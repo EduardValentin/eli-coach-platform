@@ -1,9 +1,17 @@
-// @vitest-environment happy-dom
+// @vitest-environment jsdom
 
 import "@testing-library/jest-dom/vitest";
 
-import { cleanup, render, screen, within } from "@testing-library/react";
+import {
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MotionConfig } from "motion/react";
+import type { ReactNode } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { MemoryRouter } from "react-router";
 import { configureAxe } from "vitest-axe";
@@ -30,25 +38,40 @@ const portalLinks = [
   },
 ] as const;
 
-function renderShell(initialPath = "/coach") {
+type ShellOptions = {
+  initialPath?: string;
+  reducedMotion?: "always" | "never";
+  topBarActions?: ReactNode;
+};
+
+function renderShell(options: ShellOptions = {}) {
+  const {
+    initialPath = "/coach",
+    reducedMotion = "always",
+    topBarActions,
+  } = options;
+
   return render(
-    <MemoryRouter initialEntries={[initialPath]}>
-      <PortalShell
-        asideLabel="Coach portal sidebar"
-        brand={<p>Evoa</p>}
-        links={portalLinks}
-        mobileNavigationLabel="Coach portal mobile navigation"
-        navigationLabel="Coach portal navigation"
-        topBarBrand={<p>Coach Portal</p>}
-      >
-        <div>Coach content</div>
-      </PortalShell>
-    </MemoryRouter>,
+    <MotionConfig reducedMotion={reducedMotion}>
+      <MemoryRouter initialEntries={[initialPath]}>
+        <PortalShell
+          asideLabel="Coach portal sidebar"
+          brand={<p>Evoa</p>}
+          links={portalLinks}
+          mobileNavigationLabel="Coach portal mobile navigation"
+          navigationLabel="Coach portal navigation"
+          topBarActions={topBarActions}
+          topBarBrand={<p>Coach Portal</p>}
+        >
+          <div>Coach content</div>
+        </PortalShell>
+      </MemoryRouter>
+    </MotionConfig>,
   );
 }
 
 function queryMobileNavigation() {
-  return screen.queryByRole("navigation", {
+  return screen.queryByRole("dialog", {
     name: "Coach portal mobile navigation",
   });
 }
@@ -58,12 +81,9 @@ async function openMobileMenu(user: ReturnType<typeof userEvent.setup>) {
   toggle.focus();
   await user.keyboard("{Enter}");
 
-  const menu = queryMobileNavigation();
-  if (menu === null) {
-    throw new Error("The mobile menu did not open");
-  }
-
-  return menu;
+  return screen.findByRole("dialog", {
+    name: "Coach portal mobile navigation",
+  });
 }
 
 describe("PortalShell landmarks", () => {
@@ -98,7 +118,7 @@ describe("PortalShell landmarks", () => {
 describe("PortalShell active link", () => {
   it("marks the link matching the current path as the current page", () => {
     // arrange, act
-    renderShell("/coach");
+    renderShell({ initialPath: "/coach" });
 
     // assert
     const sidebar = screen.getByRole("complementary", {
@@ -115,7 +135,7 @@ describe("PortalShell active link", () => {
 
   it("marks only the longest matching link on a nested path", () => {
     // arrange, act
-    renderShell("/coach/clients/42");
+    renderShell({ initialPath: "/coach/clients/42" });
 
     // assert
     const sidebar = screen.getByRole("complementary", {
@@ -145,6 +165,12 @@ describe("PortalShell mobile menu", () => {
     const menu = await openMobileMenu(user);
 
     // assert
+    expect(
+      within(menu).getByRole("navigation", {
+        name: "Coach portal navigation",
+      }),
+    ).toBeInTheDocument();
+    expect(within(menu).queryByRole("complementary")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Close menu" })).toHaveAttribute(
       "aria-expanded",
       "true",
@@ -169,6 +195,27 @@ describe("PortalShell mobile menu", () => {
     expect(screen.getByRole("button", { name: "Open menu" })).toHaveFocus();
   });
 
+  it("closes when the viewport crosses the desktop breakpoint and focuses the main content", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderShell();
+    const menuTrigger = screen.getByRole("button", { name: "Open menu" });
+    await openMobileMenu(user);
+
+    // act
+    menuTrigger.style.display = "none";
+    window.dispatchEvent(new Event("resize"));
+
+    // assert
+    await waitFor(() => {
+      expect(queryMobileNavigation()).not.toBeInTheDocument();
+    });
+    expect(document.body).not.toHaveAttribute("data-scroll-locked");
+    await waitFor(() => {
+      expect(screen.getByRole("main")).toHaveFocus();
+    });
+  });
+
   it("keeps Tab cycling between the open menu and the toggle", async () => {
     // arrange
     const user = userEvent.setup();
@@ -182,6 +229,40 @@ describe("PortalShell mobile menu", () => {
       const active = document.activeElement;
       expect(menu.contains(active) || active === toggle).toBe(true);
     }
+  });
+
+  it("returns focus to the toggle once the drawer finishes closing", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderShell({ reducedMotion: "never" });
+    await openMobileMenu(user);
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Close menu" }));
+
+    // assert
+    await waitFor(() => {
+      expect(queryMobileNavigation()).not.toBeInTheDocument();
+    });
+    expect(screen.getByRole("button", { name: "Open menu" })).toHaveFocus();
+  });
+
+  it("closes immediately when a top-bar action runs from the open menu", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderShell({
+      reducedMotion: "never",
+      topBarActions: <button type="button">Notifications</button>,
+    });
+    const menu = await openMobileMenu(user);
+
+    // act
+    await user.click(
+      within(menu).getByRole("button", { name: "Notifications" }),
+    );
+
+    // assert
+    expect(queryMobileNavigation()).not.toBeInTheDocument();
   });
 
   it("closes when a navigation link inside the menu is activated", async () => {

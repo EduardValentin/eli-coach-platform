@@ -47,7 +47,6 @@ afterEach(() => {
   while (nodesAddedOutsideReact.length > 0) {
     nodesAddedOutsideReact.pop()?.remove();
   }
-  document.body.style.overflow = "";
   setScrollY(0);
 });
 
@@ -234,13 +233,35 @@ describe("PublicNavigation", () => {
     await waitFor(() => {
       expect(
         screen.queryByRole("navigation", {
-          name: "Mobile public site navigation",
+          name: "Public site menu",
         }),
       ).not.toBeInTheDocument();
     });
     await waitFor(() => {
       expect(openMenuButton).toHaveFocus();
     });
+  });
+
+  it("closes when the viewport crosses the desktop breakpoint", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderPublicNavigation({ variant: "normal" });
+    const menuTrigger = screen.getByRole("button", { name: "Open menu" });
+    await openMobileMenuWithPointer(user);
+
+    // act
+    menuTrigger.style.display = "none";
+    window.dispatchEvent(new Event("resize"));
+
+    // assert
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("navigation", {
+          name: "Public site menu",
+        }),
+      ).not.toBeInTheDocument();
+    });
+    expect(document.body).not.toHaveStyle({ overflow: "hidden" });
   });
 
   it("keeps tabbing inside the header and the open menu", async () => {
@@ -261,6 +282,34 @@ describe("PublicNavigation", () => {
     expect(reached).not.toContain("Behind the overlay");
   });
 
+  it("closes before running a header action from the dialog", async () => {
+    // arrange
+    const user = userEvent.setup();
+    const runCartAction = vi.fn();
+    renderPublicNavigation({
+      actions: (
+        <button onClick={runCartAction} type="button">
+          Cart
+        </button>
+      ),
+      variant: "normal",
+    });
+    await openMobileMenuWithPointer(user);
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Cart" }));
+
+    // assert
+    expect(runCartAction).toHaveBeenCalledOnce();
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("dialog", {
+          name: "Mobile public site navigation",
+        }),
+      ).not.toBeInTheDocument();
+    });
+  });
+
   it("opens the mobile menu through the keyboard-operable button", async () => {
     // arrange
     const user = userEvent.setup();
@@ -271,10 +320,15 @@ describe("PublicNavigation", () => {
 
     // assert
     const mobileNavigation = screen.getByRole("navigation", {
-      name: "Mobile public site navigation",
+      name: "Public site menu",
     });
     const closeMenuButton = screen.getByRole("button", { name: "Close menu" });
 
+    expect(
+      screen.getByRole("dialog", {
+        name: "Mobile public site navigation",
+      }),
+    ).toBeInTheDocument();
     expect(closeMenuButton).toHaveAttribute("aria-expanded", "true");
     expect(
       within(mobileNavigation).getByRole("link", { name: "Store" }),
@@ -292,7 +346,7 @@ describe("PublicNavigation", () => {
 
     // assert
     const mobileNavigation = screen.getByRole("navigation", {
-      name: "Mobile public site navigation",
+      name: "Public site menu",
     });
 
     expect(
@@ -313,17 +367,17 @@ describe("PublicNavigation", () => {
     await user.keyboard("{Enter}");
 
     // assert
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("navigation", {
+          name: "Public site menu",
+        }),
+      ).not.toBeInTheDocument();
+    });
     expect(screen.getByRole("button", { name: "Open menu" })).toHaveAttribute(
       "aria-expanded",
       "false",
     );
-    await waitFor(() => {
-      expect(
-        screen.queryByRole("navigation", {
-          name: "Mobile public site navigation",
-        }),
-      ).not.toBeInTheDocument();
-    });
     expect(document.body).not.toHaveStyle({ overflow: "hidden" });
   });
 
@@ -335,7 +389,7 @@ describe("PublicNavigation", () => {
 
     const storeLink = within(
       screen.getByRole("navigation", {
-        name: "Mobile public site navigation",
+        name: "Public site menu",
       }),
     ).getByRole("link", { name: "Store" });
 
@@ -346,11 +400,41 @@ describe("PublicNavigation", () => {
     await waitFor(() => {
       expect(
         screen.queryByRole("navigation", {
-          name: "Mobile public site navigation",
+          name: "Public site menu",
         }),
       ).not.toBeInTheDocument();
     });
     expect(document.body).not.toHaveStyle({ overflow: "hidden" });
+  });
+
+  it("shows every menu link and Sign In at once when motion is reduced", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderPublicNavigation({
+      mobileActions: (
+        <AuthNavActions
+          placement="mobile-menu"
+          session={{ kind: "anonymous" }}
+          storePath="/store"
+        />
+      ),
+      variant: "normal",
+    });
+
+    // act
+    await openMobileMenuWithPointer(user);
+
+    // assert
+    const mobileNavigation = screen.getByRole("navigation", {
+      name: "Public site menu",
+    });
+
+    for (const link of within(mobileNavigation).getAllByRole("link")) {
+      expect(link).toBeVisible();
+    }
+    expect(
+      within(mobileNavigation).getByRole("button", { name: "Sign In" }),
+    ).toBeVisible();
   });
 
   it("uses the transparent hero appearance before the scroll threshold is crossed", () => {
@@ -421,7 +505,7 @@ describe("PublicNavigation mobile auth controls", () => {
 
     // assert
     const mobileNavigation = screen.getByRole("navigation", {
-      name: "Mobile public site navigation",
+      name: "Public site menu",
     });
 
     expect(
@@ -464,7 +548,7 @@ describe("PublicNavigation mobile auth controls", () => {
     });
     await openMobileMenuWithPointer(user);
     const mobileNavigation = screen.getByRole("navigation", {
-      name: "Mobile public site navigation",
+      name: "Public site menu",
     });
     const signOutButton = within(mobileNavigation).getByRole("button", {
       name: "Sign Out",
@@ -477,7 +561,7 @@ describe("PublicNavigation mobile auth controls", () => {
     await waitFor(() => {
       expect(
         screen.queryByRole("navigation", {
-          name: "Mobile public site navigation",
+          name: "Public site menu",
         }),
       ).not.toBeInTheDocument();
     });

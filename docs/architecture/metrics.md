@@ -4,25 +4,27 @@ Header: date 2026-09-18, commit 8ac6a613 (PR #229 head, squash-merged to main as
 
 Change review: date 2026-09-18, commit c2277ebb, baseline 7d92dc22, scope the persisted waitlist-mode change (`79fa1e95..f0eb1bf4`, merged with main in `242a0976`): the changed units and their direct graph neighborhood in apps/platform, packages/{config,content,db,domain,infrastructure,ui}, tests, migrations and package deployment; partial scope, recorded under "Persisted waitlist-mode change review" below. The figures above that section stand as of `8ac6a613` except where that section names a change.
 
+Change review: date 2026-09-18, commits 6c043f97, 63100724, eced8490 and 3836745e (PR #230, base 843d8261), merged with main at 74950bd7; scope the C5 mobile-navigation modules (`layout/navigation-dialog.tsx`, `layout/use-close-mobile-navigation-on-desktop.ts`, `layout/portal-shell.tsx`, the removed `lib/focus-trap.ts`) and their public-site and portal consumers; partial scope. It recomputes C5 and C11 and adds the "Mobile navigation" volatility column.
+
 Counting: fan-in is the number of modules outside the component that import at least one module inside it; fan-out is the number of modules inside that import at least one module in another in-scope component (externals excluded). Abstract types are port interfaces that exist only to be implemented; total types are exported classes, interfaces, and type aliases. The `8ac6a613` change review recomputes C1, C6, C7, C8 and C14; other rows are carried from run 8. Volatility keeps run 8's count of the 84 commits in `148d594f..e8690f45` that changed a non-test file in the component, with the 16 commits of the domain-model restructure (`2173cbfb..e8690f45`) in the "of which run 8" column, and adds PR #229 (`7d92dc22`) as `+ 1` to each component it changed. The last column counts the waitlist-mode commits that changed a non-test file or package manifest in the component: the seven in `79fa1e95..f0eb1bf4` plus the main merge `242a0976`. Previous distance is the run-8 value at `e8690f45` for the five recomputed rows; the carried rows keep run 8's comparison with run 7 at `dbe88053`. Generated from a cold cruise of the import graph at `8ac6a613`: 287 production modules, 782 dependencies, 0 violations, 0 circular.
 
-| Component | Fan-in | Fan-out | Instability | Abstractness | Distance | Previous distance | Volatility | of which run 8 | Waitlist mode |
-|---|---|---|---|---|---|---|---|---|---|
-| C1 packages/domain | 41 | 0 | 0.00 | 0.23 (18 / 80) | 0.78 | 0.77 | 25 + 1 | 12 | 6 |
-| C2 packages/db | 15 | 0 | 0.00 | 0.00 (0 / 1) | 1.00 | 1.00 | 0 | 0 | 0 |
-| C3 packages/config | 25 | 0 | 0.00 | 0.00 (0 / 12) | 1.00 | 1.00 | 5 | 0 | 2 |
-| C4 packages/content | 8 | 0 | 0.00 | 0.00 (0 / 7) | 1.00 | 1.00 | 2 | 0 | 1 |
-| C5 packages/ui | 32 | 0 | 0.00 | 0.00 (0 / 3) | 1.00 | 1.00 | 3 | 0 | 1 |
-| C6 packages/infrastructure | 39 | 8 | 0.17 | 0.13 (3 / 24) | 0.70 | 0.72 | 10 + 1 | 1 | 1 |
-| C7 features/store | 10 | 37 | 0.79 | 0.00 (0 / 37) | 0.21 | 0.21 | 29 + 1 | 6 | 0 |
-| C8 features/waitlist | 10 | 14 | 0.58 | 0.00 (0 / 12) | 0.42 | 0.42 | 16 + 1 | 1 | 4 |
-| C9 features/accounts | 15 | 15 | 0.50 | 0.00 (0 / 10) | 0.50 | 0.48 | 11 | 1 | 0 |
-| C11 surfaces/public-site | 1 | 22 | 0.96 | 0.00 (0 / 11) | 0.04 | 0.05 | 12 | 1 | 0 |
-| C12 surfaces/client-portal | 1 | 6 | 0.86 | undefined (0 types) | 0.14 | 0.14 | 3 | 0 | 0 |
-| C13 surfaces/coach-portal | 1 | 5 | 0.83 | undefined (0 types) | 0.17 | 0.17 | 3 | 0 | 0 |
-| C14 apps/platform/src/server | 3 | 11 | 0.79 | 0.00 (0 / 14) | 0.21 | 0.21 | 11 + 1 | 1 | 3 |
-| C15 app root | 0 | 4 | 1.00 | undefined (0 types) | 0.00 | 0.00 | 7 | 0 | 2 |
-| C16 packages/test-support | 0 | 0 | undefined | undefined (0 types) | undefined | undefined | 3 | 0 | 0 |
+| Component | Fan-in | Fan-out | Instability | Abstractness | Distance | Previous distance | Volatility | of which run 8 | Waitlist mode | Mobile navigation |
+|---|---|---|---|---|---|---|---|---|---|---|
+| C1 packages/domain | 41 | 0 | 0.00 | 0.23 (18 / 80) | 0.78 | 0.77 | 25 + 1 | 12 | 6 | 0 |
+| C2 packages/db | 15 | 0 | 0.00 | 0.00 (0 / 1) | 1.00 | 1.00 | 0 | 0 | 0 | 0 |
+| C3 packages/config | 25 | 0 | 0.00 | 0.00 (0 / 12) | 1.00 | 1.00 | 5 | 0 | 2 | 0 |
+| C4 packages/content | 8 | 0 | 0.00 | 0.00 (0 / 7) | 1.00 | 1.00 | 2 | 0 | 1 | 0 |
+| C5 packages/ui | 32 | 0 | 0.00 | 0.00 (0 / 4) | 1.00 | 1.00 | 3 | 0 | 1 | 3 |
+| C6 packages/infrastructure | 39 | 8 | 0.17 | 0.13 (3 / 24) | 0.70 | 0.72 | 10 + 1 | 1 | 1 | 0 |
+| C7 features/store | 10 | 37 | 0.79 | 0.00 (0 / 37) | 0.21 | 0.21 | 29 + 1 | 6 | 0 | 0 |
+| C8 features/waitlist | 10 | 14 | 0.58 | 0.00 (0 / 12) | 0.42 | 0.42 | 16 + 1 | 1 | 4 | 0 |
+| C9 features/accounts | 15 | 15 | 0.50 | 0.00 (0 / 10) | 0.50 | 0.48 | 11 | 1 | 0 | 0 |
+| C11 surfaces/public-site | 1 | 22 | 0.96 | 0.00 (0 / 11) | 0.04 | 0.05 | 12 | 1 | 0 | 3 |
+| C12 surfaces/client-portal | 1 | 6 | 0.86 | undefined (0 types) | 0.14 | 0.14 | 3 | 0 | 0 | 0 |
+| C13 surfaces/coach-portal | 1 | 5 | 0.83 | undefined (0 types) | 0.17 | 0.17 | 3 | 0 | 0 | 0 |
+| C14 apps/platform/src/server | 3 | 11 | 0.79 | 0.00 (0 / 14) | 0.21 | 0.21 | 11 + 1 | 1 | 3 | 0 |
+| C15 app root | 0 | 4 | 1.00 | undefined (0 types) | 0.00 | 0.00 | 7 | 0 | 2 | 0 |
+| C16 packages/test-support | 0 | 0 | undefined | undefined (0 types) | undefined | undefined | 3 | 0 | 0 | 0 |
 
 **C10 features/coaching-bundles is gone.** The feature folder and the `packages/domain/src/coaching-bundles` slice were both deleted; the three bundle literals, the benefits list and the presenter are one C11-private module in `surfaces/public-site/sections/pricing/` (decision D5). Its three edges (`C11 → C10`, `C10 → C1`, `C10 → C5`) left the graph with it.
 
@@ -30,11 +32,13 @@ Mean D 0.51, population standard deviation 0.38, over the fourteen components wi
 
 `8ac6a613` left C1 at D 0.77: four shared ports left C1 and two consumer-owned incident interfaces were added, taking abstract/total types from 20/87 to 18/79. C6 moves 0.72 → 0.70: it gains those three adapter-facing interfaces while eight of its former C1-dependent modules become concern-local, taking fan-out 13 → 8 and fan-in 34 → 39. C7, C8 and C14 keep their prior distances. The C1 and C2 rows above carry the waitlist-mode change described below.
 
+PR #230 replaces the C5 module `lib/focus-trap.ts` with `layout/navigation-dialog.tsx` and the package-private `layout/use-close-mobile-navigation-on-desktop.ts`. A cold cruise of the tree merging `74950bd7` and `3836745e` reads 308 modules (288 in-scope production modules), 793 dependencies, 0 violations and 0 circular; against main's 785 dependencies the navigation change adds eight edges and one module. C5 fan-in (32) and fan-out (0) are unchanged; the published `NavigationMenu` type raises its total types from three to four, so abstractness stays 0.00 and distance 1.00. C11's `public-navigation.tsx` swaps its `./primitives` import for `./layout` and `./motion`, which leaves its fan-in, fan-out and types unchanged.
+
 C1 carries the window's highest volatility, 12 of the 16 restructure commits and 25 of the branch's 84. Every one of the twelve is a move, a rename, or a behaviour-preserving internal refactor of the restructure itself: no domain entity, use case, port or boundary type changed in this window because a database, framework or vendor concern changed. That is one reason to change executed in twelve steps, not a component with many reasons. The position stays a watched screen for the next run, whose window is the first that can tell migration from volatility.
 
 No component sits in the zone of uselessness: all 18 published abstract types in C1 have an implementer and a consumer, including `AcquisitionIncidents` and `WaitlistIncidents`. C6's three new concern contracts each have at least one implementation and outside consumer. The unpublished `DownloadTokenGenerator` also has both (`AcquireProductsUseCase` consumes it; `RandomDownloadTokenGenerator` satisfies it structurally). One method is paid for and unused: `ProductAssets.assertReady` has no production caller, because the composition calls the adapter's own `assertReadyAtStartup()` instead; it predates this change review.
 
-Component edge counts (distinct importing modules): see `dependencies.md`, section "Component graph". Cycles detected: none, at module, component, domain-folder and UI-subpath level, over 287 in-scope production modules. PR #229 is one coherent ownership refactor across C1, C6, C7, C8 and C14, not five independent requirement changes.
+Component edge counts (distinct importing modules): see `dependencies.md`, section "Component graph". Cycles detected: none, at module, component, domain-folder and UI-subpath level, over 288 in-scope production modules of the tree merging `74950bd7` and `3836745e`. PR #229 is one coherent ownership refactor across C1, C6, C7, C8 and C14, not five independent requirement changes.
 
 ## Persisted waitlist-mode change review
 

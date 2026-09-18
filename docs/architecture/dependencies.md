@@ -4,9 +4,11 @@ Header: date 2026-09-18, commit 8ac6a613 (PR #229 head, squash-merged to main as
 
 Change review: date 2026-09-18, commit c2277ebb, baseline 7d92dc22, scope the persisted waitlist-mode change (`79fa1e95..f0eb1bf4`, merged with main in `242a0976`): the changed units and their direct graph neighborhood in apps/platform, packages/{config,content,db,domain,infrastructure,ui}, tests, migrations and package deployment; partial scope. Rows it changed or added carry the commit that changed them.
 
+Change review: date 2026-09-18, commits 6c043f97, 63100724, eced8490 and 3836745e (PR #230, base 843d8261), merged with main at 74950bd7; scope the C5 mobile-navigation modules (`layout/navigation-dialog.tsx`, `layout/use-close-mobile-navigation-on-desktop.ts`, `layout/portal-shell.tsx`, the removed `lib/focus-trap.ts`) and their public-site and portal consumers; partial scope.
+
 ## Component graph
 
-Generated from a cold cruise of the import graph at `8ac6a613` (287 in-scope production modules, 782 dependencies, 0 violations, 0 circular). The persisted waitlist-mode change leaves the graph at `c2277ebb` with the same 287 production modules, 785 dependencies, 0 violations and 0 circular; the rows it changed name it, and the package packlists, Docker assertions and handle visibility changes add no module edge. Count = distinct importing modules. Component IDs refer to `components.md`.
+Generated from a cold cruise of the import graph at `8ac6a613` (287 in-scope production modules, 782 dependencies, 0 violations, 0 circular). The persisted waitlist-mode change leaves the graph at `c2277ebb` with the same 287 production modules, 785 dependencies, 0 violations and 0 circular; the rows it changed name it, and the package packlists, Docker assertions and handle visibility changes add no module edge. Rows E1200-E1212 record the PR #230 Radix mobile navigation; a cold cruise of the tree merging `74950bd7` and `3836745e` reads 308 modules (288 in-scope production modules), 793 dependencies, 0 violations and 0 circular. Count = distinct importing modules. Component IDs refer to `components.md`.
 
 | From | To | Modules | Notes |
 |---|---|---|---|
@@ -65,7 +67,7 @@ Generated from a cold cruise of the import graph at `8ac6a613` (287 in-scope pro
 
 **C10 features/coaching-bundles is gone**, and with it the three edges `C11 → C10`, `C10 → C1` and `C10 → C5`. The bundle literal and its presenter are C11-private modules under `surfaces/public-site/sections/pricing/` (decision D5), so the pricing page reaches them without crossing a component boundary at all.
 
-Cycles: none, at module, component, domain-folder and UI-subpath level, proven by the `no-circular` rule over 287 production modules and by a depth-first walk of the component graph. Inside C1 the nine folders remain acyclic: `acquisition → {product, email-address, shared}`, `download-grant → {product, shared}`, `waitlist → {email-address, feature-flag, shared}`. Every cross-folder edge enters the sibling's `index.ts`, never a deep path. C1, C2, C3, C4 and C5 depend on no in-scope component. C1 has no external dependency. C16 has no production edge.
+Cycles: none, at module, component, domain-folder and UI-subpath level, proven by the `no-circular` rule over 288 production modules and by a depth-first walk of the component graph. Inside C1 the nine folders remain acyclic: `acquisition → {product, email-address, shared}`, `download-grant → {product, shared}`, `waitlist → {email-address, feature-flag, shared}`. Every cross-folder edge enters the sibling's `index.ts`, never a deep path. C1, C2, C3, C4 and C5 depend on no in-scope component. C1 has no external dependency. C16 has no production edge.
 
 External dependencies per component: C1 none; C2 drizzle-orm, pg; C3 zod; C4 node:crypto; C5 react, react-router, motion, radix-ui, class-variance-authority, clsx, tailwind-merge; C6 react, resend, drizzle-orm, zod, node:crypto, fetch; C7 react, react-dom, react-router, react-hook-form, @hookform/resolvers, zustand, lucide-react, zod, drizzle-orm, archiver, node:crypto, node:fs, node:path, node:stream; C8 react, react-dom, react-router, lucide-react, canvas-confetti, zod, drizzle-orm, pg, node:crypto; C9 @clerk/react-router, react, react-router, lucide-react, zod, drizzle-orm; C11 react, react-router, motion, lucide-react (it absorbed C10's motion and lucide-react use with the pricing section); C12 react-router; C13 react-router, lucide-react; C14 react-router, zod, pg; C15 @clerk/react-router, react, react-router, motion, lucide-react, @react-router/dev, vite, @tailwindcss/vite, drizzle-kit; C16 none.
 
@@ -169,7 +171,7 @@ Enforcement names what fails if a consumer imports an implementer directly.
 | B144 | the five request-context keys | C7, C8, C9 `server/guards/` and C14 `server/guards/` | `createFeatureContextMiddleware` (U517) sets all five from the container | `accountsContext` (accounts routes, the resolution middleware, the portal guards), `storeContext` (store routes and loaders), `waitlistContext` (the waitlist route and the public-site layout loader), `platformContext` (`server/api/*` only), `runtimeConfigContext` (the public-site layout loader only) | the feature slice or `{ appBasePath, botDetection }` | the context key | each is created with `createContext<…>()` and constructs nothing (`guards-construct-nothing`); `server-guards-consumers` fences `platformContext` |
 | B151 | PlatformDatabase.client deferred DatabaseClient proxy | C14 (frameworks) | private createDeferredDatabaseClient in U503 | every repository built by a feature composition | DatabaseClient (Drizzle type) | proxy | none |
 | B152 | PlatformContainer (U502) composition output | C14 composition | U500 | `root.server.ts` only | a record of feature slices `{ accounts, closeDatabase, platform, store, waitlist }` | root.server.ts | `composition-root` |
-| B180 | Radix wrapper boundary in C5 | C5 frameworks | checkbox, filter-chip-group, sheet (avatar, dialog and select are deleted) | apps through the concern subpaths | React props | C5 component | none |
+| B180 | Radix wrapper boundary in C5 | C5 frameworks | checkbox, filter-chip-group, sheet, navigation-dialog (avatar, the general dialog and select are deleted) | apps through the concern subpaths | React props | C5 component | none |
 | B181 | SearchParamsWriter (U805) | C5 lib (adapters) | C5 | U237 catalog-view | { searchParams, writeSearchParams } | consumer | none |
 | B182 | packages/ui export map | C5 | six concern `index.ts` entries plus `styles.css`; no root barrel | apps/platform/src, app.css | components, CSS | consumers | exports, `ui-subpaths`, `ui-primitives-import-only-lib`, `ui-lib-is-the-base` |
 | B260 | DatabaseClient (U1151, Drizzle NodePgDatabase) | C2 adapters | drizzle() | U503; every repository in C7, C8, C9, C6 | Drizzle ORM instance (detail type) | C2 | exports |
@@ -231,7 +233,7 @@ Enforcement names what fails if a consumer imports an implementer directly.
 
 ## Edges
 
-An edge from A to B means A's source names B. Direction `inward` points toward policy (ring order: entities, use-cases, adapters, frameworks, composition). Generated from every `import`, `export … from`, dynamic `import()` and CSS `@import` in the 287 in-scope production modules at `8ac6a613`; kind is `import` for all rows (the `implements` and `constructs` relationships are recorded in the Boundaries and Entry points sections above). Crosses-ring compares the majority ring of the two modules from `units.md`; an edge into a `packages/domain` folder entry is recorded `lateral`, because a subpath barrel is a publication surface rather than a ring of its own. Externals are tagged framework, vendor or runtime. Component membership is by path. The PR #229 review allocated E1014-E1019 and E1021-E1038; E333 retains its frozen-base identity. The persisted waitlist-mode change allocated E1039-E1043 and marks the rows it removed or retyped.
+An edge from A to B means A's source names B. Direction `inward` points toward policy (ring order: entities, use-cases, adapters, frameworks, composition). Generated from every `import`, `export … from`, dynamic `import()` and CSS `@import` in the 288 in-scope production modules of the tree merging `74950bd7` and `3836745e`; kind is `import` for all rows (the `implements` and `constructs` relationships are recorded in the Boundaries and Entry points sections above). Crosses-ring compares the majority ring of the two modules from `units.md`; an edge into a `packages/domain` folder entry is recorded `lateral`, because a subpath barrel is a publication surface rather than a ring of its own. Externals are tagged framework, vendor or runtime. Component membership is by path. The PR #229 review allocated E1014-E1019 and E1021-E1038; E333 retains its frozen-base identity. The persisted waitlist-mode change allocated E1039-E1043 and marks the rows it removed or retyped. E1200-E1212 record the PR #230 Radix mobile navigation.
 
 No edge leaves a `packages/domain` unit for a detail or an external: C1's fan-out is zero, and the package declares no dependencies and sets `"types": []`.
 
@@ -734,8 +736,10 @@ No edge leaves a `packages/domain` unit for a detail or an external: C1's fan-ou
 | E500 | apps/platform/src/surfaces/public-site/shell/public-navigation.tsx | apps/platform/src/surfaces/public-site/shell/logo.tsx | import | no | no | lateral | present |
 | E872 | apps/platform/src/surfaces/public-site/shell/public-navigation.tsx | external:lucide-react | import | n/a | no | lateral | present |
 | E873 | apps/platform/src/surfaces/public-site/shell/public-navigation.tsx | external:react | import | n/a | no | lateral | present |
+| E1200 | apps/platform/src/surfaces/public-site/shell/public-navigation.tsx | packages/ui/src/layout/index.ts | import | yes | no | lateral | present |
 | E503 | apps/platform/src/surfaces/public-site/shell/public-navigation.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
-| E504 | apps/platform/src/surfaces/public-site/shell/public-navigation.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E1207 | apps/platform/src/surfaces/public-site/shell/public-navigation.tsx | packages/ui/src/motion/index.ts | import | yes | no | lateral | present |
+| E504 | apps/platform/src/surfaces/public-site/shell/public-navigation.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | removed |
 | E874 | packages/config/src/concerns/app.ts | external:zod | import | n/a | no | lateral | present |
 | E875 | packages/config/src/concerns/bot-detection.ts | external:zod | import | n/a | no | lateral | present |
 | E507 | packages/config/src/concerns/bot-detection.ts | packages/config/src/concerns/app.ts | import | no | no | lateral | present |
@@ -956,13 +960,24 @@ No edge leaves a `packages/domain` unit for a detail or an external: C1's fan-ou
 | E687 | packages/ui/src/layout/index.ts | packages/ui/src/layout/phone-frame.tsx | import | no | no | lateral | present |
 | E688 | packages/ui/src/layout/index.ts | packages/ui/src/layout/portal-shell.tsx | import | no | no | lateral | present |
 | E689 | packages/ui/src/layout/index.ts | packages/ui/src/layout/sidebar-surface-layout.tsx | import | no | no | lateral | present |
+| E1201 | packages/ui/src/layout/index.ts | packages/ui/src/layout/navigation-dialog.tsx | import | no | no | lateral | present |
+| E1202 | packages/ui/src/layout/index.ts | packages/ui/src/layout/use-close-mobile-navigation-on-desktop.ts | import | no | no | lateral | removed |
+| E1203 | packages/ui/src/layout/navigation-dialog.tsx | external:radix-ui | import | n/a | no | lateral | present |
+| E1212 | packages/ui/src/layout/navigation-dialog.tsx | external:react | import | n/a | no | lateral | present |
+| E1211 | packages/ui/src/layout/navigation-dialog.tsx | packages/ui/src/layout/use-close-mobile-navigation-on-desktop.ts | import | no | no | lateral | present |
+| E1208 | packages/ui/src/layout/navigation-dialog.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
+| E1209 | packages/ui/src/layout/navigation-dialog.tsx | packages/ui/src/lib/constants.ts | import | no | no | lateral | present |
+| E1210 | packages/ui/src/layout/navigation-dialog.tsx | packages/ui/src/primitives/icon-button.tsx | import | no | no | lateral | present |
+| E1204 | packages/ui/src/layout/use-close-mobile-navigation-on-desktop.ts | external:react | import | n/a | no | lateral | present |
 | E992 | packages/ui/src/layout/phone-frame.tsx | external:react | import | n/a | no | lateral | present |
 | E691 | packages/ui/src/layout/phone-frame.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
 | E993 | packages/ui/src/layout/portal-shell.tsx | external:react | import | n/a | no | lateral | present |
 | E693 | packages/ui/src/layout/portal-shell.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
 | E694 | packages/ui/src/layout/portal-shell.tsx | packages/ui/src/lib/constants.ts | import | no | no | lateral | present |
-| E695 | packages/ui/src/layout/portal-shell.tsx | packages/ui/src/lib/focus-trap.ts | import | no | no | lateral | present |
-| E696 | packages/ui/src/layout/portal-shell.tsx | packages/ui/src/primitives/icon-button.tsx | import | no | no | lateral | present |
+| E695 | packages/ui/src/layout/portal-shell.tsx | packages/ui/src/lib/focus-trap.ts | import | no | no | lateral | removed |
+| E696 | packages/ui/src/layout/portal-shell.tsx | packages/ui/src/primitives/icon-button.tsx | import | no | no | lateral | removed |
+| E1205 | packages/ui/src/layout/portal-shell.tsx | packages/ui/src/layout/navigation-dialog.tsx | import | no | no | lateral | present |
+| E1206 | packages/ui/src/layout/portal-shell.tsx | packages/ui/src/layout/use-close-mobile-navigation-on-desktop.ts | import | no | no | lateral | removed |
 | E994 | packages/ui/src/layout/sidebar-surface-layout.tsx | external:react | import | n/a | no | lateral | present |
 | E698 | packages/ui/src/layout/sidebar-surface-layout.tsx | packages/ui/src/lib/constants.ts | import | no | no | lateral | present |
 | E699 | packages/ui/src/layout/sidebar-surface-layout.tsx | packages/ui/src/primitives/link.tsx | import | no | no | lateral | present |

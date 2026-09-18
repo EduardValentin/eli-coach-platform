@@ -4,6 +4,8 @@ Header: date 2026-09-18, commit 8ac6a613 (PR #229 head, squash-merged to main as
 
 Change review: date 2026-09-18, commit c2277ebb, baseline 7d92dc22, scope the persisted waitlist-mode change (`79fa1e95..f0eb1bf4`, merged with main in `242a0976`): the changed units and their direct graph neighborhood in apps/platform, packages/{config,content,db,domain,infrastructure,ui}, tests, migrations and package deployment; partial scope. Rows it changed or added carry the commit that changed them.
 
+Change review: date 2026-09-18, commits 6c043f97, 63100724, eced8490 and 3836745e (PR #230, base 843d8261), merged with main at 74950bd7; scope the C5 mobile-navigation modules (`layout/navigation-dialog.tsx`, `layout/use-close-mobile-navigation-on-desktop.ts`, `layout/portal-shell.tsx`, the removed `lib/focus-trap.ts`) and their public-site and portal consumers; partial scope.
+
 One row per module by default; ports, entity/model sets, and separate implementations get their own rows. Test files (`*.test.*`) are the outermost ring and are not mapped as units; the tests that import each module are listed in the slice returns under `.architecture/slices/`. Component IDs refer to `components.md`. "Published" means the symbol is reachable from outside its component through an export map, a route registration or a rule-sanctioned folder (`contracts/`, `ui/shared/`, `server/guards/`, `routes.ts`).
 
 | ID | Path:symbol | Component | Kind | Ring | Visibility | Actors | Status |
@@ -206,11 +208,13 @@ One row per module by default; ports, entity/model sets, and separate implementa
 | U827 | packages/ui/src/primitives/link.tsx:Link (+linkVariants) | C5 | view | frameworks | published (`./primitives`) | operator/platform | present |
 | U828 | packages/ui/src/layout/phone-frame.tsx:PhoneFrame | C5 | view | frameworks | published (`./layout`) | operator/platform | present |
 | U829 | packages/ui/src/primitives/section-eyebrow.tsx:SectionEyebrow | C5 | view | frameworks | published (`./primitives`) | operator/platform | present |
-| U830 | packages/ui/src/layout/portal-shell.tsx:PortalShell (+PortalNavigationLink) — calls `resolveFocusTrapTarget` | C5 | view | frameworks | published (`./layout`) | coach, client | present |
+| U830 | packages/ui/src/layout/portal-shell.tsx:PortalShell (+PortalNavigationLink) — composes the Radix-backed NavigationDialog for mobile navigation | C5 | view | frameworks | published (`./layout`) | coach, client | present |
 | U832 | packages/ui/src/layout/sidebar-surface-layout.tsx:SidebarSurfaceLayout | C5 | view | frameworks | published (`./layout`) | operator/platform | present |
 | U833 | packages/ui/src/overlays/sheet.tsx:Sheet, SheetTitle, SheetDescription, SheetContent | C5 | view | frameworks | published (`./overlays`) | operator/platform | present |
-| U850 | packages/ui/src/lib/focus-trap.ts:resolveFocusTrapTarget | C5 | entity rule (pure, tested) | entities | package-private | coach, client | present |
+| U850 | packages/ui/src/lib/focus-trap.ts:resolveFocusTrapTarget | C5 | entity rule (pure, tested) | entities | package-private | coach, client | removed (Radix NavigationDialog owns focus containment) |
 | U851 | packages/ui/src/{filters,layout,lib,motion,overlays,primitives}/index.ts:module | C5 | framework-glue | frameworks | published (six subpath entries) | operator/platform | present |
+| U852 | packages/ui/src/layout/navigation-dialog.tsx:NavigationDialog (+NavigationMenu) — owns the mobile navigation pattern: persistent top bar whose page trigger turns invisible and hidden from assistive technology while the in-dialog menu button, which stays mounted across open, closing and reopen, takes over, top-bar actions that close the menu, first-link focus, the animated panel whose `open`/`closed` variants end the closing state, and the desktop-breakpoint close | C5 | view | frameworks | published (`./layout`) | visitor, client, coach | present |
+| U853 | packages/ui/src/layout/use-close-mobile-navigation-on-desktop.ts:useCloseMobileNavigationOnDesktop | C5 | adapter | adapters | package-private | visitor, client, coach | present |
 | U900 | domain/account/account.ts:Account (+AccountRole, AccountSnapshot; `isActive()`, `toSnapshot()`, statics `canAccessClientPortal(snapshot)` / `canAccessCoachPortal(snapshot)`) | C1 | entity | entities | published | operator/platform, coach, client | moved from domain/accounts/account-model.ts, rules became methods |
 | U901 | domain/account/accounts.ts:Accounts | C1 | port | use-cases | published | operator/platform | present (moved) |
 | U902 | domain/account/provision-account-use-case.ts:ProvisionAccountUseCase (+ProvisionAccountResult carrying `AccountSnapshot`) | C1 | use-case | use-cases | published | operator/platform, vendor:clerk | renamed from AccountProvisioningService |

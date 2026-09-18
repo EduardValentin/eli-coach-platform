@@ -1,18 +1,10 @@
-import {
-  useCallback,
-  useEffect,
-  useId,
-  useRef,
-  useState,
-  type PropsWithChildren,
-  type ReactNode,
-} from "react";
+import { motion } from "motion/react";
+import type { PropsWithChildren, ReactNode, RefObject } from "react";
 import { Link as RouterLink, useLocation } from "react-router";
 
 import { MAIN_CONTENT_ID } from "../lib/constants";
 import { cn } from "../lib/cn";
-import { resolveFocusTrapTarget } from "../lib/focus-trap";
-import { IconButton } from "../primitives/icon-button";
+import { NavigationDialog } from "./navigation-dialog";
 
 export type PortalNavigationLink = {
   href: string;
@@ -36,8 +28,17 @@ type PortalShellProps = PropsWithChildren<{
   topBarActions?: ReactNode;
 }>;
 
-const MENU_FOCUSABLE_SELECTOR =
-  'a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])';
+const BACKDROP_VARIANTS = {
+  closed: { opacity: 0 },
+  open: { opacity: 1, transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] } },
+} as const;
+const DRAWER_VARIANTS = {
+  closed: {
+    transition: { damping: 25, stiffness: 200, type: "spring" },
+    x: "-100%",
+  },
+  open: { transition: { duration: 0.3, ease: [0, 0, 0.2, 1] }, x: 0 },
+} as const;
 
 export function PortalShell(props: PortalShellProps) {
   const {
@@ -52,136 +53,41 @@ export function PortalShell(props: PortalShellProps) {
     topBarBrand,
   } = props;
 
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const menuId = useId();
-  const topBarRef = useRef<HTMLElement | null>(null);
-  const overlayRef = useRef<HTMLDivElement | null>(null);
-
-  const closeMenu = useCallback(() => {
-    setIsMenuOpen(false);
-  }, []);
-
-  useEffect(() => {
-    document.body.style.overflow = isMenuOpen ? "hidden" : "";
-
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [isMenuOpen]);
-
-  // The open menu covers the page, but the top bar stays above it so the
-  // toggle remains reachable. Keyboard focus has to respect the same
-  // boundary: the reachable set is the top bar plus the overlay, never the
-  // obscured page. Radix Dialog/Sheet (used elsewhere in this package) can't
-  // model this — its focus scope traps within one subtree and would inert
-  // the top bar — so the trap is hand-rolled here, mirroring the
-  // public-site navigation's proven implementation.
-  useEffect(() => {
-    if (!isMenuOpen) {
-      return;
-    }
-
-    const previouslyFocused = document.activeElement as HTMLElement | null;
-    overlayRef.current
-      ?.querySelector<HTMLElement>(MENU_FOCUSABLE_SELECTOR)
-      ?.focus();
-
-    const handleMenuKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        closeMenu();
-        return;
-      }
-
-      if (event.key !== "Tab") {
-        return;
-      }
-
-      const reachable = [topBarRef.current, overlayRef.current]
-        .filter((root): root is HTMLElement => root !== null)
-        .flatMap((root) =>
-          Array.from(
-            root.querySelectorAll<HTMLElement>(MENU_FOCUSABLE_SELECTOR),
-          ),
-        )
-        .filter(
-          (element) =>
-            !element.hasAttribute("disabled") &&
-            element.getClientRects().length > 0,
-        );
-
-      const target = resolveFocusTrapTarget({
-        active: document.activeElement as HTMLElement | null,
-        reachable,
-        shiftKey: event.shiftKey,
-      });
-
-      if (target !== null) {
-        event.preventDefault();
-        target.focus();
-      }
-    };
-
-    window.addEventListener("keydown", handleMenuKeyDown);
-
-    return () => {
-      window.removeEventListener("keydown", handleMenuKeyDown);
-      previouslyFocused?.focus();
-    };
-  }, [closeMenu, isMenuOpen]);
-
   return (
     <div className="min-h-dvh bg-surface-page">
       <a className="ui-skip-link" href={`#${MAIN_CONTENT_ID}`}>
         Skip to main content
       </a>
-      <header
-        className="fixed inset-x-0 top-0 z-50 flex h-16 items-center justify-between border-b border-border-subtle bg-surface-base px-6 shadow-soft lg:hidden"
-        ref={topBarRef}
+      <NavigationDialog
+        closeMenuIcon={<CloseGlyph />}
+        contentClassName="fixed inset-0 z-40 outline-none lg:hidden"
+        menuButtonClassName="relative z-[60] -mr-2 text-text-secondary hover:text-text-primary"
+        openMenuIcon={<MenuGlyph />}
+        renderTopBar={(topBar) => (
+          <header className="fixed inset-x-0 top-0 z-50 flex h-16 items-center justify-between border-b border-border-subtle bg-surface-base px-6 shadow-soft lg:hidden">
+            <div className="flex min-w-0 items-center gap-3">{topBarBrand}</div>
+            <div className="flex items-center gap-2">
+              {topBar.actions}
+              {topBar.menuButton}
+            </div>
+          </header>
+        )}
+        title={mobileNavigationLabel}
+        topBarActions={topBarActions}
       >
-        <div className="flex min-w-0 items-center gap-3">{topBarBrand}</div>
-        <div className="flex items-center gap-2">
-          {topBarActions}
-          <IconButton
-            aria-controls={menuId}
-            aria-expanded={isMenuOpen}
-            aria-label={isMenuOpen ? "Close menu" : "Open menu"}
-            className="relative z-[60] -mr-2 text-text-secondary hover:text-text-primary"
-            onClick={() => {
-              setIsMenuOpen((open) => !open);
-            }}
-          >
-            {isMenuOpen ? <CloseGlyph /> : <MenuGlyph />}
-          </IconButton>
-        </div>
-      </header>
-      {isMenuOpen ? (
-        <div
-          className="fixed inset-0 z-40 bg-overlay-soft opacity-100 backdrop-blur-sm motion-safe:transition-opacity motion-safe:duration-300 motion-safe:starting:opacity-0 lg:hidden"
-          id={menuId}
-          onClick={(event) => {
-            // Clicks inside the drawer bubble up with their own target;
-            // only a click on the backdrop itself dismisses the menu.
-            if (event.target === event.currentTarget) {
-              closeMenu();
-            }
-          }}
-          ref={overlayRef}
-          role="presentation"
-        >
-          <aside
-            aria-label={mobileNavigationLabel}
-            className="absolute inset-y-0 left-0 w-64 translate-x-0 shadow-floating motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-out motion-safe:starting:-translate-x-full"
-          >
+        {(menu) => (
+          <PortalMobileDrawer>
             <PortalSidebarContent
               actions={sidebarActions}
               brand={brand}
+              firstLinkRef={menu.firstLinkRef}
               links={links}
-              navigationLabel={mobileNavigationLabel}
-              onNavigate={closeMenu}
+              navigationLabel={navigationLabel}
+              onNavigate={menu.close}
             />
-          </aside>
-        </div>
-      ) : null}
+          </PortalMobileDrawer>
+        )}
+      </NavigationDialog>
       <aside
         aria-label={asideLabel}
         className="fixed inset-y-0 left-0 z-30 hidden w-64 lg:block"
@@ -206,16 +112,37 @@ export function PortalShell(props: PortalShellProps) {
   );
 }
 
+function PortalMobileDrawer(props: PropsWithChildren) {
+  const { children } = props;
+
+  return (
+    <>
+      <motion.div
+        className="pointer-events-none absolute inset-0 bg-overlay-soft backdrop-blur-sm"
+        variants={BACKDROP_VARIANTS}
+      />
+      <motion.div
+        className="absolute inset-y-0 left-0 w-64 shadow-floating"
+        variants={DRAWER_VARIANTS}
+      >
+        {children}
+      </motion.div>
+    </>
+  );
+}
+
 type PortalSidebarContentProps = {
   actions?: ReactNode;
   brand: ReactNode;
+  firstLinkRef?: RefObject<HTMLAnchorElement | null>;
   links: readonly PortalNavigationLink[];
   navigationLabel: string;
   onNavigate?: () => void;
 };
 
 function PortalSidebarContent(props: PortalSidebarContentProps) {
-  const { actions, brand, links, navigationLabel, onNavigate } = props;
+  const { actions, brand, firstLinkRef, links, navigationLabel, onNavigate } =
+    props;
   const { pathname } = useLocation();
 
   const matches = (href: string) =>
@@ -242,7 +169,7 @@ function PortalSidebarContent(props: PortalSidebarContentProps) {
         aria-label={navigationLabel}
         className="flex-1 space-y-1 overflow-y-auto px-4 py-2"
       >
-        {links.map((link) => {
+        {links.map((link, linkIndex) => {
           const isActive = link.href === activeHref;
 
           return (
@@ -258,6 +185,7 @@ function PortalSidebarContent(props: PortalSidebarContentProps) {
               )}
               key={link.href}
               onClick={onNavigate}
+              ref={linkIndex === 0 ? firstLinkRef : undefined}
               to={link.href}
             >
               {link.icon}
