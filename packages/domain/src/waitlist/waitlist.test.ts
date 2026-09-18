@@ -34,42 +34,12 @@ describe("Waitlist availability", () => {
     [11, "closed"],
   ] as const)("maps a reduced count of %i to %s", (count, expected) => {
     // arrange
-    const waitlist = Waitlist.configure({
-      cap: 10,
-      offer: activeOffer,
-    });
+    const waitlist = Waitlist.configure({ offer: activeOffer });
 
     // act
     const availability = waitlist.availability(count);
 
     // assert
     expect(availability).toBe(expected);
-  });
-});
-
-describe("Waitlist.decideReducedPricingRegistration", () => {
-  it.each([
-    [
-      { alreadyRegistered: true, cap: 10, reducedPricingCount: 10 },
-      "already_registered",
-    ],
-    [
-      { alreadyRegistered: false, cap: 10, reducedPricingCount: 10 },
-      "capacity_reached",
-    ],
-    [{ alreadyRegistered: false, cap: 10, reducedPricingCount: 9 }, "register"],
-    [
-      { alreadyRegistered: false, cap: 0, reducedPricingCount: 0 },
-      "capacity_reached",
-    ],
-  ] as const)("decides %o as %s", (input, expected) => {
-    // arrange
-    const decisionInput = input;
-
-    // act
-    const decision = Waitlist.decideReducedPricingRegistration(decisionInput);
-
-    // assert
-    expect(decision).toBe(expected);
   });
 });

@@ -45,7 +45,6 @@ export function composeWaitlistFeature(
   handles: WaitlistFeatureHandles,
 ): WaitlistFeature {
   const waitlist = Waitlist.configure({
-    cap: handles.waitlist.WAITLIST_CAP,
     offer: {
       plan: handles.waitlist.WAITLIST_ACTIVE_OFFER_PLAN,
       campaignSlug: handles.waitlist.WAITLIST_ACTIVE_CAMPAIGN_SLUG,

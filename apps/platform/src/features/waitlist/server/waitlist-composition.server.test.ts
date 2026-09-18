@@ -17,7 +17,6 @@ function createWaitlistConfig(): WaitlistConfig {
   return {
     WAITLIST_ACTIVE_CAMPAIGN_SLUG: "all-bundles-launch-1",
     WAITLIST_ACTIVE_OFFER_PLAN: "all-bundles",
-    WAITLIST_CAP: 10,
   };
 }
 

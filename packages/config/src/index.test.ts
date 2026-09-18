@@ -35,15 +35,6 @@ describe("@eli-coach-platform/config runtime environment", () => {
     overrides: Parameters<typeof loadRuntimeEnvironment>[0] = {},
   ) => loadRuntimeEnvironment(buildEnvironment(overrides));
 
-  it("defaults the waitlist cap to the prototype seed value", () => {
-    // arrange
-    // act
-    const environment = loadTestRuntimeEnvironment();
-
-    // assert
-    expect(environment.WAITLIST_CAP).toBe(10);
-  });
-
   it("defaults the active waitlist offer to all coaching bundles", () => {
     // arrange
     // act
@@ -323,14 +314,6 @@ describe("@eli-coach-platform/config runtime environment", () => {
     expect(environment.PRODUCT_EMAIL_REPLY_TO).toBe("support@test.evoa.fit");
     expect(environment.TURNSTILE_SITE_KEY).toBe("real-site-key");
     expect(environment.TURNSTILE_SECRET_KEY).toBe("real-secret");
-  });
-
-  it("loads an explicit positive waitlist cap", () => {
-    const environment = loadTestRuntimeEnvironment({
-      WAITLIST_CAP: "50",
-    });
-
-    expect(environment.WAITLIST_CAP).toBe(50);
   });
 });
 

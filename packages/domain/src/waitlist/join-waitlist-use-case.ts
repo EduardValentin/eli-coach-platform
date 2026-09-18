@@ -34,7 +34,6 @@ export class JoinWaitlistUseCase {
 
     const reducedPricingSignup =
       await this.options.waitlistEntries.registerReducedPricingSignup({
-        cap: this.options.waitlist.cap,
         consentVersions: this.options.consentVersions,
         normalizedEmail,
         offer: this.options.waitlist.offer,

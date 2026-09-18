@@ -4,6 +4,7 @@ export {
   type JoinWaitlistResult,
 } from "./join-waitlist-use-case";
 export {
+  WAITLIST_REDUCED_PRICING_CAP,
   Waitlist,
   type WaitlistConsentVersions,
   type WaitlistOffer,
