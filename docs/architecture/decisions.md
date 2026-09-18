@@ -2,7 +2,7 @@
 
 Header: date 2026-09-18, commit 8ac6a613 (PR #229 head, squash-merged to main as 7d92dc22; base 79fa1e95), scope 46 changed implementation files in C1, C6, C7, C8 and C14 plus direct neighbors, mode partial change review (run 8 baseline e8690f45).
 
-Change review: date 2026-09-18, commit f0eb1bf4, baseline 7d92dc22, scope the persisted waitlist-mode change (`79fa1e95..f0eb1bf4`, merged with main in the main merge): the changed units and their direct graph neighborhood in apps/platform, packages/{config,content,db,domain,infrastructure,ui}, tests, migrations and package deployment; partial scope. It adds the waitlist-mode rows dated 2026-09-18 below and changes no earlier row except C8's accepted cost.
+Change review: date 2026-09-18, commit c2277ebb, baseline 7d92dc22, scope the persisted waitlist-mode change (`79fa1e95..f0eb1bf4`, merged with main in `242a0976`): the changed units and their direct graph neighborhood in apps/platform, packages/{config,content,db,domain,infrastructure,ui}, tests, migrations and package deployment; partial scope. It adds the waitlist-mode rows dated 2026-09-18 below and changes no earlier row except C8's accepted cost.
 
 ## Deferred decisions
 

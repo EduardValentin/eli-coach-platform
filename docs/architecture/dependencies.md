@@ -2,11 +2,11 @@
 
 Header: date 2026-09-18, commit 8ac6a613 (PR #229 head, squash-merged to main as 7d92dc22; base 79fa1e95), scope 46 changed implementation files in C1, C6, C7, C8 and C14 plus direct neighbors, mode partial change review (run 8 baseline e8690f45).
 
-Change review: date 2026-09-18, commit f0eb1bf4, baseline 7d92dc22, scope the persisted waitlist-mode change (`79fa1e95..f0eb1bf4`, merged with main in the main merge): the changed units and their direct graph neighborhood in apps/platform, packages/{config,content,db,domain,infrastructure,ui}, tests, migrations and package deployment; partial scope. Rows it changed or added carry the commit that changed them.
+Change review: date 2026-09-18, commit c2277ebb, baseline 7d92dc22, scope the persisted waitlist-mode change (`79fa1e95..f0eb1bf4`, merged with main in `242a0976`): the changed units and their direct graph neighborhood in apps/platform, packages/{config,content,db,domain,infrastructure,ui}, tests, migrations and package deployment; partial scope. Rows it changed or added carry the commit that changed them.
 
 ## Component graph
 
-Generated from a cold cruise of the import graph at `8ac6a613` (287 in-scope production modules, 782 dependencies, 0 violations, 0 circular). The persisted waitlist-mode change leaves the graph at f0eb1bf4 with the same 287 production modules, 785 dependencies, 0 violations and 0 circular; the rows it changed name it, and the package packlists, Docker assertions and handle visibility changes add no module edge. Count = distinct importing modules. Component IDs refer to `components.md`.
+Generated from a cold cruise of the import graph at `8ac6a613` (287 in-scope production modules, 782 dependencies, 0 violations, 0 circular). The persisted waitlist-mode change leaves the graph at `c2277ebb` with the same 287 production modules, 785 dependencies, 0 violations and 0 circular; the rows it changed name it, and the package packlists, Docker assertions and handle visibility changes add no module edge. Count = distinct importing modules. Component IDs refer to `components.md`.
 
 | From | To | Modules | Notes |
 |---|---|---|---|
@@ -93,9 +93,9 @@ Every row is a named rule in `tools/dependency-cruiser.config.cjs` that fails `p
 | the route registry | anything under `server/` but `server/api/routes.ts` | F78 | `root-registry-to-server` |
 | anything but root.tsx and the registry | `routes.ts`, `root.tsx`, `root.server.ts`, `root-error-page.tsx` | F78 | `root-registry` |
 | a feature's ui/**, including any `.server.ts` beside a page | its data/, api/ or email/, or its server/ outside guards/ | R6 | `browser-half`. It absorbed `browser-half-loaders` at `2173cbfb`: that rule's `from` was the narrower `features/*/ui/**.server.ts` over the identical `to`, and no such file exists any more now that a registered page carries its own loader |
-| a registered route module or its .server half | data/, email/, a controller, the db package, `config/runtime`, infrastructure server internals or `server/` outside guards/ | route thinness | `route-thinness` (carries `dependencyTypesNot: ["type-only"]` on every one of the rule's `to.path` entries, so a route may also name `packages/db` or a `*-controller.server.ts` type, not only a config or bot-detection type — no route exploits this at f0eb1bf4) |
+| a registered route module or its .server half | data/, email/, a controller, the db package, `config/runtime`, infrastructure server internals or `server/` outside guards/ | route thinness | `route-thinness` (carries `dependencyTypesNot: ["type-only"]` on every one of the rule's `to.path` entries, so a route may also name `packages/db` or a `*-controller.server.ts` type, not only a config or bot-detection type — no route exploits this at c2277ebb) |
 | a registered route module, and the surface shell's `layout.server.ts` | a domain subpath, including `import type` | route thinness | `route-thinness-domain` (no type-only carve-out). Feature page loaders moved into their page modules at `2173cbfb`, so the `.server` half the rule still matches is the public-site shell loader |
-| a domain entity folder | another folder's internals | R3 (policy) | `domain-slices`, which matches `packages/domain/src/<folder>/` against any sibling path but the sibling's `index.ts`; all eight cross-folder edges at f0eb1bf4 enter the sibling entry |
+| a domain entity folder | another folder's internals | R3 (policy) | `domain-slices`, which matches `packages/domain/src/<folder>/` against any sibling path but the sibling's `index.ts`; all eight cross-folder edges at c2277ebb enter the sibling entry |
 | packages/domain | any vendor, framework, database or workspace package | domain purity | `domain-no-externals` (still carries `dependencyTypesNot: ["local", "type-only"]`, so the rule alone admits a type-only external; the gate that actually stops `import type { Readable } from "node:stream"` inside the domain is the package's closed type scope) **and** dependency-absence (`package.json` declares no dependencies) **and** `"types": []` in the package tsconfig, which keeps `@types/node`'s ambient globals (`NodeJS.*`, `Buffer`) out of scope — a fixture proves the rule fires |
 | infrastructure subpath A | infrastructure subpath B | F77 | `infrastructure-subpaths` |
 | a non-`.server` infrastructure module | a `*.server` module | browser-bundle safety | `infrastructure-browser-entries` |
@@ -1032,4 +1032,4 @@ No edge leaves a `packages/domain` unit for a detail or an external: C1's fan-ou
 | E1040 | apps/platform/src/features/waitlist/server/waitlist-composition.server.ts | packages/domain/src/feature-flag/index.ts | import | yes | yes | inward | added (f5d1889c) |
 | E1041 | apps/platform/src/server/container.server.ts | packages/domain/src/feature-flag/index.ts | import | yes | yes | inward | added (f5d1889c) |
 | E1042 | apps/platform/src/server/container.server.ts | packages/infrastructure/src/feature-flags/index.server.ts | import | yes | yes | inward | added (f5d1889c) |
-| E1043 | packages/domain/src/waitlist/get-waitlist-use-case.ts | packages/domain/src/waitlist/waitlist-incidents.ts | import | no | no | lateral | added (the main merge) |
+| E1043 | packages/domain/src/waitlist/get-waitlist-use-case.ts | packages/domain/src/waitlist/waitlist-incidents.ts | import | no | no | lateral | added (242a0976) |
