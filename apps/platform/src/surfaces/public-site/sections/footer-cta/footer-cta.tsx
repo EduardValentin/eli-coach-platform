@@ -24,7 +24,7 @@ type PublicFooterCtaProps = {
 const FOOTER_CTA_SHEET_OFFSET_PX = 140;
 const FOOTER_CTA_INITIAL_SCALE = 0.97;
 const footerCtaLinkClassName =
-  "inline-flex min-h-[var(--size-control-md)] min-w-0 items-center justify-center rounded-public-footer-cta-control border px-8 text-center text-body-base font-medium transition-[background-color,border-color,color,box-shadow] duration-150 ease-out focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary";
+  "inline-flex min-h-[var(--size-control-md)] min-w-0 items-center justify-center rounded-xl border px-8 text-center text-body-base font-medium transition-[background-color,border-color,color,box-shadow] duration-150 ease-out focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary";
 
 export function PublicFooterCta(props: PublicFooterCtaProps) {
   return (

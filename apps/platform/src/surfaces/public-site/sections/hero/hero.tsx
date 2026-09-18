@@ -245,7 +245,7 @@ export function PublicHero(props: PublicHeroProps) {
               })}
             >
               <Link
-                className="group inline-flex h-12 items-center justify-center rounded-public-footer-cta-control bg-brand-primary px-8 text-sm font-semibold text-text-inverted uppercase tracking-widest shadow-md transition-all hover:bg-waitlist-button-hover hover:shadow-lg active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+                className="group inline-flex h-12 items-center justify-center rounded-xl bg-brand-primary px-8 text-sm font-semibold text-text-inverted uppercase tracking-widest shadow-md transition-all hover:bg-waitlist-button-hover hover:shadow-lg active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
                 to={BOOK_PATH}
               >
                 See if we’re a fit

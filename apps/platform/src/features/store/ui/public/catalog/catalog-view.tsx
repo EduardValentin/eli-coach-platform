@@ -240,7 +240,7 @@ function CatalogProductCard({ product }: { product: StoreProduct }) {
               : `Get ${product.title} for free`
           }
           className={cn(
-            "flex min-h-14 w-full items-center justify-center gap-2 rounded-control border-2 px-4 py-3.5 font-medium transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary",
+            "flex min-h-14 w-full items-center justify-center gap-2 rounded-xl border-2 px-4 py-3.5 font-medium transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary",
             {
               "border-brand-secondary bg-brand-secondary text-brand-secondary-foreground":
                 isInCart,

@@ -105,7 +105,7 @@ function AssessmentCallCta() {
         goals and lay out a roadmap for your success.
       </p>
       <Link
-        className="ui-public-assessment-button inline-flex items-center justify-center gap-2 bg-brand-primary px-8 py-4 text-base font-medium leading-6 text-text-inverted shadow-md transition-colors hover:bg-brand-primary-hover"
+        className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-primary px-8 py-4 text-base font-medium leading-6 text-text-inverted shadow-md transition-colors hover:bg-brand-primary-hover"
         to={BOOK_PATH}
       >
         Book Assessment Call

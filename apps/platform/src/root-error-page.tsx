@@ -32,7 +32,7 @@ export function RootErrorPage(props: RootErrorPageProps) {
         {description}
       </p>
       <Link
-        className="mt-8 inline-flex min-h-11 items-center gap-2 rounded-pill bg-surface-inverted px-7 py-4 font-medium text-text-inverted transition-colors hover:bg-brand-primary"
+        className="mt-8 inline-flex min-h-11 items-center gap-2 rounded-xl bg-surface-inverted px-7 py-4 font-medium text-text-inverted transition-colors hover:bg-brand-primary"
         to="/"
       >
         Back to home
