@@ -1,273 +1,414 @@
-import { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { Calendar as CalendarIcon, Clock, Video, ChevronLeft, CircleCheck, User, Mail, ArrowRight } from 'lucide-react';
-import { format, addDays } from 'date-fns';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
+import { Clock, Video } from 'lucide-react';
 
-import { DateTimePicker } from '../components/DateTimePicker';
+import { Navbar } from '../components/Navbar';
+import { LegalFooter } from '../components/legal/LegalNav';
+import { AssessmentSlotPicker } from '../components/AssessmentSlotPicker';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
-import { useCheckins } from '../context/CheckinContext';
-import { toISODate } from '../utils/dateFormatters';
+import { useAppState } from '../context/AppContext';
+import { useAssessmentCalls } from '../context/AssessmentCallContext';
+import {
+  ASSESSMENT_CALL_DURATION_MINUTES,
+  AssessmentCallError,
+  BOOKING_HORIZON_DAYS,
+  bookAssessmentCall,
+  listOpenSlots,
+  type PrototypeBooking,
+} from '../services/assessmentCallService';
+import { formatCallMoment } from '../utils/dateFormatters';
+import { NotFound } from './NotFound';
 
-type Step = 'date-time' | 'details' | 'success';
+type Step = 'slot' | 'details' | 'success';
 
-const ASSESSMENT_TIME_SLOTS = [
-  '9:00 AM', '9:30 AM', '10:00 AM', '11:00 AM',
-  '1:00 PM', '2:30 PM', '3:00 PM', '4:00 PM', '4:30 PM'
-];
+type FieldErrors = {
+  fullName?: string;
+  email?: string;
+  notes?: string;
+};
+
+const SUPPORT_EMAIL = 'contact@evoa.fit';
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MAX_NOTES_LENGTH = 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+const NAME_ERROR = 'Enter your full name, between 2 and 120 characters.';
+const EMAIL_ERROR = 'Enter a valid email address.';
+const NOTES_ERROR = `Keep your note under ${MAX_NOTES_LENGTH} characters.`;
+
+function validate(fullName: string, email: string, notes: string): FieldErrors {
+  const errors: FieldErrors = {};
+  const trimmedName = fullName.trim();
+
+  if (trimmedName.length < 2 || trimmedName.length > 120) {
+    errors.fullName = NAME_ERROR;
+  }
+  if (!EMAIL_PATTERN.test(email.trim())) {
+    errors.email = EMAIL_ERROR;
+  }
+  if (notes.length > MAX_NOTES_LENGTH) {
+    errors.notes = NOTES_ERROR;
+  }
+
+  return errors;
+}
 
 export function Book() {
-  const [step, setStep] = useState<Step>('date-time');
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-  const [selectedTime, setSelectedTime] = useState<string | null>(null);
-  const { getBookedSlots } = useCheckins();
+  const { appState } = useAppState();
+  const { bookedStarts, addBooking } = useAssessmentCalls();
 
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    notes: ''
-  });
-
+  const [step, setStep] = useState<Step>('slot');
+  const [slots, setSlots] = useState<Date[]>([]);
+  const [retryToken, setRetryToken] = useState(0);
+  const [selectedSlot, setSelectedSlot] = useState<Date | null>(null);
+  const [slotTakenNotice, setSlotTakenNotice] = useState<string | null>(null);
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [notes, setNotes] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [submitError, setSubmitError] = useState<AssessmentCallError | null>(
+    null,
+  );
+  const [existingBooking, setExistingBooking] =
+    useState<PrototypeBooking | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [booking, setBooking] = useState<PrototypeBooking | null>(null);
 
-  const today = new Date();
-  const maxDate = addDays(today, 30);
+  const visitorTimeZone = useMemo(
+    () => Intl.DateTimeFormat().resolvedOptions().timeZone,
+    [],
+  );
+  const slotsUnavailable = appState.bookingSlotsUnavailable;
 
-  const bookedSlots = useMemo(
-    () => selectedDate ? getBookedSlots(toISODate(selectedDate)) : [],
-    [selectedDate, getBookedSlots]
+  useEffect(() => {
+    if (slotsUnavailable) {
+      setSlots([]);
+      return;
+    }
+
+    let cancelled = false;
+    listOpenSlots({ now: new Date(), bookedStarts }).then((open) => {
+      if (!cancelled) setSlots(open);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [slotsUnavailable, bookedStarts, retryToken]);
+
+  const horizonEnd = useMemo(
+    () => new Date(Date.now() + BOOKING_HORIZON_DAYS * DAY_MS),
+    [retryToken],
   );
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
+  if (appState.isWaitlistMode) return <NotFound />;
 
-    setTimeout(() => {
-      setIsSubmitting(false);
+  const chooseSlot = (slot: Date) => {
+    setSelectedSlot(slot);
+    setSlotTakenNotice(null);
+  };
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!selectedSlot) return;
+
+    const errors = validate(fullName, email, notes);
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) return;
+
+    setIsSubmitting(true);
+    setSubmitError(null);
+    setExistingBooking(null);
+
+    try {
+      const confirmed = await bookAssessmentCall({
+        startsAt: selectedSlot,
+        fullName,
+        email,
+        notes,
+        visitorTimeZone,
+        outcome: appState.bookingOutcome,
+      });
+      addBooking(confirmed);
+      setBooking(confirmed);
       setStep('success');
-    }, 1200);
+    } catch (error) {
+      if (!(error instanceof AssessmentCallError)) throw error;
+
+      if (error.code === 'SLOT_UNAVAILABLE') {
+        setSelectedSlot(null);
+        setSlotTakenNotice(error.message);
+        setRetryToken((token) => token + 1);
+        setStep('slot');
+        return;
+      }
+
+      setSubmitError(error);
+      setExistingBooking(error.existingBooking ?? null);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-surface-page flex items-center justify-center py-12 px-4 sm:px-6 relative overflow-hidden">
-      {/* Background abstract elements */}
-      <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] rounded-full bg-brand/5 blur-[100px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] left-[-5%] w-[500px] h-[500px] rounded-full bg-brand-secondary/5 blur-[100px] pointer-events-none" />
+    <>
+      <main className="w-full min-h-screen bg-surface-page pb-24">
+        <Navbar theme="dark" />
 
-      <div className="max-w-5xl w-full bg-white rounded-3xl shadow-[0_8px_40px_rgba(0,0,0,0.04)] border border-neutral-100 flex flex-col md:flex-row overflow-hidden relative z-10 min-h-[650px]">
-
-        {/* LEFT PANEL - INFO */}
-        <div className="w-full md:w-[35%] bg-neutral-50/50 p-8 md:p-10 border-b md:border-b-0 md:border-r border-neutral-100 flex flex-col">
-          <Link to="/" className="text-text-primary font-serif font-bold tracking-wide text-xl mb-12 hover:text-brand transition-colors inline-block w-fit">
-            Evoa
-          </Link>
-
-          <img
-            src="https://images.unsplash.com/photo-1757347398206-7425300ef990?crop=entropy&cs=tinysrgb&fit=facearea&facepad=2&w=150&h=150&q=80"
-            alt="Eli"
-            className="w-16 h-16 rounded-full object-cover mb-6 shadow-sm border border-neutral-200"
-          />
-
-          <h2 className="text-sm font-semibold text-text-secondary uppercase tracking-widest mb-2">Free Assessment Call</h2>
-          <h1 className="text-3xl font-serif text-text-primary mb-6 font-medium">Start Your Plan</h1>
-
-          <div className="space-y-4 text-text-secondary mb-8 font-medium">
-            <div className="flex items-center gap-3 text-[15px]">
-              <Clock className="w-5 h-5 text-text-secondary" />
-              <span>30 min session</span>
-            </div>
-            <div className="flex items-center gap-3 text-[15px]">
-              <Video className="w-5 h-5 text-text-secondary" />
-              <span>Google Meet (Video)</span>
-            </div>
+        <div className="max-w-7xl mx-auto px-6 pt-32">
+          <div className="max-w-3xl">
+            <p className="text-label font-semibold uppercase tracking-section-eyebrow text-brand mb-3">
+              Free assessment call
+            </p>
+            <h1 className="font-serif text-4xl md:text-5xl text-foreground mb-6 tracking-tight">
+              Start Your Plan
+            </h1>
+            <p className="text-lg text-copy-muted mb-8">
+              We&apos;ll talk through your goals, your training so far and
+              anything getting in the way, and I&apos;ll show you how my
+              coaching works so you can decide if it fits.
+            </p>
+            <ul className="flex flex-wrap gap-x-8 gap-y-3 text-copy-muted mb-12">
+              <li className="flex items-center gap-3">
+                <Clock size={18} aria-hidden="true" />
+                {ASSESSMENT_CALL_DURATION_MINUTES} min call
+              </li>
+              <li className="flex items-center gap-3">
+                <Video size={18} aria-hidden="true" />
+                Video call
+              </li>
+            </ul>
           </div>
 
-          <p className="text-[15px] leading-relaxed text-text-secondary font-medium">
-            In this session, we'll discuss your goals, current routine, past fitness experience, and any challenges you are facing. I will also walk you through how my coaching works so we can see if it's the right fit for you.
-          </p>
+          {step === 'slot' && (
+            <section className="bg-card border border-stroke-faint rounded-2xl shadow-sm p-6 md:p-10">
+              <h2 className="font-serif text-2xl text-foreground mb-6">
+                Pick a date and time
+              </h2>
 
-          {selectedDate && selectedTime && step === 'details' && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mt-8 p-4 bg-white rounded-2xl border border-neutral-100 shadow-sm"
-            >
-              <div className="flex items-start gap-3">
-                <CalendarIcon className="w-5 h-5 text-brand mt-0.5" />
-                <div>
-                  <p className="font-semibold text-text-primary">{format(selectedDate, 'EEEE, MMMM d, yyyy')}</p>
-                  <p className="text-brand font-medium">{selectedTime}</p>
+              {slotTakenNotice && (
+                <p
+                  role="alert"
+                  className="mb-6 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive"
+                >
+                  {slotTakenNotice}
+                </p>
+              )}
+
+              {slotsUnavailable ? (
+                <div className="flex flex-col items-start gap-4">
+                  <p className="text-copy-muted">
+                    We couldn&apos;t load the open times just now.
+                  </p>
+                  <Button
+                    type="button"
+                    onClick={() => setRetryToken((token) => token + 1)}
+                    className="h-12 px-8 bg-brand hover:bg-brand-hover text-brand-foreground rounded-xl font-semibold"
+                  >
+                    Try again
+                  </Button>
                 </div>
+              ) : (
+                <>
+                  <AssessmentSlotPicker
+                    slots={slots}
+                    timeZone={visitorTimeZone}
+                    selectedSlot={selectedSlot}
+                    onSelectSlot={chooseSlot}
+                    horizonEnd={horizonEnd}
+                  />
+
+                  <Button
+                    type="button"
+                    onClick={() => setStep('details')}
+                    disabled={!selectedSlot}
+                    className="w-full md:w-auto h-12 px-8 mt-10 bg-brand hover:bg-brand-hover text-brand-foreground rounded-xl text-base font-semibold disabled:bg-muted disabled:text-copy-muted"
+                  >
+                    {selectedSlot
+                      ? 'Continue to your details'
+                      : 'Select a date and time'}
+                  </Button>
+                </>
+              )}
+            </section>
+          )}
+
+          {step === 'details' && selectedSlot && (
+            <section className="bg-card border border-stroke-faint rounded-2xl shadow-sm p-6 md:p-10 max-w-2xl">
+              <h2 className="font-serif text-2xl text-foreground mb-2">
+                Your details
+              </h2>
+              <p className="text-copy-muted mb-8">
+                Your call: {formatCallMoment(selectedSlot, visitorTimeZone)}
+              </p>
+
+              {submitError && (
+                <div
+                  role="alert"
+                  className="mb-8 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive"
+                >
+                  <p>{submitError.message}</p>
+                  {existingBooking && (
+                    <p className="mt-2">
+                      It is on{' '}
+                      {formatCallMoment(
+                        existingBooking.startsAt,
+                        visitorTimeZone,
+                      )}
+                      .{' '}
+                      <Link
+                        to={existingBooking.joinPath}
+                        className="font-semibold underline underline-offset-2"
+                      >
+                        Join your call
+                      </Link>
+                    </p>
+                  )}
+                  {submitError.code === 'SERVER_ERROR' && (
+                    <p className="mt-2">
+                      If it keeps failing, email{' '}
+                      <a
+                        href={`mailto:${SUPPORT_EMAIL}`}
+                        className="font-semibold underline underline-offset-2"
+                      >
+                        {SUPPORT_EMAIL}
+                      </a>
+                      .
+                    </p>
+                  )}
+                </div>
+              )}
+
+              <form noValidate onSubmit={handleSubmit} className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="booking-full-name">Full name</Label>
+                  <Input
+                    id="booking-full-name"
+                    className="h-12"
+                    value={fullName}
+                    onChange={(event) => setFullName(event.target.value)}
+                    aria-invalid={Boolean(fieldErrors.fullName) || undefined}
+                    aria-describedby={
+                      fieldErrors.fullName
+                        ? 'booking-full-name-error'
+                        : undefined
+                    }
+                  />
+                  {fieldErrors.fullName && (
+                    <p
+                      id="booking-full-name-error"
+                      className="text-sm text-destructive"
+                    >
+                      {fieldErrors.fullName}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="booking-email">Email address</Label>
+                  <Input
+                    id="booking-email"
+                    type="email"
+                    className="h-12"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    aria-invalid={Boolean(fieldErrors.email) || undefined}
+                    aria-describedby={
+                      fieldErrors.email ? 'booking-email-error' : undefined
+                    }
+                  />
+                  {fieldErrors.email && (
+                    <p
+                      id="booking-email-error"
+                      className="text-sm text-destructive"
+                    >
+                      {fieldErrors.email}
+                    </p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="booking-notes">
+                    Anything to share beforehand? (Optional)
+                  </Label>
+                  <Textarea
+                    id="booking-notes"
+                    className="h-28 resize-none"
+                    value={notes}
+                    onChange={(event) => setNotes(event.target.value)}
+                    aria-invalid={Boolean(fieldErrors.notes) || undefined}
+                    aria-describedby={
+                      fieldErrors.notes ? 'booking-notes-error' : undefined
+                    }
+                  />
+                  {fieldErrors.notes && (
+                    <p
+                      id="booking-notes-error"
+                      className="text-sm text-destructive"
+                    >
+                      {fieldErrors.notes}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex flex-wrap items-center gap-4 pt-2">
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    aria-busy={isSubmitting || undefined}
+                    className="h-12 px-8 bg-brand hover:bg-brand-hover text-brand-foreground rounded-xl text-base font-semibold disabled:opacity-70"
+                  >
+                    Book my call
+                  </Button>
+                  <button
+                    type="button"
+                    onClick={() => setStep('slot')}
+                    className="text-sm font-semibold text-brand hover:underline"
+                  >
+                    Back to the times
+                  </button>
+                </div>
+              </form>
+            </section>
+          )}
+
+          {step === 'success' && booking && (
+            <section className="bg-card border border-stroke-faint rounded-2xl shadow-sm p-6 md:p-10 max-w-2xl">
+              <h2 className="font-serif text-2xl text-foreground mb-4">
+                Your call is booked
+              </h2>
+              <p className="text-copy-muted mb-2">
+                {formatCallMoment(booking.startsAt, visitorTimeZone)}
+              </p>
+              <p className="text-copy-muted mb-2">
+                The call runs {ASSESSMENT_CALL_DURATION_MINUTES} minutes.
+              </p>
+              <p className="text-copy-muted mb-8">
+                A confirmation is on its way to {booking.visitorEmail}.
+              </p>
+
+              <div className="flex flex-wrap items-center gap-4">
+                <Link
+                  to={booking.joinPath}
+                  className="inline-flex items-center justify-center h-12 px-8 bg-brand hover:bg-brand-hover text-brand-foreground rounded-xl font-semibold transition-colors"
+                >
+                  Join the call
+                </Link>
+                <Link
+                  to="/"
+                  className="text-sm font-semibold text-brand hover:underline"
+                >
+                  Return to Home
+                </Link>
               </div>
-            </motion.div>
+            </section>
           )}
         </div>
-
-        {/* RIGHT PANEL - INTERACTION */}
-        <div className="w-full md:w-[65%] p-6 md:p-10 relative bg-white">
-          <AnimatePresence mode="wait">
-
-            {/* STEP 1: DATE AND TIME */}
-            {step === 'date-time' && (
-              <motion.div
-                key="step-date"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="h-full flex flex-col"
-              >
-                <h3 className="text-xl font-semibold mb-6 text-text-primary">Select a Date & Time</h3>
-
-                <DateTimePicker
-                  selectedDate={selectedDate}
-                  onDateChange={(date) => { setSelectedDate(date); setSelectedTime(null); }}
-                  selectedTime={selectedTime}
-                  onTimeChange={setSelectedTime}
-                  bookedSlots={bookedSlots}
-                  disableWeekends
-                  maxDate={maxDate}
-                  timeSlots={ASSESSMENT_TIME_SLOTS}
-                />
-
-                <Button
-                  type="button"
-                  onClick={() => setStep('details')}
-                  disabled={!selectedDate || !selectedTime}
-                  className="w-full h-12 mt-6 bg-brand hover:bg-brand-hover text-white rounded-xl text-base font-semibold transition-colors disabled:bg-neutral-100 disabled:text-text-secondary"
-                >
-                  {selectedTime ? 'Continue to your details' : 'Select a date and time'}
-                </Button>
-              </motion.div>
-            )}
-
-            {/* STEP 2: DETAILS */}
-            {step === 'details' && (
-              <motion.div
-                key="step-details"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="h-full flex flex-col max-w-md mx-auto"
-              >
-                <button
-                  onClick={() => setStep('date-time')}
-                  className="w-10 h-10 rounded-full bg-neutral-50 hover:bg-neutral-100 flex items-center justify-center text-text-secondary transition-colors mb-6 -ml-2"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-
-                <h3 className="text-2xl font-semibold mb-2 text-text-primary">Almost there</h3>
-                <p className="text-text-secondary mb-8 font-medium">Please provide your details to secure your slot.</p>
-
-                <form onSubmit={handleSubmit} className="space-y-5 flex-1">
-                  <div className="space-y-2">
-                    <Label htmlFor="name" className="text-neutral-700 font-medium">Full Name</Label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" />
-                      <Input
-                        id="name"
-                        required
-                        placeholder="Jane Doe"
-                        className="pl-9 h-12 bg-neutral-50/50 border-neutral-200 focus:ring-brand"
-                        value={formData.name}
-                        onChange={(e) => setFormData(p => ({ ...p, name: e.target.value }))}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="text-neutral-700 font-medium">Email Address</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" />
-                      <Input
-                        id="email"
-                        type="email"
-                        required
-                        placeholder="jane@example.com"
-                        className="pl-9 h-12 bg-neutral-50/50 border-neutral-200 focus:ring-brand"
-                        value={formData.email}
-                        onChange={(e) => setFormData(p => ({ ...p, email: e.target.value }))}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="notes" className="text-neutral-700 font-medium">Anything to share beforehand? (Optional)</Label>
-                    <Textarea
-                      id="notes"
-                      placeholder="e.g. recovering from a knee injury"
-                      className="resize-none h-24 bg-neutral-50/50 border-neutral-200 focus:ring-brand"
-                      value={formData.notes}
-                      onChange={(e) => setFormData(p => ({ ...p, notes: e.target.value }))}
-                    />
-                  </div>
-
-                  <div className="pt-4">
-                    <Button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="w-full h-12 bg-brand hover:bg-brand-hover text-white rounded-xl text-base font-semibold transition-colors disabled:opacity-70"
-                    >
-                      {isSubmitting ? (
-                        <motion.div
-                          animate={{ rotate: 360 }}
-                          transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-                          className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
-                        />
-                      ) : (
-                        'Schedule Assessment'
-                      )}
-                    </Button>
-                  </div>
-                </form>
-              </motion.div>
-            )}
-
-            {/* STEP 3: SUCCESS */}
-            {step === 'success' && (
-              <motion.div
-                key="step-success"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="h-full flex flex-col items-center justify-center text-center py-12"
-              >
-                <div className="w-20 h-20 bg-brand/10 rounded-full flex items-center justify-center mb-6">
-                  <CircleCheck className="w-10 h-10 text-brand" />
-                </div>
-
-                <h3 className="text-3xl font-serif font-medium text-text-primary mb-4">You're booked!</h3>
-                <p className="text-text-secondary text-lg max-w-md mx-auto mb-8 font-medium leading-relaxed">
-                  A calendar invitation with your Google Meet link has been sent to <strong className="text-neutral-900">{formData.email}</strong>.
-                </p>
-
-                <div className="bg-neutral-50 border border-neutral-100 rounded-2xl p-6 w-full max-w-sm mb-10 text-left">
-                  <p className="text-sm text-text-secondary font-medium mb-1">When</p>
-                  <p className="font-semibold text-text-primary mb-4">
-                    {selectedDate && format(selectedDate, 'EEEE, MMMM d, yyyy')} <br/>
-                    {selectedTime}
-                  </p>
-
-                  <p className="text-sm text-text-secondary font-medium mb-1">Where</p>
-                  <p className="font-semibold text-text-primary flex items-center gap-2">
-                    <Video className="w-4 h-4 text-brand" />
-                    Google Meet
-                  </p>
-                </div>
-
-                <Link to="/">
-                  <Button variant="outline" className="h-12 px-8 rounded-xl font-semibold border-neutral-200 hover:bg-neutral-50 text-neutral-700">
-                    Return to Home
-                  </Button>
-                </Link>
-              </motion.div>
-            )}
-
-          </AnimatePresence>
-        </div>
-      </div>
-    </div>
+      </main>
+      <LegalFooter />
+    </>
   );
 }

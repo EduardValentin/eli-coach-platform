@@ -30,3 +30,44 @@ export function to24h(label: string): string {
   if (period === 'AM' && h === 12) h = 0;
   return `${h.toString().padStart(2, '0')}:00`;
 }
+
+export function describeTimeZone(timeZone: string, reference: Date): string {
+  const offset = new Intl.DateTimeFormat('en-GB', {
+    timeZone,
+    timeZoneName: 'shortOffset',
+  })
+    .formatToParts(reference)
+    .find((part) => part.type === 'timeZoneName')?.value;
+
+  return offset ? `${timeZone} (${offset})` : timeZone;
+}
+
+export function formatSlotTime(instant: Date, timeZone: string): string {
+  return new Intl.DateTimeFormat(undefined, {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+    timeZone,
+  }).format(instant);
+}
+
+export function formatSlotDay(instant: Date, timeZone: string): string {
+  return new Intl.DateTimeFormat('en-GB', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    timeZone,
+  }).format(instant);
+}
+
+export function formatCallMoment(instant: Date, timeZone: string): string {
+  const day = new Intl.DateTimeFormat('en-GB', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone,
+  }).format(instant);
+
+  return `${day} at ${formatSlotTime(instant, timeZone)} — ${describeTimeZone(timeZone, instant)}`;
+}

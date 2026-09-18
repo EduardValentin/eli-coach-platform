@@ -12,11 +12,18 @@ import {
   ClientInvitation,
   type ClientInvitationVariant,
 } from '../../email-templates/ClientInvitation';
+import {
+  AssessmentCallVisitorConfirmation,
+  type AssessmentCallEmailVariant,
+} from '../../email-templates/AssessmentCallVisitorConfirmation';
+import { AssessmentCallCoachNotification } from '../../email-templates/AssessmentCallCoachNotification';
 
 type TemplateKey =
   | 'waitlist-confirmation'
   | 'store-delivery'
-  | 'client-invitation';
+  | 'client-invitation'
+  | 'assessment-call-visitor'
+  | 'assessment-call-coach';
 
 type TemplateOption = {
   key: TemplateKey;
@@ -47,6 +54,22 @@ const TEMPLATES: TemplateOption[] = [
     variants: [
       { value: 'first', label: 'First invitation' },
       { value: 'replaced', label: 'Replaced invitation' },
+    ],
+  },
+  {
+    key: 'assessment-call-visitor',
+    label: 'Assessment call — visitor',
+    variants: [
+      { value: 'with-notes', label: 'With a shared note' },
+      { value: 'without-notes', label: 'Without a shared note' },
+    ],
+  },
+  {
+    key: 'assessment-call-coach',
+    label: 'Assessment call — coach',
+    variants: [
+      { value: 'with-notes', label: 'With a shared note' },
+      { value: 'without-notes', label: 'Without a shared note' },
     ],
   },
 ];
@@ -83,6 +106,22 @@ export function EmailPreview() {
           clientName="Jane"
           coachName="Eli"
           acceptUrl={`${window.location.origin}/portal/onboarding`}
+        />
+      );
+    }
+    if (template === 'assessment-call-visitor') {
+      return (
+        <AssessmentCallVisitorConfirmation
+          variant={variant as AssessmentCallEmailVariant}
+          joinUrl={`${window.location.origin}/book/ac-demo/join`}
+        />
+      );
+    }
+    if (template === 'assessment-call-coach') {
+      return (
+        <AssessmentCallCoachNotification
+          variant={variant as AssessmentCallEmailVariant}
+          joinUrl={`${window.location.origin}/book/ac-demo/join`}
         />
       );
     }

@@ -10,6 +10,7 @@ import {
 import type { PrototypeStoreCheckoutOutcome } from '../services/storeAcquisitionService';
 import type { PrototypeSignInOutcome } from '../services/authService';
 import type { PrototypeClientOnboardingOutcome } from '../services/clientOnboardingService';
+import type { PrototypeBookingOutcome } from '../services/assessmentCallService';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
@@ -71,6 +72,19 @@ function parseClientOnboardingOutcomeControl(
     value === 'replaced-invitation' ||
     value === 'already-client' ||
     value === 'delivery-failure'
+  ) {
+    return value;
+  }
+
+  return 'success';
+}
+
+function parseBookingOutcomeControl(value: string): PrototypeBookingOutcome {
+  if (
+    value === 'slot_unavailable' ||
+    value === 'email_already_booked' ||
+    value === 'invalid_email' ||
+    value === 'server_error'
   ) {
     return value;
   }
@@ -140,6 +154,7 @@ export function DevToggle() {
               <TabsList className="h-auto w-full flex-wrap">
                 <TabsTrigger value="session">Session</TabsTrigger>
                 <TabsTrigger value="store">Store</TabsTrigger>
+                <TabsTrigger value="booking">Booking</TabsTrigger>
                 <TabsTrigger value="waitlist">Waitlist</TabsTrigger>
                 <TabsTrigger value="nutrition">Nutrition</TabsTrigger>
                 <TabsTrigger value="coach">Coach</TabsTrigger>
@@ -270,6 +285,61 @@ export function DevToggle() {
                   className="inline-flex items-center gap-1 text-sm text-brand hover:underline"
                 >
                   Open download page <ArrowRight size={14} aria-hidden="true" />
+                </Link>
+              </TabsContent>
+
+              <TabsContent value="booking" className="space-y-4 pt-3 max-h-[50vh] overflow-y-auto pr-1">
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="dev-booking-outcome"
+                    className="text-xs font-semibold text-copy-muted uppercase tracking-wider"
+                  >
+                    Booking outcome
+                  </Label>
+                  <Select
+                    value={appState.bookingOutcome}
+                    onValueChange={(value) =>
+                      setAppState({
+                        bookingOutcome: parseBookingOutcomeControl(value),
+                      })
+                    }
+                  >
+                    <SelectTrigger id="dev-booking-outcome" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="success">Call booked</SelectItem>
+                      <SelectItem value="slot_unavailable">
+                        Time taken while filling in details
+                      </SelectItem>
+                      <SelectItem value="email_already_booked">
+                        Email already has a call
+                      </SelectItem>
+                      <SelectItem value="invalid_email">
+                        Email rejected by the server
+                      </SelectItem>
+                      <SelectItem value="server_error">Server failure</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-copy-muted">
+                    Bot verification runs on the real server, so the prototype
+                    never rejects a booking as a bot.
+                  </p>
+                </div>
+                <DevCheckboxRow
+                  id="dev-booking-slots-unavailable"
+                  label="Slots unavailable"
+                  checked={appState.bookingSlotsUnavailable}
+                  onCheckedChange={(checked) =>
+                    setAppState({ bookingSlotsUnavailable: checked })
+                  }
+                />
+                <Link
+                  to="/book"
+                  onClick={() => setIsOpen(false)}
+                  className="inline-flex items-center gap-1 text-sm text-brand hover:underline"
+                >
+                  Open booking page <ArrowRight size={14} aria-hidden="true" />
                 </Link>
               </TabsContent>
 

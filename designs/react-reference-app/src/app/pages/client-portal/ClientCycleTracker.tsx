@@ -261,7 +261,8 @@ export function ClientCycleTracker() {
               period: (date) => periodDates.has(toISO(date)),
             }}
             modifiersClassNames={{
-              period: 'bg-cycle-menstrual/10 text-brand font-semibold hover:bg-cycle-menstrual/20',
+              period:
+                '[&>button]:bg-cycle-menstrual/10 [&>button]:text-brand [&>button]:font-semibold [&>button]:hover:bg-cycle-menstrual/20',
             }}
           />
 

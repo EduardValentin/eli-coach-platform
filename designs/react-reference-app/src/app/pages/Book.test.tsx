@@ -1,65 +1,263 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { UserEvent } from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Book } from './Book';
 import { AppProvider } from '../context/AppContext';
-import { CheckinProvider } from '../context/CheckinContext';
+import { StoreProvider } from '../context/StoreContext';
+import { AssessmentCallProvider } from '../context/AssessmentCallContext';
 
-// The step-1 control is the whole reason this flow can complete: it used to be
-// passed to DateTimePicker, which never declared it, so the props were dropped
-// and the visitor dead-ended after choosing a time.
-function renderBook() {
-  window.history.replaceState({}, '', '/book');
+const TODAY = new Date('2026-03-02T06:00:00.000Z');
+const VISITOR_TIME_ZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
+const BOOKING_WAIT = { timeout: 4000 };
 
-  return render(
-    <MemoryRouter initialEntries={['/book']}>
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(TODAY);
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+});
+
+function renderBook(search = '') {
+  window.history.replaceState({}, '', `/book${search}`);
+  const user = userEvent.setup();
+
+  render(
+    <MemoryRouter initialEntries={[`/book${search}`]}>
       <AppProvider>
-        <CheckinProvider>
-          <Book />
-        </CheckinProvider>
+        <StoreProvider>
+          <AssessmentCallProvider>
+            <Book />
+          </AssessmentCallProvider>
+        </StoreProvider>
       </AppProvider>
     </MemoryRouter>,
   );
+
+  return user;
 }
 
-const stepControl = () =>
-  screen.getByRole('button', { name: /continue to your details|select a date and time/i });
-
-async function chooseFirstAvailableSlot(user: ReturnType<typeof userEvent.setup>) {
-  // react-day-picker renders each day as button[name="day"].
-  const day = document.querySelector<HTMLButtonElement>(
-    'button[name="day"]:not([disabled])',
+function openDayButtons(): HTMLButtonElement[] {
+  return Array.from(
+    document.querySelectorAll<HTMLButtonElement>(
+      'td[data-day] button:not([disabled])',
+    ),
   );
-  await user.click(day!);
-  const slots = await screen.findAllByRole('button', { name: /\d{1,2}:\d{2}\s(AM|PM)/ });
-  await user.click(slots[0]);
+}
+
+async function pickFirstOpenDay(user: UserEvent) {
+  await waitFor(() => expect(openDayButtons().length).toBeGreaterThan(0));
+  await user.click(openDayButtons()[0]);
+}
+
+async function pickFirstOpenSlot(user: UserEvent) {
+  await pickFirstOpenDay(user);
+  const times = await screen.findAllByRole('radio');
+  await user.click(times[0]);
+}
+
+async function reachDetails(user: UserEvent) {
+  await pickFirstOpenSlot(user);
+  await user.click(screen.getByRole('button', { name: 'Continue to your details' }));
+  await screen.findByRole('heading', { level: 2, name: 'Your details' });
+}
+
+async function fillDetails(user: UserEvent) {
+  await user.type(screen.getByLabelText('Full name'), 'Jane Doe');
+  await user.type(screen.getByLabelText('Email address'), 'jane@example.com');
 }
 
 describe('Book', () => {
-  it('keeps the step control disabled until a date and time are chosen', () => {
+  it('sends the visitor to the not-found page while the site is in waitlist mode', async () => {
     // arrange
     // act
-    renderBook();
-
-    // assert
-    expect(stepControl()).toBeDisabled();
-    expect(stepControl()).toHaveAccessibleName(/select a date and time/i);
-  });
-
-  it('advances to the details step once a slot is chosen', async () => {
-    // arrange
-    const user = userEvent.setup();
-    renderBook();
-
-    // act
-    await chooseFirstAvailableSlot(user);
-    await user.click(stepControl());
+    renderBook('?waitlist=1');
 
     // assert
     expect(
-      await screen.findByRole('heading', { name: /almost there/i }),
+      await screen.findByRole('heading', { level: 1, name: 'Page not found' }),
     ).toBeInTheDocument();
-    expect(screen.getByLabelText(/full name/i)).toBeInTheDocument();
+    expect(screen.queryByText('Start Your Plan')).not.toBeInTheDocument();
+  });
+
+  it('says why each closed day cannot be picked', async () => {
+    // arrange
+    renderBook();
+
+    // act
+    await waitFor(() => expect(openDayButtons().length).toBeGreaterThan(0));
+
+    // assert
+    expect(
+      screen.getAllByRole('button', { name: /No open slots$/ }).length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getAllByRole('button', { name: /Past day$/ }).length,
+    ).toBeGreaterThan(0);
+  });
+
+  it('offers the times only once a day is picked, and names the zone they are in', async () => {
+    // arrange
+    const user = renderBook();
+    await waitFor(() => expect(openDayButtons().length).toBeGreaterThan(0));
+
+    // act
+    const timesBeforeADayIsPicked = screen.queryAllByRole('radio');
+    await user.click(openDayButtons()[0]);
+
+    // assert
+    expect(timesBeforeADayIsPicked).toHaveLength(0);
+    const times = await screen.findAllByRole('radio');
+    expect(times.length).toBeGreaterThan(0);
+    expect(times[0]).toHaveAccessibleName(/\d{1,2}:\d{2}\s?(AM|PM)/i);
+    expect(
+      screen.getByText(
+        (content) =>
+          content.includes('Times are shown in') &&
+          content.includes(VISITOR_TIME_ZONE) &&
+          content.includes('GMT'),
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('keeps the chosen time when the details are rejected', async () => {
+    // arrange
+    const user = renderBook();
+    await reachDetails(user);
+    const chosenTime = screen.getByText(/Your call:/).textContent;
+
+    // act
+    await user.type(screen.getByLabelText('Full name'), 'J');
+    await user.type(screen.getByLabelText('Email address'), 'not-an-address');
+    await user.click(screen.getByRole('button', { name: 'Book my call' }));
+
+    // assert
+    expect(
+      screen.getByText('Enter your full name, between 2 and 120 characters.'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Enter a valid email address.')).toBeInTheDocument();
+    expect(screen.getByLabelText('Full name')).toHaveAccessibleDescription(
+      'Enter your full name, between 2 and 120 characters.',
+    );
+    expect(screen.getByText(/Your call:/).textContent).toBe(chosenTime);
+  });
+
+  it('confirms a booked call with its length and a way to join it', async () => {
+    // arrange
+    const user = renderBook();
+    await reachDetails(user);
+    await fillDetails(user);
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Book my call' }));
+
+    // assert
+    expect(
+      await screen.findByRole(
+        'heading',
+        { level: 2, name: 'Your call is booked' },
+        BOOKING_WAIT,
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/30 minutes/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Join the call' })).toHaveAttribute(
+      'href',
+      expect.stringMatching(/^\/book\/[a-z0-9-]+\/join$/),
+    );
+    expect(
+      screen.getByRole('link', { name: 'Return to Home' }),
+    ).toHaveAttribute('href', '/');
+    expect(
+      screen.getByText((content) => content.includes(VISITOR_TIME_ZONE)),
+    ).toBeInTheDocument();
+  });
+
+  it('returns to the times with an explanation when the chosen one was taken', async () => {
+    // arrange
+    const user = renderBook('?booking=slot_unavailable');
+    await reachDetails(user);
+    await fillDetails(user);
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Book my call' }));
+
+    // assert
+    const alert = await screen.findByRole('alert', {}, BOOKING_WAIT);
+    expect(alert).toHaveTextContent(/taken while you were filling in your details/i);
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'Pick a date and time' }),
+    ).toBeInTheDocument();
+  });
+
+  it('points at the call the visitor already holds when the email is taken', async () => {
+    // arrange
+    const user = renderBook('?booking=email_already_booked');
+    await reachDetails(user);
+    await fillDetails(user);
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Book my call' }));
+
+    // assert
+    const alert = await screen.findByRole('alert', {}, BOOKING_WAIT);
+    expect(alert).toHaveTextContent(/already have an assessment call booked/i);
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'Your details' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: 'Join your call' }),
+    ).toHaveAttribute('href', expect.stringMatching(/^\/book\/[a-z0-9-]+\/join$/));
+  });
+
+  it('offers a retry and a way to reach Eli when the server fails', async () => {
+    // arrange
+    const user = renderBook('?booking=server_error');
+    await reachDetails(user);
+    await fillDetails(user);
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Book my call' }));
+
+    // assert
+    const alert = await screen.findByRole('alert', {}, BOOKING_WAIT);
+    expect(alert).toHaveTextContent(/went wrong on our end/i);
+    expect(
+      screen.getByRole('link', { name: 'contact@evoa.fit' }),
+    ).toHaveAttribute('href', 'mailto:contact@evoa.fit');
+    expect(screen.getByRole('button', { name: 'Book my call' })).toBeEnabled();
+  });
+
+  it('rejects an email the server will not accept, without losing the details', async () => {
+    // arrange
+    const user = renderBook('?booking=invalid_email');
+    await reachDetails(user);
+    await fillDetails(user);
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Book my call' }));
+
+    // assert
+    const alert = await screen.findByRole('alert', {}, BOOKING_WAIT);
+    expect(alert).toHaveTextContent(/doesn't look right/i);
+    expect(screen.getByLabelText('Email address')).toHaveValue(
+      'jane@example.com',
+    );
+  });
+
+  it('offers a retry when the open times cannot be loaded', async () => {
+    // arrange
+    // act
+    renderBook('?bookingslots=unavailable');
+
+    // assert
+    expect(
+      await screen.findByText(
+        "We couldn't load the open times just now.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
   });
 });

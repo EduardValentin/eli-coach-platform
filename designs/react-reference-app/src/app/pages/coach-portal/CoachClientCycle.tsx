@@ -147,13 +147,15 @@ export function CoachClientCycle() {
           <BrandCalendar
             mode="single"
             classNames={{
-              day: 'w-full aspect-square p-0 font-medium rounded-xl inline-flex items-center justify-center relative cursor-default',
+              day_button:
+                'w-full aspect-square p-0 font-medium rounded-xl inline-flex items-center justify-center relative cursor-default',
             }}
             modifiers={{
               period: (date) => periodDates.has(toISO(date)),
             }}
             modifiersClassNames={{
-              period: 'bg-cycle-menstrual/10 text-brand font-semibold',
+              period:
+                '[&>button]:bg-cycle-menstrual/10 [&>button]:text-brand [&>button]:font-semibold',
             }}
           />
           <div className="flex items-center gap-4 mt-6 pt-4 border-t border-border text-xs text-muted-foreground">

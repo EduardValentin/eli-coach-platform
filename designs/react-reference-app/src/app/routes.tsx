@@ -8,6 +8,7 @@ import { StoreProvider } from "./context/StoreContext";
 import { NotificationProvider } from "./context/NotificationContext";
 import { TrainingProvider } from "./context/TrainingContext";
 import { CheckinProvider } from "./context/CheckinContext";
+import { AssessmentCallProvider } from "./context/AssessmentCallContext";
 import { MessagingProvider } from "./context/MessagingContext";
 import { Store } from "./pages/Store";
 import { ProductDetails } from "./pages/ProductDetails";
@@ -72,6 +73,7 @@ function Root() {
           <UnitPreferencesProvider>
           <CycleProvider>
           <CheckinProvider>
+            <AssessmentCallProvider>
             <MessagingProvider>
               <NotificationProvider>
                 <div className="relative min-h-screen bg-surface-subtle text-foreground font-sans selection:bg-brand selection:text-white">
@@ -82,6 +84,7 @@ function Root() {
                 </div>
               </NotificationProvider>
             </MessagingProvider>
+            </AssessmentCallProvider>
           </CheckinProvider>
           </CycleProvider>
           </UnitPreferencesProvider>
