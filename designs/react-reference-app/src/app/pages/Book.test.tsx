@@ -294,10 +294,7 @@ describe('Book', () => {
         content.includes(`(${VISITOR_TIME_ZONE}, GMT`),
       ),
     ).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Join the call' })).toHaveAttribute(
-      'href',
-      expect.stringMatching(/^\/book\/[a-z0-9-]+\/join$/),
-    );
+    expect(screen.queryByRole('link', { name: 'Join the call' })).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Return to Home' })).toHaveAttribute('href', '/');
   });
 

@@ -393,15 +393,7 @@ export function Book() {
                       </p>
 
                       <p className="text-sm text-text-secondary font-medium mb-1">Duration</p>
-                      <p className="font-semibold text-text-primary mb-4">{`${ASSESSMENT_CALL_DURATION_MINUTES} minutes`}</p>
-
-                      <p className="text-sm text-text-secondary font-medium mb-1">Where</p>
-                      <p className="font-semibold text-text-primary flex items-center gap-2">
-                        <Video className="w-4 h-4 text-brand" aria-hidden="true" />
-                        <Link to={booking.joinPath} className="text-brand hover:underline">
-                          Join the call
-                        </Link>
-                      </p>
+                      <p className="font-semibold text-text-primary">{`${ASSESSMENT_CALL_DURATION_MINUTES} minutes`}</p>
                     </div>
 
                     <Button asChild variant="outline" className="h-12 px-8 rounded-xl font-semibold border-neutral-200 hover:bg-neutral-50 text-neutral-700">
