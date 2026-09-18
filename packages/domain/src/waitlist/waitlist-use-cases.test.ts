@@ -94,6 +94,7 @@ describe("GetWaitlistUseCase", () => {
     const getWaitlist = new GetWaitlistUseCase({
       clock: fixedClock,
       featureFlags: createFeatureFlags({ WAITLIST_MODE: false }),
+      logger: createLogger(),
       waitlist: createWaitlist(),
       waitlistEntries: createWaitlistEntries({
         countReducedPricingSignupsCreatedBefore: vi.fn().mockResolvedValue(0),
@@ -116,6 +117,7 @@ describe("GetWaitlistUseCase", () => {
     const getWaitlist = new GetWaitlistUseCase({
       clock: fixedClock,
       featureFlags: createFeatureFlags({}),
+      logger: createLogger(),
       waitlist: createWaitlist(),
       waitlistEntries: createWaitlistEntries(),
     });
@@ -138,6 +140,7 @@ describe("GetWaitlistUseCase", () => {
       featureFlags: {
         execute: vi.fn().mockRejectedValue(new Error("database unavailable")),
       },
+      logger: createLogger(),
       waitlist: createWaitlist(),
       waitlistEntries: createWaitlistEntries(),
     });
@@ -153,6 +156,47 @@ describe("GetWaitlistUseCase", () => {
     });
   });
 
+  it("records a failed feature flag read", async () => {
+    // arrange
+    const logger = createLogger();
+    const getWaitlist = new GetWaitlistUseCase({
+      clock: fixedClock,
+      featureFlags: {
+        execute: vi.fn().mockRejectedValue(new Error("database unavailable")),
+      },
+      logger,
+      waitlist: createWaitlist(),
+      waitlistEntries: createWaitlistEntries(),
+    });
+
+    // act
+    await getWaitlist.execute();
+
+    // assert
+    expect(logger.error).toHaveBeenCalledWith(
+      "Waitlist mode feature flag read failed.",
+      { errorCategory: "waitlist_mode_read_failure" },
+    );
+  });
+
+  it("records nothing when the feature flags are read", async () => {
+    // arrange
+    const logger = createLogger();
+    const getWaitlist = new GetWaitlistUseCase({
+      clock: fixedClock,
+      featureFlags: createFeatureFlags(),
+      logger,
+      waitlist: createWaitlist(),
+      waitlistEntries: createWaitlistEntries(),
+    });
+
+    // act
+    await getWaitlist.execute();
+
+    // assert
+    expect(logger.error).not.toHaveBeenCalled();
+  });
+
   it("returns the delayed available waitlist snapshot", async () => {
     // arrange
     const waitlistEntries = createWaitlistEntries({
@@ -161,6 +205,7 @@ describe("GetWaitlistUseCase", () => {
     const getWaitlist = new GetWaitlistUseCase({
       clock: { now: () => new Date("2026-07-26T10:12:00.000Z") },
       featureFlags: createFeatureFlags(),
+      logger: createLogger(),
       waitlist: createWaitlist(),
       waitlistEntries,
     });
@@ -187,6 +232,7 @@ describe("GetWaitlistUseCase", () => {
     const getWaitlist = new GetWaitlistUseCase({
       clock: fixedClock,
       featureFlags: createFeatureFlags(),
+      logger: createLogger(),
       waitlist: createWaitlist(),
       waitlistEntries: createWaitlistEntries({
         countReducedPricingSignupsCreatedBefore: vi.fn().mockResolvedValue(8),
@@ -209,6 +255,7 @@ describe("GetWaitlistUseCase", () => {
     const getWaitlist = new GetWaitlistUseCase({
       clock: fixedClock,
       featureFlags: createFeatureFlags({ WAITLIST_MODE: false }),
+      logger: createLogger(),
       waitlist: createWaitlist(),
       waitlistEntries: createWaitlistEntries({
         countReducedPricingSignupsCreatedBefore: vi.fn().mockResolvedValue(10),
@@ -231,6 +278,7 @@ describe("GetWaitlistUseCase", () => {
     const getWaitlist = new GetWaitlistUseCase({
       clock: fixedClock,
       featureFlags: createFeatureFlags({ WAITLIST_MODE: false }),
+      logger: createLogger(),
       waitlist: createWaitlist(),
       waitlistEntries: createWaitlistEntries({
         countReducedPricingSignupsCreatedBefore: vi

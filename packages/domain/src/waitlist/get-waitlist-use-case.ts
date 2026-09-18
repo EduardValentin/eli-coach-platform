@@ -1,5 +1,5 @@
-import type { FeatureFlagReader } from "../feature-flag";
-import type { Clock } from "../shared";
+import type { FeatureFlagReader, FeatureFlagSet } from "../feature-flag";
+import type { Clock, Logger } from "../shared";
 
 import { Waitlist, type WaitlistSnapshot } from "./waitlist";
 import type { WaitlistEntries } from "./waitlist-entries";
@@ -7,12 +7,12 @@ import type { WaitlistEntries } from "./waitlist-entries";
 type GetWaitlistUseCaseOptions = {
   clock: Clock;
   featureFlags: FeatureFlagReader;
+  logger: Logger;
   waitlist: Waitlist;
   waitlistEntries: WaitlistEntries;
 };
 
 const WAITLIST_MODE_FEATURE_FLAG = "WAITLIST_MODE";
-type FeatureFlagSet = Awaited<ReturnType<FeatureFlagReader["execute"]>>;
 
 export class GetWaitlistUseCase {
   constructor(private readonly options: GetWaitlistUseCaseOptions) {}
@@ -41,6 +41,10 @@ export class GetWaitlistUseCase {
     try {
       return await this.options.featureFlags.execute();
     } catch {
+      this.options.logger.error("Waitlist mode feature flag read failed.", {
+        errorCategory: "waitlist_mode_read_failure",
+      });
+
       return null;
     }
   }

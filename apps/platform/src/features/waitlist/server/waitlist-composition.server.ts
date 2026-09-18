@@ -61,6 +61,7 @@ export function composeWaitlistFeature(
       getWaitlist: new GetWaitlistUseCase({
         clock: handles.clock,
         featureFlags: handles.featureFlags,
+        logger: handles.logger,
         waitlist,
         waitlistEntries,
       }),
