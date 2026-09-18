@@ -1,7 +1,7 @@
 import type { ManagementApiConfig } from "@eli-coach-platform/config";
-import type { ManagementAuthenticator } from "@eli-coach-platform/domain/shared";
 
 import { BearerSecretManagementAuthenticator } from "./bearer-secret-authenticator.server";
+import type { ManagementAuthenticator } from "./management-authenticator-contract.server";
 import { MANAGEMENT_AGENT_PRINCIPAL_ID } from "./management-auth-config.server";
 
 export function createManagementAuthenticator(

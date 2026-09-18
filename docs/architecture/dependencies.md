@@ -1,16 +1,16 @@
 # Dependencies
 
-Header: date 2026-09-17, commit e8690f45, scope apps/platform/src, apps/platform/db, packages/{config,content,db,domain,infrastructure,test-support,ui}/src plus the enforcement layer (tools/dependency-cruiser.config.cjs, tools/dependency-cruiser.tsconfig.json, tools/boundaries.test.mjs, tools/boundary-fixtures/, tools/domain-layout.mjs, tools/domain-layout.test.mjs, tools/domain-layout-fixtures/, knip.json, eslint.config.mjs, workspace package.json export maps, tsconfigs, vite/react-router/vitest configs), mode change review (run 8).
+Header: date 2026-09-18, commit 8ac6a613 (PR #229 head, squash-merged to main as 7d92dc22; base 79fa1e95), scope 46 changed implementation files in C1, C6, C7, C8 and C14 plus direct neighbors, mode partial change review (run 8 baseline e8690f45).
 
-Change review: date 2026-09-18, commit f0eb1bf4, baseline 79fa1e95, scope the persisted waitlist-mode change (`79fa1e95..f0eb1bf4`): the changed units and their direct graph neighborhood in apps/platform, packages/{config,content,db,domain,infrastructure,ui}, tests, migrations and package deployment; partial scope. Rows it changed or added carry the commit that changed them.
+Change review: date 2026-09-18, commit f0eb1bf4, baseline 7d92dc22, scope the persisted waitlist-mode change (`79fa1e95..f0eb1bf4`, merged with main in the main merge): the changed units and their direct graph neighborhood in apps/platform, packages/{config,content,db,domain,infrastructure,ui}, tests, migrations and package deployment; partial scope. Rows it changed or added carry the commit that changed them.
 
 ## Component graph
 
-The baseline cold cruise at 79fa1e95 had 307 modules, 776 dependencies, 0 violations and 0 circular dependencies. The graph at f0eb1bf4 has 307 modules, 778 dependencies and 0 violations; the package packlists, Docker assertions, handle visibility changes, and projection-ownership fixes add no module edge and close no cycle. Count = distinct importing modules.
+Generated from a cold cruise of the import graph at `8ac6a613` (287 in-scope production modules, 782 dependencies, 0 violations, 0 circular). The persisted waitlist-mode change leaves the graph at f0eb1bf4 with the same 287 production modules, 785 dependencies, 0 violations and 0 circular; the rows it changed name it, and the package packlists, Docker assertions and handle visibility changes add no module edge. Count = distinct importing modules. Component IDs refer to `components.md`.
 
 | From | To | Modules | Notes |
 |---|---|---|---|
-| C6 infrastructure | C1 domain | 9 | adapters implement C1 ports |
+| C6 infrastructure | C1 domain | 1 | the feature-flags repository implements the C1 `FeatureFlags` port |
 | C6 infrastructure | C2 db | 2 | feature-flags repository and table |
 | C6 infrastructure | C3 config | 6 | concern types the factories read |
 | C7 store | C1 domain | 18 | entities, ports, use cases, publication types across `/product`, `/acquisition`, `/download-grant`, `/cart`, `/shared` |
@@ -18,13 +18,13 @@ The baseline cold cruise at 79fa1e95 had 307 modules, 776 dependencies, 0 violat
 | C7 store | C3 config | 5 | joinBasePath and concern types |
 | C7 store | C4 content | 2 | consent copy |
 | C7 store | C5 ui | 6 | primitives in ui/public |
-| C7 store | C6 infrastructure | 15 | bot-detection (browser and server), email/server, management-auth/server, http/server |
+| C7 store | C6 infrastructure | 17 | bot-detection (browser and server), email/server, management-auth/server, http/server; adapter-facing contracts now live in C6 |
 | C8 waitlist | C1 domain | 7 | `/feature-flag`, `/waitlist` and `/shared`; the importing-module count is unchanged because the composition already imported C1 |
 | C8 waitlist | C2 db | 3 | |
 | C8 waitlist | C3 config | 2 | |
 | C8 waitlist | C4 content | 2 | |
 | C8 waitlist | C5 ui | 2 | |
-| C8 waitlist | C6 infrastructure | 5 | bot-detection, email/server, http/server |
+| C8 waitlist | C6 infrastructure | 8 | bot-detection, email/server, http/server; adapter-facing contracts now live in C6 |
 | C9 accounts | C1 domain | 11 | `/account` |
 | C9 accounts | C2 db | 3 | |
 | C9 accounts | C3 config | 2 | |
@@ -65,7 +65,7 @@ The baseline cold cruise at 79fa1e95 had 307 modules, 776 dependencies, 0 violat
 
 **C10 features/coaching-bundles is gone**, and with it the three edges `C11 → C10`, `C10 → C1` and `C10 → C5`. The bundle literal and its presenter are C11-private modules under `surfaces/public-site/sections/pricing/` (decision D5), so the pricing page reaches them without crossing a component boundary at all.
 
-Cycles: none at module, component, domain-folder or UI-subpath level. Inside C1 the nine folders form a directed acyclic graph: `acquisition → {product, email-address, shared}`, `download-grant → {product, shared}`, `waitlist → {email-address, feature-flag, shared}`, and `product`, `account`, `cart`, `feature-flag`, `email-address` and `shared` import nothing outside themselves. Every cross-folder edge enters the sibling's `index.ts`, never a deep path. C1, C2, C3, C4 and C5 depend on no in-scope component; C1 has no external dependency.
+Cycles: none, at module, component, domain-folder and UI-subpath level, proven by the `no-circular` rule over 287 production modules and by a depth-first walk of the component graph. Inside C1 the nine folders remain acyclic: `acquisition → {product, email-address, shared}`, `download-grant → {product, shared}`, `waitlist → {email-address, feature-flag, shared}`. Every cross-folder edge enters the sibling's `index.ts`, never a deep path. C1, C2, C3, C4 and C5 depend on no in-scope component. C1 has no external dependency. C16 has no production edge.
 
 External dependencies per component: C1 none; C2 drizzle-orm, pg; C3 zod; C4 node:crypto; C5 react, react-router, motion, radix-ui, class-variance-authority, clsx, tailwind-merge; C6 react, resend, drizzle-orm, zod, node:crypto, fetch; C7 react, react-dom, react-router, react-hook-form, @hookform/resolvers, zustand, lucide-react, zod, drizzle-orm, archiver, node:crypto, node:fs, node:path, node:stream; C8 react, react-dom, react-router, lucide-react, canvas-confetti, zod, drizzle-orm, pg, node:crypto; C9 @clerk/react-router, react, react-router, lucide-react, zod, drizzle-orm; C11 react, react-router, motion, lucide-react (it absorbed C10's motion and lucide-react use with the pricing section); C12 react-router; C13 react-router, lucide-react; C14 react-router, zod, pg; C15 @clerk/react-router, react, react-router, motion, lucide-react, @react-router/dev, vite, @tailwindcss/vite, drizzle-kit; C16 none.
 
@@ -90,14 +90,14 @@ Every row is a named rule in `tools/dependency-cruiser.config.cjs` that fails `p
 | features/** | anything under the app's `server/` | cycle closure | `features-never-reach-server` (`composition-root` deliberately excludes `features/` so one rule owns the edge) |
 | a `server/guards/` module | anything but the framework, its feature's contracts, domain slices, config types and sibling guards | R5 refinement | `guards-construct-nothing` (a guard takes its feature type from the composition as a type-only import — the recorded carve-out) |
 | a controller or route module | its feature's `data/` or `email/` | R5 refinement | `feature-api-to-data` |
-| the route registry | anything under `server/` but `server/api/routes.ts` | root registry policy | `root-registry-to-server` |
-| anything but root.tsx and the registry | `routes.ts`, `root.tsx`, `root.server.ts`, `root-error-page.tsx` | root registry policy | `root-registry` |
+| the route registry | anything under `server/` but `server/api/routes.ts` | F78 | `root-registry-to-server` |
+| anything but root.tsx and the registry | `routes.ts`, `root.tsx`, `root.server.ts`, `root-error-page.tsx` | F78 | `root-registry` |
 | a feature's ui/**, including any `.server.ts` beside a page | its data/, api/ or email/, or its server/ outside guards/ | R6 | `browser-half`. It absorbed `browser-half-loaders` at `2173cbfb`: that rule's `from` was the narrower `features/*/ui/**.server.ts` over the identical `to`, and no such file exists any more now that a registered page carries its own loader |
 | a registered route module or its .server half | data/, email/, a controller, the db package, `config/runtime`, infrastructure server internals or `server/` outside guards/ | route thinness | `route-thinness` (carries `dependencyTypesNot: ["type-only"]` on every one of the rule's `to.path` entries, so a route may also name `packages/db` or a `*-controller.server.ts` type, not only a config or bot-detection type — no route exploits this at f0eb1bf4) |
 | a registered route module, and the surface shell's `layout.server.ts` | a domain subpath, including `import type` | route thinness | `route-thinness-domain` (no type-only carve-out). Feature page loaders moved into their page modules at `2173cbfb`, so the `.server` half the rule still matches is the public-site shell loader |
 | a domain entity folder | another folder's internals | R3 (policy) | `domain-slices`, which matches `packages/domain/src/<folder>/` against any sibling path but the sibling's `index.ts`; all eight cross-folder edges at f0eb1bf4 enter the sibling entry |
 | packages/domain | any vendor, framework, database or workspace package | domain purity | `domain-no-externals` (still carries `dependencyTypesNot: ["local", "type-only"]`, so the rule alone admits a type-only external; the gate that actually stops `import type { Readable } from "node:stream"` inside the domain is the package's closed type scope) **and** dependency-absence (`package.json` declares no dependencies) **and** `"types": []` in the package tsconfig, which keeps `@types/node`'s ambient globals (`NodeJS.*`, `Buffer`) out of scope — a fixture proves the rule fires |
-| infrastructure subpath A | infrastructure subpath B | infrastructure subpath isolation | `infrastructure-subpaths` |
+| infrastructure subpath A | infrastructure subpath B | F77 | `infrastructure-subpaths` |
 | a non-`.server` infrastructure module | a `*.server` module | browser-bundle safety | `infrastructure-browser-entries` |
 | an app module | a package by relative path | package APIs | `workspace-by-name-app` |
 | a package module | another package by relative path | package APIs | `workspace-by-name-packages` |
@@ -112,8 +112,8 @@ Every row is a named rule in `tools/dependency-cruiser.config.cjs` that fails `p
 | any module | nothing, and nothing imports it | hygiene | `no-orphans` (excludes `*.d.ts`, `*.css`, the client-portal service worker, `server/test-support/request-args.ts`, `packages/test-support/src/index.ts`, `apps/platform/src/routes.ts` and the two portal `readyz.ts` leaves) |
 | any workspace consumer | a package's internal file (deep import) | package APIs | `package.json` export maps (resolution fails) plus `workspace-by-name-*` |
 | any published surface | an unused export, file, dependency or undeclared dependency | published surfaces | `knip` through `pnpm check:surfaces` (`knip --no-config-hints`), at zero on all four counts; a fixture asserts one unused export is reported |
-| controllers | request state on instance fields; a base controller hierarchy | accepted review-owned rule | review only; the last full controller pass found none |
-| infrastructure failure | a business status (capacity, duplicate, availability) | accepted review-owned rule | review only, refined to "an adapter never swallows an infrastructure failure into a result-union member; exactly one named expected condition may be classified". The one sanctioned instance is ENOENT in `FilesystemProductAssetStore` |
+| controllers | request state on instance fields; a base controller hierarchy | review-owned rule (F88/F89 accepted) | review only; run 6 read all eleven controllers and found none |
+| infrastructure failure | a business status (capacity, duplicate, availability) | review-owned rule (F88/F89 accepted) | review only, refined to "an adapter never swallows an infrastructure failure into a result-union member; exactly one named expected condition may be classified". The one sanctioned instance is ENOENT in `FilesystemProductAssetStore`; run 6 read all sixteen catch sites in the adapter ring |
 
 ESLint residue: `js.recommended`, jsx-a11y strict, and the app-root-alias `no-restricted-imports`/`no-restricted-syntax` pair, switched off for `apps/platform/src/surfaces/*/routes.ts` because the `~` alias does not resolve inside React Router's route-config loader. The boundary regions R1–R7, `createContainerFencedConfigs`, `createFeatureBoundaryConfigs`, `createSurfaceBoundaryConfigs`, the fenced lists and `tools/lint-boundaries.test.mjs` are deleted.
 
@@ -142,7 +142,7 @@ Enforcement names what fails if a consumer imports an implementer directly.
 | B193 | WaitlistEntries (U912) | C1 use-cases | U303 PostgresWaitlistRepository | U914, U963 | plain signup commands and results; the adapter calls the pure `Waitlist.decideReducedPricingRegistration` inside its own transaction | implementer | dependency-absence |
 | B194 | WaitlistConfirmation (U913) | C1 use-cases | U307 EmailWaitlistConfirmation | U914 | SendWaitlistConfirmationCommand in; `WaitlistConfirmationResult` = sent \| failed out | implementer | dependency-absence |
 | B195 | StoreCatalog (U919) | C1 use-cases | U120 PostgresStoreCatalogRepository | U967, U968, U969, U979 | `PublishedProduct` instances and the plain `PublishedProductCover` | implementer | dependency-absence. Three of the four consumers call one of its three methods |
-| B196 | StoreAcquisitions (U922) | C1 use-cases | U117 PostgresStoreAcquisitionRepository | U979 | PrepareAcquisitionCommand / AcquisitionPreparation; the command's `products` field carries `PublishedProduct` instances into the adapter | implementer | dependency-absence |
+| B196 | StoreAcquisitions (U922) | C1 use-cases | U117 PostgresStoreAcquisitionRepository | U979 | PrepareAcquisitionCommand / AcquisitionPreparation. The command's `products` field carries `PublishedProduct` instances into the adapter; the record's D6 wording covers only entities a port *returns*, and the ledger's run-8 F245 holds the reconciliation | implementer | dependency-absence |
 | B197 | ProductDelivery (U923) | C1 use-cases | U129 EmailProductDelivery | U979 | a plain command carrying `{title, typeLabels}` resources the entity projected; `ProductDeliveryResult` = delivered(provider, providerMessageId) \| rejected(reason) \| unconfirmed out. The third member is a deliberate deviation from the spec's two-member union (owner ruling); a thrown `deliver()` stays a domain-audited retryable outcome through `recordRetryableDelivery`. Renamed from StoreDeliveryService by decision D3 | implementer | dependency-absence |
 | B199 | PayloadDigestGenerator (U925) | C1 use-cases | U124 PayloadSha256Digest | U979 | string | implementer | dependency-absence |
 | B208 | DownloadTokenGenerator (U978) | C1 use-cases | U122 RandomDownloadTokenGenerator, satisfying it structurally with no `implements` clause | U979 | CreateDownloadTokenResult (`{rawToken, sha256}`) | implementer | dependency-absence. Deliberately **not** in the `./acquisition` export map: the owner's rule is to publish only what a consumer outside the package imports, and an `implements` clause is cosmetic |
@@ -153,10 +153,12 @@ Enforcement names what fails if a consumer imports an implementer directly.
 | B204 | ProductAssetWriter (U937) | C1 use-cases | U119 FilesystemProductAssetStore | U973, U974 | ProductAssetContent (Uint8Array) | implementer | dependency-absence |
 | B205 | ProductAssetDigest (U938) | C1 use-cases | U118 ProductAssetSha256Digest | U971, U972, U973, U974, and U970 `ProductPublicationDraft#requestDigest`, which names the port type directly | Uint8Array / string | implementer | dependency-absence |
 | B206 | StoreProductPublications (U943) | C1 use-cases | U125 PostgresStoreProductPublicationRepository | U971, U972, U973, U974, U975 | `Product` instances out; PersistPublicationCommand and the plain publication records otherwise. Each of the five consumers calls between one and five of its seven methods | implementer | dependency-absence |
-| B207 | Logger (U958) | C1 `/shared` | U519 `createConsoleLogger` (`server/logger.server.ts:3`) | U979 AcquireProductsUseCase, U914 JoinWaitlistUseCase | a message and a details record | implementer | dependency-absence |
-| B240 | BotVerifier (U959) | C1 `/shared` | U1007 StaticTokenBotVerifier, U1012 TurnstileBotVerifier, behind `createBotVerifier` | U301 WaitlistController, U100 StoreAcquisitionController | BotVerificationRequest/Result (plain) | implementers | exports (both implementers are un-exported) |
-| B241 | ProductEmail (U960) | C1 `/shared` | U1023 ResendProductEmail, U1038 InMemoryProductEmail, behind `createProductEmail` | U129, U307 adapters | ProductEmailCommand / ProductEmailResult. `ProductEmail.provider` is boundary data the use case records in its delivery audit, not a detail leak | implementer | exports |
-| B242 | ManagementAuthenticator (U961) | C1 `/shared` | U1029 BearerSecretManagementAuthenticator, behind `createManagementAuthenticator` | U109 StoreProductManagementController | `ManagementCredentials` (`{ authorizationHeader }`) in, `ManagementAuthenticationResult` out | implementer | exports |
+| B207 | Logger (U958, removed) | C1 `/shared` | U519 `createConsoleLogger` (current symbol, former generic implementation) | former consumers U979 and U914 | a message and details record | implementer | historical generic boundary removed in a79f507d; replaced by B266 and B267 |
+| B240 | BotVerifier (U1195) | C6 bot-detection (adapters) | U1007 StaticTokenBotVerifier, U1012 TurnstileBotVerifier, behind `createBotVerifier` | U301 WaitlistController, U100 StoreAcquisitionController | BotVerificationRequest/Result (plain) | implementers | `./bot-detection/server` export; both implementations are package-private |
+| B241 | ProductEmail (U1196) | C6 email (adapters) | U1023 ResendProductEmail, U1038 InMemoryProductEmail, behind `createProductEmail` | U129, U307 adapters | ProductEmailCommand / ProductEmailResult (plain) | implementers | `./email/server` export; the Resend implementation is package-private |
+| B242 | ManagementAuthenticator (U1197) | C6 management-auth (adapters) | U1029 BearerSecretManagementAuthenticator, behind `createManagementAuthenticator` | U109 StoreProductManagementController; future coach-management consumer | `ManagementCredentials` in, `ManagementAuthenticationResult` out | implementer | `./management-auth/server` export; the bearer implementation is package-private |
+| B266 | AcquisitionIncidents (U1193) | C1 acquisition (use-cases) | U519 createConsoleLogger | U979 AcquireProductsUseCase | plain request ID; rejected form adds a plain reason | implementer | dependency-absence, `./acquisition` export, composition injection |
+| B267 | WaitlistIncidents (U1194) | C1 waitlist (use-cases) | U519 createConsoleLogger | U914 JoinWaitlistUseCase, U963 GetWaitlistUseCase | no payload | implementer | dependency-absence, `./waitlist` export, composition injection |
 | B100 | ZipDeliveryStream (structural type declared by its consumer, `downloads-controller.server.ts:12-14`) | C7 adapters | U114 ZipDeliveryStream | U107 | DownloadGrant in, ProductAssetOpenResult out. `planGrantEntries` walks `grant.items` rather than `GrantDelivery.bundle.assets` because it needs `item.productSlug` for the zip entry name | U114 | none (structural typing, which is where R5 puts it) |
 | B120 | StoreCartState (U204, Zustand store shape) | C7 ui/public (adapters) | U205 createStoreCartStore | U210–U218, U237, U248, C11 shell/layout.tsx | object with functions and productSlugs | consumers | none |
 | B121 | useStoreCatalogFetcher / useStoreAcquisitionFetcher (U202, U203) | C7 ui/public | same | U213, U218 | StoreCatalogResponse / parsed acquisition response | callers | none |
@@ -180,7 +182,7 @@ Enforcement names what fails if a consumer imports an implementer directly.
 
 | Kind | Path | Constructs |
 |---|---|---|
-| composition-root | apps/platform/src/server/container.server.ts (createPlatformContainer, memoised by getPlatformContainer) | the shared handles once — `createPlatformDatabase`, the `Clock` implementation, logger, bot verifier, management authenticator, product email, one `PostgresFeatureFlagRepository` and one `GetFeatureFlagsUseCase` — then passes the same feature-flag reader to `composePlatformFeature` and `composeWaitlistFeature` while composing accounts and store |
+| composition-root | apps/platform/src/server/container.server.ts (createPlatformContainer, memoised by getPlatformContainer) | the shared handles once — `createPlatformDatabase`, the `Clock` implementation, `createConsoleLogger()`, `createBotVerifier()`, `createManagementAuthConfig()` and `createManagementAuthenticator()`, `createProductEmail()`, one `PostgresFeatureFlagRepository` and one `GetFeatureFlagsUseCase` — then `composeAccountsFeature`, `composePlatformFeature`, `composeStoreFeature`, `composeWaitlistFeature`, passing the same feature-flag reader to the platform and waitlist compositions. One console logger implements both B266 and B267 |
 | composition-root (second) | apps/platform/src/root.server.ts | `clerkMiddleware()`, `createFeatureContextMiddleware(getPlatformContainer)`, `createAccountResolutionMiddleware()`; the container's only importer |
 | composition-site | apps/platform/src/features/accounts/server/accounts-composition.server.ts | the account repository, `ProvisionAccountUseCase`, `DeleteAccountUseCase`, and the account and webhook controllers; `AccountsFeatureHandles` names only what the feature reads |
 | composition-site | apps/platform/src/features/store/server/store-composition.server.ts | the store repositories, asset store and digests, token generators, zip stream, `EmailProductDelivery`, the eight `/product`, `/acquisition` and `/download-grant` use cases, and the five store controllers; `StoreFeatureHandles` names only what the feature reads |
@@ -212,7 +214,7 @@ Enforcement names what fails if a consumer imports an implementer directly.
 | Shape | Components reading or writing it | Owning component |
 |---|---|---|
 | Postgres namespace `app` (appSchema) and the migration journal apps/platform/db/drizzle | C2 declares the namespace; C7 (store tables), C8 (waitlist_entries), C9 (accounts, account_role enum), C6 (feature_flags) attach tables; C15 drizzle.config.ts discovers them by glob | C2 owns the namespace; each table is owned by the feature that declares it |
-| `app.feature_flags`, including `WAITLIST_MODE` | C6 declares and reads it; C15 migration 0018 seeds `WAITLIST_MODE=true`; C14 constructs the generic reader; U1198 and integration tests write it only for test arrangement | C6 owns the table; U963 owns the waitlist-mode interpretation |
+| `app.feature_flags`, including `WAITLIST_MODE` | C6 declares and reads it; C15 migration 0018 seeds `WAITLIST_MODE=true`; C14 constructs the generic reader; U1203 and integration tests write it only for test arrangement | C6 owns the table; U963 owns the waitlist-mode interpretation |
 | store zod contracts (contracts/store.ts, store-management.ts) | C7 server half and C7 ui half; C11 through `contracts/` | C7 |
 | waitlist zod contracts (contracts/waitlist.ts) | C8; C11 | C8 |
 | accounts contracts (PublicSessionState, accountResponseSchema, AccountRole) | C9; C11; AccountRole originates in C1 | C9 (wire) / C1 (role) |
@@ -229,7 +231,7 @@ Enforcement names what fails if a consumer imports an implementer directly.
 
 ## Edges
 
-An edge from A to B means A's source names B. Direction `inward` points toward policy (ring order: entities, use-cases, adapters, frameworks, composition). The baseline rows came from every `import`, `export … from`, dynamic `import()` and CSS `@import` in the in-scope production modules; kind is `import` for all rows (the `implements` and `constructs` relationships are recorded in Boundaries and Entry points). Crosses-ring compares the majority ring of the two modules from `units.md`; an edge into a `packages/domain` folder entry is `lateral`, because a subpath barrel is a publication surface rather than a ring of its own. Externals are tagged framework, vendor or runtime. Component membership is by path. IDs are stable, and rows added by the persisted waitlist-mode change begin at E1014. The generating command is `npx depcruise --config tools/dependency-cruiser.config.cjs --output-type json apps/platform/src packages/{config,content,db,domain,infrastructure,test-support,ui}/src`.
+An edge from A to B means A's source names B. Direction `inward` points toward policy (ring order: entities, use-cases, adapters, frameworks, composition). Generated from every `import`, `export … from`, dynamic `import()` and CSS `@import` in the 287 in-scope production modules at `8ac6a613`; kind is `import` for all rows (the `implements` and `constructs` relationships are recorded in the Boundaries and Entry points sections above). Crosses-ring compares the majority ring of the two modules from `units.md`; an edge into a `packages/domain` folder entry is recorded `lateral`, because a subpath barrel is a publication surface rather than a ring of its own. Externals are tagged framework, vendor or runtime. Component membership is by path. The PR #229 review allocated E1014-E1019 and E1021-E1038; E333 retains its frozen-base identity. The persisted waitlist-mode change allocated E1039-E1043 and marks the rows it removed or retyped.
 
 No edge leaves a `packages/domain` unit for a detail or an external: C1's fan-out is zero, and the package declares no dependencies and sets `"types": []`.
 
@@ -286,7 +288,7 @@ No edge leaves a `packages/domain` unit for a detail or an external: C1's fan-ou
 | E55 | apps/platform/src/features/store/api/acquisitions/acquisitions-controller.server.ts | apps/platform/src/features/store/contracts/store.ts | import | no | yes | outward | present |
 | E753 | apps/platform/src/features/store/api/acquisitions/acquisitions-controller.server.ts | external:crypto | import | n/a | yes | outward | present |
 | E754 | apps/platform/src/features/store/api/acquisitions/acquisitions-controller.server.ts | packages/domain/src/acquisition/index.ts | import | yes | no | lateral | present |
-| E57 | apps/platform/src/features/store/api/acquisitions/acquisitions-controller.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | present |
+| E57 | apps/platform/src/features/store/api/acquisitions/acquisitions-controller.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | removed in a79f507d |
 | E59 | apps/platform/src/features/store/api/acquisitions/acquisitions-controller.server.ts | packages/infrastructure/src/bot-detection/index.server.ts | import | yes | no | lateral | present |
 | E60 | apps/platform/src/features/store/api/acquisitions/acquisitions-controller.server.ts | packages/infrastructure/src/bot-detection/index.ts | import | yes | no | lateral | present |
 | E61 | apps/platform/src/features/store/api/acquisitions/acquisitions-controller.server.ts | packages/infrastructure/src/http/index.server.ts | import | yes | no | lateral | present |
@@ -319,7 +321,7 @@ No edge leaves a `packages/domain` unit for a detail or an external: C1's fan-ou
 | E766 | apps/platform/src/features/store/api/downloads/zip-stream.server.ts | packages/domain/src/product/index.ts | import | yes | yes | inward | present |
 | E84 | apps/platform/src/features/store/api/management/management-controller.server.ts | apps/platform/src/features/store/contracts/store-management.ts | import | no | yes | outward | present |
 | E767 | apps/platform/src/features/store/api/management/management-controller.server.ts | packages/domain/src/product/index.ts | import | yes | no | lateral | present |
-| E85 | apps/platform/src/features/store/api/management/management-controller.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | present |
+| E85 | apps/platform/src/features/store/api/management/management-controller.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | removed in a79f507d |
 | E87 | apps/platform/src/features/store/api/management/management-controller.server.ts | packages/infrastructure/src/http/index.server.ts | import | yes | no | lateral | present |
 | E88 | apps/platform/src/features/store/api/management/management-controller.server.ts | packages/infrastructure/src/management-auth/index.server.ts | import | yes | no | lateral | present |
 | E89 | apps/platform/src/features/store/api/management/management-product-validations.ts | apps/platform/src/features/store/server/guards/store-context.server.ts | import | no | no | lateral | present |
@@ -359,12 +361,12 @@ No edge leaves a `packages/domain` unit for a detail or an external: C1's fan-ou
 | E124 | apps/platform/src/features/store/data/schema.server.ts | packages/db/src/index.ts | import | yes | no | lateral | present |
 | E789 | apps/platform/src/features/store/email/create-product-delivery.server.ts | apps/platform/src/features/store/email/email-product-delivery.server.ts | import | no | no | lateral | present |
 | E790 | apps/platform/src/features/store/email/create-product-delivery.server.ts | packages/domain/src/acquisition/index.ts | import | yes | no | lateral | present |
-| E791 | apps/platform/src/features/store/email/create-product-delivery.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | present |
+| E791 | apps/platform/src/features/store/email/create-product-delivery.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | removed in a79f507d |
 | E792 | apps/platform/src/features/store/email/email-product-delivery.server.ts | apps/platform/src/features/store/contracts/paths.ts | import | no | yes | outward | present |
 | E793 | apps/platform/src/features/store/email/email-product-delivery.server.ts | apps/platform/src/features/store/email/store-delivery-email.server.ts | import | no | no | lateral | present |
 | E794 | apps/platform/src/features/store/email/email-product-delivery.server.ts | packages/config/src/index.ts | import | yes | yes | outward | present |
 | E795 | apps/platform/src/features/store/email/email-product-delivery.server.ts | packages/domain/src/acquisition/index.ts | import | yes | no | lateral | present |
-| E796 | apps/platform/src/features/store/email/email-product-delivery.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | present |
+| E796 | apps/platform/src/features/store/email/email-product-delivery.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | removed in a79f507d |
 | E797 | apps/platform/src/features/store/email/store-delivery-email-template.server.tsx | external:react | import | n/a | yes | outward | present |
 | E134 | apps/platform/src/features/store/email/store-delivery-email-template.server.tsx | packages/infrastructure/src/email/index.server.ts | import | yes | no | lateral | present |
 | E135 | apps/platform/src/features/store/email/store-delivery-email.server.ts | apps/platform/src/features/store/email/store-delivery-email-template.server.tsx | import | no | no | lateral | present |
@@ -463,7 +465,7 @@ No edge leaves a `packages/domain` unit for a detail or an external: C1's fan-ou
 | E230 | apps/platform/src/features/store/ui/public/product/product-page.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
 | E231 | apps/platform/src/features/waitlist/api/waitlist-controller.server.ts | apps/platform/src/features/waitlist/contracts/waitlist.ts | import | no | yes | outward | present |
 | E822 | apps/platform/src/features/waitlist/api/waitlist-controller.server.ts | external:crypto | import | n/a | yes | outward | present |
-| E233 | apps/platform/src/features/waitlist/api/waitlist-controller.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | present |
+| E233 | apps/platform/src/features/waitlist/api/waitlist-controller.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | removed in a79f507d |
 | E234 | apps/platform/src/features/waitlist/api/waitlist-controller.server.ts | packages/domain/src/waitlist/index.ts | import | yes | no | lateral | present |
 | E235 | apps/platform/src/features/waitlist/api/waitlist-controller.server.ts | packages/infrastructure/src/bot-detection/index.server.ts | import | yes | no | lateral | present |
 | E236 | apps/platform/src/features/waitlist/api/waitlist-controller.server.ts | packages/infrastructure/src/bot-detection/index.ts | import | yes | no | lateral | present |
@@ -477,10 +479,10 @@ No edge leaves a `packages/domain` unit for a detail or an external: C1's fan-ou
 | E244 | apps/platform/src/features/waitlist/data/repository.server.ts | packages/domain/src/waitlist/index.ts | import | yes | no | lateral | present |
 | E245 | apps/platform/src/features/waitlist/data/schema.server.ts | packages/db/src/index.ts | import | yes | no | lateral | present |
 | E825 | apps/platform/src/features/waitlist/email/create-waitlist-confirmation.server.ts | apps/platform/src/features/waitlist/email/email-waitlist-confirmation.server.ts | import | no | no | lateral | present |
-| E826 | apps/platform/src/features/waitlist/email/create-waitlist-confirmation.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | present |
+| E826 | apps/platform/src/features/waitlist/email/create-waitlist-confirmation.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | removed in a79f507d |
 | E827 | apps/platform/src/features/waitlist/email/create-waitlist-confirmation.server.ts | packages/domain/src/waitlist/index.ts | import | yes | no | lateral | present |
 | E828 | apps/platform/src/features/waitlist/email/email-waitlist-confirmation.server.ts | apps/platform/src/features/waitlist/email/waitlist-confirmation-email.server.ts | import | no | no | lateral | present |
-| E829 | apps/platform/src/features/waitlist/email/email-waitlist-confirmation.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | present |
+| E829 | apps/platform/src/features/waitlist/email/email-waitlist-confirmation.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | removed in a79f507d |
 | E830 | apps/platform/src/features/waitlist/email/email-waitlist-confirmation.server.ts | packages/domain/src/waitlist/index.ts | import | yes | no | lateral | present |
 | E831 | apps/platform/src/features/waitlist/email/waitlist-confirmation-email-template.server.tsx | external:react | import | n/a | yes | outward | present |
 | E253 | apps/platform/src/features/waitlist/email/waitlist-confirmation-email-template.server.tsx | packages/infrastructure/src/email/index.server.ts | import | yes | no | lateral | present |
@@ -581,13 +583,13 @@ No edge leaves a `packages/domain` unit for a detail or an external: C1's fan-ou
 | E351 | apps/platform/src/server/feature-contexts.server.ts | apps/platform/src/server/guards/runtime-config-context.server.ts | import | no | no | lateral | present |
 | E352 | apps/platform/src/server/guards/platform-context.server.ts | apps/platform/src/server/platform-composition.server.ts | import | no | yes | outward | present |
 | E353 | apps/platform/src/server/guards/runtime-config-context.server.ts | apps/platform/src/server/platform-composition.server.ts | import | no | yes | outward | present |
-| E354 | apps/platform/src/server/logger.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | present |
+| E354 | apps/platform/src/server/logger.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | removed in a79f507d |
 | E356 | apps/platform/src/server/platform-composition.server.ts | apps/platform/src/server/api/feature-flags/feature-flags-controller.server.ts | import | no | yes | inward | present |
 | E355 | apps/platform/src/server/platform-composition.server.ts | apps/platform/src/server/api/meta/app-metadata-controller.server.ts | import | no | yes | inward | present |
 | E357 | apps/platform/src/server/platform-composition.server.ts | apps/platform/src/server/api/readyz/readyz-controller.server.ts | import | no | yes | inward | present |
 | E358 | apps/platform/src/server/platform-composition.server.ts | packages/config/src/index.ts | import | yes | yes | inward | present |
 | E359 | apps/platform/src/server/platform-composition.server.ts | packages/db/src/index.ts | import | yes | yes | inward | removed (f5d1889c) |
-| E846 | apps/platform/src/server/platform-composition.server.ts | packages/domain/src/feature-flag/index.ts | import | yes | yes | inward | present |
+| E846 | apps/platform/src/server/platform-composition.server.ts | packages/domain/src/feature-flag/index.ts | import | yes | yes | inward | present (type-only since f5d1889c) |
 | E361 | apps/platform/src/server/platform-composition.server.ts | packages/infrastructure/src/bot-detection/index.ts | import | yes | yes | inward | present |
 | E362 | apps/platform/src/server/platform-composition.server.ts | packages/infrastructure/src/feature-flags/index.server.ts | import | yes | yes | inward | removed (f5d1889c) |
 | E363 | apps/platform/src/server/runtime-environment.server.ts | packages/config/src/index.ts | import | yes | no | lateral | present |
@@ -864,11 +866,11 @@ No edge leaves a `packages/domain` unit for a detail or an external: C1's fan-ou
 | E961 | packages/domain/src/product/store-catalog.ts | packages/domain/src/product/product.ts | import | no | yes | inward | present |
 | E962 | packages/domain/src/product/store-product-publications.ts | packages/domain/src/product/product-publication.ts | import | no | no | lateral | present |
 | E963 | packages/domain/src/product/store-product-publications.ts | packages/domain/src/product/product.ts | import | no | yes | inward | present |
-| E573 | packages/domain/src/shared/index.ts | packages/domain/src/shared/bot-verifier.ts | import | no | no | lateral | present |
+| E573 | packages/domain/src/shared/index.ts | packages/domain/src/shared/bot-verifier.ts | import | no | no | lateral | removed in a79f507d |
 | E574 | packages/domain/src/shared/index.ts | packages/domain/src/shared/clock.ts | import | no | no | lateral | present |
-| E575 | packages/domain/src/shared/index.ts | packages/domain/src/shared/logger.ts | import | no | no | lateral | present |
-| E576 | packages/domain/src/shared/index.ts | packages/domain/src/shared/management-authenticator.ts | import | no | no | lateral | present |
-| E577 | packages/domain/src/shared/index.ts | packages/domain/src/shared/product-email.ts | import | no | no | lateral | present |
+| E575 | packages/domain/src/shared/index.ts | packages/domain/src/shared/logger.ts | import | no | no | lateral | removed in a79f507d |
+| E576 | packages/domain/src/shared/index.ts | packages/domain/src/shared/management-authenticator.ts | import | no | no | lateral | removed in a79f507d |
+| E577 | packages/domain/src/shared/index.ts | packages/domain/src/shared/product-email.ts | import | no | no | lateral | removed in a79f507d |
 | E964 | packages/domain/src/waitlist/get-waitlist-use-case.ts | packages/domain/src/shared/index.ts | import | no | no | lateral | present |
 | E965 | packages/domain/src/waitlist/get-waitlist-use-case.ts | packages/domain/src/waitlist/waitlist-entries.ts | import | no | no | lateral | present |
 | E966 | packages/domain/src/waitlist/get-waitlist-use-case.ts | packages/domain/src/waitlist/waitlist.ts | import | no | yes | inward | present |
@@ -878,7 +880,7 @@ No edge leaves a `packages/domain` unit for a detail or an external: C1's fan-ou
 | E970 | packages/domain/src/waitlist/index.ts | packages/domain/src/waitlist/waitlist-entries.ts | import | no | yes | inward | present |
 | E971 | packages/domain/src/waitlist/index.ts | packages/domain/src/waitlist/waitlist.ts | import | no | yes | inward | present |
 | E972 | packages/domain/src/waitlist/join-waitlist-use-case.ts | packages/domain/src/email-address/index.ts | import | no | no | lateral | present |
-| E973 | packages/domain/src/waitlist/join-waitlist-use-case.ts | packages/domain/src/shared/index.ts | import | no | no | lateral | present |
+| E973 | packages/domain/src/waitlist/join-waitlist-use-case.ts | packages/domain/src/shared/index.ts | import | no | no | lateral | removed in a79f507d |
 | E974 | packages/domain/src/waitlist/join-waitlist-use-case.ts | packages/domain/src/waitlist/waitlist-confirmation.ts | import | no | no | lateral | present |
 | E975 | packages/domain/src/waitlist/join-waitlist-use-case.ts | packages/domain/src/waitlist/waitlist-entries.ts | import | no | no | lateral | present |
 | E976 | packages/domain/src/waitlist/join-waitlist-use-case.ts | packages/domain/src/waitlist/waitlist.ts | import | no | yes | inward | present |
@@ -901,28 +903,28 @@ No edge leaves a `packages/domain` unit for a detail or an external: C1's fan-ou
 | E644 | packages/infrastructure/src/bot-detection/submission/use-bot-detection-submission.ts | packages/infrastructure/src/bot-detection/bot-detection-contract.ts | import | no | no | lateral | present |
 | E645 | packages/infrastructure/src/bot-detection/submission/use-bot-detection-submission.ts | packages/infrastructure/src/bot-detection/submission/bot-detection-flow.ts | import | no | no | lateral | present |
 | E646 | packages/infrastructure/src/bot-detection/submission/use-bot-detection-submission.ts | packages/infrastructure/src/bot-detection/submission/bot-detection-widget.tsx | import | no | no | lateral | present |
-| E637 | packages/infrastructure/src/bot-detection/turnstile/turnstile-bot-verifier.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | present |
+| E637 | packages/infrastructure/src/bot-detection/turnstile/turnstile-bot-verifier.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | removed in a79f507d |
 | E982 | packages/infrastructure/src/bot-detection/turnstile/turnstile-client.ts | external:react | import | n/a | yes | outward | present |
 | E639 | packages/infrastructure/src/bot-detection/turnstile/turnstile-client.ts | packages/infrastructure/src/bot-detection/bot-detection-contract.ts | import | no | no | lateral | present |
 | E640 | packages/infrastructure/src/bot-detection/turnstile/turnstile-widget.tsx | packages/infrastructure/src/bot-detection/bot-detection-contract.ts | import | no | no | lateral | present |
 | E642 | packages/infrastructure/src/bot-detection/turnstile/turnstile-widget.tsx | packages/infrastructure/src/bot-detection/turnstile/turnstile-client.ts | import | no | no | lateral | present |
-| E626 | packages/infrastructure/src/bot-detection/verifier/bot-verifier.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | present |
+| E626 | packages/infrastructure/src/bot-detection/verifier/bot-verifier.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | removed in a79f507d |
 | E627 | packages/infrastructure/src/bot-detection/verifier/create-bot-verifier.server.ts | packages/config/src/index.ts | import | yes | yes | outward | present |
-| E628 | packages/infrastructure/src/bot-detection/verifier/create-bot-verifier.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | present |
+| E628 | packages/infrastructure/src/bot-detection/verifier/create-bot-verifier.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | removed in a79f507d |
 | E630 | packages/infrastructure/src/bot-detection/verifier/create-bot-verifier.server.ts | packages/infrastructure/src/bot-detection/turnstile/turnstile-bot-verifier.server.ts | import | no | no | lateral | present |
 | E629 | packages/infrastructure/src/bot-detection/verifier/create-bot-verifier.server.ts | packages/infrastructure/src/bot-detection/verifier/bot-verifier.server.ts | import | no | no | lateral | present |
 | E983 | packages/infrastructure/src/email/create-product-email.server.ts | external:resend | import | n/a | yes | outward | present |
 | E648 | packages/infrastructure/src/email/create-product-email.server.ts | packages/config/src/index.ts | import | yes | yes | outward | present |
-| E649 | packages/infrastructure/src/email/create-product-email.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | present |
+| E649 | packages/infrastructure/src/email/create-product-email.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | removed in a79f507d |
 | E650 | packages/infrastructure/src/email/create-product-email.server.ts | packages/infrastructure/src/email/in-memory-product-email.server.ts | import | no | no | lateral | present |
 | E651 | packages/infrastructure/src/email/create-product-email.server.ts | packages/infrastructure/src/email/resend-product-email.server.ts | import | no | no | lateral | present |
 | E984 | packages/infrastructure/src/email/email-primitives.server.tsx | external:react | import | n/a | yes | outward | present |
-| E653 | packages/infrastructure/src/email/in-memory-product-email.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | present |
+| E653 | packages/infrastructure/src/email/in-memory-product-email.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | removed in a79f507d |
 | E654 | packages/infrastructure/src/email/index.server.ts | packages/infrastructure/src/email/create-product-email.server.ts | import | no | no | lateral | present |
 | E655 | packages/infrastructure/src/email/index.server.ts | packages/infrastructure/src/email/email-primitives.server.tsx | import | no | no | lateral | present |
 | E656 | packages/infrastructure/src/email/index.server.ts | packages/infrastructure/src/email/in-memory-product-email.server.ts | import | no | no | lateral | present |
 | E985 | packages/infrastructure/src/email/resend-product-email.server.ts | external:resend | import | n/a | yes | outward | present |
-| E658 | packages/infrastructure/src/email/resend-product-email.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | present |
+| E658 | packages/infrastructure/src/email/resend-product-email.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | removed in a79f507d |
 | E659 | packages/infrastructure/src/feature-flags/index.server.ts | packages/infrastructure/src/feature-flags/repository.server.ts | import | no | no | lateral | present |
 | E660 | packages/infrastructure/src/feature-flags/repository.server.ts | packages/db/src/index.ts | import | yes | no | lateral | present |
 | E986 | packages/infrastructure/src/feature-flags/repository.server.ts | packages/domain/src/feature-flag/index.ts | import | yes | no | lateral | present |
@@ -930,16 +932,16 @@ No edge leaves a `packages/domain` unit for a detail or an external: C1's fan-ou
 | E663 | packages/infrastructure/src/feature-flags/schema.server.ts | packages/db/src/index.ts | import | yes | no | lateral | present |
 | E664 | packages/infrastructure/src/http/index.server.ts | packages/infrastructure/src/http/http.server.ts | import | no | no | lateral | present |
 | E987 | packages/infrastructure/src/management-auth/bearer-secret-authenticator.server.ts | external:crypto | import | n/a | yes | outward | present |
-| E666 | packages/infrastructure/src/management-auth/bearer-secret-authenticator.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | present |
+| E666 | packages/infrastructure/src/management-auth/bearer-secret-authenticator.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | removed in a79f507d |
 | E667 | packages/infrastructure/src/management-auth/create-management-authenticator.server.ts | packages/config/src/index.ts | import | yes | yes | outward | present |
-| E668 | packages/infrastructure/src/management-auth/create-management-authenticator.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | present |
+| E668 | packages/infrastructure/src/management-auth/create-management-authenticator.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | removed in a79f507d |
 | E669 | packages/infrastructure/src/management-auth/create-management-authenticator.server.ts | packages/infrastructure/src/management-auth/bearer-secret-authenticator.server.ts | import | no | no | lateral | present |
 | E670 | packages/infrastructure/src/management-auth/create-management-authenticator.server.ts | packages/infrastructure/src/management-auth/management-auth-config.server.ts | import | no | no | lateral | present |
 | E671 | packages/infrastructure/src/management-auth/index.server.ts | packages/infrastructure/src/management-auth/create-management-authenticator.server.ts | import | no | no | lateral | present |
 | E672 | packages/infrastructure/src/management-auth/index.server.ts | packages/infrastructure/src/management-auth/management-auth-config.server.ts | import | no | no | lateral | present |
-| E673 | packages/infrastructure/src/management-auth/index.server.ts | packages/infrastructure/src/management-auth/management-auth-contract.server.ts | import | no | no | lateral | present |
+| E673 | packages/infrastructure/src/management-auth/index.server.ts | packages/infrastructure/src/management-auth/management-authenticator-contract.server.ts | import | no | no | lateral | present |
 | E674 | packages/infrastructure/src/management-auth/management-auth-config.server.ts | packages/config/src/index.ts | import | yes | yes | outward | present |
-| E675 | packages/infrastructure/src/management-auth/management-auth-config.server.ts | packages/infrastructure/src/management-auth/management-auth-contract.server.ts | import | no | no | lateral | present |
+| E675 | packages/infrastructure/src/management-auth/management-auth-config.server.ts | packages/infrastructure/src/management-auth/management-authenticator-contract.server.ts | import | no | no | lateral | present |
 | E676 | packages/infrastructure/src/pwa/index.ts | packages/infrastructure/src/pwa/pwa-registration.ts | import | no | no | lateral | present |
 | E677 | packages/infrastructure/src/pwa/index.ts | packages/infrastructure/src/pwa/pwa-surfaces.ts | import | no | no | lateral | present |
 | E678 | packages/infrastructure/src/pwa/pwa-registration.ts | packages/config/src/index.ts | import | yes | yes | outward | present |
@@ -1002,7 +1004,32 @@ No edge leaves a `packages/domain` unit for a detail or an external: C1's fan-ou
 | E735 | packages/ui/src/primitives/link.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
 | E1012 | packages/ui/src/primitives/section-eyebrow.tsx | external:class-variance-authority | import | n/a | no | lateral | present |
 | E1013 | packages/ui/src/primitives/section-eyebrow.tsx | external:react | import | n/a | no | lateral | present |
-| E1014 | packages/domain/src/waitlist/get-waitlist-use-case.ts | packages/domain/src/feature-flag/index.ts | import | no | no | lateral | present (introduced 63a570a7) |
-| E1015 | apps/platform/src/features/waitlist/server/waitlist-composition.server.ts | packages/domain/src/feature-flag/index.ts | import | yes | yes | inward | added (f5d1889c) |
-| E1016 | apps/platform/src/server/container.server.ts | packages/domain/src/feature-flag/index.ts | import | yes | yes | inward | added (f5d1889c) |
-| E1017 | apps/platform/src/server/container.server.ts | packages/infrastructure/src/feature-flags/index.server.ts | import | yes | yes | inward | added (f5d1889c) |
+| E1014 | packages/domain/src/acquisition/acquire-products-use-case.ts | packages/domain/src/acquisition/acquisition-incidents.ts | import | no | no | lateral | present |
+| E1015 | packages/domain/src/acquisition/index.ts | packages/domain/src/acquisition/acquisition-incidents.ts | import | no | yes | inward | present |
+| E1016 | packages/domain/src/waitlist/join-waitlist-use-case.ts | packages/domain/src/waitlist/waitlist-incidents.ts | import | no | no | lateral | present |
+| E1017 | packages/domain/src/waitlist/index.ts | packages/domain/src/waitlist/waitlist-incidents.ts | import | no | yes | inward | present |
+| E1018 | apps/platform/src/server/logger.server.ts | packages/domain/src/acquisition/index.ts | import | yes | yes | inward | present |
+| E1019 | apps/platform/src/server/logger.server.ts | packages/domain/src/waitlist/index.ts | import | yes | yes | inward | present |
+| E1021 | packages/infrastructure/src/bot-detection/index.server.ts | packages/infrastructure/src/bot-detection/verifier/bot-verifier-contract.server.ts | import | no | no | lateral | present |
+| E1022 | packages/infrastructure/src/bot-detection/verifier/bot-verifier.server.ts | packages/infrastructure/src/bot-detection/verifier/bot-verifier-contract.server.ts | import | no | no | lateral | present |
+| E1023 | packages/infrastructure/src/bot-detection/turnstile/turnstile-bot-verifier.server.ts | packages/infrastructure/src/bot-detection/verifier/bot-verifier-contract.server.ts | import | no | no | lateral | present |
+| E1024 | packages/infrastructure/src/bot-detection/verifier/create-bot-verifier.server.ts | packages/infrastructure/src/bot-detection/verifier/bot-verifier-contract.server.ts | import | no | no | lateral | present |
+| E1025 | packages/infrastructure/src/email/index.server.ts | packages/infrastructure/src/email/product-email-contract.server.ts | import | no | no | lateral | present |
+| E1026 | packages/infrastructure/src/email/create-product-email.server.ts | packages/infrastructure/src/email/product-email-contract.server.ts | import | no | no | lateral | present |
+| E1027 | packages/infrastructure/src/email/in-memory-product-email.server.ts | packages/infrastructure/src/email/product-email-contract.server.ts | import | no | no | lateral | present |
+| E1028 | packages/infrastructure/src/email/resend-product-email.server.ts | packages/infrastructure/src/email/product-email-contract.server.ts | import | no | no | lateral | present |
+| E1029 | packages/infrastructure/src/management-auth/bearer-secret-authenticator.server.ts | packages/infrastructure/src/management-auth/management-authenticator-contract.server.ts | import | no | no | lateral | present |
+| E1030 | packages/infrastructure/src/management-auth/create-management-authenticator.server.ts | packages/infrastructure/src/management-auth/management-authenticator-contract.server.ts | import | no | no | lateral | present |
+| E1031 | apps/platform/src/features/store/email/create-product-delivery.server.ts | packages/infrastructure/src/email/index.server.ts | import | yes | no | lateral | present |
+| E1032 | apps/platform/src/features/store/email/email-product-delivery.server.ts | packages/infrastructure/src/email/index.server.ts | import | yes | no | lateral | present |
+| E1033 | apps/platform/src/features/store/server/store-composition.server.ts | packages/infrastructure/src/bot-detection/index.server.ts | import | yes | yes | inward | present |
+| E1034 | apps/platform/src/features/store/server/store-composition.server.ts | packages/infrastructure/src/email/index.server.ts | import | yes | yes | inward | present |
+| E1035 | apps/platform/src/features/waitlist/email/create-waitlist-confirmation.server.ts | packages/infrastructure/src/email/index.server.ts | import | yes | no | lateral | present |
+| E1036 | apps/platform/src/features/waitlist/email/email-waitlist-confirmation.server.ts | packages/infrastructure/src/email/index.server.ts | import | yes | no | lateral | present |
+| E1037 | apps/platform/src/features/waitlist/server/waitlist-composition.server.ts | packages/infrastructure/src/bot-detection/index.server.ts | import | yes | yes | inward | present |
+| E1038 | apps/platform/src/features/waitlist/server/waitlist-composition.server.ts | packages/infrastructure/src/email/index.server.ts | import | yes | yes | inward | present |
+| E1039 | packages/domain/src/waitlist/get-waitlist-use-case.ts | packages/domain/src/feature-flag/index.ts | import | no | no | lateral | added (63a570a7) |
+| E1040 | apps/platform/src/features/waitlist/server/waitlist-composition.server.ts | packages/domain/src/feature-flag/index.ts | import | yes | yes | inward | added (f5d1889c) |
+| E1041 | apps/platform/src/server/container.server.ts | packages/domain/src/feature-flag/index.ts | import | yes | yes | inward | added (f5d1889c) |
+| E1042 | apps/platform/src/server/container.server.ts | packages/infrastructure/src/feature-flags/index.server.ts | import | yes | yes | inward | added (f5d1889c) |
+| E1043 | packages/domain/src/waitlist/get-waitlist-use-case.ts | packages/domain/src/waitlist/waitlist-incidents.ts | import | no | no | lateral | added (the main merge) |

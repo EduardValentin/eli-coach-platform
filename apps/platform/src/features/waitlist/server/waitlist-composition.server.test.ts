@@ -34,7 +34,10 @@ describe("composeWaitlistFeature", () => {
           throw new Error("database down");
         },
       },
-      logger: { error: () => {} },
+      incidents: {
+        confirmationDeliveryFailed: () => {},
+        waitlistModeReadFailed: () => {},
+      },
       privacyEmail: "privacy@evoa.fit",
       productEmail: new InMemoryProductEmail(),
       waitlist: createWaitlistConfig(),

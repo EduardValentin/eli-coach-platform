@@ -1,5 +1,5 @@
 import type { PublishedProduct, StoreCatalog } from "../product";
-import type { Clock, Logger } from "../shared";
+import type { Clock } from "../shared";
 
 import {
   AcquisitionRequest,
@@ -7,6 +7,7 @@ import {
   type AcquireProductsCommand,
   type StoreDeliveryLimitWindow,
 } from "./acquisition";
+import type { AcquisitionIncidents } from "./acquisition-incidents";
 import type {
   DownloadTokenGenerator,
   PayloadDigestGenerator,
@@ -44,7 +45,7 @@ type AcquireProductsUseCaseOptions = {
   clock: Clock;
   consentVersions: StoreConsentVersions;
   delivery: ProductDelivery;
-  logger: Logger;
+  incidents: AcquisitionIncidents;
   payloadDigestGenerator: PayloadDigestGenerator;
   tokenGenerator: DownloadTokenGenerator;
 };
@@ -189,9 +190,8 @@ export class AcquireProductsUseCase {
     command: AuditedProductDeliveryCommand,
     reason: string,
   ): Promise<AcquireProductsResult> {
-    this.options.logger.error("Store delivery provider rejected the request.", {
-      errorCategory: "store_delivery_rejected",
-      providerRejectionReason: reason,
+    this.options.incidents.deliveryRejected({
+      reason,
       requestId: command.requestId,
     });
 
@@ -217,13 +217,9 @@ export class AcquireProductsUseCase {
         requestId: command.requestId,
       });
     } catch {
-      this.options.logger.error(
-        "Store retryable delivery audit requires reconciliation.",
-        {
-          errorCategory: "store_delivery_retryable_audit_pending",
-          requestId: command.requestId,
-        },
-      );
+      this.options.incidents.retryableDeliveryAuditPending({
+        requestId: command.requestId,
+      });
     }
 
     return { status: "delivery_retryable" };
@@ -245,13 +241,9 @@ export class AcquireProductsUseCase {
         requestId: command.requestId,
       });
     } catch {
-      this.options.logger.error(
-        "Store delivery acceptance audit requires reconciliation.",
-        {
-          errorCategory: "store_delivery_acceptance_audit_pending",
-          requestId: command.requestId,
-        },
-      );
+      this.options.incidents.deliveryAcceptanceAuditPending({
+        requestId: command.requestId,
+      });
 
       return { status: "delivery_retryable" };
     }
