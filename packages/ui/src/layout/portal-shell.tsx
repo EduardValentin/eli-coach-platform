@@ -1,26 +1,10 @@
-import {
-  useCallback,
-  useId,
-  useRef,
-  useState,
-  type PropsWithChildren,
-  type ReactNode,
-} from "react";
+import { motion, useReducedMotionConfig } from "motion/react";
+import type { PropsWithChildren, ReactNode, RefObject } from "react";
 import { Link as RouterLink, useLocation } from "react-router";
 
 import { MAIN_CONTENT_ID } from "../lib/constants";
 import { cn } from "../lib/cn";
-import {
-  NavigationDialog,
-  NavigationDialogClose,
-  NavigationDialogContent,
-  NavigationDialogOverlay,
-  NavigationDialogPortal,
-  NavigationDialogTitle,
-  NavigationDialogTrigger,
-} from "./navigation-dialog";
-import { IconButton } from "../primitives/icon-button";
-import { useCloseMobileNavigationOnDesktop } from "./use-close-mobile-navigation-on-desktop";
+import { NavigationDialog, type NavigationMenu } from "./navigation-dialog";
 
 export type PortalNavigationLink = {
   href: string;
@@ -44,6 +28,17 @@ type PortalShellProps = PropsWithChildren<{
   topBarActions?: ReactNode;
 }>;
 
+const DRAWER_OPEN_TRANSITION = { duration: 0.3, ease: [0, 0, 0.2, 1] } as const;
+const DRAWER_CLOSE_TRANSITION = {
+  damping: 25,
+  stiffness: 200,
+  type: "spring",
+} as const;
+const BACKDROP_OPEN_TRANSITION = {
+  duration: 0.3,
+  ease: [0.4, 0, 0.2, 1],
+} as const;
+
 export function PortalShell(props: PortalShellProps) {
   const {
     asideLabel,
@@ -57,111 +52,40 @@ export function PortalShell(props: PortalShellProps) {
     topBarBrand,
   } = props;
 
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const menuId = useId();
-  const mobileDialogRef = useRef<HTMLDivElement | null>(null);
-  const mobileTriggerRef = useRef<HTMLButtonElement | null>(null);
-
-  const closeMenu = useCallback(() => {
-    setIsMenuOpen(false);
-  }, []);
-
-  useCloseMobileNavigationOnDesktop({
-    close: closeMenu,
-    isOpen: isMenuOpen,
-    mobileControlRef: mobileTriggerRef,
-  });
-
-  // Radix traps focus inside DialogContent, so the open top bar must live in
-  // that subtree while the page copy keeps the stable trigger for restoration.
-  const renderMobileTopBar = (placement: "page" | "dialog") => {
-    const isActiveHeader = placement === "dialog" ? isMenuOpen : !isMenuOpen;
-    const menuButton = (
-      <IconButton
-        aria-controls={menuId}
-        aria-expanded={isMenuOpen}
-        aria-label={isMenuOpen ? "Close menu" : "Open menu"}
-        className="relative z-[60] -mr-2 text-text-secondary hover:text-text-primary"
-        ref={placement === "page" ? mobileTriggerRef : undefined}
-      >
-        {isMenuOpen ? <CloseGlyph /> : <MenuGlyph />}
-      </IconButton>
-    );
-
-    return (
-      <header
-        className={cn(
-          "fixed inset-x-0 top-0 z-50 flex h-16 items-center justify-between border-b border-border-subtle bg-surface-base px-6 shadow-soft lg:hidden",
-          { invisible: !isActiveHeader },
-        )}
-      >
-        <div className="flex min-w-0 items-center gap-3">{topBarBrand}</div>
-        <div className="flex items-center gap-2">
-          {isActiveHeader ? topBarActions : null}
-          {placement === "dialog" ? (
-            <NavigationDialogClose asChild>{menuButton}</NavigationDialogClose>
-          ) : (
-            <NavigationDialogTrigger asChild>
-              {menuButton}
-            </NavigationDialogTrigger>
-          )}
-        </div>
-      </header>
-    );
-  };
-
   return (
     <div className="min-h-dvh bg-surface-page">
       <a className="ui-skip-link" href={`#${MAIN_CONTENT_ID}`}>
         Skip to main content
       </a>
       <NavigationDialog
-        modal={isMenuOpen}
-        onOpenChange={setIsMenuOpen}
-        open={isMenuOpen}
+        closeMenuIcon={<CloseGlyph />}
+        contentClassName="fixed inset-0 z-40 outline-none lg:hidden"
+        menuButtonClassName="relative z-[60] -mr-2 text-text-secondary hover:text-text-primary"
+        openMenuIcon={<MenuGlyph />}
+        renderTopBar={(topBar) => (
+          <header className="fixed inset-x-0 top-0 z-50 flex h-16 items-center justify-between border-b border-border-subtle bg-surface-base px-6 shadow-soft lg:hidden">
+            <div className="flex min-w-0 items-center gap-3">{topBarBrand}</div>
+            <div className="flex items-center gap-2">
+              {topBar.actions}
+              {topBar.menuButton}
+            </div>
+          </header>
+        )}
+        title={mobileNavigationLabel}
+        topBarActions={topBarActions}
       >
-        {renderMobileTopBar("page")}
-        {isMenuOpen ? (
-          <NavigationDialogPortal>
-            <NavigationDialogOverlay className="fixed inset-0 z-40 bg-overlay-soft opacity-100 backdrop-blur-sm motion-safe:transition-opacity motion-safe:duration-300 motion-safe:starting:opacity-0 lg:hidden" />
-            <NavigationDialogContent
-              aria-describedby={undefined}
-              className="fixed inset-0 z-40 outline-none lg:hidden"
-              id={menuId}
-              onClick={(event) => {
-                // Clicks inside the drawer bubble up with their own target;
-                // only a click on the backdrop itself dismisses the menu.
-                if (event.target === event.currentTarget) {
-                  closeMenu();
-                }
-              }}
-              onOpenAutoFocus={(event) => {
-                event.preventDefault();
-                mobileDialogRef.current
-                  ?.querySelector<HTMLElement>("nav a[href]")
-                  ?.focus();
-              }}
-              ref={mobileDialogRef}
-            >
-              {renderMobileTopBar("dialog")}
-              <NavigationDialogTitle className="sr-only">
-                {mobileNavigationLabel}
-              </NavigationDialogTitle>
-              <aside
-                aria-label={mobileNavigationLabel}
-                className="absolute inset-y-0 left-0 w-64 translate-x-0 shadow-floating motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-out motion-safe:starting:-translate-x-full"
-              >
-                <PortalSidebarContent
-                  actions={sidebarActions}
-                  brand={brand}
-                  links={links}
-                  navigationLabel={mobileNavigationLabel}
-                  onNavigate={closeMenu}
-                />
-              </aside>
-            </NavigationDialogContent>
-          </NavigationDialogPortal>
-        ) : null}
+        {(menu) => (
+          <PortalMobileDrawer menu={menu}>
+            <PortalSidebarContent
+              actions={sidebarActions}
+              brand={brand}
+              firstLinkRef={menu.firstLinkRef}
+              links={links}
+              navigationLabel={navigationLabel}
+              onNavigate={menu.close}
+            />
+          </PortalMobileDrawer>
+        )}
       </NavigationDialog>
       <aside
         aria-label={asideLabel}
@@ -187,16 +111,49 @@ export function PortalShell(props: PortalShellProps) {
   );
 }
 
+type PortalMobileDrawerProps = PropsWithChildren<{
+  menu: NavigationMenu;
+}>;
+
+function PortalMobileDrawer(props: PortalMobileDrawerProps) {
+  const { children, menu } = props;
+  const shouldReduceMotion = useReducedMotionConfig() === true;
+
+  return (
+    <>
+      <motion.div
+        animate={{ opacity: menu.isOpen ? 1 : 0 }}
+        className="pointer-events-none absolute inset-0 bg-overlay-soft backdrop-blur-sm"
+        initial={shouldReduceMotion ? false : { opacity: 0 }}
+        transition={menu.isOpen ? BACKDROP_OPEN_TRANSITION : undefined}
+      />
+      <motion.div
+        animate={{ x: menu.isOpen ? 0 : "-100%" }}
+        className="absolute inset-y-0 left-0 w-64 shadow-floating"
+        initial={shouldReduceMotion ? false : { x: "-100%" }}
+        onAnimationComplete={menu.completeClose}
+        transition={
+          menu.isOpen ? DRAWER_OPEN_TRANSITION : DRAWER_CLOSE_TRANSITION
+        }
+      >
+        {children}
+      </motion.div>
+    </>
+  );
+}
+
 type PortalSidebarContentProps = {
   actions?: ReactNode;
   brand: ReactNode;
+  firstLinkRef?: RefObject<HTMLAnchorElement | null>;
   links: readonly PortalNavigationLink[];
   navigationLabel: string;
   onNavigate?: () => void;
 };
 
 function PortalSidebarContent(props: PortalSidebarContentProps) {
-  const { actions, brand, links, navigationLabel, onNavigate } = props;
+  const { actions, brand, firstLinkRef, links, navigationLabel, onNavigate } =
+    props;
   const { pathname } = useLocation();
 
   const matches = (href: string) =>
@@ -223,7 +180,7 @@ function PortalSidebarContent(props: PortalSidebarContentProps) {
         aria-label={navigationLabel}
         className="flex-1 space-y-1 overflow-y-auto px-4 py-2"
       >
-        {links.map((link) => {
+        {links.map((link, linkIndex) => {
           const isActive = link.href === activeHref;
 
           return (
@@ -239,6 +196,7 @@ function PortalSidebarContent(props: PortalSidebarContentProps) {
               )}
               key={link.href}
               onClick={onNavigate}
+              ref={linkIndex === 0 ? firstLinkRef : undefined}
               to={link.href}
             >
               {link.icon}

@@ -49,7 +49,6 @@ afterEach(() => {
     nodesAddedOutsideReact.pop()?.remove();
   }
   document.body.style.overflow = "";
-  setInnerWidth(1024);
   setScrollY(0);
 });
 
@@ -70,20 +69,12 @@ function setScrollY(value: number) {
   });
 }
 
-function setInnerWidth(value: number) {
-  Object.defineProperty(window, "innerWidth", {
-    configurable: true,
-    value,
-  });
-}
-
 function renderPublicNavigation(options: {
   actions?: ReactNode;
   mobileActions?: ReactNode;
   scrollBehavior?: "hero-overlay" | "solid";
   variant?: "waitlist" | "normal";
 }) {
-  setInnerWidth(390);
   render(
     <MotionConfig reducedMotion="always">
       <MemoryRouter>
@@ -253,40 +244,15 @@ describe("PublicNavigation", () => {
     });
   });
 
-  it("can reopen while the previous menu is still animating out", async () => {
-    // arrange
-    const user = userEvent.setup();
-    renderPublicNavigation({ variant: "normal" });
-    await openMobileMenuWithPointer(user);
-
-    // act
-    await user.keyboard("{Escape}");
-    await user.click(screen.getByRole("button", { name: "Open menu" }));
-
-    // assert
-    expect(
-      screen.getByRole("dialog", {
-        name: "Mobile public site navigation",
-      }),
-    ).toHaveAttribute("data-state", "open");
-  });
-
   it("closes when the viewport crosses the desktop breakpoint", async () => {
     // arrange
     const user = userEvent.setup();
-    setInnerWidth(767);
     renderPublicNavigation({ variant: "normal" });
+    const menuTrigger = screen.getByRole("button", { name: "Open menu" });
     await openMobileMenuWithPointer(user);
 
     // act
-    const mobileControl = document.querySelector<HTMLButtonElement>(
-      'button[aria-haspopup="dialog"]',
-    );
-    if (mobileControl === null) {
-      throw new Error("The mobile navigation trigger was not rendered");
-    }
-    mobileControl.style.display = "none";
-    setInnerWidth(768);
+    menuTrigger.style.display = "none";
     window.dispatchEvent(new Event("resize"));
 
     // assert

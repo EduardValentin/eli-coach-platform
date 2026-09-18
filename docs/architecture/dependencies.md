@@ -1,10 +1,10 @@
 # Dependencies
 
-Header: date 2026-09-17, baseline commit e8690f45 plus the working-tree Radix mobile-navigation update, scope apps/platform/src, apps/platform/db, packages/{config,content,db,domain,infrastructure,test-support,ui}/src plus the enforcement layer (tools/dependency-cruiser.config.cjs, tools/dependency-cruiser.tsconfig.json, tools/boundaries.test.mjs, tools/boundary-fixtures/, tools/domain-layout.mjs, tools/domain-layout.test.mjs, tools/domain-layout-fixtures/, knip.json, eslint.config.mjs, workspace package.json export maps, tsconfigs, vite/react-router/vitest configs), mode change review (run 8).
+Header: date 2026-09-17, commit e8690f45 with the Radix mobile-navigation rows applied, scope apps/platform/src, apps/platform/db, packages/{config,content,db,domain,infrastructure,test-support,ui}/src plus the enforcement layer (tools/dependency-cruiser.config.cjs, tools/dependency-cruiser.tsconfig.json, tools/boundaries.test.mjs, tools/boundary-fixtures/, tools/domain-layout.mjs, tools/domain-layout.test.mjs, tools/domain-layout-fixtures/, knip.json, eslint.config.mjs, workspace package.json export maps, tsconfigs, vite/react-router/vitest configs), mode change review (run 8).
 
 ## Component graph
 
-Baseline rows were generated from a cold cruise at e8690f45 (307 modules, 776 dependencies). Working-tree rows E1200–E1207 record the Radix mobile-navigation delta; the current cold cruise has 308 modules, 783 dependencies, 0 violations and 0 circular. `.architecture/slices/run8/` holds the baseline per-slice returns. Count = distinct importing modules. Component IDs refer to `components.md`.
+Baseline rows were generated from a cold cruise at e8690f45 (307 modules, 776 dependencies). Rows E1200–E1212 record the Radix mobile navigation; the current cold cruise has 308 modules, 784 dependencies, 0 violations and 0 circular. `.architecture/slices/run8/` holds the baseline per-slice returns. Count = distinct importing modules. Component IDs refer to `components.md`.
 
 | From | To | Modules | Notes |
 |---|---|---|---|
@@ -225,7 +225,7 @@ Enforcement names what fails if a consumer imports an implementer directly.
 
 ## Edges
 
-An edge from A to B means A's source names B. Direction `inward` points toward policy (ring order: entities, use-cases, adapters, frameworks, composition). Generated from every `import`, `export … from`, dynamic `import()` and CSS `@import` in the 288 current in-scope production modules; kind is `import` for all rows (the `implements` and `constructs` relationships are recorded in the Boundaries and Entry points sections above). Crosses-ring compares the majority ring of the two modules from `units.md`; an edge into a `packages/domain` folder entry is recorded `lateral`, because a subpath barrel is a publication surface rather than a ring of its own. Externals are tagged framework, vendor or runtime. Component membership is by path (see `components.md`). Edge IDs are stable across runs: 491 of these rows keep the ID run 6 gave them, E738-E1013 came from run 8, and E1200-E1207 are the working-tree Radix navigation delta. The generating command is `npx depcruise --config tools/dependency-cruiser.config.cjs --output-type json apps/platform/src packages/{config,content,db,domain,infrastructure,test-support,ui}/src`.
+An edge from A to B means A's source names B. Direction `inward` points toward policy (ring order: entities, use-cases, adapters, frameworks, composition). Generated from every `import`, `export … from`, dynamic `import()` and CSS `@import` in the 288 current in-scope production modules; kind is `import` for all rows (the `implements` and `constructs` relationships are recorded in the Boundaries and Entry points sections above). Crosses-ring compares the majority ring of the two modules from `units.md`; an edge into a `packages/domain` folder entry is recorded `lateral`, because a subpath barrel is a publication surface rather than a ring of its own. Externals are tagged framework, vendor or runtime. Component membership is by path (see `components.md`). Edge IDs are stable across runs: 491 of these rows keep the ID run 6 gave them, E738-E1013 came from run 8, and E1200-E1212 record the Radix mobile navigation. The generating command is `npx depcruise --config tools/dependency-cruiser.config.cjs --output-type json apps/platform/src packages/{config,content,db,domain,infrastructure,test-support,ui}/src`.
 
 No edge leaves a `packages/domain` unit for a detail or an external: C1's fan-out is zero, and the package declares no dependencies and sets `"types": []`.
 
@@ -731,7 +731,7 @@ No edge leaves a `packages/domain` unit for a detail or an external: C1's fan-ou
 | E1200 | apps/platform/src/surfaces/public-site/shell/public-navigation.tsx | packages/ui/src/layout/index.ts | import | yes | no | lateral | present |
 | E503 | apps/platform/src/surfaces/public-site/shell/public-navigation.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
 | E1207 | apps/platform/src/surfaces/public-site/shell/public-navigation.tsx | packages/ui/src/motion/index.ts | import | yes | no | lateral | present |
-| E504 | apps/platform/src/surfaces/public-site/shell/public-navigation.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E504 | apps/platform/src/surfaces/public-site/shell/public-navigation.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | removed |
 | E874 | packages/config/src/concerns/app.ts | external:zod | import | n/a | no | lateral | present |
 | E875 | packages/config/src/concerns/bot-detection.ts | external:zod | import | n/a | no | lateral | present |
 | E507 | packages/config/src/concerns/bot-detection.ts | packages/config/src/concerns/app.ts | import | no | no | lateral | present |
@@ -953,8 +953,13 @@ No edge leaves a `packages/domain` unit for a detail or an external: C1's fan-ou
 | E688 | packages/ui/src/layout/index.ts | packages/ui/src/layout/portal-shell.tsx | import | no | no | lateral | present |
 | E689 | packages/ui/src/layout/index.ts | packages/ui/src/layout/sidebar-surface-layout.tsx | import | no | no | lateral | present |
 | E1201 | packages/ui/src/layout/index.ts | packages/ui/src/layout/navigation-dialog.tsx | import | no | no | lateral | present |
-| E1202 | packages/ui/src/layout/index.ts | packages/ui/src/layout/use-close-mobile-navigation-on-desktop.ts | import | no | no | lateral | present |
+| E1202 | packages/ui/src/layout/index.ts | packages/ui/src/layout/use-close-mobile-navigation-on-desktop.ts | import | no | no | lateral | removed |
 | E1203 | packages/ui/src/layout/navigation-dialog.tsx | external:radix-ui | import | n/a | no | lateral | present |
+| E1212 | packages/ui/src/layout/navigation-dialog.tsx | external:react | import | n/a | no | lateral | present |
+| E1211 | packages/ui/src/layout/navigation-dialog.tsx | packages/ui/src/layout/use-close-mobile-navigation-on-desktop.ts | import | no | no | lateral | present |
+| E1208 | packages/ui/src/layout/navigation-dialog.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
+| E1209 | packages/ui/src/layout/navigation-dialog.tsx | packages/ui/src/lib/constants.ts | import | no | no | lateral | present |
+| E1210 | packages/ui/src/layout/navigation-dialog.tsx | packages/ui/src/primitives/icon-button.tsx | import | no | no | lateral | present |
 | E1204 | packages/ui/src/layout/use-close-mobile-navigation-on-desktop.ts | external:react | import | n/a | no | lateral | present |
 | E992 | packages/ui/src/layout/phone-frame.tsx | external:react | import | n/a | no | lateral | present |
 | E691 | packages/ui/src/layout/phone-frame.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
@@ -962,9 +967,9 @@ No edge leaves a `packages/domain` unit for a detail or an external: C1's fan-ou
 | E693 | packages/ui/src/layout/portal-shell.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
 | E694 | packages/ui/src/layout/portal-shell.tsx | packages/ui/src/lib/constants.ts | import | no | no | lateral | present |
 | E695 | packages/ui/src/layout/portal-shell.tsx | packages/ui/src/lib/focus-trap.ts | import | no | no | lateral | removed |
-| E696 | packages/ui/src/layout/portal-shell.tsx | packages/ui/src/primitives/icon-button.tsx | import | no | no | lateral | present |
+| E696 | packages/ui/src/layout/portal-shell.tsx | packages/ui/src/primitives/icon-button.tsx | import | no | no | lateral | removed |
 | E1205 | packages/ui/src/layout/portal-shell.tsx | packages/ui/src/layout/navigation-dialog.tsx | import | no | no | lateral | present |
-| E1206 | packages/ui/src/layout/portal-shell.tsx | packages/ui/src/layout/use-close-mobile-navigation-on-desktop.ts | import | no | no | lateral | present |
+| E1206 | packages/ui/src/layout/portal-shell.tsx | packages/ui/src/layout/use-close-mobile-navigation-on-desktop.ts | import | no | no | lateral | removed |
 | E994 | packages/ui/src/layout/sidebar-surface-layout.tsx | external:react | import | n/a | no | lateral | present |
 | E698 | packages/ui/src/layout/sidebar-surface-layout.tsx | packages/ui/src/lib/constants.ts | import | no | no | lateral | present |
 | E699 | packages/ui/src/layout/sidebar-surface-layout.tsx | packages/ui/src/primitives/link.tsx | import | no | no | lateral | present |

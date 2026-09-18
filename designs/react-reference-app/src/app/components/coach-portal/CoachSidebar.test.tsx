@@ -27,18 +27,9 @@ beforeAll(() => {
 
 afterEach(() => {
   vi.restoreAllMocks();
-  setInnerWidth(1024);
 });
 
-function setInnerWidth(value: number) {
-  Object.defineProperty(window, 'innerWidth', {
-    configurable: true,
-    value,
-  });
-}
-
 function renderSidebar() {
-  setInnerWidth(390);
   return render(
     <MemoryRouter initialEntries={['/coach']}>
       <AppProvider>
@@ -74,19 +65,12 @@ describe('CoachSidebar mobile navigation', () => {
   it('closes when the viewport crosses the desktop breakpoint', async () => {
     // arrange
     const user = userEvent.setup();
-    setInnerWidth(1023);
     renderSidebar();
-    await user.click(screen.getByRole('button', { name: 'Open menu' }));
+    const menuTrigger = screen.getByRole('button', { name: 'Open menu' });
+    await user.click(menuTrigger);
 
     // act
-    const mobileControl = document.querySelector<HTMLButtonElement>(
-      'button[aria-haspopup="dialog"]',
-    );
-    if (mobileControl === null) {
-      throw new Error('The mobile navigation trigger was not rendered');
-    }
-    mobileControl.style.display = 'none';
-    setInnerWidth(1024);
+    menuTrigger.style.display = 'none';
     window.dispatchEvent(new Event('resize'));
 
     // assert

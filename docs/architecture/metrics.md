@@ -1,8 +1,8 @@
 # Metrics
 
-Header: date 2026-09-17, baseline commit e8690f45 plus the working-tree Radix mobile-navigation update, scope apps/platform/src, apps/platform/db, packages/{config,content,db,domain,infrastructure,test-support,ui}/src plus the enforcement layer (tools/dependency-cruiser.config.cjs, tools/dependency-cruiser.tsconfig.json, tools/boundaries.test.mjs, tools/boundary-fixtures/, tools/domain-layout.mjs, tools/domain-layout.test.mjs, tools/domain-layout-fixtures/, knip.json, eslint.config.mjs, workspace package.json export maps, tsconfigs, vite/react-router/vitest configs), mode change review (run 8). Definitions and reading guide: the inspection workflow's metrics reference. Computed because the graph has fifteen components.
+Header: date 2026-09-17, commit e8690f45 with the Radix mobile-navigation rows applied, scope apps/platform/src, apps/platform/db, packages/{config,content,db,domain,infrastructure,test-support,ui}/src plus the enforcement layer (tools/dependency-cruiser.config.cjs, tools/dependency-cruiser.tsconfig.json, tools/boundaries.test.mjs, tools/boundary-fixtures/, tools/domain-layout.mjs, tools/domain-layout.test.mjs, tools/domain-layout-fixtures/, knip.json, eslint.config.mjs, workspace package.json export maps, tsconfigs, vite/react-router/vitest configs), mode change review (run 8). Definitions and reading guide: the inspection workflow's metrics reference. Computed because the graph has fifteen components.
 
-Working-tree update 2026-09-17: the Radix mobile-navigation change replaces one C5 production module (`lib/focus-trap.ts`) with `layout/navigation-dialog.tsx` and `layout/use-close-mobile-navigation-on-desktop.ts`. A cold cruise reads 308 modules, 783 dependencies, 0 violations and 0 cycles. C5 fan-in, fan-out and published type counts are unchanged, so its metric row remains valid.
+The Radix mobile navigation replaces the C5 module `lib/focus-trap.ts` with `layout/navigation-dialog.tsx` and the package-private `layout/use-close-mobile-navigation-on-desktop.ts`. A cold cruise reads 308 modules, 784 dependencies, 0 violations and 0 cycles. C5 fan-in (32) and fan-out (0) are unchanged; `NavigationMenu` raises its exported types from three to four, so abstractness stays 0.00 and distance 1.00.
 
 Counting: fan-in is the number of modules outside the component that import at least one module inside it; fan-out is the number of modules inside that import at least one module in another in-scope component (externals excluded). Abstract types are port interfaces that exist only to be implemented; total types are exported classes, interfaces, and type aliases. Volatility is the number of the 84 commits in `148d594f..e8690f45` that changed a non-test file in the component, with the 16 commits of the domain-model restructure (`2173cbfb..e8690f45`) counted separately in the last column. Previous distance is the run-7 value at dbe88053. Generated from a cold cruise of the import graph at e8690f45: 307 modules, 776 dependencies, 0 violations, 0 circular (`.architecture/slices/run8/` holds the per-slice returns and the per-module edge table is in `dependencies.md`).
 
@@ -12,7 +12,7 @@ Counting: fan-in is the number of modules outside the component that import at l
 | C2 packages/db | 16 | 0 | 0.00 | 0.00 (0 / 1) | 1.00 | 1.00 | 0 | 0 |
 | C3 packages/config | 25 | 0 | 0.00 | 0.00 (0 / 12) | 1.00 | 1.00 | 5 | 0 |
 | C4 packages/content | 8 | 0 | 0.00 | 0.00 (0 / 7) | 1.00 | 1.00 | 2 | 0 |
-| C5 packages/ui | 32 | 0 | 0.00 | 0.00 (0 / 3) | 1.00 | 1.00 | 3 | 0 |
+| C5 packages/ui | 32 | 0 | 0.00 | 0.00 (0 / 4) | 1.00 | 1.00 | 3 | 0 |
 | C6 packages/infrastructure | 34 | 13 | 0.28 | 0.00 (0 / 14) | 0.72 | 0.72 | 10 | 1 |
 | C7 features/store | 10 | 37 | 0.79 | 0.00 (0 / 37) | 0.21 | 0.21 | 29 | 6 |
 | C8 features/waitlist | 10 | 14 | 0.58 | 0.00 (0 / 12) | 0.42 | 0.42 | 16 | 1 |

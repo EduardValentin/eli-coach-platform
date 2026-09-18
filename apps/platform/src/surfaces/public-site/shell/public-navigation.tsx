@@ -1,37 +1,23 @@
 import { Menu, X } from "lucide-react";
 import { motion } from "motion/react";
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type ReactNode,
-  type RefObject,
-} from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router";
 
 import {
   NavigationDialog,
-  NavigationDialogClose,
-  NavigationDialogContent,
-  NavigationDialogOverlay,
-  NavigationDialogPortal,
-  NavigationDialogTitle,
-  NavigationDialogTrigger,
-  useCloseMobileNavigationOnDesktop,
+  type NavigationMenu,
 } from "@eli-coach-platform/ui/layout";
 import { cn } from "@eli-coach-platform/ui/lib";
 import { useClientReducedMotionPreference } from "@eli-coach-platform/ui/motion";
-import { IconButton } from "@eli-coach-platform/ui/primitives";
 
 import { Logo } from "./logo";
 
 const SCROLLED_NAV_THRESHOLD = 50;
-const MOBILE_MENU_ID = "mobile-public-navigation-overlay";
+const MOBILE_NAVIGATION_LABEL = "Mobile public site navigation";
 
 export type PublicNavigationScrollBehavior = "hero-overlay" | "solid";
 export type PublicNavigationVariant = "waitlist" | "normal";
-type MobileMenuState = "closed" | "closing" | "open";
+type PublicNavigationAppearance = "solid" | "transparent";
 
 export type PublicNavigationLink = {
   href: string;
@@ -49,34 +35,6 @@ type PublicNavigationProps = {
 export function PublicNavigation(props: PublicNavigationProps) {
   const { actions, links, mobileActions, scrollBehavior, variant } = props;
   const [isScrolled, setIsScrolled] = useState(scrollBehavior === "solid");
-  const [mobileMenuState, setMobileMenuState] =
-    useState<MobileMenuState>("closed");
-  const isMobileDialogOpen = mobileMenuState !== "closed";
-  const isMobileMenuOpen = mobileMenuState === "open";
-  const mobileTriggerRef = useRef<HTMLButtonElement | null>(null);
-
-  const closeMobileMenu = useCallback(() => {
-    setMobileMenuState((currentState) =>
-      currentState === "closed" ? "closed" : "closing",
-    );
-  }, []);
-  const closeMobileMenuImmediately = useCallback(() => {
-    setMobileMenuState("closed");
-  }, []);
-  const reopenMobileMenu = useCallback(() => {
-    setMobileMenuState("open");
-  }, []);
-  const completeMobileMenuClose = useCallback(() => {
-    setMobileMenuState((currentState) =>
-      currentState === "closing" ? "closed" : currentState,
-    );
-  }, []);
-
-  useCloseMobileNavigationOnDesktop({
-    close: closeMobileMenuImmediately,
-    isOpen: isMobileDialogOpen,
-    mobileControlRef: mobileTriggerRef,
-  });
 
   useEffect(() => {
     if (scrollBehavior === "solid") {
@@ -96,97 +54,88 @@ export function PublicNavigation(props: PublicNavigationProps) {
     };
   }, [scrollBehavior]);
 
-  const shouldUseSolidAppearance =
-    scrollBehavior === "solid" || isScrolled || isMobileMenuOpen;
-  const shouldShowNavigationControls = links.length > 0;
+  const scrollAppearance: PublicNavigationAppearance =
+    scrollBehavior === "solid" || isScrolled ? "solid" : "transparent";
 
-  // Radix traps focus inside DialogContent, so the open header must live in
-  // that subtree while the page copy keeps the stable trigger for restoration.
-  const renderHeader = (placement: "page" | "dialog") => {
-    const isActiveHeader =
-      placement === "dialog" ? isMobileDialogOpen : !isMobileDialogOpen;
-
+  if (links.length === 0) {
     return (
-      <header
-        className={cn(
-          // `group` scopes descendants such as AuthNavActions' portal pill to
-          // this header's own `data-appearance`, so a control nested several
-          // levels down (inside the actions slot) can still switch its look
-          // with the scroll state via `group-data-[appearance=solid]:*`
-          // instead of threading a boolean prop through every layer.
-          "group fixed left-0 right-0 top-0 z-[60] transition-colors duration-300 ease-out",
-          {
-            "bg-surface-base/95 text-text-primary shadow-public-nav backdrop-blur-md":
-              shouldUseSolidAppearance,
-            "bg-surface-base/0 text-text-inverted": !shouldUseSolidAppearance,
-            invisible: !isActiveHeader,
-          },
-        )}
-        data-appearance={shouldUseSolidAppearance ? "solid" : "transparent"}
-        data-launch-mode={variant}
-      >
-        <nav
-          aria-label="Public site navigation"
-          className="mx-auto flex h-20 max-w-7xl items-center justify-between gap-6 px-6"
-        >
-          <Logo
-            isSolid={shouldUseSolidAppearance}
-            onNavigate={closeMobileMenu}
-          />
-          {shouldShowNavigationControls ? (
-            <>
-              <PublicNavigationCluster
-                actions={isActiveHeader ? actions : undefined}
-                links={links}
-                onAction={
-                  placement === "dialog"
-                    ? closeMobileMenuImmediately
-                    : undefined
-                }
-              />
-              <MobilePublicNavigationButton
-                isOpen={isMobileMenuOpen}
-                onReopen={reopenMobileMenu}
-                placement={placement}
-                triggerRef={mobileTriggerRef}
-              />
-            </>
-          ) : null}
-        </nav>
-      </header>
+      <PublicNavigationHeader appearance={scrollAppearance} variant={variant} />
     );
-  };
+  }
 
   return (
     <NavigationDialog
-      onOpenChange={(nextOpen) => {
-        if (nextOpen) {
-          setMobileMenuState("open");
-          return;
-        }
-        closeMobileMenu();
-      }}
-      open={isMobileDialogOpen}
+      closeMenuIcon={<X aria-hidden="true" size={28} />}
+      contentClassName="fixed inset-0 z-[55] outline-none md:hidden"
+      menuButtonClassName="relative z-[60] text-current md:hidden"
+      openMenuIcon={<Menu aria-hidden="true" size={28} />}
+      renderTopBar={(topBar) => (
+        <PublicNavigationHeader
+          appearance={topBar.menu.isOpen ? "solid" : scrollAppearance}
+          onNavigateHome={topBar.menu.close}
+          variant={variant}
+        >
+          <PublicNavigationCluster
+            actions={topBar.actions}
+            links={links}
+            onAction={topBar.menu.closeForAction}
+          />
+          {topBar.menuButton}
+        </PublicNavigationHeader>
+      )}
+      title={MOBILE_NAVIGATION_LABEL}
+      topBarActions={actions}
     >
-      {renderHeader("page")}
-      {shouldShowNavigationControls ? (
+      {(menu) => (
         <MobilePublicNavigation
-          dialogHeader={renderHeader("dialog")}
-          isOpen={isMobileMenuOpen}
           links={links}
+          menu={menu}
           mobileActions={mobileActions}
-          onClose={closeMobileMenu}
-          onExitComplete={completeMobileMenuClose}
         />
-      ) : null}
+      )}
     </NavigationDialog>
+  );
+}
+
+type PublicNavigationHeaderProps = {
+  appearance: PublicNavigationAppearance;
+  children?: ReactNode;
+  onNavigateHome?: () => void;
+  variant: PublicNavigationVariant;
+};
+
+function PublicNavigationHeader(props: PublicNavigationHeaderProps) {
+  const { appearance, children, onNavigateHome, variant } = props;
+  const isSolid = appearance === "solid";
+
+  return (
+    <header
+      className={cn(
+        "group fixed left-0 right-0 top-0 z-[60] transition-colors duration-300 ease-out",
+        {
+          "bg-surface-base/95 text-text-primary shadow-public-nav backdrop-blur-md":
+            isSolid,
+          "bg-surface-base/0 text-text-inverted": !isSolid,
+        },
+      )}
+      data-appearance={appearance}
+      data-launch-mode={variant}
+    >
+      <nav
+        aria-label="Public site navigation"
+        className="mx-auto flex h-20 max-w-7xl items-center justify-between gap-6 px-6"
+      >
+        <Logo isSolid={isSolid} onNavigate={onNavigateHome} />
+        {children}
+      </nav>
+    </header>
   );
 }
 
 type PublicNavigationClusterProps = {
   actions?: ReactNode;
   links: readonly PublicNavigationLink[];
-  onAction?: () => void;
+  onAction: () => void;
 };
 
 // The links collapse into the mobile menu below `md`, but the actions stay in the
@@ -224,24 +173,13 @@ function PublicNavigationCluster(props: PublicNavigationClusterProps) {
 }
 
 type MobilePublicNavigationProps = {
-  dialogHeader: ReactNode;
-  isOpen: boolean;
   links: readonly PublicNavigationLink[];
+  menu: NavigationMenu;
   mobileActions?: ReactNode;
-  onClose: () => void;
-  onExitComplete: () => void;
 };
 
 function MobilePublicNavigation(props: MobilePublicNavigationProps) {
-  const {
-    dialogHeader,
-    isOpen,
-    links,
-    mobileActions,
-    onClose,
-    onExitComplete,
-  } = props;
-  const dialogRef = useRef<HTMLDivElement | null>(null);
+  const { links, menu, mobileActions } = props;
   const prefersReducedMotion = useClientReducedMotionPreference();
   const transition = {
     duration: prefersReducedMotion ? 0 : 0.5,
@@ -249,159 +187,85 @@ function MobilePublicNavigation(props: MobilePublicNavigationProps) {
   };
 
   return (
-    <NavigationDialogPortal>
-      <NavigationDialogOverlay className="fixed inset-0" />
-      <NavigationDialogContent
-        aria-describedby={undefined}
-        className="fixed inset-0 z-[55] outline-none md:hidden"
-        id={MOBILE_MENU_ID}
-        onOpenAutoFocus={(event) => {
-          event.preventDefault();
-          dialogRef.current
-            ?.querySelector<HTMLElement>(
-              'nav[aria-label="Mobile public site navigation"] a[href]',
-            )
-            ?.focus();
-        }}
-        onCloseAutoFocus={(event) => {
-          const anotherDialogIsOpen = Array.from(
-            document.querySelectorAll<HTMLElement>('[role="dialog"]'),
-          ).some((dialog) => dialog !== dialogRef.current);
-
-          if (anotherDialogIsOpen) {
-            event.preventDefault();
-          }
-        }}
-        ref={dialogRef}
+    <motion.div
+      animate={
+        menu.isOpen
+          ? { opacity: 1, y: 0 }
+          : { opacity: 0, y: prefersReducedMotion ? 0 : "-100%" }
+      }
+      className="absolute inset-0 flex items-center justify-center bg-surface-page px-6 text-text-primary"
+      initial={prefersReducedMotion ? false : { opacity: 0, y: "-100%" }}
+      onAnimationComplete={menu.completeClose}
+      transition={transition}
+    >
+      <nav
+        aria-label={MOBILE_NAVIGATION_LABEL}
+        className="flex flex-col items-center gap-10"
       >
-        {dialogHeader}
-        <NavigationDialogTitle className="sr-only">
-          Mobile public site navigation
-        </NavigationDialogTitle>
-        <motion.div
-          animate={
-            isOpen
-              ? { opacity: 1, y: 0 }
-              : { opacity: 0, y: prefersReducedMotion ? 0 : "-100%" }
-          }
-          className="absolute inset-0 flex items-center justify-center bg-surface-page px-6 text-text-primary"
-          initial={prefersReducedMotion ? false : { opacity: 0, y: "-100%" }}
-          onAnimationComplete={onExitComplete}
-          transition={transition}
-        >
-          <nav
-            aria-label="Mobile public site navigation"
-            className="flex flex-col items-center gap-10"
-          >
-            {links.map((link, linkIndex) => (
-              <motion.div
-                animate={{ opacity: 1, y: 0 }}
-                initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
-                key={link.href}
-                transition={
-                  prefersReducedMotion
-                    ? { duration: 0 }
-                    : {
-                        delay: 0.1 + linkIndex * 0.1,
-                        duration: 0.32,
-                        ease: "easeOut",
-                      }
-                }
-              >
-                <Link
-                  className="font-heading text-4xl font-medium text-text-primary transition-colors duration-150 ease-out hover:text-brand-primary sm:text-5xl"
-                  onClick={onClose}
-                  to={link.href}
-                >
-                  {link.label}
-                </Link>
-              </motion.div>
-            ))}
-            {mobileActions ? (
-              // A single wrapping click handler closes the menu for whichever
-              // control inside actually fires — the portal pill link or the
-              // Sign In/Out button — instead of threading `onClose` down into
-              // AuthNavActions, which has no reason to know this menu exists.
-              <motion.div
-                animate={{ opacity: 1, y: 0 }}
-                className="flex flex-col items-center gap-6"
-                initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
-                onClick={onClose}
-                transition={
-                  prefersReducedMotion
-                    ? { duration: 0 }
-                    : {
-                        delay: 0.1 + links.length * 0.1,
-                        duration: 0.32,
-                        ease: "easeOut",
-                      }
-                }
-              >
-                {mobileActions}
-              </motion.div>
-            ) : null}
-          </nav>
-          <motion.svg
-            animate={{ opacity: 0.03 }}
-            aria-hidden="true"
-            className="pointer-events-none absolute bottom-0 left-0 right-0 w-full text-brand-primary"
-            fill="none"
-            initial={prefersReducedMotion ? false : { opacity: 0 }}
+        {links.map((link, linkIndex) => (
+          <motion.div
+            animate={{ opacity: 1, y: 0 }}
+            initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
+            key={link.href}
             transition={
               prefersReducedMotion
                 ? { duration: 0 }
-                : { delay: 0.5, duration: 0.3, ease: "easeOut" }
+                : {
+                    delay: 0.1 + linkIndex * 0.1,
+                    duration: 0.32,
+                    ease: "easeOut",
+                  }
             }
-            viewBox="0 0 1440 320"
-            xmlns="http://www.w3.org/2000/svg"
           >
-            <path
-              d="M0,288L48,272C96,256,192,224,288,197.3C384,171,480,149,576,165.3C672,181,768,219,864,218.7C960,219,1056,181,1152,149.3C1248,117,1344,91,1392,80L1440,64L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
-              fill="currentColor"
-            />
-          </motion.svg>
-        </motion.div>
-      </NavigationDialogContent>
-    </NavigationDialogPortal>
-  );
-}
-
-type MobilePublicNavigationButtonProps = {
-  isOpen: boolean;
-  onReopen: () => void;
-  placement: "page" | "dialog";
-  triggerRef: RefObject<HTMLButtonElement | null>;
-};
-
-function MobilePublicNavigationButton(
-  props: MobilePublicNavigationButtonProps,
-) {
-  const { isOpen, onReopen, placement, triggerRef } = props;
-
-  const button = (
-    <IconButton
-      aria-controls={MOBILE_MENU_ID}
-      aria-expanded={isOpen}
-      aria-label={isOpen ? "Close menu" : "Open menu"}
-      className="relative z-[60] text-current md:hidden"
-      onClick={placement === "dialog" && !isOpen ? onReopen : undefined}
-      ref={placement === "page" ? triggerRef : undefined}
-    >
-      {isOpen ? (
-        <X aria-hidden="true" size={28} />
-      ) : (
-        <Menu aria-hidden="true" size={28} />
-      )}
-    </IconButton>
-  );
-
-  if (placement === "page") {
-    return <NavigationDialogTrigger asChild>{button}</NavigationDialogTrigger>;
-  }
-
-  return isOpen ? (
-    <NavigationDialogClose asChild>{button}</NavigationDialogClose>
-  ) : (
-    button
+            <Link
+              className="font-heading text-4xl font-medium text-text-primary transition-colors duration-150 ease-out hover:text-brand-primary sm:text-5xl"
+              onClick={menu.close}
+              ref={linkIndex === 0 ? menu.firstLinkRef : undefined}
+              to={link.href}
+            >
+              {link.label}
+            </Link>
+          </motion.div>
+        ))}
+        {mobileActions ? (
+          <motion.div
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col items-center gap-6"
+            initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
+            onClick={menu.close}
+            transition={
+              prefersReducedMotion
+                ? { duration: 0 }
+                : {
+                    delay: 0.1 + links.length * 0.1,
+                    duration: 0.32,
+                    ease: "easeOut",
+                  }
+            }
+          >
+            {mobileActions}
+          </motion.div>
+        ) : null}
+      </nav>
+      <motion.svg
+        animate={{ opacity: 0.03 }}
+        aria-hidden="true"
+        className="pointer-events-none absolute bottom-0 left-0 right-0 w-full text-brand-primary"
+        fill="none"
+        initial={prefersReducedMotion ? false : { opacity: 0 }}
+        transition={
+          prefersReducedMotion
+            ? { duration: 0 }
+            : { delay: 0.5, duration: 0.3, ease: "easeOut" }
+        }
+        viewBox="0 0 1440 320"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M0,288L48,272C96,256,192,224,288,197.3C384,171,480,149,576,165.3C672,181,768,219,864,218.7C960,219,1056,181,1152,149.3C1248,117,1344,91,1392,80L1440,64L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
+          fill="currentColor"
+        />
+      </motion.svg>
+    </motion.div>
   );
 }

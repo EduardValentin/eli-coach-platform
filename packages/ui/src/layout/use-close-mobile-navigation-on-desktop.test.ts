@@ -1,27 +1,34 @@
 // @vitest-environment happy-dom
 
-import { renderHook, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { renderHook } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { useCloseMobileNavigationOnDesktop } from "./use-close-mobile-navigation-on-desktop";
 
+const nodesAddedOutsideReact: HTMLElement[] = [];
+
+afterEach(() => {
+  while (nodesAddedOutsideReact.length > 0) {
+    nodesAddedOutsideReact.pop()?.remove();
+  }
+});
+
+function appendHiddenMobileControl() {
+  const hiddenRegion = document.createElement("div");
+  const mobileControl = document.createElement("button");
+  hiddenRegion.style.display = "none";
+  hiddenRegion.append(mobileControl);
+  document.body.append(hiddenRegion);
+  nodesAddedOutsideReact.push(hiddenRegion);
+
+  return mobileControl;
+}
+
 describe("useCloseMobileNavigationOnDesktop", () => {
-  it("closes an open menu whose mobile control is hidden by an ancestor", async () => {
+  it("closes an open menu whose mobile control is hidden by an ancestor", () => {
     // arrange
     const close = vi.fn();
-    const hiddenRegion = document.createElement("div");
-    const mobileControl = document.createElement("button");
-    hiddenRegion.style.display = "none";
-    hiddenRegion.append(mobileControl);
-    document.body.append(hiddenRegion);
-    const mainContent = document.createElement("main");
-    const focusMainContent = vi.spyOn(mainContent, "focus");
-    document.body.append(mainContent);
-    vi.spyOn(window, "requestAnimationFrame").mockImplementation((callback) => {
-      callback(0);
-      return 1;
-    });
-    const mobileControlRef = { current: mobileControl };
+    const mobileControlRef = { current: appendHiddenMobileControl() };
 
     // act
     renderHook(() =>
@@ -33,10 +40,6 @@ describe("useCloseMobileNavigationOnDesktop", () => {
     );
 
     // assert
-    await waitFor(() => expect(close).toHaveBeenCalledOnce());
-    expect(focusMainContent).toHaveBeenCalledOnce();
-    expect(mainContent.getAttribute("tabindex")).toBe("-1");
-    hiddenRegion.remove();
-    mainContent.remove();
+    expect(close).toHaveBeenCalledOnce();
   });
 });

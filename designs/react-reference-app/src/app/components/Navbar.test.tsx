@@ -11,7 +11,6 @@ const completeSignIn = vi.hoisted(() => vi.fn());
 
 afterEach(() => {
   vi.restoreAllMocks();
-  setInnerWidth(1024);
 });
 
 vi.mock('../services/authService', async (importOriginal) => {
@@ -50,15 +49,7 @@ function CartFixture() {
   );
 }
 
-function setInnerWidth(value: number) {
-  Object.defineProperty(window, 'innerWidth', {
-    configurable: true,
-    value,
-  });
-}
-
 function renderNavbar(url = '/') {
-  setInnerWidth(390);
   window.history.replaceState({}, '', url);
 
   return render(
@@ -74,7 +65,6 @@ function renderNavbar(url = '/') {
 }
 
 function renderNavbarWithCart() {
-  setInnerWidth(390);
   window.history.replaceState({}, '', '/');
 
   return render(
@@ -161,7 +151,7 @@ describe('Navbar mobile navigation', () => {
     renderNavbar('/');
 
     // act
-    await user.click(screen.getByRole('button', { name: 'Toggle menu' }));
+    await user.click(screen.getByRole('button', { name: 'Open menu' }));
 
     // assert
     expect(
@@ -176,7 +166,7 @@ describe('Navbar mobile navigation', () => {
     renderNavbar('/');
 
     // act
-    await user.click(screen.getByRole('button', { name: 'Toggle menu' }));
+    await user.click(screen.getByRole('button', { name: 'Open menu' }));
 
     // assert
     const dialog = screen.getByRole('dialog', {
@@ -193,7 +183,7 @@ describe('Navbar mobile navigation', () => {
     const user = userEvent.setup();
     renderNavbar('/');
     render(<FocusOutsideDialogFixture />);
-    await user.click(screen.getByRole('button', { name: 'Toggle menu' }));
+    await user.click(screen.getByRole('button', { name: 'Open menu' }));
     const reached: (string | null)[] = [];
 
     // act
@@ -210,7 +200,7 @@ describe('Navbar mobile navigation', () => {
     // arrange
     const user = userEvent.setup();
     renderNavbar('/');
-    const trigger = screen.getByRole('button', { name: 'Toggle menu' });
+    const trigger = screen.getByRole('button', { name: 'Open menu' });
     await user.click(trigger);
 
     // act
@@ -231,11 +221,11 @@ describe('Navbar mobile navigation', () => {
     // arrange
     const user = userEvent.setup();
     renderNavbar('/');
-    await user.click(screen.getByRole('button', { name: 'Toggle menu' }));
+    await user.click(screen.getByRole('button', { name: 'Open menu' }));
 
     // act
     await user.keyboard('{Escape}');
-    await user.click(screen.getByRole('button', { name: 'Toggle menu' }));
+    await user.click(screen.getByRole('button', { name: 'Open menu' }));
 
     // assert
     expect(screen.getByRole('dialog', { name: 'Mobile public site navigation' })).toHaveAttribute(
@@ -247,19 +237,12 @@ describe('Navbar mobile navigation', () => {
   it('closes when the viewport crosses the desktop breakpoint', async () => {
     // arrange
     const user = userEvent.setup();
-    setInnerWidth(767);
     renderNavbar('/');
-    await user.click(screen.getByRole('button', { name: 'Toggle menu' }));
+    const menuTrigger = screen.getByRole('button', { name: 'Open menu' });
+    await user.click(menuTrigger);
 
     // act
-    const mobileControl = document.querySelector<HTMLButtonElement>(
-      'button[aria-haspopup="dialog"]',
-    );
-    if (mobileControl === null) {
-      throw new Error('The mobile navigation trigger was not rendered');
-    }
-    mobileControl.style.display = 'none';
-    setInnerWidth(768);
+    menuTrigger.style.display = 'none';
     window.dispatchEvent(new Event('resize'));
 
     // assert
@@ -278,13 +261,14 @@ describe('Navbar mobile navigation', () => {
     const user = userEvent.setup();
     renderNavbarWithCart();
     await user.click(screen.getByRole('button', { name: 'Seed cart' }));
-    await user.click(screen.getByRole('button', { name: 'Toggle menu' }));
+    await user.click(screen.getByRole('button', { name: 'Open menu' }));
 
     // act
     const dialog = screen.getByRole('dialog', {
       name: 'Mobile public site navigation',
     });
-    await user.click(within(dialog).getByRole('button', { name: 'Open cart' }));
+    const [, mobileCartButton] = within(dialog).getAllByRole('button', { name: 'Open cart' });
+    await user.click(mobileCartButton);
 
     // assert
     expect(screen.getByTestId('cart-state')).toHaveTextContent('open');
@@ -295,6 +279,6 @@ describe('Navbar mobile navigation', () => {
         }),
       ).not.toBeInTheDocument();
     });
-    expect(screen.getByRole('button', { name: 'Toggle menu' })).not.toHaveFocus();
+    expect(screen.getByRole('button', { name: 'Open menu' })).not.toHaveFocus();
   });
 });

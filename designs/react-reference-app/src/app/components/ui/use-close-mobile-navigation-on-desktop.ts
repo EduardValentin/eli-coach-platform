@@ -19,18 +19,6 @@ function isHiddenByDisplay(element: HTMLElement) {
   return false;
 }
 
-function focusMainContent() {
-  const mainContent = document.querySelector<HTMLElement>('main');
-  if (mainContent === null) {
-    return;
-  }
-
-  if (!mainContent.hasAttribute('tabindex')) {
-    mainContent.tabIndex = -1;
-  }
-  mainContent.focus({ preventScroll: true });
-}
-
 export function useCloseMobileNavigationOnDesktop(options: CloseMobileNavigationOptions) {
   const { close, isOpen, mobileControlRef } = options;
 
@@ -43,7 +31,6 @@ export function useCloseMobileNavigationOnDesktop(options: CloseMobileNavigation
       const mobileControl = mobileControlRef.current;
       if (mobileControl !== null && isHiddenByDisplay(mobileControl)) {
         close();
-        window.requestAnimationFrame(focusMainContent);
       }
     };
 

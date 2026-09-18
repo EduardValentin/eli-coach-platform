@@ -10,6 +10,7 @@ import {
   within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MotionConfig } from "motion/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { MemoryRouter } from "react-router";
 import { configureAxe } from "vitest-axe";
@@ -25,15 +26,7 @@ const axe = configureAxe({
 
 afterEach(() => {
   cleanup();
-  setInnerWidth(1024);
 });
-
-function setInnerWidth(value: number) {
-  Object.defineProperty(window, "innerWidth", {
-    configurable: true,
-    value,
-  });
-}
 
 const portalLinks = [
   { href: "/coach", label: "Dashboard", icon: <span aria-hidden="true" /> },
@@ -45,25 +38,26 @@ const portalLinks = [
 ] as const;
 
 function renderShell(initialPath = "/coach") {
-  setInnerWidth(390);
   return render(
-    <MemoryRouter initialEntries={[initialPath]}>
-      <PortalShell
-        asideLabel="Coach portal sidebar"
-        brand={<p>Evoa</p>}
-        links={portalLinks}
-        mobileNavigationLabel="Coach portal mobile navigation"
-        navigationLabel="Coach portal navigation"
-        topBarBrand={<p>Coach Portal</p>}
-      >
-        <div>Coach content</div>
-      </PortalShell>
-    </MemoryRouter>,
+    <MotionConfig reducedMotion="always">
+      <MemoryRouter initialEntries={[initialPath]}>
+        <PortalShell
+          asideLabel="Coach portal sidebar"
+          brand={<p>Evoa</p>}
+          links={portalLinks}
+          mobileNavigationLabel="Coach portal mobile navigation"
+          navigationLabel="Coach portal navigation"
+          topBarBrand={<p>Coach Portal</p>}
+        >
+          <div>Coach content</div>
+        </PortalShell>
+      </MemoryRouter>
+    </MotionConfig>,
   );
 }
 
 function queryMobileNavigation() {
-  return screen.queryByRole("navigation", {
+  return screen.queryByRole("dialog", {
     name: "Coach portal mobile navigation",
   });
 }
@@ -73,7 +67,7 @@ async function openMobileMenu(user: ReturnType<typeof userEvent.setup>) {
   toggle.focus();
   await user.keyboard("{Enter}");
 
-  return screen.findByRole("navigation", {
+  return screen.findByRole("dialog", {
     name: "Coach portal mobile navigation",
   });
 }
@@ -158,10 +152,11 @@ describe("PortalShell mobile menu", () => {
 
     // assert
     expect(
-      screen.getByRole("dialog", {
-        name: "Coach portal mobile navigation",
+      within(menu).getByRole("navigation", {
+        name: "Coach portal navigation",
       }),
     ).toBeInTheDocument();
+    expect(within(menu).queryByRole("complementary")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Close menu" })).toHaveAttribute(
       "aria-expanded",
       "true",
@@ -186,22 +181,15 @@ describe("PortalShell mobile menu", () => {
     expect(screen.getByRole("button", { name: "Open menu" })).toHaveFocus();
   });
 
-  it("closes when the viewport crosses the desktop breakpoint", async () => {
+  it("closes when the viewport crosses the desktop breakpoint and focuses the main content", async () => {
     // arrange
     const user = userEvent.setup();
-    setInnerWidth(1023);
     renderShell();
+    const menuTrigger = screen.getByRole("button", { name: "Open menu" });
     await openMobileMenu(user);
 
     // act
-    const mobileControl = document.querySelector<HTMLButtonElement>(
-      'button[aria-haspopup="dialog"]',
-    );
-    if (mobileControl === null) {
-      throw new Error("The mobile navigation trigger was not rendered");
-    }
-    mobileControl.style.display = "none";
-    setInnerWidth(1024);
+    menuTrigger.style.display = "none";
     window.dispatchEvent(new Event("resize"));
 
     // assert
@@ -209,6 +197,9 @@ describe("PortalShell mobile menu", () => {
       expect(queryMobileNavigation()).not.toBeInTheDocument();
     });
     expect(document.body).not.toHaveAttribute("data-scroll-locked");
+    await waitFor(() => {
+      expect(screen.getByRole("main")).toHaveFocus();
+    });
   });
 
   it("keeps Tab cycling between the open menu and the toggle", async () => {
