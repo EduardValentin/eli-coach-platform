@@ -4,6 +4,7 @@ import {
   PRIVACY_POLICY_VERSION,
   WAITLIST_MARKETING_CONSENT_VERSION,
 } from "@eli-coach-platform/content";
+import type { FeatureFlagReader } from "@eli-coach-platform/domain/feature-flag";
 import type { Clock } from "@eli-coach-platform/domain/shared";
 import {
   GetWaitlistUseCase,
@@ -23,11 +24,12 @@ export type WaitlistFeature = {
   waitlist: WaitlistController;
 };
 
-export type WaitlistFeatureHandles = {
+type WaitlistFeatureHandles = {
   botVerifier: BotVerifier;
   clock: Clock;
   contactEmail: string;
   database: DatabaseClient;
+  featureFlags: FeatureFlagReader;
   incidents: WaitlistIncidents;
   privacyEmail: string;
   productEmail: ProductEmail;
@@ -44,7 +46,6 @@ export function composeWaitlistFeature(
 ): WaitlistFeature {
   const waitlist = Waitlist.configure({
     cap: handles.waitlist.WAITLIST_CAP,
-    enabled: handles.waitlist.WAITLIST_MODE,
     offer: {
       plan: handles.waitlist.WAITLIST_ACTIVE_OFFER_PLAN,
       campaignSlug: handles.waitlist.WAITLIST_ACTIVE_CAMPAIGN_SLUG,
@@ -57,6 +58,8 @@ export function composeWaitlistFeature(
       botVerifier: handles.botVerifier,
       getWaitlist: new GetWaitlistUseCase({
         clock: handles.clock,
+        featureFlags: handles.featureFlags,
+        incidents: handles.incidents,
         waitlist,
         waitlistEntries,
       }),

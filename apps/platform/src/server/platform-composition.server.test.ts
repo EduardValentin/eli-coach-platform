@@ -1,6 +1,5 @@
 import { loadRuntimeEnvironment } from "@eli-coach-platform/config/runtime";
 import { CLERK_TEST_ENVIRONMENT } from "@eli-coach-platform/test-support";
-import type { DatabaseClient } from "@eli-coach-platform/db";
 import { mkdtempSync } from "node:fs";
 import { rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -13,14 +12,6 @@ const storeAssetRoot = mkdtempSync(
   join(tmpdir(), "eli-coach-platform-composition-"),
 );
 
-function createDatabaseStub(): DatabaseClient {
-  return {
-    select: () => {
-      throw new Error("database down");
-    },
-  } as unknown as DatabaseClient;
-}
-
 function createRuntimeEnvironment() {
   return loadRuntimeEnvironment({
     APP_NAME: "eli-coach-platform",
@@ -30,7 +21,6 @@ function createRuntimeEnvironment() {
     NODE_ENV: "development",
     PUBLIC_APP_URL: "https://eli.example",
     STORE_ASSET_ROOT: storeAssetRoot,
-    WAITLIST_MODE: "true",
   });
 }
 
@@ -41,10 +31,14 @@ describe("composePlatformFeature", () => {
 
   it("reports readiness on a local environment without a database", async () => {
     // arrange
+    const featureFlags = {
+      execute: async () => ({ WAITLIST_MODE: true }),
+    };
+
     const feature = composePlatformFeature({
       app: createRuntimeEnvironment(),
       botDetection: { provider: "static", token: "XXXX.DUMMY.TOKEN.XXXX" },
-      database: createDatabaseStub(),
+      featureFlags,
       version: "dev",
     });
 

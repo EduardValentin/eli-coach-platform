@@ -1,6 +1,8 @@
 # Decisions
 
-Header: date 2026-09-18, commit a79f507d (base 79fa1e95), scope 43 changed implementation files in C1, C6, C7, C8 and C14 plus direct neighbors, mode partial change review (run 8 baseline e8690f45).
+Header: date 2026-09-18, commit 8ac6a613 (PR #229 head, squash-merged to main as 7d92dc22; base 79fa1e95), scope 46 changed implementation files in C1, C6, C7, C8 and C14 plus direct neighbors, mode partial change review (run 8 baseline e8690f45).
+
+Change review: date 2026-09-18, commit c2277ebb, baseline 7d92dc22, scope the persisted waitlist-mode change (`79fa1e95..f0eb1bf4`, merged with main in `242a0976`): the changed units and their direct graph neighborhood in apps/platform, packages/{config,content,db,domain,infrastructure,ui}, tests, migrations and package deployment; partial scope. It adds the waitlist-mode rows dated 2026-09-18 below and changes no earlier row except C8's accepted cost.
 
 ## Deferred decisions
 
@@ -27,7 +29,7 @@ Header: date 2026-09-18, commit a79f507d (base 79fa1e95), scope 43 changed imple
 | C5 packages/ui | split by concern into six subpaths, no root barrel | each subpath still ships in one package; a consumer imports the subpath it needs rather than the whole design system |
 | C6 packages/infrastructure | adapters, factories and three adapter-facing concern contracts, split into seven subpaths; provider implementations stay private behind factories | C6 remains heavily depended on and mostly concrete; `a79f507d` moved D 0.72 → 0.70, so recurring volatility remains the trigger to revisit this grouping |
 | C7 features/store | grouped for maintenance: server and browser halves of one feature | the largest component (37 modules fan-out) |
-| C8 features/waitlist | grouped for maintenance | none material |
+| C8 features/waitlist | grouped for maintenance across composition, persistence, delivery, contracts and UI | the persisted-mode change crossed C1, C3, C8, C14 and C15; this spread is accepted until a concrete waitlist change justifies moving a boundary |
 | C9 features/accounts | grouped for maintenance: Clerk adapters, guards, context and UI; `server/guards/` is its surface-facing kernel, four modules, with `sessionContext` and `accountsContext` as the accepted two keys | its `server/guards/` folder is consumed by three surfaces and the root, so it is effectively a shared kernel; everything else in `server/` stays private to the container |
 | C11 surfaces/public-site | grouped by product (assembly), and since D5 it also owns the coaching-bundle literal and its presenter under `sections/pricing/` | a pricing change edits a surface; a second surface needing bundles would force the literal to move again |
 | C12-C13 portal surfaces | grouped by product (assembly) | none material; portals are near-empty shells today |
@@ -68,6 +70,7 @@ Header: date 2026-09-18, commit a79f507d (base 79fa1e95), scope 43 changed imple
 | `packages/test-support` is a dev-only workspace package no production package declares | the shared Clerk fixture must not sit on a production barrel | fenced by `no-production-import-of-tests` and `not-to-dev-dep`, and stripped by `pnpm --prod deploy` | Eduard | 2026-09-17 |
 | Email templates render React on the server (`email-primitives.server.tsx`) and in each feature's `email/` content builders | React as an HTML templating engine, never hydrated | framework in an adapter package; accepted by design (F52, F53) | implicit | 2026-08-09 |
 | `packages/domain/src/shared` is interface-only and publishes only `Clock`, implemented in `apps/platform/src/server/container.server.ts` and consumed by the waitlist, acquisition and download-grant use cases | wall-clock time is the only capability shared by unrelated policy slices | `/shared` must not become a bucket for adapter-facing or incident-specific contracts | Eduard | 2026-09-17 |
+| `packages/domain/src/waitlist/get-waitlist-use-case.ts` imports `FeatureFlagReader` and `FeatureFlagSet` through the `feature-flag` slice entry | reuse the existing policy input boundary for one per-request read shared with the platform API | waitlist policy interprets one operator-owned flag; `domain-slices` limits the edge to the entry and `no-circular` prevents a cycle | Eduard | 2026-09-18 |
 | The `stability` rule (R31) judges only edges that cross from one workspace package into another, and is the one rule with no fixture | an intra-package barrel edge is structurally "unstable-ward" by construction, so it is not what R31 targets; `moreUnstable` needs dependent counts a synthetic fixture tree cannot express, so the real-tree cruise is its only proof (a spec §3.6 deviation) | none: cross-package instability remains fully enforced | Eduard | 2026-09-17 |
 | `apps/platform/src/surfaces/*/routes.ts` is exempt from the app-root-alias ESLint rules | the `~` alias does not resolve inside React Router's route-config loader | none: the structural rules that matter for those files (`surface-<s>-to-feature`, `root-registry-to-server`, `feature-server-private`) still apply | Eduard | 2026-09-17 |
 | `packages/domain/tsconfig.json` sets `"types": []` | an ambient global needs no import and produces no dependency edge, so no rule of any shape can see `@types/node`'s `NodeJS.*` and `Buffer` inside the domain; run 1's blocker F5 (`openVerified(): Promise<NodeJS.ReadableStream>`) is exactly that class. Closing the type scope makes the domain typecheck fail on a Node global, and the package uses only web-standard types (`AsyncIterable<Uint8Array>`) | the domain cannot use Node APIs even in a test file inside `src`; that is the intent | Eduard | 2026-09-17 |
@@ -85,13 +88,18 @@ Header: date 2026-09-18, commit a79f507d (base 79fa1e95), scope 43 changed imple
 
 ## Accepted findings
 
-| Ledger finding | Rule | Reason accepted | Accepted by | Date |
+| Ledger finding or target | Rule | Reason accepted | Accepted by | Date |
 |---|---|---|---|---|
 | F7 | R6 (CH-C) | Single-implementation use cases in a pre-launch MVP; controllers depend on the service class type, which TypeScript treats structurally, so tests already substitute doubles | Eduard | 2026-09-16 |
 | F52, F53 | R21 (CH-R) | The "React as email templating" exception extends to the content builders in a feature's `email/` folder; rendering is their job as adapters | Eduard | 2026-09-16 |
 | F88, F89 | R39 | Controller shape (no base controller, no request state on instance fields) and infrastructure-failure mapping stay review-owned. The mapping rule now reads "an adapter never swallows an infrastructure failure into a result-union member; exactly one named expected condition may be classified"; run 6 read all sixteen catch sites in the adapter ring and found one residue (a bare catch in `TurnstileBotVerifier`) | Eduard | 2026-09-16 |
 | F150, F151 | R13 | One request-context key per feature (plan review run 2): a feature's controllers belong to one actor, a route names the single member it uses, and a test sets one key with one fake. The platform key is split instead (controllers for the app's routes, runtime config for surfaces) because its consumers span components | Eduard | 2026-09-16 |
 | F76 | R36 | Resolved at 148d594f: no test in `apps/platform/src` mocks a hook or the fetch mechanism | Eduard | 2026-09-16 |
+| `packages/domain/src/waitlist/get-waitlist-use-case.ts` → `packages/domain/src/feature-flag/index.ts` | R39 | The caller explicitly approved reuse of the existing `FeatureFlagReader`; `domain-slices` enforces entry-only access and `no-circular` protects the slice graph | Eduard | 2026-09-18 |
+| `Waitlist.cap` and `Waitlist.offer` remain readonly public fields used by both waitlist use cases | R14 | The approved model keeps Waitlist as the domain entity for cap, offer and availability; hiding those fields would broaden a projection-only refactor and add accessors without changing the boundary | Eduard | 2026-09-18 |
+| `packages/domain/src/waitlist/waitlist.ts:Waitlist.offer` | R17 | Waitlist is the configured waiting-list aggregate; cap and active offer form the aggregate configuration shared by availability and registration workflows. Accepted risk: use cases read the readonly offer object directly, and its nested representation is not deeply immutable; revisit when offer mutation or a second offer model is required. | Eduard | 2026-09-18 |
+| C3 remains the concrete runtime-configuration hub | R31 | Restructuring the config package is pre-existing debt outside the approved persisted-mode behavior and packaging fixes | Eduard | 2026-09-18 |
+| The persisted-mode change spans C1, C3, C8, C14 and C15 | R27 | The direct reader edge and existing feature/composition boundaries are approved; restructuring C8 would broaden a behavior-preserving review fix without a concrete next requirement | Eduard | 2026-09-18 |
 
 ## Open questions
 

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
+import type { FeatureFlagReader } from "../feature-flag";
 import { GetWaitlistUseCase } from "./get-waitlist-use-case";
 import { JoinWaitlistUseCase } from "./join-waitlist-use-case";
 import {
@@ -21,11 +22,22 @@ const consentVersions = {
 const fixedClock = { now: () => new Date("2026-07-30T12:00:00.000Z") };
 
 function createWaitlistIncidents() {
-  return { confirmationDeliveryFailed: vi.fn() };
+  return {
+    confirmationDeliveryFailed: vi.fn(),
+    waitlistModeReadFailed: vi.fn(),
+  };
 }
 
-function createWaitlist(enabled: boolean): Waitlist {
-  return Waitlist.configure({ cap: 10, enabled, offer: activeOffer });
+function createFeatureFlags(
+  flags: Record<string, boolean> = { WAITLIST_MODE: true },
+): FeatureFlagReader {
+  return {
+    execute: vi.fn().mockResolvedValue(flags),
+  };
+}
+
+function createWaitlist(): Waitlist {
+  return Waitlist.configure({ cap: 10, offer: activeOffer });
 }
 
 function createWaitlistEntries(
@@ -58,17 +70,19 @@ function createJoinWaitlist(options: {
     confirmation: options.confirmation,
     consentVersions,
     incidents: options.incidents,
-    waitlist: createWaitlist(true),
+    waitlist: createWaitlist(),
     waitlistEntries: options.waitlistEntries,
   });
 }
 
 describe("GetWaitlistUseCase", () => {
-  it("returns the deployment-configured mode independently of availability", async () => {
+  it("returns the persisted mode independently of availability", async () => {
     // arrange
     const getWaitlist = new GetWaitlistUseCase({
       clock: fixedClock,
-      waitlist: createWaitlist(false),
+      featureFlags: createFeatureFlags({ WAITLIST_MODE: false }),
+      incidents: createWaitlistIncidents(),
+      waitlist: createWaitlist(),
       waitlistEntries: createWaitlistEntries({
         countReducedPricingSignupsCreatedBefore: vi.fn().mockResolvedValue(0),
       }),
@@ -85,6 +99,88 @@ describe("GetWaitlistUseCase", () => {
     });
   });
 
+  it("treats an absent persisted flag as disabled", async () => {
+    // arrange
+    const getWaitlist = new GetWaitlistUseCase({
+      clock: fixedClock,
+      featureFlags: createFeatureFlags({}),
+      incidents: createWaitlistIncidents(),
+      waitlist: createWaitlist(),
+      waitlistEntries: createWaitlistEntries(),
+    });
+
+    // act
+    const waitlist = await getWaitlist.execute();
+
+    // assert
+    expect(waitlist).toEqual({
+      enabled: false,
+      offer: activeOffer,
+      availability: "available",
+    });
+  });
+
+  it("uses safe waitlist mode without availability when feature flags are unreachable", async () => {
+    // arrange
+    const getWaitlist = new GetWaitlistUseCase({
+      clock: fixedClock,
+      featureFlags: {
+        execute: vi.fn().mockRejectedValue(new Error("database unavailable")),
+      },
+      incidents: createWaitlistIncidents(),
+      waitlist: createWaitlist(),
+      waitlistEntries: createWaitlistEntries(),
+    });
+
+    // act
+    const waitlist = await getWaitlist.execute();
+
+    // assert
+    expect(waitlist).toEqual({
+      enabled: true,
+      offer: activeOffer,
+      availability: null,
+    });
+  });
+
+  it("records a failed feature flag read", async () => {
+    // arrange
+    const incidents = createWaitlistIncidents();
+    const getWaitlist = new GetWaitlistUseCase({
+      clock: fixedClock,
+      featureFlags: {
+        execute: vi.fn().mockRejectedValue(new Error("database unavailable")),
+      },
+      incidents,
+      waitlist: createWaitlist(),
+      waitlistEntries: createWaitlistEntries(),
+    });
+
+    // act
+    await getWaitlist.execute();
+
+    // assert
+    expect(incidents.waitlistModeReadFailed).toHaveBeenCalledWith();
+  });
+
+  it("records nothing when the feature flags are read", async () => {
+    // arrange
+    const incidents = createWaitlistIncidents();
+    const getWaitlist = new GetWaitlistUseCase({
+      clock: fixedClock,
+      featureFlags: createFeatureFlags(),
+      incidents,
+      waitlist: createWaitlist(),
+      waitlistEntries: createWaitlistEntries(),
+    });
+
+    // act
+    await getWaitlist.execute();
+
+    // assert
+    expect(incidents.waitlistModeReadFailed).not.toHaveBeenCalled();
+  });
+
   it("returns the delayed available waitlist snapshot", async () => {
     // arrange
     const waitlistEntries = createWaitlistEntries({
@@ -92,7 +188,9 @@ describe("GetWaitlistUseCase", () => {
     });
     const getWaitlist = new GetWaitlistUseCase({
       clock: { now: () => new Date("2026-07-26T10:12:00.000Z") },
-      waitlist: createWaitlist(true),
+      featureFlags: createFeatureFlags(),
+      incidents: createWaitlistIncidents(),
+      waitlist: createWaitlist(),
       waitlistEntries,
     });
 
@@ -117,7 +215,9 @@ describe("GetWaitlistUseCase", () => {
     // arrange
     const getWaitlist = new GetWaitlistUseCase({
       clock: fixedClock,
-      waitlist: createWaitlist(true),
+      featureFlags: createFeatureFlags(),
+      incidents: createWaitlistIncidents(),
+      waitlist: createWaitlist(),
       waitlistEntries: createWaitlistEntries({
         countReducedPricingSignupsCreatedBefore: vi.fn().mockResolvedValue(8),
       }),
@@ -134,11 +234,13 @@ describe("GetWaitlistUseCase", () => {
     });
   });
 
-  it("returns the delayed closed waitlist snapshot when deployment mode is disabled", async () => {
+  it("returns the delayed closed waitlist snapshot when persisted mode is disabled", async () => {
     // arrange
     const getWaitlist = new GetWaitlistUseCase({
       clock: fixedClock,
-      waitlist: createWaitlist(false),
+      featureFlags: createFeatureFlags({ WAITLIST_MODE: false }),
+      incidents: createWaitlistIncidents(),
+      waitlist: createWaitlist(),
       waitlistEntries: createWaitlistEntries({
         countReducedPricingSignupsCreatedBefore: vi.fn().mockResolvedValue(10),
       }),
@@ -155,11 +257,13 @@ describe("GetWaitlistUseCase", () => {
     });
   });
 
-  it("returns an unavailable public snapshot when delayed observation fails", async () => {
+  it("retains the persisted mode when delayed availability is unreachable", async () => {
     // arrange
     const getWaitlist = new GetWaitlistUseCase({
       clock: fixedClock,
-      waitlist: createWaitlist(true),
+      featureFlags: createFeatureFlags({ WAITLIST_MODE: false }),
+      incidents: createWaitlistIncidents(),
+      waitlist: createWaitlist(),
       waitlistEntries: createWaitlistEntries({
         countReducedPricingSignupsCreatedBefore: vi
           .fn()
@@ -172,7 +276,7 @@ describe("GetWaitlistUseCase", () => {
 
     // assert
     expect(waitlist).toEqual({
-      enabled: true,
+      enabled: false,
       offer: activeOffer,
       availability: null,
     });

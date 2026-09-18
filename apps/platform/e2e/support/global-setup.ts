@@ -18,27 +18,7 @@ import {
   requireRealEnv,
 } from "./env";
 import { resolveRunId } from "./run-id";
-
-// PublicLayout renders no auth controls at all while the waitlist is on
-// (authControlsEnabled = !waitlist.enabled, and waitlist.enabled is read
-// straight from this env var at process boot) — every journey here starts
-// by clicking "Sign In" or asserting a signed-out/signed-in nav state, none
-// of which exists in that mode. This isn't a test-only concern: a human
-// clicking through the app locally hits the same dead end, so it's worth
-// failing loudly here rather than have every journey time out looking for a
-// button that was never going to render.
-function requireWaitlistModeDisabled(): void {
-  const value = process.env.WAITLIST_MODE;
-
-  if (value === "true") {
-    throw new Error(
-      'WAITLIST_MODE is "true" in the repo root .env. Waitlist mode hides ' +
-        "every auth control (Sign In/Out, the Client/Coach Portal pills) " +
-        "from the public nav, so none of this suite's journeys can run. Set " +
-        'it to "false" locally before running the Playwright suite.',
-    );
-  }
-}
+import { disableWaitlistMode } from "./waitlist-mode";
 
 // requirePortalAccess redirects an anonymous visitor here when they hit a
 // guarded portal route directly (apps/platform/src/features/accounts/
@@ -114,7 +94,6 @@ export default async function globalSetup() {
   requireRealEnv("CLERK_PUBLISHABLE_KEY");
   requireRealEnv("CLERK_SECRET_KEY");
   requireRealSignInUrl();
-  requireWaitlistModeDisabled();
 
   // This run's own id — shared with fixtures.ts (the worker process) and
   // global-teardown.ts via run-id.ts's environment variable — so every
@@ -123,6 +102,6 @@ export default async function globalSetup() {
   const runId = resolveRunId();
 
   await sweepLeftoverRegistries(runId);
-
   await clerkSetup();
+  await disableWaitlistMode();
 }

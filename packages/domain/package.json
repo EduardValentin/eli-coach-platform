@@ -2,6 +2,11 @@
   "name": "@eli-coach-platform/domain",
   "private": true,
   "type": "module",
+  "files": [
+    "src",
+    "!src/**/*.test.*",
+    "!src/**/*.spec.*"
+  ],
   "exports": {
     "./account": "./src/account/index.ts",
     "./acquisition": "./src/acquisition/index.ts",

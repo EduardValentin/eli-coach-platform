@@ -89,4 +89,23 @@ describe("createConsoleLogger", () => {
       },
     );
   });
+
+  it("logs a failed waitlist mode feature flag read", () => {
+    // arrange
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+
+    // act
+    logger.waitlistModeReadFailed();
+
+    // assert
+    expect(consoleError).toHaveBeenCalledWith(
+      "Waitlist mode feature flag read failed.",
+      {
+        errorCategory: "waitlist_mode_read_failure",
+      },
+    );
+  });
 });

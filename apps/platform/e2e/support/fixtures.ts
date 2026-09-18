@@ -2,10 +2,11 @@ import { createClerkClient, type ClerkClient } from "@clerk/backend";
 import { setupClerkTestingToken } from "@clerk/testing/playwright";
 import { test as base, expect } from "@playwright/test";
 import type { AccountRole } from "@eli-coach-platform/domain/account";
-import pg from "pg";
+import type pg from "pg";
 
 import { AccountPortal } from "./account-portal";
 import { recordCreatedEmail } from "./clerk-users";
+import { createE2eDatabasePool } from "./database";
 import { requireEnv } from "./env";
 import { PublicNav } from "./public-nav";
 import { resolveRunId } from "./run-id";
@@ -71,13 +72,7 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
     // fixture needs none of them.
     // eslint-disable-next-line no-empty-pattern
     async ({}, use) => {
-      const pool = new pg.Pool({
-        host: requireEnv("DATABASE_HOST"),
-        port: Number(requireEnv("DATABASE_PORT")),
-        database: requireEnv("DATABASE_NAME"),
-        user: requireEnv("DATABASE_USER"),
-        password: requireEnv("DATABASE_PASSWORD"),
-      });
+      const pool = createE2eDatabasePool();
 
       await use(pool);
       await pool.end();
