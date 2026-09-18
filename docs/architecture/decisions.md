@@ -2,6 +2,8 @@
 
 Header: date 2026-09-18, commit 8ac6a613 (PR #229 head, squash-merged to main as 7d92dc22; base 79fa1e95), scope 46 changed implementation files in C1, C6, C7, C8 and C14 plus direct neighbors, mode partial change review (run 8 baseline e8690f45).
 
+Change review: date 2026-09-18, commit b3eb2653 (PR #232, base 299f237f); scope the waitlist capacity enforcement: the C8 waitlist repository, table, constraint-violation classifier and migration 0019, the C1 cap constant, the C3 waitlist config and the integration rig; partial scope. Rows it changed or added carry the commit.
+
 Change review: date 2026-09-18, commit c2277ebb, baseline 7d92dc22, scope the persisted waitlist-mode change (`79fa1e95..f0eb1bf4`, merged with main in `242a0976`): the changed units and their direct graph neighborhood in apps/platform, packages/{config,content,db,domain,infrastructure,ui}, tests, migrations and package deployment; partial scope. It adds the waitlist-mode rows dated 2026-09-18 below and changes no earlier row except C8's accepted cost.
 
 ## Deferred decisions
@@ -59,6 +61,20 @@ Change review: date 2026-09-18, commit c2277ebb, baseline 7d92dc22, scope the pe
 | D11 | `packages/domain/src/shared` owns only `Clock`. `BotVerifier`, `ProductEmail` and `ManagementAuthenticator` live in their matching C6 concerns and are published only through the concern's server subpath. | Keep adapter-facing contracts in a generic policy shared bucket | No domain use case consumes them: their implementations are adapters in the matching C6 concern, and their consumers are infrastructure or delivery adapters (`BotVerifier` by the store acquisitions and waitlist controllers, `ManagementAuthenticator` by the store management controller, `ProductEmail` by the store and waitlist email adapters). Concern ownership removes eight C6→C1 importing modules without exposing concrete implementations. | Eduard | 2026-09-17 |
 | D12 | Operational incident signaling uses `AcquisitionIncidents` and `WaitlistIncidents`, each declared beside the consuming use case. | Keep a generic `Logger` port in `/shared` | The narrow interfaces name policy-significant incidents, keep each consumer at one actor, and prevent log message/details shapes from becoming shared policy vocabulary. | Eduard | 2026-09-17 |
 | D13 | `apps/platform/src/server/logger.server.ts:createConsoleLogger` implements both incident interfaces as one console adapter, preserving the existing messages and structured details. | One console adapter per incident interface | Console logging has one operator/platform actor and no independent cadence yet; one composition-root instance satisfies both narrow interfaces without coupling the domain slices. | Eduard | 2026-09-17 |
+
+## Waitlist capacity enforcement decisions (2026-09-18)
+
+| # | Decision | Alternative rejected | Reason | Accepted by | Date |
+|---|---|---|---|---|---|
+| D14 | The waitlist rules are enforced by database constraints on `app.waitlist_entries`: `UNIQUE (email, offer_slug)` keeps one entry per email and offer, and each reduced-price entry holds a numbered `reduced_slot` under `UNIQUE (offer_slug, reduced_slot)`, `CHECK (reduced_slot BETWEEN 1 AND N)` and a check that a slot is present exactly for reduced entries. The signup runs as one `READ COMMITTED` transaction that takes the per-offer `pg_advisory_xact_lock`, refreshes consent for an existing email, otherwise inserts with the lowest free slot in 1..N (`generate_series` with `NOT EXISTS`), or registers at the regular price when none is free. The lock only queues signups so they commit in order; it is not what guarantees the rules. | The advisory lock alone (#232 as first pushed) | Rules held only by a lock protect only the writers that take it; the constraints hold for any future writer, including one that skips the lock. | Eduard | 2026-09-18 |
+| D15 | `SERIALIZABLE` with three immediate retries is dropped, and no retry loop replaces it. A constraint rejection, which can only happen when some writer skipped the lock, is mapped by constraint name and SQLSTATE to the normal outcome: a unique violation on `(offer_slug, reduced_slot)` or a violation of the slot range registers at the regular price, and a unique violation on `(email, offer_slug)` refreshes consent. Every other database error stays a failure. | Keep `SERIALIZABLE` and retry serialization failures | Every signup contends on the same rows, so repeated serialization failures exhausted the retries and answered 500. Serializable protection also covers only transactions that are themselves serializable (PostgreSQL documentation §13.4.1), so it would not protect against a writer at another isolation level. | Eduard | 2026-09-18 |
+| D16 | N is the domain constant `WAITLIST_REDUCED_PRICING_CAP`, read by the schema's check constraint; the `WAITLIST_CAP` runtime setting is removed. An integration test proves the constant and the constraint's N agree. | Keep N as deployment configuration | A configured cap could disagree with the constraint the migration fixed; N changes only through code review with its migration. | Eduard | 2026-09-18 |
+
+Changing N is a migration plus the constant change in the same PR:
+
+- An increase replaces the check constraint with the new upper bound.
+- A decrease is allowed only when no taken slot is above the new N. Otherwise that PR must first decide what happens to the entries holding those slots.
+- The replacement constraint is never added `NOT VALID`: a grandfathered row above N would fail the check the next time its consent is refreshed, turning a resubmission into an error.
 
 ## Intended exceptions
 
