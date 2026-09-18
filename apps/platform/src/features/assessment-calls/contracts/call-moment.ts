@@ -1,4 +1,4 @@
-type CallMomentPart = "day" | "weekday" | "time" | "zone";
+type CallMomentPart = "day" | "time" | "zone";
 
 const PART_FORMATS: Record<
   CallMomentPart,
@@ -12,10 +12,6 @@ const PART_FORMATS: Record<
       weekday: "long",
       year: "numeric",
     },
-  },
-  weekday: {
-    locale: "en-GB",
-    options: { day: "numeric", month: "long", weekday: "long" },
   },
   time: {
     locale: "en-US",
@@ -34,11 +30,7 @@ export function formatCallDay(instant: Date, timeZone: string): string {
   return formatterFor("day", timeZone).format(instant);
 }
 
-export function formatCallWeekday(instant: Date, timeZone: string): string {
-  return formatterFor("weekday", timeZone).format(instant);
-}
-
-export function formatCallTime(instant: Date, timeZone: string): string {
+function formatCallTime(instant: Date, timeZone: string): string {
   const part = partReader(
     formatterFor("time", timeZone).formatToParts(instant),
   );
@@ -46,7 +38,7 @@ export function formatCallTime(instant: Date, timeZone: string): string {
   return `${part("hour")}:${part("minute")} ${part("dayPeriod")}`;
 }
 
-export function describeTimeZone(instant: Date, timeZone: string): string {
+function describeTimeZone(instant: Date, timeZone: string): string {
   const offset = partReader(
     formatterFor("zone", timeZone).formatToParts(instant),
   )("timeZoneName");

@@ -121,7 +121,7 @@ export default function ProductDetailsRoute() {
             aria-label={
               isInCart ? "Added to your cart" : `Get ${product.title} for free`
             }
-            className="min-h-15 w-full !rounded-control border-0 py-4 leading-7 !text-text-inverted shadow-raised hover:shadow-raised"
+            className="min-h-15 w-full border-0 py-4 leading-7 !text-text-inverted shadow-raised hover:shadow-raised"
             onClick={(event) => {
               addProduct(product.slug);
               openCartFrom(event.currentTarget);

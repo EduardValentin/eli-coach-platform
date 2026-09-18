@@ -110,8 +110,8 @@ describe.sequential("assessment call booking integration", () => {
     const document = await response.text();
 
     expect(response.status).toBe(200);
-    expect(document).toContain("Start Your Plan");
-    expect(document).toContain("Pick a date and time");
+    expect(document).toContain("Free Assessment Call");
+    expect(document).toContain("Select a Date &amp; Time");
   });
 
   it("stores a booking in both time zones and notifies both sides", async () => {

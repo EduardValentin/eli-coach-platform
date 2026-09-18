@@ -1,17 +1,20 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useRef } from "react";
 
 export function useStepHeadingFocus<Step>(step: Step) {
-  const headingRef = useRef<HTMLHeadingElement>(null);
-  const shownStep = useRef(step);
+  const renderedStep = useRef(step);
+  const isFocusPending = useRef(false);
 
-  useEffect(() => {
-    if (shownStep.current === step) {
+  if (renderedStep.current !== step) {
+    renderedStep.current = step;
+    isFocusPending.current = true;
+  }
+
+  return useCallback((heading: HTMLHeadingElement | null) => {
+    if (!heading || !isFocusPending.current) {
       return;
     }
 
-    shownStep.current = step;
-    headingRef.current?.focus();
-  }, [step]);
-
-  return headingRef;
+    isFocusPending.current = false;
+    heading.focus();
+  }, []);
 }

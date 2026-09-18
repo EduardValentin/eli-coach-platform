@@ -8,31 +8,18 @@ import {
 import { cn } from "../lib/cn";
 
 const linkClasses = cva(
-  "outline-none transition-[background-color,border-color,color,box-shadow] duration-150 ease-out focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary",
+  "outline-none transition-[background-color,border-color,color,box-shadow] duration-150 ease-out",
   {
     variants: {
       variant: {
         inline:
           "font-medium text-brand-primary underline-offset-4 hover:text-brand-primary-hover hover:underline",
-        subtle: "font-medium text-text-secondary hover:text-text-primary",
+        subtle: "font-medium text-copy-muted hover:text-text-primary",
         pill: "inline-flex items-center rounded-pill border border-border-subtle bg-surface-base/80 px-3 py-2 text-body-sm font-medium text-text-primary shadow-soft hover:border-brand-primary hover:text-brand-primary",
       },
-      placement: {
-        prose: "",
-        standalone:
-          "inline-flex min-h-11 items-center text-body-sm font-semibold",
-      },
     },
-    compoundVariants: [
-      {
-        variant: "inline",
-        placement: "standalone",
-        class: "hover:text-brand-primary",
-      },
-    ],
     defaultVariants: {
       variant: "inline",
-      placement: "prose",
     },
   },
 );
@@ -46,11 +33,11 @@ export function linkVariants(options?: LinkVariantProps): string {
 type LinkProps = RouterLinkProps & LinkVariantProps;
 
 export const Link = React.forwardRef<HTMLAnchorElement, LinkProps>(
-  ({ className, placement, prefetch = "intent", variant, ...props }, ref) => (
+  ({ className, prefetch = "intent", variant, ...props }, ref) => (
     <RouterLink
       ref={ref}
       prefetch={prefetch}
-      className={cn(linkClasses({ placement, variant }), className)}
+      className={cn(linkClasses({ variant }), className)}
       {...props}
     />
   ),

@@ -74,6 +74,29 @@ describe("assessment call booking flow", () => {
     expect(state.selectedDayKey).toBeNull();
   });
 
+  it("forgets the chosen time when the visitor opens another day", () => {
+    // arrange
+    const timeChosen = reduceBookingFlow(
+      reduceBookingFlow(INITIAL_BOOKING_FLOW, {
+        dayKey: FIRST_DAY,
+        type: "select-day",
+      }),
+      { slot: FIRST_SLOT, type: "select-slot" },
+    );
+
+    // act
+    const state = reduceBookingFlow(timeChosen, {
+      dayKey: "2026-03-03",
+      type: "select-day",
+    });
+
+    // assert
+    expect(state).toMatchObject({
+      selectedDayKey: "2026-03-03",
+      selectedSlot: null,
+    });
+  });
+
   it("remembers the details the booking was sent with", () => {
     // arrange
     const onDetails = detailsStateFor(FIRST_SLOT);

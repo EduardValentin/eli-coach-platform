@@ -45,12 +45,11 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
     : "Joining the list";
   const inputClassName = cn(
     inputClasses({
-      controlSize: "lg",
       variant: variant === "dark" ? "inverted" : "default",
     }),
-    "block h-14 rounded-pill px-6 py-0 text-base focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/30 focus-visible:border-brand-primary focus-visible:ring-2 focus-visible:ring-brand-primary/30 focus-visible:!outline-none aria-invalid:!outline-none",
+    "block h-14 rounded-pill px-6 py-0 text-base focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/30 focus-visible:border-brand-primary focus-visible:ring-2 focus-visible:ring-brand-primary/30",
     {
-      "!shadow-none border-control-border-soft placeholder:text-placeholder-soft aria-invalid:!border-control-border-soft disabled:bg-surface-base disabled:text-text-primary disabled:placeholder:text-placeholder-soft":
+      "!shadow-none border-control-border-soft bg-surface-base text-text-primary transition-all placeholder:text-placeholder-soft aria-invalid:!border-control-border-soft disabled:pointer-events-auto disabled:bg-surface-base disabled:text-text-primary disabled:opacity-100 disabled:placeholder:text-placeholder-soft md:text-base":
         variant === "light",
       "border-surface-base/20 bg-surface-base/10 aria-invalid:!border-surface-base/20 disabled:bg-surface-base/10 disabled:text-text-inverted":
         variant === "dark",

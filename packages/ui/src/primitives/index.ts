@@ -3,6 +3,7 @@ export { Card } from "./card";
 export { Checkbox } from "./checkbox";
 export { IconButton } from "./icon-button";
 export { Input, inputClasses } from "./input";
+export { Label } from "./label";
 export { Link, linkVariants } from "./link";
 export { SectionEyebrow } from "./section-eyebrow";
 export { Textarea } from "./textarea";

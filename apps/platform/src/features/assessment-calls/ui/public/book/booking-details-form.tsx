@@ -4,16 +4,23 @@ import { BotDetectionWidget } from "@eli-coach-platform/infrastructure/bot-detec
 import {
   Button,
   Input,
-  linkVariants,
+  Label,
   Textarea,
 } from "@eli-coach-platform/ui/primitives";
+import { ChevronLeft, Mail, User, type LucideIcon } from "lucide-react";
+import { motion } from "motion/react";
 import type { ReactNode, Ref } from "react";
 import { useId } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { z } from "zod";
 
+import { cn } from "@eli-coach-platform/ui/lib";
+
+import {
+  BOOKING_ALERT_CLASS_NAME,
+  STEP_HEADING_FOCUS_CLASS_NAME,
+} from "./booking-classes";
 import type { BookingClientError, BookingDetails } from "./booking-flow";
-import { formatCallMoment } from "~/features/assessment-calls/contracts/call-moment";
 import type { BookAssessmentCallSubmission } from "./submission";
 
 const SUPPORT_CONTACT_CODES: ReadonlySet<BookingClientError["code"]> = new Set([
@@ -24,6 +31,8 @@ const SUPPORT_CONTACT_CODES: ReadonlySet<BookingClientError["code"]> = new Set([
 const NAME_ERROR = "Enter your full name, between 2 and 120 characters.";
 const EMAIL_ERROR = "Enter a valid email address.";
 
+const FIELD_CLASS_NAME = "border-control-border-soft bg-surface-quiet/50";
+
 const bookingDetailsSchema = z.object({
   email: z.string().trim().max(320, EMAIL_ERROR).email(EMAIL_ERROR),
   fullName: z.string().trim().min(2, NAME_ERROR).max(120, NAME_ERROR),
@@ -31,7 +40,6 @@ const bookingDetailsSchema = z.object({
 }) satisfies z.ZodType<BookingDetails>;
 
 type BookingDetailsFormProps = {
-  call: { startsAt: string; timeZone: string };
   enteredDetails: BookingDetails;
   error: BookingClientError | null;
   headingRef: Ref<HTMLHeadingElement>;
@@ -41,15 +49,8 @@ type BookingDetailsFormProps = {
 };
 
 export function BookingDetailsForm(props: BookingDetailsFormProps) {
-  const {
-    call,
-    enteredDetails,
-    error,
-    headingRef,
-    onBack,
-    onSubmit,
-    submission,
-  } = props;
+  const { enteredDetails, error, headingRef, onBack, onSubmit, submission } =
+    props;
   const fields = useId();
   const nameId = `${fields}-full-name`;
   const emailId = `${fields}-email`;
@@ -68,16 +69,28 @@ export function BookingDetailsForm(props: BookingDetailsFormProps) {
   };
 
   return (
-    <section className="max-w-2xl rounded-md border border-stroke-faint bg-surface-base p-6 shadow-soft md:p-10">
+    <>
+      <button
+        aria-label="Back to the times"
+        className="mb-6 -ml-2 flex size-10 items-center justify-center rounded-full bg-surface-quiet font-medium text-text-secondary transition-colors hover:bg-surface-muted"
+        onClick={() => onBack(getValues())}
+        type="button"
+      >
+        <ChevronLeft aria-hidden="true" className="size-5" />
+      </button>
+
       <h2
-        className="mb-2 scroll-mt-24 font-heading text-display-sm text-text-primary focus:outline-none"
+        className={cn(
+          "mb-2 text-2xl font-semibold text-text-primary",
+          STEP_HEADING_FOCUS_CLASS_NAME,
+        )}
         ref={headingRef}
         tabIndex={-1}
       >
-        Your details
+        Almost there
       </h2>
-      <p className="mb-8 text-copy-muted">
-        Your call: {formatCallMoment(new Date(call.startsAt), call.timeZone)}
+      <p className="mb-8 font-medium text-text-secondary">
+        Please provide your details to secure your slot.
       </p>
 
       <BookingErrorAlert
@@ -86,21 +99,27 @@ export function BookingDetailsForm(props: BookingDetailsFormProps) {
       />
 
       <form
-        className="relative flex flex-col gap-6"
+        className="flex-1 space-y-5"
         noValidate
         onSubmit={handleSubmit(submitDetails)}
       >
+        <div className="absolute size-0 overflow-hidden">
+          <BotDetectionWidget {...submission.botDetectionWidgetProps} />
+        </div>
+
         <BookingField
           error={errors.fullName?.message}
           htmlFor={nameId}
-          label="Full name"
+          icon={User}
+          label="Full Name"
         >
           <Input
             aria-describedby={errors.fullName ? `${nameId}-error` : undefined}
             aria-invalid={errors.fullName ? true : undefined}
             autoComplete="name"
-            controlSize="lg"
+            className={cn("h-12 pl-9", FIELD_CLASS_NAME)}
             id={nameId}
+            placeholder="Jane Doe"
             type="text"
             {...register("fullName")}
           />
@@ -109,15 +128,17 @@ export function BookingDetailsForm(props: BookingDetailsFormProps) {
         <BookingField
           error={errors.email?.message}
           htmlFor={emailId}
-          label="Email address"
+          icon={Mail}
+          label="Email Address"
         >
           <Input
             aria-describedby={errors.email ? `${emailId}-error` : undefined}
             aria-invalid={errors.email ? true : undefined}
             autoComplete="email"
-            controlSize="lg"
+            className={cn("h-12 pl-9", FIELD_CLASS_NAME)}
             id={emailId}
             inputMode="email"
+            placeholder="jane@example.com"
             type="text"
             {...register("email")}
           />
@@ -131,36 +152,41 @@ export function BookingDetailsForm(props: BookingDetailsFormProps) {
           <Textarea
             aria-describedby={errors.notes ? `${notesId}-error` : undefined}
             aria-invalid={errors.notes ? true : undefined}
-            className="h-28"
+            className={cn("h-24", FIELD_CLASS_NAME)}
             id={notesId}
-            rows={4}
+            placeholder="e.g. recovering from a knee injury"
             {...register("notes")}
           />
         </BookingField>
 
-        <div className="flex flex-wrap items-center gap-4 pt-2">
+        <div className="pt-4">
           <Button
             aria-busy={submission.isSubmitting || undefined}
+            className="h-12 w-full text-base font-semibold disabled:opacity-70"
             disabled={submission.isSubmitting}
-            size="lg"
             type="submit"
           >
-            Book my call
+            {submission.isSubmitting ? (
+              <>
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  aria-hidden="true"
+                  className="size-5 rounded-full border-2 border-text-inverted/30 border-t-text-inverted"
+                  transition={{
+                    duration: 1,
+                    ease: "linear",
+                    repeat: Infinity,
+                  }}
+                />
+                <span className="sr-only">Scheduling your assessment</span>
+              </>
+            ) : (
+              "Schedule Assessment"
+            )}
           </Button>
-          <button
-            className={linkVariants({ placement: "standalone" })}
-            onClick={() => onBack(getValues())}
-            type="button"
-          >
-            Back to the times
-          </button>
-        </div>
-
-        <div className="absolute size-0 overflow-hidden">
-          <BotDetectionWidget {...submission.botDetectionWidgetProps} />
         </div>
       </form>
-    </section>
+    </>
   );
 }
 
@@ -168,22 +194,30 @@ function BookingField(props: {
   children: ReactNode;
   error: string | undefined;
   htmlFor: string;
+  icon?: LucideIcon;
   label: string;
 }) {
-  const { children, error, htmlFor, label } = props;
+  const { children, error, htmlFor, icon: Icon, label } = props;
 
   return (
     <div className="space-y-2">
-      <label
-        className="block text-body-sm font-medium text-text-primary"
-        htmlFor={htmlFor}
-      >
+      <Label className="font-medium text-text-label" htmlFor={htmlFor}>
         {label}
-      </label>
-      {children}
+      </Label>
+      {Icon ? (
+        <div className="relative">
+          <Icon
+            aria-hidden="true"
+            className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-text-secondary"
+          />
+          {children}
+        </div>
+      ) : (
+        children
+      )}
       {error ? (
         <p
-          className="text-body-sm text-feedback-danger"
+          className="text-sm font-medium text-feedback-danger"
           id={`${htmlFor}-error`}
         >
           {error}
@@ -204,16 +238,13 @@ function BookingErrorAlert(props: {
   }
 
   return (
-    <div
-      className="mb-8 rounded-sm border border-feedback-danger/30 bg-feedback-danger/5 px-4 py-3 text-body-sm text-feedback-danger"
-      role="alert"
-    >
+    <div className={cn("mb-6", BOOKING_ALERT_CLASS_NAME)} role="alert">
       <p>{botDetectionError ?? error?.message}</p>
       {error && SUPPORT_CONTACT_CODES.has(error.code) ? (
         <p className="mt-2">
           If it keeps failing, email{" "}
           <a
-            className="font-semibold underline underline-offset-2 hover:no-underline"
+            className="font-semibold underline underline-offset-2"
             href={`mailto:${ELI_COACH_CONTACT_EMAIL}`}
           >
             {ELI_COACH_CONTACT_EMAIL}

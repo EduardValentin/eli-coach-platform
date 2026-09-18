@@ -8,22 +8,29 @@ import { describe, expect, it } from "vitest";
 import { Input } from "./input";
 
 describe("Input", () => {
-  it("uses the default field surface by default", () => {
+  it("uses the field surface by default", () => {
+    // arrange
+    // act
     render(<Input aria-label="Name" />);
 
+    // assert
     expect(screen.getByLabelText("Name")).toHaveClass(
-      "rounded-md",
-      "border-border-subtle",
-      "bg-surface-base",
-      "shadow-soft",
+      "h-9",
+      "rounded-lg",
+      "border-transparent",
+      "bg-surface-input",
+      "focus-visible:border-border-focus",
+      "aria-invalid:border-feedback-danger",
     );
   });
 
   it("uses a blurred translucent surface for inverted inputs", () => {
+    // arrange
+    // act
     render(<Input aria-label="Email address" variant="inverted" />);
 
+    // assert
     const input = screen.getByLabelText("Email address");
-
     expect(input).toHaveClass(
       "rounded-pill",
       "border-surface-base/30",
@@ -36,11 +43,6 @@ describe("Input", () => {
       "focus-visible:ring-brand-primary/30",
       "shadow-none",
     );
-    expect(input).not.toHaveClass(
-      "rounded-md",
-      "border-border-subtle",
-      "bg-surface-base",
-      "shadow-soft",
-    );
+    expect(input).not.toHaveClass("rounded-lg", "bg-surface-input");
   });
 });

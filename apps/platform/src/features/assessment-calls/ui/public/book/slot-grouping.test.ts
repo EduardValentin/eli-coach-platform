@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { dayKeyOf, groupSlotsByDay, horizonEnd } from "./slot-grouping";
+import { dayKeyOf, groupSlotsByDay } from "./slot-grouping";
 
 const BUCHAREST = "Europe/Bucharest";
 const HONOLULU = "Pacific/Honolulu";
@@ -64,18 +64,5 @@ describe("grouping open slots by day", () => {
     // assert
     expect([...inBucharest.keys()]).toEqual(["2026-03-03"]);
     expect([...inHonolulu.keys()]).toEqual(["2026-03-02"]);
-  });
-});
-
-describe("the booking horizon", () => {
-  it("reaches thirty days past the day the visitor is on", () => {
-    // arrange
-    const now = new Date(WINTER_EVENING);
-
-    // act
-    const end = horizonEnd(now, BUCHAREST);
-
-    // assert
-    expect(dayKeyOf(end, BUCHAREST)).toBe("2026-04-01");
   });
 });

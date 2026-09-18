@@ -4,22 +4,24 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../lib/cn";
 
 export const buttonVariants = cva(
-  "inline-flex min-w-0 items-center justify-center gap-2 rounded-pill border border-transparent text-center font-medium whitespace-normal transition-[background-color,border-color,color,box-shadow,filter,transform] duration-150 ease-out outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary disabled:border-border-subtle disabled:bg-surface-subtle disabled:text-text-muted disabled:shadow-none",
+  "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl font-medium transition-colors outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
   {
     variants: {
       variant: {
         primary:
-          "bg-brand-primary text-text-inverted shadow-brand-glow hover:bg-brand-primary-hover active:bg-brand-primary-pressed",
+          "bg-brand-primary text-text-inverted hover:bg-brand-primary-hover",
         secondary:
           "bg-brand-secondary text-text-inverted shadow-soft hover:bg-brand-secondary-hover active:brightness-95",
         destructive:
           "bg-feedback-danger text-text-inverted shadow-soft hover:brightness-95 active:brightness-90",
+        outline:
+          "border border-control-border-soft bg-surface-base text-text-label hover:bg-surface-quiet hover:text-text-accent focus-visible:border-border-focus",
         ghost:
-          "border-border-subtle bg-surface-base text-text-primary shadow-soft hover:border-brand-primary hover:text-brand-primary active:border-brand-primary-hover active:text-brand-primary-hover",
+          "border border-border-subtle bg-surface-base text-text-primary shadow-soft hover:border-brand-primary hover:text-brand-primary active:border-brand-primary-hover active:text-brand-primary-hover",
       },
       size: {
         sm: "min-h-[var(--size-control-sm)] px-3 text-body-sm",
-        md: "min-h-[var(--size-control-md)] px-4 text-body-base",
+        md: "min-h-[var(--size-control-md)] px-4 py-2 text-body-base",
         lg: "min-h-[var(--size-control-lg)] px-6 text-body-lg",
         icon: "size-[var(--size-control-md)] p-0",
       },

@@ -27,10 +27,10 @@ describe("assessment call booking page server rendering", () => {
 
     // assert
     expect(zoneLine).toContain(
-      `Times are shown in ${COACH_TIME_ZONE} (GMT-10).`,
+      `All times shown in your local timezone (${COACH_TIME_ZONE}, GMT-10)`,
     );
-    expect(html).toContain("Start Your Plan");
-    expect(html).toContain("Pick a date and time");
+    expect(html).toContain("Free Assessment Call");
+    expect(html).toContain("Select a Date &amp; Time");
   });
 
   it("offers the times again when availability could not be read", async () => {
@@ -43,7 +43,7 @@ describe("assessment call booking page server rendering", () => {
     // act
     // assert
     expect(html).toContain("Try again");
-    expect(html).not.toContain("Times are shown in");
+    expect(html).not.toContain("All times shown in your local timezone");
   });
 });
 

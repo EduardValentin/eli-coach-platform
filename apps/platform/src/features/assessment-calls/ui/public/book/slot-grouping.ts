@@ -1,7 +1,4 @@
 import { TZDate } from "@date-fns/tz";
-import { ASSESSMENT_CALL_RULES } from "@eli-coach-platform/domain/coach-availability";
-
-const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 
 export function dayKeyOf(instant: Date, timeZone: string): string {
   const zoned = new TZDate(instant, timeZone);
@@ -29,11 +26,4 @@ export function groupSlotsByDay(
   }
 
   return grouped;
-}
-
-export function horizonEnd(now: Date, timeZone: string): Date {
-  return new TZDate(
-    now.getTime() + ASSESSMENT_CALL_RULES.horizonDays * MILLISECONDS_PER_DAY,
-    timeZone,
-  );
 }

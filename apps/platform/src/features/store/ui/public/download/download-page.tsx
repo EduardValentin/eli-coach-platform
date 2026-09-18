@@ -57,7 +57,12 @@ export default function DownloadRoute() {
       </div>
       <form action={DOWNLOAD_API_URL} method="post">
         <input name="token" type="hidden" value={token} />
-        <Button className="w-full" size="lg" type="submit" variant="primary">
+        <Button
+          className="w-full shadow-md hover:shadow-lg"
+          size="lg"
+          type="submit"
+          variant="primary"
+        >
           <Download aria-hidden="true" size={21} />
           Download your resources
         </Button>
@@ -90,7 +95,7 @@ function UnavailableDownload() {
         request your resources again from the store.
       </p>
       <Link
-        className="mt-7 inline-flex items-center gap-2 rounded-pill bg-surface-inverted px-7 py-4 font-medium text-text-inverted transition-colors hover:bg-brand-primary"
+        className="mt-7 inline-flex items-center gap-2 rounded-xl bg-surface-inverted px-7 py-4 font-medium text-text-inverted transition-colors hover:bg-brand-primary"
         to={STORE_PATH}
       >
         Back to the store

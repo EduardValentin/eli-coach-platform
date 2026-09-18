@@ -1,9 +1,12 @@
 import { Button } from "@eli-coach-platform/ui/primitives";
+import { cn } from "@eli-coach-platform/ui/lib";
+import { AnimatePresence, MotionConfig, motion } from "motion/react";
 import {
   useCallback,
   useEffect,
   useMemo,
   useReducer,
+  useState,
   type Dispatch,
   type Ref,
 } from "react";
@@ -21,6 +24,10 @@ import type {
 import { assessmentCallsContext } from "~/features/assessment-calls/server/guards/assessment-calls-context.server";
 
 import { useRefreshSlotsFetcher } from "./api-client";
+import {
+  BOOKING_ALERT_CLASS_NAME,
+  BOOKING_PRIMARY_ACTION_CLASS_NAME,
+} from "./booking-classes";
 import { BookingConfirmation } from "./booking-confirmation";
 import { BookingDetailsForm } from "./booking-details-form";
 import {
@@ -30,11 +37,10 @@ import {
   type BookingFlowEvent,
   type BookingFlowState,
 } from "./booking-flow";
-import { CallFacts } from "./call-facts";
+import { CallOverview } from "./call-overview";
 import { useDisplayTimeZone } from "./display-time-zone";
-import { SlotCalendar } from "./slot-calendar";
 import { groupSlotsByDay } from "./slot-grouping";
-import { SlotList } from "./slot-list";
+import { SlotPicker } from "./slot-picker";
 import { useStepHeadingFocus } from "./step-heading-focus";
 import { useBookAssessmentCallSubmission } from "./submission";
 import { UnavailableSlots } from "./unavailable-slots";
@@ -62,41 +68,39 @@ export const meta: MetaFunction = () => [
   },
 ];
 
+export const handle = { publicContentFrame: "full-bleed" } as const;
+
 type BotDetection = Awaited<ReturnType<typeof loader>>["botDetection"];
+
+const STEP_TRANSITION = {
+  animate: { opacity: 1, x: 0 },
+  exit: { opacity: 0, x: -20 },
+  initial: { opacity: 0, x: 20 },
+} as const;
 
 export default function AssessmentCallBookingRoute() {
   const page = useLoaderData<typeof loader>();
 
   return (
-    <section className="mx-auto w-full max-w-stage pb-16 pt-4">
-      <div className="max-w-3xl">
-        <p className="text-body-base font-semibold uppercase tracking-section-eyebrow text-brand-primary">
-          Free assessment call
-        </p>
-        <h1 className="mb-6 mt-3 font-heading text-4xl leading-display-relaxed tracking-tight text-text-primary md:text-5xl">
-          Start Your Plan
-        </h1>
-        <p className="mb-8 text-body-lg leading-copy-relaxed text-copy-muted">
-          We&apos;ll talk through your goals, your training so far and anything
-          getting in the way, and I&apos;ll show you how my coaching works so
-          you can decide if it fits.
-        </p>
-        <CallFacts />
-      </div>
+    <MotionConfig reducedMotion="user">
+      <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-surface-page px-4 pt-32 pb-12 sm:px-6">
+        <div className="pointer-events-none absolute top-[-10%] right-[-5%] size-[600px] rounded-full bg-brand-primary/5 blur-[100px]" />
+        <div className="pointer-events-none absolute bottom-[-10%] left-[-5%] size-[500px] rounded-full bg-brand-secondary/5 blur-[100px]" />
 
-      <BookingFlow
-        botDetection={page.botDetection}
-        initialOpenSlots={
-          page.status === "open"
-            ? { coachTimeZone: page.coachTimeZone, slots: page.slots }
-            : null
-        }
-      />
-    </section>
+        <BookingCard
+          botDetection={page.botDetection}
+          initialOpenSlots={
+            page.status === "open"
+              ? { coachTimeZone: page.coachTimeZone, slots: page.slots }
+              : null
+          }
+        />
+      </div>
+    </MotionConfig>
   );
 }
 
-function BookingFlow(props: {
+function BookingCard(props: {
   botDetection: BotDetection;
   initialOpenSlots: OpenSlotsResponse | null;
 }) {
@@ -107,6 +111,11 @@ function BookingFlow(props: {
   const submission = useBookAssessmentCallSubmission(botDetection);
   const { response, submitFormData } = submission;
   const stepHeadingRef = useStepHeadingFocus(flow.step);
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!response) {
@@ -145,40 +154,70 @@ function BookingFlow(props: {
     [flow.selectedSlot, submitFormData, timeZone],
   );
 
-  if (flow.step === "confirmed" && flow.booking) {
-    return (
-      <BookingConfirmation
-        booking={flow.booking}
-        headingRef={stepHeadingRef}
-        timeZone={timeZone}
-        visitorEmail={flow.details.email}
-      />
-    );
-  }
-
-  if (flow.step === "details" && flow.selectedSlot) {
-    return (
-      <BookingDetailsForm
-        call={{ startsAt: flow.selectedSlot, timeZone }}
-        enteredDetails={flow.details}
-        error={flow.error}
-        headingRef={stepHeadingRef}
-        onBack={(details) => dispatch({ details, type: "show-slots" })}
-        onSubmit={submitDetails}
-        submission={submission}
-      />
-    );
-  }
+  const chosenCall =
+    flow.step === "details" && flow.selectedSlot
+      ? { startsAt: flow.selectedSlot, timeZone }
+      : null;
 
   return (
-    <SlotSelectionStep
-      dispatch={dispatch}
-      flow={flow}
-      headingRef={stepHeadingRef}
-      onRetry={refresh}
-      openSlots={refreshedOpenSlots ?? initialOpenSlots}
-      timeZone={timeZone}
-    />
+    <div className="relative z-10 flex min-h-[650px] w-full max-w-5xl flex-col overflow-hidden rounded-panel border border-stroke-faint bg-surface-base shadow-floating md:flex-row">
+      <CallOverview chosenCall={chosenCall} />
+
+      <div className="relative flex w-full flex-col bg-surface-base p-6 md:w-[65%] md:p-10">
+        <AnimatePresence mode="wait">
+          {flow.step === "slot" ? (
+            <motion.div
+              className="flex flex-1 flex-col"
+              key="step-slot"
+              {...STEP_TRANSITION}
+              initial={hasMounted ? STEP_TRANSITION.initial : false}
+            >
+              <SlotSelectionStep
+                dispatch={dispatch}
+                flow={flow}
+                headingRef={stepHeadingRef}
+                onRetry={refresh}
+                openSlots={refreshedOpenSlots ?? initialOpenSlots}
+                timeZone={timeZone}
+              />
+            </motion.div>
+          ) : null}
+
+          {flow.step === "details" && flow.selectedSlot ? (
+            <motion.div
+              className="mx-auto flex h-full max-w-md flex-col"
+              key="step-details"
+              {...STEP_TRANSITION}
+            >
+              <BookingDetailsForm
+                enteredDetails={flow.details}
+                error={flow.error}
+                headingRef={stepHeadingRef}
+                onBack={(details) => dispatch({ details, type: "show-slots" })}
+                onSubmit={submitDetails}
+                submission={submission}
+              />
+            </motion.div>
+          ) : null}
+
+          {flow.step === "confirmed" && flow.booking ? (
+            <motion.div
+              animate={{ opacity: 1, scale: 1 }}
+              className="flex h-full flex-col items-center justify-center py-12 text-center"
+              initial={{ opacity: 0, scale: 0.95 }}
+              key="step-confirmed"
+            >
+              <BookingConfirmation
+                booking={flow.booking}
+                headingRef={stepHeadingRef}
+                timeZone={timeZone}
+                visitorEmail={flow.details.email}
+              />
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+      </div>
+    </div>
   );
 }
 
@@ -201,59 +240,50 @@ function SlotSelectionStep(props: {
     (dayKey: string | null) => dispatch({ dayKey, type: "select-day" }),
     [dispatch],
   );
-  const daySlots = selectedDayKey ? (slotsByDay.get(selectedDayKey) ?? []) : [];
 
   return (
-    <section className="rounded-md border border-stroke-faint bg-surface-base p-6 shadow-soft md:p-10">
+    <>
       <h2
-        className="mb-6 scroll-mt-24 font-heading text-display-sm text-text-primary focus:outline-none"
+        className="sr-only text-xl leading-normal font-medium"
         ref={headingRef}
         tabIndex={-1}
       >
-        Pick a date and time
+        Select a Date &amp; Time
       </h2>
 
       {error ? (
-        <p
-          className="mb-6 rounded-sm border border-feedback-danger/30 bg-feedback-danger/5 px-4 py-3 text-body-sm text-feedback-danger"
-          role="alert"
-        >
+        <p className={cn("mb-6", BOOKING_ALERT_CLASS_NAME)} role="alert">
           {error.message}
         </p>
       ) : null}
 
       {openSlots ? (
         <>
-          <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
-            <SlotCalendar
-              onSelectDay={selectDay}
-              selectedDayKey={selectedDayKey}
-              slotsByDay={slotsByDay}
-              timeZone={timeZone}
-            />
-            <SlotList
-              daySlots={daySlots}
-              onSelectSlot={(slot) => dispatch({ slot, type: "select-slot" })}
-              selectedSlot={selectedSlot}
-              timeZone={timeZone}
-            />
-          </div>
+          <SlotPicker
+            onSelectDay={selectDay}
+            onSelectSlot={(slot) => dispatch({ slot, type: "select-slot" })}
+            selectedDayKey={selectedDayKey}
+            selectedSlot={selectedSlot}
+            slotsByDay={slotsByDay}
+            timeZone={timeZone}
+          />
 
-          <Button
-            className="mt-10 w-full md:w-auto"
-            disabled={!selectedSlot}
-            onClick={() => dispatch({ type: "show-details" })}
-            size="lg"
-            type="button"
-          >
-            {selectedSlot
-              ? "Continue to your details"
-              : "Select a date and time"}
-          </Button>
+          <div className="mt-auto">
+            <Button
+              className={BOOKING_PRIMARY_ACTION_CLASS_NAME}
+              disabled={!selectedSlot}
+              onClick={() => dispatch({ type: "show-details" })}
+              type="button"
+            >
+              {selectedSlot
+                ? "Continue to your details"
+                : "Select a date and time"}
+            </Button>
+          </div>
         </>
       ) : (
         <UnavailableSlots onRetry={onRetry} />
       )}
-    </section>
+    </>
   );
 }

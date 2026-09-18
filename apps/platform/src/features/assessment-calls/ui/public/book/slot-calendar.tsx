@@ -1,12 +1,9 @@
 import { Calendar, type CalendarProps } from "@eli-coach-platform/ui/calendar";
 import { memo, useCallback, useMemo, useState } from "react";
 
-import {
-  describeTimeZone,
-  formatCallDay,
-} from "~/features/assessment-calls/contracts/call-moment";
+import { formatCallDay } from "~/features/assessment-calls/contracts/call-moment";
 
-import { dayKeyOf, horizonEnd } from "./slot-grouping";
+import { dayKeyOf } from "./slot-grouping";
 
 type SlotCalendarProps = {
   onSelectDay: (dayKey: string | null) => void;
@@ -79,26 +76,17 @@ export const SlotCalendar = memo(function SlotCalendar(
     () => (firstOpenSlot ? new Date(firstOpenSlot) : now),
     [firstOpenSlot, now],
   );
-  const zoneReferenceInstant = selected ?? firstOpenInstant;
-  const endMonth = useMemo(() => horizonEnd(now, timeZone), [now, timeZone]);
 
   return (
-    <div className="w-full max-w-[22rem] shrink-0">
-      <Calendar
-        aria-label="Available days"
-        defaultMonth={selected ?? firstOpenInstant}
-        disabled={hasNoOpenSlots}
-        endMonth={endMonth}
-        labels={dayLabels}
-        modifiers={modifiers}
-        onSelect={selectDay}
-        selected={selected}
-        startMonth={now}
-        timeZone={timeZone}
-      />
-      <p className="mt-4 text-body-sm leading-copy-relaxed text-copy-muted">
-        Times are shown in {describeTimeZone(zoneReferenceInstant, timeZone)}.
-      </p>
-    </div>
+    <Calendar
+      aria-label="Available days"
+      defaultMonth={selected ?? firstOpenInstant}
+      disabled={hasNoOpenSlots}
+      labels={dayLabels}
+      modifiers={modifiers}
+      onSelect={selectDay}
+      selected={selected}
+      timeZone={timeZone}
+    />
   );
 });

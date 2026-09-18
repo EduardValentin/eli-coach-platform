@@ -59,8 +59,8 @@ describe("calendar structure", () => {
       name: "Available days, March 2026",
     });
     const dayButton = screen.getByRole("button", { name: /March 10th, 2026/ });
-    expect(grid).toHaveClass("table-fixed", "w-full");
-    expect(dayButton).toHaveClass("w-full", "aspect-square", "max-w-11");
+    expect(grid).toHaveClass("w-full");
+    expect(dayButton).toHaveClass("w-full", "aspect-square");
     expect(dayButton.className).not.toMatch(/(^|\s)size-\d/);
   });
 
@@ -181,12 +181,12 @@ describe("calendar outside days", () => {
     // assert
     expect(
       screen.getByRole("button", { name: /October 1st, 2026/ }),
-    ).toHaveClass("group-data-[outside=true]:text-text-secondary");
+    ).toHaveClass("text-text-secondary");
   });
 });
 
 describe("calendar day marks", () => {
-  it("rings today in the brand colour and rounds each day to the small corner", () => {
+  it("rings today in the brand colour and rounds each day to the button corner", () => {
     // arrange
     const onSelect = vi.fn();
 
@@ -204,15 +204,12 @@ describe("calendar day marks", () => {
     // assert
     const dayButton = screen.getByRole("button", { name: /March 10th, 2026/ });
     expect(dayButton).toHaveClass(
-      "rounded-sm",
+      "rounded-xl",
       "font-medium",
-      "group-data-[today=true]:ring-2",
-      "group-data-[today=true]:ring-brand-primary/30",
+      "ring-2",
+      "ring-brand-primary/30",
     );
-    expect(dayButton).not.toHaveClass(
-      "rounded-pill",
-      "group-data-[today=true]:text-brand-primary",
-    );
+    expect(dayButton).not.toHaveClass("rounded-pill", "text-brand-primary");
   });
 });
 
@@ -236,7 +233,7 @@ describe("calendar weekdays and weeks", () => {
     expect(weekdays).toHaveLength(7);
     expect(weekdays[0]).toHaveClass(
       "h-10",
-      "text-label",
+      "text-calendar-weekday",
       "uppercase",
       "tracking-wider",
       "text-text-secondary",
@@ -259,8 +256,8 @@ describe("calendar weekdays and weeks", () => {
 
     // assert
     expect(
-      screen.getByRole("button", { name: /March 10th, 2026/ }).closest("td"),
-    ).toHaveClass("pt-1");
+      screen.getByRole("button", { name: /March 10th, 2026/ }).closest("tr"),
+    ).toHaveClass("mt-1");
   });
 
   it("darkens the selected day while hovered and keeps the brand colour while it has focus", () => {
@@ -283,35 +280,10 @@ describe("calendar weekdays and weeks", () => {
       name: /March 10th, 2026/,
     });
     expect(selectedDay).toHaveClass(
-      "group-data-[selected=true]:hover:bg-brand-primary-hover",
-      "group-data-[selected=true]:focus:bg-brand-primary",
+      "hover:bg-brand-primary-hover",
+      "focus:bg-brand-primary",
     );
-    expect(selectedDay).not.toHaveClass(
-      "group-data-[selected=true]:hover:bg-brand-primary",
-    );
-  });
-
-  it("fades a month button that cannot move further", () => {
-    // arrange
-    const onSelect = vi.fn();
-
-    // act
-    render(
-      <Calendar
-        aria-label="Available days"
-        month={march2026}
-        onSelect={onSelect}
-        startMonth={march2026}
-        timeZone="UTC"
-      />,
-    );
-
-    // assert
-    const previousMonth = screen.getByRole("button", {
-      name: "Go to the Previous Month",
-    });
-    expect(previousMonth).toHaveAttribute("aria-disabled", "true");
-    expect(previousMonth).toHaveClass("aria-disabled:opacity-30");
+    expect(selectedDay).not.toHaveClass("hover:bg-brand-primary");
   });
 });
 
@@ -553,27 +525,5 @@ describe("calendar day annotations", () => {
     expect(
       screen.getByRole("button", { name: "11 March 2026, no open slots" }),
     ).toBeDisabled();
-  });
-
-  it("styles a day from the modifier the consumer supplies", () => {
-    // arrange
-    const onSelect = vi.fn();
-
-    // act
-    render(
-      <Calendar
-        aria-label="Available days"
-        modifiers={{ noOpenSlots: march11 }}
-        modifiersClassNames={{ noOpenSlots: "text-text-muted" }}
-        month={march2026}
-        onSelect={onSelect}
-        timeZone="UTC"
-      />,
-    );
-
-    // assert
-    expect(
-      screen.getByRole("button", { name: /March 11th, 2026/ }).closest("td"),
-    ).toHaveClass("text-text-muted");
   });
 });

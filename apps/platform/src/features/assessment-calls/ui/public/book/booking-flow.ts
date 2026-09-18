@@ -46,7 +46,7 @@ export function reduceBookingFlow(
 ): BookingFlowState {
   switch (event.type) {
     case "select-day":
-      return { ...state, selectedDayKey: event.dayKey };
+      return { ...state, selectedDayKey: event.dayKey, selectedSlot: null };
 
     case "select-slot":
       return { ...state, error: null, selectedSlot: event.slot };

@@ -14,7 +14,9 @@ const twMerge = extendTailwindMerge({
           text: [
             "count-badge",
             "label",
+            "calendar-weekday",
             "body-sm",
+            "body-md",
             "body-base",
             "body-lg",
             "display-sm",

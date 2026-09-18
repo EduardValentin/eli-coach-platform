@@ -231,7 +231,7 @@ function CartReview(props: {
       </ul>
       <div className="mt-auto border-t border-border-subtle pt-6">
         <Button
-          className="min-h-14 w-full !rounded-control border-0 bg-surface-inverted py-4 !text-text-inverted shadow-none hover:bg-brand-primary"
+          className="min-h-14 w-full border-0 bg-surface-inverted py-4 !text-text-inverted shadow-none hover:bg-brand-primary"
           onClick={props.onContinue}
           size="md"
           type="button"
@@ -320,7 +320,7 @@ function AcquisitionDetails(props: {
             autoComplete="email"
             disabled={props.isSubmitting}
             id="store-acquisition-email"
-            className="rounded-lg px-4 py-3 shadow-none"
+            className="h-auto border-control-border-soft bg-surface-base px-4 py-3 placeholder:text-placeholder-soft focus-visible:border-brand-primary"
             placeholder="you@example.com"
             required
             type="email"
@@ -408,7 +408,7 @@ function AcquisitionDetails(props: {
       </div>
       <div className="mt-auto flex gap-4 border-t border-border-subtle pt-6">
         <Button
-          className="min-h-14 !rounded-control border-control-border-soft bg-transparent px-6 py-4 shadow-none"
+          className="min-h-14 border-control-border-soft bg-transparent px-6 py-4 shadow-none"
           disabled={props.isSubmitting}
           onClick={props.onBack}
           size="md"
@@ -418,7 +418,7 @@ function AcquisitionDetails(props: {
           Back
         </Button>
         <Button
-          className="min-h-14 flex-1 !rounded-control border-0 px-0 py-4 !text-text-inverted shadow-none disabled:!bg-brand-primary disabled:!text-text-inverted disabled:opacity-50"
+          className="min-h-14 flex-1 border-0 px-0 py-4 !text-text-inverted shadow-none disabled:!bg-brand-primary disabled:!text-text-inverted disabled:opacity-50"
           disabled={!props.canSubmit}
           size="md"
           type="submit"

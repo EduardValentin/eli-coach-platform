@@ -10,7 +10,7 @@ export function LegalNav(props: LegalNavProps) {
     <nav
       aria-label="Legal"
       className={cn(
-        "flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-body-sm",
+        "flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm",
         props.className,
       )}
     >
