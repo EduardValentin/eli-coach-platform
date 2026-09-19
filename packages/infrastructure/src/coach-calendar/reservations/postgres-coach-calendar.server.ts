@@ -5,7 +5,7 @@ import type {
 } from "@eli-coach-platform/domain/coach-availability";
 import { gt } from "drizzle-orm";
 
-import { coachTimeReservationsTable } from "./schema.server";
+import { coachTimeReservationsTable } from "../schema.server";
 
 export class PostgresCoachCalendar implements CoachCalendar {
   constructor(private readonly database: DatabaseClient) {}

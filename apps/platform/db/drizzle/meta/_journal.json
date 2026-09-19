@@ -169,6 +169,13 @@
       "when": 1789778169144,
       "tag": "0023_coach_time_reservation_per_appointment",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1789840953960,
+      "tag": "0024_create_coach_availability_and_meeting_room",
+      "breakpoints": true
     }
   ]
 }

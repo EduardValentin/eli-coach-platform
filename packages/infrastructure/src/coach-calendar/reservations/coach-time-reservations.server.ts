@@ -8,7 +8,7 @@ import {
   COACH_TIME_RESERVATIONS_NO_OVERLAP,
   coachTimeReservationsTable,
   type AppointmentKind,
-} from "./schema.server";
+} from "../schema.server";
 
 type Appointment = {
   appointmentKind: AppointmentKind;

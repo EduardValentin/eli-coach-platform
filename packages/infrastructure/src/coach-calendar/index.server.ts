@@ -1,5 +1,6 @@
-export { PostgresCoachCalendar } from "./postgres-coach-calendar.server";
+export { PostgresCoachAvailability } from "./availability/postgres-coach-availability.server";
+export { PostgresCoachCalendar } from "./reservations/postgres-coach-calendar.server";
 export {
   releaseCoachTime,
   reserveCoachTime,
-} from "./coach-time-reservations.server";
+} from "./reservations/coach-time-reservations.server";
