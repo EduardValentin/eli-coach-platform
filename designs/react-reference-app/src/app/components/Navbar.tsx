@@ -5,6 +5,7 @@ import { isSignedIn, useAppState } from '../context/AppContext';
 import { useStore } from '../context/StoreContext';
 import { Link, useNavigate } from 'react-router';
 import { completeSignIn } from '../services/authService';
+import { buttonVariants } from './ThemeButton';
 import { NavigationDialog } from './ui/navigation-dialog';
 
 export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparent' }) {
@@ -106,11 +107,12 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
           {appState.session === 'client' && (
             <Link
               to="/portal"
-              className={`text-sm font-medium tracking-wide px-4 py-1.5 rounded-full transition-all ${
-                isScrolled
-                  ? 'bg-brand text-brand-foreground hover:bg-brand-hover'
-                  : 'bg-white/15 text-white border border-white/30 backdrop-blur-sm hover:bg-white/25'
-              }`}
+              className={buttonVariants({
+                lettering: 'wide',
+                size: 'xs',
+                textSize: 'sm',
+                variant: isScrolled ? 'primary' : 'glass',
+              })}
             >
               Client Portal
             </Link>
@@ -119,11 +121,12 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
           {appState.session === 'coach' && (
             <Link
               to="/coach"
-              className={`text-sm font-medium tracking-wide px-4 py-1.5 rounded-full transition-all ${
-                isScrolled
-                  ? 'bg-brand text-brand-foreground hover:bg-brand-hover'
-                  : 'bg-white/15 text-white border border-white/30 backdrop-blur-sm hover:bg-white/25'
-              }`}
+              className={buttonVariants({
+                lettering: 'wide',
+                size: 'xs',
+                textSize: 'sm',
+                variant: isScrolled ? 'primary' : 'glass',
+              })}
             >
               Coach Portal
             </Link>
@@ -139,7 +142,7 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
         >
           <span className="relative block">
             <ShoppingBag size={20} />
-            <span className="absolute -top-1.5 -right-2 bg-brand text-brand-foreground text-[10px] font-semibold w-4 h-4 rounded-full flex items-center justify-center">
+            <span className="absolute -top-1.5 -right-2 bg-brand text-brand-foreground text-micro font-semibold w-4 h-4 rounded-full flex items-center justify-center">
               {cart.length}
             </span>
           </span>
@@ -166,7 +169,7 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
     >
       <span className="relative block">
         <ShoppingBag size={20} className={isScrolled ? 'text-foreground' : 'text-white'} />
-        <span className="absolute -top-1.5 -right-2 bg-brand text-brand-foreground text-[10px] font-semibold w-4 h-4 rounded-full flex items-center justify-center">
+        <span className="absolute -top-1.5 -right-2 bg-brand text-brand-foreground text-micro font-semibold w-4 h-4 rounded-full flex items-center justify-center">
           {cart.length}
         </span>
       </span>
@@ -192,6 +195,7 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
 
         return (
           <header
+            data-surface={isSolid ? undefined : 'inverted'}
             className={`fixed top-0 left-0 right-0 z-[60] transition-colors duration-300 ${
               isSolid
                 ? 'bg-white/95 backdrop-blur-md shadow-sm text-foreground'
@@ -204,7 +208,7 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
                 onClick={topBar.menu.close}
               >
                 <div
-                  className={`w-8 h-8 flex items-center justify-center border-2 rounded-sm transform rotate-45 transition-colors ${
+                  className={`w-8 h-8 flex items-center justify-center border-2 rounded-tile transform rotate-45 transition-colors ${
                     isSolid ? 'border-brand' : 'border-current'
                   }`}
                 >
@@ -278,7 +282,7 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
                 initial={prefersReducedMotion ? false : { opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={prefersReducedMotion ? { duration: 0 } : { delay: 0.3 }}
-                className="w-16 h-px bg-neutral-300 my-4"
+                className="w-16 h-px bg-divider my-4"
               />
             )}
 
@@ -336,6 +340,7 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
             className="absolute bottom-0 left-0 right-0 pointer-events-none"
           >
             <svg
+              aria-hidden="true"
               viewBox="0 0 1440 320"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"

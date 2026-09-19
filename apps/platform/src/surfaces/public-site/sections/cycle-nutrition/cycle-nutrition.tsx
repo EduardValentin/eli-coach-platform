@@ -13,7 +13,8 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import {
   CYCLE_NUTRITION_DAYS,
   CYCLE_NUTRITION_DEGREES_PER_DAY,
-  getCycleNutritionViewState,
+  getAnchoredCycleViewState,
+  getScrollingCycleViewState,
   getPillPresentation,
 } from "./cycle-nutrition-content";
 import "./cycle-nutrition.css";
@@ -22,12 +23,15 @@ type PillStyle = CSSProperties & {
   "--cycle-nutrition-pill-color": string;
 };
 
-function getCycleMotionTransition(prefersReducedMotion: boolean): Transition {
-  return {
-    duration: prefersReducedMotion ? 0 : 0.3,
-    ease: [0.25, 0.1, 0.25, 1] as const,
-  };
-}
+const CYCLE_TRANSITION: Transition = {
+  duration: 0.3,
+  ease: [0.25, 0.1, 0.25, 1],
+};
+
+const INSTANT_CYCLE_TRANSITION: Transition = {
+  ...CYCLE_TRANSITION,
+  duration: 0,
+};
 
 export function PublicCycleNutrition() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -37,49 +41,47 @@ export function PublicCycleNutrition() {
     target: sectionRef,
   });
   const wheelRotation = useMotionValue(
-    getCycleNutritionViewState({ prefersReducedMotion: false, progress: 0 })
-      .rotationDegrees,
+    getScrollingCycleViewState(0).rotationDegrees,
   );
   const [viewState, setViewState] = useState(() =>
-    getCycleNutritionViewState({ prefersReducedMotion: false, progress: 0 }),
+    getScrollingCycleViewState(0),
   );
-  const transition = getCycleMotionTransition(prefersReducedMotion);
+  const transition = prefersReducedMotion
+    ? INSTANT_CYCLE_TRANSITION
+    : CYCLE_TRANSITION;
+  const viewStateAt = prefersReducedMotion
+    ? getAnchoredCycleViewState
+    : getScrollingCycleViewState;
 
   useMotionValueEvent(scrollYProgress, "change", (progress) => {
-    const nextViewState = getCycleNutritionViewState({
-      prefersReducedMotion,
-      progress,
-    });
+    const nextViewState = viewStateAt(progress);
 
     wheelRotation.set(nextViewState.rotationDegrees);
     setViewState(nextViewState);
   });
 
   useEffect(() => {
-    const nextViewState = getCycleNutritionViewState({
-      prefersReducedMotion,
-      progress: scrollYProgress.get(),
-    });
+    const nextViewState = viewStateAt(scrollYProgress.get());
 
     wheelRotation.set(nextViewState.rotationDegrees);
     setViewState(nextViewState);
-  }, [prefersReducedMotion, scrollYProgress, wheelRotation]);
+  }, [scrollYProgress, viewStateAt, wheelRotation]);
 
   return (
     <section
       aria-label="Your cycle is part of the plan."
-      className="relative min-h-[250vh] bg-surface-page"
+      className="ui-public-cycle-nutrition relative h-[250vh] bg-surface-page"
       ref={sectionRef}
     >
-      <div className="ui-public-cycle-nutrition-sticky sticky top-0 flex min-h-screen items-center overflow-hidden pt-20 pb-10 lg:pt-24 lg:pb-14">
-        <div className="mx-auto grid w-full max-w-stage grid-cols-1 items-center gap-10 px-6 md:px-12 lg:grid-cols-2 lg:gap-16 lg:px-24">
+      <div className="sticky top-0 flex min-h-screen items-center overflow-hidden pt-20 pb-10 lg:pt-24 lg:pb-14">
+        <div className="mx-auto grid w-full max-w-stage grid-cols-1 items-center gap-10 px-6 lg:grid-cols-2 lg:gap-16 lg:px-24">
           <div className="relative z-10 flex w-full flex-col items-center text-center lg:items-start lg:text-left">
             <div className="flex w-full max-w-lg flex-col items-center lg:items-start">
               <SectionEyebrow>Nutrition that fits the picture</SectionEyebrow>
-              <h2 className="font-heading text-3xl leading-tight font-medium text-text-primary md:text-4xl lg:text-5xl">
+              <h2 className="mb-5 font-heading text-3xl leading-display-snug font-medium text-text-primary md:text-4xl lg:text-5xl">
                 Your cycle is part of the plan.
               </h2>
-              <p className="mt-5 max-w-md text-body-base leading-copy-relaxed text-text-secondary md:text-body-lg">
+              <p className="max-w-md text-base leading-relaxed text-copy-muted md:text-lg">
                 Your menstrual cycle can influence your energy, appetite,
                 training, and recovery. Your nutrition plan takes that into
                 account, so you feel supported without having to overthink it.
@@ -93,15 +95,15 @@ export function PublicCycleNutrition() {
                 <motion.div
                   animate={{ backgroundColor: viewState.phase.tokenVariable }}
                   aria-hidden="true"
-                  className="ui-public-cycle-nutrition-indicator h-7 w-1 rounded-pill"
+                  className="h-7 w-1 rounded-full"
                   transition={transition}
                 />
               </div>
 
-              <div className="relative size-full rounded-pill">
+              <div className="relative size-full rounded-full">
                 <motion.div
                   aria-hidden="true"
-                  className="ui-public-cycle-nutrition-wheel absolute inset-0 rounded-pill"
+                  className="ui-public-cycle-nutrition-wheel absolute inset-0 rounded-full"
                   style={{ rotate: wheelRotation }}
                 >
                   {CYCLE_NUTRITION_DAYS.map((day) => {
@@ -121,9 +123,6 @@ export function PublicCycleNutrition() {
                         <div className="absolute top-1 left-1/2 -translate-x-1/2">
                           <motion.span
                             animate={{
-                              boxShadow: pill.isCurrent
-                                ? "var(--shadow-soft)"
-                                : "none",
                               height: pill.isCurrent
                                 ? "var(--space-9)"
                                 : "3.25rem",
@@ -135,12 +134,10 @@ export function PublicCycleNutrition() {
                                 : "var(--space-7)",
                             }}
                             className={cn(
-                              "ui-public-cycle-nutrition-day-pill flex flex-col items-center justify-start border border-border-soft bg-surface-subtle p-1",
+                              "ui-public-cycle-nutrition-day-pill flex flex-col items-center justify-start border border-surface-base/60 bg-surface-subtle p-1 transition-shadow duration-300",
                               {
-                                "ui-public-cycle-nutrition-day-pill-current":
+                                "shadow-(--cycle-nutrition-pill-shadow)":
                                   pill.isCurrent,
-                                "ui-public-cycle-nutrition-day-pill-muted":
-                                  !pill.isCurrent,
                                 "ui-public-cycle-nutrition-day-pill-striped":
                                   pill.isStriped,
                               },
@@ -169,14 +166,14 @@ export function PublicCycleNutrition() {
                   })}
                 </motion.div>
 
-                <div className="ui-public-cycle-nutrition-center absolute top-1/2 left-1/2 z-10 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-pill bg-surface-base p-8 text-center shadow-floating">
-                  <p className="text-label font-bold tracking-section-eyebrow text-text-muted uppercase">
+                <div className="ui-public-cycle-nutrition-center pointer-events-none absolute shadow-(--cycle-nutrition-center-shadow) top-1/2 left-1/2 z-10 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-full bg-surface-base p-8 text-center">
+                  <span className="mb-4 text-xs leading-normal font-bold tracking-section-eyebrow text-text-muted uppercase">
                     DAY {viewState.activeDay}
-                  </p>
-                  <motion.p
+                  </span>
+                  <motion.h3
                     animate={{ opacity: 1, scale: 1 }}
                     className={cn(
-                      "mt-4 font-heading text-4xl leading-tight font-medium md:text-5xl",
+                      "mb-3 font-heading text-4xl leading-normal font-medium motion-reduce:transform-none md:text-public-cycle-phase",
                       viewState.phase.tokenClassName.text,
                     )}
                     initial={
@@ -186,10 +183,10 @@ export function PublicCycleNutrition() {
                     transition={transition}
                   >
                     {viewState.phase.name}
-                  </motion.p>
+                  </motion.h3>
                   <motion.p
                     animate={{ opacity: 1 }}
-                    className="ui-public-cycle-nutrition-cue mt-3 text-body-sm leading-snug font-medium text-text-secondary"
+                    className="ui-public-cycle-nutrition-cue leading-snug font-medium text-copy-muted md:text-sm"
                     initial={prefersReducedMotion ? false : { opacity: 0 }}
                     key={`${viewState.phase.id}-cue`}
                     transition={transition}

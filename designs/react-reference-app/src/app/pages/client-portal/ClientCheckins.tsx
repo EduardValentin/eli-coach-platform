@@ -129,17 +129,17 @@ export function ClientCheckins() {
       <Tabs defaultValue="upcoming" className="w-full">
         {/* Tabs + desktop CTA on one row, vertically centered */}
         <div className="flex items-center justify-between gap-4 mb-6">
-          <TabsList className="bg-neutral-100 rounded-2xl p-1">
-          <TabsTrigger value="upcoming" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm px-4 sm:px-5 py-2.5 text-sm font-semibold">
+          <TabsList className="bg-neutral-100 rounded-card p-1">
+          <TabsTrigger value="upcoming" className="rounded-control data-[state=active]:bg-white data-[state=active]:shadow-sm px-4 sm:px-5 py-2.5 text-sm font-semibold">
             Upcoming {upcoming.length > 0 && <span className="ml-1.5 text-text-secondary">({upcoming.length})</span>}
           </TabsTrigger>
-          <TabsTrigger value="requests" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm px-4 sm:px-5 py-2.5 text-sm font-semibold">
+          <TabsTrigger value="requests" className="rounded-control data-[state=active]:bg-white data-[state=active]:shadow-sm px-4 sm:px-5 py-2.5 text-sm font-semibold">
             Requests
             {needsResponseCount > 0 && (
               <span className="ml-1.5 w-5 h-5 rounded-full bg-status-pending text-white text-[10px] font-bold inline-flex items-center justify-center">{needsResponseCount}</span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="past" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm px-4 sm:px-5 py-2.5 text-sm font-semibold">
+          <TabsTrigger value="past" className="rounded-control data-[state=active]:bg-white data-[state=active]:shadow-sm px-4 sm:px-5 py-2.5 text-sm font-semibold">
             Past
           </TabsTrigger>
           </TabsList>
@@ -150,7 +150,7 @@ export function ClientCheckins() {
             onClick={() => setShowRequest(true)}
             disabled={pendingExists}
             title={pendingExists ? 'You already have a check-in request awaiting your coach' : 'Request a check-in with your coach'}
-            className={`hidden sm:inline-flex items-center gap-2 px-4 min-h-11 rounded-xl text-sm font-bold transition-colors shrink-0 ${
+            className={`hidden sm:inline-flex items-center gap-2 px-4 min-h-11 rounded-control text-sm font-bold transition-colors shrink-0 ${
               pendingExists
                 ? 'bg-neutral-100 text-text-secondary'
                 : 'bg-brand text-white hover:bg-brand-hover shadow-sm'
@@ -172,7 +172,7 @@ export function ClientCheckins() {
                   href={MEET_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 min-h-10 px-4 bg-text-primary text-white text-xs font-semibold rounded-xl hover:bg-neutral-800 transition-colors"
+                  className="inline-flex items-center justify-center gap-2 min-h-10 px-4 bg-text-primary text-white text-xs font-semibold rounded-control hover:bg-neutral-800 transition-colors"
                 >
                   <Video size={14} aria-hidden="true" />
                   Join Meet
@@ -181,7 +181,7 @@ export function ClientCheckins() {
                   <button
                     type="button"
                     onClick={() => openReschedule(c.id)}
-                    className="inline-flex items-center justify-center min-h-10 px-4 bg-white border border-brand/30 text-brand text-xs font-semibold rounded-xl hover:bg-brand/5 transition-colors"
+                    className="inline-flex items-center justify-center min-h-10 px-4 bg-white border border-brand/30 text-brand text-xs font-semibold rounded-control hover:bg-brand/5 transition-colors"
                   >
                     Reschedule
                   </button>
@@ -207,7 +207,7 @@ export function ClientCheckins() {
                       <button
                         type="button"
                         onClick={() => isRescheduling ? handleAcceptReschedule(c) : handleApprove(c)}
-                        className="inline-flex items-center justify-center min-h-10 px-4 bg-text-primary text-white text-xs font-semibold rounded-xl hover:bg-neutral-800 transition-colors"
+                        className="inline-flex items-center justify-center min-h-10 px-4 bg-text-primary text-white text-xs font-semibold rounded-control hover:bg-neutral-800 transition-colors"
                       >
                         {isRescheduling ? 'Accept' : 'Approve'}
                       </button>
@@ -215,7 +215,7 @@ export function ClientCheckins() {
                         <button
                           type="button"
                           onClick={() => openReschedule(c.id)}
-                          className="inline-flex items-center justify-center min-h-10 px-4 bg-white border border-brand/30 text-brand text-xs font-semibold rounded-xl hover:bg-brand/5 transition-colors"
+                          className="inline-flex items-center justify-center min-h-10 px-4 bg-white border border-brand/30 text-brand text-xs font-semibold rounded-control hover:bg-brand/5 transition-colors"
                         >
                           Reschedule
                         </button>
@@ -223,7 +223,7 @@ export function ClientCheckins() {
                       <button
                         type="button"
                         onClick={() => handleDecline(c)}
-                        className="inline-flex items-center justify-center min-h-10 px-4 bg-white border border-neutral-200 text-text-secondary text-xs font-semibold rounded-xl hover:bg-neutral-50 transition-colors"
+                        className="inline-flex items-center justify-center min-h-10 px-4 bg-white border border-neutral-200 text-text-secondary text-xs font-semibold rounded-control hover:bg-neutral-50 transition-colors"
                       >
                         Decline
                       </button>
@@ -232,7 +232,7 @@ export function ClientCheckins() {
                     <button
                       type="button"
                       onClick={() => handleCancelRequest(c)}
-                      className="inline-flex items-center justify-center min-h-10 px-4 bg-white border border-neutral-200 text-text-secondary text-xs font-semibold rounded-xl hover:bg-neutral-50 transition-colors"
+                      className="inline-flex items-center justify-center min-h-10 px-4 bg-white border border-neutral-200 text-text-secondary text-xs font-semibold rounded-control hover:bg-neutral-50 transition-colors"
                     >
                       Cancel request
                     </button>
@@ -300,7 +300,7 @@ export function ClientCheckins() {
         disabled={pendingExists}
         aria-label={pendingExists ? 'Check-in request pending — awaiting your coach' : 'Request a check-in'}
         title={pendingExists ? 'You already have a check-in request awaiting your coach' : 'Request a check-in with your coach'}
-        className={`sm:hidden fixed left-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-40 inline-flex items-center gap-2 min-h-12 px-5 rounded-full font-bold text-sm shadow-lg transition-colors ${
+        className={`sm:hidden fixed left-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-40 inline-flex items-center gap-2 min-h-12 px-5 rounded-control font-bold text-sm shadow-lg transition-colors ${
           pendingExists
             ? 'bg-neutral-200 text-text-secondary'
             : 'bg-brand text-white hover:bg-brand-hover'
@@ -326,10 +326,10 @@ function CheckinCard({ checkin, children, muted }: { checkin: CheckIn; children?
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`bg-white p-4 sm:p-5 rounded-2xl border border-neutral-100/50 shadow-[0_2px_12px_rgb(0,0,0,0.03)] ${muted ? 'opacity-90' : ''}`}
+      className={`bg-white p-4 sm:p-5 rounded-card border border-neutral-100/50 shadow-[0_2px_12px_rgb(0,0,0,0.03)] ${muted ? 'opacity-90' : ''}`}
     >
       <div className="flex items-start gap-3 sm:gap-4">
-        <span className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center shrink-0 ${
+        <span className={`w-10 h-10 sm:w-11 sm:h-11 rounded-control flex items-center justify-center shrink-0 ${
           isAdHoc ? 'bg-status-pending-soft text-status-pending' : 'bg-brand-secondary/10 text-brand-secondary'
         }`}>
           <Icon size={18} aria-hidden="true" />

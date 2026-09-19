@@ -1,6 +1,7 @@
 import { index, relative } from "@react-router/dev/routes";
 
-import { accountsPublicRoutes } from "../../features/accounts/routes";
+import { accountsDeadEndRoutes } from "../../features/accounts/routes";
+import { assessmentCallsPublicRoutes } from "../../features/assessment-calls/routes";
 import { storePublicRoutes } from "../../features/store/routes";
 
 import { PRICING_PATH } from "./paths";
@@ -14,7 +15,8 @@ export const publicSiteRoutes = [
     route(PRICING_PATH.slice(1), "./pages/pricing.tsx"),
     route("privacy", "./pages/privacy.tsx"),
     route("terms", "./pages/terms.tsx"),
-    ...accountsPublicRoutes,
+    ...assessmentCallsPublicRoutes,
     ...storePublicRoutes,
   ]),
+  ...accountsDeadEndRoutes,
 ];

@@ -9,6 +9,7 @@ import {
   useId,
   useRef,
   useState,
+  type ComponentProps,
   type MouseEvent,
   type ReactNode,
   type RefObject,
@@ -22,6 +23,7 @@ import { useCloseMobileNavigationOnDesktop } from "./use-close-mobile-navigation
 type NavigationMenuState = "closed" | "closing" | "open";
 type FocusAfterClose = "menu-button" | "main-content" | "unchanged";
 type NavigationPanelVariant = "closed" | "open";
+type MenuButtonVariant = ComponentProps<typeof IconButton>["variant"];
 
 export type NavigationMenu = {
   close: () => void;
@@ -40,6 +42,7 @@ type NavigationDialogProps = {
   closeMenuIcon: ReactNode;
   contentClassName: string;
   menuButtonClassName: string;
+  menuButtonVariant?: MenuButtonVariant;
   openMenuIcon: ReactNode;
   renderTopBar: (topBar: NavigationTopBar) => ReactNode;
   title: string;
@@ -53,6 +56,7 @@ export function NavigationDialog(props: NavigationDialogProps) {
     closeMenuIcon,
     contentClassName,
     menuButtonClassName,
+    menuButtonVariant,
     openMenuIcon,
     renderTopBar,
     title,
@@ -114,6 +118,7 @@ export function NavigationDialog(props: NavigationDialogProps) {
     "aria-label": isOpen ? "Close menu" : "Open menu",
     children: isOpen ? closeMenuIcon : openMenuIcon,
     className: menuButtonClassName,
+    variant: menuButtonVariant,
   };
 
   const focusFirstLink = (event: Event) => {

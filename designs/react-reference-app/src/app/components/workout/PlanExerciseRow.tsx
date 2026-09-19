@@ -32,17 +32,17 @@ export function PlanExerciseRow({ planExercise, exercise }: PlanExerciseRowProps
         type="button"
         onClick={() => setVideoOpen(true)}
         aria-label={`${exercise.name} details`}
-        className="w-full flex items-center gap-3 sm:gap-4 rounded-xl px-2 sm:px-3 py-2 hover:bg-neutral-50 transition-colors text-left outline-none focus-visible:ring-[3px] focus-visible:ring-brand/30"
+        className="w-full flex items-center gap-3 sm:gap-4 rounded-control px-2 sm:px-3 py-2 hover:bg-neutral-50 transition-colors text-left outline-none focus-visible:ring-[3px] focus-visible:ring-brand/30"
       >
-        <span aria-hidden="true" className="shrink-0 size-10 rounded-lg overflow-hidden bg-neutral-100 flex items-center justify-center">
+        <span aria-hidden="true" className="shrink-0 size-10 rounded-compact overflow-hidden bg-neutral-100 flex items-center justify-center">
           {exercise.thumbnailUrl ? (
             <img src={exercise.thumbnailUrl} alt="" className="w-full h-full object-cover" />
           ) : (
-            <span className="text-[11px] font-bold text-text-secondary tracking-wider">{initials}</span>
+            <span className="text-caption font-bold text-text-secondary tracking-wider">{initials}</span>
           )}
         </span>
 
-        <span className="flex-1 min-w-0 text-text-primary text-[15px] sm:text-base leading-tight truncate">
+        <span className="flex-1 min-w-0 text-text-primary text-md sm:text-base leading-tight truncate">
           {exercise.name}
         </span>
 
@@ -51,7 +51,7 @@ export function PlanExerciseRow({ planExercise, exercise }: PlanExerciseRowProps
             {planExercise.sets} &times; {planExercise.reps}
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="text-[11px] text-text-secondary font-medium tracking-wider">RIR</span>
+            <span className="text-caption text-text-secondary font-medium tracking-wider">RIR</span>
             <RirBadge value={planExercise.rir} />
           </span>
         </span>

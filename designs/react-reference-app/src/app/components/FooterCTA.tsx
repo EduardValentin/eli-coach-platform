@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { Link } from 'react-router';
 import { motion, useScroll, useTransform, useInView } from 'motion/react';
-import { buttonVariants, cn } from './ThemeButton';
+import { buttonVariants } from './ThemeButton';
 import { useAppState } from '../context/AppContext';
 import { WaitlistEmailForm } from './waitlist/WaitlistEmailForm';
 import { WaitlistAvailabilityStatus } from './waitlist/WaitlistAvailabilityStatus';
@@ -92,19 +92,13 @@ export function FooterCTA() {
               >
                 <Link
                   to="/store"
-                  className={cn(
-                    buttonVariants({ size: 'lg', variant: 'primary' }),
-                    'w-full sm:w-auto px-8',
-                  )}
+                  className={buttonVariants({ elevation: 'raised', press: 'scale', weight: 'regular', width: 'full-below-sm' })}
                 >
                   Browse the free resources
                 </Link>
                 <Link
                   to="/pricing"
-                  className={cn(
-                    buttonVariants({ size: 'lg', variant: 'outline' }),
-                    'w-full sm:w-auto px-8',
-                  )}
+                  className={buttonVariants({ press: 'scale', variant: 'outline-brand', weight: 'regular', width: 'full-below-sm' })}
                 >
                   See coaching plans
                 </Link>

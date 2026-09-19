@@ -21,7 +21,7 @@ export function VideoSheet({ exercise, open, onOpenChange }: VideoSheetProps) {
       </div>
 
       <div className="px-5 pb-8 md:px-8 md:pb-8 overflow-y-auto space-y-5">
-        <div className="aspect-video bg-neutral-900 rounded-xl flex items-center justify-center">
+        <div className="aspect-video bg-neutral-900 rounded-control flex items-center justify-center">
           <PlayCircle size={56} className="text-white/70" />
         </div>
 

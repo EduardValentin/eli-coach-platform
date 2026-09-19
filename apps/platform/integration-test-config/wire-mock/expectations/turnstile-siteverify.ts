@@ -1,5 +1,6 @@
 import { TURNSTILE_TEST_RESPONSE_TOKEN } from "@eli-coach-platform/config";
 import {
+  ASSESSMENT_CALL_BOOKING_TURNSTILE_ACTION,
   STORE_ACQUISITION_TURNSTILE_ACTION,
   WAITLIST_TURNSTILE_ACTION,
 } from "@eli-coach-platform/infrastructure/bot-detection";
@@ -9,6 +10,7 @@ import type { WireMockStub } from "../wire-mock-container";
 export const TURNSTILE_SITEVERIFY_PATH = "/turnstile/v0/siteverify";
 
 const ISSUED_ACTIONS = [
+  ASSESSMENT_CALL_BOOKING_TURNSTILE_ACTION,
   STORE_ACQUISITION_TURNSTILE_ACTION,
   WAITLIST_TURNSTILE_ACTION,
 ];

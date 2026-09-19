@@ -273,7 +273,7 @@ const buttonSectionStyle: CSSProperties = {
 };
 const downloadButtonStyle: CSSProperties = {
   backgroundColor: BRAND.pink,
-  borderRadius: "999px",
+  borderRadius: "14px",
   color: BRAND.white,
   display: "inline-block",
   fontFamily: FONT_SANS,

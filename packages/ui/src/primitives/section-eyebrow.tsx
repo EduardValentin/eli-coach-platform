@@ -7,7 +7,7 @@ const sectionEyebrowVariants = cva(
     variants: {
       variant: {
         brand: "mb-4 text-xs font-semibold text-brand-primary md:text-sm",
-        muted: "mb-6 text-body-sm font-regular text-text-muted",
+        muted: "mb-6 text-sm text-text-muted",
       },
     },
     defaultVariants: {

@@ -22,6 +22,8 @@ import { presentWaitlist } from "~/features/waitlist/ui/shared/waitlist-presenta
 
 import { PublicHero } from "./hero";
 
+import { BOOK_PATH } from "~/features/assessment-calls/contracts/paths";
+
 const STATIC_BOT_DETECTION = {
   provider: "static",
   token: TURNSTILE_TEST_RESPONSE_TOKEN,
@@ -142,7 +144,7 @@ describe("PublicHero local interactions", () => {
     ).toHaveLength(1);
     expect(screen.getByRole("link", { name: /\S/ })).toHaveAttribute(
       "href",
-      "/book",
+      BOOK_PATH,
     );
     expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
   });
@@ -259,8 +261,11 @@ describe("PublicHero local interactions", () => {
     const videoControls = screen.getAllByRole("button", { name: /\S/ });
     const [playbackControl, restartControl] = videoControls;
     video.currentTime = 18;
+    const bookingLink = screen.getByRole("link", { name: /\S/ });
 
     // act
+    await user.tab();
+    const bookingLinkReceivedFocus = bookingLink === document.activeElement;
     await user.tab();
     const playbackControlReceivedFocus =
       playbackControl === document.activeElement;
@@ -277,6 +282,7 @@ describe("PublicHero local interactions", () => {
     expect(videoControls).toHaveLength(2);
     expect(playbackControl).toHaveAccessibleName(/\S/);
     expect(restartControl).toHaveAccessibleName(/\S/);
+    expect(bookingLinkReceivedFocus).toBe(true);
     expect(playbackControlReceivedFocus).toBe(true);
     expect(restartControlReceivedFocus).toBe(true);
     expect(pausedAfterFirstActivation).toBe(true);

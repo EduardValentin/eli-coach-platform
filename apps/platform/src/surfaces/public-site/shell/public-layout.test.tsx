@@ -54,6 +54,7 @@ describe("PublicLayout", () => {
     render(
       <MemoryRouter>
         <PublicLayout
+          contentFrame="padded"
           scrollBehavior="solid"
           session={anonymousSession}
           storePath={STORE_PATH}
@@ -83,6 +84,7 @@ describe("PublicLayout", () => {
     render(
       <MemoryRouter>
         <PublicLayout
+          contentFrame="padded"
           scrollBehavior="solid"
           session={anonymousSession}
           storePath={STORE_PATH}
@@ -133,6 +135,7 @@ describe("PublicLayout", () => {
     render(
       <MemoryRouter>
         <PublicLayout
+          contentFrame="padded"
           navigationActions={cart}
           scrollBehavior="solid"
           session={{ kind: "authenticated", role: "CLIENT" }}
@@ -169,6 +172,7 @@ describe("PublicLayout", () => {
     render(
       <MemoryRouter>
         <PublicLayout
+          contentFrame="padded"
           navigationActions={cart}
           scrollBehavior="solid"
           session={{ kind: "authenticated", role: "COACH" }}
@@ -206,6 +210,7 @@ describe("PublicLayout accessibility", () => {
     const { baseElement } = render(
       <MemoryRouter>
         <PublicLayout
+          contentFrame="padded"
           scrollBehavior="solid"
           session={anonymousSession}
           storePath={STORE_PATH}

@@ -54,7 +54,7 @@ export function CoachClientCycle() {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-card p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50"
+          className="bg-card p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50"
         >
           <div className="flex justify-between items-start mb-4">
             <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Current Phase</span>
@@ -77,7 +77,7 @@ export function CoachClientCycle() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="bg-card p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50"
+          className="bg-card p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50"
         >
           <div className="flex justify-between items-start mb-4">
             <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Cycle Info</span>
@@ -102,7 +102,7 @@ export function CoachClientCycle() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-card p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50"
+          className="bg-card p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50"
         >
           <div className="flex justify-between items-start mb-4">
             <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Conditions</span>
@@ -111,7 +111,7 @@ export function CoachClientCycle() {
           {profile && profile.conditions.length > 0 ? (
             <div className="flex flex-wrap gap-2">
               {profile.conditions.map(c => (
-                <span key={c} className="text-xs font-semibold bg-cycle-menstrual/10 text-brand px-2.5 py-1 rounded-lg">
+                <span key={c} className="text-xs font-semibold bg-cycle-menstrual/10 text-brand px-2.5 py-1 rounded-compact">
                   {c}
                 </span>
               ))}
@@ -128,7 +128,7 @@ export function CoachClientCycle() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
-          className="bg-card p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50 mb-8"
+          className="bg-card p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50 mb-8"
         >
           <h2 className="font-serif text-lg text-foreground font-semibold mb-3">Client Notes</h2>
           <p className="text-sm text-muted-foreground leading-relaxed">{profile.notes}</p>
@@ -141,13 +141,14 @@ export function CoachClientCycle() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-card p-6 lg:p-8 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50"
+          className="bg-card p-6 lg:p-8 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50"
         >
           <h2 className="font-serif text-xl text-foreground font-semibold mb-6">Cycle Calendar</h2>
           <BrandCalendar
             mode="single"
             classNames={{
-              day: 'w-full aspect-square p-0 font-medium rounded-xl inline-flex items-center justify-center relative cursor-default',
+              day_button:
+                'w-full aspect-square p-0 font-medium rounded-control inline-flex items-center justify-center relative cursor-default',
             }}
             modifiers={{
               period: (date) => periodDates.has(toISO(date)),
@@ -173,7 +174,7 @@ export function CoachClientCycle() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25 }}
-          className="bg-card p-6 lg:p-8 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50 self-start"
+          className="bg-card p-6 lg:p-8 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50 self-start"
         >
           <h2 className="font-serif text-xl text-foreground font-semibold mb-6">Period History</h2>
           {records.length === 0 ? (
@@ -193,7 +194,7 @@ export function CoachClientCycle() {
                 const allSymptoms = [...new Set(record.entries.flatMap(e => e.symptoms))];
 
                 return (
-                  <div key={record.id} className="p-4 rounded-2xl border border-border bg-muted/50">
+                  <div key={record.id} className="p-4 rounded-card border border-border bg-muted/50">
                     <div className="flex items-center gap-2 mb-2">
                       <div className="w-2.5 h-2.5 rounded-full bg-cycle-menstrual" />
                       <p className="font-semibold text-sm text-foreground">

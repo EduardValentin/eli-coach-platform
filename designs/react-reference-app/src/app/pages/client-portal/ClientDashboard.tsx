@@ -77,7 +77,7 @@ export function ClientDashboard() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           aria-labelledby="nutrition-heading"
-          className="lg:col-span-2 bg-white p-5 sm:p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
+          className="lg:col-span-2 bg-white p-5 sm:p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
         >
           <div className="flex items-center justify-between gap-2 mb-5">
             <h2 id="nutrition-heading" className="text-xs font-bold text-text-secondary uppercase tracking-widest">Daily Nutrition</h2>
@@ -91,7 +91,7 @@ export function ClientDashboard() {
             <div>
               <div className="flex items-center gap-1.5 mb-1">
                 <Flame size={13} className="text-metric-energy" strokeWidth={2.5} aria-hidden="true" />
-                <span className="text-[11px] font-bold text-text-secondary uppercase tracking-widest">BMR</span>
+                <span className="text-caption font-bold text-text-secondary uppercase tracking-widest">BMR</span>
               </div>
               <div className="flex items-baseline gap-1">
                 <span className="font-serif text-3xl lg:text-4xl text-text-primary">{clientProfile?.bmr.toLocaleString() ?? '--'}</span>
@@ -101,7 +101,7 @@ export function ClientDashboard() {
             <div>
               <div className="flex items-center gap-1.5 mb-1">
                 <Activity size={13} className="text-text-secondary" strokeWidth={2.5} aria-hidden="true" />
-                <span className="text-[11px] font-bold text-text-secondary uppercase tracking-widest">Maintenance</span>
+                <span className="text-caption font-bold text-text-secondary uppercase tracking-widest">Maintenance</span>
               </div>
               <div className="flex items-baseline gap-1">
                 <span className="font-serif text-3xl lg:text-4xl text-text-primary">{clientProfile?.maintenanceCalories.toLocaleString() ?? '--'}</span>
@@ -111,7 +111,7 @@ export function ClientDashboard() {
             <div>
               <div className="flex items-center gap-1.5 mb-1">
                 <TargetIcon size={13} className="text-text-primary" strokeWidth={2.5} aria-hidden="true" />
-                <span className="text-[11px] font-bold text-text-secondary uppercase tracking-widest">Daily Target</span>
+                <span className="text-caption font-bold text-text-secondary uppercase tracking-widest">Daily Target</span>
               </div>
               <div className="flex items-baseline gap-1">
                 <span className="font-serif text-3xl lg:text-4xl text-text-primary">{clientProfile?.dailyCalories.toLocaleString() ?? '--'}</span>
@@ -130,8 +130,8 @@ export function ClientDashboard() {
                 ? `−${Math.abs(delta).toLocaleString()} kcal/day deficit`
                 : `+${delta.toLocaleString()} kcal/day surplus`;
             return (
-              <p className="flex flex-wrap items-center gap-1.5 mb-5 text-[11px] font-medium text-text-secondary">
-                <span className="inline-block px-2 py-0.5 rounded-md bg-neutral-100 text-text-secondary font-bold uppercase tracking-wide text-[10px]">
+              <p className="flex flex-wrap items-center gap-1.5 mb-5 text-caption font-medium text-text-secondary">
+                <span className="inline-block px-2 py-0.5 rounded-field bg-neutral-100 text-text-secondary font-bold uppercase tracking-wide text-[10px]">
                   {clientProfile.primaryGoal}
                 </span>
                 <span>{deltaLabel}</span>
@@ -142,8 +142,8 @@ export function ClientDashboard() {
           {/* Macro split */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-bold text-text-secondary uppercase tracking-widest">Macros</span>
-              <span className="text-[11px] font-medium text-text-secondary">{macroKcal.toLocaleString()} kcal</span>
+              <span className="text-caption font-bold text-text-secondary uppercase tracking-widest">Macros</span>
+              <span className="text-caption font-medium text-text-secondary">{macroKcal.toLocaleString()} kcal</span>
             </div>
             <div className="flex h-2.5 w-full gap-1 mb-3" aria-hidden="true">
               {macros.map(m => (
@@ -159,12 +159,12 @@ export function ClientDashboard() {
                 <li key={m.label} className="min-w-0">
                   <div className="flex items-center gap-1.5">
                     <span className={`w-2 h-2 rounded-full shrink-0 ${m.barClass}`} aria-hidden="true" />
-                    <span className="text-[10px] sm:text-[11px] font-bold text-text-secondary uppercase tracking-wide truncate">{m.label}</span>
+                    <span className="text-[10px] sm:text-caption font-bold text-text-secondary uppercase tracking-wide truncate">{m.label}</span>
                   </div>
                   <p className="mt-1 text-text-primary">
                     <span className="font-serif text-lg lg:text-xl">{m.grams}</span>
                     <span className="text-xs font-semibold text-text-secondary">g</span>
-                    <span className="text-[11px] font-medium text-text-secondary"> · {pctOf(m.kcal)}%</span>
+                    <span className="text-caption font-medium text-text-secondary"> · {pctOf(m.kcal)}%</span>
                   </p>
                 </li>
               ))}
@@ -178,7 +178,7 @@ export function ClientDashboard() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 }}
-            className="h-full bg-white p-5 sm:p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 hover:border-brand/20 hover:shadow-md transition-all cursor-pointer flex flex-col"
+            className="h-full bg-white p-5 sm:p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 hover:border-brand/20 hover:shadow-md transition-all cursor-pointer flex flex-col"
           >
             <div className="flex items-center justify-between gap-2">
               <span className="text-xs font-bold text-text-secondary uppercase tracking-widest">Phase</span>
@@ -207,24 +207,24 @@ export function ClientDashboard() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="lg:col-span-2 bg-white p-8 lg:p-10 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col items-start"
+          className="lg:col-span-2 bg-white p-8 lg:p-10 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col items-start"
         >
           <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full mb-4 gap-4">
             <h2 className="font-serif text-xl lg:text-2xl text-text-primary font-semibold">Today's Focus</h2>
             {todayInfo && !todayInfo.isRest && (
-              <div className="bg-metric-energy-soft text-metric-energy px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-widest self-start sm:self-auto">
+              <div className="bg-metric-energy-soft text-metric-energy px-3 py-1.5 rounded-field text-xs font-bold uppercase tracking-widest self-start sm:self-auto">
                 {todayInfo.dayName} &middot; {todayInfo.day.type}
               </div>
             )}
             {todayInfo?.isRest && (
-              <div className="bg-neutral-100 text-text-secondary px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-widest self-start sm:self-auto">
+              <div className="bg-neutral-100 text-text-secondary px-3 py-1.5 rounded-field text-xs font-bold uppercase tracking-widest self-start sm:self-auto">
                 Rest Day
               </div>
             )}
           </div>
 
           {activeGoal && (
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-brand-secondary/10 text-brand-secondary rounded-lg text-[11px] font-semibold mb-4">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-brand-secondary/10 text-brand-secondary rounded-compact text-caption font-semibold mb-4">
               <TargetIcon size={12} />
               {activeGoal.type}
             </div>
@@ -244,7 +244,7 @@ export function ClientDashboard() {
           )}
 
           {todayInfo?.isRest && (
-            <div className="mt-auto px-6 py-3.5 bg-neutral-100 text-text-secondary text-sm font-semibold rounded-xl flex items-center gap-3">
+            <div className="mt-auto px-6 py-3.5 bg-neutral-100 text-text-secondary text-sm font-semibold rounded-control flex items-center gap-3">
               <Activity size={16} />
               Enjoy your rest day
             </div>
@@ -256,7 +256,7 @@ export function ClientDashboard() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25 }}
-          className="lg:col-span-1 bg-white p-8 lg:p-10 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
+          className="lg:col-span-1 bg-white p-8 lg:p-10 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
         >
           <h2 className="font-serif text-xl text-text-primary font-semibold mb-8">Profile Details</h2>
 
@@ -304,7 +304,7 @@ export function ClientDashboard() {
           <button
             type="button"
             onClick={handleStartWorkout}
-            className="inline-flex items-center gap-2 text-base font-semibold text-white bg-brand hover:bg-brand-hover px-6 min-h-12 rounded-2xl shadow-sm hover:shadow transition-all"
+            className="inline-flex items-center gap-2 text-base font-semibold text-white bg-brand hover:bg-brand-hover px-6 min-h-12 rounded-control shadow-sm hover:shadow transition-all"
           >
             Start today's workout
             <Play size={16} className="fill-current" aria-hidden="true" />

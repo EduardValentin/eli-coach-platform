@@ -24,12 +24,12 @@ function ProgressGraph() {
       onViewportEnter={() => setIsVisible(true)}
       viewport={{ once: true, margin: '-80px' }}
       transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
-      className="group bg-card border border-border rounded-3xl p-6 md:p-8 shadow-xl motion-reduce:transform-none"
+      className="group bg-card border border-border rounded-panel p-6 md:p-8 shadow-xl motion-reduce:transform-none"
       aria-labelledby={titleId}
       aria-describedby={descId}
     >
       <figcaption className="mb-5">
-        <p className="text-public-my-method-overline uppercase tracking-section-eyebrow text-muted-foreground font-bold mb-1">
+        <p className="text-micro uppercase tracking-section-eyebrow text-muted-foreground font-bold mb-1">
           Progress, side by side
         </p>
         <h3
@@ -103,10 +103,10 @@ function ProgressGraph() {
           On your own
         </span>
 
-        <span className="absolute left-2 -bottom-1 text-public-my-method-axis-label text-muted-foreground font-medium">
+        <span className="absolute left-2 -bottom-1 text-caption leading-normal text-muted-foreground font-medium">
           Month 1
         </span>
-        <span className="absolute right-[14%] -bottom-1 text-public-my-method-axis-label text-muted-foreground font-medium">
+        <span className="absolute right-[14%] -bottom-1 text-caption leading-normal text-muted-foreground font-medium">
           Month 6
         </span>
       </div>
@@ -134,7 +134,7 @@ export function MyMethod() {
             <SectionEyebrow>My method</SectionEyebrow>
             <h2
               id={headingId}
-              className="text-3xl md:text-4xl lg:text-5xl font-serif font-medium text-foreground mb-8 leading-public-my-method-heading"
+              className="text-3xl md:text-4xl lg:text-5xl font-serif font-medium text-foreground mb-8 leading-tight"
             >
               Why progress is easier with support.
             </h2>

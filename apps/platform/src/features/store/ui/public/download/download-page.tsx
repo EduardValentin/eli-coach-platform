@@ -1,4 +1,5 @@
-import { Button } from "@eli-coach-platform/ui/primitives";
+import { cn } from "@eli-coach-platform/ui/lib";
+import { Button, buttonVariants } from "@eli-coach-platform/ui/primitives";
 import { ArrowRight, Download, LinkIcon } from "lucide-react";
 import { Link, type MetaFunction } from "react-router";
 
@@ -39,30 +40,36 @@ export default function DownloadRoute() {
       <h1 className="font-heading text-display-lg tracking-tight text-text-primary">
         Your resources
       </h1>
-      <p className="mt-4 text-body-lg text-text-secondary">
+      <p className="mt-4 text-lg text-text-secondary">
         Everything you requested is ready. Your private link can be reused for
         seven days after the request.
       </p>
       <div className="my-10 rounded-panel border border-border-subtle bg-surface-base p-8 shadow-soft">
-        <span className="mx-auto flex size-16 items-center justify-center rounded-pill bg-brand-primary-soft text-brand-primary">
+        <span className="mx-auto flex size-16 items-center justify-center rounded-full bg-brand-primary-soft text-brand-primary">
           <Download aria-hidden="true" size={30} />
         </span>
         <h2 className="mt-5 text-center font-heading text-display-sm text-text-primary">
           One secure download
         </h2>
-        <p className="mt-2 text-center text-body-sm text-text-secondary">
+        <p className="mt-2 text-center text-sm text-text-secondary">
           Single files download directly. Multiple resources arrive together in
           a ZIP file.
         </p>
       </div>
       <form action={DOWNLOAD_API_URL} method="post">
         <input name="token" type="hidden" value={token} />
-        <Button className="w-full" size="lg" type="submit" variant="primary">
+        <Button
+          elevation="raised"
+          size="lg"
+          textSize="lg"
+          type="submit"
+          width="full"
+        >
           <Download aria-hidden="true" size={21} />
           Download your resources
         </Button>
       </form>
-      <p className="mt-6 text-center text-body-sm text-text-secondary">
+      <p className="mt-6 text-center text-sm text-text-secondary">
         Need something else?{" "}
         <Link
           className="-mx-2 inline-flex min-h-11 items-center px-2 text-brand-primary underline underline-offset-2"
@@ -79,7 +86,7 @@ export default function DownloadRoute() {
 function UnavailableDownload() {
   return (
     <div className="mx-auto flex max-w-2xl flex-col items-center py-16 text-center">
-      <span className="mb-5 flex size-20 items-center justify-center rounded-pill bg-surface-subtle text-text-muted">
+      <span className="mb-5 flex size-20 items-center justify-center rounded-full bg-surface-subtle text-text-muted">
         <LinkIcon aria-hidden="true" size={36} />
       </span>
       <h1 className="font-heading text-display-md tracking-tight text-text-primary">
@@ -90,7 +97,10 @@ function UnavailableDownload() {
         request your resources again from the store.
       </p>
       <Link
-        className="mt-7 inline-flex items-center gap-2 rounded-pill bg-surface-inverted px-7 py-4 font-medium text-text-inverted transition-colors hover:bg-brand-primary"
+        className={cn(
+          buttonVariants({ size: "lg", variant: "inverted" }),
+          "mt-7",
+        )}
         to={STORE_PATH}
       >
         Back to the store

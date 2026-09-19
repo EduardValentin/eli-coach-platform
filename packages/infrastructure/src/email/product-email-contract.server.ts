@@ -1,6 +1,14 @@
+export type EmailAttachment = {
+  content: Uint8Array;
+  contentType: string;
+  filename: string;
+};
+
 export type ProductEmailCommand = {
+  attachments?: readonly EmailAttachment[];
   html: string;
   idempotencyKey?: string;
+  replyTo?: string;
   subject: string;
   text: string;
   to: string;

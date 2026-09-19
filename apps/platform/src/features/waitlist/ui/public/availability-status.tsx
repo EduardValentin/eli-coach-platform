@@ -9,7 +9,7 @@ export function WaitlistAvailabilityStatus(props: {
   if (props.status === null) {
     return (
       <p
-        className="text-center text-body-sm font-medium tracking-nav"
+        className="text-center text-sm font-medium tracking-wide"
         role={props.announcement === "none" ? undefined : "alert"}
       >
         <span
@@ -25,22 +25,20 @@ export function WaitlistAvailabilityStatus(props: {
     );
   }
 
+  const isClosed = props.status.tone === "closed";
+
   return (
     <p
-      className="text-center text-body-sm font-medium tracking-nav"
+      className={cn("text-center text-sm font-medium tracking-wide", {
+        "text-feedback-danger": isClosed && props.variant === "light",
+        "text-feedback-danger-on-inverted":
+          isClosed && props.variant === "dark",
+        "text-text-inverted/70": !isClosed && props.variant === "dark",
+        "text-copy-muted": !isClosed && props.variant === "light",
+      })}
       role={props.announcement === "none" ? undefined : "status"}
     >
-      <span
-        className={cn({
-          "text-feedback-danger": props.status.tone === "closed",
-          "text-text-inverted/70":
-            props.variant === "dark" && props.status.tone !== "closed",
-          "text-text-secondary":
-            props.variant === "light" && props.status.tone !== "closed",
-        })}
-      >
-        {props.status.label}
-      </span>
+      {props.status.label}
     </p>
   );
 }

@@ -123,7 +123,7 @@ export function FoodFormDialog({ open, food, onOpenChange }: FoodFormDialogProps
                     aria-label={label}
                     aria-pressed={draft.icon === key}
                     onClick={() => set('icon', key)}
-                    className={`flex size-9 items-center justify-center rounded-lg border transition-colors ${draft.icon === key ? 'border-brand bg-brand-soft text-brand' : 'border-border text-muted-foreground hover:bg-muted'}`}
+                    className={`flex size-9 items-center justify-center rounded-compact border transition-colors ${draft.icon === key ? 'border-brand bg-brand-soft text-brand' : 'border-border text-muted-foreground hover:bg-muted'}`}
                   >
                     <Icon size={18} aria-hidden="true" />
                   </button>
@@ -174,7 +174,7 @@ export function FoodFormDialog({ open, food, onOpenChange }: FoodFormDialogProps
                   key={family}
                   role="group"
                   aria-label={TAG_FAMILY_LABELS[family]}
-                  className={`rounded-xl border border-border border-l-[3px] bg-card p-3 ${TAG_FAMILY_BORDER[family]}`}
+                  className={`rounded-control border border-border border-l-[3px] bg-card p-3 ${TAG_FAMILY_BORDER[family]}`}
                 >
                   <p className="mb-2 inline-flex items-center gap-1.5 text-xs font-semibold text-foreground">
                     {(() => { const Icon = TAG_FAMILY_ICON[family]; return <Icon size={14} className="text-muted-foreground" aria-hidden="true" />; })()}

@@ -119,7 +119,7 @@ export function WorkoutSchedule() {
                   delay: index * 0.06,
                   ease: [0.25, 0.1, 0.25, 1],
                 }}
-                className="flex flex-col shrink-0 w-24 h-24 md:w-28 md:h-28 rounded-sm snap-center motion-reduce:transform-none"
+                className="flex flex-col shrink-0 w-24 h-24 md:w-28 md:h-28 rounded-tile snap-center motion-reduce:transform-none"
                 style={{ backgroundColor: day.bg }}
               >
                 <div className="px-3 border-b border-white/40 p-1.5 md:p-2 text-center">

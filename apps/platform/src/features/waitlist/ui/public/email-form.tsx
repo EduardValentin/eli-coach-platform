@@ -6,13 +6,15 @@ import {
 import type { WaitlistPresentation } from "~/features/waitlist/ui/shared/waitlist-presentation";
 import { cn } from "@eli-coach-platform/ui/lib";
 import {
-  buttonVariants,
-  inputClasses,
-  Link,
-} from "@eli-coach-platform/ui/primitives";
+  publicEaseOut,
+  useClientReducedMotionPreference,
+} from "@eli-coach-platform/ui/motion";
+import { Button } from "@eli-coach-platform/ui/primitives";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
+import { AnimatePresence, MotionConfig, motion } from "motion/react";
 import type { FormEvent } from "react";
 import { useId, useState } from "react";
+import { Link } from "react-router";
 
 import {
   BotDetectionWidget,
@@ -30,158 +32,183 @@ import { useWaitlistSubmission } from "./submission";
 type WaitlistEmailFormProps = {
   botDetection: BotDetectionConfig;
   mode: WaitlistPresentation["mode"];
-  variant: "dark" | "light";
+  variant: WaitlistFormVariant;
 };
+
+type WaitlistFormVariant = "dark" | "light";
+
+const emailFieldClassName =
+  "h-14 w-full rounded-full border px-6 text-base outline-none transition-all";
+const consentLinkClassName =
+  "font-medium underline underline-offset-2 hover:no-underline";
 
 export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
   const { botDetection, mode, variant } = props;
   const [email, setEmail] = useState("");
   const errorId = useId();
   const submission = useWaitlistSubmission(botDetection);
-  const isClosed = mode === "closed";
-  const submitLabel = isClosed ? "Notify me" : "Join the list";
-  const loadingLabel = isClosed
-    ? "Joining the notify list"
-    : "Joining the list";
-  const inputClassName = cn(
-    inputClasses({
-      controlSize: "lg",
-      variant: variant === "dark" ? "inverted" : "default",
-    }),
-    "block h-14 rounded-pill px-6 py-0 text-base focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/30 focus-visible:border-brand-primary focus-visible:ring-2 focus-visible:ring-brand-primary/30 focus-visible:!outline-none aria-invalid:!outline-none",
-    {
-      "!shadow-none border-control-border-soft placeholder:text-placeholder-soft aria-invalid:!border-control-border-soft disabled:bg-surface-base disabled:text-text-primary disabled:placeholder:text-placeholder-soft":
-        variant === "light",
-      "border-surface-base/20 bg-surface-base/10 aria-invalid:!border-surface-base/20 disabled:bg-surface-base/10 disabled:text-text-inverted":
-        variant === "dark",
-    },
-  );
-  const buttonClassName = cn(
-    buttonVariants({ size: "lg", variant: "primary" }),
-    "block h-14 min-w-max border-0 px-8 !text-base !text-text-inverted font-semibold leading-6 !shadow-none transition-all ease-in-out hover:!bg-waitlist-button-hover active:!bg-waitlist-button-hover active:scale-[0.98] disabled:!bg-brand-primary disabled:!text-text-inverted disabled:opacity-50",
-    "whitespace-nowrap",
-  );
+  const isDark = variant === "dark";
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     submission.submitForm(event.currentTarget);
   }
 
-  if (submission.isSubmitted) {
-    return (
+  return (
+    <MotionConfig reducedMotion="user">
       <div className="mx-auto w-full max-w-lg">
-        <div className="flex flex-col items-center gap-3 py-2">
-          <CheckCircle2
-            aria-hidden="true"
-            className="text-brand-secondary"
-            size={36}
-            strokeWidth={1.5}
-          />
-          <p
-            className={cn("font-heading text-lg font-medium leading-7", {
-              "text-text-inverted": variant === "dark",
-              "text-text-primary": variant === "light",
-            })}
-          >
-            You're in. Keep an eye on your inbox.
-          </p>
-        </div>
+        <AnimatePresence mode="wait">
+          {submission.isSubmitted ? (
+            <WaitlistJoinedMessage key="success" variant={variant} />
+          ) : (
+            <motion.form
+              action={WAITLIST_API_URL}
+              className="flex flex-col gap-3"
+              exit={{ opacity: 0, scale: 0.95 }}
+              key="form"
+              method="post"
+              noValidate
+              onSubmit={handleSubmit}
+              transition={{ duration: 0.2 }}
+            >
+              <WaitlistConsentNotice variant={variant} />
+              <div className="flex flex-col gap-3 md:flex-row">
+                <label className="block min-w-0 flex-1">
+                  <span className="sr-only">Email address</span>
+                  <input
+                    aria-describedby={submission.error ? errorId : undefined}
+                    aria-invalid={submission.error ? true : undefined}
+                    autoComplete="email"
+                    className={cn(emailFieldClassName, {
+                      "border-control-border-soft bg-surface-base text-text-primary placeholder:text-placeholder-soft":
+                        !isDark,
+                      "border-surface-base/20 bg-surface-base/10 text-text-inverted placeholder:text-text-inverted/50 backdrop-blur-md":
+                        isDark,
+                    })}
+                    disabled={submission.isSubmitting}
+                    inputMode="email"
+                    name="email"
+                    onChange={(event) => {
+                      setEmail(event.target.value);
+                    }}
+                    placeholder="Enter your email"
+                    required
+                    type="text"
+                    value={email}
+                  />
+                </label>
+                <input
+                  data-testid="bot-detection-response"
+                  name={TURNSTILE_RESPONSE_FIELD}
+                  readOnly
+                  type="hidden"
+                  value={submission.botDetectionToken}
+                />
+                <Button
+                  aria-label={
+                    submission.isSubmitting
+                      ? waitlistLoadingLabel(mode)
+                      : undefined
+                  }
+                  disabled={submission.isSubmitting || !email.trim()}
+                  press="scale"
+                  size="lg"
+                  type="submit"
+                  weight="semibold"
+                >
+                  {submission.isSubmitting ? (
+                    <WaitlistSubmittingLabel mode={mode} />
+                  ) : (
+                    waitlistSubmitLabel(mode)
+                  )}
+                </Button>
+              </div>
+              <div className="absolute size-0 overflow-hidden">
+                <BotDetectionWidget {...submission.botDetectionWidgetProps} />
+              </div>
+            </motion.form>
+          )}
+        </AnimatePresence>
+        <WaitlistErrorAlert
+          botDetectionError={submission.botDetectionError}
+          error={submission.error}
+          errorId={errorId}
+          variant={variant}
+        />
       </div>
-    );
+    </MotionConfig>
+  );
+}
+
+function waitlistLoadingLabel(mode: WaitlistPresentation["mode"]): string {
+  return mode === "closed" ? "Joining the notify list" : "Joining the list";
+}
+
+function WaitlistJoinedMessage(props: { variant: WaitlistFormVariant }) {
+  return (
+    <motion.div
+      animate={{ opacity: 1, scale: 1 }}
+      className="flex flex-col items-center gap-3 py-2"
+      initial={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.4, ease: publicEaseOut }}
+    >
+      <CheckCircle2
+        aria-hidden="true"
+        className="text-brand-secondary"
+        size={36}
+        strokeWidth={1.5}
+      />
+      <p
+        className={cn("font-heading text-lg font-medium", {
+          "text-text-inverted": props.variant === "dark",
+          "text-text-primary": props.variant === "light",
+        })}
+      >
+        You're in. Keep an eye on your inbox.
+      </p>
+    </motion.div>
+  );
+}
+
+function WaitlistConsentNotice(props: { variant: WaitlistFormVariant }) {
+  return (
+    <p
+      className={cn("text-sm leading-snug", {
+        "text-text-inverted/70": props.variant === "dark",
+        "text-copy-muted": props.variant === "light",
+      })}
+    >
+      {WAITLIST_MARKETING_CONSENT.beforePrivacyEmail.trimEnd()}{" "}
+      <a
+        className={consentLinkClassName}
+        href={`mailto:${EVOA_FITNESS_PRIVACY_EMAIL}`}
+      >
+        {EVOA_FITNESS_PRIVACY_EMAIL}
+      </a>
+      {WAITLIST_MARKETING_CONSENT.betweenPrivacyEmailAndPolicyLink.trimEnd()}{" "}
+      <Link className={consentLinkClassName} reloadDocument to="/privacy">
+        {WAITLIST_MARKETING_CONSENT.privacyPolicyLinkLabel}
+      </Link>
+      {WAITLIST_MARKETING_CONSENT.afterPrivacyPolicyLink}
+    </p>
+  );
+}
+
+function waitlistSubmitLabel(mode: WaitlistPresentation["mode"]): string {
+  return mode === "closed" ? "Notify me" : "Join the list";
+}
+
+function WaitlistSubmittingLabel(props: {
+  mode: WaitlistPresentation["mode"];
+}) {
+  const shouldReduceMotion = useClientReducedMotionPreference();
+
+  if (shouldReduceMotion) {
+    return <span>{waitlistLoadingLabel(props.mode)}…</span>;
   }
 
   return (
-    <div className="mx-auto w-full max-w-lg">
-      <form
-        action={WAITLIST_API_URL}
-        className="relative flex flex-col gap-3"
-        method="post"
-        noValidate
-        onSubmit={handleSubmit}
-      >
-        <p className="text-body-sm leading-snug">
-          <span
-            className={cn({
-              "text-text-inverted/70": variant === "dark",
-              "text-text-secondary": variant === "light",
-            })}
-          >
-            {WAITLIST_MARKETING_CONSENT.beforePrivacyEmail}
-            <a
-              className="font-medium underline underline-offset-2 hover:no-underline"
-              href={`mailto:${EVOA_FITNESS_PRIVACY_EMAIL}`}
-            >
-              {EVOA_FITNESS_PRIVACY_EMAIL}
-            </a>
-            {WAITLIST_MARKETING_CONSENT.betweenPrivacyEmailAndPolicyLink}
-            <Link
-              className={cn("underline underline-offset-2 hover:no-underline", {
-                "text-text-inverted hover:text-text-inverted":
-                  variant === "dark",
-              })}
-              reloadDocument
-              to="/privacy"
-            >
-              {WAITLIST_MARKETING_CONSENT.privacyPolicyLinkLabel}
-            </Link>
-            {WAITLIST_MARKETING_CONSENT.afterPrivacyPolicyLink}
-          </span>
-        </p>
-        <div className="flex flex-col gap-3 md:flex-row">
-          <label className="block min-w-0 flex-1">
-            <span className="ui-sr-only">Email address</span>
-            <input
-              aria-describedby={submission.error ? errorId : undefined}
-              aria-invalid={submission.error ? true : undefined}
-              autoComplete="email"
-              className={inputClassName}
-              disabled={submission.isSubmitting}
-              inputMode="email"
-              name="email"
-              onChange={(event) => {
-                setEmail(event.target.value);
-              }}
-              placeholder="Enter your email"
-              required
-              type="text"
-              value={email}
-            />
-          </label>
-          <input
-            data-testid="bot-detection-response"
-            name={TURNSTILE_RESPONSE_FIELD}
-            readOnly
-            type="hidden"
-            value={submission.botDetectionToken}
-          />
-          <button
-            aria-label={submission.isSubmitting ? loadingLabel : undefined}
-            className={buttonClassName}
-            disabled={submission.isSubmitting || !email.trim()}
-            type="submit"
-          >
-            {submission.isSubmitting ? (
-              <Loader2
-                aria-hidden="true"
-                className="mx-auto animate-spin"
-                size={20}
-              />
-            ) : (
-              submitLabel
-            )}
-          </button>
-        </div>
-        <div className="absolute size-0 overflow-hidden">
-          <BotDetectionWidget {...submission.botDetectionWidgetProps} />
-        </div>
-      </form>
-      <WaitlistErrorAlert
-        botDetectionError={submission.botDetectionError}
-        error={submission.error}
-        errorId={errorId}
-        variant={variant}
-      />
-    </div>
+    <Loader2 aria-hidden="true" className="mx-auto animate-spin" size={20} />
   );
 }
 
@@ -189,35 +216,40 @@ function WaitlistErrorAlert(props: {
   botDetectionError: string | null;
   error: WaitlistClientError | null;
   errorId: string;
-  variant: "dark" | "light";
+  variant: WaitlistFormVariant;
 }) {
   const { botDetectionError, error, errorId, variant } = props;
-
-  if (!botDetectionError && !error) {
-    return null;
-  }
+  const hasError = botDetectionError !== null || error !== null;
 
   return (
-    <div
-      className={cn(
-        "mt-3 flex items-start justify-center gap-2 text-sm leading-snug",
-        {
-          "text-feedback-danger": variant === "light",
-          "text-feedback-danger-on-inverted": variant === "dark",
-        },
-      )}
-      id={errorId}
-      role="alert"
-    >
-      <AlertCircle aria-hidden="true" className="mt-0.5 shrink-0" size={16} />
-      <p className="text-left">
-        {botDetectionError ? (
-          botDetectionError
-        ) : error ? (
-          <WaitlistErrorContent error={error} />
-        ) : null}
-      </p>
-    </div>
+    <AnimatePresence>
+      {hasError ? (
+        <motion.div
+          animate={{ opacity: 1, y: 0 }}
+          className={cn(
+            "mt-3 flex items-start justify-center gap-2 text-sm leading-snug",
+            {
+              "text-feedback-danger": variant === "light",
+              "text-feedback-danger-on-inverted": variant === "dark",
+            },
+          )}
+          exit={{ opacity: 0, y: -4 }}
+          id={errorId}
+          initial={{ opacity: 0, y: -4 }}
+          role="alert"
+        >
+          <AlertCircle
+            aria-hidden="true"
+            className="mt-0.5 shrink-0"
+            size={16}
+          />
+          <p className="text-left">
+            {botDetectionError ??
+              (error ? <WaitlistErrorContent error={error} /> : null)}
+          </p>
+        </motion.div>
+      ) : null}
+    </AnimatePresence>
   );
 }
 

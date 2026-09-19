@@ -144,7 +144,7 @@ export function WorkoutViewer() {
         </p>
         <button
           onClick={() => navigate('/portal/plan')}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-text-primary text-white text-sm font-semibold rounded-xl"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-text-primary text-white text-sm font-semibold rounded-control"
         >
           <ArrowLeft size={16} />
           Back to Plan
@@ -164,12 +164,12 @@ export function WorkoutViewer() {
   return (
     <div className="fixed inset-0 bg-surface-page flex flex-col">
       {/* Top bar */}
-      <div className="shrink-0 h-14 lg:h-16 bg-white border-b border-neutral-200 rounded-md flex items-center justify-between gap-2 px-4">
+      <div className="shrink-0 h-14 lg:h-16 bg-white border-b border-neutral-200 rounded-field flex items-center justify-between gap-2 px-4">
         <button
           type="button"
           onClick={() => navigate('/portal/plan')}
           aria-label="Back to plan"
-          className="w-9 h-9 lg:w-11 lg:h-11 shrink-0 flex items-center justify-center rounded-xl hover:bg-neutral-100 transition-colors"
+          className="w-9 h-9 lg:w-11 lg:h-11 shrink-0 flex items-center justify-center rounded-control hover:bg-neutral-100 transition-colors"
         >
           <ArrowLeft size={20} className="text-text-primary lg:size-6" />
         </button>
@@ -187,7 +187,7 @@ export function WorkoutViewer() {
           aria-label="Workout options"
           aria-haspopup="dialog"
           aria-expanded={optionsOpen}
-          className="w-11 h-11 shrink-0 flex items-center justify-center rounded-xl hover:bg-neutral-100 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+          className="w-11 h-11 shrink-0 flex items-center justify-center rounded-control hover:bg-neutral-100 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
         >
           <MoreVertical size={22} className="text-text-primary lg:size-6" />
         </button>
@@ -201,7 +201,7 @@ export function WorkoutViewer() {
               setOptionsOpen(false);
               handleCompletePress();
             }}
-            className="w-full flex items-center gap-4 px-4 min-h-14 rounded-2xl text-left text-base font-medium text-text-primary hover:bg-neutral-50 transition-colors"
+            className="w-full flex items-center gap-4 px-4 min-h-14 rounded-card text-left text-base font-medium text-text-primary hover:bg-neutral-50 transition-colors"
           >
             <span className="w-10 h-10 shrink-0 flex items-center justify-center rounded-full bg-brand/10">
               <Flag size={20} className="text-brand" />
@@ -213,7 +213,7 @@ export function WorkoutViewer() {
           <button
             type="button"
             onClick={() => setOptionsOpen(false)}
-            className="w-full min-h-12 rounded-2xl text-sm font-semibold text-text-secondary hover:bg-neutral-50 transition-colors"
+            className="w-full min-h-12 rounded-control text-sm font-semibold text-text-secondary hover:bg-neutral-50 transition-colors"
           >
             Cancel
           </button>
@@ -316,7 +316,7 @@ export function WorkoutViewer() {
             <button
               type="button"
               onClick={handleCompletePress}
-              className="w-full py-4 lg:py-5 font-semibold rounded-2xl text-base lg:text-lg flex items-center justify-center gap-2 bg-brand text-white hover:bg-brand-hover transition-colors"
+              className="w-full py-4 lg:py-5 font-semibold rounded-control text-base lg:text-lg flex items-center justify-center gap-2 bg-brand text-white hover:bg-brand-hover transition-colors"
             >
               <Trophy size={20} className="lg:size-6" aria-hidden="true" />
               Complete Workout
@@ -435,17 +435,17 @@ function WorkoutSummary({ workout, exercises: allExercises, day, week, navigate 
       {/* Stats grid */}
       <div className="px-4 pb-4 w-full max-w-2xl mx-auto">
         <div className="grid grid-cols-3 gap-3 lg:gap-4">
-          <div className="bg-white rounded-xl p-4 lg:p-5 text-center border border-neutral-100">
+          <div className="bg-white rounded-control p-4 lg:p-5 text-center border border-neutral-100">
             <Clock size={18} className="text-text-secondary mx-auto mb-1.5 lg:size-6" />
             <p className="text-lg lg:text-2xl font-serif font-bold text-text-primary">{durationMin}</p>
             <p className="text-[10px] lg:text-xs uppercase tracking-widest text-text-secondary font-bold">min</p>
           </div>
-          <div className="bg-white rounded-xl p-4 lg:p-5 text-center border border-neutral-100">
+          <div className="bg-white rounded-control p-4 lg:p-5 text-center border border-neutral-100">
             <Dumbbell size={18} className="text-brand mx-auto mb-1.5 lg:size-6" />
             <p className="text-lg lg:text-2xl font-serif font-bold text-text-primary">{displayWeightValue(totalVolume, weightUnit, 0).toLocaleString()}</p>
             <p className="text-[10px] lg:text-xs uppercase tracking-widest text-text-secondary font-bold">{weightUnitLabel(weightUnit)} vol</p>
           </div>
-          <div className="bg-white rounded-xl p-4 lg:p-5 text-center border border-neutral-100">
+          <div className="bg-white rounded-control p-4 lg:p-5 text-center border border-neutral-100">
             <Flame size={18} className="text-brand-secondary mx-auto mb-1.5 lg:size-6" />
             <p className="text-lg lg:text-2xl font-serif font-bold text-text-primary">{workout.exercises.length}</p>
             <p className="text-[10px] lg:text-xs uppercase tracking-widest text-text-secondary font-bold">exercises</p>
@@ -475,7 +475,7 @@ function WorkoutSummary({ workout, exercises: allExercises, day, week, navigate 
             const planEx = day.exercises[i];
             if (!ex) return null;
             return (
-              <div key={exLog.planExerciseId} className="bg-white rounded-xl border border-neutral-100 overflow-hidden">
+              <div key={exLog.planExerciseId} className="bg-white rounded-control border border-neutral-100 overflow-hidden">
                 {/* Header */}
                 <div className="p-4 pb-3">
                   <div className="flex items-center justify-between">
@@ -515,7 +515,7 @@ function WorkoutSummary({ workout, exercises: allExercises, day, week, navigate 
                           {s.actualReps}
                         </span>
                         {repsDiff !== null && repsDiff !== 0 && (
-                          <span className={`ml-2 text-[9px] lg:text-[11px] font-bold rounded-full px-1.5 py-0.5 ${
+                          <span className={`ml-2 text-[9px] lg:text-caption font-bold rounded-full px-1.5 py-0.5 ${
                             isUnder ? 'bg-brand/10 text-brand' : 'bg-brand-secondary/10 text-brand-secondary'
                           }`}>
                             {repsDiff > 0 ? `+${repsDiff}` : repsDiff}
@@ -535,7 +535,7 @@ function WorkoutSummary({ workout, exercises: allExercises, day, week, navigate 
       <div className="px-4 pb-10 w-full max-w-2xl mx-auto">
         <button
           onClick={() => navigate('/portal/plan')}
-          className="w-full py-3.5 lg:py-4 bg-text-primary text-white font-semibold rounded-2xl text-sm lg:text-base flex items-center justify-center gap-2"
+          className="w-full py-3.5 lg:py-4 bg-text-primary text-white font-semibold rounded-control text-sm lg:text-base flex items-center justify-center gap-2"
         >
           Back to Plan
           <ArrowRight size={16} className="lg:size-5" />
@@ -593,7 +593,7 @@ function IncompleteWorkoutDialog({ open, onOpenChange, onConfirm, completedSets,
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="sm:max-w-md rounded-2xl p-0 overflow-hidden">
+      <AlertDialogContent className="sm:max-w-md rounded-card p-0 overflow-hidden">
         {/* Warning header */}
         <div className="bg-brand/5 px-6 py-5 flex items-center gap-3">
           <div className="w-10 h-10 bg-brand/10 rounded-full flex items-center justify-center shrink-0">
@@ -613,12 +613,12 @@ function IncompleteWorkoutDialog({ open, onOpenChange, onConfirm, completedSets,
         <div className="px-6 py-4 space-y-4">
           {/* Partial stats */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-neutral-50 rounded-xl p-3 text-center">
+            <div className="bg-neutral-50 rounded-control p-3 text-center">
               <Dumbbell size={16} className="text-brand mx-auto mb-1" />
               <p className="text-base font-serif font-bold text-text-primary">{displayWeightValue(partialVolume, weightUnit, 0).toLocaleString()}</p>
               <p className="text-[10px] uppercase tracking-widest text-text-secondary font-bold">{weightUnitLabel(weightUnit)} logged</p>
             </div>
-            <div className="bg-neutral-50 rounded-xl p-3 text-center">
+            <div className="bg-neutral-50 rounded-control p-3 text-center">
               <Flame size={16} className="text-brand-secondary mx-auto mb-1" />
               <p className="text-base font-serif font-bold text-text-primary">{sortedMuscles.length}</p>
               <p className="text-[10px] uppercase tracking-widest text-text-secondary font-bold">muscle groups</p>
@@ -639,7 +639,7 @@ function IncompleteWorkoutDialog({ open, onOpenChange, onConfirm, completedSets,
             <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-2">Unlogged</p>
             <div className="space-y-1.5">
               {incomplete.map(({ name, missing, total }) => (
-                <div key={name} className="flex items-center justify-between text-xs bg-brand/[0.03] rounded-lg px-3 py-2">
+                <div key={name} className="flex items-center justify-between text-xs bg-brand/[0.03] rounded-compact px-3 py-2">
                   <span className="font-medium text-text-primary">{name}</span>
                   <span className="text-brand font-semibold">{missing}/{total} sets</span>
                 </div>
@@ -649,12 +649,12 @@ function IncompleteWorkoutDialog({ open, onOpenChange, onConfirm, completedSets,
         </div>
 
         <AlertDialogFooter className="flex-row gap-3 px-6 pb-6 pt-2">
-          <AlertDialogCancel className="flex-1 rounded-xl border-neutral-200 text-text-primary hover:bg-neutral-50 font-semibold">
+          <AlertDialogCancel className="flex-1 rounded-control border-neutral-200 text-text-primary hover:bg-neutral-50 font-semibold">
             Go Back
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirm}
-            className="flex-1 rounded-xl bg-brand text-white hover:bg-brand-hover font-semibold"
+            className="flex-1 rounded-control bg-brand text-white hover:bg-brand-hover font-semibold"
           >
             Finish Anyway
           </AlertDialogAction>

@@ -46,6 +46,7 @@ function createPublicLayoutRouter(basename?: string) {
       {
         element: (
           <PublicLayout
+            contentFrame="padded"
             scrollBehavior="solid"
             session={anonymousSession}
             storePath={STORE_PATH}

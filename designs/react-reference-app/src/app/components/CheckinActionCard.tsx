@@ -41,7 +41,7 @@ export function CheckinActionCard({
       className="w-full sm:max-w-[85%]"
     >
       <div
-        className={`rounded-2xl rounded-bl-sm border-2 p-4 space-y-2.5 ${
+        className={`rounded-card rounded-bl-tile border-2 p-4 space-y-2.5 ${
           isRescheduling
             ? 'border-brand/30 bg-brand/5'
             : 'border-status-pending/30 bg-status-pending/5'
@@ -101,7 +101,7 @@ export function CheckinActionCard({
             <button
               type="button"
               onClick={primaryAction}
-              className="flex-1 sm:flex-none min-h-10 px-3 bg-text-primary text-white text-xs font-semibold rounded-lg hover:bg-neutral-800 transition-colors"
+              className="flex-1 sm:flex-none min-h-10 px-3 bg-text-primary text-white text-xs font-semibold rounded-control hover:bg-neutral-800 transition-colors"
             >
               {primaryLabel}
             </button>
@@ -109,7 +109,7 @@ export function CheckinActionCard({
               <button
                 type="button"
                 onClick={onReschedule}
-                className="flex-1 sm:flex-none min-h-10 px-3 bg-white border border-brand/30 text-brand text-xs font-semibold rounded-lg hover:bg-brand/5 transition-colors"
+                className="flex-1 sm:flex-none min-h-10 px-3 bg-white border border-brand/30 text-brand text-xs font-semibold rounded-control hover:bg-brand/5 transition-colors"
               >
                 Reschedule
               </button>
@@ -117,7 +117,7 @@ export function CheckinActionCard({
             <button
               type="button"
               onClick={onDecline}
-              className="flex-1 sm:flex-none min-h-10 px-3 bg-white border border-neutral-200 text-text-secondary text-xs font-semibold rounded-lg hover:bg-neutral-50 transition-colors"
+              className="flex-1 sm:flex-none min-h-10 px-3 bg-white border border-neutral-200 text-text-secondary text-xs font-semibold rounded-control hover:bg-neutral-50 transition-colors"
             >
               Decline
             </button>

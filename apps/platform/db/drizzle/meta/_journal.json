@@ -141,6 +141,34 @@
       "when": 1789755645746,
       "tag": "0019_waitlist_reduced_slots",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1789760000000,
+      "tag": "0020_create_assessment_calls",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1789770065451,
+      "tag": "0021_create_coach_time_reservations",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1789770070870,
+      "tag": "0022_exclude_overlapping_coach_time_reservations",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1789778169144,
+      "tag": "0023_coach_time_reservation_per_appointment",
+      "breakpoints": true
     }
   ]
 }

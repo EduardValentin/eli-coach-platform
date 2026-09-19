@@ -1,9 +1,15 @@
 import { ArrowRight } from "lucide-react";
+import { cn } from "@eli-coach-platform/ui/lib";
+import {
+  buttonVariants,
+  cardVariants,
+} from "@eli-coach-platform/ui/primitives";
 import { Link, useOutletContext, type MetaFunction } from "react-router";
 
 import type { PublicOutletContext } from "~/surfaces/public-site/shell/layout";
 import { BundleSelector } from "~/surfaces/public-site/sections/pricing/bundle-selector";
 import { presentCoachingBundles } from "~/surfaces/public-site/sections/pricing/coaching-bundles";
+import { BOOK_PATH } from "~/features/assessment-calls/contracts/paths";
 import { WaitlistAvailabilityStatus } from "~/features/waitlist/ui/public/availability-status";
 import { WaitlistEmailForm } from "~/features/waitlist/ui/public/email-form";
 
@@ -16,6 +22,8 @@ export const meta: MetaFunction = () => [
   },
 ];
 
+export const handle = { publicContentFrame: "full-bleed" } as const;
+
 export default function PricingRoute() {
   const { botDetection, waitlist } = useOutletContext<PublicOutletContext>();
   const bundlePresentation = presentCoachingBundles({
@@ -23,12 +31,12 @@ export default function PricingRoute() {
   });
 
   return (
-    <section className="mx-auto w-full max-w-stage pb-16 pt-4">
+    <section className="mx-auto max-w-7xl px-6 pt-32 pb-24">
       <header className="mx-auto mb-16 max-w-3xl text-center">
         <h1 className="mb-6 font-heading text-4xl font-medium tracking-tight text-text-primary md:text-5xl lg:text-6xl">
           Coaching Plans
         </h1>
-        <p className="mx-auto mb-8 max-w-3xl text-lg leading-7 text-copy-muted">
+        <p className="mb-8 text-lg leading-7 text-copy-muted">
           {waitlist.mode === "disabled"
             ? "Experience 1-on-1 premium coaching with personalized workout protocols, customized nutrition, and uninterrupted support."
             : waitlist.showsBundleOffer
@@ -49,7 +57,12 @@ export default function PricingRoute() {
         applies.
       </p>
 
-      <section className="mx-auto w-full max-w-4xl rounded-md border border-stroke-faint bg-surface-base p-8 text-center shadow-sm md:p-12">
+      <section
+        className={cn(
+          cardVariants(),
+          "mx-auto w-full max-w-4xl p-8 text-center md:p-12",
+        )}
+      >
         {waitlist.mode === "disabled" ? (
           <AssessmentCallCta />
         ) : (
@@ -104,8 +117,8 @@ function AssessmentCallCta() {
         goals and lay out a roadmap for your success.
       </p>
       <Link
-        className="ui-public-assessment-button inline-flex items-center justify-center gap-2 bg-brand-primary px-8 py-4 text-base font-medium leading-6 text-text-inverted shadow-md transition-colors hover:bg-brand-primary-hover"
-        to="/book"
+        className={buttonVariants({ elevation: "raised", size: "lg" })}
+        to={BOOK_PATH}
       >
         Book Assessment Call
         <ArrowRight aria-hidden="true" size={18} />

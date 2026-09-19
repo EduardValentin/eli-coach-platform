@@ -8,7 +8,10 @@ import {
 } from "@eli-coach-platform/domain/product";
 import { sql } from "drizzle-orm";
 
-import type { DatabaseClient } from "@eli-coach-platform/db";
+import type {
+  DatabaseClient,
+  DatabaseTransaction,
+} from "@eli-coach-platform/db";
 
 type TaxonomyRow = {
   displayOrder: number;
@@ -37,10 +40,6 @@ type StoredPublicationRow = {
 type IdRow = { id: number };
 
 type NextDisplayOrderRow = { nextDisplayOrder: number | string };
-
-type DatabaseTransaction = Parameters<
-  Parameters<DatabaseClient["transaction"]>[0]
->[0];
 
 const MAX_SERIALIZATION_RETRIES = 3;
 const SERIALIZATION_FAILURE_CODE = "40001";

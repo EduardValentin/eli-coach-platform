@@ -22,7 +22,7 @@ export function BottomSheet({
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent
-        className={cn('rounded-t-3xl max-h-[90vh]', className)}
+        className={cn('rounded-t-panel max-h-[90vh]', className)}
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
         <DrawerTitle className="sr-only">{title}</DrawerTitle>

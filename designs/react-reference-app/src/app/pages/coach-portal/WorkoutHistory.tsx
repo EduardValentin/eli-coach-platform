@@ -211,7 +211,7 @@ export function WorkoutHistory() {
       <div className="flex items-center gap-4 mb-8">
         <button
           onClick={() => navigate(`/coach/clients/${clientId}`)}
-          className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-muted transition-colors"
+          className="w-9 h-9 flex items-center justify-center rounded-control hover:bg-muted transition-colors"
           aria-label="Back to client"
         >
           <ArrowLeft size={20} className="text-foreground" />
@@ -269,7 +269,7 @@ export function WorkoutHistory() {
               <CollapsibleTrigger asChild>
                 <button
                   type="button"
-                  className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3.5 py-2 text-sm font-semibold text-foreground hover:bg-muted transition-colors"
+                  className="inline-flex items-center gap-2 rounded-control border border-border bg-card px-3.5 py-2 text-sm font-semibold text-foreground hover:bg-muted transition-colors"
                 >
                   <SlidersHorizontal size={16} aria-hidden="true" />
                   Filters
@@ -289,14 +289,14 @@ export function WorkoutHistory() {
           </div>
 
           <CollapsibleContent>
-            <div className="bg-card border border-border rounded-2xl p-5 sm:p-6 shadow-sm space-y-6">
+            <div className="bg-card border border-border rounded-card p-5 sm:p-6 shadow-sm space-y-6">
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 <FilterField icon={<Calendar size={14} />} label="Date range">
                   <Popover>
                     <PopoverTrigger asChild>
                       <button
                         type="button"
-                        className="flex w-full items-center justify-between gap-2 rounded-xl border border-border bg-input-background px-3.5 py-2 text-sm hover:bg-muted transition-colors"
+                        className="flex w-full items-center justify-between gap-2 rounded-control border border-border bg-input-background px-3.5 py-2 text-sm hover:bg-muted transition-colors"
                       >
                         <span className={dateTouched ? 'text-foreground' : 'text-muted-foreground'}>{dateRangeLabel}</span>
                         <Calendar size={16} className="text-muted-foreground shrink-0" aria-hidden="true" />
@@ -310,7 +310,7 @@ export function WorkoutHistory() {
                         <button
                           type="button"
                           onClick={() => setDateRange(undefined)}
-                          className="mt-2 w-full rounded-lg py-1.5 text-xs font-semibold text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                          className="mt-2 w-full rounded-control py-1.5 text-xs font-semibold text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                         >
                           Clear dates
                         </button>
@@ -369,7 +369,7 @@ export function WorkoutHistory() {
       ) : (
         <>
           {topExercises.length > 0 && (
-            <div className="bg-card rounded-2xl border border-border p-5 mb-8">
+            <div className="bg-card rounded-card border border-border p-5 mb-8">
               <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">Most Trained</h2>
               <div className="flex flex-wrap gap-2">
                 {topExercises.map(({ exercise, count }) => (
@@ -390,7 +390,7 @@ export function WorkoutHistory() {
               <button
                 type="button"
                 onClick={clearAll}
-                className="inline-flex items-center rounded-xl border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted transition-colors"
+                className="inline-flex items-center rounded-control border border-border px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted transition-colors"
               >
                 Clear all filters
               </button>
@@ -399,7 +399,7 @@ export function WorkoutHistory() {
             <div className="space-y-8">
               {groups.map(g => (
                 <section key={g.key}>
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 px-3 border-b border-border rounded-md pb-2 mb-3">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 px-3 border-b border-border rounded-field pb-2 mb-3">
                     <h3 className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-semibold text-foreground">
                       {g.subscription && <SubscriptionBadge subscription={g.subscription} />}
                       <span aria-hidden="true" className="text-muted-foreground">·</span>

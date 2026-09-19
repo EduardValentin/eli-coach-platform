@@ -10,7 +10,7 @@ export function NextCheckinCard() {
   if (!nextCheckin) return null;
 
   return (
-    <div className="p-4 rounded-2xl bg-brand/5 border border-brand/10">
+    <div className="p-4 rounded-card bg-brand/5 border border-brand/10">
       <div className="flex items-center gap-2 mb-2">
         <CalendarDays size={14} className="text-brand" />
         <span className="text-[10px] font-bold text-brand uppercase tracking-widest">Next Check-in</span>
@@ -21,7 +21,7 @@ export function NextCheckinCard() {
         href="https://meet.google.com/mock-eli-checkin"
         target="_blank"
         rel="noopener noreferrer"
-        className="flex items-center justify-center gap-2 w-full min-h-11 px-3 text-xs font-bold rounded-xl bg-text-primary text-white hover:bg-neutral-800 transition-colors"
+        className="flex items-center justify-center gap-2 w-full min-h-11 px-3 text-xs font-bold rounded-control bg-text-primary text-white hover:bg-neutral-800 transition-colors"
       >
         <Video size={14} />
         Join Meet

@@ -4,21 +4,17 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../lib/cn";
 
 const iconButtonVariants = cva(
-  "inline-flex shrink-0 items-center justify-center rounded-pill border border-transparent transition-[background-color,border-color,color,opacity,box-shadow,transform] duration-150 ease-out outline-none focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary disabled:opacity-50",
+  "outline-none disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
-      size: {
-        md: "size-11",
-        sm: "size-9",
-      },
       variant: {
-        ghost: "bg-transparent text-current hover:text-brand-primary",
-        inverted:
-          "bg-transparent text-text-inverted/80 hover:text-text-inverted",
+        ghost:
+          "inline-flex size-11 shrink-0 items-center justify-center rounded-full border border-transparent bg-transparent text-current transition-[background-color,border-color,color,opacity,box-shadow,transform] duration-150 ease-out hover:text-brand-primary",
+        plain: "p-2",
+        soft: "flex size-10 items-center justify-center rounded-full bg-surface-quiet text-text-secondary transition-colors hover:bg-surface-muted",
       },
     },
     defaultVariants: {
-      size: "md",
       variant: "ghost",
     },
   },
@@ -33,11 +29,11 @@ type IconButtonProps = Omit<
   };
 
 export const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
-  ({ className, size, type = "button", variant, ...props }, ref) => (
+  ({ className, type = "button", variant, ...props }, ref) => (
     <button
       ref={ref}
       type={type}
-      className={cn(iconButtonVariants({ size, variant }), className)}
+      className={cn(iconButtonVariants({ variant }), className)}
       {...props}
     />
   ),

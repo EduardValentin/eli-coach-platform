@@ -13,6 +13,7 @@ import {
   type PublicNavigationVariant,
   type PublicNavigationScrollBehavior,
 } from "./public-navigation";
+import type { PublicHeaderAppearance } from "./header-appearance";
 import { PublicFooter } from "./public-footer";
 
 const publicNavigationLinks = [
@@ -21,7 +22,15 @@ const publicNavigationLinks = [
   { href: PRICING_PATH, label: "Pricing" },
 ] as const satisfies readonly PublicNavigationLink[];
 
+const HEADER_PLACEMENT_BY_APPEARANCE = {
+  solid: "header-solid",
+  transparent: "header-transparent",
+} as const satisfies Record<PublicHeaderAppearance, string>;
+
+export type PublicContentFrame = "padded" | "full-bleed";
+
 type PublicLayoutProps = PropsWithChildren<{
+  contentFrame: PublicContentFrame;
   homepageFooterCta?: ReactNode;
   navigationActions?: ReactNode;
   scrollBehavior: PublicNavigationScrollBehavior;
@@ -33,6 +42,7 @@ type PublicLayoutProps = PropsWithChildren<{
 export function PublicLayout(props: PublicLayoutProps) {
   const {
     children,
+    contentFrame,
     homepageFooterCta,
     navigationActions,
     scrollBehavior,
@@ -46,14 +56,23 @@ export function PublicLayout(props: PublicLayoutProps) {
   const authControlsEnabled = waitlist.showsAuthControls;
 
   return (
-    <div className="flex min-h-screen flex-col bg-surface-page text-text-primary">
+    <div
+      className={cn("flex min-h-screen flex-col text-text-primary", {
+        "bg-surface-page": scrollBehavior === "solid",
+        "bg-surface-subtle": scrollBehavior === "hero-overlay",
+      })}
+    >
       <a className="ui-skip-link" href={`#${MAIN_CONTENT_ID}`}>
         Skip to main content
       </a>
       <PublicNavigation
-        actions={
+        actions={(appearance) =>
           authControlsEnabled ? (
-            <AuthNavActions session={session} storePath={storePath}>
+            <AuthNavActions
+              placement={HEADER_PLACEMENT_BY_APPEARANCE[appearance]}
+              session={session}
+              storePath={storePath}
+            >
               {navigationActions}
             </AuthNavActions>
           ) : (
@@ -75,9 +94,9 @@ export function PublicLayout(props: PublicLayoutProps) {
       />
       <main
         aria-label="Public site content"
-        className={cn("min-w-0 flex-1", {
+        className={cn("min-h-screen min-w-0 flex-1", {
           "mx-auto w-full max-w-stage px-6 pb-12 pt-28 lg:px-12":
-            scrollBehavior === "solid",
+            scrollBehavior === "solid" && contentFrame === "padded",
         })}
         id={MAIN_CONTENT_ID}
         tabIndex={-1}

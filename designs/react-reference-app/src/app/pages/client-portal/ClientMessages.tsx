@@ -17,8 +17,9 @@ import {
   AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogAction
 } from '../../components/ui/alert-dialog';
 import { toast } from 'sonner';
+import { ELI_PORTRAIT_SMALL } from '../../utils/eliPortrait';
 
-const COACH_DEFAULT_PHOTO = 'https://images.unsplash.com/photo-1757347398206-7425300ef990?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxicnVuZXR0ZSUyMHNtaWxpbmclMjB3b21hbiUyMHBvcnRyYWl0JTIwb3V0ZG9vcnxlbnwxfHx8fDE3NzQ0MzE3MDR8MA&ixlib=rb-4.1.0&q=80&w=1080';
+const COACH_DEFAULT_PHOTO = ELI_PORTRAIT_SMALL;
 
 const CLIENT_ID = 'c1';
 const CLIENT_NAME = 'Jane Doe';
@@ -161,12 +162,12 @@ export function ClientMessages() {
   };
 
   return (
-    <div className="w-full min-h-[540px] h-[calc(100dvh-11rem)] lg:h-[calc(100vh-8rem)] flex bg-white rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 overflow-hidden">
+    <div className="w-full min-h-[540px] h-[calc(100dvh-11rem)] lg:h-[calc(100vh-8rem)] flex bg-white rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 overflow-hidden">
 
       {/* Sidebar - Coach Info */}
       <div className="hidden lg:flex w-80 flex-col border-r border-neutral-100 bg-surface-page">
-        <div className="p-8 flex flex-col items-center px-3 border-b border-neutral-100 rounded-md bg-white">
-          <img src={coachPhoto} alt={coachName} className="w-20 h-20 rounded-2xl object-cover shadow-lg mb-4" />
+        <div className="p-8 flex flex-col items-center px-3 border-b border-neutral-100 rounded-field bg-white">
+          <img src={coachPhoto} alt={coachName} className="w-20 h-20 rounded-card object-cover shadow-lg mb-4" />
           <h2 className="font-serif text-xl font-semibold text-text-primary">{coachName}</h2>
           <p className="text-sm text-brand font-medium mt-1">Lead Trainer</p>
           <p className="text-xs text-text-secondary text-center mt-4">
@@ -185,9 +186,9 @@ export function ClientMessages() {
       {/* Chat Area */}
       <div className="flex-1 min-w-0 flex flex-col h-full bg-surface-page">
         {/* Header */}
-        <div className="h-20 px-6 border-b border-neutral-100 rounded-md bg-white flex items-center justify-between shrink-0">
+        <div className="h-20 px-6 border-b border-neutral-100 rounded-field bg-white flex items-center justify-between shrink-0">
           <div className="flex items-center gap-4">
-            <img src={coachPhoto} alt={coachName} className="lg:hidden w-10 h-10 rounded-xl object-cover shrink-0" />
+            <img src={coachPhoto} alt={coachName} className="lg:hidden w-10 h-10 rounded-control object-cover shrink-0" />
             <div>
               <h3 className="font-semibold text-text-primary">Chat with Coach</h3>
               <p className="text-xs text-text-secondary font-medium">Online</p>
@@ -200,9 +201,9 @@ export function ClientMessages() {
               disabled={pendingExists}
               aria-label={pendingExists ? 'Check-in request pending — awaiting your coach' : 'Request a check-in'}
               title={pendingExists ? 'You already have a check-in request awaiting your coach' : 'Request a check-in with your coach'}
-              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-full transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-control transition-all ${
                 pendingExists
-                  ? 'bg-neutral-100 text-text-secondary cursor-not-allowed'
+                  ? 'bg-brand/10 text-brand pointer-events-none opacity-50'
                   : showCheckinPicker
                     ? 'bg-brand text-white'
                     : 'bg-brand/10 text-brand hover:bg-brand hover:text-white'
@@ -223,19 +224,19 @@ export function ClientMessages() {
                   <MoreVertical size={18} />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-52 rounded-xl shadow-lg border-neutral-100">
-                <DropdownMenuItem className="gap-3 rounded-lg cursor-pointer" onClick={() => toast.info('Search in conversation — coming soon')}>
+              <DropdownMenuContent align="end" className="w-52 rounded-control shadow-lg border-neutral-100">
+                <DropdownMenuItem className="gap-3 rounded-compact cursor-pointer" onClick={() => toast.info('Search in conversation — coming soon')}>
                   <SearchIcon size={15} /> Search in chat
                 </DropdownMenuItem>
-                <DropdownMenuItem className="gap-3 rounded-lg cursor-pointer" onClick={() => { setIsMuted(!isMuted); toast.success(isMuted ? 'Notifications unmuted' : 'Notifications muted'); }}>
+                <DropdownMenuItem className="gap-3 rounded-compact cursor-pointer" onClick={() => { setIsMuted(!isMuted); toast.success(isMuted ? 'Notifications unmuted' : 'Notifications muted'); }}>
                   <BellOff size={15} className={isMuted ? 'text-brand' : ''} />
                   {isMuted ? 'Unmute notifications' : 'Mute notifications'}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="gap-3 rounded-lg cursor-pointer" onClick={() => toast.success('Conversation archived')}>
+                <DropdownMenuItem className="gap-3 rounded-compact cursor-pointer" onClick={() => toast.success('Conversation archived')}>
                   <Archive size={15} /> Archive conversation
                 </DropdownMenuItem>
-                <DropdownMenuItem className="gap-3 rounded-lg cursor-pointer text-red-600 focus:text-red-600" onClick={() => setShowDeleteDialog(true)}>
+                <DropdownMenuItem className="gap-3 rounded-compact cursor-pointer text-red-600 focus:text-red-600" onClick={() => setShowDeleteDialog(true)}>
                   <Trash2 size={15} /> Delete conversation
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -248,7 +249,7 @@ export function ClientMessages() {
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mx-4 lg:mx-6 mt-4 px-3 py-2.5 sm:px-4 sm:py-3 bg-brand/5 border border-brand/15 rounded-2xl flex items-center gap-2.5 min-w-0"
+            className="mx-4 lg:mx-6 mt-4 px-3 py-2.5 sm:px-4 sm:py-3 bg-brand/5 border border-brand/15 rounded-card flex items-center gap-2.5 min-w-0"
           >
             <CalendarDays size={16} className="text-brand shrink-0" />
             <span className="text-xs sm:text-sm text-text-primary font-medium min-w-0 flex-1 truncate">
@@ -281,7 +282,7 @@ export function ClientMessages() {
                   animate={{ opacity: 1, y: 0 }}
                   className="flex justify-center"
                 >
-                  <div className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-medium border ${
+                  <div className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-card text-xs font-medium border ${
                     msg.systemType === 'plan-update'
                       ? 'bg-brand-secondary/5 border-brand-secondary/20 text-brand-secondary'
                       : msg.systemType === 'checkin-cancelled'
@@ -306,12 +307,12 @@ export function ClientMessages() {
               >
                 <div className="flex items-end gap-2 max-w-[85%] lg:max-w-[70%] min-w-0">
                   {!isClient && (
-                    <img src={coachPhoto} alt="" className="w-6 h-6 rounded-md object-cover shrink-0 mb-1 shadow-sm" />
+                    <img src={coachPhoto} alt="" className="w-6 h-6 rounded-field object-cover shrink-0 mb-1 shadow-sm" />
                   )}
-                  <div className={`p-4 rounded-2xl text-sm break-words min-w-0 ${
+                  <div className={`p-4 rounded-card text-sm break-words min-w-0 ${
                     isClient
-                      ? 'bg-brand text-white rounded-br-sm shadow-md'
-                      : 'bg-white border border-neutral-100 shadow-sm text-text-primary rounded-bl-sm'
+                      ? 'bg-brand text-white rounded-br-tile shadow-md'
+                      : 'bg-white border border-neutral-100 shadow-sm text-text-primary rounded-bl-tile'
                   }`}>
                     {msg.text}
                   </div>
@@ -347,10 +348,10 @@ export function ClientMessages() {
         {/* Quick Actions + Input */}
         <div className="bg-white border-t border-neutral-100 shrink-0">
           <form onSubmit={handleSend} className="flex items-end gap-3 p-4">
-            <button type="button" className="h-[56px] w-[56px] flex items-center justify-center text-text-secondary hover:text-text-primary transition-colors rounded-2xl hover:bg-neutral-50 shrink-0">
+            <button type="button" className="h-[56px] w-[56px] flex items-center justify-center text-text-secondary hover:text-text-primary transition-colors rounded-card hover:bg-neutral-50 shrink-0">
               <Paperclip size={22} />
             </button>
-            <div className="flex-1 min-h-[56px] flex items-center bg-neutral-50 rounded-2xl border border-neutral-200 focus-within:border-brand focus-within:ring-1 focus-within:ring-brand transition-all overflow-hidden shadow-sm">
+            <div className="flex-1 min-h-[56px] flex items-center bg-neutral-50 rounded-card border border-neutral-200 focus-within:border-brand focus-within:ring-1 focus-within:ring-brand transition-all overflow-hidden shadow-sm">
               <textarea
                 rows={1}
                 value={message}
@@ -368,7 +369,7 @@ export function ClientMessages() {
             <button
               type="submit"
               disabled={!message.trim()}
-              className="h-[56px] w-[56px] flex items-center justify-center bg-text-primary text-white rounded-2xl hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0 shadow-md"
+              className="h-[56px] w-[56px] flex items-center justify-center bg-text-primary text-white rounded-card hover:bg-neutral-800 transition-colors shrink-0 shadow-md disabled:pointer-events-none disabled:opacity-50"
             >
               <Send size={20} />
             </button>
@@ -418,7 +419,7 @@ export function ClientMessages() {
 
       {/* Delete Confirmation */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent className="sm:max-w-md rounded-2xl">
+        <AlertDialogContent className="sm:max-w-md rounded-card">
           <AlertDialogHeader>
             <div className="mx-auto mb-2 w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
               <Trash2 size={24} className="text-red-600" />
@@ -431,12 +432,12 @@ export function ClientMessages() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="sm:flex-row gap-3 mt-2">
-            <AlertDialogCancel className="flex-1 rounded-xl border-neutral-200 text-text-secondary hover:bg-neutral-50 font-semibold">
+            <AlertDialogCancel className="flex-1 rounded-control border-neutral-200 text-text-secondary hover:bg-neutral-50 font-semibold">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => { setShowDeleteDialog(false); toast.success('Conversation deleted'); }}
-              className="flex-1 rounded-xl bg-red-600 text-white hover:bg-red-700 font-semibold shadow-sm"
+              className="flex-1 rounded-control bg-red-600 text-white hover:bg-red-700 font-semibold shadow-sm"
             >
               Delete
             </AlertDialogAction>

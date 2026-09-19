@@ -8,6 +8,7 @@
     "!src/**/*.spec.*"
   ],
   "exports": {
+    "./calendar": "./src/calendar/index.ts",
     "./filters": "./src/filters/index.ts",
     "./layout": "./src/layout/index.ts",
     "./lib": "./src/lib/index.ts",
@@ -26,6 +27,7 @@
     "class-variance-authority": "catalog:",
     "clsx": "catalog:",
     "radix-ui": "catalog:",
+    "react-day-picker": "catalog:",
     "tailwind-merge": "catalog:"
   },
   "devDependencies": {

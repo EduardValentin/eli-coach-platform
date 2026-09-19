@@ -1,9 +1,11 @@
 import type {
+  EmailAttachment,
   ProductEmail,
   ProductEmailCommand,
   ProductEmailResult,
 } from "./product-email-contract.server";
 import type {
+  Attachment,
   CreateEmailOptions,
   CreateEmailResponse,
   ErrorResponse,
@@ -32,9 +34,12 @@ export class ResendProductEmail implements ProductEmail {
 
   async send(command: ProductEmailCommand): Promise<ProductEmailResult> {
     const payload = {
+      ...(command.attachments
+        ? { attachments: command.attachments.map(toResendAttachment) }
+        : {}),
       from: `${this.options.fromName} <${this.options.fromAddress}>`,
       html: command.html,
-      replyTo: this.options.replyTo,
+      replyTo: command.replyTo ?? this.options.replyTo,
       subject: command.subject,
       text: command.text,
       to: command.to,
@@ -59,6 +64,14 @@ export class ResendProductEmail implements ProductEmail {
 
     return { kind: "sent", providerMessageId: result.data.id };
   }
+}
+
+function toResendAttachment(attachment: EmailAttachment): Attachment {
+  return {
+    content: Buffer.from(attachment.content),
+    contentType: attachment.contentType,
+    filename: attachment.filename,
+  };
 }
 
 /**

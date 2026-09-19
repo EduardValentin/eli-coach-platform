@@ -1,4 +1,8 @@
-import type { FeatureFlagReader, FeatureFlagSet } from "../feature-flag";
+import {
+  WAITLIST_MODE_FEATURE_FLAG,
+  type FeatureFlagReader,
+  type FeatureFlagSet,
+} from "../feature-flag";
 import type { Clock } from "../shared";
 
 import { Waitlist, type WaitlistSnapshot } from "./waitlist";
@@ -12,8 +16,6 @@ type GetWaitlistUseCaseOptions = {
   waitlist: Waitlist;
   waitlistEntries: WaitlistEntries;
 };
-
-const WAITLIST_MODE_FEATURE_FLAG = "WAITLIST_MODE";
 
 export class GetWaitlistUseCase {
   constructor(private readonly options: GetWaitlistUseCaseOptions) {}

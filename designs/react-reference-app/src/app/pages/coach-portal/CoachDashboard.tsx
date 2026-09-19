@@ -34,7 +34,7 @@ export function CoachDashboard() {
         </div>
         <Link 
           to="/coach/onboard"
-          className="px-6 py-3.5 bg-brand text-white text-sm font-semibold rounded-xl hover:bg-brand-hover transition-colors flex items-center justify-center gap-2 shadow-md hover:shadow-lg shrink-0"
+          className="px-6 py-3.5 bg-brand text-white text-sm font-semibold rounded-control hover:bg-brand-hover transition-colors flex items-center justify-center gap-2 shadow-md hover:shadow-lg shrink-0"
         >
           <Plus size={18} strokeWidth={2.5} />
           Onboard New Client
@@ -47,7 +47,7 @@ export function CoachDashboard() {
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-card p-8 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50"
+          className="bg-card p-8 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50"
         >
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
@@ -58,12 +58,12 @@ export function CoachDashboard() {
           
           <div className="space-y-4">
             {MOCK_CALLS.map(call => (
-              <div key={call.id} className="flex items-center justify-between p-4 rounded-2xl border border-border bg-muted/50 hover:bg-card hover:shadow-sm transition-all">
+              <div key={call.id} className="flex items-center justify-between p-4 rounded-card border border-border bg-muted/50 hover:bg-card hover:shadow-sm transition-all">
                 <div>
                   <p className="font-semibold text-sm text-foreground">{call.name}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">{call.time} • {call.type}</p>
                 </div>
-                <button className="px-4 py-2 bg-surface-inverted text-white text-xs font-semibold rounded-lg hover:bg-neutral-800 transition-colors">
+                <button className="px-4 py-2 bg-surface-inverted text-white text-xs font-semibold rounded-control hover:bg-neutral-800 transition-colors">
                   Join Meet
                 </button>
               </div>
@@ -76,7 +76,7 @@ export function CoachDashboard() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-card p-8 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50"
+          className="bg-card p-8 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50"
         >
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 rounded-full bg-status-pending-soft text-status-pending flex items-center justify-center">
@@ -90,12 +90,12 @@ export function CoachDashboard() {
               <p className="text-sm text-muted-foreground py-4 text-center">No pending check-ins</p>
             ) : (
               pendingCheckins.map(checkin => (
-                <div key={checkin.id} className="flex items-center justify-between p-4 rounded-2xl border border-border bg-muted/50 hover:bg-card hover:shadow-sm transition-all">
+                <div key={checkin.id} className="flex items-center justify-between p-4 rounded-card border border-border bg-muted/50 hover:bg-card hover:shadow-sm transition-all">
                   <div>
                     <p className="font-semibold text-sm text-foreground">{checkin.clientName}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">{formatCheckinDate(checkin.date)} at {formatCheckinTime(checkin.time)}</p>
                   </div>
-                  <Link to="/coach/checkins" className="px-4 py-2 bg-card border border-border text-foreground text-xs font-semibold rounded-lg hover:bg-muted transition-colors">
+                  <Link to="/coach/checkins" className="px-4 py-2 bg-card border border-border text-foreground text-xs font-semibold rounded-control hover:bg-muted transition-colors">
                     Review
                   </Link>
                 </div>
@@ -110,7 +110,7 @@ export function CoachDashboard() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="bg-card p-8 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50"
+        className="bg-card p-8 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50"
       >
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
@@ -127,7 +127,7 @@ export function CoachDashboard() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="px-3 border-b border-border rounded-md">
+              <tr className="px-3 border-b border-border rounded-field">
                 <th className="pb-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Client Name</th>
                 <th className="pb-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Cycle Phase</th>
                 <th className="pb-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Primary Goal</th>
@@ -137,12 +137,12 @@ export function CoachDashboard() {
             </thead>
             <tbody>
               {MOCK_CLIENTS.map(client => (
-                <tr key={client.id} className="px-3 border-b border-neutral-50 rounded-md hover:bg-muted/50 transition-colors group">
+                <tr key={client.id} className="px-3 border-b border-neutral-50 rounded-field hover:bg-muted/50 transition-colors group">
                   <td className="py-4 font-semibold text-sm text-foreground">{client.name}</td>
                   <td className="py-4 text-sm text-muted-foreground">{client.phase}</td>
                   <td className="py-4 text-sm text-muted-foreground">{client.goal}</td>
                   <td className="py-4">
-                    <span className="inline-flex items-center px-2 py-1 rounded-md bg-success-soft text-success text-xs font-bold">
+                    <span className="inline-flex items-center px-2 py-1 rounded-field bg-success-soft text-success text-xs font-bold">
                       {client.compliance}
                     </span>
                   </td>

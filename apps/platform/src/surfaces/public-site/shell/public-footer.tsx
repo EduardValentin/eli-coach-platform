@@ -8,7 +8,7 @@ type PublicFooterProps = {
 
 export function PublicFooter(props: PublicFooterProps) {
   return (
-    <footer className="bg-surface-page text-text-secondary">
+    <footer className="text-copy-muted">
       {props.children ?? (
         <LegalNav className="mx-auto max-w-stage px-6 py-8 lg:px-12" />
       )}

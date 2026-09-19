@@ -1,4 +1,5 @@
 import { cn } from "@eli-coach-platform/ui/lib";
+import { cardVariants } from "@eli-coach-platform/ui/primitives";
 import {
   createFadeUpVariants,
   publicEaseOut,
@@ -20,11 +21,9 @@ export function BundleSelector(props: BundleSelectorProps) {
       <h2 className="ui-sr-only">Coaching bundle options</h2>
       {props.showsWaitlistPricing ? (
         <div className="mb-8 flex justify-center">
-          <span className="inline-flex max-w-xs items-center justify-center gap-2 rounded-pill bg-brand-secondary-soft px-4 py-1.5 text-center text-xs font-semibold leading-4 uppercase tracking-nav text-brand-secondary sm:max-w-none">
-            <Tag aria-hidden="true" className="shrink-0" size={13} />
-            <span className="min-w-0">
-              Waitlist pricing — reserved for early signups
-            </span>
+          <span className="inline-flex items-center gap-2 rounded-full bg-brand-secondary-soft px-4 py-1.5 text-xs font-semibold tracking-wide text-brand-secondary uppercase">
+            <Tag aria-hidden="true" size={13} /> Waitlist pricing — reserved for
+            early signups
           </span>
         </div>
       ) : null}
@@ -44,9 +43,10 @@ function BundleCard(props: { card: CoachingBundleCard; index: number }) {
   return (
     <motion.article
       animate="visible"
-      className={cn("relative rounded-md border-2 px-6 py-7 text-center", {
-        "ui-public-bundle-card-featured": card.isPopular,
-        "bg-surface-base ui-public-bundle-card-default shadow-sm":
+      className={cn("relative rounded-card border-2 px-6 py-7 text-center", {
+        "ui-public-bundle-card-featured z-10 shadow-(--ui-public-bundle-featured-shadow)":
+          card.isPopular,
+        "bg-surface-base ui-public-bundle-card-default shadow-card":
           !card.isPopular,
       })}
       initial="hidden"
@@ -78,14 +78,14 @@ function BundleCardBadges(props: { card: CoachingBundleCard }) {
   return (
     <>
       {card.isPopular ? (
-        <div className="ui-public-bundle-label ui-public-bundle-on-emphasis absolute bottom-full left-1/2 inline-flex -translate-x-1/2 translate-y-px items-center gap-1 whitespace-nowrap rounded-t-md bg-brand-secondary px-4 py-1 font-bold uppercase shadow-sm">
+        <div className="ui-public-bundle-label ui-public-bundle-on-emphasis absolute bottom-full left-1/2 inline-flex -mb-px -translate-x-1/2 items-center gap-1 whitespace-nowrap rounded-t-compact bg-brand-secondary px-4 py-1 font-bold uppercase shadow-card">
           <Star aria-hidden="true" className="fill-current" size={10} />
           Most Popular
         </div>
       ) : null}
-      {card.badgeLabel ? (
-        <div className="ui-public-bundle-savings absolute right-3 top-3 whitespace-nowrap px-1.5 py-0.5 font-bold uppercase">
-          {card.badgeLabel}
+      {card.savingsPercent ? (
+        <div className="ui-public-bundle-savings absolute right-3 top-3 px-1.5 py-0.5 font-bold uppercase tracking-wide">
+          Save {card.savingsPercent}%
         </div>
       ) : null}
     </>
@@ -99,23 +99,23 @@ function BundlePrice(props: { card: CoachingBundleCard }) {
   return (
     <div>
       <div className="mb-1 flex flex-wrap items-end justify-center gap-0.5">
-        {card.originalPriceLabel ? (
+        {card.originalPricePerMonth ? (
           <span
-            aria-label={`Original ${titleLower} monthly price ${card.originalPriceLabel}`}
+            aria-label={`Original ${titleLower} monthly price ${formatEuros(card.originalPricePerMonth)}`}
             className="ui-public-bundle-muted mr-1 text-lg font-bold leading-7 line-through"
           >
-            {card.originalPriceLabel}
+            <EuroAmount amount={card.originalPricePerMonth} />
           </span>
         ) : null}
         <span
-          aria-label={`${card.title} monthly price ${card.priceLabel}`}
+          aria-label={`${card.title} monthly price ${formatEuros(card.pricePerMonth)}`}
           className={cn("font-body text-3xl font-bold leading-9", {
             "text-brand-primary": card.isWaitlistPrice,
           })}
         >
-          {card.priceLabel}
+          <EuroAmount amount={card.pricePerMonth} />
         </span>
-        <span className="ui-public-bundle-secondary mb-0.5 text-sm font-medium leading-5">
+        <span className="mb-0.5 text-sm font-medium leading-5 text-link-muted">
           /mo
         </span>
       </div>
@@ -126,17 +126,36 @@ function BundlePrice(props: { card: CoachingBundleCard }) {
         />
       ) : null}
       <p className="ui-public-bundle-muted text-xs font-medium leading-4 tracking-normal">
-        {card.originalTotalLabel ? (
+        {card.originalTotal ? (
           <span
-            aria-label={`Original ${titleLower} billing total ${card.originalTotalLabel}`}
+            aria-label={`Original ${titleLower} billing total ${formatEuros(card.originalTotal)}`}
             className="mr-1 line-through"
           >
-            {card.originalTotalLabel}
+            <EuroAmount amount={card.originalTotal} />
           </span>
         ) : null}
-        {card.billingLabel}
+        {card.billedMonthly ? (
+          "Billed monthly"
+        ) : (
+          <EuroAmount amount={card.total} precedingText="Billed as " />
+        )}
       </p>
     </div>
+  );
+}
+
+const EURO_SIGN = "€";
+
+function formatEuros(amount: number): string {
+  return `${EURO_SIGN}${amount}`;
+}
+
+function EuroAmount(props: { amount: number; precedingText?: string }) {
+  return (
+    <>
+      {`${props.precedingText ?? ""}${EURO_SIGN}`}
+      {props.amount}
+    </>
   );
 }
 
@@ -144,7 +163,7 @@ function BundleBenefits(props: { benefits: readonly string[] }) {
   return (
     <motion.section
       animate="visible"
-      className="ui-public-bundle-panel mb-10 rounded-md border bg-surface-base p-8 shadow-sm md:p-10"
+      className={cn(cardVariants(), "mb-10 p-8 md:p-10")}
       initial="hidden"
       variants={createFadeUpVariants({
         delay: 0.3,
@@ -152,9 +171,9 @@ function BundleBenefits(props: { benefits: readonly string[] }) {
         offset: 15,
       })}
     >
-      <h3 className="ui-public-bundle-benefits-heading ui-public-bundle-muted mb-6 text-center text-sm font-semibold uppercase leading-5">
+      <h4 className="ui-public-bundle-benefits-heading ui-public-bundle-muted mb-6 text-center text-sm font-semibold uppercase leading-5">
         What's included in every plan
-      </h3>
+      </h4>
       <ul className="mx-auto grid max-w-2xl grid-cols-1 gap-x-8 gap-y-4 md:grid-cols-2">
         {props.benefits.map((benefit) => (
           <li className="flex items-start gap-3" key={benefit}>
@@ -163,9 +182,7 @@ function BundleBenefits(props: { benefits: readonly string[] }) {
               className="mt-0.5 shrink-0 text-brand-primary"
               size={18}
             />
-            <span className="ui-public-bundle-secondary text-sm leading-5">
-              {benefit}
-            </span>
+            <span className="text-sm leading-5 text-link-muted">{benefit}</span>
           </li>
         ))}
       </ul>

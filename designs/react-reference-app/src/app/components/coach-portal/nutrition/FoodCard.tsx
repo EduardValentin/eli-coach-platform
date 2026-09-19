@@ -22,14 +22,14 @@ export function FoodCard({ food, onEdit }: FoodCardProps) {
     : undefined;
 
   return (
-    <Card className="gap-3">
+    <Card className="flex flex-col gap-3">
       <CardContent className="pt-6 flex flex-col gap-3">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-2.5 min-w-0">
             {(() => { const Icon = foodIcon(food.icon); return <Icon size={20} className={`shrink-0 mt-0.5 ${CATEGORY_ICON_COLOR[food.category]}`} aria-hidden="true" />; })()}
             <div className="min-w-0">
               <p className="font-semibold text-foreground truncate">{food.name}</p>
-              <span className={`mt-1 inline-flex w-fit items-center rounded-full px-2 py-0.5 text-[11px] font-medium text-foreground ${CATEGORY_SOFT[food.category]}`}>
+              <span className={`mt-1 inline-flex w-fit items-center rounded-full px-2 py-0.5 text-caption font-medium text-foreground ${CATEGORY_SOFT[food.category]}`}>
                 {CATEGORY_LABELS[food.category]}
               </span>
             </div>
@@ -53,7 +53,7 @@ export function FoodCard({ food, onEdit }: FoodCardProps) {
               { key: 'carb', label: 'C', value: `${food.carb}g`, tile: MACRO_TILE.carb },
               { key: 'fat', label: 'F', value: `${food.fat}g`, tile: MACRO_TILE.fat },
             ].map((m) => (
-              <div key={m.key} className={`rounded-lg px-1.5 py-2 text-center ${m.tile}`}>
+              <div key={m.key} className={`rounded-compact px-1.5 py-2 text-center ${m.tile}`}>
                 <dt className="text-[10px] uppercase tracking-wide text-foreground">{m.label}</dt>
                 <dd className="text-base font-bold text-foreground leading-tight">{m.value}</dd>
               </div>

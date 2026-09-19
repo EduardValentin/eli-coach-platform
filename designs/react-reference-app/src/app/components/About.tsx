@@ -4,6 +4,7 @@ import { Button } from './ThemeButton';
 import { InstagramWidget } from './InstagramWidget';
 import { useAppState } from '../context/AppContext';
 import { SectionEyebrow } from './SectionEyebrow';
+import { ELI_PORTRAIT_LARGE } from '../utils/eliPortrait';
 
 export function About() {
   const { appState } = useAppState();
@@ -23,8 +24,10 @@ export function About() {
           <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-brand to-brand-secondary opacity-70 group-hover:opacity-100 transition-opacity blur-md" />
           <div className="absolute inset-[3px] bg-white rounded-full z-10" />
           <img 
-            src="https://images.unsplash.com/photo-1757347398206-7425300ef990?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxicnVuZXR0ZSUyMHNtaWxpbmclMjB3b21hbiUyMHBvcnRyYWl0JTIwb3V0ZG9vcnxlbnwxfHx8fDE3NzQ0MzE3MDR8MA&ixlib=rb-4.1.0&q=80&w=1080" 
+            src={ELI_PORTRAIT_LARGE}
             alt="Eli, personal trainer and nutritionist for women, smiling outdoors"
+            width={208}
+            height={208}
             className="relative z-20 w-full h-full object-cover rounded-full"
           />
         </motion.div>
@@ -59,7 +62,7 @@ export function About() {
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 mt-8 text-sm font-medium text-about-credential-text">
+          <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 mt-8 text-sm font-medium text-text-label">
             <span className="flex items-center gap-1.5"><span className="text-brand">✔</span> IFBB Certified Trainer</span>
             <span className="flex items-center gap-1.5"><span className="text-brand">✔</span> Certified Nutritionist</span>
             <span className="flex items-center gap-1.5"><span className="text-brand">✔</span> Women Focused</span>
@@ -68,7 +71,7 @@ export function About() {
           {!appState.isWaitlistMode && (
             <div className="flex items-center gap-6 mt-10 justify-center lg:justify-start">
               <Link to="/book" className="inline-block">
-                <Button size="lg" className="rounded-full px-8">Book a free call</Button>
+                <Button elevation="raised" press="scale">Book a free call</Button>
               </Link>
               <Link to="/pricing" className="text-sm font-semibold text-link-muted hover:text-brand underline underline-offset-4 transition-colors">
                 See pricing

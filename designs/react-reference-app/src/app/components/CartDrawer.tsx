@@ -13,6 +13,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { Checkbox } from './ui/checkbox';
+import { Alert } from './ui/alert';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import {
@@ -21,6 +22,7 @@ import {
   STORE_ACQUISITION_ERROR_MESSAGES,
   submitStoreAcquisition,
 } from '../services/storeAcquisitionService';
+import { Button as ThemeButton, buttonVariants, cn as themeCn } from './ThemeButton';
 
 const FOCUSABLE_SELECTOR =
   'a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])';
@@ -33,14 +35,9 @@ function AcquisitionErrorAlert({
   error: StoreAcquisitionError;
 }) {
   return (
-    <div
-      id={id}
-      role="alert"
-      className="flex items-start gap-2 text-sm leading-snug text-destructive"
-    >
-      <AlertCircle size={16} aria-hidden="true" className="shrink-0 mt-0.5" />
-      <p className="text-left">{error.message}</p>
-    </div>
+    <Alert id={id}>
+      <p>{error.message}</p>
+    </Alert>
   );
 }
 
@@ -227,7 +224,7 @@ export function CartDrawer() {
             <div className="flex-1 overflow-y-auto p-6 flex flex-col">
               {cart.length === 0 && checkoutStep === 'cart' ? (
                 <div className="flex flex-col items-center justify-center flex-1 text-center h-full gap-4">
-                  <ShoppingBag size={64} aria-hidden="true" className="text-placeholder-soft mb-4" />
+                  <ShoppingBag size={64} aria-hidden="true" className="text-icon-muted mb-4" />
                   <p className="text-xl text-copy-muted font-medium">Your cart is empty.</p>
                   <p className="text-copy-muted">Add some plans or free resources to get started.</p>
                   {serviceError && (
@@ -235,7 +232,7 @@ export function CartDrawer() {
                   )}
                   <button
                     onClick={handleClose}
-                    className="mt-6 px-6 py-3 bg-surface-inverted text-surface-inverted-foreground rounded-sm font-medium hover:bg-brand transition-colors"
+                    className={themeCn(buttonVariants({ variant: 'inverted' }), 'mt-6')}
                   >
                     Continue Shopping
                   </button>
@@ -250,7 +247,7 @@ export function CartDrawer() {
                             <img
                               src={item.product.imageUrl}
                               alt={item.product.title}
-                              className="w-20 h-24 object-cover rounded-md shadow-sm"
+                              className="w-20 h-24 object-cover rounded-field shadow-sm"
                             />
                             <div className="flex-1 flex flex-col justify-between">
                               <div>
@@ -258,7 +255,7 @@ export function CartDrawer() {
                                   {item.product.title}
                                 </h3>
                                 {item.product.priceUSD === 0 && (
-                                  <span className="text-[10px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded-sm text-brand-secondary bg-brand-secondary-soft">
+                                  <span className="text-label uppercase px-1.5 py-0.5 rounded-tile text-brand-secondary bg-brand-secondary-soft">
                                     {item.product.type}
                                   </span>
                                 )}
@@ -294,7 +291,7 @@ export function CartDrawer() {
                           onClick={() => setCheckoutStep('checkout')}
                           disabled={isProcessing}
                           aria-label={isProcessing ? processingLabel : undefined}
-                          className="w-full py-4 bg-surface-inverted text-surface-inverted-foreground font-medium rounded-sm flex items-center justify-center gap-2 hover:bg-brand transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          className={buttonVariants({ size: 'lg', variant: 'inverted', width: 'full' })}
                         >
                           {isProcessing ? (
                             processingContent
@@ -338,7 +335,6 @@ export function CartDrawer() {
                             placeholder="you@example.com"
                             aria-invalid={emailError !== null}
                             aria-describedby={emailError ? emailErrorId : undefined}
-                            className="h-auto px-4 py-3 bg-card border-control-border-soft placeholder:text-placeholder-soft focus-visible:border-brand focus-visible:ring-brand/30 focus-visible:ring-2"
                           />
                           {emailError && (
                             <p
@@ -352,7 +348,7 @@ export function CartDrawer() {
                           )}
                         </div>
 
-                        <div className="bg-surface-subtle p-4 rounded-md border border-stroke-faint">
+                        <div className="bg-surface-subtle p-4 rounded-field border border-stroke-faint">
                           <p className="text-sm font-semibold text-foreground mb-2">Order Summary</p>
                           <div className="flex justify-between items-center text-sm text-copy-muted">
                             <span>{cart.length} item{cart.length === 1 ? '' : 's'}</span>
@@ -404,18 +400,18 @@ export function CartDrawer() {
                         )}
 
                         <div className="mt-auto pt-6 border-t border-control-border-soft flex gap-4">
-                          <button
-                            type="button"
+                          <ThemeButton
                             onClick={() => setCheckoutStep('cart')}
-                            className="px-6 py-4 border border-control-border-soft text-foreground font-medium rounded-sm hover:bg-surface-subtle transition-colors"
+                            size="lg"
+                            variant="outline"
                           >
                             Back
-                          </button>
+                          </ThemeButton>
                           <button
                             type="submit"
                             disabled={!termsAccepted || !email || isProcessing || cart.length === 0}
                             aria-label={isProcessing ? processingLabel : undefined}
-                            className="flex-1 py-4 bg-brand text-brand-foreground font-medium rounded-sm flex items-center justify-center gap-2 hover:bg-brand-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className={buttonVariants({ size: 'lg-tight', width: 'full' })}
                           >
                             {isProcessing
                               ? processingContent
@@ -447,7 +443,7 @@ export function CartDrawer() {
                           </p>
                           <button
                             onClick={handleClose}
-                            className="px-8 py-3.5 bg-surface-inverted text-surface-inverted-foreground font-medium rounded-sm hover:bg-brand transition-colors"
+                            className={buttonVariants({ size: 'lg', variant: 'inverted' })}
                           >
                             Keep Browsing
                           </button>
@@ -461,7 +457,7 @@ export function CartDrawer() {
                           </p>
                           <button
                             onClick={handleClose}
-                            className="px-8 py-3.5 bg-surface-inverted text-surface-inverted-foreground font-medium rounded-sm hover:bg-brand transition-colors"
+                            className={buttonVariants({ size: 'lg', variant: 'inverted' })}
                           >
                             Continue Browsing
                           </button>

@@ -157,22 +157,22 @@ export function ClientDetails() {
         <div className="flex flex-wrap items-center gap-3">
           <Link
             to={`/coach/clients/${clientId}/edit`}
-            className="px-5 py-2.5 bg-white border border-neutral-200 text-text-primary text-sm font-semibold rounded-xl hover:bg-neutral-50 transition-colors flex items-center gap-2 shadow-sm"
+            className="px-5 py-2.5 bg-white border border-neutral-200 text-text-primary text-sm font-semibold rounded-control hover:bg-neutral-50 transition-colors flex items-center gap-2 shadow-sm"
           >
             <UserCog size={16} />
             Edit Profile
           </Link>
-          <Link to={`/coach/clients/${clientId}/cycle`} className="px-5 py-2.5 bg-white border border-neutral-200 text-text-primary text-sm font-semibold rounded-xl hover:bg-neutral-50 transition-colors flex items-center gap-2 shadow-sm">
+          <Link to={`/coach/clients/${clientId}/cycle`} className="px-5 py-2.5 bg-white border border-neutral-200 text-text-primary text-sm font-semibold rounded-control hover:bg-neutral-50 transition-colors flex items-center gap-2 shadow-sm">
             <Droplet size={16} />
             Cycle Log
           </Link>
-          <Link to={`/coach/messages?client=${clientId}`} className="px-5 py-2.5 bg-white border border-neutral-200 text-text-primary text-sm font-semibold rounded-xl hover:bg-neutral-50 transition-colors flex items-center gap-2 shadow-sm">
+          <Link to={`/coach/messages?client=${clientId}`} className="px-5 py-2.5 bg-white border border-neutral-200 text-text-primary text-sm font-semibold rounded-control hover:bg-neutral-50 transition-colors flex items-center gap-2 shadow-sm">
             <MessageSquare size={16} />
             Message
           </Link>
           <button
             onClick={() => setShowScheduleDialog(true)}
-            className="px-5 py-2.5 bg-text-primary text-white text-sm font-semibold rounded-xl hover:bg-neutral-800 transition-colors flex items-center gap-2 shadow-md"
+            className="px-5 py-2.5 bg-text-primary text-white text-sm font-semibold rounded-control hover:bg-neutral-800 transition-colors flex items-center gap-2 shadow-md"
           >
             <Calendar size={16} />
             Schedule Check-in
@@ -182,7 +182,7 @@ export function ClientDetails() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-8">
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36">
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36">
           <div className="flex justify-between items-start w-full">
             <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Progress</span>
             <Activity size={16} className="text-green-600" strokeWidth={2.5} />
@@ -195,7 +195,7 @@ export function ClientDetails() {
           </div>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36">
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36">
           <div className="flex justify-between items-start w-full">
             <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Daily Target</span>
             <Flame size={16} className="text-metric-energy" strokeWidth={2.5} />
@@ -214,7 +214,7 @@ export function ClientDetails() {
         </motion.div>
 
         <Link to={`/coach/clients/${clientId}/cycle`} className="block">
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36 hover:border-brand/20 hover:shadow-md transition-all cursor-pointer">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36 hover:border-brand/20 hover:shadow-md transition-all cursor-pointer">
             <div className="flex justify-between items-start w-full">
               <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Current Phase</span>
               <Droplet size={16} className="text-brand" strokeWidth={2.5} />
@@ -232,7 +232,7 @@ export function ClientDetails() {
           </motion.div>
         </Link>
 
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36">
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36">
           <div className="flex justify-between items-start w-full">
             <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Avg Compliance</span>
             <History size={16} className="text-brand-secondary" strokeWidth={2.5} />
@@ -250,7 +250,7 @@ export function ClientDetails() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
           {/* Current Goal */}
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col h-full">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col h-full">
             <h2 className="font-serif text-lg text-text-primary font-semibold mb-4 flex items-center gap-2">
               <Target size={18} className="text-brand-secondary" />
               Current Goal
@@ -262,7 +262,7 @@ export function ClientDetails() {
                 <p className="text-xs text-text-secondary mb-4">Started {activeGoal.startDate}</p>
                 <button
                   onClick={() => setShowEndGoal(true)}
-                  className="mt-auto w-full py-2 text-sm font-semibold text-text-secondary border border-neutral-200 rounded-xl hover:bg-neutral-50 transition-colors"
+                  className="mt-auto w-full py-2 text-sm font-semibold text-text-secondary border border-neutral-200 rounded-control hover:bg-neutral-50 transition-colors"
                 >
                   End Goal
                 </button>
@@ -277,7 +277,7 @@ export function ClientDetails() {
                     <p className="text-sm text-text-secondary">No active goal set</p>
                     <button
                       onClick={() => setShowNewGoal(true)}
-                      className="inline-flex items-center gap-2 rounded-xl bg-brand-secondary px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-secondary-hover transition-colors"
+                      className="inline-flex items-center gap-2 rounded-control bg-brand-secondary px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-secondary-hover transition-colors"
                     >
                       <Plus size={16} /> Start New Goal
                     </button>
@@ -288,15 +288,15 @@ export function ClientDetails() {
                       aria-label="Goal type"
                       value={newGoalType}
                       onChange={e => setNewGoalType(e.target.value as GoalType)}
-                      className="w-full px-3 py-2.5 text-sm border border-neutral-200 rounded-xl focus:outline-none bg-neutral-50"
+                      className="w-full px-3 py-2.5 text-sm border border-neutral-200 rounded-control focus:outline-none bg-neutral-50"
                     >
                       {GOAL_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                     </select>
                     <div className="flex gap-2">
-                      <button onClick={handleCreateGoal} className="flex-1 py-2 text-sm font-semibold bg-brand-secondary text-white rounded-xl hover:bg-brand-secondary-hover">
+                      <button onClick={handleCreateGoal} className="flex-1 py-2 text-sm font-semibold bg-brand-secondary text-white rounded-control hover:bg-brand-secondary-hover">
                         Create
                       </button>
-                      <button onClick={() => setShowNewGoal(false)} className="py-2 px-3 text-sm font-semibold text-text-secondary border border-neutral-200 rounded-xl hover:bg-neutral-50">
+                      <button onClick={() => setShowNewGoal(false)} className="py-2 px-3 text-sm font-semibold text-text-secondary border border-neutral-200 rounded-control hover:bg-neutral-50">
                         <X size={16} />
                       </button>
                     </div>
@@ -307,7 +307,7 @@ export function ClientDetails() {
           </motion.div>
 
           {/* Active Plan */}
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col h-full">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col h-full">
             <h2 className="font-serif text-lg text-text-primary font-semibold mb-4 flex items-center gap-2">
               <Activity size={18} className="text-brand" />
               Active Plan
@@ -339,7 +339,7 @@ export function ClientDetails() {
 
                 <button
                   onClick={() => setShowEndPlan(true)}
-                  className="mt-auto w-full py-2 text-sm font-semibold text-text-secondary border border-neutral-200 rounded-xl hover:bg-neutral-50 transition-colors"
+                  className="mt-auto w-full py-2 text-sm font-semibold text-text-secondary border border-neutral-200 rounded-control hover:bg-neutral-50 transition-colors"
                 >
                   End Plan
                 </button>
@@ -352,7 +352,7 @@ export function ClientDetails() {
                 <p className="text-sm text-text-secondary">No active plan</p>
                 <button
                   onClick={() => navigate(`/coach/training/builder/${clientId}`)}
-                  className="inline-flex items-center gap-2 rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-hover transition-colors"
+                  className="inline-flex items-center gap-2 rounded-control bg-brand px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-hover transition-colors"
                 >
                   <Plus size={16} /> Create Plan
                 </button>
@@ -394,7 +394,7 @@ export function ClientDetails() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
-                className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col h-full"
+                className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col h-full"
               >
                 <h2 className="font-serif text-lg text-text-primary font-semibold mb-4 flex items-center gap-2">
                   <UtensilsCrossed size={18} className="text-brand-secondary" />
@@ -427,7 +427,7 @@ export function ClientDetails() {
                         <span
                           key={label}
                           role="listitem"
-                          className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-brand-secondary/10 text-text-primary border border-brand-secondary/20"
+                          className="text-caption font-semibold px-2.5 py-1 rounded-full bg-brand-secondary/10 text-text-primary border border-brand-secondary/20"
                         >
                           {label}
                         </span>
@@ -436,7 +436,7 @@ export function ClientDetails() {
                         <span
                           key={label}
                           role="listitem"
-                          className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-text-primary border border-amber-200"
+                          className="text-caption font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-text-primary border border-amber-200"
                         >
                           {label} allergy
                         </span>
@@ -445,7 +445,7 @@ export function ClientDetails() {
                         <span
                           key={label}
                           role="listitem"
-                          className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-neutral-100 text-text-primary"
+                          className="text-caption font-semibold px-2.5 py-1 rounded-full bg-neutral-100 text-text-primary"
                         >
                           No {label}
                         </span>
@@ -459,7 +459,7 @@ export function ClientDetails() {
                 {/* Actions */}
                 <button
                   onClick={() => navigate(`/coach/nutrition/client/${clientId}/plan`)}
-                  className="mt-auto w-full py-2.5 text-sm font-semibold bg-brand-secondary text-white rounded-xl hover:bg-brand-secondary-hover transition-colors flex items-center justify-center gap-2"
+                  className="mt-auto w-full py-2.5 text-sm font-semibold bg-brand-secondary text-white rounded-control hover:bg-brand-secondary-hover transition-colors flex items-center justify-center gap-2"
                 >
                   <UtensilsCrossed size={15} />
                   Open plan builder
@@ -475,7 +475,7 @@ export function ClientDetails() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
         {/* Workout History */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="lg:col-span-2 bg-white p-8 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 self-start">
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="lg:col-span-2 bg-white p-8 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 self-start">
           <div className="flex items-center justify-between mb-6">
             <h2 className="font-serif text-xl text-text-primary font-semibold">Workout History</h2>
             <Link
@@ -507,7 +507,7 @@ export function ClientDetails() {
                   <Link
                     key={wl.id}
                     to={`/coach/clients/${clientId}/workout/${wl.id}`}
-                    className="flex items-center justify-between p-4 rounded-2xl border border-neutral-100 bg-neutral-50/50 hover:border-neutral-200 hover:bg-neutral-50 transition-colors group"
+                    className="flex items-center justify-between p-4 rounded-card border border-neutral-100 bg-neutral-50/50 hover:border-neutral-200 hover:bg-neutral-50 transition-colors group"
                   >
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 mb-0.5">
@@ -518,7 +518,7 @@ export function ClientDetails() {
                       </div>
                       <p className="text-xs text-text-secondary">{dateStr} · {durationMin} min · {formatVolume(wl.totalVolume || 0, weightUnit)}</p>
                     </div>
-                    <span className="px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest bg-green-100 text-green-700 shrink-0 ml-3">
+                    <span className="px-3 py-1 rounded-field text-[10px] font-bold uppercase tracking-widest bg-green-100 text-green-700 shrink-0 ml-3">
                       Completed
                     </span>
                   </Link>
@@ -532,7 +532,7 @@ export function ClientDetails() {
         <div className="lg:col-span-1 space-y-6">
 
           {/* Profile Details */}
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-serif text-lg text-text-primary font-semibold">Profile Details</h2>
               <Link
@@ -582,7 +582,7 @@ export function ClientDetails() {
 
           {/* Past Plans */}
           {pastPlans.length > 0 && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50">
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50">
               <button
                 onClick={() => setPastPlansExpanded(!pastPlansExpanded)}
                 className="w-full flex items-center justify-between"
@@ -606,7 +606,7 @@ export function ClientDetails() {
                     {pastPlans.map(plan => {
                       const goal = allGoals.find(g => g.id === plan.goalId);
                       return (
-                        <div key={plan.id} className="p-4 rounded-xl border border-neutral-100 bg-neutral-50/50">
+                        <div key={plan.id} className="p-4 rounded-control border border-neutral-100 bg-neutral-50/50">
                           <p className="font-semibold text-sm text-text-primary mb-1">{plan.name}</p>
                           {goal && (
                             <span className="inline-block text-[10px] font-bold uppercase tracking-wider bg-neutral-200 text-text-secondary px-2 py-0.5 rounded-full mb-1">
@@ -630,7 +630,7 @@ export function ClientDetails() {
 
       {/* End Goal Dialog */}
       <AlertDialog open={showEndGoal} onOpenChange={setShowEndGoal}>
-        <AlertDialogContent className="sm:max-w-md rounded-2xl">
+        <AlertDialogContent className="sm:max-w-md rounded-card">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-center text-text-primary">End this goal?</AlertDialogTitle>
             <AlertDialogDescription className="text-center">
@@ -638,15 +638,15 @@ export function ClientDetails() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="sm:flex-row gap-3 mt-2">
-            <AlertDialogCancel className="flex-1 rounded-xl border-neutral-200 text-text-secondary hover:bg-neutral-50 font-semibold">Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleEndGoal} className="flex-1 rounded-xl bg-text-primary text-white hover:bg-neutral-800 font-semibold">End Goal</AlertDialogAction>
+            <AlertDialogCancel className="flex-1 rounded-control border-neutral-200 text-text-secondary hover:bg-neutral-50 font-semibold">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleEndGoal} className="flex-1 rounded-control bg-text-primary text-white hover:bg-neutral-800 font-semibold">End Goal</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
       {/* End Plan Dialog */}
       <AlertDialog open={showEndPlan} onOpenChange={setShowEndPlan}>
-        <AlertDialogContent className="sm:max-w-md rounded-2xl">
+        <AlertDialogContent className="sm:max-w-md rounded-card">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-center text-text-primary">End this plan?</AlertDialogTitle>
             <AlertDialogDescription className="text-center">
@@ -654,8 +654,8 @@ export function ClientDetails() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="sm:flex-row gap-3 mt-2">
-            <AlertDialogCancel className="flex-1 rounded-xl border-neutral-200 text-text-secondary hover:bg-neutral-50 font-semibold">Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleEndPlan} className="flex-1 rounded-xl bg-red-600 text-white hover:bg-red-700 font-semibold">End Plan</AlertDialogAction>
+            <AlertDialogCancel className="flex-1 rounded-control border-neutral-200 text-text-secondary hover:bg-neutral-50 font-semibold">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleEndPlan} className="flex-1 rounded-control bg-red-600 text-white hover:bg-red-700 font-semibold">End Plan</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

@@ -40,7 +40,7 @@ export function EquivalenceGroups() {
         {equivalenceGroups.map((group) => {
           const members = foods.filter((f) => f.equivalenceGroupId === group.id);
           return (
-            <Card key={group.id}>
+            <Card key={group.id} className="flex flex-col gap-6">
               <CardContent className="pt-6 flex flex-col gap-3">
                 <p className="font-semibold text-foreground">{group.name}</p>
                 {members.length === 0 ? (

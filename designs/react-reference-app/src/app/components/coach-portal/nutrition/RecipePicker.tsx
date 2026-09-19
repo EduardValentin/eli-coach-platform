@@ -111,7 +111,7 @@ export function RecipePicker({
         aria-label="Choose a recipe"
       >
         {/* Header */}
-        <DialogHeader className="px-5 pt-5 pb-3 border-b border-border rounded-md shrink-0">
+        <DialogHeader className="px-5 pt-5 pb-3 border-b border-border rounded-field shrink-0">
           <DialogTitle className="text-base font-semibold text-foreground">
             Choose a recipe
           </DialogTitle>
@@ -121,7 +121,7 @@ export function RecipePicker({
         </DialogHeader>
 
         {/* Filter bar */}
-        <div className="px-4 py-3 border-b border-border rounded-md shrink-0 space-y-2.5">
+        <div className="px-4 py-3 border-b border-border rounded-field shrink-0 space-y-2.5">
           {/* Search */}
           <div className="relative">
             <Search
@@ -298,7 +298,7 @@ function RecipePickerCard({
   return (
     <article
       aria-label={recipe.name}
-      className={`flex gap-3 rounded-xl border p-3 transition-colors ${
+      className={`flex gap-3 rounded-control border p-3 transition-colors ${
         isCurrent
           ? 'border-primary/40 bg-primary/5'
           : 'border-border bg-card hover:bg-muted/40'
@@ -307,7 +307,7 @@ function RecipePickerCard({
       {/* Thumbnail */}
       <RecipeVisual
         recipe={recipe}
-        className="h-16 w-16 shrink-0 rounded-lg"
+        className="h-16 w-16 shrink-0 rounded-compact"
         iconSize={22}
       />
 
@@ -319,7 +319,7 @@ function RecipePickerCard({
             {recipe.name}
           </p>
           {totalMinutes > 0 && (
-            <span className="inline-flex shrink-0 items-center gap-1 text-[11px] text-muted-foreground">
+            <span className="inline-flex shrink-0 items-center gap-1 text-caption text-muted-foreground">
               <Clock size={11} aria-hidden="true" />
               {totalMinutes} min
             </span>
@@ -327,7 +327,7 @@ function RecipePickerCard({
         </div>
 
         {/* Macros */}
-        <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-2 text-caption text-muted-foreground">
           <span className="font-semibold text-foreground tabular-nums">{macros.kcal} kcal</span>
           <span className="inline-flex items-center gap-1">
             <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${MACRO_DOT.protein}`} aria-hidden="true" />
@@ -359,7 +359,7 @@ function RecipePickerCard({
           {isCurrent ? (
             <span
               role="status"
-              className="inline-flex items-center gap-1 rounded-lg bg-primary/10 px-3 py-1 text-xs font-semibold text-primary"
+              className="inline-flex items-center gap-1 rounded-compact bg-primary/10 px-3 py-1 text-xs font-semibold text-primary"
             >
               <Check size={13} aria-hidden="true" />
               Current meal
@@ -387,7 +387,7 @@ function RecipePickerCard({
                   ? `Remove ${recipe.name} as a swap option`
                   : `Add ${recipe.name} as a swap option`
               }
-              className={`inline-flex h-7 items-center gap-1 rounded-lg border px-2.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+              className={`inline-flex h-7 items-center gap-1 rounded-compact border px-2.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                 isAlt
                   ? 'border-primary/30 bg-primary/10 text-primary hover:bg-primary/15'
                   : 'border-border bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground'

@@ -1,7 +1,7 @@
 import { cn } from "@eli-coach-platform/ui/lib";
 import {
-  createFadeUpVariants,
-  publicViewportOnce,
+  publicEase,
+  publicSectionRevealViewport,
 } from "@eli-coach-platform/ui/motion";
 import { SectionEyebrow } from "@eli-coach-platform/ui/primitives";
 import {
@@ -21,7 +21,7 @@ type TrainingDayType = "strength" | "hypertrophy" | "recovery" | "rest";
 type TrainingDayTypeContent = {
   Icon: LucideIcon;
   cardClassName: string;
-  iconClassName: string;
+  iconColor: string;
   label: string;
   labelClassName: string;
 };
@@ -36,30 +36,34 @@ const TRAINING_DAY_TYPES = {
   strength: {
     Icon: Dumbbell,
     cardClassName: "bg-training-strength-soft",
-    iconClassName: "text-training-strength",
+    iconColor: "var(--color-training-strength)",
     label: "Strength",
-    labelClassName: "text-label text-training-strength uppercase",
+    labelClassName:
+      "text-xs font-medium tracking-widest text-training-strength uppercase",
   },
   hypertrophy: {
     Icon: Sparkles,
     cardClassName: "bg-training-hypertrophy-soft",
-    iconClassName: "text-training-hypertrophy",
+    iconColor: "var(--color-training-hypertrophy)",
     label: "Hypertrophy",
-    labelClassName: "text-label text-training-hypertrophy uppercase",
+    labelClassName:
+      "text-xs font-medium tracking-widest text-training-hypertrophy uppercase",
   },
   recovery: {
     Icon: PersonStanding,
     cardClassName: "bg-training-recovery-soft",
-    iconClassName: "text-training-recovery",
+    iconColor: "var(--color-training-recovery)",
     label: "Recovery",
-    labelClassName: "text-label text-training-recovery uppercase",
+    labelClassName:
+      "text-xs font-medium tracking-widest text-training-recovery uppercase",
   },
   rest: {
     Icon: Moon,
     cardClassName: "bg-training-rest-soft",
-    iconClassName: "text-training-rest",
+    iconColor: "var(--color-training-rest)",
     label: "Rest",
-    labelClassName: "text-label text-training-rest uppercase",
+    labelClassName:
+      "text-xs font-medium tracking-widest text-training-rest uppercase",
   },
 } satisfies Record<TrainingDayType, TrainingDayTypeContent>;
 
@@ -138,34 +142,32 @@ export function PublicWorkouts() {
   }, []);
 
   return (
-    <motion.section
+    <section
       aria-label="Workouts that support your body"
       className="bg-surface-base py-24"
-      initial="hidden"
-      viewport={publicViewportOnce}
-      whileInView="visible"
     >
       <div
         className="mx-auto w-full max-w-stage px-6 lg:px-24"
         ref={wrapperRef}
       >
-        <motion.div
-          className="mb-16 text-center"
-          variants={createFadeUpVariants({ duration: 0.6, offset: 24 })}
-        >
+        <div className="mb-16 text-center">
           <SectionEyebrow>A week of training</SectionEyebrow>
-          <h2 className="font-heading text-3xl leading-tight font-medium text-text-primary md:text-4xl lg:text-5xl">
+          <h2 className="mb-4 font-heading text-3xl leading-tight font-medium text-text-primary md:text-4xl lg:text-5xl">
             Workouts that support your body
           </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-body-base text-copy-muted">
+          <p className="mx-auto max-w-2xl text-copy-muted">
             A balanced week built around how you feel — not a fixed template.
           </p>
-        </motion.div>
+        </div>
 
-        <ul
+        <motion.ul
           aria-label="Weekly workout schedule"
-          className="flex w-full snap-x snap-mandatory items-center justify-start gap-3 overflow-x-auto pb-4 min-[41rem]:justify-center md:justify-start md:gap-4 min-[80rem]:justify-center"
+          className="flex w-full snap-x snap-mandatory items-center justify-start gap-3 overflow-x-auto pb-4 min-[41rem]:justify-center motion-reduce:transform-none md:justify-start md:gap-4 min-[80rem]:justify-center"
+          initial={{ opacity: 0, y: 16 }}
           ref={scrollRef}
+          transition={{ duration: 0.6, ease: publicEase }}
+          viewport={publicSectionRevealViewport}
+          whileInView={{ opacity: 1, y: 0 }}
         >
           {WORKOUT_SCHEDULE.map((day, index) => {
             const dayType = TRAINING_DAY_TYPES[day.type];
@@ -174,18 +176,21 @@ export function PublicWorkouts() {
             return (
               <motion.li
                 className={cn(
-                  "flex h-24 w-24 shrink-0 snap-center flex-col md:h-28 md:w-28",
+                  "flex h-24 w-24 shrink-0 snap-center flex-col rounded-tile motion-reduce:transform-none md:h-28 md:w-28",
                   dayType.cardClassName,
                 )}
+                initial={{ opacity: 0, y: 12 }}
                 key={day.id}
-                variants={createFadeUpVariants({
+                transition={{
                   delay: index * 0.06,
                   duration: 0.4,
-                  offset: 24,
-                })}
+                  ease: publicEase,
+                }}
+                viewport={{ margin: "-40px", once: true }}
+                whileInView={{ opacity: 1, y: 0 }}
               >
-                <div className="border-b border-surface-base/40 p-1.5 text-center md:p-2">
-                  <span className="text-label text-copy-muted uppercase">
+                <div className="border-b border-surface-base/40 p-1.5 px-3 text-center md:p-2">
+                  <span className="text-xs font-semibold tracking-widest text-copy-muted uppercase">
                     {day.dayName}
                   </span>
                 </div>
@@ -195,14 +200,15 @@ export function PublicWorkouts() {
                   </span>
                   <Icon
                     aria-hidden="true"
-                    className={cn("size-4", dayType.iconClassName)}
+                    className="size-4"
+                    color={dayType.iconColor}
                   />
                 </div>
               </motion.li>
             );
           })}
-        </ul>
+        </motion.ul>
       </div>
-    </motion.section>
+    </section>
   );
 }

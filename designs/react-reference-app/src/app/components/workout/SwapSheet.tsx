@@ -21,7 +21,7 @@ export function SwapSheet({ currentExerciseId, variants, originalExercise, open,
       title="Swap exercise"
       className="max-h-[70vh] flex flex-col"
     >
-      <div className="flex items-center gap-2 px-5 pt-2 pb-3 border-b border-neutral-100 rounded-md">
+      <div className="flex items-center gap-2 px-5 pt-2 pb-3 border-b border-neutral-100 rounded-field">
         <ArrowLeftRight size={16} className="text-brand-secondary" />
         <h2 className="text-base font-semibold text-text-primary">Swap Exercise</h2>
       </div>
@@ -34,7 +34,7 @@ export function SwapSheet({ currentExerciseId, variants, originalExercise, open,
               key={ex.id}
               type="button"
               onClick={() => { onSwap(ex.id); onOpenChange(false); }}
-              className={`w-full text-left p-4 rounded-xl border transition-all ${
+              className={`w-full text-left p-4 rounded-control border transition-all ${
                 isActive
                   ? 'border-brand-secondary bg-brand-secondary/5'
                   : 'border-neutral-200 bg-white hover:border-neutral-300'

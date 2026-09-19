@@ -6,6 +6,8 @@ import { useAppState } from '../context/AppContext';
 import { WaitlistEmailForm } from '../components/waitlist/WaitlistEmailForm';
 import { WaitlistAvailabilityStatus } from '../components/waitlist/WaitlistAvailabilityStatus';
 import { LegalFooter } from '../components/legal/LegalNav';
+import { buttonVariants, cn } from '../components/ThemeButton';
+import { cardVariants } from '../components/ui/card';
 
 export function Pricing() {
   const { appState } = useAppState();
@@ -42,7 +44,7 @@ export function Pricing() {
           On the 3- and 6-month plans, you may cancel within the first 7 days if coaching is not the right fit. After that, the full plan commitment applies.
         </p>
 
-        <div className="max-w-4xl mx-auto text-center bg-card p-8 md:p-12 rounded-2xl border border-stroke-faint shadow-sm">
+        <div className={cn(cardVariants(), 'max-w-4xl mx-auto text-center p-8 md:p-12')}>
           {appState.isWaitlistMode ? (
             <>
               <h2 className="font-serif text-2xl text-foreground mb-4">
@@ -72,7 +74,7 @@ export function Pricing() {
               </p>
               <Link
                 to="/book"
-                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-brand text-brand-foreground font-medium rounded-sm hover:bg-brand-hover transition-colors shadow-md"
+                className={buttonVariants({ elevation: 'raised', size: 'lg' })}
               >
                 Book Assessment Call <ArrowRight size={18} />
               </Link>

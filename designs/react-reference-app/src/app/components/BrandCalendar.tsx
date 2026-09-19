@@ -1,5 +1,12 @@
-import { useMemo, type ComponentProps } from 'react';
-import { DayPicker, useNavigation, type CaptionProps } from 'react-day-picker';
+import { createContext, useContext, useMemo, type ComponentProps } from 'react';
+import {
+  DayButton,
+  DayPicker,
+  useDayPicker,
+  type ChevronProps,
+  type DayButtonProps,
+  type MonthCaptionProps,
+} from 'react-day-picker';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from './ui/utils';
 import {
@@ -10,28 +17,58 @@ import {
   SelectValue,
 } from './ui/select';
 
+const navButtonClass =
+  'size-8 shrink-0 inline-flex items-center justify-center rounded-control border border-control-border-soft text-text-primary hover:bg-surface-quiet transition-colors disabled:pointer-events-none disabled:opacity-50';
+
+const monthNavButtonClass =
+  'size-8 bg-transparent p-0 opacity-50 hover:opacity-100 inline-flex items-center justify-center rounded-control border border-control-border-soft hover:bg-surface-quiet transition-colors absolute z-10 -top-0.5';
+
 const BRAND_CLASSNAMES = {
   months: 'flex flex-col w-full',
-  month: 'flex flex-col gap-4 w-full',
-  caption: 'flex justify-center pt-1 relative items-center w-full',
+  month: 'relative flex flex-col gap-4 w-full',
+  month_caption: 'flex justify-center pt-1 relative items-center w-full',
   caption_label: 'text-sm font-semibold text-text-primary',
-  nav: 'flex items-center gap-1',
-  nav_button:
-    'size-8 bg-transparent p-0 opacity-50 hover:opacity-100 inline-flex items-center justify-center rounded-lg border border-neutral-200 hover:bg-neutral-50 transition-colors',
-  nav_button_previous: 'absolute left-1',
-  nav_button_next: 'absolute right-1',
-  table: 'w-full border-collapse',
-  head_row: 'flex w-full',
-  head_cell:
-    'text-text-secondary rounded-md flex-1 h-10 font-semibold text-[11px] uppercase tracking-wider flex items-center justify-center',
-  row: 'flex w-full mt-1',
-  cell: 'relative p-0 text-center text-sm focus-within:relative focus-within:z-20 flex-1 [&:has([aria-selected])]:rounded-xl',
-  day: 'w-full aspect-square p-0 font-medium rounded-xl hover:bg-neutral-100 transition-colors aria-selected:opacity-100 inline-flex items-center justify-center relative',
-  day_selected:
-    'bg-brand text-white hover:bg-brand-hover hover:text-white focus:bg-brand focus:text-white',
-  day_today: 'ring-2 ring-brand/30',
-  day_outside: 'text-text-secondary hover:bg-neutral-50',
-  day_disabled: 'text-neutral-300 opacity-50 hover:bg-transparent',
+  button_previous: `${monthNavButtonClass} left-1`,
+  button_next: `${monthNavButtonClass} right-1`,
+  month_grid: 'w-full border-collapse',
+  weekdays: 'flex w-full',
+  weekday:
+    'text-text-secondary rounded-field flex-1 h-10 font-semibold text-caption uppercase tracking-wider flex items-center justify-center',
+  week: 'flex w-full mt-1',
+  day: 'relative p-0 text-center text-sm focus-within:relative focus-within:z-20 flex-1 aria-selected:rounded-control',
+  day_button:
+    'w-full aspect-square p-0 font-medium rounded-control hover:bg-surface-muted transition-colors inline-flex items-center justify-center relative',
+};
+
+const BRAND_DAY_MODIFIER_CLASSNAMES: Record<string, string> = {
+  selected:
+    'bg-brand text-white hover:bg-brand-hover! hover:text-white',
+  today: 'ring-2 ring-brand/30',
+  outside: 'text-text-secondary hover:bg-surface-quiet',
+  disabled: 'opacity-50 hover:bg-transparent',
+};
+
+const DayModifierClassNames = createContext<Record<string, string>>(
+  BRAND_DAY_MODIFIER_CLASSNAMES,
+);
+
+export function BrandDayButton(props: DayButtonProps) {
+  const modifierClassNames = useContext(DayModifierClassNames);
+  const activeModifierClasses = Object.entries(props.modifiers)
+    .filter(([, isActive]) => isActive)
+    .map(([modifier]) => modifierClassNames[modifier])
+    .filter(Boolean);
+
+  return (
+    <DayButton
+      {...props}
+      className={[props.className, ...activeModifierClasses].join(' ')}
+    />
+  );
+}
+
+const DROPDOWN_CAPTION_CLASSNAMES = {
+  month_caption: 'flex w-full items-center gap-2 pt-1',
 };
 
 const MONTH_LABELS = Array.from({ length: 12 }, (_, month) =>
@@ -40,26 +77,45 @@ const MONTH_LABELS = Array.from({ length: 12 }, (_, month) =>
 
 export type YearRange = { from: number; to: number };
 
-const navButtonClass =
-  'size-8 shrink-0 inline-flex items-center justify-center rounded-lg border border-neutral-200 text-text-primary hover:bg-neutral-50 disabled:opacity-30 disabled:hover:bg-transparent transition-colors';
+const CHEVRON_PATHS = {
+  left: 'M69.490332,3.34314575 C72.6145263,0.218951416 77.6798462,0.218951416 80.8040405,3.34314575 C83.8617626,6.40086786 83.9268205,11.3179931 80.9992143,14.4548388 L80.8040405,14.6568542 L35.461,60 L80.8040405,105.343146 C83.8617626,108.400868 83.9268205,113.317993 80.9992143,116.454839 L80.8040405,116.656854 C77.7463184,119.714576 72.8291931,119.779634 69.6923475,116.852028 L69.490332,116.656854 L18.490332,65.6568542 C15.4326099,62.5991321 15.367552,57.6820069 18.2951583,54.5451612 L18.490332,54.3431458 L69.490332,3.34314575 Z',
+  right:
+    'M49.8040405,3.34314575 C46.6798462,0.218951416 41.6145263,0.218951416 38.490332,3.34314575 C35.4326099,6.40086786 35.367552,11.3179931 38.2951583,14.4548388 L38.490332,14.6568542 L83.8333725,60 L38.490332,105.343146 C35.4326099,108.400868 35.367552,113.317993 38.2951583,116.454839 L38.490332,116.656854 C41.5480541,119.714576 46.4651794,119.779634 49.602025,116.852028 L49.8040405,116.656854 L100.804041,65.6568542 C103.861763,62.5991321 103.926821,57.6820069 100.999214,54.5451612 L100.804041,54.3431458 L49.8040405,3.34314575 Z',
+};
+
+function BrandChevron({ orientation }: ChevronProps) {
+  return (
+    <svg width="16px" height="16px" viewBox="0 0 120 120" aria-hidden="true">
+      <path
+        d={orientation === 'right' ? CHEVRON_PATHS.right : CHEVRON_PATHS.left}
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
 
 /**
  * Replaces the default caption when a caller needs to reach a distant year — a
  * birth date, say, where paging one month at a time is not a navigation.
  *
  * Built from the app's own Select rather than react-day-picker's
- * `captionLayout="dropdown-buttons"`: that path styles itself through the
+ * `captionLayout="dropdown"`: that path styles itself through the
  * library's stylesheet, which this app never imports, so its labels and value
  * echoes render unstyled and overlap the nav buttons.
  */
 function createMonthYearCaption({ from, to }: YearRange) {
   const years = Array.from({ length: to - from + 1 }, (_, index) => to - index);
 
-  return function MonthYearCaption({ displayMonth }: CaptionProps) {
-    const { goToMonth, previousMonth, nextMonth } = useNavigation();
+  return function MonthYearCaption({
+    calendarMonth,
+    displayIndex: _displayIndex,
+    ...divProps
+  }: MonthCaptionProps) {
+    const { goToMonth, previousMonth, nextMonth } = useDayPicker();
+    const displayMonth = calendarMonth.date;
 
     return (
-      <div className="flex items-center gap-2 pt-1">
+      <div {...divProps}>
         <button
           type="button"
           aria-label="Previous month"
@@ -134,22 +190,41 @@ export function BrandCalendar({
   classNames,
   className,
   components,
+  modifiersClassNames,
   showOutsideDays = true,
   yearRange,
   ...props
 }: BrandCalendarProps) {
   const captionComponents = useMemo(
-    () => (yearRange ? { Caption: createMonthYearCaption(yearRange) } : null),
+    () =>
+      yearRange ? { MonthCaption: createMonthYearCaption(yearRange) } : null,
     [yearRange?.from, yearRange?.to],
+  );
+  const dayModifierClassNames = useMemo(
+    () => ({ ...BRAND_DAY_MODIFIER_CLASSNAMES, ...modifiersClassNames }),
+    [modifiersClassNames],
   );
 
   return (
-    <DayPicker
-      showOutsideDays={showOutsideDays}
-      className={cn('w-full', className)}
-      classNames={{ ...BRAND_CLASSNAMES, ...classNames }}
-      components={{ ...captionComponents, ...components }}
-      {...props}
-    />
+    <DayModifierClassNames.Provider value={dayModifierClassNames}>
+      <DayPicker
+        showOutsideDays={showOutsideDays}
+        navLayout="around"
+        hideNavigation={Boolean(yearRange)}
+        className={cn('w-full', className)}
+        classNames={{
+          ...BRAND_CLASSNAMES,
+          ...(yearRange ? DROPDOWN_CAPTION_CLASSNAMES : null),
+          ...classNames,
+        }}
+        components={{
+          Chevron: BrandChevron,
+          DayButton: BrandDayButton,
+          ...captionComponents,
+          ...components,
+        }}
+        {...props}
+      />
+    </DayModifierClassNames.Provider>
   );
 }

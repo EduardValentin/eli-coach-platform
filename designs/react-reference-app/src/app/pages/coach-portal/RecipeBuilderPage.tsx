@@ -35,7 +35,7 @@ function DraggableFood({ food, onAdd }: { food: Food; onAdd: (foodId: string) =>
   return (
     <div
       ref={drag}
-      className={`flex cursor-grab select-none items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 ${isDragging ? 'opacity-40' : ''}`}
+      className={`flex cursor-grab select-none items-center gap-2 rounded-control border border-border bg-card px-3 py-2 ${isDragging ? 'opacity-40' : ''}`}
     >
       <GripVertical size={14} className="text-muted-foreground" aria-hidden="true" />
       <span className={`size-2.5 rounded-full ${CATEGORY_SWATCH[food.category]}`} aria-hidden="true" />
@@ -56,7 +56,7 @@ function DragLayerPreview() {
   if (!isDragging || !offset || !item) return null;
   return (
     <div className="pointer-events-none fixed left-0 top-0 z-[100]" style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }}>
-      <div className="inline-flex items-center gap-2 rounded-xl border border-brand bg-card px-3 py-2 shadow-lg">
+      <div className="inline-flex items-center gap-2 rounded-control border border-brand bg-card px-3 py-2 shadow-lg">
         <GripVertical size={14} className="text-muted-foreground" aria-hidden="true" />
         <span className="text-sm font-semibold text-foreground">{item.name}</span>
       </div>
@@ -204,12 +204,12 @@ function RecipeBuilderInner() {
   return (
       <div className={`fixed inset-0 z-50 flex flex-col bg-surface-subtle ${isDragging ? 'select-none' : ''}`}>
         {/* Header */}
-        <div className="h-14 px-4 lg:px-6 border-b border-border rounded-md bg-card flex items-center justify-between shrink-0">
+        <div className="h-14 px-4 lg:px-6 border-b border-border rounded-field bg-card flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <button
               onClick={() => navigate('/coach/nutrition?tab=recipes')}
               aria-label="Back to Nutrition"
-              className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-xl transition-colors shrink-0"
+              className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-control transition-colors shrink-0"
             >
               <ArrowLeft size={20} />
             </button>
@@ -231,7 +231,7 @@ function RecipeBuilderInner() {
         <div className="flex-1 flex min-h-0">
           {/* Library sidebar */}
           <aside aria-label="Food library" className="w-72 shrink-0 border-r border-border bg-card flex flex-col">
-            <div className="p-3 px-3 border-b border-border rounded-md">
+            <div className="p-3 px-3 border-b border-border rounded-field">
               <div className="relative">
                 <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
                 <Input
@@ -258,10 +258,10 @@ function RecipeBuilderInner() {
             {/* Recipe visual: photo → icon → default */}
             <div className="mb-4">
               {/* Preview area */}
-              <div className="relative mb-3 rounded-2xl overflow-hidden">
+              <div className="relative mb-3 rounded-card overflow-hidden">
                 <RecipeVisual
                   recipe={{ imageUrl, icon, name: name.trim() || 'Recipe' }}
-                  className="h-40 w-full rounded-2xl"
+                  className="h-40 w-full rounded-card"
                   iconSize={48}
                 />
                 {/* Photo overlay controls (shown only when photo is set) */}
@@ -271,7 +271,7 @@ function RecipeBuilderInner() {
                       type="button"
                       aria-label="Replace recipe photo"
                       onClick={() => fileInputRef.current?.click()}
-                      className="inline-flex items-center gap-1.5 rounded-xl bg-black/60 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-sm hover:bg-black/75 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                      className="inline-flex items-center gap-1.5 rounded-control bg-black/60 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-sm hover:bg-black/75 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                     >
                       <RefreshCw size={12} aria-hidden="true" />
                       Replace
@@ -280,7 +280,7 @@ function RecipeBuilderInner() {
                       type="button"
                       aria-label="Remove recipe photo"
                       onClick={() => setImageUrl(undefined)}
-                      className="inline-flex items-center gap-1.5 rounded-xl bg-black/60 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-sm hover:bg-black/75 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                      className="inline-flex items-center gap-1.5 rounded-control bg-black/60 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-sm hover:bg-black/75 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                     >
                       <X size={12} aria-hidden="true" />
                       Remove
@@ -297,7 +297,7 @@ function RecipeBuilderInner() {
                     type="button"
                     aria-label="Upload recipe photo"
                     onClick={() => fileInputRef.current?.click()}
-                    className="inline-flex items-center gap-2 rounded-xl border border-dashed border-border bg-card px-4 py-2.5 text-sm font-medium text-muted-foreground hover:border-brand hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+                    className="inline-flex items-center gap-2 rounded-control border border-dashed border-border bg-card px-4 py-2.5 text-sm font-medium text-muted-foreground hover:border-brand hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
                   >
                     <ImagePlus size={16} aria-hidden="true" />
                     Upload photo
@@ -310,7 +310,7 @@ function RecipeBuilderInner() {
                     <button
                       type="button"
                       aria-label={icon ? `Change meal icon (current: ${RECIPE_ICONS.find((r) => r.key === icon)?.label ?? icon})` : 'Choose meal icon'}
-                      className="inline-flex items-center gap-2 rounded-xl border border-dashed border-border bg-card px-4 py-2.5 text-sm font-medium text-muted-foreground hover:border-brand hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+                      className="inline-flex items-center gap-2 rounded-control border border-dashed border-border bg-card px-4 py-2.5 text-sm font-medium text-muted-foreground hover:border-brand hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
                     >
                       <Smile size={16} aria-hidden="true" />
                       {icon ? `Icon: ${RECIPE_ICONS.find((r) => r.key === icon)?.label ?? icon}` : 'Choose icon'}
@@ -330,7 +330,7 @@ function RecipeBuilderInner() {
                         aria-selected={icon === undefined}
                         aria-label="No icon"
                         onClick={() => { setIcon(undefined); setIconPickerOpen(false); }}
-                        className={`flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${
+                        className={`flex flex-col items-center gap-0.5 rounded-compact p-1.5 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${
                           icon === undefined
                             ? 'bg-brand/10 text-brand ring-1 ring-brand/30'
                             : 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -348,7 +348,7 @@ function RecipeBuilderInner() {
                           aria-selected={icon === key}
                           aria-label={label}
                           onClick={() => { setIcon(key); setIconPickerOpen(false); }}
-                          className={`flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${
+                          className={`flex flex-col items-center gap-0.5 rounded-compact p-1.5 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${
                             icon === key
                               ? 'bg-brand/10 text-brand ring-1 ring-brand/30'
                               : 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -376,7 +376,7 @@ function RecipeBuilderInner() {
 
             <div
               ref={drop}
-              className={`rounded-2xl border-2 border-dashed p-4 min-h-40 transition-colors ${
+              className={`rounded-card border-2 border-dashed p-4 min-h-40 transition-colors ${
                 isOver && canDrop ? 'border-brand bg-brand-soft' : 'border-border'
               }`}
             >
@@ -387,7 +387,7 @@ function RecipeBuilderInner() {
                   {ingredients.map((ing, index) => {
                     const food = foods.find((f) => f.id === ing.foodId);
                     return (
-                      <li key={`${ing.foodId}-${index}`} className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card px-3 py-2">
+                      <li key={`${ing.foodId}-${index}`} className="flex flex-wrap items-center gap-2 rounded-control border border-border bg-card px-3 py-2">
                         <span className="flex-1 min-w-32 text-sm font-medium text-foreground">{food?.name ?? 'Unknown food'}</span>
                         <label className="flex items-center gap-1 text-xs text-muted-foreground">
                           <span className="sr-only">Grams for {food?.name}</span>
@@ -433,8 +433,8 @@ function RecipeBuilderInner() {
               </div>
               <dl className="grid grid-cols-4 gap-2">
                 {(['kcal', 'protein', 'carb', 'fat'] as const).map((key) => (
-                  <div key={key} className={`rounded-lg py-2 text-center ${key === 'kcal' ? 'bg-muted' : MACRO_TILE[key]}`}>
-                    <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                  <div key={key} className={`rounded-compact py-2 text-center ${key === 'kcal' ? 'bg-muted' : MACRO_TILE[key]}`}>
+                    <dt className="text-caption uppercase tracking-wide text-muted-foreground">
                       {key === 'kcal' ? 'kcal' : key === 'protein' ? 'P' : key === 'carb' ? 'C' : 'F'}
                     </dt>
                     <dd className="text-sm font-semibold text-foreground">
@@ -492,7 +492,7 @@ function RecipeBuilderInner() {
                         key={family}
                         role="group"
                         aria-label={TAG_FAMILY_LABELS[family]}
-                        className={`rounded-xl border border-border border-l-[3px] bg-card p-3 ${TAG_FAMILY_BORDER[family]}`}
+                        className={`rounded-control border border-border border-l-[3px] bg-card p-3 ${TAG_FAMILY_BORDER[family]}`}
                       >
                         <p className="mb-2 inline-flex items-center gap-1.5 text-xs font-semibold text-foreground">
                           {(() => { const Icon = TAG_FAMILY_ICON[family]; return <Icon size={14} className="text-muted-foreground" aria-hidden="true" />; })()}

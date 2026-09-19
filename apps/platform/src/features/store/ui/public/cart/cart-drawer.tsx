@@ -8,7 +8,12 @@ import {
   SheetDescription,
   SheetTitle,
 } from "@eli-coach-platform/ui/overlays";
-import { Button, Checkbox, Input } from "@eli-coach-platform/ui/primitives";
+import {
+  Alert,
+  Button,
+  Checkbox,
+  Input,
+} from "@eli-coach-platform/ui/primitives";
 import {
   AlertCircle,
   CheckCircle2,
@@ -59,14 +64,14 @@ export function StoreCartButton() {
       aria-label={`Cart, ${itemCount} ${itemCount === 1 ? "item" : "items"}`}
       // The bare icon is only 20px, so the padding widens the pointer target to
       // 44px and the matching negative margin keeps the bar's spacing unchanged.
-      className="-m-3 inline-flex p-3 text-current transition-colors hover:text-brand-primary focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
+      className="-m-3 inline-flex p-3 text-current transition-colors hover:text-brand-primary"
       onClick={(event) => openCartFrom(event.currentTarget)}
       ref={setPersistentCartControl}
       type="button"
     >
       <span className="relative block">
         <ShoppingBag aria-hidden="true" size={20} />
-        <span className="absolute -right-2 -top-1.5 flex size-4 items-center justify-center rounded-pill bg-brand-primary text-count-badge text-brand-primary-foreground">
+        <span className="absolute -right-2 -top-1.5 flex size-4 items-center justify-center rounded-full bg-brand-primary text-micro font-semibold text-brand-primary-foreground">
           {itemCount}
         </span>
       </span>
@@ -194,7 +199,7 @@ function CartReview(props: {
         <p className="font-medium text-text-primary">
           Your cart is temporarily unavailable.
         </p>
-        <p className="mt-2 text-body-sm text-text-secondary">
+        <p className="mt-2 text-sm text-text-secondary">
           Close this panel and keep browsing, or try again in a moment.
         </p>
       </div>
@@ -206,13 +211,13 @@ function CartReview(props: {
       <div className="m-auto text-center">
         <ShoppingBag
           aria-hidden="true"
-          className="mx-auto mb-4 text-text-muted"
+          className="mx-auto mb-4 text-icon-muted"
           size={44}
         />
         <p className="font-heading text-display-sm text-text-primary">
           Your cart is empty
         </p>
-        <p className="mt-2 text-body-sm text-text-secondary">
+        <p className="mt-2 text-sm text-text-secondary">
           Add a free resource from the store to get started.
         </p>
       </div>
@@ -231,11 +236,10 @@ function CartReview(props: {
       </ul>
       <div className="mt-auto border-t border-border-subtle pt-6">
         <Button
-          className="min-h-14 w-full !rounded-control border-0 bg-surface-inverted py-4 !text-text-inverted shadow-none hover:bg-brand-primary"
           onClick={props.onContinue}
-          size="md"
-          type="button"
-          variant="primary"
+          size="lg"
+          variant="inverted"
+          width="full"
         >
           Continue
         </Button>
@@ -251,11 +255,11 @@ function CartProduct({ product }: { product: StoreProduct }) {
     <li className="flex gap-4 py-4">
       <img
         alt={product.cover.alt}
-        className="h-24 w-20 rounded-lg object-cover shadow-public-nav"
+        className="h-24 w-20 rounded-field object-cover shadow-card"
         src={product.cover.url}
       />
       <div className="flex min-w-0 flex-1 flex-col">
-        <p className="font-heading text-body-base font-medium leading-tight text-text-primary">
+        <p className="font-heading text-base font-medium leading-tight text-text-primary">
           {product.title}
         </p>
         <p className="mt-1 text-label uppercase text-brand-secondary">
@@ -263,7 +267,7 @@ function CartProduct({ product }: { product: StoreProduct }) {
         </p>
         <button
           aria-label={`Remove ${product.title} from cart`}
-          className="ml-auto mt-auto inline-flex items-center justify-center p-1 text-text-secondary transition-colors hover:text-feedback-danger focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary"
+          className="ml-auto mt-auto inline-flex items-center justify-center p-1 text-text-secondary transition-colors hover:text-feedback-danger"
           onClick={() => removeProduct(product.slug)}
           type="button"
         >
@@ -306,21 +310,18 @@ function AcquisitionDetails(props: {
         <h2 className="font-heading text-display-sm leading-8 text-text-primary">
           Almost there
         </h2>
-        <p className="mt-2 text-body-sm text-text-secondary">
+        <p className="mt-2 text-sm text-text-secondary">
           Enter your email and we&apos;ll send one private download link for
           everything in your cart.
         </p>
         <label className="mt-7 block" htmlFor="store-acquisition-email">
-          <span className="mb-2 block text-body-sm font-medium">
-            Email address
-          </span>
+          <span className="mb-2 block text-sm font-medium">Email address</span>
           <Input
             aria-describedby={errors.email ? props.emailErrorId : undefined}
             aria-invalid={errors.email ? true : undefined}
             autoComplete="email"
             disabled={props.isSubmitting}
             id="store-acquisition-email"
-            className="rounded-lg px-4 py-3 shadow-none"
             placeholder="you@example.com"
             required
             type="email"
@@ -329,7 +330,7 @@ function AcquisitionDetails(props: {
         </label>
         {errors.email ? (
           <p
-            className="mt-2 text-body-sm text-feedback-danger"
+            className="mt-2 text-sm text-feedback-danger"
             id={props.emailErrorId}
             role="alert"
           >
@@ -382,7 +383,7 @@ function AcquisitionDetails(props: {
             />
           )}
         />
-        <p className="mt-4 text-body-sm leading-relaxed text-text-secondary">
+        <p className="mt-4 text-sm leading-relaxed text-text-secondary">
           We use your email to deliver these resources and keep evidence of this
           request. Read our{" "}
           <Link
@@ -408,21 +409,18 @@ function AcquisitionDetails(props: {
       </div>
       <div className="mt-auto flex gap-4 border-t border-border-subtle pt-6">
         <Button
-          className="min-h-14 !rounded-control border-control-border-soft bg-transparent px-6 py-4 shadow-none"
           disabled={props.isSubmitting}
           onClick={props.onBack}
-          size="md"
-          type="button"
-          variant="ghost"
+          size="lg"
+          variant="outline"
         >
           Back
         </Button>
         <Button
-          className="min-h-14 flex-1 !rounded-control border-0 px-0 py-4 !text-text-inverted shadow-none disabled:!bg-brand-primary disabled:!text-text-inverted disabled:opacity-50"
           disabled={!props.canSubmit}
-          size="md"
+          size="lg-tight"
           type="submit"
-          variant="primary"
+          width="full"
         >
           {props.isSubmitting ? (
             <>
@@ -467,7 +465,6 @@ function ConsentRow(props: {
             aria-invalid={props.errorMessage ? true : undefined}
             aria-label={props.accessibleLabel}
             checked={props.checked}
-            className="size-4 rounded-xs shadow-none"
             disabled={props.disabled}
             id={props.id}
             onBlur={props.onBlur}
@@ -477,14 +474,14 @@ function ConsentRow(props: {
             ref={props.inputRef}
           />
         </label>
-        <span className="flex min-h-11 items-center text-body-sm leading-relaxed text-text-primary">
+        <span className="flex min-h-11 items-center text-sm leading-relaxed text-text-primary">
           <label htmlFor={props.id}>{props.label}</label>
           {props.trailingContent}
         </span>
       </div>
       {props.errorMessage ? (
         <p
-          className="ml-7 mt-2 text-body-sm text-feedback-danger"
+          className="ml-7 mt-2 text-sm text-feedback-danger"
           id={props.errorId}
           role="alert"
         >
@@ -497,21 +494,16 @@ function ConsentRow(props: {
 
 function StoreAcquisitionError(props: { id?: string; message: string }) {
   return (
-    <div
-      className="flex items-start gap-2 rounded-sm bg-feedback-danger-soft p-3 text-body-sm text-feedback-danger"
-      id={props.id}
-      role="alert"
-    >
-      <AlertCircle aria-hidden="true" className="mt-0.5 shrink-0" size={16} />
+    <Alert id={props.id}>
       <p>{props.message}</p>
-    </div>
+    </Alert>
   );
 }
 
 function AcquisitionSuccess() {
   return (
     <div className="m-auto text-center">
-      <span className="mx-auto mb-5 flex size-16 items-center justify-center rounded-pill bg-feedback-success-soft text-feedback-success">
+      <span className="mx-auto mb-5 flex size-16 items-center justify-center rounded-full bg-feedback-success-soft text-feedback-success">
         <CheckCircle2 aria-hidden="true" size={32} />
       </span>
       <h2 className="font-heading text-display-md text-text-primary">
@@ -521,7 +513,7 @@ function AcquisitionSuccess() {
         Your resources are on their way. The private download link will stay
         active for seven days.
       </p>
-      <p className="mt-5 text-body-sm text-text-secondary">
+      <p className="mt-5 text-sm text-text-secondary">
         Nothing there? Contact{" "}
         <a
           className="-mx-1 inline-flex min-h-11 items-center px-1 underline underline-offset-2"

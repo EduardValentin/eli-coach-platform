@@ -116,7 +116,7 @@ function DesktopNotificationPopover({
             transition={{ duration: 0.15 }}
             role="dialog"
             aria-label="Notifications"
-            className={`absolute ${align === 'right' ? 'right-0' : 'left-0'} mt-2 w-80 bg-white rounded-2xl shadow-xl border border-neutral-100/50 z-50 overflow-hidden`}
+            className={`absolute ${align === 'right' ? 'right-0' : 'left-0'} mt-2 w-80 bg-white rounded-card shadow-xl border border-neutral-100/50 z-50 overflow-hidden`}
           >
             <NotificationHeader unreadCount={unreadCount} onMarkAllAsRead={onMarkAllAsRead} />
             <NotificationList
@@ -156,7 +156,7 @@ function MobileNotificationSheet({
       title="Notifications"
       className="h-[80vh] flex flex-col"
     >
-      <div className="flex items-center justify-between gap-2 px-5 pt-2 pb-3 border-b border-neutral-100 rounded-md">
+      <div className="flex items-center justify-between gap-2 px-5 pt-2 pb-3 border-b border-neutral-100 rounded-field">
         <h2 className="text-base font-semibold text-text-primary">Notifications</h2>
         {unreadCount > 0 && (
           <button
@@ -189,7 +189,7 @@ function NotificationHeader({
   onMarkAllAsRead: () => void;
 }) {
   return (
-    <div className="p-4 px-3 border-b border-neutral-50 rounded-md flex items-center justify-between bg-white">
+    <div className="p-4 px-3 border-b border-neutral-50 rounded-field flex items-center justify-between bg-white">
       <h3 className="font-semibold text-text-primary text-sm">Notifications</h3>
       {unreadCount > 0 && (
         <button

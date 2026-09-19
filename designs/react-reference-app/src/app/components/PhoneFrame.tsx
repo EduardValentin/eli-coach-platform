@@ -29,7 +29,7 @@ export function PhoneFrame({
 
       <div
         aria-hidden="true"
-        className={`absolute top-0 left-0 right-0 h-10 flex items-center justify-between px-6 pt-2.5 text-[10px] font-semibold z-20 tabular-nums pointer-events-none ${textClass}`}
+        className={`absolute top-0 left-0 right-0 h-10 flex items-center justify-between px-6 pt-2.5 text-micro font-semibold z-20 tabular-nums pointer-events-none ${textClass}`}
       >
         <span>{time}</span>
         <span className="flex items-center gap-1">

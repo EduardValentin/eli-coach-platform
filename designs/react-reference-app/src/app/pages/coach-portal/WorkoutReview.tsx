@@ -70,7 +70,7 @@ export function WorkoutReview() {
         <p className="text-text-secondary text-sm mb-6">This workout log doesn't exist.</p>
         <button
           onClick={() => navigate(`/coach/clients/${clientId}`)}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-text-primary text-white text-sm font-semibold rounded-xl"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-text-primary text-white text-sm font-semibold rounded-control"
         >
           <ArrowLeft size={16} /> Back to Client
         </button>
@@ -124,7 +124,7 @@ export function WorkoutReview() {
       <div className="flex items-center gap-4 mb-8">
         <button
           onClick={() => navigate(`/coach/clients/${clientId}`)}
-          className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-neutral-100 transition-colors"
+          className="w-9 h-9 flex items-center justify-center rounded-control hover:bg-neutral-100 transition-colors"
         >
           <ArrowLeft size={20} className="text-text-primary" />
         </button>
@@ -151,7 +151,7 @@ export function WorkoutReview() {
       {/* ── Analytics Section ────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-8">
         {/* Volume per exercise — horizontal bar chart */}
-        <div className="bg-white rounded-2xl border border-neutral-100 p-5">
+        <div className="bg-white rounded-card border border-neutral-100 p-5">
           <h3 className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-4">Volume per Exercise</h3>
           <div className="space-y-3">
             {(() => {
@@ -162,9 +162,9 @@ export function WorkoutReview() {
                     <span className="text-xs font-medium text-text-primary truncate mr-2">{d.name}</span>
                     <span className="text-xs text-text-secondary shrink-0">{formatVolume(d.volume, weightUnit)}</span>
                   </div>
-                  <div className="h-5 bg-neutral-100 rounded-md overflow-hidden">
+                  <div className="h-5 bg-neutral-100 rounded-field overflow-hidden">
                     <div
-                      className="h-full bg-brand rounded-md transition-all"
+                      className="h-full bg-brand rounded-field transition-all"
                       style={{ width: `${(d.volume / maxVol) * 100}%` }}
                     />
                   </div>
@@ -175,7 +175,7 @@ export function WorkoutReview() {
         </div>
 
         {/* Muscle group volume split — legend-only (no pie dependency) */}
-        <div className="bg-white rounded-2xl border border-neutral-100 p-5">
+        <div className="bg-white rounded-card border border-neutral-100 p-5">
           <h3 className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-4">Muscle Group Volume</h3>
           {(() => {
             const totalMuscleVol = muscleVolumeData.reduce((t, d) => t + d.value, 0) || 1;
@@ -216,14 +216,14 @@ export function WorkoutReview() {
       </div>
 
       {/* ── Estimated Rep Maxes & Fatigue ────────────────────────── */}
-      <div className="bg-white rounded-2xl border border-neutral-100 p-5 mb-8">
+      <div className="bg-white rounded-card border border-neutral-100 p-5 mb-8">
         <h3 className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-4">Estimated Rep Maxes & Fatigue</h3>
         <p className="text-[10px] text-text-secondary mb-4">Estimated from the heaviest set using the Epley formula</p>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="text-[9px] uppercase tracking-widest text-text-secondary font-bold px-3 border-b border-neutral-100 rounded-md">
+              <tr className="text-[9px] uppercase tracking-widest text-text-secondary font-bold px-3 border-b border-neutral-100 rounded-field">
                 <th className="pb-3 pr-4 font-bold">Exercise</th>
                 <th className="pb-3 pr-3 font-bold text-center">Best Set</th>
                 <th className="pb-3 pr-3 font-bold text-center">Est. 1RM</th>
@@ -245,7 +245,7 @@ export function WorkoutReview() {
                 const e3RM = estimateRM(best.weight, best.reps, 3);
 
                 return (
-                  <tr key={exLog.planExerciseId} className="px-3 border-b border-neutral-50 rounded-md last:border-0">
+                  <tr key={exLog.planExerciseId} className="px-3 border-b border-neutral-50 rounded-field last:border-0">
                     <td className="py-3 pr-4">
                       <span className="text-sm font-medium text-text-primary">{ex.name}</span>
                     </td>
@@ -299,7 +299,7 @@ export function WorkoutReview() {
           if (!ex) return null;
 
           return (
-            <div key={exLog.planExerciseId} className="bg-white rounded-2xl border border-neutral-100 overflow-hidden">
+            <div key={exLog.planExerciseId} className="bg-white rounded-card border border-neutral-100 overflow-hidden">
               {/* Exercise header */}
               <div className="p-5 pb-4">
                 <div className="flex items-start justify-between">
@@ -426,7 +426,7 @@ export function WorkoutReview() {
 
 function SwapCallout({ original, swappedTo }: { original: Exercise; swappedTo: Exercise }) {
   return (
-    <div className="mx-5 mb-4 rounded-xl border border-brand-secondary/20 bg-brand-secondary/[0.03] p-4">
+    <div className="mx-5 mb-4 rounded-control border border-brand-secondary/20 bg-brand-secondary/[0.03] p-4">
       <div className="flex items-center gap-1.5 mb-3">
         <ArrowLeftRight size={13} className="text-brand-secondary" />
         <span className="text-[10px] font-bold uppercase tracking-widest text-brand-secondary">Exercise Swapped</span>

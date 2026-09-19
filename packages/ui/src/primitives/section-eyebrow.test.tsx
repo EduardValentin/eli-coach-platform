@@ -27,7 +27,7 @@ describe("SectionEyebrow", () => {
 
     expect(screen.getByText("What you get")).toHaveClass(
       "text-text-muted",
-      "text-body-sm",
+      "text-sm",
       "mb-6",
     );
   });

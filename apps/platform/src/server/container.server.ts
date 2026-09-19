@@ -18,6 +18,10 @@ import {
   type AccountsFeature,
 } from "~/features/accounts/server/accounts-composition.server";
 import {
+  composeAssessmentCallsFeature,
+  type AssessmentCallsFeature,
+} from "~/features/assessment-calls/server/assessment-calls-composition.server";
+import {
   composeStoreFeature,
   type StoreFeature,
 } from "~/features/store/server/store-composition.server";
@@ -35,6 +39,7 @@ import { getRuntimeEnvironment } from "~/server/runtime-environment.server";
 
 export type PlatformContainer = {
   accounts: AccountsFeature;
+  assessmentCalls: AssessmentCallsFeature;
   closeDatabase: () => Promise<void>;
   platform: PlatformFeature;
   store: StoreFeature;
@@ -50,6 +55,7 @@ export function createPlatformContainer(options: {
   const database = createPlatformDatabase({ runtimeEnvironment: environment });
   const clock: Clock = { now: () => new Date() };
   const incidents = createConsoleLogger();
+  const botDetection = createBotDetectionConfig(environment);
   const botVerifier = createBotVerifier(environment);
   const managementAuthConfig = createManagementAuthConfig(
     { MANAGEMENT_API_SECRET: environment.MANAGEMENT_API_SECRET },
@@ -62,7 +68,7 @@ export function createPlatformContainer(options: {
   });
   const platform = composePlatformFeature({
     app: environment,
-    botDetection: createBotDetectionConfig(environment),
+    botDetection,
     featureFlags,
     version: process.env.GIT_SHA ?? "dev",
   });
@@ -77,6 +83,19 @@ export function createPlatformContainer(options: {
         publicAppUrl: environment.PUBLIC_APP_URL,
         signInUrl: environment.CLERK_SIGN_IN_URL,
       },
+    }),
+    assessmentCalls: composeAssessmentCallsFeature({
+      appBasePath: environment.APP_BASE_PATH,
+      assessmentCallsConfig: environment,
+      botDetection,
+      botVerifier,
+      clock,
+      contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
+      database: database.client,
+      featureFlags,
+      incidents,
+      productEmail,
+      publicAppUrl: environment.PUBLIC_APP_URL,
     }),
     closeDatabase: () => database.close(),
     platform,

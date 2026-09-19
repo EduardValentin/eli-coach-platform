@@ -21,13 +21,13 @@ export function AppShell(props: AppShellProps) {
         <h1 className="max-w-reading font-heading text-display-lg text-text-primary">
           {title}
         </h1>
-        <p className="max-w-reading text-body-lg text-text-secondary">
+        <p className="max-w-reading text-lg text-text-secondary">
           {description}
         </p>
       </header>
       <div className="grid gap-6">{children}</div>
       {footer ? (
-        <footer className="text-body-base text-text-secondary">{footer}</footer>
+        <footer className="text-base text-text-secondary">{footer}</footer>
       ) : null}
     </div>
   );

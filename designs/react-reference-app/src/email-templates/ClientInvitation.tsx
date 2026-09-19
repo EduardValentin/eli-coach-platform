@@ -349,7 +349,7 @@ const acceptButtonStyle: React.CSSProperties = {
   fontWeight: 600,
   lineHeight: 1,
   padding: '18px 40px',
-  borderRadius: '999px',
+  borderRadius: '14px',
   textDecoration: 'none',
 };
 

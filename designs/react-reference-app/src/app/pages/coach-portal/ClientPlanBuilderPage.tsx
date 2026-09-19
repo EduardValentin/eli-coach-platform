@@ -290,7 +290,7 @@ export function ClientPlanBuilderPage() {
           {planTemplates.length > 0 && (
             <button
               onClick={() => setShowTemplatePicker(true)}
-              className="hidden sm:flex px-4 py-2 font-semibold text-muted-foreground border border-border hover:bg-muted rounded-xl transition-colors items-center gap-2 text-sm"
+              className="hidden sm:flex px-4 py-2 font-semibold text-muted-foreground border border-border hover:bg-muted rounded-control transition-colors items-center gap-2 text-sm"
             >
               <FileText size={16} /> <span className="hidden lg:inline">Use Template</span>
             </button>
@@ -298,7 +298,7 @@ export function ClientPlanBuilderPage() {
           <button
             onClick={handleSaveChanges}
             disabled={isSaving}
-            className="px-4 lg:px-5 py-2 bg-brand text-white font-semibold rounded-xl hover:bg-brand-hover transition-colors shadow-md flex items-center gap-2 text-sm disabled:opacity-50"
+            className="px-4 lg:px-5 py-2 bg-brand text-white font-semibold rounded-control hover:bg-brand-hover transition-colors shadow-md flex items-center gap-2 text-sm disabled:pointer-events-none disabled:opacity-50"
           >
             <Save size={16} /> <span className="hidden sm:inline">{isSaving ? 'Saving...' : isNewPlan ? 'Create Plan' : 'Save Changes'}</span>
           </button>
@@ -307,7 +307,7 @@ export function ClientPlanBuilderPage() {
       sidebarFooterExtra={
         <button
           onClick={handleInsertDeload}
-          className="w-full py-2.5 flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold text-sm rounded-xl transition-colors border border-blue-200"
+          className="w-full py-2.5 flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold text-sm rounded-control transition-colors border border-blue-200"
         >
           <Calendar size={16} /> Insert Deload
         </button>
@@ -328,10 +328,10 @@ export function ClientPlanBuilderPage() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-card rounded-2xl shadow-2xl w-full max-w-3xl max-h-[80vh] flex flex-col overflow-hidden"
+              className="bg-card rounded-card shadow-2xl w-full max-w-3xl max-h-[80vh] flex flex-col overflow-hidden"
             >
               {/* Header */}
-              <div className="px-6 py-4 border-b border-border rounded-md flex items-center justify-between">
+              <div className="px-6 py-4 border-b border-border rounded-field flex items-center justify-between">
                 <div>
                   <h2 className="text-lg font-serif font-bold text-foreground">Use a Template</h2>
                   <p className="text-xs text-muted-foreground mt-0.5">
@@ -340,7 +340,7 @@ export function ClientPlanBuilderPage() {
                 </div>
                 <button
                   onClick={() => { setShowTemplatePicker(false); setPreviewingTemplate(null); }}
-                  className="p-2 hover:bg-muted rounded-xl transition-colors text-muted-foreground"
+                  className="p-2 hover:bg-muted rounded-control transition-colors text-muted-foreground"
                 >
                   <X size={20} />
                 </button>
@@ -360,7 +360,7 @@ export function ClientPlanBuilderPage() {
                       return (
                         <div
                           key={template.id}
-                          className={`p-4 rounded-xl border-2 transition-all cursor-pointer ${
+                          className={`p-4 rounded-control border-2 transition-all cursor-pointer ${
                             isSelected
                               ? 'border-brand bg-brand/5'
                               : 'border-border hover:border-neutral-300 bg-card'
@@ -378,14 +378,14 @@ export function ClientPlanBuilderPage() {
                             <div className="flex items-center gap-2">
                               <button
                                 onClick={(e) => { e.stopPropagation(); setPreviewingTemplate(template); }}
-                                className="p-1.5 text-muted-foreground hover:text-muted-foreground hover:bg-muted rounded-lg transition-colors"
+                                className="p-1.5 text-muted-foreground hover:text-muted-foreground hover:bg-muted rounded-compact transition-colors"
                                 title="Preview"
                               >
                                 <Eye size={16} />
                               </button>
                               <button
                                 onClick={(e) => { e.stopPropagation(); handleLoadTemplate(template); }}
-                                className="px-3 py-1.5 text-xs font-semibold bg-brand text-white rounded-lg hover:bg-brand-hover transition-colors"
+                                className="px-3 py-1.5 text-xs font-semibold bg-brand text-white rounded-control hover:bg-brand-hover transition-colors"
                               >
                                 Use
                               </button>
@@ -408,7 +408,7 @@ export function ClientPlanBuilderPage() {
                       <h3 className="font-bold text-base text-foreground">{previewingTemplate.name}</h3>
                       <button
                         onClick={() => handleLoadTemplate(previewingTemplate)}
-                        className="px-4 py-1.5 text-xs font-semibold bg-brand text-white rounded-lg hover:bg-brand-hover transition-colors shrink-0"
+                        className="px-4 py-1.5 text-xs font-semibold bg-brand text-white rounded-control hover:bg-brand-hover transition-colors shrink-0"
                       >
                         Use This Template
                       </button>
@@ -437,7 +437,7 @@ export function ClientPlanBuilderPage() {
                               const day = week.days[dIdx];
                               if (!day || day.type === 'Rest') return null;
                               return (
-                                <div key={dIdx} className="bg-card rounded-xl px-3.5 py-2.5 border border-border">
+                                <div key={dIdx} className="bg-card rounded-control px-3.5 py-2.5 border border-border">
                                   <div className="flex items-center justify-between mb-2">
                                     <span className="text-xs font-bold text-foreground">{dName}</span>
                                     <span
@@ -459,7 +459,7 @@ export function ClientPlanBuilderPage() {
                                             <span className="w-4 h-4 rounded-full bg-muted text-[9px] font-bold text-muted-foreground flex items-center justify-center shrink-0">
                                               {eIdx + 1}
                                             </span>
-                                            <span className="text-[11px] font-medium text-foreground truncate flex-1">
+                                            <span className="text-caption font-medium text-foreground truncate flex-1">
                                               {ex?.name ?? 'Unknown'}
                                             </span>
                                             <div className="flex items-center gap-1.5 shrink-0">

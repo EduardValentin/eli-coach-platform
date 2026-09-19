@@ -10,6 +10,7 @@ import {
 import { cn } from "@eli-coach-platform/ui/lib";
 import { useClientReducedMotionPreference } from "@eli-coach-platform/ui/motion";
 
+import type { PublicHeaderAppearance } from "./header-appearance";
 import { Logo } from "./logo";
 
 const SCROLLED_NAV_THRESHOLD = 50;
@@ -19,7 +20,6 @@ const ACTIONS_ROW_CLASS_NAME =
 
 export type PublicNavigationScrollBehavior = "hero-overlay" | "solid";
 export type PublicNavigationVariant = "waitlist" | "normal";
-type PublicNavigationAppearance = "solid" | "transparent";
 
 export type PublicNavigationLink = {
   href: string;
@@ -27,7 +27,7 @@ export type PublicNavigationLink = {
 };
 
 type PublicNavigationProps = {
-  actions?: ReactNode;
+  actions?: (appearance: PublicHeaderAppearance) => ReactNode;
   links: readonly PublicNavigationLink[];
   mobileActions?: ReactNode;
   scrollBehavior: PublicNavigationScrollBehavior;
@@ -56,7 +56,7 @@ export function PublicNavigation(props: PublicNavigationProps) {
     };
   }, [scrollBehavior]);
 
-  const scrollAppearance: PublicNavigationAppearance =
+  const scrollAppearance: PublicHeaderAppearance =
     scrollBehavior === "solid" || isScrolled ? "solid" : "transparent";
 
   if (links.length === 0) {
@@ -69,7 +69,8 @@ export function PublicNavigation(props: PublicNavigationProps) {
     <NavigationDialog
       closeMenuIcon={<X aria-hidden="true" size={28} />}
       contentClassName="fixed inset-0 z-[55] outline-none md:hidden"
-      menuButtonClassName="relative z-[60] text-current md:hidden"
+      menuButtonClassName="relative z-[60] md:hidden"
+      menuButtonVariant="plain"
       openMenuIcon={<Menu aria-hidden="true" size={28} />}
       renderTopBar={(topBar) => (
         <PublicNavigationHeader
@@ -82,7 +83,7 @@ export function PublicNavigation(props: PublicNavigationProps) {
         </PublicNavigationHeader>
       )}
       title={MOBILE_NAVIGATION_LABEL}
-      topBarActions={actions}
+      topBarActions={actions?.(scrollAppearance)}
       topBarActionsClassName={ACTIONS_ROW_CLASS_NAME}
     >
       {(menu) => (
@@ -97,7 +98,7 @@ export function PublicNavigation(props: PublicNavigationProps) {
 }
 
 type PublicNavigationHeaderProps = {
-  appearance: PublicNavigationAppearance;
+  appearance: PublicHeaderAppearance;
   children?: ReactNode;
   onNavigateHome?: () => void;
   variant: PublicNavigationVariant;
@@ -105,26 +106,26 @@ type PublicNavigationHeaderProps = {
 
 function PublicNavigationHeader(props: PublicNavigationHeaderProps) {
   const { appearance, children, onNavigateHome, variant } = props;
-  const isSolid = appearance === "solid";
 
   return (
     <header
       className={cn(
-        "group fixed left-0 right-0 top-0 z-[60] transition-colors duration-300 ease-out",
+        "fixed left-0 right-0 top-0 z-[60] transition-colors duration-300 ease-out",
         {
-          "bg-surface-base/95 text-text-primary shadow-public-nav backdrop-blur-md":
-            isSolid,
-          "bg-surface-base/0 text-text-inverted": !isSolid,
+          "bg-surface-base/95 text-text-primary shadow-card backdrop-blur-md":
+            appearance === "solid",
+          "bg-surface-base/0 text-text-inverted": appearance === "transparent",
         },
       )}
       data-appearance={appearance}
       data-launch-mode={variant}
+      data-surface={appearance === "transparent" ? "inverted" : undefined}
     >
       <nav
         aria-label="Public site navigation"
         className="mx-auto flex h-20 max-w-7xl items-center justify-between gap-6 px-6"
       >
-        <Logo isSolid={isSolid} onNavigate={onNavigateHome} />
+        <Logo appearance={appearance} onNavigate={onNavigateHome} />
         {children}
       </nav>
     </header>
@@ -146,7 +147,7 @@ function PublicNavigationCluster(props: PublicNavigationClusterProps) {
       <div className="hidden items-center gap-8 md:flex">
         {links.map((link) => (
           <Link
-            className="text-sm font-medium tracking-nav text-current transition-colors duration-150 ease-out hover:text-brand-primary"
+            className="text-sm font-medium tracking-wide text-current transition-colors duration-150 ease-out hover:text-brand-primary"
             key={link.href}
             to={link.href}
           >
@@ -168,18 +169,25 @@ type MobilePublicNavigationProps = {
 function MobilePublicNavigation(props: MobilePublicNavigationProps) {
   const { links, menu, mobileActions } = props;
   const prefersReducedMotion = useClientReducedMotionPreference();
-  const transition = {
-    duration: prefersReducedMotion ? 0 : 0.5,
-    ease: [0.22, 1, 0.36, 1] as const,
-  };
+  const instantly = { duration: 0 };
+  const enterFromBelow = prefersReducedMotion ? false : { opacity: 0, y: 20 };
 
   return (
     <motion.div
-      className="absolute inset-0 flex items-center justify-center bg-surface-page px-6 text-text-primary"
-      transition={transition}
+      className="absolute inset-0 flex flex-col items-center justify-center bg-surface-page text-text-primary"
       variants={{
-        closed: { opacity: 0, y: prefersReducedMotion ? 0 : "-100%" },
-        open: { opacity: 1, y: 0 },
+        closed: {
+          opacity: 0,
+          transition: prefersReducedMotion ? instantly : { duration: 0.3 },
+          y: prefersReducedMotion ? 0 : "-100%",
+        },
+        open: {
+          opacity: 1,
+          transition: prefersReducedMotion
+            ? instantly
+            : { damping: 25, stiffness: 200, type: "spring" },
+          y: 0,
+        },
       }}
     >
       <nav
@@ -189,20 +197,16 @@ function MobilePublicNavigation(props: MobilePublicNavigationProps) {
         {links.map((link, linkIndex) => (
           <motion.div
             animate={{ opacity: 1, y: 0 }}
-            initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
+            initial={enterFromBelow}
             key={link.href}
             transition={
               prefersReducedMotion
-                ? { duration: 0 }
-                : {
-                    delay: 0.1 + linkIndex * 0.1,
-                    duration: 0.32,
-                    ease: "easeOut",
-                  }
+                ? instantly
+                : { delay: 0.1 + linkIndex * 0.1 }
             }
           >
             <Link
-              className="font-heading text-4xl font-medium text-text-primary transition-colors duration-150 ease-out hover:text-brand-primary sm:text-5xl"
+              className="block font-heading text-4xl font-medium text-text-primary transition-colors hover:text-brand-primary sm:text-5xl"
               onClick={menu.close}
               ref={linkIndex === 0 ? menu.firstLinkRef : undefined}
               to={link.href}
@@ -212,44 +216,47 @@ function MobilePublicNavigation(props: MobilePublicNavigationProps) {
           </motion.div>
         ))}
         {mobileActions ? (
-          <motion.div
-            animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col items-center gap-6"
-            initial={prefersReducedMotion ? false : { opacity: 0, y: 20 }}
-            onClick={menu.close}
-            transition={
-              prefersReducedMotion
-                ? { duration: 0 }
-                : {
-                    delay: 0.1 + links.length * 0.1,
-                    duration: 0.32,
-                    ease: "easeOut",
-                  }
-            }
-          >
-            {mobileActions}
-          </motion.div>
+          <>
+            <motion.div
+              animate={{ opacity: 1, scale: 1 }}
+              aria-hidden="true"
+              className="my-4 h-px w-16 bg-divider"
+              initial={
+                prefersReducedMotion ? false : { opacity: 0, scale: 0.8 }
+              }
+              transition={prefersReducedMotion ? instantly : { delay: 0.3 }}
+            />
+            <motion.div
+              animate={{ opacity: 1, y: 0 }}
+              className="flex flex-col items-center gap-10"
+              initial={enterFromBelow}
+              onClick={menu.close}
+              transition={prefersReducedMotion ? instantly : { delay: 0.4 }}
+            >
+              {mobileActions}
+            </motion.div>
+          </>
         ) : null}
       </nav>
-      <motion.svg
+      <motion.div
         animate={{ opacity: 0.03 }}
         aria-hidden="true"
-        className="pointer-events-none absolute bottom-0 left-0 right-0 w-full text-brand-primary"
-        fill="none"
+        className="pointer-events-none absolute bottom-0 left-0 right-0"
         initial={prefersReducedMotion ? false : { opacity: 0 }}
-        transition={
-          prefersReducedMotion
-            ? { duration: 0 }
-            : { delay: 0.5, duration: 0.3, ease: "easeOut" }
-        }
-        viewBox="0 0 1440 320"
-        xmlns="http://www.w3.org/2000/svg"
+        transition={prefersReducedMotion ? instantly : { delay: 0.5 }}
       >
-        <path
-          d="M0,288L48,272C96,256,192,224,288,197.3C384,171,480,149,576,165.3C672,181,768,219,864,218.7C960,219,1056,181,1152,149.3C1248,117,1344,91,1392,80L1440,64L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
-          fill="currentColor"
-        />
-      </motion.svg>
+        <svg
+          className="h-auto w-full text-brand-primary"
+          fill="none"
+          viewBox="0 0 1440 320"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M0,288L48,272C96,256,192,224,288,197.3C384,171,480,149,576,165.3C672,181,768,219,864,218.7C960,219,1056,181,1152,149.3C1248,117,1344,91,1392,80L1440,64L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
+            fill="currentColor"
+          />
+        </svg>
+      </motion.div>
     </motion.div>
   );
 }

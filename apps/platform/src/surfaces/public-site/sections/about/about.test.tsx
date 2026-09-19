@@ -6,6 +6,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { createMemoryRouter, RouterProvider } from "react-router";
 
+import { BOOK_PATH } from "~/features/assessment-calls/contracts/paths";
 import { presentWaitlist } from "~/features/waitlist/ui/shared/waitlist-presentation";
 
 import { PublicAbout } from "./about";
@@ -78,11 +79,11 @@ describe("PublicAbout", () => {
 
     expect(within(credentials).getAllByRole("listitem")).toHaveLength(3);
     expect(screen.getAllByRole("button", { name: /\S/ })).toHaveLength(3);
-    expect(screen.getByRole("textbox", { name: /\S/ })).toBeInTheDocument();
+    expect(screen.getByText("Send message…")).toBeInTheDocument();
     const links = screen.getAllByRole("link", { name: /\S/ });
 
     expect(
-      links.filter((link) => link.getAttribute("href") === "/book"),
+      links.filter((link) => link.getAttribute("href") === BOOK_PATH),
     ).toHaveLength(0);
     expect(
       links.filter((link) => link.getAttribute("href") === "/pricing"),
@@ -98,7 +99,7 @@ describe("PublicAbout", () => {
     const links = screen.getAllByRole("link", { name: /\S/ });
 
     expect(
-      links.filter((link) => link.getAttribute("href") === "/book"),
+      links.filter((link) => link.getAttribute("href") === BOOK_PATH),
     ).toHaveLength(1);
     expect(
       links.filter((link) => link.getAttribute("href") === "/pricing"),

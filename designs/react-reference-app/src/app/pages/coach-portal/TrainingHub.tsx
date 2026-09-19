@@ -42,7 +42,7 @@ function PlanInstanceCard({ instance, onClick, onGoToClient, onDelete }: {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       onClick={onClick}
-      className={`rounded-2xl flex flex-col relative cursor-pointer transition-all duration-150 ${
+      className={`rounded-card flex flex-col relative cursor-pointer transition-all duration-150 ${
         isCompleted
           ? 'bg-muted/40 border border-dashed border-border hover:border-muted-foreground/30'
           : 'bg-card shadow-sm border border-border hover:shadow-md hover:border-muted-foreground/30'
@@ -82,15 +82,15 @@ function PlanInstanceCard({ instance, onClick, onGoToClient, onDelete }: {
               <PopoverTrigger asChild>
                 <button
                   onClick={(e) => e.stopPropagation()}
-                  className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
+                  className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-compact transition-colors"
                 >
                   <MoreVertical size={16} />
                 </button>
               </PopoverTrigger>
-              <PopoverContent align="end" className="w-48 p-1.5 bg-popover border border-border rounded-xl shadow-xl z-50">
+              <PopoverContent align="end" className="w-48 p-1.5 bg-popover border border-border rounded-control shadow-xl z-50">
                 <button
                   onClick={(e) => { e.stopPropagation(); onGoToClient(); }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left hover:bg-muted transition-colors"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-compact text-left hover:bg-muted transition-colors"
                 >
                   <User size={15} className="text-muted-foreground" />
                   <span className="text-sm font-medium text-foreground">Go to Client</span>
@@ -98,7 +98,7 @@ function PlanInstanceCard({ instance, onClick, onGoToClient, onDelete }: {
                 <div className="my-1 border-t border-border" />
                 <button
                   onClick={(e) => { e.stopPropagation(); onDelete(); }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left hover:bg-destructive/10 transition-colors"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-compact text-left hover:bg-destructive/10 transition-colors"
                 >
                   <Trash2 size={15} className="text-destructive" />
                   <span className="text-sm font-medium text-destructive">Delete Plan</span>
@@ -110,7 +110,7 @@ function PlanInstanceCard({ instance, onClick, onGoToClient, onDelete }: {
 
         {/* Goal badge */}
         {goal && (
-          <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold mb-3 self-start ${
+          <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-compact text-caption font-semibold mb-3 self-start ${
             isCompleted
               ? 'bg-muted text-muted-foreground'
               : 'bg-brand-secondary-soft text-brand-secondary'
@@ -178,11 +178,11 @@ function TemplateCard({ template, onEdit, onStartPlan, onDelete }: {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-2xl shadow-sm border border-neutral-100 flex flex-col overflow-hidden"
+      className="bg-white rounded-card shadow-sm border border-neutral-100 flex flex-col overflow-hidden"
     >
       <div className="p-5 flex-1 flex flex-col">
         <div className="flex items-start justify-between mb-3">
-          <div className="w-11 h-11 rounded-xl bg-brand-secondary/10 text-brand-secondary flex items-center justify-center">
+          <div className="w-11 h-11 rounded-control bg-brand-secondary/10 text-brand-secondary flex items-center justify-center">
             <CalendarDays size={22} />
           </div>
           <div className="flex items-center gap-2">
@@ -191,7 +191,7 @@ function TemplateCard({ template, onEdit, onStartPlan, onDelete }: {
             </span>
             <button
               onClick={() => onDelete(template.id, template.name)}
-              className="p-1.5 rounded-lg text-neutral-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+              className="p-1.5 rounded-compact text-neutral-300 hover:text-red-500 hover:bg-red-50 transition-colors"
               title="Delete template"
             >
               <Trash2 size={15} />
@@ -219,14 +219,14 @@ function TemplateCard({ template, onEdit, onStartPlan, onDelete }: {
         <div className="mt-auto pt-4 border-t border-neutral-100 flex items-center gap-2">
           <button
             onClick={onStartPlan}
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold text-text-primary bg-neutral-50 hover:bg-neutral-100 rounded-xl transition-colors border border-neutral-200"
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold text-text-primary bg-neutral-50 hover:bg-neutral-100 rounded-control transition-colors border border-neutral-200"
           >
             <Copy size={16} />
             Start Plan
           </button>
           <button
             onClick={onEdit}
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold text-white bg-text-primary hover:bg-neutral-800 rounded-xl transition-colors"
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold text-white bg-text-primary hover:bg-neutral-800 rounded-control transition-colors"
           >
             <Pencil size={16} />
             Edit
@@ -335,7 +335,7 @@ export function TrainingHub() {
           {activeTab === 'instances' ? (
             <button
               onClick={() => { setNewPlanClientSearch(''); setShowNewPlanClientPicker(true); }}
-              className="px-5 py-2.5 bg-brand text-white rounded-xl font-semibold hover:bg-brand-hover transition-colors flex items-center gap-2 shadow-md"
+              className="px-5 py-2.5 bg-brand text-white rounded-control font-semibold hover:bg-brand-hover transition-colors flex items-center gap-2 shadow-md"
             >
               <Plus size={20} />
               New Client Plan
@@ -343,7 +343,7 @@ export function TrainingHub() {
           ) : (
             <button
               onClick={handleCreate}
-              className="px-5 py-2.5 bg-brand text-white rounded-xl font-semibold hover:bg-brand-hover transition-colors flex items-center gap-2 shadow-md"
+              className="px-5 py-2.5 bg-brand text-white rounded-control font-semibold hover:bg-brand-hover transition-colors flex items-center gap-2 shadow-md"
             >
               <Plus size={20} />
               {activeTab === 'exercises' ? 'New Exercise' : 'New Template'}
@@ -353,7 +353,7 @@ export function TrainingHub() {
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-6 px-3 border-b border-neutral-200 rounded-md mb-6">
+      <div className="flex items-center gap-6 px-3 border-b border-neutral-200 rounded-field mb-6">
         {[
           { key: 'instances' as const, label: 'Client Plans', count: planInstances.filter(p => p.status === 'active').length },
           { key: 'templates' as const, label: 'Templates', count: planTemplates.length },
@@ -386,7 +386,7 @@ export function TrainingHub() {
               <button
                 key={f}
                 onClick={() => setStatusFilter(f)}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
+                className={`px-3 py-1.5 text-xs font-semibold rounded-compact transition-colors ${
                   statusFilter === f
                     ? 'bg-text-primary text-white'
                     : 'bg-neutral-100 text-text-secondary hover:bg-neutral-200'
@@ -449,7 +449,7 @@ export function TrainingHub() {
               placeholder="Search exercises by name or muscle..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-11 pr-4 py-3 bg-white border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand/20 transition-all text-sm"
+              className="w-full pl-11 pr-4 py-3 bg-white border border-neutral-200 rounded-control focus:outline-none focus:ring-2 focus:ring-brand/20 transition-all text-sm"
             />
           </div>
 
@@ -461,10 +461,10 @@ export function TrainingHub() {
             />
           </div>
 
-          <div className="bg-white rounded-2xl border border-neutral-200 overflow-x-auto shadow-sm">
+          <div className="bg-white rounded-card border border-neutral-200 overflow-x-auto shadow-sm">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-neutral-50 px-3 border-b border-neutral-200 rounded-md">
+                <tr className="bg-neutral-50 px-3 border-b border-neutral-200 rounded-field">
                   <th className="p-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Exercise</th>
                   <th className="p-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Target Muscles</th>
                   <th className="p-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Difficulty</th>
@@ -474,10 +474,10 @@ export function TrainingHub() {
               </thead>
               <tbody>
                 {filteredExercises.map(exercise => (
-                  <tr key={exercise.id} className="px-3 border-b border-neutral-100 rounded-md hover:bg-neutral-50/50 transition-colors">
+                  <tr key={exercise.id} className="px-3 border-b border-neutral-100 rounded-field hover:bg-neutral-50/50 transition-colors">
                     <td className="p-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-neutral-100 rounded-lg flex items-center justify-center text-text-secondary shrink-0">
+                        <div className="w-10 h-10 bg-neutral-100 rounded-compact flex items-center justify-center text-text-secondary shrink-0">
                           <Activity size={20} />
                         </div>
                         <div>
@@ -505,7 +505,7 @@ export function TrainingHub() {
                       </div>
                     </td>
                     <td className="p-4">
-                      <span className={`text-[10px] font-bold uppercase tracking-[0.08em] px-2 py-1 rounded-sm ${
+                      <span className={`text-[10px] font-bold uppercase tracking-[0.08em] px-2 py-1 rounded-tile ${
                         exercise.difficulty === 'Beginner' ? 'bg-green-100 text-green-700' :
                         exercise.difficulty === 'Intermediate' ? 'bg-yellow-100 text-yellow-700' :
                         'bg-red-100 text-red-700'
@@ -563,7 +563,7 @@ export function TrainingHub() {
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
-        <AlertDialogContent className="sm:max-w-md rounded-2xl">
+        <AlertDialogContent className="sm:max-w-md rounded-card">
           <AlertDialogHeader>
             <div className="mx-auto mb-2 w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
               <AlertTriangle size={24} className="text-red-600" />
@@ -576,12 +576,12 @@ export function TrainingHub() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="sm:flex-row gap-3 mt-2">
-            <AlertDialogCancel className="flex-1 rounded-xl border-neutral-200 text-text-secondary hover:bg-neutral-50 font-semibold">
+            <AlertDialogCancel className="flex-1 rounded-control border-neutral-200 text-text-secondary hover:bg-neutral-50 font-semibold">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
-              className="flex-1 rounded-xl bg-red-600 text-white hover:bg-red-700 font-semibold shadow-sm"
+              className="flex-1 rounded-control bg-red-600 text-white hover:bg-red-700 font-semibold shadow-sm"
             >
               Delete
             </AlertDialogAction>
@@ -591,7 +591,7 @@ export function TrainingHub() {
 
       {/* Start Plan from Template - Client Selection */}
       <AlertDialog open={!!startPlanTemplateId} onOpenChange={(open) => !open && setStartPlanTemplateId(null)}>
-        <AlertDialogContent className="sm:max-w-md rounded-2xl">
+        <AlertDialogContent className="sm:max-w-md rounded-card">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-text-primary">Start plan for client</AlertDialogTitle>
             <AlertDialogDescription>
@@ -606,7 +606,7 @@ export function TrainingHub() {
                 placeholder="Search clients..."
                 value={clientSearch}
                 onChange={e => setClientSearch(e.target.value)}
-                className="w-full pl-9 pr-3 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl text-sm focus:outline-none"
+                className="w-full pl-9 pr-3 py-2.5 bg-neutral-50 border border-neutral-200 rounded-control text-sm focus:outline-none"
               />
             </div>
             <div className="max-h-48 overflow-y-auto space-y-1">
@@ -614,7 +614,7 @@ export function TrainingHub() {
                 <button
                   key={client.id}
                   onClick={() => handleStartPlanFromTemplate(client.id, client.name)}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left hover:bg-neutral-50 transition-colors"
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-control text-left hover:bg-neutral-50 transition-colors"
                 >
                   <div className="w-8 h-8 rounded-full bg-neutral-100 text-text-secondary flex items-center justify-center text-xs font-bold shrink-0">
                     {client.avatar}
@@ -625,7 +625,7 @@ export function TrainingHub() {
             </div>
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-xl border-neutral-200 text-text-secondary hover:bg-neutral-50 font-semibold">
+            <AlertDialogCancel className="rounded-control border-neutral-200 text-text-secondary hover:bg-neutral-50 font-semibold">
               Cancel
             </AlertDialogCancel>
           </AlertDialogFooter>
@@ -634,7 +634,7 @@ export function TrainingHub() {
 
       {/* New Client Plan - Client Selection (no template required) */}
       <AlertDialog open={showNewPlanClientPicker} onOpenChange={(open) => !open && setShowNewPlanClientPicker(false)}>
-        <AlertDialogContent className="sm:max-w-md rounded-2xl">
+        <AlertDialogContent className="sm:max-w-md rounded-card">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-text-primary">Create plan for client</AlertDialogTitle>
             <AlertDialogDescription>
@@ -649,7 +649,7 @@ export function TrainingHub() {
                 placeholder="Search clients..."
                 value={newPlanClientSearch}
                 onChange={e => setNewPlanClientSearch(e.target.value)}
-                className="w-full pl-9 pr-3 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl text-sm focus:outline-none"
+                className="w-full pl-9 pr-3 py-2.5 bg-neutral-50 border border-neutral-200 rounded-control text-sm focus:outline-none"
               />
             </div>
             <div className="max-h-48 overflow-y-auto space-y-1">
@@ -661,7 +661,7 @@ export function TrainingHub() {
                     setNewPlanClientSearch('');
                     navigate(`/coach/training/builder/${client.id}`);
                   }}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left hover:bg-neutral-50 transition-colors"
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-control text-left hover:bg-neutral-50 transition-colors"
                 >
                   <div className="w-8 h-8 rounded-full bg-brand text-white flex items-center justify-center text-xs font-bold shrink-0">
                     {client.avatar}
@@ -679,7 +679,7 @@ export function TrainingHub() {
             </div>
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-xl border-neutral-200 text-text-secondary hover:bg-neutral-50 font-semibold">
+            <AlertDialogCancel className="rounded-control border-neutral-200 text-text-secondary hover:bg-neutral-50 font-semibold">
               Cancel
             </AlertDialogCancel>
           </AlertDialogFooter>

@@ -10,6 +10,7 @@ import {
 import type { PrototypeStoreCheckoutOutcome } from '../services/storeAcquisitionService';
 import type { PrototypeSignInOutcome } from '../services/authService';
 import type { PrototypeClientOnboardingOutcome } from '../services/clientOnboardingService';
+import type { PrototypeBookingOutcome } from '../services/assessmentCallService';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
@@ -78,6 +79,19 @@ function parseClientOnboardingOutcomeControl(
   return 'success';
 }
 
+function parseBookingOutcomeControl(value: string): PrototypeBookingOutcome {
+  if (
+    value === 'slot_unavailable' ||
+    value === 'booking_refused' ||
+    value === 'invalid_email' ||
+    value === 'server_error'
+  ) {
+    return value;
+  }
+
+  return 'success';
+}
+
 const SELECT_CONTENT_CLASS = 'z-[10000]';
 
 function DevCheckboxRow({
@@ -123,7 +137,7 @@ export function DevToggle() {
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="fixed right-4 z-[9999] bg-card p-5 rounded-2xl shadow-2xl border border-control-border-soft w-80 max-w-[calc(100vw-2rem)] bottom-[calc(env(safe-area-inset-bottom)+9rem)] lg:bottom-20"
+            className="fixed right-4 z-[9999] bg-card p-5 rounded-card shadow-2xl border border-control-border-soft w-80 max-w-[calc(100vw-2rem)] bottom-[calc(env(safe-area-inset-bottom)+9rem)] lg:bottom-20"
           >
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-semibold text-lg">Dev Settings</h3>
@@ -140,6 +154,7 @@ export function DevToggle() {
               <TabsList className="h-auto w-full flex-wrap">
                 <TabsTrigger value="session">Session</TabsTrigger>
                 <TabsTrigger value="store">Store</TabsTrigger>
+                <TabsTrigger value="booking">Booking</TabsTrigger>
                 <TabsTrigger value="waitlist">Waitlist</TabsTrigger>
                 <TabsTrigger value="nutrition">Nutrition</TabsTrigger>
                 <TabsTrigger value="coach">Coach</TabsTrigger>
@@ -270,6 +285,61 @@ export function DevToggle() {
                   className="inline-flex items-center gap-1 text-sm text-brand hover:underline"
                 >
                   Open download page <ArrowRight size={14} aria-hidden="true" />
+                </Link>
+              </TabsContent>
+
+              <TabsContent value="booking" className="space-y-4 pt-3 max-h-[50vh] overflow-y-auto pr-1">
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="dev-booking-outcome"
+                    className="text-xs font-semibold text-copy-muted uppercase tracking-wider"
+                  >
+                    Booking outcome
+                  </Label>
+                  <Select
+                    value={appState.bookingOutcome}
+                    onValueChange={(value) =>
+                      setAppState({
+                        bookingOutcome: parseBookingOutcomeControl(value),
+                      })
+                    }
+                  >
+                    <SelectTrigger id="dev-booking-outcome" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="success">Call booked</SelectItem>
+                      <SelectItem value="slot_unavailable">
+                        Time taken while filling in details
+                      </SelectItem>
+                      <SelectItem value="booking_refused">
+                        Booking refused (email already has a call)
+                      </SelectItem>
+                      <SelectItem value="invalid_email">
+                        Email rejected by the server
+                      </SelectItem>
+                      <SelectItem value="server_error">Server failure</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-copy-muted">
+                    Bot verification runs on the real server, so the prototype
+                    never rejects a booking as a bot.
+                  </p>
+                </div>
+                <DevCheckboxRow
+                  id="dev-booking-slots-unavailable"
+                  label="Slots unavailable"
+                  checked={appState.bookingSlotsUnavailable}
+                  onCheckedChange={(checked) =>
+                    setAppState({ bookingSlotsUnavailable: checked })
+                  }
+                />
+                <Link
+                  to="/book"
+                  onClick={() => setIsOpen(false)}
+                  className="inline-flex items-center gap-1 text-sm text-brand hover:underline"
+                >
+                  Open booking page <ArrowRight size={14} aria-hidden="true" />
                 </Link>
               </TabsContent>
 

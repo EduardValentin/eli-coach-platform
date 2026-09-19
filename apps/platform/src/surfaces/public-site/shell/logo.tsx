@@ -2,46 +2,45 @@ import { Link } from "react-router";
 
 import { cn } from "@eli-coach-platform/ui/lib";
 
+import type { PublicHeaderAppearance } from "./header-appearance";
+
 type LogoProps = {
-  isSolid: boolean;
+  appearance: PublicHeaderAppearance;
   onNavigate?: () => void;
 };
 
 export function Logo(props: LogoProps) {
-  const { isSolid, onNavigate } = props;
+  const { appearance, onNavigate } = props;
 
   return (
     <Link
-      className="relative z-[60] inline-flex min-w-0 items-center gap-2 rounded-xs outline-none transition-colors duration-150 ease-out hover:text-brand-primary focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-primary"
+      className="relative z-[60] inline-flex min-w-0 items-center gap-2 rounded-tile outline-none"
       onClick={onNavigate}
       to="/"
     >
       <span
         aria-hidden="true"
         className={cn(
-          "flex size-8 shrink-0 rotate-45 items-center justify-center rounded-public-logo-mark border-2 transition-colors duration-150 ease-out",
+          "flex size-8 shrink-0 rotate-45 items-center justify-center rounded-tile border-2 transition-colors",
           {
-            "border-brand-primary": isSolid,
-            "border-current": !isSolid,
+            "border-brand-primary": appearance === "solid",
+            "border-current": appearance === "transparent",
           },
         )}
       >
         <span
-          className={cn(
-            "block size-3 -rotate-45 transition-colors duration-150 ease-out",
-            {
-              "bg-brand-primary": isSolid,
-              "bg-current": !isSolid,
-            },
-          )}
+          className={cn("block size-3 -rotate-45 transition-colors", {
+            "bg-brand-primary": appearance === "solid",
+            "bg-current": appearance === "transparent",
+          })}
         />
       </span>
       <span
         className={cn(
-          "ml-2 truncate font-heading text-xl font-semibold tracking-nav transition-colors duration-150 ease-out",
+          "ml-2 font-heading text-xl font-semibold tracking-wide transition-colors",
           {
-            "text-text-primary": isSolid,
-            "text-text-inverted": !isSolid,
+            "text-text-primary": appearance === "solid",
+            "text-text-inverted": appearance === "transparent",
           },
         )}
       >

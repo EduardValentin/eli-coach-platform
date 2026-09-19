@@ -2,6 +2,6 @@ export {
   createFadeUpVariants,
   publicEase,
   publicEaseOut,
-  publicViewportOnce,
+  publicSectionRevealViewport,
   useClientReducedMotionPreference,
 } from "./motion";

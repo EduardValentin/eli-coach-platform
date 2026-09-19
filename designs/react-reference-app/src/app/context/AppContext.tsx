@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useLocation } from 'react-router';
 import type { PrototypeStoreCheckoutOutcome } from '../services/storeAcquisitionService';
+import type { PrototypeBookingOutcome } from '../services/assessmentCallService';
 import type {
   PrototypeAccountRole,
   PrototypeSignInOutcome,
@@ -35,6 +36,8 @@ type AppState = {
   storeCheckoutOutcome: PrototypeStoreCheckoutOutcome;
   isDownloadUnavailable: boolean;
   clientOnboardingOutcome: PrototypeClientOnboardingOutcome;
+  bookingOutcome: PrototypeBookingOutcome;
+  bookingSlotsUnavailable: boolean;
 };
 
 type AppContextType = {
@@ -55,6 +58,8 @@ const defaultState: AppState = {
   storeCheckoutOutcome: 'success',
   isDownloadUnavailable: false,
   clientOnboardingOutcome: 'success',
+  bookingOutcome: 'success',
+  bookingSlotsUnavailable: false,
 };
 
 const validSessions = ['anonymous', 'client', 'coach'] as const;
@@ -68,6 +73,13 @@ const validStoreCheckoutOutcomes = [
   'rate-limited-daily',
   'server-error',
   'unavailable-product',
+] as const;
+const validBookingOutcomes = [
+  'success',
+  'slot_unavailable',
+  'booking_refused',
+  'invalid_email',
+  'server_error',
 ] as const;
 const validClientOnboardingOutcomes = [
   'success',
@@ -129,6 +141,14 @@ function parseDevParamsFromURL(): AppState {
       clientOnboarding as PrototypeClientOnboardingOutcome;
   }
 
+  const booking = params.get('booking');
+  if (booking && (validBookingOutcomes as readonly string[]).includes(booking)) {
+    state.bookingOutcome = booking as PrototypeBookingOutcome;
+  }
+  if (params.has('bookingslots')) {
+    state.bookingSlotsUnavailable = params.get('bookingslots') === 'unavailable';
+  }
+
   return state;
 }
 
@@ -156,6 +176,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     url.searchParams.delete('checkout');
     url.searchParams.delete('download');
     url.searchParams.delete('invite');
+    url.searchParams.delete('booking');
+    url.searchParams.delete('bookingslots');
 
     if (isSignedIn(appState.session)) {
       url.searchParams.set('session', appState.session);
@@ -181,6 +203,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     if (appState.clientOnboardingOutcome !== 'success') {
       url.searchParams.set('invite', appState.clientOnboardingOutcome);
+    }
+    if (appState.bookingOutcome !== 'success') {
+      url.searchParams.set('booking', appState.bookingOutcome);
+    }
+    if (appState.bookingSlotsUnavailable) {
+      url.searchParams.set('bookingslots', 'unavailable');
     }
 
     const target = url.pathname + url.search + url.hash;

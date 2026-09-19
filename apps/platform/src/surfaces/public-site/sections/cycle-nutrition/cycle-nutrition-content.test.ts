@@ -3,7 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   CYCLE_DAY_COUNT,
   CYCLE_NUTRITION_PHASES,
-  getCycleNutritionViewState,
+  getAnchoredCycleViewState,
+  getScrollingCycleViewState,
   getPhaseForCycleDay,
   getPillPresentation,
 } from "./cycle-nutrition-content";
@@ -45,33 +46,19 @@ describe("cycle nutrition content model", () => {
     // assert
     expect(CYCLE_DAY_COUNT).toBe(28);
 
-    expect(
-      getCycleNutritionViewState({ prefersReducedMotion: false, progress: 0 }),
-    ).toMatchObject({
+    expect(getScrollingCycleViewState(0)).toMatchObject({
       activeDay: 25,
       rotationDegrees: -((25 - 1) * (360 / 28)),
     });
-    expect(
-      getCycleNutritionViewState({
-        prefersReducedMotion: false,
-        progress: 4 / 28,
-      }),
-    ).toMatchObject({
+    expect(getScrollingCycleViewState(4 / 28)).toMatchObject({
       activeDay: 1,
       phase: CYCLE_NUTRITION_PHASES[0],
     });
-    expect(
-      getCycleNutritionViewState({
-        prefersReducedMotion: false,
-        progress: 17 / 28,
-      }),
-    ).toMatchObject({
+    expect(getScrollingCycleViewState(17 / 28)).toMatchObject({
       activeDay: 14,
       phase: CYCLE_NUTRITION_PHASES[2],
     });
-    expect(
-      getCycleNutritionViewState({ prefersReducedMotion: false, progress: 1 }),
-    ).toMatchObject({
+    expect(getScrollingCycleViewState(1)).toMatchObject({
       activeDay: 25,
       rotationDegrees: -((25 - 1) * (360 / 28)) - 360,
     });
@@ -81,36 +68,19 @@ describe("cycle nutrition content model", () => {
     // arrange
     // act
     // assert
-    expect(
-      getCycleNutritionViewState({ prefersReducedMotion: true, progress: 0 }),
-    ).toMatchObject({
+    expect(getAnchoredCycleViewState(0)).toMatchObject({
       activeDay: 25,
       phase: CYCLE_NUTRITION_PHASES[3],
     });
-    expect(
-      getCycleNutritionViewState({
-        prefersReducedMotion: true,
-        progress: 4 / 28,
-      }),
-    ).toMatchObject({
+    expect(getAnchoredCycleViewState(4 / 28)).toMatchObject({
       activeDay: 1,
       phase: CYCLE_NUTRITION_PHASES[0],
     });
-    expect(
-      getCycleNutritionViewState({
-        prefersReducedMotion: true,
-        progress: 10 / 28,
-      }),
-    ).toMatchObject({
+    expect(getAnchoredCycleViewState(10 / 28)).toMatchObject({
       activeDay: 6,
       phase: CYCLE_NUTRITION_PHASES[1],
     });
-    expect(
-      getCycleNutritionViewState({
-        prefersReducedMotion: true,
-        progress: 17 / 28,
-      }),
-    ).toMatchObject({
+    expect(getAnchoredCycleViewState(17 / 28)).toMatchObject({
       activeDay: 14,
       phase: CYCLE_NUTRITION_PHASES[2],
     });

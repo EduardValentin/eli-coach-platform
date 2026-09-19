@@ -14,13 +14,31 @@ import {
 } from "./wire-mock/expectations/resend-emails";
 import { turnstileSiteverifyStubs } from "./wire-mock/expectations/turnstile-siteverify";
 
+export type SentEmailAttachment = {
+  contentText: string;
+  contentType: string;
+  filename: string;
+};
+
 /** One send as Resend received it, whether or not Resend accepted it. */
 export type SentEmail = {
+  attachments: SentEmailAttachment[];
   html: string;
   idempotencyKey: string | null;
+  replyTo: string | null;
   subject: string;
   text: string;
   to: string;
+};
+
+type ResendWireAttachment = {
+  content: { data: number[] };
+  content_type: string;
+  filename: string;
+};
+
+export type ApiIntegrationTestSuiteOptions = {
+  environment?: Record<string, string>;
 };
 
 /**
@@ -42,6 +60,10 @@ export class ApiIntegrationTestSuite extends IntegrationTestSuite {
     loadIntegrationTestEnvironment();
   private server: PlatformServer | null = null;
   private storeAssetRoot: string | null = null;
+
+  constructor(private readonly options: ApiIntegrationTestSuiteOptions = {}) {
+    super();
+  }
 
   override async start(): Promise<void> {
     this.storeAssetRoot = await mkdtemp(
@@ -120,15 +142,19 @@ export class ApiIntegrationTestSuite extends IntegrationTestSuite {
 
     return sends.map((send) => {
       const payload = JSON.parse(send.body) as {
+        attachments?: ResendWireAttachment[];
         html: string;
+        reply_to?: string;
         subject: string;
         text: string;
         to: string;
       };
 
       return {
+        attachments: (payload.attachments ?? []).map(readWireAttachment),
         html: payload.html,
         idempotencyKey: send.headers["Idempotency-Key"] ?? null,
+        replyTo: payload.reply_to ?? null,
         subject: payload.subject,
         text: payload.text,
         to: payload.to,
@@ -140,6 +166,7 @@ export class ApiIntegrationTestSuite extends IntegrationTestSuite {
     return {
       ...super.settings(),
       STORE_ASSET_ROOT: this.assetRoot(),
+      ...this.options.environment,
     };
   }
 
@@ -154,4 +181,14 @@ export class ApiIntegrationTestSuite extends IntegrationTestSuite {
 
     return this.server;
   }
+}
+
+function readWireAttachment(
+  attachment: ResendWireAttachment,
+): SentEmailAttachment {
+  return {
+    contentText: Buffer.from(attachment.content.data).toString("utf8"),
+    contentType: attachment.content_type,
+    filename: attachment.filename,
+  };
 }

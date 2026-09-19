@@ -4,6 +4,10 @@ import * as schema from "./schema";
 
 export type DatabaseClient = NodePgDatabase<typeof schema>;
 
+export type DatabaseTransaction = Parameters<
+  Parameters<DatabaseClient["transaction"]>[0]
+>[0];
+
 export function createDatabaseClient(pool: Pool): DatabaseClient {
   return drizzle({
     client: pool,

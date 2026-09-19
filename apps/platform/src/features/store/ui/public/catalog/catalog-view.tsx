@@ -1,4 +1,9 @@
 import { cn, useSearchParamsWriter } from "@eli-coach-platform/ui/lib";
+import {
+  buttonVariants,
+  Card,
+  cardVariants,
+} from "@eli-coach-platform/ui/primitives";
 import { Plus, ShoppingBag } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link } from "react-router";
@@ -36,10 +41,7 @@ export function CatalogView(props: { products: readonly StoreProduct[] }) {
 export function CatalogUnavailableView() {
   return (
     <CatalogShell>
-      <div
-        className="rounded-panel border border-border-subtle bg-surface-base p-10 text-center shadow-soft"
-        role="alert"
-      >
+      <Card className="p-10 text-center" role="alert" variant="panel">
         <ShoppingBag
           aria-hidden="true"
           className="mx-auto mb-5 text-text-muted"
@@ -58,22 +60,23 @@ export function CatalogUnavailableView() {
         >
           Return home
         </Link>
-      </div>
+      </Card>
     </CatalogShell>
   );
 }
 
 function CatalogShell(props: { children: ReactNode }) {
   return (
-    <div className="relative left-1/2 w-dvw max-w-7xl -translate-x-1/2 px-6 pb-24 pt-4">
-      <header className="mb-12 max-w-2xl">
-        <h1 className="mb-4 font-heading text-4xl tracking-tight text-text-primary md:text-5xl lg:text-6xl">
-          Find the right guide
-        </h1>
-        <p className="text-body-lg text-text-secondary">
-          Free workout, nutrition, and wellbeing resources to help you take your
-          next step.
-        </p>
+    <div className="relative left-1/2 w-dvw max-w-7xl -translate-x-1/2 px-6 pb-12 pt-4">
+      <header className="mb-12 flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
+        <div className="max-w-2xl">
+          <h1 className="mb-4 font-heading text-4xl tracking-tight text-text-primary md:text-5xl lg:text-6xl">
+            Find the right plan
+          </h1>
+          <p className="text-lg text-copy-muted">
+            Workout and nutrition plans, plus free guides to get you started.
+          </p>
+        </div>
       </header>
       {props.children}
     </div>
@@ -143,11 +146,11 @@ function CatalogResults(props: {
   if (props.products.length === 0) {
     return (
       <section className="py-20 text-center">
-        <p className="text-body-lg font-medium text-text-secondary">
+        <p className="text-lg font-medium text-text-secondary">
           No products found matching your filters.
         </p>
         <button
-          className="mt-6 inline-flex min-h-11 items-center px-3 font-medium text-brand-primary hover:underline focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary"
+          className="mt-6 inline-flex min-h-11 items-center px-3 font-medium text-brand-primary hover:underline"
           onClick={props.onClearFilters}
           type="button"
         >
@@ -176,19 +179,15 @@ function CatalogResults(props: {
 
 function EmptyCatalogView() {
   return (
-    <section className="py-24 text-center">
-      <ShoppingBag
-        aria-hidden="true"
-        className="mx-auto mb-4 text-text-muted"
-        size={64}
-      />
+    <div className="flex flex-col items-center gap-4 py-24 text-center">
+      <ShoppingBag aria-hidden="true" className="text-icon-muted" size={64} />
       <h2 className="font-heading text-3xl text-text-primary">
         The store is getting ready
       </h2>
-      <p className="mx-auto mt-3 max-w-md text-text-secondary">
-        New free plans and guides are on the way. Check back soon.
+      <p className="max-w-md text-copy-muted">
+        New plans and guides are on the way. Check back soon.
       </p>
-    </section>
+    </div>
   );
 }
 
@@ -200,7 +199,12 @@ function CatalogProductCard({ product }: { product: StoreProduct }) {
   const openCartFrom = useStoreCart((cart) => cart.openCartFrom);
 
   return (
-    <article className="group flex h-full flex-col overflow-hidden rounded-md border border-stroke-faint bg-surface-base shadow-public-nav transition-shadow hover:shadow-raised">
+    <article
+      className={cn(
+        cardVariants(),
+        "group flex h-full flex-col overflow-hidden transition-shadow hover:shadow-raised",
+      )}
+    >
       <Link
         className="relative block aspect-[4/3] overflow-hidden bg-surface-subtle"
         to={storeProductPath(product.slug)}
@@ -210,7 +214,7 @@ function CatalogProductCard({ product }: { product: StoreProduct }) {
           className="size-full object-cover transition-transform duration-700 motion-reduce:transition-none group-hover:scale-105 motion-reduce:group-hover:scale-100"
           src={product.cover.url}
         />
-        <span className="absolute right-4 top-4 rounded-pill bg-brand-secondary px-3 py-1.5 text-label uppercase text-brand-secondary-foreground">
+        <span className="absolute right-4 top-4 rounded-full bg-brand-secondary px-3 py-1.5 text-label uppercase text-brand-secondary-foreground">
           Free
         </span>
       </Link>
@@ -218,7 +222,7 @@ function CatalogProductCard({ product }: { product: StoreProduct }) {
         <div className="mb-3 flex flex-wrap gap-2">
           {product.types.map((type) => (
             <span
-              className="rounded-xs bg-brand-secondary-soft px-2 py-1 text-label uppercase text-brand-secondary"
+              className="rounded-tile bg-brand-secondary-soft px-2 py-1 text-label uppercase text-brand-secondary"
               key={type.slug}
             >
               {type.label}
@@ -230,7 +234,7 @@ function CatalogProductCard({ product }: { product: StoreProduct }) {
             {product.title}
           </h3>
         </Link>
-        <p className="mb-6 flex-1 text-body-sm text-text-secondary">
+        <p className="mb-6 flex-1 text-sm text-text-secondary">
           {product.cardSummary}
         </p>
         <button
@@ -239,15 +243,11 @@ function CatalogProductCard({ product }: { product: StoreProduct }) {
               ? `${product.title} is in your cart`
               : `Get ${product.title} for free`
           }
-          className={cn(
-            "flex min-h-14 w-full items-center justify-center gap-2 rounded-control border-2 px-4 py-3.5 font-medium transition-colors focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-primary",
-            {
-              "border-brand-secondary bg-brand-secondary text-brand-secondary-foreground":
-                isInCart,
-              "border-text-primary text-text-primary hover:border-brand-secondary hover:bg-brand-secondary hover:text-brand-secondary-foreground":
-                !isInCart,
-            },
-          )}
+          className={buttonVariants({
+            size: "lg",
+            variant: isInCart ? "secondary" : "outline",
+            width: "full",
+          })}
           onClick={(event) => {
             addProduct(product.slug);
             openCartFrom(event.currentTarget);

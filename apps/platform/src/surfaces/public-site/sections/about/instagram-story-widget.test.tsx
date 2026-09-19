@@ -43,7 +43,7 @@ describe("InstagramStoryWidget", () => {
     const instagramLink = screen.getByRole("link", { name: "eli.fitness" });
 
     expect(screen.getByLabelText("Story 1 of 3")).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("Send message…")).toBeInTheDocument();
+    expect(screen.getByText("Send message…")).toBeInTheDocument();
     expect(instagramLink).toHaveAttribute(
       "href",
       "https://www.instagram.com/elilungu_",
@@ -58,7 +58,7 @@ describe("InstagramStoryWidget", () => {
     ).toBeInTheDocument();
   });
 
-  it("advances and rewinds from the left and right halves", () => {
+  it("advances and rewinds from the left and right halves", async () => {
     // arrange
     renderStoryWidget();
 
@@ -81,16 +81,16 @@ describe("InstagramStoryWidget", () => {
     fireEvent.click(surface, { clientX: 250 });
 
     // assert
-    expect(screen.getByLabelText("Story 2 of 3")).toBeInTheDocument();
+    expect(await screen.findByLabelText("Story 2 of 3")).toBeInTheDocument();
 
     // act
     fireEvent.click(surface, { clientX: 25 });
 
     // assert
-    expect(screen.getByLabelText("Story 1 of 3")).toBeInTheDocument();
+    expect(await screen.findByLabelText("Story 1 of 3")).toBeInTheDocument();
   });
 
-  it("loops from the last story back to the first", () => {
+  it("loops from the last story back to the first", async () => {
     // arrange
     renderStoryWidget();
 
@@ -102,22 +102,22 @@ describe("InstagramStoryWidget", () => {
     fireEvent.keyDown(surface, { key: "ArrowRight" });
 
     // assert
-    expect(screen.getByLabelText("Story 2 of 3")).toBeInTheDocument();
+    expect(await screen.findByLabelText("Story 2 of 3")).toBeInTheDocument();
 
     // act
     fireEvent.keyDown(surface, { key: "ArrowRight" });
 
     // assert
-    expect(screen.getByLabelText("Story 3 of 3")).toBeInTheDocument();
+    expect(await screen.findByLabelText("Story 3 of 3")).toBeInTheDocument();
 
     // act
     fireEvent.keyDown(surface, { key: "ArrowRight" });
 
     // assert
-    expect(screen.getByLabelText("Story 1 of 3")).toBeInTheDocument();
+    expect(await screen.findByLabelText("Story 1 of 3")).toBeInTheDocument();
   });
 
-  it("activates the story navigation button with Space", () => {
+  it("activates the story navigation button with Space", async () => {
     // arrange
     renderStoryWidget();
 
@@ -132,7 +132,7 @@ describe("InstagramStoryWidget", () => {
     );
 
     // assert
-    expect(screen.getByLabelText("Story 2 of 3")).toBeInTheDocument();
+    expect(await screen.findByLabelText("Story 2 of 3")).toBeInTheDocument();
   });
 
   it("toggles like state for the current story", async () => {
@@ -175,7 +175,7 @@ describe("InstagramStoryWidget", () => {
     );
 
     // assert
-    expect(screen.getByLabelText("Story 2 of 3")).toBeInTheDocument();
+    expect(await screen.findByLabelText("Story 2 of 3")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Like story" }),
     ).toBeInTheDocument();
@@ -191,7 +191,7 @@ describe("InstagramStoryWidget", () => {
     );
 
     // assert
-    expect(screen.getByLabelText("Story 1 of 3")).toBeInTheDocument();
+    expect(await screen.findByLabelText("Story 1 of 3")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Unlike story" }),
     ).toBeInTheDocument();
@@ -204,7 +204,7 @@ describe("InstagramStoryWidget", () => {
 
     // act
     await act(async () => {
-      vi.advanceTimersByTime(5000);
+      vi.advanceTimersByTime(5050);
     });
 
     // assert

@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "coach_time_reservations_appointment_unique" ON "app"."coach_time_reservations" USING btree ("appointment_kind","appointment_id");

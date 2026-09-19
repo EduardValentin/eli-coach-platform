@@ -100,9 +100,9 @@ export function ClientPlan() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: dIdx * 0.04 }}
               aria-label={`${DAY_NAMES[dIdx]} — ${day.type}`}
-              className="bg-white rounded-2xl border border-neutral-200 overflow-hidden"
+              className="bg-white rounded-card border border-neutral-200 overflow-hidden"
             >
-              <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-b border-neutral-100 rounded-md flex items-center justify-between gap-3">
+              <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-b border-neutral-100 rounded-field flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className={`text-[10px] font-bold uppercase tracking-widest ${DAY_TYPE_ACCENT[day.type as DayType] ?? 'text-text-secondary'}`}>
                     {day.type}
@@ -114,7 +114,7 @@ export function ClientPlan() {
                 <button
                   type="button"
                   onClick={() => navigate(`/portal/workout/${clientActivePlan.id}/${activeWeekIdx}/${dIdx}`)}
-                  className="shrink-0 inline-flex items-center gap-1.5 text-sm font-semibold text-brand hover:text-brand-hover hover:bg-brand/5 px-3 min-h-10 rounded-xl transition-colors"
+                  className="shrink-0 inline-flex items-center gap-1.5 text-sm font-semibold text-brand hover:text-brand-hover hover:bg-brand/5 px-3 min-h-10 rounded-control transition-colors"
                 >
                   Start
                   <Play size={14} fill="currentColor" aria-hidden="true" />

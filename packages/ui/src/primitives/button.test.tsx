@@ -5,27 +5,31 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { Button } from "./button";
-import { IconButton } from "./icon-button";
+import { Button, buttonVariants } from "./button";
 
 afterEach(() => {
   cleanup();
 });
 
-describe("button focus affordances", () => {
-  it("sets an explicit focus-visible outline style on text buttons", () => {
+describe("button corner", () => {
+  it("rounds every text button to the button corner", () => {
+    // arrange
+    // act
     render(<Button>Save</Button>);
 
+    // assert
     expect(screen.getByRole("button", { name: "Save" })).toHaveClass(
-      "focus-visible:outline-solid",
+      "rounded-control",
     );
   });
 
-  it("sets an explicit focus-visible outline style on icon buttons", () => {
-    render(<IconButton aria-label="Save" />);
+  it("gives a button-styled link the same corner", () => {
+    // arrange
+    // act
+    const classes = buttonVariants({ variant: "outline" }).split(" ");
 
-    expect(screen.getByRole("button", { name: "Save" })).toHaveClass(
-      "focus-visible:outline-solid",
-    );
+    // assert
+    expect(classes).toContain("rounded-control");
+    expect(classes).not.toContain("rounded-full");
   });
 });

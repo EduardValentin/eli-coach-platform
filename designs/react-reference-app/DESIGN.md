@@ -21,10 +21,12 @@ The production source of truth is `packages/ui/src/styles.css` and the component
 | `AppShell`, `Panel` | Framed application and content-section shells | No variants |
 | `Avatar`, `AvatarImage`, `AvatarFallback` | Profile image with initials fallback | `size`: `sm`, `md`, `lg` |
 | `Badge` | Compact status or category label | `default`, `info`, `success`, `pending`, `destructive`, `secondary` |
-| `Button` | Primary action control | `variant`: `primary`, `secondary`, `destructive`, `ghost`; `size`: `sm`, `md`, `lg`, `icon` |
-| `Card` | Standard bordered, raised content container | No variants |
-| `IconButton` | Labelled icon-only action | `variant`: `ghost`, `inverted`; `size`: `sm`, `md` |
-| `Input` | Single-line form control | `variant`: `default`, `inverted`; `controlSize`: `md`, `lg` |
+| `Alert` | Form-level error message, one look wherever a form reports a failure | No variants |
+| `Button` | Every text action control, as a button or through `buttonVariants` on a link | `variant`: `primary`, `secondary`, `inverted`, `outline`, `outline-brand`, `glass`; `size` by height: `xs` (32px), `md` (48px), `lg` (56px), `lg-tight` (56px with the narrow padding); `width`: `content`, `full`, `full-below-sm`; `weight`: `regular`, `medium`, `semibold`; `textSize`: `sm`, `base`, `lg`; `lettering`: `plain`, `wide`, `caps`; `elevation`: `flat`, `raised`; `press`: `none`, `scale` |
+| `Card` | Bordered content container, as a `div` or through `cardVariants` on any element | `variant`: `card` (16px corner, faint border, card shadow), `quiet` (the same corner on the quiet surface, flat), `panel` (24px corner, subtle border, soft shadow, for large frames) |
+| `Checkbox` | The one check box: 20px, base surface, soft shadow, brand fill and white check when checked | No variants |
+| `IconButton` | Labelled icon-only action; icon-only buttons are circular | `variant`: `ghost`, `plain`, `soft` |
+| `Input` | Single-line form control: 48px tall, quiet grey fill, soft border | No variants |
 | `Link` | Router-aware text or navigation link | `inline`, `subtle`, `pill` |
 | `FormField` | Label, control, hint and error with the `aria-describedby`/`aria-invalid` wiring done once | No variants |
 | `RadioGroup` | Fieldset-grouped radio options with a legend | No variants |
@@ -32,18 +34,20 @@ The production source of truth is `packages/ui/src/styles.css` and the component
 | `Slider` | Single-thumb range control, labelled on the thumb Radix gives the role to | No variants |
 | `MetricTile` | One figure with its name, an optional hint and a label suffix | `tone`: `neutral`, `brand` |
 | `Select` and its compound parts | Styled Radix selection control | Trigger `size`: `sm`, `md` |
-| `TextArea` | Multi-line form control | No variants |
+| `TextArea` | Multi-line form control with the `Input` look | No variants |
 | `FilterChipGroup`, `FilterChip` | Filter chips offering one choice per group | `tone`: `brand`, `brand-secondary` |
 | `SidebarSurfaceLayout` | Portal shell with sidebar navigation and main content | No variants |
 | `PortalShell` | Portal chrome: sidebar, mobile top bar and navigation, main landmark | No variants |
 | `PhoneFrame` | Reusable device chrome for product previews | `statusBarVariant`: `dark`, `light` |
 | `SectionEyebrow` | Uppercase label above a section heading | `brand`, `muted` |
 
+Every button shares one base: the 14px `control` corner, a 2-unit gap, no wrapping, 50% opacity when disabled, and the one focus rule below. A size sets only the height and one horizontal padding (`px-4` for `xs` and `lg-tight`, `px-8` otherwise); `lg-tight` is for a full button that shares its row with another action. A `full` button fills its row; `full-below-sm` fills it only below the `sm` breakpoint, where stacked actions take the whole width. `raised` is the only elevation: the `action` shadow lifting to `action-hover` on hover. `glass` is the one translucent tone for an action over the hero; the header's portal link uses it while the header is transparent and `primary` once it turns solid. The reference app's `ThemeButton` mirrors production's `Button` variant for variant, and its shadcn `Button` keeps the same corner and no focus border.
+
 The reference app also has three reusable product compositions of its own: `ToggleChip` for multi-select pills, `ResponsiveSheetDialog`, which presents the same content in a mobile bottom sheet or desktop dialog, and `ErrorPage`, the shared dead-end layout behind the 404, the 403 and the failed-sign-in page — an icon medallion, a muted eyebrow, one `<h1>`, body copy, and exactly one action supplied by the caller. Its local `PhoneFrame` and `SectionEyebrow` mirror the production components. Its `MetricTile` carries a toned icon and four tones where the production component has two and tones the label instead; the two have not been reconciled.
 
-Keyboard focus is drawn by one unlayered `:focus-visible` rule in `theme.css` rather than per component: the `focus-visible:ring-*` and `focus-visible:outline-*` utilities the primitives carry paint nothing in this app, and the primitives also carry `outline-none`, which as a utility beats anything in `@layer base`. The indicator is a 2px `--focus-ring` outline at 2px offset with a soft 16% halo, matching the brand ring production already draws. `--focus-ring` resolves to `--brand`, which clears 5.5:1 on white and 4.9:1 on the warm page background, well over the 3:1 SC 1.4.11 asks of a non-text indicator; controls inside an inverted surface switch to the lighter `--brand-on-inverted`, because the brand pink only reaches 2.7:1 against near-black. Menu and option items, and `tabindex="-1"` skip-link targets, are excluded because they suppress their outline deliberately and signal focus another way.
+Keyboard focus is drawn by one unlayered `:focus-visible` rule in `theme.css` rather than per component: the `focus-visible:ring-*` and `focus-visible:outline-*` utilities the primitives carry paint nothing in this app, and the primitives also carry `outline-none`, which as a utility beats anything in `@layer base`. The indicator is a 2px `--focus-ring` outline at 2px offset with a soft 16% halo, matching the brand ring production already draws. `--focus-ring` resolves to `--brand`, which clears 5.5:1 on white and 4.9:1 on the warm page background, well over the 3:1 SC 1.4.11 asks of a non-text indicator; controls inside an element marked `data-surface="inverted"` (the hero, and the header while it is transparent over it) switch to the lighter `--brand-on-inverted`, because the brand pink only reaches 2.7:1 against near-black. Menu and option items, and `tabindex="-1"` skip-link targets, are excluded because they suppress their outline deliberately and signal focus another way; a base rule also removes the browser outline those targets would get on programmatic focus.
 
-Fields are drawn one way on the public site and another inside the portals. Public forms — the waitlist capture, the store — use a boxed control, and so does the reference app's own `Input`. Portal forms underline single-line fields and box multi-line ones; the reference app does that across sixteen coach and client surfaces. Underlined fields carry a small radius so their focus ring has the same soft corners a textarea's does, and no field sets its own focus colour — the one rule above owns that.
+Every form built on `Input` and `TextArea` — the booking details, the cart, the coach tools — draws one field: 48px tall, the 8px `field` corner, a quiet grey fill at half strength, the soft control border, and the border darkening to `border-focus` on focus. Callers set only layout (width, an icon inset, a textarea height), never the look. The waitlist capture keeps its own pill field on its dark and light surfaces. Portal pages that still draw raw underlined inputs have not been moved onto `Input` yet. No field sets its own focus colour — the one rule above owns that.
 
 ### Semantic Tokens
 
@@ -51,10 +55,10 @@ Token names below omit the CSS `--color-` prefix used in production utilities.
 
 | Family | Tokens and role |
 | --- | --- |
-| Surfaces | `surface-page`, `surface-base`, `surface-subtle`, `surface-soft`, `surface-brand-soft`, `surface-inverted` define the page, cards, quiet sections, brand tint, and always-dark areas. |
-| Text | `text-primary`, `text-secondary`, `text-muted`, `text-inverted`, `copy-muted`, `placeholder-soft`, `link-muted`, `about-credential-text` define content hierarchy and surface-aware copy. |
-| Borders and neutral metadata | `border-subtle`, `border-strong`, `border-soft`, `control-border-soft`, `stroke-faint`, `bundle-muted`, `bundle-secondary` separate controls and content without adding emphasis. |
-| Primary brand | `brand-primary`, `brand-primary-hover`, `brand-primary-pressed`, `brand-primary-foreground`, `brand-primary-soft`, `waitlist-button-hover` cover primary emphasis and interaction states. |
+| Surfaces | `surface-page`, `surface-base`, `surface-subtle`, `surface-soft`, `surface-brand-soft`, `surface-inverted` define the page, cards, quiet sections, brand tint, and always-dark areas. `surface-quiet` and `surface-muted` are the resting and hover fills of neutral controls, `surface-strong` the dark fill of a chosen option, `surface-neutral` a neutral chip fill. |
+| Text | `text-primary`, `text-secondary`, `text-muted`, `text-inverted`, `copy-muted`, `placeholder-soft`, `link-muted` define content hierarchy and surface-aware copy. `text-label` is the ink of field labels, neutral control text and short credential lines, `text-inverted-secondary` the lead copy over the hero video, and `icon-muted` the decorative glyph of an empty state. |
+| Borders and neutral metadata | `border-subtle`, `border-strong`, `border-soft`, `border-default`, `border-focus`, `control-border-soft`, `stroke-faint`, `divider`, `bundle-muted` separate controls and content without adding emphasis; `border-focus` is the border a field takes while focused and `divider` the short rule between the mobile menu's links and its account actions. |
+| Primary brand | `brand-primary`, `brand-primary-hover`, `brand-primary-foreground`, `brand-primary-soft`, `brand-primary-on-inverted`, `focus-ring` cover primary emphasis, interaction states and the keyboard focus ring. |
 | Secondary brand | `brand-secondary`, `brand-secondary-hover`, `brand-secondary-foreground`, `brand-secondary-soft` cover supporting actions and balancing accents. |
 | Feedback | `feedback-danger`, `feedback-danger-on-inverted`, `feedback-danger-soft`, `feedback-success`, `feedback-success-soft`, `feedback-info`, `feedback-info-soft`, `status-pending`, `status-pending-soft`, `savings-badge-text`, `savings-badge-surface` communicate outcomes and status. |
 | Metrics | `metric-energy` and `metric-energy-soft` mark energy and effort readings — calories, streaks, and the day's training focus. They share a value with `status-pending` but answer to measured effort rather than workflow state. Reference app only. |
@@ -66,16 +70,16 @@ Token names below omit the CSS `--color-` prefix used in production utilities.
 | Overlays | `overlay-strong`, `overlay-medium`, `overlay-soft` provide consistent scrim strength. |
 | Prototype nutrition | `macro-{protein,carb,fat,kcal}[-soft]` is for macro data; `nutrition-{protein,carb,fat,legume,extra,seasoning}[-soft]` is for food categories; `tag-{mealtime,cycle,nutrient,dietary}[-soft]` is for tag families. |
 
-Layout tokens include `container-reading`, `container-content`, and `container-stage`; `size-control-{sm,md,lg}` and `size-avatar-{sm,md,lg}`; `radius-{xs,control,sm,md,panel,pill,phone-frame}`; and `shadow-{soft,raised,floating,brand-glow,phone-frame}`. Public-site compositions use narrowly scoped `public-*` radius, size, and shadow tokens rather than adding raw repeated values.
+Layout tokens include `container-reading`, `container-content`, and `container-stage`; `size-control-{xs,sm,md,lg}` and `size-avatar-{sm,md,lg}`. Radii are named by role, never by size: `checkbox` (4px) the check box, `tile` (6px) small tiles, tags, the logo mark and chat-bubble tails, `field` (8px) text fields and the thumbnails and rows inside a card, `compact` (10px) the pricing card's folder-tab badge and the coach portal's brand marks, `control` (14px) every button, time slot and calendar control, `card` (16px) every card and card-like surface, `panel` (24px) large framed panels, and `phone-frame` (40px) the device chrome. Both apps use the role names only; the framework's size steps keep their own values and are not used for corners. Fully rounded shapes use the framework's `rounded-full`; and `shadow-{soft,card,raised,floating,action,action-hover,phone-frame}`, where `card` is the low elevation of cards and chosen options and `action`/`action-hover` the resting and hover lift of a raised call to action. Public-site compositions use narrowly scoped `public-*` radius, size, and shadow tokens rather than adding raw repeated values.
 
 ### Typography
 
 - `DM Sans` is the body and interface family; `Playfair Display` is the heading and display family.
-- The core scale is `label` (12px), `body-sm` (14px), `body-base` (16px), `body-lg` (18px), `display-sm` (24px), `display-md` (32px), and fluid `display-lg` (44–72px).
-- Available weights are regular 400, medium 500, and semibold 600. Shared line-height roles are `tight`, `heading`, `display-relaxed`, `body`, and `copy-relaxed`.
-- `tracking-label`, `tracking-nav`, `tracking-section-eyebrow`, and `tracking-wide` cover the current letter-spacing roles.
-- `count-badge` (10px) is the one step below the core scale, reserved for the numeric count overlaid on an icon control such as the cart button.
-- `public-my-method-*`, `public-footer-cta-*`, and `phone-*` typography tokens are intentionally scoped to compact public-site compositions and phone previews.
+- The core scale is the framework's `xs` to `5xl` steps plus `caption` (11px) for the smallest readable text — calendar weekdays, chart axes, phone-preview body copy — `md` (15px) between `sm` and `base`, `label` (12px semibold at `tracking-label`, the uppercase store tags and badges), and the display steps `display-sm` (24px), `display-md` (32px), and fluid `display-lg` (44–72px).
+- Available weights are regular 400, medium 500, and semibold 600. Two more are reserved: light 300 for the hero's lead copy over video, and bold 700 for prices and the tracked uppercase `micro` labels. Line heights are the framework's `tight` (1.25, every heading that sets one), `snug`, `normal` and `relaxed`, plus `display-snug` (1.1) for large display headings and `heading` (1.2) inside the display steps.
+- `tracking-label` and `tracking-section-eyebrow` are the letter-spacing roles; everything else uses the framework's `tracking-*` steps at their own values, `tracking-wide` (0.025em) for navigation links and short badges.
+- `micro` (10px) is the one step below the core scale: the count on an icon control such as the cart button, tracked uppercase overlines and badges, and phone-preview actions.
+- `public-my-method-figure-heading`, `public-cycle-phase`, `public-footer-cta-*`, and `phone-*` typography tokens are intentionally scoped to compact public-site compositions and phone previews.
 
 ### Spacing
 

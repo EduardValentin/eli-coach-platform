@@ -25,6 +25,7 @@
     "@eli-coach-platform/domain": "workspace:*",
     "@eli-coach-platform/infrastructure": "workspace:*",
     "@eli-coach-platform/ui": "workspace:*",
+    "@date-fns/tz": "catalog:",
     "@hookform/resolvers": "catalog:",
     "@react-router/node": "catalog:",
     "@react-router/serve": "catalog:",

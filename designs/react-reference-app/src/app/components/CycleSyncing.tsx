@@ -113,7 +113,7 @@ export function CycleSyncing() {
 
               <h2
                 id={headingId}
-                className="text-3xl md:text-4xl lg:text-5xl font-serif font-medium text-foreground mb-5 leading-[1.1]"
+                className="text-3xl md:text-4xl lg:text-5xl font-serif font-medium text-foreground mb-5 leading-display-snug"
               >
                 Your cycle is part of the plan.
               </h2>
@@ -158,13 +158,13 @@ export function CycleSyncing() {
                         <div
                           className={`transition-all duration-300 flex flex-col items-center justify-start rounded-[24px] bg-surface-subtle p-[4px] border border-white/60 ${
                             isCurrent
-                              ? 'w-[40px] h-[64px] shadow-[0_2px_12px_rgba(0,0,0,0.06)]'
-                              : 'w-[32px] h-[52px] mt-1.5'
+                              ? 'w-(--size-control-sm) h-(--space-9) shadow-[0_2px_12px_rgba(0,0,0,0.06)]'
+                              : 'w-(--space-7) h-[52px] mt-1.5'
                           }`}
                         >
                           <div
                             className={`rounded-full transition-all duration-300 mt-[2px] ${
-                              isCurrent ? 'w-[30px] h-[30px]' : 'w-[24px] h-[24px]'
+                              isCurrent ? 'w-[30px] h-[30px]' : 'w-(--space-6) h-(--space-6)'
                             }`}
                             style={{
                               backgroundColor: style.isStriped ? 'transparent' : style.bg,
@@ -190,7 +190,7 @@ export function CycleSyncing() {
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.3 }}
-                  className="text-[36px] md:text-[44px] font-serif font-medium mb-3 motion-reduce:transform-none"
+                  className="text-4xl leading-normal md:text-public-cycle-phase font-serif font-medium mb-3 motion-reduce:transform-none"
                   style={{ color: activePhase.color }}
                 >
                   {activePhase.shortName}

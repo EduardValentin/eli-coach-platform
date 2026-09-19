@@ -1,7 +1,10 @@
+export { Alert } from "./alert";
 export { Button, buttonVariants } from "./button";
-export { Card } from "./card";
+export { Card, cardVariants } from "./card";
 export { Checkbox } from "./checkbox";
 export { IconButton } from "./icon-button";
-export { Input, inputClasses } from "./input";
+export { Input } from "./input";
+export { Label } from "./label";
 export { Link, linkVariants } from "./link";
 export { SectionEyebrow } from "./section-eyebrow";
+export { Textarea } from "./textarea";

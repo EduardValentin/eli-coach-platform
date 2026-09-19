@@ -69,7 +69,7 @@ describe("PublicPlatform", () => {
 
     // assert
     expectCloudPressed("Nutrition planner", true);
-    expect(screen.getByText("Today · April 17")).toBeInTheDocument();
+    expect(await screen.findByText("Today · April 17")).toBeInTheDocument();
     expect(screen.getByText("Your nutrition")).toBeInTheDocument();
     expect(screen.queryByText("Lower Strength")).not.toBeInTheDocument();
 
@@ -78,7 +78,7 @@ describe("PublicPlatform", () => {
 
     // assert
     expectCloudPressed("Chat with your coach", true);
-    expect(screen.getByText("Evoa")).toBeInTheDocument();
+    expect(await screen.findByText("Evoa")).toBeInTheDocument();
     expect(
       screen.getByText("How did Tuesday's session feel?"),
     ).toBeInTheDocument();
@@ -89,7 +89,7 @@ describe("PublicPlatform", () => {
 
     // assert
     expectCloudPressed("Cycle tracking", true);
-    expect(screen.getByText("Day 14 · Cycle")).toBeInTheDocument();
+    expect(await screen.findByText("Day 14 · Cycle")).toBeInTheDocument();
     expect(screen.getByText("Ovulatory phase")).toBeInTheDocument();
     expect(screen.getByText("Day 1–5")).toBeInTheDocument();
     expect(screen.getByText("Day 6–13")).toBeInTheDocument();
@@ -107,9 +107,9 @@ describe("PublicPlatform", () => {
     await user.click(getCloudButtons("Chat with your coach")[0]);
 
     // assert
-    const proposal = screen
-      .getByText("Fri 9:00 AM · 20 min")
-      .closest("section");
+    const proposal = (await screen.findByText("Fri 9:00 AM · 20 min")).closest(
+      "section",
+    );
 
     expect(proposal).not.toBeNull();
     expect(
