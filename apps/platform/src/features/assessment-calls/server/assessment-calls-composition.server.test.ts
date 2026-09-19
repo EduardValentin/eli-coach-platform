@@ -14,8 +14,8 @@ const BOOKED_ROW = {
   visitorEmail: "ana@example.com",
   visitorNotes: "Training three times a week.",
   startsAt: new Date("2026-10-20T14:00:00.000Z"),
-  visitorTimeZone: "Europe/Bucharest",
-  coachTimeZone: "Europe/Bucharest",
+  visitorTimeZone: "Europe/Chisinau",
+  coachTimeZone: "Europe/Chisinau",
   bookedAt: new Date("2026-10-18T09:30:00.000Z"),
 };
 

@@ -18,6 +18,15 @@ const VALID_REQUEST = {
   notes: "Training three times a week.",
   visitorTimeZone: "Europe/Bucharest",
 };
+const COACH_CALL = {
+  id: "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11",
+  visitorName: "Ana Popescu",
+  visitorEmail: "ana@example.com",
+  visitorNotes: "Training three times a week.",
+  startsAt: "2026-10-01T14:00:00.000Z",
+  endsAt: "2026-10-01T14:30:00.000Z",
+  joinPath: "/book/4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11/join",
+};
 
 describe("openSlotsResponseSchema", () => {
   it("publishes open slots as ISO instants alongside the coach time zone", () => {
@@ -400,15 +409,7 @@ describe("bookAssessmentCallResponseSchema", () => {
 describe("coachAssessmentCallSchema", () => {
   it("publishes a booked call with the join path the coach follows", () => {
     // arrange
-    const call = {
-      id: "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11",
-      visitorName: "Ana Popescu",
-      visitorEmail: "ana@example.com",
-      visitorNotes: "Training three times a week.",
-      startsAt: "2026-10-01T14:00:00.000Z",
-      endsAt: "2026-10-01T14:30:00.000Z",
-      joinPath: "/book/4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11/join",
-    };
+    const call = COACH_CALL;
 
     // act
     const result = coachAssessmentCallSchema.safeParse(call);
@@ -420,15 +421,7 @@ describe("coachAssessmentCallSchema", () => {
 
   it("publishes a call the visitor left no notes on", () => {
     // arrange
-    const call = {
-      id: "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11",
-      visitorName: "Ana Popescu",
-      visitorEmail: "ana@example.com",
-      visitorNotes: null,
-      startsAt: "2026-10-01T14:00:00.000Z",
-      endsAt: "2026-10-01T14:30:00.000Z",
-      joinPath: "/book/4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11/join",
-    };
+    const call = { ...COACH_CALL, visitorNotes: null };
 
     // act
     const result = coachAssessmentCallSchema.safeParse(call);
@@ -440,15 +433,7 @@ describe("coachAssessmentCallSchema", () => {
 
   it("rejects an end that is not an ISO instant", () => {
     // arrange
-    const call = {
-      id: "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11",
-      visitorName: "Ana Popescu",
-      visitorEmail: "ana@example.com",
-      visitorNotes: null,
-      startsAt: "2026-10-01T14:00:00.000Z",
-      endsAt: "2026-10-01 14:30",
-      joinPath: "/book/4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11/join",
-    };
+    const call = { ...COACH_CALL, endsAt: "2026-10-01 14:30" };
 
     // act
     const result = coachAssessmentCallSchema.safeParse(call);
@@ -463,17 +448,7 @@ describe("coachAssessmentCallsSchema", () => {
   it("publishes the coach's calls beside her time zone and the server instant", () => {
     // arrange
     const dashboard = {
-      calls: [
-        {
-          id: "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11",
-          visitorName: "Ana Popescu",
-          visitorEmail: "ana@example.com",
-          visitorNotes: null,
-          startsAt: "2026-10-01T14:00:00.000Z",
-          endsAt: "2026-10-01T14:30:00.000Z",
-          joinPath: "/book/4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11/join",
-        },
-      ],
+      calls: [COACH_CALL],
       coachTimeZone: "Europe/Bucharest",
       now: "2026-09-30T08:00:00.000Z",
     };
