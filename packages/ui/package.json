@@ -30,6 +30,7 @@
     "clsx": "catalog:",
     "radix-ui": "catalog:",
     "react-day-picker": "catalog:",
+    "sonner": "catalog:",
     "tailwind-merge": "catalog:"
   },
   "devDependencies": {

@@ -56,6 +56,7 @@ catalog:
   react-router: 7.18.2
   react: 19.2.8
   resend: 6.12.3
+  sonner: 2.0.3
   tailwind-merge: 3.5.0
   tailwindcss: 4.2.4
   testcontainers: 12.1.0
