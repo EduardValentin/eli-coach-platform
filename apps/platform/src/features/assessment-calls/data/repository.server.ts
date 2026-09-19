@@ -50,6 +50,15 @@ export class PostgresAssessmentCallRepository implements AssessmentCallReservati
       throw error;
     }
   }
+
+  async listAll(): Promise<AssessmentCall[]> {
+    const rows = await this.database
+      .select()
+      .from(assessmentCallsTable)
+      .orderBy(assessmentCallsTable.startsAt);
+
+    return rows.map(toAssessmentCall);
+  }
 }
 
 async function reserveUnderEmailLock(

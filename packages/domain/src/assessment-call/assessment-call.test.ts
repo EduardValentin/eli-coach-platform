@@ -31,6 +31,41 @@ describe("AssessmentCall#endsAt", () => {
   });
 });
 
+describe("AssessmentCall#hasEnded", () => {
+  it("has not ended before the end instant", () => {
+    // arrange
+    const call = bookedCall();
+
+    // act
+    const ended = call.hasEnded(new Date("2026-06-01T15:29:59.999Z"));
+
+    // assert
+    expect(ended).toBe(false);
+  });
+
+  it("has ended at the end instant", () => {
+    // arrange
+    const call = bookedCall();
+
+    // act
+    const ended = call.hasEnded(new Date("2026-06-01T15:30:00.000Z"));
+
+    // assert
+    expect(ended).toBe(true);
+  });
+
+  it("has ended after the end instant", () => {
+    // arrange
+    const call = bookedCall();
+
+    // act
+    const ended = call.hasEnded(new Date("2026-06-01T15:30:00.001Z"));
+
+    // assert
+    expect(ended).toBe(true);
+  });
+});
+
 describe("AssessmentCall#toSnapshot", () => {
   it("carries every field and the derived end as instants", () => {
     // arrange

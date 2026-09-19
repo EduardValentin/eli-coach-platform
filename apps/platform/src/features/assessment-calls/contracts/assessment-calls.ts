@@ -86,11 +86,29 @@ export const bookAssessmentCallResponseSchema = z.discriminatedUnion(
   [bookAssessmentCallSuccessSchema, bookAssessmentCallErrorSchema],
 );
 
+export const coachAssessmentCallSchema = z.object({
+  id: z.uuid(),
+  visitorName: z.string().min(1),
+  visitorEmail: z.email(),
+  visitorNotes: z.string().nullable(),
+  startsAt: z.iso.datetime(),
+  endsAt: z.iso.datetime(),
+  joinPath: z.string().min(1),
+});
+
+export const coachAssessmentCallsSchema = z.object({
+  calls: z.array(coachAssessmentCallSchema),
+  coachTimeZone: z.string().min(1),
+  now: z.iso.datetime(),
+});
+
 export type OpenSlotsResponse = z.infer<typeof openSlotsResponseSchema>;
 export type BookAssessmentCallRequest = z.infer<
   typeof bookAssessmentCallRequestSchema
 >;
 export type Booking = z.infer<typeof bookingSchema>;
+export type CoachAssessmentCall = z.infer<typeof coachAssessmentCallSchema>;
+export type CoachAssessmentCalls = z.infer<typeof coachAssessmentCallsSchema>;
 export type BookAssessmentCallErrorCode = z.infer<
   typeof bookAssessmentCallErrorCodeSchema
 >;

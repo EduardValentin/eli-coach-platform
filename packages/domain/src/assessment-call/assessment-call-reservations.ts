@@ -19,4 +19,5 @@ export type ReservationResult =
 export interface AssessmentCallReservations {
   reserve(command: ReserveAssessmentCallCommand): Promise<ReservationResult>;
   findById(id: string): Promise<AssessmentCall | null>;
+  listAll(): Promise<AssessmentCall[]>;
 }

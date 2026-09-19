@@ -16,6 +16,10 @@ export {
   type BookAssessmentCallResult,
 } from "./book-assessment-call-use-case";
 export {
+  ListAssessmentCallsUseCase,
+  type AssessmentCallListing,
+} from "./list-assessment-calls-use-case";
+export {
   ListOpenSlotsUseCase,
   type OpenSlotsResult,
 } from "./list-open-slots-use-case";

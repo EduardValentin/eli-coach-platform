@@ -8,6 +8,17 @@ import {
   type AssessmentCallsFeatureHandles,
 } from "./assessment-calls-composition.server";
 
+const STORED_ROW = {
+  id: "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11",
+  visitorName: "Ana Popescu",
+  visitorEmail: "ana@example.com",
+  visitorNotes: "Training three times a week.",
+  startsAt: new Date("2026-10-20T14:00:00.000Z"),
+  visitorTimeZone: "Europe/Bucharest",
+  coachTimeZone: "Europe/Bucharest",
+  bookedAt: new Date("2026-10-18T09:30:00.000Z"),
+};
+
 describe("composeAssessmentCallsFeature", () => {
   it("hides the booking page while the site is in waitlist mode", async () => {
     // arrange
@@ -37,6 +48,34 @@ describe("composeAssessmentCallsFeature", () => {
       status: "unavailable",
     });
   });
+
+  it("serves the coach dashboard every booked call in her own time zone", async () => {
+    // arrange
+    const feature = composeAssessmentCallsFeature({
+      ...createHandles({ WAITLIST_MODE: false }),
+      database: createDatabaseReturning([STORED_ROW]),
+    });
+
+    // act
+    const dashboard = await feature.coachAssessmentCalls.loadDashboard();
+
+    // assert
+    expect(dashboard).toEqual({
+      calls: [
+        {
+          id: "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11",
+          visitorName: "Ana Popescu",
+          visitorEmail: "ana@example.com",
+          visitorNotes: "Training three times a week.",
+          startsAt: "2026-10-20T14:00:00.000Z",
+          endsAt: "2026-10-20T14:30:00.000Z",
+          joinPath: "/book/4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11/join",
+        },
+      ],
+      coachTimeZone: "Europe/Bucharest",
+      now: "2026-10-19T08:00:00.000Z",
+    });
+  });
 });
 
 function createHandles(
@@ -62,6 +101,17 @@ function createHandles(
     productEmail: new InMemoryProductEmail(),
     publicAppUrl: "https://evoa.fit",
   };
+}
+
+function createDatabaseReturning(rows: readonly unknown[]): DatabaseClient {
+  const chain = {
+    from: () => chain,
+    orderBy: () => chain,
+    then: (onFulfilled: (value: readonly unknown[]) => unknown) =>
+      Promise.resolve(rows).then(onFulfilled),
+  };
+
+  return { select: () => chain } as unknown as DatabaseClient;
 }
 
 function createDatabaseStub(): DatabaseClient {

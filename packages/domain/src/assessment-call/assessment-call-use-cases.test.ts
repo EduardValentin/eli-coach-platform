@@ -12,6 +12,7 @@ import type { AssessmentCallNotifications } from "./assessment-call-notification
 import type { AssessmentCallReservations } from "./assessment-call-reservations";
 import { AssessmentCall } from "./assessment-call";
 import { BookAssessmentCallUseCase } from "./book-assessment-call-use-case";
+import { ListAssessmentCallsUseCase } from "./list-assessment-calls-use-case";
 import { ListOpenSlotsUseCase } from "./list-open-slots-use-case";
 import type { MeetingRoomLink } from "./meeting-room-link";
 import { ResolveJoinLinkUseCase } from "./resolve-join-link-use-case";
@@ -74,6 +75,7 @@ function createAvailabilitySource(
 
 function existingCall(props?: {
   id?: string;
+  startsAt?: Date;
   visitorEmail?: string;
 }): AssessmentCall {
   return AssessmentCall.reconstitute({
@@ -81,7 +83,7 @@ function existingCall(props?: {
     visitorName: "Ana Popescu",
     visitorEmail: props?.visitorEmail ?? "ana@example.com",
     visitorNotes: null,
-    startsAt: OPEN_START,
+    startsAt: props?.startsAt ?? OPEN_START,
     visitorTimeZone: "Europe/Bucharest",
     coachTimeZone: COACH_TIME_ZONE,
     bookedAt: new Date("2026-05-30T09:12:00.000Z"),
@@ -96,6 +98,7 @@ function createReservations(
       .fn()
       .mockResolvedValue({ status: "reserved", call: existingCall() }),
     findById: vi.fn().mockResolvedValue(null),
+    listAll: vi.fn().mockResolvedValue([]),
     ...options,
   };
 }
@@ -321,6 +324,64 @@ describe("ListOpenSlotsUseCase", () => {
     // assert
     expect(result).toEqual({ status: "unavailable" });
     expect(incidents.slotsReadFailed).toHaveBeenCalledOnce();
+  });
+});
+
+describe("ListAssessmentCallsUseCase", () => {
+  it("lists the coach's calls as snapshots carrying their end, in her time zone", async () => {
+    // arrange
+    const call = existingCall();
+    const listAssessmentCalls = new ListAssessmentCallsUseCase({
+      availability: createAvailabilitySource("Europe/Chisinau"),
+      reservations: createReservations({
+        listAll: vi.fn().mockResolvedValue([call]),
+      }),
+    });
+
+    // act
+    const listing = await listAssessmentCalls.execute();
+
+    // assert
+    expect(listing).toEqual({
+      coachTimeZone: "Europe/Chisinau",
+      calls: [call.toSnapshot()],
+    });
+    expect(listing.calls[0]?.endsAt).toEqual(call.endsAt());
+  });
+
+  it("keeps the order the reservations hand it", async () => {
+    // arrange
+    const earlier = existingCall({ id: "call-1", startsAt: OPEN_START });
+    const later = existingCall({
+      id: "call-2",
+      startsAt: new Date("2026-06-02T15:00:00.000Z"),
+    });
+    const listAssessmentCalls = new ListAssessmentCallsUseCase({
+      availability: createAvailabilitySource(),
+      reservations: createReservations({
+        listAll: vi.fn().mockResolvedValue([earlier, later]),
+      }),
+    });
+
+    // act
+    const listing = await listAssessmentCalls.execute();
+
+    // assert
+    expect(listing.calls.map((call) => call.id)).toEqual(["call-1", "call-2"]);
+  });
+
+  it("still names the coach's time zone when she has no calls", async () => {
+    // arrange
+    const listAssessmentCalls = new ListAssessmentCallsUseCase({
+      availability: createAvailabilitySource(),
+      reservations: createReservations(),
+    });
+
+    // act
+    const listing = await listAssessmentCalls.execute();
+
+    // assert
+    expect(listing).toEqual({ coachTimeZone: COACH_TIME_ZONE, calls: [] });
   });
 });
 
