@@ -8,11 +8,13 @@ export const PAGE_SIZE = 10;
 
 const LISTING_PARAMS = [STATUS_PARAM, QUERY_PARAM, PAGE_PARAM];
 
-const FIRST_PAGE = 1;
+export const FIRST_PAGE = 1;
 const PAGES_AROUND_CURRENT = 1;
 const PAGES_SHOWN_WITHOUT_GAPS = 7;
 
 export type CoachCallStatus = "upcoming" | "today" | "past" | "all";
+
+export const DEFAULT_CALL_STATUS: CoachCallStatus = "upcoming";
 
 type CoachCallTiming = "upcoming" | "past";
 
@@ -99,7 +101,7 @@ export function parseStatusParam(raw: string | null): CoachCallStatus {
     return raw;
   }
 
-  return "upcoming";
+  return DEFAULT_CALL_STATUS;
 }
 
 export function parsePageParam(raw: string | null): number {

@@ -4,14 +4,13 @@ import { useLocation } from "react-router";
 import {
   parsePageParam,
   parseStatusParam,
+  DEFAULT_CALL_STATUS,
+  FIRST_PAGE,
   PAGE_PARAM,
   QUERY_PARAM,
   STATUS_PARAM,
   type CoachCallStatus,
 } from "~/features/assessment-calls/ui/coach/assessment-call-listing";
-
-const DEFAULT_STATUS: CoachCallStatus = "upcoming";
-const FIRST_PAGE = 1;
 
 export type CallListingParams = {
   changeQuery: (value: string) => void;
@@ -32,7 +31,7 @@ export function useCallListingParams(): CallListingParams {
     replaceSearchParams((params) => {
       params.delete(PAGE_PARAM);
 
-      if (chosen === DEFAULT_STATUS) {
+      if (chosen === DEFAULT_CALL_STATUS) {
         params.delete(STATUS_PARAM);
         return;
       }

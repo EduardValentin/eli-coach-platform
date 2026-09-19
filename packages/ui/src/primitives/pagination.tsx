@@ -149,11 +149,11 @@ function PaginationEdge(props: {
   );
 }
 
-const STEP_GLYPH_SIZE = 24;
+const GLYPH_ATTRIBUTE_SIZE = 24;
 
 function ChevronLeftGlyph() {
   return (
-    <svg aria-hidden="true" {...glyphAttributes(STEP_GLYPH_SIZE)}>
+    <svg aria-hidden="true" {...glyphAttributes(GLYPH_ATTRIBUTE_SIZE)}>
       <path d="m15 18-6-6 6-6" />
     </svg>
   );
@@ -161,7 +161,7 @@ function ChevronLeftGlyph() {
 
 function ChevronRightGlyph() {
   return (
-    <svg aria-hidden="true" {...glyphAttributes(STEP_GLYPH_SIZE)}>
+    <svg aria-hidden="true" {...glyphAttributes(GLYPH_ATTRIBUTE_SIZE)}>
       <path d="m9 18 6-6-6-6" />
     </svg>
   );
@@ -172,7 +172,7 @@ function EllipsisGlyph() {
     <svg
       aria-hidden="true"
       className="size-4"
-      {...glyphAttributes(STEP_GLYPH_SIZE)}
+      {...glyphAttributes(GLYPH_ATTRIBUTE_SIZE)}
     >
       <circle cx="12" cy="12" r="1" />
       <circle cx="19" cy="12" r="1" />

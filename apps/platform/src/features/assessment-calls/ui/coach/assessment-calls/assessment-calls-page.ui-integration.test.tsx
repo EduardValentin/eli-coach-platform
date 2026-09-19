@@ -287,21 +287,44 @@ describe("the coach's assessment calls page", () => {
     ).toBeInTheDocument();
   });
 
-  it("says so for each filter that has nothing to show", async () => {
-    // arrange
-    const user = await renderCallsPage({ calls: [] });
+  it("says nothing is coming up when no call is upcoming", async () => {
+    // arrange, act
+    await renderCallsPage({ calls: [] });
 
     // assert
     expect(screen.getByText("No upcoming calls.")).toBeInTheDocument();
+  });
 
-    // act, assert
+  it("says nothing is on today when no call falls today", async () => {
+    // arrange
+    const user = await renderCallsPage({ calls: [] });
+
+    // act
     await user.click(screen.getByRole("tab", { name: "Today" }));
+
+    // assert
     expect(screen.getByText("No calls today.")).toBeInTheDocument();
+  });
 
+  it("says there is no history when no call has ended", async () => {
+    // arrange
+    const user = await renderCallsPage({ calls: [] });
+
+    // act
     await user.click(screen.getByRole("tab", { name: "Past" }));
-    expect(screen.getByText("No past calls.")).toBeInTheDocument();
 
+    // assert
+    expect(screen.getByText("No past calls.")).toBeInTheDocument();
+  });
+
+  it("says no call has ever been booked when the whole list is empty", async () => {
+    // arrange
+    const user = await renderCallsPage({ calls: [] });
+
+    // act
     await user.click(screen.getByRole("tab", { name: "All" }));
+
+    // assert
     expect(screen.getByText("No calls yet.")).toBeInTheDocument();
   });
 

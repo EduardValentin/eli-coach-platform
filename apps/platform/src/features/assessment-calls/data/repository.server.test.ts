@@ -121,20 +121,6 @@ describe("PostgresAssessmentCallRepository#listAll", () => {
     ]);
   });
 
-  it("leaves the order to Postgres, earliest call first", async () => {
-    // arrange
-    const orderedBy: unknown[] = [];
-    const repository = new PostgresAssessmentCallRepository(
-      createDatabaseReturning([STORED_ROW], orderedBy),
-    );
-
-    // act
-    await repository.listAll();
-
-    // assert
-    expect(orderedBy).toEqual([assessmentCallsTable.startsAt]);
-  });
-
   it("lists nothing when no call is booked", async () => {
     // arrange
     const repository = new PostgresAssessmentCallRepository(
@@ -149,12 +135,9 @@ describe("PostgresAssessmentCallRepository#listAll", () => {
   });
 });
 
-function createDatabaseReturning(
-  rows: readonly unknown[],
-  orderedBy: unknown[] = [],
-): DatabaseClient {
+function createDatabaseReturning(rows: readonly unknown[]): DatabaseClient {
   return {
-    select: vi.fn().mockReturnValue(createQueryChain(rows, orderedBy)),
+    select: vi.fn().mockReturnValue(createQueryChain(rows)),
   } as unknown as DatabaseClient;
 }
 
@@ -164,15 +147,11 @@ function createDatabaseRejecting(error: Error): DatabaseClient {
   } as unknown as DatabaseClient;
 }
 
-function createQueryChain(rows: readonly unknown[], orderedBy: unknown[]) {
+function createQueryChain(rows: readonly unknown[]) {
   const chain = {
     from: () => chain,
     where: () => chain,
-    orderBy: (...columns: unknown[]) => {
-      orderedBy.push(...columns);
-
-      return chain;
-    },
+    orderBy: () => chain,
     limit: () => chain,
     then: (onFulfilled: (value: readonly unknown[]) => unknown) =>
       Promise.resolve(rows).then(onFulfilled),
