@@ -13,7 +13,7 @@ function isFormattableTimeZone(timeZone: string): boolean {
   }
 }
 
-const timeZoneSchema = z
+export const timeZoneSchema = z
   .string()
   .max(MAX_TIME_ZONE_LENGTH, "Please choose a known time zone.")
   .refine(isFormattableTimeZone, "Please choose a known time zone.")

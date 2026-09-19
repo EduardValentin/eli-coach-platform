@@ -47,11 +47,13 @@ describe("CoachLayoutRoute", () => {
     });
     const links = within(navigation).getAllByRole("link");
 
-    expect(links).toHaveLength(2);
+    expect(links).toHaveLength(3);
     expect(links[0]).toHaveAccessibleName("Dashboard");
     expect(links[0]).toHaveAttribute("href", "/coach");
     expect(links[1]).toHaveAccessibleName("Assessment calls");
     expect(links[1]).toHaveAttribute("href", "/coach/assessment-calls");
+    expect(links[2]).toHaveAccessibleName("Settings");
+    expect(links[2]).toHaveAttribute("href", "/coach/settings");
   });
 
   it("marks the assessment calls entry as the page being read", () => {

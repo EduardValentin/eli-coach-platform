@@ -3,27 +3,33 @@ import type { DatabaseClient } from "@eli-coach-platform/db";
 import {
   AssessmentCallBookingWindow,
   BookAssessmentCallUseCase,
+  GetAssessmentCallSettingsUseCase,
   ListAssessmentCallsUseCase,
   ListOpenSlotsUseCase,
   ResolveJoinLinkUseCase,
+  UpdateAssessmentCallSettingsUseCase,
   type AssessmentCallIncidents,
 } from "@eli-coach-platform/domain/assessment-call";
 import type { FeatureFlagReader } from "@eli-coach-platform/domain/feature-flag";
 import type { Clock } from "@eli-coach-platform/domain/shared";
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 import type { BotVerifier } from "@eli-coach-platform/infrastructure/bot-detection/server";
-import { PostgresCoachCalendar } from "@eli-coach-platform/infrastructure/coach-calendar/server";
+import {
+  PostgresCoachAvailability,
+  PostgresCoachCalendar,
+} from "@eli-coach-platform/infrastructure/coach-calendar/server";
+import { PostgresCoachMeetingRoom } from "@eli-coach-platform/infrastructure/coach-meeting-room/server";
 import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 
-import { AssessmentCallsController } from "~/features/assessment-calls/api/assessment-calls-controller.server";
+import { AssessmentCallSettingsController } from "~/features/assessment-calls/api/settings/assessment-call-settings-controller.server";
+import { AssessmentCallsController } from "~/features/assessment-calls/api/booking/assessment-calls-controller.server";
 import { CoachAssessmentCallsController } from "~/features/assessment-calls/api/coach-assessment-calls-controller.server";
-import { ConfiguredMeetingRoomLink } from "~/features/assessment-calls/data/configured-meeting-room-link.server";
 import { PostgresAssessmentCallRepository } from "~/features/assessment-calls/data/repository.server";
-import { StaticCoachAvailability } from "~/features/assessment-calls/data/static-coach-availability.server";
 import { createAssessmentCallNotifications } from "~/features/assessment-calls/email/create-assessment-call-notifications.server";
 
 export type AssessmentCallsFeature = {
   assessmentCalls: AssessmentCallsController;
+  assessmentCallSettings: AssessmentCallSettingsController;
   coachAssessmentCalls: CoachAssessmentCallsController;
 };
 
@@ -44,7 +50,14 @@ export type AssessmentCallsFeatureHandles = {
 export function composeAssessmentCallsFeature(
   handles: AssessmentCallsFeatureHandles,
 ): AssessmentCallsFeature {
-  const availability = new StaticCoachAvailability();
+  const availability = new PostgresCoachAvailability({
+    clock: handles.clock,
+    database: handles.database,
+  });
+  const meetingRoom = new PostgresCoachMeetingRoom({
+    clock: handles.clock,
+    database: handles.database,
+  });
   const reservations = new PostgresAssessmentCallRepository(handles.database);
   const bookingWindow = new AssessmentCallBookingWindow({
     featureFlags: handles.featureFlags,
@@ -76,10 +89,18 @@ export function composeAssessmentCallsFeature(
         incidents: handles.incidents,
       }),
       resolveJoinLink: new ResolveJoinLinkUseCase({
-        meetingRoomLink: new ConfiguredMeetingRoomLink(
-          handles.assessmentCallsConfig.ASSESSMENT_CALL_MEETING_LINK,
-        ),
+        meetingRoom,
         reservations,
+      }),
+    }),
+    assessmentCallSettings: new AssessmentCallSettingsController({
+      getSettings: new GetAssessmentCallSettingsUseCase({
+        availability,
+        meetingRoom,
+      }),
+      updateSettings: new UpdateAssessmentCallSettingsUseCase({
+        availabilityChanges: availability,
+        meetingRoomChanges: meetingRoom,
       }),
     }),
     coachAssessmentCalls: new CoachAssessmentCallsController({

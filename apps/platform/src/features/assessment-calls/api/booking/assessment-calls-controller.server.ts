@@ -15,6 +15,7 @@ import {
 } from "@eli-coach-platform/infrastructure/bot-detection";
 import { resolveRequestRemoteIp } from "@eli-coach-platform/infrastructure/bot-detection/server";
 
+import { resolveFieldErrorCode } from "~/features/assessment-calls/api/resolve-field-error-code";
 import {
   bookAssessmentCallErrorSchema,
   bookAssessmentCallRequestSchema,
@@ -39,10 +40,6 @@ type AssessmentCallsControllerOptions = {
 type BookingErrorOptions = {
   code: BookAssessmentCallErrorCode;
   status: number;
-};
-
-type ValidationIssue = {
-  path: PropertyKey[];
 };
 
 const VALIDATION_ERROR_CODES = {
@@ -118,7 +115,11 @@ export class AssessmentCallsController {
 
     if (!submission.success) {
       return createBookingErrorResponse({
-        code: resolveValidationErrorCode(submission.error.issues),
+        code: resolveFieldErrorCode(
+          submission.error.issues,
+          VALIDATION_ERROR_CODES,
+          "server_error",
+        ),
         status: 400,
       });
     }
@@ -218,18 +219,6 @@ function createBookingErrorResponse(options: BookingErrorOptions): Response {
 
 function createNotFoundResponse(): Response {
   return new Response("Not Found", { status: 404 });
-}
-
-function resolveValidationErrorCode(
-  issues: readonly ValidationIssue[],
-): BookAssessmentCallErrorCode {
-  for (const [field, code] of Object.entries(VALIDATION_ERROR_CODES)) {
-    if (issues.some((issue) => issue.path[0] === field)) {
-      return code;
-    }
-  }
-
-  return "server_error";
 }
 
 function readNotes(formData: FormData): string | undefined {

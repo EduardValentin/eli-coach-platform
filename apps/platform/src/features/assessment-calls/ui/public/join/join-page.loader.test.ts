@@ -29,6 +29,17 @@ describe("assessment call join loader", () => {
     expect(resolveJoin).toHaveBeenCalledWith(BOOKING_ID);
   });
 
+  it("answers a known booking with no saved meeting link as not ready", async () => {
+    // arrange
+    const resolveJoin = vi.fn().mockResolvedValue({ status: "link_not_set" });
+
+    // act
+    const result = await loader(createLoaderArguments(resolveJoin, BOOKING_ID));
+
+    // assert
+    expect(result).toEqual({ status: "link_not_set" });
+  });
+
   it("answers an unknown booking as not found", async () => {
     // arrange
     const resolveJoin = vi.fn().mockResolvedValue({ status: "unknown" });

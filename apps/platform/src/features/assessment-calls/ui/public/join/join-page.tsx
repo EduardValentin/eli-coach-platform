@@ -15,9 +15,13 @@ export async function loader({ context, params }: LoaderFunctionArgs) {
     throw redirect(link.url, 302);
   }
 
+  if (link.status === "link_not_set") {
+    return { status: "link_not_set" } as const;
+  }
+
   throw new Response("Not Found", { status: 404 });
 }
 
 export default function AssessmentCallJoinRoute() {
-  return null;
+  return <h1>Your call link isn't ready yet</h1>;
 }

@@ -1,7 +1,10 @@
 import { index, relative } from "@react-router/dev/routes";
 
 import { accountsDeadEndRoutes } from "../../features/accounts/routes";
-import { assessmentCallsPublicRoutes } from "../../features/assessment-calls/routes";
+import {
+  assessmentCallsJoinRoutes,
+  assessmentCallsPublicRoutes,
+} from "../../features/assessment-calls/routes";
 import { storePublicRoutes } from "../../features/store/routes";
 
 import { PRICING_PATH } from "./paths";
@@ -19,4 +22,5 @@ export const publicSiteRoutes = [
     ...storePublicRoutes,
   ]),
   ...accountsDeadEndRoutes,
+  ...assessmentCallsJoinRoutes,
 ];
