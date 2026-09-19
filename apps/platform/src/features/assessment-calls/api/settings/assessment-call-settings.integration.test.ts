@@ -17,6 +17,7 @@ import {
   updateAssessmentCallSettingsErrorSchema,
   updateAssessmentCallSettingsSuccessSchema,
 } from "~/features/assessment-calls/contracts/assessment-call-settings";
+import { COACH_SETTINGS_PATH } from "~/features/assessment-calls/contracts/paths";
 import { ApiIntegrationTestSuite } from "~integration-test-config/api-integration-test-suite";
 import { mintSessionToken } from "~integration-test-config/clerk-session";
 import { turnstileTokenForAction } from "~integration-test-config/wire-mock/expectations/turnstile-siteverify";
@@ -275,6 +276,41 @@ describe.sequential("assessment call settings integration", () => {
     expect(slots[0]).toBe(TUESDAY_EVENING_START);
   });
 
+  it("shows the coach her saved assessment call settings on /coach/settings", async () => {
+    // arrange
+    const savedAt = new Date("2026-10-12T09:00:00.000Z");
+    await suite.setServerClock(savedAt);
+    await requestSettingsUpdate({
+      authorization: coachAuthorization(savedAt),
+      body: VALID_UPDATE,
+    });
+
+    // act
+    const response = await requestSettingsPage(coachAuthorization(savedAt));
+
+    // assert
+    expect(response.status).toBe(200);
+
+    const document = await response.text();
+
+    expect(document).toContain("Mon");
+    expect(document).toContain("Wed");
+    expect(document).toContain("09:00");
+    expect(document).toContain("11:00");
+    expect(document).toContain(VALID_UPDATE.meetingLink);
+  });
+
+  it("refuses a client's request for /coach/settings", async () => {
+    // arrange
+    await provisionClient();
+
+    // act
+    const response = await requestSettingsPage(clientAuthorization());
+
+    // assert
+    expect(response.status).toBe(403);
+  });
+
   describe("schema constraints", () => {
     it("refuses a coach_availability row whose id is not the singleton 1", async () => {
       // arrange, act
@@ -373,6 +409,14 @@ async function requestSettingsUpdate(options: {
           : {}),
       },
       method: "PUT",
+    }),
+  );
+}
+
+async function requestSettingsPage(authorization: string): Promise<Response> {
+  return suite.request(
+    new Request(suite.url(COACH_SETTINGS_PATH), {
+      headers: { authorization },
     }),
   );
 }

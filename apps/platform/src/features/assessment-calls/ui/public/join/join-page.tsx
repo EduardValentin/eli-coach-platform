@@ -1,4 +1,12 @@
-import { redirect, type LoaderFunctionArgs } from "react-router";
+import { DeadEndPage } from "@eli-coach-platform/ui/layout";
+import { buttonVariants } from "@eli-coach-platform/ui/primitives";
+import { ArrowRight, VideoOff } from "lucide-react";
+import {
+  redirect,
+  Link,
+  type LoaderFunctionArgs,
+  type MetaFunction,
+} from "react-router";
 
 import { assessmentCallsContext } from "~/features/assessment-calls/server/guards/assessment-calls-context.server";
 
@@ -22,6 +30,28 @@ export async function loader({ context, params }: LoaderFunctionArgs) {
   throw new Response("Not Found", { status: 404 });
 }
 
+export const meta: MetaFunction = () => [
+  { title: "Call link not ready | Evoa" },
+];
+
 export default function AssessmentCallJoinRoute() {
-  return <h1>Your call link isn't ready yet</h1>;
+  return (
+    <div data-parity-root="JoinCall">
+      <DeadEndPage
+        description="The meeting room for this call hasn't been set up yet. Check back before your call, or reply to your confirmation email and we'll send the link."
+        eyebrow="Assessment call"
+        icon={<VideoOff aria-hidden="true" size={36} />}
+        landmarkLabel="Assessment call"
+        title="Your call link isn't ready yet"
+      >
+        <Link
+          className={buttonVariants({ size: "lg", variant: "inverted" })}
+          to="/"
+        >
+          Back to home
+          <ArrowRight aria-hidden="true" size={18} />
+        </Link>
+      </DeadEndPage>
+    </div>
+  );
 }
