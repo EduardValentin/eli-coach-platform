@@ -2,6 +2,7 @@ type CallMomentWording =
   | "dayFirstDate"
   | "monthFirstDate"
   | "monthFirstDay"
+  | "shortDay"
   | "clockTime"
   | "zoneOffset";
 
@@ -31,6 +32,10 @@ const WORDINGS: Record<
     locale: "en-US",
     options: { day: "numeric", month: "long", weekday: "long" },
   },
+  shortDay: {
+    locale: "en-US",
+    options: { day: "numeric", month: "short", weekday: "short" },
+  },
   clockTime: {
     locale: "en-US",
     options: { hour: "numeric", hour12: true, minute: "2-digit" },
@@ -54,6 +59,10 @@ export function formatMonthFirstDate(instant: Date, timeZone: string): string {
 
 export function formatMonthFirstDay(instant: Date, timeZone: string): string {
   return formatterFor("monthFirstDay", timeZone).format(instant);
+}
+
+export function formatShortDay(instant: Date, timeZone: string): string {
+  return formatterFor("shortDay", timeZone).format(instant);
 }
 
 export function formatClockTime(instant: Date, timeZone: string): string {

@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { formatDayFirstDate, formatCallMoment } from "./call-moment";
+import {
+  formatCallMoment,
+  formatDayFirstDate,
+  formatShortDay,
+} from "./call-moment";
 
 describe("formatCallMoment", () => {
   it("names the day, the time and the zone the reader reads it in", () => {
@@ -58,5 +62,29 @@ describe("formatDayFirstDate", () => {
 
     // assert
     expect(day).toBe("Tuesday, 3 March 2026");
+  });
+});
+
+describe("formatShortDay", () => {
+  it("shortens the day to the wording a dense list can carry", () => {
+    // arrange
+    const startsAt = new Date("2026-09-19T21:36:00.000Z");
+
+    // act
+    const day = formatShortDay(startsAt, "Europe/Bucharest");
+
+    // assert
+    expect(day).toBe("Sun, Sep 20");
+  });
+
+  it("shortens the same instant to the day the reader's zone is on", () => {
+    // arrange
+    const startsAt = new Date("2026-09-19T21:36:00.000Z");
+
+    // act
+    const day = formatShortDay(startsAt, "America/Los_Angeles");
+
+    // assert
+    expect(day).toBe("Sat, Sep 19");
   });
 });

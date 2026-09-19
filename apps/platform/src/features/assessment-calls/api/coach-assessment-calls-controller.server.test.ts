@@ -28,7 +28,7 @@ describe("CoachAssessmentCallsController", () => {
     });
 
     // act
-    const dashboard = await controller.loadDashboard();
+    const dashboard = await controller.loadCalls();
 
     // assert
     expect(dashboard).toEqual({
@@ -60,7 +60,7 @@ describe("CoachAssessmentCallsController", () => {
     });
 
     // act
-    const dashboard = await controller.loadDashboard();
+    const dashboard = await controller.loadCalls();
 
     // assert
     expect(dashboard.calls[0]?.visitorNotes).toBeNull();
@@ -74,7 +74,7 @@ describe("CoachAssessmentCallsController", () => {
     });
 
     // act
-    const dashboard = await controller.loadDashboard();
+    const dashboard = await controller.loadCalls();
 
     // assert
     expect(dashboard).toEqual({

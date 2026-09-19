@@ -22,7 +22,7 @@ export class CoachAssessmentCallsController {
     private readonly options: CoachAssessmentCallsControllerOptions,
   ) {}
 
-  async loadDashboard(): Promise<CoachAssessmentCalls> {
+  async loadCalls(): Promise<CoachAssessmentCalls> {
     return serialiseListing(
       await this.options.listAssessmentCalls.execute(),
       this.options.clock.now(),

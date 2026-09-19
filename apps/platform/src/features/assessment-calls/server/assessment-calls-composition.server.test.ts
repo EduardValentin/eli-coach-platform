@@ -49,7 +49,7 @@ describe("composeAssessmentCallsFeature", () => {
     });
   });
 
-  it("serves the coach dashboard every booked call in her own time zone", async () => {
+  it("serves the coach every booked call in her own time zone", async () => {
     // arrange
     const feature = composeAssessmentCallsFeature({
       ...createHandles({ WAITLIST_MODE: false }),
@@ -57,14 +57,14 @@ describe("composeAssessmentCallsFeature", () => {
     });
 
     // act
-    const dashboard = await feature.coachAssessmentCalls.loadDashboard();
+    const listing = await feature.coachAssessmentCalls.loadCalls();
 
     // assert
-    expect(dashboard.calls.map((call) => call.id)).toEqual([
+    expect(listing.calls.map((call) => call.id)).toEqual([
       "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11",
     ]);
-    expect(dashboard.coachTimeZone).toBe("Europe/Bucharest");
-    expect(dashboard.now).toBe("2026-10-19T08:00:00.000Z");
+    expect(listing.coachTimeZone).toBe("Europe/Bucharest");
+    expect(listing.now).toBe("2026-10-19T08:00:00.000Z");
   });
 });
 
