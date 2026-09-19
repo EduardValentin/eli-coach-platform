@@ -17,6 +17,7 @@ import type {
 import {
   sampleDashboardBookings,
   sampleImminentBookings,
+  sampleManyBookings,
 } from '../services/assessmentCallSamples';
 import { useAssessmentCalls } from '../context/AssessmentCallContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
@@ -100,10 +101,10 @@ function parseBookingOutcomeControl(value: string): PrototypeBookingOutcome {
   return 'success';
 }
 
-type DashboardCallsSeed = 'none' | 'one' | 'sample';
+type DashboardCallsSeed = 'none' | 'one' | 'sample' | 'many';
 
 function parseDashboardCallsControl(value: string): DashboardCallsSeed {
-  if (value === 'one' || value === 'sample') return value;
+  if (value === 'one' || value === 'sample' || value === 'many') return value;
 
   return 'none';
 }
@@ -147,6 +148,7 @@ export function DevToggle() {
       none: [],
       one: sampleImminentBookings(now),
       sample: sampleDashboardBookings(now),
+      many: sampleManyBookings(now),
     };
     setDashboardCalls(seed);
     replaceBookings(seeds[seed]);
@@ -377,6 +379,7 @@ export function DevToggle() {
                       <SelectItem value="sample">
                         Sample calls (today, upcoming, past)
                       </SelectItem>
+                      <SelectItem value="many">Many calls (30)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

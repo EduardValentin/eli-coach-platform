@@ -1,10 +1,12 @@
 import { motion } from 'motion/react';
-import { useSearchParams } from 'react-router';
+import { useLocation, useSearchParams } from 'react-router';
 import type { PrototypeBooking } from '../../services/assessmentCallService';
 import {
   classifyCalls,
   filterCalls,
   orderCalls,
+  pageOfCalls,
+  parsePage,
   parseStatus,
   type AssessmentCallStatus,
   type ClassifiedCall,
@@ -15,10 +17,13 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { AppointmentCard } from './AppointmentCard';
+import { CallListPager } from './CallListPager';
 import { JoinCallLink } from './JoinCallLink';
 
 const STATUS_PARAM = 'status';
 const QUERY_PARAM = 'q';
+const PAGE_PARAM = 'page';
+const CALLS_PER_PAGE = 10;
 const DEFAULT_STATUS: AssessmentCallStatus = 'upcoming';
 const SEARCH_FIELD_ID = 'assessment-call-search';
 const NO_MATCH_MESSAGE = 'No calls match your search.';
@@ -91,7 +96,7 @@ function CallList({
   }
 
   return (
-    <ul className="space-y-4">
+    <ul aria-label="Assessment calls" className="space-y-4">
       {calls.map((call) => (
         <CallItem key={call.booking.id} call={call} timeZone={timeZone} />
       ))}
@@ -108,9 +113,11 @@ export function AssessmentCallsSection({
   now: Date;
   timeZone: string;
 }) {
+  const { pathname } = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const status = parseStatus(searchParams.get(STATUS_PARAM));
   const query = searchParams.get(QUERY_PARAM) ?? '';
+  const page = parsePage(searchParams.get(PAGE_PARAM));
   const calls = orderCalls(classifyCalls(bookings, { now, timeZone }));
 
   const updateSearchParams = (edit: (params: URLSearchParams) => void) => {
@@ -122,6 +129,7 @@ export function AssessmentCallsSection({
   const chooseStatus = (value: string) => {
     const chosen = parseStatus(value);
     updateSearchParams((params) => {
+      params.delete(PAGE_PARAM);
       if (chosen === DEFAULT_STATUS) params.delete(STATUS_PARAM);
       else params.set(STATUS_PARAM, chosen);
     });
@@ -129,9 +137,26 @@ export function AssessmentCallsSection({
 
   const changeQuery = (value: string) => {
     updateSearchParams((params) => {
+      params.delete(PAGE_PARAM);
       if (value.length === 0) params.delete(QUERY_PARAM);
       else params.set(QUERY_PARAM, value);
     });
+  };
+
+  const writePage = (params: URLSearchParams, chosen: number) => {
+    if (chosen === 1) params.delete(PAGE_PARAM);
+    else params.set(PAGE_PARAM, String(chosen));
+  };
+
+  const choosePage = (chosen: number) => {
+    updateSearchParams((params) => writePage(params, chosen));
+  };
+
+  const hrefForPage = (chosen: number) => {
+    const params = new URLSearchParams(searchParams);
+    writePage(params, chosen);
+    const search = params.toString();
+    return search.length > 0 ? `${pathname}?${search}` : pathname;
   };
 
   const emptyMessageFor = (tabStatus: AssessmentCallStatus) =>
@@ -141,7 +166,7 @@ export function AssessmentCallsSection({
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-card p-8 rounded-panel shadow-soft border border-border/50"
+      className="bg-card p-5 sm:p-8 rounded-panel shadow-soft border border-border/50"
     >
       <div className="space-y-2 mb-6">
         <Label htmlFor={SEARCH_FIELD_ID}>Search calls</Label>
@@ -167,19 +192,32 @@ export function AssessmentCallsSection({
           ))}
         </TabsList>
 
-        {STATUS_TABS.map((tab) => (
-          <TabsContent
-            key={tab.status}
-            variant="segmented"
-            value={tab.status}
-          >
-            <CallList
-              calls={filterCalls(calls, { status: tab.status, query })}
-              emptyMessage={emptyMessageFor(tab.status)}
-              timeZone={timeZone}
-            />
-          </TabsContent>
-        ))}
+        {STATUS_TABS.map((tab) => {
+          const matching = filterCalls(calls, { status: tab.status, query });
+          const view = pageOfCalls(matching, { page, perPage: CALLS_PER_PAGE });
+
+          return (
+            <TabsContent
+              key={tab.status}
+              variant="segmented"
+              value={tab.status}
+            >
+              <CallList
+                calls={view.calls}
+                emptyMessage={emptyMessageFor(tab.status)}
+                timeZone={timeZone}
+              />
+
+              {view.total > 0 && (
+                <CallListPager
+                  view={view}
+                  hrefForPage={hrefForPage}
+                  onPageChange={choosePage}
+                />
+              )}
+            </TabsContent>
+          );
+        })}
       </Tabs>
     </motion.div>
   );

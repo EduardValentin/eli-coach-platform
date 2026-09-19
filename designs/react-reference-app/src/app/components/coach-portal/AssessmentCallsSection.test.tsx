@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, useLocation, useNavigationType } from 'react-router';
 import { describe, expect, it } from 'vitest';
@@ -47,6 +47,15 @@ const YESTERDAY = bookingAt(localInstant(20, 18), {
 
 const ALL_BOOKINGS = [LATER_TODAY, TOMORROW, EARLIER_TODAY, YESTERDAY];
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+const MANY_UPCOMING = Array.from({ length: 23 }, (_, index) =>
+  bookingAt(new Date(NOW.getTime() + (index + 1) * DAY_MS), {
+    visitorName: `Visitor ${index + 1}`,
+    visitorEmail: `visitor${index + 1}@example.com`,
+  }),
+);
+
 function LocationProbe() {
   const { search } = useLocation();
   const navigationType = useNavigationType();
@@ -75,9 +84,14 @@ function currentLocation(): string {
   return screen.getByTestId('location-probe').textContent ?? '';
 }
 
+function callRows(): HTMLElement[] {
+  return within(
+    screen.getByRole('list', { name: 'Assessment calls' }),
+  ).getAllByRole('listitem');
+}
+
 function listedNames(): string[] {
-  return screen
-    .getAllByRole('listitem')
+  return callRows()
     .map((item) => within(item).getByRole('heading', { level: 2 }).textContent ?? '');
 }
 
@@ -106,7 +120,7 @@ describe('the assessment calls section', () => {
     renderSection();
 
     // act
-    const item = screen.getAllByRole('listitem')[0];
+    const item = callRows()[0];
 
     // assert
     expect(within(item).getByRole('link', { name: 'maria@example.com' })).toHaveAttribute(
@@ -123,9 +137,9 @@ describe('the assessment calls section', () => {
     const user = renderSection();
 
     // act
-    const upcomingItem = screen.getAllByRole('listitem')[0];
+    const upcomingItem = callRows()[0];
     await selectTab(user, 'Past');
-    const pastItem = screen.getAllByRole('listitem')[0];
+    const pastItem = callRows()[0];
 
     // assert
     expect(within(upcomingItem).getByRole('link', { name: 'Join call' })).toHaveAttribute(
@@ -141,7 +155,7 @@ describe('the assessment calls section', () => {
 
     // act
     await selectTab(user, 'Today');
-    const items = screen.getAllByRole('listitem');
+    const items = callRows();
 
     // assert
     expect(listedNames()).toEqual(['Maria Ionescu', 'Sofia Dinu']);
@@ -155,7 +169,7 @@ describe('the assessment calls section', () => {
 
     // act
     await selectTab(user, 'Past');
-    const pastItem = screen.getAllByRole('listitem')[0];
+    const pastItem = callRows()[0];
 
     // assert
     expect(within(pastItem).getByText('Past')).toBeInTheDocument();
@@ -168,7 +182,7 @@ describe('the assessment calls section', () => {
 
     // act
     await selectTab(user, 'Past');
-    const pastItem = screen.getAllByRole('listitem')[0];
+    const pastItem = callRows()[0];
 
     // assert
     expect(
@@ -349,5 +363,130 @@ describe('the assessment calls section', () => {
 
     // assert
     expect(screen.getByText('No calls yet.')).toBeInTheDocument();
+  });
+});
+
+describe('paging a long assessment call list', () => {
+  it('shows the first ten calls and says how many there are', () => {
+    // arrange
+    renderSection({ bookings: MANY_UPCOMING });
+
+    // act
+    const rows = callRows();
+
+    // assert
+    expect(rows).toHaveLength(10);
+    expect(screen.getByText('Showing 1–10 of 23')).toBeInTheDocument();
+    expect(listedNames()[0]).toBe('Visitor 1');
+  });
+
+  it('moves to another page from the numbered controls', async () => {
+    // arrange
+    const user = renderSection({ bookings: MANY_UPCOMING });
+
+    // act
+    await user.click(screen.getByRole('link', { name: 'Go to page 3' }));
+
+    // assert
+    expect(listedNames()[0]).toBe('Visitor 21');
+    expect(screen.getByText('Showing 21–23 of 23')).toBeInTheDocument();
+    expect(currentLocation()).toBe('?page=3 REPLACE');
+  });
+
+  it('opens on the page the URL carries and keeps the first page out of it', async () => {
+    // arrange
+    const user = renderSection({ bookings: MANY_UPCOMING, urlQuery: '?page=2' });
+
+    // assert
+    expect(listedNames()[0]).toBe('Visitor 11');
+    expect(screen.getByRole('link', { name: 'Go to page 3' })).toHaveAttribute(
+      'href',
+      '/coach?page=3',
+    );
+    expect(screen.getByRole('link', { name: 'Go to page 1' })).toHaveAttribute(
+      'href',
+      '/coach',
+    );
+
+    // act
+    await user.click(screen.getByRole('link', { name: 'Go to page 1' }));
+
+    // assert
+    expect(currentLocation()).toBe(' REPLACE');
+  });
+
+  it('falls back to the last page when the URL asks for one past the end', () => {
+    // arrange
+    renderSection({ bookings: MANY_UPCOMING, urlQuery: '?page=99' });
+
+    // act
+    const rows = callRows();
+
+    // assert
+    expect(rows).toHaveLength(3);
+    expect(screen.getByText('Showing 21–23 of 23')).toBeInTheDocument();
+  });
+
+  it('returns to the first page when the coach searches', async () => {
+    // arrange
+    const user = renderSection({ bookings: MANY_UPCOMING, urlQuery: '?page=3' });
+
+    // act
+    await user.type(screen.getByLabelText('Search calls'), 'visitor1');
+
+    // assert
+    expect(currentLocation()).toBe('?q=visitor1 REPLACE');
+    expect(screen.getByText('Showing 1–10 of 11')).toBeInTheDocument();
+  });
+
+  it('returns to the first page when the coach changes the filter', async () => {
+    // arrange
+    const user = renderSection({ bookings: MANY_UPCOMING, urlQuery: '?page=3' });
+
+    // act
+    await selectTab(user, 'All');
+
+    // assert
+    expect(currentLocation()).toBe('?status=all REPLACE');
+    expect(screen.getByText('Showing 1–10 of 23')).toBeInTheDocument();
+  });
+
+  it('keeps the step to the previous page inert on the first page', () => {
+    // arrange
+    renderSection({ bookings: MANY_UPCOMING });
+    const previous = screen.getByRole('link', { name: 'Go to previous page' });
+
+    // act
+    fireEvent.click(previous);
+
+    // assert
+    expect(previous).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByText('Showing 1–10 of 23')).toBeInTheDocument();
+    expect(listedNames()[0]).toBe('Visitor 1');
+  });
+
+  it('keeps the step to the next page inert on the last page', () => {
+    // arrange
+    renderSection({ bookings: MANY_UPCOMING, urlQuery: '?page=3' });
+    const next = screen.getByRole('link', { name: 'Go to next page' });
+
+    // act
+    fireEvent.click(next);
+
+    // assert
+    expect(next).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByText('Showing 21–23 of 23')).toBeInTheDocument();
+  });
+
+  it('offers no paging controls when everything fits on one page', () => {
+    // arrange
+    renderSection();
+
+    // act
+    const pager = screen.queryByRole('navigation', { name: 'pagination' });
+
+    // assert
+    expect(pager).toBeNull();
+    expect(screen.getByText('Showing 1–2 of 2')).toBeInTheDocument();
   });
 });

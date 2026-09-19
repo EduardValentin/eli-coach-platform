@@ -69,3 +69,58 @@ export function sampleDashboardBookings(now: Date): PrototypeBooking[] {
     }),
   ];
 }
+
+const MANY_CALL_NAMES = [
+  'Maria Ionescu',
+  'Ioana Radu',
+  'Andreea Pop',
+  'Elena Marin',
+  'Sofia Dinu',
+  'Carmen Lazar',
+  'Bianca Stan',
+  'Raluca Toma',
+  'Daniela Neagu',
+  'Alina Barbu',
+  'Gabriela Ene',
+  'Roxana Muresan',
+  'Cristina Vlad',
+  'Oana Dumitru',
+  'Simona Petrescu',
+  'Larisa Anton',
+  'Teodora Sava',
+  'Mihaela Croitoru',
+  'Adriana Nistor',
+  'Corina Balan',
+  'Georgiana Ilie',
+  'Iulia Moldovan',
+  'Diana Voicu',
+  'Anca Serban',
+  'Lavinia Tudor',
+  'Patricia Grigore',
+  'Alexandra Dobre',
+  'Nicoleta Raducu',
+  'Stefania Olaru',
+  'Monica Ivan',
+];
+
+const MANY_CALL_COUNT = MANY_CALL_NAMES.length;
+
+const MANY_CALL_MIDPOINT = MANY_CALL_COUNT / 2;
+
+export function sampleManyBookings(now: Date): PrototypeBooking[] {
+  return Array.from({ length: MANY_CALL_COUNT }, (_, index) => {
+    const dayOffset = index - MANY_CALL_MIDPOINT + 1;
+    const name = MANY_CALL_NAMES[index];
+    const [firstName] = name.toLowerCase().split(' ');
+
+    return sampleBooking(
+      `ac-sample-many-${index}`,
+      atLocalHour(now, dayOffset, 9 + (index % 8)),
+      {
+        name,
+        email: `${firstName}.${index + 1}@example.com`,
+        notes: index % 3 === 0 ? 'Booked through the public site.' : '',
+      },
+    );
+  });
+}

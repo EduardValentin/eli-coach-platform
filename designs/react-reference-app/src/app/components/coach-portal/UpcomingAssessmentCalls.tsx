@@ -6,12 +6,9 @@ import {
   classifyCalls,
   upcomingCalls,
 } from '../../utils/assessmentCallListing';
-import {
-  formatShortDay,
-  formatSlotTime,
-  nameTimeZone,
-} from '../../utils/dateFormatters';
+import { formatShortDay, formatSlotTime } from '../../utils/dateFormatters';
 import { Badge } from '../ui/badge';
+import { cn } from '../ui/utils';
 import { DashboardAppointmentRow } from './DashboardAppointmentRow';
 import { JoinCallLink } from './JoinCallLink';
 
@@ -33,6 +30,7 @@ export function UpcomingAssessmentCalls({
     classifyCalls(bookings, { now, timeZone }),
     DASHBOARD_CALL_LIMIT,
   );
+  const isEmpty = calls.length === 0;
 
   return (
     <motion.div
@@ -41,7 +39,7 @@ export function UpcomingAssessmentCalls({
       transition={prefersReducedMotion ? { duration: 0 } : undefined}
       className="bg-card p-8 rounded-panel shadow-soft border border-border/50 flex flex-col h-full"
     >
-      <div className="flex items-center gap-3 mb-2">
+      <div className="flex items-center gap-3 mb-6">
         <div className="w-10 h-10 rounded-full bg-brand-secondary-soft text-brand-secondary flex items-center justify-center">
           <Video aria-hidden="true" size={20} />
         </div>
@@ -50,31 +48,35 @@ export function UpcomingAssessmentCalls({
         </h2>
       </div>
 
-      <p className="text-xs text-muted-foreground mb-6">
-        Times in {nameTimeZone(timeZone, now)}
-      </p>
-
-      {calls.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No upcoming calls.</p>
-      ) : (
-        <ul className="space-y-4">
-          {calls.map((call) => (
-            <li key={call.booking.id}>
-              <DashboardAppointmentRow
-                attendeeName={call.booking.visitorName}
-                when={{
-                  date: formatShortDay(call.booking.startsAt, timeZone),
-                  time: formatSlotTime(call.booking.startsAt, timeZone),
-                }}
-                badges={
-                  call.isToday && <Badge variant="brand-secondary">Today</Badge>
-                }
-                action={<JoinCallLink joinPath={call.booking.joinPath} />}
-              />
-            </li>
-          ))}
-        </ul>
-      )}
+      <div
+        className={cn('flex-1', {
+          'flex items-center justify-center': isEmpty,
+        })}
+      >
+        {isEmpty ? (
+          <p className="text-sm text-muted-foreground">No upcoming calls.</p>
+        ) : (
+          <ul className="space-y-4">
+            {calls.map((call) => (
+              <li key={call.booking.id}>
+                <DashboardAppointmentRow
+                  attendeeName={call.booking.visitorName}
+                  when={{
+                    date: formatShortDay(call.booking.startsAt, timeZone),
+                    time: formatSlotTime(call.booking.startsAt, timeZone),
+                  }}
+                  badges={
+                    call.isToday && (
+                      <Badge variant="brand-secondary">Today</Badge>
+                    )
+                  }
+                  action={<JoinCallLink joinPath={call.booking.joinPath} />}
+                />
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
 
       <Link
         to={ALL_CALLS_PATH}

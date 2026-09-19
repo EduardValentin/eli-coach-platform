@@ -8,7 +8,7 @@ export function CoachAssessmentCalls() {
   const timeZone = browserTimeZone();
 
   return (
-    <div className="w-full pb-12">
+    <div className="max-w-4xl mx-auto pb-12 lg:px-8 lg:pt-8">
       <header className="mb-8">
         <h1 className="text-3xl lg:text-4xl font-serif font-medium text-text-primary">
           Assessment calls

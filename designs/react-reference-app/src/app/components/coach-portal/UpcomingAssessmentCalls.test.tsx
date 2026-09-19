@@ -46,7 +46,7 @@ function renderWidget(bookings: PrototypeBooking[]) {
 }
 
 describe('the upcoming calls widget', () => {
-  it('heads the card and names the zone its times are shown in', () => {
+  it('heads the card and shows no zone line', () => {
     // arrange
     const bookings = [LATER_TODAY];
 
@@ -57,9 +57,7 @@ describe('the upcoming calls widget', () => {
     expect(
       screen.getByRole('heading', { level: 2, name: 'Upcoming calls' }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByText(new RegExp(`Times in ${TIME_ZONE}`)),
-    ).toBeInTheDocument();
+    expect(screen.queryByText(/Times in/)).toBeNull();
   });
 
   it('lists the one call still to come', () => {

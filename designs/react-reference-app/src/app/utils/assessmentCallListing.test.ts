@@ -3,6 +3,9 @@ import {
   classifyCalls,
   countTodayCalls,
   filterCalls,
+  pageOfCalls,
+  paginationSteps,
+  parsePage,
   upcomingCalls,
   orderCalls,
   parseStatus,
@@ -371,5 +374,123 @@ describe('reading the status filter from the URL', () => {
     // assert
     expect(fromUnknown).toBe('upcoming');
     expect(fromMissing).toBe('upcoming');
+  });
+});
+
+describe('paging the assessment call list', () => {
+  const now = new Date('2026-09-21T09:00:00.000Z');
+
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  const FIRST_START = new Date('2026-10-01T15:00:00.000Z').getTime();
+
+  function classifyMany(count: number) {
+    return classifyCalls(
+      Array.from({ length: count }, (_, index) =>
+        bookingAt(new Date(FIRST_START + index * DAY_MS).toISOString(), {
+          visitorName: `Visitor ${index + 1}`,
+        }),
+      ),
+      { now, timeZone: BUCHAREST },
+    );
+  }
+
+  it('shows the first ten calls and counts the rest', () => {
+    // arrange
+    const calls = classifyMany(43);
+
+    // act
+    const view = pageOfCalls(calls, { page: 1, perPage: 10 });
+
+    // assert
+    expect(view.calls).toHaveLength(10);
+    expect(view.page).toBe(1);
+    expect(view.pageCount).toBe(5);
+    expect(view.firstShown).toBe(1);
+    expect(view.lastShown).toBe(10);
+    expect(view.total).toBe(43);
+  });
+
+  it('shows the remainder on the last page', () => {
+    // arrange
+    const calls = classifyMany(43);
+
+    // act
+    const view = pageOfCalls(calls, { page: 5, perPage: 10 });
+
+    // assert
+    expect(view.calls).toHaveLength(3);
+    expect(view.firstShown).toBe(41);
+    expect(view.lastShown).toBe(43);
+  });
+
+  it('falls back to the last page when the page is past the end', () => {
+    // arrange
+    const calls = classifyMany(43);
+
+    // act
+    const view = pageOfCalls(calls, { page: 99, perPage: 10 });
+
+    // assert
+    expect(view.page).toBe(5);
+    expect(view.calls).toHaveLength(3);
+  });
+
+  it('stays on one page when nothing is booked', () => {
+    // arrange
+    const calls = classifyMany(0);
+
+    // act
+    const view = pageOfCalls(calls, { page: 3, perPage: 10 });
+
+    // assert
+    expect(view.page).toBe(1);
+    expect(view.pageCount).toBe(1);
+    expect(view.total).toBe(0);
+    expect(view.firstShown).toBe(0);
+    expect(view.lastShown).toBe(0);
+  });
+
+  it('reads a page from the URL and falls back to the first', () => {
+    // arrange
+    const raw = ['3', '1', '0', '-2', 'two', '', null];
+
+    // act
+    const parsed = raw.map(parsePage);
+
+    // assert
+    expect(parsed).toEqual([3, 1, 1, 1, 1, 1, 1]);
+  });
+
+  it('numbers every page while they fit', () => {
+    // arrange
+    const pageCount = 5;
+
+    // act
+    const steps = paginationSteps(1, pageCount);
+
+    // assert
+    expect(steps).toEqual([1, 2, 3, 4, 5]);
+  });
+
+  it('collapses the run before the current page when there are many', () => {
+    // arrange
+    const pageCount = 20;
+
+    // act
+    const steps = paginationSteps(18, pageCount);
+
+    // assert
+    expect(steps).toEqual([1, 'gap', 17, 18, 19, 20]);
+  });
+
+  it('collapses both runs around a middle page', () => {
+    // arrange
+    const pageCount = 20;
+
+    // act
+    const steps = paginationSteps(10, pageCount);
+
+    // assert
+    expect(steps).toEqual([1, 'gap', 9, 10, 11, 'gap', 20]);
   });
 });
