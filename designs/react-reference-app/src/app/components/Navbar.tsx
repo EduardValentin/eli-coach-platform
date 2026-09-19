@@ -149,6 +149,7 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
     <>
       <header 
         ref={headerRef}
+        data-surface={isScrolled || isMobileMenuOpen ? undefined : 'inverted'}
         className={`fixed top-0 left-0 right-0 z-[60] transition-colors duration-300 ${
           isScrolled || isMobileMenuOpen ? 'bg-white/95 backdrop-blur-md shadow-sm text-foreground' : 'bg-transparent text-white'
         }`}
@@ -163,7 +164,7 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
                 isScrolled || isMobileMenuOpen ? 'bg-brand' : 'bg-current'
               }`} />
             </div>
-            <span className={`font-serif font-semibold text-xl tracking-nav ml-2 transition-colors ${
+            <span className={`font-serif font-semibold text-xl tracking-wide ml-2 transition-colors ${
               isScrolled || isMobileMenuOpen ? 'text-foreground' : 'text-white'
             }`}>
               Evoa
@@ -176,7 +177,7 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
               <Link
                 key={link.name}
                 to={link.href}
-                className="text-sm font-medium tracking-nav hover:text-brand transition-colors"
+                className="text-sm font-medium tracking-wide hover:text-brand transition-colors"
               >
                 {link.name}
               </Link>
@@ -192,7 +193,7 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
                   <Link
                     to="/portal"
                     className={buttonVariants({
-                      lettering: 'nav',
+                      lettering: 'wide',
                       size: 'xs',
                       textSize: 'sm',
                       variant: isScrolled ? 'primary' : 'glass',
@@ -206,7 +207,7 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
                   <Link
                     to="/coach"
                     className={buttonVariants({
-                      lettering: 'nav',
+                      lettering: 'wide',
                       size: 'xs',
                       textSize: 'sm',
                       variant: isScrolled ? 'primary' : 'glass',
@@ -237,7 +238,7 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
               <button
                 onClick={runAuthAction}
                 aria-busy={isSigningIn}
-                className="text-sm font-medium tracking-nav hover:text-brand transition-colors aria-busy:opacity-60"
+                className="text-sm font-medium tracking-wide hover:text-brand transition-colors aria-busy:opacity-60"
               >
                 {authActionLabel}
               </button>
@@ -369,7 +370,7 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
               transition={{ delay: 0.5 }}
               className="absolute bottom-0 left-0 right-0 pointer-events-none"
             >
-              <svg viewBox="0 0 1440 320" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-auto text-brand">
+              <svg aria-hidden="true" viewBox="0 0 1440 320" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-auto text-brand">
                 <path fill="currentColor" d="M0,288L48,272C96,256,192,224,288,197.3C384,171,480,149,576,165.3C672,181,768,219,864,218.7C960,219,1056,181,1152,149.3C1248,117,1344,91,1392,80L1440,64L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
               </svg>
             </motion.div>

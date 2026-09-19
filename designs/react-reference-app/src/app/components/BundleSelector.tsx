@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { CheckCircle2, Star, Tag } from 'lucide-react';
 import { motion } from 'motion/react';
+import { cn } from './ThemeButton';
+import { cardVariants } from './ui/card';
 
 export type Bundle = {
   id: string;
@@ -93,7 +95,7 @@ export function BundleSelector({ mode, onCheckout, disabled = false, waitlistMod
     <div className="w-full max-w-4xl mx-auto">
       {waitlistMode && (
         <div className="flex justify-center mb-8">
-          <span className="inline-flex items-center gap-2 rounded-full bg-brand-secondary-soft px-4 py-1.5 text-xs font-semibold uppercase tracking-nav text-brand-secondary">
+          <span className="inline-flex items-center gap-2 rounded-full bg-brand-secondary-soft px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-brand-secondary">
             <Tag size={13} aria-hidden="true" /> Waitlist pricing — reserved for early signups
           </span>
         </div>
@@ -138,7 +140,7 @@ export function BundleSelector({ mode, onCheckout, disabled = false, waitlistMod
               )}
 
               {savingsPct > 0 && (
-                <div className="absolute top-3 right-3 bg-savings-badge-surface text-savings-badge-text px-1.5 py-0.5 rounded-tile text-micro font-bold uppercase tracking-nav">
+                <div className="absolute top-3 right-3 bg-savings-badge-surface text-savings-badge-text px-1.5 py-0.5 rounded-tile text-micro font-bold uppercase tracking-wide">
                   Save {savingsPct}%
                 </div>
               )}
@@ -189,7 +191,7 @@ export function BundleSelector({ mode, onCheckout, disabled = false, waitlistMod
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="bg-card rounded-card border border-stroke-faint shadow-card p-8 md:p-10 mb-10"
+        className={cn(cardVariants(), 'p-8 md:p-10 mb-10')}
       >
         <h4 className="text-sm font-semibold uppercase tracking-wider text-bundle-muted mb-6 text-center">
           What's included in every plan

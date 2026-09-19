@@ -1,5 +1,7 @@
 import { Fragment } from 'react';
 import { Link } from 'react-router';
+import { cn } from '../ui/utils';
+import { cardVariants } from '../ui/card';
 import type {
   LegalDocument,
   LegalDocumentBlock,
@@ -16,7 +18,7 @@ const effectiveDateFormatter = new Intl.DateTimeFormat('en-GB', {
 
 export function LegalDocumentView({ document }: { document: LegalDocument }) {
   return (
-    <article className="mx-auto max-w-reading overflow-hidden rounded-panel border border-border-subtle bg-surface-base shadow-soft">
+    <article className={cn(cardVariants({ variant: 'panel' }), 'mx-auto max-w-reading overflow-hidden')}>
       <header className="border-b border-border-subtle px-6 py-10 sm:px-8 lg:px-12">
         <h1 className="font-serif text-display-lg text-text-primary">{document.title}</h1>
         <p className="mt-4 text-lg text-text-secondary">{document.description}</p>

@@ -87,7 +87,7 @@ export function InstagramWidget() {
         </AnimatePresence>
         <div
           aria-hidden="true"
-          className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/40 pointer-events-none"
+          className="absolute inset-0 bg-gradient-to-b from-surface-inverted/40 via-transparent to-surface-inverted/40 pointer-events-none"
         />
       </div>
 

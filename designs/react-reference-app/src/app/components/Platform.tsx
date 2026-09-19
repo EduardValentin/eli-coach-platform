@@ -520,7 +520,7 @@ export function Platform() {
           >
             <PhoneFrame
               statusBarVariant="dark"
-              className="w-[260px] sm:w-[280px] aspect-[9/16]"
+              className="w-(--size-public-platform-phone-base) sm:w-(--size-public-platform-phone-sm) aspect-[9/16]"
             >
               <PhoneView active={active} />
             </PhoneFrame>

@@ -24,7 +24,7 @@ export function RecipeCard({ recipe, onEdit }: RecipeCardProps) {
   const totalMinutes = recipe.prepMinutes + recipe.cookMinutes;
 
   return (
-    <Card className="gap-3 overflow-hidden">
+    <Card className="flex flex-col gap-3 overflow-hidden">
       <RecipeVisual recipe={recipe} className="h-32 w-full rounded-t-[inherit]" />
       <CardContent className="pt-3 flex flex-col gap-3">
         <div className="flex items-start justify-between gap-3">

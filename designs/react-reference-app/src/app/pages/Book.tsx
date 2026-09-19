@@ -8,7 +8,8 @@ import { Navbar } from '../components/Navbar';
 import { LegalFooter } from '../components/legal/LegalNav';
 import { firstInvalidField, useBookingDetailsForm, type BookingField } from '../components/booking/useBookingDetailsForm';
 import { Alert } from '../components/ui/alert';
-import { Button, buttonVariants } from '../components/ThemeButton';
+import { Button, buttonVariants, cn } from '../components/ThemeButton';
+import { Card, cardVariants } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
@@ -182,7 +183,7 @@ export function Book() {
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mt-8 p-4 bg-surface-base rounded-card border border-stroke-faint shadow-card"
+                  className={cn(cardVariants(), 'mt-8 p-4')}
                 >
                   <div className="flex items-start gap-3">
                     <CalendarIcon className="w-5 h-5 text-brand mt-0.5" aria-hidden="true" />
@@ -392,7 +393,7 @@ export function Book() {
                       A confirmation with your join link is on its way to <strong className="text-text-primary">{booking.visitorEmail}</strong>.
                     </p>
 
-                    <div className="bg-surface-quiet border border-stroke-faint rounded-card p-6 w-full max-w-sm mb-10 text-left">
+                    <Card variant="quiet" className="p-6 w-full max-w-sm mb-10 text-left">
                       <p className="text-sm text-text-secondary font-medium mb-1">When</p>
                       <p className="font-semibold text-text-primary mb-4">
                         {formatZonedDate(booking.startsAt, visitorTimeZone, CALL_DATE_PATTERN)} <br />
@@ -401,7 +402,7 @@ export function Book() {
 
                       <p className="text-sm text-text-secondary font-medium mb-1">Duration</p>
                       <p className="font-semibold text-text-primary">{`${ASSESSMENT_CALL_DURATION_MINUTES} minutes`}</p>
-                    </div>
+                    </Card>
 
                     <Link
                       to="/"

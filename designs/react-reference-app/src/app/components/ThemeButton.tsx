@@ -23,11 +23,12 @@ const buttonVariants = cva(
         xs: 'h-(--size-control-xs) px-4',
         md: 'h-(--size-control-md) px-8',
         lg: 'h-(--size-control-lg) px-8',
-        xl: 'h-(--size-control-xl) px-8',
+        'lg-tight': 'h-(--size-control-lg) px-4',
       },
       width: {
         content: '',
-        full: 'w-full shrink px-0',
+        full: 'w-full shrink',
+        'full-below-sm': 'w-full sm:w-auto',
       },
       weight: {
         regular: 'font-normal',
@@ -41,7 +42,7 @@ const buttonVariants = cva(
       },
       lettering: {
         plain: '',
-        nav: 'tracking-nav',
+        wide: 'tracking-wide',
         caps: 'uppercase tracking-widest',
       },
       elevation: {

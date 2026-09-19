@@ -22,7 +22,7 @@ export function FoodCard({ food, onEdit }: FoodCardProps) {
     : undefined;
 
   return (
-    <Card className="gap-3">
+    <Card className="flex flex-col gap-3">
       <CardContent className="pt-6 flex flex-col gap-3">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-2.5 min-w-0">

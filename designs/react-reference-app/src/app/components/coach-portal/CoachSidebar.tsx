@@ -36,10 +36,10 @@ const SidebarContent = ({ setIsMobileMenuOpen, pathname, pendingCheckins = 0, co
           <img
             src={coachAvatarUrl}
             alt=""
-            className="w-10 h-10 rounded-control object-cover shrink-0 shadow-md border border-neutral-100"
+            className="w-10 h-10 rounded-compact object-cover shrink-0 shadow-md border border-neutral-100"
           />
         ) : (
-          <div className="w-10 h-10 rounded-control bg-text-primary text-white flex items-center justify-center shrink-0 shadow-md">
+          <div className="w-10 h-10 rounded-compact bg-text-primary text-white flex items-center justify-center shrink-0 shadow-md">
             <Dumbbell size={20} className="transform -rotate-45" />
           </div>
         )}

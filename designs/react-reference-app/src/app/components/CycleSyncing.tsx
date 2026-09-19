@@ -158,13 +158,13 @@ export function CycleSyncing() {
                         <div
                           className={`transition-all duration-300 flex flex-col items-center justify-start rounded-[24px] bg-surface-subtle p-[4px] border border-white/60 ${
                             isCurrent
-                              ? 'w-[40px] h-[64px] shadow-[0_2px_12px_rgba(0,0,0,0.06)]'
-                              : 'w-[32px] h-[52px] mt-1.5'
+                              ? 'w-(--size-control-sm) h-(--space-9) shadow-[0_2px_12px_rgba(0,0,0,0.06)]'
+                              : 'w-(--space-7) h-[52px] mt-1.5'
                           }`}
                         >
                           <div
                             className={`rounded-full transition-all duration-300 mt-[2px] ${
-                              isCurrent ? 'w-[30px] h-[30px]' : 'w-[24px] h-[24px]'
+                              isCurrent ? 'w-[30px] h-[30px]' : 'w-(--space-6) h-(--space-6)'
                             }`}
                             style={{
                               backgroundColor: style.isStriped ? 'transparent' : style.bg,

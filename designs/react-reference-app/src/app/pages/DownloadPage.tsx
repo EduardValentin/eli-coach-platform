@@ -89,7 +89,7 @@ export function DownloadPage() {
 
             <button
               onClick={downloadPlaceholderFile}
-              className={buttonVariants({ elevation: 'raised', size: 'xl', textSize: 'lg', width: 'full' })}
+              className={buttonVariants({ elevation: 'raised', size: 'lg', textSize: 'lg', width: 'full' })}
             >
               <Download size={22} aria-hidden="true" /> Download your resources
             </button>

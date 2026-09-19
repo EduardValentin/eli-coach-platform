@@ -46,7 +46,7 @@ export function ProductDetails() {
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="rounded-card overflow-hidden aspect-[4/5] sm:aspect-square lg:aspect-[4/5] bg-surface-subtle shadow-md"
+            className="rounded-card overflow-hidden aspect-[4/5] sm:aspect-square lg:aspect-[4/5] bg-surface-subtle shadow-raised"
           >
             <img
               src={product.imageUrl}
@@ -64,7 +64,7 @@ export function ProductDetails() {
               {product.categories.map(c => (
                 <span
                   key={c}
-                  className={cn('text-xs uppercase tracking-wider font-bold px-3 py-1.5 rounded-tile', {
+                  className={cn('text-label uppercase px-3 py-1.5 rounded-tile', {
                     'text-brand-secondary bg-brand-secondary-soft': isFree,
                     'text-brand bg-brand-soft': !isFree,
                   })}
@@ -73,7 +73,7 @@ export function ProductDetails() {
                 </span>
               ))}
               {product.goals.map(g => (
-                <span key={g} className="text-xs uppercase tracking-wider font-bold px-3 py-1.5 rounded-tile text-copy-muted bg-surface-subtle">
+                <span key={g} className="text-label uppercase px-3 py-1.5 rounded-tile text-copy-muted bg-surface-subtle">
                   {g}
                 </span>
               ))}
@@ -97,7 +97,7 @@ export function ProductDetails() {
               {product.longDescription}
             </p>
 
-            <Card className="rounded-card border-stroke-faint shadow-sm mb-10">
+            <Card className="mb-10">
               <CardContent className="p-6">
                 <h2 className="font-semibold text-foreground text-sm uppercase tracking-wider mb-4">What's included:</h2>
                 <ul className="space-y-4">
@@ -122,7 +122,7 @@ export function ProductDetails() {
               onClick={() => addToCart(product)}
               className={buttonVariants({
                 elevation: 'raised',
-                size: 'xl',
+                size: 'lg',
                 textSize: 'lg',
                 variant: isFree ? 'secondary' : 'primary',
                 width: 'full',

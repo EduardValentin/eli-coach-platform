@@ -7,7 +7,8 @@ import { Filter, Euro, DollarSign, Plus, ShoppingBag } from 'lucide-react';
 import { motion } from 'motion/react';
 import { ToggleGroup, ToggleGroupItem } from '../components/ui/toggle-group';
 import { LegalFooter } from '../components/legal/LegalNav';
-import { buttonVariants } from '../components/ThemeButton';
+import { buttonVariants, cn } from '../components/ThemeButton';
+import { cardVariants } from '../components/ui/card';
 
 const CHIP_BASE_CLASS =
   'flex-none h-auto min-w-0 rounded-full first:rounded-l-full last:rounded-r-full border bg-card px-4 py-2 text-sm font-normal text-foreground transition-colors';
@@ -67,7 +68,7 @@ export function Store() {
                 if (value) setCurrency(value as typeof currency);
               }}
               aria-label="Currency"
-              className="gap-2 bg-card rounded-full p-1 shadow-sm border border-control-border-soft"
+              className="gap-2 bg-card rounded-full p-1 shadow-card border border-control-border-soft"
             >
               <ToggleGroupItem value="USD" className={CURRENCY_ITEM_CLASS}>
                 <DollarSign size={16} aria-hidden="true" /> USD
@@ -152,7 +153,7 @@ export function Store() {
                       initial={{ opacity: 0, y: 20 }}
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true }}
-                      className="bg-card rounded-card overflow-hidden border border-stroke-faint shadow-sm hover:shadow-xl transition-shadow group flex flex-col h-full"
+                      className={cn(cardVariants(), 'overflow-hidden hover:shadow-raised transition-shadow group flex flex-col h-full')}
                     >
                       <Link to={`/store/${product.id}`} className="block relative aspect-[4/3] overflow-hidden">
                         <img
@@ -167,7 +168,7 @@ export function Store() {
                       <div className="p-6 flex flex-col flex-grow">
                         <div className="flex gap-2 mb-3 flex-wrap">
                           {product.categories.map(c => (
-                            <span key={c} className="text-micro uppercase tracking-wider font-bold text-brand bg-brand-soft px-2 py-1 rounded-tile">
+                            <span key={c} className="text-label uppercase text-brand bg-brand-soft px-2 py-1 rounded-tile">
                               {c}
                             </span>
                           ))}
@@ -206,7 +207,7 @@ export function Store() {
                       initial={{ opacity: 0, y: 20 }}
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true }}
-                      className="bg-card rounded-card overflow-hidden border border-stroke-faint shadow-sm hover:shadow-md transition-shadow group flex flex-col h-full"
+                      className={cn(cardVariants(), 'overflow-hidden hover:shadow-raised transition-shadow group flex flex-col h-full')}
                     >
                       <Link to={`/store/${product.id}`} className="block relative aspect-[4/3] overflow-hidden">
                         <img
@@ -214,14 +215,14 @@ export function Store() {
                           alt={product.title}
                           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                         />
-                        <div className="absolute top-4 right-4 bg-brand-secondary text-brand-secondary-foreground px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide">
+                        <div className="absolute top-4 right-4 bg-brand-secondary text-brand-secondary-foreground px-3 py-1.5 rounded-full text-label uppercase">
                           Free
                         </div>
                       </Link>
                       <div className="p-6 flex flex-col flex-grow">
                         <div className="flex gap-2 mb-3 flex-wrap">
                           {product.categories.map(c => (
-                            <span key={c} className="text-micro uppercase tracking-wider font-bold text-brand-secondary bg-brand-secondary-soft px-2 py-1 rounded-tile">
+                            <span key={c} className="text-label uppercase text-brand-secondary bg-brand-secondary-soft px-2 py-1 rounded-tile">
                               {c}
                             </span>
                           ))}

@@ -1,33 +1,25 @@
 import { clsx, type ClassValue } from "clsx";
 import { extendTailwindMerge } from "tailwind-merge";
 
-// Custom @theme `text-*` font-size tokens (theme.css) must be registered under
-// the `font-size` group, or tailwind-merge treats them as `text-{color}` and
-// silently drops the size when a color class shares the same element.
 const twMerge = extendTailwindMerge({
   extend: {
-    classGroups: {
-      "font-size": [
-        {
-          text: [
-            "micro",
-            "caption",
-            "md",
-            "display-lg",
-            "display-md",
-            "display-sm",
-            "public-my-method-figure-heading",
-            "public-cycle-phase",
-            "public-footer-cta-heading-sm",
-            "public-footer-cta-heading-md",
-            "phone-caption",
-            "phone-title",
-            "phone-value",
-          ],
-        },
-      ],
-    },
     theme: {
+      text: [
+        "micro",
+        "caption",
+        "label",
+        "md",
+        "display-sm",
+        "display-md",
+        "display-lg",
+        "public-my-method-figure-heading",
+        "public-cycle-phase",
+        "phone-caption",
+        "phone-title",
+        "phone-value",
+        "public-footer-cta-heading-sm",
+        "public-footer-cta-heading-md",
+      ],
       radius: [
         "checkbox",
         "tile",
@@ -38,6 +30,21 @@ const twMerge = extendTailwindMerge({
         "panel",
         "phone-frame",
       ],
+      shadow: [
+        "soft",
+        "card",
+        "action",
+        "action-hover",
+        "raised",
+        "floating",
+        "public-footer-cta-sheet",
+        "phone-frame",
+        "public-platform-cloud",
+        "public-platform-cloud-active",
+      ],
+      tracking: ["label", "section-eyebrow"],
+      leading: ["display-snug"],
+      container: ["reading", "content", "stage"],
     },
   },
 });

@@ -255,7 +255,7 @@ export function CartDrawer() {
                                   {item.product.title}
                                 </h3>
                                 {item.product.priceUSD === 0 && (
-                                  <span className="text-micro uppercase tracking-wider font-bold px-1.5 py-0.5 rounded-tile text-brand-secondary bg-brand-secondary-soft">
+                                  <span className="text-label uppercase px-1.5 py-0.5 rounded-tile text-brand-secondary bg-brand-secondary-soft">
                                     {item.product.type}
                                   </span>
                                 )}
@@ -411,7 +411,7 @@ export function CartDrawer() {
                             type="submit"
                             disabled={!termsAccepted || !email || isProcessing || cart.length === 0}
                             aria-label={isProcessing ? processingLabel : undefined}
-                            className={buttonVariants({ size: 'lg', width: 'full' })}
+                            className={buttonVariants({ size: 'lg-tight', width: 'full' })}
                           >
                             {isProcessing
                               ? processingContent

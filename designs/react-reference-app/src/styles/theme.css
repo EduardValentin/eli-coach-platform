@@ -25,6 +25,7 @@
   --switch-background: #cbced4;
   --font-weight-medium: 500;
   --font-weight-normal: 400;
+  --font-weight-semibold: 600;
   --ring: oklch(0.708 0 0);
   --brand: #C81D6B;
   --brand-foreground: #ffffff;
@@ -111,7 +112,7 @@
   /* Fine-neutral text & borders */
   --copy-muted: oklch(0.439 0 0);
   --link-muted: oklch(0.46 0 0);
-  --text-label: oklch(0.371 0 0);
+  --label-foreground: oklch(0.371 0 0);
   --placeholder-soft: oklch(0.552 0 0);
   --icon-muted: oklch(0.708 0 0);
   --control-border-soft: oklch(0.922 0 0);
@@ -120,7 +121,6 @@
   --stroke-faint: oklch(0.97 0 0);
   --divider: oklch(0.87 0 0);
   --bundle-muted: oklch(0.52 0 0);
-  /* Pricing savings badge */
   --savings-badge-surface: oklch(0.962 0.044 156.743);
   --savings-badge-text: oklch(0.43 0.17 150.069);
   --text-inverted-secondary: oklch(0.928 0.006 264.531);
@@ -158,6 +158,7 @@
   --font-size-md: 0.9375rem;
   --font-size-public-my-method-figure-heading: 1.25rem;
   --font-size-micro: 0.625rem;
+  --font-size-label: 0.75rem;
   --font-size-public-cycle-phase: 2.75rem;
   --font-size-public-footer-cta-heading-sm: 1.875rem;
   --font-size-public-footer-cta-heading-md: 2.25rem;
@@ -190,7 +191,6 @@
   --size-control-sm: 2.5rem;
   --size-control-md: 3rem;
   --size-control-lg: 3.5rem;
-  --size-control-xl: 3.75rem;
   --font-size-display-lg: clamp(2.75rem, 6vw, 4.5rem);
   /* The middle stop of the scale DESIGN.md already documents; production has
      carried it as --font-size-display-md all along. The 404 page is the first
@@ -198,8 +198,21 @@
   --font-size-display-md: 2rem;
   --font-size-display-sm: 1.5rem;
   /* Marketing tracking, radii, shadows */
+  --tracking-label: 0.12em;
   --tracking-section-eyebrow: 0.2em;
-  --tracking-nav: 0.025em;
+  --space-0: 0rem;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.625rem;
+  --space-4: 0.75rem;
+  --space-5: 1rem;
+  --space-6: 1.5rem;
+  --space-7: 2rem;
+  --space-8: 3rem;
+  --space-9: 4rem;
+  --space-10: 6rem;
+  --size-public-platform-phone-base: 16.25rem;
+  --size-public-platform-phone-sm: 17.5rem;
   --radius-checkbox: 0.25rem;
   --radius-tile: 0.375rem;
   --radius-field: 0.5rem;
@@ -364,7 +377,7 @@
   --color-surface-neutral: var(--surface-neutral);
   --color-copy-muted: var(--copy-muted);
   --color-link-muted: var(--link-muted);
-  --color-text-label: var(--text-label);
+  --color-text-label: var(--label-foreground);
   --color-text-inverted-secondary: var(--text-inverted-secondary);
   --color-placeholder-soft: var(--placeholder-soft);
   --color-icon-muted: var(--icon-muted);
@@ -427,6 +440,10 @@
   --text-public-my-method-figure-heading--line-height: var(--line-height-public-my-method-figure-heading);
   --text-public-my-method-figure-heading--font-weight: var(--font-weight-medium);
   --text-micro: var(--font-size-micro);
+  --text-label: var(--font-size-label);
+  --text-label--line-height: 1.3;
+  --text-label--letter-spacing: var(--tracking-label);
+  --text-label--font-weight: var(--font-weight-semibold);
   --text-public-cycle-phase: var(--font-size-public-cycle-phase);
   --text-public-footer-cta-heading-sm: var(--font-size-public-footer-cta-heading-sm);
   --text-public-footer-cta-heading-sm--line-height: var(--line-height-public-footer-cta-heading-sm);
@@ -438,8 +455,8 @@
   --text-phone-title: var(--font-size-phone-title);
   --text-phone-value: var(--font-size-phone-value);
   --leading-display-snug: var(--line-height-display-snug);
+  --tracking-label: var(--tracking-label);
   --tracking-section-eyebrow: var(--tracking-section-eyebrow);
-  --tracking-nav: var(--tracking-nav);
   --radius-checkbox: var(--radius-checkbox);
   --radius-tile: var(--radius-tile);
   --radius-field: var(--radius-field);
@@ -451,7 +468,6 @@
   --size-control-sm: var(--size-control-sm);
   --size-control-md: var(--size-control-md);
   --size-control-lg: var(--size-control-lg);
-  --size-control-xl: var(--size-control-xl);
   --container-content: var(--container-content);
   --container-stage: var(--container-stage);
   --shadow-raised: var(--shadow-raised);
