@@ -5,8 +5,8 @@ import { Calendar as CalendarIcon, Clock, Video } from "lucide-react";
 import { motion } from "motion/react";
 
 import {
-  formatCallDate,
-  formatSlotTime,
+  formatMonthFirstDate,
+  formatClockTime,
 } from "~/features/assessment-calls/contracts/call-moment";
 
 const COACH_AVATAR_URL = joinBasePath(
@@ -67,13 +67,13 @@ export function CallOverview(props: {
             />
             <div>
               <p className="font-semibold text-text-primary">
-                {formatCallDate(
+                {formatMonthFirstDate(
                   new Date(chosenCall.startsAt),
                   chosenCall.timeZone,
                 )}
               </p>
               <p className="font-medium text-brand-primary">
-                {formatSlotTime(
+                {formatClockTime(
                   new Date(chosenCall.startsAt),
                   chosenCall.timeZone,
                 )}

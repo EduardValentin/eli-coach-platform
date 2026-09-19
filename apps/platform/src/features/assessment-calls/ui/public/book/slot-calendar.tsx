@@ -1,7 +1,7 @@
 import { Calendar, type CalendarProps } from "@eli-coach-platform/ui/calendar";
 import { memo, useCallback, useMemo, useState } from "react";
 
-import { formatCallDay } from "~/features/assessment-calls/contracts/call-moment";
+import { formatDayFirstDate } from "~/features/assessment-calls/contracts/call-moment";
 
 import { dayKeyOf } from "./slot-grouping";
 
@@ -55,7 +55,7 @@ export const SlotCalendar = memo(function SlotCalendar(
       labelDayButton: (date, dayModifiers) =>
         [
           dayModifiers.today && TODAY_PREFIX,
-          formatCallDay(date, timeZone),
+          formatDayFirstDate(date, timeZone),
           dayModifiers.pastDay && PAST_DAY_REASON,
           dayModifiers.noOpenSlots && NO_OPEN_SLOTS_REASON,
           dayModifiers.selected && SELECTED_STATE,

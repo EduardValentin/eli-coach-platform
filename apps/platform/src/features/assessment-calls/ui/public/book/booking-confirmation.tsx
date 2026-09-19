@@ -7,8 +7,8 @@ import { Link as RouterLink } from "react-router";
 import type { Booking } from "~/features/assessment-calls/contracts/assessment-calls";
 
 import {
-  formatCallDate,
-  formatSlotTime,
+  formatMonthFirstDate,
+  formatClockTime,
   nameTimeZone,
 } from "~/features/assessment-calls/contracts/call-moment";
 
@@ -47,8 +47,8 @@ export function BookingConfirmation(props: BookingConfirmationProps) {
       <div className="mb-10 w-full max-w-sm rounded-2xl border border-stroke-faint bg-surface-quiet p-6 text-left">
         <p className="mb-1 text-sm font-medium text-text-secondary">When</p>
         <p className="mb-4 font-semibold text-text-primary">
-          {formatCallDate(startsAt, timeZone)} <br />
-          {`${formatSlotTime(startsAt, timeZone)} (${nameTimeZone(startsAt, timeZone)})`}
+          {formatMonthFirstDate(startsAt, timeZone)} <br />
+          {`${formatClockTime(startsAt, timeZone)} (${nameTimeZone(startsAt, timeZone)})`}
         </p>
 
         <p className="mb-1 text-sm font-medium text-text-secondary">Duration</p>

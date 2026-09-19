@@ -5,8 +5,8 @@ import { cn } from "@eli-coach-platform/ui/lib";
 import { linkVariants } from "@eli-coach-platform/ui/primitives";
 
 import {
-  formatCallDayHeading,
-  formatSlotTime,
+  formatMonthFirstDay,
+  formatClockTime,
   nameTimeZone,
 } from "~/features/assessment-calls/contracts/call-moment";
 
@@ -38,7 +38,7 @@ export function SlotPicker(props: SlotPickerProps) {
   const firstSlot = slotsByDay.values().next().value?.[0];
   const zoneReference = selectedDay ?? (firstSlot ? new Date(firstSlot) : now);
   const dayHeading = selectedDay
-    ? formatCallDayHeading(selectedDay, timeZone)
+    ? formatMonthFirstDay(selectedDay, timeZone)
     : null;
 
   useScrollDaySlotsIntoView(dayHeading, slotsRef);
@@ -96,7 +96,7 @@ export function SlotPicker(props: SlotPickerProps) {
               <TimeSlotButton
                 isSelected={selectedSlot === slot}
                 key={slot}
-                label={formatSlotTime(new Date(slot), timeZone)}
+                label={formatClockTime(new Date(slot), timeZone)}
                 onSelect={() => onSelectSlot(slot)}
               />
             ))}

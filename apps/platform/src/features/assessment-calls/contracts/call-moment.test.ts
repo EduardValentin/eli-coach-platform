@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { formatCallDay, formatCallMoment } from "./call-moment";
+import { formatDayFirstDate, formatCallMoment } from "./call-moment";
 
 describe("formatCallMoment", () => {
   it("names the day, the time and the zone the reader reads it in", () => {
@@ -48,13 +48,13 @@ describe("formatCallMoment", () => {
   });
 });
 
-describe("formatCallDay", () => {
+describe("formatDayFirstDate", () => {
   it("names the whole calendar day in the reader's zone", () => {
     // arrange
     const startsAt = new Date("2026-03-02T23:30:00.000Z");
 
     // act
-    const day = formatCallDay(startsAt, "Europe/Bucharest");
+    const day = formatDayFirstDate(startsAt, "Europe/Bucharest");
 
     // assert
     expect(day).toBe("Tuesday, 3 March 2026");

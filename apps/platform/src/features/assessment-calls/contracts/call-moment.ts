@@ -1,11 +1,15 @@
-type CallMomentFormat =
-  "day" | "time" | "zone" | "date" | "dayHeading" | "slotTime";
+type CallMomentWording =
+  | "dayFirstDate"
+  | "monthFirstDate"
+  | "monthFirstDay"
+  | "clockTime"
+  | "zoneOffset";
 
-const FORMATS: Record<
-  CallMomentFormat,
-  { locale: string | undefined; options: Intl.DateTimeFormatOptions }
+const WORDINGS: Record<
+  CallMomentWording,
+  { locale: string; options: Intl.DateTimeFormatOptions }
 > = {
-  day: {
+  dayFirstDate: {
     locale: "en-GB",
     options: {
       day: "numeric",
@@ -14,12 +18,7 @@ const FORMATS: Record<
       year: "numeric",
     },
   },
-  time: {
-    locale: "en-US",
-    options: { hour: "numeric", hour12: true, minute: "2-digit" },
-  },
-  zone: { locale: "en-GB", options: { timeZoneName: "shortOffset" } },
-  date: {
+  monthFirstDate: {
     locale: "en-US",
     options: {
       day: "numeric",
@@ -28,50 +27,43 @@ const FORMATS: Record<
       year: "numeric",
     },
   },
-  dayHeading: {
+  monthFirstDay: {
     locale: "en-US",
     options: { day: "numeric", month: "long", weekday: "long" },
   },
-  slotTime: {
-    locale: undefined,
+  clockTime: {
+    locale: "en-US",
     options: { hour: "numeric", hour12: true, minute: "2-digit" },
   },
+  zoneOffset: { locale: "en-GB", options: { timeZoneName: "shortOffset" } },
 };
 
 const formatters = new Map<string, Intl.DateTimeFormat>();
 
 export function formatCallMoment(instant: Date, timeZone: string): string {
-  return `${formatCallDay(instant, timeZone)} at ${formatCallTime(instant, timeZone)} — ${describeTimeZone(instant, timeZone)}`;
+  return `${formatDayFirstDate(instant, timeZone)} at ${formatClockTime(instant, timeZone)} — ${describeTimeZone(instant, timeZone)}`;
 }
 
-export function formatCallDay(instant: Date, timeZone: string): string {
-  return formatterFor("day", timeZone).format(instant);
+export function formatDayFirstDate(instant: Date, timeZone: string): string {
+  return formatterFor("dayFirstDate", timeZone).format(instant);
 }
 
-export function formatCallDate(instant: Date, timeZone: string): string {
-  return formatterFor("date", timeZone).format(instant);
+export function formatMonthFirstDate(instant: Date, timeZone: string): string {
+  return formatterFor("monthFirstDate", timeZone).format(instant);
 }
 
-export function formatCallDayHeading(instant: Date, timeZone: string): string {
-  return formatterFor("dayHeading", timeZone).format(instant);
+export function formatMonthFirstDay(instant: Date, timeZone: string): string {
+  return formatterFor("monthFirstDay", timeZone).format(instant);
 }
 
-export function formatSlotTime(instant: Date, timeZone: string): string {
-  return formatterFor("slotTime", timeZone).format(instant);
+export function formatClockTime(instant: Date, timeZone: string): string {
+  return formatterFor("clockTime", timeZone).format(instant);
 }
 
 export function nameTimeZone(instant: Date, timeZone: string): string {
   const offset = zoneOffset(instant, timeZone);
 
   return offset ? `${timeZone}, ${offset}` : timeZone;
-}
-
-function formatCallTime(instant: Date, timeZone: string): string {
-  const part = partReader(
-    formatterFor("time", timeZone).formatToParts(instant),
-  );
-
-  return `${part("hour")}:${part("minute")} ${part("dayPeriod")}`;
 }
 
 function describeTimeZone(instant: Date, timeZone: string): string {
@@ -81,31 +73,27 @@ function describeTimeZone(instant: Date, timeZone: string): string {
 }
 
 function zoneOffset(instant: Date, timeZone: string): string {
-  return partReader(formatterFor("zone", timeZone).formatToParts(instant))(
-    "timeZoneName",
+  return (
+    formatterFor("zoneOffset", timeZone)
+      .formatToParts(instant)
+      .find((part) => part.type === "timeZoneName")?.value ?? ""
   );
 }
 
 function formatterFor(
-  format: CallMomentFormat,
+  wording: CallMomentWording,
   timeZone: string,
 ): Intl.DateTimeFormat {
-  const key = `${format}:${timeZone}`;
+  const key = `${wording}:${timeZone}`;
   const cached = formatters.get(key);
 
   if (cached) {
     return cached;
   }
 
-  const { locale, options } = FORMATS[format];
+  const { locale, options } = WORDINGS[wording];
   const formatter = new Intl.DateTimeFormat(locale, { ...options, timeZone });
   formatters.set(key, formatter);
 
   return formatter;
-}
-
-function partReader(
-  parts: readonly Intl.DateTimeFormatPart[],
-): (type: Intl.DateTimeFormatPartTypes) => string {
-  return (type) => parts.find((part) => part.type === type)?.value ?? "";
 }
