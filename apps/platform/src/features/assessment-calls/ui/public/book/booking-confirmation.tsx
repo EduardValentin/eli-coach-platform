@@ -1,5 +1,4 @@
 import { buttonVariants } from "@eli-coach-platform/ui/primitives";
-import { cn } from "@eli-coach-platform/ui/lib";
 import { CircleCheck } from "lucide-react";
 import type { Ref } from "react";
 import { Link as RouterLink } from "react-router";
@@ -41,10 +40,10 @@ export function BookingConfirmation(props: BookingConfirmationProps) {
       </h2>
       <p className="mx-auto mb-8 max-w-md text-lg leading-relaxed font-medium text-text-secondary">
         A confirmation with your join link is on its way to{" "}
-        <strong className="text-text-strong">{visitorEmail}</strong>.
+        <strong className="text-text-primary">{visitorEmail}</strong>.
       </p>
 
-      <div className="mb-10 w-full max-w-sm rounded-2xl border border-stroke-faint bg-surface-quiet p-6 text-left">
+      <div className="mb-10 w-full max-w-sm rounded-card border border-stroke-faint bg-surface-quiet p-6 text-left">
         <p className="mb-1 text-sm font-medium text-text-secondary">When</p>
         <p className="mb-4 font-semibold text-text-primary">
           {formatMonthFirstDate(startsAt, timeZone)} <br />
@@ -58,10 +57,11 @@ export function BookingConfirmation(props: BookingConfirmationProps) {
       </div>
 
       <RouterLink
-        className={cn(
-          buttonVariants({ label: "compact", variant: "outline" }),
-          "px-8",
-        )}
+        className={buttonVariants({
+          textSize: "sm",
+          variant: "outline",
+          weight: "semibold",
+        })}
         to="/"
       >
         Return to Home

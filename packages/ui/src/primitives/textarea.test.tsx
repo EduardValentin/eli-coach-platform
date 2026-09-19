@@ -21,7 +21,7 @@ describe("Textarea", () => {
     const field = screen.getByRole("textbox", { name: "Notes" });
     expect(field.tagName).toBe("TEXTAREA");
     expect(field).toHaveClass(
-      "rounded-lg",
+      "rounded-field",
       "border-control-border-soft",
       "bg-surface-quiet/50",
       "focus-visible:border-border-focus",

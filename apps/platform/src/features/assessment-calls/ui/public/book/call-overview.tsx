@@ -57,7 +57,7 @@ export function CallOverview(props: {
       {chosenCall ? (
         <motion.div
           animate={{ opacity: 1, y: 0 }}
-          className="mt-8 rounded-2xl border border-stroke-faint bg-surface-base p-4 shadow-card"
+          className="mt-8 rounded-card border border-stroke-faint bg-surface-base p-4 shadow-card"
           initial={{ opacity: 0, y: 10 }}
         >
           <div className="flex items-start gap-3">

@@ -71,7 +71,7 @@ export function StoreCartButton() {
     >
       <span className="relative block">
         <ShoppingBag aria-hidden="true" size={20} />
-        <span className="absolute -right-2 -top-1.5 flex size-4 items-center justify-center rounded-full bg-brand-primary text-count-badge text-brand-primary-foreground">
+        <span className="absolute -right-2 -top-1.5 flex size-4 items-center justify-center rounded-full bg-brand-primary text-micro font-semibold text-brand-primary-foreground">
           {itemCount}
         </span>
       </span>
@@ -236,10 +236,10 @@ function CartReview(props: {
       </ul>
       <div className="mt-auto border-t border-border-subtle pt-6">
         <Button
-          className="w-full"
           onClick={props.onContinue}
           size="lg"
           variant="inverted"
+          width="full"
         >
           Continue
         </Button>
@@ -255,7 +255,7 @@ function CartProduct({ product }: { product: StoreProduct }) {
     <li className="flex gap-4 py-4">
       <img
         alt={product.cover.alt}
-        className="h-24 w-20 rounded-lg object-cover shadow-card"
+        className="h-24 w-20 rounded-field object-cover shadow-card"
         src={product.cover.url}
       />
       <div className="flex min-w-0 flex-1 flex-col">
@@ -417,10 +417,10 @@ function AcquisitionDetails(props: {
           Back
         </Button>
         <Button
-          className="flex-1 px-0"
           disabled={!props.canSubmit}
           size="lg"
           type="submit"
+          width="full"
         >
           {props.isSubmitting ? (
             <>
@@ -465,7 +465,7 @@ function ConsentRow(props: {
             aria-invalid={props.errorMessage ? true : undefined}
             aria-label={props.accessibleLabel}
             checked={props.checked}
-            className="size-4 rounded-xs shadow-none"
+            className="size-4 rounded-checkbox shadow-none"
             disabled={props.disabled}
             id={props.id}
             onBlur={props.onBlur}

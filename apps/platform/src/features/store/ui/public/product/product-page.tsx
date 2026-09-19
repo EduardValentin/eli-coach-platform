@@ -64,7 +64,7 @@ export default function ProductDetailsRoute() {
         Back to Store
       </Link>
       <div className="grid gap-12 lg:grid-cols-2 lg:gap-20">
-        <div className="aspect-[4/5] overflow-hidden rounded-md bg-surface-subtle shadow-raised sm:aspect-square lg:aspect-[4/5]">
+        <div className="aspect-[4/5] overflow-hidden rounded-card bg-surface-subtle shadow-raised sm:aspect-square lg:aspect-[4/5]">
           <img
             alt={product.cover.alt}
             className="size-full object-cover"
@@ -75,7 +75,7 @@ export default function ProductDetailsRoute() {
           <div className="mb-6 flex flex-wrap gap-2">
             {product.types.map((type) => (
               <span
-                className="rounded-xs bg-brand-secondary-soft px-3 py-1.5 text-label uppercase text-brand-secondary"
+                className="rounded-tile bg-brand-secondary-soft px-3 py-1.5 text-label uppercase text-brand-secondary"
                 key={type.slug}
               >
                 {type.label}
@@ -83,7 +83,7 @@ export default function ProductDetailsRoute() {
             ))}
             {product.goals.map((goal) => (
               <span
-                className="rounded-xs bg-surface-subtle px-3 py-1.5 text-label uppercase text-text-secondary"
+                className="rounded-tile bg-surface-subtle px-3 py-1.5 text-label uppercase text-text-secondary"
                 key={goal.slug}
               >
                 {goal.label}
@@ -97,8 +97,8 @@ export default function ProductDetailsRoute() {
           <p className="text-lg leading-relaxed text-text-secondary">
             {product.detailDescription}
           </p>
-          <Card className="my-10 rounded-sm p-6 shadow-soft sm:p-6">
-            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-text-primary">
+          <Card className="my-10 rounded-card p-6 shadow-soft sm:p-6">
+            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-text-primary">
               What&apos;s included:
             </h2>
             <ul className="grid gap-4">
@@ -121,14 +121,15 @@ export default function ProductDetailsRoute() {
             aria-label={
               isInCart ? "Added to your cart" : `Get ${product.title} for free`
             }
-            className="min-h-15 w-full border-0 py-4 leading-7 !text-text-inverted shadow-raised hover:shadow-raised"
             onClick={(event) => {
               addProduct(product.slug);
               openCartFrom(event.currentTarget);
             }}
-            label="large"
-            size="lg"
+            elevation="raised"
+            size="xl"
+            textSize="lg"
             variant="secondary"
+            width="full"
           >
             <Download aria-hidden="true" size={21} />
             {isInCart ? "Added to your cart" : "Get it for Free"}

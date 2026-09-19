@@ -76,8 +76,8 @@ export function SlotPicker(props: SlotPickerProps) {
             </div>
             <button
               className={cn(
-                linkVariants({ variant: "brand" }),
-                "text-xs lg:hidden",
+                linkVariants({ variant: "inline" }),
+                "text-xs font-semibold lg:hidden",
               )}
               onClick={() =>
                 calendarRef.current?.scrollIntoView({

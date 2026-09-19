@@ -54,7 +54,8 @@ function isDataSaverEnabled() {
   return connection?.saveData === true;
 }
 
-function useShouldLoadHeroVideo(prefersReducedMotion: boolean) {
+function useShouldLoadHeroVideo() {
+  const prefersReducedMotion = useClientReducedMotionPreference();
   const [shouldLoadVideo, setShouldLoadVideo] = useState(false);
 
   useEffect(() => {
@@ -77,7 +78,7 @@ function useShouldLoadHeroVideo(prefersReducedMotion: boolean) {
 export function PublicHero(props: PublicHeroProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const shouldReduceMotion = useClientReducedMotionPreference();
-  const shouldLoadVideo = useShouldLoadHeroVideo(shouldReduceMotion);
+  const shouldLoadVideo = useShouldLoadHeroVideo();
   const [playRequested, setPlayRequested] = useState(true);
   const isPlaying = !shouldReduceMotion && playRequested;
   const { isClosed, isUnavailable, mode } = props.waitlist;
@@ -160,10 +161,10 @@ export function PublicHero(props: PublicHeroProps) {
               {isClosed ? (
                 <motion.span
                   className="mb-4 inline-block text-sm font-medium uppercase tracking-section-eyebrow text-text-inverted/70"
-                  {...heroEntranceMotion(
-                    { duration: 0.6, ease: "easeOut" },
-                    10,
-                  )}
+                  {...heroEntranceMotion({
+                    riseDistance: 10,
+                    transition: { duration: 0.6, ease: "easeOut" },
+                  })}
                 >
                   This round is full
                 </motion.span>
@@ -171,19 +172,23 @@ export function PublicHero(props: PublicHeroProps) {
               <motion.h1
                 className={heroHeadingClassName}
                 {...heroEntranceMotion({
-                  delay: 0.1,
-                  duration: 0.8,
-                  ease: "easeOut",
+                  transition: {
+                    delay: 0.1,
+                    duration: 0.8,
+                    ease: "easeOut",
+                  },
                 })}
               >
                 Coaching built around your body.
               </motion.h1>
               <motion.p
-                className="mb-10 max-w-2xl text-lg font-light tracking-nav text-gray-200 md:text-xl"
+                className="mb-10 max-w-2xl text-lg font-light tracking-nav text-text-inverted-secondary md:text-xl"
                 {...heroEntranceMotion({
-                  delay: 0.25,
-                  duration: 0.8,
-                  ease: "easeOut",
+                  transition: {
+                    delay: 0.25,
+                    duration: 0.8,
+                    ease: "easeOut",
+                  },
                 })}
               >
                 {isClosed ? (
@@ -206,9 +211,11 @@ export function PublicHero(props: PublicHeroProps) {
               <motion.div
                 className="mb-6 w-full"
                 {...heroEntranceMotion({
-                  delay: 0.4,
-                  duration: 0.8,
-                  ease: "easeOut",
+                  transition: {
+                    delay: 0.4,
+                    duration: 0.8,
+                    ease: "easeOut",
+                  },
                 })}
               >
                 <WaitlistEmailForm
@@ -220,9 +227,11 @@ export function PublicHero(props: PublicHeroProps) {
               <motion.div
                 className="mb-6 w-full"
                 {...heroEntranceMotion({
-                  delay: 0.55,
-                  duration: 0.8,
-                  ease: "easeOut",
+                  transition: {
+                    delay: 0.55,
+                    duration: 0.8,
+                    ease: "easeOut",
+                  },
                 })}
               >
                 <WaitlistAvailabilityStatus
@@ -238,16 +247,20 @@ export function PublicHero(props: PublicHeroProps) {
             >
               <motion.h1
                 className={heroHeadingClassName}
-                {...heroEntranceMotion({ duration: 0.8, ease: "easeOut" })}
+                {...heroEntranceMotion({
+                  transition: { duration: 0.8, ease: "easeOut" },
+                })}
               >
                 Strength training for women.
               </motion.h1>
               <motion.p
-                className="mb-8 text-lg font-light tracking-nav text-gray-200 md:text-xl"
+                className="mb-8 text-lg font-light tracking-nav text-text-inverted-secondary md:text-xl"
                 {...heroEntranceMotion({
-                  delay: 0.2,
-                  duration: 0.8,
-                  ease: "easeOut",
+                  transition: {
+                    delay: 0.2,
+                    duration: 0.8,
+                    ease: "easeOut",
+                  },
                 })}
               >
                 Coaching with Eli — strength, nutrition, and a plan that takes
@@ -263,10 +276,11 @@ export function PublicHero(props: PublicHeroProps) {
                   <Link
                     className={cn(
                       buttonVariants({
-                        elevation: "lifted",
-                        label: "caps",
+                        elevation: "raised",
+                        lettering: "caps",
                         press: "scale",
-                        size: "cta",
+                        textSize: "sm",
+                        weight: "semibold",
                       }),
                       "group",
                     )}
@@ -275,11 +289,11 @@ export function PublicHero(props: PublicHeroProps) {
                     See if we’re a fit
                     <ChevronRight
                       aria-hidden="true"
-                      className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1"
+                      className="h-4 w-4 transition-transform group-hover:translate-x-1"
                     />
                   </Link>
                 </div>
-                <p className="text-sm font-light tracking-nav text-gray-200">
+                <p className="text-sm font-light tracking-nav text-text-inverted-secondary">
                   Free 30-minute assessment call.
                 </p>
               </motion.div>
@@ -323,10 +337,13 @@ const HERO_PANEL_MOTION = {
   transition: { duration: 0.4 },
 } as const;
 
-function heroEntranceMotion(transition: Transition, offset = 20) {
+function heroEntranceMotion(options: {
+  transition: Transition;
+  riseDistance?: number;
+}) {
   return {
     animate: { opacity: 1, y: 0 },
-    initial: { opacity: 0, y: offset },
-    transition,
+    initial: { opacity: 0, y: options.riseDistance ?? 20 },
+    transition: options.transition,
   };
 }

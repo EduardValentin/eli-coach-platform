@@ -39,6 +39,7 @@ import { SlotPicker } from "./slot-picker";
 import { useStepHeadingFocus } from "./step-heading-focus";
 import { useBookAssessmentCallSubmission } from "./submission";
 import { UnavailableSlots } from "./unavailable-slots";
+import "./book-page.css";
 
 export async function loader({ context }: LoaderFunctionArgs) {
   return context.get(assessmentCallsContext).assessmentCalls.loadBookingPage();
@@ -158,7 +159,7 @@ function BookingFlow(props: {
     <div className="relative z-10 flex min-h-[650px] w-full max-w-5xl flex-col overflow-hidden rounded-panel border border-stroke-faint bg-surface-base shadow-floating md:flex-row">
       <CallOverview chosenCall={chosenCall} />
 
-      <div className="relative flex w-full flex-col bg-surface-base p-6 md:w-[65%] md:p-10">
+      <div className="ui-booking-first-step-entrance relative flex w-full flex-col bg-surface-base p-6 md:w-[65%] md:p-10">
         <AnimatePresence mode="wait">
           {flow.step === "slot" ? (
             <motion.div
@@ -261,9 +262,10 @@ function SlotSelectionStep(props: {
 
           <div className="mt-auto">
             <Button
-              className="mt-6 w-full"
+              className="mt-6"
               disabled={!selectedSlot}
-              label="strong"
+              weight="semibold"
+              width="full"
               onClick={() => dispatch({ type: "show-details" })}
               type="button"
             >

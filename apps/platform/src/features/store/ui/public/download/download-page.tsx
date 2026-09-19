@@ -59,11 +59,11 @@ export default function DownloadRoute() {
       <form action={DOWNLOAD_API_URL} method="post">
         <input name="token" type="hidden" value={token} />
         <Button
-          className="w-full"
-          elevation="lifted"
-          label="large"
-          size="lg"
+          elevation="raised"
+          size="xl"
+          textSize="lg"
           type="submit"
+          width="full"
         >
           <Download aria-hidden="true" size={21} />
           Download your resources
@@ -99,7 +99,7 @@ function UnavailableDownload() {
       <Link
         className={cn(
           buttonVariants({ size: "lg", variant: "inverted" }),
-          "mt-7 px-7",
+          "mt-7",
         )}
         to={STORE_PATH}
       >

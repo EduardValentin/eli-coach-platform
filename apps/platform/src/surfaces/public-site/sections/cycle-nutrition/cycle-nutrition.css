@@ -17,10 +17,6 @@
     width: 62%;
   }
 
-  .ui-public-cycle-nutrition-phase {
-    font-size: 2.25rem;
-  }
-
   .ui-public-cycle-nutrition-cue {
     font-size: 0.8125rem;
     max-width: 13.75rem;
@@ -49,11 +45,5 @@
       transparent 0.125rem,
       transparent 0.3125rem
     );
-  }
-
-  @media (min-width: 48rem) {
-    .ui-public-cycle-nutrition-phase {
-      font-size: 2.75rem;
-    }
   }
 }

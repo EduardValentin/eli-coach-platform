@@ -45,7 +45,7 @@ export default function SignInFailedRoute() {
       title="We couldn't finish signing you in"
     >
       <SignInButton fallbackRedirectUrl={storePath}>
-        <Button className="mt-8 px-7" size="lg" variant="inverted">
+        <Button size="lg" variant="inverted">
           Try Again
           <RotateCcw aria-hidden="true" size={18} />
         </Button>

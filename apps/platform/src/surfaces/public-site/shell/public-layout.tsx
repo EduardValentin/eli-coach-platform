@@ -13,6 +13,7 @@ import {
   type PublicNavigationVariant,
   type PublicNavigationScrollBehavior,
 } from "./public-navigation";
+import type { PublicHeaderAppearance } from "./header-appearance";
 import { PublicFooter } from "./public-footer";
 
 const publicNavigationLinks = [
@@ -20,6 +21,11 @@ const publicNavigationLinks = [
   { href: STORE_PATH, label: "Store" },
   { href: PRICING_PATH, label: "Pricing" },
 ] as const satisfies readonly PublicNavigationLink[];
+
+const HEADER_PLACEMENT_BY_APPEARANCE = {
+  solid: "header-solid",
+  transparent: "header-transparent",
+} as const satisfies Record<PublicHeaderAppearance, string>;
 
 export type PublicContentFrame = "padded" | "full-bleed";
 
@@ -60,9 +66,13 @@ export function PublicLayout(props: PublicLayoutProps) {
         Skip to main content
       </a>
       <PublicNavigation
-        actions={
+        actions={(appearance) =>
           authControlsEnabled ? (
-            <AuthNavActions session={session} storePath={storePath}>
+            <AuthNavActions
+              placement={HEADER_PLACEMENT_BY_APPEARANCE[appearance]}
+              session={session}
+              storePath={storePath}
+            >
               {navigationActions}
             </AuthNavActions>
           ) : (

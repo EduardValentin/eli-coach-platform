@@ -4,39 +4,51 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../lib/cn";
 
 const buttonClasses = cva(
-  "rounded-control text-base font-medium transition-colors outline-none disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-control transition-colors outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
   {
     variants: {
       variant: {
         primary:
-          "bg-brand-primary text-text-inverted hover:bg-brand-primary-hover",
+          "bg-brand-primary text-brand-primary-foreground hover:bg-brand-primary-hover",
         secondary:
-          "bg-brand-secondary text-text-inverted shadow-soft hover:bg-brand-secondary-hover active:brightness-95",
+          "bg-brand-secondary text-brand-secondary-foreground hover:bg-brand-secondary-hover",
         inverted:
           "bg-surface-inverted text-text-inverted hover:bg-brand-primary",
         outline:
-          "border border-control-border-soft bg-surface-base text-text-label hover:bg-surface-quiet hover:text-text-emphasis focus-visible:border-border-focus",
+          "border border-control-border-soft bg-surface-base text-text-label hover:bg-surface-quiet hover:text-text-primary",
         "outline-brand":
           "border border-brand-primary text-brand-primary hover:bg-brand-primary/5",
+        glass:
+          "border border-text-inverted/30 bg-text-inverted/15 text-text-inverted backdrop-blur-sm hover:bg-text-inverted/25",
       },
       size: {
-        md: "inline-flex h-12 shrink-0 items-center justify-center gap-2 px-4 py-2 whitespace-nowrap [&_svg]:pointer-events-none [&_svg]:shrink-0",
-        lg: "inline-flex items-center justify-center gap-2 px-6 py-4",
-        cta: "inline-flex h-12 items-center justify-center px-8",
-        "cta-lg": "h-14 px-8 whitespace-nowrap",
+        xs: "h-(--size-control-xs) px-4",
+        md: "h-(--size-control-md) px-8",
+        lg: "h-(--size-control-lg) px-8",
+        xl: "h-(--size-control-xl) px-8",
       },
-      label: {
-        standard: "",
+      width: {
+        content: "",
+        full: "w-full shrink px-0",
+      },
+      weight: {
         regular: "font-normal",
-        strong: "font-semibold",
-        compact: "text-sm font-semibold",
-        caps: "text-sm font-semibold tracking-widest uppercase",
-        large: "text-lg",
+        medium: "font-medium",
+        semibold: "font-semibold",
+      },
+      textSize: {
+        sm: "text-sm",
+        base: "text-base",
+        lg: "text-lg",
+      },
+      lettering: {
+        plain: "",
+        nav: "tracking-nav",
+        caps: "uppercase tracking-widest",
       },
       elevation: {
         flat: "",
-        raised: "shadow-action",
-        lifted: "shadow-action hover:shadow-action-hover",
+        raised: "shadow-action transition-all hover:shadow-action-hover",
       },
       press: {
         none: "",
@@ -46,7 +58,10 @@ const buttonClasses = cva(
     defaultVariants: {
       variant: "primary",
       size: "md",
-      label: "standard",
+      width: "content",
+      weight: "medium",
+      textSize: "base",
+      lettering: "plain",
       elevation: "flat",
       press: "none",
     },
@@ -67,10 +82,13 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     {
       className,
       elevation,
-      label,
+      lettering,
       press,
       size,
+      textSize,
       variant,
+      weight,
+      width,
       type = "button",
       ...props
     },
@@ -80,7 +98,16 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       ref={ref}
       type={type}
       className={cn(
-        buttonClasses({ elevation, label, press, size, variant }),
+        buttonClasses({
+          elevation,
+          lettering,
+          press,
+          size,
+          textSize,
+          variant,
+          weight,
+          width,
+        }),
         className,
       )}
       {...props}

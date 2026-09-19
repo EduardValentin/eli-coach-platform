@@ -78,7 +78,7 @@ function renderPublicNavigation(options: {
     <MotionConfig reducedMotion="always">
       <MemoryRouter>
         <PublicNavigation
-          actions={options.actions}
+          actions={() => options.actions}
           links={publicNavigationLinks}
           mobileActions={options.mobileActions}
           scrollBehavior={options.scrollBehavior ?? "hero-overlay"}

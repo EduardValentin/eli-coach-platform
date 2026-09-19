@@ -90,9 +90,8 @@ export function PublicAbout(props: PublicAboutProps) {
               <span className="inline-block">
                 <Link
                   className={buttonVariants({
-                    elevation: "lifted",
+                    elevation: "raised",
                     press: "scale",
-                    size: "cta",
                   })}
                   to={BOOK_PATH}
                 >

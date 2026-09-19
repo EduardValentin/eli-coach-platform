@@ -26,7 +26,7 @@ const calendarClassNames: Partial<ClassNames> = {
   month_grid: "w-full border-collapse",
   weekdays: "flex w-full",
   weekday:
-    "flex h-10 flex-1 items-center justify-center rounded-lg text-caption font-semibold uppercase tracking-wider text-text-secondary",
+    "flex h-10 flex-1 items-center justify-center rounded-field text-caption font-semibold uppercase tracking-wider text-text-secondary",
   week: "mt-1 flex w-full",
   day: "relative flex-1 p-0 text-center text-sm focus-within:relative focus-within:z-20 aria-selected:rounded-control",
   day_button:

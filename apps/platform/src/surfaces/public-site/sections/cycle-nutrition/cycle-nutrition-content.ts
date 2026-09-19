@@ -131,24 +131,29 @@ function getRotationForProgress(progress: number) {
   return INITIAL_ROTATION - 360 * clampProgress(progress);
 }
 
-export function getCycleNutritionViewState(options: {
-  prefersReducedMotion: boolean;
-  progress: number;
-}): CycleNutritionViewState {
-  const smoothDay = getCycleDayForProgress(options.progress);
-  const smoothPhase = getPhaseForCycleDay(smoothDay);
-  const activeDay = options.prefersReducedMotion
-    ? smoothPhase.anchorDay
-    : smoothDay;
-  const phase = getPhaseForCycleDay(activeDay);
-  const rotationDegrees = options.prefersReducedMotion
-    ? getRotationForCycleDay(activeDay)
-    : getRotationForProgress(options.progress);
+export function getScrollingCycleViewState(
+  progress: number,
+): CycleNutritionViewState {
+  const activeDay = getCycleDayForProgress(progress);
 
   return {
     activeDay,
-    phase,
-    rotationDegrees,
+    phase: getPhaseForCycleDay(activeDay),
+    rotationDegrees: getRotationForProgress(progress),
+  };
+}
+
+export function getAnchoredCycleViewState(
+  progress: number,
+): CycleNutritionViewState {
+  const activeDay = getPhaseForCycleDay(
+    getCycleDayForProgress(progress),
+  ).anchorDay;
+
+  return {
+    activeDay,
+    phase: getPhaseForCycleDay(activeDay),
+    rotationDegrees: getRotationForCycleDay(activeDay),
   };
 }
 

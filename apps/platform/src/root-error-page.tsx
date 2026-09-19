@@ -1,5 +1,4 @@
 import { DeadEndPage } from "@eli-coach-platform/ui/layout";
-import { cn } from "@eli-coach-platform/ui/lib";
 import { buttonVariants } from "@eli-coach-platform/ui/primitives";
 import { ArrowRight, Compass } from "lucide-react";
 import { Link } from "react-router";
@@ -22,10 +21,7 @@ export function RootErrorPage(props: RootErrorPageProps) {
       title={heading}
     >
       <Link
-        className={cn(
-          buttonVariants({ size: "lg", variant: "inverted" }),
-          "mt-8 px-7",
-        )}
+        className={buttonVariants({ size: "lg", variant: "inverted" })}
         to="/"
       >
         Back to home

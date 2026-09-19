@@ -153,9 +153,9 @@ export function BookingDetailsForm(props: BookingDetailsFormProps) {
         <div className="pt-4">
           <Button
             aria-busy={submission.isSubmitting || undefined}
-            className="w-full"
             disabled={submission.isSubmitting}
-            label="strong"
+            weight="semibold"
+            width="full"
             type="submit"
           >
             {submission.isSubmitting ? (

@@ -33,7 +33,7 @@ function ProgressGraph() {
       whileInView={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
     >
       <figcaption className="mb-5">
-        <p className="mb-1 text-public-my-method-overline font-bold tracking-section-eyebrow text-text-muted uppercase">
+        <p className="mb-1 text-micro font-bold tracking-section-eyebrow text-text-muted uppercase">
           Progress, side by side
         </p>
         <h3 className="font-heading text-public-my-method-figure-heading font-medium text-text-primary">

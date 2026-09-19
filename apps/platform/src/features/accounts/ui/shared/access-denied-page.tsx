@@ -1,5 +1,4 @@
 import { DeadEndPage } from "@eli-coach-platform/ui/layout";
-import { cn } from "@eli-coach-platform/ui/lib";
 import { buttonVariants } from "@eli-coach-platform/ui/primitives";
 import { ArrowRight, Lock } from "lucide-react";
 import { Link } from "react-router";
@@ -67,10 +66,7 @@ export function AccessDeniedPage({ recovery }: AccessDeniedPageProps) {
       title="You don't have access to this page"
     >
       <Link
-        className={cn(
-          buttonVariants({ size: "lg", variant: "inverted" }),
-          "mt-8 px-7",
-        )}
+        className={buttonVariants({ size: "lg", variant: "inverted" })}
         to={copy.to}
       >
         {copy.actionLabel}

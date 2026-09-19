@@ -30,11 +30,15 @@ import { AuthNavActions } from "./auth-nav-actions";
 const STORE_PATH = "/app/store";
 
 function renderAuthNavActions(
-  props: Omit<Parameters<typeof AuthNavActions>[0], "storePath">,
+  props: Omit<Parameters<typeof AuthNavActions>[0], "storePath" | "placement">,
 ) {
   return render(
     <MemoryRouter>
-      <AuthNavActions storePath={STORE_PATH} {...props} />
+      <AuthNavActions
+        placement="header-solid"
+        storePath={STORE_PATH}
+        {...props}
+      />
     </MemoryRouter>,
   );
 }

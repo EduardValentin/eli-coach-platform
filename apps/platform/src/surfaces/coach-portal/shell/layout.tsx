@@ -28,14 +28,14 @@ export const meta: MetaFunction = () => [
 function CoachBrand() {
   return (
     <div className="flex min-w-0 items-center gap-3">
-      <div className="flex size-10 shrink-0 items-center justify-center rounded-sm bg-text-primary text-text-inverted shadow-raised">
+      <div className="flex size-10 shrink-0 items-center justify-center rounded-control bg-text-primary text-text-inverted shadow-raised">
         <Dumbbell aria-hidden="true" className="-rotate-45" size={20} />
       </div>
       <div className="min-w-0">
         <p className="font-heading text-lg font-semibold text-text-primary">
           Evoa
         </p>
-        <p className="text-count-badge font-semibold uppercase tracking-widest text-brand-primary">
+        <p className="text-micro font-semibold uppercase tracking-widest text-brand-primary">
           Coach Portal
         </p>
       </div>
@@ -46,7 +46,7 @@ function CoachBrand() {
 function CoachTopBarBrand() {
   return (
     <div className="flex min-w-0 items-center gap-3">
-      <div className="flex size-8 shrink-0 items-center justify-center rounded-sm bg-text-primary text-text-inverted">
+      <div className="flex size-8 shrink-0 items-center justify-center rounded-compact bg-text-primary text-text-inverted">
         <Dumbbell aria-hidden="true" className="-rotate-45" size={16} />
       </div>
       <span className="font-heading text-sm font-semibold text-text-primary">

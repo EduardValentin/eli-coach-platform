@@ -29,7 +29,7 @@ export function DeadEndPage(props: DeadEndPageProps) {
       <p className="mt-4 max-w-md text-lg leading-relaxed text-text-secondary">
         {description}
       </p>
-      {children}
+      <div className="mt-8 flex justify-center">{children}</div>
     </main>
   );
 }

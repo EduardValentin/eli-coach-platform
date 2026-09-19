@@ -13,7 +13,8 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import {
   CYCLE_NUTRITION_DAYS,
   CYCLE_NUTRITION_DEGREES_PER_DAY,
-  getCycleNutritionViewState,
+  getAnchoredCycleViewState,
+  getScrollingCycleViewState,
   getPillPresentation,
 } from "./cycle-nutrition-content";
 import "./cycle-nutrition.css";
@@ -22,12 +23,15 @@ type PillStyle = CSSProperties & {
   "--cycle-nutrition-pill-color": string;
 };
 
-function getCycleMotionTransition(prefersReducedMotion: boolean): Transition {
-  return {
-    duration: prefersReducedMotion ? 0 : 0.3,
-    ease: [0.25, 0.1, 0.25, 1] as const,
-  };
-}
+const CYCLE_TRANSITION: Transition = {
+  duration: 0.3,
+  ease: [0.25, 0.1, 0.25, 1],
+};
+
+const INSTANT_CYCLE_TRANSITION: Transition = {
+  ...CYCLE_TRANSITION,
+  duration: 0,
+};
 
 export function PublicCycleNutrition() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -37,33 +41,31 @@ export function PublicCycleNutrition() {
     target: sectionRef,
   });
   const wheelRotation = useMotionValue(
-    getCycleNutritionViewState({ prefersReducedMotion: false, progress: 0 })
-      .rotationDegrees,
+    getScrollingCycleViewState(0).rotationDegrees,
   );
   const [viewState, setViewState] = useState(() =>
-    getCycleNutritionViewState({ prefersReducedMotion: false, progress: 0 }),
+    getScrollingCycleViewState(0),
   );
-  const transition = getCycleMotionTransition(prefersReducedMotion);
+  const transition = prefersReducedMotion
+    ? INSTANT_CYCLE_TRANSITION
+    : CYCLE_TRANSITION;
+  const viewStateAt = prefersReducedMotion
+    ? getAnchoredCycleViewState
+    : getScrollingCycleViewState;
 
   useMotionValueEvent(scrollYProgress, "change", (progress) => {
-    const nextViewState = getCycleNutritionViewState({
-      prefersReducedMotion,
-      progress,
-    });
+    const nextViewState = viewStateAt(progress);
 
     wheelRotation.set(nextViewState.rotationDegrees);
     setViewState(nextViewState);
   });
 
   useEffect(() => {
-    const nextViewState = getCycleNutritionViewState({
-      prefersReducedMotion,
-      progress: scrollYProgress.get(),
-    });
+    const nextViewState = viewStateAt(scrollYProgress.get());
 
     wheelRotation.set(nextViewState.rotationDegrees);
     setViewState(nextViewState);
-  }, [prefersReducedMotion, scrollYProgress, wheelRotation]);
+  }, [scrollYProgress, viewStateAt, wheelRotation]);
 
   return (
     <section
@@ -171,7 +173,7 @@ export function PublicCycleNutrition() {
                   <motion.h3
                     animate={{ opacity: 1, scale: 1 }}
                     className={cn(
-                      "ui-public-cycle-nutrition-phase mb-3 font-heading leading-normal font-medium motion-reduce:transform-none",
+                      "mb-3 font-heading text-4xl leading-normal font-medium motion-reduce:transform-none md:text-public-cycle-phase",
                       viewState.phase.tokenClassName.text,
                     )}
                     initial={

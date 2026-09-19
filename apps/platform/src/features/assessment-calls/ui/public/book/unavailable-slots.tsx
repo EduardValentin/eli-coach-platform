@@ -7,8 +7,9 @@ export function UnavailableSlots(props: { onRetry: () => void }) {
         <p>We couldn&apos;t load the open times just now.</p>
       </Alert>
       <Button
-        className="mt-6 w-full"
-        label="strong"
+        className="mt-6"
+        weight="semibold"
+        width="full"
         onClick={props.onRetry}
         type="button"
       >

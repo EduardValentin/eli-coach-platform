@@ -178,10 +178,9 @@ function FooterNormalContent() {
         <RouterLink
           className={cn(
             buttonVariants({
-              elevation: "lifted",
-              label: "regular",
+              elevation: "raised",
               press: "scale",
-              size: "cta",
+              weight: "regular",
             }),
             footerCtaLinkClassName,
           )}
@@ -192,10 +191,9 @@ function FooterNormalContent() {
         <RouterLink
           className={cn(
             buttonVariants({
-              label: "regular",
               press: "scale",
-              size: "cta",
               variant: "outline-brand",
+              weight: "regular",
             }),
             footerCtaLinkClassName,
           )}

@@ -42,7 +42,7 @@ function BundleCard(props: { card: CoachingBundleCard; index: number }) {
   return (
     <motion.article
       animate="visible"
-      className={cn("relative rounded-md border-2 px-6 py-7 text-center", {
+      className={cn("relative rounded-card border-2 px-6 py-7 text-center", {
         "ui-public-bundle-card-featured z-10 shadow-(--ui-public-bundle-featured-shadow)":
           card.isPopular,
         "bg-surface-base ui-public-bundle-card-default shadow-card":
@@ -100,21 +100,21 @@ function BundlePrice(props: { card: CoachingBundleCard }) {
       <div className="mb-1 flex flex-wrap items-end justify-center gap-0.5">
         {card.originalPricePerMonth ? (
           <span
-            aria-label={`Original ${titleLower} monthly price €${card.originalPricePerMonth}`}
+            aria-label={`Original ${titleLower} monthly price ${formatEuros(card.originalPricePerMonth)}`}
             className="ui-public-bundle-muted mr-1 text-lg font-bold leading-7 line-through"
           >
-            €{card.originalPricePerMonth}
+            {formatEuros(card.originalPricePerMonth)}
           </span>
         ) : null}
         <span
-          aria-label={`${card.title} monthly price €${card.pricePerMonth}`}
+          aria-label={`${card.title} monthly price ${formatEuros(card.pricePerMonth)}`}
           className={cn("font-body text-3xl font-bold leading-9", {
             "text-brand-primary": card.isWaitlistPrice,
           })}
         >
-          €{card.pricePerMonth}
+          {formatEuros(card.pricePerMonth)}
         </span>
-        <span className="ui-public-bundle-secondary mb-0.5 text-sm font-medium leading-5">
+        <span className="mb-0.5 text-sm font-medium leading-5 text-link-muted">
           /mo
         </span>
       </div>
@@ -127,23 +127,29 @@ function BundlePrice(props: { card: CoachingBundleCard }) {
       <p className="ui-public-bundle-muted text-xs font-medium leading-4 tracking-normal">
         {card.originalTotal ? (
           <span
-            aria-label={`Original ${titleLower} billing total €${card.originalTotal}`}
+            aria-label={`Original ${titleLower} billing total ${formatEuros(card.originalTotal)}`}
             className="mr-1 line-through"
           >
-            €{card.originalTotal}
+            {formatEuros(card.originalTotal)}
           </span>
         ) : null}
-        {card.billedMonthly ? "Billed monthly" : <>Billed as €{card.total}</>}
+        {card.billedMonthly
+          ? "Billed monthly"
+          : `Billed as ${formatEuros(card.total)}`}
       </p>
     </div>
   );
+}
+
+function formatEuros(amount: number): string {
+  return `€${amount}`;
 }
 
 function BundleBenefits(props: { benefits: readonly string[] }) {
   return (
     <motion.section
       animate="visible"
-      className="ui-public-bundle-panel mb-10 rounded-md border bg-surface-base p-8 shadow-card md:p-10"
+      className="ui-public-bundle-panel mb-10 rounded-card border bg-surface-base p-8 shadow-card md:p-10"
       initial="hidden"
       variants={createFadeUpVariants({
         delay: 0.3,
@@ -162,9 +168,7 @@ function BundleBenefits(props: { benefits: readonly string[] }) {
               className="mt-0.5 shrink-0 text-brand-primary"
               size={18}
             />
-            <span className="ui-public-bundle-secondary text-sm leading-5">
-              {benefit}
-            </span>
+            <span className="text-sm leading-5 text-link-muted">{benefit}</span>
           </li>
         ))}
       </ul>

@@ -110,17 +110,17 @@ export function WaitlistEmailForm(props: WaitlistEmailFormProps) {
                       ? waitlistLoadingLabel(mode)
                       : undefined
                   }
-                  className="hover:bg-waitlist-button-hover"
                   disabled={submission.isSubmitting || !email.trim()}
-                  label="strong"
                   press="scale"
-                  size="cta-lg"
+                  size="lg"
                   type="submit"
+                  weight="semibold"
                 >
-                  <WaitlistSubmitLabel
-                    isSubmitting={submission.isSubmitting}
-                    mode={mode}
-                  />
+                  {submission.isSubmitting ? (
+                    <WaitlistSubmittingLabel mode={mode} />
+                  ) : (
+                    waitlistSubmitLabel(mode)
+                  )}
                 </Button>
               </div>
               <div className="absolute size-0 overflow-hidden">
@@ -194,15 +194,14 @@ function WaitlistConsentNotice(props: { variant: WaitlistFormVariant }) {
   );
 }
 
-function WaitlistSubmitLabel(props: {
-  isSubmitting: boolean;
+function waitlistSubmitLabel(mode: WaitlistPresentation["mode"]): string {
+  return mode === "closed" ? "Notify me" : "Join the list";
+}
+
+function WaitlistSubmittingLabel(props: {
   mode: WaitlistPresentation["mode"];
 }) {
   const shouldReduceMotion = useClientReducedMotionPreference();
-
-  if (!props.isSubmitting) {
-    return props.mode === "closed" ? "Notify me" : "Join the list";
-  }
 
   if (shouldReduceMotion) {
     return <span>{waitlistLoadingLabel(props.mode)}…</span>;

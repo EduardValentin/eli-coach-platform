@@ -13,12 +13,15 @@ import { Link } from "react-router";
 import { cn } from "@eli-coach-platform/ui/lib";
 import { IconButton } from "@eli-coach-platform/ui/primitives";
 
+import type { PublicHeaderAppearance } from "./header-appearance";
 import { Logo } from "./logo";
 
 const SCROLLED_NAV_THRESHOLD = 50;
 const MENU_FOCUSABLE_SELECTOR =
   'a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])';
 const MOBILE_MENU_ID = "mobile-public-navigation-overlay";
+
+const MotionLink = motion.create(Link);
 
 export type PublicNavigationScrollBehavior = "hero-overlay" | "solid";
 export type PublicNavigationVariant = "waitlist" | "normal";
@@ -29,7 +32,7 @@ export type PublicNavigationLink = {
 };
 
 type PublicNavigationProps = {
-  actions?: ReactNode;
+  actions?: (appearance: PublicHeaderAppearance) => ReactNode;
   links: readonly PublicNavigationLink[];
   mobileActions?: ReactNode;
   scrollBehavior: PublicNavigationScrollBehavior;
@@ -146,27 +149,25 @@ export function PublicNavigation(props: PublicNavigationProps) {
     };
   }, [closeMobileMenu, isMobileMenuOpen]);
 
-  const shouldUseSolidAppearance =
-    scrollBehavior === "solid" || isScrolled || isMobileMenuOpen;
+  const appearance: PublicHeaderAppearance =
+    scrollBehavior === "solid" || isScrolled || isMobileMenuOpen
+      ? "solid"
+      : "transparent";
   const shouldShowNavigationControls = links.length > 0;
 
   return (
     <>
       <header
         className={cn(
-          // `group` scopes descendants such as AuthNavActions' portal pill to
-          // this header's own `data-appearance`, so a control nested several
-          // levels down (inside the actions slot) can still switch its look
-          // with the scroll state via `group-data-[appearance=solid]:*`
-          // instead of threading a boolean prop through every layer.
-          "group fixed left-0 right-0 top-0 z-[60] transition-colors duration-300 ease-out",
+          "fixed left-0 right-0 top-0 z-[60] transition-colors duration-300 ease-out",
           {
             "bg-surface-base/95 text-text-primary shadow-card backdrop-blur-md":
-              shouldUseSolidAppearance,
-            "bg-surface-base/0 text-text-inverted": !shouldUseSolidAppearance,
+              appearance === "solid",
+            "bg-surface-base/0 text-text-inverted":
+              appearance === "transparent",
           },
         )}
-        data-appearance={shouldUseSolidAppearance ? "solid" : "transparent"}
+        data-appearance={appearance}
         ref={headerRef}
         data-launch-mode={variant}
       >
@@ -174,13 +175,13 @@ export function PublicNavigation(props: PublicNavigationProps) {
           aria-label="Public site navigation"
           className="mx-auto flex h-20 max-w-7xl items-center justify-between gap-6 px-6"
         >
-          <Logo
-            isSolid={shouldUseSolidAppearance}
-            onNavigate={closeMobileMenu}
-          />
+          <Logo appearance={appearance} onNavigate={closeMobileMenu} />
           {shouldShowNavigationControls ? (
             <>
-              <PublicNavigationCluster actions={actions} links={links} />
+              <PublicNavigationCluster
+                actions={actions?.(appearance)}
+                links={links}
+              />
               <MobilePublicNavigationButton
                 isOpen={isMobileMenuOpen}
                 onToggle={toggleMobileMenu}
@@ -254,59 +255,50 @@ function MobilePublicNavigation(props: MobilePublicNavigationProps) {
       {isOpen ? (
         <motion.div
           animate={{ opacity: 1, y: 0 }}
-          className="fixed inset-0 z-[55] flex items-center justify-center bg-surface-page px-6 text-text-primary md:hidden"
-          exit={{ opacity: 0, y: "-100%" }}
+          className="fixed inset-0 z-[55] flex flex-col items-center justify-center bg-surface-page text-text-primary md:hidden"
+          exit={{ opacity: 0, y: "-100%", transition: { duration: 0.3 } }}
           initial={{ opacity: 0, y: "-100%" }}
           id={MOBILE_MENU_ID}
           key="mobile-public-navigation"
           ref={overlayRef}
-          transition={{
-            duration: 0.5,
-            ease: [0.22, 1, 0.36, 1],
-          }}
+          transition={{ damping: 25, stiffness: 200, type: "spring" }}
         >
           <nav
             aria-label="Mobile public site navigation"
             className="flex flex-col items-center gap-10"
           >
             {links.map((link, linkIndex) => (
-              <motion.div
+              <MotionLink
                 animate={{ opacity: 1, y: 0 }}
+                className="font-heading text-4xl font-medium text-text-primary transition-colors hover:text-brand-primary sm:text-5xl"
                 initial={{ opacity: 0, y: 20 }}
                 key={link.href}
-                transition={{
-                  delay: 0.1 + linkIndex * 0.1,
-                  duration: 0.32,
-                  ease: "easeOut",
-                }}
+                onClick={onClose}
+                to={link.href}
+                transition={{ delay: 0.1 + linkIndex * 0.1 }}
               >
-                <Link
-                  className="font-heading text-4xl font-medium text-text-primary transition-colors duration-150 ease-out hover:text-brand-primary sm:text-5xl"
-                  onClick={onClose}
-                  to={link.href}
-                >
-                  {link.label}
-                </Link>
-              </motion.div>
+                {link.label}
+              </MotionLink>
             ))}
             {mobileActions ? (
-              // A single wrapping click handler closes the menu for whichever
-              // control inside actually fires — the portal pill link or the
-              // Sign In/Out button — instead of threading `onClose` down into
-              // AuthNavActions, which has no reason to know this menu exists.
-              <motion.div
-                animate={{ opacity: 1, y: 0 }}
-                className="flex flex-col items-center gap-6"
-                initial={{ opacity: 0, y: 20 }}
-                onClick={onClose}
-                transition={{
-                  delay: 0.1 + links.length * 0.1,
-                  duration: 0.32,
-                  ease: "easeOut",
-                }}
-              >
-                {mobileActions}
-              </motion.div>
+              <>
+                <motion.div
+                  animate={{ opacity: 1, scale: 1 }}
+                  aria-hidden="true"
+                  className="my-4 h-px w-16 bg-divider"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  transition={{ delay: 0.3 }}
+                />
+                <motion.div
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex flex-col items-center gap-10"
+                  initial={{ opacity: 0, y: 20 }}
+                  onClick={onClose}
+                  transition={{ delay: 0.4 }}
+                >
+                  {mobileActions}
+                </motion.div>
+              </>
             ) : null}
           </nav>
           <motion.svg

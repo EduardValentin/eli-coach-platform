@@ -16,7 +16,7 @@ describe("Input", () => {
     // assert
     expect(screen.getByLabelText("Name")).toHaveClass(
       "h-12",
-      "rounded-lg",
+      "rounded-field",
       "border-control-border-soft",
       "bg-surface-quiet/50",
       "focus-visible:border-border-focus",

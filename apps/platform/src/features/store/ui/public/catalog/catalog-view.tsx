@@ -1,4 +1,5 @@
-import { cn, useSearchParamsWriter } from "@eli-coach-platform/ui/lib";
+import { useSearchParamsWriter } from "@eli-coach-platform/ui/lib";
+import { buttonVariants } from "@eli-coach-platform/ui/primitives";
 import { Plus, ShoppingBag } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link } from "react-router";
@@ -197,7 +198,7 @@ function CatalogProductCard({ product }: { product: StoreProduct }) {
   const openCartFrom = useStoreCart((cart) => cart.openCartFrom);
 
   return (
-    <article className="group flex h-full flex-col overflow-hidden rounded-md border border-stroke-faint bg-surface-base shadow-card transition-shadow hover:shadow-raised">
+    <article className="group flex h-full flex-col overflow-hidden rounded-card border border-stroke-faint bg-surface-base shadow-card transition-shadow hover:shadow-raised">
       <Link
         className="relative block aspect-[4/3] overflow-hidden bg-surface-subtle"
         to={storeProductPath(product.slug)}
@@ -215,7 +216,7 @@ function CatalogProductCard({ product }: { product: StoreProduct }) {
         <div className="mb-3 flex flex-wrap gap-2">
           {product.types.map((type) => (
             <span
-              className="rounded-xs bg-brand-secondary-soft px-2 py-1 text-label uppercase text-brand-secondary"
+              className="rounded-tile bg-brand-secondary-soft px-2 py-1 text-label uppercase text-brand-secondary"
               key={type.slug}
             >
               {type.label}
@@ -236,15 +237,11 @@ function CatalogProductCard({ product }: { product: StoreProduct }) {
               ? `${product.title} is in your cart`
               : `Get ${product.title} for free`
           }
-          className={cn(
-            "flex min-h-14 w-full items-center justify-center gap-2 rounded-control border-2 px-4 py-3.5 font-medium transition-colors",
-            {
-              "border-brand-secondary bg-brand-secondary text-brand-secondary-foreground":
-                isInCart,
-              "border-text-primary text-text-primary hover:border-brand-secondary hover:bg-brand-secondary hover:text-brand-secondary-foreground":
-                !isInCart,
-            },
-          )}
+          className={buttonVariants({
+            size: "lg",
+            variant: isInCart ? "secondary" : "outline",
+            width: "full",
+          })}
           onClick={(event) => {
             addProduct(product.slug);
             openCartFrom(event.currentTarget);

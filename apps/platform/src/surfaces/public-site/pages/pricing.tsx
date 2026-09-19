@@ -1,5 +1,4 @@
 import { ArrowRight } from "lucide-react";
-import { cn } from "@eli-coach-platform/ui/lib";
 import { buttonVariants } from "@eli-coach-platform/ui/primitives";
 import { Link, useOutletContext, type MetaFunction } from "react-router";
 
@@ -54,7 +53,7 @@ export default function PricingRoute() {
         applies.
       </p>
 
-      <section className="mx-auto w-full max-w-4xl rounded-md border border-stroke-faint bg-surface-base p-8 text-center shadow-card md:p-12">
+      <section className="mx-auto w-full max-w-4xl rounded-card border border-stroke-faint bg-surface-base p-8 text-center shadow-card md:p-12">
         {waitlist.mode === "disabled" ? (
           <AssessmentCallCta />
         ) : (
@@ -109,10 +108,7 @@ function AssessmentCallCta() {
         goals and lay out a roadmap for your success.
       </p>
       <Link
-        className={cn(
-          buttonVariants({ elevation: "raised", size: "lg" }),
-          "px-8",
-        )}
+        className={buttonVariants({ elevation: "raised", size: "lg" })}
         to={BOOK_PATH}
       >
         Book Assessment Call
