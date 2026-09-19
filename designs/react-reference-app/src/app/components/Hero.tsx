@@ -32,7 +32,6 @@ export function Hero() {
           {appState.isWaitlistMode ? (
             <motion.div
               key="waitlist"
-              initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.4 }}
@@ -49,14 +48,9 @@ export function Hero() {
                 </motion.span>
               )}
 
-              <motion.h1
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.1, ease: 'easeOut' }}
-                className="text-surface-inverted-foreground text-display-md min-[360px]:text-4xl sm:text-5xl md:text-7xl leading-none text-balance font-serif font-medium mb-4"
-              >
+              <h1 className="text-surface-inverted-foreground text-display-md min-[360px]:text-4xl sm:text-5xl md:text-7xl leading-none text-balance font-serif font-medium mb-4">
                 Coaching built around your body.
-              </motion.h1>
+              </h1>
 
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
@@ -104,20 +98,14 @@ export function Hero() {
           ) : (
             <motion.div
               key="default"
-              initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.4 }}
               className="flex flex-col items-center"
             >
-              <motion.h1
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, ease: 'easeOut' }}
-                className="text-surface-inverted-foreground text-display-md min-[360px]:text-4xl sm:text-5xl md:text-7xl leading-none text-balance font-serif font-medium mb-4"
-              >
+              <h1 className="text-surface-inverted-foreground text-display-md min-[360px]:text-4xl sm:text-5xl md:text-7xl leading-none text-balance font-serif font-medium mb-4">
                 Strength training for women.
-              </motion.h1>
+              </h1>
 
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
