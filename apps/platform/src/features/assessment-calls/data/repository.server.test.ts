@@ -2,7 +2,6 @@ import type { DatabaseClient } from "@eli-coach-platform/db";
 import { describe, expect, it, vi } from "vitest";
 
 import { PostgresAssessmentCallRepository } from "./repository.server";
-import { assessmentCallsTable } from "./schema.server";
 
 const STORED_ROW = {
   id: "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11",
