@@ -112,7 +112,6 @@ describe("@eli-coach-platform/config runtime environment", () => {
 
   it("loads deployed Resend config using current contact sender routing", () => {
     const environment = loadTestRuntimeEnvironment({
-      ASSESSMENT_CALL_MEETING_LINK: "https://meet.google.com/abc-defg-hij",
       BOT_DETECTION_PROVIDER: "turnstile",
       NODE_ENV: "production",
       PRODUCT_EMAIL_FROM_ADDRESS: "contact@evoa.fit",
@@ -157,67 +156,26 @@ describe("@eli-coach-platform/config runtime environment", () => {
     ).toThrow("Resend product email delivery requires RESEND_API_KEY.");
   });
 
-  it("defaults assessment calls to placeholders that name no real room or address", () => {
+  it("defaults the assessment call coach email to a placeholder that names no real address", () => {
     // arrange
     // act
     const environment = loadTestRuntimeEnvironment();
 
     // assert
-    expect(environment.ASSESSMENT_CALL_MEETING_LINK).toBe(
-      "https://example.invalid/2f8b41c6a9d7",
-    );
     expect(environment.ASSESSMENT_CALL_COACH_EMAIL).toBe(
       "4e1c7a93b5d2@example.invalid",
     );
   });
 
-  it("loads an explicit assessment call meeting room and coach address", () => {
+  it("loads an explicit assessment call coach address", () => {
     // arrange
     // act
     const environment = loadTestRuntimeEnvironment({
       ASSESSMENT_CALL_COACH_EMAIL: "coach@evoa.fit",
-      ASSESSMENT_CALL_MEETING_LINK: "https://meet.google.com/abc-defg-hij",
     });
 
     // assert
-    expect(environment.ASSESSMENT_CALL_MEETING_LINK).toBe(
-      "https://meet.google.com/abc-defg-hij",
-    );
     expect(environment.ASSESSMENT_CALL_COACH_EMAIL).toBe("coach@evoa.fit");
-  });
-
-  it("boots a production runtime that still carries the placeholder meeting link", () => {
-    // arrange
-    // act
-    const environment = loadTestRuntimeEnvironment({
-      BOT_DETECTION_PROVIDER: "turnstile",
-      CLERK_WEBHOOK_SIGNING_SECRET: TEST_CLERK_WEBHOOK_SIGNING_SECRET,
-      ENVIRONMENT: "production",
-      MANAGEMENT_API_SECRET: "production-management-api-secret-value",
-      NODE_ENV: "production",
-      PRODUCT_EMAIL_PROVIDER: "resend",
-      RESEND_API_KEY: "re_123",
-      STORE_ASSET_ROOT: "/srv/store-assets",
-      TURNSTILE_SECRET_KEY: "real-secret",
-      TURNSTILE_SITE_KEY: "real-site-key",
-    });
-
-    // assert
-    expect(environment.ASSESSMENT_CALL_MEETING_LINK).toBe(
-      "https://example.invalid/2f8b41c6a9d7",
-    );
-  });
-
-  it("rejects an assessment call meeting link that is not a URL", () => {
-    // arrange
-    // act
-    const loadMalformedMeetingLink = () =>
-      loadTestRuntimeEnvironment({
-        ASSESSMENT_CALL_MEETING_LINK: "replace-me",
-      });
-
-    // assert
-    expect(loadMalformedMeetingLink).toThrow();
   });
 
   it("requires a configured private Store asset root", () => {
@@ -353,7 +311,6 @@ describe("@eli-coach-platform/config runtime environment", () => {
   it("loads the expected TEST deployment configuration", () => {
     // arrange
     const testDeploymentConfiguration = {
-      ASSESSMENT_CALL_MEETING_LINK: "https://meet.google.com/abc-defg-hij",
       BOT_DETECTION_PROVIDER: "turnstile",
       NODE_ENV: "production",
       PRODUCT_EMAIL_FROM_ADDRESS: "hello@test.evoa.fit",
@@ -379,9 +336,6 @@ describe("@eli-coach-platform/config runtime environment", () => {
     expect(environment.PRODUCT_EMAIL_REPLY_TO).toBe("support@test.evoa.fit");
     expect(environment.TURNSTILE_SITE_KEY).toBe("real-site-key");
     expect(environment.TURNSTILE_SECRET_KEY).toBe("real-secret");
-    expect(environment.ASSESSMENT_CALL_MEETING_LINK).toBe(
-      "https://meet.google.com/abc-defg-hij",
-    );
   });
 });
 
