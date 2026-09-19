@@ -10,8 +10,14 @@ import {
 import type { PrototypeStoreCheckoutOutcome } from '../services/storeAcquisitionService';
 import type { PrototypeSignInOutcome } from '../services/authService';
 import type { PrototypeClientOnboardingOutcome } from '../services/clientOnboardingService';
-import type { PrototypeBookingOutcome } from '../services/assessmentCallService';
-import { sampleDashboardBookings } from '../services/assessmentCallSamples';
+import type {
+  PrototypeBooking,
+  PrototypeBookingOutcome,
+} from '../services/assessmentCallService';
+import {
+  sampleDashboardBookings,
+  sampleImminentBookings,
+} from '../services/assessmentCallSamples';
 import { useAssessmentCalls } from '../context/AssessmentCallContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Checkbox } from './ui/checkbox';
@@ -94,10 +100,10 @@ function parseBookingOutcomeControl(value: string): PrototypeBookingOutcome {
   return 'success';
 }
 
-type DashboardCallsSeed = 'none' | 'sample';
+type DashboardCallsSeed = 'none' | 'one' | 'sample';
 
 function parseDashboardCallsControl(value: string): DashboardCallsSeed {
-  if (value === 'sample') return value;
+  if (value === 'one' || value === 'sample') return value;
 
   return 'none';
 }
@@ -136,8 +142,14 @@ export function DevToggle() {
 
   const seedDashboardCalls = (value: string) => {
     const seed = parseDashboardCallsControl(value);
+    const now = new Date();
+    const seeds: Record<DashboardCallsSeed, PrototypeBooking[]> = {
+      none: [],
+      one: sampleImminentBookings(now),
+      sample: sampleDashboardBookings(now),
+    };
     setDashboardCalls(seed);
-    replaceBookings(seed === 'sample' ? sampleDashboardBookings(new Date()) : []);
+    replaceBookings(seeds[seed]);
   };
 
   return (
@@ -361,6 +373,7 @@ export function DevToggle() {
                     </SelectTrigger>
                     <SelectContent className={SELECT_CONTENT_CLASS}>
                       <SelectItem value="none">None</SelectItem>
+                      <SelectItem value="one">One upcoming call</SelectItem>
                       <SelectItem value="sample">
                         Sample calls (today, upcoming, past)
                       </SelectItem>

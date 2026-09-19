@@ -97,8 +97,13 @@ export function orderCalls(calls: ClassifiedCall[]): ClassifiedCall[] {
   ];
 }
 
-export function nextCall(calls: ClassifiedCall[]): ClassifiedCall | undefined {
-  return orderCalls(calls).find((call) => call.timing === 'upcoming');
+export function upcomingCalls(
+  calls: ClassifiedCall[],
+  limit: number,
+): ClassifiedCall[] {
+  return orderCalls(calls)
+    .filter((call) => call.timing === 'upcoming')
+    .slice(0, limit);
 }
 
 export function countTodayCalls(calls: ClassifiedCall[]): number {

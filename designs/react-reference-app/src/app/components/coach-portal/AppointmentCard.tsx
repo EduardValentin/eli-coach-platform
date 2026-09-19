@@ -2,21 +2,15 @@ import { CalendarDays, Clock, Mail } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import type { ReactNode } from 'react';
 import { cn } from '../ui/utils';
-
-export type AppointmentStatus = 'scheduled' | 'past';
-
-export type AppointmentAttendee = {
-  name: string;
-  imageUrl?: string;
-  email?: string;
-};
-
-export type AppointmentTime = { date: string; time: string };
-
-export type AppointmentTitleElement = 'p' | 'h2' | 'h3';
+import type {
+  AppointmentAttendee,
+  AppointmentStatus,
+  AppointmentTime,
+  AppointmentTitleElement,
+} from './appointment';
 
 const CARD_CLASS =
-  'flex items-start gap-4 p-5 rounded-card border border-neutral-100/50 bg-card';
+  'flex flex-col md:flex-row md:items-start gap-4 p-5 rounded-card border border-neutral-100/50 bg-card';
 
 const CARD_TONE: Record<AppointmentStatus, string> = {
   scheduled: 'shadow-soft text-text-primary',
@@ -117,37 +111,43 @@ export function AppointmentCard({
       transition={prefersReducedMotion ? { duration: 0 } : undefined}
       className={cn(CARD_CLASS, CARD_TONE[status])}
     >
-      <AttendeeAvatar attendee={attendee} status={status} />
+      <div className="flex items-start gap-4 flex-1 min-w-0">
+        <AttendeeAvatar attendee={attendee} status={status} />
 
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1 flex-wrap">
-          <Title className="text-sm font-semibold">{attendee.name}</Title>
-          {badges}
-        </div>
-
-        {supersededWhen && (
-          <div className="flex items-center gap-2 text-xs text-text-secondary line-through mb-0.5">
-            <CalendarDays aria-hidden="true" size={12} className="shrink-0" />
-            {supersededWhen.date} at {supersededWhen.time}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
+            <Title className="text-sm font-semibold">{attendee.name}</Title>
+            {badges}
           </div>
-        )}
 
-        <AppointmentTimeRow when={when} />
+          {supersededWhen && (
+            <div className="flex items-center gap-2 text-xs text-text-secondary line-through mb-0.5">
+              <CalendarDays aria-hidden="true" size={12} className="shrink-0" />
+              {supersededWhen.date} at {supersededWhen.time}
+            </div>
+          )}
 
-        {attendee.email && <AttendeeEmailLink email={attendee.email} />}
+          <AppointmentTimeRow when={when} />
 
-        {quote && (
-          <p className="text-xs text-text-secondary italic mt-2 whitespace-pre-line">
-            "{quote}"
-          </p>
-        )}
+          {attendee.email && <AttendeeEmailLink email={attendee.email} />}
 
-        {footnote && (
-          <p className="text-[10px] text-text-secondary mt-1.5">{footnote}</p>
-        )}
+          {quote && (
+            <p className="text-xs text-text-secondary italic mt-2 whitespace-pre-line">
+              "{quote}"
+            </p>
+          )}
+
+          {footnote && (
+            <p className="text-[10px] text-text-secondary mt-1.5">{footnote}</p>
+          )}
+        </div>
       </div>
 
-      {actions && <div className="flex gap-2 shrink-0 flex-wrap">{actions}</div>}
+      {actions && (
+        <div className="flex flex-col gap-2 w-full md:flex-row md:flex-wrap md:w-auto md:shrink-0">
+          {actions}
+        </div>
+      )}
     </motion.div>
   );
 }

@@ -9,7 +9,7 @@ import {
   type AssessmentCallStatus,
   type ClassifiedCall,
 } from '../../utils/assessmentCallListing';
-import { formatCallDate, formatSlotTime } from '../../utils/dateFormatters';
+import { formatShortDay, formatSlotTime } from '../../utils/dateFormatters';
 import { Badge } from '../ui/badge';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -54,7 +54,7 @@ function CallItem({
           email: booking.visitorEmail,
         }}
         when={{
-          date: formatCallDate(booking.startsAt, timeZone),
+          date: formatShortDay(booking.startsAt, timeZone),
           time: formatSlotTime(booking.startsAt, timeZone),
         }}
         status={timing === 'past' ? 'past' : 'scheduled'}

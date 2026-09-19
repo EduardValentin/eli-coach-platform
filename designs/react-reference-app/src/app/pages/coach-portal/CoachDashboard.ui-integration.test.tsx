@@ -90,7 +90,7 @@ describe('the coach dashboard', () => {
     ).toBeInTheDocument();
   });
 
-  it('shows the soonest call in the next call widget', () => {
+  it('shows the soonest call in the upcoming calls widget', () => {
     // arrange
     const bookings = [bookingAt(LATER_TODAY, 'Maria Ionescu')];
 
@@ -99,11 +99,9 @@ describe('the coach dashboard', () => {
 
     // assert
     expect(
-      screen.getByRole('heading', { level: 2, name: 'Next call' }),
+      screen.getByRole('heading', { level: 2, name: 'Upcoming calls' }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole('heading', { level: 3, name: 'Maria Ionescu' }),
-    ).toBeInTheDocument();
+    expect(screen.getByText('Maria Ionescu')).toBeInTheDocument();
   });
 
   it('sends the coach from the widget to the full list of calls', () => {

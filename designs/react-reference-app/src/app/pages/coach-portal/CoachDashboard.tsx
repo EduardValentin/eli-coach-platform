@@ -1,7 +1,8 @@
 import { motion } from 'motion/react';
 import { ClipboardCheck, Plus, ArrowRight, User } from 'lucide-react';
 import { Link } from 'react-router';
-import { NextAssessmentCall } from '../../components/coach-portal/NextAssessmentCall';
+import { DashboardAppointmentRow } from '../../components/coach-portal/DashboardAppointmentRow';
+import { UpcomingAssessmentCalls } from '../../components/coach-portal/UpcomingAssessmentCalls';
 import { useAssessmentCalls } from '../../context/AssessmentCallContext';
 import { useCheckins } from '../../context/CheckinContext';
 import {
@@ -56,7 +57,7 @@ export function CoachDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 mb-8">
         
-        <NextAssessmentCall
+        <UpcomingAssessmentCalls
           bookings={bookings}
           now={now}
           timeZone={timeZone}
@@ -78,18 +79,22 @@ export function CoachDashboard() {
 
           <div className="space-y-4">
             {pendingCheckins.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4 text-center">No pending check-ins</p>
+              <p className="text-sm text-muted-foreground">No pending check-ins</p>
             ) : (
               pendingCheckins.map(checkin => (
-                <div key={checkin.id} className="flex items-center justify-between p-4 rounded-card border border-border bg-muted/50 hover:bg-card hover:shadow-sm transition-all">
-                  <div>
-                    <p className="font-semibold text-sm text-foreground">{checkin.clientName}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{formatCheckinDate(checkin.date)} at {formatCheckinTime(checkin.time)}</p>
-                  </div>
-                  <Link to="/coach/checkins" className="px-4 py-2 bg-card border border-border text-foreground text-xs font-semibold rounded-control hover:bg-muted transition-colors">
-                    Review
-                  </Link>
-                </div>
+                <DashboardAppointmentRow
+                  key={checkin.id}
+                  attendeeName={checkin.clientName}
+                  when={{
+                    date: formatCheckinDate(checkin.date),
+                    time: formatCheckinTime(checkin.time),
+                  }}
+                  action={
+                    <Link to="/coach/checkins" className="px-4 py-2 bg-card border border-border text-foreground text-xs font-semibold rounded-control hover:bg-muted transition-colors">
+                      Review
+                    </Link>
+                  }
+                />
               ))
             )}
           </div>

@@ -33,7 +33,7 @@ function sampleBooking(
   };
 }
 
-export function sampleDashboardBookings(now: Date): PrototypeBooking[] {
+export function sampleImminentBookings(now: Date): PrototypeBooking[] {
   return [
     sampleBooking('ac-sample-in-two-hours', hoursFromNow(now, 2), {
       name: 'Maria Ionescu',
@@ -41,10 +41,21 @@ export function sampleDashboardBookings(now: Date): PrototypeBooking[] {
       notes:
         'Training three times a week at home.\nComing back from a shoulder injury, so upper body needs care.',
     }),
+  ];
+}
+
+export function sampleDashboardBookings(now: Date): PrototypeBooking[] {
+  return [
+    ...sampleImminentBookings(now),
     sampleBooking('ac-sample-tomorrow', atLocalHour(now, 1, 18), {
       name: 'Ioana Radu',
       email: 'ioana.radu@example.com',
       notes: '',
+    }),
+    sampleBooking('ac-sample-in-three-days', atLocalHour(now, 3, 11), {
+      name: 'Andreea Pop',
+      email: 'andreea.pop@example.com',
+      notes: 'Wants to start before the holidays.',
     }),
     sampleBooking('ac-sample-three-hours-ago', hoursFromNow(now, -3), {
       name: 'Sofia Dinu',

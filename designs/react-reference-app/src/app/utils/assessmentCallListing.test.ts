@@ -3,7 +3,7 @@ import {
   classifyCalls,
   countTodayCalls,
   filterCalls,
-  nextCall,
+  upcomingCalls,
   orderCalls,
   parseStatus,
 } from './assessmentCallListing';
@@ -235,85 +235,95 @@ describe('ordering assessment calls', () => {
   });
 });
 
-describe('choosing the next assessment call', () => {
-  it('picks the soonest call that has not ended, whatever order it is given', () => {
-    // arrange
-    const now = new Date('2026-09-21T09:00:00.000Z');
-    const calls = classifyCalls(
-      [
-        bookingAt('2026-09-22T15:00:00.000Z', { visitorName: 'Later upcoming' }),
-        bookingAt('2026-09-21T15:00:00.000Z', { visitorName: 'Next upcoming' }),
-      ],
+describe('choosing the calls still to come', () => {
+  const now = new Date('2026-09-21T09:00:00.000Z');
+
+  function classify(starts: string[]) {
+    return classifyCalls(
+      starts.map((iso, index) =>
+        bookingAt(iso, { visitorName: `Visitor ${index + 1}` }),
+      ),
       { now, timeZone: BUCHAREST },
     );
+  }
 
-    // act
-    const next = nextCall(calls);
-
-    // assert
-    expect(next?.booking.visitorName).toBe('Next upcoming');
-  });
-
-  it('passes over a call that already ended today', () => {
+  it('finds none when no call is booked', () => {
     // arrange
-    const now = new Date('2026-09-21T09:00:00.000Z');
-    const calls = classifyCalls(
-      [
-        bookingAt('2026-09-21T06:00:00.000Z', { visitorName: 'Ended today' }),
-        bookingAt('2026-09-21T15:00:00.000Z', { visitorName: 'Still to come' }),
-      ],
-      { now, timeZone: BUCHAREST },
-    );
+    const calls = classify([]);
 
     // act
-    const next = nextCall(calls);
+    const upcoming = upcomingCalls(calls, 3);
 
     // assert
-    expect(next?.booking.visitorName).toBe('Still to come');
-  });
-
-  it('keeps a call that is under way as the next one', () => {
-    // arrange
-    const now = new Date('2026-09-21T09:15:00.000Z');
-    const calls = classifyCalls(
-      [bookingAt('2026-09-21T09:00:00.000Z', { visitorName: 'Under way' })],
-      { now, timeZone: BUCHAREST },
-    );
-
-    // act
-    const next = nextCall(calls);
-
-    // assert
-    expect(next?.booking.visitorName).toBe('Under way');
+    expect(upcoming).toEqual([]);
   });
 
   it('finds none when every call has ended', () => {
     // arrange
-    const now = new Date('2026-09-21T09:00:00.000Z');
-    const calls = classifyCalls([bookingAt('2026-09-20T15:00:00.000Z')], {
-      now,
-      timeZone: BUCHAREST,
-    });
+    const calls = classify(['2026-09-20T15:00:00.000Z', '2026-09-21T06:00:00.000Z']);
 
     // act
-    const next = nextCall(calls);
+    const upcoming = upcomingCalls(calls, 3);
 
     // assert
-    expect(next).toBeUndefined();
+    expect(upcoming).toEqual([]);
   });
 
-  it('finds none when no call is booked', () => {
+  it('returns the one call still to come', () => {
     // arrange
-    const calls = classifyCalls([], {
-      now: new Date('2026-09-21T09:00:00.000Z'),
-      timeZone: BUCHAREST,
-    });
+    const calls = classify(['2026-09-21T06:00:00.000Z', '2026-09-22T15:00:00.000Z']);
 
     // act
-    const next = nextCall(calls);
+    const upcoming = upcomingCalls(calls, 3);
 
     // assert
-    expect(next).toBeUndefined();
+    expect(namesOf(upcoming)).toEqual(['Visitor 2']);
+  });
+
+  it('returns three calls soonest first when exactly three are coming', () => {
+    // arrange
+    const calls = classify([
+      '2026-09-23T15:00:00.000Z',
+      '2026-09-21T15:00:00.000Z',
+      '2026-09-22T15:00:00.000Z',
+    ]);
+
+    // act
+    const upcoming = upcomingCalls(calls, 3);
+
+    // assert
+    expect(namesOf(upcoming)).toEqual(['Visitor 2', 'Visitor 3', 'Visitor 1']);
+  });
+
+  it('keeps only the three soonest when more are coming, ignoring ended ones', () => {
+    // arrange
+    const calls = classify([
+      '2026-09-25T15:00:00.000Z',
+      '2026-09-21T15:00:00.000Z',
+      '2026-09-20T15:00:00.000Z',
+      '2026-09-24T15:00:00.000Z',
+      '2026-09-22T15:00:00.000Z',
+    ]);
+
+    // act
+    const upcoming = upcomingCalls(calls, 3);
+
+    // assert
+    expect(namesOf(upcoming)).toEqual(['Visitor 2', 'Visitor 5', 'Visitor 4']);
+  });
+
+  it('keeps a call that is under way among the ones still to come', () => {
+    // arrange
+    const underWay = classifyCalls(
+      [bookingAt('2026-09-21T08:50:00.000Z', { visitorName: 'Under way' })],
+      { now, timeZone: BUCHAREST },
+    );
+
+    // act
+    const upcoming = upcomingCalls(underWay, 3);
+
+    // assert
+    expect(namesOf(upcoming)).toEqual(['Under way']);
   });
 });
 
