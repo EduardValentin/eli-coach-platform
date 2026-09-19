@@ -1,5 +1,7 @@
 export type FeatureFlagSet = Record<string, boolean>;
 
+export const WAITLIST_MODE_FEATURE_FLAG = "WAITLIST_MODE";
+
 type FeatureFlagProps = {
   id: number;
   name: string;

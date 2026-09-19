@@ -1,6 +1,8 @@
 import type { RuntimeEnvironment } from "@eli-coach-platform/config";
+import { GetFeatureFlagsUseCase } from "@eli-coach-platform/domain/feature-flag";
 import type { Clock } from "@eli-coach-platform/domain/shared";
 import { EVOA_FITNESS_PRIVACY_EMAIL } from "@eli-coach-platform/content";
+import { PostgresFeatureFlagRepository } from "@eli-coach-platform/infrastructure/feature-flags/server";
 import {
   createBotDetectionConfig,
   createBotVerifier,
@@ -52,7 +54,7 @@ export function createPlatformContainer(options: {
   const environment = options.runtimeEnvironment;
   const database = createPlatformDatabase({ runtimeEnvironment: environment });
   const clock: Clock = { now: () => new Date() };
-  const logger = createConsoleLogger();
+  const incidents = createConsoleLogger();
   const botDetection = createBotDetectionConfig(environment);
   const botVerifier = createBotVerifier(environment);
   const managementAuthConfig = createManagementAuthConfig(
@@ -61,6 +63,15 @@ export function createPlatformContainer(options: {
   );
   const managementAuthenticator = createManagementAuthenticator(environment);
   const productEmail = createProductEmail(environment);
+  const featureFlags = new GetFeatureFlagsUseCase({
+    featureFlags: new PostgresFeatureFlagRepository(database.client),
+  });
+  const platform = composePlatformFeature({
+    app: environment,
+    botDetection,
+    featureFlags,
+    version: process.env.GIT_SHA ?? "dev",
+  });
 
   return {
     accounts: composeAccountsFeature({
@@ -76,30 +87,25 @@ export function createPlatformContainer(options: {
     assessmentCalls: composeAssessmentCallsFeature({
       appBasePath: environment.APP_BASE_PATH,
       assessmentCallsConfig: environment,
-      bookingOpen: !environment.WAITLIST_MODE,
       botDetection,
       botVerifier,
       clock,
       contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
       database: database.client,
-      logger,
+      featureFlags,
+      incidents,
       productEmail,
       publicAppUrl: environment.PUBLIC_APP_URL,
     }),
     closeDatabase: () => database.close(),
-    platform: composePlatformFeature({
-      app: environment,
-      botDetection,
-      database: database.client,
-      version: process.env.GIT_SHA ?? "dev",
-    }),
+    platform,
     store: composeStoreFeature({
       appBasePath: environment.APP_BASE_PATH,
       botVerifier,
       clock,
       contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
       database: database.client,
-      logger,
+      incidents,
       managementAuth: {
         authenticator: managementAuthenticator,
         config: managementAuthConfig,
@@ -113,7 +119,8 @@ export function createPlatformContainer(options: {
       clock,
       contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
       database: database.client,
-      logger,
+      featureFlags,
+      incidents,
       privacyEmail: EVOA_FITNESS_PRIVACY_EMAIL,
       productEmail,
       waitlist: environment,

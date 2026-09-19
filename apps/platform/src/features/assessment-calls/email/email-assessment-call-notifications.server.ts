@@ -8,7 +8,7 @@ import type {
   EmailAttachment,
   ProductEmail,
   ProductEmailCommand,
-} from "@eli-coach-platform/domain/shared";
+} from "@eli-coach-platform/infrastructure/email/server";
 
 import { assessmentCallJoinPath } from "~/features/assessment-calls/contracts/paths";
 

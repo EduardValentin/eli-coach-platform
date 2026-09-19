@@ -74,7 +74,6 @@ Object.assign(process.env, {
   PRODUCT_EMAIL_PROVIDER: "memory",
   PUBLIC_APP_URL: "http://localhost:3000",
   STORE_ASSET_ROOT: lighthouseStoreAssetRoot,
-  WAITLIST_MODE: "false",
   PORT: "3000",
 });
 
@@ -103,7 +102,6 @@ module.exports = {
       url: [
         "http://localhost:3000/",
         "http://localhost:3000/blog/",
-        "http://localhost:3000/book/",
         "http://localhost:3000/privacy/",
         "http://localhost:3000/terms/",
       ],

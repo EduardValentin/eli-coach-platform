@@ -1,5 +1,13 @@
 import { ASSESSMENT_CALL_BOOKING_TURNSTILE_ACTION } from "@eli-coach-platform/infrastructure/bot-detection";
-import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+} from "vitest";
 
 import {
   bookAssessmentCallResponseSchema,
@@ -38,7 +46,6 @@ const suite = new ApiIntegrationTestSuite({
     ASSESSMENT_CALL_COACH_EMAIL: COACH_EMAIL,
     ASSESSMENT_CALL_MEETING_LINK: MEETING_LINK,
     PRODUCT_EMAIL_REPLY_TO,
-    WAITLIST_MODE: "false",
   },
 });
 const bookingToken = turnstileTokenForAction(
@@ -59,6 +66,10 @@ const MALFORMED_BOOKING_ID = "not-a-booking";
 describe.sequential("assessment call booking integration", () => {
   beforeAll(async () => {
     await suite.start();
+  });
+
+  beforeEach(async () => {
+    await switchWaitlistModeOff();
   });
 
   afterEach(async () => {
@@ -655,5 +666,16 @@ async function reserveCoachTimeDirectly(reservation: {
       reservation.endsAt,
       reservation.appointmentKind,
     ],
+  });
+}
+
+async function switchWaitlistModeOff(): Promise<void> {
+  await suite.postgres.executeSql({
+    sql: `
+      update app.feature_flags
+      set enabled = false, updated_at = now()
+      where name = $1
+    `,
+    values: ["WAITLIST_MODE"],
   });
 }

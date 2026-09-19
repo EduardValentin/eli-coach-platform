@@ -17,7 +17,7 @@ import { execFile } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { promisify } from "node:util";
-import type { Pool, QueryResultRow } from "pg";
+import type { Pool, PoolClient, QueryResultRow } from "pg";
 
 const postgresRuntimeBaseImagePath = "docker/postgres-runtime-base-image.txt";
 const bootstrapScriptTargetPath = "/docker-entrypoint-initdb.d/01-bootstrap.sh";
@@ -38,6 +38,11 @@ export type ExecuteSqlOptions = {
 export type QueryRowsOptions = {
   sql: string;
   values: readonly unknown[];
+};
+
+export type OpenTransaction = {
+  executeSql(options: ExecuteSqlOptions): Promise<void>;
+  commit(): Promise<void>;
 };
 
 export type ApplyApplicationMigrationsOptions = {
@@ -80,6 +85,7 @@ export class PostgresTestEnvironment {
   private container: StartedPostgreSqlContainer | null = null;
   private migrationDatabaseConnection: DatabaseConnection | null = null;
   private migrationPool: Pool | null = null;
+  private readonly openTransactionClients = new Set<PoolClient>();
 
   constructor(private readonly options: PostgresTestEnvironmentOptions) {}
 
@@ -116,7 +122,30 @@ export class PostgresTestEnvironment {
     return result.rows;
   }
 
+  async beginTransaction(): Promise<OpenTransaction> {
+    const client = await this.getMigrationPool().connect();
+
+    await client.query("begin");
+    this.openTransactionClients.add(client);
+
+    return {
+      executeSql: async (options) => {
+        await client.query(options.sql, [...(options.values ?? [])]);
+      },
+      commit: async () => {
+        this.openTransactionClients.delete(client);
+
+        try {
+          await client.query("commit");
+        } finally {
+          client.release();
+        }
+      },
+    };
+  }
+
   async resetToBaselineState(): Promise<void> {
+    await this.rollBackOpenTransactions();
     await this.dropApplicationSchema();
     await this.reconcileBootstrapState();
     await this.applyApplicationMigrations();
@@ -213,6 +242,7 @@ export class PostgresTestEnvironment {
   }
 
   async stop(): Promise<void> {
+    await this.rollBackOpenTransactions();
     await this.resetMigrationPool();
 
     if (this.container) {
@@ -239,6 +269,20 @@ export class PostgresTestEnvironment {
     }
 
     return this.migrationPool;
+  }
+
+  private async rollBackOpenTransactions(): Promise<void> {
+    const clients = [...this.openTransactionClients];
+
+    this.openTransactionClients.clear();
+
+    for (const client of clients) {
+      try {
+        await client.query("rollback");
+      } finally {
+        client.release();
+      }
+    }
   }
 
   private async resetMigrationPool(): Promise<void> {

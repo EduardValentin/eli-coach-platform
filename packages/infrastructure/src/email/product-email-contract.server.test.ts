@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import type { EmailAttachment, ProductEmailCommand } from "./index";
+import type {
+  EmailAttachment,
+  ProductEmailCommand,
+} from "./product-email-contract.server";
 
 describe("ProductEmailCommand", () => {
   it("carries attachment bytes alongside the filename and content type", () => {

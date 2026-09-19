@@ -2,7 +2,7 @@ import type { AssessmentCallSnapshot } from "@eli-coach-platform/domain/assessme
 import type {
   ProductEmail,
   ProductEmailCommand,
-} from "@eli-coach-platform/domain/shared";
+} from "@eli-coach-platform/infrastructure/email/server";
 import { describe, expect, it, vi } from "vitest";
 
 import { EmailAssessmentCallNotifications } from "./email-assessment-call-notifications.server";

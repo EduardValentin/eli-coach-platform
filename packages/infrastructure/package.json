@@ -2,6 +2,11 @@
   "name": "@eli-coach-platform/infrastructure",
   "private": true,
   "type": "module",
+  "files": [
+    "src",
+    "!src/**/*.test.*",
+    "!src/**/*.spec.*"
+  ],
   "exports": {
     "./pwa": "./src/pwa/index.ts",
     "./bot-detection": "./src/bot-detection/index.ts",

@@ -1,12 +1,11 @@
 import type { CoachAvailabilitySource } from "../coach-availability";
 import { EmailAddress } from "../email-address";
-import type { Clock, Logger } from "../shared";
+import type { Clock } from "../shared";
 
 import type { AssessmentCall } from "./assessment-call";
-import type {
-  AssessmentCallNotifications,
-  AssessmentCallRecipient,
-} from "./assessment-call-notifications";
+import type { AssessmentCallBookingWindow } from "./assessment-call-booking-window";
+import type { AssessmentCallIncidents } from "./assessment-call-incidents";
+import type { AssessmentCallNotifications } from "./assessment-call-notifications";
 import type {
   AssessmentCallReservations,
   ReservationResult,
@@ -29,9 +28,9 @@ export type BookAssessmentCallResult =
 
 type BookAssessmentCallUseCaseOptions = {
   availability: CoachAvailabilitySource;
-  bookingOpen: boolean;
+  bookingWindow: AssessmentCallBookingWindow;
   clock: Clock;
-  logger: Logger;
+  incidents: AssessmentCallIncidents;
   notifications: AssessmentCallNotifications;
   reservations: AssessmentCallReservations;
 };
@@ -44,7 +43,7 @@ export class BookAssessmentCallUseCase {
   async execute(
     command: BookAssessmentCallCommand,
   ): Promise<BookAssessmentCallResult> {
-    if (!this.options.bookingOpen) {
+    if (!(await this.options.bookingWindow.isOpen())) {
       return { status: "closed" };
     }
 
@@ -100,20 +99,13 @@ export class BookAssessmentCallUseCase {
 
       for (const recipient of RECIPIENTS) {
         if (delivery[recipient] === "failed") {
-          this.logNotificationFailure(recipient);
+          this.options.incidents.notificationFailed({ recipient });
         }
       }
     } catch {
       for (const recipient of RECIPIENTS) {
-        this.logNotificationFailure(recipient);
+        this.options.incidents.notificationFailed({ recipient });
       }
     }
-  }
-
-  private logNotificationFailure(recipient: AssessmentCallRecipient): void {
-    this.options.logger.error("Assessment call notification failed.", {
-      errorCategory: "assessment_call_notification_failure",
-      recipient,
-    });
   }
 }

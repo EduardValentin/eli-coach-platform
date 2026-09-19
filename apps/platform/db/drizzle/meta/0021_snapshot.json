@@ -1,6 +1,6 @@
 {
-  "id": "70c74e08-5f26-4be9-9e79-c54121cb3279",
-  "prevId": "fe1fe346-36af-44ca-8eb8-c949c9fc7524",
+  "id": "893a4f21-61a2-4380-abb8-b6230f17959f",
+  "prevId": "eabc6dd2-2937-4e9a-90e9-29f96c6e17a7",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -47,29 +47,7 @@
           "default": "now()"
         }
       },
-      "indexes": {
-        "coach_time_reservations_appointment_unique": {
-          "name": "coach_time_reservations_appointment_unique",
-          "columns": [
-            {
-              "expression": "appointment_kind",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "appointment_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
+      "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
@@ -1903,8 +1881,13 @@
           "name": "pricing_eligibility",
           "type": "varchar(32)",
           "primaryKey": false,
-          "notNull": true,
-          "default": "'reduced'"
+          "notNull": true
+        },
+        "reduced_slot": {
+          "name": "reduced_slot",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
         },
         "privacy_policy_version": {
           "name": "privacy_policy_version",
@@ -2004,13 +1987,43 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "waitlist_entries_offer_reduced_slot_unique": {
+          "name": "waitlist_entries_offer_reduced_slot_unique",
+          "columns": [
+            {
+              "expression": "offer_slug",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "reduced_slot",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "waitlist_entries_reduced_slot_range": {
+          "name": "waitlist_entries_reduced_slot_range",
+          "value": "\"app\".\"waitlist_entries\".\"reduced_slot\" between 1 and 10"
+        },
+        "waitlist_entries_reduced_slot_matches_pricing": {
+          "name": "waitlist_entries_reduced_slot_matches_pricing",
+          "value": "(\"app\".\"waitlist_entries\".\"pricing_eligibility\" = 'reduced') = (\"app\".\"waitlist_entries\".\"reduced_slot\" is not null)"
+        }
+      },
       "isRLSEnabled": false
     }
   },

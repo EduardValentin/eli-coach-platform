@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
+import type { FeatureFlagReader } from "../feature-flag";
 import { GetWaitlistUseCase } from "./get-waitlist-use-case";
 import { JoinWaitlistUseCase } from "./join-waitlist-use-case";
 import {
@@ -20,12 +21,23 @@ const consentVersions = {
 } satisfies WaitlistConsentVersions;
 const fixedClock = { now: () => new Date("2026-07-30T12:00:00.000Z") };
 
-function createLogger() {
-  return { error: vi.fn() };
+function createWaitlistIncidents() {
+  return {
+    confirmationDeliveryFailed: vi.fn(),
+    waitlistModeReadFailed: vi.fn(),
+  };
 }
 
-function createWaitlist(enabled: boolean): Waitlist {
-  return Waitlist.configure({ cap: 10, enabled, offer: activeOffer });
+function createFeatureFlags(
+  flags: Record<string, boolean> = { WAITLIST_MODE: true },
+): FeatureFlagReader {
+  return {
+    execute: vi.fn().mockResolvedValue(flags),
+  };
+}
+
+function createWaitlist(): Waitlist {
+  return Waitlist.configure({ offer: activeOffer });
 }
 
 function createWaitlistEntries(
@@ -51,40 +63,26 @@ function createConfirmation(): WaitlistConfirmation {
 
 function createJoinWaitlist(options: {
   confirmation: WaitlistConfirmation;
-  logger: ReturnType<typeof createLogger>;
+  incidents: ReturnType<typeof createWaitlistIncidents>;
   waitlistEntries: WaitlistEntries;
 }): JoinWaitlistUseCase {
   return new JoinWaitlistUseCase({
     confirmation: options.confirmation,
     consentVersions,
-    logger: options.logger,
-    waitlist: createWaitlist(true),
+    incidents: options.incidents,
+    waitlist: createWaitlist(),
     waitlistEntries: options.waitlistEntries,
   });
 }
 
-function serializeCapturedLoggerArguments(argumentsList: unknown[][]): string {
-  return JSON.stringify(argumentsList, (_key, value: unknown) => {
-    if (value instanceof Error) {
-      return {
-        cause: value.cause,
-        message: value.message,
-        name: value.name,
-        params: (value as Error & { params?: unknown }).params,
-        stack: value.stack,
-      };
-    }
-
-    return value;
-  });
-}
-
 describe("GetWaitlistUseCase", () => {
-  it("returns the deployment-configured mode independently of availability", async () => {
+  it("returns the persisted mode independently of availability", async () => {
     // arrange
     const getWaitlist = new GetWaitlistUseCase({
       clock: fixedClock,
-      waitlist: createWaitlist(false),
+      featureFlags: createFeatureFlags({ WAITLIST_MODE: false }),
+      incidents: createWaitlistIncidents(),
+      waitlist: createWaitlist(),
       waitlistEntries: createWaitlistEntries({
         countReducedPricingSignupsCreatedBefore: vi.fn().mockResolvedValue(0),
       }),
@@ -101,6 +99,88 @@ describe("GetWaitlistUseCase", () => {
     });
   });
 
+  it("treats an absent persisted flag as disabled", async () => {
+    // arrange
+    const getWaitlist = new GetWaitlistUseCase({
+      clock: fixedClock,
+      featureFlags: createFeatureFlags({}),
+      incidents: createWaitlistIncidents(),
+      waitlist: createWaitlist(),
+      waitlistEntries: createWaitlistEntries(),
+    });
+
+    // act
+    const waitlist = await getWaitlist.execute();
+
+    // assert
+    expect(waitlist).toEqual({
+      enabled: false,
+      offer: activeOffer,
+      availability: "available",
+    });
+  });
+
+  it("uses safe waitlist mode without availability when feature flags are unreachable", async () => {
+    // arrange
+    const getWaitlist = new GetWaitlistUseCase({
+      clock: fixedClock,
+      featureFlags: {
+        execute: vi.fn().mockRejectedValue(new Error("database unavailable")),
+      },
+      incidents: createWaitlistIncidents(),
+      waitlist: createWaitlist(),
+      waitlistEntries: createWaitlistEntries(),
+    });
+
+    // act
+    const waitlist = await getWaitlist.execute();
+
+    // assert
+    expect(waitlist).toEqual({
+      enabled: true,
+      offer: activeOffer,
+      availability: null,
+    });
+  });
+
+  it("records a failed feature flag read", async () => {
+    // arrange
+    const incidents = createWaitlistIncidents();
+    const getWaitlist = new GetWaitlistUseCase({
+      clock: fixedClock,
+      featureFlags: {
+        execute: vi.fn().mockRejectedValue(new Error("database unavailable")),
+      },
+      incidents,
+      waitlist: createWaitlist(),
+      waitlistEntries: createWaitlistEntries(),
+    });
+
+    // act
+    await getWaitlist.execute();
+
+    // assert
+    expect(incidents.waitlistModeReadFailed).toHaveBeenCalledWith();
+  });
+
+  it("records nothing when the feature flags are read", async () => {
+    // arrange
+    const incidents = createWaitlistIncidents();
+    const getWaitlist = new GetWaitlistUseCase({
+      clock: fixedClock,
+      featureFlags: createFeatureFlags(),
+      incidents,
+      waitlist: createWaitlist(),
+      waitlistEntries: createWaitlistEntries(),
+    });
+
+    // act
+    await getWaitlist.execute();
+
+    // assert
+    expect(incidents.waitlistModeReadFailed).not.toHaveBeenCalled();
+  });
+
   it("returns the delayed available waitlist snapshot", async () => {
     // arrange
     const waitlistEntries = createWaitlistEntries({
@@ -108,7 +188,9 @@ describe("GetWaitlistUseCase", () => {
     });
     const getWaitlist = new GetWaitlistUseCase({
       clock: { now: () => new Date("2026-07-26T10:12:00.000Z") },
-      waitlist: createWaitlist(true),
+      featureFlags: createFeatureFlags(),
+      incidents: createWaitlistIncidents(),
+      waitlist: createWaitlist(),
       waitlistEntries,
     });
 
@@ -133,7 +215,9 @@ describe("GetWaitlistUseCase", () => {
     // arrange
     const getWaitlist = new GetWaitlistUseCase({
       clock: fixedClock,
-      waitlist: createWaitlist(true),
+      featureFlags: createFeatureFlags(),
+      incidents: createWaitlistIncidents(),
+      waitlist: createWaitlist(),
       waitlistEntries: createWaitlistEntries({
         countReducedPricingSignupsCreatedBefore: vi.fn().mockResolvedValue(8),
       }),
@@ -150,11 +234,13 @@ describe("GetWaitlistUseCase", () => {
     });
   });
 
-  it("returns the delayed closed waitlist snapshot when deployment mode is disabled", async () => {
+  it("returns the delayed closed waitlist snapshot when persisted mode is disabled", async () => {
     // arrange
     const getWaitlist = new GetWaitlistUseCase({
       clock: fixedClock,
-      waitlist: createWaitlist(false),
+      featureFlags: createFeatureFlags({ WAITLIST_MODE: false }),
+      incidents: createWaitlistIncidents(),
+      waitlist: createWaitlist(),
       waitlistEntries: createWaitlistEntries({
         countReducedPricingSignupsCreatedBefore: vi.fn().mockResolvedValue(10),
       }),
@@ -171,11 +257,13 @@ describe("GetWaitlistUseCase", () => {
     });
   });
 
-  it("returns an unavailable public snapshot when delayed observation fails", async () => {
+  it("retains the persisted mode when delayed availability is unreachable", async () => {
     // arrange
     const getWaitlist = new GetWaitlistUseCase({
       clock: fixedClock,
-      waitlist: createWaitlist(true),
+      featureFlags: createFeatureFlags({ WAITLIST_MODE: false }),
+      incidents: createWaitlistIncidents(),
+      waitlist: createWaitlist(),
       waitlistEntries: createWaitlistEntries({
         countReducedPricingSignupsCreatedBefore: vi
           .fn()
@@ -188,7 +276,7 @@ describe("GetWaitlistUseCase", () => {
 
     // assert
     expect(waitlist).toEqual({
-      enabled: true,
+      enabled: false,
       offer: activeOffer,
       availability: null,
     });
@@ -202,7 +290,7 @@ describe("JoinWaitlistUseCase", () => {
     const confirmation = createConfirmation();
     const joinWaitlist = createJoinWaitlist({
       confirmation,
-      logger: createLogger(),
+      incidents: createWaitlistIncidents(),
       waitlistEntries,
     });
 
@@ -214,7 +302,6 @@ describe("JoinWaitlistUseCase", () => {
       status: "registered",
     });
     expect(waitlistEntries.registerReducedPricingSignup).toHaveBeenCalledWith({
-      cap: 10,
       consentVersions,
       normalizedEmail: "eli@example.com",
       offer: activeOffer,
@@ -240,7 +327,7 @@ describe("JoinWaitlistUseCase", () => {
     };
     const joinWaitlist = createJoinWaitlist({
       confirmation,
-      logger: createLogger(),
+      incidents: createWaitlistIncidents(),
       waitlistEntries: createWaitlistEntries(),
     });
     const timeoutResult = Symbol("timeout");
@@ -268,44 +355,32 @@ describe("JoinWaitlistUseCase", () => {
   });
 
   it.each(["a reported failure", "a thrown failure"] as const)(
-    "does not log a submitted email when confirmation delivery ends in %s",
+    "keeps the registration and reports the incident when confirmation delivery ends in %s",
     async (failureMode) => {
       // arrange
-      const email = "confirmation-privacy-regression@example.com";
-      const logger = createLogger();
+      const incidents = createWaitlistIncidents();
       const joinWaitlist = createJoinWaitlist({
         confirmation: {
           sendConfirmation: vi.fn(
             failureMode === "a reported failure"
               ? async () => ({ kind: "failed" as const })
               : async () => {
-                  throw Object.assign(
-                    new Error(`confirmation failed for ${email}`),
-                    { params: [email] },
-                  );
+                  throw new Error("confirmation failed");
                 },
           ),
         },
-        logger,
+        incidents,
         waitlistEntries: createWaitlistEntries(),
       });
 
       // act
-      const result = await joinWaitlist.execute({ email });
+      const result = await joinWaitlist.execute({ email: "eli@example.com" });
 
       // assert
       expect(result).toEqual({
         status: "registered",
       });
-      expect(logger.error).toHaveBeenCalledWith(
-        "Waitlist confirmation email failed.",
-        {
-          errorCategory: "waitlist_confirmation_failure",
-        },
-      );
-      expect(
-        serializeCapturedLoggerArguments(logger.error.mock.calls),
-      ).not.toContain(email);
+      expect(incidents.confirmationDeliveryFailed).toHaveBeenCalledWith();
     },
   );
 
@@ -319,7 +394,7 @@ describe("JoinWaitlistUseCase", () => {
     });
     const joinWaitlist = createJoinWaitlist({
       confirmation,
-      logger: createLogger(),
+      incidents: createWaitlistIncidents(),
       waitlistEntries,
     });
 
@@ -346,7 +421,7 @@ describe("JoinWaitlistUseCase", () => {
     const confirmation = createConfirmation();
     const joinWaitlist = createJoinWaitlist({
       confirmation,
-      logger: createLogger(),
+      incidents: createWaitlistIncidents(),
       waitlistEntries,
     });
 
@@ -358,7 +433,6 @@ describe("JoinWaitlistUseCase", () => {
       status: "registered",
     });
     expect(waitlistEntries.registerReducedPricingSignup).toHaveBeenCalledWith({
-      cap: 10,
       consentVersions,
       normalizedEmail: "eli@example.com",
       offer: activeOffer,
@@ -388,7 +462,7 @@ describe("JoinWaitlistUseCase", () => {
     };
     const joinWaitlist = createJoinWaitlist({
       confirmation,
-      logger: createLogger(),
+      incidents: createWaitlistIncidents(),
       waitlistEntries: createWaitlistEntries({
         registerReducedPricingSignup: vi
           .fn()
@@ -424,7 +498,7 @@ describe("JoinWaitlistUseCase", () => {
     const confirmation = createConfirmation();
     const joinWaitlist = createJoinWaitlist({
       confirmation,
-      logger: createLogger(),
+      incidents: createWaitlistIncidents(),
       waitlistEntries: createWaitlistEntries({
         registerReducedPricingSignup: vi
           .fn()

@@ -1,6 +1,6 @@
 import type { BotDetectionSettings } from "@eli-coach-platform/config";
-import type { BotVerifier } from "@eli-coach-platform/domain/shared";
 
+import type { BotVerifier } from "./bot-verifier-contract.server";
 import { StaticTokenBotVerifier } from "./bot-verifier.server";
 import { TurnstileBotVerifier } from "../turnstile/turnstile-bot-verifier.server";
 

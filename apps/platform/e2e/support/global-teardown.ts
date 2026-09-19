@@ -9,18 +9,19 @@ import {
 } from "./clerk-users";
 import { loadRepoRootEnv, requireEnv } from "./env";
 import { resolveRunId } from "./run-id";
+import { restoreWaitlistMode } from "./waitlist-mode";
 
-// Counterpart to global-setup.ts: every Clerk Development-instance user this
-// run's journeys created gets deleted here, so the shared instance's hard
-// 100-user cap never creeps back toward the outage that motivated this file
-// (see docs/CLERK.md's E2E lane section). A deletion failure is reported,
-// never thrown — a cleanup problem shouldn't flip an otherwise-green run
-// red, and there is no meaningful retry target from inside a teardown hook;
-// instead this run's registry file is left in place so the next run's
-// global-setup.ts sweep can retry it.
 export default async function globalTeardown() {
   loadRepoRootEnv();
 
+  try {
+    await cleanUpClerkUsers();
+  } finally {
+    await restoreWaitlistMode();
+  }
+}
+
+async function cleanUpClerkUsers(): Promise<void> {
   const runId = resolveRunId();
   const emails = readCreatedEmails(runId);
 
@@ -32,7 +33,6 @@ export default async function globalTeardown() {
   const clerkClient = createClerkClient({
     secretKey: requireEnv("CLERK_SECRET_KEY"),
   });
-
   const results = [];
 
   for (const email of emails) {

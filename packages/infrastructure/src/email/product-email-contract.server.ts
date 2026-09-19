@@ -19,7 +19,7 @@ export type ProductEmailResult =
   | { kind: "rejected"; reason: string }
   | { kind: "unconfirmed" };
 
-export type ProductEmail = {
+export interface ProductEmail {
   readonly provider: string;
   send(command: ProductEmailCommand): Promise<ProductEmailResult>;
-};
+}

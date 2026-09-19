@@ -1,5 +1,5 @@
 import { useReducedMotionConfig } from "motion/react";
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 export const publicEase = [0.25, 0.1, 0.25, 1] as const;
 export const publicEaseOut = [0.16, 1, 0.3, 1] as const;
@@ -8,15 +8,22 @@ export const publicSectionRevealViewport = {
   once: true,
 } as const;
 
+const subscribeToNothing = () => () => {};
+const readClientSnapshot = () => true;
+const readServerSnapshot = () => false;
+
+function useHasHydrated() {
+  return useSyncExternalStore(
+    subscribeToNothing,
+    readClientSnapshot,
+    readServerSnapshot,
+  );
+}
+
 export function useClientReducedMotionPreference() {
   const shouldReduceMotion = useReducedMotionConfig() === true;
-  const [hasHydrated, setHasHydrated] = useState(false);
 
-  useEffect(() => {
-    setHasHydrated(true);
-  }, []);
-
-  return hasHydrated && shouldReduceMotion;
+  return useHasHydrated() && shouldReduceMotion;
 }
 
 export function createFadeUpVariants(

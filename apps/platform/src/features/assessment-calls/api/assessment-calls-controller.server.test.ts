@@ -7,7 +7,7 @@ import {
   type OpenSlotsResult,
   type ResolveJoinLinkUseCase,
 } from "@eli-coach-platform/domain/assessment-call";
-import type { BotVerificationResult } from "@eli-coach-platform/domain/shared";
+import type { BotVerifier } from "@eli-coach-platform/infrastructure/bot-detection/server";
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 import { describe, expect, it, vi } from "vitest";
 
@@ -21,6 +21,10 @@ type ControllerOptions = {
   openSlots?: OpenSlotsResult;
   verification?: BotVerificationResult;
 };
+
+type BotVerificationResult = Awaited<
+  ReturnType<BotVerifier["verifySubmission"]>
+>;
 
 const botDetection: BotDetectionConfig = {
   provider: "static",

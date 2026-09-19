@@ -21,7 +21,6 @@ function createRuntimeEnvironmentWithoutDatabase() {
     NODE_ENV: "development",
     PUBLIC_APP_URL: "https://eli.example",
     STORE_ASSET_ROOT: storeAssetRoot,
-    WAITLIST_MODE: "true",
   });
 }
 
@@ -79,7 +78,6 @@ describe("platform container", () => {
     vi.stubEnv("NODE_ENV", "development");
     vi.stubEnv("PUBLIC_APP_URL", "https://eli.example");
     vi.stubEnv("STORE_ASSET_ROOT", storeAssetRoot);
-    vi.stubEnv("WAITLIST_MODE", "true");
     vi.resetModules();
     const { getPlatformContainer } = await import("./container.server");
 

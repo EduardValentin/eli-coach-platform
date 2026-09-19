@@ -100,7 +100,7 @@ describe("StoreCartButton", () => {
     );
     const dialog = await screen.findByRole("dialog", { name: "Your cart" });
     await user.click(
-      within(dialog).getByRole("button", {
+      await within(dialog).findByRole("button", {
         name: /^Remove .* from cart$/,
       }),
     );
@@ -138,7 +138,7 @@ describe("StoreCartDrawer", () => {
       await screen.findByRole("button", { name: "Cart, 1 item" }),
     );
     const dialog = await screen.findByRole("dialog", { name: "Your cart" });
-    const catalogError = within(dialog).getByRole("alert");
+    const catalogError = await within(dialog).findByRole("alert");
     await user.click(within(dialog).getByRole("button", { name: "Close" }));
 
     // assert
@@ -228,7 +228,7 @@ describe("StoreCartDrawer", () => {
     );
     const dialog = await screen.findByRole("dialog", { name: "Your cart" });
     await user.click(
-      within(dialog).getByRole("button", {
+      await within(dialog).findByRole("button", {
         name: /^Remove .* from cart$/,
       }),
     );
@@ -237,7 +237,9 @@ describe("StoreCartDrawer", () => {
     // assert
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^Cart,/ })).toBeNull();
-    expect(screen.getByRole("main", { name: "Store" })).toHaveFocus();
+    await waitFor(() => {
+      expect(screen.getByRole("main", { name: "Store" })).toHaveFocus();
+    });
   });
 
   it("delivers the selected resources and clears the cart only after accepted delivery", async () => {

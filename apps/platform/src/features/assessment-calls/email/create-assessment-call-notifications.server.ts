@@ -1,5 +1,5 @@
 import type { AssessmentCallNotifications } from "@eli-coach-platform/domain/assessment-call";
-import type { ProductEmail } from "@eli-coach-platform/domain/shared";
+import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 
 import {
   EmailAssessmentCallNotifications,

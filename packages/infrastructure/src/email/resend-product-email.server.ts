@@ -3,7 +3,7 @@ import type {
   ProductEmail,
   ProductEmailCommand,
   ProductEmailResult,
-} from "@eli-coach-platform/domain/shared";
+} from "./product-email-contract.server";
 import type {
   Attachment,
   CreateEmailOptions,

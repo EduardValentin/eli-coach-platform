@@ -8,18 +8,22 @@ import { useIsMobile } from './ui/use-mobile';
 
 interface NotificationBellProps {
   align?: 'left' | 'right';
+  onOpenChange?: (open: boolean) => void;
+  open?: boolean;
 }
 
-export function NotificationBell({ align = 'right' }: NotificationBellProps) {
+export function NotificationBell({ align = 'right', onOpenChange, open }: NotificationBellProps) {
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
-  const [isOpen, setIsOpen] = useState(false);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const isOpen = open ?? uncontrolledOpen;
+  const setIsOpen = onOpenChange ?? setUncontrolledOpen;
   const isMobile = useIsMobile();
 
   return (
     <>
       <TriggerButton
         unreadCount={unreadCount}
-        onClick={() => setIsOpen(open => !open)}
+        onClick={() => setIsOpen(!isOpen)}
         ariaExpanded={isOpen}
       />
       {isMobile ? (

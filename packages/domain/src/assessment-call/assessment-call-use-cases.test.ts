@@ -5,7 +5,9 @@ import {
   type CoachAvailabilitySource,
   type CoachCalendar,
 } from "../coach-availability";
+import type { FeatureFlagReader } from "../feature-flag";
 
+import { AssessmentCallBookingWindow } from "./assessment-call-booking-window";
 import type { AssessmentCallNotifications } from "./assessment-call-notifications";
 import type { AssessmentCallReservations } from "./assessment-call-reservations";
 import { AssessmentCall } from "./assessment-call";
@@ -21,8 +23,38 @@ const COACH_TIME_ZONE = "Europe/Bucharest";
 
 const clock = { now: () => NOW };
 
-function createLogger() {
-  return { error: vi.fn() };
+function createIncidents() {
+  return {
+    bookingModeReadFailed: vi.fn(),
+    notificationFailed: vi.fn(),
+    slotsReadFailed: vi.fn(),
+  };
+}
+
+function createBookingWindow(options: {
+  featureFlags: FeatureFlagReader;
+  incidents?: ReturnType<typeof createIncidents>;
+}): AssessmentCallBookingWindow {
+  return new AssessmentCallBookingWindow({
+    featureFlags: options.featureFlags,
+    incidents: options.incidents ?? createIncidents(),
+  });
+}
+
+function openBookingWindow(): AssessmentCallBookingWindow {
+  return createBookingWindow({
+    featureFlags: {
+      execute: vi.fn().mockResolvedValue({ WAITLIST_MODE: false }),
+    },
+  });
+}
+
+function closedBookingWindow(): AssessmentCallBookingWindow {
+  return createBookingWindow({
+    featureFlags: {
+      execute: vi.fn().mockResolvedValue({ WAITLIST_MODE: true }),
+    },
+  });
 }
 
 function createAvailabilitySource(
@@ -88,28 +120,28 @@ function createNotifications(
 function createListOpenSlots(options: {
   availability: CoachAvailabilitySource;
   calendar: CoachCalendar;
-  logger: ReturnType<typeof createLogger>;
+  incidents: ReturnType<typeof createIncidents>;
 }): ListOpenSlotsUseCase {
   return new ListOpenSlotsUseCase({
     availability: options.availability,
-    bookingOpen: true,
+    bookingWindow: openBookingWindow(),
     calendar: options.calendar,
     clock,
-    logger: options.logger,
+    incidents: options.incidents,
   });
 }
 
 function createBookAssessmentCall(options: {
   availability: CoachAvailabilitySource;
-  logger: ReturnType<typeof createLogger>;
+  incidents: ReturnType<typeof createIncidents>;
   notifications: AssessmentCallNotifications;
   reservations: AssessmentCallReservations;
 }): BookAssessmentCallUseCase {
   return new BookAssessmentCallUseCase({
     availability: options.availability,
-    bookingOpen: true,
+    bookingWindow: openBookingWindow(),
     clock,
-    logger: options.logger,
+    incidents: options.incidents,
     notifications: options.notifications,
     reservations: options.reservations,
   });
@@ -123,6 +155,59 @@ const bookingCommand = {
   visitorTimeZone: "Europe/Bucharest",
 };
 
+describe("AssessmentCallBookingWindow", () => {
+  it("stays closed while the site is in waitlist mode", async () => {
+    // arrange
+    const bookingWindow = closedBookingWindow();
+
+    // act
+    const open = await bookingWindow.isOpen();
+
+    // assert
+    expect(open).toBe(false);
+  });
+
+  it("opens once waitlist mode is switched off", async () => {
+    // arrange
+    const bookingWindow = openBookingWindow();
+
+    // act
+    const open = await bookingWindow.isOpen();
+
+    // assert
+    expect(open).toBe(true);
+  });
+
+  it("opens when no waitlist mode is persisted", async () => {
+    // arrange
+    const bookingWindow = createBookingWindow({
+      featureFlags: { execute: vi.fn().mockResolvedValue({}) },
+    });
+
+    // act
+    const open = await bookingWindow.isOpen();
+
+    // assert
+    expect(open).toBe(true);
+  });
+
+  it("stays closed and records the incident when the mode cannot be read", async () => {
+    // arrange
+    const incidents = createIncidents();
+    const bookingWindow = createBookingWindow({
+      featureFlags: { execute: vi.fn().mockRejectedValue(new Error("down")) },
+      incidents,
+    });
+
+    // act
+    const open = await bookingWindow.isOpen();
+
+    // assert
+    expect(open).toBe(false);
+    expect(incidents.bookingModeReadFailed).toHaveBeenCalledOnce();
+  });
+});
+
 describe("ListOpenSlotsUseCase", () => {
   it("reports closed without reading availability when booking is closed", async () => {
     // arrange
@@ -130,10 +215,10 @@ describe("ListOpenSlotsUseCase", () => {
     const calendar = createCalendar();
     const listOpenSlots = new ListOpenSlotsUseCase({
       availability,
-      bookingOpen: false,
+      bookingWindow: closedBookingWindow(),
       calendar,
       clock,
-      logger: createLogger(),
+      incidents: createIncidents(),
     });
 
     // act
@@ -158,7 +243,7 @@ describe("ListOpenSlotsUseCase", () => {
     const listOpenSlots = createListOpenSlots({
       availability: createAvailabilitySource(),
       calendar,
-      logger: createLogger(),
+      incidents: createIncidents(),
     });
 
     // act
@@ -182,11 +267,11 @@ describe("ListOpenSlotsUseCase", () => {
 
   it("reports unavailable and logs when the availability source throws", async () => {
     // arrange
-    const logger = createLogger();
+    const incidents = createIncidents();
     const listOpenSlots = createListOpenSlots({
       availability: { current: vi.fn().mockRejectedValue(new Error("down")) },
       calendar: createCalendar(),
-      logger,
+      incidents,
     });
 
     // act
@@ -194,14 +279,12 @@ describe("ListOpenSlotsUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "unavailable" });
-    expect(logger.error).toHaveBeenCalledWith(expect.any(String), {
-      errorCategory: "assessment_call_slots_failure",
-    });
+    expect(incidents.slotsReadFailed).toHaveBeenCalledOnce();
   });
 
   it("lets a fault in the slot arithmetic surface instead of reporting empty", async () => {
     // arrange
-    const logger = createLogger();
+    const incidents = createIncidents();
     const availability = createAvailabilitySource();
     const configured = await availability.current();
     vi.spyOn(configured, "openSlotStarts").mockImplementation(() => {
@@ -210,7 +293,7 @@ describe("ListOpenSlotsUseCase", () => {
     const listOpenSlots = createListOpenSlots({
       availability,
       calendar: createCalendar(),
-      logger,
+      incidents,
     });
 
     // act
@@ -218,18 +301,18 @@ describe("ListOpenSlotsUseCase", () => {
 
     // assert
     await expect(execute).rejects.toThrow(/Invalid time zone/);
-    expect(logger.error).not.toHaveBeenCalled();
+    expect(incidents.slotsReadFailed).not.toHaveBeenCalled();
   });
 
   it("reports unavailable and logs when the coach calendar throws", async () => {
     // arrange
-    const logger = createLogger();
+    const incidents = createIncidents();
     const listOpenSlots = createListOpenSlots({
       availability: createAvailabilitySource(),
       calendar: createCalendar({
         busyFrom: vi.fn().mockRejectedValue(new Error("down")),
       }),
-      logger,
+      incidents,
     });
 
     // act
@@ -237,9 +320,7 @@ describe("ListOpenSlotsUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "unavailable" });
-    expect(logger.error).toHaveBeenCalledWith(expect.any(String), {
-      errorCategory: "assessment_call_slots_failure",
-    });
+    expect(incidents.slotsReadFailed).toHaveBeenCalledOnce();
   });
 });
 
@@ -249,9 +330,9 @@ describe("BookAssessmentCallUseCase", () => {
     const reservations = createReservations();
     const bookAssessmentCall = new BookAssessmentCallUseCase({
       availability: createAvailabilitySource(),
-      bookingOpen: false,
+      bookingWindow: closedBookingWindow(),
       clock,
-      logger: createLogger(),
+      incidents: createIncidents(),
       notifications: createNotifications(),
       reservations,
     });
@@ -269,7 +350,7 @@ describe("BookAssessmentCallUseCase", () => {
     const reservations = createReservations();
     const bookAssessmentCall = createBookAssessmentCall({
       availability: createAvailabilitySource(),
-      logger: createLogger(),
+      incidents: createIncidents(),
       notifications: createNotifications(),
       reservations,
     });
@@ -291,7 +372,7 @@ describe("BookAssessmentCallUseCase", () => {
     const notifications = createNotifications();
     const bookAssessmentCall = createBookAssessmentCall({
       availability: createAvailabilitySource(),
-      logger: createLogger(),
+      incidents: createIncidents(),
       notifications,
       reservations,
     });
@@ -321,7 +402,7 @@ describe("BookAssessmentCallUseCase", () => {
     const reservations = createReservations();
     const bookAssessmentCall = createBookAssessmentCall({
       availability: createAvailabilitySource("Europe/Chisinau"),
-      logger: createLogger(),
+      incidents: createIncidents(),
       notifications: createNotifications(),
       reservations,
     });
@@ -341,10 +422,10 @@ describe("BookAssessmentCallUseCase", () => {
     [{ visitor: "failed", coach: "failed" } as const, 2],
   ])("logs the failed legs of %o", async (delivery, failures) => {
     // arrange
-    const logger = createLogger();
+    const incidents = createIncidents();
     const bookAssessmentCall = createBookAssessmentCall({
       availability: createAvailabilitySource(),
-      logger,
+      incidents,
       notifications: createNotifications(delivery),
       reservations: createReservations(),
     });
@@ -354,19 +435,15 @@ describe("BookAssessmentCallUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "booked", call: existingCall() });
-    expect(logger.error).toHaveBeenCalledTimes(failures);
-    expect(logger.error).toHaveBeenCalledWith(expect.any(String), {
-      errorCategory: "assessment_call_notification_failure",
-      recipient: expect.any(String),
-    });
+    expect(incidents.notificationFailed).toHaveBeenCalledTimes(failures);
   });
 
   it("keeps the booking when the notification port throws", async () => {
     // arrange
-    const logger = createLogger();
+    const incidents = createIncidents();
     const bookAssessmentCall = createBookAssessmentCall({
       availability: createAvailabilitySource(),
-      logger,
+      incidents,
       notifications: { notifyBooked: vi.fn().mockRejectedValue(new Error()) },
       reservations: createReservations(),
     });
@@ -376,7 +453,12 @@ describe("BookAssessmentCallUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "booked", call: existingCall() });
-    expect(logger.error).toHaveBeenCalledTimes(2);
+    expect(incidents.notificationFailed).toHaveBeenCalledWith({
+      recipient: "visitor",
+    });
+    expect(incidents.notificationFailed).toHaveBeenCalledWith({
+      recipient: "coach",
+    });
   });
 
   it("refuses a slot that is already taken, whoever holds it, without notifying anyone", async () => {
@@ -384,7 +466,7 @@ describe("BookAssessmentCallUseCase", () => {
     const notifications = createNotifications();
     const bookAssessmentCall = createBookAssessmentCall({
       availability: createAvailabilitySource(),
-      logger: createLogger(),
+      incidents: createIncidents(),
       notifications,
       reservations: createReservations({
         reserve: vi.fn().mockResolvedValue({ status: "slot_taken" }),
@@ -403,7 +485,7 @@ describe("BookAssessmentCallUseCase", () => {
     // arrange
     const bookAssessmentCall = createBookAssessmentCall({
       availability: createAvailabilitySource(),
-      logger: createLogger(),
+      incidents: createIncidents(),
       notifications: createNotifications(),
       reservations: createReservations({
         reserve: vi

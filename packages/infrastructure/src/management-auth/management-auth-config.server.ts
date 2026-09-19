@@ -3,7 +3,7 @@ import type {
   ManagementApiConfig,
 } from "@eli-coach-platform/config";
 
-import type { ManagementAuthConfig } from "./management-auth-contract.server";
+import type { ManagementAuthConfig } from "./management-authenticator-contract.server";
 
 /**
  * One shared secret means one identity. When the coach reaches these flows

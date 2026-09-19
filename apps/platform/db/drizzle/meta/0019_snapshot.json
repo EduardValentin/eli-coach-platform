@@ -1,65 +1,9 @@
 {
-  "id": "893a4f21-61a2-4380-abb8-b6230f17959f",
-  "prevId": "eabc6dd2-2937-4e9a-90e9-29f96c6e17a7",
+  "id": "669d8cc1-c682-4368-86c9-92e4e3b0fb63",
+  "prevId": "8d2400a9-c7a5-4e7c-bb08-e6cb890ecca1",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
-    "app.coach_time_reservations": {
-      "name": "coach_time_reservations",
-      "schema": "app",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "starts_at": {
-          "name": "starts_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "ends_at": {
-          "name": "ends_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "appointment_kind": {
-          "name": "appointment_kind",
-          "type": "varchar(32)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "appointment_id": {
-          "name": "appointment_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "coach_time_reservations_ends_after_start": {
-          "name": "coach_time_reservations_ends_after_start",
-          "value": "\"app\".\"coach_time_reservations\".\"ends_at\" > \"app\".\"coach_time_reservations\".\"starts_at\""
-        }
-      },
-      "isRLSEnabled": false
-    },
     "app.feature_flags": {
       "name": "feature_flags",
       "schema": "app",
@@ -170,90 +114,6 @@
           ]
         }
       },
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "app.assessment_calls": {
-      "name": "assessment_calls",
-      "schema": "app",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "visitor_name": {
-          "name": "visitor_name",
-          "type": "varchar(120)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "visitor_email": {
-          "name": "visitor_email",
-          "type": "varchar(320)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "visitor_notes": {
-          "name": "visitor_notes",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "starts_at": {
-          "name": "starts_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "visitor_time_zone": {
-          "name": "visitor_time_zone",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "coach_time_zone": {
-          "name": "coach_time_zone",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "booked_at": {
-          "name": "booked_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {
-        "assessment_calls_visitor_email_starts_at_idx": {
-          "name": "assessment_calls_visitor_email_starts_at_idx",
-          "columns": [
-            {
-              "expression": "visitor_email",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "starts_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -1881,8 +1741,13 @@
           "name": "pricing_eligibility",
           "type": "varchar(32)",
           "primaryKey": false,
-          "notNull": true,
-          "default": "'reduced'"
+          "notNull": true
+        },
+        "reduced_slot": {
+          "name": "reduced_slot",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
         },
         "privacy_policy_version": {
           "name": "privacy_policy_version",
@@ -1982,13 +1847,43 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "waitlist_entries_offer_reduced_slot_unique": {
+          "name": "waitlist_entries_offer_reduced_slot_unique",
+          "columns": [
+            {
+              "expression": "offer_slug",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "reduced_slot",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "waitlist_entries_reduced_slot_range": {
+          "name": "waitlist_entries_reduced_slot_range",
+          "value": "\"app\".\"waitlist_entries\".\"reduced_slot\" between 1 and 10"
+        },
+        "waitlist_entries_reduced_slot_matches_pricing": {
+          "name": "waitlist_entries_reduced_slot_matches_pricing",
+          "value": "(\"app\".\"waitlist_entries\".\"pricing_eligibility\" = 'reduced') = (\"app\".\"waitlist_entries\".\"reduced_slot\" is not null)"
+        }
+      },
       "isRLSEnabled": false
     }
   },

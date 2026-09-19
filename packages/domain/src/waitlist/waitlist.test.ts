@@ -34,64 +34,12 @@ describe("Waitlist availability", () => {
     [11, "closed"],
   ] as const)("maps a reduced count of %i to %s", (count, expected) => {
     // arrange
-    const waitlist = Waitlist.configure({
-      cap: 10,
-      enabled: true,
-      offer: activeOffer,
-    });
+    const waitlist = Waitlist.configure({ offer: activeOffer });
 
     // act
     const availability = waitlist.availability(count);
 
     // assert
     expect(availability).toBe(expected);
-  });
-});
-
-describe("Waitlist snapshot", () => {
-  it("publishes the configured mode and offer beside the given availability", () => {
-    // arrange
-    const waitlist = Waitlist.configure({
-      cap: 10,
-      enabled: false,
-      offer: activeOffer,
-    });
-
-    // act
-    const snapshot = waitlist.snapshot("limited");
-
-    // assert
-    expect(snapshot).toEqual({
-      availability: "limited",
-      enabled: false,
-      offer: activeOffer,
-    });
-  });
-});
-
-describe("Waitlist.decideReducedPricingRegistration", () => {
-  it.each([
-    [
-      { alreadyRegistered: true, cap: 10, reducedPricingCount: 10 },
-      "already_registered",
-    ],
-    [
-      { alreadyRegistered: false, cap: 10, reducedPricingCount: 10 },
-      "capacity_reached",
-    ],
-    [{ alreadyRegistered: false, cap: 10, reducedPricingCount: 9 }, "register"],
-    [
-      { alreadyRegistered: false, cap: 0, reducedPricingCount: 0 },
-      "capacity_reached",
-    ],
-  ] as const)("decides %o as %s", (input, expected) => {
-    // arrange
-    const decisionInput = input;
-
-    // act
-    const decision = Waitlist.decideReducedPricingRegistration(decisionInput);
-
-    // assert
-    expect(decision).toBe(expected);
   });
 });

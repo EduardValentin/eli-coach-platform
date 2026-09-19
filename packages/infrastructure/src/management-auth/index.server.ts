@@ -3,4 +3,8 @@ export {
   createManagementAuthConfig,
   isSecureManagementTransport,
 } from "./management-auth-config.server";
-export type { ManagementAuthConfig } from "./management-auth-contract.server";
+export type {
+  ManagementAuthenticationResult,
+  ManagementAuthenticator,
+  ManagementAuthConfig,
+} from "./management-authenticator-contract.server";

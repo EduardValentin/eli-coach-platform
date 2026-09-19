@@ -4,8 +4,10 @@ import type {
   CoachCalendar,
   TimeInterval,
 } from "../coach-availability";
-import type { Clock, Logger } from "../shared";
+import type { Clock } from "../shared";
 
+import type { AssessmentCallBookingWindow } from "./assessment-call-booking-window";
+import type { AssessmentCallIncidents } from "./assessment-call-incidents";
 import { ASSESSMENT_CALL_RULES } from "./assessment-call-rules";
 
 export type OpenSlotsResult =
@@ -15,10 +17,10 @@ export type OpenSlotsResult =
 
 type ListOpenSlotsUseCaseOptions = {
   availability: CoachAvailabilitySource;
-  bookingOpen: boolean;
+  bookingWindow: AssessmentCallBookingWindow;
   calendar: CoachCalendar;
   clock: Clock;
-  logger: Logger;
+  incidents: AssessmentCallIncidents;
 };
 
 type SlotSources = {
@@ -30,7 +32,7 @@ export class ListOpenSlotsUseCase {
   constructor(private readonly options: ListOpenSlotsUseCaseOptions) {}
 
   async execute(): Promise<OpenSlotsResult> {
-    if (!this.options.bookingOpen) {
+    if (!(await this.options.bookingWindow.isOpen())) {
       return { status: "closed" };
     }
 
@@ -38,9 +40,7 @@ export class ListOpenSlotsUseCase {
     const sources = await this.readSources(now);
 
     if (!sources) {
-      this.options.logger.error("Assessment call slots could not be read.", {
-        errorCategory: "assessment_call_slots_failure",
-      });
+      this.options.incidents.slotsReadFailed();
 
       return { status: "unavailable" };
     }

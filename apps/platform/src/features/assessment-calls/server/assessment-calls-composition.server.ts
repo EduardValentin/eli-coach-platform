@@ -1,18 +1,18 @@
 import type { AssessmentCallsConfig } from "@eli-coach-platform/config";
 import type { DatabaseClient } from "@eli-coach-platform/db";
 import {
+  AssessmentCallBookingWindow,
   BookAssessmentCallUseCase,
   ListOpenSlotsUseCase,
   ResolveJoinLinkUseCase,
+  type AssessmentCallIncidents,
 } from "@eli-coach-platform/domain/assessment-call";
-import type {
-  BotVerifier,
-  Clock,
-  Logger,
-  ProductEmail,
-} from "@eli-coach-platform/domain/shared";
+import type { FeatureFlagReader } from "@eli-coach-platform/domain/feature-flag";
+import type { Clock } from "@eli-coach-platform/domain/shared";
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
+import type { BotVerifier } from "@eli-coach-platform/infrastructure/bot-detection/server";
 import { PostgresCoachCalendar } from "@eli-coach-platform/infrastructure/coach-calendar/server";
+import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 
 import { AssessmentCallsController } from "~/features/assessment-calls/api/assessment-calls-controller.server";
 import { ConfiguredMeetingRoomLink } from "~/features/assessment-calls/data/configured-meeting-room-link.server";
@@ -27,13 +27,13 @@ export type AssessmentCallsFeature = {
 export type AssessmentCallsFeatureHandles = {
   appBasePath: string;
   assessmentCallsConfig: AssessmentCallsConfig;
-  bookingOpen: boolean;
   botDetection: BotDetectionConfig;
   botVerifier: BotVerifier;
   clock: Clock;
   contactEmail: string;
   database: DatabaseClient;
-  logger: Logger;
+  featureFlags: FeatureFlagReader;
+  incidents: AssessmentCallIncidents;
   productEmail: ProductEmail;
   publicAppUrl: string;
 };
@@ -43,6 +43,10 @@ export function composeAssessmentCallsFeature(
 ): AssessmentCallsFeature {
   const availability = new StaticCoachAvailability();
   const reservations = new PostgresAssessmentCallRepository(handles.database);
+  const bookingWindow = new AssessmentCallBookingWindow({
+    featureFlags: handles.featureFlags,
+    incidents: handles.incidents,
+  });
 
   return {
     assessmentCalls: new AssessmentCallsController({
@@ -50,9 +54,9 @@ export function composeAssessmentCallsFeature(
       botVerifier: handles.botVerifier,
       bookAssessmentCall: new BookAssessmentCallUseCase({
         availability,
-        bookingOpen: handles.bookingOpen,
+        bookingWindow,
         clock: handles.clock,
-        logger: handles.logger,
+        incidents: handles.incidents,
         notifications: createAssessmentCallNotifications(handles.productEmail, {
           appBasePath: handles.appBasePath,
           coachEmail: handles.assessmentCallsConfig.ASSESSMENT_CALL_COACH_EMAIL,
@@ -63,10 +67,10 @@ export function composeAssessmentCallsFeature(
       }),
       listOpenSlots: new ListOpenSlotsUseCase({
         availability,
-        bookingOpen: handles.bookingOpen,
+        bookingWindow,
         calendar: new PostgresCoachCalendar(handles.database),
         clock: handles.clock,
-        logger: handles.logger,
+        incidents: handles.incidents,
       }),
       resolveJoinLink: new ResolveJoinLinkUseCase({
         meetingRoomLink: new ConfiguredMeetingRoomLink(

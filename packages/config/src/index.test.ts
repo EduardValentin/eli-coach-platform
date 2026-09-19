@@ -35,35 +35,6 @@ describe("@eli-coach-platform/config runtime environment", () => {
     overrides: Parameters<typeof loadRuntimeEnvironment>[0] = {},
   ) => loadRuntimeEnvironment(buildEnvironment(overrides));
 
-  it("defaults the waitlist cap to the prototype seed value", () => {
-    // arrange
-    // act
-    const environment = loadTestRuntimeEnvironment();
-
-    // assert
-    expect(environment.WAITLIST_CAP).toBe(10);
-  });
-
-  it("defaults deployments to waitlist mode", () => {
-    // arrange
-    // act
-    const environment = loadTestRuntimeEnvironment();
-
-    // assert
-    expect(environment.WAITLIST_MODE).toBe(true);
-  });
-
-  it("loads an explicitly disabled waitlist mode", () => {
-    // arrange
-    // act
-    const environment = loadTestRuntimeEnvironment({
-      WAITLIST_MODE: "false",
-    });
-
-    // assert
-    expect(environment.WAITLIST_MODE).toBe(false);
-  });
-
   it("defaults the active waitlist offer to all coaching bundles", () => {
     // arrange
     // act
@@ -411,14 +382,6 @@ describe("@eli-coach-platform/config runtime environment", () => {
     expect(environment.ASSESSMENT_CALL_MEETING_LINK).toBe(
       "https://meet.google.com/abc-defg-hij",
     );
-  });
-
-  it("loads an explicit positive waitlist cap", () => {
-    const environment = loadTestRuntimeEnvironment({
-      WAITLIST_CAP: "50",
-    });
-
-    expect(environment.WAITLIST_CAP).toBe(50);
   });
 });
 

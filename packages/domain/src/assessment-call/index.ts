@@ -1,4 +1,6 @@
 export { AssessmentCall, type AssessmentCallSnapshot } from "./assessment-call";
+export { AssessmentCallBookingWindow } from "./assessment-call-booking-window";
+export { type AssessmentCallIncidents } from "./assessment-call-incidents";
 export { ASSESSMENT_CALL_RULES } from "./assessment-call-rules";
 export {
   type AssessmentCallNotificationResult,

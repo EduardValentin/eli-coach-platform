@@ -32,6 +32,25 @@ describe.sequential("assessment calls during the waitlist", () => {
     expect(response.status).toBe(404);
   });
 
+  it("serves the booking page once waitlist mode is switched off, without a restart", async () => {
+    // arrange, act
+    const waitlistModeResponse = await suite.request(
+      new Request(suite.url("/book")),
+    );
+
+    // arrange
+    await switchWaitlistModeOff();
+
+    // act
+    const bookingModeResponse = await suite.request(
+      new Request(suite.url("/book")),
+    );
+
+    // assert
+    expect(waitlistModeResponse.status).toBe(404);
+    expect(bookingModeResponse.status).toBe(200);
+  });
+
   it("does not answer the open slots", async () => {
     // arrange, act
     const response = await suite.request(
@@ -117,4 +136,15 @@ async function seedAssessmentCall(): Promise<string> {
   }
 
   return row.id;
+}
+
+async function switchWaitlistModeOff(): Promise<void> {
+  await suite.postgres.executeSql({
+    sql: `
+      update app.feature_flags
+      set enabled = false, updated_at = now()
+      where name = $1
+    `,
+    values: ["WAITLIST_MODE"],
+  });
 }
