@@ -27,7 +27,6 @@
   --line-height-public-my-method-figure-heading: 1.75rem;
 
   --tracking-label: 0.12em;
-  --tracking-nav: 0.025em;
   --tracking-section-eyebrow: 0.2em;
 
   --space-0: 0rem;
@@ -50,7 +49,6 @@
   --size-control-sm: 2.5rem;
   --size-control-md: 3rem;
   --size-control-lg: 3.5rem;
-  --size-control-xl: 3.75rem;
   --size-avatar-sm: 3rem;
   --size-avatar-md: 3.5rem;
   --size-avatar-lg: 4rem;
@@ -227,7 +225,6 @@
   --font-weight-semibold: var(--font-weight-semibold);
 
   --tracking-label: var(--tracking-label);
-  --tracking-nav: var(--tracking-nav);
   --tracking-section-eyebrow: var(--tracking-section-eyebrow);
   --leading-display-snug: var(--line-height-display-snug);
 
@@ -239,7 +236,6 @@
   --size-control-sm: var(--size-control-sm);
   --size-control-md: var(--size-control-md);
   --size-control-lg: var(--size-control-lg);
-  --size-control-xl: var(--size-control-xl);
   --size-avatar-sm: var(--size-avatar-sm);
   --size-avatar-md: var(--size-avatar-md);
   --size-avatar-lg: var(--size-avatar-lg);
@@ -611,15 +607,10 @@
     border-radius: var(--radius-tile);
     color: var(--color-savings-badge-text);
     font-size: var(--font-size-micro);
-    letter-spacing: var(--tracking-nav);
     line-height: 1.5;
   }
 
   .ui-public-bundle-benefits-heading {
     letter-spacing: 0.05em;
-  }
-
-  .ui-public-bundle-panel {
-    border-color: var(--color-stroke-faint);
   }
 }

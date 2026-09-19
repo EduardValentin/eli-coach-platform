@@ -3,7 +3,12 @@ import {
   type LegalDocumentBlock,
   type LegalText,
 } from "@eli-coach-platform/content";
-import { Link, linkVariants } from "@eli-coach-platform/ui/primitives";
+import { cn } from "@eli-coach-platform/ui/lib";
+import {
+  cardVariants,
+  Link,
+  linkVariants,
+} from "@eli-coach-platform/ui/primitives";
 import { Fragment } from "react";
 
 type LegalDocumentViewProps = {
@@ -12,7 +17,12 @@ type LegalDocumentViewProps = {
 
 export function LegalDocumentView({ document }: LegalDocumentViewProps) {
   return (
-    <article className="mx-auto max-w-reading overflow-hidden rounded-panel border border-border-subtle bg-surface-base shadow-soft">
+    <article
+      className={cn(
+        cardVariants({ variant: "panel" }),
+        "mx-auto max-w-reading overflow-hidden",
+      )}
+    >
       <header className="border-b border-border-subtle px-6 py-10 sm:px-8 lg:px-12">
         <h1 className="font-heading text-display-lg text-text-primary">
           {document.title}

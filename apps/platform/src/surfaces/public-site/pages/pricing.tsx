@@ -1,5 +1,9 @@
 import { ArrowRight } from "lucide-react";
-import { buttonVariants } from "@eli-coach-platform/ui/primitives";
+import { cn } from "@eli-coach-platform/ui/lib";
+import {
+  buttonVariants,
+  cardVariants,
+} from "@eli-coach-platform/ui/primitives";
 import { Link, useOutletContext, type MetaFunction } from "react-router";
 
 import type { PublicOutletContext } from "~/surfaces/public-site/shell/layout";
@@ -53,7 +57,12 @@ export default function PricingRoute() {
         applies.
       </p>
 
-      <section className="mx-auto w-full max-w-4xl rounded-card border border-stroke-faint bg-surface-base p-8 text-center shadow-card md:p-12">
+      <section
+        className={cn(
+          cardVariants(),
+          "mx-auto w-full max-w-4xl p-8 text-center md:p-12",
+        )}
+      >
         {waitlist.mode === "disabled" ? (
           <AssessmentCallCta />
         ) : (

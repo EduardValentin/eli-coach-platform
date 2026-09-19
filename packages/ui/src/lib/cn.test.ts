@@ -9,12 +9,7 @@ import { cn } from "./cn";
 const currentDirectory = dirname(fileURLToPath(import.meta.url));
 const stylesPath = resolve(currentDirectory, "../styles.css");
 
-// Independently re-derives the custom `text-*` font-size token names from
-// styles.css, the same way cn.ts's classGroups list must be derived. This
-// does not read cn.ts's own list: it walks the CSS source of truth so a
-// token added to @theme without being registered in cn.ts fails below, by
-// name, instead of silently losing its size class at render time.
-function readFontSizeTokenNames(): string[] {
+function readThemeTokenNames(namespace: string): string[] {
   const css = readFileSync(stylesPath, "utf8");
   const themeBlock = css.match(/@theme inline \{([\s\S]*?)\n\}/)?.[1];
   if (!themeBlock) {
@@ -25,7 +20,9 @@ function readFontSizeTokenNames(): string[] {
 
   const companionSuffix = /--(line-height|font-weight|letter-spacing)$/;
   const seen = new Set<string>();
-  for (const match of themeBlock.matchAll(/--text-([a-zA-Z0-9-]+):/g)) {
+  for (const match of themeBlock.matchAll(
+    new RegExp(`--${namespace}-([a-zA-Z0-9-]+):`, "g"),
+  )) {
     const name = match[1];
     if (!companionSuffix.test(name)) {
       seen.add(name);
@@ -35,21 +32,50 @@ function readFontSizeTokenNames(): string[] {
   return [...seen];
 }
 
-describe("cn font-size token registration", () => {
-  const tokenNames = readFontSizeTokenNames();
+const roleNamespaces = [
+  { namespace: "text", utility: "text", framework: "text-sm" },
+  { namespace: "radius", utility: "rounded", framework: "rounded-full" },
+  { namespace: "shadow", utility: "shadow", framework: "shadow-none" },
+  { namespace: "tracking", utility: "tracking", framework: "tracking-wide" },
+  { namespace: "leading", utility: "leading", framework: "leading-tight" },
+  { namespace: "container", utility: "max-w", framework: "max-w-full" },
+];
 
-  it("finds font-size tokens to check", () => {
-    // arrange
-    // (readFontSizeTokenNames ran during collection)
+describe("cn theme role registration", () => {
+  it.each(roleNamespaces)(
+    "finds $namespace role tokens to check",
+    ({ namespace }) => {
+      // arrange
+      const tokenNames = readThemeTokenNames(namespace);
 
-    // act
-    const count = tokenNames.length;
+      // act
+      const count = tokenNames.length;
 
-    // assert
-    expect(count).toBeGreaterThan(0);
-  });
+      // assert
+      expect(count).toBeGreaterThan(0);
+    },
+  );
 
-  it.each(tokenNames)(
+  describe.each(roleNamespaces)(
+    "the $namespace roles",
+    ({ namespace, utility, framework }) => {
+      it.each(readThemeTokenNames(namespace))(
+        `lets a later framework ${utility} utility replace the %s role`,
+        (tokenName) => {
+          // arrange
+          const roleClass = `${utility}-${tokenName}`;
+
+          // act
+          const merged = cn(roleClass, framework);
+
+          // assert
+          expect(merged).toBe(framework);
+        },
+      );
+    },
+  );
+
+  it.each(readThemeTokenNames("text"))(
     "keeps the text-%s size class when merged with a color class",
     (tokenName) => {
       // arrange
@@ -85,27 +111,14 @@ describe("cn font-size token registration", () => {
     expect(merged).toBe("text-text-secondary");
   });
 
-  it("keeps the size class at the four real component call sites", () => {
+  it("keeps a radius role and a shadow role on the same element", () => {
     // arrange
-    const callSites = [
-      "pr-12 font-heading text-display-sm font-medium text-text-primary",
-      "mt-2 text-sm text-text-secondary",
-      "px-2.5 py-2 text-label text-text-secondary",
-      "py-2 text-sm text-text-primary",
-    ];
-    const expectedSizeClasses = [
-      "text-display-sm",
-      "text-sm",
-      "text-label",
-      "text-sm",
-    ];
+    const classes = ["rounded-card", "shadow-card"];
 
     // act
-    const merged = callSites.map((classes) => cn(classes));
+    const merged = cn(...classes);
 
     // assert
-    merged.forEach((result, index) => {
-      expect(result.split(" ")).toContain(expectedSizeClasses[index]);
-    });
+    expect(merged).toBe("rounded-card shadow-card");
   });
 });

@@ -1,4 +1,4 @@
-import { buttonVariants } from "@eli-coach-platform/ui/primitives";
+import { buttonVariants, Card } from "@eli-coach-platform/ui/primitives";
 import { CircleCheck } from "lucide-react";
 import type { Ref } from "react";
 import { Link as RouterLink } from "react-router";
@@ -43,7 +43,7 @@ export function BookingConfirmation(props: BookingConfirmationProps) {
         <strong className="text-text-primary">{visitorEmail}</strong>.
       </p>
 
-      <div className="mb-10 w-full max-w-sm rounded-card border border-stroke-faint bg-surface-quiet p-6 text-left">
+      <Card className="mb-10 w-full max-w-sm p-6 text-left" variant="quiet">
         <p className="mb-1 text-sm font-medium text-text-secondary">When</p>
         <p className="mb-4 font-semibold text-text-primary">
           {formatMonthFirstDate(startsAt, timeZone)} <br />
@@ -54,7 +54,7 @@ export function BookingConfirmation(props: BookingConfirmationProps) {
         <p className="font-semibold text-text-primary">
           {`${booking.durationMinutes} minutes`}
         </p>
-      </div>
+      </Card>
 
       <RouterLink
         className={buttonVariants({

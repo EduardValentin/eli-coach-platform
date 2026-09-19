@@ -37,7 +37,7 @@ export function Logo(props: LogoProps) {
       </span>
       <span
         className={cn(
-          "ml-2 font-heading text-xl font-semibold tracking-nav transition-colors",
+          "ml-2 font-heading text-xl font-semibold tracking-wide transition-colors",
           {
             "text-text-primary": appearance === "solid",
             "text-text-inverted": appearance === "transparent",

@@ -1,6 +1,6 @@
 export { Alert } from "./alert";
 export { Button, buttonVariants } from "./button";
-export { Card } from "./card";
+export { Card, cardVariants } from "./card";
 export { Checkbox } from "./checkbox";
 export { IconButton } from "./icon-button";
 export { Input } from "./input";

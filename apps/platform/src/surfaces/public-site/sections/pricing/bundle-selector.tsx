@@ -1,4 +1,5 @@
 import { cn } from "@eli-coach-platform/ui/lib";
+import { cardVariants } from "@eli-coach-platform/ui/primitives";
 import {
   createFadeUpVariants,
   publicEaseOut,
@@ -20,7 +21,7 @@ export function BundleSelector(props: BundleSelectorProps) {
       <h2 className="ui-sr-only">Coaching bundle options</h2>
       {props.showsWaitlistPricing ? (
         <div className="mb-8 flex justify-center">
-          <span className="inline-flex items-center gap-2 rounded-full bg-brand-secondary-soft px-4 py-1.5 text-xs font-semibold tracking-nav text-brand-secondary uppercase">
+          <span className="inline-flex items-center gap-2 rounded-full bg-brand-secondary-soft px-4 py-1.5 text-xs font-semibold tracking-wide text-brand-secondary uppercase">
             <Tag aria-hidden="true" size={13} /> Waitlist pricing — reserved for
             early signups
           </span>
@@ -83,7 +84,7 @@ function BundleCardBadges(props: { card: CoachingBundleCard }) {
         </div>
       ) : null}
       {card.savingsPercent ? (
-        <div className="ui-public-bundle-savings absolute right-3 top-3 px-1.5 py-0.5 font-bold uppercase">
+        <div className="ui-public-bundle-savings absolute right-3 top-3 px-1.5 py-0.5 font-bold uppercase tracking-wide">
           Save {card.savingsPercent}%
         </div>
       ) : null}
@@ -103,7 +104,7 @@ function BundlePrice(props: { card: CoachingBundleCard }) {
             aria-label={`Original ${titleLower} monthly price ${formatEuros(card.originalPricePerMonth)}`}
             className="ui-public-bundle-muted mr-1 text-lg font-bold leading-7 line-through"
           >
-            <Euros amount={card.originalPricePerMonth} />
+            <EuroAmount amount={card.originalPricePerMonth} />
           </span>
         ) : null}
         <span
@@ -112,7 +113,7 @@ function BundlePrice(props: { card: CoachingBundleCard }) {
             "text-brand-primary": card.isWaitlistPrice,
           })}
         >
-          <Euros amount={card.pricePerMonth} />
+          <EuroAmount amount={card.pricePerMonth} />
         </span>
         <span className="mb-0.5 text-sm font-medium leading-5 text-link-muted">
           /mo
@@ -130,28 +131,39 @@ function BundlePrice(props: { card: CoachingBundleCard }) {
             aria-label={`Original ${titleLower} billing total ${formatEuros(card.originalTotal)}`}
             className="mr-1 line-through"
           >
-            <Euros amount={card.originalTotal} />
+            <EuroAmount amount={card.originalTotal} />
           </span>
         ) : null}
-        {card.billedMonthly ? "Billed monthly" : <>Billed as €{card.total}</>}
+        {card.billedMonthly ? (
+          "Billed monthly"
+        ) : (
+          <EuroAmount amount={card.total} precedingText="Billed as " />
+        )}
       </p>
     </div>
   );
 }
 
+const EURO_SIGN = "€";
+
 function formatEuros(amount: number): string {
-  return `€${amount}`;
+  return `${EURO_SIGN}${amount}`;
 }
 
-function Euros(props: { amount: number }) {
-  return <>€{props.amount}</>;
+function EuroAmount(props: { amount: number; precedingText?: string }) {
+  return (
+    <>
+      {`${props.precedingText ?? ""}${EURO_SIGN}`}
+      {props.amount}
+    </>
+  );
 }
 
 function BundleBenefits(props: { benefits: readonly string[] }) {
   return (
     <motion.section
       animate="visible"
-      className="ui-public-bundle-panel mb-10 rounded-card border bg-surface-base p-8 shadow-card md:p-10"
+      className={cn(cardVariants(), "mb-10 p-8 md:p-10")}
       initial="hidden"
       variants={createFadeUpVariants({
         delay: 0.3,

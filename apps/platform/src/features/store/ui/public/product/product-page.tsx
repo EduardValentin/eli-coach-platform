@@ -83,7 +83,7 @@ export default function ProductDetailsRoute() {
             ))}
             {product.goals.map((goal) => (
               <span
-                className="rounded-tile bg-surface-subtle px-3 py-1.5 text-label uppercase text-text-secondary"
+                className="rounded-tile bg-surface-subtle px-3 py-1.5 text-label uppercase text-copy-muted"
                 key={goal.slug}
               >
                 {goal.label}
@@ -97,7 +97,7 @@ export default function ProductDetailsRoute() {
           <p className="text-lg leading-relaxed text-text-secondary">
             {product.detailDescription}
           </p>
-          <Card className="my-10 rounded-card p-6 shadow-soft sm:p-6">
+          <Card className="my-10 p-6">
             <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-text-primary">
               What&apos;s included:
             </h2>
@@ -126,7 +126,7 @@ export default function ProductDetailsRoute() {
               openCartFrom(event.currentTarget);
             }}
             elevation="raised"
-            size="xl"
+            size="lg"
             textSize="lg"
             variant="secondary"
             width="full"

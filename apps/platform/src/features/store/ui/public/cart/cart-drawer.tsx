@@ -418,7 +418,7 @@ function AcquisitionDetails(props: {
         </Button>
         <Button
           disabled={!props.canSubmit}
-          size="lg"
+          size="lg-tight"
           type="submit"
           width="full"
         >
@@ -465,7 +465,6 @@ function ConsentRow(props: {
             aria-invalid={props.errorMessage ? true : undefined}
             aria-label={props.accessibleLabel}
             checked={props.checked}
-            className="size-4 rounded-checkbox shadow-none"
             disabled={props.disabled}
             id={props.id}
             onBlur={props.onBlur}

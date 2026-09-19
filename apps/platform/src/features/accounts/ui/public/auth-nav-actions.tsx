@@ -76,7 +76,7 @@ function PortalPillLink(props: {
     <Link
       className={cn(
         buttonVariants({
-          lettering: "nav",
+          lettering: "wide",
           size: "xs",
           textSize: "sm",
           variant: PILL_VARIANT_BY_PLACEMENT[placement],
@@ -98,7 +98,7 @@ function AuthControl(props: {
   const { placement, session, storePath } = props;
 
   const className = cn("font-medium transition-colors duration-150 ease-out", {
-    "hidden text-sm tracking-nav text-current hover:text-brand-primary md:inline-block":
+    "hidden text-sm tracking-wide text-current hover:text-brand-primary md:inline-block":
       placement !== "mobile-menu",
     "text-2xl tracking-wide text-link-muted hover:text-text-primary":
       placement === "mobile-menu",

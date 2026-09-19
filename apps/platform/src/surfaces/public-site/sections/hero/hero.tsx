@@ -182,7 +182,7 @@ export function PublicHero(props: PublicHeroProps) {
                 Coaching built around your body.
               </motion.h1>
               <motion.p
-                className="mb-10 max-w-2xl text-lg font-light tracking-nav text-text-inverted-secondary md:text-xl"
+                className="mb-10 max-w-2xl text-lg font-light tracking-wide text-text-inverted-secondary md:text-xl"
                 {...heroEntranceMotion({
                   transition: {
                     delay: 0.25,
@@ -254,7 +254,7 @@ export function PublicHero(props: PublicHeroProps) {
                 Strength training for women.
               </motion.h1>
               <motion.p
-                className="mb-8 text-lg font-light tracking-nav text-text-inverted-secondary md:text-xl"
+                className="mb-8 text-lg font-light tracking-wide text-text-inverted-secondary md:text-xl"
                 {...heroEntranceMotion({
                   transition: {
                     delay: 0.2,
@@ -293,7 +293,7 @@ export function PublicHero(props: PublicHeroProps) {
                     />
                   </Link>
                 </div>
-                <p className="text-sm font-light tracking-nav text-text-inverted-secondary">
+                <p className="text-sm font-light tracking-wide text-text-inverted-secondary">
                   Free 30-minute assessment call.
                 </p>
               </motion.div>

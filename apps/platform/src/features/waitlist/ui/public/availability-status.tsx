@@ -9,7 +9,7 @@ export function WaitlistAvailabilityStatus(props: {
   if (props.status === null) {
     return (
       <p
-        className="text-center text-sm font-medium tracking-nav"
+        className="text-center text-sm font-medium tracking-wide"
         role={props.announcement === "none" ? undefined : "alert"}
       >
         <span
@@ -29,7 +29,7 @@ export function WaitlistAvailabilityStatus(props: {
 
   return (
     <p
-      className={cn("text-center text-sm font-medium tracking-nav", {
+      className={cn("text-center text-sm font-medium tracking-wide", {
         "text-feedback-danger": isClosed && props.variant === "light",
         "text-feedback-danger-on-inverted":
           isClosed && props.variant === "dark",

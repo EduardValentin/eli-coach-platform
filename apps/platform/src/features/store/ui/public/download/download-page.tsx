@@ -60,7 +60,7 @@ export default function DownloadRoute() {
         <input name="token" type="hidden" value={token} />
         <Button
           elevation="raised"
-          size="xl"
+          size="lg"
           textSize="lg"
           type="submit"
           width="full"

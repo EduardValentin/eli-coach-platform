@@ -28,7 +28,7 @@ export const meta: MetaFunction = () => [
 function CoachBrand() {
   return (
     <div className="flex min-w-0 items-center gap-3">
-      <div className="flex size-10 shrink-0 items-center justify-center rounded-control bg-text-primary text-text-inverted shadow-raised">
+      <div className="flex size-10 shrink-0 items-center justify-center rounded-compact bg-text-primary text-text-inverted shadow-raised">
         <Dumbbell aria-hidden="true" className="-rotate-45" size={20} />
       </div>
       <div className="min-w-0">

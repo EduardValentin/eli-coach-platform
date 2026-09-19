@@ -1,6 +1,8 @@
 import { joinBasePath } from "@eli-coach-platform/config";
 import { ELI_PORTRAIT_PATHS } from "@eli-coach-platform/content";
 import { ASSESSMENT_CALL_RULES } from "@eli-coach-platform/domain/assessment-call";
+import { cn } from "@eli-coach-platform/ui/lib";
+import { cardVariants } from "@eli-coach-platform/ui/primitives";
 import { Calendar as CalendarIcon, Clock, Video } from "lucide-react";
 import { motion } from "motion/react";
 
@@ -57,7 +59,7 @@ export function CallOverview(props: {
       {chosenCall ? (
         <motion.div
           animate={{ opacity: 1, y: 0 }}
-          className="mt-8 rounded-card border border-stroke-faint bg-surface-base p-4 shadow-card"
+          className={cn(cardVariants(), "mt-8 p-4")}
           initial={{ opacity: 0, y: 10 }}
         >
           <div className="flex items-start gap-3">

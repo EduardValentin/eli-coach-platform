@@ -168,6 +168,7 @@ export function PublicNavigation(props: PublicNavigationProps) {
           },
         )}
         data-appearance={appearance}
+        data-surface={appearance === "transparent" ? "inverted" : undefined}
         ref={headerRef}
         data-launch-mode={variant}
       >
@@ -218,7 +219,7 @@ function PublicNavigationCluster(props: PublicNavigationClusterProps) {
       <div className="hidden items-center gap-8 md:flex">
         {links.map((link) => (
           <Link
-            className="text-sm font-medium tracking-nav text-current transition-colors duration-150 ease-out hover:text-brand-primary"
+            className="text-sm font-medium tracking-wide text-current transition-colors duration-150 ease-out hover:text-brand-primary"
             key={link.href}
             to={link.href}
           >

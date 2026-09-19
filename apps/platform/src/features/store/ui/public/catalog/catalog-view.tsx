@@ -1,5 +1,9 @@
-import { useSearchParamsWriter } from "@eli-coach-platform/ui/lib";
-import { buttonVariants } from "@eli-coach-platform/ui/primitives";
+import { cn, useSearchParamsWriter } from "@eli-coach-platform/ui/lib";
+import {
+  buttonVariants,
+  Card,
+  cardVariants,
+} from "@eli-coach-platform/ui/primitives";
 import { Plus, ShoppingBag } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link } from "react-router";
@@ -37,10 +41,7 @@ export function CatalogView(props: { products: readonly StoreProduct[] }) {
 export function CatalogUnavailableView() {
   return (
     <CatalogShell>
-      <div
-        className="rounded-panel border border-border-subtle bg-surface-base p-10 text-center shadow-soft"
-        role="alert"
-      >
+      <Card className="p-10 text-center" role="alert" variant="panel">
         <ShoppingBag
           aria-hidden="true"
           className="mx-auto mb-5 text-text-muted"
@@ -59,7 +60,7 @@ export function CatalogUnavailableView() {
         >
           Return home
         </Link>
-      </div>
+      </Card>
     </CatalogShell>
   );
 }
@@ -198,7 +199,12 @@ function CatalogProductCard({ product }: { product: StoreProduct }) {
   const openCartFrom = useStoreCart((cart) => cart.openCartFrom);
 
   return (
-    <article className="group flex h-full flex-col overflow-hidden rounded-card border border-stroke-faint bg-surface-base shadow-card transition-shadow hover:shadow-raised">
+    <article
+      className={cn(
+        cardVariants(),
+        "group flex h-full flex-col overflow-hidden transition-shadow hover:shadow-raised",
+      )}
+    >
       <Link
         className="relative block aspect-[4/3] overflow-hidden bg-surface-subtle"
         to={storeProductPath(product.slug)}

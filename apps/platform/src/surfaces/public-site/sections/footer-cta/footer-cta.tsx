@@ -1,5 +1,4 @@
 import type { WaitlistPresentation } from "~/features/waitlist/ui/shared/waitlist-presentation";
-import { cn } from "@eli-coach-platform/ui/lib";
 import {
   publicEaseOut,
   useClientReducedMotionPreference,
@@ -49,8 +48,6 @@ const FOOTER_CTA_ACTIONS_REVEAL: Variants = {
     y: 0,
   },
 };
-
-const footerCtaLinkClassName = "w-full sm:w-auto";
 
 export function PublicFooterCta(props: PublicFooterCtaProps) {
   const sectionRef = useRef<HTMLElement>(null);
@@ -176,27 +173,23 @@ function FooterNormalContent() {
       </p>
       <FooterActionsReveal className="flex flex-col items-center justify-center gap-4 sm:flex-row">
         <RouterLink
-          className={cn(
-            buttonVariants({
-              elevation: "raised",
-              press: "scale",
-              weight: "regular",
-            }),
-            footerCtaLinkClassName,
-          )}
+          className={buttonVariants({
+            elevation: "raised",
+            press: "scale",
+            weight: "regular",
+            width: "full-below-sm",
+          })}
           to={STORE_PATH}
         >
           Browse the free resources
         </RouterLink>
         <RouterLink
-          className={cn(
-            buttonVariants({
-              press: "scale",
-              variant: "outline-brand",
-              weight: "regular",
-            }),
-            footerCtaLinkClassName,
-          )}
+          className={buttonVariants({
+            press: "scale",
+            variant: "outline-brand",
+            weight: "regular",
+            width: "full-below-sm",
+          })}
           to={PRICING_PATH}
         >
           See coaching plans
