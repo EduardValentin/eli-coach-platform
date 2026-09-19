@@ -1,15 +1,14 @@
 import { motion } from 'motion/react';
-import { Video, ClipboardCheck, Plus, ArrowRight, User } from 'lucide-react';
+import { ClipboardCheck, Plus, ArrowRight, User } from 'lucide-react';
 import { Link } from 'react-router';
+import { AssessmentCallsSection } from '../../components/coach-portal/AssessmentCallsSection';
+import { useAssessmentCalls } from '../../context/AssessmentCallContext';
 import { useCheckins } from '../../context/CheckinContext';
+import {
+  classifyCalls,
+  countTodayCalls,
+} from '../../utils/assessmentCallListing';
 import { formatCheckinDate, formatCheckinTime } from '../../utils/dateFormatters';
-
-const MOCK_CALLS = [
-  { id: 1, name: 'Emma Watson', time: '10:00 AM', type: 'Assessment Call' },
-  { id: 2, name: 'Sarah Jenkins', time: '1:30 PM', type: 'Ad-hoc Check-in' },
-];
-
-// MOCK_CHECKINS removed — now pulled from CheckinContext
 
 const MOCK_CLIENTS = [
   { id: 'c1', name: 'Jane Doe', phase: 'Luteal', goal: 'Recomp', compliance: '95%' },
@@ -19,7 +18,14 @@ const MOCK_CLIENTS = [
 
 export function CoachDashboard() {
   const { getPendingCheckins } = useCheckins();
+  const { bookings } = useAssessmentCalls();
   const pendingCheckins = getPendingCheckins();
+
+  const now = new Date();
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const todayCallCount = countTodayCalls(
+    classifyCalls(bookings, { now, timeZone }),
+  );
 
   return (
     <div className="w-full pb-12">
@@ -29,7 +35,10 @@ export function CoachDashboard() {
             Good morning, Coach.
           </h1>
           <p className="text-muted-foreground font-medium">
-            You have 2 calls and {pendingCheckins.length} check-in{pendingCheckins.length !== 1 ? 's' : ''} to review today.
+            <span data-parity="today-count">
+              You have {todayCallCount} assessment call{todayCallCount !== 1 ? 's' : ''} today.
+            </span>
+            <span> {pendingCheckins.length} check-in{pendingCheckins.length !== 1 ? 's' : ''} to review.</span>
           </p>
         </div>
         <Link 
@@ -43,33 +52,11 @@ export function CoachDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 mb-8">
         
-        {/* Upcoming Calls */}
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-card p-8 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50"
-        >
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center">
-              <Video size={20} />
-            </div>
-            <h2 className="font-serif text-xl text-foreground font-semibold">Upcoming Calls</h2>
-          </div>
-          
-          <div className="space-y-4">
-            {MOCK_CALLS.map(call => (
-              <div key={call.id} className="flex items-center justify-between p-4 rounded-card border border-border bg-muted/50 hover:bg-card hover:shadow-sm transition-all">
-                <div>
-                  <p className="font-semibold text-sm text-foreground">{call.name}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{call.time} • {call.type}</p>
-                </div>
-                <button className="px-4 py-2 bg-surface-inverted text-white text-xs font-semibold rounded-control hover:bg-neutral-800 transition-colors">
-                  Join Meet
-                </button>
-              </div>
-            ))}
-          </div>
-        </motion.div>
+        <AssessmentCallsSection
+          bookings={bookings}
+          now={now}
+          timeZone={timeZone}
+        />
 
         {/* Pending Check-ins */}
         <motion.div 

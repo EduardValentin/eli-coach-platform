@@ -11,6 +11,8 @@ import type { PrototypeStoreCheckoutOutcome } from '../services/storeAcquisition
 import type { PrototypeSignInOutcome } from '../services/authService';
 import type { PrototypeClientOnboardingOutcome } from '../services/clientOnboardingService';
 import type { PrototypeBookingOutcome } from '../services/assessmentCallService';
+import { sampleDashboardBookings } from '../services/assessmentCallSamples';
+import { useAssessmentCalls } from '../context/AssessmentCallContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
@@ -92,6 +94,14 @@ function parseBookingOutcomeControl(value: string): PrototypeBookingOutcome {
   return 'success';
 }
 
+type DashboardCallsSeed = 'none' | 'sample';
+
+function parseDashboardCallsControl(value: string): DashboardCallsSeed {
+  if (value === 'sample') return value;
+
+  return 'none';
+}
+
 const SELECT_CONTENT_CLASS = 'z-[10000]';
 
 function DevCheckboxRow({
@@ -119,7 +129,16 @@ function DevCheckboxRow({
 
 export function DevToggle() {
   const [isOpen, setIsOpen] = useState(false);
+  const [dashboardCalls, setDashboardCalls] =
+    useState<DashboardCallsSeed>('none');
   const { appState, setAppState } = useAppState();
+  const { replaceBookings } = useAssessmentCalls();
+
+  const seedDashboardCalls = (value: string) => {
+    const seed = parseDashboardCallsControl(value);
+    setDashboardCalls(seed);
+    replaceBookings(seed === 'sample' ? sampleDashboardBookings(new Date()) : []);
+  };
 
   return (
     <>
@@ -325,6 +344,28 @@ export function DevToggle() {
                     Bot verification runs on the real server, so the prototype
                     never rejects a booking as a bot.
                   </p>
+                </div>
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="dev-dashboard-calls"
+                    className="text-xs font-semibold text-copy-muted uppercase tracking-wider"
+                  >
+                    Dashboard calls
+                  </Label>
+                  <Select
+                    value={dashboardCalls}
+                    onValueChange={seedDashboardCalls}
+                  >
+                    <SelectTrigger id="dev-dashboard-calls" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="none">None</SelectItem>
+                      <SelectItem value="sample">
+                        Sample calls (today, upcoming, past)
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <DevCheckboxRow
                   id="dev-booking-slots-unavailable"

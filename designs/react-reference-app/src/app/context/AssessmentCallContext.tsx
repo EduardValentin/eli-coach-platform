@@ -12,6 +12,7 @@ type AssessmentCallContextType = {
   bookings: PrototypeBooking[];
   bookedStarts: Date[];
   addBooking: (booking: PrototypeBooking) => void;
+  replaceBookings: (bookings: PrototypeBooking[]) => void;
 };
 
 const AssessmentCallContext = createContext<
@@ -30,8 +31,14 @@ export function AssessmentCallProvider({ children }: { children: ReactNode }) {
     setBookings((previous) => [booking, ...previous]);
   }, []);
 
+  const replaceBookings = useCallback((replacements: PrototypeBooking[]) => {
+    setBookings(replacements);
+  }, []);
+
   return (
-    <AssessmentCallContext.Provider value={{ bookings, bookedStarts, addBooking }}>
+    <AssessmentCallContext.Provider
+      value={{ bookings, bookedStarts, addBooking, replaceBookings }}
+    >
       {children}
     </AssessmentCallContext.Provider>
   );

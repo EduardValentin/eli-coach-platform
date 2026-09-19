@@ -129,17 +129,17 @@ export function ClientCheckins() {
       <Tabs defaultValue="upcoming" className="w-full">
         {/* Tabs + desktop CTA on one row, vertically centered */}
         <div className="flex items-center justify-between gap-4 mb-6">
-          <TabsList className="bg-neutral-100 rounded-card p-1">
-          <TabsTrigger value="upcoming" className="rounded-control data-[state=active]:bg-white data-[state=active]:shadow-sm px-4 sm:px-5 py-2.5 text-sm font-semibold">
+          <TabsList variant="segmented">
+          <TabsTrigger variant="segmented" value="upcoming" className="px-4 sm:px-5">
             Upcoming {upcoming.length > 0 && <span className="ml-1.5 text-text-secondary">({upcoming.length})</span>}
           </TabsTrigger>
-          <TabsTrigger value="requests" className="rounded-control data-[state=active]:bg-white data-[state=active]:shadow-sm px-4 sm:px-5 py-2.5 text-sm font-semibold">
+          <TabsTrigger variant="segmented" value="requests" className="px-4 sm:px-5">
             Requests
             {needsResponseCount > 0 && (
               <span className="ml-1.5 w-5 h-5 rounded-full bg-status-pending text-white text-[10px] font-bold inline-flex items-center justify-center">{needsResponseCount}</span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="past" className="rounded-control data-[state=active]:bg-white data-[state=active]:shadow-sm px-4 sm:px-5 py-2.5 text-sm font-semibold">
+          <TabsTrigger variant="segmented" value="past" className="px-4 sm:px-5">
             Past
           </TabsTrigger>
           </TabsList>
