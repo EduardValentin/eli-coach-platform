@@ -20,16 +20,12 @@ const AVATAR_TONE = {
   scheduled: "quiet",
 } as const;
 
-const SUPERSEDED_GLYPH_SIZE = 12;
-
 type AppointmentCardProps = {
   actions?: ReactNode;
   attendee: AppointmentAttendee;
   badges?: ReactNode;
-  footnote?: string;
   quote?: string;
   status?: AppointmentStatus;
-  supersededWhen?: AppointmentTime;
   titleElement?: AppointmentTitleElement;
   when: AppointmentTime;
 };
@@ -38,10 +34,8 @@ export function AppointmentCard({
   actions,
   attendee,
   badges,
-  footnote,
   quote,
   status = "scheduled",
-  supersededWhen,
   titleElement: Title = "p",
   when,
 }: AppointmentCardProps) {
@@ -53,24 +47,13 @@ export function AppointmentCard({
       )}
     >
       <div className="flex min-w-0 flex-1 items-start gap-4">
-        <Avatar
-          imageUrl={attendee.imageUrl}
-          name={attendee.name}
-          tone={AVATAR_TONE[status]}
-        />
+        <Avatar name={attendee.name} tone={AVATAR_TONE[status]} />
 
         <div className="min-w-0 flex-1">
           <div className="mb-1 flex flex-wrap items-center gap-2">
             <Title className="text-sm font-semibold">{attendee.name}</Title>
             {badges}
           </div>
-
-          {supersededWhen && (
-            <div className="mb-0.5 flex items-center gap-2 text-xs text-text-secondary line-through">
-              <CalendarDaysGlyph size={SUPERSEDED_GLYPH_SIZE} />
-              {supersededWhen.date} at {supersededWhen.time}
-            </div>
-          )}
 
           <div className="flex flex-col gap-1 text-sm text-text-secondary md:flex-row md:flex-wrap md:items-center md:gap-3">
             <span className="flex items-center gap-1.5 whitespace-nowrap">
@@ -99,10 +82,6 @@ export function AppointmentCard({
             <p className="mt-2 text-xs text-text-secondary italic whitespace-pre-line">
               &quot;{quote}&quot;
             </p>
-          )}
-
-          {footnote && (
-            <p className="mt-1.5 text-micro text-text-secondary">{footnote}</p>
           )}
         </div>
       </div>

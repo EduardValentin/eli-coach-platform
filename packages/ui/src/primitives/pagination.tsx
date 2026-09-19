@@ -1,10 +1,11 @@
 import * as React from "react";
-import { cva } from "class-variance-authority";
+import { cva, type VariantProps } from "class-variance-authority";
 import { Link } from "react-router";
 
 import { cn } from "../lib/cn";
+import { glyphAttributes } from "../lib/glyph";
 
-const stepClasses = cva(
+const stepClassNames = cva(
   "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-control text-sm font-medium outline-none transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
@@ -24,6 +25,12 @@ const stepClasses = cva(
     },
   },
 );
+
+type StepVariantProps = VariantProps<typeof stepClassNames>;
+
+function stepClasses(options?: StepVariantProps): string {
+  return cn(stepClassNames(options));
+}
 
 type PageProps = {
   page: number;
@@ -142,21 +149,11 @@ function PaginationEdge(props: {
   );
 }
 
-const GLYPH_ATTRIBUTES = {
-  fill: "none",
-  height: 24,
-  stroke: "currentColor",
-  strokeLinecap: "round",
-  strokeLinejoin: "round",
-  strokeWidth: 2,
-  viewBox: "0 0 24 24",
-  width: 24,
-  xmlns: "http://www.w3.org/2000/svg",
-} as const satisfies React.SVGProps<SVGSVGElement>;
+const STEP_GLYPH_SIZE = 24;
 
 function ChevronLeftGlyph() {
   return (
-    <svg aria-hidden="true" {...GLYPH_ATTRIBUTES}>
+    <svg aria-hidden="true" {...glyphAttributes(STEP_GLYPH_SIZE)}>
       <path d="m15 18-6-6 6-6" />
     </svg>
   );
@@ -164,7 +161,7 @@ function ChevronLeftGlyph() {
 
 function ChevronRightGlyph() {
   return (
-    <svg aria-hidden="true" {...GLYPH_ATTRIBUTES}>
+    <svg aria-hidden="true" {...glyphAttributes(STEP_GLYPH_SIZE)}>
       <path d="m9 18 6-6-6-6" />
     </svg>
   );
@@ -172,7 +169,11 @@ function ChevronRightGlyph() {
 
 function EllipsisGlyph() {
   return (
-    <svg aria-hidden="true" className="size-4" {...GLYPH_ATTRIBUTES}>
+    <svg
+      aria-hidden="true"
+      className="size-4"
+      {...glyphAttributes(STEP_GLYPH_SIZE)}
+    >
       <circle cx="12" cy="12" r="1" />
       <circle cx="19" cy="12" r="1" />
       <circle cx="5" cy="12" r="1" />

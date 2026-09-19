@@ -1,5 +1,5 @@
 import { AppointmentCard } from "@eli-coach-platform/ui/appointments";
-import { cn, useSearchParamsWriter } from "@eli-coach-platform/ui/lib";
+import { cn } from "@eli-coach-platform/ui/lib";
 import {
   Badge,
   cardVariants,
@@ -12,8 +12,6 @@ import {
   TabsList,
   TabsTrigger,
 } from "@eli-coach-platform/ui/tabs";
-import { useLocation } from "react-router";
-
 import type { CoachAssessmentCall } from "~/features/assessment-calls/contracts/assessment-calls";
 import {
   formatClockTime,
@@ -24,22 +22,16 @@ import {
   filterCalls,
   orderCalls,
   pageOfCalls,
-  parsePageParam,
-  parseStatusParam,
-  PAGE_PARAM,
   PAGE_SIZE,
-  QUERY_PARAM,
-  STATUS_PARAM,
   type ClassifiedCall,
   type CoachCallStatus,
 } from "~/features/assessment-calls/ui/coach/assessment-call-listing";
 import { JoinCallLink } from "~/features/assessment-calls/ui/coach/join-call-link";
 
 import { CallListPager } from "./call-list-pager";
+import { useCallListingParams } from "./use-call-listing-params";
 
 const SEARCH_FIELD_ID = "assessment-call-search";
-const DEFAULT_STATUS: CoachCallStatus = "upcoming";
-const FIRST_PAGE = 1;
 const NO_MATCH_MESSAGE = "No calls match your search.";
 
 const STATUS_TABS: readonly { label: string; status: CoachCallStatus }[] = [
@@ -67,52 +59,9 @@ export function AssessmentCallsSection({
   now,
   timeZone,
 }: AssessmentCallsSectionProps) {
-  const { pathname } = useLocation();
-  const { replaceSearchParams, searchParams } = useSearchParamsWriter();
-  const status = parseStatusParam(searchParams.get(STATUS_PARAM));
-  const query = searchParams.get(QUERY_PARAM) ?? "";
-  const page = parsePageParam(searchParams.get(PAGE_PARAM));
+  const { changeQuery, chooseStatus, page, pathForPage, query, status } =
+    useCallListingParams();
   const classified = orderCalls(classifyCalls(calls, { now, timeZone }));
-
-  const chooseStatus = (value: string) => {
-    const chosen = parseStatusParam(value);
-
-    replaceSearchParams((params) => {
-      params.delete(PAGE_PARAM);
-
-      if (chosen === DEFAULT_STATUS) {
-        params.delete(STATUS_PARAM);
-      } else {
-        params.set(STATUS_PARAM, chosen);
-      }
-    });
-  };
-
-  const changeQuery = (value: string) => {
-    replaceSearchParams((params) => {
-      params.delete(PAGE_PARAM);
-
-      if (value.length === 0) {
-        params.delete(QUERY_PARAM);
-      } else {
-        params.set(QUERY_PARAM, value);
-      }
-    });
-  };
-
-  const pathForPage = (chosen: number) => {
-    const params = new URLSearchParams(searchParams);
-
-    if (chosen === FIRST_PAGE) {
-      params.delete(PAGE_PARAM);
-    } else {
-      params.set(PAGE_PARAM, String(chosen));
-    }
-
-    const search = params.toString();
-
-    return search.length > 0 ? `${pathname}?${search}` : pathname;
-  };
 
   const emptyMessageFor = (tabStatus: CoachCallStatus) =>
     query.trim().length > 0 ? NO_MATCH_MESSAGE : EMPTY_MESSAGES[tabStatus];
@@ -184,7 +133,7 @@ function CallList(props: {
   return (
     <ul aria-label="Assessment calls" className="space-y-4">
       {calls.map((call) => (
-        <li key={call.call.id}>
+        <li key={call.id}>
           <CallCard call={call} timeZone={timeZone} />
         </li>
       ))}
@@ -193,26 +142,26 @@ function CallList(props: {
 }
 
 function CallCard(props: { call: ClassifiedCall; timeZone: string }) {
-  const { call, isToday, timing } = props.call;
+  const { call, timeZone } = props;
   const startsAt = new Date(call.startsAt);
 
   return (
     <AppointmentCard
       actions={
-        timing === "upcoming" ? (
+        call.timing === "upcoming" ? (
           <JoinCallLink joinPath={call.joinPath} />
         ) : (
           <Badge tone="neutral">Past</Badge>
         )
       }
       attendee={{ email: call.visitorEmail, name: call.visitorName }}
-      badges={isToday && <Badge tone="accent">Today</Badge>}
+      badges={call.isToday && <Badge tone="accent">Today</Badge>}
       quote={call.visitorNotes ?? undefined}
-      status={timing === "past" ? "past" : "scheduled"}
+      status={call.timing === "past" ? "past" : "scheduled"}
       titleElement="h2"
       when={{
-        date: formatShortDay(startsAt, props.timeZone),
-        time: formatClockTime(startsAt, props.timeZone),
+        date: formatShortDay(startsAt, timeZone),
+        time: formatClockTime(startsAt, timeZone),
       }}
     />
   );

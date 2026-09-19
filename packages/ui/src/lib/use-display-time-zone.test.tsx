@@ -12,8 +12,8 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-function TimeZoneProbe(props: { coachTimeZone: string | null }) {
-  const timeZone = useDisplayTimeZone(props.coachTimeZone);
+function TimeZoneProbe(props: { serverTimeZone: string | null }) {
+  const timeZone = useDisplayTimeZone(props.serverTimeZone);
 
   return <p>zone: {timeZone}</p>;
 }
@@ -24,7 +24,7 @@ describe("display time zone", () => {
     const browserZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     // act
-    render(<TimeZoneProbe coachTimeZone="Pacific/Kiritimati" />);
+    render(<TimeZoneProbe serverTimeZone="Pacific/Kiritimati" />);
 
     // assert
     expect(screen.getByText(`zone: ${browserZone}`)).toBeInTheDocument();
@@ -35,7 +35,7 @@ describe("display time zone", () => {
     const browserZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     // act
-    render(<TimeZoneProbe coachTimeZone={null} />);
+    render(<TimeZoneProbe serverTimeZone={null} />);
 
     // assert
     expect(screen.getByText(`zone: ${browserZone}`)).toBeInTheDocument();

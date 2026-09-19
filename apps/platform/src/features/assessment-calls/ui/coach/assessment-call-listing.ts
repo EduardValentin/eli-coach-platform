@@ -16,8 +16,7 @@ export type CoachCallStatus = "upcoming" | "today" | "past" | "all";
 
 type CoachCallTiming = "upcoming" | "past";
 
-export type ClassifiedCall = {
-  call: CoachAssessmentCall;
+export type ClassifiedCall = CoachAssessmentCall & {
   isToday: boolean;
   timing: CoachCallTiming;
 };
@@ -50,7 +49,7 @@ export function classifyCalls(
   const today = dayKeyOf(moment.now, moment.timeZone);
 
   return calls.map((call) => ({
-    call,
+    ...call,
     isToday: dayKeyOf(new Date(call.startsAt), moment.timeZone) === today,
     timing:
       new Date(call.endsAt).getTime() <= moment.now.getTime()
@@ -70,8 +69,7 @@ export function filterCalls(
 }
 
 export function orderCalls(calls: readonly ClassifiedCall[]): ClassifiedCall[] {
-  const startOf = (call: ClassifiedCall) =>
-    new Date(call.call.startsAt).getTime();
+  const startOf = (call: ClassifiedCall) => new Date(call.startsAt).getTime();
   const withTiming = (timing: CoachCallTiming) =>
     calls.filter((call) => call.timing === timing);
 
@@ -149,9 +147,11 @@ export function paginationSteps(
     around <= page + PAGES_AROUND_CURRENT;
     around += 1
   ) {
-    if (around >= FIRST_PAGE && around <= pageCount) {
-      shown.add(around);
+    if (around < FIRST_PAGE || around > pageCount) {
+      continue;
     }
+
+    shown.add(around);
   }
 
   return withGaps([...shown].sort((one, other) => one - other));
@@ -191,8 +191,8 @@ function matchesQuery(call: ClassifiedCall, query: string): boolean {
   }
 
   return (
-    call.call.visitorName.toLowerCase().includes(needle) ||
-    call.call.visitorEmail.toLowerCase().includes(needle)
+    call.visitorName.toLowerCase().includes(needle) ||
+    call.visitorEmail.toLowerCase().includes(needle)
   );
 }
 

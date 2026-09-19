@@ -133,8 +133,8 @@ describe("the coach's assessment calls page", () => {
     expect(within(calls[1]).queryByText("Today")).not.toBeInTheDocument();
   });
 
-  it("reads the day and today from the browser's zone, not the coach's", async () => {
-    // arrange — the Bucharest evening has already become tomorrow on Kiritimati.
+  it("reads the day and today from the browser's zone, where the Bucharest evening is already tomorrow", async () => {
+    // arrange
     vi.stubEnv("TZ", KIRITIMATI);
 
     // act

@@ -55,12 +55,12 @@ export function UpcomingCallsWidget({
           <p className="text-sm text-text-muted">No upcoming calls.</p>
         ) : (
           <ul className="space-y-4">
-            {soonest.map(({ call, isToday }) => (
+            {soonest.map((call) => (
               <li key={call.id}>
                 <DashboardAppointmentRow
                   action={<JoinCallLink joinPath={call.joinPath} />}
                   attendeeName={call.visitorName}
-                  badges={isToday && <Badge tone="accent">Today</Badge>}
+                  badges={call.isToday && <Badge tone="accent">Today</Badge>}
                   when={{
                     date: formatShortDay(new Date(call.startsAt), timeZone),
                     time: formatClockTime(new Date(call.startsAt), timeZone),

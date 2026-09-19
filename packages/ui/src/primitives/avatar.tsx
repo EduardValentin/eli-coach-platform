@@ -1,4 +1,3 @@
-import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "../lib/cn";
@@ -22,21 +21,10 @@ const initialClasses = cva(
 );
 
 type AvatarProps = VariantProps<typeof initialClasses> & {
-  imageUrl?: string;
   name: string;
 };
 
-export function Avatar({ imageUrl, name, tone }: AvatarProps) {
-  if (imageUrl) {
-    return (
-      <img
-        alt=""
-        className={cn(AVATAR_CLASSES, "object-cover")}
-        src={imageUrl}
-      />
-    );
-  }
-
+export function Avatar({ name, tone }: AvatarProps) {
   return (
     <div
       aria-hidden="true"

@@ -2,7 +2,7 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { Avatar } from "./avatar";
@@ -26,17 +26,6 @@ describe("avatar", () => {
 
     // assert
     expect(container.firstElementChild).toHaveAttribute("aria-hidden", "true");
-  });
-
-  it("shows the picture when there is one, with no duplicate of the name", () => {
-    // arrange, act
-    render(<Avatar imageUrl="https://example.test/ana.png" name="Ana" />);
-
-    // assert
-    const picture = screen.getByRole("presentation");
-
-    expect(picture).toHaveAttribute("src", "https://example.test/ana.png");
-    expect(picture).toHaveAttribute("alt", "");
   });
 
   it("mutes the stand-in when the moment it belongs to has passed", () => {

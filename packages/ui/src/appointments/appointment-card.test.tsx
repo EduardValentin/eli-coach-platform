@@ -72,22 +72,6 @@ describe("appointment card", () => {
     expect(quote).toHaveClass("whitespace-pre-line");
   });
 
-  it("strikes through a moment the appointment has moved away from", () => {
-    // arrange, act
-    render(
-      <AppointmentCard
-        attendee={ATTENDEE}
-        supersededWhen={{ date: "Sat, Sep 19", time: "9:00 AM" }}
-        when={WHEN}
-      />,
-    );
-
-    // assert
-    expect(screen.getByText(/Sat, Sep 19 at 9:00 AM/)).toHaveClass(
-      "line-through",
-    );
-  });
-
   it("mutes a card whose appointment has already happened", () => {
     // arrange, act
     const { container } = render(
@@ -105,7 +89,6 @@ describe("appointment card", () => {
         actions={<button type="button">Join call</button>}
         attendee={ATTENDEE}
         badges={<span>Today</span>}
-        footnote="Booked yesterday"
         when={WHEN}
       />,
     );
@@ -115,6 +98,5 @@ describe("appointment card", () => {
     expect(
       screen.getByRole("button", { name: "Join call" }),
     ).toBeInTheDocument();
-    expect(screen.getByText("Booked yesterday")).toBeInTheDocument();
   });
 });

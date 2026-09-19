@@ -88,8 +88,8 @@ describe("classifying a coach's calls", () => {
     expect(inLosAngeles.isToday).toBe(false);
   });
 
-  it("keeps today honest across the night the clocks go back", () => {
-    // arrange — Europe/Bucharest leaves summer time on 2026-10-25.
+  it("keeps today honest across the 2026-10-25 night Europe/Bucharest leaves summer time", () => {
+    // arrange
     const lateOnTheTwentyFourth = callAt("2026-10-24T21:30:00.000Z");
     const lateOnTheTwentyFifth = callAt("2026-10-25T22:30:00.000Z");
     const moment = {
@@ -146,10 +146,7 @@ describe("choosing which calls to show", () => {
     const shown = filterCalls(calls, { query: "", status: "upcoming" });
 
     // assert
-    expect(shown.map((call) => call.call.id)).toEqual([
-      "later-today",
-      "next-week",
-    ]);
+    expect(shown.map((call) => call.id)).toEqual(["later-today", "next-week"]);
   });
 
   it("shows every call starting today under Today, ended or not", () => {
@@ -157,7 +154,7 @@ describe("choosing which calls to show", () => {
     const shown = filterCalls(calls, { query: "", status: "today" });
 
     // assert
-    expect(shown.map((call) => call.call.id)).toEqual([
+    expect(shown.map((call) => call.id)).toEqual([
       "earlier-today",
       "later-today",
     ]);
@@ -168,7 +165,7 @@ describe("choosing which calls to show", () => {
     const shown = filterCalls(calls, { query: "", status: "past" });
 
     // assert
-    expect(shown.map((call) => call.call.id)).toEqual([
+    expect(shown.map((call) => call.id)).toEqual([
       "yesterday",
       "earlier-today",
     ]);
@@ -188,8 +185,8 @@ describe("choosing which calls to show", () => {
     const byEmail = filterCalls(calls, { query: "CARLA@", status: "all" });
 
     // assert
-    expect(byName.map((call) => call.call.id)).toEqual(["yesterday"]);
-    expect(byEmail.map((call) => call.call.id)).toEqual(["earlier-today"]);
+    expect(byName.map((call) => call.id)).toEqual(["yesterday"]);
+    expect(byEmail.map((call) => call.id)).toEqual(["earlier-today"]);
   });
 
   it("puts the soonest call first and the most recent past call after them", () => {
@@ -197,7 +194,7 @@ describe("choosing which calls to show", () => {
     const ordered = orderCalls(calls);
 
     // assert
-    expect(ordered.map((call) => call.call.id)).toEqual([
+    expect(ordered.map((call) => call.id)).toEqual([
       "later-today",
       "next-week",
       "earlier-today",
@@ -210,7 +207,7 @@ describe("choosing which calls to show", () => {
     const soonest = upcomingCalls(orderCalls(calls), 1);
 
     // assert
-    expect(soonest.map((call) => call.call.id)).toEqual(["later-today"]);
+    expect(soonest.map((call) => call.id)).toEqual(["later-today"]);
   });
 });
 
@@ -264,7 +261,7 @@ describe("paging through the calls", () => {
     const view = pageOfCalls(manyCalls, { page: 2, size: PAGE_SIZE });
 
     // assert
-    expect(view.calls.map((call) => call.call.id)).toEqual([
+    expect(view.calls.map((call) => call.id)).toEqual([
       "call-11",
       "call-12",
       "call-13",

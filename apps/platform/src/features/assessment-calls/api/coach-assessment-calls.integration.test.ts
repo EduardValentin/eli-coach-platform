@@ -14,12 +14,6 @@ import { ApiIntegrationTestSuite } from "~integration-test-config/api-integratio
 import { mintSessionToken } from "~integration-test-config/clerk-session";
 import { turnstileTokenForAction } from "~integration-test-config/wire-mock/expectations/turnstile-siteverify";
 
-/**
- * Its own suite because the deployment names its bootstrap coach through the
- * environment, and the instance is handed that environment once, when
- * `suite.start()` spawns it. Mutating `process.env` here stays in this file:
- * vitest runs the default `forks` pool with `isolate: true`.
- */
 const suite = new ApiIntegrationTestSuite();
 
 const bootstrapCoach = {
@@ -73,7 +67,7 @@ describe.sequential("coach assessment calls integration", () => {
     const response = await requestAsCoach(DASHBOARD);
 
     // assert
-    const page = await readPage(response);
+    const page = await visibleDocument(response);
 
     expect(response.status).toBe(200);
     expect(page).toContain("Upcoming calls");
@@ -82,7 +76,7 @@ describe.sequential("coach assessment calls integration", () => {
     expect(page).toContain(`href="${suite.path("/coach/assessment-calls")}"`);
   });
 
-  it("shows a booked call on the dashboard and on the calls page", async () => {
+  it("paints a booked call on both coach surfaces in the coach's own zone", async () => {
     // arrange
     await holdServerClock(MONDAY_MORNING);
     const [firstSlot] = await openSlots();
@@ -94,10 +88,10 @@ describe.sequential("coach assessment calls integration", () => {
     });
 
     // act
-    const dashboard = await readPage(await requestAsCoach(DASHBOARD));
-    const calls = await readPage(await requestAsCoach(CALLS_PAGE));
+    const dashboard = await visibleDocument(await requestAsCoach(DASHBOARD));
+    const calls = await visibleDocument(await requestAsCoach(CALLS_PAGE));
 
-    // assert — the server paints both surfaces in the coach's own zone.
+    // assert
     expect(dashboard).toContain("Ana Popescu");
     expect(dashboard).toContain("Mon, Oct 19");
     expect(dashboard).toContain("5:00 PM");
@@ -125,8 +119,8 @@ describe.sequential("coach assessment calls integration", () => {
     });
 
     // act
-    const dashboard = await readPage(await requestAsCoach(DASHBOARD));
-    const calls = await readPage(await requestAsCoach(CALLS_PAGE));
+    const dashboard = await visibleDocument(await requestAsCoach(DASHBOARD));
+    const calls = await visibleDocument(await requestAsCoach(CALLS_PAGE));
 
     // assert
     expect(dashboard.indexOf("Earlier Visitor")).toBeLessThan(
@@ -149,9 +143,9 @@ describe.sequential("coach assessment calls integration", () => {
     await holdServerClock(TWO_DAYS_LATER);
 
     // act
-    const dashboard = await readPage(await requestAsCoach(DASHBOARD));
-    const upcoming = await readPage(await requestAsCoach(CALLS_PAGE));
-    const past = await readPage(
+    const dashboard = await visibleDocument(await requestAsCoach(DASHBOARD));
+    const upcoming = await visibleDocument(await requestAsCoach(CALLS_PAGE));
+    const past = await visibleDocument(
       await requestAsCoach(`${CALLS_PAGE}?status=past`),
     );
 
@@ -174,7 +168,7 @@ describe.sequential("coach assessment calls integration", () => {
     });
 
     // act
-    const dashboard = await readPage(await requestAsCoach(DASHBOARD));
+    const dashboard = await visibleDocument(await requestAsCoach(DASHBOARD));
 
     // assert
     expect(dashboard).toContain("You have 1 assessment call today.");
@@ -211,7 +205,7 @@ describe.sequential("coach assessment calls integration", () => {
 
   it("offers the assessment calls page from the coach sidebar", async () => {
     // arrange, act
-    const dashboard = await readPage(await requestAsCoach(DASHBOARD));
+    const dashboard = await visibleDocument(await requestAsCoach(DASHBOARD));
 
     // assert
     expect(dashboard).toContain("Coach portal navigation");
@@ -235,10 +229,10 @@ describe.sequential("coach assessment calls integration", () => {
     }
 
     // act
-    const secondPage = await readPage(
+    const secondPage = await visibleDocument(
       await requestAsCoach(`${CALLS_PAGE}?status=all&page=2`),
     );
-    const dashboard = await readPage(await requestAsCoach(DASHBOARD));
+    const dashboard = await visibleDocument(await requestAsCoach(DASHBOARD));
 
     // assert
     expect(secondPage).toContain("Visitor 11");
@@ -251,28 +245,19 @@ describe.sequential("coach assessment calls integration", () => {
   });
 });
 
-/**
- * Clerk rejects a session token issued outside the window the instance sees,
- * so a case that holds the clock has to mint for the instant it holds.
- */
 async function holdServerClock(instant: Date): Promise<void> {
   heldInstant = instant;
   await suite.setServerClock(instant);
 }
 
-function sessionTokenFor(session: {
+function sessionTokenForHeldClock(session: {
   sessionId: string;
   subjectId: string;
 }): string {
   return mintSessionToken({ ...session, issuedAt: heldInstant ?? new Date() });
 }
 
-/**
- * The document the reader sees, without the hydration payload that repeats
- * every loader value, and without the comment markers React writes between
- * adjacent text nodes so that a sentence reads as one string.
- */
-async function readPage(response: Response): Promise<string> {
+async function visibleDocument(response: Response): Promise<string> {
   const [rendered] = (await response.text()).split("<script");
 
   return rendered.replaceAll("<!-- -->", "");
@@ -318,7 +303,9 @@ async function bookCall(booking: {
 async function requestAsCoach(target: string): Promise<Response> {
   return suite.request(
     new Request(suite.url(target), {
-      headers: { authorization: `Bearer ${sessionTokenFor(bootstrapCoach)}` },
+      headers: {
+        authorization: `Bearer ${sessionTokenForHeldClock(bootstrapCoach)}`,
+      },
     }),
   );
 }
@@ -326,7 +313,7 @@ async function requestAsCoach(target: string): Promise<Response> {
 async function requestAsClient(target: string): Promise<Response> {
   return suite.request(
     new Request(suite.url(target), {
-      headers: { authorization: `Bearer ${sessionTokenFor(client)}` },
+      headers: { authorization: `Bearer ${sessionTokenForHeldClock(client)}` },
     }),
   );
 }

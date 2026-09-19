@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 
-export function useDisplayTimeZone(coachTimeZone: string | null): string {
+export function useDisplayTimeZone(serverTimeZone: string | null): string {
   const [timeZone, setTimeZone] = useState(
-    () => coachTimeZone ?? resolvedTimeZone(),
+    () => serverTimeZone ?? resolvedTimeZone(),
   );
 
   useEffect(() => {

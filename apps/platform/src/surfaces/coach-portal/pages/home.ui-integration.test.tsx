@@ -173,14 +173,14 @@ describe("the coach's dashboard", () => {
     ).toBeInTheDocument();
   });
 
-  it("re-reads today in the browser's zone once it has mounted", async () => {
+  it("re-reads today in the browser's zone, where the Bucharest evening is already tomorrow", async () => {
     // arrange
     vi.stubEnv("TZ", KIRITIMATI);
 
     // act
     await renderDashboard([LATER_TODAY]);
 
-    // assert — the Bucharest evening is already tomorrow on Kiritimati.
+    // assert
     await waitFor(() => {
       expect(
         screen.getByText("You have 0 assessment calls today."),
