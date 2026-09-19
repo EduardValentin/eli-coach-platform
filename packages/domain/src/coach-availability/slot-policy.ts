@@ -27,6 +27,7 @@ export class SlotPolicy {
 
   static of(props: SlotPolicyProps): SlotPolicy {
     assertWholeCounts(props);
+    assertCallHasLength(props);
     assertStepFitsTheCall(props);
 
     return new SlotPolicy(props);
@@ -51,13 +52,16 @@ function isWholeCount(value: number): boolean {
 }
 
 function assertWholeCounts(props: SlotPolicyProps): void {
-  const whole =
-    Object.values(props).every(isWholeCount) && props.durationMinutes > 0;
-
-  if (!whole) {
+  if (!Object.values(props).every(isWholeCount)) {
     throw new Error(
-      "A slot policy needs a positive whole-minute duration and whole, non-negative buffer, step, horizon and lead.",
+      "A slot policy needs whole, non-negative minutes for its duration, buffer, step, horizon and lead.",
     );
+  }
+}
+
+function assertCallHasLength(props: SlotPolicyProps): void {
+  if (props.durationMinutes === 0) {
+    throw new Error("A slot policy needs a call that lasts at least a minute.");
   }
 }
 

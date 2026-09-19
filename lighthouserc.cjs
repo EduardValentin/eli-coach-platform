@@ -74,10 +74,6 @@ Object.assign(process.env, {
   PRODUCT_EMAIL_PROVIDER: "memory",
   PUBLIC_APP_URL: "http://localhost:3000",
   STORE_ASSET_ROOT: lighthouseStoreAssetRoot,
-  // Launched mode, unconditionally: /book is a launched-only route (waitlist
-  // mode answers it with a 404), and auditing it is the point of listing it
-  // below. Decision D5 accepts that this audits the homepage in launched mode
-  // too, which is the mode the public site ships in.
   WAITLIST_MODE: "false",
   PORT: "3000",
 });
