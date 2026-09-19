@@ -103,7 +103,7 @@ function BundlePrice(props: { card: CoachingBundleCard }) {
             aria-label={`Original ${titleLower} monthly price ${formatEuros(card.originalPricePerMonth)}`}
             className="ui-public-bundle-muted mr-1 text-lg font-bold leading-7 line-through"
           >
-            {formatEuros(card.originalPricePerMonth)}
+            <Euros amount={card.originalPricePerMonth} />
           </span>
         ) : null}
         <span
@@ -112,7 +112,7 @@ function BundlePrice(props: { card: CoachingBundleCard }) {
             "text-brand-primary": card.isWaitlistPrice,
           })}
         >
-          {formatEuros(card.pricePerMonth)}
+          <Euros amount={card.pricePerMonth} />
         </span>
         <span className="mb-0.5 text-sm font-medium leading-5 text-link-muted">
           /mo
@@ -130,12 +130,10 @@ function BundlePrice(props: { card: CoachingBundleCard }) {
             aria-label={`Original ${titleLower} billing total ${formatEuros(card.originalTotal)}`}
             className="mr-1 line-through"
           >
-            {formatEuros(card.originalTotal)}
+            <Euros amount={card.originalTotal} />
           </span>
         ) : null}
-        {card.billedMonthly
-          ? "Billed monthly"
-          : `Billed as ${formatEuros(card.total)}`}
+        {card.billedMonthly ? "Billed monthly" : <>Billed as €{card.total}</>}
       </p>
     </div>
   );
@@ -143,6 +141,10 @@ function BundlePrice(props: { card: CoachingBundleCard }) {
 
 function formatEuros(amount: number): string {
   return `€${amount}`;
+}
+
+function Euros(props: { amount: number }) {
+  return <>€{props.amount}</>;
 }
 
 function BundleBenefits(props: { benefits: readonly string[] }) {

@@ -1,8 +1,9 @@
 @layer components {
   .ui-booking-first-step-entrance {
     animation:
-      ui-booking-first-step-slide 295ms linear both,
-      ui-booking-first-step-fade 300ms cubic-bezier(0.25, 0.1, 0.35, 1) both;
+      ui-booking-first-step-slide 295ms linear backwards,
+      ui-booking-first-step-fade 300ms cubic-bezier(0.25, 0.1, 0.35, 1)
+        backwards;
   }
 
   @keyframes ui-booking-first-step-slide {
