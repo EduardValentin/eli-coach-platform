@@ -123,7 +123,7 @@ function PhoneWorkoutView() {
         { num: '03', name: 'Hip Thrust', detail: '4 sets · 12 reps' },
       ].map((exercise) => (
         <div key={exercise.num} className="bg-card border border-border rounded-2xl p-2.5 flex items-center gap-2.5 shadow-card">
-          <div className="w-7 h-7 rounded-full bg-foreground text-background flex items-center justify-center text-phone-action font-bold shrink-0 tabular-nums">
+          <div className="w-7 h-7 rounded-full bg-foreground text-background flex items-center justify-center text-micro font-bold shrink-0 tabular-nums">
             {exercise.num}
           </div>
           <div className="flex-1 min-w-0">
@@ -136,7 +136,7 @@ function PhoneWorkoutView() {
       ))}
 
       <div className="mt-auto bg-brand/10 border border-brand/20 rounded-2xl p-3 text-center">
-        <p className="text-phone-action font-semibold text-brand uppercase tracking-widest">
+        <p className="text-micro font-semibold text-brand uppercase tracking-widest">
           3 more exercises
         </p>
       </div>
@@ -169,7 +169,7 @@ function PhoneNutritionView() {
           <span className="text-phone-value font-serif font-medium text-foreground tabular-nums">
             1,700
           </span>
-          <span className="text-phone-action text-muted-foreground">kcal</span>
+          <span className="text-micro text-muted-foreground">kcal</span>
         </div>
         <div className="flex h-1 rounded-full overflow-hidden" aria-hidden="true">
           <div className="bg-brand" style={{ width: '35%' }} />
@@ -286,10 +286,10 @@ function PhoneMessagingView() {
           </div>
           <p className="text-caption text-foreground mb-2">Fri 9:00 AM · 20 min</p>
           <div className="flex gap-1.5">
-            <span className="px-2.5 py-1 bg-brand text-brand-foreground rounded-full text-phone-action font-semibold">
+            <span className="px-2.5 py-1 bg-brand text-brand-foreground rounded-full text-micro font-semibold">
               Approve
             </span>
-            <span className="px-2.5 py-1 bg-card border border-border text-foreground rounded-full text-phone-action font-semibold">
+            <span className="px-2.5 py-1 bg-card border border-border text-foreground rounded-full text-micro font-semibold">
               Reschedule
             </span>
           </div>
@@ -375,7 +375,7 @@ function PhoneCycleView() {
                 aria-hidden="true"
               />
               <span
-                className={`text-phone-action flex-1 ${
+                className={`text-micro flex-1 ${
                   phase.active
                     ? 'font-semibold text-foreground'
                     : 'text-muted-foreground'

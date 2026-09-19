@@ -7,6 +7,7 @@ import { Filter, Euro, DollarSign, Plus, ShoppingBag } from 'lucide-react';
 import { motion } from 'motion/react';
 import { ToggleGroup, ToggleGroupItem } from '../components/ui/toggle-group';
 import { LegalFooter } from '../components/legal/LegalNav';
+import { buttonVariants } from '../components/ThemeButton';
 
 const CHIP_BASE_CLASS =
   'flex-none h-auto min-w-0 rounded-full first:rounded-l-full last:rounded-r-full border bg-card px-4 py-2 text-sm font-normal text-foreground transition-colors';
@@ -151,7 +152,7 @@ export function Store() {
                       initial={{ opacity: 0, y: 20 }}
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true }}
-                      className="bg-card rounded-2xl overflow-hidden border border-stroke-faint shadow-sm hover:shadow-xl transition-shadow group flex flex-col h-full"
+                      className="bg-card rounded-card overflow-hidden border border-stroke-faint shadow-sm hover:shadow-xl transition-shadow group flex flex-col h-full"
                     >
                       <Link to={`/store/${product.id}`} className="block relative aspect-[4/3] overflow-hidden">
                         <img
@@ -166,7 +167,7 @@ export function Store() {
                       <div className="p-6 flex flex-col flex-grow">
                         <div className="flex gap-2 mb-3 flex-wrap">
                           {product.categories.map(c => (
-                            <span key={c} className="text-[10px] uppercase tracking-wider font-bold text-brand bg-brand-soft px-2 py-1 rounded-sm">
+                            <span key={c} className="text-micro uppercase tracking-wider font-bold text-brand bg-brand-soft px-2 py-1 rounded-tile">
                               {c}
                             </span>
                           ))}
@@ -181,7 +182,7 @@ export function Store() {
                         </p>
                         <button
                           onClick={() => addToCart(product)}
-                          className="w-full py-3.5 bg-surface-inverted text-surface-inverted-foreground font-medium rounded-xl flex items-center justify-center gap-2 hover:bg-brand transition-colors"
+                          className={buttonVariants({ size: 'lg', variant: 'inverted', width: 'full' })}
                         >
                           <ShoppingBag size={18} aria-hidden="true" /> Add to Cart
                         </button>
@@ -205,7 +206,7 @@ export function Store() {
                       initial={{ opacity: 0, y: 20 }}
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true }}
-                      className="bg-card rounded-2xl overflow-hidden border border-stroke-faint shadow-sm hover:shadow-md transition-shadow group flex flex-col h-full"
+                      className="bg-card rounded-card overflow-hidden border border-stroke-faint shadow-sm hover:shadow-md transition-shadow group flex flex-col h-full"
                     >
                       <Link to={`/store/${product.id}`} className="block relative aspect-[4/3] overflow-hidden">
                         <img
@@ -220,7 +221,7 @@ export function Store() {
                       <div className="p-6 flex flex-col flex-grow">
                         <div className="flex gap-2 mb-3 flex-wrap">
                           {product.categories.map(c => (
-                            <span key={c} className="text-[10px] uppercase tracking-wider font-bold text-brand-secondary bg-brand-secondary-soft px-2 py-1 rounded-sm">
+                            <span key={c} className="text-micro uppercase tracking-wider font-bold text-brand-secondary bg-brand-secondary-soft px-2 py-1 rounded-tile">
                               {c}
                             </span>
                           ))}
@@ -235,7 +236,7 @@ export function Store() {
                         </p>
                         <button
                           onClick={() => addToCart(product)}
-                          className="w-full py-3.5 border-2 border-surface-inverted text-foreground font-medium rounded-xl flex items-center justify-center gap-2 hover:bg-surface-inverted hover:text-surface-inverted-foreground transition-colors"
+                          className={buttonVariants({ size: 'lg', variant: 'outline', width: 'full' })}
                         >
                           <Plus size={18} aria-hidden="true" /> Get for Free
                         </button>

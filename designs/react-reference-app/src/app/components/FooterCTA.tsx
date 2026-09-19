@@ -93,8 +93,8 @@ export function FooterCTA() {
                 <Link
                   to="/store"
                   className={cn(
-                    buttonVariants({ size: 'lg', variant: 'primary' }),
-                    'w-full sm:w-auto px-8',
+                    buttonVariants({ elevation: 'raised', press: 'scale', weight: 'regular' }),
+                    'w-full sm:w-auto',
                   )}
                 >
                   Browse the free resources
@@ -102,8 +102,8 @@ export function FooterCTA() {
                 <Link
                   to="/pricing"
                   className={cn(
-                    buttonVariants({ size: 'lg', variant: 'outline' }),
-                    'w-full sm:w-auto px-8',
+                    buttonVariants({ press: 'scale', variant: 'outline-brand', weight: 'regular' }),
+                    'w-full sm:w-auto',
                   )}
                 >
                   See coaching plans

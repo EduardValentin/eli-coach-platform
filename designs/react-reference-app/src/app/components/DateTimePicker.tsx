@@ -76,7 +76,7 @@ export function SlotPickerFrame({
             <button
               type="button"
               onClick={handleChangeDate}
-              className="lg:hidden text-xs font-semibold text-brand hover:underline"
+              className="lg:hidden text-xs font-semibold text-brand underline-offset-4 transition-colors duration-150 ease-out hover:text-brand-hover hover:underline"
             >
               Change date
             </button>

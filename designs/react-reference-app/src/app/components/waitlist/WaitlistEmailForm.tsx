@@ -11,6 +11,7 @@ import {
 import type { PrototypeWaitlistAvailability } from '../../context/AppContext';
 import { cn } from '../ui/utils';
 import { resolveTokenColors } from '../../utils/tokenColors';
+import { buttonVariants } from '../ThemeButton';
 
 type WaitlistEmailFormProps = {
   availability: PrototypeWaitlistAvailability;
@@ -67,8 +68,7 @@ export function WaitlistEmailForm({
     },
   );
 
-  const buttonClasses =
-    'h-14 rounded-xl bg-brand text-brand-foreground font-semibold px-8 hover:bg-waitlist-button-hover active:scale-[0.98] transition-all whitespace-nowrap disabled:pointer-events-none disabled:opacity-50';
+  const buttonClasses = buttonVariants({ press: 'scale', size: 'lg', weight: 'semibold' });
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();

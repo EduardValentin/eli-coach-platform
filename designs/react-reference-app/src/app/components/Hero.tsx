@@ -14,7 +14,7 @@ export function Hero() {
   const isUnavailable = appState.waitlistAvailability === null;
 
   return (
-    <section className="relative w-full h-screen min-h-[600px] flex items-center justify-center overflow-hidden bg-surface-inverted">
+    <section data-surface="inverted" className="relative w-full h-screen min-h-[600px] flex items-center justify-center overflow-hidden bg-surface-inverted">
       {/* Background Media Placeholder */}
       <div className="absolute inset-0 w-full h-full">
         <img
@@ -62,7 +62,7 @@ export function Hero() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.25, ease: 'easeOut' }}
-                className="text-gray-200 text-lg md:text-xl font-light tracking-wide mb-10 max-w-2xl"
+                className="text-text-inverted-secondary text-lg md:text-xl font-light tracking-wide mb-10 max-w-2xl"
               >
                 {isClosed
                   ? "Leave your email — I'll let you know when new spots open."
@@ -123,7 +123,7 @@ export function Hero() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
-                className="text-gray-200 text-lg md:text-xl font-light tracking-wide mb-8"
+                className="text-text-inverted-secondary text-lg md:text-xl font-light tracking-wide mb-8"
               >
                 Coaching with Eli — strength, nutrition, and a plan that takes your cycle into account.
               </motion.p>
@@ -135,12 +135,12 @@ export function Hero() {
                 className="flex flex-col items-center gap-3"
               >
                 <Link to="/book" className="inline-block">
-                  <Button size="lg" variant="primary" className="group uppercase tracking-widest text-sm font-semibold">
+                  <Button elevation="raised" lettering="caps" press="scale" textSize="sm" weight="semibold" className="group">
                     See if we’re a fit
-                    <ChevronRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
+                    <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                   </Button>
                 </Link>
-                <p className="text-gray-200 text-sm font-light tracking-wide">
+                <p className="text-text-inverted-secondary text-sm font-light tracking-wide">
                   Free 30-minute assessment call.
                 </p>
               </motion.div>

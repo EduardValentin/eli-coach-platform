@@ -190,7 +190,7 @@ export function CycleSyncing() {
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.3 }}
-                  className="text-[36px] md:text-[44px] font-serif font-medium mb-3 motion-reduce:transform-none"
+                  className="text-4xl leading-normal md:text-public-cycle-phase font-serif font-medium mb-3 motion-reduce:transform-none"
                   style={{ color: activePhase.color }}
                 >
                   {activePhase.shortName}

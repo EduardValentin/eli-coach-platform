@@ -6,6 +6,7 @@ import { motion } from 'motion/react';
 import { cn } from '../components/ui/utils';
 import { Card, CardContent } from '../components/ui/card';
 import { LegalFooter } from '../components/legal/LegalNav';
+import { buttonVariants } from '../components/ThemeButton';
 
 export function ProductDetails() {
   const { productId } = useParams<{ productId: string }>();
@@ -45,7 +46,7 @@ export function ProductDetails() {
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="rounded-2xl overflow-hidden aspect-[4/5] sm:aspect-square lg:aspect-[4/5] bg-surface-subtle shadow-md"
+            className="rounded-card overflow-hidden aspect-[4/5] sm:aspect-square lg:aspect-[4/5] bg-surface-subtle shadow-md"
           >
             <img
               src={product.imageUrl}
@@ -63,7 +64,7 @@ export function ProductDetails() {
               {product.categories.map(c => (
                 <span
                   key={c}
-                  className={cn('text-xs uppercase tracking-wider font-bold px-3 py-1.5 rounded-sm', {
+                  className={cn('text-xs uppercase tracking-wider font-bold px-3 py-1.5 rounded-tile', {
                     'text-brand-secondary bg-brand-secondary-soft': isFree,
                     'text-brand bg-brand-soft': !isFree,
                   })}
@@ -72,7 +73,7 @@ export function ProductDetails() {
                 </span>
               ))}
               {product.goals.map(g => (
-                <span key={g} className="text-xs uppercase tracking-wider font-bold px-3 py-1.5 rounded-sm text-copy-muted bg-surface-subtle">
+                <span key={g} className="text-xs uppercase tracking-wider font-bold px-3 py-1.5 rounded-tile text-copy-muted bg-surface-subtle">
                   {g}
                 </span>
               ))}
@@ -96,7 +97,7 @@ export function ProductDetails() {
               {product.longDescription}
             </p>
 
-            <Card className="border-stroke-faint shadow-sm mb-10">
+            <Card className="rounded-card border-stroke-faint shadow-sm mb-10">
               <CardContent className="p-6">
                 <h2 className="font-semibold text-foreground text-sm uppercase tracking-wider mb-4">What's included:</h2>
                 <ul className="space-y-4">
@@ -119,13 +120,13 @@ export function ProductDetails() {
 
             <button
               onClick={() => addToCart(product)}
-              className={cn(
-                'w-full py-4 text-lg font-medium rounded-xl flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-lg',
-                {
-                  'bg-brand-secondary text-brand-secondary-foreground hover:bg-brand-secondary-hover': isFree,
-                  'bg-brand text-brand-foreground hover:bg-brand-hover': !isFree,
-                },
-              )}
+              className={buttonVariants({
+                elevation: 'raised',
+                size: 'xl',
+                textSize: 'lg',
+                variant: isFree ? 'secondary' : 'primary',
+                width: 'full',
+              })}
             >
               {isFree ? (
                 <><Download size={22} aria-hidden="true" /> Get it for Free</>

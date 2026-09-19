@@ -8,7 +8,7 @@ import { Navbar } from '../components/Navbar';
 import { LegalFooter } from '../components/legal/LegalNav';
 import { firstInvalidField, useBookingDetailsForm, type BookingField } from '../components/booking/useBookingDetailsForm';
 import { Alert } from '../components/ui/alert';
-import { Button } from '../components/ui/button';
+import { Button, buttonVariants } from '../components/ThemeButton';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
@@ -38,8 +38,6 @@ const SUPPORT_CONTACT_CODES: ReadonlySet<AssessmentCallErrorCode> = new Set([
 
 const FIELD_ERROR_CLASS = 'text-sm font-medium text-destructive';
 const STEP_HEADING_FOCUS_CLASS = 'scroll-mt-24 focus:outline-none';
-const PRIMARY_ACTION_CLASS =
-  'w-full h-12 mt-6 bg-brand hover:bg-brand-hover text-white rounded-xl text-base font-semibold transition-colors disabled:pointer-events-none disabled:opacity-50';
 
 export function Book() {
   const { appState } = useAppState();
@@ -223,7 +221,7 @@ export function Book() {
                         <Alert>
                           <p>We couldn&apos;t load the open times just now.</p>
                         </Alert>
-                        <Button type="button" onClick={reloadSlots} className={PRIMARY_ACTION_CLASS}>
+                        <Button onClick={reloadSlots} className="mt-6" weight="semibold" width="full">
                           Try again
                         </Button>
                       </>
@@ -238,10 +236,11 @@ export function Book() {
 
                         <div className="mt-auto">
                           <Button
-                            type="button"
                             onClick={() => goToStep('details')}
                             disabled={!selectedSlot}
-                            className={PRIMARY_ACTION_CLASS}
+                            className="mt-6"
+                            weight="semibold"
+                            width="full"
                           >
                             {selectedSlot ? 'Continue to your details' : 'Select a date and time'}
                           </Button>
@@ -353,7 +352,8 @@ export function Book() {
                           type="submit"
                           disabled={isSubmitting}
                           aria-busy={isSubmitting || undefined}
-                          className="w-full h-12 bg-brand hover:bg-brand-hover text-white rounded-xl text-base font-semibold transition-colors disabled:pointer-events-none disabled:opacity-50"
+                          weight="semibold"
+                          width="full"
                         >
                           {isSubmitting ? (
                             <>
@@ -389,10 +389,10 @@ export function Book() {
                       You're booked!
                     </h2>
                     <p className="text-text-secondary text-lg max-w-md mx-auto mb-8 font-medium leading-relaxed">
-                      A confirmation with your join link is on its way to <strong className="text-text-strong">{booking.visitorEmail}</strong>.
+                      A confirmation with your join link is on its way to <strong className="text-text-primary">{booking.visitorEmail}</strong>.
                     </p>
 
-                    <div className="bg-surface-quiet border border-stroke-faint rounded-2xl p-6 w-full max-w-sm mb-10 text-left">
+                    <div className="bg-surface-quiet border border-stroke-faint rounded-card p-6 w-full max-w-sm mb-10 text-left">
                       <p className="text-sm text-text-secondary font-medium mb-1">When</p>
                       <p className="font-semibold text-text-primary mb-4">
                         {formatZonedDate(booking.startsAt, visitorTimeZone, CALL_DATE_PATTERN)} <br />
@@ -403,9 +403,12 @@ export function Book() {
                       <p className="font-semibold text-text-primary">{`${ASSESSMENT_CALL_DURATION_MINUTES} minutes`}</p>
                     </div>
 
-                    <Button asChild variant="outline" className="h-12 px-8 rounded-xl font-semibold">
-                      <Link to="/">Return to Home</Link>
-                    </Button>
+                    <Link
+                      to="/"
+                      className={buttonVariants({ textSize: 'sm', variant: 'outline', weight: 'semibold' })}
+                    >
+                      Return to Home
+                    </Link>
                   </motion.div>
                 )}
 

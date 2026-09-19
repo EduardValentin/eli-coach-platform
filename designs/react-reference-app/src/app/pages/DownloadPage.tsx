@@ -3,6 +3,7 @@ import { Navbar } from '../components/Navbar';
 import { useAppState } from '../context/AppContext';
 import { Download, FileText, LinkIcon, ArrowRight } from 'lucide-react';
 import { LegalFooter } from '../components/legal/LegalNav';
+import { buttonVariants, cn } from '../components/ThemeButton';
 
 type GrantedResource = {
   title: string;
@@ -53,7 +54,7 @@ export function DownloadPage() {
             </p>
             <Link
               to="/store"
-              className="mt-6 px-8 py-4 bg-surface-inverted text-surface-inverted-foreground font-medium rounded-xl inline-flex items-center justify-center gap-2 hover:bg-brand transition-colors"
+              className={cn(buttonVariants({ size: 'lg', variant: 'inverted' }), 'mt-6')}
             >
               Back to the Store <ArrowRight size={18} aria-hidden="true" />
             </Link>
@@ -68,7 +69,7 @@ export function DownloadPage() {
               for seven days after each request.
             </p>
 
-            <ul className="bg-card rounded-2xl border border-stroke-faint shadow-card divide-y divide-stroke-faint mb-10">
+            <ul className="bg-card rounded-card border border-stroke-faint shadow-card divide-y divide-stroke-faint mb-10">
               {GRANTED_RESOURCES.map((resource) => (
                 <li key={resource.title} className="flex items-center gap-4 p-5">
                   <span className="w-11 h-11 shrink-0 bg-brand-soft text-brand rounded-lg flex items-center justify-center">
@@ -88,7 +89,7 @@ export function DownloadPage() {
 
             <button
               onClick={downloadPlaceholderFile}
-              className="w-full py-4 bg-brand text-brand-foreground text-lg font-medium rounded-xl flex items-center justify-center gap-2 hover:bg-brand-hover transition-colors shadow-action hover:shadow-action-hover"
+              className={buttonVariants({ elevation: 'raised', size: 'xl', textSize: 'lg', width: 'full' })}
             >
               <Download size={22} aria-hidden="true" /> Download your resources
             </button>

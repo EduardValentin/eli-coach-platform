@@ -117,7 +117,7 @@ export function BundleSelector({ mode, onCheckout, disabled = false, waitlistMod
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.06, duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
               onClick={() => handleSelect(bundle.id)}
-              className={`relative rounded-2xl px-6 py-7 border-2 text-center ${
+              className={`relative rounded-card px-6 py-7 border-2 text-center ${
                 bundle.isPopular ? 'bg-[color-mix(in_srgb,var(--brand-secondary)_5%,var(--card))]' : 'bg-card'
               } ${
                 mode === 'checkout' ? 'transition-[border-color,box-shadow,transform]' : 'transition-[border-color,box-shadow]'
@@ -138,7 +138,7 @@ export function BundleSelector({ mode, onCheckout, disabled = false, waitlistMod
               )}
 
               {savingsPct > 0 && (
-                <div className="absolute top-3 right-3 bg-savings-badge-surface text-savings-badge-text px-1.5 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-nav">
+                <div className="absolute top-3 right-3 bg-savings-badge-surface text-savings-badge-text px-1.5 py-0.5 rounded-tile text-micro font-bold uppercase tracking-nav">
                   Save {savingsPct}%
                 </div>
               )}
@@ -152,7 +152,7 @@ export function BundleSelector({ mode, onCheckout, disabled = false, waitlistMod
                 <span className={`text-3xl font-bold ${hasWaitlistPrice ? 'text-brand' : 'text-foreground'}`}>
                   €{displayPrice}
                 </span>
-                <span className="text-bundle-secondary text-sm font-medium mb-0.5">/mo</span>
+                <span className="text-link-muted text-sm font-medium mb-0.5">/mo</span>
               </div>
 
               {bundle.isPopular && (
@@ -189,7 +189,7 @@ export function BundleSelector({ mode, onCheckout, disabled = false, waitlistMod
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="bg-card rounded-2xl border border-stroke-faint shadow-card p-8 md:p-10 mb-10"
+        className="bg-card rounded-card border border-stroke-faint shadow-card p-8 md:p-10 mb-10"
       >
         <h4 className="text-sm font-semibold uppercase tracking-wider text-bundle-muted mb-6 text-center">
           What's included in every plan
@@ -198,7 +198,7 @@ export function BundleSelector({ mode, onCheckout, disabled = false, waitlistMod
           {BENEFITS.map((benefit, i) => (
             <li key={i} className="flex items-start gap-3">
               <CheckCircle2 size={18} className="text-brand shrink-0 mt-0.5" />
-              <span className="text-bundle-secondary text-sm">{benefit}</span>
+              <span className="text-link-muted text-sm">{benefit}</span>
             </li>
           ))}
         </ul>

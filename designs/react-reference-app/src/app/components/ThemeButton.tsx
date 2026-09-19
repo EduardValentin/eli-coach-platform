@@ -1,55 +1,117 @@
 import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
 
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+import { cn } from './ui/utils';
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center rounded-xl transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98]",
+  'inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-control transition-colors outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0',
   {
     variants: {
       variant: {
-        primary: "bg-brand text-white hover:bg-brand-hover shadow-action hover:shadow-action-hover",
-        secondary: "bg-brand-secondary text-white hover:bg-brand-secondary-hover shadow-action hover:shadow-action-hover",
-        outline: "border border-brand text-brand hover:bg-brand/5",
-        ghost: "hover:bg-neutral-100 text-neutral-800",
-        link: "underline-offset-4 hover:underline text-brand",
+        primary: 'bg-brand text-brand-foreground hover:bg-brand-hover',
+        secondary:
+          'bg-brand-secondary text-brand-secondary-foreground hover:bg-brand-secondary-hover',
+        inverted:
+          'bg-surface-inverted text-surface-inverted-foreground hover:bg-brand',
+        outline:
+          'border border-control-border-soft bg-surface-base text-text-label hover:bg-surface-quiet hover:text-text-primary',
+        'outline-brand': 'border border-brand text-brand hover:bg-brand/5',
+        glass:
+          'border border-surface-inverted-foreground/30 bg-surface-inverted-foreground/15 text-surface-inverted-foreground backdrop-blur-sm hover:bg-surface-inverted-foreground/25',
       },
       size: {
-        default: "h-10 py-2 px-4 text-sm",
-        sm: "h-9 px-3 text-xs",
-        lg: "h-12 px-8 text-base",
-        icon: "h-10 w-10",
+        xs: 'h-(--size-control-xs) px-4',
+        md: 'h-(--size-control-md) px-8',
+        lg: 'h-(--size-control-lg) px-8',
+        xl: 'h-(--size-control-xl) px-8',
+      },
+      width: {
+        content: '',
+        full: 'w-full shrink px-0',
+      },
+      weight: {
+        regular: 'font-normal',
+        medium: 'font-medium',
+        semibold: 'font-semibold',
+      },
+      textSize: {
+        sm: 'text-sm',
+        base: 'text-base',
+        lg: 'text-lg',
+      },
+      lettering: {
+        plain: '',
+        nav: 'tracking-nav',
+        caps: 'uppercase tracking-widest',
+      },
+      elevation: {
+        flat: '',
+        raised: 'shadow-action transition-all hover:shadow-action-hover',
+      },
+      press: {
+        none: '',
+        scale: 'transition-all active:scale-[0.98]',
       },
     },
     defaultVariants: {
-      variant: "primary",
-      size: "default",
+      variant: 'primary',
+      size: 'md',
+      width: 'content',
+      weight: 'medium',
+      textSize: 'base',
+      lettering: 'plain',
+      elevation: 'flat',
+      press: 'none',
     },
-  }
+  },
 );
 
-export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
-  asChild?: boolean;
+type ButtonVariantProps = VariantProps<typeof buttonVariants>;
+
+function themeButtonVariants(options?: ButtonVariantProps): string {
+  return cn(buttonVariants(options));
 }
 
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
-    const Comp = asChild ? React.Fragment : "button";
-    return (
-      <Comp
-        className={cn(buttonVariants({ variant, size, className }))}
-        ref={ref}
-        {...props}
-      />
-    );
-  }
-);
-Button.displayName = "Button";
+export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> &
+  ButtonVariantProps;
 
-export { Button, buttonVariants };
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  (
+    {
+      className,
+      elevation,
+      lettering,
+      press,
+      size,
+      textSize,
+      variant,
+      weight,
+      width,
+      type = 'button',
+      ...props
+    },
+    ref,
+  ) => (
+    <button
+      ref={ref}
+      type={type}
+      className={cn(
+        buttonVariants({
+          elevation,
+          lettering,
+          press,
+          size,
+          textSize,
+          variant,
+          weight,
+          width,
+        }),
+        className,
+      )}
+      {...props}
+    />
+  ),
+);
+Button.displayName = 'Button';
+
+export { Button, cn, themeButtonVariants as buttonVariants };

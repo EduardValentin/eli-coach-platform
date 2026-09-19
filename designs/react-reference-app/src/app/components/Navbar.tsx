@@ -5,6 +5,7 @@ import { isSignedIn, useAppState } from '../context/AppContext';
 import { useStore } from '../context/StoreContext';
 import { Link, useNavigate } from 'react-router';
 import { completeSignIn } from '../services/authService';
+import { buttonVariants } from './ThemeButton';
 
 const MENU_FOCUSABLE_SELECTOR =
   'a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])';
@@ -155,14 +156,14 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           {/* Logo Mock */}
           <div className="flex items-center gap-2 cursor-pointer z-[60]" onClick={() => setIsMobileMenuOpen(false)}>
-            <div className={`w-8 h-8 flex items-center justify-center border-2 rounded-sm transform rotate-45 transition-colors ${
+            <div className={`w-8 h-8 flex items-center justify-center border-2 rounded-tile transform rotate-45 transition-colors ${
               isScrolled || isMobileMenuOpen ? 'border-brand' : 'border-current'
             }`}>
               <div className={`w-3 h-3 transform -rotate-45 transition-colors ${
                 isScrolled || isMobileMenuOpen ? 'bg-brand' : 'bg-current'
               }`} />
             </div>
-            <span className={`font-serif font-semibold text-xl tracking-wide ml-2 transition-colors ${
+            <span className={`font-serif font-semibold text-xl tracking-nav ml-2 transition-colors ${
               isScrolled || isMobileMenuOpen ? 'text-foreground' : 'text-white'
             }`}>
               Evoa
@@ -175,7 +176,7 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
               <Link
                 key={link.name}
                 to={link.href}
-                className="text-sm font-medium tracking-wide hover:text-brand transition-colors"
+                className="text-sm font-medium tracking-nav hover:text-brand transition-colors"
               >
                 {link.name}
               </Link>
@@ -190,11 +191,12 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
                 {appState.session === 'client' && (
                   <Link
                     to="/portal"
-                    className={`text-sm font-medium tracking-wide px-4 py-1.5 rounded-xl transition-all ${
-                      isScrolled
-                        ? 'bg-brand text-brand-foreground hover:bg-brand-hover'
-                        : 'bg-white/15 text-white border border-white/30 backdrop-blur-sm hover:bg-white/25'
-                    }`}
+                    className={buttonVariants({
+                      lettering: 'nav',
+                      size: 'xs',
+                      textSize: 'sm',
+                      variant: isScrolled ? 'primary' : 'glass',
+                    })}
                   >
                     Client Portal
                   </Link>
@@ -203,11 +205,12 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
                 {appState.session === 'coach' && (
                   <Link
                     to="/coach"
-                    className={`text-sm font-medium tracking-wide px-4 py-1.5 rounded-xl transition-all ${
-                      isScrolled
-                        ? 'bg-brand text-brand-foreground hover:bg-brand-hover'
-                        : 'bg-white/15 text-white border border-white/30 backdrop-blur-sm hover:bg-white/25'
-                    }`}
+                    className={buttonVariants({
+                      lettering: 'nav',
+                      size: 'xs',
+                      textSize: 'sm',
+                      variant: isScrolled ? 'primary' : 'glass',
+                    })}
                   >
                     Coach Portal
                   </Link>
@@ -223,7 +226,7 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
               >
                 <span className="relative block">
                   <ShoppingBag size={20} />
-                  <span className="absolute -top-1.5 -right-2 bg-brand text-brand-foreground text-[10px] font-semibold w-4 h-4 rounded-full flex items-center justify-center">
+                  <span className="absolute -top-1.5 -right-2 bg-brand text-brand-foreground text-micro font-semibold w-4 h-4 rounded-full flex items-center justify-center">
                     {cart.length}
                   </span>
                 </span>
@@ -234,7 +237,7 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
               <button
                 onClick={runAuthAction}
                 aria-busy={isSigningIn}
-                className="text-sm font-medium tracking-wide hover:text-brand transition-colors aria-busy:opacity-60"
+                className="text-sm font-medium tracking-nav hover:text-brand transition-colors aria-busy:opacity-60"
               >
                 {authActionLabel}
               </button>
@@ -249,7 +252,7 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
             >
               <span className="relative block">
                 <ShoppingBag size={20} className={isScrolled ? "text-foreground" : "text-white"} />
-                <span className="absolute -top-1.5 -right-2 bg-brand text-brand-foreground text-[10px] font-semibold w-4 h-4 rounded-full flex items-center justify-center">
+                <span className="absolute -top-1.5 -right-2 bg-brand text-brand-foreground text-micro font-semibold w-4 h-4 rounded-full flex items-center justify-center">
                   {cart.length}
                 </span>
               </span>
@@ -307,7 +310,7 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.3 }}
-                  className="w-16 h-px bg-neutral-300 my-4"
+                  className="w-16 h-px bg-divider my-4"
                 />
               )}
               

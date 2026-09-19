@@ -29,7 +29,7 @@ function ProgressGraph() {
       aria-describedby={descId}
     >
       <figcaption className="mb-5">
-        <p className="text-public-my-method-overline uppercase tracking-section-eyebrow text-muted-foreground font-bold mb-1">
+        <p className="text-micro uppercase tracking-section-eyebrow text-muted-foreground font-bold mb-1">
           Progress, side by side
         </p>
         <h3

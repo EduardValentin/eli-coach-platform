@@ -14,7 +14,6 @@ import {
 } from 'lucide-react';
 import { Checkbox } from './ui/checkbox';
 import { Alert } from './ui/alert';
-import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import {
@@ -23,6 +22,7 @@ import {
   STORE_ACQUISITION_ERROR_MESSAGES,
   submitStoreAcquisition,
 } from '../services/storeAcquisitionService';
+import { Button as ThemeButton, buttonVariants, cn as themeCn } from './ThemeButton';
 
 const FOCUSABLE_SELECTOR =
   'a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])';
@@ -232,7 +232,7 @@ export function CartDrawer() {
                   )}
                   <button
                     onClick={handleClose}
-                    className="mt-6 px-6 py-3 bg-surface-inverted text-surface-inverted-foreground rounded-xl font-medium hover:bg-brand transition-colors"
+                    className={themeCn(buttonVariants({ variant: 'inverted' }), 'mt-6')}
                   >
                     Continue Shopping
                   </button>
@@ -247,7 +247,7 @@ export function CartDrawer() {
                             <img
                               src={item.product.imageUrl}
                               alt={item.product.title}
-                              className="w-20 h-24 object-cover rounded-md shadow-sm"
+                              className="w-20 h-24 object-cover rounded-field shadow-sm"
                             />
                             <div className="flex-1 flex flex-col justify-between">
                               <div>
@@ -255,7 +255,7 @@ export function CartDrawer() {
                                   {item.product.title}
                                 </h3>
                                 {item.product.priceUSD === 0 && (
-                                  <span className="text-[10px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded-sm text-brand-secondary bg-brand-secondary-soft">
+                                  <span className="text-micro uppercase tracking-wider font-bold px-1.5 py-0.5 rounded-tile text-brand-secondary bg-brand-secondary-soft">
                                     {item.product.type}
                                   </span>
                                 )}
@@ -291,7 +291,7 @@ export function CartDrawer() {
                           onClick={() => setCheckoutStep('checkout')}
                           disabled={isProcessing}
                           aria-label={isProcessing ? processingLabel : undefined}
-                          className="w-full py-4 bg-surface-inverted text-surface-inverted-foreground font-medium rounded-xl flex items-center justify-center gap-2 hover:bg-brand transition-colors disabled:pointer-events-none disabled:opacity-50"
+                          className={buttonVariants({ size: 'lg', variant: 'inverted', width: 'full' })}
                         >
                           {isProcessing ? (
                             processingContent
@@ -348,7 +348,7 @@ export function CartDrawer() {
                           )}
                         </div>
 
-                        <div className="bg-surface-subtle p-4 rounded-md border border-stroke-faint">
+                        <div className="bg-surface-subtle p-4 rounded-field border border-stroke-faint">
                           <p className="text-sm font-semibold text-foreground mb-2">Order Summary</p>
                           <div className="flex justify-between items-center text-sm text-copy-muted">
                             <span>{cart.length} item{cart.length === 1 ? '' : 's'}</span>
@@ -400,19 +400,18 @@ export function CartDrawer() {
                         )}
 
                         <div className="mt-auto pt-6 border-t border-control-border-soft flex gap-4">
-                          <Button
-                            type="button"
-                            variant="outline"
+                          <ThemeButton
                             onClick={() => setCheckoutStep('cart')}
-                            className="h-auto px-6 py-4 text-base transition-colors"
+                            size="lg"
+                            variant="outline"
                           >
                             Back
-                          </Button>
+                          </ThemeButton>
                           <button
                             type="submit"
                             disabled={!termsAccepted || !email || isProcessing || cart.length === 0}
                             aria-label={isProcessing ? processingLabel : undefined}
-                            className="flex-1 py-4 bg-brand text-brand-foreground font-medium rounded-xl flex items-center justify-center gap-2 hover:bg-brand-hover transition-colors disabled:pointer-events-none disabled:opacity-50"
+                            className={buttonVariants({ size: 'lg', width: 'full' })}
                           >
                             {isProcessing
                               ? processingContent
@@ -444,7 +443,7 @@ export function CartDrawer() {
                           </p>
                           <button
                             onClick={handleClose}
-                            className="px-8 py-3.5 bg-surface-inverted text-surface-inverted-foreground font-medium rounded-xl hover:bg-brand transition-colors"
+                            className={buttonVariants({ size: 'lg', variant: 'inverted' })}
                           >
                             Keep Browsing
                           </button>
@@ -458,7 +457,7 @@ export function CartDrawer() {
                           </p>
                           <button
                             onClick={handleClose}
-                            className="px-8 py-3.5 bg-surface-inverted text-surface-inverted-foreground font-medium rounded-xl hover:bg-brand transition-colors"
+                            className={buttonVariants({ size: 'lg', variant: 'inverted' })}
                           >
                             Continue Browsing
                           </button>
