@@ -18,7 +18,11 @@ export const PhoneFrame = React.forwardRef<HTMLDivElement, PhoneFrameProps>(
         : "ui-phone-frame__status-bar-dark";
 
     return (
-      <div ref={ref} className={cn("ui-phone-frame", className)} {...props}>
+      <div
+        ref={ref}
+        className={cn("ui-phone-frame shadow-phone-frame", className)}
+        {...props}
+      >
         {children}
         <div aria-hidden="true" className="ui-phone-frame__notch" />
         <div

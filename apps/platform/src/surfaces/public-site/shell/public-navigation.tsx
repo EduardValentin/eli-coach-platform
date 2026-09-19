@@ -301,21 +301,25 @@ function MobilePublicNavigation(props: MobilePublicNavigationProps) {
               </>
             ) : null}
           </nav>
-          <motion.svg
+          <motion.div
             animate={{ opacity: 0.03 }}
             aria-hidden="true"
-            className="pointer-events-none absolute bottom-0 left-0 right-0 w-full text-brand-primary"
-            fill="none"
+            className="pointer-events-none absolute bottom-0 left-0 right-0"
             initial={{ opacity: 0 }}
-            transition={{ delay: 0.5, duration: 0.3, ease: "easeOut" }}
-            viewBox="0 0 1440 320"
-            xmlns="http://www.w3.org/2000/svg"
+            transition={{ delay: 0.5 }}
           >
-            <path
-              d="M0,288L48,272C96,256,192,224,288,197.3C384,171,480,149,576,165.3C672,181,768,219,864,218.7C960,219,1056,181,1152,149.3C1248,117,1344,91,1392,80L1440,64L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
-              fill="currentColor"
-            />
-          </motion.svg>
+            <svg
+              className="h-auto w-full text-brand-primary"
+              fill="none"
+              viewBox="0 0 1440 320"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M0,288L48,272C96,256,192,224,288,197.3C384,171,480,149,576,165.3C672,181,768,219,864,218.7C960,219,1056,181,1152,149.3C1248,117,1344,91,1392,80L1440,64L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
+                fill="currentColor"
+              />
+            </svg>
+          </motion.div>
         </motion.div>
       ) : null}
     </AnimatePresence>
