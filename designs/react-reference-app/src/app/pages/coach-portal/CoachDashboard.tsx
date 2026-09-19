@@ -1,14 +1,18 @@
 import { motion } from 'motion/react';
 import { ClipboardCheck, Plus, ArrowRight, User } from 'lucide-react';
 import { Link } from 'react-router';
-import { AssessmentCallsSection } from '../../components/coach-portal/AssessmentCallsSection';
+import { NextAssessmentCall } from '../../components/coach-portal/NextAssessmentCall';
 import { useAssessmentCalls } from '../../context/AssessmentCallContext';
 import { useCheckins } from '../../context/CheckinContext';
 import {
   classifyCalls,
   countTodayCalls,
 } from '../../utils/assessmentCallListing';
-import { formatCheckinDate, formatCheckinTime } from '../../utils/dateFormatters';
+import {
+  browserTimeZone,
+  formatCheckinDate,
+  formatCheckinTime,
+} from '../../utils/dateFormatters';
 
 const MOCK_CLIENTS = [
   { id: 'c1', name: 'Jane Doe', phase: 'Luteal', goal: 'Recomp', compliance: '95%' },
@@ -22,7 +26,7 @@ export function CoachDashboard() {
   const pendingCheckins = getPendingCheckins();
 
   const now = new Date();
-  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const timeZone = browserTimeZone();
   const todayCallCount = countTodayCalls(
     classifyCalls(bookings, { now, timeZone }),
   );
@@ -52,7 +56,7 @@ export function CoachDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 mb-8">
         
-        <AssessmentCallsSection
+        <NextAssessmentCall
           bookings={bookings}
           now={now}
           timeZone={timeZone}

@@ -90,7 +90,7 @@ describe('the coach dashboard', () => {
     ).toBeInTheDocument();
   });
 
-  it('lists the booked calls in the assessment calls section', () => {
+  it('shows the soonest call in the next call widget', () => {
     // arrange
     const bookings = [bookingAt(LATER_TODAY, 'Maria Ionescu')];
 
@@ -99,10 +99,24 @@ describe('the coach dashboard', () => {
 
     // assert
     expect(
-      screen.getByRole('heading', { level: 2, name: 'Assessment calls' }),
+      screen.getByRole('heading', { level: 2, name: 'Next call' }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('heading', { level: 3, name: 'Maria Ionescu' }),
     ).toBeInTheDocument();
+  });
+
+  it('sends the coach from the widget to the full list of calls', () => {
+    // arrange
+    const bookings = [bookingAt(LATER_TODAY, 'Maria Ionescu')];
+
+    // act
+    renderDashboard(bookings);
+
+    // assert
+    expect(
+      screen.getByRole('link', { name: 'View all calls' }),
+    ).toHaveAttribute('href', '/coach/assessment-calls');
+    expect(screen.queryByRole('tab', { name: 'Upcoming' })).toBeNull();
   });
 });

@@ -1,6 +1,5 @@
-import { Video } from 'lucide-react';
 import { motion } from 'motion/react';
-import { Link, useSearchParams } from 'react-router';
+import { useSearchParams } from 'react-router';
 import type { PrototypeBooking } from '../../services/assessmentCallService';
 import {
   classifyCalls,
@@ -10,13 +9,19 @@ import {
   type AssessmentCallStatus,
   type ClassifiedCall,
 } from '../../utils/assessmentCallListing';
-import { formatCallSchedule, nameTimeZone } from '../../utils/dateFormatters';
+import { formatCallSchedule } from '../../utils/dateFormatters';
 import { Badge } from '../ui/badge';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { cn } from '../ui/utils';
-import { buttonVariants } from '../ThemeButton';
+import {
+  CALL_CARD_CLASS,
+  CALL_ROW_HOVER,
+  PAST_CALL_TONE,
+  UPCOMING_CALL_TONE,
+} from './assessmentCallCard';
+import { JoinCallLink } from './JoinCallLink';
 
 const STATUS_PARAM = 'status';
 const QUERY_PARAM = 'q';
@@ -38,13 +43,6 @@ const EMPTY_MESSAGES: Record<AssessmentCallStatus, string> = {
   all: 'No calls yet.',
 };
 
-const JOIN_LINK_CLASS = buttonVariants({
-  variant: 'inverted',
-  size: 'xs',
-  textSize: 'sm',
-  weight: 'semibold',
-});
-
 function CallItem({
   call,
   timeZone,
@@ -56,17 +54,15 @@ function CallItem({
 
   return (
     <li
-      className={cn(
-        'flex items-start justify-between gap-4 p-4 rounded-card border border-border transition-all',
-        {
-          'bg-muted/50 hover:bg-card hover:shadow-card': timing === 'upcoming',
-          'bg-muted text-muted-foreground': timing === 'past',
-        },
-      )}
+      className={cn(CALL_CARD_CLASS, {
+        [UPCOMING_CALL_TONE]: timing === 'upcoming',
+        [CALL_ROW_HOVER]: timing === 'upcoming',
+        [PAST_CALL_TONE]: timing === 'past',
+      })}
     >
       <div className="min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <h3 className="font-semibold text-sm">{booking.visitorName}</h3>
+          <h2 className="font-semibold text-sm">{booking.visitorName}</h2>
           {isToday && <Badge variant="brand-secondary">Today</Badge>}
         </div>
         <a
@@ -84,11 +80,7 @@ function CallItem({
           </p>
         )}
       </div>
-      {timing === 'upcoming' && (
-        <Link to={booking.joinPath} className={JOIN_LINK_CLASS}>
-          Join call
-        </Link>
-      )}
+      {timing === 'upcoming' && <JoinCallLink joinPath={booking.joinPath} />}
     </li>
   );
 }
@@ -163,19 +155,6 @@ export function AssessmentCallsSection({
       animate={{ opacity: 1, y: 0 }}
       className="bg-card p-8 rounded-panel shadow-soft border border-border/50"
     >
-      <div className="flex items-center gap-3 mb-2">
-        <div className="w-10 h-10 rounded-full bg-brand-secondary-soft text-brand-secondary flex items-center justify-center">
-          <Video size={20} />
-        </div>
-        <h2 className="font-serif text-xl text-foreground font-semibold">
-          Assessment calls
-        </h2>
-      </div>
-
-      <p className="text-xs text-muted-foreground mb-6">
-        Times in {nameTimeZone(timeZone, now)}
-      </p>
-
       <div className="space-y-2 mb-6">
         <Label htmlFor={SEARCH_FIELD_ID}>Search calls</Label>
         <Input

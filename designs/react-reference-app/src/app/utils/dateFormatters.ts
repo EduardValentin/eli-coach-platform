@@ -48,6 +48,10 @@ export function describeTimeZone(timeZone: string, reference: Date): string {
   return offset ? `${timeZone} (${offset})` : timeZone;
 }
 
+export function browserTimeZone(): string {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone;
+}
+
 export function nameTimeZone(timeZone: string, reference: Date): string {
   const offset = formatZoneOffset(timeZone, reference);
   return offset ? `${timeZone}, ${offset}` : timeZone;

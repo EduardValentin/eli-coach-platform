@@ -78,7 +78,7 @@ function currentLocation(): string {
 function listedNames(): string[] {
   return screen
     .getAllByRole('listitem')
-    .map((item) => within(item).getByRole('heading', { level: 3 }).textContent ?? '');
+    .map((item) => within(item).getByRole('heading', { level: 2 }).textContent ?? '');
 }
 
 async function selectTab(user: ReturnType<typeof userEvent.setup>, name: string) {
@@ -86,17 +86,6 @@ async function selectTab(user: ReturnType<typeof userEvent.setup>, name: string)
 }
 
 describe('the assessment calls section', () => {
-  it('names the zone every time is shown in', () => {
-    // arrange
-    renderSection({ bookings: [] });
-
-    // act
-    const zoneLine = screen.getByText(new RegExp(`Times in ${TIME_ZONE}`));
-
-    // assert
-    expect(zoneLine).toBeInTheDocument();
-  });
-
   it('opens on upcoming calls, soonest first', () => {
     // arrange
     renderSection();

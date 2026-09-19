@@ -3,6 +3,7 @@ import {
   classifyCalls,
   countTodayCalls,
   filterCalls,
+  nextCall,
   orderCalls,
   parseStatus,
 } from './assessmentCallListing';
@@ -231,6 +232,88 @@ describe('ordering assessment calls', () => {
       'Recent past',
       'Older past',
     ]);
+  });
+});
+
+describe('choosing the next assessment call', () => {
+  it('picks the soonest call that has not ended, whatever order it is given', () => {
+    // arrange
+    const now = new Date('2026-09-21T09:00:00.000Z');
+    const calls = classifyCalls(
+      [
+        bookingAt('2026-09-22T15:00:00.000Z', { visitorName: 'Later upcoming' }),
+        bookingAt('2026-09-21T15:00:00.000Z', { visitorName: 'Next upcoming' }),
+      ],
+      { now, timeZone: BUCHAREST },
+    );
+
+    // act
+    const next = nextCall(calls);
+
+    // assert
+    expect(next?.booking.visitorName).toBe('Next upcoming');
+  });
+
+  it('passes over a call that already ended today', () => {
+    // arrange
+    const now = new Date('2026-09-21T09:00:00.000Z');
+    const calls = classifyCalls(
+      [
+        bookingAt('2026-09-21T06:00:00.000Z', { visitorName: 'Ended today' }),
+        bookingAt('2026-09-21T15:00:00.000Z', { visitorName: 'Still to come' }),
+      ],
+      { now, timeZone: BUCHAREST },
+    );
+
+    // act
+    const next = nextCall(calls);
+
+    // assert
+    expect(next?.booking.visitorName).toBe('Still to come');
+  });
+
+  it('keeps a call that is under way as the next one', () => {
+    // arrange
+    const now = new Date('2026-09-21T09:15:00.000Z');
+    const calls = classifyCalls(
+      [bookingAt('2026-09-21T09:00:00.000Z', { visitorName: 'Under way' })],
+      { now, timeZone: BUCHAREST },
+    );
+
+    // act
+    const next = nextCall(calls);
+
+    // assert
+    expect(next?.booking.visitorName).toBe('Under way');
+  });
+
+  it('finds none when every call has ended', () => {
+    // arrange
+    const now = new Date('2026-09-21T09:00:00.000Z');
+    const calls = classifyCalls([bookingAt('2026-09-20T15:00:00.000Z')], {
+      now,
+      timeZone: BUCHAREST,
+    });
+
+    // act
+    const next = nextCall(calls);
+
+    // assert
+    expect(next).toBeUndefined();
+  });
+
+  it('finds none when no call is booked', () => {
+    // arrange
+    const calls = classifyCalls([], {
+      now: new Date('2026-09-21T09:00:00.000Z'),
+      timeZone: BUCHAREST,
+    });
+
+    // act
+    const next = nextCall(calls);
+
+    // assert
+    expect(next).toBeUndefined();
   });
 });
 
