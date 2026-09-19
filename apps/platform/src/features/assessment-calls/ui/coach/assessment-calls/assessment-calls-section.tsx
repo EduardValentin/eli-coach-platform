@@ -12,7 +12,6 @@ import {
   TabsList,
   TabsTrigger,
 } from "@eli-coach-platform/ui/tabs";
-import { motion, useReducedMotion } from "motion/react";
 import { useLocation } from "react-router";
 
 import type { CoachAssessmentCall } from "~/features/assessment-calls/contracts/assessment-calls";
@@ -68,7 +67,6 @@ export function AssessmentCallsSection({
   now,
   timeZone,
 }: AssessmentCallsSectionProps) {
-  const prefersReducedMotion = useReducedMotion() ?? false;
   const { pathname } = useLocation();
   const { replaceSearchParams, searchParams } = useSearchParamsWriter();
   const status = parseStatusParam(searchParams.get(STATUS_PARAM));
@@ -120,12 +118,9 @@ export function AssessmentCallsSection({
     query.trim().length > 0 ? NO_MATCH_MESSAGE : EMPTY_MESSAGES[tabStatus];
 
   return (
-    <motion.div
-      animate={{ opacity: 1, y: 0 }}
+    <div
       className={cn(cardVariants({ variant: "portal-panel" }), "p-5 sm:p-8")}
       data-parity-root="AssessmentCallsSection"
-      initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
-      transition={prefersReducedMotion ? { duration: 0 } : undefined}
     >
       <div className="mb-6 space-y-2">
         <Label htmlFor={SEARCH_FIELD_ID}>Search calls</Label>
@@ -169,7 +164,7 @@ export function AssessmentCallsSection({
           );
         })}
       </Tabs>
-    </motion.div>
+    </div>
   );
 }
 

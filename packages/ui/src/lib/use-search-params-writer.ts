@@ -28,10 +28,6 @@ export type SearchParamsWriter = {
  * itself, because an interrupted navigation can settle on the search it started
  * from — leaving a pending value answering for a URL nobody reached, and
  * swallowing every later attempt to make that same choice.
- *
- * `writeSearchParams` leaves a history entry behind, so Back returns to the
- * previous state; `replaceSearchParams` overwrites the current one, for state a
- * reader would rather step straight past than walk back through.
  */
 export function useSearchParamsWriter(): SearchParamsWriter {
   const [searchParams, setSearchParams] = useSearchParams();

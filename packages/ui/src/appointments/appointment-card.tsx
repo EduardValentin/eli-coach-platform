@@ -1,4 +1,3 @@
-import { motion, useReducedMotion } from "motion/react";
 import type { ReactNode } from "react";
 
 import { cn } from "../lib/cn";
@@ -46,17 +45,12 @@ export function AppointmentCard({
   titleElement: Title = "p",
   when,
 }: AppointmentCardProps) {
-  const prefersReducedMotion = useReducedMotion() ?? false;
-
   return (
-    <motion.div
-      animate={{ opacity: 1, y: 0 }}
+    <div
       className={cn(
         "flex flex-col gap-4 rounded-card border border-stroke-faint/50 bg-surface-base p-5 md:flex-row md:items-start",
         CARD_TONE[status],
       )}
-      initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
-      transition={prefersReducedMotion ? { duration: 0 } : undefined}
     >
       <div className="flex min-w-0 flex-1 items-start gap-4">
         <Avatar
@@ -118,6 +112,6 @@ export function AppointmentCard({
           {actions}
         </div>
       )}
-    </motion.div>
+    </div>
   );
 }

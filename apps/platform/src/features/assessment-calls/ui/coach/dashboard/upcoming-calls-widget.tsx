@@ -2,7 +2,6 @@ import { DashboardAppointmentRow } from "@eli-coach-platform/ui/appointments";
 import { cn } from "@eli-coach-platform/ui/lib";
 import { Badge, cardVariants } from "@eli-coach-platform/ui/primitives";
 import { ArrowRight, Video } from "lucide-react";
-import { motion, useReducedMotion } from "motion/react";
 import { Link } from "react-router";
 
 import {
@@ -27,20 +26,16 @@ export function UpcomingCallsWidget({
   calls,
   timeZone,
 }: UpcomingCallsWidgetProps) {
-  const prefersReducedMotion = useReducedMotion() ?? false;
   const soonest = upcomingCalls(calls, CALLS_ON_THE_DASHBOARD);
   const isEmpty = soonest.length === 0;
 
   return (
-    <motion.div
-      animate={{ opacity: 1, y: 0 }}
+    <div
       className={cn(
         cardVariants({ variant: "portal-panel" }),
         "flex h-full flex-col p-8",
       )}
       data-parity-root="UpcomingCallsWidget"
-      initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
-      transition={prefersReducedMotion ? { duration: 0 } : undefined}
     >
       <div className="mb-6 flex items-center gap-3">
         <div className="flex size-10 items-center justify-center rounded-full bg-brand-secondary-soft text-brand-secondary">
@@ -84,6 +79,6 @@ export function UpcomingCallsWidget({
         View all calls
         <ArrowRight aria-hidden="true" size={16} />
       </Link>
-    </motion.div>
+    </div>
   );
 }

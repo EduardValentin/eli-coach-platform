@@ -43,8 +43,6 @@ export type CallPageView = {
 
 export type PaginationStep = number | "gap";
 
-// The browser's mirror of `AssessmentCall.hasEnded`: a call belongs to the
-// past from the instant it ends, never from the instant it starts.
 export function classifyCalls(
   calls: readonly CoachAssessmentCall[],
   moment: ListingMoment,
@@ -159,8 +157,6 @@ export function paginationSteps(
   return withGaps([...shown].sort((one, other) => one - other));
 }
 
-// Status, search and page are answered in the browser from the list the loader
-// already carried, so a change to any of them must not wait on the server.
 export function haveOnlyListingParamsChanged(
   currentUrl: URL,
   nextUrl: URL,
