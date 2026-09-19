@@ -1,9 +1,16 @@
 import { useCallback, useEffect, useRef } from "react";
-import { useLocation, useSearchParams } from "react-router";
+import {
+  useLocation,
+  useSearchParams,
+  type NavigateOptions,
+} from "react-router";
+
+type ReviseSearchParams = (params: URLSearchParams) => void;
 
 export type SearchParamsWriter = {
   searchParams: URLSearchParams;
-  writeSearchParams: (reviseParams: (params: URLSearchParams) => void) => void;
+  writeSearchParams: (reviseParams: ReviseSearchParams) => void;
+  replaceSearchParams: (reviseParams: ReviseSearchParams) => void;
 };
 
 /**
@@ -21,6 +28,10 @@ export type SearchParamsWriter = {
  * itself, because an interrupted navigation can settle on the search it started
  * from — leaving a pending value answering for a URL nobody reached, and
  * swallowing every later attempt to make that same choice.
+ *
+ * `writeSearchParams` leaves a history entry behind, so Back returns to the
+ * previous state; `replaceSearchParams` overwrites the current one, for state a
+ * reader would rather step straight past than walk back through.
  */
 export function useSearchParamsWriter(): SearchParamsWriter {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -31,8 +42,8 @@ export function useSearchParamsWriter(): SearchParamsWriter {
     pendingSearch.current = null;
   }, [location.key]);
 
-  const writeSearchParams = useCallback(
-    (reviseParams: (params: URLSearchParams) => void) => {
+  const commitSearchParams = useCallback(
+    (reviseParams: ReviseSearchParams, options: NavigateOptions) => {
       const currentSearch = pendingSearch.current ?? searchParams.toString();
       const nextParams = new URLSearchParams(currentSearch);
 
@@ -43,10 +54,25 @@ export function useSearchParamsWriter(): SearchParamsWriter {
       }
 
       pendingSearch.current = nextParams.toString();
-      setSearchParams(nextParams, { preventScrollReset: true });
+      setSearchParams(nextParams, options);
     },
     [searchParams, setSearchParams],
   );
 
-  return { searchParams, writeSearchParams };
+  const writeSearchParams = useCallback(
+    (reviseParams: ReviseSearchParams) =>
+      commitSearchParams(reviseParams, { preventScrollReset: true }),
+    [commitSearchParams],
+  );
+
+  const replaceSearchParams = useCallback(
+    (reviseParams: ReviseSearchParams) =>
+      commitSearchParams(reviseParams, {
+        preventScrollReset: true,
+        replace: true,
+      }),
+    [commitSearchParams],
+  );
+
+  return { replaceSearchParams, searchParams, writeSearchParams };
 }

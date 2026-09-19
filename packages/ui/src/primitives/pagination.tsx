@@ -1,0 +1,181 @@
+import * as React from "react";
+import { cva } from "class-variance-authority";
+import { Link } from "react-router";
+
+import { cn } from "../lib/cn";
+
+const stepClasses = cva(
+  "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-control text-sm font-medium outline-none transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  {
+    variants: {
+      emphasis: {
+        current:
+          "border border-control-border-soft bg-surface-base text-text-label hover:bg-surface-quiet hover:text-text-primary",
+        quiet: "hover:bg-surface-neutral hover:text-text-primary",
+      },
+      shape: {
+        page: "size-9 rounded-full",
+        step: "h-9 gap-1 px-3 py-2",
+      },
+    },
+    defaultVariants: {
+      emphasis: "quiet",
+      shape: "page",
+    },
+  },
+);
+
+type PageProps = {
+  page: number;
+  to: string;
+};
+
+type EdgeProps = {
+  to: string | null;
+};
+
+export function Pagination({
+  className,
+  ...props
+}: React.ComponentPropsWithoutRef<"nav">) {
+  return (
+    <nav
+      aria-label="pagination"
+      className={cn("mx-auto flex w-full justify-center", className)}
+      {...props}
+    />
+  );
+}
+
+export function PaginationList(props: React.ComponentPropsWithoutRef<"ul">) {
+  return <ul className="flex flex-row items-center gap-1" {...props} />;
+}
+
+export function PaginationLink({ page, to }: PageProps) {
+  return (
+    <li>
+      <Link
+        aria-label={`Go to page ${page}`}
+        className={stepClasses()}
+        prefetch="intent"
+        replace
+        to={to}
+      >
+        {page}
+      </Link>
+    </li>
+  );
+}
+
+export function PaginationCurrentPage({ page, to }: PageProps) {
+  return (
+    <li>
+      <Link
+        aria-current="page"
+        aria-label={`Go to page ${page}`}
+        className={stepClasses({ emphasis: "current" })}
+        prefetch="intent"
+        replace
+        to={to}
+      >
+        {page}
+      </Link>
+    </li>
+  );
+}
+
+export function PaginationPrevious({ to }: EdgeProps) {
+  return (
+    <PaginationEdge label="Go to previous page" to={to}>
+      <ChevronLeftGlyph />
+      <span className="hidden sm:block">Previous</span>
+    </PaginationEdge>
+  );
+}
+
+export function PaginationNext({ to }: EdgeProps) {
+  return (
+    <PaginationEdge label="Go to next page" to={to}>
+      <span className="hidden sm:block">Next</span>
+      <ChevronRightGlyph />
+    </PaginationEdge>
+  );
+}
+
+export function PaginationEllipsis() {
+  return (
+    <li aria-hidden="true">
+      <span className="flex size-9 items-center justify-center">
+        <EllipsisGlyph />
+        <span className="sr-only">More pages</span>
+      </span>
+    </li>
+  );
+}
+
+function PaginationEdge(props: {
+  children: React.ReactNode;
+  label: string;
+  to: string | null;
+}) {
+  const { children, label, to } = props;
+  const className = stepClasses({ shape: "step" });
+
+  return (
+    <li>
+      {to === null ? (
+        <button aria-label={label} className={className} disabled type="button">
+          {children}
+        </button>
+      ) : (
+        <Link
+          aria-label={label}
+          className={className}
+          prefetch="intent"
+          replace
+          to={to}
+        >
+          {children}
+        </Link>
+      )}
+    </li>
+  );
+}
+
+const GLYPH_ATTRIBUTES = {
+  fill: "none",
+  height: 24,
+  stroke: "currentColor",
+  strokeLinecap: "round",
+  strokeLinejoin: "round",
+  strokeWidth: 2,
+  viewBox: "0 0 24 24",
+  width: 24,
+  xmlns: "http://www.w3.org/2000/svg",
+} as const satisfies React.SVGProps<SVGSVGElement>;
+
+function ChevronLeftGlyph() {
+  return (
+    <svg aria-hidden="true" {...GLYPH_ATTRIBUTES}>
+      <path d="m15 18-6-6 6-6" />
+    </svg>
+  );
+}
+
+function ChevronRightGlyph() {
+  return (
+    <svg aria-hidden="true" {...GLYPH_ATTRIBUTES}>
+      <path d="m9 18 6-6-6-6" />
+    </svg>
+  );
+}
+
+function EllipsisGlyph() {
+  return (
+    <svg aria-hidden="true" className="size-4" {...GLYPH_ATTRIBUTES}>
+      <circle cx="12" cy="12" r="1" />
+      <circle cx="19" cy="12" r="1" />
+      <circle cx="5" cy="12" r="1" />
+    </svg>
+  );
+}
