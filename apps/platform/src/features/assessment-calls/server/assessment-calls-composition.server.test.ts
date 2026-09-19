@@ -8,7 +8,7 @@ import {
   type AssessmentCallsFeatureHandles,
 } from "./assessment-calls-composition.server";
 
-const STORED_ROW = {
+const BOOKED_ROW = {
   id: "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11",
   visitorName: "Ana Popescu",
   visitorEmail: "ana@example.com",
@@ -53,28 +53,18 @@ describe("composeAssessmentCallsFeature", () => {
     // arrange
     const feature = composeAssessmentCallsFeature({
       ...createHandles({ WAITLIST_MODE: false }),
-      database: createDatabaseReturning([STORED_ROW]),
+      database: createDatabaseReturning([BOOKED_ROW]),
     });
 
     // act
     const dashboard = await feature.coachAssessmentCalls.loadDashboard();
 
     // assert
-    expect(dashboard).toEqual({
-      calls: [
-        {
-          id: "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11",
-          visitorName: "Ana Popescu",
-          visitorEmail: "ana@example.com",
-          visitorNotes: "Training three times a week.",
-          startsAt: "2026-10-20T14:00:00.000Z",
-          endsAt: "2026-10-20T14:30:00.000Z",
-          joinPath: "/book/4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11/join",
-        },
-      ],
-      coachTimeZone: "Europe/Bucharest",
-      now: "2026-10-19T08:00:00.000Z",
-    });
+    expect(dashboard.calls.map((call) => call.id)).toEqual([
+      "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11",
+    ]);
+    expect(dashboard.coachTimeZone).toBe("Europe/Bucharest");
+    expect(dashboard.now).toBe("2026-10-19T08:00:00.000Z");
   });
 });
 

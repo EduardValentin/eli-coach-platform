@@ -2,6 +2,7 @@ import type { DatabaseClient } from "@eli-coach-platform/db";
 import { describe, expect, it, vi } from "vitest";
 
 import { PostgresAssessmentCallRepository } from "./repository.server";
+import { assessmentCallsTable } from "./schema.server";
 
 const STORED_ROW = {
   id: "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11",
@@ -120,6 +121,20 @@ describe("PostgresAssessmentCallRepository#listAll", () => {
     ]);
   });
 
+  it("leaves the order to Postgres, earliest call first", async () => {
+    // arrange
+    const orderedBy: unknown[] = [];
+    const repository = new PostgresAssessmentCallRepository(
+      createDatabaseReturning([STORED_ROW], orderedBy),
+    );
+
+    // act
+    await repository.listAll();
+
+    // assert
+    expect(orderedBy).toEqual([assessmentCallsTable.startsAt]);
+  });
+
   it("lists nothing when no call is booked", async () => {
     // arrange
     const repository = new PostgresAssessmentCallRepository(
@@ -134,9 +149,12 @@ describe("PostgresAssessmentCallRepository#listAll", () => {
   });
 });
 
-function createDatabaseReturning(rows: readonly unknown[]): DatabaseClient {
+function createDatabaseReturning(
+  rows: readonly unknown[],
+  orderedBy: unknown[] = [],
+): DatabaseClient {
   return {
-    select: vi.fn().mockReturnValue(createQueryChain(rows)),
+    select: vi.fn().mockReturnValue(createQueryChain(rows, orderedBy)),
   } as unknown as DatabaseClient;
 }
 
@@ -146,11 +164,15 @@ function createDatabaseRejecting(error: Error): DatabaseClient {
   } as unknown as DatabaseClient;
 }
 
-function createQueryChain(rows: readonly unknown[]) {
+function createQueryChain(rows: readonly unknown[], orderedBy: unknown[]) {
   const chain = {
     from: () => chain,
     where: () => chain,
-    orderBy: () => chain,
+    orderBy: (...columns: unknown[]) => {
+      orderedBy.push(...columns);
+
+      return chain;
+    },
     limit: () => chain,
     then: (onFulfilled: (value: readonly unknown[]) => unknown) =>
       Promise.resolve(rows).then(onFulfilled),

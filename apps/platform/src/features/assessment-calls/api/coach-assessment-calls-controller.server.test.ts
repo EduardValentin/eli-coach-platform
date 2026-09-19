@@ -83,28 +83,6 @@ describe("CoachAssessmentCallsController", () => {
       now: "2026-10-19T08:00:00.000Z",
     });
   });
-
-  it("keeps the order the use case lists the calls in", async () => {
-    // arrange
-    const later = AssessmentCall.reconstitute({
-      ...bookedCall.toSnapshot(),
-      id: "9c2b7d41-0e58-4a17-8c6f-2d4e7b9a1f03",
-      startsAt: new Date("2026-10-20T14:00:00.000Z"),
-    });
-    const controller = createController({
-      coachTimeZone: "Europe/Bucharest",
-      calls: [bookedCall.toSnapshot(), later.toSnapshot()],
-    });
-
-    // act
-    const dashboard = await controller.loadDashboard();
-
-    // assert
-    expect(dashboard.calls.map((call) => call.startsAt)).toEqual([
-      "2026-10-19T14:00:00.000Z",
-      "2026-10-20T14:00:00.000Z",
-    ]);
-  });
 });
 
 function createController(
