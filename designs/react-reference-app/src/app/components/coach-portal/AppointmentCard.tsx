@@ -73,10 +73,10 @@ function AttendeeEmailLink({ email }: { email: string }) {
   return (
     <a
       href={`mailto:${email}`}
-      className="mt-1.5 flex items-center gap-1.5 text-xs text-text-secondary hover:text-text-primary hover:underline"
+      className="mt-1.5 inline-flex max-w-full items-center gap-1.5 text-xs text-text-secondary hover:text-text-primary hover:underline"
     >
       <Mail aria-hidden="true" size={13} className="shrink-0" />
-      <span className="truncate" title={email}>
+      <span className="min-w-0 truncate" title={email}>
         {email}
       </span>
     </a>

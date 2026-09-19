@@ -1,4 +1,4 @@
-import { motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import { useLocation, useSearchParams } from 'react-router';
 import type { PrototypeBooking } from '../../services/assessmentCallService';
 import {
@@ -113,6 +113,7 @@ export function AssessmentCallsSection({
   now: Date;
   timeZone: string;
 }) {
+  const prefersReducedMotion = useReducedMotion() ?? false;
   const { pathname } = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const status = parseStatus(searchParams.get(STATUS_PARAM));
@@ -160,8 +161,9 @@ export function AssessmentCallsSection({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
+      initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
+      transition={prefersReducedMotion ? { duration: 0 } : undefined}
       className="bg-card p-5 sm:p-8 rounded-panel shadow-soft border border-border/50"
     >
       <div className="space-y-2 mb-6">
