@@ -64,6 +64,11 @@ function PaginationLink({
           variant: isActive ? "outline" : "ghost",
           size,
         }),
+        "hover:text-foreground",
+        {
+          "hover:bg-surface-quiet": isActive,
+          "hover:bg-muted": !isActive,
+        },
         className,
       )}
       {...props}
