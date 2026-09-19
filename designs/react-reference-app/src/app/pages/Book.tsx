@@ -25,6 +25,7 @@ import {
 } from '../services/assessmentCallService';
 import { formatSlotTime, formatZonedDate, nameTimeZone } from '../utils/dateFormatters';
 import { ELI_PORTRAIT_SMALL } from '../utils/eliPortrait';
+import { FIELD_ERROR_CLASS } from '../utils/formFieldStyles';
 import { NotFound } from './NotFound';
 
 type Step = 'date-time' | 'details' | 'success';
@@ -37,12 +38,11 @@ const SUPPORT_CONTACT_CODES: ReadonlySet<AssessmentCallErrorCode> = new Set([
   'server_error',
 ]);
 
-const FIELD_ERROR_CLASS = 'text-sm font-medium text-destructive';
 const STEP_HEADING_FOCUS_CLASS = 'scroll-mt-24 focus:outline-none';
 
 export function Book() {
   const { appState } = useAppState();
-  const { bookedStarts, addBooking } = useAssessmentCalls();
+  const { bookedStarts, addBooking, settings } = useAssessmentCalls();
 
   const [step, setStep] = useState<Step>('date-time');
   const [slots, setSlots] = useState<Date[]>([]);
@@ -69,14 +69,16 @@ export function Book() {
     }
 
     let cancelled = false;
-    listOpenSlots({ now: new Date(), bookedStarts }).then((open) => {
-      if (!cancelled) setSlots(open);
-    });
+    listOpenSlots({ now: new Date(), bookedStarts, availability: settings }).then(
+      (open) => {
+        if (!cancelled) setSlots(open);
+      },
+    );
 
     return () => {
       cancelled = true;
     };
-  }, [slotsUnavailable, bookedStarts, slotReloadCount]);
+  }, [slotsUnavailable, bookedStarts, slotReloadCount, settings]);
 
   const focusStepHeading = useCallback((heading: HTMLHeadingElement | null) => {
     if (!heading || !shouldFocusStepHeading.current) return;
@@ -123,14 +125,17 @@ export function Book() {
     setSubmitError(null);
 
     try {
-      const confirmed = await bookAssessmentCall({
-        startsAt: selectedSlot,
-        fullName: detailsForm.fullName,
-        email: detailsForm.email,
-        notes: detailsForm.notes,
-        visitorTimeZone,
-        outcome: appState.bookingOutcome,
-      });
+      const confirmed = await bookAssessmentCall(
+        {
+          startsAt: selectedSlot,
+          fullName: detailsForm.fullName,
+          email: detailsForm.email,
+          notes: detailsForm.notes,
+          visitorTimeZone,
+          outcome: appState.bookingOutcome,
+        },
+        settings,
+      );
       addBooking(confirmed);
       setBooking(confirmed);
       goToStep('success');

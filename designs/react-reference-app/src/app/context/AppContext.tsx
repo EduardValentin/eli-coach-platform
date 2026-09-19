@@ -1,7 +1,10 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useLocation } from 'react-router';
 import type { PrototypeStoreCheckoutOutcome } from '../services/storeAcquisitionService';
-import type { PrototypeBookingOutcome } from '../services/assessmentCallService';
+import type {
+  PrototypeBookingOutcome,
+  PrototypeCallSettingsSaveOutcome,
+} from '../services/assessmentCallService';
 import type {
   PrototypeAccountRole,
   PrototypeSignInOutcome,
@@ -38,6 +41,7 @@ type AppState = {
   clientOnboardingOutcome: PrototypeClientOnboardingOutcome;
   bookingOutcome: PrototypeBookingOutcome;
   bookingSlotsUnavailable: boolean;
+  callSettingsSaveOutcome: PrototypeCallSettingsSaveOutcome;
 };
 
 type AppContextType = {
@@ -60,6 +64,7 @@ const defaultState: AppState = {
   clientOnboardingOutcome: 'success',
   bookingOutcome: 'success',
   bookingSlotsUnavailable: false,
+  callSettingsSaveOutcome: 'saved',
 };
 
 const validSessions = ['anonymous', 'client', 'coach'] as const;
@@ -87,6 +92,7 @@ const validClientOnboardingOutcomes = [
   'already-client',
   'delivery-failure',
 ] as const;
+const validCallSettingsSaveOutcomes = ['saved', 'server_error'] as const;
 
 function parseDevParamsFromURL(): AppState {
   const params = new URLSearchParams(window.location.search);
@@ -149,6 +155,14 @@ function parseDevParamsFromURL(): AppState {
     state.bookingSlotsUnavailable = params.get('bookingslots') === 'unavailable';
   }
 
+  const settingsSave = params.get('callsettingssave');
+  if (
+    settingsSave &&
+    (validCallSettingsSaveOutcomes as readonly string[]).includes(settingsSave)
+  ) {
+    state.callSettingsSaveOutcome = settingsSave as PrototypeCallSettingsSaveOutcome;
+  }
+
   return state;
 }
 
@@ -178,6 +192,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     url.searchParams.delete('invite');
     url.searchParams.delete('booking');
     url.searchParams.delete('bookingslots');
+    url.searchParams.delete('callsettingssave');
 
     if (isSignedIn(appState.session)) {
       url.searchParams.set('session', appState.session);
@@ -209,6 +224,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     if (appState.bookingSlotsUnavailable) {
       url.searchParams.set('bookingslots', 'unavailable');
+    }
+    if (appState.callSettingsSaveOutcome !== 'saved') {
+      url.searchParams.set('callsettingssave', appState.callSettingsSaveOutcome);
     }
 
     const target = url.pathname + url.search + url.hash;

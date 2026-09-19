@@ -633,3 +633,17 @@
 [data-surface="inverted"] :focus-visible {
   --focus-ring: var(--brand-on-inverted);
 }
+
+/*
+* A chip whose real control is a visually hidden native input (an
+* `opacity: 0` checkbox overlaying its label) never shows the rule above: an
+* invisible element's outline is invisible too. This rule hands the same
+* indicator to the visible label instead.
+*/
+label[data-chip-control]:has(:focus-visible) {
+  outline-style: solid;
+  outline-width: 2px;
+  outline-color: var(--focus-ring);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--focus-ring) 16%, transparent);
+}

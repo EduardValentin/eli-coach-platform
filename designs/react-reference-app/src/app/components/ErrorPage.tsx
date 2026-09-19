@@ -8,6 +8,9 @@ import { buttonVariants } from './ThemeButton';
 // and offers exactly one way out.
 export const ERROR_PAGE_ACTION_CLASS = buttonVariants({ size: 'lg', variant: 'inverted' });
 
+export const FULL_PAGE_MESSAGE_SHELL_CLASS =
+  'w-full min-h-screen bg-surface-page flex flex-col items-center justify-center px-6 py-16 text-center';
+
 export function ErrorPage({
   icon: Icon,
   eyebrow,
@@ -22,10 +25,7 @@ export function ErrorPage({
   children: ReactNode;
 }) {
   return (
-    <main
-      aria-label="Error"
-      className="w-full min-h-screen bg-surface-page flex flex-col items-center justify-center px-6 py-16 text-center"
-    >
+    <main aria-label="Error" className={FULL_PAGE_MESSAGE_SHELL_CLASS}>
       <div className="w-20 h-20 bg-surface-subtle text-muted-foreground rounded-full flex items-center justify-center mb-6">
         <Icon size={36} aria-hidden="true" />
       </div>
