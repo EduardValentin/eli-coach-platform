@@ -18,7 +18,7 @@ function FoodChip({ food }: { food: Food }) {
   return (
     <div
       ref={drag}
-      className={`inline-flex cursor-grab items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 ${isDragging ? 'opacity-40' : ''}`}
+      className={`inline-flex cursor-grab items-center gap-2 rounded-control border border-border bg-card px-3 py-2 ${isDragging ? 'opacity-40' : ''}`}
     >
       <GripVertical size={14} className="text-muted-foreground" aria-hidden="true" />
       <span className={`size-2.5 rounded-full ${CATEGORY_SWATCH[food.category]}`} aria-hidden="true" />
@@ -43,7 +43,7 @@ function TagBucket({ tag }: { tag: Tag }) {
   return (
     <div
       ref={drop}
-      className={`flex min-h-24 flex-col gap-2 rounded-xl border-2 border-dashed p-3 transition-colors ${
+      className={`flex min-h-24 flex-col gap-2 rounded-control border-2 border-dashed p-3 transition-colors ${
         isOver && canDrop ? 'border-brand bg-brand-soft' : 'border-border'
       }`}
     >
@@ -76,7 +76,7 @@ function DragLayer() {
   if (!isDragging || !offset || !item) return null;
   return (
     <div className="pointer-events-none fixed left-0 top-0 z-[100]" style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }}>
-      <div className="inline-flex items-center gap-2 rounded-xl border border-brand bg-card px-3 py-2 shadow-lg">
+      <div className="inline-flex items-center gap-2 rounded-control border border-brand bg-card px-3 py-2 shadow-lg">
         <GripVertical size={14} className="text-muted-foreground" />
         <span className="text-sm font-semibold text-foreground">{item.name}</span>
       </div>

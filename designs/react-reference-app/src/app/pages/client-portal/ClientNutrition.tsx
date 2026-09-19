@@ -114,10 +114,10 @@ function RecipeDetailBody({ slot, recipe, recipes, foods }: RecipeDetailBodyProp
   return (
     <div className="pb-8 overflow-y-auto">
       {/* Cover image / icon */}
-      <RecipeVisual recipe={recipe} className="h-48 w-full rounded-t-2xl" />
+      <RecipeVisual recipe={recipe} className="h-48 w-full rounded-t-card" />
       <div className="px-5 pt-4 md:px-8 space-y-5">
       {/* Macros */}
-      <div className="bg-neutral-50 rounded-2xl px-4 py-3 space-y-2">
+      <div className="bg-neutral-50 rounded-card px-4 py-3 space-y-2">
         <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">Macros</p>
         <p className="text-sm font-semibold text-text-primary tabular-nums">
           {macros.kcal.toLocaleString()} kcal
@@ -166,7 +166,7 @@ function RecipeDetailBody({ slot, recipe, recipes, foods }: RecipeDetailBodyProp
             return (
               <li
                 key={`${ing.foodId}-${i}`}
-                className="flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-sm text-text-primary hover:bg-neutral-50"
+                className="flex items-center justify-between gap-2 rounded-compact px-2 py-1.5 text-sm text-text-primary hover:bg-neutral-50"
               >
                 <span className="flex-1">
                   {food?.name ?? ing.foodId}
@@ -236,7 +236,7 @@ function MealSwapChooserBody({
                 aria-label={`${recipe.name}, ${kcal} kcal${isSelected ? ', currently selected' : ''}`}
                 aria-pressed={isSelected}
                 onClick={() => onSelect(rid)}
-                className={`w-full text-left rounded-xl px-4 py-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 flex items-center gap-3 ${
+                className={`w-full text-left rounded-control px-4 py-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 flex items-center gap-3 ${
                   isSelected
                     ? 'bg-brand/8 border border-brand/25'
                     : 'bg-neutral-50 border border-neutral-100 hover:border-neutral-200 hover:bg-neutral-100'
@@ -255,7 +255,7 @@ function MealSwapChooserBody({
                 {/* Recipe thumbnail */}
                 <RecipeVisual
                   recipe={recipe}
-                  className="h-10 w-10 rounded-lg shrink-0"
+                  className="h-10 w-10 rounded-compact shrink-0"
                   iconSize={18}
                 />
 
@@ -342,7 +342,7 @@ function SlotCard({ slot, recipes, foods, onViewRecipe, onSelect }: SlotCardProp
   return (
     <>
       <article
-        className="bg-white rounded-2xl border border-neutral-100 overflow-hidden"
+        className="bg-white rounded-card border border-neutral-100 overflow-hidden"
         aria-label={`${roleLabel} meal`}
       >
         <div className="px-4 pt-3 pb-3">
@@ -356,7 +356,7 @@ function SlotCard({ slot, recipes, foods, onViewRecipe, onSelect }: SlotCardProp
                 type="button"
                 aria-label="Swap this meal"
                 onClick={() => setSwapOpen(true)}
-                className="inline-flex items-center gap-1 px-2 py-1 rounded-xl text-caption font-semibold text-text-secondary bg-neutral-100 hover:bg-neutral-200 hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 shrink-0"
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-control text-caption font-semibold text-text-secondary bg-neutral-100 hover:bg-neutral-200 hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 shrink-0"
               >
                 <ArrowLeftRight size={11} aria-hidden="true" />
                 Swap
@@ -369,7 +369,7 @@ function SlotCard({ slot, recipes, foods, onViewRecipe, onSelect }: SlotCardProp
               {/* Thumbnail — effective recipe photo or meal icon */}
               <RecipeVisual
                 recipe={displayRecipe}
-                className="h-12 w-12 rounded-lg shrink-0"
+                className="h-12 w-12 rounded-compact shrink-0"
                 iconSize={20}
               />
               {/* Name, macros, cook info */}
@@ -493,7 +493,7 @@ function ShoppingListBody({ groups }: ShoppingListBodyProps) {
             {group.items.map((item) => (
               <li
                 key={item.foodId}
-                className="flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-sm text-text-primary hover:bg-neutral-50"
+                className="flex items-center justify-between gap-2 rounded-compact px-2 py-1.5 text-sm text-text-primary hover:bg-neutral-50"
               >
                 <span>{item.name}</span>
                 <span className="shrink-0 tabular-nums text-text-secondary">{item.grams} g</span>
@@ -526,7 +526,7 @@ function GoalHero({ primaryGoal, goalTarget, maintenanceCalories }: GoalHeroProp
     : `+${absDelta.toLocaleString()} kcal/day vs maintenance`;
 
   return (
-    <div className="px-5 py-5 border-b border-neutral-50 rounded-md">
+    <div className="px-5 py-5 border-b border-neutral-50 rounded-field">
       {/* Eyebrow: goal label */}
       <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-1">
         {primaryGoal}
@@ -581,7 +581,7 @@ export function ClientNutrition() {
             My nutrition
           </h1>
         </header>
-        <div className="bg-white rounded-3xl border border-neutral-100 p-10 text-center">
+        <div className="bg-white rounded-panel border border-neutral-100 p-10 text-center">
           <div className="w-16 h-16 rounded-full bg-neutral-100 flex items-center justify-center mx-auto mb-4">
             <UtensilsIcon size={28} className="text-text-secondary" aria-hidden="true" />
           </div>
@@ -635,7 +635,7 @@ export function ClientNutrition() {
           <DialogTrigger asChild>
             <button
               type="button"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-neutral-200 text-sm font-semibold text-text-primary hover:bg-neutral-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 shrink-0"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-control bg-white border border-neutral-200 text-sm font-semibold text-text-primary hover:bg-neutral-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 shrink-0"
               aria-label="Open shopping list for this meal block"
             >
               <ShoppingCart size={16} aria-hidden="true" />
@@ -674,7 +674,7 @@ export function ClientNutrition() {
                   onClick={() => setSelectedDate(day.date)}
                   aria-label={`${format(parseISO(day.date), 'EEEE, MMMM d')}${day.phase ? `, ${PHASE_LABEL[day.phase]} phase` : ''}${isToday ? ', today' : ''}`}
                   aria-pressed={isSelected}
-                  className={`flex flex-col items-center gap-1 rounded-2xl px-3 py-2.5 min-w-[56px] text-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${
+                  className={`flex flex-col items-center gap-1 rounded-card px-3 py-2.5 min-w-[56px] text-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${
                     isSelected
                       ? 'bg-brand text-white shadow-md'
                       : isToday
@@ -711,10 +711,10 @@ export function ClientNutrition() {
       {/* Selected day card */}
       {selectedDay && (
         <section aria-label={`Meals for ${format(parseISO(selectedDay.date), 'EEEE, MMMM d')}`}>
-          <div className="bg-white rounded-3xl border border-neutral-100 overflow-hidden shadow-[0_2px_12px_rgb(0,0,0,0.03)]">
+          <div className="bg-white rounded-panel border border-neutral-100 overflow-hidden shadow-[0_2px_12px_rgb(0,0,0,0.03)]">
             {/* Day header */}
             <div
-              className="px-5 py-4 border-b border-neutral-50 rounded-md"
+              className="px-5 py-4 border-b border-neutral-50 rounded-field"
               style={
                 selectedDay.phase
                   ? {
@@ -762,7 +762,7 @@ export function ClientNutrition() {
 
             {/* Day macro meter */}
             {dayTotals && (
-              <div className="px-5 py-4 border-b border-neutral-50 rounded-md space-y-3">
+              <div className="px-5 py-4 border-b border-neutral-50 rounded-field space-y-3">
                 <h3 className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">
                   Daily totals
                 </h3>

@@ -101,9 +101,9 @@ export function NutritionPlanBuilderPage() {
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-surface-subtle">
-      <header className="flex h-14 shrink-0 items-center gap-3 border-b border-border rounded-md bg-card px-4 lg:px-6">
+      <header className="flex h-14 shrink-0 items-center gap-3 border-b border-border rounded-field bg-card px-4 lg:px-6">
         <button onClick={() => navigate('/coach/nutrition')} aria-label="Back to Nutrition"
-          className="rounded-xl p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+          className="rounded-control p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
           <ArrowLeft size={20} />
         </button>
         <h1 className="font-serif text-lg text-foreground">{profile ? fullName(profile) : 'Client'} · Nutrition plan</h1>
@@ -114,7 +114,7 @@ export function NutritionPlanBuilderPage() {
               aria-label="View plan block"
               value={viewedBlock?.id ?? ''}
               onChange={(e) => setViewBlockId(e.target.value === block?.id ? null : e.target.value)}
-              className="rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="rounded-field border border-border bg-background px-2 py-1 text-xs text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               {block && <option value={block.id}>Current · {blockRange(block)}</option>}
               {pastBlocks.map((b) => (
@@ -184,7 +184,7 @@ export function NutritionPlanBuilderPage() {
                     <div
                       role="group"
                       aria-label="Select week"
-                      className="inline-flex rounded-lg border border-border bg-muted/40 p-0.5"
+                      className="inline-flex rounded-compact border border-border bg-muted/40 p-0.5"
                     >
                       {[0, 1].map((w) => (
                         <button
@@ -192,7 +192,7 @@ export function NutritionPlanBuilderPage() {
                           type="button"
                           aria-pressed={week === w}
                           onClick={() => setWeek(w)}
-                          className={`rounded-md px-4 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                          className={`rounded-field px-4 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                             week === w ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
                           }`}
                         >
@@ -242,7 +242,7 @@ function PastReviewBanner({ review }: { review: BlockReview }) {
   return (
     <section
       aria-label="Block review"
-      className="rounded-xl border border-border bg-muted/30 p-4"
+      className="rounded-control border border-border bg-muted/30 p-4"
     >
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
         <div>
@@ -299,7 +299,7 @@ function PlanSummary({ block, plan, recipes, foods }: PlanSummaryProps) {
   const orderedPhases = (Object.keys(PHASE_LABEL) as CyclePhase[]).filter((p) => phaseCounts.has(p));
 
   return (
-    <section aria-label="Plan summary" className="rounded-xl border border-border bg-card p-4">
+    <section aria-label="Plan summary" className="rounded-control border border-border bg-card p-4">
       <p className="mb-3 text-caption font-semibold uppercase tracking-wide text-muted-foreground">
         Plan · {range} · {n} days
       </p>
@@ -397,7 +397,7 @@ function PhaseTargetsBar({ plan, clientId, onCommit }: PhaseTargetsBarProps) {
   };
 
   return (
-    <div className="shrink-0 border-b border-border rounded-md bg-card px-4 py-3 lg:px-6" role="group" aria-label="Per-phase calorie targets">
+    <div className="shrink-0 border-b border-border rounded-field bg-card px-4 py-3 lg:px-6" role="group" aria-label="Per-phase calorie targets">
       <div className="mb-2.5 flex items-center justify-between gap-3">
         <p className="text-caption font-semibold uppercase tracking-wide text-muted-foreground">Phase targets</p>
         <div className="flex items-center gap-3">
@@ -435,7 +435,7 @@ function PhaseTargetsBar({ plan, clientId, onCommit }: PhaseTargetsBarProps) {
       >
         <ul className="m-0 list-none space-y-2 p-0">
           {changes.map(({ phase, from, to }) => (
-            <li key={phase} className="flex items-center justify-between gap-3 rounded-lg bg-muted/50 px-3.5 py-2.5 text-sm">
+            <li key={phase} className="flex items-center justify-between gap-3 rounded-compact bg-muted/50 px-3.5 py-2.5 text-sm">
               <span className="inline-flex items-center gap-2 font-medium text-foreground">
                 <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: PHASE_VAR[phase] }} aria-hidden="true" />
                 {PHASE_LABEL[phase]}
@@ -486,7 +486,7 @@ function PhaseTargetField({ phase, value, defaultKcal, onChange, onReset }: Phas
           value={value}
           aria-label={`${PHASE_LABEL[phase]} calorie target`}
           onChange={(e) => onChange(e.target.value)}
-          className="w-16 rounded-md border border-border bg-background px-2 py-0.5 text-xs tabular-nums text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="w-16 rounded-field border border-border bg-background px-2 py-0.5 text-xs tabular-nums text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         />
         <span className="text-caption text-muted-foreground">kcal</span>
         {isOverride && (
@@ -543,7 +543,7 @@ function ShoppingListBody({ groups, categoryAs = 'h3', emptyLabel }: ShoppingLis
           </div>
           <ul className="space-y-1 list-none p-0 m-0">
             {group.items.map((item) => (
-              <li key={item.foodId} className="flex items-center justify-between gap-2 rounded-md px-2 py-1.5 text-sm text-foreground hover:bg-muted">
+              <li key={item.foodId} className="flex items-center justify-between gap-2 rounded-field px-2 py-1.5 text-sm text-foreground hover:bg-muted">
                 <span>{item.name}</span>
                 <span className="shrink-0 tabular-nums text-muted-foreground">{item.grams} g</span>
               </li>
@@ -575,7 +575,7 @@ function ShoppingListView({ block, recipes, foods }: ShoppingListViewProps) {
       <div
         role="group"
         aria-label="Shopping list view"
-        className="inline-flex rounded-lg border border-border bg-muted/40 p-0.5"
+        className="inline-flex rounded-compact border border-border bg-muted/40 p-0.5"
       >
         {([['block', 'Two-week block'], ['week', 'By week']] as const).map(([value, label]) => (
           <button
@@ -583,7 +583,7 @@ function ShoppingListView({ block, recipes, foods }: ShoppingListViewProps) {
             type="button"
             aria-pressed={mode === value}
             onClick={() => setMode(value)}
-            className={`rounded-md px-3 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+            className={`rounded-field px-3 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
               mode === value ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
             }`}
           >
@@ -601,7 +601,7 @@ function ShoppingListView({ block, recipes, foods }: ShoppingListViewProps) {
             if (weekDays.length === 0) return null;
             return (
               <section key={w} aria-label={`Week ${w + 1}, ${rangeOf(weekDays)}`} className="space-y-3">
-                <h3 className="flex items-baseline gap-2 px-3 border-b border-border rounded-md pb-2 text-sm font-semibold text-foreground">
+                <h3 className="flex items-baseline gap-2 px-3 border-b border-border rounded-field pb-2 text-sm font-semibold text-foreground">
                   Week {w + 1}
                   <span className="text-caption font-normal text-muted-foreground">{rangeOf(weekDays)}</span>
                 </h3>
@@ -633,7 +633,7 @@ function BlockReviewPanel({ review, onCarryOver, onStartNew }: BlockReviewPanelP
   return (
     <section
       aria-label="Block review"
-      className="mx-auto mb-6 max-w-lg rounded-2xl border border-border bg-card p-6"
+      className="mx-auto mb-6 max-w-lg rounded-card border border-border bg-card p-6"
     >
       <div className="flex items-center gap-2 mb-4">
         <CheckCircle2 size={18} className="text-success shrink-0" aria-hidden="true" />
@@ -641,18 +641,18 @@ function BlockReviewPanel({ review, onCarryOver, onStartNew }: BlockReviewPanelP
       </div>
 
       <dl className="grid grid-cols-2 gap-4 mb-4">
-        <div className="rounded-xl border border-border bg-surface-subtle px-4 py-3">
+        <div className="rounded-control border border-border bg-surface-subtle px-4 py-3">
           <dt className="text-caption font-medium uppercase tracking-wide text-muted-foreground mb-1">Adherence</dt>
           <dd className="text-2xl font-semibold text-success">{review.adherencePct}%</dd>
         </div>
-        <div className="rounded-xl border border-border bg-surface-subtle px-4 py-3">
+        <div className="rounded-control border border-border bg-surface-subtle px-4 py-3">
           <dt className="text-caption font-medium uppercase tracking-wide text-muted-foreground mb-1">Swaps used</dt>
           <dd className="text-2xl font-semibold text-foreground">{review.swapsUsed}</dd>
         </div>
       </dl>
 
       {review.clientFeedbackNote && (
-        <blockquote className="mb-5 rounded-xl border border-border bg-surface-subtle px-4 py-3">
+        <blockquote className="mb-5 rounded-control border border-border bg-surface-subtle px-4 py-3">
           <p className="text-caption font-medium uppercase tracking-wide text-muted-foreground mb-1">Client feedback</p>
           <p className="text-sm text-foreground">{review.clientFeedbackNote}</p>
         </blockquote>
@@ -708,13 +708,13 @@ function DayOverviewCell({ day, plan, recipes, foods, clientId, editable, classN
   ].map((m) => ({ ...m, pct: m.target > 0 ? Math.min(1, m.value / m.target) : 0 }));
 
   const summary = `${format(parseISO(day.date), 'EEEE, MMM d')}${day.phase ? ' — ' + PHASE_LABEL[day.phase] : ''}, ${filledCount} of ${totalSlots} meals set, ${totals.kcal} of ${target.kcal} kcal`;
-  const baseClass = `flex w-full flex-col rounded-xl border border-border bg-card text-left ${className ?? ''}`;
+  const baseClass = `flex w-full flex-col rounded-control border border-border bg-card text-left ${className ?? ''}`;
 
   const content = (
     <>
       {/* Date + phase accent */}
       <div
-        className="flex items-center justify-between gap-1 rounded-t-xl px-3 py-2"
+        className="flex items-center justify-between gap-1 rounded-t-control px-3 py-2"
         style={
           day.phase
             ? {
@@ -742,7 +742,7 @@ function DayOverviewCell({ day, plan, recipes, foods, clientId, editable, classN
       </div>
 
       {/* Calorie meter */}
-      <div className="border-b border-border/60 rounded-md px-3 pb-2.5 pt-2.5">
+      <div className="border-b border-border/60 rounded-field px-3 pb-2.5 pt-2.5">
         <div className="mb-1 flex items-baseline justify-between">
           <span className={`text-xs font-semibold tabular-nums ${over ? 'text-destructive' : 'text-foreground'}`}>
             {totals.kcal} / {target.kcal}
@@ -766,7 +766,7 @@ function DayOverviewCell({ day, plan, recipes, foods, clientId, editable, classN
       </div>
 
       {/* Per-day macros — protein / carb / fat vs target */}
-      <div className="grid grid-cols-3 gap-3 border-b border-border/60 rounded-md px-3 pb-2.5 pt-2.5">
+      <div className="grid grid-cols-3 gap-3 border-b border-border/60 rounded-field px-3 pb-2.5 pt-2.5">
         {macros.map((m) => (
           <div key={m.key} className="min-w-0">
             <div className="mb-1 flex items-center justify-between gap-1">
@@ -799,7 +799,7 @@ function DayOverviewCell({ day, plan, recipes, foods, clientId, editable, classN
             const kcal = slotMacros(slot, recipes, foods).kcal;
             return (
               <li key={slot.id} className="flex items-center gap-2.5">
-                <RecipeVisual recipe={recipe} className="h-8 w-8 shrink-0 rounded-lg" iconSize={16} />
+                <RecipeVisual recipe={recipe} className="h-8 w-8 shrink-0 rounded-compact" iconSize={16} />
                 <span className="min-w-0 flex-1 truncate text-sm text-foreground">{recipe.name}</span>
                 <span className="shrink-0 text-xs tabular-nums text-muted-foreground">{kcal} kcal</span>
               </li>
@@ -807,7 +807,7 @@ function DayOverviewCell({ day, plan, recipes, foods, clientId, editable, classN
           }
           return (
             <li key={slot.id} className="flex items-center gap-2.5">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-dashed border-border text-muted-foreground">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-compact border border-dashed border-border text-muted-foreground">
                 <Plus size={15} />
               </span>
               <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">{roleLabel} — not set</span>

@@ -8,7 +8,7 @@ function Alert({ className, ...props }: React.ComponentProps<"div">) {
       data-slot="alert"
       role="alert"
       className={cn(
-        "rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-left text-sm font-medium text-destructive",
+        "rounded-control border border-destructive/30 bg-destructive/5 px-4 py-3 text-left text-sm font-medium text-destructive",
         className,
       )}
       {...props}

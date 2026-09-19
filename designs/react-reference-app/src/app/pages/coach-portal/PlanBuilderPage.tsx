@@ -75,13 +75,13 @@ export function PlanBuilderPage() {
         <>
           <button
             onClick={() => handleSave(true)}
-            className="hidden sm:flex px-4 py-2 font-semibold text-text-secondary border border-neutral-200 hover:bg-neutral-50 rounded-xl transition-colors items-center gap-2"
+            className="hidden sm:flex px-4 py-2 font-semibold text-text-secondary border border-neutral-200 hover:bg-neutral-50 rounded-control transition-colors items-center gap-2"
           >
             <FileText size={18} /> <span className="hidden lg:inline">Save Draft</span>
           </button>
           <button
             onClick={() => handleSave(false)}
-            className="px-4 lg:px-5 py-2 bg-text-primary text-white font-semibold rounded-xl hover:bg-neutral-800 transition-colors shadow-md flex items-center gap-2"
+            className="px-4 lg:px-5 py-2 bg-text-primary text-white font-semibold rounded-control hover:bg-neutral-800 transition-colors shadow-md flex items-center gap-2"
           >
             <Save size={18} /> <span className="hidden sm:inline">{isEditing ? 'Save Template' : 'Save Template'}</span>
           </button>

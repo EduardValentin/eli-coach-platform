@@ -182,7 +182,7 @@ export function Book() {
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mt-8 p-4 bg-surface-base rounded-2xl border border-stroke-faint shadow-card"
+                  className="mt-8 p-4 bg-surface-base rounded-card border border-stroke-faint shadow-card"
                 >
                   <div className="flex items-start gap-3">
                     <CalendarIcon className="w-5 h-5 text-brand mt-0.5" aria-hidden="true" />

@@ -33,7 +33,7 @@ export function WorkoutSessionCard({ log, to }: WorkoutSessionCardProps) {
   return (
     <Link
       to={to}
-      className="block bg-card rounded-2xl border border-border p-5 hover:border-foreground/20 hover:shadow-sm transition-all"
+      className="block bg-card rounded-card border border-border p-5 hover:border-foreground/20 hover:shadow-sm transition-all"
     >
       <div className="flex items-start justify-between mb-3">
         <div>

@@ -16,7 +16,7 @@ export function ClientPlansTab() {
         const plan = getPlan(c.id);
         const active = plan?.blocks.find((b) => b.status === 'active');
         return (
-          <li key={c.id} className="rounded-2xl border border-border bg-card p-4">
+          <li key={c.id} className="rounded-card border border-border bg-card p-4">
             <p className="text-sm font-semibold text-foreground">{fullName(c)}</p>
             <p className="mt-1 text-xs text-muted-foreground">
               {active

@@ -18,10 +18,10 @@ import {
 } from './ui/select';
 
 const navButtonClass =
-  'size-8 shrink-0 inline-flex items-center justify-center rounded-xl border border-control-border-soft text-text-primary hover:bg-surface-quiet transition-colors disabled:pointer-events-none disabled:opacity-50';
+  'size-8 shrink-0 inline-flex items-center justify-center rounded-control border border-control-border-soft text-text-primary hover:bg-surface-quiet transition-colors disabled:pointer-events-none disabled:opacity-50';
 
 const monthNavButtonClass =
-  'size-8 bg-transparent p-0 opacity-50 hover:opacity-100 inline-flex items-center justify-center rounded-xl border border-control-border-soft hover:bg-surface-quiet transition-colors absolute z-10 -top-0.5';
+  'size-8 bg-transparent p-0 opacity-50 hover:opacity-100 inline-flex items-center justify-center rounded-control border border-control-border-soft hover:bg-surface-quiet transition-colors absolute z-10 -top-0.5';
 
 const BRAND_CLASSNAMES = {
   months: 'flex flex-col w-full',
@@ -33,11 +33,11 @@ const BRAND_CLASSNAMES = {
   month_grid: 'w-full border-collapse',
   weekdays: 'flex w-full',
   weekday:
-    'text-text-secondary rounded-md flex-1 h-10 font-semibold text-caption uppercase tracking-wider flex items-center justify-center',
+    'text-text-secondary rounded-field flex-1 h-10 font-semibold text-caption uppercase tracking-wider flex items-center justify-center',
   week: 'flex w-full mt-1',
-  day: 'relative p-0 text-center text-sm focus-within:relative focus-within:z-20 flex-1 aria-selected:rounded-xl',
+  day: 'relative p-0 text-center text-sm focus-within:relative focus-within:z-20 flex-1 aria-selected:rounded-control',
   day_button:
-    'w-full aspect-square p-0 font-medium rounded-xl hover:bg-surface-muted transition-colors inline-flex items-center justify-center relative',
+    'w-full aspect-square p-0 font-medium rounded-control hover:bg-surface-muted transition-colors inline-flex items-center justify-center relative',
 };
 
 const BRAND_DAY_MODIFIER_CLASSNAMES: Record<string, string> = {

@@ -28,7 +28,7 @@ function CheckinCard({ checkin, actions }: { checkin: CheckIn; actions?: React.R
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white p-5 rounded-2xl border border-neutral-100/50 shadow-[0_2px_12px_rgb(0,0,0,0.03)] flex items-start gap-4"
+      className="bg-white p-5 rounded-card border border-neutral-100/50 shadow-[0_2px_12px_rgb(0,0,0,0.03)] flex items-start gap-4"
     >
       {avatar ? (
         <img src={avatar} alt={checkin.clientName} className="w-11 h-11 rounded-full object-cover border border-neutral-200 shrink-0" />
@@ -190,14 +190,14 @@ export function CoachCheckins() {
           {isRescheduling ? (
             <button
               onClick={() => handleAcceptReschedule(c)}
-              className="px-4 py-2 bg-text-primary text-white text-xs font-semibold rounded-xl hover:bg-neutral-800 transition-colors"
+              className="px-4 py-2 bg-text-primary text-white text-xs font-semibold rounded-control hover:bg-neutral-800 transition-colors"
             >
               Accept
             </button>
           ) : (
             <button
               onClick={() => handleApprove(c)}
-              className="px-4 py-2 bg-text-primary text-white text-xs font-semibold rounded-xl hover:bg-neutral-800 transition-colors"
+              className="px-4 py-2 bg-text-primary text-white text-xs font-semibold rounded-control hover:bg-neutral-800 transition-colors"
             >
               Approve
             </button>
@@ -205,14 +205,14 @@ export function CoachCheckins() {
           {canReschedule && (
             <button
               onClick={() => openReschedule(c.id)}
-              className="px-4 py-2 bg-white border border-brand/30 text-brand text-xs font-semibold rounded-xl hover:bg-brand/5 transition-colors"
+              className="px-4 py-2 bg-white border border-brand/30 text-brand text-xs font-semibold rounded-control hover:bg-brand/5 transition-colors"
             >
               Reschedule
             </button>
           )}
           <button
             onClick={() => handleDecline(c)}
-            className="px-4 py-2 bg-white border border-neutral-200 text-text-secondary text-xs font-semibold rounded-xl hover:bg-neutral-50 transition-colors"
+            className="px-4 py-2 bg-white border border-neutral-200 text-text-secondary text-xs font-semibold rounded-control hover:bg-neutral-50 transition-colors"
           >
             Decline
           </button>
@@ -229,14 +229,14 @@ export function CoachCheckins() {
       </div>
 
       <Tabs defaultValue="pending" className="w-full">
-        <TabsList className="bg-neutral-100 rounded-2xl p-1 mb-6">
-          <TabsTrigger value="pending" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm px-5 py-2.5 text-sm font-semibold">
+        <TabsList className="bg-neutral-100 rounded-card p-1 mb-6">
+          <TabsTrigger value="pending" className="rounded-control data-[state=active]:bg-white data-[state=active]:shadow-sm px-5 py-2.5 text-sm font-semibold">
             Pending {pending.length > 0 && <span className="ml-1.5 w-5 h-5 rounded-full bg-status-pending text-white text-[10px] font-bold inline-flex items-center justify-center">{pending.length}</span>}
           </TabsTrigger>
-          <TabsTrigger value="upcoming" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm px-5 py-2.5 text-sm font-semibold">
+          <TabsTrigger value="upcoming" className="rounded-control data-[state=active]:bg-white data-[state=active]:shadow-sm px-5 py-2.5 text-sm font-semibold">
             Upcoming {upcoming.length > 0 && <span className="ml-1.5 text-text-secondary">({upcoming.length})</span>}
           </TabsTrigger>
-          <TabsTrigger value="past" className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm px-5 py-2.5 text-sm font-semibold">
+          <TabsTrigger value="past" className="rounded-control data-[state=active]:bg-white data-[state=active]:shadow-sm px-5 py-2.5 text-sm font-semibold">
             Past
           </TabsTrigger>
         </TabsList>

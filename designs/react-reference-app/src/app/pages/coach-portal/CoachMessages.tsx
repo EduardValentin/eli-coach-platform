@@ -174,11 +174,11 @@ export function CoachMessages() {
   );
 
   return (
-    <div className="w-full h-[calc(100vh-6rem)] lg:h-[calc(100vh-8rem)] flex bg-card rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50 overflow-hidden">
+    <div className="w-full h-[calc(100vh-6rem)] lg:h-[calc(100vh-8rem)] flex bg-card rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50 overflow-hidden">
 
       {/* Sidebar */}
       <div className="w-full md:w-80 border-r border-border flex flex-col hidden md:flex shrink-0">
-        <div className="p-6 px-3 border-b border-border rounded-md">
+        <div className="p-6 px-3 border-b border-border rounded-field">
           <h2 className="font-serif text-2xl text-foreground mb-4">Messages</h2>
           <div className="relative">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -187,7 +187,7 @@ export function CoachMessages() {
               placeholder="Search clients..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-muted border border-border rounded-xl text-sm focus:outline-none focus:bg-card transition-all"
+              className="w-full pl-9 pr-4 py-2 bg-muted border border-border rounded-control text-sm focus:outline-none focus:bg-card transition-all"
             />
           </div>
         </div>
@@ -239,7 +239,7 @@ export function CoachMessages() {
         {activeConversation ? (
           <>
             {/* Header */}
-            <div className="h-20 px-6 border-b border-border rounded-md bg-card flex items-center justify-between shrink-0">
+            <div className="h-20 px-6 border-b border-border rounded-field bg-card flex items-center justify-between shrink-0">
               <div className="flex items-center gap-4">
                 {activeConversation.avatar ? (
                   <img src={activeConversation.avatar} alt={activeConversation.name} className="w-10 h-10 rounded-full object-cover border border-border" />
@@ -256,7 +256,7 @@ export function CoachMessages() {
               <div className="flex items-center gap-1 text-muted-foreground">
                 <button
                   onClick={() => { setShowSchedulePicker(!showSchedulePicker); setRescheduleTarget(null); }}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-control transition-all ${
                     showSchedulePicker
                       ? 'bg-brand text-white'
                       : 'bg-brand-soft text-brand hover:bg-brand hover:text-white'
@@ -274,23 +274,23 @@ export function CoachMessages() {
                       <MoreVertical size={18} />
                     </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-52 rounded-xl shadow-lg border-border">
+                  <DropdownMenuContent align="end" className="w-52 rounded-control shadow-lg border-border">
                     <DropdownMenuItem
-                      className="gap-3 rounded-lg cursor-pointer"
+                      className="gap-3 rounded-compact cursor-pointer"
                       onClick={() => { setIsPinned(!isPinned); toast.success(isPinned ? 'Conversation unpinned' : 'Conversation pinned'); }}
                     >
                       <Pin size={15} className={isPinned ? 'text-brand' : ''} />
                       {isPinned ? 'Unpin conversation' : 'Pin conversation'}
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      className="gap-3 rounded-lg cursor-pointer"
+                      className="gap-3 rounded-compact cursor-pointer"
                       onClick={() => { setIsMuted(!isMuted); toast.success(isMuted ? 'Notifications unmuted' : 'Notifications muted'); }}
                     >
                       <BellOff size={15} className={isMuted ? 'text-brand' : ''} />
                       {isMuted ? 'Unmute notifications' : 'Mute notifications'}
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      className="gap-3 rounded-lg cursor-pointer"
+                      className="gap-3 rounded-compact cursor-pointer"
                       onClick={() => toast.success('Conversation flagged for follow-up')}
                     >
                       <Flag size={15} />
@@ -298,14 +298,14 @@ export function CoachMessages() {
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
-                      className="gap-3 rounded-lg cursor-pointer"
+                      className="gap-3 rounded-compact cursor-pointer"
                       onClick={() => toast.success('Conversation archived')}
                     >
                       <Archive size={15} />
                       Archive conversation
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      className="gap-3 rounded-lg cursor-pointer text-red-600 focus:text-red-600"
+                      className="gap-3 rounded-compact cursor-pointer text-red-600 focus:text-red-600"
                       onClick={() => setShowDeleteDialog(true)}
                     >
                       <Trash2 size={15} />
@@ -321,7 +321,7 @@ export function CoachMessages() {
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mx-6 mt-4 px-4 py-3 bg-surface-inverted/5 border border-border rounded-2xl flex items-center gap-3"
+                className="mx-6 mt-4 px-4 py-3 bg-surface-inverted/5 border border-border rounded-card flex items-center gap-3"
               >
                 <CalendarDays size={16} className="text-foreground shrink-0" />
                 <span className="text-sm text-foreground font-medium">
@@ -347,7 +347,7 @@ export function CoachMessages() {
                       animate={{ opacity: 1, y: 0 }}
                       className="flex justify-center"
                     >
-                      <div className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-medium border ${
+                      <div className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-card text-xs font-medium border ${
                         msg.systemType === 'plan-update'
                           ? 'bg-brand-secondary/5 border-brand-secondary/20 text-brand-secondary'
                           : msg.systemType === 'checkin-cancelled'
@@ -381,10 +381,10 @@ export function CoachMessages() {
                         )
                       )}
 
-                      <div className={`p-4 rounded-2xl text-sm ${
+                      <div className={`p-4 rounded-card text-sm ${
                         isCoach
-                          ? 'bg-surface-inverted text-white rounded-br-sm'
-                          : 'bg-card border border-border shadow-sm text-foreground rounded-bl-sm'
+                          ? 'bg-surface-inverted text-white rounded-br-tile'
+                          : 'bg-card border border-border shadow-sm text-foreground rounded-bl-tile'
                       }`}>
                         {msg.text}
                       </div>
@@ -423,10 +423,10 @@ export function CoachMessages() {
             {/* Composer */}
             <div className="bg-card border-t border-border shrink-0">
               <form onSubmit={handleSend} className="flex items-end gap-3 p-4">
-                <button type="button" className="h-[56px] w-[56px] flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors rounded-2xl hover:bg-muted shrink-0">
+                <button type="button" className="h-[56px] w-[56px] flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors rounded-card hover:bg-muted shrink-0">
                   <Paperclip size={22} />
                 </button>
-                <div className="flex-1 min-h-[56px] flex items-center bg-muted rounded-2xl border border-border focus-within:border-brand focus-within:ring-1 focus-within:ring-brand transition-all overflow-hidden">
+                <div className="flex-1 min-h-[56px] flex items-center bg-muted rounded-card border border-border focus-within:border-brand focus-within:ring-1 focus-within:ring-brand transition-all overflow-hidden">
                   <textarea
                     rows={1}
                     value={message}
@@ -444,7 +444,7 @@ export function CoachMessages() {
                 <button
                   type="submit"
                   disabled={!message.trim()}
-                  className="h-[56px] w-[56px] flex items-center justify-center bg-brand text-white rounded-2xl hover:bg-brand-hover transition-colors shrink-0 shadow-md disabled:pointer-events-none disabled:opacity-50"
+                  className="h-[56px] w-[56px] flex items-center justify-center bg-brand text-white rounded-card hover:bg-brand-hover transition-colors shrink-0 shadow-md disabled:pointer-events-none disabled:opacity-50"
                 >
                   <Send size={20} />
                 </button>
@@ -504,7 +504,7 @@ export function CoachMessages() {
 
       {/* Delete Confirmation */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent className="sm:max-w-md rounded-2xl">
+        <AlertDialogContent className="sm:max-w-md rounded-card">
           <AlertDialogHeader>
             <div className="mx-auto mb-2 w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
               <Trash2 size={24} className="text-red-600" />
@@ -517,12 +517,12 @@ export function CoachMessages() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="sm:flex-row gap-3 mt-2">
-            <AlertDialogCancel className="flex-1 rounded-xl border-border text-muted-foreground hover:bg-muted font-semibold">
+            <AlertDialogCancel className="flex-1 rounded-control border-border text-muted-foreground hover:bg-muted font-semibold">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => { setShowDeleteDialog(false); toast.success('Conversation deleted'); }}
-              className="flex-1 rounded-xl bg-red-600 text-white hover:bg-red-700 font-semibold shadow-sm"
+              className="flex-1 rounded-control bg-red-600 text-white hover:bg-red-700 font-semibold shadow-sm"
             >
               Delete
             </AlertDialogAction>

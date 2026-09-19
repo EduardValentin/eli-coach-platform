@@ -30,7 +30,7 @@ export function FilterDropdown({ label, options, selected, onToggle }: FilterDro
         <ul className="flex flex-col gap-0.5">
           {options.map((opt) => (
             <li key={opt.value}>
-              <label className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm cursor-pointer hover:bg-muted">
+              <label className="flex items-center gap-2 rounded-field px-2 py-1.5 text-sm cursor-pointer hover:bg-muted">
                 <Checkbox checked={selected.includes(opt.value)} onCheckedChange={() => onToggle(opt.value)} />
                 {opt.label}
               </label>

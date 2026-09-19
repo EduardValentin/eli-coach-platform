@@ -160,9 +160,9 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+        className="relative w-full max-w-2xl bg-white rounded-card shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
       >
-        <div className="p-6 px-3 border-b border-neutral-100 rounded-md flex items-center justify-between gap-4 shrink-0">
+        <div className="p-6 px-3 border-b border-neutral-100 rounded-field flex items-center justify-between gap-4 shrink-0">
           <h2 id={titleId} className="text-xl font-serif font-bold text-text-primary">
             {exerciseId ? 'Edit Exercise' : 'Create New Exercise'}
           </h2>
@@ -186,7 +186,7 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
                   value={name}
                   onChange={e => setName(e.target.value)}
                   placeholder="e.g. Barbell Back Squat"
-                  className="block w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-brand transition-all"
+                  className="block w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-control focus:outline-none focus:ring-1 focus:ring-brand transition-all"
                 />
               </div>
 
@@ -197,7 +197,7 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
                     <button
                       key={diff}
                       onClick={() => setDifficulty(diff as any)}
-                      className={`flex flex-1 items-center justify-center py-2 text-sm font-medium rounded-xl border transition-all ${
+                      className={`flex flex-1 items-center justify-center py-2 text-sm font-medium rounded-control border transition-all ${
                         difficulty === diff 
                           ? 'bg-text-primary border-text-primary text-white' 
                           : 'bg-white border-neutral-200 text-text-secondary hover:bg-neutral-50'
@@ -231,7 +231,7 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
                   onChange={e => setDescription(e.target.value)}
                   rows={4}
                   placeholder="Keep chest up, drive through heels..."
-                  className="block w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-brand transition-all resize-none"
+                  className="block w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-control focus:outline-none focus:ring-1 focus:ring-brand transition-all resize-none"
                 />
               </div>
 
@@ -259,7 +259,7 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
                     onDrop={handleDrop}
-                    className={`border-2 border-dashed rounded-2xl p-6 text-center transition-all ${
+                    className={`border-2 border-dashed rounded-card p-6 text-center transition-all ${
                       isDragging ? 'border-brand bg-brand/5' : 'border-neutral-200 bg-neutral-50 hover:bg-neutral-100/50'
                     }`}
                   >
@@ -285,13 +285,13 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
                       onClick={() => fileInputRef.current?.click()}
                       aria-invalid={videoError ? true : undefined}
                       aria-describedby="exercise-video-error"
-                      className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-white border border-neutral-200 text-sm font-medium rounded-xl hover:bg-neutral-50 transition-colors shadow-sm"
+                      className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-white border border-neutral-200 text-sm font-medium rounded-control hover:bg-neutral-50 transition-colors shadow-sm"
                     >
                       Browse Files
                     </button>
                   </div>
                 ) : (
-                  <div className="relative rounded-2xl overflow-hidden bg-black aspect-video flex items-center justify-center group">
+                  <div className="relative rounded-card overflow-hidden bg-black aspect-video flex items-center justify-center group">
                     <video src={videoPreview} className="w-full h-full object-cover opacity-80" />
                     <div className="absolute inset-0 flex items-center justify-center">
                       <PlayCircle size={48} className="text-white drop-shadow-md" />
@@ -302,7 +302,7 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
                           setVideoFile(null);
                           setVideoPreview(null);
                         }}
-                        className="p-2 bg-white/10 hover:bg-red-500 text-white rounded-lg backdrop-blur-md transition-colors"
+                        className="p-2 bg-white/10 hover:bg-red-500 text-white rounded-compact backdrop-blur-md transition-colors"
                       >
                         <Trash2 size={16} />
                       </button>
@@ -356,13 +356,13 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
         <div className="p-6 border-t border-neutral-100 bg-neutral-50 flex items-center justify-end gap-3 shrink-0">
           <button 
             onClick={onClose}
-            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 font-semibold text-text-secondary hover:bg-neutral-200 rounded-xl transition-colors"
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 font-semibold text-text-secondary hover:bg-neutral-200 rounded-control transition-colors"
           >
             Cancel
           </button>
           <button 
             onClick={handleSave}
-            className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-brand text-white font-semibold rounded-xl hover:bg-brand-hover transition-colors shadow-md"
+            className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-brand text-white font-semibold rounded-control hover:bg-brand-hover transition-colors shadow-md"
           >
             {exerciseId ? 'Save Changes' : 'Create Exercise'}
           </button>

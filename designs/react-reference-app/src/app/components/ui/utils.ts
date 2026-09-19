@@ -27,6 +27,18 @@ const twMerge = extendTailwindMerge({
         },
       ],
     },
+    theme: {
+      radius: [
+        "checkbox",
+        "tile",
+        "field",
+        "compact",
+        "control",
+        "card",
+        "panel",
+        "phone-frame",
+      ],
+    },
   },
 });
 

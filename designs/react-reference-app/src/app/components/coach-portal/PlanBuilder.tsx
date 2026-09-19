@@ -51,7 +51,7 @@ function CustomDragLayer() {
       className="pointer-events-none fixed left-0 top-0 z-[100]"
       style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }}
     >
-      <div className="inline-flex items-center gap-2 rounded-xl border border-brand bg-card px-3 py-2 shadow-lg">
+      <div className="inline-flex items-center gap-2 rounded-control border border-brand bg-card px-3 py-2 shadow-lg">
         <GripVertical size={14} className="text-muted-foreground" />
         <span className="text-sm font-semibold text-foreground">{label}</span>
       </div>
@@ -102,7 +102,7 @@ function EmptyDropTarget({ onDrop }: { onDrop: (item: any) => void }) {
   return (
     <div
       ref={drop as any}
-      className={`py-16 text-center border-2 border-dashed rounded-2xl mt-4 flex flex-col items-center transition-all duration-200 ${
+      className={`py-16 text-center border-2 border-dashed rounded-card mt-4 flex flex-col items-center transition-all duration-200 ${
         isOver && canDrop
           ? 'border-brand bg-brand/5 text-brand'
           : canDrop
@@ -167,7 +167,7 @@ function LibraryExerciseCard({ ex, onQuickAdd }: { ex: Exercise; onQuickAdd: (ex
   return (
     <div
       ref={drag as any}
-      className={`p-3 bg-card border rounded-xl hover:shadow-md transition-all group flex flex-col cursor-grab active:cursor-grabbing ${
+      className={`p-3 bg-card border rounded-control hover:shadow-md transition-all group flex flex-col cursor-grab active:cursor-grabbing ${
         isDragging
           ? 'opacity-50 ring-2 ring-brand'
           : flashed
@@ -180,7 +180,7 @@ function LibraryExerciseCard({ ex, onQuickAdd }: { ex: Exercise; onQuickAdd: (ex
         <div className="flex items-center gap-1">
           <button
             onClick={handleQuickAdd}
-            className="p-1 rounded-md text-muted-foreground hover:text-brand hover:bg-brand-soft opacity-0 group-hover:opacity-100 transition-all"
+            className="p-1 rounded-field text-muted-foreground hover:text-brand hover:bg-brand-soft opacity-0 group-hover:opacity-100 transition-all"
             title="Add to current day"
           >
             <Plus size={14} />
@@ -236,7 +236,7 @@ function PlanGroupCard({
   return (
     <div
       ref={drop as any}
-      className={`relative rounded-2xl bg-card border transition-colors ${
+      className={`relative rounded-card bg-card border transition-colors ${
         isOver
           ? 'border-brand-secondary shadow-md ring-2 ring-brand-secondary/20 bg-brand-secondary/5'
           : group.isSuperset
@@ -246,7 +246,7 @@ function PlanGroupCard({
     >
       {group.isSuperset && (
         <div
-          className="bg-brand-secondary text-white px-4 py-2 rounded-t-xl flex justify-between items-center text-xs font-bold uppercase tracking-wider cursor-grab active:cursor-grabbing"
+          className="bg-brand-secondary text-white px-4 py-2 rounded-t-control flex justify-between items-center text-xs font-bold uppercase tracking-wider cursor-grab active:cursor-grabbing"
           ref={drag as any}
         >
           <div className="flex items-center gap-2">
@@ -271,7 +271,7 @@ function PlanGroupCard({
           return (
             <div key={pe.id}>
               <div
-                className={`p-4 rounded-xl transition-colors ${
+                className={`p-4 rounded-control transition-colors ${
                   isSelected ? 'bg-brand/5 border border-brand/30' : 'bg-card hover:bg-muted'
                 } ${!group.isSuperset ? 'border border-transparent hover:border-border' : ''}`}
               >
@@ -313,7 +313,7 @@ function PlanGroupCard({
                   <div className="flex items-center gap-1 shrink-0">
                     <button
                       onClick={() => toggleNotes(pe.id)}
-                      className={`p-1.5 rounded-lg transition-colors ${
+                      className={`p-1.5 rounded-compact transition-colors ${
                         hasNotes
                           ? 'text-brand-secondary bg-brand-secondary-soft'
                           : 'text-muted-foreground hover:text-foreground hover:bg-muted'
@@ -329,7 +329,7 @@ function PlanGroupCard({
                     />
                     <button
                       onClick={() => handleRemoveExercise(pe.id)}
-                      className="p-1.5 text-muted-foreground hover:text-red-500 rounded-lg hover:bg-red-50"
+                      className="p-1.5 text-muted-foreground hover:text-red-500 rounded-compact hover:bg-red-50"
                     >
                       <Trash2 size={15} />
                     </button>
@@ -344,7 +344,7 @@ function PlanGroupCard({
                       type="number"
                       value={pe.sets}
                       onChange={(e) => handleUpdateExerciseData(pe.id, 'sets', parseInt(e.target.value))}
-                      className="w-16 p-2 text-sm border border-border rounded-lg text-center focus:outline-none bg-muted"
+                      className="w-16 p-2 text-sm border border-border rounded-compact text-center focus:outline-none bg-muted"
                     />
                   </div>
                   <div className="flex flex-col">
@@ -353,7 +353,7 @@ function PlanGroupCard({
                       type="text"
                       value={pe.reps}
                       onChange={(e) => handleUpdateExerciseData(pe.id, 'reps', e.target.value)}
-                      className="w-24 p-2 text-sm border border-border rounded-lg text-center focus:outline-none bg-muted"
+                      className="w-24 p-2 text-sm border border-border rounded-compact text-center focus:outline-none bg-muted"
                     />
                   </div>
                   <div className="flex flex-col">
@@ -362,7 +362,7 @@ function PlanGroupCard({
                       type="number"
                       value={pe.rir}
                       onChange={(e) => handleUpdateExerciseData(pe.id, 'rir', parseInt(e.target.value))}
-                      className="w-16 p-2 text-sm border border-border rounded-lg text-center focus:outline-none bg-muted"
+                      className="w-16 p-2 text-sm border border-border rounded-compact text-center focus:outline-none bg-muted"
                     />
                   </div>
                   <div className="flex flex-col">
@@ -373,7 +373,7 @@ function PlanGroupCard({
                         value={pe.restSeconds || ''}
                         placeholder="--"
                         onChange={(e) => handleUpdateExerciseData(pe.id, 'restSeconds', parseInt(e.target.value) || undefined)}
-                        className="w-16 p-2 text-sm border border-border rounded-lg text-center focus:outline-none bg-muted"
+                        className="w-16 p-2 text-sm border border-border rounded-compact text-center focus:outline-none bg-muted"
                       />
                       <span className="text-[10px] text-muted-foreground">sec</span>
                     </div>
@@ -395,7 +395,7 @@ function PlanGroupCard({
                       value={pe.notes || ''}
                       onChange={(e) => handleUpdateExerciseData(pe.id, 'notes', e.target.value)}
                       placeholder="Add coaching notes (form cues, tempo, etc.)"
-                      className="w-full mt-2 p-3 text-sm border border-border rounded-xl bg-muted focus:outline-none resize-none min-h-[60px]"
+                      className="w-full mt-2 p-3 text-sm border border-border rounded-control bg-muted focus:outline-none resize-none min-h-[60px]"
                     />
                   </motion.div>
                 )}
@@ -406,8 +406,8 @@ function PlanGroupCard({
       </div>
 
       {isOver && (
-        <div className="absolute inset-0 bg-brand-soft rounded-2xl flex items-center justify-center backdrop-blur-[1px] z-10 pointer-events-none">
-          <div className="bg-card text-brand font-bold px-4 py-2 rounded-xl shadow-lg flex items-center gap-2">
+        <div className="absolute inset-0 bg-brand-soft rounded-card flex items-center justify-center backdrop-blur-[1px] z-10 pointer-events-none">
+          <div className="bg-card text-brand font-bold px-4 py-2 rounded-control shadow-lg flex items-center gap-2">
             <Plus size={18} /> Add to Superset
           </div>
         </div>
@@ -445,7 +445,7 @@ function SwapVariantsPicker({ planExercise, exercises, onUpdate }: {
     <Popover>
       <PopoverTrigger asChild>
         <button
-          className={`relative p-1.5 rounded-lg transition-colors ${
+          className={`relative p-1.5 rounded-compact transition-colors ${
             hasVariants
               ? 'text-brand-secondary bg-brand-secondary-soft'
               : 'text-muted-foreground hover:text-foreground hover:bg-muted'
@@ -461,14 +461,14 @@ function SwapVariantsPicker({ planExercise, exercises, onUpdate }: {
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-64 p-0" align="end">
-        <div className="p-3 px-3 border-b border-border rounded-md">
+        <div className="p-3 px-3 border-b border-border rounded-field">
           <p className="text-xs font-semibold text-muted-foreground mb-2">Swap Variants</p>
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search exercises..."
-            className="w-full text-sm p-2 border border-border rounded-lg focus:outline-none bg-muted"
+            className="w-full text-sm p-2 border border-border rounded-compact focus:outline-none bg-muted"
           />
         </div>
         <div className="max-h-48 overflow-y-auto p-2 space-y-1">
@@ -477,7 +477,7 @@ function SwapVariantsPicker({ planExercise, exercises, onUpdate }: {
             return (
               <label
                 key={ex.id}
-                className={`flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-xs cursor-pointer transition-colors ${
+                className={`flex items-center gap-2.5 w-full px-3 py-2 rounded-compact text-xs cursor-pointer transition-colors ${
                   isSelected ? 'bg-brand-secondary-soft' : 'hover:bg-muted'
                 }`}
               >
@@ -996,18 +996,18 @@ export function PlanBuilder({
       {/* Full-screen takeover -- no coach sidebar */}
       <div className="fixed inset-0 z-50 flex flex-col bg-surface-subtle">
         {/* ── Header ─────────────────────────────────────────────── */}
-        <div className="h-14 px-4 lg:px-6 border-b border-border rounded-md bg-card flex items-center justify-between shrink-0 z-30">
+        <div className="h-14 px-4 lg:px-6 border-b border-border rounded-field bg-card flex items-center justify-between shrink-0 z-30">
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <button
               onClick={onBack}
-              className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-xl transition-colors shrink-0"
+              className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-control transition-colors shrink-0"
             >
               <ArrowLeft size={20} />
             </button>
             {/* Plan structure toggle -- visible on small screens only */}
             <button
               onClick={() => { setLeftDrawerOpen(true); setRightDrawerOpen(false); }}
-              className="xl:hidden p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-xl transition-colors shrink-0"
+              className="xl:hidden p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-control transition-colors shrink-0"
               title="Plan Structure"
             >
               <PanelLeftOpen size={20} />
@@ -1018,7 +1018,7 @@ export function PlanBuilder({
             {/* Exercise library toggle -- visible on small screens only */}
             <button
               onClick={() => { setRightDrawerOpen(true); setLeftDrawerOpen(false); }}
-              className="xl:hidden p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-xl transition-colors"
+              className="xl:hidden p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-control transition-colors"
               title="Exercise Library"
             >
               <Library size={20} />
@@ -1050,14 +1050,14 @@ export function PlanBuilder({
             }`}
           >
             {/* Drawer close button -- small screens only */}
-            <div className="xl:hidden flex items-center justify-between px-4 py-3 border-b border-border rounded-md">
+            <div className="xl:hidden flex items-center justify-between px-4 py-3 border-b border-border rounded-field">
               <span className="font-bold text-sm text-foreground">Plan Structure</span>
-              <button onClick={() => setLeftDrawerOpen(false)} className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg">
+              <button onClick={() => setLeftDrawerOpen(false)} className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-compact">
                 <X size={18} />
               </button>
             </div>
 
-            <div className="p-4 px-3 border-b border-border rounded-md">
+            <div className="p-4 px-3 border-b border-border rounded-field">
               <h2 className="font-bold text-foreground uppercase tracking-wider text-xs">Plan Structure</h2>
               {originalWeekCount > 0 && (
                 <p className="text-[10px] text-muted-foreground mt-1">
@@ -1073,7 +1073,7 @@ export function PlanBuilder({
                 const isNewWeek = originalWeekCount > 0 && wIdx >= originalWeekCount;
 
                 return (
-                  <div key={week.id} className="px-3 border-b border-border rounded-md">
+                  <div key={week.id} className="px-3 border-b border-border rounded-field">
                     <div
                       className={`px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-muted transition-colors group relative ${
                         activeWeekIdx === wIdx ? 'bg-muted' : ''
@@ -1105,7 +1105,7 @@ export function PlanBuilder({
                           <PopoverTrigger asChild>
                             <button
                               onClick={(e) => e.stopPropagation()}
-                              className="p-1.5 rounded-md text-muted-foreground hover:text-brand hover:bg-brand-soft transition-colors"
+                              className="p-1.5 rounded-field text-muted-foreground hover:text-brand hover:bg-brand-soft transition-colors"
                               title="Copy week"
                             >
                               <Copy size={14} />
@@ -1113,7 +1113,7 @@ export function PlanBuilder({
                           </PopoverTrigger>
                           <PopoverContent
                             align="start"
-                            className="w-52 p-2 bg-card border border-border rounded-xl shadow-xl z-50"
+                            className="w-52 p-2 bg-card border border-border rounded-control shadow-xl z-50"
                           >
                             <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider px-2 py-1.5">
                               Copy Week {wIdx + 1} to:
@@ -1125,7 +1125,7 @@ export function PlanBuilder({
                                     <button
                                       key={i}
                                       onClick={() => handleCopyWeek(wIdx, i)}
-                                      className="w-full text-left px-3 py-2 text-sm hover:bg-muted rounded-lg text-foreground"
+                                      className="w-full text-left px-3 py-2 text-sm hover:bg-muted rounded-compact text-foreground"
                                     >
                                       Week {i + 1}
                                     </button>
@@ -1136,7 +1136,7 @@ export function PlanBuilder({
                               <div className="border-t border-border mt-1 pt-1">
                                 <button
                                   onClick={() => handleApplyWeekToAll(wIdx)}
-                                  className="w-full text-left px-3 py-2 text-sm font-semibold text-brand hover:bg-brand/5 rounded-lg"
+                                  className="w-full text-left px-3 py-2 text-sm font-semibold text-brand hover:bg-brand/5 rounded-compact"
                                 >
                                   Apply to All Weeks
                                 </button>
@@ -1152,7 +1152,7 @@ export function PlanBuilder({
                             toggleDeload(wIdx);
                           }}
                           title="Toggle Deload"
-                          className={`p-1.5 rounded-md ${
+                          className={`p-1.5 rounded-field ${
                             week.isDeload
                               ? 'text-blue-600 bg-blue-50'
                               : 'text-muted-foreground hover:bg-muted opacity-0 group-hover:opacity-100'
@@ -1168,7 +1168,7 @@ export function PlanBuilder({
                               e.stopPropagation();
                               setOpenWeekAction(openWeekAction === wIdx ? null : wIdx);
                             }}
-                            className="p-1.5 rounded-md text-muted-foreground hover:bg-muted opacity-0 group-hover:opacity-100"
+                            className="p-1.5 rounded-field text-muted-foreground hover:bg-muted opacity-0 group-hover:opacity-100"
                           >
                             <MoreVertical size={14} />
                           </button>
@@ -1179,10 +1179,10 @@ export function PlanBuilder({
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 exit={{ opacity: 0, scale: 0.95 }}
-                                className="absolute right-0 top-8 w-48 bg-card rounded-xl shadow-xl border border-border py-1 z-50"
+                                className="absolute right-0 top-8 w-48 bg-card rounded-control shadow-xl border border-border py-1 z-50"
                                 onClick={(e) => e.stopPropagation()}
                               >
-                                <div className="px-3 py-2 text-xs font-bold text-muted-foreground uppercase tracking-wider border-b border-border rounded-md">
+                                <div className="px-3 py-2 text-xs font-bold text-muted-foreground uppercase tracking-wider border-b border-border rounded-field">
                                   Swap With...
                                 </div>
                                 <div className="max-h-32 overflow-y-auto">
@@ -1228,7 +1228,7 @@ export function PlanBuilder({
                             <button
                               key={dIdx}
                               onClick={() => setActiveDayIdx(dIdx)}
-                              className={`w-full text-left px-3 py-2 text-sm rounded-lg flex items-center justify-between transition-colors ${
+                              className={`w-full text-left px-3 py-2 text-sm rounded-compact flex items-center justify-between transition-colors ${
                                 isActive
                                   ? 'bg-brand/5 font-semibold text-brand'
                                   : 'text-muted-foreground hover:bg-muted'
@@ -1273,7 +1273,7 @@ export function PlanBuilder({
             <div className="p-4 border-t border-border bg-muted shrink-0 space-y-2">
               <button
                 onClick={handleAddWeek}
-                className="w-full py-2.5 flex items-center justify-center gap-2 bg-card hover:bg-muted text-foreground font-semibold text-sm rounded-xl transition-colors border border-border shadow-sm"
+                className="w-full py-2.5 flex items-center justify-center gap-2 bg-card hover:bg-muted text-foreground font-semibold text-sm rounded-control transition-colors border border-border shadow-sm"
               >
                 <Plus size={16} /> Add Week
               </button>
@@ -1284,7 +1284,7 @@ export function PlanBuilder({
           {/* ── Middle Content: Day Builder ─────────────────────── */}
           <div className="flex-1 flex flex-col bg-surface-page overflow-hidden min-w-0">
             {/* Week overview bar */}
-            <div className="p-4 pb-2 px-3 border-b border-border rounded-md bg-card shrink-0">
+            <div className="p-4 pb-2 px-3 border-b border-border rounded-field bg-card shrink-0">
               {/* Week pills */}
               <div className="flex gap-2 overflow-x-auto pb-3 mb-3">
                 {weeks.map((week, wIdx) => {
@@ -1293,7 +1293,7 @@ export function PlanBuilder({
                     <button
                       key={week.id}
                       onClick={() => setActiveWeekIdx(wIdx)}
-                      className={`shrink-0 flex flex-col items-center gap-1.5 px-3 py-2 rounded-xl border transition-all relative ${
+                      className={`shrink-0 flex flex-col items-center gap-1.5 px-3 py-2 rounded-control border transition-all relative ${
                         activeWeekIdx === wIdx
                           ? 'bg-brand border-brand text-white shadow-md'
                           : 'bg-card border-border text-muted-foreground hover:border-neutral-400'
@@ -1359,7 +1359,7 @@ export function PlanBuilder({
                 {activeWeekHasContent && weeks.length > 1 && (
                   <button
                     onClick={() => handleApplyWeekToAll(activeWeekIdx)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-brand-secondary bg-brand-secondary/5 border border-brand-secondary/20 rounded-xl hover:bg-brand-secondary-soft transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-brand-secondary bg-brand-secondary/5 border border-brand-secondary/20 rounded-control hover:bg-brand-secondary-soft transition-colors"
                   >
                     <Layers size={14} />
                     Apply week to all
@@ -1390,7 +1390,7 @@ export function PlanBuilder({
             {/* Exercise list area */}
             <div className="flex-1 overflow-y-auto relative">
               {activeWeek?.isDeload && (
-                <div className="mx-8 mt-8 bg-blue-50 border border-blue-200 rounded-2xl p-5 flex items-start gap-4 shadow-sm">
+                <div className="mx-8 mt-8 bg-blue-50 border border-blue-200 rounded-card p-5 flex items-start gap-4 shadow-sm">
                   <Info className="text-blue-600 shrink-0 mt-0.5" size={24} />
                   <div>
                     <h4 className="text-blue-800 font-bold text-base uppercase tracking-wider">Deload Week</h4>
@@ -1416,7 +1416,7 @@ export function PlanBuilder({
                       <motion.div
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="bg-card p-4 rounded-xl border border-brand shadow-lg flex items-center justify-between mb-6 sticky top-4 z-20"
+                        className="bg-card p-4 rounded-control border border-brand shadow-lg flex items-center justify-between mb-6 sticky top-4 z-20"
                       >
                         <span className="text-sm font-semibold text-brand">
                           {selectedForSuperset.length} exercises selected
@@ -1424,13 +1424,13 @@ export function PlanBuilder({
                         <div className="flex gap-3">
                           <button
                             onClick={() => setSelectedForSuperset([])}
-                            className="px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-muted rounded-xl transition-colors"
+                            className="px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-muted rounded-control transition-colors"
                           >
                             Cancel
                           </button>
                           <button
                             onClick={handleGroupSuperset}
-                            className="px-4 py-2 text-sm font-semibold bg-brand text-white rounded-xl shadow-sm hover:bg-brand-hover transition-colors"
+                            className="px-4 py-2 text-sm font-semibold bg-brand text-white rounded-control shadow-sm hover:bg-brand-hover transition-colors"
                           >
                             Create Superset
                           </button>
@@ -1490,10 +1490,10 @@ export function PlanBuilder({
                 : 'fixed inset-y-0 right-0 z-50 w-80 translate-x-full xl:translate-x-0 xl:relative xl:w-80 xl:shadow-[-4px_0_15px_-3px_rgba(0,0,0,0.05)]'
             }`}
           >
-            <div className="p-4 px-3 border-b border-border rounded-md bg-card">
+            <div className="p-4 px-3 border-b border-border rounded-field bg-card">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-bold text-foreground uppercase tracking-wider text-xs">Exercise Library</h3>
-                <button onClick={() => setRightDrawerOpen(false)} className="xl:hidden p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg">
+                <button onClick={() => setRightDrawerOpen(false)} className="xl:hidden p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-compact">
                   <X size={18} />
                 </button>
               </div>
@@ -1504,7 +1504,7 @@ export function PlanBuilder({
                   placeholder="Search exercises..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2.5 bg-muted border border-border rounded-xl text-sm focus:outline-none focus:bg-card transition-colors"
+                  className="w-full pl-9 pr-3 py-2.5 bg-muted border border-border rounded-control text-sm focus:outline-none focus:bg-card transition-colors"
                 />
               </div>
 
@@ -1513,7 +1513,7 @@ export function PlanBuilder({
                   ref={filterTriggerRef}
                   onClick={() => setIsFilterOpen(!isFilterOpen)}
                   aria-expanded={isFilterOpen}
-                  className="w-full flex items-center justify-between px-3 py-2 bg-muted border border-border rounded-xl text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
+                  className="w-full flex items-center justify-between px-3 py-2 bg-muted border border-border rounded-control text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
                 >
                   <div className="flex items-center gap-2">
                     <Filter size={16} />
@@ -1528,7 +1528,7 @@ export function PlanBuilder({
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
-                      className="absolute top-full left-0 right-0 mt-2 bg-card border border-border shadow-xl rounded-xl p-3 z-50"
+                      className="absolute top-full left-0 right-0 mt-2 bg-card border border-border shadow-xl rounded-control p-3 z-50"
                     >
                       <ExerciseFilters
                         activeFilters={activeFilters}

@@ -194,7 +194,7 @@ const MIN_DAILY_CALORIES = FIELD_RANGES.dailyCalories.min;
 const EMAIL_SHAPE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const inputClass =
-  'w-full px-3 border-b border-border rounded-md py-3 focus:outline-none transition-colors text-sm';
+  'w-full px-3 border-b border-border rounded-field py-3 focus:outline-none transition-colors text-sm';
 // The unit rides at the right-hand end of the same underline every other field
 // in the app uses, rather than in a box of its own.
 const unitSuffixClass =
@@ -202,7 +202,7 @@ const unitSuffixClass =
 const labelClass =
   'text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2 block';
 const areaClass =
-  'w-full border border-border rounded-xl p-4 focus:outline-none transition-colors text-sm resize-none';
+  'w-full border border-border rounded-control p-4 focus:outline-none transition-colors text-sm resize-none';
 
 function Field({
   id,
@@ -655,7 +655,7 @@ export function OnboardClient() {
   if (sentSummary) {
     return (
       <div className="w-full max-w-3xl mx-auto pb-12">
-        <div className="bg-card p-8 lg:p-10 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50 flex flex-col items-center text-center">
+        <div className="bg-card p-8 lg:p-10 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50 flex flex-col items-center text-center">
           <div className="w-20 h-20 bg-success-soft text-success rounded-full flex items-center justify-center mb-6">
             <Check size={32} strokeWidth={3} aria-hidden="true" />
           </div>
@@ -686,7 +686,7 @@ export function OnboardClient() {
                 seededGoalType.current = null;
                 setStep(1);
               }}
-              className="px-8 py-3 bg-brand text-white text-sm font-semibold rounded-xl hover:bg-brand-hover transition-colors shadow-md"
+              className="px-8 py-3 bg-brand text-white text-sm font-semibold rounded-control hover:bg-brand-hover transition-colors shadow-md"
             >
               Onboard another client
             </button>
@@ -730,7 +730,7 @@ export function OnboardClient() {
         </div>
       </div>
 
-      <div className="bg-card p-8 lg:p-10 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50 min-h-[400px] flex flex-col">
+      <div className="bg-card p-8 lg:p-10 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50 min-h-[400px] flex flex-col">
         <AnimatePresence mode="wait">
           <motion.section
             key={step}
@@ -1199,7 +1199,7 @@ export function OnboardClient() {
                   />
                 </div>
 
-                <section className="rounded-2xl border border-border bg-card p-5 space-y-5">
+                <section className="rounded-card border border-border bg-card p-5 space-y-5">
                   <h3 className="font-serif text-lg text-foreground">
                     Where she is heading
                   </h3>
@@ -1224,7 +1224,7 @@ export function OnboardClient() {
                   />
 
                   {weightDirection && rateCeiling !== null ? (
-                    <div className="rounded-xl bg-muted/40 p-4">
+                    <div className="rounded-control bg-muted/40 p-4">
                       <div className="flex flex-wrap items-baseline justify-between gap-2">
                         {/* A `label` cannot name the slider — Radix puts the
                             role on a span, which `htmlFor` does not reach — so
@@ -1263,7 +1263,7 @@ export function OnboardClient() {
                       </div>
 
                       {rateCaution !== null && rateKgPerWeek > rateCaution && (
-                        <p className="mt-3 flex items-start gap-2 rounded-lg bg-destructive/10 px-3 py-2 text-xs font-medium text-destructive">
+                        <p className="mt-3 flex items-start gap-2 rounded-compact bg-destructive/10 px-3 py-2 text-xs font-medium text-destructive">
                           <TriangleAlert
                             size={14}
                             className="mt-px shrink-0"
@@ -1283,7 +1283,7 @@ export function OnboardClient() {
                       )}
                     </div>
                   ) : (
-                    <p className="rounded-xl bg-muted/40 px-4 py-3 text-xs text-muted-foreground">
+                    <p className="rounded-control bg-muted/40 px-4 py-3 text-xs text-muted-foreground">
                       Set a target weight to choose how fast she gets there.
                     </p>
                   )}
@@ -1295,7 +1295,7 @@ export function OnboardClient() {
                   )}
                 </section>
 
-                <section className="rounded-2xl border border-border bg-card p-5">
+                <section className="rounded-card border border-border bg-card p-5">
                   <div className="mb-4 flex items-baseline justify-between gap-3">
                     <h3 className="font-serif text-lg text-foreground">
                       Macro split
@@ -1497,7 +1497,7 @@ export function OnboardClient() {
                 {sendFailure && (
                   <div
                     role="alert"
-                    className="flex items-start gap-3 rounded-xl border border-destructive/30 bg-destructive/10 p-4"
+                    className="flex items-start gap-3 rounded-control border border-destructive/30 bg-destructive/10 p-4"
                   >
                     <TriangleAlert
                       size={18}
@@ -1533,7 +1533,7 @@ export function OnboardClient() {
           {step < TOTAL_STEPS ? (
             <button
               onClick={goNext}
-              className="px-8 py-3 bg-surface-inverted text-white text-sm font-semibold rounded-xl hover:bg-neutral-800 transition-colors flex items-center gap-2 shadow-md"
+              className="px-8 py-3 bg-surface-inverted text-white text-sm font-semibold rounded-control hover:bg-neutral-800 transition-colors flex items-center gap-2 shadow-md"
             >
               Continue <ChevronRight size={16} aria-hidden="true" />
             </button>
@@ -1541,7 +1541,7 @@ export function OnboardClient() {
             <button
               onClick={send}
               disabled={isSending}
-              className="px-8 py-3 bg-brand text-white text-sm font-semibold rounded-xl hover:bg-brand-hover transition-colors shadow-md disabled:pointer-events-none disabled:opacity-50"
+              className="px-8 py-3 bg-brand text-white text-sm font-semibold rounded-control hover:bg-brand-hover transition-colors shadow-md disabled:pointer-events-none disabled:opacity-50"
             >
               {isSending
                 ? 'Sending…'

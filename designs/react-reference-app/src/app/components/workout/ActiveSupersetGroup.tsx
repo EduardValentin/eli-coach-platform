@@ -53,7 +53,7 @@ export function ActiveSupersetGroup({
     : null;
 
   return (
-    <div className={`border-2 rounded-2xl p-4 space-y-3 transition-colors ${
+    <div className={`border-2 rounded-card p-4 space-y-3 transition-colors ${
       allComplete ? 'border-brand-secondary/30 bg-brand-secondary/[0.02]' : 'border-brand-secondary/20 bg-brand-secondary/5'
     }`}>
       <div className="flex items-center justify-between">

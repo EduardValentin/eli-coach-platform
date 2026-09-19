@@ -26,20 +26,20 @@ interface SidebarContentProps {
 const SidebarContent = ({ setIsMobileMenuOpen, pathname, pendingCheckins = 0, coachAvatarUrl }: SidebarContentProps) => (
   <div className="flex flex-col h-full bg-white text-text-primary border-r border-neutral-100">
     {/* Brand / Profile Area */}
-    <div className="p-6 mb-4 px-3 border-b border-neutral-50 rounded-md flex items-center justify-between">
+    <div className="p-6 mb-4 px-3 border-b border-neutral-50 rounded-field flex items-center justify-between">
       <Link
         to="/coach/profile"
         onClick={() => setIsMobileMenuOpen(false)}
-        className="flex items-center gap-3 min-w-0 rounded-xl hover:opacity-80 transition-opacity"
+        className="flex items-center gap-3 min-w-0 rounded-control hover:opacity-80 transition-opacity"
       >
         {coachAvatarUrl ? (
           <img
             src={coachAvatarUrl}
             alt=""
-            className="w-10 h-10 rounded-xl object-cover shrink-0 shadow-md border border-neutral-100"
+            className="w-10 h-10 rounded-control object-cover shrink-0 shadow-md border border-neutral-100"
           />
         ) : (
-          <div className="w-10 h-10 rounded-xl bg-text-primary text-white flex items-center justify-center shrink-0 shadow-md">
+          <div className="w-10 h-10 rounded-control bg-text-primary text-white flex items-center justify-center shrink-0 shadow-md">
             <Dumbbell size={20} className="transform -rotate-45" />
           </div>
         )}
@@ -62,7 +62,7 @@ const SidebarContent = ({ setIsMobileMenuOpen, pathname, pendingCheckins = 0, co
             key={link.name}
             to={link.href}
             onClick={() => setIsMobileMenuOpen(false)}
-            className={`flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all ${
+            className={`flex items-center gap-4 px-4 py-3.5 rounded-card transition-all ${
               isActive 
                 ? 'bg-text-primary text-white shadow-md' 
                 : 'text-text-secondary hover:bg-neutral-50 hover:text-text-primary'
@@ -93,12 +93,12 @@ export function CoachSidebar() {
   return (
     <>
       {/* Mobile Top Bar */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white text-text-primary border-b border-neutral-100 rounded-md flex items-center justify-between px-6 z-50 shadow-sm">
+      <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white text-text-primary border-b border-neutral-100 rounded-field flex items-center justify-between px-6 z-50 shadow-sm">
         <Link to="/coach/profile" className="flex items-center gap-3 min-w-0 hover:opacity-80 transition-opacity">
           {coachAvatarUrl ? (
-            <img src={coachAvatarUrl} alt="" className="w-8 h-8 rounded-lg object-cover shrink-0 border border-neutral-100" />
+            <img src={coachAvatarUrl} alt="" className="w-8 h-8 rounded-compact object-cover shrink-0 border border-neutral-100" />
           ) : (
-            <div className="w-8 h-8 rounded-lg bg-text-primary text-white flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-compact bg-text-primary text-white flex items-center justify-center shrink-0">
               <Dumbbell size={16} className="transform -rotate-45" />
             </div>
           )}

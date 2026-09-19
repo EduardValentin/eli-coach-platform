@@ -55,7 +55,7 @@ export function ClientWorkoutHistory() {
 
       {/* Most trained muscles */}
       {topMuscles.length > 0 && (
-        <div className="bg-card rounded-2xl border border-border p-5 mb-8">
+        <div className="bg-card rounded-card border border-border p-5 mb-8">
           <div className="flex items-center justify-between gap-3 mb-3">
             <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Most Trained</h2>
             {hasMore && (
@@ -84,7 +84,7 @@ export function ClientWorkoutHistory() {
         title="Most trained muscles"
         description="Frequency of each muscle group across your completed sessions."
       >
-        <div className="px-5 pt-6 pb-4 md:px-8 md:pt-8 border-b border-border rounded-md">
+        <div className="px-5 pt-6 pb-4 md:px-8 md:pt-8 border-b border-border rounded-field">
           <h3 className="text-lg md:text-xl font-semibold text-foreground pr-10">Most trained muscles</h3>
           <p className="text-sm text-muted-foreground mt-1">Times trained across {totalSessions} completed {totalSessions === 1 ? 'session' : 'sessions'}.</p>
         </div>

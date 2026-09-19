@@ -114,7 +114,7 @@ export function RestTimer({ initialSeconds, onComplete, onSkip }: RestTimerProps
         dragElastic={{ top: 0, bottom: 0.6 }}
         onDragEnd={handleDragEnd}
         style={{ y: dragY, opacity: sheetOpacity }}
-        className="fixed inset-x-0 bottom-0 z-50 bg-text-primary/95 backdrop-blur-sm rounded-t-3xl px-6 pt-3 pb-10 flex flex-col items-center gap-4 touch-none"
+        className="fixed inset-x-0 bottom-0 z-50 bg-text-primary/95 backdrop-blur-sm rounded-t-panel px-6 pt-3 pb-10 flex flex-col items-center gap-4 touch-none"
       >
         {/* Drag handle */}
         <div className="w-10 h-1 rounded-full bg-white/25 shrink-0 cursor-grab active:cursor-grabbing" />
@@ -148,25 +148,25 @@ export function RestTimer({ initialSeconds, onComplete, onSkip }: RestTimerProps
         <div className="flex items-center gap-2">
           <button
             onClick={() => handleAdjust(-30)}
-            className="flex items-center gap-1 px-3 py-2 rounded-xl bg-white/10 text-white/70 text-xs font-medium hover:bg-white/15 transition-colors"
+            className="flex items-center gap-1 px-3 py-2 rounded-control bg-white/10 text-white/70 text-xs font-medium hover:bg-white/15 transition-colors"
           >
             <Minus size={12} />30
           </button>
           <button
             onClick={() => handleAdjust(-15)}
-            className="flex items-center gap-1 px-3 py-2 rounded-xl bg-white/10 text-white/70 text-xs font-medium hover:bg-white/15 transition-colors"
+            className="flex items-center gap-1 px-3 py-2 rounded-control bg-white/10 text-white/70 text-xs font-medium hover:bg-white/15 transition-colors"
           >
             <Minus size={12} />15
           </button>
           <button
             onClick={() => handleAdjust(15)}
-            className="flex items-center gap-1 px-3 py-2 rounded-xl bg-white/10 text-white text-xs font-medium hover:bg-white/20 transition-colors"
+            className="flex items-center gap-1 px-3 py-2 rounded-control bg-white/10 text-white text-xs font-medium hover:bg-white/20 transition-colors"
           >
             <Plus size={12} />15
           </button>
           <button
             onClick={() => handleAdjust(30)}
-            className="flex items-center gap-1 px-3 py-2 rounded-xl bg-white/10 text-white text-xs font-medium hover:bg-white/20 transition-colors"
+            className="flex items-center gap-1 px-3 py-2 rounded-control bg-white/10 text-white text-xs font-medium hover:bg-white/20 transition-colors"
           >
             <Plus size={12} />30
           </button>
@@ -176,14 +176,14 @@ export function RestTimer({ initialSeconds, onComplete, onSkip }: RestTimerProps
         <div className="flex items-center gap-3 w-full max-w-xs">
           <button
             onClick={handleRestart}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 lg:py-3 rounded-xl bg-white/10 text-white text-sm lg:text-base font-medium hover:bg-white/20 transition-colors"
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 lg:py-3 rounded-control bg-white/10 text-white text-sm lg:text-base font-medium hover:bg-white/20 transition-colors"
           >
             <RotateCcw size={15} className="lg:size-[18px]" />
             Restart
           </button>
           <button
             onClick={handleSkip}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 lg:py-3 rounded-xl bg-brand text-white text-sm lg:text-base font-semibold hover:bg-brand-hover transition-colors"
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 lg:py-3 rounded-control bg-brand text-white text-sm lg:text-base font-semibold hover:bg-brand-hover transition-colors"
           >
             <SkipForward size={15} className="lg:size-[18px]" />
             Skip

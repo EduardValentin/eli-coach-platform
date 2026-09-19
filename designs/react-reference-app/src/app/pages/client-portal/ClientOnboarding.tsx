@@ -114,7 +114,7 @@ export function ClientOnboarding() {
         </div>
 
         {/* Card */}
-        <div className="bg-white p-8 lg:p-10 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 min-h-[420px] flex flex-col">
+        <div className="bg-white p-8 lg:p-10 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 min-h-[420px] flex flex-col">
           <AnimatePresence mode="wait">
             <motion.div
               key={step}
@@ -144,7 +144,7 @@ export function ClientOnboarding() {
                         type="text"
                         value={formData.firstName}
                         onChange={e => setFormData({ ...formData, firstName: e.target.value })}
-                        className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm"
+                        className="w-full px-3 border-b border-neutral-200 rounded-field py-3 focus:outline-none transition-colors text-sm"
                       />
                     </div>
                     <div>
@@ -155,7 +155,7 @@ export function ClientOnboarding() {
                         type="text"
                         value={formData.lastName}
                         onChange={e => setFormData({ ...formData, lastName: e.target.value })}
-                        className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm"
+                        className="w-full px-3 border-b border-neutral-200 rounded-field py-3 focus:outline-none transition-colors text-sm"
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-6">
@@ -167,7 +167,7 @@ export function ClientOnboarding() {
                           type="number"
                           value={formData.age}
                           onChange={e => setFormData({ ...formData, age: e.target.value })}
-                          className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm"
+                          className="w-full px-3 border-b border-neutral-200 rounded-field py-3 focus:outline-none transition-colors text-sm"
                         />
                       </div>
                       <div>
@@ -177,7 +177,7 @@ export function ClientOnboarding() {
                         <select
                           value={formData.gender}
                           onChange={e => setFormData({ ...formData, gender: e.target.value as Gender })}
-                          className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm bg-transparent"
+                          className="w-full px-3 border-b border-neutral-200 rounded-field py-3 focus:outline-none transition-colors text-sm bg-transparent"
                         >
                           <option value="Female">Female</option>
                           <option value="Male">Male</option>
@@ -213,7 +213,7 @@ export function ClientOnboarding() {
                             type="button"
                             aria-pressed={formData.regularity === opt}
                             onClick={() => setFormData({ ...formData, regularity: opt })}
-                            className={`flex-1 py-3 rounded-xl text-sm font-semibold transition-all ${
+                            className={`flex-1 py-3 rounded-control text-sm font-semibold transition-all ${
                               formData.regularity === opt
                                 ? 'bg-brand text-white shadow-md'
                                 : 'bg-neutral-50 text-text-secondary border border-neutral-100 hover:bg-neutral-100'
@@ -233,7 +233,7 @@ export function ClientOnboarding() {
                           type="number"
                           value={formData.averageCycleLength}
                           onChange={e => setFormData({ ...formData, averageCycleLength: e.target.value })}
-                          className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm"
+                          className="w-full px-3 border-b border-neutral-200 rounded-field py-3 focus:outline-none transition-colors text-sm"
                           placeholder="28"
                         />
                       </div>
@@ -245,7 +245,7 @@ export function ClientOnboarding() {
                           type="number"
                           value={formData.averagePeriodLength}
                           onChange={e => setFormData({ ...formData, averagePeriodLength: e.target.value })}
-                          className="w-full px-3 border-b border-neutral-200 rounded-md py-3 focus:outline-none transition-colors text-sm"
+                          className="w-full px-3 border-b border-neutral-200 rounded-field py-3 focus:outline-none transition-colors text-sm"
                           placeholder="5"
                         />
                       </div>
@@ -398,7 +398,7 @@ export function ClientOnboarding() {
                     value={formData.notes}
                     onChange={e => setFormData({ ...formData, notes: e.target.value })}
                     placeholder="e.g. I experience severe cramps on day 1-2, specific food sensitivities during luteal phase..."
-                    className="w-full border border-neutral-200 rounded-xl p-4 min-h-[150px] focus:outline-none transition-colors text-sm resize-none"
+                    className="w-full border border-neutral-200 rounded-control p-4 min-h-[150px] focus:outline-none transition-colors text-sm resize-none"
                   />
                 </div>
               )}
@@ -419,14 +419,14 @@ export function ClientOnboarding() {
             {step < TOTAL_STEPS ? (
               <button
                 onClick={handleNext}
-                className="px-8 py-3 bg-text-primary text-white text-sm font-semibold rounded-xl hover:bg-neutral-800 transition-colors flex items-center gap-2 shadow-md"
+                className="px-8 py-3 bg-text-primary text-white text-sm font-semibold rounded-control hover:bg-neutral-800 transition-colors flex items-center gap-2 shadow-md"
               >
                 Continue <ChevronRight size={16} />
               </button>
             ) : (
               <button
                 onClick={handleComplete}
-                className="px-8 py-3 bg-brand text-white text-sm font-semibold rounded-xl hover:bg-brand-hover transition-colors shadow-md flex items-center gap-2"
+                className="px-8 py-3 bg-brand text-white text-sm font-semibold rounded-control hover:bg-brand-hover transition-colors shadow-md flex items-center gap-2"
               >
                 <Check size={16} />
                 Complete Setup

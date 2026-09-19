@@ -72,7 +72,7 @@ export function DownloadPage() {
             <ul className="bg-card rounded-card border border-stroke-faint shadow-card divide-y divide-stroke-faint mb-10">
               {GRANTED_RESOURCES.map((resource) => (
                 <li key={resource.title} className="flex items-center gap-4 p-5">
-                  <span className="w-11 h-11 shrink-0 bg-brand-soft text-brand rounded-lg flex items-center justify-center">
+                  <span className="w-11 h-11 shrink-0 bg-brand-soft text-brand rounded-compact flex items-center justify-center">
                     <FileText size={20} aria-hidden="true" />
                   </span>
                   <span className="flex flex-col">

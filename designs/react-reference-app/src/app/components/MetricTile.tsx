@@ -26,7 +26,7 @@ interface MetricTileProps extends VariantProps<typeof iconTone> {
 
 export function MetricTile({ label, suffix, value, hint, icon, tone }: MetricTileProps) {
   return (
-    <div className="bg-card rounded-xl p-4 border border-border">
+    <div className="bg-card rounded-control p-4 border border-border">
       <div className="flex items-center gap-2 mb-2">
         <span className={cn(iconTone({ tone }))} aria-hidden="true">{icon}</span>
         <span className="text-xs uppercase tracking-widest text-muted-foreground font-bold">

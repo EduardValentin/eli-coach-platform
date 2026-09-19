@@ -201,11 +201,11 @@ export function NutritionDayEditorPage() {
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-surface-subtle">
-      <header className="flex h-14 shrink-0 items-center gap-3 border-b border-border rounded-md bg-card px-4 lg:px-6">
+      <header className="flex h-14 shrink-0 items-center gap-3 border-b border-border rounded-field bg-card px-4 lg:px-6">
         <button
           onClick={() => attemptLeave(backUrl)}
           aria-label="Back to plan"
-          className="rounded-xl p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          className="rounded-control p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         >
           <ArrowLeft size={20} />
         </button>
@@ -271,7 +271,7 @@ export function NutritionDayEditorPage() {
                       {overrideDays.map((d) => (
                         <li
                           key={d.date}
-                          className="flex items-start justify-between gap-4 rounded-lg bg-muted/50 px-3.5 py-3"
+                          className="flex items-start justify-between gap-4 rounded-compact bg-muted/50 px-3.5 py-3"
                         >
                           <span className="shrink-0 text-xs font-medium text-foreground">
                             {format(parseISO(d.date), 'EEE, MMM d')}
@@ -291,7 +291,7 @@ export function NutritionDayEditorPage() {
                       {emptyDays.map((d) => (
                         <li
                           key={d.date}
-                          className="flex items-center justify-between gap-4 rounded-lg bg-muted/50 px-3.5 py-3"
+                          className="flex items-center justify-between gap-4 rounded-compact bg-muted/50 px-3.5 py-3"
                         >
                           <span className="text-xs font-medium text-foreground">
                             {format(parseISO(d.date), 'EEE, MMM d')}
@@ -340,7 +340,7 @@ export function NutritionDayEditorPage() {
               {changes.map((c, i) => (
                 <li
                   key={i}
-                  className="flex items-start gap-2.5 rounded-lg bg-muted/50 px-3.5 py-2.5 text-sm text-foreground"
+                  className="flex items-start gap-2.5 rounded-compact bg-muted/50 px-3.5 py-2.5 text-sm text-foreground"
                 >
                   <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-foreground/40" aria-hidden="true" />
                   {c}
@@ -407,14 +407,14 @@ function DayStrip({
   return (
     <nav
       aria-label="Day picker"
-      className="flex shrink-0 items-center justify-center gap-1 border-b border-border rounded-md bg-card px-2 py-1.5 lg:px-4"
+      className="flex shrink-0 items-center justify-center gap-1 border-b border-border rounded-field bg-card px-2 py-1.5 lg:px-4"
     >
       <button
         type="button"
         onClick={() => prev && onSelect(prev.date)}
         disabled={!prev}
         aria-label={prev ? `Previous day, ${format(parseISO(prev.date), 'EEEE, MMM d')}` : 'No previous day'}
-        className="shrink-0 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
+        className="shrink-0 rounded-compact p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
       >
         <ChevronLeft size={18} />
       </button>
@@ -429,7 +429,7 @@ function DayStrip({
                 onClick={() => onSelect(d.date)}
                 aria-current={isCurrent ? 'date' : undefined}
                 aria-label={`${format(parseISO(d.date), 'EEEE, MMM d')}${d.phase ? `, ${PHASE_LABEL[d.phase]}` : ''}`}
-                className={`flex min-w-[2.75rem] flex-col items-center gap-0.5 rounded-lg px-2 py-1 text-center transition-colors ${
+                className={`flex min-w-[2.75rem] flex-col items-center gap-0.5 rounded-compact px-2 py-1 text-center transition-colors ${
                   isCurrent
                     ? 'bg-primary/10 text-primary'
                     : 'text-muted-foreground hover:bg-muted hover:text-foreground'
@@ -457,7 +457,7 @@ function DayStrip({
         onClick={() => next && onSelect(next.date)}
         disabled={!next}
         aria-label={next ? `Next day, ${format(parseISO(next.date), 'EEEE, MMM d')}` : 'No next day'}
-        className="shrink-0 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
+        className="shrink-0 rounded-compact p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
       >
         <ChevronRight size={18} />
       </button>
@@ -501,7 +501,7 @@ function DayEditor({
   return (
     <section
       aria-label={`Day editor — ${format(parseISO(day.date), 'EEEE, MMM d')}`}
-      className="mx-auto max-w-2xl rounded-2xl border border-border bg-card p-5"
+      className="mx-auto max-w-2xl rounded-card border border-border bg-card p-5"
     >
       {/* Day editor header */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -548,7 +548,7 @@ function DayEditor({
       )}
 
       {/* Prominent day macro meter */}
-      <div className="mb-6 rounded-xl border border-border bg-surface-subtle p-4 space-y-3">
+      <div className="mb-6 rounded-control border border-border bg-surface-subtle p-4 space-y-3">
         {/* Calories */}
         <div className="space-y-1">
           <div className="flex items-center justify-between">
@@ -663,7 +663,7 @@ function DayEditorMealRow({
   const hasConflict = conflicts.length > 0;
 
   return (
-    <div className="rounded-xl border border-border bg-card p-4">
+    <div className="rounded-control border border-border bg-card p-4">
       {/* Row header: role + soft budget */}
       <div className="mb-3 flex items-center justify-between gap-2">
         <h2 className="text-sm font-semibold text-foreground">{roleLabel}</h2>
@@ -677,7 +677,7 @@ function DayEditorMealRow({
           <div className="flex gap-3">
             <RecipeVisual
               recipe={recipe}
-              className="h-14 w-14 shrink-0 rounded-lg"
+              className="h-14 w-14 shrink-0 rounded-compact"
               iconSize={22}
             />
             <div className="min-w-0 flex-1">
@@ -705,7 +705,7 @@ function DayEditorMealRow({
               type="button"
               aria-label={`Remove ${recipe.name}`}
               onClick={() => onClear(date, slot.id)}
-              className="shrink-0 self-start rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="shrink-0 self-start rounded-compact p-1.5 text-muted-foreground hover:bg-muted hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <X size={15} aria-hidden="true" />
             </button>
@@ -713,7 +713,7 @@ function DayEditorMealRow({
 
           {/* Preference conflict warning */}
           {hasConflict && (
-            <p className="flex items-center gap-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/30 px-3 py-2 text-xs text-foreground">
+            <p className="flex items-center gap-1.5 rounded-compact bg-amber-50 dark:bg-amber-950/30 px-3 py-2 text-xs text-foreground">
               <AlertTriangle size={13} className="shrink-0 text-amber-600 dark:text-amber-400" aria-hidden="true" />
               Client dislikes: {conflicts.join(', ')}
             </p>
@@ -805,7 +805,7 @@ function DayEditorMealRow({
             type="button"
             aria-label={`Add a meal for ${roleLabel}`}
             onClick={() => setPickerOpen(true)}
-            className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border py-5 text-sm text-muted-foreground transition-colors hover:border-muted-foreground/40 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex w-full items-center justify-center gap-2 rounded-control border-2 border-dashed border-border py-5 text-sm text-muted-foreground transition-colors hover:border-muted-foreground/40 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <Plus size={16} aria-hidden="true" />
             Add a meal
@@ -868,7 +868,7 @@ function IngredientSwaps({ slot, date, recipe, foods, onSetSwap, onClearSwap }: 
         const labelId = `swap-label-${slot.id}-${ing.foodId}`;
         const selectId = `swap-${slot.id}-${ing.foodId}`;
         return (
-          <div key={ing.foodId} className="rounded-md bg-muted/60 px-2 py-1.5 space-y-1">
+          <div key={ing.foodId} className="rounded-field bg-muted/60 px-2 py-1.5 space-y-1">
             <div className="flex items-center justify-between gap-1">
               <label
                 id={labelId}

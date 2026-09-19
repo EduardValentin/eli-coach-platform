@@ -37,7 +37,7 @@ export function WeekSwitcher({ weeks, activeWeekIdx, currentWeekIdx, onChange, m
           onClick={() => onChange(Math.max(0, activeWeekIdx - 1))}
           disabled={prevDisabled}
           aria-label="Previous week"
-          className="inline-flex items-center justify-center size-11 shrink-0 rounded-xl text-text-secondary hover:text-text-primary hover:bg-neutral-100 transition-colors disabled:pointer-events-none disabled:opacity-50"
+          className="inline-flex items-center justify-center size-11 shrink-0 rounded-control text-text-secondary hover:text-text-primary hover:bg-neutral-100 transition-colors disabled:pointer-events-none disabled:opacity-50"
         >
           <ChevronLeft size={20} aria-hidden="true" />
         </button>
@@ -57,7 +57,7 @@ export function WeekSwitcher({ weeks, activeWeekIdx, currentWeekIdx, onChange, m
                 data-week-idx={idx}
                 onClick={() => onChange(idx)}
                 aria-current={isActive ? 'true' : undefined}
-                className={`shrink-0 snap-center min-h-11 px-4 rounded-xl text-sm font-semibold transition-all border ${
+                className={`shrink-0 snap-center min-h-11 px-4 rounded-control text-sm font-semibold transition-all border ${
                   isActive
                     ? 'bg-brand text-white border-brand shadow-sm'
                     : isCurrent
@@ -80,7 +80,7 @@ export function WeekSwitcher({ weeks, activeWeekIdx, currentWeekIdx, onChange, m
           onClick={() => onChange(Math.min(lastIdx, activeWeekIdx + 1))}
           disabled={nextDisabled}
           aria-label="Next week"
-          className="inline-flex items-center justify-center size-11 shrink-0 rounded-xl text-text-secondary hover:text-text-primary hover:bg-neutral-100 transition-colors disabled:pointer-events-none disabled:opacity-50"
+          className="inline-flex items-center justify-center size-11 shrink-0 rounded-control text-text-secondary hover:text-text-primary hover:bg-neutral-100 transition-colors disabled:pointer-events-none disabled:opacity-50"
         >
           <ChevronRight size={20} aria-hidden="true" />
         </button>

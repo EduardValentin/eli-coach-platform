@@ -53,7 +53,7 @@ export function FoodCard({ food, onEdit }: FoodCardProps) {
               { key: 'carb', label: 'C', value: `${food.carb}g`, tile: MACRO_TILE.carb },
               { key: 'fat', label: 'F', value: `${food.fat}g`, tile: MACRO_TILE.fat },
             ].map((m) => (
-              <div key={m.key} className={`rounded-lg px-1.5 py-2 text-center ${m.tile}`}>
+              <div key={m.key} className={`rounded-compact px-1.5 py-2 text-center ${m.tile}`}>
                 <dt className="text-[10px] uppercase tracking-wide text-foreground">{m.label}</dt>
                 <dd className="text-base font-bold text-foreground leading-tight">{m.value}</dd>
               </div>

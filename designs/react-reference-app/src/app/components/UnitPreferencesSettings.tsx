@@ -24,9 +24,9 @@ export function UnitPreferencesSettings({ sampleWeightKg = 66.1, sampleHeightCm 
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       aria-labelledby="units-heading"
-      className="bg-card rounded-3xl border border-border overflow-hidden"
+      className="bg-card rounded-panel border border-border overflow-hidden"
     >
-      <div className="px-5 sm:px-6 py-4 border-b border-border rounded-md">
+      <div className="px-5 sm:px-6 py-4 border-b border-border rounded-field">
         <h2 id="units-heading" className="font-serif text-lg font-semibold text-foreground">Units &amp; Measurements</h2>
       </div>
 
@@ -88,7 +88,7 @@ function SettingRow({
   return (
     <div className="px-5 sm:px-6 py-5 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
       <div className="flex items-start gap-3 flex-1 min-w-0">
-        <span className="w-9 h-9 rounded-xl bg-muted flex items-center justify-center shrink-0 mt-0.5">{icon}</span>
+        <span className="w-9 h-9 rounded-control bg-muted flex items-center justify-center shrink-0 mt-0.5">{icon}</span>
         <div className="min-w-0">
           <p id={labelId} className="font-semibold text-sm text-foreground">{title}</p>
           <p className="text-xs text-muted-foreground mt-0.5">{description}</p>

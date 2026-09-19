@@ -107,7 +107,7 @@ export function TimeSlotButton({ label, isSelected, isBooked = false, onSelect }
       disabled={isBooked}
       aria-pressed={isSelected}
       onClick={onSelect}
-      className={`w-full py-3 px-4 rounded-xl text-sm font-medium transition-all duration-200 border ${
+      className={`w-full py-3 px-4 rounded-control text-sm font-medium transition-all duration-200 border ${
         isBooked
           ? 'bg-surface-base border-brand/30 text-brand pointer-events-none opacity-50'
           : isSelected
@@ -201,7 +201,7 @@ export function DateTimePicker({
               onChange={(e) => onMessageChange?.(e.target.value)}
               placeholder={messagePlaceholder}
               rows={2}
-              className="w-full px-3 py-2.5 text-sm border border-neutral-200 rounded-xl focus:outline-none bg-neutral-50 resize-none"
+              className="w-full px-3 py-2.5 text-sm border border-neutral-200 rounded-control focus:outline-none bg-neutral-50 resize-none"
             />
           </motion.div>
         )

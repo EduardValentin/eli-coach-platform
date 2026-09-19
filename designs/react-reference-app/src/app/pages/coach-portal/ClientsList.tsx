@@ -56,7 +56,7 @@ export function ClientsList() {
         </div>
         <Link 
           to="/coach/onboard"
-          className="px-6 py-3.5 bg-brand text-white text-sm font-semibold rounded-xl hover:bg-brand-hover transition-colors flex items-center justify-center gap-2 shadow-md hover:shadow-lg shrink-0"
+          className="px-6 py-3.5 bg-brand text-white text-sm font-semibold rounded-control hover:bg-brand-hover transition-colors flex items-center justify-center gap-2 shadow-md hover:shadow-lg shrink-0"
         >
           <Plus size={18} strokeWidth={2.5} />
           Onboard New Client
@@ -72,16 +72,16 @@ export function ClientsList() {
             placeholder="Search by name or email..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-11 pr-4 py-3 bg-white border border-neutral-200 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-brand transition-all shadow-sm"
+            className="w-full pl-11 pr-4 py-3 bg-white border border-neutral-200 rounded-control text-sm focus:outline-none focus:ring-1 focus:ring-brand transition-all shadow-sm"
           />
         </div>
 
-        <div className="flex items-center gap-2 bg-white border border-neutral-200 p-1 rounded-xl shadow-sm">
+        <div className="flex items-center gap-2 bg-white border border-neutral-200 p-1 rounded-control shadow-sm">
           {['All', 'Active', 'Inactive'].map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f as 'All' | 'Active' | 'Inactive')}
-              className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${
+              className={`px-4 py-2 text-sm font-semibold rounded-compact transition-colors ${
                 filter === f 
                   ? 'bg-neutral-100 text-text-primary' 
                   : 'text-text-secondary hover:text-text-primary hover:bg-neutral-50'
@@ -97,12 +97,12 @@ export function ClientsList() {
       <motion.div 
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 overflow-hidden"
+        className="bg-white rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 overflow-hidden"
       >
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="px-3 border-b border-neutral-100 rounded-md bg-neutral-50/50">
+              <tr className="px-3 border-b border-neutral-100 rounded-field bg-neutral-50/50">
                 <th className="py-4 px-6 text-[10px] font-bold text-text-secondary uppercase tracking-widest">Client</th>
                 <th className="py-4 px-6 text-[10px] font-bold text-text-secondary uppercase tracking-widest">Status</th>
                 <th className="py-4 px-6 text-[10px] font-bold text-text-secondary uppercase tracking-widest">Bundle / Plan</th>
@@ -116,7 +116,7 @@ export function ClientsList() {
                   const profile = getProfile(client.id);
                   const avatarUrl = profile?.avatarUrl;
                   return (
-                  <tr key={client.id} className="px-3 border-b border-neutral-50 rounded-md hover:bg-neutral-50/50 transition-colors group">
+                  <tr key={client.id} className="px-3 border-b border-neutral-50 rounded-field hover:bg-neutral-50/50 transition-colors group">
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-3">
                         {avatarUrl ? (
@@ -137,7 +137,7 @@ export function ClientsList() {
                       </div>
                     </td>
                     <td className="py-4 px-6">
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest ${
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-field text-[10px] font-bold uppercase tracking-widest ${
                         client.status === 'Active' 
                           ? 'bg-green-50 text-green-700' 
                           : 'bg-neutral-100 text-text-secondary'
@@ -152,7 +152,7 @@ export function ClientsList() {
                         
                         <button 
                           onClick={() => handleRemoveClient(client.id, client.name, client.status)}
-                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-control text-xs font-semibold transition-colors ${
                             client.status === 'Active'
                               ? 'text-red-600 hover:bg-red-50'
                               : 'text-text-secondary hover:bg-neutral-100 hover:text-neutral-900'

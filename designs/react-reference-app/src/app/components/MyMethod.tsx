@@ -24,7 +24,7 @@ function ProgressGraph() {
       onViewportEnter={() => setIsVisible(true)}
       viewport={{ once: true, margin: '-80px' }}
       transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
-      className="group bg-card border border-border rounded-3xl p-6 md:p-8 shadow-xl motion-reduce:transform-none"
+      className="group bg-card border border-border rounded-panel p-6 md:p-8 shadow-xl motion-reduce:transform-none"
       aria-labelledby={titleId}
       aria-describedby={descId}
     >

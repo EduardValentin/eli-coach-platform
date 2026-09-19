@@ -61,10 +61,10 @@ function SwipeableLogEntry({ entry, onRemove }: { entry: PeriodLogEntry & { reco
   }, [x, entry.id, onRemove]);
 
   return (
-    <div className="relative overflow-hidden rounded-2xl">
+    <div className="relative overflow-hidden rounded-card">
       {/* Delete background revealed on swipe */}
       <motion.div
-        className="absolute inset-y-0 right-0 w-24 bg-red-500 flex items-center justify-center rounded-r-2xl"
+        className="absolute inset-y-0 right-0 w-24 bg-red-500 flex items-center justify-center rounded-r-card"
         style={{ opacity: deleteOpacity }}
       >
         <Trash2 size={20} className="text-white" />
@@ -76,7 +76,7 @@ function SwipeableLogEntry({ entry, onRemove }: { entry: PeriodLogEntry & { reco
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        className="flex items-center justify-between p-4 min-h-[60px] rounded-2xl border border-neutral-100 bg-neutral-50/50 relative z-10 bg-white touch-pan-y"
+        className="flex items-center justify-between p-4 min-h-[60px] rounded-card border border-neutral-100 bg-neutral-50/50 relative z-10 bg-white touch-pan-y"
       >
         <div className="flex items-center gap-3 lg:gap-4 min-w-0">
           <div
@@ -216,7 +216,7 @@ export function ClientCycleTracker() {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white p-6 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 mb-8 flex items-center gap-5"
+          className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 mb-8 flex items-center gap-5"
         >
           <div
             className="w-14 h-14 rounded-full flex items-center justify-center shrink-0"
@@ -249,7 +249,7 @@ export function ClientCycleTracker() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white p-6 lg:p-8 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
+          className="bg-white p-6 lg:p-8 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
         >
           <h2 className="font-serif text-lg lg:text-xl text-text-primary font-semibold mb-6">Your Calendar</h2>
           <BrandCalendar
@@ -286,7 +286,7 @@ export function ClientCycleTracker() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
-          className="bg-white p-6 lg:p-8 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 self-start"
+          className="bg-white p-6 lg:p-8 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 self-start"
         >
           {selectedDate ? (
             <div>
@@ -312,7 +312,7 @@ export function ClientCycleTracker() {
                     <button
                       key={opt.value}
                       onClick={() => setFlow(opt.value)}
-                      className={`px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                      className={`px-3 py-2.5 rounded-control text-sm font-semibold transition-all ${
                         flow === opt.value
                           ? 'shadow-md'
                           : 'bg-neutral-50 text-text-secondary hover:bg-neutral-100 border border-neutral-100'
@@ -345,7 +345,7 @@ export function ClientCycleTracker() {
                       type="button"
                       onClick={() => setSymptomsExpanded(expanded => !expanded)}
                       aria-expanded={symptomsExpanded}
-                      className="min-h-10 px-3 rounded-xl text-xs font-semibold text-text-primary bg-white border border-neutral-200 hover:border-brand/40 transition-colors"
+                      className="min-h-10 px-3 rounded-control text-xs font-semibold text-text-primary bg-white border border-neutral-200 hover:border-brand/40 transition-colors"
                     >
                       {symptomsExpanded
                         ? 'Show less'
@@ -364,13 +364,13 @@ export function ClientCycleTracker() {
                   value={notes}
                   onChange={e => setNotes(e.target.value)}
                   placeholder="How are you feeling today?"
-                  className="w-full border border-neutral-200 rounded-xl p-3 min-h-[80px] focus:outline-none transition-colors text-sm resize-none"
+                  className="w-full border border-neutral-200 rounded-control p-3 min-h-[80px] focus:outline-none transition-colors text-sm resize-none"
                 />
               </div>
 
               <button
                 onClick={handleLog}
-                className="w-full py-3 bg-brand text-white text-sm font-semibold rounded-xl hover:bg-brand-hover transition-colors shadow-md flex items-center justify-center gap-2"
+                className="w-full py-3 bg-brand text-white text-sm font-semibold rounded-control hover:bg-brand-hover transition-colors shadow-md flex items-center justify-center gap-2"
               >
                 <Plus size={16} />
                 {existingEntry ? 'Update Log' : 'Log Period'}
@@ -396,7 +396,7 @@ export function ClientCycleTracker() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="mt-8 bg-white p-6 lg:p-8 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
+          className="mt-8 bg-white p-6 lg:p-8 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
         >
           <h2 className="font-serif text-lg lg:text-xl text-text-primary font-semibold mb-4 lg:mb-6">Recent Logs</h2>
           <div className="space-y-3">

@@ -69,7 +69,7 @@ export function ClientProfile() {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white p-6 lg:p-8 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 mb-6 lg:mb-8 flex flex-col sm:flex-row items-center gap-6"
+        className="bg-white p-6 lg:p-8 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 mb-6 lg:mb-8 flex flex-col sm:flex-row items-center gap-6"
       >
         <div className="relative shrink-0">
           {clientProfile.avatarUrl ? (
@@ -100,7 +100,7 @@ export function ClientProfile() {
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="px-4 py-2.5 bg-text-primary text-white text-sm font-semibold rounded-xl hover:bg-neutral-800 transition-colors flex items-center gap-2 shadow-md"
+              className="px-4 py-2.5 bg-text-primary text-white text-sm font-semibold rounded-control hover:bg-neutral-800 transition-colors flex items-center gap-2 shadow-md"
             >
               <Camera size={16} />
               {clientProfile.avatarUrl ? 'Change picture' : 'Upload picture'}
@@ -109,7 +109,7 @@ export function ClientProfile() {
               <button
                 type="button"
                 onClick={handleRemoveAvatar}
-                className="px-4 py-2.5 bg-white border border-neutral-200 text-text-secondary text-sm font-semibold rounded-xl hover:bg-neutral-50 transition-colors flex items-center gap-2"
+                className="px-4 py-2.5 bg-white border border-neutral-200 text-text-secondary text-sm font-semibold rounded-control hover:bg-neutral-50 transition-colors flex items-center gap-2"
               >
                 <Trash2 size={16} />
                 Remove
@@ -124,10 +124,10 @@ export function ClientProfile() {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white p-6 lg:p-8 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
+          className="bg-white p-6 lg:p-8 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
         >
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-2xl bg-brand/10 text-brand flex items-center justify-center">
+            <div className="w-10 h-10 rounded-card bg-brand/10 text-brand flex items-center justify-center">
               <User size={18} strokeWidth={2.5} />
             </div>
             <h2 className="font-serif text-xl text-text-primary font-semibold">About You</h2>
@@ -143,10 +143,10 @@ export function ClientProfile() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="bg-white p-6 lg:p-8 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
+          className="bg-white p-6 lg:p-8 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
         >
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-2xl bg-brand-secondary/10 text-brand-secondary flex items-center justify-center">
+            <div className="w-10 h-10 rounded-card bg-brand-secondary/10 text-brand-secondary flex items-center justify-center">
               <Target size={18} strokeWidth={2.5} />
             </div>
             <h2 className="font-serif text-xl text-text-primary font-semibold">Body & Goals</h2>
@@ -165,10 +165,10 @@ export function ClientProfile() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white p-6 lg:p-8 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
+          className="bg-white p-6 lg:p-8 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
         >
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-2xl bg-metric-energy-soft text-metric-energy flex items-center justify-center">
+            <div className="w-10 h-10 rounded-card bg-metric-energy-soft text-metric-energy flex items-center justify-center">
               <Flame size={18} strokeWidth={2.5} />
             </div>
             <h2 className="font-serif text-xl text-text-primary font-semibold">Nutrition</h2>
@@ -186,10 +186,10 @@ export function ClientProfile() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
-          className="bg-white p-6 lg:p-8 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
+          className="bg-white p-6 lg:p-8 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
         >
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-2xl bg-neutral-100 text-text-secondary flex items-center justify-center">
+            <div className="w-10 h-10 rounded-card bg-neutral-100 text-text-secondary flex items-center justify-center">
               <Utensils size={18} strokeWidth={2.5} />
             </div>
             <h2 className="font-serif text-xl text-text-primary font-semibold">Dietary Restrictions</h2>
@@ -205,10 +205,10 @@ export function ClientProfile() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-white p-6 lg:p-8 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 lg:col-span-2"
+            className="bg-white p-6 lg:p-8 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 lg:col-span-2"
           >
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-2xl bg-cycle-menstrual/10 text-cycle-menstrual flex items-center justify-center">
+              <div className="w-10 h-10 rounded-card bg-cycle-menstrual/10 text-cycle-menstrual flex items-center justify-center">
                 <Droplet size={18} strokeWidth={2.5} />
               </div>
               <h2 className="font-serif text-xl text-text-primary font-semibold">Menstrual Health</h2>
@@ -241,7 +241,7 @@ export function ClientProfile() {
         )}
       </div>
 
-      <div className="mt-8 p-5 rounded-2xl bg-brand/5 border border-brand/10 flex items-start gap-3">
+      <div className="mt-8 p-5 rounded-card bg-brand/5 border border-brand/10 flex items-start gap-3">
         <FileText size={18} className="text-brand mt-0.5 shrink-0" />
         <p className="text-sm text-text-secondary leading-relaxed">
           Something out of date? Message your coach and she&apos;ll update your profile.
@@ -253,7 +253,7 @@ export function ClientProfile() {
 
 function ProfileField({ label, value }: { label: string; value: string }) {
   return (
-    <div className="py-3 px-3 border-b border-neutral-100 rounded-md last:border-b-0 last:pb-0">
+    <div className="py-3 px-3 border-b border-neutral-100 rounded-field last:border-b-0 last:pb-0">
       <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">{label}</p>
       <p className="font-semibold text-sm text-text-primary">{value}</p>
     </div>

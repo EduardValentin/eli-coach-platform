@@ -76,7 +76,7 @@ export function EditCoachProfile() {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-card p-6 lg:p-8 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50 mb-6 lg:mb-8 flex flex-col sm:flex-row items-center gap-6"
+        className="bg-card p-6 lg:p-8 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50 mb-6 lg:mb-8 flex flex-col sm:flex-row items-center gap-6"
       >
         <div className="shrink-0">
           {coachProfile.avatarUrl ? (
@@ -107,7 +107,7 @@ export function EditCoachProfile() {
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="px-4 py-2.5 bg-surface-inverted text-white text-sm font-semibold rounded-xl hover:bg-neutral-800 transition-colors flex items-center gap-2 shadow-md"
+              className="px-4 py-2.5 bg-surface-inverted text-white text-sm font-semibold rounded-control hover:bg-neutral-800 transition-colors flex items-center gap-2 shadow-md"
             >
               <Camera size={16} />
               {coachProfile.avatarUrl ? 'Change picture' : 'Upload picture'}
@@ -116,7 +116,7 @@ export function EditCoachProfile() {
               <button
                 type="button"
                 onClick={handleRemoveAvatar}
-                className="px-4 py-2.5 bg-card border border-border text-muted-foreground text-sm font-semibold rounded-xl hover:bg-muted transition-colors flex items-center gap-2"
+                className="px-4 py-2.5 bg-card border border-border text-muted-foreground text-sm font-semibold rounded-control hover:bg-muted transition-colors flex items-center gap-2"
               >
                 <Trash2 size={16} />
                 Remove
@@ -127,7 +127,7 @@ export function EditCoachProfile() {
       </motion.div>
 
       {/* Details */}
-      <div className="bg-card p-8 lg:p-10 rounded-3xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50 space-y-6">
+      <div className="bg-card p-8 lg:p-10 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50 space-y-6">
         <div>
           <h2 className="font-serif text-2xl text-foreground mb-2">Details</h2>
           <p className="text-sm text-muted-foreground">
@@ -143,7 +143,7 @@ export function EditCoachProfile() {
             type="text"
             value={form.name}
             onChange={e => setForm({ ...form, name: e.target.value })}
-            className="w-full px-3 border-b border-border rounded-md py-3 focus:outline-none transition-colors text-sm"
+            className="w-full px-3 border-b border-border rounded-field py-3 focus:outline-none transition-colors text-sm"
           />
         </div>
 
@@ -156,7 +156,7 @@ export function EditCoachProfile() {
             onChange={e => setForm({ ...form, bio: e.target.value })}
             rows={5}
             placeholder="A short bio that clients can read on your profile."
-            className="w-full border border-border rounded-xl p-4 focus:outline-none transition-colors text-sm resize-none"
+            className="w-full border border-border rounded-control p-4 focus:outline-none transition-colors text-sm resize-none"
           />
         </div>
       </div>
@@ -171,7 +171,7 @@ export function EditCoachProfile() {
         </Link>
         <button
           onClick={handleSave}
-          className="px-8 py-3 bg-brand text-white text-sm font-semibold rounded-xl hover:bg-brand-hover transition-colors shadow-md flex items-center gap-2"
+          className="px-8 py-3 bg-brand text-white text-sm font-semibold rounded-control hover:bg-brand-hover transition-colors shadow-md flex items-center gap-2"
         >
           <Check size={16} />
           Save Changes

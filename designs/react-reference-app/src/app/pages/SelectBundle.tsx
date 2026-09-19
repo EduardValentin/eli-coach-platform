@@ -38,7 +38,7 @@ export function SelectBundle() {
             </div>
             <Link 
               to="/book"
-              className="shrink-0 px-6 py-3 bg-card text-brand font-medium rounded-xl hover:bg-surface-subtle transition-colors flex items-center gap-2"
+              className="shrink-0 px-6 py-3 bg-card text-brand font-medium rounded-control hover:bg-surface-subtle transition-colors flex items-center gap-2"
             >
               <Calendar size={18} />
               Book Assessment

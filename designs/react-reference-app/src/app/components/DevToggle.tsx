@@ -137,7 +137,7 @@ export function DevToggle() {
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="fixed right-4 z-[9999] bg-card p-5 rounded-2xl shadow-2xl border border-control-border-soft w-80 max-w-[calc(100vw-2rem)] bottom-[calc(env(safe-area-inset-bottom)+9rem)] lg:bottom-20"
+            className="fixed right-4 z-[9999] bg-card p-5 rounded-card shadow-2xl border border-control-border-soft w-80 max-w-[calc(100vw-2rem)] bottom-[calc(env(safe-area-inset-bottom)+9rem)] lg:bottom-20"
           >
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-semibold text-lg">Dev Settings</h3>

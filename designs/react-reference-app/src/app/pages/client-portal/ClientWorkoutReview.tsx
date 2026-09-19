@@ -58,7 +58,7 @@ export function ClientWorkoutReview() {
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <h2 className="text-xl font-serif font-bold text-text-primary mb-2">Session Not Found</h2>
         <p className="text-text-secondary text-sm mb-6">This workout session couldn't be found.</p>
-        <button onClick={() => navigate('/portal/history')} className="inline-flex items-center gap-2 px-5 py-2.5 bg-text-primary text-white text-sm font-semibold rounded-xl">
+        <button onClick={() => navigate('/portal/history')} className="inline-flex items-center gap-2 px-5 py-2.5 bg-text-primary text-white text-sm font-semibold rounded-control">
           <ArrowLeft size={16} /> Back to History
         </button>
       </div>
@@ -95,7 +95,7 @@ export function ClientWorkoutReview() {
     <div>
       {/* Header */}
       <div className="flex items-center gap-4 mb-8">
-        <button onClick={() => navigate('/portal/history')} className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-neutral-100 transition-colors">
+        <button onClick={() => navigate('/portal/history')} className="w-9 h-9 flex items-center justify-center rounded-control hover:bg-neutral-100 transition-colors">
           <ArrowLeft size={20} className="text-text-primary" />
         </button>
         <div>
@@ -106,24 +106,24 @@ export function ClientWorkoutReview() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
-        <div className="bg-white rounded-xl p-4 border border-neutral-100">
+        <div className="bg-white rounded-control p-4 border border-neutral-100">
           <div className="flex items-center gap-2 mb-2"><Clock size={16} className="text-text-secondary" /><span className="text-[10px] uppercase tracking-widest text-text-secondary font-bold">Duration</span></div>
           <p className="text-xl font-serif font-bold text-text-primary">{durationMin} min</p>
         </div>
-        <div className="bg-white rounded-xl p-4 border border-neutral-100">
+        <div className="bg-white rounded-control p-4 border border-neutral-100">
           <div className="flex items-center gap-2 mb-2"><Dumbbell size={16} className="text-brand" /><span className="text-[10px] uppercase tracking-widest text-text-secondary font-bold">Volume</span></div>
           <p className="text-xl font-serif font-bold text-text-primary">{formatVolume(workout.totalVolume || 0, weightUnit)}</p>
         </div>
-        <div className="bg-white rounded-xl p-4 border border-neutral-100">
+        <div className="bg-white rounded-control p-4 border border-neutral-100">
           <div className="flex items-center gap-2 mb-2"><TrendingUp size={16} className="text-brand-secondary" /><span className="text-[10px] uppercase tracking-widest text-text-secondary font-bold">Completed</span></div>
           <p className="text-xl font-serif font-bold text-text-primary">{completedSets}/{totalSets}</p>
         </div>
-        <div className="bg-white rounded-xl p-4 border border-neutral-100">
+        <div className="bg-white rounded-control p-4 border border-neutral-100">
           <div className="flex items-center gap-2 mb-2"><Zap size={16} className="text-brand" /><span className="text-[10px] uppercase tracking-widest text-text-secondary font-bold">Density</span></div>
           <p className="text-xl font-serif font-bold text-text-primary">{displayWeightValue(density, weightUnit)}</p>
           <p className="text-[10px] text-text-secondary">{weightUnitLabel(weightUnit)}/min</p>
         </div>
-        <div className="bg-white rounded-xl p-4 border border-neutral-100">
+        <div className="bg-white rounded-control p-4 border border-neutral-100">
           <div className="flex items-center gap-2 mb-2"><Timer size={16} className="text-text-secondary" /><span className="text-[10px] uppercase tracking-widest text-text-secondary font-bold">Day</span></div>
           <p className="text-lg font-serif font-bold text-text-primary">{day ? DAY_NAMES[day.dayOfWeek] : 'N/A'}</p>
         </div>
@@ -132,7 +132,7 @@ export function ClientWorkoutReview() {
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-8">
         {/* Volume per exercise */}
-        <div className="bg-white rounded-2xl border border-neutral-100 p-5">
+        <div className="bg-white rounded-card border border-neutral-100 p-5">
           <h3 className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-4">Volume per Exercise</h3>
           <div className="space-y-3">
             {(() => {
@@ -143,8 +143,8 @@ export function ClientWorkoutReview() {
                     <span className="text-xs font-medium text-text-primary truncate mr-2">{d.name}</span>
                     <span className="text-xs text-text-secondary shrink-0">{formatVolume(d.volume, weightUnit)}</span>
                   </div>
-                  <div className="h-5 bg-neutral-100 rounded-md overflow-hidden">
-                    <div className="h-full bg-brand rounded-md transition-all" style={{ width: `${(d.volume / maxVol) * 100}%` }} />
+                  <div className="h-5 bg-neutral-100 rounded-field overflow-hidden">
+                    <div className="h-full bg-brand rounded-field transition-all" style={{ width: `${(d.volume / maxVol) * 100}%` }} />
                   </div>
                 </div>
               ));
@@ -153,7 +153,7 @@ export function ClientWorkoutReview() {
         </div>
 
         {/* Muscle group split */}
-        <div className="bg-white rounded-2xl border border-neutral-100 p-5">
+        <div className="bg-white rounded-card border border-neutral-100 p-5">
           <h3 className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-4">Muscle Groups</h3>
           {(() => {
             const total = muscleVolumeData.reduce((t, d) => t + d.value, 0) || 1;
@@ -185,7 +185,7 @@ export function ClientWorkoutReview() {
       </div>
 
       {/* Estimated Rep Maxes */}
-      <div className="bg-white rounded-2xl border border-neutral-100 p-4 sm:p-5 mb-8">
+      <div className="bg-white rounded-card border border-neutral-100 p-4 sm:p-5 mb-8">
         <h3 className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-2">Your Estimated Maxes</h3>
         <p className="text-xs text-text-secondary mb-4">Based on your heaviest set this session (Epley formula)</p>
 
@@ -208,7 +208,7 @@ export function ClientWorkoutReview() {
             return (
               <li
                 key={exLog.planExerciseId}
-                className="rounded-xl bg-neutral-50/70 border border-neutral-100 p-3"
+                className="rounded-control bg-neutral-50/70 border border-neutral-100 p-3"
               >
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="min-w-0">
@@ -235,7 +235,7 @@ export function ClientWorkoutReview() {
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="text-[9px] uppercase tracking-widest text-text-secondary font-bold px-3 border-b border-neutral-100 rounded-md">
+              <tr className="text-[9px] uppercase tracking-widest text-text-secondary font-bold px-3 border-b border-neutral-100 rounded-field">
                 <th className="pb-3 pr-4 font-bold">Exercise</th>
                 <th className="pb-3 pr-3 font-bold text-center">Best Set</th>
                 <th className="pb-3 pr-3 font-bold text-center">Est. 1RM</th>
@@ -253,7 +253,7 @@ export function ClientWorkoutReview() {
                 const e1RM = estimateRM(best.weight, best.reps, 1);
                 const e3RM = estimateRM(best.weight, best.reps, 3);
                 return (
-                  <tr key={exLog.planExerciseId} className="px-3 border-b border-neutral-50 rounded-md last:border-0">
+                  <tr key={exLog.planExerciseId} className="px-3 border-b border-neutral-50 rounded-field last:border-0">
                     <td className="py-3 pr-4"><span className="text-sm font-medium text-text-primary">{ex.name}</span></td>
                     <td className="py-3 pr-3 text-center">
                       <span className="text-sm font-semibold text-text-primary">{formatLoad(best.weight, weightUnit)}</span>
@@ -284,7 +284,7 @@ export function ClientWorkoutReview() {
           const planEx = day?.exercises[i];
           if (!ex) return null;
           return (
-            <div key={exLog.planExerciseId} className="bg-white rounded-2xl border border-neutral-100 overflow-hidden">
+            <div key={exLog.planExerciseId} className="bg-white rounded-card border border-neutral-100 overflow-hidden">
               <div className="p-5 pb-3">
                 <div className="flex items-center gap-2">
                   <h3 className="font-semibold text-text-primary">{ex.name}</h3>
@@ -326,7 +326,7 @@ export function ClientWorkoutReview() {
 
       {/* Back */}
       <div className="mt-8">
-        <button onClick={() => navigate('/portal/history')} className="w-full py-3.5 bg-text-primary text-white font-semibold rounded-xl text-sm flex items-center justify-center gap-2">
+        <button onClick={() => navigate('/portal/history')} className="w-full py-3.5 bg-text-primary text-white font-semibold rounded-control text-sm flex items-center justify-center gap-2">
           Back to History <ArrowRight size={16} />
         </button>
       </div>
@@ -346,7 +346,7 @@ function MaxStat({
   valueClassName?: string;
 }) {
   return (
-    <div className="rounded-lg bg-white border border-neutral-100 px-2 py-2 text-center">
+    <div className="rounded-compact bg-white border border-neutral-100 px-2 py-2 text-center">
       <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">{label}</p>
       <p
         className={`text-sm font-bold ${

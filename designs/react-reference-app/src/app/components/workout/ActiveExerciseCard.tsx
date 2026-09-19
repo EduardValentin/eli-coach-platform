@@ -32,7 +32,7 @@ export function ActiveExerciseCard({
   const isComplete = completedSets === totalSets;
 
   return (
-    <div className={`bg-white rounded-2xl border transition-colors ${isComplete ? 'border-brand-secondary/30 bg-brand-secondary/[0.02]' : 'border-neutral-200'}`}>
+    <div className={`bg-white rounded-card border transition-colors ${isComplete ? 'border-brand-secondary/30 bg-brand-secondary/[0.02]' : 'border-neutral-200'}`}>
       {/* Header */}
       <div className="p-4 pb-3">
         <div className="flex items-start gap-3">
@@ -64,7 +64,7 @@ export function ActiveExerciseCard({
               <button
                 onClick={() => onSwapPress(exerciseLogIndex)}
                 aria-label={`Swap ${exercise.name}`}
-                className="w-8 h-8 lg:w-9 lg:h-9 flex items-center justify-center rounded-lg hover:bg-neutral-100 transition-colors"
+                className="w-8 h-8 lg:w-9 lg:h-9 flex items-center justify-center rounded-compact hover:bg-neutral-100 transition-colors"
               >
                 <ArrowLeftRight size={16} className="text-brand-secondary lg:size-5" />
               </button>
@@ -74,7 +74,7 @@ export function ActiveExerciseCard({
               onClick={() => onVideoPress(exercise)}
               aria-label={`${exercise.name} details`}
               title="Exercise details"
-              className="w-8 h-8 lg:w-9 lg:h-9 flex items-center justify-center rounded-lg hover:bg-neutral-100 transition-colors"
+              className="w-8 h-8 lg:w-9 lg:h-9 flex items-center justify-center rounded-compact hover:bg-neutral-100 transition-colors"
             >
               <Info size={16} className="text-brand lg:size-5" />
             </button>
@@ -93,7 +93,7 @@ export function ActiveExerciseCard({
 
         {/* Coach notes */}
         {planExercise.notes && (
-          <div className="mt-3 bg-brand-secondary/5 border-l-2 border-brand-secondary p-2.5 rounded-r-lg">
+          <div className="mt-3 bg-brand-secondary/5 border-l-2 border-brand-secondary p-2.5 rounded-r-compact">
             <p className="text-xs lg:text-sm italic text-text-secondary">{planExercise.notes}</p>
           </div>
         )}
@@ -136,7 +136,7 @@ export function ActiveExerciseCard({
           <button
             type="button"
             onClick={() => onAddSet(exerciseLogIndex)}
-            className="w-full flex items-center justify-center gap-1.5 min-h-11 mt-1 rounded-xl border border-dashed border-neutral-200 text-text-secondary text-xs lg:text-sm font-semibold hover:border-brand/40 hover:text-brand hover:bg-brand/[0.03] transition-colors"
+            className="w-full flex items-center justify-center gap-1.5 min-h-11 mt-1 rounded-control border border-dashed border-neutral-200 text-text-secondary text-xs lg:text-sm font-semibold hover:border-brand/40 hover:text-brand hover:bg-brand/[0.03] transition-colors"
           >
             <Plus size={14} className="lg:size-4" aria-hidden="true" />
             Add set
@@ -195,7 +195,7 @@ function SetRow({ setLog, prescribedReps, rir, weightUnit, exerciseLogIndex, onL
   return (
     <motion.div
       layout
-      className={`flex items-center gap-2 sm:gap-3 p-3 rounded-xl transition-colors ${
+      className={`flex items-center gap-2 sm:gap-3 p-3 rounded-control transition-colors ${
         setLog.completed
           ? isUnder ? 'bg-brand/5' : isOver ? 'bg-brand-secondary/5' : 'bg-neutral-50'
           : 'bg-neutral-50'
@@ -229,7 +229,7 @@ function SetRow({ setLog, prescribedReps, rir, weightUnit, exerciseLogIndex, onL
           value={setLog.completed ? (setLog.actualWeight != null ? displayWeightValue(setLog.actualWeight, weightUnit) : '') : weight}
           onChange={(e) => setWeight(e.target.value)}
           disabled={setLog.completed}
-          className="w-full text-center text-sm lg:text-base font-medium bg-white border border-neutral-200 rounded-lg py-1.5 lg:py-2 px-1 focus:outline-none disabled:opacity-60 disabled:bg-neutral-50"
+          className="w-full text-center text-sm lg:text-base font-medium bg-white border border-neutral-200 rounded-compact py-1.5 lg:py-2 px-1 focus:outline-none disabled:opacity-60 disabled:bg-neutral-50"
         />
       </div>
 
@@ -242,7 +242,7 @@ function SetRow({ setLog, prescribedReps, rir, weightUnit, exerciseLogIndex, onL
           value={setLog.completed ? (setLog.actualReps || '') : reps}
           onChange={(e) => setReps(e.target.value)}
           disabled={setLog.completed}
-          className="w-full text-center text-sm lg:text-base font-medium bg-white border border-neutral-200 rounded-lg py-1.5 lg:py-2 px-1 focus:outline-none disabled:opacity-60 disabled:bg-neutral-50"
+          className="w-full text-center text-sm lg:text-base font-medium bg-white border border-neutral-200 rounded-compact py-1.5 lg:py-2 px-1 focus:outline-none disabled:opacity-60 disabled:bg-neutral-50"
         />
       </div>
 
