@@ -40,7 +40,7 @@ catalog:
   eslint: 9.39.1
   globals: 17.5.0
   happy-dom: 20.11.2
-  isbot: 5.1.39
+  isbot: 5.2.2
   jsdom: 30.0.1
   knip: 6.36.0
   motion: 13.1.0
