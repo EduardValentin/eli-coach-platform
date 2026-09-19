@@ -5,6 +5,8 @@ import {
   MoreHorizontalIcon,
 } from "lucide-react";
 
+import { Slot, Slottable } from "@radix-ui/react-slot";
+
 import { cn } from "./utils";
 import { Button, buttonVariants } from "./button";
 
@@ -39,6 +41,7 @@ function PaginationItem({ ...props }: React.ComponentProps<"li">) {
 
 type PaginationLinkProps = {
   isActive?: boolean;
+  asChild?: boolean;
 } & Pick<React.ComponentProps<typeof Button>, "size"> &
   React.ComponentProps<"a">;
 
@@ -46,10 +49,13 @@ function PaginationLink({
   className,
   isActive,
   size = "icon",
+  asChild = false,
   ...props
 }: PaginationLinkProps) {
+  const Comp = asChild ? Slot : "a";
+
   return (
-    <a
+    <Comp
       aria-current={isActive ? "page" : undefined}
       data-slot="pagination-link"
       data-active={isActive}
@@ -67,6 +73,7 @@ function PaginationLink({
 
 function PaginationPrevious({
   className,
+  children,
   ...props
 }: React.ComponentProps<typeof PaginationLink>) {
   return (
@@ -77,6 +84,7 @@ function PaginationPrevious({
       {...props}
     >
       <ChevronLeftIcon />
+      <Slottable>{children}</Slottable>
       <span className="hidden sm:block">Previous</span>
     </PaginationLink>
   );
@@ -84,6 +92,7 @@ function PaginationPrevious({
 
 function PaginationNext({
   className,
+  children,
   ...props
 }: React.ComponentProps<typeof PaginationLink>) {
   return (
@@ -94,6 +103,7 @@ function PaginationNext({
       {...props}
     >
       <span className="hidden sm:block">Next</span>
+      <Slottable>{children}</Slottable>
       <ChevronRightIcon />
     </PaginationLink>
   );

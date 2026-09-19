@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, useLocation, useNavigationType } from 'react-router';
 import { describe, expect, it } from 'vitest';
@@ -451,34 +451,35 @@ describe('paging a long assessment call list', () => {
     expect(screen.getByText('Showing 1–10 of 23')).toBeInTheDocument();
   });
 
-  it('keeps the step to the previous page inert on the first page', () => {
+  it('shows the step to the previous page as disabled, not a link, on the first page', () => {
     // arrange
     renderSection({ bookings: MANY_UPCOMING });
-    const previous = screen.getByRole('link', { name: 'Go to previous page' });
 
     // act
-    fireEvent.click(previous);
+    const previous = screen.getByRole('button', { name: 'Go to previous page' });
 
     // assert
-    expect(previous).toHaveAttribute('aria-disabled', 'true');
-    expect(screen.getByText('Showing 1–10 of 23')).toBeInTheDocument();
+    expect(previous).toBeDisabled();
+    expect(
+      screen.queryByRole('link', { name: 'Go to previous page' }),
+    ).toBeNull();
     expect(listedNames()[0]).toBe('Visitor 1');
   });
 
-  it('keeps the step to the next page inert on the last page', () => {
+  it('shows the step to the next page as disabled, not a link, on the last page', () => {
     // arrange
     renderSection({ bookings: MANY_UPCOMING, urlQuery: '?page=3' });
-    const next = screen.getByRole('link', { name: 'Go to next page' });
 
     // act
-    fireEvent.click(next);
+    const next = screen.getByRole('button', { name: 'Go to next page' });
 
     // assert
-    expect(next).toHaveAttribute('aria-disabled', 'true');
+    expect(next).toBeDisabled();
+    expect(screen.queryByRole('link', { name: 'Go to next page' })).toBeNull();
     expect(screen.getByText('Showing 21–23 of 23')).toBeInTheDocument();
   });
 
-  it('offers no paging controls when everything fits on one page', () => {
+  it('hides the whole pager footer when everything fits on one page', () => {
     // arrange
     renderSection();
 
@@ -487,6 +488,6 @@ describe('paging a long assessment call list', () => {
 
     // assert
     expect(pager).toBeNull();
-    expect(screen.getByText('Showing 1–2 of 2')).toBeInTheDocument();
+    expect(screen.queryByText(/^Showing /)).toBeNull();
   });
 });

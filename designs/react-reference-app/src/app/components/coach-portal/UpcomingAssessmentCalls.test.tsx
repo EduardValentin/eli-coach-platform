@@ -118,7 +118,7 @@ describe('the upcoming calls widget', () => {
     const row = screen.getByRole('listitem');
 
     // assert
-    expect(within(row).getByText('Mon, Sep 21 at 6:00 PM')).toBeInTheDocument();
+    expect(row).toHaveTextContent('Mon, Sep 21 at 6:00 PM');
     expect(within(row).getByText('Today')).toBeInTheDocument();
     expect(within(row).getByRole('link', { name: 'Join call' })).toHaveAttribute(
       'href',

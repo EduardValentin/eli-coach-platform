@@ -20,7 +20,8 @@ export function DashboardAppointmentRow({
           {badges}
         </div>
         <p className="text-xs text-muted-foreground mt-0.5">
-          {when.date} at {when.time}
+          <span className="whitespace-nowrap">{when.date}</span> at{' '}
+          <span className="whitespace-nowrap">{when.time}</span>
         </p>
       </div>
       {action}

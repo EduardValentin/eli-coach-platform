@@ -148,11 +148,7 @@ export function AssessmentCallsSection({
     else params.set(PAGE_PARAM, String(chosen));
   };
 
-  const choosePage = (chosen: number) => {
-    updateSearchParams((params) => writePage(params, chosen));
-  };
-
-  const hrefForPage = (chosen: number) => {
+  const pathForPage = (chosen: number) => {
     const params = new URLSearchParams(searchParams);
     writePage(params, chosen);
     const search = params.toString();
@@ -208,12 +204,8 @@ export function AssessmentCallsSection({
                 timeZone={timeZone}
               />
 
-              {view.total > 0 && (
-                <CallListPager
-                  view={view}
-                  hrefForPage={hrefForPage}
-                  onPageChange={choosePage}
-                />
+              {view.pageCount > 1 && (
+                <CallListPager view={view} pathForPage={pathForPage} />
               )}
             </TabsContent>
           );

@@ -56,12 +56,12 @@ function AttendeeAvatar({
 
 function AppointmentTimeRow({ when }: { when: AppointmentTime }) {
   return (
-    <div className="flex items-center gap-3 flex-wrap text-sm text-text-secondary">
-      <span className="flex items-center gap-1.5">
+    <div className="flex flex-col gap-1 md:flex-row md:flex-wrap md:items-center md:gap-3 text-sm text-text-secondary">
+      <span className="flex items-center gap-1.5 whitespace-nowrap">
         <CalendarDays aria-hidden="true" size={13} className="shrink-0" />
         {when.date}
       </span>
-      <span className="flex items-center gap-1.5">
+      <span className="flex items-center gap-1.5 whitespace-nowrap">
         <Clock aria-hidden="true" size={13} className="shrink-0" />
         {when.time}
       </span>
