@@ -7,7 +7,11 @@ import {
   type ReservationResult,
   type ReserveAssessmentCallCommand,
 } from "@eli-coach-platform/domain/assessment-call";
-import type { DatabaseClient } from "@eli-coach-platform/db";
+import {
+  isCausedByDatabaseError,
+  type DatabaseClient,
+  type DatabaseTransaction,
+} from "@eli-coach-platform/db";
 import {
   releaseCoachTime,
   reserveCoachTime,
@@ -17,9 +21,6 @@ import { and, eq, gt, sql } from "drizzle-orm";
 import { assessmentCallsTable } from "./schema.server";
 
 type AssessmentCallRow = typeof assessmentCallsTable.$inferSelect;
-type DatabaseTransaction = Parameters<
-  Parameters<DatabaseClient["transaction"]>[0]
->[0];
 
 const UNREADABLE_IDENTIFIER_CODE = "22P02";
 
@@ -76,7 +77,7 @@ async function reserveUnderEmailLock(
     return {
       status: "reserved",
       call: await insertCall(transaction, {
-        callId: appointment.appointmentId,
+        id: appointment.appointmentId,
         command,
       }),
     };
@@ -110,13 +111,13 @@ async function findUpcomingCallForEmail(
 
 async function insertCall(
   transaction: DatabaseTransaction,
-  call: { callId: string; command: ReserveAssessmentCallCommand },
+  newCall: { id: string; command: ReserveAssessmentCallCommand },
 ): Promise<AssessmentCall> {
-  const { callId, command } = call;
+  const { id, command } = newCall;
   const [row] = await transaction
     .insert(assessmentCallsTable)
     .values({
-      id: callId,
+      id,
       visitorName: command.fullName,
       visitorEmail: command.normalizedEmail,
       visitorNotes: command.notes,
@@ -148,38 +149,8 @@ function toAssessmentCall(row: AssessmentCallRow): AssessmentCall {
 }
 
 function isUnreadableIdentifier(error: unknown): boolean {
-  return matchesCause(
+  return isCausedByDatabaseError(
     error,
-    (cause) => readTextField(cause, "code") === UNREADABLE_IDENTIFIER_CODE,
+    ({ code }) => code === UNREADABLE_IDENTIFIER_CODE,
   );
-}
-
-function matchesCause(
-  error: unknown,
-  matches: (cause: object) => boolean,
-): boolean {
-  let currentError = error;
-
-  while (typeof currentError === "object" && currentError !== null) {
-    if (matches(currentError)) {
-      return true;
-    }
-
-    currentError =
-      "cause" in currentError
-        ? (currentError as { cause?: unknown }).cause
-        : null;
-  }
-
-  return false;
-}
-
-function readTextField(error: object, field: "code"): string | null {
-  if (!(field in error)) {
-    return null;
-  }
-
-  const value = (error as Record<typeof field, unknown>)[field];
-
-  return typeof value === "string" ? value : null;
 }

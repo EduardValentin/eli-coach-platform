@@ -414,6 +414,49 @@ describe.sequential("assessment call booking integration", () => {
     ]);
   });
 
+  it("gives a start to another visitor when an address refused for its upcoming call asks for it at the same moment", async () => {
+    // arrange
+    await suite.setServerClock(MONDAY_MORNING);
+    await requestBooking({ startsAt: NEXT_DAY_EVENING_START });
+    const otherVisitor = "maria@example.com";
+
+    // act
+    const [holder, other] = await Promise.all([
+      requestBooking({}),
+      requestBooking({ email: otherVisitor }),
+    ]);
+
+    // assert
+    const holderBody = bookAssessmentCallResponseSchema.parse(
+      await holder.json(),
+    );
+    const otherBody = bookAssessmentCallResponseSchema.parse(
+      await other.json(),
+    );
+
+    if (holderBody.success || !otherBody.success) {
+      throw new Error("Expected only the other visitor to be booked.");
+    }
+
+    const reservationsForTheStart = (await readCoachTimeReservations()).filter(
+      (reservation) =>
+        reservation.startsAt.toISOString() === FIRST_EVENING_START,
+    );
+
+    expect(holder.status).toBe(409);
+    expect(["booking_refused", "slot_unavailable"]).toContain(
+      holderBody.error.code,
+    );
+    expect(other.status).toBe(201);
+    expect(reservationsForTheStart).toEqual([
+      expect.objectContaining({ appointmentId: otherBody.booking.id }),
+    ]);
+    expect(await readCalls()).toEqual([
+      expect.objectContaining({ id: otherBody.booking.id }),
+      expect.objectContaining({ visitorEmail: VISITOR_EMAIL }),
+    ]);
+  });
+
   it("lets a visitor book again once their call is in the past", async () => {
     // arrange
     await suite.setServerClock(MONDAY_MORNING);

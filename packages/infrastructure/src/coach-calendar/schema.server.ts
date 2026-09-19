@@ -1,6 +1,12 @@
 import { appSchema } from "@eli-coach-platform/db";
 import { sql } from "drizzle-orm";
-import { check, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
+import {
+  check,
+  timestamp,
+  uniqueIndex,
+  uuid,
+  varchar,
+} from "drizzle-orm/pg-core";
 
 const APPOINTMENT_KINDS = ["assessment_call"] as const;
 
@@ -28,6 +34,10 @@ export const coachTimeReservationsTable = appSchema.table(
     check(
       "coach_time_reservations_ends_after_start",
       sql`${table.endsAt} > ${table.startsAt}`,
+    ),
+    uniqueIndex("coach_time_reservations_appointment_unique").on(
+      table.appointmentKind,
+      table.appointmentId,
     ),
   ],
 );

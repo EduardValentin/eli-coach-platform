@@ -1,4 +1,7 @@
-import type { DatabaseClient } from "@eli-coach-platform/db";
+import {
+  isCausedByDatabaseError,
+  type DatabaseTransaction,
+} from "@eli-coach-platform/db";
 import { and, eq } from "drizzle-orm";
 
 import {
@@ -6,10 +9,6 @@ import {
   coachTimeReservationsTable,
   type AppointmentKind,
 } from "./schema.server";
-
-type DatabaseTransaction = Parameters<
-  Parameters<DatabaseClient["transaction"]>[0]
->[0];
 
 type Appointment = {
   appointmentKind: AppointmentKind;
@@ -67,35 +66,10 @@ export async function releaseCoachTime(
 }
 
 function isOverlapViolation(error: unknown): boolean {
-  let currentError = error;
-
-  while (typeof currentError === "object" && currentError !== null) {
-    if (
-      readTextField(currentError, "code") === EXCLUSION_VIOLATION_CODE &&
-      readTextField(currentError, "constraint") ===
-        COACH_TIME_RESERVATIONS_NO_OVERLAP
-    ) {
-      return true;
-    }
-
-    currentError =
-      "cause" in currentError
-        ? (currentError as { cause?: unknown }).cause
-        : null;
-  }
-
-  return false;
-}
-
-function readTextField(
-  error: object,
-  field: "code" | "constraint",
-): string | null {
-  if (!(field in error)) {
-    return null;
-  }
-
-  const value = (error as Record<typeof field, unknown>)[field];
-
-  return typeof value === "string" ? value : null;
+  return isCausedByDatabaseError(
+    error,
+    ({ code, constraint }) =>
+      code === EXCLUSION_VIOLATION_CODE &&
+      constraint === COACH_TIME_RESERVATIONS_NO_OVERLAP,
+  );
 }

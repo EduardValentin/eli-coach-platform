@@ -148,6 +148,13 @@
       "when": 1789770070870,
       "tag": "0020_exclude_overlapping_coach_time_reservations",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1789778169144,
+      "tag": "0021_coach_time_reservation_per_appointment",
+      "breakpoints": true
     }
   ]
 }
