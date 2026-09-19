@@ -58,8 +58,15 @@ export default [
       ],
     },
   },
+  // React Router's route-config loader resolves these two without the app's
+  // tsconfig alias, so they are the only app-local modules that reach across
+  // directories relatively: a surface's route registry, and the path literals
+  // a feature's route fragment reads.
   {
-    files: ["apps/platform/src/surfaces/*/routes.ts"],
+    files: [
+      "apps/platform/src/surfaces/*/routes.ts",
+      "apps/platform/src/features/*/contracts/paths.ts",
+    ],
     rules: {
       "no-restricted-imports": "off",
       "no-restricted-syntax": "off",
