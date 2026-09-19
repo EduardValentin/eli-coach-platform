@@ -154,10 +154,7 @@ export function PublicHero(props: PublicHeroProps) {
 
         <div className="relative z-10 flex w-full flex-col items-center justify-center px-6 text-center">
           {props.waitlist.mode !== "disabled" ? (
-            <motion.div
-              className="flex w-full flex-col items-center"
-              {...HERO_PANEL_MOTION}
-            >
+            <div className="flex w-full flex-col items-center">
               {isClosed ? (
                 <motion.span
                   className="mb-4 inline-block text-sm font-medium uppercase tracking-section-eyebrow text-text-inverted/70"
@@ -169,18 +166,9 @@ export function PublicHero(props: PublicHeroProps) {
                   This round is full
                 </motion.span>
               ) : null}
-              <motion.h1
-                className={heroHeadingClassName}
-                {...heroEntranceMotion({
-                  transition: {
-                    delay: 0.1,
-                    duration: 0.8,
-                    ease: "easeOut",
-                  },
-                })}
-              >
+              <h1 className={heroHeadingClassName}>
                 Coaching built around your body.
-              </motion.h1>
+              </h1>
               <motion.p
                 className="mb-10 max-w-2xl text-lg font-light tracking-wide text-text-inverted-secondary md:text-xl"
                 {...heroEntranceMotion({
@@ -239,20 +227,12 @@ export function PublicHero(props: PublicHeroProps) {
                   variant="dark"
                 />
               </motion.div>
-            </motion.div>
+            </div>
           ) : (
-            <motion.div
-              className="flex flex-col items-center"
-              {...HERO_PANEL_MOTION}
-            >
-              <motion.h1
-                className={heroHeadingClassName}
-                {...heroEntranceMotion({
-                  transition: { duration: 0.8, ease: "easeOut" },
-                })}
-              >
+            <div className="flex flex-col items-center">
+              <h1 className={heroHeadingClassName}>
                 Strength training for women.
-              </motion.h1>
+              </h1>
               <motion.p
                 className="mb-8 text-lg font-light tracking-wide text-text-inverted-secondary md:text-xl"
                 {...heroEntranceMotion({
@@ -297,7 +277,7 @@ export function PublicHero(props: PublicHeroProps) {
                   Free 30-minute assessment call.
                 </p>
               </motion.div>
-            </motion.div>
+            </div>
           )}
         </div>
 
@@ -330,12 +310,6 @@ export function PublicHero(props: PublicHeroProps) {
 
 const heroHeadingClassName =
   "mb-4 font-heading text-display-md font-medium leading-none text-balance text-text-inverted min-[360px]:text-4xl sm:text-5xl md:text-7xl";
-
-const HERO_PANEL_MOTION = {
-  animate: { opacity: 1 },
-  initial: { opacity: 0 },
-  transition: { duration: 0.4 },
-} as const;
 
 function heroEntranceMotion(options: {
   transition: Transition;
