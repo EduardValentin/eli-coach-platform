@@ -9,18 +9,12 @@ import {
   type AssessmentCallStatus,
   type ClassifiedCall,
 } from '../../utils/assessmentCallListing';
-import { formatCallSchedule } from '../../utils/dateFormatters';
+import { formatCallDate, formatSlotTime } from '../../utils/dateFormatters';
 import { Badge } from '../ui/badge';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import { cn } from '../ui/utils';
-import {
-  CALL_CARD_CLASS,
-  CALL_ROW_HOVER,
-  PAST_CALL_TONE,
-  UPCOMING_CALL_TONE,
-} from './assessmentCallCard';
+import { AppointmentCard } from './AppointmentCard';
 import { JoinCallLink } from './JoinCallLink';
 
 const STATUS_PARAM = 'status';
@@ -53,34 +47,28 @@ function CallItem({
   const { booking, timing, isToday } = call;
 
   return (
-    <li
-      className={cn(CALL_CARD_CLASS, {
-        [UPCOMING_CALL_TONE]: timing === 'upcoming',
-        [CALL_ROW_HOVER]: timing === 'upcoming',
-        [PAST_CALL_TONE]: timing === 'past',
-      })}
-    >
-      <div className="min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <h2 className="font-semibold text-sm">{booking.visitorName}</h2>
-          {isToday && <Badge variant="brand-secondary">Today</Badge>}
-        </div>
-        <a
-          href={`mailto:${booking.visitorEmail}`}
-          className="mt-1 inline-block text-xs text-muted-foreground hover:text-foreground hover:underline"
-        >
-          {booking.visitorEmail}
-        </a>
-        <p className="text-xs text-muted-foreground mt-1">
-          {formatCallSchedule(booking.startsAt, timeZone)}
-        </p>
-        {booking.notes.length > 0 && (
-          <p className="text-xs text-muted-foreground mt-2 whitespace-pre-line">
-            {booking.notes}
-          </p>
-        )}
-      </div>
-      {timing === 'upcoming' && <JoinCallLink joinPath={booking.joinPath} />}
+    <li>
+      <AppointmentCard
+        attendee={{
+          name: booking.visitorName,
+          email: booking.visitorEmail,
+        }}
+        when={{
+          date: formatCallDate(booking.startsAt, timeZone),
+          time: formatSlotTime(booking.startsAt, timeZone),
+        }}
+        status={timing === 'past' ? 'past' : 'scheduled'}
+        titleElement="h2"
+        badges={isToday && <Badge variant="brand-secondary">Today</Badge>}
+        quote={booking.notes.length > 0 ? booking.notes : undefined}
+        actions={
+          timing === 'upcoming' ? (
+            <JoinCallLink joinPath={booking.joinPath} />
+          ) : (
+            <Badge variant="muted">Past</Badge>
+          )
+        }
+      />
     </li>
   );
 }

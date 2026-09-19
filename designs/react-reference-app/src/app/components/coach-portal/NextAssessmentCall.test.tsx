@@ -68,9 +68,8 @@ describe('the next assessment call widget', () => {
       screen.getByRole('heading', { level: 3, name: 'Maria Ionescu' }),
     ).toBeInTheDocument();
     expect(screen.queryByText('Sofia Dinu')).toBeNull();
-    expect(
-      screen.getByText('Monday, 21 September 2026 at 6:00 PM'),
-    ).toBeInTheDocument();
+    expect(screen.getByText('Monday, 21 September 2026')).toBeInTheDocument();
+    expect(screen.getByText('6:00 PM')).toBeInTheDocument();
   });
 
   it('badges the next call when it starts today', () => {

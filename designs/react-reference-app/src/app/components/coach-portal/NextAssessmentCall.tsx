@@ -7,10 +7,13 @@ import {
   nextCall,
   type ClassifiedCall,
 } from '../../utils/assessmentCallListing';
-import { formatCallSchedule, nameTimeZone } from '../../utils/dateFormatters';
+import {
+  formatCallDate,
+  formatSlotTime,
+  nameTimeZone,
+} from '../../utils/dateFormatters';
 import { Badge } from '../ui/badge';
-import { cn } from '../ui/utils';
-import { CALL_CARD_CLASS, UPCOMING_CALL_TONE } from './assessmentCallCard';
+import { AppointmentCard } from './AppointmentCard';
 import { JoinCallLink } from './JoinCallLink';
 
 const ALL_CALLS_PATH = '/coach/assessment-calls';
@@ -25,18 +28,16 @@ function NextCallCard({
   const { booking, isToday } = call;
 
   return (
-    <div className={cn(CALL_CARD_CLASS, UPCOMING_CALL_TONE)}>
-      <div className="min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <h3 className="font-semibold text-sm">{booking.visitorName}</h3>
-          {isToday && <Badge variant="brand-secondary">Today</Badge>}
-        </div>
-        <p className="text-xs text-muted-foreground mt-1">
-          {formatCallSchedule(booking.startsAt, timeZone)}
-        </p>
-      </div>
-      <JoinCallLink joinPath={booking.joinPath} />
-    </div>
+    <AppointmentCard
+      attendee={{ name: booking.visitorName }}
+      when={{
+        date: formatCallDate(booking.startsAt, timeZone),
+        time: formatSlotTime(booking.startsAt, timeZone),
+      }}
+      titleElement="h3"
+      badges={isToday && <Badge variant="brand-secondary">Today</Badge>}
+      actions={<JoinCallLink joinPath={booking.joinPath} />}
+    />
   );
 }
 

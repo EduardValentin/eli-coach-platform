@@ -149,6 +149,33 @@ describe('the assessment calls section', () => {
     expect(within(items[1]).getByText('Today')).toBeInTheDocument();
   });
 
+  it('marks an ended call as past instead of offering it an action', async () => {
+    // arrange
+    const user = renderSection();
+
+    // act
+    await selectTab(user, 'Past');
+    const pastItem = screen.getAllByRole('listitem')[0];
+
+    // assert
+    expect(within(pastItem).getByText('Past')).toBeInTheDocument();
+    expect(within(pastItem).queryByRole('link', { name: 'Join call' })).toBeNull();
+  });
+
+  it('still offers a way to reach the visitor after the call has ended', async () => {
+    // arrange
+    const user = renderSection();
+
+    // act
+    await selectTab(user, 'Past');
+    const pastItem = screen.getAllByRole('listitem')[0];
+
+    // assert
+    expect(
+      within(pastItem).getByRole('link', { name: 'sofia@example.com' }),
+    ).toHaveAttribute('href', 'mailto:sofia@example.com');
+  });
+
   it('lists past calls most recent first', async () => {
     // arrange
     const user = renderSection();

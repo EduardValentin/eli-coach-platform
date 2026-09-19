@@ -74,16 +74,18 @@ export function formatSlotTime(instant: Date, timeZone: string): string {
   }).format(instant);
 }
 
-export function formatCallSchedule(instant: Date, timeZone: string): string {
-  const day = new Intl.DateTimeFormat('en-GB', {
+export function formatCallDate(instant: Date, timeZone: string): string {
+  return new Intl.DateTimeFormat('en-GB', {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
     year: 'numeric',
     timeZone,
   }).format(instant);
+}
 
-  return `${day} at ${formatSlotTime(instant, timeZone)}`;
+export function formatCallSchedule(instant: Date, timeZone: string): string {
+  return `${formatCallDate(instant, timeZone)} at ${formatSlotTime(instant, timeZone)}`;
 }
 
 export function formatCallMoment(instant: Date, timeZone: string): string {
