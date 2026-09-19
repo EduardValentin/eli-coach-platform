@@ -10,7 +10,7 @@ import {
   type WallClock,
 } from "./zoned-time";
 
-const WEEKDAYS = [
+export const WEEKDAYS = [
   "sunday",
   "monday",
   "tuesday",
@@ -29,6 +29,13 @@ export type CoachAvailabilityProps = {
   endHour: number;
 };
 
+export type CoachAvailabilityProblem =
+  "no_weekday" | "invalid_hours" | "invalid_time_zone";
+
+export type CoachAvailabilityResult =
+  | { status: "configured"; availability: CoachAvailability }
+  | { status: "invalid"; problems: CoachAvailabilityProblem[] };
+
 const MINUTES_PER_HOUR = 60;
 
 export class CoachAvailability {
@@ -44,12 +51,26 @@ export class CoachAvailability {
     this.endHour = props.endHour;
   }
 
-  static configure(props: CoachAvailabilityProps): CoachAvailability {
-    assertConfiguredTimeZone(props.timeZone);
-    assertConfiguredHours(props.startHour, props.endHour);
-    assertConfiguredWeekdays(props.weekdays);
+  static from(props: CoachAvailabilityProps): CoachAvailabilityResult {
+    const problems: CoachAvailabilityProblem[] = [];
 
-    return new CoachAvailability(props);
+    if (!hasValidWeekdays(props.weekdays)) {
+      problems.push("no_weekday");
+    }
+
+    if (!hasValidHours(props.startHour, props.endHour)) {
+      problems.push("invalid_hours");
+    }
+
+    if (!hasValidTimeZone(props.timeZone)) {
+      problems.push("invalid_time_zone");
+    }
+
+    if (problems.length > 0) {
+      return { status: "invalid", problems };
+    }
+
+    return { status: "configured", availability: new CoachAvailability(props) };
   }
 
   openSlotStarts(options: {
@@ -195,37 +216,29 @@ function overlapsAny(
   );
 }
 
-function assertConfiguredTimeZone(timeZone: string): void {
+function hasValidTimeZone(timeZone: string): boolean {
   try {
     new Intl.DateTimeFormat(undefined, { timeZone });
+
+    return true;
   } catch {
-    throw new Error(
-      "Coach availability needs a time zone the platform can format, such as Europe/Bucharest.",
-    );
+    return false;
   }
 }
 
-function assertConfiguredHours(startHour: number, endHour: number): void {
-  const configured =
+function hasValidHours(startHour: number, endHour: number): boolean {
+  return (
     Number.isInteger(startHour) &&
     Number.isInteger(endHour) &&
     startHour >= 0 &&
     endHour <= 24 &&
-    startHour < endHour;
-
-  if (!configured) {
-    throw new Error(
-      "Coach availability hours must be whole hours from 0 to 24, with the start hour before the end hour.",
-    );
-  }
+    startHour < endHour
+  );
 }
 
-function assertConfiguredWeekdays(weekdays: readonly Weekday[]): void {
-  const configured =
+function hasValidWeekdays(weekdays: readonly Weekday[]): boolean {
+  return (
     weekdays.length > 0 &&
-    weekdays.every((weekday) => WEEKDAYS.includes(weekday));
-
-  if (!configured) {
-    throw new Error("Coach availability needs at least one known weekday.");
-  }
+    weekdays.every((weekday) => WEEKDAYS.includes(weekday))
+  );
 }

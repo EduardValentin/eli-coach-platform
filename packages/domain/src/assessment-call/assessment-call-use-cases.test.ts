@@ -2,19 +2,20 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   CoachAvailability,
+  type CoachAvailabilityProps,
   type CoachAvailabilitySource,
   type CoachCalendar,
 } from "../coach-availability";
+import type { CoachMeetingRoomSource } from "../coach-meeting-room";
 import type { FeatureFlagReader } from "../feature-flag";
 
+import { AssessmentCall } from "./assessment-call";
 import { AssessmentCallBookingWindow } from "./assessment-call-booking-window";
 import type { AssessmentCallNotifications } from "./assessment-call-notifications";
 import type { AssessmentCallReservations } from "./assessment-call-reservations";
-import { AssessmentCall } from "./assessment-call";
 import { BookAssessmentCallUseCase } from "./book-assessment-call-use-case";
 import { ListAssessmentCallsUseCase } from "./list-assessment-calls-use-case";
 import { ListOpenSlotsUseCase } from "./list-open-slots-use-case";
-import type { MeetingRoomLink } from "./meeting-room-link";
 import { ResolveJoinLinkUseCase } from "./resolve-join-link-use-case";
 
 const NOW = new Date("2026-06-01T06:00:00.000Z");
@@ -58,12 +59,26 @@ function closedBookingWindow(): AssessmentCallBookingWindow {
   });
 }
 
+function configuredAvailabilityOrThrow(
+  props: CoachAvailabilityProps,
+): CoachAvailability {
+  const result = CoachAvailability.from(props);
+
+  if (result.status !== "configured") {
+    throw new Error(
+      `Expected a configured availability, got problems: ${result.problems.join(", ")}`,
+    );
+  }
+
+  return result.availability;
+}
+
 function createAvailabilitySource(
   timeZone: string = COACH_TIME_ZONE,
 ): CoachAvailabilitySource {
   return {
     current: vi.fn().mockResolvedValue(
-      CoachAvailability.configure({
+      configuredAvailabilityOrThrow({
         timeZone,
         weekdays: ["monday", "tuesday", "wednesday", "thursday", "friday"],
         startHour: 17,
@@ -563,15 +578,26 @@ describe("BookAssessmentCallUseCase", () => {
   });
 });
 
+function createMeetingRoomSource(
+  options?: Partial<CoachMeetingRoomSource>,
+): CoachMeetingRoomSource {
+  return {
+    current: vi.fn().mockResolvedValue(null),
+    ...options,
+  };
+}
+
 describe("ResolveJoinLinkUseCase", () => {
-  it("resolves the meeting room link of a known booking", async () => {
+  it("resolves the coach's current meeting room for a known booking", async () => {
     // arrange
     const call = existingCall();
-    const meetingRoomLink = {
-      forCall: vi.fn().mockResolvedValue("https://meet.example.com/call-1"),
-    } satisfies MeetingRoomLink;
+    const meetingRoom = createMeetingRoomSource({
+      current: vi
+        .fn()
+        .mockResolvedValue({ url: "https://meet.example.com/room" }),
+    });
     const resolveJoinLink = new ResolveJoinLinkUseCase({
-      meetingRoomLink,
+      meetingRoom,
       reservations: createReservations({
         findById: vi.fn().mockResolvedValue(call),
       }),
@@ -581,18 +607,33 @@ describe("ResolveJoinLinkUseCase", () => {
     const result = await resolveJoinLink.execute("call-1");
 
     // assert
-    expect(meetingRoomLink.forCall).toHaveBeenCalledWith(call.toSnapshot());
     expect(result).toEqual({
       status: "found",
-      url: "https://meet.example.com/call-1",
+      url: "https://meet.example.com/room",
     });
   });
 
-  it("reports an unknown booking", async () => {
+  it("reports the link as not set while the coach has saved no room", async () => {
     // arrange
-    const meetingRoomLink = { forCall: vi.fn() } satisfies MeetingRoomLink;
     const resolveJoinLink = new ResolveJoinLinkUseCase({
-      meetingRoomLink,
+      meetingRoom: createMeetingRoomSource(),
+      reservations: createReservations({
+        findById: vi.fn().mockResolvedValue(existingCall()),
+      }),
+    });
+
+    // act
+    const result = await resolveJoinLink.execute("call-1");
+
+    // assert
+    expect(result).toEqual({ status: "link_not_set" });
+  });
+
+  it("reports an unknown booking without reading the meeting room", async () => {
+    // arrange
+    const meetingRoom = createMeetingRoomSource();
+    const resolveJoinLink = new ResolveJoinLinkUseCase({
+      meetingRoom,
       reservations: createReservations(),
     });
 
@@ -601,6 +642,6 @@ describe("ResolveJoinLinkUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "unknown" });
-    expect(meetingRoomLink.forCall).not.toHaveBeenCalled();
+    expect(meetingRoom.current).not.toHaveBeenCalled();
   });
 });
