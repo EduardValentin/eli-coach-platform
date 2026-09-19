@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   CoachAvailability,
   SlotPolicy,
-  type BusyInterval,
+  type TimeInterval,
   type CoachAvailabilityProps,
   type Weekday,
 } from "./index";
@@ -31,7 +31,7 @@ const HOURLY_HALF_HOUR_CALLS = SlotPolicy.of({
   leadMinutes: 120,
 });
 
-function busyBetween(start: string, end: string): BusyInterval {
+function busyBetween(start: string, end: string): TimeInterval {
   return { start: new Date(start), end: new Date(end) };
 }
 
@@ -393,7 +393,7 @@ describe("CoachAvailability.isOpenStart", () => {
 describe("CoachAvailability.openSlotStarts against busy time", () => {
   const now = new Date("2026-06-01T06:00:00.000Z");
 
-  function firstDayStarts(busy: readonly BusyInterval[]): string[] {
+  function firstDayStarts(busy: readonly TimeInterval[]): string[] {
     return isoStarts(
       bucharestEvenings().openSlotStarts({
         now,
@@ -550,4 +550,107 @@ describe("CoachAvailability horizon and lead time", () => {
       "2026-06-02T16:00:00.000Z",
     ]);
   });
+});
+
+describe("CoachAvailability steps in minutes of the day", () => {
+  const now = new Date("2026-06-01T06:00:00.000Z");
+
+  function firstDayStarts(policy: SlotPolicy): string[] {
+    return isoStarts(
+      bucharestEvenings().openSlotStarts({ now, policy, busy: [] }),
+    ).filter((start) => start.startsWith("2026-06-01"));
+  }
+
+  function policyOf(durationMinutes: number, stepMinutes: number): SlotPolicy {
+    return SlotPolicy.of({
+      durationMinutes,
+      bufferMinutes: 0,
+      stepMinutes,
+      horizonDays: 0,
+      leadMinutes: 0,
+    });
+  }
+
+  it("offers a start every half hour for a 30-minute step", () => {
+    // arrange
+    const policy = policyOf(30, 30);
+
+    // act
+    const starts = firstDayStarts(policy);
+
+    // assert
+    expect(starts).toEqual([
+      "2026-06-01T14:00:00.000Z",
+      "2026-06-01T14:30:00.000Z",
+      "2026-06-01T15:00:00.000Z",
+      "2026-06-01T15:30:00.000Z",
+      "2026-06-01T16:00:00.000Z",
+      "2026-06-01T16:30:00.000Z",
+    ]);
+  });
+
+  it("offers a start every 45 minutes for a 45-minute step", () => {
+    // arrange
+    const policy = policyOf(45, 45);
+
+    // act
+    const starts = firstDayStarts(policy);
+
+    // assert
+    expect(starts).toEqual([
+      "2026-06-01T14:00:00.000Z",
+      "2026-06-01T14:45:00.000Z",
+      "2026-06-01T15:30:00.000Z",
+      "2026-06-01T16:15:00.000Z",
+    ]);
+  });
+
+  it("offers a start every hour and a half for a 90-minute step", () => {
+    // arrange
+    const policy = policyOf(60, 90);
+
+    // act
+    const starts = firstDayStarts(policy);
+
+    // assert
+    expect(starts).toEqual([
+      "2026-06-01T14:00:00.000Z",
+      "2026-06-01T15:30:00.000Z",
+    ]);
+  });
+
+  it("offers only starts whose call ends inside the window", () => {
+    // arrange
+    const policy = policyOf(90, 120);
+
+    // act
+    const starts = firstDayStarts(policy);
+
+    // assert
+    expect(starts).toEqual(["2026-06-01T14:00:00.000Z"]);
+  });
+
+  it.each([
+    ["2026-06-01T14:30:00.000Z", policyOf(30, 30), true],
+    ["2026-06-01T16:30:00.000Z", policyOf(30, 30), true],
+    ["2026-06-01T14:15:00.000Z", policyOf(30, 30), false],
+    ["2026-06-01T14:45:00.000Z", policyOf(45, 45), true],
+    ["2026-06-01T16:00:00.000Z", policyOf(90, 120), false],
+  ])(
+    "decides %s as open or not by the step and the window end",
+    (start, policy, expected) => {
+      // arrange
+      const availability = bucharestEvenings();
+
+      // act
+      const open = availability.isOpenStart({
+        start: new Date(start),
+        now,
+        policy,
+      });
+
+      // assert
+      expect(open).toBe(expected);
+    },
+  );
 });

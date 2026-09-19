@@ -1,4 +1,4 @@
-import type { BusyInterval } from "./busy-interval";
+import type { TimeInterval } from "./time-interval";
 
 type SlotPolicyProps = {
   durationMinutes: number;
@@ -26,10 +26,13 @@ export class SlotPolicy {
   }
 
   static of(props: SlotPolicyProps): SlotPolicy {
+    assertWholeCounts(props);
+    assertStepFitsTheCall(props);
+
     return new SlotPolicy(props);
   }
 
-  coachTimeFrom(start: Date): BusyInterval {
+  coachTimeFrom(start: Date): TimeInterval {
     const heldMinutes = this.durationMinutes + this.bufferMinutes;
 
     return {
@@ -40,5 +43,28 @@ export class SlotPolicy {
 
   leadMilliseconds(): number {
     return this.leadMinutes * MILLISECONDS_PER_MINUTE;
+  }
+}
+
+function isWholeCount(value: number): boolean {
+  return Number.isInteger(value) && value >= 0;
+}
+
+function assertWholeCounts(props: SlotPolicyProps): void {
+  const whole =
+    Object.values(props).every(isWholeCount) && props.durationMinutes > 0;
+
+  if (!whole) {
+    throw new Error(
+      "A slot policy needs a positive whole-minute duration and whole, non-negative buffer, step, horizon and lead.",
+    );
+  }
+}
+
+function assertStepFitsTheCall(props: SlotPolicyProps): void {
+  if (props.stepMinutes < props.durationMinutes) {
+    throw new Error(
+      "A slot policy's step must be at least as long as the call, so offered starts never overlap.",
+    );
   }
 }

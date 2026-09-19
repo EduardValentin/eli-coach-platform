@@ -1,5 +1,5 @@
-import type { BusyInterval } from "./busy-interval";
 import type { SlotPolicy } from "./slot-policy";
+import type { TimeInterval } from "./time-interval";
 import {
   addDays,
   compareCalendarDates,
@@ -55,7 +55,7 @@ export class CoachAvailability {
   openSlotStarts(options: {
     now: Date;
     policy: SlotPolicy;
-    busy: readonly BusyInterval[];
+    busy: readonly TimeInterval[];
   }): Date[] {
     const { now, policy, busy } = options;
 
@@ -75,7 +75,7 @@ export class CoachAvailability {
     const wallClock = instantToWallClock(start, this.timeZone);
 
     return (
-      this.isWindowHour(wallClock) &&
+      this.fitsTheWindow({ wallClock, policy }) &&
       this.isStepStart({ start, wallClock, policy }) &&
       this.isAvailableWeekday(wallClock) &&
       this.isWithinHorizon({ date: wallClock, now, policy }) &&
@@ -98,17 +98,16 @@ export class CoachAvailability {
     const starts: Date[] = [];
 
     for (
-      let hour = this.startHour;
-      hour < this.endHour;
-      hour += hoursPerStep(policy)
+      let minuteOfDay = this.windowStartMinute();
+      minuteOfDay + policy.durationMinutes <= this.windowEndMinute();
+      minuteOfDay += policy.stepMinutes
     ) {
       starts.push(
         wallClockToInstant({
           timeZone: this.timeZone,
-          year: date.year,
-          month: date.month,
-          day: date.day,
-          hour,
+          ...date,
+          hour: Math.floor(minuteOfDay / MINUTES_PER_HOUR),
+          minute: minuteOfDay % MINUTES_PER_HOUR,
         }),
       );
     }
@@ -116,8 +115,16 @@ export class CoachAvailability {
     return starts;
   }
 
-  private isWindowHour(wallClock: WallClock): boolean {
-    return wallClock.hour >= this.startHour && wallClock.hour < this.endHour;
+  private fitsTheWindow(options: {
+    wallClock: WallClock;
+    policy: SlotPolicy;
+  }): boolean {
+    const start = minuteOfDayOf(options.wallClock);
+
+    return (
+      start >= this.windowStartMinute() &&
+      start + options.policy.durationMinutes <= this.windowEndMinute()
+    );
   }
 
   private isStepStart(options: {
@@ -126,13 +133,22 @@ export class CoachAvailability {
     policy: SlotPolicy;
   }): boolean {
     const { start, wallClock, policy } = options;
+    const minutesIntoWindow =
+      minuteOfDayOf(wallClock) - this.windowStartMinute();
 
     return (
       start.getMilliseconds() === 0 &&
       wallClock.second === 0 &&
-      wallClock.minute === 0 &&
-      (wallClock.hour - this.startHour) % hoursPerStep(policy) === 0
+      minutesIntoWindow % policy.stepMinutes === 0
     );
+  }
+
+  private windowStartMinute(): number {
+    return this.startHour * MINUTES_PER_HOUR;
+  }
+
+  private windowEndMinute(): number {
+    return this.endHour * MINUTES_PER_HOUR;
   }
 
   private isAvailableWeekday(date: CalendarDate): boolean {
@@ -153,8 +169,8 @@ export class CoachAvailability {
   }
 }
 
-function hoursPerStep(policy: SlotPolicy): number {
-  return policy.stepMinutes / MINUTES_PER_HOUR;
+function minuteOfDayOf(wallClock: WallClock): number {
+  return wallClock.hour * MINUTES_PER_HOUR + wallClock.minute;
 }
 
 function isBeyondLeadTime(options: {
@@ -169,8 +185,8 @@ function isBeyondLeadTime(options: {
 }
 
 function overlapsAny(
-  interval: BusyInterval,
-  busy: readonly BusyInterval[],
+  interval: TimeInterval,
+  busy: readonly TimeInterval[],
 ): boolean {
   return busy.some(
     (taken) =>

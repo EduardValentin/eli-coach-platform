@@ -10,9 +10,10 @@ export type WallClock = CalendarDate & {
   second: number;
 };
 
-export type WallClockHour = CalendarDate & {
+export type ZonedWallClockMinute = CalendarDate & {
   timeZone: string;
   hour: number;
+  minute: number;
 };
 
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1_000;
@@ -32,18 +33,19 @@ export function instantToWallClock(instant: Date, timeZone: string): WallClock {
   };
 }
 
-export function wallClockToInstant(wallClockHour: WallClockHour): Date {
+export function wallClockToInstant(wallClock: ZonedWallClockMinute): Date {
   const asUtc = Date.UTC(
-    wallClockHour.year,
-    wallClockHour.month - 1,
-    wallClockHour.day,
-    wallClockHour.hour,
+    wallClock.year,
+    wallClock.month - 1,
+    wallClock.day,
+    wallClock.hour,
+    wallClock.minute,
   );
   const firstPass = new Date(
-    asUtc - zoneOffsetMs(new Date(asUtc), wallClockHour.timeZone),
+    asUtc - zoneOffsetMs(new Date(asUtc), wallClock.timeZone),
   );
 
-  return new Date(asUtc - zoneOffsetMs(firstPass, wallClockHour.timeZone));
+  return new Date(asUtc - zoneOffsetMs(firstPass, wallClock.timeZone));
 }
 
 export function addDays(date: CalendarDate, days: number): CalendarDate {

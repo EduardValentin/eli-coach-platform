@@ -94,7 +94,32 @@ describe("wallClockToInstant", () => {
     "resolves %s %i-%i-%i at hour %i to %s",
     (timeZone, year, month, day, hour, expected) => {
       // arrange
-      const wallClock = { timeZone, year, month, day, hour };
+      const wallClock = { timeZone, year, month, day, hour, minute: 0 };
+
+      // act
+      const instant = wallClockToInstant(wallClock);
+
+      // assert
+      expect(instant.toISOString()).toBe(expected);
+    },
+  );
+
+  it.each([
+    ["Europe/Bucharest", 17, 30, "2026-06-01T14:30:00.000Z"],
+    ["Europe/Bucharest", 19, 45, "2026-06-01T16:45:00.000Z"],
+    ["Asia/Kolkata", 17, 30, "2026-06-01T12:00:00.000Z"],
+  ])(
+    "resolves %s 2026-06-01 at %i:%i to %s",
+    (timeZone, hour, minute, expected) => {
+      // arrange
+      const wallClock = {
+        timeZone,
+        year: 2026,
+        month: 6,
+        day: 1,
+        hour,
+        minute,
+      };
 
       // act
       const instant = wallClockToInstant(wallClock);
@@ -112,6 +137,7 @@ describe("wallClockToInstant", () => {
       month: 3,
       day: 29,
       hour: 3,
+      minute: 0,
     };
 
     // act
@@ -134,6 +160,7 @@ describe("wallClockToInstant", () => {
           month: 10,
           day,
           hour: 17,
+          minute: 0,
         }),
         "Europe/Bucharest",
       ),

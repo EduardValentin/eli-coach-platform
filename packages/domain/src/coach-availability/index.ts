@@ -1,4 +1,3 @@
-export { type BusyInterval } from "./busy-interval";
 export {
   CoachAvailability,
   type CoachAvailabilityProps,
@@ -7,3 +6,4 @@ export {
 export { type CoachAvailabilitySource } from "./coach-availability-source";
 export { type CoachCalendar } from "./coach-calendar";
 export { SlotPolicy } from "./slot-policy";
+export { type TimeInterval } from "./time-interval";

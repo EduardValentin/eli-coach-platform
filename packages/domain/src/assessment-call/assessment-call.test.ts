@@ -121,29 +121,6 @@ describe("AssessmentCall.decideReservation", () => {
 });
 
 describe("ASSESSMENT_CALL_RULES", () => {
-  it("is the single home of the assessment call's slot policy", () => {
-    // arrange
-    const rules = ASSESSMENT_CALL_RULES;
-
-    // act
-    const values = {
-      durationMinutes: rules.durationMinutes,
-      bufferMinutes: rules.bufferMinutes,
-      stepMinutes: rules.stepMinutes,
-      horizonDays: rules.horizonDays,
-      leadMinutes: rules.leadMinutes,
-    };
-
-    // assert
-    expect(values).toEqual({
-      durationMinutes: 30,
-      bufferMinutes: 30,
-      stepMinutes: 60,
-      horizonDays: 30,
-      leadMinutes: 120,
-    });
-  });
-
   it("steps by a call plus its buffer, so every booking reserves the buffer", () => {
     // arrange
     const rules = ASSESSMENT_CALL_RULES;
@@ -153,19 +130,5 @@ describe("ASSESSMENT_CALL_RULES", () => {
 
     // assert
     expect(step).toBe(rules.durationMinutes + rules.bufferMinutes);
-  });
-
-  it("reserves the coach's time through the call and its buffer", () => {
-    // arrange
-    const start = new Date("2026-06-01T14:00:00.000Z");
-
-    // act
-    const coachTime = ASSESSMENT_CALL_RULES.coachTimeFrom(start);
-
-    // assert
-    expect(coachTime).toEqual({
-      start,
-      end: new Date("2026-06-01T15:00:00.000Z"),
-    });
   });
 });

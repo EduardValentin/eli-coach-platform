@@ -1,4 +1,4 @@
-export type BusyInterval = {
+export type TimeInterval = {
   readonly start: Date;
   readonly end: Date;
 };

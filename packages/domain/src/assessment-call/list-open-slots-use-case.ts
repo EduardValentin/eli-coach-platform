@@ -1,8 +1,8 @@
 import type {
-  BusyInterval,
   CoachAvailability,
   CoachAvailabilitySource,
   CoachCalendar,
+  TimeInterval,
 } from "../coach-availability";
 import type { Clock, Logger } from "../shared";
 
@@ -23,7 +23,7 @@ type ListOpenSlotsUseCaseOptions = {
 
 type SlotSources = {
   availability: CoachAvailability;
-  busy: BusyInterval[];
+  busy: TimeInterval[];
 };
 
 export class ListOpenSlotsUseCase {
