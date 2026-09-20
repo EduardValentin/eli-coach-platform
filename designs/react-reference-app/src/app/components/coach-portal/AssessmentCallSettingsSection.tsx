@@ -39,12 +39,10 @@ const START_HOUR_OPTIONS = Array.from({ length: 24 }, (_, hour) => hour);
 const END_HOUR_OPTIONS = Array.from({ length: 24 }, (_, hour) => hour + 1);
 
 const START_HOUR_FIELD_ID = 'assessment-call-start-hour';
+const END_HOUR_FIELD_ID = 'assessment-call-end-hour';
 const MEETING_LINK_FIELD_ID = 'assessment-call-meeting-link';
 
-// In DOM order: the weekday fieldset, then the hours, then the link. A
-// problem with no field of its own (invalid_time_zone, a page-level Alert)
-// is absent here and so never receives focus.
-const REFUSED_FIELD_SELECTORS: ReadonlyArray<
+const REFUSED_FIELD_SELECTORS_IN_DOM_ORDER: ReadonlyArray<
   [AssessmentCallSettingsProblem, string]
 > = [
   ['no_weekday', 'input[type="checkbox"]'],
@@ -56,7 +54,7 @@ function focusFirstRefusedField(
   form: HTMLFormElement,
   problems: AssessmentCallSettingsProblem[],
 ) {
-  const match = REFUSED_FIELD_SELECTORS.find(([problem]) =>
+  const match = REFUSED_FIELD_SELECTORS_IN_DOM_ORDER.find(([problem]) =>
     problems.includes(problem),
   );
 
@@ -291,7 +289,7 @@ export function AssessmentCallSettingsSection() {
             onHourChange={(hour) => setDraft((previous) => ({ ...previous, startHour: hour }))}
           />
           <HourSelect
-            id="assessment-call-end-hour"
+            id={END_HOUR_FIELD_ID}
             label="End"
             hour={draft.endHour}
             hourOptions={END_HOUR_OPTIONS}

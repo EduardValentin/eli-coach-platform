@@ -98,16 +98,13 @@ function createDatabaseWithoutSavedAvailability(
   bookedCallRows: readonly unknown[],
 ): DatabaseClient {
   function chainResolving(resolvedRows: readonly unknown[]) {
-    const chain = {
-      from: () => chain,
-      orderBy: () => chain,
-      where: () => chain,
-      limit: () => chain,
+    return {
+      orderBy: () => chainResolving(resolvedRows),
+      where: () => chainResolving(resolvedRows),
+      limit: () => chainResolving(resolvedRows),
       then: (onFulfilled: (value: readonly unknown[]) => unknown) =>
         Promise.resolve(resolvedRows).then(onFulfilled),
     };
-
-    return chain;
   }
 
   return {
