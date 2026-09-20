@@ -229,7 +229,7 @@ export function CheckinProvider({ children }: { children: ReactNode }) {
 
   const hasPendingAdHoc = useCallback(
     (clientId: string) => checkins.some(
-      c => c.clientId === clientId && c.type === 'ad-hoc' && (c.status === 'pending' || c.status === 'rescheduling')
+      c => c.clientId === clientId && c.type === 'ad-hoc' && isPending(c)
     ),
     [checkins]
   );
