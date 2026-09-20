@@ -43,6 +43,7 @@
 
   --container-reading: 45rem;
   --container-content: 70rem;
+  --container-portal: 80rem;
   --container-stage: 90rem;
 
   --size-control-xs: 2rem;
@@ -231,6 +232,7 @@
 
   --container-reading: var(--container-reading);
   --container-content: var(--container-content);
+  --container-portal: var(--container-portal);
   --container-stage: var(--container-stage);
 
   --size-control-xs: var(--size-control-xs);

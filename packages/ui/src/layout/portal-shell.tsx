@@ -104,7 +104,7 @@ export function PortalShell(props: PortalShellProps) {
         id={MAIN_CONTENT_ID}
         tabIndex={-1}
       >
-        <div className="mx-auto max-w-content p-6 lg:px-8 lg:py-8">
+        <div className="mx-auto max-w-portal p-6 lg:px-8 lg:py-8">
           {children}
         </div>
       </main>
@@ -176,9 +176,9 @@ function PortalSidebarContent(props: PortalSidebarContentProps) {
             <RouterLink
               aria-current={isActive ? "page" : undefined}
               className={cn(
-                "flex items-center gap-4 rounded-card px-4 py-3.5 text-sm font-semibold outline-none transition-colors duration-150 ease-out",
+                "flex items-center gap-4 rounded-card px-4 py-3.5 outline-none transition-colors duration-150 ease-out",
                 {
-                  "bg-text-primary text-text-inverted shadow-raised": isActive,
+                  "bg-text-primary text-text-inverted shadow-action": isActive,
                   "text-text-secondary hover:bg-surface-subtle hover:text-text-primary":
                     !isActive,
                 },
@@ -189,7 +189,7 @@ function PortalSidebarContent(props: PortalSidebarContentProps) {
               to={link.href}
             >
               {link.icon}
-              <span>{link.label}</span>
+              <span className="text-sm font-semibold">{link.label}</span>
               {link.trailing}
             </RouterLink>
           );
