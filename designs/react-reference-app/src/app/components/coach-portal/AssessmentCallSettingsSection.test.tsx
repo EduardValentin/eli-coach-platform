@@ -90,6 +90,7 @@ describe('AssessmentCallSettingsSection', () => {
     expect(screen.getByLabelText('Meeting link')).toHaveValue(
       'https://meet.google.com/abc-defg-hij',
     );
+    expect(screen.getByRole('checkbox', { name: 'Monday' })).toHaveFocus();
   });
 
   it('refuses a save when the start is not before the end, and keeps values', async () => {
@@ -109,6 +110,7 @@ describe('AssessmentCallSettingsSection', () => {
     );
     expect(screen.getByLabelText('Start')).toHaveTextContent('20:00');
     expect(screen.getByLabelText('End')).toHaveTextContent('20:00');
+    expect(screen.getByLabelText('Start')).toHaveFocus();
   });
 
   it('refuses a save with an invalid meeting link, and keeps it as typed', async () => {
@@ -125,6 +127,7 @@ describe('AssessmentCallSettingsSection', () => {
       'Enter a full https:// link, or leave it empty.',
     );
     expect(screen.getByLabelText('Meeting link')).toHaveValue('http://meet.google.com/abc');
+    expect(screen.getByLabelText('Meeting link')).toHaveFocus();
   });
 
   it('hides the no-link warning once a link is typed and shows it again once cleared', async () => {

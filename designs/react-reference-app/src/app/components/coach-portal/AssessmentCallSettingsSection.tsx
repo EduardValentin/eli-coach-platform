@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
 import { Alert } from '../ui/alert';
 import { Button } from '../ThemeButton';
@@ -162,6 +162,20 @@ export function AssessmentCallSettingsSection() {
   const [draft, setDraft] = useState<AssessmentCallSettingsDraft>(() => toDraft(settings));
   const [problems, setProblems] = useState<AssessmentCallSettingsProblem[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    const form = formRef.current;
+    if (!form || problems.length === 0) return;
+
+    if (problems.includes('no_weekday')) {
+      form.querySelector<HTMLInputElement>('input[type="checkbox"]')?.focus();
+    } else if (problems.includes('invalid_hours')) {
+      form.querySelector<HTMLButtonElement>('#assessment-call-start-hour')?.focus();
+    } else if (problems.includes('invalid_meeting_link')) {
+      form.querySelector<HTMLInputElement>('#assessment-call-meeting-link')?.focus();
+    }
+  }, [problems]);
 
   const toggleWeekday = (day: number) => {
     setDraft((previous) => ({
@@ -227,7 +241,12 @@ export function AssessmentCallSettingsSection() {
         </h2>
       </div>
 
-      <form noValidate onSubmit={handleSubmit} className="px-5 sm:px-6 py-5 space-y-6">
+      <form
+        noValidate
+        onSubmit={handleSubmit}
+        ref={formRef}
+        className="px-5 sm:px-6 py-5 space-y-6"
+      >
         {timeZoneUnreadable && (
           <Alert>
             <p>{ASSESSMENT_CALL_SETTINGS_PROBLEM_MESSAGES.invalid_time_zone}</p>
