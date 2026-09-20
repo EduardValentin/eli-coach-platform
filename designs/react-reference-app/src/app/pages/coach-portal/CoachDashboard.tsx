@@ -30,15 +30,14 @@ export function CoachDashboard() {
   const { bookings } = useAssessmentCalls();
   const { appState } = useAppState();
   const listing = readCoachCallListing(bookings, appState.coachCallsOutcome);
-  const pendingCheckins = getPendingCheckins();
-
-  const now = new Date();
-  const timeZone = browserTimeZone();
 
   if (listing.status === 'unavailable') {
     return <AssessmentCallsUnavailable />;
   }
 
+  const pendingCheckins = getPendingCheckins();
+  const now = new Date();
+  const timeZone = browserTimeZone();
   const callsLeftToday = countCallsLeftToday(
     classifyCalls(listing.bookings, { now, timeZone }),
   );

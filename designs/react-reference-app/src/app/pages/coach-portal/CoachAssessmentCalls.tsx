@@ -9,12 +9,13 @@ export function CoachAssessmentCalls() {
   const { bookings } = useAssessmentCalls();
   const { appState } = useAppState();
   const listing = readCoachCallListing(bookings, appState.coachCallsOutcome);
-  const now = new Date();
-  const timeZone = browserTimeZone();
 
   if (listing.status === 'unavailable') {
     return <AssessmentCallsUnavailable />;
   }
+
+  const now = new Date();
+  const timeZone = browserTimeZone();
 
   return (
     <div className="max-w-4xl mx-auto pb-12 lg:px-8 lg:pt-8">

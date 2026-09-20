@@ -477,6 +477,7 @@ describe("the coach assessment calls page when the calls cannot be read", () => 
     expect(screen.queryByRole("tablist")).not.toBeInTheDocument();
   });
 });
+
 function shownCalls(): HTMLElement[] {
   return within(
     screen.getByRole("list", { name: "Assessment calls" }),

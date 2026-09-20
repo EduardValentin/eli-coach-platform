@@ -7,10 +7,11 @@ import { cardVariants } from "@eli-coach-platform/ui/primitives";
 import { VideoOff } from "lucide-react";
 import { isRouteErrorResponse, useRouteError } from "react-router";
 
-import { COACH_ASSESSMENT_CALLS_UNAVAILABLE_MESSAGE } from "~/features/assessment-calls/contracts/assessment-calls";
+import {
+  COACH_ASSESSMENT_CALLS_UNAVAILABLE_MESSAGE,
+  COACH_ASSESSMENT_CALLS_UNAVAILABLE_STATUS,
+} from "~/features/assessment-calls/contracts/assessment-calls";
 import { COACH_CALLS_PAGE_FRAME_CLASS_NAME } from "~/features/assessment-calls/ui/coach/coach-calls-page-frame";
-
-const UNAVAILABLE_STATUS = 503;
 
 function AssessmentCallsUnavailable() {
   return (
@@ -38,7 +39,10 @@ function AssessmentCallsUnavailable() {
 export function AssessmentCallsErrorBoundary() {
   const error = useRouteError();
 
-  if (isRouteErrorResponse(error) && error.status === UNAVAILABLE_STATUS) {
+  if (
+    isRouteErrorResponse(error) &&
+    error.status === COACH_ASSESSMENT_CALLS_UNAVAILABLE_STATUS
+  ) {
     return <AssessmentCallsUnavailable />;
   }
 

@@ -162,6 +162,14 @@ const bookingCommand = {
   visitorTimeZone: "Europe/Bucharest",
 };
 
+function loadedListing(result: AssessmentCallListingResult) {
+  if (result.status !== "ok") {
+    throw new Error(`expected a loaded listing, got ${result.status}`);
+  }
+
+  return result;
+}
+
 describe("AssessmentCallBookingWindow", () => {
   it("stays closed while the site is in waitlist mode", async () => {
     // arrange
@@ -330,14 +338,6 @@ describe("ListOpenSlotsUseCase", () => {
     expect(incidents.slotsReadFailed).toHaveBeenCalledOnce();
   });
 });
-
-function loadedListing(result: AssessmentCallListingResult) {
-  if (result.status !== "ok") {
-    throw new Error(`expected a loaded listing, got ${result.status}`);
-  }
-
-  return result;
-}
 
 describe("ListAssessmentCallsUseCase", () => {
   it("lists the coach's calls as snapshots carrying their end, in her time zone", async () => {

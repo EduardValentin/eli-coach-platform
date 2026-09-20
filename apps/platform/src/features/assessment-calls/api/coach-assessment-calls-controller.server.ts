@@ -7,6 +7,7 @@ import type { Clock } from "@eli-coach-platform/domain/shared";
 import {
   coachAssessmentCallsSchema,
   COACH_ASSESSMENT_CALLS_UNAVAILABLE_MESSAGE,
+  COACH_ASSESSMENT_CALLS_UNAVAILABLE_STATUS,
   type CoachAssessmentCall,
   type CoachAssessmentCalls,
 } from "~/features/assessment-calls/contracts/assessment-calls";
@@ -27,7 +28,7 @@ export class CoachAssessmentCallsController {
 
     if (listing.status === "unavailable") {
       throw new Response(COACH_ASSESSMENT_CALLS_UNAVAILABLE_MESSAGE, {
-        status: 503,
+        status: COACH_ASSESSMENT_CALLS_UNAVAILABLE_STATUS,
       });
     }
 
