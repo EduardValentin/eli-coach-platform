@@ -22,22 +22,24 @@ const VISITOR = 'Maria Ionescu';
 const VISITOR_EMAIL = 'maria@example.com';
 const WAIT = { timeout: 4000 };
 
-function upcomingBooking(): PrototypeBooking {
-  const startsAt = new Date(Date.now() + DAY_MS);
-
+function bookingAt(id: string, startsAt: Date): PrototypeBooking {
   return {
-    id: 'ac-row-actions',
+    id,
     startsAt,
     visitorName: VISITOR,
     visitorEmail: VISITOR_EMAIL,
     notes: '',
     visitorTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     coachTimeZone: 'Europe/Bucharest',
-    joinPath: '/book/ac-row-actions/join',
+    joinPath: `/book/${id}/join`,
   };
 }
 
-const BOOKING = upcomingBooking();
+const BOOKING = bookingAt('ac-row-actions', new Date(Date.now() - DAY_MS));
+const UPCOMING_BOOKING = bookingAt(
+  'ac-row-actions-upcoming',
+  new Date(Date.now() + DAY_MS),
+);
 
 beforeAll(() => {
   vi.stubGlobal(
@@ -63,7 +65,7 @@ function SeedBookings() {
   const { replaceBookings } = useAssessmentCalls();
 
   useEffect(() => {
-    replaceBookings([BOOKING]);
+    replaceBookings([BOOKING, UPCOMING_BOOKING]);
   }, [replaceBookings]);
 
   return null;
@@ -101,11 +103,17 @@ function JourneyDriver() {
   );
 }
 
+function heldCallsQuery(urlQuery: string) {
+  if (urlQuery.includes('status=')) return urlQuery;
+  return `?status=past${urlQuery.replace(/^\?/, '&')}`;
+}
+
 function renderPage(urlQuery = '') {
-  window.history.replaceState({}, '', `/coach/assessment-calls${urlQuery}`);
+  const query = heldCallsQuery(urlQuery);
+  window.history.replaceState({}, '', `/coach/assessment-calls${query}`);
 
   render(
-    <MemoryRouter initialEntries={[`/coach/assessment-calls${urlQuery}`]}>
+    <MemoryRouter initialEntries={[`/coach/assessment-calls${query}`]}>
       <AppProvider>
         <ClientProfileProvider>
           <AssessmentCallProvider>
@@ -143,18 +151,33 @@ async function sendInvitation(user: ReturnType<typeof userEvent.setup>) {
 }
 
 describe('the assessment call row actions', () => {
-  it('shows no journey stage on an upcoming call before the coach acts', () => {
+  it('offers the journey actions only once the call has taken place', () => {
     // arrange
-    const urlQuery = '';
+    const urlQuery = '?status=past';
 
     // act
     renderPage(urlQuery);
 
     // assert
-    expect(screen.queryByText('Call held')).toBeNull();
+    expect(screen.getByText('Call held')).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /Journey actions for/ }),
     ).toBeInTheDocument();
+  });
+
+  it('keeps an upcoming call free of journey status and actions', () => {
+    // arrange
+    const urlQuery = '?status=upcoming';
+
+    // act
+    renderPage(urlQuery);
+
+    // assert
+    expect(screen.getByRole('link', { name: 'Join call' })).toBeInTheDocument();
+    expect(screen.queryByText('Call held')).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: /Journey actions for/ }),
+    ).toBeNull();
   });
 
   it('sends the payment link from the row and confirms the send', async () => {
