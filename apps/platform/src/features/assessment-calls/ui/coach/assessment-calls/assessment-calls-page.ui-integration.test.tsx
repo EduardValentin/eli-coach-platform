@@ -72,6 +72,7 @@ const FOUR_CALLS = [YESTERDAY, EARLIER_TODAY, LATER_TODAY, NEXT_WEEK];
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(NOW);
+  vi.stubEnv("TZ", COACH_TIME_ZONE);
 });
 
 afterEach(() => {
