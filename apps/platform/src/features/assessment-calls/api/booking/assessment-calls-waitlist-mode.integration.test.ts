@@ -2,13 +2,21 @@ import { ASSESSMENT_CALL_BOOKING_TURNSTILE_ACTION } from "@eli-coach-platform/in
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import { ApiIntegrationTestSuite } from "~integration-test-config/api-integration-test-suite";
+import { mintSessionToken } from "~integration-test-config/clerk-session";
 import { turnstileTokenForAction } from "~integration-test-config/wire-mock/expectations/turnstile-siteverify";
 
-const suite = new ApiIntegrationTestSuite();
+const COACH_SESSION = {
+  sessionId: "sess_waitlistcoachsession",
+  subjectId: "user_waitlistcoachsubject",
+};
+
+const suite = new ApiIntegrationTestSuite({
+  environment: { BOOTSTRAP_COACH_AUTH_SUBJECT_ID: COACH_SESSION.subjectId },
+});
 const bookingToken = turnstileTokenForAction(
   ASSESSMENT_CALL_BOOKING_TURNSTILE_ACTION,
 );
-const PLACEHOLDER_MEETING_LINK = "https://example.invalid/2f8b41c6a9d7";
+const SAVED_MEETING_LINK = "https://meet.example/eli-assessment-room";
 const BOOKED_START = "2026-10-19T14:00:00.000Z";
 
 describe.sequential("assessment calls during the waitlist", () => {
@@ -94,6 +102,7 @@ describe.sequential("assessment calls during the waitlist", () => {
   it("still sends a visitor whose call was booked before the waitlist to the meeting room", async () => {
     // arrange
     const bookingId = await seedAssessmentCall();
+    await saveAssessmentCallSettings({ meetingLink: SAVED_MEETING_LINK });
 
     // act
     const response = await suite.request(
@@ -102,9 +111,30 @@ describe.sequential("assessment calls during the waitlist", () => {
 
     // assert
     expect(response.status).toBe(302);
-    expect(response.headers.get("Location")).toBe(PLACEHOLDER_MEETING_LINK);
+    expect(response.headers.get("Location")).toBe(SAVED_MEETING_LINK);
   });
 });
+
+async function saveAssessmentCallSettings(options: {
+  meetingLink: string;
+}): Promise<void> {
+  await suite.request(
+    new Request(suite.url("/api/assessment-calls/settings"), {
+      body: JSON.stringify({
+        endHour: 20,
+        meetingLink: options.meetingLink,
+        startHour: 17,
+        timeZone: "Europe/Bucharest",
+        weekdays: ["monday", "tuesday", "wednesday", "thursday", "friday"],
+      }),
+      headers: {
+        authorization: `Bearer ${mintSessionToken(COACH_SESSION)}`,
+        "content-type": "application/json",
+      },
+      method: "PUT",
+    }),
+  );
+}
 
 async function seedAssessmentCall(): Promise<string> {
   const [row] = await suite.postgres.queryRows<{ id: string }>({

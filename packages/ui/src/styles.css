@@ -445,9 +445,11 @@
   }
 }
 
+/* label[data-chip-control] covers a chip whose real control is an opacity:0 input, which cannot show its own outline. */
 :focus-visible:not([role="option"]):not([role="menuitem"]):not(
     [role="menuitemcheckbox"]
-  ):not([role="menuitemradio"]):not([tabindex="-1"]) {
+  ):not([role="menuitemradio"]):not([tabindex="-1"]),
+label[data-chip-control]:has(:focus-visible) {
   outline-style: solid;
   outline-width: 2px;
   outline-color: var(--color-focus-ring);
@@ -458,6 +460,28 @@
 
 [data-surface="inverted"] :focus-visible {
   --color-focus-ring: var(--color-brand-primary-on-inverted);
+}
+
+@keyframes ui-popover-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes ui-popover-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
 }
 
 @layer components {

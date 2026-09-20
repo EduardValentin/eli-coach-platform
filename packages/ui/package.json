@@ -17,6 +17,7 @@
     "./overlays": "./src/overlays/index.ts",
     "./primitives": "./src/primitives/index.ts",
     "./tabs": "./src/tabs/index.ts",
+    "./toast": "./src/toast/index.ts",
     "./styles.css": "./src/styles.css"
   },
   "peerDependencies": {
@@ -30,6 +31,7 @@
     "clsx": "catalog:",
     "radix-ui": "catalog:",
     "react-day-picker": "catalog:",
+    "sonner": "catalog:",
     "tailwind-merge": "catalog:"
   },
   "devDependencies": {

@@ -3,6 +3,8 @@ import type { FeatureFlagSet } from "@eli-coach-platform/domain/feature-flag";
 import { InMemoryProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 import { describe, expect, it } from "vitest";
 
+import { assessmentCallsTable } from "~/features/assessment-calls/data/schema.server";
+
 import {
   composeAssessmentCallsFeature,
   type AssessmentCallsFeatureHandles,
@@ -53,7 +55,7 @@ describe("composeAssessmentCallsFeature", () => {
     // arrange
     const feature = composeAssessmentCallsFeature({
       ...createHandles({ WAITLIST_MODE: false }),
-      database: createDatabaseReturning([BOOKED_ROW]),
+      database: createDatabaseWithoutSavedAvailability([BOOKED_ROW]),
     });
 
     // act
@@ -75,7 +77,6 @@ function createHandles(
     appBasePath: "/eli-coach-platform",
     assessmentCallsConfig: {
       ASSESSMENT_CALL_COACH_EMAIL: "coach@evoa.fit",
-      ASSESSMENT_CALL_MEETING_LINK: "https://meet.example/eli",
     },
     botDetection: { provider: "static", token: "XXXX.DUMMY.TOKEN.XXXX" },
     botVerifier: { verifySubmission: async () => ({ status: "verified" }) },
@@ -94,15 +95,25 @@ function createHandles(
   };
 }
 
-function createDatabaseReturning(rows: readonly unknown[]): DatabaseClient {
-  const chain = {
-    from: () => chain,
-    orderBy: () => chain,
-    then: (onFulfilled: (value: readonly unknown[]) => unknown) =>
-      Promise.resolve(rows).then(onFulfilled),
-  };
+function createDatabaseWithoutSavedAvailability(
+  bookedCallRows: readonly unknown[],
+): DatabaseClient {
+  function chainResolving(resolvedRows: readonly unknown[]) {
+    return {
+      orderBy: () => chainResolving(resolvedRows),
+      where: () => chainResolving(resolvedRows),
+      limit: () => chainResolving(resolvedRows),
+      then: (onFulfilled: (value: readonly unknown[]) => unknown) =>
+        Promise.resolve(resolvedRows).then(onFulfilled),
+    };
+  }
 
-  return { select: () => chain } as unknown as DatabaseClient;
+  return {
+    select: () => ({
+      from: (table: unknown) =>
+        chainResolving(table === assessmentCallsTable ? bookedCallRows : []),
+    }),
+  } as unknown as DatabaseClient;
 }
 
 function createDatabaseStub(): DatabaseClient {

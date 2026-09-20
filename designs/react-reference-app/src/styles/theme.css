@@ -637,3 +637,12 @@
 [data-surface="inverted"] :focus-visible {
   --focus-ring: var(--brand-on-inverted);
 }
+
+/* label[data-chip-control] covers a chip whose real control is an opacity:0 input, which cannot show its own outline. */
+label[data-chip-control]:has(:focus-visible) {
+  outline-style: solid;
+  outline-width: 2px;
+  outline-color: var(--focus-ring);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--focus-ring) 16%, transparent);
+}

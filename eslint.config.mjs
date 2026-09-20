@@ -65,6 +65,7 @@ export default [
   {
     files: [
       "apps/platform/src/surfaces/*/routes.ts",
+      "apps/platform/src/features/*/routes.ts",
       "apps/platform/src/features/*/contracts/paths.ts",
     ],
     rules: {

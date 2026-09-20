@@ -13,6 +13,7 @@ import type { PrototypeClientOnboardingOutcome } from '../services/clientOnboard
 import type {
   PrototypeBooking,
   PrototypeBookingOutcome,
+  PrototypeCallSettingsSaveOutcome,
   PrototypeCoachListingOutcome,
 } from '../services/assessmentCallService';
 import {
@@ -131,6 +132,11 @@ function parseDashboardCallsControl(value: string): DashboardCallsSeed {
   }
 
   return 'none';
+}
+
+function parseCallSettingsSaveOutcomeControl(value: string): PrototypeCallSettingsSaveOutcome {
+  if (value === 'server_error') return value;
+  return 'saved';
 }
 
 const SELECT_CONTENT_CLASS = 'z-[10000]';
@@ -441,6 +447,37 @@ export function DevToggle() {
                   className="inline-flex items-center gap-1 text-sm text-brand hover:underline"
                 >
                   Open booking page <ArrowRight size={14} aria-hidden="true" />
+                </Link>
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="dev-call-settings-save-outcome"
+                    className="text-xs font-semibold text-copy-muted uppercase tracking-wider"
+                  >
+                    Assessment call settings save outcome
+                  </Label>
+                  <Select
+                    value={appState.callSettingsSaveOutcome}
+                    onValueChange={(value) =>
+                      setAppState({
+                        callSettingsSaveOutcome: parseCallSettingsSaveOutcomeControl(value),
+                      })
+                    }
+                  >
+                    <SelectTrigger id="dev-call-settings-save-outcome" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="saved">Saved</SelectItem>
+                      <SelectItem value="server_error">Server failure</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Link
+                  to="/coach/settings"
+                  onClick={() => setIsOpen(false)}
+                  className="inline-flex items-center gap-1 text-sm text-brand hover:underline"
+                >
+                  Open coach settings <ArrowRight size={14} aria-hidden="true" />
                 </Link>
               </TabsContent>
 

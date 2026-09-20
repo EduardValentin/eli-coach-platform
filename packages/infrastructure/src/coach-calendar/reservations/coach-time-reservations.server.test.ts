@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { reserveCoachTime } from "./coach-time-reservations.server";
-import { COACH_TIME_RESERVATIONS_NO_OVERLAP } from "./schema.server";
+import { COACH_TIME_RESERVATIONS_NO_OVERLAP } from "../schema.server";
 
 type Transaction = Parameters<typeof reserveCoachTime>[0];
 

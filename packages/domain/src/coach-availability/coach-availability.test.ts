@@ -3,8 +3,9 @@ import { describe, expect, it } from "vitest";
 import {
   CoachAvailability,
   SlotPolicy,
-  type TimeInterval,
   type CoachAvailabilityProps,
+  type CoachAvailabilityResult,
+  type TimeInterval,
   type Weekday,
 } from "./index";
 
@@ -35,58 +36,75 @@ function busyBetween(start: string, end: string): TimeInterval {
   return { start: new Date(start), end: new Date(end) };
 }
 
+function configuredAvailabilityOrThrow(
+  props: CoachAvailabilityProps,
+): CoachAvailability {
+  const result = CoachAvailability.from(props);
+
+  if (result.status !== "configured") {
+    throw new Error(
+      `Expected a configured availability, got problems: ${result.problems.join(", ")}`,
+    );
+  }
+
+  return result.availability;
+}
+
 function bucharestEvenings(): CoachAvailability {
-  return CoachAvailability.configure(BUCHAREST_EVENINGS);
+  return configuredAvailabilityOrThrow(BUCHAREST_EVENINGS);
 }
 
 function isoStarts(starts: readonly Date[]): string[] {
   return starts.map((start) => start.toISOString());
 }
 
-describe("CoachAvailability.configure", () => {
+describe("CoachAvailability.from", () => {
   it.each([
     [{ startHour: 20, endHour: 17 }],
     [{ startHour: 17, endHour: 17 }],
     [{ startHour: -1, endHour: 20 }],
     [{ startHour: 17, endHour: 25 }],
     [{ startHour: 17.5, endHour: 20 }],
-  ])("rejects the hours %o", (hours) => {
+  ])("reports invalid_hours for %o", (hours) => {
     // arrange
     const props = { ...BUCHAREST_EVENINGS, ...hours };
 
     // act
-    const configure = () => CoachAvailability.configure(props);
+    const result = CoachAvailability.from(props);
 
     // assert
-    expect(configure).toThrow(/hours/i);
+    expect(result).toEqual({ status: "invalid", problems: ["invalid_hours"] });
   });
 
   it.each([["Europe/Bucarest"], [""], ["UTC+2"]])(
-    "rejects the time zone %o",
+    "reports invalid_time_zone for %o",
     (timeZone) => {
       // arrange
       const props = { ...BUCHAREST_EVENINGS, timeZone };
 
       // act
-      const configure = () => CoachAvailability.configure(props);
+      const result = CoachAvailability.from(props);
 
       // assert
-      expect(configure).toThrow(/time zone/i);
+      expect(result).toEqual({
+        status: "invalid",
+        problems: ["invalid_time_zone"],
+      });
     },
   );
 
-  it("rejects an empty weekday list", () => {
+  it("reports no_weekday for an empty weekday list", () => {
     // arrange
     const props = { ...BUCHAREST_EVENINGS, weekdays: [] };
 
     // act
-    const configure = () => CoachAvailability.configure(props);
+    const result = CoachAvailability.from(props);
 
     // assert
-    expect(configure).toThrow(/weekday/i);
+    expect(result).toEqual({ status: "invalid", problems: ["no_weekday"] });
   });
 
-  it("rejects an unknown weekday", () => {
+  it("reports no_weekday for an unknown weekday", () => {
     // arrange
     const props = {
       ...BUCHAREST_EVENINGS,
@@ -94,26 +112,46 @@ describe("CoachAvailability.configure", () => {
     };
 
     // act
-    const configure = () => CoachAvailability.configure(props);
+    const result = CoachAvailability.from(props);
 
     // assert
-    expect(configure).toThrow(/weekday/i);
+    expect(result).toEqual({ status: "invalid", problems: ["no_weekday"] });
+  });
+
+  it("collects every problem when several are invalid", () => {
+    // arrange
+    const props = {
+      timeZone: "UTC+2",
+      weekdays: [] as readonly Weekday[],
+      startHour: 20,
+      endHour: 17,
+    };
+
+    // act
+    const result = CoachAvailability.from(props);
+
+    // assert
+    expect(result).toEqual({
+      status: "invalid",
+      problems: ["no_weekday", "invalid_hours", "invalid_time_zone"],
+    });
   });
 
   it("keeps the configured window readable", () => {
-    // arrange
-    const availability = bucharestEvenings();
-
-    // act
-    const configured = {
-      timeZone: availability.timeZone,
-      weekdays: availability.weekdays,
-      startHour: availability.startHour,
-      endHour: availability.endHour,
-    };
+    // arrange & act
+    const result: CoachAvailabilityResult =
+      CoachAvailability.from(BUCHAREST_EVENINGS);
 
     // assert
-    expect(configured).toEqual({
+    expect(result.status).toBe("configured");
+    expect(
+      result.status === "configured" && {
+        timeZone: result.availability.timeZone,
+        weekdays: result.availability.weekdays,
+        startHour: result.availability.startHour,
+        endHour: result.availability.endHour,
+      },
+    ).toEqual({
       timeZone: "Europe/Bucharest",
       weekdays: WORKING_WEEK,
       startHour: 17,
@@ -253,7 +291,7 @@ describe("CoachAvailability.openSlotStarts", () => {
 
   it("holds the evening wall clock on the Bucharest autumn change day", () => {
     // arrange
-    const availability = CoachAvailability.configure({
+    const availability = configuredAvailabilityOrThrow({
       ...BUCHAREST_EVENINGS,
       weekdays: ["sunday"],
     });
@@ -275,7 +313,7 @@ describe("CoachAvailability.openSlotStarts", () => {
 
   it("holds the evening wall clock on the Bucharest spring change day", () => {
     // arrange
-    const availability = CoachAvailability.configure({
+    const availability = configuredAvailabilityOrThrow({
       ...BUCHAREST_EVENINGS,
       weekdays: ["sunday"],
     });
@@ -297,7 +335,7 @@ describe("CoachAvailability.openSlotStarts", () => {
 
   it("offers the same wall clock hours all year in a zone without a change", () => {
     // arrange
-    const availability = CoachAvailability.configure({
+    const availability = configuredAvailabilityOrThrow({
       ...BUCHAREST_EVENINGS,
       timeZone: "Asia/Kolkata",
     });
@@ -499,7 +537,7 @@ describe("CoachAvailability.openSlotStarts against busy time", () => {
 
   it("drops the start busy time covers on a Bucharest clock change day", () => {
     // arrange
-    const availability = CoachAvailability.configure({
+    const availability = configuredAvailabilityOrThrow({
       ...BUCHAREST_EVENINGS,
       weekdays: ["sunday"],
     });

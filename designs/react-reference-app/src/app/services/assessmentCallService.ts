@@ -86,6 +86,93 @@ export const DEFAULT_COACH_AVAILABILITY: CoachAvailability = {
   endHour: 20,
 };
 
+export const DEFAULT_MEETING_LINK: string | null = null;
+
+export type AssessmentCallSettings = CoachAvailability & {
+  meetingLink: string | null;
+};
+
+export const DEFAULT_ASSESSMENT_CALL_SETTINGS: AssessmentCallSettings = {
+  ...DEFAULT_COACH_AVAILABILITY,
+  meetingLink: DEFAULT_MEETING_LINK,
+};
+
+export type AssessmentCallSettingsProblem =
+  | 'no_weekday'
+  | 'invalid_hours'
+  | 'invalid_meeting_link'
+  | 'invalid_time_zone';
+
+export const ASSESSMENT_CALL_SETTINGS_PROBLEM_MESSAGES: Record<
+  AssessmentCallSettingsProblem,
+  string
+> = {
+  no_weekday: 'Pick at least one day.',
+  invalid_hours: 'The start hour must be before the end hour.',
+  invalid_meeting_link: 'Enter a full https:// link, or leave it empty.',
+  invalid_time_zone: "Your browser's time zone could not be read.",
+};
+
+const MAX_MEETING_LINK_LENGTH = 2048;
+
+function isValidMeetingLink(link: string | null): boolean {
+  if (link === null || link.trim() === '') return true;
+  if (link.length > MAX_MEETING_LINK_LENGTH) return false;
+
+  try {
+    return new URL(link).protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+function isValidTimeZone(zone: string): boolean {
+  try {
+    new Intl.DateTimeFormat(undefined, { timeZone: zone });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function validateAssessmentCallSettings(
+  settings: AssessmentCallSettings,
+): AssessmentCallSettingsProblem[] {
+  const problems: AssessmentCallSettingsProblem[] = [];
+
+  if (settings.weekdays.length === 0) problems.push('no_weekday');
+  if (!(settings.startHour < settings.endHour)) problems.push('invalid_hours');
+  if (!isValidMeetingLink(settings.meetingLink)) {
+    problems.push('invalid_meeting_link');
+  }
+  if (!isValidTimeZone(settings.timeZone)) problems.push('invalid_time_zone');
+
+  return problems;
+}
+
+export type PrototypeCallSettingsSaveOutcome = 'saved' | 'server_error';
+
+export type SaveAssessmentCallSettingsRequest = {
+  settings: AssessmentCallSettings;
+  outcome: PrototypeCallSettingsSaveOutcome;
+};
+
+export async function saveAssessmentCallSettings({
+  settings,
+  outcome,
+}: SaveAssessmentCallSettingsRequest): Promise<AssessmentCallSettings> {
+  await new Promise((resolve) => setTimeout(resolve, SIMULATED_LATENCY_MS));
+
+  if (outcome === 'server_error') {
+    throw new AssessmentCallError(
+      'server_error',
+      "We couldn't save your settings. Try again in a moment.",
+    );
+  }
+
+  return settings;
+}
+
 const MINUTE_MS = 60 * 1000;
 const DAY_MS = 24 * 60 * MINUTE_MS;
 
@@ -154,10 +241,15 @@ function instantAt(
   return new Date(asUtc - refinedOffset);
 }
 
-function startHours({ startHour, endHour }: CoachAvailability): number[] {
+function startHours(availability: CoachAvailability): number[] {
   const step = SLOT_STEP_MINUTES / 60;
+  const duration = ASSESSMENT_CALL_DURATION_MINUTES / 60;
   const hours: number[] = [];
-  for (let hour = startHour; hour + step <= endHour; hour += step) {
+  for (
+    let hour = availability.startHour;
+    hour + duration <= availability.endHour;
+    hour += step
+  ) {
     hours.push(hour);
   }
   return hours;
@@ -209,7 +301,10 @@ function bookingId(): string {
   return `ac-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-function bookingFrom(request: AssessmentCallRequest): PrototypeBooking {
+function bookingFrom(
+  request: AssessmentCallRequest,
+  availability: CoachAvailability,
+): PrototypeBooking {
   const id = bookingId();
   return {
     id,
@@ -218,13 +313,14 @@ function bookingFrom(request: AssessmentCallRequest): PrototypeBooking {
     visitorEmail: request.email.trim(),
     notes: request.notes.trim(),
     visitorTimeZone: request.visitorTimeZone,
-    coachTimeZone: DEFAULT_COACH_AVAILABILITY.timeZone,
+    coachTimeZone: availability.timeZone,
     joinPath: `/book/${id}/join`,
   };
 }
 
 export async function bookAssessmentCall(
   request: AssessmentCallRequest,
+  availability: CoachAvailability,
 ): Promise<PrototypeBooking> {
   await new Promise((resolve) => setTimeout(resolve, SIMULATED_LATENCY_MS));
 
@@ -235,5 +331,5 @@ export async function bookAssessmentCall(
     );
   }
 
-  return bookingFrom(request);
+  return bookingFrom(request, availability);
 }

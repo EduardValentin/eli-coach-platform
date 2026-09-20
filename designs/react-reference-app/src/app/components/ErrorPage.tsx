@@ -8,6 +8,9 @@ import { buttonVariants } from './ThemeButton';
 // and offers exactly one way out.
 export const ERROR_PAGE_ACTION_CLASS = buttonVariants({ size: 'lg', variant: 'inverted' });
 
+export const FULL_PAGE_MESSAGE_SHELL_CLASS =
+  'w-full min-h-screen bg-surface-page flex flex-col items-center justify-center px-6 py-16 text-center';
+
 export function DeadEndContent({
   icon: Icon,
   eyebrow,
@@ -44,18 +47,17 @@ export function ErrorPage({
   title,
   description,
   children,
+  landmarkLabel = 'Error',
 }: {
   icon: LucideIcon;
   eyebrow: string;
   title: string;
   description: ReactNode;
   children: ReactNode;
+  landmarkLabel?: string;
 }) {
   return (
-    <main
-      aria-label="Error"
-      className="w-full min-h-screen bg-surface-page flex flex-col items-center justify-center px-6 py-16 text-center"
-    >
+    <main aria-label={landmarkLabel} className={FULL_PAGE_MESSAGE_SHELL_CLASS}>
       <DeadEndContent
         icon={icon}
         eyebrow={eyebrow}

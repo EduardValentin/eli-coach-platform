@@ -4,9 +4,14 @@ export const BOOK_ROUTE_SEGMENT = "book";
 
 export const BOOK_PATH = `/${BOOK_ROUTE_SEGMENT}`;
 
+export const COACH_SETTINGS_ROUTE_SEGMENT = "settings";
+
+export const COACH_SETTINGS_PATH = `${COACH_PORTAL_PATH}/${COACH_SETTINGS_ROUTE_SEGMENT}`;
+
 export const ASSESSMENT_CALL_API_PATHS = {
   bookings: "/api/assessment-calls",
   slots: "/api/assessment-calls/slots",
+  settings: "/api/assessment-calls/settings",
 } as const;
 
 export function assessmentCallJoinPath(bookingId: string): string {

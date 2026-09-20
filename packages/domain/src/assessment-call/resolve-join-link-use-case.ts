@@ -1,11 +1,14 @@
+import type { CoachMeetingRoomSource } from "../coach-meeting-room";
+
 import type { AssessmentCallReservations } from "./assessment-call-reservations";
-import type { MeetingRoomLink } from "./meeting-room-link";
 
 export type JoinLinkResult =
-  { status: "found"; url: string } | { status: "unknown" };
+  | { status: "found"; url: string }
+  | { status: "link_not_set" }
+  | { status: "unknown" };
 
 type ResolveJoinLinkUseCaseOptions = {
-  meetingRoomLink: MeetingRoomLink;
+  meetingRoom: CoachMeetingRoomSource;
   reservations: AssessmentCallReservations;
 };
 
@@ -19,9 +22,12 @@ export class ResolveJoinLinkUseCase {
       return { status: "unknown" };
     }
 
-    return {
-      status: "found",
-      url: await this.options.meetingRoomLink.forCall(call.toSnapshot()),
-    };
+    const room = await this.options.meetingRoom.current();
+
+    if (!room) {
+      return { status: "link_not_set" };
+    }
+
+    return { status: "found", url: room.url };
   }
 }

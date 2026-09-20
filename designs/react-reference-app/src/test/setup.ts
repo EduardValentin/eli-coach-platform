@@ -15,6 +15,12 @@ vi.stubGlobal('ResizeObserver', ResizeObserverStub);
 // selection call scrollIntoView on it.
 Element.prototype.scrollIntoView = vi.fn();
 
+// jsdom has no pointer-capture API; Radix's Select (and other primitives
+// built on it) call these during pointer interaction.
+Element.prototype.hasPointerCapture = vi.fn().mockReturnValue(false);
+Element.prototype.setPointerCapture = vi.fn();
+Element.prototype.releasePointerCapture = vi.fn();
+
 afterEach(() => {
   cleanup();
 });

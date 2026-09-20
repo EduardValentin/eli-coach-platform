@@ -14,6 +14,7 @@ import {
   openSlotsResponseSchema,
 } from "~/features/assessment-calls/contracts/assessment-calls";
 import { ApiIntegrationTestSuite } from "~integration-test-config/api-integration-test-suite";
+import { mintSessionToken } from "~integration-test-config/clerk-session";
 import { turnstileTokenForAction } from "~integration-test-config/wire-mock/expectations/turnstile-siteverify";
 
 type AssessmentCallRow = {
@@ -40,11 +41,15 @@ const MEETING_LINK = "https://meet.example/eli-assessment-room";
 const VISITOR_EMAIL = "ana@example.com";
 const VISITOR_NAME = "Ana Popescu";
 const VISITOR_TIME_ZONE = "Europe/London";
+const COACH_SESSION = {
+  sessionId: "sess_bookingcoachsession",
+  subjectId: "user_bookingcoachsubject",
+};
 
 const suite = new ApiIntegrationTestSuite({
   environment: {
     ASSESSMENT_CALL_COACH_EMAIL: COACH_EMAIL,
-    ASSESSMENT_CALL_MEETING_LINK: MEETING_LINK,
+    BOOTSTRAP_COACH_AUTH_SUBJECT_ID: COACH_SESSION.subjectId,
     PRODUCT_EMAIL_REPLY_TO,
   },
 });
@@ -539,7 +544,7 @@ describe.sequential("assessment call booking integration", () => {
     expect(row?.startsAt).toEqual(new Date(WINTER_TIME_EVENING_START));
   });
 
-  it("sends a booked visitor to the meeting room", async () => {
+  it("tells a booked visitor their call link isn't ready before the coach saves one", async () => {
     // arrange
     await suite.setServerClock(MONDAY_MORNING);
     const booked = bookAssessmentCallResponseSchema.parse(
@@ -549,6 +554,32 @@ describe.sequential("assessment call booking integration", () => {
     if (!booked.success) {
       throw new Error("Expected a confirmed booking.");
     }
+
+    // act
+    const response = await requestJoin(booked.booking.id);
+
+    // assert
+    const document = await response.text();
+
+    expect(response.status).toBe(200);
+    expect(document).toContain("Your call link isn&#x27;t ready yet");
+  });
+
+  it("sends a booked visitor to the meeting room once the coach saves one", async () => {
+    // arrange
+    await suite.setServerClock(MONDAY_MORNING);
+    const booked = bookAssessmentCallResponseSchema.parse(
+      await (await requestBooking({})).json(),
+    );
+
+    if (!booked.success) {
+      throw new Error("Expected a confirmed booking.");
+    }
+
+    await saveAssessmentCallSettings({
+      issuedAt: MONDAY_MORNING,
+      meetingLink: MEETING_LINK,
+    });
 
     // act
     const response = await requestJoin(booked.booking.id);
@@ -589,6 +620,28 @@ async function requestBookingPage(): Promise<Response> {
 
 async function requestJoin(bookingId: string): Promise<Response> {
   return suite.request(new Request(suite.url(`/book/${bookingId}/join`)));
+}
+
+async function saveAssessmentCallSettings(options: {
+  issuedAt: Date;
+  meetingLink: string;
+}): Promise<void> {
+  await suite.request(
+    new Request(suite.url("/api/assessment-calls/settings"), {
+      body: JSON.stringify({
+        endHour: 20,
+        meetingLink: options.meetingLink,
+        startHour: 17,
+        timeZone: "Europe/Bucharest",
+        weekdays: ["monday", "tuesday", "wednesday", "thursday", "friday"],
+      }),
+      headers: {
+        authorization: `Bearer ${mintSessionToken({ ...COACH_SESSION, issuedAt: options.issuedAt })}`,
+        "content-type": "application/json",
+      },
+      method: "PUT",
+    }),
+  );
 }
 
 async function requestBooking(

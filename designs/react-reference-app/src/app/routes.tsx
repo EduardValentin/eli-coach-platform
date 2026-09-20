@@ -1,7 +1,8 @@
 import { createBrowserRouter, Outlet } from "react-router";
-import { Toaster } from "sonner";
+import { Toaster } from "./components/ui/sonner";
 import { Home } from "./pages/Home";
 import { Book } from "./pages/Book";
+import { JoinCall } from "./pages/JoinCall";
 import { DevToggle } from "./components/DevToggle";
 import { AppProvider } from "./context/AppContext";
 import { StoreProvider } from "./context/StoreContext";
@@ -109,6 +110,7 @@ export const router = createBrowserRouter(
       children: [
         { index: true, Component: Home },
         { path: "book", Component: Book },
+        { path: "book/:bookingId/join", Component: JoinCall },
         { path: "store", Component: Store },
         { path: "store/:productId", Component: ProductDetails },
         { path: "pricing", Component: Pricing },

@@ -6,13 +6,22 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import type { PrototypeBooking } from '../services/assessmentCallService';
+import { useAppState } from './AppContext';
+import {
+  DEFAULT_ASSESSMENT_CALL_SETTINGS,
+  saveAssessmentCallSettings,
+  type AssessmentCallSettings,
+  type PrototypeBooking,
+} from '../services/assessmentCallService';
 
 type AssessmentCallContextType = {
   bookings: PrototypeBooking[];
   bookedStarts: Date[];
   addBooking: (booking: PrototypeBooking) => void;
   replaceBookings: (bookings: PrototypeBooking[]) => void;
+  settings: AssessmentCallSettings;
+  saveSettings: (next: AssessmentCallSettings) => Promise<void>;
+  findBooking: (id: string) => PrototypeBooking | undefined;
 };
 
 const AssessmentCallContext = createContext<
@@ -20,7 +29,11 @@ const AssessmentCallContext = createContext<
 >(undefined);
 
 export function AssessmentCallProvider({ children }: { children: ReactNode }) {
+  const { appState } = useAppState();
   const [bookings, setBookings] = useState<PrototypeBooking[]>([]);
+  const [settings, setSettings] = useState<AssessmentCallSettings>(
+    DEFAULT_ASSESSMENT_CALL_SETTINGS,
+  );
 
   const bookedStarts = useMemo(
     () => bookings.map((booking) => booking.startsAt),
@@ -35,9 +48,33 @@ export function AssessmentCallProvider({ children }: { children: ReactNode }) {
     setBookings(replacements);
   }, []);
 
+  const findBooking = useCallback(
+    (id: string) => bookings.find((booking) => booking.id === id),
+    [bookings],
+  );
+
+  const saveSettings = useCallback(
+    async (next: AssessmentCallSettings) => {
+      const saved = await saveAssessmentCallSettings({
+        settings: next,
+        outcome: appState.callSettingsSaveOutcome,
+      });
+      setSettings(saved);
+    },
+    [appState.callSettingsSaveOutcome],
+  );
+
   return (
     <AssessmentCallContext.Provider
-      value={{ bookings, bookedStarts, addBooking, replaceBookings }}
+      value={{
+        bookings,
+        bookedStarts,
+        addBooking,
+        replaceBookings,
+        settings,
+        saveSettings,
+        findBooking,
+      }}
     >
       {children}
     </AssessmentCallContext.Provider>

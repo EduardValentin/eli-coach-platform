@@ -1,0 +1,21 @@
+import { cva, type VariantProps } from "class-variance-authority";
+
+const CHIP_FILLED_SURFACE = "border-control-border-soft bg-surface-base py-2";
+
+export const chipVariants = cva(
+  "inline-flex min-h-11 items-center rounded-full border px-4 text-sm text-text-primary outline-none transition-[background-color,border-color,color] duration-150 ease-out",
+  {
+    variants: {
+      tone: {
+        brand: `${CHIP_FILLED_SURFACE} data-[state=off]:hover:border-brand-primary data-[state=off]:hover:text-brand-primary data-[state=on]:border-brand-primary data-[state=on]:bg-brand-primary data-[state=on]:text-brand-primary-foreground`,
+        "brand-secondary": `${CHIP_FILLED_SURFACE} data-[state=off]:hover:border-brand-secondary data-[state=off]:hover:text-brand-secondary data-[state=on]:border-brand-secondary data-[state=on]:bg-brand-secondary data-[state=on]:text-brand-secondary-foreground`,
+        soft: "text-text-muted data-[state=off]:hover:border-brand-primary data-[state=off]:hover:text-brand-primary data-[state=on]:border-brand-primary/30 data-[state=on]:bg-brand-primary-soft data-[state=on]:text-brand-primary data-[state=on]:hover:border-brand-primary",
+      },
+    },
+    defaultVariants: {
+      tone: "brand",
+    },
+  },
+);
+
+export type ChipTone = NonNullable<VariantProps<typeof chipVariants>["tone"]>;
