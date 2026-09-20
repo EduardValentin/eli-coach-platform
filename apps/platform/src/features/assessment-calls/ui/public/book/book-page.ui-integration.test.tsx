@@ -38,8 +38,8 @@ import BookRoute, { shouldRevalidate } from "./book-page";
 import { BOOKINGS_API_URL, SLOTS_API_URL } from "./api-client";
 
 const TODAY = new Date("2026-03-02T06:00:00.000Z");
-const BROWSER_TIME_ZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
 const COACH_TIME_ZONE = "Europe/Bucharest";
+const BROWSER_TIME_ZONE = COACH_TIME_ZONE;
 
 const FIRST_SLOT = "2026-03-02T15:00:00.000Z";
 const SECOND_SLOT = "2026-03-02T16:00:00.000Z";
@@ -65,6 +65,7 @@ beforeAll(() => {
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(TODAY);
+  vi.stubEnv("TZ", BROWSER_TIME_ZONE);
 });
 
 afterEach(() => {
