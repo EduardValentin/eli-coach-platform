@@ -40,7 +40,7 @@ export function DateField({
   const selected = parseDate(value);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover modal open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button
           type="button"
@@ -50,11 +50,20 @@ export function DateField({
           <span className={cn(!selected && 'text-muted-foreground')}>
             {selected ? format(selected, 'd MMMM yyyy') : placeholder}
           </span>
-          <CalendarDays size={16} className="text-brand" aria-hidden="true" />
+          <CalendarDays
+            size={16}
+            className="text-muted-foreground"
+            aria-hidden="true"
+          />
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-auto p-3">
+      <PopoverContent
+        align="start"
+        className="w-80 p-3"
+        onFocusOutside={(event) => event.preventDefault()}
+      >
         <BrandCalendar
+          fixedWeeks
           mode="single"
           selected={selected}
           defaultMonth={selected ?? defaultMonth}

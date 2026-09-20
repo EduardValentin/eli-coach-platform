@@ -267,7 +267,7 @@ function InviteForm({
                 )}
               />
 
-              <div className="grid grid-cols-[minmax(7rem,auto)_1fr] gap-3">
+              <div className="grid grid-cols-[auto_1fr] gap-3">
                 <FormField
                   control={form.control}
                   name="phoneDiallingCode"
@@ -276,7 +276,7 @@ function InviteForm({
                       <FormLabel>Country code</FormLabel>
                       <Select value={field.value} onValueChange={field.onChange}>
                         <FormControl>
-                          <SelectTrigger className="w-full">
+                          <SelectTrigger className="w-auto gap-2 whitespace-nowrap">
                             <SelectValue />
                           </SelectTrigger>
                         </FormControl>
@@ -286,7 +286,7 @@ function InviteForm({
                               key={country.name}
                               value={country.diallingCode}
                             >
-                              {country.diallingCode} {country.name}
+                              {country.diallingCode} {country.isoCode}
                             </SelectItem>
                           ))}
                         </SelectContent>
