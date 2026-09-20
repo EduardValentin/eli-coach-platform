@@ -95,6 +95,7 @@
   --color-surface-inverted: #0c0c0c;
   --color-surface-quiet: oklch(0.985 0 0);
   --color-surface-muted: oklch(0.97 0 0);
+  --color-surface-muted-hover: oklch(0.922 0 0);
   --color-surface-strong: oklch(0.269 0 0);
   --color-surface-neutral: #ececf0;
 
@@ -113,6 +114,7 @@
   --color-border-strong: rgba(233, 230, 226, 0.6);
   --color-border-soft: rgba(233, 230, 226, 0.25);
   --color-control-border-soft: oklch(0.922 0 0);
+  --color-stroke-quiet: oklch(0.985 0 0);
   --color-stroke-faint: oklch(0.97 0 0);
   --color-divider: oklch(0.87 0 0);
   --color-border-focus: oklch(0.708 0 0);
@@ -273,6 +275,7 @@
   --color-surface-inverted: var(--color-surface-inverted);
   --color-surface-quiet: var(--color-surface-quiet);
   --color-surface-muted: var(--color-surface-muted);
+  --color-surface-muted-hover: var(--color-surface-muted-hover);
   --color-surface-strong: var(--color-surface-strong);
   --color-surface-neutral: var(--color-surface-neutral);
 
@@ -291,6 +294,7 @@
   --color-border-strong: var(--color-border-strong);
   --color-border-soft: var(--color-border-soft);
   --color-control-border-soft: var(--color-control-border-soft);
+  --color-stroke-quiet: var(--color-stroke-quiet);
   --color-stroke-faint: var(--color-stroke-faint);
   --color-divider: var(--color-divider);
   --color-border-focus: var(--color-border-focus);

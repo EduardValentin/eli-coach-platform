@@ -86,6 +86,11 @@ export const bookAssessmentCallResponseSchema = z.discriminatedUnion(
   [bookAssessmentCallSuccessSchema, bookAssessmentCallErrorSchema],
 );
 
+export const COACH_ASSESSMENT_CALLS_UNAVAILABLE_STATUS = 503;
+
+export const COACH_ASSESSMENT_CALLS_UNAVAILABLE_MESSAGE =
+  "Your assessment calls could not be loaded. Try again in a moment.";
+
 export const coachAssessmentCallSchema = z.object({
   id: z.uuid(),
   visitorName: z.string().min(1),

@@ -44,6 +44,26 @@ export const ASSESSMENT_CALL_ERROR_MESSAGES: Record<
   server_error: 'Something went wrong on our end. Please try again.',
 };
 
+export type PrototypeCoachListingOutcome = 'ok' | 'unavailable';
+
+export type CoachCallListing =
+  | { status: 'ok'; bookings: PrototypeBooking[] }
+  | { status: 'unavailable' };
+
+export const COACH_CALLS_UNAVAILABLE_MESSAGE =
+  'Your assessment calls could not be loaded. Try again in a moment.';
+
+export function readCoachCallListing(
+  bookings: PrototypeBooking[],
+  outcome: PrototypeCoachListingOutcome,
+): CoachCallListing {
+  if (outcome === 'unavailable') {
+    return { status: 'unavailable' };
+  }
+
+  return { status: 'ok', bookings };
+}
+
 export const SIMULATED_LATENCY_MS = 1200;
 
 export const ASSESSMENT_CALL_DURATION_MINUTES = 30;

@@ -4,6 +4,7 @@ import type { PrototypeStoreCheckoutOutcome } from '../services/storeAcquisition
 import type {
   PrototypeBookingOutcome,
   PrototypeCallSettingsSaveOutcome,
+  PrototypeCoachListingOutcome,
 } from '../services/assessmentCallService';
 import type {
   PrototypeAccountRole,
@@ -42,6 +43,7 @@ type AppState = {
   bookingOutcome: PrototypeBookingOutcome;
   bookingSlotsUnavailable: boolean;
   callSettingsSaveOutcome: PrototypeCallSettingsSaveOutcome;
+  coachCallsOutcome: PrototypeCoachListingOutcome;
 };
 
 type AppContextType = {
@@ -65,6 +67,7 @@ const defaultState: AppState = {
   bookingOutcome: 'success',
   bookingSlotsUnavailable: false,
   callSettingsSaveOutcome: 'saved',
+  coachCallsOutcome: 'ok',
 };
 
 const validSessions = ['anonymous', 'client', 'coach'] as const;
@@ -86,6 +89,7 @@ const validBookingOutcomes = [
   'invalid_email',
   'server_error',
 ] as const;
+const validCoachListingOutcomes = ['ok', 'unavailable'] as const;
 const validClientOnboardingOutcomes = [
   'success',
   'replaced-invitation',
@@ -154,6 +158,13 @@ function parseDevParamsFromURL(): AppState {
   if (params.has('bookingslots')) {
     state.bookingSlotsUnavailable = params.get('bookingslots') === 'unavailable';
   }
+  const coachCalls = params.get('coachcalls');
+  if (
+    coachCalls &&
+    (validCoachListingOutcomes as readonly string[]).includes(coachCalls)
+  ) {
+    state.coachCallsOutcome = coachCalls as PrototypeCoachListingOutcome;
+  }
 
   const settingsSave = params.get('callsettingssave');
   if (
@@ -193,6 +204,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     url.searchParams.delete('booking');
     url.searchParams.delete('bookingslots');
     url.searchParams.delete('callsettingssave');
+    url.searchParams.delete('coachcalls');
 
     if (isSignedIn(appState.session)) {
       url.searchParams.set('session', appState.session);
@@ -227,6 +239,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     if (appState.callSettingsSaveOutcome !== 'saved') {
       url.searchParams.set('callsettingssave', appState.callSettingsSaveOutcome);
+    }
+    if (appState.coachCallsOutcome !== 'ok') {
+      url.searchParams.set('coachcalls', appState.coachCallsOutcome);
     }
 
     const target = url.pathname + url.search + url.hash;

@@ -13,6 +13,8 @@ import { CoachGreeting } from "~/features/assessment-calls/ui/coach/dashboard/co
 import { UpcomingCallsWidget } from "~/features/assessment-calls/ui/coach/dashboard/upcoming-calls-widget";
 import { useCoachClock } from "~/features/assessment-calls/ui/coach/use-coach-clock";
 
+export { AssessmentCallsErrorBoundary as ErrorBoundary } from "~/features/assessment-calls/ui/coach/assessment-calls-error-boundary";
+
 export async function loader({ context }: LoaderFunctionArgs) {
   return context.get(assessmentCallsContext).coachAssessmentCalls.loadCalls();
 }

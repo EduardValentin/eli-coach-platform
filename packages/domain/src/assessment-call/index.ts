@@ -22,7 +22,7 @@ export {
 export { GetAssessmentCallSettingsUseCase } from "./get-assessment-call-settings-use-case";
 export {
   ListAssessmentCallsUseCase,
-  type AssessmentCallListing,
+  type AssessmentCallListingResult,
 } from "./list-assessment-calls-use-case";
 export {
   ListOpenSlotsUseCase,

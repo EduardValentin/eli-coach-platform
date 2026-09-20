@@ -4,6 +4,8 @@ Header: date 2026-09-19, commit ea81d98f merged with origin/main at e2d86a3a (br
 
 Change review: date 2026-09-20, commit 05e46534 (GEN-192, base f46b6f41: `f46b6f41..05e46534`), mode record update, scope "Let the coach set her assessment call hours and meeting room"; full scope, from a fresh cruise (399 modules, 1084 dependencies, 0 violations, over the same in-scope production filter).
 
+Change review: date 2026-09-20, commits `a5615696..HEAD` on `claude/coach-portal-followups`; scope the ad-hoc coach portal follow-up set across C1, C5, C13, C14 and C17; partial scope. It adds E1567-E1581 and changes no existing row. E1579-E1581 backfill `ui/coach/assessment-calls/use-call-listing-params.ts`, a GEN-193 module this record never carried; the component-graph count table above is regenerated only by a full record update and is not recomputed here. The range's own edges are: the two new C17 modules (`ui/coach/assessment-calls-error-boundary.tsx`, `ui/coach/coach-calls-page-frame.ts`), the two coach route modules' re-export of the shared boundary, the listing use case's own incident port and the dead-end page's `cn`. The two route-module edges are `re-export` rather than `import`: React Router reads `ErrorBoundary` as a named export of the route module, so each route re-exports the one boundary instead of carrying a copy.
+
 Change review: date 2026-09-18, commit 8ac6a613 (PR #229 head, squash-merged to main as 7d92dc22; base 79fa1e95), scope 46 changed implementation files in C1, C6, C7, C8 and C14 plus direct neighbors, mode partial change review (run 8 baseline e8690f45).
 
 Change review: date 2026-09-18, commit b3eb2653 (PR #232, base 299f237f); scope the waitlist capacity enforcement: the C8 waitlist repository, table, constraint-violation classifier and migration 0019, the C1 cap constant, the C3 waitlist config and the integration rig; partial scope. Rows it changed or added carry the commit.
@@ -158,10 +160,19 @@ A feature depends on another feature only through a published interface; everyth
 | E1495 | apps/platform/src/features/assessment-calls/server/assessment-calls-composition.server.ts | apps/platform/src/features/assessment-calls/api/coach/coach-assessment-calls-controller.server.ts | import | no | no | lateral | present |
 | E1496 | apps/platform/src/features/assessment-calls/ui/coach/assessment-call-listing.ts | apps/platform/src/features/assessment-calls/contracts/assessment-calls.ts | import | no | no | lateral | present |
 | E1497 | apps/platform/src/features/assessment-calls/ui/coach/assessment-call-listing.ts | apps/platform/src/features/assessment-calls/ui/shared/day-key.ts | import | no | no | lateral | present |
+| E1567 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls-error-boundary.tsx | apps/platform/src/features/assessment-calls/contracts/assessment-calls.ts | import | no | no | lateral | added (coach follow-ups) |
+| E1568 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls-error-boundary.tsx | apps/platform/src/features/assessment-calls/ui/coach/coach-calls-page-frame.ts | import | no | no | lateral | added (coach follow-ups) |
+| E1569 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls-error-boundary.tsx | external:lucide-react | import | n/a | no | lateral | added (coach follow-ups) |
+| E1570 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls-error-boundary.tsx | external:react-router | import | n/a | no | lateral | added (coach follow-ups) |
+| E1571 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls-error-boundary.tsx | packages/ui/src/layout/index.ts | import | yes | no | lateral | added (coach follow-ups) |
+| E1572 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls-error-boundary.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | added (coach follow-ups) |
+| E1573 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls-error-boundary.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | added (coach follow-ups) |
 | E1498 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-page.tsx | apps/platform/src/features/assessment-calls/contracts/call-moment.ts | import | no | no | lateral | removed (GEN-193: the header no longer names the active zone, so the page stops importing `call-moment`) |
 | E1499 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-page.tsx | apps/platform/src/features/assessment-calls/server/guards/assessment-calls-context.server.ts | import | no | no | lateral | present |
 | E1500 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-page.tsx | apps/platform/src/features/assessment-calls/ui/coach/assessment-call-listing.ts | import | no | no | lateral | present |
+| E1574 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-page.tsx | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls-error-boundary.tsx | re-export | no | no | lateral | added (coach follow-ups; the route's `ErrorBoundary` export) |
 | E1501 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-page.tsx | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | import | no | no | lateral | present |
+| E1575 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-page.tsx | apps/platform/src/features/assessment-calls/ui/coach/coach-calls-page-frame.ts | import | no | no | lateral | added (coach follow-ups) |
 | E1502 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-page.tsx | apps/platform/src/features/assessment-calls/ui/coach/use-coach-clock.ts | import | no | no | lateral | present |
 | E1503 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | apps/platform/src/features/assessment-calls/contracts/assessment-calls.ts | import | no | no | lateral | present |
 | E1504 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | apps/platform/src/features/assessment-calls/contracts/call-moment.ts | import | no | no | lateral | present |
@@ -174,6 +185,9 @@ A feature depends on another feature only through a published interface; everyth
 | E1511 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | packages/ui/src/tabs/index.ts | import | yes | no | lateral | present |
 | E1512 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/call-list-pager.tsx | apps/platform/src/features/assessment-calls/ui/coach/assessment-call-listing.ts | import | no | no | lateral | present |
 | E1513 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/call-list-pager.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E1579 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/use-call-listing-params.ts | apps/platform/src/features/assessment-calls/ui/coach/assessment-call-listing.ts | import | no | no | lateral | added (coach follow-ups; backfills a GEN-193 module the record never carried) |
+| E1580 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/use-call-listing-params.ts | external:react-router | import | n/a | no | lateral | added (coach follow-ups; backfills a GEN-193 module the record never carried) |
+| E1581 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/use-call-listing-params.ts | packages/ui/src/lib/index.ts | import | yes | no | lateral | added (coach follow-ups; backfills a GEN-193 module the record never carried) |
 | E1514 | apps/platform/src/features/assessment-calls/ui/coach/dashboard/upcoming-calls-widget.tsx | apps/platform/src/features/assessment-calls/contracts/call-moment.ts | import | no | no | lateral | present |
 | E1515 | apps/platform/src/features/assessment-calls/ui/coach/dashboard/upcoming-calls-widget.tsx | apps/platform/src/features/assessment-calls/contracts/paths.ts | import | no | no | lateral | present |
 | E1516 | apps/platform/src/features/assessment-calls/ui/coach/dashboard/upcoming-calls-widget.tsx | apps/platform/src/features/assessment-calls/ui/coach/assessment-call-listing.ts | import | no | no | lateral | present |
@@ -191,12 +205,14 @@ A feature depends on another feature only through a published interface; everyth
 | E1528 | apps/platform/src/features/assessment-calls/ui/shared/day-key.ts | external:@date-fns/tz | import | n/a | no | lateral | present |
 | E1529 | apps/platform/src/surfaces/coach-portal/pages/home.tsx | apps/platform/src/features/assessment-calls/server/guards/assessment-calls-context.server.ts | import | yes | no | lateral | present |
 | E1530 | apps/platform/src/surfaces/coach-portal/pages/home.tsx | apps/platform/src/features/assessment-calls/ui/coach/assessment-call-listing.ts | import | yes | no | lateral | present |
+| E1576 | apps/platform/src/surfaces/coach-portal/pages/home.tsx | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls-error-boundary.tsx | re-export | yes | no | lateral | added (coach follow-ups; the route's `ErrorBoundary` export) |
 | E1531 | apps/platform/src/surfaces/coach-portal/pages/home.tsx | apps/platform/src/features/assessment-calls/ui/coach/dashboard/coach-greeting.tsx | import | yes | no | lateral | present |
 | E1532 | apps/platform/src/surfaces/coach-portal/pages/home.tsx | apps/platform/src/features/assessment-calls/ui/coach/dashboard/upcoming-calls-widget.tsx | import | yes | no | lateral | present |
 | E1533 | apps/platform/src/surfaces/coach-portal/pages/home.tsx | apps/platform/src/features/assessment-calls/ui/coach/use-coach-clock.ts | import | yes | no | lateral | present |
 | E1534 | apps/platform/src/surfaces/coach-portal/routes.ts | apps/platform/src/features/assessment-calls/routes.ts | import | yes | no | lateral | present |
 | E1535 | apps/platform/src/surfaces/coach-portal/shell/navigation-links.tsx | apps/platform/src/features/assessment-calls/contracts/paths.ts | import | yes | no | lateral | present |
 | E1536 | packages/domain/src/assessment-call/index.ts | packages/domain/src/assessment-call/list-assessment-calls-use-case.ts | import | no | no | lateral | present |
+| E1577 | packages/domain/src/assessment-call/list-assessment-calls-use-case.ts | packages/domain/src/assessment-call/assessment-call-incidents.ts | import | no | no | lateral | added (coach follow-ups) |
 | E1537 | packages/domain/src/assessment-call/list-assessment-calls-use-case.ts | packages/domain/src/assessment-call/assessment-call-reservations.ts | import | no | no | lateral | present |
 | E1538 | packages/domain/src/assessment-call/list-assessment-calls-use-case.ts | packages/domain/src/assessment-call/assessment-call.ts | import | no | no | lateral | present |
 | E1539 | packages/domain/src/assessment-call/list-assessment-calls-use-case.ts | packages/domain/src/coach-availability/index.ts | import | no | no | lateral | present |
@@ -1374,6 +1390,7 @@ No edge leaves a `packages/domain` unit for a detail or an external: C1's fan-ou
 | E684 | packages/ui/src/filters/index.ts | packages/ui/src/filters/filter-chip-group.tsx | import | no | no | lateral | present |
 | E991 | packages/ui/src/layout/app-shell.tsx | external:react | import | n/a | no | lateral | present |
 | E1413 | packages/ui/src/layout/dead-end-page.tsx | external:react | import | n/a | no | lateral | present |
+| E1578 | packages/ui/src/layout/dead-end-page.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | added (coach follow-ups) |
 | E1414 | packages/ui/src/layout/dead-end-page.tsx | packages/ui/src/primitives/index.ts | import | no | no | lateral | present |
 | E686 | packages/ui/src/layout/index.ts | packages/ui/src/layout/app-shell.tsx | import | no | no | lateral | present |
 | E1415 | packages/ui/src/layout/index.ts | packages/ui/src/layout/dead-end-page.tsx | import | no | no | lateral | present |

@@ -19,7 +19,9 @@ import type {
 import { COACH_ASSESSMENT_CALLS_PATH } from "~/features/assessment-calls/contracts/paths";
 import { COACH_PORTAL_PATH } from "~/features/accounts/contracts/paths";
 
-import CoachHomeRoute from "./home";
+import CoachHomeRoute, {
+  ErrorBoundary as CoachHomeErrorBoundary,
+} from "./home";
 
 const COACH_TIME_ZONE = "Europe/Bucharest";
 const KIRITIMATI = "Pacific/Kiritimati";
@@ -202,6 +204,44 @@ describe("the coach's dashboard", () => {
       ).toBeInTheDocument();
     });
     expect(screen.queryByText("Today")).not.toBeInTheDocument();
+  });
+});
+
+describe("the coach's dashboard when the calls cannot be read", () => {
+  it("replaces the dashboard with the unavailable dead end", async () => {
+    // arrange
+    const router = createMemoryRouter(
+      [
+        {
+          Component: CoachHomeRoute,
+          ErrorBoundary: CoachHomeErrorBoundary,
+          loader: () => {
+            throw new Response("unavailable", { status: 503 });
+          },
+          path: COACH_PORTAL_PATH,
+        },
+      ],
+      { initialEntries: [COACH_PORTAL_PATH] },
+    );
+
+    // act
+    render(<RouterProvider router={router} />);
+
+    // assert
+    expect(
+      await screen.findByRole("heading", {
+        level: 1,
+        name: "Assessment calls unavailable",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Your assessment calls could not be loaded. Try again in a moment.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Upcoming calls" }),
+    ).not.toBeInTheDocument();
   });
 });
 

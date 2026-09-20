@@ -14,7 +14,10 @@ import { AssessmentCallBookingWindow } from "./assessment-call-booking-window";
 import type { AssessmentCallNotifications } from "./assessment-call-notifications";
 import type { AssessmentCallReservations } from "./assessment-call-reservations";
 import { BookAssessmentCallUseCase } from "./book-assessment-call-use-case";
-import { ListAssessmentCallsUseCase } from "./list-assessment-calls-use-case";
+import {
+  ListAssessmentCallsUseCase,
+  type AssessmentCallListingResult,
+} from "./list-assessment-calls-use-case";
 import { ListOpenSlotsUseCase } from "./list-open-slots-use-case";
 import { ResolveJoinLinkUseCase } from "./resolve-join-link-use-case";
 
@@ -28,6 +31,7 @@ const clock = { now: () => NOW };
 function createIncidents() {
   return {
     bookingModeReadFailed: vi.fn(),
+    callsReadFailed: vi.fn(),
     notificationFailed: vi.fn(),
     slotsReadFailed: vi.fn(),
   };
@@ -172,6 +176,14 @@ const bookingCommand = {
   notes: "Training around a desk job.",
   visitorTimeZone: "Europe/Bucharest",
 };
+
+function loadedListing(result: AssessmentCallListingResult) {
+  if (result.status !== "ok") {
+    throw new Error(`expected a loaded listing, got ${result.status}`);
+  }
+
+  return result;
+}
 
 describe("AssessmentCallBookingWindow", () => {
   it("stays closed while the site is in waitlist mode", async () => {
@@ -348,16 +360,18 @@ describe("ListAssessmentCallsUseCase", () => {
     const call = existingCall();
     const listAssessmentCalls = new ListAssessmentCallsUseCase({
       availability: createAvailabilitySource("Europe/Chisinau"),
+      incidents: createIncidents(),
       reservations: createReservations({
         listAll: vi.fn().mockResolvedValue([call]),
       }),
     });
 
     // act
-    const listing = await listAssessmentCalls.execute();
+    const listing = loadedListing(await listAssessmentCalls.execute());
 
     // assert
     expect(listing).toEqual({
+      status: "ok",
       coachTimeZone: "Europe/Chisinau",
       calls: [call.toSnapshot()],
     });
@@ -373,13 +387,14 @@ describe("ListAssessmentCallsUseCase", () => {
     });
     const listAssessmentCalls = new ListAssessmentCallsUseCase({
       availability: createAvailabilitySource(),
+      incidents: createIncidents(),
       reservations: createReservations({
         listAll: vi.fn().mockResolvedValue([earlier, later]),
       }),
     });
 
     // act
-    const listing = await listAssessmentCalls.execute();
+    const listing = loadedListing(await listAssessmentCalls.execute());
 
     // assert
     expect(listing.calls.map((call) => call.id)).toEqual(["call-1", "call-2"]);
@@ -389,6 +404,7 @@ describe("ListAssessmentCallsUseCase", () => {
     // arrange
     const listAssessmentCalls = new ListAssessmentCallsUseCase({
       availability: createAvailabilitySource(),
+      incidents: createIncidents(),
       reservations: createReservations(),
     });
 
@@ -396,7 +412,49 @@ describe("ListAssessmentCallsUseCase", () => {
     const listing = await listAssessmentCalls.execute();
 
     // assert
-    expect(listing).toEqual({ coachTimeZone: COACH_TIME_ZONE, calls: [] });
+    expect(listing).toEqual({
+      status: "ok",
+      coachTimeZone: COACH_TIME_ZONE,
+      calls: [],
+    });
+  });
+
+  it("reports unavailable and logs when the reservations read throws", async () => {
+    // arrange
+    const incidents = createIncidents();
+    const listAssessmentCalls = new ListAssessmentCallsUseCase({
+      availability: createAvailabilitySource(),
+      incidents,
+      reservations: createReservations({
+        listAll: vi.fn().mockRejectedValue(new Error("down")),
+      }),
+    });
+
+    // act
+    const listing = await listAssessmentCalls.execute();
+
+    // assert
+    expect(listing).toEqual({ status: "unavailable" });
+    expect(incidents.callsReadFailed).toHaveBeenCalledOnce();
+  });
+
+  it("reports unavailable and logs when the availability read throws", async () => {
+    // arrange
+    const incidents = createIncidents();
+    const listAssessmentCalls = new ListAssessmentCallsUseCase({
+      availability: {
+        current: vi.fn().mockRejectedValue(new Error("down")),
+      },
+      incidents,
+      reservations: createReservations(),
+    });
+
+    // act
+    const listing = await listAssessmentCalls.execute();
+
+    // assert
+    expect(listing).toEqual({ status: "unavailable" });
+    expect(incidents.callsReadFailed).toHaveBeenCalledOnce();
   });
 });
 

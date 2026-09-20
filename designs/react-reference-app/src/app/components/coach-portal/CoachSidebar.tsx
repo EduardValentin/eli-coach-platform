@@ -30,12 +30,12 @@ const LINKS = [
   { name: 'Settings', href: '/coach/settings', icon: Settings },
 ];
 
-const COACH_IDENTITY_CLASS_NAME =
-  'flex items-center gap-3 min-w-0 rounded-control hover:opacity-80 transition-opacity';
-
-function CoachIdentityContent({ coachAvatarUrl }: { coachAvatarUrl?: string }) {
+function CoachIdentityLink({ coachAvatarUrl }: { coachAvatarUrl?: string }) {
   return (
-    <>
+    <Link
+      to="/coach/profile"
+      className="flex items-center gap-3 min-w-0 rounded-control hover:opacity-80 transition-opacity"
+    >
       {coachAvatarUrl ? (
         <img
           src={coachAvatarUrl}
@@ -51,82 +51,115 @@ function CoachIdentityContent({ coachAvatarUrl }: { coachAvatarUrl?: string }) {
         <p className="font-serif font-semibold text-lg text-text-primary">Evoa</p>
         <p className="text-[10px] uppercase tracking-widest text-brand font-bold">Coach Portal</p>
       </div>
-    </>
-  );
-}
-
-function CoachIdentityLink({ coachAvatarUrl }: { coachAvatarUrl?: string }) {
-  return (
-    <Link to="/coach/profile" className={COACH_IDENTITY_CLASS_NAME}>
-      <CoachIdentityContent coachAvatarUrl={coachAvatarUrl} />
     </Link>
   );
 }
 
-function CoachIdentityMark({ coachAvatarUrl }: { coachAvatarUrl?: string }) {
-  return (
-    <div aria-hidden="true" className={COACH_IDENTITY_CLASS_NAME}>
-      <CoachIdentityContent coachAvatarUrl={coachAvatarUrl} />
-    </div>
-  );
-}
+const SidebarSurface = ({ children }: { children: ReactNode }) => (
+  <div className="flex flex-col h-full bg-white text-text-primary border-r border-stroke-faint">
+    {children}
+  </div>
+);
 
-interface SidebarContentProps {
-  actions?: ReactNode;
-  brand: ReactNode;
+interface SidebarNavigationProps {
   firstLinkRef?: RefObject<HTMLAnchorElement>;
   onNavigate?: () => void;
   pathname: string;
   pendingCheckins?: number;
 }
 
-const SidebarContent = ({
-  actions,
-  brand,
+const SidebarNavigation = ({
   firstLinkRef,
   onNavigate,
   pathname,
   pendingCheckins = 0,
-}: SidebarContentProps) => (
-  <div className="flex flex-col h-full bg-white text-text-primary border-r border-neutral-100">
-    {/* Brand / Profile Area */}
-    <div className="p-6 mb-4 px-3 border-b border-neutral-50 rounded-field flex items-center justify-between">
+}: SidebarNavigationProps) => (
+  <nav
+    aria-label="Coach portal navigation"
+    className="flex flex-1 flex-col gap-1 px-4 py-2 overflow-y-auto"
+  >
+    {LINKS.map((link, linkIndex) => {
+      const Icon = link.icon;
+      const isActive =
+        pathname === link.href || (link.href !== '/coach' && pathname.startsWith(link.href));
+
+      return (
+        <Link
+          key={link.name}
+          to={link.href}
+          aria-current={isActive ? 'page' : undefined}
+          onClick={onNavigate}
+          ref={linkIndex === 0 ? firstLinkRef : undefined}
+          className={`flex items-center gap-4 px-4 py-3.5 rounded-card transition-all ${
+            isActive
+              ? 'bg-text-primary text-white shadow-md'
+              : 'text-text-secondary hover:bg-surface-quiet hover:text-text-primary'
+          }`}
+        >
+          <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
+          <span className="text-sm font-semibold">{link.name}</span>
+          {link.name === 'Schedule' && pendingCheckins > 0 && (
+            <span className="ml-auto w-5 h-5 rounded-full bg-status-pending text-white text-[10px] font-bold flex items-center justify-center">
+              {pendingCheckins}
+            </span>
+          )}
+        </Link>
+      );
+    })}
+  </nav>
+);
+
+const CoachPortalDrawer = ({
+  firstLinkRef,
+  onNavigate,
+  pathname,
+  pendingCheckins,
+}: SidebarNavigationProps) => {
+  const prefersReducedMotion = useReducedMotion() ?? false;
+
+  return (
+    <motion.div
+      className="absolute top-16 left-0 bottom-0 w-64 shadow-floating"
+      transition={
+        prefersReducedMotion
+          ? { duration: 0 }
+          : { type: 'spring', damping: 25, stiffness: 200 }
+      }
+      variants={{ closed: { x: '-100%' }, open: { x: 0 } }}
+    >
+      <SidebarSurface>
+        <SidebarNavigation
+          firstLinkRef={firstLinkRef}
+          onNavigate={onNavigate}
+          pathname={pathname}
+          pendingCheckins={pendingCheckins}
+        />
+      </SidebarSurface>
+    </motion.div>
+  );
+};
+
+interface DesktopSidebarProps {
+  actions?: ReactNode;
+  brand: ReactNode;
+  pathname: string;
+  pendingCheckins?: number;
+}
+
+const DesktopSidebar = ({
+  actions,
+  brand,
+  pathname,
+  pendingCheckins = 0,
+}: DesktopSidebarProps) => (
+  <SidebarSurface>
+    <div className="p-6 mb-4 px-3 border-b border-stroke-quiet rounded-field flex items-center justify-between">
       {brand}
       {actions}
     </div>
 
-    {/* Navigation */}
-    <nav className="flex flex-1 flex-col gap-1 px-4 py-2 overflow-y-auto">
-      {LINKS.map((link, linkIndex) => {
-        const Icon = link.icon;
-        const isActive =
-          pathname === link.href || (link.href !== '/coach' && pathname.startsWith(link.href));
-
-        return (
-          <Link
-            key={link.name}
-            to={link.href}
-            aria-current={isActive ? 'page' : undefined}
-            onClick={onNavigate}
-            ref={linkIndex === 0 ? firstLinkRef : undefined}
-            className={`flex items-center gap-4 px-4 py-3.5 rounded-card transition-all ${
-              isActive
-                ? 'bg-text-primary text-white shadow-md'
-                : 'text-text-secondary hover:bg-surface-quiet hover:text-text-primary'
-            }`}
-          >
-            <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
-            <span className="text-sm font-semibold">{link.name}</span>
-            {link.name === 'Schedule' && pendingCheckins > 0 && (
-              <span className="ml-auto w-5 h-5 rounded-full bg-status-pending text-white text-[10px] font-bold flex items-center justify-center">
-                {pendingCheckins}
-              </span>
-            )}
-          </Link>
-        );
-      })}
-    </nav>
-  </div>
+    <SidebarNavigation pathname={pathname} pendingCheckins={pendingCheckins} />
+  </SidebarSurface>
 );
 
 export function CoachSidebar() {
@@ -185,30 +218,19 @@ export function CoachSidebar() {
               transition={prefersReducedMotion ? { duration: 0 } : undefined}
               variants={{ closed: { opacity: 0 }, open: { opacity: 1 } }}
             />
-            <motion.div
-              className="absolute top-0 left-0 bottom-0 w-64 bg-white shadow-xl"
-              transition={
-                prefersReducedMotion
-                  ? { duration: 0 }
-                  : { type: 'spring', damping: 25, stiffness: 200 }
-              }
-              variants={{ closed: { x: '-100%' }, open: { x: 0 } }}
-            >
-              <SidebarContent
-                brand={<CoachIdentityMark coachAvatarUrl={coachAvatarUrl} />}
-                firstLinkRef={menu.firstLinkRef}
-                onNavigate={menu.close}
-                pathname={location.pathname}
-                pendingCheckins={pendingCount}
-              />
-            </motion.div>
+            <CoachPortalDrawer
+              firstLinkRef={menu.firstLinkRef}
+              onNavigate={menu.close}
+              pathname={location.pathname}
+              pendingCheckins={pendingCount}
+            />
           </>
         )}
       </NavigationDialog>
 
       {/* Desktop Sidebar */}
       <div className="hidden lg:block fixed top-0 left-0 bottom-0 w-64 bg-white z-50">
-        <SidebarContent
+        <DesktopSidebar
           actions={<NotificationBell align="left" />}
           brand={<CoachIdentityLink coachAvatarUrl={coachAvatarUrl} />}
           pathname={location.pathname}

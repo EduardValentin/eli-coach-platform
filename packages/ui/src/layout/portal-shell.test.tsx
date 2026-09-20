@@ -227,6 +227,19 @@ describe("PortalShell mobile menu", () => {
     expect(menu.contains(document.activeElement)).toBe(true);
   });
 
+  it("leaves the top bar's brand as the only one while the drawer is open", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderShell();
+
+    // act
+    const menu = await openMobileMenu(user);
+
+    // assert
+    expect(within(menu).getByText("Coach Portal")).toBeInTheDocument();
+    expect(within(menu).queryByText("Evoa")).not.toBeInTheDocument();
+  });
+
   it("closes on Escape and returns focus to the toggle", async () => {
     // arrange
     const user = userEvent.setup();

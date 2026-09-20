@@ -14,6 +14,7 @@ import type {
   PrototypeBooking,
   PrototypeBookingOutcome,
   PrototypeCallSettingsSaveOutcome,
+  PrototypeCoachListingOutcome,
 } from '../services/assessmentCallService';
 import {
   sampleDashboardBookings,
@@ -107,6 +108,12 @@ function parseBookingOutcomeControl(value: string): PrototypeBookingOutcome {
 type DashboardCallsSeed = 'none' | 'one' | 'twoLeftToday' | 'sample' | 'many';
 
 type PendingCheckinsSeed = 'seeded' | 'none';
+
+function parseCoachListingControl(value: string): PrototypeCoachListingOutcome {
+  if (value === 'unavailable') return value;
+
+  return 'ok';
+}
 
 function parsePendingCheckinsControl(value: string): PendingCheckinsSeed {
   if (value === 'none') return value;
@@ -546,6 +553,32 @@ export function DevToggle() {
                     <SelectContent className={SELECT_CONTENT_CLASS}>
                       <SelectItem value="seeded">Seeded check-ins</SelectItem>
                       <SelectItem value="none">None pending</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="dev-coach-calls-listing"
+                    className="text-xs font-semibold text-copy-muted uppercase tracking-wider"
+                  >
+                    Assessment calls listing
+                  </Label>
+                  <Select
+                    value={appState.coachCallsOutcome}
+                    onValueChange={(value) =>
+                      setAppState({
+                        coachCallsOutcome: parseCoachListingControl(value),
+                      })
+                    }
+                  >
+                    <SelectTrigger id="dev-coach-calls-listing" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="ok">Calls loaded</SelectItem>
+                      <SelectItem value="unavailable">
+                        Assessment calls unavailable
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
