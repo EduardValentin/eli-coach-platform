@@ -4,11 +4,11 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, useLocation, useNavigationType } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CoachAssessmentCalls } from './CoachAssessmentCalls';
+import { AppProvider } from '../../context/AppContext';
 import {
   AssessmentCallProvider,
   useAssessmentCalls,
 } from '../../context/AssessmentCallContext';
-import { AppProvider } from '../../context/AppContext';
 import type { PrototypeBooking } from '../../services/assessmentCallService';
 
 const TIME_ZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -46,6 +46,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers();
+  window.history.replaceState({}, '', '/');
 });
 
 function SeedBookings({ bookings }: { bookings: PrototypeBooking[] }) {
@@ -92,6 +93,27 @@ function listedNames(): string[] {
       (item) => within(item).getByRole('heading', { level: 2 }).textContent ?? '',
     );
 }
+
+describe('the coach assessment calls page when the calls cannot be read', () => {
+  it('replaces the listing with the unavailable dead end', () => {
+    // arrange
+    window.history.replaceState({}, '', '/coach/assessment-calls?coachcalls=unavailable');
+
+    // act
+    renderPage();
+
+    // assert
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'Assessment calls unavailable' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Your assessment calls could not be loaded. Try again in a moment.',
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
+  });
+});
 
 describe('the coach assessment calls page', () => {
   it('titles the page', () => {
