@@ -224,17 +224,17 @@ describe("store catalog", () => {
 
     expect(
       within(typeFilter)
-        .getAllByRole("button")
+        .getAllByRole("radio")
         .map((chip) => chip.textContent),
     ).toEqual(["All", "Workouts", "Nutrition Plans", "E-Books"]);
     expect(
       within(goalFilter)
-        .getAllByRole("button")
+        .getAllByRole("radio")
         .map((chip) => chip.textContent),
     ).toEqual(["All", "Muscle Building", "Fat Loss", "Wellness"]);
     expect(
-      within(typeFilter).getByRole("button", { name: "All" }),
-    ).toHaveAttribute("aria-pressed", "true");
+      within(typeFilter).getByRole("radio", { name: "All" }),
+    ).toHaveAttribute("aria-checked", "true");
   });
 
   it("hides a dimension whose published resources share a single value", async () => {
@@ -267,7 +267,7 @@ describe("store catalog", () => {
     const { router } = renderStore({ products: createCatalog() });
 
     // act
-    await user.click(await screen.findByRole("button", { name: "E-Books" }));
+    await user.click(await screen.findByRole("radio", { name: "E-Books" }));
 
     // assert
     expect(
@@ -280,8 +280,8 @@ describe("store catalog", () => {
       screen.queryByRole("heading", { level: 3, name: "Lean Kitchen" }),
     ).not.toBeInTheDocument();
     expect(router.state.location.search).toBe("?type=e-books");
-    expect(screen.getByRole("button", { name: "E-Books" })).toHaveAttribute(
-      "aria-pressed",
+    expect(screen.getByRole("radio", { name: "E-Books" })).toHaveAttribute(
+      "aria-checked",
       "true",
     );
   });
@@ -292,8 +292,8 @@ describe("store catalog", () => {
     const { router } = renderStore({ products: createCatalog() });
 
     // act
-    await user.click(await screen.findByRole("button", { name: "Workouts" }));
-    await user.click(screen.getByRole("button", { name: "Wellness" }));
+    await user.click(await screen.findByRole("radio", { name: "Workouts" }));
+    await user.click(screen.getByRole("radio", { name: "Wellness" }));
 
     // assert
     expect(
@@ -315,7 +315,7 @@ describe("store catalog", () => {
     });
 
     // act
-    await user.click(within(typeFilter).getByRole("button", { name: "All" }));
+    await user.click(within(typeFilter).getByRole("radio", { name: "All" }));
 
     // assert
     expect(router.state.location.search).toBe("");
@@ -327,8 +327,8 @@ describe("store catalog", () => {
     const user = userEvent.setup();
     const { router } = renderStore({ products: createCatalog() });
 
-    await user.click(await screen.findByRole("button", { name: "E-Books" }));
-    await user.click(screen.getByRole("button", { name: "Workouts" }));
+    await user.click(await screen.findByRole("radio", { name: "E-Books" }));
+    await user.click(screen.getByRole("radio", { name: "Workouts" }));
 
     // act
     await act(async () => {
@@ -337,8 +337,8 @@ describe("store catalog", () => {
 
     // assert
     expect(router.state.location.search).toBe("?type=e-books");
-    expect(screen.getByRole("button", { name: "E-Books" })).toHaveAttribute(
-      "aria-pressed",
+    expect(screen.getByRole("radio", { name: "E-Books" })).toHaveAttribute(
+      "aria-checked",
       "true",
     );
     expect(screen.getAllByRole("article")).toHaveLength(2);
@@ -356,8 +356,8 @@ describe("store catalog", () => {
       await screen.findByRole("heading", { level: 3, name: "Lean Kitchen" }),
     ).toBeInTheDocument();
     expect(screen.getAllByRole("article")).toHaveLength(1);
-    expect(screen.getByRole("button", { name: "Fat Loss" })).toHaveAttribute(
-      "aria-pressed",
+    expect(screen.getByRole("radio", { name: "Fat Loss" })).toHaveAttribute(
+      "aria-checked",
       "true",
     );
   });
@@ -391,14 +391,14 @@ describe("store catalog", () => {
     renderStore({ products: createCatalog() });
 
     // act
-    await user.click(await screen.findByRole("button", { name: "E-Books" }));
+    await user.click(await screen.findByRole("radio", { name: "E-Books" }));
 
     // assert
     expect(screen.getByRole("status")).toHaveTextContent(
       "2 resources match your filters.",
     );
 
-    await user.click(screen.getByRole("button", { name: "Muscle Building" }));
+    await user.click(screen.getByRole("radio", { name: "Muscle Building" }));
 
     expect(screen.getByRole("status")).toHaveTextContent(
       "1 resource matches your filters.",
@@ -418,7 +418,7 @@ describe("store catalog", () => {
     );
   });
 
-  it("moves across the chips with the arrow keys and activates from the keyboard", async () => {
+  it("moves across the radios and activates from the keyboard", async () => {
     // arrange
     const user = userEvent.setup();
     const { router } = renderStore({ products: createCatalog() });
@@ -427,22 +427,19 @@ describe("store catalog", () => {
     });
 
     // act
-    within(typeFilter).getByRole("button", { name: "All" }).focus();
+    within(typeFilter).getByRole("radio", { name: "All" }).focus();
     await user.keyboard("{ArrowRight}");
-    const focusedChip = within(typeFilter).getByRole("button", {
+    const focusedChip = within(typeFilter).getByRole("radio", {
       name: "Workouts",
     });
+    await user.keyboard("{Enter}");
 
     // assert
     expect(focusedChip).toHaveFocus();
-    expect(router.state.location.search).toBe("");
-
-    await user.keyboard("{Enter}");
-
     expect(router.state.location.search).toBe("?type=workouts");
     expect(
-      within(typeFilter).getByRole("button", { name: "Workouts" }),
-    ).toHaveAttribute("aria-pressed", "true");
+      within(typeFilter).getByRole("radio", { name: "Workouts" }),
+    ).toHaveAttribute("aria-checked", "true");
     expect(screen.getAllByRole("article")).toHaveLength(1);
   });
 
@@ -450,14 +447,14 @@ describe("store catalog", () => {
     // arrange
     const { router } = renderStore({ products: createCatalog() });
 
-    await screen.findByRole("button", { name: "E-Books" });
+    await screen.findByRole("radio", { name: "E-Books" });
 
     // act
     // `fireEvent` rather than `userEvent`: the point is two choices reaching
     // React in one batch, which awaited interactions never produce.
     act(() => {
-      fireEvent.click(screen.getByRole("button", { name: "E-Books" }));
-      fireEvent.click(screen.getByRole("button", { name: "Wellness" }));
+      fireEvent.click(screen.getByRole("radio", { name: "E-Books" }));
+      fireEvent.click(screen.getByRole("radio", { name: "Wellness" }));
     });
 
     // assert
@@ -469,18 +466,18 @@ describe("store catalog", () => {
     const user = userEvent.setup();
     const { router } = renderStore({ products: createCatalog() });
 
-    await screen.findByRole("button", { name: "E-Books" });
+    await screen.findByRole("radio", { name: "E-Books" });
 
     // act
     // The interruption settles on the search the choice started from, so the
     // URL never registers that anything happened.
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "E-Books" }));
+      fireEvent.click(screen.getByRole("radio", { name: "E-Books" }));
       await router.navigate("/store");
     });
     expect(router.state.location.search).toBe("");
 
-    await user.click(screen.getByRole("button", { name: "E-Books" }));
+    await user.click(screen.getByRole("radio", { name: "E-Books" }));
 
     // assert
     expect(router.state.location.search).toBe("?type=e-books");
@@ -499,7 +496,7 @@ describe("store catalog", () => {
     );
 
     // act
-    screen.getByRole("button", { name: "Nutrition Plans" }).focus();
+    screen.getByRole("radio", { name: "Nutrition Plans" }).focus();
     await user.tab();
     await user.tab({ shift: true });
 
@@ -507,8 +504,8 @@ describe("store catalog", () => {
     expect(router.state.location.search).toBe("");
     expect(screen.getAllByRole("article")).toHaveLength(3);
     expect(
-      screen.getByRole("button", { name: "Nutrition Plans" }),
-    ).toHaveAttribute("aria-pressed", "false");
+      screen.getByRole("radio", { name: "Nutrition Plans" }),
+    ).toHaveAttribute("aria-checked", "false");
   });
 
   it("has no obvious accessibility violations while nothing matches", async () => {
@@ -533,7 +530,7 @@ describe("store catalog", () => {
     const { baseElement } = renderStore({ products: createCatalog() });
 
     // act
-    await user.click(await screen.findByRole("button", { name: "E-Books" }));
+    await user.click(await screen.findByRole("radio", { name: "E-Books" }));
     const results = await axe(baseElement);
 
     // assert
@@ -560,20 +557,20 @@ describe("store catalog", () => {
 
     // assert
     expect(
-      within(typeFilter).getByRole("button", { name: "All" }),
-    ).toHaveAttribute("aria-pressed", "true");
+      within(typeFilter).getByRole("radio", { name: "All" }),
+    ).toHaveAttribute("aria-checked", "true");
     expect(
-      within(typeFilter).getByRole("button", { name: "All Levels" }),
-    ).toHaveAttribute("aria-pressed", "false");
+      within(typeFilter).getByRole("radio", { name: "All Levels" }),
+    ).toHaveAttribute("aria-checked", "false");
 
     await userEvent
       .setup()
-      .click(within(typeFilter).getByRole("button", { name: "All Levels" }));
+      .click(within(typeFilter).getByRole("radio", { name: "All Levels" }));
 
     expect(router.state.location.search).toBe("?type=all");
     expect(
-      within(typeFilter).getByRole("button", { name: "All Levels" }),
-    ).toHaveAttribute("aria-pressed", "true");
+      within(typeFilter).getByRole("radio", { name: "All Levels" }),
+    ).toHaveAttribute("aria-checked", "true");
     expect(screen.getAllByRole("article")).toHaveLength(1);
   });
 
@@ -633,7 +630,7 @@ describe("store catalog", () => {
 
     // assert
     expect(
-      screen.getByRole("button", { name: "Nutrition Plans" }),
+      screen.getByRole("radio", { name: "Nutrition Plans" }),
     ).toHaveFocus();
     expect(document.body).not.toHaveFocus();
   });

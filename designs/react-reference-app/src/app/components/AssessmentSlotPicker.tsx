@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { TZDate } from '@date-fns/tz';
-import type { DayButtonProps } from 'react-day-picker';
+import type { DayButtonProps, Labels } from 'react-day-picker';
 import { BrandCalendar, BrandDayButton } from './BrandCalendar';
 import { SlotPickerFrame, TimeSlotButton } from './DateTimePicker';
 import {
   formatSlotTime,
+  formatDayFirstDate,
   formatZonedDate,
   nameTimeZone,
 } from '../utils/dateFormatters';
@@ -16,8 +17,10 @@ type AssessmentSlotPickerProps = {
   onSelectSlot: (slot: Date | null) => void;
 };
 
+const TODAY_PREFIX = 'Today';
 const PAST_DAY_REASON = 'Past day';
 const NO_SLOTS_REASON = 'No open slots';
+const SELECTED_STATE = 'selected';
 
 function dayKeyOf(instant: Date, timeZone: string): string {
   const zoned = new TZDate(instant, timeZone);
@@ -26,22 +29,13 @@ function dayKeyOf(instant: Date, timeZone: string): string {
   return `${zoned.getFullYear()}-${month}-${day}`;
 }
 
-function dayReason(modifiers: DayButtonProps['modifiers']): string | null {
-  if (modifiers.pastDay) return PAST_DAY_REASON;
-  if (modifiers.noSlots) return NO_SLOTS_REASON;
-  return null;
-}
-
 function SlotDayButton(props: DayButtonProps) {
   const { modifiers } = props;
-  const reason = dayReason(modifiers);
-  const label = props['aria-label'];
 
   return (
     <BrandDayButton
       {...props}
       aria-disabled={modifiers.disabled || undefined}
-      aria-label={reason && label ? `${label}, ${reason}` : label}
     />
   );
 }
@@ -71,6 +65,21 @@ export function AssessmentSlotPicker({
   }, [selectedSlot, timeZone]);
 
   const today = useMemo(() => new Date(), []);
+  const dayLabels = useMemo<Partial<Labels>>(
+    () => ({
+      labelDayButton: (date, modifiers) =>
+        [
+          modifiers.today && TODAY_PREFIX,
+          formatDayFirstDate(date, timeZone),
+          modifiers.pastDay && PAST_DAY_REASON,
+          modifiers.noSlots && NO_SLOTS_REASON,
+          modifiers.selected && SELECTED_STATE,
+        ]
+          .filter(Boolean)
+          .join(', '),
+    }),
+    [timeZone],
+  );
   const daySlots = selectedDayKey ? (slotsByDay.get(selectedDayKey) ?? []) : [];
   const selectedDay = daySlots[0] ?? null;
   const zoneName = nameTimeZone(timeZone, selectedDay ?? slots[0] ?? today);
@@ -91,6 +100,7 @@ export function AssessmentSlotPicker({
           mode="single"
           fixedWeeks
           timeZone={timeZone}
+          labels={dayLabels}
           defaultMonth={selectedSlot ?? slots[0] ?? today}
           selected={selectedDay ?? undefined}
           onSelect={selectDay}

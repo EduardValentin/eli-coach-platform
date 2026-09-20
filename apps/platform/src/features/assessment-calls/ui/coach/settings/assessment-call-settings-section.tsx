@@ -13,7 +13,7 @@ import {
 } from "@eli-coach-platform/ui/primitives";
 import { cn } from "@eli-coach-platform/ui/lib";
 import { toast } from "@eli-coach-platform/ui/toast";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import {
   Controller,
   useForm,
@@ -59,6 +59,15 @@ const FIELD_BY_ERROR_CODE: Partial<
 };
 
 const FIELD_ERROR_CLASS = "text-sm font-medium text-feedback-danger";
+const START_HOUR_FIELD_ID = "start-hour";
+
+const REFUSED_FIELD_SELECTOR_BY_ERROR_CODE: Partial<
+  Record<AssessmentCallSettingsErrorCode, string>
+> = {
+  no_weekday: 'input[name="weekdays"]',
+  invalid_hours: `#${START_HOUR_FIELD_ID}`,
+  invalid_meeting_link: 'input[name="meetingLink"]',
+};
 
 type AssessmentCallSettingsSectionProps = {
   settings: AssessmentCallSettings;
@@ -72,6 +81,7 @@ export function AssessmentCallSettingsSection(
   const hoursErrorId = useId();
   const { isSubmitting, response, submit } =
     useSaveAssessmentCallSettingsFetcher();
+  const formRef = useRef<HTMLFormElement>(null);
   const {
     control,
     formState: { errors },
@@ -118,6 +128,13 @@ export function AssessmentCallSettingsSection(
     }
 
     setError(field, { message: response.error.message });
+    const refusedFieldSelector =
+      REFUSED_FIELD_SELECTOR_BY_ERROR_CODE[response.error.code];
+    if (refusedFieldSelector) {
+      formRef.current
+        ?.querySelector<HTMLElement>(refusedFieldSelector)
+        ?.focus();
+    }
   }, [response, setError]);
 
   const submitSettings: SubmitHandler<AssessmentCallSettings> = (values) => {
@@ -145,6 +162,7 @@ export function AssessmentCallSettingsSection(
         className="space-y-6 px-5 py-5 sm:px-6"
         noValidate
         onSubmit={handleSubmit(submitSettings)}
+        ref={formRef}
       >
         {timeZoneUnreadable ? (
           <Alert>
@@ -162,7 +180,7 @@ export function AssessmentCallSettingsSection(
           <HourSelectField
             control={control}
             errorId={hoursError ? hoursErrorId : null}
-            id="start-hour"
+            id={START_HOUR_FIELD_ID}
             label="Start"
             name="startHour"
             options={HOUR_OPTIONS.start}

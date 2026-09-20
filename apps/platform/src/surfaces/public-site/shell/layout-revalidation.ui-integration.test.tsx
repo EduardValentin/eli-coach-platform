@@ -85,7 +85,7 @@ describe("public shell revalidation", () => {
 
     // act
     publishedCatalog.includesLeanKitchen = false;
-    await user.click(screen.getByRole("button", { name: "Wellness" }));
+    await user.click(screen.getByRole("radio", { name: "Wellness" }));
 
     // assert
     expect(
@@ -93,7 +93,7 @@ describe("public shell revalidation", () => {
     ).toBeInTheDocument();
     await user.click(
       within(screen.getByRole("group", { name: "Filter by Goal" })).getByRole(
-        "button",
+        "radio",
         { name: "All" },
       ),
     );
@@ -131,11 +131,11 @@ describe("public shell revalidation", () => {
     const user = userEvent.setup();
 
     renderPublicSite();
-    await screen.findByRole("button", { name: "Wellness" });
+    await screen.findByRole("radio", { name: "Wellness" });
     expect(shellLoads).toEqual(["/store"]);
 
     // act
-    await user.click(screen.getByRole("button", { name: "Wellness" }));
+    await user.click(screen.getByRole("radio", { name: "Wellness" }));
 
     // assert
     expect(shellLoads).toEqual(["/store"]);

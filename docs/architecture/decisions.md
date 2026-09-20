@@ -205,7 +205,7 @@ Adopted from the architecture plan review of 2026-09-18 (verdict SHOULD_CHANGE o
 
 ## Owner decisions (2026-09-19): the coach calendar
 
-Every item in this block landed in `19169b9e..eb88ecb4`, the owner-approved units U1–U3 of the architect's coach-scheduling assessment. The GEN-191 fix round brought CC1, CC2 and CC4 up to date: minute stepping and policy validation (5f4591ec), and one reservation per appointment (a29a6e74). Client check-ins, a program-review call, the availability editor, multi-coach, external calendars and cancellation are out of scope, and nothing for them was built.
+Every item in this block landed in `19169b9e..eb88ecb4`, the first three owner-approved units of the architect's coach-scheduling assessment. The GEN-191 fix round brought CC1, CC2 and CC4 up to date: minute stepping and policy validation (5f4591ec), and one reservation per appointment (a29a6e74). Client check-ins, a program-review call, the availability editor, multi-coach, external calendars and cancellation are out of scope, and nothing for them was built.
 
 | # | Decision | Alternative rejected | Reason | Accepted by | Date |
 |---|---|---|---|---|---|
