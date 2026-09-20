@@ -14,14 +14,7 @@ const SELECTED_CLASS = 'border-brand/30 bg-brand-soft text-brand hover:border-br
 const UNSELECTED_CLASS =
   'border-border text-muted-foreground hover:border-brand hover:text-brand';
 
-/**
- * A multi-selection chip backed by a native checkbox rather than `ToggleChip`'s
- * `Toggle` button, for a fieldset that must read as a checkbox group to
- * assistive technology. The checkbox is visually hidden behind its label, so
- * `data-chip-control` opts the label into the shared `:has(:focus-visible)`
- * rule in `theme.css` — the real focusable element is invisible and cannot
- * show its own outline.
- */
+// data-chip-control lets theme.css paint the focus ring on the label, since the opacity-0 input cannot show its own.
 export function CheckboxChip({
   checked,
   onCheckedChange,
