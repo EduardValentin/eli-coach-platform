@@ -12,7 +12,7 @@ The product is designed for women seeking personalized strength and nutrition co
 
 ## Design System
 
-The production source of truth is `packages/ui/src/styles.css` and the components exported by `packages/ui/src/index.tsx`. The reference app mirrors the same visual roles and may keep prototype-only tokens and composed components where the production surface does not exist yet.
+The production source of truth is `packages/ui/src/styles.css` for tokens and, for components, `packages/ui`'s ten concern subpaths (`appointments`, `calendar`, `filters`, `layout`, `lib`, `motion`, `overlays`, `primitives`, `tabs`, `toast`), imported one at a time — the package has no root barrel. The reference app mirrors the same visual roles and may keep prototype-only tokens and composed components where the production surface does not exist yet.
 
 ### Reusable Components
 
