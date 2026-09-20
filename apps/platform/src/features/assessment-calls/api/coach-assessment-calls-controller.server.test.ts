@@ -1,9 +1,11 @@
 import {
   AssessmentCall,
-  type AssessmentCallListing,
+  type AssessmentCallListingResult,
   type ListAssessmentCallsUseCase,
 } from "@eli-coach-platform/domain/assessment-call";
 import { describe, expect, it, vi } from "vitest";
+
+import { COACH_ASSESSMENT_CALLS_UNAVAILABLE_MESSAGE } from "~/features/assessment-calls/contracts/assessment-calls";
 
 import { CoachAssessmentCallsController } from "./coach-assessment-calls-controller.server";
 
@@ -23,6 +25,7 @@ describe("CoachAssessmentCallsController", () => {
   it("publishes every booked call with its instants and the link the coach joins on", async () => {
     // arrange
     const controller = createController({
+      status: "ok",
       coachTimeZone: "Europe/Bucharest",
       calls: [bookedCall.toSnapshot()],
     });
@@ -55,6 +58,7 @@ describe("CoachAssessmentCallsController", () => {
       visitorNotes: null,
     });
     const controller = createController({
+      status: "ok",
       coachTimeZone: "Europe/Bucharest",
       calls: [withoutNotes.toSnapshot()],
     });
@@ -69,6 +73,7 @@ describe("CoachAssessmentCallsController", () => {
   it("names the coach's zone and the instant it read at when nothing is booked", async () => {
     // arrange
     const controller = createController({
+      status: "ok",
       coachTimeZone: "Europe/Chisinau",
       calls: [],
     });
@@ -83,10 +88,26 @@ describe("CoachAssessmentCallsController", () => {
       now: "2026-10-19T08:00:00.000Z",
     });
   });
+
+  it("answers 503 with the coach's copy when the listing is unavailable", async () => {
+    // arrange
+    const controller = createController({ status: "unavailable" });
+
+    // act
+    const loading = controller.loadCalls();
+
+    // assert
+    const thrown = await loading.catch((error: unknown) => error);
+    expect(thrown).toBeInstanceOf(Response);
+    expect((thrown as Response).status).toBe(503);
+    await expect((thrown as Response).text()).resolves.toBe(
+      COACH_ASSESSMENT_CALLS_UNAVAILABLE_MESSAGE,
+    );
+  });
 });
 
 function createController(
-  listing: AssessmentCallListing,
+  listing: AssessmentCallListingResult,
 ): CoachAssessmentCallsController {
   return new CoachAssessmentCallsController({
     clock: { now: () => NOW },

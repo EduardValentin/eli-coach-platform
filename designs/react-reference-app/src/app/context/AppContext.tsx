@@ -1,7 +1,10 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useLocation } from 'react-router';
 import type { PrototypeStoreCheckoutOutcome } from '../services/storeAcquisitionService';
-import type { PrototypeBookingOutcome } from '../services/assessmentCallService';
+import type {
+  PrototypeBookingOutcome,
+  PrototypeCoachListingOutcome,
+} from '../services/assessmentCallService';
 import type {
   PrototypeAccountRole,
   PrototypeSignInOutcome,
@@ -38,6 +41,7 @@ type AppState = {
   clientOnboardingOutcome: PrototypeClientOnboardingOutcome;
   bookingOutcome: PrototypeBookingOutcome;
   bookingSlotsUnavailable: boolean;
+  coachCallsOutcome: PrototypeCoachListingOutcome;
 };
 
 type AppContextType = {
@@ -60,6 +64,7 @@ const defaultState: AppState = {
   clientOnboardingOutcome: 'success',
   bookingOutcome: 'success',
   bookingSlotsUnavailable: false,
+  coachCallsOutcome: 'ok',
 };
 
 const validSessions = ['anonymous', 'client', 'coach'] as const;
@@ -81,6 +86,7 @@ const validBookingOutcomes = [
   'invalid_email',
   'server_error',
 ] as const;
+const validCoachListingOutcomes = ['ok', 'unavailable'] as const;
 const validClientOnboardingOutcomes = [
   'success',
   'replaced-invitation',
@@ -148,6 +154,13 @@ function parseDevParamsFromURL(): AppState {
   if (params.has('bookingslots')) {
     state.bookingSlotsUnavailable = params.get('bookingslots') === 'unavailable';
   }
+  const coachCalls = params.get('coachcalls');
+  if (
+    coachCalls &&
+    (validCoachListingOutcomes as readonly string[]).includes(coachCalls)
+  ) {
+    state.coachCallsOutcome = coachCalls as PrototypeCoachListingOutcome;
+  }
 
   return state;
 }
@@ -178,6 +191,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     url.searchParams.delete('invite');
     url.searchParams.delete('booking');
     url.searchParams.delete('bookingslots');
+    url.searchParams.delete('coachcalls');
 
     if (isSignedIn(appState.session)) {
       url.searchParams.set('session', appState.session);
@@ -209,6 +223,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     if (appState.bookingSlotsUnavailable) {
       url.searchParams.set('bookingslots', 'unavailable');
+    }
+    if (appState.coachCallsOutcome !== 'ok') {
+      url.searchParams.set('coachcalls', appState.coachCallsOutcome);
     }
 
     const target = url.pathname + url.search + url.hash;

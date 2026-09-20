@@ -85,6 +85,7 @@ function createHandles(
     featureFlags: { execute: async () => featureFlags },
     incidents: {
       bookingModeReadFailed: () => {},
+      callsReadFailed: () => {},
       notificationFailed: () => {},
       slotsReadFailed: () => {},
     },

@@ -16,13 +16,15 @@ Counting: fan-in is the number of modules outside the component that import at l
 
 Change review: date 2026-09-20, commits `f46b6f41..HEAD`; scope the GEN-193 coach assessment-calls slice; partial scope. The C5, C9 and C17 cells below carry its figures, read from a cold cruise at HEAD; every other cell is carried forward.
 
+Change review: date 2026-09-20, commits `a5615696..HEAD` on `claude/coach-portal-followups`; scope the ad-hoc coach portal follow-up set; partial scope. The C5 and C17 cells below carry its figures, read from a cold cruise at HEAD; every other cell is carried forward, and the volatility columns count none of its commits.
+
 | Component | Fan-in | Fan-out | Instability | Abstractness | Distance | Previous distance | Volatility (run-8 window) | of which run 8 | Waitlist mode | Mobile navigation | GEN-191 commits |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| C1 packages/domain | 55 | 0 | 0.00 | 0.23 (24 / 104) | 0.77 | 0.77 | 25 + 1 | 12 | 6 | 0 | 4 |
+| C1 packages/domain | 56 | 0 | 0.00 | 0.23 (24 / 104) | 0.77 | 0.77 | 25 + 1 | 12 | 6 | 0 | 4 |
 | C2 packages/db | 21 | 0 | 0.00 | 0.00 (0 / 2) | 1.00 | 1.00 | 0 | 0 | 0 | 0 | 0 |
 | C3 packages/config | 29 | 0 | 0.00 | 0.00 (0 / 13) | 1.00 | 1.00 | 5 | 0 | 2 | 0 | 2 |
 | C4 packages/content | 11 | 0 | 0.00 | 0.00 (0 / 7) | 1.00 | 1.00 | 2 | 0 | 1 | 0 | 0 |
-| C5 packages/ui | 44 | 0 | 0.00 | 0.00 (0 / 5) | 1.00 | 1.00 | 3 | 0 | 1 | 3 | 6 |
+| C5 packages/ui | 46 | 0 | 0.00 | 0.00 (0 / 5) | 1.00 | 1.00 | 3 | 0 | 1 | 3 | 6 |
 | C6 packages/infrastructure | 51 | 11 | 0.18 | 0.12 (3 / 26) | 0.71 | 0.72 | 10 + 1 | 1 | 1 | 0 | 2 |
 | C7 features/store | 10 | 37 | 0.79 | 0.00 (0 / 37) | 0.21 | 0.21 | 29 + 1 | 6 | 0 | 0 | 0 |
 | C8 features/waitlist | 10 | 14 | 0.58 | 0.00 (0 / 11) | 0.42 | 0.42 | 16 + 1 | 1 | 4 | 0 | 0 |
@@ -33,7 +35,7 @@ Change review: date 2026-09-20, commits `f46b6f41..HEAD`; scope the GEN-193 coac
 | C14 apps/platform/src/server | 3 | 11 | 0.79 | 0.00 (0 / 13) | 0.21 | 0.21 | 11 + 1 | 1 | 3 | 0 | 2 |
 | C15 app root | 0 | 4 | 1.00 | undefined (0 types) | 0.00 | 0.00 | 7 | 0 | 2 | 0 | 1 |
 | C16 packages/test-support | 0 | 0 | undefined | undefined (0 types) | undefined | undefined | 3 | 0 | 0 | 0 | 0 |
-| C17 features/assessment-calls | 10 | 33 | 0.77 | 0.00 (0 / 23) | 0.23 | 0.21 | n/a | n/a | n/a | n/a | 8 |
+| C17 features/assessment-calls | 10 | 35 | 0.78 | 0.00 (0 / 23) | 0.22 | 0.23 | n/a | n/a | n/a | n/a | 8 |
 
 ## GEN-193 coach assessment calls
 
@@ -78,3 +80,17 @@ The change review covers `79fa1e95..f0eb1bf4` and its merge with main at `7d92dc
 Two cells differ from the `8ac6a613` figures. C2's fan-in fell 16 → 15 because `platform-composition.server.ts` stopped importing `DatabaseClient`. C1's total type count rose 79 → 80 because `./feature-flag` now publishes `FeatureFlagSet`, which `GetWaitlistUseCase` names instead of deriving its own copy from the reader port; abstractness is 0.225 and distance 0.775, so the rounded D moves 0.77 → 0.78 without crossing the 0.10 review threshold. C1's fan-in stays 41 because every new importer of `feature-flag` already imported another C1 subpath. No instability changed; mean D stays 0.51 with standard deviation 0.38, the one-standard-deviation set is unchanged, and no component entered the zone of uselessness: `WaitlistIncidents` gained a method, not a type. The package packlists and handle visibility changes add no module edge.
 
 C1 carries six of the eight counted commits, all serving one requirement: persisted waitlist mode read through the existing `FeatureFlagReader`. C3 remains a stable, concrete hub; its R31 finding is accepted because restructuring configuration was outside the approved behavior change. The waitlist-mode requirement changed C1, C3, C4, C5, C6, C8, C14 and C15, the C4, C5 and C6 touches being package-manifest packlists only; C8's R27 finding is likewise accepted rather than used to broaden this change. Component and domain-slice graphs remain acyclic.
+
+## Coach portal follow-ups
+
+A cold cruise of the working tree at HEAD reads 403 modules and 1102 dependencies, 0 violations and 0 circular. Two components move, neither by the 0.10 review threshold and neither reclassified; the range adds two modules to C17, one published function and one published constant to C5, one method to a C1 port and one edge inside C1.
+
+**Three cells are corrected rather than carried, because this pass re-read every importer list from the cruise instead of adding a delta to the previous cell.** GEN-193 never recorded `ui/coach/assessment-calls/use-call-listing-params.ts` (now U1327), which imports C5's `./lib`, so its C5 fan-in and C17 fan-out were each one low before this range began, and C1's fan-in missed the coach controller. The corrected baselines are C5 45, C17 34 and C1 56.
+
+**C5 fan-in rises 45 to 46** and its fan-out stays 0, so instability stays 0.00 and D stays 1.00. The one new importer this range adds is C17's `ui/coach/assessment-calls-error-boundary.tsx`, which takes `./layout`, `./lib` and `./primitives`. `DeadEndContent` is a function and `DEAD_END_BODY_CLASS_NAME` a constant, so the published type count holds at 5 and abstractness at 0.00.
+
+**C17 fan-out rises 34 to 35** with that same module; its fan-in holds at 10, because the coach surface's `pages/home.tsx` already imported the feature and only added a re-export of the shared boundary. I moves 0.77 to 0.78 (35 / 45 = 0.7778 against the corrected 34 / 44 = 0.7727) and D 0.23 to 0.22, a tenth of the review threshold and no reclassification. Its abstractness holds at 0.00 (0 / 23): the range adds no exported type to C17 at all.
+
+**C1, C13 and C14 hold.** C1 gains a method on an existing port and one intra-component edge (`list-assessment-calls-use-case.ts` to `assessment-call-incidents.ts`), neither of which crosses a component, and `AssessmentCallListingResult` renames `AssessmentCallListing` rather than adding a published type, so its 24 / 104 abstractness and D 0.77 are unchanged; only its fan-in cell is corrected, for the GEN-193 reason above. C13's fan-out is still five distinct modules: the re-exported boundary is a sixth edge out of `pages/home.tsx`, but that module was already counted. C14's logger implements one more method on a port it already implemented.
+
+Volatility is not recounted here: a follow-up set of eleven commits is too short a window to read, and the next full architecture review owns the recount.

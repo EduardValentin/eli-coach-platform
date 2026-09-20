@@ -77,14 +77,14 @@ export function PortalShell(props: PortalShellProps) {
       >
         {(menu) => (
           <PortalMobileDrawer>
-            <PortalSidebarContent
-              actions={sidebarActions}
-              brand={brand}
-              firstLinkRef={menu.firstLinkRef}
-              links={links}
-              navigationLabel={navigationLabel}
-              onNavigate={menu.close}
-            />
+            <PortalSidebarSurface>
+              <PortalSidebarNavigation
+                firstLinkRef={menu.firstLinkRef}
+                links={links}
+                navigationLabel={navigationLabel}
+                onNavigate={menu.close}
+              />
+            </PortalSidebarSurface>
           </PortalMobileDrawer>
         )}
       </NavigationDialog>
@@ -92,12 +92,16 @@ export function PortalShell(props: PortalShellProps) {
         aria-label={asideLabel}
         className="fixed inset-y-0 left-0 z-30 hidden w-64 lg:block"
       >
-        <PortalSidebarContent
-          actions={sidebarActions}
-          brand={brand}
-          links={links}
-          navigationLabel={navigationLabel}
-        />
+        <PortalSidebarSurface>
+          <div className="mb-4 flex items-center justify-between rounded-field border-b border-stroke-quiet px-3 py-6">
+            {brand}
+            {sidebarActions}
+          </div>
+          <PortalSidebarNavigation
+            links={links}
+            navigationLabel={navigationLabel}
+          />
+        </PortalSidebarSurface>
       </aside>
       <main
         className="min-w-0 pt-16 lg:pl-64 lg:pt-0"
@@ -122,7 +126,8 @@ function PortalMobileDrawer(props: PropsWithChildren) {
         variants={BACKDROP_VARIANTS}
       />
       <motion.div
-        className="absolute inset-y-0 left-0 w-64 shadow-floating"
+        className="absolute bottom-0 left-0 top-16 w-64 shadow-floating"
+        data-parity-root="PortalMobileDrawer"
         variants={DRAWER_VARIANTS}
       >
         {children}
@@ -131,18 +136,25 @@ function PortalMobileDrawer(props: PropsWithChildren) {
   );
 }
 
-type PortalSidebarContentProps = {
-  actions?: ReactNode;
-  brand: ReactNode;
+function PortalSidebarSurface(props: PropsWithChildren) {
+  const { children } = props;
+
+  return (
+    <div className="flex h-full flex-col border-r border-stroke-faint bg-surface-base text-text-primary">
+      {children}
+    </div>
+  );
+}
+
+type PortalSidebarNavigationProps = {
   firstLinkRef?: RefObject<HTMLAnchorElement | null>;
   links: readonly PortalNavigationLink[];
   navigationLabel: string;
   onNavigate?: () => void;
 };
 
-function PortalSidebarContent(props: PortalSidebarContentProps) {
-  const { actions, brand, firstLinkRef, links, navigationLabel, onNavigate } =
-    props;
+function PortalSidebarNavigation(props: PortalSidebarNavigationProps) {
+  const { firstLinkRef, links, navigationLabel, onNavigate } = props;
   const { pathname } = useLocation();
 
   const matches = (href: string) =>
@@ -160,42 +172,36 @@ function PortalSidebarContent(props: PortalSidebarContentProps) {
     );
 
   return (
-    <div className="flex h-full flex-col border-r border-border-subtle bg-surface-base text-text-primary">
-      <div className="mb-4 flex items-center justify-between gap-3 border-b border-border-subtle p-6">
-        {brand}
-        {actions}
-      </div>
-      <nav
-        aria-label={navigationLabel}
-        className="flex-1 space-y-1 overflow-y-auto px-4 py-2"
-      >
-        {links.map((link, linkIndex) => {
-          const isActive = link.href === activeHref;
+    <nav
+      aria-label={navigationLabel}
+      className="flex flex-1 flex-col gap-1 overflow-y-auto px-4 py-2"
+    >
+      {links.map((link, linkIndex) => {
+        const isActive = link.href === activeHref;
 
-          return (
-            <RouterLink
-              aria-current={isActive ? "page" : undefined}
-              className={cn(
-                "flex items-center gap-4 rounded-card px-4 py-3.5 outline-none transition-all",
-                {
-                  "bg-text-primary text-text-inverted shadow-action": isActive,
-                  "text-text-secondary hover:bg-surface-quiet hover:text-text-primary":
-                    !isActive,
-                },
-              )}
-              key={link.href}
-              onClick={onNavigate}
-              ref={linkIndex === 0 ? firstLinkRef : undefined}
-              to={link.href}
-            >
-              {link.icon}
-              <span className="text-sm font-semibold">{link.label}</span>
-              {link.trailing}
-            </RouterLink>
-          );
-        })}
-      </nav>
-    </div>
+        return (
+          <RouterLink
+            aria-current={isActive ? "page" : undefined}
+            className={cn(
+              "flex items-center gap-4 rounded-card px-4 py-3.5 outline-none transition-all",
+              {
+                "bg-text-primary text-text-inverted shadow-action": isActive,
+                "text-text-secondary hover:bg-surface-quiet hover:text-text-primary":
+                  !isActive,
+              },
+            )}
+            key={link.href}
+            onClick={onNavigate}
+            ref={linkIndex === 0 ? firstLinkRef : undefined}
+            to={link.href}
+          >
+            {link.icon}
+            <span className="text-sm font-semibold">{link.label}</span>
+            {link.trailing}
+          </RouterLink>
+        );
+      })}
+    </nav>
   );
 }
 

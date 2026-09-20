@@ -42,6 +42,19 @@ describe("coach assessment calls page loader", () => {
     // assert
     await expect(loading).rejects.toMatchObject({ status: 403 });
   });
+
+  it("leaves the 503 the controller raises when the calls cannot be read alone", async () => {
+    // arrange
+    const loadCalls = vi
+      .fn()
+      .mockRejectedValue(new Response("unavailable", { status: 503 }));
+
+    // act
+    const loading = loader(createLoaderArguments(loadCalls));
+
+    // assert
+    await expect(loading).rejects.toMatchObject({ status: 503 });
+  });
 });
 
 describe("coach assessment calls page revalidation", () => {

@@ -114,6 +114,22 @@ describe('CoachSidebar mobile navigation', () => {
     expect(within(dialog).getByRole('button', { name: 'Close menu' })).toBeInTheDocument();
   });
 
+  it('shows the portal brand once while the drawer is open', async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderSidebar();
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Open menu' }));
+
+    // assert
+    const dialog = screen.getByRole('dialog', {
+      name: 'Coach portal mobile navigation',
+    });
+    expect(within(dialog).getByText('Coach Portal')).toBeInTheDocument();
+    expect(within(dialog).queryByText('Evoa')).not.toBeInTheDocument();
+  });
+
   it('closes the menu and opens notifications from the top-bar bell', async () => {
     // arrange
     const user = userEvent.setup();
