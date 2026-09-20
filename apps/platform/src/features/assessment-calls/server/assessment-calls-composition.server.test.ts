@@ -93,14 +93,28 @@ function createHandles(
 }
 
 function createDatabaseReturning(rows: readonly unknown[]): DatabaseClient {
-  const chain = {
-    from: () => chain,
-    orderBy: () => chain,
-    then: (onFulfilled: (value: readonly unknown[]) => unknown) =>
-      Promise.resolve(rows).then(onFulfilled),
-  };
+  function chainResolving(resolvedRows: readonly unknown[]) {
+    const chain = {
+      from: () => chain,
+      orderBy: () => chain,
+      where: () => chain,
+      limit: () => chain,
+      then: (onFulfilled: (value: readonly unknown[]) => unknown) =>
+        Promise.resolve(resolvedRows).then(onFulfilled),
+    };
 
-  return { select: () => chain } as unknown as DatabaseClient;
+    return chain;
+  }
+
+  // The composition reads the coach's availability before her booked calls
+  // (Promise.all preserves that order), so the first select answers no row
+  // and PostgresCoachAvailability falls back to its own default; the second
+  // answers the seeded calls.
+  let selectCount = 0;
+
+  return {
+    select: () => chainResolving(selectCount++ === 0 ? [] : rows),
+  } as unknown as DatabaseClient;
 }
 
 function createDatabaseStub(): DatabaseClient {
