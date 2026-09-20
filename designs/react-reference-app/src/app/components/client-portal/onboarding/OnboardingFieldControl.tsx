@@ -1,3 +1,4 @@
+import { DateField } from '../../DateField';
 import { useId } from 'react';
 import type { Control, RegisterOptions } from 'react-hook-form';
 import type { OnboardingField } from '../../../domain/onboardingSchema';
@@ -199,6 +200,13 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
                     ref={controller.ref}
                     value={asText(controller.value)}
                   />
+                ) : field.kind === 'date' ? (
+                  <DateField
+                    value={asText(controller.value)}
+                    onChange={controller.onChange}
+                    onBlur={controller.onBlur}
+                    disabledDays={{ after: new Date() }}
+                  />
                 ) : (
                   <Input
                     inputMode={
@@ -209,7 +217,7 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
                     onChange={controller.onChange}
                     onBlur={controller.onBlur}
                     ref={controller.ref}
-                    type={field.kind === 'date' ? 'date' : 'text'}
+                    type="text"
                     value={asText(controller.value)}
                   />
                 )}

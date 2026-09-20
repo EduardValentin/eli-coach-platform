@@ -503,11 +503,16 @@ type DemoPerson = {
   age: number;
 };
 
+function dateOfBirthForAge(age: number): string {
+  const birthYear = new Date().getFullYear() - age;
+  return `${birthYear}-06-15`;
+}
+
 function demoIdentity(person: DemoPerson, sex: JourneySex): JourneyIdentity {
   return {
     firstName: person.firstName,
     lastName: person.lastName,
-    birth: { kind: 'age', age: person.age },
+    dateOfBirth: dateOfBirthForAge(person.age),
     email: person.email,
     sex,
     country: 'Romania',

@@ -41,6 +41,24 @@ const UPCOMING_BOOKING = bookingAt(
   new Date(Date.now() + DAY_MS),
 );
 
+vi.mock('../../components/DateField', () => ({
+  DateField: ({
+    value,
+    onChange,
+    id,
+  }: {
+    value: string;
+    onChange: (isoDate: string) => void;
+    id?: string;
+  }) => (
+    <input
+      id={id}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+    />
+  ),
+}));
+
 beforeAll(() => {
   vi.stubGlobal(
     'matchMedia',
@@ -147,6 +165,10 @@ async function sendInvitation(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole('button', { name: 'driver: mark paid' }));
   await openRowMenu(user);
   await user.click(screen.getByRole('menuitem', { name: 'Invite' }));
+  await user.type(
+    screen.getByRole('textbox', { name: 'Date of birth' }),
+    '1996-05-15',
+  );
   await user.click(screen.getByRole('button', { name: 'Send invitation' }));
 }
 
@@ -262,7 +284,7 @@ describe('the assessment call row actions', () => {
       ),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/opening the email is not enough/i),
+      screen.getByText(/Invitation sent to/i),
     ).toBeInTheDocument();
   });
 

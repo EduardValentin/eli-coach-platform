@@ -1,11 +1,12 @@
 import { useId, useState } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
-import { Mail } from 'lucide-react';
 import { ResponsiveSheetDialog } from '../workout/ResponsiveSheetDialog';
 import { Alert } from '../ui/alert';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
+import { DateField } from '../DateField';
+import { subYears } from 'date-fns';
 import {
   Select,
   SelectContent,
@@ -22,7 +23,7 @@ import {
   FormMessage,
 } from '../ui/form';
 import { useAppState } from '../../context/AppContext';
-import { COUNTRIES } from '../../domain/countries';
+import { COUNTRIES, diallingCodeFor } from '../../domain/countries';
 import type {
   ClientJourney,
   JourneyIdentity,
@@ -34,15 +35,16 @@ import {
   type SentInvitation,
 } from '../../services/invitationService';
 
-type BirthKind = 'date-of-birth' | 'age';
+const YOUNGEST_CLIENT_AGE = 16;
+const OLDEST_CLIENT_AGE = 100;
+const TYPICAL_CLIENT_AGE = 30;
 
 type InviteFormValues = {
   firstName: string;
   lastName: string;
-  birthKind: BirthKind;
   dateOfBirth: string;
-  age: string;
   email: string;
+  phoneDiallingCode: string;
   phone: string;
   sex: JourneySex;
   country: string;
@@ -60,8 +62,6 @@ export type InvitationAccepted = {
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const SENT_MESSAGE =
-  'The link works for 30 days. She needs to create her account from it — opening the email is not enough.';
 const REPLACED_MESSAGE = 'Her earlier invitation no longer works.';
 const ALREADY_CLIENT_MESSAGE = 'This email already belongs to a client.';
 const DELIVERY_FAILURE_MESSAGE =
@@ -71,12 +71,11 @@ function defaultValues(identity: JourneyIdentity): InviteFormValues {
   return {
     firstName: identity.firstName,
     lastName: identity.lastName,
-    birthKind: identity.birth.kind,
-    dateOfBirth:
-      identity.birth.kind === 'date-of-birth' ? identity.birth.dateOfBirth : '',
-    age: identity.birth.kind === 'age' ? String(identity.birth.age) : '',
+    dateOfBirth: identity.dateOfBirth,
     email: identity.email,
-    phone: identity.phone ?? '',
+    phoneDiallingCode:
+      identity.phone?.diallingCode ?? diallingCodeFor(identity.country),
+    phone: identity.phone?.number ?? '',
     sex: identity.sex,
     country: identity.country,
   };
@@ -88,12 +87,12 @@ function toIdentity(values: InviteFormValues): JourneyIdentity {
   return {
     firstName: values.firstName.trim(),
     lastName: values.lastName.trim(),
-    birth:
-      values.birthKind === 'date-of-birth'
-        ? { kind: 'date-of-birth', dateOfBirth: values.dateOfBirth }
-        : { kind: 'age', age: Number(values.age) },
+    dateOfBirth: values.dateOfBirth,
     email: values.email.trim(),
-    phone: phone.length > 0 ? phone : undefined,
+    phone:
+      phone.length > 0
+        ? { diallingCode: values.phoneDiallingCode, number: phone }
+        : undefined,
     sex: values.sex,
     country: values.country,
   };
@@ -130,7 +129,7 @@ function InviteForm({
   const form = useForm<InviteFormValues>({
     defaultValues: defaultValues(journey.identity),
   });
-  const birthKind = form.watch('birthKind');
+  const today = new Date();
 
   const submit: SubmitHandler<InviteFormValues> = async (values) => {
     const identity = toIdentity(values);
@@ -161,12 +160,6 @@ function InviteForm({
   return (
     <>
       <div className="shrink-0 border-b border-neutral-100 px-5 pt-6 pb-4 md:px-8 md:pt-8">
-        <div className="mb-1.5 flex items-center gap-1.5">
-          <Mail size={13} className="text-brand" aria-hidden="true" />
-          <span className="text-[10px] font-bold uppercase tracking-widest text-brand">
-            Invitation
-          </span>
-        </div>
         <h3 className="pr-10 text-lg font-semibold leading-snug text-text-primary md:text-xl">
           Invite {visitorName}
         </h3>
@@ -180,7 +173,7 @@ function InviteForm({
         {result?.kind === 'sent' ? (
           <div className="space-y-4">
             <p role="status" className="text-sm text-text-primary">
-              Invitation sent to {result.email}. {SENT_MESSAGE}
+              Invitation sent to {result.email}.
               {result.replaced ? ` ${REPLACED_MESSAGE}` : ''}
             </p>
             <Button type="button" onClick={onClose}>
@@ -228,72 +221,30 @@ function InviteForm({
 
               <FormField
                 control={form.control}
-                name="birthKind"
+                name="dateOfBirth"
+                rules={{ required: 'Pick her date of birth.' }}
                 render={({ field }) => (
                   <FormItem>
-                    <fieldset>
-                      <legend className="text-sm font-medium text-text-label">
-                        What do you have for her?
-                      </legend>
-                      <RadioGroup
+                    <FormLabel>Date of birth</FormLabel>
+                    <FormControl>
+                      <DateField
                         value={field.value}
-                        onValueChange={field.onChange}
-                        className="mt-2 flex flex-wrap gap-6"
-                      >
-                        <RadioOption
-                          value="date-of-birth"
-                          label="Date of birth"
-                        />
-                        <RadioOption value="age" label="Age" />
-                      </RadioGroup>
-                    </fieldset>
+                        onChange={field.onChange}
+                        placeholder="Pick her date of birth"
+                        yearRange={{
+                          from: today.getFullYear() - OLDEST_CLIENT_AGE,
+                          to: today.getFullYear() - YOUNGEST_CLIENT_AGE,
+                        }}
+                        disabledDays={{
+                          after: subYears(today, YOUNGEST_CLIENT_AGE),
+                        }}
+                        defaultMonth={subYears(today, TYPICAL_CLIENT_AGE)}
+                      />
+                    </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
-
-              {birthKind === 'date-of-birth' ? (
-                <FormField
-                  control={form.control}
-                  name="dateOfBirth"
-                  rules={{ required: 'Enter her date of birth.' }}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Date of birth</FormLabel>
-                      <FormControl>
-                        <Input type="date" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              ) : (
-                <FormField
-                  control={form.control}
-                  name="age"
-                  rules={{
-                    required: 'Enter her age.',
-                    validate: (value) =>
-                      Number(value) >= 16 && Number(value) <= 100
-                        ? true
-                        : 'Enter an age between 16 and 100.',
-                  }}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Age</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          inputMode="numeric"
-                          min={16}
-                          max={100}
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
 
               <FormField
                 control={form.control}
@@ -316,19 +267,53 @@ function InviteForm({
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Phone (optional)</FormLabel>
-                    <FormControl>
-                      <Input type="tel" {...field} autoComplete="tel" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid grid-cols-[minmax(7rem,auto)_1fr] gap-3">
+                <FormField
+                  control={form.control}
+                  name="phoneDiallingCode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Country code</FormLabel>
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {COUNTRIES.map((country) => (
+                            <SelectItem
+                              key={country.name}
+                              value={country.diallingCode}
+                            >
+                              {country.diallingCode} {country.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Phone (optional)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="tel"
+                          inputMode="tel"
+                          {...field}
+                          autoComplete="tel-national"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
               <FormField
                 control={form.control}
@@ -367,8 +352,8 @@ function InviteForm({
                       </FormControl>
                       <SelectContent>
                         {COUNTRIES.map((country) => (
-                          <SelectItem key={country} value={country}>
-                            {country}
+                          <SelectItem key={country.name} value={country.name}>
+                            {country.name}
                           </SelectItem>
                         ))}
                       </SelectContent>

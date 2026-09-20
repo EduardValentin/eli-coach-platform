@@ -46,16 +46,14 @@ export type JourneyPricing = 'regular' | 'reduced';
 
 export type JourneyLinkState = 'valid' | 'expired' | 'used';
 
-export type JourneyBirthDetail =
-  | { kind: 'date-of-birth'; dateOfBirth: string }
-  | { kind: 'age'; age: number };
+export type JourneyPhone = { diallingCode: string; number: string };
 
 export type JourneyIdentity = {
   firstName: string;
   lastName: string;
-  birth: JourneyBirthDetail;
+  dateOfBirth: string;
   email: string;
-  phone?: string;
+  phone?: JourneyPhone;
   sex: JourneySex;
   country: string;
 };

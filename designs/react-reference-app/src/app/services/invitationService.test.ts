@@ -11,7 +11,7 @@ import {
 const form: InvitationForm = {
   firstName: 'Jane',
   lastName: 'Doe',
-  birth: { kind: 'age', age: 28 },
+  dateOfBirth: '1998-03-14',
   email: 'jane@example.com',
   sex: 'female',
   country: 'Romania',

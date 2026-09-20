@@ -111,7 +111,7 @@ export function identityFromBooking(booking: PrototypeBooking): JourneyIdentity 
   return {
     firstName: firstName ?? booking.visitorName,
     lastName: rest.join(' '),
-    birth: { kind: 'age', age: 30 },
+    dateOfBirth: '',
     email: booking.visitorEmail,
     sex: 'female',
     country: 'Romania',
