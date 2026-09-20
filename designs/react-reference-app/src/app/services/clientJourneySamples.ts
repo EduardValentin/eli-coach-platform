@@ -41,37 +41,68 @@ type SubscriptionSeed = {
 };
 
 const SEEDED_GOAL_ANSWERS = {
-  goal: 'Feel strong and lose fat around my middle',
-  daysPerWeek: 3,
+  weight: 66.1,
+  height: 165,
+  goalWeight: 62,
+  primaryGoal: 'Lose fat',
+  experienceLevel: 'Some experience',
+  trainingDaysPerWeek: '3',
+  minutesPerSession: '60',
+  realisticTimeframe: '6 months',
+  lifestyleActivityLevel: 'Mostly sitting',
+  availableEquipment: ['Full gym', 'Dumbbells'],
   trainingPlace: 'Gym',
 };
 
 const SEEDED_SAFETY_ANSWERS = {
-  chestPain: 'No',
-  jointProblem: 'Yes',
-  prescribedMedication: 'No',
+  heartCondition: 'No',
+  chestPainOnExertion: 'No',
+  dizzinessOrFainting: 'No',
+  boneOrJointProblem: 'Yes',
+  chronicConditionMedication: 'No',
+  currentInjury: 'Yes',
+  currentInjuryDetail: 'Right shoulder aches on overhead pressing.',
+  doctorProhibitedActivity: 'No',
+  adviceToAvoidExertion: 'No',
 };
 
 const SEEDED_CYCLE_ANSWERS = {
-  cycleRegular: 'Yes',
-  cycleLengthDays: 29,
+  cycleRegularity: 'Regular',
+  averageCycleLength: 29,
+  lastPeriodStart: '2026-09-08',
+  hormonalContraception: 'None',
+  pregnancyStatus: 'None',
+  perimenopauseOrMenopause: 'No',
+  gynaecologicalCondition: 'No',
+  recurringSymptoms: ['Fatigue', 'Appetite changes'],
 };
 
 const SEEDED_LIFESTYLE_ANSWERS = {
-  mealsPerDay: 3,
+  eatingStyle: 'No particular style',
+  foodPreferences: 'Chicken, rice, Greek yoghurt, anything with eggs.',
+  allergiesOrIntolerances: 'Lactose, mild',
+  foodsYouAvoid: 'Liver',
+  mealsPerDay: '3',
+  mealSchedule: 'Around 8, 14 and 20',
+  jobType: 'Sedentary',
+  sleepHours: '6 to 7',
+  smoking: 'No',
+  whoCooks: 'I cook, about 30 minutes on a weeknight',
+  currentSupplements: 'Vitamin D',
   checkInDay: 'Monday',
   checkInChannel: 'In-app messages',
 };
 
 const SEEDED_MEASUREMENT_ANSWERS = {
-  weightKg: 66.1,
-  waistCm: 74,
+  weight: 66.1,
+  waist: 74,
+  hips: 98,
 };
 
 const SEEDED_DETAIL_REQUEST = {
-  questionIds: ['sleep', 'previous-injuries'],
+  questionIds: ['sleepHours', 'currentInjuryDetail'],
   message:
-    "Two quick things before I build your plan — tell me a little more about your sleep and about that shoulder.",
+    'Two quick things before I build your plan — tell me a little more about your sleep and about that shoulder.',
 };
 
 export function identityFromBooking(booking: PrototypeBooking): JourneyIdentity {
@@ -87,12 +118,25 @@ export function identityFromBooking(booking: PrototypeBooking): JourneyIdentity 
   };
 }
 
-function seedMeasurement(recordedAt: Date): MeasurementEntry {
-  return { recordedAt, weightKg: 66.1, waistCm: 74, hipsCm: 98 };
+const MEASUREMENT_HISTORY: readonly Omit<MeasurementEntry, 'recordedAt'>[] = [
+  { weightKg: 67.4, waistCm: 76.5, hipsCm: 99, thighCm: 58, armCm: 28 },
+  { weightKg: 66.8, waistCm: 75.5, hipsCm: 98.5 },
+  { weightKg: 66.1, waistCm: 74, hipsCm: 98, thighCm: 57, armCm: 28 },
+];
+
+function seedMeasurements(latestRecordedAt: Date): MeasurementEntry[] {
+  return MEASUREMENT_HISTORY.map((readings, index) => ({
+    ...readings,
+    recordedAt: subDays(
+      latestRecordedAt,
+      (MEASUREMENT_HISTORY.length - 1 - index) * 7,
+    ),
+  }));
 }
 
 function seedOnboarding(
   stage: JourneyStage,
+  identity: JourneyIdentity,
   submittedAt: Date,
 ): JourneyOnboarding {
   const empty = emptyOnboarding();
@@ -121,7 +165,7 @@ function seedOnboarding(
     answers: {
       'goal-availability': SEEDED_GOAL_ANSWERS,
       'safety-screening': SEEDED_SAFETY_ANSWERS,
-      'cycle-context': SEEDED_CYCLE_ANSWERS,
+      'cycle-context': identity.sex === 'female' ? SEEDED_CYCLE_ANSWERS : {},
       'nutrition-lifestyle': SEEDED_LIFESTYLE_ANSWERS,
       measurements: SEEDED_MEASUREMENT_ANSWERS,
     },
@@ -192,7 +236,7 @@ export function seedJourney(seed: JourneySeed): ClientJourney {
         }
       : null,
     welcomeSeen: reached('onboarding'),
-    onboarding: seedOnboarding(stage, submittedAt),
+    onboarding: seedOnboarding(stage, identity, submittedAt),
     review:
       stage === 'needs-details'
         ? {
@@ -203,7 +247,7 @@ export function seedJourney(seed: JourneySeed): ClientJourney {
     reviewCall: reached('review-call-scheduled')
       ? { startsAt: addDays(now, 1), scheduledAt: subDays(now, 1) }
       : undefined,
-    measurements: reached('submitted') ? [seedMeasurement(submittedAt)] : [],
+    measurements: reached('submitted') ? seedMeasurements(submittedAt) : [],
     subscription: reached('paid')
       ? seedSubscription({
           purchasedAt: paidAt,

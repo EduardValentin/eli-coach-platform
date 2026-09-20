@@ -76,3 +76,28 @@ export const HEIGHT_UNIT_LABELS: Record<HeightUnit, string> = {
   cm: 'Centimetres (cm)',
   'ft-in': 'Feet & inches (ft·in)',
 };
+
+// ── Circumference ───────────────────────────────────────────────────
+
+export type CircumferenceUnit = 'cm' | 'in';
+
+export const cmToIn = (cm: number): number => cm / CM_PER_IN;
+export const inToCm = (inch: number): number => inch * CM_PER_IN;
+
+export const circumferenceUnitOf = (unit: HeightUnit): CircumferenceUnit =>
+  unit === 'cm' ? 'cm' : 'in';
+
+export const toDisplayCircumference = (cm: number, unit: CircumferenceUnit): number =>
+  unit === 'cm' ? cm : cmToIn(cm);
+
+export const fromDisplayCircumference = (value: number, unit: CircumferenceUnit): number =>
+  unit === 'cm' ? value : inToCm(value);
+
+export const displayCircumferenceValue = (
+  cm: number,
+  unit: CircumferenceUnit,
+  dp = 1,
+): number => round(toDisplayCircumference(cm, unit), dp);
+
+export const formatCircumference = (cm: number, unit: CircumferenceUnit): string =>
+  `${displayCircumferenceValue(cm, unit, 1)} ${unit}`;

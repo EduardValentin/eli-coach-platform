@@ -75,7 +75,6 @@ function ProfileHeader({ onNavigate }: { onNavigate?: () => void }) {
       )}
       <div className="min-w-0">
         <p className="font-semibold text-sm text-text-primary truncate">{displayName}</p>
-        <p className="text-xs text-text-secondary">Active Client</p>
       </div>
     </Link>
   );

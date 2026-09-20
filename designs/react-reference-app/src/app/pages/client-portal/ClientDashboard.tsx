@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'motion/react';
 import { Flame, Target as TargetIcon, Activity, Droplet, Play, Utensils } from 'lucide-react';
 import { useTraining } from '../../context/TrainingContext';
@@ -6,7 +6,9 @@ import { useCycle } from '../../context/CycleContext';
 import { useClientProfile, ACTIVITY_LEVEL_LABELS } from '../../context/ClientProfileContext';
 import { useUnitPreferences } from '../../context/UnitPreferencesContext';
 import { formatHeight, formatBodyWeight } from '../../utils/units';
-import { useNavigate, Link } from 'react-router';
+import { useNavigate, useSearchParams, Link } from 'react-router';
+import { ProgramStatusCard } from '../../components/client-portal/ProgramStatusCard';
+import { ReviewCallScheduler } from '../../components/client-portal/ReviewCallScheduler';
 import { MACRO_BAR } from '../../components/coach-portal/nutrition/nutrition-constants';
 
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -17,6 +19,8 @@ export function ClientDashboard() {
   const { clientProfile } = useClientProfile();
   const { weightUnit, heightUnit } = useUnitPreferences();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [bookingReview, setBookingReview] = useState(false);
   const firstName = clientProfile?.firstName ?? 'there';
 
   // Macro split for the nutrition card (protein/carbs 4 kcal/g, fats 9 kcal/g)
@@ -55,6 +59,15 @@ export function ClientDashboard() {
     navigate(`/portal/workout/${clientActivePlan.id}/${todayInfo.weekIdx}/${todayInfo.dayIdx}`);
   };
 
+  const reviewRequested = searchParams.get('review') === '1';
+  const reviewOpened = useRef(false);
+
+  useEffect(() => {
+    if (!reviewRequested || reviewOpened.current) return;
+    reviewOpened.current = true;
+    setBookingReview(true);
+  }, [reviewRequested]);
+
   const hasActiveSession = Boolean(activeWorkout && activeWorkout.status === 'in-progress');
   const showStartCTA = Boolean(todayInfo && !todayInfo.isRest && !hasActiveSession);
 
@@ -68,6 +81,8 @@ export function ClientDashboard() {
           Here is your daily snapshot and current focus.
         </p>
       </header>
+
+      <ProgramStatusCard />
 
       {/* Top Metrics Grid: unified nutrition card + cycle phase */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6 mb-8">
@@ -298,6 +313,8 @@ export function ClientDashboard() {
         </motion.div>
 
       </div>
+
+      <ReviewCallScheduler onOpenChange={setBookingReview} open={bookingReview} />
 
       {showStartCTA && (
         <div className="mt-8 flex justify-center sm:justify-start">

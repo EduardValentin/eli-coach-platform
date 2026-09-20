@@ -1,6 +1,9 @@
 import { useState, useMemo } from 'react';
 import { CalendarDays, CalendarPlus, Clock, CheckCircle2, XCircle, RefreshCw, X } from 'lucide-react';
 import { useCheckins, type CheckIn, MAX_RESCHEDULES } from '../../context/CheckinContext';
+import { useClientJourneys } from '../../context/ClientJourneyContext';
+import { PROGRAM_REVIEW_LABEL, upcomingReviewCall } from '../../utils/reviewCallListing';
+import { browserTimeZone, formatSlotTime, formatZonedDate } from '../../utils/dateFormatters';
 import { useNotifications } from '../../context/NotificationContext';
 import { useMessaging } from '../../context/MessagingContext';
 import { formatCheckinDate, formatCheckinTime, toISODate, to24h } from '../../utils/dateFormatters';
@@ -73,6 +76,8 @@ function CheckinCard({ checkin, actions }: { checkin: CheckIn; actions?: React.R
 
 export function CoachCheckins() {
   const { checkins, getPendingCheckins, getUpcomingCheckins, approveCheckin, declineCheckin, rescheduleCheckin, acceptReschedule, getBookedSlots } = useCheckins();
+  const { demoJourney } = useClientJourneys();
+  const reviewCall = upcomingReviewCall(demoJourney, new Date());
   const { addNotification } = useNotifications();
   const { addSystemMessage, sendMessage: ctxSendMessage } = useMessaging();
 
@@ -232,7 +237,21 @@ export function CoachCheckins() {
         </TabsContent>
 
         <TabsContent value="upcoming" className="space-y-3">
-          {upcoming.length === 0 ? (
+          {reviewCall && (
+            <AppointmentCard
+              attendee={{ name: `${demoJourney.identity.firstName} ${demoJourney.identity.lastName}`.trim() }}
+              when={{
+                date: formatZonedDate(reviewCall.startsAt, browserTimeZone(), 'EEE, MMM d'),
+                time: formatSlotTime(reviewCall.startsAt, browserTimeZone()),
+              }}
+              badges={
+                <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-brand-secondary-surface text-brand-secondary">
+                  {PROGRAM_REVIEW_LABEL}
+                </span>
+              }
+            />
+          )}
+          {upcoming.length === 0 && !reviewCall ? (
             <div className="text-center py-16">
               <CalendarDays size={40} className="mx-auto text-neutral-300 mb-4" />
               <p className="text-text-secondary font-medium">No upcoming check-ins</p>

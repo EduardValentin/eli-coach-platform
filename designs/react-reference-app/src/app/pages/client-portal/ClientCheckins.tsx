@@ -4,6 +4,9 @@ import {
   CalendarDays, CalendarPlus, Clock, CheckCircle2, XCircle, RefreshCw, Video,
 } from 'lucide-react';
 import { useCheckins, type CheckIn, MAX_RESCHEDULES } from '../../context/CheckinContext';
+import { useClientJourneys } from '../../context/ClientJourneyContext';
+import { PROGRAM_REVIEW_LABEL, upcomingReviewCall } from '../../utils/reviewCallListing';
+import { browserTimeZone, formatSlotTime, formatZonedDate } from '../../utils/dateFormatters';
 import { useMessaging } from '../../context/MessagingContext';
 import { useCoachProfile } from '../../context/CoachProfileContext';
 import { formatCheckinDate, formatCheckinTime, toISODate, to24h } from '../../utils/dateFormatters';
@@ -22,6 +25,8 @@ export function ClientCheckins() {
     hasPendingAdHoc, getBookedSlots,
   } = useCheckins();
   const { addSystemMessage, sendMessage: ctxSendMessage } = useMessaging();
+  const { demoJourney } = useClientJourneys();
+  const reviewCall = upcomingReviewCall(demoJourney, new Date());
   const { coachProfile } = useCoachProfile();
   const coachName = coachProfile.name;
 
@@ -163,7 +168,10 @@ export function ClientCheckins() {
 
         {/* Upcoming */}
         <TabsContent value="upcoming" className="space-y-3">
-          {upcoming.length === 0 ? (
+          {reviewCall && (
+            <ProgramReviewCard coachName={coachName} startsAt={reviewCall.startsAt} />
+          )}
+          {upcoming.length === 0 && !reviewCall ? (
             <EmptyState icon={CalendarDays} title="No upcoming check-ins" hint="Request one any time using the button above." />
           ) : (
             upcoming.map(c => (
@@ -309,6 +317,47 @@ export function ClientCheckins() {
         {pendingExists ? <Clock size={18} aria-hidden="true" /> : <CalendarPlus size={18} aria-hidden="true" />}
         {pendingExists ? 'Pending' : 'Request check-in'}
       </button>
+    </div>
+  );
+}
+
+function ProgramReviewCard({
+  coachName,
+  startsAt,
+}: {
+  coachName: string;
+  startsAt: Date;
+}) {
+  const timeZone = browserTimeZone();
+
+  return (
+    <div className="bg-white p-4 sm:p-5 rounded-card border border-neutral-100/50 shadow-[0_2px_12px_rgb(0,0,0,0.03)]">
+      <div className="flex items-start gap-3 sm:gap-4">
+        <span className="w-10 h-10 sm:w-11 sm:h-11 rounded-control flex items-center justify-center shrink-0 bg-brand/10 text-brand">
+          <CalendarDays size={18} aria-hidden="true" />
+        </span>
+
+        <div className="flex-1 min-w-0">
+          <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-brand-secondary-surface text-brand-secondary">
+            {PROGRAM_REVIEW_LABEL}
+          </span>
+
+          <div className="mt-1 flex items-center gap-x-3 gap-y-0.5 text-sm font-medium text-text-primary flex-wrap">
+            <span className="inline-flex items-center gap-1.5">
+              <CalendarDays size={13} aria-hidden="true" />
+              {formatZonedDate(startsAt, timeZone, 'EEE, MMM d')}
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <Clock size={13} aria-hidden="true" />
+              {formatSlotTime(startsAt, timeZone)}
+            </span>
+          </div>
+
+          <p className="text-xs text-text-secondary mt-2">
+            You and {coachName} go through your new program together.
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

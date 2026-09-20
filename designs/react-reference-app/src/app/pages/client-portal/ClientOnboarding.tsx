@@ -1,440 +1,64 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { Check, ChevronRight, ArrowLeft } from 'lucide-react';
-import { useNavigate } from 'react-router';
+import type { ReactNode } from 'react';
+import { useSearchParams } from 'react-router';
+import { SectionEyebrow } from '../../components/SectionEyebrow';
+import { AnswerRequestCard } from '../../components/client-portal/onboarding/AnswerRequestCard';
+import { OnboardingWizard } from '../../components/client-portal/onboarding/OnboardingWizard';
+import { ANSWER_REQUEST_PARAM } from '../../components/client-portal/ClientJourneyGate';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
-import { ToggleChip } from '../../components/ToggleChip';
-import {
-  useCycle,
-  CYCLE_SYMPTOMS,
-  CYCLE_CONDITIONS,
-  CycleRegularity,
-  CycleSymptom,
-} from '../../context/CycleContext';
-import { useClientProfile, Gender } from '../../context/ClientProfileContext';
-import { useNutrition } from '../../context/NutritionContext';
+import type { ClientJourney, DetailRequest } from '../../domain/journey';
 
-const TOTAL_STEPS = 5;
-const ALLERGEN_OPTIONS = ['Dairy', 'Gluten', 'Nuts', 'Shellfish', 'Eggs', 'Soy'] as const;
+const WIZARD_TITLE = "Let's get you set up";
+const ANSWER_TITLE = 'A few more details';
 
-export function ClientOnboarding() {
-  const navigate = useNavigate();
-  const { demoJourney, submitOnboarding } = useClientJourneys();
-  const { setMenstrualProfile } = useCycle();
-  const { clientProfile, updateProfile } = useClientProfile();
-  const { tags, foods, getPreferences, setPreferences } = useNutrition();
-  const [step, setStep] = useState(1);
+function pendingRequest(journey: ClientJourney): DetailRequest | null {
+  const latest = journey.review.requests.at(-1);
 
-  const existingPrefs = getPreferences('client-1');
-  const [dietaryFlags, setDietaryFlags] = useState<string[]>(existingPrefs?.dietaryFlags ?? []);
-  const [allergens, setAllergens] = useState<string[]>(existingPrefs?.allergens ?? []);
-  const [dislikedFoodIds, setDislikedFoodIds] = useState<string[]>(existingPrefs?.dislikedFoodIds ?? []);
+  return latest && !latest.answeredAt ? latest : null;
+}
 
-  const dietaryTags = tags.filter(t => t.family === 'dietary');
-
-  // Pre-filled from coach-set profile; client can override
-  const [formData, setFormData] = useState({
-    firstName: clientProfile?.firstName ?? 'Jane',
-    lastName: clientProfile?.lastName ?? 'Doe',
-    age: String(clientProfile?.age ?? 28),
-    gender: (clientProfile?.gender ?? 'Female') as Gender,
-    regularity: 'regular' as CycleRegularity,
-    averageCycleLength: '28',
-    averagePeriodLength: '5',
-    lastPeriodStart: '',
-    conditions: [] as string[],
-    commonSymptoms: [] as CycleSymptom[],
-    notes: '',
-  });
-
-  const handleNext = () => setStep(s => Math.min(s + 1, TOTAL_STEPS));
-  const handlePrev = () => setStep(s => Math.max(s - 1, 1));
-
-  const toggleCondition = (c: string) => {
-    setFormData(prev => ({
-      ...prev,
-      conditions: prev.conditions.includes(c)
-        ? prev.conditions.filter(x => x !== c)
-        : [...prev.conditions, c],
-    }));
-  };
-
-  const toggleSymptom = (s: CycleSymptom) => {
-    setFormData(prev => ({
-      ...prev,
-      commonSymptoms: prev.commonSymptoms.includes(s)
-        ? prev.commonSymptoms.filter(x => x !== s)
-        : [...prev.commonSymptoms, s],
-    }));
-  };
-
-  const handleComplete = () => {
-    setMenstrualProfile('client-1', {
-      regularity: formData.regularity,
-      averageCycleLength: parseInt(formData.averageCycleLength) || 28,
-      averagePeriodLength: parseInt(formData.averagePeriodLength) || 5,
-      conditions: formData.conditions,
-      notes: formData.notes,
-    });
-    updateProfile('client-1', {
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      age: parseInt(formData.age) || 0,
-      gender: formData.gender,
-      clientNotes: formData.notes,
-    });
-    setPreferences('client-1', { dietaryFlags, allergens, dislikedFoodIds });
-    submitOnboarding(demoJourney.callId, new Date());
-    navigate('/portal');
-  };
-
+function OnboardingShell({
+  eyebrow,
+  title,
+  children,
+}: {
+  eyebrow: string;
+  title: string;
+  children: ReactNode;
+}) {
   return (
-    <div className="min-h-screen bg-surface-page flex items-start justify-center px-4 py-12 lg:py-20">
-      <div className="w-full max-w-2xl">
-        {/* Brand header */}
-        <div className="text-center mb-10">
-          <p className="text-[10px] font-bold text-brand uppercase tracking-[0.2em] mb-2">
-            Welcome to Evoa
-          </p>
-          <h1 className="font-serif text-3xl lg:text-4xl text-text-primary tracking-tight">
-            Let&apos;s get you set up
+    <main
+      aria-label={title}
+      className="min-h-screen bg-surface-page px-4 py-10 sm:px-6 lg:py-16"
+    >
+      <div className="mx-auto w-full max-w-2xl">
+        <div className="mb-8 text-center">
+          <SectionEyebrow className="mb-2">{eyebrow}</SectionEyebrow>
+          <h1 className="font-serif text-3xl tracking-tight text-text-primary lg:text-display-md">
+            {title}
           </h1>
         </div>
-
-        {/* Progress Bar */}
-        <div className="flex items-center gap-2 w-full mb-8">
-          {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
-            <div
-              key={i}
-              className={`h-1.5 flex-1 rounded-full transition-colors duration-500 ${
-                i + 1 <= step ? 'bg-brand' : 'bg-neutral-200'
-              }`}
-            />
-          ))}
-        </div>
-
-        {/* Card */}
-        <div className="bg-white p-8 lg:p-10 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 min-h-[420px] flex flex-col">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={step}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.2 }}
-              className="flex-1"
-            >
-              {/* Step 1: Verify Info */}
-              {step === 1 && (
-                <div className="space-y-6">
-                  <div>
-                    <h2 className="font-serif text-2xl text-text-primary mb-2">
-                      Let&apos;s make sure we have your details right
-                    </h2>
-                    <p className="text-sm text-text-secondary">
-                      Your coach set some basics for you. Feel free to correct anything.
-                    </p>
-                  </div>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">
-                        First Name
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.firstName}
-                        onChange={e => setFormData({ ...formData, firstName: e.target.value })}
-                        className="w-full px-3 border-b border-neutral-200 rounded-field py-3 focus:outline-none transition-colors text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">
-                        Last Name
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.lastName}
-                        onChange={e => setFormData({ ...formData, lastName: e.target.value })}
-                        className="w-full px-3 border-b border-neutral-200 rounded-field py-3 focus:outline-none transition-colors text-sm"
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-6">
-                      <div>
-                        <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">
-                          Age
-                        </label>
-                        <input
-                          type="number"
-                          value={formData.age}
-                          onChange={e => setFormData({ ...formData, age: e.target.value })}
-                          className="w-full px-3 border-b border-neutral-200 rounded-field py-3 focus:outline-none transition-colors text-sm"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">
-                          Gender
-                        </label>
-                        <select
-                          value={formData.gender}
-                          onChange={e => setFormData({ ...formData, gender: e.target.value as Gender })}
-                          className="w-full px-3 border-b border-neutral-200 rounded-field py-3 focus:outline-none transition-colors text-sm bg-transparent"
-                        >
-                          <option value="Female">Female</option>
-                          <option value="Male">Male</option>
-                          <option value="Non-binary">Non-binary</option>
-                          <option value="Prefer not to say">Prefer not to say</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Step 2: Cycle Info */}
-              {step === 2 && (
-                <div className="space-y-6">
-                  <div>
-                    <h2 className="font-serif text-2xl text-text-primary mb-2">
-                      Tell us about your cycle
-                    </h2>
-                    <p className="text-sm text-text-secondary">
-                      This helps us tailor your training and nutrition to your body.
-                    </p>
-                  </div>
-                  <div className="space-y-5">
-                    <div>
-                      <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3 block">
-                        Is your period regular?
-                      </label>
-                      <div className="flex gap-3">
-                        {(['regular', 'irregular'] as const).map(opt => (
-                          <button
-                            key={opt}
-                            type="button"
-                            aria-pressed={formData.regularity === opt}
-                            onClick={() => setFormData({ ...formData, regularity: opt })}
-                            className={`flex-1 py-3 rounded-control text-sm font-semibold transition-all ${
-                              formData.regularity === opt
-                                ? 'bg-brand text-white shadow-md'
-                                : 'bg-neutral-50 text-text-secondary border border-neutral-100 hover:bg-neutral-100'
-                            }`}
-                          >
-                            {opt === 'regular' ? 'Regular' : 'Irregular'}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-6">
-                      <div>
-                        <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">
-                          Average Cycle Length (days)
-                        </label>
-                        <input
-                          type="number"
-                          value={formData.averageCycleLength}
-                          onChange={e => setFormData({ ...formData, averageCycleLength: e.target.value })}
-                          className="w-full px-3 border-b border-neutral-200 rounded-field py-3 focus:outline-none transition-colors text-sm"
-                          placeholder="28"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">
-                          Average Period Length (days)
-                        </label>
-                        <input
-                          type="number"
-                          value={formData.averagePeriodLength}
-                          onChange={e => setFormData({ ...formData, averagePeriodLength: e.target.value })}
-                          className="w-full px-3 border-b border-neutral-200 rounded-field py-3 focus:outline-none transition-colors text-sm"
-                          placeholder="5"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Step 3: Conditions */}
-              {step === 3 && (
-                <div className="space-y-6">
-                  <div>
-                    <h2 className="font-serif text-2xl text-text-primary mb-2">
-                      Any conditions we should know about?
-                    </h2>
-                    <p className="text-sm text-text-secondary">
-                      Select any that apply. This stays between you and your coach.
-                    </p>
-                  </div>
-                  <fieldset className="space-y-1 border-0 p-0 m-0">
-                    <legend className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3">
-                      Conditions
-                    </legend>
-                    <div className="flex flex-wrap gap-2">
-                      {CYCLE_CONDITIONS.map(c => (
-                        <ToggleChip
-                          key={c}
-                          pressed={formData.conditions.includes(c)}
-                          onPressedChange={() => toggleCondition(c)}
-                        >
-                          {c}
-                        </ToggleChip>
-                      ))}
-                    </div>
-                  </fieldset>
-                  <fieldset className="space-y-1 border-0 p-0 m-0">
-                    <legend className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3">
-                      Common Symptoms
-                    </legend>
-                    <div className="flex flex-wrap gap-2">
-                      {CYCLE_SYMPTOMS.map(s => (
-                        <ToggleChip
-                          key={s.value}
-                          pressed={formData.commonSymptoms.includes(s.value)}
-                          onPressedChange={() => toggleSymptom(s.value)}
-                        >
-                          {s.label}
-                        </ToggleChip>
-                      ))}
-                    </div>
-                  </fieldset>
-                </div>
-              )}
-
-              {/* Step 4: Food Preferences */}
-              {step === 4 && (
-                <div className="space-y-6">
-                  <div>
-                    <h2 className="font-serif text-2xl text-text-primary mb-2">
-                      Tell us about your food preferences
-                    </h2>
-                    <p className="text-sm text-text-secondary">
-                      Helps us tailor your nutrition plan. All fields are optional.
-                    </p>
-                  </div>
-
-                  <fieldset className="space-y-1 border-0 p-0 m-0">
-                    <legend className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3">
-                      Dietary preferences
-                    </legend>
-                    <div className="flex flex-wrap gap-2">
-                      {dietaryTags.map(tag => (
-                        <ToggleChip
-                          key={tag.id}
-                          pressed={dietaryFlags.includes(tag.id)}
-                          onPressedChange={() =>
-                            setDietaryFlags(prev =>
-                              prev.includes(tag.id)
-                                ? prev.filter(id => id !== tag.id)
-                                : [...prev, tag.id]
-                            )
-                          }
-                        >
-                          {tag.label}
-                        </ToggleChip>
-                      ))}
-                    </div>
-                  </fieldset>
-
-                  <fieldset className="space-y-1 border-0 p-0 m-0">
-                    <legend className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3">
-                      Allergens
-                    </legend>
-                    <div className="flex flex-wrap gap-2">
-                      {ALLERGEN_OPTIONS.map(allergen => (
-                        <ToggleChip
-                          key={allergen}
-                          pressed={allergens.includes(allergen)}
-                          onPressedChange={() =>
-                            setAllergens(prev =>
-                              prev.includes(allergen)
-                                ? prev.filter(a => a !== allergen)
-                                : [...prev, allergen]
-                            )
-                          }
-                        >
-                          {allergen}
-                        </ToggleChip>
-                      ))}
-                    </div>
-                  </fieldset>
-
-                  <fieldset className="space-y-1 border-0 p-0 m-0">
-                    <legend className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3">
-                      Foods I&apos;d rather avoid
-                    </legend>
-                    <div className="flex flex-wrap gap-2">
-                      {foods.map(food => (
-                        <ToggleChip
-                          key={food.id}
-                          pressed={dislikedFoodIds.includes(food.id)}
-                          onPressedChange={() =>
-                            setDislikedFoodIds(prev =>
-                              prev.includes(food.id)
-                                ? prev.filter(id => id !== food.id)
-                                : [...prev, food.id]
-                            )
-                          }
-                        >
-                          {food.name}
-                        </ToggleChip>
-                      ))}
-                    </div>
-                  </fieldset>
-                </div>
-              )}
-
-              {/* Step 5: Notes + Completion */}
-              {step === 5 && (
-                <div className="space-y-6">
-                  <div>
-                    <h2 className="font-serif text-2xl text-text-primary mb-2">
-                      Anything else you&apos;d like to share?
-                    </h2>
-                    <p className="text-sm text-text-secondary">
-                      Your coach will see these notes on your profile.
-                    </p>
-                  </div>
-                  <textarea
-                    value={formData.notes}
-                    onChange={e => setFormData({ ...formData, notes: e.target.value })}
-                    placeholder="e.g. I experience severe cramps on day 1-2, specific food sensitivities during luteal phase..."
-                    className="w-full border border-neutral-200 rounded-control p-4 min-h-[150px] focus:outline-none transition-colors text-sm resize-none"
-                  />
-                </div>
-              )}
-            </motion.div>
-          </AnimatePresence>
-
-          {/* Footer */}
-          <div className="mt-10 pt-6 border-t border-neutral-100 flex items-center justify-between">
-            <button
-              onClick={handlePrev}
-              disabled={step === 1}
-              className="px-6 py-3 text-sm font-semibold text-text-secondary hover:text-text-primary transition-colors disabled:opacity-0 flex items-center gap-2"
-            >
-              <ArrowLeft size={16} />
-              Back
-            </button>
-
-            {step < TOTAL_STEPS ? (
-              <button
-                onClick={handleNext}
-                className="px-8 py-3 bg-text-primary text-white text-sm font-semibold rounded-control hover:bg-neutral-800 transition-colors flex items-center gap-2 shadow-md"
-              >
-                Continue <ChevronRight size={16} />
-              </button>
-            ) : (
-              <button
-                onClick={handleComplete}
-                className="px-8 py-3 bg-brand text-white text-sm font-semibold rounded-control hover:bg-brand-hover transition-colors shadow-md flex items-center gap-2"
-              >
-                <Check size={16} />
-                Complete Setup
-              </button>
-            )}
-          </div>
-        </div>
+        {children}
       </div>
-    </div>
+    </main>
+  );
+}
+
+export function ClientOnboarding() {
+  const [searchParams] = useSearchParams();
+  const { demoJourney } = useClientJourneys();
+  const request = pendingRequest(demoJourney);
+
+  if (searchParams.get(ANSWER_REQUEST_PARAM) === '1' && request) {
+    return (
+      <OnboardingShell eyebrow="Your coach" title={ANSWER_TITLE}>
+        <AnswerRequestCard request={request} />
+      </OnboardingShell>
+    );
+  }
+
+  return (
+    <OnboardingShell eyebrow="Welcome to Evoa" title={WIZARD_TITLE}>
+      <OnboardingWizard />
+    </OnboardingShell>
   );
 }

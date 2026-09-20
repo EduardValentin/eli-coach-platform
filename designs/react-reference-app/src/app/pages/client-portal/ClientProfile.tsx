@@ -7,6 +7,7 @@ import { useClientProfile, fullName, ACTIVITY_LEVEL_LABELS } from '../../context
 import { useCycle } from '../../context/CycleContext';
 import { useUnitPreferences } from '../../context/UnitPreferencesContext';
 import { formatHeight, formatBodyWeight } from '../../utils/units';
+import { MeasurementsSection } from '../../components/client-portal/MeasurementsSection';
 
 const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
 
@@ -240,6 +241,8 @@ export function ClientProfile() {
           </motion.div>
         )}
       </div>
+
+      <MeasurementsSection />
 
       <div className="mt-8 p-5 rounded-card bg-brand/5 border border-brand/10 flex items-start gap-3">
         <FileText size={18} className="text-brand mt-0.5 shrink-0" />

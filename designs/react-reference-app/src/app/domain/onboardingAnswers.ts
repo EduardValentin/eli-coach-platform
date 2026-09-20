@@ -31,6 +31,8 @@ export type AnsweredForm = {
 
 const PREGNANCY_PATTERN = /pregnan|postpartum/i;
 
+const NEGATIVE_ANSWERS: ReadonlySet<string> = new Set(['no', 'none']);
+
 export function humaniseQuestionId(questionId: string): string {
   const spaced = questionId
     .replace(/[-_]+/g, ' ')
@@ -88,10 +90,18 @@ export function answeredQuestions(draft: OnboardingDraft): AnsweredQuestion[] {
   return answeredForms(draft).flatMap((form) => form.questions);
 }
 
+function isPositive(answer: OnboardingAnswer): boolean {
+  if (!isAnswered(answer)) return false;
+
+  return !(
+    typeof answer === 'string' && NEGATIVE_ANSWERS.has(answer.trim().toLowerCase())
+  );
+}
+
 export function hasPregnancyContext(draft: OnboardingDraft): boolean {
   return Object.entries(draft.answers['cycle-context']).some(
     ([questionId, answer]) =>
-      PREGNANCY_PATTERN.test(questionId) && isAnswered(answer),
+      PREGNANCY_PATTERN.test(questionId) && isPositive(answer),
   );
 }
 

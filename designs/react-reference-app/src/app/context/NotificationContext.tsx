@@ -1,7 +1,12 @@
-import { createContext, useContext, useState, useRef, ReactNode } from 'react';
+import { createContext, useContext, useMemo, useState, useRef, ReactNode } from 'react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router';
 import { useAppState } from './AppContext';
+import { useClientJourneys } from './ClientJourneyContext';
+import {
+  needsReviewCall,
+  PROGRAM_READY_NOTIFICATION,
+} from '../utils/reviewCallListing';
 
 export type Notification = {
   id: string;
@@ -68,14 +73,39 @@ const CLIENT_NOTIFICATIONS: Notification[] = [
   }
 ];
 
+export const PROGRAM_READY_NOTIFICATION_ID = 'program-ready';
+
+const PROGRAM_READY_TIME = 'Waiting on you';
+
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const navigateRef = useRef(navigate);
   navigateRef.current = navigate;
   const { appState } = useAppState();
+  const { demoJourney } = useClientJourneys();
 
-  const [notifications, setNotifications] = useState<Notification[]>(
+  const [stored, setStored] = useState<Notification[]>(
     appState.session === 'client' ? CLIENT_NOTIFICATIONS : COACH_NOTIFICATIONS
+  );
+
+  const reviewCallDue = appState.session === 'client' && needsReviewCall(demoJourney);
+
+  const notifications = useMemo(
+    () =>
+      reviewCallDue
+        ? [
+            {
+              id: PROGRAM_READY_NOTIFICATION_ID,
+              title: PROGRAM_READY_NOTIFICATION.title,
+              message: PROGRAM_READY_NOTIFICATION.message,
+              time: PROGRAM_READY_TIME,
+              read: false,
+              link: PROGRAM_READY_NOTIFICATION.link,
+            },
+            ...stored,
+          ]
+        : stored,
+    [reviewCallDue, stored]
   );
 
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -87,7 +117,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       time: 'Just now',
       read: false,
     };
-    setNotifications(prev => [newNotif, ...prev]);
+    setStored(prev => [newNotif, ...prev]);
     
     // Show toast
     toast(newNotif.title, {
@@ -102,11 +132,11 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   };
 
   const markAsRead = (id: string) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    setStored(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
   };
 
   const markAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    setStored(prev => prev.map(n => ({ ...n, read: true })));
   };
 
   return (
