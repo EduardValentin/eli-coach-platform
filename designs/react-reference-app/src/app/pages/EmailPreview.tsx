@@ -221,8 +221,9 @@ export function EmailPreview() {
         }}
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <span
+          <h1
             style={{
+              margin: 0,
               fontSize: 11,
               letterSpacing: '0.22em',
               textTransform: 'uppercase',
@@ -231,7 +232,7 @@ export function EmailPreview() {
             }}
           >
             Email preview
-          </span>
+          </h1>
           <span style={{ fontSize: 15, fontWeight: 500, color: '#121212' }}>
             {currentTemplate.label}
           </span>

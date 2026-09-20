@@ -158,8 +158,11 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
     }),
   );
 
+  const [signedInCallId, setSignedInCallId] = useState(DEMO_JOURNEY_CALL_ID);
+
   const seedDemoJourney = useCallback(
     (stage: JourneyStage, options: DemoJourneyOptions) => {
+      setSignedInCallId(DEMO_JOURNEY_CALL_ID);
       setJourneys((previous) => ({
         ...previous,
         [DEMO_JOURNEY_CALL_ID]: seedJourney({
@@ -295,6 +298,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
 
   const recordAccountCreated = useCallback(
     (callId: string) => {
+      setSignedInCallId(callId);
       updateJourney(callId, (journey) =>
         applied(
           {
@@ -465,7 +469,8 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
         journeyForCall,
         journeyForPaymentToken,
         journeyForInvitationToken,
-        demoJourney: journeys[DEMO_JOURNEY_CALL_ID],
+        demoJourney:
+          journeys[signedInCallId] ?? journeys[DEMO_JOURNEY_CALL_ID],
         dispatch,
         seedDemoJourney,
         recordPaymentLinkSent,
