@@ -179,7 +179,7 @@ function PortalSidebarContent(props: PortalSidebarContentProps) {
                 "flex items-center gap-4 rounded-card px-4 py-3.5 outline-none transition-all",
                 {
                   "bg-text-primary text-text-inverted shadow-action": isActive,
-                  "text-text-secondary hover:bg-surface-subtle hover:text-text-primary":
+                  "text-text-secondary hover:bg-surface-quiet hover:text-text-primary":
                     !isActive,
                 },
               )}
