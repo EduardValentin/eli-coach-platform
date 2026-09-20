@@ -1,6 +1,10 @@
 import type { ReactNode } from "react";
 
+import { cn } from "../lib/cn";
 import { SectionEyebrow } from "../primitives";
+
+export const DEAD_END_BODY_CLASS_NAME =
+  "flex flex-col items-center px-6 py-16 text-center";
 
 type DeadEndContentProps = {
   children?: ReactNode;
@@ -49,7 +53,10 @@ export function DeadEndPage(props: DeadEndPageProps) {
   return (
     <main
       aria-label={landmarkLabel}
-      className="flex min-h-screen w-full flex-col items-center justify-center bg-surface-page px-6 py-16 text-center"
+      className={cn(
+        DEAD_END_BODY_CLASS_NAME,
+        "min-h-screen w-full justify-center bg-surface-page",
+      )}
     >
       <DeadEndContent
         description={description}

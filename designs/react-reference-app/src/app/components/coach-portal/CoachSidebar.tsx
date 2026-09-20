@@ -115,40 +115,40 @@ const CoachPortalDrawer = ({
   const prefersReducedMotion = useReducedMotion() ?? false;
 
   return (
-  <motion.div
-    className="absolute top-16 left-0 bottom-0 w-64 shadow-floating"
-    transition={
-      prefersReducedMotion
-        ? { duration: 0 }
-        : { type: 'spring', damping: 25, stiffness: 200 }
-    }
-    variants={{ closed: { x: '-100%' }, open: { x: 0 } }}
-  >
-    <SidebarSurface>
-      <SidebarNavigation
-        firstLinkRef={firstLinkRef}
-        onNavigate={onNavigate}
-        pathname={pathname}
-        pendingCheckins={pendingCheckins}
-      />
-    </SidebarSurface>
-  </motion.div>
+    <motion.div
+      className="absolute top-16 left-0 bottom-0 w-64 shadow-floating"
+      transition={
+        prefersReducedMotion
+          ? { duration: 0 }
+          : { type: 'spring', damping: 25, stiffness: 200 }
+      }
+      variants={{ closed: { x: '-100%' }, open: { x: 0 } }}
+    >
+      <SidebarSurface>
+        <SidebarNavigation
+          firstLinkRef={firstLinkRef}
+          onNavigate={onNavigate}
+          pathname={pathname}
+          pendingCheckins={pendingCheckins}
+        />
+      </SidebarSurface>
+    </motion.div>
   );
 };
 
-interface SidebarContentProps {
+interface DesktopSidebarProps {
   actions?: ReactNode;
   brand: ReactNode;
   pathname: string;
   pendingCheckins?: number;
 }
 
-const SidebarContent = ({
+const DesktopSidebar = ({
   actions,
   brand,
   pathname,
   pendingCheckins = 0,
-}: SidebarContentProps) => (
+}: DesktopSidebarProps) => (
   <SidebarSurface>
     <div className="p-6 mb-4 px-3 border-b border-neutral-50 rounded-field flex items-center justify-between">
       {brand}
@@ -227,7 +227,7 @@ export function CoachSidebar() {
 
       {/* Desktop Sidebar */}
       <div className="hidden lg:block fixed top-0 left-0 bottom-0 w-64 bg-white z-50">
-        <SidebarContent
+        <DesktopSidebar
           actions={<NotificationBell align="left" />}
           brand={<CoachIdentityLink coachAvatarUrl={coachAvatarUrl} />}
           pathname={location.pathname}

@@ -1,23 +1,27 @@
 import { cn } from "@eli-coach-platform/ui/lib";
-import { DeadEndContent } from "@eli-coach-platform/ui/layout";
+import {
+  DeadEndContent,
+  DEAD_END_BODY_CLASS_NAME,
+} from "@eli-coach-platform/ui/layout";
 import { cardVariants } from "@eli-coach-platform/ui/primitives";
 import { VideoOff } from "lucide-react";
 import { isRouteErrorResponse, useRouteError } from "react-router";
 
 import { COACH_ASSESSMENT_CALLS_UNAVAILABLE_MESSAGE } from "~/features/assessment-calls/contracts/assessment-calls";
+import { COACH_CALLS_PAGE_FRAME_CLASS_NAME } from "~/features/assessment-calls/ui/coach/coach-calls-page-frame";
 
 const UNAVAILABLE_STATUS = 503;
 
 function AssessmentCallsUnavailable() {
   return (
     <div
-      className="mx-auto max-w-4xl pb-12 lg:px-8 lg:pt-8"
+      className={COACH_CALLS_PAGE_FRAME_CLASS_NAME}
       data-parity-root="AssessmentCallsUnavailable"
     >
       <div
         className={cn(
           cardVariants({ variant: "portal-panel" }),
-          "flex flex-col items-center px-6 py-16 text-center",
+          DEAD_END_BODY_CLASS_NAME,
         )}
         role="alert"
       >

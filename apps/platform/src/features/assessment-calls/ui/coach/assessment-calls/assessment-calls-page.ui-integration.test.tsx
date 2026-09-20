@@ -442,18 +442,6 @@ describe("paging through a long history of calls", () => {
   });
 });
 
-function shownCalls(): HTMLElement[] {
-  return within(
-    screen.getByRole("list", { name: "Assessment calls" }),
-  ).getAllByRole("listitem");
-}
-
-function shownCallNames(): string[] {
-  return screen
-    .getAllByRole("heading", { level: 2 })
-    .map((heading) => heading.textContent ?? "");
-}
-
 describe("the coach assessment calls page when the calls cannot be read", () => {
   it("replaces the listing with the unavailable dead end", async () => {
     // arrange
@@ -489,6 +477,17 @@ describe("the coach assessment calls page when the calls cannot be read", () => 
     expect(screen.queryByRole("tablist")).not.toBeInTheDocument();
   });
 });
+function shownCalls(): HTMLElement[] {
+  return within(
+    screen.getByRole("list", { name: "Assessment calls" }),
+  ).getAllByRole("listitem");
+}
+
+function shownCallNames(): string[] {
+  return screen
+    .getAllByRole("heading", { level: 2 })
+    .map((heading) => heading.textContent ?? "");
+}
 
 async function renderCallsRouter(options?: {
   calls?: CoachAssessmentCall[];
