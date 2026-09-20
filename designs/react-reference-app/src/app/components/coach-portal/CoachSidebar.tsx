@@ -10,6 +10,7 @@ import {
   MessageSquare,
   Activity,
   Utensils,
+  Video,
 } from 'lucide-react';
 import { useState, type ReactNode, type RefObject } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
@@ -25,6 +26,7 @@ const LINKS = [
   { name: 'Messages', href: '/coach/messages', icon: MessageSquare },
   { name: 'Clients', href: '/coach/clients', icon: Users },
   { name: 'Schedule', href: '/coach/checkins', icon: CalendarDays },
+  { name: 'Assessment calls', href: '/coach/assessment-calls', icon: Video },
   { name: 'Settings', href: '/coach/settings', icon: Settings },
 ];
 
@@ -104,12 +106,13 @@ const SidebarContent = ({
           <Link
             key={link.name}
             to={link.href}
+            aria-current={isActive ? 'page' : undefined}
             onClick={onNavigate}
             ref={linkIndex === 0 ? firstLinkRef : undefined}
             className={`flex items-center gap-4 px-4 py-3.5 rounded-card transition-all ${
               isActive
                 ? 'bg-text-primary text-white shadow-md'
-                : 'text-text-secondary hover:bg-neutral-50 hover:text-text-primary'
+                : 'text-text-secondary hover:bg-surface-quiet hover:text-text-primary'
             }`}
           >
             <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />

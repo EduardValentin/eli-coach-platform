@@ -39,6 +39,8 @@ interface CheckinContextType {
   acceptReschedule: (checkinId: string) => void;
   getUpcomingCheckins: (clientId?: string) => CheckIn[];
   getPendingCheckins: (clientId?: string) => CheckIn[];
+  clearPendingCheckins: () => void;
+  restoreSeededCheckins: () => void;
   getActionableCheckins: (clientId: string, role: 'coach' | 'client') => CheckIn[];
   hasPendingAdHoc: (clientId: string) => boolean;
   getBookedSlots: (date: string) => string[];
@@ -218,12 +220,16 @@ const MOCK_CHECKINS: CheckIn[] = [
   },
 ];
 
+function isPending(checkin: CheckIn): boolean {
+  return checkin.status === 'pending' || checkin.status === 'rescheduling';
+}
+
 export function CheckinProvider({ children }: { children: ReactNode }) {
   const [checkins, setCheckins] = useState<CheckIn[]>(MOCK_CHECKINS);
 
   const hasPendingAdHoc = useCallback(
     (clientId: string) => checkins.some(
-      c => c.clientId === clientId && c.type === 'ad-hoc' && (c.status === 'pending' || c.status === 'rescheduling')
+      c => c.clientId === clientId && c.type === 'ad-hoc' && isPending(c)
     ),
     [checkins]
   );
@@ -336,10 +342,18 @@ export function CheckinProvider({ children }: { children: ReactNode }) {
     [checkins]
   );
 
+  const clearPendingCheckins = useCallback(() => {
+    setCheckins((previous) => previous.filter(checkin => !isPending(checkin)));
+  }, []);
+
+  const restoreSeededCheckins = useCallback(() => {
+    setCheckins(MOCK_CHECKINS);
+  }, []);
+
   const getPendingCheckins = useCallback(
     (clientId?: string) =>
       checkins
-        .filter(c => (c.status === 'pending' || c.status === 'rescheduling') && (!clientId || c.clientId === clientId))
+        .filter(c => isPending(c) && (!clientId || c.clientId === clientId))
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
     [checkins]
   );
@@ -402,6 +416,8 @@ export function CheckinProvider({ children }: { children: ReactNode }) {
         acceptReschedule,
         getUpcomingCheckins,
         getPendingCheckins,
+        clearPendingCheckins,
+        restoreSeededCheckins,
         getActionableCheckins,
         hasPendingAdHoc,
         getBookedSlots,

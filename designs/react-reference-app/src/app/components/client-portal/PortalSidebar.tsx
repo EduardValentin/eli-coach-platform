@@ -106,7 +106,7 @@ function DesktopSidebar() {
               className={`flex items-center gap-4 px-4 py-3 rounded-card transition-all ${
                 isActive
                   ? 'bg-brand/5 text-brand font-medium'
-                  : 'text-text-secondary hover:bg-neutral-50 hover:text-text-primary font-medium'
+                  : 'text-text-secondary hover:bg-surface-quiet hover:text-text-primary font-medium'
               }`}
             >
               <Icon size={18} strokeWidth={isActive ? 2.5 : 2} aria-hidden="true" />
@@ -250,7 +250,7 @@ function MoreSheetBody({ onClose }: { onClose: () => void }) {
               className={`flex items-center gap-4 px-4 min-h-14 rounded-card transition-colors ${
                 isActive
                   ? 'bg-brand/5 text-brand'
-                  : 'text-text-primary hover:bg-neutral-50'
+                  : 'text-text-primary hover:bg-surface-quiet'
               }`}
             >
               <Icon size={22} strokeWidth={isActive ? 2.4 : 2} aria-hidden="true" />
@@ -272,7 +272,7 @@ function MoreSheetBody({ onClose }: { onClose: () => void }) {
         <button
           type="button"
           onClick={handleSignOut}
-          className="w-full flex items-center justify-center gap-2 min-h-12 px-4 rounded-control text-sm font-semibold text-text-secondary hover:bg-neutral-50 hover:text-text-primary transition-colors"
+          className="w-full flex items-center justify-center gap-2 min-h-12 px-4 rounded-control text-sm font-semibold text-text-secondary hover:bg-surface-quiet hover:text-text-primary transition-colors"
         >
           <LogOut size={18} aria-hidden="true" />
           Sign out

@@ -14,24 +14,38 @@ Counting: fan-in is the number of modules outside the component that import at l
 
 **What the branch's record updates recounted.** On the branch, the GEN-191 column counts the seventeen commits in `843d8261..6fc3157f` rather than extending the window, and does not count the twelve commits in `6fc3157f..bcf6555e`, the four of the booking-card rebuild and its record (`bcf6555e..7a61673f`), or the second parity round (`7a61673f..d3513898`). Six of the seventeen touch no component: `54a4a29b`, `a54d0ece` and `c6122c63` change only the prototype, and `422c7797`, `eb1fb8a3` and `186b77c4` only this record. The migration files under `apps/platform/db/drizzle/` are the shared migration journal, not C15, so `d26c0925` counts for C17 alone. A single feature's window is too short to read as volatility; the next full architecture review owns the recount. The GEN-191 fix round's six commits (`47edb229..59c019ec`, two of them prototype-only) are not counted either. That round moved no fan-in, fan-out, instability or distance: its three new modules (`packages/db/src/database-error.ts`, `surfaces/public-site/shell/header-appearance.ts`, `ui/public/book/book-page.css`) are imported only from inside their own components, and every module that gained or lost a C5 subpath (`auth-nav-actions.tsx` and `catalog-view.tsx` now also import `./primitives`; `access-denied-page.tsx`, `booking-confirmation.tsx`, `root-error-page.tsx` and `pricing.tsx` no longer import `./lib`) still imports C5. It added two published types, `DatabaseTransaction` to C2 (0 / 1 → 0 / 2) and `PublicHeaderAppearance` to C11 (0 / 12 → 0 / 13), neither abstract, so neither A moved; `BusyInterval` became `TimeInterval` without changing C1's count. The final fix round (`a4256c45..8a604aef`, two of its four commits prototype-only) is not counted in the volatility columns either. It moved one fan-in: C5 39 → 40, because `call-overview.tsx` (C17) now builds its card from C5's `cardVariants`; C17 already imported other components from that module, so its fan-out held at 26, and C5 stays at I 0.00 and D 1.00. `cardVariants` is a function, so C5's published type count holds at 4.
 
+Change review: date 2026-09-20, commits `f46b6f41..HEAD`; scope the GEN-193 coach assessment-calls slice; partial scope. The C5, C9 and C17 cells below carry its figures, read from a cold cruise at HEAD; every other cell is carried forward.
+
 | Component | Fan-in | Fan-out | Instability | Abstractness | Distance | Previous distance | Volatility (run-8 window) | of which run 8 | Waitlist mode | Mobile navigation | GEN-191 commits |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | C1 packages/domain | 55 | 0 | 0.00 | 0.23 (24 / 104) | 0.77 | 0.77 | 25 + 1 | 12 | 6 | 0 | 4 |
 | C2 packages/db | 21 | 0 | 0.00 | 0.00 (0 / 2) | 1.00 | 1.00 | 0 | 0 | 0 | 0 | 0 |
 | C3 packages/config | 29 | 0 | 0.00 | 0.00 (0 / 13) | 1.00 | 1.00 | 5 | 0 | 2 | 0 | 2 |
 | C4 packages/content | 11 | 0 | 0.00 | 0.00 (0 / 7) | 1.00 | 1.00 | 2 | 0 | 1 | 0 | 0 |
-| C5 packages/ui | 40 | 0 | 0.00 | 0.00 (0 / 5) | 1.00 | 1.00 | 3 | 0 | 1 | 3 | 6 |
+| C5 packages/ui | 44 | 0 | 0.00 | 0.00 (0 / 5) | 1.00 | 1.00 | 3 | 0 | 1 | 3 | 6 |
 | C6 packages/infrastructure | 51 | 11 | 0.18 | 0.12 (3 / 26) | 0.71 | 0.72 | 10 + 1 | 1 | 1 | 0 | 2 |
 | C7 features/store | 10 | 37 | 0.79 | 0.00 (0 / 37) | 0.21 | 0.21 | 29 + 1 | 6 | 0 | 0 | 0 |
 | C8 features/waitlist | 10 | 14 | 0.58 | 0.00 (0 / 11) | 0.42 | 0.42 | 16 + 1 | 1 | 4 | 0 | 0 |
-| C9 features/accounts | 15 | 15 | 0.50 | 0.00 (0 / 10) | 0.50 | 0.50 | 11 | 1 | 0 | 0 | 0 |
+| C9 features/accounts | 16 | 15 | 0.50 | 0.00 (0 / 10) | 0.50 | 0.50 | 11 | 1 | 0 | 0 | 0 |
 | C11 surfaces/public-site | 1 | 22 | 0.96 | 0.00 (0 / 13) | 0.04 | 0.04 | 12 | 1 | 0 | 3 | 2 |
 | C12 surfaces/client-portal | 1 | 6 | 0.86 | undefined (0 types) | 0.14 | 0.14 | 3 | 0 | 0 | 0 | 0 |
 | C13 surfaces/coach-portal | 1 | 5 | 0.83 | undefined (0 types) | 0.17 | 0.17 | 3 | 0 | 0 | 0 | 0 |
 | C14 apps/platform/src/server | 3 | 11 | 0.79 | 0.00 (0 / 13) | 0.21 | 0.21 | 11 + 1 | 1 | 3 | 0 | 2 |
 | C15 app root | 0 | 4 | 1.00 | undefined (0 types) | 0.00 | 0.00 | 7 | 0 | 2 | 0 | 1 |
 | C16 packages/test-support | 0 | 0 | undefined | undefined (0 types) | undefined | undefined | 3 | 0 | 0 | 0 | 0 |
-| C17 features/assessment-calls | 7 | 26 | 0.79 | 0.00 (0 / 23) | 0.21 | n/a (new) | n/a | n/a | n/a | n/a | 8 |
+| C17 features/assessment-calls | 10 | 33 | 0.77 | 0.00 (0 / 23) | 0.23 | 0.21 | n/a | n/a | n/a | n/a | 8 |
+
+## GEN-193 coach assessment calls
+
+A cold cruise of the working tree at HEAD reads 399 modules and 1088 dependencies, 0 violations and 0 circular, over 373 in-scope production modules. Three components move, none by the 0.10 review threshold and none reclassified.
+
+**C5 fan-in rises 40 to 44** and its fan-out stays 0, so instability stays 0.00 and D stays 1.00: `coach-portal/pages/home.tsx` stopped importing `./layout` when the placeholder shell went, and five C17 modules arrived (the coach section, the pager, the widget, the join link and `use-coach-clock.ts`). The two new subpaths publish values only — `Badge`, the seven pagination parts, the four tabs parts and the two appointment composites — and `appointment.ts`'s four types stay package-private, so the published type count and abstractness are unchanged. C5 is concrete by design; every consumer that arrives pushes it no further, because it already sits at the far end.
+
+**C17 moves 0.21 to 0.23**, closer to the main sequence. Its fan-in rises 7 to 10 (the coach surface's page, route registry and navigation links), and its fan-out 26 to 33 (the coach controller, `contracts/paths.ts` now naming C9's portal path, and the five coach UI modules that reach C5). Abstractness stays 0.00: the coach contract and the listing module publish inferred wire types and view types, not ports.
+
+**C13 holds at 0.17.** Its fan-out is still five distinct modules — the page, the route registry, the two shell modules and the navigation links — because the page swapped one outward import for another, and its fan-in is still one. **C9 fan-in rises 15 to 16**, because C17's `contracts/paths.ts` builds the coach page's path on `COACH_PORTAL_PATH`; nothing else about C9 moved.
+
+No component entered the zone of uselessness: the slice publishes no new abstract type, and every C5 export it adds has a named consumer, which `knip` proves on every `pnpm typecheck`. Mean D and its standard deviation are unchanged to two places, and the one-standard-deviation set is the same.
 
 **C10 features/coaching-bundles is gone.** The feature folder and the `packages/domain/src/coaching-bundles` slice were both deleted; the three bundle literals, the benefits list and the presenter are one C11-private module in `surfaces/public-site/sections/pricing/` (decision D5). Its three edges (`C11 → C10`, `C10 → C1`, `C10 → C5`) left the graph with it.
 

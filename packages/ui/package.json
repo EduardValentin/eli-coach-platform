@@ -8,6 +8,7 @@
     "!src/**/*.spec.*"
   ],
   "exports": {
+    "./appointments": "./src/appointments/index.ts",
     "./calendar": "./src/calendar/index.ts",
     "./filters": "./src/filters/index.ts",
     "./layout": "./src/layout/index.ts",
@@ -15,6 +16,7 @@
     "./motion": "./src/motion/index.ts",
     "./overlays": "./src/overlays/index.ts",
     "./primitives": "./src/primitives/index.ts",
+    "./tabs": "./src/tabs/index.ts",
     "./styles.css": "./src/styles.css"
   },
   "peerDependencies": {

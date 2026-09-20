@@ -1,9 +1,16 @@
 import { useCallback, useEffect, useRef } from "react";
-import { useLocation, useSearchParams } from "react-router";
+import {
+  useLocation,
+  useSearchParams,
+  type NavigateOptions,
+} from "react-router";
+
+type ReviseSearchParams = (params: URLSearchParams) => void;
 
 export type SearchParamsWriter = {
   searchParams: URLSearchParams;
-  writeSearchParams: (reviseParams: (params: URLSearchParams) => void) => void;
+  writeSearchParams: (reviseParams: ReviseSearchParams) => void;
+  replaceSearchParams: (reviseParams: ReviseSearchParams) => void;
 };
 
 /**
@@ -31,8 +38,8 @@ export function useSearchParamsWriter(): SearchParamsWriter {
     pendingSearch.current = null;
   }, [location.key]);
 
-  const writeSearchParams = useCallback(
-    (reviseParams: (params: URLSearchParams) => void) => {
+  const commitSearchParams = useCallback(
+    (reviseParams: ReviseSearchParams, options: NavigateOptions) => {
       const currentSearch = pendingSearch.current ?? searchParams.toString();
       const nextParams = new URLSearchParams(currentSearch);
 
@@ -43,10 +50,25 @@ export function useSearchParamsWriter(): SearchParamsWriter {
       }
 
       pendingSearch.current = nextParams.toString();
-      setSearchParams(nextParams, { preventScrollReset: true });
+      setSearchParams(nextParams, options);
     },
     [searchParams, setSearchParams],
   );
 
-  return { searchParams, writeSearchParams };
+  const writeSearchParams = useCallback(
+    (reviseParams: ReviseSearchParams) =>
+      commitSearchParams(reviseParams, { preventScrollReset: true }),
+    [commitSearchParams],
+  );
+
+  const replaceSearchParams = useCallback(
+    (reviseParams: ReviseSearchParams) =>
+      commitSearchParams(reviseParams, {
+        preventScrollReset: true,
+        replace: true,
+      }),
+    [commitSearchParams],
+  );
+
+  return { replaceSearchParams, searchParams, writeSearchParams };
 }

@@ -1,0 +1,11 @@
+export type AppointmentStatus = 'scheduled' | 'past';
+
+export type AppointmentAttendee = {
+  name: string;
+  imageUrl?: string;
+  email?: string;
+};
+
+export type AppointmentTime = { date: string; time: string };
+
+export type AppointmentTitleElement = 'p' | 'h2' | 'h3';

@@ -70,6 +70,10 @@ export class AssessmentCall {
     return new Date(this.startsAt.getTime() + DURATION_MS);
   }
 
+  hasEnded(now: Date): boolean {
+    return this.endsAt() <= now;
+  }
+
   toSnapshot(): AssessmentCallSnapshot {
     return {
       id: this.id,

@@ -20,7 +20,8 @@ afterEach(() => {
 });
 
 function SearchParamsProbe() {
-  const { searchParams, writeSearchParams } = useSearchParamsWriter();
+  const { replaceSearchParams, searchParams, writeSearchParams } =
+    useSearchParamsWriter();
 
   return (
     <div>
@@ -29,6 +30,12 @@ function SearchParamsProbe() {
         type="button"
       >
         set type
+      </button>
+      <button
+        onClick={() => replaceSearchParams((params) => params.set("page", "2"))}
+        type="button"
+      >
+        replace page
       </button>
       <button
         onClick={() => writeSearchParams((params) => params.set("goal", "b"))}
@@ -121,5 +128,36 @@ describe("search params writer", () => {
 
     // assert
     expect(router.state.location.search).toBe("?type=a");
+  });
+});
+
+describe("search params replacer", () => {
+  it("writes a revision into the URL without stacking a history entry", async () => {
+    // arrange
+    const user = userEvent.setup();
+    const { router } = renderProbe();
+    const entriesBefore = router.state.location.key;
+
+    // act
+    await user.click(screen.getByRole("button", { name: "replace page" }));
+
+    // assert
+    expect(router.state.location.search).toBe("?page=2");
+    expect(router.state.location.key).not.toBe(entriesBefore);
+    expect(router.state.historyAction).toBe("REPLACE");
+  });
+
+  it("leaves the URL alone when a replacement changes nothing", async () => {
+    // arrange
+    const user = userEvent.setup();
+    const { router } = renderProbe("/?page=2");
+    const originalKey = router.state.location.key;
+
+    // act
+    await user.click(screen.getByRole("button", { name: "replace page" }));
+
+    // assert
+    expect(router.state.location.search).toBe("?page=2");
+    expect(router.state.location.key).toBe(originalKey);
   });
 });

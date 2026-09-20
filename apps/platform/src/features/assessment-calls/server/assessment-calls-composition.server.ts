@@ -3,6 +3,7 @@ import type { DatabaseClient } from "@eli-coach-platform/db";
 import {
   AssessmentCallBookingWindow,
   BookAssessmentCallUseCase,
+  ListAssessmentCallsUseCase,
   ListOpenSlotsUseCase,
   ResolveJoinLinkUseCase,
   type AssessmentCallIncidents,
@@ -15,6 +16,7 @@ import { PostgresCoachCalendar } from "@eli-coach-platform/infrastructure/coach-
 import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 
 import { AssessmentCallsController } from "~/features/assessment-calls/api/assessment-calls-controller.server";
+import { CoachAssessmentCallsController } from "~/features/assessment-calls/api/coach-assessment-calls-controller.server";
 import { ConfiguredMeetingRoomLink } from "~/features/assessment-calls/data/configured-meeting-room-link.server";
 import { PostgresAssessmentCallRepository } from "~/features/assessment-calls/data/repository.server";
 import { StaticCoachAvailability } from "~/features/assessment-calls/data/static-coach-availability.server";
@@ -22,6 +24,7 @@ import { createAssessmentCallNotifications } from "~/features/assessment-calls/e
 
 export type AssessmentCallsFeature = {
   assessmentCalls: AssessmentCallsController;
+  coachAssessmentCalls: CoachAssessmentCallsController;
 };
 
 export type AssessmentCallsFeatureHandles = {
@@ -76,6 +79,13 @@ export function composeAssessmentCallsFeature(
         meetingRoomLink: new ConfiguredMeetingRoomLink(
           handles.assessmentCallsConfig.ASSESSMENT_CALL_MEETING_LINK,
         ),
+        reservations,
+      }),
+    }),
+    coachAssessmentCalls: new CoachAssessmentCallsController({
+      clock: handles.clock,
+      listAssessmentCalls: new ListAssessmentCallsUseCase({
+        availability,
         reservations,
       }),
     }),

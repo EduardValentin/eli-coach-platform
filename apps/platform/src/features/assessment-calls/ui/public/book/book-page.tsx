@@ -1,3 +1,4 @@
+import { useDisplayTimeZone } from "@eli-coach-platform/ui/lib";
 import { Alert, Button } from "@eli-coach-platform/ui/primitives";
 import { AnimatePresence, MotionConfig, motion } from "motion/react";
 import {
@@ -33,7 +34,6 @@ import {
   type BookingFlowState,
 } from "./booking-flow";
 import { CallOverview } from "./call-overview";
-import { useDisplayTimeZone } from "./display-time-zone";
 import { groupSlotsByDay } from "./slot-grouping";
 import { SlotPicker } from "./slot-picker";
 import { useStepHeadingFocus } from "./step-heading-focus";

@@ -8,6 +8,17 @@ import {
   type AssessmentCallsFeatureHandles,
 } from "./assessment-calls-composition.server";
 
+const BOOKED_ROW = {
+  id: "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11",
+  visitorName: "Ana Popescu",
+  visitorEmail: "ana@example.com",
+  visitorNotes: "Training three times a week.",
+  startsAt: new Date("2026-10-20T14:00:00.000Z"),
+  visitorTimeZone: "Europe/Chisinau",
+  coachTimeZone: "Europe/Chisinau",
+  bookedAt: new Date("2026-10-18T09:30:00.000Z"),
+};
+
 describe("composeAssessmentCallsFeature", () => {
   it("hides the booking page while the site is in waitlist mode", async () => {
     // arrange
@@ -37,6 +48,24 @@ describe("composeAssessmentCallsFeature", () => {
       status: "unavailable",
     });
   });
+
+  it("serves the coach every booked call in her own time zone", async () => {
+    // arrange
+    const feature = composeAssessmentCallsFeature({
+      ...createHandles({ WAITLIST_MODE: false }),
+      database: createDatabaseReturning([BOOKED_ROW]),
+    });
+
+    // act
+    const listing = await feature.coachAssessmentCalls.loadCalls();
+
+    // assert
+    expect(listing.calls.map((call) => call.id)).toEqual([
+      "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11",
+    ]);
+    expect(listing.coachTimeZone).toBe("Europe/Bucharest");
+    expect(listing.now).toBe("2026-10-19T08:00:00.000Z");
+  });
 });
 
 function createHandles(
@@ -62,6 +91,17 @@ function createHandles(
     productEmail: new InMemoryProductEmail(),
     publicAppUrl: "https://evoa.fit",
   };
+}
+
+function createDatabaseReturning(rows: readonly unknown[]): DatabaseClient {
+  const chain = {
+    from: () => chain,
+    orderBy: () => chain,
+    then: (onFulfilled: (value: readonly unknown[]) => unknown) =>
+      Promise.resolve(rows).then(onFulfilled),
+  };
+
+  return { select: () => chain } as unknown as DatabaseClient;
 }
 
 function createDatabaseStub(): DatabaseClient {

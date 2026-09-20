@@ -10,7 +10,18 @@ import {
 import type { PrototypeStoreCheckoutOutcome } from '../services/storeAcquisitionService';
 import type { PrototypeSignInOutcome } from '../services/authService';
 import type { PrototypeClientOnboardingOutcome } from '../services/clientOnboardingService';
-import type { PrototypeBookingOutcome } from '../services/assessmentCallService';
+import type {
+  PrototypeBooking,
+  PrototypeBookingOutcome,
+} from '../services/assessmentCallService';
+import {
+  sampleDashboardBookings,
+  sampleImminentBookings,
+  sampleManyBookings,
+  sampleTwoLeftTodayBookings,
+} from '../services/assessmentCallSamples';
+import { useAssessmentCalls } from '../context/AssessmentCallContext';
+import { useCheckins } from '../context/CheckinContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
@@ -92,6 +103,29 @@ function parseBookingOutcomeControl(value: string): PrototypeBookingOutcome {
   return 'success';
 }
 
+type DashboardCallsSeed = 'none' | 'one' | 'twoLeftToday' | 'sample' | 'many';
+
+type PendingCheckinsSeed = 'seeded' | 'none';
+
+function parsePendingCheckinsControl(value: string): PendingCheckinsSeed {
+  if (value === 'none') return value;
+
+  return 'seeded';
+}
+
+function parseDashboardCallsControl(value: string): DashboardCallsSeed {
+  if (
+    value === 'one' ||
+    value === 'twoLeftToday' ||
+    value === 'sample' ||
+    value === 'many'
+  ) {
+    return value;
+  }
+
+  return 'none';
+}
+
 const SELECT_CONTENT_CLASS = 'z-[10000]';
 
 function DevCheckboxRow({
@@ -119,7 +153,40 @@ function DevCheckboxRow({
 
 export function DevToggle() {
   const [isOpen, setIsOpen] = useState(false);
+  const [dashboardCalls, setDashboardCalls] =
+    useState<DashboardCallsSeed>('none');
+  const [pendingCheckins, setPendingCheckins] =
+    useState<PendingCheckinsSeed>('seeded');
   const { appState, setAppState } = useAppState();
+  const { replaceBookings } = useAssessmentCalls();
+  const { clearPendingCheckins, restoreSeededCheckins } = useCheckins();
+
+  const seedDashboardCalls = (value: string) => {
+    const seed = parseDashboardCallsControl(value);
+    const now = new Date();
+    const seeds: Record<DashboardCallsSeed, PrototypeBooking[]> = {
+      none: [],
+      one: sampleImminentBookings(now),
+      twoLeftToday: sampleTwoLeftTodayBookings(now),
+      sample: sampleDashboardBookings(now),
+      many: sampleManyBookings(now),
+    };
+    setDashboardCalls(seed);
+    replaceBookings(seeds[seed]);
+  };
+
+  const seedPendingCheckins = (value: string) => {
+    const seed = parsePendingCheckinsControl(value);
+
+    setPendingCheckins(seed);
+
+    if (seed === 'none') {
+      clearPendingCheckins();
+      return;
+    }
+
+    restoreSeededCheckins();
+  };
 
   return (
     <>
@@ -326,6 +393,33 @@ export function DevToggle() {
                     never rejects a booking as a bot.
                   </p>
                 </div>
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="dev-dashboard-calls"
+                    className="text-xs font-semibold text-copy-muted uppercase tracking-wider"
+                  >
+                    Dashboard calls
+                  </Label>
+                  <Select
+                    value={dashboardCalls}
+                    onValueChange={seedDashboardCalls}
+                  >
+                    <SelectTrigger id="dev-dashboard-calls" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="none">None</SelectItem>
+                      <SelectItem value="one">One upcoming call</SelectItem>
+                      <SelectItem value="twoLeftToday">
+                        Two calls left today
+                      </SelectItem>
+                      <SelectItem value="sample">
+                        Sample calls (today, upcoming, past)
+                      </SelectItem>
+                      <SelectItem value="many">Many calls (30)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <DevCheckboxRow
                   id="dev-booking-slots-unavailable"
                   label="Slots unavailable"
@@ -398,6 +492,26 @@ export function DevToggle() {
               </TabsContent>
 
               <TabsContent value="coach" className="space-y-4 pt-3 max-h-[50vh] overflow-y-auto pr-1">
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="dev-pending-checkins"
+                    className="text-xs font-semibold text-copy-muted uppercase tracking-wider"
+                  >
+                    Pending check-ins
+                  </Label>
+                  <Select
+                    value={pendingCheckins}
+                    onValueChange={seedPendingCheckins}
+                  >
+                    <SelectTrigger id="dev-pending-checkins" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="seeded">Seeded check-ins</SelectItem>
+                      <SelectItem value="none">None pending</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div className="space-y-2">
                   <Label
                     htmlFor="dev-client-onboarding-outcome"

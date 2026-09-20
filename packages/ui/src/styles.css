@@ -43,6 +43,7 @@
 
   --container-reading: 45rem;
   --container-content: 70rem;
+  --container-portal: 80rem;
   --container-stage: 90rem;
 
   --size-control-xs: 2rem;
@@ -129,6 +130,7 @@
   --color-brand-secondary-hover: #005a4f;
   --color-brand-secondary-foreground: #ffffff;
   --color-brand-secondary-soft: rgba(0, 121, 107, 0.1);
+  --color-brand-secondary-surface: #e6f2f0;
 
   --color-feedback-danger: #d1183c;
   --color-feedback-danger-on-inverted: #f87171;
@@ -230,6 +232,7 @@
 
   --container-reading: var(--container-reading);
   --container-content: var(--container-content);
+  --container-portal: var(--container-portal);
   --container-stage: var(--container-stage);
 
   --size-control-xs: var(--size-control-xs);
@@ -304,6 +307,7 @@
   --color-brand-secondary-hover: var(--color-brand-secondary-hover);
   --color-brand-secondary-foreground: var(--color-brand-secondary-foreground);
   --color-brand-secondary-soft: var(--color-brand-secondary-soft);
+  --color-brand-secondary-surface: var(--color-brand-secondary-surface);
 
   --color-feedback-danger: var(--color-feedback-danger);
   --color-feedback-danger-on-inverted: var(--color-feedback-danger-on-inverted);

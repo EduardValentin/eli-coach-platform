@@ -151,6 +151,52 @@ describe("PortalShell active link", () => {
   });
 });
 
+describe("PortalShell navigation link styling", () => {
+  it("leaves the link's own typography to the label it wraps", () => {
+    // arrange, act
+    renderShell({ initialPath: "/coach" });
+
+    // assert
+    const sidebar = screen.getByRole("complementary", {
+      name: "Coach portal sidebar",
+    });
+    const link = within(sidebar).getByRole("link", { name: "Dashboard" });
+
+    expect(link).not.toHaveClass("text-sm");
+    expect(link).not.toHaveClass("font-semibold");
+    expect(within(link).getByText("Dashboard")).toHaveClass(
+      "text-sm",
+      "font-semibold",
+    );
+  });
+
+  it("lifts the current page's link on the inverted fill", () => {
+    // arrange, act
+    renderShell({ initialPath: "/coach" });
+
+    // assert
+    const sidebar = screen.getByRole("complementary", {
+      name: "Coach portal sidebar",
+    });
+
+    expect(
+      within(sidebar).getByRole("link", { name: "Dashboard" }),
+    ).toHaveClass("bg-text-primary", "text-text-inverted", "shadow-action");
+  });
+});
+
+describe("PortalShell content width", () => {
+  it("caps its content at the width both portals share", () => {
+    // arrange, act
+    renderShell({ initialPath: "/coach" });
+
+    // assert
+    const main = screen.getByRole("main");
+
+    expect(main.firstElementChild).toHaveClass("max-w-portal");
+  });
+});
+
 describe("PortalShell mobile menu", () => {
   it("opens through the keyboard-operable toggle and moves focus into the menu", async () => {
     // arrange

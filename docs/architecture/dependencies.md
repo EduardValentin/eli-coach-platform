@@ -10,6 +10,8 @@ Change review: date 2026-09-18, commit c2277ebb, baseline 7d92dc22, scope the pe
 
 Change review: date 2026-09-18, commits 6c043f97, 63100724, eced8490 and 3836745e (PR #230, base 843d8261), merged with main at 74950bd7; scope the C5 mobile-navigation modules (`layout/navigation-dialog.tsx`, `layout/use-close-mobile-navigation-on-desktop.ts`, `layout/portal-shell.tsx`, the removed `lib/focus-trap.ts`) and their public-site and portal consumers; partial scope.
 
+Change review: date 2026-09-20, commits `f46b6f41..HEAD` on `eduardvalentin1996/gen-193-coach-sees-her-assessment-calls-on-the-dashboard`; scope the GEN-193 coach assessment-calls slice — the C1 `ListAssessmentCallsUseCase` and `AssessmentCall.hasEnded`, the C17 coach controller, contracts, coach UI and `ui/shared/day-key.ts`, the C5 `./tabs` and `./appointments` subpaths with `Badge`, `Avatar`, `Pagination`, the `portal-panel` card variant and `useDisplayTimeZone`, and the C13 dashboard loader, route spread and sidebar link; partial scope. It adds E1490-E1566 and marks E377, E1292, E1315, E1316, E1319 and E1498 removed, E1498 being an edge this same review had recorded, whose ID stays out of use. Rows it changed or added carry that range.
+
 ## Component graph
 
 Generated from a cold cruise of the working tree that merges main (e2d86a3a) into the GEN-191 branch at ea81d98f: 378 modules, 1016 dependencies, 0 violations, 0 circular, 0 unresolved, over 355 in-scope production modules; the per-module edge table is below. Count = distinct importing modules. Component IDs refer to `components.md`. Against the branch's last record (8a604aef: 374 modules, 984 dependencies) the merge moved three counts. C6 → C1 went 10 → 2: main moved `BotVerifier`, `ProductEmail` and `ManagementAuthenticator` into their C6 concerns, so eight C6 modules stopped importing `/shared` and only the feature-flags repository and `PostgresCoachCalendar` still import C1. C17 → C6 went 10 → 12: the notification factory and adapter now take `ProductEmail` from C6's `./email/server`. C8 → C1 reads 8, where main's record carried 7 after PR #232 (`e2d86a3a`) gave `data/schema.server.ts` an import of `/waitlist`. The assessment-call slice's other merge edges (the composition into `/feature-flag`, the console logger into `/assessment-call`) land in components that already imported the target. On main's side, the record read 287 in-scope production modules and 782 dependencies for PR #229, 785 dependencies after the persisted waitlist-mode change (PR #231), and 308 modules (288 in-scope production modules) and 793 dependencies after PR #230; rows E1200-E1212 record the PR #230 Radix mobile navigation. On the branch side, every count C17 did not appear in was unchanged from run 8 at e8690f45: `features/assessment-calls` is the only component the GEN-191 window added, and nothing else gained or lost a cross-component importer. The review fix round moved two C17 counts: C17 → C1 went 12 → 13 (`ui/public/book/call-facts.tsx` reads the duration off `ASSESSMENT_CALL_RULES`) and C17 → C5 went 5 → 6 (the join page took `Link` from `./primitives`, while `booking-details-form.tsx` dropped its `./lib` import). The remediation round took C17 → C5 back to 5: the join page no longer renders a page of its own, so it imports nothing from C5. The booking-card rebuild moved both again: C17 → C1 went 13 → 12 (`call-facts.tsx` was deleted and `slot-grouping.ts` lost its `ASSESSMENT_CALL_RULES` import, while `call-overview.tsx` took the duration) and C17 → C5 went 5 → 6 (`slot-picker.tsx` takes `cn` from `./lib`, which the page, the details form and the confirmation import again too). The second parity round moved no count: the three dead-end pages (`root-error-page.tsx`, `access-denied-page.tsx`, `sign-in-failed-page.tsx`) moved from `./primitives` to `./layout`, the waitlist email form from `./primitives` to `./motion`, `about.tsx` from `./motion` to `./primitives`, and `hero.tsx` dropped `./lib` and `./primitives` but keeps `./motion`, so every importing module still imports C5. The coach-calendar refactor (`19169b9e..eb88ecb4`) added eight modules and moved three counts outside C17's own rows: C6 → C1 went 9 → 10 (`PostgresCoachCalendar` implements `CoachCalendar`), C6 → C2 went 2 → 5 (the calendar, the reservation writers and the `coach_time_reservations` table name the client or the `app` schema), and C17 → C6 went 9 → 10 (the repository reserves through `./coach-calendar/server`). C17 → C1 held at 12: the modules that read `ASSESSMENT_CALL_RULES` now take it from `/assessment-call`, which each of them except `call-overview.tsx` and the wire contract already imported, and only `StaticCoachAvailability` still reads `/coach-availability`. The GEN-191 fix round (`47edb229..59c019ec`) moved no count: its three new modules are imported only inside their own components, `auth-nav-actions.tsx` (C9) and `catalog-view.tsx` (C7) added `./primitives` to the C5 subpaths they already imported, and `access-denied-page.tsx`, `booking-confirmation.tsx`, `root-error-page.tsx` and `pricing.tsx` dropped `./lib` while keeping another C5 subpath. The final fix round (`a4256c45..8a604aef`) moved one count: C17 → C5 went 6 → 7, because `call-overview.tsx` now builds its card from `cardVariants` and `cn`. The C11 modules that moved onto `Card` only changed which C5 subpaths they import: `pricing.tsx` and `legal-document-view.tsx` added `./lib`, `bundle-selector.tsx` added `./primitives`, and `footer-cta.tsx` dropped `./lib` while keeping `./primitives` and `./motion`.
@@ -50,7 +52,8 @@ Generated from a cold cruise of the working tree that merges main (e2d86a3a) int
 | C12 client-portal | C5 ui | 2 | |
 | C12 client-portal | C6 infrastructure | 2 | pwa |
 | C12 client-portal | C9 accounts | 4 | portal guard and paths |
-| C13 coach-portal | C5 ui | 3 | |
+| C13 coach-portal | C5 ui | 2 | the shell and its navigation links; `pages/home.tsx` stopped importing `./layout` with GEN-193 |
+| C13 coach-portal | C17 assessment-calls | 3 | `pages/home.tsx` composes the coach greeting and the upcoming-calls widget from `ui/coach/` and reads the feature's request-context key; `routes.ts` spreads `assessmentCallsCoachRoutes`; `shell/navigation-links.tsx` takes `COACH_ASSESSMENT_CALLS_PATH` from `contracts/paths.ts` |
 | C13 coach-portal | C9 accounts | 3 | portal guard and paths |
 | C14 server | C1 domain | 4 | the container and platform composition name ports and use cases |
 | C14 server | C2 db | 1 | `platform-composition.server.ts` no longer imports `DatabaseClient` |
@@ -65,7 +68,7 @@ Generated from a cold cruise of the working tree that merges main (e2d86a3a) int
 | C17 assessment-calls | C2 db | 3 | DatabaseClient, appSchema |
 | C17 assessment-calls | C3 config | 4 | `joinBasePath` (the emails and the booking overview's portrait) and `AssessmentCallsConfig` |
 | C17 assessment-calls | C4 content | 2 | the support address on the error state; Eli's portrait path on the booking overview |
-| C17 assessment-calls | C5 ui | 7 | `./primitives` (the booking page, the details form, the confirmation, the unavailable state, `call-overview.tsx` and `slot-picker.tsx`), `./lib` (`call-overview.tsx` and `slot-picker.tsx`) and `./calendar` (`slot-calendar.tsx`) |
+| C17 assessment-calls | C5 ui | 12 | `./primitives` (the booking page, the details form, the confirmation, the unavailable state, `call-overview.tsx`, `slot-picker.tsx`, and the coach's section, pager, widget and join link), `./lib` (`call-overview.tsx`, `slot-picker.tsx`, `book-page.tsx`, the coach's section and widget, and `use-coach-clock.ts`), `./calendar` (`slot-calendar.tsx`), `./tabs` (the coach's section) and `./appointments` (the coach's section and widget) |
 | C17 assessment-calls | C6 infrastructure | 12 | bot-detection (browser and server; the controller and the composition type `BotVerifier` from its contract), email/server (the notification factory, the adapter and the composition take `ProductEmail`, `ProductEmailCommand` and `EmailAttachment` from its contract), http/server, coach-calendar/server (the repository's reservation writers and the composition's `PostgresCoachCalendar`) |
 | C15 app root | C3 config | 1 | |
 | C15 app root | C5 ui | 1 | `root-error-page.tsx` renders the shared `DeadEndPage` from `./layout`; `app.css`'s `@import` of `styles.css` is not followed by the cruise |
@@ -144,6 +147,83 @@ A feature depends on another feature only through a published interface; everyth
 | Reference another feature's table | persistence | `data/schema.server.ts` may import the other feature's `data/schema.server.ts` for a foreign key | `feature-schema-foreign-key` | no exercising edge |
 | Compose another feature's UI | `ui/shared/` | the owning feature publishes the component or presenter | `feature-internals`, the three `surface-<s>-to-feature` rules | yes |
 | Exchange wire data | `contracts/` | zod schemas and path literals | `feature-internals`, the three `surface-<s>-to-feature` rules | yes |
+| E1490 | apps/platform/src/features/assessment-calls/api/coach-assessment-calls-controller.server.ts | apps/platform/src/features/assessment-calls/contracts/assessment-calls.ts | import | no | no | lateral | present |
+| E1491 | apps/platform/src/features/assessment-calls/api/coach-assessment-calls-controller.server.ts | apps/platform/src/features/assessment-calls/contracts/paths.ts | import | no | no | lateral | present |
+| E1492 | apps/platform/src/features/assessment-calls/api/coach-assessment-calls-controller.server.ts | packages/domain/src/assessment-call/index.ts | import | yes | no | lateral | present |
+| E1493 | apps/platform/src/features/assessment-calls/api/coach-assessment-calls-controller.server.ts | packages/domain/src/shared/index.ts | import | yes | no | lateral | present |
+| E1494 | apps/platform/src/features/assessment-calls/contracts/paths.ts | apps/platform/src/features/accounts/contracts/paths.ts | import | yes | no | lateral | present |
+| E1495 | apps/platform/src/features/assessment-calls/server/assessment-calls-composition.server.ts | apps/platform/src/features/assessment-calls/api/coach-assessment-calls-controller.server.ts | import | no | no | lateral | present |
+| E1496 | apps/platform/src/features/assessment-calls/ui/coach/assessment-call-listing.ts | apps/platform/src/features/assessment-calls/contracts/assessment-calls.ts | import | no | no | lateral | present |
+| E1497 | apps/platform/src/features/assessment-calls/ui/coach/assessment-call-listing.ts | apps/platform/src/features/assessment-calls/ui/shared/day-key.ts | import | no | no | lateral | present |
+| E1498 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-page.tsx | apps/platform/src/features/assessment-calls/contracts/call-moment.ts | import | no | no | lateral | removed (GEN-193: the header no longer names the active zone, so the page stops importing `call-moment`) |
+| E1499 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-page.tsx | apps/platform/src/features/assessment-calls/server/guards/assessment-calls-context.server.ts | import | no | no | lateral | present |
+| E1500 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-page.tsx | apps/platform/src/features/assessment-calls/ui/coach/assessment-call-listing.ts | import | no | no | lateral | present |
+| E1501 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-page.tsx | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | import | no | no | lateral | present |
+| E1502 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-page.tsx | apps/platform/src/features/assessment-calls/ui/coach/use-coach-clock.ts | import | no | no | lateral | present |
+| E1503 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | apps/platform/src/features/assessment-calls/contracts/assessment-calls.ts | import | no | no | lateral | present |
+| E1504 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | apps/platform/src/features/assessment-calls/contracts/call-moment.ts | import | no | no | lateral | present |
+| E1505 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | apps/platform/src/features/assessment-calls/ui/coach/assessment-call-listing.ts | import | no | no | lateral | present |
+| E1506 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/call-list-pager.tsx | import | no | no | lateral | present |
+| E1507 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | apps/platform/src/features/assessment-calls/ui/coach/join-call-link.tsx | import | no | no | lateral | present |
+| E1508 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | packages/ui/src/appointments/index.ts | import | yes | no | lateral | present |
+| E1509 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
+| E1510 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E1511 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | packages/ui/src/tabs/index.ts | import | yes | no | lateral | present |
+| E1512 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/call-list-pager.tsx | apps/platform/src/features/assessment-calls/ui/coach/assessment-call-listing.ts | import | no | no | lateral | present |
+| E1513 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/call-list-pager.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E1514 | apps/platform/src/features/assessment-calls/ui/coach/dashboard/upcoming-calls-widget.tsx | apps/platform/src/features/assessment-calls/contracts/call-moment.ts | import | no | no | lateral | present |
+| E1515 | apps/platform/src/features/assessment-calls/ui/coach/dashboard/upcoming-calls-widget.tsx | apps/platform/src/features/assessment-calls/contracts/paths.ts | import | no | no | lateral | present |
+| E1516 | apps/platform/src/features/assessment-calls/ui/coach/dashboard/upcoming-calls-widget.tsx | apps/platform/src/features/assessment-calls/ui/coach/assessment-call-listing.ts | import | no | no | lateral | present |
+| E1517 | apps/platform/src/features/assessment-calls/ui/coach/dashboard/upcoming-calls-widget.tsx | apps/platform/src/features/assessment-calls/ui/coach/join-call-link.tsx | import | no | no | lateral | present |
+| E1518 | apps/platform/src/features/assessment-calls/ui/coach/dashboard/upcoming-calls-widget.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E1519 | apps/platform/src/features/assessment-calls/ui/coach/dashboard/upcoming-calls-widget.tsx | packages/ui/src/appointments/index.ts | import | yes | no | lateral | present |
+| E1520 | apps/platform/src/features/assessment-calls/ui/coach/dashboard/upcoming-calls-widget.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
+| E1521 | apps/platform/src/features/assessment-calls/ui/coach/dashboard/upcoming-calls-widget.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E1522 | apps/platform/src/features/assessment-calls/ui/coach/join-call-link.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E1523 | apps/platform/src/features/assessment-calls/ui/coach/use-coach-clock.ts | external:react | import | n/a | no | lateral | present |
+| E1524 | apps/platform/src/features/assessment-calls/ui/coach/use-coach-clock.ts | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
+| E1525 | apps/platform/src/features/assessment-calls/ui/public/book/book-page.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
+| E1526 | apps/platform/src/features/assessment-calls/ui/public/book/slot-calendar.tsx | apps/platform/src/features/assessment-calls/ui/shared/day-key.ts | import | no | no | lateral | present |
+| E1527 | apps/platform/src/features/assessment-calls/ui/public/book/slot-grouping.ts | apps/platform/src/features/assessment-calls/ui/shared/day-key.ts | import | no | no | lateral | present |
+| E1528 | apps/platform/src/features/assessment-calls/ui/shared/day-key.ts | external:@date-fns/tz | import | n/a | no | lateral | present |
+| E1529 | apps/platform/src/surfaces/coach-portal/pages/home.tsx | apps/platform/src/features/assessment-calls/server/guards/assessment-calls-context.server.ts | import | yes | no | lateral | present |
+| E1530 | apps/platform/src/surfaces/coach-portal/pages/home.tsx | apps/platform/src/features/assessment-calls/ui/coach/assessment-call-listing.ts | import | yes | no | lateral | present |
+| E1531 | apps/platform/src/surfaces/coach-portal/pages/home.tsx | apps/platform/src/features/assessment-calls/ui/coach/dashboard/coach-greeting.tsx | import | yes | no | lateral | present |
+| E1532 | apps/platform/src/surfaces/coach-portal/pages/home.tsx | apps/platform/src/features/assessment-calls/ui/coach/dashboard/upcoming-calls-widget.tsx | import | yes | no | lateral | present |
+| E1533 | apps/platform/src/surfaces/coach-portal/pages/home.tsx | apps/platform/src/features/assessment-calls/ui/coach/use-coach-clock.ts | import | yes | no | lateral | present |
+| E1534 | apps/platform/src/surfaces/coach-portal/routes.ts | apps/platform/src/features/assessment-calls/routes.ts | import | yes | no | lateral | present |
+| E1535 | apps/platform/src/surfaces/coach-portal/shell/navigation-links.tsx | apps/platform/src/features/assessment-calls/contracts/paths.ts | import | yes | no | lateral | present |
+| E1536 | packages/domain/src/assessment-call/index.ts | packages/domain/src/assessment-call/list-assessment-calls-use-case.ts | import | no | no | lateral | present |
+| E1537 | packages/domain/src/assessment-call/list-assessment-calls-use-case.ts | packages/domain/src/assessment-call/assessment-call-reservations.ts | import | no | no | lateral | present |
+| E1538 | packages/domain/src/assessment-call/list-assessment-calls-use-case.ts | packages/domain/src/assessment-call/assessment-call.ts | import | no | no | lateral | present |
+| E1539 | packages/domain/src/assessment-call/list-assessment-calls-use-case.ts | packages/domain/src/coach-availability/index.ts | import | no | no | lateral | present |
+| E1540 | packages/ui/src/appointments/appointment-card.tsx | external:react | import | n/a | no | lateral | present |
+| E1541 | packages/ui/src/appointments/appointment-card.tsx | packages/ui/src/appointments/appointment-glyphs.tsx | import | no | no | lateral | present |
+| E1542 | packages/ui/src/appointments/appointment-card.tsx | packages/ui/src/appointments/appointment.ts | import | no | no | lateral | present |
+| E1543 | packages/ui/src/appointments/appointment-card.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
+| E1544 | packages/ui/src/appointments/appointment-card.tsx | packages/ui/src/primitives/avatar.tsx | import | no | no | lateral | present |
+| E1545 | packages/ui/src/appointments/appointment-glyphs.tsx | external:react | import | n/a | no | lateral | present |
+| E1546 | packages/ui/src/appointments/dashboard-appointment-row.tsx | external:react | import | n/a | no | lateral | present |
+| E1547 | packages/ui/src/appointments/dashboard-appointment-row.tsx | packages/ui/src/appointments/appointment.ts | import | no | no | lateral | present |
+| E1548 | packages/ui/src/appointments/index.ts | packages/ui/src/appointments/appointment-card.tsx | import | no | no | lateral | present |
+| E1549 | packages/ui/src/appointments/index.ts | packages/ui/src/appointments/dashboard-appointment-row.tsx | import | no | no | lateral | present |
+| E1550 | packages/ui/src/lib/index.ts | packages/ui/src/lib/use-display-time-zone.ts | import | no | no | lateral | present |
+| E1551 | packages/ui/src/lib/use-display-time-zone.ts | external:react | import | n/a | no | lateral | present |
+| E1552 | packages/ui/src/primitives/avatar.tsx | external:class-variance-authority | import | n/a | no | lateral | present |
+| E1553 | packages/ui/src/primitives/avatar.tsx | external:react | import | n/a | no | lateral | present |
+| E1554 | packages/ui/src/primitives/avatar.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
+| E1555 | packages/ui/src/primitives/badge.tsx | external:class-variance-authority | import | n/a | no | lateral | present |
+| E1556 | packages/ui/src/primitives/badge.tsx | external:react | import | n/a | no | lateral | present |
+| E1557 | packages/ui/src/primitives/badge.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
+| E1558 | packages/ui/src/primitives/index.ts | packages/ui/src/primitives/badge.tsx | import | no | no | lateral | present |
+| E1559 | packages/ui/src/primitives/index.ts | packages/ui/src/primitives/pagination.tsx | import | no | no | lateral | present |
+| E1560 | packages/ui/src/primitives/pagination.tsx | external:class-variance-authority | import | n/a | no | lateral | present |
+| E1561 | packages/ui/src/primitives/pagination.tsx | external:react | import | n/a | no | lateral | present |
+| E1562 | packages/ui/src/primitives/pagination.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
+| E1563 | packages/ui/src/tabs/index.ts | packages/ui/src/tabs/tabs.tsx | import | no | no | lateral | present |
+| E1564 | packages/ui/src/tabs/tabs.tsx | external:radix-ui | import | n/a | no | lateral | present |
+| E1565 | packages/ui/src/tabs/tabs.tsx | external:react | import | n/a | no | lateral | present |
+| E1566 | packages/ui/src/tabs/tabs.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
 
 ## Boundaries (ports)
 
@@ -396,7 +476,7 @@ No edge leaves a `packages/domain` unit for a detail or an external: C1's fan-ou
 | E1290 | apps/platform/src/features/assessment-calls/ui/public/book/book-page.tsx | apps/platform/src/features/assessment-calls/ui/public/book/booking-details-form.tsx | import | no | no | lateral | present |
 | E1291 | apps/platform/src/features/assessment-calls/ui/public/book/book-page.tsx | apps/platform/src/features/assessment-calls/ui/public/book/booking-flow.ts | import | no | no | lateral | present |
 | E1387 | apps/platform/src/features/assessment-calls/ui/public/book/book-page.tsx | apps/platform/src/features/assessment-calls/ui/public/book/call-overview.tsx | import | no | no | lateral | present |
-| E1292 | apps/platform/src/features/assessment-calls/ui/public/book/book-page.tsx | apps/platform/src/features/assessment-calls/ui/public/book/display-time-zone.ts | import | no | no | lateral | present |
+| E1292 | apps/platform/src/features/assessment-calls/ui/public/book/book-page.tsx | apps/platform/src/features/assessment-calls/ui/public/book/display-time-zone.ts | import | no | no | lateral | removed (GEN-193: `useDisplayTimeZone` moved to C5 `./lib`) |
 | E1294 | apps/platform/src/features/assessment-calls/ui/public/book/book-page.tsx | apps/platform/src/features/assessment-calls/ui/public/book/slot-grouping.ts | import | no | no | lateral | present |
 | E1388 | apps/platform/src/features/assessment-calls/ui/public/book/book-page.tsx | apps/platform/src/features/assessment-calls/ui/public/book/slot-picker.tsx | import | no | no | lateral | present |
 | E1383 | apps/platform/src/features/assessment-calls/ui/public/book/book-page.tsx | apps/platform/src/features/assessment-calls/ui/public/book/step-heading-focus.ts | import | no | no | lateral | present |
@@ -425,12 +505,12 @@ No edge leaves a `packages/domain` unit for a detail or an external: C1's fan-ou
 | E1442 | apps/platform/src/features/assessment-calls/ui/public/book/call-overview.tsx | packages/domain/src/assessment-call/index.ts | import | yes | yes | lateral | present |
 | E1470 | apps/platform/src/features/assessment-calls/ui/public/book/call-overview.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
 | E1471 | apps/platform/src/features/assessment-calls/ui/public/book/call-overview.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
-| E1315 | apps/platform/src/features/assessment-calls/ui/public/book/display-time-zone.ts | external:react | import | n/a | no | lateral | present |
+| E1315 | apps/platform/src/features/assessment-calls/ui/public/book/display-time-zone.ts | external:react | import | n/a | no | lateral | removed (GEN-193: the module moved to `packages/ui/src/lib/use-display-time-zone.ts`) |
 | E1375 | apps/platform/src/features/assessment-calls/ui/public/book/slot-calendar.tsx | apps/platform/src/features/assessment-calls/contracts/call-moment.ts | import | no | no | lateral | present |
-| E1316 | apps/platform/src/features/assessment-calls/ui/public/book/slot-calendar.tsx | apps/platform/src/features/assessment-calls/ui/public/book/slot-grouping.ts | import | no | no | lateral | present |
+| E1316 | apps/platform/src/features/assessment-calls/ui/public/book/slot-calendar.tsx | apps/platform/src/features/assessment-calls/ui/public/book/slot-grouping.ts | import | no | no | lateral | removed (GEN-193: `dayKeyOf` moved to `ui/shared/day-key.ts`) |
 | E1317 | apps/platform/src/features/assessment-calls/ui/public/book/slot-calendar.tsx | external:react | import | n/a | no | lateral | present |
 | E1318 | apps/platform/src/features/assessment-calls/ui/public/book/slot-calendar.tsx | packages/ui/src/calendar/index.ts | import | yes | no | lateral | present |
-| E1319 | apps/platform/src/features/assessment-calls/ui/public/book/slot-grouping.ts | external:@date-fns/tz | import | n/a | no | lateral | present |
+| E1319 | apps/platform/src/features/assessment-calls/ui/public/book/slot-grouping.ts | external:@date-fns/tz | import | n/a | no | lateral | removed (GEN-193: `dayKeyOf` moved to `ui/shared/day-key.ts`) |
 | E1427 | apps/platform/src/features/assessment-calls/ui/public/book/slot-picker.tsx | apps/platform/src/features/assessment-calls/contracts/call-moment.ts | import | no | no | lateral | present |
 | E1401 | apps/platform/src/features/assessment-calls/ui/public/book/slot-picker.tsx | apps/platform/src/features/assessment-calls/ui/public/book/slot-calendar.tsx | import | no | no | lateral | present |
 | E1402 | apps/platform/src/features/assessment-calls/ui/public/book/slot-picker.tsx | external:react | import | n/a | no | lateral | present |
@@ -787,7 +867,7 @@ No edge leaves a `packages/domain` unit for a detail or an external: C1's fan-ou
 | E374 | apps/platform/src/surfaces/client-portal/shell/layout.tsx | packages/infrastructure/src/pwa/index.ts | import | yes | yes | inward | present |
 | E375 | apps/platform/src/surfaces/client-portal/shell/layout.tsx | packages/ui/src/layout/index.ts | import | yes | no | lateral | present |
 | E376 | apps/platform/src/surfaces/client-portal/shell/navigation-links.ts | apps/platform/src/features/accounts/contracts/paths.ts | import | yes | no | lateral | present |
-| E377 | apps/platform/src/surfaces/coach-portal/pages/home.tsx | packages/ui/src/layout/index.ts | import | yes | no | lateral | present |
+| E377 | apps/platform/src/surfaces/coach-portal/pages/home.tsx | packages/ui/src/layout/index.ts | import | yes | no | lateral | removed (GEN-193: the dashboard renders the greeting and the calls widget, not `AppShell`) |
 | E378 | apps/platform/src/surfaces/coach-portal/routes.ts | apps/platform/src/features/accounts/contracts/paths.ts | import | yes | no | lateral | present |
 | E379 | apps/platform/src/surfaces/coach-portal/shell/layout.server.ts | apps/platform/src/features/accounts/server/guards/require-portal-access.server.ts | import | yes | no | lateral | present |
 | E380 | apps/platform/src/surfaces/coach-portal/shell/layout.tsx | apps/platform/src/surfaces/coach-portal/shell/layout.server.ts | import | no | no | lateral | present |

@@ -5,6 +5,8 @@ import {
   bookAssessmentCallRequestSchema,
   bookAssessmentCallResponseSchema,
   bookingSchema,
+  coachAssessmentCallSchema,
+  coachAssessmentCallsSchema,
   openSlotsResponseSchema,
 } from "./assessment-calls";
 
@@ -15,6 +17,15 @@ const VALID_REQUEST = {
   email: "ana@example.com",
   notes: "Training three times a week.",
   visitorTimeZone: "Europe/Bucharest",
+};
+const COACH_CALL = {
+  id: "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11",
+  visitorName: "Ana Popescu",
+  visitorEmail: "ana@example.com",
+  visitorNotes: "Training three times a week.",
+  startsAt: "2026-10-01T14:00:00.000Z",
+  endsAt: "2026-10-01T14:30:00.000Z",
+  joinPath: "/book/4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11/join",
 };
 
 describe("openSlotsResponseSchema", () => {
@@ -392,5 +403,88 @@ describe("bookAssessmentCallResponseSchema", () => {
 
     // assert
     expect(result.success).toBe(false);
+  });
+});
+
+describe("coachAssessmentCallSchema", () => {
+  it("publishes a booked call with the join path the coach follows", () => {
+    // arrange
+    const call = COACH_CALL;
+
+    // act
+    const result = coachAssessmentCallSchema.safeParse(call);
+
+    // assert
+    expect(result.success).toBe(true);
+    expect(result.data).toEqual(call);
+  });
+
+  it("publishes a call the visitor left no notes on", () => {
+    // arrange
+    const call = { ...COACH_CALL, visitorNotes: null };
+
+    // act
+    const result = coachAssessmentCallSchema.safeParse(call);
+
+    // assert
+    expect(result.success).toBe(true);
+    expect(result.data?.visitorNotes).toBeNull();
+  });
+
+  it("rejects an end that is not an ISO instant", () => {
+    // arrange
+    const call = { ...COACH_CALL, endsAt: "2026-10-01 14:30" };
+
+    // act
+    const result = coachAssessmentCallSchema.safeParse(call);
+
+    // assert
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.path).toEqual(["endsAt"]);
+  });
+});
+
+describe("coachAssessmentCallsSchema", () => {
+  it("publishes the coach's calls beside her time zone and the server instant", () => {
+    // arrange
+    const dashboard = {
+      calls: [COACH_CALL],
+      coachTimeZone: "Europe/Bucharest",
+      now: "2026-09-30T08:00:00.000Z",
+    };
+
+    // act
+    const result = coachAssessmentCallsSchema.safeParse(dashboard);
+
+    // assert
+    expect(result.success).toBe(true);
+    expect(result.data).toEqual(dashboard);
+  });
+
+  it("publishes a coach with no calls booked", () => {
+    // arrange
+    const dashboard = {
+      calls: [],
+      coachTimeZone: "Europe/Bucharest",
+      now: "2026-09-30T08:00:00.000Z",
+    };
+
+    // act
+    const result = coachAssessmentCallsSchema.safeParse(dashboard);
+
+    // assert
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects a dashboard without the instant it was read at", () => {
+    // arrange
+    const dashboard = { calls: [], coachTimeZone: "Europe/Bucharest" };
+
+    // act
+    const result = coachAssessmentCallsSchema.safeParse(dashboard);
+
+    // assert
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.path).toEqual(["now"]);
   });
 });

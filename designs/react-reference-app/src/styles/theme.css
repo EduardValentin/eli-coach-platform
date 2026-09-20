@@ -39,6 +39,7 @@
   --brand-secondary-hover: #005A4F;
   --brand-secondary-foreground: #ffffff;
   --brand-secondary-soft: rgba(0, 121, 107, 0.1);
+  --brand-secondary-surface: #E6F2F0;
   --success: #0F7A36;
   --success-foreground: #ffffff;
   --success-soft: rgba(15, 122, 54, 0.1);
@@ -186,6 +187,7 @@
   --surface-base: #ffffff;
   --container-reading: 45rem;
   --container-content: 70rem;
+  --container-portal: 80rem;
   --container-stage: 90rem;
   --size-control-xs: 2rem;
   --size-control-sm: 2.5rem;
@@ -280,6 +282,7 @@
   --brand-secondary-hover: #005A4F;
   --brand-secondary-foreground: #ffffff;
   --brand-secondary-soft: rgba(0, 121, 107, 0.1);
+  --brand-secondary-surface: #E6F2F0;
   --success: #16A34A;
   --success-foreground: #ffffff;
   --success-soft: rgba(22, 163, 74, 0.1);
@@ -346,6 +349,7 @@
   --color-brand-secondary-hover: var(--brand-secondary-hover);
   --color-brand-secondary-foreground: var(--brand-secondary-foreground);
   --color-brand-secondary-soft: var(--brand-secondary-soft);
+  --color-brand-secondary-surface: var(--brand-secondary-surface);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
   --color-success-soft: var(--success-soft);
@@ -469,6 +473,7 @@
   --size-control-md: var(--size-control-md);
   --size-control-lg: var(--size-control-lg);
   --container-content: var(--container-content);
+  --container-portal: var(--container-portal);
   --container-stage: var(--container-stage);
   --shadow-raised: var(--shadow-raised);
   --color-overlay-strong: var(--overlay-strong);

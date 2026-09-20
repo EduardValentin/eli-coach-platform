@@ -37,7 +37,7 @@ describe("CoachLayoutRoute", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows only the Dashboard link, since no other coach page exists yet", () => {
+  it("shows the coach pages that exist, Dashboard first", () => {
     // arrange, act
     renderCoachLayout();
 
@@ -47,9 +47,32 @@ describe("CoachLayoutRoute", () => {
     });
     const links = within(navigation).getAllByRole("link");
 
-    expect(links).toHaveLength(1);
+    expect(links).toHaveLength(2);
     expect(links[0]).toHaveAccessibleName("Dashboard");
     expect(links[0]).toHaveAttribute("href", "/coach");
+    expect(links[1]).toHaveAccessibleName("Assessment calls");
+    expect(links[1]).toHaveAttribute("href", "/coach/assessment-calls");
+  });
+
+  it("marks the assessment calls entry as the page being read", () => {
+    // arrange, act
+    render(
+      <MemoryRouter initialEntries={["/coach/assessment-calls"]}>
+        <CoachLayoutRoute />
+      </MemoryRouter>,
+    );
+
+    // assert
+    const navigation = screen.getByRole("navigation", {
+      name: "Coach portal navigation",
+    });
+
+    expect(
+      within(navigation).getByRole("link", { name: "Assessment calls" }),
+    ).toHaveAttribute("aria-current", "page");
+    expect(
+      within(navigation).getByRole("link", { name: "Dashboard" }),
+    ).not.toHaveAttribute("aria-current");
   });
 
   it("keeps the brand block non-navigating until a coach profile page exists", () => {

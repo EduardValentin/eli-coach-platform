@@ -1,10 +1,10 @@
 import { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import { CalendarDays, CalendarPlus, Clock, CheckCircle2, XCircle, RefreshCw, X } from 'lucide-react';
 import { useCheckins, type CheckIn, MAX_RESCHEDULES } from '../../context/CheckinContext';
 import { useNotifications } from '../../context/NotificationContext';
 import { useMessaging } from '../../context/MessagingContext';
 import { formatCheckinDate, formatCheckinTime, toISODate, to24h } from '../../utils/dateFormatters';
+import { AppointmentCard } from '../../components/coach-portal/AppointmentCard';
 import { CheckinSchedulerSheet } from '../../components/CheckinSchedulerSheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import {
@@ -21,25 +21,28 @@ const CLIENT_AVATARS: Record<string, string | null> = {
 };
 
 function CheckinCard({ checkin, actions }: { checkin: CheckIn; actions?: React.ReactNode }) {
-  const avatar = CLIENT_AVATARS[checkin.clientId];
   const isRescheduling = checkin.status === 'rescheduling';
+  const supersededWhen =
+    isRescheduling && checkin.previousDate && checkin.previousTime
+      ? {
+          date: formatCheckinDate(checkin.previousDate),
+          time: formatCheckinTime(checkin.previousTime),
+        }
+      : undefined;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="bg-white p-5 rounded-card border border-neutral-100/50 shadow-[0_2px_12px_rgb(0,0,0,0.03)] flex items-start gap-4"
-    >
-      {avatar ? (
-        <img src={avatar} alt={checkin.clientName} className="w-11 h-11 rounded-full object-cover border border-neutral-200 shrink-0" />
-      ) : (
-        <div className="w-11 h-11 rounded-full bg-neutral-100 border border-neutral-200 flex items-center justify-center font-serif text-sm font-semibold text-text-primary shrink-0">
-          {checkin.clientName.charAt(0)}
-        </div>
-      )}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1 flex-wrap">
-          <p className="text-sm font-semibold text-text-primary">{checkin.clientName}</p>
+    <AppointmentCard
+      attendee={{
+        name: checkin.clientName,
+        imageUrl: CLIENT_AVATARS[checkin.clientId] ?? undefined,
+      }}
+      when={{
+        date: formatCheckinDate(checkin.date),
+        time: formatCheckinTime(checkin.time),
+      }}
+      supersededWhen={supersededWhen}
+      badges={
+        <>
           <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${
             checkin.type === 'ad-hoc'
               ? 'bg-status-pending-soft text-status-pending'
@@ -59,39 +62,12 @@ function CheckinCard({ checkin, actions }: { checkin: CheckIn; actions?: React.R
               {checkin.rescheduleCount} reschedule{checkin.rescheduleCount > 1 ? 's' : ''}
             </span>
           )}
-        </div>
-
-        {/* Previous time if rescheduled */}
-        {isRescheduling && checkin.previousDate && checkin.previousTime && (
-          <div className="flex items-center gap-2 text-xs text-text-secondary line-through mb-0.5">
-            <CalendarDays size={12} />
-            {formatCheckinDate(checkin.previousDate)} at {formatCheckinTime(checkin.previousTime)}
-          </div>
-        )}
-
-        <div className="flex items-center gap-3 text-sm text-text-secondary">
-          <span className="flex items-center gap-1.5">
-            <CalendarDays size={13} />
-            {formatCheckinDate(checkin.date)}
-          </span>
-          <span className="flex items-center gap-1.5">
-            <Clock size={13} />
-            {formatCheckinTime(checkin.time)}
-          </span>
-        </div>
-
-        {checkin.rescheduleMessage && (
-          <p className="text-xs text-text-secondary italic mt-2">"{checkin.rescheduleMessage}"</p>
-        )}
-        {!checkin.rescheduleMessage && checkin.note && (
-          <p className="text-xs text-text-secondary italic mt-2">"{checkin.note}"</p>
-        )}
-        {checkin.planId && (
-          <p className="text-[10px] text-text-secondary mt-1.5">Linked to training plan</p>
-        )}
-      </div>
-      {actions && <div className="flex gap-2 shrink-0 flex-wrap">{actions}</div>}
-    </motion.div>
+        </>
+      }
+      quote={checkin.rescheduleMessage || checkin.note || undefined}
+      footnote={checkin.planId ? 'Linked to training plan' : undefined}
+      actions={actions}
+    />
   );
 }
 
@@ -229,14 +205,14 @@ export function CoachCheckins() {
       </div>
 
       <Tabs defaultValue="pending" className="w-full">
-        <TabsList className="bg-neutral-100 rounded-card p-1 mb-6">
-          <TabsTrigger value="pending" className="rounded-control data-[state=active]:bg-white data-[state=active]:shadow-sm px-5 py-2.5 text-sm font-semibold">
+        <TabsList variant="segmented" className="mb-6">
+          <TabsTrigger variant="segmented" value="pending">
             Pending {pending.length > 0 && <span className="ml-1.5 w-5 h-5 rounded-full bg-status-pending text-white text-[10px] font-bold inline-flex items-center justify-center">{pending.length}</span>}
           </TabsTrigger>
-          <TabsTrigger value="upcoming" className="rounded-control data-[state=active]:bg-white data-[state=active]:shadow-sm px-5 py-2.5 text-sm font-semibold">
+          <TabsTrigger variant="segmented" value="upcoming">
             Upcoming {upcoming.length > 0 && <span className="ml-1.5 text-text-secondary">({upcoming.length})</span>}
           </TabsTrigger>
-          <TabsTrigger value="past" className="rounded-control data-[state=active]:bg-white data-[state=active]:shadow-sm px-5 py-2.5 text-sm font-semibold">
+          <TabsTrigger variant="segmented" value="past">
             Past
           </TabsTrigger>
         </TabsList>

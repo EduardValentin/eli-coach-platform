@@ -3,6 +3,7 @@ import { relative } from "@react-router/dev/routes";
 import {
   ASSESSMENT_CALL_API_PATHS,
   BOOK_ROUTE_SEGMENT,
+  COACH_ASSESSMENT_CALLS_ROUTE_SEGMENT,
 } from "./contracts/paths";
 
 const { route } = relative(import.meta.dirname);
@@ -12,6 +13,13 @@ export const assessmentCallsPublicRoutes = [
   route(
     `${BOOK_ROUTE_SEGMENT}/:bookingId/join`,
     "./ui/public/join/join-page.tsx",
+  ),
+];
+
+export const assessmentCallsCoachRoutes = [
+  route(
+    COACH_ASSESSMENT_CALLS_ROUTE_SEGMENT,
+    "./ui/coach/assessment-calls/assessment-calls-page.tsx",
   ),
 ];
 

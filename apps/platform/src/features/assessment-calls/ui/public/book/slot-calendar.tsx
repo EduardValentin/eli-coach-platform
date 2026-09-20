@@ -3,7 +3,7 @@ import { memo, useCallback, useMemo, useState } from "react";
 
 import { formatDayFirstDate } from "~/features/assessment-calls/contracts/call-moment";
 
-import { dayKeyOf } from "./slot-grouping";
+import { dayKeyOf } from "~/features/assessment-calls/ui/shared/day-key";
 
 type SlotCalendarProps = {
   onSelectDay: (dayKey: string | null) => void;

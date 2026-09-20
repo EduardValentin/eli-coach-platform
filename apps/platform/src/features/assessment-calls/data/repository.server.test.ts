@@ -78,6 +78,62 @@ describe("PostgresAssessmentCallRepository row mapping", () => {
   });
 });
 
+describe("PostgresAssessmentCallRepository#listAll", () => {
+  it("maps every stored row into the assessment calls the domain reads", async () => {
+    // arrange
+    const laterRow = {
+      ...STORED_ROW,
+      id: "9c2b7d41-0e58-4a17-8c6f-2d4e7b9a1f03",
+      startsAt: new Date("2026-10-02T14:00:00.000Z"),
+    };
+    const repository = new PostgresAssessmentCallRepository(
+      createDatabaseReturning([STORED_ROW, laterRow]),
+    );
+
+    // act
+    const calls = await repository.listAll();
+
+    // assert
+    expect(calls.map((call) => call.toSnapshot())).toEqual([
+      {
+        id: "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11",
+        visitorName: "Ana Popescu",
+        visitorEmail: "ana@example.com",
+        visitorNotes: "Training three times a week.",
+        startsAt: new Date("2026-10-01T14:00:00.000Z"),
+        endsAt: new Date("2026-10-01T14:30:00.000Z"),
+        visitorTimeZone: "Europe/Bucharest",
+        coachTimeZone: "Europe/Bucharest",
+        bookedAt: new Date("2026-09-18T09:30:00.000Z"),
+      },
+      {
+        id: "9c2b7d41-0e58-4a17-8c6f-2d4e7b9a1f03",
+        visitorName: "Ana Popescu",
+        visitorEmail: "ana@example.com",
+        visitorNotes: "Training three times a week.",
+        startsAt: new Date("2026-10-02T14:00:00.000Z"),
+        endsAt: new Date("2026-10-02T14:30:00.000Z"),
+        visitorTimeZone: "Europe/Bucharest",
+        coachTimeZone: "Europe/Bucharest",
+        bookedAt: new Date("2026-09-18T09:30:00.000Z"),
+      },
+    ]);
+  });
+
+  it("lists nothing when no call is booked", async () => {
+    // arrange
+    const repository = new PostgresAssessmentCallRepository(
+      createDatabaseReturning([]),
+    );
+
+    // act
+    const calls = await repository.listAll();
+
+    // assert
+    expect(calls).toEqual([]);
+  });
+});
+
 function createDatabaseReturning(rows: readonly unknown[]): DatabaseClient {
   return {
     select: vi.fn().mockReturnValue(createQueryChain(rows)),
