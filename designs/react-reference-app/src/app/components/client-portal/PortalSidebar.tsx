@@ -209,7 +209,7 @@ function MoreSheetBody({ onClose }: { onClose: () => void }) {
   const { setAppState } = useAppState();
 
   const handleSignOut = () => {
-    setAppState({ session: 'anonymous', hasBundle: false, needsOnboarding: false });
+    setAppState({ session: 'anonymous', hasBundle: false });
     onClose();
     navigate('/');
   };

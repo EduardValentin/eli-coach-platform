@@ -1,12 +1,13 @@
 import { Outlet, Navigate } from 'react-router';
 import { PortalSidebar } from './PortalSidebar';
 import { ActiveWorkoutBanner } from './ActiveWorkoutBanner';
-import { useAppState } from '../../context/AppContext';
+import { useClientJourneys } from '../../context/ClientJourneyContext';
+import { isBeforeStage } from '../../domain/journey';
 
 export function PortalLayout() {
-  const { appState } = useAppState();
+  const { demoJourney } = useClientJourneys();
 
-  if (appState.needsOnboarding) {
+  if (isBeforeStage(demoJourney.stage, 'submitted')) {
     return <Navigate to="/portal/onboarding" replace />;
   }
 

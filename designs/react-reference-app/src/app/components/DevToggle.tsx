@@ -9,7 +9,25 @@ import {
 } from '../context/AppContext';
 import type { PrototypeStoreCheckoutOutcome } from '../services/storeAcquisitionService';
 import type { PrototypeSignInOutcome } from '../services/authService';
-import type { PrototypeClientOnboardingOutcome } from '../services/clientOnboardingService';
+import type {
+  PrototypeInvitationLinkState,
+  PrototypeInvitationOutcome,
+} from '../services/invitationService';
+import type {
+  PrototypePaymentLinkOutcome,
+  PrototypePaymentLinkState,
+} from '../services/paymentLinkService';
+import type { PrototypeCheckoutOutcome } from '../services/checkoutService';
+import {
+  COACH_STAGE_LABELS,
+  JOURNEY_STAGES,
+  type JourneySex,
+  type JourneyStage,
+} from '../domain/journey';
+import type {
+  SubscriptionStartPath,
+  SubscriptionStatus,
+} from '../domain/coachingSubscription';
 import type {
   PrototypeBooking,
   PrototypeBookingOutcome,
@@ -78,18 +96,80 @@ function parseStoreCheckoutOutcomeControl(
   return 'success';
 }
 
-function parseClientOnboardingOutcomeControl(
+function parseJourneyStageControl(value: string): JourneyStage {
+  const stage = JOURNEY_STAGES.find((candidate) => candidate === value);
+
+  return stage ?? 'review-call-scheduled';
+}
+
+function parseStartPathControl(value: string): SubscriptionStartPath {
+  if (value === 'waiting') return value;
+
+  return 'immediate';
+}
+
+function parseSubscriptionStatusControl(value: string): SubscriptionStatus {
+  if (value === 'not-started' || value === 'cancelled' || value === 'ended') {
+    return value;
+  }
+
+  return 'active';
+}
+
+function parseJourneySexControl(value: string): JourneySex {
+  if (value === 'male') return value;
+
+  return 'female';
+}
+
+function parsePaymentLinkOutcomeControl(
   value: string,
-): PrototypeClientOnboardingOutcome {
+): PrototypePaymentLinkOutcome {
+  if (value === 'delivery-failure') return value;
+
+  return 'sent';
+}
+
+function parsePaymentLinkStateControl(
+  value: string,
+): PrototypePaymentLinkState {
+  if (value === 'expired' || value === 'used' || value === 'invalid') {
+    return value;
+  }
+
+  return 'valid';
+}
+
+function parseJourneyCheckoutOutcomeControl(
+  value: string,
+): PrototypeCheckoutOutcome {
+  if (value === 'cancelled' || value === 'failed') return value;
+
+  return 'success';
+}
+
+function parseInvitationOutcomeControl(
+  value: string,
+): PrototypeInvitationOutcome {
   if (
-    value === 'replaced-invitation' ||
+    value === 'replaced' ||
     value === 'already-client' ||
     value === 'delivery-failure'
   ) {
     return value;
   }
 
-  return 'success';
+  return 'sent';
+}
+
+function parseInvitationLinkStateControl(
+  value: string,
+): PrototypeInvitationLinkState {
+  if (value === 'expired' || value === 'used' || value === 'unknown') {
+    return value;
+  }
+
+  return 'valid';
 }
 
 function parseBookingOutcomeControl(value: string): PrototypeBookingOutcome {
@@ -140,6 +220,13 @@ function parseCallSettingsSaveOutcomeControl(value: string): PrototypeCallSettin
 }
 
 const SELECT_CONTENT_CLASS = 'z-[10000]';
+
+const TAB_TRIGGER_CLASS = 'h-auto flex-auto';
+
+const TAB_PANEL_CLASS = 'space-y-4 pt-3 max-h-[50vh] overflow-y-auto pr-1';
+
+const DEV_LABEL_CLASS =
+  'text-xs font-semibold text-copy-muted uppercase tracking-wider';
 
 function DevCheckboxRow({
   id,
@@ -231,16 +318,31 @@ export function DevToggle() {
             </div>
 
             <Tabs defaultValue="session">
-              <TabsList className="h-auto w-full flex-wrap">
-                <TabsTrigger value="session">Session</TabsTrigger>
-                <TabsTrigger value="store">Store</TabsTrigger>
-                <TabsTrigger value="booking">Booking</TabsTrigger>
-                <TabsTrigger value="waitlist">Waitlist</TabsTrigger>
-                <TabsTrigger value="nutrition">Nutrition</TabsTrigger>
-                <TabsTrigger value="coach">Coach</TabsTrigger>
+              <TabsList className="h-auto w-full flex-wrap gap-1">
+                <TabsTrigger value="session" className={TAB_TRIGGER_CLASS}>
+                  Session
+                </TabsTrigger>
+                <TabsTrigger value="store" className={TAB_TRIGGER_CLASS}>
+                  Store
+                </TabsTrigger>
+                <TabsTrigger value="booking" className={TAB_TRIGGER_CLASS}>
+                  Booking
+                </TabsTrigger>
+                <TabsTrigger value="waitlist" className={TAB_TRIGGER_CLASS}>
+                  Waitlist
+                </TabsTrigger>
+                <TabsTrigger value="nutrition" className={TAB_TRIGGER_CLASS}>
+                  Nutrition
+                </TabsTrigger>
+                <TabsTrigger value="coach" className={TAB_TRIGGER_CLASS}>
+                  Coach
+                </TabsTrigger>
+                <TabsTrigger value="journey" className={TAB_TRIGGER_CLASS}>
+                  Journey
+                </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="session" className="space-y-4 pt-3 max-h-[50vh] overflow-y-auto pr-1">
+              <TabsContent value="session" className={TAB_PANEL_CLASS}>
                 <div className="space-y-2">
                   <Label
                     htmlFor="dev-session"
@@ -305,18 +407,9 @@ export function DevToggle() {
                   checked={appState.hasBundle}
                   onCheckedChange={(checked) => setAppState({ hasBundle: checked })}
                 />
-
-                {appState.session === 'client' && (
-                  <DevCheckboxRow
-                    id="dev-needs-onboarding"
-                    label="Needs Onboarding"
-                    checked={appState.needsOnboarding}
-                    onCheckedChange={(checked) => setAppState({ needsOnboarding: checked })}
-                  />
-                )}
               </TabsContent>
 
-              <TabsContent value="store" className="space-y-4 pt-3 max-h-[50vh] overflow-y-auto pr-1">
+              <TabsContent value="store" className={TAB_PANEL_CLASS}>
                 <DevCheckboxRow
                   id="dev-store-empty-catalog"
                   label="Empty catalog"
@@ -368,7 +461,7 @@ export function DevToggle() {
                 </Link>
               </TabsContent>
 
-              <TabsContent value="booking" className="space-y-4 pt-3 max-h-[50vh] overflow-y-auto pr-1">
+              <TabsContent value="booking" className={TAB_PANEL_CLASS}>
                 <div className="space-y-2">
                   <Label
                     htmlFor="dev-booking-outcome"
@@ -481,7 +574,7 @@ export function DevToggle() {
                 </Link>
               </TabsContent>
 
-              <TabsContent value="waitlist" className="space-y-4 pt-3 max-h-[50vh] overflow-y-auto pr-1">
+              <TabsContent value="waitlist" className={TAB_PANEL_CLASS}>
                 <DevCheckboxRow
                   id="dev-waitlist-mode"
                   label="Waiting List Mode"
@@ -520,7 +613,7 @@ export function DevToggle() {
                 )}
               </TabsContent>
 
-              <TabsContent value="nutrition" className="space-y-4 pt-3 max-h-[50vh] overflow-y-auto pr-1">
+              <TabsContent value="nutrition" className={TAB_PANEL_CLASS}>
                 <DevCheckboxRow
                   id="dev-nutrition-block-completed"
                   label="Block completed (show review)"
@@ -535,7 +628,7 @@ export function DevToggle() {
                 />
               </TabsContent>
 
-              <TabsContent value="coach" className="space-y-4 pt-3 max-h-[50vh] overflow-y-auto pr-1">
+              <TabsContent value="coach" className={TAB_PANEL_CLASS}>
                 <div className="space-y-2">
                   <Label
                     htmlFor="dev-pending-checkins"
@@ -582,31 +675,204 @@ export function DevToggle() {
                     </SelectContent>
                   </Select>
                 </div>
+              </TabsContent>
+
+              <TabsContent value="journey" className={TAB_PANEL_CLASS}>
                 <div className="space-y-2">
-                  <Label
-                    htmlFor="dev-client-onboarding-outcome"
-                    className="text-xs font-semibold text-copy-muted uppercase tracking-wider"
-                  >
-                    Client invitation outcome
+                  <Label htmlFor="dev-journey-stage" className={DEV_LABEL_CLASS}>
+                    Journey stage
                   </Label>
                   <Select
-                    value={appState.clientOnboardingOutcome}
+                    value={appState.journeyStage}
                     onValueChange={(value) =>
                       setAppState({
-                        clientOnboardingOutcome:
-                          parseClientOnboardingOutcomeControl(value),
+                        journeyStage: parseJourneyStageControl(value),
                       })
                     }
                   >
-                    <SelectTrigger
-                      id="dev-client-onboarding-outcome"
-                      className="w-full"
-                    >
+                    <SelectTrigger id="dev-journey-stage" className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className={SELECT_CONTENT_CLASS}>
-                      <SelectItem value="success">Invitation sent</SelectItem>
-                      <SelectItem value="replaced-invitation">
+                      {JOURNEY_STAGES.map((stage) => (
+                        <SelectItem key={stage} value={stage}>
+                          {COACH_STAGE_LABELS[stage]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="dev-journey-start-path" className={DEV_LABEL_CLASS}>
+                    Start path
+                  </Label>
+                  <Select
+                    value={appState.journeyStartPath}
+                    onValueChange={(value) =>
+                      setAppState({
+                        journeyStartPath: parseStartPathControl(value),
+                      })
+                    }
+                  >
+                    <SelectTrigger id="dev-journey-start-path" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="immediate">Immediate start</SelectItem>
+                      <SelectItem value="waiting">
+                        Waiting out the 14 days
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="dev-journey-subscription" className={DEV_LABEL_CLASS}>
+                    Subscription state
+                  </Label>
+                  <Select
+                    value={appState.journeySubscriptionStatus}
+                    onValueChange={(value) =>
+                      setAppState({
+                        journeySubscriptionStatus:
+                          parseSubscriptionStatusControl(value),
+                      })
+                    }
+                  >
+                    <SelectTrigger id="dev-journey-subscription" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="not-started">Not started</SelectItem>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                      <SelectItem value="ended">Ended</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="dev-journey-sex" className={DEV_LABEL_CLASS}>
+                    Sex
+                  </Label>
+                  <Select
+                    value={appState.journeySex}
+                    onValueChange={(value) =>
+                      setAppState({ journeySex: parseJourneySexControl(value) })
+                    }
+                  >
+                    <SelectTrigger id="dev-journey-sex" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="female">Female</SelectItem>
+                      <SelectItem value="male">Male</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <DevCheckboxRow
+                  id="dev-journey-reduced-pricing"
+                  label="Reduced pricing"
+                  checked={appState.journeyReducedPricing}
+                  onCheckedChange={(checked) =>
+                    setAppState({ journeyReducedPricing: checked })
+                  }
+                />
+
+                <div className="space-y-2">
+                  <Label htmlFor="dev-payment-link-outcome" className={DEV_LABEL_CLASS}>
+                    Payment link outcome
+                  </Label>
+                  <Select
+                    value={appState.paymentLinkOutcome}
+                    onValueChange={(value) =>
+                      setAppState({
+                        paymentLinkOutcome: parsePaymentLinkOutcomeControl(value),
+                      })
+                    }
+                  >
+                    <SelectTrigger id="dev-payment-link-outcome" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="sent">Payment link sent</SelectItem>
+                      <SelectItem value="delivery-failure">
+                        Email delivery failed
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="dev-payment-link-state" className={DEV_LABEL_CLASS}>
+                    Payment link state
+                  </Label>
+                  <Select
+                    value={appState.paymentLinkState}
+                    onValueChange={(value) =>
+                      setAppState({
+                        paymentLinkState: parsePaymentLinkStateControl(value),
+                      })
+                    }
+                  >
+                    <SelectTrigger id="dev-payment-link-state" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="valid">Valid</SelectItem>
+                      <SelectItem value="expired">Expired</SelectItem>
+                      <SelectItem value="used">Already used</SelectItem>
+                      <SelectItem value="invalid">Unknown link</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="dev-journey-checkout" className={DEV_LABEL_CLASS}>
+                    Checkout outcome
+                  </Label>
+                  <Select
+                    value={appState.journeyCheckoutOutcome}
+                    onValueChange={(value) =>
+                      setAppState({
+                        journeyCheckoutOutcome:
+                          parseJourneyCheckoutOutcomeControl(value),
+                      })
+                    }
+                  >
+                    <SelectTrigger id="dev-journey-checkout" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="success">Payment confirmed</SelectItem>
+                      <SelectItem value="cancelled">
+                        Cancelled at checkout
+                      </SelectItem>
+                      <SelectItem value="failed">Card declined</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="dev-invitation-outcome" className={DEV_LABEL_CLASS}>
+                    Invitation outcome
+                  </Label>
+                  <Select
+                    value={appState.invitationOutcome}
+                    onValueChange={(value) =>
+                      setAppState({
+                        invitationOutcome: parseInvitationOutcomeControl(value),
+                      })
+                    }
+                  >
+                    <SelectTrigger id="dev-invitation-outcome" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="sent">Invitation sent</SelectItem>
+                      <SelectItem value="replaced">
                         Replaced a pending invitation
                       </SelectItem>
                       <SelectItem value="already-client">
@@ -618,13 +884,31 @@ export function DevToggle() {
                     </SelectContent>
                   </Select>
                 </div>
-                <Link
-                  to="/coach/onboard"
-                  onClick={() => setIsOpen(false)}
-                  className="inline-flex items-center gap-1 text-sm text-brand hover:underline"
-                >
-                  Open onboarding wizard <ArrowRight size={14} aria-hidden="true" />
-                </Link>
+
+                <div className="space-y-2">
+                  <Label htmlFor="dev-invitation-state" className={DEV_LABEL_CLASS}>
+                    Invitation link state
+                  </Label>
+                  <Select
+                    value={appState.invitationLinkState}
+                    onValueChange={(value) =>
+                      setAppState({
+                        invitationLinkState:
+                          parseInvitationLinkStateControl(value),
+                      })
+                    }
+                  >
+                    <SelectTrigger id="dev-invitation-state" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="valid">Valid</SelectItem>
+                      <SelectItem value="expired">Expired</SelectItem>
+                      <SelectItem value="used">Already used</SelectItem>
+                      <SelectItem value="unknown">Unknown link</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </TabsContent>
             </Tabs>
           </motion.div>

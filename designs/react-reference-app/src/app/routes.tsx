@@ -10,6 +10,7 @@ import { NotificationProvider } from "./context/NotificationContext";
 import { TrainingProvider } from "./context/TrainingContext";
 import { CheckinProvider } from "./context/CheckinContext";
 import { AssessmentCallProvider } from "./context/AssessmentCallContext";
+import { ClientJourneyProvider } from "./context/ClientJourneyContext";
 import { MessagingProvider } from "./context/MessagingContext";
 import { Store } from "./pages/Store";
 import { ProductDetails } from "./pages/ProductDetails";
@@ -27,7 +28,6 @@ import { CoachAssessmentCalls } from "./pages/coach-portal/CoachAssessmentCalls"
 import { CoachMessages } from "./pages/coach-portal/CoachMessages";
 import { ClientsList } from "./pages/coach-portal/ClientsList";
 import { ClientDetails } from "./pages/coach-portal/ClientDetails";
-import { OnboardClient } from "./pages/coach-portal/OnboardClient";
 import { TrainingHub } from "./pages/coach-portal/TrainingHub";
 import { NutritionHub } from "./pages/coach-portal/NutritionHub";
 import { RecipeBuilderPage } from "./pages/coach-portal/RecipeBuilderPage";
@@ -76,6 +76,7 @@ function Root() {
           <CycleProvider>
           <CheckinProvider>
             <AssessmentCallProvider>
+            <ClientJourneyProvider>
             <MessagingProvider>
               <NotificationProvider>
                 <div className="relative min-h-screen bg-surface-subtle text-foreground font-sans selection:bg-brand selection:text-white">
@@ -86,6 +87,7 @@ function Root() {
                 </div>
               </NotificationProvider>
             </MessagingProvider>
+            </ClientJourneyProvider>
             </AssessmentCallProvider>
           </CheckinProvider>
           </CycleProvider>
@@ -154,7 +156,6 @@ export const router = createBrowserRouter(
             { path: "messages", Component: CoachMessages },
             { path: "clients", Component: ClientsList },
             { path: "clients/:id", Component: ClientDetails },
-            { path: "onboard", Component: OnboardClient },
             { path: "training", Component: TrainingHub },
             { path: "nutrition", Component: NutritionHub },
             { path: "nutrition/recipe-builder", Component: RecipeBuilderPage },

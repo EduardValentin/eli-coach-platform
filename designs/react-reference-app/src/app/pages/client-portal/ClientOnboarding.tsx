@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Check, ChevronRight, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router';
-import { useAppState } from '../../context/AppContext';
+import { useClientJourneys } from '../../context/ClientJourneyContext';
 import { ToggleChip } from '../../components/ToggleChip';
 import {
   useCycle,
@@ -19,7 +19,7 @@ const ALLERGEN_OPTIONS = ['Dairy', 'Gluten', 'Nuts', 'Shellfish', 'Eggs', 'Soy']
 
 export function ClientOnboarding() {
   const navigate = useNavigate();
-  const { appState, setAppState } = useAppState();
+  const { demoJourney, submitOnboarding } = useClientJourneys();
   const { setMenstrualProfile } = useCycle();
   const { clientProfile, updateProfile } = useClientProfile();
   const { tags, foods, getPreferences, setPreferences } = useNutrition();
@@ -84,7 +84,7 @@ export function ClientOnboarding() {
       clientNotes: formData.notes,
     });
     setPreferences('client-1', { dietaryFlags, allergens, dislikedFoodIds });
-    setAppState({ needsOnboarding: false });
+    submitOnboarding(demoJourney.callId, new Date());
     navigate('/portal');
   };
 

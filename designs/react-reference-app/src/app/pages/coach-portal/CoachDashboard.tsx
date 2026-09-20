@@ -1,5 +1,5 @@
 import { motion, useReducedMotion } from 'motion/react';
-import { ClipboardCheck, Plus, ArrowRight, User } from 'lucide-react';
+import { ClipboardCheck, ArrowRight, User } from 'lucide-react';
 import { Link } from 'react-router';
 import { DashboardAppointmentRow } from '../../components/coach-portal/DashboardAppointmentRow';
 import { AssessmentCallsUnavailable } from '../../components/coach-portal/AssessmentCallsUnavailable';
@@ -56,13 +56,6 @@ export function CoachDashboard() {
             <span> {pendingCheckins.length} check-in{pendingCheckins.length !== 1 ? 's' : ''} to review.</span>
           </p>
         </div>
-        <Link 
-          to="/coach/onboard"
-          className="px-6 py-3.5 bg-brand text-white text-sm font-semibold rounded-control hover:bg-brand-hover transition-colors flex items-center justify-center gap-2 shadow-md hover:shadow-lg shrink-0"
-        >
-          <Plus size={18} strokeWidth={2.5} />
-          Onboard New Client
-        </Link>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 mb-8">

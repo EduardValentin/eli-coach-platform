@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
-import { Search, Plus, UserX, ArrowRight, ShieldAlert } from 'lucide-react';
+import { Search, UserX, ArrowRight, ShieldAlert } from 'lucide-react';
 import { Link } from 'react-router';
 import { useClientProfile } from '../../context/ClientProfileContext';
 import { useTraining, subscriptionTermLabel } from '../../context/TrainingContext';
@@ -54,13 +54,6 @@ export function ClientsList() {
             Manage your active roster and past client records.
           </p>
         </div>
-        <Link 
-          to="/coach/onboard"
-          className="px-6 py-3.5 bg-brand text-white text-sm font-semibold rounded-control hover:bg-brand-hover transition-colors flex items-center justify-center gap-2 shadow-md hover:shadow-lg shrink-0"
-        >
-          <Plus size={18} strokeWidth={2.5} />
-          Onboard New Client
-        </Link>
       </header>
 
       {/* Controls */}
