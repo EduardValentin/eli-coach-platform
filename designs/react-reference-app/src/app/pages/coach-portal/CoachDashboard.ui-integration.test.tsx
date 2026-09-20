@@ -7,6 +7,7 @@ import {
   AssessmentCallProvider,
   useAssessmentCalls,
 } from '../../context/AssessmentCallContext';
+import { AppProvider } from '../../context/AppContext';
 import { CheckinProvider } from '../../context/CheckinContext';
 import type { PrototypeBooking } from '../../services/assessmentCallService';
 
@@ -53,12 +54,14 @@ function SeedBookings({ bookings }: { bookings: PrototypeBooking[] }) {
 function renderDashboard(bookings: PrototypeBooking[]) {
   render(
     <MemoryRouter initialEntries={['/coach']}>
-      <CheckinProvider>
-        <AssessmentCallProvider>
-          <SeedBookings bookings={bookings} />
-          <CoachDashboard />
-        </AssessmentCallProvider>
-      </CheckinProvider>
+      <AppProvider>
+        <CheckinProvider>
+          <AssessmentCallProvider>
+            <SeedBookings bookings={bookings} />
+            <CoachDashboard />
+          </AssessmentCallProvider>
+        </CheckinProvider>
+      </AppProvider>
     </MemoryRouter>,
   );
 }

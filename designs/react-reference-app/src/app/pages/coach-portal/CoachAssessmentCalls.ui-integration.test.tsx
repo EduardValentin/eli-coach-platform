@@ -8,6 +8,7 @@ import {
   AssessmentCallProvider,
   useAssessmentCalls,
 } from '../../context/AssessmentCallContext';
+import { AppProvider } from '../../context/AppContext';
 import type { PrototypeBooking } from '../../services/assessmentCallService';
 
 const TIME_ZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -71,11 +72,13 @@ function renderPage(
     <MemoryRouter
       initialEntries={[`/coach/assessment-calls${options.urlQuery ?? ''}`]}
     >
-      <AssessmentCallProvider>
-        <SeedBookings bookings={options.bookings ?? ALL_BOOKINGS} />
-        <CoachAssessmentCalls />
-        <LocationProbe />
-      </AssessmentCallProvider>
+      <AppProvider>
+        <AssessmentCallProvider>
+          <SeedBookings bookings={options.bookings ?? ALL_BOOKINGS} />
+          <CoachAssessmentCalls />
+          <LocationProbe />
+        </AssessmentCallProvider>
+      </AppProvider>
     </MemoryRouter>,
   );
 
