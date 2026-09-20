@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CoachDashboard } from './CoachDashboard';
+import { AppProvider } from '../../context/AppContext';
 import {
   AssessmentCallProvider,
   useAssessmentCalls,
@@ -38,6 +39,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers();
+  window.history.replaceState({}, '', '/');
 });
 
 function SeedBookings({ bookings }: { bookings: PrototypeBooking[] }) {
@@ -53,15 +55,40 @@ function SeedBookings({ bookings }: { bookings: PrototypeBooking[] }) {
 function renderDashboard(bookings: PrototypeBooking[]) {
   render(
     <MemoryRouter initialEntries={['/coach']}>
-      <CheckinProvider>
-        <AssessmentCallProvider>
-          <SeedBookings bookings={bookings} />
-          <CoachDashboard />
-        </AssessmentCallProvider>
-      </CheckinProvider>
+      <AppProvider>
+        <CheckinProvider>
+          <AssessmentCallProvider>
+            <SeedBookings bookings={bookings} />
+            <CoachDashboard />
+          </AssessmentCallProvider>
+        </CheckinProvider>
+      </AppProvider>
     </MemoryRouter>,
   );
 }
+
+describe('the coach dashboard when the calls cannot be read', () => {
+  it('replaces the dashboard with the unavailable dead end', () => {
+    // arrange
+    window.history.replaceState({}, '', '/coach?coachcalls=unavailable');
+
+    // act
+    renderDashboard([]);
+
+    // assert
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'Assessment calls unavailable' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Your assessment calls could not be loaded. Try again in a moment.',
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { name: 'Upcoming calls' }),
+    ).not.toBeInTheDocument();
+  });
+});
 
 describe('the coach dashboard', () => {
   it('greets the coach with no calls when none is booked today', () => {

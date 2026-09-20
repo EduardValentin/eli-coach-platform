@@ -13,6 +13,11 @@ export function createConsoleLogger(): ConsoleLogger {
         errorCategory: "assessment_call_booking_mode_read_failure",
       });
     },
+    callsReadFailed: () => {
+      console.error("Assessment calls could not be read.", {
+        errorCategory: "assessment_call_listing_failure",
+      });
+    },
     confirmationDeliveryFailed: () => {
       console.error("Waitlist confirmation email failed.", {
         errorCategory: "waitlist_confirmation_failure",

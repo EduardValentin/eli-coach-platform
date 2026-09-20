@@ -1,5 +1,4 @@
 import type {
-  AssessmentCallListing,
   AssessmentCallSnapshot,
   ListAssessmentCallsUseCase,
 } from "@eli-coach-platform/domain/assessment-call";
@@ -7,6 +6,7 @@ import type { Clock } from "@eli-coach-platform/domain/shared";
 
 import {
   coachAssessmentCallsSchema,
+  COACH_ASSESSMENT_CALLS_UNAVAILABLE_MESSAGE,
   type CoachAssessmentCall,
   type CoachAssessmentCalls,
 } from "~/features/assessment-calls/contracts/assessment-calls";
@@ -23,22 +23,20 @@ export class CoachAssessmentCallsController {
   ) {}
 
   async loadCalls(): Promise<CoachAssessmentCalls> {
-    return serialiseListing(
-      await this.options.listAssessmentCalls.execute(),
-      this.options.clock.now(),
-    );
-  }
-}
+    const listing = await this.options.listAssessmentCalls.execute();
 
-function serialiseListing(
-  listing: AssessmentCallListing,
-  now: Date,
-): CoachAssessmentCalls {
-  return coachAssessmentCallsSchema.parse({
-    calls: listing.calls.map(serialiseCall),
-    coachTimeZone: listing.coachTimeZone,
-    now: now.toISOString(),
-  });
+    if (listing.status === "unavailable") {
+      throw new Response(COACH_ASSESSMENT_CALLS_UNAVAILABLE_MESSAGE, {
+        status: 503,
+      });
+    }
+
+    return coachAssessmentCallsSchema.parse({
+      calls: listing.calls.map(serialiseCall),
+      coachTimeZone: listing.coachTimeZone,
+      now: this.options.clock.now().toISOString(),
+    });
+  }
 }
 
 function serialiseCall(call: AssessmentCallSnapshot): CoachAssessmentCall {

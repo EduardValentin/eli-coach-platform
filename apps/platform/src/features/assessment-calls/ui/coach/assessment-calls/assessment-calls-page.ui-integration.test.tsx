@@ -21,6 +21,7 @@ import type {
 import { COACH_ASSESSMENT_CALLS_PATH } from "~/features/assessment-calls/contracts/paths";
 
 import CoachAssessmentCallsRoute, {
+  ErrorBoundary as CoachAssessmentCallsErrorBoundary,
   shouldRevalidate,
 } from "./assessment-calls-page";
 
@@ -452,6 +453,42 @@ function shownCallNames(): string[] {
     .getAllByRole("heading", { level: 2 })
     .map((heading) => heading.textContent ?? "");
 }
+
+describe("the coach assessment calls page when the calls cannot be read", () => {
+  it("replaces the listing with the unavailable dead end", async () => {
+    // arrange
+    const router = createMemoryRouter(
+      [
+        {
+          Component: CoachAssessmentCallsRoute,
+          ErrorBoundary: CoachAssessmentCallsErrorBoundary,
+          loader: () => {
+            throw new Response("unavailable", { status: 503 });
+          },
+          path: COACH_ASSESSMENT_CALLS_PATH,
+        },
+      ],
+      { initialEntries: [COACH_ASSESSMENT_CALLS_PATH] },
+    );
+
+    // act
+    render(<RouterProvider router={router} />);
+
+    // assert
+    expect(
+      await screen.findByRole("heading", {
+        level: 1,
+        name: "Assessment calls unavailable",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Your assessment calls could not be loaded. Try again in a moment.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("tablist")).not.toBeInTheDocument();
+  });
+});
 
 async function renderCallsRouter(options?: {
   calls?: CoachAssessmentCall[];

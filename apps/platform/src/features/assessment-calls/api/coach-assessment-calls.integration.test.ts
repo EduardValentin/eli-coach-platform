@@ -9,7 +9,10 @@ import {
   it,
 } from "vitest";
 
-import { openSlotsResponseSchema } from "~/features/assessment-calls/contracts/assessment-calls";
+import {
+  COACH_ASSESSMENT_CALLS_UNAVAILABLE_MESSAGE,
+  openSlotsResponseSchema,
+} from "~/features/assessment-calls/contracts/assessment-calls";
 import { ApiIntegrationTestSuite } from "~integration-test-config/api-integration-test-suite";
 import { mintSessionToken } from "~integration-test-config/clerk-session";
 import { turnstileTokenForAction } from "~integration-test-config/wire-mock/expectations/turnstile-siteverify";
@@ -192,6 +195,25 @@ describe.sequential("coach assessment calls integration", () => {
     expect(dashboard).toContain("You have 0 assessment calls today.");
   });
 
+  it("answers both coach pages with 503 when the calls cannot be read", async () => {
+    // arrange
+    await breakTheCallsRead();
+
+    // act
+    const dashboard = await requestAsCoach(DASHBOARD);
+    const calls = await requestAsCoach(CALLS_PAGE);
+
+    // assert
+    expect(dashboard.status).toBe(503);
+    expect(calls.status).toBe(503);
+    expect(await visibleDocument(dashboard)).toContain(
+      COACH_ASSESSMENT_CALLS_UNAVAILABLE_MESSAGE,
+    );
+    expect(await visibleDocument(calls)).toContain(
+      COACH_ASSESSMENT_CALLS_UNAVAILABLE_MESSAGE,
+    );
+  });
+
   it("keeps a CLIENT out of both coach pages", async () => {
     // arrange
     await provisionClient();
@@ -344,6 +366,14 @@ async function provisionClient(): Promise<void> {
   await suite.postgres.executeSql({
     sql: "insert into app.accounts (auth_subject_id, role) values ($1, $2)",
     values: [client.subjectId, "CLIENT"],
+  });
+}
+
+// The schema is dropped and remigrated between cases, so the rename lives
+// only as long as the case that asks for it.
+async function breakTheCallsRead(): Promise<void> {
+  await suite.postgres.executeSql({
+    sql: "alter table app.assessment_calls rename to assessment_calls_unreadable",
   });
 }
 

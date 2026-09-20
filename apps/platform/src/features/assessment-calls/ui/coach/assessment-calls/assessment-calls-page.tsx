@@ -1,11 +1,14 @@
 import {
+  isRouteErrorResponse,
   useLoaderData,
+  useRouteError,
   type LoaderFunctionArgs,
   type MetaFunction,
   type ShouldRevalidateFunctionArgs,
 } from "react-router";
 
 import { assessmentCallsContext } from "~/features/assessment-calls/server/guards/assessment-calls-context.server";
+import { AssessmentCallsUnavailable } from "~/features/assessment-calls/ui/coach/assessment-calls-unavailable";
 import { haveOnlyListingParamsChanged } from "~/features/assessment-calls/ui/coach/assessment-call-listing";
 import { useCoachClock } from "~/features/assessment-calls/ui/coach/use-coach-clock";
 
@@ -46,4 +49,14 @@ export default function CoachAssessmentCallsRoute() {
       />
     </div>
   );
+}
+
+export function ErrorBoundary() {
+  const error = useRouteError();
+
+  if (isRouteErrorResponse(error) && error.status === 503) {
+    return <AssessmentCallsUnavailable />;
+  }
+
+  throw error;
 }

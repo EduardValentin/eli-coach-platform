@@ -2,9 +2,12 @@ import { motion, useReducedMotion } from 'motion/react';
 import { ClipboardCheck, Plus, ArrowRight, User } from 'lucide-react';
 import { Link } from 'react-router';
 import { DashboardAppointmentRow } from '../../components/coach-portal/DashboardAppointmentRow';
+import { AssessmentCallsUnavailable } from '../../components/coach-portal/AssessmentCallsUnavailable';
 import { UpcomingAssessmentCalls } from '../../components/coach-portal/UpcomingAssessmentCalls';
+import { useAppState } from '../../context/AppContext';
 import { useAssessmentCalls } from '../../context/AssessmentCallContext';
 import { useCheckins } from '../../context/CheckinContext';
+import { readCoachCallListing } from '../../services/assessmentCallService';
 import {
   classifyCalls,
   countCallsLeftToday,
@@ -25,12 +28,23 @@ export function CoachDashboard() {
   const prefersReducedMotion = useReducedMotion() ?? false;
   const { getPendingCheckins } = useCheckins();
   const { bookings } = useAssessmentCalls();
+  const { appState } = useAppState();
+  const listing = readCoachCallListing(bookings, appState.coachCallsOutcome);
   const pendingCheckins = getPendingCheckins();
 
   const now = new Date();
   const timeZone = browserTimeZone();
+
+  if (listing.status === 'unavailable') {
+    return (
+      <div className="w-full pb-12">
+        <AssessmentCallsUnavailable />
+      </div>
+    );
+  }
+
   const callsLeftToday = countCallsLeftToday(
-    classifyCalls(bookings, { now, timeZone }),
+    classifyCalls(listing.bookings, { now, timeZone }),
   );
 
   return (
@@ -59,7 +73,7 @@ export function CoachDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 mb-8">
         
         <UpcomingAssessmentCalls
-          bookings={bookings}
+          bookings={listing.bookings}
           now={now}
           timeZone={timeZone}
         />

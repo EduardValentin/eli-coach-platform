@@ -86,6 +86,7 @@ export function composeAssessmentCallsFeature(
       clock: handles.clock,
       listAssessmentCalls: new ListAssessmentCallsUseCase({
         availability,
+        incidents: handles.incidents,
         reservations,
       }),
     }),
