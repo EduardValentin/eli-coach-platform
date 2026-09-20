@@ -20,6 +20,7 @@ import {
   sampleManyBookings,
 } from '../services/assessmentCallSamples';
 import { useAssessmentCalls } from '../context/AssessmentCallContext';
+import { useCheckins } from '../context/CheckinContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Checkbox } from './ui/checkbox';
 import { Label } from './ui/label';
@@ -103,6 +104,14 @@ function parseBookingOutcomeControl(value: string): PrototypeBookingOutcome {
 
 type DashboardCallsSeed = 'none' | 'one' | 'sample' | 'many';
 
+type PendingCheckinsSeed = 'seeded' | 'none';
+
+function parsePendingCheckinsControl(value: string): PendingCheckinsSeed {
+  if (value === 'none') return value;
+
+  return 'seeded';
+}
+
 function parseDashboardCallsControl(value: string): DashboardCallsSeed {
   if (value === 'one' || value === 'sample' || value === 'many') return value;
 
@@ -138,8 +147,11 @@ export function DevToggle() {
   const [isOpen, setIsOpen] = useState(false);
   const [dashboardCalls, setDashboardCalls] =
     useState<DashboardCallsSeed>('none');
+  const [pendingCheckins, setPendingCheckins] =
+    useState<PendingCheckinsSeed>('seeded');
   const { appState, setAppState } = useAppState();
   const { replaceBookings } = useAssessmentCalls();
+  const { clearPendingCheckins, restoreSeededCheckins } = useCheckins();
 
   const seedDashboardCalls = (value: string) => {
     const seed = parseDashboardCallsControl(value);
@@ -152,6 +164,19 @@ export function DevToggle() {
     };
     setDashboardCalls(seed);
     replaceBookings(seeds[seed]);
+  };
+
+  const seedPendingCheckins = (value: string) => {
+    const seed = parsePendingCheckinsControl(value);
+
+    setPendingCheckins(seed);
+
+    if (seed === 'none') {
+      clearPendingCheckins();
+      return;
+    }
+
+    restoreSeededCheckins();
   };
 
   return (
@@ -455,6 +480,26 @@ export function DevToggle() {
               </TabsContent>
 
               <TabsContent value="coach" className="space-y-4 pt-3 max-h-[50vh] overflow-y-auto pr-1">
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="dev-pending-checkins"
+                    className="text-xs font-semibold text-copy-muted uppercase tracking-wider"
+                  >
+                    Pending check-ins
+                  </Label>
+                  <Select
+                    value={pendingCheckins}
+                    onValueChange={seedPendingCheckins}
+                  >
+                    <SelectTrigger id="dev-pending-checkins" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="seeded">Seeded check-ins</SelectItem>
+                      <SelectItem value="none">None pending</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div className="space-y-2">
                   <Label
                     htmlFor="dev-client-onboarding-outcome"

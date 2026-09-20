@@ -39,6 +39,8 @@ interface CheckinContextType {
   acceptReschedule: (checkinId: string) => void;
   getUpcomingCheckins: (clientId?: string) => CheckIn[];
   getPendingCheckins: (clientId?: string) => CheckIn[];
+  clearPendingCheckins: () => void;
+  restoreSeededCheckins: () => void;
   getActionableCheckins: (clientId: string, role: 'coach' | 'client') => CheckIn[];
   hasPendingAdHoc: (clientId: string) => boolean;
   getBookedSlots: (date: string) => string[];
@@ -336,6 +338,19 @@ export function CheckinProvider({ children }: { children: ReactNode }) {
     [checkins]
   );
 
+  const clearPendingCheckins = useCallback(() => {
+    setCheckins((previous) =>
+      previous.filter(
+        (checkin) =>
+          checkin.status !== 'pending' && checkin.status !== 'rescheduling',
+      ),
+    );
+  }, []);
+
+  const restoreSeededCheckins = useCallback(() => {
+    setCheckins(MOCK_CHECKINS);
+  }, []);
+
   const getPendingCheckins = useCallback(
     (clientId?: string) =>
       checkins
@@ -402,6 +417,8 @@ export function CheckinProvider({ children }: { children: ReactNode }) {
         acceptReschedule,
         getUpcomingCheckins,
         getPendingCheckins,
+        clearPendingCheckins,
+        restoreSeededCheckins,
         getActionableCheckins,
         hasPendingAdHoc,
         getBookedSlots,

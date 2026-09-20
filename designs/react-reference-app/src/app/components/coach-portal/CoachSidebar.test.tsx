@@ -29,9 +29,9 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-function renderSidebar() {
+function renderSidebar(path = '/coach') {
   return render(
-    <MemoryRouter initialEntries={['/coach']}>
+    <MemoryRouter initialEntries={[path]}>
       <AppProvider>
         <CoachProfileProvider>
           <CheckinProvider>
@@ -55,6 +55,28 @@ describe('CoachSidebar navigation links', () => {
 
     // assert
     expect(link).toHaveAttribute('href', '/coach/assessment-calls');
+  });
+
+  it('marks the page being read as the current one', () => {
+    // arrange
+    renderSidebar('/coach/assessment-calls');
+
+    // act
+    const [link] = screen.getAllByRole('link', { name: 'Assessment calls' });
+
+    // assert
+    expect(link).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('leaves the other links without a current marker', () => {
+    // arrange
+    renderSidebar('/coach/assessment-calls');
+
+    // act
+    const [dashboard] = screen.getAllByRole('link', { name: 'Dashboard' });
+
+    // assert
+    expect(dashboard).not.toHaveAttribute('aria-current');
   });
 
   it('sits between the schedule and the settings links', () => {

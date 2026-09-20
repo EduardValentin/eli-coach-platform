@@ -36,7 +36,7 @@ export function CoachDashboard() {
     <div className="w-full pb-12">
       <header className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="font-serif text-3xl lg:text-4xl text-foreground mb-3 tracking-tight">
+          <h1 className="w-fit font-serif text-3xl lg:text-4xl text-foreground mb-3 tracking-tight">
             Good morning, Coach.
           </h1>
           <p className="text-muted-foreground font-medium">

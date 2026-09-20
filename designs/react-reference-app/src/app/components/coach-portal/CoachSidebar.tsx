@@ -106,6 +106,7 @@ const SidebarContent = ({
           <Link
             key={link.name}
             to={link.href}
+            aria-current={isActive ? 'page' : undefined}
             onClick={onNavigate}
             ref={linkIndex === 0 ? firstLinkRef : undefined}
             className={`flex items-center gap-4 px-4 py-3.5 rounded-card transition-all ${
