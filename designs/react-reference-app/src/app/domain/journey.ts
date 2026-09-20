@@ -218,6 +218,16 @@ export function clientStatusLabel(stage: JourneyStage): string | null {
   return CLIENT_STATUS_LABELS[stage] ?? null;
 }
 
+const COACH_REVIEW_STAGES: readonly JourneyStage[] = [
+  'submitted',
+  'reviewing',
+  'needs-details',
+];
+
+export function awaitsCoachReview(stage: JourneyStage): boolean {
+  return COACH_REVIEW_STAGES.includes(stage);
+}
+
 export function isBeforeStage(
   stage: JourneyStage,
   boundary: JourneyStage,

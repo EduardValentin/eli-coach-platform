@@ -21,9 +21,9 @@ import { ResponsiveSheetDialog } from '../workout/ResponsiveSheetDialog';
 import { OnboardingFieldControl } from './onboarding/OnboardingFieldControl';
 import {
   EMPTY_PROGRESS_PHOTOS,
-  ProgressPhotoConsent,
+  ProgressPhotoBlock,
   type ProgressPhotos,
-} from './onboarding/ProgressPhotoConsent';
+} from './onboarding/ProgressPhotoBlock';
 import {
   toAnswers,
   toFormValues,
@@ -101,7 +101,7 @@ function AddMeasurementsForm({
               <OnboardingFieldControl control={form.control} field={field} key={field.id} />
             ))}
 
-            <ProgressPhotoConsent
+            <ProgressPhotoBlock
               consented={photoConsent}
               onConsentChange={setPhotoConsent}
               onPhotosChange={setPhotos}

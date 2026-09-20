@@ -12,7 +12,11 @@ import {
 } from '../../context/ClientJourneyContext';
 import { ClientProfileProvider } from '../../context/ClientProfileContext';
 import { UnitPreferencesProvider } from '../../context/UnitPreferencesContext';
-import { emptyOnboardingDraft, type OnboardingDraft } from '../../domain/journey';
+import {
+  emptyOnboardingDraft,
+  type OnboardingConsents,
+  type OnboardingDraft,
+} from '../../domain/journey';
 import { saveDraft } from '../../services/onboardingService';
 
 const SERVICE_TIMEOUT = 4000;
@@ -64,13 +68,28 @@ function renderOnboarding(devParams: string) {
   );
 }
 
-function draftAt(currentFormIndex: number): OnboardingDraft {
+const GIVEN_CONSENTS: OnboardingConsents = {
+  disclaimer: true,
+  specialCategory: true,
+  progressPhotos: false,
+};
+
+const WITHHELD_CONSENTS: OnboardingConsents = {
+  disclaimer: false,
+  specialCategory: false,
+  progressPhotos: false,
+};
+
+function draftAt(
+  currentFormIndex: number,
+  consents: OnboardingConsents = GIVEN_CONSENTS,
+): OnboardingDraft {
   const draft = emptyOnboardingDraft();
 
   return {
     ...draft,
     currentFormIndex,
-    consents: { disclaimer: true, specialCategory: true, progressPhotos: false },
+    consents,
     answers: { ...draft.answers, measurements: { weight: 66.1, waist: 74 } },
   };
 }
@@ -85,30 +104,94 @@ afterEach(() => {
 });
 
 describe('the onboarding', () => {
-  it('asks for the disclaimer before the first form and refuses to move on without it', async () => {
+  it('opens the first form straight away, with no consent screen in front of it', () => {
     // arrange
     renderOnboarding('?session=client&jstage=account-created');
+
+    // act
+    const heading = screen.getByRole('heading', { level: 2 });
+
+    // assert
+    expect(heading).toHaveTextContent('Your goal and your week');
+    expect(screen.getByText('Step 1 of 5')).toBeVisible();
+  });
+
+  it('asks for the health-data consent on the safety form and holds her there without it', async () => {
+    // arrange
+    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(1, WITHHELD_CONSENTS));
+    renderOnboarding('?session=client&jstage=onboarding');
 
     // act
     await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
 
     // assert
     expect(screen.getByText('Tick the box to carry on.')).toBeVisible();
-    expect(screen.getByText('Step 1 of 5')).toBeVisible();
+    expect(screen.getByText('Step 2 of 5')).toBeVisible();
   });
 
-  it('opens the first form once the disclaimer is acknowledged', async () => {
+  it('asks for the disclaimer on the last form and refuses to send without it', async () => {
+    // arrange
+    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(4, WITHHELD_CONSENTS));
+    renderOnboarding('?session=client&jstage=onboarding');
+
+    // act
+    await userEvent.click(screen.getByRole('button', { name: 'Send to my coach' }));
+
+    // assert
+    expect(screen.getByText('Tick the box to carry on.')).toBeVisible();
+    expect(screen.getByTestId('stage')).toHaveTextContent('onboarding');
+  });
+
+  it('offers a choice of more than two options as a select', () => {
     // arrange
     renderOnboarding('?session=client&jstage=account-created');
 
     // act
-    await userEvent.click(screen.getByRole('checkbox'));
+    const control = screen.getByRole('combobox', { name: /Where you train/ });
+
+    // assert
+    expect(control).toBeVisible();
+  });
+
+  it('turns down a weight outside the sensible range', async () => {
+    // arrange
+    renderOnboarding('?session=client&jstage=account-created');
+
+    // act
+    await userEvent.type(screen.getByLabelText(/Your weight/), '500');
     await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
 
     // assert
     expect(
-      screen.getByRole('heading', { level: 2, name: 'Your goal and your week' }),
+      screen.getByText('Check that one — it should be between 30 and 300 kg.'),
     ).toBeVisible();
+  });
+
+  it('keeps a goal weight within reach of the weight she has now', async () => {
+    // arrange
+    renderOnboarding('?session=client&jstage=account-created');
+
+    // act
+    await userEvent.type(screen.getByLabelText(/Your weight/), '66');
+    await userEvent.type(screen.getByLabelText(/Goal weight/), '200');
+    await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
+
+    // assert
+    expect(
+      screen.getByText('Keep your goal within 60 kg of where you are now.'),
+    ).toBeVisible();
+  });
+
+  it('holds the progress photos shut until she agrees to share them', async () => {
+    // arrange
+    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(4));
+
+    // act
+    renderOnboarding('?session=client&jstage=onboarding');
+
+    // assert
+    expect(screen.getByLabelText('Front Add photo')).toBeDisabled();
+    expect(screen.getByText('Tick the box to add your photos.')).toBeVisible();
   });
 
   it('holds her on a form until the required answers are there', async () => {
@@ -152,8 +235,6 @@ describe('the onboarding', () => {
   it('saves her answers quietly as she types', async () => {
     // arrange
     renderOnboarding('?session=client&jstage=account-created');
-    await userEvent.click(screen.getByRole('checkbox'));
-    await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
 
     // act
     await userEvent.type(screen.getByLabelText(/Your weight/), '66');
@@ -174,6 +255,7 @@ describe('the onboarding', () => {
 
     // assert
     expect(screen.getByText('Step 4 of 5')).toBeVisible();
+    expect(screen.getByText('Picking up where you left off.')).toBeVisible();
     expect(
       screen.getByRole('heading', { level: 2, name: 'Food and daily life' }),
     ).toBeVisible();

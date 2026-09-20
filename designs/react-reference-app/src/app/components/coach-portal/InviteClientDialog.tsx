@@ -62,6 +62,20 @@ export type InvitationAccepted = {
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+const PHONE_PATTERN = /^0?[\d ]+$/;
+
+const PHONE_MESSAGE = 'Use 6 to 14 digits — spaces are fine.';
+
+function phoneProblem(entered: string): string | true {
+  const phone = entered.trim();
+  if (phone.length === 0) return true;
+  if (!PHONE_PATTERN.test(phone)) return PHONE_MESSAGE;
+
+  const digits = phone.replace(/\D/g, '').replace(/^0/, '');
+
+  return digits.length >= 6 && digits.length <= 14 ? true : PHONE_MESSAGE;
+}
+
 const REPLACED_MESSAGE = 'Her earlier invitation no longer works.';
 const ALREADY_CLIENT_MESSAGE = 'This email already belongs to a client.';
 const DELIVERY_FAILURE_MESSAGE =
@@ -298,6 +312,7 @@ function InviteForm({
                 <FormField
                   control={form.control}
                   name="phone"
+                  rules={{ validate: phoneProblem }}
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Phone (optional)</FormLabel>

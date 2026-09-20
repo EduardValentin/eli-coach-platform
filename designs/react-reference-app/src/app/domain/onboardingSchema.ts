@@ -17,6 +17,10 @@ export type OnboardingOption = { value: string; label: string };
 
 export type FieldRequirement = 'required' | 'optional';
 
+export type NumericRange = { min: number; max: number };
+
+export type RelativeRange = { id: string; spread: number };
+
 export type OnboardingField = {
   id: string;
   label: string;
@@ -27,7 +31,18 @@ export type OnboardingField = {
   section?: string;
   revealedBy?: { id: string; value: string };
   unitSuffix?: string;
+  range?: NumericRange;
+  relativeTo?: RelativeRange;
+  recentMonths?: number;
 };
+
+export const WEIGHT_RANGE_KG: NumericRange = { min: 30, max: 300 };
+
+export const HEIGHT_RANGE_CM: NumericRange = { min: 120, max: 230 };
+
+export const GOAL_WEIGHT_SPREAD_KG = 60;
+
+export const LAST_PERIOD_MONTHS = 12;
 
 export type FormAudience = 'everyone' | 'female';
 
@@ -81,13 +96,32 @@ const GOAL_FORM: OnboardingFormDefinition = {
   audience: 'everyone',
   sensitivity: 'ordinary',
   fields: [
-    { id: 'weight', label: 'Your weight', kind: 'weight', requirement: 'required' },
-    { id: 'height', label: 'Your height', kind: 'height', requirement: 'required' },
-    { id: 'goalWeight', label: 'Goal weight', kind: 'weight', requirement: 'required' },
+    {
+      id: 'weight',
+      label: 'Your weight',
+      kind: 'weight',
+      requirement: 'required',
+      range: WEIGHT_RANGE_KG,
+    },
+    {
+      id: 'height',
+      label: 'Your height',
+      kind: 'height',
+      requirement: 'required',
+      range: HEIGHT_RANGE_CM,
+    },
+    {
+      id: 'goalWeight',
+      label: 'Goal weight',
+      kind: 'weight',
+      requirement: 'required',
+      range: WEIGHT_RANGE_KG,
+      relativeTo: { id: 'weight', spread: GOAL_WEIGHT_SPREAD_KG },
+    },
     {
       id: 'primaryGoal',
       label: 'What you want most',
-      kind: 'radio',
+      kind: 'select',
       requirement: 'required',
       options: options([
         'Lose fat',
@@ -100,7 +134,7 @@ const GOAL_FORM: OnboardingFormDefinition = {
     {
       id: 'experienceLevel',
       label: 'Your training experience',
-      kind: 'radio',
+      kind: 'select',
       requirement: 'required',
       options: options([
         'New to training',
@@ -111,33 +145,30 @@ const GOAL_FORM: OnboardingFormDefinition = {
     {
       id: 'trainingDaysPerWeek',
       label: 'Training days a week',
-      kind: 'select',
+      kind: 'number',
       requirement: 'required',
-      options: options(['2', '3', '4', '5', '6']),
+      range: { min: 1, max: 7 },
     },
     {
       id: 'minutesPerSession',
-      label: 'Minutes you have per session',
-      kind: 'select',
+      label: 'Time you have per session',
+      kind: 'number',
       requirement: 'required',
-      options: options(['30', '45', '60', '75', '90']),
+      unitSuffix: 'minutes',
+      range: { min: 15, max: 180 },
     },
     {
       id: 'realisticTimeframe',
       label: 'A timeframe that feels realistic to you',
-      kind: 'select',
+      kind: 'number',
       requirement: 'required',
-      options: options([
-        '3 months',
-        '6 months',
-        'A year',
-        'No deadline, I want this to last',
-      ]),
+      unitSuffix: 'weeks',
+      range: { min: 1, max: 104 },
     },
     {
       id: 'lifestyleActivityLevel',
       label: 'How active your days are',
-      kind: 'radio',
+      kind: 'select',
       requirement: 'required',
       options: options([
         'Mostly sitting',
@@ -165,9 +196,9 @@ const GOAL_FORM: OnboardingFormDefinition = {
     {
       id: 'trainingPlace',
       label: 'Where you train',
-      kind: 'radio',
+      kind: 'select',
       requirement: 'required',
-      options: options(['Home', 'Gym']),
+      options: options(['Home', 'Gym', 'Both']),
     },
   ],
 };
@@ -237,12 +268,14 @@ const CYCLE_FORM: OnboardingFormDefinition = {
       kind: 'number',
       requirement: 'required',
       unitSuffix: 'days',
+      range: { min: 15, max: 60 },
     },
     {
       id: 'lastPeriodStart',
       label: 'The day your last period started',
       kind: 'date',
       requirement: 'required',
+      recentMonths: LAST_PERIOD_MONTHS,
     },
     {
       id: 'hormonalContraception',
@@ -262,7 +295,7 @@ const CYCLE_FORM: OnboardingFormDefinition = {
     {
       id: 'pregnancyStatus',
       label: 'Pregnancy, postpartum or breastfeeding',
-      kind: 'radio',
+      kind: 'select',
       requirement: 'required',
       options: options(['None', 'Pregnant', 'Postpartum', 'Breastfeeding']),
     },
@@ -304,7 +337,7 @@ const LIFESTYLE_FORM: OnboardingFormDefinition = {
     {
       id: 'eatingStyle',
       label: 'How you eat',
-      kind: 'radio',
+      kind: 'select',
       requirement: 'required',
       options: options(['No particular style', 'Vegetarian', 'Vegan', 'Other']),
     },
@@ -331,9 +364,9 @@ const LIFESTYLE_FORM: OnboardingFormDefinition = {
     {
       id: 'mealsPerDay',
       label: 'Meals a day that suit you',
-      kind: 'select',
+      kind: 'number',
       requirement: 'required',
-      options: options(['2', '3', '4', '5']),
+      range: { min: 1, max: 8 },
     },
     {
       id: 'mealSchedule',
@@ -344,16 +377,17 @@ const LIFESTYLE_FORM: OnboardingFormDefinition = {
     {
       id: 'jobType',
       label: 'Your working day',
-      kind: 'radio',
+      kind: 'select',
       requirement: 'required',
       options: options(['Sedentary', 'On my feet', 'Shifts']),
     },
     {
       id: 'sleepHours',
-      label: 'Hours of sleep on a normal night',
-      kind: 'select',
+      label: 'Sleep on a normal night',
+      kind: 'number',
       requirement: 'required',
-      options: options(['Under 6', '6 to 7', '7 to 8', 'More than 8']),
+      unitSuffix: 'hours',
+      range: { min: 3, max: 14 },
     },
     yesNo('smoking', 'Do you smoke?'),
     {
@@ -415,7 +449,7 @@ const LIFESTYLE_FORM: OnboardingFormDefinition = {
     {
       id: 'checkInChannel',
       label: 'Where you want to hear from me',
-      kind: 'radio',
+      kind: 'select',
       requirement: 'required',
       section: COLLABORATION_SECTION,
       options: options(['In-app messages', 'Email', 'WhatsApp']),
@@ -436,6 +470,7 @@ const MEASUREMENTS_FORM: OnboardingFormDefinition = {
       kind: 'weight',
       requirement: 'required',
       hint: 'First thing in the morning, before eating, after the bathroom.',
+      range: WEIGHT_RANGE_KG,
     },
     {
       id: 'waist',
@@ -443,6 +478,7 @@ const MEASUREMENTS_FORM: OnboardingFormDefinition = {
       kind: 'circumference',
       requirement: 'required',
       hint: "Narrowest point, usually just above the navel. Relaxed, don't pull the tape tight.",
+      range: { min: 40, max: 200 },
     },
     {
       id: 'hips',
@@ -450,6 +486,7 @@ const MEASUREMENTS_FORM: OnboardingFormDefinition = {
       kind: 'circumference',
       requirement: 'optional',
       hint: 'Widest point.',
+      range: { min: 50, max: 200 },
     },
     {
       id: 'thigh',
@@ -457,6 +494,7 @@ const MEASUREMENTS_FORM: OnboardingFormDefinition = {
       kind: 'circumference',
       requirement: 'optional',
       hint: 'Mid-thigh, same leg every time.',
+      range: { min: 30, max: 100 },
     },
     {
       id: 'arm',
@@ -464,6 +502,7 @@ const MEASUREMENTS_FORM: OnboardingFormDefinition = {
       kind: 'circumference',
       requirement: 'optional',
       hint: 'Relaxed, mid-bicep.',
+      range: { min: 15, max: 60 },
     },
   ],
 };

@@ -1,6 +1,6 @@
 import { DateField } from '../../DateField';
 import { useId } from 'react';
-import type { Control, RegisterOptions } from 'react-hook-form';
+import type { Control } from 'react-hook-form';
 import type { OnboardingField } from '../../../domain/onboardingSchema';
 import { CheckboxChip } from '../../CheckboxChip';
 import { Input } from '../../ui/input';
@@ -22,6 +22,7 @@ import {
   FormMessage,
 } from '../../ui/form';
 import { measureUnitLabel, useMeasureUnits, type MeasureKind } from '../measureUnits';
+import { fieldRules } from './onboardingValidation';
 import {
   asList,
   asText,
@@ -35,43 +36,6 @@ type FieldControlProps = {
 };
 
 const OPTIONAL_SUFFIX = '(optional)';
-
-const REQUIRED_MESSAGES: Record<string, string> = {
-  radio: 'Pick one of these.',
-  select: 'Choose one of these.',
-  chips: 'Pick at least one.',
-  number: 'Add a number here.',
-  date: 'Pick a date.',
-};
-
-const NUMBER_MESSAGE = 'Use numbers only.';
-
-function requiredMessage(field: OnboardingField): string {
-  if (isMeasureField(field)) return REQUIRED_MESSAGES.number;
-
-  return REQUIRED_MESSAGES[field.kind] ?? 'Write a short answer here.';
-}
-
-function rulesFor(field: OnboardingField): RegisterOptions<OnboardingValues> {
-  const numeric = isMeasureField(field) || field.kind === 'number';
-  const required = field.requirement === 'required';
-
-  return {
-    validate: (value) => {
-      const empty =
-        field.kind === 'chips'
-          ? asList(value).length === 0
-          : asText(value).trim() === '';
-
-      if (empty) return required ? requiredMessage(field) : true;
-      if (!numeric) return true;
-
-      const entered = Number(asText(value));
-
-      return Number.isFinite(entered) && entered > 0 ? true : NUMBER_MESSAGE;
-    },
-  };
-}
 
 function LabelText({ field, unit }: { field: OnboardingField; unit: string | null }) {
   const suffixes = [
@@ -115,7 +79,7 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
     <FormField
       control={control}
       name={field.id}
-      rules={rulesFor(field)}
+      rules={fieldRules(field, units)}
       render={({ field: controller }) => {
         if (field.kind === 'radio' || field.kind === 'chips') {
           return (

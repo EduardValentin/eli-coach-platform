@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
-import { Search, UserX, ArrowRight, ShieldAlert } from 'lucide-react';
+import { Search, UserX, ArrowRight, ClipboardList, ShieldAlert } from 'lucide-react';
 import { Link } from 'react-router';
 import { useClientProfile } from '../../context/ClientProfileContext';
 import { useTraining, subscriptionTermLabel } from '../../context/TrainingContext';
@@ -9,7 +9,11 @@ import {
   useClientJourneys,
 } from '../../context/ClientJourneyContext';
 import { JourneyStageBadge } from '../../components/coach-portal/JourneyStageBadge';
-import { isBeforeStage, type ClientJourney } from '../../domain/journey';
+import {
+  awaitsCoachReview,
+  isBeforeStage,
+  type ClientJourney,
+} from '../../domain/journey';
 import { getInitials } from '../../utils/clientHelpers';
 import { journeyCallIdForClient, startPathLabel } from '../../utils/journeyLabels';
 
@@ -39,7 +43,9 @@ function journeyName(journey: ClientJourney): string {
 function OnboardingRow({ journey }: { journey: ClientJourney }) {
   const name = journeyName(journey);
   const detailPath =
-    journey.callId === DEMO_JOURNEY_CALL_ID ? '/coach/clients/c1' : null;
+    journey.callId === DEMO_JOURNEY_CALL_ID
+      ? '/coach/clients/c1'
+      : `/coach/clients/${journey.callId}`;
 
   return (
     <tr className="px-3 border-b border-neutral-50 rounded-field hover:bg-neutral-50/50 transition-colors group">
@@ -65,15 +71,22 @@ function OnboardingRow({ journey }: { journey: ClientJourney }) {
       <td className="py-4 px-6 text-sm text-text-secondary">—</td>
       <td className="py-4 px-6">
         <div className="flex items-center justify-end gap-3">
-          {detailPath && (
+          {awaitsCoachReview(journey.stage) && (
             <Link
               to={detailPath}
-              className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white border border-neutral-200 text-text-secondary hover:bg-text-primary hover:text-white hover:border-text-primary transition-all"
-              title="View Details"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-control text-xs font-semibold text-brand hover:bg-brand-soft transition-colors"
             >
-              <ArrowRight size={14} />
+              <ClipboardList size={14} aria-hidden="true" />
+              Review onboarding
             </Link>
           )}
+          <Link
+            to={detailPath}
+            className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white border border-neutral-200 text-text-secondary hover:bg-text-primary hover:text-white hover:border-text-primary transition-all"
+            title={`View details for ${name}`}
+          >
+            <ArrowRight size={14} />
+          </Link>
         </div>
       </td>
     </tr>

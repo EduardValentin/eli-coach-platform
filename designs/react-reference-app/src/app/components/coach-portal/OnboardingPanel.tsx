@@ -10,6 +10,7 @@ import {
   deliveryDate,
 } from '../../domain/coachingSubscription';
 import { formatRatio, waistToHeightRatio } from '../../domain/bodyMetrics';
+import { formsForSex } from '../../domain/onboardingSchema';
 import type { ClientJourney } from '../../domain/journey';
 import {
   CHECK_IN_CHANNEL_KEY,
@@ -91,9 +92,14 @@ function CollaborationReading({ journey }: { journey: ClientJourney }) {
 }
 
 function AnswerGroups({ journey }: { journey: ClientJourney }) {
+  const shown = new Set(formsForSex(journey.identity.sex).map((form) => form.id));
+  const forms = answeredForms(journey.onboarding).filter((form) =>
+    shown.has(form.formId),
+  );
+
   return (
     <div className="space-y-2">
-      {answeredForms(journey.onboarding).map((form) => (
+      {forms.map((form) => (
         <details
           key={form.formId}
           className="rounded-field border border-neutral-100 px-4 py-3"

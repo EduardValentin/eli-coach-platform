@@ -12,6 +12,7 @@ import { useNutrition } from '../../context/NutritionContext';
 import { formatBodyWeight, formatHeight, formatVolume, displayWeightValue, weightUnitLabel } from '../../utils/units';
 import { getInitials } from '../../utils/clientHelpers';
 import { SubscriptionBadge } from '../../components/coach-portal/SubscriptionBadge';
+import { JourneyClientDetails } from '../../components/coach-portal/JourneyClientDetails';
 import { OnboardingPanel } from '../../components/coach-portal/OnboardingPanel';
 import { SubscriptionPanel } from '../../components/coach-portal/SubscriptionPanel';
 import { MeasurementsTable } from '../../components/coach-portal/MeasurementsTable';
@@ -33,6 +34,18 @@ import { toast } from 'sonner';
 
 
 export function ClientDetails() {
+  const { id = 'client-1' } = useParams();
+  const { journeyForCall } = useClientJourneys();
+  const journey = journeyForCall(id);
+
+  return journey ? (
+    <JourneyClientDetails journey={journey} />
+  ) : (
+    <RosterClientDetails />
+  );
+}
+
+function RosterClientDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { getClientActivePlan, getClientPastPlans, getClientActiveGoal, getClientGoals, getClientActiveSubscription, createGoal, completeGoal, completePlanInstance, getClientWorkoutHistory, exercises } = useTraining();

@@ -1,8 +1,11 @@
 import { useNavigate } from 'react-router';
-import { Button } from '../../components/ThemeButton';
-import { SectionEyebrow } from '../../components/SectionEyebrow';
+import { Button, cn } from '../../components/ThemeButton';
+import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
+import { cardVariants } from '../../components/ui/card';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
+import { useCoachProfile } from '../../context/CoachProfileContext';
 import type { JourneySex } from '../../domain/journey';
+import { getInitials } from '../../utils/clientHelpers';
 
 const FORM_INTRO: Record<JourneySex, string> = {
   female:
@@ -25,6 +28,7 @@ const CLOSING =
 export function ClientWelcome() {
   const navigate = useNavigate();
   const { demoJourney, markWelcomeSeen } = useClientJourneys();
+  const { coachProfile } = useCoachProfile();
 
   const start = () => {
     markWelcomeSeen(demoJourney.callId);
@@ -34,24 +38,43 @@ export function ClientWelcome() {
   return (
     <main
       aria-label="Welcome"
-      className="min-h-screen bg-surface-page px-4 py-16 sm:px-6 lg:py-24"
+      className="flex min-h-screen items-center justify-center bg-surface-page px-4 py-12 sm:px-6 lg:py-20"
     >
-      <div className="mx-auto w-full max-w-reading">
-        <SectionEyebrow>Welcome</SectionEyebrow>
+      <div
+        className={cn(
+          cardVariants({ variant: 'panel' }),
+          'w-full max-w-reading px-6 py-10 sm:px-10 sm:py-12 lg:px-14 lg:py-16',
+        )}
+      >
+        <Avatar className="size-16">
+          {coachProfile.avatarUrl && (
+            <AvatarImage alt="" className="object-cover" src={coachProfile.avatarUrl} />
+          )}
+          <AvatarFallback className="bg-brand-soft font-serif text-lg font-semibold text-brand">
+            {getInitials(coachProfile.name)}
+          </AvatarFallback>
+        </Avatar>
 
-        <h1 className="font-serif text-display-md text-text-primary tracking-tight">
+        <h1 className="mt-6 font-serif text-display-sm tracking-tight text-text-primary lg:text-display-md">
           Welcome to Evoa Fitness, {demoJourney.identity.firstName}
         </h1>
 
-        <div className="mt-8 grid gap-5 text-lg leading-relaxed text-text-secondary">
-          <p>{OPENING}</p>
+        <p className="mt-5 text-lg leading-relaxed text-text-primary">{OPENING}</p>
+
+        <div className="mt-4 grid gap-4 text-base leading-relaxed text-text-secondary">
           <p>{TOGETHER}</p>
           <p>{FORM_INTRO[demoJourney.identity.sex]}</p>
           <p>{PACE}</p>
           <p>{CLOSING}</p>
         </div>
 
-        <Button className="mt-10" onClick={start} size="lg" width="full-below-sm">
+        <Button
+          className="mt-10"
+          elevation="raised"
+          onClick={start}
+          size="lg"
+          width="full-below-sm"
+        >
           Let's get started
         </Button>
       </div>

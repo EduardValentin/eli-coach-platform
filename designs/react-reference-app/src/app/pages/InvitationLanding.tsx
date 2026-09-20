@@ -21,7 +21,7 @@ const UNAVAILABLE_BODY =
   'It may have expired or already been used. Ask your coach for a new one.';
 
 const HAND_OFF_NOTE =
-  "You'll set a password with Evoa's secure sign-in and come straight back here.";
+  "You'll confirm your email with a one-time code through Evoa's secure sign-in and come straight back here.";
 
 type InvitationResolution = ResolvedInvitation | { status: 'loading' };
 

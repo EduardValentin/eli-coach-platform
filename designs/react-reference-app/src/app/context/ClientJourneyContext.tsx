@@ -3,6 +3,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -139,16 +140,21 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
     ? 'reduced'
     : 'regular';
 
-  const firstName = clientProfile?.firstName ?? 'Jane';
-  const lastName = clientProfile?.lastName ?? 'Doe';
-  const email = clientProfile?.email ?? 'jane@example.com';
-  const age = clientProfile?.age ?? 28;
+  const demoPerson: DemoPerson = {
+    firstName: clientProfile?.firstName ?? 'Jane',
+    lastName: clientProfile?.lastName ?? 'Doe',
+    email: clientProfile?.email ?? 'jane@example.com',
+    age: clientProfile?.age ?? 28,
+  };
+
+  const demoPersonRef = useRef(demoPerson);
+  demoPersonRef.current = demoPerson;
 
   const [journeys, setJourneys] = useState<Record<string, ClientJourney>>(
     () => ({
       [DEMO_JOURNEY_CALL_ID]: seedJourney({
         callId: DEMO_JOURNEY_CALL_ID,
-        identity: demoIdentity({ firstName, lastName, email, age }, journeySex),
+        identity: demoIdentity(demoPerson, journeySex),
         stage: journeyStage,
         startPath: journeyStartPath,
         subscriptionStatus: journeySubscriptionStatus,
@@ -167,10 +173,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
         ...previous,
         [DEMO_JOURNEY_CALL_ID]: seedJourney({
           callId: DEMO_JOURNEY_CALL_ID,
-          identity: demoIdentity(
-            { firstName, lastName, email, age },
-            options.sex,
-          ),
+          identity: demoIdentity(demoPersonRef.current, options.sex),
           stage,
           startPath: options.startPath,
           subscriptionStatus: options.subscriptionStatus,
@@ -179,7 +182,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
         }),
       }));
     },
-    [firstName, lastName, email, age],
+    [],
   );
 
   useEffect(() => {

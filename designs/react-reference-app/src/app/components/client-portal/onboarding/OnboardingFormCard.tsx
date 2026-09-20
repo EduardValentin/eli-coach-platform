@@ -1,4 +1,4 @@
-import { useEffect, useMemo, type ReactNode } from 'react';
+import { useEffect, useMemo, type FormEvent, type ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 import type { OnboardingFormAnswers } from '../../../domain/journey';
 import type {
@@ -24,8 +24,10 @@ import {
 type OnboardingFormCardProps = {
   definition: OnboardingFormDefinition;
   answers: OnboardingFormAnswers;
+  consent: ReactNode;
   continueLabel: string;
   headingRef: (node: HTMLHeadingElement | null) => void;
+  onAttempt: () => void;
   onBack: (() => void) | null;
   onChange: (answers: OnboardingFormAnswers) => void;
   onContinue: (answers: OnboardingFormAnswers) => void;
@@ -50,8 +52,10 @@ function groupFields(fields: OnboardingField[]): FieldGroup[] {
 export function OnboardingFormCard({
   definition,
   answers,
+  consent,
   continueLabel,
   headingRef,
+  onAttempt,
   onBack,
   onChange,
   onContinue,
@@ -76,9 +80,15 @@ export function OnboardingFormCard({
     return () => subscription.unsubscribe();
   }, [form, definition, onChange, units]);
 
-  const submit = form.handleSubmit((next) =>
+  const handleValid = form.handleSubmit((next) =>
     onContinue(toAnswers(definition.fields, next, units)),
   );
+
+  const submit = (event: FormEvent<HTMLFormElement>) => {
+    onAttempt();
+
+    return handleValid(event);
+  };
 
   return (
     <section aria-labelledby="onboarding-form-heading" className={ONBOARDING_CARD_CLASS}>
@@ -93,10 +103,12 @@ export function OnboardingFormCard({
       <p className={ONBOARDING_INTRO_CLASS}>{definition.intro}</p>
 
       {definition.notice && (
-        <p className="mt-5 rounded-card border border-brand/10 bg-brand/5 px-4 py-3 text-sm leading-relaxed text-text-secondary">
+        <p className="mt-5 rounded-card border border-border-subtle bg-surface-quiet/60 px-4 py-3 text-sm leading-relaxed text-text-secondary">
           {definition.notice}
         </p>
       )}
+
+      {consent && <div className="mt-5">{consent}</div>}
 
       <Form {...form}>
         <form className="mt-7 grid gap-6" noValidate onSubmit={submit}>

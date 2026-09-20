@@ -25,35 +25,24 @@ import {
 } from '../../../services/onboardingService';
 import { Alert } from '../../ui/alert';
 import { Stepper } from '../../ui/stepper';
-import { ConsentCard } from './ConsentCard';
+import { OnboardingConsent } from './OnboardingConsent';
 import { OnboardingFormCard } from './OnboardingFormCard';
 import {
   EMPTY_PROGRESS_PHOTOS,
-  ProgressPhotoConsent,
+  ProgressPhotoBlock,
   type ProgressPhotos,
-} from './ProgressPhotoConsent';
+} from './ProgressPhotoBlock';
 
 const SAVE_DEBOUNCE_MS = 400;
 
 const SUBMIT_PROBLEM =
   "Your answers could not be sent just now. They're saved — try again in a moment.";
 
-const CONSENT_TITLES = {
-  disclaimer: 'Before we start',
-  'special-category': 'About the next questions',
-};
+const MISSING_CONSENT = 'Tick the box to carry on.';
 
-const CONSENT_INTROS = {
-  disclaimer: 'One thing to confirm, then we get going.',
-  'special-category': 'Read this, then tick the box to carry on.',
-};
+const RESUME_NOTE = 'Picking up where you left off.';
 
-const CONSENT_STATEMENTS = {
-  disclaimer: DISCLAIMER_ACKNOWLEDGEMENT,
-  'special-category': SPECIAL_CATEGORY_CONSENT_COPY,
-};
-
-type ConsentGate = keyof typeof CONSENT_TITLES;
+type ConsentKey = 'specialCategory' | 'disclaimer';
 
 type SaveState = 'idle' | 'saving' | 'saved';
 
@@ -71,24 +60,20 @@ function draftOf(onboarding: JourneyOnboarding): OnboardingDraft {
   };
 }
 
-function restoredDraft(
-  journeyId: string,
-  onboarding: JourneyOnboarding,
-): OnboardingDraft {
-  return loadDraft(journeyId) ?? draftOf(onboarding);
+function firstSpecialCategoryIndex(
+  steps: readonly OnboardingFormDefinition[],
+): number {
+  return steps.findIndex((step) => step.sensitivity === 'special-category');
 }
 
-function pendingConsent(
-  step: OnboardingFormDefinition,
-  stepIndex: number,
+function withConsent(
   consents: OnboardingConsents,
-): ConsentGate | null {
-  if (stepIndex === 0 && !consents.disclaimer) return 'disclaimer';
-  if (step.sensitivity === 'special-category' && !consents.specialCategory) {
-    return 'special-category';
-  }
-
-  return null;
+  key: ConsentKey,
+  agreed: boolean,
+): OnboardingConsents {
+  return key === 'disclaimer'
+    ? { ...consents, disclaimer: agreed }
+    : { ...consents, specialCategory: agreed };
 }
 
 function problemMessage(problem: unknown): string {
@@ -107,12 +92,14 @@ export function OnboardingWizard() {
     [demoJourney.identity.sex],
   );
 
-  const [draft, setDraft] = useState<OnboardingDraft>(() =>
-    restoredDraft(journeyId, demoJourney.onboarding),
+  const [savedDraft] = useState(() => loadDraft(journeyId));
+  const [draft, setDraft] = useState<OnboardingDraft>(
+    () => savedDraft ?? draftOf(demoJourney.onboarding),
   );
   const [photos, setPhotos] = useState<ProgressPhotos>(EMPTY_PROGRESS_PHOTOS);
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [problem, setProblem] = useState<string | null>(null);
+  const [consentProblem, setConsentProblem] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
 
   const draftRef = useRef(draft);
@@ -123,8 +110,8 @@ export function OnboardingWizard() {
 
   const stepIndex = Math.min(draft.currentFormIndex, steps.length - 1);
   const step = steps[stepIndex];
-  const gate = pendingConsent(step, stepIndex, draft.consents);
   const isLastStep = stepIndex === steps.length - 1;
+  const asksSpecialCategory = stepIndex === firstSpecialCategoryIndex(steps);
 
   const persist = useCallback(
     (next: OnboardingDraft) => {
@@ -165,19 +152,15 @@ export function OnboardingWizard() {
     [persist, steps],
   );
 
-  const agree = (consent: ConsentGate) => {
+  const agree = (key: ConsentKey) => (agreed: boolean) => {
     const current = draftRef.current;
-    const consents: OnboardingConsents =
-      consent === 'disclaimer'
-        ? { ...current.consents, disclaimer: true }
-        : { ...current.consents, specialCategory: true };
-
-    focusPending.current = true;
-    persist({ ...current, consents });
+    setConsentProblem(null);
+    persist({ ...current, consents: withConsent(current.consents, key, agreed) });
   };
 
   const goToStep = (index: number) => {
     focusPending.current = true;
+    setConsentProblem(null);
     persist({ ...draftRef.current, currentFormIndex: index });
   };
 
@@ -201,8 +184,23 @@ export function OnboardingWizard() {
     }
   };
 
+  const consentMissing = (consents: OnboardingConsents) => {
+    if (asksSpecialCategory && !consents.specialCategory) return true;
+
+    return isLastStep && !consents.disclaimer;
+  };
+
+  const reviewConsent = () => {
+    setConsentProblem(
+      consentMissing(draftRef.current.consents) ? MISSING_CONSENT : null,
+    );
+  };
+
   const continueFrom = (answers: OnboardingFormAnswers) => {
     const current = draftRef.current;
+
+    if (consentMissing(current.consents)) return;
+
     const next: OnboardingDraft = {
       ...current,
       answers: { ...current.answers, [step.id]: answers },
@@ -218,20 +216,27 @@ export function OnboardingWizard() {
     persist(next);
   };
 
-  const back = stepIndex === 0 && gate === 'disclaimer' ? null : () => goToStep(Math.max(stepIndex - 1, 0));
+  const back = stepIndex === 0 ? null : () => goToStep(stepIndex - 1);
   const offset = prefersReducedMotion ? 0 : 16;
 
   return (
     <>
-      <div className="mb-6 flex items-end justify-between gap-4">
-        <Stepper className="w-full max-w-xs" current={stepIndex + 1} total={steps.length} />
-        <p
-          aria-live="polite"
-          className="shrink-0 text-caption font-medium text-text-secondary"
-          role="status"
-        >
-          {SAVE_LABELS[saveState]}
-        </p>
+      <div className="mb-6 grid gap-2">
+        <div className="flex items-end justify-between gap-4">
+          <Stepper className="w-full max-w-xs" current={stepIndex + 1} total={steps.length} />
+          <p
+            aria-live="polite"
+            className="shrink-0 text-caption font-medium text-text-secondary"
+            role="status"
+          >
+            {SAVE_LABELS[saveState]}
+          </p>
+        </div>
+        {savedDraft && (
+          <p className="text-sm text-text-secondary" role="status">
+            {RESUME_NOTE}
+          </p>
+        )}
       </div>
 
       {problem && <Alert className="mb-4">{problem}</Alert>}
@@ -241,46 +246,57 @@ export function OnboardingWizard() {
           animate={{ opacity: 1, x: 0 }}
           exit={prefersReducedMotion ? undefined : { opacity: 0, x: -offset }}
           initial={prefersReducedMotion ? false : { opacity: 0, x: offset }}
-          key={`${stepIndex}-${gate ?? 'form'}`}
+          key={stepIndex}
           transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
         >
-          {gate ? (
-            <ConsentCard
-              headingRef={headingRef}
-              intro={CONSENT_INTROS[gate]}
-              onAgree={() => agree(gate)}
-              onBack={back}
-              statement={CONSENT_STATEMENTS[gate]}
-              title={CONSENT_TITLES[gate]}
-            />
-          ) : (
-            <OnboardingFormCard
-              answers={draft.answers[step.id]}
-              continueLabel={
-                isLastStep ? (sending ? 'Sending…' : 'Send to my coach') : 'Continue'
-              }
-              definition={step}
-              headingRef={headingRef}
-              key={step.id}
-              onBack={back}
-              onChange={handleAnswers}
-              onContinue={continueFrom}
-            >
-              {isLastStep && (
-                <ProgressPhotoConsent
+          <OnboardingFormCard
+            answers={draft.answers[step.id]}
+            consent={
+              asksSpecialCategory ? (
+                <OnboardingConsent
+                  checked={draft.consents.specialCategory}
+                  onChange={agree('specialCategory')}
+                  problem={consentProblem}
+                  statement={SPECIAL_CATEGORY_CONSENT_COPY}
+                />
+              ) : null
+            }
+            continueLabel={
+              isLastStep ? (sending ? 'Sending…' : 'Send to my coach') : 'Continue'
+            }
+            definition={step}
+            headingRef={headingRef}
+            key={step.id}
+            onAttempt={reviewConsent}
+            onBack={back}
+            onChange={handleAnswers}
+            onContinue={continueFrom}
+          >
+            {isLastStep && (
+              <>
+                <ProgressPhotoBlock
                   consented={draft.consents.progressPhotos}
                   onConsentChange={(consented) =>
                     persist({
                       ...draftRef.current,
-                      consents: { ...draftRef.current.consents, progressPhotos: consented },
+                      consents: {
+                        ...draftRef.current.consents,
+                        progressPhotos: consented,
+                      },
                     })
                   }
                   onPhotosChange={setPhotos}
                   photos={photos}
                 />
-              )}
-            </OnboardingFormCard>
-          )}
+                <OnboardingConsent
+                  checked={draft.consents.disclaimer}
+                  onChange={agree('disclaimer')}
+                  problem={consentProblem}
+                  statement={DISCLAIMER_ACKNOWLEDGEMENT}
+                />
+              </>
+            )}
+          </OnboardingFormCard>
         </motion.div>
       </AnimatePresence>
     </>

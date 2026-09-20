@@ -10,6 +10,7 @@ import {
   useClientJourneys,
 } from '../../context/ClientJourneyContext';
 import { ClientProfileProvider } from '../../context/ClientProfileContext';
+import { CoachProfileProvider } from '../../context/CoachProfileContext';
 
 function WelcomeSeenProbe() {
   const { demoJourney } = useClientJourneys();
@@ -28,17 +29,22 @@ function renderWelcome(devParams: string) {
   render(
     <MemoryRouter initialEntries={[url]}>
       <AppProvider>
-        <ClientProfileProvider>
-          <AssessmentCallProvider>
-            <ClientJourneyProvider>
-              <WelcomeSeenProbe />
-              <Routes>
-                <Route element={<ClientWelcome />} path="/portal/welcome" />
-                <Route element={<p>onboarding page</p>} path="/portal/onboarding" />
-              </Routes>
-            </ClientJourneyProvider>
-          </AssessmentCallProvider>
-        </ClientProfileProvider>
+        <CoachProfileProvider>
+          <ClientProfileProvider>
+            <AssessmentCallProvider>
+              <ClientJourneyProvider>
+                <WelcomeSeenProbe />
+                <Routes>
+                  <Route element={<ClientWelcome />} path="/portal/welcome" />
+                  <Route
+                    element={<p>onboarding page</p>}
+                    path="/portal/onboarding"
+                  />
+                </Routes>
+              </ClientJourneyProvider>
+            </AssessmentCallProvider>
+          </ClientProfileProvider>
+        </CoachProfileProvider>
       </AppProvider>
     </MemoryRouter>,
   );

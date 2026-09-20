@@ -109,6 +109,37 @@ describe('the coach clients list', () => {
       .toBeInTheDocument();
   });
 
+  it('opens her onboarding from the row once it is waiting on the coach', async () => {
+    // arrange
+    const user = renderList('?jstage=submitted');
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Onboarding' }));
+
+    // assert
+    const row = rowFor('Jane Doe');
+    expect(
+      within(row).getByRole('link', { name: 'Review onboarding' }),
+    ).toHaveAttribute('href', '/coach/clients/c1');
+  });
+
+  it('keeps the review action off a row she has not sent yet', async () => {
+    // arrange
+    const user = renderList('?jstage=onboarding');
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Onboarding' }));
+
+    // assert
+    const row = rowFor('Jane Doe');
+    expect(
+      within(row).queryByRole('link', { name: 'Review onboarding' }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(row).getByRole('link', { name: 'View details for Jane Doe' }),
+    ).toHaveAttribute('href', '/coach/clients/c1');
+  });
+
   it('keeps an onboarding client out of the roster rows she has not reached yet', async () => {
     // arrange
     renderList('?jstage=submitted');
