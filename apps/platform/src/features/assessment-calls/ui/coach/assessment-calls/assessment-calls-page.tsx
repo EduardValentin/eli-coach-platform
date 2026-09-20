@@ -5,7 +5,6 @@ import {
   type ShouldRevalidateFunctionArgs,
 } from "react-router";
 
-import { nameTimeZone } from "~/features/assessment-calls/contracts/call-moment";
 import { assessmentCallsContext } from "~/features/assessment-calls/server/guards/assessment-calls-context.server";
 import { haveOnlyListingParamsChanged } from "~/features/assessment-calls/ui/coach/assessment-call-listing";
 import { useCoachClock } from "~/features/assessment-calls/ui/coach/use-coach-clock";
@@ -38,9 +37,6 @@ export default function CoachAssessmentCallsRoute() {
         <h1 className="font-heading text-3xl font-medium text-text-primary lg:text-4xl">
           Assessment calls
         </h1>
-        <p className="mt-2 text-text-secondary">
-          Times in {nameTimeZone(now, timeZone)}
-        </p>
       </header>
 
       <AssessmentCallsSection

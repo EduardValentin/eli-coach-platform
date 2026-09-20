@@ -82,7 +82,7 @@ afterEach(() => {
 });
 
 describe("the coach's assessment calls page", () => {
-  it("heads the page and names the zone its times are in", async () => {
+  it("heads the page", async () => {
     // arrange, act
     await renderCallsPage();
 
@@ -90,9 +90,14 @@ describe("the coach's assessment calls page", () => {
     expect(
       screen.getByRole("heading", { level: 1, name: "Assessment calls" }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByText(`Times in ${COACH_TIME_ZONE}, GMT+3`),
-    ).toBeInTheDocument();
+  });
+
+  it("names no time zone, because every time is the reader's own", async () => {
+    // arrange, act
+    await renderCallsPage();
+
+    // assert
+    expect(screen.queryByText(/Times in /)).not.toBeInTheDocument();
   });
 
   it("opens on the calls that have not ended, soonest first", async () => {

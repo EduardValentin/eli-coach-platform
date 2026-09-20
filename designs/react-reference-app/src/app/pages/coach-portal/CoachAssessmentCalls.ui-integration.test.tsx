@@ -91,7 +91,7 @@ function listedNames(): string[] {
 }
 
 describe('the coach assessment calls page', () => {
-  it('titles the page and names the zone its times are shown in', () => {
+  it('titles the page', () => {
     // arrange
     const bookings: PrototypeBooking[] = [];
 
@@ -102,9 +102,17 @@ describe('the coach assessment calls page', () => {
     expect(
       screen.getByRole('heading', { level: 1, name: 'Assessment calls' }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByText(new RegExp(`Times in ${TIME_ZONE}`)),
-    ).toBeInTheDocument();
+  });
+
+  it('names no time zone, because every time is the reader’s own', () => {
+    // arrange
+    const bookings: PrototypeBooking[] = [];
+
+    // act
+    renderPage({ bookings });
+
+    // assert
+    expect(screen.queryByText(/Times in /)).not.toBeInTheDocument();
   });
 
   it('opens on the upcoming calls with the search and the filters ready', () => {

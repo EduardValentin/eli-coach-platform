@@ -95,7 +95,6 @@ describe.sequential("coach assessment calls integration", () => {
     expect(dashboard).toContain("Ana Popescu");
     expect(dashboard).toContain("Mon, Oct 19");
     expect(dashboard).toContain("5:00 PM");
-    expect(calls).toContain("Times in Europe/Bucharest, GMT+3");
     expect(calls).toContain("Ana Popescu");
     expect(calls).toContain("mailto:ana@example.com");
     expect(calls).toContain("Wants to talk about her glutes");
