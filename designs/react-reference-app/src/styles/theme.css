@@ -120,6 +120,7 @@
   --control-border-soft: oklch(0.922 0 0);
   --border-focus: oklch(0.708 0 0);
   --border-default: rgba(0, 0, 0, 0.1);
+  --stroke-quiet: oklch(0.985 0 0);
   --stroke-faint: oklch(0.97 0 0);
   --divider: oklch(0.87 0 0);
   --bundle-muted: oklch(0.52 0 0);
@@ -390,6 +391,7 @@
   --color-control-border-soft: var(--control-border-soft);
   --color-border-focus: var(--border-focus);
   --color-border-default: var(--border-default);
+  --color-stroke-quiet: var(--stroke-quiet);
   --color-stroke-faint: var(--stroke-faint);
   --color-divider: var(--divider);
   --color-bundle-muted: var(--bundle-muted);

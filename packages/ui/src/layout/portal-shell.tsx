@@ -93,7 +93,7 @@ export function PortalShell(props: PortalShellProps) {
         className="fixed inset-y-0 left-0 z-30 hidden w-64 lg:block"
       >
         <PortalSidebarSurface>
-          <div className="mb-4 flex items-center justify-between gap-3 border-b border-border-subtle p-6">
+          <div className="mb-4 flex items-center justify-between rounded-field border-b border-stroke-quiet px-3 py-6">
             {brand}
             {sidebarActions}
           </div>
@@ -140,7 +140,7 @@ function PortalSidebarSurface(props: PropsWithChildren) {
   const { children } = props;
 
   return (
-    <div className="flex h-full flex-col border-r border-border-subtle bg-surface-base text-text-primary">
+    <div className="flex h-full flex-col border-r border-stroke-faint bg-surface-base text-text-primary">
       {children}
     </div>
   );
@@ -174,7 +174,7 @@ function PortalSidebarNavigation(props: PortalSidebarNavigationProps) {
   return (
     <nav
       aria-label={navigationLabel}
-      className="flex-1 space-y-1 overflow-y-auto px-4 py-2"
+      className="flex flex-1 flex-col gap-1 overflow-y-auto px-4 py-2"
     >
       {links.map((link, linkIndex) => {
         const isActive = link.href === activeHref;

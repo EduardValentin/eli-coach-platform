@@ -56,7 +56,7 @@ function CoachIdentityLink({ coachAvatarUrl }: { coachAvatarUrl?: string }) {
 }
 
 const SidebarSurface = ({ children }: { children: ReactNode }) => (
-  <div className="flex flex-col h-full bg-white text-text-primary border-r border-neutral-100">
+  <div className="flex flex-col h-full bg-white text-text-primary border-r border-stroke-faint">
     {children}
   </div>
 );
@@ -74,7 +74,10 @@ const SidebarNavigation = ({
   pathname,
   pendingCheckins = 0,
 }: SidebarNavigationProps) => (
-  <nav className="flex flex-1 flex-col gap-1 px-4 py-2 overflow-y-auto">
+  <nav
+    aria-label="Coach portal navigation"
+    className="flex flex-1 flex-col gap-1 px-4 py-2 overflow-y-auto"
+  >
     {LINKS.map((link, linkIndex) => {
       const Icon = link.icon;
       const isActive =
@@ -150,7 +153,7 @@ const DesktopSidebar = ({
   pendingCheckins = 0,
 }: DesktopSidebarProps) => (
   <SidebarSurface>
-    <div className="p-6 mb-4 px-3 border-b border-neutral-50 rounded-field flex items-center justify-between">
+    <div className="p-6 mb-4 px-3 border-b border-stroke-quiet rounded-field flex items-center justify-between">
       {brand}
       {actions}
     </div>
