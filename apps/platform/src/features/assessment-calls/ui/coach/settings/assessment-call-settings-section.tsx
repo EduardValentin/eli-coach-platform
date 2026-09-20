@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@eli-coach-platform/ui/primitives";
 import { cn } from "@eli-coach-platform/ui/lib";
-import { toast } from "@eli-coach-platform/ui/overlays";
+import { toast } from "@eli-coach-platform/ui/toast";
 import { useEffect, useId, useState } from "react";
 import {
   Controller,

@@ -2,7 +2,7 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { Toaster } from "@eli-coach-platform/ui/overlays";
+import { Toaster } from "@eli-coach-platform/ui/toast";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";

@@ -1,4 +1,4 @@
-import { toast } from "@eli-coach-platform/ui/overlays";
+import { toast } from "@eli-coach-platform/ui/toast";
 import { useEffect } from "react";
 import {
   isRouteErrorResponse,
