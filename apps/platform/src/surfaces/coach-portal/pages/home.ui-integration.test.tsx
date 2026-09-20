@@ -49,6 +49,10 @@ const ENDED_TODAY = call("2026-09-20T05:00:00.000Z", {
   visitorName: "Carla Marin",
 });
 const LATER_TODAY = call("2026-09-20T15:00:00.000Z", { id: "later-today" });
+const ALSO_LATER_TODAY = call("2026-09-20T17:00:00.000Z", {
+  id: "also-later-today",
+  visitorName: "Gina Toma",
+});
 const TOMORROW = call("2026-09-21T15:00:00.000Z", {
   id: "tomorrow",
   visitorName: "Dana Radu",
@@ -75,9 +79,9 @@ afterEach(() => {
 });
 
 describe("the coach's dashboard", () => {
-  it("greets her and counts the calls starting today", async () => {
+  it("greets her and counts the calls she has left today", async () => {
     // arrange, act
-    await renderDashboard([ENDED_TODAY, LATER_TODAY, TOMORROW]);
+    await renderDashboard([LATER_TODAY, ALSO_LATER_TODAY, TOMORROW]);
 
     // assert
     expect(
@@ -85,6 +89,16 @@ describe("the coach's dashboard", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText("You have 2 assessment calls today."),
+    ).toBeInTheDocument();
+  });
+
+  it("stops counting a call once it has ended", async () => {
+    // arrange, act
+    await renderDashboard([ENDED_TODAY, TOMORROW]);
+
+    // assert
+    expect(
+      screen.getByText("You have 0 assessment calls today."),
     ).toBeInTheDocument();
   });
 

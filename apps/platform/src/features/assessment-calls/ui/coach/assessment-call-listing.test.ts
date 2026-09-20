@@ -5,7 +5,7 @@ import type { CoachAssessmentCall } from "~/features/assessment-calls/contracts/
 import {
   PAGE_SIZE,
   classifyCalls,
-  countTodayCalls,
+  countCallsLeftToday,
   filterCalls,
   haveOnlyListingParamsChanged,
   orderCalls,
@@ -107,19 +107,54 @@ describe("classifying a coach's calls", () => {
     expect(classified[0].isToday).toBe(true);
     expect(classified[1].isToday).toBe(false);
   });
+});
 
-  it("counts every call starting today, ended or not", () => {
-    // arrange
-    const calls = classifyCalls(
-      [callAt("2026-09-20T05:00:00.000Z"), callAt("2026-09-20T15:00:00.000Z")],
-      { now: NOON, timeZone: BUCHAREST },
+describe("counting the calls left today", () => {
+  function countLeft(starts: string[]): number {
+    return countCallsLeftToday(
+      classifyCalls(
+        starts.map((start) => callAt(start)),
+        { now: NOON, timeZone: BUCHAREST },
+      ),
     );
+  }
 
-    // act
-    const today = countTodayCalls(calls);
+  it("counts the calls still to come today", () => {
+    // arrange, act
+    const left = countLeft([
+      "2026-09-20T15:00:00.000Z",
+      "2026-09-20T17:00:00.000Z",
+    ]);
 
     // assert
-    expect(today).toBe(2);
+    expect(left).toBe(2);
+  });
+
+  it("leaves out a call that already ended today", () => {
+    // arrange, act
+    const left = countLeft([
+      "2026-09-20T05:00:00.000Z",
+      "2026-09-20T15:00:00.000Z",
+    ]);
+
+    // assert
+    expect(left).toBe(1);
+  });
+
+  it("keeps a call that is under way right now", () => {
+    // arrange, act
+    const left = countLeft(["2026-09-20T08:50:00.000Z"]);
+
+    // assert
+    expect(left).toBe(1);
+  });
+
+  it("leaves out a call that is not until tomorrow", () => {
+    // arrange, act
+    const left = countLeft(["2026-09-21T15:00:00.000Z"]);
+
+    // assert
+    expect(left).toBe(0);
   });
 });
 

@@ -44,6 +44,17 @@ export function sampleImminentBookings(now: Date): PrototypeBooking[] {
   ];
 }
 
+export function sampleTwoLeftTodayBookings(now: Date): PrototypeBooking[] {
+  return [
+    ...sampleImminentBookings(now),
+    sampleBooking('ac-sample-later-today', hoursFromNow(now, 3), {
+      name: 'Ioana Radu',
+      email: 'ioana.radu@example.com',
+      notes: '',
+    }),
+  ];
+}
+
 export function sampleDashboardBookings(now: Date): PrototypeBooking[] {
   return [
     ...sampleImminentBookings(now),

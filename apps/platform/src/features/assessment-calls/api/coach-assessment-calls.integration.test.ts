@@ -35,6 +35,7 @@ const CALLS_PAGE = "/coach/assessment-calls/";
 let heldInstant: Date | null = null;
 
 const MONDAY_MORNING = new Date("2026-10-19T08:00:00.000Z");
+const MONDAY_NIGHT = new Date("2026-10-19T20:00:00.000Z");
 const TWO_DAYS_LATER = new Date("2026-10-21T08:00:00.000Z");
 const VISITOR_TIME_ZONE = "Europe/London";
 
@@ -156,7 +157,7 @@ describe.sequential("coach assessment calls integration", () => {
     expect(past).not.toContain("Join call");
   });
 
-  it("counts the calls starting today in the greeting", async () => {
+  it("counts the calls she has left today in the greeting", async () => {
     // arrange
     await holdServerClock(MONDAY_MORNING);
     const [firstSlot] = await openSlots();
@@ -171,6 +172,24 @@ describe.sequential("coach assessment calls integration", () => {
 
     // assert
     expect(dashboard).toContain("You have 1 assessment call today.");
+  });
+
+  it("stops counting a call once it has ended, on the day it ran", async () => {
+    // arrange
+    await holdServerClock(MONDAY_MORNING);
+    const [firstSlot] = await openSlots();
+    await bookCall({
+      email: "ana@example.com",
+      fullName: "Ana Popescu",
+      startsAt: firstSlot,
+    });
+    await holdServerClock(MONDAY_NIGHT);
+
+    // act
+    const dashboard = await visibleDocument(await requestAsCoach(DASHBOARD));
+
+    // assert
+    expect(dashboard).toContain("You have 0 assessment calls today.");
   });
 
   it("keeps a CLIENT out of both coach pages", async () => {

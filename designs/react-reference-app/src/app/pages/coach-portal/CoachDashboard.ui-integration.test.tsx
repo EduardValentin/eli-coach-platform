@@ -28,6 +28,7 @@ function bookingAt(startsAt: Date, visitorName: string): PrototypeBooking {
 }
 
 const NOW = new Date(2026, 8, 21, 12, 0, 0);
+const ENDED_TODAY = new Date(2026, 8, 21, 9, 0, 0);
 const LATER_TODAY = new Date(2026, 8, 21, 18, 0, 0);
 
 beforeEach(() => {
@@ -77,7 +78,7 @@ describe('the coach dashboard', () => {
     expect(screen.getByText(/check-ins? to review\./)).toBeInTheDocument();
   });
 
-  it('counts the calls that start today in the greeting', () => {
+  it('counts the calls she has left today in the greeting', () => {
     // arrange
     const bookings = [bookingAt(LATER_TODAY, 'Maria Ionescu')];
 
@@ -87,6 +88,19 @@ describe('the coach dashboard', () => {
     // assert
     expect(
       screen.getByText('You have 1 assessment call today.'),
+    ).toBeInTheDocument();
+  });
+
+  it('stops counting a call once it has ended', () => {
+    // arrange
+    const bookings = [bookingAt(ENDED_TODAY, 'Sofia Dinu')];
+
+    // act
+    renderDashboard(bookings);
+
+    // assert
+    expect(
+      screen.getByText('You have 0 assessment calls today.'),
     ).toBeInTheDocument();
   });
 

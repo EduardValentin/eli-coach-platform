@@ -18,6 +18,7 @@ import {
   sampleDashboardBookings,
   sampleImminentBookings,
   sampleManyBookings,
+  sampleTwoLeftTodayBookings,
 } from '../services/assessmentCallSamples';
 import { useAssessmentCalls } from '../context/AssessmentCallContext';
 import { useCheckins } from '../context/CheckinContext';
@@ -102,7 +103,7 @@ function parseBookingOutcomeControl(value: string): PrototypeBookingOutcome {
   return 'success';
 }
 
-type DashboardCallsSeed = 'none' | 'one' | 'sample' | 'many';
+type DashboardCallsSeed = 'none' | 'one' | 'twoLeftToday' | 'sample' | 'many';
 
 type PendingCheckinsSeed = 'seeded' | 'none';
 
@@ -113,7 +114,14 @@ function parsePendingCheckinsControl(value: string): PendingCheckinsSeed {
 }
 
 function parseDashboardCallsControl(value: string): DashboardCallsSeed {
-  if (value === 'one' || value === 'sample' || value === 'many') return value;
+  if (
+    value === 'one' ||
+    value === 'twoLeftToday' ||
+    value === 'sample' ||
+    value === 'many'
+  ) {
+    return value;
+  }
 
   return 'none';
 }
@@ -159,6 +167,7 @@ export function DevToggle() {
     const seeds: Record<DashboardCallsSeed, PrototypeBooking[]> = {
       none: [],
       one: sampleImminentBookings(now),
+      twoLeftToday: sampleTwoLeftTodayBookings(now),
       sample: sampleDashboardBookings(now),
       many: sampleManyBookings(now),
     };
@@ -401,6 +410,9 @@ export function DevToggle() {
                     <SelectContent className={SELECT_CONTENT_CLASS}>
                       <SelectItem value="none">None</SelectItem>
                       <SelectItem value="one">One upcoming call</SelectItem>
+                      <SelectItem value="twoLeftToday">
+                        Two calls left today
+                      </SelectItem>
                       <SelectItem value="sample">
                         Sample calls (today, upcoming, past)
                       </SelectItem>

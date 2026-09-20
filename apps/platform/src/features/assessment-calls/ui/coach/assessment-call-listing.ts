@@ -92,8 +92,9 @@ export function upcomingCalls(
     .slice(0, limit);
 }
 
-export function countTodayCalls(calls: readonly ClassifiedCall[]): number {
-  return calls.filter((call) => call.isToday).length;
+export function countCallsLeftToday(calls: readonly ClassifiedCall[]): number {
+  return calls.filter((call) => call.isToday && call.timing === "upcoming")
+    .length;
 }
 
 export function parseStatusParam(raw: string | null): CoachCallStatus {

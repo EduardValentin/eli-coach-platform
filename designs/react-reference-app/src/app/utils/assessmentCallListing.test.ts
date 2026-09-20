@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   classifyCalls,
-  countTodayCalls,
+  countCallsLeftToday,
   filterCalls,
   pageOfCalls,
   paginationSteps,
@@ -330,24 +330,54 @@ describe('choosing the calls still to come', () => {
   });
 });
 
-describe('counting today’s assessment calls', () => {
-  it('counts every call starting today, ended or not', () => {
-    // arrange
-    const now = new Date('2026-09-21T09:00:00.000Z');
-    const calls = classifyCalls(
-      [
-        bookingAt('2026-09-21T06:00:00.000Z'),
-        bookingAt('2026-09-21T15:00:00.000Z'),
-        bookingAt('2026-09-22T15:00:00.000Z'),
-      ],
-      { now, timeZone: BUCHAREST },
-    );
+describe('counting the calls left today', () => {
+  const NOW = new Date('2026-09-21T09:00:00.000Z');
 
-    // act
-    const count = countTodayCalls(calls);
+  function countLeft(starts: string[]): number {
+    return countCallsLeftToday(
+      classifyCalls(
+        starts.map((start) => bookingAt(start)),
+        { now: NOW, timeZone: BUCHAREST },
+      ),
+    );
+  }
+
+  it('counts the calls still to come today', () => {
+    // arrange, act
+    const count = countLeft([
+      '2026-09-21T15:00:00.000Z',
+      '2026-09-21T17:00:00.000Z',
+    ]);
 
     // assert
     expect(count).toBe(2);
+  });
+
+  it('leaves out a call that already ended today', () => {
+    // arrange, act
+    const count = countLeft([
+      '2026-09-21T06:00:00.000Z',
+      '2026-09-21T15:00:00.000Z',
+    ]);
+
+    // assert
+    expect(count).toBe(1);
+  });
+
+  it('keeps a call that is under way right now', () => {
+    // arrange, act
+    const count = countLeft(['2026-09-21T08:50:00.000Z']);
+
+    // assert
+    expect(count).toBe(1);
+  });
+
+  it('leaves out a call that is not until tomorrow', () => {
+    // arrange, act
+    const count = countLeft(['2026-09-22T15:00:00.000Z']);
+
+    // assert
+    expect(count).toBe(0);
   });
 });
 

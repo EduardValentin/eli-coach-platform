@@ -7,7 +7,7 @@ import { useAssessmentCalls } from '../../context/AssessmentCallContext';
 import { useCheckins } from '../../context/CheckinContext';
 import {
   classifyCalls,
-  countTodayCalls,
+  countCallsLeftToday,
 } from '../../utils/assessmentCallListing';
 import {
   browserTimeZone,
@@ -28,7 +28,7 @@ export function CoachDashboard() {
 
   const now = new Date();
   const timeZone = browserTimeZone();
-  const todayCallCount = countTodayCalls(
+  const callsLeftToday = countCallsLeftToday(
     classifyCalls(bookings, { now, timeZone }),
   );
 
@@ -41,7 +41,7 @@ export function CoachDashboard() {
           </h1>
           <p className="text-muted-foreground font-medium">
             <span data-parity="today-count">
-              You have {todayCallCount} assessment call{todayCallCount !== 1 ? 's' : ''} today.
+              You have {callsLeftToday} assessment call{callsLeftToday !== 1 ? 's' : ''} today.
             </span>
             <span> {pendingCheckins.length} check-in{pendingCheckins.length !== 1 ? 's' : ''} to review.</span>
           </p>

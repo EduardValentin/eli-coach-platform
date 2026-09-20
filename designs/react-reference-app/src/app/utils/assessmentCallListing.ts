@@ -106,8 +106,9 @@ export function upcomingCalls(
     .slice(0, limit);
 }
 
-export function countTodayCalls(calls: ClassifiedCall[]): number {
-  return calls.filter((call) => call.isToday).length;
+export function countCallsLeftToday(calls: ClassifiedCall[]): number {
+  return calls.filter((call) => call.isToday && call.timing === 'upcoming')
+    .length;
 }
 
 export function parseStatus(raw: string | null): AssessmentCallStatus {
