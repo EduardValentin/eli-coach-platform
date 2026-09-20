@@ -2,8 +2,9 @@ import { clearBookedAssessmentCalls } from "../support/assessment-calls";
 import { expect, test } from "../support/fixtures";
 import { resolveRunId } from "../support/run-id";
 
-const VISITOR_NAME = `Visitor ${resolveRunId()}`;
-const VISITOR_EMAIL = `booking-${resolveRunId()}@evoa.fit`;
+const RUN_ID = resolveRunId();
+const VISITOR_NAME = `Visitor ${RUN_ID}`;
+const VISITOR_EMAIL = `booking-${RUN_ID}@evoa.fit`;
 const VISITOR_NOTES = "Recovering from a knee injury.";
 
 test("a visitor books an assessment call and the coach sees it", async ({
@@ -19,8 +20,8 @@ test("a visitor books an assessment call and the coach sees it", async ({
   const calendar = page.getByRole("grid", { name: "Available days" });
 
   // act
-  await calendar.locator("button:not([disabled])").first().click();
-  await page.locator("button[aria-pressed]").first().click();
+  await calendar.getByRole("button", { disabled: false }).first().click();
+  await page.getByRole("main").locator("button[aria-pressed]").first().click();
   await page.getByRole("button", { name: "Continue to your details" }).click();
   await page.getByLabel("Full Name").fill(VISITOR_NAME);
   await page.getByLabel("Email Address").fill(VISITOR_EMAIL);
