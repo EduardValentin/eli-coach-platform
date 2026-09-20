@@ -57,20 +57,8 @@ jobs:
 
           echo "Migrations are up to date with the schema."
 
-      - name: Lint
-        run: pnpm lint
-
-      - name: Typecheck
-        run: pnpm typecheck
-
-      - name: Run tests
-        run: pnpm test
-
-      - name: Build workspace
-        env:
-          STORE_ASSET_ROOT: /tmp/eli-coach-store-assets-build
-          MANAGEMENT_API_SECRET: ci-build-management-api-secret-value
-        run: pnpm build
+      - name: Validate workspace
+        run: pnpm validate
 
       - name: Run Lighthouse CI
         # No database on purpose: the container opens its pool on first use

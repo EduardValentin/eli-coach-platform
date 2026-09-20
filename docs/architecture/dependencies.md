@@ -94,7 +94,7 @@ External dependencies per component: C1 none; C2 drizzle-orm, pg; C3 zod; C4 nod
 
 ## Forbidden edges
 
-Every row is a named rule in `tools/dependency-cruiser.config.cjs` that fails `pnpm check:boundaries` — inside `pnpm typecheck`, `pnpm build`, every vitest run and the Docker builder stage — except the two rows marked review-owned. 35 rules; 34 have a fixture in `tools/boundary-fixtures/` and `tools/boundaries.test.mjs` asserts the exact set each fixture fires; `stability` alone is unfixtured. (Run 7 recorded 36 and 35; `browser-half-loaders` was deleted at `2173cbfb` when page loaders moved into their route modules, and `browser-half` already covered everything it forbade.) `tools/domain-layout.mjs` is a separate tool in the same gate and is not one of the 35 rules.
+Every row is a named rule in `tools/dependency-cruiser.config.cjs` that fails `pnpm check:boundaries` — directly inside `pnpm validate` and the Docker builder stage — except the two rows marked review-owned. 35 rules; 34 have a fixture in `tools/boundary-fixtures/` and `tools/boundaries.test.mjs` asserts the exact set each fixture fires; `stability` alone is unfixtured. (Run 7 recorded 36 and 35; `browser-half-loaders` was deleted at `2173cbfb` when page loaders moved into their route modules, and `browser-half` already covered everything it forbade.) `tools/domain-layout.mjs` is a separate tool in the same gate and is not one of the 35 rules.
 
 | From | To | Source of the rule | Enforced by |
 |---|---|---|---|

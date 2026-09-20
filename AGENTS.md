@@ -15,7 +15,7 @@ This production app is backed by a reference prototype in `designs/react-referen
 - `docs/architecture/`: the audited architecture record; `conventions.md` says where a file goes and what it may import.
 - `DESIGN.md`: visual identity and where the design system lives.
 - `PRD.md`: product behavior, business rules, and canonical vocabulary. Rename vocabulary when the PRD changes; never create synonyms.
-- Boundary rules: `tools/dependency-cruiser.config.cjs`; published surfaces: `knip.json`. `pnpm check:boundaries` runs dependency-cruiser and then `pnpm check:surfaces` (knip), inside `pnpm typecheck` and `pnpm build`; both are proven by `tools/boundaries.test.mjs`.
+- Boundary rules: `tools/dependency-cruiser.config.cjs`; published surfaces: `knip.json`. `pnpm check:boundaries` runs dependency-cruiser and then `pnpm check:surfaces` (knip), directly inside `pnpm validate` and the Docker builder stage; both are proven by `tools/boundaries.test.mjs`.
 
 Before implementing from a ticket, prototype, PRD, or branch: fetch `origin/main`, inspect the referenced commit or file, and restart stale previews. Never rely on memory, screenshots, or stale servers.
 
@@ -38,9 +38,7 @@ Pre-launch MVP with no users and no production environment.
 Before claiming completion or opening a PR:
 
 ```bash
-pnpm lint
-pnpm typecheck
-pnpm test
+pnpm validate
 pnpm test:lighthouse
 ```
 
@@ -64,7 +62,7 @@ Exercise UI changes in a browser. If browser verification is unavailable, say so
 
 ## Tests
 
-- Every vitest run typechecks first and refuses to run if it fails.
+- Every `pnpm test` run typechecks first and refuses to start Vitest if it fails.
 - Co-locate tests with code, organized by product concept. Every scenario has ordered `// arrange`, `// act`, `// assert` sections. Prefer `userEvent`; use `fireEvent` only for unsupported interactions.
 - Backend unit and integration tests live in separate files. Unit tests mock dependencies. Integration tests mock nothing: a suite extends `apps/platform/integration-test-config/`, starts real containers (Postgres, third parties behind WireMock honoring their real contract), spawns the production build as its own process, and drives an entry point over HTTP through `suite.request`. Assert the response and the side effects that reached the database or provider. A page is asserted by status and copy, not loader output.
 - Never construct a repository, service, or controller inside an integration test, never stand in for an internal collaborator, and never call below the entry point. Behavior unreachable from an entry point belongs in a unit test. The harness itself is not integration-tested. A repository is a Postgres adapter implementing a domain port.

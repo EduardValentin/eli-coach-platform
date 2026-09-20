@@ -13,7 +13,7 @@
     }
   },
   "scripts": {
-    "build": "pnpm check:boundaries && pnpm --filter @eli-coach-platform/platform build",
+    "build": "pnpm --filter @eli-coach-platform/platform build",
     "check:boundaries": "depcruise --config tools/dependency-cruiser.config.cjs apps/platform/src packages/config/src packages/content/src packages/db/src packages/domain/src packages/infrastructure/src packages/test-support/src packages/ui/src && pnpm check:surfaces && node tools/domain-layout.mjs",
     "check:surfaces": "knip --no-config-hints",
     "db:bootstrap:local": "./packages/db/scripts/bootstrap-local.sh",
@@ -32,10 +32,11 @@
     "start:platform": "pnpm --filter @eli-coach-platform/platform start:local",
     "store:assets:local:prepare": "./scripts/dev/prepare_local_store_assets.sh",
     "terms:pdf": "pnpm --filter @eli-coach-platform/content terms:pdf",
-    "test": "vitest run",
+    "test": "pnpm typecheck && vitest run",
     "test:e2e": "pnpm --filter @eli-coach-platform/platform test:e2e",
     "test:lighthouse": "lhci autorun --config=./lighthouserc.cjs",
-    "typecheck": "pnpm -r --if-present typecheck && pnpm check:boundaries"
+    "typecheck": "pnpm -r --if-present typecheck",
+    "validate": "pnpm lint && pnpm check:boundaries && pnpm test && STORE_ASSET_ROOT=/tmp/eli-coach-store-assets-build MANAGEMENT_API_SECRET=validation-build-management-api-secret-value pnpm build"
   },
   "devDependencies": {
     "@eslint/js": "catalog:",
