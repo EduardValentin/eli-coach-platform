@@ -38,6 +38,8 @@ export type CompletedCheckout =
 
 export const SIMULATED_LATENCY_MS = 1100;
 
+const sessions = new Map<string, CheckoutSession>();
+
 function checkoutSessionId(): string {
   return `cs-${Math.random().toString(36).slice(2, 10)}`;
 }
@@ -48,7 +50,14 @@ export async function createCheckoutSession(
 ): Promise<CheckoutSession> {
   await new Promise((resolve) => setTimeout(resolve, SIMULATED_LATENCY_MS));
 
-  return { sessionId: checkoutSessionId(), token, ...selection };
+  const session = { sessionId: checkoutSessionId(), token, ...selection };
+  sessions.set(session.sessionId, session);
+
+  return session;
+}
+
+export function findCheckoutSession(sessionId: string): CheckoutSession | null {
+  return sessions.get(sessionId) ?? null;
 }
 
 export async function completeCheckout(

@@ -15,6 +15,7 @@ import {
   type DetailRequest,
   type JourneyEvent,
   type JourneyIdentity,
+  type JourneyPricing,
   type JourneySex,
   type JourneyStage,
   type MeasurementEntry,
@@ -51,6 +52,8 @@ export type JourneyPayment = {
 type ClientJourneyContextType = {
   journeys: Record<string, ClientJourney>;
   journeyForCall: (callId: string) => ClientJourney | null;
+  journeyForPaymentToken: (token: string) => ClientJourney | null;
+  journeyForInvitationToken: (token: string) => ClientJourney | null;
   demoJourney: ClientJourney;
   dispatch: (callId: string, event: JourneyEvent) => void;
   seedDemoJourney: (stage: JourneyStage, options: DemoJourneyOptions) => void;
@@ -132,6 +135,10 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
     journeyReducedPricing,
   } = appState;
 
+  const visitorPricing: JourneyPricing = journeyReducedPricing
+    ? 'reduced'
+    : 'regular';
+
   const firstName = clientProfile?.firstName ?? 'Jane';
   const lastName = clientProfile?.lastName ?? 'Doe';
   const email = clientProfile?.email ?? 'jane@example.com';
@@ -145,7 +152,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
         stage: journeyStage,
         startPath: journeyStartPath,
         subscriptionStatus: journeySubscriptionStatus,
-        pricing: journeyReducedPricing ? 'reduced' : 'regular',
+        pricing: visitorPricing,
         now: new Date(),
       }),
     }),
@@ -195,12 +202,13 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
       };
 
       for (const booking of bookings) {
-        next[booking.id] = previous[booking.id] ?? heldJourney(booking);
+        next[booking.id] =
+          previous[booking.id] ?? heldJourney(booking, visitorPricing);
       }
 
       return next;
     });
-  }, [bookings]);
+  }, [bookings, visitorPricing]);
 
   const updateJourney = useCallback(
     (callId: string, revise: (journey: ClientJourney) => ClientJourney) => {
@@ -434,11 +442,29 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
     [journeys],
   );
 
+  const journeyForPaymentToken = useCallback(
+    (token: string) =>
+      Object.values(journeys).find(
+        (journey) => journey.paymentLink?.token === token,
+      ) ?? null,
+    [journeys],
+  );
+
+  const journeyForInvitationToken = useCallback(
+    (token: string) =>
+      Object.values(journeys).find(
+        (journey) => journey.invitation?.token === token,
+      ) ?? null,
+    [journeys],
+  );
+
   return (
     <ClientJourneyContext.Provider
       value={{
         journeys,
         journeyForCall,
+        journeyForPaymentToken,
+        journeyForInvitationToken,
         demoJourney: journeys[DEMO_JOURNEY_CALL_ID],
         dispatch,
         seedDemoJourney,

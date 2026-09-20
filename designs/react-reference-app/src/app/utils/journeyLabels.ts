@@ -1,4 +1,5 @@
 import { format } from 'date-fns';
+import { bundleLengthLabel } from '../domain/bundles';
 import { DEMO_JOURNEY_CALL_ID } from '../context/ClientJourneyContext';
 import {
   deliveryDate,
@@ -37,6 +38,4 @@ export function startPathLabel(
     : IMMEDIATE_START_LABEL;
 }
 
-export function bundleLengthLabel(months: number): string {
-  return months === 1 ? '1 month' : `${months} months`;
-}
+export { bundleLengthLabel };

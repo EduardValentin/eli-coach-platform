@@ -13,6 +13,12 @@ import {
   EmailSection,
   EmailText,
 } from './_primitives';
+import {
+  bundleLengthLabel,
+  bundlePerMonth,
+  bundleTotal,
+  COACHING_BUNDLES,
+} from '../app/domain/bundles';
 
 export type PaymentLinkVariant = 'regular' | 'reduced';
 
@@ -25,13 +31,6 @@ export type PaymentLinkProps = {
   termsUrl?: string;
 };
 
-type BundlePrice = {
-  title: string;
-  months: number;
-  regularPerMonth: number;
-  reducedPerMonth: number;
-};
-
 const BRAND = EMAIL_BRAND;
 const FONT_SERIF = EMAIL_FONT_SERIF;
 const FONT_SANS = EMAIL_FONT_SANS;
@@ -42,12 +41,6 @@ const DEFAULT_COACH_NAME = 'Eli';
 
 const EYEBROW = 'Your bundles — 1-on-1 coaching';
 const BUTTON_LABEL = 'Choose your bundle';
-
-const BUNDLES: BundlePrice[] = [
-  { title: '1 month', months: 1, regularPerMonth: 159, reducedPerMonth: 139 },
-  { title: '3 months', months: 3, regularPerMonth: 149, reducedPerMonth: 125 },
-  { title: '6 months', months: 6, regularPerMonth: 139, reducedPerMonth: 119 },
-];
 
 const SUBSCRIPTION_NOTE =
   'Each bundle is a subscription that renews at its own length — every 1, 3 or 6 months — and our terms apply.';
@@ -71,10 +64,6 @@ const copy: Record<
       "It was good to talk to you. I've put your reduced pricing on all three bundles below, so you can take your time and choose.",
   },
 };
-
-function perMonth(bundle: BundlePrice, variant: PaymentLinkVariant): number {
-  return variant === 'reduced' ? bundle.reducedPerMonth : bundle.regularPerMonth;
-}
 
 export function PaymentLink({
   variant = 'regular',
@@ -133,23 +122,19 @@ export function PaymentLink({
             </EmailSection>
 
             <EmailSection style={bundlesOuterStyle}>
-              {BUNDLES.map((bundle) => {
-                const monthly = perMonth(bundle, variant);
-
-                return (
-                  <div key={bundle.title} style={bundleCardStyle}>
-                    <EmailText style={bundleTitleStyle}>
-                      {bundle.title}
-                    </EmailText>
-                    <EmailText style={bundlePriceStyle}>
-                      €{monthly} per month
-                    </EmailText>
-                    <EmailText style={bundleTotalStyle}>
-                      €{monthly * bundle.months} in total
-                    </EmailText>
-                  </div>
-                );
-              })}
+              {COACHING_BUNDLES.map((bundle) => (
+                <div key={bundle.id} style={bundleCardStyle}>
+                  <EmailText style={bundleTitleStyle}>
+                    {bundleLengthLabel(bundle.months)}
+                  </EmailText>
+                  <EmailText style={bundlePriceStyle}>
+                    €{bundlePerMonth(bundle, variant)} per month
+                  </EmailText>
+                  <EmailText style={bundleTotalStyle}>
+                    €{bundleTotal(bundle, variant)} in total
+                  </EmailText>
+                </div>
+              ))}
             </EmailSection>
 
             <EmailSection style={buttonSectionStyle}>

@@ -17,6 +17,9 @@ import { ProductDetails } from "./pages/ProductDetails";
 import { CartDrawer } from "./components/CartDrawer";
 import { Pricing } from "./pages/Pricing";
 import { SelectBundle } from "./pages/SelectBundle";
+import { CheckoutStandIn } from "./pages/CheckoutStandIn";
+import { CheckoutComplete } from "./pages/CheckoutComplete";
+import { InvitationLanding } from "./pages/InvitationLanding";
 import { PortalLayout } from "./components/client-portal/PortalLayout";
 import { ClientDashboard } from "./pages/client-portal/ClientDashboard";
 import { ClientMessages } from "./pages/client-portal/ClientMessages";
@@ -43,6 +46,8 @@ import { ClientWorkoutHistory } from "./pages/client-portal/ClientWorkoutHistory
 import { ClientWorkoutReview } from "./pages/client-portal/ClientWorkoutReview";
 import { ClientCycleTracker } from "./pages/client-portal/ClientCycleTracker";
 import { ClientOnboarding } from "./pages/client-portal/ClientOnboarding";
+import { ClientWelcome } from "./pages/client-portal/ClientWelcome";
+import { ClientJourneyGate } from "./components/client-portal/ClientJourneyGate";
 import { CoachClientCycle } from "./pages/coach-portal/CoachClientCycle";
 import { EditClientProfile } from "./pages/coach-portal/EditClientProfile";
 import { CycleProvider } from "./context/CycleContext";
@@ -117,6 +122,9 @@ export const router = createBrowserRouter(
         { path: "store/:productId", Component: ProductDetails },
         { path: "pricing", Component: Pricing },
         { path: "select-bundle", Component: SelectBundle },
+        { path: "checkout/complete", Component: CheckoutComplete },
+        { path: "checkout/:sessionId", Component: CheckoutStandIn },
+        { path: "invitation/:token", Component: InvitationLanding },
         { path: "email-preview", Component: EmailPreview },
         { path: "downloads", Component: DownloadPage },
         { path: "privacy", Component: Privacy },
@@ -124,6 +132,9 @@ export const router = createBrowserRouter(
         {
           element: <RequireSession session="client" />,
           children: [
+            {
+              element: <ClientJourneyGate />,
+              children: [
         {
           path: "portal",
           Component: PortalLayout,
@@ -141,7 +152,10 @@ export const router = createBrowserRouter(
           ]
         },
         { path: "portal/workout/:planId/:weekIdx/:dayIdx", Component: WorkoutViewer },
+        { path: "portal/welcome", Component: ClientWelcome },
         { path: "portal/onboarding", Component: ClientOnboarding },
+              ]
+            },
           ]
         },
         {

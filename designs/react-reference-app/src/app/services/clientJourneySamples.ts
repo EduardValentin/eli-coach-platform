@@ -216,12 +216,15 @@ export function seedJourney(seed: JourneySeed): ClientJourney {
   };
 }
 
-export function heldJourney(booking: PrototypeBooking): ClientJourney {
+export function heldJourney(
+  booking: PrototypeBooking,
+  pricing: JourneyPricing,
+): ClientJourney {
   return {
     callId: booking.id,
     stage: 'held',
     identity: identityFromBooking(booking),
-    pricing: 'regular',
+    pricing,
     paymentLink: null,
     paidAt: null,
     invitation: null,

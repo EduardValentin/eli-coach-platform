@@ -1,16 +1,8 @@
-import { Outlet, Navigate } from 'react-router';
+import { Outlet } from 'react-router';
 import { PortalSidebar } from './PortalSidebar';
 import { ActiveWorkoutBanner } from './ActiveWorkoutBanner';
-import { useClientJourneys } from '../../context/ClientJourneyContext';
-import { isBeforeStage } from '../../domain/journey';
 
 export function PortalLayout() {
-  const { demoJourney } = useClientJourneys();
-
-  if (isBeforeStage(demoJourney.stage, 'submitted')) {
-    return <Navigate to="/portal/onboarding" replace />;
-  }
-
   return (
     <div className="min-h-screen bg-surface-page">
       <a
