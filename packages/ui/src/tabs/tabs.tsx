@@ -3,6 +3,9 @@ import { Tabs as RadixTabs } from "radix-ui";
 
 import { cn } from "../lib/cn";
 
+const PAIRS_A_FOURTH_TRIGGER_BELOW_SM =
+  "max-sm:has-[>*:nth-child(4)]:grid max-sm:has-[>*:nth-child(4)]:w-full max-sm:has-[>*:nth-child(4)]:grid-cols-2";
+
 export const Tabs = React.forwardRef<
   HTMLDivElement,
   React.ComponentPropsWithoutRef<typeof RadixTabs.Root>
@@ -23,7 +26,8 @@ export const TabsList = React.forwardRef<
   <RadixTabs.List
     ref={ref}
     className={cn(
-      "flex h-auto w-fit max-w-full flex-wrap items-center justify-center gap-1 rounded-card bg-surface-neutral p-1 text-text-muted max-sm:has-[>*:nth-child(4)]:grid max-sm:has-[>*:nth-child(4)]:w-full max-sm:has-[>*:nth-child(4)]:grid-cols-2",
+      "flex h-auto w-fit max-w-full flex-wrap items-center justify-center gap-1 rounded-card bg-surface-neutral p-1 text-text-muted",
+      PAIRS_A_FOURTH_TRIGGER_BELOW_SM,
       className,
     )}
     {...props}

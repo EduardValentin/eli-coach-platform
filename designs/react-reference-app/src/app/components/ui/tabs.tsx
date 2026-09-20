@@ -6,14 +6,16 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "./utils";
 
+const PAIRS_A_FOURTH_TRIGGER_BELOW_SM =
+  "max-sm:has-[>*:nth-child(4)]:grid max-sm:has-[>*:nth-child(4)]:w-full max-sm:has-[>*:nth-child(4)]:grid-cols-2";
+
 const tabsListVariants = cva(
   "bg-muted text-muted-foreground inline-flex w-fit items-center justify-center flex",
   {
     variants: {
       variant: {
         default: "h-9 rounded-control p-[3px]",
-        segmented:
-          "h-auto max-w-full flex-wrap gap-1 rounded-card p-1 max-sm:has-[>*:nth-child(4)]:grid max-sm:has-[>*:nth-child(4)]:w-full max-sm:has-[>*:nth-child(4)]:grid-cols-2",
+        segmented: `h-auto max-w-full flex-wrap gap-1 rounded-card p-1 ${PAIRS_A_FOURTH_TRIGGER_BELOW_SM}`,
       },
     },
     defaultVariants: {
