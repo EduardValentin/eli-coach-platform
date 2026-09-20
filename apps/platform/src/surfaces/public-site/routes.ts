@@ -2,8 +2,8 @@ import { index, relative } from "@react-router/dev/routes";
 
 import { accountsDeadEndRoutes } from "../../features/accounts/routes";
 import {
+  assessmentCallsBookingRoutes,
   assessmentCallsJoinRoutes,
-  assessmentCallsPublicRoutes,
 } from "../../features/assessment-calls/routes";
 import { storePublicRoutes } from "../../features/store/routes";
 
@@ -18,7 +18,7 @@ export const publicSiteRoutes = [
     route(PRICING_PATH.slice(1), "./pages/pricing.tsx"),
     route("privacy", "./pages/privacy.tsx"),
     route("terms", "./pages/terms.tsx"),
-    ...assessmentCallsPublicRoutes,
+    ...assessmentCallsBookingRoutes,
     ...storePublicRoutes,
   ]),
   ...accountsDeadEndRoutes,

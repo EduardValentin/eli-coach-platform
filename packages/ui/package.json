@@ -17,8 +17,8 @@
     "./overlays": "./src/overlays/index.ts",
     "./primitives": "./src/primitives/index.ts",
     "./tabs": "./src/tabs/index.ts",
-    "./styles.css": "./src/styles.css",
-    "./toast": "./src/toast/index.ts"
+    "./toast": "./src/toast/index.ts",
+    "./styles.css": "./src/styles.css"
   },
   "peerDependencies": {
     "motion": "catalog:",

@@ -3,6 +3,8 @@ import type { FeatureFlagSet } from "@eli-coach-platform/domain/feature-flag";
 import { InMemoryProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 import { describe, expect, it } from "vitest";
 
+import { assessmentCallsTable } from "~/features/assessment-calls/data/schema.server";
+
 import {
   composeAssessmentCallsFeature,
   type AssessmentCallsFeatureHandles,
@@ -53,7 +55,7 @@ describe("composeAssessmentCallsFeature", () => {
     // arrange
     const feature = composeAssessmentCallsFeature({
       ...createHandles({ WAITLIST_MODE: false }),
-      database: createDatabaseReturning([BOOKED_ROW]),
+      database: createDatabaseWithoutSavedAvailability([BOOKED_ROW]),
     });
 
     // act
@@ -92,7 +94,9 @@ function createHandles(
   };
 }
 
-function createDatabaseReturning(rows: readonly unknown[]): DatabaseClient {
+function createDatabaseWithoutSavedAvailability(
+  bookedCallRows: readonly unknown[],
+): DatabaseClient {
   function chainResolving(resolvedRows: readonly unknown[]) {
     const chain = {
       from: () => chain,
@@ -106,14 +110,11 @@ function createDatabaseReturning(rows: readonly unknown[]): DatabaseClient {
     return chain;
   }
 
-  // The composition reads the coach's availability before her booked calls
-  // (Promise.all preserves that order), so the first select answers no row
-  // and PostgresCoachAvailability falls back to its own default; the second
-  // answers the seeded calls.
-  let selectCount = 0;
-
   return {
-    select: () => chainResolving(selectCount++ === 0 ? [] : rows),
+    select: () => ({
+      from: (table: unknown) =>
+        chainResolving(table === assessmentCallsTable ? bookedCallRows : []),
+    }),
   } as unknown as DatabaseClient;
 }
 

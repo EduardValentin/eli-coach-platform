@@ -81,7 +81,7 @@ describe("Select", () => {
     expect(option).toHaveClass("*:[span]:last:flex");
   });
 
-  it("keeps a long value on one line instead of wrapping or growing the trigger", () => {
+  it("carries the one-line clipping classes its trigger contract publishes", () => {
     // arrange, act
     renderHourSelect();
     const trigger = screen.getByRole("combobox", { name: "Start" });
@@ -89,6 +89,7 @@ describe("Select", () => {
     // assert
     expect(trigger).toHaveClass("whitespace-nowrap");
     expect(trigger).toHaveClass("[&>span:first-child]:overflow-hidden");
+    expect(trigger).toHaveClass("[&>span:first-child]:text-ellipsis");
     expect(trigger).toHaveClass("[&>span:first-child]:whitespace-nowrap");
   });
 });

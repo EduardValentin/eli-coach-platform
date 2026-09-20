@@ -38,6 +38,34 @@ const WEEKDAY_OPTIONS: WeekdayOption[] = [
 const START_HOUR_OPTIONS = Array.from({ length: 24 }, (_, hour) => hour);
 const END_HOUR_OPTIONS = Array.from({ length: 24 }, (_, hour) => hour + 1);
 
+const START_HOUR_FIELD_ID = 'assessment-call-start-hour';
+const MEETING_LINK_FIELD_ID = 'assessment-call-meeting-link';
+
+// In DOM order: the weekday fieldset, then the hours, then the link. A
+// problem with no field of its own (invalid_time_zone, a page-level Alert)
+// is absent here and so never receives focus.
+const REFUSED_FIELD_SELECTORS: ReadonlyArray<
+  [AssessmentCallSettingsProblem, string]
+> = [
+  ['no_weekday', 'input[type="checkbox"]'],
+  ['invalid_hours', `#${START_HOUR_FIELD_ID}`],
+  ['invalid_meeting_link', `#${MEETING_LINK_FIELD_ID}`],
+];
+
+function focusFirstRefusedField(
+  form: HTMLFormElement,
+  problems: AssessmentCallSettingsProblem[],
+) {
+  const match = REFUSED_FIELD_SELECTORS.find(([problem]) =>
+    problems.includes(problem),
+  );
+
+  if (!match) return;
+
+  const [, selector] = match;
+  form.querySelector<HTMLElement>(selector)?.focus();
+}
+
 function formatHourLabel(hour: number): string {
   return `${String(hour).padStart(2, '0')}:00`;
 }
@@ -168,13 +196,7 @@ export function AssessmentCallSettingsSection() {
     const form = formRef.current;
     if (!form || problems.length === 0) return;
 
-    if (problems.includes('no_weekday')) {
-      form.querySelector<HTMLInputElement>('input[type="checkbox"]')?.focus();
-    } else if (problems.includes('invalid_hours')) {
-      form.querySelector<HTMLButtonElement>('#assessment-call-start-hour')?.focus();
-    } else if (problems.includes('invalid_meeting_link')) {
-      form.querySelector<HTMLInputElement>('#assessment-call-meeting-link')?.focus();
-    }
+    focusFirstRefusedField(form, problems);
   }, [problems]);
 
   const toggleWeekday = (day: number) => {
@@ -261,7 +283,7 @@ export function AssessmentCallSettingsSection() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <HourSelect
-            id="assessment-call-start-hour"
+            id={START_HOUR_FIELD_ID}
             label="Start"
             hour={draft.startHour}
             hourOptions={START_HOUR_OPTIONS}
@@ -285,9 +307,9 @@ export function AssessmentCallSettingsSection() {
         )}
 
         <div className="space-y-2">
-          <Label htmlFor="assessment-call-meeting-link">Meeting link</Label>
+          <Label htmlFor={MEETING_LINK_FIELD_ID}>Meeting link</Label>
           <Input
-            id="assessment-call-meeting-link"
+            id={MEETING_LINK_FIELD_ID}
             type="url"
             inputMode="url"
             placeholder="https://meet.google.com/…"

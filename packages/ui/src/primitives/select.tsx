@@ -67,7 +67,7 @@ export const SelectTrigger = React.forwardRef<
 >(({ children, className, ...props }, ref) => (
   <RadixSelect.Trigger
     className={cn(
-      "flex h-12 w-full min-w-0 items-center justify-between gap-2 whitespace-nowrap rounded-field border border-control-border-soft bg-surface-quiet/50 px-3 py-1 text-base outline-none transition-[color,box-shadow] data-[placeholder]:text-text-muted focus-visible:border-border-focus aria-invalid:border-feedback-danger disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 [&>span:first-child]:flex [&>span:first-child]:items-center [&>span:first-child]:gap-2 [&>span:first-child]:overflow-hidden [&>span:first-child]:whitespace-nowrap md:text-sm",
+      "flex h-12 w-full min-w-0 items-center justify-between gap-2 whitespace-nowrap rounded-field border border-control-border-soft bg-surface-quiet/50 px-3 py-1 text-base outline-none transition-[color,box-shadow] data-[placeholder]:text-text-muted focus-visible:border-border-focus aria-invalid:border-feedback-danger disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 [&>span:first-child]:flex [&>span:first-child]:items-center [&>span:first-child]:gap-2 [&>span:first-child]:overflow-hidden [&>span:first-child]:text-ellipsis [&>span:first-child]:whitespace-nowrap md:text-sm",
       className,
     )}
     ref={ref}

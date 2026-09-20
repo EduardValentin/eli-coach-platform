@@ -9,7 +9,7 @@ import {
 
 const { route } = relative(import.meta.dirname);
 
-export const assessmentCallsPublicRoutes = [
+export const assessmentCallsBookingRoutes = [
   route(BOOK_ROUTE_SEGMENT, "./ui/public/book/book-page.tsx"),
 ];
 

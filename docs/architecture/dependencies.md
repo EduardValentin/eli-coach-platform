@@ -49,7 +49,7 @@ Generated from a cold cruise of the working tree that merges main (e2d86a3a) int
 | C11 public-site | C8 waitlist | 7 | contracts, `ui/shared` presentation, `ui/public` |
 | C11 public-site | C9 accounts | 3 | contracts, guards, `ui/public/auth-nav-actions` |
 | C11 public-site | C14 server | 1 | `shell/layout.server.ts` reads `runtimeConfigContext` |
-| C11 public-site | C17 assessment-calls | 4 | `routes.ts` takes the public route fragment (`assessmentCallsPublicRoutes`) and, since GEN-192, the join route fragment (`assessmentCallsJoinRoutes`), registered outside the layout beside `accountsDeadEndRoutes`; `pages/pricing.tsx`, `sections/hero/hero.tsx` and `sections/about/about.tsx` take `BOOK_PATH` from `contracts/paths.ts` and nothing else |
+| C11 public-site | C17 assessment-calls | 4 | `routes.ts` takes the public route fragment (`assessmentCallsBookingRoutes`, renamed from `assessmentCallsPublicRoutes` by the rebase-resolution round) and, since GEN-192, the join route fragment (`assessmentCallsJoinRoutes`), registered outside the layout beside `accountsDeadEndRoutes`; `pages/pricing.tsx`, `sections/hero/hero.tsx` and `sections/about/about.tsx` take `BOOK_PATH` from `contracts/paths.ts` and nothing else |
 | C12 client-portal | C3 config | 1 | |
 | C12 client-portal | C5 ui | 2 | |
 | C12 client-portal | C6 infrastructure | 2 | pwa |
