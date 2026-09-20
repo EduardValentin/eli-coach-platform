@@ -127,7 +127,7 @@ function PortalMobileDrawer(props: PropsWithChildren) {
       />
       <motion.div
         className="absolute bottom-0 left-0 top-16 w-64 shadow-floating"
-        data-parity-root="CoachPortalDrawer"
+        data-parity-root="PortalMobileDrawer"
         variants={DRAWER_VARIANTS}
       >
         {children}

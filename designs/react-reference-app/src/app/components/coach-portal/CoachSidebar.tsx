@@ -30,12 +30,12 @@ const LINKS = [
   { name: 'Settings', href: '/coach/settings', icon: Settings },
 ];
 
-const COACH_IDENTITY_CLASS_NAME =
-  'flex items-center gap-3 min-w-0 rounded-control hover:opacity-80 transition-opacity';
-
-function CoachIdentityContent({ coachAvatarUrl }: { coachAvatarUrl?: string }) {
+function CoachIdentityLink({ coachAvatarUrl }: { coachAvatarUrl?: string }) {
   return (
-    <>
+    <Link
+      to="/coach/profile"
+      className="flex items-center gap-3 min-w-0 rounded-control hover:opacity-80 transition-opacity"
+    >
       {coachAvatarUrl ? (
         <img
           src={coachAvatarUrl}
@@ -51,14 +51,6 @@ function CoachIdentityContent({ coachAvatarUrl }: { coachAvatarUrl?: string }) {
         <p className="font-serif font-semibold text-lg text-text-primary">Evoa</p>
         <p className="text-[10px] uppercase tracking-widest text-brand font-bold">Coach Portal</p>
       </div>
-    </>
-  );
-}
-
-function CoachIdentityLink({ coachAvatarUrl }: { coachAvatarUrl?: string }) {
-  return (
-    <Link to="/coach/profile" className={COACH_IDENTITY_CLASS_NAME}>
-      <CoachIdentityContent coachAvatarUrl={coachAvatarUrl} />
     </Link>
   );
 }
@@ -114,19 +106,17 @@ const SidebarNavigation = ({
   </nav>
 );
 
-interface CoachPortalDrawerProps extends SidebarNavigationProps {
-  prefersReducedMotion: boolean;
-}
-
 const CoachPortalDrawer = ({
   firstLinkRef,
   onNavigate,
   pathname,
   pendingCheckins,
-  prefersReducedMotion,
-}: CoachPortalDrawerProps) => (
+}: SidebarNavigationProps) => {
+  const prefersReducedMotion = useReducedMotion() ?? false;
+
+  return (
   <motion.div
-    className="absolute top-16 left-0 bottom-0 w-64 shadow-xl"
+    className="absolute top-16 left-0 bottom-0 w-64 shadow-floating"
     transition={
       prefersReducedMotion
         ? { duration: 0 }
@@ -143,7 +133,8 @@ const CoachPortalDrawer = ({
       />
     </SidebarSurface>
   </motion.div>
-);
+  );
+};
 
 interface SidebarContentProps {
   actions?: ReactNode;
@@ -229,7 +220,6 @@ export function CoachSidebar() {
               onNavigate={menu.close}
               pathname={location.pathname}
               pendingCheckins={pendingCount}
-              prefersReducedMotion={prefersReducedMotion}
             />
           </>
         )}
