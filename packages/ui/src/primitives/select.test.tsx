@@ -64,4 +64,20 @@ describe("Select", () => {
     // assert
     expect(screen.getByRole("option", { name: "10:00" })).toBeInTheDocument();
   });
+
+  it("lays out the value and option text from the trigger and item, since Radix drops a className passed directly to Select.Value and Select.ItemText", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderHourSelect();
+    const trigger = screen.getByRole("combobox", { name: "Start" });
+
+    // act
+    trigger.focus();
+    await user.keyboard("{Enter}");
+    const option = screen.getByRole("option", { name: "10:00" });
+
+    // assert
+    expect(trigger).toHaveClass("[&>span:first-child]:flex");
+    expect(option).toHaveClass("*:[span]:last:flex");
+  });
 });

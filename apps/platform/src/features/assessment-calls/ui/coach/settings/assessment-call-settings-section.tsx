@@ -268,10 +268,13 @@ function HourSelectField(props: {
   options: ReadonlyArray<{ label: string; value: number }>;
 }) {
   const { control, errorId, id, label, name, options } = props;
+  const labelId = `${id}-label`;
 
   return (
     <div className="space-y-2">
-      <Label htmlFor={id}>{label}</Label>
+      <Label htmlFor={id} id={labelId}>
+        {label}
+      </Label>
       <Controller
         control={control}
         name={name}
@@ -283,6 +286,7 @@ function HourSelectField(props: {
             <SelectTrigger
               aria-describedby={errorId ?? undefined}
               aria-invalid={errorId ? true : undefined}
+              aria-labelledby={labelId}
               id={id}
               onBlur={field.onBlur}
               ref={field.ref}

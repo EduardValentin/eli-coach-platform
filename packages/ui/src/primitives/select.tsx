@@ -67,7 +67,7 @@ export const SelectTrigger = React.forwardRef<
 >(({ children, className, ...props }, ref) => (
   <RadixSelect.Trigger
     className={cn(
-      "flex h-12 w-full min-w-0 items-center justify-between gap-2 rounded-field border border-control-border-soft bg-surface-quiet/50 px-3 py-1 text-base outline-none transition-[color,box-shadow] data-[placeholder]:text-text-muted focus-visible:border-border-focus aria-invalid:border-feedback-danger disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+      "flex h-12 w-full min-w-0 items-center justify-between gap-2 rounded-field border border-control-border-soft bg-surface-quiet/50 px-3 py-1 text-base outline-none transition-[color,box-shadow] data-[placeholder]:text-text-muted focus-visible:border-border-focus aria-invalid:border-feedback-danger disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 [&>span:first-child]:flex [&>span:first-child]:items-center [&>span:first-child]:gap-2 md:text-sm",
       className,
     )}
     ref={ref}
@@ -163,7 +163,7 @@ export const SelectItem = React.forwardRef<
 >(({ children, className, ...props }, ref) => (
   <RadixSelect.Item
     className={cn(
-      "relative flex w-full cursor-default items-center gap-2 rounded-tile py-1.5 pr-8 pl-2 text-sm outline-none select-none focus:bg-surface-neutral focus:text-text-primary data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      "relative flex w-full cursor-default items-center gap-2 rounded-tile py-1.5 pr-8 pl-2 text-sm outline-none select-none focus:bg-surface-neutral focus:text-text-primary data-[disabled]:pointer-events-none data-[disabled]:opacity-50 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
       className,
     )}
     ref={ref}

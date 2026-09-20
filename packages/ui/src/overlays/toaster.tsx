@@ -7,6 +7,8 @@ const TOAST_STYLE = {
   "--normal-bg": "var(--color-surface-base)",
   "--normal-border": "var(--color-border-default)",
   "--normal-text": "var(--color-text-primary)",
+  "--success-text": "var(--color-feedback-success)",
+  "--error-text": "var(--color-feedback-danger)",
 } as CSSProperties;
 
 export function Toaster(props: ToasterProps) {
