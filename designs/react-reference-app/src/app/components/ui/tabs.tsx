@@ -12,7 +12,8 @@ const tabsListVariants = cva(
     variants: {
       variant: {
         default: "h-9 rounded-control p-[3px]",
-        segmented: "h-auto max-w-full flex-wrap gap-1 rounded-card p-1",
+        segmented:
+          "h-auto max-w-full flex-wrap gap-1 rounded-card p-1 max-sm:has-[>*:nth-child(4)]:grid max-sm:has-[>*:nth-child(4)]:w-full max-sm:has-[>*:nth-child(4)]:grid-cols-2",
       },
     },
     defaultVariants: {

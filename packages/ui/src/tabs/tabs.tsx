@@ -23,7 +23,7 @@ export const TabsList = React.forwardRef<
   <RadixTabs.List
     ref={ref}
     className={cn(
-      "flex h-auto w-fit max-w-full flex-wrap items-center justify-center gap-1 rounded-card bg-surface-neutral p-1 text-text-muted",
+      "flex h-auto w-fit max-w-full flex-wrap items-center justify-center gap-1 rounded-card bg-surface-neutral p-1 text-text-muted max-sm:has-[>*:nth-child(4)]:grid max-sm:has-[>*:nth-child(4)]:w-full max-sm:has-[>*:nth-child(4)]:grid-cols-2",
       className,
     )}
     {...props}
