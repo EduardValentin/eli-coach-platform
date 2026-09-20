@@ -19,15 +19,15 @@ This document is the source of product behavior, business rules, and vocabulary.
 
 - Automatic training prescription. The coach stays in control of formulas, exercise prescription, and deload adjustments.
 - Admin roles beyond the coach, community or social features, and advanced analytics.
-- Video calling inside the product. Check-ins meet on Google Meet.
+- Video calling inside the product. Assessment calls and check-ins meet in an external meeting room on Google Meet; the product only links to it.
 
 ## Users
 
-**Visitor.** A woman discovering the coach through the public site. She can browse the landing page, blog, pricing, and store, and acquire store products with her email. She cannot create an account. She can see 1-on-1 coaching bundles but cannot check out for coaching without the unique token issued after an assessment call.
+**Visitor.** A woman discovering the coach through the public site. She can browse the landing page, blog, pricing, and store, acquire store products with her email, and book a free assessment call with the coach. She cannot create an account. She can see 1-on-1 coaching bundles but cannot check out for coaching without the unique token issued after an assessment call.
 
 **Client.** An invited, paying woman with an active coaching subscription. She uses the client portal to receive assigned plans, follow and log workouts, message the coach, schedule check-ins, track her menstrual cycle, and adjust her schedule within allowed limits. Clients with a regular cycle and clients without an active cycle (amenorrhea, post-menopause, hormonal contraception) receive the same level of personalized coaching.
 
-**Coach.** The trainer running the business. She uses the coach portal to onboard clients, set calorie and macro targets per client, chat, create exercises, build and assign plans, manage check-ins, and review client workouts and cycle data.
+**Coach.** The trainer running the business. She uses the coach portal to set when she takes assessment calls and see who booked them, onboard clients, set calorie and macro targets per client, chat, create exercises, build and assign plans, manage check-ins, and review client workouts and cycle data.
 
 ## Product and Brand Principles
 
@@ -57,64 +57,76 @@ The product is modelled first in a reference prototype application before it is 
 7. **The 3- and 6-month plans have a 7-day cancellation window.** Within the first 7 days the client may cancel if coaching is not the right fit; afterwards the full term applies. The 1-month plan is month-to-month with no term commitment.
 8. **The coach can see each client's subscription**: its term and whether it is active or expired.
 
+## Assessment Calls
+
+An **Assessment Call** is a free 30-minute video call between a visitor and the coach, booked from the public site without an account. It has the visitor's name, email, and optional notes, a start time, the visitor's time zone, the coach's time zone, and a join link.
+
+9. **Every assessment call lasts 30 minutes and reserves the coach for a full hour.** Slots start on the hour, one per hour, because each call reserves the 30 minutes after it as a buffer. The visitor sees only the 30-minute call; the buffer and the 60-minute reservation are never shown to her.
+10. **The coach sets her availability: the weekdays and the daily hour interval in which she takes assessment calls.** Any of the seven weekdays can be chosen, and at least one must be. Start and end are whole hours between 00:00 and 24:00 with the start before the end; slots start on the hour from the start hour, the last one an hour before the end hour (17:00 to 20:00 yields 17:00, 18:00, and 19:00). The hours are the coach's own local time and are saved together with her time zone. Until she saves for the first time, availability is Monday to Friday, 17:00 to 20:00 Europe/Bucharest. A change applies only to what is offered from then on: calls already booked stay booked, keep blocking their hour, and stay listed.
+11. **A slot is offered only when it lies inside the coach's availability, starts at least two hours from now, falls within the next 30 days, and is not taken.** A slot is taken when its hour overlaps time already reserved by a booked call. A taken slot is refused identically whoever holds it, including the visitor's own earlier booking, so the answer never reveals who holds a slot. A day without an open slot cannot be selected.
+12. **One email address holds at most one upcoming assessment call.** A booking for an address that already holds one is refused with a generic message that reveals nothing about the existing call: no date, time, join link, or booking reference. Past calls do not block a new booking.
+13. **A booking sends two emails in the platform's shared email styling: a confirmation to the visitor and a notification to the coach.** Each carries the visitor's name and email, her notes when given, the call's date and time in the recipient's time zone with the zone named, the 30-minute duration, the join link, an add-to-calendar action for Google Calendar, and a calendar file that opens in Apple Calendar, Outlook, and Google Calendar in the recipient's local time. Nothing is written to the coach's calendar and no reminder is sent.
+14. **Every assessment call meets in the coach's single meeting room.** The coach sets the meeting room's link in her settings: one absolute `https` URL, or empty while she has none. Each call has a join link, a platform link for that call that stays valid indefinitely and redirects, when opened, to the meeting room current at that moment, so a room change reaches every call, including those in emails already sent. While no meeting room is set, the join link of a known call shows a page saying the call link is not ready yet and reveals no call detail; the join link of an unknown call shows a privacy-safe not-found page. A join link keeps working in waiting list mode.
+15. **Every time shown to a person is in her own local time zone, and stored times keep their zone.** The booking page, its confirmation, and both emails name the zone. The coach portal shows times in the coach's local zone. Every call records the visitor's time zone and the coach's time zone at booking.
+
 ## Waiting List
 
-9. **Waiting list mode is an operator-controlled feature flag.** While enabled, coaching CTAs are hidden and the free store and all landing page content stay available. The persisted pre-launch default is enabled; an absent flag means normal coaching mode. If the flag cannot be read, the public site uses waiting list mode without making an availability claim.
-10. **Every accepted submission joins one waitlist; allocation determines pricing.** A limited number of reduced-price places exist. The allocation recorded at submission decides whether the visitor receives reduced pricing on every coaching bundle or regular pricing. Joining stays open after reduced-price places run out. The number of reduced-price places cannot be lowered while more people hold reduced-price places than the new number allows.
-11. **Public availability is qualitative, delayed, and privacy-preserving.** Public surfaces show exactly one of "Reduced-price spots available", "Limited spots", or "Reduced-price spots closed", refreshed at fixed half-hour intervals. They never expose a count, progress toward capacity, or an immediate change after a submission. Reduced prices and promotional copy appear only while availability is "available" or "limited". If availability cannot be determined, a generic outage message is shown, signup stays open, and no reduced-price claim is made.
-12. **Duplicate submissions look identical to new ones.** Re-submitting a registered email keeps its existing allocation, refreshes consent and retention, and sends no additional confirmation email. The browser shows the same generic confirmation and celebration for new and duplicate submissions.
-13. **Validation, bot verification, and server failures are real error outcomes.** Invalid emails stay on the form for correction, bot-failed submissions are rejected, and server failures ask the visitor to retry and offer the support email. A newly accepted regular-pricing entrant receives a confirmation email stating that joining succeeded, reduced-price places were already full, and the signup does not include reduced pricing.
+16. **Waiting list mode is an operator-controlled feature flag.** While enabled, coaching CTAs are hidden and the free store and all landing page content stay available. The persisted pre-launch default is enabled; an absent flag means normal coaching mode. If the flag cannot be read, the public site uses waiting list mode without making an availability claim.
+17. **Every accepted submission joins one waitlist; allocation determines pricing.** A limited number of reduced-price places exist. The allocation recorded at submission decides whether the visitor receives reduced pricing on every coaching bundle or regular pricing. Joining stays open after reduced-price places run out. The number of reduced-price places cannot be lowered while more people hold reduced-price places than the new number allows.
+18. **Public availability is qualitative, delayed, and privacy-preserving.** Public surfaces show exactly one of "Reduced-price spots available", "Limited spots", or "Reduced-price spots closed", refreshed at fixed half-hour intervals. They never expose a count, progress toward capacity, or an immediate change after a submission. Reduced prices and promotional copy appear only while availability is "available" or "limited". If availability cannot be determined, a generic outage message is shown, signup stays open, and no reduced-price claim is made.
+19. **Duplicate submissions look identical to new ones.** Re-submitting a registered email keeps its existing allocation, refreshes consent and retention, and sends no additional confirmation email. The browser shows the same generic confirmation and celebration for new and duplicate submissions.
+20. **Validation, bot verification, and server failures are real error outcomes.** Invalid emails stay on the form for correction, bot-failed submissions are rejected, and server failures ask the visitor to retry and offer the support email. A newly accepted regular-pricing entrant receives a confirmation email stating that joining succeeded, reduced-price places were already full, and the signup does not include reduced pricing.
 
 ## Digital Store
 
-14. **The store is public.** Products are free or paid, and each shows which it is. Product types include e-books, workout challenges, nutrition tips and recipes, workout plans, nutrition plans, and fat loss plans. Products can be inspected before acquisition and added to a persistent cart.
-15. **Acquisition requires an email, acceptance of the current Terms, and bot verification.** The Privacy Policy is a linked notice, not a choice. Marketing consent is a separate, optional, unchecked choice that never blocks delivery.
-16. **Outcomes are explicit.** An invalid email, failed bot verification, failed delivery, and server failure each produce a clear message, and failures keep the visitor's selections and details for retry. If a requested product is no longer available, the whole request is rejected, the cart drops the unavailable items, and the visitor is asked to review and retry. Successful free requests confirm the resources were sent to the email, without order or price framing.
-17. **One delivery email per accepted request** offers a single primary download action for all granted resources. Download access is reached from that email, lasts seven days from each request, and can be revoked. Invalid, expired, or revoked links show one privacy-safe unavailable message that does not reveal what the link pointed to, and the visitor can request the resources again.
-18. **Delivery is rate-limited per email address**: at most one delivery per minute and ten in any rolling 24 hours. Addresses differing only by a sub-address tag share one allowance. A declined request explains which limit was reached, records nothing, and keeps the visitor's selections. A delivery that fails or whose outcome is unknown does not consume the allowance.
-19. **Acquisitions belong to the entered email.** An acquisition is recorded against the email the visitor enters and is never linked to an account. Signed-in visitors acquire products exactly as signed-out visitors do, by entering an email.
-20. **Lost access is recovered by acquiring again.** A visitor who no longer has a delivery email requests a free product again from the store, or buys a paid product again. The platform never restores access from an account.
+21. **The store is public.** Products are free or paid, and each shows which it is. Product types include e-books, workout challenges, nutrition tips and recipes, workout plans, nutrition plans, and fat loss plans. Products can be inspected before acquisition and added to a persistent cart.
+22. **Acquisition requires an email, acceptance of the current Terms, and bot verification.** The Privacy Policy is a linked notice, not a choice. Marketing consent is a separate, optional, unchecked choice that never blocks delivery.
+23. **Outcomes are explicit.** An invalid email, failed bot verification, failed delivery, and server failure each produce a clear message, and failures keep the visitor's selections and details for retry. If a requested product is no longer available, the whole request is rejected, the cart drops the unavailable items, and the visitor is asked to review and retry. Successful free requests confirm the resources were sent to the email, without order or price framing.
+24. **One delivery email per accepted request** offers a single primary download action for all granted resources. Download access is reached from that email, lasts seven days from each request, and can be revoked. Invalid, expired, or revoked links show one privacy-safe unavailable message that does not reveal what the link pointed to, and the visitor can request the resources again.
+25. **Delivery is rate-limited per email address**: at most one delivery per minute and ten in any rolling 24 hours. Addresses differing only by a sub-address tag share one allowance. A declined request explains which limit was reached, records nothing, and keeps the visitor's selections. A delivery that fails or whose outcome is unknown does not consume the allowance.
+26. **Acquisitions belong to the entered email.** An acquisition is recorded against the email the visitor enters and is never linked to an account. Signed-in visitors acquire products exactly as signed-out visitors do, by entering an email.
+27. **Lost access is recovered by acquiring again.** A visitor who no longer has a delivery email requests a free product again from the store, or buys a paid product again. The platform never restores access from an account.
 
 ## Plans and Training
 
-21. **A client has at most one active plan.** The coach must end the current plan before starting a new one. Past plans are preserved for history.
-22. **Plans follow a template-instance model.** Plan Templates are reusable structures the coach creates, edits, copies, and deletes. Plan Instances are personalized plans assigned to one client and tied to one Goal. Templates are optional; a client plan can start from one or from scratch.
-23. **Each plan instance is tied to a client Goal.** A Goal names the training objective (Muscle Building, Fat Loss, Strength, Recomposition, Maintenance, or Custom), has a start date, and moves from active to completed.
-24. **Templates default to 4 weeks with 1 deload week.** The deload week is visually distinguished and prompts the coach to manually adjust volume and intensity. The system never auto-modifies plan variables.
-25. **Plan building is iterative.** The coach may schedule 1–2 weeks at a time and add weeks incrementally to an active plan; the client's plan updates with each addition. The coach can insert a deload week at any position at any time.
-26. **Existing weeks of an active plan are immutable.** Once a client has started, weeks already part of the plan cannot be deleted; only newly added weeks can be removed.
-27. **Clients see only current and past weeks.** Weeks the coach has built ahead are hidden until the client reaches them.
-28. **The coach sets a default schedule for each plan.** Clients may adjust it in ways that fit their needs, with limited flexibility rather than unrestricted restructuring.
-29. **Workout logging records actual against prescribed.** Each set is tracked individually with actual weight and reps and compared with the prescription.
-30. **Exercise swaps are coach-controlled.** Only the coach defines swap variants for an exercise assignment; during a workout a client may swap only to those variants. Swap history is recorded per workout.
-31. **Rest time is coach-configured per exercise assignment, in seconds.** Clients can extend or skip the rest timer during a workout; both prescribed and actual rest are recorded.
-32. **A workout is complete only when every prescribed set is logged.** Ending a workout early is an explicit action, after which the workout is recorded with only the sets logged so far.
-33. **Exercise videos are raw `.mp4` uploads**, supplied through drag-and-drop or an upload button.
-34. **System messages record plan and scheduling events.** Creating or updating a client's plan, and every check-in event (request, approval, reschedule, cancellation, coach-initiated check-in), sends a message in the coach–client chat thread and notifies the relevant party.
+28. **A client has at most one active plan.** The coach must end the current plan before starting a new one. Past plans are preserved for history.
+29. **Plans follow a template-instance model.** Plan Templates are reusable structures the coach creates, edits, copies, and deletes. Plan Instances are personalized plans assigned to one client and tied to one Goal. Templates are optional; a client plan can start from one or from scratch.
+30. **Each plan instance is tied to a client Goal.** A Goal names the training objective (Muscle Building, Fat Loss, Strength, Recomposition, Maintenance, or Custom), has a start date, and moves from active to completed.
+31. **Templates default to 4 weeks with 1 deload week.** The deload week is visually distinguished and prompts the coach to manually adjust volume and intensity. The system never auto-modifies plan variables.
+32. **Plan building is iterative.** The coach may schedule 1–2 weeks at a time and add weeks incrementally to an active plan; the client's plan updates with each addition. The coach can insert a deload week at any position at any time.
+33. **Existing weeks of an active plan are immutable.** Once a client has started, weeks already part of the plan cannot be deleted; only newly added weeks can be removed.
+34. **Clients see only current and past weeks.** Weeks the coach has built ahead are hidden until the client reaches them.
+35. **The coach sets a default schedule for each plan.** Clients may adjust it in ways that fit their needs, with limited flexibility rather than unrestricted restructuring.
+36. **Workout logging records actual against prescribed.** Each set is tracked individually with actual weight and reps and compared with the prescription.
+37. **Exercise swaps are coach-controlled.** Only the coach defines swap variants for an exercise assignment; during a workout a client may swap only to those variants. Swap history is recorded per workout.
+38. **Rest time is coach-configured per exercise assignment, in seconds.** Clients can extend or skip the rest timer during a workout; both prescribed and actual rest are recorded.
+39. **A workout is complete only when every prescribed set is logged.** Ending a workout early is an explicit action, after which the workout is recorded with only the sets logged so far.
+40. **Exercise videos are raw `.mp4` uploads**, supplied through drag-and-drop or an upload button.
+41. **System messages record plan and scheduling events.** Creating or updating a client's plan, and every check-in event (request, approval, reschedule, cancellation, coach-initiated check-in), sends a message in the coach–client chat thread and notifies the relevant party.
 
 ## Check-ins
 
 A **Check-in** has a client, a coach, a date and time, a type (`ad-hoc` or `recurring`), a status (`pending`, `confirmed`, `rescheduling`, `declined`, `cancelled`, or `completed`), a source (`client-request`, `coach-request`, or `plan-schedule`), who initiated it, an optional linked plan, an optional note from either party, a reschedule count, and, while rescheduling, who proposed the new time.
 
-35. **Recurring check-ins are auto-confirmed when a plan is assigned.** The system generates weekly check-ins for the plan's duration, linked to the plan, with a configurable frequency defaulting to one per week (default slot Wednesday 10 AM). They need no approval.
-36. **Ad-hoc check-ins require approval from the other party.** Both the coach and the client can initiate them; the coach from the messaging area or a client's profile, the client from chat or the Check-ins page.
-37. **A client has at most one pending ad-hoc request at a time.** While one is pending, the client cannot submit another and the action is disabled. A client can cancel her own pending request; a cancelled request can no longer be approved.
-38. **Scheduling uses coach availability.** Slots are hourly from 9 AM to 4 PM, past dates are disabled, and already-booked slots are unavailable, for new check-ins and reschedules alike.
-39. **Either party can propose a reschedule for a confirmed check-in.** The original slot is released and the check-in enters a rescheduling state. The other party can accept the new time, decline, or counter-propose. A proposal may carry an optional message that appears in the chat thread.
-40. **Declining a reschedule cancels the check-in.** It never reverts to the original time.
-41. **At most 2 reschedule rounds per check-in.** Without agreement after 2 rounds the check-in is automatically cancelled.
-42. **Check-ins meet on Google Meet.** The client portal offers a "Join Meet" link for the next confirmed check-in.
+42. **Recurring check-ins are auto-confirmed when a plan is assigned.** The system generates weekly check-ins for the plan's duration, linked to the plan, with a configurable frequency defaulting to one per week (default slot Wednesday 10 AM). They need no approval.
+43. **Ad-hoc check-ins require approval from the other party.** Both the coach and the client can initiate them; the coach from the messaging area or a client's profile, the client from chat or the Check-ins page.
+44. **A client has at most one pending ad-hoc request at a time.** While one is pending, the client cannot submit another and the action is disabled. A client can cancel her own pending request; a cancelled request can no longer be approved.
+45. **Scheduling uses coach availability.** Slots are hourly from 9 AM to 4 PM, past dates are disabled, and already-booked slots are unavailable, for new check-ins and reschedules alike.
+46. **Either party can propose a reschedule for a confirmed check-in.** The original slot is released and the check-in enters a rescheduling state. The other party can accept the new time, decline, or counter-propose. A proposal may carry an optional message that appears in the chat thread.
+47. **Declining a reschedule cancels the check-in.** It never reverts to the original time.
+48. **At most 2 reschedule rounds per check-in.** Without agreement after 2 rounds the check-in is automatically cancelled.
+49. **Check-ins meet on Google Meet.** The client portal offers a "Join Meet" link for the next confirmed check-in.
 
 ## Menstrual Cycle
 
-43. **Every client has a menstrual cycle profile**, created during self-onboarding and visible to the coach: regularity (regular or irregular), average cycle length, average period length, conditions (PCOS, Endometriosis, PMDD, Heavy periods, Amenorrhea, Fibroids), and common symptoms.
-44. **Current cycle phase is derived** from the last recorded period start date and the client's average cycle length, and shown on the client dashboard and the coach's client detail page.
-45. **Clients without an active cycle are fully supported.** Cycle tracking and cycle-driven adjustments are gracefully skipped or replaced with non-cycle-based coaching.
+50. **Every client has a menstrual cycle profile**, created during self-onboarding and visible to the coach: regularity (regular or irregular), average cycle length, average period length, conditions (PCOS, Endometriosis, PMDD, Heavy periods, Amenorrhea, Fibroids), and common symptoms.
+51. **Current cycle phase is derived** from the last recorded period start date and the client's average cycle length, and shown on the client dashboard and the coach's client detail page.
+52. **Clients without an active cycle are fully supported.** Cycle tracking and cycle-driven adjustments are gracefully skipped or replaced with non-cycle-based coaching.
 
 ## Legal and Public Submissions
 
-46. **The current Privacy Policy and Terms & Conditions are dedicated public pages** at `/privacy` and `/terms`, each showing its version and effective date. Every public page ends with links to both, in normal and waiting list mode.
-47. **Every public submission rejects bot-driven attempts before it affects system state.** This covers waitlist capture (hero, footer, pricing page), store acquisition for logged-out buyers, assessment call booking, and any future public submission point. The mechanism must offer accessible alternatives or require no visual or motor input, in keeping with the WCAG AA target.
+53. **The current Privacy Policy and Terms & Conditions are dedicated public pages** at `/privacy` and `/terms`, each showing its version and effective date. Every public page ends with links to both, in normal and waiting list mode.
+54. **Every public submission rejects bot-driven attempts before it affects system state.** This covers waitlist capture (hero, footer, pricing page), store acquisition for logged-out buyers, assessment call booking, and any future public submission point. The mechanism must offer accessible alternatives or require no visual or motor input, in keeping with the WCAG AA target.
 
 ---
 
@@ -137,15 +149,23 @@ Convert visitors into assessment calls and introduce the coaching philosophy, tr
 
 ### Waiting list mode
 
-While enabled, the navigation shows the brand logo, Home, Store, Pricing, and the free-resource cart; sign-in and portal links are hidden. The hero CTA becomes a waitlist email capture form, the About "Start my plan" CTA is hidden, and the footer CTA switches to waitlist messaging with the same capture and availability behavior as the hero and pricing page. All content sections stay visible. Email capture validates format before submission and behaves per Business Rules 9–13 and 47.
+While enabled, the navigation shows the brand logo, Home, Store, Pricing, and the free-resource cart; sign-in and portal links are hidden. The hero CTA becomes a waitlist email capture form, the About "Start my plan" CTA is hidden, and the footer CTA switches to waitlist messaging with the same capture and availability behavior as the hero and pricing page. All content sections stay visible. Email capture validates format before submission and behaves per Business Rules 16–20 and 54.
 
 ### Pricing (`/pricing`)
 
 Shows the three coaching bundles and their pricing. Accessible in waiting list mode, where it also offers waitlist capture and shows reduced prices alongside regular prices only while reduced-price places remain open. Checkout is token-gated per Business Rule 6.
 
-### Assessment call booking
+### Assessment call booking (`/book`)
 
-Visitors book a 30-minute assessment call from the landing page CTA. After the call, the visitor receives an email with a unique tokenized link that opens the coaching bundle page with checkout enabled.
+Visitors book a free 30-minute assessment call with the coach, reached from the hero, About, and pricing CTAs in normal mode. The page sits inside the public site layout with the navigation bar and footer. In waiting list mode those CTAs stay hidden and the page does not exist: opening `/book` by URL, or submitting a booking, gets a not-found page (404).
+
+1. The page introduces the call, the coach, its 30-minute duration, and that it is a video call, beside a two-step form.
+2. Step 1, date and time: a calendar of the next 30 days. A day is selectable only when it has at least one open slot; past days and days without open slots are disabled and announced as such. Selecting a day lists its open slots as start times per Business Rules 9–11, in the visitor's local time zone with the zone named. If open slots cannot be loaded, the page says so instead of failing.
+3. Step 2, details: full name, email, and optional notes for the coach. Invalid or missing values are explained inline and keep the chosen slot and entered values. Bot verification runs on submission before anything is stored (Business Rule 54); a rejected verification stores nothing, sends nothing, and shows a retryable message.
+4. Confirmation: a successful booking is stored and confirmed on screen with the date, the time in the visitor's zone with the zone named, and the 30-minute duration, and tells the visitor the join link is on its way by email; the two emails of Business Rule 13 are sent. A refresh returns to the first step; the email is the durable record.
+5. Error outcomes: a slot taken meanwhile returns the visitor to the date and time step with refreshed slots and an explanation, keeping her details; an email address that already holds an upcoming call gets the generic refusal of Business Rule 12 and stays on the details step; a server failure asks her to try again.
+6. Each call's join link (`/book/:bookingId/join`) behaves per Business Rule 14.
+7. After the call, the visitor receives an email with a unique tokenized link that opens the coaching bundle page with checkout enabled.
 
 ### Blog (`/blog`)
 
@@ -153,13 +173,13 @@ A publicly accessible, coach-authored content area following brand voice and the
 
 ### Legal pages
 
-Per Business Rule 46.
+Per Business Rule 53.
 
 ## 2. Digital Store (`/store`)
 
 1. The catalog lists published products with type and goal filters. It distinguishes an empty catalog ("nothing is available yet") from "no results match the selected filters".
 2. Each product has a detail page (`/store/:slug`) for inspection before acquisition.
-3. Acquisition, delivery, download access (`/store/download`), and rate limits follow Business Rules 14–20.
+3. Acquisition, delivery, download access (`/store/download`), and rate limits follow Business Rules 21–27.
 
 ## 3. Accounts and Onboarding
 
@@ -190,19 +210,19 @@ Per Business Rule 46.
 1. The dashboard shows the client's next workout or day from the assigned plan and her current cycle phase.
 2. Clients are notified when a new plan is assigned or updated.
 3. The plan view offers week navigation limited to current and past weeks, day cards with Past, Current, and Upcoming status, and a way to start each training day.
-4. Clients can adjust the default schedule within the allowed bounds (Business Rule 28).
+4. Clients can adjust the default schedule within the allowed bounds (Business Rule 35).
 
 ### Workout Viewer and active tracking
 
 5. A distraction-free, mobile-optimized Workout Viewer shows exercises in order with number, name, equipment, primary muscles, sets, reps, RIR, coach notes, and demo video. Superset exercises appear as a visually connected group and follow an alternating set pattern (A1, B1, A2, B2) during tracking.
 6. Clients log actual weight and reps per set. After a set, a rest countdown starts from the coach-configured rest time; the client can extend it by 15 seconds per press or skip it, and actual rest is recorded.
 7. Clients can swap the current exercise for any coach-defined variant at any time.
-8. On completion the client sees total duration, total volume (weight × reps), muscle groups worked, a per-exercise comparison of logged against prescribed values, and highlighted all-time personal records. Completing early uses an "End workout" action in the viewer's options menu (Business Rule 32).
+8. On completion the client sees total duration, total volume (weight × reps), muscle groups worked, a per-exercise comparison of logged against prescribed values, and highlighted all-time personal records. Completing early uses an "End workout" action in the viewer's options menu (Business Rule 39).
 
 ### Messaging (`/client/messages`)
 
 9. Chat with the coach shows a coach profile sidebar (photo, name, role, response-time note), message bubbles with timestamps and read receipts, and a menu with Search in chat, Mute/Unmute notifications, Archive conversation, and Delete conversation. Delete confirmation uses a styled modal dialog, never a browser-native confirm. There is no call or video button.
-10. A "Schedule check-in" action submits an ad-hoc request per Business Rules 36–38 and is disabled while a request is pending.
+10. A "Schedule check-in" action submits an ad-hoc request per Business Rules 43–45 and is disabled while a request is pending.
 11. An upcoming check-in banner at the top of the chat shows the next confirmed check-in's date, time, and type.
 12. The sidebar has a "Next Check-in" widget with date, time, a "Join Meet" button, and a link to the Check-ins page.
 
@@ -224,31 +244,37 @@ Per Business Rule 46.
 
 ### Dashboard
 
-1. Shows managed clients, pending check-ins, important client information, and upcoming assessment calls. The "Pending Check-ins" card reads from the check-in system, its subtitle reflects the actual pending count, and its "Review" action opens the Schedule page.
+1. Opens to a greeting stating how many assessment calls the coach still has today (calls dated today that have not ended) and an "Upcoming calls" widget listing her next three calls that have not ended, soonest first, each with the visitor's name, the call's date and time, a Today badge when it is today, and its join link, plus a link to the full assessment calls list. With no upcoming call the widget says so and still links to the list.
+2. Managed clients, pending check-ins, and important client information. The "Pending Check-ins" card reads from the check-in system, its subtitle reflects the actual pending count, and its "Review" action opens the Schedule page.
+
+### Assessment calls (`/coach/assessment-calls`)
+
+3. Reached from the sidebar "Assessment calls" entry. Lists every assessment call with the visitor's name, her email as a mail link, the call's date and time, her notes when she left any, a Today badge when the call is today, and its join link while the call has not ended. A call is upcoming until it ends and past afterwards; upcoming and past calls are visually distinct, upcoming calls list soonest first, past calls list most recent first, and past calls carry no join link. A status filter offers Upcoming (the default), Today, Past, and All, and a search box narrows the list by visitor name or email. The list shows ten calls per page with page controls and a "Showing a–b of n" line; the active filter, search, and page survive a reload and a return from another page, and the page resets to the first when the filter or search changes. Each filter has its own empty state: no upcoming calls, no calls today, no past calls, no calls yet, and no matches for a search. A call booked on `/book` appears on the next load, and a call that has ended moves from Upcoming to Past without any action. There is no action on a call.
 
 ### Clients (`/coach/clients`)
 
-2. A client list and a client detail page. The detail page shows the client's subscription term and status, current cycle phase, cycle regularity, average cycle and period length, conditions, and notes, and links to the client's read-only period log and completed workout history.
+4. A client list and a client detail page. The detail page shows the client's subscription term and status, current cycle phase, cycle regularity, average cycle and period length, conditions, and notes, and links to the client's read-only period log and completed workout history.
 
 ### Messaging (`/coach/messages`)
 
-3. A conversation list with client avatar (photo or initial), online status, unread count, and last message preview. Each conversation has a menu with Pin/Unpin, Mute/Unmute, Flag for follow-up, Archive, and Delete; delete confirmation uses a styled modal with a warning icon. There is no call or video button. The coach can navigate from a conversation directly to that client's profile.
-4. Send and attach actions are visually centered and polished. Notification UI adapts to available space and never renders outside the viewport.
-5. An upcoming check-in banner at the top of the active chat shows the next confirmed check-in for that client. The coach can initiate an ad-hoc check-in from here.
-6. Pending requests and reschedule proposals appear as action cards in the message stream with client name, requested date and time, optional note, and Accept and Decline buttons. Acting updates the check-in immediately and fires a notification.
+5. A conversation list with client avatar (photo or initial), online status, unread count, and last message preview. Each conversation has a menu with Pin/Unpin, Mute/Unmute, Flag for follow-up, Archive, and Delete; delete confirmation uses a styled modal with a warning icon. There is no call or video button. The coach can navigate from a conversation directly to that client's profile.
+6. Send and attach actions are visually centered and polished. Notification UI adapts to available space and never renders outside the viewport.
+7. An upcoming check-in banner at the top of the active chat shows the next confirmed check-in for that client. The coach can initiate an ad-hoc check-in from here.
+8. Pending requests and reschedule proposals appear as action cards in the message stream with client name, requested date and time, optional note, and Accept and Decline buttons. Acting updates the check-in immediately and fires a notification.
 
 ### Workout review and history
 
-7. Completed workouts are grouped by subscription, then plan, then week. The coach can filter by date range, session duration, session volume, and muscle groups trained (a session matches when at least one exercise trains a selected group; multiple groups may be selected). For the current selection the coach sees session count, total volume, average volume per session, and average duration.
-8. Each workout review shows logged against prescribed weight and reps per set, rest taken against prescribed, swaps made, compliance percentage, duration, and volume. Volumes use the coach's unit setting.
+9. Completed workouts are grouped by subscription, then plan, then week. The coach can filter by date range, session duration, session volume, and muscle groups trained (a session matches when at least one exercise trains a selected group; multiple groups may be selected). For the current selection the coach sees session count, total volume, average volume per session, and average duration.
+10. Each workout review shows logged against prescribed weight and reps per set, rest taken against prescribed, swaps made, compliance percentage, duration, and volume. Volumes use the coach's unit setting.
 
 ### Schedule (`/coach/checkins`)
 
-9. Reached from the sidebar "Schedule" link, which carries a badge with the pending count. Three tabs: Pending (all ad-hoc requests and reschedule proposals across clients, each card showing client, type, date, time, note, and who initiated it, with Accept and Decline and an empty state), Upcoming (confirmed recurring and ad-hoc check-ins sorted by date with a type badge and Confirmed status), and Past (completed, declined, cancelled, with status and any client notes).
+11. Reached from the sidebar "Schedule" link, which carries a badge with the pending count. Three tabs: Pending (all ad-hoc requests and reschedule proposals across clients, each card showing client, type, date, time, note, and who initiated it, with Accept and Decline and an empty state), Upcoming (confirmed recurring and ad-hoc check-ins sorted by date with a type badge and Confirmed status), and Past (completed, declined, cancelled, with status and any client notes).
 
 ### Settings (`/coach/settings`)
 
-10. The coach chooses units for weight and height. The choice applies across her views, including workout-history volumes and the session-volume filter.
+12. Reached from the sidebar "Settings" entry. An "Assessment calls" section holds the coach's availability (weekdays, start hour, end hour) and the meeting room link per Business Rules 10 and 14, showing the defaults until she has saved once. Saving with no weekday, a start at or after the end, or an invalid link is refused with an inline explanation that keeps the entered values; a valid save confirms with a toast and is live at once for the next visitor; a server failure shows an error toast and keeps the entered values. While the meeting room link is empty, the section warns that visitors cannot join calls until a link is set.
+13. The coach chooses units for weight and height. The choice applies across her views, including workout-history volumes and the session-volume filter.
 
 ## 6. Exercises and Plans (`/coach/training`)
 
@@ -291,7 +317,7 @@ Per Business Rule 46.
 
 ### Assignment
 
-15. Assigning a plan notifies the client, generates its recurring check-ins (Business Rule 35), and posts a system message (Business Rule 34).
+15. Assigning a plan notifies the client, generates its recurring check-ins (Business Rule 42), and posts a system message (Business Rule 41).
 
 ## 7. Notifications
 
@@ -312,11 +338,13 @@ Per Business Rule 46.
 
 - Full blog CMS, authoring workflow, categories, and search
 - Real payment processing for coaching bundles and paid store products
-- Real Google Meet integration for check-ins
+- Per-call meeting room generation through a video provider. Every assessment call shares the coach's single meeting room (Business Rule 14); check-ins have no meeting room set up yet
 - Rich analytics and reporting; advanced search across clients
 - Plan version history or changelog
 - Per-client configurable check-in frequency (default weekly today)
-- Check-in reminders and calendar integrations
+- Reminders and calendar writes for assessment calls and check-ins. The add-to-calendar action and calendar file in the booking emails (Business Rule 13) are in scope; writing to the coach's calendar is not
+- Visitor rescheduling or cancellation of an assessment call, and coach actions on a booked call (cancel, reschedule, mark as done, edit notes)
+- Per-day hour intervals, blackout dates, and vacations in the coach's availability
 - Video calling
 
 # Open Questions
@@ -327,3 +355,5 @@ Per Business Rule 46.
 4. What happens to a plan's recurring check-ins when the plan is ended: are they cancelled automatically or kept?
 5. Should the system track plan version history when the coach adds weeks to an active plan?
 6. The prototype includes a nutrition module (recipe builder, per-client nutrition plans, client nutrition view) that this document does not yet specify.
+7. Check-in scheduling (Business Rule 45) still uses fixed 9 AM to 4 PM hours, while assessment calls use the coach-configured availability of Business Rule 10. Do check-ins adopt that availability when they are built?
+8. Business Rule 12 treats a call as upcoming until it starts, while the coach portal treats it as upcoming until it ends. May a visitor whose call is in progress book another one?
