@@ -39,7 +39,7 @@ describe('EmailPreview', () => {
       'Client invitation — first',
       'starting targets',
     );
-    expect(markup).toContain('Accept your invitation');
+    expect(markup).toContain('Create your account');
   });
 
   it('previews the replaced invitation when that variant is chosen', async () => {
@@ -57,6 +57,6 @@ describe('EmailPreview', () => {
       'Client invitation — replaced',
       'stopped working',
     );
-    expect(markup).toContain('Accept your invitation');
+    expect(markup).toContain('Create your account');
   });
 });

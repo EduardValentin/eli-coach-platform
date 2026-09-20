@@ -6,6 +6,7 @@ import {
 import {
   useTraining, PlanWeek, DayType, PlanInstance, PlanTemplate,
 } from '../../context/TrainingContext';
+import { useProgramDelivery } from '../../hooks/useProgramDelivery';
 import { useMessaging } from '../../context/MessagingContext';
 import { useNotifications } from '../../context/NotificationContext';
 import { toast } from 'sonner';
@@ -89,6 +90,7 @@ export function ClientPlanBuilderPage() {
   const { clientId } = useParams<{ clientId: string }>();
   const navigate = useNavigate();
   const { exercises, planTemplates, getClientActivePlan, updatePlanInstance, createPlanInstance, getClientActiveGoal, goals } = useTraining();
+  const programDelivery = useProgramDelivery(clientId ?? '');
   const { addSystemMessage } = useMessaging();
   const { addNotification } = useNotifications();
 
@@ -179,6 +181,7 @@ export function ClientPlanBuilderPage() {
       updatePlanInstance(updatedInstance);
       setPlanInstance(updatedInstance);
       setIsNewPlan(false);
+      programDelivery.deliver();
 
       addSystemMessage(
         messagingClientId,

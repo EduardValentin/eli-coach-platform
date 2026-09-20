@@ -4,6 +4,10 @@ import { MemoryRouter, useLocation, useNavigationType } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import { AssessmentCallsSection } from './AssessmentCallsSection';
 import type { PrototypeBooking } from '../../services/assessmentCallService';
+import { AppProvider } from '../../context/AppContext';
+import { AssessmentCallProvider } from '../../context/AssessmentCallContext';
+import { ClientJourneyProvider } from '../../context/ClientJourneyContext';
+import { ClientProfileProvider } from '../../context/ClientProfileContext';
 
 const TIME_ZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
 const NOW = new Date(2026, 8, 21, 12, 0, 0);
@@ -68,12 +72,20 @@ function renderSection(
 ) {
   render(
     <MemoryRouter initialEntries={[`/coach${options.urlQuery ?? ''}`]}>
-      <AssessmentCallsSection
-        bookings={options.bookings ?? ALL_BOOKINGS}
-        now={NOW}
-        timeZone={TIME_ZONE}
-      />
-      <LocationProbe />
+      <AppProvider>
+        <ClientProfileProvider>
+          <AssessmentCallProvider>
+            <ClientJourneyProvider>
+              <AssessmentCallsSection
+                bookings={options.bookings ?? ALL_BOOKINGS}
+                now={NOW}
+                timeZone={TIME_ZONE}
+              />
+              <LocationProbe />
+            </ClientJourneyProvider>
+          </AssessmentCallProvider>
+        </ClientProfileProvider>
+      </AppProvider>
     </MemoryRouter>,
   );
 

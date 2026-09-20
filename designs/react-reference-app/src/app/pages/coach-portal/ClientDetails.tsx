@@ -12,6 +12,12 @@ import { useNutrition } from '../../context/NutritionContext';
 import { formatBodyWeight, formatHeight, formatVolume, displayWeightValue, weightUnitLabel } from '../../utils/units';
 import { getInitials } from '../../utils/clientHelpers';
 import { SubscriptionBadge } from '../../components/coach-portal/SubscriptionBadge';
+import { OnboardingPanel } from '../../components/coach-portal/OnboardingPanel';
+import { SubscriptionPanel } from '../../components/coach-portal/SubscriptionPanel';
+import { MeasurementsTable } from '../../components/coach-portal/MeasurementsTable';
+import { useClientJourneys } from '../../context/ClientJourneyContext';
+import { journeyCallIdForClient } from '../../utils/journeyLabels';
+import { isBeforeStage } from '../../domain/journey';
 import { useNotifications } from '../../context/NotificationContext';
 import { useMessaging } from '../../context/MessagingContext';
 import { formatCheckinDate, formatCheckinTime, toISODate, to24h } from '../../utils/dateFormatters';
@@ -33,6 +39,7 @@ export function ClientDetails() {
   const { coachInitiateCheckin, getBookedSlots } = useCheckins();
   const { getCurrentPhase, getClientProfile } = useCycle();
   const { getProfile } = useClientProfile();
+  const { journeyForCall } = useClientJourneys();
   const { weightUnit, heightUnit } = useUnitPreferences();
   const { addNotification } = useNotifications();
   const { addSystemMessage, sendMessage: ctxSendMessage } = useMessaging();
@@ -54,6 +61,12 @@ export function ClientDetails() {
   const activeGoal = getClientActiveGoal(clientId);
   const allGoals = getClientGoals(clientId);
   const activeSubscription = getClientActiveSubscription(dataClientId);
+
+  const journeyCallId = journeyCallIdForClient(clientId);
+  const journey = journeyCallId ? journeyForCall(journeyCallId) : null;
+  const showsJourney =
+    journey !== null && !isBeforeStage(journey.stage, 'account-created');
+  const heightCm = profile?.heightCm ?? 0;
 
   // Goal creation form
   const [showNewGoal, setShowNewGoal] = useState(false);
@@ -179,6 +192,23 @@ export function ClientDetails() {
           </button>
         </div>
       </header>
+
+      {showsJourney && journey && (
+        <>
+          <OnboardingPanel
+            journey={journey}
+            clientId={clientId}
+            heightCm={heightCm}
+          />
+          {journey.subscription && (
+            <SubscriptionPanel subscription={journey.subscription} />
+          )}
+          <MeasurementsTable
+            measurements={journey.measurements}
+            heightCm={heightCm}
+          />
+        </>
+      )}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-8">

@@ -4,7 +4,14 @@ import { Search, UserX, ArrowRight, ShieldAlert } from 'lucide-react';
 import { Link } from 'react-router';
 import { useClientProfile } from '../../context/ClientProfileContext';
 import { useTraining, subscriptionTermLabel } from '../../context/TrainingContext';
+import {
+  DEMO_JOURNEY_CALL_ID,
+  useClientJourneys,
+} from '../../context/ClientJourneyContext';
+import { JourneyStageBadge } from '../../components/coach-portal/JourneyStageBadge';
+import { isBeforeStage, type ClientJourney } from '../../domain/journey';
 import { getInitials } from '../../utils/clientHelpers';
+import { journeyCallIdForClient, startPathLabel } from '../../utils/journeyLabels';
 
 const MOCK_CLIENTS = [
   { id: 'c1', name: 'Jane Doe', email: 'jane@example.com', status: 'Active', joinDate: 'Oct 01, 2025' },
@@ -14,12 +21,77 @@ const MOCK_CLIENTS = [
   { id: 'c5', name: 'Mia Thermopolis', email: 'mia@example.com', status: 'Inactive', joinDate: 'Mar 22, 2025' },
 ];
 
+const FILTERS = ['All', 'Active', 'Inactive', 'Onboarding'] as const;
+
+type RosterFilter = (typeof FILTERS)[number];
+
+function isOnboarding(journey: ClientJourney): boolean {
+  return (
+    !isBeforeStage(journey.stage, 'account-created') &&
+    journey.stage !== 'review-call-scheduled'
+  );
+}
+
+function journeyName(journey: ClientJourney): string {
+  return `${journey.identity.firstName} ${journey.identity.lastName}`.trim();
+}
+
+function OnboardingRow({ journey }: { journey: ClientJourney }) {
+  const name = journeyName(journey);
+  const detailPath =
+    journey.callId === DEMO_JOURNEY_CALL_ID ? '/coach/clients/c1' : null;
+
+  return (
+    <tr className="px-3 border-b border-neutral-50 rounded-field hover:bg-neutral-50/50 transition-colors group">
+      <td className="py-4 px-6">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-neutral-100 flex items-center justify-center font-serif text-text-primary font-semibold shrink-0">
+            {getInitials(name)}
+          </div>
+          <div>
+            <p className="font-semibold text-sm text-text-primary">{name}</p>
+            <p className="text-xs text-text-secondary mt-0.5">
+              {journey.identity.email}
+            </p>
+          </div>
+        </div>
+      </td>
+      <td className="py-4 px-6">
+        <JourneyStageBadge stage={journey.stage} />
+      </td>
+      <td className="py-4 px-6 text-sm text-text-secondary font-medium">
+        {startPathLabel(journey.subscription) ?? '—'}
+      </td>
+      <td className="py-4 px-6 text-sm text-text-secondary">—</td>
+      <td className="py-4 px-6">
+        <div className="flex items-center justify-end gap-3">
+          {detailPath && (
+            <Link
+              to={detailPath}
+              className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white border border-neutral-200 text-text-secondary hover:bg-text-primary hover:text-white hover:border-text-primary transition-all"
+              title="View Details"
+            >
+              <ArrowRight size={14} />
+            </Link>
+          )}
+        </div>
+      </td>
+    </tr>
+  );
+}
+
 export function ClientsList() {
   const [clients, setClients] = useState(MOCK_CLIENTS);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filter, setFilter] = useState<'All' | 'Active' | 'Inactive'>('All');
+  const [filter, setFilter] = useState<RosterFilter>('All');
   const { getProfile } = useClientProfile();
   const { getClientActiveSubscription, getClientSubscriptions } = useTraining();
+  const { journeys } = useClientJourneys();
+
+  const onboardingJourneys = Object.values(journeys).filter(isOnboarding);
+  const onboardingCallIds = new Set(
+    onboardingJourneys.map((journey) => journey.callId),
+  );
 
   const subClientId = (id: string) => (id === 'c1' ? 'client-1' : id);
   const bundleLabel = (id: string) => {
@@ -29,12 +101,36 @@ export function ClientsList() {
     return sub ? subscriptionTermLabel(sub) : '—';
   };
 
-  const filteredClients = clients.filter(client => {
-    const matchesSearch = client.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          client.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFilter = filter === 'All' || client.status === filter;
-    return matchesSearch && matchesFilter;
-  });
+  const matchesSearch = (name: string, email: string) => {
+    const needle = searchQuery.toLowerCase();
+    return (
+      name.toLowerCase().includes(needle) || email.toLowerCase().includes(needle)
+    );
+  };
+
+  const showsRoster = filter !== 'Onboarding';
+  const showsOnboarding = filter === 'All' || filter === 'Onboarding';
+
+  const filteredClients = showsRoster
+    ? clients.filter(client => {
+        const callId = journeyCallIdForClient(client.id);
+        const inOnboarding = callId !== null && onboardingCallIds.has(callId);
+        const matchesFilter = filter === 'All' || client.status === filter;
+        return (
+          !inOnboarding &&
+          matchesFilter &&
+          matchesSearch(client.name, client.email)
+        );
+      })
+    : [];
+
+  const filteredOnboarding = showsOnboarding
+    ? onboardingJourneys.filter(journey =>
+        matchesSearch(journeyName(journey), journey.identity.email),
+      )
+    : [];
+
+  const rowCount = filteredClients.length + filteredOnboarding.length;
 
   const handleRemoveClient = (id: string, name: string, status: string) => {
     const actionText = status === 'Active' ? 'terminate the subscription for' : 'remove';
@@ -70,10 +166,10 @@ export function ClientsList() {
         </div>
 
         <div className="flex items-center gap-2 bg-white border border-neutral-200 p-1 rounded-control shadow-sm">
-          {['All', 'Active', 'Inactive'].map((f) => (
+          {FILTERS.map((f) => (
             <button
               key={f}
-              onClick={() => setFilter(f as 'All' | 'Active' | 'Inactive')}
+              onClick={() => setFilter(f)}
               className={`px-4 py-2 text-sm font-semibold rounded-compact transition-colors ${
                 filter === f 
                   ? 'bg-neutral-100 text-text-primary' 
@@ -104,8 +200,10 @@ export function ClientsList() {
               </tr>
             </thead>
             <tbody>
-              {filteredClients.length > 0 ? (
-                filteredClients.map(client => {
+              {filteredOnboarding.map(journey => (
+                <OnboardingRow key={journey.callId} journey={journey} />
+              ))}
+              {filteredClients.map(client => {
                   const profile = getProfile(client.id);
                   const avatarUrl = profile?.avatarUrl;
                   return (
@@ -167,8 +265,8 @@ export function ClientsList() {
                     </td>
                   </tr>
                   );
-                })
-              ) : (
+                })}
+              {rowCount === 0 && (
                 <tr>
                   <td colSpan={5} className="py-12 text-center text-text-secondary text-sm">
                     No clients found matching your criteria.

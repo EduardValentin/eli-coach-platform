@@ -14,80 +14,80 @@ import {
   EmailText,
 } from './_primitives';
 
-export type ClientInvitationVariant = 'first' | 'replaced';
+export type PaymentLinkVariant = 'regular' | 'reduced';
 
-export type ClientInvitationProps = {
-  variant?: ClientInvitationVariant;
+export type PaymentLinkProps = {
+  variant?: PaymentLinkVariant;
   clientName?: string;
   coachName?: string;
   contactEmail?: string;
-  acceptUrl?: string;
+  chooseUrl?: string;
+  termsUrl?: string;
 };
 
-const DEFAULT_CONTACT_EMAIL = 'contact@evoa.fit';
-const DEFAULT_CLIENT_NAME = 'Jane';
-const DEFAULT_COACH_NAME = 'Eli';
+type BundlePrice = {
+  title: string;
+  months: number;
+  regularPerMonth: number;
+  reducedPerMonth: number;
+};
 
 const BRAND = EMAIL_BRAND;
 const FONT_SERIF = EMAIL_FONT_SERIF;
 const FONT_SANS = EMAIL_FONT_SANS;
 
-const EYEBROW = 'Invitation — 1-on-1 coaching';
-const BUTTON_LABEL = 'Create your account';
+const DEFAULT_CONTACT_EMAIL = 'contact@evoa.fit';
+const DEFAULT_CLIENT_NAME = 'Jane';
+const DEFAULT_COACH_NAME = 'Eli';
 
-// The card below lists what she does next, so the letter only has to set the
-// expectation of how long it takes.
-const SHARED_NEXT_PARAGRAPH = 'The whole thing takes about five minutes.';
+const EYEBROW = 'Your bundles — 1-on-1 coaching';
+const BUTTON_LABEL = 'Choose your bundle';
 
-// Both sends grant the same 30 days; only the lines explaining why this email
-// arrived differ between them.
-const SHARED_VALIDITY =
-  "This link works for the next 30 days. You have to create your account from it — reading this email isn't enough. If it runs out, tell me and I'll send you a new one.";
+const BUNDLES: BundlePrice[] = [
+  { title: '1 month', months: 1, regularPerMonth: 159, reducedPerMonth: 139 },
+  { title: '3 months', months: 3, regularPerMonth: 149, reducedPerMonth: 125 },
+  { title: '6 months', months: 6, regularPerMonth: 139, reducedPerMonth: 119 },
+];
+
+const SUBSCRIPTION_NOTE =
+  'Each bundle is a subscription that renews at its own length — every 1, 3 or 6 months — and our terms apply.';
 
 const copy: Record<
-  ClientInvitationVariant,
-  {
-    previewText: string;
-    heading: string;
-    subhead: string;
-    opening: string;
-  }
+  PaymentLinkVariant,
+  { previewText: string; heading: string; subhead: string; opening: string }
 > = {
-  first: {
-    previewText: 'Your targets are ready — create your account.',
-    heading: "You're all set up.",
-    subhead: "Everything's waiting for you.",
+  regular: {
+    previewText: 'Your coaching bundles — pick the one that fits.',
+    heading: "Let's get you started.",
+    subhead: 'Three ways to work together. Pick the one that fits your months ahead.',
     opening:
-      "I've set up your profile, your starting targets and your first goal. Create your account from the button below and it's all waiting for you.",
+      'It was good to talk to you. Here are the three bundles we went through, so you can take your time and choose.',
   },
-  replaced: {
-    previewText: 'A fresh link — create your account with this one.',
-    heading: "Here's your new link.",
-    subhead: 'I updated your details, so the earlier invitation stopped working.',
+  reduced: {
+    previewText: 'Your reduced prices are ready.',
+    heading: "Let's get you started.",
+    subhead: 'These are your reduced prices, held for you.',
     opening:
-      'I made some changes to your profile and sent this fresh link. Create your account from the button below — the link from my earlier email no longer works.',
+      "It was good to talk to you. I've put your reduced pricing on all three bundles below, so you can take your time and choose.",
   },
 };
 
-const nextSteps = [
-  'Create your account from the button above.',
-  'Answer a few questions — your cycle, your food preferences, anything I should know.',
-  'Your targets and my notes are waiting in your portal.',
-];
+function perMonth(bundle: BundlePrice, variant: PaymentLinkVariant): number {
+  return variant === 'reduced' ? bundle.reducedPerMonth : bundle.regularPerMonth;
+}
 
-export function ClientInvitation({
-  variant = 'first',
+export function PaymentLink({
+  variant = 'regular',
   clientName = DEFAULT_CLIENT_NAME,
   coachName = DEFAULT_COACH_NAME,
   contactEmail = DEFAULT_CONTACT_EMAIL,
-  acceptUrl = '/portal/onboarding',
-}: ClientInvitationProps) {
+  chooseUrl = '/select-bundle',
+  termsUrl = '/terms',
+}: PaymentLinkProps) {
   const content = copy[variant];
   const bodyParagraphs = [
     `Hi ${clientName},`,
     content.opening,
-    SHARED_NEXT_PARAGRAPH,
-    SHARED_VALIDITY,
     `— ${coachName}`,
   ];
 
@@ -132,33 +132,45 @@ export function ClientInvitation({
               })}
             </EmailSection>
 
+            <EmailSection style={bundlesOuterStyle}>
+              {BUNDLES.map((bundle) => {
+                const monthly = perMonth(bundle, variant);
+
+                return (
+                  <div key={bundle.title} style={bundleCardStyle}>
+                    <EmailText style={bundleTitleStyle}>
+                      {bundle.title}
+                    </EmailText>
+                    <EmailText style={bundlePriceStyle}>
+                      €{monthly} per month
+                    </EmailText>
+                    <EmailText style={bundleTotalStyle}>
+                      €{monthly * bundle.months} in total
+                    </EmailText>
+                  </div>
+                );
+              })}
+            </EmailSection>
+
             <EmailSection style={buttonSectionStyle}>
-              <EmailLink href={acceptUrl} style={acceptButtonStyle}>
+              <EmailLink href={chooseUrl} style={chooseButtonStyle}>
                 {BUTTON_LABEL}
               </EmailLink>
             </EmailSection>
 
-            <EmailSection style={nextStepsOuterStyle}>
-              <div style={nextStepsCardStyle}>
-                <EmailText style={nextStepsEyebrowStyle}>
-                  WHAT HAPPENS NEXT
-                </EmailText>
-                {nextSteps.map((step, i) => (
-                  <div key={i} style={nextStepRowStyle}>
-                    <EmailText style={nextStepBulletStyle}>0{i + 1}</EmailText>
-                    <EmailText style={nextStepTextStyle}>{step}</EmailText>
-                  </div>
-                ))}
-              </div>
+            <EmailSection style={noteSectionStyle}>
+              <EmailText style={noteTextStyle}>
+                {SUBSCRIPTION_NOTE}{' '}
+                <EmailLink href={termsUrl} style={noteLinkStyle}>
+                  Read the terms
+                </EmailLink>
+                .
+              </EmailText>
             </EmailSection>
 
             <EmailDivider style={dividerStyle} />
 
             <EmailSection style={reassuranceSectionStyle}>
-              <EmailText style={reassuranceTextStyle}>
-                This is your personal invitation — please don't forward it. It
-                belongs to your email address alone.
-              </EmailText>
               <EmailText style={contactLineStyle}>
                 Questions? Reply to this email or write to{' '}
                 <EmailLink
@@ -174,16 +186,8 @@ export function ClientInvitation({
 
           <EmailSection style={footerSectionStyle}>
             <EmailText style={footerLineStyle}>
-              You received this email because {coachName} invited you to 1-on-1
-              coaching.
-            </EmailText>
-            <EmailText style={footerLineStyle}>
-              <EmailLink
-                href={`mailto:${contactEmail}`}
-                style={footerLinkStyle}
-              >
-                Contact
-              </EmailLink>
+              You received this email because you had an assessment call with{' '}
+              {coachName}.
             </EmailText>
             <EmailText style={footerCreditStyle}>
               © {new Date().getFullYear()} Evoa Fitness
@@ -195,11 +199,11 @@ export function ClientInvitation({
   );
 }
 
-ClientInvitation.PreviewProps = {
-  variant: 'first',
-} satisfies ClientInvitationProps;
+PaymentLink.PreviewProps = {
+  variant: 'regular',
+} satisfies PaymentLinkProps;
 
-export default ClientInvitation;
+export default PaymentLink;
 
 const bodyStyle: React.CSSProperties = {
   margin: 0,
@@ -322,12 +326,50 @@ const signoffStyle: React.CSSProperties = {
   fontStyle: 'italic',
 };
 
+const bundlesOuterStyle: React.CSSProperties = {
+  padding: '24px 24px 8px',
+};
+
+const bundleCardStyle: React.CSSProperties = {
+  marginBottom: '12px',
+  padding: '18px 20px',
+  backgroundColor: BRAND.pinkSoft,
+  border: `1px solid ${BRAND.pinkBorder}`,
+  borderRadius: '16px',
+};
+
+const bundleTitleStyle: React.CSSProperties = {
+  margin: 0,
+  fontFamily: FONT_SERIF,
+  fontSize: '18px',
+  fontWeight: 500,
+  color: BRAND.ink,
+  lineHeight: 1.3,
+};
+
+const bundlePriceStyle: React.CSSProperties = {
+  margin: '6px 0 0',
+  fontFamily: FONT_SANS,
+  fontSize: '15px',
+  fontWeight: 600,
+  color: BRAND.pink,
+  lineHeight: 1.4,
+};
+
+const bundleTotalStyle: React.CSSProperties = {
+  margin: '2px 0 0',
+  fontFamily: FONT_SANS,
+  fontSize: '13px',
+  color: BRAND.muted,
+  lineHeight: 1.4,
+};
+
 const buttonSectionStyle: React.CSSProperties = {
-  padding: '24px 36px 8px',
+  padding: '16px 36px 8px',
   textAlign: 'center',
 };
 
-const acceptButtonStyle: React.CSSProperties = {
+const chooseButtonStyle: React.CSSProperties = {
   display: 'inline-block',
   backgroundColor: BRAND.pink,
   color: BRAND.white,
@@ -340,48 +382,24 @@ const acceptButtonStyle: React.CSSProperties = {
   textDecoration: 'none',
 };
 
-const nextStepsOuterStyle: React.CSSProperties = {
-  padding: '24px 24px 32px',
+const noteSectionStyle: React.CSSProperties = {
+  padding: '16px 36px 24px',
+  textAlign: 'center',
 };
 
-const nextStepsCardStyle: React.CSSProperties = {
-  padding: '28px 28px 12px',
-  backgroundColor: BRAND.pinkSoft,
-  border: `1px solid ${BRAND.pinkBorder}`,
-  borderRadius: '16px',
-};
-
-const nextStepsEyebrowStyle: React.CSSProperties = {
-  margin: '0 0 18px',
-  fontFamily: FONT_SANS,
-  fontSize: '11px',
-  letterSpacing: '0.22em',
-  color: BRAND.pink,
-  fontWeight: 600,
-  lineHeight: 1.4,
-};
-
-const nextStepRowStyle: React.CSSProperties = {
-  marginBottom: '16px',
-};
-
-const nextStepBulletStyle: React.CSSProperties = {
-  margin: '0 0 4px',
-  fontFamily: FONT_SERIF,
-  fontSize: '14px',
-  letterSpacing: '0.08em',
-  color: BRAND.pink,
-  fontWeight: 500,
-  lineHeight: 1,
-};
-
-const nextStepTextStyle: React.CSSProperties = {
+const noteTextStyle: React.CSSProperties = {
   margin: 0,
   fontFamily: FONT_SANS,
-  fontSize: '15px',
+  fontSize: '13px',
   lineHeight: 1.55,
-  color: BRAND.inkSoft,
+  color: BRAND.muted,
   fontWeight: 400,
+};
+
+const noteLinkStyle: React.CSSProperties = {
+  color: BRAND.pink,
+  textDecoration: 'underline',
+  textUnderlineOffset: '2px',
 };
 
 const dividerStyle: React.CSSProperties = {
@@ -392,17 +410,8 @@ const dividerStyle: React.CSSProperties = {
 };
 
 const reassuranceSectionStyle: React.CSSProperties = {
-  padding: '28px 36px 36px',
+  padding: '24px 36px 32px',
   textAlign: 'center',
-};
-
-const reassuranceTextStyle: React.CSSProperties = {
-  margin: '0 0 12px',
-  fontFamily: FONT_SANS,
-  fontSize: '14px',
-  lineHeight: 1.55,
-  color: BRAND.muted,
-  fontWeight: 500,
 };
 
 const contactLineStyle: React.CSSProperties = {
@@ -432,12 +441,6 @@ const footerLineStyle: React.CSSProperties = {
   lineHeight: 1.55,
   color: BRAND.faint,
   fontWeight: 400,
-};
-
-const footerLinkStyle: React.CSSProperties = {
-  color: BRAND.muted,
-  textDecoration: 'underline',
-  textUnderlineOffset: '2px',
 };
 
 const footerCreditStyle: React.CSSProperties = {

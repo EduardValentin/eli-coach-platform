@@ -16,7 +16,10 @@ import { Badge } from '../ui/badge';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { useClientJourneys } from '../../context/ClientJourneyContext';
 import { AppointmentCard } from './AppointmentCard';
+import { CallJourneyActions } from './CallJourneyActions';
+import { JourneyStageBadge } from './JourneyStageBadge';
 import { CallListPager } from './CallListPager';
 import { JoinCallLink } from './JoinCallLink';
 
@@ -50,6 +53,8 @@ function CallItem({
   timeZone: string;
 }) {
   const { booking, timing, isToday } = call;
+  const { journeyForCall } = useClientJourneys();
+  const journey = journeyForCall(booking.id);
 
   return (
     <li>
@@ -64,14 +69,27 @@ function CallItem({
         }}
         status={timing === 'past' ? 'past' : 'scheduled'}
         titleElement="h2"
-        badges={isToday && <Badge variant="brand-secondary">Today</Badge>}
+        badges={
+          <>
+            {isToday && <Badge variant="brand-secondary">Today</Badge>}
+            {journey && <JourneyStageBadge stage={journey.stage} />}
+          </>
+        }
         quote={booking.notes.length > 0 ? booking.notes : undefined}
         actions={
-          timing === 'upcoming' ? (
-            <JoinCallLink joinPath={booking.joinPath} />
-          ) : (
-            <Badge variant="muted">Past</Badge>
-          )
+          <>
+            {timing === 'upcoming' ? (
+              <JoinCallLink joinPath={booking.joinPath} />
+            ) : (
+              <Badge variant="muted">Past</Badge>
+            )}
+            {journey && (
+              <CallJourneyActions
+                journey={journey}
+                visitorName={booking.visitorName}
+              />
+            )}
+          </>
         }
       />
     </li>

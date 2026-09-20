@@ -46,6 +46,23 @@ const SEEDED_GOAL_ANSWERS = {
   trainingPlace: 'Gym',
 };
 
+const SEEDED_SAFETY_ANSWERS = {
+  chestPain: 'No',
+  jointProblem: 'Yes',
+  prescribedMedication: 'No',
+};
+
+const SEEDED_CYCLE_ANSWERS = {
+  cycleRegular: 'Yes',
+  cycleLengthDays: 29,
+};
+
+const SEEDED_LIFESTYLE_ANSWERS = {
+  mealsPerDay: 3,
+  checkInDay: 'Monday',
+  checkInChannel: 'In-app messages',
+};
+
 const SEEDED_MEASUREMENT_ANSWERS = {
   weightKg: 66.1,
   waistCm: 74,
@@ -102,8 +119,10 @@ function seedOnboarding(
     consents,
     currentFormIndex: ONBOARDING_FORM_IDS.length - 1,
     answers: {
-      ...empty.answers,
       'goal-availability': SEEDED_GOAL_ANSWERS,
+      'safety-screening': SEEDED_SAFETY_ANSWERS,
+      'cycle-context': SEEDED_CYCLE_ANSWERS,
+      'nutrition-lifestyle': SEEDED_LIFESTYLE_ANSWERS,
       measurements: SEEDED_MEASUREMENT_ANSWERS,
     },
     submittedAt,

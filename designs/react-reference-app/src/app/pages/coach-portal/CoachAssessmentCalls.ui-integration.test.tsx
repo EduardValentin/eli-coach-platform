@@ -2,13 +2,15 @@ import { useEffect } from 'react';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, useLocation, useNavigationType } from 'react-router';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CoachAssessmentCalls } from './CoachAssessmentCalls';
 import { AppProvider } from '../../context/AppContext';
 import {
   AssessmentCallProvider,
   useAssessmentCalls,
 } from '../../context/AssessmentCallContext';
+import { ClientJourneyProvider } from '../../context/ClientJourneyContext';
+import { ClientProfileProvider } from '../../context/ClientProfileContext';
 import type { PrototypeBooking } from '../../services/assessmentCallService';
 
 const TIME_ZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -38,6 +40,22 @@ const TOMORROW = bookingAt(localInstant(22, 18), 'Ioana Radu');
 const YESTERDAY = bookingAt(localInstant(20, 18), 'Elena Marin');
 
 const ALL_BOOKINGS = [LATER_TODAY, TOMORROW, YESTERDAY];
+
+beforeAll(() => {
+  vi.stubGlobal(
+    'matchMedia',
+    vi.fn((query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
+  );
+});
 
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date'] });
@@ -69,16 +87,22 @@ function LocationProbe() {
 function renderPage(
   options: { bookings?: PrototypeBooking[]; urlQuery?: string } = {},
 ) {
+  const bookings = options.bookings ?? ALL_BOOKINGS;
+
   render(
     <MemoryRouter
       initialEntries={[`/coach/assessment-calls${options.urlQuery ?? ''}`]}
     >
       <AppProvider>
-        <AssessmentCallProvider>
-          <SeedBookings bookings={options.bookings ?? ALL_BOOKINGS} />
-          <CoachAssessmentCalls />
-          <LocationProbe />
-        </AssessmentCallProvider>
+        <ClientProfileProvider>
+          <AssessmentCallProvider>
+            <SeedBookings bookings={bookings} />
+            <ClientJourneyProvider>
+              <CoachAssessmentCalls />
+              <LocationProbe />
+            </ClientJourneyProvider>
+          </AssessmentCallProvider>
+        </ClientProfileProvider>
       </AppProvider>
     </MemoryRouter>,
   );

@@ -17,11 +17,21 @@ import {
   type AssessmentCallEmailVariant,
 } from '../../email-templates/AssessmentCallVisitorConfirmation';
 import { AssessmentCallCoachNotification } from '../../email-templates/AssessmentCallCoachNotification';
+import {
+  PaymentLink,
+  type PaymentLinkVariant,
+} from '../../email-templates/PaymentLink';
+import {
+  PaymentReceipt,
+  type PaymentReceiptVariant,
+} from '../../email-templates/PaymentReceipt';
 
 type TemplateKey =
   | 'waitlist-confirmation'
   | 'store-delivery'
   | 'client-invitation'
+  | 'payment-link'
+  | 'payment-receipt'
   | 'assessment-call-visitor'
   | 'assessment-call-coach';
 
@@ -54,6 +64,22 @@ const TEMPLATES: TemplateOption[] = [
     variants: [
       { value: 'first', label: 'First invitation' },
       { value: 'replaced', label: 'Replaced invitation' },
+    ],
+  },
+  {
+    key: 'payment-link',
+    label: 'Payment link',
+    variants: [
+      { value: 'regular', label: 'Regular pricing' },
+      { value: 'reduced', label: 'Reduced pricing' },
+    ],
+  },
+  {
+    key: 'payment-receipt',
+    label: 'Payment receipt',
+    variants: [
+      { value: 'immediate', label: 'Immediate start' },
+      { value: 'waiting', label: 'Waiting the 14 days' },
     ],
   },
   {
@@ -106,6 +132,26 @@ export function EmailPreview() {
           clientName="Jane"
           coachName="Eli"
           acceptUrl={`${window.location.origin}/portal/onboarding`}
+        />
+      );
+    }
+    if (template === 'payment-link') {
+      return (
+        <PaymentLink
+          variant={variant as PaymentLinkVariant}
+          clientName="Jane"
+          coachName="Eli"
+          chooseUrl={`${window.location.origin}/select-bundle?token=pl-preview`}
+          termsUrl={`${window.location.origin}/terms`}
+        />
+      );
+    }
+    if (template === 'payment-receipt') {
+      return (
+        <PaymentReceipt
+          variant={variant as PaymentReceiptVariant}
+          clientName="Jane"
+          coachName="Eli"
         />
       );
     }

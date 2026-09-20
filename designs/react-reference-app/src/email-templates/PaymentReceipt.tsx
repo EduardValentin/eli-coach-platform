@@ -14,82 +14,67 @@ import {
   EmailText,
 } from './_primitives';
 
-export type ClientInvitationVariant = 'first' | 'replaced';
+export type PaymentReceiptVariant = 'immediate' | 'waiting';
 
-export type ClientInvitationProps = {
-  variant?: ClientInvitationVariant;
+export type PaymentReceiptProps = {
+  variant?: PaymentReceiptVariant;
   clientName?: string;
   coachName?: string;
   contactEmail?: string;
-  acceptUrl?: string;
+  bundleLabel?: string;
+  amount?: string;
 };
-
-const DEFAULT_CONTACT_EMAIL = 'contact@evoa.fit';
-const DEFAULT_CLIENT_NAME = 'Jane';
-const DEFAULT_COACH_NAME = 'Eli';
 
 const BRAND = EMAIL_BRAND;
 const FONT_SERIF = EMAIL_FONT_SERIF;
 const FONT_SANS = EMAIL_FONT_SANS;
 
-const EYEBROW = 'Invitation — 1-on-1 coaching';
-const BUTTON_LABEL = 'Create your account';
+const DEFAULT_CONTACT_EMAIL = 'contact@evoa.fit';
+const DEFAULT_CLIENT_NAME = 'Jane';
+const DEFAULT_COACH_NAME = 'Eli';
+const DEFAULT_BUNDLE_LABEL = '3 months';
+const DEFAULT_AMOUNT = '€447';
 
-// The card below lists what she does next, so the letter only has to set the
-// expectation of how long it takes.
-const SHARED_NEXT_PARAGRAPH = 'The whole thing takes about five minutes.';
+const EYEBROW = 'Payment confirmed';
+const HEADING = 'Thank you — your place is booked.';
+const INVITATION_LINE = 'Your invitation is on its way.';
 
-// Both sends grant the same 30 days; only the lines explaining why this email
-// arrived differ between them.
-const SHARED_VALIDITY =
-  "This link works for the next 30 days. You have to create your account from it — reading this email isn't enough. If it runs out, tell me and I'll send you a new one.";
+const START_PATH_COPY: Record<PaymentReceiptVariant, string> = {
+  immediate:
+    'You asked to start as soon as your payment cleared, so your coach begins building your program straight away.',
+  waiting:
+    'You kept your 14-day right to withdraw, so your program is delivered once those 14 days have passed.',
+};
 
-const copy: Record<
-  ClientInvitationVariant,
-  {
-    previewText: string;
-    heading: string;
-    subhead: string;
-    opening: string;
-  }
-> = {
-  first: {
-    previewText: 'Your targets are ready — create your account.',
-    heading: "You're all set up.",
-    subhead: "Everything's waiting for you.",
-    opening:
-      "I've set up your profile, your starting targets and your first goal. Create your account from the button below and it's all waiting for you.",
+const RENEWAL_TERM = 'Renews every';
+
+const copy: Record<PaymentReceiptVariant, { previewText: string }> = {
+  immediate: {
+    previewText: 'Payment confirmed — your coach is on it.',
   },
-  replaced: {
-    previewText: 'A fresh link — create your account with this one.',
-    heading: "Here's your new link.",
-    subhead: 'I updated your details, so the earlier invitation stopped working.',
-    opening:
-      'I made some changes to your profile and sent this fresh link. Create your account from the button below — the link from my earlier email no longer works.',
+  waiting: {
+    previewText: 'Payment confirmed — your start date is set.',
   },
 };
 
-const nextSteps = [
-  'Create your account from the button above.',
-  'Answer a few questions — your cycle, your food preferences, anything I should know.',
-  'Your targets and my notes are waiting in your portal.',
-];
+function Reading({ term, value }: { term: string; value: string }) {
+  return (
+    <div style={readingRowStyle}>
+      <EmailText style={readingTermStyle}>{term}</EmailText>
+      <EmailText style={readingValueStyle}>{value}</EmailText>
+    </div>
+  );
+}
 
-export function ClientInvitation({
-  variant = 'first',
+export function PaymentReceipt({
+  variant = 'immediate',
   clientName = DEFAULT_CLIENT_NAME,
   coachName = DEFAULT_COACH_NAME,
   contactEmail = DEFAULT_CONTACT_EMAIL,
-  acceptUrl = '/portal/onboarding',
-}: ClientInvitationProps) {
+  bundleLabel = DEFAULT_BUNDLE_LABEL,
+  amount = DEFAULT_AMOUNT,
+}: PaymentReceiptProps) {
   const content = copy[variant];
-  const bodyParagraphs = [
-    `Hi ${clientName},`,
-    content.opening,
-    SHARED_NEXT_PARAGRAPH,
-    SHARED_VALIDITY,
-    `— ${coachName}`,
-  ];
 
   return (
     <EmailHtml lang="en">
@@ -112,53 +97,34 @@ export function ClientInvitation({
                 {EYEBROW.toUpperCase()}
               </EmailText>
               <EmailHeading level="h1" style={heroHeadingStyle}>
-                {content.heading}
+                {HEADING}
               </EmailHeading>
               <div style={heroAccentRuleStyle} />
-              <EmailText style={heroSubheadStyle}>{content.subhead}</EmailText>
+              <EmailText style={heroSubheadStyle}>{INVITATION_LINE}</EmailText>
             </EmailSection>
 
             <EmailSection style={letterSectionStyle}>
-              {bodyParagraphs.map((paragraph, i) => {
-                const isSignoff = paragraph.startsWith('—');
-                return (
-                  <EmailText
-                    key={i}
-                    style={isSignoff ? signoffStyle : letterParagraphStyle}
-                  >
-                    {paragraph}
-                  </EmailText>
-                );
-              })}
+              <EmailText style={letterParagraphStyle}>
+                Hi {clientName},
+              </EmailText>
+              <EmailText style={letterParagraphStyle}>
+                {START_PATH_COPY[variant]}
+              </EmailText>
+              <EmailText style={signoffStyle}>— {coachName}</EmailText>
             </EmailSection>
 
-            <EmailSection style={buttonSectionStyle}>
-              <EmailLink href={acceptUrl} style={acceptButtonStyle}>
-                {BUTTON_LABEL}
-              </EmailLink>
-            </EmailSection>
-
-            <EmailSection style={nextStepsOuterStyle}>
-              <div style={nextStepsCardStyle}>
-                <EmailText style={nextStepsEyebrowStyle}>
-                  WHAT HAPPENS NEXT
-                </EmailText>
-                {nextSteps.map((step, i) => (
-                  <div key={i} style={nextStepRowStyle}>
-                    <EmailText style={nextStepBulletStyle}>0{i + 1}</EmailText>
-                    <EmailText style={nextStepTextStyle}>{step}</EmailText>
-                  </div>
-                ))}
+            <EmailSection style={summaryOuterStyle}>
+              <div style={summaryCardStyle}>
+                <EmailText style={summaryEyebrowStyle}>WHAT YOU BOUGHT</EmailText>
+                <Reading term="Bundle" value={bundleLabel} />
+                <Reading term="Amount" value={amount} />
+                <Reading term={RENEWAL_TERM} value={bundleLabel} />
               </div>
             </EmailSection>
 
             <EmailDivider style={dividerStyle} />
 
             <EmailSection style={reassuranceSectionStyle}>
-              <EmailText style={reassuranceTextStyle}>
-                This is your personal invitation — please don't forward it. It
-                belongs to your email address alone.
-              </EmailText>
               <EmailText style={contactLineStyle}>
                 Questions? Reply to this email or write to{' '}
                 <EmailLink
@@ -173,18 +139,6 @@ export function ClientInvitation({
           </EmailContainer>
 
           <EmailSection style={footerSectionStyle}>
-            <EmailText style={footerLineStyle}>
-              You received this email because {coachName} invited you to 1-on-1
-              coaching.
-            </EmailText>
-            <EmailText style={footerLineStyle}>
-              <EmailLink
-                href={`mailto:${contactEmail}`}
-                style={footerLinkStyle}
-              >
-                Contact
-              </EmailLink>
-            </EmailText>
             <EmailText style={footerCreditStyle}>
               © {new Date().getFullYear()} Evoa Fitness
             </EmailText>
@@ -195,11 +149,11 @@ export function ClientInvitation({
   );
 }
 
-ClientInvitation.PreviewProps = {
-  variant: 'first',
-} satisfies ClientInvitationProps;
+PaymentReceipt.PreviewProps = {
+  variant: 'immediate',
+} satisfies PaymentReceiptProps;
 
-export default ClientInvitation;
+export default PaymentReceipt;
 
 const bodyStyle: React.CSSProperties = {
   margin: 0,
@@ -272,8 +226,8 @@ const heroEyebrowStyle: React.CSSProperties = {
 const heroHeadingStyle: React.CSSProperties = {
   margin: '14px 0 0',
   fontFamily: FONT_SERIF,
-  fontSize: '40px',
-  lineHeight: 1.05,
+  fontSize: '36px',
+  lineHeight: 1.1,
   fontWeight: 500,
   color: BRAND.white,
   letterSpacing: '-0.01em',
@@ -294,9 +248,6 @@ const heroSubheadStyle: React.CSSProperties = {
   lineHeight: 1.55,
   color: '#D9D9D9',
   fontWeight: 400,
-  maxWidth: '420px',
-  marginLeft: 'auto',
-  marginRight: 'auto',
 };
 
 const letterSectionStyle: React.CSSProperties = {
@@ -322,37 +273,19 @@ const signoffStyle: React.CSSProperties = {
   fontStyle: 'italic',
 };
 
-const buttonSectionStyle: React.CSSProperties = {
-  padding: '24px 36px 8px',
-  textAlign: 'center',
-};
-
-const acceptButtonStyle: React.CSSProperties = {
-  display: 'inline-block',
-  backgroundColor: BRAND.pink,
-  color: BRAND.white,
-  fontFamily: FONT_SANS,
-  fontSize: '16px',
-  fontWeight: 600,
-  lineHeight: 1,
-  padding: '18px 40px',
-  borderRadius: '14px',
-  textDecoration: 'none',
-};
-
-const nextStepsOuterStyle: React.CSSProperties = {
+const summaryOuterStyle: React.CSSProperties = {
   padding: '24px 24px 32px',
 };
 
-const nextStepsCardStyle: React.CSSProperties = {
-  padding: '28px 28px 12px',
+const summaryCardStyle: React.CSSProperties = {
+  padding: '24px 24px 8px',
   backgroundColor: BRAND.pinkSoft,
   border: `1px solid ${BRAND.pinkBorder}`,
   borderRadius: '16px',
 };
 
-const nextStepsEyebrowStyle: React.CSSProperties = {
-  margin: '0 0 18px',
+const summaryEyebrowStyle: React.CSSProperties = {
+  margin: '0 0 16px',
   fontFamily: FONT_SANS,
   fontSize: '11px',
   letterSpacing: '0.22em',
@@ -361,27 +294,28 @@ const nextStepsEyebrowStyle: React.CSSProperties = {
   lineHeight: 1.4,
 };
 
-const nextStepRowStyle: React.CSSProperties = {
-  marginBottom: '16px',
+const readingRowStyle: React.CSSProperties = {
+  marginBottom: '14px',
 };
 
-const nextStepBulletStyle: React.CSSProperties = {
-  margin: '0 0 4px',
-  fontFamily: FONT_SERIF,
-  fontSize: '14px',
-  letterSpacing: '0.08em',
-  color: BRAND.pink,
-  fontWeight: 500,
-  lineHeight: 1,
-};
-
-const nextStepTextStyle: React.CSSProperties = {
+const readingTermStyle: React.CSSProperties = {
   margin: 0,
   fontFamily: FONT_SANS,
+  fontSize: '12px',
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase',
+  color: BRAND.muted,
+  fontWeight: 600,
+  lineHeight: 1.4,
+};
+
+const readingValueStyle: React.CSSProperties = {
+  margin: '2px 0 0',
+  fontFamily: FONT_SANS,
   fontSize: '15px',
-  lineHeight: 1.55,
   color: BRAND.inkSoft,
-  fontWeight: 400,
+  fontWeight: 500,
+  lineHeight: 1.5,
 };
 
 const dividerStyle: React.CSSProperties = {
@@ -392,17 +326,8 @@ const dividerStyle: React.CSSProperties = {
 };
 
 const reassuranceSectionStyle: React.CSSProperties = {
-  padding: '28px 36px 36px',
+  padding: '24px 36px 32px',
   textAlign: 'center',
-};
-
-const reassuranceTextStyle: React.CSSProperties = {
-  margin: '0 0 12px',
-  fontFamily: FONT_SANS,
-  fontSize: '14px',
-  lineHeight: 1.55,
-  color: BRAND.muted,
-  fontWeight: 500,
 };
 
 const contactLineStyle: React.CSSProperties = {
@@ -423,21 +348,6 @@ const contactLinkStyle: React.CSSProperties = {
 const footerSectionStyle: React.CSSProperties = {
   padding: '28px 24px 0',
   textAlign: 'center',
-};
-
-const footerLineStyle: React.CSSProperties = {
-  margin: '0 0 8px',
-  fontFamily: FONT_SANS,
-  fontSize: '12px',
-  lineHeight: 1.55,
-  color: BRAND.faint,
-  fontWeight: 400,
-};
-
-const footerLinkStyle: React.CSSProperties = {
-  color: BRAND.muted,
-  textDecoration: 'underline',
-  textUnderlineOffset: '2px',
 };
 
 const footerCreditStyle: React.CSSProperties = {
