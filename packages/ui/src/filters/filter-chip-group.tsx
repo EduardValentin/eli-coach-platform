@@ -28,22 +28,9 @@ export const FilterChipGroup = React.forwardRef<
     <RadixToggleGroup.Root
       ref={ref}
       className={cn("flex flex-wrap gap-2", className)}
-      onValueChange={(values) => {
-        // Radix's multiple mode keeps the chips as buttons that state their own
-        // pressed status, which single mode trades for radio semantics — and a
-        // radio checks whatever the arrow keys land on, filtering the page per
-        // keystroke. One choice at a time is this group's own rule instead: the
-        // value the caller already holds is dropped, and pressing the pressed
-        // chip reports nothing selected rather than promising a state it cannot
-        // reach.
-        const [pressedValue] = values.filter(
-          (candidate) => candidate !== value,
-        );
-
-        onValueChange(pressedValue ?? null);
-      }}
-      type="multiple"
-      value={value === null ? [] : [value]}
+      onValueChange={(nextValue) => onValueChange(nextValue || null)}
+      type="single"
+      value={value ?? ""}
       {...props}
     />
   </FilterChipToneContext.Provider>
@@ -62,7 +49,7 @@ export const FilterChip = React.forwardRef<HTMLButtonElement, FilterChipProps>(
     return (
       <RadixToggleGroup.Item
         ref={ref}
-        className={cn(chipVariants({ tone }), className)}
+        className={cn(chipVariants({ tone }), "h-auto min-h-0", className)}
         {...props}
       />
     );

@@ -31,7 +31,7 @@ function renderGroup(options: {
 }
 
 describe("filter chip group selection", () => {
-  it("exposes a named group holding one button per chip", () => {
+  it("exposes a named group holding one radio per chip", () => {
     // arrange
     const onValueChange = vi.fn();
 
@@ -42,10 +42,10 @@ describe("filter chip group selection", () => {
     expect(
       screen.getByRole("group", { name: "Filter by Type" }),
     ).toBeInTheDocument();
-    expect(screen.getAllByRole("button")).toHaveLength(2);
+    expect(screen.getAllByRole("radio")).toHaveLength(2);
   });
 
-  it("presses nothing while no value is chosen", () => {
+  it("checks nothing while no value is chosen", () => {
     // arrange
     const onValueChange = vi.fn();
 
@@ -53,12 +53,12 @@ describe("filter chip group selection", () => {
     renderGroup({ onValueChange, value: null });
 
     // assert
-    for (const chip of screen.getAllByRole("button")) {
-      expect(chip).toHaveAttribute("aria-pressed", "false");
+    for (const chip of screen.getAllByRole("radio")) {
+      expect(chip).toHaveAttribute("aria-checked", "false");
     }
   });
 
-  it("presses only the chip matching the current value", () => {
+  it("checks only the radio matching the current value", () => {
     // arrange
     const onValueChange = vi.fn();
 
@@ -66,12 +66,12 @@ describe("filter chip group selection", () => {
     renderGroup({ onValueChange, value: "workouts" });
 
     // assert
-    expect(screen.getByRole("button", { name: "Workouts" })).toHaveAttribute(
-      "aria-pressed",
+    expect(screen.getByRole("radio", { name: "Workouts" })).toHaveAttribute(
+      "aria-checked",
       "true",
     );
-    expect(screen.getByRole("button", { name: "E-Books" })).toHaveAttribute(
-      "aria-pressed",
+    expect(screen.getByRole("radio", { name: "E-Books" })).toHaveAttribute(
+      "aria-checked",
       "false",
     );
   });
@@ -84,14 +84,14 @@ describe("filter chip group selection", () => {
     renderGroup({ onValueChange, value: null });
 
     // act
-    await user.click(screen.getByRole("button", { name: "Workouts" }));
+    await user.click(screen.getByRole("radio", { name: "Workouts" }));
 
     // assert
     expect(onValueChange).toHaveBeenCalledTimes(1);
     expect(onValueChange).toHaveBeenCalledWith("workouts");
   });
 
-  it("replaces the pressed chip rather than adding to it", async () => {
+  it("replaces the checked radio rather than adding to it", async () => {
     // arrange
     const user = userEvent.setup();
     const onValueChange = vi.fn();
@@ -99,14 +99,14 @@ describe("filter chip group selection", () => {
     renderGroup({ onValueChange, value: "workouts" });
 
     // act
-    await user.click(screen.getByRole("button", { name: "E-Books" }));
+    await user.click(screen.getByRole("radio", { name: "E-Books" }));
 
     // assert
     expect(onValueChange).toHaveBeenCalledTimes(1);
     expect(onValueChange).toHaveBeenCalledWith("e-books");
   });
 
-  it("reports nothing chosen when the pressed chip is pressed again", async () => {
+  it("reports nothing chosen when the checked radio is activated again", async () => {
     // arrange
     const user = userEvent.setup();
     const onValueChange = vi.fn();
@@ -114,14 +114,14 @@ describe("filter chip group selection", () => {
     renderGroup({ onValueChange, value: "workouts" });
 
     // act
-    await user.click(screen.getByRole("button", { name: "Workouts" }));
+    await user.click(screen.getByRole("radio", { name: "Workouts" }));
 
     // assert
     expect(onValueChange).toHaveBeenCalledTimes(1);
     expect(onValueChange).toHaveBeenCalledWith(null);
   });
 
-  it("moves focus across the chips without choosing one", async () => {
+  it("moves focus across the radios without choosing one", async () => {
     // arrange
     const user = userEvent.setup();
     const onValueChange = vi.fn();
@@ -133,11 +133,11 @@ describe("filter chip group selection", () => {
     await user.keyboard("{ArrowRight}");
 
     // assert
-    expect(screen.getByRole("button", { name: "E-Books" })).toHaveFocus();
+    expect(screen.getByRole("radio", { name: "E-Books" })).toHaveFocus();
     expect(onValueChange).not.toHaveBeenCalled();
   });
 
-  it("reports the focused chip when the keyboard activates it", async () => {
+  it("reports the focused radio when the keyboard activates it", async () => {
     // arrange
     const user = userEvent.setup();
     const onValueChange = vi.fn();
@@ -164,7 +164,7 @@ describe("filter chip group appearance", () => {
     renderGroup({ onValueChange, tone: "brand-secondary", value: null });
 
     // assert
-    for (const chip of screen.getAllByRole("button")) {
+    for (const chip of screen.getAllByRole("radio")) {
       expect(chip).toHaveClass("data-[state=on]:bg-brand-secondary");
     }
   });
@@ -177,7 +177,7 @@ describe("filter chip group appearance", () => {
     renderGroup({ onValueChange, value: null });
 
     // assert
-    expect(screen.getByRole("button", { name: "Workouts" })).toHaveClass(
+    expect(screen.getByRole("radio", { name: "Workouts" })).toHaveClass(
       "data-[state=on]:bg-brand-primary",
     );
   });
@@ -204,6 +204,6 @@ describe("filter chip group appearance", () => {
     expect(
       screen.getByRole("group", { name: "Filter by Type" }),
     ).toHaveAttribute("id", "type-filter");
-    expect(screen.getByRole("button", { name: "Workouts" })).toBeDisabled();
+    expect(screen.getByRole("radio", { name: "Workouts" })).toBeDisabled();
   });
 });

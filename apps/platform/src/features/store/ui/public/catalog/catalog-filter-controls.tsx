@@ -22,7 +22,7 @@ export function useStoreCatalogFilterFocus() {
   // attribute would break silently the day that changes.
   const focusSelection = useCallback(() => {
     chipsRef.current
-      ?.querySelector<HTMLElement>('[aria-pressed="true"]')
+      ?.querySelector<HTMLElement>('[aria-checked="true"]')
       ?.focus();
   }, []);
 

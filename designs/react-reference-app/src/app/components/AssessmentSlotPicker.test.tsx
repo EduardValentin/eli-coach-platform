@@ -39,6 +39,39 @@ function dayButton(isoDay: string): HTMLButtonElement {
 }
 
 describe('AssessmentSlotPicker', () => {
+  it('names a past day with day-first wording and its refusal reason', () => {
+    // arrange
+    // act
+    renderPicker();
+
+    // assert
+    expect(dayButton('2026-10-19')).toHaveAccessibleName(
+      'Monday, 19 October 2026, Past day',
+    );
+  });
+
+  it('names today with day-first wording and its refusal reason', () => {
+    // arrange
+    // act
+    renderPicker();
+
+    // assert
+    expect(dayButton('2026-10-20')).toHaveAccessibleName(
+      'Today, Tuesday, 20 October 2026, No open slots',
+    );
+  });
+
+  it('names a future unavailable day with day-first wording and its refusal reason', () => {
+    // arrange
+    // act
+    renderPicker();
+
+    // assert
+    expect(dayButton('2026-10-21')).toHaveAccessibleName(
+      'Wednesday, 21 October 2026, No open slots',
+    );
+  });
+
   it('names the zone offset of the first open time before a day is picked', () => {
     // arrange
     // act
@@ -82,6 +115,9 @@ describe('AssessmentSlotPicker', () => {
     expect(dayButton('2026-10-27').closest('td')).toHaveAttribute(
       'aria-selected',
       'true',
+    );
+    expect(dayButton('2026-10-27')).toHaveAccessibleName(
+      'Tuesday, 27 October 2026, selected',
     );
     expect(screen.getByRole('button', { name: /^10:00\s?AM$/i })).toBeInTheDocument();
   });

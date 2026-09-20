@@ -163,6 +163,48 @@ describe("assessment call settings section", () => {
     expect(screen.getByRole("checkbox", { name: "Monday" })).toBeChecked();
   });
 
+  it("focuses the start hour after an hours refusal submitted with the keyboard", async () => {
+    // arrange
+    let sentSettings: unknown;
+    server.use(
+      http.put(SETTINGS_URL, async ({ request }) => {
+        sentSettings = await request.json();
+
+        return HttpResponse.json(
+          {
+            success: false,
+            error: {
+              code: "invalid_hours",
+              message: "The start hour must be before the end hour.",
+            },
+          },
+          { status: 400 },
+        );
+      }),
+    );
+    const user = userEvent.setup();
+    await renderSection();
+    const startHour = screen.getByRole("combobox", { name: "Start" });
+
+    // act
+    startHour.focus();
+    await user.keyboard("{Enter}{ArrowDown}{ArrowDown}{ArrowDown}{Enter}");
+    await user.tab();
+    await user.tab();
+    await user.tab();
+    await user.keyboard("{Enter}");
+
+    // assert
+    expect(
+      await screen.findByText("The start hour must be before the end hour."),
+    ).toHaveAttribute("role", "alert");
+    expect(sentSettings).toMatchObject({ startHour: 20, endHour: 20 });
+    expect(startHour).toHaveAttribute("aria-invalid", "true");
+    await waitFor(() => {
+      expect(document.activeElement).toBe(startHour);
+    });
+  });
+
   it("saves valid values, sends the browser zone, and shows the success toast", async () => {
     // arrange
     let sentBody: unknown;
