@@ -22,22 +22,22 @@ Change review: date 2026-09-20, commits `f46b6f41..HEAD` on `eduardvalentin1996/
 
 | Component | Fan-in | Fan-out | Instability | Abstractness | Distance | Previous distance | Volatility (run-8 window) | of which run 8 | Waitlist mode | Mobile navigation | GEN-191 commits |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| C1 packages/domain | 57 | 0 | 0.00 | 0.23 (26 / 115) | 0.77 | 0.77 | 25 + 1 | 12 | 6 | 0 | 4 |
+| C1 packages/domain | 58 | 0 | 0.00 | 0.23 (26 / 115) | 0.77 | 0.77 | 25 + 1 | 12 | 6 | 0 | 4 |
 | C2 packages/db | 24 | 0 | 0.00 | 0.00 (0 / 2) | 1.00 | 1.00 | 0 | 0 | 0 | 0 | 0 |
 | C3 packages/config | 29 | 0 | 0.00 | 0.00 (0 / 13) | 1.00 | 1.00 | 5 | 0 | 2 | 0 | 2 |
 | C4 packages/content | 11 | 0 | 0.00 | 0.00 (0 / 7) | 1.00 | 1.00 | 2 | 0 | 1 | 0 | 0 |
-| C5 packages/ui | PENDING-RECOUNT | 0 | 0.00 | 0.00 (0 / 5) | 1.00 | 1.00 | 3 | 0 | 1 | 3 | 6 |
-| C6 packages/infrastructure | PENDING-RECOUNT | PENDING-RECOUNT | PENDING-RECOUNT | PENDING-RECOUNT | PENDING-RECOUNT | 0.72 | 10 + 1 | 1 | 1 | 0 | 2 |
+| C5 packages/ui | 48 | 0 | 0.00 | 0.00 (0 / 5) | 1.00 | 1.00 | 3 | 0 | 1 | 3 | 6 |
+| C6 packages/infrastructure | 52 | 14 | 0.21 | 0.11 (3 / 28) | 0.68 | 0.72 | 10 + 1 | 1 | 1 | 0 | 2 |
 | C7 features/store | 10 | 37 | 0.79 | 0.00 (0 / 37) | 0.21 | 0.21 | 29 + 1 | 6 | 0 | 0 | 0 |
 | C8 features/waitlist | 10 | 14 | 0.58 | 0.00 (0 / 11) | 0.42 | 0.42 | 16 + 1 | 1 | 4 | 0 | 0 |
-| C9 features/accounts | PENDING-RECOUNT | 15 | PENDING-RECOUNT | 0.00 (0 / 10) | PENDING-RECOUNT | 0.50 | 11 | 1 | 0 | 0 | 0 |
+| C9 features/accounts | 17 | 15 | 0.47 | 0.00 (0 / 10) | 0.53 | 0.50 | 11 | 1 | 0 | 0 | 0 |
 | C11 surfaces/public-site | 1 | 22 | 0.96 | 0.00 (0 / 13) | 0.04 | 0.04 | 12 | 1 | 0 | 3 | 2 |
 | C12 surfaces/client-portal | 1 | 6 | 0.86 | undefined (0 types) | 0.14 | 0.14 | 3 | 0 | 0 | 0 | 0 |
 | C13 surfaces/coach-portal | 1 | 5 | 0.83 | undefined (0 types) | 0.17 | 0.17 | 3 | 0 | 0 | 0 | 0 |
 | C14 apps/platform/src/server | 3 | 11 | 0.79 | 0.00 (0 / 13) | 0.21 | 0.21 | 11 + 1 | 1 | 3 | 0 | 2 |
 | C15 app root | 0 | 4 | 1.00 | undefined (0 types) | 0.00 | 0.00 | 7 | 0 | 2 | 0 | 1 |
 | C16 packages/test-support | 0 | 0 | undefined | undefined (0 types) | undefined | undefined | 3 | 0 | 0 | 0 | 0 |
-| C17 features/assessment-calls | PENDING-RECOUNT | PENDING-RECOUNT | PENDING-RECOUNT | PENDING-RECOUNT | PENDING-RECOUNT | 0.21 | n/a | n/a | n/a | n/a | 8 |
+| C17 features/assessment-calls | 10 | 38 | 0.79 | 0.00 (0 / 26) | 0.21 | 0.21 | n/a | n/a | n/a | n/a | 8 |
 
 ## GEN-193 coach assessment calls
 
@@ -52,6 +52,8 @@ A cold cruise of the working tree at GEN-193's HEAD (before this rebase) read 39
 No component entered the zone of uselessness: the slice published no new abstract type, and every C5 export it added had a named consumer, which `knip` proves on every `pnpm typecheck`. Mean D and its standard deviation were unchanged to two places, and the one-standard-deviation set was the same.
 
 Superseded by the rebase recount below, which folds this slice's figures into the same fresh cruise that recomputes GEN-192's own recut.
+
+**Rebase recount (`origin/main` at `a5615696`, 2026-09-20).** A fresh cold cruise of the rebased tree (`pnpm exec depcruise --config tools/dependency-cruiser.config.cjs --output-type json apps/platform/src packages/config/src packages/content/src packages/db/src packages/domain/src packages/infrastructure/src packages/test-support/src packages/ui/src`) reads 423 modules and 1156 dependencies, 0 violations, over the same in-scope production filter. It supersedes both the GEN-192 recut and the GEN-193 section above for every cell either one touched, and also folds in the remediation round's toaster move and the coach-controller's `api/coach/` regrouping (neither moves a fan-in/fan-out count, since both are renames within C5 and C17 respectively). Six components carry updated cells: **C1** fan-in 57 → 58 (GEN-193's `ListAssessmentCallsUseCase`/`AssessmentCallListing`/`AssessmentCall.hasEnded`/`AssessmentCallReservations.listAll` add one net importer beyond GEN-192's own recut), A and D unchanged. **C5** fan-in 43/44 (GEN-192's and GEN-193's separately recorded figures) settle at 48 in the merged tree: the two slices' new C17 consumers do not overlap, so both additions land; fan-out, A and D hold at 0/0.00/1.00. **C6** holds exactly at GEN-192's own recut (52/14/0.21/0.11 (3/28)/0.68), unmoved by GEN-193, which never touches infrastructure. **C9** settles at 17 fan-in (GEN-192's 17 and GEN-193's 16 both describe real edges into C9 that coexist in the merged tree, and 17 is the fan-in GEN-192's own recut already counted, so no further move), fan-out 15, I 0.47, D 0.53. **C13** holds at 1/5/0.17, unmoved by either slice once merged (its two C17-importing modules already imported C9, so gaining a further C17 fragment moves no distinct-module count). **C17** settles at fan-in 10, fan-out 38 (fan-out is the sum of GEN-192's 31 and GEN-193's coach-listing outward edges once both slices' new files are counted together, since they touch disjoint files), I 0.79, A 0.00 (0 / 26), D 0.21 — back near its run-8 baseline rather than the 0.225 either slice reached alone, because the two slices' fan-in growth (GEN-192's settings routes, GEN-193's coach-listing routes) compounds faster than their fan-out growth once both are present together. No component crosses the 0.10 threshold from this recount and none is reclassified. Mean D holds at 0.49 and its population standard deviation at 0.37 over the same fifteen components with a defined D, the same band (0.12 to 0.86) and the same outlier set (C2, C3, C4, C5 above it; C11, C15 below it; C12 at 0.14 the nearest edge, still inside).
 
 **C10 features/coaching-bundles is gone.** The feature folder and the `packages/domain/src/coaching-bundles` slice were both deleted; the three bundle literals, the benefits list and the presenter are one C11-private module in `surfaces/public-site/sections/pricing/` (decision D5). Its three edges (`C11 → C10`, `C10 → C1`, `C10 → C5`) left the graph with it.
 

@@ -23,7 +23,7 @@ import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/serv
 
 import { AssessmentCallSettingsController } from "~/features/assessment-calls/api/settings/assessment-call-settings-controller.server";
 import { AssessmentCallsController } from "~/features/assessment-calls/api/booking/assessment-calls-controller.server";
-import { CoachAssessmentCallsController } from "~/features/assessment-calls/api/coach-assessment-calls-controller.server";
+import { CoachAssessmentCallsController } from "~/features/assessment-calls/api/coach/coach-assessment-calls-controller.server";
 import { PostgresAssessmentCallRepository } from "~/features/assessment-calls/data/repository.server";
 import { createAssessmentCallNotifications } from "~/features/assessment-calls/email/create-assessment-call-notifications.server";
 
