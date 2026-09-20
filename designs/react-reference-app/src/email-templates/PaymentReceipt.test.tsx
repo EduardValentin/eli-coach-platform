@@ -5,9 +5,6 @@ import { PaymentReceipt, type PaymentReceiptProps } from './PaymentReceipt';
 
 const CONTACT_HREF = 'mailto:contact@evoa.fit';
 
-// The template renders a whole document, so it is rendered the way the preview
-// surface renders it and the resulting markup is mounted, letting queries run
-// against the accessibility tree a mail client would build.
 async function mountReceipt(props: PaymentReceiptProps) {
   const html = await renderEmail(<PaymentReceipt {...props} />);
   const parsed = new DOMParser().parseFromString(html, 'text/html');
@@ -32,8 +29,6 @@ describe('PaymentReceipt', () => {
     expect(
       screen.getByText('Your invitation is on its way.'),
     ).toBeInTheDocument();
-    // The only destination is the way to reach her coach, so the receipt
-    // cannot quietly grow a second call to action.
     expect(
       screen.getAllByRole('link').map((link) => link.getAttribute('href')),
     ).toEqual([CONTACT_HREF]);
@@ -95,8 +90,6 @@ describe('PaymentReceipt', () => {
       const parsed = await mountReceipt(props);
 
       // assert
-      // Read through the DOM directly: jest-dom's element matchers reject
-      // nodes from a DOMParser document, which has no defaultView.
       expect(parsed.documentElement.getAttribute('lang')).toBe('en');
       expect(parsed.documentElement.getAttribute('dir')).toBe('ltr');
       expect(parsed.title).toBe(subject);

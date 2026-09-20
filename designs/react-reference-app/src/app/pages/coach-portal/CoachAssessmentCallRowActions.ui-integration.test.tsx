@@ -17,10 +17,6 @@ import {
 import { ClientProfileProvider } from '../../context/ClientProfileContext';
 import type { PrototypeBooking } from '../../services/assessmentCallService';
 
-// The invitation and payment-link mocks answer after a real delay, so this
-// suite keeps real timers: freezing Date would leave every retry loop without
-// a clock to time out against. The one booking is placed ahead of the real
-// present so it lands on the page's default upcoming filter.
 const DAY_MS = 24 * 60 * 60 * 1000;
 const VISITOR = 'Maria Ionescu';
 const VISITOR_EMAIL = 'maria@example.com';
@@ -73,9 +69,6 @@ function SeedBookings() {
   return null;
 }
 
-// The prototype has no coach-facing way to record a payment or an accepted
-// invitation yet, so the suite drives those two journey events through the
-// same context the sales pages will use.
 function JourneyDriver() {
   const { recordPaymentLinkSent, recordPaid, recordAccountCreated } =
     useClientJourneys();

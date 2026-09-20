@@ -7,9 +7,6 @@ const CHOOSE_URL = 'https://evoa.fit/select-bundle?token=pl-1';
 const TERMS_URL = 'https://evoa.fit/terms';
 const CONTACT_HREF = 'mailto:contact@evoa.fit';
 
-// The template renders a whole document, so it is rendered the way the preview
-// surface renders it and the resulting markup is mounted, letting queries run
-// against the accessibility tree a mail client would build.
 async function mountPaymentLink(props: PaymentLinkProps) {
   const html = await renderEmail(
     <PaymentLink chooseUrl={CHOOSE_URL} termsUrl={TERMS_URL} {...props} />,
@@ -107,8 +104,6 @@ describe('PaymentLink', () => {
       const parsed = await mountPaymentLink(props);
 
       // assert
-      // Read through the DOM directly: jest-dom's element matchers reject
-      // nodes from a DOMParser document, which has no defaultView.
       expect(parsed.documentElement.getAttribute('lang')).toBe('en');
       expect(parsed.documentElement.getAttribute('dir')).toBe('ltr');
       expect(parsed.title).toBe(subject);

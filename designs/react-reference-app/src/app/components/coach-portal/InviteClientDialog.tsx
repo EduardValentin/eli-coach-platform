@@ -116,8 +116,6 @@ function visitorNameOf(journey: ClientJourney): string {
   return `${journey.identity.firstName} ${journey.identity.lastName}`.trim();
 }
 
-// The dialog unmounts its body when it closes, so the form and the outcome
-// start clean on every open without an effect resetting them.
 function InviteForm({
   journey,
   onClose,
