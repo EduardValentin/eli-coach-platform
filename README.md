@@ -39,7 +39,7 @@ Alongside it lives a React reference prototype in [designs/react-reference-app](
 | [PRD.md](PRD.md) | Product requirements and canonical domain vocabulary |
 | [docs/](docs/) | [DATABASE.md](docs/DATABASE.md), [SECRET_MANAGEMENT.md](docs/SECRET_MANAGEMENT.md), [STORE_PUBLISHING.md](docs/STORE_PUBLISHING.md), [CLERK.md](docs/CLERK.md), [TERMS.md](docs/TERMS.md), [CLAUDE_WEB_SESSIONS.md](docs/CLAUDE_WEB_SESSIONS.md) |
 
-Boundary rules are stated in [tools/dependency-cruiser.config.cjs](tools/dependency-cruiser.config.cjs) and published surfaces in [knip.json](knip.json). `pnpm check:boundaries` runs dependency-cruiser and then `pnpm check:surfaces` (knip), inside `pnpm typecheck` and `pnpm build`; both are proven in [tools/boundaries.test.mjs](tools/boundaries.test.mjs).
+Boundary rules are stated in [tools/dependency-cruiser.config.cjs](tools/dependency-cruiser.config.cjs) and published surfaces in [knip.json](knip.json). `pnpm check:boundaries` runs dependency-cruiser and then `pnpm check:surfaces` (knip), directly inside `pnpm validate` and the Docker builder stage; both are proven in [tools/boundaries.test.mjs](tools/boundaries.test.mjs).
 
 ## Requirements
 
@@ -83,14 +83,15 @@ npm run dev
 ```bash
 pnpm lint            # eslint over apps and packages, then the Prettier check
 pnpm format          # rewrite every file Prettier owns (see .prettierignore)
-pnpm typecheck       # tsc across every workspace package
-pnpm test            # vitest: unit and integration projects
-pnpm build           # build the platform app
+pnpm typecheck       # TypeScript checks across every workspace package
+pnpm test            # typecheck, then run the unit and integration Vitest projects
+pnpm build           # build the platform app only
+pnpm validate        # lint, boundaries, test, and build: the workspace CI gate
 pnpm test:lighthouse # Lighthouse CI over the built SSR server's public pages
 pnpm test:e2e        # Playwright: local-only, drives real Clerk sign-in journeys (see docs/CLERK.md)
 ```
 
-The reference prototype is covered by its own `npm test` — which typechecks with `tsc --noEmit` before running vitest, as the workspace does — and `npm run build`, both of which CI runs as a separate step; no workspace gate reaches it.
+The reference prototype is covered by its own `npm test` — which typechecks with `tsc --noEmit` before running vitest, as `pnpm test` does for the workspace — and `npm run build`, both of which CI runs as a separate step; no workspace gate reaches it.
 
 ## Database
 

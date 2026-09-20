@@ -53,7 +53,7 @@ A cold cruise of the working tree at GEN-193's HEAD (before this rebase) read 39
 
 **C13 held at 0.17.** Its fan-out was still five distinct modules — the page, the route registry, the two shell modules and the navigation links — because the page swapped one outward import for another, and its fan-in was still one. **C9 fan-in rose 15 to 16**, because C17's `contracts/paths.ts` built the coach page's path on `COACH_PORTAL_PATH`; nothing else about C9 moved.
 
-No component entered the zone of uselessness: the slice published no new abstract type, and every C5 export it added had a named consumer, which `knip` proves on every `pnpm typecheck`. Mean D and its standard deviation were unchanged to two places, and the one-standard-deviation set was the same.
+No component entered the zone of uselessness: the slice published no new abstract type, and every C5 export it added had a named consumer, which `knip` proves during `pnpm validate`. Mean D and its standard deviation were unchanged to two places, and the one-standard-deviation set was the same.
 
 Superseded by the rebase recount below, which folds this slice's figures into the same fresh cruise that recomputes GEN-192's own recut.
 
