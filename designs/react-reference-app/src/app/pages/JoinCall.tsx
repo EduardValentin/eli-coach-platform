@@ -39,6 +39,7 @@ export function JoinCall() {
       eyebrow="Assessment call"
       title="Your call link isn't ready yet"
       description="The meeting room for this call hasn't been set up yet. Check back before your call, or reply to your confirmation email and we'll send the link."
+      landmarkLabel="Assessment call"
     >
       <Link to="/" className={ERROR_PAGE_ACTION_CLASS}>
         Back to home <ArrowRight size={18} aria-hidden="true" />

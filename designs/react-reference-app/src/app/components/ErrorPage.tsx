@@ -17,15 +17,17 @@ export function ErrorPage({
   title,
   description,
   children,
+  landmarkLabel = 'Error',
 }: {
   icon: LucideIcon;
   eyebrow: string;
   title: string;
   description: ReactNode;
   children: ReactNode;
+  landmarkLabel?: string;
 }) {
   return (
-    <main aria-label="Error" className={FULL_PAGE_MESSAGE_SHELL_CLASS}>
+    <main aria-label={landmarkLabel} className={FULL_PAGE_MESSAGE_SHELL_CLASS}>
       <div className="w-20 h-20 bg-surface-subtle text-muted-foreground rounded-full flex items-center justify-center mb-6">
         <Icon size={36} aria-hidden="true" />
       </div>

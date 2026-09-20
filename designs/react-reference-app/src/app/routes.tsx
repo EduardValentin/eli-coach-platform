@@ -1,5 +1,5 @@
 import { createBrowserRouter, Outlet } from "react-router";
-import { Toaster } from "sonner";
+import { Toaster } from "./components/ui/sonner";
 import { Home } from "./pages/Home";
 import { Book } from "./pages/Book";
 import { JoinCall } from "./pages/JoinCall";

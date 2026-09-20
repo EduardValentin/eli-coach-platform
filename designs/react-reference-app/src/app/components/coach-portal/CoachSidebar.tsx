@@ -109,6 +109,7 @@ const SidebarContent = ({
             aria-current={isActive ? 'page' : undefined}
             onClick={onNavigate}
             ref={linkIndex === 0 ? firstLinkRef : undefined}
+            aria-current={isActive ? 'page' : undefined}
             className={`flex items-center gap-4 px-4 py-3.5 rounded-card transition-all ${
               isActive
                 ? 'bg-text-primary text-white shadow-md'

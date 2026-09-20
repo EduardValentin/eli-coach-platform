@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
 import { Alert } from '../ui/alert';
-import { Button } from '../ui/button';
+import { Button } from '../ThemeButton';
 import { CheckboxChip } from '../CheckboxChip';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -93,15 +93,20 @@ function HourSelect({
   errorId?: string;
   onHourChange: (hour: number) => void;
 }) {
+  const labelId = `${id}-label`;
+
   return (
     <div className="space-y-2">
-      <Label htmlFor={id}>{label}</Label>
+      <Label htmlFor={id} id={labelId}>
+        {label}
+      </Label>
       <Select value={String(hour)} onValueChange={(value) => onHourChange(Number(value))}>
         <SelectTrigger
           id={id}
           className="w-full"
           aria-describedby={errorId}
           aria-invalid={Boolean(errorId) || undefined}
+          aria-labelledby={labelId}
         >
           <SelectValue />
         </SelectTrigger>
