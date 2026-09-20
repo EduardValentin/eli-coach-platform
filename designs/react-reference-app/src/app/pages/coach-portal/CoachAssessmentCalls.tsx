@@ -13,11 +13,7 @@ export function CoachAssessmentCalls() {
   const timeZone = browserTimeZone();
 
   if (listing.status === 'unavailable') {
-    return (
-      <div className="max-w-4xl mx-auto pb-12 lg:px-8 lg:pt-8">
-        <AssessmentCallsUnavailable />
-      </div>
-    );
+    return <AssessmentCallsUnavailable />;
   }
 
   return (

@@ -36,11 +36,7 @@ export function CoachDashboard() {
   const timeZone = browserTimeZone();
 
   if (listing.status === 'unavailable') {
-    return (
-      <div className="w-full pb-12">
-        <AssessmentCallsUnavailable />
-      </div>
-    );
+    return <AssessmentCallsUnavailable />;
   }
 
   const callsLeftToday = countCallsLeftToday(

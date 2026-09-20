@@ -1,7 +1,5 @@
 import {
-  isRouteErrorResponse,
   useLoaderData,
-  useRouteError,
   type LoaderFunctionArgs,
   type MetaFunction,
 } from "react-router";
@@ -11,10 +9,11 @@ import {
   classifyCalls,
   countCallsLeftToday,
 } from "~/features/assessment-calls/ui/coach/assessment-call-listing";
-import { AssessmentCallsUnavailable } from "~/features/assessment-calls/ui/coach/assessment-calls-unavailable";
 import { CoachGreeting } from "~/features/assessment-calls/ui/coach/dashboard/coach-greeting";
 import { UpcomingCallsWidget } from "~/features/assessment-calls/ui/coach/dashboard/upcoming-calls-widget";
 import { useCoachClock } from "~/features/assessment-calls/ui/coach/use-coach-clock";
+
+export { AssessmentCallsErrorBoundary as ErrorBoundary } from "~/features/assessment-calls/ui/coach/assessment-calls-unavailable";
 
 export async function loader({ context }: LoaderFunctionArgs) {
   return context.get(assessmentCallsContext).coachAssessmentCalls.loadCalls();
@@ -38,14 +37,4 @@ export default function CoachHomeRoute() {
       </div>
     </div>
   );
-}
-
-export function ErrorBoundary() {
-  const error = useRouteError();
-
-  if (isRouteErrorResponse(error) && error.status === 503) {
-    return <AssessmentCallsUnavailable />;
-  }
-
-  throw error;
 }

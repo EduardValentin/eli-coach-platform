@@ -1,28 +1,42 @@
 import { cn } from "@eli-coach-platform/ui/lib";
+import { DeadEndContent } from "@eli-coach-platform/ui/layout";
 import { cardVariants } from "@eli-coach-platform/ui/primitives";
 import { VideoOff } from "lucide-react";
+import { isRouteErrorResponse, useRouteError } from "react-router";
 
 import { COACH_ASSESSMENT_CALLS_UNAVAILABLE_MESSAGE } from "~/features/assessment-calls/contracts/assessment-calls";
 
-export function AssessmentCallsUnavailable() {
+const UNAVAILABLE_STATUS = 503;
+
+function AssessmentCallsUnavailable() {
   return (
     <div
-      className={cn(
-        cardVariants({ variant: "portal-panel" }),
-        "flex flex-col items-center px-6 py-16 text-center",
-      )}
+      className="mx-auto max-w-4xl pb-12 lg:px-8 lg:pt-8"
       data-parity-root="AssessmentCallsUnavailable"
-      role="alert"
     >
-      <div className="mb-6 flex size-20 items-center justify-center rounded-full bg-surface-subtle text-text-muted">
-        <VideoOff aria-hidden="true" size={36} />
+      <div
+        className={cn(
+          cardVariants({ variant: "portal-panel" }),
+          "flex flex-col items-center px-6 py-16 text-center",
+        )}
+        role="alert"
+      >
+        <DeadEndContent
+          description={COACH_ASSESSMENT_CALLS_UNAVAILABLE_MESSAGE}
+          icon={<VideoOff aria-hidden="true" size={36} />}
+          title="Assessment calls unavailable"
+        />
       </div>
-      <h1 className="font-heading text-display-md tracking-tight text-text-primary">
-        Assessment calls unavailable
-      </h1>
-      <p className="mt-4 max-w-md text-lg leading-relaxed text-text-secondary">
-        {COACH_ASSESSMENT_CALLS_UNAVAILABLE_MESSAGE}
-      </p>
     </div>
   );
+}
+
+export function AssessmentCallsErrorBoundary() {
+  const error = useRouteError();
+
+  if (isRouteErrorResponse(error) && error.status === UNAVAILABLE_STATUS) {
+    return <AssessmentCallsUnavailable />;
+  }
+
+  throw error;
 }

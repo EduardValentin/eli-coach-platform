@@ -197,7 +197,7 @@ describe.sequential("coach assessment calls integration", () => {
 
   it("answers both coach pages with 503 when the calls cannot be read", async () => {
     // arrange
-    await breakTheCallsRead();
+    await makeAssessmentCallsUnreadable();
 
     // act
     const dashboard = await requestAsCoach(DASHBOARD);
@@ -371,7 +371,7 @@ async function provisionClient(): Promise<void> {
 
 // The schema is dropped and remigrated between cases, so the rename lives
 // only as long as the case that asks for it.
-async function breakTheCallsRead(): Promise<void> {
+async function makeAssessmentCallsUnreadable(): Promise<void> {
   await suite.postgres.executeSql({
     sql: "alter table app.assessment_calls rename to assessment_calls_unreadable",
   });
