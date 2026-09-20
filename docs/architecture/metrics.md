@@ -22,6 +22,8 @@ Change review: date 2026-09-20, commits `f46b6f41..HEAD` on `eduardvalentin1996/
 
 Change review: date 2026-09-20, commits `a5615696..HEAD` on `claude/coach-portal-followups`; scope the ad-hoc coach portal follow-up set; partial scope. The C5 and C17 cells below carry its figures, read from a cold cruise at HEAD; every other cell is carried forward, and the volatility columns count none of its commits.
 
+Change review: date 2026-09-20, commits `a5615696..HEAD` on `claude/coach-portal-followups`; scope the ad-hoc coach portal follow-up set; partial scope. The C5 and C17 cells below carry its figures, read from a cold cruise at HEAD; every other cell is carried forward, and the volatility columns count none of its commits.
+
 | Component | Fan-in | Fan-out | Instability | Abstractness | Distance | Previous distance | Volatility (run-8 window) | of which run 8 | Waitlist mode | Mobile navigation | GEN-191 commits |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | C1 packages/domain | 58 | 0 | 0.00 | 0.23 (26 / 115) | 0.77 | 0.77 | 25 + 1 | 12 | 6 | 0 | 4 |
