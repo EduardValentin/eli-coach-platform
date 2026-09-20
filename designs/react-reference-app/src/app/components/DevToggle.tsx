@@ -41,6 +41,7 @@ import {
   sampleTwoLeftTodayBookings,
 } from '../services/assessmentCallSamples';
 import { useAssessmentCalls } from '../context/AssessmentCallContext';
+import { useClientJourneys } from '../context/ClientJourneyContext';
 import { useCheckins } from '../context/CheckinContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Checkbox } from './ui/checkbox';
@@ -259,6 +260,27 @@ export function DevToggle() {
     useState<PendingCheckinsSeed>('seeded');
   const { appState, setAppState } = useAppState();
   const { replaceBookings } = useAssessmentCalls();
+  const { journeys } = useClientJourneys();
+  const journeyLinks = Object.values(journeys).flatMap((journey) => [
+    ...(journey.paymentLink
+      ? [
+          {
+            key: `${journey.callId}-payment`,
+            label: `Open payment link · ${journey.identity.firstName} ${journey.identity.lastName}`,
+            to: `/select-bundle?token=${journey.paymentLink.token}`,
+          },
+        ]
+      : []),
+    ...(journey.invitation
+      ? [
+          {
+            key: `${journey.callId}-invitation`,
+            label: `Open invitation link · ${journey.identity.firstName} ${journey.identity.lastName}`,
+            to: `/invitation/${journey.invitation.token}`,
+          },
+        ]
+      : []),
+  ]);
   const { clearPendingCheckins, restoreSeededCheckins } = useCheckins();
 
   const seedDashboardCalls = (value: string) => {
@@ -909,6 +931,22 @@ export function DevToggle() {
                     </SelectContent>
                   </Select>
                 </div>
+
+                {journeyLinks.length > 0 && (
+                  <div className="space-y-2">
+                    <p className={DEV_LABEL_CLASS}>Links sent by the coach</p>
+                    {journeyLinks.map((link) => (
+                      <Link
+                        key={link.key}
+                        to={link.to}
+                        onClick={() => setIsOpen(false)}
+                        className="inline-flex items-center gap-1 text-sm text-brand hover:underline"
+                      >
+                        {link.label} <ArrowRight size={14} aria-hidden="true" />
+                      </Link>
+                    ))}
+                  </div>
+                )}
               </TabsContent>
             </Tabs>
           </motion.div>

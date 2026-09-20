@@ -331,18 +331,11 @@ describe('the assessment call row actions', () => {
     await user.click(
       screen.getByRole('button', { name: 'driver: create account' }),
     );
-    await openRowMenu(user);
 
     // assert
     expect(screen.getByText('Invitation accepted')).toBeInTheDocument();
     expect(
-      screen.queryByRole('menuitem', { name: 'Send payment link' }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.getByRole('menuitem', { name: 'Open payment link' }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('menuitem', { name: 'Open invitation link' }),
-    ).toBeInTheDocument();
+      screen.queryByRole('button', { name: /Journey actions for/ }),
+    ).toBeNull();
   });
 });

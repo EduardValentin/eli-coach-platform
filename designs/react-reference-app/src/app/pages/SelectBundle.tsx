@@ -121,7 +121,7 @@ export function SelectBundle() {
           </h1>
           {isValidToken ? (
             <p className="text-lg text-copy-muted mb-8">
-              Based on our assessment call, select the commitment timeframe that works best for you. Let's get to work.
+              Based on our assessment call, select the commitment timeframe that works best for you.
             </p>
           ) : isLoading ? (
             <p aria-busy="true" className="text-lg text-copy-muted mb-8" role="status">

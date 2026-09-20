@@ -1,13 +1,11 @@
 import { useState } from 'react';
 import { MoreVertical } from 'lucide-react';
-import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { Button } from '../ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
 import { useAppState } from '../../context/AppContext';
@@ -28,7 +26,6 @@ export function CallJourneyActions({
   journey: ClientJourney;
   visitorName: string;
 }) {
-  const navigate = useNavigate();
   const { appState } = useAppState();
   const { recordPaymentLinkSent, recordInvitation, updateIdentity } =
     useClientJourneys();
@@ -54,6 +51,8 @@ export function CallJourneyActions({
     }
   };
 
+  if (accountCreated) return null;
+
   return (
     <>
       <DropdownMenu modal={false} open={menuOpen} onOpenChange={setMenuOpen}>
@@ -70,56 +69,29 @@ export function CallJourneyActions({
         </DropdownMenuTrigger>
 
         <DropdownMenuContent align="end" className="w-64">
-          {!accountCreated && (
-            <>
-              <DropdownMenuItem
-                disabled={sendingLink}
-                onSelect={(event) => {
-                  event.preventDefault();
-                  void sendLink();
-                }}
-              >
-                {sendingLink ? 'Sending payment link…' : 'Send payment link'}
-              </DropdownMenuItem>
+      <DropdownMenuItem
+            disabled={sendingLink}
+            onSelect={(event) => {
+              event.preventDefault();
+              void sendLink();
+            }}
+          >
+            {sendingLink ? 'Sending payment link…' : 'Send payment link'}
+          </DropdownMenuItem>
 
-              <DropdownMenuItem
-                disabled={!canInvite}
-                onSelect={() => setInviteOpen(true)}
-                className="flex-col items-start gap-0.5"
-              >
-                <span>Invite</span>
-                {!canInvite && (
-                  <span className="text-xs text-muted-foreground">
-                    {INVITE_HINT}
-                  </span>
-                )}
-              </DropdownMenuItem>
+          <DropdownMenuItem
+            disabled={!canInvite}
+            onSelect={() => setInviteOpen(true)}
+            className="flex-col items-start gap-0.5"
+          >
+            <span>Invite</span>
+            {!canInvite && (
+              <span className="text-xs text-muted-foreground">
+                {INVITE_HINT}
+              </span>
+            )}
+          </DropdownMenuItem>
 
-              {(journey.paymentLink || journey.invitation) && (
-                <DropdownMenuSeparator />
-              )}
-            </>
-          )}
-
-          {journey.paymentLink && (
-            <DropdownMenuItem
-              onSelect={() =>
-                navigate(`/select-bundle?token=${journey.paymentLink?.token}`)
-              }
-            >
-              Open payment link
-            </DropdownMenuItem>
-          )}
-
-          {journey.invitation && (
-            <DropdownMenuItem
-              onSelect={() =>
-                navigate(`/invitation/${journey.invitation?.token}`)
-              }
-            >
-              Open invitation link
-            </DropdownMenuItem>
-          )}
         </DropdownMenuContent>
       </DropdownMenu>
 
