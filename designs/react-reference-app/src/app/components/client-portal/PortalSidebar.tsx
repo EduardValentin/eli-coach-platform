@@ -158,7 +158,7 @@ function MobileTopBar({ onOpenMore, moreOpen }: { onOpenMore: () => void; moreOp
             aria-label="Open menu"
             aria-expanded={moreOpen}
             aria-controls="portal-more-sheet"
-            className="w-10 h-10 rounded-full flex items-center justify-center bg-neutral-100 hover:bg-neutral-200 text-text-secondary transition-colors"
+            className="w-10 h-10 rounded-full flex items-center justify-center bg-surface-muted hover:bg-surface-muted-hover text-text-secondary transition-colors"
           >
             <Menu size={20} aria-hidden="true" />
           </button>

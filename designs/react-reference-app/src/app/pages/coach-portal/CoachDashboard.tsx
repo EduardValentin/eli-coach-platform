@@ -1,4 +1,4 @@
-import { motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import { ClipboardCheck, Plus, ArrowRight, User } from 'lucide-react';
 import { Link } from 'react-router';
 import { DashboardAppointmentRow } from '../../components/coach-portal/DashboardAppointmentRow';
@@ -22,6 +22,7 @@ const MOCK_CLIENTS = [
 ];
 
 export function CoachDashboard() {
+  const prefersReducedMotion = useReducedMotion() ?? false;
   const { getPendingCheckins } = useCheckins();
   const { bookings } = useAssessmentCalls();
   const pendingCheckins = getPendingCheckins();
@@ -64,10 +65,10 @@ export function CoachDashboard() {
         />
 
         {/* Pending Check-ins */}
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
+        <motion.div
+          initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
+          transition={prefersReducedMotion ? { duration: 0 } : { delay: 0.1 }}
           className="bg-card p-8 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50"
         >
           <div className="flex items-center gap-3 mb-6">
@@ -102,10 +103,10 @@ export function CoachDashboard() {
       </div>
 
       {/* Active Clients Table */}
-      <motion.div 
-        initial={{ opacity: 0, y: 10 }}
+      <motion.div
+        initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
+        transition={prefersReducedMotion ? { duration: 0 } : { delay: 0.2 }}
         className="bg-card p-8 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50"
       >
         <div className="flex items-center justify-between mb-8">

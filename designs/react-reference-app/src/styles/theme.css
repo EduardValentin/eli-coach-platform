@@ -108,6 +108,7 @@
   --surface-brand-soft: #fff5f8;
   --surface-quiet: oklch(0.985 0 0);
   --surface-muted: oklch(0.97 0 0);
+  --surface-muted-hover: oklch(0.922 0 0);
   --surface-strong: oklch(0.269 0 0);
   --surface-neutral: #ececf0;
   /* Fine-neutral text & borders */
@@ -377,6 +378,7 @@
   --color-surface-brand-soft: var(--surface-brand-soft);
   --color-surface-quiet: var(--surface-quiet);
   --color-surface-muted: var(--surface-muted);
+  --color-surface-muted-hover: var(--surface-muted-hover);
   --color-surface-strong: var(--surface-strong);
   --color-surface-neutral: var(--surface-neutral);
   --color-copy-muted: var(--copy-muted);
