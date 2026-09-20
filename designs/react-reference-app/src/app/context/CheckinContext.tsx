@@ -220,6 +220,10 @@ const MOCK_CHECKINS: CheckIn[] = [
   },
 ];
 
+function isPending(checkin: CheckIn): boolean {
+  return checkin.status === 'pending' || checkin.status === 'rescheduling';
+}
+
 export function CheckinProvider({ children }: { children: ReactNode }) {
   const [checkins, setCheckins] = useState<CheckIn[]>(MOCK_CHECKINS);
 
@@ -339,12 +343,7 @@ export function CheckinProvider({ children }: { children: ReactNode }) {
   );
 
   const clearPendingCheckins = useCallback(() => {
-    setCheckins((previous) =>
-      previous.filter(
-        (checkin) =>
-          checkin.status !== 'pending' && checkin.status !== 'rescheduling',
-      ),
-    );
+    setCheckins((previous) => previous.filter(checkin => !isPending(checkin)));
   }, []);
 
   const restoreSeededCheckins = useCallback(() => {
@@ -354,7 +353,7 @@ export function CheckinProvider({ children }: { children: ReactNode }) {
   const getPendingCheckins = useCallback(
     (clientId?: string) =>
       checkins
-        .filter(c => (c.status === 'pending' || c.status === 'rescheduling') && (!clientId || c.clientId === clientId))
+        .filter(c => isPending(c) && (!clientId || c.clientId === clientId))
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
     [checkins]
   );

@@ -174,12 +174,11 @@ describe("PortalShell navigation link styling", () => {
     // arrange, act
     renderShell({ initialPath: "/coach" });
 
-    // act
+    // assert
     const sidebar = screen.getByRole("complementary", {
       name: "Coach portal sidebar",
     });
 
-    // assert
     expect(
       within(sidebar).getByRole("link", { name: "Dashboard" }),
     ).toHaveClass("bg-text-primary", "text-text-inverted", "shadow-action");

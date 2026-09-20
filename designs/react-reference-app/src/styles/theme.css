@@ -187,6 +187,7 @@
   --surface-base: #ffffff;
   --container-reading: 45rem;
   --container-content: 70rem;
+  --container-portal: 80rem;
   --container-stage: 90rem;
   --size-control-xs: 2rem;
   --size-control-sm: 2.5rem;
@@ -472,6 +473,7 @@
   --size-control-md: var(--size-control-md);
   --size-control-lg: var(--size-control-lg);
   --container-content: var(--container-content);
+  --container-portal: var(--container-portal);
   --container-stage: var(--container-stage);
   --shadow-raised: var(--shadow-raised);
   --color-overlay-strong: var(--overlay-strong);
