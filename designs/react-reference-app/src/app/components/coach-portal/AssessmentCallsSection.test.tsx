@@ -1,11 +1,15 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useEffect } from 'react';
 import { MemoryRouter, useLocation, useNavigationType } from 'react-router';
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { AssessmentCallsSection } from './AssessmentCallsSection';
 import type { PrototypeBooking } from '../../services/assessmentCallService';
 import { AppProvider } from '../../context/AppContext';
-import { AssessmentCallProvider } from '../../context/AssessmentCallContext';
+import {
+  AssessmentCallProvider,
+  useAssessmentCalls,
+} from '../../context/AssessmentCallContext';
 import { ClientJourneyProvider } from '../../context/ClientJourneyContext';
 import { ClientProfileProvider } from '../../context/ClientProfileContext';
 
@@ -67,17 +71,43 @@ function LocationProbe() {
   return <p data-testid="location-probe">{`${search} ${navigationType}`}</p>;
 }
 
+beforeAll(() => {
+  vi.stubGlobal(
+    'matchMedia',
+    vi.fn((query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
+  );
+});
+
+function SeedBookings({ bookings }: { bookings: PrototypeBooking[] }) {
+  const { replaceBookings } = useAssessmentCalls();
+  useEffect(() => {
+    replaceBookings(bookings);
+  }, [bookings, replaceBookings]);
+  return null;
+}
+
 function renderSection(
   options: { bookings?: PrototypeBooking[]; urlQuery?: string } = {},
 ) {
+  const bookings = options.bookings ?? ALL_BOOKINGS;
   render(
     <MemoryRouter initialEntries={[`/coach${options.urlQuery ?? ''}`]}>
       <AppProvider>
         <ClientProfileProvider>
           <AssessmentCallProvider>
             <ClientJourneyProvider>
+              <SeedBookings bookings={bookings} />
               <AssessmentCallsSection
-                bookings={options.bookings ?? ALL_BOOKINGS}
+                bookings={bookings}
                 now={NOW}
                 timeZone={TIME_ZONE}
               />
@@ -175,7 +205,7 @@ describe('the assessment calls section', () => {
     expect(within(items[1]).getByText('Today')).toBeInTheDocument();
   });
 
-  it('marks an ended call as past instead of offering it an action', async () => {
+  it('marks an ended call as held instead of offering it an action', async () => {
     // arrange
     const user = renderSection();
 
@@ -184,7 +214,7 @@ describe('the assessment calls section', () => {
     const pastItem = callRows()[0];
 
     // assert
-    expect(within(pastItem).getByText('Past')).toBeInTheDocument();
+    expect(within(pastItem).getByText('Call held')).toBeInTheDocument();
     expect(within(pastItem).queryByRole('link', { name: 'Join call' })).toBeNull();
   });
 

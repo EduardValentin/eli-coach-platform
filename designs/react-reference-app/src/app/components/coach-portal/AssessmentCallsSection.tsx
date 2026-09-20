@@ -17,6 +17,7 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
+import type { JourneyStage } from '../../domain/journey';
 import { AppointmentCard } from './AppointmentCard';
 import { CallJourneyActions } from './CallJourneyActions';
 import { JourneyStageBadge } from './JourneyStageBadge';
@@ -72,16 +73,16 @@ function CallItem({
         badges={
           <>
             {isToday && <Badge variant="brand-secondary">Today</Badge>}
-            {journey && <JourneyStageBadge stage={journey.stage} />}
+            {journey && showsJourneyStage(journey.stage, timing) && (
+              <JourneyStageBadge stage={journey.stage} />
+            )}
           </>
         }
         quote={booking.notes.length > 0 ? booking.notes : undefined}
         actions={
           <>
-            {timing === 'upcoming' ? (
+            {timing === 'upcoming' && (
               <JoinCallLink joinPath={booking.joinPath} />
-            ) : (
-              <Badge variant="muted">Past</Badge>
             )}
             {journey && (
               <CallJourneyActions
@@ -94,6 +95,13 @@ function CallItem({
       />
     </li>
   );
+}
+
+function showsJourneyStage(
+  stage: JourneyStage,
+  timing: ClassifiedCall['timing'],
+) {
+  return stage !== 'held' || timing === 'past';
 }
 
 function CallList({

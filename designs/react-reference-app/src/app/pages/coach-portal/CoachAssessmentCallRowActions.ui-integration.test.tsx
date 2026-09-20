@@ -143,7 +143,7 @@ async function sendInvitation(user: ReturnType<typeof userEvent.setup>) {
 }
 
 describe('the assessment call row actions', () => {
-  it('tells the coach where the call stands', () => {
+  it('shows no journey stage on an upcoming call before the coach acts', () => {
     // arrange
     const urlQuery = '';
 
@@ -151,7 +151,10 @@ describe('the assessment call row actions', () => {
     renderPage(urlQuery);
 
     // assert
-    expect(screen.getByText('Call held')).toBeInTheDocument();
+    expect(screen.queryByText('Call held')).toBeNull();
+    expect(
+      screen.getByRole('button', { name: /Journey actions for/ }),
+    ).toBeInTheDocument();
   });
 
   it('sends the payment link from the row and confirms the send', async () => {
