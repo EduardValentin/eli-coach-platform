@@ -49,8 +49,19 @@ export function formatCallMoment(instant: Date, timeZone: string): string {
   return `${formatDayFirstDate(instant, timeZone)} at ${formatClockTime(instant, timeZone)} — ${describeTimeZone(instant, timeZone)}`;
 }
 
+// Joined from parts because Node and Chromium disagree on the comma after the
+// weekday in en-GB, which broke hydration and prototype parity.
 export function formatDayFirstDate(instant: Date, timeZone: string): string {
-  return formatterFor("dayFirstDate", timeZone).format(instant);
+  const part = partReader(formatterFor("dayFirstDate", timeZone), instant);
+
+  return `${part("weekday")}, ${part("day")} ${part("month")} ${part("year")}`;
+}
+
+function partReader(formatter: Intl.DateTimeFormat, instant: Date) {
+  const parts = formatter.formatToParts(instant);
+
+  return (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((candidate) => candidate.type === type)?.value ?? "";
 }
 
 export function formatMonthFirstDate(instant: Date, timeZone: string): string {

@@ -37,7 +37,7 @@ const BRAND_CLASSNAMES = {
   week: 'flex w-full mt-1',
   day: 'relative p-0 text-center text-sm focus-within:relative focus-within:z-20 flex-1 aria-selected:rounded-control',
   day_button:
-    'w-full aspect-square p-0 font-medium rounded-control hover:bg-surface-muted transition-colors inline-flex items-center justify-center relative',
+    'w-full aspect-square p-0 font-medium text-text-primary rounded-control hover:bg-surface-muted transition-colors inline-flex items-center justify-center relative',
 };
 
 const BRAND_DAY_MODIFIER_CLASSNAMES: Record<string, string> = {

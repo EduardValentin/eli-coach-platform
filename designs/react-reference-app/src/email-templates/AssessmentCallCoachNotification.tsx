@@ -67,7 +67,7 @@ export function AssessmentCallCoachNotification({
   visitorName = 'Jane Doe',
   visitorEmail = 'jane@example.com',
   visitorPhone = '+40712345678',
-  visitorAgeLine = '32 (born 14 March 1994)',
+  visitorAgeLine = '31 (born 14 March 1994)',
   visitorGender = 'Female',
   visitorPrimaryGoal = 'Build strength',
   visitorCountry = 'Romania',
