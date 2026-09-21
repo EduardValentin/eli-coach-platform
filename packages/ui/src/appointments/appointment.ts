@@ -3,6 +3,12 @@ export type AppointmentStatus = "scheduled" | "past";
 export type AppointmentAttendee = {
   email?: string;
   name: string;
+  phone?: string;
+};
+
+export type AppointmentDetail = {
+  label: string;
+  value: string;
 };
 
 export type AppointmentTime = {

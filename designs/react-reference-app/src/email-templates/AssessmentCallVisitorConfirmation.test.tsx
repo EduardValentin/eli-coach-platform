@@ -50,6 +50,15 @@ describe('AssessmentCallVisitorConfirmation', () => {
     expect(screen.getByText('30 minutes')).toBeInTheDocument();
   });
 
+  it('greets her by first name', async () => {
+    // arrange
+    // act
+    await mountConfirmation({ visitorFirstName: 'Sofia' });
+
+    // assert
+    expect(screen.getByText('Hi Sofia,')).toBeInTheDocument();
+  });
+
   it('offers both ways to keep the call and says the calendar file is attached', async () => {
     // arrange
     // act

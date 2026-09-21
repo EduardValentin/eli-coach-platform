@@ -1,6 +1,16 @@
 import { motion, useReducedMotion } from 'motion/react';
 import { useLocation, useSearchParams } from 'react-router';
-import type { PrototypeBooking } from '../../services/assessmentCallService';
+import {
+  visitorFullName,
+  type PrototypeBooking,
+} from '../../services/assessmentCallService';
+import { findCountry } from '../../services/countries';
+import {
+  formatAgeForCard,
+  labelForGender,
+  labelForPrimaryGoal,
+} from '../../services/visitorProfile';
+import type { AppointmentDetail } from './appointment';
 import {
   classifyCalls,
   filterCalls,
@@ -42,11 +52,22 @@ const EMPTY_MESSAGES: Record<AssessmentCallStatus, string> = {
   all: 'No calls yet.',
 };
 
+function visitorDetails(booking: PrototypeBooking, now: Date): AppointmentDetail[] {
+  return [
+    { label: 'Age', value: formatAgeForCard(booking.dateOfBirth, now) },
+    { label: 'Gender', value: labelForGender(booking.gender) },
+    { label: 'Goal', value: labelForPrimaryGoal(booking.primaryGoal) },
+    { label: 'Country', value: findCountry(booking.country)?.name ?? booking.country },
+  ];
+}
+
 function CallItem({
   call,
+  now,
   timeZone,
 }: {
   call: ClassifiedCall;
+  now: Date;
   timeZone: string;
 }) {
   const { booking, timing, isToday } = call;
@@ -55,9 +76,11 @@ function CallItem({
     <li>
       <AppointmentCard
         attendee={{
-          name: booking.visitorName,
+          name: visitorFullName(booking),
           email: booking.visitorEmail,
+          phone: booking.phone ?? undefined,
         }}
+        details={visitorDetails(booking, now)}
         when={{
           date: formatShortDay(booking.startsAt, timeZone),
           time: formatSlotTime(booking.startsAt, timeZone),
@@ -81,10 +104,12 @@ function CallItem({
 function CallList({
   calls,
   emptyMessage,
+  now,
   timeZone,
 }: {
   calls: ClassifiedCall[];
   emptyMessage: string;
+  now: Date;
   timeZone: string;
 }) {
   if (calls.length === 0) {
@@ -98,7 +123,7 @@ function CallList({
   return (
     <ul aria-label="Assessment calls" className="space-y-4">
       {calls.map((call) => (
-        <CallItem key={call.booking.id} call={call} timeZone={timeZone} />
+        <CallItem key={call.booking.id} call={call} now={now} timeZone={timeZone} />
       ))}
     </ul>
   );
@@ -203,6 +228,7 @@ export function AssessmentCallsSection({
               <CallList
                 calls={view.calls}
                 emptyMessage={emptyMessageFor(tab.status)}
+                now={now}
                 timeZone={timeZone}
               />
 

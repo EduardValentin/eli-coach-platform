@@ -2,7 +2,7 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { AppointmentCard } from "./appointment-card";
@@ -41,6 +41,62 @@ describe("appointment card", () => {
 
     // assert
     expect(screen.queryByRole("link")).not.toBeInTheDocument();
+  });
+
+  it("offers the attendee's phone as a tel link beside the mail link", () => {
+    // arrange, act
+    render(
+      <AppointmentCard
+        attendee={{ ...ATTENDEE, phone: "+40712345678" }}
+        when={WHEN}
+      />,
+    );
+
+    // assert
+    expect(screen.getByRole("link", { name: "+40712345678" })).toHaveAttribute(
+      "href",
+      "tel:+40712345678",
+    );
+    expect(
+      screen.getByRole("link", { name: /ana@example.com/ }),
+    ).toBeInTheDocument();
+  });
+
+  it("lists the details the caller hands it as labelled values", () => {
+    // arrange, act
+    render(
+      <AppointmentCard
+        attendee={ATTENDEE}
+        details={[
+          { label: "Age", value: "32 (14 Mar 1994)" },
+          { label: "Goal", value: "Weight loss" },
+        ]}
+        when={WHEN}
+      />,
+    );
+
+    // assert
+    const list = screen.getByText("Age").closest("dl");
+    expect(list).not.toBeNull();
+    expect(
+      within(list as HTMLElement)
+        .getAllByRole("term")
+        .map((term) => term.textContent),
+    ).toEqual(["Age", "Goal"]);
+    expect(
+      within(list as HTMLElement)
+        .getAllByRole("definition")
+        .map((definition) => definition.textContent),
+    ).toEqual(["32 (14 Mar 1994)", "Weight loss"]);
+  });
+
+  it("renders no detail list when there are no details", () => {
+    // arrange, act
+    render(<AppointmentCard attendee={ATTENDEE} details={[]} when={WHEN} />);
+
+    // assert
+    expect(screen.queryByRole("term")).not.toBeInTheDocument();
+    expect(screen.queryByRole("definition")).not.toBeInTheDocument();
   });
 
   it("titles the card as a heading when the list around it needs one", () => {

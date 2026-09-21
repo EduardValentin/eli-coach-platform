@@ -70,13 +70,13 @@ export function Pricing() {
             <>
               <h2 className="font-serif text-2xl text-foreground mb-4">Ready to start?</h2>
               <p className="text-copy-muted mb-8">
-                To ensure we're the perfect fit, all 1-on-1 coaching begins with a complimentary assessment call. During this call, we'll discuss your goals and lay out a roadmap for your success.
+                To ensure we're the perfect fit, all 1-on-1 coaching begins with a complimentary call, where we'll discuss your goals and lay out a roadmap for your success.
               </p>
               <Link
                 to="/book"
                 className={buttonVariants({ elevation: 'raised', size: 'lg' })}
               >
-                Book Assessment Call <ArrowRight size={18} />
+                Book a Call <ArrowRight size={18} />
               </Link>
             </>
           )}

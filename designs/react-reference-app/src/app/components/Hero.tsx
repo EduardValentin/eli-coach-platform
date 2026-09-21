@@ -129,7 +129,7 @@ export function Hero() {
                   </Button>
                 </Link>
                 <p className="text-text-inverted-secondary text-sm font-light tracking-wide">
-                  Free 30-minute assessment call.
+                  Free 30-minute call.
                 </p>
               </motion.div>
             </motion.div>

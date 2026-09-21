@@ -12,8 +12,14 @@ const SAVE_WAIT = { timeout: 4000 };
 const KNOWN_BOOKING: PrototypeBooking = {
   id: 'ac-known',
   startsAt: new Date('2026-03-02T15:00:00.000Z'),
-  visitorName: 'Jane Doe',
+  firstName: 'Jane',
+  lastName: 'Doe',
   visitorEmail: 'jane@example.com',
+  dateOfBirth: '1994-03-14',
+  gender: 'female',
+  primaryGoal: 'build_strength',
+  country: 'RO',
+  phone: null,
   notes: '',
   visitorTimeZone: 'Europe/London',
   coachTimeZone: 'Europe/Bucharest',
@@ -104,7 +110,7 @@ describe('JoinCall', () => {
         name: "Your call link isn't ready yet",
       }),
     ).toBeInTheDocument();
-    expect(screen.getByText('Assessment call')).toBeInTheDocument();
+    expect(screen.getByText('Your call')).toBeInTheDocument();
     expect(
       screen.getByText(
         "The meeting room for this call hasn't been set up yet. Check back before your call, or reply to your confirmation email and we'll send the link.",

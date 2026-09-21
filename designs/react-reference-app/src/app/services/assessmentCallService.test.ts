@@ -119,11 +119,17 @@ describe('bookAssessmentCall', () => {
 
   const request = {
     startsAt: new Date('2026-03-02T15:00:00.000Z'),
-    fullName: 'Jane Doe',
+    firstName: ' Jane ',
+    lastName: 'Doe',
     email: 'jane@example.com',
+    dateOfBirth: '1994-03-14',
+    gender: 'female',
+    primaryGoal: 'build_strength',
+    country: 'RO',
+    phone: '+40712345678',
     notes: 'Recovering from a knee injury',
     visitorTimeZone: 'Europe/London',
-  };
+  } as const;
 
   it('confirms a call the visitor can join, in both time zones', async () => {
     // arrange
@@ -139,8 +145,14 @@ describe('bookAssessmentCall', () => {
     const confirmed = await booking;
     expect(confirmed).toMatchObject({
       startsAt: request.startsAt,
-      visitorName: 'Jane Doe',
+      firstName: 'Jane',
+      lastName: 'Doe',
       visitorEmail: 'jane@example.com',
+      dateOfBirth: '1994-03-14',
+      gender: 'female',
+      primaryGoal: 'build_strength',
+      country: 'RO',
+      phone: '+40712345678',
       notes: 'Recovering from a knee injury',
       visitorTimeZone: 'Europe/London',
       coachTimeZone: DEFAULT_COACH_AVAILABILITY.timeZone,

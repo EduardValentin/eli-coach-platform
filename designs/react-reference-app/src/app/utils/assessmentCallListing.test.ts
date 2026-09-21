@@ -10,29 +10,40 @@ import {
   orderCalls,
   parseStatus,
 } from './assessmentCallListing';
-import type { PrototypeBooking } from '../services/assessmentCallService';
+import {
+  visitorFullName,
+  type PrototypeBooking,
+} from '../services/assessmentCallService';
 
 const BUCHAREST = 'Europe/Bucharest';
 
 function bookingAt(
   startsAt: string,
-  details: Partial<PrototypeBooking> = {},
+  details: Partial<PrototypeBooking> & { visitorName?: string } = {},
 ): PrototypeBooking {
+  const { visitorName = 'Ana Popescu', ...rest } = details;
+  const [firstName, ...lastNames] = visitorName.split(' ');
   return {
     id: `ac-${startsAt}`,
     startsAt: new Date(startsAt),
-    visitorName: 'Ana Popescu',
+    firstName,
+    lastName: lastNames.join(' '),
     visitorEmail: 'ana.popescu@example.com',
+    dateOfBirth: '1994-03-14',
+    gender: 'female',
+    primaryGoal: 'build_strength',
+    country: 'RO',
+    phone: null,
     notes: '',
     visitorTimeZone: BUCHAREST,
     coachTimeZone: BUCHAREST,
     joinPath: `/book/ac-${startsAt}/join`,
-    ...details,
+    ...rest,
   };
 }
 
 function namesOf(calls: ReturnType<typeof classifyCalls>): string[] {
-  return calls.map((call) => call.booking.visitorName);
+  return calls.map((call) => visitorFullName(call.booking));
 }
 
 describe('classifying assessment calls', () => {
@@ -208,6 +219,15 @@ describe('filtering assessment calls', () => {
 
     // assert
     expect(namesOf(filtered)).toEqual(['Ioana Radu']);
+  });
+
+  it('matches the last name on its own', () => {
+    // arrange
+    // act
+    const filtered = filterCalls(calls, { status: 'all', query: 'marin' });
+
+    // assert
+    expect(namesOf(filtered)).toEqual(['Elena Marin']);
   });
 });
 

@@ -17,8 +17,14 @@ function bookingAt(startsAt: Date, details: Partial<PrototypeBooking> = {}) {
   return {
     id,
     startsAt,
-    visitorName: 'Ana Popescu',
+    firstName: 'Ana',
+    lastName: 'Popescu',
     visitorEmail: 'ana.popescu@example.com',
+    dateOfBirth: '1994-03-14',
+    gender: 'female',
+    primaryGoal: 'build_strength',
+    country: 'RO',
+    phone: null,
     notes: '',
     visitorTimeZone: TIME_ZONE,
     coachTimeZone: 'Europe/Bucharest',
@@ -28,20 +34,26 @@ function bookingAt(startsAt: Date, details: Partial<PrototypeBooking> = {}) {
 }
 
 const LATER_TODAY = bookingAt(localInstant(21, 18), {
-  visitorName: 'Maria Ionescu',
+  firstName: 'Maria',
+  lastName: 'Ionescu',
   visitorEmail: 'maria@example.com',
+  phone: '+40712345678',
+  primaryGoal: 'lose_weight',
   notes: 'Training three times a week.\nShoulder injury last year.',
 });
 const TOMORROW = bookingAt(localInstant(22, 18), {
-  visitorName: 'Ioana Radu',
+  firstName: 'Ioana',
+  lastName: 'Radu',
   visitorEmail: 'ioana@studio.ro',
 });
 const EARLIER_TODAY = bookingAt(localInstant(21, 9), {
-  visitorName: 'Sofia Dinu',
+  firstName: 'Sofia',
+  lastName: 'Dinu',
   visitorEmail: 'sofia@example.com',
 });
 const YESTERDAY = bookingAt(localInstant(20, 18), {
-  visitorName: 'Elena Marin',
+  firstName: 'Elena',
+  lastName: 'Marin',
   visitorEmail: 'elena@example.com',
 });
 
@@ -51,7 +63,8 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 const MANY_UPCOMING = Array.from({ length: 23 }, (_, index) =>
   bookingAt(new Date(NOW.getTime() + (index + 1) * DAY_MS), {
-    visitorName: `Visitor ${index + 1}`,
+    firstName: 'Visitor',
+    lastName: `${index + 1}`,
     visitorEmail: `visitor${index + 1}@example.com`,
   }),
 );
@@ -100,6 +113,41 @@ async function selectTab(user: ReturnType<typeof userEvent.setup>, name: string)
 }
 
 describe('the assessment calls section', () => {
+  it('shows each visitor\'s age, gender, goal, country and phone on her card', () => {
+    // arrange
+    renderSection();
+
+    // act
+    const [maria, ioana] = callRows();
+
+    // assert
+    expect(within(maria).getAllByRole('term').map((term) => term.textContent)).toEqual([
+      'Age',
+      'Gender',
+      'Goal',
+      'Country',
+    ]);
+    expect(
+      within(maria).getAllByRole('definition').map((definition) => definition.textContent),
+    ).toEqual(['32 (14 Mar 1994)', 'Female', 'Lose weight', 'Romania']);
+    expect(within(maria).getByRole('link', { name: '+40712345678' })).toHaveAttribute(
+      'href',
+      'tel:+40712345678',
+    );
+    expect(within(ioana).queryByRole('link', { name: /^\+/ })).toBeNull();
+  });
+
+  it('finds a visitor by her last name alone', async () => {
+    // arrange
+    const user = renderSection();
+
+    // act
+    await user.type(screen.getByLabelText('Search calls'), 'Radu');
+
+    // assert
+    expect(listedNames()).toEqual(['Ioana Radu']);
+  });
+
   it('opens on upcoming calls, soonest first', () => {
     // arrange
     renderSection();

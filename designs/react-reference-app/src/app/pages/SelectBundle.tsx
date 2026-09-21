@@ -30,9 +30,9 @@ export function SelectBundle() {
             <div className="flex items-start md:items-center gap-4">
               <AlertCircle size={32} className="shrink-0 hidden md:block" />
               <div>
-                <h2 className="font-serif text-xl md:text-2xl font-medium mb-1">Assessment Call Required</h2>
+                <h2 className="font-serif text-xl md:text-2xl font-medium mb-1">A Call Comes First</h2>
                 <p className="text-brand-foreground/90 text-sm md:text-base">
-                  You need a unique, secure token from an assessment call to purchase a 1-on-1 coaching bundle.
+                  You need a unique, secure token from your call with Eli to purchase a 1-on-1 coaching bundle.
                 </p>
               </div>
             </div>
@@ -41,7 +41,7 @@ export function SelectBundle() {
               className="shrink-0 px-6 py-3 bg-card text-brand font-medium rounded-control hover:bg-surface-subtle transition-colors flex items-center gap-2"
             >
               <Calendar size={18} />
-              Book Assessment
+              Book a Call
             </Link>
           </div>
         </div>
@@ -54,11 +54,11 @@ export function SelectBundle() {
           </h1>
           {isValidToken ? (
             <p className="text-lg text-copy-muted mb-8">
-              Based on our assessment call, select the commitment timeframe that works best for you. Let's get to work.
+              Based on our call, select the commitment timeframe that works best for you. Let's get to work.
             </p>
           ) : (
             <p className="text-lg text-link-muted mb-8 italic">
-              These bundles are available for purchase exclusively after completing an assessment call.
+              These bundles are available for purchase exclusively after your call with Eli.
             </p>
           )}
         </div>

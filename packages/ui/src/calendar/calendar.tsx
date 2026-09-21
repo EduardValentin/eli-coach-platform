@@ -1,19 +1,33 @@
 import {
   DayButton,
   DayPicker,
+  defaultDateLib,
   labelGrid,
+  useDayPicker,
   type ChevronProps,
   type ClassNames,
   type CustomComponents,
   type DayButtonProps,
+  type MonthCaptionProps,
   type PropsBase,
   type PropsSingle,
 } from "react-day-picker";
 
 import { cn } from "../lib/cn";
+import {
+  IconButton,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../primitives";
 
 const monthNavButtonClassName =
   "absolute -top-0.5 z-10 inline-flex size-8 items-center justify-center rounded-control border border-control-border-soft bg-transparent p-0 font-medium opacity-50 transition-colors hover:bg-surface-quiet hover:opacity-100";
+
+const captionNavButtonClassName =
+  "inline-flex size-8 shrink-0 items-center justify-center rounded-control border border-control-border-soft text-text-primary transition-colors hover:bg-surface-quiet";
 
 const calendarClassNames: Partial<ClassNames> = {
   root: "w-full",
@@ -32,6 +46,11 @@ const calendarClassNames: Partial<ClassNames> = {
   day_button:
     "relative inline-flex aspect-square w-full items-center justify-center rounded-control p-0 text-base font-medium transition-colors hover:bg-surface-muted",
   hidden: "invisible",
+};
+
+const yearRangeClassNames: Partial<ClassNames> = {
+  ...calendarClassNames,
+  month_caption: "flex w-full items-center gap-2 pt-1",
 };
 
 const dayModifierClassNames: Record<string, string> = {
@@ -73,10 +92,124 @@ function CalendarDayButton(props: DayButtonProps) {
   );
 }
 
+const MONTH_LABELS = Array.from({ length: 12 }, (_, month) =>
+  new Date(2000, month, 1).toLocaleDateString("en-GB", { month: "long" }),
+);
+
+function yearsDescending(from: number, to: number) {
+  return Array.from({ length: to - from + 1 }, (_, index) => to - index);
+}
+
+function MonthYearCaption({
+  calendarMonth,
+  displayIndex: _displayIndex,
+  ...divProps
+}: MonthCaptionProps) {
+  const { dayPickerProps, goToMonth, nextMonth, previousMonth } =
+    useDayPicker();
+  const { endMonth, startMonth } = dayPickerProps;
+  const displayMonth = calendarMonth.date;
+  const years =
+    startMonth && endMonth
+      ? yearsDescending(startMonth.getFullYear(), endMonth.getFullYear())
+      : [];
+
+  return (
+    <div {...divProps}>
+      <IconButton
+        aria-label="Previous month"
+        className={captionNavButtonClassName}
+        disabled={!previousMonth}
+        onClick={() => previousMonth && goToMonth(previousMonth)}
+        variant="plain"
+      >
+        <CalendarChevron orientation="left" />
+      </IconButton>
+
+      <div className="flex flex-1 items-center gap-2">
+        <Select
+          onValueChange={(month) =>
+            goToMonth(defaultDateLib.setMonth(displayMonth, Number(month)))
+          }
+          value={String(displayMonth.getMonth())}
+        >
+          <SelectTrigger aria-label="Month" className="h-8 flex-1 text-sm">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="z-[60]">
+            {MONTH_LABELS.map((label, month) => (
+              <SelectItem key={label} value={String(month)}>
+                {label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <Select
+          onValueChange={(year) =>
+            goToMonth(defaultDateLib.setYear(displayMonth, Number(year)))
+          }
+          value={String(displayMonth.getFullYear())}
+        >
+          <SelectTrigger aria-label="Year" className="h-8 w-[5.5rem] text-sm">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="z-[60]">
+            {years.map((year) => (
+              <SelectItem key={year} value={String(year)}>
+                {year}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <IconButton
+        aria-label="Next month"
+        className={captionNavButtonClassName}
+        disabled={!nextMonth}
+        onClick={() => nextMonth && goToMonth(nextMonth)}
+        variant="plain"
+      >
+        <CalendarChevron orientation="right" />
+      </IconButton>
+    </div>
+  );
+}
+
 const calendarComponents: Partial<CustomComponents> = {
   Chevron: CalendarChevron,
   DayButton: CalendarDayButton,
 };
+
+const yearRangeComponents: Partial<CustomComponents> = {
+  ...calendarComponents,
+  MonthCaption: MonthYearCaption,
+};
+
+// Noon UTC on the first of the month stays in that month in every zone, so
+// the range boundaries hold once DayPicker re-reads them in the calendar's
+// time zone.
+function monthBoundary(year: number, monthIndex: number) {
+  return new Date(Date.UTC(year, monthIndex, 1, 12));
+}
+
+type CalendarYearRange = { from: number; to: number };
+
+const plainCaptionProps = {
+  classNames: calendarClassNames,
+  components: calendarComponents,
+};
+
+function yearRangeCaptionProps({ from, to }: CalendarYearRange) {
+  return {
+    classNames: yearRangeClassNames,
+    components: yearRangeComponents,
+    endMonth: monthBoundary(to, 11),
+    hideNavigation: true,
+    startMonth: monthBoundary(from, 0),
+  };
+}
 
 export type CalendarProps = Pick<
   PropsBase,
@@ -92,18 +225,19 @@ export type CalendarProps = Pick<
   Pick<PropsSingle, "onSelect" | "selected"> & {
     "aria-label": string;
     timeZone: string;
+    yearRange?: CalendarYearRange;
   };
 
 export function Calendar({
   "aria-label": ariaLabel,
   labels,
+  yearRange,
   ...props
 }: CalendarProps) {
   return (
     <DayPicker
       {...props}
-      classNames={calendarClassNames}
-      components={calendarComponents}
+      {...(yearRange ? yearRangeCaptionProps(yearRange) : plainCaptionProps)}
       fixedWeeks
       labels={{
         labelGrid: (date, options, dateLib) =>

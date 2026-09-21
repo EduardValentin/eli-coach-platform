@@ -16,16 +16,34 @@ function atLocalHour(now: Date, dayOffset: number, hour: number): Date {
   return day;
 }
 
+type SampleVisitor = {
+  name: string;
+  email: string;
+  notes: string;
+  dateOfBirth?: string;
+  gender?: PrototypeBooking['gender'];
+  primaryGoal?: PrototypeBooking['primaryGoal'];
+  country?: string;
+  phone?: string;
+};
+
 function sampleBooking(
   id: string,
   startsAt: Date,
-  visitor: { name: string; email: string; notes: string },
+  visitor: SampleVisitor,
 ): PrototypeBooking {
+  const [firstName, ...rest] = visitor.name.split(' ');
   return {
     id,
     startsAt,
-    visitorName: visitor.name,
+    firstName,
+    lastName: rest.join(' '),
     visitorEmail: visitor.email,
+    dateOfBirth: visitor.dateOfBirth ?? '1993-05-14',
+    gender: visitor.gender ?? 'female',
+    primaryGoal: visitor.primaryGoal ?? 'build_strength',
+    country: visitor.country ?? 'RO',
+    phone: visitor.phone ?? null,
     notes: visitor.notes,
     visitorTimeZone: DEFAULT_COACH_AVAILABILITY.timeZone,
     coachTimeZone: DEFAULT_COACH_AVAILABILITY.timeZone,
@@ -40,6 +58,9 @@ export function sampleImminentBookings(now: Date): PrototypeBooking[] {
       email: 'maria.ionescu@example.com',
       notes:
         'Training three times a week at home.\nComing back from a shoulder injury, so upper body needs care.',
+      dateOfBirth: '1991-08-23',
+      primaryGoal: 'lose_weight',
+      phone: '+40712345678',
     }),
   ];
 }
@@ -67,6 +88,10 @@ export function sampleDashboardBookings(now: Date): PrototypeBooking[] {
       name: 'Andreea Pop',
       email: 'andreea.pop@example.com',
       notes: 'Wants to start before the holidays.',
+      dateOfBirth: '1998-11-02',
+      primaryGoal: 'build_muscle',
+      country: 'GB',
+      phone: '+447700900123',
     }),
     sampleBooking('ac-sample-three-hours-ago', hoursFromNow(now, -3), {
       name: 'Sofia Dinu',

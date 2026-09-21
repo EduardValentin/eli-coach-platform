@@ -6,6 +6,9 @@ import { Link } from 'react-router';
 import { AssessmentSlotPicker } from '../components/AssessmentSlotPicker';
 import { Navbar } from '../components/Navbar';
 import { LegalFooter } from '../components/legal/LegalNav';
+import { ChoiceSelectField } from '../components/booking/ChoiceSelectField';
+import { DateOfBirthField } from '../components/booking/DateOfBirthField';
+import { PhoneField } from '../components/booking/PhoneField';
 import { firstInvalidField, useBookingDetailsForm, type BookingField } from '../components/booking/useBookingDetailsForm';
 import { Alert } from '../components/ui/alert';
 import { Button, buttonVariants, cn } from '../components/ThemeButton';
@@ -23,7 +26,15 @@ import {
   type AssessmentCallErrorCode,
   type PrototypeBooking,
 } from '../services/assessmentCallService';
-import { formatSlotTime, formatZonedDate, nameTimeZone } from '../utils/dateFormatters';
+import { COUNTRIES, findCountry } from '../services/countries';
+import {
+  VISITOR_GENDERS,
+  VISITOR_PRIMARY_GOALS,
+  normalizePhone,
+  type VisitorGender,
+  type VisitorPrimaryGoal,
+} from '../services/visitorProfile';
+import { formatSlotTime, formatZonedDate } from '../utils/dateFormatters';
 import { ELI_PORTRAIT_SMALL } from '../utils/eliPortrait';
 import { FIELD_ERROR_CLASS } from '../utils/formFieldStyles';
 import { NotFound } from './NotFound';
@@ -32,7 +43,27 @@ type Step = 'date-time' | 'details' | 'success';
 
 const CALL_DATE_PATTERN = 'EEEE, MMMM d, yyyy';
 const SUPPORT_EMAIL = 'contact@evoa.fit';
-const FIELD_IDS: Record<BookingField, string> = { fullName: 'name', email: 'email', notes: 'notes' };
+const FIELD_IDS: Record<BookingField, string> = {
+  firstName: 'first-name',
+  lastName: 'last-name',
+  email: 'email',
+  dateOfBirth: 'date-of-birth',
+  gender: 'gender',
+  primaryGoal: 'primary-goal',
+  country: 'country',
+  phone: 'phone-number',
+  notes: 'notes',
+};
+const COUNTRY_OPTIONS = COUNTRIES.map((country) => ({
+  value: country.code,
+  label: country.name,
+}));
+
+function submittedPhone(phoneCountry: string, phoneNumber: string): string | null {
+  const callingCode = findCountry(phoneCountry)?.callingCode ?? '';
+  const phone = normalizePhone({ callingCode, nationalNumber: phoneNumber });
+  return phone.status === 'valid' ? phone.e164 : null;
+}
 const SUPPORT_CONTACT_CODES: ReadonlySet<AssessmentCallErrorCode> = new Set([
   'booking_refused',
   'server_error',
@@ -128,8 +159,14 @@ export function Book() {
       const confirmed = await bookAssessmentCall(
         {
           startsAt: selectedSlot,
-          fullName: detailsForm.fullName,
+          firstName: detailsForm.firstName,
+          lastName: detailsForm.lastName,
           email: detailsForm.email,
+          dateOfBirth: detailsForm.dateOfBirth,
+          gender: detailsForm.gender as VisitorGender,
+          primaryGoal: detailsForm.primaryGoal as VisitorPrimaryGoal,
+          country: detailsForm.country,
+          phone: submittedPhone(detailsForm.phoneCountry, detailsForm.phoneNumber),
           notes: detailsForm.notes,
           visitorTimeZone,
           outcome: appState.bookingOutcome,
@@ -149,7 +186,7 @@ export function Book() {
 
   return (
     <MotionConfig reducedMotion="user">
-      <main aria-label="Book a free assessment call" className="w-full">
+      <main aria-label="Book a free call" className="w-full">
         <Navbar theme="dark" />
 
         <div className="min-h-screen bg-surface-page flex items-center justify-center pt-32 pb-12 px-4 sm:px-6 relative overflow-hidden">
@@ -167,7 +204,7 @@ export function Book() {
                 className="w-24 h-24 rounded-full object-cover mb-6 shadow-card border border-control-border-soft"
               />
 
-              <h1 className="text-sm font-semibold text-text-secondary uppercase tracking-widest mb-6">Free Assessment Call</h1>
+              <h1 className="text-sm font-semibold text-text-secondary uppercase tracking-widest mb-6">Free Call</h1>
 
               <div className="space-y-4 text-text-secondary mb-8 font-medium">
                 <div className="flex items-center gap-3 text-md">
@@ -294,25 +331,44 @@ export function Book() {
                     )}
 
                     <form noValidate onSubmit={handleSubmit} className="space-y-5 flex-1">
-                      <div className="space-y-2">
-                        <Label htmlFor="name" className="text-text-label font-medium">Full Name</Label>
-                        <div className="relative">
-                          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" aria-hidden="true" />
-                          <Input
-                            id="name"
-                            required
-                            autoComplete="name"
-                            placeholder="Jane Doe"
-                            className="pl-9"
-                            value={detailsForm.fullName}
-                            onChange={(e) => detailsForm.setFullName(e.target.value)}
-                            aria-invalid={Boolean(fieldErrors.fullName) || undefined}
-                            aria-describedby={fieldErrors.fullName ? 'name-error' : undefined}
-                          />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div className="space-y-2">
+                          <Label htmlFor="first-name" className="text-text-label font-medium">First name</Label>
+                          <div className="relative">
+                            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" aria-hidden="true" />
+                            <Input
+                              id="first-name"
+                              required
+                              autoComplete="given-name"
+                              placeholder="Jane"
+                              className="pl-9"
+                              value={detailsForm.firstName}
+                              onChange={(e) => detailsForm.setFirstName(e.target.value)}
+                              aria-invalid={Boolean(fieldErrors.firstName) || undefined}
+                              aria-describedby={fieldErrors.firstName ? 'first-name-error' : undefined}
+                            />
+                          </div>
+                          {fieldErrors.firstName && (
+                            <p id="first-name-error" className={FIELD_ERROR_CLASS}>{fieldErrors.firstName}</p>
+                          )}
                         </div>
-                        {fieldErrors.fullName && (
-                          <p id="name-error" className={FIELD_ERROR_CLASS}>{fieldErrors.fullName}</p>
-                        )}
+
+                        <div className="space-y-2">
+                          <Label htmlFor="last-name" className="text-text-label font-medium">Last name</Label>
+                          <Input
+                            id="last-name"
+                            required
+                            autoComplete="family-name"
+                            placeholder="Doe"
+                            value={detailsForm.lastName}
+                            onChange={(e) => detailsForm.setLastName(e.target.value)}
+                            aria-invalid={Boolean(fieldErrors.lastName) || undefined}
+                            aria-describedby={fieldErrors.lastName ? 'last-name-error' : undefined}
+                          />
+                          {fieldErrors.lastName && (
+                            <p id="last-name-error" className={FIELD_ERROR_CLASS}>{fieldErrors.lastName}</p>
+                          )}
+                        </div>
                       </div>
 
                       <div className="space-y-2">
@@ -336,6 +392,56 @@ export function Book() {
                           <p id="email-error" className={FIELD_ERROR_CLASS}>{fieldErrors.email}</p>
                         )}
                       </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <DateOfBirthField
+                          id="date-of-birth"
+                          label="Date of birth"
+                          value={detailsForm.dateOfBirth}
+                          error={fieldErrors.dateOfBirth}
+                          now={new Date()}
+                          onChange={detailsForm.setDateOfBirth}
+                        />
+                        <ChoiceSelectField
+                          id="gender"
+                          label="Gender"
+                          placeholder="Select"
+                          value={detailsForm.gender}
+                          options={VISITOR_GENDERS}
+                          error={fieldErrors.gender}
+                          onValueChange={(value) => detailsForm.setGender(value as VisitorGender)}
+                        />
+                      </div>
+
+                      <ChoiceSelectField
+                        id="primary-goal"
+                        label="Primary goal"
+                        placeholder="Select your goal"
+                        value={detailsForm.primaryGoal}
+                        options={VISITOR_PRIMARY_GOALS}
+                        error={fieldErrors.primaryGoal}
+                        onValueChange={(value) => detailsForm.setPrimaryGoal(value as VisitorPrimaryGoal)}
+                      />
+
+                      <ChoiceSelectField
+                        id="country"
+                        label="Country"
+                        placeholder="Select your country"
+                        value={detailsForm.country}
+                        options={COUNTRY_OPTIONS}
+                        error={fieldErrors.country}
+                        autoComplete="country-name"
+                        onValueChange={detailsForm.setCountry}
+                      />
+
+                      <PhoneField
+                        id="phone"
+                        country={detailsForm.phoneCountry}
+                        number={detailsForm.phoneNumber}
+                        error={fieldErrors.phone}
+                        onCountryChange={detailsForm.setPhoneCountry}
+                        onNumberChange={detailsForm.setPhoneNumber}
+                      />
 
                       <div className="space-y-2">
                         <Label htmlFor="notes" className="text-text-label font-medium">Anything to share beforehand? (Optional)</Label>
@@ -369,10 +475,10 @@ export function Book() {
                                 className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
                                 aria-hidden="true"
                               />
-                              <span className="sr-only">Scheduling your assessment</span>
+                              <span className="sr-only">Scheduling your call</span>
                             </>
                           ) : (
-                            'Schedule Assessment'
+                            'Schedule Call'
                           )}
                         </Button>
                       </div>
@@ -402,7 +508,7 @@ export function Book() {
                       <p className="text-sm text-text-secondary font-medium mb-1">When</p>
                       <p className="font-semibold text-text-primary mb-4">
                         {formatZonedDate(booking.startsAt, visitorTimeZone, CALL_DATE_PATTERN)} <br />
-                        {formatSlotTime(booking.startsAt, visitorTimeZone)} ({nameTimeZone(visitorTimeZone, booking.startsAt)})
+                        {formatSlotTime(booking.startsAt, visitorTimeZone)}
                       </p>
 
                       <p className="text-sm text-text-secondary font-medium mb-1">Duration</p>

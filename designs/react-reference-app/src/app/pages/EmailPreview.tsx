@@ -68,8 +68,8 @@ const TEMPLATES: TemplateOption[] = [
     key: 'assessment-call-coach',
     label: 'Assessment call — coach',
     variants: [
-      { value: 'with-notes', label: 'With a shared note' },
-      { value: 'without-notes', label: 'Without a shared note' },
+      { value: 'with-notes', label: 'With a shared note and a phone' },
+      { value: 'without-notes', label: 'Without a shared note or a phone' },
     ],
   },
 ];
@@ -121,6 +121,7 @@ export function EmailPreview() {
       return (
         <AssessmentCallCoachNotification
           variant={variant as AssessmentCallEmailVariant}
+          visitorPhone={variant === 'with-notes' ? undefined : null}
           joinUrl={`${window.location.origin}/book/ac-demo/join`}
         />
       );

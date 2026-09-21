@@ -47,6 +47,55 @@ describe('the appointment card', () => {
     expect(container.querySelector('img')).toHaveAttribute('alt', '');
   });
 
+  it('lists the caller-supplied details as a definition list', () => {
+    // arrange
+    const details = [
+      { label: 'Age', value: '31 (14 Mar 1994)' },
+      { label: 'Gender', value: 'Female' },
+    ];
+
+    // act
+    render(
+      <AppointmentCard attendee={{ name: 'Maria Ionescu' }} when={WHEN} details={details} />,
+    );
+
+    // assert
+    const terms = screen.getAllByRole('term').map((term) => term.textContent);
+    const definitions = screen
+      .getAllByRole('definition')
+      .map((definition) => definition.textContent);
+    expect(terms).toEqual(['Age', 'Gender']);
+    expect(definitions).toEqual(['31 (14 Mar 1994)', 'Female']);
+  });
+
+  it('renders no details list when the caller supplies none', () => {
+    // arrange
+    // act
+    render(<AppointmentCard attendee={{ name: 'Maria Ionescu' }} when={WHEN} />);
+
+    // assert
+    expect(screen.queryByRole('term')).toBeNull();
+  });
+
+  it('offers a phone link beside the mail link when the attendee has a number', () => {
+    // arrange
+    const attendee = {
+      name: 'Maria Ionescu',
+      email: 'maria@example.com',
+      phone: '+40712345678',
+    };
+
+    // act
+    render(<AppointmentCard attendee={attendee} when={WHEN} />);
+
+    // assert
+    expect(screen.getByRole('link', { name: '+40712345678' })).toHaveAttribute(
+      'href',
+      'tel:+40712345678',
+    );
+    expect(screen.getByRole('link', { name: 'maria@example.com' })).toBeInTheDocument();
+  });
+
   it('offers a mail link only when the attendee has an address', () => {
     // arrange
     const withEmail = { name: 'Maria Ionescu', email: 'maria@example.com' };

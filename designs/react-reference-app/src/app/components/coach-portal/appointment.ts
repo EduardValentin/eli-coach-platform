@@ -4,7 +4,10 @@ export type AppointmentAttendee = {
   name: string;
   imageUrl?: string;
   email?: string;
+  phone?: string;
 };
+
+export type AppointmentDetail = { label: string; value: string };
 
 export type AppointmentTime = { date: string; time: string };
 

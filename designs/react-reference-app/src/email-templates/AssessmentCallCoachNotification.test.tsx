@@ -57,6 +57,53 @@ describe('AssessmentCallCoachNotification', () => {
     expect(screen.getByText('30 minutes')).toBeInTheDocument();
   });
 
+  it('carries her phone, age, gender, goal and country, in that order after the email', async () => {
+    // arrange
+    // act
+    await mountNotification({
+      visitorPhone: '+40712345678',
+      visitorAgeLine: '31 (born 14 March 1994)',
+      visitorGender: 'Female',
+      visitorPrimaryGoal: 'Build strength',
+      visitorCountry: 'Romania',
+    });
+
+    // assert
+    expect(screen.getByRole('link', { name: '+40712345678' })).toHaveAttribute(
+      'href',
+      'tel:+40712345678',
+    );
+    expect(screen.getByText('31 (born 14 March 1994)')).toBeInTheDocument();
+    expect(screen.getByText('Female')).toBeInTheDocument();
+    expect(screen.getByText('Build strength')).toBeInTheDocument();
+    expect(screen.getByText('Romania')).toBeInTheDocument();
+    const eyebrows = screen
+      .getAllByText(/^(WHO|EMAIL|PHONE|AGE|GENDER|GOAL|COUNTRY|WHEN|HOW LONG|WHAT SHE SHARED)$/)
+      .map((element) => element.textContent);
+    expect(eyebrows).toEqual([
+      'WHO',
+      'EMAIL',
+      'PHONE',
+      'AGE',
+      'GENDER',
+      'GOAL',
+      'COUNTRY',
+      'WHEN',
+      'HOW LONG',
+      'WHAT SHE SHARED',
+    ]);
+  });
+
+  it('leaves the phone row out when she gave no number', async () => {
+    // arrange
+    // act
+    await mountNotification({ visitorPhone: null });
+
+    // assert
+    expect(screen.queryByText('PHONE')).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /^\+/ })).not.toBeInTheDocument();
+  });
+
   it('offers both ways to keep the call and says the calendar file is attached', async () => {
     // arrange
     // act

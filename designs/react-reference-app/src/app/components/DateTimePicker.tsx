@@ -17,7 +17,7 @@ type TimeSlot = {
 
 type SlotPickerFrameProps = {
   calendar: ReactNode;
-  timeZoneNote: string;
+  timeZoneNote?: string;
   dayHeading: string | null;
   DayHeading?: 'h3' | 'h4';
   revealScrollMargin?: string;
@@ -56,7 +56,9 @@ export function SlotPickerFrame({
     <div className="flex flex-col lg:flex-row lg:justify-center gap-8">
       <div ref={calendarRef} className={`w-full max-w-[340px] mx-auto lg:mx-0 lg:w-[320px] lg:max-w-none shrink-0 ${revealScrollMargin}`}>
         {calendar}
-        <p className="text-xs text-text-secondary mt-4 text-center font-medium">{timeZoneNote}</p>
+        {timeZoneNote && (
+          <p className="text-xs text-text-secondary mt-4 text-center font-medium">{timeZoneNote}</p>
+        )}
       </div>
 
       {dayHeading && (

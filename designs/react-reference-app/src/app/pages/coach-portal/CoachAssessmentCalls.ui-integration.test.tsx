@@ -20,12 +20,19 @@ function localInstant(day: number, hour: number): Date {
 
 function bookingAt(startsAt: Date, visitorName: string): PrototypeBooking {
   const id = `ac-${startsAt.getTime()}`;
+  const [firstName, lastName] = visitorName.split(' ');
 
   return {
     id,
     startsAt,
-    visitorName,
-    visitorEmail: `${visitorName.split(' ')[0].toLowerCase()}@example.com`,
+    firstName,
+    lastName,
+    visitorEmail: `${firstName.toLowerCase()}@example.com`,
+    dateOfBirth: '1994-03-14',
+    gender: 'female',
+    primaryGoal: 'build_strength',
+    country: 'RO',
+    phone: null,
     notes: '',
     visitorTimeZone: TIME_ZONE,
     coachTimeZone: 'Europe/Bucharest',

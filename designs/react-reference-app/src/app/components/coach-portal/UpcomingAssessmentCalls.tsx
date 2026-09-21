@@ -1,7 +1,10 @@
 import { ArrowRight, Video } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import { Link } from 'react-router';
-import type { PrototypeBooking } from '../../services/assessmentCallService';
+import {
+  visitorFullName,
+  type PrototypeBooking,
+} from '../../services/assessmentCallService';
 import {
   classifyCalls,
   upcomingCalls,
@@ -60,7 +63,7 @@ export function UpcomingAssessmentCalls({
             {calls.map((call) => (
               <li key={call.booking.id}>
                 <DashboardAppointmentRow
-                  attendeeName={call.booking.visitorName}
+                  attendeeName={visitorFullName(call.booking)}
                   when={{
                     date: formatShortDay(call.booking.startsAt, timeZone),
                     time: formatSlotTime(call.booking.startsAt, timeZone),

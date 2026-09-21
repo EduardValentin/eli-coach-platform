@@ -527,3 +527,125 @@ describe("calendar day annotations", () => {
     ).toBeDisabled();
   });
 });
+
+describe("calendar year range", () => {
+  it("jumps the grid to the year chosen in the Year select", async () => {
+    // arrange
+    const user = userEvent.setup();
+    const onSelect = vi.fn();
+
+    render(
+      <Calendar
+        aria-label="Date of birth"
+        defaultMonth={march2026}
+        onSelect={onSelect}
+        timeZone="UTC"
+        yearRange={{ from: 1906, to: 2026 }}
+      />,
+    );
+
+    // act
+    await user.click(screen.getByRole("combobox", { name: "Year" }));
+    await user.click(screen.getByRole("option", { name: "1994" }));
+
+    // assert
+    expect(
+      screen.getByRole("grid", { name: "Date of birth, March 1994" }),
+    ).toBeInTheDocument();
+  });
+
+  it("jumps the grid to the month chosen in the Month select", async () => {
+    // arrange
+    const user = userEvent.setup();
+    const onSelect = vi.fn();
+
+    render(
+      <Calendar
+        aria-label="Date of birth"
+        defaultMonth={march2026}
+        onSelect={onSelect}
+        timeZone="UTC"
+        yearRange={{ from: 1906, to: 2026 }}
+      />,
+    );
+
+    // act
+    await user.click(screen.getByRole("combobox", { name: "Month" }));
+    await user.click(screen.getByRole("option", { name: "September" }));
+
+    // assert
+    expect(
+      screen.getByRole("grid", { name: "Date of birth, September 2026" }),
+    ).toBeInTheDocument();
+  });
+
+  it("replaces the plain month navigation with labelled month buttons", async () => {
+    // arrange
+    const user = userEvent.setup();
+    const onSelect = vi.fn();
+
+    render(
+      <Calendar
+        aria-label="Date of birth"
+        defaultMonth={march2026}
+        onSelect={onSelect}
+        timeZone="UTC"
+        yearRange={{ from: 1906, to: 2026 }}
+      />,
+    );
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Next month" }));
+
+    // assert
+    expect(
+      screen.getByRole("grid", { name: "Date of birth, April 2026" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Go to the Next Month" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("stops at the last month of the range", () => {
+    // arrange
+    const onSelect = vi.fn();
+
+    // act
+    render(
+      <Calendar
+        aria-label="Date of birth"
+        defaultMonth={new Date("2026-12-01T12:00:00Z")}
+        onSelect={onSelect}
+        timeZone="UTC"
+        yearRange={{ from: 1906, to: 2026 }}
+      />,
+    );
+
+    // assert
+    expect(screen.getByRole("button", { name: "Next month" })).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Previous month" }),
+    ).toBeEnabled();
+  });
+
+  it("keeps the plain caption when no year range is given", () => {
+    // arrange
+    const onSelect = vi.fn();
+
+    // act
+    render(
+      <Calendar
+        aria-label="Available days"
+        month={march2026}
+        onSelect={onSelect}
+        timeZone="UTC"
+      />,
+    );
+
+    // assert
+    expect(
+      screen.queryByRole("combobox", { name: "Year" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText("March 2026")).toBeInTheDocument();
+  });
+});
