@@ -2,6 +2,27 @@ import type { CSSProperties, ReactNode } from 'react';
 
 type StyleProps = { style?: CSSProperties };
 
+export const EMAIL_BRAND = {
+  pink: '#C81D6B',
+  pinkOnDark: '#E03A7E',
+  pinkSoft: '#FFF5F8',
+  pinkBorder: '#F4D8E4',
+  ink: '#121212',
+  inkSoft: '#3A3A3A',
+  body: '#4A4A4A',
+  muted: '#616161',
+  faint: '#6E6D6D',
+  page: '#F4EFEC',
+  cardBorder: '#EFE6E2',
+  white: '#FFFFFF',
+};
+
+export const EMAIL_FONT_SERIF =
+  '"Playfair Display", Georgia, "Times New Roman", Times, serif';
+
+export const EMAIL_FONT_SANS =
+  '"DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif';
+
 export function EmailHtml({
   lang = 'en',
   children,

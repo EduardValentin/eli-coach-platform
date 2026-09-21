@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useParams, Link } from 'react-router';
 import { motion } from 'motion/react';
 import { ArrowLeft, Droplet, Heart, FileText } from 'lucide-react';
+import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { BrandCalendar } from '../../components/BrandCalendar';
 import { useCycle, CYCLE_SYMPTOMS } from '../../context/CycleContext';
 
@@ -34,19 +35,15 @@ export function CoachClientCycle() {
   }, [records]);
 
   return (
-    <div className="w-full pb-12">
+    <div className="w-full">
       <Link to={`/coach/clients/${clientId}`} className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground mb-8 transition-colors">
         <ArrowLeft size={16} /> Back to {clientName}
       </Link>
 
-      <header className="mb-10">
-        <h1 className="font-serif text-3xl lg:text-4xl text-foreground mb-2 tracking-tight">
-          {clientName}&apos;s Cycle Log
-        </h1>
-        <p className="text-muted-foreground font-medium">
-          View cycle history, current phase, and menstrual health profile.
-        </p>
-      </header>
+      <PortalPageHeader
+        title={`${clientName}’s Cycle Log`}
+        subtitle="View cycle history, current phase, and menstrual health profile."
+      />
 
       {/* Top cards row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 mb-8">

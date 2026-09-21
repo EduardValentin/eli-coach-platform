@@ -1,11 +1,15 @@
 import { useState, useMemo } from 'react';
 import { CalendarDays, CalendarPlus, Clock, CheckCircle2, XCircle, RefreshCw, X } from 'lucide-react';
 import { useCheckins, type CheckIn, MAX_RESCHEDULES } from '../../context/CheckinContext';
+import { useClientJourneys } from '../../context/ClientJourneyContext';
+import { PROGRAM_REVIEW_LABEL, upcomingReviewCall } from '../../utils/reviewCallListing';
+import { browserTimeZone, formatSlotTime, formatZonedDate } from '../../utils/dateFormatters';
 import { useNotifications } from '../../context/NotificationContext';
 import { useMessaging } from '../../context/MessagingContext';
 import { formatCheckinDate, formatCheckinTime, toISODate, to24h } from '../../utils/dateFormatters';
 import { AppointmentCard } from '../../components/coach-portal/AppointmentCard';
 import { CheckinSchedulerSheet } from '../../components/CheckinSchedulerSheet';
+import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle
@@ -19,6 +23,10 @@ const CLIENT_AVATARS: Record<string, string | null> = {
   c4: null,
   c5: null,
 };
+
+function requestsWaitingLine(count: number): string {
+  return count === 1 ? '1 request waiting on you' : `${count} requests waiting on you`;
+}
 
 function CheckinCard({ checkin, actions }: { checkin: CheckIn; actions?: React.ReactNode }) {
   const isRescheduling = checkin.status === 'rescheduling';
@@ -73,10 +81,13 @@ function CheckinCard({ checkin, actions }: { checkin: CheckIn; actions?: React.R
 
 export function CoachCheckins() {
   const { checkins, getPendingCheckins, getUpcomingCheckins, approveCheckin, declineCheckin, rescheduleCheckin, acceptReschedule, getBookedSlots } = useCheckins();
+  const { demoJourney } = useClientJourneys();
+  const reviewCall = upcomingReviewCall(demoJourney, new Date());
   const { addNotification } = useNotifications();
   const { addSystemMessage, sendMessage: ctxSendMessage } = useMessaging();
 
   const pending = getPendingCheckins();
+  const awaitingCoach = pending.filter(c => c.proposedBy === 'client').length;
   const upcoming = getUpcomingCheckins();
   const past = checkins.filter(c => c.status === 'completed' || c.status === 'declined' || c.status === 'cancelled');
 
@@ -198,24 +209,31 @@ export function CoachCheckins() {
   };
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl lg:text-4xl font-serif font-medium text-text-primary">Check-ins</h1>
-        <p className="text-text-secondary mt-2">Manage all client check-ins in one place.</p>
-      </div>
+    <div className="w-full">
+      <PortalPageHeader
+        title="Check-ins"
+        subtitle="Manage all client check-ins in one place."
+      />
 
       <Tabs defaultValue="pending" className="w-full">
-        <TabsList variant="segmented" className="mb-6">
-          <TabsTrigger variant="segmented" value="pending">
-            Pending {pending.length > 0 && <span className="ml-1.5 w-5 h-5 rounded-full bg-status-pending text-white text-[10px] font-bold inline-flex items-center justify-center">{pending.length}</span>}
-          </TabsTrigger>
-          <TabsTrigger variant="segmented" value="upcoming">
-            Upcoming {upcoming.length > 0 && <span className="ml-1.5 text-text-secondary">({upcoming.length})</span>}
-          </TabsTrigger>
-          <TabsTrigger variant="segmented" value="past">
-            Past
-          </TabsTrigger>
-        </TabsList>
+        <div className="mb-6 flex flex-col gap-2">
+          <TabsList variant="segmented">
+            <TabsTrigger variant="segmented" value="pending">
+              Pending
+            </TabsTrigger>
+            <TabsTrigger variant="segmented" value="upcoming">
+              Upcoming
+            </TabsTrigger>
+            <TabsTrigger variant="segmented" value="past">
+              Past
+            </TabsTrigger>
+          </TabsList>
+          {awaitingCoach > 0 && (
+            <p className="text-sm text-text-secondary">
+              {requestsWaitingLine(awaitingCoach)}
+            </p>
+          )}
+        </div>
 
         <TabsContent value="pending" className="space-y-3">
           {pending.length === 0 ? (
@@ -232,7 +250,21 @@ export function CoachCheckins() {
         </TabsContent>
 
         <TabsContent value="upcoming" className="space-y-3">
-          {upcoming.length === 0 ? (
+          {reviewCall && (
+            <AppointmentCard
+              attendee={{ name: `${demoJourney.identity.firstName} ${demoJourney.identity.lastName}`.trim() }}
+              when={{
+                date: formatZonedDate(reviewCall.startsAt, browserTimeZone(), 'EEE, MMM d'),
+                time: formatSlotTime(reviewCall.startsAt, browserTimeZone()),
+              }}
+              badges={
+                <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-brand-secondary-surface text-brand-secondary">
+                  {PROGRAM_REVIEW_LABEL}
+                </span>
+              }
+            />
+          )}
+          {upcoming.length === 0 && !reviewCall ? (
             <div className="text-center py-16">
               <CalendarDays size={40} className="mx-auto text-neutral-300 mb-4" />
               <p className="text-text-secondary font-medium">No upcoming check-ins</p>

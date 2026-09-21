@@ -3,6 +3,7 @@ import { useTraining } from '../../context/TrainingContext';
 import { CalendarDays, Play, Info } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useNavigate } from 'react-router';
+import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { WeekSwitcher } from '../../components/workout/WeekSwitcher';
 import { PlanExerciseRow } from '../../components/workout/PlanExerciseRow';
 
@@ -54,11 +55,12 @@ export function ClientPlan() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-5 sm:space-y-7">
-      <header className="space-y-3">
-        <h1 className="text-2xl md:text-3xl font-serif font-bold text-text-primary leading-tight">
-          {clientActivePlan.name}
-        </h1>
-        <p className="text-sm text-text-secondary">{metaParts.join(' · ')}</p>
+      <div>
+        <PortalPageHeader
+          title={clientActivePlan.name}
+          subtitle={metaParts.join(' · ')}
+        />
+        <div className="space-y-3">
         <WeekSwitcher
           weeks={clientActivePlan.weeks}
           activeWeekIdx={activeWeekIdx}
@@ -70,7 +72,8 @@ export function ClientPlan() {
           <Info size={13} className="text-text-secondary shrink-0 mt-0.5" aria-hidden="true" />
           <span><span className="font-semibold text-text-primary">RIR</span> = reps in reserve — how many more reps you could do at the end of a set before reaching failure.</span>
         </p>
-      </header>
+        </div>
+      </div>
 
       <div className="space-y-4">
         {activeWeek.days.map((day, dIdx) => {

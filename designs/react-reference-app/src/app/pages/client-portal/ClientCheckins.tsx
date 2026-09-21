@@ -3,7 +3,11 @@ import { motion } from 'motion/react';
 import {
   CalendarDays, CalendarPlus, Clock, CheckCircle2, XCircle, RefreshCw, Video,
 } from 'lucide-react';
+import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { useCheckins, type CheckIn, MAX_RESCHEDULES } from '../../context/CheckinContext';
+import { useClientJourneys } from '../../context/ClientJourneyContext';
+import { PROGRAM_REVIEW_LABEL, upcomingReviewCall } from '../../utils/reviewCallListing';
+import { browserTimeZone, formatSlotTime, formatZonedDate } from '../../utils/dateFormatters';
 import { useMessaging } from '../../context/MessagingContext';
 import { useCoachProfile } from '../../context/CoachProfileContext';
 import { formatCheckinDate, formatCheckinTime, toISODate, to24h } from '../../utils/dateFormatters';
@@ -22,6 +26,8 @@ export function ClientCheckins() {
     hasPendingAdHoc, getBookedSlots,
   } = useCheckins();
   const { addSystemMessage, sendMessage: ctxSendMessage } = useMessaging();
+  const { demoJourney } = useClientJourneys();
+  const reviewCall = upcomingReviewCall(demoJourney, new Date());
   const { coachProfile } = useCoachProfile();
   const coachName = coachProfile.name;
 
@@ -117,53 +123,55 @@ export function ClientCheckins() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto pb-12">
-      {/* Header */}
-      <header className="mb-6">
-        <h1 className="text-2xl md:text-3xl font-serif font-bold text-text-primary leading-tight">Check-ins</h1>
-        <p className="text-sm text-text-secondary mt-1">
-          Request time with {coachName}, respond to proposals, and review past sessions.
-        </p>
-      </header>
+    <div className="max-w-3xl mx-auto">
+      <PortalPageHeader
+        title="Check-ins"
+        subtitle={`Request time with ${coachName}, respond to proposals, and review past sessions.`}
+      />
 
       <Tabs defaultValue="upcoming" className="w-full">
-        {/* Tabs + desktop CTA on one row, vertically centered */}
-        <div className="flex items-center justify-between gap-4 mb-6">
-          <TabsList variant="segmented">
-          <TabsTrigger variant="segmented" value="upcoming" className="px-4 sm:px-5">
-            Upcoming {upcoming.length > 0 && <span className="ml-1.5 text-text-secondary">({upcoming.length})</span>}
-          </TabsTrigger>
-          <TabsTrigger variant="segmented" value="requests" className="px-4 sm:px-5">
-            Requests
-            {needsResponseCount > 0 && (
-              <span className="ml-1.5 w-5 h-5 rounded-full bg-status-pending text-white text-[10px] font-bold inline-flex items-center justify-center">{needsResponseCount}</span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger variant="segmented" value="past" className="px-4 sm:px-5">
-            Past
-          </TabsTrigger>
-          </TabsList>
+        <div className="mb-6 flex flex-col gap-2">
+          <div className="flex items-center justify-between gap-4">
+            <TabsList variant="segmented">
+              <TabsTrigger variant="segmented" value="upcoming" className="px-4 sm:px-5">
+                Upcoming
+              </TabsTrigger>
+              <TabsTrigger variant="segmented" value="requests" className="px-4 sm:px-5">
+                Requests
+              </TabsTrigger>
+              <TabsTrigger variant="segmented" value="past" className="px-4 sm:px-5">
+                Past
+              </TabsTrigger>
+            </TabsList>
 
-          {/* Desktop CTA — vertically centered with the tabs (mobile uses the FAB below) */}
-          <button
-            type="button"
-            onClick={() => setShowRequest(true)}
-            disabled={pendingExists}
-            title={pendingExists ? 'You already have a check-in request awaiting your coach' : 'Request a check-in with your coach'}
-            className={`hidden sm:inline-flex items-center gap-2 px-4 min-h-11 rounded-control text-sm font-bold transition-colors shrink-0 ${
-              pendingExists
-                ? 'bg-neutral-100 text-text-secondary'
-                : 'bg-brand text-white hover:bg-brand-hover shadow-sm'
-            }`}
-          >
-            {pendingExists ? <Clock size={16} aria-hidden="true" /> : <CalendarPlus size={16} aria-hidden="true" />}
-            {pendingExists ? 'Check-in pending' : 'Request check-in'}
-          </button>
+            <button
+              type="button"
+              onClick={() => setShowRequest(true)}
+              disabled={pendingExists}
+              title={pendingExists ? 'You already have a check-in request awaiting your coach' : 'Request a check-in with your coach'}
+              className={`hidden sm:inline-flex items-center gap-2 px-4 min-h-11 rounded-control text-sm font-bold transition-colors shrink-0 ${
+                pendingExists
+                  ? 'bg-neutral-100 text-text-secondary'
+                  : 'bg-brand text-white hover:bg-brand-hover shadow-sm'
+              }`}
+            >
+              {pendingExists ? <Clock size={16} aria-hidden="true" /> : <CalendarPlus size={16} aria-hidden="true" />}
+              {pendingExists ? 'Check-in pending' : 'Request check-in'}
+            </button>
+          </div>
+          {needsResponseCount > 0 && (
+            <p className="text-sm text-text-secondary">
+              {proposalsWaitingLine(needsResponseCount)}
+            </p>
+          )}
         </div>
 
         {/* Upcoming */}
         <TabsContent value="upcoming" className="space-y-3">
-          {upcoming.length === 0 ? (
+          {reviewCall && (
+            <ProgramReviewCard coachName={coachName} startsAt={reviewCall.startsAt} />
+          )}
+          {upcoming.length === 0 && !reviewCall ? (
             <EmptyState icon={CalendarDays} title="No upcoming check-ins" hint="Request one any time using the button above." />
           ) : (
             upcoming.map(c => (
@@ -309,6 +317,53 @@ export function ClientCheckins() {
         {pendingExists ? <Clock size={18} aria-hidden="true" /> : <CalendarPlus size={18} aria-hidden="true" />}
         {pendingExists ? 'Pending' : 'Request check-in'}
       </button>
+    </div>
+  );
+}
+
+function proposalsWaitingLine(count: number): string {
+  return count === 1
+    ? '1 proposal waiting on you'
+    : `${count} proposals waiting on you`;
+}
+
+function ProgramReviewCard({
+  coachName,
+  startsAt,
+}: {
+  coachName: string;
+  startsAt: Date;
+}) {
+  const timeZone = browserTimeZone();
+
+  return (
+    <div className="bg-white p-4 sm:p-5 rounded-card border border-neutral-100/50 shadow-[0_2px_12px_rgb(0,0,0,0.03)]">
+      <div className="flex items-start gap-3 sm:gap-4">
+        <span className="w-10 h-10 sm:w-11 sm:h-11 rounded-control flex items-center justify-center shrink-0 bg-brand/10 text-brand">
+          <CalendarDays size={18} aria-hidden="true" />
+        </span>
+
+        <div className="flex-1 min-w-0">
+          <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-brand-secondary-surface text-brand-secondary">
+            {PROGRAM_REVIEW_LABEL}
+          </span>
+
+          <div className="mt-1 flex items-center gap-x-3 gap-y-0.5 text-sm font-medium text-text-primary flex-wrap">
+            <span className="inline-flex items-center gap-1.5">
+              <CalendarDays size={13} aria-hidden="true" />
+              {formatZonedDate(startsAt, timeZone, 'EEE, MMM d')}
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <Clock size={13} aria-hidden="true" />
+              {formatSlotTime(startsAt, timeZone)}
+            </span>
+          </div>
+
+          <p className="text-xs text-text-secondary mt-2">
+            You and {coachName} go through your new program together.
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

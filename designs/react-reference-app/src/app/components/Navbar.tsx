@@ -2,15 +2,34 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import { Menu, X, ShoppingBag } from 'lucide-react';
 import { isSignedIn, useAppState } from '../context/AppContext';
+import { useClientJourneys } from '../context/ClientJourneyContext';
 import { useStore } from '../context/StoreContext';
+import { isBeforeStage, type ClientJourney } from '../domain/journey';
 import { Link, useNavigate } from 'react-router';
 import { completeSignIn } from '../services/authService';
 import { buttonVariants } from './ThemeButton';
 import { NavigationDialog } from './ui/navigation-dialog';
 
+const FINISH_ONBOARDING_LABEL = 'Finish your onboarding';
+
+const CLIENT_PORTAL_LABEL = 'Client Portal';
+
+function clientPortalLink(journey: ClientJourney): { label: string; to: string } {
+  if (!isBeforeStage(journey.stage, 'submitted')) {
+    return { label: CLIENT_PORTAL_LABEL, to: '/portal' };
+  }
+
+  return {
+    label: FINISH_ONBOARDING_LABEL,
+    to: journey.welcomeSeen ? '/portal/onboarding' : '/portal/welcome',
+  };
+}
+
 export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparent' }) {
   const [isScrolled, setIsScrolled] = useState(theme === 'dark');
   const { appState, setAppState } = useAppState();
+  const { demoJourney } = useClientJourneys();
+  const clientPortal = clientPortalLink(demoJourney);
   const { cart, setIsCartOpen } = useStore();
   // The cart control is an affordance for a cart that has something in it, so
   // it stays out of the bar until the visitor has added a product.
@@ -106,7 +125,7 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
         <>
           {appState.session === 'client' && (
             <Link
-              to="/portal"
+              to={clientPortal.to}
               className={buttonVariants({
                 lettering: 'wide',
                 size: 'xs',
@@ -114,7 +133,7 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
                 variant: isScrolled ? 'primary' : 'glass',
               })}
             >
-              Client Portal
+              {clientPortal.label}
             </Link>
           )}
 
@@ -293,11 +312,11 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
                 transition={prefersReducedMotion ? { duration: 0 } : { delay: 0.35 }}
               >
                 <Link
-                  to="/portal"
+                  to={clientPortal.to}
                   onClick={menu.close}
                   className="text-2xl font-medium tracking-wide text-brand"
                 >
-                  Client Portal
+                  {clientPortal.label}
                 </Link>
               </motion.div>
             )}

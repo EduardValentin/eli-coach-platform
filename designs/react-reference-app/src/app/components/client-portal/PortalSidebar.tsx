@@ -75,7 +75,6 @@ function ProfileHeader({ onNavigate }: { onNavigate?: () => void }) {
       )}
       <div className="min-w-0">
         <p className="font-semibold text-sm text-text-primary truncate">{displayName}</p>
-        <p className="text-xs text-text-secondary">Active Client</p>
       </div>
     </Link>
   );
@@ -209,7 +208,7 @@ function MoreSheetBody({ onClose }: { onClose: () => void }) {
   const { setAppState } = useAppState();
 
   const handleSignOut = () => {
-    setAppState({ session: 'anonymous', hasBundle: false, needsOnboarding: false });
+    setAppState({ session: 'anonymous', hasBundle: false });
     onClose();
     navigate('/');
   };

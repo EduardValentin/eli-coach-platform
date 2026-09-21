@@ -95,6 +95,9 @@
       "optional": true
     }
   },
+  "overrides": {
+    "@radix-ui/react-focus-scope": "1.1.7"
+  },
   "pnpm": {
     "overrides": {
       "vite": "6.4.1"

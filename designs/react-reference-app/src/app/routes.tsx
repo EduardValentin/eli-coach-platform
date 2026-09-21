@@ -10,12 +10,16 @@ import { NotificationProvider } from "./context/NotificationContext";
 import { TrainingProvider } from "./context/TrainingContext";
 import { CheckinProvider } from "./context/CheckinContext";
 import { AssessmentCallProvider } from "./context/AssessmentCallContext";
+import { ClientJourneyProvider } from "./context/ClientJourneyContext";
 import { MessagingProvider } from "./context/MessagingContext";
 import { Store } from "./pages/Store";
 import { ProductDetails } from "./pages/ProductDetails";
 import { CartDrawer } from "./components/CartDrawer";
 import { Pricing } from "./pages/Pricing";
 import { SelectBundle } from "./pages/SelectBundle";
+import { CheckoutStandIn } from "./pages/CheckoutStandIn";
+import { CheckoutComplete } from "./pages/CheckoutComplete";
+import { InvitationLanding } from "./pages/InvitationLanding";
 import { PortalLayout } from "./components/client-portal/PortalLayout";
 import { ClientDashboard } from "./pages/client-portal/ClientDashboard";
 import { ClientMessages } from "./pages/client-portal/ClientMessages";
@@ -27,7 +31,6 @@ import { CoachAssessmentCalls } from "./pages/coach-portal/CoachAssessmentCalls"
 import { CoachMessages } from "./pages/coach-portal/CoachMessages";
 import { ClientsList } from "./pages/coach-portal/ClientsList";
 import { ClientDetails } from "./pages/coach-portal/ClientDetails";
-import { OnboardClient } from "./pages/coach-portal/OnboardClient";
 import { TrainingHub } from "./pages/coach-portal/TrainingHub";
 import { NutritionHub } from "./pages/coach-portal/NutritionHub";
 import { RecipeBuilderPage } from "./pages/coach-portal/RecipeBuilderPage";
@@ -43,6 +46,9 @@ import { ClientWorkoutHistory } from "./pages/client-portal/ClientWorkoutHistory
 import { ClientWorkoutReview } from "./pages/client-portal/ClientWorkoutReview";
 import { ClientCycleTracker } from "./pages/client-portal/ClientCycleTracker";
 import { ClientOnboarding } from "./pages/client-portal/ClientOnboarding";
+import { ClientWelcome } from "./pages/client-portal/ClientWelcome";
+import { PortalEnded } from "./pages/client-portal/PortalEnded";
+import { ClientJourneyGate } from "./components/client-portal/ClientJourneyGate";
 import { CoachClientCycle } from "./pages/coach-portal/CoachClientCycle";
 import { EditClientProfile } from "./pages/coach-portal/EditClientProfile";
 import { CycleProvider } from "./context/CycleContext";
@@ -76,6 +82,7 @@ function Root() {
           <CycleProvider>
           <CheckinProvider>
             <AssessmentCallProvider>
+            <ClientJourneyProvider>
             <MessagingProvider>
               <NotificationProvider>
                 <div className="relative min-h-screen bg-surface-subtle text-foreground font-sans selection:bg-brand selection:text-white">
@@ -86,6 +93,7 @@ function Root() {
                 </div>
               </NotificationProvider>
             </MessagingProvider>
+            </ClientJourneyProvider>
             </AssessmentCallProvider>
           </CheckinProvider>
           </CycleProvider>
@@ -115,6 +123,9 @@ export const router = createBrowserRouter(
         { path: "store/:productId", Component: ProductDetails },
         { path: "pricing", Component: Pricing },
         { path: "select-bundle", Component: SelectBundle },
+        { path: "checkout/complete", Component: CheckoutComplete },
+        { path: "checkout/:sessionId", Component: CheckoutStandIn },
+        { path: "invitation/:token", Component: InvitationLanding },
         { path: "email-preview", Component: EmailPreview },
         { path: "downloads", Component: DownloadPage },
         { path: "privacy", Component: Privacy },
@@ -122,6 +133,9 @@ export const router = createBrowserRouter(
         {
           element: <RequireSession session="client" />,
           children: [
+            {
+              element: <ClientJourneyGate />,
+              children: [
         {
           path: "portal",
           Component: PortalLayout,
@@ -139,7 +153,11 @@ export const router = createBrowserRouter(
           ]
         },
         { path: "portal/workout/:planId/:weekIdx/:dayIdx", Component: WorkoutViewer },
+        { path: "portal/welcome", Component: ClientWelcome },
         { path: "portal/onboarding", Component: ClientOnboarding },
+        { path: "portal/ended", Component: PortalEnded },
+              ]
+            },
           ]
         },
         {
@@ -154,7 +172,6 @@ export const router = createBrowserRouter(
             { path: "messages", Component: CoachMessages },
             { path: "clients", Component: ClientsList },
             { path: "clients/:id", Component: ClientDetails },
-            { path: "onboard", Component: OnboardClient },
             { path: "training", Component: TrainingHub },
             { path: "nutrition", Component: NutritionHub },
             { path: "nutrition/recipe-builder", Component: RecipeBuilderPage },

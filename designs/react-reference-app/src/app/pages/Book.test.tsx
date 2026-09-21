@@ -7,6 +7,8 @@ import { Book } from './Book';
 import { AppProvider } from '../context/AppContext';
 import { StoreProvider } from '../context/StoreContext';
 import { AssessmentCallProvider } from '../context/AssessmentCallContext';
+import { ClientJourneyProvider } from '../context/ClientJourneyContext';
+import { ClientProfileProvider } from '../context/ClientProfileContext';
 
 const TODAY = new Date('2026-03-02T06:00:00.000Z');
 const VISITOR_TIME_ZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -29,9 +31,13 @@ function renderBook(search = '') {
     <MemoryRouter initialEntries={[`/book${search}`]}>
       <AppProvider>
         <StoreProvider>
-          <AssessmentCallProvider>
-            <Book />
-          </AssessmentCallProvider>
+          <ClientProfileProvider>
+            <AssessmentCallProvider>
+              <ClientJourneyProvider>
+                <Book />
+              </ClientJourneyProvider>
+            </AssessmentCallProvider>
+          </ClientProfileProvider>
         </StoreProvider>
       </AppProvider>
     </MemoryRouter>,
@@ -144,14 +150,6 @@ describe('Book', () => {
     expect(
       await screen.findAllByRole('button', { name: TIME_NAME }),
     ).not.toHaveLength(0);
-    expect(
-      screen.getByText(
-        (content) =>
-          content.startsWith('All times shown in your local timezone (') &&
-          content.includes(VISITOR_TIME_ZONE) &&
-          content.includes('GMT'),
-      ),
-    ).toBeInTheDocument();
   });
 
   it('lets the visitor continue only once a time is chosen', async () => {

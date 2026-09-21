@@ -1,4 +1,7 @@
 import {
+  EMAIL_BRAND,
+  EMAIL_FONT_SANS,
+  EMAIL_FONT_SERIF,
   EmailBody,
   EmailContainer,
   EmailDivider,
@@ -25,28 +28,12 @@ const DEFAULT_CONTACT_EMAIL = 'contact@evoa.fit';
 const DEFAULT_CLIENT_NAME = 'Jane';
 const DEFAULT_COACH_NAME = 'Eli';
 
-const BRAND = {
-  pink: '#C81D6B',
-  pinkOnDark: '#E03A7E',
-  pinkSoft: '#FFF5F8',
-  pinkBorder: '#F4D8E4',
-  ink: '#121212',
-  inkSoft: '#3A3A3A',
-  body: '#4A4A4A',
-  muted: '#616161',
-  faint: '#6E6D6D',
-  page: '#F4EFEC',
-  cardBorder: '#EFE6E2',
-  white: '#FFFFFF',
-};
-
-const FONT_SERIF =
-  '"Playfair Display", Georgia, "Times New Roman", Times, serif';
-const FONT_SANS =
-  '"DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif';
+const BRAND = EMAIL_BRAND;
+const FONT_SERIF = EMAIL_FONT_SERIF;
+const FONT_SANS = EMAIL_FONT_SANS;
 
 const EYEBROW = 'Invitation — 1-on-1 coaching';
-const BUTTON_LABEL = 'Accept your invitation';
+const BUTTON_LABEL = 'Create your account';
 
 // The card below lists what she does next, so the letter only has to set the
 // expectation of how long it takes.
@@ -55,7 +42,7 @@ const SHARED_NEXT_PARAGRAPH = 'The whole thing takes about five minutes.';
 // Both sends grant the same 30 days; only the lines explaining why this email
 // arrived differ between them.
 const SHARED_VALIDITY =
-  "This invitation works for the next 30 days. If it runs out, tell me and I'll send you a new one.";
+  "This link works for the next 30 days. You have to create your account from it — reading this email isn't enough. If it runs out, tell me and I'll send you a new one.";
 
 const copy: Record<
   ClientInvitationVariant,
@@ -67,23 +54,23 @@ const copy: Record<
   }
 > = {
   first: {
-    previewText: 'Your targets are ready — accept your invitation.',
+    previewText: 'Your targets are ready — create your account.',
     heading: "You're all set up.",
     subhead: "Everything's waiting for you.",
     opening:
-      "I've set up your profile, your starting targets and your first goal. You just need to accept the invitation below.",
+      "I've set up your profile, your starting targets and your first goal. Create your account from the button below and it's all waiting for you.",
   },
   replaced: {
-    previewText: 'A fresh invitation link — use this one instead.',
+    previewText: 'A fresh link — create your account with this one.',
     heading: "Here's your new link.",
     subhead: 'I updated your details, so the earlier invitation stopped working.',
     opening:
-      'I made some changes to your profile and sent this fresh invitation. Use the button below — the link from my earlier email no longer works.',
+      'I made some changes to your profile and sent this fresh link. Create your account from the button below — the link from my earlier email no longer works.',
   },
 };
 
 const nextSteps = [
-  'Tap the button and sign in with the code I email you.',
+  'Create your account from the button above.',
   'Answer a few questions — your cycle, your food preferences, anything I should know.',
   'Your targets and my notes are waiting in your portal.',
 ];
@@ -170,7 +157,7 @@ export function ClientInvitation({
             <EmailSection style={reassuranceSectionStyle}>
               <EmailText style={reassuranceTextStyle}>
                 This is your personal invitation — please don't forward it. It
-                works once, on the first account that opens it.
+                belongs to your email address alone.
               </EmailText>
               <EmailText style={contactLineStyle}>
                 Questions? Reply to this email or write to{' '}

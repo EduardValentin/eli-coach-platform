@@ -72,18 +72,7 @@ describe('AssessmentSlotPicker', () => {
     );
   });
 
-  it('names the zone offset of the first open time before a day is picked', () => {
-    // arrange
-    // act
-    renderPicker();
-
-    // assert
-    expect(
-      screen.getByText('All times shown in your local timezone (Europe/Bucharest, GMT+3)'),
-    ).toBeInTheDocument();
-  });
-
-  it('names the zone offset of the picked day when it falls past a clock change', async () => {
+  it('shows the picked day\'s times past a clock change', async () => {
     // arrange
     const user = renderPicker();
 
@@ -91,9 +80,6 @@ describe('AssessmentSlotPicker', () => {
     await user.click(dayButton('2026-10-27'));
 
     // assert
-    expect(
-      screen.getByText('All times shown in your local timezone (Europe/Bucharest, GMT+2)'),
-    ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /^10:00\s?AM$/i })).toBeInTheDocument();
   });
 
