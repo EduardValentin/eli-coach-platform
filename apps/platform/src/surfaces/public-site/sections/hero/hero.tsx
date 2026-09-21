@@ -124,6 +124,7 @@ export function PublicHero(props: PublicHeroProps) {
   return (
     <section
       className="relative flex h-screen min-h-[600px] w-full items-center justify-center overflow-hidden bg-surface-inverted"
+      data-parity-root="Hero"
       data-surface="inverted"
     >
       <MotionConfig reducedMotion="user">

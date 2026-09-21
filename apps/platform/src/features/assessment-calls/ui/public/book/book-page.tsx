@@ -205,6 +205,7 @@ function BookingFlow(props: {
             <motion.div
               animate={{ opacity: 1, scale: 1 }}
               className="flex h-full flex-col items-center justify-center py-12 text-center"
+              data-parity-root="BookingConfirmation"
               initial={{ opacity: 0, scale: 0.95 }}
               key="step-confirmed"
             >

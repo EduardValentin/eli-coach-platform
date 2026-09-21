@@ -24,6 +24,7 @@ export function CallOverview(props: {
   return (
     <aside
       aria-label="About the call"
+      data-parity-root="CallOverview"
       className="flex w-full flex-col border-b border-stroke-faint bg-surface-quiet/50 p-8 md:w-[35%] md:border-r md:border-b-0 md:p-10"
     >
       <img
