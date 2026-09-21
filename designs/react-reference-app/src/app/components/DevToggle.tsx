@@ -41,7 +41,10 @@ import {
   sampleTwoLeftTodayBookings,
 } from '../services/assessmentCallSamples';
 import { useAssessmentCalls } from '../context/AssessmentCallContext';
-import { useClientJourneys } from '../context/ClientJourneyContext';
+import {
+  DEMO_JOURNEY_CALL_ID,
+  useClientJourneys,
+} from '../context/ClientJourneyContext';
 import { useCheckins } from '../context/CheckinContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Checkbox } from './ui/checkbox';
@@ -261,7 +264,9 @@ export function DevToggle() {
   const { appState, setAppState } = useAppState();
   const { replaceBookings } = useAssessmentCalls();
   const { journeys } = useClientJourneys();
-  const journeyLinks = Object.values(journeys).flatMap((journey) => [
+  const journeyLinks = Object.values(journeys)
+    .filter((journey) => journey.callId !== DEMO_JOURNEY_CALL_ID)
+    .flatMap((journey) => [
     ...(journey.paymentLink
       ? [
           {
