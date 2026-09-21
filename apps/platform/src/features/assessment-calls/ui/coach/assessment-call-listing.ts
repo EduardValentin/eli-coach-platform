@@ -193,8 +193,8 @@ function matchesQuery(call: ClassifiedCall, query: string): boolean {
     return true;
   }
 
-  return [call.fullName, call.firstName, call.lastName, call.visitorEmail].some(
-    (value) => value.toLowerCase().includes(needle),
+  return [call.fullName, call.visitorEmail].some((value) =>
+    value.toLowerCase().includes(needle),
   );
 }
 

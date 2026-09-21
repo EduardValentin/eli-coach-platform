@@ -18,6 +18,8 @@ import { DateOfBirthField } from './DateOfBirthField';
 import { PhoneField } from './PhoneField';
 import type { BookingDetailsForm, BookingField } from './useBookingDetailsForm';
 
+const PHONE_FIELD_ID = 'phone';
+
 export const FIELD_IDS: Record<BookingField, string> = {
   firstName: 'first-name',
   lastName: 'last-name',
@@ -26,7 +28,7 @@ export const FIELD_IDS: Record<BookingField, string> = {
   gender: 'gender',
   primaryGoal: 'primary-goal',
   country: 'country',
-  phone: 'phone-number',
+  phone: `${PHONE_FIELD_ID}-number`,
   notes: 'notes',
 };
 
@@ -154,7 +156,7 @@ export function BookingDetailsStep({
       />
 
       <PhoneField
-        id="phone"
+        id={PHONE_FIELD_ID}
         country={form.phoneCountry}
         number={form.phoneNumber}
         error={fieldErrors.phone}

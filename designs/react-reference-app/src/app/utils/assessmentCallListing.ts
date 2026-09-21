@@ -70,8 +70,7 @@ function matchesQuery(call: ClassifiedCall, query: string): boolean {
   const needle = query.trim().toLowerCase();
   if (needle.length === 0) return true;
 
-  const { firstName, lastName, visitorEmail } = call.booking;
-  return [visitorFullName(call.booking), firstName, lastName, visitorEmail].some((value) =>
+  return [visitorFullName(call.booking), call.booking.visitorEmail].some((value) =>
     value.toLowerCase().includes(needle),
   );
 }

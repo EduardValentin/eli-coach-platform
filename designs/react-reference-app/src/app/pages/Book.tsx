@@ -49,7 +49,7 @@ export function Book() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [booking, setBooking] = useState<PrototypeBooking | null>(null);
   const detailsForm = useBookingDetailsForm();
-  const [bookingDay] = useState(() => new Date());
+  const [now] = useState(() => new Date());
   const shouldFocusStepHeading = useRef(false);
 
   const visitorTimeZone = useMemo(
@@ -291,7 +291,7 @@ export function Book() {
 
                     <BookingDetailsStep
                       form={detailsForm}
-                      now={bookingDay}
+                      now={now}
                       isSubmitting={isSubmitting}
                       onSubmit={handleSubmit}
                     />

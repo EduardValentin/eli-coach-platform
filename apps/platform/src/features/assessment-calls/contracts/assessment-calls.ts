@@ -79,12 +79,12 @@ type PhoneFields = Partial<Pick<BookingFields, "phoneCountry" | "phoneNumber">>;
 
 export function createBookAssessmentCallRequestSchema(options: { now: Date }) {
   return bookingFieldsSchema.superRefine((request, context) => {
-    const birthDateMessage = describeBirthDateProblem(request, options.now);
+    const birthDateIssue = describeBirthDateProblem(request, options.now);
 
-    if (birthDateMessage) {
+    if (birthDateIssue) {
       context.addIssue({
         code: "custom",
-        message: birthDateMessage,
+        message: birthDateIssue,
         path: ["dateOfBirth"],
       });
     }
