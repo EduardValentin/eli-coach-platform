@@ -81,6 +81,20 @@ describe('advancing a journey', () => {
     expect([flagged, answered]).toEqual(['needs-details', 'reviewing']);
   });
 
+  it('lets the coach build the program without reviewing the answers first', () => {
+    // arrange
+    const journey = journeyAt('submitted');
+
+    // act
+    const transition = advance(journey, 'mark-program-ready');
+
+    // assert
+    expect(transition).toEqual({
+      status: 'advanced',
+      journey: { ...journey, stage: 'program-ready' },
+    });
+  });
+
   it('lets the coach resend a payment link without moving the journey on', () => {
     // arrange
     const journey = journeyAt('payment-link-sent');

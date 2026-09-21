@@ -4,15 +4,12 @@ import { BottomSheet } from '../ui/bottom-sheet';
 import { useIsMobile } from '../ui/use-mobile';
 import { cn } from '../ui/utils';
 
-type ResponsiveSheetSize = 'md' | 'wide';
-
 interface ResponsiveSheetDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
   description?: string;
   contentClassName?: string;
-  size?: ResponsiveSheetSize;
   children: ReactNode;
 }
 
@@ -22,7 +19,6 @@ export function ResponsiveSheetDialog({
   title,
   description,
   contentClassName,
-  size = 'md',
   children,
 }: ResponsiveSheetDialogProps) {
   const isMobile = useIsMobile();
@@ -38,7 +34,7 @@ export function ResponsiveSheetDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        size={size}
+        size="md"
         className={cn(
           'gap-0 p-0 overflow-hidden max-h-[85vh] flex flex-col',
           contentClassName

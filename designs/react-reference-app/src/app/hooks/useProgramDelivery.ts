@@ -4,7 +4,7 @@ import {
   canDeliverProgram,
   deliveryDate,
 } from '../domain/coachingSubscription';
-import { journeyCallIdForClient } from '../utils/journeyLabels';
+import { useJourneyClient } from './useJourneyClient';
 
 export type ProgramDelivery = {
   status: 'no-journey' | 'ready' | 'waiting';
@@ -13,9 +13,9 @@ export type ProgramDelivery = {
 };
 
 export function useProgramDelivery(clientId: string): ProgramDelivery {
-  const { journeyForCall, markProgramReady } = useClientJourneys();
-  const callId = journeyCallIdForClient(clientId);
-  const journey = callId ? journeyForCall(callId) : null;
+  const { markProgramReady } = useClientJourneys();
+  const journey = useJourneyClient(clientId);
+  const callId = journey?.callId ?? null;
   const subscription = journey?.subscription;
   const ready = subscription ? canDeliverProgram(subscription, new Date()) : false;
 

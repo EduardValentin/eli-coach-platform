@@ -169,7 +169,10 @@ const TRANSITIONS: Record<
   },
   'account-created': { 'start-onboarding': 'onboarding' },
   onboarding: { 'submit-onboarding': 'submitted' },
-  submitted: { 'start-review': 'reviewing' },
+  submitted: {
+    'start-review': 'reviewing',
+    'mark-program-ready': 'program-ready',
+  },
   reviewing: {
     'request-details': 'needs-details',
     'mark-program-ready': 'program-ready',

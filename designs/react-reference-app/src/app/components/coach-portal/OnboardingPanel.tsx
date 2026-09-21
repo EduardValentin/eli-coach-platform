@@ -10,13 +10,20 @@ import {
 } from '../ui/accordion';
 import { Alert } from '../ui/alert';
 import { Button } from '../ui/button';
+import { Checkbox } from '../ui/checkbox';
+import { cn } from '../ui/utils';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
 import {
   canDeliverProgram,
   deliveryDate,
+  type CoachingSubscription,
 } from '../../domain/coachingSubscription';
 import { formatRatio, waistToHeightRatio } from '../../domain/bodyMetrics';
-import type { ClientJourney } from '../../domain/journey';
+import {
+  awaitsCoachReview,
+  type ClientJourney,
+  type JourneyStage,
+} from '../../domain/journey';
 import {
   CHECK_IN_CHANNEL_KEY,
   CHECK_IN_DAY_KEY,
@@ -24,10 +31,12 @@ import {
   hasPregnancyContext,
   needsSafetyLook,
   reviewForms,
+  type ReviewAnswer,
+  type ReviewForm,
 } from '../../domain/onboardingAnswers';
 import { formatJourneyDate } from '../../utils/journeyLabels';
 import { JourneyStageBadge } from './JourneyStageBadge';
-import { OnboardingReviewDialog } from './OnboardingReviewDialog';
+import { OnboardingReviewBar } from './OnboardingReviewBar';
 import { ReviewAnswerValue } from './ReviewAnswerValue';
 
 const PANEL_CLASS =
@@ -35,6 +44,23 @@ const PANEL_CLASS =
 
 const SAFETY_FLAG = 'Needs a look: safety screening';
 const RATIO_HIDDEN_NOTE = 'Not shown during pregnancy or right after birth.';
+const BUILD_ACTION = 'Build her program';
+
+const REVIEW_ACTIONS: Partial<Record<JourneyStage, string>> = {
+  submitted: 'Review answers',
+  reviewing: 'Continue review',
+};
+
+type ReviewSession = {
+  flagged: readonly string[];
+  toggleFlag: (questionId: string) => void;
+};
+
+type AnswersView = {
+  openForms: string[];
+  onOpenForms: (formIds: string[]) => void;
+  review: ReviewSession | null;
+};
 
 function SubHeading({ children }: { children: string }) {
   return (
@@ -96,12 +122,61 @@ function CollaborationReading({ journey }: { journey: ClientJourney }) {
   );
 }
 
-function AnswerGroups({ journey }: { journey: ClientJourney }) {
-  const forms = reviewForms(journey.onboarding, journey.identity.sex);
+function AnswerQuestion({
+  answer,
+  review,
+}: {
+  answer: ReviewAnswer;
+  review: ReviewSession | null;
+}) {
+  if (!review) return <>{answer.label}</>;
 
+  return (
+    <label className="flex cursor-pointer items-start gap-3">
+      <Checkbox
+        className="mt-0.5"
+        checked={review.flagged.includes(answer.questionId)}
+        onCheckedChange={() => review.toggleFlag(answer.questionId)}
+      />
+      <span>
+        <span className="sr-only">Flag </span>
+        {answer.label}
+      </span>
+    </label>
+  );
+}
+
+function AnswerRow({
+  answer,
+  review,
+}: {
+  answer: ReviewAnswer;
+  review: ReviewSession | null;
+}) {
+  return (
+    <div className="grid gap-1 py-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] sm:gap-6">
+      <dt className="text-sm text-text-secondary">
+        <AnswerQuestion answer={answer} review={review} />
+      </dt>
+      <dd className={cn('text-sm text-text-primary', review && 'pl-8 sm:pl-0')}>
+        <ReviewAnswerValue answer={answer} />
+      </dd>
+    </div>
+  );
+}
+
+function AnswerGroups({
+  forms,
+  view,
+}: {
+  forms: ReviewForm[];
+  view: AnswersView;
+}) {
   return (
     <Accordion
       type="multiple"
+      value={view.openForms}
+      onValueChange={view.onOpenForms}
       className="rounded-card border border-border-subtle bg-surface-quiet/60 px-4 sm:px-5"
     >
       {forms.map((form) => (
@@ -119,15 +194,11 @@ function AnswerGroups({ journey }: { journey: ClientJourney }) {
           <AccordionContent>
             <dl className="divide-y divide-border-subtle rounded-field bg-surface-base px-4">
               {form.answers.map((answer) => (
-                <div
+                <AnswerRow
+                  answer={answer}
                   key={answer.questionId}
-                  className="grid gap-1 py-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] sm:gap-6"
-                >
-                  <dt className="text-sm text-text-secondary">{answer.label}</dt>
-                  <dd className="text-sm text-text-primary">
-                    <ReviewAnswerValue answer={answer} />
-                  </dd>
-                </div>
+                  review={view.review}
+                />
               ))}
             </dl>
           </AccordionContent>
@@ -137,32 +208,92 @@ function AnswerGroups({ journey }: { journey: ClientJourney }) {
   );
 }
 
-function ProgramAssignment({
+function questionLabels(forms: ReviewForm[], questionIds: string[]): string[] {
+  const asked = new Set(questionIds);
+
+  return forms
+    .flatMap((form) => form.answers)
+    .filter((answer) => asked.has(answer.questionId))
+    .map((answer) => answer.label);
+}
+
+function PendingRequest({
   journey,
-  clientId,
+  forms,
 }: {
   journey: ClientJourney;
-  clientId: string;
+  forms: ReviewForm[];
 }) {
-  const { subscription } = journey;
-  const now = new Date();
+  const request = journey.review.requests.at(-1);
+  if (journey.stage !== 'needs-details' || !request || request.answeredAt) {
+    return null;
+  }
+
+  return (
+    <div className="space-y-3 rounded-card border border-border-subtle bg-surface-quiet/60 p-4">
+      <SubHeading>What you asked her for</SubHeading>
+      <p className="text-sm leading-relaxed text-text-primary">
+        {request.message}
+      </p>
+      <ul className="flex flex-wrap gap-2">
+        {questionLabels(forms, request.questionIds).map((label) => (
+          <li
+            key={label}
+            className="rounded-tile bg-surface-base px-2 py-1 text-xs text-text-secondary"
+          >
+            {label}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function DeliveryNote({
+  subscription,
+}: {
+  subscription: CoachingSubscription | undefined;
+}) {
   const deliverOn =
-    subscription && !canDeliverProgram(subscription, now)
+    subscription && !canDeliverProgram(subscription, new Date())
       ? deliveryDate(subscription)
       : null;
 
+  if (!deliverOn) return null;
+
+  return (
+    <p className="text-xs text-text-secondary">
+      Her program will be delivered on {formatJourneyDate(deliverOn)}.
+    </p>
+  );
+}
+
+function StageActions({
+  journey,
+  clientId,
+  onReview,
+}: {
+  journey: ClientJourney;
+  clientId: string;
+  onReview: () => void;
+}) {
+  if (!awaitsCoachReview(journey.stage)) return null;
+
+  const reviewAction = REVIEW_ACTIONS[journey.stage];
+
   return (
     <div className="flex flex-col gap-2">
-      <Button asChild variant="outline">
-        <Link to={`/coach/training/builder/${clientId}`}>
-          Build her program
-        </Link>
-      </Button>
-      {deliverOn && (
-        <p className="text-xs text-text-secondary">
-          Her program will be delivered on {formatJourneyDate(deliverOn)}.
-        </p>
-      )}
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <Button asChild>
+          <Link to={`/coach/training/builder/${clientId}`}>{BUILD_ACTION}</Link>
+        </Button>
+        {reviewAction && (
+          <Button variant="outline" onClick={onReview}>
+            {reviewAction}
+          </Button>
+        )}
+      </div>
+      <DeliveryNote subscription={journey.subscription} />
     </div>
   );
 }
@@ -176,12 +307,35 @@ export function OnboardingPanel({
   clientId: string;
   heightCm: number;
 }) {
-  const { startReview } = useClientJourneys();
-  const [reviewOpen, setReviewOpen] = useState(false);
+  const { startReview, requestDetails } = useClientJourneys();
+  const [openForms, setOpenForms] = useState<string[]>([]);
+  const [flagged, setFlagged] = useState<string[] | null>(null);
 
-  const openReview = () => {
+  const forms = reviewForms(journey.onboarding, journey.identity.sex);
+
+  const enterReview = () => {
     if (journey.stage === 'submitted') startReview(journey.callId);
-    setReviewOpen(true);
+    setOpenForms(forms.map((form) => form.formId));
+    setFlagged([]);
+  };
+
+  const toggleFlag = (questionId: string) => {
+    setFlagged((current) => {
+      const flags = current ?? [];
+
+      return flags.includes(questionId)
+        ? flags.filter((id) => id !== questionId)
+        : [...flags, questionId];
+    });
+  };
+
+  const askForDetails = (note: string) => {
+    requestDetails(journey.callId, {
+      questionIds: flagged ?? [],
+      message: note,
+      createdAt: new Date(),
+    });
+    setFlagged(null);
   };
 
   return (
@@ -206,6 +360,8 @@ export function OnboardingPanel({
         <Alert role="status">{SAFETY_FLAG}</Alert>
       )}
 
+      <PendingRequest journey={journey} forms={forms} />
+
       <div className="grid gap-6 sm:grid-cols-2">
         <div className="space-y-2">
           <SubHeading>Waist-to-height ratio</SubHeading>
@@ -219,25 +375,29 @@ export function OnboardingPanel({
 
       <div className="space-y-3">
         <SubHeading>Her answers</SubHeading>
-        <AnswerGroups journey={journey} />
+        <AnswerGroups
+          forms={forms}
+          view={{
+            openForms,
+            onOpenForms: setOpenForms,
+            review: flagged ? { flagged, toggleFlag } : null,
+          }}
+        />
       </div>
 
-      {journey.stage === 'submitted' && (
-        <Button onClick={openReview}>Start review</Button>
+      {flagged ? (
+        <OnboardingReviewBar
+          flagged={flagged}
+          onSend={askForDetails}
+          onDone={() => setFlagged(null)}
+        />
+      ) : (
+        <StageActions
+          journey={journey}
+          clientId={clientId}
+          onReview={enterReview}
+        />
       )}
-
-      {journey.stage === 'reviewing' && (
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-          <Button onClick={openReview}>Continue review</Button>
-          <ProgramAssignment journey={journey} clientId={clientId} />
-        </div>
-      )}
-
-      <OnboardingReviewDialog
-        journey={journey}
-        open={reviewOpen}
-        onOpenChange={setReviewOpen}
-      />
     </motion.section>
   );
 }
