@@ -84,7 +84,7 @@ describe('the coach clients list', () => {
     ).toBeInTheDocument();
   });
 
-  it('lists a client who is still onboarding by name and email alone', async () => {
+  it('lists a client who is still onboarding with her name, email and onboarding status', async () => {
     // arrange
     const user = renderList('?jstage=submitted');
 
@@ -94,7 +94,7 @@ describe('the coach clients list', () => {
     // assert
     const row = rowFor('Jane Doe');
     expect(within(row).getByText('jane@example.com')).toBeInTheDocument();
-    expect(within(row).queryByText('Sent to coach')).not.toBeInTheDocument();
+    expect(within(row).getByText('Sent to coach')).toBeInTheDocument();
     expect(within(row).queryByText('Immediate start')).not.toBeInTheDocument();
   });
 

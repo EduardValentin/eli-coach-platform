@@ -18,6 +18,7 @@ import {
   type ClientJourney,
 } from '../../domain/journey';
 import { getInitials } from '../../utils/clientHelpers';
+import { JourneyStageBadge } from '../../components/coach-portal/JourneyStageBadge';
 import { journeyCallIdForClient } from '../../utils/journeyLabels';
 
 const MOCK_CLIENTS = [
@@ -78,7 +79,9 @@ function OnboardingRow({ journey }: { journey: ClientJourney }) {
           </div>
         </div>
       </td>
-      <td className="py-4 px-6 text-sm text-text-secondary">—</td>
+      <td className="py-4 px-6">
+        <JourneyStageBadge stage={journey.stage} />
+      </td>
       <td className="py-4 px-6 text-sm text-text-secondary">—</td>
       <td className="py-4 px-6 text-sm text-text-secondary">—</td>
       <td className="py-4 px-6">
