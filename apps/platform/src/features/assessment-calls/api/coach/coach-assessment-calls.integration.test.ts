@@ -338,7 +338,7 @@ async function bookCall(booking: {
     firstName: booking.firstName,
     gender: "female",
     lastName: booking.lastName,
-    phoneCallingCode: "RO",
+    phoneCountry: "RO",
     phoneNumber: "0712 345 678",
     primaryGoal: "build_strength",
     startsAt: booking.startsAt,

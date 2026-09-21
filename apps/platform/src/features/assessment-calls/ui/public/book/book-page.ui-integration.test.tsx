@@ -114,7 +114,7 @@ describe("booking an assessment call: choosing a time", () => {
     ).toBeInTheDocument();
   });
 
-  it("offers the times only once a day is chosen, and names their zone", async () => {
+  it("offers the times only once a day is chosen, naming no zone", async () => {
     // arrange
     const user = renderBookingPage();
     await waitFor(() => {
@@ -243,6 +243,15 @@ describe("booking an assessment call: the details", () => {
     expect(calendarDayButton("2008-03-03")).toBeDisabled();
     expect(calendarDayButton("2008-03-02")).toBeEnabled();
     expect(screen.queryByRole("option", { name: "2009" })).toBeNull();
+  });
+
+  it("shows the chosen birth date on the field and closes the calendar", async () => {
+    // arrange
+    const user = renderBookingPage();
+    await reachDetails(user);
+    await user.click(screen.getByLabelText("Date of birth"));
+    await chooseOption(user, "Year", "2008");
+    await chooseOption(user, "Month", "March");
 
     // act
     await user.click(calendarDayButton("2008-03-02"));
@@ -251,6 +260,7 @@ describe("booking an assessment call: the details", () => {
     expect(screen.getByLabelText("Date of birth")).toHaveTextContent(
       "2 March 2008",
     );
+    expect(screen.queryByRole("grid")).not.toBeInTheDocument();
   });
 
   it("preselects the calling code from the country until the visitor changes it herself", async () => {
@@ -357,7 +367,7 @@ describe("booking an assessment call: the details", () => {
       gender: "female",
       lastName: "Doe",
       notes: "",
-      phoneCallingCode: "RO",
+      phoneCountry: "RO",
       phoneNumber: "0712 345 678",
       primaryGoal: "build_strength",
       startsAt: FIRST_SLOT,
@@ -385,7 +395,7 @@ describe("booking an assessment call: the details", () => {
     // assert
     await screen.findByRole("heading", { level: 2, name: "You're booked!" });
     expect(submitted.phoneNumber).toBe("");
-    expect(submitted.phoneCallingCode).toBe("RO");
+    expect(submitted.phoneCountry).toBe("RO");
   });
 });
 

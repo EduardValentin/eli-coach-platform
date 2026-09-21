@@ -1,21 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence, MotionConfig } from 'motion/react';
-import { Calendar as CalendarIcon, Clock, Video, ChevronLeft, CircleCheck, User, Mail } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, Video, ChevronLeft, CircleCheck } from 'lucide-react';
 import { Link } from 'react-router';
 
 import { AssessmentSlotPicker } from '../components/AssessmentSlotPicker';
 import { Navbar } from '../components/Navbar';
 import { LegalFooter } from '../components/legal/LegalNav';
-import { ChoiceSelectField } from '../components/booking/ChoiceSelectField';
-import { DateOfBirthField } from '../components/booking/DateOfBirthField';
-import { PhoneField } from '../components/booking/PhoneField';
-import { firstInvalidField, useBookingDetailsForm, type BookingField } from '../components/booking/useBookingDetailsForm';
+import { BookingDetailsStep, FIELD_IDS } from '../components/booking/BookingDetailsStep';
+import { firstInvalidField, useBookingDetailsForm } from '../components/booking/useBookingDetailsForm';
 import { Alert } from '../components/ui/alert';
 import { Button, buttonVariants, cn } from '../components/ThemeButton';
 import { Card, cardVariants } from '../components/ui/card';
-import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
-import { Textarea } from '../components/ui/textarea';
 import { useAppState } from '../context/AppContext';
 import { useAssessmentCalls } from '../context/AssessmentCallContext';
 import {
@@ -26,44 +21,14 @@ import {
   type AssessmentCallErrorCode,
   type PrototypeBooking,
 } from '../services/assessmentCallService';
-import { COUNTRIES, findCountry } from '../services/countries';
-import {
-  VISITOR_GENDERS,
-  VISITOR_PRIMARY_GOALS,
-  normalizePhone,
-  type VisitorGender,
-  type VisitorPrimaryGoal,
-} from '../services/visitorProfile';
 import { formatSlotTime, formatZonedDate } from '../utils/dateFormatters';
 import { ELI_PORTRAIT_SMALL } from '../utils/eliPortrait';
-import { FIELD_ERROR_CLASS } from '../utils/formFieldStyles';
 import { NotFound } from './NotFound';
 
 type Step = 'date-time' | 'details' | 'success';
 
 const CALL_DATE_PATTERN = 'EEEE, MMMM d, yyyy';
 const SUPPORT_EMAIL = 'contact@evoa.fit';
-const FIELD_IDS: Record<BookingField, string> = {
-  firstName: 'first-name',
-  lastName: 'last-name',
-  email: 'email',
-  dateOfBirth: 'date-of-birth',
-  gender: 'gender',
-  primaryGoal: 'primary-goal',
-  country: 'country',
-  phone: 'phone-number',
-  notes: 'notes',
-};
-const COUNTRY_OPTIONS = COUNTRIES.map((country) => ({
-  value: country.code,
-  label: country.name,
-}));
-
-function submittedPhone(phoneCountry: string, phoneNumber: string): string | null {
-  const callingCode = findCountry(phoneCountry)?.callingCode ?? '';
-  const phone = normalizePhone({ callingCode, nationalNumber: phoneNumber });
-  return phone.status === 'valid' ? phone.e164 : null;
-}
 const SUPPORT_CONTACT_CODES: ReadonlySet<AssessmentCallErrorCode> = new Set([
   'booking_refused',
   'server_error',
@@ -84,7 +49,7 @@ export function Book() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [booking, setBooking] = useState<PrototypeBooking | null>(null);
   const detailsForm = useBookingDetailsForm();
-  const { fieldErrors } = detailsForm;
+  const [bookingDay] = useState(() => new Date());
   const shouldFocusStepHeading = useRef(false);
 
   const visitorTimeZone = useMemo(
@@ -151,6 +116,8 @@ export function Book() {
       event.currentTarget.querySelector<HTMLElement>(`#${FIELD_IDS[invalidField]}`)?.focus();
       return;
     }
+    const profile = detailsForm.validatedProfile();
+    if (!profile) return;
 
     setIsSubmitting(true);
     setSubmitError(null);
@@ -158,16 +125,8 @@ export function Book() {
     try {
       const confirmed = await bookAssessmentCall(
         {
+          ...profile,
           startsAt: selectedSlot,
-          firstName: detailsForm.firstName,
-          lastName: detailsForm.lastName,
-          email: detailsForm.email,
-          dateOfBirth: detailsForm.dateOfBirth,
-          gender: detailsForm.gender as VisitorGender,
-          primaryGoal: detailsForm.primaryGoal as VisitorPrimaryGoal,
-          country: detailsForm.country,
-          phone: submittedPhone(detailsForm.phoneCountry, detailsForm.phoneNumber),
-          notes: detailsForm.notes,
           visitorTimeZone,
           outcome: appState.bookingOutcome,
         },
@@ -330,159 +289,12 @@ export function Book() {
                       </Alert>
                     )}
 
-                    <form noValidate onSubmit={handleSubmit} className="space-y-5 flex-1">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <div className="space-y-2">
-                          <Label htmlFor="first-name" className="text-text-label font-medium">First name</Label>
-                          <div className="relative">
-                            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" aria-hidden="true" />
-                            <Input
-                              id="first-name"
-                              required
-                              autoComplete="given-name"
-                              placeholder="Jane"
-                              className="pl-9"
-                              value={detailsForm.firstName}
-                              onChange={(e) => detailsForm.setFirstName(e.target.value)}
-                              aria-invalid={Boolean(fieldErrors.firstName) || undefined}
-                              aria-describedby={fieldErrors.firstName ? 'first-name-error' : undefined}
-                            />
-                          </div>
-                          {fieldErrors.firstName && (
-                            <p id="first-name-error" className={FIELD_ERROR_CLASS}>{fieldErrors.firstName}</p>
-                          )}
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="last-name" className="text-text-label font-medium">Last name</Label>
-                          <Input
-                            id="last-name"
-                            required
-                            autoComplete="family-name"
-                            placeholder="Doe"
-                            value={detailsForm.lastName}
-                            onChange={(e) => detailsForm.setLastName(e.target.value)}
-                            aria-invalid={Boolean(fieldErrors.lastName) || undefined}
-                            aria-describedby={fieldErrors.lastName ? 'last-name-error' : undefined}
-                          />
-                          {fieldErrors.lastName && (
-                            <p id="last-name-error" className={FIELD_ERROR_CLASS}>{fieldErrors.lastName}</p>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="email" className="text-text-label font-medium">Email Address</Label>
-                        <div className="relative">
-                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" aria-hidden="true" />
-                          <Input
-                            id="email"
-                            type="email"
-                            required
-                            autoComplete="email"
-                            placeholder="jane@example.com"
-                            className="pl-9"
-                            value={detailsForm.email}
-                            onChange={(e) => detailsForm.setEmail(e.target.value)}
-                            aria-invalid={Boolean(fieldErrors.email) || undefined}
-                            aria-describedby={fieldErrors.email ? 'email-error' : undefined}
-                          />
-                        </div>
-                        {fieldErrors.email && (
-                          <p id="email-error" className={FIELD_ERROR_CLASS}>{fieldErrors.email}</p>
-                        )}
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <DateOfBirthField
-                          id="date-of-birth"
-                          label="Date of birth"
-                          value={detailsForm.dateOfBirth}
-                          error={fieldErrors.dateOfBirth}
-                          now={new Date()}
-                          onChange={detailsForm.setDateOfBirth}
-                        />
-                        <ChoiceSelectField
-                          id="gender"
-                          label="Gender"
-                          placeholder="Select"
-                          value={detailsForm.gender}
-                          options={VISITOR_GENDERS}
-                          error={fieldErrors.gender}
-                          onValueChange={(value) => detailsForm.setGender(value as VisitorGender)}
-                        />
-                      </div>
-
-                      <ChoiceSelectField
-                        id="primary-goal"
-                        label="Primary goal"
-                        placeholder="Select your goal"
-                        value={detailsForm.primaryGoal}
-                        options={VISITOR_PRIMARY_GOALS}
-                        error={fieldErrors.primaryGoal}
-                        onValueChange={(value) => detailsForm.setPrimaryGoal(value as VisitorPrimaryGoal)}
-                      />
-
-                      <ChoiceSelectField
-                        id="country"
-                        label="Country"
-                        placeholder="Select your country"
-                        value={detailsForm.country}
-                        options={COUNTRY_OPTIONS}
-                        error={fieldErrors.country}
-                        autoComplete="country-name"
-                        onValueChange={detailsForm.setCountry}
-                      />
-
-                      <PhoneField
-                        id="phone"
-                        country={detailsForm.phoneCountry}
-                        number={detailsForm.phoneNumber}
-                        error={fieldErrors.phone}
-                        onCountryChange={detailsForm.setPhoneCountry}
-                        onNumberChange={detailsForm.setPhoneNumber}
-                      />
-
-                      <div className="space-y-2">
-                        <Label htmlFor="notes" className="text-text-label font-medium">Anything to share beforehand? (Optional)</Label>
-                        <Textarea
-                          id="notes"
-                          placeholder="e.g. recovering from a knee injury"
-                          className="h-24"
-                          value={detailsForm.notes}
-                          onChange={(e) => detailsForm.setNotes(e.target.value)}
-                          aria-invalid={Boolean(fieldErrors.notes) || undefined}
-                          aria-describedby={fieldErrors.notes ? 'notes-error' : undefined}
-                        />
-                        {fieldErrors.notes && (
-                          <p id="notes-error" className={FIELD_ERROR_CLASS}>{fieldErrors.notes}</p>
-                        )}
-                      </div>
-
-                      <div className="pt-4">
-                        <Button
-                          type="submit"
-                          disabled={isSubmitting}
-                          aria-busy={isSubmitting || undefined}
-                          weight="semibold"
-                          width="full"
-                        >
-                          {isSubmitting ? (
-                            <>
-                              <motion.div
-                                animate={{ rotate: 360 }}
-                                transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-                                className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
-                                aria-hidden="true"
-                              />
-                              <span className="sr-only">Scheduling your call</span>
-                            </>
-                          ) : (
-                            'Schedule Call'
-                          )}
-                        </Button>
-                      </div>
-                    </form>
+                    <BookingDetailsStep
+                      form={detailsForm}
+                      now={bookingDay}
+                      isSubmitting={isSubmitting}
+                      onSubmit={handleSubmit}
+                    />
                   </motion.div>
                 )}
 

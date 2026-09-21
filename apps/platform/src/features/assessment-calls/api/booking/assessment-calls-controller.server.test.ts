@@ -325,7 +325,7 @@ describe("AssessmentCallsController booking submissions", () => {
 
     // act
     await controller.book(
-      createBookingRequest({}, ["phoneCallingCode", "phoneNumber"]),
+      createBookingRequest({}, ["phoneCountry", "phoneNumber"]),
     );
 
     // assert
@@ -339,7 +339,7 @@ describe("AssessmentCallsController booking submissions", () => {
     // act
     await controller.book(
       createBookingRequest({
-        phoneCallingCode: "GB",
+        phoneCountry: "GB",
         phoneNumber: "(07700) 900-123",
       }),
     );
@@ -522,7 +522,7 @@ function createBookingRequest(
     firstName: " Ana ",
     gender: "female",
     lastName: " Popescu ",
-    phoneCallingCode: "RO",
+    phoneCountry: "RO",
     phoneNumber: "0712 345 678",
     primaryGoal: "build_strength",
     startsAt: "2026-10-19T14:00:00.000Z",

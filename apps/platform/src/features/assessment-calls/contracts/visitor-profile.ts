@@ -2,6 +2,9 @@ import type {
   VisitorGender,
   VisitorPrimaryGoal,
 } from "@eli-coach-platform/domain/assessment-call";
+import { z } from "zod";
+
+import { findCountry } from "./countries";
 
 export type ChoiceOption<Value extends string> = {
   readonly value: Value;
@@ -28,6 +31,63 @@ export const VISITOR_PRIMARY_GOAL_OPTIONS: readonly ChoiceOption<VisitorPrimaryG
 
 export const MIN_BOOKING_AGE = 18;
 export const MAX_BOOKING_AGE = 120;
+const MAX_NAME_LENGTH = 60;
+export const MAX_NOTES_LENGTH = 1000;
+
+export const BOOKING_FIELD_MESSAGES = {
+  birthDateImpossible: "Enter a real date of birth.",
+  birthDateMissing: "Choose your date of birth.",
+  birthDateTooYoung: "You must be at least 18 to book a call.",
+  country: "Choose your country.",
+  email: "Enter a valid email address.",
+  firstName: `Enter your first name, up to ${MAX_NAME_LENGTH} characters.`,
+  gender: "Choose an option.",
+  lastName: `Enter your last name, up to ${MAX_NAME_LENGTH} characters.`,
+  notes: `Keep your note under ${MAX_NOTES_LENGTH} characters.`,
+  phone:
+    "Enter a phone number with digits only, 4 to 14 digits after the country code.",
+  primaryGoal: "Choose your primary goal.",
+} as const;
+
+export type BirthDateCheck = "ok" | "too_young" | "impossible";
+
+export function nameSchema(message: string) {
+  return z.string().trim().min(1, message).max(MAX_NAME_LENGTH, message);
+}
+
+export function checkBirthDate(question: AgeQuestion): BirthDateCheck {
+  if (!ISO_DATE.test(question.dateOfBirth)) {
+    return "impossible";
+  }
+
+  const age = ageOn(question);
+
+  if (Number.isNaN(age) || age < 0 || age > MAX_BOOKING_AGE) {
+    return "impossible";
+  }
+
+  return age < MIN_BOOKING_AGE ? "too_young" : "ok";
+}
+
+export function birthDateMessage(check: BirthDateCheck): string | null {
+  if (check === "too_young") {
+    return BOOKING_FIELD_MESSAGES.birthDateTooYoung;
+  }
+
+  return check === "impossible"
+    ? BOOKING_FIELD_MESSAGES.birthDateImpossible
+    : null;
+}
+
+export function normalizeVisitorPhone(parts: {
+  country: string;
+  nationalNumber: string;
+}): PhoneNormalization {
+  return normalizePhone({
+    callingCode: findCountry(parts.country)?.callingCode ?? "",
+    nationalNumber: parts.nationalNumber,
+  });
+}
 
 const MIN_NATIONAL_DIGITS = 4;
 const MAX_NATIONAL_DIGITS = 14;
@@ -35,6 +95,7 @@ const MAX_E164_DIGITS = 15;
 const PHONE_SEPARATORS = /[\s().-]/g;
 const CALLING_CODE = /^\+\d{1,3}$/;
 const NATIONAL_NUMBER = /^\d+$/;
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 export type PhoneNormalization =
   | { status: "empty" }

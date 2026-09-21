@@ -229,6 +229,15 @@ describe('filtering assessment calls', () => {
     // assert
     expect(namesOf(filtered)).toEqual(['Elena Marin']);
   });
+
+  it('matches the full name as the card shows it', () => {
+    // arrange
+    // act
+    const filtered = filterCalls(calls, { status: 'all', query: 'elena marin' });
+
+    // assert
+    expect(namesOf(filtered)).toEqual(['Elena Marin']);
+  });
 });
 
 describe('ordering assessment calls', () => {

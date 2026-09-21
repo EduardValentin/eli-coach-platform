@@ -20,6 +20,7 @@ const DETAILS = {
   lastName: "Doe",
   notes: "Knee injury last year",
   phoneCountry: "RO",
+  phoneCountryChosen: false,
   phoneNumber: "0712 345 678",
   primaryGoal: "build_strength",
 };
@@ -52,6 +53,7 @@ describe("assessment call booking flow", () => {
         lastName: "",
         notes: "",
         phoneCountry: "",
+        phoneCountryChosen: false,
         phoneNumber: "",
         primaryGoal: "",
       },

@@ -8,7 +8,7 @@ import {
   SelectValue,
 } from '../ui/select';
 
-export type ChoiceOption = { value: string; label: string; searchText?: string };
+export type ChoiceOption = { value: string; label: string };
 
 export function ChoiceSelectField({
   id,
@@ -52,7 +52,7 @@ export function ChoiceSelectField({
             <SelectItem
               key={option.value}
               value={option.value}
-              textValue={option.searchText ?? option.label}
+              textValue={option.label}
             >
               {option.label}
             </SelectItem>

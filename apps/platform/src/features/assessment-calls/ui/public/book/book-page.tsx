@@ -136,7 +136,7 @@ function BookingFlow(props: {
         gender: details.gender,
         lastName: details.lastName,
         notes: details.notes,
-        phoneCallingCode: details.phoneCountry,
+        phoneCountry: details.phoneCountry,
         phoneNumber: details.phoneNumber,
         primaryGoal: details.primaryGoal,
         startsAt: flow.selectedSlot,

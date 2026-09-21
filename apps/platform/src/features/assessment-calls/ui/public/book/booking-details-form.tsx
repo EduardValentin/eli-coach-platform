@@ -13,7 +13,12 @@ import { ChevronLeft, Mail, User, type LucideIcon } from "lucide-react";
 import { motion } from "motion/react";
 import type { ReactNode, Ref } from "react";
 import { useId, useState } from "react";
-import { Controller, useForm, type SubmitHandler } from "react-hook-form";
+import {
+  Controller,
+  useForm,
+  useWatch,
+  type SubmitHandler,
+} from "react-hook-form";
 import { z } from "zod";
 
 import {
@@ -21,10 +26,12 @@ import {
   findCountry,
 } from "~/features/assessment-calls/contracts/countries";
 import {
-  ageOn,
-  MAX_BOOKING_AGE,
-  MIN_BOOKING_AGE,
-  normalizePhone,
+  birthDateMessage,
+  BOOKING_FIELD_MESSAGES,
+  checkBirthDate,
+  MAX_NOTES_LENGTH,
+  nameSchema,
+  normalizeVisitorPhone,
   VISITOR_GENDER_OPTIONS,
   VISITOR_PRIMARY_GOAL_OPTIONS,
 } from "~/features/assessment-calls/contracts/visitor-profile";
@@ -41,33 +48,12 @@ const SUPPORT_CONTACT_CODES: ReadonlySet<BookingClientError["code"]> = new Set([
   "server_error",
 ]);
 
-const MAX_NAME_LENGTH = 60;
-const MAX_NOTES_LENGTH = 1000;
-const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
-
-const FIRST_NAME_ERROR = "Enter your first name, up to 60 characters.";
-const LAST_NAME_ERROR = "Enter your last name, up to 60 characters.";
-const EMAIL_ERROR = "Enter a valid email address.";
-const BIRTH_DATE_MISSING_ERROR = "Choose your date of birth.";
-const BIRTH_DATE_TOO_YOUNG_ERROR = "You must be at least 18 to book a call.";
-const BIRTH_DATE_IMPOSSIBLE_ERROR = "Enter a real date of birth.";
-const GENDER_ERROR = "Choose an option.";
-const PRIMARY_GOAL_ERROR = "Choose your primary goal.";
-const COUNTRY_ERROR = "Choose your country.";
-const PHONE_ERROR =
-  "Enter a phone number with digits only, 4 to 14 digits after the country code.";
-const NOTES_ERROR = "Keep your note under 1000 characters.";
-
 const COUNTRY_OPTIONS = COUNTRIES.map((country) => ({
   label: country.name,
   value: country.code,
 }));
 
 type BookingMoment = { now: Date; timeZone: string };
-
-function nameSchema(message: string) {
-  return z.string().trim().min(1, message).max(MAX_NAME_LENGTH, message);
-}
 
 function isOneOf(options: readonly { value: string }[]) {
   return (value: string) => options.some((option) => option.value === value);
@@ -78,46 +64,51 @@ function birthDateProblem(
   moment: BookingMoment,
 ): string | null {
   if (dateOfBirth.length === 0) {
-    return BIRTH_DATE_MISSING_ERROR;
+    return BOOKING_FIELD_MESSAGES.birthDateMissing;
   }
 
-  if (!ISO_DATE.test(dateOfBirth)) {
-    return BIRTH_DATE_IMPOSSIBLE_ERROR;
-  }
-
-  const age = ageOn({ dateOfBirth, on: moment.now, timeZone: moment.timeZone });
-
-  if (Number.isNaN(age) || age < 0 || age > MAX_BOOKING_AGE) {
-    return BIRTH_DATE_IMPOSSIBLE_ERROR;
-  }
-
-  return age < MIN_BOOKING_AGE ? BIRTH_DATE_TOO_YOUNG_ERROR : null;
+  return birthDateMessage(
+    checkBirthDate({ dateOfBirth, on: moment.now, timeZone: moment.timeZone }),
+  );
 }
 
 function phoneProblem(details: BookingDetails): string | null {
-  const phone = normalizePhone({
-    callingCode: findCountry(details.phoneCountry)?.callingCode ?? "",
+  const phone = normalizeVisitorPhone({
+    country: details.phoneCountry,
     nationalNumber: details.phoneNumber,
   });
 
-  return phone.status === "invalid" ? PHONE_ERROR : null;
+  return phone.status === "invalid" ? BOOKING_FIELD_MESSAGES.phone : null;
 }
 
 function createBookingDetailsSchema(moment: BookingMoment) {
   return z
     .object({
-      country: z.string().refine(findCountry, COUNTRY_ERROR),
+      country: z.string().refine(findCountry, BOOKING_FIELD_MESSAGES.country),
       dateOfBirth: z.string(),
-      email: z.string().trim().max(320, EMAIL_ERROR).email(EMAIL_ERROR),
-      firstName: nameSchema(FIRST_NAME_ERROR),
-      gender: z.string().refine(isOneOf(VISITOR_GENDER_OPTIONS), GENDER_ERROR),
-      lastName: nameSchema(LAST_NAME_ERROR),
-      notes: z.string().trim().max(MAX_NOTES_LENGTH, NOTES_ERROR),
+      email: z
+        .string()
+        .trim()
+        .max(320, BOOKING_FIELD_MESSAGES.email)
+        .email(BOOKING_FIELD_MESSAGES.email),
+      firstName: nameSchema(BOOKING_FIELD_MESSAGES.firstName),
+      gender: z
+        .string()
+        .refine(isOneOf(VISITOR_GENDER_OPTIONS), BOOKING_FIELD_MESSAGES.gender),
+      lastName: nameSchema(BOOKING_FIELD_MESSAGES.lastName),
+      notes: z
+        .string()
+        .trim()
+        .max(MAX_NOTES_LENGTH, BOOKING_FIELD_MESSAGES.notes),
       phoneCountry: z.string(),
+      phoneCountryChosen: z.boolean(),
       phoneNumber: z.string(),
       primaryGoal: z
         .string()
-        .refine(isOneOf(VISITOR_PRIMARY_GOAL_OPTIONS), PRIMARY_GOAL_ERROR),
+        .refine(
+          isOneOf(VISITOR_PRIMARY_GOAL_OPTIONS),
+          BOOKING_FIELD_MESSAGES.primaryGoal,
+        ),
     })
     .superRefine((details, context) => {
       const birthDate = birthDateProblem(details.dateOfBirth, moment);
@@ -175,10 +166,8 @@ export function BookingDetailsForm(props: BookingDetailsFormProps) {
     defaultValues: enteredDetails,
     resolver: zodResolver(createBookingDetailsSchema({ now, timeZone })),
   });
-  const [phoneCountryChosen, setPhoneCountryChosen] = useState(
-    enteredDetails.phoneCountry.length > 0 &&
-      enteredDetails.phoneCountry !== enteredDetails.country,
-  );
+  const phoneCountry = useWatch({ control, name: "phoneCountry" });
+  const phoneCountryChosen = useWatch({ control, name: "phoneCountryChosen" });
   const submitDetails: SubmitHandler<BookingDetails> = (details) => {
     onSubmit(details);
   };
@@ -191,7 +180,7 @@ export function BookingDetailsForm(props: BookingDetailsFormProps) {
   };
 
   const choosePhoneCountry = (country: string) => {
-    setPhoneCountryChosen(true);
+    setValue("phoneCountryChosen", true);
     setValue("phoneCountry", country);
   };
 
@@ -361,21 +350,15 @@ export function BookingDetailsForm(props: BookingDetailsFormProps) {
 
         <Controller
           control={control}
-          name="phoneCountry"
-          render={({ field: phoneCountry }) => (
-            <Controller
-              control={control}
-              name="phoneNumber"
-              render={({ field: phoneNumber }) => (
-                <PhoneField
-                  country={phoneCountry.value}
-                  error={errors.phoneNumber?.message}
-                  id={fieldId("phone")}
-                  number={phoneNumber.value}
-                  onCountryChange={choosePhoneCountry}
-                  onNumberChange={phoneNumber.onChange}
-                />
-              )}
+          name="phoneNumber"
+          render={({ field }) => (
+            <PhoneField
+              country={phoneCountry}
+              error={errors.phoneNumber?.message}
+              id={fieldId("phone")}
+              number={field.value}
+              onCountryChange={choosePhoneCountry}
+              onNumberChange={field.onChange}
             />
           )}
         />

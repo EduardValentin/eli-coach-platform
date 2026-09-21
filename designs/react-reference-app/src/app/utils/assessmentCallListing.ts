@@ -1,5 +1,6 @@
 import {
   ASSESSMENT_CALL_DURATION_MINUTES,
+  visitorFullName,
   type PrototypeBooking,
 } from '../services/assessmentCallService';
 
@@ -70,7 +71,7 @@ function matchesQuery(call: ClassifiedCall, query: string): boolean {
   if (needle.length === 0) return true;
 
   const { firstName, lastName, visitorEmail } = call.booking;
-  return [firstName, lastName, visitorEmail].some((value) =>
+  return [visitorFullName(call.booking), firstName, lastName, visitorEmail].some((value) =>
     value.toLowerCase().includes(needle),
   );
 }

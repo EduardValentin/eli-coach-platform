@@ -11,7 +11,6 @@ import { FieldError } from "./field-error";
 
 type ChoiceOption = {
   readonly label: string;
-  readonly searchText?: string;
   readonly value: string;
 };
 
@@ -62,7 +61,7 @@ export function ChoiceSelectField(props: ChoiceSelectFieldProps) {
           {options.map((option) => (
             <SelectItem
               key={option.value}
-              textValue={option.searchText ?? option.label}
+              textValue={option.label}
               value={option.value}
             >
               {option.label}

@@ -11,6 +11,8 @@ import {
   EmailText,
 } from "@eli-coach-platform/infrastructure/email/server";
 
+import type { ReactNode } from "react";
+
 import { AssessmentCallEmailActions } from "./assessment-call-email-actions.server";
 import {
   bodyStyle,
@@ -64,6 +66,15 @@ type VisitorProfileViewModel = {
   primaryGoal: string;
 };
 
+function DetailRow(props: { children: ReactNode; label: string }) {
+  return (
+    <>
+      <EmailText style={detailsEyebrowStyle}>{props.label}</EmailText>
+      <EmailText style={detailsValueStyle}>{props.children}</EmailText>
+    </>
+  );
+}
+
 export function CoachNotificationEmailTemplate({
   content,
   currentYear,
@@ -105,66 +116,33 @@ export function CoachNotificationEmailTemplate({
 
             <EmailSection style={detailsOuterStyle}>
               <div style={detailsCardStyle}>
-                <EmailText style={detailsEyebrowStyle}>WHO</EmailText>
-                <EmailText style={detailsValueStyle}>{visitorName}</EmailText>
-
-                <EmailText style={detailsEyebrowStyle}>EMAIL</EmailText>
-                <EmailText style={detailsValueStyle}>
+                <DetailRow label="WHO">{visitorName}</DetailRow>
+                <DetailRow label="EMAIL">
                   <EmailLink
                     href={`mailto:${visitorEmail}`}
                     style={calendarLinkStyle}
                   >
                     {visitorEmail}
                   </EmailLink>
-                </EmailText>
-
+                </DetailRow>
                 {profile.phone ? (
-                  <>
-                    <EmailText style={detailsEyebrowStyle}>PHONE</EmailText>
-                    <EmailText style={detailsValueStyle}>
-                      <EmailLink
-                        href={`tel:${profile.phone}`}
-                        style={calendarLinkStyle}
-                      >
-                        {profile.phone}
-                      </EmailLink>
-                    </EmailText>
-                  </>
+                  <DetailRow label="PHONE">
+                    <EmailLink
+                      href={`tel:${profile.phone}`}
+                      style={calendarLinkStyle}
+                    >
+                      {profile.phone}
+                    </EmailLink>
+                  </DetailRow>
                 ) : null}
-
-                <EmailText style={detailsEyebrowStyle}>AGE</EmailText>
-                <EmailText style={detailsValueStyle}>
-                  {profile.ageLine}
-                </EmailText>
-
-                <EmailText style={detailsEyebrowStyle}>GENDER</EmailText>
-                <EmailText style={detailsValueStyle}>
-                  {profile.gender}
-                </EmailText>
-
-                <EmailText style={detailsEyebrowStyle}>GOAL</EmailText>
-                <EmailText style={detailsValueStyle}>
-                  {profile.primaryGoal}
-                </EmailText>
-
-                <EmailText style={detailsEyebrowStyle}>COUNTRY</EmailText>
-                <EmailText style={detailsValueStyle}>
-                  {profile.country}
-                </EmailText>
-
-                <EmailText style={detailsEyebrowStyle}>WHEN</EmailText>
-                <EmailText style={detailsValueStyle}>{scheduleLine}</EmailText>
-
-                <EmailText style={detailsEyebrowStyle}>HOW LONG</EmailText>
-                <EmailText style={detailsValueStyle}>{durationLabel}</EmailText>
-
+                <DetailRow label="AGE">{profile.ageLine}</DetailRow>
+                <DetailRow label="GENDER">{profile.gender}</DetailRow>
+                <DetailRow label="GOAL">{profile.primaryGoal}</DetailRow>
+                <DetailRow label="COUNTRY">{profile.country}</DetailRow>
+                <DetailRow label="WHEN">{scheduleLine}</DetailRow>
+                <DetailRow label="HOW LONG">{durationLabel}</DetailRow>
                 {notes ? (
-                  <>
-                    <EmailText style={detailsEyebrowStyle}>
-                      WHAT SHE SHARED
-                    </EmailText>
-                    <EmailText style={detailsValueStyle}>{notes}</EmailText>
-                  </>
+                  <DetailRow label="WHAT SHE SHARED">{notes}</DetailRow>
                 ) : null}
               </div>
             </EmailSection>

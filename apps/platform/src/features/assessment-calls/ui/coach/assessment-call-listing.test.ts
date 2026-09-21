@@ -249,6 +249,17 @@ describe("choosing which calls to show", () => {
     expect(byLastName.map((call) => call.id)).toEqual(["earlier-today"]);
   });
 
+  it("narrows by the full name as the card shows it", () => {
+    // arrange, act
+    const byFullName = filterCalls(calls, {
+      query: "carla marin",
+      status: "all",
+    });
+
+    // assert
+    expect(byFullName.map((call) => call.id)).toEqual(["earlier-today"]);
+  });
+
   it("puts the soonest call first and the most recent past call after them", () => {
     // arrange, act
     const ordered = orderCalls(calls);

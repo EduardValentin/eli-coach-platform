@@ -7,18 +7,15 @@ import { z } from "zod";
 
 import { findCountry } from "./countries";
 import {
-  ageOn,
-  MAX_BOOKING_AGE,
-  MIN_BOOKING_AGE,
-  normalizePhone,
+  birthDateMessage,
+  BOOKING_FIELD_MESSAGES,
+  checkBirthDate,
+  MAX_NOTES_LENGTH,
+  nameSchema,
+  normalizeVisitorPhone,
 } from "./visitor-profile";
 
 const MAX_TIME_ZONE_LENGTH = 64;
-const MAX_NAME_LENGTH = 60;
-const COUNTRY_MESSAGE = "Choose your country.";
-const REAL_BIRTH_DATE_MESSAGE = "Enter a real date of birth.";
-const PHONE_MESSAGE =
-  "Enter a phone number with digits only, 4 to 14 digits after the country code.";
 
 function isFormattableTimeZone(timeZone: string): boolean {
   try {
@@ -45,40 +42,40 @@ export const openSlotsResponseSchema = z.object({
   slots: z.array(z.iso.datetime()),
 });
 
-function nameSchema(message: string) {
-  return z.string().trim().min(1, message).max(MAX_NAME_LENGTH, message);
-}
-
 const bookingFieldsSchema = z.object({
   startsAt: z.iso.datetime("Please choose an available time."),
-  firstName: nameSchema("Enter your first name, up to 60 characters."),
-  lastName: nameSchema("Enter your last name, up to 60 characters."),
+  firstName: nameSchema(BOOKING_FIELD_MESSAGES.firstName),
+  lastName: nameSchema(BOOKING_FIELD_MESSAGES.lastName),
   email: z
     .string()
     .trim()
     .toLowerCase()
-    .max(320, "Please enter an email address under 320 characters.")
-    .email("Please enter a valid email address."),
-  dateOfBirth: z.iso.date(REAL_BIRTH_DATE_MESSAGE),
-  gender: z.enum(VISITOR_GENDERS, "Choose an option."),
-  primaryGoal: z.enum(VISITOR_PRIMARY_GOALS, "Choose your primary goal."),
+    .max(320, BOOKING_FIELD_MESSAGES.email)
+    .email(BOOKING_FIELD_MESSAGES.email),
+  dateOfBirth: z.iso.date(BOOKING_FIELD_MESSAGES.birthDateImpossible),
+  gender: z.enum(VISITOR_GENDERS, BOOKING_FIELD_MESSAGES.gender),
+  primaryGoal: z.enum(
+    VISITOR_PRIMARY_GOALS,
+    BOOKING_FIELD_MESSAGES.primaryGoal,
+  ),
   country: z
-    .string(COUNTRY_MESSAGE)
-    .refine((code) => findCountry(code) !== undefined, COUNTRY_MESSAGE),
-  phoneCallingCode: z.string().optional(),
+    .string(BOOKING_FIELD_MESSAGES.country)
+    .refine(
+      (code) => findCountry(code) !== undefined,
+      BOOKING_FIELD_MESSAGES.country,
+    ),
+  phoneCountry: z.string().optional(),
   phoneNumber: z.string().optional(),
   notes: z
     .string()
     .trim()
-    .max(1000, "Please keep your notes under 1000 characters.")
+    .max(MAX_NOTES_LENGTH, BOOKING_FIELD_MESSAGES.notes)
     .optional(),
   visitorTimeZone: timeZoneSchema,
 });
 
 type BookingFields = z.infer<typeof bookingFieldsSchema>;
-type PhoneFields = Partial<
-  Pick<BookingFields, "phoneCallingCode" | "phoneNumber">
->;
+type PhoneFields = Partial<Pick<BookingFields, "phoneCountry" | "phoneNumber">>;
 
 export function createBookAssessmentCallRequestSchema(options: { now: Date }) {
   return bookingFieldsSchema.superRefine((request, context) => {
@@ -95,7 +92,7 @@ export function createBookAssessmentCallRequestSchema(options: { now: Date }) {
     if (normalizeRequestPhone(request).status === "invalid") {
       context.addIssue({
         code: "custom",
-        message: PHONE_MESSAGE,
+        message: BOOKING_FIELD_MESSAGES.phone,
         path: ["phoneNumber"],
       });
     }
@@ -109,8 +106,8 @@ export function phoneFromRequest(request: PhoneFields): string | null {
 }
 
 function normalizeRequestPhone(request: PhoneFields) {
-  return normalizePhone({
-    callingCode: findCountry(request.phoneCallingCode ?? "")?.callingCode ?? "",
+  return normalizeVisitorPhone({
+    country: request.phoneCountry ?? "",
     nationalNumber: request.phoneNumber ?? "",
   });
 }
@@ -125,21 +122,13 @@ function describeBirthDateProblem(
     return null;
   }
 
-  const age = ageOn({
-    dateOfBirth: request.dateOfBirth,
-    on: now,
-    timeZone: request.visitorTimeZone,
-  });
-
-  if (age < 0 || age > MAX_BOOKING_AGE) {
-    return REAL_BIRTH_DATE_MESSAGE;
-  }
-
-  if (age < MIN_BOOKING_AGE) {
-    return "You must be at least 18 to book a call.";
-  }
-
-  return null;
+  return birthDateMessage(
+    checkBirthDate({
+      dateOfBirth: request.dateOfBirth,
+      on: now,
+      timeZone: request.visitorTimeZone,
+    }),
+  );
 }
 
 export const bookingSchema = z.object({

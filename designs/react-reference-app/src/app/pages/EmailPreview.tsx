@@ -31,6 +31,8 @@ type TemplateOption = {
   variants: { value: string; label: string }[];
 };
 
+const SAMPLE_VISITOR_PHONE = '+40712345678';
+
 const TEMPLATES: TemplateOption[] = [
   {
     key: 'waitlist-confirmation',
@@ -121,7 +123,7 @@ export function EmailPreview() {
       return (
         <AssessmentCallCoachNotification
           variant={variant as AssessmentCallEmailVariant}
-          visitorPhone={variant === 'with-notes' ? undefined : null}
+          visitorPhone={variant === 'with-notes' ? SAMPLE_VISITOR_PHONE : null}
           joinUrl={`${window.location.origin}/book/ac-demo/join`}
         />
       );

@@ -726,7 +726,7 @@ async function requestBooking(
     firstName: "Ana",
     gender: "female",
     lastName: "Popescu",
-    phoneCallingCode: "RO",
+    phoneCountry: "RO",
     phoneNumber: "0712 345 678",
     primaryGoal: "build_strength",
     email: VISITOR_EMAIL,

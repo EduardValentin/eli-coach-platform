@@ -22,7 +22,7 @@ const VALID_REQUEST = {
   gender: "female",
   primaryGoal: "build_strength",
   country: "RO",
-  phoneCallingCode: "RO",
+  phoneCountry: "RO",
   phoneNumber: "0712 345 678",
   notes: "Training three times a week.",
   visitorTimeZone: "Europe/Bucharest",
@@ -132,7 +132,7 @@ describe("createBookAssessmentCallRequestSchema", () => {
       gender: "female",
       primaryGoal: "build_strength",
       country: "RO",
-      phoneCallingCode: "RO",
+      phoneCountry: "RO",
       phoneNumber: "0712 345 678",
       notes: "Training three times a week.",
       visitorTimeZone: "Europe/Bucharest",
@@ -155,15 +155,14 @@ describe("createBookAssessmentCallRequestSchema", () => {
 
   it("accepts a booking without a phone number", () => {
     // arrange
-    const { phoneCallingCode, phoneNumber, ...requestWithoutPhone } =
-      VALID_REQUEST;
+    const { phoneCountry, phoneNumber, ...requestWithoutPhone } = VALID_REQUEST;
 
     // act
     const result =
       bookAssessmentCallRequestSchema.safeParse(requestWithoutPhone);
 
     // assert
-    expect([phoneCallingCode, phoneNumber]).toEqual(["RO", "0712 345 678"]);
+    expect([phoneCountry, phoneNumber]).toEqual(["RO", "0712 345 678"]);
     expect(result.success).toBe(true);
   });
 
@@ -228,12 +227,12 @@ describe("createBookAssessmentCallRequestSchema", () => {
     ],
     [
       "a phone number without a calling code",
-      { phoneCallingCode: undefined },
+      { phoneCountry: undefined },
       ["phoneNumber"],
     ],
     [
       "a phone number with a calling code off the list",
-      { phoneCallingCode: "XX" },
+      { phoneCountry: "XX" },
       ["phoneNumber"],
     ],
   ])("rejects %s", (_scenario, override, path) => {
@@ -432,7 +431,7 @@ describe("createBookAssessmentCallRequestSchema", () => {
 describe("phoneFromRequest", () => {
   it("resolves the calling code from the chosen country and stores the number in E.164", () => {
     // arrange
-    const request = { phoneCallingCode: "RO", phoneNumber: "(0712) 345-678" };
+    const request = { phoneCountry: "RO", phoneNumber: "(0712) 345-678" };
 
     // act
     const phone = phoneFromRequest(request);
@@ -443,7 +442,7 @@ describe("phoneFromRequest", () => {
 
   it("stores no phone when the number is left blank", () => {
     // arrange
-    const request = { phoneCallingCode: "RO", phoneNumber: "  " };
+    const request = { phoneCountry: "RO", phoneNumber: "  " };
 
     // act
     const phone = phoneFromRequest(request);

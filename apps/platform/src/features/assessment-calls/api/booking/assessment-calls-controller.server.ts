@@ -132,7 +132,7 @@ export class AssessmentCallsController {
       gender: formData.get("gender"),
       lastName: formData.get("lastName"),
       notes: readOptionalField(formData, "notes"),
-      phoneCallingCode: readOptionalField(formData, "phoneCallingCode"),
+      phoneCountry: readOptionalField(formData, "phoneCountry"),
       phoneNumber: readOptionalField(formData, "phoneNumber"),
       primaryGoal: formData.get("primaryGoal"),
       startsAt: formData.get("startsAt"),

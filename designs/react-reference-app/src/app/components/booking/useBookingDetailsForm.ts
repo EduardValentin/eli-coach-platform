@@ -34,8 +34,21 @@ export type BookingDetailsValues = {
   notes: string;
 };
 
+export type ValidatedVisitorProfile = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  dateOfBirth: string;
+  gender: VisitorGender;
+  primaryGoal: VisitorPrimaryGoal;
+  country: string;
+  phone: string | null;
+  notes: string;
+};
+
 export type BookingDetailsForm = BookingDetailsValues & {
   fieldErrors: BookingFieldErrors;
+  validatedProfile: () => ValidatedVisitorProfile | null;
   setFirstName: (value: string) => void;
   setLastName: (value: string) => void;
   setEmail: (value: string) => void;
@@ -140,6 +153,31 @@ export function firstInvalidField(errors: BookingFieldErrors): BookingField | nu
   return FIELD_ORDER.find((field) => errors[field]) ?? null;
 }
 
+function submittedPhone(values: BookingDetailsValues): string | null {
+  const callingCode = findCountry(values.phoneCountry)?.callingCode ?? '';
+  const phone = normalizePhone({ callingCode, nationalNumber: values.phoneNumber });
+  return phone.status === 'valid' ? phone.e164 : null;
+}
+
+// Only a form that passed `collectBookingErrors` reaches here, so the empty
+// select placeholders have already been refused and the narrowing holds.
+function validatedProfileOf(values: BookingDetailsValues): ValidatedVisitorProfile | null {
+  if (Object.keys(collectBookingErrors(values)).length > 0) return null;
+  if (values.gender === '' || values.primaryGoal === '') return null;
+
+  return {
+    firstName: values.firstName,
+    lastName: values.lastName,
+    email: values.email,
+    dateOfBirth: values.dateOfBirth,
+    gender: values.gender,
+    primaryGoal: values.primaryGoal,
+    country: values.country,
+    phone: submittedPhone(values),
+    notes: values.notes,
+  };
+}
+
 export function useBookingDetailsForm(): BookingDetailsForm {
   const [values, setValues] = useState<BookingDetailsValues>(EMPTY_VALUES);
   const [phoneCountryChosen, setPhoneCountryChosen] = useState(false);
@@ -169,6 +207,7 @@ export function useBookingDetailsForm(): BookingDetailsForm {
   return {
     ...values,
     fieldErrors,
+    validatedProfile: () => validatedProfileOf(values),
     setFirstName: (firstName) => update({ firstName }),
     setLastName: (lastName) => update({ lastName }),
     setEmail: (email) => update({ email }),

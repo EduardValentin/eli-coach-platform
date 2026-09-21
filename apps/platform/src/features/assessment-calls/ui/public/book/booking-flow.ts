@@ -17,6 +17,7 @@ export type BookingDetails = {
   lastName: string;
   notes: string;
   phoneCountry: string;
+  phoneCountryChosen: boolean;
   phoneNumber: string;
   primaryGoal: string;
 };
@@ -30,6 +31,7 @@ const EMPTY_BOOKING_DETAILS: BookingDetails = {
   lastName: "",
   notes: "",
   phoneCountry: "",
+  phoneCountryChosen: false,
   phoneNumber: "",
   primaryGoal: "",
 };
