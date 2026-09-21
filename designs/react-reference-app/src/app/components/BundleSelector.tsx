@@ -20,6 +20,7 @@ const PRICING_BANNERS: Partial<Record<BundleSelectorPricing, string>> = {
 
 const BENEFITS = [
   "Personalized workout and nutrition program",
+  "2 live training sessions per month",
   "Periodic progress check-ins",
   "Uninterrupted support with your coach",
   "Video form review and correction",
