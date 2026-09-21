@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useEffect } from 'react';
 import { MemoryRouter, useLocation, useNavigationType } from 'react-router';
@@ -10,7 +10,11 @@ import {
   AssessmentCallProvider,
   useAssessmentCalls,
 } from '../../context/AssessmentCallContext';
-import { ClientJourneyProvider } from '../../context/ClientJourneyContext';
+import {
+  ClientJourneyProvider,
+  useClientJourneys,
+} from '../../context/ClientJourneyContext';
+import type { JourneyStage } from '../../domain/journey';
 import { ClientProfileProvider } from '../../context/ClientProfileContext';
 
 const TIME_ZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -53,7 +57,37 @@ const YESTERDAY = bookingAt(localInstant(20, 18), {
   visitorEmail: 'elena@example.com',
 });
 
+const TWO_DAYS_AGO = bookingAt(localInstant(19, 18), {
+  visitorName: 'Dana Pop',
+  visitorEmail: 'dana@example.com',
+});
+const THREE_DAYS_AGO = bookingAt(localInstant(18, 18), {
+  visitorName: 'Carmen Iliescu',
+  visitorEmail: 'carmen@example.com',
+});
+
 const ALL_BOOKINGS = [LATER_TODAY, TOMORROW, EARLIER_TODAY, YESTERDAY];
+
+const JOURNEY_BOOKINGS = [
+  TOMORROW,
+  EARLIER_TODAY,
+  YESTERDAY,
+  TWO_DAYS_AGO,
+  THREE_DAYS_AGO,
+];
+
+const JOURNEY_STAGES: Record<string, JourneyStage> = {
+  [YESTERDAY.id]: 'payment-link-sent',
+  [TWO_DAYS_AGO.id]: 'paid',
+  [THREE_DAYS_AGO.id]: 'invited',
+};
+
+const REACHABLE_STAGES: JourneyStage[] = [
+  'held',
+  'payment-link-sent',
+  'paid',
+  'invited',
+];
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -87,6 +121,68 @@ beforeAll(() => {
   );
 });
 
+vi.mock('../DateRangeField', () => ({
+  DateRangeField: ({
+    value,
+    onChange,
+  }: {
+    value: { from: string | null; to: string | null };
+    onChange: (range: { from: string | null; to: string | null }) => void;
+  }) => (
+    <>
+      <input
+        aria-label="From"
+        value={value.from ?? ''}
+        onChange={(event) =>
+          onChange({ from: event.target.value || null, to: value.to })
+        }
+      />
+      <input
+        aria-label="To"
+        value={value.to ?? ''}
+        onChange={(event) =>
+          onChange({ from: value.from, to: event.target.value || null })
+        }
+      />
+    </>
+  ),
+}));
+
+function AdvanceJourneys({ stages }: { stages: Record<string, JourneyStage> }) {
+  const { journeys, recordPaymentLinkSent, recordPaid, recordInvitation } =
+    useClientJourneys();
+
+  useEffect(() => {
+    for (const [callId, target] of Object.entries(stages)) {
+      const journey = journeys[callId];
+      if (!journey) continue;
+
+      const reached = REACHABLE_STAGES.indexOf(journey.stage);
+      if (reached < 0 || reached >= REACHABLE_STAGES.indexOf(target)) continue;
+
+      if (reached === 0) {
+        recordPaymentLinkSent(callId, { token: `pl-${callId}`, sentAt: NOW });
+      } else if (reached === 1) {
+        recordPaid(callId, {
+          paidAt: NOW,
+          bundle: 3,
+          startPath: 'immediate',
+        });
+      } else {
+        recordInvitation(callId, {
+          token: `inv-${callId}`,
+          email: journey.identity.email,
+          sentAt: NOW,
+          expiresAt: NOW,
+          replaced: false,
+        });
+      }
+    }
+  }, [journeys, stages, recordPaymentLinkSent, recordPaid, recordInvitation]);
+
+  return null;
+}
+
 function SeedBookings({ bookings }: { bookings: PrototypeBooking[] }) {
   const { replaceBookings } = useAssessmentCalls();
   useEffect(() => {
@@ -96,7 +192,11 @@ function SeedBookings({ bookings }: { bookings: PrototypeBooking[] }) {
 }
 
 function renderSection(
-  options: { bookings?: PrototypeBooking[]; urlQuery?: string } = {},
+  options: {
+    bookings?: PrototypeBooking[];
+    urlQuery?: string;
+    stages?: Record<string, JourneyStage>;
+  } = {},
 ) {
   const bookings = options.bookings ?? ALL_BOOKINGS;
   render(
@@ -106,6 +206,7 @@ function renderSection(
           <AssessmentCallProvider>
             <ClientJourneyProvider>
               <SeedBookings bookings={bookings} />
+              <AdvanceJourneys stages={options.stages ?? {}} />
               <AssessmentCallsSection
                 bookings={bookings}
                 now={NOW}
@@ -264,7 +365,6 @@ describe('the assessment calls section', () => {
     const user = renderSection();
 
     // act
-    await user.click(screen.getByLabelText('Search calls'));
     await user.tab();
     await user.keyboard('{ArrowRight}');
     await user.keyboard('{ArrowRight}');
@@ -531,5 +631,231 @@ describe('paging a long assessment call list', () => {
     // assert
     expect(pager).toBeNull();
     expect(screen.queryByText(/^Showing /)).toBeNull();
+  });
+});
+
+describe('filtering assessment calls by journey step', () => {
+  function renderJourneys(urlQuery: string) {
+    return renderSection({
+      bookings: JOURNEY_BOOKINGS,
+      stages: JOURNEY_STAGES,
+      urlQuery,
+    });
+  }
+
+  it('counts the calls waiting at each step within the chosen window', () => {
+    // arrange
+    renderJourneys('?status=all');
+
+    // act
+    const group = screen.getByRole('group', { name: 'Journey' });
+
+    // assert
+    expect(within(group).getByRole('button', { name: 'Any 5' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    expect(
+      within(group).getByRole('button', { name: 'Payment link sent 1' }),
+    ).toBeInTheDocument();
+    expect(
+      within(group).getByRole('button', { name: 'Paid 1' }),
+    ).toBeInTheDocument();
+    expect(
+      within(group).getByRole('button', { name: 'Invited 1' }),
+    ).toBeInTheDocument();
+  });
+
+  it('counts only within the window the coach is looking at', () => {
+    // arrange
+    renderJourneys('');
+
+    // act
+    const group = screen.getByRole('group', { name: 'Journey' });
+
+    // assert
+    expect(
+      within(group).getByRole('button', { name: 'Any 1' }),
+    ).toBeInTheDocument();
+    expect(
+      within(group).getByRole('button', { name: 'Payment link sent 0' }),
+    ).toBeInTheDocument();
+  });
+
+  it('narrows the list to one step and writes it to the URL', async () => {
+    // arrange
+    const user = renderJourneys('?status=all');
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Paid 1' }));
+
+    // assert
+    expect(listedNames()).toEqual(['Dana Pop']);
+    expect(currentLocation()).toBe('?status=all&journey=paid REPLACE');
+  });
+
+  it('leaves a call with no action yet to the any chip', async () => {
+    // arrange
+    const user = renderJourneys('?status=all');
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Invited 1' }));
+
+    // assert
+    expect(listedNames()).toEqual(['Carmen Iliescu']);
+    expect(listedNames()).not.toContain('Sofia Dinu');
+  });
+
+  it('keeps the any chip out of the URL when the coach goes back to it', async () => {
+    // arrange
+    const user = renderJourneys('?status=all&journey=paid');
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Any 5' }));
+
+    // assert
+    expect(currentLocation()).toBe('?status=all REPLACE');
+    expect(listedNames()).toHaveLength(5);
+  });
+
+  it('opens on the journey step the URL carries', () => {
+    // arrange
+    renderJourneys('?status=all&journey=payment-link-sent');
+
+    // act
+    const chip = screen.getByRole('button', { name: 'Payment link sent 1' });
+
+    // assert
+    expect(chip).toHaveAttribute('aria-pressed', 'true');
+    expect(listedNames()).toEqual(['Elena Marin']);
+  });
+
+  it('combines the journey step with the search', async () => {
+    // arrange
+    const user = renderJourneys('?status=all&journey=paid');
+
+    // act
+    await user.type(screen.getByLabelText('Search calls'), 'carmen');
+
+    // assert
+    expect(screen.getByText('No calls match your search.')).toBeInTheDocument();
+  });
+
+  it('says which step and window came up empty', () => {
+    // arrange
+    renderJourneys('?journey=payment-link-sent');
+
+    // act
+    const message = screen.getByText(
+      'No upcoming calls with a payment link sent.',
+    );
+
+    // assert
+    expect(message).toBeInTheDocument();
+  });
+
+  it('returns to the first page when the coach picks a step', async () => {
+    // arrange
+    const user = renderSection({
+      bookings: MANY_UPCOMING,
+      urlQuery: '?page=3',
+    });
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Invited 0' }));
+
+    // assert
+    expect(currentLocation()).toBe('?journey=invited REPLACE');
+  });
+});
+
+describe('filtering assessment calls by a custom date range', () => {
+  function renderCustom(urlQuery: string) {
+    return renderSection({
+      bookings: JOURNEY_BOOKINGS,
+      stages: JOURNEY_STAGES,
+      urlQuery,
+    });
+  }
+
+  it('asks for both days and holds nothing back until they are picked', () => {
+    // arrange
+    renderCustom('?status=custom');
+
+    // act
+    const hint = screen.getByText('Pick a start and end date.');
+
+    // assert
+    expect(hint).toBeInTheDocument();
+    expect(listedNames()).toHaveLength(5);
+  });
+
+  it('offers the range picker only under the custom window', async () => {
+    // arrange
+    const user = renderCustom('');
+
+    // assert
+    expect(screen.queryByLabelText('From')).toBeNull();
+
+    // act
+    await user.click(screen.getByRole('tab', { name: 'Custom' }));
+
+    // assert
+    expect(screen.getByLabelText('From')).toBeInTheDocument();
+  });
+
+  it('writes the picked days to the URL and keeps both of them', () => {
+    // arrange
+    renderCustom('?status=custom');
+
+    // act
+    fireEvent.change(screen.getByLabelText('From'), {
+      target: { value: '2026-09-18' },
+    });
+    fireEvent.change(screen.getByLabelText('To'), {
+      target: { value: '2026-09-20' },
+    });
+
+    // assert
+    expect(currentLocation()).toBe(
+      '?status=custom&from=2026-09-18&to=2026-09-20 REPLACE',
+    );
+  });
+
+  it('opens on the range the URL carries, both days included', () => {
+    // arrange
+    renderCustom('?status=custom&from=2026-09-18&to=2026-09-20');
+
+    // act
+    const names = listedNames();
+
+    // assert
+    expect(screen.getByRole('tab', { name: 'Custom' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    expect(names).toEqual(['Carmen Iliescu', 'Dana Pop', 'Elena Marin']);
+  });
+
+  it('names the picked days when nothing falls inside them', () => {
+    // arrange
+    renderCustom('?status=custom&from=2026-09-12&to=2026-09-16');
+
+    // act
+    const message = screen.getByText('No calls between 12 and 16 September.');
+
+    // assert
+    expect(message).toBeInTheDocument();
+  });
+
+  it('combines the range with the journey step', () => {
+    // arrange
+    renderCustom('?status=custom&from=2026-09-18&to=2026-09-20&journey=paid');
+
+    // act
+    const names = listedNames();
+
+    // assert
+    expect(names).toEqual(['Dana Pop']);
   });
 });

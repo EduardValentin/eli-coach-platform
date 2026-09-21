@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useCallback } from 'react';
 import { motion, useMotionValue, useTransform, animate } from 'motion/react';
 import { Droplet, Plus, X, Trash2 } from 'lucide-react';
+import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { BrandCalendar } from '../../components/BrandCalendar';
 import { ToggleChip } from '../../components/ToggleChip';
 import {
@@ -201,15 +202,11 @@ export function ClientCycleTracker() {
   const PhaseIcon = Droplet;
 
   return (
-    <div className="w-full max-w-5xl mx-auto pb-12">
-      <header className="mb-10">
-        <h1 className="font-serif text-3xl lg:text-4xl text-text-primary mb-3 tracking-tight">
-          Cycle Tracker
-        </h1>
-        <p className="text-text-secondary font-medium">
-          Log your periods and track your cycle phases.
-        </p>
-      </header>
+    <div className="w-full max-w-5xl mx-auto">
+      <PortalPageHeader
+        title="Cycle Tracker"
+        subtitle="Log your periods and track your cycle phases."
+      />
 
       {/* Phase Summary */}
       {clientPhase && (

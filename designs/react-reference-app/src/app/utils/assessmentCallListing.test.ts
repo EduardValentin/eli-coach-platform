@@ -2,15 +2,26 @@ import { describe, expect, it } from 'vitest';
 import {
   classifyCalls,
   countCallsLeftToday,
+  countsByJourneyStep,
+  emptyListingMessage,
   filterCalls,
+  isChosenRange,
+  NO_DATE_RANGE,
+  orderCallsFor,
   pageOfCalls,
   paginationSteps,
+  parseDateRange,
+  parseJourneyStep,
   parsePage,
   upcomingCalls,
   orderCalls,
   parseStatus,
+  withJourneyStages,
+  type ListedCall,
+  type ListingSelection,
 } from './assessmentCallListing';
 import type { PrototypeBooking } from '../services/assessmentCallService';
+import type { JourneyStage } from '../domain/journey';
 
 const BUCHAREST = 'Europe/Bucharest';
 
@@ -33,6 +44,23 @@ function bookingAt(
 
 function namesOf(calls: ReturnType<typeof classifyCalls>): string[] {
   return calls.map((call) => call.booking.visitorName);
+}
+
+function listed(
+  calls: ReturnType<typeof classifyCalls>,
+  stages: Record<string, JourneyStage> = {},
+): ListedCall[] {
+  return withJourneyStages(calls, (callId) => stages[callId] ?? null);
+}
+
+function selecting(details: Partial<ListingSelection> = {}): ListingSelection {
+  return {
+    status: 'all',
+    query: '',
+    journey: 'any',
+    range: NO_DATE_RANGE,
+    ...details,
+  };
 }
 
 describe('classifying assessment calls', () => {
@@ -137,7 +165,7 @@ describe('filtering assessment calls', () => {
     const status = 'upcoming' as const;
 
     // act
-    const filtered = filterCalls(calls, { status, query: '' });
+    const filtered = filterCalls(listed(calls), selecting({ status }));
 
     // assert
     expect(namesOf(filtered)).toEqual(['Maria Ionescu', 'Ioana Radu']);
@@ -148,7 +176,7 @@ describe('filtering assessment calls', () => {
     const status = 'today' as const;
 
     // act
-    const filtered = filterCalls(calls, { status, query: '' });
+    const filtered = filterCalls(listed(calls), selecting({ status }));
 
     // assert
     expect(namesOf(filtered)).toEqual(['Maria Ionescu', 'Sofia Dinu']);
@@ -159,7 +187,7 @@ describe('filtering assessment calls', () => {
     const status = 'past' as const;
 
     // act
-    const filtered = filterCalls(calls, { status, query: '' });
+    const filtered = filterCalls(listed(calls), selecting({ status }));
 
     // assert
     expect(namesOf(filtered)).toEqual(['Elena Marin', 'Sofia Dinu']);
@@ -170,7 +198,7 @@ describe('filtering assessment calls', () => {
     const status = 'all' as const;
 
     // act
-    const filtered = filterCalls(calls, { status, query: '' });
+    const filtered = filterCalls(listed(calls), selecting({ status }));
 
     // assert
     expect(filtered).toHaveLength(4);
@@ -181,7 +209,7 @@ describe('filtering assessment calls', () => {
     const status = 'all' as const;
 
     // act
-    const filtered = filterCalls(calls, { status, query: '  IONE ' });
+    const filtered = filterCalls(listed(calls), selecting({ status, query: '  IONE ' }));
 
     // assert
     expect(namesOf(filtered)).toEqual(['Maria Ionescu']);
@@ -201,10 +229,10 @@ describe('filtering assessment calls', () => {
     );
 
     // act
-    const filtered = filterCalls(withOwnEmail, {
-      status: 'all',
-      query: 'STUDIO.RO',
-    });
+    const filtered = filterCalls(
+      listed(withOwnEmail),
+      selecting({ query: 'STUDIO.RO' }),
+    );
 
     // assert
     expect(namesOf(filtered)).toEqual(['Ioana Radu']);
@@ -522,5 +550,320 @@ describe('paging the assessment call list', () => {
 
     // assert
     expect(steps).toEqual([1, 'gap', 9, 10, 11, 'gap', 20]);
+  });
+});
+
+describe('filtering assessment calls by a date range', () => {
+  const now = new Date('2026-09-21T09:00:00.000Z');
+  const calls = classifyCalls(
+    [
+      bookingAt('2026-09-10T15:00:00.000Z', { visitorName: 'Before' }),
+      bookingAt('2026-09-11T21:00:00.000Z', { visitorName: 'Midnight start' }),
+      bookingAt('2026-09-12T05:00:00.000Z', { visitorName: 'First day' }),
+      bookingAt('2026-09-16T15:00:00.000Z', { visitorName: 'Middle' }),
+      bookingAt('2026-09-20T20:00:00.000Z', { visitorName: 'Last day' }),
+      bookingAt('2026-09-21T15:00:00.000Z', { visitorName: 'After' }),
+    ],
+    { now, timeZone: BUCHAREST },
+  );
+
+  it('keeps both boundary days of the range', () => {
+    // arrange
+    const range = { from: '2026-09-12', to: '2026-09-20' };
+
+    // act
+    const filtered = filterCalls(
+      listed(calls),
+      selecting({ status: 'custom', range }),
+    );
+
+    // assert
+    expect(namesOf(filtered)).toEqual([
+      'Midnight start',
+      'First day',
+      'Middle',
+      'Last day',
+    ]);
+  });
+
+  it('reads the day of a call in the coach time zone, not in UTC', () => {
+    // arrange
+    const range = { from: '2026-09-12', to: '2026-09-12' };
+
+    // act
+    const filtered = filterCalls(
+      listed(calls),
+      selecting({ status: 'custom', range }),
+    );
+
+    // assert
+    expect(namesOf(filtered)).toEqual(['Midnight start', 'First day']);
+  });
+
+  it('keeps every call while the range is still half picked', () => {
+    // arrange
+    const range = { from: '2026-09-12', to: null };
+
+    // act
+    const filtered = filterCalls(
+      listed(calls),
+      selecting({ status: 'custom', range }),
+    );
+
+    // assert
+    expect(filtered).toHaveLength(6);
+  });
+
+  it('ignores the range outside the custom selection', () => {
+    // arrange
+    const range = { from: '2026-09-12', to: '2026-09-12' };
+
+    // act
+    const filtered = filterCalls(listed(calls), selecting({ range }));
+
+    // assert
+    expect(filtered).toHaveLength(6);
+  });
+
+  it('lists a custom range soonest first across the present', () => {
+    // arrange
+    const range = { from: '2026-09-12', to: '2026-09-21' };
+
+    // act
+    const ordered = orderCallsFor(
+      filterCalls(listed(calls), selecting({ status: 'custom', range })),
+      'custom',
+    );
+
+    // assert
+    expect(namesOf(ordered)).toEqual([
+      'Midnight start',
+      'First day',
+      'Middle',
+      'Last day',
+      'After',
+    ]);
+  });
+});
+
+describe('filtering assessment calls by journey step', () => {
+  const now = new Date('2026-09-21T09:00:00.000Z');
+  const bookings = [
+    bookingAt('2026-09-18T15:00:00.000Z', { visitorName: 'Link sent' }),
+    bookingAt('2026-09-19T15:00:00.000Z', { visitorName: 'Paid' }),
+    bookingAt('2026-09-20T15:00:00.000Z', { visitorName: 'Invited' }),
+    bookingAt('2026-09-17T15:00:00.000Z', { visitorName: 'Held' }),
+    bookingAt('2026-09-16T15:00:00.000Z', { visitorName: 'No journey' }),
+  ];
+  const stages: Record<string, JourneyStage> = {
+    'ac-2026-09-18T15:00:00.000Z': 'payment-link-sent',
+    'ac-2026-09-19T15:00:00.000Z': 'paid',
+    'ac-2026-09-20T15:00:00.000Z': 'invited',
+    'ac-2026-09-17T15:00:00.000Z': 'held',
+  };
+  const calls = listed(classifyCalls(bookings, { now, timeZone: BUCHAREST }), stages);
+
+  it('keeps only the calls waiting at the chosen step', () => {
+    // act
+    const filtered = filterCalls(calls, selecting({ journey: 'paid' }));
+
+    // assert
+    expect(namesOf(filtered)).toEqual(['Paid']);
+  });
+
+  it('drops a call that has already moved past the chosen step', () => {
+    // act
+    const filtered = filterCalls(
+      calls,
+      selecting({ journey: 'payment-link-sent' }),
+    );
+
+    // assert
+    expect(namesOf(filtered)).toEqual(['Link sent']);
+  });
+
+  it('matches a held call and a call with no journey only under any', () => {
+    // act
+    const anyStep = filterCalls(calls, selecting({ journey: 'any' }));
+    const invited = filterCalls(calls, selecting({ journey: 'invited' }));
+
+    // assert
+    expect(namesOf(anyStep)).toContain('Held');
+    expect(namesOf(anyStep)).toContain('No journey');
+    expect(namesOf(invited)).toEqual(['Invited']);
+  });
+
+  it('combines the journey step with the time window and the search', () => {
+    // arrange
+    const range = { from: '2026-09-18', to: '2026-09-20' };
+
+    // act
+    const filtered = filterCalls(
+      calls,
+      selecting({ status: 'custom', range, journey: 'invited', query: 'invited' }),
+    );
+
+    // assert
+    expect(namesOf(filtered)).toEqual(['Invited']);
+  });
+
+  it('finds nothing when the axes disagree', () => {
+    // arrange
+    const range = { from: '2026-09-16', to: '2026-09-17' };
+
+    // act
+    const filtered = filterCalls(
+      calls,
+      selecting({ status: 'custom', range, journey: 'paid' }),
+    );
+
+    // assert
+    expect(filtered).toEqual([]);
+  });
+
+  it('counts each step within the rest of the selection', () => {
+    // arrange
+    const range = { from: '2026-09-18', to: '2026-09-19' };
+
+    // act
+    const counts = countsByJourneyStep(
+      calls,
+      selecting({ status: 'custom', range }),
+    );
+
+    // assert
+    expect(counts).toEqual({
+      any: 2,
+      'payment-link-sent': 1,
+      paid: 1,
+      invited: 0,
+    });
+  });
+});
+
+describe('reading a listing selection from the URL', () => {
+  it('accepts the custom window and falls back to upcoming otherwise', () => {
+    // act
+    const custom = parseStatus('custom');
+    const unknown = parseStatus('someday');
+
+    // assert
+    expect(custom).toBe('custom');
+    expect(unknown).toBe('upcoming');
+  });
+
+  it('accepts a known journey step and falls back to any', () => {
+    // act
+    const paid = parseJourneyStep('paid');
+    const unknown = parseJourneyStep('refunded');
+    const missing = parseJourneyStep(null);
+
+    // assert
+    expect(paid).toBe('paid');
+    expect(unknown).toBe('any');
+    expect(missing).toBe('any');
+  });
+
+  it('keeps a pair of ISO days and drops anything else', () => {
+    // act
+    const both = parseDateRange('2026-09-12', '2026-09-20');
+    const partial = parseDateRange('2026-09-12', null);
+    const rubbish = parseDateRange('12/09/2026', '2026-13-45');
+
+    // assert
+    expect(both).toEqual({ from: '2026-09-12', to: '2026-09-20' });
+    expect(partial).toEqual({ from: '2026-09-12', to: null });
+    expect(rubbish).toEqual({ from: null, to: null });
+  });
+
+  it('puts a reversed pair of days back in order', () => {
+    // act
+    const range = parseDateRange('2026-09-20', '2026-09-12');
+
+    // assert
+    expect(range).toEqual({ from: '2026-09-12', to: '2026-09-20' });
+    expect(isChosenRange(range)).toBe(true);
+  });
+});
+
+describe('the message shown when nothing matches', () => {
+  it('names the search before anything else', () => {
+    // act
+    const message = emptyListingMessage(
+      selecting({ status: 'past', journey: 'paid', query: 'ana' }),
+    );
+
+    // assert
+    expect(message).toBe('No calls match your search.');
+  });
+
+  it('keeps the plain window messages when no other filter is on', () => {
+    // act
+    const messages = (['upcoming', 'today', 'past', 'all'] as const).map(
+      (status) => emptyListingMessage(selecting({ status })),
+    );
+
+    // assert
+    expect(messages).toEqual([
+      'No upcoming calls.',
+      'No calls today.',
+      'No past calls.',
+      'No calls yet.',
+    ]);
+  });
+
+  it('names the window and the journey step together', () => {
+    // act
+    const message = emptyListingMessage(
+      selecting({ status: 'upcoming', journey: 'payment-link-sent' }),
+    );
+
+    // assert
+    expect(message).toBe('No upcoming calls with a payment link sent.');
+  });
+
+  it('names the picked days, dropping a month both days share', () => {
+    // act
+    const message = emptyListingMessage(
+      selecting({
+        status: 'custom',
+        range: { from: '2026-09-12', to: '2026-09-20' },
+      }),
+    );
+
+    // assert
+    expect(message).toBe('No calls between 12 and 20 September.');
+  });
+
+  it('names both months, and both years when the range crosses one', () => {
+    // act
+    const acrossMonths = emptyListingMessage(
+      selecting({
+        status: 'custom',
+        range: { from: '2026-09-12', to: '2026-10-03' },
+      }),
+    );
+    const acrossYears = emptyListingMessage(
+      selecting({
+        status: 'custom',
+        range: { from: '2026-12-28', to: '2027-01-03' },
+      }),
+    );
+
+    // assert
+    expect(acrossMonths).toBe('No calls between 12 September and 3 October.');
+    expect(acrossYears).toBe(
+      'No calls between 28 December 2026 and 3 January 2027.',
+    );
+  });
+
+  it('falls back to the plain message while the range is half picked', () => {
+    // act
+    const message = emptyListingMessage(
+      selecting({ status: 'custom', range: { from: '2026-09-12', to: null } }),
+    );
+
+    // assert
+    expect(message).toBe('No calls yet.');
   });
 });

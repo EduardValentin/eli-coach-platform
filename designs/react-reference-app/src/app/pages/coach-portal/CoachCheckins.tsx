@@ -9,6 +9,7 @@ import { useMessaging } from '../../context/MessagingContext';
 import { formatCheckinDate, formatCheckinTime, toISODate, to24h } from '../../utils/dateFormatters';
 import { AppointmentCard } from '../../components/coach-portal/AppointmentCard';
 import { CheckinSchedulerSheet } from '../../components/CheckinSchedulerSheet';
+import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle
@@ -203,11 +204,11 @@ export function CoachCheckins() {
   };
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl lg:text-4xl font-serif font-medium text-text-primary">Check-ins</h1>
-        <p className="text-text-secondary mt-2">Manage all client check-ins in one place.</p>
-      </div>
+    <div className="w-full">
+      <PortalPageHeader
+        title="Check-ins"
+        subtitle="Manage all client check-ins in one place."
+      />
 
       <Tabs defaultValue="pending" className="w-full">
         <TabsList variant="segmented" className="mb-6">

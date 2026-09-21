@@ -1,3 +1,4 @@
+import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { AssessmentCallsSection } from '../../components/coach-portal/AssessmentCallsSection';
 import { AssessmentCallsUnavailable } from '../../components/coach-portal/AssessmentCallsUnavailable';
 import { useAppState } from '../../context/AppContext';
@@ -18,12 +19,11 @@ export function CoachAssessmentCalls() {
   const timeZone = browserTimeZone();
 
   return (
-    <div className="max-w-4xl mx-auto pb-12 lg:px-8 lg:pt-8">
-      <header className="mb-8">
-        <h1 className="text-3xl lg:text-4xl font-serif font-medium text-text-primary">
-          Assessment calls
-        </h1>
-      </header>
+    <div className="w-full">
+      <PortalPageHeader
+        title="Assessment calls"
+        subtitle="Everyone who booked a call with you."
+      />
 
       <AssessmentCallsSection
         bookings={listing.bookings}

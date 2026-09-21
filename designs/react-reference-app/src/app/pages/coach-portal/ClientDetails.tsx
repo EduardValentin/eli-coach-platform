@@ -11,6 +11,7 @@ import { useUnitPreferences } from '../../context/UnitPreferencesContext';
 import { useNutrition } from '../../context/NutritionContext';
 import { formatBodyWeight, formatHeight, formatVolume, displayWeightValue, weightUnitLabel } from '../../utils/units';
 import { getInitials } from '../../utils/clientHelpers';
+import { PORTAL_PAGE_TITLE_CLASS } from '../../components/PortalPageHeader';
 import { SubscriptionBadge } from '../../components/coach-portal/SubscriptionBadge';
 import { JourneyClientDetails } from '../../components/coach-portal/JourneyClientDetails';
 import { OnboardingPanel } from '../../components/coach-portal/OnboardingPanel';
@@ -148,12 +149,12 @@ function RosterClientDetails() {
   };
 
   return (
-    <div className="w-full pb-12">
+    <div className="w-full">
       <Link to="/coach/clients" className="inline-flex items-center gap-2 text-sm font-semibold text-text-secondary hover:text-text-primary mb-8 transition-colors">
         <ArrowLeft size={16} /> Back to Clients
       </Link>
 
-      <header className="mb-10 flex flex-col xl:flex-row xl:items-end justify-between gap-6">
+      <header className="mb-8 flex flex-col xl:flex-row xl:items-end justify-between gap-6">
         <div className="flex items-center gap-5 min-w-0">
           {profile?.avatarUrl ? (
             <img
@@ -167,10 +168,8 @@ function RosterClientDetails() {
             </div>
           )}
           <div className="min-w-0">
-            <h1 className="font-serif text-3xl lg:text-4xl text-text-primary mb-2 tracking-tight">
-              {clientName}
-            </h1>
-            <p className="text-text-secondary font-medium">
+            <h1 className={`${PORTAL_PAGE_TITLE_CLASS} mb-2`}>{clientName}</h1>
+            <p className="text-text-secondary">
               {activePlan ? `Active Client · Week ${activePlan.currentWeekNumber} of ${activePlan.weeks.length}` : 'Active Client'}
             </p>
             {activeSubscription && (

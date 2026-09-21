@@ -19,7 +19,7 @@ export function PortalLayout() {
         tabIndex={-1}
         className="lg:pl-64 pt-[calc(env(safe-area-inset-top)+3.5rem)] lg:pt-0 pb-[calc(env(safe-area-inset-bottom)+5rem)] lg:pb-0 focus:outline-none"
       >
-        <div className="max-w-portal mx-auto px-4 pt-5 pb-4 sm:px-6 sm:pt-6 md:pt-7 lg:px-8 lg:py-8">
+        <div className="max-w-portal mx-auto px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
           <ActiveWorkoutBanner />
           <Outlet />
         </div>

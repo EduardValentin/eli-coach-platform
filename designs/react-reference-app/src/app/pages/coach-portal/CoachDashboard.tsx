@@ -1,3 +1,4 @@
+import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { motion, useReducedMotion } from 'motion/react';
 import { ClipboardCheck, ArrowRight, User } from 'lucide-react';
 import { Link } from 'react-router';
@@ -43,20 +44,18 @@ export function CoachDashboard() {
   );
 
   return (
-    <div className="w-full pb-12">
-      <header className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-          <h1 className="w-fit font-serif text-3xl lg:text-4xl text-foreground mb-3 tracking-tight">
-            Good morning, Coach.
-          </h1>
-          <p className="text-muted-foreground font-medium">
+    <div className="w-full">
+      <PortalPageHeader
+        title="Good morning, Coach."
+        subtitle={
+          <>
             <span data-parity="today-count">
               You have {callsLeftToday} assessment call{callsLeftToday !== 1 ? 's' : ''} today.
             </span>
             <span> {pendingCheckins.length} check-in{pendingCheckins.length !== 1 ? 's' : ''} to review.</span>
-          </p>
-        </div>
-      </header>
+          </>
+        }
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 mb-8">
         

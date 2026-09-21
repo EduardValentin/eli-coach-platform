@@ -41,6 +41,33 @@ const YESTERDAY = bookingAt(localInstant(20, 18), 'Elena Marin');
 
 const ALL_BOOKINGS = [LATER_TODAY, TOMORROW, YESTERDAY];
 
+vi.mock('../../components/DateRangeField', () => ({
+  DateRangeField: ({
+    value,
+    onChange,
+  }: {
+    value: { from: string | null; to: string | null };
+    onChange: (range: { from: string | null; to: string | null }) => void;
+  }) => (
+    <>
+      <input
+        aria-label="From"
+        value={value.from ?? ''}
+        onChange={(event) =>
+          onChange({ from: event.target.value || null, to: value.to })
+        }
+      />
+      <input
+        aria-label="To"
+        value={value.to ?? ''}
+        onChange={(event) =>
+          onChange({ from: value.from, to: event.target.value || null })
+        }
+      />
+    </>
+  ),
+}));
+
 beforeAll(() => {
   vi.stubGlobal(
     'matchMedia',
@@ -211,12 +238,48 @@ describe('the coach assessment calls page', () => {
     expect(listedNames()).toEqual(['Elena Marin']);
   });
 
+  it('opens on the journey step and the date range the URL carries', () => {
+    // arrange
+    const urlQuery =
+      '?status=custom&from=2026-09-20&to=2026-09-22&journey=payment-link-sent';
+
+    // act
+    renderPage({ urlQuery });
+
+    // assert
+    expect(screen.getByRole('tab', { name: 'Custom' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    expect(screen.getByLabelText('From')).toHaveValue('2026-09-20');
+    expect(screen.getByLabelText('To')).toHaveValue('2026-09-22');
+    expect(
+      screen.getByRole('button', { name: 'Payment link sent 0' }),
+    ).toHaveAttribute('aria-pressed', 'true');
+    expect(
+      screen.getByText('No calls with a payment link sent between 20 and 22 September.'),
+    ).toBeInTheDocument();
+  });
+
+  it('writes both axes the coach picks into the URL', async () => {
+    // arrange
+    const user = renderPage();
+
+    // act
+    await user.click(screen.getByRole('tab', { name: 'All' }));
+    await user.click(screen.getByRole('button', { name: 'Invited 0' }));
+
+    // assert
+    expect(screen.getByTestId('location-probe')).toHaveTextContent(
+      '?status=all&journey=invited REPLACE',
+    );
+  });
+
   it('moves between the filters with the arrow keys', async () => {
     // arrange
     const user = renderPage();
 
     // act
-    await user.click(screen.getByLabelText('Search calls'));
     await user.tab();
     await user.keyboard('{ArrowRight}');
     await user.keyboard('{ArrowRight}');

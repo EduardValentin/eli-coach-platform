@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { motion } from 'motion/react';
 import { Search, UserX, ArrowRight, ShieldAlert } from 'lucide-react';
 import { Link } from 'react-router';
@@ -147,17 +148,11 @@ export function ClientsList() {
   };
 
   return (
-    <div className="w-full pb-12">
-      <header className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-          <h1 className="font-serif text-3xl lg:text-4xl text-text-primary mb-3 tracking-tight">
-            Clients
-          </h1>
-          <p className="text-text-secondary font-medium">
-            Manage your active roster and past client records.
-          </p>
-        </div>
-      </header>
+    <div className="w-full">
+      <PortalPageHeader
+        title="Clients"
+        subtitle="Manage your active roster and past client records."
+      />
 
       {/* Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">

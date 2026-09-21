@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { Toaster } from 'sonner';
@@ -156,6 +156,12 @@ async function openRowMenu(user: ReturnType<typeof userEvent.setup>) {
   );
 }
 
+function findStageBadge(label: string) {
+  return within(
+    screen.getByRole('list', { name: 'Assessment calls' }),
+  ).findByText(label, {}, WAIT);
+}
+
 async function sendPaymentLink(user: ReturnType<typeof userEvent.setup>) {
   await openRowMenu(user);
   await user.click(screen.getByRole('menuitem', { name: 'Send payment link' }));
@@ -217,7 +223,7 @@ describe('the assessment call row actions', () => {
         WAIT,
       ),
     ).toBeInTheDocument();
-    expect(await screen.findByText('Payment link sent')).toBeInTheDocument();
+    expect(await findStageBadge('Payment link sent')).toBeInTheDocument();
   });
 
   it('says so when the payment link email does not go out', async () => {
@@ -344,7 +350,7 @@ describe('the assessment call row actions', () => {
     // arrange
     const user = renderPage();
     await sendPaymentLink(user);
-    await screen.findByText('Payment link sent', {}, WAIT);
+    await findStageBadge('Payment link sent');
     await sendInvitation(user);
     await screen.findByRole('button', { name: 'Done' }, WAIT);
     await user.click(screen.getByRole('button', { name: 'Done' }));

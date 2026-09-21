@@ -3,6 +3,7 @@ import { Calendar, Dumbbell, Clock, TrendingUp, Activity } from 'lucide-react';
 import { useTraining } from '../../context/TrainingContext';
 import { useUnitPreferences } from '../../context/UnitPreferencesContext';
 import { formatVolume } from '../../utils/units';
+import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { MetricTile } from '../../components/MetricTile';
 import { WorkoutSessionCard } from '../../components/workout/WorkoutSessionCard';
 import { ResponsiveSheetDialog } from '../../components/workout/ResponsiveSheetDialog';
@@ -40,10 +41,10 @@ export function ClientWorkoutHistory() {
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-2xl font-serif font-bold text-foreground">Workout History</h1>
-        <p className="text-sm text-muted-foreground mt-1">Review your past training sessions</p>
-      </div>
+      <PortalPageHeader
+        title="Workout History"
+        subtitle="Review your past training sessions."
+      />
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">

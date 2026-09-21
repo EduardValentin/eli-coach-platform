@@ -7,6 +7,7 @@ import { useClientProfile, ACTIVITY_LEVEL_LABELS } from '../../context/ClientPro
 import { useUnitPreferences } from '../../context/UnitPreferencesContext';
 import { formatHeight, formatBodyWeight } from '../../utils/units';
 import { useNavigate, useSearchParams, Link } from 'react-router';
+import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { ProgramStatusCard } from '../../components/client-portal/ProgramStatusCard';
 import { ReviewCallScheduler } from '../../components/client-portal/ReviewCallScheduler';
 import { MACRO_BAR } from '../../components/coach-portal/nutrition/nutrition-constants';
@@ -72,15 +73,11 @@ export function ClientDashboard() {
   const showStartCTA = Boolean(todayInfo && !todayInfo.isRest && !hasActiveSession);
 
   return (
-    <div className="w-full max-w-5xl mx-auto pb-12">
-      <header className="mb-10">
-        <h1 className="font-serif text-3xl lg:text-4xl text-text-primary mb-3 tracking-tight">
-          Welcome back, {firstName}.
-        </h1>
-        <p className="text-text-secondary font-medium">
-          Here is your daily snapshot and current focus.
-        </p>
-      </header>
+    <div className="w-full max-w-5xl mx-auto">
+      <PortalPageHeader
+        title={`Welcome back, ${firstName}.`}
+        subtitle="Here is your daily snapshot and current focus."
+      />
 
       <ProgramStatusCard />
 

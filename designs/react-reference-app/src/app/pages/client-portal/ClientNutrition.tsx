@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { format, parseISO } from 'date-fns';
 import { ShoppingCart, Clock, Utensils as UtensilsIcon, TrendingDown, TrendingUp, ArrowLeftRight, Check } from 'lucide-react';
 import {
@@ -575,12 +576,8 @@ export function ClientNutrition() {
 
   if (!plan || !block) {
     return (
-      <div className="w-full max-w-3xl mx-auto pb-12">
-        <header className="mb-10">
-          <h1 className="font-serif text-3xl lg:text-4xl text-text-primary mb-3 tracking-tight">
-            My nutrition
-          </h1>
-        </header>
+      <div className="w-full max-w-3xl mx-auto">
+        <PortalPageHeader title="My nutrition" />
         <div className="bg-white rounded-panel border border-neutral-100 p-10 text-center">
           <div className="w-16 h-16 rounded-full bg-neutral-100 flex items-center justify-center mx-auto mb-4">
             <UtensilsIcon size={28} className="text-text-secondary" aria-hidden="true" />
@@ -620,18 +617,12 @@ export function ClientNutrition() {
   const primaryGoal = profile?.primaryGoal;
 
   return (
-    <div className="w-full max-w-3xl mx-auto pb-12 space-y-6">
-      {/* Page header */}
-      <header className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="font-serif text-3xl lg:text-4xl text-text-primary tracking-tight">
-            My nutrition
-          </h1>
-          <p className="text-text-secondary font-medium mt-1">
-            Your coach-built meal plan for this cycle block.
-          </p>
-        </div>
-        <Dialog open={shoppingOpen} onOpenChange={setShoppingOpen}>
+    <div className="w-full max-w-3xl mx-auto space-y-6">
+      <PortalPageHeader
+        title="My nutrition"
+        subtitle="Your coach-built meal plan for this cycle block."
+        actions={
+          <Dialog open={shoppingOpen} onOpenChange={setShoppingOpen}>
           <DialogTrigger asChild>
             <button
               type="button"
@@ -652,8 +643,9 @@ export function ClientNutrition() {
             </DialogHeader>
             <ShoppingListBody groups={shoppingList(block, recipes, foods)} />
           </DialogContent>
-        </Dialog>
-      </header>
+          </Dialog>
+        }
+      />
 
       {/* Week strip */}
       <section aria-label="Week overview">

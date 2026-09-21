@@ -1,5 +1,6 @@
 import { useState, useRef, ChangeEvent } from 'react';
 import { Link, useNavigate } from 'react-router';
+import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { motion } from 'motion/react';
 import { ArrowLeft, Camera, Trash2, Check, User } from 'lucide-react';
 import { toast } from 'sonner';
@@ -55,7 +56,7 @@ export function EditCoachProfile() {
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto pb-12">
+    <div className="w-full max-w-3xl">
       <Link
         to="/coach"
         className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground mb-8 transition-colors"
@@ -63,14 +64,10 @@ export function EditCoachProfile() {
         <ArrowLeft size={16} /> Back to Dashboard
       </Link>
 
-      <header className="mb-10">
-        <h1 className="font-serif text-3xl lg:text-4xl text-foreground mb-3 tracking-tight">
-          My Profile
-        </h1>
-        <p className="text-muted-foreground font-medium">
-          Update how you appear to your clients across the platform.
-        </p>
-      </header>
+      <PortalPageHeader
+        title="My Profile"
+        subtitle="Update how you appear to your clients across the platform."
+      />
 
       {/* Avatar */}
       <motion.div

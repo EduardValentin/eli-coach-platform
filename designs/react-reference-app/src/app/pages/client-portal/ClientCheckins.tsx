@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import {
   CalendarDays, CalendarPlus, Clock, CheckCircle2, XCircle, RefreshCw, Video,
 } from 'lucide-react';
+import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { useCheckins, type CheckIn, MAX_RESCHEDULES } from '../../context/CheckinContext';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
 import { PROGRAM_REVIEW_LABEL, upcomingReviewCall } from '../../utils/reviewCallListing';
@@ -122,14 +123,11 @@ export function ClientCheckins() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto pb-12">
-      {/* Header */}
-      <header className="mb-6">
-        <h1 className="text-2xl md:text-3xl font-serif font-bold text-text-primary leading-tight">Check-ins</h1>
-        <p className="text-sm text-text-secondary mt-1">
-          Request time with {coachName}, respond to proposals, and review past sessions.
-        </p>
-      </header>
+    <div className="max-w-3xl mx-auto">
+      <PortalPageHeader
+        title="Check-ins"
+        subtitle={`Request time with ${coachName}, respond to proposals, and review past sessions.`}
+      />
 
       <Tabs defaultValue="upcoming" className="w-full">
         {/* Tabs + desktop CTA on one row, vertically centered */}
