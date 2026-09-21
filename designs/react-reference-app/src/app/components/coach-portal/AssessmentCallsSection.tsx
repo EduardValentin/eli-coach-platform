@@ -22,6 +22,7 @@ import {
 import { formatShortDay, formatSlotTime } from '../../utils/dateFormatters';
 import { Badge } from '../ui/badge';
 import { DateRangeField, type IsoDateRange } from '../DateRangeField';
+import type { YearRange } from '../BrandCalendar';
 import { FilterChip, FilterChipGroup } from '../FilterChipGroup';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -177,9 +178,11 @@ function JourneyFilter({
 function CustomRangeFilter({
   range,
   onChoose,
+  yearRange,
 }: {
   range: IsoDateRange;
   onChoose: (range: IsoDateRange) => void;
+  yearRange: YearRange;
 }) {
   return (
     <DateRangeField
@@ -187,6 +190,7 @@ function CustomRangeFilter({
       className="w-full"
       value={range}
       onChange={onChoose}
+      yearRange={yearRange}
     />
   );
 }
@@ -302,7 +306,14 @@ export function AssessmentCallsSection({
                 ))}
               </TabsList>
               {status === 'custom' && (
-                <CustomRangeFilter range={range} onChoose={chooseRange} />
+                <CustomRangeFilter
+                  range={range}
+                  onChoose={chooseRange}
+                  yearRange={{
+                    from: now.getFullYear() - 1,
+                    to: now.getFullYear() + 1,
+                  }}
+                />
               )}
             </div>
 

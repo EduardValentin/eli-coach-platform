@@ -1,7 +1,7 @@
 import { useState, type ComponentProps } from 'react';
 import { format, isValid, parseISO } from 'date-fns';
 import type { DateRange as PickerRange } from 'react-day-picker';
-import { BrandCalendar } from './BrandCalendar';
+import { BrandCalendar, type YearRange } from './BrandCalendar';
 import { DateFieldTrigger } from './DateFieldTrigger';
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover';
 
@@ -22,6 +22,7 @@ type DateRangeFieldProps = Omit<
   onChange: (range: IsoDateRange) => void;
   placeholder?: string;
   defaultMonth?: Date;
+  yearRange?: YearRange;
 };
 
 function parseDay(value: string | null): Date | undefined {
@@ -37,6 +38,9 @@ function toIsoDay(date: Date | undefined): string | null {
 function labelFor(from: Date | undefined, to: Date | undefined): string {
   if (!from) return '';
   if (!to) return `${format(from, 'd MMM')} – …`;
+  if (from.getFullYear() !== to.getFullYear()) {
+    return `${format(from, 'd MMM yyyy')} – ${format(to, 'd MMM yyyy')}`;
+  }
   return `${format(from, 'd MMM')} – ${format(to, 'd MMM yyyy')}`;
 }
 
@@ -45,6 +49,7 @@ export function DateRangeField({
   onChange,
   placeholder = 'Pick dates',
   defaultMonth,
+  yearRange,
   ...buttonProps
 }: DateRangeFieldProps) {
   const [open, setOpen] = useState(false);
@@ -84,6 +89,7 @@ export function DateRangeField({
           modifiersClassNames={RANGE_MODIFIER_CLASSNAMES}
           selected={from ? { from, to } : undefined}
           defaultMonth={from ?? defaultMonth}
+          yearRange={yearRange}
           onSelect={chooseRange}
         />
       </PopoverContent>

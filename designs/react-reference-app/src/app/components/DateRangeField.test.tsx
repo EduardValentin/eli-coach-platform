@@ -55,6 +55,23 @@ async function openCalendar(
 }
 
 describe('the date range field', () => {
+  it('names both years when the range crosses a year boundary', () => {
+    // arrange
+    // act
+    render(
+      <DateRangeField
+        aria-label="Date range"
+        value={{ from: '2025-02-23', to: '2026-10-24' }}
+        onChange={() => {}}
+      />,
+    );
+
+    // assert
+    expect(screen.getByRole('button', { name: 'Date range' })).toHaveTextContent(
+      '23 Feb 2025 – 24 Oct 2026',
+    );
+  });
+
   it('reads as unset until the coach picks a range', () => {
     // arrange
     render(<RangeHarness />);
@@ -74,7 +91,7 @@ describe('the date range field', () => {
     // act
     await openCalendar(user, 'Date range');
     await user.click(
-      screen.getByRole('button', { name: 'Friday, September 18th, 2026' }),
+      screen.getByRole('button', { name: /September 18th, 2026/ }),
     );
 
     // assert
@@ -89,10 +106,10 @@ describe('the date range field', () => {
     // act
     await openCalendar(user, 'Date range');
     await user.click(
-      screen.getByRole('button', { name: 'Friday, September 18th, 2026' }),
+      screen.getByRole('button', { name: /September 18th, 2026/ }),
     );
     await user.click(
-      screen.getByRole('button', { name: 'Tuesday, September 22nd, 2026' }),
+      screen.getByRole('button', { name: /September 22nd, 2026/ }),
     );
 
     // assert
@@ -112,7 +129,7 @@ describe('the single date field', () => {
     // act
     await openCalendar(user, 'Start date');
     await user.click(
-      screen.getByRole('button', { name: 'Friday, September 18th, 2026' }),
+      screen.getByRole('button', { name: /September 18th, 2026/ }),
     );
 
     // assert
