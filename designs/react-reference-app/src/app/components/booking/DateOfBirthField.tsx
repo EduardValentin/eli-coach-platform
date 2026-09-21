@@ -14,7 +14,7 @@ const PLACEHOLDER = 'Select a date';
 // The trigger is a button that has to read as one of the form's fields, so it
 // carries the Input primitive's frame rather than a button variant.
 const FIELD_BUTTON_CLASS =
-  'flex h-12 w-full min-w-0 items-center justify-between gap-2 rounded-field border border-control-border-soft bg-surface-quiet/50 px-3 py-1 text-left text-base outline-none transition-[color,box-shadow] md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:border-destructive aria-invalid:ring-destructive/20';
+  'flex h-12 w-full min-w-0 items-center justify-between gap-2 rounded-field border border-control-border-soft bg-surface-quiet/50 px-3 py-1 text-left text-base outline-none transition-[color,box-shadow] md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] data-[invalid]:border-destructive';
 
 export function DateOfBirthField({
   id,
@@ -53,7 +53,7 @@ export function DateOfBirthField({
             id={id}
             type="button"
             className={FIELD_BUTTON_CLASS}
-            aria-invalid={Boolean(error) || undefined}
+            data-invalid={Boolean(error) || undefined}
             aria-describedby={error ? errorId : undefined}
           >
             <span
