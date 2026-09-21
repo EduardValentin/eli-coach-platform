@@ -32,9 +32,12 @@ export type AnsweredForm = {
   questions: AnsweredQuestion[];
 };
 
-const PREGNANCY_PATTERN = /pregnan|postpartum/i;
+const PREGNANCY_STATUS_KEY = 'pregnancyStatus';
 
-const NEGATIVE_ANSWERS: ReadonlySet<string> = new Set(['no', 'none']);
+const PREGNANCY_ANSWERS: ReadonlySet<string> = new Set([
+  'Pregnant',
+  'Postpartum',
+]);
 
 export function humaniseQuestionId(questionId: string): string {
   const spaced = questionId
@@ -93,19 +96,17 @@ export function answeredQuestions(draft: OnboardingDraft): AnsweredQuestion[] {
   return answeredForms(draft).flatMap((form) => form.questions);
 }
 
-function isPositive(answer: OnboardingAnswer): boolean {
-  if (!isAnswered(answer)) return false;
-
-  return !(
-    typeof answer === 'string' && NEGATIVE_ANSWERS.has(answer.trim().toLowerCase())
+function isPregnancyFlag(questionId: string, answer: OnboardingAnswer): boolean {
+  return (
+    questionId === PREGNANCY_STATUS_KEY &&
+    PREGNANCY_ANSWERS.has(describeAnswer(answer))
   );
 }
 
 export function hasPregnancyContext(draft: OnboardingDraft): boolean {
-  return Object.entries(draft.answers['cycle-context']).some(
-    ([questionId, answer]) =>
-      PREGNANCY_PATTERN.test(questionId) && isPositive(answer),
-  );
+  const status = draft.answers['cycle-context'][PREGNANCY_STATUS_KEY];
+
+  return status !== undefined && PREGNANCY_ANSWERS.has(describeAnswer(status));
 }
 
 export function needsSafetyLook(draft: OnboardingDraft): boolean {
@@ -145,9 +146,7 @@ function isFlagged(
   answer: OnboardingAnswer,
 ): boolean {
   if (formId === 'safety-screening') return isAffirmative(answer);
-  if (formId === 'cycle-context') {
-    return PREGNANCY_PATTERN.test(questionId) && isPositive(answer);
-  }
+  if (formId === 'cycle-context') return isPregnancyFlag(questionId, answer);
 
   return false;
 }

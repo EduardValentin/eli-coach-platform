@@ -66,7 +66,7 @@ function numberEntry(
       onBlur={controller.onBlur}
       onChange={controller.onChange}
       ref={controller.ref}
-      step={NUMERIC_STEPS[field.kind] ?? '1'}
+      step={field.step ?? NUMERIC_STEPS[field.kind] ?? '1'}
       type="number"
       value={asText(controller.value)}
     />
@@ -148,6 +148,7 @@ function RadioOption({ value, label }: { value: string; label: string }) {
 
 export function OnboardingFieldControl({ control, field }: FieldControlProps) {
   const units = useMeasureUnits();
+  const legendId = useId();
   const unit = isMeasureField(field)
     ? measureUnitLabel(field.kind as MeasureKind, units)
     : null;
@@ -163,12 +164,16 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
             <FormItem>
               <FormControl>
                 <fieldset>
-                  <legend className="mb-1 flex flex-wrap items-baseline gap-1.5 text-sm font-medium text-text-label">
+                  <legend
+                    className="mb-1 flex flex-wrap items-baseline gap-1.5 text-sm font-medium text-text-label"
+                    id={legendId}
+                  >
                     <LabelText field={field} unit={unit} />
                   </legend>
                   {field.hint && <FormDescription>{field.hint}</FormDescription>}
                   {field.kind === 'radio' ? (
                     <RadioGroup
+                      aria-labelledby={legendId}
                       className="mt-2 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-x-6"
                       onValueChange={controller.onChange}
                       value={asText(controller.value)}

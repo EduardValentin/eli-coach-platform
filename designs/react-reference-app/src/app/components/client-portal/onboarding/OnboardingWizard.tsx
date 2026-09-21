@@ -6,7 +6,7 @@ import {
   DISCLAIMER_ACKNOWLEDGEMENT,
   SPECIAL_CATEGORY_CONSENT_COPY,
 } from '../../../domain/onboardingCopy';
-import { measurementEntryFrom } from '../../../domain/measurements';
+import { submittedMeasurementEntry } from '../../../domain/measurements';
 import {
   formsForSex,
   type OnboardingFormDefinition,
@@ -173,7 +173,7 @@ export function OnboardingWizard() {
     try {
       const submitted = await submit(journeyId);
       await saving.current;
-      const entry = measurementEntryFrom(next.answers.measurements, submitted.submittedAt);
+      const entry = submittedMeasurementEntry(next.answers, submitted.submittedAt);
       if (entry) addMeasurements(journeyId, entry);
       submitOnboarding(journeyId, submitted.submittedAt);
       forgetDraft(journeyId);
@@ -257,7 +257,7 @@ export function OnboardingWizard() {
                   checked={draft.consents.specialCategory}
                   onChange={agree('specialCategory')}
                   problem={consentProblem}
-                  statement={SPECIAL_CATEGORY_CONSENT_COPY}
+                  statement={SPECIAL_CATEGORY_CONSENT_COPY[demoJourney.identity.sex]}
                 />
               ) : null
             }

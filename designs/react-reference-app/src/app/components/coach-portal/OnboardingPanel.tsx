@@ -9,7 +9,6 @@ import {
   AccordionTrigger,
 } from '../ui/accordion';
 import { Alert } from '../ui/alert';
-import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
 import {
@@ -25,18 +24,17 @@ import {
   hasPregnancyContext,
   needsSafetyLook,
   reviewForms,
-  type ReviewAnswer,
 } from '../../domain/onboardingAnswers';
 import { formatJourneyDate } from '../../utils/journeyLabels';
 import { JourneyStageBadge } from './JourneyStageBadge';
-import { NeedsDetailsDialog } from './NeedsDetailsDialog';
+import { OnboardingReviewDialog } from './OnboardingReviewDialog';
+import { ReviewAnswerValue } from './ReviewAnswerValue';
 
 const PANEL_CLASS =
   'bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50';
 
 const SAFETY_FLAG = 'Needs a look: safety screening';
-const RATIO_HIDDEN_NOTE =
-  'Hidden while pregnancy or the postpartum period applies.';
+const RATIO_HIDDEN_NOTE = 'Not shown during pregnancy or right after birth.';
 
 function SubHeading({ children }: { children: string }) {
   return (
@@ -98,18 +96,6 @@ function CollaborationReading({ journey }: { journey: ClientJourney }) {
   );
 }
 
-function AnswerReading({ answer }: { answer: ReviewAnswer }) {
-  if (answer.answer === null) {
-    return <span className="text-copy-muted">Not answered</span>;
-  }
-
-  if (answer.flagged) {
-    return <Badge variant="pending">{answer.answer}</Badge>;
-  }
-
-  return <>{answer.answer}</>;
-}
-
 function AnswerGroups({ journey }: { journey: ClientJourney }) {
   const forms = reviewForms(journey.onboarding, journey.identity.sex);
 
@@ -139,7 +125,7 @@ function AnswerGroups({ journey }: { journey: ClientJourney }) {
                 >
                   <dt className="text-sm text-text-secondary">{answer.label}</dt>
                   <dd className="text-sm text-text-primary">
-                    <AnswerReading answer={answer} />
+                    <ReviewAnswerValue answer={answer} />
                   </dd>
                 </div>
               ))}
@@ -191,7 +177,12 @@ export function OnboardingPanel({
   heightCm: number;
 }) {
   const { startReview } = useClientJourneys();
-  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [reviewOpen, setReviewOpen] = useState(false);
+
+  const openReview = () => {
+    if (journey.stage === 'submitted') startReview(journey.callId);
+    setReviewOpen(true);
+  };
 
   return (
     <motion.section
@@ -232,22 +223,20 @@ export function OnboardingPanel({
       </div>
 
       {journey.stage === 'submitted' && (
-        <Button onClick={() => startReview(journey.callId)}>Start review</Button>
+        <Button onClick={openReview}>Start review</Button>
       )}
 
       {journey.stage === 'reviewing' && (
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+          <Button onClick={openReview}>Continue review</Button>
           <ProgramAssignment journey={journey} clientId={clientId} />
-          <Button variant="outline" onClick={() => setDetailsOpen(true)}>
-            Needs more details
-          </Button>
         </div>
       )}
 
-      <NeedsDetailsDialog
+      <OnboardingReviewDialog
         journey={journey}
-        open={detailsOpen}
-        onOpenChange={setDetailsOpen}
+        open={reviewOpen}
+        onOpenChange={setReviewOpen}
       />
     </motion.section>
   );

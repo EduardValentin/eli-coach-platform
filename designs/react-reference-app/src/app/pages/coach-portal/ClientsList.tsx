@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'motion/react';
-import { Search, UserX, ArrowRight, ClipboardList, ShieldAlert } from 'lucide-react';
+import { Search, UserX, ArrowRight, ShieldAlert } from 'lucide-react';
 import { Link } from 'react-router';
 import { useClientProfile } from '../../context/ClientProfileContext';
 import { useTraining, subscriptionTermLabel } from '../../context/TrainingContext';
@@ -39,8 +39,15 @@ function journeyName(journey: ClientJourney): string {
   return `${journey.identity.firstName} ${journey.identity.lastName}`.trim();
 }
 
+function rowActionLabel(journey: ClientJourney, name: string): string {
+  return awaitsCoachReview(journey.stage)
+    ? `Review onboarding for ${name}`
+    : `View details for ${name}`;
+}
+
 function OnboardingRow({ journey }: { journey: ClientJourney }) {
   const name = journeyName(journey);
+  const actionLabel = rowActionLabel(journey, name);
   const detailPath =
     journey.callId === DEMO_JOURNEY_CALL_ID
       ? '/coach/clients/c1'
@@ -66,21 +73,13 @@ function OnboardingRow({ journey }: { journey: ClientJourney }) {
       <td className="py-4 px-6 text-sm text-text-secondary">—</td>
       <td className="py-4 px-6">
         <div className="flex items-center justify-end gap-3">
-          {awaitsCoachReview(journey.stage) && (
-            <Link
-              to={detailPath}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-control text-xs font-semibold text-brand hover:bg-brand-soft transition-colors"
-            >
-              <ClipboardList size={14} aria-hidden="true" />
-              Review onboarding
-            </Link>
-          )}
           <Link
             to={detailPath}
+            aria-label={actionLabel}
             className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white border border-neutral-200 text-text-secondary hover:bg-text-primary hover:text-white hover:border-text-primary transition-all"
-            title={`View details for ${name}`}
+            title={actionLabel}
           >
-            <ArrowRight size={14} />
+            <ArrowRight size={14} aria-hidden="true" />
           </Link>
         </div>
       </td>
@@ -173,7 +172,7 @@ export function ClientsList() {
           />
         </div>
 
-        <div className="flex items-center gap-2 bg-white border border-neutral-200 p-1 rounded-control shadow-sm">
+        <div className="flex flex-wrap items-center gap-2 bg-white border border-neutral-200 p-1 rounded-control shadow-sm">
           {FILTERS.map((f) => (
             <button
               key={f}

@@ -89,12 +89,13 @@ const SEEDED_LIFESTYLE_ANSWERS = {
   smoking: 'No',
   whoCooks: 'I cook, about 30 minutes on a weeknight',
   currentSupplements: 'Vitamin D',
+  coffeePerDay: 2,
+  waterPerDay: 2,
   checkInDay: 'Monday',
-  checkInChannel: 'In-app messages',
+  checkInChannel: 'Email',
 };
 
 const SEEDED_MEASUREMENT_ANSWERS = {
-  weight: 66.1,
   waist: 74,
   hips: 98,
 };

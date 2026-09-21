@@ -1,4 +1,8 @@
-import type { MeasurementEntry, OnboardingFormAnswers } from './journey';
+import type {
+  MeasurementEntry,
+  OnboardingFormAnswers,
+  OnboardingFormId,
+} from './journey';
 
 export const MEASUREMENT_FIELD_IDS = {
   weight: 'weight',
@@ -31,6 +35,19 @@ export function measurementEntryFrom(
     thighCm: reading(answers, MEASUREMENT_FIELD_IDS.thigh),
     armCm: reading(answers, MEASUREMENT_FIELD_IDS.arm),
   };
+}
+
+export function submittedMeasurementEntry(
+  answers: Record<OnboardingFormId, OnboardingFormAnswers>,
+  recordedAt: Date,
+): MeasurementEntry | null {
+  return measurementEntryFrom(
+    {
+      ...answers.measurements,
+      [MEASUREMENT_FIELD_IDS.weight]: answers['goal-availability'].weight,
+    },
+    recordedAt,
+  );
 }
 
 export function measurementAnswersFrom(

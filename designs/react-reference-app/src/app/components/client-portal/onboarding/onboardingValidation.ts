@@ -129,13 +129,15 @@ function numberProblem(
   entry: FieldEntry,
 ): string | true {
   const entered = Number(asText(entry.value));
-  if (!Number.isFinite(entered) || entered <= 0) return amountMessage(field);
+  if (!Number.isFinite(entered)) return amountMessage(field);
 
   if (field.range) {
     const bounds = displayRange(field, field.range, units);
     if (entered < bounds.min || entered > bounds.max) {
       return rangeMessage(field, field.range, units);
     }
+  } else if (entered <= 0) {
+    return amountMessage(field);
   }
 
   if (!field.relativeTo) return true;

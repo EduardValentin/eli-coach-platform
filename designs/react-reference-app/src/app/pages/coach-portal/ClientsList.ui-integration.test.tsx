@@ -109,7 +109,7 @@ describe('the coach clients list', () => {
       .not.toBeInTheDocument();
   });
 
-  it('opens her onboarding from the row once it is waiting on the coach', async () => {
+  it('names the row arrow after the review waiting on the coach', async () => {
     // arrange
     const user = renderList('?jstage=submitted');
 
@@ -118,12 +118,13 @@ describe('the coach clients list', () => {
 
     // assert
     const row = rowFor('Jane Doe');
+    expect(within(row).getAllByRole('link')).toHaveLength(1);
     expect(
-      within(row).getByRole('link', { name: 'Review onboarding' }),
+      within(row).getByRole('link', { name: 'Review onboarding for Jane Doe' }),
     ).toHaveAttribute('href', '/coach/clients/c1');
   });
 
-  it('keeps the review action off a row she has not sent yet', async () => {
+  it('keeps the review wording off a row she has not sent yet', async () => {
     // arrange
     const user = renderList('?jstage=onboarding');
 
@@ -133,7 +134,7 @@ describe('the coach clients list', () => {
     // assert
     const row = rowFor('Jane Doe');
     expect(
-      within(row).queryByRole('link', { name: 'Review onboarding' }),
+      within(row).queryByRole('link', { name: /^Review onboarding/ }),
     ).not.toBeInTheDocument();
     expect(
       within(row).getByRole('link', { name: 'View details for Jane Doe' }),
@@ -150,7 +151,9 @@ describe('the coach clients list', () => {
     // assert
     expect(names.filter((name) => name.includes('Jane Doe'))).toHaveLength(1);
     expect(
-      within(rowFor('Jane Doe')).getByRole('link', { name: 'Review onboarding' }),
+      within(rowFor('Jane Doe')).getByRole('link', {
+        name: 'Review onboarding for Jane Doe',
+      }),
     ).toBeInTheDocument();
   });
 

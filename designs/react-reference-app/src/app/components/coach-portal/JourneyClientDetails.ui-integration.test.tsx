@@ -118,7 +118,7 @@ describe('the coach view of a client in onboarding', () => {
     const widget = onboardingWidget();
     expect(
       within(widget).getByRole('button', { name: /Your measurements/ }),
-    ).toHaveTextContent('3 of 5 answered');
+    ).toHaveTextContent('2 of 4 answered');
     expect(
       within(widget).getByRole('button', { name: /Your cycle and hormonal context/ }),
     ).toBeInTheDocument();
@@ -140,16 +140,97 @@ describe('the coach view of a client in onboarding', () => {
     expect(within(widget).getAllByText('Not answered')).toHaveLength(2);
   });
 
+  it('reads a yes or no back as plain text and marks the ones that need a look', async () => {
+    // arrange
+    const user = renderDetails('?jstage=submitted');
+
+    // act
+    await user.click(
+      within(onboardingWidget()).getByRole('button', {
+        name: /A few safety questions/,
+      }),
+    );
+
+    // assert
+    const widget = onboardingWidget();
+    const injury = within(widget).getByText('Bone or joint problem').nextSibling;
+    expect(injury).toHaveTextContent('Yes');
+    expect(
+      within(injury as HTMLElement).getByLabelText('Needs a look'),
+    ).toBeInTheDocument();
+    const heart = within(widget).getByText('Heart condition').nextSibling;
+    expect(heart).toHaveTextContent('No');
+    expect(
+      within(heart as HTMLElement).queryByLabelText('Needs a look'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('opens the answers the moment the coach starts the review', async () => {
+    // arrange
+    const user = renderDetails('?jstage=submitted');
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Start review' }));
+
+    // assert
+    const dialog = screen.getByRole('dialog');
+    expect(
+      within(dialog).getByRole('heading', { level: 3, name: "Jane's answers" }),
+    ).toBeVisible();
+    expect(
+      within(dialog).getByRole('button', { name: 'Ask for more details' }),
+    ).toBeInTheDocument();
+  });
+
+  it('offers to continue a review she has already started', async () => {
+    // arrange
+    const user = renderDetails('?jstage=submitted');
+    await user.click(screen.getByRole('button', { name: 'Start review' }));
+
+    // act
+    await user.keyboard('{Escape}');
+
+    // assert
+    expect(
+      within(onboardingWidget()).getByRole('button', { name: 'Continue review' }),
+    ).toBeInTheDocument();
+    expect(
+      within(onboardingWidget()).queryByRole('button', { name: 'Start review' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('closes the review without moving her on', async () => {
+    // arrange
+    const user = renderDetails('?jstage=reviewing');
+    await user.click(screen.getByRole('button', { name: 'Continue review' }));
+
+    const dialog = screen.getByRole('dialog');
+    const actions = within(dialog).getByRole('button', {
+      name: 'Ask for more details',
+    }).parentElement as HTMLElement;
+
+    // act
+    await user.click(within(actions).getByRole('button', { name: 'Close' }));
+
+    // assert
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(
+      within(onboardingWidget()).getByRole('button', { name: 'Continue review' }),
+    ).toBeInTheDocument();
+  });
+
   it('asks for more details only once a question is flagged and a note written', async () => {
     // arrange
     const user = renderDetails('?jstage=reviewing');
 
     // act
-    await user.click(screen.getByRole('button', { name: 'Needs more details' }));
+    await user.click(screen.getByRole('button', { name: 'Continue review' }));
 
     // assert
     const dialog = screen.getByRole('dialog');
-    const send = within(dialog).getByRole('button', { name: 'Send the request' });
+    const send = within(dialog).getByRole('button', {
+      name: 'Ask for more details',
+    });
     expect(send).toBeDisabled();
     expect(within(dialog).getByText('0 questions flagged')).toBeVisible();
 
@@ -169,7 +250,7 @@ describe('the coach view of a client in onboarding', () => {
   it('sends the request and moves her back to answering', async () => {
     // arrange
     const user = renderDetails('?jstage=reviewing');
-    await user.click(screen.getByRole('button', { name: 'Needs more details' }));
+    await user.click(screen.getByRole('button', { name: 'Continue review' }));
     const dialog = screen.getByRole('dialog');
 
     // act
@@ -181,7 +262,7 @@ describe('the coach view of a client in onboarding', () => {
       'Tell me more about your sleep.',
     );
     await user.click(
-      within(dialog).getByRole('button', { name: 'Send the request' }),
+      within(dialog).getByRole('button', { name: 'Ask for more details' }),
     );
 
     // assert

@@ -32,6 +32,7 @@ export type OnboardingField = {
   revealedBy?: { id: string; value: string };
   unitSuffix?: string;
   range?: NumericRange;
+  step?: string;
   relativeTo?: RelativeRange;
   recentMonths?: number;
 };
@@ -417,20 +418,27 @@ const LIFESTYLE_FORM: OnboardingFormDefinition = {
     {
       id: 'coffeePerDay',
       label: 'Coffee a day',
-      kind: 'text',
+      kind: 'number',
       requirement: 'optional',
+      unitSuffix: 'cups',
+      range: { min: 0, max: 12 },
     },
     {
       id: 'alcoholPerWeek',
       label: 'Alcohol in a week',
-      kind: 'text',
+      kind: 'number',
       requirement: 'optional',
+      unitSuffix: 'drinks',
+      range: { min: 0, max: 50 },
     },
     {
       id: 'waterPerDay',
       label: 'Water a day',
-      kind: 'text',
+      kind: 'number',
       requirement: 'optional',
+      unitSuffix: 'litres',
+      range: { min: 0, max: 10 },
+      step: '0.5',
     },
     {
       id: 'dietHistory',
@@ -449,12 +457,21 @@ const LIFESTYLE_FORM: OnboardingFormDefinition = {
     {
       id: 'checkInChannel',
       label: 'Where you want to hear from me',
-      kind: 'select',
+      kind: 'radio',
       requirement: 'required',
       section: COLLABORATION_SECTION,
-      options: options(['In-app messages', 'Email', 'WhatsApp']),
+      options: options(['Email', 'WhatsApp']),
     },
   ],
+};
+
+const WEIGHT_MEASUREMENT_FIELD: OnboardingField = {
+  id: 'weight',
+  label: 'Weight',
+  kind: 'weight',
+  requirement: 'required',
+  hint: 'First thing in the morning, before eating, after the bathroom.',
+  range: WEIGHT_RANGE_KG,
 };
 
 const MEASUREMENTS_FORM: OnboardingFormDefinition = {
@@ -464,14 +481,6 @@ const MEASUREMENTS_FORM: OnboardingFormDefinition = {
   audience: 'everyone',
   sensitivity: 'ordinary',
   fields: [
-    {
-      id: 'weight',
-      label: 'Weight',
-      kind: 'weight',
-      requirement: 'required',
-      hint: 'First thing in the morning, before eating, after the bathroom.',
-      range: WEIGHT_RANGE_KG,
-    },
     {
       id: 'waist',
       label: 'Waist',
@@ -515,7 +524,10 @@ export const ONBOARDING_FORMS: readonly OnboardingFormDefinition[] = [
   MEASUREMENTS_FORM,
 ];
 
-export const MEASUREMENT_FIELDS = MEASUREMENTS_FORM.fields;
+export const MEASUREMENT_FIELDS: readonly OnboardingField[] = [
+  WEIGHT_MEASUREMENT_FIELD,
+  ...MEASUREMENTS_FORM.fields,
+];
 
 export function formsForSex(sex: 'female' | 'male'): OnboardingFormDefinition[] {
   return ONBOARDING_FORMS.filter(

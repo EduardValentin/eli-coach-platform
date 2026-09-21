@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -90,7 +90,11 @@ function draftAt(
     ...draft,
     currentFormIndex,
     consents,
-    answers: { ...draft.answers, measurements: { weight: 66.1, waist: 74 } },
+    answers: {
+      ...draft.answers,
+      'goal-availability': { weight: 66.1, height: 165 },
+      measurements: { waist: 74 },
+    },
   };
 }
 
@@ -140,6 +144,43 @@ describe('the onboarding', () => {
     // assert
     expect(screen.getByText('Tick the box to carry on.')).toBeVisible();
     expect(screen.getByTestId('stage')).toHaveTextContent('onboarding');
+  });
+
+  it('offers a two-option choice as radio buttons, not a dropdown', async () => {
+    // arrange
+    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(3));
+    renderOnboarding('?session=client&jstage=onboarding');
+
+    // act
+    const group = screen.getByRole('radiogroup', {
+      name: /Where you want to hear from me/,
+    });
+
+    // assert
+    expect(within(group).getAllByRole('radio')).toHaveLength(2);
+    expect(within(group).getByRole('radio', { name: 'Email' })).toBeVisible();
+    expect(within(group).getByRole('radio', { name: 'WhatsApp' })).toBeVisible();
+  });
+
+  it('asks how much she drinks as a number', async () => {
+    // arrange
+    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(3));
+    renderOnboarding('?session=client&jstage=onboarding');
+
+    // act
+    const water = screen.getByLabelText(/Water a day/);
+
+    // assert
+    expect(water).toHaveAttribute('type', 'number');
+    expect(water).toHaveAttribute('max', '10');
+    expect(screen.getByLabelText(/Coffee a day/)).toHaveAttribute(
+      'type',
+      'number',
+    );
+    expect(screen.getByLabelText(/Meals a day that suit you/)).toHaveAttribute(
+      'type',
+      'number',
+    );
   });
 
   it('offers a choice of more than two options as a select', () => {
@@ -198,6 +239,18 @@ describe('the onboarding', () => {
     expect(
       screen.getByText('Keep your goal within 60 kg of your current weight.'),
     ).toBeVisible();
+  });
+
+  it('asks for the measurements without repeating the weight from the first form', async () => {
+    // arrange
+    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(4));
+
+    // act
+    renderOnboarding('?session=client&jstage=onboarding');
+
+    // assert
+    expect(screen.getByLabelText(/Waist/)).toBeVisible();
+    expect(screen.queryByLabelText(/Weight/)).not.toBeInTheDocument();
   });
 
   it('holds the progress photos shut until she agrees to share them', async () => {
