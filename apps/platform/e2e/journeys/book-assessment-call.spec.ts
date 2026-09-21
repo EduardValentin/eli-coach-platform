@@ -49,7 +49,7 @@ test("a visitor books an assessment call and the coach sees it", async ({
   await page.getByRole("option", { name: "Female", exact: true }).click();
   await page.getByRole("combobox", { name: "Primary goal" }).click();
   await page.getByRole("option", { name: "Build strength" }).click();
-  await page.getByRole("combobox", { name: "Country" }).click();
+  await page.getByRole("combobox", { name: "Country", exact: true }).click();
   await page.getByRole("option", { name: "Romania", exact: true }).click();
   await page.getByLabel("Phone number").fill(VISITOR_PHONE_NUMBER);
   await page
