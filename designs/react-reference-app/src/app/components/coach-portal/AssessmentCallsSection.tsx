@@ -288,8 +288,8 @@ export function AssessmentCallsSection({
     >
       <Tabs value={status} onValueChange={chooseStatus} className="w-full">
         <div className="mb-6 flex flex-col gap-5">
-          <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between xl:gap-8">
-            <div className="flex w-fit max-w-full flex-col gap-2">
+          <div className="grid w-fit max-w-full gap-4 xl:flex xl:w-full xl:items-start xl:justify-between xl:gap-8">
+            <div className="flex max-w-full flex-col gap-2 xl:w-fit">
               <TabsList aria-label="When" variant="segmented">
                 {WHEN_TABS.map((tab) => (
                   <TabsTrigger
@@ -306,7 +306,7 @@ export function AssessmentCallsSection({
               )}
             </div>
 
-            <div className="w-full xl:w-72 xl:shrink-0">
+            <div className="w-full xl:min-w-0 xl:flex-1">
               <Label className="sr-only" htmlFor={SEARCH_FIELD_ID}>
                 Search calls
               </Label>
