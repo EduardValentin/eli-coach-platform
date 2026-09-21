@@ -7,8 +7,7 @@ import {
   formatSlotTime,
   formatDayFirstDate,
   formatZonedDate,
-  nameTimeZone,
-} from '../utils/dateFormatters';
+  } from '../utils/dateFormatters';
 
 type AssessmentSlotPickerProps = {
   slots: Date[];
@@ -82,7 +81,6 @@ export function AssessmentSlotPicker({
   );
   const daySlots = selectedDayKey ? (slotsByDay.get(selectedDayKey) ?? []) : [];
   const selectedDay = daySlots[0] ?? null;
-  const zoneName = nameTimeZone(timeZone, selectedDay ?? slots[0] ?? today);
 
   const hasOpenSlots = (date: Date) => slotsByDay.has(dayKeyOf(date, timeZone));
   const isPastDay = (date: Date) =>
@@ -112,7 +110,6 @@ export function AssessmentSlotPicker({
           components={{ DayButton: SlotDayButton }}
         />
       }
-      timeZoneNote={`All times shown in your local timezone (${zoneName})`}
       dayHeading={selectedDay ? formatZonedDate(selectedDay, timeZone, 'EEEE, MMMM d') : null}
       DayHeading="h3"
       revealScrollMargin="scroll-mt-24"

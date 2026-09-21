@@ -150,14 +150,6 @@ describe('Book', () => {
     expect(
       await screen.findAllByRole('button', { name: TIME_NAME }),
     ).not.toHaveLength(0);
-    expect(
-      screen.getByText(
-        (content) =>
-          content.startsWith('All times shown in your local timezone (') &&
-          content.includes(VISITOR_TIME_ZONE) &&
-          content.includes('GMT'),
-      ),
-    ).toBeInTheDocument();
   });
 
   it('lets the visitor continue only once a time is chosen', async () => {
