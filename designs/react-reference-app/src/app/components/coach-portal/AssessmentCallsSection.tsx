@@ -184,7 +184,7 @@ function CustomRangeFilter({
   return (
     <DateRangeField
       aria-label="Date range"
-      className="sm:w-64"
+      className="w-full"
       value={range}
       onChange={onChoose}
     />
@@ -289,13 +289,18 @@ export function AssessmentCallsSection({
       <Tabs value={status} onValueChange={chooseStatus} className="w-full">
         <div className="mb-6 flex flex-col gap-5">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between xl:gap-8">
-            <div className="flex flex-col gap-2">
-              <TabsList aria-label="When" variant="segmented">
+            <div className="flex w-full flex-col gap-2 xl:min-w-0 xl:flex-1">
+              <TabsList
+                aria-label="When"
+                variant="segmented"
+                className="w-full"
+              >
                 {WHEN_TABS.map((tab) => (
                   <TabsTrigger
                     key={tab.status}
                     variant="segmented"
                     value={tab.status}
+                    className="sm:flex-1 sm:basis-0"
                   >
                     {tab.label}
                   </TabsTrigger>
