@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -88,38 +88,16 @@ describe('the Stripe checkout stand-in', () => {
   it('sends her back to the bundles with a cancellation notice', async () => {
     // arrange
     const session = await openSession();
-    renderStandIn(session, '?jstage=payment-link-sent&paycheckout=cancelled');
+    renderStandIn(session, '?jstage=payment-link-sent');
 
     // act
-    await userEvent.click(screen.getByRole('button', { name: 'Pay €447' }));
+    await userEvent.click(screen.getByRole('link', { name: 'Back' }));
 
     // assert
     expect(await screen.findByText('bundle page', undefined, WAIT)).toBeVisible();
     expect(screen.getByTestId('route')).toHaveTextContent(
       `/select-bundle?token=${DEMO_TOKEN}&payment=cancelled`,
     );
-  }, TEST_TIMEOUT_MS);
-
-  it('explains a declined card and lets her try again', async () => {
-    // arrange
-    const session = await openSession();
-    renderStandIn(session, '?jstage=payment-link-sent&paycheckout=failed');
-
-    // act
-    await userEvent.click(screen.getByRole('button', { name: 'Pay €447' }));
-
-    // assert
-    expect(
-      await screen.findByText(
-        "Your payment didn't go through. Nothing was charged — try again or use another card.",
-        undefined,
-        WAIT,
-      ),
-    ).toBeVisible();
-    await waitFor(() =>
-      expect(screen.getByRole('button', { name: 'Pay €447' })).toBeEnabled(),
-    );
-    expect(screen.getByTestId('stage')).toHaveTextContent('payment-link-sent');
   }, TEST_TIMEOUT_MS);
 
   it('summarises the order and offers a way back', async () => {
@@ -140,7 +118,7 @@ describe('the Stripe checkout stand-in', () => {
     expect(screen.getByLabelText('Card number')).toBeDisabled();
     expect(screen.getByRole('link', { name: 'Back' })).toHaveAttribute(
       'href',
-      `/select-bundle?token=${DEMO_TOKEN}`,
+      `/select-bundle?token=${DEMO_TOKEN}&payment=cancelled`,
     );
   }, TEST_TIMEOUT_MS);
 });

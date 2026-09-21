@@ -17,7 +17,6 @@ import type {
   PrototypePaymentLinkOutcome,
   PrototypePaymentLinkState,
 } from '../services/paymentLinkService';
-import type { PrototypeCheckoutOutcome } from '../services/checkoutService';
 import {
   COACH_STAGE_LABELS,
   JOURNEY_STAGES,
@@ -142,14 +141,6 @@ function parsePaymentLinkStateControl(
   }
 
   return 'valid';
-}
-
-function parseJourneyCheckoutOutcomeControl(
-  value: string,
-): PrototypeCheckoutOutcome {
-  if (value === 'cancelled' || value === 'failed') return value;
-
-  return 'success';
 }
 
 function parseInvitationOutcomeControl(
@@ -852,32 +843,6 @@ export function DevToggle() {
                       <SelectItem value="expired">Expired</SelectItem>
                       <SelectItem value="used">Already used</SelectItem>
                       <SelectItem value="invalid">Unknown link</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="dev-journey-checkout" className={DEV_LABEL_CLASS}>
-                    Checkout outcome
-                  </Label>
-                  <Select
-                    value={appState.journeyCheckoutOutcome}
-                    onValueChange={(value) =>
-                      setAppState({
-                        journeyCheckoutOutcome:
-                          parseJourneyCheckoutOutcomeControl(value),
-                      })
-                    }
-                  >
-                    <SelectTrigger id="dev-journey-checkout" className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className={SELECT_CONTENT_CLASS}>
-                      <SelectItem value="success">Payment confirmed</SelectItem>
-                      <SelectItem value="cancelled">
-                        Cancelled at checkout
-                      </SelectItem>
-                      <SelectItem value="failed">Card declined</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

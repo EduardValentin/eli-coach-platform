@@ -1,8 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
-import { Alert } from '../components/ui/alert';
 import { Button } from '../components/ThemeButton';
-import { useAppState } from '../context/AppContext';
 import { useClientJourneys } from '../context/ClientJourneyContext';
 import {
   bundleForMonths,
@@ -19,9 +17,6 @@ const EYEBROW = 'Stripe Checkout · prototype stand-in';
 
 const HOSTED_PAGE_NOTE =
   "In production this is Stripe's hosted payment page. Nothing here takes a real card.";
-
-const FAILURE_MESSAGE =
-  "Your payment didn't go through. Nothing was charged — try again or use another card.";
 
 const START_PATH_SUMMARY: Record<SubscriptionStartPath, string> = {
   immediate: 'Starts as soon as your payment clears',
@@ -40,10 +35,8 @@ const FIELD_CLASS =
 export function CheckoutStandIn() {
   const { sessionId = '' } = useParams();
   const navigate = useNavigate();
-  const { appState } = useAppState();
   const { demoJourney, journeyForPaymentToken, recordPaid } = useClientJourneys();
   const [paying, setPaying] = useState(false);
-  const [failed, setFailed] = useState(false);
 
   const session = findCheckoutSession(sessionId);
 
@@ -69,29 +62,15 @@ export function CheckoutStandIn() {
 
   const pay = async () => {
     setPaying(true);
-    setFailed(false);
 
-    try {
-      const completed = await completeCheckout(
-        sessionId,
-        appState.journeyCheckoutOutcome,
-      );
+    const completed = await completeCheckout(sessionId);
 
-      if (completed.status === 'cancelled') {
-        navigate(`/select-bundle?token=${session.token}&payment=cancelled`);
-        return;
-      }
-
-      recordPaid(journey.callId, {
-        paidAt: completed.paidAt,
-        bundle: session.bundle,
-        startPath: session.startPath,
-      });
-      navigate(`/checkout/complete?order=${sessionId}`);
-    } catch {
-      setFailed(true);
-      setPaying(false);
-    }
+    recordPaid(journey.callId, {
+      paidAt: completed.paidAt,
+      bundle: session.bundle,
+      startPath: session.startPath,
+    });
+    navigate(`/checkout/complete?order=${sessionId}`);
   };
 
   return (
@@ -126,8 +105,6 @@ export function CheckoutStandIn() {
         ))}
       </fieldset>
 
-      {failed && <Alert className="mt-6">{FAILURE_MESSAGE}</Alert>}
-
       <Button
         aria-busy={paying}
         className="mt-8"
@@ -141,7 +118,7 @@ export function CheckoutStandIn() {
 
       <Link
         className="mt-5 block text-center text-sm text-muted-foreground underline underline-offset-4 hover:text-text-primary"
-        to={`/select-bundle?token=${session.token}`}
+        to={`/select-bundle?token=${session.token}&payment=cancelled`}
       >
         Back
       </Link>

@@ -10,14 +10,40 @@ import {
 } from '../ui/dropdown-menu';
 import { useAppState } from '../../context/AppContext';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
-import { isBeforeStage, type ClientJourney } from '../../domain/journey';
+import type { ClientJourney, JourneyStage } from '../../domain/journey';
 import {
   PAYMENT_LINK_ERROR_MESSAGES,
   sendPaymentLink,
 } from '../../services/paymentLinkService';
-import { InviteClientDialog } from './InviteClientDialog';
+import {
+  InvitationError,
+  sendInvitation,
+  type SentInvitation,
+} from '../../services/invitationService';
 
-const INVITE_HINT = 'Available once she has paid.';
+const REPLACED_NOTE = 'Her earlier invitation no longer works.';
+
+const ALREADY_CLIENT_MESSAGE = 'This email already belongs to a client.';
+
+const INVITATION_DELIVERY_FAILURE_MESSAGE =
+  'Saved, but the email could not be sent. Try again in a moment.';
+
+const PAYMENT_LINK_STAGES: readonly JourneyStage[] = [
+  'held',
+  'payment-link-sent',
+];
+
+function invitationSentMessage(invitation: SentInvitation): string {
+  const sent = `Invitation sent to ${invitation.email}.`;
+
+  return invitation.replaced ? `${sent} ${REPLACED_NOTE}` : sent;
+}
+
+function invitationFailureMessage(error: unknown): string {
+  return error instanceof InvitationError && error.code === 'already-client'
+    ? ALREADY_CLIENT_MESSAGE
+    : INVITATION_DELIVERY_FAILURE_MESSAGE;
+}
 
 export function CallJourneyActions({
   journey,
@@ -27,17 +53,15 @@ export function CallJourneyActions({
   visitorName: string;
 }) {
   const { appState } = useAppState();
-  const { recordPaymentLinkSent, recordInvitation, updateIdentity } =
-    useClientJourneys();
+  const { recordPaymentLinkSent, recordInvitation } = useClientJourneys();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [sendingLink, setSendingLink] = useState(false);
-  const [inviteOpen, setInviteOpen] = useState(false);
+  const [sending, setSending] = useState(false);
 
-  const accountCreated = !isBeforeStage(journey.stage, 'account-created');
-  const canInvite = !isBeforeStage(journey.stage, 'paid');
+  const offersPaymentLink = PAYMENT_LINK_STAGES.includes(journey.stage);
+  const offersInvitation = journey.stage === 'paid';
 
   const sendLink = async () => {
-    setSendingLink(true);
+    setSending(true);
 
     try {
       const link = await sendPaymentLink(appState.paymentLinkOutcome);
@@ -46,64 +70,70 @@ export function CallJourneyActions({
     } catch {
       toast.error(PAYMENT_LINK_ERROR_MESSAGES['delivery-failure']);
     } finally {
-      setSendingLink(false);
+      setSending(false);
       setMenuOpen(false);
     }
   };
 
-  if (accountCreated) return null;
+  const invite = async () => {
+    setSending(true);
+
+    try {
+      const invitation = await sendInvitation(
+        journey.identity,
+        appState.invitationOutcome,
+      );
+      recordInvitation(journey.callId, invitation);
+      toast.success(invitationSentMessage(invitation));
+    } catch (error) {
+      toast.error(invitationFailureMessage(error));
+    } finally {
+      setSending(false);
+      setMenuOpen(false);
+    }
+  };
+
+  if (!offersPaymentLink && !offersInvitation) return null;
 
   return (
-    <>
-      <DropdownMenu modal={false} open={menuOpen} onOpenChange={setMenuOpen}>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label={`Journey actions for ${visitorName}`}
-            aria-busy={sendingLink}
-            className="self-end md:self-auto"
-          >
-            <MoreVertical aria-hidden="true" />
-          </Button>
-        </DropdownMenuTrigger>
+    <DropdownMenu modal={false} open={menuOpen} onOpenChange={setMenuOpen}>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={`Journey actions for ${visitorName}`}
+          aria-busy={sending}
+          className="self-end md:self-auto"
+        >
+          <MoreVertical aria-hidden="true" />
+        </Button>
+      </DropdownMenuTrigger>
 
-        <DropdownMenuContent align="end" className="w-64">
-      <DropdownMenuItem
-            disabled={sendingLink}
+      <DropdownMenuContent align="end" className="w-64">
+        {offersPaymentLink && (
+          <DropdownMenuItem
+            disabled={sending}
             onSelect={(event) => {
               event.preventDefault();
               void sendLink();
             }}
           >
-            {sendingLink ? 'Sending payment link…' : 'Send payment link'}
+            {sending ? 'Sending payment link…' : 'Send payment link'}
           </DropdownMenuItem>
+        )}
 
+        {offersInvitation && (
           <DropdownMenuItem
-            disabled={!canInvite}
-            onSelect={() => setInviteOpen(true)}
-            className="flex-col items-start gap-0.5"
+            disabled={sending}
+            onSelect={(event) => {
+              event.preventDefault();
+              void invite();
+            }}
           >
-            <span>Invite</span>
-            {!canInvite && (
-              <span className="text-xs text-muted-foreground">
-                {INVITE_HINT}
-              </span>
-            )}
+            {sending ? 'Sending invitation…' : 'Invite'}
           </DropdownMenuItem>
-
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      <InviteClientDialog
-        journey={journey}
-        open={inviteOpen}
-        onOpenChange={setInviteOpen}
-        onInvited={({ invitation, identity }) => {
-          updateIdentity(journey.callId, identity);
-          recordInvitation(journey.callId, invitation);
-        }}
-      />
-    </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

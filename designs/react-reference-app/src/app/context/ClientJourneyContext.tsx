@@ -61,7 +61,6 @@ type ClientJourneyContextType = {
   recordPaymentLinkSent: (callId: string, link: SentPaymentLink) => void;
   recordPaid: (callId: string, payment: JourneyPayment) => void;
   recordInvitation: (callId: string, invitation: SentInvitation) => void;
-  updateIdentity: (callId: string, identity: JourneyIdentity) => void;
   recordAccountCreated: (callId: string) => void;
   markWelcomeSeen: (callId: string) => void;
   saveOnboardingDraft: (callId: string, draft: OnboardingDraft) => void;
@@ -293,13 +292,6 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
     [updateJourney],
   );
 
-  const updateIdentity = useCallback(
-    (callId: string, identity: JourneyIdentity) => {
-      updateJourney(callId, (journey) => ({ ...journey, identity }));
-    },
-    [updateJourney],
-  );
-
   const recordAccountCreated = useCallback(
     (callId: string) => {
       setSignedInCallId(callId);
@@ -487,7 +479,6 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
         recordPaymentLinkSent,
         recordPaid,
         recordInvitation,
-        updateIdentity,
         recordAccountCreated,
         markWelcomeSeen,
         saveOnboardingDraft,

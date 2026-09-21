@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  CheckoutError,
   completeCheckout,
   createCheckoutSession,
   SIMULATED_LATENCY_MS,
@@ -51,47 +50,16 @@ describe('creating a checkout session', () => {
 });
 
 describe('completing a checkout', () => {
-  it('dates the payment on success', async () => {
+  it('dates the payment', async () => {
     // arrange
-    const completing = completeCheckout('cs-abc123', 'success');
+    const completing = completeCheckout('cs-abc123');
 
     // act
     await vi.advanceTimersByTimeAsync(SIMULATED_LATENCY_MS);
 
     // assert
     const completed = await completing;
-    expect(completed).toMatchObject({ status: 'success', sessionId: 'cs-abc123' });
-  });
-
-  it('reports a cancelled checkout without treating it as a failure', async () => {
-    // arrange
-    const completing = completeCheckout('cs-abc123', 'cancelled');
-
-    // act
-    await vi.advanceTimersByTimeAsync(SIMULATED_LATENCY_MS);
-
-    // assert
-    await expect(completing).resolves.toEqual({
-      status: 'cancelled',
-      sessionId: 'cs-abc123',
-    });
-  });
-
-  it('rejects a failed payment with its own code', async () => {
-    // arrange
-    const completing = completeCheckout('cs-abc123', 'failed');
-    const isDomainError = expect(completing).rejects.toBeInstanceOf(
-      CheckoutError,
-    );
-    const carriesCode = expect(completing).rejects.toMatchObject({
-      code: 'failed',
-    });
-
-    // act
-    await vi.advanceTimersByTimeAsync(SIMULATED_LATENCY_MS);
-
-    // assert
-    await isDomainError;
-    await carriesCode;
+    expect(completed.sessionId).toBe('cs-abc123');
+    expect(completed.paidAt).toBeInstanceOf(Date);
   });
 });

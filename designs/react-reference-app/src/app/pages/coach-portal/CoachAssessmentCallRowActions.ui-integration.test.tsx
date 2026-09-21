@@ -41,24 +41,6 @@ const UPCOMING_BOOKING = bookingAt(
   new Date(Date.now() + DAY_MS),
 );
 
-vi.mock('../../components/DateField', () => ({
-  DateField: ({
-    value,
-    onChange,
-    id,
-  }: {
-    value: string;
-    onChange: (isoDate: string) => void;
-    id?: string;
-  }) => (
-    <input
-      id={id}
-      value={value}
-      onChange={(event) => onChange(event.target.value)}
-    />
-  ),
-}));
-
 beforeAll(() => {
   vi.stubGlobal(
     'matchMedia',
@@ -171,11 +153,6 @@ async function sendInvitation(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole('button', { name: 'driver: mark paid' }));
   await openRowMenu(user);
   await user.click(screen.getByRole('menuitem', { name: 'Invite' }));
-  await user.type(
-    screen.getByRole('textbox', { name: 'Date of birth' }),
-    '1996-05-15',
-  );
-  await user.click(screen.getByRole('button', { name: 'Send invitation' }));
 }
 
 describe('the assessment call row actions', () => {
@@ -243,7 +220,7 @@ describe('the assessment call row actions', () => {
     ).toBeInTheDocument();
   });
 
-  it('keeps the invitation out of reach until she has paid', async () => {
+  it('offers only the payment link until she has paid', async () => {
     // arrange
     const user = renderPage();
 
@@ -251,30 +228,28 @@ describe('the assessment call row actions', () => {
     await openRowMenu(user);
 
     // assert
-    expect(screen.getByRole('menuitem', { name: /Invite/ })).toHaveAttribute(
-      'aria-disabled',
-      'true',
-    );
-    expect(screen.getByText('Available once she has paid.')).toBeInTheDocument();
+    expect(
+      screen.getByRole('menuitem', { name: 'Send payment link' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'Invite' })).toBeNull();
   });
 
-  it('opens the invitation form on the booking details once she has paid', async () => {
+  it('offers only the invitation once she has paid', async () => {
     // arrange
     const user = renderPage();
     await user.click(screen.getByRole('button', { name: 'driver: mark paid' }));
 
     // act
     await openRowMenu(user);
-    await user.click(screen.getByRole('menuitem', { name: 'Invite' }));
 
     // assert
-    expect(screen.getByLabelText('First name')).toHaveValue('Maria');
-    expect(screen.getByLabelText('Last name')).toHaveValue('Ionescu');
-    expect(screen.getByLabelText('Email')).toHaveValue(VISITOR_EMAIL);
-    expect(screen.getByLabelText('Phone (optional)')).toHaveValue('');
+    expect(screen.getByRole('menuitem', { name: 'Invite' })).toBeInTheDocument();
+    expect(
+      screen.queryByRole('menuitem', { name: 'Send payment link' }),
+    ).toBeNull();
   });
 
-  it('says what the invitation link does once it is sent', async () => {
+  it('sends the invitation from the row and confirms the send', async () => {
     // arrange
     const user = renderPage();
 
@@ -283,15 +258,9 @@ describe('the assessment call row actions', () => {
 
     // assert
     expect(
-      await screen.findByText(
-        new RegExp(`Invitation sent to ${VISITOR_EMAIL}`),
-        {},
-        WAIT,
-      ),
+      await screen.findByText(`Invitation sent to ${VISITOR_EMAIL}.`, {}, WAIT),
     ).toBeInTheDocument();
-    expect(
-      screen.getByText(/Invitation sent to/i),
-    ).toBeInTheDocument();
+    expect(await findStageBadge('Invited')).toBeInTheDocument();
   });
 
   it('tells her the earlier invitation stopped working when one is replaced', async () => {
@@ -304,14 +273,14 @@ describe('the assessment call row actions', () => {
     // assert
     expect(
       await screen.findByText(
-        /Her earlier invitation no longer works\./,
+        `Invitation sent to ${VISITOR_EMAIL}. Her earlier invitation no longer works.`,
         {},
         WAIT,
       ),
     ).toBeInTheDocument();
   });
 
-  it('refuses an email that already belongs to a client and keeps the form', async () => {
+  it('refuses an email that already belongs to a client', async () => {
     // arrange
     const user = renderPage('?invitation=already-client');
 
@@ -326,7 +295,7 @@ describe('the assessment call row actions', () => {
         WAIT,
       ),
     ).toBeInTheDocument();
-    expect(screen.getByLabelText('Email')).toHaveValue(VISITOR_EMAIL);
+    expect(await findStageBadge('Paid')).toBeInTheDocument();
   });
 
   it('says the invitation was saved when the email could not be sent', async () => {
@@ -346,14 +315,25 @@ describe('the assessment call row actions', () => {
     ).toBeInTheDocument();
   });
 
-  it('leaves only the prototype shortcuts once she has created her account', async () => {
+  it('leaves the row without a menu once she has been invited', async () => {
     // arrange
     const user = renderPage();
-    await sendPaymentLink(user);
-    await findStageBadge('Payment link sent');
+
+    // act
     await sendInvitation(user);
-    await screen.findByRole('button', { name: 'Done' }, WAIT);
-    await user.click(screen.getByRole('button', { name: 'Done' }));
+
+    // assert
+    expect(await findStageBadge('Invited')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /Journey actions for/ }),
+    ).toBeNull();
+  });
+
+  it('shows the accepted invitation once she has created her account', async () => {
+    // arrange
+    const user = renderPage();
+    await sendInvitation(user);
+    await findStageBadge('Invited');
 
     // act
     await user.click(

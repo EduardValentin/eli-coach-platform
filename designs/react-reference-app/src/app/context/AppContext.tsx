@@ -18,7 +18,6 @@ import type {
   PrototypePaymentLinkOutcome,
   PrototypePaymentLinkState,
 } from '../services/paymentLinkService';
-import type { PrototypeCheckoutOutcome } from '../services/checkoutService';
 import type { JourneySex, JourneyStage } from '../domain/journey';
 import type {
   SubscriptionStartPath,
@@ -62,7 +61,6 @@ type AppState = {
   journeyReducedPricing: boolean;
   paymentLinkOutcome: PrototypePaymentLinkOutcome;
   paymentLinkState: PrototypePaymentLinkState;
-  journeyCheckoutOutcome: PrototypeCheckoutOutcome;
   invitationOutcome: PrototypeInvitationOutcome;
   invitationLinkState: PrototypeInvitationLinkState;
 };
@@ -94,7 +92,6 @@ const defaultState: AppState = {
   journeyReducedPricing: false,
   paymentLinkOutcome: 'sent',
   paymentLinkState: 'valid',
-  journeyCheckoutOutcome: 'success',
   invitationOutcome: 'sent',
   invitationLinkState: 'valid',
 };
@@ -144,7 +141,6 @@ const validSubscriptionStatuses = [
 const validJourneySexes = ['female', 'male'] as const;
 const validPaymentLinkOutcomes = ['sent', 'delivery-failure'] as const;
 const validPaymentLinkStates = ['valid', 'expired', 'used', 'invalid'] as const;
-const validCheckoutOutcomes = ['success', 'cancelled', 'failed'] as const;
 const validInvitationOutcomes = [
   'sent',
   'replaced',
@@ -262,13 +258,6 @@ function parseDevParamsFromURL(): AppState {
   ) {
     state.paymentLinkState = paymentLinkState as PrototypePaymentLinkState;
   }
-  const journeyCheckout = params.get('paycheckout');
-  if (
-    journeyCheckout &&
-    (validCheckoutOutcomes as readonly string[]).includes(journeyCheckout)
-  ) {
-    state.journeyCheckoutOutcome = journeyCheckout as PrototypeCheckoutOutcome;
-  }
   const invitation = params.get('invitation');
   if (
     invitation &&
@@ -322,7 +311,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     url.searchParams.delete('jreduced');
     url.searchParams.delete('paylink');
     url.searchParams.delete('paylinkstate');
-    url.searchParams.delete('paycheckout');
     url.searchParams.delete('invitation');
     url.searchParams.delete('invitationstate');
 
@@ -381,11 +369,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     if (appState.paymentLinkState !== defaultState.paymentLinkState) {
       url.searchParams.set('paylinkstate', appState.paymentLinkState);
-    }
-    if (
-      appState.journeyCheckoutOutcome !== defaultState.journeyCheckoutOutcome
-    ) {
-      url.searchParams.set('paycheckout', appState.journeyCheckoutOutcome);
     }
     if (appState.invitationOutcome !== defaultState.invitationOutcome) {
       url.searchParams.set('invitation', appState.invitationOutcome);
