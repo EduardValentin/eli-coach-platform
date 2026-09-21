@@ -24,6 +24,10 @@ const CLIENT_AVATARS: Record<string, string | null> = {
   c5: null,
 };
 
+function requestsWaitingLine(count: number): string {
+  return count === 1 ? '1 request waiting on you' : `${count} requests waiting on you`;
+}
+
 function CheckinCard({ checkin, actions }: { checkin: CheckIn; actions?: React.ReactNode }) {
   const isRescheduling = checkin.status === 'rescheduling';
   const supersededWhen =
@@ -83,6 +87,7 @@ export function CoachCheckins() {
   const { addSystemMessage, sendMessage: ctxSendMessage } = useMessaging();
 
   const pending = getPendingCheckins();
+  const awaitingCoach = pending.filter(c => c.proposedBy === 'client').length;
   const upcoming = getUpcomingCheckins();
   const past = checkins.filter(c => c.status === 'completed' || c.status === 'declined' || c.status === 'cancelled');
 
@@ -211,17 +216,24 @@ export function CoachCheckins() {
       />
 
       <Tabs defaultValue="pending" className="w-full">
-        <TabsList variant="segmented" className="mb-6">
-          <TabsTrigger variant="segmented" value="pending">
-            Pending {pending.length > 0 && <span className="ml-1.5 w-5 h-5 rounded-full bg-status-pending text-white text-[10px] font-bold inline-flex items-center justify-center">{pending.length}</span>}
-          </TabsTrigger>
-          <TabsTrigger variant="segmented" value="upcoming">
-            Upcoming {upcoming.length > 0 && <span className="ml-1.5 text-text-secondary">({upcoming.length})</span>}
-          </TabsTrigger>
-          <TabsTrigger variant="segmented" value="past">
-            Past
-          </TabsTrigger>
-        </TabsList>
+        <div className="mb-6 flex flex-col gap-2">
+          <TabsList variant="segmented">
+            <TabsTrigger variant="segmented" value="pending">
+              Pending
+            </TabsTrigger>
+            <TabsTrigger variant="segmented" value="upcoming">
+              Upcoming
+            </TabsTrigger>
+            <TabsTrigger variant="segmented" value="past">
+              Past
+            </TabsTrigger>
+          </TabsList>
+          {awaitingCoach > 0 && (
+            <p className="text-sm text-text-secondary">
+              {requestsWaitingLine(awaitingCoach)}
+            </p>
+          )}
+        </div>
 
         <TabsContent value="pending" className="space-y-3">
           {pending.length === 0 ? (

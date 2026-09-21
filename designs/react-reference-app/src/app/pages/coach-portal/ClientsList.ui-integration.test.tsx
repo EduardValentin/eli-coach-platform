@@ -65,8 +65,9 @@ describe('the coach clients list', () => {
     renderList(urlQuery);
 
     // assert
+    const tabs = within(screen.getByRole('tablist', { name: 'Show' }));
     for (const label of ['All', 'Active', 'Inactive', 'Onboarding']) {
-      expect(screen.getByRole('button', { name: label })).toBeInTheDocument();
+      expect(tabs.getByRole('tab', { name: label })).toBeInTheDocument();
     }
   });
 
@@ -75,7 +76,7 @@ describe('the coach clients list', () => {
     const user = renderList();
 
     // act
-    await user.click(screen.getByRole('button', { name: 'Onboarding' }));
+    await user.click(screen.getByRole('tab', { name: 'Onboarding' }));
 
     // assert
     expect(
@@ -88,7 +89,7 @@ describe('the coach clients list', () => {
     const user = renderList('?jstage=submitted');
 
     // act
-    await user.click(screen.getByRole('button', { name: 'Onboarding' }));
+    await user.click(screen.getByRole('tab', { name: 'Onboarding' }));
 
     // assert
     const row = rowFor('Jane Doe');
@@ -102,7 +103,7 @@ describe('the coach clients list', () => {
     const user = renderList('?jstage=submitted&jstart=waiting');
 
     // act
-    await user.click(screen.getByRole('button', { name: 'Onboarding' }));
+    await user.click(screen.getByRole('tab', { name: 'Onboarding' }));
 
     // assert
     expect(within(rowFor('Jane Doe')).queryByText('Starts on 30 September'))
@@ -114,7 +115,7 @@ describe('the coach clients list', () => {
     const user = renderList('?jstage=submitted');
 
     // act
-    await user.click(screen.getByRole('button', { name: 'Onboarding' }));
+    await user.click(screen.getByRole('tab', { name: 'Onboarding' }));
 
     // assert
     const row = rowFor('Jane Doe');
@@ -129,7 +130,7 @@ describe('the coach clients list', () => {
     const user = renderList('?jstage=onboarding');
 
     // act
-    await user.click(screen.getByRole('button', { name: 'Onboarding' }));
+    await user.click(screen.getByRole('tab', { name: 'Onboarding' }));
 
     // assert
     const row = rowFor('Jane Doe');
@@ -162,7 +163,7 @@ describe('the coach clients list', () => {
     const user = renderList();
 
     // act
-    await user.click(screen.getByRole('button', { name: 'Inactive' }));
+    await user.click(screen.getByRole('tab', { name: 'Inactive' }));
 
     // assert
     const names = listedNames();

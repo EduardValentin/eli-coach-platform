@@ -130,38 +130,40 @@ export function ClientCheckins() {
       />
 
       <Tabs defaultValue="upcoming" className="w-full">
-        {/* Tabs + desktop CTA on one row, vertically centered */}
-        <div className="flex items-center justify-between gap-4 mb-6">
-          <TabsList variant="segmented">
-          <TabsTrigger variant="segmented" value="upcoming" className="px-4 sm:px-5">
-            Upcoming {upcoming.length > 0 && <span className="ml-1.5 text-text-secondary">({upcoming.length})</span>}
-          </TabsTrigger>
-          <TabsTrigger variant="segmented" value="requests" className="px-4 sm:px-5">
-            Requests
-            {needsResponseCount > 0 && (
-              <span className="ml-1.5 w-5 h-5 rounded-full bg-status-pending text-white text-[10px] font-bold inline-flex items-center justify-center">{needsResponseCount}</span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger variant="segmented" value="past" className="px-4 sm:px-5">
-            Past
-          </TabsTrigger>
-          </TabsList>
+        <div className="mb-6 flex flex-col gap-2">
+          <div className="flex items-center justify-between gap-4">
+            <TabsList variant="segmented">
+              <TabsTrigger variant="segmented" value="upcoming" className="px-4 sm:px-5">
+                Upcoming
+              </TabsTrigger>
+              <TabsTrigger variant="segmented" value="requests" className="px-4 sm:px-5">
+                Requests
+              </TabsTrigger>
+              <TabsTrigger variant="segmented" value="past" className="px-4 sm:px-5">
+                Past
+              </TabsTrigger>
+            </TabsList>
 
-          {/* Desktop CTA — vertically centered with the tabs (mobile uses the FAB below) */}
-          <button
-            type="button"
-            onClick={() => setShowRequest(true)}
-            disabled={pendingExists}
-            title={pendingExists ? 'You already have a check-in request awaiting your coach' : 'Request a check-in with your coach'}
-            className={`hidden sm:inline-flex items-center gap-2 px-4 min-h-11 rounded-control text-sm font-bold transition-colors shrink-0 ${
-              pendingExists
-                ? 'bg-neutral-100 text-text-secondary'
-                : 'bg-brand text-white hover:bg-brand-hover shadow-sm'
-            }`}
-          >
-            {pendingExists ? <Clock size={16} aria-hidden="true" /> : <CalendarPlus size={16} aria-hidden="true" />}
-            {pendingExists ? 'Check-in pending' : 'Request check-in'}
-          </button>
+            <button
+              type="button"
+              onClick={() => setShowRequest(true)}
+              disabled={pendingExists}
+              title={pendingExists ? 'You already have a check-in request awaiting your coach' : 'Request a check-in with your coach'}
+              className={`hidden sm:inline-flex items-center gap-2 px-4 min-h-11 rounded-control text-sm font-bold transition-colors shrink-0 ${
+                pendingExists
+                  ? 'bg-neutral-100 text-text-secondary'
+                  : 'bg-brand text-white hover:bg-brand-hover shadow-sm'
+              }`}
+            >
+              {pendingExists ? <Clock size={16} aria-hidden="true" /> : <CalendarPlus size={16} aria-hidden="true" />}
+              {pendingExists ? 'Check-in pending' : 'Request check-in'}
+            </button>
+          </div>
+          {needsResponseCount > 0 && (
+            <p className="text-sm text-text-secondary">
+              {proposalsWaitingLine(needsResponseCount)}
+            </p>
+          )}
         </div>
 
         {/* Upcoming */}
@@ -317,6 +319,12 @@ export function ClientCheckins() {
       </button>
     </div>
   );
+}
+
+function proposalsWaitingLine(count: number): string {
+  return count === 1
+    ? '1 proposal waiting on you'
+    : `${count} proposals waiting on you`;
 }
 
 function ProgramReviewCard({
