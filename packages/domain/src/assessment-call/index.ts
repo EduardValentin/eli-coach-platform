@@ -36,3 +36,9 @@ export {
   UpdateAssessmentCallSettingsUseCase,
   type UpdateAssessmentCallSettingsResult,
 } from "./update-assessment-call-settings-use-case";
+export {
+  VISITOR_GENDERS,
+  VISITOR_PRIMARY_GOALS,
+  type VisitorGender,
+  type VisitorPrimaryGoal,
+} from "./visitor-profile";

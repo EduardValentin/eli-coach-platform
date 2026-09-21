@@ -99,9 +99,15 @@ function existingCall(props?: {
 }): AssessmentCall {
   return AssessmentCall.reconstitute({
     id: props?.id ?? "call-1",
-    visitorName: "Ana Popescu",
+    firstName: "Ana",
+    lastName: "Popescu",
     visitorEmail: props?.visitorEmail ?? "ana@example.com",
     visitorNotes: null,
+    dateOfBirth: "1994-03-14",
+    gender: "female",
+    primaryGoal: "build_strength",
+    country: "RO",
+    phone: null,
     startsAt: props?.startsAt ?? OPEN_START,
     visitorTimeZone: "Europe/Bucharest",
     coachTimeZone: COACH_TIME_ZONE,
@@ -171,11 +177,17 @@ function createBookAssessmentCall(options: {
 
 const bookingCommand = {
   startsAt: OPEN_START,
-  fullName: "Ana Popescu",
+  firstName: "Ana",
+  lastName: "Popescu",
   email: "  Ana@Example.COM ",
+  dateOfBirth: "1994-03-14",
+  gender: "female",
+  primaryGoal: "build_strength",
+  country: "RO",
+  phone: "+40712345678",
   notes: "Training around a desk job.",
   visitorTimeZone: "Europe/Bucharest",
-};
+} as const;
 
 function loadedListing(result: AssessmentCallListingResult) {
   if (result.status !== "ok") {
@@ -500,7 +512,7 @@ describe("BookAssessmentCallUseCase", () => {
     expect(reservations.reserve).not.toHaveBeenCalled();
   });
 
-  it("reserves with the normalised email and the clock instants, then notifies", async () => {
+  it("reserves with the visitor's profile, the normalised email and the clock instants, then notifies", async () => {
     // arrange
     const reservations = createReservations();
     const notifications = createNotifications();
@@ -518,10 +530,16 @@ describe("BookAssessmentCallUseCase", () => {
     expect(reservations.reserve).toHaveBeenCalledWith({
       bookedAt: NOW,
       coachTimeZone: COACH_TIME_ZONE,
-      fullName: "Ana Popescu",
+      country: "RO",
+      dateOfBirth: "1994-03-14",
+      firstName: "Ana",
+      gender: "female",
+      lastName: "Popescu",
       normalizedEmail: "ana@example.com",
       notes: "Training around a desk job.",
       now: NOW,
+      phone: "+40712345678",
+      primaryGoal: "build_strength",
       startsAt: OPEN_START,
       visitorTimeZone: "Europe/Bucharest",
     });

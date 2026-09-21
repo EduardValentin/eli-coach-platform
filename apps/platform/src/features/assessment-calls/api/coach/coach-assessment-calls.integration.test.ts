@@ -86,7 +86,8 @@ describe.sequential("coach assessment calls integration", () => {
     const [firstSlot] = await openSlots();
     await bookCall({
       email: "ana@example.com",
-      fullName: "Ana Popescu",
+      firstName: "Ana",
+      lastName: "Popescu",
       notes: "Wants to talk about her glutes",
       startsAt: firstSlot,
     });
@@ -101,6 +102,11 @@ describe.sequential("coach assessment calls integration", () => {
     expect(dashboard).toContain("5:00 PM");
     expect(calls).toContain("Ana Popescu");
     expect(calls).toContain("mailto:ana@example.com");
+    expect(calls).toContain("tel:+40712345678");
+    expect(calls).toContain("32 (14 Mar 1994)");
+    expect(calls).toContain("Female");
+    expect(calls).toContain("Build strength");
+    expect(calls).toContain("Romania");
     expect(calls).toContain("Wants to talk about her glutes");
     expect(calls).toContain("Mon, Oct 19");
     expect(calls).toContain("5:00 PM");
@@ -112,12 +118,14 @@ describe.sequential("coach assessment calls integration", () => {
     const [firstSlot, secondSlot] = await openSlots();
     await bookCall({
       email: "later@example.com",
-      fullName: "Later Visitor",
+      firstName: "Later",
+      lastName: "Visitor",
       startsAt: secondSlot,
     });
     await bookCall({
       email: "earlier@example.com",
-      fullName: "Earlier Visitor",
+      firstName: "Earlier",
+      lastName: "Visitor",
       startsAt: firstSlot,
     });
 
@@ -140,7 +148,8 @@ describe.sequential("coach assessment calls integration", () => {
     const [firstSlot] = await openSlots();
     await bookCall({
       email: "ana@example.com",
-      fullName: "Ana Popescu",
+      firstName: "Ana",
+      lastName: "Popescu",
       startsAt: firstSlot,
     });
     await holdServerClock(TWO_DAYS_LATER);
@@ -166,7 +175,8 @@ describe.sequential("coach assessment calls integration", () => {
     const [firstSlot] = await openSlots();
     await bookCall({
       email: "ana@example.com",
-      fullName: "Ana Popescu",
+      firstName: "Ana",
+      lastName: "Popescu",
       startsAt: firstSlot,
     });
 
@@ -183,7 +193,8 @@ describe.sequential("coach assessment calls integration", () => {
     const [firstSlot] = await openSlots();
     await bookCall({
       email: "ana@example.com",
-      fullName: "Ana Popescu",
+      firstName: "Ana",
+      lastName: "Popescu",
       startsAt: firstSlot,
     });
     await holdServerClock(MONDAY_NIGHT);
@@ -263,7 +274,8 @@ describe.sequential("coach assessment calls integration", () => {
     for (const [index, startsAt] of slots.entries()) {
       await bookCall({
         email: `visitor${index + 1}@example.com`,
-        fullName: `Visitor ${String(index + 1).padStart(2, "0")}`,
+        firstName: "Visitor",
+        lastName: String(index + 1).padStart(2, "0"),
         startsAt,
       });
     }
@@ -313,14 +325,22 @@ async function openSlots(): Promise<string[]> {
 
 async function bookCall(booking: {
   email: string;
-  fullName: string;
+  firstName: string;
+  lastName: string;
   notes?: string;
   startsAt: string;
 }): Promise<void> {
   const body = new URLSearchParams({
     "cf-turnstile-response": bookingToken,
+    country: "RO",
+    dateOfBirth: "1994-03-14",
     email: booking.email,
-    fullName: booking.fullName,
+    firstName: booking.firstName,
+    gender: "female",
+    lastName: booking.lastName,
+    phoneCallingCode: "RO",
+    phoneNumber: "0712 345 678",
+    primaryGoal: "build_strength",
     startsAt: booking.startsAt,
     visitorTimeZone: VISITOR_TIME_ZONE,
   });

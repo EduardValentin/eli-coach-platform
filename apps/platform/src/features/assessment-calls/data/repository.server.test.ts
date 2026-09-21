@@ -5,9 +5,15 @@ import { PostgresAssessmentCallRepository } from "./repository.server";
 
 const STORED_ROW = {
   id: "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11",
-  visitorName: "Ana Popescu",
+  firstName: "Ana",
+  lastName: "Popescu",
   visitorEmail: "ana@example.com",
   visitorNotes: "Training three times a week.",
+  dateOfBirth: "1994-03-14",
+  gender: "female",
+  primaryGoal: "build_strength",
+  country: "RO",
+  phone: "+40712345678",
   startsAt: new Date("2026-10-01T14:00:00.000Z"),
   visitorTimeZone: "Europe/Bucharest",
   coachTimeZone: "Europe/Bucharest",
@@ -27,9 +33,16 @@ describe("PostgresAssessmentCallRepository row mapping", () => {
     // assert
     expect(call?.toSnapshot()).toEqual({
       id: "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11",
-      visitorName: "Ana Popescu",
+      firstName: "Ana",
+      lastName: "Popescu",
+      fullName: "Ana Popescu",
       visitorEmail: "ana@example.com",
       visitorNotes: "Training three times a week.",
+      dateOfBirth: "1994-03-14",
+      gender: "female",
+      primaryGoal: "build_strength",
+      country: "RO",
+      phone: "+40712345678",
       startsAt: new Date("2026-10-01T14:00:00.000Z"),
       endsAt: new Date("2026-10-01T14:30:00.000Z"),
       visitorTimeZone: "Europe/Bucharest",
@@ -49,6 +62,19 @@ describe("PostgresAssessmentCallRepository row mapping", () => {
 
     // assert
     expect(call?.toSnapshot().visitorNotes).toBeNull();
+  });
+
+  it("maps an absent phone to no phone", async () => {
+    // arrange
+    const repository = new PostgresAssessmentCallRepository(
+      createDatabaseReturning([{ ...STORED_ROW, phone: null }]),
+    );
+
+    // act
+    const call = await repository.findById(STORED_ROW.id);
+
+    // assert
+    expect(call?.toSnapshot().phone).toBeNull();
   });
 
   it("finds no call for an identifier that matches no row", async () => {
@@ -97,9 +123,16 @@ describe("PostgresAssessmentCallRepository#listAll", () => {
     expect(calls.map((call) => call.toSnapshot())).toEqual([
       {
         id: "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11",
-        visitorName: "Ana Popescu",
+        firstName: "Ana",
+        lastName: "Popescu",
+        fullName: "Ana Popescu",
         visitorEmail: "ana@example.com",
         visitorNotes: "Training three times a week.",
+        dateOfBirth: "1994-03-14",
+        gender: "female",
+        primaryGoal: "build_strength",
+        country: "RO",
+        phone: "+40712345678",
         startsAt: new Date("2026-10-01T14:00:00.000Z"),
         endsAt: new Date("2026-10-01T14:30:00.000Z"),
         visitorTimeZone: "Europe/Bucharest",
@@ -108,9 +141,16 @@ describe("PostgresAssessmentCallRepository#listAll", () => {
       },
       {
         id: "9c2b7d41-0e58-4a17-8c6f-2d4e7b9a1f03",
-        visitorName: "Ana Popescu",
+        firstName: "Ana",
+        lastName: "Popescu",
+        fullName: "Ana Popescu",
         visitorEmail: "ana@example.com",
         visitorNotes: "Training three times a week.",
+        dateOfBirth: "1994-03-14",
+        gender: "female",
+        primaryGoal: "build_strength",
+        country: "RO",
+        phone: "+40712345678",
         startsAt: new Date("2026-10-02T14:00:00.000Z"),
         endsAt: new Date("2026-10-02T14:30:00.000Z"),
         visitorTimeZone: "Europe/Bucharest",

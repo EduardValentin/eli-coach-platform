@@ -12,9 +12,9 @@ import { COUNTRIES } from "~/features/assessment-calls/contracts/countries";
 
 import { FieldError } from "./field-error";
 
-export const PHONE_FIELD_LABEL = "Phone (optional)";
-export const CALLING_CODE_LABEL = "Country calling code";
-export const PHONE_NUMBER_LABEL = "Phone number";
+const PHONE_FIELD_LABEL = "Phone (optional)";
+const CALLING_CODE_LABEL = "Country calling code";
+const PHONE_NUMBER_LABEL = "Phone number";
 
 type PhoneFieldProps = {
   country: string;

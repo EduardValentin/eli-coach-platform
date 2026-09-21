@@ -43,9 +43,16 @@ export class CoachAssessmentCallsController {
 function serialiseCall(call: AssessmentCallSnapshot): CoachAssessmentCall {
   return {
     id: call.id,
-    visitorName: call.visitorName,
+    firstName: call.firstName,
+    lastName: call.lastName,
+    fullName: call.fullName,
     visitorEmail: call.visitorEmail,
     visitorNotes: call.visitorNotes,
+    dateOfBirth: call.dateOfBirth,
+    gender: call.gender,
+    primaryGoal: call.primaryGoal,
+    country: call.country,
+    phone: call.phone,
     startsAt: call.startsAt.toISOString(),
     endsAt: call.endsAt.toISOString(),
     joinPath: assessmentCallJoinPath(call.id),

@@ -16,9 +16,16 @@ function createCall(
 ): AssessmentCallSnapshot {
   return {
     id: "ac-demo",
-    visitorName: "Sofia Marin",
+    firstName: "Sofia",
+    lastName: "Marin",
+    fullName: "Sofia Marin",
     visitorEmail: "sofia@example.com",
     visitorNotes: null,
+    dateOfBirth: "1994-03-14",
+    gender: "female",
+    primaryGoal: "build_strength",
+    country: "RO",
+    phone: "+40712345678",
     startsAt: new Date("2026-03-02T15:00:00.000Z"),
     endsAt: new Date("2026-03-02T15:30:00.000Z"),
     visitorTimeZone: "Europe/Bucharest",
@@ -76,7 +83,7 @@ describe("buildIcs", () => {
 
   it("returns the calendar as UTF-8 bytes", () => {
     // arrange
-    const call = createCall({ visitorName: "Ștefania Mureșan" });
+    const call = createCall({ fullName: "Ștefania Mureșan" });
 
     // act
     const invite = buildIcs(call, INVITE_OPTIONS);
@@ -88,7 +95,7 @@ describe("buildIcs", () => {
 
   it("escapes backslashes, semicolons, commas and newlines in text values", () => {
     // arrange
-    const call = createCall({ visitorName: "Marin, Sofia; a\\b\nsecond line" });
+    const call = createCall({ fullName: "Marin, Sofia; a\\b\nsecond line" });
 
     // act
     const invite = unfold(decode(buildIcs(call, INVITE_OPTIONS)));
@@ -102,7 +109,7 @@ describe("buildIcs", () => {
   it("escapes a bare carriage return so a name cannot start a content line of its own", () => {
     // arrange
     const call = createCall({
-      visitorName: "Eve\rLOCATION:https://meet.evil.example/room",
+      fullName: "Eve\rLOCATION:https://meet.evil.example/room",
     });
 
     // act
@@ -121,7 +128,7 @@ describe("buildIcs", () => {
 
   it("folds every content line to 75 octets without losing the value", () => {
     // arrange
-    const call = createCall({ visitorName: "Ștefania".repeat(20) });
+    const call = createCall({ fullName: "Ștefania".repeat(20) });
 
     // act
     const invite = decode(buildIcs(call, INVITE_OPTIONS));

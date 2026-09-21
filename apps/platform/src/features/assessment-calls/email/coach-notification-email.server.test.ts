@@ -12,9 +12,16 @@ function createCall(
 ): AssessmentCallSnapshot {
   return {
     id: "ac-demo",
-    visitorName: "Sofia Marin",
+    firstName: "Sofia",
+    lastName: "Marin",
+    fullName: "Sofia Marin",
     visitorEmail: "sofia@example.com",
     visitorNotes: null,
+    dateOfBirth: "1994-03-14",
+    gender: "female",
+    primaryGoal: "build_strength",
+    country: "RO",
+    phone: "+40712345678",
     startsAt: new Date("2026-03-02T15:00:00.000Z"),
     endsAt: new Date("2026-03-02T15:30:00.000Z"),
     visitorTimeZone: "America/New_York",
@@ -47,12 +54,82 @@ describe("createCoachNotificationEmailContent", () => {
       "Monday, 2 March 2026 at 5:00 PM — Europe/Bucharest (GMT+2)",
     );
     expect(content.html).toContain("30 minutes");
-    expect(content.text).toContain("Sofia Marin");
-    expect(content.text).toContain("sofia@example.com");
+    expect(content.text).toContain("WHO: Sofia Marin");
+    expect(content.text).toContain("EMAIL: sofia@example.com");
     expect(content.text).toContain(
-      "Monday, 2 March 2026 at 5:00 PM — Europe/Bucharest (GMT+2)",
+      "WHEN: Monday, 2 March 2026 at 5:00 PM — Europe/Bucharest (GMT+2)",
     );
-    expect(content.text).toContain("30 minutes");
+    expect(content.text).toContain("HOW LONG: 30 minutes");
+  });
+
+  it("tells the coach the visitor's age on her booking day, gender, goal and country", () => {
+    // arrange
+    // act
+    const content = createContent();
+
+    // assert
+    expect(content.html).toContain("AGE");
+    expect(content.html).toContain("31 (born 14 March 1994)");
+    expect(content.html).toContain("Female");
+    expect(content.html).toContain("Build strength");
+    expect(content.html).toContain("Romania");
+    expect(content.text).toContain("AGE: 31 (born 14 March 1994)");
+    expect(content.text).toContain("GENDER: Female");
+    expect(content.text).toContain("GOAL: Build strength");
+    expect(content.text).toContain("COUNTRY: Romania");
+  });
+
+  it("offers her phone as a tel link when she left one", () => {
+    // arrange
+    // act
+    const content = createContent();
+
+    // assert
+    expect(content.html).toContain('href="tel:+40712345678"');
+    expect(content.html).toContain("PHONE");
+    expect(content.text).toContain("PHONE: +40712345678");
+  });
+
+  it("leaves the phone row out when she left none", () => {
+    // arrange
+    // act
+    const content = createContent({ phone: null });
+
+    // assert
+    expect(content.html).not.toContain("PHONE");
+    expect(content.html).not.toContain("tel:");
+    expect(content.text).not.toContain("PHONE");
+  });
+
+  it("orders the rows who, email, phone, age, gender, goal, country, when, how long, what she shared", () => {
+    // arrange
+    const labels = [
+      "WHO",
+      "EMAIL",
+      "PHONE",
+      "AGE",
+      "GENDER",
+      "GOAL",
+      "COUNTRY",
+      "WHEN",
+      "HOW LONG",
+      "WHAT SHE SHARED",
+    ];
+
+    // act
+    const content = createContent({ visitorNotes: "Sleeps badly" });
+    const htmlPositions = labels.map((label) =>
+      content.html.indexOf(`>${label}<`),
+    );
+    const textPositions = labels.map((label) =>
+      content.text.indexOf(`${label}: `),
+    );
+
+    // assert
+    expect(htmlPositions.every((position) => position >= 0)).toBe(true);
+    expect(htmlPositions).toEqual([...htmlPositions].sort((a, b) => a - b));
+    expect(textPositions.every((position) => position >= 0)).toBe(true);
+    expect(textPositions).toEqual([...textPositions].sort((a, b) => a - b));
   });
 
   it("offers the join link, the Google Calendar link and the attached calendar file", () => {

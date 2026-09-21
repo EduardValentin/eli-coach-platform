@@ -12,9 +12,15 @@ import {
 
 const BOOKED_ROW = {
   id: "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11",
-  visitorName: "Ana Popescu",
+  firstName: "Ana",
+  lastName: "Popescu",
   visitorEmail: "ana@example.com",
   visitorNotes: "Training three times a week.",
+  dateOfBirth: "1994-03-14",
+  gender: "female",
+  primaryGoal: "build_strength",
+  country: "RO",
+  phone: "+40712345678",
   startsAt: new Date("2026-10-20T14:00:00.000Z"),
   visitorTimeZone: "Europe/Chisinau",
   coachTimeZone: "Europe/Chisinau",

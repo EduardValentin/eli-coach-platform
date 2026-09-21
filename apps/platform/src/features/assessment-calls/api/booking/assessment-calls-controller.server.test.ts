@@ -18,6 +18,7 @@ import { AssessmentCallsController } from "./assessment-calls-controller.server"
 type ControllerOptions = {
   bookings?: BookAssessmentCallResult;
   joinLink?: JoinLinkResult;
+  now?: Date;
   openSlots?: OpenSlotsResult;
   verification?: BotVerificationResult;
 };
@@ -26,15 +27,22 @@ type BotVerificationResult = Awaited<
   ReturnType<BotVerifier["verifySubmission"]>
 >;
 
+const NOW = new Date("2026-10-19T08:00:00.000Z");
 const botDetection: BotDetectionConfig = {
   provider: "static",
   token: "XXXX.DUMMY.TOKEN.XXXX",
 };
 const bookedCall = AssessmentCall.reconstitute({
   id: "3f1e8d0c-2a44-4f6e-9a2b-7c0d5e6f8a91",
-  visitorName: "Ana Popescu",
+  firstName: "Ana",
+  lastName: "Popescu",
   visitorEmail: "ana@example.com",
   visitorNotes: "Training three times a week.",
+  dateOfBirth: "1994-03-14",
+  gender: "female",
+  primaryGoal: "build_strength",
+  country: "RO",
+  phone: "+40712345678",
   startsAt: new Date("2026-10-19T14:00:00.000Z"),
   visitorTimeZone: "Europe/Bucharest",
   coachTimeZone: "Europe/Bucharest",
@@ -177,8 +185,14 @@ describe("AssessmentCallsController slots endpoint", () => {
 
 describe("AssessmentCallsController booking submissions", () => {
   it.each([
-    ["fullName", "A", "invalid_name"],
+    ["firstName", "   ", "invalid_first_name"],
+    ["lastName", "x".repeat(61), "invalid_last_name"],
     ["email", "not-an-email", "invalid_email"],
+    ["dateOfBirth", "2010-10-19", "invalid_date_of_birth"],
+    ["gender", "woman", "invalid_gender"],
+    ["primaryGoal", "run_marathon", "invalid_primary_goal"],
+    ["country", "XX", "invalid_country"],
+    ["phoneNumber", "0712 CALL", "invalid_phone"],
     ["notes", "x".repeat(1001), "notes_too_long"],
     ["visitorTimeZone", "Mars/Olympus_Mons", "invalid_time_zone"],
     ["startsAt", "not-a-date", "invalid_start"],
@@ -239,6 +253,26 @@ describe("AssessmentCallsController booking submissions", () => {
     expect(book).not.toHaveBeenCalled();
   });
 
+  it("judges the visitor's age on the server's clock, not the wall clock", async () => {
+    // arrange
+    const { book, controller } = createController({
+      now: new Date("2012-10-19T08:00:00.000Z"),
+    });
+
+    // act
+    const response = await controller.book(
+      createBookingRequest({ dateOfBirth: "1994-10-20" }),
+    );
+
+    // assert
+    expect(response.status).toBe(400);
+    await expect(readBody(response)).resolves.toMatchObject({
+      success: false,
+      error: { code: "invalid_date_of_birth" },
+    });
+    expect(book).not.toHaveBeenCalled();
+  });
+
   it("confirms a booking with the link the visitor joins from", async () => {
     // arrange
     const { book, controller } = createController({});
@@ -260,12 +294,60 @@ describe("AssessmentCallsController booking submissions", () => {
       },
     });
     expect(book).toHaveBeenCalledWith({
+      country: "RO",
+      dateOfBirth: "1994-03-14",
       email: "ana@example.com",
-      fullName: "Ana Popescu",
+      firstName: "Ana",
+      gender: "female",
+      lastName: "Popescu",
       notes: "Training three times a week.",
+      phone: "+40712345678",
+      primaryGoal: "build_strength",
       startsAt: new Date("2026-10-19T14:00:00.000Z"),
       visitorTimeZone: "Europe/Bucharest",
     });
+  });
+
+  it("stores no phone when the number is left blank", async () => {
+    // arrange
+    const { book, controller } = createController({});
+
+    // act
+    await controller.book(createBookingRequest({ phoneNumber: "  " }));
+
+    // assert
+    expect(book).toHaveBeenCalledWith(expect.objectContaining({ phone: null }));
+  });
+
+  it("stores no phone when neither phone field is sent", async () => {
+    // arrange
+    const { book, controller } = createController({});
+
+    // act
+    await controller.book(
+      createBookingRequest({}, ["phoneCallingCode", "phoneNumber"]),
+    );
+
+    // assert
+    expect(book).toHaveBeenCalledWith(expect.objectContaining({ phone: null }));
+  });
+
+  it("stores the phone in E.164 under the chosen calling code", async () => {
+    // arrange
+    const { book, controller } = createController({});
+
+    // act
+    await controller.book(
+      createBookingRequest({
+        phoneCallingCode: "GB",
+        phoneNumber: "(07700) 900-123",
+      }),
+    );
+
+    // assert
+    expect(book).toHaveBeenCalledWith(
+      expect.objectContaining({ phone: "+447700900123" }),
+    );
   });
 
   it("names a blank note as no note at all", async () => {
@@ -418,6 +500,7 @@ function createController(options: ControllerOptions) {
       bookAssessmentCall: {
         execute: book,
       } as unknown as BookAssessmentCallUseCase,
+      clock: { now: () => options.now ?? NOW },
       listOpenSlots: { execute: listSlots } as unknown as ListOpenSlotsUseCase,
       resolveJoinLink: {
         execute: resolveJoin,
@@ -428,14 +511,28 @@ function createController(options: ControllerOptions) {
   };
 }
 
-function createBookingRequest(overrides: Record<string, string> = {}): Request {
+function createBookingRequest(
+  overrides: Record<string, string> = {},
+  omitted: readonly string[] = [],
+): Request {
   const body = new URLSearchParams({
+    country: "RO",
+    dateOfBirth: "1994-03-14",
     email: "  ANA@example.com ",
-    fullName: " Ana Popescu ",
+    firstName: " Ana ",
+    gender: "female",
+    lastName: " Popescu ",
+    phoneCallingCode: "RO",
+    phoneNumber: "0712 345 678",
+    primaryGoal: "build_strength",
     startsAt: "2026-10-19T14:00:00.000Z",
     visitorTimeZone: "Europe/Bucharest",
     ...overrides,
   });
+
+  for (const field of omitted) {
+    body.delete(field);
+  }
 
   return new Request("http://localhost/api/assessment-calls", {
     body,

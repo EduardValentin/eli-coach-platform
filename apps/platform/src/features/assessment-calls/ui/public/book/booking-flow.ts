@@ -21,7 +21,7 @@ export type BookingDetails = {
   primaryGoal: string;
 };
 
-export const EMPTY_BOOKING_DETAILS: BookingDetails = {
+const EMPTY_BOOKING_DETAILS: BookingDetails = {
   country: "",
   dateOfBirth: "",
   email: "",

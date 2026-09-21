@@ -9,7 +9,7 @@ import {
 
 import { FieldError } from "./field-error";
 
-export type ChoiceOption = {
+type ChoiceOption = {
   readonly label: string;
   readonly searchText?: string;
   readonly value: string;

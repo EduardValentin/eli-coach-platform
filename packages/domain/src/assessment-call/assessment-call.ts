@@ -1,10 +1,17 @@
 import { ASSESSMENT_CALL_RULES } from "./assessment-call-rules";
+import type { VisitorGender, VisitorPrimaryGoal } from "./visitor-profile";
 
 export type AssessmentCallProps = {
   id: string;
-  visitorName: string;
+  firstName: string;
+  lastName: string;
   visitorEmail: string;
   visitorNotes: string | null;
+  dateOfBirth: string;
+  gender: VisitorGender;
+  primaryGoal: VisitorPrimaryGoal;
+  country: string;
+  phone: string | null;
   startsAt: Date;
   visitorTimeZone: string;
   coachTimeZone: string;
@@ -13,6 +20,7 @@ export type AssessmentCallProps = {
 
 export type AssessmentCallSnapshot = AssessmentCallProps & {
   endsAt: Date;
+  fullName: string;
 };
 
 export type CoachTimeOutcome = "reserved" | "taken";
@@ -28,9 +36,15 @@ const DURATION_MS =
 
 export class AssessmentCall {
   readonly id: string;
-  readonly visitorName: string;
+  readonly firstName: string;
+  readonly lastName: string;
   readonly visitorEmail: string;
   readonly visitorNotes: string | null;
+  readonly dateOfBirth: string;
+  readonly gender: VisitorGender;
+  readonly primaryGoal: VisitorPrimaryGoal;
+  readonly country: string;
+  readonly phone: string | null;
   readonly startsAt: Date;
   readonly visitorTimeZone: string;
   readonly coachTimeZone: string;
@@ -38,9 +52,15 @@ export class AssessmentCall {
 
   private constructor(props: AssessmentCallProps) {
     this.id = props.id;
-    this.visitorName = props.visitorName;
+    this.firstName = props.firstName;
+    this.lastName = props.lastName;
     this.visitorEmail = props.visitorEmail;
     this.visitorNotes = props.visitorNotes;
+    this.dateOfBirth = props.dateOfBirth;
+    this.gender = props.gender;
+    this.primaryGoal = props.primaryGoal;
+    this.country = props.country;
+    this.phone = props.phone;
     this.startsAt = props.startsAt;
     this.visitorTimeZone = props.visitorTimeZone;
     this.coachTimeZone = props.coachTimeZone;
@@ -70,6 +90,10 @@ export class AssessmentCall {
     return new Date(this.startsAt.getTime() + DURATION_MS);
   }
 
+  fullName(): string {
+    return `${this.firstName} ${this.lastName}`;
+  }
+
   hasEnded(now: Date): boolean {
     return this.endsAt() <= now;
   }
@@ -77,9 +101,16 @@ export class AssessmentCall {
   toSnapshot(): AssessmentCallSnapshot {
     return {
       id: this.id,
-      visitorName: this.visitorName,
+      firstName: this.firstName,
+      lastName: this.lastName,
+      fullName: this.fullName(),
       visitorEmail: this.visitorEmail,
       visitorNotes: this.visitorNotes,
+      dateOfBirth: this.dateOfBirth,
+      gender: this.gender,
+      primaryGoal: this.primaryGoal,
+      country: this.country,
+      phone: this.phone,
       startsAt: this.startsAt,
       endsAt: this.endsAt(),
       visitorTimeZone: this.visitorTimeZone,

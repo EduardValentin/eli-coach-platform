@@ -73,8 +73,13 @@ describe.sequential("assessment calls during the waitlist", () => {
     // arrange
     const body = new URLSearchParams({
       "cf-turnstile-response": bookingToken,
+      country: "RO",
+      dateOfBirth: "1994-03-14",
       email: "ana@example.com",
-      fullName: "Ana Popescu",
+      firstName: "Ana",
+      gender: "female",
+      lastName: "Popescu",
+      primaryGoal: "build_strength",
       startsAt: BOOKED_START,
       visitorTimeZone: "Europe/London",
     });
@@ -140,20 +145,31 @@ async function seedAssessmentCall(): Promise<string> {
   const [row] = await suite.postgres.queryRows<{ id: string }>({
     sql: `
       insert into app.assessment_calls (
-        visitor_name,
+        first_name,
+        last_name,
         visitor_email,
         visitor_notes,
+        date_of_birth,
+        gender,
+        primary_goal,
+        country,
+        phone,
         starts_at,
         visitor_time_zone,
         coach_time_zone,
         booked_at
       )
-      values ($1, $2, null, $3, $4, $5, $6)
+      values ($1, $2, $3, null, $4, $5, $6, $7, null, $8, $9, $10, $11)
       returning id
     `,
     values: [
-      "Ana Popescu",
+      "Ana",
+      "Popescu",
       "ana@example.com",
+      "1994-03-14",
+      "female",
+      "build_strength",
+      "RO",
       BOOKED_START,
       "Europe/London",
       "Europe/Bucharest",

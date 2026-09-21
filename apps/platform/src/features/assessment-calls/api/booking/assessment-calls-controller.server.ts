@@ -7,6 +7,7 @@ import {
   type OpenSlotsResult,
   type ResolveJoinLinkUseCase,
 } from "@eli-coach-platform/domain/assessment-call";
+import type { Clock } from "@eli-coach-platform/domain/shared";
 import type { BotVerifier } from "@eli-coach-platform/infrastructure/bot-detection/server";
 import {
   ASSESSMENT_CALL_BOOKING_TURNSTILE_ACTION,
@@ -18,9 +19,10 @@ import { resolveRequestRemoteIp } from "@eli-coach-platform/infrastructure/bot-d
 import { resolveFieldErrorCode } from "~/features/assessment-calls/api/resolve-field-error-code";
 import {
   bookAssessmentCallErrorSchema,
-  bookAssessmentCallRequestSchema,
   bookAssessmentCallSuccessSchema,
+  createBookAssessmentCallRequestSchema,
   openSlotsResponseSchema,
+  phoneFromRequest,
   type BookAssessmentCallErrorCode,
   type OpenSlotsResponse,
 } from "~/features/assessment-calls/contracts/assessment-calls";
@@ -33,6 +35,7 @@ type AssessmentCallsControllerOptions = {
   botDetection: BotDetectionConfig;
   botVerifier: BotVerifier;
   bookAssessmentCall: BookAssessmentCallUseCase;
+  clock: Clock;
   listOpenSlots: ListOpenSlotsUseCase;
   resolveJoinLink: ResolveJoinLinkUseCase;
 };
@@ -43,9 +46,15 @@ type BookingErrorOptions = {
 };
 
 const VALIDATION_ERROR_CODES = {
+  country: "invalid_country",
+  dateOfBirth: "invalid_date_of_birth",
   email: "invalid_email",
-  fullName: "invalid_name",
+  firstName: "invalid_first_name",
+  gender: "invalid_gender",
+  lastName: "invalid_last_name",
   notes: "notes_too_long",
+  phoneNumber: "invalid_phone",
+  primaryGoal: "invalid_primary_goal",
   startsAt: "invalid_start",
   visitorTimeZone: "invalid_time_zone",
 } as const satisfies Record<string, BookAssessmentCallErrorCode>;
@@ -55,9 +64,17 @@ const ERROR_MESSAGES = {
     "We couldn't book this call. Email us and we'll sort it out.",
   bot_verification_failed:
     "We could not confirm this request. Please try again.",
+  invalid_country: "Please choose your country.",
+  invalid_date_of_birth:
+    "Please enter a date of birth that makes you at least 18.",
   invalid_email:
     "That email address doesn't look right. Check it and try again.",
-  invalid_name: "Please enter your name.",
+  invalid_first_name: "Please enter your first name, up to 60 characters.",
+  invalid_gender: "Please choose a gender option.",
+  invalid_last_name: "Please enter your last name, up to 60 characters.",
+  invalid_phone:
+    "Please enter a phone number with digits only, 4 to 14 digits after the country code.",
+  invalid_primary_goal: "Please choose your primary goal.",
   invalid_start: "Please choose an available time.",
   invalid_time_zone: "Please choose a known time zone.",
   notes_too_long: "Please keep your notes under 1000 characters.",
@@ -105,10 +122,19 @@ export class AssessmentCallsController {
 
   async book(request: Request): Promise<Response> {
     const formData = await request.formData();
-    const submission = bookAssessmentCallRequestSchema.safeParse({
+    const submission = createBookAssessmentCallRequestSchema({
+      now: this.options.clock.now(),
+    }).safeParse({
+      country: formData.get("country"),
+      dateOfBirth: formData.get("dateOfBirth"),
       email: formData.get("email"),
-      fullName: formData.get("fullName"),
-      notes: readNotes(formData),
+      firstName: formData.get("firstName"),
+      gender: formData.get("gender"),
+      lastName: formData.get("lastName"),
+      notes: readOptionalField(formData, "notes"),
+      phoneCallingCode: readOptionalField(formData, "phoneCallingCode"),
+      phoneNumber: readOptionalField(formData, "phoneNumber"),
+      primaryGoal: formData.get("primaryGoal"),
       startsAt: formData.get("startsAt"),
       visitorTimeZone: formData.get("visitorTimeZone"),
     });
@@ -143,9 +169,15 @@ export class AssessmentCallsController {
 
     try {
       const result = await this.options.bookAssessmentCall.execute({
+        country: submission.data.country,
+        dateOfBirth: submission.data.dateOfBirth,
         email: submission.data.email,
-        fullName: submission.data.fullName,
+        firstName: submission.data.firstName,
+        gender: submission.data.gender,
+        lastName: submission.data.lastName,
         notes: submission.data.notes ?? null,
+        phone: phoneFromRequest(submission.data),
+        primaryGoal: submission.data.primaryGoal,
         startsAt: new Date(submission.data.startsAt),
         visitorTimeZone: submission.data.visitorTimeZone,
       });
@@ -221,10 +253,13 @@ function createNotFoundResponse(): Response {
   return new Response("Not Found", { status: 404 });
 }
 
-function readNotes(formData: FormData): string | undefined {
-  const notes = formData.get("notes");
+function readOptionalField(
+  formData: FormData,
+  field: string,
+): string | undefined {
+  const value = formData.get(field);
 
-  return typeof notes === "string" && notes.trim() ? notes : undefined;
+  return typeof value === "string" && value.trim() ? value : undefined;
 }
 
 function readTurnstileToken(formData: FormData): string | null {

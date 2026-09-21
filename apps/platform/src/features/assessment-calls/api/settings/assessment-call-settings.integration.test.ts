@@ -431,8 +431,13 @@ async function requestBookingPage(): Promise<Response> {
 
 async function requestBooking(): Promise<Response> {
   const body = new URLSearchParams({
+    country: "RO",
+    dateOfBirth: "1994-03-14",
     email: "ana@example.com",
-    fullName: "Ana Popescu",
+    firstName: "Ana",
+    gender: "female",
+    lastName: "Popescu",
+    primaryGoal: "build_strength",
     startsAt: MONDAY_EVENING_START,
     visitorTimeZone: "Europe/London",
     "cf-turnstile-response": bookingToken,

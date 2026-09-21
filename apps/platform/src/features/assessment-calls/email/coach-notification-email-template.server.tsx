@@ -50,9 +50,18 @@ export type CoachNotificationEmailViewModel = {
   googleCalendarUrl: string;
   joinUrl: string;
   notes: string | null;
+  profile: VisitorProfileViewModel;
   scheduleLine: string;
   visitorEmail: string;
   visitorName: string;
+};
+
+type VisitorProfileViewModel = {
+  ageLine: string;
+  country: string;
+  gender: string;
+  phone: string | null;
+  primaryGoal: string;
 };
 
 export function CoachNotificationEmailTemplate({
@@ -62,6 +71,7 @@ export function CoachNotificationEmailTemplate({
   googleCalendarUrl,
   joinUrl,
   notes,
+  profile,
   scheduleLine,
   visitorEmail,
   visitorName,
@@ -106,6 +116,40 @@ export function CoachNotificationEmailTemplate({
                   >
                     {visitorEmail}
                   </EmailLink>
+                </EmailText>
+
+                {profile.phone ? (
+                  <>
+                    <EmailText style={detailsEyebrowStyle}>PHONE</EmailText>
+                    <EmailText style={detailsValueStyle}>
+                      <EmailLink
+                        href={`tel:${profile.phone}`}
+                        style={calendarLinkStyle}
+                      >
+                        {profile.phone}
+                      </EmailLink>
+                    </EmailText>
+                  </>
+                ) : null}
+
+                <EmailText style={detailsEyebrowStyle}>AGE</EmailText>
+                <EmailText style={detailsValueStyle}>
+                  {profile.ageLine}
+                </EmailText>
+
+                <EmailText style={detailsEyebrowStyle}>GENDER</EmailText>
+                <EmailText style={detailsValueStyle}>
+                  {profile.gender}
+                </EmailText>
+
+                <EmailText style={detailsEyebrowStyle}>GOAL</EmailText>
+                <EmailText style={detailsValueStyle}>
+                  {profile.primaryGoal}
+                </EmailText>
+
+                <EmailText style={detailsEyebrowStyle}>COUNTRY</EmailText>
+                <EmailText style={detailsValueStyle}>
+                  {profile.country}
                 </EmailText>
 
                 <EmailText style={detailsEyebrowStyle}>WHEN</EmailText>

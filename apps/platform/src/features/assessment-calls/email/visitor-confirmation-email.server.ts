@@ -53,7 +53,7 @@ function createViewModel(
       eyebrow: "Assessment call — confirmed",
       heading: "Your call is booked.",
       letterParagraphs: [
-        `Hi ${call.visitorName},`,
+        `Hi ${call.firstName},`,
         "We'll talk through your goals, your training so far and anything getting in the way — and I'll show you how my coaching works, so you can decide whether it fits.",
       ],
       previewText: PREVIEW_TEXT,

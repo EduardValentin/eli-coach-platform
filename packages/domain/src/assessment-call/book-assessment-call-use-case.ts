@@ -11,11 +11,18 @@ import type {
   ReservationResult,
 } from "./assessment-call-reservations";
 import { ASSESSMENT_CALL_RULES } from "./assessment-call-rules";
+import type { VisitorGender, VisitorPrimaryGoal } from "./visitor-profile";
 
 export type BookAssessmentCallCommand = {
   startsAt: Date;
-  fullName: string;
+  firstName: string;
+  lastName: string;
   email: string;
+  dateOfBirth: string;
+  gender: VisitorGender;
+  primaryGoal: VisitorPrimaryGoal;
+  country: string;
+  phone: string | null;
   notes: string | null;
   visitorTimeZone: string;
 };
@@ -64,10 +71,16 @@ export class BookAssessmentCallUseCase {
     const reservation = await this.options.reservations.reserve({
       bookedAt: now,
       coachTimeZone: availability.timeZone,
-      fullName: command.fullName,
+      country: command.country,
+      dateOfBirth: command.dateOfBirth,
+      firstName: command.firstName,
+      gender: command.gender,
+      lastName: command.lastName,
       normalizedEmail,
       notes: command.notes,
       now,
+      phone: command.phone,
+      primaryGoal: command.primaryGoal,
       startsAt: command.startsAt,
       visitorTimeZone: command.visitorTimeZone,
     });

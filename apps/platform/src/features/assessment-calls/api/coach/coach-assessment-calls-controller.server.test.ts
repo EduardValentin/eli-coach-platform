@@ -12,9 +12,15 @@ import { CoachAssessmentCallsController } from "./coach-assessment-calls-control
 const NOW = new Date("2026-10-19T08:00:00.000Z");
 const bookedCall = AssessmentCall.reconstitute({
   id: "3f1e8d0c-2a44-4f6e-9a2b-7c0d5e6f8a91",
-  visitorName: "Ana Popescu",
+  firstName: "Ana",
+  lastName: "Popescu",
   visitorEmail: "ana@example.com",
   visitorNotes: "Training three times a week.",
+  dateOfBirth: "1994-03-14",
+  gender: "female",
+  primaryGoal: "build_strength",
+  country: "RO",
+  phone: "+40712345678",
   startsAt: new Date("2026-10-19T14:00:00.000Z"),
   visitorTimeZone: "Europe/Bucharest",
   coachTimeZone: "Europe/Bucharest",
@@ -22,7 +28,7 @@ const bookedCall = AssessmentCall.reconstitute({
 });
 
 describe("CoachAssessmentCallsController", () => {
-  it("publishes every booked call with its instants and the link the coach joins on", async () => {
+  it("publishes every booked call with the visitor's profile, its instants and the link the coach joins on", async () => {
     // arrange
     const controller = createController({
       status: "ok",
@@ -38,9 +44,16 @@ describe("CoachAssessmentCallsController", () => {
       calls: [
         {
           id: "3f1e8d0c-2a44-4f6e-9a2b-7c0d5e6f8a91",
-          visitorName: "Ana Popescu",
+          firstName: "Ana",
+          lastName: "Popescu",
+          fullName: "Ana Popescu",
           visitorEmail: "ana@example.com",
           visitorNotes: "Training three times a week.",
+          dateOfBirth: "1994-03-14",
+          gender: "female",
+          primaryGoal: "build_strength",
+          country: "RO",
+          phone: "+40712345678",
           startsAt: "2026-10-19T14:00:00.000Z",
           endsAt: "2026-10-19T14:30:00.000Z",
           joinPath: "/book/3f1e8d0c-2a44-4f6e-9a2b-7c0d5e6f8a91/join",
@@ -51,10 +64,11 @@ describe("CoachAssessmentCallsController", () => {
     });
   });
 
-  it("keeps a call the visitor left no notes on", async () => {
+  it("keeps a call the visitor left no notes or phone on", async () => {
     // arrange
     const withoutNotes = AssessmentCall.reconstitute({
       ...bookedCall.toSnapshot(),
+      phone: null,
       visitorNotes: null,
     });
     const controller = createController({
@@ -68,6 +82,7 @@ describe("CoachAssessmentCallsController", () => {
 
     // assert
     expect(dashboard.calls[0]?.visitorNotes).toBeNull();
+    expect(dashboard.calls[0]?.phone).toBeNull();
   });
 
   it("names the coach's zone and the instant it read at when nothing is booked", async () => {
