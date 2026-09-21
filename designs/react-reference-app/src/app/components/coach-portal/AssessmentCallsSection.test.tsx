@@ -795,15 +795,14 @@ describe('filtering assessment calls by a custom date range', () => {
     });
   }
 
-  it('asks for both days and holds nothing back until they are picked', () => {
+  it('holds nothing back until both days are picked', () => {
     // arrange
+    // act
     renderCustom('?when=custom');
 
-    // act
-    const hint = screen.getByText('Pick a start and end date.');
-
     // assert
-    expect(hint).toBeInTheDocument();
+    expect(screen.getByLabelText('From')).toHaveValue('');
+    expect(screen.getByLabelText('To')).toHaveValue('');
     expect(listedNames()).toHaveLength(5);
   });
 

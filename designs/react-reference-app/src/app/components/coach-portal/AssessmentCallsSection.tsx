@@ -6,7 +6,6 @@ import {
   countsByJourneyStep,
   emptyListingMessage,
   filterCalls,
-  isChosenRange,
   orderCallsFor,
   pageOfCalls,
   parseDateRange,
@@ -45,7 +44,6 @@ const CALLS_PER_PAGE = 10;
 const DEFAULT_STATUS: AssessmentCallStatus = 'all';
 const DEFAULT_JOURNEY: JourneyStep = 'any';
 const SEARCH_FIELD_ID = 'assessment-call-search';
-const RANGE_HINT = 'Pick a start and end date.';
 
 const WHEN_TABS: { status: AssessmentCallStatus; label: string }[] = [
   { status: 'all', label: 'All' },
@@ -184,17 +182,12 @@ function CustomRangeFilter({
   onChoose: (range: IsoDateRange) => void;
 }) {
   return (
-    <div className="flex flex-col gap-2">
-      <DateRangeField
-        aria-label="Date range"
-        className="sm:w-64"
-        value={range}
-        onChange={onChoose}
-      />
-      {!isChosenRange(range) && (
-        <p className="text-xs text-muted-foreground">{RANGE_HINT}</p>
-      )}
-    </div>
+    <DateRangeField
+      aria-label="Date range"
+      className="sm:w-64"
+      value={range}
+      onChange={onChoose}
+    />
   );
 }
 
