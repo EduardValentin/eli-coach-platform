@@ -3,6 +3,7 @@ import { Ruler } from 'lucide-react';
 import { formatRatio, waistToHeightRatio } from '../../domain/bodyMetrics';
 import type { MeasurementEntry } from '../../domain/journey';
 import { formatJourneyDate } from '../../utils/journeyLabels';
+import { formatBodyWeight, formatCircumference } from '../../utils/units';
 
 const PANEL_CLASS =
   'bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50';
@@ -15,7 +16,7 @@ const CELL_CLASS = 'py-3 px-4 text-sm text-text-primary';
 const COLUMNS = ['Date', 'Weight', 'Waist', 'Hips', 'Thigh', 'Arm', 'Ratio'];
 
 function centimetres(value: number | undefined): string {
-  return value === undefined ? '—' : `${value} cm`;
+  return value === undefined ? '—' : formatCircumference(value, 'cm');
 }
 
 export function MeasurementsTable({
@@ -71,7 +72,9 @@ export function MeasurementsTable({
                     <td className={CELL_CLASS}>
                       {formatJourneyDate(entry.recordedAt)}
                     </td>
-                    <td className={CELL_CLASS}>{entry.weightKg} kg</td>
+                    <td className={CELL_CLASS}>
+                      {formatBodyWeight(entry.weightKg, 'kg')}
+                    </td>
                     <td className={CELL_CLASS}>{centimetres(entry.waistCm)}</td>
                     <td className={CELL_CLASS}>{centimetres(entry.hipsCm)}</td>
                     <td className={CELL_CLASS}>{centimetres(entry.thighCm)}</td>

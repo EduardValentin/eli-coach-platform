@@ -5,3 +5,6 @@ export const ONBOARDING_HEADING_CLASS =
   'font-serif text-2xl text-text-primary tracking-tight focus:outline-none';
 
 export const ONBOARDING_INTRO_CLASS = 'mt-2 text-sm text-text-secondary';
+
+export const ONBOARDING_LEGEND_CLASS =
+  'mb-1 flex flex-wrap items-baseline gap-1.5 text-sm font-medium text-text-label';

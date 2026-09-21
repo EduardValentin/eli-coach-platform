@@ -1,15 +1,12 @@
 import { useMemo } from 'react';
 import { useUnitPreferences } from '../../context/UnitPreferencesContext';
 import {
-  circumferenceUnitOf,
-  cmToIn,
-  displayCircumferenceValue,
+  displayLengthValue,
   displayWeightValue,
-  fromDisplayCircumference,
+  fromDisplayLength,
   fromDisplayWeight,
-  inToCm,
-  type CircumferenceUnit,
-  type HeightUnit,
+  lengthUnitOf,
+  type LengthUnit,
   type WeightUnit,
 } from '../../utils/units';
 
@@ -17,28 +14,28 @@ export type MeasureKind = 'weight' | 'height' | 'circumference';
 
 export type MeasureUnits = {
   weight: WeightUnit;
-  height: HeightUnit;
-  circumference: CircumferenceUnit;
+  length: LengthUnit;
 };
+
+const LENGTH_STEPS: Record<LengthUnit, string> = { cm: '0.1', in: '0.25' };
+
+const WEIGHT_STEP = '0.1';
 
 export function useMeasureUnits(): MeasureUnits {
   const { weightUnit, heightUnit } = useUnitPreferences();
 
   return useMemo(
-    () => ({
-      weight: weightUnit,
-      height: heightUnit,
-      circumference: circumferenceUnitOf(heightUnit),
-    }),
+    () => ({ weight: weightUnit, length: lengthUnitOf(heightUnit) }),
     [weightUnit, heightUnit],
   );
 }
 
 export function measureUnitLabel(kind: MeasureKind, units: MeasureUnits): string {
-  if (kind === 'weight') return units.weight;
-  if (kind === 'height') return units.height === 'cm' ? 'cm' : 'in';
+  return kind === 'weight' ? units.weight : units.length;
+}
 
-  return units.circumference;
+export function measureStep(kind: MeasureKind, units: MeasureUnits): string {
+  return kind === 'weight' ? WEIGHT_STEP : LENGTH_STEPS[units.length];
 }
 
 export function toDisplayMeasure(
@@ -46,14 +43,9 @@ export function toDisplayMeasure(
   canonical: number,
   units: MeasureUnits,
 ): number {
-  if (kind === 'weight') return displayWeightValue(canonical, units.weight, 1);
-  if (kind === 'height') {
-    return units.height === 'cm'
-      ? Math.round(canonical)
-      : Math.round(cmToIn(canonical) * 10) / 10;
-  }
-
-  return displayCircumferenceValue(canonical, units.circumference, 1);
+  return kind === 'weight'
+    ? displayWeightValue(canonical, units.weight, 1)
+    : displayLengthValue(canonical, units.length);
 }
 
 export function toCanonicalMeasure(
@@ -61,10 +53,7 @@ export function toCanonicalMeasure(
   entered: number,
   units: MeasureUnits,
 ): number {
-  if (kind === 'weight') return fromDisplayWeight(entered, units.weight);
-  if (kind === 'height') {
-    return units.height === 'cm' ? entered : inToCm(entered);
-  }
-
-  return fromDisplayCircumference(entered, units.circumference);
+  return kind === 'weight'
+    ? fromDisplayWeight(entered, units.weight)
+    : fromDisplayLength(entered, units.length);
 }

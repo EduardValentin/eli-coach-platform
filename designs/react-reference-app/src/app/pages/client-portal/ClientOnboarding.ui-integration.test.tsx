@@ -17,7 +17,7 @@ import {
   type OnboardingConsents,
   type OnboardingDraft,
 } from '../../domain/journey';
-import { saveDraft } from '../../services/onboardingService';
+import { loadDraft, saveDraft } from '../../services/onboardingService';
 
 const SERVICE_TIMEOUT = 4000;
 
@@ -345,6 +345,93 @@ describe('the onboarding', () => {
       await screen.findByText('portal home', undefined, { timeout: SERVICE_TIMEOUT }),
     ).toBeVisible();
     await waitFor(() => expect(screen.getByTestId('stage')).toHaveTextContent('submitted'));
+  });
+
+  it('lets her pick the measurement system before the first measurement', async () => {
+    // arrange
+    renderOnboarding('?session=client&jstage=account-created');
+
+    // act
+    const group = screen.getByRole('radiogroup', { name: 'How do you measure?' });
+
+    // assert
+    expect(within(group).getByRole('radio', { name: 'kg · cm' })).toBeChecked();
+    expect(within(group).getByRole('radio', { name: 'lb · in' })).toBeVisible();
+    expect(screen.getByLabelText(/Your weight/)).toHaveAccessibleName(/\(kg\)/);
+  });
+
+  it('takes her weight in pounds and stores it in kilograms', async () => {
+    // arrange
+    renderOnboarding('?session=client&jstage=account-created');
+    await userEvent.click(screen.getByRole('radio', { name: 'lb · in' }));
+
+    // act
+    await userEvent.type(screen.getByLabelText(/Your weight/), '150');
+
+    // assert
+    expect(screen.getByLabelText(/Your weight/)).toHaveAccessibleName(/\(lb\)/);
+    await waitFor(
+      () =>
+        expect(
+          loadDraft(DEMO_JOURNEY_CALL_ID)?.answers['goal-availability'].weight,
+        ).toBeCloseTo(68, 1),
+      { timeout: SERVICE_TIMEOUT },
+    );
+  });
+
+  it('turns down a weight outside the sensible range in pounds', async () => {
+    // arrange
+    renderOnboarding('?session=client&jstage=account-created');
+    await userEvent.click(screen.getByRole('radio', { name: 'lb · in' }));
+
+    // act
+    await userEvent.type(screen.getByLabelText(/Your weight/), '1200');
+    await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
+
+    // assert
+    expect(
+      screen.getByText('Enter a weight between 66 and 661 lb.'),
+    ).toBeVisible();
+  });
+
+  it('converts what she already typed when she changes the measurement system', async () => {
+    // arrange
+    renderOnboarding('?session=client&jstage=account-created');
+    await userEvent.type(screen.getByLabelText(/Your weight/), '68');
+
+    // act
+    await userEvent.click(screen.getByRole('radio', { name: 'lb · in' }));
+
+    // assert
+    expect(screen.getByLabelText(/Your weight/)).toHaveValue(149.9);
+  });
+
+  it('spells out her height in feet and inches while she works in inches', async () => {
+    // arrange
+    renderOnboarding('?session=client&jstage=account-created');
+    await userEvent.click(screen.getByRole('radio', { name: 'lb · in' }));
+
+    // act
+    await userEvent.type(screen.getByLabelText(/Your height/), '68');
+
+    // assert
+    expect(screen.getByText('5 ft 8 in')).toBeVisible();
+  });
+
+  it('shows the same answers in pounds when she comes back to the form', async () => {
+    // arrange
+    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(0));
+    window.localStorage.setItem(
+      'eli.unitPreferences',
+      JSON.stringify({ weightUnit: 'lb', heightUnit: 'ft-in' }),
+    );
+
+    // act
+    renderOnboarding('?session=client&jstage=onboarding');
+
+    // assert
+    expect(screen.getByLabelText(/Your weight/)).toHaveValue(145.7);
+    expect(screen.getByLabelText(/Your height/)).toHaveValue(65);
   });
 
   it('shows only the flagged questions when her coach asks for more', async () => {

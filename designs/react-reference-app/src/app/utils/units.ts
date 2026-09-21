@@ -1,11 +1,13 @@
 // ── Unit conversion + formatting ────────────────────────────────────
 //
-// Canonical storage is metric: weight in kilograms, height in centimetres.
+// Canonical storage is metric: weight in kilograms, length in centimetres.
 // Conversion happens only at display + input boundaries, driven by the
 // client's unit preferences (see UnitPreferencesContext).
 
 export type WeightUnit = 'kg' | 'lb';
 export type HeightUnit = 'cm' | 'ft-in';
+export type LengthUnit = 'cm' | 'in';
+export type MeasurementSystem = 'metric' | 'imperial';
 
 const KG_PER_LB = 0.45359237;
 const CM_PER_IN = 2.54;
@@ -16,10 +18,13 @@ const round = (n: number, dp = 0): number => {
   return Math.round(n * f) / f;
 };
 
+const toHalf = (n: number): number => Math.round(n * 2) / 2;
+const toQuarter = (n: number): number => Math.round(n * 4) / 4;
+
 // ── Weight ──────────────────────────────────────────────────────────
 
-export const kgToLb = (kg: number): number => kg / KG_PER_LB;
-export const lbToKg = (lb: number): number => lb * KG_PER_LB;
+export const kgToLb = (kg: number): number => round(kg / KG_PER_LB, 1);
+export const lbToKg = (lb: number): number => round(lb * KG_PER_LB, 2);
 
 /** Short label for a weight unit, e.g. for inputs and column headers. */
 export const weightUnitLabel = (unit: WeightUnit): string => unit;
@@ -48,6 +53,26 @@ export const formatLoad = (kg: number, unit: WeightUnit, dp = 1): string =>
 export const formatVolume = (kg: number, unit: WeightUnit): string =>
   `${Math.round(toDisplayWeight(kg, unit)).toLocaleString()} ${weightUnitLabel(unit)}`;
 
+// ── Length ──────────────────────────────────────────────────────────
+
+export const cmToIn = (cm: number): number => toQuarter(cm / CM_PER_IN);
+export const inToCm = (inch: number): number => toHalf(inch * CM_PER_IN);
+
+export const lengthUnitOf = (unit: HeightUnit): LengthUnit =>
+  unit === 'cm' ? 'cm' : 'in';
+
+export const toDisplayLength = (cm: number, unit: LengthUnit): number =>
+  unit === 'cm' ? cm : cmToIn(cm);
+
+export const fromDisplayLength = (value: number, unit: LengthUnit): number =>
+  unit === 'cm' ? value : inToCm(value);
+
+export const displayLengthValue = (cm: number, unit: LengthUnit): number =>
+  unit === 'cm' ? round(cm, 1) : cmToIn(cm);
+
+export const formatCircumference = (cm: number, unit: LengthUnit): string =>
+  `${displayLengthValue(cm, unit)} ${unit}`;
+
 // ── Height ──────────────────────────────────────────────────────────
 
 export const cmToFtIn = (cm: number): { ft: number; inch: number } => {
@@ -56,11 +81,16 @@ export const cmToFtIn = (cm: number): { ft: number; inch: number } => {
 };
 
 export const ftInToCm = (ft: number, inch: number): number =>
-  (ft * IN_PER_FT + inch) * CM_PER_IN;
+  inToCm(ft * IN_PER_FT + inch);
+
+export const formatFeetAndInches = (inches: number): string => {
+  const whole = Math.round(inches);
+  return `${Math.floor(whole / IN_PER_FT)} ft ${whole % IN_PER_FT} in`;
+};
 
 /** Height display: "165 cm" / "5'5\"". */
 export const formatHeight = (cm: number, unit: HeightUnit): string => {
-  if (unit === 'cm') return `${Math.round(cm)} cm`;
+  if (unit === 'cm') return `${round(cm, 1)} cm`;
   const { ft, inch } = cmToFtIn(cm);
   return `${ft}'${inch}"`;
 };
@@ -77,27 +107,20 @@ export const HEIGHT_UNIT_LABELS: Record<HeightUnit, string> = {
   'ft-in': 'Feet & inches (ft·in)',
 };
 
-// ── Circumference ───────────────────────────────────────────────────
+// ── Measurement system ────────────────────────────────────────────
 
-export type CircumferenceUnit = 'cm' | 'in';
+export const MEASUREMENT_SYSTEM_UNITS: Record<
+  MeasurementSystem,
+  { weightUnit: WeightUnit; heightUnit: HeightUnit }
+> = {
+  metric: { weightUnit: 'kg', heightUnit: 'cm' },
+  imperial: { weightUnit: 'lb', heightUnit: 'ft-in' },
+};
 
-export const cmToIn = (cm: number): number => cm / CM_PER_IN;
-export const inToCm = (inch: number): number => inch * CM_PER_IN;
+export const MEASUREMENT_SYSTEM_LABELS: Record<MeasurementSystem, string> = {
+  metric: 'kg · cm',
+  imperial: 'lb · in',
+};
 
-export const circumferenceUnitOf = (unit: HeightUnit): CircumferenceUnit =>
-  unit === 'cm' ? 'cm' : 'in';
-
-export const toDisplayCircumference = (cm: number, unit: CircumferenceUnit): number =>
-  unit === 'cm' ? cm : cmToIn(cm);
-
-export const fromDisplayCircumference = (value: number, unit: CircumferenceUnit): number =>
-  unit === 'cm' ? value : inToCm(value);
-
-export const displayCircumferenceValue = (
-  cm: number,
-  unit: CircumferenceUnit,
-  dp = 1,
-): number => round(toDisplayCircumference(cm, unit), dp);
-
-export const formatCircumference = (cm: number, unit: CircumferenceUnit): string =>
-  `${displayCircumferenceValue(cm, unit, 1)} ${unit}`;
+export const measurementSystemOf = (unit: WeightUnit): MeasurementSystem =>
+  unit === 'kg' ? 'metric' : 'imperial';

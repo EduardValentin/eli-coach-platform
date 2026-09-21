@@ -25,6 +25,7 @@ import {
 } from '../../../services/onboardingService';
 import { Alert } from '../../ui/alert';
 import { Stepper } from '../../ui/stepper';
+import { MeasurementSystemField } from './MeasurementSystemField';
 import { OnboardingConsent } from './OnboardingConsent';
 import { OnboardingFormCard } from './OnboardingFormCard';
 import {
@@ -271,6 +272,7 @@ export function OnboardingWizard() {
             onBack={back}
             onChange={handleAnswers}
             onContinue={continueFrom}
+            unitsChoice={stepIndex === 0 ? <MeasurementSystemField /> : null}
           >
             {isLastStep && (
               <>

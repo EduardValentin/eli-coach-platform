@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import type { WeightUnit, HeightUnit } from '../utils/units';
+import { MEASUREMENT_SYSTEM_UNITS } from '../utils/units';
+import type { HeightUnit, MeasurementSystem, WeightUnit } from '../utils/units';
 
 // ── Types ───────────────────────────────────────────────────────────
 
@@ -11,6 +12,7 @@ interface UnitPreferences {
 interface UnitPreferencesContextType extends UnitPreferences {
   setWeightUnit(unit: WeightUnit): void;
   setHeightUnit(unit: HeightUnit): void;
+  setMeasurementSystem(system: MeasurementSystem): void;
 }
 
 const STORAGE_KEY = 'eli.unitPreferences';
@@ -56,8 +58,14 @@ export function UnitPreferencesProvider({ children }: { children: ReactNode }) {
     setPrefs(prev => ({ ...prev, heightUnit }));
   }, []);
 
+  const setMeasurementSystem = useCallback((system: MeasurementSystem) => {
+    setPrefs({ ...MEASUREMENT_SYSTEM_UNITS[system] });
+  }, []);
+
   return (
-    <UnitPreferencesContext.Provider value={{ ...prefs, setWeightUnit, setHeightUnit }}>
+    <UnitPreferencesContext.Provider
+      value={{ ...prefs, setWeightUnit, setHeightUnit, setMeasurementSystem }}
+    >
       {children}
     </UnitPreferencesContext.Provider>
   );

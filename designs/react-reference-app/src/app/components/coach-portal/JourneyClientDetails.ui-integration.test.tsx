@@ -28,6 +28,7 @@ beforeAll(() => {
 });
 
 afterEach(() => {
+  window.localStorage.clear();
   window.history.replaceState({}, '', '/');
 });
 
@@ -138,6 +139,25 @@ describe('the coach view of a client in onboarding', () => {
     expect(within(widget).getByText('Waist')).toBeInTheDocument();
     expect(within(widget).getByText('74 cm')).toBeInTheDocument();
     expect(within(widget).getAllByText('Not answered')).toHaveLength(2);
+  });
+
+  it('reads her measurements back in kilograms and centimetres whatever she entered them in', async () => {
+    // arrange
+    window.localStorage.setItem(
+      'eli.unitPreferences',
+      JSON.stringify({ weightUnit: 'lb', heightUnit: 'ft-in' }),
+    );
+    const user = renderDetails('?jstage=submitted');
+
+    // act
+    await user.click(
+      within(onboardingWidget()).getByRole('button', { name: /Your goal and your week/ }),
+    );
+
+    // assert
+    const widget = onboardingWidget();
+    expect(within(widget).getByText('66.1 kg')).toBeInTheDocument();
+    expect(within(widget).getByText('165 cm')).toBeInTheDocument();
   });
 
   it('reads a yes or no back as plain text and marks the ones that need a look', async () => {

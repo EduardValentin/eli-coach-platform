@@ -51,7 +51,7 @@ function readingsOf(entry: MeasurementEntry, units: MeasureUnits): string {
     `Weight ${formatBodyWeight(entry.weightKg, units.weight)}`,
     ...circumferences
       .filter(([, value]) => value !== undefined)
-      .map(([name, value]) => `${name} ${formatCircumference(value ?? 0, units.circumference)}`),
+      .map(([name, value]) => `${name} ${formatCircumference(value ?? 0, units.length)}`),
   ].join(' · ');
 }
 

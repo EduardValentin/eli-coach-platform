@@ -4,7 +4,7 @@ import type { Control, ControllerRenderProps } from 'react-hook-form';
 import type { OnboardingField } from '../../../domain/onboardingSchema';
 import { CheckboxChip } from '../../CheckboxChip';
 import { Input } from '../../ui/input';
-import { RadioGroup, RadioGroupItem } from '../../ui/radio-group';
+import { RadioGroup } from '../../ui/radio-group';
 import {
   Select,
   SelectContent,
@@ -21,12 +21,16 @@ import {
   FormLabel,
   FormMessage,
 } from '../../ui/form';
+import { formatFeetAndInches } from '../../../utils/units';
 import {
+  measureStep,
   measureUnitLabel,
   useMeasureUnits,
   type MeasureKind,
   type MeasureUnits,
 } from '../measureUnits';
+import { ONBOARDING_LEGEND_CLASS } from './onboardingCard';
+import { OnboardingRadioOption } from './OnboardingRadioOption';
 import { entryBounds, fieldRules } from './onboardingValidation';
 import {
   asList,
@@ -45,11 +49,29 @@ type FieldController = ControllerRenderProps<OnboardingValues>;
 
 const OPTIONAL_SUFFIX = '(optional)';
 
-const NUMERIC_STEPS: Record<string, string> = {
-  weight: '0.1',
-  height: '0.1',
-  circumference: '0.1',
-};
+const WHOLE_STEP = '1';
+
+function entryStep(field: OnboardingField, units: MeasureUnits): string {
+  if (field.step) return field.step;
+
+  return isMeasureField(field)
+    ? measureStep(field.kind as MeasureKind, units)
+    : WHOLE_STEP;
+}
+
+function feetAndInchesHint(
+  field: OnboardingField,
+  value: string | string[] | undefined,
+  units: MeasureUnits,
+): string | null {
+  if (field.kind !== 'height' || units.length !== 'in') return null;
+
+  const entered = Number(asText(value));
+
+  return Number.isFinite(entered) && entered > 0
+    ? formatFeetAndInches(entered)
+    : null;
+}
 
 function numberEntry(
   field: OnboardingField,
@@ -66,7 +88,7 @@ function numberEntry(
       onBlur={controller.onBlur}
       onChange={controller.onChange}
       ref={controller.ref}
-      step={field.step ?? NUMERIC_STEPS[field.kind] ?? '1'}
+      step={entryStep(field, units)}
       type="number"
       value={asText(controller.value)}
     />
@@ -133,19 +155,6 @@ function LabelText({ field, unit }: { field: OnboardingField; unit: string | nul
   );
 }
 
-function RadioOption({ value, label }: { value: string; label: string }) {
-  const id = useId();
-
-  return (
-    <div className="flex items-center gap-2">
-      <RadioGroupItem id={id} value={value} />
-      <label htmlFor={id} className="text-sm text-text-primary">
-        {label}
-      </label>
-    </div>
-  );
-}
-
 export function OnboardingFieldControl({ control, field }: FieldControlProps) {
   const units = useMeasureUnits();
   const legendId = useId();
@@ -164,10 +173,7 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
             <FormItem>
               <FormControl>
                 <fieldset>
-                  <legend
-                    className="mb-1 flex flex-wrap items-baseline gap-1.5 text-sm font-medium text-text-label"
-                    id={legendId}
-                  >
+                  <legend className={ONBOARDING_LEGEND_CLASS} id={legendId}>
                     <LabelText field={field} unit={unit} />
                   </legend>
                   {field.hint && <FormDescription>{field.hint}</FormDescription>}
@@ -179,7 +185,7 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
                       value={asText(controller.value)}
                     >
                       {(field.options ?? []).map((option) => (
-                        <RadioOption
+                        <OnboardingRadioOption
                           key={option.value}
                           label={option.label}
                           value={option.value}
@@ -215,12 +221,16 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
           );
         }
 
+        const equivalent = feetAndInchesHint(field, controller.value, units);
+
         return (
           <FormItem>
             <FormLabel className="flex flex-wrap items-baseline gap-1.5">
               <LabelText field={field} unit={unit} />
             </FormLabel>
-            {field.hint && <FormDescription>{field.hint}</FormDescription>}
+            {!equivalent && field.hint && (
+              <FormDescription>{field.hint}</FormDescription>
+            )}
             {field.kind === 'select' ? (
               <Select onValueChange={controller.onChange} value={asText(controller.value)}>
                 <FormControl>
@@ -239,6 +249,7 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
             ) : (
               <FormControl>{fieldEntry(field, controller, units)}</FormControl>
             )}
+            {equivalent && <FormDescription>{equivalent}</FormDescription>}
             <FormMessage />
           </FormItem>
         );

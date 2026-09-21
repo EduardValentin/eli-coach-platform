@@ -6,6 +6,7 @@ import {
   type OnboardingFormAnswers,
   type OnboardingFormId,
 } from './journey';
+import { displayLengthValue, displayWeightValue } from '../utils/units';
 import { formsForSex, type OnboardingField } from './onboardingSchema';
 
 export const ONBOARDING_FORM_LABELS: Record<OnboardingFormId, string> = {
@@ -168,13 +169,20 @@ const CANONICAL_UNITS: Record<string, string> = {
   circumference: 'cm',
 };
 
+function canonicalReading(kind: string, value: number): string {
+  const reading =
+    kind === 'weight'
+      ? displayWeightValue(value, 'kg', 1)
+      : displayLengthValue(value, 'cm');
+
+  return `${reading} ${CANONICAL_UNITS[kind]}`;
+}
+
 function readAnswer(field: OnboardingField, answer: OnboardingAnswer): string {
-  const reading = describeAnswer(answer);
-  if (typeof answer !== 'number') return reading;
+  if (typeof answer !== 'number') return describeAnswer(answer);
+  if (CANONICAL_UNITS[field.kind]) return canonicalReading(field.kind, answer);
 
-  const unit = CANONICAL_UNITS[field.kind] ?? field.unitSuffix;
-
-  return unit ? `${reading} ${unit}` : reading;
+  return field.unitSuffix ? `${answer} ${field.unitSuffix}` : String(answer);
 }
 
 function reviewAnswer(

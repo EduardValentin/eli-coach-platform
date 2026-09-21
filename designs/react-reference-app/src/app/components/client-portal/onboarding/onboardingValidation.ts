@@ -78,8 +78,8 @@ function displayRange(
   units: MeasureUnits,
 ): NumericRange {
   return {
-    min: Math.floor(displayAmount(field, range.min, units)),
-    max: Math.ceil(displayAmount(field, range.max, units)),
+    min: Math.round(displayAmount(field, range.min, units)),
+    max: Math.round(displayAmount(field, range.max, units)),
   };
 }
 
