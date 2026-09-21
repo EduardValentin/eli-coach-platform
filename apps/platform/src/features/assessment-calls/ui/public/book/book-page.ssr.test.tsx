@@ -13,7 +13,7 @@ import BookRoute from "./book-page";
 const COACH_TIME_ZONE = "Pacific/Honolulu";
 
 describe("assessment call booking page server rendering", () => {
-  it("names the times in the coach zone before the browser zone is known", async () => {
+  it("renders the booking page with its heading and first step, naming no zone", async () => {
     // arrange
     const html = await renderBookingPage({
       botDetection: { provider: "static", token: "XXXX.DUMMY.TOKEN.XXXX" },
@@ -23,13 +23,12 @@ describe("assessment call booking page server rendering", () => {
     });
 
     // act
-    const zoneLine = html.replace(/<!--[^>]*-->/g, "");
+    const visible = html.replace(/<!--[^>]*-->/g, "");
 
     // assert
-    expect(zoneLine).toContain(
-      `All times shown in your local timezone (${COACH_TIME_ZONE}, GMT-10)`,
-    );
-    expect(html).toContain("Free Assessment Call");
+    expect(visible).not.toContain("All times shown in your local timezone");
+    expect(visible).not.toContain("GMT-10");
+    expect(html).toContain("Free Call");
     expect(html).toContain("Select a Date &amp; Time");
   });
 

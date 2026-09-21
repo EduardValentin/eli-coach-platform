@@ -42,30 +42,47 @@ function call(
     joinPath: `/book/${startsAt}/join`,
     startsAt: starts.toISOString(),
     visitorEmail: "ana@example.com",
-    visitorName: "Ana Popescu",
     visitorNotes: null,
+    ...visitorNamed("Ana Popescu"),
+    ...VISITOR_PROFILE,
     ...overrides,
   };
 }
 
+function visitorNamed(fullName: string) {
+  const [firstName, lastName] = fullName.split(" ");
+
+  return { firstName, fullName, lastName };
+}
+
+const VISITOR_PROFILE = {
+  country: "RO",
+  dateOfBirth: "1994-03-14",
+  gender: "female",
+  phone: null,
+  primaryGoal: "build_strength",
+} as const;
+
 const YESTERDAY = call("2026-09-19T15:00:00.000Z", {
   id: "yesterday",
   visitorEmail: "bea@example.com",
-  visitorName: "Bea Ionescu",
+  ...visitorNamed("Bea Ionescu"),
 });
 const EARLIER_TODAY = call("2026-09-20T05:00:00.000Z", {
   id: "earlier-today",
   visitorEmail: "carla@example.com",
-  visitorName: "Carla Marin",
+  ...visitorNamed("Carla Marin"),
 });
 const LATER_TODAY = call("2026-09-20T15:00:00.000Z", {
   id: "later-today",
+  phone: "+40712345678",
+  primaryGoal: "lose_weight",
   visitorNotes: "Wants to talk about\nher glute programme",
 });
 const NEXT_WEEK = call("2026-09-22T15:00:00.000Z", {
   id: "next-week",
   visitorEmail: "dana@example.com",
-  visitorName: "Dana Radu",
+  ...visitorNamed("Dana Radu"),
 });
 
 const FOUR_CALLS = [YESTERDAY, EARLIER_TODAY, LATER_TODAY, NEXT_WEEK];
@@ -127,6 +144,41 @@ describe("the coach's assessment calls page", () => {
     expect(
       soonest.getByText(/Wants to talk about\s+her glute programme/),
     ).toBeInTheDocument();
+  });
+
+  it("shows each visitor's age, gender, goal, country and phone", async () => {
+    // arrange, act
+    await renderCallsPage();
+
+    // assert
+    const [soonest, next] = shownCalls().map((item) => within(item));
+
+    expect(
+      soonest.getAllByRole("term").map((term) => term.textContent),
+    ).toEqual(["Age", "Gender", "Goal", "Country"]);
+    expect(
+      soonest.getAllByRole("definition").map((entry) => entry.textContent),
+    ).toEqual(["32 (14 Mar 1994)", "Female", "Lose weight", "Romania"]);
+    expect(soonest.getByRole("link", { name: "+40712345678" })).toHaveAttribute(
+      "href",
+      "tel:+40712345678",
+    );
+    expect(next.queryByRole("link", { name: /^\+/ })).not.toBeInTheDocument();
+  });
+
+  it("finds a visitor by her last name alone", async () => {
+    // arrange
+    const user = await renderCallsPage({
+      url: `${COACH_ASSESSMENT_CALLS_PATH}?status=all`,
+    });
+
+    // act
+    await user.type(screen.getByLabelText("Search calls"), "Radu");
+
+    // assert
+    await waitFor(() => {
+      expect(shownCallNames()).toEqual(["Dana Radu"]);
+    });
   });
 
   it("badges the calls that fall today in the reader's own zone", async () => {
@@ -353,7 +405,7 @@ describe("paging through a long history of calls", () => {
     call(new Date(NOW.getTime() + (index + 1) * 3_600_000).toISOString(), {
       id: `call-${index + 1}`,
       visitorEmail: `visitor${index + 1}@example.com`,
-      visitorName: `Visitor ${index + 1}`,
+      ...visitorNamed(`Visitor ${index + 1}`),
     }),
   );
 

@@ -17,10 +17,7 @@ import {
   type ShouldRevalidateFunctionArgs,
 } from "react-router";
 
-import type {
-  BookAssessmentCallRequest,
-  OpenSlotsResponse,
-} from "~/features/assessment-calls/contracts/assessment-calls";
+import type { OpenSlotsResponse } from "~/features/assessment-calls/contracts/assessment-calls";
 import { assessmentCallsContext } from "~/features/assessment-calls/server/guards/assessment-calls-context.server";
 
 import { useRefreshSlotsFetcher } from "./api-client";
@@ -57,10 +54,10 @@ export function shouldRevalidate({
 }
 
 export const meta: MetaFunction = () => [
-  { title: "Book a Free Assessment Call | Evoa" },
+  { title: "Book a Free Call | Evoa" },
   {
     name: "description",
-    content: "Book a free assessment call with Eli and start your plan.",
+    content: "Book a free call with Eli and start your plan.",
   },
 ];
 
@@ -131,13 +128,20 @@ function BookingFlow(props: {
         return;
       }
 
-      const booking = {
+      const booking: Record<string, string> = {
+        country: details.country,
+        dateOfBirth: details.dateOfBirth,
         email: details.email,
-        fullName: details.fullName,
+        firstName: details.firstName,
+        gender: details.gender,
+        lastName: details.lastName,
         notes: details.notes,
+        phoneCallingCode: details.phoneCountry,
+        phoneNumber: details.phoneNumber,
+        primaryGoal: details.primaryGoal,
         startsAt: flow.selectedSlot,
         visitorTimeZone: timeZone,
-      } satisfies BookAssessmentCallRequest;
+      };
       const formData = new FormData();
 
       for (const [field, value] of Object.entries(booking)) {
@@ -192,6 +196,7 @@ function BookingFlow(props: {
                 onBack={(details) => dispatch({ details, type: "show-slots" })}
                 onSubmit={submitDetails}
                 submission={submission}
+                timeZone={timeZone}
               />
             </motion.div>
           ) : null}

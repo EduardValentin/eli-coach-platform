@@ -1,4 +1,7 @@
-import { AppointmentCard } from "@eli-coach-platform/ui/appointments";
+import {
+  AppointmentCard,
+  type AppointmentDetail,
+} from "@eli-coach-platform/ui/appointments";
 import { cn } from "@eli-coach-platform/ui/lib";
 import {
   Badge,
@@ -17,6 +20,12 @@ import {
   formatClockTime,
   formatShortDay,
 } from "~/features/assessment-calls/contracts/call-moment";
+import { findCountry } from "~/features/assessment-calls/contracts/countries";
+import {
+  formatAgeForCard,
+  labelForGender,
+  labelForPrimaryGoal,
+} from "~/features/assessment-calls/contracts/visitor-profile";
 import {
   classifyCalls,
   filterCalls,
@@ -25,6 +34,7 @@ import {
   PAGE_SIZE,
   type ClassifiedCall,
   type CoachCallStatus,
+  type ListingMoment,
 } from "~/features/assessment-calls/ui/coach/assessment-call-listing";
 import { JoinCallLink } from "~/features/assessment-calls/ui/coach/join-call-link";
 
@@ -103,7 +113,7 @@ export function AssessmentCallsSection({
               <CallList
                 calls={view.calls}
                 emptyMessage={emptyMessageFor(tab.status)}
-                timeZone={timeZone}
+                moment={{ now, timeZone }}
               />
 
               {view.pageCount > 1 && (
@@ -120,9 +130,9 @@ export function AssessmentCallsSection({
 function CallList(props: {
   calls: readonly ClassifiedCall[];
   emptyMessage: string;
-  timeZone: string;
+  moment: ListingMoment;
 }) {
-  const { calls, emptyMessage, timeZone } = props;
+  const { calls, emptyMessage, moment } = props;
 
   if (calls.length === 0) {
     return (
@@ -133,16 +143,39 @@ function CallList(props: {
   return (
     <ul aria-label="Assessment calls" className="space-y-4">
       {calls.map((call) => (
-        <li key={call.id}>
-          <CallCard call={call} timeZone={timeZone} />
+        <li data-parity-root="AppointmentCard" key={call.id}>
+          <CallCard call={call} moment={moment} />
         </li>
       ))}
     </ul>
   );
 }
 
-function CallCard(props: { call: ClassifiedCall; timeZone: string }) {
-  const { call, timeZone } = props;
+function visitorDetails(
+  call: ClassifiedCall,
+  moment: ListingMoment,
+): AppointmentDetail[] {
+  return [
+    {
+      label: "Age",
+      value: formatAgeForCard({
+        dateOfBirth: call.dateOfBirth,
+        on: moment.now,
+        timeZone: moment.timeZone,
+      }),
+    },
+    { label: "Gender", value: labelForGender(call.gender) },
+    { label: "Goal", value: labelForPrimaryGoal(call.primaryGoal) },
+    {
+      label: "Country",
+      value: findCountry(call.country)?.name ?? call.country,
+    },
+  ];
+}
+
+function CallCard(props: { call: ClassifiedCall; moment: ListingMoment }) {
+  const { call, moment } = props;
+  const { timeZone } = moment;
   const startsAt = new Date(call.startsAt);
 
   return (
@@ -154,8 +187,13 @@ function CallCard(props: { call: ClassifiedCall; timeZone: string }) {
           <Badge tone="neutral">Past</Badge>
         )
       }
-      attendee={{ email: call.visitorEmail, name: call.visitorName }}
+      attendee={{
+        email: call.visitorEmail,
+        name: call.fullName,
+        phone: call.phone ?? undefined,
+      }}
       badges={call.isToday && <Badge tone="accent">Today</Badge>}
+      details={visitorDetails(call, moment)}
       quote={call.visitorNotes ?? undefined}
       status={call.timing === "past" ? "past" : "scheduled"}
       titleElement="h2"

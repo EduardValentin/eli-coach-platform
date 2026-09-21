@@ -274,7 +274,7 @@ export function PublicHero(props: PublicHeroProps) {
                   </Link>
                 </div>
                 <p className="text-sm font-light tracking-wide text-text-inverted-secondary">
-                  Free 30-minute assessment call.
+                  Free 30-minute call.
                 </p>
               </motion.div>
             </div>

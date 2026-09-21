@@ -35,7 +35,7 @@ export function CallOverview(props: {
       />
 
       <h1 className="mb-6 text-sm font-semibold tracking-widest text-text-secondary uppercase">
-        Free Assessment Call
+        Free Call
       </h1>
 
       <div className="mb-8 space-y-4 font-medium text-text-secondary">

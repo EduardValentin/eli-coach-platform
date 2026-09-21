@@ -132,13 +132,8 @@ describe("booking an assessment call: choosing a time", () => {
     });
     expect(timeButtons()[0]).toHaveAttribute("aria-pressed", "false");
     expect(
-      screen.getByText(
-        (content) =>
-          content.includes("All times shown in your local timezone") &&
-          content.includes(BROWSER_TIME_ZONE) &&
-          content.includes("GMT"),
-      ),
-    ).toBeInTheDocument();
+      screen.queryByText(/timezone|time zone|GMT/i),
+    ).not.toBeInTheDocument();
   });
 
   it("announces the chosen day as selected", async () => {
@@ -154,37 +149,6 @@ describe("booking an assessment call: choosing a time", () => {
     // assert
     expect(openDayButtons()[0]).toHaveAccessibleName(
       /^Today, Monday,? 2 March 2026, selected$/,
-    );
-  });
-
-  it("names the zone offset of the chosen day when a clock change falls inside the open times", async () => {
-    // arrange
-    vi.stubEnv("TZ", "Australia/Sydney");
-    vi.setSystemTime(new Date("2026-09-30T00:00:00.000Z"));
-    const user = renderBookingPage({
-      page: {
-        botDetection: STATIC_BOT_DETECTION,
-        coachTimeZone: COACH_TIME_ZONE,
-        slots: ["2026-10-01T00:00:00.000Z", "2026-10-06T00:00:00.000Z"],
-        status: "open",
-      },
-    });
-    await waitFor(() => {
-      expect(zoneLine()).toHaveTextContent("Australia/Sydney");
-    });
-    const zoneBeforeADayIsChosen = zoneLine().textContent;
-
-    // act
-    await user.click(
-      screen.getByRole("button", { name: /^Tuesday,? 6 October 2026/ }),
-    );
-
-    // assert
-    expect(zoneBeforeADayIsChosen).toBe(
-      "All times shown in your local timezone (Australia/Sydney, GMT+10)",
-    );
-    expect(zoneLine()).toHaveTextContent(
-      "All times shown in your local timezone (Australia/Sydney, GMT+11)",
     );
   });
 
@@ -212,45 +176,116 @@ describe("booking an assessment call: choosing a time", () => {
 });
 
 describe("booking an assessment call: the details", () => {
-  it("names the chosen call and keeps it while the details are rejected", async () => {
+  it("explains every rejected detail under its field and keeps the chosen call", async () => {
     // arrange
     const user = renderBookingPage();
     await reachDetails(user);
     const chosenCall = chosenCallSummary();
 
     // act
-    await user.type(screen.getByLabelText("Full Name"), "J");
     await user.type(screen.getByLabelText("Email Address"), "not-an-address");
+    await user.type(screen.getByLabelText("Phone number"), "12ab");
     await user.click(
-      screen.getByRole("button", { name: "Schedule Assessment" }),
+      screen.getByLabelText("Anything to share beforehand? (Optional)"),
     );
+    await user.paste("x".repeat(1001));
+    await user.click(screen.getByRole("button", { name: "Schedule Call" }));
 
     // assert
     expect(
-      await screen.findByText(
-        "Enter your full name, between 2 and 120 characters.",
-      ),
+      await screen.findByText("Enter your first name, up to 60 characters."),
     ).toBeInTheDocument();
+    expect(screen.getByLabelText("First name")).toHaveAccessibleDescription(
+      "Enter your first name, up to 60 characters.",
+    );
+    expect(screen.getByLabelText("Last name")).toHaveAccessibleDescription(
+      "Enter your last name, up to 60 characters.",
+    );
+    expect(screen.getByLabelText("Email Address")).toHaveAccessibleDescription(
+      "Enter a valid email address.",
+    );
+    expect(screen.getByLabelText("Date of birth")).toHaveAccessibleDescription(
+      "Choose your date of birth.",
+    );
     expect(
-      screen.getByText("Enter a valid email address."),
-    ).toBeInTheDocument();
-    expect(screen.getByLabelText("Full Name")).toHaveAccessibleDescription(
-      "Enter your full name, between 2 and 120 characters.",
+      screen.getByRole("combobox", { name: "Gender" }),
+    ).toHaveAccessibleDescription("Choose an option.");
+    expect(
+      screen.getByRole("combobox", { name: "Primary goal" }),
+    ).toHaveAccessibleDescription("Choose your primary goal.");
+    expect(
+      screen.getByRole("combobox", { name: "Country" }),
+    ).toHaveAccessibleDescription("Choose your country.");
+    expect(screen.getByLabelText("Phone number")).toHaveAccessibleDescription(
+      "Enter a phone number with digits only, 4 to 14 digits after the country code.",
+    );
+    expect(
+      screen.getByLabelText("Anything to share beforehand? (Optional)"),
+    ).toHaveAccessibleDescription("Keep your note under 1000 characters.");
+    expect(screen.getByLabelText("First name")).toHaveAttribute(
+      "aria-invalid",
+      "true",
     );
     expect(chosenCallSummary()).toBe(chosenCall);
+  });
+
+  it("offers no birth date that would make the visitor under 18 on the booking day", async () => {
+    // arrange
+    const user = renderBookingPage();
+    await reachDetails(user);
+    await user.click(screen.getByLabelText("Date of birth"));
+
+    // act
+    await chooseOption(user, "Year", "2008");
+    await chooseOption(user, "Month", "March");
+
+    // assert
+    expect(calendarDayButton("2008-03-03")).toBeDisabled();
+    expect(calendarDayButton("2008-03-02")).toBeEnabled();
+    expect(screen.queryByRole("option", { name: "2009" })).toBeNull();
+
+    // act
+    await user.click(calendarDayButton("2008-03-02"));
+
+    // assert
+    expect(screen.getByLabelText("Date of birth")).toHaveTextContent(
+      "2 March 2008",
+    );
+  });
+
+  it("preselects the calling code from the country until the visitor changes it herself", async () => {
+    // arrange
+    const user = renderBookingPage();
+    await reachDetails(user);
+
+    // act
+    await chooseOption(user, "Country", "Romania");
+    const afterCountry = screen.getByRole("combobox", {
+      name: "Country calling code",
+    }).textContent;
+    await chooseOption(user, "Country calling code", "+44 GB");
+    await chooseOption(user, "Country", "France");
+
+    // assert
+    expect(afterCountry).toBe("+40 RO");
+    expect(
+      screen.getByRole("combobox", { name: "Country calling code" }),
+    ).toHaveTextContent("+44 GB");
+    expect(screen.getByRole("combobox", { name: "Country" })).toHaveTextContent(
+      "France",
+    );
   });
 
   it("moves focus to the first rejected detail", async () => {
     // arrange
     const user = renderBookingPage();
     await reachDetails(user);
-    await user.type(screen.getByLabelText("Full Name"), "Jane Doe");
+    await fillDetails(user);
+    await user.clear(screen.getByLabelText("Email Address"));
     await user.type(screen.getByLabelText("Email Address"), "not-an-address");
 
     // act
-    await user.click(
-      screen.getByRole("button", { name: "Schedule Assessment" }),
-    );
+    await user.click(screen.getByRole("button", { name: "Schedule Call" }));
 
     // assert
     await waitFor(() => {
@@ -270,14 +305,13 @@ describe("booking an assessment call: the details", () => {
     );
     const user = renderBookingPage();
     await reachDetails(user);
-    await user.type(screen.getByLabelText("Full Name"), "Jane Doe");
+    await fillDetails(user);
+    await user.clear(screen.getByLabelText("Email Address"));
     await user.click(screen.getByLabelText("Email Address"));
     await user.paste(`${"a".repeat(309)}@example.com`);
 
     // act
-    await user.click(
-      screen.getByRole("button", { name: "Schedule Assessment" }),
-    );
+    await user.click(screen.getByRole("button", { name: "Schedule Call" }));
 
     // assert
     expect(
@@ -290,7 +324,7 @@ describe("booking an assessment call: the details", () => {
     expect(bookingRequests).toBe(0);
   });
 
-  it("sends the chosen time, the details and the visitor zone", async () => {
+  it("sends the chosen time, every detail and the visitor zone", async () => {
     // arrange
     let submitted: Record<string, FormDataEntryValue> = {};
     server.use(
@@ -306,9 +340,8 @@ describe("booking an assessment call: the details", () => {
 
     // act
     await fillDetails(user);
-    await user.click(
-      screen.getByRole("button", { name: "Schedule Assessment" }),
-    );
+    await user.type(screen.getByLabelText("Phone number"), "0712 345 678");
+    await user.click(screen.getByRole("button", { name: "Schedule Call" }));
 
     // assert
     await screen.findByRole("heading", {
@@ -317,12 +350,42 @@ describe("booking an assessment call: the details", () => {
     });
     expect(submitted).toEqual({
       "cf-turnstile-response": TURNSTILE_TEST_RESPONSE_TOKEN,
+      country: "RO",
+      dateOfBirth: "1994-03-14",
       email: "jane@example.com",
-      fullName: "Jane Doe",
+      firstName: "Jane",
+      gender: "female",
+      lastName: "Doe",
       notes: "",
+      phoneCallingCode: "RO",
+      phoneNumber: "0712 345 678",
+      primaryGoal: "build_strength",
       startsAt: FIRST_SLOT,
       visitorTimeZone: BROWSER_TIME_ZONE,
     });
+  });
+
+  it("books without a phone when the number is left empty", async () => {
+    // arrange
+    let submitted: Record<string, FormDataEntryValue> = {};
+    server.use(
+      http.post(BOOKINGS_API_URL, async ({ request }) => {
+        submitted = Object.fromEntries((await request.formData()).entries());
+
+        return HttpResponse.json(confirmedBooking(), { status: 201 });
+      }),
+    );
+    const user = renderBookingPage();
+    await reachDetails(user);
+    await fillDetails(user);
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Schedule Call" }));
+
+    // assert
+    await screen.findByRole("heading", { level: 2, name: "You're booked!" });
+    expect(submitted.phoneNumber).toBe("");
+    expect(submitted.phoneCallingCode).toBe("RO");
   });
 });
 
@@ -336,9 +399,7 @@ describe("booking an assessment call: the outcome", () => {
     await fillDetails(user);
 
     // act
-    await user.click(
-      screen.getByRole("button", { name: "Schedule Assessment" }),
-    );
+    await user.click(screen.getByRole("button", { name: "Schedule Call" }));
 
     // assert
     expect(
@@ -358,10 +419,9 @@ describe("booking an assessment call: the outcome", () => {
       screen.getByRole("link", { name: "Return to Home" }),
     ).toHaveAttribute("href", "/");
     expect(
-      screen.getByText(
-        /^Monday, March 2, 2026\s+5:00\sPM \(Europe\/Bucharest, GMT\+2\)$/,
-      ),
+      screen.getByText(/^Monday, March 2, 2026\s+5:00\sPM$/),
     ).toBeInTheDocument();
+    expect(screen.queryByText(/Europe\/Bucharest|GMT/)).not.toBeInTheDocument();
   });
 
   it("returns to refreshed times with no day chosen when the chosen one was taken", async () => {
@@ -395,9 +455,7 @@ describe("booking an assessment call: the outcome", () => {
     );
 
     // act
-    await user.click(
-      screen.getByRole("button", { name: "Schedule Assessment" }),
-    );
+    await user.click(screen.getByRole("button", { name: "Schedule Call" }));
     const bounceAlert = (await screen.findByRole("alert")).textContent;
     const stepAfterBounce = screen.getByRole("heading", {
       level: 2,
@@ -475,9 +533,7 @@ describe("booking an assessment call: the outcome", () => {
     await fillDetails(user);
 
     // act
-    await user.click(
-      screen.getByRole("button", { name: "Schedule Assessment" }),
-    );
+    await user.click(screen.getByRole("button", { name: "Schedule Call" }));
 
     // assert
     const alert = await screen.findByRole("alert");
@@ -514,9 +570,7 @@ describe("booking an assessment call: the outcome", () => {
     await fillDetails(user);
 
     // act
-    await user.click(
-      screen.getByRole("button", { name: "Schedule Assessment" }),
-    );
+    await user.click(screen.getByRole("button", { name: "Schedule Call" }));
 
     // assert
     const alert = await screen.findByRole("alert");
@@ -526,7 +580,7 @@ describe("booking an assessment call: the outcome", () => {
     ).toHaveAttribute("href", `mailto:${ELI_COACH_CONTACT_EMAIL}`);
     await waitFor(() => {
       expect(
-        screen.getByRole("button", { name: "Schedule Assessment" }),
+        screen.getByRole("button", { name: "Schedule Call" }),
       ).toBeEnabled();
     });
     expect(screen.getByLabelText("Email Address")).toHaveValue(
@@ -563,18 +617,14 @@ describe("booking an assessment call: the outcome", () => {
     await fillDetails(user);
 
     // act
-    await user.click(
-      screen.getByRole("button", { name: "Schedule Assessment" }),
-    );
+    await user.click(screen.getByRole("button", { name: "Schedule Call" }));
     const alert = await screen.findByRole("alert");
     await waitFor(() => {
       expect(
-        screen.getByRole("button", { name: "Schedule Assessment" }),
+        screen.getByRole("button", { name: "Schedule Call" }),
       ).toBeEnabled();
     });
-    await user.click(
-      screen.getByRole("button", { name: "Schedule Assessment" }),
-    );
+    await user.click(screen.getByRole("button", { name: "Schedule Call" }));
 
     // assert
     expect(alert).toHaveTextContent(/could not confirm this request/i);
@@ -672,9 +722,7 @@ describe("booking an assessment call: moving between steps", () => {
     await fillDetails(user);
 
     // act
-    await user.click(
-      screen.getByRole("button", { name: "Schedule Assessment" }),
-    );
+    await user.click(screen.getByRole("button", { name: "Schedule Call" }));
 
     // assert
     expect(
@@ -801,10 +849,6 @@ function openDayButtons(): HTMLButtonElement[] {
   );
 }
 
-function zoneLine(): HTMLElement {
-  return screen.getByText(/^All times shown in your local timezone /);
-}
-
 function timeButtons(): HTMLElement[] {
   return screen.queryAllByRole("button", { name: TIME_LABEL });
 }
@@ -837,14 +881,70 @@ function chosenCallSummary(): string | null {
 }
 
 async function expectEnteredDetails() {
-  expect(await screen.findByLabelText("Full Name")).toHaveValue("Jane Doe");
+  expect(await screen.findByLabelText("First name")).toHaveValue("Jane");
+  expect(screen.getByLabelText("Last name")).toHaveValue("Doe");
   expect(screen.getByLabelText("Email Address")).toHaveValue(
     "jane@example.com",
   );
+  expect(screen.getByLabelText("Date of birth")).toHaveTextContent(
+    "14 March 1994",
+  );
+  expect(screen.getByRole("combobox", { name: "Gender" })).toHaveTextContent(
+    "Female",
+  );
+  expect(
+    screen.getByRole("combobox", { name: "Primary goal" }),
+  ).toHaveTextContent("Build strength");
+  expect(screen.getByRole("combobox", { name: "Country" })).toHaveTextContent(
+    "Romania",
+  );
+  expect(
+    screen.getByRole("combobox", { name: "Country calling code" }),
+  ).toHaveTextContent("+40 RO");
   expect(
     screen.getByLabelText("Anything to share beforehand? (Optional)"),
   ).toHaveValue("Knee injury last year");
 }
+
+async function chooseOption(user: UserEvent, field: string, option: string) {
+  await user.click(screen.getByRole("combobox", { name: field }));
+  await user.click(await screen.findByRole("option", { name: option }));
+}
+
+function calendarDayButton(dayKey: string): HTMLButtonElement {
+  const button = document.querySelector<HTMLButtonElement>(
+    `td[data-day="${dayKey}"] button`,
+  );
+
+  if (!button) {
+    throw new Error(`No calendar day ${dayKey}`);
+  }
+
+  return button;
+}
+
+async function chooseBirthDate(user: UserEvent, dayKey = "1994-03-14") {
+  const [year, month] = dayKey.split("-");
+  await user.click(screen.getByLabelText("Date of birth"));
+  await chooseOption(user, "Year", year);
+  await chooseOption(user, "Month", MONTH_NAMES[Number(month) - 1]);
+  await user.click(calendarDayButton(dayKey));
+}
+
+const MONTH_NAMES = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
 
 async function chooseFirstTime(user: UserEvent) {
   await waitFor(() => {
@@ -866,8 +966,13 @@ async function reachDetails(user: UserEvent) {
 }
 
 async function fillDetails(user: UserEvent) {
-  await user.type(screen.getByLabelText("Full Name"), "Jane Doe");
+  await user.type(screen.getByLabelText("First name"), "Jane");
+  await user.type(screen.getByLabelText("Last name"), "Doe");
   await user.type(screen.getByLabelText("Email Address"), "jane@example.com");
+  await chooseBirthDate(user);
+  await chooseOption(user, "Gender", "Female");
+  await chooseOption(user, "Primary goal", "Build strength");
+  await chooseOption(user, "Country", "Romania");
   await waitFor(() => {
     expect(screen.getByTestId("bot-detection-widget")).toBeInTheDocument();
   });

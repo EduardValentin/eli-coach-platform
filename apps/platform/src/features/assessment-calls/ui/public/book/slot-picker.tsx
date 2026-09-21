@@ -1,5 +1,5 @@
 import { motion } from "motion/react";
-import { useEffect, useRef, useState, type RefObject } from "react";
+import { useEffect, useRef, type RefObject } from "react";
 
 import { cn } from "@eli-coach-platform/ui/lib";
 import { linkVariants } from "@eli-coach-platform/ui/primitives";
@@ -7,7 +7,6 @@ import { linkVariants } from "@eli-coach-platform/ui/primitives";
 import {
   formatMonthFirstDay,
   formatClockTime,
-  nameTimeZone,
 } from "~/features/assessment-calls/contracts/call-moment";
 
 import { SlotCalendar } from "./slot-calendar";
@@ -30,13 +29,10 @@ export function SlotPicker(props: SlotPickerProps) {
     slotsByDay,
     timeZone,
   } = props;
-  const [now] = useState(() => new Date());
   const calendarRef = useRef<HTMLDivElement>(null);
   const slotsRef = useRef<HTMLDivElement>(null);
   const daySlots = selectedDayKey ? (slotsByDay.get(selectedDayKey) ?? []) : [];
   const selectedDay = daySlots[0] ? new Date(daySlots[0]) : null;
-  const firstSlot = slotsByDay.values().next().value?.[0];
-  const zoneReference = selectedDay ?? (firstSlot ? new Date(firstSlot) : now);
   const dayHeading = selectedDay
     ? formatMonthFirstDay(selectedDay, timeZone)
     : null;
@@ -44,7 +40,10 @@ export function SlotPicker(props: SlotPickerProps) {
   useScrollDaySlotsIntoView(dayHeading, slotsRef);
 
   return (
-    <div className="flex flex-col gap-8 lg:flex-row lg:justify-center">
+    <div
+      className="flex flex-col gap-8 lg:flex-row lg:justify-center"
+      data-parity-root="SlotPicker"
+    >
       <div
         className="mx-auto w-full max-w-[340px] shrink-0 scroll-mt-24 lg:mx-0 lg:w-[320px] lg:max-w-none"
         ref={calendarRef}
@@ -55,9 +54,6 @@ export function SlotPicker(props: SlotPickerProps) {
           slotsByDay={slotsByDay}
           timeZone={timeZone}
         />
-        <p className="mt-4 text-center text-xs font-medium text-text-secondary">
-          {`All times shown in your local timezone (${nameTimeZone(zoneReference, timeZone)})`}
-        </p>
       </div>
 
       {dayHeading ? (

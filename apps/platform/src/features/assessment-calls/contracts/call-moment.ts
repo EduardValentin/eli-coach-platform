@@ -69,12 +69,6 @@ export function formatClockTime(instant: Date, timeZone: string): string {
   return formatterFor("clockTime", timeZone).format(instant);
 }
 
-export function nameTimeZone(instant: Date, timeZone: string): string {
-  const offset = zoneOffset(instant, timeZone);
-
-  return offset ? `${timeZone}, ${offset}` : timeZone;
-}
-
 function describeTimeZone(instant: Date, timeZone: string): string {
   const offset = zoneOffset(instant, timeZone);
 

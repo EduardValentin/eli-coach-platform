@@ -9,9 +9,29 @@ export type BookingClientError = Extract<
 >["error"];
 
 export type BookingDetails = {
+  country: string;
+  dateOfBirth: string;
   email: string;
-  fullName: string;
+  firstName: string;
+  gender: string;
+  lastName: string;
   notes: string;
+  phoneCountry: string;
+  phoneNumber: string;
+  primaryGoal: string;
+};
+
+export const EMPTY_BOOKING_DETAILS: BookingDetails = {
+  country: "",
+  dateOfBirth: "",
+  email: "",
+  firstName: "",
+  gender: "",
+  lastName: "",
+  notes: "",
+  phoneCountry: "",
+  phoneNumber: "",
+  primaryGoal: "",
 };
 
 export type BookingFlowState = {
@@ -33,7 +53,7 @@ export type BookingFlowEvent =
 
 export const INITIAL_BOOKING_FLOW: BookingFlowState = {
   booking: null,
-  details: { email: "", fullName: "", notes: "" },
+  details: EMPTY_BOOKING_DETAILS,
   error: null,
   selectedDayKey: null,
   selectedSlot: null,

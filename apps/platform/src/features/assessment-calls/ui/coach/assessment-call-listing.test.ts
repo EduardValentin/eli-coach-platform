@@ -32,10 +32,27 @@ function callAt(
     joinPath: `/book/${startsAt}/join`,
     startsAt: starts.toISOString(),
     visitorEmail: "ana@example.com",
-    visitorName: "Ana Popescu",
     visitorNotes: null,
+    ...visitorNamed("Ana Popescu"),
+    ...visitorProfile(),
     ...overrides,
   } satisfies CoachAssessmentCall;
+}
+
+function visitorNamed(fullName: string) {
+  const [firstName, lastName] = fullName.split(" ");
+
+  return { firstName, fullName, lastName };
+}
+
+function visitorProfile() {
+  return {
+    country: "RO",
+    dateOfBirth: "1994-03-14",
+    gender: "female",
+    phone: null,
+    primaryGoal: "build_strength",
+  } as const;
 }
 
 const NOON = new Date("2026-09-20T09:00:00.000Z");
@@ -163,12 +180,12 @@ describe("choosing which calls to show", () => {
     [
       callAt("2026-09-19T15:00:00.000Z", {
         id: "yesterday",
-        visitorName: "Bea Ionescu",
+        ...visitorNamed("Bea Ionescu"),
       }),
       callAt("2026-09-20T05:00:00.000Z", {
         id: "earlier-today",
         visitorEmail: "carla@example.com",
-        visitorName: "Carla Marin",
+        ...visitorNamed("Carla Marin"),
       }),
       callAt("2026-09-20T15:00:00.000Z", { id: "later-today" }),
       callAt("2026-09-22T15:00:00.000Z", { id: "next-week" }),
@@ -222,6 +239,14 @@ describe("choosing which calls to show", () => {
     // assert
     expect(byName.map((call) => call.id)).toEqual(["yesterday"]);
     expect(byEmail.map((call) => call.id)).toEqual(["earlier-today"]);
+  });
+
+  it("narrows by the last name on its own", () => {
+    // arrange, act
+    const byLastName = filterCalls(calls, { query: "marin", status: "all" });
+
+    // assert
+    expect(byLastName.map((call) => call.id)).toEqual(["earlier-today"]);
   });
 
   it("puts the soonest call first and the most recent past call after them", () => {
