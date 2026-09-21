@@ -130,6 +130,7 @@ const validJourneyStages = [
   'submitted',
   'reviewing',
   'needs-details',
+  'approved',
   'program-ready',
   'review-call-scheduled',
 ] as const;

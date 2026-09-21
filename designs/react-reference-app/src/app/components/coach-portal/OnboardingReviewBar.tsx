@@ -13,10 +13,12 @@ export function OnboardingReviewBar({
   flagged,
   onSend,
   onDone,
+  onApprove,
 }: {
   flagged: readonly string[];
   onSend: (note: string) => void;
   onDone: () => void;
+  onApprove?: () => void;
 }) {
   const noteId = useId();
   const [note, setNote] = useState('');
@@ -40,7 +42,12 @@ export function OnboardingReviewBar({
           {flaggedCountLabel(flagged.length)}
         </p>
         <div className="flex flex-col gap-3 sm:flex-row-reverse">
-          <Button disabled={!ready} onClick={() => onSend(note.trim())}>
+          {onApprove && <Button onClick={onApprove}>Approve answers</Button>}
+          <Button
+            disabled={!ready}
+            variant="outline"
+            onClick={() => onSend(note.trim())}
+          >
             Ask for more details
           </Button>
           <Button variant="outline" onClick={onDone}>

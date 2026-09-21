@@ -49,6 +49,7 @@ const BUILD_ACTION = 'Build her program';
 const REVIEW_ACTIONS: Partial<Record<JourneyStage, string>> = {
   submitted: 'Review answers',
   reviewing: 'Continue review',
+  approved: 'Review again',
 };
 
 type ReviewSession = {
@@ -307,7 +308,7 @@ export function OnboardingPanel({
   clientId: string;
   heightCm: number;
 }) {
-  const { startReview, requestDetails } = useClientJourneys();
+  const { startReview, approveAnswers, requestDetails } = useClientJourneys();
   const [openForms, setOpenForms] = useState<string[]>([]);
   const [flagged, setFlagged] = useState<string[] | null>(null);
 
@@ -329,11 +330,17 @@ export function OnboardingPanel({
     });
   };
 
+  const approve = () => {
+    approveAnswers(journey.callId);
+    setFlagged(null);
+  };
+
   const askForDetails = (note: string) => {
     requestDetails(journey.callId, {
       questionIds: flagged ?? [],
       message: note,
       createdAt: new Date(),
+      raisedFrom: journey.stage === 'approved' ? 'approved' : 'reviewing',
     });
     setFlagged(null);
   };
@@ -390,6 +397,7 @@ export function OnboardingPanel({
           flagged={flagged}
           onSend={askForDetails}
           onDone={() => setFlagged(null)}
+          onApprove={journey.stage === 'reviewing' ? approve : undefined}
         />
       ) : (
         <StageActions

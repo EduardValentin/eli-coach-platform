@@ -108,7 +108,7 @@ describe('the coach clients list', () => {
     // assert
     const row = rowFor('Jane Doe');
     expect(within(row).getByText('jane@example.com')).toBeInTheDocument();
-    expect(within(row).getByText('Sent to coach')).toBeInTheDocument();
+    expect(within(row).getByText('Awaiting review')).toBeInTheDocument();
     expect(within(row).queryByText('Immediate start')).not.toBeInTheDocument();
   });
 
@@ -170,6 +170,86 @@ describe('the coach clients list', () => {
         name: 'Review onboarding for Jane Doe',
       }),
     ).toBeInTheDocument();
+  });
+
+  it.each([
+    ['?jstage=paid', 'Paid'],
+    ['?jstage=invited', 'Invited'],
+    ['?jstage=account-created', 'Onboarding'],
+    ['?jstage=onboarding', 'Onboarding'],
+    ['?jstage=submitted', 'Awaiting review'],
+    ['?jstage=reviewing', 'In review'],
+    ['?jstage=needs-details', 'Needs details'],
+    ['?jstage=approved', 'Approved'],
+    ['?jstage=program-ready', 'Active'],
+    ['?jstage=review-call-scheduled', 'Active'],
+    ['?jstage=program-ready&jsub=cancelled', 'Cancelled'],
+    ['?jstage=program-ready&jsub=ended', 'Inactive'],
+  ])('reads %s back as %s on her row', (urlQuery, status) => {
+    // arrange
+    renderList(urlQuery);
+
+    // act
+    const row = rowFor('Jane Doe');
+
+    // assert
+    expect(within(row).getByText(status)).toBeInTheDocument();
+  });
+
+  it('keeps the roster tags in the one status vocabulary', () => {
+    // arrange
+    renderList();
+
+    // act
+    const inactive = rowFor('Sarah Jenkins');
+
+    // assert
+    expect(within(rowFor('Jessica Alba')).getByText('Active')).toBeInTheDocument();
+    expect(within(inactive).getByText('Inactive')).toBeInTheDocument();
+  });
+
+  it('gathers everyone from her payment to her approval under Onboarding', async () => {
+    // arrange
+    const user = renderList('?jstage=approved');
+
+    // act
+    await user.click(screen.getByRole('tab', { name: 'Onboarding' }));
+
+    // assert
+    expect(listedNames()).toHaveLength(1);
+    expect(within(rowFor('Jane Doe')).getByText('Approved')).toBeInTheDocument();
+  });
+
+  it('files a client whose program is ready under Active', async () => {
+    // arrange
+    const user = renderList('?jstage=program-ready');
+
+    // act
+    await user.click(screen.getByRole('tab', { name: 'Active' }));
+
+    // assert
+    expect(within(rowFor('Jane Doe')).getByText('Active')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('tab', { name: 'Onboarding' }));
+    expect(
+      screen.getByText('No clients found matching your criteria.'),
+    ).toBeInTheDocument();
+  });
+
+  it('files a client whose subscription has run out under Inactive', async () => {
+    // arrange
+    const user = renderList('?jstage=program-ready&jsub=ended');
+
+    // act
+    await user.click(screen.getByRole('tab', { name: 'Inactive' }));
+
+    // assert
+    expect(within(rowFor('Jane Doe')).getByText('Inactive')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('tab', { name: 'Active' }));
+    expect(
+      screen.queryByText('jane@example.com'),
+    ).not.toBeInTheDocument();
   });
 
   it('keeps the roster working when nothing is onboarding', async () => {

@@ -33,9 +33,19 @@ afterEach(() => {
 });
 
 function DemoJourneyDetails() {
-  const { demoJourney } = useClientJourneys();
+  const { demoJourney, answerRequest } = useClientJourneys();
 
-  return <JourneyClientDetails journey={demoJourney} />;
+  return (
+    <>
+      <JourneyClientDetails journey={demoJourney} />
+      <button
+        onClick={() => answerRequest(demoJourney.callId, new Date())}
+        type="button"
+      >
+        stand in for her answer
+      </button>
+    </>
+  );
 }
 
 function renderDetails(urlQuery: string) {
@@ -305,6 +315,77 @@ describe('the coach view of a client in onboarding', () => {
     expect(
       within(reviewed).getByRole('link', { name: 'Build her program' }),
     ).toBeInTheDocument();
+  });
+
+  it('approves the answers and turns the widget to building her program', async () => {
+    // arrange
+    const user = renderDetails('?jstage=reviewing');
+    await user.click(screen.getByRole('button', { name: 'Continue review' }));
+
+    // act
+    await user.click(
+      within(onboardingWidget()).getByRole('button', {
+        name: 'Approve answers',
+      }),
+    );
+
+    // assert
+    const widget = onboardingWidget();
+    expect(within(widget).getByText('Approved')).toBeInTheDocument();
+    expect(within(widget).queryByRole('checkbox')).not.toBeInTheDocument();
+    expect(
+      within(widget).getByRole('link', { name: 'Build her program' }),
+    ).toBeInTheDocument();
+    expect(
+      within(widget).getByRole('button', { name: 'Review again' }),
+    ).toBeInTheDocument();
+  });
+
+  it('reopens the approved answers without approving them twice', async () => {
+    // arrange
+    const user = renderDetails('?jstage=approved');
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Review again' }));
+
+    // assert
+    const widget = onboardingWidget();
+    expect(
+      within(widget).getByRole('checkbox', { name: 'Flag Sleep hours' }),
+    ).not.toBeChecked();
+    expect(within(widget).getByText('Approved')).toBeInTheDocument();
+    expect(
+      within(widget).queryByRole('button', { name: 'Approve answers' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('brings her back to the approved answers after a reopened question', async () => {
+    // arrange
+    const user = renderDetails('?jstage=approved');
+    await user.click(screen.getByRole('button', { name: 'Review again' }));
+    const reopened = onboardingWidget();
+    await user.click(
+      within(reopened).getByRole('checkbox', { name: 'Flag Sleep hours' }),
+    );
+    await user.type(
+      within(reopened).getByRole('textbox', { name: 'What is missing?' }),
+      'Tell me more about your sleep.',
+    );
+
+    // act
+    await user.click(
+      within(reopened).getByRole('button', { name: 'Ask for more details' }),
+    );
+
+    // assert
+    expect(
+      within(onboardingWidget()).getByText('Needs more details'),
+    ).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole('button', { name: 'stand in for her answer' }),
+    );
+    expect(within(onboardingWidget()).getByText('Approved')).toBeInTheDocument();
   });
 
   it('leaves a client with her program ready nothing to act on', () => {

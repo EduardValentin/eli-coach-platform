@@ -38,6 +38,8 @@ const SUPPORTING_LINES: Partial<Record<JourneyStage, string>> = {
   submitted: 'Eli has your answers and will start on them soon.',
   reviewing:
     "You'll see the next step here as soon as she has looked through your answers.",
+  approved:
+    "Eli is putting your program together. You'll find it here as soon as it's ready.",
   'program-ready': "Head to your plan whenever you're ready.",
 };
 

@@ -51,7 +51,10 @@ describe('advancing a journey', () => {
     ['account-created', 'start-onboarding', 'onboarding'],
     ['onboarding', 'submit-onboarding', 'submitted'],
     ['submitted', 'start-review', 'reviewing'],
+    ['reviewing', 'approve-answers', 'approved'],
     ['reviewing', 'mark-program-ready', 'program-ready'],
+    ['approved', 'mark-program-ready', 'program-ready'],
+    ['approved', 'request-details', 'needs-details'],
     ['program-ready', 'schedule-review-call', 'review-call-scheduled'],
   ];
 
@@ -79,6 +82,33 @@ describe('advancing a journey', () => {
 
     // assert
     expect([flagged, answered]).toEqual(['needs-details', 'reviewing']);
+  });
+
+  it('returns her to the approved answers once she has answered a reopened review', () => {
+    // arrange
+    const journey = journeyAt('needs-details');
+    const reopened = {
+      ...journey,
+      review: {
+        requests: [
+          {
+            questionIds: ['sleepHours'],
+            message: 'One more thing about your sleep.',
+            createdAt: new Date(2026, 8, 20, 9),
+            raisedFrom: 'approved' as const,
+          },
+        ],
+      },
+    };
+
+    // act
+    const transition = advance(reopened, 'answer-request');
+
+    // assert
+    expect(transition).toEqual({
+      status: 'advanced',
+      journey: { ...reopened, stage: 'approved' },
+    });
   });
 
   it('lets the coach build the program without reviewing the answers first', () => {
@@ -160,6 +190,7 @@ describe('journey labels', () => {
       'submitted',
       'reviewing',
       'needs-details',
+      'approved',
       'program-ready',
       'review-call-scheduled',
     ];
@@ -177,6 +208,7 @@ describe('journey labels', () => {
       'Sent to coach',
       'Reviewing',
       'Needs more details',
+      'Approved',
       'Program ready',
       'Review call booked',
     ]);
@@ -189,6 +221,7 @@ describe('journey labels', () => {
       'submitted',
       'reviewing',
       'needs-details',
+      'approved',
       'program-ready',
     ];
 
@@ -201,6 +234,7 @@ describe('journey labels', () => {
       'Sent to your coach',
       'Your coach is reviewing your answers',
       'Your coach needs a few more details',
+      'Your answers are approved',
       'Your program is ready',
     ]);
   });
@@ -227,12 +261,17 @@ describe('ordering stages', () => {
 
   it('places the review loop after submitted', () => {
     // arrange
-    const stages: JourneyStage[] = ['submitted', 'reviewing', 'needs-details'];
+    const stages: JourneyStage[] = [
+      'submitted',
+      'reviewing',
+      'needs-details',
+      'approved',
+    ];
 
     // act
     const before = stages.map((stage) => isBeforeStage(stage, 'submitted'));
 
     // assert
-    expect(before).toEqual([false, false, false]);
+    expect(before).toEqual([false, false, false, false]);
   });
 });

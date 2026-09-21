@@ -86,6 +86,22 @@ describe('the program status card', () => {
     ).toBeVisible();
   });
 
+  it('tells her the answers are approved and the program is being built', () => {
+    // arrange
+    renderCard('?session=client&jstage=approved');
+
+    // act
+    const heading = screen.getByRole('heading', { level: 2 });
+
+    // assert
+    expect(heading).toHaveTextContent('Your answers are approved');
+    expect(
+      screen.getByText(
+        "Eli is putting your program together. You'll find it here as soon as it's ready.",
+      ),
+    ).toBeVisible();
+  });
+
   it("passes on her coach's question and offers to answer it", async () => {
     // arrange
     renderCard('?session=client&jstage=needs-details');

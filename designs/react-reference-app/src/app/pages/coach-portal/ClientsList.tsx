@@ -17,13 +17,30 @@ import {
   isBeforeStage,
   type ClientJourney,
 } from '../../domain/journey';
+import {
+  clientStatus,
+  clientStatusNamed,
+  ONBOARDING_STATUS_LABELS,
+  type ClientStatus,
+  type ClientStatusLabel,
+} from '../../domain/clientStatus';
 import { format } from 'date-fns';
 import { bundleLengthLabel } from '../../domain/bundles';
 import { getInitials } from '../../utils/clientHelpers';
-import { JourneyStageBadge } from '../../components/coach-portal/JourneyStageBadge';
+import { ClientStatusBadge } from '../../components/coach-portal/ClientStatusBadge';
 import { journeyCallIdForClient } from '../../utils/journeyLabels';
 
-const MOCK_CLIENTS = [
+type RosterStatus = Extract<ClientStatusLabel, 'Active' | 'Inactive'>;
+
+type RosterClient = {
+  id: string;
+  name: string;
+  email: string;
+  status: RosterStatus;
+  joinDate: string;
+};
+
+const MOCK_CLIENTS: RosterClient[] = [
   { id: 'c1', name: 'Jane Doe', email: 'jane@example.com', status: 'Active', joinDate: 'Oct 01, 2025' },
   { id: 'c2', name: 'Jessica Alba', email: 'jessica@example.com', status: 'Active', joinDate: 'Nov 15, 2025' },
   { id: 'c3', name: 'Emma Stone', email: 'emma@example.com', status: 'Active', joinDate: 'Dec 05, 2025' },
@@ -41,11 +58,18 @@ function parseRosterFilter(value: string): RosterFilter {
   return FILTERS.find((filter) => filter === value) ?? 'All';
 }
 
-function isOnboarding(journey: ClientJourney): boolean {
-  return (
-    !isBeforeStage(journey.stage, 'paid') &&
-    journey.stage !== 'review-call-scheduled'
-  );
+function hasStarted(journey: ClientJourney): boolean {
+  return !isBeforeStage(journey.stage, 'paid');
+}
+
+function matchesFilter(status: ClientStatus, filter: RosterFilter): boolean {
+  if (filter === 'All') return true;
+  if (filter === 'Onboarding') {
+    return ONBOARDING_STATUS_LABELS.includes(status.label);
+  }
+  if (filter === 'Active') return status.label === 'Active';
+
+  return status.label === 'Cancelled' || status.label === 'Inactive';
 }
 
 function journeyBundleLabel(journey: ClientJourney): string {
@@ -70,7 +94,7 @@ function rowActionLabel(journey: ClientJourney, name: string): string {
     : `View details for ${name}`;
 }
 
-function OnboardingRow({ journey }: { journey: ClientJourney }) {
+function JourneyRow({ journey }: { journey: ClientJourney }) {
   const name = journeyName(journey);
   const actionLabel = rowActionLabel(journey, name);
   const detailPath =
@@ -94,7 +118,7 @@ function OnboardingRow({ journey }: { journey: ClientJourney }) {
         </div>
       </td>
       <td className="py-4 px-6">
-        <JourneyStageBadge stage={journey.stage} />
+        <ClientStatusBadge status={clientStatus(journey, new Date())} />
       </td>
       <td className="py-4 px-6 text-sm text-text-secondary font-medium">
         {journeyBundleLabel(journey)}
@@ -126,9 +150,9 @@ export function ClientsList() {
   const { getClientActiveSubscription, getClientSubscriptions } = useTraining();
   const { journeys } = useClientJourneys();
 
-  const onboardingJourneys = Object.values(journeys).filter(isOnboarding);
-  const onboardingCallIds = new Set(
-    onboardingJourneys.map((journey) => journey.callId),
+  const startedJourneys = Object.values(journeys).filter(hasStarted);
+  const startedCallIds = new Set(
+    startedJourneys.map((journey) => journey.callId),
   );
 
   const subClientId = (id: string) => (id === 'c1' ? 'client-1' : id);
@@ -146,31 +170,26 @@ export function ClientsList() {
     );
   };
 
-  const showsRoster = filter !== 'Onboarding';
-  const showsOnboarding = filter === 'All' || filter === 'Onboarding';
+  const filteredClients = clients.filter(client => {
+    const callId = journeyCallIdForClient(client.id);
+    const hasJourney = callId !== null && startedCallIds.has(callId);
 
-  const filteredClients = showsRoster
-    ? clients.filter(client => {
-        const callId = journeyCallIdForClient(client.id);
-        const inOnboarding = callId !== null && onboardingCallIds.has(callId);
-        const matchesFilter = filter === 'All' || client.status === filter;
-        return (
-          !inOnboarding &&
-          matchesFilter &&
-          matchesSearch(client.name, client.email)
-        );
-      })
-    : [];
+    return (
+      !hasJourney &&
+      matchesFilter(clientStatusNamed(client.status), filter) &&
+      matchesSearch(client.name, client.email)
+    );
+  });
 
-  const filteredOnboarding = showsOnboarding
-    ? onboardingJourneys.filter(journey =>
-        matchesSearch(journeyName(journey), journey.identity.email),
-      )
-    : [];
+  const filteredJourneys = startedJourneys.filter(
+    journey =>
+      matchesFilter(clientStatus(journey, new Date()), filter) &&
+      matchesSearch(journeyName(journey), journey.identity.email),
+  );
 
-  const rowCount = filteredClients.length + filteredOnboarding.length;
+  const rowCount = filteredClients.length + filteredJourneys.length;
 
-  const handleRemoveClient = (id: string, name: string, status: string) => {
+  const handleRemoveClient = (id: string, name: string, status: RosterStatus) => {
     const actionText = status === 'Active' ? 'terminate the subscription for' : 'remove';
     if (window.confirm(`Are you sure you want to ${actionText} ${name}? This action cannot be undone.`)) {
       setClients(prev => prev.filter(c => c.id !== id));
@@ -230,8 +249,8 @@ export function ClientsList() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredOnboarding.map(journey => (
-                    <OnboardingRow key={journey.callId} journey={journey} />
+                  {filteredJourneys.map(journey => (
+                    <JourneyRow key={journey.callId} journey={journey} />
                   ))}
                   {filteredClients.map(client => {
                       const profile = getProfile(client.id);
@@ -258,13 +277,9 @@ export function ClientsList() {
                           </div>
                         </td>
                         <td className="py-4 px-6">
-                          <span className={`inline-flex items-center px-2.5 py-1 rounded-field text-[10px] font-bold uppercase tracking-widest ${
-                            client.status === 'Active' 
-                              ? 'bg-green-50 text-green-700' 
-                              : 'bg-neutral-100 text-text-secondary'
-                          }`}>
-                            {client.status}
-                          </span>
+                          <ClientStatusBadge
+                            status={clientStatusNamed(client.status)}
+                          />
                         </td>
                         <td className="py-4 px-6 text-sm text-text-secondary font-medium">{bundleLabel(client.id)}</td>
                         <td className="py-4 px-6 text-sm text-text-secondary">{client.joinDate}</td>

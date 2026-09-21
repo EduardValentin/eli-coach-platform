@@ -10,6 +10,7 @@ export type JourneyStage =
   | 'submitted'
   | 'reviewing'
   | 'needs-details'
+  | 'approved'
   | 'program-ready'
   | 'review-call-scheduled';
 
@@ -23,6 +24,7 @@ export const JOURNEY_STAGES: readonly JourneyStage[] = [
   'submitted',
   'reviewing',
   'needs-details',
+  'approved',
   'program-ready',
   'review-call-scheduled',
 ];
@@ -37,6 +39,7 @@ export type JourneyEvent =
   | 'start-review'
   | 'request-details'
   | 'answer-request'
+  | 'approve-answers'
   | 'mark-program-ready'
   | 'schedule-review-call';
 
@@ -107,10 +110,13 @@ export type JourneyOnboarding = OnboardingDraft & {
   submittedAt: Date | null;
 };
 
+export type ReviewStage = Extract<JourneyStage, 'reviewing' | 'approved'>;
+
 export type DetailRequest = {
   questionIds: string[];
   message: string;
   createdAt: Date;
+  raisedFrom: ReviewStage;
   answeredAt?: Date;
 };
 
@@ -175,12 +181,21 @@ const TRANSITIONS: Record<
   },
   reviewing: {
     'request-details': 'needs-details',
+    'approve-answers': 'approved',
     'mark-program-ready': 'program-ready',
   },
   'needs-details': { 'answer-request': 'reviewing' },
+  approved: {
+    'request-details': 'needs-details',
+    'mark-program-ready': 'program-ready',
+  },
   'program-ready': { 'schedule-review-call': 'review-call-scheduled' },
   'review-call-scheduled': {},
 };
+
+function reopenedStage(journey: ClientJourney): ReviewStage {
+  return journey.review.requests.at(-1)?.raisedFrom ?? 'reviewing';
+}
 
 export function advance(
   journey: ClientJourney,
@@ -192,7 +207,10 @@ export function advance(
     return { status: 'rejected', stage: journey.stage, event };
   }
 
-  return { status: 'advanced', journey: { ...journey, stage: nextStage } };
+  const stage =
+    event === 'answer-request' ? reopenedStage(journey) : nextStage;
+
+  return { status: 'advanced', journey: { ...journey, stage } };
 }
 
 export const COACH_STAGE_LABELS: Record<JourneyStage, string> = {
@@ -205,6 +223,7 @@ export const COACH_STAGE_LABELS: Record<JourneyStage, string> = {
   submitted: 'Sent to coach',
   reviewing: 'Reviewing',
   'needs-details': 'Needs more details',
+  approved: 'Approved',
   'program-ready': 'Program ready',
   'review-call-scheduled': 'Review call booked',
 };
@@ -213,6 +232,7 @@ const CLIENT_STATUS_LABELS: Partial<Record<JourneyStage, string>> = {
   submitted: 'Sent to your coach',
   reviewing: 'Your coach is reviewing your answers',
   'needs-details': 'Your coach needs a few more details',
+  approved: 'Your answers are approved',
   'program-ready': 'Your program is ready',
   'review-call-scheduled': 'Your program is ready',
 };
@@ -225,6 +245,7 @@ const COACH_REVIEW_STAGES: readonly JourneyStage[] = [
   'submitted',
   'reviewing',
   'needs-details',
+  'approved',
 ];
 
 export function awaitsCoachReview(stage: JourneyStage): boolean {

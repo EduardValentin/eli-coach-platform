@@ -132,6 +132,7 @@ describe('answering a request for more details', () => {
       questionIds: ['sleep', 'injuries'],
       message: 'Tell me a little more about your sleep.',
       createdAt: new Date(2026, 0, 10, 12),
+      raisedFrom: 'reviewing' as const,
     };
     const answering = answerRequest('ac-1', request, {
       sleep: 'Six hours',
@@ -153,6 +154,7 @@ describe('answering a request for more details', () => {
       questionIds: ['sleep', 'injuries'],
       message: 'Tell me a little more about your sleep.',
       createdAt: new Date(2026, 0, 10, 12),
+      raisedFrom: 'reviewing' as const,
     };
     const answering = answerRequest('ac-1', request, { sleep: 'Six hours' });
 

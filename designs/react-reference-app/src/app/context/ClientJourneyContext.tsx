@@ -67,6 +67,7 @@ type ClientJourneyContextType = {
   saveOnboardingDraft: (callId: string, draft: OnboardingDraft) => void;
   submitOnboarding: (callId: string, submittedAt: Date) => void;
   startReview: (callId: string) => void;
+  approveAnswers: (callId: string) => void;
   requestDetails: (callId: string, request: DetailRequest) => void;
   answerRequest: (callId: string, answeredAt: Date) => void;
   markProgramReady: (callId: string, readyAt: Date) => void;
@@ -361,6 +362,13 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
     [dispatch],
   );
 
+  const approveAnswers = useCallback(
+    (callId: string) => {
+      dispatch(callId, 'approve-answers');
+    },
+    [dispatch],
+  );
+
   const requestDetails = useCallback(
     (callId: string, request: DetailRequest) => {
       updateJourney(callId, (journey) =>
@@ -485,6 +493,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
         saveOnboardingDraft,
         submitOnboarding,
         startReview,
+        approveAnswers,
         requestDetails,
         answerRequest,
         markProgramReady,

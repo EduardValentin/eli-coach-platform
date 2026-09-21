@@ -102,6 +102,7 @@ const SEEDED_MEASUREMENT_ANSWERS = {
 
 const SEEDED_DETAIL_REQUEST = {
   questionIds: ['sleepHours', 'currentInjuryDetail'],
+  raisedFrom: 'reviewing' as const,
   message:
     'Two quick things before I build your plan — tell me a little more about your sleep and about that shoulder.',
 };
