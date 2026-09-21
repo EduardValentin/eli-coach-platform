@@ -238,12 +238,19 @@ function listedNames(): string[] {
     .map((item) => within(item).getByRole('heading', { level: 2 }).textContent ?? '');
 }
 
-async function selectTab(user: ReturnType<typeof userEvent.setup>, name: string) {
-  await user.click(screen.getByRole('tab', { name }));
+function whenTab(name: string): HTMLElement {
+  return screen.getByRole('tab', { name });
+}
+
+async function chooseWhen(
+  user: ReturnType<typeof userEvent.setup>,
+  name: string,
+) {
+  await user.click(whenTab(name));
 }
 
 describe('the assessment calls section', () => {
-  it('opens on upcoming calls, soonest first', () => {
+  it('opens on every call, the upcoming ones first', () => {
     // arrange
     renderSection();
 
@@ -251,11 +258,13 @@ describe('the assessment calls section', () => {
     const names = listedNames();
 
     // assert
-    expect(screen.getByRole('tab', { name: 'Upcoming' })).toHaveAttribute(
-      'aria-selected',
-      'true',
-    );
-    expect(names).toEqual(['Maria Ionescu', 'Ioana Radu']);
+    expect(whenTab('All')).toHaveAttribute('aria-selected', 'true');
+    expect(names).toEqual([
+      'Maria Ionescu',
+      'Ioana Radu',
+      'Sofia Dinu',
+      'Elena Marin',
+    ]);
   });
 
   it('shows the visitor email as a mail link and the notes as written', () => {
@@ -281,7 +290,7 @@ describe('the assessment calls section', () => {
 
     // act
     const upcomingItem = callRows()[0];
-    await selectTab(user, 'Past');
+    await chooseWhen(user, 'Past');
     const pastItem = callRows()[0];
 
     // assert
@@ -297,7 +306,7 @@ describe('the assessment calls section', () => {
     const user = renderSection();
 
     // act
-    await selectTab(user, 'Today');
+    await chooseWhen(user, 'Today');
     const items = callRows();
 
     // assert
@@ -311,7 +320,7 @@ describe('the assessment calls section', () => {
     const user = renderSection();
 
     // act
-    await selectTab(user, 'Past');
+    await chooseWhen(user, 'Past');
     const pastItem = callRows()[0];
 
     // assert
@@ -324,7 +333,7 @@ describe('the assessment calls section', () => {
     const user = renderSection();
 
     // act
-    await selectTab(user, 'Past');
+    await chooseWhen(user, 'Past');
     const pastItem = callRows()[0];
 
     // assert
@@ -338,7 +347,7 @@ describe('the assessment calls section', () => {
     const user = renderSection();
 
     // act
-    await selectTab(user, 'Past');
+    await chooseWhen(user, 'Past');
 
     // assert
     expect(listedNames()).toEqual(['Sofia Dinu', 'Elena Marin']);
@@ -347,9 +356,10 @@ describe('the assessment calls section', () => {
   it('lists the upcoming calls before the past ones under all', async () => {
     // arrange
     const user = renderSection();
+    await chooseWhen(user, 'Past');
 
     // act
-    await selectTab(user, 'All');
+    await chooseWhen(user, 'All');
 
     // assert
     expect(listedNames()).toEqual([
@@ -366,11 +376,10 @@ describe('the assessment calls section', () => {
 
     // act
     await user.tab();
-    await user.keyboard('{ArrowRight}');
-    await user.keyboard('{ArrowRight}');
+    await user.keyboard('{ArrowRight}{ArrowRight}{ArrowRight}');
 
     // assert
-    expect(screen.getByRole('tab', { name: 'Past' })).toHaveFocus();
+    expect(whenTab('Past')).toHaveFocus();
     await waitFor(() =>
       expect(listedNames()).toEqual(['Sofia Dinu', 'Elena Marin']),
     );
@@ -391,12 +400,18 @@ describe('the assessment calls section', () => {
     await user.clear(search);
 
     // assert
-    expect(listedNames()).toEqual(['Maria Ionescu', 'Ioana Radu']);
+    expect(listedNames()).toEqual([
+      'Maria Ionescu',
+      'Ioana Radu',
+      'Sofia Dinu',
+      'Elena Marin',
+    ]);
   });
 
   it('searches within the chosen filter only', async () => {
     // arrange
     const user = renderSection();
+    await chooseWhen(user, 'Upcoming');
 
     // act
     await user.type(screen.getByLabelText('Search calls'), 'Elena');
@@ -405,7 +420,7 @@ describe('the assessment calls section', () => {
     expect(screen.getByText('No calls match your search.')).toBeInTheDocument();
 
     // act
-    await selectTab(user, 'Past');
+    await chooseWhen(user, 'Past');
 
     // assert
     expect(listedNames()).toEqual(['Elena Marin']);
@@ -416,20 +431,20 @@ describe('the assessment calls section', () => {
     const user = renderSection();
 
     // act
-    await selectTab(user, 'Past');
+    await chooseWhen(user, 'Past');
     await user.type(screen.getByLabelText('Search calls'), 'elena');
 
     // assert
-    expect(currentLocation()).toBe('?status=past&q=elena REPLACE');
+    expect(currentLocation()).toBe('?when=past&q=elena REPLACE');
   });
 
   it('keeps the default filter and an empty search out of the URL', async () => {
     // arrange
-    const user = renderSection({ urlQuery: '?status=past&q=elena' });
+    const user = renderSection({ urlQuery: '?when=past&q=elena' });
 
     // act
     await user.clear(screen.getByLabelText('Search calls'));
-    await selectTab(user, 'Upcoming');
+    await chooseWhen(user, 'All');
 
     // assert
     expect(currentLocation()).toBe(' REPLACE');
@@ -437,35 +452,37 @@ describe('the assessment calls section', () => {
 
   it('opens on the filter and search the URL carries', () => {
     // arrange
-    renderSection({ urlQuery: '?status=all&q=marin' });
+    renderSection({ urlQuery: '?when=all&q=marin' });
 
     // act
     const search = screen.getByLabelText('Search calls');
 
     // assert
-    expect(screen.getByRole('tab', { name: 'All' })).toHaveAttribute(
-      'aria-selected',
-      'true',
-    );
+    expect(whenTab('All')).toHaveAttribute('aria-selected', 'true');
     expect(search).toHaveValue('marin');
     expect(listedNames()).toEqual(['Elena Marin']);
   });
 
-  it('falls back to upcoming when the URL carries an unknown filter', () => {
+  it('falls back to all when the URL carries an unknown filter', () => {
     // arrange
-    renderSection({ urlQuery: '?status=yesterday' });
+    renderSection({ urlQuery: '?when=yesterday' });
 
     // act
-    const upcomingTab = screen.getByRole('tab', { name: 'Upcoming' });
+    const allTab = whenTab('All');
 
     // assert
-    expect(upcomingTab).toHaveAttribute('aria-selected', 'true');
-    expect(listedNames()).toEqual(['Maria Ionescu', 'Ioana Radu']);
+    expect(allTab).toHaveAttribute('aria-selected', 'true');
+    expect(listedNames()).toEqual([
+      'Maria Ionescu',
+      'Ioana Radu',
+      'Sofia Dinu',
+      'Elena Marin',
+    ]);
   });
 
   it('says there is nothing upcoming when every call has ended', () => {
     // arrange
-    renderSection({ bookings: [YESTERDAY] });
+    renderSection({ bookings: [YESTERDAY], urlQuery: '?when=upcoming' });
 
     // act
     const message = screen.getByText('No upcoming calls.');
@@ -479,7 +496,7 @@ describe('the assessment calls section', () => {
     const user = renderSection({ bookings: [TOMORROW] });
 
     // act
-    await selectTab(user, 'Today');
+    await chooseWhen(user, 'Today');
 
     // assert
     expect(screen.getByText('No calls today.')).toBeInTheDocument();
@@ -490,7 +507,7 @@ describe('the assessment calls section', () => {
     const user = renderSection({ bookings: [TOMORROW] });
 
     // act
-    await selectTab(user, 'Past');
+    await chooseWhen(user, 'Past');
 
     // assert
     expect(screen.getByText('No past calls.')).toBeInTheDocument();
@@ -501,7 +518,7 @@ describe('the assessment calls section', () => {
     const user = renderSection({ bookings: [] });
 
     // act
-    await selectTab(user, 'All');
+    await chooseWhen(user, 'All');
 
     // assert
     expect(screen.getByText('No calls yet.')).toBeInTheDocument();
@@ -586,10 +603,10 @@ describe('paging a long assessment call list', () => {
     const user = renderSection({ bookings: MANY_UPCOMING, urlQuery: '?page=3' });
 
     // act
-    await selectTab(user, 'All');
+    await chooseWhen(user, 'Upcoming');
 
     // assert
-    expect(currentLocation()).toBe('?status=all REPLACE');
+    expect(currentLocation()).toBe('?when=upcoming REPLACE');
     expect(screen.getByText('Showing 1–10 of 23')).toBeInTheDocument();
   });
 
@@ -645,10 +662,10 @@ describe('filtering assessment calls by journey step', () => {
 
   it('counts the calls waiting at each step within the chosen window', () => {
     // arrange
-    renderJourneys('?status=all');
+    renderJourneys('?when=all');
 
     // act
-    const group = screen.getByRole('group', { name: 'Journey' });
+    const group = screen.getByRole('group', { name: 'Status' });
 
     // assert
     expect(within(group).getByRole('button', { name: 'Any 5' })).toHaveAttribute(
@@ -668,10 +685,10 @@ describe('filtering assessment calls by journey step', () => {
 
   it('counts only within the window the coach is looking at', () => {
     // arrange
-    renderJourneys('');
+    renderJourneys('?when=upcoming');
 
     // act
-    const group = screen.getByRole('group', { name: 'Journey' });
+    const group = screen.getByRole('group', { name: 'Status' });
 
     // assert
     expect(
@@ -684,19 +701,19 @@ describe('filtering assessment calls by journey step', () => {
 
   it('narrows the list to one step and writes it to the URL', async () => {
     // arrange
-    const user = renderJourneys('?status=all');
+    const user = renderJourneys('?when=all');
 
     // act
     await user.click(screen.getByRole('button', { name: 'Paid 1' }));
 
     // assert
     expect(listedNames()).toEqual(['Dana Pop']);
-    expect(currentLocation()).toBe('?status=all&journey=paid REPLACE');
+    expect(currentLocation()).toBe('?when=all&status=paid REPLACE');
   });
 
   it('leaves a call with no action yet to the any chip', async () => {
     // arrange
-    const user = renderJourneys('?status=all');
+    const user = renderJourneys('?when=all');
 
     // act
     await user.click(screen.getByRole('button', { name: 'Invited 1' }));
@@ -708,19 +725,19 @@ describe('filtering assessment calls by journey step', () => {
 
   it('keeps the any chip out of the URL when the coach goes back to it', async () => {
     // arrange
-    const user = renderJourneys('?status=all&journey=paid');
+    const user = renderJourneys('?when=all&status=paid');
 
     // act
     await user.click(screen.getByRole('button', { name: 'Any 5' }));
 
     // assert
-    expect(currentLocation()).toBe('?status=all REPLACE');
+    expect(currentLocation()).toBe('?when=all REPLACE');
     expect(listedNames()).toHaveLength(5);
   });
 
   it('opens on the journey step the URL carries', () => {
     // arrange
-    renderJourneys('?status=all&journey=payment-link-sent');
+    renderJourneys('?when=all&status=payment-link-sent');
 
     // act
     const chip = screen.getByRole('button', { name: 'Payment link sent 1' });
@@ -732,7 +749,7 @@ describe('filtering assessment calls by journey step', () => {
 
   it('combines the journey step with the search', async () => {
     // arrange
-    const user = renderJourneys('?status=all&journey=paid');
+    const user = renderJourneys('?when=all&status=paid');
 
     // act
     await user.type(screen.getByLabelText('Search calls'), 'carmen');
@@ -743,7 +760,7 @@ describe('filtering assessment calls by journey step', () => {
 
   it('says which step and window came up empty', () => {
     // arrange
-    renderJourneys('?journey=payment-link-sent');
+    renderJourneys('?when=upcoming&status=payment-link-sent');
 
     // act
     const message = screen.getByText(
@@ -765,7 +782,7 @@ describe('filtering assessment calls by journey step', () => {
     await user.click(screen.getByRole('button', { name: 'Invited 0' }));
 
     // assert
-    expect(currentLocation()).toBe('?journey=invited REPLACE');
+    expect(currentLocation()).toBe('?status=invited REPLACE');
   });
 });
 
@@ -780,7 +797,7 @@ describe('filtering assessment calls by a custom date range', () => {
 
   it('asks for both days and holds nothing back until they are picked', () => {
     // arrange
-    renderCustom('?status=custom');
+    renderCustom('?when=custom');
 
     // act
     const hint = screen.getByText('Pick a start and end date.');
@@ -798,7 +815,7 @@ describe('filtering assessment calls by a custom date range', () => {
     expect(screen.queryByLabelText('From')).toBeNull();
 
     // act
-    await user.click(screen.getByRole('tab', { name: 'Custom' }));
+    await chooseWhen(user, 'Custom');
 
     // assert
     expect(screen.getByLabelText('From')).toBeInTheDocument();
@@ -806,7 +823,7 @@ describe('filtering assessment calls by a custom date range', () => {
 
   it('writes the picked days to the URL and keeps both of them', () => {
     // arrange
-    renderCustom('?status=custom');
+    renderCustom('?when=custom');
 
     // act
     fireEvent.change(screen.getByLabelText('From'), {
@@ -818,28 +835,25 @@ describe('filtering assessment calls by a custom date range', () => {
 
     // assert
     expect(currentLocation()).toBe(
-      '?status=custom&from=2026-09-18&to=2026-09-20 REPLACE',
+      '?when=custom&from=2026-09-18&to=2026-09-20 REPLACE',
     );
   });
 
   it('opens on the range the URL carries, both days included', () => {
     // arrange
-    renderCustom('?status=custom&from=2026-09-18&to=2026-09-20');
+    renderCustom('?when=custom&from=2026-09-18&to=2026-09-20');
 
     // act
     const names = listedNames();
 
     // assert
-    expect(screen.getByRole('tab', { name: 'Custom' })).toHaveAttribute(
-      'aria-selected',
-      'true',
-    );
+    expect(whenTab('Custom')).toHaveAttribute('aria-selected', 'true');
     expect(names).toEqual(['Carmen Iliescu', 'Dana Pop', 'Elena Marin']);
   });
 
   it('names the picked days when nothing falls inside them', () => {
     // arrange
-    renderCustom('?status=custom&from=2026-09-12&to=2026-09-16');
+    renderCustom('?when=custom&from=2026-09-12&to=2026-09-16');
 
     // act
     const message = screen.getByText('No calls between 12 and 16 September.');
@@ -850,7 +864,7 @@ describe('filtering assessment calls by a custom date range', () => {
 
   it('combines the range with the journey step', () => {
     // arrange
-    renderCustom('?status=custom&from=2026-09-18&to=2026-09-20&journey=paid');
+    renderCustom('?when=custom&from=2026-09-18&to=2026-09-20&status=paid');
 
     // act
     const names = listedNames();

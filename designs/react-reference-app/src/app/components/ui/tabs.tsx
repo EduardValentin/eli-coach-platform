@@ -15,7 +15,7 @@ const tabsListVariants = cva(
     variants: {
       variant: {
         default: "h-9 rounded-control p-[3px]",
-        segmented: `h-auto max-w-full flex-wrap gap-1 rounded-card p-1 ${PAIRS_A_FOURTH_TRIGGER_BELOW_SM}`,
+        segmented: `h-auto max-w-full flex-wrap gap-1 rounded-card p-[3px] ${PAIRS_A_FOURTH_TRIGGER_BELOW_SM}`,
       },
     },
     defaultVariants: {

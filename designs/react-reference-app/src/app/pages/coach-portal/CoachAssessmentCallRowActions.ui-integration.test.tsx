@@ -122,8 +122,8 @@ function JourneyDriver() {
 }
 
 function heldCallsQuery(urlQuery: string) {
-  if (urlQuery.includes('status=')) return urlQuery;
-  return `?status=past${urlQuery.replace(/^\?/, '&')}`;
+  if (urlQuery.includes('when=')) return urlQuery;
+  return `?when=past${urlQuery.replace(/^\?/, '&')}`;
 }
 
 function renderPage(urlQuery = '') {
@@ -181,7 +181,7 @@ async function sendInvitation(user: ReturnType<typeof userEvent.setup>) {
 describe('the assessment call row actions', () => {
   it('offers the journey actions only once the call has taken place', () => {
     // arrange
-    const urlQuery = '?status=past';
+    const urlQuery = '?when=past';
 
     // act
     renderPage(urlQuery);
@@ -195,7 +195,7 @@ describe('the assessment call row actions', () => {
 
   it('keeps an upcoming call free of journey status and actions', () => {
     // arrange
-    const urlQuery = '?status=upcoming';
+    const urlQuery = '?when=upcoming';
 
     // act
     renderPage(urlQuery);

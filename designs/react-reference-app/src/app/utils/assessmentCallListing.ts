@@ -199,10 +199,15 @@ export function countCallsLeftToday(calls: ClassifiedCall[]): number {
 }
 
 export function parseStatus(raw: string | null): AssessmentCallStatus {
-  if (raw === 'today' || raw === 'past' || raw === 'all' || raw === 'custom') {
+  if (
+    raw === 'upcoming' ||
+    raw === 'today' ||
+    raw === 'past' ||
+    raw === 'custom'
+  ) {
     return raw;
   }
-  return 'upcoming';
+  return 'all';
 }
 
 export function parseJourneyStep(raw: string | null): JourneyStep {

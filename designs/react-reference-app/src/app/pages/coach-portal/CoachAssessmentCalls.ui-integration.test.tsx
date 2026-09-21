@@ -137,6 +137,10 @@ function renderPage(
   return userEvent.setup();
 }
 
+function whenTab(name: string): HTMLElement {
+  return screen.getByRole('tab', { name });
+}
+
 function listedNames(): string[] {
   return screen
     .getAllByRole('listitem')
@@ -191,7 +195,7 @@ describe('the coach assessment calls page', () => {
     expect(screen.queryByText(/Times in /)).not.toBeInTheDocument();
   });
 
-  it('opens on the upcoming calls with the search and the filters ready', () => {
+  it('opens on every call with the search and the filters ready', () => {
     // arrange
     const bookings = ALL_BOOKINGS;
 
@@ -199,26 +203,20 @@ describe('the coach assessment calls page', () => {
     renderPage({ bookings });
 
     // assert
-    expect(screen.getByRole('tab', { name: 'Upcoming' })).toHaveAttribute(
-      'aria-selected',
-      'true',
-    );
+    expect(whenTab('All')).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByLabelText('Search calls')).toHaveValue('');
-    expect(listedNames()).toEqual(['Maria Ionescu', 'Ioana Radu']);
+    expect(listedNames()).toEqual(['Maria Ionescu', 'Ioana Radu', 'Elena Marin']);
   });
 
   it('opens on the filter and the search the URL carries', () => {
     // arrange
-    const urlQuery = '?status=all&q=marin';
+    const urlQuery = '?when=all&q=marin';
 
     // act
     renderPage({ urlQuery });
 
     // assert
-    expect(screen.getByRole('tab', { name: 'All' })).toHaveAttribute(
-      'aria-selected',
-      'true',
-    );
+    expect(whenTab('All')).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByLabelText('Search calls')).toHaveValue('marin');
     expect(listedNames()).toEqual(['Elena Marin']);
   });
@@ -228,12 +226,12 @@ describe('the coach assessment calls page', () => {
     const user = renderPage();
 
     // act
-    await user.click(screen.getByRole('tab', { name: 'Past' }));
+    await user.click(whenTab('Past'));
     await user.type(screen.getByLabelText('Search calls'), 'elena');
 
     // assert
     expect(screen.getByTestId('location-probe')).toHaveTextContent(
-      '?status=past&q=elena REPLACE',
+      '?when=past&q=elena REPLACE',
     );
     expect(listedNames()).toEqual(['Elena Marin']);
   });
@@ -241,16 +239,13 @@ describe('the coach assessment calls page', () => {
   it('opens on the journey step and the date range the URL carries', () => {
     // arrange
     const urlQuery =
-      '?status=custom&from=2026-09-20&to=2026-09-22&journey=payment-link-sent';
+      '?when=custom&from=2026-09-20&to=2026-09-22&status=payment-link-sent';
 
     // act
     renderPage({ urlQuery });
 
     // assert
-    expect(screen.getByRole('tab', { name: 'Custom' })).toHaveAttribute(
-      'aria-selected',
-      'true',
-    );
+    expect(whenTab('Custom')).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByLabelText('From')).toHaveValue('2026-09-20');
     expect(screen.getByLabelText('To')).toHaveValue('2026-09-22');
     expect(
@@ -266,12 +261,12 @@ describe('the coach assessment calls page', () => {
     const user = renderPage();
 
     // act
-    await user.click(screen.getByRole('tab', { name: 'All' }));
+    await user.click(whenTab('Upcoming'));
     await user.click(screen.getByRole('button', { name: 'Invited 0' }));
 
     // assert
     expect(screen.getByTestId('location-probe')).toHaveTextContent(
-      '?status=all&journey=invited REPLACE',
+      '?when=upcoming&status=invited REPLACE',
     );
   });
 
@@ -281,11 +276,10 @@ describe('the coach assessment calls page', () => {
 
     // act
     await user.tab();
-    await user.keyboard('{ArrowRight}');
-    await user.keyboard('{ArrowRight}');
+    await user.keyboard('{ArrowRight}{ArrowRight}{ArrowRight}');
 
     // assert
-    expect(screen.getByRole('tab', { name: 'Past' })).toHaveFocus();
+    expect(whenTab('Past')).toHaveFocus();
     await waitFor(() => expect(listedNames()).toEqual(['Elena Marin']));
   });
 });

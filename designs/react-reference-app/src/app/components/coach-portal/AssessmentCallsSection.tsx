@@ -35,24 +35,23 @@ import { JourneyStageBadge } from './JourneyStageBadge';
 import { CallListPager } from './CallListPager';
 import { JoinCallLink } from './JoinCallLink';
 
-const STATUS_PARAM = 'status';
+const STATUS_PARAM = 'when';
 const QUERY_PARAM = 'q';
 const PAGE_PARAM = 'page';
-const JOURNEY_PARAM = 'journey';
+const JOURNEY_PARAM = 'status';
 const FROM_PARAM = 'from';
 const TO_PARAM = 'to';
 const CALLS_PER_PAGE = 10;
-const DEFAULT_STATUS: AssessmentCallStatus = 'upcoming';
+const DEFAULT_STATUS: AssessmentCallStatus = 'all';
 const DEFAULT_JOURNEY: JourneyStep = 'any';
 const SEARCH_FIELD_ID = 'assessment-call-search';
 const RANGE_HINT = 'Pick a start and end date.';
-const GROUP_LABEL_CLASS = 'text-sm font-medium text-text-secondary';
 
-const STATUS_TABS: { status: AssessmentCallStatus; label: string }[] = [
+const WHEN_TABS: { status: AssessmentCallStatus; label: string }[] = [
+  { status: 'all', label: 'All' },
   { status: 'upcoming', label: 'Upcoming' },
   { status: 'today', label: 'Today' },
   { status: 'past', label: 'Past' },
-  { status: 'all', label: 'All' },
   { status: 'custom', label: 'Custom' },
 ];
 
@@ -158,9 +157,9 @@ function JourneyFilter({
 }) {
   return (
     <div className="flex flex-col gap-2">
-      <span className={GROUP_LABEL_CLASS}>Journey</span>
+      <span className="text-sm font-medium text-text-secondary">Status</span>
       <FilterChipGroup
-        aria-label="Journey"
+        aria-label="Status"
         value={journey}
         onValueChange={(value) => onChoose(parseJourneyStep(value))}
       >
@@ -296,11 +295,10 @@ export function AssessmentCallsSection({
     >
       <Tabs value={status} onValueChange={chooseStatus} className="w-full">
         <div className="mb-6 flex flex-col gap-5">
-          <div className="flex flex-col gap-5 lg:flex-row lg:flex-wrap lg:items-start lg:gap-x-8">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between xl:gap-8">
             <div className="flex flex-col gap-2">
-              <span className={GROUP_LABEL_CLASS}>When</span>
               <TabsList aria-label="When" variant="segmented">
-                {STATUS_TABS.map((tab) => (
+                {WHEN_TABS.map((tab) => (
                   <TabsTrigger
                     key={tab.status}
                     variant="segmented"
@@ -315,23 +313,25 @@ export function AssessmentCallsSection({
               )}
             </div>
 
-            <JourneyFilter
-              counts={counts}
-              journey={journey}
-              onChoose={chooseJourney}
-            />
+            <div className="w-full xl:w-72 xl:shrink-0">
+              <Label className="sr-only" htmlFor={SEARCH_FIELD_ID}>
+                Search calls
+              </Label>
+              <Input
+                id={SEARCH_FIELD_ID}
+                type="search"
+                placeholder="Search by name or email"
+                value={query}
+                onChange={(event) => changeQuery(event.target.value)}
+              />
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor={SEARCH_FIELD_ID}>Search calls</Label>
-            <Input
-              id={SEARCH_FIELD_ID}
-              type="search"
-              placeholder="Name or email"
-              value={query}
-              onChange={(event) => changeQuery(event.target.value)}
-            />
-          </div>
+          <JourneyFilter
+            counts={counts}
+            journey={journey}
+            onChoose={chooseJourney}
+          />
         </div>
 
         <TabsContent variant="segmented" value={status}>

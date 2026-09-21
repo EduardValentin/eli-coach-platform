@@ -421,7 +421,7 @@ describe('reading the status filter from the URL', () => {
     expect(parsed).toEqual(['upcoming', 'today', 'past', 'all']);
   });
 
-  it('falls back to upcoming for a missing or unknown status', () => {
+  it('falls back to all for a missing or unknown status', () => {
     // arrange
     const unknown = 'yesterday';
 
@@ -430,8 +430,8 @@ describe('reading the status filter from the URL', () => {
     const fromMissing = parseStatus(null);
 
     // assert
-    expect(fromUnknown).toBe('upcoming');
-    expect(fromMissing).toBe('upcoming');
+    expect(fromUnknown).toBe('all');
+    expect(fromMissing).toBe('all');
   });
 });
 
@@ -742,14 +742,14 @@ describe('filtering assessment calls by journey step', () => {
 });
 
 describe('reading a listing selection from the URL', () => {
-  it('accepts the custom window and falls back to upcoming otherwise', () => {
+  it('accepts the custom window and falls back to all otherwise', () => {
     // act
     const custom = parseStatus('custom');
     const unknown = parseStatus('someday');
 
     // assert
     expect(custom).toBe('custom');
-    expect(unknown).toBe('upcoming');
+    expect(unknown).toBe('all');
   });
 
   it('accepts a known journey step and falls back to any', () => {
