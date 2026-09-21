@@ -18,7 +18,7 @@ export const PopoverContent = React.forwardRef<
     <RadixPopover.Content
       align={align}
       className={cn(
-        "z-50 origin-(--radix-popover-content-transform-origin) rounded-field border bg-surface-base p-3 text-text-primary shadow-action outline-none motion-safe:data-[state=closed]:animate-[ui-popover-out_150ms_ease-out] motion-safe:data-[state=open]:animate-[ui-popover-in_150ms_ease-out]",
+        "z-50 max-h-(--radix-popover-content-available-height) origin-(--radix-popover-content-transform-origin) overflow-y-auto rounded-field border bg-surface-base p-3 text-text-primary shadow-action outline-none motion-safe:data-[state=closed]:animate-[ui-popover-out_150ms_ease-out] motion-safe:data-[state=open]:animate-[ui-popover-in_150ms_ease-out]",
         className,
       )}
       ref={ref}
