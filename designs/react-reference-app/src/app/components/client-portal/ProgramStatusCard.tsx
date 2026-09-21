@@ -36,7 +36,8 @@ const PANEL_CLASS =
 
 const SUPPORTING_LINES: Partial<Record<JourneyStage, string>> = {
   submitted: 'Eli has your answers and will start on them soon.',
-  reviewing: "She's going through everything now.",
+  reviewing:
+    "You'll see the next step here as soon as she has looked through your answers.",
   'program-ready': "Head to your plan whenever you're ready.",
 };
 
@@ -76,7 +77,11 @@ function reassuranceLine(
   }
 
   if (status === 'not-started') {
-    return 'Your first period starts on day 1 — the day your program is ready';
+    const delivery = deliveryDate(subscription);
+
+    return delivery
+      ? `Your subscription starts on ${formatJourneyDate(delivery)}, when your program is delivered.`
+      : 'Your subscription starts the day your program is ready.';
   }
 
   return null;

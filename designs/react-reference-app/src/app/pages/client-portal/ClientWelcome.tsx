@@ -1,11 +1,8 @@
 import { useNavigate } from 'react-router';
 import { Button, cn } from '../../components/ThemeButton';
-import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
 import { cardVariants } from '../../components/ui/card';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
-import { useCoachProfile } from '../../context/CoachProfileContext';
 import type { JourneySex } from '../../domain/journey';
-import { getInitials } from '../../utils/clientHelpers';
 
 const FORM_INTRO: Record<JourneySex, string> = {
   female:
@@ -28,7 +25,6 @@ const CLOSING =
 export function ClientWelcome() {
   const navigate = useNavigate();
   const { demoJourney, markWelcomeSeen } = useClientJourneys();
-  const { coachProfile } = useCoachProfile();
 
   const start = () => {
     markWelcomeSeen(demoJourney.callId);
@@ -46,16 +42,7 @@ export function ClientWelcome() {
           'w-full max-w-reading px-6 py-10 sm:px-10 sm:py-12 lg:px-14 lg:py-16',
         )}
       >
-        <Avatar className="size-16">
-          {coachProfile.avatarUrl && (
-            <AvatarImage alt="" className="object-cover" src={coachProfile.avatarUrl} />
-          )}
-          <AvatarFallback className="bg-brand-soft font-serif text-lg font-semibold text-brand">
-            {getInitials(coachProfile.name)}
-          </AvatarFallback>
-        </Avatar>
-
-        <h1 className="mt-6 font-serif text-display-sm tracking-tight text-text-primary lg:text-display-md">
+        <h1 className="font-serif text-display-sm tracking-tight text-text-primary lg:text-display-md">
           Welcome to Evoa Fitness, {demoJourney.identity.firstName}
         </h1>
 

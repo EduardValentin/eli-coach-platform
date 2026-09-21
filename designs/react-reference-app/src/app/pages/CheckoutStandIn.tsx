@@ -102,7 +102,7 @@ export function CheckoutStandIn() {
 
       <dl className="mt-6 grid gap-3 rounded-panel border border-border-subtle bg-surface-quiet px-5 py-4 text-sm">
         <Reading term="Bundle" value={bundle.title} />
-        <Reading term="Price per period" value={`€${total}`} />
+        <Reading term="Price per renewal" value={`€${total}`} />
         <Reading term="Renews" value={renewalLabel(bundle.months)} />
         <Reading term="Start" value={START_PATH_SUMMARY[session.startPath]} />
       </dl>

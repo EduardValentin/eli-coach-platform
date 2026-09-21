@@ -1,9 +1,10 @@
 import { ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router';
 import type { ClientJourney } from '../../domain/journey';
+import { Badge } from '../ui/badge';
 import { getInitials } from '../../utils/clientHelpers';
+import { deliveryDate } from '../../domain/coachingSubscription';
 import { startPathLabel } from '../../utils/journeyLabels';
-import { JourneyStageBadge } from './JourneyStageBadge';
 import { MeasurementsTable } from './MeasurementsTable';
 import { OnboardingPanel } from './OnboardingPanel';
 import { SubscriptionPanel } from './SubscriptionPanel';
@@ -18,9 +19,19 @@ function statedHeightCm(journey: ClientJourney): number {
   return typeof stated === 'number' ? stated : 0;
 }
 
+function StartPathBadge({ journey }: { journey: ClientJourney }) {
+  const startPath = startPathLabel(journey.subscription);
+  if (!startPath) return null;
+
+  const waiting = journey.subscription
+    ? deliveryDate(journey.subscription) !== null
+    : false;
+
+  return <Badge variant={waiting ? 'pending' : 'secondary'}>{startPath}</Badge>;
+}
+
 export function JourneyClientDetails({ journey }: { journey: ClientJourney }) {
   const name = journeyName(journey);
-  const startPath = startPathLabel(journey.subscription);
 
   return (
     <div className="w-full pb-12">
@@ -36,16 +47,13 @@ export function JourneyClientDetails({ journey }: { journey: ClientJourney }) {
           {getInitials(name)}
         </div>
         <div className="min-w-0">
-          <h1 className="mb-2 font-serif text-3xl tracking-tight text-text-primary lg:text-4xl">
-            {name}
-          </h1>
-          <p className="font-medium text-text-secondary">{journey.identity.email}</p>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            <JourneyStageBadge stage={journey.stage} />
-            {startPath && (
-              <span className="text-sm text-text-secondary">{startPath}</span>
-            )}
+          <div className="mb-2 flex flex-wrap items-center gap-3">
+            <h1 className="font-serif text-3xl tracking-tight text-text-primary lg:text-4xl">
+              {name}
+            </h1>
+            <StartPathBadge journey={journey} />
           </div>
+          <p className="font-medium text-text-secondary">{journey.identity.email}</p>
         </div>
       </header>
 

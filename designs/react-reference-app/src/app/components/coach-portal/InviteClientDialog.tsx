@@ -23,7 +23,7 @@ import {
   FormMessage,
 } from '../ui/form';
 import { useAppState } from '../../context/AppContext';
-import { COUNTRIES, diallingCodeFor } from '../../domain/countries';
+import { COUNTRIES, diallingCodeFor, type Country } from '../../domain/countries';
 import type {
   ClientJourney,
   JourneyIdentity,
@@ -62,9 +62,13 @@ export type InvitationAccepted = {
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+function diallingCodeSearchKeys(country: Country): string {
+  return `${country.isoCode} ${country.diallingCode.replace('+', '')}`;
+}
+
 const PHONE_PATTERN = /^0?[\d ]+$/;
 
-const PHONE_MESSAGE = 'Use 6 to 14 digits — spaces are fine.';
+const PHONE_MESSAGE = 'Enter 6 to 14 digits — spaces are fine.';
 
 function phoneProblem(entered: string): string | true {
   const phone = entered.trim();
@@ -299,6 +303,7 @@ function InviteForm({
                             <SelectItem
                               key={country.name}
                               value={country.diallingCode}
+                              data-typeahead={diallingCodeSearchKeys(country)}
                             >
                               {country.diallingCode} {country.isoCode}
                             </SelectItem>

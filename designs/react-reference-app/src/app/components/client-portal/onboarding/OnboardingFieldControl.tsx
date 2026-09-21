@@ -1,6 +1,6 @@
 import { DateField } from '../../DateField';
-import { useId } from 'react';
-import type { Control } from 'react-hook-form';
+import { useId, type ReactElement } from 'react';
+import type { Control, ControllerRenderProps } from 'react-hook-form';
 import type { OnboardingField } from '../../../domain/onboardingSchema';
 import { CheckboxChip } from '../../CheckboxChip';
 import { Input } from '../../ui/input';
@@ -21,12 +21,18 @@ import {
   FormLabel,
   FormMessage,
 } from '../../ui/form';
-import { measureUnitLabel, useMeasureUnits, type MeasureKind } from '../measureUnits';
-import { fieldRules } from './onboardingValidation';
+import {
+  measureUnitLabel,
+  useMeasureUnits,
+  type MeasureKind,
+  type MeasureUnits,
+} from '../measureUnits';
+import { entryBounds, fieldRules } from './onboardingValidation';
 import {
   asList,
   asText,
   isMeasureField,
+  isNumericField,
   type OnboardingValues,
 } from './onboardingValues';
 
@@ -35,7 +41,78 @@ type FieldControlProps = {
   field: OnboardingField;
 };
 
+type FieldController = ControllerRenderProps<OnboardingValues>;
+
 const OPTIONAL_SUFFIX = '(optional)';
+
+const NUMERIC_STEPS: Record<string, string> = {
+  weight: '0.1',
+  height: '0.1',
+  circumference: '0.1',
+};
+
+function numberEntry(
+  field: OnboardingField,
+  controller: FieldController,
+  units: MeasureUnits,
+): ReactElement {
+  const bounds = entryBounds(field, units);
+
+  return (
+    <Input
+      inputMode={isMeasureField(field) ? 'decimal' : 'numeric'}
+      max={bounds?.max}
+      min={bounds?.min}
+      onBlur={controller.onBlur}
+      onChange={controller.onChange}
+      ref={controller.ref}
+      step={NUMERIC_STEPS[field.kind] ?? '1'}
+      type="number"
+      value={asText(controller.value)}
+    />
+  );
+}
+
+function fieldEntry(
+  field: OnboardingField,
+  controller: FieldController,
+  units: MeasureUnits,
+): ReactElement {
+  if (field.kind === 'textarea') {
+    return (
+      <Textarea
+        className="min-h-28"
+        onBlur={controller.onBlur}
+        onChange={controller.onChange}
+        ref={controller.ref}
+        value={asText(controller.value)}
+      />
+    );
+  }
+
+  if (field.kind === 'date') {
+    return (
+      <DateField
+        disabledDays={{ after: new Date() }}
+        onBlur={controller.onBlur}
+        onChange={controller.onChange}
+        value={asText(controller.value)}
+      />
+    );
+  }
+
+  if (isNumericField(field)) return numberEntry(field, controller, units);
+
+  return (
+    <Input
+      onBlur={controller.onBlur}
+      onChange={controller.onChange}
+      ref={controller.ref}
+      type="text"
+      value={asText(controller.value)}
+    />
+  );
+}
 
 function LabelText({ field, unit }: { field: OnboardingField; unit: string | null }) {
   const suffixes = [
@@ -155,37 +232,7 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
                 </SelectContent>
               </Select>
             ) : (
-              <FormControl>
-                {field.kind === 'textarea' ? (
-                  <Textarea
-                    className="min-h-28"
-                    onChange={controller.onChange}
-                    onBlur={controller.onBlur}
-                    ref={controller.ref}
-                    value={asText(controller.value)}
-                  />
-                ) : field.kind === 'date' ? (
-                  <DateField
-                    value={asText(controller.value)}
-                    onChange={controller.onChange}
-                    onBlur={controller.onBlur}
-                    disabledDays={{ after: new Date() }}
-                  />
-                ) : (
-                  <Input
-                    inputMode={
-                      isMeasureField(field) || field.kind === 'number'
-                        ? 'decimal'
-                        : undefined
-                    }
-                    onChange={controller.onChange}
-                    onBlur={controller.onBlur}
-                    ref={controller.ref}
-                    type="text"
-                    value={asText(controller.value)}
-                  />
-                )}
-              </FormControl>
+              <FormControl>{fieldEntry(field, controller, units)}</FormControl>
             )}
             <FormMessage />
           </FormItem>

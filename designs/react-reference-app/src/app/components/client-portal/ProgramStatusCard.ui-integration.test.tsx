@@ -79,7 +79,11 @@ describe('the program status card', () => {
 
     // assert
     expect(heading).toHaveTextContent('Your coach is reviewing your answers');
-    expect(screen.getByText("She's going through everything now.")).toBeVisible();
+    expect(
+      screen.getByText(
+        "You'll see the next step here as soon as she has looked through your answers.",
+      ),
+    ).toBeVisible();
   });
 
   it("passes on her coach's question and offers to answer it", async () => {
@@ -136,7 +140,7 @@ describe('the program status card', () => {
     expect(delivery).toBeVisible();
     expect(
       screen.getByText(
-        'Your first period starts on day 1 — the day your program is ready',
+        /^Your subscription starts on .+, when your program is delivered\.$/,
       ),
     ).toBeVisible();
   });

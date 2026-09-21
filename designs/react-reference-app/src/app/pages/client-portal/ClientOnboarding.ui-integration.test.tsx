@@ -153,6 +153,24 @@ describe('the onboarding', () => {
     expect(control).toBeVisible();
   });
 
+  it('asks for every number as a number, bounded by the range the schema sets', () => {
+    // arrange
+    renderOnboarding('?session=client&jstage=account-created');
+
+    // act
+    const weight = screen.getByLabelText(/Your weight/);
+
+    // assert
+    expect(weight).toHaveAttribute('type', 'number');
+    expect(weight).toHaveAttribute('inputmode', 'decimal');
+    expect(weight).toHaveAttribute('min', '30');
+    expect(weight).toHaveAttribute('max', '300');
+    expect(screen.getByLabelText(/Training days a week/)).toHaveAttribute(
+      'inputmode',
+      'numeric',
+    );
+  });
+
   it('turns down a weight outside the sensible range', async () => {
     // arrange
     renderOnboarding('?session=client&jstage=account-created');
@@ -163,7 +181,7 @@ describe('the onboarding', () => {
 
     // assert
     expect(
-      screen.getByText('Check that one — it should be between 30 and 300 kg.'),
+      screen.getByText('Enter a weight between 30 and 300 kg.'),
     ).toBeVisible();
   });
 
@@ -178,7 +196,7 @@ describe('the onboarding', () => {
 
     // assert
     expect(
-      screen.getByText('Keep your goal within 60 kg of where you are now.'),
+      screen.getByText('Keep your goal within 60 kg of your current weight.'),
     ).toBeVisible();
   });
 
@@ -205,8 +223,8 @@ describe('the onboarding', () => {
     expect(
       screen.getByRole('heading', { level: 2, name: 'Your cycle and hormonal context' }),
     ).toBeVisible();
-    expect(screen.getAllByText('Pick one of these.').length).toBeGreaterThan(0);
-    expect(screen.getByText('Add a number here.')).toBeVisible();
+    expect(screen.getAllByText('Choose one option.').length).toBeGreaterThan(0);
+    expect(screen.getByText('Enter a number.')).toBeVisible();
   });
 
   it('marks the answers she can skip as optional', () => {

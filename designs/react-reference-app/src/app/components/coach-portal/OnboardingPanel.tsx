@@ -2,7 +2,14 @@ import { useState } from 'react';
 import { motion } from 'motion/react';
 import { ClipboardList } from 'lucide-react';
 import { Link } from 'react-router';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '../ui/accordion';
 import { Alert } from '../ui/alert';
+import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
 import {
@@ -10,17 +17,17 @@ import {
   deliveryDate,
 } from '../../domain/coachingSubscription';
 import { formatRatio, waistToHeightRatio } from '../../domain/bodyMetrics';
-import { formsForSex } from '../../domain/onboardingSchema';
 import type { ClientJourney } from '../../domain/journey';
 import {
   CHECK_IN_CHANNEL_KEY,
   CHECK_IN_DAY_KEY,
-  answeredForms,
   collaborationPreference,
   hasPregnancyContext,
   needsSafetyLook,
+  reviewForms,
+  type ReviewAnswer,
 } from '../../domain/onboardingAnswers';
-import { formatJourneyDate, startPathLabel } from '../../utils/journeyLabels';
+import { formatJourneyDate } from '../../utils/journeyLabels';
 import { JourneyStageBadge } from './JourneyStageBadge';
 import { NeedsDetailsDialog } from './NeedsDetailsDialog';
 
@@ -91,43 +98,56 @@ function CollaborationReading({ journey }: { journey: ClientJourney }) {
   );
 }
 
+function AnswerReading({ answer }: { answer: ReviewAnswer }) {
+  if (answer.answer === null) {
+    return <span className="text-copy-muted">Not answered</span>;
+  }
+
+  if (answer.flagged) {
+    return <Badge variant="pending">{answer.answer}</Badge>;
+  }
+
+  return <>{answer.answer}</>;
+}
+
 function AnswerGroups({ journey }: { journey: ClientJourney }) {
-  const shown = new Set(formsForSex(journey.identity.sex).map((form) => form.id));
-  const forms = answeredForms(journey.onboarding).filter((form) =>
-    shown.has(form.formId),
-  );
+  const forms = reviewForms(journey.onboarding, journey.identity.sex);
 
   return (
-    <div className="space-y-2">
+    <Accordion
+      type="multiple"
+      className="rounded-card border border-border-subtle bg-surface-quiet/60 px-4 sm:px-5"
+    >
       {forms.map((form) => (
-        <details
-          key={form.formId}
-          className="rounded-field border border-neutral-100 px-4 py-3"
-        >
-          <summary className="cursor-pointer text-sm font-semibold text-text-primary">
-            {form.label}
-          </summary>
-          {form.questions.length === 0 ? (
-            <p className="mt-3 text-sm text-text-secondary">
-              Nothing answered here yet.
-            </p>
-          ) : (
-            <dl className="mt-3 space-y-2">
-              {form.questions.map((question) => (
-                <div key={question.questionId}>
-                  <dt className="text-xs text-text-secondary">
-                    {question.label}
-                  </dt>
+        <AccordionItem key={form.formId} value={form.formId}>
+          <AccordionTrigger>
+            <span className="flex flex-1 flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+              <span className="font-serif text-base font-medium">
+                {form.title}
+              </span>
+              <span className="text-xs font-normal text-text-secondary">
+                {form.answeredCount} of {form.answers.length} answered
+              </span>
+            </span>
+          </AccordionTrigger>
+          <AccordionContent>
+            <dl className="divide-y divide-border-subtle rounded-field bg-surface-base px-4">
+              {form.answers.map((answer) => (
+                <div
+                  key={answer.questionId}
+                  className="grid gap-1 py-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] sm:gap-6"
+                >
+                  <dt className="text-sm text-text-secondary">{answer.label}</dt>
                   <dd className="text-sm text-text-primary">
-                    {question.answer}
+                    <AnswerReading answer={answer} />
                   </dd>
                 </div>
               ))}
             </dl>
-          )}
-        </details>
+          </AccordionContent>
+        </AccordionItem>
       ))}
-    </div>
+    </Accordion>
   );
 }
 
@@ -172,7 +192,6 @@ export function OnboardingPanel({
 }) {
   const { startReview } = useClientJourneys();
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const startPath = startPathLabel(journey.subscription);
 
   return (
     <motion.section
@@ -189,12 +208,7 @@ export function OnboardingPanel({
           <ClipboardList size={18} className="text-brand" aria-hidden="true" />
           Onboarding
         </h2>
-        <div className="flex flex-wrap items-center gap-2">
-          <JourneyStageBadge stage={journey.stage} />
-          {startPath && (
-            <span className="text-sm text-text-secondary">{startPath}</span>
-          )}
-        </div>
+        <JourneyStageBadge stage={journey.stage} />
       </div>
 
       {needsSafetyLook(journey.onboarding) && (

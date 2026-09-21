@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useId } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { MessageSquare } from 'lucide-react';
 import { ResponsiveSheetDialog } from '../workout/ResponsiveSheetDialog';
@@ -14,7 +14,7 @@ import {
   FormMessage,
 } from '../ui/form';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
-import { answeredQuestions } from '../../domain/onboardingAnswers';
+import { reviewForms, type ReviewAnswer } from '../../domain/onboardingAnswers';
 import type { ClientJourney } from '../../domain/journey';
 
 type DetailRequestValues = {
@@ -23,6 +23,41 @@ type DetailRequestValues = {
 };
 
 const EMPTY_VALUES: DetailRequestValues = { questionIds: [], message: '' };
+
+const MESSAGE_REQUIRED = 'Write her a short note so she knows what you need.';
+
+function flaggedCountLabel(count: number): string {
+  return count === 1 ? '1 question flagged' : `${count} questions flagged`;
+}
+
+function AnswerFlag({
+  answer,
+  checked,
+  onToggle,
+}: {
+  answer: ReviewAnswer;
+  checked: boolean;
+  onToggle: (flagged: boolean) => void;
+}) {
+  const id = useId();
+
+  return (
+    <div className="flex items-start gap-3 rounded-field border border-border-subtle bg-surface-base p-3 transition-colors has-[:checked]:border-brand/40">
+      <Checkbox
+        id={id}
+        className="mt-0.5"
+        checked={checked}
+        onCheckedChange={(value) => onToggle(value === true)}
+      />
+      <label htmlFor={id} className="min-w-0 cursor-pointer">
+        <span className="block text-xs text-text-secondary">{answer.label}</span>
+        <span className="mt-0.5 block text-sm text-text-primary">
+          {answer.answer}
+        </span>
+      </label>
+    </div>
+  );
+}
 
 export function NeedsDetailsDialog({
   journey,
@@ -35,8 +70,17 @@ export function NeedsDetailsDialog({
 }) {
   const { requestDetails } = useClientJourneys();
   const form = useForm<DetailRequestValues>({ defaultValues: EMPTY_VALUES });
-  const questions = answeredQuestions(journey.onboarding);
   const firstName = journey.identity.firstName;
+  const groups = reviewForms(journey.onboarding, journey.identity.sex)
+    .map((group) => ({
+      ...group,
+      answers: group.answers.filter((answer) => answer.answer !== null),
+    }))
+    .filter((group) => group.answers.length > 0);
+
+  const flagged = form.watch('questionIds');
+  const message = form.watch('message');
+  const ready = flagged.length > 0 && message.trim().length > 0;
 
   useEffect(() => {
     if (open) form.reset(EMPTY_VALUES);
@@ -55,114 +99,113 @@ export function NeedsDetailsDialog({
     <ResponsiveSheetDialog
       open={open}
       onOpenChange={onOpenChange}
+      size="wide"
       title={`Ask ${firstName} for more details`}
-      description="Tick the answers you want her to revisit and write her a short note."
+      description="Flag the answers you want her to revisit and write her a short note."
     >
-      <div className="shrink-0 border-b border-neutral-100 px-5 pt-6 pb-4 md:px-8 md:pt-8">
+      <div className="shrink-0 border-b border-border-subtle px-5 pt-6 pb-4 md:px-8 md:pt-8">
         <div className="mb-1.5 flex items-center gap-1.5">
           <MessageSquare size={13} className="text-brand" aria-hidden="true" />
           <span className="text-[10px] font-bold uppercase tracking-widest text-brand">
             Review
           </span>
         </div>
-        <h3 className="pr-10 text-lg font-semibold leading-snug text-text-primary md:text-xl">
+        <h3 className="pr-10 font-serif text-lg leading-snug text-text-primary md:text-xl">
           Ask {firstName} for more details
         </h3>
         <p className="mt-1 text-xs text-text-secondary sm:text-sm">
-          Tick the answers you want her to revisit and write her a short note.
+          Flag the answers you want her to revisit and write her a short note.
         </p>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-5 pt-5 pb-6 md:px-8 md:pt-6 md:pb-8">
-        <Form {...form}>
-          <form
-            noValidate
-            className="space-y-6"
-            onSubmit={form.handleSubmit(submit)}
-          >
+      <Form {...form}>
+        <form
+          noValidate
+          className="flex min-h-0 flex-1 flex-col"
+          onSubmit={form.handleSubmit(submit)}
+        >
+          <div className="min-h-0 flex-1 overflow-y-auto px-5 pt-5 pb-6 md:px-8 md:pt-6">
             <FormField
               control={form.control}
               name="questionIds"
               render={({ field }) => (
                 <FormItem>
-                  <fieldset>
-                    <legend className="text-sm font-medium text-text-label">
-                      Answers to revisit (optional)
-                    </legend>
-                    <div className="mt-3 space-y-3">
-                      {questions.length === 0 && (
-                        <p className="text-sm text-text-secondary">
-                          She has not answered anything yet.
-                        </p>
-                      )}
-                      {questions.map((question) => (
-                        <div
-                          key={`${question.formId}-${question.questionId}`}
-                          className="flex items-start gap-3"
-                        >
-                          <Checkbox
-                            id={`detail-${question.questionId}`}
-                            checked={field.value.includes(question.questionId)}
-                            onCheckedChange={(checked) =>
-                              field.onChange(
-                                checked === true
-                                  ? [...field.value, question.questionId]
-                                  : field.value.filter(
-                                      (id) => id !== question.questionId,
-                                    ),
-                              )
-                            }
-                          />
-                          <label
-                            htmlFor={`detail-${question.questionId}`}
-                            className="text-sm text-text-primary"
-                          >
-                            {question.label}
-                            <span className="block text-xs text-text-secondary">
-                              {question.answer}
-                            </span>
-                          </label>
+                  <div className="space-y-6">
+                    {groups.length === 0 && (
+                      <p className="text-sm text-text-secondary">
+                        She has not answered anything yet.
+                      </p>
+                    )}
+                    {groups.map((group) => (
+                      <fieldset key={group.formId}>
+                        <legend className="mb-3 font-serif text-base font-medium text-text-primary">
+                          {group.title}
+                        </legend>
+                        <div className="grid gap-3 md:grid-cols-2">
+                          {group.answers.map((answer) => (
+                            <AnswerFlag
+                              key={answer.questionId}
+                              answer={answer}
+                              checked={field.value.includes(answer.questionId)}
+                              onToggle={(flag) =>
+                                field.onChange(
+                                  flag
+                                    ? [...field.value, answer.questionId]
+                                    : field.value.filter(
+                                        (id) => id !== answer.questionId,
+                                      ),
+                                )
+                              }
+                            />
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  </fieldset>
+                      </fieldset>
+                    ))}
+                  </div>
                 </FormItem>
               )}
             />
+          </div>
 
+          <div className="shrink-0 border-t border-border-subtle bg-surface-base px-5 pt-4 pb-6 md:px-8 md:pb-8">
             <FormField
               control={form.control}
               name="message"
               rules={{
                 validate: (value) =>
-                  value.trim().length > 0
-                    ? true
-                    : 'Write her a short note so she knows what you need.',
+                  value.trim().length > 0 ? true : MESSAGE_REQUIRED,
               }}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Your note</FormLabel>
+                  <FormLabel>What is missing</FormLabel>
                   <FormControl>
-                    <Textarea rows={4} {...field} />
+                    <Textarea rows={3} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <div className="flex flex-col gap-3 sm:flex-row-reverse">
-              <Button type="submit">Send the request</Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-              >
-                Cancel
-              </Button>
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p role="status" className="text-sm text-text-secondary">
+                {flaggedCountLabel(flagged.length)}
+              </p>
+              <div className="flex flex-col gap-3 sm:flex-row-reverse">
+                <Button type="submit" disabled={!ready}>
+                  Send the request
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => onOpenChange(false)}
+                >
+                  Cancel
+                </Button>
+              </div>
             </div>
-          </form>
-        </Form>
-      </div>
+          </div>
+        </form>
+      </Form>
     </ResponsiveSheetDialog>
   );
 }

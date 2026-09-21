@@ -17,7 +17,7 @@ import {
 import { createCheckoutSession } from '../services/checkoutService';
 
 const SUBSCRIPTION_NOTE =
-  'Each bundle is a subscription: it renews at its own length — every 1, 3 or 6 months — and each period is charged up front.';
+  'Each bundle is a subscription: it renews at its own length — every 1, 3 or 6 months — and each renewal is charged up front.';
 
 const WAIVER_LABEL =
   'Start my program as soon as my payment clears. I understand that by ticking this I give up my 14-day right to withdraw and to a refund.';

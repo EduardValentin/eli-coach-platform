@@ -64,6 +64,7 @@ export function OnboardingFormCard({
   const units = useMeasureUnits();
   const form = useForm<OnboardingValues>({
     defaultValues: toFormValues(definition.fields, answers, units),
+    mode: 'onBlur',
     shouldUnregister: true,
   });
   const values = form.watch();

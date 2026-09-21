@@ -18,6 +18,10 @@ export function isMeasureField(field: OnboardingField): boolean {
   return MEASURE_KINDS.includes(field.kind);
 }
 
+export function isNumericField(field: OnboardingField): boolean {
+  return isMeasureField(field) || field.kind === 'number';
+}
+
 export function asText(value: string | string[] | undefined): string {
   return typeof value === 'string' ? value : '';
 }

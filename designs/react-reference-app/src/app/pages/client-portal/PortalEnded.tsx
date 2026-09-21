@@ -2,7 +2,7 @@ import { CalendarX } from 'lucide-react';
 import { Link } from 'react-router';
 import { ERROR_PAGE_ACTION_CLASS, ErrorPage } from '../../components/ErrorPage';
 
-const TITLE = 'Your coaching period has ended';
+const TITLE = 'Your coaching has ended';
 
 const DESCRIPTION =
   "It was good to train together. Whenever you want to pick it back up, your plan and your history are waiting for you.";

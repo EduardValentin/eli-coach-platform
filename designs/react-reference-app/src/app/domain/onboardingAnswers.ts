@@ -1,9 +1,12 @@
 import {
   ONBOARDING_FORM_IDS,
+  type JourneySex,
   type OnboardingAnswer,
   type OnboardingDraft,
+  type OnboardingFormAnswers,
   type OnboardingFormId,
 } from './journey';
+import { formsForSex, type OnboardingField } from './onboardingSchema';
 
 export const ONBOARDING_FORM_LABELS: Record<OnboardingFormId, string> = {
   'goal-availability': 'Goal and availability',
@@ -120,4 +123,89 @@ export function collaborationPreference(
   return answer !== undefined && isAnswered(answer)
     ? describeAnswer(answer)
     : null;
+}
+
+export type ReviewAnswer = {
+  questionId: string;
+  label: string;
+  answer: string | null;
+  flagged: boolean;
+};
+
+export type ReviewForm = {
+  formId: OnboardingFormId;
+  title: string;
+  answers: ReviewAnswer[];
+  answeredCount: number;
+};
+
+function isFlagged(
+  formId: OnboardingFormId,
+  questionId: string,
+  answer: OnboardingAnswer,
+): boolean {
+  if (formId === 'safety-screening') return isAffirmative(answer);
+  if (formId === 'cycle-context') {
+    return PREGNANCY_PATTERN.test(questionId) && isPositive(answer);
+  }
+
+  return false;
+}
+
+function isReachable(
+  field: OnboardingField,
+  given: OnboardingFormAnswers,
+): boolean {
+  if (!field.revealedBy) return true;
+
+  const trigger = given[field.revealedBy.id];
+
+  return trigger !== undefined && describeAnswer(trigger) === field.revealedBy.value;
+}
+
+const CANONICAL_UNITS: Record<string, string> = {
+  weight: 'kg',
+  height: 'cm',
+  circumference: 'cm',
+};
+
+function readAnswer(field: OnboardingField, answer: OnboardingAnswer): string {
+  const reading = describeAnswer(answer);
+  if (typeof answer !== 'number') return reading;
+
+  const unit = CANONICAL_UNITS[field.kind] ?? field.unitSuffix;
+
+  return unit ? `${reading} ${unit}` : reading;
+}
+
+function reviewAnswer(
+  formId: OnboardingFormId,
+  field: OnboardingField,
+  given: OnboardingFormAnswers,
+): ReviewAnswer {
+  const answer = given[field.id];
+  const answered = answer !== undefined && isAnswered(answer);
+
+  return {
+    questionId: field.id,
+    label: humaniseQuestionId(field.id),
+    answer: answered ? readAnswer(field, answer) : null,
+    flagged: answer !== undefined && isFlagged(formId, field.id, answer),
+  };
+}
+
+export function reviewForms(draft: OnboardingDraft, sex: JourneySex): ReviewForm[] {
+  return formsForSex(sex).map((definition) => {
+    const given = draft.answers[definition.id];
+    const answers = definition.fields
+      .filter((field) => isReachable(field, given))
+      .map((field) => reviewAnswer(definition.id, field, given));
+
+    return {
+      formId: definition.id,
+      title: definition.title,
+      answers,
+      answeredCount: answers.filter((answer) => answer.answer !== null).length,
+    };
+  });
 }

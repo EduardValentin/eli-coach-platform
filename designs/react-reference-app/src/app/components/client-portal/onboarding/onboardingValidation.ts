@@ -10,36 +10,48 @@ import {
   type MeasureKind,
   type MeasureUnits,
 } from '../measureUnits';
-import { asList, asText, isMeasureField, type OnboardingValues } from './onboardingValues';
+import {
+  asList,
+  asText,
+  isMeasureField,
+  isNumericField,
+  type OnboardingValues,
+} from './onboardingValues';
+
+const AMOUNT_NOUNS: Record<string, string> = {
+  weight: 'a weight',
+  height: 'a height',
+  circumference: 'a measurement',
+};
 
 const REQUIRED_MESSAGES: Record<string, string> = {
-  radio: 'Pick one of these.',
-  select: 'Choose one of these.',
-  chips: 'Pick at least one.',
-  number: 'Add a number here.',
+  radio: 'Choose one option.',
+  select: 'Choose one option.',
+  chips: 'Choose at least one option.',
   date: 'Pick a date.',
 };
 
-const NUMBER_MESSAGE = 'Use numbers only.';
+const TEXT_REQUIRED_MESSAGE = 'Enter an answer.';
 
-const FUTURE_DATE_MESSAGE = "That day hasn't come yet — pick the day it started.";
-
-const DISTANT_DATE_MESSAGE =
-  'That is more than a year back — pick the most recent one you remember.';
+const FUTURE_DATE_MESSAGE = 'Pick a date in the past.';
 
 type FieldEntry = {
   value: string | string[] | undefined;
   values: OnboardingValues;
 };
 
-function requiredMessage(field: OnboardingField): string {
-  if (isMeasureField(field)) return REQUIRED_MESSAGES.number;
-
-  return REQUIRED_MESSAGES[field.kind] ?? 'Write a short answer here.';
+function amountNoun(field: OnboardingField): string {
+  return AMOUNT_NOUNS[field.kind] ?? 'a number';
 }
 
-function isNumeric(field: OnboardingField): boolean {
-  return isMeasureField(field) || field.kind === 'number';
+function amountMessage(field: OnboardingField): string {
+  return `Enter ${amountNoun(field)}.`;
+}
+
+function requiredMessage(field: OnboardingField): string {
+  if (isNumericField(field)) return amountMessage(field);
+
+  return REQUIRED_MESSAGES[field.kind] ?? TEXT_REQUIRED_MESSAGE;
 }
 
 function unitLabelOf(field: OnboardingField, units: MeasureUnits): string {
@@ -71,6 +83,13 @@ function displayRange(
   };
 }
 
+export function entryBounds(
+  field: OnboardingField,
+  units: MeasureUnits,
+): NumericRange | null {
+  return field.range ? displayRange(field, field.range, units) : null;
+}
+
 function rangeMessage(
   field: OnboardingField,
   range: NumericRange,
@@ -78,7 +97,7 @@ function rangeMessage(
 ): string {
   const bounds = displayRange(field, range, units);
 
-  return `Check that one — it should be between ${bounds.min} and ${bounds.max}${unitLabelOf(field, units)}.`;
+  return `Enter ${amountNoun(field)} between ${bounds.min} and ${bounds.max}${unitLabelOf(field, units)}.`;
 }
 
 function spreadMessage(
@@ -88,7 +107,7 @@ function spreadMessage(
 ): string {
   const allowed = Math.round(displayAmount(field, spread, units));
 
-  return `Keep your goal within ${allowed}${unitLabelOf(field, units)} of where you are now.`;
+  return `Keep your goal within ${allowed}${unitLabelOf(field, units)} of your current weight.`;
 }
 
 function dateProblem(field: OnboardingField, entered: string): string | true {
@@ -100,7 +119,7 @@ function dateProblem(field: OnboardingField, entered: string): string | true {
   if (field.recentMonths === undefined) return true;
 
   return parsed < subMonths(today, field.recentMonths)
-    ? DISTANT_DATE_MESSAGE
+    ? `Pick a date within the last ${field.recentMonths} months.`
     : true;
 }
 
@@ -110,7 +129,7 @@ function numberProblem(
   entry: FieldEntry,
 ): string | true {
   const entered = Number(asText(entry.value));
-  if (!Number.isFinite(entered) || entered <= 0) return NUMBER_MESSAGE;
+  if (!Number.isFinite(entered) || entered <= 0) return amountMessage(field);
 
   if (field.range) {
     const bounds = displayRange(field, field.range, units);
@@ -143,7 +162,7 @@ function fieldProblem(
 
   if (empty) return field.requirement === 'required' ? requiredMessage(field) : true;
   if (field.kind === 'date') return dateProblem(field, asText(entry.value));
-  if (!isNumeric(field)) return true;
+  if (!isNumericField(field)) return true;
 
   return numberProblem(field, units, entry);
 }

@@ -8,14 +8,13 @@ import {
   DEMO_JOURNEY_CALL_ID,
   useClientJourneys,
 } from '../../context/ClientJourneyContext';
-import { JourneyStageBadge } from '../../components/coach-portal/JourneyStageBadge';
 import {
   awaitsCoachReview,
   isBeforeStage,
   type ClientJourney,
 } from '../../domain/journey';
 import { getInitials } from '../../utils/clientHelpers';
-import { journeyCallIdForClient, startPathLabel } from '../../utils/journeyLabels';
+import { journeyCallIdForClient } from '../../utils/journeyLabels';
 
 const MOCK_CLIENTS = [
   { id: 'c1', name: 'Jane Doe', email: 'jane@example.com', status: 'Active', joinDate: 'Oct 01, 2025' },
@@ -62,12 +61,8 @@ function OnboardingRow({ journey }: { journey: ClientJourney }) {
           </div>
         </div>
       </td>
-      <td className="py-4 px-6">
-        <JourneyStageBadge stage={journey.stage} />
-      </td>
-      <td className="py-4 px-6 text-sm text-text-secondary font-medium">
-        {startPathLabel(journey.subscription) ?? '—'}
-      </td>
+      <td className="py-4 px-6 text-sm text-text-secondary">—</td>
+      <td className="py-4 px-6 text-sm text-text-secondary">—</td>
       <td className="py-4 px-6 text-sm text-text-secondary">—</td>
       <td className="py-4 px-6">
         <div className="flex items-center justify-end gap-3">

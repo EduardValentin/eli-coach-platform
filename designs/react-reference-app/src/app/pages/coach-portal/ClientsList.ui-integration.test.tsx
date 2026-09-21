@@ -83,7 +83,7 @@ describe('the coach clients list', () => {
     ).toBeInTheDocument();
   });
 
-  it('lists a client who is still onboarding, with her stage and her start', async () => {
+  it('lists a client who is still onboarding by name and email alone', async () => {
     // arrange
     const user = renderList('?jstage=submitted');
 
@@ -93,11 +93,11 @@ describe('the coach clients list', () => {
     // assert
     const row = rowFor('Jane Doe');
     expect(within(row).getByText('jane@example.com')).toBeInTheDocument();
-    expect(within(row).getByText('Sent to coach')).toBeInTheDocument();
-    expect(within(row).getByText('Immediate start')).toBeInTheDocument();
+    expect(within(row).queryByText('Sent to coach')).not.toBeInTheDocument();
+    expect(within(row).queryByText('Immediate start')).not.toBeInTheDocument();
   });
 
-  it('names the day a waiting client starts', async () => {
+  it('keeps the day a waiting client starts off her row', async () => {
     // arrange
     const user = renderList('?jstage=submitted&jstart=waiting');
 
@@ -105,8 +105,8 @@ describe('the coach clients list', () => {
     await user.click(screen.getByRole('button', { name: 'Onboarding' }));
 
     // assert
-    expect(within(rowFor('Jane Doe')).getByText('Starts on 30 September'))
-      .toBeInTheDocument();
+    expect(within(rowFor('Jane Doe')).queryByText('Starts on 30 September'))
+      .not.toBeInTheDocument();
   });
 
   it('opens her onboarding from the row once it is waiting on the coach', async () => {
@@ -149,7 +149,9 @@ describe('the coach clients list', () => {
 
     // assert
     expect(names.filter((name) => name.includes('Jane Doe'))).toHaveLength(1);
-    expect(screen.getByText('Sent to coach')).toBeInTheDocument();
+    expect(
+      within(rowFor('Jane Doe')).getByRole('link', { name: 'Review onboarding' }),
+    ).toBeInTheDocument();
   });
 
   it('keeps the roster working when nothing is onboarding', async () => {

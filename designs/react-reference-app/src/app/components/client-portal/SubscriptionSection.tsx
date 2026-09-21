@@ -39,9 +39,9 @@ const REFUND_CONFIRMATION =
 function cancellationFacts(periodEndsAt: Date | undefined): string {
   const access = periodEndsAt
     ? `your access stays until ${formatJourneyDate(periodEndsAt)}`
-    : 'your access stays until the end of the period you paid for';
+    : 'your access stays until the end of the coaching you paid for';
 
-  return `You won't be charged again, the period you are in is not refunded, and ${access}.`;
+  return `You won't be charged again, there is no refund for the coaching already paid, and ${access}.`;
 }
 
 function cancelAction(subscription: CoachingSubscription, now: Date): string | null {
@@ -61,7 +61,7 @@ function Reading({ term, value }: { term: string; value: string }) {
   );
 }
 
-function periodReading(
+function subscriptionReading(
   subscription: CoachingSubscription,
   now: Date,
 ): { term: string; value: string } {
@@ -98,7 +98,7 @@ export function SubscriptionSection() {
   if (status === 'ended') return null;
 
   const refundable = !canDeliverProgram(subscription, now);
-  const period = periodReading(subscription, now);
+  const reading = subscriptionReading(subscription, now);
   const action = cancelAction(subscription, now);
 
   const confirm = async () => {
@@ -133,7 +133,7 @@ export function SubscriptionSection() {
             subscription.day1 ? formatJourneyDate(subscription.day1) : 'Not set yet'
           }
         />
-        <Reading term={period.term} value={period.value} />
+        <Reading term={reading.term} value={reading.value} />
       </dl>
 
       {action && (
