@@ -17,6 +17,8 @@ import {
   isBeforeStage,
   type ClientJourney,
 } from '../../domain/journey';
+import { format } from 'date-fns';
+import { bundleLengthLabel } from '../../domain/bundles';
 import { getInitials } from '../../utils/clientHelpers';
 import { JourneyStageBadge } from '../../components/coach-portal/JourneyStageBadge';
 import { journeyCallIdForClient } from '../../utils/journeyLabels';
@@ -41,9 +43,21 @@ function parseRosterFilter(value: string): RosterFilter {
 
 function isOnboarding(journey: ClientJourney): boolean {
   return (
-    !isBeforeStage(journey.stage, 'account-created') &&
+    !isBeforeStage(journey.stage, 'paid') &&
     journey.stage !== 'review-call-scheduled'
   );
+}
+
+function journeyBundleLabel(journey: ClientJourney): string {
+  return journey.subscription
+    ? bundleLengthLabel(journey.subscription.bundle)
+    : '—';
+}
+
+function journeyJoinDate(journey: ClientJourney): string {
+  return journey.subscription
+    ? format(journey.subscription.purchasedAt, 'MMM dd, yyyy')
+    : '—';
 }
 
 function journeyName(journey: ClientJourney): string {
@@ -82,8 +96,12 @@ function OnboardingRow({ journey }: { journey: ClientJourney }) {
       <td className="py-4 px-6">
         <JourneyStageBadge stage={journey.stage} />
       </td>
-      <td className="py-4 px-6 text-sm text-text-secondary">—</td>
-      <td className="py-4 px-6 text-sm text-text-secondary">—</td>
+      <td className="py-4 px-6 text-sm text-text-secondary font-medium">
+        {journeyBundleLabel(journey)}
+      </td>
+      <td className="py-4 px-6 text-sm text-text-secondary">
+        {journeyJoinDate(journey)}
+      </td>
       <td className="py-4 px-6">
         <div className="flex items-center justify-end gap-3">
           <Link

@@ -84,6 +84,20 @@ describe('the coach clients list', () => {
     ).toBeInTheDocument();
   });
 
+  it('lists a client as soon as she has paid, with her bundle and the day she paid', async () => {
+    // arrange
+    const user = renderList('?jstage=paid');
+
+    // act
+    await user.click(screen.getByRole('tab', { name: 'Onboarding' }));
+
+    // assert
+    const row = rowFor('Jane Doe');
+    expect(within(row).getByText('Paid')).toBeInTheDocument();
+    expect(within(row).getByText('3 months')).toBeInTheDocument();
+    expect(within(row).getByText(/^[A-Z][a-z]{2} \d{2}, \d{4}$/)).toBeInTheDocument();
+  });
+
   it('lists a client who is still onboarding with her name, email and onboarding status', async () => {
     // arrange
     const user = renderList('?jstage=submitted');
