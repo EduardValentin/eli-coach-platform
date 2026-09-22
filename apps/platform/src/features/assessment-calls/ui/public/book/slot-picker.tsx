@@ -130,7 +130,7 @@ function TimeSlotButton(props: {
   );
 }
 
-type SlotPickerBoxes = {
+type DaySlotsLayout = {
   calendarRef: RefObject<HTMLDivElement | null>;
   slotsRef: RefObject<HTMLDivElement | null>;
 };
@@ -144,7 +144,7 @@ function rendersBelow(element: HTMLElement, reference: HTMLElement): boolean {
 
 function useScrollDaySlotsIntoView(
   dayHeading: string | null,
-  { calendarRef, slotsRef }: SlotPickerBoxes,
+  { calendarRef, slotsRef }: DaySlotsLayout,
 ) {
   const revealedDay = useRef(dayHeading);
 

@@ -237,7 +237,7 @@ type CalendarSingleProps = CalendarBaseProps &
   Pick<PropsSingle, "onSelect" | "selected">;
 
 type CalendarRangeProps = CalendarBaseProps &
-  Pick<PropsRangeRequired, "mode" | "onSelect" | "required" | "selected">;
+  Pick<PropsRangeRequired, "mode" | "onSelect" | "selected">;
 
 export type CalendarProps = CalendarSingleProps | CalendarRangeProps;
 

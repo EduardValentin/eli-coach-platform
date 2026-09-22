@@ -17,6 +17,7 @@ import {
 
 import {
   defaultDirectionFor,
+  parseSortKeyParam,
   SORT_KEYS,
   type CallSort,
   type SortDirection,
@@ -38,12 +39,14 @@ type DirectionPresentation = Record<
   { icon: LucideIcon; label: string }
 >;
 
-const DATE_DIRECTIONS = (
+function dateDirections(
   labels: Record<SortDirection, string>,
-): DirectionPresentation => ({
-  asc: { icon: ArrowUpNarrowWide, label: labels.asc },
-  desc: { icon: ArrowDownWideNarrow, label: labels.desc },
-});
+): DirectionPresentation {
+  return {
+    asc: { icon: ArrowUpNarrowWide, label: labels.asc },
+    desc: { icon: ArrowDownWideNarrow, label: labels.desc },
+  };
+}
 
 const TEXT_DIRECTIONS: DirectionPresentation = {
   asc: { icon: ArrowDownAZ, label: "A to Z" },
@@ -51,14 +54,14 @@ const TEXT_DIRECTIONS: DirectionPresentation = {
 };
 
 const DIRECTIONS: Record<SortKey, DirectionPresentation> = {
-  booked: DATE_DIRECTIONS({ asc: "Oldest first", desc: "Newest first" }),
+  booked: dateDirections({ asc: "Oldest first", desc: "Newest first" }),
   email: TEXT_DIRECTIONS,
   name: TEXT_DIRECTIONS,
-  scheduled: DATE_DIRECTIONS({ asc: "Latest first", desc: "Soonest first" }),
+  scheduled: dateDirections({ asc: "Latest first", desc: "Soonest first" }),
 };
 
 type SortControlProps = {
-  onChooseKey: (value: string) => void;
+  onChooseKey: (key: SortKey) => void;
   onToggleDirection: () => void;
   sort: CallSort;
 };
@@ -78,7 +81,10 @@ export function SortControl({
     >
       <Label htmlFor={SORT_FIELD_ID}>Sort by</Label>
       <div className="flex items-center gap-2">
-        <Select onValueChange={onChooseKey} value={sort.key}>
+        <Select
+          onValueChange={(value) => onChooseKey(parseSortKeyParam(value))}
+          value={sort.key}
+        >
           <SelectTrigger className="h-8 w-40 text-sm" id={SORT_FIELD_ID}>
             <SelectValue />
           </SelectTrigger>

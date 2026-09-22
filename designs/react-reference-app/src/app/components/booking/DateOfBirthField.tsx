@@ -16,6 +16,10 @@ const PLACEHOLDER = 'Select a date';
 const FIELD_BUTTON_CLASS =
   'flex h-12 w-full min-w-0 items-center justify-between gap-2 rounded-field border border-control-border-soft bg-surface-quiet/50 px-3 py-1 text-left text-base outline-none transition-[color,box-shadow] md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] data-[invalid]:border-destructive';
 
+// The public header is fixed, so the calendar must not flip up into the
+// 80px it covers; 96px matches the page's scroll margin under that header.
+const FIXED_HEADER_CLEARANCE_PX = 96;
+
 export function DateOfBirthField({
   id,
   label,
@@ -71,7 +75,11 @@ export function DateOfBirthField({
             />
           </button>
         </PopoverTrigger>
-        <PopoverContent align="start" className="w-auto p-3">
+        <PopoverContent
+          align="start"
+          className="w-auto p-3"
+          collisionPadding={{ top: FIXED_HEADER_CLEARANCE_PX }}
+        >
           <div className="w-80">
             <BrandCalendar
               mode="single"

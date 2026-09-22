@@ -664,7 +664,6 @@ describe("calendar range selection", () => {
         mode="range"
         month={march2026}
         onSelect={onSelect}
-        required
         selected={{ from: march10, to: march12 }}
         timeZone="UTC"
       />,
@@ -689,7 +688,6 @@ describe("calendar range selection", () => {
         mode="range"
         month={march2026}
         onSelect={onSelect}
-        required
         selected={{ from: march10, to: march10 }}
         timeZone="UTC"
       />,

@@ -43,6 +43,10 @@ type DateOfBirthFieldProps = {
   value: string;
 };
 
+// The public header is fixed, so the calendar must not flip up into the
+// 80px it covers; 96px matches the page's scroll margin under that header.
+const FIXED_HEADER_CLEARANCE_PX = 96;
+
 export function DateOfBirthField(props: DateOfBirthFieldProps) {
   const { error, id, label, now, onChange, timeZone, value } = props;
   const [open, setOpen] = useState(false);
@@ -85,7 +89,10 @@ export function DateOfBirthField(props: DateOfBirthFieldProps) {
             />
           </button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto">
+        <PopoverContent
+          className="w-auto"
+          collisionPadding={{ top: FIXED_HEADER_CLEARANCE_PX }}
+        >
           <div className="w-80">
             <Calendar
               aria-label="Birth date"

@@ -32,24 +32,24 @@ export function DateRangeField({
   ...triggerProps
 }: DateRangeFieldProps) {
   const [open, setOpen] = React.useState(false);
-  const [picks, setPicks] = React.useState(0);
-  const from = dayOf(value.from);
-  const to = dayOf(value.to);
+  const [daysPickedSinceOpen, setDaysPickedSinceOpen] = React.useState(0);
+  const from = utcDayOf(value.from);
+  const to = utcDayOf(value.to);
 
   const openPicker = () => {
-    setPicks(0);
+    setDaysPickedSinceOpen(0);
     setOpen(true);
   };
 
   const closePicker = () => setOpen(false);
 
   const chooseRange = (range: DateRange | undefined) => {
-    const picksSoFar = picks + 1;
+    const daysPicked = daysPickedSinceOpen + 1;
 
     onChange({ from: isoDayOf(range?.from), to: isoDayOf(range?.to) });
-    setPicks(picksSoFar);
+    setDaysPickedSinceOpen(daysPicked);
 
-    if (picksSoFar >= PICKS_THAT_COMPLETE_A_RANGE) {
+    if (daysPicked >= PICKS_THAT_COMPLETE_A_RANGE) {
       closePicker();
     }
   };
@@ -73,7 +73,6 @@ export function DateRangeField({
           defaultMonth={from}
           mode="range"
           onSelect={chooseRange}
-          required
           selected={from ? { from, to } : undefined}
           timeZone={DAY_ZONE}
           yearRange={yearRange}
@@ -85,7 +84,7 @@ export function DateRangeField({
 
 const ISO_DAY = /^(\d{4})-(\d{2})-(\d{2})$/;
 
-function dayOf(isoDay: string | null): Date | undefined {
+function utcDayOf(isoDay: string | null): Date | undefined {
   const match = isoDay === null ? null : ISO_DAY.exec(isoDay);
 
   if (match === null) {
@@ -95,7 +94,7 @@ function dayOf(isoDay: string | null): Date | undefined {
   const [, year, month, day] = match.map(Number);
   const date = new Date(Date.UTC(year, month - 1, day));
 
-  return Number.isNaN(date.getTime()) ? undefined : date;
+  return isoDayOf(date) === isoDay ? date : undefined;
 }
 
 function isoDayOf(date: Date | undefined): string | null {

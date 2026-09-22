@@ -21,12 +21,13 @@ import {
   type CallSort,
   type CoachCallStatus,
   type DateRange,
+  type SortKey,
 } from "~/features/assessment-calls/ui/coach/assessment-call-listing";
 
 export type CallListingParams = {
   changeQuery: (value: string) => void;
   chooseRange: (range: DateRange) => void;
-  chooseSortKey: (value: string) => void;
+  chooseSortKey: (key: SortKey) => void;
   chooseStatus: (value: string) => void;
   page: number;
   pathForPage: (page: number) => string;
@@ -54,8 +55,8 @@ export function useCallListingParams(): CallListingParams {
 
     replaceSearchParams((params) => {
       params.delete(PAGE_PARAM);
-      writeParam(params, STATUS_PARAM, {
-        unlessDefault: DEFAULT_CALL_STATUS,
+      setParamUnlessDefault(params, STATUS_PARAM, {
+        defaultValue: DEFAULT_CALL_STATUS,
         value: chosen,
       });
     });
@@ -64,30 +65,31 @@ export function useCallListingParams(): CallListingParams {
   const changeQuery = (value: string) => {
     replaceSearchParams((params) => {
       params.delete(PAGE_PARAM);
-      writeParam(params, QUERY_PARAM, { unlessDefault: "", value });
+      setParamUnlessDefault(params, QUERY_PARAM, { defaultValue: "", value });
     });
   };
 
   const chooseRange = (range: DateRange) => {
     replaceSearchParams((params) => {
       params.delete(PAGE_PARAM);
-      writeParam(params, FROM_PARAM, {
-        unlessDefault: null,
+      setParamUnlessDefault(params, FROM_PARAM, {
+        defaultValue: null,
         value: range.from,
       });
-      writeParam(params, TO_PARAM, { unlessDefault: null, value: range.to });
+      setParamUnlessDefault(params, TO_PARAM, {
+        defaultValue: null,
+        value: range.to,
+      });
     });
   };
 
-  const chooseSortKey = (value: string) => {
-    const chosen = parseSortKeyParam(value);
-
+  const chooseSortKey = (key: SortKey) => {
     replaceSearchParams((params) => {
       params.delete(PAGE_PARAM);
       params.delete(DIRECTION_PARAM);
-      writeParam(params, SORT_PARAM, {
-        unlessDefault: DEFAULT_SORT_KEY,
-        value: chosen,
+      setParamUnlessDefault(params, SORT_PARAM, {
+        defaultValue: DEFAULT_SORT_KEY,
+        value: key,
       });
     });
   };
@@ -97,8 +99,8 @@ export function useCallListingParams(): CallListingParams {
 
     replaceSearchParams((params) => {
       params.delete(PAGE_PARAM);
-      writeParam(params, DIRECTION_PARAM, {
-        unlessDefault: defaultDirectionFor(sort.key),
+      setParamUnlessDefault(params, DIRECTION_PARAM, {
+        defaultValue: defaultDirectionFor(sort.key),
         value: reversed,
       });
     });
@@ -136,14 +138,14 @@ export function useCallListingParams(): CallListingParams {
   };
 }
 
-type ParamChoice = { unlessDefault: string | null; value: string | null };
+type ParamChoice = { defaultValue: string | null; value: string | null };
 
-function writeParam(
+function setParamUnlessDefault(
   params: URLSearchParams,
   param: string,
   choice: ParamChoice,
 ): void {
-  if (choice.value === null || choice.value === choice.unlessDefault) {
+  if (choice.value === null || choice.value === choice.defaultValue) {
     params.delete(param);
     return;
   }

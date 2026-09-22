@@ -79,8 +79,9 @@ async function pickTheOpenDay(user: ReturnType<typeof userEvent.setup>) {
 describe("the slot picker", () => {
   it("scrolls the times into view when they render below the calendar", async () => {
     // arrange
-    const scrollIntoView = vi.fn();
-    Element.prototype.scrollIntoView = scrollIntoView;
+    const scrollIntoView = vi
+      .spyOn(Element.prototype, "scrollIntoView")
+      .mockImplementation(() => {});
     layOut(CALENDAR_BOTTOM + 32);
     const user = userEvent.setup();
     render(<Harness />);
@@ -94,8 +95,9 @@ describe("the slot picker", () => {
 
   it("leaves the page still when the times render beside the calendar", async () => {
     // arrange
-    const scrollIntoView = vi.fn();
-    Element.prototype.scrollIntoView = scrollIntoView;
+    const scrollIntoView = vi
+      .spyOn(Element.prototype, "scrollIntoView")
+      .mockImplementation(() => {});
     layOut(CALENDAR_TOP);
     const user = userEvent.setup();
     render(<Harness />);
