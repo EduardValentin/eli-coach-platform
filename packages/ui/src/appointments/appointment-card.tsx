@@ -1,3 +1,4 @@
+import { CalendarDays, Clock, Mail, Phone } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { cn } from "../lib/cn";
@@ -9,12 +10,8 @@ import type {
   AppointmentTime,
   AppointmentTitleElement,
 } from "./appointment";
-import {
-  CalendarDaysGlyph,
-  ClockGlyph,
-  MailGlyph,
-  PhoneGlyph,
-} from "./appointment-glyphs";
+
+const APPOINTMENT_GLYPH_SIZE = 13;
 
 const CARD_TONE: Record<AppointmentStatus, string> = {
   past: "text-text-muted",
@@ -41,7 +38,11 @@ function AttendeeContactRow({ attendee }: { attendee: AppointmentAttendee }) {
           className={CONTACT_LINK_CLASS_NAME}
           href={`mailto:${attendee.email}`}
         >
-          <MailGlyph />
+          <Mail
+            aria-hidden="true"
+            className="shrink-0"
+            size={APPOINTMENT_GLYPH_SIZE}
+          />
           <span className="min-w-0 truncate" title={attendee.email}>
             {attendee.email}
           </span>
@@ -49,7 +50,11 @@ function AttendeeContactRow({ attendee }: { attendee: AppointmentAttendee }) {
       )}
       {attendee.phone && (
         <a className={CONTACT_LINK_CLASS_NAME} href={`tel:${attendee.phone}`}>
-          <PhoneGlyph />
+          <Phone
+            aria-hidden="true"
+            className="shrink-0"
+            size={APPOINTMENT_GLYPH_SIZE}
+          />
           <span className="min-w-0 truncate">{attendee.phone}</span>
         </a>
       )}
@@ -119,11 +124,19 @@ export function AppointmentCard({
 
           <div className="flex flex-col gap-1 text-sm text-text-secondary md:flex-row md:flex-wrap md:items-center md:gap-3">
             <span className="flex items-center gap-1.5 whitespace-nowrap">
-              <CalendarDaysGlyph />
+              <CalendarDays
+                aria-hidden="true"
+                className="shrink-0"
+                size={APPOINTMENT_GLYPH_SIZE}
+              />
               {when.date}
             </span>
             <span className="flex items-center gap-1.5 whitespace-nowrap">
-              <ClockGlyph />
+              <Clock
+                aria-hidden="true"
+                className="shrink-0"
+                size={APPOINTMENT_GLYPH_SIZE}
+              />
               {when.time}
             </span>
           </div>

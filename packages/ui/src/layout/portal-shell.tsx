@@ -1,3 +1,4 @@
+import { Menu, X } from "lucide-react";
 import { motion } from "motion/react";
 import type { PropsWithChildren, ReactNode, RefObject } from "react";
 import { Link as RouterLink, useLocation } from "react-router";
@@ -59,10 +60,10 @@ export function PortalShell(props: PortalShellProps) {
         Skip to main content
       </a>
       <NavigationDialog
-        closeMenuIcon={<CloseGlyph />}
+        closeMenuIcon={<X aria-hidden="true" className="size-6" />}
         contentClassName="fixed inset-0 z-40 outline-none lg:hidden"
         menuButtonClassName="relative z-[60] -mr-2 text-text-secondary hover:text-text-primary"
-        openMenuIcon={<MenuGlyph />}
+        openMenuIcon={<Menu aria-hidden="true" className="size-6" />}
         renderTopBar={(topBar) => (
           <header className="fixed inset-x-0 top-0 z-50 flex h-16 items-center justify-between border-b border-border-subtle bg-surface-base px-6 shadow-soft lg:hidden">
             <div className="flex min-w-0 items-center gap-3">{topBarBrand}</div>
@@ -202,39 +203,5 @@ function PortalSidebarNavigation(props: PortalSidebarNavigationProps) {
         );
       })}
     </nav>
-  );
-}
-
-function MenuGlyph() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="size-6"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      viewBox="0 0 24 24"
-    >
-      <path d="M4 6h16M4 12h16M4 18h16" />
-    </svg>
-  );
-}
-
-function CloseGlyph() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="size-6"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      viewBox="0 0 24 24"
-    >
-      <path d="M18 6 6 18M6 6l12 12" />
-    </svg>
   );
 }

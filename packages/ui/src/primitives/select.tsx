@@ -1,58 +1,8 @@
+import { Check, ChevronDown, ChevronUp } from "lucide-react";
 import * as React from "react";
 import { Select as RadixSelect } from "radix-ui";
 
 import { cn } from "../lib/cn";
-
-function ChevronDownIcon(props: React.ComponentPropsWithoutRef<"svg">) {
-  return (
-    <svg
-      aria-hidden="true"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      viewBox="0 0 24 24"
-      {...props}
-    >
-      <path d="m6 9 6 6 6-6" />
-    </svg>
-  );
-}
-
-function CheckIcon(props: React.ComponentPropsWithoutRef<"svg">) {
-  return (
-    <svg
-      aria-hidden="true"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      viewBox="0 0 24 24"
-      {...props}
-    >
-      <path d="M20 6 9 17l-5-5" />
-    </svg>
-  );
-}
-
-function ChevronUpIcon(props: React.ComponentPropsWithoutRef<"svg">) {
-  return (
-    <svg
-      aria-hidden="true"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      viewBox="0 0 24 24"
-      {...props}
-    >
-      <path d="m18 15-6-6-6 6" />
-    </svg>
-  );
-}
 
 export const Select = RadixSelect.Root;
 export const SelectValue = RadixSelect.Value;
@@ -81,7 +31,10 @@ export const SelectTrigger = React.forwardRef<
   >
     {children}
     <RadixSelect.Icon asChild>
-      <ChevronDownIcon className="size-4 shrink-0 text-text-muted opacity-50" />
+      <ChevronDown
+        aria-hidden="true"
+        className="size-4 shrink-0 text-text-muted opacity-50"
+      />
     </RadixSelect.Icon>
   </RadixSelect.Trigger>
 ));
@@ -138,7 +91,7 @@ function SelectScrollUpButton(
       )}
       {...rest}
     >
-      <ChevronUpIcon className="size-4 text-text-muted" />
+      <ChevronUp aria-hidden="true" className="size-4 text-text-muted" />
     </RadixSelect.ScrollUpButton>
   );
 }
@@ -156,7 +109,7 @@ function SelectScrollDownButton(
       )}
       {...rest}
     >
-      <ChevronDownIcon className="size-4 text-text-muted" />
+      <ChevronDown aria-hidden="true" className="size-4 text-text-muted" />
     </RadixSelect.ScrollDownButton>
   );
 }
@@ -177,7 +130,7 @@ export const SelectItem = React.forwardRef<
   >
     <span className="absolute right-2 flex size-3.5 items-center justify-center">
       <RadixSelect.ItemIndicator>
-        <CheckIcon className="size-4 text-text-muted" />
+        <Check aria-hidden="true" className="size-4 text-text-muted" />
       </RadixSelect.ItemIndicator>
     </span>
     <RadixSelect.ItemText>{children}</RadixSelect.ItemText>

@@ -1,9 +1,9 @@
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
+import { ChevronLeft, ChevronRight, Ellipsis } from "lucide-react";
 import { Link } from "react-router";
 
 import { cn } from "../lib/cn";
-import { glyphAttributes } from "../lib/glyph";
 
 const stepClassNames = cva(
   "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-control text-sm font-medium outline-none transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
@@ -94,7 +94,7 @@ export function PaginationCurrentPage({ page, to }: PageProps) {
 export function PaginationPrevious({ to }: EdgeProps) {
   return (
     <PaginationEdge label="Go to previous page" to={to}>
-      <ChevronLeftGlyph />
+      <ChevronLeft aria-hidden="true" />
       <span className="hidden sm:block">Previous</span>
     </PaginationEdge>
   );
@@ -104,7 +104,7 @@ export function PaginationNext({ to }: EdgeProps) {
   return (
     <PaginationEdge label="Go to next page" to={to}>
       <span className="hidden sm:block">Next</span>
-      <ChevronRightGlyph />
+      <ChevronRight aria-hidden="true" />
     </PaginationEdge>
   );
 }
@@ -113,7 +113,7 @@ export function PaginationEllipsis() {
   return (
     <li aria-hidden="true">
       <span className="flex size-9 items-center justify-center">
-        <EllipsisGlyph />
+        <Ellipsis aria-hidden="true" className="size-4" />
         <span className="sr-only">More pages</span>
       </span>
     </li>
@@ -146,37 +146,5 @@ function PaginationEdge(props: {
         </Link>
       )}
     </li>
-  );
-}
-
-const GLYPH_ATTRIBUTE_SIZE = 24;
-
-function ChevronLeftGlyph() {
-  return (
-    <svg aria-hidden="true" {...glyphAttributes(GLYPH_ATTRIBUTE_SIZE)}>
-      <path d="m15 18-6-6 6-6" />
-    </svg>
-  );
-}
-
-function ChevronRightGlyph() {
-  return (
-    <svg aria-hidden="true" {...glyphAttributes(GLYPH_ATTRIBUTE_SIZE)}>
-      <path d="m9 18 6-6-6-6" />
-    </svg>
-  );
-}
-
-function EllipsisGlyph() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="size-4"
-      {...glyphAttributes(GLYPH_ATTRIBUTE_SIZE)}
-    >
-      <circle cx="12" cy="12" r="1" />
-      <circle cx="19" cy="12" r="1" />
-      <circle cx="5" cy="12" r="1" />
-    </svg>
   );
 }

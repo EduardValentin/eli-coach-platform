@@ -29,6 +29,7 @@
   "dependencies": {
     "class-variance-authority": "catalog:",
     "clsx": "catalog:",
+    "lucide-react": "catalog:",
     "radix-ui": "catalog:",
     "react-day-picker": "catalog:",
     "sonner": "catalog:",

@@ -1,3 +1,4 @@
+import { Check } from "lucide-react";
 import * as React from "react";
 import { Checkbox as RadixCheckbox } from "radix-ui";
 
@@ -18,16 +19,7 @@ export const Checkbox = React.forwardRef<
     {...props}
   >
     <RadixCheckbox.Indicator>
-      <svg
-        aria-hidden="true"
-        className="size-3.5"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        viewBox="0 0 16 16"
-      >
-        <path d="m3 8 3 3 7-7" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
+      <Check aria-hidden="true" className="size-3.5" />
     </RadixCheckbox.Indicator>
   </RadixCheckbox.Root>
 ));

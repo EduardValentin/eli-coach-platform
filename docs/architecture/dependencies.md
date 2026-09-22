@@ -189,11 +189,11 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 | E1538 | packages/domain/src/assessment-call/list-assessment-calls-use-case.ts | packages/domain/src/assessment-call/assessment-call.ts | import | no | no | lateral | present |
 | E1539 | packages/domain/src/assessment-call/list-assessment-calls-use-case.ts | packages/domain/src/coach-availability/index.ts | import | no | no | lateral | present |
 | E1540 | packages/ui/src/appointments/appointment-card.tsx | external:react | import | n/a | no | lateral | present |
-| E1541 | packages/ui/src/appointments/appointment-card.tsx | packages/ui/src/appointments/appointment-glyphs.tsx | import | no | no | lateral | present |
+| E1541 | packages/ui/src/appointments/appointment-card.tsx | packages/ui/src/appointments/appointment-glyphs.tsx | import | no | no | lateral | retired (GEN-197: lucide-react replaces the inline glyphs) |
 | E1542 | packages/ui/src/appointments/appointment-card.tsx | packages/ui/src/appointments/appointment.ts | import | no | no | lateral | present |
 | E1543 | packages/ui/src/appointments/appointment-card.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
 | E1544 | packages/ui/src/appointments/appointment-card.tsx | packages/ui/src/primitives/avatar.tsx | import | no | no | lateral | present |
-| E1545 | packages/ui/src/appointments/appointment-glyphs.tsx | external:react | import | n/a | no | lateral | present |
+| E1545 | packages/ui/src/appointments/appointment-glyphs.tsx | external:react | import | n/a | no | lateral | retired (GEN-197: lucide-react replaces the inline glyphs) |
 | E1546 | packages/ui/src/appointments/dashboard-appointment-row.tsx | external:react | import | n/a | no | lateral | present |
 | E1547 | packages/ui/src/appointments/dashboard-appointment-row.tsx | packages/ui/src/appointments/appointment.ts | import | no | no | lateral | present |
 | E1548 | packages/ui/src/appointments/index.ts | packages/ui/src/appointments/appointment-card.tsx | import | no | no | lateral | present |
@@ -1444,3 +1444,10 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E1013 | packages/ui/src/primitives/section-eyebrow.tsx | external:react | import | n/a | no | lateral | present |
 | E1380 | packages/ui/src/primitives/textarea.tsx | external:react | import | n/a | no | lateral | present |
 | E1381 | packages/ui/src/primitives/textarea.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
+| E1582 | packages/ui/src/appointments/appointment-card.tsx | external:lucide-react | import | n/a | no | lateral | new (GEN-197: lucide replaces the inline glyphs) |
+| E1583 | packages/ui/src/calendar/calendar.tsx | external:lucide-react | import | n/a | no | lateral | new (GEN-197: lucide replaces the inline glyphs) |
+| E1584 | packages/ui/src/calendar/date-field-trigger.tsx | external:lucide-react | import | n/a | no | lateral | new (GEN-197: lucide replaces the inline glyphs) |
+| E1585 | packages/ui/src/layout/portal-shell.tsx | external:lucide-react | import | n/a | no | lateral | new (GEN-197: lucide replaces the inline glyphs) |
+| E1586 | packages/ui/src/primitives/checkbox.tsx | external:lucide-react | import | n/a | no | lateral | new (GEN-197: lucide replaces the inline glyphs) |
+| E1587 | packages/ui/src/primitives/pagination.tsx | external:lucide-react | import | n/a | no | lateral | new (GEN-197: lucide replaces the inline glyphs) |
+| E1588 | packages/ui/src/primitives/select.tsx | external:lucide-react | import | n/a | no | lateral | new (GEN-197: lucide replaces the inline glyphs) |
