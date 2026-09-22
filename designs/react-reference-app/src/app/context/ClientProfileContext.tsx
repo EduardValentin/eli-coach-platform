@@ -2,7 +2,7 @@ import { createContext, useContext, useState, ReactNode } from 'react';
 
 // ── Types ───────────────────────────────────────────────────────────
 
-export type Gender = 'Female' | 'Male' | 'Non-binary' | 'Prefer not to say';
+export type Gender = 'Female' | 'Male' | 'Prefer not to say';
 
 export type ActivityLevel =
   | 'sedentary'

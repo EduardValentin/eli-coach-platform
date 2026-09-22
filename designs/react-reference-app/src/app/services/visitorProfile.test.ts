@@ -20,14 +20,14 @@ describe('visitor profile vocabulary', () => {
     const goals = VISITOR_PRIMARY_GOALS.map((option) => option.label);
 
     // assert
-    expect(genders).toEqual(['Female', 'Male', 'Non-binary', 'Prefer not to say']);
+    expect(genders).toEqual(['Female', 'Male', 'Prefer not to say']);
     expect(goals).toEqual([
       'Lose weight',
       'Build muscle',
       'Build strength',
       'Maintain but improve lifestyle',
     ]);
-    expect(labelForGender('non_binary')).toBe('Non-binary');
+    expect(labelForGender('prefer_not_to_say')).toBe('Prefer not to say');
     expect(labelForPrimaryGoal('maintain_improve_lifestyle')).toBe(
       'Maintain but improve lifestyle',
     );

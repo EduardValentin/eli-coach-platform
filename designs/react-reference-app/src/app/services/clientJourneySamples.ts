@@ -124,8 +124,8 @@ function journeyPhone(
 }
 
 // The journey model knows two sexes because it drives the cycle-context
-// onboarding form; a visitor who booked as non-binary or undisclosed is seeded
-// as female and the coach corrects it at onboarding.
+// onboarding form; a visitor who did not disclose her gender is seeded as
+// female and the coach corrects it at onboarding.
 function journeySexFromGender(gender: VisitorGender): JourneySex {
   return gender === 'male' ? 'male' : 'female';
 }

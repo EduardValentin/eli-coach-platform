@@ -1,9 +1,4 @@
-export const VISITOR_GENDERS = [
-  "female",
-  "male",
-  "non_binary",
-  "prefer_not_to_say",
-] as const;
+export const VISITOR_GENDERS = ["female", "male", "prefer_not_to_say"] as const;
 
 export type VisitorGender = (typeof VISITOR_GENDERS)[number];
 

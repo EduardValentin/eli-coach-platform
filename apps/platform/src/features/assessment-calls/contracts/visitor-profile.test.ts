@@ -17,7 +17,7 @@ const BUCHAREST = "Europe/Bucharest";
 const AUTUMN_EVENING = new Date("2026-09-21T18:00:00.000Z");
 
 describe("visitor profile options", () => {
-  it("labels the four genders in the order the visitor sees them", () => {
+  it("labels the three genders in the order the visitor sees them", () => {
     // arrange
     const options = VISITOR_GENDER_OPTIONS;
 
@@ -28,15 +28,9 @@ describe("visitor profile options", () => {
     expect(options.map((option) => option.value)).toEqual([
       "female",
       "male",
-      "non_binary",
       "prefer_not_to_say",
     ]);
-    expect(labels).toEqual([
-      "Female",
-      "Male",
-      "Non-binary",
-      "Prefer not to say",
-    ]);
+    expect(labels).toEqual(["Female", "Male", "Prefer not to say"]);
   });
 
   it("labels the four primary goals in the order the visitor sees them", () => {

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { VISITOR_GENDERS, VISITOR_PRIMARY_GOALS } from "./visitor-profile";
 
 describe("visitor profile vocabulary", () => {
-  it("names the four genders a visitor can choose from", () => {
+  it("names the three genders a visitor can choose from", () => {
     // arrange
     const genders = VISITOR_GENDERS;
 
@@ -11,12 +11,7 @@ describe("visitor profile vocabulary", () => {
     const codes = [...genders];
 
     // assert
-    expect(codes).toEqual([
-      "female",
-      "male",
-      "non_binary",
-      "prefer_not_to_say",
-    ]);
+    expect(codes).toEqual(["female", "male", "prefer_not_to_say"]);
   });
 
   it("names the four primary goals a visitor can state", () => {

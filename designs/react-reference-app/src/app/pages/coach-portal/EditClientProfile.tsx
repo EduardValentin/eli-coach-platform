@@ -23,7 +23,7 @@ import {
   formatHeight, formatBodyWeight, weightUnitLabel,
 } from '../../utils/units';
 
-const GENDERS: Gender[] = ['Female', 'Male', 'Non-binary', 'Prefer not to say'];
+const GENDERS: Gender[] = ['Female', 'Male', 'Prefer not to say'];
 
 export function EditClientProfile() {
   const { id } = useParams();

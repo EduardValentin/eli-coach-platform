@@ -14,7 +14,6 @@ export type ChoiceOption<Value extends string> = {
 export const VISITOR_GENDER_OPTIONS: readonly ChoiceOption<VisitorGender>[] = [
   { value: "female", label: "Female" },
   { value: "male", label: "Male" },
-  { value: "non_binary", label: "Non-binary" },
   { value: "prefer_not_to_say", label: "Prefer not to say" },
 ];
 
