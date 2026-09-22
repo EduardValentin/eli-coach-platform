@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ArrowRight, Settings, X } from 'lucide-react';
 import {
   useAppState,
+  type PrototypeMode,
   type PrototypeSession,
   type PrototypeWaitlistAvailability,
 } from '../context/AppContext';
@@ -72,6 +73,10 @@ function parseSessionControl(value: string): PrototypeSession {
   }
 
   return 'anonymous';
+}
+
+function parsePrototypeModeControl(value: string): PrototypeMode {
+  return value === 'post-mvp' ? 'post-mvp' : 'mvp';
 }
 
 function parseSignInOutcomeControl(value: string): PrototypeSignInOutcome {
@@ -253,6 +258,12 @@ export function DevToggle() {
   const [pendingCheckins, setPendingCheckins] =
     useState<PendingCheckinsSeed>('seeded');
   const { appState, setAppState } = useAppState();
+  const isPostMvp = appState.prototypeMode === 'post-mvp';
+  const journeyStages = JOURNEY_STAGES.filter(
+    (stage) =>
+      isPostMvp ||
+      (stage !== 'program-ready' && stage !== 'review-call-scheduled'),
+  );
   const { replaceBookings } = useAssessmentCalls();
   const { journeys } = useClientJourneys();
   const journeyLinks = Object.values(journeys)
@@ -306,6 +317,18 @@ export function DevToggle() {
     restoreSeededCheckins();
   };
 
+  const setPrototypeMode = (value: string) => {
+    const prototypeMode = parsePrototypeModeControl(value);
+    const journeyStage =
+      prototypeMode === 'mvp' &&
+      (appState.journeyStage === 'program-ready' ||
+        appState.journeyStage === 'review-call-scheduled')
+        ? 'approved'
+        : appState.journeyStage;
+
+    setAppState({ prototypeMode, journeyStage });
+  };
+
   return (
     <>
       <button
@@ -335,7 +358,25 @@ export function DevToggle() {
               </button>
             </div>
 
-            <Tabs defaultValue="session">
+            <div className="mb-4 space-y-2">
+              <Label htmlFor="dev-prototype-mode" className={DEV_LABEL_CLASS}>
+                Prototype mode
+              </Label>
+              <Select
+                value={appState.prototypeMode}
+                onValueChange={setPrototypeMode}
+              >
+                <SelectTrigger id="dev-prototype-mode" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className={SELECT_CONTENT_CLASS}>
+                  <SelectItem value="mvp">MVP</SelectItem>
+                  <SelectItem value="post-mvp">Post-MVP</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Tabs key={appState.prototypeMode} defaultValue="session">
               <TabsList className="h-auto w-full flex-wrap gap-1">
                 <TabsTrigger value="session" className={TAB_TRIGGER_CLASS}>
                   Session
@@ -349,9 +390,11 @@ export function DevToggle() {
                 <TabsTrigger value="waitlist" className={TAB_TRIGGER_CLASS}>
                   Waitlist
                 </TabsTrigger>
-                <TabsTrigger value="nutrition" className={TAB_TRIGGER_CLASS}>
-                  Nutrition
-                </TabsTrigger>
+                {isPostMvp && (
+                  <TabsTrigger value="nutrition" className={TAB_TRIGGER_CLASS}>
+                    Nutrition
+                  </TabsTrigger>
+                )}
                 <TabsTrigger value="coach" className={TAB_TRIGGER_CLASS}>
                   Coach
                 </TabsTrigger>
@@ -631,20 +674,22 @@ export function DevToggle() {
                 )}
               </TabsContent>
 
-              <TabsContent value="nutrition" className={TAB_PANEL_CLASS}>
-                <DevCheckboxRow
-                  id="dev-nutrition-block-completed"
-                  label="Block completed (show review)"
-                  checked={appState.nutritionBlockCompleted}
-                  onCheckedChange={(checked) => setAppState({ nutritionBlockCompleted: checked })}
-                />
-                <DevCheckboxRow
-                  id="dev-nutrition-preference-conflict"
-                  label="Preference conflict (salmon)"
-                  checked={appState.nutritionPreferenceConflict}
-                  onCheckedChange={(checked) => setAppState({ nutritionPreferenceConflict: checked })}
-                />
-              </TabsContent>
+              {isPostMvp && (
+                <TabsContent value="nutrition" className={TAB_PANEL_CLASS}>
+                  <DevCheckboxRow
+                    id="dev-nutrition-block-completed"
+                    label="Block completed (show review)"
+                    checked={appState.nutritionBlockCompleted}
+                    onCheckedChange={(checked) => setAppState({ nutritionBlockCompleted: checked })}
+                  />
+                  <DevCheckboxRow
+                    id="dev-nutrition-preference-conflict"
+                    label="Preference conflict (salmon)"
+                    checked={appState.nutritionPreferenceConflict}
+                    onCheckedChange={(checked) => setAppState({ nutritionPreferenceConflict: checked })}
+                  />
+                </TabsContent>
+              )}
 
               <TabsContent value="coach" className={TAB_PANEL_CLASS}>
                 <div className="space-y-2">
@@ -712,7 +757,7 @@ export function DevToggle() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className={SELECT_CONTENT_CLASS}>
-                      {JOURNEY_STAGES.map((stage) => (
+                      {journeyStages.map((stage) => (
                         <SelectItem key={stage} value={stage}>
                           {COACH_STAGE_LABELS[stage]}
                         </SelectItem>

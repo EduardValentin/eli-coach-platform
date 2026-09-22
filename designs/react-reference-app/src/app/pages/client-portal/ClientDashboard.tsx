@@ -11,6 +11,8 @@ import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { ProgramStatusCard } from '../../components/client-portal/ProgramStatusCard';
 import { ReviewCallScheduler } from '../../components/client-portal/ReviewCallScheduler';
 import { MACRO_BAR } from '../../components/coach-portal/nutrition/nutrition-constants';
+import { useAppState } from '../../context/AppContext';
+import { cn } from '../../components/ui/utils';
 
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -18,6 +20,8 @@ export function ClientDashboard() {
   const { clientActivePlan, goals, activeWorkout } = useTraining();
   const { clientPhase } = useCycle();
   const { clientProfile } = useClientProfile();
+  const { appState } = useAppState();
+  const isPostMvp = appState.prototypeMode === 'post-mvp';
   const { weightUnit, heightUnit } = useUnitPreferences();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -79,13 +83,17 @@ export function ClientDashboard() {
         subtitle="Here is your daily snapshot and current focus."
       />
 
-      <ProgramStatusCard />
+      {isPostMvp && <ProgramStatusCard />}
 
       {/* Top Metrics Grid: unified nutrition card + cycle phase */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6 mb-8">
+      <div
+        className={cn('grid grid-cols-1 gap-4 mb-8 lg:gap-6', {
+          'lg:grid-cols-3': isPostMvp,
+        })}
+      >
 
         {/* Daily Nutrition Card — BMR, Daily Target + macro split */}
-        <motion.section
+        {isPostMvp && <motion.section
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           aria-labelledby="nutrition-heading"
@@ -182,10 +190,10 @@ export function ClientDashboard() {
               ))}
             </ul>
           </div>
-        </motion.section>
+        </motion.section>}
 
         {/* Phase Card (kept separate) */}
-        <Link to="/portal/cycle" className="lg:col-span-1 block h-full">
+        <Link to="/portal/cycle" className="block h-full">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -212,10 +220,14 @@ export function ClientDashboard() {
       </div>
 
       {/* Bottom Layout Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+      <div
+        className={cn('grid grid-cols-1 gap-6 lg:gap-8', {
+          'lg:grid-cols-3': isPostMvp,
+        })}
+      >
         
         {/* Focus Card - Spans 2 cols on lg */}
-        <motion.div 
+        {isPostMvp && <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
@@ -261,14 +273,14 @@ export function ClientDashboard() {
               Enjoy your rest day
             </div>
           )}
-        </motion.div>
+        </motion.div>}
 
         {/* Profile Details Card - Spans 1 col */}
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25 }}
-          className="lg:col-span-1 bg-white p-8 lg:p-10 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
+          className="bg-white p-8 lg:p-10 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
         >
           <h2 className="font-serif text-xl text-text-primary font-semibold mb-8">Profile Details</h2>
 
@@ -311,9 +323,11 @@ export function ClientDashboard() {
 
       </div>
 
-      <ReviewCallScheduler onOpenChange={setBookingReview} open={bookingReview} />
+      {isPostMvp && (
+        <ReviewCallScheduler onOpenChange={setBookingReview} open={bookingReview} />
+      )}
 
-      {showStartCTA && (
+      {isPostMvp && showStartCTA && (
         <div className="mt-8 flex justify-center sm:justify-start">
           <button
             type="button"

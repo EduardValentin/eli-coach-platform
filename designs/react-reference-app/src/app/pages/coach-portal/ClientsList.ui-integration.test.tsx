@@ -22,10 +22,11 @@ afterEach(() => {
 });
 
 function renderList(urlQuery = '') {
-  window.history.replaceState({}, '', `/coach/clients${urlQuery}`);
+  const url = `/coach/clients?scope=post-mvp&${urlQuery.replace(/^\?/, '')}`;
+  window.history.replaceState({}, '', url);
 
   render(
-    <MemoryRouter initialEntries={[`/coach/clients${urlQuery}`]}>
+    <MemoryRouter initialEntries={[url]}>
       <AppProvider>
         <TrainingProvider>
           <ClientProfileProvider>
@@ -73,7 +74,7 @@ describe('the coach clients list', () => {
 
   it('shows nobody under Onboarding while every journey is finished', async () => {
     // arrange
-    const user = renderList();
+    const user = renderList('?jstage=review-call-scheduled');
 
     // act
     await user.click(screen.getByRole('tab', { name: 'Onboarding' }));

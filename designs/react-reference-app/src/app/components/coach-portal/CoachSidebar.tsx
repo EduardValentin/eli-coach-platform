@@ -18,12 +18,13 @@ import { NotificationBell } from '../NotificationBell';
 import { useCheckins } from '../../context/CheckinContext';
 import { useCoachProfile } from '../../context/CoachProfileContext';
 import { NavigationDialog } from '../ui/navigation-dialog';
+import { useAppState } from '../../context/AppContext';
 
 const LINKS = [
   { name: 'Dashboard', href: '/coach', icon: LayoutDashboard },
-  { name: 'Training', href: '/coach/training', icon: Activity },
-  { name: 'Nutrition', href: '/coach/nutrition', icon: Utensils },
-  { name: 'Messages', href: '/coach/messages', icon: MessageSquare },
+  { name: 'Training', href: '/coach/training', icon: Activity, postMvp: true },
+  { name: 'Nutrition', href: '/coach/nutrition', icon: Utensils, postMvp: true },
+  { name: 'Messages', href: '/coach/messages', icon: MessageSquare, postMvp: true },
   { name: 'Clients', href: '/coach/clients', icon: Users },
   { name: 'Schedule', href: '/coach/checkins', icon: CalendarDays },
   { name: 'Assessment calls', href: '/coach/assessment-calls', icon: Video },
@@ -63,6 +64,7 @@ const SidebarSurface = ({ children }: { children: ReactNode }) => (
 
 interface SidebarNavigationProps {
   firstLinkRef?: RefObject<HTMLAnchorElement>;
+  links: (typeof LINKS)[number][];
   onNavigate?: () => void;
   pathname: string;
   pendingCheckins?: number;
@@ -70,6 +72,7 @@ interface SidebarNavigationProps {
 
 const SidebarNavigation = ({
   firstLinkRef,
+  links,
   onNavigate,
   pathname,
   pendingCheckins = 0,
@@ -78,7 +81,7 @@ const SidebarNavigation = ({
     aria-label="Coach portal navigation"
     className="flex flex-1 flex-col gap-1 px-4 py-2 overflow-y-auto"
   >
-    {LINKS.map((link, linkIndex) => {
+    {links.map((link, linkIndex) => {
       const Icon = link.icon;
       const isActive =
         pathname === link.href || (link.href !== '/coach' && pathname.startsWith(link.href));
@@ -111,6 +114,7 @@ const SidebarNavigation = ({
 
 const CoachPortalDrawer = ({
   firstLinkRef,
+  links,
   onNavigate,
   pathname,
   pendingCheckins,
@@ -130,6 +134,7 @@ const CoachPortalDrawer = ({
       <SidebarSurface>
         <SidebarNavigation
           firstLinkRef={firstLinkRef}
+          links={links}
           onNavigate={onNavigate}
           pathname={pathname}
           pendingCheckins={pendingCheckins}
@@ -142,6 +147,7 @@ const CoachPortalDrawer = ({
 interface DesktopSidebarProps {
   actions?: ReactNode;
   brand: ReactNode;
+  links: (typeof LINKS)[number][];
   pathname: string;
   pendingCheckins?: number;
 }
@@ -149,6 +155,7 @@ interface DesktopSidebarProps {
 const DesktopSidebar = ({
   actions,
   brand,
+  links,
   pathname,
   pendingCheckins = 0,
 }: DesktopSidebarProps) => (
@@ -158,7 +165,11 @@ const DesktopSidebar = ({
       {actions}
     </div>
 
-    <SidebarNavigation pathname={pathname} pendingCheckins={pendingCheckins} />
+    <SidebarNavigation
+      links={links}
+      pathname={pathname}
+      pendingCheckins={pendingCheckins}
+    />
   </SidebarSurface>
 );
 
@@ -167,6 +178,10 @@ export function CoachSidebar() {
   const prefersReducedMotion = useReducedMotion() ?? false;
   const { getPendingCheckins } = useCheckins();
   const { coachProfile } = useCoachProfile();
+  const { appState } = useAppState();
+  const links = LINKS.filter(
+    (link) => !('postMvp' in link) || appState.prototypeMode === 'post-mvp',
+  );
   const pendingCount = getPendingCheckins().length;
   const coachAvatarUrl = coachProfile.avatarUrl;
   const [isTopBarNotificationsOpen, setIsTopBarNotificationsOpen] = useState(false);
@@ -220,6 +235,7 @@ export function CoachSidebar() {
             />
             <CoachPortalDrawer
               firstLinkRef={menu.firstLinkRef}
+              links={links}
               onNavigate={menu.close}
               pathname={location.pathname}
               pendingCheckins={pendingCount}
@@ -233,6 +249,7 @@ export function CoachSidebar() {
         <DesktopSidebar
           actions={<NotificationBell align="left" />}
           brand={<CoachIdentityLink coachAvatarUrl={coachAvatarUrl} />}
+          links={links}
           pathname={location.pathname}
           pendingCheckins={pendingCount}
         />

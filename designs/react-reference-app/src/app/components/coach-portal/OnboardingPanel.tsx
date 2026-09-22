@@ -38,6 +38,7 @@ import { formatJourneyDate } from '../../utils/journeyLabels';
 import { JourneyStageBadge } from './JourneyStageBadge';
 import { OnboardingReviewBar } from './OnboardingReviewBar';
 import { ReviewAnswerValue } from './ReviewAnswerValue';
+import { useAppState } from '../../context/AppContext';
 
 const PANEL_CLASS =
   'bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50';
@@ -278,23 +279,30 @@ function StageActions({
   clientId: string;
   onReview: () => void;
 }) {
+  const { appState } = useAppState();
+
   if (!awaitsCoachReview(journey.stage)) return null;
 
   const reviewAction = REVIEW_ACTIONS[journey.stage];
+  const isPostMvp = appState.prototypeMode === 'post-mvp';
+
+  if (!isPostMvp && !reviewAction) return null;
 
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-col gap-3 sm:flex-row">
-        <Button asChild>
-          <Link to={`/coach/training/builder/${clientId}`}>{BUILD_ACTION}</Link>
-        </Button>
+        {isPostMvp && (
+          <Button asChild>
+            <Link to={`/coach/training/builder/${clientId}`}>{BUILD_ACTION}</Link>
+          </Button>
+        )}
         {reviewAction && (
           <Button variant="outline" onClick={onReview}>
             {reviewAction}
           </Button>
         )}
       </div>
-      <DeliveryNote subscription={journey.subscription} />
+      {isPostMvp && <DeliveryNote subscription={journey.subscription} />}
     </div>
   );
 }

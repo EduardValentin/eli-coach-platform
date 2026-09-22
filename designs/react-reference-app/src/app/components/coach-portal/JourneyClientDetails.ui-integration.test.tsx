@@ -49,7 +49,7 @@ function DemoJourneyDetails() {
 }
 
 function renderDetails(urlQuery: string) {
-  const url = `/coach/clients/c1${urlQuery}`;
+  const url = `/coach/clients/c1?scope=post-mvp&${urlQuery.slice(1)}`;
   window.history.replaceState({}, '', url);
 
   render(

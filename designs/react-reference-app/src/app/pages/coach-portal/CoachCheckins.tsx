@@ -157,6 +157,7 @@ export function CoachCheckins() {
       title: 'Reschedule Proposed',
       message: `Coach proposed rescheduling ${checkin.clientName}'s check-in to ${formatCheckinDate(date)} at ${formatCheckinTime(time)}.`,
       link: '/portal/messages',
+      mvpLink: '/portal/checkins',
     });
     setRescheduleTarget(null);
   };

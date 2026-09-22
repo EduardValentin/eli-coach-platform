@@ -25,9 +25,21 @@ This document is the source of product behavior, business rules, and vocabulary.
 
 **Visitor.** A woman discovering the coach through the public site. She can browse the landing page, blog, pricing, and store, acquire store products with her email, and book a free assessment call with the coach. She cannot create an account. She can see 1-on-1 coaching bundles but cannot check out for coaching without the unique token issued after an assessment call.
 
-**Client.** An invited, paying woman with an active coaching subscription. She uses the client portal to receive assigned plans, follow and log workouts, message the coach, schedule check-ins, track her menstrual cycle, and adjust her schedule within allowed limits. Clients with a regular cycle and clients without an active cycle (amenorrhea, post-menopause, hormonal contraception) receive the same level of personalized coaching.
+**Client.** An invited, paying woman with an active coaching subscription. In the MVP she uses the client portal to complete onboarding, manage check-ins, track her menstrual cycle, and maintain her profile and subscription. Post-MVP adds assigned training and nutritional programs, workout logging, and in-app messaging. Clients with a regular cycle and clients without an active cycle (amenorrhea, post-menopause, hormonal contraception) receive the same level of personalized coaching.
 
-**Coach.** The trainer running the business. She uses the coach portal to set when she takes assessment calls and see who booked them, onboard clients, set calorie and macro targets per client, chat, create exercises, build and assign plans, manage check-ins, and review client workouts and cycle data.
+**Coach.** The trainer running the business. In the MVP she uses the coach portal to manage assessment calls, onboard clients, manage check-ins, and review client profiles and cycle data. Post-MVP adds training and nutritional program creation and assignment, in-app messaging, and workout review.
+
+## Delivery Stages
+
+The MVP includes every requirement in this document except the capabilities explicitly marked Post-MVP. Check-ins, including client and coach scheduling, approval, rescheduling, and Google Meet links, remain in the MVP.
+
+Post-MVP adds three capability groups:
+
+- Training programs: exercise and plan creation, assignment, client plan delivery, workout logging, and workout history or review.
+- Nutritional programs: coach nutritional-program creation and assignment, and client nutritional-program views.
+- In-app messaging: coach-client conversations and chat-specific system events. Check-in notifications and check-in notes remain available in the MVP without chat.
+
+The reference prototype defaults to MVP mode. Its Dev Toggle can switch to Post-MVP mode, which renders the complete MVP plus these three capability groups. Routes may remain directly reachable because the prototype models scope rather than production authorization.
 
 ## Product and Brand Principles
 
@@ -37,7 +49,7 @@ Brand voice is personal, human, empowering, supportive, and confident. It avoids
 
 ## Reference Prototype
 
-The product is modelled first in a reference prototype application before it is built in production. The prototype mocks every backend, auth, email, and payment dependency and carries a global Dev Toggle for switching between app states such as signed out, client, coach, bundle purchased, waiting list mode, and client needs onboarding. Those mocks and the Dev Toggle are prototype conventions, not product requirements. Production uses real authentication, persistence, and email. URLs in this document are production URLs.
+The product is modelled first in a reference prototype application before it is built in production. The prototype mocks every backend, auth, email, and payment dependency and carries a global Dev Toggle for switching between MVP and Post-MVP scope and between app states such as signed out, client, coach, bundle purchased, waiting list mode, and client needs onboarding. MVP is the default; Post-MVP is a strict superset. Those mocks and the Dev Toggle are prototype conventions, not product requirements. Production uses real authentication, persistence, and email. URLs in this document are production URLs.
 
 ---
 
@@ -87,7 +99,7 @@ An **Assessment Call** is a free 30-minute video call between a visitor and the 
 26. **Acquisitions belong to the entered email.** An acquisition is recorded against the email the visitor enters and is never linked to an account. Signed-in visitors acquire products exactly as signed-out visitors do, by entering an email.
 27. **Lost access is recovered by acquiring again.** A visitor who no longer has a delivery email requests a free product again from the store, or buys a paid product again. The platform never restores access from an account.
 
-## Plans and Training
+## Plans and Training — Post-MVP
 
 28. **A client has at most one active plan.** The coach must end the current plan before starting a new one. Past plans are preserved for history.
 29. **Plans follow a template-instance model.** Plan Templates are reusable structures the coach creates, edits, copies, and deletes. Plan Instances are personalized plans assigned to one client and tied to one Goal. Templates are optional; a client plan can start from one or from scratch.
@@ -102,17 +114,17 @@ An **Assessment Call** is a free 30-minute video call between a visitor and the 
 38. **Rest time is coach-configured per exercise assignment, in seconds.** Clients can extend or skip the rest timer during a workout; both prescribed and actual rest are recorded.
 39. **A workout is complete only when every prescribed set is logged.** Ending a workout early is an explicit action, after which the workout is recorded with only the sets logged so far.
 40. **Exercise videos are raw `.mp4` uploads**, supplied through drag-and-drop or an upload button.
-41. **System messages record plan and scheduling events.** Creating or updating a client's plan, and every check-in event (request, approval, reschedule, cancellation, coach-initiated check-in), sends a message in the coach–client chat thread and notifies the relevant party.
+41. **System messages record plan and scheduling events Post-MVP.** Creating or updating a client's plan, and every check-in event (request, approval, reschedule, cancellation, coach-initiated check-in), sends a message in the coach–client chat thread and notifies the relevant party. In the MVP, check-in events still notify the relevant party and remain visible in the check-in flow without creating a chat entry.
 
 ## Check-ins
 
 A **Check-in** has a client, a coach, a date and time, a type (`ad-hoc` or `recurring`), a status (`pending`, `confirmed`, `rescheduling`, `declined`, `cancelled`, or `completed`), a source (`client-request`, `coach-request`, or `plan-schedule`), who initiated it, an optional linked plan, an optional note from either party, a reschedule count, and, while rescheduling, who proposed the new time.
 
-42. **Recurring check-ins are auto-confirmed when a plan is assigned.** The system generates weekly check-ins for the plan's duration, linked to the plan, with a configurable frequency defaulting to one per week (default slot Wednesday 10 AM). They need no approval.
-43. **Ad-hoc check-ins require approval from the other party.** Both the coach and the client can initiate them; the coach from the messaging area or a client's profile, the client from chat or the Check-ins page.
+42. **Recurring check-ins are auto-confirmed.** In the MVP, recurring check-ins are managed independently of a training program. Post-MVP, assigning a plan generates weekly check-ins for the plan's duration, linked to the plan, with a configurable frequency defaulting to one per week (default slot Wednesday 10 AM). They need no approval.
+43. **Ad-hoc check-ins require approval from the other party.** Both the coach and the client can initiate them from the client profile or Check-ins page. Post-MVP, they can also initiate them from the messaging area or chat.
 44. **A client has at most one pending ad-hoc request at a time.** While one is pending, the client cannot submit another and the action is disabled. A client can cancel her own pending request; a cancelled request can no longer be approved.
 45. **Scheduling uses coach availability.** Slots are hourly from 9 AM to 4 PM, past dates are disabled, and already-booked slots are unavailable, for new check-ins and reschedules alike.
-46. **Either party can propose a reschedule for a confirmed check-in.** The original slot is released and the check-in enters a rescheduling state. The other party can accept the new time, decline, or counter-propose. A proposal may carry an optional message that appears in the chat thread.
+46. **Either party can propose a reschedule for a confirmed check-in.** The original slot is released and the check-in enters a rescheduling state. The other party can accept the new time, decline, or counter-propose. A proposal may carry an optional note. Post-MVP, that note also appears in the chat thread.
 47. **Declining a reschedule cancels the check-in.** It never reverts to the original time.
 48. **At most 2 reschedule rounds per check-in.** Without agreement after 2 rounds the check-in is automatically cancelled.
 49. **Check-ins meet on Google Meet.** The client portal offers a "Join Meet" link for the next confirmed check-in.
@@ -205,21 +217,21 @@ Per Business Rule 53.
 
 ## 4. Client Portal (`/client`)
 
-### Dashboard and plan
+### Training dashboard and plan — Post-MVP
 
 1. The dashboard shows the client's next workout or day from the assigned plan and her current cycle phase.
 2. Clients are notified when a new plan is assigned or updated.
 3. The plan view offers week navigation limited to current and past weeks, day cards with Past, Current, and Upcoming status, and a way to start each training day.
 4. Clients can adjust the default schedule within the allowed bounds (Business Rule 35).
 
-### Workout Viewer and active tracking
+### Workout Viewer and active tracking — Post-MVP
 
 5. A distraction-free, mobile-optimized Workout Viewer shows exercises in order with number, name, equipment, primary muscles, sets, reps, RIR, coach notes, and demo video. Superset exercises appear as a visually connected group and follow an alternating set pattern (A1, B1, A2, B2) during tracking.
 6. Clients log actual weight and reps per set. After a set, a rest countdown starts from the coach-configured rest time; the client can extend it by 15 seconds per press or skip it, and actual rest is recorded.
 7. Clients can swap the current exercise for any coach-defined variant at any time.
 8. On completion the client sees total duration, total volume (weight × reps), muscle groups worked, a per-exercise comparison of logged against prescribed values, and highlighted all-time personal records. Completing early uses an "End workout" action in the viewer's options menu (Business Rule 39).
 
-### Messaging (`/client/messages`)
+### Messaging (`/client/messages`) — Post-MVP
 
 9. Chat with the coach shows a coach profile sidebar (photo, name, role, response-time note), message bubbles with timestamps and read receipts, and a menu with Search in chat, Mute/Unmute notifications, Archive conversation, and Delete conversation. Delete confirmation uses a styled modal dialog, never a browser-native confirm. There is no call or video button.
 10. A "Schedule check-in" action submits an ad-hoc request per Business Rules 43–45 and is disabled while a request is pending.
@@ -229,7 +241,7 @@ Per Business Rule 53.
 ### Check-ins (`/client/checkins`)
 
 13. Organized into Upcoming (confirmed check-ins with Join Meet and the option to propose a new time), Requests (coach-proposed check-ins the client can approve, reschedule, or decline; the client's own pending request, which she can cancel), and Past (completed, declined, and cancelled).
-14. New ad-hoc requests can be made from this page under the one-pending limit. Actions here and in chat stay in sync. The page is reachable from portal navigation and from the Next Check-in widget.
+14. New ad-hoc requests can be made from this page under the one-pending limit. The page is reachable from portal navigation and from the Next Check-in widget. Post-MVP, actions here and in chat stay in sync.
 
 ### Menstrual cycle tracking (`/client/cycle`)
 
@@ -253,16 +265,16 @@ Per Business Rule 53.
 
 ### Clients (`/coach/clients`)
 
-4. A client list and a client detail page. The detail page shows the client's subscription term and status, current cycle phase, cycle regularity, average cycle and period length, conditions, and notes, and links to the client's read-only period log and completed workout history.
+4. A client list and a client detail page. The detail page shows the client's subscription term and status, current cycle phase, cycle regularity, average cycle and period length, conditions, and notes, and links to the client's read-only period log. Post-MVP it also shows assigned training and nutritional programs and links to completed workout history.
 
-### Messaging (`/coach/messages`)
+### Messaging (`/coach/messages`) — Post-MVP
 
 5. A conversation list with client avatar (photo or initial), online status, unread count, and last message preview. Each conversation has a menu with Pin/Unpin, Mute/Unmute, Flag for follow-up, Archive, and Delete; delete confirmation uses a styled modal with a warning icon. There is no call or video button. The coach can navigate from a conversation directly to that client's profile.
 6. Send and attach actions are visually centered and polished. Notification UI adapts to available space and never renders outside the viewport.
 7. An upcoming check-in banner at the top of the active chat shows the next confirmed check-in for that client. The coach can initiate an ad-hoc check-in from here.
 8. Pending requests and reschedule proposals appear as action cards in the message stream with client name, requested date and time, optional note, and Accept and Decline buttons. Acting updates the check-in immediately and fires a notification.
 
-### Workout review and history
+### Workout review and history — Post-MVP
 
 9. Completed workouts are grouped by subscription, then plan, then week. The coach can filter by date range, session duration, session volume, and muscle groups trained (a session matches when at least one exercise trains a selected group; multiple groups may be selected). For the current selection the coach sees session count, total volume, average volume per session, and average duration.
 10. Each workout review shows logged against prescribed weight and reps per set, rest taken against prescribed, swaps made, compliance percentage, duration, and volume. Volumes use the coach's unit setting.
@@ -276,7 +288,7 @@ Per Business Rule 53.
 12. Reached from the sidebar "Settings" entry. An "Assessment calls" section holds the coach's availability (weekdays, start hour, end hour) and the meeting room link per Business Rules 10 and 14, showing the defaults until she has saved once. Saving with no weekday, a start at or after the end, or an invalid link is refused with an inline explanation that keeps the entered values; a valid save confirms with a toast and is live at once for the next visitor; a server failure shows an error toast and keeps the entered values. While the meeting room link is empty, the section warns that visitors cannot join calls until a link is set.
 13. The coach chooses units for weight and height. The choice applies across her views, including workout-history volumes and the session-volume filter.
 
-## 6. Exercises and Plans (`/coach/training`)
+## 6. Exercises and Plans (`/coach/training`) — Post-MVP
 
 ### Data model
 
@@ -321,7 +333,7 @@ Per Business Rule 53.
 
 ## 7. Notifications
 
-1. A notification bell in both portals' sidebar headers. Notifications are role-aware: client notifications link to client routes such as `/client/messages`; coach notifications link to coach routes such as `/coach/messages?client=id` and `/coach/checkins`.
+1. A notification bell in both portals' sidebar headers. Notifications are role-aware. In the MVP, check-in notifications link to the appropriate Check-ins page. Post-MVP, message and program notifications link to routes such as `/client/messages` and `/coach/messages?client=id`.
 2. Toasts carry a "View" action that navigates without losing app state. Clicking a notification marks it read and navigates.
 3. Types: new message; check-in requested (by client or coach); check-in approved; reschedule proposed; check-in cancelled (by decline or auto-cancel). The requesting party is notified on approval; both parties on cancellation.
 
@@ -354,6 +366,6 @@ Per Business Rule 53.
 3. What product metadata does the store need beyond type, goal, and price?
 4. What happens to a plan's recurring check-ins when the plan is ended: are they cancelled automatically or kept?
 5. Should the system track plan version history when the coach adds weeks to an active plan?
-6. The prototype includes a nutrition module (recipe builder, per-client nutrition plans, client nutrition view) that this document does not yet specify.
+6. The Post-MVP prototype includes a nutrition module (recipe builder, per-client nutrition plans, client nutrition view) that this document does not yet specify.
 7. Check-in scheduling (Business Rule 45) still uses fixed 9 AM to 4 PM hours, while assessment calls use the coach-configured availability of Business Rule 10. Do check-ins adopt that availability when they are built?
 8. Business Rule 12 treats a call as upcoming until it starts, while the coach portal treats it as upcoming until it ends. May a visitor whose call is in progress book another one?
