@@ -8,22 +8,24 @@ import {
 } from "~/server/container.server";
 import { createFeatureContextMiddleware } from "~/server/feature-contexts.server";
 
+const nonProductionComposition = __FEATURE_FLAG_OVERRIDES_ENABLED__
+  ? import("~/server/non-production/feature-flag-overrides-composition.server")
+  : null;
+
 const featureFlagOverrideMiddleware: MiddlewareFunction<Response> =
-  __FEATURE_FLAG_OVERRIDES_ENABLED__
+  nonProductionComposition
     ? async (args, next) =>
-        (
-          await import("~/server/non-production/feature-flag-overrides-composition.server")
-        ).featureFlagOverrideMiddleware(args, next)
+        (await nonProductionComposition).featureFlagOverrideMiddleware(
+          args,
+          next,
+        )
     : (_args, next) => next();
 
 const getRuntimePlatformContainer: () =>
-  PlatformContainer | Promise<PlatformContainer> =
-  __FEATURE_FLAG_OVERRIDES_ENABLED__
-    ? async () =>
-        (
-          await import("~/server/non-production/feature-flag-overrides-composition.server")
-        ).getFeatureFlagOverrideContainer()
-    : getPlatformContainer;
+  PlatformContainer | Promise<PlatformContainer> = nonProductionComposition
+  ? async () =>
+      (await nonProductionComposition).getFeatureFlagOverrideContainer()
+  : getPlatformContainer;
 
 export const middleware = [
   clerkMiddleware(),

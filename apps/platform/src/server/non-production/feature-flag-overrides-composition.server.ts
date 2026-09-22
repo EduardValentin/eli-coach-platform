@@ -14,53 +14,48 @@ import { getRuntimeEnvironment } from "~/server/runtime-environment.server";
 
 import { createFeatureFlagOverrideMiddleware } from "./feature-flag-overrides-http.server";
 
-let nonProductionContainer: PlatformContainer | null = null;
+let overrideMiddleware: MiddlewareFunction<Response> | null = null;
+let overrideContainer: PlatformContainer | null = null;
 
-export const featureFlagOverrideMiddleware =
-  createRuntimeFeatureFlagOverrideMiddleware({
-    environment: getRuntimeEnvironment,
+export const featureFlagOverrideMiddleware: MiddlewareFunction<Response> = (
+  args,
+  next,
+) => {
+  const environment = getRuntimeEnvironment();
+
+  if (!featureFlagOverridesAllowed(environment)) {
+    return next();
+  }
+
+  overrideMiddleware ??= createFeatureFlagOverrideMiddleware({
+    appBasePath: environment.APP_BASE_PATH,
   });
 
-export function createRuntimeFeatureFlagOverrideMiddleware(options: {
-  environment: () => { APP_BASE_PATH: string; ENVIRONMENT: string };
-}): MiddlewareFunction<Response> {
-  return function applyFeatureFlagOverrides(args, next) {
-    const environment = options.environment();
-
-    if (!featureFlagOverridesAllowed(environment.ENVIRONMENT)) {
-      return next();
-    }
-
-    return createFeatureFlagOverrideMiddleware({
-      appBasePath: environment.APP_BASE_PATH,
-    })(args, next);
-  };
-}
+  return overrideMiddleware(args, next);
+};
 
 export function getFeatureFlagOverrideContainer(): PlatformContainer {
   const environment = getRuntimeEnvironment();
 
-  if (!featureFlagOverridesAllowed(environment.ENVIRONMENT)) {
+  if (!featureFlagOverridesAllowed(environment)) {
     return getPlatformContainer();
   }
 
-  nonProductionContainer ??= createFeatureFlagOverrideContainer({
-    runtimeEnvironment: environment,
-  });
+  overrideContainer ??= createFeatureFlagOverrideContainer(environment);
 
-  return nonProductionContainer;
+  return overrideContainer;
 }
 
-export function featureFlagOverridesAllowed(environment: string): boolean {
-  return environment === "local" || environment === "test";
+function featureFlagOverridesAllowed(environment: RuntimeEnvironment): boolean {
+  return (
+    environment.ENVIRONMENT === "local" || environment.ENVIRONMENT === "test"
+  );
 }
 
-function createFeatureFlagOverrideContainer(options: {
-  runtimeEnvironment: RuntimeEnvironment;
-}): PlatformContainer {
-  const database = createPlatformDatabase({
-    runtimeEnvironment: options.runtimeEnvironment,
-  });
+function createFeatureFlagOverrideContainer(
+  runtimeEnvironment: RuntimeEnvironment,
+): PlatformContainer {
+  const database = createPlatformDatabase({ runtimeEnvironment });
   const databaseFeatureFlags = new GetFeatureFlagsUseCase({
     featureFlags: new PostgresFeatureFlagRepository(database.client),
   });
@@ -68,6 +63,6 @@ function createFeatureFlagOverrideContainer(options: {
   return composePlatformContainer({
     database,
     featureFlags: createFeatureFlagOverrideReader(databaseFeatureFlags),
-    runtimeEnvironment: options.runtimeEnvironment,
+    runtimeEnvironment,
   });
 }

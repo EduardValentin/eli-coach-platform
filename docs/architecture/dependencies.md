@@ -45,7 +45,7 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 | C13 coach-portal | C17 assessment-calls | 5 | `pages/home.tsx` composes the coach greeting and the upcoming-calls widget from `ui/coach/` and reads the feature's request-context key; `routes.ts` spreads `assessmentCallsCoachRoutes`, now two fragments (the assessment-calls listing and, since GEN-192, the settings page); `shell/navigation-links.tsx` takes `COACH_ASSESSMENT_CALLS_PATH` and, since GEN-192, `COACH_SETTINGS_PATH` from `contracts/paths.ts` for its two nav links |
 | C14 server | C1 domain | 7 | the production and non-production container roots, shared container composition, platform composition, platform guard, override reader and HTTP override adapter name feature-flag ports, evaluation data or use cases |
 | C14 server | C2 db | 1 | `platform-composition.server.ts` no longer imports `DatabaseClient` |
-| C14 server | C3 config | 5 | |
+| C14 server | C3 config | 8 | `RuntimeEnvironment` and concern types; the non-production HTTP adapter scopes its cookie with `normalizeBasePath` |
 | C14 server | C4 content | 1 | privacy email |
 | C14 server | C6 infrastructure | 5 | bot verifier, product email, management auth, feature-flags repository, http/server |
 | C14 server | C7 store | 2 | the container calls `composeStoreFeature` |

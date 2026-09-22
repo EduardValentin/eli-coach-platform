@@ -44,10 +44,35 @@ describe("feature flag override middleware", () => {
     );
     expect(response.headers.get("Set-Cookie")).toContain("HttpOnly");
     expect(response.headers.get("Set-Cookie")).toContain("SameSite=Lax");
-    expect(response.headers.get("Set-Cookie")).toContain("Secure");
     expect(response.headers.get("Set-Cookie")).not.toContain("Expires=");
     expect(response.headers.get("Set-Cookie")).not.toContain("Max-Age=");
     expect(response.headers.get("Cache-Control")).toBe("private, no-store");
+  });
+
+  it("scopes the cookie to the normalized app base path", async () => {
+    // arrange
+    const middleware = createFeatureFlagOverrideMiddleware({
+      appBasePath: "/eli-coach-platform/",
+    });
+
+    // act
+    const response = requireResponse(
+      await middleware(
+        {
+          context: new RouterContextProvider(),
+          params: {},
+          request: new Request(
+            "https://eli.example/eli-coach-platform/?ff.WAITLIST_MODE=false",
+          ),
+        } as never,
+        () => Promise.resolve(new Response("ok")),
+      ),
+    );
+
+    // assert
+    expect(response.headers.get("Set-Cookie")).toContain(
+      "Path=/eli-coach-platform;",
+    );
   });
 
   it("restores a session override when the URL has no override", async () => {

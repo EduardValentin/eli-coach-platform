@@ -1,5 +1,6 @@
 import type { MiddlewareFunction } from "react-router";
 
+import { normalizeBasePath } from "@eli-coach-platform/config";
 import {
   WAITLIST_MODE_FEATURE_FLAG,
   type FeatureFlagEvaluation,
@@ -46,12 +47,7 @@ export function createFeatureFlagOverrideMiddleware(options: {
         appBasePath: options.appBasePath,
         overrides: parsed.evaluation.overrides,
       });
-      response.headers.append(
-        "Set-Cookie",
-        new URL(request.url).protocol === "https:"
-          ? serializeSecureOverridesCookie(cookie)
-          : cookie,
-      );
+      response.headers.append("Set-Cookie", cookie);
     }
 
     return response;
@@ -151,7 +147,7 @@ function serializeOverridesCookie(options: {
 }): string {
   const attributes = [
     `${COOKIE_NAME}=${encodeURIComponent(JSON.stringify(options.overrides))}`,
-    `Path=${options.appBasePath}`,
+    `Path=${normalizeBasePath(options.appBasePath)}`,
     "HttpOnly",
     "SameSite=Lax",
   ];
@@ -161,10 +157,6 @@ function serializeOverridesCookie(options: {
   }
 
   return attributes.join("; ");
-}
-
-function serializeSecureOverridesCookie(cookie: string): string {
-  return `${cookie}; Secure`;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
