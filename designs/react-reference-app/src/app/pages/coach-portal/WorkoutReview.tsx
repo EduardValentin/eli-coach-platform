@@ -6,6 +6,7 @@ import type { Exercise, ExerciseLog } from '../../context/TrainingContext';
 import { RirBadge } from '../../components/workout/RirBadge';
 import { useUnitPreferences } from '../../context/UnitPreferencesContext';
 import { formatVolume, formatLoad } from '../../utils/units';
+import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { MetricTile } from '../../components/MetricTile';
 
 const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -120,19 +121,18 @@ export function WorkoutReview() {
 
   return (
     <div>
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-8">
-        <button
-          onClick={() => navigate(`/coach/clients/${clientId}`)}
-          className="w-9 h-9 flex items-center justify-center rounded-control hover:bg-neutral-100 transition-colors"
-        >
-          <ArrowLeft size={20} className="text-text-primary" />
-        </button>
-        <div>
-          <h1 className="text-2xl font-serif font-bold text-text-primary">Workout Review</h1>
-          <p className="text-sm text-text-secondary">{clientName} &middot; {workoutDate}</p>
-        </div>
-      </div>
+      <button
+        type="button"
+        onClick={() => navigate(`/coach/clients/${clientId}`)}
+        className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-text-secondary hover:text-text-primary transition-colors"
+      >
+        <ArrowLeft size={16} aria-hidden="true" /> Back to {clientName}
+      </button>
+
+      <PortalPageHeader
+        title="Workout Review"
+        subtitle={`${clientName} · ${workoutDate}`}
+      />
 
       {/* Summary stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">

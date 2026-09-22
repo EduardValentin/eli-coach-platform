@@ -57,7 +57,9 @@ export function SlotPickerFrame({
       <div ref={calendarRef} className={`w-full max-w-[340px] mx-auto lg:mx-0 lg:w-[320px] lg:max-w-none shrink-0 ${revealScrollMargin}`}>
         {calendar}
         {timeZoneNote && (
-          <p className="text-xs text-text-secondary mt-4 text-center font-medium">{timeZoneNote}</p>
+          <p className="text-xs text-text-secondary mt-4 text-center font-medium">
+            {timeZoneNote}
+          </p>
         )}
       </div>
 

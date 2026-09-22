@@ -1,4 +1,5 @@
 import { useRef, ChangeEvent } from 'react';
+import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { motion } from 'motion/react';
 import { User, Target, Flame, Utensils, FileText, Droplet, Camera, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -7,6 +8,7 @@ import { useClientProfile, fullName, ACTIVITY_LEVEL_LABELS } from '../../context
 import { useCycle } from '../../context/CycleContext';
 import { useUnitPreferences } from '../../context/UnitPreferencesContext';
 import { formatHeight, formatBodyWeight } from '../../utils/units';
+import { MeasurementsSection } from '../../components/client-portal/MeasurementsSection';
 
 const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
 
@@ -48,22 +50,18 @@ export function ClientProfile() {
 
   if (!clientProfile) {
     return (
-      <div className="w-full max-w-4xl mx-auto pb-12">
+      <div className="w-full max-w-4xl mx-auto">
         <p className="text-text-secondary">No profile data available.</p>
       </div>
     );
   }
 
   return (
-    <div className="w-full max-w-4xl mx-auto pb-12">
-      <header className="mb-10">
-        <h1 className="font-serif text-3xl lg:text-4xl text-text-primary mb-3 tracking-tight">
-          Your Profile
-        </h1>
-        <p className="text-text-secondary font-medium">
-          Review the information your coach has set up for you. Reach out in chat if anything needs updating.
-        </p>
-      </header>
+    <div className="w-full max-w-4xl mx-auto">
+      <PortalPageHeader
+        title="Your Profile"
+        subtitle="Review the information your coach has set up for you. Reach out in chat if anything needs updating."
+      />
 
       {/* Avatar */}
       <motion.div
@@ -240,6 +238,8 @@ export function ClientProfile() {
           </motion.div>
         )}
       </div>
+
+      <MeasurementsSection />
 
       <div className="mt-8 p-5 rounded-card bg-brand/5 border border-brand/10 flex items-start gap-3">
         <FileText size={18} className="text-brand mt-0.5 shrink-0" />

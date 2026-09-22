@@ -30,7 +30,7 @@ function linkTargets() {
 }
 
 describe('ClientInvitation', () => {
-  it('offers one primary action to accept, naming the coach and the 30-day validity', async () => {
+  it('offers one primary action to create the account, naming the coach and the 30-day validity', async () => {
     // arrange
     const props: ClientInvitationProps = { variant: 'first' };
 
@@ -46,10 +46,13 @@ describe('ClientInvitation', () => {
     // to reach Eli, so a second call to action cannot slip in unnoticed.
     expect(linkTargets()).toEqual([ACCEPT_URL, CONTACT_HREF, CONTACT_HREF]);
     expect(
-      screen.getByRole('link', { name: 'Accept your invitation' }),
+      screen.getByRole('link', { name: 'Create your account' }),
     ).toHaveAttribute('href', ACCEPT_URL);
     expect(screen.getByText('— Eli')).toBeInTheDocument();
     expect(screen.getByText(/works for the next 30 days/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/have to create your account from it/i),
+    ).toBeInTheDocument();
   });
 
   it('tells a re-invited client that the earlier link stopped working', async () => {
@@ -87,8 +90,8 @@ describe('ClientInvitation', () => {
   // The title carries the subject line, so asserting it per variant is what
   // catches a send wired to the wrong copy.
   it.each([
-    ['first', 'Your targets are ready — accept your invitation.'],
-    ['replaced', 'A fresh invitation link — use this one instead.'],
+    ['first', 'Your targets are ready — create your account.'],
+    ['replaced', 'A fresh link — create your account with this one.'],
   ] as const)(
     'declares language, direction and the %s send’s subject line',
     async (variant, subject) => {

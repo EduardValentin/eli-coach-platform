@@ -1,5 +1,5 @@
-import { Fragment } from 'react';
-import { Link } from 'react-router';
+import { Fragment, useEffect } from 'react';
+import { Link, useLocation } from 'react-router';
 import { cn } from '../ui/utils';
 import { cardVariants } from '../ui/card';
 import type {
@@ -17,6 +17,8 @@ const effectiveDateFormatter = new Intl.DateTimeFormat('en-GB', {
 });
 
 export function LegalDocumentView({ document }: { document: LegalDocument }) {
+  useSectionAnchor();
+
   return (
     <article className={cn(cardVariants({ variant: 'panel' }), 'mx-auto max-w-reading overflow-hidden')}>
       <header className="border-b border-border-subtle px-6 py-10 sm:px-8 lg:px-12">
@@ -40,7 +42,7 @@ export function LegalDocumentView({ document }: { document: LegalDocument }) {
 
       <div className="grid gap-10 px-6 py-10 sm:px-8 lg:px-12">
         {document.sections.map((section) => (
-          <section className="grid gap-4" key={section.id}>
+          <section className="grid gap-4 scroll-mt-28" id={section.id} key={section.id}>
             <h2 className="font-serif text-display-sm text-text-primary">{section.heading}</h2>
             {section.blocks.map((block, blockIndex) => (
               <Fragment key={`${section.id}-${block.kind}-${blockIndex}`}>
@@ -52,6 +54,16 @@ export function LegalDocumentView({ document }: { document: LegalDocument }) {
       </div>
     </article>
   );
+}
+
+function useSectionAnchor() {
+  const { hash } = useLocation();
+
+  useEffect(() => {
+    if (!hash) return;
+
+    window.document.getElementById(hash.slice(1))?.scrollIntoView();
+  }, [hash]);
 }
 
 function renderLegalDocumentBlock(block: LegalDocumentBlock) {

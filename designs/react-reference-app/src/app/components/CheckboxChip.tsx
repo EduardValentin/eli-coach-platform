@@ -14,7 +14,6 @@ const SELECTED_CLASS = 'border-brand/30 bg-brand-soft text-brand hover:border-br
 const UNSELECTED_CLASS =
   'border-border text-muted-foreground hover:border-brand hover:text-brand';
 
-// data-chip-control lets theme.css paint the focus ring on the label, since the opacity-0 input cannot show its own.
 export function CheckboxChip({
   checked,
   onCheckedChange,

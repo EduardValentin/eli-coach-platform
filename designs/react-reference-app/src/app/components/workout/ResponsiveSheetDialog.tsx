@@ -34,8 +34,9 @@ export function ResponsiveSheetDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
+        size="md"
         className={cn(
-          'sm:max-w-2xl gap-0 p-0 overflow-hidden max-h-[85vh] flex flex-col',
+          'gap-0 p-0 overflow-hidden max-h-[85vh] flex flex-col',
           contentClassName
         )}
       >

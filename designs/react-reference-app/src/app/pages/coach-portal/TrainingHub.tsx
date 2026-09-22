@@ -6,6 +6,7 @@ import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter,
   AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogAction
 } from '../../components/ui/alert-dialog';
+import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { ExerciseModal } from '../../components/coach-portal/ExerciseModal';
 import { ExerciseFilters } from '../../components/coach-portal/ExerciseFilters';
 import { matchesExerciseFilters, type ExerciseFilter } from '../../utils/exerciseFilters';
@@ -325,14 +326,12 @@ export function TrainingHub() {
   };
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-3xl font-serif font-bold text-text-primary">Training & Programs</h1>
-          <p className="text-text-secondary mt-1">Manage client plans, templates, and exercises</p>
-        </div>
-        <div className="flex items-center gap-3">
-          {activeTab === 'instances' ? (
+    <div className="w-full">
+      <PortalPageHeader
+        title="Training & Programs"
+        subtitle="Manage client plans, templates, and exercises."
+        actions={
+          activeTab === 'instances' ? (
             <button
               onClick={() => { setNewPlanClientSearch(''); setShowNewPlanClientPicker(true); }}
               className="px-5 py-2.5 bg-brand text-white rounded-control font-semibold hover:bg-brand-hover transition-colors flex items-center gap-2 shadow-md"
@@ -348,9 +347,9 @@ export function TrainingHub() {
               <Plus size={20} />
               {activeTab === 'exercises' ? 'New Exercise' : 'New Template'}
             </button>
-          )}
-        </div>
-      </div>
+          )
+        }
+      />
 
       {/* Tabs */}
       <div className="flex items-center gap-6 px-3 border-b border-neutral-200 rounded-field mb-6">

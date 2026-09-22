@@ -38,7 +38,7 @@ export function Pricing() {
           </p>
         </div>
 
-        <BundleSelector mode="public" waitlistMode={showsWaitlistPricing} />
+        <BundleSelector mode="public" pricing={showsWaitlistPricing ? 'waitlist' : 'regular'} />
 
         <p className="max-w-2xl mx-auto text-center text-sm text-copy-muted mb-14">
           On the 3- and 6-month plans, you may cancel within the first 7 days if coaching is not the right fit. After that, the full plan commitment applies.

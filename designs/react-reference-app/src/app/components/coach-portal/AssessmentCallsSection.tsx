@@ -13,44 +13,63 @@ import {
 import type { AppointmentDetail } from './appointment';
 import {
   classifyCalls,
+  countsByJourneyStep,
+  emptyListingMessage,
   filterCalls,
-  orderCalls,
+  orderCallsFor,
   pageOfCalls,
+  parseDateRange,
+  parseJourneyStep,
   parsePage,
   parseStatus,
+  withJourneyStages,
   type AssessmentCallStatus,
   type ClassifiedCall,
+  type JourneyStep,
+  type ListedCall,
+  type ListingSelection,
 } from '../../utils/assessmentCallListing';
 import { formatShortDay, formatSlotTime } from '../../utils/dateFormatters';
 import { Badge } from '../ui/badge';
+import { DateRangeField, type IsoDateRange } from '../DateRangeField';
+import type { YearRange } from '../BrandCalendar';
+import { FilterChip, FilterChipGroup } from '../FilterChipGroup';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { useClientJourneys } from '../../context/ClientJourneyContext';
+import type { JourneyStage } from '../../domain/journey';
 import { AppointmentCard } from './AppointmentCard';
+import { CallJourneyActions } from './CallJourneyActions';
+import { JourneyStageBadge } from './JourneyStageBadge';
 import { CallListPager } from './CallListPager';
 import { JoinCallLink } from './JoinCallLink';
 
-const STATUS_PARAM = 'status';
+const STATUS_PARAM = 'when';
 const QUERY_PARAM = 'q';
 const PAGE_PARAM = 'page';
+const JOURNEY_PARAM = 'status';
+const FROM_PARAM = 'from';
+const TO_PARAM = 'to';
 const CALLS_PER_PAGE = 10;
-const DEFAULT_STATUS: AssessmentCallStatus = 'upcoming';
+const DEFAULT_STATUS: AssessmentCallStatus = 'all';
+const DEFAULT_JOURNEY: JourneyStep = 'any';
 const SEARCH_FIELD_ID = 'assessment-call-search';
-const NO_MATCH_MESSAGE = 'No calls match your search.';
 
-const STATUS_TABS: { status: AssessmentCallStatus; label: string }[] = [
+const WHEN_TABS: { status: AssessmentCallStatus; label: string }[] = [
+  { status: 'all', label: 'All' },
   { status: 'upcoming', label: 'Upcoming' },
   { status: 'today', label: 'Today' },
   { status: 'past', label: 'Past' },
-  { status: 'all', label: 'All' },
+  { status: 'custom', label: 'Custom' },
 ];
 
-const EMPTY_MESSAGES: Record<AssessmentCallStatus, string> = {
-  upcoming: 'No upcoming calls.',
-  today: 'No calls today.',
-  past: 'No past calls.',
-  all: 'No calls yet.',
-};
+const JOURNEY_CHIPS: { step: JourneyStep; label: string }[] = [
+  { step: 'any', label: 'Any' },
+  { step: 'payment-link-sent', label: 'Payment link sent' },
+  { step: 'paid', label: 'Paid' },
+  { step: 'invited', label: 'Invited' },
+];
 
 function visitorDetails(booking: PrototypeBooking, now: Date): AppointmentDetail[] {
   return [
@@ -71,6 +90,8 @@ function CallItem({
   timeZone: string;
 }) {
   const { booking, timing, isToday } = call;
+  const { journeyForCall } = useClientJourneys();
+  const journey = journeyForCall(booking.id);
 
   return (
     <li>
@@ -87,18 +108,38 @@ function CallItem({
         }}
         status={timing === 'past' ? 'past' : 'scheduled'}
         titleElement="h2"
-        badges={isToday && <Badge variant="brand-secondary">Today</Badge>}
+        badges={
+          <>
+            {isToday && <Badge variant="brand-secondary">Today</Badge>}
+            {journey && showsJourneyStage(journey.stage, timing) && (
+              <JourneyStageBadge stage={journey.stage} />
+            )}
+          </>
+        }
         quote={booking.notes.length > 0 ? booking.notes : undefined}
         actions={
-          timing === 'upcoming' ? (
-            <JoinCallLink joinPath={booking.joinPath} />
-          ) : (
-            <Badge variant="muted">Past</Badge>
-          )
+          <>
+            {timing === 'upcoming' && (
+              <JoinCallLink joinPath={booking.joinPath} />
+            )}
+            {journey && timing === 'past' && (
+              <CallJourneyActions
+                journey={journey}
+                visitorName={visitorFullName(booking)}
+              />
+            )}
+          </>
         }
       />
     </li>
   );
+}
+
+function showsJourneyStage(
+  stage: JourneyStage,
+  timing: ClassifiedCall['timing'],
+) {
+  return stage !== 'held' || timing === 'past';
 }
 
 function CallList({
@@ -129,6 +170,61 @@ function CallList({
   );
 }
 
+function JourneyFilter({
+  counts,
+  journey,
+  onChoose,
+}: {
+  counts: Record<JourneyStep, number>;
+  journey: JourneyStep;
+  onChoose: (step: JourneyStep) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <span className="text-sm font-medium text-text-secondary">Status</span>
+      <FilterChipGroup
+        aria-label="Status"
+        value={journey}
+        onValueChange={(value) => onChoose(parseJourneyStep(value))}
+      >
+        {JOURNEY_CHIPS.map((chip) => (
+          <FilterChip key={chip.step} value={chip.step}>
+            {chip.label}{' '}
+            <span className="ml-2 text-xs tabular-nums">
+              {counts[chip.step]}
+            </span>
+          </FilterChip>
+        ))}
+      </FilterChipGroup>
+    </div>
+  );
+}
+
+function CustomRangeFilter({
+  range,
+  onChoose,
+  yearRange,
+}: {
+  range: IsoDateRange;
+  onChoose: (range: IsoDateRange) => void;
+  yearRange: YearRange;
+}) {
+  return (
+    <DateRangeField
+      aria-label="Date range"
+      className="w-full"
+      value={range}
+      onChange={onChoose}
+      yearRange={yearRange}
+    />
+  );
+}
+
+function writeDay(params: URLSearchParams, key: string, day: string | null) {
+  if (day === null) params.delete(key);
+  else params.set(key, day);
+}
+
 export function AssessmentCallsSection({
   bookings,
   now,
@@ -141,10 +237,25 @@ export function AssessmentCallsSection({
   const prefersReducedMotion = useReducedMotion() ?? false;
   const { pathname } = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { journeyForCall } = useClientJourneys();
+
   const status = parseStatus(searchParams.get(STATUS_PARAM));
   const query = searchParams.get(QUERY_PARAM) ?? '';
+  const journey = parseJourneyStep(searchParams.get(JOURNEY_PARAM));
+  const range = parseDateRange(
+    searchParams.get(FROM_PARAM),
+    searchParams.get(TO_PARAM),
+  );
   const page = parsePage(searchParams.get(PAGE_PARAM));
-  const calls = orderCalls(classifyCalls(bookings, { now, timeZone }));
+
+  const selection: ListingSelection = { status, query, journey, range };
+  const calls: ListedCall[] = withJourneyStages(
+    classifyCalls(bookings, { now, timeZone }),
+    (callId) => journeyForCall(callId)?.stage ?? null,
+  );
+  const matching = orderCallsFor(filterCalls(calls, selection), status);
+  const view = pageOfCalls(matching, { page, perPage: CALLS_PER_PAGE });
+  const counts = countsByJourneyStep(calls, selection);
 
   const updateSearchParams = (edit: (params: URLSearchParams) => void) => {
     const next = new URLSearchParams(searchParams);
@@ -158,6 +269,22 @@ export function AssessmentCallsSection({
       params.delete(PAGE_PARAM);
       if (chosen === DEFAULT_STATUS) params.delete(STATUS_PARAM);
       else params.set(STATUS_PARAM, chosen);
+    });
+  };
+
+  const chooseJourney = (chosen: JourneyStep) => {
+    updateSearchParams((params) => {
+      params.delete(PAGE_PARAM);
+      if (chosen === DEFAULT_JOURNEY) params.delete(JOURNEY_PARAM);
+      else params.set(JOURNEY_PARAM, chosen);
+    });
+  };
+
+  const chooseRange = (chosen: IsoDateRange) => {
+    updateSearchParams((params) => {
+      params.delete(PAGE_PARAM);
+      writeDay(params, FROM_PARAM, chosen.from);
+      writeDay(params, TO_PARAM, chosen.to);
     });
   };
 
@@ -181,9 +308,6 @@ export function AssessmentCallsSection({
     return search.length > 0 ? `${pathname}?${search}` : pathname;
   };
 
-  const emptyMessageFor = (tabStatus: AssessmentCallStatus) =>
-    query.trim().length > 0 ? NO_MATCH_MESSAGE : EMPTY_MESSAGES[tabStatus];
-
   return (
     <motion.div
       initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
@@ -191,53 +315,66 @@ export function AssessmentCallsSection({
       transition={prefersReducedMotion ? { duration: 0 } : undefined}
       className="bg-card p-5 sm:p-8 rounded-panel shadow-soft border border-border/50"
     >
-      <div className="space-y-2 mb-6">
-        <Label htmlFor={SEARCH_FIELD_ID}>Search calls</Label>
-        <Input
-          id={SEARCH_FIELD_ID}
-          type="search"
-          placeholder="Name or email"
-          value={query}
-          onChange={(event) => changeQuery(event.target.value)}
-        />
-      </div>
-
       <Tabs value={status} onValueChange={chooseStatus} className="w-full">
-        <TabsList variant="segmented" className="mb-6">
-          {STATUS_TABS.map((tab) => (
-            <TabsTrigger
-              key={tab.status}
-              variant="segmented"
-              value={tab.status}
-            >
-              {tab.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-
-        {STATUS_TABS.map((tab) => {
-          const matching = filterCalls(calls, { status: tab.status, query });
-          const view = pageOfCalls(matching, { page, perPage: CALLS_PER_PAGE });
-
-          return (
-            <TabsContent
-              key={tab.status}
-              variant="segmented"
-              value={tab.status}
-            >
-              <CallList
-                calls={view.calls}
-                emptyMessage={emptyMessageFor(tab.status)}
-                now={now}
-                timeZone={timeZone}
-              />
-
-              {view.pageCount > 1 && (
-                <CallListPager view={view} pathForPage={pathForPage} />
+        <div className="mb-6 flex flex-col gap-5">
+          <div className="grid w-fit max-w-full gap-4 xl:flex xl:w-full xl:items-start xl:justify-between xl:gap-8">
+            <div className="flex max-w-full flex-col gap-2 xl:w-fit">
+              <TabsList aria-label="When" variant="segmented">
+                {WHEN_TABS.map((tab) => (
+                  <TabsTrigger
+                    key={tab.status}
+                    variant="segmented"
+                    value={tab.status}
+                  >
+                    {tab.label}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+              {status === 'custom' && (
+                <CustomRangeFilter
+                  range={range}
+                  onChoose={chooseRange}
+                  yearRange={{
+                    from: now.getFullYear() - 1,
+                    to: now.getFullYear() + 1,
+                  }}
+                />
               )}
-            </TabsContent>
-          );
-        })}
+            </div>
+
+            <div className="w-full xl:min-w-0 xl:flex-1">
+              <Label className="sr-only" htmlFor={SEARCH_FIELD_ID}>
+                Search calls
+              </Label>
+              <Input
+                id={SEARCH_FIELD_ID}
+                type="search"
+                placeholder="Search by name or email"
+                value={query}
+                onChange={(event) => changeQuery(event.target.value)}
+              />
+            </div>
+          </div>
+
+          <JourneyFilter
+            counts={counts}
+            journey={journey}
+            onChoose={chooseJourney}
+          />
+        </div>
+
+        <TabsContent variant="segmented" value={status}>
+          <CallList
+            calls={view.calls}
+            emptyMessage={emptyListingMessage(selection)}
+            now={now}
+            timeZone={timeZone}
+          />
+
+          {view.pageCount > 1 && (
+            <CallListPager view={view} pathForPage={pathForPage} />
+          )}
+        </TabsContent>
       </Tabs>
     </motion.div>
   );

@@ -7,6 +7,7 @@ import { useTraining, subscriptionTermLabel } from '../../context/TrainingContex
 import type { Subscription, WorkoutLog } from '../../context/TrainingContext';
 import { useUnitPreferences } from '../../context/UnitPreferencesContext';
 import { formatVolume, displayWeightValue, fromDisplayWeight, weightUnitLabel } from '../../utils/units';
+import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { MetricTile } from '../../components/MetricTile';
 import { SubscriptionBadge } from '../../components/coach-portal/SubscriptionBadge';
 import { WorkoutSessionCard } from '../../components/workout/WorkoutSessionCard';
@@ -207,20 +208,15 @@ export function WorkoutHistory() {
 
   return (
     <div>
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-8">
-        <button
-          onClick={() => navigate(`/coach/clients/${clientId}`)}
-          className="w-9 h-9 flex items-center justify-center rounded-control hover:bg-muted transition-colors"
-          aria-label="Back to client"
-        >
-          <ArrowLeft size={20} className="text-foreground" />
-        </button>
-        <div>
-          <h1 className="text-2xl font-serif font-bold text-foreground">Workout History</h1>
-          <p className="text-sm text-muted-foreground">{clientName}</p>
-        </div>
-      </div>
+      <button
+        type="button"
+        onClick={() => navigate(`/coach/clients/${clientId}`)}
+        className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
+      >
+        <ArrowLeft size={16} aria-hidden="true" /> Back to {clientName}
+      </button>
+
+      <PortalPageHeader title="Workout History" subtitle={clientName} />
 
       {/* Selection-scoped metrics */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">

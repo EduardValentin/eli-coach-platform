@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
+import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { motion } from 'motion/react';
 import { Search, Send, Paperclip, Check, CheckCheck, MoreVertical, User, Archive, Trash2, BellOff, Pin, Flag, CalendarPlus, CalendarDays, Activity } from 'lucide-react';
 import { useSearchParams, Link } from 'react-router';
@@ -174,7 +175,13 @@ export function CoachMessages() {
   );
 
   return (
-    <div className="w-full h-[calc(100vh-6rem)] lg:h-[calc(100vh-8rem)] flex bg-card rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50 overflow-hidden">
+    <div className="w-full">
+      <PortalPageHeader
+        title="Messages"
+        subtitle="Every conversation with your clients in one place."
+      />
+
+      <div className="flex h-[calc(100vh-17rem)] lg:h-[calc(100vh-14rem)] bg-card rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50 overflow-hidden">
 
       {/* Sidebar */}
       <div className="w-full md:w-80 border-r border-border flex flex-col hidden md:flex shrink-0">
@@ -529,6 +536,7 @@ export function CoachMessages() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      </div>
     </div>
   );
 }

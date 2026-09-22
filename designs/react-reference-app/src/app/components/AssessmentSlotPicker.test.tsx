@@ -72,7 +72,7 @@ describe('AssessmentSlotPicker', () => {
     );
   });
 
-  it('shows the picked day\'s times without naming the zone', async () => {
+  it('shows the picked day\'s times past a clock change', async () => {
     // arrange
     const user = renderPicker();
 

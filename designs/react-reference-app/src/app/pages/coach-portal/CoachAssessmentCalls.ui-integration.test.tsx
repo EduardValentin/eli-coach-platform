@@ -2,13 +2,15 @@ import { useEffect } from 'react';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, useLocation, useNavigationType } from 'react-router';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CoachAssessmentCalls } from './CoachAssessmentCalls';
 import { AppProvider } from '../../context/AppContext';
 import {
   AssessmentCallProvider,
   useAssessmentCalls,
 } from '../../context/AssessmentCallContext';
+import { ClientJourneyProvider } from '../../context/ClientJourneyContext';
+import { ClientProfileProvider } from '../../context/ClientProfileContext';
 import type { PrototypeBooking } from '../../services/assessmentCallService';
 
 const TIME_ZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -46,6 +48,49 @@ const YESTERDAY = bookingAt(localInstant(20, 18), 'Elena Marin');
 
 const ALL_BOOKINGS = [LATER_TODAY, TOMORROW, YESTERDAY];
 
+vi.mock('../../components/DateRangeField', () => ({
+  DateRangeField: ({
+    value,
+    onChange,
+  }: {
+    value: { from: string | null; to: string | null };
+    onChange: (range: { from: string | null; to: string | null }) => void;
+  }) => (
+    <>
+      <input
+        aria-label="From"
+        value={value.from ?? ''}
+        onChange={(event) =>
+          onChange({ from: event.target.value || null, to: value.to })
+        }
+      />
+      <input
+        aria-label="To"
+        value={value.to ?? ''}
+        onChange={(event) =>
+          onChange({ from: value.from, to: event.target.value || null })
+        }
+      />
+    </>
+  ),
+}));
+
+beforeAll(() => {
+  vi.stubGlobal(
+    'matchMedia',
+    vi.fn((query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
+  );
+});
+
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date'] });
   vi.setSystemTime(NOW);
@@ -76,21 +121,31 @@ function LocationProbe() {
 function renderPage(
   options: { bookings?: PrototypeBooking[]; urlQuery?: string } = {},
 ) {
+  const bookings = options.bookings ?? ALL_BOOKINGS;
+
   render(
     <MemoryRouter
       initialEntries={[`/coach/assessment-calls${options.urlQuery ?? ''}`]}
     >
       <AppProvider>
-        <AssessmentCallProvider>
-          <SeedBookings bookings={options.bookings ?? ALL_BOOKINGS} />
-          <CoachAssessmentCalls />
-          <LocationProbe />
-        </AssessmentCallProvider>
+        <ClientProfileProvider>
+          <AssessmentCallProvider>
+            <SeedBookings bookings={bookings} />
+            <ClientJourneyProvider>
+              <CoachAssessmentCalls />
+              <LocationProbe />
+            </ClientJourneyProvider>
+          </AssessmentCallProvider>
+        </ClientProfileProvider>
       </AppProvider>
     </MemoryRouter>,
   );
 
   return userEvent.setup();
+}
+
+function whenTab(name: string): HTMLElement {
+  return screen.getByRole('tab', { name });
 }
 
 function listedNames(): string[] {
@@ -147,7 +202,7 @@ describe('the coach assessment calls page', () => {
     expect(screen.queryByText(/Times in /)).not.toBeInTheDocument();
   });
 
-  it('opens on the upcoming calls with the search and the filters ready', () => {
+  it('opens on every call with the search and the filters ready', () => {
     // arrange
     const bookings = ALL_BOOKINGS;
 
@@ -155,26 +210,20 @@ describe('the coach assessment calls page', () => {
     renderPage({ bookings });
 
     // assert
-    expect(screen.getByRole('tab', { name: 'Upcoming' })).toHaveAttribute(
-      'aria-selected',
-      'true',
-    );
+    expect(whenTab('All')).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByLabelText('Search calls')).toHaveValue('');
-    expect(listedNames()).toEqual(['Maria Ionescu', 'Ioana Radu']);
+    expect(listedNames()).toEqual(['Maria Ionescu', 'Ioana Radu', 'Elena Marin']);
   });
 
   it('opens on the filter and the search the URL carries', () => {
     // arrange
-    const urlQuery = '?status=all&q=marin';
+    const urlQuery = '?when=all&q=marin';
 
     // act
     renderPage({ urlQuery });
 
     // assert
-    expect(screen.getByRole('tab', { name: 'All' })).toHaveAttribute(
-      'aria-selected',
-      'true',
-    );
+    expect(whenTab('All')).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByLabelText('Search calls')).toHaveValue('marin');
     expect(listedNames()).toEqual(['Elena Marin']);
   });
@@ -184,14 +233,48 @@ describe('the coach assessment calls page', () => {
     const user = renderPage();
 
     // act
-    await user.click(screen.getByRole('tab', { name: 'Past' }));
+    await user.click(whenTab('Past'));
     await user.type(screen.getByLabelText('Search calls'), 'elena');
 
     // assert
     expect(screen.getByTestId('location-probe')).toHaveTextContent(
-      '?status=past&q=elena REPLACE',
+      '?when=past&q=elena REPLACE',
     );
     expect(listedNames()).toEqual(['Elena Marin']);
+  });
+
+  it('opens on the journey step and the date range the URL carries', () => {
+    // arrange
+    const urlQuery =
+      '?when=custom&from=2026-09-20&to=2026-09-22&status=payment-link-sent';
+
+    // act
+    renderPage({ urlQuery });
+
+    // assert
+    expect(whenTab('Custom')).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByLabelText('From')).toHaveValue('2026-09-20');
+    expect(screen.getByLabelText('To')).toHaveValue('2026-09-22');
+    expect(
+      screen.getByRole('button', { name: 'Payment link sent 0' }),
+    ).toHaveAttribute('aria-pressed', 'true');
+    expect(
+      screen.getByText('No calls with a payment link sent between 20 and 22 September.'),
+    ).toBeInTheDocument();
+  });
+
+  it('writes both axes the coach picks into the URL', async () => {
+    // arrange
+    const user = renderPage();
+
+    // act
+    await user.click(whenTab('Upcoming'));
+    await user.click(screen.getByRole('button', { name: 'Invited 0' }));
+
+    // assert
+    expect(screen.getByTestId('location-probe')).toHaveTextContent(
+      '?when=upcoming&status=invited REPLACE',
+    );
   });
 
   it('moves between the filters with the arrow keys', async () => {
@@ -199,13 +282,11 @@ describe('the coach assessment calls page', () => {
     const user = renderPage();
 
     // act
-    await user.click(screen.getByLabelText('Search calls'));
     await user.tab();
-    await user.keyboard('{ArrowRight}');
-    await user.keyboard('{ArrowRight}');
+    await user.keyboard('{ArrowRight}{ArrowRight}{ArrowRight}');
 
     // assert
-    expect(screen.getByRole('tab', { name: 'Past' })).toHaveFocus();
+    expect(whenTab('Past')).toHaveFocus();
     await waitFor(() => expect(listedNames()).toEqual(['Elena Marin']));
   });
 });

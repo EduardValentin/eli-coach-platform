@@ -1,15 +1,19 @@
+import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { UnitPreferencesSettings } from '../../components/UnitPreferencesSettings';
+import { SubscriptionSection } from '../../components/client-portal/SubscriptionSection';
 import { useClientProfile } from '../../context/ClientProfileContext';
 
 export function ClientSettings() {
   const { clientProfile } = useClientProfile();
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6 sm:space-y-8 pb-12">
-      <header className="space-y-2">
-        <h1 className="text-2xl md:text-3xl font-serif font-bold text-foreground leading-tight">Settings</h1>
-        <p className="text-sm text-muted-foreground">Choose how your measurements are shown across the app.</p>
-      </header>
+    <div className="max-w-3xl mx-auto space-y-6 sm:space-y-8">
+      <PortalPageHeader
+        title="Settings"
+        subtitle="Your coaching, and how your measurements are shown across the app."
+      />
+
+      <SubscriptionSection />
 
       <UnitPreferencesSettings
         sampleWeightKg={clientProfile?.currentWeightKg}

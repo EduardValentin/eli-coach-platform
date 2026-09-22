@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router';
+import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { ArrowLeft, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { ToggleChip } from '../../components/ToggleChip';
@@ -64,7 +65,7 @@ export function EditClientProfile() {
 
   if (!profile) {
     return (
-      <div className="w-full max-w-3xl mx-auto pb-12">
+      <div className="w-full max-w-3xl">
         <p className="text-text-secondary">Client not found.</p>
       </div>
     );
@@ -121,7 +122,7 @@ export function EditClientProfile() {
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto pb-12">
+    <div className="w-full max-w-3xl">
       <Link
         to={`/coach/clients/${clientId}`}
         className="inline-flex items-center gap-2 text-sm font-semibold text-text-secondary hover:text-text-primary mb-8 transition-colors"
@@ -129,14 +130,10 @@ export function EditClientProfile() {
         <ArrowLeft size={16} /> Back to {fullName(profile)}
       </Link>
 
-      <header className="mb-10">
-        <h1 className="font-serif text-3xl lg:text-4xl text-text-primary mb-3 tracking-tight">
-          Edit Profile
-        </h1>
-        <p className="text-text-secondary font-medium">
-          Update {fullName(profile)}&apos;s profile information. Changes are visible to the client except for your private notes.
-        </p>
-      </header>
+      <PortalPageHeader
+        title="Edit Profile"
+        subtitle={`Update ${fullName(profile)}’s profile information. Changes are visible to the client except for your private notes.`}
+      />
 
       <div className="bg-white p-8 lg:p-10 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 space-y-12">
         {/* Basic Information */}
