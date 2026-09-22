@@ -6,7 +6,7 @@ import {
   parseDateRangeParams,
   parsePageParam,
   parseSortDirectionParam,
-  parseSortKeyParam,
+  toSortKey,
   parseStatusParam,
   DEFAULT_CALL_STATUS,
   DEFAULT_SORT_KEY,
@@ -41,7 +41,7 @@ export type CallListingParams = {
 export function useCallListingParams(): CallListingParams {
   const { pathname } = useLocation();
   const { replaceSearchParams, searchParams } = useSearchParamsWriter();
-  const sortKey = parseSortKeyParam(searchParams.get(SORT_PARAM));
+  const sortKey = toSortKey(searchParams.get(SORT_PARAM));
   const sort: CallSort = {
     direction: parseSortDirectionParam(
       searchParams.get(DIRECTION_PARAM),
@@ -142,13 +142,13 @@ type ParamChoice = { defaultValue: string | null; value: string | null };
 
 function setParamUnlessDefault(
   params: URLSearchParams,
-  param: string,
+  name: string,
   choice: ParamChoice,
 ): void {
   if (choice.value === null || choice.value === choice.defaultValue) {
-    params.delete(param);
+    params.delete(name);
     return;
   }
 
-  params.set(param, choice.value);
+  params.set(name, choice.value);
 }

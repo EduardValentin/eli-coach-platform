@@ -162,7 +162,7 @@ export function parseStatusParam(raw: string | null): CoachCallStatus {
   return DEFAULT_CALL_STATUS;
 }
 
-export function parseSortKeyParam(raw: string | null): SortKey {
+export function toSortKey(raw: string | null): SortKey {
   return SORT_KEYS.find((key) => key === raw) ?? DEFAULT_SORT_KEY;
 }
 

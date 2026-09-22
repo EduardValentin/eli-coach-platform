@@ -8,7 +8,7 @@ const GLYPH_SIZE = 16;
 // A button that has to read as one of the form's fields, so it carries the
 // Input primitive's frame rather than a button variant.
 const FIELD_TRIGGER_CLASS_NAME =
-  "flex h-12 w-full min-w-0 items-center justify-between gap-2 rounded-field border border-control-border-soft bg-surface-quiet/50 px-3 py-1 text-left text-base transition-[color,box-shadow] outline-none focus-visible:border-border-focus aria-invalid:border-feedback-danger disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm";
+  "flex h-12 w-full min-w-0 items-center justify-between gap-2 rounded-field border border-control-border-soft bg-surface-quiet/50 px-3 text-left text-base transition-[color,box-shadow] outline-none focus-visible:border-border-focus aria-invalid:border-feedback-danger disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm";
 
 function CalendarDaysGlyph() {
   return (

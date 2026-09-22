@@ -55,6 +55,9 @@ const STATIC_BOT_DETECTION = {
 
 const BOOKING_ID = "2b0f2d2e-6f52-4a2e-9a19-1a1b4b1a6f11";
 const TIME_LABEL = /^\d{1,2}:\d{2}\s?(AM|PM)$/i;
+// Nine fields, four Radix selects and a calendar per flow: a loaded runner
+// needs more than vitest's 5s default for the booking flows.
+const BOOKING_FLOW = { timeout: 15000 };
 
 const server = setupServer();
 
@@ -175,7 +178,7 @@ describe("booking an assessment call: choosing a time", () => {
   });
 });
 
-describe("booking an assessment call: the details", () => {
+describe("booking an assessment call: the details", BOOKING_FLOW, () => {
   it("explains every rejected detail under its field and keeps the chosen call", async () => {
     // arrange
     const user = renderBookingPage();
@@ -399,7 +402,7 @@ describe("booking an assessment call: the details", () => {
   });
 });
 
-describe("booking an assessment call: the outcome", () => {
+describe("booking an assessment call: the outcome", BOOKING_FLOW, () => {
   it("confirms the booked call with its time and length, and says the join link is on its way", async () => {
     // arrange
     vi.stubEnv("TZ", COACH_TIME_ZONE);
@@ -648,116 +651,124 @@ describe("booking an assessment call: the outcome", () => {
   });
 });
 
-describe("booking an assessment call: moving between steps", () => {
-  it("moves focus to the details heading when the visitor continues", async () => {
-    // arrange
-    const user = renderBookingPage();
-    await chooseFirstTime(user);
+describe(
+  "booking an assessment call: moving between steps",
+  BOOKING_FLOW,
+  () => {
+    it("moves focus to the details heading when the visitor continues", async () => {
+      // arrange
+      const user = renderBookingPage();
+      await chooseFirstTime(user);
 
-    // act
-    await user.click(
-      screen.getByRole("button", { name: "Continue to your details" }),
-    );
+      // act
+      await user.click(
+        screen.getByRole("button", { name: "Continue to your details" }),
+      );
 
-    // assert
-    expect(
-      await screen.findByRole("heading", { level: 2, name: "Almost there" }),
-    ).toHaveFocus();
-  });
-
-  it("moves focus to the times heading when the visitor goes back", async () => {
-    // arrange
-    const user = renderBookingPage();
-    await reachDetails(user);
-
-    // act
-    await user.click(screen.getByRole("button", { name: "Back to the times" }));
-
-    // assert
-    expect(
-      await screen.findByRole("heading", {
-        level: 2,
-        name: "Select a Date & Time",
-      }),
-    ).toHaveFocus();
-  });
-
-  it("reopens the calendar on the month of a next-month day chosen from the overflow row", async () => {
-    // arrange
-    vi.stubEnv("TZ", COACH_TIME_ZONE);
-    const user = renderBookingPage({
-      page: {
-        botDetection: STATIC_BOT_DETECTION,
-        coachTimeZone: COACH_TIME_ZONE,
-        slots: [FIRST_SLOT, "2026-04-01T12:00:00.000Z"],
-        status: "open",
-      },
-    });
-    await waitFor(() => {
-      expect(openDayButtons().length).toBeGreaterThan(0);
-    });
-    await user.click(
-      screen.getByRole("button", { name: /^Wednesday,? 1 April 2026$/ }),
-    );
-    await waitFor(() => {
-      expect(timeButtons().length).toBeGreaterThan(0);
-    });
-    await user.click(timeButtons()[0]);
-    await user.click(
-      screen.getByRole("button", { name: "Continue to your details" }),
-    );
-    await screen.findByRole("heading", { level: 2, name: "Almost there" });
-
-    // act
-    await user.click(screen.getByRole("button", { name: "Back to the times" }));
-
-    // assert
-    expect(
-      await screen.findByRole("grid", { name: "Available days, April 2026" }),
-    ).toBeInTheDocument();
-    const selectedDay = screen.getByRole("gridcell", { selected: true });
-    expect(selectedDay).toHaveAttribute("data-day", "2026-04-01");
-    expect(selectedDay).not.toHaveAttribute("data-outside");
-    expect(within(selectedDay).getByRole("button")).toHaveAttribute(
-      "tabindex",
-      "0",
-    );
-  });
-
-  it("announces a booked call by moving focus to its heading", async () => {
-    // arrange
-    mockBooking(confirmedBooking(), { status: 201 });
-    const user = renderBookingPage();
-    await reachDetails(user);
-    await fillDetails(user);
-
-    // act
-    await user.click(screen.getByRole("button", { name: "Schedule Call" }));
-
-    // assert
-    expect(
-      await screen.findByRole("heading", {
-        level: 2,
-        name: "You're booked!",
-      }),
-    ).toHaveFocus();
-  });
-
-  it("leaves focus where it was when the page first opens", async () => {
-    // arrange
-    renderBookingPage();
-
-    // act
-    await waitFor(() => {
-      expect(openDayButtons().length).toBeGreaterThan(0);
+      // assert
+      expect(
+        await screen.findByRole("heading", { level: 2, name: "Almost there" }),
+      ).toHaveFocus();
     });
 
-    // assert
-    expect(
-      screen.getByRole("heading", { level: 2, name: "Select a Date & Time" }),
-    ).not.toHaveFocus();
-  });
-});
+    it("moves focus to the times heading when the visitor goes back", async () => {
+      // arrange
+      const user = renderBookingPage();
+      await reachDetails(user);
+
+      // act
+      await user.click(
+        screen.getByRole("button", { name: "Back to the times" }),
+      );
+
+      // assert
+      expect(
+        await screen.findByRole("heading", {
+          level: 2,
+          name: "Select a Date & Time",
+        }),
+      ).toHaveFocus();
+    });
+
+    it("reopens the calendar on the month of a next-month day chosen from the overflow row", async () => {
+      // arrange
+      vi.stubEnv("TZ", COACH_TIME_ZONE);
+      const user = renderBookingPage({
+        page: {
+          botDetection: STATIC_BOT_DETECTION,
+          coachTimeZone: COACH_TIME_ZONE,
+          slots: [FIRST_SLOT, "2026-04-01T12:00:00.000Z"],
+          status: "open",
+        },
+      });
+      await waitFor(() => {
+        expect(openDayButtons().length).toBeGreaterThan(0);
+      });
+      await user.click(
+        screen.getByRole("button", { name: /^Wednesday,? 1 April 2026$/ }),
+      );
+      await waitFor(() => {
+        expect(timeButtons().length).toBeGreaterThan(0);
+      });
+      await user.click(timeButtons()[0]);
+      await user.click(
+        screen.getByRole("button", { name: "Continue to your details" }),
+      );
+      await screen.findByRole("heading", { level: 2, name: "Almost there" });
+
+      // act
+      await user.click(
+        screen.getByRole("button", { name: "Back to the times" }),
+      );
+
+      // assert
+      expect(
+        await screen.findByRole("grid", { name: "Available days, April 2026" }),
+      ).toBeInTheDocument();
+      const selectedDay = screen.getByRole("gridcell", { selected: true });
+      expect(selectedDay).toHaveAttribute("data-day", "2026-04-01");
+      expect(selectedDay).not.toHaveAttribute("data-outside");
+      expect(within(selectedDay).getByRole("button")).toHaveAttribute(
+        "tabindex",
+        "0",
+      );
+    });
+
+    it("announces a booked call by moving focus to its heading", async () => {
+      // arrange
+      mockBooking(confirmedBooking(), { status: 201 });
+      const user = renderBookingPage();
+      await reachDetails(user);
+      await fillDetails(user);
+
+      // act
+      await user.click(screen.getByRole("button", { name: "Schedule Call" }));
+
+      // assert
+      expect(
+        await screen.findByRole("heading", {
+          level: 2,
+          name: "You're booked!",
+        }),
+      ).toHaveFocus();
+    });
+
+    it("leaves focus where it was when the page first opens", async () => {
+      // arrange
+      renderBookingPage();
+
+      // act
+      await waitFor(() => {
+        expect(openDayButtons().length).toBeGreaterThan(0);
+      });
+
+      // assert
+      expect(
+        screen.getByRole("heading", { level: 2, name: "Select a Date & Time" }),
+      ).not.toHaveFocus();
+    });
+  },
+);
 
 describe("booking an assessment call: unreadable open slots", () => {
   it("explains the times are unreadable and offers to load them again", async () => {

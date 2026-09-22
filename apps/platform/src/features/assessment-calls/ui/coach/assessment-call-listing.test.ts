@@ -17,7 +17,7 @@ import {
   parseDateRangeParams,
   parsePageParam,
   parseSortDirectionParam,
-  parseSortKeyParam,
+  toSortKey,
   parseStatusParam,
   upcomingCalls,
   type CallSort,
@@ -586,7 +586,7 @@ describe("reading the sort from the URL", () => {
     const raw = ["scheduled", "booked", "name", "email", "phone", null];
 
     // act
-    const parsed = raw.map(parseSortKeyParam);
+    const parsed = raw.map(toSortKey);
 
     // assert
     expect(parsed).toEqual([

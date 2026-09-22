@@ -1,6 +1,5 @@
 import {
   IconButton,
-  Label,
   Select,
   SelectContent,
   SelectItem,
@@ -17,14 +16,13 @@ import {
 
 import {
   defaultDirectionFor,
-  parseSortKeyParam,
+  toSortKey,
   SORT_KEYS,
   type CallSort,
   type SortDirection,
   type SortKey,
 } from "~/features/assessment-calls/ui/coach/assessment-call-listing";
 
-const SORT_FIELD_ID = "assessment-call-sort";
 const ICON_SIZE = 16;
 
 const SORT_KEY_LABELS: Record<SortKey, string> = {
@@ -79,13 +77,13 @@ export function SortControl({
       className="flex flex-col gap-2 xl:w-fit"
       data-parity-root="SortControl"
     >
-      <Label htmlFor={SORT_FIELD_ID}>Sort by</Label>
+      <span className="text-sm font-medium text-text-secondary">Sort by</span>
       <div className="flex items-center gap-2">
         <Select
-          onValueChange={(value) => onChooseKey(parseSortKeyParam(value))}
+          onValueChange={(value) => onChooseKey(toSortKey(value))}
           value={sort.key}
         >
-          <SelectTrigger className="h-8 w-40 text-sm" id={SORT_FIELD_ID}>
+          <SelectTrigger aria-label="Sort by" className="h-8 w-40 text-sm">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
