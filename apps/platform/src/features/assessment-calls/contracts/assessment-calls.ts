@@ -193,6 +193,7 @@ export const coachAssessmentCallSchema = z.object({
   phone: z.string().nullable(),
   startsAt: z.iso.datetime(),
   endsAt: z.iso.datetime(),
+  bookedAt: z.iso.datetime(),
   joinPath: z.string().min(1),
 });
 

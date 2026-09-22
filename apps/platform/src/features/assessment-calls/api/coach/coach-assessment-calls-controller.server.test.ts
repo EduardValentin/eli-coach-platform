@@ -56,6 +56,7 @@ describe("CoachAssessmentCallsController", () => {
           phone: "+40712345678",
           startsAt: "2026-10-19T14:00:00.000Z",
           endsAt: "2026-10-19T14:30:00.000Z",
+          bookedAt: "2026-10-18T08:00:00.000Z",
           joinPath: "/book/3f1e8d0c-2a44-4f6e-9a2b-7c0d5e6f8a91/join",
         },
       ],

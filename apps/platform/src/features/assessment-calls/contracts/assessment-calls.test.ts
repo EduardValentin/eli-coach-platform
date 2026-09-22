@@ -41,6 +41,7 @@ const COACH_CALL = {
   phone: "+40712345678",
   startsAt: "2026-10-01T14:00:00.000Z",
   endsAt: "2026-10-01T14:30:00.000Z",
+  bookedAt: "2026-09-28T14:00:00.000Z",
   joinPath: "/book/4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11/join",
 };
 

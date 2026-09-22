@@ -649,3 +649,60 @@ describe("calendar year range", () => {
     expect(screen.getByText("March 2026")).toBeInTheDocument();
   });
 });
+
+describe("calendar range selection", () => {
+  const march12 = new Date("2026-03-12T12:00:00Z");
+
+  it("fills the ends of the range in the brand colour and tints the days between", () => {
+    // arrange
+    const onSelect = vi.fn();
+
+    // act
+    render(
+      <Calendar
+        aria-label="Date range"
+        mode="range"
+        month={march2026}
+        onSelect={onSelect}
+        required
+        selected={{ from: march10, to: march12 }}
+        timeZone="UTC"
+      />,
+    );
+
+    // assert
+    const start = screen.getByRole("button", { name: /March 10th, 2026/ });
+    const middle = screen.getByRole("button", { name: /March 11th, 2026/ });
+    expect(start).toHaveClass("bg-brand-primary", "text-text-inverted");
+    expect(middle).toHaveClass("bg-brand-primary-soft", "text-brand-primary");
+    expect(middle).not.toHaveClass("bg-brand-primary", "text-text-inverted");
+  });
+
+  it("extends a one-day range to the day the visitor picks next", async () => {
+    // arrange
+    const user = userEvent.setup();
+    const onSelect = vi.fn();
+
+    render(
+      <Calendar
+        aria-label="Date range"
+        mode="range"
+        month={march2026}
+        onSelect={onSelect}
+        required
+        selected={{ from: march10, to: march10 }}
+        timeZone="UTC"
+      />,
+    );
+
+    // act
+    await user.click(screen.getByRole("button", { name: /March 12th, 2026/ }));
+
+    // assert
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(onSelect.mock.calls[0][0]).toEqual({
+      from: march10,
+      to: new Date("2026-03-12T00:00:00Z"),
+    });
+  });
+});

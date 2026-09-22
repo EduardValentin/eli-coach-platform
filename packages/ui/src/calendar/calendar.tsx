@@ -10,6 +10,7 @@ import {
   type DayButtonProps,
   type MonthCaptionProps,
   type PropsBase,
+  type PropsRangeRequired,
   type PropsSingle,
 } from "react-day-picker";
 
@@ -53,9 +54,13 @@ const yearRangeClassNames: Partial<ClassNames> = {
   month_caption: "flex w-full items-center gap-2 pt-1",
 };
 
+// The range's middle days are selected too, so their entry follows `selected`
+// and wins the merge.
 const dayModifierClassNames: Record<string, string> = {
   selected:
     "bg-brand-primary text-text-inverted hover:bg-brand-primary-hover hover:text-text-inverted",
+  range_middle:
+    "bg-brand-primary-soft text-brand-primary hover:bg-brand-primary-soft hover:text-brand-primary",
   today: "ring-2 ring-brand-primary/30",
   outside: "text-text-secondary hover:bg-surface-quiet",
   disabled: "opacity-50 hover:bg-transparent",
@@ -194,7 +199,7 @@ function monthBoundary(year: number, monthIndex: number) {
   return new Date(Date.UTC(year, monthIndex, 1, 12));
 }
 
-type CalendarYearRange = { from: number; to: number };
+export type CalendarYearRange = { from: number; to: number };
 
 const plainCaptionProps = {
   classNames: calendarClassNames,
@@ -211,7 +216,7 @@ function yearRangeCaptionProps({ from, to }: CalendarYearRange) {
   };
 }
 
-export type CalendarProps = Pick<
+type CalendarBaseProps = Pick<
   PropsBase,
   | "className"
   | "defaultMonth"
@@ -221,30 +226,69 @@ export type CalendarProps = Pick<
   | "month"
   | "onMonthChange"
   | "today"
-> &
-  Pick<PropsSingle, "onSelect" | "selected"> & {
-    "aria-label": string;
-    timeZone: string;
-    yearRange?: CalendarYearRange;
-  };
+> & {
+  "aria-label": string;
+  timeZone: string;
+  yearRange?: CalendarYearRange;
+};
 
-export function Calendar({
-  "aria-label": ariaLabel,
-  labels,
-  yearRange,
-  ...props
-}: CalendarProps) {
+type CalendarSingleProps = CalendarBaseProps &
+  Partial<Pick<PropsSingle, "mode">> &
+  Pick<PropsSingle, "onSelect" | "selected">;
+
+type CalendarRangeProps = CalendarBaseProps &
+  Pick<PropsRangeRequired, "mode" | "onSelect" | "required" | "selected">;
+
+export type CalendarProps = CalendarSingleProps | CalendarRangeProps;
+
+function selectionProps(
+  props: CalendarProps,
+): PropsSingle | PropsRangeRequired {
+  if (props.mode === "range") {
+    return {
+      mode: "range",
+      onSelect: props.onSelect,
+      required: true,
+      selected: props.selected,
+    };
+  }
+
+  return { mode: "single", onSelect: props.onSelect, selected: props.selected };
+}
+
+export function Calendar(props: CalendarProps) {
+  const {
+    "aria-label": ariaLabel,
+    className,
+    defaultMonth,
+    disabled,
+    labels,
+    modifiers,
+    month,
+    onMonthChange,
+    timeZone,
+    today,
+    yearRange,
+  } = props;
+
   return (
     <DayPicker
-      {...props}
+      className={className}
+      defaultMonth={defaultMonth}
+      disabled={disabled}
+      modifiers={modifiers}
+      month={month}
+      onMonthChange={onMonthChange}
+      timeZone={timeZone}
+      today={today}
       {...(yearRange ? yearRangeCaptionProps(yearRange) : plainCaptionProps)}
+      {...selectionProps(props)}
       fixedWeeks
       labels={{
         labelGrid: (date, options, dateLib) =>
           `${ariaLabel}, ${labelGrid(date, options, dateLib)}`,
         ...labels,
       }}
-      mode="single"
       navLayout="around"
       showOutsideDays
     />

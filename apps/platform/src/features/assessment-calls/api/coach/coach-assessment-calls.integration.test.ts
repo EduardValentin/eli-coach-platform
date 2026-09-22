@@ -156,7 +156,9 @@ describe.sequential("coach assessment calls integration", () => {
 
     // act
     const dashboard = await visibleDocument(await requestAsCoach(DASHBOARD));
-    const upcoming = await visibleDocument(await requestAsCoach(CALLS_PAGE));
+    const upcoming = await visibleDocument(
+      await requestAsCoach(`${CALLS_PAGE}?status=upcoming`),
+    );
     const past = await visibleDocument(
       await requestAsCoach(`${CALLS_PAGE}?status=past`),
     );

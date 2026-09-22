@@ -11,14 +11,10 @@ import {
   COACH_ASSESSMENT_CALLS_UNAVAILABLE_MESSAGE,
   COACH_ASSESSMENT_CALLS_UNAVAILABLE_STATUS,
 } from "~/features/assessment-calls/contracts/assessment-calls";
-import { COACH_CALLS_PAGE_FRAME_CLASS_NAME } from "~/features/assessment-calls/ui/coach/coach-calls-page-frame";
 
 function AssessmentCallsUnavailable() {
   return (
-    <div
-      className={COACH_CALLS_PAGE_FRAME_CLASS_NAME}
-      data-parity-root="AssessmentCallsUnavailable"
-    >
+    <div className="w-full" data-parity-root="AssessmentCallsUnavailable">
       <div
         className={cn(
           cardVariants({ variant: "portal-panel" }),

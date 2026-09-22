@@ -36,7 +36,7 @@ The production source of truth is `packages/ui/src/styles.css` for tokens and, f
 | `Select` and its compound parts | Styled Radix selection control | Trigger `size`: `sm`, `md` |
 | `TextArea` | Multi-line form control with the `Input` look | No variants |
 | `FilterChipGroup`, `FilterChip` | Filter chips offering one choice per group, the narrowing filter under a page's segmented view switch; the reference app mirrors it for the coach's journey-step filter, where each chip carries a count of the calls waiting at that step | `tone`: `brand`, `brand-secondary` |
-| `DateField`, `DateRangeField` | Popover date pickers built on `BrandCalendar`, sharing one `DateFieldTrigger`: the 48px field trigger with its muted calendar glyph. `DateField` picks one day, `DateRangeField` an inclusive span that closes the popover on the second pick. Reference app only | No variants |
+| `DateField`, `DateRangeField` | Popover date pickers built on `BrandCalendar`, sharing one `DateFieldTrigger`: the 48px field trigger with its muted calendar glyph. `DateField` picks one day, `DateRangeField` an inclusive span that closes the popover on the second pick. `DateRangeField` and `DateFieldTrigger` are in both apps since GEN-197, where production's coach assessment-calls Custom filter composes them from `packages/ui/src/calendar`; `DateField` is reference app only | No variants |
 | `PortalPageHeader` | The one page header of both portals: a serif `<h1>`, an optional subtitle and an optional action slot, with the gap to the content set once. Reference app only | No variants |
 | `SidebarSurfaceLayout` | Portal shell with sidebar navigation and main content | No variants |
 | `PortalShell` | Portal chrome: sidebar, mobile top bar and navigation, main landmark | No variants |

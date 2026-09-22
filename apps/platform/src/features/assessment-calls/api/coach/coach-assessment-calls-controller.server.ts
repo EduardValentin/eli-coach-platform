@@ -55,6 +55,7 @@ function serialiseCall(call: AssessmentCallSnapshot): CoachAssessmentCall {
     phone: call.phone,
     startsAt: call.startsAt.toISOString(),
     endsAt: call.endsAt.toISOString(),
+    bookedAt: call.bookedAt.toISOString(),
     joinPath: assessmentCallJoinPath(call.id),
   };
 }

@@ -27,6 +27,8 @@ const COACH_TIME_ZONE = "Europe/Bucharest";
 const KIRITIMATI = "Pacific/Kiritimati";
 const NOW = new Date("2026-09-20T09:00:00.000Z");
 const CALL_MINUTES = 30;
+const DAY_MS = 24 * 60 * 60_000;
+const BOOKED_DAYS_AHEAD = 3;
 
 function call(
   startsAt: string,
@@ -35,6 +37,9 @@ function call(
   const starts = new Date(startsAt);
 
   return {
+    bookedAt: new Date(
+      starts.getTime() - BOOKED_DAYS_AHEAD * DAY_MS,
+    ).toISOString(),
     endsAt: new Date(starts.getTime() + CALL_MINUTES * 60_000).toISOString(),
     id: startsAt,
     joinPath: `/book/${startsAt}/join`,

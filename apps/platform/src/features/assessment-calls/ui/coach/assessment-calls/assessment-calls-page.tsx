@@ -7,7 +7,6 @@ import {
 
 import { assessmentCallsContext } from "~/features/assessment-calls/server/guards/assessment-calls-context.server";
 import { haveOnlyListingParamsChanged } from "~/features/assessment-calls/ui/coach/assessment-call-listing";
-import { COACH_CALLS_PAGE_FRAME_CLASS_NAME } from "~/features/assessment-calls/ui/coach/coach-calls-page-frame";
 import { useCoachClock } from "~/features/assessment-calls/ui/coach/use-coach-clock";
 
 import { AssessmentCallsSection } from "./assessment-calls-section";
@@ -35,7 +34,7 @@ export default function CoachAssessmentCallsRoute() {
   const { now, timeZone } = useCoachClock(listing.now, listing.coachTimeZone);
 
   return (
-    <div className={COACH_CALLS_PAGE_FRAME_CLASS_NAME}>
+    <div className="w-full">
       <header className="mb-8" data-parity-root="CoachAssessmentCallsHeader">
         <h1 className="font-heading text-3xl font-medium text-text-primary lg:text-4xl">
           Assessment calls
