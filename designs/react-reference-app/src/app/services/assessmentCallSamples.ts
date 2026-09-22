@@ -1,9 +1,12 @@
+import { subDays } from 'date-fns';
 import {
   DEFAULT_COACH_AVAILABILITY,
   type PrototypeBooking,
 } from './assessmentCallService';
 
 const HOUR_MS = 60 * 60 * 1000;
+
+const USUAL_BOOKING_LEAD_DAYS = 3;
 
 function hoursFromNow(now: Date, hours: number): Date {
   return new Date(now.getTime() + hours * HOUR_MS);
@@ -27,15 +30,19 @@ type SampleVisitor = {
   phone?: string;
 };
 
+type SampleCall = SampleVisitor & { bookedDaysAhead?: number };
+
 function sampleBooking(
   id: string,
   startsAt: Date,
-  visitor: SampleVisitor,
+  call: SampleCall,
 ): PrototypeBooking {
+  const { bookedDaysAhead = USUAL_BOOKING_LEAD_DAYS, ...visitor } = call;
   const [firstName, ...rest] = visitor.name.split(' ');
   return {
     id,
     startsAt,
+    bookedAt: subDays(startsAt, bookedDaysAhead),
     firstName,
     lastName: rest.join(' '),
     visitorEmail: visitor.email,
@@ -83,6 +90,7 @@ export function sampleDashboardBookings(now: Date): PrototypeBooking[] {
       name: 'Ioana Radu',
       email: 'ioana.radu@example.com',
       notes: '',
+      bookedDaysAhead: 1,
     }),
     sampleBooking('ac-sample-in-three-days', atLocalHour(now, 3, 11), {
       name: 'Andreea Pop',
@@ -92,6 +100,7 @@ export function sampleDashboardBookings(now: Date): PrototypeBooking[] {
       primaryGoal: 'build_muscle',
       country: 'GB',
       phone: '+447700900123',
+      bookedDaysAhead: 10,
     }),
     sampleBooking('ac-sample-three-hours-ago', hoursFromNow(now, -3), {
       name: 'Sofia Dinu',
@@ -156,6 +165,7 @@ export function sampleManyBookings(now: Date): PrototypeBooking[] {
         name,
         email: `${firstName}.${index + 1}@example.com`,
         notes: index % 3 === 0 ? 'Booked through the public site.' : '',
+        bookedDaysAhead: 1 + (index % 5),
       },
     );
   });

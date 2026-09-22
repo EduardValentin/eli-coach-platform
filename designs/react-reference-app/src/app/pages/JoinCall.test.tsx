@@ -12,6 +12,7 @@ const SAVE_WAIT = { timeout: 4000 };
 const KNOWN_BOOKING: PrototypeBooking = {
   id: 'ac-known',
   startsAt: new Date('2026-03-02T15:00:00.000Z'),
+  bookedAt: new Date('2026-02-27T10:00:00.000Z'),
   firstName: 'Jane',
   lastName: 'Doe',
   visitorEmail: 'jane@example.com',

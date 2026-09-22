@@ -1,4 +1,5 @@
 import { render, screen, within } from '@testing-library/react';
+import { subDays } from 'date-fns';
 import { MemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import { UpcomingAssessmentCalls } from './UpcomingAssessmentCalls';
@@ -18,6 +19,7 @@ function bookingAt(startsAt: Date, visitorName: string): PrototypeBooking {
   return {
     id,
     startsAt,
+    bookedAt: subDays(startsAt, 3),
     firstName,
     lastName,
     visitorEmail: 'ana.popescu@example.com',

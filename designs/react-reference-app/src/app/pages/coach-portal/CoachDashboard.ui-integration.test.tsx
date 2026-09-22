@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { render, screen } from '@testing-library/react';
+import { subDays } from 'date-fns';
 import { MemoryRouter } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CoachDashboard } from './CoachDashboard';
@@ -20,6 +21,7 @@ function bookingAt(startsAt: Date, visitorName: string): PrototypeBooking {
   return {
     id,
     startsAt,
+    bookedAt: subDays(startsAt, 3),
     firstName,
     lastName,
     visitorEmail: 'ana.popescu@example.com',

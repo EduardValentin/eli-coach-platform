@@ -14,20 +14,25 @@ import type { AppointmentDetail } from './appointment';
 import {
   classifyCalls,
   countsByJourneyStep,
+  defaultDirectionFor,
   emptyListingMessage,
   filterCalls,
-  orderCallsFor,
+  orderCallsBy,
   pageOfCalls,
   parseDateRange,
   parseJourneyStep,
   parsePage,
+  parseSortDirection,
+  parseSortKey,
   parseStatus,
   withJourneyStages,
   type AssessmentCallStatus,
+  type CallSort,
   type ClassifiedCall,
   type JourneyStep,
   type ListedCall,
   type ListingSelection,
+  type SortKey,
 } from '../../utils/assessmentCallListing';
 import { formatShortDay, formatSlotTime } from '../../utils/dateFormatters';
 import { Badge } from '../ui/badge';
@@ -44,6 +49,7 @@ import { CallJourneyActions } from './CallJourneyActions';
 import { JourneyStageBadge } from './JourneyStageBadge';
 import { CallListPager } from './CallListPager';
 import { JoinCallLink } from './JoinCallLink';
+import { SortControl } from './SortControl';
 
 const STATUS_PARAM = 'when';
 const QUERY_PARAM = 'q';
@@ -51,9 +57,12 @@ const PAGE_PARAM = 'page';
 const JOURNEY_PARAM = 'status';
 const FROM_PARAM = 'from';
 const TO_PARAM = 'to';
+const SORT_PARAM = 'sort';
+const DIRECTION_PARAM = 'dir';
 const CALLS_PER_PAGE = 10;
 const DEFAULT_STATUS: AssessmentCallStatus = 'all';
 const DEFAULT_JOURNEY: JourneyStep = 'any';
+const DEFAULT_SORT_KEY: SortKey = 'scheduled';
 const SEARCH_FIELD_ID = 'assessment-call-search';
 
 const WHEN_TABS: { status: AssessmentCallStatus; label: string }[] = [
@@ -247,13 +256,18 @@ export function AssessmentCallsSection({
     searchParams.get(TO_PARAM),
   );
   const page = parsePage(searchParams.get(PAGE_PARAM));
+  const sortKey = parseSortKey(searchParams.get(SORT_PARAM));
+  const sort: CallSort = {
+    key: sortKey,
+    direction: parseSortDirection(searchParams.get(DIRECTION_PARAM), sortKey),
+  };
 
   const selection: ListingSelection = { status, query, journey, range };
   const calls: ListedCall[] = withJourneyStages(
     classifyCalls(bookings, { now, timeZone }),
     (callId) => journeyForCall(callId)?.stage ?? null,
   );
-  const matching = orderCallsFor(filterCalls(calls, selection), status);
+  const matching = orderCallsBy(filterCalls(calls, selection), sort, status);
   const view = pageOfCalls(matching, { page, perPage: CALLS_PER_PAGE });
   const counts = countsByJourneyStep(calls, selection);
 
@@ -285,6 +299,19 @@ export function AssessmentCallsSection({
       params.delete(PAGE_PARAM);
       writeDay(params, FROM_PARAM, chosen.from);
       writeDay(params, TO_PARAM, chosen.to);
+    });
+  };
+
+  const chooseSort = (chosen: CallSort) => {
+    updateSearchParams((params) => {
+      params.delete(PAGE_PARAM);
+      if (chosen.key === DEFAULT_SORT_KEY) params.delete(SORT_PARAM);
+      else params.set(SORT_PARAM, chosen.key);
+      if (chosen.direction === defaultDirectionFor(chosen.key)) {
+        params.delete(DIRECTION_PARAM);
+      } else {
+        params.set(DIRECTION_PARAM, chosen.direction);
+      }
     });
   };
 
@@ -354,6 +381,12 @@ export function AssessmentCallsSection({
                 onChange={(event) => changeQuery(event.target.value)}
               />
             </div>
+
+            <SortControl
+              className="xl:w-fit"
+              sort={sort}
+              onChange={chooseSort}
+            />
           </div>
 
           <JourneyFilter

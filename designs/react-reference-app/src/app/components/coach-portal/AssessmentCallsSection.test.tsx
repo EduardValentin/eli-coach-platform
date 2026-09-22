@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { subDays } from 'date-fns';
 import { useEffect } from 'react';
 import { MemoryRouter, useLocation, useNavigationType } from 'react-router';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
@@ -29,6 +30,7 @@ function bookingAt(startsAt: Date, details: Partial<PrototypeBooking> = {}) {
   return {
     id,
     startsAt,
+    bookedAt: subDays(startsAt, 3),
     firstName: 'Ana',
     lastName: 'Popescu',
     visitorEmail: 'ana.popescu@example.com',
@@ -572,6 +574,137 @@ describe('the assessment calls section', () => {
 
     // assert
     expect(screen.getByText('No calls yet.')).toBeInTheDocument();
+  });
+});
+
+describe('sorting the assessment call list', () => {
+  function sortSelect(): HTMLElement {
+    return screen.getByRole('combobox', { name: 'Sort by' });
+  }
+
+  async function chooseSort(
+    user: ReturnType<typeof userEvent.setup>,
+    option: string,
+  ) {
+    await user.click(sortSelect());
+    await user.click(await screen.findByRole('option', { name: option }));
+  }
+
+  it('opens sorted by the scheduled date, soonest first', () => {
+    // arrange
+    renderSection();
+
+    // act
+    const toggle = screen.getByRole('button', { name: 'Soonest first' });
+
+    // assert
+    expect(sortSelect()).toHaveTextContent('Scheduled date');
+    expect(toggle).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('orders the calls A to Z by name and writes the sort to the URL', async () => {
+    // arrange
+    const user = renderSection();
+
+    // act
+    await chooseSort(user, 'Name');
+
+    // assert
+    expect(listedNames()).toEqual([
+      'Elena Marin',
+      'Ioana Radu',
+      'Maria Ionescu',
+      'Sofia Dinu',
+    ]);
+    expect(currentLocation()).toBe('?sort=name REPLACE');
+    expect(screen.getByRole('button', { name: 'A to Z' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+  });
+
+  it('reverses the order from the direction toggle and writes it to the URL', async () => {
+    // arrange
+    const user = renderSection({ urlQuery: '?sort=name' });
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'A to Z' }));
+
+    // assert
+    expect(listedNames()).toEqual([
+      'Sofia Dinu',
+      'Maria Ionescu',
+      'Ioana Radu',
+      'Elena Marin',
+    ]);
+    expect(currentLocation()).toBe('?sort=name&dir=desc REPLACE');
+    expect(screen.getByRole('button', { name: 'Z to A' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+  });
+
+  it('lists the newest booking first by the booking date', async () => {
+    // arrange
+    const user = renderSection({
+      bookings: [
+        bookingAt(localInstant(22, 18), {
+          firstName: 'Booked',
+          lastName: 'last week',
+          bookedAt: localInstant(14, 10),
+        }),
+        bookingAt(localInstant(24, 18), {
+          firstName: 'Booked',
+          lastName: 'yesterday',
+          bookedAt: localInstant(20, 10),
+        }),
+      ],
+    });
+
+    // act
+    await chooseSort(user, 'Booking date');
+
+    // assert
+    expect(listedNames()).toEqual(['Booked yesterday', 'Booked last week']);
+    expect(screen.getByRole('button', { name: 'Newest first' })).toBeInTheDocument();
+  });
+
+  it('drops the direction when the coach picks another sort', async () => {
+    // arrange
+    const user = renderSection({ urlQuery: '?sort=name&dir=desc' });
+
+    // act
+    await chooseSort(user, 'Email');
+
+    // assert
+    expect(currentLocation()).toBe('?sort=email REPLACE');
+    expect(screen.getByRole('button', { name: 'A to Z' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+  });
+
+  it('keeps the default sort out of the URL', async () => {
+    // arrange
+    const user = renderSection({ urlQuery: '?sort=email&dir=desc' });
+
+    // act
+    await chooseSort(user, 'Scheduled date');
+
+    // assert
+    expect(currentLocation()).toBe(' REPLACE');
+  });
+
+  it('returns to the first page when the coach changes the sort', async () => {
+    // arrange
+    const user = renderSection({ bookings: MANY_UPCOMING, urlQuery: '?page=3' });
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Soonest first' }));
+
+    // assert
+    expect(currentLocation()).toBe('?dir=asc REPLACE');
+    expect(listedNames()[0]).toBe('Visitor 23');
   });
 });
 

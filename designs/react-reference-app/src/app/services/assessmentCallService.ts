@@ -15,6 +15,7 @@ export type AssessmentCallErrorCode = Exclude<
 export type PrototypeBooking = {
   id: string;
   startsAt: Date;
+  bookedAt: Date;
   firstName: string;
   lastName: string;
   visitorEmail: string;
@@ -329,6 +330,7 @@ function bookingFrom(
   return {
     id,
     startsAt: request.startsAt,
+    bookedAt: new Date(),
     firstName: request.firstName.trim(),
     lastName: request.lastName.trim(),
     visitorEmail: request.email.trim(),
