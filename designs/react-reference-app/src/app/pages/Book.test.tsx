@@ -13,6 +13,9 @@ import { ClientProfileProvider } from '../context/ClientProfileContext';
 const TODAY = new Date('2026-03-02T06:00:00.000Z');
 const VISITOR_TIME_ZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
 const BOOKING_WAIT = { timeout: 4000 };
+// Nine fields, four Radix selects and a calendar per flow: the CI runner needs
+// more than vitest's 5s default for the booking tests.
+const BOOKING_FLOW = { timeout: 15000 };
 
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date'] });
@@ -112,7 +115,7 @@ async function fillDetails(user: UserEvent) {
   await chooseOption(user, 'Country', 'Romania');
 }
 
-describe('Book', () => {
+describe('Book', BOOKING_FLOW, () => {
   it('sends the visitor to the not-found page while the site is in waitlist mode', async () => {
     // arrange
     // act
