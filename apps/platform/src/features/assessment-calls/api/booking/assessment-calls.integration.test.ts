@@ -71,6 +71,7 @@ const SECOND_EVENING_START = "2026-10-19T15:00:00.000Z";
 const NEXT_DAY_EVENING_START = "2026-10-20T14:00:00.000Z";
 const WINTER_TIME_EVENING_START = "2026-10-26T15:00:00.000Z";
 const LAST_HORIZON_START = "2026-11-18T17:00:00.000Z";
+const CHECK_VIOLATION = "23514";
 const UNKNOWN_BOOKING_ID = "00000000-0000-4000-8000-000000000000";
 const MALFORMED_BOOKING_ID = "not-a-booking";
 
@@ -246,6 +247,34 @@ describe.sequential("assessment call booking integration", () => {
 
     expect(coachEmail?.text).not.toContain("PHONE:");
   });
+
+  it.each([
+    { column: "gender", constraint: "assessment_calls_gender_check" },
+    {
+      column: "primary_goal",
+      constraint: "assessment_calls_primary_goal_check",
+    },
+  ])(
+    "refuses a $column outside its vocabulary at the database",
+    async ({ column, constraint }) => {
+      // arrange
+      const columns = {
+        gender: "female",
+        primary_goal: "build_strength",
+        [column]: "unknown",
+      };
+
+      // act
+      const insert = insertCallDirectly(columns);
+
+      // assert
+      await expect(insert).rejects.toMatchObject({
+        code: CHECK_VIOLATION,
+        constraint,
+      });
+      expect(await readCalls()).toHaveLength(0);
+    },
+  );
 
   it("declines a visitor under eighteen without storing anything", async () => {
     // arrange
@@ -785,6 +814,33 @@ async function readCoachTimeReservations(): Promise<CoachTimeReservationRow[]> {
       order by starts_at
     `,
     values: [],
+  });
+}
+
+async function insertCallDirectly(columns: {
+  gender: string;
+  primary_goal: string;
+}): Promise<void> {
+  await suite.postgres.executeSql({
+    sql: `
+      insert into app.assessment_calls
+        (first_name, last_name, visitor_email, date_of_birth, gender, primary_goal,
+         country, starts_at, visitor_time_zone, coach_time_zone, booked_at)
+      values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+    `,
+    values: [
+      "Ana",
+      "Popescu",
+      VISITOR_EMAIL,
+      "1994-03-14",
+      columns.gender,
+      columns.primary_goal,
+      "RO",
+      FIRST_EVENING_START,
+      VISITOR_TIME_ZONE,
+      "Europe/Bucharest",
+      MONDAY_MORNING.toISOString(),
+    ],
   });
 }
 

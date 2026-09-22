@@ -3,8 +3,10 @@ import {
   VISITOR_GENDERS,
   VISITOR_PRIMARY_GOALS,
 } from "@eli-coach-platform/domain/assessment-call";
+import { sql } from "drizzle-orm";
 import {
   char,
+  check,
   date,
   index,
   text,
@@ -39,5 +41,17 @@ export const assessmentCallsTable = appSchema.table(
       table.visitorEmail,
       table.startsAt,
     ),
+    check(
+      "assessment_calls_gender_check",
+      sql`${table.gender} in (${quotedList(VISITOR_GENDERS)})`,
+    ),
+    check(
+      "assessment_calls_primary_goal_check",
+      sql`${table.primaryGoal} in (${quotedList(VISITOR_PRIMARY_GOALS)})`,
+    ),
   ],
 );
+
+function quotedList(values: readonly string[]) {
+  return sql.raw(values.map((value) => `'${value}'`).join(", "));
+}

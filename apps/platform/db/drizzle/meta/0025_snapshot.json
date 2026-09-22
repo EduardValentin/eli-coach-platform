@@ -411,7 +411,16 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "assessment_calls_gender_check": {
+          "name": "assessment_calls_gender_check",
+          "value": "\"app\".\"assessment_calls\".\"gender\" in ('female', 'male', 'prefer_not_to_say')"
+        },
+        "assessment_calls_primary_goal_check": {
+          "name": "assessment_calls_primary_goal_check",
+          "value": "\"app\".\"assessment_calls\".\"primary_goal\" in ('lose_weight', 'build_muscle', 'build_strength', 'maintain_improve_lifestyle')"
+        }
+      },
       "isRLSEnabled": false
     },
     "app.acquisition_requests": {
