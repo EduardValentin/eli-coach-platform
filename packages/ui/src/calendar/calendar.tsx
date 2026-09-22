@@ -27,7 +27,7 @@ const monthNavButtonClassName =
   "absolute -top-0.5 z-10 inline-flex size-8 items-center justify-center rounded-control border border-control-border-soft bg-transparent p-0 font-medium opacity-50 transition-colors hover:bg-surface-quiet hover:opacity-100";
 
 const captionNavButtonClassName =
-  "inline-flex size-8 shrink-0 items-center justify-center rounded-control border border-control-border-soft text-text-primary transition-colors hover:bg-surface-quiet";
+  "inline-flex size-8 shrink-0 items-center justify-center rounded-control border border-control-border-soft p-0 text-text-primary transition-colors hover:bg-surface-quiet";
 
 const calendarClassNames: Partial<ClassNames> = {
   root: "w-full",
