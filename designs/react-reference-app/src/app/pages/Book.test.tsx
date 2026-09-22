@@ -339,8 +339,8 @@ describe('Book', () => {
     // arrange
     const user = renderBook();
     await reachDetails(user);
-    await fillDetails(user);
-    await user.clear(screen.getByLabelText('Email Address'));
+    await user.type(screen.getByLabelText('First name'), 'Jane');
+    await user.type(screen.getByLabelText('Last name'), 'Doe');
     await user.type(screen.getByLabelText('Email Address'), 'not-an-address');
 
     // act
