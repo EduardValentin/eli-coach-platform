@@ -47,6 +47,11 @@ type DateOfBirthFieldProps = {
 // 80px it covers; 96px matches the page's scroll margin under that header.
 const FIXED_HEADER_CLEARANCE_PX = 96;
 
+// Safari's default Tab order visits text fields only and skips buttons unless
+// they carry an explicit tabindex; a control that stands in for a form field
+// must stay reachable like the native field it replaces.
+const FIELD_TAB_INDEX = 0;
+
 export function DateOfBirthField(props: DateOfBirthFieldProps) {
   const { error, id, label, now, onChange, timeZone, value } = props;
   const [open, setOpen] = useState(false);
@@ -72,6 +77,7 @@ export function DateOfBirthField(props: DateOfBirthFieldProps) {
             className={FIELD_BUTTON_CLASS}
             data-invalid={error ? true : undefined}
             id={id}
+            tabIndex={FIELD_TAB_INDEX}
             type="button"
           >
             <span

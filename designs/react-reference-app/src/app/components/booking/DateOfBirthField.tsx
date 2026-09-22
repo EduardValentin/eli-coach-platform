@@ -20,6 +20,11 @@ const FIELD_BUTTON_CLASS =
 // 80px it covers; 96px matches the page's scroll margin under that header.
 const FIXED_HEADER_CLEARANCE_PX = 96;
 
+// Safari's default Tab order visits text fields only and skips buttons unless
+// they carry an explicit tabindex; a control that stands in for a form field
+// must stay reachable like the native field it replaces.
+const FIELD_TAB_INDEX = 0;
+
 export function DateOfBirthField({
   id,
   label,
@@ -56,6 +61,7 @@ export function DateOfBirthField({
           <button
             id={id}
             type="button"
+            tabIndex={FIELD_TAB_INDEX}
             className={FIELD_BUTTON_CLASS}
             data-invalid={Boolean(error) || undefined}
             aria-describedby={error ? errorId : undefined}

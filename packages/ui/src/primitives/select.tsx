@@ -61,6 +61,11 @@ type SelectTriggerProps = React.ComponentPropsWithoutRef<
   typeof RadixSelect.Trigger
 >;
 
+// Safari's default Tab order visits text fields only and skips buttons unless
+// they carry an explicit tabindex; a control that stands in for a form field
+// must stay reachable like the native field it replaces.
+const FIELD_TAB_INDEX = 0;
+
 export const SelectTrigger = React.forwardRef<
   React.ElementRef<typeof RadixSelect.Trigger>,
   SelectTriggerProps
@@ -71,6 +76,7 @@ export const SelectTrigger = React.forwardRef<
       className,
     )}
     ref={ref}
+    tabIndex={FIELD_TAB_INDEX}
     {...props}
   >
     {children}

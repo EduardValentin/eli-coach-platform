@@ -4,6 +4,10 @@ import { cn } from "../lib/cn";
 import { glyphAttributes } from "../lib/glyph";
 
 const GLYPH_SIZE = 16;
+// Safari's default Tab order visits text fields only and skips buttons unless
+// they carry an explicit tabindex; a control that stands in for a form field
+// must stay reachable like the native field it replaces.
+const FIELD_TAB_INDEX = 0;
 
 // A button that has to read as one of the form's fields, so it carries the
 // Input primitive's frame rather than a button variant.
@@ -49,6 +53,7 @@ export const DateFieldTrigger = React.forwardRef<
     <button
       ref={ref}
       className={cn(FIELD_TRIGGER_CLASS_NAME, className)}
+      tabIndex={FIELD_TAB_INDEX}
       type="button"
       {...buttonProps}
     >

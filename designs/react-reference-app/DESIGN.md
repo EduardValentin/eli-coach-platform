@@ -33,7 +33,7 @@ The production source of truth is `packages/ui/src/styles.css` for tokens and, f
 | `Stepper` | Wizard progress with a spoken step count and decorative bars | No variants |
 | `Slider` | Single-thumb range control, labelled on the thumb Radix gives the role to | No variants |
 | `MetricTile` | One figure with its name, an optional hint and a label suffix | `tone`: `neutral`, `brand` |
-| `Select` and its compound parts | Styled Radix selection control | Trigger `size`: `sm`, `md` |
+| `Select` and its compound parts | Styled Radix selection control. Its trigger carries an explicit `tabindex="0"`, as does every button that stands in for a form field (`DateFieldTrigger`, the booking form's date-of-birth trigger): Safari's default Tab order visits text fields only and skips buttons without one | Trigger `size`: `sm`, `md` |
 | `TextArea` | Multi-line form control with the `Input` look | No variants |
 | `FilterChipGroup`, `FilterChip` | Filter chips offering one choice per group, the narrowing filter under a page's segmented view switch; the reference app mirrors it for the coach's journey-step filter, where each chip carries a count of the calls waiting at that step | `tone`: `brand`, `brand-secondary` |
 | `DateField`, `DateRangeField` | Popover date pickers built on `BrandCalendar`, sharing one `DateFieldTrigger`: the 48px field trigger with its muted calendar glyph. `DateField` picks one day, `DateRangeField` an inclusive span that closes the popover on the second pick. `DateRangeField` and `DateFieldTrigger` are in both apps since GEN-197, where production's coach assessment-calls Custom filter composes them from `packages/ui/src/calendar`; `DateField` is reference app only | No variants |

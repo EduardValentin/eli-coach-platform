@@ -42,6 +42,14 @@ describe("the date range field", () => {
     expect(rangeField()).toHaveTextContent("Pick dates");
   });
 
+  it("stays in Safari's default Tab order like the native field it replaces", () => {
+    // arrange, act
+    render(<RangeHarness />);
+
+    // assert
+    expect(rangeField()).toHaveAttribute("tabindex", "0");
+  });
+
   it("names the span a range covers, once with the year they share", () => {
     // arrange, act
     render(
