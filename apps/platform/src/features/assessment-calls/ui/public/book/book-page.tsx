@@ -76,7 +76,7 @@ export default function AssessmentCallBookingRoute() {
 
   return (
     <MotionConfig reducedMotion="user">
-      <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-surface-page px-4 pt-32 pb-12 sm:px-6">
+      <div className="relative flex min-h-screen items-start justify-center overflow-hidden bg-surface-page px-4 pt-32 pb-12 sm:px-6">
         <div className="pointer-events-none absolute top-[-10%] right-[-5%] size-[600px] rounded-full bg-brand-primary/5 blur-[100px]" />
         <div className="pointer-events-none absolute bottom-[-10%] left-[-5%] size-[500px] rounded-full bg-brand-secondary/5 blur-[100px]" />
 

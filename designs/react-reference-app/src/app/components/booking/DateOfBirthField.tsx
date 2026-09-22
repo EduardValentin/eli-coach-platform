@@ -72,7 +72,7 @@ export function DateOfBirthField({
           </button>
         </PopoverTrigger>
         <PopoverContent align="start" className="w-auto p-3">
-          <div className="w-[18rem]">
+          <div className="w-80">
             <BrandCalendar
               mode="single"
               yearRange={{

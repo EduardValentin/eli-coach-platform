@@ -25,6 +25,13 @@ type SlotPickerFrameProps = {
   footer?: ReactNode;
 };
 
+function rendersBelow(element: HTMLElement, reference: HTMLElement): boolean {
+  return (
+    element.getBoundingClientRect().top >=
+    reference.getBoundingClientRect().bottom
+  );
+}
+
 export function SlotPickerFrame({
   calendar,
   timeZoneNote,
@@ -43,7 +50,10 @@ export function SlotPickerFrame({
     revealedDay.current = dayHeading;
     if (!dayHeading) return;
     const id = window.requestAnimationFrame(() => {
-      slotsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const calendar = calendarRef.current;
+      const slots = slotsRef.current;
+      if (!calendar || !slots || !rendersBelow(slots, calendar)) return;
+      slots.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
     return () => window.cancelAnimationFrame(id);
   }, [dayHeading]);
@@ -53,7 +63,7 @@ export function SlotPickerFrame({
   };
 
   return (
-    <div className="flex flex-col lg:flex-row lg:justify-center gap-8">
+    <div className="flex flex-col lg:flex-row lg:justify-start gap-8">
       <div ref={calendarRef} className={`w-full max-w-[340px] mx-auto lg:mx-0 lg:w-[320px] lg:max-w-none shrink-0 ${revealScrollMargin}`}>
         {calendar}
         {timeZoneNote && (

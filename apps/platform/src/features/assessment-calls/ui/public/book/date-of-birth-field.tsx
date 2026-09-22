@@ -86,7 +86,7 @@ export function DateOfBirthField(props: DateOfBirthFieldProps) {
           </button>
         </PopoverTrigger>
         <PopoverContent className="w-auto">
-          <div className="w-[18rem]">
+          <div className="w-80">
             <Calendar
               aria-label="Birth date"
               defaultMonth={

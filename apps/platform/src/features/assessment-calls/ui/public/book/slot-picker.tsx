@@ -37,11 +37,11 @@ export function SlotPicker(props: SlotPickerProps) {
     ? formatMonthFirstDay(selectedDay, timeZone)
     : null;
 
-  useScrollDaySlotsIntoView(dayHeading, slotsRef);
+  useScrollDaySlotsIntoView(dayHeading, { calendarRef, slotsRef });
 
   return (
     <div
-      className="flex flex-col gap-8 lg:flex-row lg:justify-center"
+      className="flex flex-col gap-8 lg:flex-row lg:justify-start"
       data-parity-root="SlotPicker"
     >
       <div
@@ -130,9 +130,21 @@ function TimeSlotButton(props: {
   );
 }
 
+type SlotPickerBoxes = {
+  calendarRef: RefObject<HTMLDivElement | null>;
+  slotsRef: RefObject<HTMLDivElement | null>;
+};
+
+function rendersBelow(element: HTMLElement, reference: HTMLElement): boolean {
+  return (
+    element.getBoundingClientRect().top >=
+    reference.getBoundingClientRect().bottom
+  );
+}
+
 function useScrollDaySlotsIntoView(
   dayHeading: string | null,
-  slotsRef: RefObject<HTMLDivElement | null>,
+  { calendarRef, slotsRef }: SlotPickerBoxes,
 ) {
   const revealedDay = useRef(dayHeading);
 
@@ -148,9 +160,16 @@ function useScrollDaySlotsIntoView(
     }
 
     const frame = window.requestAnimationFrame(() => {
-      slotsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      const calendar = calendarRef.current;
+      const slots = slotsRef.current;
+
+      if (!calendar || !slots || !rendersBelow(slots, calendar)) {
+        return;
+      }
+
+      slots.scrollIntoView({ behavior: "smooth", block: "start" });
     });
 
     return () => window.cancelAnimationFrame(frame);
-  }, [dayHeading, slotsRef]);
+  }, [calendarRef, dayHeading, slotsRef]);
 }

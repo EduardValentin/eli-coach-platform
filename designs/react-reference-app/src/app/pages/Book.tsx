@@ -148,7 +148,7 @@ export function Book() {
       <main aria-label="Book a free call" className="w-full">
         <Navbar theme="dark" />
 
-        <div className="min-h-screen bg-surface-page flex items-center justify-center pt-32 pb-12 px-4 sm:px-6 relative overflow-hidden">
+        <div className="min-h-screen bg-surface-page flex items-start justify-center pt-32 pb-12 px-4 sm:px-6 relative overflow-hidden">
           <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] rounded-full bg-brand/5 blur-[100px] pointer-events-none" />
           <div className="absolute bottom-[-10%] left-[-5%] w-[500px] h-[500px] rounded-full bg-brand-secondary/5 blur-[100px] pointer-events-none" />
 
