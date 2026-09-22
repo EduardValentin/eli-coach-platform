@@ -210,6 +210,7 @@ export function BrandCalendar({
       <DayPicker
         showOutsideDays={showOutsideDays}
         navLayout="around"
+        fixedWeeks
         hideNavigation={Boolean(yearRange)}
         className={cn('w-full', className)}
         classNames={{

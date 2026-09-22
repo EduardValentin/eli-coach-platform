@@ -7,7 +7,7 @@
   --card: #ffffff;
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
+  --popover-foreground: var(--text-primary);
   --primary: #030213;
   --primary-foreground: oklch(1 0 0);
   --secondary: oklch(0.95 0.0058 264.53);
@@ -186,6 +186,7 @@
      bg-surface-base utilities. */
   --text-primary: #121212;
   --text-secondary: #616161;
+  --text-muted: #6a6a7a;
   --surface-base: #ffffff;
   --container-reading: 45rem;
   --container-content: 70rem;
@@ -495,6 +496,7 @@
   --color-border-subtle: var(--border-subtle);
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
   --color-surface-base: var(--surface-base);
   --container-reading: var(--container-reading);
   --radius-panel: var(--radius-panel);
