@@ -8,6 +8,7 @@ import {
   type JourneyOnboarding,
   type JourneyPhone,
   type JourneyPricing,
+  type JourneySex,
   type JourneyStage,
   type MeasurementEntry,
 } from '../domain/journey';
@@ -21,6 +22,7 @@ import {
 import { INVITATION_VALIDITY_DAYS } from './invitationService';
 import type { PrototypeBooking } from './assessmentCallService';
 import { findCountry } from './countries';
+import type { VisitorGender } from './visitorProfile';
 
 export const SEEDED_BUNDLE = 3;
 
@@ -109,28 +111,36 @@ const SEEDED_DETAIL_REQUEST = {
     'Two quick things before I build your plan — tell me a little more about your sleep and about that shoulder.',
 };
 
-function journeyPhoneFromBooking(
-  booking: PrototypeBooking,
+function journeyPhone(
+  phone: string | null,
+  diallingCode: string,
 ): JourneyPhone | undefined {
-  if (!booking.phone) return undefined;
-  const diallingCode = findCountry(booking.country)?.callingCode ?? '';
-  return {
-    diallingCode,
-    number: booking.phone.startsWith(diallingCode)
-      ? booking.phone.slice(diallingCode.length)
-      : booking.phone,
-  };
+  if (!phone) return undefined;
+  const number =
+    diallingCode && phone.startsWith(diallingCode)
+      ? phone.slice(diallingCode.length)
+      : phone;
+  return { diallingCode, number };
+}
+
+// The journey model knows two sexes because it drives the cycle-context
+// onboarding form; a visitor who booked as non-binary or undisclosed is seeded
+// as female and the coach corrects it at onboarding.
+function journeySexFromGender(gender: VisitorGender): JourneySex {
+  return gender === 'male' ? 'male' : 'female';
 }
 
 export function identityFromBooking(booking: PrototypeBooking): JourneyIdentity {
+  const country = findCountry(booking.country);
+
   return {
     firstName: booking.firstName,
     lastName: booking.lastName,
     dateOfBirth: booking.dateOfBirth,
     email: booking.visitorEmail,
-    phone: journeyPhoneFromBooking(booking),
-    sex: booking.gender === 'male' ? 'male' : 'female',
-    country: findCountry(booking.country)?.name ?? booking.country,
+    phone: journeyPhone(booking.phone, country?.callingCode ?? ''),
+    sex: journeySexFromGender(booking.gender),
+    country: country?.name ?? booking.country,
   };
 }
 

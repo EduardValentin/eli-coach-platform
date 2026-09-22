@@ -18,7 +18,9 @@ import { ClientProfileProvider } from '../../context/ClientProfileContext';
 import type { PrototypeBooking } from '../../services/assessmentCallService';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const VISITOR = 'Maria Ionescu';
+const VISITOR_FIRST_NAME = 'Maria';
+const VISITOR_LAST_NAME = 'Ionescu';
+const VISITOR = `${VISITOR_FIRST_NAME} ${VISITOR_LAST_NAME}`;
 const VISITOR_EMAIL = 'maria@example.com';
 const WAIT = { timeout: 4000 };
 
@@ -26,8 +28,8 @@ function bookingAt(id: string, startsAt: Date): PrototypeBooking {
   return {
     id,
     startsAt,
-    firstName: 'Maria',
-    lastName: 'Ionescu',
+    firstName: VISITOR_FIRST_NAME,
+    lastName: VISITOR_LAST_NAME,
     visitorEmail: VISITOR_EMAIL,
     dateOfBirth: '1994-03-14',
     gender: 'female',
