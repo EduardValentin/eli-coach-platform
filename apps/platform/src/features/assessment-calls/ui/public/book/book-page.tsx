@@ -18,7 +18,10 @@ import {
 } from "react-router";
 
 import type { OpenSlotsResponse } from "~/features/assessment-calls/contracts/assessment-calls";
-import { assessmentCallsContext } from "~/features/assessment-calls/server/guards/assessment-calls-context.server";
+import {
+  assessmentCallsContext,
+  assessmentCallsFeatureFlagEvaluationContext,
+} from "~/features/assessment-calls/server/guards/assessment-calls-context.server";
 
 import { useRefreshSlotsFetcher } from "./api-client";
 import { BookingConfirmation } from "./booking-confirmation";
@@ -39,7 +42,11 @@ import { UnavailableSlots } from "./unavailable-slots";
 import "./book-page.css";
 
 export async function loader({ context }: LoaderFunctionArgs) {
-  return context.get(assessmentCallsContext).assessmentCalls.loadBookingPage();
+  return context
+    .get(assessmentCallsContext)
+    .assessmentCalls.loadBookingPage(
+      context.get(assessmentCallsFeatureFlagEvaluationContext),
+    );
 }
 
 export function shouldRevalidate({

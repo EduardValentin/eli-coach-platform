@@ -1,5 +1,6 @@
 import type { CoachAvailabilitySource } from "../coach-availability";
 import { EmailAddress } from "../email-address";
+import type { FeatureFlagEvaluation } from "../feature-flag";
 import type { Clock } from "../shared";
 
 import type { AssessmentCall } from "./assessment-call";
@@ -49,8 +50,9 @@ export class BookAssessmentCallUseCase {
 
   async execute(
     command: BookAssessmentCallCommand,
+    featureFlagEvaluation?: FeatureFlagEvaluation,
   ): Promise<BookAssessmentCallResult> {
-    if (!(await this.options.bookingWindow.isOpen())) {
+    if (!(await this.options.bookingWindow.isOpen(featureFlagEvaluation))) {
       return { status: "closed" };
     }
 

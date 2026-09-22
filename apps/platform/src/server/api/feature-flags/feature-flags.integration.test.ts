@@ -59,8 +59,49 @@ describe.sequential("feature flag API integration", () => {
     expect(response.status).toBe(200);
     expect(body).toEqual({ flags: { WAITLIST_MODE: true } });
   });
+
+  it("overrides a flag for one browser without changing the stored row", async () => {
+    // arrange
+    // act
+    const response = await requestFeatureFlags("?ff.WAITLIST_MODE=false");
+
+    // assert
+    const body = featureFlagSnapshotSchema.parse(await response.json());
+    const [storedFlag] = await suite.postgres.queryRows<{ enabled: boolean }>({
+      sql: "select enabled from app.feature_flags where name = $1",
+      values: ["WAITLIST_MODE"],
+    });
+
+    expect(response.status).toBe(200);
+    expect(body).toEqual({ flags: { WAITLIST_MODE: false } });
+    expect(storedFlag).toEqual({ enabled: true });
+  });
+
+  it("keeps an override for later requests in the browser session", async () => {
+    // arrange
+    const overrideResponse = await requestFeatureFlags(
+      "?ff.WAITLIST_MODE=false",
+    );
+    const cookie = overrideResponse.headers.get("Set-Cookie")?.split(";", 1)[0];
+
+    // act
+    const response = await requestFeatureFlags("", cookie);
+
+    // assert
+    const body = featureFlagSnapshotSchema.parse(await response.json());
+
+    expect(response.status).toBe(200);
+    expect(body).toEqual({ flags: { WAITLIST_MODE: false } });
+  });
 });
 
-async function requestFeatureFlags(): Promise<Response> {
-  return suite.request(new Request(suite.url("/api/feature-flags")));
+async function requestFeatureFlags(
+  search = "",
+  cookie?: string,
+): Promise<Response> {
+  return suite.request(
+    new Request(suite.url(`/api/feature-flags${search}`), {
+      headers: cookie ? { Cookie: cookie } : undefined,
+    }),
+  );
 }

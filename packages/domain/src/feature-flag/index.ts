@@ -4,6 +4,7 @@ export {
   type FeatureFlagSet,
 } from "./feature-flag";
 export { type FeatureFlags } from "./feature-flags";
+export { type FeatureFlagEvaluation } from "./feature-flag-evaluation";
 export {
   GetFeatureFlagsUseCase,
   type FeatureFlagReader,

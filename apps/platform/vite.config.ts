@@ -11,9 +11,16 @@ const rootDirectory = resolve(currentDirectory, "../..");
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, rootDirectory, "");
   const base = env.APP_BASE_PATH ?? "/";
+  const featureFlagOverridesEnabled =
+    mode === "development" || env.FEATURE_FLAG_OVERRIDES_ENABLED === "true";
 
   return {
     base,
+    define: {
+      __FEATURE_FLAG_OVERRIDES_ENABLED__: JSON.stringify(
+        featureFlagOverridesEnabled,
+      ),
+    },
     plugins: [tailwindcss(), reactRouter()],
     resolve: {
       alias: {

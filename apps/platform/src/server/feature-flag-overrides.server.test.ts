@@ -1,0 +1,299 @@
+import { RouterContextProvider } from "react-router";
+import { describe, expect, it, vi } from "vitest";
+
+import type { FeatureFlagReader } from "@eli-coach-platform/domain/feature-flag";
+import { assessmentCallsFeatureFlagEvaluationContext } from "~/features/assessment-calls/server/guards/assessment-calls-context.server";
+import { waitlistFeatureFlagEvaluationContext } from "~/features/waitlist/server/guards/waitlist-context.server";
+import { createFeatureFlagOverrideReader } from "~/server/feature-flags/feature-flag-override-reader.server";
+import {
+  createRuntimeFeatureFlagOverrideMiddleware,
+  featureFlagOverridesAllowed,
+} from "~/server/non-production/feature-flag-overrides-composition.server";
+import { createFeatureFlagOverrideMiddleware } from "~/server/non-production/feature-flag-overrides-http.server";
+import { platformFeatureFlagEvaluationContext } from "~/server/guards/platform-context.server";
+
+describe("feature flag overrides", () => {
+  it.each(["local", "test"])("allows overrides in %s", (environment) => {
+    // arrange
+    // act
+    const allowed = featureFlagOverridesAllowed(environment);
+
+    // assert
+    expect(allowed).toBe(true);
+  });
+
+  it.each(["production", "preview", ""])(
+    "denies overrides in %s",
+    (environment) => {
+      // arrange
+      // act
+      const allowed = featureFlagOverridesAllowed(environment);
+
+      // assert
+      expect(allowed).toBe(false);
+    },
+  );
+
+  it("overlays a request value without changing the database reader", async () => {
+    // arrange
+    const databaseReader: FeatureFlagReader = {
+      execute: vi.fn().mockResolvedValue({ WAITLIST_MODE: true }),
+    };
+    const reader = createFeatureFlagOverrideReader(databaseReader);
+
+    // act
+    const flags = await reader.execute({
+      overrides: { WAITLIST_MODE: false },
+    });
+
+    // assert
+    expect(flags).toEqual({ WAITLIST_MODE: false });
+    expect(databaseReader.execute).toHaveBeenCalledWith();
+  });
+
+  it("does not mask a database read failure", async () => {
+    // arrange
+    const failure = new Error("database unavailable");
+    const databaseReader: FeatureFlagReader = {
+      execute: vi.fn().mockRejectedValue(failure),
+    };
+    const reader = createFeatureFlagOverrideReader(databaseReader);
+
+    // act
+    const result = reader.execute({ overrides: { WAITLIST_MODE: false } });
+
+    // assert
+    await expect(result).rejects.toBe(failure);
+  });
+
+  it("does not parse override input in production", async () => {
+    // arrange
+    const context = new RouterContextProvider();
+    const next = vi.fn().mockResolvedValue(new Response("ok"));
+    const middleware = createRuntimeFeatureFlagOverrideMiddleware({
+      environment: () => ({ APP_BASE_PATH: "/", ENVIRONMENT: "production" }),
+    });
+
+    // act
+    const response = requireResponse(
+      await middleware(
+        {
+          context,
+          params: {},
+          request: new Request("https://eli.example/?ff.UNKNOWN=true"),
+        } as never,
+        next,
+      ),
+    );
+
+    // assert
+    expect(await response.text()).toBe("ok");
+    expect(response.headers.get("Set-Cookie")).toBeNull();
+    expect(next).toHaveBeenCalledOnce();
+  });
+
+  it("applies an override immediately and stores it for the browser session", async () => {
+    // arrange
+    const context = new RouterContextProvider();
+    const next = vi.fn().mockResolvedValue(new Response("ok"));
+    const middleware = createFeatureFlagOverrideMiddleware({
+      appBasePath: "/eli-coach-platform",
+    });
+
+    // act
+    const response = requireResponse(
+      await middleware(
+        {
+          context,
+          params: {},
+          request: new Request(
+            "https://eli.example/eli-coach-platform/?ff.WAITLIST_MODE=false",
+          ),
+        } as never,
+        next,
+      ),
+    );
+
+    // assert
+    expect(context.get(platformFeatureFlagEvaluationContext)).toEqual({
+      overrides: { WAITLIST_MODE: false },
+    });
+    expect(context.get(waitlistFeatureFlagEvaluationContext)).toEqual({
+      overrides: { WAITLIST_MODE: false },
+    });
+    expect(context.get(assessmentCallsFeatureFlagEvaluationContext)).toEqual({
+      overrides: { WAITLIST_MODE: false },
+    });
+    expect(response.headers.get("Set-Cookie")).toContain(
+      "Path=/eli-coach-platform",
+    );
+    expect(response.headers.get("Set-Cookie")).toContain("HttpOnly");
+    expect(response.headers.get("Set-Cookie")).toContain("SameSite=Lax");
+    expect(response.headers.get("Set-Cookie")).toContain("Secure");
+    expect(response.headers.get("Set-Cookie")).not.toContain("Expires=");
+    expect(response.headers.get("Set-Cookie")).not.toContain("Max-Age=");
+    expect(response.headers.get("Cache-Control")).toBe("private, no-store");
+  });
+
+  it("restores a session override when the URL has no override", async () => {
+    // arrange
+    const firstContext = new RouterContextProvider();
+    const middleware = createFeatureFlagOverrideMiddleware({
+      appBasePath: "/",
+    });
+    const firstResponse = requireResponse(
+      await middleware(
+        {
+          context: firstContext,
+          params: {},
+          request: new Request("http://localhost:3000/?ff.WAITLIST_MODE=true"),
+        } as never,
+        () => Promise.resolve(new Response("ok")),
+      ),
+    );
+    const cookie = firstResponse.headers.get("Set-Cookie")?.split(";", 1)[0];
+    const context = new RouterContextProvider();
+
+    // act
+    const response = requireResponse(
+      await middleware(
+        {
+          context,
+          params: {},
+          request: new Request("http://localhost:3000/pricing", {
+            headers: { Cookie: cookie ?? "" },
+          }),
+        } as never,
+        () => Promise.resolve(new Response("ok")),
+      ),
+    );
+
+    // assert
+    expect(context.get(platformFeatureFlagEvaluationContext)).toEqual({
+      overrides: { WAITLIST_MODE: true },
+    });
+    expect(response.headers.get("Cache-Control")).toBe("private, no-store");
+  });
+
+  it("ignores a malformed session cookie", async () => {
+    // arrange
+    const context = new RouterContextProvider();
+    const middleware = createFeatureFlagOverrideMiddleware({
+      appBasePath: "/",
+    });
+
+    // act
+    await middleware(
+      {
+        context,
+        params: {},
+        request: new Request("http://localhost:3000/", {
+          headers: { Cookie: "__eli_feature_flags=%not-json" },
+        }),
+      } as never,
+      () => Promise.resolve(new Response("ok")),
+    );
+
+    // assert
+    expect(context.get(platformFeatureFlagEvaluationContext)).toEqual({
+      overrides: {},
+    });
+  });
+
+  it("returns to the database value when the override is defaulted", async () => {
+    // arrange
+    const context = new RouterContextProvider();
+    const middleware = createFeatureFlagOverrideMiddleware({
+      appBasePath: "/",
+    });
+
+    // act
+    const response = requireResponse(
+      await middleware(
+        {
+          context,
+          params: {},
+          request: new Request(
+            "http://localhost:3000/?ff.WAITLIST_MODE=default",
+            {
+              headers: {
+                Cookie: "__eli_feature_flags=%7B%22WAITLIST_MODE%22%3Atrue%7D",
+              },
+            },
+          ),
+        } as never,
+        () => Promise.resolve(new Response("ok")),
+      ),
+    );
+
+    // assert
+    expect(context.get(platformFeatureFlagEvaluationContext)).toEqual({
+      overrides: {},
+    });
+    expect(response.headers.get("Set-Cookie")).toContain("Max-Age=0");
+  });
+
+  it("rejects an unknown override without running the application", async () => {
+    // arrange
+    const context = new RouterContextProvider();
+    const next = vi.fn().mockResolvedValue(new Response("ok"));
+    const middleware = createFeatureFlagOverrideMiddleware({
+      appBasePath: "/",
+    });
+
+    // act
+    const response = requireResponse(
+      await middleware(
+        {
+          context,
+          params: {},
+          request: new Request("http://localhost:3000/?ff.UNKNOWN=true"),
+        } as never,
+        next,
+      ),
+    );
+
+    // assert
+    expect(response.status).toBe(400);
+    expect(await response.text()).toContain("Unknown feature flag");
+    expect(response.headers.get("Cache-Control")).toBe("private, no-store");
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it("rejects an invalid override value", async () => {
+    // arrange
+    const context = new RouterContextProvider();
+    const next = vi.fn().mockResolvedValue(new Response("ok"));
+    const middleware = createFeatureFlagOverrideMiddleware({
+      appBasePath: "/",
+    });
+
+    // act
+    const response = requireResponse(
+      await middleware(
+        {
+          context,
+          params: {},
+          request: new Request(
+            "http://localhost:3000/?ff.WAITLIST_MODE=enabled",
+          ),
+        } as never,
+        next,
+      ),
+    );
+
+    // assert
+    expect(response.status).toBe(400);
+    expect(await response.text()).toContain("Invalid feature flag override");
+    expect(response.headers.get("Cache-Control")).toBe("private, no-store");
+    expect(next).not.toHaveBeenCalled();
+  });
+});
+
+function requireResponse(response: Response | void): Response {
+  if (!response) {
+    throw new Error("Expected middleware to return a response.");
+  }
+
+  return response;
+}

@@ -12,7 +12,10 @@ import {
   presentWaitlist,
   type WaitlistPresentation,
 } from "~/features/waitlist/ui/shared/waitlist-presentation";
-import { waitlistContext } from "~/features/waitlist/server/guards/waitlist-context.server";
+import {
+  waitlistContext,
+  waitlistFeatureFlagEvaluationContext,
+} from "~/features/waitlist/server/guards/waitlist-context.server";
 
 import { runtimeConfigContext } from "~/server/guards/runtime-config-context.server";
 
@@ -33,7 +36,11 @@ export async function loader(
     botDetection: runtimeConfig.botDetection,
     session: toPublicSessionState(args.context.get(sessionContext)),
     storePath: buildRedirectPath(runtimeConfig.appBasePath, STORE_PATH),
-    waitlist: presentWaitlist(await waitlist.getWaitlist()),
+    waitlist: presentWaitlist(
+      await waitlist.getWaitlist(
+        args.context.get(waitlistFeatureFlagEvaluationContext),
+      ),
+    ),
   };
 }
 

@@ -18,6 +18,7 @@ const bookingToken = turnstileTokenForAction(
 );
 const SAVED_MEETING_LINK = "https://meet.example/eli-assessment-room";
 const BOOKED_START = "2026-10-19T14:00:00.000Z";
+const MONDAY_MORNING = new Date("2026-10-19T08:00:00.000Z");
 
 describe.sequential("assessment calls during the waitlist", () => {
   beforeAll(async () => {
@@ -59,6 +60,64 @@ describe.sequential("assessment calls during the waitlist", () => {
     expect(bookingModeResponse.status).toBe(200);
   });
 
+  it("serves the booking page for a browser override", async () => {
+    // arrange
+    // act
+    const response = await suite.request(
+      new Request(suite.url("/book?ff.WAITLIST_MODE=false")),
+    );
+
+    // assert
+    expect(response.status).toBe(200);
+  });
+
+  it("keeps a browser override for slot refresh and booking", async () => {
+    // arrange
+    await suite.setServerClock(MONDAY_MORNING);
+    const pageResponse = await suite.request(
+      new Request(suite.url("/book?ff.WAITLIST_MODE=false")),
+    );
+    const cookie = pageResponse.headers.get("Set-Cookie")?.split(";", 1)[0];
+
+    if (!cookie) {
+      throw new Error("Expected the override response to set a cookie.");
+    }
+
+    // act
+    const slotsResponse = await suite.request(
+      new Request(suite.url("/api/assessment-calls/slots"), {
+        headers: { Cookie: cookie },
+      }),
+    );
+    const bookingResponse = await suite.request(
+      new Request(suite.url("/api/assessment-calls"), {
+        body: createBookingBody(),
+        headers: {
+          Cookie: cookie,
+          "content-type": "application/x-www-form-urlencoded",
+        },
+        method: "POST",
+      }),
+    );
+
+    // assert
+    const storedCalls = await suite.postgres.countRows({
+      tableName: "app.assessment_calls",
+      values: [],
+      whereClause: "true",
+    });
+
+    expect(slotsResponse.status).toBe(200);
+    expect(slotsResponse.headers.get("Cache-Control")).toBe(
+      "private, no-store",
+    );
+    expect(bookingResponse.status).toBe(201);
+    expect(bookingResponse.headers.get("Cache-Control")).toBe(
+      "private, no-store",
+    );
+    expect(storedCalls).toBe(1);
+  });
+
   it("does not answer the open slots", async () => {
     // arrange, act
     const response = await suite.request(
@@ -71,18 +130,7 @@ describe.sequential("assessment calls during the waitlist", () => {
 
   it("does not take a booking", async () => {
     // arrange
-    const body = new URLSearchParams({
-      "cf-turnstile-response": bookingToken,
-      country: "RO",
-      dateOfBirth: "1994-03-14",
-      email: "ana@example.com",
-      firstName: "Ana",
-      gender: "female",
-      lastName: "Popescu",
-      primaryGoal: "build_strength",
-      startsAt: BOOKED_START,
-      visitorTimeZone: "Europe/London",
-    });
+    const body = createBookingBody();
 
     // act
     const response = await suite.request(
@@ -119,6 +167,21 @@ describe.sequential("assessment calls during the waitlist", () => {
     expect(response.headers.get("Location")).toBe(SAVED_MEETING_LINK);
   });
 });
+
+function createBookingBody(): URLSearchParams {
+  return new URLSearchParams({
+    "cf-turnstile-response": bookingToken,
+    country: "RO",
+    dateOfBirth: "1994-03-14",
+    email: "ana@example.com",
+    firstName: "Ana",
+    gender: "female",
+    lastName: "Popescu",
+    primaryGoal: "build_strength",
+    startsAt: BOOKED_START,
+    visitorTimeZone: "Europe/London",
+  });
+}
 
 async function saveAssessmentCallSettings(options: {
   meetingLink: string;

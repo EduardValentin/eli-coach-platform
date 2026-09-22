@@ -71,6 +71,21 @@ describe.sequential("waitlist API integration", () => {
     expect(document).toContain(AVAILABLE_LABEL);
   });
 
+  it("renders normal mode for a browser override", async () => {
+    // arrange
+    // act
+    const response = await suite.request(
+      new Request(suite.url("/?ff.WAITLIST_MODE=false")),
+    );
+
+    // assert
+    const document = await response.text();
+
+    expect(response.status).toBe(200);
+    expect(document).toContain(NORMAL_MODE_CTA);
+    expect(document).not.toContain(AVAILABLE_LABEL);
+  });
+
   it("observes persisted mode changes without restarting the server", async () => {
     // arrange
     await switchWaitlistModeOff();

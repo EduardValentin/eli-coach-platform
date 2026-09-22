@@ -220,6 +220,21 @@ describe("AssessmentCallBookingWindow", () => {
     expect(open).toBe(true);
   });
 
+  it("evaluates the booking window with the request feature flag context", async () => {
+    // arrange
+    const featureFlags: FeatureFlagReader = {
+      execute: vi.fn().mockResolvedValue({ WAITLIST_MODE: false }),
+    };
+    const bookingWindow = createBookingWindow({ featureFlags });
+    const evaluation = { overrides: { WAITLIST_MODE: false } };
+
+    // act
+    await bookingWindow.isOpen(evaluation);
+
+    // assert
+    expect(featureFlags.execute).toHaveBeenCalledWith(evaluation);
+  });
+
   it("opens when no waitlist mode is persisted", async () => {
     // arrange
     const bookingWindow = createBookingWindow({

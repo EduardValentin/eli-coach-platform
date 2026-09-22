@@ -4,6 +4,7 @@ import type {
   CoachCalendar,
   TimeInterval,
 } from "../coach-availability";
+import type { FeatureFlagEvaluation } from "../feature-flag";
 import type { Clock } from "../shared";
 
 import type { AssessmentCallBookingWindow } from "./assessment-call-booking-window";
@@ -31,8 +32,10 @@ type SlotSources = {
 export class ListOpenSlotsUseCase {
   constructor(private readonly options: ListOpenSlotsUseCaseOptions) {}
 
-  async execute(): Promise<OpenSlotsResult> {
-    if (!(await this.options.bookingWindow.isOpen())) {
+  async execute(
+    featureFlagEvaluation?: FeatureFlagEvaluation,
+  ): Promise<OpenSlotsResult> {
+    if (!(await this.options.bookingWindow.isOpen(featureFlagEvaluation))) {
       return { status: "closed" };
     }
 

@@ -4,7 +4,10 @@ import {
   handleHttpErrorResponse,
   throwMethodNotAllowedResponse,
 } from "@eli-coach-platform/infrastructure/http/server";
-import { assessmentCallsContext } from "~/features/assessment-calls/server/guards/assessment-calls-context.server";
+import {
+  assessmentCallsContext,
+  assessmentCallsFeatureFlagEvaluationContext,
+} from "~/features/assessment-calls/server/guards/assessment-calls-context.server";
 
 export async function action(_args: ActionFunctionArgs) {
   return handleHttpErrorResponse(() => {
@@ -18,6 +21,10 @@ export async function loader({ context, request }: LoaderFunctionArgs) {
       throwMethodNotAllowedResponse({ allowedMethods: ["GET", "HEAD"] });
     }
 
-    return context.get(assessmentCallsContext).assessmentCalls.listSlots();
+    return context
+      .get(assessmentCallsContext)
+      .assessmentCalls.listSlots(
+        context.get(assessmentCallsFeatureFlagEvaluationContext),
+      );
   });
 }

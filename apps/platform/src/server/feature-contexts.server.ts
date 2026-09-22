@@ -9,10 +9,10 @@ import { platformContext } from "~/server/guards/platform-context.server";
 import { runtimeConfigContext } from "~/server/guards/runtime-config-context.server";
 
 export function createFeatureContextMiddleware(
-  getContainer: () => PlatformContainer,
+  getContainer: () => PlatformContainer | Promise<PlatformContainer>,
 ): MiddlewareFunction<Response> {
   return async function provideFeatureContexts({ context }, next) {
-    const container = getContainer();
+    const container = await getContainer();
 
     context.set(accountsContext, container.accounts);
     context.set(assessmentCallsContext, container.assessmentCalls);
