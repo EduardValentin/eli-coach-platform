@@ -7,7 +7,7 @@ import {
   parsePageParam,
   parseSortDirectionParam,
   toSortKey,
-  parseStatusParam,
+  toCallStatus,
   DEFAULT_CALL_STATUS,
   DEFAULT_SORT_KEY,
   DIRECTION_PARAM,
@@ -51,7 +51,7 @@ export function useCallListingParams(): CallListingParams {
   };
 
   const chooseStatus = (value: string) => {
-    const chosen = parseStatusParam(value);
+    const chosen = toCallStatus(value);
 
     replaceSearchParams((params) => {
       params.delete(PAGE_PARAM);
@@ -133,7 +133,7 @@ export function useCallListingParams(): CallListingParams {
       searchParams.get(TO_PARAM),
     ),
     sort,
-    status: parseStatusParam(searchParams.get(STATUS_PARAM)),
+    status: toCallStatus(searchParams.get(STATUS_PARAM)),
     toggleSortDirection,
   };
 }

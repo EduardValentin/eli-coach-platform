@@ -149,7 +149,7 @@ export function countCallsLeftToday(calls: readonly ClassifiedCall[]): number {
     .length;
 }
 
-export function parseStatusParam(raw: string | null): CoachCallStatus {
+export function toCallStatus(raw: string | null): CoachCallStatus {
   if (
     raw === "upcoming" ||
     raw === "today" ||

@@ -18,7 +18,7 @@ import {
   parsePageParam,
   parseSortDirectionParam,
   toSortKey,
-  parseStatusParam,
+  toCallStatus,
   upcomingCalls,
   type CallSort,
   type ListingSelection,
@@ -626,10 +626,10 @@ describe("reading the sort from the URL", () => {
 describe("reading the listing's URL", () => {
   it("falls back to All for anything it does not recognise", () => {
     // arrange, act, assert
-    expect(parseStatusParam(null)).toBe("all");
-    expect(parseStatusParam("nonsense")).toBe("all");
-    expect(parseStatusParam("past")).toBe("past");
-    expect(parseStatusParam("custom")).toBe("custom");
+    expect(toCallStatus(null)).toBe("all");
+    expect(toCallStatus("nonsense")).toBe("all");
+    expect(toCallStatus("past")).toBe("past");
+    expect(toCallStatus("custom")).toBe("custom");
   });
 
   it("falls back to the first page for anything that is not a page number", () => {

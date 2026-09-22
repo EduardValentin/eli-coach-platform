@@ -82,7 +82,7 @@ afterAll(() => {
   server.close();
 });
 
-describe("booking an assessment call: choosing a time", () => {
+describe("booking an assessment call: choosing a time", BOOKING_FLOW, () => {
   it("says why each closed day cannot be chosen", async () => {
     // arrange
     renderBookingPage();
