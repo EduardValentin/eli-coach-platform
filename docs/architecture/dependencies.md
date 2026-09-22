@@ -52,7 +52,7 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 | C14 server | C8 waitlist | 2 | the container calls `composeWaitlistFeature` |
 | C14 server | C9 accounts | 2 | the container calls `composeAccountsFeature` |
 | C14 server | C17 assessment-calls | 2 | the container calls `composeAssessmentCallsFeature`; `feature-contexts.server.ts` sets `assessmentCallsContext` |
-| C17 assessment-calls | C1 domain | 12 | `/assessment-call`, `/coach-availability` (since GEN-192, `contracts/assessment-call-settings.ts` alone, reading `WEEKDAYS`/`Weekday`; `StaticCoachAvailability`, the former sole reader, is deleted), `/feature-flag` (the composition's `FeatureFlagReader` type), `/shared`; the two controllers (`api/booking/assessment-calls-controller.server.ts`, `api/settings/assessment-call-settings-controller.server.ts`), the two `contracts/` modules (`assessment-calls.ts`, `assessment-call-settings.ts`), the composition, the one remaining `data/` adapter (`PostgresAssessmentCallRepository`; `StaticCoachAvailability` and `ConfiguredMeetingRoomLink` are deleted, so the count that left with them is exactly replaced by the new settings controller and contract), the notification factory and adapter, the calendar-invite and the two content builders, and in the browser half `call-overview.tsx` alone, reading `ASSESSMENT_CALL_RULES`. No C17 module imports `/coach-meeting-room`: the composition builds C6's `PostgresCoachMeetingRoom` directly and names no domain type from that slice |
+| C17 assessment-calls | C1 domain | 12 | `/assessment-call`, `/coach-availability` (since GEN-192, `contracts/assessment-call-settings.ts` alone, reading `WEEKDAYS`/`Weekday`), `/feature-flag` (the composition's `FeatureFlagReader` type), `/shared`; the two controllers (`api/booking/assessment-calls-controller.server.ts`, `api/settings/assessment-call-settings-controller.server.ts`), the two `contracts/` modules (`assessment-calls.ts`, `assessment-call-settings.ts`), the composition, the one `data/` adapter (`PostgresAssessmentCallRepository`), the notification factory and adapter, the calendar-invite and the two content builders, and in the browser half `call-overview.tsx` alone, reading `ASSESSMENT_CALL_RULES`. No C17 module imports `/coach-meeting-room`: the composition builds C6's `PostgresCoachMeetingRoom` directly and names no domain type from that slice |
 | C17 assessment-calls | C2 db | 3 | DatabaseClient, appSchema |
 | C17 assessment-calls | C3 config | 4 | `joinBasePath` (the emails and the booking overview's portrait) and `AssessmentCallsConfig` |
 | C17 assessment-calls | C4 content | 2 | the support address on the error state; Eli's portrait path on the booking overview |
@@ -139,7 +139,6 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 | E1571 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls-error-boundary.tsx | packages/ui/src/layout/index.ts | import | yes | no | lateral | added (coach follow-ups) |
 | E1572 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls-error-boundary.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | added (coach follow-ups) |
 | E1573 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls-error-boundary.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | added (coach follow-ups) |
-| E1498 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-page.tsx | apps/platform/src/features/assessment-calls/contracts/call-moment.ts | import | no | no | lateral | removed (GEN-193: the header no longer names the active zone, so the page stops importing `call-moment`) |
 | E1499 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-page.tsx | apps/platform/src/features/assessment-calls/server/guards/assessment-calls-context.server.ts | import | no | no | lateral | present |
 | E1500 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-page.tsx | apps/platform/src/features/assessment-calls/ui/coach/assessment-call-listing.ts | import | no | no | lateral | present |
 | E1574 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-page.tsx | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls-error-boundary.tsx | re-export | no | no | lateral | added (coach follow-ups; the route's `ErrorBoundary` export) |
@@ -189,11 +188,9 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 | E1538 | packages/domain/src/assessment-call/list-assessment-calls-use-case.ts | packages/domain/src/assessment-call/assessment-call.ts | import | no | no | lateral | present |
 | E1539 | packages/domain/src/assessment-call/list-assessment-calls-use-case.ts | packages/domain/src/coach-availability/index.ts | import | no | no | lateral | present |
 | E1540 | packages/ui/src/appointments/appointment-card.tsx | external:react | import | n/a | no | lateral | present |
-| E1541 | packages/ui/src/appointments/appointment-card.tsx | packages/ui/src/appointments/appointment-glyphs.tsx | import | no | no | lateral | retired (GEN-197: lucide-react replaces the inline glyphs) |
 | E1542 | packages/ui/src/appointments/appointment-card.tsx | packages/ui/src/appointments/appointment.ts | import | no | no | lateral | present |
 | E1543 | packages/ui/src/appointments/appointment-card.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
 | E1544 | packages/ui/src/appointments/appointment-card.tsx | packages/ui/src/primitives/avatar.tsx | import | no | no | lateral | present |
-| E1545 | packages/ui/src/appointments/appointment-glyphs.tsx | external:react | import | n/a | no | lateral | retired (GEN-197: lucide-react replaces the inline glyphs) |
 | E1546 | packages/ui/src/appointments/dashboard-appointment-row.tsx | external:react | import | n/a | no | lateral | present |
 | E1547 | packages/ui/src/appointments/dashboard-appointment-row.tsx | packages/ui/src/appointments/appointment.ts | import | no | no | lateral | present |
 | E1548 | packages/ui/src/appointments/index.ts | packages/ui/src/appointments/appointment-card.tsx | import | no | no | lateral | present |
@@ -246,7 +243,6 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 | B268 | AssessmentCallReservations (U1256) | C1 use-cases | U1221 PostgresAssessmentCallRepository (adapters, C17) | U1259, U1261 | `ReserveAssessmentCallCommand` in; `ReservationResult` out, where only `reserved` carries an `AssessmentCall` instance (the new booking) and `slot_taken` and `email_has_upcoming_call` carry nothing about the call that caused them; plus an `AssessmentCall \| null` from `findById` | implementer | dependency-absence keeps C1 from naming the adapter; `feature-api-to-data` forbids the controller or route from importing the repository; the composition hands one instance to both use cases that take it |
 | B269 | CoachAvailabilitySource (U1265) | C1 use-cases | U1332 PostgresCoachAvailability (adapters, C6), reading the `coach_availability` singleton row | U1259, U1260, U1330, U1331 | a `CoachAvailability` instance out of `current()` | implementer | dependency-absence. `current()` is the only read: every consumer takes the coach's window off the instance it returns, per call, and the implementer has no other member; changed (GEN-192): the implementer moves from C17's `StaticCoachAvailability` (removed, U1223) to C6's `PostgresCoachAvailability`, which also implements the new `CoachAvailabilityChanges` (B274), so the coach's own window is a saved record instead of a code literal, and `GetAssessmentCallSettingsUseCase`/`UpdateAssessmentCallSettingsUseCase` join `BookAssessmentCallUseCase`/`ListOpenSlotsUseCase` as consumers |
 | B270 | AssessmentCallNotifications (U1257) | C1 use-cases | U1226 EmailAssessmentCallNotifications (adapters, C17), built by `createAssessmentCallNotifications` | U1259 | `AssessmentCallSnapshot` in (plain data with the derived `endsAt`); a per-recipient `sent \| failed` record out | implementer | dependency-absence |
-| B271 | MeetingRoomLink (U1258) | C1 use-cases | U1224 ConfiguredMeetingRoomLink (adapters, C17) | U1261 | `AssessmentCallSnapshot` in, a URL string out | implementer | retired (GEN-192). Replaced by `CoachMeetingRoomSource` (B275): the join use case no longer takes the whole call snapshot to resolve a link, since the coach's room is call-independent, and the honest cost of that widening — a per-call room would mean editing `ResolveJoinLinkUseCase` again and adding a per-call read — is recorded in `decisions.md`'s Video provider row |
 | B272 | CoachCalendar (U1291) | C1 use-cases | U1293 PostgresCoachCalendar (adapters, C6), reading the rows U1294 writes | U1260 | a `from` instant in; `TimeInterval[]` out, plain data with no kind or appointment | implementer | dependency-absence. An external calendar is a second adapter behind this port, merged in the composition; the write side is not a port but the transaction-scoped `reserveCoachTime` / `releaseCoachTime` pair, because each appointment kind's repository must reserve inside its own transaction (D4) |
 | B274 | CoachAvailabilityChanges (U1324) | C1 use-cases | U1332 PostgresCoachAvailability (adapters, C6) | U1331 | a `CoachAvailability` instance in; nothing out | implementer | dependency-absence. `save` is the coach's only write to her own window; `UpdateAssessmentCallSettingsUseCase` is its one consumer |
 | B275 | CoachMeetingRoomSource (U1326) | C1 use-cases | U1333 PostgresCoachMeetingRoom (adapters, C6) | U1261, U1330 | a `CoachMeetingRoom \| null` out of `current()` | implementer | dependency-absence. `current()` is call-independent: `ResolveJoinLinkUseCase` reads the coach's one saved room regardless of which call is being joined |
@@ -262,7 +258,7 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 | B144 | the six request-context keys | C7, C8, C9, C17 `server/guards/` and C14 `server/guards/` | `createFeatureContextMiddleware` (U517) sets all six from the container | `accountsContext` (accounts routes, the resolution middleware, the portal guards), `storeContext` (store routes and loaders), `waitlistContext` (the waitlist route and the public-site layout loader), `assessmentCallsContext` (the two assessment-call routes and the two booking pages), `platformContext` (`server/api/*` only), `runtimeConfigContext` (the public-site layout loader only) | the feature slice or `{ appBasePath, botDetection }` | the context key | each is created with `createContext<…>()` and constructs nothing (`guards-construct-nothing`); `server-guards-consumers` fences `platformContext` |
 | B151 | PlatformDatabase.client deferred DatabaseClient proxy | C14 (frameworks) | private createDeferredDatabaseClient in U503 | every repository built by a feature composition | DatabaseClient (Drizzle type) | proxy | none |
 | B152 | PlatformContainer (U502) composition output | C14 composition | U500 | `root.server.ts` only | a record of feature slices `{ accounts, assessmentCalls, closeDatabase, platform, store, waitlist }` | root.server.ts | `composition-root` |
-| B180 | Radix wrapper boundary in C5 | C5 frameworks | checkbox, filter-chip-group, sheet, navigation-dialog (avatar, the general dialog and select are deleted) | apps through the concern subpaths | React props | C5 component | none |
+| B180 | Radix wrapper boundary in C5 | C5 frameworks | checkbox, filter-chip-group, sheet, navigation-dialog, select, popover, tabs and the package-private avatar | apps through the concern subpaths | React props | C5 component | none |
 | B181 | SearchParamsWriter (U805) | C5 lib (adapters) | C5 | U237 catalog-view | { searchParams, writeSearchParams } | consumer | none |
 | B182 | packages/ui export map | C5 | seven concern `index.ts` entries plus `styles.css`; no root barrel | apps/platform/src, app.css | components, CSS | consumers | exports, `ui-subpaths`, `ui-primitives-import-only-lib`, `ui-lib-is-the-base` |
 | B260 | DatabaseClient (U1151, Drizzle NodePgDatabase) | C2 adapters | drizzle() | U503; every repository in C7, C8, C9, C17, C6 | Drizzle ORM instance (detail type). `DatabaseTransaction`, the handle a `transaction` callback receives, is published beside it and named by U1294, U1221 and U125 | C2 | exports |
@@ -389,7 +385,6 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E1421 | apps/platform/src/features/accounts/ui/shared/access-denied-page.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
 | E1216 | apps/platform/src/features/assessment-calls/api/booking/assessment-calls-controller.server.ts | apps/platform/src/features/assessment-calls/contracts/assessment-calls.ts | import | no | no | lateral | present; changed (GEN-192, path only): moved from `api/assessment-calls-controller.server.ts` into `api/booking/` |
 | E1218 | apps/platform/src/features/assessment-calls/api/booking/assessment-calls-controller.server.ts | packages/domain/src/assessment-call/index.ts | import | yes | no | lateral | present; changed (GEN-192, path only) |
-| E1220 | apps/platform/src/features/assessment-calls/api/booking/assessment-calls-controller.server.ts | packages/domain/src/shared/index.ts | import | yes | no | lateral | removed (main merge: the contract moved from C1 `/shared` to C6) |
 | E1221 | apps/platform/src/features/assessment-calls/api/booking/assessment-calls-controller.server.ts | packages/infrastructure/src/bot-detection/index.server.ts | import | yes | no | lateral | present; changed (GEN-192, path only) |
 | E1222 | apps/platform/src/features/assessment-calls/api/booking/assessment-calls-controller.server.ts | packages/infrastructure/src/bot-detection/index.ts | import | yes | no | lateral | present; changed (GEN-192, path only) |
 | E1223 | apps/platform/src/features/assessment-calls/api/booking/bookings.ts | apps/platform/src/features/assessment-calls/server/guards/assessment-calls-context.server.ts | import | no | no | lateral | present; changed (GEN-192, path only): moved from `api/bookings.ts` into `api/booking/` |
@@ -398,14 +393,12 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E1226 | apps/platform/src/features/assessment-calls/api/booking/slots.ts | packages/infrastructure/src/http/index.server.ts | import | yes | yes | inward | present; changed (GEN-192, path only) |
 | E1227 | apps/platform/src/features/assessment-calls/contracts/assessment-calls.ts | external:zod | import | n/a | no | lateral | present |
 | E1438 | apps/platform/src/features/assessment-calls/contracts/assessment-calls.ts | packages/domain/src/assessment-call/index.ts | import | yes | no | lateral | present |
-| E1229 | apps/platform/src/features/assessment-calls/data/configured-meeting-room-link.server.ts | packages/domain/src/assessment-call/index.ts | import | yes | no | lateral | removed (GEN-192; the module is deleted) |
 | E1230 | apps/platform/src/features/assessment-calls/data/repository.server.ts | apps/platform/src/features/assessment-calls/data/schema.server.ts | import | no | no | lateral | present |
 | E1439 | apps/platform/src/features/assessment-calls/data/repository.server.ts | external:crypto | import | n/a | yes | outward | present |
 | E1231 | apps/platform/src/features/assessment-calls/data/repository.server.ts | packages/db/src/index.ts | import | yes | no | lateral | present |
 | E1232 | apps/platform/src/features/assessment-calls/data/repository.server.ts | packages/domain/src/assessment-call/index.ts | import | yes | no | lateral | present |
 | E1440 | apps/platform/src/features/assessment-calls/data/repository.server.ts | packages/infrastructure/src/coach-calendar/index.server.ts | import | yes | no | lateral | present |
 | E1233 | apps/platform/src/features/assessment-calls/data/schema.server.ts | packages/db/src/index.ts | import | yes | no | lateral | present |
-| E1234 | apps/platform/src/features/assessment-calls/data/static-coach-availability.server.ts | packages/domain/src/coach-availability/index.ts | import | yes | no | lateral | removed (GEN-192; the module is deleted) |
 | E1235 | apps/platform/src/features/assessment-calls/email/assessment-call-email-actions.server.tsx | apps/platform/src/features/assessment-calls/email/assessment-call-email-styles.server.ts | import | no | no | lateral | present |
 | E1236 | apps/platform/src/features/assessment-calls/email/assessment-call-email-actions.server.tsx | packages/infrastructure/src/email/index.server.ts | import | yes | no | lateral | present |
 | E1237 | apps/platform/src/features/assessment-calls/email/assessment-call-email-styles.server.ts | external:react | import | n/a | no | lateral | present |
@@ -421,7 +414,6 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E1248 | apps/platform/src/features/assessment-calls/email/coach-notification-email.server.ts | packages/domain/src/assessment-call/index.ts | import | yes | no | lateral | present |
 | E1250 | apps/platform/src/features/assessment-calls/email/create-assessment-call-notifications.server.ts | apps/platform/src/features/assessment-calls/email/email-assessment-call-notifications.server.ts | import | no | no | lateral | present |
 | E1251 | apps/platform/src/features/assessment-calls/email/create-assessment-call-notifications.server.ts | packages/domain/src/assessment-call/index.ts | import | yes | no | lateral | present |
-| E1252 | apps/platform/src/features/assessment-calls/email/create-assessment-call-notifications.server.ts | packages/domain/src/shared/index.ts | import | yes | no | lateral | removed (main merge: the contract moved from C1 `/shared` to C6) |
 | E1475 | apps/platform/src/features/assessment-calls/email/create-assessment-call-notifications.server.ts | packages/infrastructure/src/email/index.server.ts | import | yes | no | lateral | added (main merge) |
 | E1253 | apps/platform/src/features/assessment-calls/email/email-assessment-call-notifications.server.ts | apps/platform/src/features/assessment-calls/contracts/paths.ts | import | no | no | lateral | present |
 | E1254 | apps/platform/src/features/assessment-calls/email/email-assessment-call-notifications.server.ts | apps/platform/src/features/assessment-calls/email/calendar-invite.server.ts | import | no | no | lateral | present |
@@ -429,7 +421,6 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E1256 | apps/platform/src/features/assessment-calls/email/email-assessment-call-notifications.server.ts | apps/platform/src/features/assessment-calls/email/visitor-confirmation-email.server.ts | import | no | no | lateral | present |
 | E1257 | apps/platform/src/features/assessment-calls/email/email-assessment-call-notifications.server.ts | packages/config/src/index.ts | import | yes | yes | outward | present |
 | E1258 | apps/platform/src/features/assessment-calls/email/email-assessment-call-notifications.server.ts | packages/domain/src/assessment-call/index.ts | import | yes | no | lateral | present |
-| E1259 | apps/platform/src/features/assessment-calls/email/email-assessment-call-notifications.server.ts | packages/domain/src/shared/index.ts | import | yes | no | lateral | removed (main merge: the contract moved from C1 `/shared` to C6) |
 | E1476 | apps/platform/src/features/assessment-calls/email/email-assessment-call-notifications.server.ts | packages/infrastructure/src/email/index.server.ts | import | yes | no | lateral | added (main merge) |
 | E1260 | apps/platform/src/features/assessment-calls/email/visitor-confirmation-email-template.server.tsx | apps/platform/src/features/assessment-calls/email/assessment-call-email-actions.server.tsx | import | no | no | lateral | present |
 | E1261 | apps/platform/src/features/assessment-calls/email/visitor-confirmation-email-template.server.tsx | apps/platform/src/features/assessment-calls/email/assessment-call-email-styles.server.ts | import | no | no | lateral | present |
@@ -442,9 +433,7 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E1268 | apps/platform/src/features/assessment-calls/email/visitor-confirmation-email.server.ts | packages/domain/src/assessment-call/index.ts | import | yes | no | lateral | present |
 | E1270 | apps/platform/src/features/assessment-calls/routes.ts | apps/platform/src/features/assessment-calls/contracts/paths.ts | import | no | yes | inward | present |
 | E1271 | apps/platform/src/features/assessment-calls/server/assessment-calls-composition.server.ts | apps/platform/src/features/assessment-calls/api/booking/assessment-calls-controller.server.ts | import | no | yes | inward | present; changed (GEN-192, path only) |
-| E1272 | apps/platform/src/features/assessment-calls/server/assessment-calls-composition.server.ts | apps/platform/src/features/assessment-calls/data/configured-meeting-room-link.server.ts | import | no | yes | inward | removed (GEN-192; the module is deleted) |
 | E1273 | apps/platform/src/features/assessment-calls/server/assessment-calls-composition.server.ts | apps/platform/src/features/assessment-calls/data/repository.server.ts | import | no | yes | inward | present |
-| E1274 | apps/platform/src/features/assessment-calls/server/assessment-calls-composition.server.ts | apps/platform/src/features/assessment-calls/data/static-coach-availability.server.ts | import | no | yes | inward | removed (GEN-192; the module is deleted) |
 | E1275 | apps/platform/src/features/assessment-calls/server/assessment-calls-composition.server.ts | apps/platform/src/features/assessment-calls/email/create-assessment-call-notifications.server.ts | import | no | yes | inward | present |
 | E1276 | apps/platform/src/features/assessment-calls/server/assessment-calls-composition.server.ts | packages/config/src/index.ts | import | yes | yes | inward | present |
 | E1277 | apps/platform/src/features/assessment-calls/server/assessment-calls-composition.server.ts | packages/db/src/index.ts | import | yes | yes | inward | present |
@@ -470,7 +459,6 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E1290 | apps/platform/src/features/assessment-calls/ui/public/book/book-page.tsx | apps/platform/src/features/assessment-calls/ui/public/book/booking-details-form.tsx | import | no | no | lateral | present |
 | E1291 | apps/platform/src/features/assessment-calls/ui/public/book/book-page.tsx | apps/platform/src/features/assessment-calls/ui/public/book/booking-flow.ts | import | no | no | lateral | present |
 | E1387 | apps/platform/src/features/assessment-calls/ui/public/book/book-page.tsx | apps/platform/src/features/assessment-calls/ui/public/book/call-overview.tsx | import | no | no | lateral | present |
-| E1292 | apps/platform/src/features/assessment-calls/ui/public/book/book-page.tsx | apps/platform/src/features/assessment-calls/ui/public/book/display-time-zone.ts | import | no | no | lateral | removed (GEN-193: `useDisplayTimeZone` moved to C5 `./lib`) |
 | E1294 | apps/platform/src/features/assessment-calls/ui/public/book/book-page.tsx | apps/platform/src/features/assessment-calls/ui/public/book/slot-grouping.ts | import | no | no | lateral | present |
 | E1388 | apps/platform/src/features/assessment-calls/ui/public/book/book-page.tsx | apps/platform/src/features/assessment-calls/ui/public/book/slot-picker.tsx | import | no | no | lateral | present |
 | E1383 | apps/platform/src/features/assessment-calls/ui/public/book/book-page.tsx | apps/platform/src/features/assessment-calls/ui/public/book/step-heading-focus.ts | import | no | no | lateral | present |
@@ -499,12 +487,9 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E1442 | apps/platform/src/features/assessment-calls/ui/public/book/call-overview.tsx | packages/domain/src/assessment-call/index.ts | import | yes | yes | lateral | present |
 | E1470 | apps/platform/src/features/assessment-calls/ui/public/book/call-overview.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
 | E1471 | apps/platform/src/features/assessment-calls/ui/public/book/call-overview.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
-| E1315 | apps/platform/src/features/assessment-calls/ui/public/book/display-time-zone.ts | external:react | import | n/a | no | lateral | removed (GEN-193: the module moved to `packages/ui/src/lib/use-display-time-zone.ts`) |
 | E1375 | apps/platform/src/features/assessment-calls/ui/public/book/slot-calendar.tsx | apps/platform/src/features/assessment-calls/contracts/call-moment.ts | import | no | no | lateral | present |
-| E1316 | apps/platform/src/features/assessment-calls/ui/public/book/slot-calendar.tsx | apps/platform/src/features/assessment-calls/ui/public/book/slot-grouping.ts | import | no | no | lateral | removed (GEN-193: `dayKeyOf` moved to `ui/shared/day-key.ts`) |
 | E1317 | apps/platform/src/features/assessment-calls/ui/public/book/slot-calendar.tsx | external:react | import | n/a | no | lateral | present |
 | E1318 | apps/platform/src/features/assessment-calls/ui/public/book/slot-calendar.tsx | packages/ui/src/calendar/index.ts | import | yes | no | lateral | present |
-| E1319 | apps/platform/src/features/assessment-calls/ui/public/book/slot-grouping.ts | external:@date-fns/tz | import | n/a | no | lateral | removed (GEN-193: `dayKeyOf` moved to `ui/shared/day-key.ts`) |
 | E1427 | apps/platform/src/features/assessment-calls/ui/public/book/slot-picker.tsx | apps/platform/src/features/assessment-calls/contracts/call-moment.ts | import | no | no | lateral | present |
 | E1401 | apps/platform/src/features/assessment-calls/ui/public/book/slot-picker.tsx | apps/platform/src/features/assessment-calls/ui/public/book/slot-calendar.tsx | import | no | no | lateral | present |
 | E1402 | apps/platform/src/features/assessment-calls/ui/public/book/slot-picker.tsx | external:react | import | n/a | no | lateral | present |
@@ -740,7 +725,6 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E823 | apps/platform/src/features/waitlist/contracts/waitlist.ts | external:zod | import | n/a | no | lateral | present |
 | E241 | apps/platform/src/features/waitlist/data/repository.server.ts | apps/platform/src/features/waitlist/data/schema.server.ts | import | no | no | lateral | present |
 | E1214 | apps/platform/src/features/waitlist/data/repository.server.ts | apps/platform/src/features/waitlist/data/signup-constraint-violations.server.ts | import | no | no | lateral | added (b3eb2653) |
-| E824 | apps/platform/src/features/waitlist/data/repository.server.ts | external:pg | import | n/a | yes | outward | removed (b3eb2653; the repository no longer names `QueryResult`) |
 | E243 | apps/platform/src/features/waitlist/data/repository.server.ts | packages/db/src/index.ts | import | yes | no | lateral | present |
 | E244 | apps/platform/src/features/waitlist/data/repository.server.ts | packages/domain/src/waitlist/index.ts | import | yes | no | lateral | present |
 | E245 | apps/platform/src/features/waitlist/data/schema.server.ts | packages/db/src/index.ts | import | yes | no | lateral | present |
@@ -871,10 +855,8 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E355 | apps/platform/src/server/platform-composition.server.ts | apps/platform/src/server/api/meta/app-metadata-controller.server.ts | import | no | yes | inward | present |
 | E357 | apps/platform/src/server/platform-composition.server.ts | apps/platform/src/server/api/readyz/readyz-controller.server.ts | import | no | yes | inward | present |
 | E358 | apps/platform/src/server/platform-composition.server.ts | packages/config/src/index.ts | import | yes | yes | inward | present |
-| E359 | apps/platform/src/server/platform-composition.server.ts | packages/db/src/index.ts | import | yes | yes | inward | removed (f5d1889c) |
 | E846 | apps/platform/src/server/platform-composition.server.ts | packages/domain/src/feature-flag/index.ts | import | yes | yes | inward | present (type-only since f5d1889c) |
 | E361 | apps/platform/src/server/platform-composition.server.ts | packages/infrastructure/src/bot-detection/index.ts | import | yes | yes | inward | present |
-| E362 | apps/platform/src/server/platform-composition.server.ts | packages/infrastructure/src/feature-flags/index.server.ts | import | yes | yes | inward | removed (f5d1889c) |
 | E363 | apps/platform/src/server/runtime-environment.server.ts | packages/config/src/index.ts | import | yes | no | lateral | present |
 | E364 | apps/platform/src/server/runtime-environment.server.ts | packages/config/src/runtime.ts | import | yes | no | lateral | present |
 | E365 | apps/platform/src/surfaces/client-portal/api/manifest.ts | apps/platform/src/features/accounts/contracts/paths.ts | import | yes | no | lateral | present |
@@ -889,7 +871,6 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E374 | apps/platform/src/surfaces/client-portal/shell/layout.tsx | packages/infrastructure/src/pwa/index.ts | import | yes | yes | inward | present |
 | E375 | apps/platform/src/surfaces/client-portal/shell/layout.tsx | packages/ui/src/layout/index.ts | import | yes | no | lateral | present |
 | E376 | apps/platform/src/surfaces/client-portal/shell/navigation-links.ts | apps/platform/src/features/accounts/contracts/paths.ts | import | yes | no | lateral | present |
-| E377 | apps/platform/src/surfaces/coach-portal/pages/home.tsx | packages/ui/src/layout/index.ts | import | yes | no | lateral | removed (GEN-193: the dashboard renders the greeting and the calls widget, not `AppShell`) |
 | E378 | apps/platform/src/surfaces/coach-portal/routes.ts | apps/platform/src/features/accounts/contracts/paths.ts | import | yes | no | lateral | present |
 | E379 | apps/platform/src/surfaces/coach-portal/shell/layout.server.ts | apps/platform/src/features/accounts/server/guards/require-portal-access.server.ts | import | yes | no | lateral | present |
 | E380 | apps/platform/src/surfaces/coach-portal/shell/layout.tsx | apps/platform/src/surfaces/coach-portal/shell/layout.server.ts | import | no | no | lateral | present |
@@ -1138,7 +1119,6 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E1349 | packages/domain/src/assessment-call/index.ts | packages/domain/src/assessment-call/assessment-call.ts | import | no | yes | inward | present |
 | E1350 | packages/domain/src/assessment-call/index.ts | packages/domain/src/assessment-call/book-assessment-call-use-case.ts | import | no | yes | inward | present |
 | E1351 | packages/domain/src/assessment-call/index.ts | packages/domain/src/assessment-call/list-open-slots-use-case.ts | import | no | yes | inward | present |
-| E1352 | packages/domain/src/assessment-call/index.ts | packages/domain/src/assessment-call/meeting-room-link.ts | import | no | yes | inward | removed (GEN-192; the module is deleted) |
 | E1353 | packages/domain/src/assessment-call/index.ts | packages/domain/src/assessment-call/resolve-join-link-use-case.ts | import | no | yes | inward | present |
 | E1530 | packages/domain/src/assessment-call/index.ts | packages/domain/src/assessment-call/assessment-call-settings.ts | import | no | yes | inward | new (GEN-192) |
 | E1531 | packages/domain/src/assessment-call/index.ts | packages/domain/src/assessment-call/get-assessment-call-settings-use-case.ts | import | no | yes | inward | new (GEN-192) |
@@ -1148,7 +1128,6 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E1447 | packages/domain/src/assessment-call/list-open-slots-use-case.ts | packages/domain/src/assessment-call/assessment-call-rules.ts | import | no | yes | inward | present |
 | E1355 | packages/domain/src/assessment-call/list-open-slots-use-case.ts | packages/domain/src/coach-availability/index.ts | import | no | yes | lateral | present |
 | E1356 | packages/domain/src/assessment-call/list-open-slots-use-case.ts | packages/domain/src/shared/index.ts | import | no | yes | lateral | present |
-| E1357 | packages/domain/src/assessment-call/meeting-room-link.ts | packages/domain/src/assessment-call/assessment-call.ts | import | no | yes | inward | removed (GEN-192; the module is deleted) |
 | E1358 | packages/domain/src/assessment-call/resolve-join-link-use-case.ts | packages/domain/src/assessment-call/assessment-call-reservations.ts | import | no | no | lateral | present |
 | E1533 | packages/domain/src/assessment-call/resolve-join-link-use-case.ts | packages/domain/src/coach-meeting-room/index.ts | import | no | no | lateral | new (GEN-192) |
 | E1534 | packages/domain/src/assessment-call/assessment-call-settings.ts | packages/domain/src/coach-availability/index.ts | import | no | no | lateral | new (GEN-192) |
@@ -1159,7 +1138,6 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E1539 | packages/domain/src/assessment-call/update-assessment-call-settings-use-case.ts | packages/domain/src/coach-availability/index.ts | import | no | no | lateral | new (GEN-192) |
 | E1540 | packages/domain/src/assessment-call/update-assessment-call-settings-use-case.ts | packages/domain/src/coach-meeting-room/index.ts | import | no | no | lateral | new (GEN-192) |
 | E1541 | packages/domain/src/assessment-call/update-assessment-call-settings-use-case.ts | packages/domain/src/assessment-call/assessment-call-settings.ts | import | no | no | lateral | new (GEN-192) |
-| E1359 | packages/domain/src/assessment-call/resolve-join-link-use-case.ts | packages/domain/src/assessment-call/meeting-room-link.ts | import | no | no | lateral | removed (GEN-192; the module is deleted) |
 | E907 | packages/domain/src/cart/index.ts | packages/domain/src/cart/cart.ts | import | no | yes | inward | present |
 | E1360 | packages/domain/src/coach-availability/coach-availability-source.ts | packages/domain/src/coach-availability/coach-availability.ts | import | no | yes | inward | present |
 | E1449 | packages/domain/src/coach-availability/coach-availability.ts | packages/domain/src/coach-availability/slot-policy.ts | import | no | no | lateral | present |
@@ -1350,7 +1328,6 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E679 | packages/infrastructure/src/pwa/pwa-registration.ts | packages/infrastructure/src/pwa/pwa-surfaces.ts | import | no | no | lateral | present |
 | E1365 | packages/ui/src/calendar/calendar.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
 | E1367 | packages/ui/src/calendar/index.ts | packages/ui/src/calendar/calendar.tsx | import | no | no | lateral | present |
-| E988 | packages/ui/src/filters/filter-chip-group.tsx | external:class-variance-authority | import | n/a | no | lateral | removed (GEN-192; the module now builds its class list from `chipVariants`, which owns the `cva` call, instead of naming `class-variance-authority` itself) |
 | E989 | packages/ui/src/filters/filter-chip-group.tsx | external:radix-ui | import | n/a | no | lateral | present |
 | E990 | packages/ui/src/filters/filter-chip-group.tsx | external:react | import | n/a | no | lateral | present |
 | E683 | packages/ui/src/filters/filter-chip-group.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
@@ -1444,10 +1421,10 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E1013 | packages/ui/src/primitives/section-eyebrow.tsx | external:react | import | n/a | no | lateral | present |
 | E1380 | packages/ui/src/primitives/textarea.tsx | external:react | import | n/a | no | lateral | present |
 | E1381 | packages/ui/src/primitives/textarea.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
-| E1582 | packages/ui/src/appointments/appointment-card.tsx | external:lucide-react | import | n/a | no | lateral | new (GEN-197: lucide replaces the inline glyphs) |
-| E1583 | packages/ui/src/calendar/calendar.tsx | external:lucide-react | import | n/a | no | lateral | new (GEN-197: lucide replaces the inline glyphs) |
-| E1584 | packages/ui/src/calendar/date-field-trigger.tsx | external:lucide-react | import | n/a | no | lateral | new (GEN-197: lucide replaces the inline glyphs) |
-| E1585 | packages/ui/src/layout/portal-shell.tsx | external:lucide-react | import | n/a | no | lateral | new (GEN-197: lucide replaces the inline glyphs) |
-| E1586 | packages/ui/src/primitives/checkbox.tsx | external:lucide-react | import | n/a | no | lateral | new (GEN-197: lucide replaces the inline glyphs) |
-| E1587 | packages/ui/src/primitives/pagination.tsx | external:lucide-react | import | n/a | no | lateral | new (GEN-197: lucide replaces the inline glyphs) |
-| E1588 | packages/ui/src/primitives/select.tsx | external:lucide-react | import | n/a | no | lateral | new (GEN-197: lucide replaces the inline glyphs) |
+| E1582 | packages/ui/src/appointments/appointment-card.tsx | external:lucide-react | import | n/a | no | lateral | new (GEN-197) |
+| E1583 | packages/ui/src/calendar/calendar.tsx | external:lucide-react | import | n/a | no | lateral | new (GEN-197) |
+| E1584 | packages/ui/src/calendar/date-field-trigger.tsx | external:lucide-react | import | n/a | no | lateral | new (GEN-197) |
+| E1585 | packages/ui/src/layout/portal-shell.tsx | external:lucide-react | import | n/a | no | lateral | new (GEN-197) |
+| E1586 | packages/ui/src/primitives/checkbox.tsx | external:lucide-react | import | n/a | no | lateral | new (GEN-197) |
+| E1587 | packages/ui/src/primitives/pagination.tsx | external:lucide-react | import | n/a | no | lateral | new (GEN-197) |
+| E1588 | packages/ui/src/primitives/select.tsx | external:lucide-react | import | n/a | no | lateral | new (GEN-197) |
