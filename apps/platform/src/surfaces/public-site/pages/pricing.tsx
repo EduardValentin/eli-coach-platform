@@ -113,14 +113,14 @@ function AssessmentCallCta() {
       </h2>
       <p className="mb-8 text-base leading-6 text-copy-muted">
         To ensure we're the perfect fit, all 1-on-1 coaching begins with a
-        complimentary assessment call. During this call, we'll discuss your
-        goals and lay out a roadmap for your success.
+        complimentary call, where we'll discuss your goals and lay out a roadmap
+        for your success.
       </p>
       <Link
         className={buttonVariants({ elevation: "raised", size: "lg" })}
         to={BOOK_PATH}
       >
-        Book Assessment Call
+        Book a Call
         <ArrowRight aria-hidden="true" size={18} />
       </Link>
     </>

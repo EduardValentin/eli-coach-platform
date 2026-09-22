@@ -176,6 +176,13 @@
       "when": 1789840953960,
       "tag": "0024_create_coach_availability_and_meeting_room",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1790021408061,
+      "tag": "0025_visitor_profile_on_assessment_calls",
+      "breakpoints": true
     }
   ]
 }

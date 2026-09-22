@@ -51,6 +51,17 @@ describe("Select", () => {
     );
   });
 
+  it("stays in Safari's default Tab order like the native field it replaces", () => {
+    // arrange, act
+    renderHourSelect();
+
+    // assert
+    expect(screen.getByRole("combobox", { name: "Start" })).toHaveAttribute(
+      "tabindex",
+      "0",
+    );
+  });
+
   it("opens the listbox of options from the keyboard", async () => {
     // arrange
     const user = userEvent.setup();

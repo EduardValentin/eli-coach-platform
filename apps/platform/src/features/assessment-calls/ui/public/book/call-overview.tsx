@@ -24,6 +24,7 @@ export function CallOverview(props: {
   return (
     <aside
       aria-label="About the call"
+      data-parity-root="CallOverview"
       className="flex w-full flex-col border-b border-stroke-faint bg-surface-quiet/50 p-8 md:w-[35%] md:border-r md:border-b-0 md:p-10"
     >
       <img
@@ -35,7 +36,7 @@ export function CallOverview(props: {
       />
 
       <h1 className="mb-6 text-sm font-semibold tracking-widest text-text-secondary uppercase">
-        Free Assessment Call
+        Free Call
       </h1>
 
       <div className="mb-8 space-y-4 font-medium text-text-secondary">

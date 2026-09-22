@@ -1,9 +1,10 @@
-import { CalendarDays, Clock, Mail } from 'lucide-react';
+import { CalendarDays, Clock, Mail, Phone } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import type { ReactNode } from 'react';
 import { cn } from '../ui/utils';
 import type {
   AppointmentAttendee,
+  AppointmentDetail,
   AppointmentStatus,
   AppointmentTime,
   AppointmentTitleElement,
@@ -69,17 +70,54 @@ function AppointmentTimeRow({ when }: { when: AppointmentTime }) {
   );
 }
 
+const CONTACT_LINK_CLASS =
+  'inline-flex max-w-full items-center gap-1.5 text-xs text-text-secondary hover:text-text-primary hover:underline';
+
 function AttendeeEmailLink({ email }: { email: string }) {
   return (
-    <a
-      href={`mailto:${email}`}
-      className="mt-1.5 inline-flex max-w-full items-center gap-1.5 text-xs text-text-secondary hover:text-text-primary hover:underline"
-    >
+    <a href={`mailto:${email}`} className={CONTACT_LINK_CLASS}>
       <Mail aria-hidden="true" size={13} className="shrink-0" />
       <span className="min-w-0 truncate" title={email}>
         {email}
       </span>
     </a>
+  );
+}
+
+function AttendeePhoneLink({ phone }: { phone: string }) {
+  return (
+    <a href={`tel:${phone}`} className={CONTACT_LINK_CLASS}>
+      <Phone aria-hidden="true" size={13} className="shrink-0" />
+      <span className="min-w-0 truncate">{phone}</span>
+    </a>
+  );
+}
+
+function AttendeeContactRow({ attendee }: { attendee: AppointmentAttendee }) {
+  if (!attendee.email && !attendee.phone) return null;
+
+  return (
+    <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1">
+      {attendee.email && <AttendeeEmailLink email={attendee.email} />}
+      {attendee.phone && <AttendeePhoneLink phone={attendee.phone} />}
+    </div>
+  );
+}
+
+function AppointmentDetails({ details }: { details: readonly AppointmentDetail[] }) {
+  if (details.length === 0) return null;
+
+  return (
+    <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+      {details.map((detail) => (
+        <div key={detail.label}>
+          <dt className="font-semibold uppercase tracking-wider text-text-muted">
+            {detail.label}
+          </dt>
+          <dd className="mt-0.5 text-text-secondary">{detail.value}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }
 
@@ -90,6 +128,7 @@ export function AppointmentCard({
   titleElement: Title = 'p',
   badges,
   supersededWhen,
+  details = [],
   quote,
   footnote,
   actions,
@@ -100,6 +139,7 @@ export function AppointmentCard({
   titleElement?: AppointmentTitleElement;
   badges?: ReactNode;
   supersededWhen?: AppointmentTime;
+  details?: readonly AppointmentDetail[];
   quote?: string;
   footnote?: string;
   actions?: ReactNode;
@@ -131,7 +171,9 @@ export function AppointmentCard({
 
           <AppointmentTimeRow when={when} />
 
-          {attendee.email && <AttendeeEmailLink email={attendee.email} />}
+          <AttendeeContactRow attendee={attendee} />
+
+          <AppointmentDetails details={details} />
 
           {quote && (
             <p className="text-xs text-text-secondary italic mt-2 whitespace-pre-line">

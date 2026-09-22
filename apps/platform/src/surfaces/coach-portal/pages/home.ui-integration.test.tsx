@@ -27,6 +27,8 @@ const COACH_TIME_ZONE = "Europe/Bucharest";
 const KIRITIMATI = "Pacific/Kiritimati";
 const NOW = new Date("2026-09-20T09:00:00.000Z");
 const CALL_MINUTES = 30;
+const DAY_MS = 24 * 60 * 60_000;
+const BOOKED_DAYS_AHEAD = 3;
 
 function call(
   startsAt: string,
@@ -35,37 +37,55 @@ function call(
   const starts = new Date(startsAt);
 
   return {
+    bookedAt: new Date(
+      starts.getTime() - BOOKED_DAYS_AHEAD * DAY_MS,
+    ).toISOString(),
     endsAt: new Date(starts.getTime() + CALL_MINUTES * 60_000).toISOString(),
     id: startsAt,
     joinPath: `/book/${startsAt}/join`,
     startsAt: starts.toISOString(),
     visitorEmail: "ana@example.com",
-    visitorName: "Ana Popescu",
     visitorNotes: null,
+    ...visitorNamed("Ana Popescu"),
+    ...VISITOR_PROFILE,
     ...overrides,
   };
 }
 
+function visitorNamed(fullName: string) {
+  const [firstName, lastName] = fullName.split(" ");
+
+  return { firstName, fullName, lastName };
+}
+
+const VISITOR_PROFILE = {
+  country: "RO",
+  dateOfBirth: "1994-03-14",
+  gender: "female",
+  phone: null,
+  primaryGoal: "build_strength",
+} as const;
+
 const ENDED_TODAY = call("2026-09-20T05:00:00.000Z", {
   id: "ended-today",
-  visitorName: "Carla Marin",
+  ...visitorNamed("Carla Marin"),
 });
 const LATER_TODAY = call("2026-09-20T15:00:00.000Z", { id: "later-today" });
 const ALSO_LATER_TODAY = call("2026-09-20T17:00:00.000Z", {
   id: "also-later-today",
-  visitorName: "Gina Toma",
+  ...visitorNamed("Gina Toma"),
 });
 const TOMORROW = call("2026-09-21T15:00:00.000Z", {
   id: "tomorrow",
-  visitorName: "Dana Radu",
+  ...visitorNamed("Dana Radu"),
 });
 const NEXT_WEEK = call("2026-09-22T15:00:00.000Z", {
   id: "next-week",
-  visitorName: "Elena Vasile",
+  ...visitorNamed("Elena Vasile"),
 });
 const LATER_STILL = call("2026-09-23T15:00:00.000Z", {
   id: "later-still",
-  visitorName: "Flora Anton",
+  ...visitorNamed("Flora Anton"),
 });
 
 beforeEach(() => {

@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { subDays } from 'date-fns';
 import { useEffect } from 'react';
 import { MemoryRouter, useLocation, useNavigationType } from 'react-router';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
@@ -29,8 +30,15 @@ function bookingAt(startsAt: Date, details: Partial<PrototypeBooking> = {}) {
   return {
     id,
     startsAt,
-    visitorName: 'Ana Popescu',
+    bookedAt: subDays(startsAt, 3),
+    firstName: 'Ana',
+    lastName: 'Popescu',
     visitorEmail: 'ana.popescu@example.com',
+    dateOfBirth: '1994-03-14',
+    gender: 'female',
+    primaryGoal: 'build_strength',
+    country: 'RO',
+    phone: null,
     notes: '',
     visitorTimeZone: TIME_ZONE,
     coachTimeZone: 'Europe/Bucharest',
@@ -40,29 +48,37 @@ function bookingAt(startsAt: Date, details: Partial<PrototypeBooking> = {}) {
 }
 
 const LATER_TODAY = bookingAt(localInstant(21, 18), {
-  visitorName: 'Maria Ionescu',
+  firstName: 'Maria',
+  lastName: 'Ionescu',
   visitorEmail: 'maria@example.com',
+  phone: '+40712345678',
+  primaryGoal: 'lose_weight',
   notes: 'Training three times a week.\nShoulder injury last year.',
 });
 const TOMORROW = bookingAt(localInstant(22, 18), {
-  visitorName: 'Ioana Radu',
+  firstName: 'Ioana',
+  lastName: 'Radu',
   visitorEmail: 'ioana@studio.ro',
 });
 const EARLIER_TODAY = bookingAt(localInstant(21, 9), {
-  visitorName: 'Sofia Dinu',
+  firstName: 'Sofia',
+  lastName: 'Dinu',
   visitorEmail: 'sofia@example.com',
 });
 const YESTERDAY = bookingAt(localInstant(20, 18), {
-  visitorName: 'Elena Marin',
+  firstName: 'Elena',
+  lastName: 'Marin',
   visitorEmail: 'elena@example.com',
 });
 
 const TWO_DAYS_AGO = bookingAt(localInstant(19, 18), {
-  visitorName: 'Dana Pop',
+  firstName: 'Dana',
+  lastName: 'Pop',
   visitorEmail: 'dana@example.com',
 });
 const THREE_DAYS_AGO = bookingAt(localInstant(18, 18), {
-  visitorName: 'Carmen Iliescu',
+  firstName: 'Carmen',
+  lastName: 'Iliescu',
   visitorEmail: 'carmen@example.com',
 });
 
@@ -93,7 +109,8 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 const MANY_UPCOMING = Array.from({ length: 23 }, (_, index) =>
   bookingAt(new Date(NOW.getTime() + (index + 1) * DAY_MS), {
-    visitorName: `Visitor ${index + 1}`,
+    firstName: 'Visitor',
+    lastName: `${index + 1}`,
     visitorEmail: `visitor${index + 1}@example.com`,
   }),
 );
@@ -250,6 +267,41 @@ async function chooseWhen(
 }
 
 describe('the assessment calls section', () => {
+  it('shows each visitor\'s age, gender, goal, country and phone on her card', () => {
+    // arrange
+    renderSection();
+
+    // act
+    const [maria, ioana] = callRows();
+
+    // assert
+    expect(within(maria).getAllByRole('term').map((term) => term.textContent)).toEqual([
+      'Age',
+      'Gender',
+      'Goal',
+      'Country',
+    ]);
+    expect(
+      within(maria).getAllByRole('definition').map((definition) => definition.textContent),
+    ).toEqual(['32 (14 Mar 1994)', 'Female', 'Lose weight', 'Romania']);
+    expect(within(maria).getByRole('link', { name: '+40712345678' })).toHaveAttribute(
+      'href',
+      'tel:+40712345678',
+    );
+    expect(within(ioana).queryByRole('link', { name: /^\+/ })).toBeNull();
+  });
+
+  it('finds a visitor by her last name alone', async () => {
+    // arrange
+    const user = renderSection();
+
+    // act
+    await user.type(screen.getByLabelText('Search calls'), 'Radu');
+
+    // assert
+    expect(listedNames()).toEqual(['Ioana Radu']);
+  });
+
   it('opens on every call, the upcoming ones first', () => {
     // arrange
     renderSection();
@@ -522,6 +574,137 @@ describe('the assessment calls section', () => {
 
     // assert
     expect(screen.getByText('No calls yet.')).toBeInTheDocument();
+  });
+});
+
+describe('sorting the assessment call list', () => {
+  function sortSelect(): HTMLElement {
+    return screen.getByRole('combobox', { name: 'Sort by' });
+  }
+
+  async function chooseSort(
+    user: ReturnType<typeof userEvent.setup>,
+    option: string,
+  ) {
+    await user.click(sortSelect());
+    await user.click(await screen.findByRole('option', { name: option }));
+  }
+
+  it('opens sorted by the scheduled date, soonest first', () => {
+    // arrange
+    renderSection();
+
+    // act
+    const toggle = screen.getByRole('button', { name: 'Soonest first' });
+
+    // assert
+    expect(sortSelect()).toHaveTextContent('Scheduled date');
+    expect(toggle).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('orders the calls A to Z by name and writes the sort to the URL', async () => {
+    // arrange
+    const user = renderSection();
+
+    // act
+    await chooseSort(user, 'Name');
+
+    // assert
+    expect(listedNames()).toEqual([
+      'Elena Marin',
+      'Ioana Radu',
+      'Maria Ionescu',
+      'Sofia Dinu',
+    ]);
+    expect(currentLocation()).toBe('?sort=name REPLACE');
+    expect(screen.getByRole('button', { name: 'A to Z' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+  });
+
+  it('reverses the order from the direction toggle and writes it to the URL', async () => {
+    // arrange
+    const user = renderSection({ urlQuery: '?sort=name' });
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'A to Z' }));
+
+    // assert
+    expect(listedNames()).toEqual([
+      'Sofia Dinu',
+      'Maria Ionescu',
+      'Ioana Radu',
+      'Elena Marin',
+    ]);
+    expect(currentLocation()).toBe('?sort=name&dir=desc REPLACE');
+    expect(screen.getByRole('button', { name: 'Z to A' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+  });
+
+  it('lists the newest booking first by the booking date', async () => {
+    // arrange
+    const user = renderSection({
+      bookings: [
+        bookingAt(localInstant(22, 18), {
+          firstName: 'Booked',
+          lastName: 'last week',
+          bookedAt: localInstant(14, 10),
+        }),
+        bookingAt(localInstant(24, 18), {
+          firstName: 'Booked',
+          lastName: 'yesterday',
+          bookedAt: localInstant(20, 10),
+        }),
+      ],
+    });
+
+    // act
+    await chooseSort(user, 'Booking date');
+
+    // assert
+    expect(listedNames()).toEqual(['Booked yesterday', 'Booked last week']);
+    expect(screen.getByRole('button', { name: 'Newest first' })).toBeInTheDocument();
+  });
+
+  it('drops the direction when the coach picks another sort', async () => {
+    // arrange
+    const user = renderSection({ urlQuery: '?sort=name&dir=desc' });
+
+    // act
+    await chooseSort(user, 'Email');
+
+    // assert
+    expect(currentLocation()).toBe('?sort=email REPLACE');
+    expect(screen.getByRole('button', { name: 'A to Z' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+  });
+
+  it('keeps the default sort out of the URL', async () => {
+    // arrange
+    const user = renderSection({ urlQuery: '?sort=email&dir=desc' });
+
+    // act
+    await chooseSort(user, 'Scheduled date');
+
+    // assert
+    expect(currentLocation()).toBe(' REPLACE');
+  });
+
+  it('returns to the first page when the coach changes the sort', async () => {
+    // arrange
+    const user = renderSection({ bookings: MANY_UPCOMING, urlQuery: '?page=3' });
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Soonest first' }));
+
+    // assert
+    expect(currentLocation()).toBe('?dir=asc REPLACE');
+    expect(listedNames()[0]).toBe('Visitor 23');
   });
 });
 

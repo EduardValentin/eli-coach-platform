@@ -12,9 +12,17 @@ const FIRST_SLOT = "2026-03-02T15:00:00.000Z";
 const SECOND_SLOT = "2026-03-02T16:00:00.000Z";
 const FIRST_DAY = "2026-03-02";
 const DETAILS = {
+  country: "RO",
+  dateOfBirth: "1994-03-14",
   email: "jane@example.com",
-  fullName: "Jane Doe",
+  firstName: "Jane",
+  gender: "female",
+  lastName: "Doe",
   notes: "Knee injury last year",
+  phoneCountry: "RO",
+  phoneCountryChosen: false,
+  phoneNumber: "0712 345 678",
+  primaryGoal: "build_strength",
 };
 
 const CONFIRMED: BookAssessmentCallResponse = {
@@ -36,7 +44,19 @@ describe("assessment call booking flow", () => {
     // assert
     expect(state).toEqual({
       booking: null,
-      details: { email: "", fullName: "", notes: "" },
+      details: {
+        country: "",
+        dateOfBirth: "",
+        email: "",
+        firstName: "",
+        gender: "",
+        lastName: "",
+        notes: "",
+        phoneCountry: "",
+        phoneCountryChosen: false,
+        phoneNumber: "",
+        primaryGoal: "",
+      },
       error: null,
       selectedDayKey: null,
       selectedSlot: null,

@@ -82,14 +82,20 @@ export function formatSlotTime(instant: Date, timeZone: string): string {
   }).format(instant);
 }
 
+// Joined from parts because Node and Chromium disagree on the comma after the
+// weekday in en-GB; every runtime must word the day the same way.
 export function formatDayFirstDate(instant: Date, timeZone: string): string {
-  return new Intl.DateTimeFormat('en-GB', {
+  const parts = new Intl.DateTimeFormat('en-GB', {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
     year: 'numeric',
     timeZone,
-  }).format(instant);
+  }).formatToParts(instant);
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((candidate) => candidate.type === type)?.value ?? '';
+
+  return `${part('weekday')}, ${part('day')} ${part('month')} ${part('year')}`;
 }
 
 export function formatCallSchedule(instant: Date, timeZone: string): string {

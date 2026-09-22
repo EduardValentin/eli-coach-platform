@@ -527,3 +527,180 @@ describe("calendar day annotations", () => {
     ).toBeDisabled();
   });
 });
+
+describe("calendar year range", () => {
+  it("jumps the grid to the year chosen in the Year select", async () => {
+    // arrange
+    const user = userEvent.setup();
+    const onSelect = vi.fn();
+
+    render(
+      <Calendar
+        aria-label="Date of birth"
+        defaultMonth={march2026}
+        onSelect={onSelect}
+        timeZone="UTC"
+        yearRange={{ from: 1906, to: 2026 }}
+      />,
+    );
+
+    // act
+    await user.click(screen.getByRole("combobox", { name: "Year" }));
+    await user.click(screen.getByRole("option", { name: "1994" }));
+
+    // assert
+    expect(
+      screen.getByRole("grid", { name: "Date of birth, March 1994" }),
+    ).toBeInTheDocument();
+  });
+
+  it("jumps the grid to the month chosen in the Month select", async () => {
+    // arrange
+    const user = userEvent.setup();
+    const onSelect = vi.fn();
+
+    render(
+      <Calendar
+        aria-label="Date of birth"
+        defaultMonth={march2026}
+        onSelect={onSelect}
+        timeZone="UTC"
+        yearRange={{ from: 1906, to: 2026 }}
+      />,
+    );
+
+    // act
+    await user.click(screen.getByRole("combobox", { name: "Month" }));
+    await user.click(screen.getByRole("option", { name: "September" }));
+
+    // assert
+    expect(
+      screen.getByRole("grid", { name: "Date of birth, September 2026" }),
+    ).toBeInTheDocument();
+  });
+
+  it("replaces the plain month navigation with labelled month buttons", async () => {
+    // arrange
+    const user = userEvent.setup();
+    const onSelect = vi.fn();
+
+    render(
+      <Calendar
+        aria-label="Date of birth"
+        defaultMonth={march2026}
+        onSelect={onSelect}
+        timeZone="UTC"
+        yearRange={{ from: 1906, to: 2026 }}
+      />,
+    );
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Next month" }));
+
+    // assert
+    expect(
+      screen.getByRole("grid", { name: "Date of birth, April 2026" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Go to the Next Month" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("stops at the last month of the range", () => {
+    // arrange
+    const onSelect = vi.fn();
+
+    // act
+    render(
+      <Calendar
+        aria-label="Date of birth"
+        defaultMonth={new Date("2026-12-01T12:00:00Z")}
+        onSelect={onSelect}
+        timeZone="UTC"
+        yearRange={{ from: 1906, to: 2026 }}
+      />,
+    );
+
+    // assert
+    expect(screen.getByRole("button", { name: "Next month" })).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Previous month" }),
+    ).toBeEnabled();
+  });
+
+  it("keeps the plain caption when no year range is given", () => {
+    // arrange
+    const onSelect = vi.fn();
+
+    // act
+    render(
+      <Calendar
+        aria-label="Available days"
+        month={march2026}
+        onSelect={onSelect}
+        timeZone="UTC"
+      />,
+    );
+
+    // assert
+    expect(
+      screen.queryByRole("combobox", { name: "Year" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText("March 2026")).toBeInTheDocument();
+  });
+});
+
+describe("calendar range selection", () => {
+  const march12 = new Date("2026-03-12T12:00:00Z");
+
+  it("fills the ends of the range in the brand colour and tints the days between", () => {
+    // arrange
+    const onSelect = vi.fn();
+
+    // act
+    render(
+      <Calendar
+        aria-label="Date range"
+        mode="range"
+        month={march2026}
+        onSelect={onSelect}
+        selected={{ from: march10, to: march12 }}
+        timeZone="UTC"
+      />,
+    );
+
+    // assert
+    const start = screen.getByRole("button", { name: /March 10th, 2026/ });
+    const middle = screen.getByRole("button", { name: /March 11th, 2026/ });
+    expect(start).toHaveClass("bg-brand-primary", "text-text-inverted");
+    expect(middle).toHaveClass("bg-brand-primary-soft", "text-brand-primary");
+    expect(middle).not.toHaveClass("bg-brand-primary", "text-text-inverted");
+  });
+
+  it("extends a one-day range to the day the visitor picks next", async () => {
+    // arrange
+    const user = userEvent.setup();
+    const onSelect = vi.fn();
+
+    render(
+      <Calendar
+        aria-label="Date range"
+        mode="range"
+        month={march2026}
+        onSelect={onSelect}
+        selected={{ from: march10, to: march10 }}
+        timeZone="UTC"
+      />,
+    );
+
+    // act
+    await user.click(screen.getByRole("button", { name: /March 12th, 2026/ }));
+
+    // assert
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(onSelect.mock.calls[0][0]).toEqual({
+      from: march10,
+      to: new Date("2026-03-12T00:00:00Z"),
+    });
+  });
+});

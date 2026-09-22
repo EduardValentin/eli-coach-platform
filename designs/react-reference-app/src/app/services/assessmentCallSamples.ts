@@ -1,9 +1,12 @@
+import { subDays } from 'date-fns';
 import {
   DEFAULT_COACH_AVAILABILITY,
   type PrototypeBooking,
 } from './assessmentCallService';
 
 const HOUR_MS = 60 * 60 * 1000;
+
+const USUAL_BOOKING_LEAD_DAYS = 3;
 
 function hoursFromNow(now: Date, hours: number): Date {
   return new Date(now.getTime() + hours * HOUR_MS);
@@ -16,16 +19,38 @@ function atLocalHour(now: Date, dayOffset: number, hour: number): Date {
   return day;
 }
 
+type SampleVisitor = {
+  name: string;
+  email: string;
+  notes: string;
+  dateOfBirth?: string;
+  gender?: PrototypeBooking['gender'];
+  primaryGoal?: PrototypeBooking['primaryGoal'];
+  country?: string;
+  phone?: string;
+};
+
+type SampleCall = SampleVisitor & { bookedDaysAhead?: number };
+
 function sampleBooking(
   id: string,
   startsAt: Date,
-  visitor: { name: string; email: string; notes: string },
+  call: SampleCall,
 ): PrototypeBooking {
+  const { bookedDaysAhead = USUAL_BOOKING_LEAD_DAYS, ...visitor } = call;
+  const [firstName, ...rest] = visitor.name.split(' ');
   return {
     id,
     startsAt,
-    visitorName: visitor.name,
+    bookedAt: subDays(startsAt, bookedDaysAhead),
+    firstName,
+    lastName: rest.join(' '),
     visitorEmail: visitor.email,
+    dateOfBirth: visitor.dateOfBirth ?? '1993-05-14',
+    gender: visitor.gender ?? 'female',
+    primaryGoal: visitor.primaryGoal ?? 'build_strength',
+    country: visitor.country ?? 'RO',
+    phone: visitor.phone ?? null,
     notes: visitor.notes,
     visitorTimeZone: DEFAULT_COACH_AVAILABILITY.timeZone,
     coachTimeZone: DEFAULT_COACH_AVAILABILITY.timeZone,
@@ -40,6 +65,9 @@ export function sampleImminentBookings(now: Date): PrototypeBooking[] {
       email: 'maria.ionescu@example.com',
       notes:
         'Training three times a week at home.\nComing back from a shoulder injury, so upper body needs care.',
+      dateOfBirth: '1991-08-23',
+      primaryGoal: 'lose_weight',
+      phone: '+40712345678',
     }),
   ];
 }
@@ -62,11 +90,17 @@ export function sampleDashboardBookings(now: Date): PrototypeBooking[] {
       name: 'Ioana Radu',
       email: 'ioana.radu@example.com',
       notes: '',
+      bookedDaysAhead: 1,
     }),
     sampleBooking('ac-sample-in-three-days', atLocalHour(now, 3, 11), {
       name: 'Andreea Pop',
       email: 'andreea.pop@example.com',
       notes: 'Wants to start before the holidays.',
+      dateOfBirth: '1998-11-02',
+      primaryGoal: 'build_muscle',
+      country: 'GB',
+      phone: '+447700900123',
+      bookedDaysAhead: 10,
     }),
     sampleBooking('ac-sample-three-hours-ago', hoursFromNow(now, -3), {
       name: 'Sofia Dinu',
@@ -131,6 +165,7 @@ export function sampleManyBookings(now: Date): PrototypeBooking[] {
         name,
         email: `${firstName}.${index + 1}@example.com`,
         notes: index % 3 === 0 ? 'Booked through the public site.' : '',
+        bookedDaysAhead: 1 + (index % 5),
       },
     );
   });

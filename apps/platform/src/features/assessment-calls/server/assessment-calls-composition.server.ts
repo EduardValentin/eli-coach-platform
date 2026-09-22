@@ -81,6 +81,7 @@ export function composeAssessmentCallsFeature(
         }),
         reservations,
       }),
+      clock: handles.clock,
       listOpenSlots: new ListOpenSlotsUseCase({
         availability,
         bookingWindow,

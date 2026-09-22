@@ -7,7 +7,7 @@ import {
   formatSlotTime,
   formatDayFirstDate,
   formatZonedDate,
-  } from '../utils/dateFormatters';
+} from '../utils/dateFormatters';
 
 type AssessmentSlotPickerProps = {
   slots: Date[];

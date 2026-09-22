@@ -17,6 +17,7 @@ export {
   PaginationNext,
   PaginationPrevious,
 } from "./pagination";
+export { Popover, PopoverContent, PopoverTrigger } from "./popover";
 export { SectionEyebrow } from "./section-eyebrow";
 export {
   Select,

@@ -22,7 +22,7 @@ describe("AssessmentCallJoinRoute", () => {
     );
 
     // assert
-    const main = screen.getByRole("main", { name: "Assessment call" });
+    const main = screen.getByRole("main", { name: "Your call" });
 
     expect(
       screen.getByRole("heading", { name: "Your call link isn't ready yet" }),

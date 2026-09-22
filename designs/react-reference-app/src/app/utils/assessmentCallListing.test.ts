@@ -1,26 +1,34 @@
+import { subDays } from 'date-fns';
 import { describe, expect, it } from 'vitest';
 import {
   classifyCalls,
   countCallsLeftToday,
   countsByJourneyStep,
+  defaultDirectionFor,
   emptyListingMessage,
   filterCalls,
   isChosenRange,
   NO_DATE_RANGE,
-  orderCallsFor,
+  orderCallsBy,
   pageOfCalls,
   paginationSteps,
   parseDateRange,
   parseJourneyStep,
   parsePage,
+  parseSortDirection,
+  parseSortKey,
   upcomingCalls,
   orderCalls,
   parseStatus,
   withJourneyStages,
+  type CallSort,
   type ListedCall,
   type ListingSelection,
 } from './assessmentCallListing';
-import type { PrototypeBooking } from '../services/assessmentCallService';
+import {
+  visitorFullName,
+  type PrototypeBooking,
+} from '../services/assessmentCallService';
 import type { JourneyStage } from '../domain/journey';
 
 const BUCHAREST = 'Europe/Bucharest';
@@ -32,8 +40,15 @@ function bookingAt(
   return {
     id: `ac-${startsAt}`,
     startsAt: new Date(startsAt),
-    visitorName: 'Ana Popescu',
+    bookedAt: subDays(new Date(startsAt), 3),
+    firstName: 'Ana',
+    lastName: 'Popescu',
     visitorEmail: 'ana.popescu@example.com',
+    dateOfBirth: '1994-03-14',
+    gender: 'female',
+    primaryGoal: 'build_strength',
+    country: 'RO',
+    phone: null,
     notes: '',
     visitorTimeZone: BUCHAREST,
     coachTimeZone: BUCHAREST,
@@ -43,7 +58,7 @@ function bookingAt(
 }
 
 function namesOf(calls: ReturnType<typeof classifyCalls>): string[] {
-  return calls.map((call) => call.booking.visitorName);
+  return calls.map((call) => visitorFullName(call.booking));
 }
 
 function listed(
@@ -152,10 +167,10 @@ describe('filtering assessment calls', () => {
   const now = new Date('2026-09-21T09:00:00.000Z');
   const calls = classifyCalls(
     [
-      bookingAt('2026-09-21T15:00:00.000Z', { visitorName: 'Maria Ionescu' }),
-      bookingAt('2026-09-23T15:00:00.000Z', { visitorName: 'Ioana Radu' }),
-      bookingAt('2026-09-20T15:00:00.000Z', { visitorName: 'Elena Marin' }),
-      bookingAt('2026-09-21T06:00:00.000Z', { visitorName: 'Sofia Dinu' }),
+      bookingAt('2026-09-21T15:00:00.000Z', { firstName: 'Maria', lastName: 'Ionescu' }),
+      bookingAt('2026-09-23T15:00:00.000Z', { firstName: 'Ioana', lastName: 'Radu' }),
+      bookingAt('2026-09-20T15:00:00.000Z', { firstName: 'Elena', lastName: 'Marin' }),
+      bookingAt('2026-09-21T06:00:00.000Z', { firstName: 'Sofia', lastName: 'Dinu' }),
     ],
     { now, timeZone: BUCHAREST },
   );
@@ -220,10 +235,10 @@ describe('filtering assessment calls', () => {
     const withOwnEmail = classifyCalls(
       [
         bookingAt('2026-09-23T15:00:00.000Z', {
-          visitorName: 'Ioana Radu',
+          firstName: 'Ioana', lastName: 'Radu',
           visitorEmail: 'ioana@studio.ro',
         }),
-        bookingAt('2026-09-24T15:00:00.000Z', { visitorName: 'Elena Marin' }),
+        bookingAt('2026-09-24T15:00:00.000Z', { firstName: 'Elena', lastName: 'Marin' }),
       ],
       { now, timeZone: BUCHAREST },
     );
@@ -237,6 +252,28 @@ describe('filtering assessment calls', () => {
     // assert
     expect(namesOf(filtered)).toEqual(['Ioana Radu']);
   });
+
+  it('matches the last name on its own', () => {
+    // arrange
+    const query = 'marin';
+
+    // act
+    const filtered = filterCalls(listed(calls), selecting({ query }));
+
+    // assert
+    expect(namesOf(filtered)).toEqual(['Elena Marin']);
+  });
+
+  it('matches the full name as the card shows it', () => {
+    // arrange
+    const query = 'elena marin';
+
+    // act
+    const filtered = filterCalls(listed(calls), selecting({ query }));
+
+    // assert
+    expect(namesOf(filtered)).toEqual(['Elena Marin']);
+  });
 });
 
 describe('ordering assessment calls', () => {
@@ -245,10 +282,10 @@ describe('ordering assessment calls', () => {
     const now = new Date('2026-09-21T09:00:00.000Z');
     const calls = classifyCalls(
       [
-        bookingAt('2026-09-19T15:00:00.000Z', { visitorName: 'Older past' }),
-        bookingAt('2026-09-24T15:00:00.000Z', { visitorName: 'Later upcoming' }),
-        bookingAt('2026-09-20T15:00:00.000Z', { visitorName: 'Recent past' }),
-        bookingAt('2026-09-22T15:00:00.000Z', { visitorName: 'Next upcoming' }),
+        bookingAt('2026-09-19T15:00:00.000Z', { firstName: 'Older', lastName: 'past' }),
+        bookingAt('2026-09-24T15:00:00.000Z', { firstName: 'Later', lastName: 'upcoming' }),
+        bookingAt('2026-09-20T15:00:00.000Z', { firstName: 'Recent', lastName: 'past' }),
+        bookingAt('2026-09-22T15:00:00.000Z', { firstName: 'Next', lastName: 'upcoming' }),
       ],
       { now, timeZone: BUCHAREST },
     );
@@ -266,13 +303,251 @@ describe('ordering assessment calls', () => {
   });
 });
 
+describe('sorting assessment calls by a chosen key', () => {
+  const now = new Date('2026-09-21T09:00:00.000Z');
+  const calls = listed(
+    classifyCalls(
+      [
+        bookingAt('2026-09-19T15:00:00.000Z', {
+          firstName: 'Older', lastName: 'past',
+          visitorEmail: 'zoe@example.com',
+          bookedAt: new Date('2026-09-01T10:00:00.000Z'),
+        }),
+        bookingAt('2026-09-24T15:00:00.000Z', {
+          firstName: 'Later', lastName: 'upcoming',
+          visitorEmail: 'Mara@example.com',
+          bookedAt: new Date('2026-09-20T10:00:00.000Z'),
+        }),
+        bookingAt('2026-09-20T15:00:00.000Z', {
+          firstName: 'Recent', lastName: 'past',
+          visitorEmail: 'anca@example.com',
+          bookedAt: new Date('2026-09-10T10:00:00.000Z'),
+        }),
+        bookingAt('2026-09-22T15:00:00.000Z', {
+          firstName: 'Next', lastName: 'upcoming',
+          visitorEmail: 'bianca@example.com',
+          bookedAt: new Date('2026-09-15T10:00:00.000Z'),
+        }),
+      ],
+      { now, timeZone: BUCHAREST },
+    ),
+  );
+
+  function sorted(sort: CallSort, status: 'all' | 'custom' = 'all'): string[] {
+    return namesOf(orderCallsBy(calls, sort, status));
+  }
+
+  it('keeps the listing order for the scheduled date by default', () => {
+    // arrange
+    const sort: CallSort = { key: 'scheduled', direction: 'desc' };
+
+    // act
+    const ordered = sorted(sort);
+
+    // assert
+    expect(ordered).toEqual([
+      'Next upcoming',
+      'Later upcoming',
+      'Recent past',
+      'Older past',
+    ]);
+  });
+
+  it('reverses the whole listing order for the scheduled date', () => {
+    // arrange
+    const sort: CallSort = { key: 'scheduled', direction: 'asc' };
+
+    // act
+    const ordered = sorted(sort);
+
+    // assert
+    expect(ordered).toEqual([
+      'Older past',
+      'Recent past',
+      'Later upcoming',
+      'Next upcoming',
+    ]);
+  });
+
+  it('lists a custom range soonest first across the present', () => {
+    // arrange
+    const sort: CallSort = { key: 'scheduled', direction: 'desc' };
+
+    // act
+    const ordered = sorted(sort, 'custom');
+
+    // assert
+    expect(ordered).toEqual([
+      'Older past',
+      'Recent past',
+      'Next upcoming',
+      'Later upcoming',
+    ]);
+  });
+
+  it('lists a reversed custom range latest first', () => {
+    // arrange
+    const sort: CallSort = { key: 'scheduled', direction: 'asc' };
+
+    // act
+    const ordered = sorted(sort, 'custom');
+
+    // assert
+    expect(ordered).toEqual([
+      'Later upcoming',
+      'Next upcoming',
+      'Recent past',
+      'Older past',
+    ]);
+  });
+
+  it('puts the newest booking first by the booking date', () => {
+    // arrange
+    const sort: CallSort = { key: 'booked', direction: 'desc' };
+
+    // act
+    const ordered = sorted(sort);
+
+    // assert
+    expect(ordered).toEqual([
+      'Later upcoming',
+      'Next upcoming',
+      'Recent past',
+      'Older past',
+    ]);
+  });
+
+  it('puts the oldest booking first when the booking date is reversed', () => {
+    // arrange
+    const sort: CallSort = { key: 'booked', direction: 'asc' };
+
+    // act
+    const ordered = sorted(sort);
+
+    // assert
+    expect(ordered).toEqual([
+      'Older past',
+      'Recent past',
+      'Next upcoming',
+      'Later upcoming',
+    ]);
+  });
+
+  it('orders names A to Z regardless of case', () => {
+    // arrange
+    const sort: CallSort = { key: 'name', direction: 'asc' };
+
+    // act
+    const ordered = sorted(sort);
+
+    // assert
+    expect(ordered).toEqual([
+      'Later upcoming',
+      'Next upcoming',
+      'Older past',
+      'Recent past',
+    ]);
+  });
+
+  it('orders names Z to A when reversed', () => {
+    // arrange
+    const sort: CallSort = { key: 'name', direction: 'desc' };
+
+    // act
+    const ordered = sorted(sort);
+
+    // assert
+    expect(ordered).toEqual([
+      'Recent past',
+      'Older past',
+      'Next upcoming',
+      'Later upcoming',
+    ]);
+  });
+
+  it('orders email addresses A to Z regardless of case', () => {
+    // arrange
+    const sort: CallSort = { key: 'email', direction: 'asc' };
+
+    // act
+    const ordered = sorted(sort);
+
+    // assert
+    expect(ordered).toEqual([
+      'Recent past',
+      'Next upcoming',
+      'Later upcoming',
+      'Older past',
+    ]);
+  });
+
+  it('orders email addresses Z to A when reversed', () => {
+    // arrange
+    const sort: CallSort = { key: 'email', direction: 'desc' };
+
+    // act
+    const ordered = sorted(sort);
+
+    // assert
+    expect(ordered).toEqual([
+      'Older past',
+      'Later upcoming',
+      'Next upcoming',
+      'Recent past',
+    ]);
+  });
+});
+
+describe('reading the sort from the URL', () => {
+  it('accepts the four sort keys and falls back to the scheduled date', () => {
+    // arrange
+    const raw = ['scheduled', 'booked', 'name', 'email', 'phone', null];
+
+    // act
+    const parsed = raw.map(parseSortKey);
+
+    // assert
+    expect(parsed).toEqual([
+      'scheduled',
+      'booked',
+      'name',
+      'email',
+      'scheduled',
+      'scheduled',
+    ]);
+  });
+
+  it('starts dates newest first and text A to Z', () => {
+    // arrange
+    const keys = ['scheduled', 'booked', 'name', 'email'] as const;
+
+    // act
+    const directions = keys.map(defaultDirectionFor);
+
+    // assert
+    expect(directions).toEqual(['desc', 'desc', 'asc', 'asc']);
+  });
+
+  it('accepts an explicit direction and falls back to the key\'s own', () => {
+    // act
+    const explicit = parseSortDirection('asc', 'booked');
+    const missingForDate = parseSortDirection(null, 'booked');
+    const unknownForText = parseSortDirection('sideways', 'name');
+
+    // assert
+    expect(explicit).toBe('asc');
+    expect(missingForDate).toBe('desc');
+    expect(unknownForText).toBe('asc');
+  });
+});
+
 describe('choosing the calls still to come', () => {
   const now = new Date('2026-09-21T09:00:00.000Z');
 
   function classify(starts: string[]) {
     return classifyCalls(
       starts.map((iso, index) =>
-        bookingAt(iso, { visitorName: `Visitor ${index + 1}` }),
+        bookingAt(iso, { firstName: 'Visitor', lastName: `${index + 1}` }),
       ),
       { now, timeZone: BUCHAREST },
     );
@@ -346,7 +621,7 @@ describe('choosing the calls still to come', () => {
   it('keeps a call that is under way among the ones still to come', () => {
     // arrange
     const underWay = classifyCalls(
-      [bookingAt('2026-09-21T08:50:00.000Z', { visitorName: 'Under way' })],
+      [bookingAt('2026-09-21T08:50:00.000Z', { firstName: 'Under', lastName: 'way' })],
       { now, timeZone: BUCHAREST },
     );
 
@@ -445,7 +720,7 @@ describe('paging the assessment call list', () => {
     return classifyCalls(
       Array.from({ length: count }, (_, index) =>
         bookingAt(new Date(FIRST_START + index * DAY_MS).toISOString(), {
-          visitorName: `Visitor ${index + 1}`,
+          firstName: 'Visitor', lastName: `${index + 1}`,
         }),
       ),
       { now, timeZone: BUCHAREST },
@@ -557,12 +832,12 @@ describe('filtering assessment calls by a date range', () => {
   const now = new Date('2026-09-21T09:00:00.000Z');
   const calls = classifyCalls(
     [
-      bookingAt('2026-09-10T15:00:00.000Z', { visitorName: 'Before' }),
-      bookingAt('2026-09-11T21:00:00.000Z', { visitorName: 'Midnight start' }),
-      bookingAt('2026-09-12T05:00:00.000Z', { visitorName: 'First day' }),
-      bookingAt('2026-09-16T15:00:00.000Z', { visitorName: 'Middle' }),
-      bookingAt('2026-09-20T20:00:00.000Z', { visitorName: 'Last day' }),
-      bookingAt('2026-09-21T15:00:00.000Z', { visitorName: 'After' }),
+      bookingAt('2026-09-10T15:00:00.000Z', { firstName: 'Before', lastName: 'range' }),
+      bookingAt('2026-09-11T21:00:00.000Z', { firstName: 'Midnight', lastName: 'start' }),
+      bookingAt('2026-09-12T05:00:00.000Z', { firstName: 'First', lastName: 'day' }),
+      bookingAt('2026-09-16T15:00:00.000Z', { firstName: 'Middle', lastName: 'day' }),
+      bookingAt('2026-09-20T20:00:00.000Z', { firstName: 'Last', lastName: 'day' }),
+      bookingAt('2026-09-21T15:00:00.000Z', { firstName: 'After', lastName: 'range' }),
     ],
     { now, timeZone: BUCHAREST },
   );
@@ -581,7 +856,7 @@ describe('filtering assessment calls by a date range', () => {
     expect(namesOf(filtered)).toEqual([
       'Midnight start',
       'First day',
-      'Middle',
+      'Middle day',
       'Last day',
     ]);
   });
@@ -625,35 +900,16 @@ describe('filtering assessment calls by a date range', () => {
     expect(filtered).toHaveLength(6);
   });
 
-  it('lists a custom range soonest first across the present', () => {
-    // arrange
-    const range = { from: '2026-09-12', to: '2026-09-21' };
-
-    // act
-    const ordered = orderCallsFor(
-      filterCalls(listed(calls), selecting({ status: 'custom', range })),
-      'custom',
-    );
-
-    // assert
-    expect(namesOf(ordered)).toEqual([
-      'Midnight start',
-      'First day',
-      'Middle',
-      'Last day',
-      'After',
-    ]);
-  });
 });
 
 describe('filtering assessment calls by journey step', () => {
   const now = new Date('2026-09-21T09:00:00.000Z');
   const bookings = [
-    bookingAt('2026-09-18T15:00:00.000Z', { visitorName: 'Link sent' }),
-    bookingAt('2026-09-19T15:00:00.000Z', { visitorName: 'Paid' }),
-    bookingAt('2026-09-20T15:00:00.000Z', { visitorName: 'Invited' }),
-    bookingAt('2026-09-17T15:00:00.000Z', { visitorName: 'Held' }),
-    bookingAt('2026-09-16T15:00:00.000Z', { visitorName: 'No journey' }),
+    bookingAt('2026-09-18T15:00:00.000Z', { firstName: 'Link', lastName: 'sent' }),
+    bookingAt('2026-09-19T15:00:00.000Z', { firstName: 'Paid', lastName: 'call' }),
+    bookingAt('2026-09-20T15:00:00.000Z', { firstName: 'Invited', lastName: 'client' }),
+    bookingAt('2026-09-17T15:00:00.000Z', { firstName: 'Held', lastName: 'call' }),
+    bookingAt('2026-09-16T15:00:00.000Z', { firstName: 'No', lastName: 'journey' }),
   ];
   const stages: Record<string, JourneyStage> = {
     'ac-2026-09-18T15:00:00.000Z': 'payment-link-sent',
@@ -668,7 +924,7 @@ describe('filtering assessment calls by journey step', () => {
     const filtered = filterCalls(calls, selecting({ journey: 'paid' }));
 
     // assert
-    expect(namesOf(filtered)).toEqual(['Paid']);
+    expect(namesOf(filtered)).toEqual(['Paid call']);
   });
 
   it('drops a call that has already moved past the chosen step', () => {
@@ -688,9 +944,9 @@ describe('filtering assessment calls by journey step', () => {
     const invited = filterCalls(calls, selecting({ journey: 'invited' }));
 
     // assert
-    expect(namesOf(anyStep)).toContain('Held');
+    expect(namesOf(anyStep)).toContain('Held call');
     expect(namesOf(anyStep)).toContain('No journey');
-    expect(namesOf(invited)).toEqual(['Invited']);
+    expect(namesOf(invited)).toEqual(['Invited client']);
   });
 
   it('combines the journey step with the time window and the search', () => {
@@ -704,7 +960,7 @@ describe('filtering assessment calls by journey step', () => {
     );
 
     // assert
-    expect(namesOf(filtered)).toEqual(['Invited']);
+    expect(namesOf(filtered)).toEqual(['Invited client']);
   });
 
   it('finds nothing when the axes disagree', () => {

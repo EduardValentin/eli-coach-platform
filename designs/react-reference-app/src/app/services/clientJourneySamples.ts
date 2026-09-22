@@ -6,7 +6,9 @@ import {
   type ClientJourney,
   type JourneyIdentity,
   type JourneyOnboarding,
+  type JourneyPhone,
   type JourneyPricing,
+  type JourneySex,
   type JourneyStage,
   type MeasurementEntry,
 } from '../domain/journey';
@@ -19,6 +21,8 @@ import {
 } from '../domain/coachingSubscription';
 import { INVITATION_VALIDITY_DAYS } from './invitationService';
 import type { PrototypeBooking } from './assessmentCallService';
+import { findCountry } from './countries';
+import type { VisitorGender } from './visitorProfile';
 
 export const SEEDED_BUNDLE = 3;
 
@@ -107,16 +111,36 @@ const SEEDED_DETAIL_REQUEST = {
     'Two quick things before I build your plan — tell me a little more about your sleep and about that shoulder.',
 };
 
+function journeyPhone(
+  phone: string | null,
+  diallingCode: string,
+): JourneyPhone | undefined {
+  if (!phone) return undefined;
+  const number =
+    diallingCode && phone.startsWith(diallingCode)
+      ? phone.slice(diallingCode.length)
+      : phone;
+  return { diallingCode, number };
+}
+
+// The journey model knows two sexes because it drives the cycle-context
+// onboarding form; a visitor who did not disclose her gender is seeded as
+// female and the coach corrects it at onboarding.
+function journeySexFromGender(gender: VisitorGender): JourneySex {
+  return gender === 'male' ? 'male' : 'female';
+}
+
 export function identityFromBooking(booking: PrototypeBooking): JourneyIdentity {
-  const [firstName, ...rest] = booking.visitorName.trim().split(/\s+/);
+  const country = findCountry(booking.country);
 
   return {
-    firstName: firstName ?? booking.visitorName,
-    lastName: rest.join(' '),
-    dateOfBirth: '',
+    firstName: booking.firstName,
+    lastName: booking.lastName,
+    dateOfBirth: booking.dateOfBirth,
     email: booking.visitorEmail,
-    sex: 'female',
-    country: 'Romania',
+    phone: journeyPhone(booking.phone, country?.callingCode ?? ''),
+    sex: journeySexFromGender(booking.gender),
+    country: country?.name ?? booking.country,
   };
 }
 

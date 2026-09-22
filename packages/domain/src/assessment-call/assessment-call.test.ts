@@ -5,9 +5,15 @@ import { ASSESSMENT_CALL_RULES } from "./assessment-call-rules";
 
 const BOOKED_CALL = {
   id: "call-1",
-  visitorName: "Ana Popescu",
+  firstName: "Ana",
+  lastName: "Popescu",
   visitorEmail: "ana@example.com",
   visitorNotes: "Training around a desk job.",
+  dateOfBirth: "1994-03-14",
+  gender: "female",
+  primaryGoal: "build_strength",
+  country: "RO",
+  phone: "+40712345678",
   startsAt: new Date("2026-06-01T15:00:00.000Z"),
   visitorTimeZone: "Europe/Bucharest",
   coachTimeZone: "Europe/Bucharest",
@@ -66,8 +72,21 @@ describe("AssessmentCall#hasEnded", () => {
   });
 });
 
+describe("AssessmentCall#fullName", () => {
+  it("joins the first and last name with one space", () => {
+    // arrange
+    const call = bookedCall();
+
+    // act
+    const fullName = call.fullName();
+
+    // assert
+    expect(fullName).toBe("Ana Popescu");
+  });
+});
+
 describe("AssessmentCall#toSnapshot", () => {
-  it("carries every field and the derived end as instants", () => {
+  it("carries every field, the full name and the derived end as instants", () => {
     // arrange
     const call = bookedCall();
 
@@ -77,15 +96,33 @@ describe("AssessmentCall#toSnapshot", () => {
     // assert
     expect(snapshot).toEqual({
       id: "call-1",
-      visitorName: "Ana Popescu",
+      firstName: "Ana",
+      lastName: "Popescu",
+      fullName: "Ana Popescu",
       visitorEmail: "ana@example.com",
       visitorNotes: "Training around a desk job.",
+      dateOfBirth: "1994-03-14",
+      gender: "female",
+      primaryGoal: "build_strength",
+      country: "RO",
+      phone: "+40712345678",
       startsAt: new Date("2026-06-01T15:00:00.000Z"),
       endsAt: new Date("2026-06-01T15:30:00.000Z"),
       visitorTimeZone: "Europe/Bucharest",
       coachTimeZone: "Europe/Bucharest",
       bookedAt: new Date("2026-05-30T09:12:00.000Z"),
     });
+  });
+
+  it("keeps an absent phone absent", () => {
+    // arrange
+    const call = bookedCall({ phone: null });
+
+    // act
+    const snapshot = call.toSnapshot();
+
+    // assert
+    expect(snapshot.phone).toBeNull();
   });
 
   it("keeps absent notes absent", () => {

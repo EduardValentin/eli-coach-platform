@@ -4,6 +4,12 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import { formatCallMoment } from "~/features/assessment-calls/contracts/call-moment";
+import { findCountry } from "~/features/assessment-calls/contracts/countries";
+import {
+  formatAgeForEmail,
+  labelForGender,
+  labelForPrimaryGoal,
+} from "~/features/assessment-calls/contracts/visitor-profile";
 
 import { ASSESSMENT_CALL_ACTION_COPY } from "./assessment-call-email-actions.server";
 import {
@@ -58,9 +64,20 @@ function createViewModel(
     googleCalendarUrl: options.googleCalendarUrl,
     joinUrl: options.joinUrl,
     notes: normalizeNotes(call.visitorNotes),
+    profile: {
+      ageLine: formatAgeForEmail({
+        dateOfBirth: call.dateOfBirth,
+        on: call.bookedAt,
+        timeZone: call.visitorTimeZone,
+      }),
+      country: findCountry(call.country)?.name ?? call.country,
+      gender: labelForGender(call.gender),
+      phone: call.phone,
+      primaryGoal: labelForPrimaryGoal(call.primaryGoal),
+    },
     scheduleLine: formatCallMoment(call.startsAt, call.coachTimeZone),
     visitorEmail: call.visitorEmail,
-    visitorName: call.visitorName,
+    visitorName: call.fullName,
   };
 }
 
@@ -71,6 +88,11 @@ function renderText(viewModel: CoachNotificationEmailViewModel): string {
     "",
     `WHO: ${viewModel.visitorName}`,
     `EMAIL: ${viewModel.visitorEmail}`,
+    ...(viewModel.profile.phone ? [`PHONE: ${viewModel.profile.phone}`] : []),
+    `AGE: ${viewModel.profile.ageLine}`,
+    `GENDER: ${viewModel.profile.gender}`,
+    `GOAL: ${viewModel.profile.primaryGoal}`,
+    `COUNTRY: ${viewModel.profile.country}`,
     `WHEN: ${viewModel.scheduleLine}`,
     `HOW LONG: ${viewModel.durationLabel}`,
     ...(viewModel.notes ? [`WHAT SHE SHARED: ${viewModel.notes}`] : []),

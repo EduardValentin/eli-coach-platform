@@ -58,7 +58,7 @@ export function About() {
             <p className="font-medium text-foreground pt-2">
               {appState.isWaitlistMode
                 ? "Doors open soon. Get on the list so yours is held."
-                : "Ready to start? Book a free 30-minute assessment call and let's see if we're a fit."}
+                : "Ready to start? Book a free 30-minute call and let's see if we're a fit."}
             </p>
           </div>
 

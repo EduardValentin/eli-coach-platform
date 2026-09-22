@@ -1,23 +1,38 @@
 import { motion, useReducedMotion } from 'motion/react';
 import { useLocation, useSearchParams } from 'react-router';
-import type { PrototypeBooking } from '../../services/assessmentCallService';
+import {
+  visitorFullName,
+  type PrototypeBooking,
+} from '../../services/assessmentCallService';
+import { findCountry } from '../../services/countries';
+import {
+  formatAgeForCard,
+  labelForGender,
+  labelForPrimaryGoal,
+} from '../../services/visitorProfile';
+import type { AppointmentDetail } from './appointment';
 import {
   classifyCalls,
   countsByJourneyStep,
+  defaultDirectionFor,
   emptyListingMessage,
   filterCalls,
-  orderCallsFor,
+  orderCallsBy,
   pageOfCalls,
   parseDateRange,
   parseJourneyStep,
   parsePage,
+  parseSortDirection,
+  parseSortKey,
   parseStatus,
   withJourneyStages,
   type AssessmentCallStatus,
+  type CallSort,
   type ClassifiedCall,
   type JourneyStep,
   type ListedCall,
   type ListingSelection,
+  type SortKey,
 } from '../../utils/assessmentCallListing';
 import { formatShortDay, formatSlotTime } from '../../utils/dateFormatters';
 import { Badge } from '../ui/badge';
@@ -34,6 +49,7 @@ import { CallJourneyActions } from './CallJourneyActions';
 import { JourneyStageBadge } from './JourneyStageBadge';
 import { CallListPager } from './CallListPager';
 import { JoinCallLink } from './JoinCallLink';
+import { SortControl } from './SortControl';
 
 const STATUS_PARAM = 'when';
 const QUERY_PARAM = 'q';
@@ -41,9 +57,12 @@ const PAGE_PARAM = 'page';
 const JOURNEY_PARAM = 'status';
 const FROM_PARAM = 'from';
 const TO_PARAM = 'to';
+const SORT_PARAM = 'sort';
+const DIRECTION_PARAM = 'dir';
 const CALLS_PER_PAGE = 10;
 const DEFAULT_STATUS: AssessmentCallStatus = 'all';
 const DEFAULT_JOURNEY: JourneyStep = 'any';
+const DEFAULT_SORT_KEY: SortKey = 'scheduled';
 const SEARCH_FIELD_ID = 'assessment-call-search';
 
 const WHEN_TABS: { status: AssessmentCallStatus; label: string }[] = [
@@ -61,11 +80,22 @@ const JOURNEY_CHIPS: { step: JourneyStep; label: string }[] = [
   { step: 'invited', label: 'Invited' },
 ];
 
+function visitorDetails(booking: PrototypeBooking, now: Date): AppointmentDetail[] {
+  return [
+    { label: 'Age', value: formatAgeForCard(booking.dateOfBirth, now) },
+    { label: 'Gender', value: labelForGender(booking.gender) },
+    { label: 'Goal', value: labelForPrimaryGoal(booking.primaryGoal) },
+    { label: 'Country', value: findCountry(booking.country)?.name ?? booking.country },
+  ];
+}
+
 function CallItem({
   call,
+  now,
   timeZone,
 }: {
   call: ClassifiedCall;
+  now: Date;
   timeZone: string;
 }) {
   const { booking, timing, isToday } = call;
@@ -76,9 +106,11 @@ function CallItem({
     <li>
       <AppointmentCard
         attendee={{
-          name: booking.visitorName,
+          name: visitorFullName(booking),
           email: booking.visitorEmail,
+          phone: booking.phone ?? undefined,
         }}
+        details={visitorDetails(booking, now)}
         when={{
           date: formatShortDay(booking.startsAt, timeZone),
           time: formatSlotTime(booking.startsAt, timeZone),
@@ -102,7 +134,7 @@ function CallItem({
             {journey && timing === 'past' && (
               <CallJourneyActions
                 journey={journey}
-                visitorName={booking.visitorName}
+                visitorName={visitorFullName(booking)}
               />
             )}
           </>
@@ -122,10 +154,12 @@ function showsJourneyStage(
 function CallList({
   calls,
   emptyMessage,
+  now,
   timeZone,
 }: {
   calls: ClassifiedCall[];
   emptyMessage: string;
+  now: Date;
   timeZone: string;
 }) {
   if (calls.length === 0) {
@@ -139,7 +173,7 @@ function CallList({
   return (
     <ul aria-label="Assessment calls" className="space-y-4">
       {calls.map((call) => (
-        <CallItem key={call.booking.id} call={call} timeZone={timeZone} />
+        <CallItem key={call.booking.id} call={call} now={now} timeZone={timeZone} />
       ))}
     </ul>
   );
@@ -222,13 +256,18 @@ export function AssessmentCallsSection({
     searchParams.get(TO_PARAM),
   );
   const page = parsePage(searchParams.get(PAGE_PARAM));
+  const sortKey = parseSortKey(searchParams.get(SORT_PARAM));
+  const sort: CallSort = {
+    key: sortKey,
+    direction: parseSortDirection(searchParams.get(DIRECTION_PARAM), sortKey),
+  };
 
   const selection: ListingSelection = { status, query, journey, range };
   const calls: ListedCall[] = withJourneyStages(
     classifyCalls(bookings, { now, timeZone }),
     (callId) => journeyForCall(callId)?.stage ?? null,
   );
-  const matching = orderCallsFor(filterCalls(calls, selection), status);
+  const matching = orderCallsBy(filterCalls(calls, selection), sort, status);
   const view = pageOfCalls(matching, { page, perPage: CALLS_PER_PAGE });
   const counts = countsByJourneyStep(calls, selection);
 
@@ -260,6 +299,19 @@ export function AssessmentCallsSection({
       params.delete(PAGE_PARAM);
       writeDay(params, FROM_PARAM, chosen.from);
       writeDay(params, TO_PARAM, chosen.to);
+    });
+  };
+
+  const chooseSort = (chosen: CallSort) => {
+    updateSearchParams((params) => {
+      params.delete(PAGE_PARAM);
+      if (chosen.key === DEFAULT_SORT_KEY) params.delete(SORT_PARAM);
+      else params.set(SORT_PARAM, chosen.key);
+      if (chosen.direction === defaultDirectionFor(chosen.key)) {
+        params.delete(DIRECTION_PARAM);
+      } else {
+        params.set(DIRECTION_PARAM, chosen.direction);
+      }
     });
   };
 
@@ -329,6 +381,12 @@ export function AssessmentCallsSection({
                 onChange={(event) => changeQuery(event.target.value)}
               />
             </div>
+
+            <SortControl
+              className="xl:w-fit"
+              sort={sort}
+              onChange={chooseSort}
+            />
           </div>
 
           <JourneyFilter
@@ -342,6 +400,7 @@ export function AssessmentCallsSection({
           <CallList
             calls={view.calls}
             emptyMessage={emptyListingMessage(selection)}
+            now={now}
             timeZone={timeZone}
           />
 

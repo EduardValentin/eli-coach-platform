@@ -1,6 +1,7 @@
 import { format, isValid, parseISO } from 'date-fns';
 import {
   ASSESSMENT_CALL_DURATION_MINUTES,
+  visitorFullName,
   type PrototypeBooking,
 } from '../services/assessmentCallService';
 import type { JourneyStage } from '../domain/journey';
@@ -21,6 +22,19 @@ export const JOURNEY_STEPS: readonly JourneyStep[] = [
   'payment-link-sent',
   'paid',
   'invited',
+];
+
+export type SortKey = 'scheduled' | 'booked' | 'name' | 'email';
+
+export type SortDirection = 'asc' | 'desc';
+
+export type CallSort = { key: SortKey; direction: SortDirection };
+
+export const SORT_KEYS: readonly SortKey[] = [
+  'scheduled',
+  'booked',
+  'name',
+  'email',
 ];
 
 export type DateRange = { from: string | null; to: string | null };
@@ -127,10 +141,8 @@ function matchesQuery(call: ClassifiedCall, query: string): boolean {
   const needle = query.trim().toLowerCase();
   if (needle.length === 0) return true;
 
-  const { visitorName, visitorEmail } = call.booking;
-  return (
-    visitorName.toLowerCase().includes(needle) ||
-    visitorEmail.toLowerCase().includes(needle)
+  return [visitorFullName(call.booking), call.booking.visitorEmail].some((value) =>
+    value.toLowerCase().includes(needle),
   );
 }
 
@@ -173,7 +185,7 @@ export function orderCalls<Call extends ClassifiedCall>(calls: Call[]): Call[] {
   ];
 }
 
-export function orderCallsFor(
+function orderCallsByScheduledDate(
   calls: ListedCall[],
   status: AssessmentCallStatus,
 ): ListedCall[] {
@@ -182,6 +194,61 @@ export function orderCallsFor(
   }
 
   return orderCalls(calls);
+}
+
+function bookedAtOf(call: ClassifiedCall): number {
+  return call.booking.bookedAt.getTime();
+}
+
+function compareText(one: string, other: string): number {
+  return one.localeCompare(other, undefined, { sensitivity: 'base' });
+}
+
+function orderCallsInDefaultDirection(
+  calls: ListedCall[],
+  key: SortKey,
+  status: AssessmentCallStatus,
+): ListedCall[] {
+  switch (key) {
+    case 'scheduled':
+      return orderCallsByScheduledDate(calls, status);
+    case 'booked':
+      return [...calls].sort((one, other) => bookedAtOf(other) - bookedAtOf(one));
+    case 'name':
+      return [...calls].sort((one, other) =>
+        compareText(visitorFullName(one.booking), visitorFullName(other.booking)),
+      );
+    case 'email':
+      return [...calls].sort((one, other) =>
+        compareText(one.booking.visitorEmail, other.booking.visitorEmail),
+      );
+  }
+}
+
+export function orderCallsBy(
+  calls: ListedCall[],
+  sort: CallSort,
+  status: AssessmentCallStatus,
+): ListedCall[] {
+  const ordered = orderCallsInDefaultDirection(calls, sort.key, status);
+  if (sort.direction === defaultDirectionFor(sort.key)) return ordered;
+  return ordered.reverse();
+}
+
+export function defaultDirectionFor(key: SortKey): SortDirection {
+  return key === 'scheduled' || key === 'booked' ? 'desc' : 'asc';
+}
+
+export function parseSortKey(raw: string | null): SortKey {
+  return SORT_KEYS.find((key) => key === raw) ?? 'scheduled';
+}
+
+export function parseSortDirection(
+  raw: string | null,
+  key: SortKey,
+): SortDirection {
+  if (raw === 'asc' || raw === 'desc') return raw;
+  return defaultDirectionFor(key);
 }
 
 export function upcomingCalls(

@@ -17,10 +17,7 @@ import {
   type ShouldRevalidateFunctionArgs,
 } from "react-router";
 
-import type {
-  BookAssessmentCallRequest,
-  OpenSlotsResponse,
-} from "~/features/assessment-calls/contracts/assessment-calls";
+import type { OpenSlotsResponse } from "~/features/assessment-calls/contracts/assessment-calls";
 import { assessmentCallsContext } from "~/features/assessment-calls/server/guards/assessment-calls-context.server";
 
 import { useRefreshSlotsFetcher } from "./api-client";
@@ -57,10 +54,10 @@ export function shouldRevalidate({
 }
 
 export const meta: MetaFunction = () => [
-  { title: "Book a Free Assessment Call | Evoa" },
+  { title: "Book a Free Call | Evoa" },
   {
     name: "description",
-    content: "Book a free assessment call with Eli and start your plan.",
+    content: "Book a free call with Eli and start your plan.",
   },
 ];
 
@@ -79,7 +76,7 @@ export default function AssessmentCallBookingRoute() {
 
   return (
     <MotionConfig reducedMotion="user">
-      <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-surface-page px-4 pt-32 pb-12 sm:px-6">
+      <div className="relative flex min-h-screen items-start justify-center overflow-hidden bg-surface-page px-4 pt-32 pb-12 sm:px-6">
         <div className="pointer-events-none absolute top-[-10%] right-[-5%] size-[600px] rounded-full bg-brand-primary/5 blur-[100px]" />
         <div className="pointer-events-none absolute bottom-[-10%] left-[-5%] size-[500px] rounded-full bg-brand-secondary/5 blur-[100px]" />
 
@@ -131,13 +128,20 @@ function BookingFlow(props: {
         return;
       }
 
-      const booking = {
+      const booking: Record<string, string> = {
+        country: details.country,
+        dateOfBirth: details.dateOfBirth,
         email: details.email,
-        fullName: details.fullName,
+        firstName: details.firstName,
+        gender: details.gender,
+        lastName: details.lastName,
         notes: details.notes,
+        phoneCountry: details.phoneCountry,
+        phoneNumber: details.phoneNumber,
+        primaryGoal: details.primaryGoal,
         startsAt: flow.selectedSlot,
         visitorTimeZone: timeZone,
-      } satisfies BookAssessmentCallRequest;
+      };
       const formData = new FormData();
 
       for (const [field, value] of Object.entries(booking)) {
@@ -192,6 +196,7 @@ function BookingFlow(props: {
                 onBack={(details) => dispatch({ details, type: "show-slots" })}
                 onSubmit={submitDetails}
                 submission={submission}
+                timeZone={timeZone}
               />
             </motion.div>
           ) : null}
@@ -200,6 +205,7 @@ function BookingFlow(props: {
             <motion.div
               animate={{ opacity: 1, scale: 1 }}
               className="flex h-full flex-col items-center justify-center py-12 text-center"
+              data-parity-root="BookingConfirmation"
               initial={{ opacity: 0, scale: 0.95 }}
               key="step-confirmed"
             >

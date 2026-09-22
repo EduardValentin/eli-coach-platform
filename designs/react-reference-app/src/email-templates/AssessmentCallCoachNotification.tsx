@@ -17,6 +17,11 @@ export type AssessmentCallCoachNotificationProps = {
   variant?: AssessmentCallEmailVariant;
   visitorName?: string;
   visitorEmail?: string;
+  visitorPhone?: string | null;
+  visitorAgeLine?: string;
+  visitorGender?: string;
+  visitorPrimaryGoal?: string;
+  visitorCountry?: string;
   notes?: string;
   startsAt?: Date;
   timeZone?: string;
@@ -61,6 +66,11 @@ export function AssessmentCallCoachNotification({
   variant = 'with-notes',
   visitorName = 'Jane Doe',
   visitorEmail = 'jane@example.com',
+  visitorPhone = '+40712345678',
+  visitorAgeLine = '31 (born 14 March 1994)',
+  visitorGender = 'Female',
+  visitorPrimaryGoal = 'Build strength',
+  visitorCountry = 'Romania',
   notes = DEFAULT_NOTES,
   startsAt = DEFAULT_STARTS_AT,
   timeZone = 'Europe/Bucharest',
@@ -111,6 +121,34 @@ export function AssessmentCallCoachNotification({
                     {visitorEmail}
                   </EmailLink>
                 </EmailText>
+
+                {visitorPhone && (
+                  <>
+                    <EmailText style={detailsEyebrowStyle}>PHONE</EmailText>
+                    <EmailText style={detailsValueStyle}>
+                      <EmailLink
+                        href={`tel:${visitorPhone}`}
+                        style={calendarLinkStyle}
+                      >
+                        {visitorPhone}
+                      </EmailLink>
+                    </EmailText>
+                  </>
+                )}
+
+                <EmailText style={detailsEyebrowStyle}>AGE</EmailText>
+                <EmailText style={detailsValueStyle}>{visitorAgeLine}</EmailText>
+
+                <EmailText style={detailsEyebrowStyle}>GENDER</EmailText>
+                <EmailText style={detailsValueStyle}>{visitorGender}</EmailText>
+
+                <EmailText style={detailsEyebrowStyle}>GOAL</EmailText>
+                <EmailText style={detailsValueStyle}>
+                  {visitorPrimaryGoal}
+                </EmailText>
+
+                <EmailText style={detailsEyebrowStyle}>COUNTRY</EmailText>
+                <EmailText style={detailsValueStyle}>{visitorCountry}</EmailText>
 
                 <EmailText style={detailsEyebrowStyle}>WHEN</EmailText>
                 <EmailText style={detailsValueStyle}>

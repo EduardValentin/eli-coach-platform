@@ -1,12 +1,19 @@
 import type { AssessmentCall } from "./assessment-call";
+import type { VisitorGender, VisitorPrimaryGoal } from "./visitor-profile";
 
 export type ReserveAssessmentCallCommand = {
   bookedAt: Date;
   coachTimeZone: string;
-  fullName: string;
+  country: string;
+  dateOfBirth: string;
+  firstName: string;
+  gender: VisitorGender;
+  lastName: string;
   normalizedEmail: string;
   notes: string | null;
   now: Date;
+  phone: string | null;
+  primaryGoal: VisitorPrimaryGoal;
   startsAt: Date;
   visitorTimeZone: string;
 };

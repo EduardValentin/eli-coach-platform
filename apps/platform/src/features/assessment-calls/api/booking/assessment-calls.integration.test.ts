@@ -19,9 +19,15 @@ import { turnstileTokenForAction } from "~integration-test-config/wire-mock/expe
 
 type AssessmentCallRow = {
   id: string;
-  visitorName: string;
+  firstName: string;
+  lastName: string;
   visitorEmail: string;
   visitorNotes: string | null;
+  dateOfBirth: string;
+  gender: string;
+  primaryGoal: string;
+  country: string;
+  phone: string | null;
   startsAt: Date;
   visitorTimeZone: string;
   coachTimeZone: string;
@@ -65,6 +71,7 @@ const SECOND_EVENING_START = "2026-10-19T15:00:00.000Z";
 const NEXT_DAY_EVENING_START = "2026-10-20T14:00:00.000Z";
 const WINTER_TIME_EVENING_START = "2026-10-26T15:00:00.000Z";
 const LAST_HORIZON_START = "2026-11-18T17:00:00.000Z";
+const CHECK_VIOLATION = "23514";
 const UNKNOWN_BOOKING_ID = "00000000-0000-4000-8000-000000000000";
 const MALFORMED_BOOKING_ID = "not-a-booking";
 
@@ -133,11 +140,11 @@ describe.sequential("assessment call booking integration", () => {
     const document = await response.text();
 
     expect(response.status).toBe(200);
-    expect(document).toContain("Free Assessment Call");
+    expect(document).toContain("Free Call");
     expect(document).toContain("Select a Date &amp; Time");
   });
 
-  it("stores a booking in both time zones and notifies both sides", async () => {
+  it("stores the visitor's profile with the booking in both time zones and notifies both sides", async () => {
     // arrange
     await suite.setServerClock(MONDAY_MORNING);
 
@@ -165,9 +172,15 @@ describe.sequential("assessment call booking integration", () => {
     expect(rows).toHaveLength(1);
     expect(row).toMatchObject({
       coachTimeZone: "Europe/Bucharest",
+      country: "RO",
+      dateOfBirth: "1994-03-14",
+      firstName: "Ana",
+      gender: "female",
       id: body.booking.id,
+      lastName: "Popescu",
+      phone: "+40712345678",
+      primaryGoal: "build_strength",
       visitorEmail: VISITOR_EMAIL,
-      visitorName: VISITOR_NAME,
       visitorNotes: "Training three times a week.",
       visitorTimeZone: VISITOR_TIME_ZONE,
     });
@@ -184,14 +197,20 @@ describe.sequential("assessment call booking integration", () => {
 
     const joinUrl = `https://localhost:3000/eli-coach-platform/book/${body.booking.id}/join`;
 
-    expect(visitorEmail?.text).toContain(VISITOR_NAME);
+    expect(visitorEmail?.text).toContain("Hi Ana,");
     expect(visitorEmail?.text).toContain("3:00 PM");
     expect(visitorEmail?.text).toContain(VISITOR_TIME_ZONE);
     expect(visitorEmail?.text).toContain(joinUrl);
     expect(visitorEmail?.text).toContain(
       "https://calendar.google.com/calendar/render",
     );
-    expect(coachEmail?.text).toContain(VISITOR_NAME);
+    expect(coachEmail?.text).toContain(`WHO: ${VISITOR_NAME}`);
+    expect(coachEmail?.text).toContain("PHONE: +40712345678");
+    expect(coachEmail?.text).toContain("AGE: 32 (born 14 March 1994)");
+    expect(coachEmail?.text).toContain("GENDER: Female");
+    expect(coachEmail?.text).toContain("GOAL: Build strength");
+    expect(coachEmail?.text).toContain("COUNTRY: Romania");
+    expect(coachEmail?.html).toContain('href="tel:+40712345678"');
     expect(coachEmail?.text).toContain("5:00 PM");
     expect(coachEmail?.text).toContain("Europe/Bucharest");
     expect(coachEmail?.text).toContain(joinUrl);
@@ -205,6 +224,88 @@ describe.sequential("assessment call booking integration", () => {
     );
     expect(invite?.contentText).toContain("DTSTAMP:20261019T080000Z");
     expect(coachEmail?.attachments.at(0)?.filename).toBe("invite.ics");
+  });
+
+  it("stores no phone when the visitor leaves the number blank", async () => {
+    // arrange
+    await suite.setServerClock(MONDAY_MORNING);
+
+    // act
+    const response = await requestBooking({ phoneNumber: "" });
+
+    // assert
+    const [row] = await readCalls();
+
+    expect(response.status).toBe(201);
+    expect(row?.phone).toBeNull();
+
+    await expect.poll(async () => (await suite.sentEmails()).length).toBe(2);
+
+    const coachEmail = (await suite.sentEmails()).find(
+      (email) => email.to === COACH_EMAIL,
+    );
+
+    expect(coachEmail?.text).not.toContain("PHONE:");
+  });
+
+  it.each([
+    { column: "gender", constraint: "assessment_calls_gender_check" },
+    {
+      column: "primary_goal",
+      constraint: "assessment_calls_primary_goal_check",
+    },
+  ])(
+    "refuses a $column outside its vocabulary at the database",
+    async ({ column, constraint }) => {
+      // arrange
+      const columns = {
+        gender: "female",
+        primary_goal: "build_strength",
+        [column]: "unknown",
+      };
+
+      // act
+      const insert = insertCallDirectly(columns);
+
+      // assert
+      await expect(insert).rejects.toMatchObject({
+        code: CHECK_VIOLATION,
+        constraint,
+      });
+      expect(await readCalls()).toHaveLength(0);
+    },
+  );
+
+  it("declines a visitor under eighteen without storing anything", async () => {
+    // arrange
+    await suite.setServerClock(MONDAY_MORNING);
+
+    // act
+    const response = await requestBooking({ dateOfBirth: "2008-10-20" });
+
+    // assert
+    const body = bookAssessmentCallResponseSchema.parse(await response.json());
+
+    expect(response.status).toBe(400);
+    expect(body).toMatchObject({
+      success: false,
+      error: { code: "invalid_date_of_birth" },
+    });
+    expect(await readCalls()).toHaveLength(0);
+    expect(await readCoachTimeReservations()).toHaveLength(0);
+    expect(await suite.sentEmails()).toHaveLength(0);
+  });
+
+  it("books a visitor on her eighteenth birthday in her own zone", async () => {
+    // arrange
+    await suite.setServerClock(MONDAY_MORNING);
+
+    // act
+    const response = await requestBooking({ dateOfBirth: "2008-10-19" });
+
+    // assert
+    expect(response.status).toBe(201);
+    expect(await readCalls()).toHaveLength(1);
   });
 
   it("declines a start another visitor already holds", async () => {
@@ -649,8 +750,15 @@ async function requestBooking(
   turnstileToken: string = bookingToken,
 ): Promise<Response> {
   const body = new URLSearchParams({
+    country: "RO",
+    dateOfBirth: "1994-03-14",
+    firstName: "Ana",
+    gender: "female",
+    lastName: "Popescu",
+    phoneCountry: "RO",
+    phoneNumber: "0712 345 678",
+    primaryGoal: "build_strength",
     email: VISITOR_EMAIL,
-    fullName: VISITOR_NAME,
     startsAt: FIRST_EVENING_START,
     visitorTimeZone: VISITOR_TIME_ZONE,
     ...overrides,
@@ -674,9 +782,15 @@ async function readCalls(): Promise<AssessmentCallRow[]> {
     sql: `
       select
         id,
-        visitor_name as "visitorName",
+        first_name as "firstName",
+        last_name as "lastName",
         visitor_email as "visitorEmail",
         visitor_notes as "visitorNotes",
+        date_of_birth::text as "dateOfBirth",
+        gender,
+        primary_goal as "primaryGoal",
+        country,
+        phone,
         starts_at as "startsAt",
         visitor_time_zone as "visitorTimeZone",
         coach_time_zone as "coachTimeZone",
@@ -700,6 +814,33 @@ async function readCoachTimeReservations(): Promise<CoachTimeReservationRow[]> {
       order by starts_at
     `,
     values: [],
+  });
+}
+
+async function insertCallDirectly(columns: {
+  gender: string;
+  primary_goal: string;
+}): Promise<void> {
+  await suite.postgres.executeSql({
+    sql: `
+      insert into app.assessment_calls
+        (first_name, last_name, visitor_email, date_of_birth, gender, primary_goal,
+         country, starts_at, visitor_time_zone, coach_time_zone, booked_at)
+      values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+    `,
+    values: [
+      "Ana",
+      "Popescu",
+      VISITOR_EMAIL,
+      "1994-03-14",
+      columns.gender,
+      columns.primary_goal,
+      "RO",
+      FIRST_EVENING_START,
+      VISITOR_TIME_ZONE,
+      "Europe/Bucharest",
+      MONDAY_MORNING.toISOString(),
+    ],
   });
 }
 

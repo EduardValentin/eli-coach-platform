@@ -27,6 +27,7 @@ export function PublicAbout(props: PublicAboutProps) {
   return (
     <section
       className="mx-auto flex max-w-7xl flex-col items-center gap-16 px-6 py-24 lg:flex-row lg:gap-24"
+      data-parity-root="About"
       id="about"
     >
       <div className="flex flex-1 flex-col items-center text-center lg:items-start lg:text-left">

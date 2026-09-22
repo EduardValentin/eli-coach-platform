@@ -34,9 +34,16 @@ describe("createAssessmentCallNotifications", () => {
     // act
     const result = await notifications.notifyBooked({
       id: "ac-demo",
-      visitorName: "Sofia Marin",
+      firstName: "Sofia",
+      lastName: "Marin",
+      fullName: "Sofia Marin",
       visitorEmail: "sofia@example.com",
       visitorNotes: null,
+      dateOfBirth: "1994-03-14",
+      gender: "female",
+      primaryGoal: "build_strength",
+      country: "RO",
+      phone: null,
       startsAt: new Date("2026-03-02T15:00:00.000Z"),
       endsAt: new Date("2026-03-02T15:30:00.000Z"),
       visitorTimeZone: "Europe/Bucharest",

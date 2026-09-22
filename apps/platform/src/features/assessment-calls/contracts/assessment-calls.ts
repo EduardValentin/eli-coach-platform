@@ -1,5 +1,19 @@
-import { ASSESSMENT_CALL_RULES } from "@eli-coach-platform/domain/assessment-call";
+import {
+  ASSESSMENT_CALL_RULES,
+  VISITOR_GENDERS,
+  VISITOR_PRIMARY_GOALS,
+} from "@eli-coach-platform/domain/assessment-call";
 import { z } from "zod";
+
+import { findCountry } from "./countries";
+import {
+  birthDateMessage,
+  BOOKING_FIELD_MESSAGES,
+  checkBirthDate,
+  MAX_NOTES_LENGTH,
+  nameSchema,
+  normalizeVisitorPhone,
+} from "./visitor-profile";
 
 const MAX_TIME_ZONE_LENGTH = 64;
 
@@ -28,26 +42,94 @@ export const openSlotsResponseSchema = z.object({
   slots: z.array(z.iso.datetime()),
 });
 
-export const bookAssessmentCallRequestSchema = z.object({
+const bookingFieldsSchema = z.object({
   startsAt: z.iso.datetime("Please choose an available time."),
-  fullName: z
-    .string()
-    .trim()
-    .min(2, "Please enter your name.")
-    .max(120, "Please enter a name under 120 characters."),
+  firstName: nameSchema(BOOKING_FIELD_MESSAGES.firstName),
+  lastName: nameSchema(BOOKING_FIELD_MESSAGES.lastName),
   email: z
     .string()
     .trim()
     .toLowerCase()
-    .max(320, "Please enter an email address under 320 characters.")
-    .email("Please enter a valid email address."),
+    .max(320, BOOKING_FIELD_MESSAGES.email)
+    .email(BOOKING_FIELD_MESSAGES.email),
+  dateOfBirth: z.iso.date(BOOKING_FIELD_MESSAGES.birthDateImpossible),
+  gender: z.enum(VISITOR_GENDERS, BOOKING_FIELD_MESSAGES.gender),
+  primaryGoal: z.enum(
+    VISITOR_PRIMARY_GOALS,
+    BOOKING_FIELD_MESSAGES.primaryGoal,
+  ),
+  country: z
+    .string(BOOKING_FIELD_MESSAGES.country)
+    .refine(
+      (code) => findCountry(code) !== undefined,
+      BOOKING_FIELD_MESSAGES.country,
+    ),
+  phoneCountry: z.string().optional(),
+  phoneNumber: z.string().optional(),
   notes: z
     .string()
     .trim()
-    .max(1000, "Please keep your notes under 1000 characters.")
+    .max(MAX_NOTES_LENGTH, BOOKING_FIELD_MESSAGES.notes)
     .optional(),
   visitorTimeZone: timeZoneSchema,
 });
+
+type BookingFields = z.infer<typeof bookingFieldsSchema>;
+type PhoneFields = Partial<Pick<BookingFields, "phoneCountry" | "phoneNumber">>;
+
+export function createBookAssessmentCallRequestSchema(options: { now: Date }) {
+  return bookingFieldsSchema.superRefine((request, context) => {
+    const birthDateIssue = describeBirthDateProblem(request, options.now);
+
+    if (birthDateIssue) {
+      context.addIssue({
+        code: "custom",
+        message: birthDateIssue,
+        path: ["dateOfBirth"],
+      });
+    }
+
+    if (normalizeRequestPhone(request).status === "invalid") {
+      context.addIssue({
+        code: "custom",
+        message: BOOKING_FIELD_MESSAGES.phone,
+        path: ["phoneNumber"],
+      });
+    }
+  });
+}
+
+export function phoneFromRequest(request: PhoneFields): string | null {
+  const phone = normalizeRequestPhone(request);
+
+  return phone.status === "valid" ? phone.e164 : null;
+}
+
+function normalizeRequestPhone(request: PhoneFields) {
+  return normalizeVisitorPhone({
+    country: request.phoneCountry ?? "",
+    nationalNumber: request.phoneNumber ?? "",
+  });
+}
+
+// The zone is refined on its own field; a zone the runtime cannot read must
+// not turn the age check into a thrown RangeError on top of that issue.
+function describeBirthDateProblem(
+  request: BookingFields,
+  now: Date,
+): string | null {
+  if (!isFormattableTimeZone(request.visitorTimeZone)) {
+    return null;
+  }
+
+  return birthDateMessage(
+    checkBirthDate({
+      dateOfBirth: request.dateOfBirth,
+      on: now,
+      timeZone: request.visitorTimeZone,
+    }),
+  );
+}
 
 export const bookingSchema = z.object({
   id: z.uuid(),
@@ -62,8 +144,14 @@ export const bookAssessmentCallSuccessSchema = z.object({
 });
 
 const bookAssessmentCallErrorCodeSchema = z.enum([
-  "invalid_name",
+  "invalid_first_name",
+  "invalid_last_name",
   "invalid_email",
+  "invalid_date_of_birth",
+  "invalid_gender",
+  "invalid_primary_goal",
+  "invalid_country",
+  "invalid_phone",
   "notes_too_long",
   "invalid_time_zone",
   "invalid_start",
@@ -93,11 +181,19 @@ export const COACH_ASSESSMENT_CALLS_UNAVAILABLE_MESSAGE =
 
 export const coachAssessmentCallSchema = z.object({
   id: z.uuid(),
-  visitorName: z.string().min(1),
+  firstName: z.string().min(1),
+  lastName: z.string().min(1),
+  fullName: z.string().min(1),
   visitorEmail: z.email(),
   visitorNotes: z.string().nullable(),
+  dateOfBirth: z.iso.date(),
+  gender: z.enum(VISITOR_GENDERS),
+  primaryGoal: z.enum(VISITOR_PRIMARY_GOALS),
+  country: z.string().length(2),
+  phone: z.string().nullable(),
   startsAt: z.iso.datetime(),
   endsAt: z.iso.datetime(),
+  bookedAt: z.iso.datetime(),
   joinPath: z.string().min(1),
 });
 
@@ -108,9 +204,6 @@ export const coachAssessmentCallsSchema = z.object({
 });
 
 export type OpenSlotsResponse = z.infer<typeof openSlotsResponseSchema>;
-export type BookAssessmentCallRequest = z.infer<
-  typeof bookAssessmentCallRequestSchema
->;
 export type Booking = z.infer<typeof bookingSchema>;
 export type CoachAssessmentCall = z.infer<typeof coachAssessmentCallSchema>;
 export type CoachAssessmentCalls = z.infer<typeof coachAssessmentCallsSchema>;

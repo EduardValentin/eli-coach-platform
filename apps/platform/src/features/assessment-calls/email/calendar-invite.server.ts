@@ -70,7 +70,7 @@ export function buildGoogleCalendarUrl(
 function describeCall(call: AssessmentCallSnapshot, joinUrl: string): string {
   return [
     `A free ${ASSESSMENT_CALL_RULES.durationMinutes}-minute assessment call with Eli.`,
-    `Booked by: ${call.visitorName}`,
+    `Booked by: ${call.fullName}`,
     `Join the call: ${joinUrl}`,
   ].join("\n");
 }

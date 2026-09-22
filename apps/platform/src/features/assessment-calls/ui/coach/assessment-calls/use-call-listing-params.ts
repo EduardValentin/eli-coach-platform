@@ -2,54 +2,107 @@ import { useSearchParamsWriter } from "@eli-coach-platform/ui/lib";
 import { useLocation } from "react-router";
 
 import {
+  defaultDirectionFor,
+  parseDateRangeParams,
   parsePageParam,
-  parseStatusParam,
+  parseSortDirectionParam,
+  toSortKey,
+  toCallStatus,
   DEFAULT_CALL_STATUS,
+  DEFAULT_SORT_KEY,
+  DIRECTION_PARAM,
   FIRST_PAGE,
+  FROM_PARAM,
   PAGE_PARAM,
   QUERY_PARAM,
+  SORT_PARAM,
   STATUS_PARAM,
+  TO_PARAM,
+  type CallSort,
   type CoachCallStatus,
+  type DateRange,
+  type SortKey,
 } from "~/features/assessment-calls/ui/coach/assessment-call-listing";
 
 export type CallListingParams = {
   changeQuery: (value: string) => void;
+  chooseRange: (range: DateRange) => void;
+  chooseSortKey: (key: SortKey) => void;
   chooseStatus: (value: string) => void;
   page: number;
   pathForPage: (page: number) => string;
   query: string;
+  range: DateRange;
+  sort: CallSort;
   status: CoachCallStatus;
+  toggleSortDirection: () => void;
 };
 
 export function useCallListingParams(): CallListingParams {
   const { pathname } = useLocation();
   const { replaceSearchParams, searchParams } = useSearchParamsWriter();
+  const sortKey = toSortKey(searchParams.get(SORT_PARAM));
+  const sort: CallSort = {
+    direction: parseSortDirectionParam(
+      searchParams.get(DIRECTION_PARAM),
+      sortKey,
+    ),
+    key: sortKey,
+  };
 
   const chooseStatus = (value: string) => {
-    const chosen = parseStatusParam(value);
+    const chosen = toCallStatus(value);
 
     replaceSearchParams((params) => {
       params.delete(PAGE_PARAM);
-
-      if (chosen === DEFAULT_CALL_STATUS) {
-        params.delete(STATUS_PARAM);
-        return;
-      }
-
-      params.set(STATUS_PARAM, chosen);
+      setParamUnlessDefault(params, STATUS_PARAM, {
+        defaultValue: DEFAULT_CALL_STATUS,
+        value: chosen,
+      });
     });
   };
 
   const changeQuery = (value: string) => {
     replaceSearchParams((params) => {
       params.delete(PAGE_PARAM);
+      setParamUnlessDefault(params, QUERY_PARAM, { defaultValue: "", value });
+    });
+  };
 
-      if (value.length === 0) {
-        params.delete(QUERY_PARAM);
-        return;
-      }
+  const chooseRange = (range: DateRange) => {
+    replaceSearchParams((params) => {
+      params.delete(PAGE_PARAM);
+      setParamUnlessDefault(params, FROM_PARAM, {
+        defaultValue: null,
+        value: range.from,
+      });
+      setParamUnlessDefault(params, TO_PARAM, {
+        defaultValue: null,
+        value: range.to,
+      });
+    });
+  };
 
-      params.set(QUERY_PARAM, value);
+  const chooseSortKey = (key: SortKey) => {
+    replaceSearchParams((params) => {
+      params.delete(PAGE_PARAM);
+      params.delete(DIRECTION_PARAM);
+      setParamUnlessDefault(params, SORT_PARAM, {
+        defaultValue: DEFAULT_SORT_KEY,
+        value: key,
+      });
+    });
+  };
+
+  const toggleSortDirection = () => {
+    const reversed = sort.direction === "asc" ? "desc" : "asc";
+
+    replaceSearchParams((params) => {
+      params.delete(PAGE_PARAM);
+      setParamUnlessDefault(params, DIRECTION_PARAM, {
+        defaultValue: defaultDirectionFor(sort.key),
+        value: reversed,
+      });
     });
   };
 
@@ -69,10 +122,33 @@ export function useCallListingParams(): CallListingParams {
 
   return {
     changeQuery,
+    chooseRange,
+    chooseSortKey,
     chooseStatus,
     page: parsePageParam(searchParams.get(PAGE_PARAM)),
     pathForPage,
     query: searchParams.get(QUERY_PARAM) ?? "",
-    status: parseStatusParam(searchParams.get(STATUS_PARAM)),
+    range: parseDateRangeParams(
+      searchParams.get(FROM_PARAM),
+      searchParams.get(TO_PARAM),
+    ),
+    sort,
+    status: toCallStatus(searchParams.get(STATUS_PARAM)),
+    toggleSortDirection,
   };
+}
+
+type ParamChoice = { defaultValue: string | null; value: string | null };
+
+function setParamUnlessDefault(
+  params: URLSearchParams,
+  name: string,
+  choice: ParamChoice,
+): void {
+  if (choice.value === null || choice.value === choice.defaultValue) {
+    params.delete(name);
+    return;
+  }
+
+  params.set(name, choice.value);
 }

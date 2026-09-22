@@ -84,7 +84,7 @@ describe('choosing a bundle from a payment link', () => {
     // act
     const heading = await screen.findByRole(
       'heading',
-      { name: 'Assessment Call Required' },
+      { name: 'A Call Comes First' },
       WAIT,
     );
 

@@ -25,7 +25,7 @@ export function JoinCall() {
 
   if (meetingLink) {
     return (
-      <main aria-label="Assessment call" className={FULL_PAGE_MESSAGE_SHELL_CLASS}>
+      <main aria-label="Your call" className={FULL_PAGE_MESSAGE_SHELL_CLASS}>
         <p role="status" className="text-text-secondary">
           Taking you to your call…
         </p>
@@ -36,10 +36,10 @@ export function JoinCall() {
   return (
     <ErrorPage
       icon={VideoOff}
-      eyebrow="Assessment call"
+      eyebrow="Your call"
       title="Your call link isn't ready yet"
       description="The meeting room for this call hasn't been set up yet. Check back before your call, or reply to your confirmation email and we'll send the link."
-      landmarkLabel="Assessment call"
+      landmarkLabel="Your call"
     >
       <Link to="/" className={ERROR_PAGE_ACTION_CLASS}>
         Back to home <ArrowRight size={18} aria-hidden="true" />

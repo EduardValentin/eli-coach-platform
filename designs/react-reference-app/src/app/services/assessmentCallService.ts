@@ -1,3 +1,5 @@
+import type { VisitorGender, VisitorPrimaryGoal } from './visitorProfile';
+
 export type PrototypeBookingOutcome =
   | 'success'
   | 'slot_unavailable'
@@ -13,13 +15,26 @@ export type AssessmentCallErrorCode = Exclude<
 export type PrototypeBooking = {
   id: string;
   startsAt: Date;
-  visitorName: string;
+  bookedAt: Date;
+  firstName: string;
+  lastName: string;
   visitorEmail: string;
+  dateOfBirth: string;
+  gender: VisitorGender;
+  primaryGoal: VisitorPrimaryGoal;
+  country: string;
+  phone: string | null;
   notes: string;
   visitorTimeZone: string;
   coachTimeZone: string;
   joinPath: string;
 };
+
+export function visitorFullName(
+  booking: Pick<PrototypeBooking, 'firstName' | 'lastName'>,
+): string {
+  return `${booking.firstName} ${booking.lastName}`;
+}
 
 export class AssessmentCallError extends Error {
   code: AssessmentCallErrorCode;
@@ -290,8 +305,14 @@ export async function listOpenSlots({
 
 export type AssessmentCallRequest = {
   startsAt: Date;
-  fullName: string;
+  firstName: string;
+  lastName: string;
   email: string;
+  dateOfBirth: string;
+  gender: VisitorGender;
+  primaryGoal: VisitorPrimaryGoal;
+  country: string;
+  phone: string | null;
   notes: string;
   visitorTimeZone: string;
   outcome: PrototypeBookingOutcome;
@@ -309,8 +330,15 @@ function bookingFrom(
   return {
     id,
     startsAt: request.startsAt,
-    visitorName: request.fullName.trim(),
+    bookedAt: new Date(),
+    firstName: request.firstName.trim(),
+    lastName: request.lastName.trim(),
     visitorEmail: request.email.trim(),
+    dateOfBirth: request.dateOfBirth,
+    gender: request.gender,
+    primaryGoal: request.primaryGoal,
+    country: request.country,
+    phone: request.phone,
     notes: request.notes.trim(),
     visitorTimeZone: request.visitorTimeZone,
     coachTimeZone: availability.timeZone,

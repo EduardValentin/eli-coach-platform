@@ -16,7 +16,7 @@ export type AssessmentCallEmailVariant = 'with-notes' | 'without-notes';
 
 export type AssessmentCallVisitorConfirmationProps = {
   variant?: AssessmentCallEmailVariant;
-  visitorName?: string;
+  visitorFirstName?: string;
   visitorEmail?: string;
   notes?: string;
   startsAt?: Date;
@@ -62,7 +62,7 @@ const FONT_SANS =
 
 export function AssessmentCallVisitorConfirmation({
   variant = 'with-notes',
-  visitorName = 'Jane',
+  visitorFirstName = 'Jane',
   visitorEmail = 'jane@example.com',
   notes = DEFAULT_NOTES,
   startsAt = DEFAULT_STARTS_AT,
@@ -103,7 +103,7 @@ export function AssessmentCallVisitorConfirmation({
 
             <EmailSection style={letterSectionStyle}>
               <EmailText style={letterParagraphStyle}>
-                Hi {visitorName},
+                Hi {visitorFirstName},
               </EmailText>
               <EmailText style={letterParagraphStyle}>
                 We&apos;ll talk through your goals, your training so far and

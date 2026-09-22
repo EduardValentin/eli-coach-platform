@@ -1,4 +1,5 @@
 import { render, screen, within } from '@testing-library/react';
+import { subDays } from 'date-fns';
 import { MemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import { UpcomingAssessmentCalls } from './UpcomingAssessmentCalls';
@@ -13,12 +14,20 @@ function localInstant(day: number, hour: number): Date {
 
 function bookingAt(startsAt: Date, visitorName: string): PrototypeBooking {
   const id = `ac-${startsAt.getTime()}`;
+  const [firstName, lastName] = visitorName.split(' ');
 
   return {
     id,
     startsAt,
-    visitorName,
+    bookedAt: subDays(startsAt, 3),
+    firstName,
+    lastName,
     visitorEmail: 'ana.popescu@example.com',
+    dateOfBirth: '1994-03-14',
+    gender: 'female',
+    primaryGoal: 'build_strength',
+    country: 'RO',
+    phone: null,
     notes: 'Training three times a week.',
     visitorTimeZone: TIME_ZONE,
     coachTimeZone: 'Europe/Bucharest',

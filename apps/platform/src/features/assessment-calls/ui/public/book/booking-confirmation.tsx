@@ -8,7 +8,6 @@ import type { Booking } from "~/features/assessment-calls/contracts/assessment-c
 import {
   formatMonthFirstDate,
   formatClockTime,
-  nameTimeZone,
 } from "~/features/assessment-calls/contracts/call-moment";
 
 type BookingConfirmationProps = {
@@ -47,7 +46,7 @@ export function BookingConfirmation(props: BookingConfirmationProps) {
         <p className="mb-1 text-sm font-medium text-text-secondary">When</p>
         <p className="mb-4 font-semibold text-text-primary">
           {formatMonthFirstDate(startsAt, timeZone)} <br />
-          {`${formatClockTime(startsAt, timeZone)} (${nameTimeZone(startsAt, timeZone)})`}
+          {formatClockTime(startsAt, timeZone)}
         </p>
 
         <p className="mb-1 text-sm font-medium text-text-secondary">Duration</p>

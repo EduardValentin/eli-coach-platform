@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { render, screen } from '@testing-library/react';
+import { subDays } from 'date-fns';
 import { MemoryRouter } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CoachDashboard } from './CoachDashboard';
@@ -15,12 +16,20 @@ const TIME_ZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 function bookingAt(startsAt: Date, visitorName: string): PrototypeBooking {
   const id = `ac-${startsAt.getTime()}`;
+  const [firstName, lastName] = visitorName.split(' ');
 
   return {
     id,
     startsAt,
-    visitorName,
+    bookedAt: subDays(startsAt, 3),
+    firstName,
+    lastName,
     visitorEmail: 'ana.popescu@example.com',
+    dateOfBirth: '1994-03-14',
+    gender: 'female',
+    primaryGoal: 'build_strength',
+    country: 'RO',
+    phone: null,
     notes: '',
     visitorTimeZone: TIME_ZONE,
     coachTimeZone: 'Europe/Bucharest',

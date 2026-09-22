@@ -59,7 +59,7 @@ export function UpcomingCallsWidget({
               <li key={call.id}>
                 <DashboardAppointmentRow
                   action={<JoinCallLink joinPath={call.joinPath} />}
-                  attendeeName={call.visitorName}
+                  attendeeName={call.fullName}
                   badges={call.isToday && <Badge tone="accent">Today</Badge>}
                   when={{
                     date: formatShortDay(new Date(call.startsAt), timeZone),

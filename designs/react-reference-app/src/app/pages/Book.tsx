@@ -1,18 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence, MotionConfig } from 'motion/react';
-import { Calendar as CalendarIcon, Clock, Video, ChevronLeft, CircleCheck, User, Mail } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, Video, ChevronLeft, CircleCheck } from 'lucide-react';
 import { Link } from 'react-router';
 
 import { AssessmentSlotPicker } from '../components/AssessmentSlotPicker';
 import { Navbar } from '../components/Navbar';
 import { LegalFooter } from '../components/legal/LegalNav';
-import { firstInvalidField, useBookingDetailsForm, type BookingField } from '../components/booking/useBookingDetailsForm';
+import { BookingDetailsStep, FIELD_IDS } from '../components/booking/BookingDetailsStep';
+import { firstInvalidField, useBookingDetailsForm } from '../components/booking/useBookingDetailsForm';
 import { Alert } from '../components/ui/alert';
 import { Button, buttonVariants, cn } from '../components/ThemeButton';
 import { Card, cardVariants } from '../components/ui/card';
-import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
-import { Textarea } from '../components/ui/textarea';
 import { useAppState } from '../context/AppContext';
 import { useAssessmentCalls } from '../context/AssessmentCallContext';
 import {
@@ -23,16 +21,14 @@ import {
   type AssessmentCallErrorCode,
   type PrototypeBooking,
 } from '../services/assessmentCallService';
-import { formatSlotTime, formatZonedDate, nameTimeZone } from '../utils/dateFormatters';
+import { formatSlotTime, formatZonedDate } from '../utils/dateFormatters';
 import { ELI_PORTRAIT_SMALL } from '../utils/eliPortrait';
-import { FIELD_ERROR_CLASS } from '../utils/formFieldStyles';
 import { NotFound } from './NotFound';
 
 type Step = 'date-time' | 'details' | 'success';
 
 const CALL_DATE_PATTERN = 'EEEE, MMMM d, yyyy';
 const SUPPORT_EMAIL = 'contact@evoa.fit';
-const FIELD_IDS: Record<BookingField, string> = { fullName: 'name', email: 'email', notes: 'notes' };
 const SUPPORT_CONTACT_CODES: ReadonlySet<AssessmentCallErrorCode> = new Set([
   'booking_refused',
   'server_error',
@@ -53,7 +49,7 @@ export function Book() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [booking, setBooking] = useState<PrototypeBooking | null>(null);
   const detailsForm = useBookingDetailsForm();
-  const { fieldErrors } = detailsForm;
+  const [now] = useState(() => new Date());
   const shouldFocusStepHeading = useRef(false);
 
   const visitorTimeZone = useMemo(
@@ -120,6 +116,8 @@ export function Book() {
       event.currentTarget.querySelector<HTMLElement>(`#${FIELD_IDS[invalidField]}`)?.focus();
       return;
     }
+    const profile = detailsForm.validatedProfile();
+    if (!profile) return;
 
     setIsSubmitting(true);
     setSubmitError(null);
@@ -127,10 +125,8 @@ export function Book() {
     try {
       const confirmed = await bookAssessmentCall(
         {
+          ...profile,
           startsAt: selectedSlot,
-          fullName: detailsForm.fullName,
-          email: detailsForm.email,
-          notes: detailsForm.notes,
           visitorTimeZone,
           outcome: appState.bookingOutcome,
         },
@@ -149,10 +145,10 @@ export function Book() {
 
   return (
     <MotionConfig reducedMotion="user">
-      <main aria-label="Book a free assessment call" className="w-full">
+      <main aria-label="Book a free call" className="w-full">
         <Navbar theme="dark" />
 
-        <div className="min-h-screen bg-surface-page flex items-center justify-center pt-32 pb-12 px-4 sm:px-6 relative overflow-hidden">
+        <div className="min-h-screen bg-surface-page flex items-start justify-center pt-32 pb-12 px-4 sm:px-6 relative overflow-hidden">
           <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] rounded-full bg-brand/5 blur-[100px] pointer-events-none" />
           <div className="absolute bottom-[-10%] left-[-5%] w-[500px] h-[500px] rounded-full bg-brand-secondary/5 blur-[100px] pointer-events-none" />
 
@@ -167,7 +163,7 @@ export function Book() {
                 className="w-24 h-24 rounded-full object-cover mb-6 shadow-card border border-control-border-soft"
               />
 
-              <h1 className="text-sm font-semibold text-text-secondary uppercase tracking-widest mb-6">Free Assessment Call</h1>
+              <h1 className="text-sm font-semibold text-text-secondary uppercase tracking-widest mb-6">Free Call</h1>
 
               <div className="space-y-4 text-text-secondary mb-8 font-medium">
                 <div className="flex items-center gap-3 text-md">
@@ -293,90 +289,12 @@ export function Book() {
                       </Alert>
                     )}
 
-                    <form noValidate onSubmit={handleSubmit} className="space-y-5 flex-1">
-                      <div className="space-y-2">
-                        <Label htmlFor="name" className="text-text-label font-medium">Full Name</Label>
-                        <div className="relative">
-                          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" aria-hidden="true" />
-                          <Input
-                            id="name"
-                            required
-                            autoComplete="name"
-                            placeholder="Jane Doe"
-                            className="pl-9"
-                            value={detailsForm.fullName}
-                            onChange={(e) => detailsForm.setFullName(e.target.value)}
-                            aria-invalid={Boolean(fieldErrors.fullName) || undefined}
-                            aria-describedby={fieldErrors.fullName ? 'name-error' : undefined}
-                          />
-                        </div>
-                        {fieldErrors.fullName && (
-                          <p id="name-error" className={FIELD_ERROR_CLASS}>{fieldErrors.fullName}</p>
-                        )}
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="email" className="text-text-label font-medium">Email Address</Label>
-                        <div className="relative">
-                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" aria-hidden="true" />
-                          <Input
-                            id="email"
-                            type="email"
-                            required
-                            autoComplete="email"
-                            placeholder="jane@example.com"
-                            className="pl-9"
-                            value={detailsForm.email}
-                            onChange={(e) => detailsForm.setEmail(e.target.value)}
-                            aria-invalid={Boolean(fieldErrors.email) || undefined}
-                            aria-describedby={fieldErrors.email ? 'email-error' : undefined}
-                          />
-                        </div>
-                        {fieldErrors.email && (
-                          <p id="email-error" className={FIELD_ERROR_CLASS}>{fieldErrors.email}</p>
-                        )}
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="notes" className="text-text-label font-medium">Anything to share beforehand? (Optional)</Label>
-                        <Textarea
-                          id="notes"
-                          placeholder="e.g. recovering from a knee injury"
-                          className="h-24"
-                          value={detailsForm.notes}
-                          onChange={(e) => detailsForm.setNotes(e.target.value)}
-                          aria-invalid={Boolean(fieldErrors.notes) || undefined}
-                          aria-describedby={fieldErrors.notes ? 'notes-error' : undefined}
-                        />
-                        {fieldErrors.notes && (
-                          <p id="notes-error" className={FIELD_ERROR_CLASS}>{fieldErrors.notes}</p>
-                        )}
-                      </div>
-
-                      <div className="pt-4">
-                        <Button
-                          type="submit"
-                          disabled={isSubmitting}
-                          aria-busy={isSubmitting || undefined}
-                          weight="semibold"
-                          width="full"
-                        >
-                          {isSubmitting ? (
-                            <>
-                              <motion.div
-                                animate={{ rotate: 360 }}
-                                transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-                                className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
-                                aria-hidden="true"
-                              />
-                              <span className="sr-only">Scheduling your assessment</span>
-                            </>
-                          ) : (
-                            'Schedule Assessment'
-                          )}
-                        </Button>
-                      </div>
-                    </form>
+                    <BookingDetailsStep
+                      form={detailsForm}
+                      now={now}
+                      isSubmitting={isSubmitting}
+                      onSubmit={handleSubmit}
+                    />
                   </motion.div>
                 )}
 
@@ -402,7 +320,7 @@ export function Book() {
                       <p className="text-sm text-text-secondary font-medium mb-1">When</p>
                       <p className="font-semibold text-text-primary mb-4">
                         {formatZonedDate(booking.startsAt, visitorTimeZone, CALL_DATE_PATTERN)} <br />
-                        {formatSlotTime(booking.startsAt, visitorTimeZone)} ({nameTimeZone(visitorTimeZone, booking.startsAt)})
+                        {formatSlotTime(booking.startsAt, visitorTimeZone)}
                       </p>
 
                       <p className="text-sm text-text-secondary font-medium mb-1">Duration</p>

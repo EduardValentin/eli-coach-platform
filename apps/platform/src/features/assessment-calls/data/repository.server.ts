@@ -127,9 +127,15 @@ async function insertCall(
     .insert(assessmentCallsTable)
     .values({
       id,
-      visitorName: command.fullName,
+      firstName: command.firstName,
+      lastName: command.lastName,
       visitorEmail: command.normalizedEmail,
       visitorNotes: command.notes,
+      dateOfBirth: command.dateOfBirth,
+      gender: command.gender,
+      primaryGoal: command.primaryGoal,
+      country: command.country,
+      phone: command.phone,
       startsAt: command.startsAt,
       visitorTimeZone: command.visitorTimeZone,
       coachTimeZone: command.coachTimeZone,
@@ -147,9 +153,15 @@ async function insertCall(
 function toAssessmentCall(row: AssessmentCallRow): AssessmentCall {
   return AssessmentCall.reconstitute({
     id: row.id,
-    visitorName: row.visitorName,
+    firstName: row.firstName,
+    lastName: row.lastName,
     visitorEmail: row.visitorEmail,
     visitorNotes: row.visitorNotes,
+    dateOfBirth: row.dateOfBirth,
+    gender: row.gender,
+    primaryGoal: row.primaryGoal,
+    country: row.country,
+    phone: row.phone,
     startsAt: row.startsAt,
     visitorTimeZone: row.visitorTimeZone,
     coachTimeZone: row.coachTimeZone,

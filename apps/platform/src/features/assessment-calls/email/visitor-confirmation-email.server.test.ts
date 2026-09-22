@@ -12,9 +12,16 @@ function createCall(
 ): AssessmentCallSnapshot {
   return {
     id: "ac-demo",
-    visitorName: "Sofia Marin",
+    firstName: "Sofia",
+    lastName: "Marin",
+    fullName: "Sofia Marin",
     visitorEmail: "sofia@example.com",
     visitorNotes: null,
+    dateOfBirth: "1994-03-14",
+    gender: "female",
+    primaryGoal: "build_strength",
+    country: "RO",
+    phone: "+40712345678",
     startsAt: new Date("2026-03-02T15:00:00.000Z"),
     endsAt: new Date("2026-03-02T15:30:00.000Z"),
     visitorTimeZone: "Europe/Bucharest",
@@ -80,16 +87,17 @@ describe("createVisitorConfirmationEmailContent", () => {
     expect(content.text).toContain("calendar file is attached to this email");
   });
 
-  it("greets the visitor by name and tells her where the confirmation went", () => {
+  it("greets the visitor by her first name and tells her where the confirmation went", () => {
     // arrange
     // act
     const content = createContent();
 
     // assert
-    expect(content.html).toContain("Hi Sofia Marin,");
+    expect(content.html).toContain("Hi Sofia,");
+    expect(content.html).not.toContain("Hi Sofia Marin,");
     expect(content.html).toContain("sofia@example.com");
     expect(content.html).toContain('href="mailto:contact@evoa.fit"');
-    expect(content.text).toContain("Hi Sofia Marin,");
+    expect(content.text).toContain("Hi Sofia,");
     expect(content.text).toContain("sofia@example.com");
     expect(content.text).toContain("contact@evoa.fit");
   });

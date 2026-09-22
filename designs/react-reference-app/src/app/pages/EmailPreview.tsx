@@ -41,6 +41,8 @@ type TemplateOption = {
   variants: { value: string; label: string }[];
 };
 
+const SAMPLE_VISITOR_PHONE = '+40712345678';
+
 const TEMPLATES: TemplateOption[] = [
   {
     key: 'waitlist-confirmation',
@@ -94,8 +96,8 @@ const TEMPLATES: TemplateOption[] = [
     key: 'assessment-call-coach',
     label: 'Assessment call — coach',
     variants: [
-      { value: 'with-notes', label: 'With a shared note' },
-      { value: 'without-notes', label: 'Without a shared note' },
+      { value: 'with-notes', label: 'With a shared note and a phone' },
+      { value: 'without-notes', label: 'Without a shared note or a phone' },
     ],
   },
 ];
@@ -167,6 +169,7 @@ export function EmailPreview() {
       return (
         <AssessmentCallCoachNotification
           variant={variant as AssessmentCallEmailVariant}
+          visitorPhone={variant === 'with-notes' ? SAMPLE_VISITOR_PHONE : null}
           joinUrl={`${window.location.origin}/book/ac-demo/join`}
         />
       );
