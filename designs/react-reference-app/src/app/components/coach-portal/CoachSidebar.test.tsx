@@ -30,6 +30,7 @@ beforeAll(() => {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  window.history.replaceState(null, '', '/');
 });
 
 function renderSidebar(path = '/coach') {
@@ -55,6 +56,33 @@ function renderSidebar(path = '/coach') {
 }
 
 describe('CoachSidebar navigation links', () => {
+  it('hides Post-MVP features in MVP mode', () => {
+    // arrange
+    renderSidebar();
+
+    // act
+    const postMvpLinks = ['Training', 'Nutrition', 'Messages'].flatMap((name) =>
+      screen.queryAllByRole('link', { name }),
+    );
+
+    // assert
+    expect(postMvpLinks).toHaveLength(0);
+  });
+
+  it('shows Post-MVP features in Post-MVP mode', () => {
+    // arrange
+    window.history.replaceState(null, '', '/?scope=post-mvp');
+    renderSidebar();
+
+    // act
+    const postMvpLinks = ['Training', 'Nutrition', 'Messages'].flatMap((name) =>
+      screen.queryAllByRole('link', { name }),
+    );
+
+    // assert
+    expect(postMvpLinks).not.toHaveLength(0);
+  });
+
   it('leads to the assessment calls page', () => {
     // arrange
     renderSidebar();

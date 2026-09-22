@@ -35,11 +35,14 @@ export type PrototypeWaitlistAvailability =
 // like a signed-out client cannot be expressed.
 export type PrototypeSession = 'anonymous' | PrototypeAccountRole;
 
+export type PrototypeMode = 'mvp' | 'post-mvp';
+
 export function isSignedIn(session: PrototypeSession): boolean {
   return session !== 'anonymous';
 }
 
 type AppState = {
+  prototypeMode: PrototypeMode;
   session: PrototypeSession;
   signInOutcome: PrototypeSignInOutcome;
   hasBundle: boolean;
@@ -71,6 +74,7 @@ type AppContextType = {
 };
 
 const defaultState: AppState = {
+  prototypeMode: 'mvp',
   session: 'anonymous',
   signInOutcome: 'client',
   hasBundle: false,
@@ -85,7 +89,7 @@ const defaultState: AppState = {
   bookingSlotsUnavailable: false,
   callSettingsSaveOutcome: 'saved',
   coachCallsOutcome: 'ok',
-  journeyStage: 'review-call-scheduled',
+  journeyStage: 'approved',
   journeyStartPath: 'immediate',
   journeySubscriptionStatus: 'active',
   journeySex: 'female',
@@ -158,6 +162,10 @@ function parseDevParamsFromURL(): AppState {
   const params = new URLSearchParams(window.location.search);
   const state = { ...defaultState };
 
+  if (params.get('scope') === 'post-mvp') {
+    state.prototypeMode = 'post-mvp';
+  }
+
   const session = params.get('session');
   if (session && (validSessions as readonly string[]).includes(session)) {
     state.session = session as PrototypeSession;
@@ -171,8 +179,12 @@ function parseDevParamsFromURL(): AppState {
   }
   if (params.has('bundle')) state.hasBundle = params.get('bundle') === '1';
   if (params.has('waitlist')) state.isWaitlistMode = params.get('waitlist') === '1';
-  if (params.has('nblock')) state.nutritionBlockCompleted = params.get('nblock') === '1';
-  if (params.has('npref')) state.nutritionPreferenceConflict = params.get('npref') === '1';
+  if (state.prototypeMode === 'post-mvp' && params.has('nblock')) {
+    state.nutritionBlockCompleted = params.get('nblock') === '1';
+  }
+  if (state.prototypeMode === 'post-mvp' && params.has('npref')) {
+    state.nutritionPreferenceConflict = params.get('npref') === '1';
+  }
   const availability = params.get('availability');
   if (
     availability &&
@@ -220,9 +232,12 @@ function parseDevParamsFromURL(): AppState {
   }
 
   const journeyStage = params.get('jstage');
+  const isPostMvpJourneyStage =
+    journeyStage === 'program-ready' || journeyStage === 'review-call-scheduled';
   if (
     journeyStage &&
-    (validJourneyStages as readonly string[]).includes(journeyStage)
+    (validJourneyStages as readonly string[]).includes(journeyStage) &&
+    (state.prototypeMode === 'post-mvp' || !isPostMvpJourneyStage)
   ) {
     state.journeyStage = journeyStage as JourneyStage;
   }
@@ -290,6 +305,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const url = new URL(window.location.href);
 
+    url.searchParams.delete('scope');
     url.searchParams.delete('session');
     url.searchParams.delete('signin');
     url.searchParams.delete('bundle');
@@ -314,6 +330,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     url.searchParams.delete('invitation');
     url.searchParams.delete('invitationstate');
 
+    if (appState.prototypeMode === 'post-mvp') {
+      url.searchParams.set('scope', 'post-mvp');
+    }
     if (isSignedIn(appState.session)) {
       url.searchParams.set('session', appState.session);
     }
@@ -322,8 +341,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     if (appState.hasBundle) url.searchParams.set('bundle', '1');
     if (appState.isWaitlistMode) url.searchParams.set('waitlist', '1');
-    if (appState.nutritionBlockCompleted) url.searchParams.set('nblock', '1');
-    if (appState.nutritionPreferenceConflict) url.searchParams.set('npref', '1');
+    if (appState.prototypeMode === 'post-mvp' && appState.nutritionBlockCompleted) {
+      url.searchParams.set('nblock', '1');
+    }
+    if (appState.prototypeMode === 'post-mvp' && appState.nutritionPreferenceConflict) {
+      url.searchParams.set('npref', '1');
+    }
     if (appState.waitlistAvailability === null) {
       url.searchParams.set('availability', 'unavailable');
     } else if (appState.waitlistAvailability !== 'available') {

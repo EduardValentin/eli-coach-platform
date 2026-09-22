@@ -32,6 +32,8 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle
 } from '../../components/ui/dialog';
 import { toast } from 'sonner';
+import { useAppState } from '../../context/AppContext';
+import { cn } from '../../components/ui/utils';
 
 
 export function ClientDetails() {
@@ -57,6 +59,8 @@ function RosterClientDetails() {
   const { weightUnit, heightUnit } = useUnitPreferences();
   const { addNotification } = useNotifications();
   const { addSystemMessage, sendMessage: ctxSendMessage } = useMessaging();
+  const { appState } = useAppState();
+  const isPostMvp = appState.prototypeMode === 'post-mvp';
 
   const { getPlan: getNutritionPlan, getPreferences: getNutritionPreferences, tags: nutritionTags, foods: nutritionFoods } = useNutrition();
 
@@ -140,6 +144,7 @@ function RosterClientDetails() {
       title: 'Check-in Scheduled',
       message: `Coach scheduled a check-in with ${clientName} for ${formatCheckinDate(date)} at ${formatCheckinTime(time)}.`,
       link: '/portal/messages',
+      mvpLink: '/portal/checkins',
     });
 
     setShowScheduleDialog(false);
@@ -170,7 +175,9 @@ function RosterClientDetails() {
           <div className="min-w-0">
             <h1 className={`${PORTAL_PAGE_TITLE_CLASS} mb-2`}>{clientName}</h1>
             <p className="text-text-secondary">
-              {activePlan ? `Active Client · Week ${activePlan.currentWeekNumber} of ${activePlan.weeks.length}` : 'Active Client'}
+              {isPostMvp && activePlan
+                ? `Active Client · Week ${activePlan.currentWeekNumber} of ${activePlan.weeks.length}`
+                : 'Active Client'}
             </p>
             {activeSubscription && (
               <div className="mt-2">
@@ -191,10 +198,12 @@ function RosterClientDetails() {
             <Droplet size={16} />
             Cycle Log
           </Link>
-          <Link to={`/coach/messages?client=${clientId}`} className="px-5 py-2.5 bg-white border border-neutral-200 text-text-primary text-sm font-semibold rounded-control hover:bg-neutral-50 transition-colors flex items-center gap-2 shadow-sm">
-            <MessageSquare size={16} />
-            Message
-          </Link>
+          {isPostMvp && (
+            <Link to={`/coach/messages?client=${clientId}`} className="px-5 py-2.5 bg-white border border-neutral-200 text-text-primary text-sm font-semibold rounded-control hover:bg-neutral-50 transition-colors flex items-center gap-2 shadow-sm">
+              <MessageSquare size={16} />
+              Message
+            </Link>
+          )}
           <button
             onClick={() => setShowScheduleDialog(true)}
             className="px-5 py-2.5 bg-text-primary text-white text-sm font-semibold rounded-control hover:bg-neutral-800 transition-colors flex items-center gap-2 shadow-md"
@@ -223,7 +232,11 @@ function RosterClientDetails() {
       )}
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-8">
+      <div
+        className={cn('grid grid-cols-1 gap-4 mb-8 sm:grid-cols-2 lg:gap-6', {
+          'lg:grid-cols-4': isPostMvp,
+        })}
+      >
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36">
           <div className="flex justify-between items-start w-full">
             <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Progress</span>
@@ -237,7 +250,7 @@ function RosterClientDetails() {
           </div>
         </motion.div>
 
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36">
+        {isPostMvp && <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36">
           <div className="flex justify-between items-start w-full">
             <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Daily Target</span>
             <Flame size={16} className="text-metric-energy" strokeWidth={2.5} />
@@ -253,7 +266,7 @@ function RosterClientDetails() {
               </p>
             )}
           </div>
-        </motion.div>
+        </motion.div>}
 
         <Link to={`/coach/clients/${clientId}/cycle`} className="block">
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36 hover:border-brand/20 hover:shadow-md transition-all cursor-pointer">
@@ -274,7 +287,7 @@ function RosterClientDetails() {
           </motion.div>
         </Link>
 
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36">
+        {isPostMvp && <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36">
           <div className="flex justify-between items-start w-full">
             <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Avg Compliance</span>
             <History size={16} className="text-brand-secondary" strokeWidth={2.5} />
@@ -283,13 +296,17 @@ function RosterClientDetails() {
             <span className="font-serif text-3xl text-text-primary">95</span>
             <span className="text-xs font-semibold text-text-secondary">%</span>
           </div>
-        </motion.div>
+        </motion.div>}
       </div>
 
       {/* Current focus section */}
       <section aria-labelledby="current-focus-heading" className="mb-8">
         <h2 id="current-focus-heading" className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-4">Current focus</h2>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div
+          className={cn('grid grid-cols-1 gap-6', {
+            'lg:grid-cols-3': isPostMvp,
+          })}
+        >
 
           {/* Current Goal */}
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col h-full">
@@ -349,7 +366,7 @@ function RosterClientDetails() {
           </motion.div>
 
           {/* Active Plan */}
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col h-full">
+          {isPostMvp && <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col h-full">
             <h2 className="font-serif text-lg text-text-primary font-semibold mb-4 flex items-center gap-2">
               <Activity size={18} className="text-brand" />
               Active Plan
@@ -400,10 +417,10 @@ function RosterClientDetails() {
                 </button>
               </div>
             )}
-          </motion.div>
+          </motion.div>}
 
           {/* Nutrition */}
-          {(() => {
+          {isPostMvp && (() => {
             const nutritionPlan = getNutritionPlan(clientId);
             const activeBlock = nutritionPlan?.blocks.find(b => b.status === 'active');
             const preferences = getNutritionPreferences(clientId);
@@ -514,10 +531,14 @@ function RosterClientDetails() {
       </section>
 
       {/* Secondary detail section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div
+        className={cn('grid grid-cols-1 gap-6', {
+          'lg:grid-cols-3': isPostMvp,
+        })}
+      >
 
         {/* Workout History */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="lg:col-span-2 bg-white p-8 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 self-start">
+        {isPostMvp && <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="lg:col-span-2 bg-white p-8 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 self-start">
           <div className="flex items-center justify-between mb-6">
             <h2 className="font-serif text-xl text-text-primary font-semibold">Workout History</h2>
             <Link
@@ -568,7 +589,7 @@ function RosterClientDetails() {
               })
             )}
           </div>
-        </motion.div>
+        </motion.div>}
 
         {/* Right column: Profile Details + Past Plans */}
         <div className="lg:col-span-1 space-y-6">
@@ -623,7 +644,7 @@ function RosterClientDetails() {
           </motion.div>
 
           {/* Past Plans */}
-          {pastPlans.length > 0 && (
+          {isPostMvp && pastPlans.length > 0 && (
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50">
               <button
                 onClick={() => setPastPlansExpanded(!pastPlansExpanded)}

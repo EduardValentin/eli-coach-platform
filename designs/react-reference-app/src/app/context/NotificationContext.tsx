@@ -15,6 +15,8 @@ export type Notification = {
   time: string;
   read: boolean;
   link: string;
+  mvpLink?: string;
+  postMvp?: boolean;
 };
 
 type NotificationContextType = {
@@ -34,7 +36,8 @@ const COACH_NOTIFICATIONS: Notification[] = [
     message: 'Jane Doe sent you a message.',
     time: '10 mins ago',
     read: false,
-    link: '/coach/messages?client=c1'
+    link: '/coach/messages?client=c1',
+    postMvp: true,
   },
   {
     id: '2',
@@ -61,7 +64,8 @@ const CLIENT_NOTIFICATIONS: Notification[] = [
     message: 'Your coach replied to your message.',
     time: '10 mins ago',
     read: false,
-    link: '/portal/messages'
+    link: '/portal/messages',
+    postMvp: true,
   },
   {
     id: '2',
@@ -69,7 +73,8 @@ const CLIENT_NOTIFICATIONS: Notification[] = [
     message: 'Your weekly check-in is confirmed for Wednesday at 10:00 AM.',
     time: '1 day ago',
     read: true,
-    link: '/portal/messages'
+    link: '/portal/messages',
+    mvpLink: '/portal/checkins',
   }
 ];
 
@@ -89,10 +94,23 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   );
 
   const reviewCallDue = appState.session === 'client' && needsReviewCall(demoJourney);
+  const includesPostMvp = appState.prototypeMode === 'post-mvp';
+
+  const visibleStored = useMemo(
+    () =>
+      stored
+        .filter((notification) => includesPostMvp || !notification.postMvp)
+        .map((notification) =>
+          !includesPostMvp && notification.mvpLink
+            ? { ...notification, link: notification.mvpLink }
+            : notification,
+        ),
+    [includesPostMvp, stored],
+  );
 
   const notifications = useMemo(
     () =>
-      reviewCallDue
+      includesPostMvp && reviewCallDue
         ? [
             {
               id: PROGRAM_READY_NOTIFICATION_ID,
@@ -102,10 +120,10 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
               read: false,
               link: PROGRAM_READY_NOTIFICATION.link,
             },
-            ...stored,
+            ...visibleStored,
           ]
-        : stored,
-    [reviewCallDue, stored]
+        : visibleStored,
+    [includesPostMvp, reviewCallDue, visibleStored]
   );
 
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -118,14 +136,15 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       read: false,
     };
     setStored(prev => [newNotif, ...prev]);
-    
-    // Show toast
+    const navigationTarget =
+      !includesPostMvp && newNotif.mvpLink ? newNotif.mvpLink : newNotif.link;
+
     toast(newNotif.title, {
       description: newNotif.message,
       action: {
         label: 'View',
         onClick: () => {
-          navigateRef.current(newNotif.link);
+          navigateRef.current(navigationTarget);
         }
       },
     });

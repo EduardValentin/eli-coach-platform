@@ -26,25 +26,24 @@ type NavLink = {
   name: string;
   href: string;
   icon: typeof Activity;
+  postMvp?: boolean;
 };
 
 const PRIMARY_LINKS: NavLink[] = [
   { name: 'Dashboard', href: '/portal', icon: Activity },
-  { name: 'My Plan', href: '/portal/plan', icon: Calendar },
-  { name: 'Messages', href: '/portal/messages', icon: MessageSquare },
+  { name: 'My Plan', href: '/portal/plan', icon: Calendar, postMvp: true },
+  { name: 'Messages', href: '/portal/messages', icon: MessageSquare, postMvp: true },
   { name: 'Cycle', href: '/portal/cycle', icon: Droplet },
 ];
 
 const SECONDARY_LINKS: NavLink[] = [
   { name: 'Check-ins', href: '/portal/checkins', icon: CalendarCheck },
-  { name: 'History', href: '/portal/history', icon: History },
-  { name: 'Nutrition', href: '/portal/nutrition', icon: Utensils },
+  { name: 'History', href: '/portal/history', icon: History, postMvp: true },
+  { name: 'Nutrition', href: '/portal/nutrition', icon: Utensils, postMvp: true },
   { name: 'Resources', href: '#', icon: PlaySquare },
   { name: 'Profile', href: '/portal/profile', icon: UserCircle },
   { name: 'Settings', href: '/portal/settings', icon: Settings },
 ];
-
-const ALL_LINKS: NavLink[] = [...PRIMARY_LINKS, ...SECONDARY_LINKS];
 
 function isRouteActive(pathname: string, href: string): boolean {
   if (href === '#') return false;
@@ -80,7 +79,7 @@ function ProfileHeader({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-function DesktopSidebar() {
+function DesktopSidebar({ links }: { links: NavLink[] }) {
   const location = useLocation();
 
   return (
@@ -94,7 +93,7 @@ function DesktopSidebar() {
       </div>
 
       <nav aria-label="Client portal primary" className="flex flex-1 flex-col gap-1 px-4 overflow-y-auto">
-        {ALL_LINKS.map(link => {
+        {links.map(link => {
           const Icon = link.icon;
           const isActive = isRouteActive(location.pathname, link.href);
           return (
@@ -167,7 +166,7 @@ function MobileTopBar({ onOpenMore, moreOpen }: { onOpenMore: () => void; moreOp
   );
 }
 
-function MobileTabBar() {
+function MobileTabBar({ links }: { links: NavLink[] }) {
   const location = useLocation();
 
   return (
@@ -177,7 +176,7 @@ function MobileTabBar() {
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <ul className="flex items-stretch h-16">
-        {PRIMARY_LINKS.map(link => {
+        {links.map(link => {
           const Icon = link.icon;
           const isActive = isRouteActive(location.pathname, link.href);
           return (
@@ -202,7 +201,7 @@ function MobileTabBar() {
   );
 }
 
-function MoreSheetBody({ onClose }: { onClose: () => void }) {
+function MoreSheetBody({ links, onClose }: { links: NavLink[]; onClose: () => void }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { setAppState } = useAppState();
@@ -220,7 +219,7 @@ function MoreSheetBody({ onClose }: { onClose: () => void }) {
       </div>
 
       <nav aria-label="Client portal more" className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4">
-        {SECONDARY_LINKS.map(link => {
+        {links.map(link => {
           const Icon = link.icon;
           const isActive = isRouteActive(location.pathname, link.href);
           const isPlaceholder = link.href === '#';
@@ -283,12 +282,17 @@ function MoreSheetBody({ onClose }: { onClose: () => void }) {
 
 export function PortalSidebar() {
   const [moreOpen, setMoreOpen] = useState(false);
+  const { appState } = useAppState();
+  const includeLink = (link: NavLink) =>
+    !link.postMvp || appState.prototypeMode === 'post-mvp';
+  const primaryLinks = PRIMARY_LINKS.filter(includeLink);
+  const secondaryLinks = SECONDARY_LINKS.filter(includeLink);
 
   return (
     <>
-      <DesktopSidebar />
+      <DesktopSidebar links={[...primaryLinks, ...secondaryLinks]} />
       <MobileTopBar onOpenMore={() => setMoreOpen(true)} moreOpen={moreOpen} />
-      <MobileTabBar />
+      <MobileTabBar links={primaryLinks} />
 
       <BottomSheet
         open={moreOpen}
@@ -296,7 +300,10 @@ export function PortalSidebar() {
         title="Portal menu"
         className="h-[90vh] flex flex-col"
       >
-        <MoreSheetBody onClose={() => setMoreOpen(false)} />
+        <MoreSheetBody
+          links={secondaryLinks}
+          onClose={() => setMoreOpen(false)}
+        />
       </BottomSheet>
     </>
   );

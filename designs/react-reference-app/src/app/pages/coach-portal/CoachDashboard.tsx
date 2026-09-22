@@ -30,6 +30,7 @@ export function CoachDashboard() {
   const { getPendingCheckins } = useCheckins();
   const { bookings } = useAssessmentCalls();
   const { appState } = useAppState();
+  const isPostMvp = appState.prototypeMode === 'post-mvp';
   const listing = readCoachCallListing(bookings, appState.coachCallsOutcome);
 
   if (listing.status === 'unavailable') {
@@ -129,7 +130,9 @@ export function CoachDashboard() {
                 <th className="pb-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Client Name</th>
                 <th className="pb-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Cycle Phase</th>
                 <th className="pb-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Primary Goal</th>
-                <th className="pb-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Compliance</th>
+                {isPostMvp && (
+                  <th className="pb-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Compliance</th>
+                )}
                 <th className="pb-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-right">Action</th>
               </tr>
             </thead>
@@ -139,11 +142,11 @@ export function CoachDashboard() {
                   <td className="py-4 font-semibold text-sm text-foreground">{client.name}</td>
                   <td className="py-4 text-sm text-muted-foreground">{client.phase}</td>
                   <td className="py-4 text-sm text-muted-foreground">{client.goal}</td>
-                  <td className="py-4">
+                  {isPostMvp && <td className="py-4">
                     <span className="inline-flex items-center px-2 py-1 rounded-field bg-success-soft text-success text-xs font-bold">
                       {client.compliance}
                     </span>
-                  </td>
+                  </td>}
                   <td className="py-4 text-right">
                     <Link 
                       to={`/coach/clients/${client.id}`}

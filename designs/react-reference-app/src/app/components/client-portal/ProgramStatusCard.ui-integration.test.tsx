@@ -28,7 +28,7 @@ beforeAll(() => {
 });
 
 function renderCard(devParams: string) {
-  const url = `/portal${devParams}`;
+  const url = `/portal?scope=post-mvp&${devParams.slice(1)}`;
   window.history.replaceState({}, '', url);
 
   render(
