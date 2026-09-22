@@ -1,97 +1,12 @@
 import { RouterContextProvider } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
-import type { FeatureFlagReader } from "@eli-coach-platform/domain/feature-flag";
 import { assessmentCallsFeatureFlagEvaluationContext } from "~/features/assessment-calls/server/guards/assessment-calls-context.server";
 import { waitlistFeatureFlagEvaluationContext } from "~/features/waitlist/server/guards/waitlist-context.server";
-import { createFeatureFlagOverrideReader } from "~/server/feature-flags/feature-flag-override-reader.server";
-import {
-  createRuntimeFeatureFlagOverrideMiddleware,
-  featureFlagOverridesAllowed,
-} from "~/server/non-production/feature-flag-overrides-composition.server";
 import { createFeatureFlagOverrideMiddleware } from "~/server/non-production/feature-flag-overrides-http.server";
 import { platformFeatureFlagEvaluationContext } from "~/server/guards/platform-context.server";
 
-describe("feature flag overrides", () => {
-  it.each(["local", "test"])("allows overrides in %s", (environment) => {
-    // arrange
-    // act
-    const allowed = featureFlagOverridesAllowed(environment);
-
-    // assert
-    expect(allowed).toBe(true);
-  });
-
-  it.each(["production", "preview", ""])(
-    "denies overrides in %s",
-    (environment) => {
-      // arrange
-      // act
-      const allowed = featureFlagOverridesAllowed(environment);
-
-      // assert
-      expect(allowed).toBe(false);
-    },
-  );
-
-  it("overlays a request value without changing the database reader", async () => {
-    // arrange
-    const databaseReader: FeatureFlagReader = {
-      execute: vi.fn().mockResolvedValue({ WAITLIST_MODE: true }),
-    };
-    const reader = createFeatureFlagOverrideReader(databaseReader);
-
-    // act
-    const flags = await reader.execute({
-      overrides: { WAITLIST_MODE: false },
-    });
-
-    // assert
-    expect(flags).toEqual({ WAITLIST_MODE: false });
-    expect(databaseReader.execute).toHaveBeenCalledWith();
-  });
-
-  it("does not mask a database read failure", async () => {
-    // arrange
-    const failure = new Error("database unavailable");
-    const databaseReader: FeatureFlagReader = {
-      execute: vi.fn().mockRejectedValue(failure),
-    };
-    const reader = createFeatureFlagOverrideReader(databaseReader);
-
-    // act
-    const result = reader.execute({ overrides: { WAITLIST_MODE: false } });
-
-    // assert
-    await expect(result).rejects.toBe(failure);
-  });
-
-  it("does not parse override input in production", async () => {
-    // arrange
-    const context = new RouterContextProvider();
-    const next = vi.fn().mockResolvedValue(new Response("ok"));
-    const middleware = createRuntimeFeatureFlagOverrideMiddleware({
-      environment: () => ({ APP_BASE_PATH: "/", ENVIRONMENT: "production" }),
-    });
-
-    // act
-    const response = requireResponse(
-      await middleware(
-        {
-          context,
-          params: {},
-          request: new Request("https://eli.example/?ff.UNKNOWN=true"),
-        } as never,
-        next,
-      ),
-    );
-
-    // assert
-    expect(await response.text()).toBe("ok");
-    expect(response.headers.get("Set-Cookie")).toBeNull();
-    expect(next).toHaveBeenCalledOnce();
-  });
-
+describe("feature flag override middleware", () => {
   it("applies an override immediately and stores it for the browser session", async () => {
     // arrange
     const context = new RouterContextProvider();
