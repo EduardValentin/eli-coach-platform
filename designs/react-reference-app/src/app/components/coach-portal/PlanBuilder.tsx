@@ -1,32 +1,76 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  X, Plus, Trash2, GripVertical, Search, Activity,
-  Info, ArrowLeft, Filter, MoreVertical, Copy, ArrowLeftRight,
-  MessageSquare, Layers, PanelLeftOpen, Library
+  X,
+  Plus,
+  Trash2,
+  GripVertical,
+  Search,
+  Activity,
+  Info,
+  ArrowLeft,
+  Filter,
+  MoreVertical,
+  Copy,
+  ArrowLeftRight,
+  MessageSquare,
+  Layers,
+  PanelLeftOpen,
+  Library,
 } from 'lucide-react';
-import { useTraining, PlanWeek, PlanDay, PlanExercise, DayType, Exercise } from '../../context/TrainingContext';
+import {
+  useTraining,
+  PlanWeek,
+  PlanDay,
+  PlanExercise,
+  DayType,
+  Exercise,
+} from '../../context/TrainingContext';
 import { toast } from 'sonner';
 import { DndProvider, useDrag, useDrop, useDragLayer } from 'react-dnd';
 import { TouchBackend } from 'react-dnd-touch-backend';
 import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover';
 import { ExerciseFilters } from './ExerciseFilters';
-import { matchesExerciseFilters, type ExerciseFilter } from '../../utils/exerciseFilters';
+import {
+  matchesExerciseFilters,
+  type ExerciseFilter,
+} from '../../utils/exerciseFilters';
 import { Checkbox } from '../ui/checkbox';
+import { Button } from '../ui/button';
+import { cn } from '../ui/utils';
 
 // ── Constants ────────────────────────────────────────────────────────
 
-const DAY_TYPES: DayType[] = ['Rest', 'Recovery', 'Strength', 'Hypertrophy', 'Lighter'];
+const DAY_TYPES: DayType[] = [
+  'Rest',
+  'Recovery',
+  'Strength',
+  'Hypertrophy',
+  'Lighter',
+];
 const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-const DAY_NAMES_FULL = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const DAY_NAMES_FULL = [
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
+];
 
 function getDayTypeColor(type: DayType) {
   switch (type) {
-    case 'Strength': return 'var(--training-strength)';
-    case 'Hypertrophy': return 'var(--training-hypertrophy)';
-    case 'Recovery': return 'var(--training-recovery)';
-    case 'Lighter': return 'var(--training-lighter)';
-    default: return 'var(--training-rest)';
+    case 'Strength':
+      return 'var(--training-strength)';
+    case 'Hypertrophy':
+      return 'var(--training-hypertrophy)';
+    case 'Recovery':
+      return 'var(--training-recovery)';
+    case 'Lighter':
+      return 'var(--training-lighter)';
+    default:
+      return 'var(--training-rest)';
   }
 }
 
@@ -43,8 +87,8 @@ function CustomDragLayer() {
 
   const label =
     itemType === 'LIBRARY_EXERCISE'
-      ? item?.exercise?.name ?? 'Exercise'
-      : item?.label ?? 'Exercise';
+      ? (item?.exercise?.name ?? 'Exercise')
+      : (item?.label ?? 'Exercise');
 
   return (
     <div
@@ -61,12 +105,26 @@ function CustomDragLayer() {
 
 // ── DnD Subcomponents ────────────────────────────────────────────────
 
-function DropSeparator({ index, onDrop, isTrailing }: { index: number; onDrop: (item: any, idx: number) => void; isTrailing?: boolean }) {
-  const [{ isOver, canDrop }, drop] = useDrop(() => ({
-    accept: ['LIBRARY_EXERCISE', 'PLAN_EXERCISE'],
-    drop: (item) => onDrop(item, index),
-    collect: (monitor) => ({ isOver: !!monitor.isOver(), canDrop: !!monitor.canDrop() }),
-  }), [onDrop, index]);
+function DropSeparator({
+  index,
+  onDrop,
+  isTrailing,
+}: {
+  index: number;
+  onDrop: (item: any, idx: number) => void;
+  isTrailing?: boolean;
+}) {
+  const [{ isOver, canDrop }, drop] = useDrop(
+    () => ({
+      accept: ['LIBRARY_EXERCISE', 'PLAN_EXERCISE'],
+      drop: (item) => onDrop(item, index),
+      collect: (monitor) => ({
+        isOver: !!monitor.isOver(),
+        canDrop: !!monitor.canDrop(),
+      }),
+    }),
+    [onDrop, index],
+  );
 
   return (
     <div
@@ -74,7 +132,9 @@ function DropSeparator({ index, onDrop, isTrailing }: { index: number; onDrop: (
       className={`z-10 relative group/drop cursor-default ${
         isTrailing
           ? 'min-h-[200px] flex-1 flex items-start pt-4'
-          : canDrop ? 'py-4 -my-2' : 'py-3'
+          : canDrop
+            ? 'py-4 -my-2'
+            : 'py-3'
       }`}
     >
       <div
@@ -90,14 +150,17 @@ function DropSeparator({ index, onDrop, isTrailing }: { index: number; onDrop: (
 
 /** Large drop target shown when a day has no exercises yet */
 function EmptyDropTarget({ onDrop }: { onDrop: (item: any) => void }) {
-  const [{ isOver, canDrop }, drop] = useDrop(() => ({
-    accept: ['LIBRARY_EXERCISE', 'PLAN_EXERCISE'],
-    drop: (item) => onDrop(item),
-    collect: (monitor) => ({
-      isOver: !!monitor.isOver(),
-      canDrop: !!monitor.canDrop(),
+  const [{ isOver, canDrop }, drop] = useDrop(
+    () => ({
+      accept: ['LIBRARY_EXERCISE', 'PLAN_EXERCISE'],
+      drop: (item) => onDrop(item),
+      collect: (monitor) => ({
+        isOver: !!monitor.isOver(),
+        canDrop: !!monitor.canDrop(),
+      }),
     }),
-  }), [onDrop]);
+    [onDrop],
+  );
 
   return (
     <div
@@ -110,19 +173,31 @@ function EmptyDropTarget({ onDrop }: { onDrop: (item: any) => void }) {
             : 'border-neutral-300 bg-neutral-50/50 text-muted-foreground'
       }`}
     >
-      <Plus size={32} className={`mb-4 ${isOver && canDrop ? 'text-brand' : 'text-neutral-300'}`} />
-      <p className={`font-medium ${isOver && canDrop ? 'text-brand' : 'text-muted-foreground'}`}>
+      <Plus
+        size={32}
+        className={`mb-4 ${isOver && canDrop ? 'text-brand' : 'text-neutral-300'}`}
+      />
+      <p
+        className={`font-medium ${isOver && canDrop ? 'text-brand' : 'text-muted-foreground'}`}
+      >
         {isOver && canDrop ? 'Drop to add exercise' : 'Drag exercises here'}
       </p>
       <p className="text-sm mt-1">
-        Pull items from the library on the right, or click the + icon to quick-add.
+        Pull items from the library on the right, or click the + icon to
+        quick-add.
       </p>
     </div>
   );
 }
 
 /** A full-area drop zone that acts as a "catch-all" — appends exercise to end of list */
-function FullAreaDropZone({ onDrop, children }: { onDrop: (item: any) => void; children: React.ReactNode }) {
+function FullAreaDropZone({
+  onDrop,
+  children,
+}: {
+  onDrop: (item: any) => void;
+  children: React.ReactNode;
+}) {
   const [{ isOver, canDrop }, drop] = useDrop(() => ({
     accept: ['LIBRARY_EXERCISE'],
     drop: (item, monitor) => {
@@ -148,12 +223,21 @@ function FullAreaDropZone({ onDrop, children }: { onDrop: (item: any) => void; c
   );
 }
 
-function LibraryExerciseCard({ ex, onQuickAdd }: { ex: Exercise; onQuickAdd: (ex: Exercise) => void }) {
-  const [{ isDragging }, drag] = useDrag(() => ({
-    type: 'LIBRARY_EXERCISE',
-    item: { type: 'LIBRARY_EXERCISE', exercise: ex },
-    collect: (monitor) => ({ isDragging: !!monitor.isDragging() }),
-  }), [ex]);
+function LibraryExerciseCard({
+  ex,
+  onQuickAdd,
+}: {
+  ex: Exercise;
+  onQuickAdd: (ex: Exercise) => void;
+}) {
+  const [{ isDragging }, drag] = useDrag(
+    () => ({
+      type: 'LIBRARY_EXERCISE',
+      item: { type: 'LIBRARY_EXERCISE', exercise: ex },
+      collect: (monitor) => ({ isDragging: !!monitor.isDragging() }),
+    }),
+    [ex],
+  );
 
   const [flashed, setFlashed] = useState(false);
 
@@ -171,20 +255,24 @@ function LibraryExerciseCard({ ex, onQuickAdd }: { ex: Exercise; onQuickAdd: (ex
         isDragging
           ? 'opacity-50 ring-2 ring-brand'
           : flashed
-          ? 'ring-2 ring-brand/50 border-brand/30'
-          : 'border-border'
+            ? 'ring-2 ring-brand/50 border-brand/30'
+            : 'border-border'
       }`}
     >
       <div className="flex justify-between items-start mb-2">
-        <p className="text-sm font-semibold text-foreground leading-tight">{ex.name}</p>
+        <p className="text-sm font-semibold text-foreground leading-tight">
+          {ex.name}
+        </p>
         <div className="flex items-center gap-1">
-          <button
+          <Button
             onClick={handleQuickAdd}
-            className="p-1 rounded-field text-muted-foreground hover:text-brand hover:bg-brand-soft opacity-0 group-hover:opacity-100 transition-all"
+            variant="ghost"
+            size="icon"
+            className="size-6 opacity-0 group-hover:opacity-100"
             title="Add to current day"
           >
             <Plus size={14} />
-          </button>
+          </Button>
           <div className="text-muted-foreground group-hover:text-brand transition-colors">
             <GripVertical size={16} />
           </div>
@@ -192,12 +280,18 @@ function LibraryExerciseCard({ ex, onQuickAdd }: { ex: Exercise; onQuickAdd: (ex
       </div>
       <div className="flex flex-wrap gap-1 mt-auto">
         {ex.tags?.map((t) => (
-          <span key={t} className="text-[9px] bg-brand-soft text-brand px-1.5 py-0.5 rounded">
+          <span
+            key={t}
+            className="text-[9px] bg-brand-soft text-brand px-1.5 py-0.5 rounded"
+          >
             {t}
           </span>
         ))}
         {ex.primaryMuscles.map((m) => (
-          <span key={m} className="text-[9px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded">
+          <span
+            key={m}
+            className="text-[9px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded"
+          >
             {m}
           </span>
         ))}
@@ -218,20 +312,33 @@ function PlanGroupCard({
   expandedNotes,
   toggleNotes,
 }: any) {
-  const [{ isDragging }, drag] = useDrag(() => ({
-    type: 'PLAN_EXERCISE',
-    item: { type: 'PLAN_EXERCISE', id: group.id, label: group.isSuperset ? 'Superset' : (exercises.find((e: any) => e.id === group.items[0]?.exerciseId)?.name ?? 'Exercise') },
-    collect: (monitor) => ({ isDragging: !!monitor.isDragging() }),
-  }), [group.id]);
+  const [{ isDragging }, drag] = useDrag(
+    () => ({
+      type: 'PLAN_EXERCISE',
+      item: {
+        type: 'PLAN_EXERCISE',
+        id: group.id,
+        label: group.isSuperset
+          ? 'Superset'
+          : (exercises.find((e: any) => e.id === group.items[0]?.exerciseId)
+              ?.name ?? 'Exercise'),
+      },
+      collect: (monitor) => ({ isDragging: !!monitor.isDragging() }),
+    }),
+    [group.id],
+  );
 
-  const [{ isOver }, drop] = useDrop(() => ({
-    accept: ['PLAN_EXERCISE'],
-    drop: (item, monitor) => {
-      if (monitor.didDrop()) return;
-      onDropOnGroup(item, group.id);
-    },
-    collect: (monitor) => ({ isOver: !!monitor.isOver({ shallow: true }) }),
-  }), [onDropOnGroup, group.id]);
+  const [{ isOver }, drop] = useDrop(
+    () => ({
+      accept: ['PLAN_EXERCISE'],
+      drop: (item, monitor) => {
+        if (monitor.didDrop()) return;
+        onDropOnGroup(item, group.id);
+      },
+      collect: (monitor) => ({ isOver: !!monitor.isOver({ shallow: true }) }),
+    }),
+    [onDropOnGroup, group.id],
+  );
 
   return (
     <div
@@ -240,8 +347,8 @@ function PlanGroupCard({
         isOver
           ? 'border-brand-secondary shadow-md ring-2 ring-brand-secondary/20 bg-brand-secondary/5'
           : group.isSuperset
-          ? 'border-brand-secondary shadow-sm'
-          : 'border-border shadow-sm'
+            ? 'border-brand-secondary shadow-sm'
+            : 'border-border shadow-sm'
       } ${isDragging ? 'opacity-50' : ''}`}
     >
       {group.isSuperset && (
@@ -253,7 +360,10 @@ function PlanGroupCard({
             <GripVertical size={14} />
             <span>Superset</span>
           </div>
-          <button onClick={() => handleRemoveSuperset(group.id)} className="hover:text-red-200">
+          <button
+            onClick={() => handleRemoveSuperset(group.id)}
+            className="hover:text-red-200"
+          >
             Ungroup
           </button>
         </div>
@@ -272,7 +382,9 @@ function PlanGroupCard({
             <div key={pe.id}>
               <div
                 className={`p-4 rounded-control transition-colors ${
-                  isSelected ? 'bg-brand/5 border border-brand/30' : 'bg-card hover:bg-muted'
+                  isSelected
+                    ? 'bg-brand/5 border border-brand/30'
+                    : 'bg-card hover:bg-muted'
                 } ${!group.isSuperset ? 'border border-transparent hover:border-border' : ''}`}
               >
                 {/* Row 1: Exercise name + actions */}
@@ -291,91 +403,142 @@ function PlanGroupCard({
                   )}
 
                   {!group.isSuperset && (
-                    <div className="text-muted-foreground cursor-grab active:cursor-grabbing shrink-0" ref={drag as any}>
+                    <div
+                      className="text-muted-foreground cursor-grab active:cursor-grabbing shrink-0"
+                      ref={drag as any}
+                    >
                       <GripVertical size={16} />
                     </div>
                   )}
 
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm text-foreground">{ex.name}</p>
+                    <p className="font-semibold text-sm text-foreground">
+                      {ex.name}
+                    </p>
                     <div className="flex flex-wrap gap-1 mt-0.5">
                       {ex.primaryMuscles.map((m: string) => (
-                        <span key={m} className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded">
+                        <span
+                          key={m}
+                          className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded"
+                        >
                           {m}
                         </span>
                       ))}
                       {ex.equipment.length > 0 && (
-                        <span className="text-[10px] text-muted-foreground">{ex.equipment.join(', ')}</span>
+                        <span className="text-[10px] text-muted-foreground">
+                          {ex.equipment.join(', ')}
+                        </span>
                       )}
                     </div>
                   </div>
 
                   <div className="flex items-center gap-1 shrink-0">
-                    <button
+                    <Button
                       onClick={() => toggleNotes(pe.id)}
-                      className={`p-1.5 rounded-compact transition-colors ${
+                      variant="ghost"
+                      size="icon"
+                      className={cn(
+                        'size-7',
                         hasNotes
                           ? 'text-brand-secondary bg-brand-secondary-soft'
-                          : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                      }`}
+                          : 'text-muted-foreground',
+                      )}
                       title="Coaching notes"
                     >
                       <MessageSquare size={15} />
-                    </button>
+                    </Button>
                     <SwapVariantsPicker
                       planExercise={pe}
                       exercises={exercises}
-                      onUpdate={(variants) => handleUpdateExerciseData(pe.id, 'swapVariants', variants)}
+                      onUpdate={(variants) =>
+                        handleUpdateExerciseData(
+                          pe.id,
+                          'swapVariants',
+                          variants,
+                        )
+                      }
                     />
-                    <button
+                    <Button
                       onClick={() => handleRemoveExercise(pe.id)}
-                      className="p-1.5 text-muted-foreground hover:text-red-500 rounded-compact hover:bg-red-50"
+                      variant="ghost"
+                      size="icon"
+                      className="size-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                     >
                       <Trash2 size={15} />
-                    </button>
+                    </Button>
                   </div>
                 </div>
 
                 {/* Row 2: Sets / Reps / RIR inputs */}
                 <div className="flex gap-3 pl-0">
                   <div className="flex flex-col">
-                    <label className="text-[10px] text-muted-foreground uppercase font-semibold mb-1">Sets</label>
+                    <label className="text-[10px] text-muted-foreground uppercase font-semibold mb-1">
+                      Sets
+                    </label>
                     <input
                       type="number"
                       value={pe.sets}
-                      onChange={(e) => handleUpdateExerciseData(pe.id, 'sets', parseInt(e.target.value))}
+                      onChange={(e) =>
+                        handleUpdateExerciseData(
+                          pe.id,
+                          'sets',
+                          parseInt(e.target.value),
+                        )
+                      }
                       className="w-16 p-2 text-sm border border-border rounded-compact text-center focus:outline-none bg-muted"
                     />
                   </div>
                   <div className="flex flex-col">
-                    <label className="text-[10px] text-muted-foreground uppercase font-semibold mb-1">Reps</label>
+                    <label className="text-[10px] text-muted-foreground uppercase font-semibold mb-1">
+                      Reps
+                    </label>
                     <input
                       type="text"
                       value={pe.reps}
-                      onChange={(e) => handleUpdateExerciseData(pe.id, 'reps', e.target.value)}
+                      onChange={(e) =>
+                        handleUpdateExerciseData(pe.id, 'reps', e.target.value)
+                      }
                       className="w-24 p-2 text-sm border border-border rounded-compact text-center focus:outline-none bg-muted"
                     />
                   </div>
                   <div className="flex flex-col">
-                    <label className="text-[10px] text-muted-foreground uppercase font-semibold mb-1">RIR</label>
+                    <label className="text-[10px] text-muted-foreground uppercase font-semibold mb-1">
+                      RIR
+                    </label>
                     <input
                       type="number"
                       value={pe.rir}
-                      onChange={(e) => handleUpdateExerciseData(pe.id, 'rir', parseInt(e.target.value))}
+                      onChange={(e) =>
+                        handleUpdateExerciseData(
+                          pe.id,
+                          'rir',
+                          parseInt(e.target.value),
+                        )
+                      }
                       className="w-16 p-2 text-sm border border-border rounded-compact text-center focus:outline-none bg-muted"
                     />
                   </div>
                   <div className="flex flex-col">
-                    <label className="text-[10px] text-muted-foreground uppercase font-semibold mb-1">Rest</label>
+                    <label className="text-[10px] text-muted-foreground uppercase font-semibold mb-1">
+                      Rest
+                    </label>
                     <div className="flex items-center gap-1">
                       <input
                         type="number"
                         value={pe.restSeconds || ''}
                         placeholder="--"
-                        onChange={(e) => handleUpdateExerciseData(pe.id, 'restSeconds', parseInt(e.target.value) || undefined)}
+                        onChange={(e) =>
+                          handleUpdateExerciseData(
+                            pe.id,
+                            'restSeconds',
+                            parseInt(e.target.value) || undefined,
+                          )
+                        }
                         className="w-16 p-2 text-sm border border-border rounded-compact text-center focus:outline-none bg-muted"
                       />
-                      <span className="text-[10px] text-muted-foreground">sec</span>
+                      <span className="text-[10px] text-muted-foreground">
+                        sec
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -393,7 +556,9 @@ function PlanGroupCard({
                   >
                     <textarea
                       value={pe.notes || ''}
-                      onChange={(e) => handleUpdateExerciseData(pe.id, 'notes', e.target.value)}
+                      onChange={(e) =>
+                        handleUpdateExerciseData(pe.id, 'notes', e.target.value)
+                      }
                       placeholder="Add coaching notes (form cues, tempo, etc.)"
                       className="w-full mt-2 p-3 text-sm border border-border rounded-control bg-muted focus:outline-none resize-none min-h-[60px]"
                     />
@@ -418,7 +583,11 @@ function PlanGroupCard({
 
 // ── Swap Variants Picker ────────────────────────────────────────────
 
-function SwapVariantsPicker({ planExercise, exercises, onUpdate }: {
+function SwapVariantsPicker({
+  planExercise,
+  exercises,
+  onUpdate,
+}: {
   planExercise: PlanExercise;
   exercises: Exercise[];
   onUpdate: (variants: string[]) => void;
@@ -427,15 +596,18 @@ function SwapVariantsPicker({ planExercise, exercises, onUpdate }: {
   const currentVariants = planExercise.swapVariants || [];
   const hasVariants = currentVariants.length > 0;
 
-  const filteredExercises = exercises.filter(ex =>
-    ex.id !== planExercise.exerciseId &&
-    (ex.name.toLowerCase().includes(search.toLowerCase()) ||
-     ex.primaryMuscles.some(m => m.toLowerCase().includes(search.toLowerCase())))
+  const filteredExercises = exercises.filter(
+    (ex) =>
+      ex.id !== planExercise.exerciseId &&
+      (ex.name.toLowerCase().includes(search.toLowerCase()) ||
+        ex.primaryMuscles.some((m) =>
+          m.toLowerCase().includes(search.toLowerCase()),
+        )),
   );
 
   const toggleVariant = (exerciseId: string) => {
     if (currentVariants.includes(exerciseId)) {
-      onUpdate(currentVariants.filter(id => id !== exerciseId));
+      onUpdate(currentVariants.filter((id) => id !== exerciseId));
     } else {
       onUpdate([...currentVariants, exerciseId]);
     }
@@ -444,12 +616,15 @@ function SwapVariantsPicker({ planExercise, exercises, onUpdate }: {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button
-          className={`relative p-1.5 rounded-compact transition-colors ${
+        <Button
+          variant="ghost"
+          size="icon"
+          className={cn(
+            'relative size-7',
             hasVariants
               ? 'text-brand-secondary bg-brand-secondary-soft'
-              : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-          }`}
+              : 'text-muted-foreground',
+          )}
           title="Swap variants"
         >
           <ArrowLeftRight size={15} />
@@ -458,11 +633,13 @@ function SwapVariantsPicker({ planExercise, exercises, onUpdate }: {
               {currentVariants.length}
             </span>
           )}
-        </button>
+        </Button>
       </PopoverTrigger>
       <PopoverContent className="w-64 p-0" align="end">
         <div className="p-3 px-3 border-b border-border rounded-field">
-          <p className="text-xs font-semibold text-muted-foreground mb-2">Swap Variants</p>
+          <p className="text-xs font-semibold text-muted-foreground mb-2">
+            Swap Variants
+          </p>
           <input
             type="text"
             value={search}
@@ -472,7 +649,7 @@ function SwapVariantsPicker({ planExercise, exercises, onUpdate }: {
           />
         </div>
         <div className="max-h-48 overflow-y-auto p-2 space-y-1">
-          {filteredExercises.map(ex => {
+          {filteredExercises.map((ex) => {
             const isSelected = currentVariants.includes(ex.id);
             return (
               <label
@@ -486,9 +663,15 @@ function SwapVariantsPicker({ planExercise, exercises, onUpdate }: {
                   onCheckedChange={() => toggleVariant(ex.id)}
                   className="shrink-0 data-[state=checked]:bg-brand-secondary data-[state=checked]:border-brand-secondary"
                 />
-                <span className={isSelected ? 'text-brand-secondary' : 'text-foreground'}>
+                <span
+                  className={
+                    isSelected ? 'text-brand-secondary' : 'text-foreground'
+                  }
+                >
                   <span className="font-medium">{ex.name}</span>
-                  <span className="text-muted-foreground ml-1">{ex.primaryMuscles.join(', ')}</span>
+                  <span className="text-muted-foreground ml-1">
+                    {ex.primaryMuscles.join(', ')}
+                  </span>
                 </span>
               </label>
             );
@@ -550,7 +733,9 @@ export function PlanBuilder({
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const filterPopoverRef = useRef<HTMLDivElement>(null);
   const filterTriggerRef = useRef<HTMLButtonElement>(null);
-  const pendingClickSwallowRef = useRef<((click: MouseEvent) => void) | null>(null);
+  const pendingClickSwallowRef = useRef<((click: MouseEvent) => void) | null>(
+    null,
+  );
 
   const stopSwallowingClicks = () => {
     const handler = pendingClickSwallowRef.current;
@@ -623,12 +808,15 @@ export function PlanBuilder({
 
   const groupedExercises = useMemo(() => {
     if (!activeDay) return [];
-    const groups: { id: string; isSuperset: boolean; items: PlanExercise[] }[] = [];
+    const groups: { id: string; isSuperset: boolean; items: PlanExercise[] }[] =
+      [];
     const processedIds = new Set<string>();
     activeDay.exercises.forEach((pe) => {
       if (processedIds.has(pe.id)) return;
       if (pe.supersetId) {
-        const ssItems = activeDay.exercises.filter((e) => e.supersetId === pe.supersetId);
+        const ssItems = activeDay.exercises.filter(
+          (e) => e.supersetId === pe.supersetId,
+        );
         groups.push({ isSuperset: true, id: pe.supersetId, items: ssItems });
         ssItems.forEach((i) => processedIds.add(i.id));
       } else {
@@ -642,9 +830,9 @@ export function PlanBuilder({
   const filteredLibrary = useMemo(
     () =>
       exercises.filter((exercise) =>
-        matchesExerciseFilters({ exercise, searchQuery, activeFilters })
+        matchesExerciseFilters({ exercise, searchQuery, activeFilters }),
       ),
-    [exercises, searchQuery, activeFilters]
+    [exercises, searchQuery, activeFilters],
   );
 
   // The popover overlays the results it filters, so a coach who has finished with
@@ -662,7 +850,9 @@ export function PlanBuilder({
 
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
-      const focusWasInside = filterPopoverRef.current?.contains(document.activeElement);
+      const focusWasInside = filterPopoverRef.current?.contains(
+        document.activeElement,
+      );
       setIsFilterOpen(false);
       if (focusWasInside) filterTriggerRef.current?.focus();
     };
@@ -676,7 +866,11 @@ export function PlanBuilder({
   }, [isFilterOpen]);
 
   const toggleFilter = (filter: ExerciseFilter) => {
-    setActiveFilters((prev) => (prev.includes(filter) ? prev.filter((f) => f !== filter) : [...prev, filter]));
+    setActiveFilters((prev) =>
+      prev.includes(filter)
+        ? prev.filter((f) => f !== filter)
+        : [...prev, filter],
+    );
   };
 
   const clearFilters = () => {
@@ -697,7 +891,7 @@ export function PlanBuilder({
             return { ...day, exercises: newExercises };
           }),
         };
-      })
+      }),
     );
   };
 
@@ -709,10 +903,14 @@ export function PlanBuilder({
           ...week,
           days: week.days.map((day, dIdx) => {
             if (dIdx !== activeDayIdx) return day;
-            return { ...day, type, exercises: type === 'Rest' ? [] : day.exercises };
+            return {
+              ...day,
+              type,
+              exercises: type === 'Rest' ? [] : day.exercises,
+            };
           }),
         };
-      })
+      }),
     );
   };
 
@@ -745,7 +943,9 @@ export function PlanBuilder({
       toast.error('Cannot remove existing plan weeks');
       return;
     }
-    const newWeeks = weeks.filter((_, i) => i !== wIdx).map((w, i) => ({ ...w, order: i + 1 }));
+    const newWeeks = weeks
+      .filter((_, i) => i !== wIdx)
+      .map((w, i) => ({ ...w, order: i + 1 }));
     setWeeks(newWeeks);
     if (activeWeekIdx >= newWeeks.length) {
       setActiveWeekIdx(newWeeks.length - 1);
@@ -762,7 +962,10 @@ export function PlanBuilder({
         e.id = `${idPrefix}-pe-${Date.now()}-${Math.random().toString(36).slice(2)}`;
         if (e.supersetId) {
           if (!ssMap.has(e.supersetId)) {
-            ssMap.set(e.supersetId, `${idPrefix}-ss-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+            ssMap.set(
+              e.supersetId,
+              `${idPrefix}-ss-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+            );
           }
           e.supersetId = ssMap.get(e.supersetId);
         }
@@ -775,7 +978,10 @@ export function PlanBuilder({
     if (sourceIdx === targetIdx) return;
     setWeeks((prev) => {
       const w = [...prev];
-      w[targetIdx] = { ...w[targetIdx], days: deepCopyWeekDays(w[sourceIdx].days) };
+      w[targetIdx] = {
+        ...w[targetIdx],
+        days: deepCopyWeekDays(w[sourceIdx].days),
+      };
       return w;
     });
     toast.success(`Copied Week ${sourceIdx + 1} to Week ${targetIdx + 1}`);
@@ -808,7 +1014,11 @@ export function PlanBuilder({
   };
 
   const toggleDeload = (wIdx: number) => {
-    setWeeks((prev) => prev.map((week, i) => (i === wIdx ? { ...week, isDeload: !week.isDeload } : week)));
+    setWeeks((prev) =>
+      prev.map((week, i) =>
+        i === wIdx ? { ...week, isDeload: !week.isDeload } : week,
+      ),
+    );
   };
 
   // ── Drag-drop handlers ─────────────────────────────────────────────
@@ -824,7 +1034,11 @@ export function PlanBuilder({
         reps: '10',
         rir: 2,
       };
-      newGroups.splice(targetIndex, 0, { id: newPe.id, isSuperset: false, items: [newPe] });
+      newGroups.splice(targetIndex, 0, {
+        id: newPe.id,
+        isSuperset: false,
+        items: [newPe],
+      });
     } else if (dragItem.type === 'PLAN_EXERCISE') {
       const oldIndex = newGroups.findIndex((g) => g.id === dragItem.id);
       if (oldIndex === -1) return;
@@ -847,7 +1061,13 @@ export function PlanBuilder({
 
     if (dragItem.type === 'LIBRARY_EXERCISE') {
       draggedItems = [
-        { id: `${idPrefix}-pe-${Date.now()}`, exerciseId: dragItem.exercise.id, sets: 3, reps: '10', rir: 2 },
+        {
+          id: `${idPrefix}-pe-${Date.now()}`,
+          exerciseId: dragItem.exercise.id,
+          sets: 3,
+          reps: '10',
+          rir: 2,
+        },
       ];
     } else if (dragItem.type === 'PLAN_EXERCISE') {
       const oldIndex = newGroups.findIndex((g) => g.id === dragItem.id);
@@ -881,7 +1101,11 @@ export function PlanBuilder({
           newGroups.splice(i, 1);
         } else if (g.isSuperset && g.items.length === 1) {
           g.items[0].supersetId = undefined;
-          newGroups[i] = { id: g.items[0].id, isSuperset: false, items: g.items };
+          newGroups[i] = {
+            id: g.items[0].id,
+            isSuperset: false,
+            items: g.items,
+          };
         }
         break;
       }
@@ -903,7 +1127,11 @@ export function PlanBuilder({
     updateActiveDayExercises(newGroups.flatMap((g) => g.items));
   };
 
-  const handleUpdateExerciseData = (peId: string, field: keyof PlanExercise, value: any) => {
+  const handleUpdateExerciseData = (
+    peId: string,
+    field: keyof PlanExercise,
+    value: any,
+  ) => {
     setWeeks((prev) =>
       prev.map((week, wIdx) => {
         if (wIdx !== activeWeekIdx) return week;
@@ -913,11 +1141,13 @@ export function PlanBuilder({
             if (dIdx !== activeDayIdx) return day;
             return {
               ...day,
-              exercises: day.exercises.map((pe) => (pe.id === peId ? { ...pe, [field]: value } : pe)),
+              exercises: day.exercises.map((pe) =>
+                pe.id === peId ? { ...pe, [field]: value } : pe,
+              ),
             };
           }),
         };
-      })
+      }),
     );
   };
 
@@ -929,7 +1159,9 @@ export function PlanBuilder({
 
     for (let i = newGroups.length - 1; i >= 0; i--) {
       const g = newGroups[i];
-      const selected = g.items.filter((pe) => selectedForSuperset.includes(pe.id));
+      const selected = g.items.filter((pe) =>
+        selectedForSuperset.includes(pe.id),
+      );
       const kept = g.items.filter((pe) => !selectedForSuperset.includes(pe.id));
 
       itemsToGroup.unshift(...selected);
@@ -972,7 +1204,9 @@ export function PlanBuilder({
 
   // ── Checks ─────────────────────────────────────────────────────────
 
-  const activeWeekHasContent = activeWeek?.days.some((d) => d.type !== 'Rest' && d.exercises.length > 0);
+  const activeWeekHasContent = activeWeek?.days.some(
+    (d) => d.type !== 'Rest' && d.exercises.length > 0,
+  );
 
   if (!activeDay && weeks.length === 0) {
     return (
@@ -980,7 +1214,9 @@ export function PlanBuilder({
         <div className="text-center">
           <Activity size={48} className="mx-auto mb-4 text-neutral-300" />
           <h2 className="text-xl font-bold text-foreground mb-2">Loading...</h2>
-          <p className="text-muted-foreground mb-6">Preparing the plan builder.</p>
+          <p className="text-muted-foreground mb-6">
+            Preparing the plan builder.
+          </p>
         </div>
       </div>
     );
@@ -998,31 +1234,43 @@ export function PlanBuilder({
         {/* ── Header ─────────────────────────────────────────────── */}
         <div className="h-14 px-4 lg:px-6 border-b border-border rounded-field bg-card flex items-center justify-between shrink-0 z-30">
           <div className="flex items-center gap-3 flex-1 min-w-0">
-            <button
+            <Button
               onClick={onBack}
-              className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-control transition-colors shrink-0"
+              variant="ghost"
+              size="icon"
+              className="shrink-0"
             >
               <ArrowLeft size={20} />
-            </button>
+            </Button>
             {/* Plan structure toggle -- visible on small screens only */}
-            <button
-              onClick={() => { setLeftDrawerOpen(true); setRightDrawerOpen(false); }}
-              className="xl:hidden p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-control transition-colors shrink-0"
+            <Button
+              onClick={() => {
+                setLeftDrawerOpen(true);
+                setRightDrawerOpen(false);
+              }}
+              variant="ghost"
+              size="icon"
+              className="xl:hidden shrink-0"
               title="Plan Structure"
             >
               <PanelLeftOpen size={20} />
-            </button>
+            </Button>
             {headerCenter}
           </div>
           <div className="flex items-center gap-2 lg:gap-3 shrink-0">
             {/* Exercise library toggle -- visible on small screens only */}
-            <button
-              onClick={() => { setRightDrawerOpen(true); setLeftDrawerOpen(false); }}
-              className="xl:hidden p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-control transition-colors"
+            <Button
+              onClick={() => {
+                setRightDrawerOpen(true);
+                setLeftDrawerOpen(false);
+              }}
+              variant="ghost"
+              size="icon"
+              className="xl:hidden"
               title="Exercise Library"
             >
               <Library size={20} />
-            </button>
+            </Button>
             {headerRight}
           </div>
         </div>
@@ -1036,7 +1284,10 @@ export function PlanBuilder({
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 className="xl:hidden fixed inset-0 bg-black/30 z-40"
-                onClick={() => { setLeftDrawerOpen(false); setRightDrawerOpen(false); }}
+                onClick={() => {
+                  setLeftDrawerOpen(false);
+                  setRightDrawerOpen(false);
+                }}
               />
             )}
           </AnimatePresence>
@@ -1051,29 +1302,45 @@ export function PlanBuilder({
           >
             {/* Drawer close button -- small screens only */}
             <div className="xl:hidden flex items-center justify-between px-4 py-3 border-b border-border rounded-field">
-              <span className="font-bold text-sm text-foreground">Plan Structure</span>
-              <button onClick={() => setLeftDrawerOpen(false)} className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-compact">
+              <span className="font-bold text-sm text-foreground">
+                Plan Structure
+              </span>
+              <Button
+                onClick={() => setLeftDrawerOpen(false)}
+                variant="ghost"
+                size="icon"
+                className="size-8"
+              >
                 <X size={18} />
-              </button>
+              </Button>
             </div>
 
             <div className="p-4 px-3 border-b border-border rounded-field">
-              <h2 className="font-bold text-foreground uppercase tracking-wider text-xs">Plan Structure</h2>
+              <h2 className="font-bold text-foreground uppercase tracking-wider text-xs">
+                Plan Structure
+              </h2>
               {originalWeekCount > 0 && (
                 <p className="text-[10px] text-muted-foreground mt-1">
-                  {originalWeekCount} existing {originalWeekCount === 1 ? 'week' : 'weeks'}
-                  {weeks.length > originalWeekCount && ` + ${weeks.length - originalWeekCount} new`}
+                  {originalWeekCount} existing{' '}
+                  {originalWeekCount === 1 ? 'week' : 'weeks'}
+                  {weeks.length > originalWeekCount &&
+                    ` + ${weeks.length - originalWeekCount} new`}
                 </p>
               )}
             </div>
 
             <div className="flex-1 overflow-y-auto">
               {weeks.map((week, wIdx) => {
-                const isExistingWeek = originalWeekCount > 0 && wIdx < originalWeekCount;
-                const isNewWeek = originalWeekCount > 0 && wIdx >= originalWeekCount;
+                const isExistingWeek =
+                  originalWeekCount > 0 && wIdx < originalWeekCount;
+                const isNewWeek =
+                  originalWeekCount > 0 && wIdx >= originalWeekCount;
 
                 return (
-                  <div key={week.id} className="px-3 border-b border-border rounded-field">
+                  <div
+                    key={week.id}
+                    className="px-3 border-b border-border rounded-field"
+                  >
                     <div
                       className={`px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-muted transition-colors group relative ${
                         activeWeekIdx === wIdx ? 'bg-muted' : ''
@@ -1081,7 +1348,9 @@ export function PlanBuilder({
                       onClick={() => setActiveWeekIdx(wIdx)}
                     >
                       <div className="flex items-center gap-2">
-                        <span className="font-semibold text-sm text-foreground">Week {week.order}</span>
+                        <span className="font-semibold text-sm text-foreground">
+                          Week {week.order}
+                        </span>
                         {week.isDeload && (
                           <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
                             Deload
@@ -1103,13 +1372,15 @@ export function PlanBuilder({
                         {/* Copy Week */}
                         <Popover>
                           <PopoverTrigger asChild>
-                            <button
+                            <Button
                               onClick={(e) => e.stopPropagation()}
-                              className="p-1.5 rounded-field text-muted-foreground hover:text-brand hover:bg-brand-soft transition-colors"
+                              variant="ghost"
+                              size="icon"
+                              className="size-7 text-muted-foreground hover:text-brand hover:bg-brand-soft"
                               title="Copy week"
                             >
                               <Copy size={14} />
-                            </button>
+                            </Button>
                           </PopoverTrigger>
                           <PopoverContent
                             align="start"
@@ -1122,56 +1393,69 @@ export function PlanBuilder({
                               {weeks.map(
                                 (_, i) =>
                                   i !== wIdx && (
-                                    <button
+                                    <Button
                                       key={i}
+                                      type="button"
                                       onClick={() => handleCopyWeek(wIdx, i)}
-                                      className="w-full text-left px-3 py-2 text-sm hover:bg-muted rounded-compact text-foreground"
+                                      variant="ghost"
+                                      size="sm"
+                                      className="w-full justify-start px-3 text-sm font-normal text-foreground"
                                     >
                                       Week {i + 1}
-                                    </button>
-                                  )
+                                    </Button>
+                                  ),
                               )}
                             </div>
                             {weeks.length > 2 && (
                               <div className="border-t border-border mt-1 pt-1">
-                                <button
+                                <Button
+                                  type="button"
                                   onClick={() => handleApplyWeekToAll(wIdx)}
-                                  className="w-full text-left px-3 py-2 text-sm font-semibold text-brand hover:bg-brand/5 rounded-compact"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="w-full justify-start px-3 text-sm font-semibold text-brand hover:bg-brand/5 hover:text-brand"
                                 >
                                   Apply to All Weeks
-                                </button>
+                                </Button>
                               </div>
                             )}
                           </PopoverContent>
                         </Popover>
 
                         {/* Toggle deload */}
-                        <button
+                        <Button
                           onClick={(e) => {
                             e.stopPropagation();
                             toggleDeload(wIdx);
                           }}
                           title="Toggle Deload"
-                          className={`p-1.5 rounded-field ${
+                          variant="ghost"
+                          size="icon"
+                          className={cn(
+                            'size-7',
                             week.isDeload
                               ? 'text-blue-600 bg-blue-50'
-                              : 'text-muted-foreground hover:bg-muted opacity-0 group-hover:opacity-100'
-                          }`}
+                              : 'text-muted-foreground opacity-0 group-hover:opacity-100',
+                          )}
                         >
                           <Info size={14} />
-                        </button>
+                        </Button>
 
                         {/* More actions */}
                         <div className="relative">
-                          <button
+                          <Button
                             onClick={(e) => {
                               e.stopPropagation();
-                              setOpenWeekAction(openWeekAction === wIdx ? null : wIdx);
+                              setOpenWeekAction(
+                                openWeekAction === wIdx ? null : wIdx,
+                              );
                             }}
-                            className="p-1.5 rounded-field text-muted-foreground hover:bg-muted opacity-0 group-hover:opacity-100"
+                            variant="ghost"
+                            size="icon"
+                            className="size-7 text-muted-foreground opacity-0 group-hover:opacity-100"
                           >
                             <MoreVertical size={14} />
-                          </button>
+                          </Button>
 
                           <AnimatePresence>
                             {openWeekAction === wIdx && (
@@ -1189,25 +1473,37 @@ export function PlanBuilder({
                                   {weeks.map(
                                     (_, i) =>
                                       i !== wIdx && (
-                                        <button
+                                        <Button
                                           key={`swap-${i}`}
-                                          onClick={() => handleSwapWeek(wIdx, i)}
-                                          className="w-full text-left px-4 py-2 text-sm hover:bg-muted text-foreground flex items-center gap-2"
+                                          type="button"
+                                          onClick={() =>
+                                            handleSwapWeek(wIdx, i)
+                                          }
+                                          variant="ghost"
+                                          size="sm"
+                                          className="w-full justify-start px-4 text-sm font-normal text-foreground"
                                         >
-                                          <ArrowLeftRight size={14} className="text-muted-foreground" /> Week {i + 1}
-                                        </button>
-                                      )
+                                          <ArrowLeftRight
+                                            size={14}
+                                            className="text-muted-foreground"
+                                          />{' '}
+                                          Week {i + 1}
+                                        </Button>
+                                      ),
                                   )}
                                 </div>
                                 {/* Show delete only when allowed: template mode (originalWeekCount===0) always, client mode only for new weeks */}
                                 {(originalWeekCount === 0 || isNewWeek) && (
                                   <div className="border-t border-border mt-1">
-                                    <button
+                                    <Button
+                                      type="button"
                                       onClick={() => handleRemoveWeek(wIdx)}
-                                      className="w-full text-left px-4 py-2 text-sm hover:bg-red-50 text-red-600 flex items-center gap-2"
+                                      variant="ghost"
+                                      size="sm"
+                                      className="w-full justify-start px-4 text-sm font-normal text-red-600 hover:bg-red-50 hover:text-red-600"
                                     >
                                       <Trash2 size={14} /> Delete Week
-                                    </button>
+                                    </Button>
                                   </div>
                                 )}
                               </motion.div>
@@ -1225,14 +1521,18 @@ export function PlanBuilder({
                           const isActive = activeDayIdx === dIdx;
                           const exCount = day.exercises.length;
                           return (
-                            <button
+                            <Button
                               key={dIdx}
+                              type="button"
                               onClick={() => setActiveDayIdx(dIdx)}
-                              className={`w-full text-left px-3 py-2 text-sm rounded-compact flex items-center justify-between transition-colors ${
+                              variant="ghost"
+                              size="sm"
+                              className={cn(
+                                'w-full justify-between px-3 text-sm',
                                 isActive
-                                  ? 'bg-brand/5 font-semibold text-brand'
-                                  : 'text-muted-foreground hover:bg-muted'
-                              }`}
+                                  ? 'bg-brand/5 font-semibold text-brand hover:bg-brand/5 hover:text-brand'
+                                  : 'font-normal text-muted-foreground',
+                              )}
                             >
                               <span className="flex items-center gap-1.5">
                                 {dName}
@@ -1242,7 +1542,10 @@ export function PlanBuilder({
                                   </span>
                                 )}
                                 {day.type !== 'Rest' && exCount === 0 && (
-                                  <span className="w-2 h-2 rounded-full bg-orange-400 shrink-0" title="No exercises yet" />
+                                  <span
+                                    className="w-2 h-2 rounded-full bg-orange-400 shrink-0"
+                                    title="No exercises yet"
+                                  />
                                 )}
                               </span>
                               <span
@@ -1250,17 +1553,17 @@ export function PlanBuilder({
                                   day.type === 'Rest'
                                     ? 'text-training-rest'
                                     : day.type === 'Strength'
-                                    ? 'bg-training-strength-soft text-training-strength'
-                                    : day.type === 'Hypertrophy'
-                                    ? 'bg-training-hypertrophy-soft text-training-hypertrophy'
-                                    : day.type === 'Recovery'
-                                    ? 'bg-training-recovery-soft text-training-recovery'
-                                    : 'bg-training-lighter-soft text-training-lighter'
+                                      ? 'bg-training-strength-soft text-training-strength'
+                                      : day.type === 'Hypertrophy'
+                                        ? 'bg-training-hypertrophy-soft text-training-hypertrophy'
+                                        : day.type === 'Recovery'
+                                          ? 'bg-training-recovery-soft text-training-recovery'
+                                          : 'bg-training-lighter-soft text-training-lighter'
                                 }`}
                               >
                                 {day.type !== 'Rest' && day.type}
                               </span>
-                            </button>
+                            </Button>
                           );
                         })}
                       </div>
@@ -1271,12 +1574,13 @@ export function PlanBuilder({
             </div>
 
             <div className="p-4 border-t border-border bg-muted shrink-0 space-y-2">
-              <button
+              <Button
                 onClick={handleAddWeek}
-                className="w-full py-2.5 flex items-center justify-center gap-2 bg-card hover:bg-muted text-foreground font-semibold text-sm rounded-control transition-colors border border-border shadow-sm"
+                variant="outline"
+                className="w-full shadow-sm"
               >
                 <Plus size={16} /> Add Week
-              </button>
+              </Button>
               {sidebarFooterExtra}
             </div>
           </div>
@@ -1288,30 +1592,37 @@ export function PlanBuilder({
               {/* Week pills */}
               <div className="flex gap-2 overflow-x-auto pb-3 mb-3">
                 {weeks.map((week, wIdx) => {
-                  const isNewWeek = originalWeekCount > 0 && wIdx >= originalWeekCount;
+                  const isNewWeek =
+                    originalWeekCount > 0 && wIdx >= originalWeekCount;
                   return (
-                    <button
+                    <Button
                       key={week.id}
+                      type="button"
                       onClick={() => setActiveWeekIdx(wIdx)}
-                      className={`shrink-0 flex flex-col items-center gap-1.5 px-3 py-2 rounded-control border transition-all relative ${
+                      variant={activeWeekIdx === wIdx ? 'brand' : 'outline'}
+                      className={cn(
+                        'h-auto shrink-0 flex-col gap-1.5 border px-3 py-2 relative',
                         activeWeekIdx === wIdx
-                          ? 'bg-brand border-brand text-white shadow-md'
-                          : 'bg-card border-border text-muted-foreground hover:border-neutral-400'
-                      }`}
+                          ? 'border-brand shadow-md'
+                          : 'border-border bg-card text-muted-foreground hover:border-neutral-400',
+                      )}
                     >
                       {isNewWeek && activeWeekIdx !== wIdx && (
                         <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-brand" />
                       )}
                       <span className="text-xs font-bold whitespace-nowrap">
                         W{week.order}
-                        {week.isDeload && <span className="ml-1 opacity-70">D</span>}
+                        {week.isDeload && (
+                          <span className="ml-1 opacity-70">D</span>
+                        )}
                       </span>
                       {/* Day dots */}
                       <div className="flex gap-[3px]">
                         {week.days.map((day, dIdx) => {
                           const color = getDayTypeColor(day.type);
                           const hasExercises = day.exercises.length > 0;
-                          const isActiveDay = activeWeekIdx === wIdx && activeDayIdx === dIdx;
+                          const isActiveDay =
+                            activeWeekIdx === wIdx && activeDayIdx === dIdx;
                           return (
                             <button
                               key={dIdx}
@@ -1325,18 +1636,26 @@ export function PlanBuilder({
                             >
                               <div
                                 className={`w-2.5 h-2.5 rounded-full transition-all ${
-                                  isActiveDay ? 'ring-2 ring-offset-1 ring-brand' : ''
+                                  isActiveDay
+                                    ? 'ring-2 ring-offset-1 ring-brand'
+                                    : ''
                                 }`}
                                 style={{
-                                  backgroundColor: hasExercises || day.type === 'Rest' ? color : 'transparent',
-                                  border: !hasExercises && day.type !== 'Rest' ? `2px solid ${color}` : 'none',
+                                  backgroundColor:
+                                    hasExercises || day.type === 'Rest'
+                                      ? color
+                                      : 'transparent',
+                                  border:
+                                    !hasExercises && day.type !== 'Rest'
+                                      ? `2px solid ${color}`
+                                      : 'none',
                                 }}
                               />
                             </button>
                           );
                         })}
                       </div>
-                    </button>
+                    </Button>
                   );
                 })}
               </div>
@@ -1357,13 +1676,15 @@ export function PlanBuilder({
                   )}
                 </h3>
                 {activeWeekHasContent && weeks.length > 1 && (
-                  <button
+                  <Button
                     onClick={() => handleApplyWeekToAll(activeWeekIdx)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-brand-secondary bg-brand-secondary/5 border border-brand-secondary/20 rounded-control hover:bg-brand-secondary-soft transition-colors"
+                    variant="outline-brand"
+                    size="sm"
+                    className="text-brand-secondary border-brand-secondary/20 bg-brand-secondary/5 hover:bg-brand-secondary-soft"
                   >
                     <Layers size={14} />
                     Apply week to all
-                  </button>
+                  </Button>
                 )}
               </div>
 
@@ -1371,17 +1692,21 @@ export function PlanBuilder({
                 {DAY_TYPES.map((type) => {
                   const isSelected = activeDay.type === type;
                   return (
-                    <button
+                    <Button
                       key={type}
+                      type="button"
                       onClick={() => handleUpdateDayType(type)}
-                      className={`px-4 py-2 rounded-full text-sm font-bold transition-all border ${
+                      variant={isSelected ? 'brand' : 'outline'}
+                      size="sm"
+                      className={cn(
+                        'rounded-full border px-4 text-sm font-bold',
                         isSelected
-                          ? 'bg-brand border-brand text-white shadow-md'
-                          : 'bg-card border-neutral-300 text-muted-foreground hover:border-neutral-400 hover:text-foreground'
-                      }`}
+                          ? 'border-brand shadow-md'
+                          : 'border-neutral-300 bg-card text-muted-foreground hover:border-neutral-400 hover:text-foreground',
+                      )}
                     >
                       {type}
-                    </button>
+                    </Button>
                   );
                 })}
               </div>
@@ -1393,10 +1718,12 @@ export function PlanBuilder({
                 <div className="mx-8 mt-8 bg-blue-50 border border-blue-200 rounded-card p-5 flex items-start gap-4 shadow-sm">
                   <Info className="text-blue-600 shrink-0 mt-0.5" size={24} />
                   <div>
-                    <h4 className="text-blue-800 font-bold text-base uppercase tracking-wider">Deload Week</h4>
+                    <h4 className="text-blue-800 font-bold text-base uppercase tracking-wider">
+                      Deload Week
+                    </h4>
                     <p className="text-sm text-blue-700 mt-1">
-                      This is a planned deload week. Consider reducing sets, lowering reps, or increasing RIR to
-                      prioritize recovery.
+                      This is a planned deload week. Consider reducing sets,
+                      lowering reps, or increasing RIR to prioritize recovery.
                     </p>
                   </div>
                 </div>
@@ -1406,8 +1733,12 @@ export function PlanBuilder({
                 {activeDay.type === 'Rest' ? (
                   <div className="h-full flex flex-col items-center justify-center text-muted-foreground py-20">
                     <Activity size={64} className="mb-6 opacity-20" />
-                    <p className="text-xl font-medium text-muted-foreground mb-2">Rest Day</p>
-                    <p className="text-sm">Enjoy the recovery. No exercises for this day.</p>
+                    <p className="text-xl font-medium text-muted-foreground mb-2">
+                      Rest Day
+                    </p>
+                    <p className="text-sm">
+                      Enjoy the recovery. No exercises for this day.
+                    </p>
                   </div>
                 ) : (
                   <div className="space-y-2 flex flex-col min-h-full">
@@ -1422,27 +1753,33 @@ export function PlanBuilder({
                           {selectedForSuperset.length} exercises selected
                         </span>
                         <div className="flex gap-3">
-                          <button
+                          <Button
                             onClick={() => setSelectedForSuperset([])}
-                            className="px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-muted rounded-control transition-colors"
+                            variant="ghost"
                           >
                             Cancel
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             onClick={handleGroupSuperset}
-                            className="px-4 py-2 text-sm font-semibold bg-brand text-white rounded-control shadow-sm hover:bg-brand-hover transition-colors"
+                            variant="brand"
+                            className="shadow-sm"
                           >
                             Create Superset
-                          </button>
+                          </Button>
                         </div>
                       </motion.div>
                     )}
 
                     {groupedExercises.length === 0 ? (
-                      <EmptyDropTarget onDrop={(item: any) => handleDropOnSeparator(item, 0)} />
+                      <EmptyDropTarget
+                        onDrop={(item: any) => handleDropOnSeparator(item, 0)}
+                      />
                     ) : (
                       <>
-                        <DropSeparator index={0} onDrop={handleDropOnSeparator} />
+                        <DropSeparator
+                          index={0}
+                          onDrop={handleDropOnSeparator}
+                        />
                         {groupedExercises.map((group, gIdx) => {
                           const baseIndex = groupedExercises
                             .slice(0, gIdx)
@@ -1454,22 +1791,37 @@ export function PlanBuilder({
                                 group={{ ...group, baseIndex }}
                                 onDropOnGroup={handleDropOnGroup}
                                 handleRemoveExercise={handleRemoveExercise}
-                                handleUpdateExerciseData={handleUpdateExerciseData}
+                                handleUpdateExerciseData={
+                                  handleUpdateExerciseData
+                                }
                                 handleRemoveSuperset={handleRemoveSuperset}
                                 exercises={exercises}
                                 selectedForSuperset={selectedForSuperset}
                                 toggleSelectForSuperset={(id: string) => {
                                   if (selectedForSuperset.includes(id))
-                                    setSelectedForSuperset((prev) => prev.filter((p) => p !== id));
-                                  else setSelectedForSuperset((prev) => [...prev, id]);
+                                    setSelectedForSuperset((prev) =>
+                                      prev.filter((p) => p !== id),
+                                    );
+                                  else
+                                    setSelectedForSuperset((prev) => [
+                                      ...prev,
+                                      id,
+                                    ]);
                                 }}
                                 expandedNotes={expandedNotes}
                                 toggleNotes={toggleNotes}
                               />
                               {isLast ? (
-                                <DropSeparator index={gIdx + 1} onDrop={handleDropOnSeparator} isTrailing />
+                                <DropSeparator
+                                  index={gIdx + 1}
+                                  onDrop={handleDropOnSeparator}
+                                  isTrailing
+                                />
                               ) : (
-                                <DropSeparator index={gIdx + 1} onDrop={handleDropOnSeparator} />
+                                <DropSeparator
+                                  index={gIdx + 1}
+                                  onDrop={handleDropOnSeparator}
+                                />
                               )}
                             </React.Fragment>
                           );
@@ -1492,13 +1844,23 @@ export function PlanBuilder({
           >
             <div className="p-4 px-3 border-b border-border rounded-field bg-card">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="font-bold text-foreground uppercase tracking-wider text-xs">Exercise Library</h3>
-                <button onClick={() => setRightDrawerOpen(false)} className="xl:hidden p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-compact">
+                <h3 className="font-bold text-foreground uppercase tracking-wider text-xs">
+                  Exercise Library
+                </h3>
+                <Button
+                  onClick={() => setRightDrawerOpen(false)}
+                  variant="ghost"
+                  size="icon"
+                  className="xl:hidden size-8"
+                >
                   <X size={18} />
-                </button>
+                </Button>
               </div>
               <div className="relative mb-3">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+                <Search
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                  size={16}
+                />
                 <input
                   type="text"
                   placeholder="Search exercises..."
@@ -1509,17 +1871,21 @@ export function PlanBuilder({
               </div>
 
               <div className="relative">
-                <button
+                <Button
                   ref={filterTriggerRef}
                   onClick={() => setIsFilterOpen(!isFilterOpen)}
                   aria-expanded={isFilterOpen}
-                  className="w-full flex items-center justify-between px-3 py-2 bg-muted border border-border rounded-control text-sm font-medium text-muted-foreground hover:bg-muted transition-colors"
+                  variant="outline"
+                  className="w-full justify-between bg-muted font-medium text-muted-foreground"
                 >
                   <div className="flex items-center gap-2">
                     <Filter size={16} />
-                    <span>Filters {activeFilters.length > 0 && `(${activeFilters.length})`}</span>
+                    <span>
+                      Filters{' '}
+                      {activeFilters.length > 0 && `(${activeFilters.length})`}
+                    </span>
                   </div>
-                </button>
+                </Button>
 
                 <AnimatePresence>
                   {isFilterOpen && (
@@ -1543,11 +1909,17 @@ export function PlanBuilder({
 
             <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-surface-page">
               {filteredLibrary.map((ex) => (
-                <LibraryExerciseCard key={ex.id} ex={ex} onQuickAdd={handleQuickAdd} />
+                <LibraryExerciseCard
+                  key={ex.id}
+                  ex={ex}
+                  onQuickAdd={handleQuickAdd}
+                />
               ))}
               {filteredLibrary.length === 0 && (
                 <div className="text-center py-8">
-                  <p className="text-sm text-muted-foreground">No exercises match your search and filters.</p>
+                  <p className="text-sm text-muted-foreground">
+                    No exercises match your search and filters.
+                  </p>
                   {(activeFilters.length > 0 || Boolean(searchQuery)) && (
                     <button
                       type="button"

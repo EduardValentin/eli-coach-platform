@@ -1,18 +1,46 @@
 import { useState, useMemo, ReactNode } from 'react';
 import { motion } from 'motion/react';
 import {
-  CalendarDays, CalendarPlus, Clock, CheckCircle2, XCircle, RefreshCw, Video,
+  CalendarDays,
+  CalendarPlus,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  RefreshCw,
+  Video,
 } from 'lucide-react';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
-import { useCheckins, type CheckIn, MAX_RESCHEDULES } from '../../context/CheckinContext';
+import {
+  useCheckins,
+  type CheckIn,
+  MAX_RESCHEDULES,
+} from '../../context/CheckinContext';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
-import { PROGRAM_REVIEW_LABEL, upcomingReviewCall } from '../../utils/reviewCallListing';
-import { browserTimeZone, formatSlotTime, formatZonedDate } from '../../utils/dateFormatters';
+import {
+  PROGRAM_REVIEW_LABEL,
+  upcomingReviewCall,
+} from '../../utils/reviewCallListing';
+import {
+  browserTimeZone,
+  formatSlotTime,
+  formatZonedDate,
+} from '../../utils/dateFormatters';
 import { useMessaging } from '../../context/MessagingContext';
 import { useCoachProfile } from '../../context/CoachProfileContext';
-import { formatCheckinDate, formatCheckinTime, toISODate, to24h } from '../../utils/dateFormatters';
+import {
+  formatCheckinDate,
+  formatCheckinTime,
+  toISODate,
+  to24h,
+} from '../../utils/dateFormatters';
 import { CheckinSchedulerSheet } from '../../components/CheckinSchedulerSheet';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '../../components/ui/tabs';
+import { Button, buttonVariants } from '../../components/ui/button';
 import { toast } from 'sonner';
 
 const CLIENT_ID = 'c1';
@@ -21,9 +49,16 @@ const MEET_URL = 'https://meet.google.com/mock-eli-checkin';
 
 export function ClientCheckins() {
   const {
-    checkins, requestCheckin, approveCheckin, declineCheckin,
-    rescheduleCheckin, acceptReschedule, getUpcomingCheckins, getPendingCheckins,
-    hasPendingAdHoc, getBookedSlots,
+    checkins,
+    requestCheckin,
+    approveCheckin,
+    declineCheckin,
+    rescheduleCheckin,
+    acceptReschedule,
+    getUpcomingCheckins,
+    getPendingCheckins,
+    hasPendingAdHoc,
+    getBookedSlots,
   } = useCheckins();
   const { addSystemMessage, sendMessage: ctxSendMessage } = useMessaging();
   const { demoJourney } = useClientJourneys();
@@ -34,13 +69,24 @@ export function ClientCheckins() {
   const upcoming = getUpcomingCheckins(CLIENT_ID);
   const pending = getPendingCheckins(CLIENT_ID); // pending + rescheduling
   const past = useMemo(
-    () => checkins
-      .filter(c => c.clientId === CLIENT_ID && (c.status === 'completed' || c.status === 'declined' || c.status === 'cancelled'))
-      .sort((a, b) => `${b.date}${b.time}`.localeCompare(`${a.date}${a.time}`)),
-    [checkins]
+    () =>
+      checkins
+        .filter(
+          (c) =>
+            c.clientId === CLIENT_ID &&
+            (c.status === 'completed' ||
+              c.status === 'declined' ||
+              c.status === 'cancelled'),
+        )
+        .sort((a, b) =>
+          `${b.date}${b.time}`.localeCompare(`${a.date}${a.time}`),
+        ),
+    [checkins],
   );
 
-  const needsResponseCount = pending.filter(c => c.proposedBy === 'coach').length;
+  const needsResponseCount = pending.filter(
+    (c) => c.proposedBy === 'coach',
+  ).length;
   const pendingExists = hasPendingAdHoc(CLIENT_ID);
 
   // Request scheduler state
@@ -61,8 +107,9 @@ export function ClientCheckins() {
   }, [showRequest, reqDate, rescheduleTarget, rsDate, getBookedSlots]);
 
   const rescheduleTargetCheckin = useMemo(
-    () => [...upcoming, ...pending].find(c => c.id === rescheduleTarget) ?? null,
-    [upcoming, pending, rescheduleTarget]
+    () =>
+      [...upcoming, ...pending].find((c) => c.id === rescheduleTarget) ?? null,
+    [upcoming, pending, rescheduleTarget],
   );
 
   // ── Handlers (mirror the in-chat flow so the conversation stays in sync) ──
@@ -70,24 +117,44 @@ export function ClientCheckins() {
     if (!reqDate || !reqTime) return;
     const date = toISODate(reqDate);
     const time = to24h(reqTime);
-    const result = requestCheckin({ clientId: CLIENT_ID, clientName: CLIENT_NAME, date, time });
-    if (!result) { toast.error('You already have a pending check-in request'); return; }
+    const result = requestCheckin({
+      clientId: CLIENT_ID,
+      clientName: CLIENT_NAME,
+      date,
+      time,
+    });
+    if (!result) {
+      toast.error('You already have a pending check-in request');
+      return;
+    }
     setShowRequest(false);
     setReqDate(undefined);
     setReqTime(null);
-    ctxSendMessage(CLIENT_ID, `Check-in requested: ${formatCheckinDate(date)} at ${formatCheckinTime(time)}`, 'client');
+    ctxSendMessage(
+      CLIENT_ID,
+      `Check-in requested: ${formatCheckinDate(date)} at ${formatCheckinTime(time)}`,
+      'client',
+    );
     toast.success(`Check-in requested for ${formatCheckinDate(date)}`);
   };
 
   const handleApprove = (c: CheckIn) => {
     approveCheckin(c.id);
-    addSystemMessage(CLIENT_ID, `Check-in confirmed for ${formatCheckinDate(c.date)} at ${formatCheckinTime(c.time)}`, 'checkin-scheduled');
+    addSystemMessage(
+      CLIENT_ID,
+      `Check-in confirmed for ${formatCheckinDate(c.date)} at ${formatCheckinTime(c.time)}`,
+      'checkin-scheduled',
+    );
     toast.success('Check-in confirmed');
   };
 
   const handleAcceptReschedule = (c: CheckIn) => {
     acceptReschedule(c.id);
-    addSystemMessage(CLIENT_ID, `Check-in confirmed for ${formatCheckinDate(c.date)} at ${formatCheckinTime(c.time)}`, 'checkin-scheduled');
+    addSystemMessage(
+      CLIENT_ID,
+      `Check-in confirmed for ${formatCheckinDate(c.date)} at ${formatCheckinTime(c.time)}`,
+      'checkin-scheduled',
+    );
     toast.success('Check-in confirmed');
   };
 
@@ -99,7 +166,11 @@ export function ClientCheckins() {
 
   const handleCancelRequest = (c: CheckIn) => {
     declineCheckin(c.id);
-    addSystemMessage(CLIENT_ID, 'Check-in request cancelled', 'checkin-cancelled');
+    addSystemMessage(
+      CLIENT_ID,
+      'Check-in request cancelled',
+      'checkin-cancelled',
+    );
     toast.success('Request cancelled');
   };
 
@@ -114,9 +185,22 @@ export function ClientCheckins() {
     if (!rescheduleTarget || !rsDate || !rsTime) return;
     const date = toISODate(rsDate);
     const time = to24h(rsTime);
-    const ok = rescheduleCheckin(rescheduleTarget, date, time, 'client', rsMsg || undefined);
-    if (!ok) { toast.error('Maximum reschedule limit reached'); return; }
-    addSystemMessage(CLIENT_ID, `${CLIENT_NAME} proposed rescheduling to ${formatCheckinDate(date)} at ${formatCheckinTime(time)}`, 'checkin-rescheduled');
+    const ok = rescheduleCheckin(
+      rescheduleTarget,
+      date,
+      time,
+      'client',
+      rsMsg || undefined,
+    );
+    if (!ok) {
+      toast.error('Maximum reschedule limit reached');
+      return;
+    }
+    addSystemMessage(
+      CLIENT_ID,
+      `${CLIENT_NAME} proposed rescheduling to ${formatCheckinDate(date)} at ${formatCheckinTime(time)}`,
+      'checkin-rescheduled',
+    );
     if (rsMsg) ctxSendMessage(CLIENT_ID, rsMsg, 'client');
     toast.success('Reschedule proposed');
     setRescheduleTarget(null);
@@ -133,31 +217,48 @@ export function ClientCheckins() {
         <div className="mb-6 flex flex-col gap-2">
           <div className="flex items-center justify-between gap-4">
             <TabsList variant="segmented">
-              <TabsTrigger variant="segmented" value="upcoming" className="px-4 sm:px-5">
+              <TabsTrigger
+                variant="segmented"
+                value="upcoming"
+                className="px-4 sm:px-5"
+              >
                 Upcoming
               </TabsTrigger>
-              <TabsTrigger variant="segmented" value="requests" className="px-4 sm:px-5">
+              <TabsTrigger
+                variant="segmented"
+                value="requests"
+                className="px-4 sm:px-5"
+              >
                 Requests
               </TabsTrigger>
-              <TabsTrigger variant="segmented" value="past" className="px-4 sm:px-5">
+              <TabsTrigger
+                variant="segmented"
+                value="past"
+                className="px-4 sm:px-5"
+              >
                 Past
               </TabsTrigger>
             </TabsList>
 
-            <button
+            <Button
               type="button"
               onClick={() => setShowRequest(true)}
               disabled={pendingExists}
-              title={pendingExists ? 'You already have a check-in request awaiting your coach' : 'Request a check-in with your coach'}
-              className={`hidden sm:inline-flex items-center gap-2 px-4 min-h-11 rounded-control text-sm font-bold transition-colors shrink-0 ${
+              title={
                 pendingExists
-                  ? 'bg-neutral-100 text-text-secondary'
-                  : 'bg-brand text-white hover:bg-brand-hover shadow-sm'
-              }`}
+                  ? 'You already have a check-in request awaiting your coach'
+                  : 'Request a check-in with your coach'
+              }
+              variant="brand"
+              className="hidden shrink-0 sm:inline-flex"
             >
-              {pendingExists ? <Clock size={16} aria-hidden="true" /> : <CalendarPlus size={16} aria-hidden="true" />}
+              {pendingExists ? (
+                <Clock size={16} aria-hidden="true" />
+              ) : (
+                <CalendarPlus size={16} aria-hidden="true" />
+              )}
               {pendingExists ? 'Check-in pending' : 'Request check-in'}
-            </button>
+            </Button>
           </div>
           {needsResponseCount > 0 && (
             <p className="text-sm text-text-secondary">
@@ -169,30 +270,37 @@ export function ClientCheckins() {
         {/* Upcoming */}
         <TabsContent value="upcoming" className="space-y-3">
           {reviewCall && (
-            <ProgramReviewCard coachName={coachName} startsAt={reviewCall.startsAt} />
+            <ProgramReviewCard
+              coachName={coachName}
+              startsAt={reviewCall.startsAt}
+            />
           )}
           {upcoming.length === 0 && !reviewCall ? (
-            <EmptyState icon={CalendarDays} title="No upcoming check-ins" hint="Request one any time using the button above." />
+            <EmptyState
+              icon={CalendarDays}
+              title="No upcoming check-ins"
+              hint="Request one any time using the button above."
+            />
           ) : (
-            upcoming.map(c => (
+            upcoming.map((c) => (
               <CheckinCard key={c.id} checkin={c}>
                 <a
                   href={MEET_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 min-h-10 px-4 bg-text-primary text-white text-xs font-semibold rounded-control hover:bg-neutral-800 transition-colors"
+                  className={buttonVariants({ variant: 'inverted' })}
                 >
                   <Video size={14} aria-hidden="true" />
                   Join Meet
                 </a>
                 {c.rescheduleCount < MAX_RESCHEDULES && (
-                  <button
+                  <Button
                     type="button"
                     onClick={() => openReschedule(c.id)}
-                    className="inline-flex items-center justify-center min-h-10 px-4 bg-white border border-brand/30 text-brand text-xs font-semibold rounded-control hover:bg-brand/5 transition-colors"
+                    variant="outline-brand"
                   >
                     Reschedule
-                  </button>
+                  </Button>
                 )}
               </CheckinCard>
             ))
@@ -202,9 +310,13 @@ export function ClientCheckins() {
         {/* Requests */}
         <TabsContent value="requests" className="space-y-3">
           {pending.length === 0 ? (
-            <EmptyState icon={CalendarPlus} title="No open requests" hint="Requests you send and proposals from your coach show up here." />
+            <EmptyState
+              icon={CalendarPlus}
+              title="No open requests"
+              hint="Requests you send and proposals from your coach show up here."
+            />
           ) : (
-            pending.map(c => {
+            pending.map((c) => {
               const needsResponse = c.proposedBy === 'coach';
               const isRescheduling = c.status === 'rescheduling';
               const canReschedule = c.rescheduleCount < MAX_RESCHEDULES;
@@ -212,38 +324,42 @@ export function ClientCheckins() {
                 <CheckinCard key={c.id} checkin={c}>
                   {needsResponse ? (
                     <>
-                      <button
+                      <Button
                         type="button"
-                        onClick={() => isRescheduling ? handleAcceptReschedule(c) : handleApprove(c)}
-                        className="inline-flex items-center justify-center min-h-10 px-4 bg-text-primary text-white text-xs font-semibold rounded-control hover:bg-neutral-800 transition-colors"
+                        onClick={() =>
+                          isRescheduling
+                            ? handleAcceptReschedule(c)
+                            : handleApprove(c)
+                        }
+                        variant="inverted"
                       >
                         {isRescheduling ? 'Accept' : 'Approve'}
-                      </button>
+                      </Button>
                       {canReschedule && (
-                        <button
+                        <Button
                           type="button"
                           onClick={() => openReschedule(c.id)}
-                          className="inline-flex items-center justify-center min-h-10 px-4 bg-white border border-brand/30 text-brand text-xs font-semibold rounded-control hover:bg-brand/5 transition-colors"
+                          variant="outline-brand"
                         >
                           Reschedule
-                        </button>
+                        </Button>
                       )}
-                      <button
+                      <Button
                         type="button"
                         onClick={() => handleDecline(c)}
-                        className="inline-flex items-center justify-center min-h-10 px-4 bg-white border border-neutral-200 text-text-secondary text-xs font-semibold rounded-control hover:bg-neutral-50 transition-colors"
+                        variant="outline"
                       >
                         Decline
-                      </button>
+                      </Button>
                     </>
                   ) : (
-                    <button
+                    <Button
                       type="button"
                       onClick={() => handleCancelRequest(c)}
-                      className="inline-flex items-center justify-center min-h-10 px-4 bg-white border border-neutral-200 text-text-secondary text-xs font-semibold rounded-control hover:bg-neutral-50 transition-colors"
+                      variant="outline"
                     >
                       Cancel request
-                    </button>
+                    </Button>
                   )}
                 </CheckinCard>
               );
@@ -254,9 +370,13 @@ export function ClientCheckins() {
         {/* Past */}
         <TabsContent value="past" className="space-y-3">
           {past.length === 0 ? (
-            <EmptyState icon={Clock} title="No past check-ins yet" hint="Completed and cancelled check-ins will appear here." />
+            <EmptyState
+              icon={Clock}
+              title="No past check-ins yet"
+              hint="Completed and cancelled check-ins will appear here."
+            />
           ) : (
-            past.map(c => <CheckinCard key={c.id} checkin={c} muted />)
+            past.map((c) => <CheckinCard key={c.id} checkin={c} muted />)
           )}
         </TabsContent>
       </Tabs>
@@ -280,7 +400,9 @@ export function ClientCheckins() {
       {/* Reschedule */}
       <CheckinSchedulerSheet
         open={Boolean(rescheduleTarget)}
-        onOpenChange={(open) => { if (!open) setRescheduleTarget(null); }}
+        onOpenChange={(open) => {
+          if (!open) setRescheduleTarget(null);
+        }}
         variant="reschedule"
         title="Propose a new time"
         description={
@@ -301,22 +423,31 @@ export function ClientCheckins() {
         messagePlaceholder="Add a note for your coach (optional)"
       />
 
-      {/* Mobile floating action — request a check-in (desktop uses the CTA in the tabs row) */}
-      <button
+      <Button
         type="button"
         onClick={() => setShowRequest(true)}
         disabled={pendingExists}
-        aria-label={pendingExists ? 'Check-in request pending — awaiting your coach' : 'Request a check-in'}
-        title={pendingExists ? 'You already have a check-in request awaiting your coach' : 'Request a check-in with your coach'}
-        className={`sm:hidden fixed left-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-40 inline-flex items-center gap-2 min-h-12 px-5 rounded-control font-bold text-sm shadow-lg transition-colors ${
+        aria-label={
           pendingExists
-            ? 'bg-neutral-200 text-text-secondary'
-            : 'bg-brand text-white hover:bg-brand-hover'
-        }`}
+            ? 'Check-in request pending — awaiting your coach'
+            : 'Request a check-in'
+        }
+        title={
+          pendingExists
+            ? 'You already have a check-in request awaiting your coach'
+            : 'Request a check-in with your coach'
+        }
+        variant="brand"
+        size="lg"
+        className="fixed left-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-40 shadow-lg sm:hidden"
       >
-        {pendingExists ? <Clock size={18} aria-hidden="true" /> : <CalendarPlus size={18} aria-hidden="true" />}
+        {pendingExists ? (
+          <Clock size={18} aria-hidden="true" />
+        ) : (
+          <CalendarPlus size={18} aria-hidden="true" />
+        )}
         {pendingExists ? 'Pending' : 'Request check-in'}
-      </button>
+      </Button>
     </div>
   );
 }
@@ -370,7 +501,15 @@ function ProgramReviewCard({
 
 // ── Check-in card ──────────────────────────────────────────────
 
-function CheckinCard({ checkin, children, muted }: { checkin: CheckIn; children?: ReactNode; muted?: boolean }) {
+function CheckinCard({
+  checkin,
+  children,
+  muted,
+}: {
+  checkin: CheckIn;
+  children?: ReactNode;
+  muted?: boolean;
+}) {
   const isAdHoc = checkin.type === 'ad-hoc';
   const isRescheduling = checkin.status === 'rescheduling';
   const Icon = isAdHoc ? CalendarPlus : CalendarDays;
@@ -384,21 +523,31 @@ function CheckinCard({ checkin, children, muted }: { checkin: CheckIn; children?
       className={`bg-white p-4 sm:p-5 rounded-card border border-neutral-100/50 shadow-[0_2px_12px_rgb(0,0,0,0.03)] ${muted ? 'opacity-90' : ''}`}
     >
       <div className="flex items-start gap-3 sm:gap-4">
-        <span className={`w-10 h-10 sm:w-11 sm:h-11 rounded-control flex items-center justify-center shrink-0 ${
-          isAdHoc ? 'bg-status-pending-soft text-status-pending' : 'bg-brand-secondary/10 text-brand-secondary'
-        }`}>
+        <span
+          className={`w-10 h-10 sm:w-11 sm:h-11 rounded-control flex items-center justify-center shrink-0 ${
+            isAdHoc
+              ? 'bg-status-pending-soft text-status-pending'
+              : 'bg-brand-secondary/10 text-brand-secondary'
+          }`}
+        >
           <Icon size={18} aria-hidden="true" />
         </span>
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${
-              isAdHoc ? 'bg-status-pending-soft text-status-pending' : 'bg-neutral-100 text-text-secondary'
-            }`}>
+            <span
+              className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${
+                isAdHoc
+                  ? 'bg-status-pending-soft text-status-pending'
+                  : 'bg-neutral-100 text-text-secondary'
+              }`}
+            >
               {isAdHoc ? 'Ad-hoc' : 'Weekly'}
             </span>
             {chip && (
-              <span className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${chip.cls}`}>
+              <span
+                className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${chip.cls}`}
+              >
                 <chip.Icon size={10} aria-hidden="true" />
                 {chip.label}
               </span>
@@ -408,7 +557,8 @@ function CheckinCard({ checkin, children, muted }: { checkin: CheckIn; children?
           {isRescheduling && checkin.previousDate && checkin.previousTime && (
             <div className="flex items-center gap-1.5 text-xs text-text-secondary line-through mb-0.5">
               <CalendarDays size={12} aria-hidden="true" />
-              {formatCheckinDate(checkin.previousDate)} at {formatCheckinTime(checkin.previousTime)}
+              {formatCheckinDate(checkin.previousDate)} at{' '}
+              {formatCheckinTime(checkin.previousTime)}
             </div>
           )}
 
@@ -424,7 +574,9 @@ function CheckinCard({ checkin, children, muted }: { checkin: CheckIn; children?
           </div>
 
           {(checkin.rescheduleMessage || checkin.note) && (
-            <p className="text-xs text-text-secondary italic mt-2">&ldquo;{checkin.rescheduleMessage || checkin.note}&rdquo;</p>
+            <p className="text-xs text-text-secondary italic mt-2">
+              &ldquo;{checkin.rescheduleMessage || checkin.note}&rdquo;
+            </p>
           )}
         </div>
       </div>
@@ -434,33 +586,79 @@ function CheckinCard({ checkin, children, muted }: { checkin: CheckIn; children?
   );
 }
 
-function getStatusChip(checkin: CheckIn): { label: string; cls: string; Icon: typeof Clock } | null {
+function getStatusChip(
+  checkin: CheckIn,
+): { label: string; cls: string; Icon: typeof Clock } | null {
   switch (checkin.status) {
     case 'confirmed':
-      return { label: 'Confirmed', cls: 'text-brand-secondary bg-brand-secondary/10', Icon: CheckCircle2 };
+      return {
+        label: 'Confirmed',
+        cls: 'text-brand-secondary bg-brand-secondary/10',
+        Icon: CheckCircle2,
+      };
     case 'completed':
-      return { label: 'Completed', cls: 'text-brand-secondary bg-brand-secondary/10', Icon: CheckCircle2 };
+      return {
+        label: 'Completed',
+        cls: 'text-brand-secondary bg-brand-secondary/10',
+        Icon: CheckCircle2,
+      };
     case 'declined':
-      return { label: 'Declined', cls: 'text-red-500 bg-red-50', Icon: XCircle };
+      return {
+        label: 'Declined',
+        cls: 'text-red-500 bg-red-50',
+        Icon: XCircle,
+      };
     case 'cancelled':
-      return { label: 'Cancelled', cls: 'text-text-secondary bg-neutral-100', Icon: XCircle };
+      return {
+        label: 'Cancelled',
+        cls: 'text-text-secondary bg-neutral-100',
+        Icon: XCircle,
+      };
     case 'rescheduling':
       return checkin.proposedBy === 'coach'
-        ? { label: 'Coach proposed a time', cls: 'text-brand bg-brand/10', Icon: RefreshCw }
-        : { label: 'Awaiting your coach', cls: 'text-text-secondary bg-neutral-100', Icon: RefreshCw };
+        ? {
+            label: 'Coach proposed a time',
+            cls: 'text-brand bg-brand/10',
+            Icon: RefreshCw,
+          }
+        : {
+            label: 'Awaiting your coach',
+            cls: 'text-text-secondary bg-neutral-100',
+            Icon: RefreshCw,
+          };
     case 'pending':
       return checkin.proposedBy === 'coach'
-        ? { label: 'From your coach', cls: 'text-status-pending bg-status-pending-soft', Icon: Clock }
-        : { label: 'Awaiting your coach', cls: 'text-text-secondary bg-neutral-100', Icon: Clock };
+        ? {
+            label: 'From your coach',
+            cls: 'text-status-pending bg-status-pending-soft',
+            Icon: Clock,
+          }
+        : {
+            label: 'Awaiting your coach',
+            cls: 'text-text-secondary bg-neutral-100',
+            Icon: Clock,
+          };
     default:
       return null;
   }
 }
 
-function EmptyState({ icon: Icon, title, hint }: { icon: typeof Clock; title: string; hint: string }) {
+function EmptyState({
+  icon: Icon,
+  title,
+  hint,
+}: {
+  icon: typeof Clock;
+  title: string;
+  hint: string;
+}) {
   return (
     <div className="text-center py-16">
-      <Icon size={40} className="mx-auto text-neutral-300 mb-4" aria-hidden="true" />
+      <Icon
+        size={40}
+        className="mx-auto text-neutral-300 mb-4"
+        aria-hidden="true"
+      />
       <p className="text-text-secondary font-medium">{title}</p>
       <p className="text-sm text-text-secondary mt-1">{hint}</p>
     </div>

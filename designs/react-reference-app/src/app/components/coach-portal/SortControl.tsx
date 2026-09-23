@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../ui/select';
+import { Button } from '../ui/button';
 import { cn } from '../ui/utils';
 
 const SORT_OPTIONS: { key: SortKey; label: string }[] = [
@@ -45,9 +46,6 @@ const DIRECTION_ICONS: Record<SortKey, Record<SortDirection, LucideIcon>> = {
   name: { asc: ArrowDownAZ, desc: ArrowUpZA },
   email: { asc: ArrowDownAZ, desc: ArrowUpZA },
 };
-
-const toggleButtonClass =
-  'h-(--size-control-sm) w-(--size-control-sm) shrink-0 inline-flex items-center justify-center rounded-field border border-control-border-soft text-text-primary transition-colors hover:border-brand hover:text-brand aria-pressed:bg-brand aria-pressed:text-brand-foreground aria-pressed:border-brand';
 
 function reversed(direction: SortDirection): SortDirection {
   return direction === 'asc' ? 'desc' : 'asc';
@@ -90,9 +88,11 @@ export function SortControl({
           ))}
         </SelectContent>
       </Select>
-      <button
+      <Button
         type="button"
-        className={toggleButtonClass}
+        variant="outline"
+        size="icon"
+        className="shrink-0 hover:border-brand hover:text-brand aria-pressed:border-brand aria-pressed:bg-brand aria-pressed:text-brand-foreground"
         aria-pressed={sort.direction !== defaultDirectionFor(sort.key)}
         aria-label={directionLabel}
         onClick={() =>
@@ -100,7 +100,7 @@ export function SortControl({
         }
       >
         <DirectionIcon className="size-4" aria-hidden="true" />
-      </button>
+      </Button>
     </div>
   );
 }

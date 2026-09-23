@@ -5,7 +5,7 @@ import type {
   OnboardingField,
   OnboardingFormDefinition,
 } from '../../../domain/onboardingSchema';
-import { Button } from '../../ThemeButton';
+import { Button } from '../../ui/button';
 import { Form } from '../../ui/form';
 import { useMeasureUnits } from '../measureUnits';
 import { OnboardingFieldControl } from './OnboardingFieldControl';
@@ -99,7 +99,9 @@ function OnboardingAnswerForm({
         {groupFields(shown).map((group) => (
           <div className="grid gap-6" key={group.section ?? 'main'}>
             {group.section && (
-              <h3 className="font-serif text-lg text-text-primary">{group.section}</h3>
+              <h3 className="font-serif text-lg text-text-primary">
+                {group.section}
+              </h3>
             )}
             {group.fields.map((field) => (
               <OnboardingFieldControl
@@ -115,13 +117,24 @@ function OnboardingAnswerForm({
 
         <div className="mt-2 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
           {onBack ? (
-            <Button onClick={onBack} type="button" variant="outline" width="full-below-sm">
+            <Button
+              onClick={onBack}
+              type="button"
+              variant="outline"
+              size="lg"
+              className="w-full sm:w-auto"
+            >
               Back
             </Button>
           ) : (
             <span />
           )}
-          <Button type="submit" width="full-below-sm">
+          <Button
+            type="submit"
+            variant="brand"
+            size="lg"
+            className="w-full sm:w-auto"
+          >
             {continueLabel}
           </Button>
         </div>
@@ -140,7 +153,10 @@ export function OnboardingFormCard({
   const { definition } = answerForm;
 
   return (
-    <section aria-labelledby="onboarding-form-heading" className={ONBOARDING_CARD_CLASS}>
+    <section
+      aria-labelledby="onboarding-form-heading"
+      className={ONBOARDING_CARD_CLASS}
+    >
       <h2
         className={ONBOARDING_HEADING_CLASS}
         id="onboarding-form-heading"
@@ -161,7 +177,10 @@ export function OnboardingFormCard({
 
       {unitsChoice && <div className="mt-7">{unitsChoice}</div>}
 
-      <OnboardingAnswerForm {...answerForm} key={`${units.weight}-${units.length}`} />
+      <OnboardingAnswerForm
+        {...answerForm}
+        key={`${units.weight}-${units.length}`}
+      />
     </section>
   );
 }

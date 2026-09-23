@@ -1,13 +1,36 @@
 import { useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router';
-import { ArrowLeft, ArrowLeftRight, ArrowRight, Clock, Dumbbell, Timer, TrendingUp, Zap } from 'lucide-react';
+import {
+  ArrowLeft,
+  ArrowLeftRight,
+  ArrowRight,
+  Clock,
+  Dumbbell,
+  Timer,
+  TrendingUp,
+  Zap,
+} from 'lucide-react';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { useTraining } from '../../context/TrainingContext';
 import { useUnitPreferences } from '../../context/UnitPreferencesContext';
-import { formatVolume, formatLoad, displayWeightValue, weightUnitLabel } from '../../utils/units';
+import {
+  formatVolume,
+  formatLoad,
+  displayWeightValue,
+  weightUnitLabel,
+} from '../../utils/units';
 import type { Exercise, ExerciseLog } from '../../context/TrainingContext';
+import { Button } from '../../components/ui/button';
 
-const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const DAY_NAMES = [
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
+];
 const PIE_COLORS = [
   'var(--brand)',
   'var(--brand-secondary)',
@@ -24,13 +47,20 @@ function estimateRM(weight: number, reps: number, targetReps: number): number {
   return Math.round((oneRM / (1 + targetReps / 30)) * 10) / 10;
 }
 
-function getBestSet(exLog: ExerciseLog): { weight: number; reps: number } | null {
-  let best: { weight: number; reps: number; estimated1RM: number } | null = null;
+function getBestSet(
+  exLog: ExerciseLog,
+): { weight: number; reps: number } | null {
+  let best: { weight: number; reps: number; estimated1RM: number } | null =
+    null;
   for (const s of exLog.sets) {
     if (s.completed && s.actualWeight && s.actualReps) {
       const est = estimateRM(s.actualWeight, s.actualReps, 1);
       if (!best || est > best.estimated1RM) {
-        best = { weight: s.actualWeight, reps: s.actualReps, estimated1RM: est };
+        best = {
+          weight: s.actualWeight,
+          reps: s.actualReps,
+          estimated1RM: est,
+        };
       }
     }
   }
@@ -38,7 +68,9 @@ function getBestSet(exLog: ExerciseLog): { weight: number; reps: number } | null
 }
 
 function getFatigueIndex(exLog: ExerciseLog): number | null {
-  const completedSets = exLog.sets.filter(s => s.completed && s.actualReps != null);
+  const completedSets = exLog.sets.filter(
+    (s) => s.completed && s.actualReps != null,
+  );
   if (completedSets.length < 2) return null;
   const firstReps = completedSets[0].actualReps!;
   const lastReps = completedSets[completedSets.length - 1].actualReps!;
@@ -52,44 +84,85 @@ export function ClientWorkoutReview() {
   const { workoutLogs, exercises, planInstances } = useTraining();
   const { weightUnit } = useUnitPreferences();
 
-  const workout = workoutLogs.find(w => w.id === logId);
+  const workout = workoutLogs.find((w) => w.id === logId);
 
   if (!workout) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
-        <h2 className="text-xl font-serif font-bold text-text-primary mb-2">Session Not Found</h2>
-        <p className="text-text-secondary text-sm mb-6">This workout session couldn't be found.</p>
-        <button onClick={() => navigate('/portal/history')} className="inline-flex items-center gap-2 px-5 py-2.5 bg-text-primary text-white text-sm font-semibold rounded-control">
+        <h2 className="text-xl font-serif font-bold text-text-primary mb-2">
+          Session Not Found
+        </h2>
+        <p className="text-text-secondary text-sm mb-6">
+          This workout session couldn't be found.
+        </p>
+        <Button
+          onClick={() => navigate('/portal/history')}
+          variant="inverted"
+          size="lg"
+        >
           <ArrowLeft size={16} /> Back to History
-        </button>
+        </Button>
       </div>
     );
   }
 
-  const plan = planInstances.find(p => p.id === workout.planInstanceId);
+  const plan = planInstances.find((p) => p.id === workout.planInstanceId);
   const week = plan?.weeks[workout.weekIndex];
   const day = week?.days[workout.dayIndex];
   const durationMin = workout.duration ? Math.round(workout.duration / 60) : 0;
   const totalSets = workout.exercises.reduce((t, e) => t + e.sets.length, 0);
-  const completedSets = workout.exercises.reduce((t, e) => t + e.sets.filter(s => s.completed).length, 0);
-  const density = durationMin > 0 ? Math.round((workout.totalVolume || 0) / durationMin) : 0;
-  const workoutDate = new Date(workout.startedAt).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+  const completedSets = workout.exercises.reduce(
+    (t, e) => t + e.sets.filter((s) => s.completed).length,
+    0,
+  );
+  const density =
+    durationMin > 0 ? Math.round((workout.totalVolume || 0) / durationMin) : 0;
+  const workoutDate = new Date(workout.startedAt).toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'short',
+    day: 'numeric',
+  });
 
-  const volumeChartData = useMemo(() =>
-    workout.exercises.map(exLog => {
-      const ex = exercises.find(e => e.id === exLog.exerciseId);
-      const vol = exLog.sets.reduce((t, s) => t + (s.completed && s.actualWeight && s.actualReps ? s.actualWeight * s.actualReps : 0), 0);
-      return { name: ex?.name?.split(' ').slice(0, 2).join(' ') || '?', volume: vol };
-    }), [workout.exercises, exercises]);
+  const volumeChartData = useMemo(
+    () =>
+      workout.exercises.map((exLog) => {
+        const ex = exercises.find((e) => e.id === exLog.exerciseId);
+        const vol = exLog.sets.reduce(
+          (t, s) =>
+            t +
+            (s.completed && s.actualWeight && s.actualReps
+              ? s.actualWeight * s.actualReps
+              : 0),
+          0,
+        );
+        return {
+          name: ex?.name?.split(' ').slice(0, 2).join(' ') || '?',
+          volume: vol,
+        };
+      }),
+    [workout.exercises, exercises],
+  );
 
   const muscleVolumeData = useMemo(() => {
     const muscleVol: Record<string, number> = {};
-    workout.exercises.forEach(exLog => {
-      const ex = exercises.find(e => e.id === exLog.exerciseId);
-      const vol = exLog.sets.reduce((t, s) => t + (s.completed && s.actualWeight && s.actualReps ? s.actualWeight * s.actualReps : 0), 0);
-      if (ex) ex.primaryMuscles.forEach(m => { muscleVol[m] = (muscleVol[m] || 0) + vol; });
+    workout.exercises.forEach((exLog) => {
+      const ex = exercises.find((e) => e.id === exLog.exerciseId);
+      const vol = exLog.sets.reduce(
+        (t, s) =>
+          t +
+          (s.completed && s.actualWeight && s.actualReps
+            ? s.actualWeight * s.actualReps
+            : 0),
+        0,
+      );
+      if (ex)
+        ex.primaryMuscles.forEach((m) => {
+          muscleVol[m] = (muscleVol[m] || 0) + vol;
+        });
     });
-    return Object.entries(muscleVol).sort((a, b) => b[1] - a[1]).map(([name, value]) => ({ name, value }));
+    return Object.entries(muscleVol)
+      .sort((a, b) => b[1] - a[1])
+      .map(([name, value]) => ({ name, value }));
   }, [workout.exercises, exercises]);
 
   return (
@@ -110,25 +183,62 @@ export function ClientWorkoutReview() {
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
         <div className="bg-white rounded-control p-4 border border-neutral-100">
-          <div className="flex items-center gap-2 mb-2"><Clock size={16} className="text-text-secondary" /><span className="text-[10px] uppercase tracking-widest text-text-secondary font-bold">Duration</span></div>
-          <p className="text-xl font-serif font-bold text-text-primary">{durationMin} min</p>
+          <div className="flex items-center gap-2 mb-2">
+            <Clock size={16} className="text-text-secondary" />
+            <span className="text-[10px] uppercase tracking-widest text-text-secondary font-bold">
+              Duration
+            </span>
+          </div>
+          <p className="text-xl font-serif font-bold text-text-primary">
+            {durationMin} min
+          </p>
         </div>
         <div className="bg-white rounded-control p-4 border border-neutral-100">
-          <div className="flex items-center gap-2 mb-2"><Dumbbell size={16} className="text-brand" /><span className="text-[10px] uppercase tracking-widest text-text-secondary font-bold">Volume</span></div>
-          <p className="text-xl font-serif font-bold text-text-primary">{formatVolume(workout.totalVolume || 0, weightUnit)}</p>
+          <div className="flex items-center gap-2 mb-2">
+            <Dumbbell size={16} className="text-brand" />
+            <span className="text-[10px] uppercase tracking-widest text-text-secondary font-bold">
+              Volume
+            </span>
+          </div>
+          <p className="text-xl font-serif font-bold text-text-primary">
+            {formatVolume(workout.totalVolume || 0, weightUnit)}
+          </p>
         </div>
         <div className="bg-white rounded-control p-4 border border-neutral-100">
-          <div className="flex items-center gap-2 mb-2"><TrendingUp size={16} className="text-brand-secondary" /><span className="text-[10px] uppercase tracking-widest text-text-secondary font-bold">Completed</span></div>
-          <p className="text-xl font-serif font-bold text-text-primary">{completedSets}/{totalSets}</p>
+          <div className="flex items-center gap-2 mb-2">
+            <TrendingUp size={16} className="text-brand-secondary" />
+            <span className="text-[10px] uppercase tracking-widest text-text-secondary font-bold">
+              Completed
+            </span>
+          </div>
+          <p className="text-xl font-serif font-bold text-text-primary">
+            {completedSets}/{totalSets}
+          </p>
         </div>
         <div className="bg-white rounded-control p-4 border border-neutral-100">
-          <div className="flex items-center gap-2 mb-2"><Zap size={16} className="text-brand" /><span className="text-[10px] uppercase tracking-widest text-text-secondary font-bold">Density</span></div>
-          <p className="text-xl font-serif font-bold text-text-primary">{displayWeightValue(density, weightUnit)}</p>
-          <p className="text-[10px] text-text-secondary">{weightUnitLabel(weightUnit)}/min</p>
+          <div className="flex items-center gap-2 mb-2">
+            <Zap size={16} className="text-brand" />
+            <span className="text-[10px] uppercase tracking-widest text-text-secondary font-bold">
+              Density
+            </span>
+          </div>
+          <p className="text-xl font-serif font-bold text-text-primary">
+            {displayWeightValue(density, weightUnit)}
+          </p>
+          <p className="text-[10px] text-text-secondary">
+            {weightUnitLabel(weightUnit)}/min
+          </p>
         </div>
         <div className="bg-white rounded-control p-4 border border-neutral-100">
-          <div className="flex items-center gap-2 mb-2"><Timer size={16} className="text-text-secondary" /><span className="text-[10px] uppercase tracking-widest text-text-secondary font-bold">Day</span></div>
-          <p className="text-lg font-serif font-bold text-text-primary">{day ? DAY_NAMES[day.dayOfWeek] : 'N/A'}</p>
+          <div className="flex items-center gap-2 mb-2">
+            <Timer size={16} className="text-text-secondary" />
+            <span className="text-[10px] uppercase tracking-widest text-text-secondary font-bold">
+              Day
+            </span>
+          </div>
+          <p className="text-lg font-serif font-bold text-text-primary">
+            {day ? DAY_NAMES[day.dayOfWeek] : 'N/A'}
+          </p>
         </div>
       </div>
 
@@ -136,18 +246,30 @@ export function ClientWorkoutReview() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-8">
         {/* Volume per exercise */}
         <div className="bg-white rounded-card border border-neutral-100 p-5">
-          <h3 className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-4">Volume per Exercise</h3>
+          <h3 className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-4">
+            Volume per Exercise
+          </h3>
           <div className="space-y-3">
             {(() => {
-              const maxVol = Math.max(...volumeChartData.map(d => d.volume), 1);
-              return volumeChartData.map(d => (
+              const maxVol = Math.max(
+                ...volumeChartData.map((d) => d.volume),
+                1,
+              );
+              return volumeChartData.map((d) => (
                 <div key={d.name}>
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-medium text-text-primary truncate mr-2">{d.name}</span>
-                    <span className="text-xs text-text-secondary shrink-0">{formatVolume(d.volume, weightUnit)}</span>
+                    <span className="text-xs font-medium text-text-primary truncate mr-2">
+                      {d.name}
+                    </span>
+                    <span className="text-xs text-text-secondary shrink-0">
+                      {formatVolume(d.volume, weightUnit)}
+                    </span>
                   </div>
                   <div className="h-5 bg-neutral-100 rounded-field overflow-hidden">
-                    <div className="h-full bg-brand rounded-field transition-all" style={{ width: `${(d.volume / maxVol) * 100}%` }} />
+                    <div
+                      className="h-full bg-brand rounded-field transition-all"
+                      style={{ width: `${(d.volume / maxVol) * 100}%` }}
+                    />
                   </div>
                 </div>
               ));
@@ -157,26 +279,50 @@ export function ClientWorkoutReview() {
 
         {/* Muscle group split */}
         <div className="bg-white rounded-card border border-neutral-100 p-5">
-          <h3 className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-4">Muscle Groups</h3>
+          <h3 className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-4">
+            Muscle Groups
+          </h3>
           {(() => {
-            const total = muscleVolumeData.reduce((t, d) => t + d.value, 0) || 1;
+            const total =
+              muscleVolumeData.reduce((t, d) => t + d.value, 0) || 1;
             return (
               <div className="space-y-3">
                 <div className="h-6 rounded-full overflow-hidden flex">
                   {muscleVolumeData.map((d, i) => (
-                    <div key={d.name} className="h-full" style={{ width: `${(d.value / total) * 100}%`, backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
+                    <div
+                      key={d.name}
+                      className="h-full"
+                      style={{
+                        width: `${(d.value / total) * 100}%`,
+                        backgroundColor: PIE_COLORS[i % PIE_COLORS.length],
+                      }}
+                    />
                   ))}
                 </div>
                 <div className="space-y-2 mt-2">
                   {muscleVolumeData.map((d, i) => (
-                    <div key={d.name} className="flex items-center justify-between">
+                    <div
+                      key={d.name}
+                      className="flex items-center justify-between"
+                    >
                       <div className="flex items-center gap-2">
-                        <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
-                        <span className="text-xs text-text-primary font-medium">{d.name}</span>
+                        <div
+                          className="w-2.5 h-2.5 rounded-full shrink-0"
+                          style={{
+                            backgroundColor: PIE_COLORS[i % PIE_COLORS.length],
+                          }}
+                        />
+                        <span className="text-xs text-text-primary font-medium">
+                          {d.name}
+                        </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-text-secondary">{formatVolume(d.value, weightUnit)}</span>
-                        <span className="text-[10px] text-neutral-300">{Math.round((d.value / total) * 100)}%</span>
+                        <span className="text-xs text-text-secondary">
+                          {formatVolume(d.value, weightUnit)}
+                        </span>
+                        <span className="text-[10px] text-neutral-300">
+                          {Math.round((d.value / total) * 100)}%
+                        </span>
                       </div>
                     </div>
                   ))}
@@ -189,25 +335,30 @@ export function ClientWorkoutReview() {
 
       {/* Estimated Rep Maxes */}
       <div className="bg-white rounded-card border border-neutral-100 p-4 sm:p-5 mb-8">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-2">Your Estimated Maxes</h3>
-        <p className="text-xs text-text-secondary mb-4">Based on your heaviest set this session (Epley formula)</p>
+        <h3 className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-2">
+          Your Estimated Maxes
+        </h3>
+        <p className="text-xs text-text-secondary mb-4">
+          Based on your heaviest set this session (Epley formula)
+        </p>
 
         <ul className="md:hidden space-y-3">
-          {workout.exercises.map(exLog => {
-            const ex = exercises.find(e => e.id === exLog.exerciseId);
+          {workout.exercises.map((exLog) => {
+            const ex = exercises.find((e) => e.id === exLog.exerciseId);
             if (!ex) return null;
             const best = getBestSet(exLog);
             const fatigue = getFatigueIndex(exLog);
             if (!best) return null;
             const e1RM = estimateRM(best.weight, best.reps, 1);
             const e3RM = estimateRM(best.weight, best.reps, 3);
-            const fatigueColor = fatigue === null
-              ? 'text-neutral-300'
-              : fatigue > 25
-                ? 'text-brand'
-                : fatigue > 10
-                  ? 'text-text-secondary'
-                  : 'text-brand-secondary';
+            const fatigueColor =
+              fatigue === null
+                ? 'text-neutral-300'
+                : fatigue > 25
+                  ? 'text-brand'
+                  : fatigue > 10
+                    ? 'text-text-secondary'
+                    : 'text-brand-secondary';
             return (
               <li
                 key={exLog.planExerciseId}
@@ -215,18 +366,34 @@ export function ClientWorkoutReview() {
               >
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-text-primary truncate">{ex.name}</p>
+                    <p className="text-sm font-semibold text-text-primary truncate">
+                      {ex.name}
+                    </p>
                     <p className="text-caption text-text-secondary mt-0.5">
-                      Best set: {formatLoad(best.weight, weightUnit)} &times; {best.reps}
+                      Best set: {formatLoad(best.weight, weightUnit)} &times;{' '}
+                      {best.reps}
                     </p>
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
-                  <MaxStat label="Est. 1RM" value={formatLoad(e1RM, weightUnit)} accent />
-                  <MaxStat label="Est. 3RM" value={formatLoad(e3RM, weightUnit)} />
+                  <MaxStat
+                    label="Est. 1RM"
+                    value={formatLoad(e1RM, weightUnit)}
+                    accent
+                  />
+                  <MaxStat
+                    label="Est. 3RM"
+                    value={formatLoad(e3RM, weightUnit)}
+                  />
                   <MaxStat
                     label="Fatigue"
-                    value={fatigue !== null ? (fatigue > 0 ? `-${fatigue}%` : `${fatigue}%`) : '--'}
+                    value={
+                      fatigue !== null
+                        ? fatigue > 0
+                          ? `-${fatigue}%`
+                          : `${fatigue}%`
+                        : '--'
+                    }
                     valueClassName={fatigueColor}
                   />
                 </div>
@@ -247,8 +414,8 @@ export function ClientWorkoutReview() {
               </tr>
             </thead>
             <tbody>
-              {workout.exercises.map(exLog => {
-                const ex = exercises.find(e => e.id === exLog.exerciseId);
+              {workout.exercises.map((exLog) => {
+                const ex = exercises.find((e) => e.id === exLog.exerciseId);
                 if (!ex) return null;
                 const best = getBestSet(exLog);
                 const fatigue = getFatigueIndex(exLog);
@@ -256,20 +423,43 @@ export function ClientWorkoutReview() {
                 const e1RM = estimateRM(best.weight, best.reps, 1);
                 const e3RM = estimateRM(best.weight, best.reps, 3);
                 return (
-                  <tr key={exLog.planExerciseId} className="px-3 border-b border-neutral-50 rounded-field last:border-0">
-                    <td className="py-3 pr-4"><span className="text-sm font-medium text-text-primary">{ex.name}</span></td>
-                    <td className="py-3 pr-3 text-center">
-                      <span className="text-sm font-semibold text-text-primary">{formatLoad(best.weight, weightUnit)}</span>
-                      <span className="text-[10px] text-text-secondary ml-1">x{best.reps}</span>
+                  <tr
+                    key={exLog.planExerciseId}
+                    className="px-3 border-b border-neutral-50 rounded-field last:border-0"
+                  >
+                    <td className="py-3 pr-4">
+                      <span className="text-sm font-medium text-text-primary">
+                        {ex.name}
+                      </span>
                     </td>
-                    <td className="py-3 pr-3 text-center"><span className="text-sm font-bold text-brand">{formatLoad(e1RM, weightUnit)}</span></td>
-                    <td className="py-3 pr-3 text-center"><span className="text-sm font-semibold text-text-primary">{formatLoad(e3RM, weightUnit)}</span></td>
+                    <td className="py-3 pr-3 text-center">
+                      <span className="text-sm font-semibold text-text-primary">
+                        {formatLoad(best.weight, weightUnit)}
+                      </span>
+                      <span className="text-[10px] text-text-secondary ml-1">
+                        x{best.reps}
+                      </span>
+                    </td>
+                    <td className="py-3 pr-3 text-center">
+                      <span className="text-sm font-bold text-brand">
+                        {formatLoad(e1RM, weightUnit)}
+                      </span>
+                    </td>
+                    <td className="py-3 pr-3 text-center">
+                      <span className="text-sm font-semibold text-text-primary">
+                        {formatLoad(e3RM, weightUnit)}
+                      </span>
+                    </td>
                     <td className="py-3 text-center">
                       {fatigue !== null ? (
-                        <span className={`text-sm font-bold ${fatigue > 25 ? 'text-brand' : fatigue > 10 ? 'text-text-secondary' : 'text-brand-secondary'}`}>
+                        <span
+                          className={`text-sm font-bold ${fatigue > 25 ? 'text-brand' : fatigue > 10 ? 'text-text-secondary' : 'text-brand-secondary'}`}
+                        >
                           {fatigue > 0 ? `-${fatigue}%` : `${fatigue}%`}
                         </span>
-                      ) : <span className="text-xs text-neutral-300">--</span>}
+                      ) : (
+                        <span className="text-xs text-neutral-300">--</span>
+                      )}
                     </td>
                   </tr>
                 );
@@ -280,47 +470,81 @@ export function ClientWorkoutReview() {
       </div>
 
       {/* Exercise breakdown */}
-      <h2 className="text-sm font-bold uppercase tracking-widest text-text-secondary mb-4">Your Sets</h2>
+      <h2 className="text-sm font-bold uppercase tracking-widest text-text-secondary mb-4">
+        Your Sets
+      </h2>
       <div className="space-y-4">
         {workout.exercises.map((exLog, i) => {
-          const ex = exercises.find(e => e.id === exLog.exerciseId);
+          const ex = exercises.find((e) => e.id === exLog.exerciseId);
           const planEx = day?.exercises[i];
           if (!ex) return null;
           return (
-            <div key={exLog.planExerciseId} className="bg-white rounded-card border border-neutral-100 overflow-hidden">
+            <div
+              key={exLog.planExerciseId}
+              className="bg-white rounded-card border border-neutral-100 overflow-hidden"
+            >
               <div className="p-5 pb-3">
                 <div className="flex items-center gap-2">
                   <h3 className="font-semibold text-text-primary">{ex.name}</h3>
                   {exLog.wasSwapped && (
-                    <span className="inline-flex items-center gap-1 text-[9px] bg-brand-secondary/10 text-brand-secondary rounded-full px-2 py-0.5 font-bold"><ArrowLeftRight size={9} /> Swapped</span>
+                    <span className="inline-flex items-center gap-1 text-[9px] bg-brand-secondary/10 text-brand-secondary rounded-full px-2 py-0.5 font-bold">
+                      <ArrowLeftRight size={9} /> Swapped
+                    </span>
                   )}
                 </div>
                 <div className="flex flex-wrap gap-1 mt-1.5">
-                  {ex.primaryMuscles.map(m => (
-                    <span key={m} className="text-[10px] bg-brand-secondary/10 text-brand-secondary rounded-full px-2 py-0.5">{m}</span>
+                  {ex.primaryMuscles.map((m) => (
+                    <span
+                      key={m}
+                      className="text-[10px] bg-brand-secondary/10 text-brand-secondary rounded-full px-2 py-0.5"
+                    >
+                      {m}
+                    </span>
                   ))}
                 </div>
               </div>
               <div className="border-t border-neutral-100">
-                {exLog.sets.filter(s => s.completed).map(s => {
-                  const prescribedNum = parseInt(planEx?.reps || '0');
-                  const repsDiff = !s.isExtra && s.actualReps != null && !isNaN(prescribedNum) ? s.actualReps - prescribedNum : null;
-                  const isUnder = repsDiff !== null && repsDiff < 0;
-                  const isOver = repsDiff !== null && repsDiff > 0;
-                  return (
-                    <div key={s.setNumber} className={`flex items-center px-5 py-2.5 text-sm border-t border-neutral-50 first:border-t-0 ${isUnder ? 'bg-brand/[0.03]' : isOver ? 'bg-brand-secondary/[0.03]' : ''}`}>
-                      <span className="w-8 text-xs text-neutral-300 font-bold">{s.setNumber}</span>
-                      <span className="font-semibold text-text-primary">{s.actualWeight != null ? formatLoad(s.actualWeight, weightUnit) : '—'}</span>
-                      <span className="text-neutral-300 mx-1.5">&times;</span>
-                      <span className={`font-bold ${isUnder ? 'text-brand' : isOver ? 'text-brand-secondary' : 'text-text-primary'}`}>{s.actualReps}</span>
-                      {repsDiff !== null && repsDiff !== 0 && (
-                        <span className={`ml-2 text-[9px] font-bold rounded-full px-1.5 py-0.5 ${isUnder ? 'bg-brand/10 text-brand' : 'bg-brand-secondary/10 text-brand-secondary'}`}>
-                          {repsDiff > 0 ? `+${repsDiff}` : repsDiff}
+                {exLog.sets
+                  .filter((s) => s.completed)
+                  .map((s) => {
+                    const prescribedNum = parseInt(planEx?.reps || '0');
+                    const repsDiff =
+                      !s.isExtra &&
+                      s.actualReps != null &&
+                      !isNaN(prescribedNum)
+                        ? s.actualReps - prescribedNum
+                        : null;
+                    const isUnder = repsDiff !== null && repsDiff < 0;
+                    const isOver = repsDiff !== null && repsDiff > 0;
+                    return (
+                      <div
+                        key={s.setNumber}
+                        className={`flex items-center px-5 py-2.5 text-sm border-t border-neutral-50 first:border-t-0 ${isUnder ? 'bg-brand/[0.03]' : isOver ? 'bg-brand-secondary/[0.03]' : ''}`}
+                      >
+                        <span className="w-8 text-xs text-neutral-300 font-bold">
+                          {s.setNumber}
                         </span>
-                      )}
-                    </div>
-                  );
-                })}
+                        <span className="font-semibold text-text-primary">
+                          {s.actualWeight != null
+                            ? formatLoad(s.actualWeight, weightUnit)
+                            : '—'}
+                        </span>
+                        <span className="text-neutral-300 mx-1.5">&times;</span>
+                        <span
+                          className={`font-bold ${isUnder ? 'text-brand' : isOver ? 'text-brand-secondary' : 'text-text-primary'}`}
+                        >
+                          {s.actualReps}
+                        </span>
+                        {repsDiff !== null && repsDiff !== 0 && (
+                          <span
+                            className={`ml-2 text-[9px] font-bold rounded-full px-1.5 py-0.5 ${isUnder ? 'bg-brand/10 text-brand' : 'bg-brand-secondary/10 text-brand-secondary'}`}
+                          >
+                            {repsDiff > 0 ? `+${repsDiff}` : repsDiff}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
               </div>
             </div>
           );
@@ -329,9 +553,14 @@ export function ClientWorkoutReview() {
 
       {/* Back */}
       <div className="mt-8">
-        <button onClick={() => navigate('/portal/history')} className="w-full py-3.5 bg-text-primary text-white font-semibold rounded-control text-sm flex items-center justify-center gap-2">
+        <Button
+          onClick={() => navigate('/portal/history')}
+          variant="inverted"
+          size="lg"
+          className="w-full"
+        >
           Back to History <ArrowRight size={16} />
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -350,7 +579,9 @@ function MaxStat({
 }) {
   return (
     <div className="rounded-compact bg-white border border-neutral-100 px-2 py-2 text-center">
-      <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">{label}</p>
+      <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">
+        {label}
+      </p>
       <p
         className={`text-sm font-bold ${
           valueClassName ?? (accent ? 'text-brand' : 'text-text-primary')

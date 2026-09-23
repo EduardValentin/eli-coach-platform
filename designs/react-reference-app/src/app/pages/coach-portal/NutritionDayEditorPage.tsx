@@ -1,31 +1,76 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { AlertTriangle, ArrowLeft, ChevronLeft, ChevronRight, Plus, RotateCcw, Shuffle, X } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  RotateCcw,
+  Shuffle,
+  X,
+} from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import {
-  useNutrition, dayMacros, dayTargetFor, slotMacros, recipeConflicts,
-  groupSiblings, rescaleGrams,
+  useNutrition,
+  dayMacros,
+  dayTargetFor,
+  slotMacros,
+  recipeConflicts,
+  groupSiblings,
+  rescaleGrams,
 } from '../../context/NutritionContext';
-import type { PlanDay, MealSlot, ClientNutritionPlan, Recipe, Food, ClientFoodPreferences } from '../../context/NutritionContext';
+import type {
+  PlanDay,
+  MealSlot,
+  ClientNutritionPlan,
+  Recipe,
+  Food,
+  ClientFoodPreferences,
+} from '../../context/NutritionContext';
 import { useClientProfile, fullName } from '../../context/ClientProfileContext';
 import { useAppState } from '../../context/AppContext';
 import { Button } from '../../components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../../components/ui/dialog';
-import { PHASE_LABEL, PHASE_VAR, MEAL_ROLE_LABEL, PHASE_NUDGE } from '../../components/coach-portal/nutrition/plan-constants';
-import { MACRO_DOT, MACRO_BAR } from '../../components/coach-portal/nutrition/nutrition-constants';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '../../components/ui/dialog';
+import {
+  PHASE_LABEL,
+  PHASE_VAR,
+  MEAL_ROLE_LABEL,
+  PHASE_NUDGE,
+} from '../../components/coach-portal/nutrition/plan-constants';
+import {
+  MACRO_DOT,
+  MACRO_BAR,
+} from '../../components/coach-portal/nutrition/nutrition-constants';
 import { RecipeVisual } from '../../components/coach-portal/nutrition/RecipeVisual';
 import { RecipePicker } from '../../components/coach-portal/nutrition/RecipePicker';
 
 // Human-readable list of what changed between the saved day and the draft, per meal.
-function buildDayChanges(savedSlots: MealSlot[], draftSlots: MealSlot[], recipes: Recipe[]): string[] {
-  const name = (rid?: string) => recipes.find((r) => r.id === rid)?.name ?? 'a meal';
-  const swapsEqual = (a?: Record<string, string>, b?: Record<string, string>) => {
+function buildDayChanges(
+  savedSlots: MealSlot[],
+  draftSlots: MealSlot[],
+  recipes: Recipe[],
+): string[] {
+  const name = (rid?: string) =>
+    recipes.find((r) => r.id === rid)?.name ?? 'a meal';
+  const swapsEqual = (
+    a?: Record<string, string>,
+    b?: Record<string, string>,
+  ) => {
     const ak = Object.keys(a ?? {});
     const bk = Object.keys(b ?? {});
     return ak.length === bk.length && ak.every((k) => a?.[k] === b?.[k]);
   };
   const setEqual = (a: string[], b: string[]) =>
-    a.length === b.length && [...a].sort().join(',') === [...b].sort().join(',');
+    a.length === b.length &&
+    [...a].sort().join(',') === [...b].sort().join(',');
 
   const out: string[] = [];
   for (const draftSlot of draftSlots) {
@@ -34,29 +79,44 @@ function buildDayChanges(savedSlots: MealSlot[], draftSlots: MealSlot[], recipes
     const role = MEAL_ROLE_LABEL[draftSlot.mealRoleId] ?? draftSlot.mealRoleId;
 
     if (savedSlot.recipeId !== draftSlot.recipeId) {
-      if (!savedSlot.recipeId) out.push(`${role} — added ${name(draftSlot.recipeId)}`);
-      else if (!draftSlot.recipeId) out.push(`${role} — removed ${name(savedSlot.recipeId)}`);
-      else out.push(`${role} — ${name(savedSlot.recipeId)} → ${name(draftSlot.recipeId)}`);
+      if (!savedSlot.recipeId)
+        out.push(`${role} — added ${name(draftSlot.recipeId)}`);
+      else if (!draftSlot.recipeId)
+        out.push(`${role} — removed ${name(savedSlot.recipeId)}`);
+      else
+        out.push(
+          `${role} — ${name(savedSlot.recipeId)} → ${name(draftSlot.recipeId)}`,
+        );
       continue;
     }
     if (!draftSlot.recipeId) continue;
 
     const parts: string[] = [];
     if (savedSlot.portionScale !== draftSlot.portionScale) {
-      parts.push(`portion ${savedSlot.portionScale}× → ${draftSlot.portionScale}×`);
+      parts.push(
+        `portion ${savedSlot.portionScale}× → ${draftSlot.portionScale}×`,
+      );
     }
-    if (!swapsEqual(savedSlot.ingredientSwaps, draftSlot.ingredientSwaps)) parts.push('ingredient swaps updated');
-    if (!setEqual(savedSlot.alternativeRecipeIds, draftSlot.alternativeRecipeIds)) parts.push('swap options updated');
+    if (!swapsEqual(savedSlot.ingredientSwaps, draftSlot.ingredientSwaps))
+      parts.push('ingredient swaps updated');
+    if (
+      !setEqual(savedSlot.alternativeRecipeIds, draftSlot.alternativeRecipeIds)
+    )
+      parts.push('swap options updated');
     if (parts.length) out.push(`${role} — ${parts.join(', ')}`);
   }
   return out;
 }
 
 export function NutritionDayEditorPage() {
-  const { clientId = '', date = '' } = useParams<{ clientId: string; date: string }>();
+  const { clientId = '', date = '' } = useParams<{
+    clientId: string;
+    date: string;
+  }>();
   const navigate = useNavigate();
 
-  const { getPlan, saveDay, copyDayToPhase, getPreferences, recipes, foods } = useNutrition();
+  const { getPlan, saveDay, copyDayToPhase, getPreferences, recipes, foods } =
+    useNutrition();
   const { getProfile } = useClientProfile();
   const { appState } = useAppState();
   const { nutritionPreferenceConflict } = appState;
@@ -66,7 +126,10 @@ export function NutritionDayEditorPage() {
   const [saveOpen, setSaveOpen] = useState(false);
   const [leaveTo, setLeaveTo] = useState<string | null>(null);
   // Edits are held in a local draft (scoped to a date) and only persisted on Save.
-  const [draft, setDraft] = useState<{ date: string; slots: MealSlot[] } | null>(null);
+  const [draft, setDraft] = useState<{
+    date: string;
+    slots: MealSlot[];
+  } | null>(null);
 
   // Declare plan/block/day BEFORE any derived value that references them (TDZ guard).
   const plan = getPlan(clientId);
@@ -89,7 +152,9 @@ export function NutritionDayEditorPage() {
   // Redirect to overview if block or day is missing.
   useEffect(() => {
     if (!block || !day) {
-      navigate('/coach/nutrition/client/' + clientId + '/plan', { replace: true });
+      navigate('/coach/nutrition/client/' + clientId + '/plan', {
+        replace: true,
+      });
     }
   }, [block, day, clientId, navigate]);
 
@@ -119,24 +184,79 @@ export function NutritionDayEditorPage() {
       ss.map((s) => {
         if (s.id !== slotId) return s;
         const sameRecipe = recipeId === s.recipeId;
-        return { ...s, recipeId, portionScale: recipeId ? s.portionScale : 1, ingredientSwaps: sameRecipe ? s.ingredientSwaps : undefined };
+        return {
+          ...s,
+          recipeId,
+          portionScale: recipeId ? s.portionScale : 1,
+          ingredientSwaps: sameRecipe ? s.ingredientSwaps : undefined,
+        };
       }),
     );
 
   const onPortion = (_d: string, slotId: string, scale: number) =>
-    editSlots((ss) => ss.map((s) => (s.id === slotId ? { ...s, portionScale: scale } : s)));
+    editSlots((ss) =>
+      ss.map((s) => (s.id === slotId ? { ...s, portionScale: scale } : s)),
+    );
 
   const onClear = (_d: string, slotId: string) =>
-    editSlots((ss) => ss.map((s) => (s.id === slotId ? { ...s, recipeId: undefined, portionScale: 1, ingredientSwaps: undefined } : s)));
+    editSlots((ss) =>
+      ss.map((s) =>
+        s.id === slotId
+          ? {
+              ...s,
+              recipeId: undefined,
+              portionScale: 1,
+              ingredientSwaps: undefined,
+            }
+          : s,
+      ),
+    );
 
   const onAddAlt = (_d: string, slotId: string, recipeId: string) =>
-    editSlots((ss) => ss.map((s) => (s.id !== slotId || s.alternativeRecipeIds.includes(recipeId) ? s : { ...s, alternativeRecipeIds: [...s.alternativeRecipeIds, recipeId] })));
+    editSlots((ss) =>
+      ss.map((s) =>
+        s.id !== slotId || s.alternativeRecipeIds.includes(recipeId)
+          ? s
+          : {
+              ...s,
+              alternativeRecipeIds: [...s.alternativeRecipeIds, recipeId],
+            },
+      ),
+    );
 
   const onRemoveAlt = (_d: string, slotId: string, recipeId: string) =>
-    editSlots((ss) => ss.map((s) => (s.id !== slotId ? s : { ...s, alternativeRecipeIds: s.alternativeRecipeIds.filter((r) => r !== recipeId) })));
+    editSlots((ss) =>
+      ss.map((s) =>
+        s.id !== slotId
+          ? s
+          : {
+              ...s,
+              alternativeRecipeIds: s.alternativeRecipeIds.filter(
+                (r) => r !== recipeId,
+              ),
+            },
+      ),
+    );
 
-  const onSetSwap = (_d: string, slotId: string, fromFoodId: string, toFoodId: string) =>
-    editSlots((ss) => ss.map((s) => (s.id !== slotId ? s : { ...s, ingredientSwaps: { ...(s.ingredientSwaps ?? {}), [fromFoodId]: toFoodId } })));
+  const onSetSwap = (
+    _d: string,
+    slotId: string,
+    fromFoodId: string,
+    toFoodId: string,
+  ) =>
+    editSlots((ss) =>
+      ss.map((s) =>
+        s.id !== slotId
+          ? s
+          : {
+              ...s,
+              ingredientSwaps: {
+                ...(s.ingredientSwaps ?? {}),
+                [fromFoodId]: toFoodId,
+              },
+            },
+      ),
+    );
 
   const onClearSwap = (_d: string, slotId: string, fromFoodId: string) =>
     editSlots((ss) =>
@@ -144,7 +264,10 @@ export function NutritionDayEditorPage() {
         if (s.id !== slotId || !s.ingredientSwaps) return s;
         const next = { ...s.ingredientSwaps };
         delete next[fromFoodId];
-        return { ...s, ingredientSwaps: Object.keys(next).length ? next : undefined };
+        return {
+          ...s,
+          ingredientSwaps: Object.keys(next).length ? next : undefined,
+        };
       }),
     );
 
@@ -189,9 +312,15 @@ export function NutritionDayEditorPage() {
   // Days the apply would touch — every other day sharing this day's phase, split
   // into "already has meals" (overwritten) vs "empty" (filled) for the preview.
   const phase = day.phase;
-  const affectedDays = phase ? block.days.filter((d) => d.date !== date && d.phase === phase) : [];
-  const overrideDays = affectedDays.filter((d) => d.slots.some((s) => s.recipeId));
-  const emptyDays = affectedDays.filter((d) => !d.slots.some((s) => s.recipeId));
+  const affectedDays = phase
+    ? block.days.filter((d) => d.date !== date && d.phase === phase)
+    : [];
+  const overrideDays = affectedDays.filter((d) =>
+    d.slots.some((s) => s.recipeId),
+  );
+  const emptyDays = affectedDays.filter(
+    (d) => !d.slots.some((s) => s.recipeId),
+  );
   const slotSummary = (d: PlanDay) =>
     d.slots
       .filter((s) => s.recipeId)
@@ -202,18 +331,24 @@ export function NutritionDayEditorPage() {
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-surface-subtle">
       <header className="flex h-14 shrink-0 items-center gap-3 border-b border-border rounded-field bg-card px-4 lg:px-6">
-        <button
+        <Button
           onClick={() => attemptLeave(backUrl)}
           aria-label="Back to plan"
-          className="rounded-control p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          variant="ghost"
+          size="icon"
         >
           <ArrowLeft size={20} />
-        </button>
+        </Button>
         <h1 className="font-serif text-lg text-foreground">
-          {profile ? fullName(profile) : 'Client'} · {format(parseISO(date), 'EEEE, MMM d')}
+          {profile ? fullName(profile) : 'Client'} ·{' '}
+          {format(parseISO(date), 'EEEE, MMM d')}
         </h1>
         <div className="ml-auto flex items-center gap-3">
-          {dirty && <span className="text-xs font-medium text-muted-foreground">Unsaved changes</span>}
+          {dirty && (
+            <span className="text-xs font-medium text-muted-foreground">
+              Unsaved changes
+            </span>
+          )}
           <Button size="sm" onClick={() => setSaveOpen(true)} disabled={!dirty}>
             Save
           </Button>
@@ -223,7 +358,9 @@ export function NutritionDayEditorPage() {
       <DayStrip
         days={block.days}
         currentDate={date}
-        onSelect={(d) => attemptLeave(`/coach/nutrition/client/${clientId}/plan/day/${d}`)}
+        onSelect={(d) =>
+          attemptLeave(`/coach/nutrition/client/${clientId}/plan/day/${d}`)
+        }
       />
 
       <main className="flex-1 overflow-y-auto p-4 lg:p-6">
@@ -250,8 +387,9 @@ export function NutritionDayEditorPage() {
             <DialogHeader className="gap-2">
               <DialogTitle>Apply to all {PHASE_LABEL[phase]} days?</DialogTitle>
               <DialogDescription className="leading-relaxed">
-                This copies {format(parseISO(date), 'EEEE, MMM d')}’s meals to {affectedDays.length} other{' '}
-                {PHASE_LABEL[phase]} {affectedDays.length === 1 ? 'day' : 'days'} in this block.
+                This copies {format(parseISO(date), 'EEEE, MMM d')}’s meals to{' '}
+                {affectedDays.length} other {PHASE_LABEL[phase]}{' '}
+                {affectedDays.length === 1 ? 'day' : 'days'} in this block.
               </DialogDescription>
             </DialogHeader>
 
@@ -264,7 +402,11 @@ export function NutritionDayEditorPage() {
                 {overrideDays.length > 0 && (
                   <div className="space-y-3">
                     <p className="flex items-center gap-2 text-xs font-semibold text-foreground">
-                      <AlertTriangle size={14} className="text-destructive" aria-hidden="true" />
+                      <AlertTriangle
+                        size={14}
+                        className="text-destructive"
+                        aria-hidden="true"
+                      />
                       Will be overwritten ({overrideDays.length})
                     </p>
                     <ul className="m-0 list-none space-y-2 p-0">
@@ -286,7 +428,9 @@ export function NutritionDayEditorPage() {
                 )}
                 {emptyDays.length > 0 && (
                   <div className="space-y-3">
-                    <p className="text-xs font-semibold text-foreground">Will be filled ({emptyDays.length})</p>
+                    <p className="text-xs font-semibold text-foreground">
+                      Will be filled ({emptyDays.length})
+                    </p>
                     <ul className="m-0 list-none space-y-2 p-0">
                       {emptyDays.map((d) => (
                         <li
@@ -296,7 +440,9 @@ export function NutritionDayEditorPage() {
                           <span className="text-xs font-medium text-foreground">
                             {format(parseISO(d.date), 'EEE, MMM d')}
                           </span>
-                          <span className="text-caption text-muted-foreground">Empty</span>
+                          <span className="text-caption text-muted-foreground">
+                            Empty
+                          </span>
                         </li>
                       ))}
                     </ul>
@@ -315,7 +461,10 @@ export function NutritionDayEditorPage() {
               <Button variant="outline" onClick={() => setApplyOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={confirmApplyPhase} disabled={affectedDays.length === 0}>
+              <Button
+                onClick={confirmApplyPhase}
+                disabled={affectedDays.length === 0}
+              >
                 {affectedDays.length === 0
                   ? 'Nothing to apply'
                   : `Apply to ${affectedDays.length} ${affectedDays.length === 1 ? 'day' : 'days'}`}
@@ -329,7 +478,9 @@ export function NutritionDayEditorPage() {
       <Dialog open={saveOpen} onOpenChange={setSaveOpen}>
         <DialogContent className="max-h-[80vh] gap-6 overflow-y-auto p-6 sm:max-w-md">
           <DialogHeader className="gap-2">
-            <DialogTitle>Save changes to {format(parseISO(date), 'EEEE, MMM d')}?</DialogTitle>
+            <DialogTitle>
+              Save changes to {format(parseISO(date), 'EEEE, MMM d')}?
+            </DialogTitle>
             <DialogDescription className="leading-relaxed">
               This updates {profile ? fullName(profile) : 'the client'}’s plan.
             </DialogDescription>
@@ -342,7 +493,10 @@ export function NutritionDayEditorPage() {
                   key={i}
                   className="flex items-start gap-2.5 rounded-compact bg-muted/50 px-3.5 py-2.5 text-sm text-foreground"
                 >
-                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-foreground/40" aria-hidden="true" />
+                  <span
+                    className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-foreground/40"
+                    aria-hidden="true"
+                  />
                   {c}
                 </li>
               ))}
@@ -363,12 +517,18 @@ export function NutritionDayEditorPage() {
       </Dialog>
 
       {/* Unsaved-changes guard when leaving the day */}
-      <Dialog open={leaveTo !== null} onOpenChange={(o) => { if (!o) setLeaveTo(null); }}>
+      <Dialog
+        open={leaveTo !== null}
+        onOpenChange={(o) => {
+          if (!o) setLeaveTo(null);
+        }}
+      >
         <DialogContent className="gap-5 p-6 sm:max-w-sm">
           <DialogHeader className="gap-2">
             <DialogTitle>Unsaved changes</DialogTitle>
             <DialogDescription className="leading-relaxed">
-              You have {changes.length} unsaved {changes.length === 1 ? 'change' : 'changes'} to{' '}
+              You have {changes.length} unsaved{' '}
+              {changes.length === 1 ? 'change' : 'changes'} to{' '}
               {format(parseISO(date), 'EEEE, MMM d')}. Save before leaving?
             </DialogDescription>
           </DialogHeader>
@@ -413,7 +573,11 @@ function DayStrip({
         type="button"
         onClick={() => prev && onSelect(prev.date)}
         disabled={!prev}
-        aria-label={prev ? `Previous day, ${format(parseISO(prev.date), 'EEEE, MMM d')}` : 'No previous day'}
+        aria-label={
+          prev
+            ? `Previous day, ${format(parseISO(prev.date), 'EEEE, MMM d')}`
+            : 'No previous day'
+        }
         className="shrink-0 rounded-compact p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
       >
         <ChevronLeft size={18} />
@@ -443,7 +607,11 @@ function DayStrip({
                 </span>
                 <span
                   className="h-1.5 w-1.5 rounded-full"
-                  style={d.phase ? { backgroundColor: PHASE_VAR[d.phase] } : undefined}
+                  style={
+                    d.phase
+                      ? { backgroundColor: PHASE_VAR[d.phase] }
+                      : undefined
+                  }
                   aria-hidden="true"
                 />
               </button>
@@ -456,7 +624,11 @@ function DayStrip({
         type="button"
         onClick={() => next && onSelect(next.date)}
         disabled={!next}
-        aria-label={next ? `Next day, ${format(parseISO(next.date), 'EEEE, MMM d')}` : 'No next day'}
+        aria-label={
+          next
+            ? `Next day, ${format(parseISO(next.date), 'EEEE, MMM d')}`
+            : 'No next day'
+        }
         className="shrink-0 rounded-compact p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
       >
         <ChevronRight size={18} />
@@ -481,19 +653,36 @@ interface DayEditorProps {
   onApplyPhase: (date: string) => void;
   onAddAlt: (date: string, slotId: string, recipeId: string) => void;
   onRemoveAlt: (date: string, slotId: string, recipeId: string) => void;
-  onSetSwap: (date: string, slotId: string, fromFoodId: string, toFoodId: string) => void;
+  onSetSwap: (
+    date: string,
+    slotId: string,
+    fromFoodId: string,
+    toFoodId: string,
+  ) => void;
   onClearSwap: (date: string, slotId: string, fromFoodId: string) => void;
 }
 
 function DayEditor({
-  day, plan, recipes, foods, prefs,
-  onPick, onPortion, onClear, onApplyPhase, onAddAlt, onRemoveAlt, onSetSwap, onClearSwap,
+  day,
+  plan,
+  recipes,
+  foods,
+  prefs,
+  onPick,
+  onPortion,
+  onClear,
+  onApplyPhase,
+  onAddAlt,
+  onRemoveAlt,
+  onSetSwap,
+  onClearSwap,
 }: DayEditorProps) {
   const target = dayTargetFor(plan, day.phase);
   const totals = dayMacros(day, recipes, foods);
   const over = totals.kcal > target.kcal;
   const kcalPct = target.kcal > 0 ? Math.min(1, totals.kcal / target.kcal) : 0;
-  const proteinPct = target.protein > 0 ? Math.min(1, totals.protein / target.protein) : 0;
+  const proteinPct =
+    target.protein > 0 ? Math.min(1, totals.protein / target.protein) : 0;
   const carbPct = target.carb > 0 ? Math.min(1, totals.carb / target.carb) : 0;
   const fatPct = target.fat > 0 ? Math.min(1, totals.fat / target.fat) : 0;
   const hasFilledSlot = day.slots.some((s) => s.recipeId);
@@ -552,8 +741,12 @@ function DayEditor({
         {/* Calories */}
         <div className="space-y-1">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-foreground">Calories</span>
-            <span className={`text-sm font-semibold tabular-nums ${over ? 'text-destructive' : 'text-foreground'}`}>
+            <span className="text-xs font-medium text-foreground">
+              Calories
+            </span>
+            <span
+              className={`text-sm font-semibold tabular-nums ${over ? 'text-destructive' : 'text-foreground'}`}
+            >
               {totals.kcal} / {target.kcal} kcal
             </span>
           </div>
@@ -576,14 +769,40 @@ function DayEditor({
         {/* Protein / Carb / Fat */}
         <div className="grid grid-cols-3 gap-3">
           {[
-            { label: 'Protein', value: totals.protein, target: target.protein, pct: proteinPct, bar: MACRO_BAR.protein, dot: MACRO_DOT.protein },
-            { label: 'Carbs', value: totals.carb, target: target.carb, pct: carbPct, bar: MACRO_BAR.carb, dot: MACRO_DOT.carb },
-            { label: 'Fat', value: totals.fat, target: target.fat, pct: fatPct, bar: MACRO_BAR.fat, dot: MACRO_DOT.fat },
+            {
+              label: 'Protein',
+              value: totals.protein,
+              target: target.protein,
+              pct: proteinPct,
+              bar: MACRO_BAR.protein,
+              dot: MACRO_DOT.protein,
+            },
+            {
+              label: 'Carbs',
+              value: totals.carb,
+              target: target.carb,
+              pct: carbPct,
+              bar: MACRO_BAR.carb,
+              dot: MACRO_DOT.carb,
+            },
+            {
+              label: 'Fat',
+              value: totals.fat,
+              target: target.fat,
+              pct: fatPct,
+              bar: MACRO_BAR.fat,
+              dot: MACRO_DOT.fat,
+            },
           ].map(({ label, value, target: t, pct, bar, dot }) => (
             <div key={label} className="space-y-1">
               <div className="flex items-center gap-1">
-                <span className={`h-2 w-2 shrink-0 rounded-full ${dot}`} aria-hidden="true" />
-                <span className="text-caption text-muted-foreground">{label}</span>
+                <span
+                  className={`h-2 w-2 shrink-0 rounded-full ${dot}`}
+                  aria-hidden="true"
+                />
+                <span className="text-caption text-muted-foreground">
+                  {label}
+                </span>
               </div>
               <div
                 role="progressbar"
@@ -646,17 +865,34 @@ interface DayEditorMealRowProps {
   onClear: (date: string, slotId: string) => void;
   onAddAlt: (date: string, slotId: string, recipeId: string) => void;
   onRemoveAlt: (date: string, slotId: string, recipeId: string) => void;
-  onSetSwap: (date: string, slotId: string, fromFoodId: string, toFoodId: string) => void;
+  onSetSwap: (
+    date: string,
+    slotId: string,
+    fromFoodId: string,
+    toFoodId: string,
+  ) => void;
   onClearSwap: (date: string, slotId: string, fromFoodId: string) => void;
 }
 
 function DayEditorMealRow({
-  slot, date, recipes, foods, prefs,
-  onPick, onPortion, onClear, onAddAlt, onRemoveAlt, onSetSwap, onClearSwap,
+  slot,
+  date,
+  recipes,
+  foods,
+  prefs,
+  onPick,
+  onPortion,
+  onClear,
+  onAddAlt,
+  onRemoveAlt,
+  onSetSwap,
+  onClearSwap,
 }: DayEditorMealRowProps) {
   const [pickerOpen, setPickerOpen] = useState(false);
 
-  const recipe = slot.recipeId ? recipes.find((r) => r.id === slot.recipeId) : undefined;
+  const recipe = slot.recipeId
+    ? recipes.find((r) => r.id === slot.recipeId)
+    : undefined;
   const roleLabel = MEAL_ROLE_LABEL[slot.mealRoleId] ?? slot.mealRoleId;
   const macros = recipe ? slotMacros(slot, recipes, foods) : null;
   const conflicts = recipe ? recipeConflicts(recipe, prefs, foods) : [];
@@ -667,7 +903,9 @@ function DayEditorMealRow({
       {/* Row header: role + soft budget */}
       <div className="mb-3 flex items-center justify-between gap-2">
         <h2 className="text-sm font-semibold text-foreground">{roleLabel}</h2>
-        <span className="text-xs text-muted-foreground">~{slot.suggestedKcal} kcal</span>
+        <span className="text-xs text-muted-foreground">
+          ~{slot.suggestedKcal} kcal
+        </span>
       </div>
 
       {recipe ? (
@@ -681,40 +919,59 @@ function DayEditorMealRow({
               iconSize={22}
             />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-foreground">{recipe.name}</p>
+              <p className="truncate text-sm font-medium text-foreground">
+                {recipe.name}
+              </p>
               {macros && (
                 <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                  <span className="font-medium text-foreground">{macros.kcal} kcal</span>
+                  <span className="font-medium text-foreground">
+                    {macros.kcal} kcal
+                  </span>
                   <span className="inline-flex items-center gap-1">
-                    <span className={`h-2 w-2 shrink-0 rounded-full ${MACRO_DOT.protein}`} aria-hidden="true" />
+                    <span
+                      className={`h-2 w-2 shrink-0 rounded-full ${MACRO_DOT.protein}`}
+                      aria-hidden="true"
+                    />
                     {macros.protein}g P
                   </span>
                   <span className="inline-flex items-center gap-1">
-                    <span className={`h-2 w-2 shrink-0 rounded-full ${MACRO_DOT.carb}`} aria-hidden="true" />
+                    <span
+                      className={`h-2 w-2 shrink-0 rounded-full ${MACRO_DOT.carb}`}
+                      aria-hidden="true"
+                    />
                     {macros.carb}g C
                   </span>
                   <span className="inline-flex items-center gap-1">
-                    <span className={`h-2 w-2 shrink-0 rounded-full ${MACRO_DOT.fat}`} aria-hidden="true" />
+                    <span
+                      className={`h-2 w-2 shrink-0 rounded-full ${MACRO_DOT.fat}`}
+                      aria-hidden="true"
+                    />
                     {macros.fat}g F
                   </span>
                 </div>
               )}
             </div>
             {/* Remove button */}
-            <button
+            <Button
               type="button"
               aria-label={`Remove ${recipe.name}`}
               onClick={() => onClear(date, slot.id)}
-              className="shrink-0 self-start rounded-compact p-1.5 text-muted-foreground hover:bg-muted hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              variant="ghost"
+              size="icon"
+              className="size-8 self-start text-muted-foreground hover:text-destructive"
             >
               <X size={15} aria-hidden="true" />
-            </button>
+            </Button>
           </div>
 
           {/* Preference conflict warning */}
           {hasConflict && (
             <p className="flex items-center gap-1.5 rounded-compact bg-amber-50 dark:bg-amber-950/30 px-3 py-2 text-xs text-foreground">
-              <AlertTriangle size={13} className="shrink-0 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+              <AlertTriangle
+                size={13}
+                className="shrink-0 text-amber-600 dark:text-amber-400"
+                aria-hidden="true"
+              />
               Client dislikes: {conflicts.join(', ')}
             </p>
           )}
@@ -722,10 +979,15 @@ function DayEditorMealRow({
           {/* Portion slider — INLINE */}
           <div className="space-y-1">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-medium text-foreground" htmlFor={`portion-inline-${slot.id}`}>
+              <label
+                className="text-xs font-medium text-foreground"
+                htmlFor={`portion-inline-${slot.id}`}
+              >
                 Portion
               </label>
-              <span className="text-xs font-medium text-foreground tabular-nums">{slot.portionScale}×</span>
+              <span className="text-xs font-medium text-foreground tabular-nums">
+                {slot.portionScale}×
+              </span>
             </div>
             <input
               id={`portion-inline-${slot.id}`}
@@ -757,7 +1019,9 @@ function DayEditorMealRow({
           {/* Alternatives */}
           {slot.alternativeRecipeIds.length > 0 && (
             <div className="space-y-1.5">
-              <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Alternatives</p>
+              <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                Alternatives
+              </p>
               <div className="flex flex-wrap gap-1.5">
                 {slot.alternativeRecipeIds.map((altId) => {
                   const altRecipe = recipes.find((r) => r.id === altId);
@@ -801,15 +1065,16 @@ function DayEditorMealRow({
       ) : (
         /* ── EMPTY SLOT ── */
         <>
-          <button
+          <Button
             type="button"
             aria-label={`Add a meal for ${roleLabel}`}
             onClick={() => setPickerOpen(true)}
-            className="flex w-full items-center justify-center gap-2 rounded-control border-2 border-dashed border-border py-5 text-sm text-muted-foreground transition-colors hover:border-muted-foreground/40 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            variant="outline"
+            className="h-auto w-full gap-2 rounded-control border-2 border-dashed py-5 text-muted-foreground hover:text-foreground"
           >
             <Plus size={16} aria-hidden="true" />
             Add a meal
-          </button>
+          </Button>
           <RecipePicker
             open={pickerOpen}
             onOpenChange={setPickerOpen}
@@ -837,11 +1102,23 @@ interface IngredientSwapsProps {
   date: string;
   recipe: Recipe;
   foods: Food[];
-  onSetSwap: (date: string, slotId: string, fromFoodId: string, toFoodId: string) => void;
+  onSetSwap: (
+    date: string,
+    slotId: string,
+    fromFoodId: string,
+    toFoodId: string,
+  ) => void;
   onClearSwap: (date: string, slotId: string, fromFoodId: string) => void;
 }
 
-function IngredientSwaps({ slot, date, recipe, foods, onSetSwap, onClearSwap }: IngredientSwapsProps) {
+function IngredientSwaps({
+  slot,
+  date,
+  recipe,
+  foods,
+  onSetSwap,
+  onClearSwap,
+}: IngredientSwapsProps) {
   const swappableIngredients = recipe.ingredients
     .map((ing) => {
       const originalFood = foods.find((f) => f.id === ing.foodId);
@@ -856,10 +1133,14 @@ function IngredientSwaps({ slot, date, recipe, foods, onSetSwap, onClearSwap }: 
 
   return (
     <div className="space-y-1.5">
-      <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Swaps</p>
+      <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+        Swaps
+      </p>
       {swappableIngredients.map(({ ing, originalFood, siblings }) => {
         const activeSwapId = slot.ingredientSwaps?.[ing.foodId];
-        const activeFood = activeSwapId ? foods.find((f) => f.id === activeSwapId) : undefined;
+        const activeFood = activeSwapId
+          ? foods.find((f) => f.id === activeSwapId)
+          : undefined;
         const displayGrams = activeFood
           ? rescaleGrams(originalFood, activeFood, ing.grams)
           : ing.grams;
@@ -868,7 +1149,10 @@ function IngredientSwaps({ slot, date, recipe, foods, onSetSwap, onClearSwap }: 
         const labelId = `swap-label-${slot.id}-${ing.foodId}`;
         const selectId = `swap-${slot.id}-${ing.foodId}`;
         return (
-          <div key={ing.foodId} className="rounded-field bg-muted/60 px-2 py-1.5 space-y-1">
+          <div
+            key={ing.foodId}
+            className="rounded-field bg-muted/60 px-2 py-1.5 space-y-1"
+          >
             <div className="flex items-center justify-between gap-1">
               <label
                 id={labelId}
@@ -876,7 +1160,9 @@ function IngredientSwaps({ slot, date, recipe, foods, onSetSwap, onClearSwap }: 
                 className="text-caption font-medium text-foreground truncate cursor-pointer"
               >
                 {displayName}
-                <span className="ml-1 font-normal text-muted-foreground">· {displayGrams} g</span>
+                <span className="ml-1 font-normal text-muted-foreground">
+                  · {displayGrams} g
+                </span>
               </label>
               {activeSwapId && (
                 <button
@@ -904,7 +1190,9 @@ function IngredientSwaps({ slot, date, recipe, foods, onSetSwap, onClearSwap }: 
               }}
               className="w-full rounded border border-border bg-background px-1.5 py-0.5 text-caption text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <option value="">{originalFood.name} (original · {ing.grams} g)</option>
+              <option value="">
+                {originalFood.name} (original · {ing.grams} g)
+              </option>
               {siblings.map((sibling) => {
                 const rescaled = rescaleGrams(originalFood, sibling, ing.grams);
                 return (
@@ -920,4 +1208,3 @@ function IngredientSwaps({ slot, date, recipe, foods, onSetSwap, onClearSwap }: 
     </div>
   );
 }
-

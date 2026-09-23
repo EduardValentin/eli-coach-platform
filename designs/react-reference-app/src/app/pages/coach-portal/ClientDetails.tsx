@@ -1,15 +1,46 @@
 import { useState, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, MessageSquare, Calendar, Activity, Flame, CalendarDays, History, Target, Pencil, Plus, X, ChevronDown, ChevronUp, Droplet, UserCog, UtensilsCrossed } from 'lucide-react';
+import {
+  ArrowLeft,
+  MessageSquare,
+  Calendar,
+  Activity,
+  Flame,
+  CalendarDays,
+  History,
+  Target,
+  Pencil,
+  Plus,
+  X,
+  ChevronDown,
+  ChevronUp,
+  Droplet,
+  UserCog,
+  UtensilsCrossed,
+} from 'lucide-react';
 import { format, parseISO } from 'date-fns';
-import { useTraining, GoalType, GOAL_TYPES } from '../../context/TrainingContext';
+import {
+  useTraining,
+  GoalType,
+  GOAL_TYPES,
+} from '../../context/TrainingContext';
 import { useCheckins } from '../../context/CheckinContext';
 import { useCycle } from '../../context/CycleContext';
-import { useClientProfile, fullName, ACTIVITY_LEVEL_LABELS } from '../../context/ClientProfileContext';
+import {
+  useClientProfile,
+  fullName,
+  ACTIVITY_LEVEL_LABELS,
+} from '../../context/ClientProfileContext';
 import { useUnitPreferences } from '../../context/UnitPreferencesContext';
 import { useNutrition } from '../../context/NutritionContext';
-import { formatBodyWeight, formatHeight, formatVolume, displayWeightValue, weightUnitLabel } from '../../utils/units';
+import {
+  formatBodyWeight,
+  formatHeight,
+  formatVolume,
+  displayWeightValue,
+  weightUnitLabel,
+} from '../../utils/units';
 import { getInitials } from '../../utils/clientHelpers';
 import { PORTAL_PAGE_TITLE_CLASS } from '../../components/PortalPageHeader';
 import { SubscriptionBadge } from '../../components/coach-portal/SubscriptionBadge';
@@ -22,19 +53,33 @@ import { journeyCallIdForClient } from '../../utils/journeyLabels';
 import { isBeforeStage } from '../../domain/journey';
 import { useNotifications } from '../../context/NotificationContext';
 import { useMessaging } from '../../context/MessagingContext';
-import { formatCheckinDate, formatCheckinTime, toISODate, to24h } from '../../utils/dateFormatters';
-import { CheckinSchedulerSheet } from '../../components/CheckinSchedulerSheet';
 import {
-  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter,
-  AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogAction
+  formatCheckinDate,
+  formatCheckinTime,
+  toISODate,
+  to24h,
+} from '../../utils/dateFormatters';
+import { CheckinSchedulerSheet } from '../../components/CheckinSchedulerSheet';
+import { Button, buttonVariants } from '../../components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogCancel,
+  AlertDialogAction,
 } from '../../components/ui/alert-dialog';
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
 } from '../../components/ui/dialog';
 import { toast } from 'sonner';
 import { useAppState } from '../../context/AppContext';
 import { cn } from '../../components/ui/utils';
-
 
 export function ClientDetails() {
   const { id = 'client-1' } = useParams();
@@ -51,7 +96,18 @@ export function ClientDetails() {
 function RosterClientDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getClientActivePlan, getClientPastPlans, getClientActiveGoal, getClientGoals, getClientActiveSubscription, createGoal, completeGoal, completePlanInstance, getClientWorkoutHistory, exercises } = useTraining();
+  const {
+    getClientActivePlan,
+    getClientPastPlans,
+    getClientActiveGoal,
+    getClientGoals,
+    getClientActiveSubscription,
+    createGoal,
+    completeGoal,
+    completePlanInstance,
+    getClientWorkoutHistory,
+    exercises,
+  } = useTraining();
   const { coachInitiateCheckin, getBookedSlots } = useCheckins();
   const { getCurrentPhase, getClientProfile } = useCycle();
   const { getProfile } = useClientProfile();
@@ -62,14 +118,21 @@ function RosterClientDetails() {
   const { appState } = useAppState();
   const isPostMvp = appState.prototypeMode === 'post-mvp';
 
-  const { getPlan: getNutritionPlan, getPreferences: getNutritionPreferences, tags: nutritionTags, foods: nutritionFoods } = useNutrition();
+  const {
+    getPlan: getNutritionPlan,
+    getPreferences: getNutritionPreferences,
+    tags: nutritionTags,
+    foods: nutritionFoods,
+  } = useNutrition();
 
   const clientId = id || 'client-1';
   // Normalize alias IDs to canonical IDs for data lookups
   const dataClientId = clientId === 'c1' ? 'client-1' : clientId;
   const profile = getProfile(clientId);
   const clientName = profile ? fullName(profile) : 'Unknown Client';
-  const weightChangeKg = profile ? profile.currentWeightKg - profile.startingWeightKg : 0;
+  const weightChangeKg = profile
+    ? profile.currentWeightKg - profile.startingWeightKg
+    : 0;
 
   const phase = getCurrentPhase(clientId);
   const menstrualProfile = getClientProfile(clientId);
@@ -103,10 +166,9 @@ function RosterClientDetails() {
   const [scheduleTime, setScheduleTime] = useState<string | null>(null);
   const [scheduleNote, setScheduleNote] = useState('');
 
-
   const bookedSlots = useMemo(
-    () => scheduleDate ? getBookedSlots(toISODate(scheduleDate)) : [],
-    [scheduleDate, getBookedSlots]
+    () => (scheduleDate ? getBookedSlots(toISODate(scheduleDate)) : []),
+    [scheduleDate, getBookedSlots],
   );
 
   const handleCreateGoal = () => {
@@ -133,9 +195,19 @@ function RosterClientDetails() {
     if (!scheduleDate || !scheduleTime) return;
     const date = toISODate(scheduleDate);
     const time = to24h(scheduleTime);
-    coachInitiateCheckin({ clientId, clientName, date, time, note: scheduleNote || undefined });
+    coachInitiateCheckin({
+      clientId,
+      clientName,
+      date,
+      time,
+      note: scheduleNote || undefined,
+    });
 
-    addSystemMessage(clientId, `Coach scheduled a check-in for ${formatCheckinDate(date)} at ${formatCheckinTime(time)}`, 'checkin-scheduled');
+    addSystemMessage(
+      clientId,
+      `Coach scheduled a check-in for ${formatCheckinDate(date)} at ${formatCheckinTime(time)}`,
+      'checkin-scheduled',
+    );
     if (scheduleNote) {
       ctxSendMessage(clientId, scheduleNote, 'coach');
     }
@@ -155,7 +227,10 @@ function RosterClientDetails() {
 
   return (
     <div className="w-full">
-      <Link to="/coach/clients" className="inline-flex items-center gap-2 text-sm font-semibold text-text-secondary hover:text-text-primary mb-8 transition-colors">
+      <Link
+        to="/coach/clients"
+        className="inline-flex items-center gap-2 text-sm font-semibold text-text-secondary hover:text-text-primary mb-8 transition-colors"
+      >
         <ArrowLeft size={16} /> Back to Clients
       </Link>
 
@@ -189,28 +264,35 @@ function RosterClientDetails() {
         <div className="flex flex-wrap items-center gap-3">
           <Link
             to={`/coach/clients/${clientId}/edit`}
-            className="px-5 py-2.5 bg-white border border-neutral-200 text-text-primary text-sm font-semibold rounded-control hover:bg-neutral-50 transition-colors flex items-center gap-2 shadow-sm"
+            className={buttonVariants({ variant: 'outline', size: 'lg' })}
           >
             <UserCog size={16} />
             Edit Profile
           </Link>
-          <Link to={`/coach/clients/${clientId}/cycle`} className="px-5 py-2.5 bg-white border border-neutral-200 text-text-primary text-sm font-semibold rounded-control hover:bg-neutral-50 transition-colors flex items-center gap-2 shadow-sm">
+          <Link
+            to={`/coach/clients/${clientId}/cycle`}
+            className={buttonVariants({ variant: 'outline', size: 'lg' })}
+          >
             <Droplet size={16} />
             Cycle Log
           </Link>
           {isPostMvp && (
-            <Link to={`/coach/messages?client=${clientId}`} className="px-5 py-2.5 bg-white border border-neutral-200 text-text-primary text-sm font-semibold rounded-control hover:bg-neutral-50 transition-colors flex items-center gap-2 shadow-sm">
+            <Link
+              to={`/coach/messages?client=${clientId}`}
+              className={buttonVariants({ variant: 'outline', size: 'lg' })}
+            >
               <MessageSquare size={16} />
               Message
             </Link>
           )}
-          <button
+          <Button
             onClick={() => setShowScheduleDialog(true)}
-            className="px-5 py-2.5 bg-text-primary text-white text-sm font-semibold rounded-control hover:bg-neutral-800 transition-colors flex items-center gap-2 shadow-md"
+            variant="inverted"
+            size="lg"
           >
             <Calendar size={16} />
             Schedule Check-in
-          </button>
+          </Button>
         </div>
       </header>
 
@@ -237,45 +319,83 @@ function RosterClientDetails() {
           'lg:grid-cols-4': isPostMvp,
         })}
       >
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36"
+        >
           <div className="flex justify-between items-start w-full">
-            <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Progress</span>
+            <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">
+              Progress
+            </span>
             <Activity size={16} className="text-green-600" strokeWidth={2.5} />
           </div>
           <div className="flex items-baseline gap-1 mt-auto">
             <span className="font-serif text-3xl text-text-primary">
-              {profile ? `${weightChangeKg > 0 ? '+' : ''}${displayWeightValue(weightChangeKg, weightUnit, 1)}` : '--'}
+              {profile
+                ? `${weightChangeKg > 0 ? '+' : ''}${displayWeightValue(weightChangeKg, weightUnit, 1)}`
+                : '--'}
             </span>
-            <span className="text-xs font-semibold text-text-secondary">{weightUnitLabel(weightUnit)}</span>
+            <span className="text-xs font-semibold text-text-secondary">
+              {weightUnitLabel(weightUnit)}
+            </span>
           </div>
         </motion.div>
 
-        {isPostMvp && <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36">
-          <div className="flex justify-between items-start w-full">
-            <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Daily Target</span>
-            <Flame size={16} className="text-metric-energy" strokeWidth={2.5} />
-          </div>
-          <div className="flex flex-col mt-auto">
-            <div className="flex items-baseline gap-1">
-              <span className="font-serif text-2xl text-text-primary">{profile?.dailyCalories.toLocaleString() ?? '--'}</span>
-              <span className="text-xs font-semibold text-text-secondary">kcal</span>
+        {isPostMvp && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36"
+          >
+            <div className="flex justify-between items-start w-full">
+              <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">
+                Daily Target
+              </span>
+              <Flame
+                size={16}
+                className="text-metric-energy"
+                strokeWidth={2.5}
+              />
             </div>
-            {profile && (
-              <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mt-1">
-                {profile.proteinGrams}P / {profile.carbsGrams}C / {profile.fatsGrams}F
-              </p>
-            )}
-          </div>
-        </motion.div>}
+            <div className="flex flex-col mt-auto">
+              <div className="flex items-baseline gap-1">
+                <span className="font-serif text-2xl text-text-primary">
+                  {profile?.dailyCalories.toLocaleString() ?? '--'}
+                </span>
+                <span className="text-xs font-semibold text-text-secondary">
+                  kcal
+                </span>
+              </div>
+              {profile && (
+                <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mt-1">
+                  {profile.proteinGrams}P / {profile.carbsGrams}C /{' '}
+                  {profile.fatsGrams}F
+                </p>
+              )}
+            </div>
+          </motion.div>
+        )}
 
         <Link to={`/coach/clients/${clientId}/cycle`} className="block">
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36 hover:border-brand/20 hover:shadow-md transition-all cursor-pointer">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36 hover:border-brand/20 hover:shadow-md transition-all cursor-pointer"
+          >
             <div className="flex justify-between items-start w-full">
-              <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Current Phase</span>
+              <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">
+                Current Phase
+              </span>
               <Droplet size={16} className="text-brand" strokeWidth={2.5} />
             </div>
             <div className="mt-auto min-w-0">
-              <span className="font-serif text-2xl block truncate" style={phase ? { color: phase.phaseColor } : undefined}>
+              <span
+                className="font-serif text-2xl block truncate"
+                style={phase ? { color: phase.phaseColor } : undefined}
+              >
                 {phase?.phaseName ?? 'N/A'}
               </span>
               {phase && (
@@ -287,29 +407,53 @@ function RosterClientDetails() {
           </motion.div>
         </Link>
 
-        {isPostMvp && <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36">
-          <div className="flex justify-between items-start w-full">
-            <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Avg Compliance</span>
-            <History size={16} className="text-brand-secondary" strokeWidth={2.5} />
-          </div>
-          <div className="flex items-baseline gap-1 mt-auto">
-            <span className="font-serif text-3xl text-text-primary">95</span>
-            <span className="text-xs font-semibold text-text-secondary">%</span>
-          </div>
-        </motion.div>}
+        {isPostMvp && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36"
+          >
+            <div className="flex justify-between items-start w-full">
+              <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">
+                Avg Compliance
+              </span>
+              <History
+                size={16}
+                className="text-brand-secondary"
+                strokeWidth={2.5}
+              />
+            </div>
+            <div className="flex items-baseline gap-1 mt-auto">
+              <span className="font-serif text-3xl text-text-primary">95</span>
+              <span className="text-xs font-semibold text-text-secondary">
+                %
+              </span>
+            </div>
+          </motion.div>
+        )}
       </div>
 
       {/* Current focus section */}
       <section aria-labelledby="current-focus-heading" className="mb-8">
-        <h2 id="current-focus-heading" className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-4">Current focus</h2>
+        <h2
+          id="current-focus-heading"
+          className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-4"
+        >
+          Current focus
+        </h2>
         <div
           className={cn('grid grid-cols-1 gap-6', {
             'lg:grid-cols-3': isPostMvp,
           })}
         >
-
           {/* Current Goal */}
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col h-full">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col h-full"
+          >
             <h2 className="font-serif text-lg text-text-primary font-semibold mb-4 flex items-center gap-2">
               <Target size={18} className="text-brand-secondary" />
               Current Goal
@@ -317,14 +461,19 @@ function RosterClientDetails() {
 
             {activeGoal ? (
               <div className="flex flex-col flex-1">
-                <h3 className="font-semibold text-text-primary text-base mb-3">{activeGoal.type}</h3>
-                <p className="text-xs text-text-secondary mb-4">Started {activeGoal.startDate}</p>
-                <button
+                <h3 className="font-semibold text-text-primary text-base mb-3">
+                  {activeGoal.type}
+                </h3>
+                <p className="text-xs text-text-secondary mb-4">
+                  Started {activeGoal.startDate}
+                </p>
+                <Button
                   onClick={() => setShowEndGoal(true)}
-                  className="mt-auto w-full py-2 text-sm font-semibold text-text-secondary border border-neutral-200 rounded-control hover:bg-neutral-50 transition-colors"
+                  variant="outline"
+                  className="mt-auto w-full"
                 >
                   End Goal
-                </button>
+                </Button>
               </div>
             ) : (
               <div className="flex flex-col flex-1">
@@ -333,31 +482,47 @@ function RosterClientDetails() {
                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-secondary/10">
                       <Target size={22} className="text-brand-secondary" />
                     </div>
-                    <p className="text-sm text-text-secondary">No active goal set</p>
-                    <button
+                    <p className="text-sm text-text-secondary">
+                      No active goal set
+                    </p>
+                    <Button
                       onClick={() => setShowNewGoal(true)}
-                      className="inline-flex items-center gap-2 rounded-control bg-brand-secondary px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-secondary-hover transition-colors"
+                      variant="brand"
                     >
                       <Plus size={16} /> Start New Goal
-                    </button>
+                    </Button>
                   </div>
                 ) : (
                   <div className="flex flex-1 flex-col justify-center space-y-3">
                     <select
                       aria-label="Goal type"
                       value={newGoalType}
-                      onChange={e => setNewGoalType(e.target.value as GoalType)}
+                      onChange={(e) =>
+                        setNewGoalType(e.target.value as GoalType)
+                      }
                       className="w-full px-3 py-2.5 text-sm border border-neutral-200 rounded-control focus:outline-none bg-neutral-50"
                     >
-                      {GOAL_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                      {GOAL_TYPES.map((t) => (
+                        <option key={t} value={t}>
+                          {t}
+                        </option>
+                      ))}
                     </select>
                     <div className="flex gap-2">
-                      <button onClick={handleCreateGoal} className="flex-1 py-2 text-sm font-semibold bg-brand-secondary text-white rounded-control hover:bg-brand-secondary-hover">
+                      <Button
+                        onClick={handleCreateGoal}
+                        variant="brand"
+                        className="flex-1"
+                      >
                         Create
-                      </button>
-                      <button onClick={() => setShowNewGoal(false)} className="py-2 px-3 text-sm font-semibold text-text-secondary border border-neutral-200 rounded-control hover:bg-neutral-50">
+                      </Button>
+                      <Button
+                        onClick={() => setShowNewGoal(false)}
+                        variant="outline"
+                        size="icon"
+                      >
                         <X size={16} />
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 )}
@@ -366,167 +531,215 @@ function RosterClientDetails() {
           </motion.div>
 
           {/* Active Plan */}
-          {isPostMvp && <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col h-full">
-            <h2 className="font-serif text-lg text-text-primary font-semibold mb-4 flex items-center gap-2">
-              <Activity size={18} className="text-brand" />
-              Active Plan
-            </h2>
+          {isPostMvp && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25 }}
+              className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col h-full"
+            >
+              <h2 className="font-serif text-lg text-text-primary font-semibold mb-4 flex items-center gap-2">
+                <Activity size={18} className="text-brand" />
+                Active Plan
+              </h2>
 
-            {activePlan ? (
-              <div className="flex flex-col flex-1">
-                <h3 className="font-semibold text-text-primary text-base mb-2">{activePlan.name}</h3>
+              {activePlan ? (
+                <div className="flex flex-col flex-1">
+                  <h3 className="font-semibold text-text-primary text-base mb-2">
+                    {activePlan.name}
+                  </h3>
 
-                {/* Week progress dots */}
-                <div className="flex gap-1 mb-3">
-                  {activePlan.weeks.map((week, i) => (
-                    <div
-                      key={week.id}
-                      className={`h-2 flex-1 rounded-full ${
-                        i < activePlan.currentWeekNumber - 1
-                          ? 'bg-brand'
-                          : i === activePlan.currentWeekNumber - 1
-                            ? 'bg-brand/50'
-                            : 'bg-neutral-100'
-                      } ${week.isDeload ? 'ring-1 ring-blue-300' : ''}`}
-                    />
-                  ))}
+                  {/* Week progress dots */}
+                  <div className="flex gap-1 mb-3">
+                    {activePlan.weeks.map((week, i) => (
+                      <div
+                        key={week.id}
+                        className={`h-2 flex-1 rounded-full ${
+                          i < activePlan.currentWeekNumber - 1
+                            ? 'bg-brand'
+                            : i === activePlan.currentWeekNumber - 1
+                              ? 'bg-brand/50'
+                              : 'bg-neutral-100'
+                        } ${week.isDeload ? 'ring-1 ring-blue-300' : ''}`}
+                      />
+                    ))}
+                  </div>
+
+                  <p className="text-xs text-text-secondary mb-4">
+                    Week {activePlan.currentWeekNumber} of{' '}
+                    {activePlan.weeks.length} · Started {activePlan.startDate}
+                  </p>
+
+                  <Button
+                    onClick={() => setShowEndPlan(true)}
+                    variant="outline"
+                    className="mt-auto w-full"
+                  >
+                    End Plan
+                  </Button>
                 </div>
-
-                <p className="text-xs text-text-secondary mb-4">
-                  Week {activePlan.currentWeekNumber} of {activePlan.weeks.length} · Started {activePlan.startDate}
-                </p>
-
-                <button
-                  onClick={() => setShowEndPlan(true)}
-                  className="mt-auto w-full py-2 text-sm font-semibold text-text-secondary border border-neutral-200 rounded-control hover:bg-neutral-50 transition-colors"
-                >
-                  End Plan
-                </button>
-              </div>
-            ) : (
-              <div className="flex flex-1 flex-col items-center justify-center gap-3 py-8 text-center">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand/10">
-                  <Activity size={22} className="text-brand" />
+              ) : (
+                <div className="flex flex-1 flex-col items-center justify-center gap-3 py-8 text-center">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand/10">
+                    <Activity size={22} className="text-brand" />
+                  </div>
+                  <p className="text-sm text-text-secondary">No active plan</p>
+                  <Button
+                    onClick={() =>
+                      navigate(`/coach/training/builder/${clientId}`)
+                    }
+                    variant="brand"
+                  >
+                    <Plus size={16} /> Create Plan
+                  </Button>
                 </div>
-                <p className="text-sm text-text-secondary">No active plan</p>
-                <button
-                  onClick={() => navigate(`/coach/training/builder/${clientId}`)}
-                  className="inline-flex items-center gap-2 rounded-control bg-brand px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-hover transition-colors"
-                >
-                  <Plus size={16} /> Create Plan
-                </button>
-              </div>
-            )}
-          </motion.div>}
+              )}
+            </motion.div>
+          )}
 
           {/* Nutrition */}
-          {isPostMvp && (() => {
-            const nutritionPlan = getNutritionPlan(clientId);
-            const activeBlock = nutritionPlan?.blocks.find(b => b.status === 'active');
-            const preferences = getNutritionPreferences(clientId);
+          {isPostMvp &&
+            (() => {
+              const nutritionPlan = getNutritionPlan(clientId);
+              const activeBlock = nutritionPlan?.blocks.find(
+                (b) => b.status === 'active',
+              );
+              const preferences = getNutritionPreferences(clientId);
 
-            // Compute active block summary
-            let blockSummary: { dateRange: string; kcalPerDay: number; mealCount: number } | null = null;
-            if (activeBlock) {
-              const start = parseISO(activeBlock.startDate);
-              const lastDay = activeBlock.days[activeBlock.days.length - 1];
-              const end = parseISO(lastDay.date);
-              const dateRange = `${format(start, 'MMM d')}–${format(end, 'MMM d')}`;
-              const mealCount = activeBlock.days.flatMap(d => d.slots).filter(s => !!s.recipeId).length;
-              blockSummary = { dateRange, kcalPerDay: nutritionPlan!.dailyTarget.kcal, mealCount };
-            }
+              // Compute active block summary
+              let blockSummary: {
+                dateRange: string;
+                kcalPerDay: number;
+                mealCount: number;
+              } | null = null;
+              if (activeBlock) {
+                const start = parseISO(activeBlock.startDate);
+                const lastDay = activeBlock.days[activeBlock.days.length - 1];
+                const end = parseISO(lastDay.date);
+                const dateRange = `${format(start, 'MMM d')}–${format(end, 'MMM d')}`;
+                const mealCount = activeBlock.days
+                  .flatMap((d) => d.slots)
+                  .filter((s) => !!s.recipeId).length;
+                blockSummary = {
+                  dateRange,
+                  kcalPerDay: nutritionPlan!.dailyTarget.kcal,
+                  mealCount,
+                };
+              }
 
-            // Resolve preference chip labels
-            const dietaryChips = preferences?.dietaryFlags.map(flagId => {
-              const tag = nutritionTags.find(t => t.id === flagId);
-              return tag?.label ?? flagId;
-            }) ?? [];
-            const allergenChips = preferences?.allergens ?? [];
-            const dislikedChips = preferences?.dislikedFoodIds.map(foodId => {
-              const food = nutritionFoods.find(f => f.id === foodId);
-              return food?.name ?? foodId;
-            }) ?? [];
-            const allChips = [...dietaryChips, ...allergenChips, ...dislikedChips];
+              // Resolve preference chip labels
+              const dietaryChips =
+                preferences?.dietaryFlags.map((flagId) => {
+                  const tag = nutritionTags.find((t) => t.id === flagId);
+                  return tag?.label ?? flagId;
+                }) ?? [];
+              const allergenChips = preferences?.allergens ?? [];
+              const dislikedChips =
+                preferences?.dislikedFoodIds.map((foodId) => {
+                  const food = nutritionFoods.find((f) => f.id === foodId);
+                  return food?.name ?? foodId;
+                }) ?? [];
+              const allChips = [
+                ...dietaryChips,
+                ...allergenChips,
+                ...dislikedChips,
+              ];
 
-            return (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col h-full"
-              >
-                <h2 className="font-serif text-lg text-text-primary font-semibold mb-4 flex items-center gap-2">
-                  <UtensilsCrossed size={18} className="text-brand-secondary" />
-                  Nutrition
-                </h2>
-
-                {/* Plan summary */}
-                <div className="mb-4">
-                  <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2">Plan</p>
-                  {blockSummary ? (
-                    <div className="space-y-1">
-                      <p className="text-sm font-semibold text-text-primary">
-                        Active block · {blockSummary.dateRange}
-                      </p>
-                      <p className="text-xs text-text-secondary">
-                        {blockSummary.kcalPerDay.toLocaleString()} kcal/day · {blockSummary.mealCount} meals planned
-                      </p>
-                    </div>
-                  ) : (
-                    <p className="text-sm text-text-secondary">No nutrition plan yet</p>
-                  )}
-                </div>
-
-                {/* Food preferences */}
-                <div className="mb-5">
-                  <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2">Food preferences</p>
-                  {allChips.length > 0 ? (
-                    <div className="flex flex-wrap gap-1.5" role="list" aria-label="Food preferences">
-                      {dietaryChips.map(label => (
-                        <span
-                          key={label}
-                          role="listitem"
-                          className="text-caption font-semibold px-2.5 py-1 rounded-full bg-brand-secondary/10 text-text-primary border border-brand-secondary/20"
-                        >
-                          {label}
-                        </span>
-                      ))}
-                      {allergenChips.map(label => (
-                        <span
-                          key={label}
-                          role="listitem"
-                          className="text-caption font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-text-primary border border-amber-200"
-                        >
-                          {label} allergy
-                        </span>
-                      ))}
-                      {dislikedChips.map(label => (
-                        <span
-                          key={label}
-                          role="listitem"
-                          className="text-caption font-semibold px-2.5 py-1 rounded-full bg-neutral-100 text-text-primary"
-                        >
-                          No {label}
-                        </span>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-text-secondary">None set</p>
-                  )}
-                </div>
-
-                {/* Actions */}
-                <button
-                  onClick={() => navigate(`/coach/nutrition/client/${clientId}/plan`)}
-                  className="mt-auto w-full py-2.5 text-sm font-semibold bg-brand-secondary text-white rounded-control hover:bg-brand-secondary-hover transition-colors flex items-center justify-center gap-2"
+              return (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                  className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col h-full"
                 >
-                  <UtensilsCrossed size={15} />
-                  Open plan builder
-                </button>
-              </motion.div>
-            );
-          })()}
+                  <h2 className="font-serif text-lg text-text-primary font-semibold mb-4 flex items-center gap-2">
+                    <UtensilsCrossed
+                      size={18}
+                      className="text-brand-secondary"
+                    />
+                    Nutrition
+                  </h2>
 
+                  {/* Plan summary */}
+                  <div className="mb-4">
+                    <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2">
+                      Plan
+                    </p>
+                    {blockSummary ? (
+                      <div className="space-y-1">
+                        <p className="text-sm font-semibold text-text-primary">
+                          Active block · {blockSummary.dateRange}
+                        </p>
+                        <p className="text-xs text-text-secondary">
+                          {blockSummary.kcalPerDay.toLocaleString()} kcal/day ·{' '}
+                          {blockSummary.mealCount} meals planned
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-text-secondary">
+                        No nutrition plan yet
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Food preferences */}
+                  <div className="mb-5">
+                    <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2">
+                      Food preferences
+                    </p>
+                    {allChips.length > 0 ? (
+                      <div
+                        className="flex flex-wrap gap-1.5"
+                        role="list"
+                        aria-label="Food preferences"
+                      >
+                        {dietaryChips.map((label) => (
+                          <span
+                            key={label}
+                            role="listitem"
+                            className="text-caption font-semibold px-2.5 py-1 rounded-full bg-brand-secondary/10 text-text-primary border border-brand-secondary/20"
+                          >
+                            {label}
+                          </span>
+                        ))}
+                        {allergenChips.map((label) => (
+                          <span
+                            key={label}
+                            role="listitem"
+                            className="text-caption font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-text-primary border border-amber-200"
+                          >
+                            {label} allergy
+                          </span>
+                        ))}
+                        {dislikedChips.map((label) => (
+                          <span
+                            key={label}
+                            role="listitem"
+                            className="text-caption font-semibold px-2.5 py-1 rounded-full bg-neutral-100 text-text-primary"
+                          >
+                            No {label}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-text-secondary">None set</p>
+                    )}
+                  </div>
+
+                  {/* Actions */}
+                  <Button
+                    onClick={() =>
+                      navigate(`/coach/nutrition/client/${clientId}/plan`)
+                    }
+                    variant="brand"
+                    className="mt-auto w-full"
+                  >
+                    <UtensilsCrossed size={15} />
+                    Open plan builder
+                  </Button>
+                </motion.div>
+              );
+            })()}
         </div>
       </section>
 
@@ -536,68 +749,105 @@ function RosterClientDetails() {
           'lg:grid-cols-3': isPostMvp,
         })}
       >
-
         {/* Workout History */}
-        {isPostMvp && <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="lg:col-span-2 bg-white p-8 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 self-start">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="font-serif text-xl text-text-primary font-semibold">Workout History</h2>
-            <Link
-              to={`/coach/clients/${clientId}/history`}
-              className="text-sm font-semibold text-brand hover:text-brand-hover transition-colors"
-            >
-              View All ({getClientWorkoutHistory(dataClientId).length})
-            </Link>
-          </div>
+        {isPostMvp && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="lg:col-span-2 bg-white p-8 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 self-start"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="font-serif text-xl text-text-primary font-semibold">
+                Workout History
+              </h2>
+              <Link
+                to={`/coach/clients/${clientId}/history`}
+                className="text-sm font-semibold text-brand hover:text-brand-hover transition-colors"
+              >
+                View All ({getClientWorkoutHistory(dataClientId).length})
+              </Link>
+            </div>
 
-          <div className="space-y-4">
-            {getClientWorkoutHistory(dataClientId).length === 0 ? (
-              <div className="text-center py-8">
-                <Activity size={28} className="text-neutral-300 mx-auto mb-2" />
-                <p className="text-sm text-text-secondary">No completed workouts yet</p>
-              </div>
-            ) : (
-              getClientWorkoutHistory(dataClientId).map(wl => {
-                const durationMin = wl.duration ? Math.round(wl.duration / 60) : 0;
-                const dateStr = new Date(wl.startedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                const exerciseNames = wl.exercises
-                  .map(el => exercises.find(e => e.id === el.exerciseId)?.name)
-                  .filter(Boolean)
-                  .slice(0, 2)
-                  .join(', ');
-                const hasSwaps = wl.exercises.some(e => e.wasSwapped);
+            <div className="space-y-4">
+              {getClientWorkoutHistory(dataClientId).length === 0 ? (
+                <div className="text-center py-8">
+                  <Activity
+                    size={28}
+                    className="text-neutral-300 mx-auto mb-2"
+                  />
+                  <p className="text-sm text-text-secondary">
+                    No completed workouts yet
+                  </p>
+                </div>
+              ) : (
+                getClientWorkoutHistory(dataClientId).map((wl) => {
+                  const durationMin = wl.duration
+                    ? Math.round(wl.duration / 60)
+                    : 0;
+                  const dateStr = new Date(wl.startedAt).toLocaleDateString(
+                    'en-US',
+                    { month: 'short', day: 'numeric' },
+                  );
+                  const exerciseNames = wl.exercises
+                    .map(
+                      (el) =>
+                        exercises.find((e) => e.id === el.exerciseId)?.name,
+                    )
+                    .filter(Boolean)
+                    .slice(0, 2)
+                    .join(', ');
+                  const hasSwaps = wl.exercises.some((e) => e.wasSwapped);
 
-                return (
-                  <Link
-                    key={wl.id}
-                    to={`/coach/clients/${clientId}/workout/${wl.id}`}
-                    className="flex items-center justify-between p-4 rounded-card border border-neutral-100 bg-neutral-50/50 hover:border-neutral-200 hover:bg-neutral-50 transition-colors group"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <p className="font-semibold text-sm text-text-primary truncate">{exerciseNames}{wl.exercises.length > 2 ? ` +${wl.exercises.length - 2}` : ''}</p>
-                        {hasSwaps && (
-                          <span className="text-[8px] bg-brand-secondary/10 text-brand-secondary rounded-full px-1.5 py-0.5 font-bold uppercase shrink-0">Swap</span>
-                        )}
+                  return (
+                    <Link
+                      key={wl.id}
+                      to={`/coach/clients/${clientId}/workout/${wl.id}`}
+                      className="flex items-center justify-between p-4 rounded-card border border-neutral-100 bg-neutral-50/50 hover:border-neutral-200 hover:bg-neutral-50 transition-colors group"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <p className="font-semibold text-sm text-text-primary truncate">
+                            {exerciseNames}
+                            {wl.exercises.length > 2
+                              ? ` +${wl.exercises.length - 2}`
+                              : ''}
+                          </p>
+                          {hasSwaps && (
+                            <span className="text-[8px] bg-brand-secondary/10 text-brand-secondary rounded-full px-1.5 py-0.5 font-bold uppercase shrink-0">
+                              Swap
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-text-secondary">
+                          {dateStr} · {durationMin} min ·{' '}
+                          {formatVolume(wl.totalVolume || 0, weightUnit)}
+                        </p>
                       </div>
-                      <p className="text-xs text-text-secondary">{dateStr} · {durationMin} min · {formatVolume(wl.totalVolume || 0, weightUnit)}</p>
-                    </div>
-                    <span className="px-3 py-1 rounded-field text-[10px] font-bold uppercase tracking-widest bg-green-100 text-green-700 shrink-0 ml-3">
-                      Completed
-                    </span>
-                  </Link>
-                );
-              })
-            )}
-          </div>
-        </motion.div>}
+                      <span className="px-3 py-1 rounded-field text-[10px] font-bold uppercase tracking-widest bg-green-100 text-green-700 shrink-0 ml-3">
+                        Completed
+                      </span>
+                    </Link>
+                  );
+                })
+              )}
+            </div>
+          </motion.div>
+        )}
 
         {/* Right column: Profile Details + Past Plans */}
         <div className="lg:col-span-1 space-y-6">
-
           {/* Profile Details */}
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35 }}
+            className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
+          >
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-serif text-lg text-text-primary font-semibold">Profile Details</h2>
+              <h2 className="font-serif text-lg text-text-primary font-semibold">
+                Profile Details
+              </h2>
               <Link
                 to={`/coach/clients/${clientId}/edit`}
                 className="text-xs font-semibold text-brand hover:text-brand-hover transition-colors flex items-center gap-1"
@@ -609,35 +859,62 @@ function RosterClientDetails() {
               {profile && (
                 <>
                   <div>
-                    <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">Starting Weight / Current</p>
-                    <p className="font-semibold text-sm text-text-primary">{formatBodyWeight(profile.startingWeightKg, weightUnit)} / {formatBodyWeight(profile.currentWeightKg, weightUnit)}</p>
+                    <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">
+                      Starting Weight / Current
+                    </p>
+                    <p className="font-semibold text-sm text-text-primary">
+                      {formatBodyWeight(profile.startingWeightKg, weightUnit)} /{' '}
+                      {formatBodyWeight(profile.currentWeightKg, weightUnit)}
+                    </p>
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">Height / Age</p>
-                    <p className="font-semibold text-sm text-text-primary">{formatHeight(profile.heightCm, heightUnit)} / {profile.age}</p>
+                    <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">
+                      Height / Age
+                    </p>
+                    <p className="font-semibold text-sm text-text-primary">
+                      {formatHeight(profile.heightCm, heightUnit)} /{' '}
+                      {profile.age}
+                    </p>
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">Activity Level</p>
-                    <p className="font-semibold text-sm text-text-primary">{ACTIVITY_LEVEL_LABELS[profile.activityLevel]}</p>
+                    <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">
+                      Activity Level
+                    </p>
+                    <p className="font-semibold text-sm text-text-primary">
+                      {ACTIVITY_LEVEL_LABELS[profile.activityLevel]}
+                    </p>
                   </div>
                   <div>
-                    <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">Dietary Restrictions</p>
-                    <p className="font-semibold text-sm text-text-primary">{profile.dietaryRestrictions || 'None'}</p>
+                    <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">
+                      Dietary Restrictions
+                    </p>
+                    <p className="font-semibold text-sm text-text-primary">
+                      {profile.dietaryRestrictions || 'None'}
+                    </p>
                   </div>
                 </>
               )}
               {menstrualProfile && (
                 <div>
-                  <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">Cycle</p>
+                  <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">
+                    Cycle
+                  </p>
                   <p className="font-semibold text-sm text-text-primary">
-                    {menstrualProfile.regularity === 'regular' ? 'Regular' : 'Irregular'} &middot; {menstrualProfile.averageCycleLength}-day cycle
+                    {menstrualProfile.regularity === 'regular'
+                      ? 'Regular'
+                      : 'Irregular'}{' '}
+                    &middot; {menstrualProfile.averageCycleLength}-day cycle
                   </p>
                 </div>
               )}
               {menstrualProfile && menstrualProfile.conditions.length > 0 && (
                 <div>
-                  <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">Conditions</p>
-                  <p className="font-semibold text-sm text-text-primary">{menstrualProfile.conditions.join(', ')}</p>
+                  <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">
+                    Conditions
+                  </p>
+                  <p className="font-semibold text-sm text-text-primary">
+                    {menstrualProfile.conditions.join(', ')}
+                  </p>
                 </div>
               )}
             </div>
@@ -645,7 +922,12 @@ function RosterClientDetails() {
 
           {/* Past Plans */}
           {isPostMvp && pastPlans.length > 0 && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
+            >
               <button
                 onClick={() => setPastPlansExpanded(!pastPlansExpanded)}
                 className="w-full flex items-center justify-between"
@@ -653,9 +935,15 @@ function RosterClientDetails() {
                 <h2 className="font-serif text-lg text-text-primary font-semibold flex items-center gap-2">
                   <History size={18} className="text-text-secondary" />
                   Past Plans
-                  <span className="text-xs font-medium bg-neutral-100 text-text-secondary px-2 py-0.5 rounded-full">{pastPlans.length}</span>
+                  <span className="text-xs font-medium bg-neutral-100 text-text-secondary px-2 py-0.5 rounded-full">
+                    {pastPlans.length}
+                  </span>
                 </h2>
-                {pastPlansExpanded ? <ChevronUp size={18} className="text-text-secondary" /> : <ChevronDown size={18} className="text-text-secondary" />}
+                {pastPlansExpanded ? (
+                  <ChevronUp size={18} className="text-text-secondary" />
+                ) : (
+                  <ChevronDown size={18} className="text-text-secondary" />
+                )}
               </button>
 
               <AnimatePresence>
@@ -666,18 +954,24 @@ function RosterClientDetails() {
                     exit={{ height: 0, opacity: 0 }}
                     className="overflow-hidden mt-4 space-y-3"
                   >
-                    {pastPlans.map(plan => {
-                      const goal = allGoals.find(g => g.id === plan.goalId);
+                    {pastPlans.map((plan) => {
+                      const goal = allGoals.find((g) => g.id === plan.goalId);
                       return (
-                        <div key={plan.id} className="p-4 rounded-control border border-neutral-100 bg-neutral-50/50">
-                          <p className="font-semibold text-sm text-text-primary mb-1">{plan.name}</p>
+                        <div
+                          key={plan.id}
+                          className="p-4 rounded-control border border-neutral-100 bg-neutral-50/50"
+                        >
+                          <p className="font-semibold text-sm text-text-primary mb-1">
+                            {plan.name}
+                          </p>
                           {goal && (
                             <span className="inline-block text-[10px] font-bold uppercase tracking-wider bg-neutral-200 text-text-secondary px-2 py-0.5 rounded-full mb-1">
                               {goal.type}
                             </span>
                           )}
                           <p className="text-xs text-text-secondary">
-                            {plan.startDate} — {plan.endDate} · {plan.weeks.length} weeks
+                            {plan.startDate} — {plan.endDate} ·{' '}
+                            {plan.weeks.length} weeks
                           </p>
                         </div>
                       );
@@ -687,7 +981,6 @@ function RosterClientDetails() {
               </AnimatePresence>
             </motion.div>
           )}
-
         </div>
       </div>
 
@@ -695,14 +988,28 @@ function RosterClientDetails() {
       <AlertDialog open={showEndGoal} onOpenChange={setShowEndGoal}>
         <AlertDialogContent className="sm:max-w-md rounded-card">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-center text-text-primary">End this goal?</AlertDialogTitle>
+            <AlertDialogTitle className="text-center text-text-primary">
+              End this goal?
+            </AlertDialogTitle>
             <AlertDialogDescription className="text-center">
-              The <span className="font-semibold text-text-primary">{activeGoal?.type}</span> goal will be marked as completed. You can start a new goal afterward.
+              The{' '}
+              <span className="font-semibold text-text-primary">
+                {activeGoal?.type}
+              </span>{' '}
+              goal will be marked as completed. You can start a new goal
+              afterward.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="sm:flex-row gap-3 mt-2">
-            <AlertDialogCancel className="flex-1 rounded-control border-neutral-200 text-text-secondary hover:bg-neutral-50 font-semibold">Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleEndGoal} className="flex-1 rounded-control bg-text-primary text-white hover:bg-neutral-800 font-semibold">End Goal</AlertDialogAction>
+            <AlertDialogCancel className="flex-1 rounded-control border-neutral-200 text-text-secondary hover:bg-neutral-50 font-semibold">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleEndGoal}
+              className="flex-1 rounded-control bg-text-primary text-white hover:bg-neutral-800 font-semibold"
+            >
+              End Goal
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -711,14 +1018,26 @@ function RosterClientDetails() {
       <AlertDialog open={showEndPlan} onOpenChange={setShowEndPlan}>
         <AlertDialogContent className="sm:max-w-md rounded-card">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-center text-text-primary">End this plan?</AlertDialogTitle>
+            <AlertDialogTitle className="text-center text-text-primary">
+              End this plan?
+            </AlertDialogTitle>
             <AlertDialogDescription className="text-center">
-              <span className="font-semibold text-text-primary">"{activePlan?.name}"</span> will be marked as completed and moved to past plans.
+              <span className="font-semibold text-text-primary">
+                "{activePlan?.name}"
+              </span>{' '}
+              will be marked as completed and moved to past plans.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="sm:flex-row gap-3 mt-2">
-            <AlertDialogCancel className="flex-1 rounded-control border-neutral-200 text-text-secondary hover:bg-neutral-50 font-semibold">Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleEndPlan} className="flex-1 rounded-control bg-red-600 text-white hover:bg-red-700 font-semibold">End Plan</AlertDialogAction>
+            <AlertDialogCancel className="flex-1 rounded-control border-neutral-200 text-text-secondary hover:bg-neutral-50 font-semibold">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleEndPlan}
+              className="flex-1 rounded-control bg-red-600 text-white hover:bg-red-700 font-semibold"
+            >
+              End Plan
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -740,7 +1059,6 @@ function RosterClientDetails() {
         onMessageChange={setScheduleNote}
         messagePlaceholder="Add a note (optional)"
       />
-
     </div>
   );
 }

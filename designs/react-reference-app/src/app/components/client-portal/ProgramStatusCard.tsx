@@ -16,10 +16,14 @@ import {
   type JourneyStage,
 } from '../../domain/journey';
 import { startSubscriptionNow } from '../../services/subscriptionService';
-import { browserTimeZone, formatCallSchedule } from '../../utils/dateFormatters';
+import {
+  browserTimeZone,
+  formatCallSchedule,
+} from '../../utils/dateFormatters';
 import { formatJourneyDate } from '../../utils/journeyLabels';
 import { SectionEyebrow } from '../SectionEyebrow';
-import { Button, buttonVariants } from '../ThemeButton';
+import { Button, buttonVariants } from '../ui/button';
+import { cn } from '../ui/utils';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -71,7 +75,9 @@ function reassuranceLine(
   if (status === 'active') {
     const period = currentPeriod(subscription, now);
     const endsAt = period?.endsAt ?? subscription.periodEndsAt;
-    return endsAt ? `Your coaching renews on ${formatJourneyDate(endsAt)}` : null;
+    return endsAt
+      ? `Your coaching renews on ${formatJourneyDate(endsAt)}`
+      : null;
   }
 
   if (status === 'cancelled' && subscription.periodEndsAt) {
@@ -103,11 +109,15 @@ function StartNowDialog({
       <AlertDialogContent className="rounded-card sm:max-w-md">
         <AlertDialogHeader>
           <AlertDialogTitle>{START_NOW_TITLE}</AlertDialogTitle>
-          <AlertDialogDescription>{WITHDRAWAL_WAIVER_COPY}</AlertDialogDescription>
+          <AlertDialogDescription>
+            {WITHDRAWAL_WAIVER_COPY}
+          </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Not yet</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm}>Start my program now</AlertDialogAction>
+          <AlertDialogAction onClick={onConfirm}>
+            Start my program now
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
@@ -169,7 +179,9 @@ export function ProgramStatusCard() {
             <Button
               onClick={() => navigate('/portal/onboarding?answer=1')}
               type="button"
-              width="full-below-sm"
+              variant="brand"
+              size="lg"
+              className="w-full sm:w-auto"
             >
               Answer now
             </Button>
@@ -178,7 +190,10 @@ export function ProgramStatusCard() {
           {(demoJourney.stage === 'program-ready' ||
             demoJourney.stage === 'review-call-scheduled') && (
             <Link
-              className={buttonVariants({ width: 'full-below-sm' })}
+              className={cn(
+                buttonVariants({ variant: 'brand', size: 'lg' }),
+                'w-full sm:w-auto',
+              )}
               to="/portal/plan"
             >
               See my plan
@@ -191,7 +206,8 @@ export function ProgramStatusCard() {
               onClick={() => setConfirming(true)}
               type="button"
               variant="outline"
-              width="full-below-sm"
+              size="lg"
+              className="w-full sm:w-auto"
             >
               Start my program now
             </Button>

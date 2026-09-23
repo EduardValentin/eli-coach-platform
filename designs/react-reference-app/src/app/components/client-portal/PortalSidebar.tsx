@@ -20,6 +20,7 @@ import { useAppState } from '../../context/AppContext';
 import { useClientProfile, fullName } from '../../context/ClientProfileContext';
 import { NotificationBell } from '../NotificationBell';
 import { BottomSheet } from '../ui/bottom-sheet';
+import { Button } from '../ui/button';
 import { NextCheckinCard } from './NextCheckinCard';
 
 type NavLink = {
@@ -32,14 +33,24 @@ type NavLink = {
 const PRIMARY_LINKS: NavLink[] = [
   { name: 'Dashboard', href: '/portal', icon: Activity },
   { name: 'My Plan', href: '/portal/plan', icon: Calendar, postMvp: true },
-  { name: 'Messages', href: '/portal/messages', icon: MessageSquare, postMvp: true },
+  {
+    name: 'Messages',
+    href: '/portal/messages',
+    icon: MessageSquare,
+    postMvp: true,
+  },
   { name: 'Cycle', href: '/portal/cycle', icon: Droplet },
 ];
 
 const SECONDARY_LINKS: NavLink[] = [
   { name: 'Check-ins', href: '/portal/checkins', icon: CalendarCheck },
   { name: 'History', href: '/portal/history', icon: History, postMvp: true },
-  { name: 'Nutrition', href: '/portal/nutrition', icon: Utensils, postMvp: true },
+  {
+    name: 'Nutrition',
+    href: '/portal/nutrition',
+    icon: Utensils,
+    postMvp: true,
+  },
   { name: 'Resources', href: '#', icon: PlaySquare },
   { name: 'Profile', href: '/portal/profile', icon: UserCircle },
   { name: 'Settings', href: '/portal/settings', icon: Settings },
@@ -73,7 +84,9 @@ function ProfileHeader({ onNavigate }: { onNavigate?: () => void }) {
         </div>
       )}
       <div className="min-w-0">
-        <p className="font-semibold text-sm text-text-primary truncate">{displayName}</p>
+        <p className="font-semibold text-sm text-text-primary truncate">
+          {displayName}
+        </p>
       </div>
     </Link>
   );
@@ -92,8 +105,11 @@ function DesktopSidebar({ links }: { links: NavLink[] }) {
         <NotificationBell align="left" />
       </div>
 
-      <nav aria-label="Client portal primary" className="flex flex-1 flex-col gap-1 px-4 overflow-y-auto">
-        {links.map(link => {
+      <nav
+        aria-label="Client portal primary"
+        className="flex flex-1 flex-col gap-1 px-4 overflow-y-auto"
+      >
+        {links.map((link) => {
           const Icon = link.icon;
           const isActive = isRouteActive(location.pathname, link.href);
           return (
@@ -107,7 +123,11 @@ function DesktopSidebar({ links }: { links: NavLink[] }) {
                   : 'text-text-secondary hover:bg-surface-quiet hover:text-text-primary font-medium'
               }`}
             >
-              <Icon size={18} strokeWidth={isActive ? 2.5 : 2} aria-hidden="true" />
+              <Icon
+                size={18}
+                strokeWidth={isActive ? 2.5 : 2}
+                aria-hidden="true"
+              />
               <span className="text-sm">{link.name}</span>
             </Link>
           );
@@ -121,7 +141,13 @@ function DesktopSidebar({ links }: { links: NavLink[] }) {
   );
 }
 
-function MobileTopBar({ onOpenMore, moreOpen }: { onOpenMore: () => void; moreOpen: boolean }) {
+function MobileTopBar({
+  onOpenMore,
+  moreOpen,
+}: {
+  onOpenMore: () => void;
+  moreOpen: boolean;
+}) {
   const { clientProfile } = useClientProfile();
   const displayName = clientProfile ? fullName(clientProfile) : 'Client';
 
@@ -150,16 +176,18 @@ function MobileTopBar({ onOpenMore, moreOpen }: { onOpenMore: () => void; moreOp
         </Link>
         <div className="flex items-center gap-2">
           <NotificationBell />
-          <button
+          <Button
             type="button"
             onClick={onOpenMore}
             aria-label="Open menu"
             aria-expanded={moreOpen}
             aria-controls="portal-more-sheet"
-            className="w-10 h-10 rounded-full flex items-center justify-center bg-surface-muted hover:bg-surface-muted-hover text-text-secondary transition-colors"
+            variant="ghost"
+            size="icon"
+            className="bg-surface-muted hover:bg-surface-muted-hover text-text-secondary"
           >
             <Menu size={20} aria-hidden="true" />
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -176,7 +204,7 @@ function MobileTabBar({ links }: { links: NavLink[] }) {
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <ul className="flex items-stretch h-16">
-        {links.map(link => {
+        {links.map((link) => {
           const Icon = link.icon;
           const isActive = isRouteActive(location.pathname, link.href);
           return (
@@ -190,7 +218,11 @@ function MobileTabBar({ links }: { links: NavLink[] }) {
                     : 'text-text-secondary hover:text-text-primary'
                 }`}
               >
-                <Icon size={22} strokeWidth={isActive ? 2.4 : 2} aria-hidden="true" />
+                <Icon
+                  size={22}
+                  strokeWidth={isActive ? 2.4 : 2}
+                  aria-hidden="true"
+                />
                 <span className="text-caption font-semibold">{link.name}</span>
               </Link>
             </li>
@@ -201,7 +233,13 @@ function MobileTabBar({ links }: { links: NavLink[] }) {
   );
 }
 
-function MoreSheetBody({ links, onClose }: { links: NavLink[]; onClose: () => void }) {
+function MoreSheetBody({
+  links,
+  onClose,
+}: {
+  links: NavLink[];
+  onClose: () => void;
+}) {
   const location = useLocation();
   const navigate = useNavigate();
   const { setAppState } = useAppState();
@@ -218,8 +256,11 @@ function MoreSheetBody({ links, onClose }: { links: NavLink[]; onClose: () => vo
         <ProfileHeader onNavigate={onClose} />
       </div>
 
-      <nav aria-label="Client portal more" className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4">
-        {links.map(link => {
+      <nav
+        aria-label="Client portal more"
+        className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4"
+      >
+        {links.map((link) => {
           const Icon = link.icon;
           const isActive = isRouteActive(location.pathname, link.href);
           const isPlaceholder = link.href === '#';
@@ -233,8 +274,12 @@ function MoreSheetBody({ links, onClose }: { links: NavLink[]; onClose: () => vo
                 className="w-full flex items-center gap-4 px-4 min-h-14 rounded-card text-text-secondary pointer-events-none opacity-50"
               >
                 <Icon size={22} aria-hidden="true" />
-                <span className="text-base font-medium flex-1 text-left">{link.name}</span>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">Soon</span>
+                <span className="text-base font-medium flex-1 text-left">
+                  {link.name}
+                </span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">
+                  Soon
+                </span>
               </button>
             );
           }
@@ -251,9 +296,17 @@ function MoreSheetBody({ links, onClose }: { links: NavLink[]; onClose: () => vo
                   : 'text-text-primary hover:bg-surface-quiet'
               }`}
             >
-              <Icon size={22} strokeWidth={isActive ? 2.4 : 2} aria-hidden="true" />
+              <Icon
+                size={22}
+                strokeWidth={isActive ? 2.4 : 2}
+                aria-hidden="true"
+              />
               <span className="text-base font-medium flex-1">{link.name}</span>
-              <ChevronRight size={18} className="text-neutral-300" aria-hidden="true" />
+              <ChevronRight
+                size={18}
+                className="text-neutral-300"
+                aria-hidden="true"
+              />
             </Link>
           );
         })}
@@ -267,14 +320,15 @@ function MoreSheetBody({ links, onClose }: { links: NavLink[]; onClose: () => vo
         className="border-t border-neutral-100 px-4 py-3"
         style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 0.75rem)' }}
       >
-        <button
+        <Button
           type="button"
           onClick={handleSignOut}
-          className="w-full flex items-center justify-center gap-2 min-h-12 px-4 rounded-control text-sm font-semibold text-text-secondary hover:bg-surface-quiet hover:text-text-primary transition-colors"
+          variant="ghost"
+          className="w-full text-text-secondary hover:text-text-primary"
         >
           <LogOut size={18} aria-hidden="true" />
           Sign out
-        </button>
+        </Button>
       </div>
     </div>
   );

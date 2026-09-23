@@ -15,7 +15,7 @@ import type { MeasurementEntry } from '../../domain/journey';
 import { MEASUREMENT_FIELDS } from '../../domain/onboardingSchema';
 import { formatJourneyDate } from '../../utils/journeyLabels';
 import { formatBodyWeight, formatCircumference } from '../../utils/units';
-import { Button } from '../ThemeButton';
+import { Button } from '../ui/button';
 import { Form } from '../ui/form';
 import { ResponsiveSheetDialog } from '../workout/ResponsiveSheetDialog';
 import { OnboardingFieldControl } from './onboarding/OnboardingFieldControl';
@@ -51,7 +51,10 @@ function readingsOf(entry: MeasurementEntry, units: MeasureUnits): string {
     `Weight ${formatBodyWeight(entry.weightKg, units.weight)}`,
     ...circumferences
       .filter(([, value]) => value !== undefined)
-      .map(([name, value]) => `${name} ${formatCircumference(value ?? 0, units.length)}`),
+      .map(
+        ([name, value]) =>
+          `${name} ${formatCircumference(value ?? 0, units.length)}`,
+      ),
   ].join(' · ');
 }
 
@@ -91,14 +94,20 @@ function AddMeasurementsForm({
         <h3 className="pr-10 text-lg font-semibold leading-snug text-text-primary md:text-xl">
           {SHEET_TITLE}
         </h3>
-        <p className="mt-1 text-xs text-text-secondary sm:text-sm">{SHEET_DESCRIPTION}</p>
+        <p className="mt-1 text-xs text-text-secondary sm:text-sm">
+          {SHEET_DESCRIPTION}
+        </p>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-5 pt-5 pb-6 md:px-8 md:pt-6 md:pb-8">
         <Form {...form}>
           <form className="grid gap-6" noValidate onSubmit={save}>
             {MEASUREMENT_FIELDS.map((field) => (
-              <OnboardingFieldControl control={form.control} field={field} key={field.id} />
+              <OnboardingFieldControl
+                control={form.control}
+                field={field}
+                key={field.id}
+              />
             ))}
 
             <ProgressPhotoBlock
@@ -109,10 +118,20 @@ function AddMeasurementsForm({
             />
 
             <div className="flex flex-col-reverse gap-3 sm:flex-row-reverse">
-              <Button type="submit" width="full-below-sm">
+              <Button
+                type="submit"
+                variant="brand"
+                size="lg"
+                className="w-full sm:w-auto"
+              >
                 Save measurements
               </Button>
-              <Button onClick={onClose} variant="outline" width="full-below-sm">
+              <Button
+                onClick={onClose}
+                variant="outline"
+                size="lg"
+                className="w-full sm:w-auto"
+              >
                 Cancel
               </Button>
             </div>
@@ -158,7 +177,9 @@ export function MeasurementsSection() {
         </h2>
       </div>
 
-      <p className="text-sm text-text-secondary">{measurementCadenceHint(tracksCycle)}</p>
+      <p className="text-sm text-text-secondary">
+        {measurementCadenceHint(tracksCycle)}
+      </p>
       {due && (
         <p className="mt-1 text-sm text-text-secondary">
           Next weight: {formatJourneyDate(due.weight)} · Next circumferences:{' '}
@@ -177,13 +198,20 @@ export function MeasurementsSection() {
               <p className="text-caption font-bold uppercase tracking-widest text-text-secondary">
                 {formatJourneyDate(entry.recordedAt)}
               </p>
-              <p className="mt-1 text-sm text-text-primary">{readingsOf(entry, units)}</p>
+              <p className="mt-1 text-sm text-text-primary">
+                {readingsOf(entry, units)}
+              </p>
             </li>
           ))}
         </ul>
       )}
 
-      <Button className="mt-6" onClick={() => setAdding(true)} width="full-below-sm">
+      <Button
+        className="mt-6 w-full sm:w-auto"
+        onClick={() => setAdding(true)}
+        variant="brand"
+        size="lg"
+      >
         {SHEET_TITLE}
       </Button>
 

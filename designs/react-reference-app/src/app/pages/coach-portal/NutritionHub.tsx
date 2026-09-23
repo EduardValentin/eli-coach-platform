@@ -1,6 +1,11 @@
 import { useSearchParams } from 'react-router';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/tabs';
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from '../../components/ui/tabs';
 import { FoodLibrary } from '../../components/coach-portal/nutrition/FoodLibrary';
 import { RecipeLibrary } from '../../components/coach-portal/nutrition/RecipeLibrary';
 import { ClientPlansTab } from '../../components/coach-portal/nutrition/ClientPlansTab';
@@ -19,7 +24,10 @@ export function NutritionHub() {
         subtitle="Build your food library, recipes, and client meal plans."
       />
 
-      <Tabs value={activeTab} onValueChange={(v) => setSearchParams({ tab: v }, { replace: true })}>
+      <Tabs
+        value={activeTab}
+        onValueChange={(v) => setSearchParams({ tab: v }, { replace: true })}
+      >
         <TabsList>
           <TabsTrigger value="foods">Foods</TabsTrigger>
           <TabsTrigger value="recipes">Recipes</TabsTrigger>

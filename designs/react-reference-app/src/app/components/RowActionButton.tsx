@@ -6,9 +6,15 @@ import { cn } from './ui/utils';
 
 type RowActionTone = 'default' | 'brand' | 'destructive';
 
+const TONE_VARIANT: Record<RowActionTone, 'outline' | 'outline-brand'> = {
+  default: 'outline',
+  brand: 'outline-brand',
+  destructive: 'outline',
+};
+
 const TONE_CLASSES: Record<RowActionTone, string> = {
   default: '',
-  brand: 'border-brand text-brand hover:bg-brand/10 hover:text-brand',
+  brand: '',
   destructive:
     'text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive',
 };
@@ -22,25 +28,25 @@ export function RowActionButton({
   children,
   ...props
 }: ComponentProps<'button'> & {
-  icon: LucideIcon;
+  icon?: LucideIcon;
   tone?: RowActionTone;
   busy?: boolean;
 }) {
   return (
     <Button
       type="button"
-      variant="outline"
+      variant={TONE_VARIANT[tone]}
       size="sm"
       disabled={disabled || busy}
       aria-busy={busy || undefined}
-      className={cn('text-xs font-semibold', TONE_CLASSES[tone], className)}
+      className={cn(TONE_CLASSES[tone], className)}
       {...props}
     >
       {busy ? (
         <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
-      ) : (
+      ) : Icon ? (
         <Icon className="size-3.5 shrink-0" aria-hidden="true" />
-      )}
+      ) : null}
       {children}
     </Button>
   );
@@ -52,18 +58,17 @@ export function RowActionLink({
   className,
   children,
   ...props
-}: LinkProps & { icon: LucideIcon; tone?: RowActionTone }) {
+}: LinkProps & { icon?: LucideIcon; tone?: RowActionTone }) {
   return (
     <Link
       className={cn(
-        buttonVariants({ variant: 'outline', size: 'sm' }),
-        'text-xs font-semibold',
+        buttonVariants({ variant: TONE_VARIANT[tone], size: 'sm' }),
         TONE_CLASSES[tone],
         className,
       )}
       {...props}
     >
-      <Icon className="size-3.5 shrink-0" aria-hidden="true" />
+      {Icon ? <Icon className="size-3.5 shrink-0" aria-hidden="true" /> : null}
       {children}
     </Link>
   );

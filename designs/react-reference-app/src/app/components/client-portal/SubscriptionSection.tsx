@@ -14,7 +14,7 @@ import {
   formatJourneyDate,
   SUBSCRIPTION_STATUS_LABELS,
 } from '../../utils/journeyLabels';
-import { Button } from '../ThemeButton';
+import { Button } from '../ui/button';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,7 +44,10 @@ function cancellationFacts(periodEndsAt: Date | undefined): string {
   return `You won't be charged again, there is no refund for the coaching already paid, and ${access}.`;
 }
 
-function cancelAction(subscription: CoachingSubscription, now: Date): string | null {
+function cancelAction(
+  subscription: CoachingSubscription,
+  now: Date,
+): string | null {
   if (!canDeliverProgram(subscription, now)) return REFUND_CANCEL_LABEL;
 
   return deriveStatus(subscription, now) === 'active' ? CANCEL_LABEL : null;
@@ -78,10 +81,16 @@ function subscriptionReading(
     return { term: 'Renews on', value: 'Once your program starts' };
   }
   if (status === 'active') {
-    return { term: 'Renews on', value: formatJourneyDate(subscription.periodEndsAt) };
+    return {
+      term: 'Renews on',
+      value: formatJourneyDate(subscription.periodEndsAt),
+    };
   }
 
-  return { term: 'Ends on', value: formatJourneyDate(subscription.periodEndsAt) };
+  return {
+    term: 'Ends on',
+    value: formatJourneyDate(subscription.periodEndsAt),
+  };
 }
 
 export function SubscriptionSection() {
@@ -130,7 +139,9 @@ export function SubscriptionSection() {
         <Reading
           term="Day 1"
           value={
-            subscription.day1 ? formatJourneyDate(subscription.day1) : 'Not set yet'
+            subscription.day1
+              ? formatJourneyDate(subscription.day1)
+              : 'Not set yet'
           }
         />
         <Reading term={reading.term} value={reading.value} />
@@ -138,11 +149,11 @@ export function SubscriptionSection() {
 
       {action && (
         <Button
-          className="mt-6"
+          className="mt-6 w-full sm:w-auto"
           disabled={cancelling}
           onClick={() => setConfirming(true)}
           variant="outline"
-          width="full-below-sm"
+          size="lg"
         >
           {action}
         </Button>

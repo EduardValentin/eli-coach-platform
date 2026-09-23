@@ -6,8 +6,17 @@ import { useNavigate } from 'react-router';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { WeekSwitcher } from '../../components/workout/WeekSwitcher';
 import { PlanExerciseRow } from '../../components/workout/PlanExerciseRow';
+import { Button } from '../../components/ui/button';
 
-const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const DAY_NAMES = [
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
+];
 
 type DayType = 'Strength' | 'Hypertrophy' | 'Conditioning' | 'Rest' | string;
 
@@ -28,7 +37,7 @@ export function ClientPlan() {
 
   const activeGoal = useMemo(() => {
     if (!clientActivePlan) return null;
-    return goals.find(g => g.id === clientActivePlan.goalId) || null;
+    return goals.find((g) => g.id === clientActivePlan.goalId) || null;
   }, [clientActivePlan, goals]);
 
   if (!clientActivePlan) {
@@ -37,8 +46,13 @@ export function ClientPlan() {
         <div className="w-20 h-20 bg-neutral-100 rounded-full flex items-center justify-center mb-4">
           <CalendarDays size={32} className="text-text-secondary" />
         </div>
-        <h1 className="text-2xl font-serif font-bold text-text-primary mb-2">No Active Plan</h1>
-        <p className="text-text-secondary max-w-md">You don't have an active training plan assigned right now. Your coach will assign one soon.</p>
+        <h1 className="text-2xl font-serif font-bold text-text-primary mb-2">
+          No Active Plan
+        </h1>
+        <p className="text-text-secondary max-w-md">
+          You don't have an active training plan assigned right now. Your coach
+          will assign one soon.
+        </p>
       </div>
     );
   }
@@ -61,17 +75,25 @@ export function ClientPlan() {
           subtitle={metaParts.join(' · ')}
         />
         <div className="space-y-3">
-        <WeekSwitcher
-          weeks={clientActivePlan.weeks}
-          activeWeekIdx={activeWeekIdx}
-          currentWeekIdx={currentWeekIdx}
-          maxWeekIdx={currentWeekIdx}
-          onChange={setActiveWeekIdx}
-        />
-        <p className="flex items-start gap-1.5 text-xs text-text-secondary leading-relaxed">
-          <Info size={13} className="text-text-secondary shrink-0 mt-0.5" aria-hidden="true" />
-          <span><span className="font-semibold text-text-primary">RIR</span> = reps in reserve — how many more reps you could do at the end of a set before reaching failure.</span>
-        </p>
+          <WeekSwitcher
+            weeks={clientActivePlan.weeks}
+            activeWeekIdx={activeWeekIdx}
+            currentWeekIdx={currentWeekIdx}
+            maxWeekIdx={currentWeekIdx}
+            onChange={setActiveWeekIdx}
+          />
+          <p className="flex items-start gap-1.5 text-xs text-text-secondary leading-relaxed">
+            <Info
+              size={13}
+              className="text-text-secondary shrink-0 mt-0.5"
+              aria-hidden="true"
+            />
+            <span>
+              <span className="font-semibold text-text-primary">RIR</span> =
+              reps in reserve — how many more reps you could do at the end of a
+              set before reaching failure.
+            </span>
+          </p>
         </div>
       </div>
 
@@ -81,17 +103,31 @@ export function ClientPlan() {
             return <RestDayDivider key={day.id} dayName={DAY_NAMES[dIdx]} />;
           }
 
-          const groupedExercises: { isSuperset: boolean; id: string; items: typeof day.exercises }[] = [];
+          const groupedExercises: {
+            isSuperset: boolean;
+            id: string;
+            items: typeof day.exercises;
+          }[] = [];
           const processedIds = new Set<string>();
 
-          day.exercises.forEach(pe => {
+          day.exercises.forEach((pe) => {
             if (processedIds.has(pe.id)) return;
             if (pe.supersetId) {
-              const ssItems = day.exercises.filter(e => e.supersetId === pe.supersetId);
-              groupedExercises.push({ isSuperset: true, id: pe.supersetId, items: ssItems });
-              ssItems.forEach(i => processedIds.add(i.id));
+              const ssItems = day.exercises.filter(
+                (e) => e.supersetId === pe.supersetId,
+              );
+              groupedExercises.push({
+                isSuperset: true,
+                id: pe.supersetId,
+                items: ssItems,
+              });
+              ssItems.forEach((i) => processedIds.add(i.id));
             } else {
-              groupedExercises.push({ isSuperset: false, id: pe.id, items: [pe] });
+              groupedExercises.push({
+                isSuperset: false,
+                id: pe.id,
+                items: [pe],
+              });
               processedIds.add(pe.id);
             }
           });
@@ -107,53 +143,74 @@ export function ClientPlan() {
             >
               <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-b border-neutral-100 rounded-field flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <p className={`text-[10px] font-bold uppercase tracking-widest ${DAY_TYPE_ACCENT[day.type as DayType] ?? 'text-text-secondary'}`}>
+                  <p
+                    className={`text-[10px] font-bold uppercase tracking-widest ${DAY_TYPE_ACCENT[day.type as DayType] ?? 'text-text-secondary'}`}
+                  >
                     {day.type}
                   </p>
                   <h2 className="font-semibold text-base sm:text-lg text-text-primary leading-tight mt-0.5">
                     {DAY_NAMES[dIdx]}
                   </h2>
                 </div>
-                <button
+                <Button
                   type="button"
-                  onClick={() => navigate(`/portal/workout/${clientActivePlan.id}/${activeWeekIdx}/${dIdx}`)}
-                  className="shrink-0 inline-flex items-center gap-1.5 text-sm font-semibold text-brand hover:text-brand-hover hover:bg-brand/5 px-3 min-h-10 rounded-control transition-colors"
+                  onClick={() =>
+                    navigate(
+                      `/portal/workout/${clientActivePlan.id}/${activeWeekIdx}/${dIdx}`,
+                    )
+                  }
+                  variant="ghost"
+                  className="shrink-0 text-brand hover:text-brand-hover hover:bg-brand/5"
                 >
                   Start
                   <Play size={14} fill="currentColor" aria-hidden="true" />
-                </button>
+                </Button>
               </div>
 
               {groupedExercises.length > 0 && (
                 <div className="px-3 sm:px-4 py-3 sm:py-4 space-y-2">
-                  {groupedExercises.map(group =>
+                  {groupedExercises.map((group) =>
                     group.isSuperset ? (
                       <SupersetGroup key={group.id}>
-                        {group.items.map(pe => {
-                          const ex = exercises.find(e => e.id === pe.exerciseId);
+                        {group.items.map((pe) => {
+                          const ex = exercises.find(
+                            (e) => e.id === pe.exerciseId,
+                          );
                           if (!ex) return null;
                           return (
                             <PlanExerciseRow
                               key={pe.id}
-                              planExercise={{ id: pe.id, sets: pe.sets, reps: pe.reps, rir: pe.rir }}
+                              planExercise={{
+                                id: pe.id,
+                                sets: pe.sets,
+                                reps: pe.reps,
+                                rir: pe.rir,
+                              }}
                               exercise={ex}
                             />
                           );
                         })}
                       </SupersetGroup>
                     ) : (
-                      group.items.map(pe => {
-                        const ex = exercises.find(e => e.id === pe.exerciseId);
+                      group.items.map((pe) => {
+                        const ex = exercises.find(
+                          (e) => e.id === pe.exerciseId,
+                        );
                         if (!ex) return null;
                         return (
                           <PlanExerciseRow
                             key={pe.id}
-                            planExercise={{ id: pe.id, sets: pe.sets, reps: pe.reps, rir: pe.rir }}
+                            planExercise={{
+                              id: pe.id,
+                              sets: pe.sets,
+                              reps: pe.reps,
+                              rir: pe.rir,
+                            }}
                             exercise={ex}
                           />
                         );
                       })
-                    )
+                    ),
                   )}
                 </div>
               )}
@@ -167,7 +224,11 @@ export function ClientPlan() {
 
 function RestDayDivider({ dayName }: { dayName: string }) {
   return (
-    <div className="flex items-center gap-3 py-1" role="separator" aria-label={`${dayName} rest day`}>
+    <div
+      className="flex items-center gap-3 py-1"
+      role="separator"
+      aria-label={`${dayName} rest day`}
+    >
       <span className="flex-1 h-px bg-neutral-200" aria-hidden="true" />
       <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-text-secondary">
         {dayName} · Rest
@@ -184,7 +245,9 @@ function SupersetGroup({ children }: { children: React.ReactNode }) {
         aria-hidden="true"
         className="absolute left-0 top-1 bottom-1 w-[3px] rounded-full bg-brand-secondary/60"
       />
-      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-brand-secondary mb-1.5">Superset</p>
+      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-brand-secondary mb-1.5">
+        Superset
+      </p>
       <div className="space-y-2">{children}</div>
     </div>
   );

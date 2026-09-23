@@ -1,6 +1,10 @@
 import { useMemo, useState } from 'react';
 import { Check, Clock, Plus, Search, X } from 'lucide-react';
-import { useNutrition, recipeMacros, CALORIE_BANDS } from '../../../context/NutritionContext';
+import {
+  useNutrition,
+  recipeMacros,
+  CALORIE_BANDS,
+} from '../../../context/NutritionContext';
 import type { Tag } from '../../../context/NutritionContext';
 import {
   Dialog,
@@ -11,6 +15,7 @@ import {
 } from '../../ui/dialog';
 import { Input } from '../../ui/input';
 import { Button } from '../../ui/button';
+import { cn } from '../../ui/utils';
 import { ScrollArea } from '../../ui/scroll-area';
 import { FilterDropdown } from './FilterDropdown';
 import { RecipeVisual } from './RecipeVisual';
@@ -60,9 +65,12 @@ export function RecipePicker({
   const [activeBand, setActiveBand] = useState<number | null>(null);
 
   const toggleTag = (id: string) =>
-    setActiveTagIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+    setActiveTagIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
 
-  const hasActiveFilters = activeTagIds.length > 0 || activeBand !== null || query.trim() !== '';
+  const hasActiveFilters =
+    activeTagIds.length > 0 || activeBand !== null || query.trim() !== '';
 
   const clearFilters = () => {
     setQuery('');
@@ -85,11 +93,14 @@ export function RecipePicker({
       // AND across every active tag id: recipe must have it in mealRoleIds OR tagIds
       const recipeTagIds = [...r.mealRoleIds, ...r.tagIds];
       const matchesTags = activeTagIds.every((id) => recipeTagIds.includes(id));
-      const matchesBand = activeBand === null || recipeMacros(r, foods).kcal <= activeBand;
+      const matchesBand =
+        activeBand === null || recipeMacros(r, foods).kcal <= activeBand;
       return matchesQuery && matchesTags && matchesBand;
     });
 
-    const suggested = filtered.filter((r) => r.mealRoleIds.includes(mealRoleId));
+    const suggested = filtered.filter((r) =>
+      r.mealRoleIds.includes(mealRoleId),
+    );
     const others = filtered.filter((r) => !r.mealRoleIds.includes(mealRoleId));
 
     return { suggested, others };
@@ -115,9 +126,7 @@ export function RecipePicker({
           <DialogTitle className="text-base font-semibold text-foreground">
             Choose a recipe
           </DialogTitle>
-          <DialogDescription>
-            for {roleLabel}
-          </DialogDescription>
+          <DialogDescription>for {roleLabel}</DialogDescription>
         </DialogHeader>
 
         {/* Filter bar */}
@@ -143,33 +152,58 @@ export function RecipePicker({
           <div className="flex flex-wrap items-center gap-2">
             <FilterDropdown
               label="Meal-time"
-              options={mealTimeTags.map((t: Tag) => ({ value: t.id, label: t.label }))}
-              selected={activeTagIds.filter((id) => mealTimeTags.some((t: Tag) => t.id === id))}
+              options={mealTimeTags.map((t: Tag) => ({
+                value: t.id,
+                label: t.label,
+              }))}
+              selected={activeTagIds.filter((id) =>
+                mealTimeTags.some((t: Tag) => t.id === id),
+              )}
               onToggle={toggleTag}
             />
             <FilterDropdown
               label={TAG_FAMILY_LABELS['cycle-phase']}
-              options={cyclePhaseTags.map((t: Tag) => ({ value: t.id, label: t.label }))}
-              selected={activeTagIds.filter((id) => cyclePhaseTags.some((t: Tag) => t.id === id))}
+              options={cyclePhaseTags.map((t: Tag) => ({
+                value: t.id,
+                label: t.label,
+              }))}
+              selected={activeTagIds.filter((id) =>
+                cyclePhaseTags.some((t: Tag) => t.id === id),
+              )}
               onToggle={toggleTag}
             />
             <FilterDropdown
               label={TAG_FAMILY_LABELS['dietary']}
-              options={dietaryTags.map((t: Tag) => ({ value: t.id, label: t.label }))}
-              selected={activeTagIds.filter((id) => dietaryTags.some((t: Tag) => t.id === id))}
+              options={dietaryTags.map((t: Tag) => ({
+                value: t.id,
+                label: t.label,
+              }))}
+              selected={activeTagIds.filter((id) =>
+                dietaryTags.some((t: Tag) => t.id === id),
+              )}
               onToggle={toggleTag}
             />
             <FilterDropdown
               label={TAG_FAMILY_LABELS['nutrient']}
-              options={nutrientTags.map((t: Tag) => ({ value: t.id, label: t.label }))}
-              selected={activeTagIds.filter((id) => nutrientTags.some((t: Tag) => t.id === id))}
+              options={nutrientTags.map((t: Tag) => ({
+                value: t.id,
+                label: t.label,
+              }))}
+              selected={activeTagIds.filter((id) =>
+                nutrientTags.some((t: Tag) => t.id === id),
+              )}
               onToggle={toggleTag}
             />
             <FilterDropdown
               label="Calories"
-              options={CALORIE_BANDS.map((b) => ({ value: String(b), label: `Under ${b} kcal` }))}
+              options={CALORIE_BANDS.map((b) => ({
+                value: String(b),
+                label: `Under ${b} kcal`,
+              }))}
               selected={activeBand !== null ? [String(activeBand)] : []}
-              onToggle={(v) => setActiveBand((prev) => (prev === Number(v) ? null : Number(v)))}
+              onToggle={(v) =>
+                setActiveBand((prev) => (prev === Number(v) ? null : Number(v)))
+              }
             />
             {hasActiveFilters && (
               <Button
@@ -194,18 +228,29 @@ export function RecipePicker({
                 aria-live="polite"
                 className="flex flex-col items-center justify-center py-16 gap-2 text-center"
               >
-                <p className="text-sm font-medium text-foreground">No recipes found</p>
+                <p className="text-sm font-medium text-foreground">
+                  No recipes found
+                </p>
                 <p className="text-xs text-muted-foreground">
                   Try adjusting your search or clearing some filters.
                 </p>
                 {hasActiveFilters && (
-                  <Button variant="outline" size="sm" onClick={clearFilters} className="mt-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={clearFilters}
+                    className="mt-2"
+                  >
                     Clear filters
                   </Button>
                 )}
               </div>
             ) : (
-              <div role="list" aria-label="Recipe results" className="space-y-4">
+              <div
+                role="list"
+                aria-label="Recipe results"
+                className="space-y-4"
+              >
                 {/* Suggested for this meal */}
                 {suggested.length > 0 && (
                   <section aria-label={`Suggested for ${roleLabel}`}>
@@ -328,24 +373,38 @@ function RecipePickerCard({
 
         {/* Macros */}
         <div className="flex flex-wrap items-center gap-2 text-caption text-muted-foreground">
-          <span className="font-semibold text-foreground tabular-nums">{macros.kcal} kcal</span>
+          <span className="font-semibold text-foreground tabular-nums">
+            {macros.kcal} kcal
+          </span>
           <span className="inline-flex items-center gap-1">
-            <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${MACRO_DOT.protein}`} aria-hidden="true" />
+            <span
+              className={`h-1.5 w-1.5 shrink-0 rounded-full ${MACRO_DOT.protein}`}
+              aria-hidden="true"
+            />
             {macros.protein}g P
           </span>
           <span className="inline-flex items-center gap-1">
-            <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${MACRO_DOT.carb}`} aria-hidden="true" />
+            <span
+              className={`h-1.5 w-1.5 shrink-0 rounded-full ${MACRO_DOT.carb}`}
+              aria-hidden="true"
+            />
             {macros.carb}g C
           </span>
           <span className="inline-flex items-center gap-1">
-            <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${MACRO_DOT.fat}`} aria-hidden="true" />
+            <span
+              className={`h-1.5 w-1.5 shrink-0 rounded-full ${MACRO_DOT.fat}`}
+              aria-hidden="true"
+            />
             {macros.fat}g F
           </span>
         </div>
 
         {/* Tags */}
         {recipeTags.length > 0 && (
-          <ul className="flex flex-wrap gap-1 list-none p-0 m-0" aria-label="Recipe tags">
+          <ul
+            className="flex flex-wrap gap-1 list-none p-0 m-0"
+            aria-label="Recipe tags"
+          >
             {recipeTags.slice(0, 4).map((t) => (
               <li key={t.id}>
                 <TagPill tag={t} />
@@ -378,8 +437,9 @@ function RecipePickerCard({
 
           {/* Swap-option toggle — adds this recipe as a client-selectable alternative */}
           {!isCurrent && (
-            <button
-              type="button"
+            <Button
+              size="sm"
+              variant="outline"
               onClick={() => onToggleAlt(recipe.id, isAlt)}
               aria-pressed={isAlt}
               aria-label={
@@ -387,11 +447,11 @@ function RecipePickerCard({
                   ? `Remove ${recipe.name} as a swap option`
                   : `Add ${recipe.name} as a swap option`
               }
-              className={`inline-flex h-7 items-center gap-1 rounded-compact border px-2.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                isAlt
-                  ? 'border-primary/30 bg-primary/10 text-primary hover:bg-primary/15'
-                  : 'border-border bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground'
-              }`}
+              className={cn(
+                'h-7 gap-1 rounded-compact px-2.5 text-xs font-medium',
+                isAlt &&
+                  'border-primary/30 bg-primary/10 text-primary hover:bg-primary/15',
+              )}
             >
               {isAlt ? (
                 <>
@@ -404,7 +464,7 @@ function RecipePickerCard({
                   Swap option
                 </>
               )}
-            </button>
+            </Button>
           )}
         </div>
       </div>

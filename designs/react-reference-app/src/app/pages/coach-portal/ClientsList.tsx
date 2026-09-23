@@ -3,7 +3,8 @@ import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { motion } from 'motion/react';
 import { UserX, ArrowRight, ShieldAlert, Users } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router';
-import { Button } from '../../components/ui/button';
+import { Button, buttonVariants } from '../../components/ui/button';
+import { cn } from '../../components/ui/utils';
 import { RowActionButton } from '../../components/RowActionButton';
 import { ConfirmDialog } from '../../components/ui/confirm-dialog';
 import { Badge } from '../../components/ui/badge';
@@ -284,7 +285,10 @@ function RosterActions({
         to={row.detailPath}
         aria-label={row.actionLabel}
         title={row.actionLabel}
-        className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white border border-border/50 text-text-secondary hover:bg-text-primary hover:text-white hover:border-text-primary transition-all opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
+        className={cn(
+          buttonVariants({ variant: 'outline', size: 'icon' }),
+          'opacity-0 hover:bg-text-primary hover:text-white hover:border-text-primary group-hover:opacity-100 focus-visible:opacity-100',
+        )}
       >
         <ArrowRight size={14} aria-hidden="true" />
       </Link>
