@@ -1,6 +1,6 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router';
+import { MemoryRouter, useLocation } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ClientsList } from './ClientsList';
 import { AppProvider } from '../../context/AppContext';
@@ -21,6 +21,11 @@ afterEach(() => {
   window.history.replaceState({}, '', '/');
 });
 
+function LocationProbe() {
+  const { search } = useLocation();
+  return <p data-testid="location-probe">{search}</p>;
+}
+
 function renderList(urlQuery = '') {
   const url = `/coach/clients?scope=post-mvp&${urlQuery.replace(/^\?/, '')}`;
   window.history.replaceState({}, '', url);
@@ -33,6 +38,7 @@ function renderList(urlQuery = '') {
             <AssessmentCallProvider>
               <ClientJourneyProvider>
                 <ClientsList />
+                <LocationProbe />
               </ClientJourneyProvider>
             </AssessmentCallProvider>
           </ClientProfileProvider>
@@ -42,6 +48,10 @@ function renderList(urlQuery = '') {
   );
 
   return userEvent.setup();
+}
+
+function currentSearch(): string {
+  return screen.getByTestId('location-probe').textContent ?? '';
 }
 
 function rowFor(name: string): HTMLElement {
@@ -57,6 +67,24 @@ function listedNames(): string[] {
     .map((row) => within(row).getAllByRole('cell')[0].textContent ?? '');
 }
 
+function orderedNames(): string[] {
+  return screen
+    .getAllByRole('row')
+    .slice(1)
+    .map((row) => {
+      const nameCell = within(row).getAllByRole('cell')[0];
+      return nameCell.querySelector('p')?.textContent ?? '';
+    });
+}
+
+function statusSelect(): HTMLElement {
+  return screen.getByRole('combobox', { name: 'Status' });
+}
+
+function headerButton(label: string): HTMLElement {
+  return screen.getByRole('button', { name: label });
+}
+
 describe('the coach clients list', () => {
   it('offers Onboarding beside the roster filters', () => {
     // arrange
@@ -67,7 +95,7 @@ describe('the coach clients list', () => {
 
     // assert
     const tabs = within(screen.getByRole('tablist', { name: 'Show' }));
-    for (const label of ['All', 'Active', 'Inactive', 'Onboarding']) {
+    for (const label of ['All', 'Active', 'Onboarding', 'Inactive']) {
       expect(tabs.getByRole('tab', { name: label })).toBeInTheDocument();
     }
   });
@@ -80,9 +108,8 @@ describe('the coach clients list', () => {
     await user.click(screen.getByRole('tab', { name: 'Onboarding' }));
 
     // assert
-    expect(
-      screen.getByText('No clients found matching your criteria.'),
-    ).toBeInTheDocument();
+    expect(screen.getByText('No clients found')).toBeInTheDocument();
+    expect(screen.getByText('No onboarding clients.')).toBeInTheDocument();
   });
 
   it('lists a client as soon as she has paid, with her bundle and the day she paid', async () => {
@@ -96,7 +123,9 @@ describe('the coach clients list', () => {
     const row = rowFor('Jane Doe');
     expect(within(row).getByText('Paid')).toBeInTheDocument();
     expect(within(row).getByText('3 months')).toBeInTheDocument();
-    expect(within(row).getByText(/^[A-Z][a-z]{2} \d{2}, \d{4}$/)).toBeInTheDocument();
+    expect(
+      within(row).getByText(/^[A-Z][a-z]{2} \d{2}, \d{4}$/),
+    ).toBeInTheDocument();
   });
 
   it('lists a client who is still onboarding with her name, email and onboarding status', async () => {
@@ -121,8 +150,9 @@ describe('the coach clients list', () => {
     await user.click(screen.getByRole('tab', { name: 'Onboarding' }));
 
     // assert
-    expect(within(rowFor('Jane Doe')).queryByText('Starts on 30 September'))
-      .not.toBeInTheDocument();
+    expect(
+      within(rowFor('Jane Doe')).queryByText('Starts on 30 September'),
+    ).not.toBeInTheDocument();
   });
 
   it('names the row arrow after the review waiting on the coach', async () => {
@@ -205,7 +235,9 @@ describe('the coach clients list', () => {
     const inactive = rowFor('Sarah Jenkins');
 
     // assert
-    expect(within(rowFor('Jessica Alba')).getByText('Active')).toBeInTheDocument();
+    expect(
+      within(rowFor('Jessica Alba')).getByText('Active'),
+    ).toBeInTheDocument();
     expect(within(inactive).getByText('Inactive')).toBeInTheDocument();
   });
 
@@ -218,7 +250,9 @@ describe('the coach clients list', () => {
 
     // assert
     expect(listedNames()).toHaveLength(1);
-    expect(within(rowFor('Jane Doe')).getByText('Approved')).toBeInTheDocument();
+    expect(
+      within(rowFor('Jane Doe')).getByText('Approved'),
+    ).toBeInTheDocument();
   });
 
   it('files a client whose program is ready under Active', async () => {
@@ -232,9 +266,8 @@ describe('the coach clients list', () => {
     expect(within(rowFor('Jane Doe')).getByText('Active')).toBeInTheDocument();
 
     await user.click(screen.getByRole('tab', { name: 'Onboarding' }));
-    expect(
-      screen.getByText('No clients found matching your criteria.'),
-    ).toBeInTheDocument();
+    expect(screen.getByText('No clients found')).toBeInTheDocument();
+    expect(screen.getByText('No onboarding clients.')).toBeInTheDocument();
   });
 
   it('files a client whose subscription has run out under Inactive', async () => {
@@ -245,12 +278,12 @@ describe('the coach clients list', () => {
     await user.click(screen.getByRole('tab', { name: 'Inactive' }));
 
     // assert
-    expect(within(rowFor('Jane Doe')).getByText('Inactive')).toBeInTheDocument();
+    expect(
+      within(rowFor('Jane Doe')).getByText('Inactive'),
+    ).toBeInTheDocument();
 
     await user.click(screen.getByRole('tab', { name: 'Active' }));
-    expect(
-      screen.queryByText('jane@example.com'),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText('jane@example.com')).not.toBeInTheDocument();
   });
 
   it('keeps the roster working when nothing is onboarding', async () => {
@@ -264,5 +297,115 @@ describe('the coach clients list', () => {
     const names = listedNames();
     expect(names.some((name) => name.includes('Sarah Jenkins'))).toBe(true);
     expect(names.some((name) => name.includes('Jane Doe'))).toBe(false);
+  });
+
+  it('lists clients newest joined first by default', () => {
+    // arrange
+    renderList('?jstage=held');
+
+    // act
+    const names = orderedNames();
+
+    // assert
+    expect(names).toEqual([
+      'Emma Stone',
+      'Jessica Alba',
+      'Jane Doe',
+      'Mia Thermopolis',
+      'Sarah Jenkins',
+    ]);
+  });
+
+  it('flips the join date direction when its header is clicked', async () => {
+    // arrange
+    const user = renderList('?jstage=held');
+
+    // act
+    await user.click(headerButton('Join date'));
+
+    // assert
+    expect(orderedNames()).toEqual([
+      'Sarah Jenkins',
+      'Mia Thermopolis',
+      'Jane Doe',
+      'Jessica Alba',
+      'Emma Stone',
+    ]);
+  });
+
+  it('sorts by client name A to Z, then Z to A on a second click', async () => {
+    // arrange
+    const user = renderList('?jstage=held');
+
+    // act
+    await user.click(headerButton('Client'));
+
+    // assert
+    expect(orderedNames()).toEqual([
+      'Emma Stone',
+      'Jane Doe',
+      'Jessica Alba',
+      'Mia Thermopolis',
+      'Sarah Jenkins',
+    ]);
+
+    // act
+    await user.click(headerButton('Client'));
+
+    // assert
+    expect(orderedNames()).toEqual([
+      'Sarah Jenkins',
+      'Mia Thermopolis',
+      'Jessica Alba',
+      'Jane Doe',
+      'Emma Stone',
+    ]);
+  });
+
+  it('scopes the status count badges to the current view', async () => {
+    // arrange
+    const user = renderList('?jstage=held');
+
+    // act
+    await user.click(screen.getByRole('tab', { name: 'Active' }));
+    await user.click(statusSelect());
+
+    // assert
+    expect(
+      await screen.findByRole('option', { name: 'All statuses 3' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('option', { name: 'Active 3' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('option', { name: 'Inactive 0' }),
+    ).toBeInTheDocument();
+  });
+
+  it('clears the view, status and search but keeps the sort', async () => {
+    // arrange
+    const user = renderList('?jstage=held');
+    await user.click(headerButton('Client'));
+    await user.click(screen.getByRole('tab', { name: 'Active' }));
+    await user.type(
+      screen.getByRole('searchbox', { name: 'Search clients' }),
+      'zzz',
+    );
+    expect(screen.getByText('No clients found')).toBeInTheDocument();
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Clear filters' }));
+
+    // assert
+    expect(
+      screen.getByRole('tab', { name: 'All', selected: true }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('searchbox', { name: 'Search clients' }),
+    ).toHaveValue('');
+    expect(currentSearch()).toContain('sort=name');
+    expect(currentSearch()).not.toMatch(/[?&]view=/);
+    expect(currentSearch()).not.toMatch(/[?&]status=/);
+    expect(currentSearch()).not.toMatch(/[?&]q=/);
   });
 });
