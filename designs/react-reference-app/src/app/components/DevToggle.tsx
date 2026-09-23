@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowRight, Settings, X } from 'lucide-react';
@@ -41,10 +41,7 @@ import {
   sampleTwoLeftTodayBookings,
 } from '../services/assessmentCallSamples';
 import { useAssessmentCalls } from '../context/AssessmentCallContext';
-import {
-  DEMO_JOURNEY_CALL_ID,
-  useClientJourneys,
-} from '../context/ClientJourneyContext';
+import { useClientJourneys } from '../context/ClientJourneyContext';
 import { useCheckins } from '../context/CheckinContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Checkbox } from './ui/checkbox';
@@ -254,7 +251,7 @@ function DevCheckboxRow({
 export function DevToggle() {
   const [isOpen, setIsOpen] = useState(false);
   const [dashboardCalls, setDashboardCalls] =
-    useState<DashboardCallsSeed>('none');
+    useState<DashboardCallsSeed>('many');
   const [pendingCheckins, setPendingCheckins] =
     useState<PendingCheckinsSeed>('seeded');
   const { appState, setAppState } = useAppState();
@@ -266,9 +263,7 @@ export function DevToggle() {
   );
   const { replaceBookings } = useAssessmentCalls();
   const { journeys } = useClientJourneys();
-  const journeyLinks = Object.values(journeys)
-    .filter((journey) => journey.callId !== DEMO_JOURNEY_CALL_ID)
-    .flatMap((journey) => [
+  const journeyLinks = Object.values(journeys).flatMap((journey) => [
     ...(journey.paymentLink
       ? [
           {
@@ -303,6 +298,10 @@ export function DevToggle() {
     setDashboardCalls(seed);
     replaceBookings(seeds[seed]);
   };
+
+  useEffect(() => {
+    replaceBookings(sampleManyBookings(new Date()));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const seedPendingCheckins = (value: string) => {
     const seed = parsePendingCheckinsControl(value);
@@ -565,7 +564,7 @@ export function DevToggle() {
                     htmlFor="dev-dashboard-calls"
                     className="text-xs font-semibold text-copy-muted uppercase tracking-wider"
                   >
-                    Dashboard calls
+                    Assessment calls
                   </Label>
                   <Select
                     value={dashboardCalls}
