@@ -87,6 +87,7 @@ function numberEntry(
       min={bounds?.min}
       onBlur={controller.onBlur}
       onChange={controller.onChange}
+      placeholder={field.placeholder}
       ref={controller.ref}
       step={entryStep(field, units)}
       type="number"
@@ -106,6 +107,7 @@ function fieldEntry(
         className="min-h-28"
         onBlur={controller.onBlur}
         onChange={controller.onChange}
+        placeholder={field.placeholder}
         ref={controller.ref}
         value={asText(controller.value)}
       />
@@ -129,6 +131,7 @@ function fieldEntry(
     <Input
       onBlur={controller.onBlur}
       onChange={controller.onChange}
+      placeholder={field.placeholder}
       ref={controller.ref}
       type="text"
       value={asText(controller.value)}
@@ -293,7 +296,9 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
               >
                 <FormControl>
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Choose one" />
+                    <SelectValue
+                      placeholder={field.placeholder ?? 'Choose one'}
+                    />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>

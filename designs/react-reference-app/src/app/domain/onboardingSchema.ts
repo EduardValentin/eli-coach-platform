@@ -30,6 +30,7 @@ export type OnboardingField = {
   kind: OnboardingFieldKind;
   requirement: FieldRequirement;
   hint?: string;
+  placeholder?: string;
   options?: OnboardingOption[];
   section?: string;
   revealedBy?: RevealCondition;
@@ -202,7 +203,7 @@ const GOAL_FORM: OnboardingFormDefinition = {
       label: "What worked well, and what didn't?",
       kind: 'text',
       requirement: 'required',
-      hint: 'A sentence or two is enough.',
+      placeholder: 'A sentence or two is enough.',
       revealedBy: { id: 'previousPt', value: 'Yes' },
     },
     {
@@ -210,7 +211,7 @@ const GOAL_FORM: OnboardingFormDefinition = {
       label: 'What do you expect from me as your coach?',
       kind: 'text',
       requirement: 'required',
-      hint: 'A few words is enough.',
+      placeholder: 'A few words is enough.',
     },
     {
       id: 'additionalInfo',
@@ -218,7 +219,8 @@ const GOAL_FORM: OnboardingFormDefinition = {
         'Is there anything else I should know when putting your program together?',
       kind: 'textarea',
       requirement: 'optional',
-      hint: 'Anything that would help me build your program — schedule, past experiences, things you love or hate doing.',
+      placeholder:
+        'Anything that would help me build your program — schedule, past experiences, things you love or hate doing.',
     },
     {
       id: 'lifestyleActivityLevel',
@@ -452,7 +454,7 @@ const CYCLE_FORM: OnboardingFormDefinition = {
       label: 'Which one(s)?',
       kind: 'text',
       requirement: 'required',
-      hint: "PCOS, endometriosis, fibroids — whatever you've been told.",
+      placeholder: "PCOS, endometriosis, fibroids — whatever you've been told.",
       revealedBy: { id: 'gynaecologicalCondition', value: 'Yes' },
     },
     {
@@ -541,7 +543,7 @@ const LIFESTYLE_FORM: OnboardingFormDefinition = {
       label: 'Which ones?',
       kind: 'text',
       requirement: 'required',
-      hint: 'Nuts, lactose, gluten — whatever applies.',
+      placeholder: 'Nuts, lactose, gluten — whatever applies.',
       section: HOW_YOU_EAT_SECTION,
       revealedBy: { id: 'allergiesOrIntolerances', value: 'Yes' },
     },
@@ -550,7 +552,8 @@ const LIFESTYLE_FORM: OnboardingFormDefinition = {
       label: 'Food you want in your plan',
       kind: 'text',
       requirement: 'optional',
-      hint: "Things you actually look forward to eating — I'd rather build around them.",
+      placeholder:
+        "Things you actually look forward to eating — I'd rather build around them.",
       section: HOW_YOU_EAT_SECTION,
     },
     {
@@ -558,7 +561,8 @@ const LIFESTYLE_FORM: OnboardingFormDefinition = {
       label: "Food you don't want in your plan",
       kind: 'text',
       requirement: 'optional',
-      hint: "Things you don't like, or just don't want to see on a plan. No reason needed.",
+      placeholder:
+        "Things you don't like, or just don't want to see on a plan. No reason needed.",
       section: HOW_YOU_EAT_SECTION,
     },
     {
@@ -701,7 +705,8 @@ const LIFESTYLE_FORM: OnboardingFormDefinition = {
         'Have you followed a specific way of eating before? What made you stop?',
       kind: 'textarea',
       requirement: 'optional',
-      hint: 'Keto, intermittent fasting, calorie counting, or just trying to eat better — and what made you stop.',
+      placeholder:
+        'Keto, intermittent fasting, calorie counting, or just trying to eat better — and what made you stop.',
       section: WHAT_YOU_WANT_SECTION,
     },
     {
