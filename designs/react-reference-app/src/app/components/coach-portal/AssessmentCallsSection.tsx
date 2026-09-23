@@ -1,3 +1,4 @@
+import { CalendarSearch } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import { useLocation, useSearchParams } from 'react-router';
 import {
@@ -17,9 +18,9 @@ import {
   defaultDirectionFor,
   emptyListingMessage,
   filterCalls,
+  hasActiveFilters,
   orderCallsBy,
   pageOfCalls,
-  parseDateRange,
   parseJourneyStep,
   parsePage,
   parseSortDirection,
@@ -36,12 +37,17 @@ import {
 } from '../../utils/assessmentCallListing';
 import { formatShortDay, formatSlotTime } from '../../utils/dateFormatters';
 import { Badge } from '../ui/badge';
-import { DateRangeField, type IsoDateRange } from '../DateRangeField';
-import type { YearRange } from '../BrandCalendar';
-import { FilterChip, FilterChipGroup } from '../FilterChipGroup';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
+import { Button } from '../ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { EmptyState } from '../EmptyState';
+import { SearchField } from '../SearchField';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
 import type { JourneyStage } from '../../domain/journey';
 import { AppointmentCard } from './AppointmentCard';
@@ -50,14 +56,11 @@ import { JourneyStageBadge } from './JourneyStageBadge';
 import { CallListPager } from './CallListPager';
 import { JoinCallLink } from './JoinCallLink';
 import { SortControl } from './SortControl';
-import { cn } from '../ui/utils';
 
 const STATUS_PARAM = 'when';
 const QUERY_PARAM = 'q';
 const PAGE_PARAM = 'page';
 const JOURNEY_PARAM = 'status';
-const FROM_PARAM = 'from';
-const TO_PARAM = 'to';
 const SORT_PARAM = 'sort';
 const DIRECTION_PARAM = 'dir';
 const CALLS_PER_PAGE = 10;
@@ -68,25 +71,30 @@ const SEARCH_FIELD_ID = 'assessment-call-search';
 
 const WHEN_TABS: { status: AssessmentCallStatus; label: string }[] = [
   { status: 'all', label: 'All' },
-  { status: 'upcoming', label: 'Upcoming' },
   { status: 'today', label: 'Today' },
+  { status: 'upcoming', label: 'Upcoming' },
   { status: 'past', label: 'Past' },
-  { status: 'custom', label: 'Custom' },
 ];
 
-const JOURNEY_CHIPS: { step: JourneyStep; label: string }[] = [
-  { step: 'any', label: 'Any' },
+const JOURNEY_FILTER_OPTIONS: { step: JourneyStep; label: string }[] = [
+  { step: 'any', label: 'All statuses' },
   { step: 'payment-link-sent', label: 'Payment link sent' },
   { step: 'paid', label: 'Paid' },
   { step: 'invited', label: 'Invited' },
 ];
 
-function visitorDetails(booking: PrototypeBooking, now: Date): AppointmentDetail[] {
+function visitorDetails(
+  booking: PrototypeBooking,
+  now: Date,
+): AppointmentDetail[] {
   return [
     { label: 'Age', value: formatAgeForCard(booking.dateOfBirth, now) },
     { label: 'Gender', value: labelForGender(booking.gender) },
     { label: 'Goal', value: labelForPrimaryGoal(booking.primaryGoal) },
-    { label: 'Country', value: findCountry(booking.country)?.name ?? booking.country },
+    {
+      label: 'Country',
+      value: findCountry(booking.country)?.name ?? booking.country,
+    },
   ];
 }
 
@@ -154,87 +162,77 @@ function showsJourneyStage(
 
 function CallList({
   calls,
-  emptyMessage,
   now,
   timeZone,
 }: {
   calls: ClassifiedCall[];
-  emptyMessage: string;
   now: Date;
   timeZone: string;
 }) {
-  if (calls.length === 0) {
-    return (
-      <p className="text-sm text-muted-foreground py-4 text-center">
-        {emptyMessage}
-      </p>
-    );
-  }
-
   return (
     <ul aria-label="Assessment calls" className="space-y-4">
       {calls.map((call) => (
-        <CallItem key={call.booking.id} call={call} now={now} timeZone={timeZone} />
+        <CallItem
+          key={call.booking.id}
+          call={call}
+          now={now}
+          timeZone={timeZone}
+        />
       ))}
     </ul>
   );
 }
 
-function JourneyFilter({
+function StatusFilter({
   counts,
   journey,
   onChoose,
-  className,
 }: {
   counts: Record<JourneyStep, number>;
   journey: JourneyStep;
   onChoose: (step: JourneyStep) => void;
-  className?: string;
 }) {
+  const chosenLabel =
+    JOURNEY_FILTER_OPTIONS.find((option) => option.step === journey)?.label ??
+    '';
+
   return (
-    <div className={cn('flex flex-col gap-2', className)}>
-      <span className="text-sm font-medium text-text-secondary">Status</span>
-      <FilterChipGroup
-        aria-label="Status"
-        value={journey}
-        onValueChange={(value) => onChoose(parseJourneyStep(value))}
-      >
-        {JOURNEY_CHIPS.map((chip) => (
-          <FilterChip key={chip.step} value={chip.step}>
-            {chip.label}{' '}
-            <span className="ml-2 text-xs tabular-nums">
-              {counts[chip.step]}
+    <Select
+      value={journey}
+      onValueChange={(value) => onChoose(parseJourneyStep(value))}
+    >
+      <SelectTrigger aria-label="Status" size="sm" className="w-full">
+        <SelectValue>{chosenLabel}</SelectValue>
+      </SelectTrigger>
+      <SelectContent>
+        {JOURNEY_FILTER_OPTIONS.map((option) => (
+          <SelectItem key={option.step} value={option.step}>
+            <span className="flex items-center gap-2">
+              {option.label}{' '}
+              <Badge variant="count">{counts[option.step]}</Badge>
             </span>
-          </FilterChip>
+          </SelectItem>
         ))}
-      </FilterChipGroup>
-    </div>
+      </SelectContent>
+    </Select>
   );
 }
 
-function CustomRangeFilter({
-  range,
-  onChoose,
-  yearRange,
-}: {
-  range: IsoDateRange;
-  onChoose: (range: IsoDateRange) => void;
-  yearRange: YearRange;
-}) {
-  return (
-    <DateRangeField
-      aria-label="Date range"
-      className="w-full"
-      value={range}
-      onChange={onChoose}
-      yearRange={yearRange}
-    />
-  );
-}
+function emptyCallsCopy(
+  selection: ListingSelection,
+  totalCalls: number,
+): { title: string; description: string } {
+  if (totalCalls === 0 && !hasActiveFilters(selection)) {
+    return {
+      title: 'No calls yet',
+      description: 'Booked assessment calls appear here.',
+    };
+  }
 
-function writeDay(params: URLSearchParams, key: string, day: string | null) {
-  if (day === null) params.delete(key);
-  else params.set(key, day);
+  return {
+    title: 'No calls found',
+    description: emptyListingMessage(selection),
+  };
 }
 
 export function AssessmentCallsSection({
@@ -254,10 +252,6 @@ export function AssessmentCallsSection({
   const status = parseStatus(searchParams.get(STATUS_PARAM));
   const query = searchParams.get(QUERY_PARAM) ?? '';
   const journey = parseJourneyStep(searchParams.get(JOURNEY_PARAM));
-  const range = parseDateRange(
-    searchParams.get(FROM_PARAM),
-    searchParams.get(TO_PARAM),
-  );
   const page = parsePage(searchParams.get(PAGE_PARAM));
   const sortKey = parseSortKey(searchParams.get(SORT_PARAM));
   const sort: CallSort = {
@@ -265,14 +259,15 @@ export function AssessmentCallsSection({
     direction: parseSortDirection(searchParams.get(DIRECTION_PARAM), sortKey),
   };
 
-  const selection: ListingSelection = { status, query, journey, range };
+  const selection: ListingSelection = { status, query, journey };
   const calls: ListedCall[] = withJourneyStages(
     classifyCalls(bookings, { now, timeZone }),
     (callId) => journeyForCall(callId)?.stage ?? null,
   );
-  const matching = orderCallsBy(filterCalls(calls, selection), sort, status);
+  const matching = orderCallsBy(filterCalls(calls, selection), sort);
   const view = pageOfCalls(matching, { page, perPage: CALLS_PER_PAGE });
   const counts = countsByJourneyStep(calls, selection);
+  const emptyCopy = emptyCallsCopy(selection, calls.length);
 
   const updateSearchParams = (edit: (params: URLSearchParams) => void) => {
     const next = new URLSearchParams(searchParams);
@@ -297,14 +292,6 @@ export function AssessmentCallsSection({
     });
   };
 
-  const chooseRange = (chosen: IsoDateRange) => {
-    updateSearchParams((params) => {
-      params.delete(PAGE_PARAM);
-      writeDay(params, FROM_PARAM, chosen.from);
-      writeDay(params, TO_PARAM, chosen.to);
-    });
-  };
-
   const chooseSort = (chosen: CallSort) => {
     updateSearchParams((params) => {
       params.delete(PAGE_PARAM);
@@ -323,6 +310,15 @@ export function AssessmentCallsSection({
       params.delete(PAGE_PARAM);
       if (value.length === 0) params.delete(QUERY_PARAM);
       else params.set(QUERY_PARAM, value);
+    });
+  };
+
+  const clearFilters = () => {
+    updateSearchParams((params) => {
+      params.delete(STATUS_PARAM);
+      params.delete(JOURNEY_PARAM);
+      params.delete(QUERY_PARAM);
+      params.delete(PAGE_PARAM);
     });
   };
 
@@ -346,71 +342,61 @@ export function AssessmentCallsSection({
       className="bg-card p-5 sm:p-8 rounded-panel shadow-soft border border-border/50"
     >
       <Tabs value={status} onValueChange={chooseStatus} className="w-full">
-        <div className="mb-6 flex flex-col gap-5">
-          <div className="grid w-fit max-w-full gap-4 xl:flex xl:w-full xl:items-start xl:gap-8">
-            <div className="flex max-w-full flex-col gap-2 xl:w-fit">
-              <TabsList aria-label="When" variant="segmented">
-                {WHEN_TABS.map((tab) => (
-                  <TabsTrigger
-                    key={tab.status}
-                    variant="segmented"
-                    value={tab.status}
-                  >
-                    {tab.label}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-              {status === 'custom' && (
-                <CustomRangeFilter
-                  range={range}
-                  onChoose={chooseRange}
-                  yearRange={{
-                    from: now.getFullYear() - 1,
-                    to: now.getFullYear() + 1,
-                  }}
-                />
-              )}
-            </div>
-
-            <div className="w-full xl:min-w-0 xl:flex-1">
-              <Label className="sr-only" htmlFor={SEARCH_FIELD_ID}>
-                Search calls
-              </Label>
-              <Input
-                id={SEARCH_FIELD_ID}
-                type="search"
-                placeholder="Search by name or email"
-                value={query}
-                onChange={(event) => changeQuery(event.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between sm:gap-8">
-            <JourneyFilter
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+          <div className="grid w-full gap-3 sm:w-fit sm:max-w-full">
+            <TabsList aria-label="When" variant="segmented">
+              {WHEN_TABS.map((tab) => (
+                <TabsTrigger
+                  key={tab.status}
+                  variant="segmented"
+                  value={tab.status}
+                >
+                  {tab.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+            <StatusFilter
               counts={counts}
               journey={journey}
               onChoose={chooseJourney}
-              className="min-w-0"
             />
-            <SortControl
-              className="shrink-0"
-              sort={sort}
-              onChange={chooseSort}
+          </div>
+
+          <div className="grid w-full gap-3 sm:w-fit sm:max-w-full">
+            <SearchField
+              id={SEARCH_FIELD_ID}
+              aria-label="Search calls"
+              placeholder="Search by name or email"
+              className="w-full sm:w-72"
+              value={query}
+              onChange={(event) => changeQuery(event.target.value)}
             />
+            <SortControl sort={sort} onChange={chooseSort} />
           </div>
         </div>
 
         <TabsContent variant="segmented" value={status}>
-          <CallList
-            calls={view.calls}
-            emptyMessage={emptyListingMessage(selection)}
-            now={now}
-            timeZone={timeZone}
-          />
+          {view.calls.length === 0 ? (
+            <EmptyState
+              icon={CalendarSearch}
+              title={emptyCopy.title}
+              description={emptyCopy.description}
+              action={
+                hasActiveFilters(selection) ? (
+                  <Button variant="outline" onClick={clearFilters}>
+                    Clear filters
+                  </Button>
+                ) : undefined
+              }
+            />
+          ) : (
+            <>
+              <CallList calls={view.calls} now={now} timeZone={timeZone} />
 
-          {view.pageCount > 1 && (
-            <CallListPager view={view} pathForPage={pathForPage} />
+              {view.pageCount > 1 && (
+                <CallListPager view={view} pathForPage={pathForPage} />
+              )}
+            </>
           )}
         </TabsContent>
       </Tabs>
