@@ -139,7 +139,16 @@ export function AnswerRequestCard({ request }: { request: DetailRequest }) {
             />
           ))}
 
-          <div className="mt-2 flex">
+          <div className="mt-2 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
+            <Button
+              type="button"
+              variant="ghost"
+              size="lg"
+              className="w-full sm:w-auto"
+              onClick={() => navigate('/portal')}
+            >
+              Not now
+            </Button>
             <Button
               disabled={form.formState.isSubmitting}
               type="submit"

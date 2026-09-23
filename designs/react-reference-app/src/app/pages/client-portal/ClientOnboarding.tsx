@@ -17,26 +17,28 @@ function pendingRequest(journey: ClientJourney): DetailRequest | null {
 }
 
 function OnboardingShell({
-  eyebrow,
-  title,
+  label,
+  header,
   children,
 }: {
-  eyebrow: string;
-  title: string;
+  label: string;
+  header?: { eyebrow: string; title: string };
   children: ReactNode;
 }) {
   return (
     <main
-      aria-label={title}
+      aria-label={label}
       className="min-h-screen bg-surface-page px-4 py-10 sm:px-6 lg:py-16"
     >
       <div className="mx-auto w-full max-w-2xl">
-        <div className="mb-8 text-center">
-          <SectionEyebrow className="mb-2">{eyebrow}</SectionEyebrow>
-          <h1 className="font-serif text-3xl tracking-tight text-text-primary lg:text-display-md">
-            {title}
-          </h1>
-        </div>
+        {header && (
+          <div className="mb-8 text-center">
+            <SectionEyebrow className="mb-2">{header.eyebrow}</SectionEyebrow>
+            <h1 className="font-serif text-3xl tracking-tight text-text-primary lg:text-display-md">
+              {header.title}
+            </h1>
+          </div>
+        )}
         {children}
       </div>
     </main>
@@ -50,14 +52,17 @@ export function ClientOnboarding() {
 
   if (searchParams.get(ANSWER_REQUEST_PARAM) === '1' && request) {
     return (
-      <OnboardingShell eyebrow="Your coach" title={ANSWER_TITLE}>
+      <OnboardingShell label={ANSWER_TITLE}>
         <AnswerRequestCard request={request} />
       </OnboardingShell>
     );
   }
 
   return (
-    <OnboardingShell eyebrow="Welcome to Evoa" title={WIZARD_TITLE}>
+    <OnboardingShell
+      label={WIZARD_TITLE}
+      header={{ eyebrow: 'Welcome to Evoa', title: WIZARD_TITLE }}
+    >
       <OnboardingWizard />
     </OnboardingShell>
   );

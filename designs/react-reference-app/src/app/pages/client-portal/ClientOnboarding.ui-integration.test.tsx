@@ -553,11 +553,12 @@ describe('the onboarding', () => {
     // arrange
     renderOnboarding('?answer=1&session=client&jstage=needs-details');
 
-    // act
-    const heading = screen.getByRole('heading', { level: 1 });
-
     // assert
-    expect(heading).toHaveTextContent('A few more details');
+    expect(
+      screen.getByRole('main', { name: 'A few more details' }),
+    ).toBeVisible();
+    expect(screen.queryByRole('heading', { level: 1 })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Not now' })).toBeVisible();
     expect(
       screen.getByText(
         'Two quick things before I build your plan — tell me a little more about your sleep and about that shoulder.',
