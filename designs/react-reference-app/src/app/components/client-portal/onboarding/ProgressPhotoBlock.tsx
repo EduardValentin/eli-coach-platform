@@ -80,7 +80,7 @@ function PhotoTile({
         TILE_CLASS,
         locked
           ? 'cursor-not-allowed opacity-60'
-          : 'cursor-pointer hover:border-brand hover:bg-brand-soft/40',
+          : 'cursor-pointer hover:border-primary hover:bg-primary-soft/40',
       )}
     >
       <input

@@ -1,7 +1,15 @@
+import { useEffect } from 'react';
 import { Outlet } from 'react-router';
 import { CoachSidebar } from './CoachSidebar';
 
 export function CoachLayout() {
+  useEffect(() => {
+    document.documentElement.dataset.portal = 'coach';
+    return () => {
+      delete document.documentElement.dataset.portal;
+    };
+  }, []);
+
   return (
     <div className="flex min-h-screen bg-surface-page">
       <CoachSidebar />

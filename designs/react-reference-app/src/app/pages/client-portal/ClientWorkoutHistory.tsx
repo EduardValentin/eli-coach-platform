@@ -63,7 +63,7 @@ export function ClientWorkoutHistory() {
               <button
                 type="button"
                 onClick={() => setMuscleSheetOpen(true)}
-                className="text-xs font-semibold text-brand hover:underline"
+                className="text-xs font-semibold text-primary hover:underline"
               >
                 View all
               </button>

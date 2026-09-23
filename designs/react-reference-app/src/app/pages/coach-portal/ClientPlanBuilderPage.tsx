@@ -344,7 +344,7 @@ export function ClientPlanBuilderPage() {
           <Button
             onClick={handleSaveChanges}
             disabled={isSaving}
-            variant="brand"
+            variant="default"
             size="lg"
             className="shadow-md"
           >
@@ -432,7 +432,7 @@ export function ClientPlanBuilderPage() {
                           key={template.id}
                           className={`p-4 rounded-control border-2 transition-all cursor-pointer ${
                             isSelected
-                              ? 'border-brand bg-brand/5'
+                              ? 'border-primary bg-primary/5'
                               : 'border-border hover:border-neutral-300 bg-card'
                           }`}
                           onClick={() => setPreviewingTemplate(template)}
@@ -468,7 +468,7 @@ export function ClientPlanBuilderPage() {
                                   e.stopPropagation();
                                   handleLoadTemplate(template);
                                 }}
-                                variant="brand"
+                                variant="default"
                                 size="sm"
                               >
                                 Use
@@ -494,7 +494,7 @@ export function ClientPlanBuilderPage() {
                       </h3>
                       <Button
                         onClick={() => handleLoadTemplate(previewingTemplate)}
-                        variant="brand"
+                        variant="default"
                         size="sm"
                         className="shrink-0"
                       >

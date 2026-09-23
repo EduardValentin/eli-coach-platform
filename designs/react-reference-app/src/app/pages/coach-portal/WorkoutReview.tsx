@@ -106,7 +106,7 @@ export function WorkoutReview() {
         </p>
         <Button
           onClick={() => navigate(`/coach/clients/${clientId}`)}
-          variant="inverted"
+          variant="default"
           size="lg"
         >
           <ArrowLeft size={16} /> Back to Client

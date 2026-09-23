@@ -495,7 +495,7 @@ export function EditClientProfile() {
                     onClick={() => setForm({ ...form, regularity: opt })}
                     className={`flex-1 py-3 rounded-control text-sm font-semibold transition-all ${
                       form.regularity === opt
-                        ? 'bg-brand text-white shadow-md'
+                        ? 'bg-primary text-primary-foreground shadow-md'
                         : 'bg-neutral-50 text-text-secondary border border-neutral-100 hover:bg-neutral-100'
                     }`}
                   >
@@ -596,7 +596,7 @@ export function EditClientProfile() {
         </Link>
         <Button
           onClick={handleSave}
-          variant="brand"
+          variant="default"
           size="lg"
           className="shadow-md"
         >

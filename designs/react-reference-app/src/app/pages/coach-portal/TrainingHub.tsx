@@ -317,7 +317,7 @@ function TemplateCard({
             <Copy size={16} />
             Start Plan
           </Button>
-          <Button onClick={onEdit} variant="inverted" className="flex-1">
+          <Button onClick={onEdit} variant="default" className="flex-1">
             <Pencil size={16} />
             Edit
           </Button>
@@ -461,7 +461,7 @@ export function TrainingHub() {
                 setNewPlanClientSearch('');
                 setShowNewPlanClientPicker(true);
               }}
-              variant="brand"
+              variant="default"
               size="lg"
               className="shadow-md"
             >
@@ -471,7 +471,7 @@ export function TrainingHub() {
           ) : (
             <Button
               onClick={handleCreate}
-              variant="brand"
+              variant="default"
               size="lg"
               className="shadow-md"
             >
@@ -502,7 +502,7 @@ export function TrainingHub() {
             onClick={() => setActiveTab(tab.key)}
             className={`min-h-11 px-2 font-medium text-sm transition-colors border-b-2 flex items-center gap-2 ${
               activeTab === tab.key
-                ? 'border-brand text-brand'
+                ? 'border-primary text-primary'
                 : 'border-transparent text-text-secondary hover:text-text-primary'
             }`}
           >
@@ -511,7 +511,7 @@ export function TrainingHub() {
               <span
                 className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
                   activeTab === tab.key
-                    ? 'bg-brand/5 text-brand'
+                    ? 'bg-primary/5 text-primary'
                     : 'bg-neutral-100 text-text-secondary'
                 }`}
               >
@@ -717,7 +717,7 @@ export function TrainingHub() {
                           setEditingExerciseId(exercise.id);
                           setIsExerciseModalOpen(true);
                         }}
-                        className="text-sm font-semibold text-brand-secondary hover:text-brand-secondary-hover"
+                        className="text-sm font-semibold text-primary hover:text-primary-hover"
                       >
                         Edit
                       </button>
@@ -735,7 +735,7 @@ export function TrainingHub() {
                   <button
                     type="button"
                     onClick={clearFilters}
-                    className="mt-2 min-h-6 px-2 text-xs font-semibold text-brand hover:text-brand-hover"
+                    className="mt-2 min-h-6 px-2 text-xs font-semibold text-primary hover:text-primary-hover"
                   >
                     Clear search and filters
                   </button>

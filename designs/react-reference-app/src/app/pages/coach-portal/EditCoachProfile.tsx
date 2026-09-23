@@ -111,7 +111,7 @@ export function EditCoachProfile() {
             <Button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              variant="inverted"
+              variant="default"
               className="shadow-md"
             >
               <Camera size={16} />
@@ -176,7 +176,7 @@ export function EditCoachProfile() {
         </Link>
         <Button
           onClick={handleSave}
-          variant="brand"
+          variant="default"
           size="lg"
           className="shadow-md"
         >

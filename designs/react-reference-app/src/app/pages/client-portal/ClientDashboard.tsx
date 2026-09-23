@@ -440,7 +440,7 @@ export function ClientDashboard() {
 
           <Link
             to="/portal/profile"
-            className="mt-6 inline-flex items-center gap-1.5 text-xs font-semibold text-brand hover:text-brand-hover transition-colors"
+            className="mt-6 inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary-hover transition-colors"
           >
             View full profile &rarr;
           </Link>
@@ -459,7 +459,7 @@ export function ClientDashboard() {
           <Button
             type="button"
             onClick={handleStartWorkout}
-            variant="brand"
+            variant="default"
             size="lg"
             className="shadow-sm hover:shadow"
           >

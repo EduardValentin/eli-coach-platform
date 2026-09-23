@@ -287,7 +287,7 @@ function RosterClientDetails() {
           )}
           <Button
             onClick={() => setShowScheduleDialog(true)}
-            variant="inverted"
+            variant="default"
             size="lg"
           >
             <Calendar size={16} />
@@ -492,7 +492,7 @@ function RosterClientDetails() {
                     </p>
                     <Button
                       onClick={() => setShowNewGoal(true)}
-                      variant="brand"
+                      variant="default"
                     >
                       <Plus size={16} /> Start New Goal
                     </Button>
@@ -516,7 +516,7 @@ function RosterClientDetails() {
                     <div className="flex gap-2">
                       <Button
                         onClick={handleCreateGoal}
-                        variant="brand"
+                        variant="default"
                         className="flex-1"
                       >
                         Create
@@ -593,7 +593,7 @@ function RosterClientDetails() {
                     onClick={() =>
                       navigate(`/coach/training/builder/${clientId}`)
                     }
-                    variant="brand"
+                    variant="default"
                   >
                     <Plus size={16} /> Create Plan
                   </Button>
@@ -736,7 +736,7 @@ function RosterClientDetails() {
                     onClick={() =>
                       navigate(`/coach/nutrition/client/${clientId}/plan`)
                     }
-                    variant="brand"
+                    variant="default"
                     className="mt-auto w-full"
                   >
                     <UtensilsCrossed size={15} />
@@ -768,7 +768,7 @@ function RosterClientDetails() {
               </h2>
               <Link
                 to={`/coach/clients/${clientId}/history`}
-                className="text-sm font-semibold text-brand hover:text-brand-hover transition-colors"
+                className="text-sm font-semibold text-primary hover:text-primary-hover transition-colors"
               >
                 View All ({getClientWorkoutHistory(dataClientId).length})
               </Link>
@@ -855,7 +855,7 @@ function RosterClientDetails() {
               </h2>
               <Link
                 to={`/coach/clients/${clientId}/edit`}
-                className="text-xs font-semibold text-brand hover:text-brand-hover transition-colors flex items-center gap-1"
+                className="text-xs font-semibold text-primary hover:text-primary-hover transition-colors flex items-center gap-1"
               >
                 <Pencil size={12} /> Edit
               </Link>

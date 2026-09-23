@@ -250,7 +250,7 @@ export function ExerciseModal({
                       key={diff}
                       type="button"
                       onClick={() => setDifficulty(diff as any)}
-                      variant={difficulty === diff ? 'inverted' : 'outline'}
+                      variant={difficulty === diff ? 'default' : 'outline'}
                       size="default"
                       className="flex-1"
                     >
@@ -451,7 +451,7 @@ export function ExerciseModal({
           <Button
             type="button"
             onClick={handleSave}
-            variant="brand"
+            variant="default"
             size="lg"
             className="shadow-md"
           >

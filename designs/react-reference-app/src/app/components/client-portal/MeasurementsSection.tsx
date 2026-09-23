@@ -120,7 +120,7 @@ function AddMeasurementsForm({
             <div className="flex flex-col-reverse gap-3 sm:flex-row-reverse">
               <Button
                 type="submit"
-                variant="brand"
+                variant="default"
                 size="lg"
                 className="w-full sm:w-auto"
               >
@@ -209,7 +209,7 @@ export function MeasurementsSection() {
       <Button
         className="mt-6 w-full sm:w-auto"
         onClick={() => setAdding(true)}
-        variant="brand"
+        variant="default"
         size="lg"
       >
         {SHEET_TITLE}

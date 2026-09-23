@@ -116,7 +116,7 @@ export function ClientProfile() {
             <Button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              variant="inverted"
+              variant="default"
             >
               <Camera size={16} />
               {clientProfile.avatarUrl ? 'Change picture' : 'Upload picture'}

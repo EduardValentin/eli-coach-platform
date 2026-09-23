@@ -310,7 +310,7 @@ export function ClientMessages() {
                   ? 'You already have a check-in request awaiting your coach'
                   : 'Request a check-in with your coach'
               }
-              variant={showCheckinPicker ? 'brand' : 'outline-brand'}
+              variant={showCheckinPicker ? 'default' : 'outline-primary'}
               size="sm"
               className="gap-1.5 rounded-control"
             >
@@ -356,7 +356,10 @@ export function ClientMessages() {
                     );
                   }}
                 >
-                  <BellOff size={15} className={isMuted ? 'text-brand' : ''} />
+                  <BellOff
+                    size={15}
+                    className={isMuted ? 'text-primary' : ''}
+                  />
                   {isMuted ? 'Unmute notifications' : 'Mute notifications'}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -528,7 +531,7 @@ export function ClientMessages() {
             <Button
               type="submit"
               disabled={!message.trim()}
-              variant="inverted"
+              variant="default"
               size="icon-lg"
               className="shrink-0"
             >

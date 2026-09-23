@@ -160,7 +160,7 @@ export function ClientPlan() {
                     )
                   }
                   variant="ghost"
-                  className="shrink-0 text-brand hover:text-brand-hover hover:bg-brand/5"
+                  className="shrink-0 text-primary hover:text-primary-hover hover:bg-primary-soft"
                 >
                   Start
                   <Play size={14} fill="currentColor" aria-hidden="true" />

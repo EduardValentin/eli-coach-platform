@@ -258,7 +258,7 @@ export function CoachCheckins() {
           {isRescheduling ? (
             <Button
               onClick={() => handleAcceptReschedule(c)}
-              variant="inverted"
+              variant="default"
               size="sm"
             >
               Accept
@@ -266,7 +266,7 @@ export function CoachCheckins() {
           ) : (
             <Button
               onClick={() => handleApprove(c)}
-              variant="inverted"
+              variant="default"
               size="sm"
             >
               Approve
@@ -275,7 +275,7 @@ export function CoachCheckins() {
           {canReschedule && (
             <Button
               onClick={() => openReschedule(c.id)}
-              variant="outline-brand"
+              variant="outline-primary"
               size="sm"
             >
               Reschedule

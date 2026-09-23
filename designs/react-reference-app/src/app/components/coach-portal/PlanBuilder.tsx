@@ -440,7 +440,7 @@ function PlanGroupCard({
                       className={cn(
                         'size-7',
                         hasNotes
-                          ? 'text-brand-secondary bg-brand-secondary-soft'
+                          ? 'text-primary bg-primary-soft'
                           : 'text-muted-foreground',
                       )}
                       title="Coaching notes"
@@ -622,14 +622,14 @@ function SwapVariantsPicker({
           className={cn(
             'relative size-7',
             hasVariants
-              ? 'text-brand-secondary bg-brand-secondary-soft'
+              ? 'text-primary bg-primary-soft'
               : 'text-muted-foreground',
           )}
           title="Swap variants"
         >
           <ArrowLeftRight size={15} />
           {hasVariants && (
-            <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-brand-secondary text-white text-[8px] font-bold rounded-full flex items-center justify-center">
+            <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-primary text-primary-foreground text-[8px] font-bold rounded-full flex items-center justify-center">
               {currentVariants.length}
             </span>
           )}
@@ -655,17 +655,17 @@ function SwapVariantsPicker({
               <label
                 key={ex.id}
                 className={`flex items-center gap-2.5 w-full px-3 py-2 rounded-compact text-xs cursor-pointer transition-colors ${
-                  isSelected ? 'bg-brand-secondary-soft' : 'hover:bg-muted'
+                  isSelected ? 'bg-primary-soft' : 'hover:bg-muted'
                 }`}
               >
                 <Checkbox
                   checked={isSelected}
                   onCheckedChange={() => toggleVariant(ex.id)}
-                  className="shrink-0 data-[state=checked]:bg-brand-secondary data-[state=checked]:border-brand-secondary"
+                  className="shrink-0 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                 />
                 <span
                   className={
-                    isSelected ? 'text-brand-secondary' : 'text-foreground'
+                    isSelected ? 'text-primary' : 'text-foreground'
                   }
                 >
                   <span className="font-medium">{ex.name}</span>
@@ -1376,7 +1376,7 @@ export function PlanBuilder({
                               onClick={(e) => e.stopPropagation()}
                               variant="ghost"
                               size="icon"
-                              className="size-7 text-muted-foreground hover:text-brand hover:bg-brand-soft"
+                              className="size-7 text-muted-foreground hover:text-accent-foreground hover:bg-accent"
                               title="Copy week"
                             >
                               <Copy size={14} />
@@ -1413,7 +1413,7 @@ export function PlanBuilder({
                                   onClick={() => handleApplyWeekToAll(wIdx)}
                                   variant="ghost"
                                   size="sm"
-                                  className="w-full justify-start px-3 text-sm font-semibold text-brand hover:bg-brand/5 hover:text-brand"
+                                  className="w-full justify-start px-3 text-sm font-semibold text-primary hover:bg-accent hover:text-accent-foreground"
                                 >
                                   Apply to All Weeks
                                 </Button>
@@ -1530,7 +1530,7 @@ export function PlanBuilder({
                               className={cn(
                                 'w-full justify-between px-3 text-sm',
                                 isActive
-                                  ? 'bg-brand/5 font-semibold text-brand hover:bg-brand/5 hover:text-brand'
+                                  ? 'bg-active-surface font-semibold text-primary-foreground hover:bg-active-surface hover:text-primary-foreground'
                                   : 'font-normal text-muted-foreground',
                               )}
                             >
@@ -1599,11 +1599,11 @@ export function PlanBuilder({
                       key={week.id}
                       type="button"
                       onClick={() => setActiveWeekIdx(wIdx)}
-                      variant={activeWeekIdx === wIdx ? 'brand' : 'outline'}
+                      variant={activeWeekIdx === wIdx ? 'default' : 'outline'}
                       className={cn(
                         'h-auto shrink-0 flex-col gap-1.5 border px-3 py-2 relative',
                         activeWeekIdx === wIdx
-                          ? 'border-brand shadow-md'
+                          ? 'border-primary shadow-md'
                           : 'border-border bg-card text-muted-foreground hover:border-neutral-400',
                       )}
                     >
@@ -1678,9 +1678,9 @@ export function PlanBuilder({
                 {activeWeekHasContent && weeks.length > 1 && (
                   <Button
                     onClick={() => handleApplyWeekToAll(activeWeekIdx)}
-                    variant="outline-brand"
+                    variant="outline-primary"
                     size="sm"
-                    className="text-brand-secondary border-brand-secondary/20 bg-brand-secondary/5 hover:bg-brand-secondary-soft"
+                    className="text-primary border-primary/20 bg-primary/5 hover:bg-primary-soft"
                   >
                     <Layers size={14} />
                     Apply week to all
@@ -1696,12 +1696,12 @@ export function PlanBuilder({
                       key={type}
                       type="button"
                       onClick={() => handleUpdateDayType(type)}
-                      variant={isSelected ? 'brand' : 'outline'}
+                      variant={isSelected ? 'default' : 'outline'}
                       size="sm"
                       className={cn(
                         'rounded-full border px-4 text-sm font-bold',
                         isSelected
-                          ? 'border-brand shadow-md'
+                          ? 'border-primary shadow-md'
                           : 'border-neutral-300 bg-card text-muted-foreground hover:border-neutral-400 hover:text-foreground',
                       )}
                     >
@@ -1761,7 +1761,7 @@ export function PlanBuilder({
                           </Button>
                           <Button
                             onClick={handleGroupSuperset}
-                            variant="brand"
+                            variant="default"
                             className="shadow-sm"
                           >
                             Create Superset
@@ -1924,7 +1924,7 @@ export function PlanBuilder({
                     <button
                       type="button"
                       onClick={clearFilters}
-                      className="mt-2 min-h-6 px-2 text-xs font-semibold text-brand hover:text-brand-hover"
+                      className="mt-2 min-h-6 px-2 text-xs font-semibold text-primary hover:text-primary-hover"
                     >
                       Clear search and filters
                     </button>

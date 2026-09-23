@@ -21,7 +21,7 @@ export function ToggleChip({ pressed, onPressedChange, children, ...props }: Tog
       size="sm"
       pressed={pressed}
       onPressedChange={onPressedChange}
-      className="rounded-full border border-border px-3 text-xs font-medium text-muted-foreground data-[state=on]:border-brand/30 data-[state=on]:bg-brand-soft data-[state=on]:text-brand"
+      className="rounded-full border border-border px-3 text-xs font-medium text-muted-foreground data-[state=on]:border-primary/30 data-[state=on]:bg-primary-soft data-[state=on]:text-primary"
       {...props}
     >
       {children}

@@ -293,7 +293,9 @@ export function CoachMessages() {
                   setShowSchedulePicker(false);
                 }}
                 className={`w-full text-left p-4 flex items-start gap-3 border-b border-neutral-50 transition-colors ${
-                  activeClient === conv.id ? 'bg-brand/5' : 'hover:bg-muted'
+                  activeClient === conv.id
+                    ? 'bg-primary-soft'
+                    : 'hover:bg-muted'
                 }`}
               >
                 <div className="relative shrink-0">
@@ -330,7 +332,7 @@ export function CoachMessages() {
                   </p>
                 </div>
                 {conv.unread > 0 && (
-                  <div className="w-5 h-5 rounded-full bg-brand text-white text-[10px] font-bold flex items-center justify-center shrink-0">
+                  <div className="w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center shrink-0">
                     {conv.unread}
                   </div>
                 )}
@@ -370,7 +372,7 @@ export function CoachMessages() {
                       setShowSchedulePicker(!showSchedulePicker);
                       setRescheduleTarget(null);
                     }}
-                    variant={showSchedulePicker ? 'brand' : 'outline-brand'}
+                    variant={showSchedulePicker ? 'default' : 'outline-primary'}
                     size="sm"
                   >
                     <CalendarPlus size={14} />
@@ -409,7 +411,7 @@ export function CoachMessages() {
                       >
                         <Pin
                           size={15}
-                          className={isPinned ? 'text-brand' : ''}
+                          className={isPinned ? 'text-primary' : ''}
                         />
                         {isPinned ? 'Unpin conversation' : 'Pin conversation'}
                       </DropdownMenuItem>
@@ -426,7 +428,7 @@ export function CoachMessages() {
                       >
                         <BellOff
                           size={15}
-                          className={isMuted ? 'text-brand' : ''}
+                          className={isMuted ? 'text-primary' : ''}
                         />
                         {isMuted
                           ? 'Unmute notifications'
@@ -617,7 +619,7 @@ export function CoachMessages() {
                   <Button
                     type="submit"
                     disabled={!message.trim()}
-                    variant="brand"
+                    variant="default"
                     size="icon-lg"
                     className="shadow-md"
                   >

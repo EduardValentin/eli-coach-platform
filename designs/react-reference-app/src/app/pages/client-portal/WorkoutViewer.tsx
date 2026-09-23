@@ -203,7 +203,7 @@ export function WorkoutViewer() {
         </p>
         <Button
           onClick={() => navigate('/portal/plan')}
-          variant="inverted"
+          variant="default"
           size="lg"
         >
           <ArrowLeft size={16} />
@@ -404,7 +404,7 @@ export function WorkoutViewer() {
             <Button
               type="button"
               onClick={handleCompletePress}
-              variant="brand"
+              variant="default"
               size="lg"
               className="w-full lg:text-lg"
             >
@@ -718,7 +718,7 @@ function WorkoutSummary({
       <div className="px-4 pb-10 w-full max-w-2xl mx-auto">
         <Button
           onClick={() => navigate('/portal/plan')}
-          variant="inverted"
+          variant="default"
           size="lg"
           className="w-full lg:text-base"
         >
@@ -883,7 +883,7 @@ function IncompleteWorkoutDialog({
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirm}
-            className="flex-1 rounded-control bg-brand text-white hover:bg-brand-hover font-semibold"
+            className="flex-1 rounded-control bg-primary text-primary-foreground hover:bg-primary-hover font-semibold"
           >
             Finish Anyway
           </AlertDialogAction>

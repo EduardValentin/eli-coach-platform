@@ -43,7 +43,7 @@ export function OnboardingReviewBar({
         </p>
         <div className="flex flex-col gap-3 sm:flex-row-reverse">
           {onApprove && (
-            <Button variant="brand" onClick={onApprove}>
+            <Button variant="default" onClick={onApprove}>
               Approve answers
             </Button>
           )}

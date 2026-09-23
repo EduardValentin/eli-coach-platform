@@ -110,7 +110,7 @@ export function ReviewCallScheduler({
         <Button
           disabled={!selected || booking}
           onClick={() => void confirm()}
-          variant="brand"
+          variant="default"
           size="lg"
           className="w-full"
         >

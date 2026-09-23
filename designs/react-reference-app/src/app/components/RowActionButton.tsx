@@ -4,17 +4,17 @@ import { Loader2, type LucideIcon } from 'lucide-react';
 import { Button, buttonVariants } from './ui/button';
 import { cn } from './ui/utils';
 
-type RowActionTone = 'default' | 'brand' | 'destructive';
+type RowActionTone = 'default' | 'primary' | 'destructive';
 
-const TONE_VARIANT: Record<RowActionTone, 'outline' | 'outline-brand'> = {
+const TONE_VARIANT: Record<RowActionTone, 'outline' | 'outline-primary'> = {
   default: 'outline',
-  brand: 'outline-brand',
+  primary: 'outline-primary',
   destructive: 'outline',
 };
 
 const TONE_CLASSES: Record<RowActionTone, string> = {
   default: '',
-  brand: '',
+  primary: '',
   destructive:
     'text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive',
 };

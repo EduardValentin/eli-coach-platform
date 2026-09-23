@@ -426,7 +426,7 @@ export function WorkoutHistory() {
                   <SlidersHorizontal size={16} aria-hidden="true" />
                   Filters
                   {activeFilterCount > 0 && (
-                    <span className="inline-flex items-center justify-center rounded-full bg-brand text-brand-foreground text-xs font-bold size-5 tabular-nums">
+                    <span className="inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold size-5 tabular-nums">
                       {activeFilterCount}
                     </span>
                   )}

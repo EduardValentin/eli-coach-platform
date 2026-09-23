@@ -41,7 +41,7 @@ export function ActiveWorkoutBanner() {
     <Link
       to={session.resumeHref}
       aria-label={`Resume workout: ${session.planName}, ${session.dayLabel}, ${session.progressPercent}% complete`}
-      className="group relative block mb-5 sm:mb-6 rounded-card overflow-hidden bg-text-primary text-white shadow-sm transition-all hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-surface-page"
+      className="group relative block mb-5 sm:mb-6 rounded-card overflow-hidden bg-text-primary text-white shadow-sm transition-all hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-surface-page"
     >
       <div className="flex items-center gap-3 px-4 py-3 sm:px-5 sm:py-3.5">
         <span className="shrink-0 relative flex items-center justify-center w-10 h-10 rounded-full bg-brand/20">

@@ -97,7 +97,7 @@ export function ClientWorkoutReview() {
         </p>
         <Button
           onClick={() => navigate('/portal/history')}
-          variant="inverted"
+          variant="default"
           size="lg"
         >
           <ArrowLeft size={16} /> Back to History
@@ -555,7 +555,7 @@ export function ClientWorkoutReview() {
       <div className="mt-8">
         <Button
           onClick={() => navigate('/portal/history')}
-          variant="inverted"
+          variant="default"
           size="lg"
           className="w-full"
         >

@@ -249,7 +249,7 @@ export function ClientCheckins() {
                   ? 'You already have a check-in request awaiting your coach'
                   : 'Request a check-in with your coach'
               }
-              variant="brand"
+              variant="default"
               className="hidden shrink-0 sm:inline-flex"
             >
               {pendingExists ? (
@@ -288,7 +288,7 @@ export function ClientCheckins() {
                   href={MEET_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={buttonVariants({ variant: 'inverted' })}
+                  className={buttonVariants({ variant: 'default' })}
                 >
                   <Video size={14} aria-hidden="true" />
                   Join Meet
@@ -297,7 +297,7 @@ export function ClientCheckins() {
                   <Button
                     type="button"
                     onClick={() => openReschedule(c.id)}
-                    variant="outline-brand"
+                    variant="outline-primary"
                   >
                     Reschedule
                   </Button>
@@ -331,7 +331,7 @@ export function ClientCheckins() {
                             ? handleAcceptReschedule(c)
                             : handleApprove(c)
                         }
-                        variant="inverted"
+                        variant="default"
                       >
                         {isRescheduling ? 'Accept' : 'Approve'}
                       </Button>
@@ -339,7 +339,7 @@ export function ClientCheckins() {
                         <Button
                           type="button"
                           onClick={() => openReschedule(c.id)}
-                          variant="outline-brand"
+                          variant="outline-primary"
                         >
                           Reschedule
                         </Button>
@@ -437,7 +437,7 @@ export function ClientCheckins() {
             ? 'You already have a check-in request awaiting your coach'
             : 'Request a check-in with your coach'
         }
-        variant="brand"
+        variant="default"
         size="lg"
         className="fixed left-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-40 shadow-lg sm:hidden"
       >

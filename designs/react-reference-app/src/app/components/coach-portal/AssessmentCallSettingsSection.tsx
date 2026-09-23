@@ -359,7 +359,7 @@ export function AssessmentCallSettingsSection() {
         <div className="flex justify-end pt-4 -mx-5 sm:-mx-6 px-5 sm:px-6 border-t border-border">
           <Button
             type="submit"
-            variant="brand"
+            variant="default"
             size="lg"
             disabled={isSaving}
             aria-busy={isSaving || undefined}

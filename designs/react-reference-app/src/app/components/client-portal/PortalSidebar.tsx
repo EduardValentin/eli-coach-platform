@@ -119,8 +119,8 @@ function DesktopSidebar({ links }: { links: NavLink[] }) {
               aria-current={isActive ? 'page' : undefined}
               className={`flex items-center gap-4 px-4 py-3 rounded-card transition-all ${
                 isActive
-                  ? 'bg-brand/5 text-brand font-medium'
-                  : 'text-text-secondary hover:bg-surface-quiet hover:text-text-primary font-medium'
+                  ? 'bg-primary-soft text-primary font-medium'
+                  : 'text-text-secondary hover:bg-accent hover:text-accent-foreground font-medium'
               }`}
             >
               <Icon
@@ -214,8 +214,8 @@ function MobileTabBar({ links }: { links: NavLink[] }) {
                 aria-current={isActive ? 'page' : undefined}
                 className={`flex flex-col items-center justify-center gap-1 h-full w-full transition-colors ${
                   isActive
-                    ? 'text-brand'
-                    : 'text-text-secondary hover:text-text-primary'
+                    ? 'bg-primary-soft text-primary'
+                    : 'text-text-secondary hover:bg-accent hover:text-accent-foreground'
                 }`}
               >
                 <Icon
@@ -292,8 +292,8 @@ function MoreSheetBody({
               aria-current={isActive ? 'page' : undefined}
               className={`flex items-center gap-4 px-4 min-h-14 rounded-card transition-colors ${
                 isActive
-                  ? 'bg-brand/5 text-brand'
-                  : 'text-text-primary hover:bg-surface-quiet'
+                  ? 'bg-primary-soft text-primary'
+                  : 'text-text-primary hover:bg-accent hover:text-accent-foreground'
               }`}
             >
               <Icon

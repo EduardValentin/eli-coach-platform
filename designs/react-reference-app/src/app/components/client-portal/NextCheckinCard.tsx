@@ -32,7 +32,7 @@ export function NextCheckinCard() {
         href="https://meet.google.com/mock-eli-checkin"
         target="_blank"
         rel="noopener noreferrer"
-        className={cn(buttonVariants({ variant: 'inverted' }), 'w-full')}
+        className={cn(buttonVariants({ variant: 'default' }), 'w-full')}
       >
         <Video size={14} />
         Join Meet

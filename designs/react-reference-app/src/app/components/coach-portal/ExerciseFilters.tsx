@@ -62,7 +62,7 @@ export function ExerciseFilters({
         <button
           type="button"
           onClick={onClearFilters}
-          className="-mx-2 min-h-6 px-2 text-xs font-semibold text-brand hover:text-brand-hover"
+          className="-mx-2 min-h-6 px-2 text-xs font-semibold text-primary hover:text-primary-hover"
         >
           Clear search and filters
         </button>

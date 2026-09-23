@@ -179,7 +179,7 @@ export function ProgramStatusCard() {
             <Button
               onClick={() => navigate('/portal/onboarding?answer=1')}
               type="button"
-              variant="brand"
+              variant="default"
               size="lg"
               className="w-full sm:w-auto"
             >
@@ -191,7 +191,7 @@ export function ProgramStatusCard() {
             demoJourney.stage === 'review-call-scheduled') && (
             <Link
               className={cn(
-                buttonVariants({ variant: 'brand', size: 'lg' }),
+                buttonVariants({ variant: 'default', size: 'lg' }),
                 'w-full sm:w-auto',
               )}
               to="/portal/plan"

@@ -469,7 +469,7 @@ export function ClientCycleTracker() {
 
               <Button
                 onClick={handleLog}
-                variant="brand"
+                variant="default"
                 size="lg"
                 className="w-full"
               >

@@ -89,7 +89,7 @@ export function PlanBuilderPage() {
             <FileText size={18} />{' '}
             <span className="hidden lg:inline">Save Draft</span>
           </Button>
-          <Button onClick={() => handleSave(false)} variant="inverted">
+          <Button onClick={() => handleSave(false)} variant="default">
             <Save size={18} />{' '}
             <span className="hidden sm:inline">
               {isEditing ? 'Save Template' : 'Save Template'}

@@ -3,7 +3,7 @@ import { RowActionLink } from '../RowActionButton';
 
 export function JoinCallLink({ joinPath }: { joinPath: string }) {
   return (
-    <RowActionLink to={joinPath} icon={Video} tone="brand">
+    <RowActionLink to={joinPath} icon={Video} tone="primary">
       Join call
     </RowActionLink>
   );

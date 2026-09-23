@@ -143,7 +143,7 @@ export function AnswerRequestCard({ request }: { request: DetailRequest }) {
             <Button
               disabled={form.formState.isSubmitting}
               type="submit"
-              variant="brand"
+              variant="default"
               size="lg"
               className="w-full sm:w-auto"
             >

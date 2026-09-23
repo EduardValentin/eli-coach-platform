@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Outlet } from 'react-router';
 import { PortalSidebar } from './PortalSidebar';
 import { ActiveWorkoutBanner } from './ActiveWorkoutBanner';
@@ -5,6 +6,13 @@ import { useAppState } from '../../context/AppContext';
 
 export function PortalLayout() {
   const { appState } = useAppState();
+
+  useEffect(() => {
+    document.documentElement.dataset.portal = 'client';
+    return () => {
+      delete document.documentElement.dataset.portal;
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-surface-page">

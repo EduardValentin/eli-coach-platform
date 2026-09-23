@@ -294,12 +294,12 @@ function StageActions({
     <div className="flex flex-col gap-2">
       <div className="flex flex-col gap-3 sm:flex-row">
         {isPostMvp && (
-          <Button variant="brand" asChild>
+          <Button variant="default" asChild>
             <Link to={`/coach/training/builder/${clientId}`}>{BUILD_ACTION}</Link>
           </Button>
         )}
         {!isPostMvp && canApprove && (
-          <Button variant="brand" onClick={onApprove}>
+          <Button variant="default" onClick={onApprove}>
             Approve answers
           </Button>
         )}

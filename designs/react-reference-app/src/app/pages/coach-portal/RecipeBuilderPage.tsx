@@ -408,7 +408,7 @@ function RecipeBuilderInner() {
                     type="button"
                     aria-label="Replace recipe photo"
                     onClick={() => fileInputRef.current?.click()}
-                    variant="inverted"
+                    variant="default"
                     size="sm"
                     className="bg-black/60 backdrop-blur-sm hover:bg-black/75 focus-visible:ring-white"
                   >
@@ -419,7 +419,7 @@ function RecipeBuilderInner() {
                     type="button"
                     aria-label="Remove recipe photo"
                     onClick={() => setImageUrl(undefined)}
-                    variant="inverted"
+                    variant="default"
                     size="sm"
                     className="bg-black/60 backdrop-blur-sm hover:bg-black/75 focus-visible:ring-white"
                   >
@@ -439,7 +439,7 @@ function RecipeBuilderInner() {
                   aria-label="Upload recipe photo"
                   onClick={() => fileInputRef.current?.click()}
                   variant="outline"
-                  className="border-dashed hover:border-brand"
+                  className="border-dashed hover:border-primary"
                 >
                   <ImagePlus size={16} aria-hidden="true" />
                   Upload photo
@@ -457,7 +457,7 @@ function RecipeBuilderInner() {
                         : 'Choose meal icon'
                     }
                     variant="outline"
-                    className="border-dashed hover:border-brand"
+                    className="border-dashed hover:border-primary"
                   >
                     <Smile size={16} aria-hidden="true" />
                     {icon
@@ -484,9 +484,9 @@ function RecipeBuilderInner() {
                         setIcon(undefined);
                         setIconPickerOpen(false);
                       }}
-                      className={`flex flex-col items-center gap-0.5 rounded-compact p-1.5 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${
+                      className={`flex flex-col items-center gap-0.5 rounded-compact p-1.5 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${
                         icon === undefined
-                          ? 'bg-brand/10 text-brand ring-1 ring-brand/30'
+                          ? 'bg-primary/10 text-primary ring-1 ring-primary/30'
                           : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                       }`}
                     >
@@ -505,9 +505,9 @@ function RecipeBuilderInner() {
                           setIcon(key);
                           setIconPickerOpen(false);
                         }}
-                        className={`flex flex-col items-center gap-0.5 rounded-compact p-1.5 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${
+                        className={`flex flex-col items-center gap-0.5 rounded-compact p-1.5 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${
                           icon === key
-                            ? 'bg-brand/10 text-brand ring-1 ring-brand/30'
+                            ? 'bg-primary/10 text-primary ring-1 ring-primary/30'
                             : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                         }`}
                       >

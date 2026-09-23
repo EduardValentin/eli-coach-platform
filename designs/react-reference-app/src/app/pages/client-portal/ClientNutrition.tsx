@@ -264,16 +264,18 @@ function MealSwapChooserBody({
                 aria-label={`${recipe.name}, ${kcal} kcal${isSelected ? ', currently selected' : ''}`}
                 aria-pressed={isSelected}
                 onClick={() => onSelect(rid)}
-                className={`w-full text-left rounded-control px-4 py-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 flex items-center gap-3 ${
+                className={`w-full text-left rounded-control px-4 py-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 flex items-center gap-3 ${
                   isSelected
-                    ? 'bg-brand/8 border border-brand/25'
+                    ? 'bg-primary/8 border border-primary/25'
                     : 'bg-neutral-50 border border-neutral-100 hover:border-neutral-200 hover:bg-neutral-100'
                 }`}
               >
                 {/* Check indicator — always present for layout stability, visible only when selected */}
                 <span
                   className={`shrink-0 w-5 h-5 rounded-full flex items-center justify-center transition-colors ${
-                    isSelected ? 'bg-brand text-white' : 'bg-neutral-200'
+                    isSelected
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-neutral-200'
                   }`}
                   aria-hidden="true"
                 >
@@ -430,7 +432,7 @@ function SlotCard({
                 {/* Recipe name as a button — opens the recipe detail dialog */}
                 <button
                   type="button"
-                  className="text-left mb-2 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 rounded"
+                  className="text-left mb-2 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 rounded"
                   aria-label={`View ${displayRecipe.name} recipe`}
                   onClick={() => onViewRecipe(slot.id, displayRecipe.id)}
                 >
@@ -755,9 +757,9 @@ export function ClientNutrition() {
                   onClick={() => setSelectedDate(day.date)}
                   aria-label={`${format(parseISO(day.date), 'EEEE, MMMM d')}${day.phase ? `, ${PHASE_LABEL[day.phase]} phase` : ''}${isToday ? ', today' : ''}`}
                   aria-pressed={isSelected}
-                  className={`flex flex-col items-center gap-1 rounded-card px-3 py-2.5 min-w-[56px] text-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${
+                  className={`flex flex-col items-center gap-1 rounded-card px-3 py-2.5 min-w-[56px] text-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${
                     isSelected
-                      ? 'bg-brand text-white shadow-md'
+                      ? 'bg-primary text-primary-foreground shadow-md'
                       : isToday
                         ? 'bg-brand/8 text-brand border border-brand/20'
                         : 'bg-white text-text-primary border border-neutral-100 hover:border-neutral-200 hover:bg-neutral-50'
