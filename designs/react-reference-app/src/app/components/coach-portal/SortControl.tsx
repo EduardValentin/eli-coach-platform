@@ -47,7 +47,7 @@ const DIRECTION_ICONS: Record<SortKey, Record<SortDirection, LucideIcon>> = {
 };
 
 const toggleButtonClass =
-  'h-(--size-control-xs) w-(--size-control-xs) shrink-0 inline-flex items-center justify-center rounded-field border border-control-border-soft text-text-primary transition-colors hover:border-brand hover:text-brand aria-pressed:bg-brand aria-pressed:text-brand-foreground aria-pressed:border-brand';
+  'h-(--size-control-sm) w-(--size-control-sm) shrink-0 inline-flex items-center justify-center rounded-field border border-control-border-soft text-text-primary transition-colors hover:border-brand hover:text-brand aria-pressed:bg-brand aria-pressed:text-brand-foreground aria-pressed:border-brand';
 
 function reversed(direction: SortDirection): SortDirection {
   return direction === 'asc' ? 'desc' : 'asc';

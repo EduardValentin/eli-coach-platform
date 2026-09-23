@@ -367,6 +367,7 @@ export function AssessmentCallsSection({
               id={SEARCH_FIELD_ID}
               aria-label="Search calls"
               placeholder="Search by name or email"
+              size="sm"
               className="w-full sm:w-72"
               value={query}
               onChange={(event) => changeQuery(event.target.value)}

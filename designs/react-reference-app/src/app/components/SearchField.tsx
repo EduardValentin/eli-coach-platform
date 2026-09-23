@@ -3,12 +3,13 @@ import { Search } from 'lucide-react';
 import { Input } from './ui/input';
 import { cn } from './ui/utils';
 
-type SearchFieldProps = React.ComponentProps<'input'> & {
+type SearchFieldProps = Omit<React.ComponentProps<'input'>, 'size'> & {
   className?: string;
+  size?: 'default' | 'sm';
 };
 
 export const SearchField = React.forwardRef<HTMLInputElement, SearchFieldProps>(
-  ({ className, ...inputProps }, ref) => (
+  ({ className, size = 'default', ...inputProps }, ref) => (
     <div className={cn('relative', className)}>
       <Search
         aria-hidden="true"
@@ -17,7 +18,8 @@ export const SearchField = React.forwardRef<HTMLInputElement, SearchFieldProps>(
       <Input
         ref={ref}
         type="search"
-        className="h-(--size-control-xs) pl-9 md:text-sm"
+        size={size}
+        className="pl-9"
         {...inputProps}
       />
     </div>
