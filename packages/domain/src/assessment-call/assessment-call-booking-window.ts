@@ -1,6 +1,5 @@
 import {
   WAITLIST_MODE_FEATURE_FLAG,
-  type FeatureFlagEvaluation,
   type FeatureFlagReader,
 } from "../feature-flag";
 
@@ -14,9 +13,9 @@ type AssessmentCallBookingWindowOptions = {
 export class AssessmentCallBookingWindow {
   constructor(private readonly options: AssessmentCallBookingWindowOptions) {}
 
-  async isOpen(evaluation?: FeatureFlagEvaluation): Promise<boolean> {
+  async isOpen(): Promise<boolean> {
     try {
-      const featureFlags = await this.options.featureFlags.execute(evaluation);
+      const featureFlags = await this.options.featureFlags.execute();
 
       return featureFlags[WAITLIST_MODE_FEATURE_FLAG] !== true;
     } catch {

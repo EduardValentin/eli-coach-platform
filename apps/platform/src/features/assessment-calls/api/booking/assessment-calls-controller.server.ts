@@ -8,7 +8,6 @@ import {
   type ResolveJoinLinkUseCase,
 } from "@eli-coach-platform/domain/assessment-call";
 import type { Clock } from "@eli-coach-platform/domain/shared";
-import type { FeatureFlagEvaluation } from "@eli-coach-platform/domain/feature-flag";
 import type { BotVerifier } from "@eli-coach-platform/infrastructure/bot-detection/server";
 import {
   ASSESSMENT_CALL_BOOKING_TURNSTILE_ACTION,
@@ -87,12 +86,8 @@ const ERROR_MESSAGES = {
 export class AssessmentCallsController {
   constructor(private readonly options: AssessmentCallsControllerOptions) {}
 
-  async loadBookingPage(
-    featureFlagEvaluation?: FeatureFlagEvaluation,
-  ): Promise<BookingPageData> {
-    const result = await this.options.listOpenSlots.execute(
-      featureFlagEvaluation,
-    );
+  async loadBookingPage(): Promise<BookingPageData> {
+    const result = await this.options.listOpenSlots.execute();
 
     if (result.status === "closed") {
       throw createNotFoundResponse();
@@ -109,12 +104,8 @@ export class AssessmentCallsController {
     };
   }
 
-  async listSlots(
-    featureFlagEvaluation?: FeatureFlagEvaluation,
-  ): Promise<Response> {
-    const result = await this.options.listOpenSlots.execute(
-      featureFlagEvaluation,
-    );
+  async listSlots(): Promise<Response> {
+    const result = await this.options.listOpenSlots.execute();
 
     if (result.status === "closed") {
       return createNotFoundResponse();
@@ -129,10 +120,7 @@ export class AssessmentCallsController {
     });
   }
 
-  async book(
-    request: Request,
-    featureFlagEvaluation?: FeatureFlagEvaluation,
-  ): Promise<Response> {
+  async book(request: Request): Promise<Response> {
     const formData = await request.formData();
     const submission = createBookAssessmentCallRequestSchema({
       now: this.options.clock.now(),
@@ -180,7 +168,7 @@ export class AssessmentCallsController {
     }
 
     try {
-      const command = {
+      const result = await this.options.bookAssessmentCall.execute({
         country: submission.data.country,
         dateOfBirth: submission.data.dateOfBirth,
         email: submission.data.email,
@@ -192,11 +180,7 @@ export class AssessmentCallsController {
         primaryGoal: submission.data.primaryGoal,
         startsAt: new Date(submission.data.startsAt),
         visitorTimeZone: submission.data.visitorTimeZone,
-      };
-      const result = await this.options.bookAssessmentCall.execute(
-        command,
-        featureFlagEvaluation,
-      );
+      });
 
       return createBookingResponse(result);
     } catch {

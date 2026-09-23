@@ -1,6 +1,5 @@
 import {
   WAITLIST_MODE_FEATURE_FLAG,
-  type FeatureFlagEvaluation,
   type FeatureFlagReader,
   type FeatureFlagSet,
 } from "../feature-flag";
@@ -21,11 +20,9 @@ type GetWaitlistUseCaseOptions = {
 export class GetWaitlistUseCase {
   constructor(private readonly options: GetWaitlistUseCaseOptions) {}
 
-  async execute(
-    featureFlagEvaluation?: FeatureFlagEvaluation,
-  ): Promise<WaitlistSnapshot> {
+  async execute(): Promise<WaitlistSnapshot> {
     const [featureFlags, reducedPricingSignupCount] = await Promise.all([
-      this.getFeatureFlagsSafely(featureFlagEvaluation),
+      this.getFeatureFlagsSafely(),
       this.getReducedPricingSignupCountForAvailabilitySafely(),
     ]);
     const enabled =
@@ -43,11 +40,9 @@ export class GetWaitlistUseCase {
     };
   }
 
-  private async getFeatureFlagsSafely(
-    evaluation?: FeatureFlagEvaluation,
-  ): Promise<FeatureFlagSet | null> {
+  private async getFeatureFlagsSafely(): Promise<FeatureFlagSet | null> {
     try {
-      return await this.options.featureFlags.execute(evaluation);
+      return await this.options.featureFlags.execute();
     } catch {
       this.options.incidents.waitlistModeReadFailed();
 

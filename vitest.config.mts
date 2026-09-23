@@ -13,9 +13,6 @@ const toolsTestGlobs = ["tools/**/*.test.mjs"];
 const testGlobs = ["apps/**/*.test.{ts,tsx}", "packages/**/*.test.{ts,tsx}"];
 
 export default defineConfig({
-  define: {
-    __FEATURE_FLAG_OVERRIDES_ENABLED__: false,
-  },
   resolve: {
     alias: {
       "~": resolve(currentDirectory, "apps/platform/src"),

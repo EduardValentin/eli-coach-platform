@@ -99,25 +99,6 @@ describe("GetWaitlistUseCase", () => {
     });
   });
 
-  it("evaluates the mode with the request feature flag context", async () => {
-    // arrange
-    const featureFlags = createFeatureFlags({ WAITLIST_MODE: false });
-    const getWaitlist = new GetWaitlistUseCase({
-      clock: fixedClock,
-      featureFlags,
-      incidents: createWaitlistIncidents(),
-      waitlist: createWaitlist(),
-      waitlistEntries: createWaitlistEntries(),
-    });
-    const evaluation = { overrides: { WAITLIST_MODE: false } };
-
-    // act
-    await getWaitlist.execute(evaluation);
-
-    // assert
-    expect(featureFlags.execute).toHaveBeenCalledWith(evaluation);
-  });
-
   it("treats an absent persisted flag as disabled", async () => {
     // arrange
     const getWaitlist = new GetWaitlistUseCase({

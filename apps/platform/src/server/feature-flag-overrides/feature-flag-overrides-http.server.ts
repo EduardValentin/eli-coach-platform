@@ -3,49 +3,40 @@ import type { MiddlewareFunction } from "react-router";
 import { normalizeBasePath } from "@eli-coach-platform/config";
 import {
   WAITLIST_MODE_FEATURE_FLAG,
-  type FeatureFlagEvaluation,
   type FeatureFlagSet,
 } from "@eli-coach-platform/domain/feature-flag";
 
-import { assessmentCallsFeatureFlagEvaluationContext } from "~/features/assessment-calls/server/guards/assessment-calls-context.server";
-import { waitlistFeatureFlagEvaluationContext } from "~/features/waitlist/server/guards/waitlist-context.server";
-import { platformFeatureFlagEvaluationContext } from "~/server/guards/platform-context.server";
+import { runWithFeatureFlagOverrides } from "./feature-flag-override-store.server";
 
 const COOKIE_NAME = "__eli_feature_flags";
 const QUERY_PREFIX = "ff.";
 const OVERRIDABLE_FLAGS = new Set([WAITLIST_MODE_FEATURE_FLAG]);
 
 type ParsedOverrides = {
-  evaluation: FeatureFlagEvaluation;
+  overrides: FeatureFlagSet;
   queryTouched: boolean;
 };
 
 export function createFeatureFlagOverrideMiddleware(options: {
   appBasePath: string;
 }): MiddlewareFunction<Response> {
-  return async function applyFeatureFlagOverrides({ context, request }, next) {
+  return async function applyFeatureFlagOverrides({ request }, next) {
     const parsed = parseOverrides(request);
 
     if (parsed instanceof Response) {
       return parsed;
     }
 
-    context.set(assessmentCallsFeatureFlagEvaluationContext, parsed.evaluation);
-    context.set(platformFeatureFlagEvaluationContext, parsed.evaluation);
-    context.set(waitlistFeatureFlagEvaluationContext, parsed.evaluation);
-    const response = await next();
+    const response = await runWithFeatureFlagOverrides(parsed.overrides, next);
 
-    if (
-      parsed.queryTouched ||
-      Object.keys(parsed.evaluation.overrides).length > 0
-    ) {
+    if (parsed.queryTouched || Object.keys(parsed.overrides).length > 0) {
       response.headers.set("Cache-Control", "private, no-store");
     }
 
     if (parsed.queryTouched) {
       const cookie = serializeOverridesCookie({
         appBasePath: options.appBasePath,
-        overrides: parsed.evaluation.overrides,
+        overrides: parsed.overrides,
       });
       response.headers.append("Set-Cookie", cookie);
     }
@@ -86,7 +77,7 @@ function parseOverrides(request: Request): ParsedOverrides | Response {
     overrides[name] = value === "true";
   }
 
-  return { evaluation: { overrides }, queryTouched };
+  return { overrides, queryTouched };
 }
 
 function invalidOverrideResponse(message: string): Response {

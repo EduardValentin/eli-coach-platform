@@ -7,7 +7,6 @@ import {
   type Waitlist,
 } from "~/features/waitlist/contracts/waitlist";
 import type { BotVerifier } from "@eli-coach-platform/infrastructure/bot-detection/server";
-import type { FeatureFlagEvaluation } from "@eli-coach-platform/domain/feature-flag";
 import type {
   GetWaitlistUseCase,
   JoinWaitlistResult,
@@ -36,12 +35,8 @@ type WaitlistControllerOptions = {
 export class WaitlistController {
   constructor(private readonly options: WaitlistControllerOptions) {}
 
-  async getWaitlist(
-    featureFlagEvaluation?: FeatureFlagEvaluation,
-  ): Promise<Waitlist> {
-    return waitlistSchema.parse(
-      await this.options.getWaitlist.execute(featureFlagEvaluation),
-    );
+  async getWaitlist(): Promise<Waitlist> {
+    return waitlistSchema.parse(await this.options.getWaitlist.execute());
   }
 
   async join(request: Request): Promise<Response> {

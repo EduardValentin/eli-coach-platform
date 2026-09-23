@@ -20,11 +20,9 @@ ARG APP_DIR
 ARG APP_BASE_PATH=/
 ARG APP_HEALTHCHECK_PATH=/readyz
 ARG APP_PACKAGE
-ARG FEATURE_FLAG_OVERRIDES_ENABLED=false
 
 ENV APP_BASE_PATH=$APP_BASE_PATH
 ENV APP_HEALTHCHECK_PATH=$APP_HEALTHCHECK_PATH
-ENV FEATURE_FLAG_OVERRIDES_ENABLED=$FEATURE_FLAG_OVERRIDES_ENABLED
 
 RUN pnpm install --frozen-lockfile
 RUN pnpm check:boundaries
@@ -35,9 +33,6 @@ RUN test -f /deploy/build/server/index.js \
   && test ! -e /deploy/src \
   && test ! -e /deploy/node_modules/@eli-coach-platform/test-support \
   && test -z "$(find -L /deploy/node_modules/@eli-coach-platform -type f \( -name '*.test.*' -o -name '*.spec.*' \) -print -quit)"
-RUN if [ "$FEATURE_FLAG_OVERRIDES_ENABLED" != "true" ]; then \
-      test -z "$(grep -R -l -E '__eli_feature_flags|feature-flag-overrides-(http|composition)' /deploy/build/server)"; \
-    fi
 
 FROM ${NODE_IMAGE} AS runtime
 

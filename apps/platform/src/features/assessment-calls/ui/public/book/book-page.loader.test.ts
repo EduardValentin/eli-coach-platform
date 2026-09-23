@@ -2,10 +2,7 @@ import type { ShouldRevalidateFunctionArgs } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
 import type { AssessmentCallsFeature } from "~/features/assessment-calls/server/assessment-calls-composition.server";
-import {
-  assessmentCallsContext,
-  assessmentCallsFeatureFlagEvaluationContext,
-} from "~/features/assessment-calls/server/guards/assessment-calls-context.server";
+import { assessmentCallsContext } from "~/features/assessment-calls/server/guards/assessment-calls-context.server";
 import {
   contextEntry,
   createRequestArgs,
@@ -58,23 +55,6 @@ describe("assessment call booking page loader", () => {
 
     // assert
     await expect(loaded).resolves.toEqual(page);
-  });
-
-  it("loads slots with the request feature flag context", async () => {
-    // arrange
-    const loadBookingPage = vi.fn().mockResolvedValue({
-      botDetection,
-      status: "unavailable",
-    });
-    const evaluation = { overrides: { WAITLIST_MODE: false } };
-    const args = createLoaderArguments(loadBookingPage);
-    args.context.set(assessmentCallsFeatureFlagEvaluationContext, evaluation);
-
-    // act
-    await loader(args);
-
-    // assert
-    expect(loadBookingPage).toHaveBeenCalledWith(evaluation);
   });
 });
 

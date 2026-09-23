@@ -184,18 +184,6 @@ describe("AssessmentCallsController slots endpoint", () => {
 });
 
 describe("AssessmentCallsController booking submissions", () => {
-  it("books with the request feature flag context", async () => {
-    // arrange
-    const { book, controller } = createController({});
-    const evaluation = { overrides: { WAITLIST_MODE: false } };
-
-    // act
-    await controller.book(createBookingRequest(), evaluation);
-
-    // assert
-    expect(book).toHaveBeenCalledWith(expect.any(Object), evaluation);
-  });
-
   it.each([
     ["firstName", "   ", "invalid_first_name"],
     ["lastName", "x".repeat(61), "invalid_last_name"],
@@ -305,22 +293,19 @@ describe("AssessmentCallsController booking submissions", () => {
         visitorTimeZone: "Europe/Bucharest",
       },
     });
-    expect(book).toHaveBeenCalledWith(
-      {
-        country: "RO",
-        dateOfBirth: "1994-03-14",
-        email: "ana@example.com",
-        firstName: "Ana",
-        gender: "female",
-        lastName: "Popescu",
-        notes: "Training three times a week.",
-        phone: "+40712345678",
-        primaryGoal: "build_strength",
-        startsAt: new Date("2026-10-19T14:00:00.000Z"),
-        visitorTimeZone: "Europe/Bucharest",
-      },
-      undefined,
-    );
+    expect(book).toHaveBeenCalledWith({
+      country: "RO",
+      dateOfBirth: "1994-03-14",
+      email: "ana@example.com",
+      firstName: "Ana",
+      gender: "female",
+      lastName: "Popescu",
+      notes: "Training three times a week.",
+      phone: "+40712345678",
+      primaryGoal: "build_strength",
+      startsAt: new Date("2026-10-19T14:00:00.000Z"),
+      visitorTimeZone: "Europe/Bucharest",
+    });
   });
 
   it("stores no phone when the number is left blank", async () => {
@@ -331,10 +316,7 @@ describe("AssessmentCallsController booking submissions", () => {
     await controller.book(createBookingRequest({ phoneNumber: "  " }));
 
     // assert
-    expect(book).toHaveBeenCalledWith(
-      expect.objectContaining({ phone: null }),
-      undefined,
-    );
+    expect(book).toHaveBeenCalledWith(expect.objectContaining({ phone: null }));
   });
 
   it("stores no phone when neither phone field is sent", async () => {
@@ -347,10 +329,7 @@ describe("AssessmentCallsController booking submissions", () => {
     );
 
     // assert
-    expect(book).toHaveBeenCalledWith(
-      expect.objectContaining({ phone: null }),
-      undefined,
-    );
+    expect(book).toHaveBeenCalledWith(expect.objectContaining({ phone: null }));
   });
 
   it("stores the phone in E.164 under the chosen calling code", async () => {
@@ -368,7 +347,6 @@ describe("AssessmentCallsController booking submissions", () => {
     // assert
     expect(book).toHaveBeenCalledWith(
       expect.objectContaining({ phone: "+447700900123" }),
-      undefined,
     );
   });
 
@@ -380,10 +358,7 @@ describe("AssessmentCallsController booking submissions", () => {
     await controller.book(createBookingRequest({ notes: "   " }));
 
     // assert
-    expect(book).toHaveBeenCalledWith(
-      expect.objectContaining({ notes: null }),
-      undefined,
-    );
+    expect(book).toHaveBeenCalledWith(expect.objectContaining({ notes: null }));
   });
 
   it("verifies the submission before anything is booked", async () => {

@@ -9,6 +9,10 @@ import {
 import { clerkShape, refineClerk } from "./concerns/clerk";
 import { databaseShape } from "./concerns/database";
 import {
+  featureFlagsShape,
+  refineFeatureFlagOverrides,
+} from "./concerns/feature-flags";
+import {
   managementApiShape,
   refineManagementApi,
 } from "./concerns/management-api";
@@ -30,8 +34,10 @@ export const runtimeEnvironmentSchema = z
     ...storeAssetsShape,
     ...managementApiShape,
     ...assessmentCallsShape,
+    ...featureFlagsShape,
   })
   .superRefine(refineBotDetection)
+  .superRefine(refineFeatureFlagOverrides)
   .superRefine(refineClerk)
   .superRefine(refineManagementApi)
   .superRefine(refineProductEmail)

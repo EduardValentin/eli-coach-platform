@@ -1,10 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import type { PlatformControllers } from "~/server/platform-composition.server";
-import {
-  platformContext,
-  platformFeatureFlagEvaluationContext,
-} from "~/server/guards/platform-context.server";
+import { platformContext } from "~/server/guards/platform-context.server";
 import {
   contextEntry,
   createRequestArgs,
@@ -65,16 +62,15 @@ describe("internal routes", () => {
     // arrange
     const response = Response.json({ values: { CLIENT_PORTAL: true } });
     const getSnapshot = vi.fn().mockResolvedValue(response);
-    const evaluation = { overrides: { WAITLIST_MODE: false } };
 
     // act
-    const args = platformArgs({ featureFlags: { getSnapshot } as never });
-    args.context.set(platformFeatureFlagEvaluationContext, evaluation);
-    const loaded = featureFlagsRoute.loader(args);
+    const loaded = featureFlagsRoute.loader(
+      platformArgs({ featureFlags: { getSnapshot } as never }),
+    );
 
     // assert
     await expect(loaded).resolves.toBe(response);
-    expect(getSnapshot).toHaveBeenCalledWith(evaluation);
+    expect(getSnapshot).toHaveBeenCalledTimes(1);
   });
 
   it("rejects a feature flag write without reading the platform context", async () => {
