@@ -47,7 +47,8 @@ import { SubscriptionBadge } from '../../components/coach-portal/SubscriptionBad
 import { JourneyClientDetails } from '../../components/coach-portal/JourneyClientDetails';
 import { OnboardingPanel } from '../../components/coach-portal/OnboardingPanel';
 import { SubscriptionSummary } from '../../components/SubscriptionSummary';
-import { MeasurementsTable } from '../../components/coach-portal/MeasurementsTable';
+import { MeasurementsTable } from '../../components/MeasurementsTable';
+import { useMeasureUnits } from '../../components/client-portal/measureUnits';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
 import { journeyCallIdForClient } from '../../utils/journeyLabels';
 import { isBeforeStage } from '../../domain/journey';
@@ -113,6 +114,7 @@ function RosterClientDetails() {
   const { getProfile } = useClientProfile();
   const { journeyForCall } = useClientJourneys();
   const { weightUnit, heightUnit } = useUnitPreferences();
+  const measureUnits = useMeasureUnits();
   const { addNotification } = useNotifications();
   const { addSystemMessage, sendMessage: ctxSendMessage } = useMessaging();
   const { appState } = useAppState();
@@ -314,6 +316,10 @@ function RosterClientDetails() {
           <MeasurementsTable
             measurements={journey.measurements}
             heightCm={heightCm}
+            units={measureUnits}
+            headingId="measurements-panel-heading"
+            emptyMessage="She has not sent any measurements yet."
+            className="mb-8"
           />
         </>
       )}

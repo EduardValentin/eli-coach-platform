@@ -2,7 +2,9 @@ import { ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router';
 import type { ClientJourney } from '../../domain/journey';
 import { getInitials } from '../../utils/clientHelpers';
-import { MeasurementsTable } from './MeasurementsTable';
+import { MeasurementsTable } from '../MeasurementsTable';
+import { useMeasureUnits } from '../client-portal/measureUnits';
+import { statedHeightCm } from '../../domain/bodyMetrics';
 import { OnboardingPanel } from './OnboardingPanel';
 import { SubscriptionSummary } from '../SubscriptionSummary';
 
@@ -10,14 +12,9 @@ function journeyName(journey: ClientJourney): string {
   return `${journey.identity.firstName} ${journey.identity.lastName}`.trim();
 }
 
-function statedHeightCm(journey: ClientJourney): number {
-  const stated = journey.onboarding.answers['goal-availability'].height;
-
-  return typeof stated === 'number' ? stated : 0;
-}
-
 export function JourneyClientDetails({ journey }: { journey: ClientJourney }) {
   const name = journeyName(journey);
+  const units = useMeasureUnits();
 
   return (
     <div className="w-full pb-12">
@@ -47,7 +44,7 @@ export function JourneyClientDetails({ journey }: { journey: ClientJourney }) {
       <OnboardingPanel
         journey={journey}
         clientId={journey.callId}
-        heightCm={statedHeightCm(journey)}
+        heightCm={statedHeightCm(journey.onboarding.answers)}
       />
       {journey.subscription && (
         <SubscriptionSummary
@@ -59,7 +56,11 @@ export function JourneyClientDetails({ journey }: { journey: ClientJourney }) {
       )}
       <MeasurementsTable
         measurements={journey.measurements}
-        heightCm={statedHeightCm(journey)}
+        heightCm={statedHeightCm(journey.onboarding.answers)}
+        units={units}
+        headingId="measurements-panel-heading"
+        emptyMessage="She has not sent any measurements yet."
+        className="mb-8"
       />
     </div>
   );

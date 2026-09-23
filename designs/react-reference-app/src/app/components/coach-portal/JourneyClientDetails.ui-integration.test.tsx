@@ -5,6 +5,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { JourneyClientDetails } from './JourneyClientDetails';
 import { AppProvider } from '../../context/AppContext';
 import { AssessmentCallProvider } from '../../context/AssessmentCallContext';
+import { UnitPreferencesProvider } from '../../context/UnitPreferencesContext';
 import {
   ClientJourneyProvider,
   useClientJourneys,
@@ -60,7 +61,9 @@ function renderDetails(urlQuery: string, options: { postMvp?: boolean } = {}) {
         <ClientProfileProvider>
           <AssessmentCallProvider>
             <ClientJourneyProvider>
-              <DemoJourneyDetails />
+              <UnitPreferencesProvider>
+                <DemoJourneyDetails />
+              </UnitPreferencesProvider>
             </ClientJourneyProvider>
           </AssessmentCallProvider>
         </ClientProfileProvider>
