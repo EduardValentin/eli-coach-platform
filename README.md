@@ -68,6 +68,21 @@ pnpm start:platform  # serve the built app locally, after pnpm build
 
 Local Postgres binds to `127.0.0.1:55437`. Override `LOCAL_POSTGRES_PORT` for a parallel run, and `LOCAL_POSTGRES_CONTAINER_NAME` too when another branch or project already uses the container name.
 
+LOCAL and TEST browsers may override a persisted feature flag without changing
+the database. Add `ff.<FLAG>=true` or `ff.<FLAG>=false` to any app URL; the
+value applies immediately and stays in an HTTP-only browser-session cookie for
+later navigation. Use `default` to remove that flag's override. Only known
+flags accept overrides; anything else answers 400.
+
+```text
+http://localhost:3000/?ff.WAITLIST_MODE=false
+http://localhost:3000/?ff.WAITLIST_MODE=default
+```
+
+`FEATURE_FLAG_OVERRIDES` selects the behaviour: `browser` (the default when
+`ENVIRONMENT` is `local` or `test`) or `none` (the default everywhere else).
+`ENVIRONMENT=production` refuses `browser` at startup.
+
 `pnpm test` builds `apps/platform/build` for the integration suites with `APP_BASE_PATH=/eli-coach-platform` baked in (see `integration-test-config/platform-build.ts`), overwriting whatever a prior `pnpm build` produced. Run a fresh `pnpm build` before `pnpm start:platform` if you ran `pnpm test` in between — otherwise the served app answers on the integration base path instead of the one local development expects.
 
 The reference prototype sits outside the pnpm workspace and uses npm on the same Node version:

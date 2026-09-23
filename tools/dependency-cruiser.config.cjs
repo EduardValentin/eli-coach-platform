@@ -117,6 +117,20 @@ module.exports = {
       },
     },
     {
+      name: "feature-flag-overrides-root-only",
+      comment:
+        "The container is the only production importer of server/feature-flag-overrides/: the override reader and middleware reach a request through the composition root alone.",
+      severity: "error",
+      from: {
+        path: APP,
+        pathNot: [
+          "^apps/platform/src/server/container\\.server\\.ts$",
+          "^apps/platform/src/server/feature-flag-overrides/",
+        ],
+      },
+      to: { path: "^apps/platform/src/server/feature-flag-overrides/" },
+    },
+    {
       name: "server-guards-consumers",
       comment:
         "A feature never imports the app's own guards; a surface reads only runtime config from them.",

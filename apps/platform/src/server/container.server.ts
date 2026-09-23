@@ -1,4 +1,7 @@
-import type { RuntimeEnvironment } from "@eli-coach-platform/config";
+import {
+  resolveFeatureFlagOverridesMode,
+  type RuntimeEnvironment,
+} from "@eli-coach-platform/config";
 import { GetFeatureFlagsUseCase } from "@eli-coach-platform/domain/feature-flag";
 import type { Clock } from "@eli-coach-platform/domain/shared";
 import { EVOA_FITNESS_PRIVACY_EMAIL } from "@eli-coach-platform/content";
@@ -30,6 +33,11 @@ import {
   type WaitlistFeature,
 } from "~/features/waitlist/server/waitlist-composition.server";
 import { createPlatformDatabase } from "~/server/database.server";
+import {
+  composeBrowserFeatureFlagOverrides,
+  composeWithoutFeatureFlagOverrides,
+  type FeatureFlagOverrides,
+} from "~/server/feature-flag-overrides/feature-flag-overrides-composition.server";
 import { createConsoleLogger } from "~/server/logger.server";
 import {
   composePlatformFeature,
@@ -41,6 +49,7 @@ export type PlatformContainer = {
   accounts: AccountsFeature;
   assessmentCalls: AssessmentCallsFeature;
   closeDatabase: () => Promise<void>;
+  featureFlagOverrides: FeatureFlagOverrides;
   platform: PlatformFeature;
   store: StoreFeature;
   waitlist: WaitlistFeature;
@@ -63,9 +72,17 @@ export function createPlatformContainer(options: {
   );
   const managementAuthenticator = createManagementAuthenticator(environment);
   const productEmail = createProductEmail(environment);
-  const featureFlags = new GetFeatureFlagsUseCase({
+  const databaseFeatureFlags = new GetFeatureFlagsUseCase({
     featureFlags: new PostgresFeatureFlagRepository(database.client),
   });
+  const featureFlagOverrides =
+    resolveFeatureFlagOverridesMode(environment) === "browser"
+      ? composeBrowserFeatureFlagOverrides({
+          appBasePath: environment.APP_BASE_PATH,
+          featureFlags: databaseFeatureFlags,
+        })
+      : composeWithoutFeatureFlagOverrides(databaseFeatureFlags);
+  const featureFlags = featureFlagOverrides.featureFlags;
   const platform = composePlatformFeature({
     app: environment,
     botDetection,
@@ -98,6 +115,7 @@ export function createPlatformContainer(options: {
       publicAppUrl: environment.PUBLIC_APP_URL,
     }),
     closeDatabase: () => database.close(),
+    featureFlagOverrides,
     platform,
     store: composeStoreFeature({
       appBasePath: environment.APP_BASE_PATH,

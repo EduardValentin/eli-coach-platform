@@ -10,5 +10,10 @@ export { TURNSTILE_TEST_RESPONSE_TOKEN } from "./concerns/bot-detection";
 export type { ProductEmailConfig } from "./concerns/product-email";
 export type { ManagementApiConfig } from "./concerns/management-api";
 export type { AssessmentCallsConfig } from "./concerns/assessment-calls";
+export { resolveFeatureFlagOverridesMode } from "./concerns/feature-flags";
 export type { RuntimeEnvironment } from "./runtime-environment";
-export { joinBasePath, buildRedirectPath } from "./base-path";
+export {
+  buildRedirectPath,
+  joinBasePath,
+  normalizeBasePath,
+} from "./base-path";

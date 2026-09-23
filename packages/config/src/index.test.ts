@@ -1,4 +1,8 @@
-import { buildRedirectPath, type RuntimeEnvironment } from "./index";
+import {
+  buildRedirectPath,
+  resolveFeatureFlagOverridesMode,
+  type RuntimeEnvironment,
+} from "./index";
 import {
   buildPostgresConnectionString,
   loadRuntimeEnvironment,
@@ -355,6 +359,7 @@ describe("provider settings", () => {
   it.each([
     ["BOT_DETECTION_PROVIDER", "static"],
     ["PRODUCT_EMAIL_PROVIDER", "memory"],
+    ["FEATURE_FLAG_OVERRIDES", "browser"],
   ])("refuses %s=%s in a production runtime", (name, value) => {
     // arrange
     const source = buildEnvironment({
@@ -379,6 +384,37 @@ describe("provider settings", () => {
 
     // assert
     expect(load).toThrow("PUBLIC_APP_URL");
+  });
+});
+
+describe("feature flag overrides mode", () => {
+  it.each(["local", "test"])(
+    "lets browsers override feature flags in %s by default",
+    (environment) => {
+      // arrange
+      const source = buildEnvironment({ ENVIRONMENT: environment });
+
+      // act
+      const mode = resolveFeatureFlagOverridesMode(
+        loadRuntimeEnvironment(source),
+      );
+
+      // assert
+      expect(mode).toBe("browser");
+    },
+  );
+
+  it("turns feature flag overrides off outside local and test by default", () => {
+    // arrange
+    const source = buildEnvironment({ ENVIRONMENT: "preview" });
+
+    // act
+    const mode = resolveFeatureFlagOverridesMode(
+      loadRuntimeEnvironment(source),
+    );
+
+    // assert
+    expect(mode).toBe("none");
   });
 });
 

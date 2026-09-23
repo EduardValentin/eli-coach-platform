@@ -18,7 +18,6 @@ import {
   requireRealEnv,
 } from "./env";
 import { resolveRunId } from "./run-id";
-import { disableWaitlistMode } from "./waitlist-mode";
 
 // requirePortalAccess redirects an anonymous visitor here when they hit a
 // guarded portal route directly (apps/platform/src/features/accounts/
@@ -103,5 +102,4 @@ export default async function globalSetup() {
 
   await sweepLeftoverRegistries(runId);
   await clerkSetup();
-  await disableWaitlistMode();
 }

@@ -82,6 +82,9 @@
   "apps/platform/src/root-error-page.tsx": ["composition-root"],
   "apps/platform/src/root.server.ts": ["server-guards-consumers"],
   "apps/platform/src/routes.ts": ["root-registry-to-server"],
+  "apps/platform/src/server/api/meta/imports-feature-flag-overrides.server.ts": [
+    "feature-flag-overrides-root-only"
+  ],
   "apps/platform/src/server/api/meta/thin.ts": [
     "config-runtime-readers",
     "route-thinness",
