@@ -50,6 +50,7 @@ import { JourneyStageBadge } from './JourneyStageBadge';
 import { CallListPager } from './CallListPager';
 import { JoinCallLink } from './JoinCallLink';
 import { SortControl } from './SortControl';
+import { cn } from '../ui/utils';
 
 const STATUS_PARAM = 'when';
 const QUERY_PARAM = 'q';
@@ -183,13 +184,15 @@ function JourneyFilter({
   counts,
   journey,
   onChoose,
+  className,
 }: {
   counts: Record<JourneyStep, number>;
   journey: JourneyStep;
   onChoose: (step: JourneyStep) => void;
+  className?: string;
 }) {
   return (
-    <div className="flex flex-col gap-2">
+    <div className={cn('flex flex-col gap-2', className)}>
       <span className="text-sm font-medium text-text-secondary">Status</span>
       <FilterChipGroup
         aria-label="Status"
@@ -344,7 +347,7 @@ export function AssessmentCallsSection({
     >
       <Tabs value={status} onValueChange={chooseStatus} className="w-full">
         <div className="mb-6 flex flex-col gap-5">
-          <div className="grid w-fit max-w-full gap-4 xl:flex xl:w-full xl:items-start xl:justify-between xl:gap-8">
+          <div className="grid w-fit max-w-full gap-4 xl:flex xl:w-full xl:items-start xl:gap-8">
             <div className="flex max-w-full flex-col gap-2 xl:w-fit">
               <TabsList aria-label="When" variant="segmented">
                 {WHEN_TABS.map((tab) => (
@@ -381,19 +384,21 @@ export function AssessmentCallsSection({
                 onChange={(event) => changeQuery(event.target.value)}
               />
             </div>
+          </div>
 
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between sm:gap-8">
+            <JourneyFilter
+              counts={counts}
+              journey={journey}
+              onChoose={chooseJourney}
+              className="min-w-0"
+            />
             <SortControl
-              className="xl:w-fit"
+              className="shrink-0"
               sort={sort}
               onChange={chooseSort}
             />
           </div>
-
-          <JourneyFilter
-            counts={counts}
-            journey={journey}
-            onChoose={chooseJourney}
-          />
         </div>
 
         <TabsContent variant="segmented" value={status}>
