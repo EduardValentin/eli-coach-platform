@@ -30,12 +30,12 @@ export function SortableTableHead({
       <button
         type="button"
         onClick={onSort}
-        className="inline-flex items-center gap-1 rounded-field outline-none transition-colors hover:text-brand focus-visible:ring-[3px] focus-visible:ring-ring/50"
+        className="inline-flex items-center gap-1 rounded-field text-[length:inherit] font-bold uppercase tracking-[inherit] text-inherit outline-none transition-colors hover:text-brand focus-visible:ring-[3px] focus-visible:ring-ring/50"
       >
         <span className={active ? 'text-brand' : undefined}>{label}</span>
         <Icon
           className={
-            active ? 'size-3.5 text-brand' : 'size-3.5 text-muted-foreground'
+            active ? 'size-3 text-brand' : 'size-3 text-muted-foreground'
           }
           aria-hidden="true"
         />

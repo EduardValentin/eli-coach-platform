@@ -3,18 +3,15 @@ import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { motion } from 'motion/react';
 import { UserX, ArrowRight, ShieldAlert, Users } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router';
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '../../components/ui/tabs';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
+  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from '../../components/ui/select';
@@ -43,7 +40,11 @@ import {
   isBeforeStage,
   type ClientJourney,
 } from '../../domain/journey';
-import { clientStatus, clientStatusNamed } from '../../domain/clientStatus';
+import {
+  clientStatus,
+  clientStatusNamed,
+  ONBOARDING_STATUS_LABELS,
+} from '../../domain/clientStatus';
 import { format, parseISO } from 'date-fns';
 import { bundleLengthLabel } from '../../domain/bundles';
 import { getInitials } from '../../utils/clientHelpers';
@@ -57,17 +58,14 @@ import {
   parseRosterSortDirection,
   parseRosterSortKey,
   parseRosterStatus,
-  parseRosterView,
   rowsMatching,
   sortRows,
-  ROSTER_STATUS_OPTIONS,
   type RosterRow,
   type RosterSelection,
   type RosterSort,
   type RosterSortKey,
   type RosterStatus,
   type RosterStatusOption,
-  type RosterView,
 } from '../../utils/clientRosterListing';
 
 type RosterClient = {
@@ -116,14 +114,15 @@ const MOCK_CLIENTS: RosterClient[] = [
   },
 ];
 
-const VIEW_TABS: { view: RosterView; label: string }[] = [
-  { view: 'all', label: 'All' },
-  { view: 'active', label: 'Active' },
-  { view: 'onboarding', label: 'Onboarding' },
-  { view: 'inactive', label: 'Inactive' },
+const STATUS_GROUPS: {
+  label: string;
+  options: readonly RosterStatusOption[];
+}[] = [
+  { label: 'Onboarding', options: ONBOARDING_STATUS_LABELS },
+  { label: 'Active', options: ['Active'] },
+  { label: 'Inactive', options: ['Cancelled', 'Inactive'] },
 ];
 
-const VIEW_PARAM = 'view';
 const STATUS_PARAM = 'status';
 const QUERY_PARAM = 'q';
 const SORT_PARAM = 'sort';
@@ -205,17 +204,27 @@ function StatusFilter({
       value={status}
       onValueChange={(value) => onChoose(parseRosterStatus(value))}
     >
-      <SelectTrigger aria-label="Status" size="sm" className="w-full">
+      <SelectTrigger aria-label="Status" size="sm" className="w-full sm:w-56">
         <SelectValue>{status === 'all' ? 'All statuses' : status}</SelectValue>
       </SelectTrigger>
       <SelectContent>
-        {ROSTER_STATUS_OPTIONS.map((option) => (
-          <SelectItem key={option} value={option}>
-            <span className="flex items-center gap-2">
-              {option === 'all' ? 'All statuses' : option}{' '}
-              <Badge variant="count">{counts[option]}</Badge>
-            </span>
-          </SelectItem>
+        <SelectItem value="all">
+          <span className="flex items-center gap-2">
+            All statuses <Badge variant="count">{counts.all}</Badge>
+          </span>
+        </SelectItem>
+        <SelectSeparator />
+        {STATUS_GROUPS.map((group) => (
+          <SelectGroup key={group.label}>
+            <SelectLabel>{group.label}</SelectLabel>
+            {group.options.map((option) => (
+              <SelectItem key={option} value={option}>
+                <span className="flex items-center gap-2">
+                  {option} <Badge variant="count">{counts[option]}</Badge>
+                </span>
+              </SelectItem>
+            ))}
+          </SelectGroup>
         ))}
       </SelectContent>
     </Select>
@@ -387,7 +396,6 @@ export function ClientsList() {
 
   const rows: RosterRow[] = [...journeyRows, ...mockRows];
 
-  const view = parseRosterView(searchParams.get(VIEW_PARAM));
   const status = parseRosterStatus(searchParams.get(STATUS_PARAM));
   const query = searchParams.get(QUERY_PARAM) ?? '';
   const sortKey = parseRosterSortKey(searchParams.get(SORT_PARAM));
@@ -399,7 +407,7 @@ export function ClientsList() {
     ),
   };
 
-  const selection: RosterSelection = { view, status, query };
+  const selection: RosterSelection = { status, query };
   const matchingRows = sortRows(rowsMatching(rows, selection), sort);
   const counts = countsByStatus(rows, selection);
   const emptyCopy = emptyRosterCopy(selection, rows.length);
@@ -411,14 +419,6 @@ export function ClientsList() {
     const next = new URLSearchParams(searchParams);
     edit(next);
     setSearchParams(next, { replace: true });
-  };
-
-  const chooseView = (value: string) => {
-    const chosen = parseRosterView(value);
-    updateSearchParams((params) => {
-      if (chosen === 'all') params.delete(VIEW_PARAM);
-      else params.set(VIEW_PARAM, chosen);
-    });
   };
 
   const chooseStatus = (chosen: RosterStatusOption) => {
@@ -455,7 +455,6 @@ export function ClientsList() {
 
   const clearFilters = () => {
     updateSearchParams((params) => {
-      params.delete(VIEW_PARAM);
       params.delete(STATUS_PARAM);
       params.delete(QUERY_PARAM);
     });
@@ -487,107 +486,93 @@ export function ClientsList() {
         subtitle="Manage your active roster and past client records."
       />
 
-      <Tabs value={view} onValueChange={chooseView} className="w-full">
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
-          <div className="grid w-full gap-3 sm:w-fit sm:max-w-full">
-            <TabsList aria-label="Show" variant="segmented">
-              {VIEW_TABS.map((tab) => (
-                <TabsTrigger
-                  key={tab.view}
-                  variant="segmented"
-                  value={tab.view}
-                >
-                  {tab.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-            <StatusFilter
-              counts={counts}
-              status={status}
-              onChoose={chooseStatus}
-            />
-          </div>
-
-          <div className="grid w-full gap-3 sm:w-fit sm:max-w-full">
-            <SearchField
-              id={SEARCH_FIELD_ID}
-              aria-label="Search clients"
-              placeholder="Search by name or email"
-              className="w-full sm:w-72"
-              value={query}
-              onChange={(event) => changeQuery(event.target.value)}
-            />
-          </div>
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+        <div className="grid w-full gap-3 sm:w-fit sm:max-w-full">
+          <StatusFilter
+            counts={counts}
+            status={status}
+            onChoose={chooseStatus}
+          />
         </div>
 
-        <TabsContent variant="segmented" value={view}>
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50 overflow-hidden"
-          >
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <SortableTableHead
-                    label="Client"
-                    active={sort.key === 'name'}
-                    direction={directionFor('name')}
-                    onSort={() => chooseSort('name')}
+        <div className="grid w-full gap-3 sm:w-fit sm:max-w-full">
+          <SearchField
+            id={SEARCH_FIELD_ID}
+            aria-label="Search clients"
+            placeholder="Search by name or email"
+            size="sm"
+            className="w-full sm:w-72"
+            value={query}
+            onChange={(event) => changeQuery(event.target.value)}
+          />
+        </div>
+      </div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50 overflow-hidden"
+      >
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <SortableTableHead
+                label="Client"
+                active={sort.key === 'name'}
+                direction={directionFor('name')}
+                onSort={() => chooseSort('name')}
+              />
+              <SortableTableHead
+                label="Status"
+                active={sort.key === 'status'}
+                direction={directionFor('status')}
+                onSort={() => chooseSort('status')}
+              />
+              <SortableTableHead
+                label="Bundle / Plan"
+                active={sort.key === 'bundle'}
+                direction={directionFor('bundle')}
+                onSort={() => chooseSort('bundle')}
+              />
+              <SortableTableHead
+                label="Join date"
+                active={sort.key === 'joined'}
+                direction={directionFor('joined')}
+                onSort={() => chooseSort('joined')}
+              />
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {matchingRows.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="p-0">
+                  <EmptyState
+                    icon={Users}
+                    title={emptyCopy.title}
+                    description={emptyCopy.description}
+                    action={
+                      hasActiveRosterFilters(selection) ? (
+                        <Button variant="outline" onClick={clearFilters}>
+                          Clear filters
+                        </Button>
+                      ) : undefined
+                    }
                   />
-                  <SortableTableHead
-                    label="Status"
-                    active={sort.key === 'status'}
-                    direction={directionFor('status')}
-                    onSort={() => chooseSort('status')}
-                  />
-                  <SortableTableHead
-                    label="Bundle / Plan"
-                    active={sort.key === 'bundle'}
-                    direction={directionFor('bundle')}
-                    onSort={() => chooseSort('bundle')}
-                  />
-                  <SortableTableHead
-                    label="Join date"
-                    active={sort.key === 'joined'}
-                    direction={directionFor('joined')}
-                    onSort={() => chooseSort('joined')}
-                  />
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {matchingRows.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="p-0">
-                      <EmptyState
-                        icon={Users}
-                        title={emptyCopy.title}
-                        description={emptyCopy.description}
-                        action={
-                          hasActiveRosterFilters(selection) ? (
-                            <Button variant="outline" onClick={clearFilters}>
-                              Clear filters
-                            </Button>
-                          ) : undefined
-                        }
-                      />
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  matchingRows.map((row) => (
-                    <RosterTableRow
-                      key={row.id}
-                      row={row}
-                      onTerminate={handleTerminate}
-                    />
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </motion.div>
-        </TabsContent>
-      </Tabs>
+                </TableCell>
+              </TableRow>
+            ) : (
+              matchingRows.map((row) => (
+                <RosterTableRow
+                  key={row.id}
+                  row={row}
+                  onTerminate={handleTerminate}
+                />
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </motion.div>
     </div>
   );
 }

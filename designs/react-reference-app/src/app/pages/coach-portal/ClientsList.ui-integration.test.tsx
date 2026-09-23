@@ -81,43 +81,22 @@ function statusSelect(): HTMLElement {
   return screen.getByRole('combobox', { name: 'Status' });
 }
 
+async function chooseStatusOption(
+  user: ReturnType<typeof userEvent.setup>,
+  name: string,
+) {
+  await user.click(statusSelect());
+  await user.click(await screen.findByRole('option', { name }));
+}
+
 function headerButton(label: string): HTMLElement {
   return screen.getByRole('button', { name: label });
 }
 
 describe('the coach clients list', () => {
-  it('offers Onboarding beside the roster filters', () => {
+  it('lists a client as soon as she has paid, with her bundle and the day she paid', () => {
     // arrange
-    const urlQuery = '';
-
-    // act
-    renderList(urlQuery);
-
-    // assert
-    const tabs = within(screen.getByRole('tablist', { name: 'Show' }));
-    for (const label of ['All', 'Active', 'Onboarding', 'Inactive']) {
-      expect(tabs.getByRole('tab', { name: label })).toBeInTheDocument();
-    }
-  });
-
-  it('shows nobody under Onboarding while every journey is finished', async () => {
-    // arrange
-    const user = renderList('?jstage=review-call-scheduled');
-
-    // act
-    await user.click(screen.getByRole('tab', { name: 'Onboarding' }));
-
-    // assert
-    expect(screen.getByText('No clients found')).toBeInTheDocument();
-    expect(screen.getByText('No onboarding clients.')).toBeInTheDocument();
-  });
-
-  it('lists a client as soon as she has paid, with her bundle and the day she paid', async () => {
-    // arrange
-    const user = renderList('?jstage=paid');
-
-    // act
-    await user.click(screen.getByRole('tab', { name: 'Onboarding' }));
+    renderList('?jstage=paid');
 
     // assert
     const row = rowFor('Jane Doe');
@@ -128,12 +107,9 @@ describe('the coach clients list', () => {
     ).toBeInTheDocument();
   });
 
-  it('lists a client who is still onboarding with her name, email and onboarding status', async () => {
+  it('lists a client who is still onboarding with her name, email and onboarding status', () => {
     // arrange
-    const user = renderList('?jstage=submitted');
-
-    // act
-    await user.click(screen.getByRole('tab', { name: 'Onboarding' }));
+    renderList('?jstage=submitted');
 
     // assert
     const row = rowFor('Jane Doe');
@@ -142,12 +118,9 @@ describe('the coach clients list', () => {
     expect(within(row).queryByText('Immediate start')).not.toBeInTheDocument();
   });
 
-  it('keeps the day a waiting client starts off her row', async () => {
+  it('keeps the day a waiting client starts off her row', () => {
     // arrange
-    const user = renderList('?jstage=submitted&jstart=waiting');
-
-    // act
-    await user.click(screen.getByRole('tab', { name: 'Onboarding' }));
+    renderList('?jstage=submitted&jstart=waiting');
 
     // assert
     expect(
@@ -155,12 +128,9 @@ describe('the coach clients list', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('names the row arrow after the review waiting on the coach', async () => {
+  it('names the row arrow after the review waiting on the coach', () => {
     // arrange
-    const user = renderList('?jstage=submitted');
-
-    // act
-    await user.click(screen.getByRole('tab', { name: 'Onboarding' }));
+    renderList('?jstage=submitted');
 
     // assert
     const row = rowFor('Jane Doe');
@@ -170,12 +140,9 @@ describe('the coach clients list', () => {
     ).toHaveAttribute('href', '/coach/clients/c1');
   });
 
-  it('keeps the review wording off a row she has not sent yet', async () => {
+  it('keeps the review wording off a row she has not sent yet', () => {
     // arrange
-    const user = renderList('?jstage=onboarding');
-
-    // act
-    await user.click(screen.getByRole('tab', { name: 'Onboarding' }));
+    renderList('?jstage=onboarding');
 
     // assert
     const row = rowFor('Jane Doe');
@@ -187,7 +154,7 @@ describe('the coach clients list', () => {
     ).toHaveAttribute('href', '/coach/clients/c1');
   });
 
-  it('keeps an onboarding client out of the roster rows she has not reached yet', async () => {
+  it('keeps an onboarding client out of the roster rows she has not reached yet', () => {
     // arrange
     renderList('?jstage=submitted');
 
@@ -239,64 +206,6 @@ describe('the coach clients list', () => {
       within(rowFor('Jessica Alba')).getByText('Active'),
     ).toBeInTheDocument();
     expect(within(inactive).getByText('Inactive')).toBeInTheDocument();
-  });
-
-  it('gathers everyone from her payment to her approval under Onboarding', async () => {
-    // arrange
-    const user = renderList('?jstage=approved');
-
-    // act
-    await user.click(screen.getByRole('tab', { name: 'Onboarding' }));
-
-    // assert
-    expect(listedNames()).toHaveLength(1);
-    expect(
-      within(rowFor('Jane Doe')).getByText('Approved'),
-    ).toBeInTheDocument();
-  });
-
-  it('files a client whose program is ready under Active', async () => {
-    // arrange
-    const user = renderList('?jstage=program-ready');
-
-    // act
-    await user.click(screen.getByRole('tab', { name: 'Active' }));
-
-    // assert
-    expect(within(rowFor('Jane Doe')).getByText('Active')).toBeInTheDocument();
-
-    await user.click(screen.getByRole('tab', { name: 'Onboarding' }));
-    expect(screen.getByText('No clients found')).toBeInTheDocument();
-    expect(screen.getByText('No onboarding clients.')).toBeInTheDocument();
-  });
-
-  it('files a client whose subscription has run out under Inactive', async () => {
-    // arrange
-    const user = renderList('?jstage=program-ready&jsub=ended');
-
-    // act
-    await user.click(screen.getByRole('tab', { name: 'Inactive' }));
-
-    // assert
-    expect(
-      within(rowFor('Jane Doe')).getByText('Inactive'),
-    ).toBeInTheDocument();
-
-    await user.click(screen.getByRole('tab', { name: 'Active' }));
-    expect(screen.queryByText('jane@example.com')).not.toBeInTheDocument();
-  });
-
-  it('keeps the roster working when nothing is onboarding', async () => {
-    // arrange
-    const user = renderList();
-
-    // act
-    await user.click(screen.getByRole('tab', { name: 'Inactive' }));
-
-    // assert
-    const names = listedNames();
-    expect(names.some((name) => name.includes('Sarah Jenkins'))).toBe(true);
-    expect(names.some((name) => name.includes('Jane Doe'))).toBe(false);
   });
 
   it('lists clients newest joined first by default', () => {
@@ -362,31 +271,35 @@ describe('the coach clients list', () => {
     ]);
   });
 
-  it('scopes the status count badges to the current view', async () => {
+  it('keeps the status count badges scoped to the search, ignoring the chosen status', async () => {
     // arrange
     const user = renderList('?jstage=held');
+    await chooseStatusOption(user, 'Active 3');
+    await user.type(
+      screen.getByRole('searchbox', { name: 'Search clients' }),
+      'jenkins',
+    );
 
     // act
-    await user.click(screen.getByRole('tab', { name: 'Active' }));
     await user.click(statusSelect());
 
     // assert
     expect(
-      await screen.findByRole('option', { name: 'All statuses 3' }),
+      await screen.findByRole('option', { name: 'All statuses 1' }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('option', { name: 'Active 3' }),
+      screen.getByRole('option', { name: 'Inactive 1' }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('option', { name: 'Inactive 0' }),
+      screen.getByRole('option', { name: 'Active 0' }),
     ).toBeInTheDocument();
   });
 
-  it('clears the view, status and search but keeps the sort', async () => {
+  it('clears the status and search but keeps the sort', async () => {
     // arrange
     const user = renderList('?jstage=held');
     await user.click(headerButton('Client'));
-    await user.click(screen.getByRole('tab', { name: 'Active' }));
+    await chooseStatusOption(user, 'Active 3');
     await user.type(
       screen.getByRole('searchbox', { name: 'Search clients' }),
       'zzz',
@@ -397,14 +310,11 @@ describe('the coach clients list', () => {
     await user.click(screen.getByRole('button', { name: 'Clear filters' }));
 
     // assert
-    expect(
-      screen.getByRole('tab', { name: 'All', selected: true }),
-    ).toBeInTheDocument();
+    expect(statusSelect()).toHaveTextContent('All statuses');
     expect(
       screen.getByRole('searchbox', { name: 'Search clients' }),
     ).toHaveValue('');
     expect(currentSearch()).toContain('sort=name');
-    expect(currentSearch()).not.toMatch(/[?&]view=/);
     expect(currentSearch()).not.toMatch(/[?&]status=/);
     expect(currentSearch()).not.toMatch(/[?&]q=/);
   });

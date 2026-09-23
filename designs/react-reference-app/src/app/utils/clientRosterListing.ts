@@ -1,17 +1,7 @@
 import {
-  ONBOARDING_STATUS_LABELS,
   type ClientStatus,
   type ClientStatusLabel,
 } from '../domain/clientStatus';
-
-export type RosterView = 'all' | 'active' | 'onboarding' | 'inactive';
-
-const ROSTER_VIEWS: readonly RosterView[] = [
-  'all',
-  'active',
-  'onboarding',
-  'inactive',
-];
 
 export type RosterStatus = Extract<ClientStatusLabel, 'Active' | 'Inactive'>;
 
@@ -62,14 +52,9 @@ export type RosterRow = {
 };
 
 export type RosterSelection = {
-  view: RosterView;
   status: RosterStatusOption;
   query: string;
 };
-
-export function parseRosterView(raw: string | null): RosterView {
-  return ROSTER_VIEWS.find((view) => view === raw) ?? 'all';
-}
 
 export function parseRosterStatus(raw: string | null): RosterStatusOption {
   return ROSTER_STATUS_OPTIONS.find((option) => option === raw) ?? 'all';
@@ -91,14 +76,6 @@ export function parseRosterSortDirection(
 ): RosterSortDirection {
   if (raw === 'asc' || raw === 'desc') return raw;
   return defaultRosterSortDirectionFor(key);
-}
-
-export function matchesView(status: ClientStatus, view: RosterView): boolean {
-  if (view === 'all') return true;
-  if (view === 'active') return status.label === 'Active';
-  if (view === 'onboarding')
-    return ONBOARDING_STATUS_LABELS.includes(status.label);
-  return status.label === 'Cancelled' || status.label === 'Inactive';
 }
 
 function matchesStatus(
@@ -123,7 +100,6 @@ export function rowsMatching(
 ): RosterRow[] {
   return rows.filter(
     (row) =>
-      matchesView(row.status, selection.view) &&
       matchesStatus(row.status, selection.status) &&
       matchesQuery(row, selection.query),
   );
@@ -221,33 +197,18 @@ export function sortRows(rows: RosterRow[], sort: RosterSort): RosterRow[] {
 }
 
 export function hasActiveRosterFilters(selection: RosterSelection): boolean {
-  return (
-    selection.view !== 'all' ||
-    selection.status !== 'all' ||
-    selection.query.trim().length > 0
-  );
+  return selection.status !== 'all' || selection.query.trim().length > 0;
 }
 
-const VIEW_EMPTY_MESSAGES: Record<RosterView, string> = {
-  all: 'No clients match your filters.',
-  active: 'No active clients.',
-  onboarding: 'No onboarding clients.',
-  inactive: 'No inactive clients.',
-};
-
-const VIEW_PHRASES: Record<RosterView, string> = {
-  all: 'clients',
-  active: 'active clients',
-  onboarding: 'onboarding clients',
-  inactive: 'inactive clients',
-};
-
-export const NO_ROSTER_SEARCH_MATCH_MESSAGE = 'No clients match your search.';
-
 export function emptyRosterMessage(selection: RosterSelection): string {
-  if (selection.query.trim().length > 0) return NO_ROSTER_SEARCH_MATCH_MESSAGE;
+  const hasStatus = selection.status !== 'all';
+  const hasQuery = selection.query.trim().length > 0;
 
-  if (selection.status === 'all') return VIEW_EMPTY_MESSAGES[selection.view];
+  if (hasStatus && hasQuery) {
+    return `No clients match the ${selection.status} status and your search.`;
+  }
+  if (hasStatus) return `No clients match the ${selection.status} status.`;
+  if (hasQuery) return 'No clients match your search.';
 
-  return `No ${VIEW_PHRASES[selection.view]} match the ${selection.status} status.`;
+  return 'No clients match your filters.';
 }

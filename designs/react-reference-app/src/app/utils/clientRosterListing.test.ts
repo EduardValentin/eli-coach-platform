@@ -5,11 +5,9 @@ import {
   defaultRosterSortDirectionFor,
   emptyRosterMessage,
   hasActiveRosterFilters,
-  matchesView,
   parseRosterSortDirection,
   parseRosterSortKey,
   parseRosterStatus,
-  parseRosterView,
   rowsMatching,
   sortRows,
   type RosterRow,
@@ -31,16 +29,10 @@ function row(details: Partial<RosterRow> = {}): RosterRow {
 }
 
 function selecting(details: Partial<RosterSelection> = {}): RosterSelection {
-  return { view: 'all', status: 'all', query: '', ...details };
+  return { status: 'all', query: '', ...details };
 }
 
 describe('parsing roster URL params with safe fallbacks', () => {
-  it('falls back to the all view for an absent or unknown value', () => {
-    expect(parseRosterView(null)).toBe('all');
-    expect(parseRosterView('bogus')).toBe('all');
-    expect(parseRosterView('active')).toBe('active');
-  });
-
   it('falls back to the all status for an absent or unknown value', () => {
     expect(parseRosterStatus(null)).toBe('all');
     expect(parseRosterStatus('bogus')).toBe('all');
@@ -72,41 +64,8 @@ describe('parsing roster URL params with safe fallbacks', () => {
   });
 });
 
-describe('view semantics', () => {
-  it('matches every status under the all view', () => {
-    expect(matchesView(clientStatusNamed('Paid'), 'all')).toBe(true);
-    expect(matchesView(clientStatusNamed('Inactive'), 'all')).toBe(true);
-  });
-
-  it('matches only Active under the active view', () => {
-    expect(matchesView(clientStatusNamed('Active'), 'active')).toBe(true);
-    expect(matchesView(clientStatusNamed('Approved'), 'active')).toBe(false);
-  });
-
-  it('matches the onboarding statuses under the onboarding view', () => {
-    for (const label of [
-      'Paid',
-      'Invited',
-      'Onboarding',
-      'Awaiting review',
-      'In review',
-      'Needs details',
-      'Approved',
-    ] as const) {
-      expect(matchesView(clientStatusNamed(label), 'onboarding')).toBe(true);
-    }
-    expect(matchesView(clientStatusNamed('Active'), 'onboarding')).toBe(false);
-  });
-
-  it('matches Cancelled and Inactive under the inactive view', () => {
-    expect(matchesView(clientStatusNamed('Cancelled'), 'inactive')).toBe(true);
-    expect(matchesView(clientStatusNamed('Inactive'), 'inactive')).toBe(true);
-    expect(matchesView(clientStatusNamed('Active'), 'inactive')).toBe(false);
-  });
-});
-
 describe('filtering roster rows', () => {
-  it('narrows by view, status and search together', () => {
+  it('narrows by status and search together', () => {
     const rows = [
       row({ id: 'a', name: 'Ann Active', status: clientStatusNamed('Active') }),
       row({ id: 'b', name: 'Bea Paid', status: clientStatusNamed('Paid') }),
@@ -117,9 +76,6 @@ describe('filtering roster rows', () => {
       }),
     ];
 
-    expect(
-      rowsMatching(rows, selecting({ view: 'onboarding' })).map((r) => r.id),
-    ).toEqual(['b']);
     expect(
       rowsMatching(rows, selecting({ status: 'Active' })).map((r) => r.id),
     ).toEqual(['a']);
@@ -141,21 +97,27 @@ describe('filtering roster rows', () => {
 });
 
 describe('counting rows per status', () => {
-  it('ignores the status filter itself while respecting the current view and search', () => {
+  it('ignores the chosen status while respecting the search', () => {
     const rows = [
       row({ id: 'a', name: 'Ann Active', status: clientStatusNamed('Active') }),
       row({ id: 'b', name: 'Bea Paid', status: clientStatusNamed('Paid') }),
       row({ id: 'c', name: 'Cel Paid', status: clientStatusNamed('Paid') }),
+      row({
+        id: 'd',
+        name: 'Dee Paid Elsewhere',
+        email: 'dee@elsewhere.com',
+        status: clientStatusNamed('Paid'),
+      }),
     ];
 
     const counts = countsByStatus(
       rows,
-      selecting({ status: 'Active', view: 'onboarding' }),
+      selecting({ status: 'Active', query: 'example.com' }),
     );
 
     expect(counts.Paid).toBe(2);
-    expect(counts.Active).toBe(0);
-    expect(counts.all).toBe(2);
+    expect(counts.Active).toBe(1);
+    expect(counts.all).toBe(3);
   });
 });
 
@@ -249,32 +211,29 @@ describe('sorting by join date', () => {
 });
 
 describe('detecting active filters', () => {
-  it('is false only when view, status and query are all at their defaults', () => {
+  it('is false only when status and query are both at their defaults', () => {
     expect(hasActiveRosterFilters(selecting())).toBe(false);
-    expect(hasActiveRosterFilters(selecting({ view: 'active' }))).toBe(true);
     expect(hasActiveRosterFilters(selecting({ status: 'Paid' }))).toBe(true);
     expect(hasActiveRosterFilters(selecting({ query: 'ann' }))).toBe(true);
   });
 });
 
 describe('the empty roster message', () => {
-  it('prefers the search message when a query is present', () => {
-    expect(
-      emptyRosterMessage(
-        selecting({ query: 'zzz', view: 'active', status: 'Paid' }),
-      ),
-    ).toBe('No clients match your search.');
-  });
-
-  it('names the view alone when no status is chosen', () => {
-    expect(emptyRosterMessage(selecting({ view: 'inactive' }))).toBe(
-      'No inactive clients.',
+  it('names the chosen status alone when there is no search', () => {
+    expect(emptyRosterMessage(selecting({ status: 'Paid' }))).toBe(
+      'No clients match the Paid status.',
     );
   });
 
-  it('names the view and the chosen status together', () => {
+  it('names the search alone when no status is chosen', () => {
+    expect(emptyRosterMessage(selecting({ query: 'zzz' }))).toBe(
+      'No clients match your search.',
+    );
+  });
+
+  it('combines the status and the search when both are set', () => {
     expect(
-      emptyRosterMessage(selecting({ view: 'active', status: 'Paid' })),
-    ).toBe('No active clients match the Paid status.');
+      emptyRosterMessage(selecting({ status: 'Paid', query: 'zzz' })),
+    ).toBe('No clients match the Paid status and your search.');
   });
 });
