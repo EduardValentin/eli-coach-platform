@@ -217,6 +217,7 @@ describe('the coach clients list', () => {
 
     // assert
     expect(names).toEqual([
+      'Andreea Popescu',
       'Emma Stone',
       'Jessica Alba',
       'Jane Doe',
@@ -239,6 +240,7 @@ describe('the coach clients list', () => {
       'Jane Doe',
       'Jessica Alba',
       'Emma Stone',
+      'Andreea Popescu',
     ]);
   });
 
@@ -251,6 +253,7 @@ describe('the coach clients list', () => {
 
     // assert
     expect(orderedNames()).toEqual([
+      'Andreea Popescu',
       'Emma Stone',
       'Jane Doe',
       'Jessica Alba',
@@ -268,6 +271,7 @@ describe('the coach clients list', () => {
       'Jessica Alba',
       'Jane Doe',
       'Emma Stone',
+      'Andreea Popescu',
     ]);
   });
 

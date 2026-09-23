@@ -219,6 +219,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
     setJourneys((previous) => {
       const next: Record<string, ClientJourney> = {
         [DEMO_JOURNEY_CALL_ID]: previous[DEMO_JOURNEY_CALL_ID],
+        [AWAITING_REVIEW_CALL_ID]: previous[AWAITING_REVIEW_CALL_ID],
       };
 
       for (const booking of bookings) {
