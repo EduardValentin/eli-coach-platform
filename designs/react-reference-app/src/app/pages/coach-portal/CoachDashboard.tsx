@@ -1,10 +1,8 @@
 import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { motion, useReducedMotion } from 'motion/react';
-import { ClipboardCheck, ArrowRight, User } from 'lucide-react';
+import { ClipboardCheck, User } from 'lucide-react';
 import { Link, useNavigate } from 'react-router';
 import { RowActionLink } from '../../components/RowActionButton';
-import { buttonVariants } from '../../components/ui/button';
-import { cn } from '../../components/ui/utils';
 import {
   Table,
   TableBody,
@@ -66,7 +64,6 @@ function ActiveClientRow({
 }) {
   const navigate = useNavigate();
   const detailPath = `/coach/clients/${client.id}`;
-  const actionLabel = `View details for ${client.name}`;
 
   return (
     <TableRow
@@ -96,22 +93,6 @@ function ActiveClientRow({
           </span>
         </TableCell>
       )}
-      <TableCell>
-        <div className="flex items-center justify-end">
-          <Link
-            to={detailPath}
-            aria-label={actionLabel}
-            title={actionLabel}
-            onClick={(event) => event.stopPropagation()}
-            className={cn(
-              buttonVariants({ variant: 'outline', size: 'icon' }),
-              'opacity-0 hover:bg-text-primary hover:text-white hover:border-text-primary group-hover:opacity-100 focus-visible:opacity-100',
-            )}
-          >
-            <ArrowRight size={14} aria-hidden="true" />
-          </Link>
-        </div>
-      </TableCell>
     </TableRow>
   );
 }
@@ -233,7 +214,6 @@ export function CoachDashboard() {
                 <TableHead>Cycle phase</TableHead>
                 <TableHead>Primary goal</TableHead>
                 {isPostMvp && <TableHead>Compliance</TableHead>}
-                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
