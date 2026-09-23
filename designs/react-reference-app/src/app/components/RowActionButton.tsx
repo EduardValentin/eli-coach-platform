@@ -4,10 +4,11 @@ import { Loader2, type LucideIcon } from 'lucide-react';
 import { Button, buttonVariants } from './ui/button';
 import { cn } from './ui/utils';
 
-type RowActionTone = 'default' | 'destructive';
+type RowActionTone = 'default' | 'brand' | 'destructive';
 
 const TONE_CLASSES: Record<RowActionTone, string> = {
   default: '',
+  brand: 'border-brand text-brand hover:bg-brand/10 hover:text-brand',
   destructive:
     'text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive',
 };
@@ -47,15 +48,17 @@ export function RowActionButton({
 
 export function RowActionLink({
   icon: Icon,
+  tone = 'default',
   className,
   children,
   ...props
-}: LinkProps & { icon: LucideIcon }) {
+}: LinkProps & { icon: LucideIcon; tone?: RowActionTone }) {
   return (
     <Link
       className={cn(
         buttonVariants({ variant: 'outline', size: 'sm' }),
         'text-xs font-semibold',
+        TONE_CLASSES[tone],
         className,
       )}
       {...props}

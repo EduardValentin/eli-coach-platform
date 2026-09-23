@@ -2,12 +2,10 @@ import { useState } from 'react';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { motion } from 'motion/react';
 import { UserX, ArrowRight, ShieldAlert, Users } from 'lucide-react';
-import { useSearchParams } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import { Button } from '../../components/ui/button';
-import {
-  RowActionButton,
-  RowActionLink,
-} from '../../components/RowActionButton';
+import { RowActionButton } from '../../components/RowActionButton';
+import { ConfirmDialog } from '../../components/ui/confirm-dialog';
 import { Badge } from '../../components/ui/badge';
 import {
   Select,
@@ -282,14 +280,14 @@ function RosterActions({
           </RowActionButton>
         ))}
 
-      <RowActionLink
+      <Link
         to={row.detailPath}
-        icon={ArrowRight}
         aria-label={row.actionLabel}
         title={row.actionLabel}
+        className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white border border-border/50 text-text-secondary hover:bg-text-primary hover:text-white hover:border-text-primary transition-all opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
       >
-        View
-      </RowActionLink>
+        <ArrowRight size={14} aria-hidden="true" />
+      </Link>
     </div>
   );
 }
@@ -302,7 +300,7 @@ function RosterTableRow({
   onTerminate: (row: RosterRow) => void;
 }) {
   return (
-    <TableRow>
+    <TableRow className="group">
       <TableCell>
         <div className="flex items-center gap-3">
           <RosterAvatar row={row} />
@@ -347,8 +345,31 @@ function emptyRosterCopy(
   };
 }
 
+function removalCopy(row: RosterRow): {
+  title: string;
+  description: string;
+  confirmLabel: string;
+} {
+  if (row.terminable?.status === 'Active') {
+    return {
+      title: `Terminate ${row.name}'s subscription?`,
+      description:
+        'She loses access to her program at the end of the current period. This cannot be undone.',
+      confirmLabel: 'Terminate',
+    };
+  }
+
+  return {
+    title: `Remove ${row.name}?`,
+    description:
+      'Her record is removed from your roster. This cannot be undone.',
+    confirmLabel: 'Remove',
+  };
+}
+
 export function ClientsList() {
   const [clients, setClients] = useState(MOCK_CLIENTS);
+  const [pendingRemoval, setPendingRemoval] = useState<RosterRow | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const { getProfile } = useClientProfile();
   const { getClientActiveSubscription, getClientSubscriptions } = useTraining();
@@ -457,22 +478,19 @@ export function ClientsList() {
 
   const handleTerminate = (row: RosterRow) => {
     if (!row.terminable) return;
-
-    const actionText =
-      row.terminable.status === 'Active'
-        ? 'terminate the subscription for'
-        : 'remove';
-
-    if (
-      window.confirm(
-        `Are you sure you want to ${actionText} ${row.name}? This action cannot be undone.`,
-      )
-    ) {
-      setClients((previous) =>
-        previous.filter((client) => client.id !== row.id),
-      );
-    }
+    setPendingRemoval(row);
   };
+
+  const confirmRemoval = () => {
+    if (!pendingRemoval) return;
+
+    setClients((previous) =>
+      previous.filter((client) => client.id !== pendingRemoval.id),
+    );
+    setPendingRemoval(null);
+  };
+
+  const removal = pendingRemoval ? removalCopy(pendingRemoval) : null;
 
   return (
     <div className="w-full">
@@ -568,6 +586,18 @@ export function ClientsList() {
           </TableBody>
         </Table>
       </motion.div>
+
+      <ConfirmDialog
+        open={pendingRemoval !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingRemoval(null);
+        }}
+        title={removal?.title ?? ''}
+        description={removal?.description}
+        confirmLabel={removal?.confirmLabel}
+        tone="destructive"
+        onConfirm={confirmRemoval}
+      />
     </div>
   );
 }

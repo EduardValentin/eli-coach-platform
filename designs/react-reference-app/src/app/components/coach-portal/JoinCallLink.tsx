@@ -1,17 +1,10 @@
-import { Link } from 'react-router';
-import { buttonVariants } from '../ThemeButton';
-
-const JOIN_LINK_CLASS = buttonVariants({
-  variant: 'inverted',
-  size: 'xs',
-  textSize: 'sm',
-  weight: 'semibold',
-});
+import { Video } from 'lucide-react';
+import { RowActionLink } from '../RowActionButton';
 
 export function JoinCallLink({ joinPath }: { joinPath: string }) {
   return (
-    <Link to={joinPath} className={JOIN_LINK_CLASS}>
+    <RowActionLink to={joinPath} icon={Video} tone="brand">
       Join call
-    </Link>
+    </RowActionLink>
   );
 }
