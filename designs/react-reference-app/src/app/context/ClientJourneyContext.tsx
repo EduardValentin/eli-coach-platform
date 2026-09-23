@@ -36,6 +36,14 @@ import type { SentPaymentLink } from '../services/paymentLinkService';
 import type { SentInvitation } from '../services/invitationService';
 
 export const DEMO_JOURNEY_CALL_ID = 'ac-demo-client-1';
+export const AWAITING_REVIEW_CALL_ID = 'ac-seed-awaiting-review';
+
+const AWAITING_REVIEW_PERSON: DemoPerson = {
+  firstName: 'Andreea',
+  lastName: 'Popescu',
+  email: 'andreea@example.com',
+  age: 31,
+};
 
 export type DemoJourneyOptions = {
   startPath: SubscriptionStartPath;
@@ -72,10 +80,7 @@ type ClientJourneyContextType = {
   markProgramReady: (callId: string, readyAt: Date) => void;
   scheduleReviewCall: (callId: string, reviewCall: ReviewCall) => void;
   addMeasurements: (callId: string, entry: MeasurementEntry) => void;
-  cancelSubscription: (
-    callId: string,
-    cancelled: CoachingSubscription,
-  ) => void;
+  cancelSubscription: (callId: string, cancelled: CoachingSubscription) => void;
   startProgramNow: (callId: string, started: CoachingSubscription) => void;
 };
 
@@ -159,6 +164,15 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
         startPath: journeyStartPath,
         subscriptionStatus: journeySubscriptionStatus,
         pricing: visitorPricing,
+        now: new Date(),
+      }),
+      [AWAITING_REVIEW_CALL_ID]: seedJourney({
+        callId: AWAITING_REVIEW_CALL_ID,
+        identity: demoIdentity(AWAITING_REVIEW_PERSON, 'female'),
+        stage: 'submitted',
+        startPath: 'immediate',
+        subscriptionStatus: 'active',
+        pricing: 'regular',
         now: new Date(),
       }),
     }),
@@ -323,7 +337,10 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
         applied(
           {
             ...journey,
-            onboarding: { ...draft, submittedAt: journey.onboarding.submittedAt },
+            onboarding: {
+              ...draft,
+              submittedAt: journey.onboarding.submittedAt,
+            },
           },
           'start-onboarding',
         ),
@@ -472,8 +489,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
         journeyForCall,
         journeyForPaymentToken,
         journeyForInvitationToken,
-        demoJourney:
-          journeys[signedInCallId] ?? journeys[DEMO_JOURNEY_CALL_ID],
+        demoJourney: journeys[signedInCallId] ?? journeys[DEMO_JOURNEY_CALL_ID],
         dispatch,
         seedDemoJourney,
         recordPaymentLinkSent,
