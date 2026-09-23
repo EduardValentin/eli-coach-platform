@@ -194,10 +194,11 @@ Prerequisites:
   `global-setup.ts` fails loudly on a placeholder value rather than letting a
   journey time out mid-run.
 - `CLERK_SIGN_IN_URL` set to the real Account Portal URL above.
-- The local database bootstrapped and migrated. Global setup temporarily
-  disables the persisted `WAITLIST_MODE` feature flag so public
-  authentication controls are available; global teardown restores the
-  value the flag held before the run.
+- The local database bootstrapped and migrated. An auto-running fixture
+  visits `/?ff.WAITLIST_MODE=false` before each journey's own navigation, so
+  the browser's session cookie carries the override for the rest of the test
+  and public authentication controls stay available without touching the
+  persisted flag.
 - The instance in Invite-only mode (see above). Journeys create their Clerk
   users through the Backend API and insert the matching `app.accounts` row
   directly, then sign in through the hosted portal with the `+clerk_test`

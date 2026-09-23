@@ -9,16 +9,11 @@ import {
 } from "./clerk-users";
 import { loadRepoRootEnv, requireEnv } from "./env";
 import { resolveRunId } from "./run-id";
-import { restoreWaitlistMode } from "./waitlist-mode";
 
 export default async function globalTeardown() {
   loadRepoRootEnv();
 
-  try {
-    await cleanUpClerkUsers();
-  } finally {
-    await restoreWaitlistMode();
-  }
+  await cleanUpClerkUsers();
 }
 
 async function cleanUpClerkUsers(): Promise<void> {

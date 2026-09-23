@@ -12,6 +12,7 @@ import { PublicNav } from "./public-nav";
 import { resolveRunId } from "./run-id";
 
 type PlatformFixtures = {
+  siteOutOfWaitlistMode: void;
   publicNav: PublicNav;
   accountPortal: AccountPortal;
   testEmail: string;
@@ -89,6 +90,16 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
     await setupClerkTestingToken({ page });
     await use(page);
   },
+
+  // Applies the URL override before the journey's own first page.goto, so the
+  // server's session cookie already carries it for every navigation after.
+  siteOutOfWaitlistMode: [
+    async ({ page }, use) => {
+      await page.goto("/?ff.WAITLIST_MODE=false");
+      await use();
+    },
+    { auto: true },
+  ],
 
   publicNav: async ({ page }, use) => {
     await use(new PublicNav(page));
