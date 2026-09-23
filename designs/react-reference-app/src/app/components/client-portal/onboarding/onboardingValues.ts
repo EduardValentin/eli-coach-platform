@@ -38,6 +38,7 @@ function answerToValue(
   if (field.kind === 'chips') {
     return Array.isArray(answer) ? answer : [];
   }
+  if (field.kind === 'checkbox') return answer === true ? 'true' : 'false';
   if (answer === undefined || answer === null) return '';
   if (typeof answer === 'number' && isMeasureField(field)) {
     return String(toDisplayMeasure(field.kind as MeasureKind, answer, units));
@@ -52,6 +53,7 @@ function valueToAnswer(
   units: MeasureUnits,
 ): OnboardingAnswer {
   if (field.kind === 'chips') return asList(value);
+  if (field.kind === 'checkbox') return asText(value) === 'true';
 
   const text = asText(value).trim();
   if (text === '') return null;
@@ -77,7 +79,10 @@ export function toFormValues(
   units: MeasureUnits,
 ): OnboardingValues {
   return Object.fromEntries(
-    fields.map((field) => [field.id, answerToValue(field, answers[field.id], units)]),
+    fields.map((field) => [
+      field.id,
+      answerToValue(field, answers[field.id], units),
+    ]),
   );
 }
 
@@ -98,12 +103,25 @@ export function toAnswers(
   return answers;
 }
 
+function matchesRevealedBy(
+  revealedBy: NonNullable<OnboardingField['revealedBy']>,
+  values: OnboardingValues,
+): boolean {
+  const expected = Array.isArray(revealedBy.value)
+    ? revealedBy.value
+    : [revealedBy.value];
+  const actual = values[revealedBy.id];
+
+  return Array.isArray(actual)
+    ? actual.some((entry) => expected.includes(entry))
+    : expected.includes(asText(actual));
+}
+
 export function visibleFields(
   fields: readonly OnboardingField[],
   values: OnboardingValues,
 ): OnboardingField[] {
   return fields.filter(
-    (field) =>
-      !field.revealedBy || asText(values[field.revealedBy.id]) === field.revealedBy.value,
+    (field) => !field.revealedBy || matchesRevealedBy(field.revealedBy, values),
   );
 }

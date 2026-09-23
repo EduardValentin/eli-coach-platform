@@ -29,6 +29,7 @@ const REQUIRED_MESSAGES: Record<string, string> = {
   select: 'Choose one option.',
   chips: 'Choose at least one option.',
   date: 'Pick a date.',
+  checkbox: 'Tick the box to continue.',
 };
 
 const TEXT_REQUIRED_MESSAGE = 'Enter an answer.';
@@ -160,9 +161,12 @@ function fieldProblem(
   const empty =
     field.kind === 'chips'
       ? asList(entry.value).length === 0
-      : asText(entry.value).trim() === '';
+      : field.kind === 'checkbox'
+        ? asText(entry.value) !== 'true'
+        : asText(entry.value).trim() === '';
 
-  if (empty) return field.requirement === 'required' ? requiredMessage(field) : true;
+  if (empty)
+    return field.requirement === 'required' ? requiredMessage(field) : true;
   if (field.kind === 'date') return dateProblem(field, asText(entry.value));
   if (!isNumericField(field)) return true;
 

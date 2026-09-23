@@ -4,6 +4,7 @@ import type { Control, ControllerRenderProps } from 'react-hook-form';
 import type { OnboardingField } from '../../../domain/onboardingSchema';
 import { CheckboxChip } from '../../CheckboxChip';
 import { ChoiceGroup, ChoiceOption } from '../../ChoiceGroup';
+import { Checkbox } from '../../ui/checkbox';
 import { Input } from '../../ui/input';
 import {
   Select,
@@ -135,7 +136,31 @@ function fieldEntry(
   );
 }
 
-function LabelText({ field, unit }: { field: OnboardingField; unit: string | null }) {
+function nextChipsValue(
+  field: OnboardingField,
+  current: string | string[] | undefined,
+  option: string,
+  checked: boolean,
+): string[] {
+  const selected = asList(current);
+
+  if (!checked) return selected.filter((picked) => picked !== option);
+  if (field.exclusiveOptions?.includes(option)) return [option];
+
+  const withoutExclusive = selected.filter(
+    (picked) => !field.exclusiveOptions?.includes(picked),
+  );
+
+  return [...withoutExclusive, option];
+}
+
+function LabelText({
+  field,
+  unit,
+}: {
+  field: OnboardingField;
+  unit: string | null;
+}) {
   const suffixes = [
     unit ? `(${unit})` : null,
     field.unitSuffix ? `(${field.unitSuffix})` : null,
@@ -167,6 +192,34 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
       name={field.id}
       rules={fieldRules(field, units)}
       render={({ field: controller }) => {
+        if (field.kind === 'checkbox') {
+          const checked = asText(controller.value) === 'true';
+
+          return (
+            <FormItem>
+              <FormControl>
+                <div className="flex items-start gap-3 rounded-card border border-border-subtle bg-surface-quiet/60 p-4">
+                  <Checkbox
+                    checked={checked}
+                    className="mt-0.5"
+                    id={legendId}
+                    onCheckedChange={(next) =>
+                      controller.onChange(next === true ? 'true' : 'false')
+                    }
+                  />
+                  <label
+                    className="text-sm leading-relaxed text-text-primary"
+                    htmlFor={legendId}
+                  >
+                    {field.label}
+                  </label>
+                </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          );
+        }
+
         if (field.kind === 'radio' || field.kind === 'chips') {
           return (
             <FormItem>
@@ -175,7 +228,9 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
                   <legend className={ONBOARDING_LEGEND_CLASS} id={legendId}>
                     <LabelText field={field} unit={unit} />
                   </legend>
-                  {field.hint && <FormDescription>{field.hint}</FormDescription>}
+                  {field.hint && (
+                    <FormDescription>{field.hint}</FormDescription>
+                  )}
                   {field.kind === 'radio' ? (
                     <ChoiceGroup
                       aria-labelledby={legendId}
@@ -195,14 +250,17 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
                         <CheckboxChip
                           aria-label={option.label}
                           key={option.value}
-                          checked={asList(controller.value).includes(option.value)}
+                          checked={asList(controller.value).includes(
+                            option.value,
+                          )}
                           onCheckedChange={(checked) =>
                             controller.onChange(
-                              checked
-                                ? [...asList(controller.value), option.value]
-                                : asList(controller.value).filter(
-                                    (picked) => picked !== option.value,
-                                  ),
+                              nextChipsValue(
+                                field,
+                                controller.value,
+                                option.value,
+                                checked === true,
+                              ),
                             )
                           }
                         >
@@ -229,7 +287,10 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
               <FormDescription>{field.hint}</FormDescription>
             )}
             {field.kind === 'select' ? (
-              <Select onValueChange={controller.onChange} value={asText(controller.value)}>
+              <Select
+                onValueChange={controller.onChange}
+                value={asText(controller.value)}
+              >
                 <FormControl>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Choose one" />
