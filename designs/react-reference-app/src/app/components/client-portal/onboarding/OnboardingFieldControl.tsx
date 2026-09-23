@@ -3,8 +3,8 @@ import { useId, type ReactElement } from 'react';
 import type { Control, ControllerRenderProps } from 'react-hook-form';
 import type { OnboardingField } from '../../../domain/onboardingSchema';
 import { CheckboxChip } from '../../CheckboxChip';
+import { ChoiceGroup, ChoiceOption } from '../../ChoiceGroup';
 import { Input } from '../../ui/input';
-import { RadioGroup } from '../../ui/radio-group';
 import {
   Select,
   SelectContent,
@@ -30,7 +30,6 @@ import {
   type MeasureUnits,
 } from '../measureUnits';
 import { ONBOARDING_LEGEND_CLASS } from './onboardingCard';
-import { OnboardingRadioOption } from './OnboardingRadioOption';
 import { entryBounds, fieldRules } from './onboardingValidation';
 import {
   asList,
@@ -178,20 +177,18 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
                   </legend>
                   {field.hint && <FormDescription>{field.hint}</FormDescription>}
                   {field.kind === 'radio' ? (
-                    <RadioGroup
+                    <ChoiceGroup
                       aria-labelledby={legendId}
-                      className="mt-2 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-x-6"
+                      className="mt-2 sm:max-w-md"
                       onValueChange={controller.onChange}
                       value={asText(controller.value)}
                     >
                       {(field.options ?? []).map((option) => (
-                        <OnboardingRadioOption
-                          key={option.value}
-                          label={option.label}
-                          value={option.value}
-                        />
+                        <ChoiceOption key={option.value} value={option.value}>
+                          {option.label}
+                        </ChoiceOption>
                       ))}
-                    </RadioGroup>
+                    </ChoiceGroup>
                   ) : (
                     <div className="mt-2 flex flex-wrap gap-2">
                       {(field.options ?? []).map((option) => (
