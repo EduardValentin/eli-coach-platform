@@ -12,6 +12,7 @@ import {
 } from '../../domain/coachingSubscription';
 import {
   clientStatusLabel,
+  isBeforeStage,
   type ClientJourney,
   type JourneyStage,
 } from '../../domain/journey';
@@ -36,7 +37,11 @@ import {
 } from '../ui/alert-dialog';
 
 const PANEL_CLASS =
-  'rounded-panel border border-neutral-100/50 bg-white p-6 shadow-[0_2px_12px_rgb(0,0,0,0.03)] sm:p-8';
+  'rounded-panel border border-border/50 bg-card p-6 shadow-[0_2px_12px_rgb(0,0,0,0.03)] sm:p-8';
+
+function eyebrowFor(stage: JourneyStage): string {
+  return isBeforeStage(stage, 'approved') ? 'Your onboarding' : 'Your program';
+}
 
 const SUPPORTING_LINES: Partial<Record<JourneyStage, string>> = {
   submitted: 'Eli has your answers and will start on them soon.',
@@ -156,7 +161,9 @@ export function ProgramStatusCard() {
         className={PANEL_CLASS}
         initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
       >
-        <SectionEyebrow className="mb-2">Your program</SectionEyebrow>
+        <SectionEyebrow className="mb-2">
+          {eyebrowFor(demoJourney.stage)}
+        </SectionEyebrow>
         <h2
           className="font-serif text-2xl tracking-tight text-text-primary lg:text-3xl"
           id="program-status-heading"
@@ -172,6 +179,10 @@ export function ProgramStatusCard() {
           <p className="mt-2 text-sm text-text-secondary">
             Your program will be delivered on {formatJourneyDate(delivery)}.
           </p>
+        )}
+
+        {reassurance && (
+          <p className="mt-2 text-sm text-text-secondary">{reassurance}</p>
         )}
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -214,10 +225,6 @@ export function ProgramStatusCard() {
           )}
         </div>
       </motion.div>
-
-      {reassurance && (
-        <p className="mt-3 px-1 text-sm text-text-secondary">{reassurance}</p>
-      )}
 
       <StartNowDialog
         onConfirm={() => void startNow()}

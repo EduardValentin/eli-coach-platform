@@ -125,7 +125,7 @@ export function ClientDashboard() {
         subtitle="Here is your daily snapshot and current focus."
       />
 
-      {isPostMvp && <ProgramStatusCard />}
+      <ProgramStatusCard />
 
       {/* Top Metrics Grid: unified nutrition card + cycle phase */}
       <div
