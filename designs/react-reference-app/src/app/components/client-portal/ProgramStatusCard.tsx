@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { motion, useReducedMotion } from 'motion/react';
 import { Link, useNavigate } from 'react-router';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
 import { WITHDRAWAL_WAIVER_COPY } from '../../domain/onboardingCopy';
@@ -22,7 +21,6 @@ import {
   formatCallSchedule,
 } from '../../utils/dateFormatters';
 import { formatJourneyDate } from '../../utils/journeyLabels';
-import { SectionEyebrow } from '../SectionEyebrow';
 import { Button, buttonVariants } from '../ui/button';
 import { cn } from '../ui/utils';
 import {
@@ -35,9 +33,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '../ui/alert-dialog';
-
-const PANEL_CLASS =
-  'rounded-panel border border-border/50 bg-card p-6 shadow-[0_2px_12px_rgb(0,0,0,0.03)] sm:p-8';
+import { ClientWidget } from './ClientWidget';
 
 function eyebrowFor(stage: JourneyStage): string {
   return isBeforeStage(stage, 'approved') ? 'Your onboarding' : 'Your program';
@@ -132,7 +128,6 @@ function StartNowDialog({
 export function ProgramStatusCard() {
   const navigate = useNavigate();
   const { demoJourney, startProgramNow } = useClientJourneys();
-  const prefersReducedMotion = useReducedMotion() ?? false;
   const [confirming, setConfirming] = useState(false);
   const [starting, setStarting] = useState(false);
 
@@ -155,22 +150,12 @@ export function ProgramStatusCard() {
   };
 
   return (
-    <section aria-labelledby="program-status-heading" className="mb-8">
-      <motion.div
-        animate={{ opacity: 1, y: 0 }}
-        className={PANEL_CLASS}
-        initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
+    <div className="mb-8">
+      <ClientWidget
+        eyebrow={eyebrowFor(demoJourney.stage)}
+        headingId="program-status-heading"
+        hero={label}
       >
-        <SectionEyebrow className="mb-2">
-          {eyebrowFor(demoJourney.stage)}
-        </SectionEyebrow>
-        <h2
-          className="font-serif text-2xl tracking-tight text-text-primary lg:text-3xl"
-          id="program-status-heading"
-        >
-          {label}
-        </h2>
-
         <p className="mt-3 max-w-2xl leading-relaxed text-text-secondary">
           {supportingLine(demoJourney)}
         </p>
@@ -224,13 +209,13 @@ export function ProgramStatusCard() {
             </Button>
           )}
         </div>
-      </motion.div>
+      </ClientWidget>
 
       <StartNowDialog
         onConfirm={() => void startNow()}
         onOpenChange={setConfirming}
         open={confirming}
       />
-    </section>
+    </div>
   );
 }

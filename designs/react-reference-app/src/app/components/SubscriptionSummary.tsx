@@ -12,6 +12,7 @@ import {
   startPathLabel,
 } from '../utils/journeyLabels';
 import { cn } from './ui/utils';
+import { SectionEyebrow } from './SectionEyebrow';
 
 export type SubscriptionPerspective = 'coach' | 'client';
 
@@ -98,13 +99,19 @@ export function SubscriptionSummary({
       aria-labelledby={headingId}
       className={cn(PANEL_CLASS, className)}
     >
-      <h2
-        id={headingId}
-        className="mb-4 flex items-center gap-2 font-serif text-lg font-semibold text-text-primary"
-      >
-        <CreditCard size={18} className="text-brand" aria-hidden="true" />
-        Subscription
-      </h2>
+      {perspective === 'client' ? (
+        <SectionEyebrow as="h2" className="mb-2" id={headingId}>
+          Subscription
+        </SectionEyebrow>
+      ) : (
+        <h2
+          id={headingId}
+          className="mb-4 flex items-center gap-2 font-serif text-lg font-semibold text-text-primary"
+        >
+          <CreditCard size={18} className="text-brand" aria-hidden="true" />
+          Subscription
+        </h2>
+      )}
 
       <dl className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-5">
         <Reading term="Bundle" value={bundleLengthLabel(subscription.bundle)} />

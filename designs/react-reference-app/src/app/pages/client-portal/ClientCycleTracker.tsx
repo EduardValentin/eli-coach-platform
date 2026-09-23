@@ -5,6 +5,7 @@ import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { BrandCalendar } from '../../components/BrandCalendar';
 import { ToggleChip } from '../../components/ToggleChip';
 import { Button } from '../../components/ui/button';
+import { ClientWidget } from '../../components/client-portal/ClientWidget';
 import {
   useCycle,
   CYCLE_SYMPTOMS,
@@ -276,8 +277,6 @@ export function ClientCycleTracker() {
     });
   };
 
-  const PhaseIcon = Droplet;
-
   return (
     <div className="w-full max-w-5xl mx-auto">
       <PortalPageHeader
@@ -287,57 +286,35 @@ export function ClientCycleTracker() {
 
       {/* Phase Summary */}
       {clientPhase && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 mb-8 flex items-center gap-5"
+        <ClientWidget
+          eyebrow="Cycle phase"
+          headingId="phase-summary-heading"
+          hero={
+            <span style={{ color: clientPhase.phaseColor }}>
+              {clientPhase.phaseName}
+            </span>
+          }
+          className="mb-8"
         >
-          <div
-            className="w-14 h-14 rounded-full flex items-center justify-center shrink-0"
-            style={{
-              backgroundColor: clientPhase.phaseSoftColor,
-              color: clientPhase.phaseColor,
-            }}
-          >
-            <PhaseIcon size={24} strokeWidth={2.5} />
-          </div>
-          <div>
-            <div className="flex items-center gap-3">
-              <h2
-                className="font-serif text-lg lg:text-xl font-semibold"
-                style={{ color: clientPhase.phaseColor }}
-              >
-                {clientPhase.phaseName} Phase
-              </h2>
-              <span className="text-xs font-bold text-text-secondary tracking-widest uppercase">
-                Day {clientPhase.dayInCycle}
-              </span>
-            </div>
-            <p className="text-sm text-text-secondary mt-1 font-medium">
-              {clientPhase.phase === 'menstrual' &&
-                'Focus on iron-rich foods and gentle movement.'}
-              {clientPhase.phase === 'follicular' &&
-                'Energy is rising. Great time to increase intensity.'}
-              {clientPhase.phase === 'ovulatory' &&
-                'Peak energy. Push your training and eat lighter.'}
-              {clientPhase.phase === 'luteal' &&
-                'Prioritize complex carbs and recovery. Listen to your body.'}
-            </p>
-          </div>
-        </motion.div>
+          <p className="mt-0.5 text-[10px] font-bold uppercase tracking-widest text-text-secondary">
+            Day {clientPhase.dayInCycle}
+          </p>
+          <p className="text-sm text-text-secondary mt-2 font-medium">
+            {clientPhase.phase === 'menstrual' &&
+              'Focus on iron-rich foods and gentle movement.'}
+            {clientPhase.phase === 'follicular' &&
+              'Energy is rising. Great time to increase intensity.'}
+            {clientPhase.phase === 'ovulatory' &&
+              'Peak energy. Push your training and eat lighter.'}
+            {clientPhase.phase === 'luteal' &&
+              'Prioritize complex carbs and recovery. Listen to your body.'}
+          </p>
+        </ClientWidget>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
         {/* Calendar */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-white p-6 lg:p-8 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
-        >
-          <h2 className="font-serif text-lg lg:text-xl text-text-primary font-semibold mb-6">
-            Your Calendar
-          </h2>
+        <ClientWidget eyebrow="Your calendar" headingId="calendar-heading">
           <BrandCalendar
             mode="single"
             selected={selectedDate}
@@ -366,32 +343,35 @@ export function ClientCycleTracker() {
               <span>Selected</span>
             </div>
           </div>
-        </motion.div>
+        </ClientWidget>
 
         {/* Log Panel */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="bg-white p-6 lg:p-8 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 self-start"
+        <ClientWidget
+          eyebrow="Log period"
+          headingId="log-period-heading"
+          hero={
+            selectedDate
+              ? selectedDate.toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                })
+              : undefined
+          }
+          className="self-start"
+          action={
+            selectedDate && (
+              <button
+                aria-label="Clear selected date"
+                onClick={() => setSelectedDate(undefined)}
+                className="text-text-secondary hover:text-text-secondary transition-colors"
+              >
+                <X size={18} />
+              </button>
+            )
+          }
         >
           {selectedDate ? (
-            <div>
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="font-serif text-lg lg:text-xl text-text-primary font-semibold">
-                  {selectedDate.toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                  })}
-                </h2>
-                <button
-                  onClick={() => setSelectedDate(undefined)}
-                  className="text-text-secondary hover:text-text-secondary transition-colors"
-                >
-                  <X size={18} />
-                </button>
-              </div>
-
+            <div className="mt-4">
               {/* Flow intensity */}
               <div className="mb-6">
                 <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3 block">
@@ -482,29 +462,22 @@ export function ClientCycleTracker() {
               <div className="w-16 h-16 rounded-full bg-cycle-menstrual/10 text-cycle-menstrual flex items-center justify-center mx-auto mb-4">
                 <Droplet size={28} />
               </div>
-              <h3 className="font-serif text-lg text-text-primary mb-2">
-                Log a Period Day
-              </h3>
               <p className="text-sm text-text-secondary max-w-xs mx-auto">
                 Select a date on the calendar to log your flow, symptoms, and
                 notes.
               </p>
             </div>
           )}
-        </motion.div>
+        </ClientWidget>
       </div>
 
       {/* Recent Logs */}
       {recentEntries.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="mt-8 bg-white p-6 lg:p-8 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
+        <ClientWidget
+          eyebrow="Recent logs"
+          headingId="recent-logs-heading"
+          className="mt-8"
         >
-          <h2 className="font-serif text-lg lg:text-xl text-text-primary font-semibold mb-4 lg:mb-6">
-            Recent Logs
-          </h2>
           <div className="space-y-3">
             {recentEntries.map((entry) => (
               <SwipeableLogEntry
@@ -514,7 +487,7 @@ export function ClientCycleTracker() {
               />
             ))}
           </div>
-        </motion.div>
+        </ClientWidget>
       )}
     </div>
   );

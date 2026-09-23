@@ -1,16 +1,7 @@
 import { useRef, ChangeEvent } from 'react';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { motion } from 'motion/react';
-import {
-  User,
-  Target,
-  Flame,
-  Utensils,
-  FileText,
-  Droplet,
-  Camera,
-  Trash2,
-} from 'lucide-react';
+import { User, FileText, Camera, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { showUndoToast } from '../../utils/showUndoToast';
 import {
@@ -22,6 +13,8 @@ import { useCycle } from '../../context/CycleContext';
 import { useUnitPreferences } from '../../context/UnitPreferencesContext';
 import { formatHeight, formatBodyWeight } from '../../utils/units';
 import { MeasurementsSection } from '../../components/client-portal/MeasurementsSection';
+import { ClientWidget } from '../../components/client-portal/ClientWidget';
+import { SectionEyebrow } from '../../components/SectionEyebrow';
 import { Button } from '../../components/ui/button';
 
 const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
@@ -81,6 +74,7 @@ export function ClientProfile() {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
+        aria-labelledby="profile-picture-heading"
         className="bg-white p-6 lg:p-8 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 mb-6 lg:mb-8 flex flex-col sm:flex-row items-center gap-6"
       >
         <div className="relative shrink-0">
@@ -98,12 +92,12 @@ export function ClientProfile() {
         </div>
 
         <div className="flex-1 min-w-0 text-center sm:text-left">
-          <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">
+          <SectionEyebrow as="h2" className="mb-1" id="profile-picture-heading">
             Profile Picture
-          </p>
-          <h2 className="font-serif text-xl lg:text-2xl text-text-primary mb-4">
+          </SectionEyebrow>
+          <p className="font-serif text-xl lg:text-2xl text-text-primary mb-4">
             {fullName(clientProfile)}
-          </h2>
+          </p>
 
           <input
             ref={fileInputRef}
@@ -137,40 +131,15 @@ export function ClientProfile() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
         {/* Basic info */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white p-6 lg:p-8 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
-        >
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-card bg-brand/10 text-brand flex items-center justify-center">
-              <User size={18} strokeWidth={2.5} />
-            </div>
-            <h2 className="font-serif text-xl text-text-primary font-semibold">
-              About You
-            </h2>
-          </div>
+        <ClientWidget eyebrow="About you" headingId="about-you-heading">
           <ProfileField label="Full Name" value={fullName(clientProfile)} />
           <ProfileField label="Email" value={clientProfile.email} />
           <ProfileField label="Age" value={`${clientProfile.age} years`} />
           <ProfileField label="Gender" value={clientProfile.gender} />
-        </motion.div>
+        </ClientWidget>
 
         {/* Body metrics */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05 }}
-          className="bg-white p-6 lg:p-8 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
-        >
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-card bg-brand-secondary/10 text-brand-secondary flex items-center justify-center">
-              <Target size={18} strokeWidth={2.5} />
-            </div>
-            <h2 className="font-serif text-xl text-text-primary font-semibold">
-              Body & Goals
-            </h2>
-          </div>
+        <ClientWidget eyebrow="Body & goals" headingId="body-goals-heading">
           <ProfileField
             label="Height"
             value={formatHeight(clientProfile.heightCm, heightUnit)}
@@ -187,23 +156,10 @@ export function ClientProfile() {
             label="Primary Goal"
             value={clientProfile.primaryGoal}
           />
-        </motion.div>
+        </ClientWidget>
 
         {/* Nutrition */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-white p-6 lg:p-8 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
-        >
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-card bg-metric-energy-soft text-metric-energy flex items-center justify-center">
-              <Flame size={18} strokeWidth={2.5} />
-            </div>
-            <h2 className="font-serif text-xl text-text-primary font-semibold">
-              Nutrition
-            </h2>
-          </div>
+        <ClientWidget eyebrow="Nutrition" headingId="profile-nutrition-heading">
           <ProfileField
             label="BMR"
             value={`${clientProfile.bmr.toLocaleString()} kcal`}
@@ -216,44 +172,25 @@ export function ClientProfile() {
             label="Macros"
             value={`${clientProfile.proteinGrams}g Protein · ${clientProfile.carbsGrams}g Carbs · ${clientProfile.fatsGrams}g Fats`}
           />
-        </motion.div>
+        </ClientWidget>
 
         {/* Dietary restrictions */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="bg-white p-6 lg:p-8 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
+        <ClientWidget
+          eyebrow="Dietary restrictions"
+          headingId="dietary-restrictions-heading"
         >
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-card bg-neutral-100 text-text-secondary flex items-center justify-center">
-              <Utensils size={18} strokeWidth={2.5} />
-            </div>
-            <h2 className="font-serif text-xl text-text-primary font-semibold">
-              Dietary Restrictions
-            </h2>
-          </div>
           <p className="text-sm text-text-secondary leading-relaxed">
             {clientProfile.dietaryRestrictions || 'None on file.'}
           </p>
-        </motion.div>
+        </ClientWidget>
 
         {/* Menstrual profile */}
         {menstrualProfile && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="bg-white p-6 lg:p-8 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 lg:col-span-2"
+          <ClientWidget
+            eyebrow="Menstrual health"
+            headingId="menstrual-health-heading"
+            className="lg:col-span-2"
           >
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-card bg-cycle-menstrual/10 text-cycle-menstrual flex items-center justify-center">
-                <Droplet size={18} strokeWidth={2.5} />
-              </div>
-              <h2 className="font-serif text-xl text-text-primary font-semibold">
-                Menstrual Health
-              </h2>
-            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8">
               <ProfileField
                 label="Cycle"
@@ -290,7 +227,7 @@ export function ClientProfile() {
                 </p>
               </div>
             )}
-          </motion.div>
+          </ClientWidget>
         )}
       </div>
 

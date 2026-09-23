@@ -133,6 +133,7 @@ export function MeasurementsSection() {
       headingId="measurements-heading"
       emptyMessage="Nothing recorded yet. Your first set goes in with your answers."
       className="mt-6 lg:mt-8"
+      perspective="client"
     >
       <Button
         className="mt-6 w-full sm:w-auto"

@@ -15,6 +15,9 @@ import {
   TableRow,
 } from './ui/table';
 import { cn } from './ui/utils';
+import { SectionEyebrow } from './SectionEyebrow';
+
+export type MeasurementsPerspective = 'coach' | 'client';
 
 const PANEL_CLASS =
   'rounded-panel border border-border/50 bg-card p-6 shadow-[0_2px_12px_rgb(0,0,0,0.03)]';
@@ -40,6 +43,7 @@ export function MeasurementsTable({
   intro,
   className,
   children,
+  perspective = 'coach',
 }: {
   measurements: MeasurementEntry[];
   heightCm: number;
@@ -49,6 +53,7 @@ export function MeasurementsTable({
   intro?: ReactNode;
   className?: string;
   children?: ReactNode;
+  perspective?: MeasurementsPerspective;
 }) {
   const prefersReducedMotion = useReducedMotion() ?? false;
   const history = newestFirst(measurements);
@@ -60,13 +65,23 @@ export function MeasurementsTable({
       className={cn(PANEL_CLASS, className)}
       aria-labelledby={headingId}
     >
-      <h2
-        id={headingId}
-        className="mb-4 flex items-center gap-2 font-serif text-lg font-semibold text-text-primary"
-      >
-        <Ruler size={18} className="text-brand-secondary" aria-hidden="true" />
-        Measurements
-      </h2>
+      {perspective === 'client' ? (
+        <SectionEyebrow as="h2" className="mb-2" id={headingId}>
+          Measurements
+        </SectionEyebrow>
+      ) : (
+        <h2
+          id={headingId}
+          className="mb-4 flex items-center gap-2 font-serif text-lg font-semibold text-text-primary"
+        >
+          <Ruler
+            size={18}
+            className="text-brand-secondary"
+            aria-hidden="true"
+          />
+          Measurements
+        </h2>
+      )}
 
       {intro}
 

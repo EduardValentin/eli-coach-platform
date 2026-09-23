@@ -1,4 +1,4 @@
-import type { HTMLAttributes } from 'react';
+import type { ElementType, HTMLAttributes } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from './ui/utils';
 
@@ -13,18 +13,23 @@ const eyebrowVariants = cva('uppercase tracking-section-eyebrow font-sans', {
 });
 
 interface SectionEyebrowProps
-  extends HTMLAttributes<HTMLParagraphElement>,
-    VariantProps<typeof eyebrowVariants> {}
+  extends HTMLAttributes<HTMLElement>, VariantProps<typeof eyebrowVariants> {
+  as?: ElementType;
+}
 
 export function SectionEyebrow({
+  as: Component = 'p',
   variant,
   className,
   children,
   ...props
 }: SectionEyebrowProps) {
   return (
-    <p className={cn(eyebrowVariants({ variant }), className)} {...props}>
+    <Component
+      className={cn(eyebrowVariants({ variant }), className)}
+      {...props}
+    >
       {children}
-    </p>
+    </Component>
   );
 }

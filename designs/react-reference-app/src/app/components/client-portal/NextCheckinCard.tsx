@@ -1,4 +1,4 @@
-import { CalendarDays, Video } from 'lucide-react';
+import { Video } from 'lucide-react';
 import { useCheckins } from '../../context/CheckinContext';
 import {
   formatCheckinDate,
@@ -7,6 +7,7 @@ import {
 import { buttonVariants } from '../ui/button';
 import { cn } from '../ui/utils';
 import { RowActionLink } from '../RowActionButton';
+import { ClientWidget } from './ClientWidget';
 
 export function NextCheckinCard() {
   const { getUpcomingCheckins } = useCheckins();
@@ -15,17 +16,13 @@ export function NextCheckinCard() {
   if (!nextCheckin) return null;
 
   return (
-    <div className="p-4 rounded-card bg-brand/5 border border-brand/10">
-      <div className="flex items-center gap-2 mb-2">
-        <CalendarDays size={14} className="text-brand" />
-        <span className="text-[10px] font-bold text-brand uppercase tracking-widest">
-          Next Check-in
-        </span>
-      </div>
-      <p className="text-sm font-semibold text-text-primary">
-        {formatCheckinDate(nextCheckin.date)}
-      </p>
-      <p className="text-xs text-text-secondary mb-3">
+    <ClientWidget
+      eyebrow="Next check-in"
+      headingId="next-checkin-heading"
+      hero={formatCheckinDate(nextCheckin.date)}
+      className="p-4 sm:p-4"
+    >
+      <p className="mb-3 text-xs text-text-secondary">
         {formatCheckinTime(nextCheckin.time)}
       </p>
       <a
@@ -40,6 +37,6 @@ export function NextCheckinCard() {
       <RowActionLink to="/portal/checkins" className="mt-2 w-full">
         Manage check-ins
       </RowActionLink>
-    </div>
+    </ClientWidget>
   );
 }

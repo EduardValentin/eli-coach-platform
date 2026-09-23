@@ -1,13 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { motion } from 'motion/react';
-import {
-  Flame,
-  Target as TargetIcon,
-  Activity,
-  Droplet,
-  Play,
-  Utensils,
-} from 'lucide-react';
+import { Target as TargetIcon, Activity, Flame, Play } from 'lucide-react';
 import { useTraining } from '../../context/TrainingContext';
 import { useCycle } from '../../context/CycleContext';
 import {
@@ -20,6 +12,7 @@ import { useNavigate, useSearchParams, Link } from 'react-router';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { ProgramStatusCard } from '../../components/client-portal/ProgramStatusCard';
 import { ReviewCallScheduler } from '../../components/client-portal/ReviewCallScheduler';
+import { ClientWidget } from '../../components/client-portal/ClientWidget';
 import { MACRO_BAR } from '../../components/coach-portal/nutrition/nutrition-constants';
 import { useAppState } from '../../context/AppContext';
 import { cn } from '../../components/ui/utils';
@@ -135,29 +128,11 @@ export function ClientDashboard() {
       >
         {/* Daily Nutrition Card — BMR, Daily Target + macro split */}
         {isPostMvp && (
-          <motion.section
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            aria-labelledby="nutrition-heading"
-            className="lg:col-span-2 bg-white p-5 sm:p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
+          <ClientWidget
+            eyebrow="Daily nutrition"
+            headingId="nutrition-heading"
+            className="lg:col-span-2"
           >
-            <div className="flex items-center justify-between gap-2 mb-5">
-              <h2
-                id="nutrition-heading"
-                className="text-xs font-bold text-text-secondary uppercase tracking-widest"
-              >
-                Daily Nutrition
-              </h2>
-              <span className="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center shrink-0">
-                <Utensils
-                  size={16}
-                  className="text-brand"
-                  strokeWidth={2.5}
-                  aria-hidden="true"
-                />
-              </span>
-            </div>
-
             {/* Headline calorie figures: BMR · Maintenance · Daily Target */}
             <div className="flex flex-wrap items-end gap-x-10 gap-y-4 mb-5">
               <div>
@@ -297,41 +272,23 @@ export function ClientDashboard() {
                 ))}
               </ul>
             </div>
-          </motion.section>
+          </ClientWidget>
         )}
 
         {/* Phase Card (kept separate) */}
         <Link to="/portal/cycle" className="block h-full">
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
-            className="h-full bg-white p-5 sm:p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 hover:border-brand/20 hover:shadow-md transition-all cursor-pointer flex flex-col"
+          <ClientWidget
+            eyebrow="Cycle phase"
+            headingId="phase-heading"
+            hero={clientPhase?.phaseName ?? 'N/A'}
+            className="h-full transition-all hover:border-brand/20 hover:shadow-md"
           >
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-bold text-text-secondary uppercase tracking-widest">
-                Phase
-              </span>
-              <span className="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center shrink-0">
-                <Droplet
-                  size={16}
-                  className="text-brand"
-                  strokeWidth={2.5}
-                  aria-hidden="true"
-                />
-              </span>
-            </div>
-            <div className="min-w-0 mt-auto pt-4">
-              <span className="font-serif text-3xl lg:text-4xl text-text-primary block truncate">
-                {clientPhase?.phaseName ?? 'N/A'}
-              </span>
-              {clientPhase && (
-                <span className="text-xs font-bold text-text-secondary uppercase tracking-widest block mt-0.5">
-                  Day {clientPhase.dayInCycle}
-                </span>
-              )}
-            </div>
-          </motion.div>
+            {clientPhase && (
+              <p className="mt-0.5 text-[10px] font-bold uppercase tracking-widest text-text-secondary">
+                Day {clientPhase.dayInCycle}
+              </p>
+            )}
+          </ClientWidget>
         </Link>
       </div>
 
@@ -343,28 +300,22 @@ export function ClientDashboard() {
       >
         {/* Focus Card - Spans 2 cols on lg */}
         {isPostMvp && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="lg:col-span-2 bg-white p-8 lg:p-10 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col items-start"
-          >
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full mb-4 gap-4">
-              <h2 className="font-serif text-xl lg:text-2xl text-text-primary font-semibold">
-                Today's Focus
-              </h2>
-              {todayInfo && !todayInfo.isRest && (
-                <div className="bg-metric-energy-soft text-metric-energy px-3 py-1.5 rounded-field text-xs font-bold uppercase tracking-widest self-start sm:self-auto">
+          <ClientWidget
+            eyebrow="Today's focus"
+            headingId="focus-heading"
+            className="lg:col-span-2"
+            action={
+              todayInfo && !todayInfo.isRest ? (
+                <div className="shrink-0 rounded-field bg-metric-energy-soft px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-metric-energy">
                   {todayInfo.dayName} &middot; {todayInfo.day.type}
                 </div>
-              )}
-              {todayInfo?.isRest && (
-                <div className="bg-neutral-100 text-text-secondary px-3 py-1.5 rounded-field text-xs font-bold uppercase tracking-widest self-start sm:self-auto">
+              ) : todayInfo?.isRest ? (
+                <div className="shrink-0 rounded-field bg-neutral-100 px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-text-secondary">
                   Rest Day
                 </div>
-              )}
-            </div>
-
+              ) : null
+            }
+          >
             {activeGoal && (
               <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-brand-secondary/10 text-brand-secondary rounded-compact text-caption font-semibold mb-4">
                 <TargetIcon size={12} />
@@ -391,23 +342,17 @@ export function ClientDashboard() {
                 Enjoy your rest day
               </div>
             )}
-          </motion.div>
+          </ClientWidget>
         )}
 
         {/* Profile Details Card - Spans 1 col */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25 }}
-          className="bg-white p-8 lg:p-10 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
+        <ClientWidget
+          eyebrow="Profile details"
+          headingId="profile-details-heading"
         >
-          <h2 className="font-serif text-xl text-text-primary font-semibold mb-8">
-            Profile Details
-          </h2>
-
           <div className="space-y-6">
             <div>
-              <p className="text-xs font-bold text-text-secondary uppercase tracking-widest mb-1">
+              <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">
                 Height & Weight
               </p>
               <p className="font-semibold text-sm text-text-primary">
@@ -418,7 +363,7 @@ export function ClientDashboard() {
             </div>
 
             <div>
-              <p className="text-xs font-bold text-text-secondary uppercase tracking-widest mb-1">
+              <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">
                 Primary Goal
               </p>
               <p className="font-semibold text-sm text-text-primary">
@@ -427,7 +372,7 @@ export function ClientDashboard() {
             </div>
 
             <div>
-              <p className="text-xs font-bold text-text-secondary uppercase tracking-widest mb-1">
+              <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">
                 Activity Level
               </p>
               <p className="font-semibold text-sm text-text-primary">
@@ -440,11 +385,11 @@ export function ClientDashboard() {
 
           <Link
             to="/portal/profile"
-            className="mt-6 inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary-hover transition-colors"
+            className="mt-6 inline-block text-sm font-medium text-primary hover:underline"
           >
             View full profile &rarr;
           </Link>
-        </motion.div>
+        </ClientWidget>
       </div>
 
       {isPostMvp && (

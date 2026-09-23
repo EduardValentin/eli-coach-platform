@@ -43,6 +43,7 @@ import {
 } from '../../components/coach-portal/nutrition/nutrition-constants';
 import { useClientProfile } from '../../context/ClientProfileContext';
 import { ResponsiveSheetDialog } from '../../components/workout/ResponsiveSheetDialog';
+import { SectionEyebrow } from '../../components/SectionEyebrow';
 import { ConfirmDialog } from '../../components/ui/confirm-dialog';
 import { RecipeVisual } from '../../components/coach-portal/nutrition/RecipeVisual';
 import { Button } from '../../components/ui/button';
@@ -739,10 +740,10 @@ export function ClientNutrition() {
       />
 
       {/* Week strip */}
-      <section aria-label="Week overview">
-        <h2 className="text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-3">
+      <section aria-labelledby="week-strip-heading">
+        <SectionEyebrow as="h2" className="mb-3" id="week-strip-heading">
           This block
-        </h2>
+        </SectionEyebrow>
         <div className="overflow-x-auto -mx-0.5 pb-1">
           <div className="inline-flex gap-2 px-0.5 min-w-max">
             {block.days.map((day) => {
@@ -813,14 +814,21 @@ export function ClientNutrition() {
             >
               <div className="flex items-center justify-between gap-3 flex-wrap">
                 <div>
-                  <h2 className="font-serif text-xl text-text-primary font-semibold leading-none mb-1">
+                  <SectionEyebrow
+                    as="h2"
+                    className="mb-2"
+                    id="nutrition-day-heading"
+                  >
+                    Today's meals
+                  </SectionEyebrow>
+                  <p className="font-serif text-2xl tracking-tight text-text-primary lg:text-3xl leading-none mb-1">
                     {format(parseISO(selectedDay.date), 'EEEE, MMMM d')}
                     {selectedDay.date === today && (
                       <span className="ml-2 text-xs font-sans font-semibold uppercase tracking-widest text-text-secondary">
                         Today
                       </span>
                     )}
-                  </h2>
+                  </p>
                   {selectedDay.phase && (
                     <p
                       className="inline-flex items-center gap-1.5 text-sm font-semibold"

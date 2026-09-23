@@ -40,7 +40,10 @@ function renderCard(devParams: string) {
               <ClientJourneyProvider>
                 <Routes>
                   <Route element={<ProgramStatusCard />} path="/portal" />
-                  <Route element={<p>onboarding page</p>} path="/portal/onboarding" />
+                  <Route
+                    element={<p>onboarding page</p>}
+                    path="/portal/onboarding"
+                  />
                 </Routes>
               </ClientJourneyProvider>
             </AssessmentCallProvider>
@@ -60,11 +63,8 @@ describe('the program status card', () => {
     // arrange
     renderCard('?session=client&jstage=submitted');
 
-    // act
-    const heading = screen.getByRole('heading', { level: 2 });
-
-    // assert
-    expect(heading).toHaveTextContent('Sent to your coach');
+    // act & assert
+    expect(screen.getByText('Sent to your coach')).toBeVisible();
     expect(
       screen.getByText('Eli has your answers and will start on them soon.'),
     ).toBeVisible();
@@ -74,11 +74,10 @@ describe('the program status card', () => {
     // arrange
     renderCard('?session=client&jstage=reviewing');
 
-    // act
-    const heading = screen.getByRole('heading', { level: 2 });
-
-    // assert
-    expect(heading).toHaveTextContent('Your coach is reviewing your answers');
+    // act & assert
+    expect(
+      screen.getByText('Your coach is reviewing your answers'),
+    ).toBeVisible();
     expect(
       screen.getByText(
         "You'll see the next step here as soon as she has looked through your answers.",
@@ -90,11 +89,8 @@ describe('the program status card', () => {
     // arrange
     renderCard('?session=client&jstage=approved');
 
-    // act
-    const heading = screen.getByRole('heading', { level: 2 });
-
-    // assert
-    expect(heading).toHaveTextContent('Your answers are approved');
+    // act & assert
+    expect(screen.getByText('Your answers are approved')).toBeVisible();
     expect(
       screen.getByText(
         "Eli is putting your program together. You'll find it here as soon as it's ready.",
@@ -117,11 +113,10 @@ describe('the program status card', () => {
     // arrange
     renderCard('?session=client&jstage=needs-details');
 
-    // act
-    const heading = screen.getByRole('heading', { level: 2 });
-
-    // assert
-    expect(heading).toHaveTextContent('Your coach needs a few more details');
+    // act & assert
+    expect(
+      screen.getByText('Your coach needs a few more details'),
+    ).toBeVisible();
     expect(
       screen.getByText(
         'Two quick things before I build your plan — tell me a little more about your sleep and about that shoulder.',
@@ -133,12 +128,11 @@ describe('the program status card', () => {
     // arrange
     renderCard('?session=client&jstage=program-ready');
 
-    // act
-    const heading = screen.getByRole('heading', { level: 2 });
-
-    // assert
-    expect(heading).toHaveTextContent('Your program is ready');
-    expect(screen.getByText("Head to your plan whenever you're ready.")).toBeVisible();
+    // act & assert
+    expect(screen.getByText('Your program is ready')).toBeVisible();
+    expect(
+      screen.getByText("Head to your plan whenever you're ready."),
+    ).toBeVisible();
     expect(screen.getByRole('link', { name: 'See my plan' })).toHaveAttribute(
       'href',
       '/portal/plan',
@@ -166,7 +160,9 @@ describe('the program status card', () => {
     renderCard('?session=client&jstage=reviewing&jstart=waiting');
 
     // act
-    await userEvent.click(screen.getByRole('button', { name: 'Start my program now' }));
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Start my program now' }),
+    );
 
     // assert
     expect(
@@ -179,10 +175,14 @@ describe('the program status card', () => {
   it('drops the waiting line once she starts her program now', async () => {
     // arrange
     renderCard('?session=client&jstage=reviewing&jstart=waiting');
-    await userEvent.click(screen.getByRole('button', { name: 'Start my program now' }));
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Start my program now' }),
+    );
 
     // act
-    await userEvent.click(screen.getByRole('button', { name: 'Start my program now' }));
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Start my program now' }),
+    );
 
     // assert
     await waitFor(
