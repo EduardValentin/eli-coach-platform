@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { motion } from 'motion/react';
 import { UserX, ArrowRight, ShieldAlert, Users } from 'lucide-react';
-import { Link, useSearchParams } from 'react-router';
+import { Link, useNavigate, useSearchParams } from 'react-router';
 import { Button, buttonVariants } from '../../components/ui/button';
 import { cn } from '../../components/ui/utils';
 import { RowActionButton } from '../../components/RowActionButton';
@@ -260,31 +260,40 @@ function RosterActions({
   onTerminate: (row: RosterRow) => void;
 }) {
   return (
-    <div className="flex items-center gap-2">
-      {row.terminable &&
-        (row.terminable.status === 'Active' ? (
-          <RowActionButton
-            icon={ShieldAlert}
-            tone="destructive"
-            onClick={() => onTerminate(row)}
-            title="Terminate subscription"
-          >
-            Terminate
-          </RowActionButton>
-        ) : (
-          <RowActionButton
-            icon={UserX}
-            onClick={() => onTerminate(row)}
-            title="Remove from system"
-          >
-            Remove
-          </RowActionButton>
-        ))}
+    <div className="flex items-center justify-between gap-2">
+      <div>
+        {row.terminable &&
+          (row.terminable.status === 'Active' ? (
+            <RowActionButton
+              icon={ShieldAlert}
+              tone="destructive"
+              onClick={(event) => {
+                event.stopPropagation();
+                onTerminate(row);
+              }}
+              title="Terminate subscription"
+            >
+              Terminate
+            </RowActionButton>
+          ) : (
+            <RowActionButton
+              icon={UserX}
+              onClick={(event) => {
+                event.stopPropagation();
+                onTerminate(row);
+              }}
+              title="Remove from system"
+            >
+              Remove
+            </RowActionButton>
+          ))}
+      </div>
 
       <Link
         to={row.detailPath}
         aria-label={row.actionLabel}
         title={row.actionLabel}
+        onClick={(event) => event.stopPropagation()}
         className={cn(
           buttonVariants({ variant: 'outline', size: 'icon' }),
           'opacity-0 hover:bg-text-primary hover:text-white hover:border-text-primary group-hover:opacity-100 focus-visible:opacity-100',
@@ -303,8 +312,12 @@ function RosterTableRow({
   row: RosterRow;
   onTerminate: (row: RosterRow) => void;
 }) {
+  const navigate = useNavigate();
   return (
-    <TableRow className="group">
+    <TableRow
+      className="group cursor-pointer"
+      onClick={() => navigate(row.detailPath)}
+    >
       <TableCell>
         <div className="flex items-center gap-3">
           <RosterAvatar row={row} />
