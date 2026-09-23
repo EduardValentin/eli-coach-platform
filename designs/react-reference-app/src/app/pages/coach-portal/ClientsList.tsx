@@ -2,8 +2,12 @@ import { useState } from 'react';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { motion } from 'motion/react';
 import { UserX, ArrowRight, ShieldAlert, Users } from 'lucide-react';
-import { Link, useSearchParams } from 'react-router';
+import { useSearchParams } from 'react-router';
 import { Button } from '../../components/ui/button';
+import {
+  RowActionButton,
+  RowActionLink,
+} from '../../components/RowActionButton';
 import { Badge } from '../../components/ui/badge';
 import {
   Select,
@@ -257,44 +261,35 @@ function RosterActions({
   onTerminate: (row: RosterRow) => void;
 }) {
   return (
-    <div
-      className={`flex items-center justify-end gap-3 ${
-        row.terminable
-          ? 'opacity-0 group-hover:opacity-100 transition-opacity'
-          : ''
-      }`}
-    >
-      {row.terminable && (
-        <button
-          onClick={() => onTerminate(row)}
-          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-control text-xs font-semibold transition-colors ${
-            row.terminable.status === 'Active'
-              ? 'text-red-600 hover:bg-red-50'
-              : 'text-text-secondary hover:bg-surface-quiet hover:text-text-primary'
-          }`}
-          title={
-            row.terminable.status === 'Active'
-              ? 'Terminate Subscription'
-              : 'Remove from System'
-          }
-        >
-          {row.terminable.status === 'Active' ? (
-            <ShieldAlert size={14} />
-          ) : (
-            <UserX size={14} />
-          )}
-          {row.terminable.status === 'Active' ? 'Terminate' : 'Remove'}
-        </button>
-      )}
+    <div className="flex items-center justify-end gap-2">
+      {row.terminable &&
+        (row.terminable.status === 'Active' ? (
+          <RowActionButton
+            icon={ShieldAlert}
+            tone="destructive"
+            onClick={() => onTerminate(row)}
+            title="Terminate subscription"
+          >
+            Terminate
+          </RowActionButton>
+        ) : (
+          <RowActionButton
+            icon={UserX}
+            onClick={() => onTerminate(row)}
+            title="Remove from system"
+          >
+            Remove
+          </RowActionButton>
+        ))}
 
-      <Link
+      <RowActionLink
         to={row.detailPath}
+        icon={ArrowRight}
         aria-label={row.actionLabel}
-        className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white border border-border/50 text-text-secondary hover:bg-text-primary hover:text-white hover:border-text-primary transition-all"
         title={row.actionLabel}
       >
-        <ArrowRight size={14} aria-hidden="true" />
-      </Link>
+        View
+      </RowActionLink>
     </div>
   );
 }
@@ -307,7 +302,7 @@ function RosterTableRow({
   onTerminate: (row: RosterRow) => void;
 }) {
   return (
-    <TableRow className="group">
+    <TableRow>
       <TableCell>
         <div className="flex items-center gap-3">
           <RosterAvatar row={row} />

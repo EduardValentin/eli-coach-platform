@@ -21,7 +21,6 @@ import type { PrototypeBooking } from '../../services/assessmentCallService';
 const DAY_MS = 24 * 60 * 60 * 1000;
 const VISITOR_FIRST_NAME = 'Maria';
 const VISITOR_LAST_NAME = 'Ionescu';
-const VISITOR = `${VISITOR_FIRST_NAME} ${VISITOR_LAST_NAME}`;
 const VISITOR_EMAIL = 'maria@example.com';
 const WAIT = { timeout: 4000 };
 
@@ -103,10 +102,7 @@ function JourneyDriver() {
       >
         driver: mark paid
       </button>
-      <button
-        type="button"
-        onClick={() => recordAccountCreated(BOOKING.id)}
-      >
+      <button type="button" onClick={() => recordAccountCreated(BOOKING.id)}>
         driver: create account
       </button>
     </>
@@ -142,12 +138,6 @@ function renderPage(urlQuery = '') {
   return userEvent.setup();
 }
 
-async function openRowMenu(user: ReturnType<typeof userEvent.setup>) {
-  await user.click(
-    screen.getByRole('button', { name: `Journey actions for ${VISITOR}` }),
-  );
-}
-
 function findStageBadge(label: string) {
   return within(
     screen.getByRole('list', { name: 'Assessment calls' }),
@@ -155,14 +145,12 @@ function findStageBadge(label: string) {
 }
 
 async function sendPaymentLink(user: ReturnType<typeof userEvent.setup>) {
-  await openRowMenu(user);
-  await user.click(screen.getByRole('menuitem', { name: 'Send payment link' }));
+  await user.click(screen.getByRole('button', { name: 'Send payment link' }));
 }
 
 async function sendInvitation(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole('button', { name: 'driver: mark paid' }));
-  await openRowMenu(user);
-  await user.click(screen.getByRole('menuitem', { name: 'Invite' }));
+  await user.click(screen.getByRole('button', { name: 'Invite' }));
 }
 
 describe('the assessment call row actions', () => {
@@ -176,7 +164,7 @@ describe('the assessment call row actions', () => {
     // assert
     expect(screen.getByText('Call held')).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: /Journey actions for/ }),
+      screen.getByRole('button', { name: 'Send payment link' }),
     ).toBeInTheDocument();
   });
 
@@ -191,8 +179,9 @@ describe('the assessment call row actions', () => {
     expect(screen.getByRole('link', { name: 'Join call' })).toBeInTheDocument();
     expect(screen.queryByText('Call held')).toBeNull();
     expect(
-      screen.queryByRole('button', { name: /Journey actions for/ }),
+      screen.queryByRole('button', { name: 'Send payment link' }),
     ).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Invite' })).toBeNull();
   });
 
   it('sends the payment link from the row and confirms the send', async () => {
@@ -230,32 +219,28 @@ describe('the assessment call row actions', () => {
     ).toBeInTheDocument();
   });
 
-  it('offers only the payment link until she has paid', async () => {
+  it('offers only the payment link until she has paid', () => {
     // arrange
-    const user = renderPage();
-
-    // act
-    await openRowMenu(user);
+    renderPage();
 
     // assert
     expect(
-      screen.getByRole('menuitem', { name: 'Send payment link' }),
+      screen.getByRole('button', { name: 'Send payment link' }),
     ).toBeInTheDocument();
-    expect(screen.queryByRole('menuitem', { name: 'Invite' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Invite' })).toBeNull();
   });
 
   it('offers only the invitation once she has paid', async () => {
     // arrange
     const user = renderPage();
-    await user.click(screen.getByRole('button', { name: 'driver: mark paid' }));
 
     // act
-    await openRowMenu(user);
+    await user.click(screen.getByRole('button', { name: 'driver: mark paid' }));
 
     // assert
-    expect(screen.getByRole('menuitem', { name: 'Invite' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Invite' })).toBeInTheDocument();
     expect(
-      screen.queryByRole('menuitem', { name: 'Send payment link' }),
+      screen.queryByRole('button', { name: 'Send payment link' }),
     ).toBeNull();
   });
 
@@ -335,8 +320,9 @@ describe('the assessment call row actions', () => {
     // assert
     expect(await findStageBadge('Invited')).toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: /Journey actions for/ }),
+      screen.queryByRole('button', { name: 'Send payment link' }),
     ).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Invite' })).toBeNull();
   });
 
   it('shows the accepted invitation once she has created her account', async () => {
@@ -353,7 +339,8 @@ describe('the assessment call row actions', () => {
     // assert
     expect(screen.getByText('Invitation accepted')).toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: /Journey actions for/ }),
+      screen.queryByRole('button', { name: 'Send payment link' }),
     ).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Invite' })).toBeNull();
   });
 });

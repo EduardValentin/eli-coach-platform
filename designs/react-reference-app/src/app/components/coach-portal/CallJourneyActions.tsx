@@ -1,13 +1,7 @@
 import { useState } from 'react';
-import { MoreVertical } from 'lucide-react';
+import { Send, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button } from '../ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '../ui/dropdown-menu';
+import { RowActionButton } from '../RowActionButton';
 import { useAppState } from '../../context/AppContext';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
 import type { ClientJourney, JourneyStage } from '../../domain/journey';
@@ -45,16 +39,9 @@ function invitationFailureMessage(error: unknown): string {
     : INVITATION_DELIVERY_FAILURE_MESSAGE;
 }
 
-export function CallJourneyActions({
-  journey,
-  visitorName,
-}: {
-  journey: ClientJourney;
-  visitorName: string;
-}) {
+export function CallJourneyActions({ journey }: { journey: ClientJourney }) {
   const { appState } = useAppState();
   const { recordPaymentLinkSent, recordInvitation } = useClientJourneys();
-  const [menuOpen, setMenuOpen] = useState(false);
   const [sending, setSending] = useState(false);
 
   const offersPaymentLink = PAYMENT_LINK_STAGES.includes(journey.stage);
@@ -71,7 +58,6 @@ export function CallJourneyActions({
       toast.error(PAYMENT_LINK_ERROR_MESSAGES['delivery-failure']);
     } finally {
       setSending(false);
-      setMenuOpen(false);
     }
   };
 
@@ -89,51 +75,34 @@ export function CallJourneyActions({
       toast.error(invitationFailureMessage(error));
     } finally {
       setSending(false);
-      setMenuOpen(false);
     }
   };
 
   if (!offersPaymentLink && !offersInvitation) return null;
 
   return (
-    <DropdownMenu modal={false} open={menuOpen} onOpenChange={setMenuOpen}>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label={`Journey actions for ${visitorName}`}
-          aria-busy={sending}
-          className="self-end md:self-auto"
+    <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+      {offersPaymentLink && (
+        <RowActionButton
+          icon={Send}
+          busy={sending}
+          onClick={() => void sendLink()}
+          className="w-full md:w-auto"
         >
-          <MoreVertical aria-hidden="true" />
-        </Button>
-      </DropdownMenuTrigger>
+          Send payment link
+        </RowActionButton>
+      )}
 
-      <DropdownMenuContent align="end" className="w-64">
-        {offersPaymentLink && (
-          <DropdownMenuItem
-            disabled={sending}
-            onSelect={(event) => {
-              event.preventDefault();
-              void sendLink();
-            }}
-          >
-            {sending ? 'Sending payment link…' : 'Send payment link'}
-          </DropdownMenuItem>
-        )}
-
-        {offersInvitation && (
-          <DropdownMenuItem
-            disabled={sending}
-            onSelect={(event) => {
-              event.preventDefault();
-              void invite();
-            }}
-          >
-            {sending ? 'Sending invitation…' : 'Invite'}
-          </DropdownMenuItem>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
+      {offersInvitation && (
+        <RowActionButton
+          icon={UserPlus}
+          busy={sending}
+          onClick={() => void invite()}
+          className="w-full md:w-auto"
+        >
+          Invite
+        </RowActionButton>
+      )}
+    </div>
   );
 }

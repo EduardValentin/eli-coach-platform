@@ -141,10 +141,7 @@ function CallItem({
               <JoinCallLink joinPath={booking.joinPath} />
             )}
             {journey && timing === 'past' && (
-              <CallJourneyActions
-                journey={journey}
-                visitorName={visitorFullName(booking)}
-              />
+              <CallJourneyActions journey={journey} />
             )}
           </>
         }
