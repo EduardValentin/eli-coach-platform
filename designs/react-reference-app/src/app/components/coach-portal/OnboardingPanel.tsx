@@ -119,7 +119,7 @@ function SafetyScreeningReading({ journey }: { journey: ClientJourney }) {
     outcome === 'cleared'
       ? 'Cleared'
       : outcome === 'needs-review'
-        ? `Needs a look: ${yesCount} yes answers`
+        ? `Needs a look: ${yesCount} yes ${yesCount === 1 ? 'answer' : 'answers'}`
         : outcome === 'manual'
           ? 'Manual screening (age)'
           : 'Not answered yet';
