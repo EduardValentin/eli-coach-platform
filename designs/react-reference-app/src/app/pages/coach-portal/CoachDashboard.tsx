@@ -173,7 +173,13 @@ export function CoachDashboard() {
                     time: formatCheckinTime(checkin.time),
                   }}
                   action={
-                    <RowActionLink to="/coach/checkins">Review</RowActionLink>
+                    <RowActionLink
+                      to="/coach/checkins"
+                      icon={ClipboardCheck}
+                      tone="primary"
+                    >
+                      Review
+                    </RowActionLink>
                   }
                 />
               ))
