@@ -1,13 +1,10 @@
 import { ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router';
 import type { ClientJourney } from '../../domain/journey';
-import { Badge } from '../ui/badge';
 import { getInitials } from '../../utils/clientHelpers';
-import { deliveryDate } from '../../domain/coachingSubscription';
-import { startPathLabel } from '../../utils/journeyLabels';
 import { MeasurementsTable } from './MeasurementsTable';
 import { OnboardingPanel } from './OnboardingPanel';
-import { SubscriptionPanel } from './SubscriptionPanel';
+import { SubscriptionSummary } from '../SubscriptionSummary';
 
 function journeyName(journey: ClientJourney): string {
   return `${journey.identity.firstName} ${journey.identity.lastName}`.trim();
@@ -17,17 +14,6 @@ function statedHeightCm(journey: ClientJourney): number {
   const stated = journey.onboarding.answers['goal-availability'].height;
 
   return typeof stated === 'number' ? stated : 0;
-}
-
-function StartPathBadge({ journey }: { journey: ClientJourney }) {
-  const startPath = startPathLabel(journey.subscription);
-  if (!startPath) return null;
-
-  const waiting = journey.subscription
-    ? deliveryDate(journey.subscription) !== null
-    : false;
-
-  return <Badge variant={waiting ? 'pending' : 'secondary'}>{startPath}</Badge>;
 }
 
 export function JourneyClientDetails({ journey }: { journey: ClientJourney }) {
@@ -51,9 +37,10 @@ export function JourneyClientDetails({ journey }: { journey: ClientJourney }) {
             <h1 className="font-serif text-3xl tracking-tight text-text-primary lg:text-4xl">
               {name}
             </h1>
-            <StartPathBadge journey={journey} />
           </div>
-          <p className="font-medium text-text-secondary">{journey.identity.email}</p>
+          <p className="font-medium text-text-secondary">
+            {journey.identity.email}
+          </p>
         </div>
       </header>
 
@@ -63,7 +50,12 @@ export function JourneyClientDetails({ journey }: { journey: ClientJourney }) {
         heightCm={statedHeightCm(journey)}
       />
       {journey.subscription && (
-        <SubscriptionPanel subscription={journey.subscription} />
+        <SubscriptionSummary
+          subscription={journey.subscription}
+          perspective="coach"
+          headingId="subscription-panel-heading"
+          className="mb-8"
+        />
       )}
       <MeasurementsTable
         measurements={journey.measurements}

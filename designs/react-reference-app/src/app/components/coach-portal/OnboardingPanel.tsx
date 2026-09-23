@@ -8,9 +8,9 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '../ui/accordion';
-import { Alert } from '../ui/alert';
 import { Button } from '../ui/button';
 import { Checkbox } from '../ui/checkbox';
+import { ConfirmDialog } from '../ui/confirm-dialog';
 import { cn } from '../ui/utils';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
 import {
@@ -29,21 +29,19 @@ import {
   CHECK_IN_DAY_KEY,
   collaborationPreference,
   hasPregnancyContext,
-  needsSafetyLook,
   reviewForms,
   type ReviewAnswer,
   type ReviewForm,
 } from '../../domain/onboardingAnswers';
 import { formatJourneyDate } from '../../utils/journeyLabels';
 import { JourneyStageBadge } from './JourneyStageBadge';
-import { OnboardingReviewBar } from './OnboardingReviewBar';
+import { OnboardingReviewDialog } from './OnboardingReviewDialog';
 import { ReviewAnswerValue } from './ReviewAnswerValue';
 import { useAppState } from '../../context/AppContext';
 
 const PANEL_CLASS =
   'bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50';
 
-const SAFETY_FLAG = 'Needs a look: safety screening';
 const RATIO_HIDDEN_NOTE = 'Not shown during pregnancy or right after birth.';
 const BUILD_ACTION = 'Build her program';
 
@@ -53,12 +51,12 @@ const REVIEW_ACTIONS: Partial<Record<JourneyStage, string>> = {
   approved: 'Review again',
 };
 
-type ReviewSession = {
+export type ReviewSession = {
   flagged: readonly string[];
   toggleFlag: (questionId: string) => void;
 };
 
-type AnswersView = {
+export type AnswersView = {
   openForms: string[];
   onOpenForms: (formIds: string[]) => void;
   review: ReviewSession | null;
@@ -167,7 +165,7 @@ function AnswerRow({
   );
 }
 
-function AnswerGroups({
+export function AnswerGroups({
   forms,
   view,
 }: {
@@ -274,10 +272,12 @@ function StageActions({
   journey,
   clientId,
   onReview,
+  onApprove,
 }: {
   journey: ClientJourney;
   clientId: string;
   onReview: () => void;
+  onApprove: () => void;
 }) {
   const { appState } = useAppState();
 
@@ -285,6 +285,8 @@ function StageActions({
 
   const reviewAction = REVIEW_ACTIONS[journey.stage];
   const isPostMvp = appState.prototypeMode === 'post-mvp';
+  const canApprove =
+    journey.stage === 'submitted' || journey.stage === 'reviewing';
 
   if (!isPostMvp && !reviewAction) return null;
 
@@ -292,8 +294,13 @@ function StageActions({
     <div className="flex flex-col gap-2">
       <div className="flex flex-col gap-3 sm:flex-row">
         {isPostMvp && (
-          <Button asChild>
+          <Button variant="brand" asChild>
             <Link to={`/coach/training/builder/${clientId}`}>{BUILD_ACTION}</Link>
+          </Button>
+        )}
+        {!isPostMvp && canApprove && (
+          <Button variant="brand" onClick={onApprove}>
+            Approve answers
           </Button>
         )}
         {reviewAction && (
@@ -319,12 +326,12 @@ export function OnboardingPanel({
   const { startReview, approveAnswers, requestDetails } = useClientJourneys();
   const [openForms, setOpenForms] = useState<string[]>([]);
   const [flagged, setFlagged] = useState<string[] | null>(null);
+  const [confirmApproveOpen, setConfirmApproveOpen] = useState(false);
 
   const forms = reviewForms(journey.onboarding, journey.identity.sex);
 
   const enterReview = () => {
     if (journey.stage === 'submitted') startReview(journey.callId);
-    setOpenForms(forms.map((form) => form.formId));
     setFlagged([]);
   };
 
@@ -353,6 +360,12 @@ export function OnboardingPanel({
     setFlagged(null);
   };
 
+  const confirmApprove = () => {
+    if (journey.stage === 'submitted') startReview(journey.callId);
+    approveAnswers(journey.callId);
+    setConfirmApproveOpen(false);
+  };
+
   return (
     <motion.section
       initial={{ opacity: 0, y: 10 }}
@@ -371,10 +384,6 @@ export function OnboardingPanel({
         <JourneyStageBadge stage={journey.stage} />
       </div>
 
-      {needsSafetyLook(journey.onboarding) && (
-        <Alert role="status">{SAFETY_FLAG}</Alert>
-      )}
-
       <PendingRequest journey={journey} forms={forms} />
 
       <div className="grid gap-6 sm:grid-cols-2">
@@ -392,28 +401,39 @@ export function OnboardingPanel({
         <SubHeading>Her answers</SubHeading>
         <AnswerGroups
           forms={forms}
-          view={{
-            openForms,
-            onOpenForms: setOpenForms,
-            review: flagged ? { flagged, toggleFlag } : null,
-          }}
+          view={{ openForms, onOpenForms: setOpenForms, review: null }}
         />
       </div>
 
-      {flagged ? (
-        <OnboardingReviewBar
-          flagged={flagged}
-          onSend={askForDetails}
-          onDone={() => setFlagged(null)}
-          onApprove={journey.stage === 'reviewing' ? approve : undefined}
-        />
-      ) : (
-        <StageActions
-          journey={journey}
-          clientId={clientId}
-          onReview={enterReview}
-        />
-      )}
+      <StageActions
+        journey={journey}
+        clientId={clientId}
+        onReview={enterReview}
+        onApprove={() => setConfirmApproveOpen(true)}
+      />
+
+      <OnboardingReviewDialog
+        open={flagged !== null}
+        onOpenChange={(open) => {
+          if (!open) setFlagged(null);
+        }}
+        journey={journey}
+        forms={forms}
+        flagged={flagged ?? []}
+        toggleFlag={toggleFlag}
+        onApprove={journey.stage === 'reviewing' ? approve : undefined}
+        onSend={askForDetails}
+        onCancel={() => setFlagged(null)}
+      />
+
+      <ConfirmDialog
+        open={confirmApproveOpen}
+        onOpenChange={setConfirmApproveOpen}
+        title={`Approve ${journey.identity.firstName}'s answers?`}
+        description="You can still ask for more details later from her onboarding."
+        confirmLabel="Approve"
+        onConfirm={confirmApprove}
+      />
     </motion.section>
   );
 }

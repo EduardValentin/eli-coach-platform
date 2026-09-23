@@ -110,12 +110,6 @@ export function hasPregnancyContext(draft: OnboardingDraft): boolean {
   return status !== undefined && PREGNANCY_ANSWERS.has(describeAnswer(status));
 }
 
-export function needsSafetyLook(draft: OnboardingDraft): boolean {
-  const screening = Object.values(draft.answers['safety-screening']);
-
-  return screening.some(isAffirmative) || hasPregnancyContext(draft);
-}
-
 export function collaborationPreference(
   draft: OnboardingDraft,
   key: string,

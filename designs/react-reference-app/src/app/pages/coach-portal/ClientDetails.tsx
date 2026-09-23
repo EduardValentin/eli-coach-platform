@@ -46,7 +46,7 @@ import { PORTAL_PAGE_TITLE_CLASS } from '../../components/PortalPageHeader';
 import { SubscriptionBadge } from '../../components/coach-portal/SubscriptionBadge';
 import { JourneyClientDetails } from '../../components/coach-portal/JourneyClientDetails';
 import { OnboardingPanel } from '../../components/coach-portal/OnboardingPanel';
-import { SubscriptionPanel } from '../../components/coach-portal/SubscriptionPanel';
+import { SubscriptionSummary } from '../../components/SubscriptionSummary';
 import { MeasurementsTable } from '../../components/coach-portal/MeasurementsTable';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
 import { journeyCallIdForClient } from '../../utils/journeyLabels';
@@ -304,7 +304,12 @@ function RosterClientDetails() {
             heightCm={heightCm}
           />
           {journey.subscription && (
-            <SubscriptionPanel subscription={journey.subscription} />
+            <SubscriptionSummary
+              subscription={journey.subscription}
+              perspective="coach"
+              headingId="subscription-panel-heading"
+              className="mb-8"
+            />
           )}
           <MeasurementsTable
             measurements={journey.measurements}
