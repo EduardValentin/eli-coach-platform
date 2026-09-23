@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useLocation } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowRight, Settings, X } from 'lucide-react';
 import {
@@ -194,7 +194,9 @@ function parseDashboardCallsControl(value: string): DashboardCallsSeed {
   return 'none';
 }
 
-function parseCallSettingsSaveOutcomeControl(value: string): PrototypeCallSettingsSaveOutcome {
+function parseCallSettingsSaveOutcomeControl(
+  value: string,
+): PrototypeCallSettingsSaveOutcome {
   if (value === 'server_error') return value;
   return 'saved';
 }
@@ -246,13 +248,26 @@ export function DevToggle() {
   );
   const { replaceBookings } = useAssessmentCalls();
   const { journeys } = useClientJourneys();
+  const { search } = useLocation();
+  const withDevParams = (path: string) => {
+    const [pathname, query = ''] = path.split('?');
+    const params = new URLSearchParams(search);
+    params.delete('session');
+    new URLSearchParams(query).forEach((value, key) => params.set(key, value));
+    const joined = params.toString();
+
+    return joined.length > 0 ? `${pathname}?${joined}` : pathname;
+  };
+
   const journeyLinks = Object.values(journeys).flatMap((journey) => [
     ...(journey.paymentLink
       ? [
           {
             key: `${journey.callId}-payment`,
             label: `Open payment link · ${journey.identity.firstName} ${journey.identity.lastName}`,
-            to: `/select-bundle?token=${journey.paymentLink.token}`,
+            to: withDevParams(
+              `/select-bundle?token=${journey.paymentLink.token}`,
+            ),
           },
         ]
       : []),
@@ -261,7 +276,7 @@ export function DevToggle() {
           {
             key: `${journey.callId}-invitation`,
             label: `Open invitation link · ${journey.identity.firstName} ${journey.identity.lastName}`,
-            to: `/invitation/${journey.invitation.token}`,
+            to: withDevParams(`/invitation/${journey.invitation.token}`),
           },
         ]
       : []),
@@ -403,7 +418,9 @@ export function DevToggle() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className={SELECT_CONTENT_CLASS}>
-                      <SelectItem value="anonymous">Anonymous visitor</SelectItem>
+                      <SelectItem value="anonymous">
+                        Anonymous visitor
+                      </SelectItem>
                       <SelectItem value="client">Client</SelectItem>
                       <SelectItem value="coach">Coach</SelectItem>
                     </SelectContent>
@@ -420,7 +437,9 @@ export function DevToggle() {
                   <Select
                     value={appState.signInOutcome}
                     onValueChange={(value) =>
-                      setAppState({ signInOutcome: parseSignInOutcomeControl(value) })
+                      setAppState({
+                        signInOutcome: parseSignInOutcomeControl(value),
+                      })
                     }
                   >
                     <SelectTrigger id="dev-signin-outcome" className="w-full">
@@ -441,14 +460,17 @@ export function DevToggle() {
                   onClick={() => setIsOpen(false)}
                   className="inline-flex items-center gap-1 text-sm text-brand hover:underline"
                 >
-                  Open denied-access page <ArrowRight size={14} aria-hidden="true" />
+                  Open denied-access page{' '}
+                  <ArrowRight size={14} aria-hidden="true" />
                 </Link>
 
                 <DevCheckboxRow
                   id="dev-has-bundle"
                   label="Has Bundle"
                   checked={appState.hasBundle}
-                  onCheckedChange={(checked) => setAppState({ hasBundle: checked })}
+                  onCheckedChange={(checked) =>
+                    setAppState({ hasBundle: checked })
+                  }
                 />
               </TabsContent>
 
@@ -457,7 +479,9 @@ export function DevToggle() {
                   id="dev-store-empty-catalog"
                   label="Empty catalog"
                   checked={appState.isStoreCatalogEmpty}
-                  onCheckedChange={(checked) => setAppState({ isStoreCatalogEmpty: checked })}
+                  onCheckedChange={(checked) =>
+                    setAppState({ isStoreCatalogEmpty: checked })
+                  }
                 />
                 <div className="space-y-2">
                   <Label
@@ -475,17 +499,32 @@ export function DevToggle() {
                       })
                     }
                   >
-                    <SelectTrigger id="dev-store-checkout-outcome" className="w-full">
+                    <SelectTrigger
+                      id="dev-store-checkout-outcome"
+                      className="w-full"
+                    >
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className={SELECT_CONTENT_CLASS}>
                       <SelectItem value="success">Success</SelectItem>
-                      <SelectItem value="bot-rejected">Bot verification rejected</SelectItem>
-                      <SelectItem value="delivery-failure">Delivery failure</SelectItem>
-                      <SelectItem value="rate-limited-cooldown">Rate limited (cooldown)</SelectItem>
-                      <SelectItem value="rate-limited-daily">Rate limited (daily)</SelectItem>
-                      <SelectItem value="server-error">Server failure</SelectItem>
-                      <SelectItem value="unavailable-product">Unavailable product in cart</SelectItem>
+                      <SelectItem value="bot-rejected">
+                        Bot verification rejected
+                      </SelectItem>
+                      <SelectItem value="delivery-failure">
+                        Delivery failure
+                      </SelectItem>
+                      <SelectItem value="rate-limited-cooldown">
+                        Rate limited (cooldown)
+                      </SelectItem>
+                      <SelectItem value="rate-limited-daily">
+                        Rate limited (daily)
+                      </SelectItem>
+                      <SelectItem value="server-error">
+                        Server failure
+                      </SelectItem>
+                      <SelectItem value="unavailable-product">
+                        Unavailable product in cart
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -493,7 +532,9 @@ export function DevToggle() {
                   id="dev-store-download-unavailable"
                   label="Download link unavailable"
                   checked={appState.isDownloadUnavailable}
-                  onCheckedChange={(checked) => setAppState({ isDownloadUnavailable: checked })}
+                  onCheckedChange={(checked) =>
+                    setAppState({ isDownloadUnavailable: checked })
+                  }
                 />
                 <Link
                   to="/downloads"
@@ -534,7 +575,9 @@ export function DevToggle() {
                       <SelectItem value="invalid_email">
                         Email rejected by the server
                       </SelectItem>
-                      <SelectItem value="server_error">Server failure</SelectItem>
+                      <SelectItem value="server_error">
+                        Server failure
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-copy-muted">
@@ -595,16 +638,22 @@ export function DevToggle() {
                     value={appState.callSettingsSaveOutcome}
                     onValueChange={(value) =>
                       setAppState({
-                        callSettingsSaveOutcome: parseCallSettingsSaveOutcomeControl(value),
+                        callSettingsSaveOutcome:
+                          parseCallSettingsSaveOutcomeControl(value),
                       })
                     }
                   >
-                    <SelectTrigger id="dev-call-settings-save-outcome" className="w-full">
+                    <SelectTrigger
+                      id="dev-call-settings-save-outcome"
+                      className="w-full"
+                    >
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className={SELECT_CONTENT_CLASS}>
                       <SelectItem value="saved">Saved</SelectItem>
-                      <SelectItem value="server_error">Server failure</SelectItem>
+                      <SelectItem value="server_error">
+                        Server failure
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -613,7 +662,8 @@ export function DevToggle() {
                   onClick={() => setIsOpen(false)}
                   className="inline-flex items-center gap-1 text-sm text-brand hover:underline"
                 >
-                  Open coach settings <ArrowRight size={14} aria-hidden="true" />
+                  Open coach settings{' '}
+                  <ArrowRight size={14} aria-hidden="true" />
                 </Link>
               </TabsContent>
 
@@ -622,7 +672,9 @@ export function DevToggle() {
                   id="dev-waitlist-mode"
                   label="Waiting List Mode"
                   checked={appState.isWaitlistMode}
-                  onCheckedChange={(checked) => setAppState({ isWaitlistMode: checked })}
+                  onCheckedChange={(checked) =>
+                    setAppState({ isWaitlistMode: checked })
+                  }
                 />
 
                 {appState.isWaitlistMode && (
@@ -642,7 +694,10 @@ export function DevToggle() {
                         })
                       }
                     >
-                      <SelectTrigger id="dev-waitlist-availability" className="w-full">
+                      <SelectTrigger
+                        id="dev-waitlist-availability"
+                        className="w-full"
+                      >
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className={SELECT_CONTENT_CLASS}>
@@ -662,13 +717,17 @@ export function DevToggle() {
                     id="dev-nutrition-block-completed"
                     label="Block completed (show review)"
                     checked={appState.nutritionBlockCompleted}
-                    onCheckedChange={(checked) => setAppState({ nutritionBlockCompleted: checked })}
+                    onCheckedChange={(checked) =>
+                      setAppState({ nutritionBlockCompleted: checked })
+                    }
                   />
                   <DevCheckboxRow
                     id="dev-nutrition-preference-conflict"
                     label="Preference conflict (salmon)"
                     checked={appState.nutritionPreferenceConflict}
-                    onCheckedChange={(checked) => setAppState({ nutritionPreferenceConflict: checked })}
+                    onCheckedChange={(checked) =>
+                      setAppState({ nutritionPreferenceConflict: checked })
+                    }
                   />
                 </TabsContent>
               )}
@@ -709,7 +768,10 @@ export function DevToggle() {
                       })
                     }
                   >
-                    <SelectTrigger id="dev-coach-calls-listing" className="w-full">
+                    <SelectTrigger
+                      id="dev-coach-calls-listing"
+                      className="w-full"
+                    >
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className={SELECT_CONTENT_CLASS}>
@@ -724,7 +786,10 @@ export function DevToggle() {
 
               <TabsContent value="journey" className={TAB_PANEL_CLASS}>
                 <div className="space-y-2">
-                  <Label htmlFor="dev-journey-stage" className={DEV_LABEL_CLASS}>
+                  <Label
+                    htmlFor="dev-journey-stage"
+                    className={DEV_LABEL_CLASS}
+                  >
                     Journey stage
                   </Label>
                   <Select
@@ -749,7 +814,10 @@ export function DevToggle() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="dev-journey-start-path" className={DEV_LABEL_CLASS}>
+                  <Label
+                    htmlFor="dev-journey-start-path"
+                    className={DEV_LABEL_CLASS}
+                  >
                     Start path
                   </Label>
                   <Select
@@ -760,7 +828,10 @@ export function DevToggle() {
                       })
                     }
                   >
-                    <SelectTrigger id="dev-journey-start-path" className="w-full">
+                    <SelectTrigger
+                      id="dev-journey-start-path"
+                      className="w-full"
+                    >
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className={SELECT_CONTENT_CLASS}>
@@ -773,7 +844,10 @@ export function DevToggle() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="dev-journey-subscription" className={DEV_LABEL_CLASS}>
+                  <Label
+                    htmlFor="dev-journey-subscription"
+                    className={DEV_LABEL_CLASS}
+                  >
                     Subscription state
                   </Label>
                   <Select
@@ -785,7 +859,10 @@ export function DevToggle() {
                       })
                     }
                   >
-                    <SelectTrigger id="dev-journey-subscription" className="w-full">
+                    <SelectTrigger
+                      id="dev-journey-subscription"
+                      className="w-full"
+                    >
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className={SELECT_CONTENT_CLASS}>
@@ -827,18 +904,25 @@ export function DevToggle() {
                 />
 
                 <div className="space-y-2">
-                  <Label htmlFor="dev-payment-link-outcome" className={DEV_LABEL_CLASS}>
+                  <Label
+                    htmlFor="dev-payment-link-outcome"
+                    className={DEV_LABEL_CLASS}
+                  >
                     Payment link outcome
                   </Label>
                   <Select
                     value={appState.paymentLinkOutcome}
                     onValueChange={(value) =>
                       setAppState({
-                        paymentLinkOutcome: parsePaymentLinkOutcomeControl(value),
+                        paymentLinkOutcome:
+                          parsePaymentLinkOutcomeControl(value),
                       })
                     }
                   >
-                    <SelectTrigger id="dev-payment-link-outcome" className="w-full">
+                    <SelectTrigger
+                      id="dev-payment-link-outcome"
+                      className="w-full"
+                    >
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className={SELECT_CONTENT_CLASS}>
@@ -851,7 +935,10 @@ export function DevToggle() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="dev-payment-link-state" className={DEV_LABEL_CLASS}>
+                  <Label
+                    htmlFor="dev-payment-link-state"
+                    className={DEV_LABEL_CLASS}
+                  >
                     Payment link state
                   </Label>
                   <Select
@@ -862,7 +949,10 @@ export function DevToggle() {
                       })
                     }
                   >
-                    <SelectTrigger id="dev-payment-link-state" className="w-full">
+                    <SelectTrigger
+                      id="dev-payment-link-state"
+                      className="w-full"
+                    >
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className={SELECT_CONTENT_CLASS}>
@@ -875,7 +965,10 @@ export function DevToggle() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="dev-invitation-state" className={DEV_LABEL_CLASS}>
+                  <Label
+                    htmlFor="dev-invitation-state"
+                    className={DEV_LABEL_CLASS}
+                  >
                     Invitation link state
                   </Label>
                   <Select
