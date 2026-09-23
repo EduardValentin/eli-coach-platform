@@ -1,4 +1,4 @@
-import type { OnboardingFormId } from './journey';
+import type { JourneySex, OnboardingFormId } from './journey';
 import { CYCLE_CONFIDENTIALITY_NOTICE } from './onboardingCopy';
 
 export type OnboardingFieldKind =
@@ -24,6 +24,8 @@ export type RelativeRange = { id: string; spread: number };
 
 export type RevealCondition = { id: string; value: string | readonly string[] };
 
+export type FieldReassurance = { value: string; text: string };
+
 export type OnboardingField = {
   id: string;
   label: string;
@@ -34,12 +36,15 @@ export type OnboardingField = {
   options?: OnboardingOption[];
   section?: string;
   revealedBy?: RevealCondition;
+  concealedBy?: RevealCondition;
+  requires?: readonly string[];
   exclusiveOptions?: readonly string[];
   unitSuffix?: string;
   range?: NumericRange;
   step?: string;
   relativeTo?: RelativeRange;
   recentMonths?: number;
+  reassurance?: FieldReassurance;
 };
 
 export const WEIGHT_RANGE_KG: NumericRange = { min: 30, max: 300 };
@@ -54,15 +59,25 @@ export type FormAudience = 'everyone' | 'female';
 
 export type FormSensitivity = 'ordinary' | 'special-category';
 
+export type OnboardingFormIntro = string | { female: string; male: string };
+
 export type OnboardingFormDefinition = {
   id: OnboardingFormId;
   title: string;
-  intro: string;
+  intro: OnboardingFormIntro;
   audience: FormAudience;
   sensitivity: FormSensitivity;
   notice?: string;
+  footnote?: string;
   fields: OnboardingField[];
 };
+
+export function resolveIntro(
+  intro: OnboardingFormIntro,
+  sex: JourneySex,
+): string {
+  return typeof intro === 'string' ? intro : intro[sex];
+}
 
 export const YES_NO_OPTIONS: readonly OnboardingOption[] = [
   { value: 'Yes', label: 'Yes' },
@@ -106,6 +121,15 @@ const PARQ_DECLARATION_LABEL =
 const REGULAR_PERIOD_VALUE = "Yes, and it's regular";
 const IRREGULAR_PERIOD_VALUE = "Yes, but it's irregular";
 const NO_PERIOD_VALUE = 'No, or very rarely';
+
+const CYCLE_DETAIL_REQUIRES: readonly string[] = [
+  'hormonalContraception',
+  'lifeStage',
+  'perimenopauseOrMenopause',
+];
+
+const CYCLE_LENGTH_RANGE_SECTION =
+  'When it varies, roughly how short and how long does it get?';
 
 const GOAL_FORM: OnboardingFormDefinition = {
   id: 'goal-availability',
@@ -263,10 +287,14 @@ const GOAL_FORM: OnboardingFormDefinition = {
 const SAFETY_FORM: OnboardingFormDefinition = {
   id: 'safety-screening',
   title: 'A few safety questions',
-  intro:
-    "The next few questions are about your health and your cycle. Your honest answers help me build a plan that's safe for you as well as effective.",
+  intro: {
+    female:
+      "The next few questions are about your health and your cycle. Your honest answers help me build a plan that's safe for you as well as effective.",
+    male: "The next few questions are about your health. Your honest answers help me build a plan that's safe for you as well as effective.",
+  },
   audience: 'everyone',
   sensitivity: 'special-category',
+  footnote: 'Adapted from the PAR-Q+ © 2026 PAR-Q+ Collaboration',
   fields: [
     yesNo(
       'heartCondition',
@@ -345,6 +373,10 @@ const CYCLE_FORM: OnboardingFormDefinition = {
         IRREGULAR_PERIOD_VALUE,
         NO_PERIOD_VALUE,
       ]),
+      reassurance: {
+        value: NO_PERIOD_VALUE,
+        text: "That's completely fine — plenty of people train without a regular cycle. I'll build your plan around how you feel week to week instead.",
+      },
     },
     {
       id: 'hormonalContraception',
@@ -400,6 +432,8 @@ const CYCLE_FORM: OnboardingFormDefinition = {
       hint: 'Most cycles are somewhere between 21 and 35 days.',
       range: { min: 15, max: 60 },
       revealedBy: { id: 'cycleRegularity', value: REGULAR_PERIOD_VALUE },
+      concealedBy: { id: 'cycleLengthUnknown', value: 'true' },
+      requires: CYCLE_DETAIL_REQUIRES,
     },
     {
       id: 'cycleLengthUnknown',
@@ -407,22 +441,29 @@ const CYCLE_FORM: OnboardingFormDefinition = {
       kind: 'checkbox',
       requirement: 'optional',
       revealedBy: { id: 'cycleRegularity', value: REGULAR_PERIOD_VALUE },
+      requires: CYCLE_DETAIL_REQUIRES,
     },
     {
       id: 'cycleLengthMin',
-      label: 'When it varies, roughly how short and how long does it get?',
+      label: 'Shortest',
       kind: 'number',
       requirement: 'optional',
+      section: CYCLE_LENGTH_RANGE_SECTION,
+      unitSuffix: 'days',
       range: { min: 15, max: 90 },
       revealedBy: { id: 'cycleRegularity', value: IRREGULAR_PERIOD_VALUE },
+      requires: CYCLE_DETAIL_REQUIRES,
     },
     {
       id: 'cycleLengthMax',
-      label: 'When it varies, roughly how short and how long does it get?',
+      label: 'Longest',
       kind: 'number',
       requirement: 'optional',
+      section: CYCLE_LENGTH_RANGE_SECTION,
+      unitSuffix: 'days',
       range: { min: 15, max: 90 },
       revealedBy: { id: 'cycleRegularity', value: IRREGULAR_PERIOD_VALUE },
+      requires: CYCLE_DETAIL_REQUIRES,
     },
     {
       id: 'lastPeriodStart',
@@ -434,6 +475,8 @@ const CYCLE_FORM: OnboardingFormDefinition = {
         id: 'cycleRegularity',
         value: [REGULAR_PERIOD_VALUE, IRREGULAR_PERIOD_VALUE],
       },
+      concealedBy: { id: 'lastPeriodUnknown', value: 'true' },
+      requires: CYCLE_DETAIL_REQUIRES,
     },
     {
       id: 'lastPeriodUnknown',
@@ -444,6 +487,7 @@ const CYCLE_FORM: OnboardingFormDefinition = {
         id: 'cycleRegularity',
         value: [REGULAR_PERIOD_VALUE, IRREGULAR_PERIOD_VALUE],
       },
+      requires: CYCLE_DETAIL_REQUIRES,
     },
     yesNo(
       'gynaecologicalCondition',

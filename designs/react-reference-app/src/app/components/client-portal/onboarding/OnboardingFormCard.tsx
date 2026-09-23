@@ -1,9 +1,13 @@
 import { useEffect, useMemo, type FormEvent, type ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
-import type { OnboardingFormAnswers } from '../../../domain/journey';
 import type {
-  OnboardingField,
-  OnboardingFormDefinition,
+  JourneySex,
+  OnboardingFormAnswers,
+} from '../../../domain/journey';
+import {
+  resolveIntro,
+  type OnboardingField,
+  type OnboardingFormDefinition,
 } from '../../../domain/onboardingSchema';
 import { Button } from '../../ui/button';
 import { Form } from '../../ui/form';
@@ -36,6 +40,7 @@ type OnboardingFormCardProps = OnboardingAnswerFormProps & {
   consent: ReactNode;
   headingRef: (node: HTMLHeadingElement | null) => void;
   unitsChoice: ReactNode;
+  sex: JourneySex;
 };
 
 type FieldGroup = { section: string | null; fields: OnboardingField[] };
@@ -76,15 +81,22 @@ function OnboardingAnswerForm({
   );
 
   useEffect(() => {
-    const subscription = form.watch((next) =>
-      onChange(toAnswers(definition.fields, next as OnboardingValues, units)),
-    );
+    const subscription = form.watch((next) => {
+      const nextValues = next as OnboardingValues;
+      onChange(
+        toAnswers(
+          visibleFields(definition.fields, nextValues),
+          nextValues,
+          units,
+        ),
+      );
+    });
 
     return () => subscription.unsubscribe();
   }, [form, definition, onChange, units]);
 
   const handleValid = form.handleSubmit((next) =>
-    onContinue(toAnswers(definition.fields, next, units)),
+    onContinue(toAnswers(visibleFields(definition.fields, next), next, units)),
   );
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
@@ -147,6 +159,7 @@ export function OnboardingFormCard({
   consent,
   headingRef,
   unitsChoice,
+  sex,
   ...answerForm
 }: OnboardingFormCardProps) {
   const units = useMeasureUnits();
@@ -165,12 +178,12 @@ export function OnboardingFormCard({
       >
         {definition.title}
       </h2>
-      <p className={ONBOARDING_INTRO_CLASS}>{definition.intro}</p>
+      <p className={ONBOARDING_INTRO_CLASS}>
+        {resolveIntro(definition.intro, sex)}
+      </p>
 
       {definition.notice && (
-        <p className="mt-5 rounded-card border border-border-subtle bg-surface-quiet/60 px-4 py-3 text-sm leading-relaxed text-text-secondary">
-          {definition.notice}
-        </p>
+        <p className="mt-4 text-sm text-text-secondary">{definition.notice}</p>
       )}
 
       {consent && <div className="mt-5">{consent}</div>}
@@ -181,6 +194,12 @@ export function OnboardingFormCard({
         {...answerForm}
         key={`${units.weight}-${units.length}`}
       />
+
+      {definition.footnote && (
+        <p className="mt-6 text-xs text-text-secondary">
+          {definition.footnote}
+        </p>
+      )}
     </section>
   );
 }

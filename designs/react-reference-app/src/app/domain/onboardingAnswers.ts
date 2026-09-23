@@ -182,29 +182,45 @@ function isFlagged(
   return false;
 }
 
-function matchesRevealedBy(
-  revealedBy: NonNullable<OnboardingField['revealedBy']>,
+function matchesCondition(
+  condition: NonNullable<OnboardingField['revealedBy']>,
   given: OnboardingFormAnswers,
 ): boolean {
-  const trigger = given[revealedBy.id];
+  const trigger = given[condition.id];
   if (trigger === undefined) return false;
 
-  const expected = Array.isArray(revealedBy.value)
-    ? revealedBy.value
-    : [revealedBy.value];
+  const expected = Array.isArray(condition.value)
+    ? condition.value
+    : [condition.value];
 
   return Array.isArray(trigger)
     ? trigger.some((entry) => expected.includes(entry))
     : expected.includes(describeAnswer(trigger));
 }
 
+function meetsRequires(
+  requires: OnboardingField['requires'],
+  given: OnboardingFormAnswers,
+): boolean {
+  return (requires ?? []).every((id) => {
+    const answer = given[id];
+
+    return answer !== undefined && isAnswered(answer);
+  });
+}
+
 function isReachable(
   field: OnboardingField,
   given: OnboardingFormAnswers,
 ): boolean {
-  if (!field.revealedBy) return true;
+  if (field.revealedBy && !matchesCondition(field.revealedBy, given)) {
+    return false;
+  }
+  if (field.concealedBy && matchesCondition(field.concealedBy, given)) {
+    return false;
+  }
 
-  return matchesRevealedBy(field.revealedBy, given);
+  return meetsRequires(field.requires, given);
 }
 
 const CANONICAL_UNITS: Record<string, string> = {

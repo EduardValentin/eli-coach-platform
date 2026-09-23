@@ -103,25 +103,48 @@ export function toAnswers(
   return answers;
 }
 
-function matchesRevealedBy(
-  revealedBy: NonNullable<OnboardingField['revealedBy']>,
+function matchesCondition(
+  condition: NonNullable<OnboardingField['revealedBy']>,
   values: OnboardingValues,
 ): boolean {
-  const expected = Array.isArray(revealedBy.value)
-    ? revealedBy.value
-    : [revealedBy.value];
-  const actual = values[revealedBy.id];
+  const expected = Array.isArray(condition.value)
+    ? condition.value
+    : [condition.value];
+  const actual = values[condition.id];
 
   return Array.isArray(actual)
     ? actual.some((entry) => expected.includes(entry))
     : expected.includes(asText(actual));
 }
 
+function hasEntry(value: string | string[] | undefined): boolean {
+  return Array.isArray(value) ? value.length > 0 : asText(value).trim() !== '';
+}
+
+function meetsRequires(
+  requires: OnboardingField['requires'],
+  values: OnboardingValues,
+): boolean {
+  return (requires ?? []).every((id) => hasEntry(values[id]));
+}
+
+export function isFieldVisible(
+  field: OnboardingField,
+  values: OnboardingValues,
+): boolean {
+  if (field.revealedBy && !matchesCondition(field.revealedBy, values)) {
+    return false;
+  }
+  if (field.concealedBy && matchesCondition(field.concealedBy, values)) {
+    return false;
+  }
+
+  return meetsRequires(field.requires, values);
+}
+
 export function visibleFields(
   fields: readonly OnboardingField[],
   values: OnboardingValues,
 ): OnboardingField[] {
-  return fields.filter(
-    (field) => !field.revealedBy || matchesRevealedBy(field.revealedBy, values),
-  );
+  return fields.filter((field) => isFieldVisible(field, values));
 }

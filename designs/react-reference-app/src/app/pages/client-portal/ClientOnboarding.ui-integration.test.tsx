@@ -302,6 +302,61 @@ describe('the onboarding', () => {
     expect(optional.length).toBeGreaterThan(0);
   });
 
+  it('reassures her plainly when she has no regular cycle', async () => {
+    // arrange
+    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(2));
+    renderOnboarding('?session=client&jstage=onboarding');
+
+    // act
+    await userEvent.click(
+      screen.getByRole('radio', { name: 'No, or very rarely' }),
+    );
+
+    // assert
+    expect(
+      screen.getByText(
+        "That's completely fine — plenty of people train without a regular cycle. I'll build your plan around how you feel week to week instead.",
+      ),
+    ).toBeVisible();
+  });
+
+  it('hides the cycle length once she says she does not know it', async () => {
+    // arrange
+    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(2));
+    renderOnboarding('?session=client&jstage=onboarding');
+
+    // act
+    await userEvent.click(
+      screen.getByRole('radio', { name: "Yes, and it's regular" }),
+    );
+    await userEvent.click(
+      screen.getByRole('combobox', { name: /Are you using any contraception/ }),
+    );
+    await userEvent.click(await screen.findByRole('option', { name: 'None' }));
+    await userEvent.click(
+      screen.getByRole('checkbox', { name: 'None of these' }),
+    );
+    await userEvent.click(
+      screen.getByRole('combobox', {
+        name: /Are you in perimenopause or menopause/,
+      }),
+    );
+    await userEvent.click(await screen.findByRole('option', { name: 'No' }));
+
+    // assert
+    expect(screen.getByLabelText(/Average cycle length/)).toBeVisible();
+
+    // act
+    await userEvent.click(
+      screen.getByRole('checkbox', { name: "I'm not sure" }),
+    );
+
+    // assert
+    expect(
+      screen.queryByLabelText(/Average cycle length/),
+    ).not.toBeInTheDocument();
+  });
+
   it('counts four forms and leaves out the cycle for a male account', () => {
     // arrange
     renderOnboarding('?session=client&jstage=onboarding&jsex=male');

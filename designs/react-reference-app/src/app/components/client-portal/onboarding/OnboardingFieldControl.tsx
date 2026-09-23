@@ -235,18 +235,27 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
                     <FormDescription>{field.hint}</FormDescription>
                   )}
                   {field.kind === 'radio' ? (
-                    <ChoiceGroup
-                      aria-labelledby={legendId}
-                      className="mt-2 sm:max-w-md"
-                      onValueChange={controller.onChange}
-                      value={asText(controller.value)}
-                    >
-                      {(field.options ?? []).map((option) => (
-                        <ChoiceOption key={option.value} value={option.value}>
-                          {option.label}
-                        </ChoiceOption>
-                      ))}
-                    </ChoiceGroup>
+                    <>
+                      <ChoiceGroup
+                        aria-labelledby={legendId}
+                        className="mt-2 sm:max-w-md"
+                        onValueChange={controller.onChange}
+                        value={asText(controller.value)}
+                      >
+                        {(field.options ?? []).map((option) => (
+                          <ChoiceOption key={option.value} value={option.value}>
+                            {option.label}
+                          </ChoiceOption>
+                        ))}
+                      </ChoiceGroup>
+                      {field.reassurance &&
+                        asText(controller.value) ===
+                          field.reassurance.value && (
+                          <p className="mt-3 text-sm text-text-secondary">
+                            {field.reassurance.text}
+                          </p>
+                        )}
+                    </>
                   ) : (
                     <div className="mt-2 flex flex-wrap gap-2">
                       {(field.options ?? []).map((option) => (

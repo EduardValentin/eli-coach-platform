@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { useNavigate } from 'react-router';
+import { toast } from 'sonner';
 import { useClientJourneys } from '../../../context/ClientJourneyContext';
 import {
   DISCLAIMER_ACKNOWLEDGEMENT,
@@ -11,6 +12,10 @@ import {
   formsForSex,
   type OnboardingFormDefinition,
 } from '../../../domain/onboardingSchema';
+import {
+  needsManualScreening,
+  screeningOutcome,
+} from '../../../domain/safetyScreening';
 import type {
   JourneyOnboarding,
   OnboardingConsents,
@@ -42,6 +47,12 @@ const SUBMIT_PROBLEM =
 const MISSING_CONSENT = 'Tick the box to carry on.';
 
 const RESUME_NOTE = 'Picking up where you left off.';
+
+const MANUAL_SCREENING_MESSAGE =
+  "These safety questions are designed for ages 15 to 69. I'll go through your health questions with you directly before building your program.";
+
+const SCREENING_CLEARED_MESSAGE =
+  "Thank you. Nothing here needs a doctor's sign-off — let's keep going.";
 
 type ConsentKey = 'specialCategory' | 'disclaimer';
 
@@ -83,8 +94,12 @@ function problemMessage(problem: unknown): string {
 
 export function OnboardingWizard() {
   const navigate = useNavigate();
-  const { addMeasurements, demoJourney, saveOnboardingDraft, submitOnboarding } =
-    useClientJourneys();
+  const {
+    addMeasurements,
+    demoJourney,
+    saveOnboardingDraft,
+    submitOnboarding,
+  } = useClientJourneys();
   const prefersReducedMotion = useReducedMotion() ?? false;
   const journeyId = demoJourney.callId;
 
@@ -113,6 +128,10 @@ export function OnboardingWizard() {
   const step = steps[stepIndex];
   const isLastStep = stepIndex === steps.length - 1;
   const asksSpecialCategory = stepIndex === firstSpecialCategoryIndex(steps);
+  const manualScreening =
+    step.id === 'safety-screening' &&
+    needsManualScreening(demoJourney.identity.dateOfBirth, new Date());
+  const cardDefinition = manualScreening ? { ...step, fields: [] } : step;
 
   const persist = useCallback(
     (next: OnboardingDraft) => {
@@ -156,7 +175,10 @@ export function OnboardingWizard() {
   const agree = (key: ConsentKey) => (agreed: boolean) => {
     const current = draftRef.current;
     setConsentProblem(null);
-    persist({ ...current, consents: withConsent(current.consents, key, agreed) });
+    persist({
+      ...current,
+      consents: withConsent(current.consents, key, agreed),
+    });
   };
 
   const goToStep = (index: number) => {
@@ -174,7 +196,10 @@ export function OnboardingWizard() {
     try {
       const submitted = await submit(journeyId);
       await saving.current;
-      const entry = submittedMeasurementEntry(next.answers, submitted.submittedAt);
+      const entry = submittedMeasurementEntry(
+        next.answers,
+        submitted.submittedAt,
+      );
       if (entry) addMeasurements(journeyId, entry);
       submitOnboarding(journeyId, submitted.submittedAt);
       forgetDraft(journeyId);
@@ -208,6 +233,13 @@ export function OnboardingWizard() {
       currentFormIndex: isLastStep ? stepIndex : stepIndex + 1,
     };
 
+    if (
+      step.id === 'safety-screening' &&
+      screeningOutcome(next, demoJourney.identity, new Date()) === 'cleared'
+    ) {
+      toast.success(SCREENING_CLEARED_MESSAGE);
+    }
+
     if (isLastStep) {
       void sendToCoach(next);
       return;
@@ -224,7 +256,11 @@ export function OnboardingWizard() {
     <>
       <div className="mb-6 grid gap-2">
         <div className="flex items-end justify-between gap-4">
-          <Stepper className="w-full max-w-xs" current={stepIndex + 1} total={steps.length} />
+          <Stepper
+            className="w-full max-w-xs"
+            current={stepIndex + 1}
+            total={steps.length}
+          />
           <p
             aria-live="polite"
             className="shrink-0 text-caption font-medium text-text-secondary"
@@ -258,22 +294,35 @@ export function OnboardingWizard() {
                   checked={draft.consents.specialCategory}
                   onChange={agree('specialCategory')}
                   problem={consentProblem}
-                  statement={SPECIAL_CATEGORY_CONSENT_COPY[demoJourney.identity.sex]}
+                  showPrivacyLink
+                  statement={
+                    SPECIAL_CATEGORY_CONSENT_COPY[demoJourney.identity.sex]
+                  }
                 />
               ) : null
             }
             continueLabel={
-              isLastStep ? (sending ? 'Sending…' : 'Send to my coach') : 'Continue'
+              isLastStep
+                ? sending
+                  ? 'Sending…'
+                  : 'Send to my coach'
+                : 'Continue'
             }
-            definition={step}
+            definition={cardDefinition}
             headingRef={headingRef}
             key={step.id}
             onAttempt={reviewConsent}
             onBack={back}
             onChange={handleAnswers}
             onContinue={continueFrom}
+            sex={demoJourney.identity.sex}
             unitsChoice={stepIndex === 0 ? <MeasurementSystemField /> : null}
           >
+            {manualScreening && (
+              <p className="text-sm text-text-secondary">
+                {MANUAL_SCREENING_MESSAGE}
+              </p>
+            )}
             {isLastStep && (
               <>
                 <ProgressPhotoBlock

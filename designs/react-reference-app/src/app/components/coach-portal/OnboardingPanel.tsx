@@ -19,6 +19,7 @@ import {
   type CoachingSubscription,
 } from '../../domain/coachingSubscription';
 import { formatRatio, waistToHeightRatio } from '../../domain/bodyMetrics';
+import { CYCLE_MODE_LABELS, cycleModeOf } from '../../domain/cycleMode';
 import {
   awaitsCoachReview,
   type ClientJourney,
@@ -33,6 +34,11 @@ import {
   type ReviewAnswer,
   type ReviewForm,
 } from '../../domain/onboardingAnswers';
+import {
+  PARQ_QUESTION_IDS,
+  screeningOutcome,
+  withholdsNutritionAdvice,
+} from '../../domain/safetyScreening';
 import { formatJourneyDate } from '../../utils/journeyLabels';
 import { JourneyStageBadge } from './JourneyStageBadge';
 import { OnboardingReviewDialog } from './OnboardingReviewDialog';
@@ -93,7 +99,54 @@ function RatioReading({
   }
 
   return (
-    <p className="font-serif text-2xl text-text-primary">{formatRatio(ratio)}</p>
+    <p className="font-serif text-2xl text-text-primary">
+      {formatRatio(ratio)}
+    </p>
+  );
+}
+
+function SafetyScreeningReading({ journey }: { journey: ClientJourney }) {
+  const outcome = screeningOutcome(
+    journey.onboarding,
+    journey.identity,
+    new Date(),
+  );
+  const yesCount = PARQ_QUESTION_IDS.filter(
+    (id) => journey.onboarding.answers['safety-screening'][id] === 'Yes',
+  ).length;
+
+  const text =
+    outcome === 'cleared'
+      ? 'Cleared'
+      : outcome === 'needs-review'
+        ? `Needs a look: ${yesCount} yes answers`
+        : outcome === 'manual'
+          ? 'Manual screening (age)'
+          : 'Not answered yet';
+
+  return (
+    <div>
+      <p className="text-sm font-medium text-text-primary">{text}</p>
+      {withholdsNutritionAdvice(journey.onboarding) && (
+        <p className="text-xs text-text-secondary">Nutrition advice on hold</p>
+      )}
+    </div>
+  );
+}
+
+function CycleModeReading({ journey }: { journey: ClientJourney }) {
+  if (journey.identity.sex === 'male') {
+    return (
+      <p className="text-sm font-medium text-text-primary">Not applicable</p>
+    );
+  }
+
+  const mode = cycleModeOf(journey.onboarding);
+
+  return (
+    <p className="text-sm font-medium text-text-primary">
+      {mode ? CYCLE_MODE_LABELS[mode] : 'Not answered yet'}
+    </p>
   );
 }
 
@@ -295,7 +348,9 @@ function StageActions({
       <div className="flex flex-col gap-3 sm:flex-row">
         {isPostMvp && (
           <Button variant="default" asChild>
-            <Link to={`/coach/training/builder/${clientId}`}>{BUILD_ACTION}</Link>
+            <Link to={`/coach/training/builder/${clientId}`}>
+              {BUILD_ACTION}
+            </Link>
           </Button>
         )}
         {!isPostMvp && canApprove && (
@@ -386,7 +441,7 @@ export function OnboardingPanel({
 
       <PendingRequest journey={journey} forms={forms} />
 
-      <div className="grid gap-6 sm:grid-cols-2">
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <div className="space-y-2">
           <SubHeading>Waist-to-height ratio</SubHeading>
           <RatioReading journey={journey} heightCm={heightCm} />
@@ -394,6 +449,14 @@ export function OnboardingPanel({
         <div className="space-y-2">
           <SubHeading>How she wants to work together</SubHeading>
           <CollaborationReading journey={journey} />
+        </div>
+        <div className="space-y-2">
+          <SubHeading>Safety screening</SubHeading>
+          <SafetyScreeningReading journey={journey} />
+        </div>
+        <div className="space-y-2">
+          <SubHeading>Cycle mode</SubHeading>
+          <CycleModeReading journey={journey} />
         </div>
       </div>
 
