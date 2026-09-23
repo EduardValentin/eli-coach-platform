@@ -33,7 +33,7 @@ import {
 } from '../domain/coachingSubscription';
 import { heldJourney, seedJourney } from '../services/clientJourneySamples';
 import type { SentPaymentLink } from '../services/paymentLinkService';
-import type { SentInvitation } from '../services/invitationService';
+import { createInvitation } from '../services/invitationService';
 
 export const DEMO_JOURNEY_CALL_ID = 'ac-demo-client-1';
 export const AWAITING_REVIEW_CALL_ID = 'ac-seed-awaiting-review';
@@ -68,7 +68,6 @@ type ClientJourneyContextType = {
   seedDemoJourney: (stage: JourneyStage, options: DemoJourneyOptions) => void;
   recordPaymentLinkSent: (callId: string, link: SentPaymentLink) => void;
   recordPaid: (callId: string, payment: JourneyPayment) => void;
-  recordInvitation: (callId: string, invitation: SentInvitation) => void;
   recordAccountCreated: (callId: string) => void;
   markWelcomeSeen: (callId: string) => void;
   saveOnboardingDraft: (callId: string, draft: OnboardingDraft) => void;
@@ -264,8 +263,13 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
 
   const recordPaid = useCallback(
     (callId: string, payment: JourneyPayment) => {
-      updateJourney(callId, (journey) =>
-        applied(
+      updateJourney(callId, (journey) => {
+        const invitation = createInvitation(
+          journey.identity.email,
+          payment.paidAt,
+        );
+
+        return applied(
           {
             ...journey,
             paidAt: payment.paidAt,
@@ -278,31 +282,16 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
               purchasedAt: payment.paidAt,
               status: 'not-started',
             },
-          },
-          'record-payment',
-        ),
-      );
-    },
-    [updateJourney],
-  );
-
-  const recordInvitation = useCallback(
-    (callId: string, invitation: SentInvitation) => {
-      updateJourney(callId, (journey) =>
-        applied(
-          {
-            ...journey,
             invitation: {
               token: invitation.token,
               sentAt: invitation.sentAt,
               expiresAt: invitation.expiresAt,
-              replaced: invitation.replaced,
               state: 'valid',
             },
           },
-          'send-invitation',
-        ),
-      );
+          'record-payment',
+        );
+      });
     },
     [updateJourney],
   );
@@ -495,7 +484,6 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
         seedDemoJourney,
         recordPaymentLinkSent,
         recordPaid,
-        recordInvitation,
         recordAccountCreated,
         markWelcomeSeen,
         saveOnboardingDraft,

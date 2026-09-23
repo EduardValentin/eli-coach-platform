@@ -10,10 +10,7 @@ import {
 } from '../context/AppContext';
 import type { PrototypeStoreCheckoutOutcome } from '../services/storeAcquisitionService';
 import type { PrototypeSignInOutcome } from '../services/authService';
-import type {
-  PrototypeInvitationLinkState,
-  PrototypeInvitationOutcome,
-} from '../services/invitationService';
+import type { PrototypeInvitationLinkState } from '../services/invitationService';
 import type {
   PrototypePaymentLinkOutcome,
   PrototypePaymentLinkState,
@@ -143,20 +140,6 @@ function parsePaymentLinkStateControl(
   }
 
   return 'valid';
-}
-
-function parseInvitationOutcomeControl(
-  value: string,
-): PrototypeInvitationOutcome {
-  if (
-    value === 'replaced' ||
-    value === 'already-client' ||
-    value === 'delivery-failure'
-  ) {
-    return value;
-  }
-
-  return 'sent';
 }
 
 function parseInvitationLinkStateControl(
@@ -887,36 +870,6 @@ export function DevToggle() {
                       <SelectItem value="expired">Expired</SelectItem>
                       <SelectItem value="used">Already used</SelectItem>
                       <SelectItem value="invalid">Unknown link</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="dev-invitation-outcome" className={DEV_LABEL_CLASS}>
-                    Invitation outcome
-                  </Label>
-                  <Select
-                    value={appState.invitationOutcome}
-                    onValueChange={(value) =>
-                      setAppState({
-                        invitationOutcome: parseInvitationOutcomeControl(value),
-                      })
-                    }
-                  >
-                    <SelectTrigger id="dev-invitation-outcome" className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className={SELECT_CONTENT_CLASS}>
-                      <SelectItem value="sent">Invitation sent</SelectItem>
-                      <SelectItem value="replaced">
-                        Replaced a pending invitation
-                      </SelectItem>
-                      <SelectItem value="already-client">
-                        Email is already a client
-                      </SelectItem>
-                      <SelectItem value="delivery-failure">
-                        Email delivery failed
-                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

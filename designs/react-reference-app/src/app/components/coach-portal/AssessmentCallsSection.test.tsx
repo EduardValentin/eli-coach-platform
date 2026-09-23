@@ -94,14 +94,12 @@ const JOURNEY_BOOKINGS = [
 
 const JOURNEY_STAGES: Record<string, JourneyStage> = {
   [YESTERDAY.id]: 'payment-link-sent',
-  [TWO_DAYS_AGO.id]: 'paid',
   [THREE_DAYS_AGO.id]: 'invited',
 };
 
 const REACHABLE_STAGES: JourneyStage[] = [
   'held',
   'payment-link-sent',
-  'paid',
   'invited',
 ];
 
@@ -139,8 +137,7 @@ beforeAll(() => {
 });
 
 function AdvanceJourneys({ stages }: { stages: Record<string, JourneyStage> }) {
-  const { journeys, recordPaymentLinkSent, recordPaid, recordInvitation } =
-    useClientJourneys();
+  const { journeys, recordPaymentLinkSent, recordPaid } = useClientJourneys();
 
   useEffect(() => {
     for (const [callId, target] of Object.entries(stages)) {
@@ -152,23 +149,15 @@ function AdvanceJourneys({ stages }: { stages: Record<string, JourneyStage> }) {
 
       if (reached === 0) {
         recordPaymentLinkSent(callId, { token: `pl-${callId}`, sentAt: NOW });
-      } else if (reached === 1) {
+      } else {
         recordPaid(callId, {
           paidAt: NOW,
           bundle: 3,
           startPath: 'immediate',
         });
-      } else {
-        recordInvitation(callId, {
-          token: `inv-${callId}`,
-          email: journey.identity.email,
-          sentAt: NOW,
-          expiresAt: NOW,
-          replaced: false,
-        });
       }
     }
-  }, [journeys, stages, recordPaymentLinkSent, recordPaid, recordInvitation]);
+  }, [journeys, stages, recordPaymentLinkSent, recordPaid]);
 
   return null;
 }
@@ -885,7 +874,6 @@ describe('filtering assessment calls by journey step', () => {
     expect(
       screen.getByRole('option', { name: 'Payment link sent 1' }),
     ).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: 'Paid 1' })).toBeInTheDocument();
     expect(
       screen.getByRole('option', { name: 'Invited 1' }),
     ).toBeInTheDocument();
@@ -912,11 +900,13 @@ describe('filtering assessment calls by journey step', () => {
     const user = renderJourneys('?when=all');
 
     // act
-    await chooseJourneyOption(user, 'Paid');
+    await chooseJourneyOption(user, 'Payment link sent');
 
     // assert
-    expect(listedNames()).toEqual(['Dana Pop']);
-    expect(currentLocation()).toBe('?when=all&status=paid REPLACE');
+    expect(listedNames()).toEqual(['Elena Marin']);
+    expect(currentLocation()).toBe(
+      '?when=all&status=payment-link-sent REPLACE',
+    );
   });
 
   it('leaves a call with no journey step to the all-statuses option only', async () => {
@@ -933,7 +923,7 @@ describe('filtering assessment calls by journey step', () => {
 
   it('keeps the all-statuses option out of the URL when the coach goes back to it', async () => {
     // arrange
-    const user = renderJourneys('?when=all&status=paid');
+    const user = renderJourneys('?when=all&status=invited');
 
     // act
     await chooseJourneyOption(user, 'All statuses');
@@ -954,7 +944,7 @@ describe('filtering assessment calls by journey step', () => {
 
   it('combines the journey step with the search', async () => {
     // arrange
-    const user = renderJourneys('?when=all&status=paid');
+    const user = renderJourneys('?when=all&status=payment-link-sent');
 
     // act
     await user.type(screen.getByLabelText('Search calls'), 'carmen');
@@ -992,7 +982,7 @@ describe('filtering assessment calls by journey step', () => {
 
   it('offers a way to clear every filter once one narrows the list to nothing, and resets the URL', async () => {
     // arrange
-    const user = renderJourneys('?when=all&status=paid');
+    const user = renderJourneys('?when=all&status=payment-link-sent');
     await user.type(screen.getByLabelText('Search calls'), 'carmen');
     expect(screen.getByText('No calls match your search.')).toBeInTheDocument();
 

@@ -3,13 +3,17 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, describe, expect, it } from 'vitest';
 import { InvitationLanding } from './InvitationLanding';
+import { ClientOnboarding } from './client-portal/ClientOnboarding';
+import { ClientWelcome } from './client-portal/ClientWelcome';
 import { AppProvider, useAppState } from '../context/AppContext';
 import { AssessmentCallProvider } from '../context/AssessmentCallContext';
 import {
   ClientJourneyProvider,
   useClientJourneys,
 } from '../context/ClientJourneyContext';
+import { ClientJourneyGate } from '../components/client-portal/ClientJourneyGate';
 import { ClientProfileProvider } from '../context/ClientProfileContext';
+import { UnitPreferencesProvider } from '../context/UnitPreferencesContext';
 
 const DEMO_TOKEN = 'inv-seed-ac-demo-client-1';
 const WAIT = { timeout: 4000 };
@@ -53,6 +57,39 @@ function renderInvitation(devParams: string) {
 afterEach(() => {
   window.history.replaceState({}, '', '/');
 });
+
+function renderInvitationThroughPortal(devParams: string) {
+  const url = `/invitation/${DEMO_TOKEN}${devParams}`;
+  window.history.replaceState({}, '', url);
+
+  render(
+    <MemoryRouter initialEntries={[url]}>
+      <AppProvider>
+        <ClientProfileProvider>
+          <UnitPreferencesProvider>
+            <AssessmentCallProvider>
+              <ClientJourneyProvider>
+                <Routes>
+                  <Route
+                    element={<InvitationLanding />}
+                    path="/invitation/:token"
+                  />
+                  <Route element={<ClientJourneyGate />}>
+                    <Route element={<ClientWelcome />} path="/portal/welcome" />
+                    <Route
+                      element={<ClientOnboarding />}
+                      path="/portal/onboarding"
+                    />
+                  </Route>
+                </Routes>
+              </ClientJourneyProvider>
+            </AssessmentCallProvider>
+          </UnitPreferencesProvider>
+        </ClientProfileProvider>
+      </AppProvider>
+    </MemoryRouter>,
+  );
+}
 
 describe('accepting an invitation', () => {
   it('hands her to the hosted sign-in and lands her on the welcome page', async () => {
@@ -113,4 +150,28 @@ describe('accepting an invitation', () => {
     },
     TEST_TIMEOUT_MS,
   );
+});
+
+describe('the invitation lands her in the onboarding wizard', () => {
+  it('reaches step 1 of the wizard after signing up and continuing past the welcome page', async () => {
+    // arrange
+    renderInvitationThroughPortal('?jstage=invited');
+    const create = await screen.findByRole(
+      'button',
+      { name: 'Continue to create my account' },
+      WAIT,
+    );
+
+    // act
+    await userEvent.click(create);
+    const start = await screen.findByRole(
+      'button',
+      { name: "Let's get started" },
+      WAIT,
+    );
+    await userEvent.click(start);
+
+    // assert
+    expect(await screen.findByText('Step 1 of 5', undefined, WAIT)).toBeVisible();
+  }, TEST_TIMEOUT_MS);
 });

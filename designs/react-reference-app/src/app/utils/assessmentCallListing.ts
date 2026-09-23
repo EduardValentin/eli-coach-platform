@@ -9,12 +9,11 @@ export type AssessmentCallStatus = 'all' | 'today' | 'upcoming' | 'past';
 
 export type AssessmentCallTiming = 'upcoming' | 'past';
 
-export type JourneyStep = 'any' | 'payment-link-sent' | 'paid' | 'invited';
+export type JourneyStep = 'any' | 'payment-link-sent' | 'invited';
 
 export const JOURNEY_STEPS: readonly JourneyStep[] = [
   'any',
   'payment-link-sent',
-  'paid',
   'invited',
 ];
 
@@ -243,7 +242,7 @@ export function parseStatus(raw: string | null): AssessmentCallStatus {
 }
 
 export function parseJourneyStep(raw: string | null): JourneyStep {
-  if (raw === 'payment-link-sent' || raw === 'paid' || raw === 'invited') {
+  if (raw === 'payment-link-sent' || raw === 'invited') {
     return raw;
   }
   return 'any';
@@ -266,7 +265,6 @@ const STATUS_PHRASES: Record<AssessmentCallStatus, string> = {
 const JOURNEY_STEP_LABELS: Record<JourneyStep, string> = {
   any: '',
   'payment-link-sent': 'Payment link sent',
-  paid: 'Paid',
   invited: 'Invited',
 };
 

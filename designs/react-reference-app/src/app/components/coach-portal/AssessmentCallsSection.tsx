@@ -79,7 +79,6 @@ const WHEN_TABS: { status: AssessmentCallStatus; label: string }[] = [
 const JOURNEY_FILTER_OPTIONS: { step: JourneyStep; label: string }[] = [
   { step: 'any', label: 'All statuses' },
   { step: 'payment-link-sent', label: 'Payment link sent' },
-  { step: 'paid', label: 'Paid' },
   { step: 'invited', label: 'Invited' },
 ];
 

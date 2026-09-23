@@ -8,7 +8,6 @@ export type RosterStatus = Extract<ClientStatusLabel, 'Active' | 'Inactive'>;
 export type RosterStatusOption = ClientStatusLabel | 'all';
 
 const ROSTER_STATUS_VOCABULARY: readonly ClientStatusLabel[] = [
-  'Paid',
   'Invited',
   'Onboarding',
   'Awaiting review',

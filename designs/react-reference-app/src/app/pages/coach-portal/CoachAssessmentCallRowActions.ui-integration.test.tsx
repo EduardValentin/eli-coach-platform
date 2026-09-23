@@ -166,10 +166,8 @@ async function sendPaymentLink(user: ReturnType<typeof userEvent.setup>) {
   await confirm(user, 'Send link');
 }
 
-async function sendInvitation(user: ReturnType<typeof userEvent.setup>) {
+async function markPaid(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole('button', { name: 'driver: mark paid' }));
-  await openDialog(user, 'Invite');
-  await confirm(user, 'Send invitation');
 }
 
 describe('the assessment call row actions', () => {
@@ -301,148 +299,26 @@ describe('the assessment call row actions', () => {
     expect(
       screen.getByRole('button', { name: 'Send payment link' }),
     ).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Invite' })).toBeNull();
   });
 
-  it('offers only the invitation once she has paid', async () => {
+  it('moves straight to invited and leaves no journey action once she has paid', async () => {
     // arrange
     const user = renderPage();
 
     // act
-    await user.click(screen.getByRole('button', { name: 'driver: mark paid' }));
+    await markPaid(user);
 
     // assert
-    expect(screen.getByRole('button', { name: 'Invite' })).toBeInTheDocument();
+    expect(await findStageBadge('Invited')).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: 'Send payment link' }),
     ).toBeNull();
-  });
-
-  it('sends the invitation from the row and confirms the send', async () => {
-    // arrange
-    const user = renderPage();
-
-    // act
-    await sendInvitation(user);
-
-    // assert
-    expect(screen.queryByRole('dialog')).toBeNull();
-    expect(
-      await screen.findByText(`Invitation sent to ${VISITOR_EMAIL}.`, {}, WAIT),
-    ).toBeInTheDocument();
-    expect(await findStageBadge('Invited')).toBeInTheDocument();
-  });
-
-  it('re-sends the invitation once she has already been invited', async () => {
-    // arrange
-    const user = renderPage();
-    await sendInvitation(user);
-    await findStageBadge('Invited');
-
-    // act
-    const dialog = await openDialog(user, 'Re-send invitation');
-
-    // assert
-    expect(
-      within(dialog).getByRole('heading', { name: 'Re-send invitation?' }),
-    ).toBeInTheDocument();
-    expect(
-      within(dialog).getByText(
-        `A fresh invitation goes to ${VISITOR_EMAIL}. Her earlier invitation no longer works.`,
-      ),
-    ).toBeInTheDocument();
-
-    // act
-    await confirm(user, 'Re-send invitation');
-
-    // assert
-    expect(screen.queryByRole('dialog')).toBeNull();
-    expect(await findStageBadge('Invited')).toBeInTheDocument();
-    expect(
-      (
-        await screen.findAllByText(
-          `Invitation sent to ${VISITOR_EMAIL}.`,
-          {},
-          WAIT,
-        )
-      ).length,
-    ).toBeGreaterThan(0);
-  });
-
-  it('tells her the earlier invitation stopped working when one is replaced', async () => {
-    // arrange
-    const user = renderPage('?invitation=replaced');
-
-    // act
-    await sendInvitation(user);
-
-    // assert
-    expect(
-      await screen.findByText(
-        `Invitation sent to ${VISITOR_EMAIL}. Her earlier invitation no longer works.`,
-        {},
-        WAIT,
-      ),
-    ).toBeInTheDocument();
-  });
-
-  it('refuses an email that already belongs to a client', async () => {
-    // arrange
-    const user = renderPage('?invitation=already-client');
-
-    // act
-    await sendInvitation(user);
-
-    // assert
-    expect(
-      await screen.findByText(
-        'This email already belongs to a client.',
-        {},
-        WAIT,
-      ),
-    ).toBeInTheDocument();
-    expect(await findStageBadge('Paid')).toBeInTheDocument();
-  });
-
-  it('says the invitation was saved when the email could not be sent', async () => {
-    // arrange
-    const user = renderPage('?invitation=delivery-failure');
-
-    // act
-    await sendInvitation(user);
-
-    // assert
-    expect(
-      await screen.findByText(
-        'Saved, but the email could not be sent. Try again in a moment.',
-        {},
-        WAIT,
-      ),
-    ).toBeInTheDocument();
-  });
-
-  it('offers only a re-send once she has been invited', async () => {
-    // arrange
-    const user = renderPage();
-
-    // act
-    await sendInvitation(user);
-
-    // assert
-    expect(await findStageBadge('Invited')).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: 'Re-send invitation' }),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole('button', { name: 'Send payment link' }),
-    ).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Invite' })).toBeNull();
   });
 
   it('shows the accepted invitation once she has created her account', async () => {
     // arrange
     const user = renderPage();
-    await sendInvitation(user);
+    await markPaid(user);
     await findStageBadge('Invited');
 
     // act
@@ -454,10 +330,6 @@ describe('the assessment call row actions', () => {
     expect(screen.getByText('Invitation accepted')).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: 'Send payment link' }),
-    ).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Invite' })).toBeNull();
-    expect(
-      screen.queryByRole('button', { name: 'Re-send invitation' }),
     ).toBeNull();
   });
 });

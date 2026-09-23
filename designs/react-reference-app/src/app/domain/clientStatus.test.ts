@@ -70,7 +70,6 @@ describe('the status the coach reads on a client row', () => {
   const stageStatuses: [JourneyStage, ClientStatus][] = [
     ['held', { label: 'Call held', tone: 'neutral' }],
     ['payment-link-sent', { label: 'Payment link sent', tone: 'neutral' }],
-    ['paid', { label: 'Paid', tone: 'neutral' }],
     ['invited', { label: 'Invited', tone: 'neutral' }],
     ['account-created', { label: 'Onboarding', tone: 'neutral' }],
     ['onboarding', { label: 'Onboarding', tone: 'neutral' }],

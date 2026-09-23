@@ -96,11 +96,11 @@ function headerButton(label: string): HTMLElement {
 describe('the coach clients list', () => {
   it('lists a client as soon as she has paid, with her bundle and the day she paid', () => {
     // arrange
-    renderList('?jstage=paid');
+    renderList('?jstage=invited');
 
     // assert
     const row = rowFor('Jane Doe');
-    expect(within(row).getByText('Paid')).toBeInTheDocument();
+    expect(within(row).getByText('Invited')).toBeInTheDocument();
     expect(within(row).getByText('3 months')).toBeInTheDocument();
     expect(
       within(row).getByText(/^[A-Z][a-z]{2} \d{2}, \d{4}$/),
@@ -171,7 +171,7 @@ describe('the coach clients list', () => {
   });
 
   it.each([
-    ['?jstage=paid', 'Paid'],
+    ['?jstage=paid', 'Invited'],
     ['?jstage=invited', 'Invited'],
     ['?jstage=account-created', 'Onboarding'],
     ['?jstage=onboarding', 'Onboarding'],

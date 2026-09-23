@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Send, UserPlus, type LucideIcon } from 'lucide-react';
+import { Send, type LucideIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { RowActionButton } from '../RowActionButton';
 import { ConfirmDialog } from '../ui/confirm-dialog';
@@ -10,19 +10,6 @@ import {
   PAYMENT_LINK_ERROR_MESSAGES,
   sendPaymentLink,
 } from '../../services/paymentLinkService';
-import {
-  INVITATION_VALIDITY_DAYS,
-  InvitationError,
-  sendInvitation,
-  type SentInvitation,
-} from '../../services/invitationService';
-
-const REPLACED_NOTE = 'Her earlier invitation no longer works.';
-
-const ALREADY_CLIENT_MESSAGE = 'This email already belongs to a client.';
-
-const INVITATION_DELIVERY_FAILURE_MESSAGE =
-  'Saved, but the email could not be sent. Try again in a moment.';
 
 type JourneyAction = {
   icon: LucideIcon;
@@ -33,24 +20,11 @@ type JourneyAction = {
   run: () => Promise<void>;
 };
 
-function invitationSentMessage(invitation: SentInvitation): string {
-  const sent = `Invitation sent to ${invitation.email}.`;
-
-  return invitation.replaced ? `${sent} ${REPLACED_NOTE}` : sent;
-}
-
-function invitationFailureMessage(error: unknown): string {
-  return error instanceof InvitationError && error.code === 'already-client'
-    ? ALREADY_CLIENT_MESSAGE
-    : INVITATION_DELIVERY_FAILURE_MESSAGE;
-}
-
 function journeyAction(
   stage: JourneyStage,
   name: string,
   email: string,
   sendLink: () => Promise<void>,
-  invite: () => Promise<void>,
 ): JourneyAction | null {
   switch (stage) {
     case 'held':
@@ -71,24 +45,6 @@ function journeyAction(
         confirmLabel: 'Re-send link',
         run: sendLink,
       };
-    case 'paid':
-      return {
-        icon: UserPlus,
-        buttonLabel: 'Invite',
-        title: 'Send invitation?',
-        description: `${name} gets an email to create her account. The invitation is valid for ${INVITATION_VALIDITY_DAYS} days.`,
-        confirmLabel: 'Send invitation',
-        run: invite,
-      };
-    case 'invited':
-      return {
-        icon: UserPlus,
-        buttonLabel: 'Re-send invitation',
-        title: 'Re-send invitation?',
-        description: `A fresh invitation goes to ${email}. Her earlier invitation no longer works.`,
-        confirmLabel: 'Re-send invitation',
-        run: invite,
-      };
     default:
       return null;
   }
@@ -96,7 +52,7 @@ function journeyAction(
 
 export function CallJourneyActions({ journey }: { journey: ClientJourney }) {
   const { appState } = useAppState();
-  const { recordPaymentLinkSent, recordInvitation } = useClientJourneys();
+  const { recordPaymentLinkSent } = useClientJourneys();
   const [sending, setSending] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
@@ -118,24 +74,7 @@ export function CallJourneyActions({ journey }: { journey: ClientJourney }) {
     }
   };
 
-  const invite = async () => {
-    setSending(true);
-
-    try {
-      const invitation = await sendInvitation(
-        journey.identity,
-        appState.invitationOutcome,
-      );
-      recordInvitation(journey.callId, invitation);
-      toast.success(invitationSentMessage(invitation));
-    } catch (error) {
-      toast.error(invitationFailureMessage(error));
-    } finally {
-      setSending(false);
-    }
-  };
-
-  const action = journeyAction(journey.stage, name, email, sendLink, invite);
+  const action = journeyAction(journey.stage, name, email, sendLink);
 
   if (!action) return null;
 

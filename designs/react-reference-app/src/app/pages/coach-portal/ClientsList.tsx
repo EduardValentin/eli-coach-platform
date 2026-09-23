@@ -134,7 +134,7 @@ const DEFAULT_SORT_KEY: RosterSortKey = 'joined';
 const SEARCH_FIELD_ID = 'clients-search';
 
 function hasStarted(journey: ClientJourney): boolean {
-  return !isBeforeStage(journey.stage, 'paid');
+  return !isBeforeStage(journey.stage, 'invited');
 }
 
 function journeyBundleLabel(journey: ClientJourney): string {

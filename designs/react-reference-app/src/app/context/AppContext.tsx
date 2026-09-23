@@ -10,10 +10,7 @@ import type {
   PrototypeAccountRole,
   PrototypeSignInOutcome,
 } from '../services/authService';
-import type {
-  PrototypeInvitationLinkState,
-  PrototypeInvitationOutcome,
-} from '../services/invitationService';
+import type { PrototypeInvitationLinkState } from '../services/invitationService';
 import type {
   PrototypePaymentLinkOutcome,
   PrototypePaymentLinkState,
@@ -64,7 +61,6 @@ type AppState = {
   journeyReducedPricing: boolean;
   paymentLinkOutcome: PrototypePaymentLinkOutcome;
   paymentLinkState: PrototypePaymentLinkState;
-  invitationOutcome: PrototypeInvitationOutcome;
   invitationLinkState: PrototypeInvitationLinkState;
 };
 
@@ -96,7 +92,6 @@ const defaultState: AppState = {
   journeyReducedPricing: false,
   paymentLinkOutcome: 'sent',
   paymentLinkState: 'valid',
-  invitationOutcome: 'sent',
   invitationLinkState: 'valid',
 };
 
@@ -124,7 +119,6 @@ const validCallSettingsSaveOutcomes = ['saved', 'server_error'] as const;
 const validJourneyStages = [
   'held',
   'payment-link-sent',
-  'paid',
   'invited',
   'account-created',
   'onboarding',
@@ -145,12 +139,6 @@ const validSubscriptionStatuses = [
 const validJourneySexes = ['female', 'male'] as const;
 const validPaymentLinkOutcomes = ['sent', 'delivery-failure'] as const;
 const validPaymentLinkStates = ['valid', 'expired', 'used', 'invalid'] as const;
-const validInvitationOutcomes = [
-  'sent',
-  'replaced',
-  'already-client',
-  'delivery-failure',
-] as const;
 const validInvitationLinkStates = [
   'valid',
   'expired',
@@ -231,7 +219,9 @@ function parseDevParamsFromURL(): AppState {
     state.callSettingsSaveOutcome = settingsSave as PrototypeCallSettingsSaveOutcome;
   }
 
-  const journeyStage = params.get('jstage');
+  const journeyStageParam = params.get('jstage');
+  const journeyStage =
+    journeyStageParam === 'paid' ? 'invited' : journeyStageParam;
   const isPostMvpJourneyStage =
     journeyStage === 'program-ready' || journeyStage === 'review-call-scheduled';
   if (
@@ -272,13 +262,6 @@ function parseDevParamsFromURL(): AppState {
     (validPaymentLinkStates as readonly string[]).includes(paymentLinkState)
   ) {
     state.paymentLinkState = paymentLinkState as PrototypePaymentLinkState;
-  }
-  const invitation = params.get('invitation');
-  if (
-    invitation &&
-    (validInvitationOutcomes as readonly string[]).includes(invitation)
-  ) {
-    state.invitationOutcome = invitation as PrototypeInvitationOutcome;
   }
   const invitationLinkState = params.get('invitationstate');
   if (
@@ -327,7 +310,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     url.searchParams.delete('jreduced');
     url.searchParams.delete('paylink');
     url.searchParams.delete('paylinkstate');
-    url.searchParams.delete('invitation');
     url.searchParams.delete('invitationstate');
 
     if (appState.prototypeMode === 'post-mvp') {
@@ -392,9 +374,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     if (appState.paymentLinkState !== defaultState.paymentLinkState) {
       url.searchParams.set('paylinkstate', appState.paymentLinkState);
-    }
-    if (appState.invitationOutcome !== defaultState.invitationOutcome) {
-      url.searchParams.set('invitation', appState.invitationOutcome);
     }
     if (appState.invitationLinkState !== defaultState.invitationLinkState) {
       url.searchParams.set('invitationstate', appState.invitationLinkState);

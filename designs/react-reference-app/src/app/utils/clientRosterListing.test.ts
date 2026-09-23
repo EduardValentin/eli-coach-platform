@@ -36,12 +36,13 @@ describe('parsing roster URL params with safe fallbacks', () => {
   it('falls back to the all status for an absent or unknown value', () => {
     expect(parseRosterStatus(null)).toBe('all');
     expect(parseRosterStatus('bogus')).toBe('all');
-    expect(parseRosterStatus('Paid')).toBe('Paid');
+    expect(parseRosterStatus('Invited')).toBe('Invited');
   });
 
   it("never accepts a status outside this page's vocabulary", () => {
     expect(parseRosterStatus('Call held')).toBe('all');
     expect(parseRosterStatus('Payment link sent')).toBe('all');
+    expect(parseRosterStatus('Paid')).toBe('all');
   });
 
   it('falls back to the joined sort key for an absent or unknown value', () => {
@@ -68,7 +69,11 @@ describe('filtering roster rows', () => {
   it('narrows by status and search together', () => {
     const rows = [
       row({ id: 'a', name: 'Ann Active', status: clientStatusNamed('Active') }),
-      row({ id: 'b', name: 'Bea Paid', status: clientStatusNamed('Paid') }),
+      row({
+        id: 'b',
+        name: 'Bea Invited',
+        status: clientStatusNamed('Invited'),
+      }),
       row({
         id: 'c',
         name: 'Cara Inactive',
@@ -100,13 +105,21 @@ describe('counting rows per status', () => {
   it('ignores the chosen status while respecting the search', () => {
     const rows = [
       row({ id: 'a', name: 'Ann Active', status: clientStatusNamed('Active') }),
-      row({ id: 'b', name: 'Bea Paid', status: clientStatusNamed('Paid') }),
-      row({ id: 'c', name: 'Cel Paid', status: clientStatusNamed('Paid') }),
+      row({
+        id: 'b',
+        name: 'Bea Invited',
+        status: clientStatusNamed('Invited'),
+      }),
+      row({
+        id: 'c',
+        name: 'Cel Invited',
+        status: clientStatusNamed('Invited'),
+      }),
       row({
         id: 'd',
-        name: 'Dee Paid Elsewhere',
+        name: 'Dee Invited Elsewhere',
         email: 'dee@elsewhere.com',
-        status: clientStatusNamed('Paid'),
+        status: clientStatusNamed('Invited'),
       }),
     ];
 
@@ -115,7 +128,7 @@ describe('counting rows per status', () => {
       selecting({ status: 'Active', query: 'example.com' }),
     );
 
-    expect(counts.Paid).toBe(2);
+    expect(counts.Invited).toBe(2);
     expect(counts.Active).toBe(1);
     expect(counts.all).toBe(3);
   });
@@ -153,7 +166,7 @@ describe('sorting by client name', () => {
 describe('sorting by status vocabulary position', () => {
   const rows = [
     row({ id: 'a', status: clientStatusNamed('Active') }),
-    row({ id: 'b', status: clientStatusNamed('Paid') }),
+    row({ id: 'b', status: clientStatusNamed('Invited') }),
     row({ id: 'c', status: clientStatusNamed('Inactive') }),
   ];
 
@@ -213,15 +226,15 @@ describe('sorting by join date', () => {
 describe('detecting active filters', () => {
   it('is false only when status and query are both at their defaults', () => {
     expect(hasActiveRosterFilters(selecting())).toBe(false);
-    expect(hasActiveRosterFilters(selecting({ status: 'Paid' }))).toBe(true);
+    expect(hasActiveRosterFilters(selecting({ status: 'Invited' }))).toBe(true);
     expect(hasActiveRosterFilters(selecting({ query: 'ann' }))).toBe(true);
   });
 });
 
 describe('the empty roster message', () => {
   it('names the chosen status alone when there is no search', () => {
-    expect(emptyRosterMessage(selecting({ status: 'Paid' }))).toBe(
-      'No clients match the Paid status.',
+    expect(emptyRosterMessage(selecting({ status: 'Invited' }))).toBe(
+      'No clients match the Invited status.',
     );
   });
 
@@ -233,7 +246,7 @@ describe('the empty roster message', () => {
 
   it('combines the status and the search when both are set', () => {
     expect(
-      emptyRosterMessage(selecting({ status: 'Paid', query: 'zzz' })),
-    ).toBe('No clients match the Paid status and your search.');
+      emptyRosterMessage(selecting({ status: 'Invited', query: 'zzz' })),
+    ).toBe('No clients match the Invited status and your search.');
   });
 });

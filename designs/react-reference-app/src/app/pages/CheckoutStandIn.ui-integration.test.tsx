@@ -32,6 +32,9 @@ function JourneyProbe() {
           ? `${demoJourney.subscription.bundle}:${demoJourney.subscription.startPath}:${demoJourney.subscription.status}`
           : 'none'}
       </span>
+      <span data-testid="invitation">
+        {demoJourney.invitation ? demoJourney.invitation.token : 'none'}
+      </span>
     </div>
   );
 }
@@ -69,7 +72,7 @@ afterEach(() => {
 });
 
 describe('the Stripe checkout stand-in', () => {
-  it('records the payment and confirms it when the charge succeeds', async () => {
+  it('records the payment, creates her invitation, and confirms the charge', async () => {
     // arrange
     const session = await openSession();
     renderStandIn(session, '?jstage=payment-link-sent');
@@ -79,10 +82,11 @@ describe('the Stripe checkout stand-in', () => {
 
     // assert
     expect(await screen.findByText('confirmation page', undefined, WAIT)).toBeVisible();
-    expect(screen.getByTestId('stage')).toHaveTextContent('paid');
+    expect(screen.getByTestId('stage')).toHaveTextContent('invited');
     expect(screen.getByTestId('subscription')).toHaveTextContent(
       '3:waiting:not-started',
     );
+    expect(screen.getByTestId('invitation')).not.toHaveTextContent('none');
   }, TEST_TIMEOUT_MS);
 
   it('sends her back to the bundles with a cancellation notice', async () => {

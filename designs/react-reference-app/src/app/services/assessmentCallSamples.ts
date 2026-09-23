@@ -3,6 +3,7 @@ import {
   DEFAULT_COACH_AVAILABILITY,
   type PrototypeBooking,
 } from './assessmentCallService';
+import { DEMO_JOURNEY_CALL_ID } from '../context/ClientJourneyContext';
 
 const HOUR_MS = 60 * 60 * 1000;
 
@@ -58,6 +59,15 @@ function sampleBooking(
   };
 }
 
+function demoClientBooking(now: Date): PrototypeBooking {
+  return sampleBooking(DEMO_JOURNEY_CALL_ID, atLocalHour(now, -7, 17), {
+    name: 'Jane Doe',
+    email: 'jane@example.com',
+    notes: 'Wants a structured plan with someone to keep her accountable.',
+    bookedDaysAhead: 2,
+  });
+}
+
 export function sampleImminentBookings(now: Date): PrototypeBooking[] {
   return [
     sampleBooking('ac-sample-in-two-hours', hoursFromNow(now, 2), {
@@ -69,6 +79,7 @@ export function sampleImminentBookings(now: Date): PrototypeBooking[] {
       primaryGoal: 'lose_weight',
       phone: '+40712345678',
     }),
+    demoClientBooking(now),
   ];
 }
 
@@ -153,20 +164,23 @@ const MANY_CALL_COUNT = MANY_CALL_NAMES.length;
 const MANY_CALL_MIDPOINT = MANY_CALL_COUNT / 2;
 
 export function sampleManyBookings(now: Date): PrototypeBooking[] {
-  return Array.from({ length: MANY_CALL_COUNT }, (_, index) => {
-    const dayOffset = index - MANY_CALL_MIDPOINT + 1;
-    const name = MANY_CALL_NAMES[index];
-    const [firstName] = name.toLowerCase().split(' ');
+  return [
+    demoClientBooking(now),
+    ...Array.from({ length: MANY_CALL_COUNT }, (_, index) => {
+      const dayOffset = index - MANY_CALL_MIDPOINT + 1;
+      const name = MANY_CALL_NAMES[index];
+      const [firstName] = name.toLowerCase().split(' ');
 
-    return sampleBooking(
-      `ac-sample-many-${index}`,
-      atLocalHour(now, dayOffset, 9 + (index % 8)),
-      {
-        name,
-        email: `${firstName}.${index + 1}@example.com`,
-        notes: index % 3 === 0 ? 'Booked through the public site.' : '',
-        bookedDaysAhead: 1 + (index % 5),
-      },
-    );
-  });
+      return sampleBooking(
+        `ac-sample-many-${index}`,
+        atLocalHour(now, dayOffset, 9 + (index % 8)),
+        {
+          name,
+          email: `${firstName}.${index + 1}@example.com`,
+          notes: index % 3 === 0 ? 'Booked through the public site.' : '',
+          bookedDaysAhead: 1 + (index % 5),
+        },
+      );
+    }),
+  ];
 }

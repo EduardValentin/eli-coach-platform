@@ -264,16 +264,15 @@ export function seedJourney(seed: JourneySeed): ClientJourney {
       ? {
           token: `pl-seed-${callId}`,
           sentAt: paymentLinkSentAt,
-          state: reached('paid') ? 'used' : 'valid',
+          state: reached('invited') ? 'used' : 'valid',
         }
       : null,
-    paidAt: reached('paid') ? paidAt : null,
+    paidAt: reached('invited') ? paidAt : null,
     invitation: reached('invited')
       ? {
           token: `inv-seed-${callId}`,
           sentAt: invitedAt,
           expiresAt: addDays(invitedAt, INVITATION_VALIDITY_DAYS),
-          replaced: false,
           state: reached('account-created') ? 'used' : 'valid',
         }
       : null,
@@ -292,7 +291,7 @@ export function seedJourney(seed: JourneySeed): ClientJourney {
       ? { startsAt: addDays(now, 1), scheduledAt: subDays(now, 1) }
       : undefined,
     measurements: reached('submitted') ? seedMeasurements(submittedAt) : [],
-    subscription: reached('paid')
+    subscription: reached('invited')
       ? seedSubscription({
           purchasedAt: paidAt,
           programReadyAt: reached('program-ready') ? programReadyAt : null,

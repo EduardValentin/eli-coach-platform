@@ -3,7 +3,6 @@ import type { CoachingSubscription } from './coachingSubscription';
 export type JourneyStage =
   | 'held'
   | 'payment-link-sent'
-  | 'paid'
   | 'invited'
   | 'account-created'
   | 'onboarding'
@@ -17,7 +16,6 @@ export type JourneyStage =
 export const JOURNEY_STAGES: readonly JourneyStage[] = [
   'held',
   'payment-link-sent',
-  'paid',
   'invited',
   'account-created',
   'onboarding',
@@ -32,7 +30,6 @@ export const JOURNEY_STAGES: readonly JourneyStage[] = [
 export type JourneyEvent =
   | 'send-payment-link'
   | 'record-payment'
-  | 'send-invitation'
   | 'create-account'
   | 'start-onboarding'
   | 'submit-onboarding'
@@ -71,7 +68,6 @@ export type JourneyInvitation = {
   token: string;
   sentAt: Date;
   expiresAt: Date;
-  replaced: boolean;
   state: JourneyLinkState;
 };
 
@@ -166,13 +162,9 @@ const TRANSITIONS: Record<
   held: { 'send-payment-link': 'payment-link-sent' },
   'payment-link-sent': {
     'send-payment-link': 'payment-link-sent',
-    'record-payment': 'paid',
+    'record-payment': 'invited',
   },
-  paid: { 'send-invitation': 'invited' },
-  invited: {
-    'send-invitation': 'invited',
-    'create-account': 'account-created',
-  },
+  invited: { 'create-account': 'account-created' },
   'account-created': { 'start-onboarding': 'onboarding' },
   onboarding: { 'submit-onboarding': 'submitted' },
   submitted: {
@@ -216,7 +208,6 @@ export function advance(
 export const COACH_STAGE_LABELS: Record<JourneyStage, string> = {
   held: 'Call held',
   'payment-link-sent': 'Payment link sent',
-  paid: 'Paid',
   invited: 'Invited',
   'account-created': 'Invitation accepted',
   onboarding: 'Onboarding',
