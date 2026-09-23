@@ -259,7 +259,7 @@ function RosterActions({
   onTerminate: (row: RosterRow) => void;
 }) {
   return (
-    <div className="flex items-center justify-end gap-2">
+    <div className="flex items-center gap-2">
       {row.terminable &&
         (row.terminable.status === 'Active' ? (
           <RowActionButton
@@ -553,7 +553,7 @@ export function ClientsList() {
                 direction={directionFor('joined')}
                 onSort={() => chooseSort('joined')}
               />
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

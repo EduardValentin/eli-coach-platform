@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
+import { bundleLengthLabel } from '../domain/bundles';
 
 const ACTIVE_WORKOUT_STORAGE_KEY = 'eli:active-workout';
 
@@ -98,9 +99,8 @@ export interface Subscription {
   status: 'active' | 'expired';
 }
 
-/** Human label for a subscription's term, e.g. "1 Month" / "6 Months". */
 export const subscriptionTermLabel = (s: Pick<Subscription, 'months'>): string =>
-  s.months === 1 ? '1 Month' : `${s.months} Months`;
+  bundleLengthLabel(s.months);
 
 export interface PlanInstance {
   id: string;
