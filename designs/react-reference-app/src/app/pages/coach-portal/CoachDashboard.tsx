@@ -1,10 +1,19 @@
 import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { motion, useReducedMotion } from 'motion/react';
 import { ClipboardCheck, ArrowRight, User } from 'lucide-react';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { RowActionLink } from '../../components/RowActionButton';
 import { buttonVariants } from '../../components/ui/button';
 import { cn } from '../../components/ui/utils';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '../../components/ui/table';
+import { getInitials } from '../../utils/clientHelpers';
 import { DashboardAppointmentRow } from '../../components/coach-portal/DashboardAppointmentRow';
 import { AssessmentCallsUnavailable } from '../../components/coach-portal/AssessmentCallsUnavailable';
 import { UpcomingAssessmentCalls } from '../../components/coach-portal/UpcomingAssessmentCalls';
@@ -45,6 +54,67 @@ const MOCK_CLIENTS = [
     compliance: '100%',
   },
 ];
+
+type ActiveClient = (typeof MOCK_CLIENTS)[number];
+
+function ActiveClientRow({
+  client,
+  showsCompliance,
+}: {
+  client: ActiveClient;
+  showsCompliance: boolean;
+}) {
+  const navigate = useNavigate();
+  const detailPath = `/coach/clients/${client.id}`;
+  const actionLabel = `View details for ${client.name}`;
+
+  return (
+    <TableRow
+      className="group cursor-pointer"
+      onClick={() => navigate(detailPath)}
+    >
+      <TableCell>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-surface-quiet flex items-center justify-center font-serif text-text-primary font-semibold shrink-0">
+            {getInitials(client.name)}
+          </div>
+          <p className="font-semibold text-sm text-text-primary">
+            {client.name}
+          </p>
+        </div>
+      </TableCell>
+      <TableCell className="text-sm text-text-secondary">
+        {client.phase}
+      </TableCell>
+      <TableCell className="text-sm text-text-secondary">
+        {client.goal}
+      </TableCell>
+      {showsCompliance && (
+        <TableCell>
+          <span className="inline-flex items-center px-2 py-1 rounded-field bg-success-soft text-success text-xs font-bold">
+            {client.compliance}
+          </span>
+        </TableCell>
+      )}
+      <TableCell>
+        <div className="flex items-center justify-end">
+          <Link
+            to={detailPath}
+            aria-label={actionLabel}
+            title={actionLabel}
+            onClick={(event) => event.stopPropagation()}
+            className={cn(
+              buttonVariants({ variant: 'outline', size: 'icon' }),
+              'opacity-0 hover:bg-text-primary hover:text-white hover:border-text-primary group-hover:opacity-100 focus-visible:opacity-100',
+            )}
+          >
+            <ArrowRight size={14} aria-hidden="true" />
+          </Link>
+        </div>
+      </TableCell>
+    </TableRow>
+  );
+}
 
 export function CoachDashboard() {
   const prefersReducedMotion = useReducedMotion() ?? false;
@@ -147,71 +217,35 @@ export function CoachDashboard() {
               Active Clients
             </h2>
           </div>
-          <button className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors">
-            View All
-          </button>
+          <Link
+            to="/coach/clients"
+            className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
+          >
+            View all
+          </Link>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="px-3 border-b border-border rounded-field">
-                <th className="pb-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                  Client Name
-                </th>
-                <th className="pb-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                  Cycle Phase
-                </th>
-                <th className="pb-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                  Primary Goal
-                </th>
-                {isPostMvp && (
-                  <th className="pb-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                    Compliance
-                  </th>
-                )}
-                <th className="pb-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-right">
-                  Action
-                </th>
-              </tr>
-            </thead>
-            <tbody>
+        <div className="-mx-6 overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Client</TableHead>
+                <TableHead>Cycle phase</TableHead>
+                <TableHead>Primary goal</TableHead>
+                {isPostMvp && <TableHead>Compliance</TableHead>}
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {MOCK_CLIENTS.map((client) => (
-                <tr
+                <ActiveClientRow
                   key={client.id}
-                  className="px-3 border-b border-neutral-50 rounded-field hover:bg-muted/50 transition-colors group"
-                >
-                  <td className="py-4 font-semibold text-sm text-foreground">
-                    {client.name}
-                  </td>
-                  <td className="py-4 text-sm text-muted-foreground">
-                    {client.phase}
-                  </td>
-                  <td className="py-4 text-sm text-muted-foreground">
-                    {client.goal}
-                  </td>
-                  {isPostMvp && (
-                    <td className="py-4">
-                      <span className="inline-flex items-center px-2 py-1 rounded-field bg-success-soft text-success text-xs font-bold">
-                        {client.compliance}
-                      </span>
-                    </td>
-                  )}
-                  <td className="py-4 text-right">
-                    <Link
-                      to={`/coach/clients/${client.id}`}
-                      className={cn(
-                        buttonVariants({ variant: 'outline', size: 'icon' }),
-                        'group-hover:bg-surface-inverted group-hover:text-white group-hover:border-surface-inverted',
-                      )}
-                    >
-                      <ArrowRight size={14} />
-                    </Link>
-                  </td>
-                </tr>
+                  client={client}
+                  showsCompliance={isPostMvp}
+                />
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       </motion.div>
     </div>
