@@ -8,7 +8,6 @@ import {
   bundleLengthLabel,
   formatJourneyDate,
   startPathLabel,
-  SUBSCRIPTION_STATUS_LABELS,
 } from '../../utils/journeyLabels';
 
 const PANEL_CLASS =
@@ -73,11 +72,11 @@ export function SubscriptionPanel({
           value={startPathLabel(subscription) ?? 'Immediate start'}
         />
         <Reading
-          term="Status"
-          value={SUBSCRIPTION_STATUS_LABELS[deriveStatus(subscription, now)]}
+          term="Payment date"
+          value={formatJourneyDate(subscription.purchasedAt)}
         />
         <Reading
-          term="Day 1"
+          term="Start date"
           value={
             subscription.day1
               ? formatJourneyDate(subscription.day1)
