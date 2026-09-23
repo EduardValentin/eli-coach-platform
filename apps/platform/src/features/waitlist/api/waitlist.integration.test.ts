@@ -72,8 +72,7 @@ describe.sequential("waitlist API integration", () => {
   });
 
   it("renders normal mode for a browser override", async () => {
-    // arrange
-    // act
+    // arrange, act
     const response = await suite.request(
       new Request(suite.url("/?ff.WAITLIST_MODE=false")),
     );

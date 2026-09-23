@@ -11,56 +11,69 @@ import { runWithFeatureFlagOverrides } from "./feature-flag-override-store.serve
 const COOKIE_NAME = "__eli_feature_flags";
 const QUERY_PREFIX = "ff.";
 const OVERRIDABLE_FLAGS = new Set([WAITLIST_MODE_FEATURE_FLAG]);
+const UNCACHEABLE = "private, no-store";
 
-type ParsedOverrides = {
+type RequestedOverrides = {
   overrides: FeatureFlagSet;
-  queryTouched: boolean;
+  urlChangedOverrides: boolean;
+};
+
+type OverrideRejection = {
+  rejection: string;
 };
 
 export function createFeatureFlagOverrideMiddleware(options: {
   appBasePath: string;
 }): MiddlewareFunction<Response> {
   return async function applyFeatureFlagOverrides({ request }, next) {
-    const parsed = parseOverrides(request);
+    const requested = readRequestedOverrides(request);
 
-    if (parsed instanceof Response) {
-      return parsed;
+    if ("rejection" in requested) {
+      return rejectOverrideRequest(requested.rejection);
     }
 
-    const response = await runWithFeatureFlagOverrides(parsed.overrides, next);
+    const response = await runWithFeatureFlagOverrides(
+      requested.overrides,
+      next,
+    );
+    const hasOverrides = Object.keys(requested.overrides).length > 0;
 
-    if (parsed.queryTouched || Object.keys(parsed.overrides).length > 0) {
-      response.headers.set("Cache-Control", "private, no-store");
+    if (requested.urlChangedOverrides || hasOverrides) {
+      response.headers.set("Cache-Control", UNCACHEABLE);
     }
 
-    if (parsed.queryTouched) {
-      const cookie = serializeOverridesCookie({
-        appBasePath: options.appBasePath,
-        overrides: parsed.overrides,
-      });
-      response.headers.append("Set-Cookie", cookie);
+    if (requested.urlChangedOverrides) {
+      response.headers.append(
+        "Set-Cookie",
+        hasOverrides
+          ? sessionOverridesCookie({
+              appBasePath: options.appBasePath,
+              overrides: requested.overrides,
+            })
+          : clearedOverridesCookie(options.appBasePath),
+      );
     }
 
     return response;
   };
 }
 
-function parseOverrides(request: Request): ParsedOverrides | Response {
+function readRequestedOverrides(
+  request: Request,
+): RequestedOverrides | OverrideRejection {
   const overrides = readOverridesCookie(request.headers.get("Cookie"));
-  let queryTouched = false;
+  let urlChangedOverrides = false;
 
   for (const [parameter, value] of new URL(request.url).searchParams) {
     if (!parameter.startsWith(QUERY_PREFIX)) {
       continue;
     }
 
-    queryTouched = true;
+    urlChangedOverrides = true;
     const name = parameter.slice(QUERY_PREFIX.length);
 
     if (!OVERRIDABLE_FLAGS.has(name)) {
-      return invalidOverrideResponse(
-        `Unknown feature flag: ${name || "(empty)"}.`,
-      );
+      return { rejection: `Unknown feature flag: ${name || "(empty)"}.` };
     }
 
     if (value === "default") {
@@ -69,21 +82,21 @@ function parseOverrides(request: Request): ParsedOverrides | Response {
     }
 
     if (value !== "true" && value !== "false") {
-      return invalidOverrideResponse(
-        `Invalid feature flag override for ${name}; use true, false, or default.`,
-      );
+      return {
+        rejection: `Invalid feature flag override for ${name}; use true, false, or default.`,
+      };
     }
 
     overrides[name] = value === "true";
   }
 
-  return { overrides, queryTouched };
+  return { overrides, urlChangedOverrides };
 }
 
-function invalidOverrideResponse(message: string): Response {
-  return new Response(message, {
+function rejectOverrideRequest(rejection: string): Response {
+  return new Response(rejection, {
     status: 400,
-    headers: { "Cache-Control": "private, no-store" },
+    headers: { "Cache-Control": UNCACHEABLE },
   });
 }
 
@@ -132,22 +145,26 @@ function readAllowlistedOverrides(
   return overrides;
 }
 
-function serializeOverridesCookie(options: {
+function sessionOverridesCookie(options: {
   appBasePath: string;
   overrides: Readonly<FeatureFlagSet>;
 }): string {
-  const attributes = [
+  return [
     `${COOKIE_NAME}=${encodeURIComponent(JSON.stringify(options.overrides))}`,
-    `Path=${normalizeBasePath(options.appBasePath)}`,
-    "HttpOnly",
-    "SameSite=Lax",
-  ];
+    ...overridesCookieAttributes(options.appBasePath),
+  ].join("; ");
+}
 
-  if (Object.keys(options.overrides).length === 0) {
-    attributes.push("Max-Age=0");
-  }
+function clearedOverridesCookie(appBasePath: string): string {
+  return [
+    `${COOKIE_NAME}=`,
+    ...overridesCookieAttributes(appBasePath),
+    "Max-Age=0",
+  ].join("; ");
+}
 
-  return attributes.join("; ");
+function overridesCookieAttributes(appBasePath: string): string[] {
+  return [`Path=${normalizeBasePath(appBasePath)}`, "HttpOnly", "SameSite=Lax"];
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

@@ -1,6 +1,6 @@
 import {
   buildRedirectPath,
-  resolveFeatureFlagOverrides,
+  resolveFeatureFlagOverridesMode,
   type RuntimeEnvironment,
 } from "./index";
 import {
@@ -356,55 +356,10 @@ describe("provider settings", () => {
     expect(environment.PRODUCT_EMAIL_PROVIDER).toBe("memory");
   });
 
-  it.each(["local", "test"])(
-    "lets browsers override feature flags in %s by default",
-    (environment) => {
-      // arrange
-      const source = buildEnvironment({ ENVIRONMENT: environment });
-
-      // act
-      const mode = resolveFeatureFlagOverrides(loadRuntimeEnvironment(source));
-
-      // assert
-      expect(mode).toBe("browser");
-    },
-  );
-
-  it("turns feature flag overrides off outside local and test by default", () => {
-    // arrange
-    const source = buildEnvironment({ ENVIRONMENT: "preview" });
-
-    // act
-    const mode = resolveFeatureFlagOverrides(loadRuntimeEnvironment(source));
-
-    // assert
-    expect(mode).toBe("none");
-  });
-
-  it("refuses browser feature flag overrides in a production runtime", () => {
-    // arrange
-    const source = buildEnvironment({
-      BOT_DETECTION_PROVIDER: "turnstile",
-      CLERK_WEBHOOK_SIGNING_SECRET: TEST_CLERK_WEBHOOK_SIGNING_SECRET,
-      ENVIRONMENT: "production",
-      FEATURE_FLAG_OVERRIDES: "browser",
-      NODE_ENV: "production",
-      PRODUCT_EMAIL_PROVIDER: "resend",
-      RESEND_API_KEY: "re_123",
-      TURNSTILE_SECRET_KEY: "real-secret",
-      TURNSTILE_SITE_KEY: "real-site-key",
-    });
-
-    // act
-    const load = () => loadRuntimeEnvironment(source);
-
-    // assert
-    expect(load).toThrow("FEATURE_FLAG_OVERRIDES");
-  });
-
   it.each([
     ["BOT_DETECTION_PROVIDER", "static"],
     ["PRODUCT_EMAIL_PROVIDER", "memory"],
+    ["FEATURE_FLAG_OVERRIDES", "browser"],
   ])("refuses %s=%s in a production runtime", (name, value) => {
     // arrange
     const source = buildEnvironment({
@@ -429,6 +384,37 @@ describe("provider settings", () => {
 
     // assert
     expect(load).toThrow("PUBLIC_APP_URL");
+  });
+});
+
+describe("feature flag overrides mode", () => {
+  it.each(["local", "test"])(
+    "lets browsers override feature flags in %s by default",
+    (environment) => {
+      // arrange
+      const source = buildEnvironment({ ENVIRONMENT: environment });
+
+      // act
+      const mode = resolveFeatureFlagOverridesMode(
+        loadRuntimeEnvironment(source),
+      );
+
+      // assert
+      expect(mode).toBe("browser");
+    },
+  );
+
+  it("turns feature flag overrides off outside local and test by default", () => {
+    // arrange
+    const source = buildEnvironment({ ENVIRONMENT: "preview" });
+
+    // act
+    const mode = resolveFeatureFlagOverridesMode(
+      loadRuntimeEnvironment(source),
+    );
+
+    // assert
+    expect(mode).toBe("none");
   });
 });
 

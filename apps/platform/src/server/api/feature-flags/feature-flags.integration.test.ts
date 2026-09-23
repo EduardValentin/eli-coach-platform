@@ -1,6 +1,7 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import { ApiIntegrationTestSuite } from "~integration-test-config/api-integration-test-suite";
+import { requireSessionCookie } from "~integration-test-config/session-cookie";
 import { featureFlagSnapshotSchema } from "~/server/api/feature-flags/feature-flags-contract";
 
 const suite = new ApiIntegrationTestSuite();
@@ -61,9 +62,10 @@ describe.sequential("feature flag API integration", () => {
   });
 
   it("overrides a flag for one browser without changing the stored row", async () => {
-    // arrange
-    // act
-    const response = await requestFeatureFlags("?ff.WAITLIST_MODE=false");
+    // arrange, act
+    const response = await requestFeatureFlags({
+      search: "?ff.WAITLIST_MODE=false",
+    });
 
     // assert
     const body = featureFlagSnapshotSchema.parse(await response.json());
@@ -79,13 +81,14 @@ describe.sequential("feature flag API integration", () => {
 
   it("keeps an override for later requests in the browser session", async () => {
     // arrange
-    const overrideResponse = await requestFeatureFlags(
-      "?ff.WAITLIST_MODE=false",
-    );
-    const cookie = overrideResponse.headers.get("Set-Cookie")?.split(";", 1)[0];
+    const overrideResponse = await requestFeatureFlags({
+      search: "?ff.WAITLIST_MODE=false",
+    });
 
     // act
-    const response = await requestFeatureFlags("", cookie);
+    const response = await requestFeatureFlags({
+      cookie: requireSessionCookie(overrideResponse),
+    });
 
     // assert
     const body = featureFlagSnapshotSchema.parse(await response.json());
@@ -96,12 +99,11 @@ describe.sequential("feature flag API integration", () => {
 });
 
 async function requestFeatureFlags(
-  search = "",
-  cookie?: string,
+  options: { search?: string; cookie?: string } = {},
 ): Promise<Response> {
   return suite.request(
-    new Request(suite.url(`/api/feature-flags${search}`), {
-      headers: cookie ? { Cookie: cookie } : undefined,
+    new Request(suite.url(`/api/feature-flags${options.search ?? ""}`), {
+      headers: options.cookie ? { Cookie: options.cookie } : undefined,
     }),
   );
 }

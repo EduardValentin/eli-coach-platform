@@ -2,6 +2,7 @@ import { ASSESSMENT_CALL_BOOKING_TURNSTILE_ACTION } from "@eli-coach-platform/in
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import { ApiIntegrationTestSuite } from "~integration-test-config/api-integration-test-suite";
+import { requireSessionCookie } from "~integration-test-config/session-cookie";
 import { mintSessionToken } from "~integration-test-config/clerk-session";
 import { turnstileTokenForAction } from "~integration-test-config/wire-mock/expectations/turnstile-siteverify";
 
@@ -61,8 +62,7 @@ describe.sequential("assessment calls during the waitlist", () => {
   });
 
   it("serves the booking page for a browser override", async () => {
-    // arrange
-    // act
+    // arrange, act
     const response = await suite.request(
       new Request(suite.url("/book?ff.WAITLIST_MODE=false")),
     );
@@ -77,11 +77,7 @@ describe.sequential("assessment calls during the waitlist", () => {
     const pageResponse = await suite.request(
       new Request(suite.url("/book?ff.WAITLIST_MODE=false")),
     );
-    const cookie = pageResponse.headers.get("Set-Cookie")?.split(";", 1)[0];
-
-    if (!cookie) {
-      throw new Error("Expected the override response to set a cookie.");
-    }
+    const cookie = requireSessionCookie(pageResponse);
 
     // act
     const slotsResponse = await suite.request(

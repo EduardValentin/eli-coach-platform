@@ -8,9 +8,11 @@ export const featureFlagsShape = {
 
 type FeatureFlagsConfig = z.infer<z.ZodObject<typeof featureFlagsShape>>;
 
-type FeatureFlagOverridesMode = "browser" | "none";
+type FeatureFlagOverridesMode = NonNullable<
+  FeatureFlagsConfig["FEATURE_FLAG_OVERRIDES"]
+>;
 
-export function resolveFeatureFlagOverrides(
+export function resolveFeatureFlagOverridesMode(
   environment: FeatureFlagsConfig & Pick<AppConfig, "ENVIRONMENT">,
 ): FeatureFlagOverridesMode {
   if (environment.FEATURE_FLAG_OVERRIDES) {
@@ -29,7 +31,7 @@ export function refineFeatureFlagOverrides(
 ): void {
   if (
     environment.ENVIRONMENT === "production" &&
-    resolveFeatureFlagOverrides(environment) === "browser"
+    resolveFeatureFlagOverridesMode(environment) === "browser"
   ) {
     context.addIssue({
       code: "custom",

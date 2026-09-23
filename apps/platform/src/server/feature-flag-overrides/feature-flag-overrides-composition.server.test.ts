@@ -1,4 +1,3 @@
-import { RouterContextProvider } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
 import type { FeatureFlagReader } from "@eli-coach-platform/domain/feature-flag";
@@ -6,6 +5,7 @@ import {
   composeBrowserFeatureFlagOverrides,
   composeWithoutFeatureFlagOverrides,
 } from "~/server/feature-flag-overrides/feature-flag-overrides-composition.server";
+import { createRequestArgs } from "~/server/test-support/request-args";
 
 const request = new Request("https://eli.example/?ff.WAITLIST_MODE=false");
 
@@ -23,7 +23,7 @@ describe("feature flag overrides composition", () => {
 
     // act
     const response = await overrides.middleware(
-      { context: new RouterContextProvider(), params: {}, request } as never,
+      createRequestArgs({ request }),
       async () => {
         flagsSeenByApplication(await overrides.featureFlags.execute());
 
@@ -51,7 +51,7 @@ describe("feature flag overrides composition", () => {
 
     // act
     const response = await overrides.middleware(
-      { context: new RouterContextProvider(), params: {}, request } as never,
+      createRequestArgs({ request }),
       async () => {
         flagsSeenByApplication(await overrides.featureFlags.execute());
 

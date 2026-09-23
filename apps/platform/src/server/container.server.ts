@@ -1,5 +1,5 @@
 import {
-  resolveFeatureFlagOverrides,
+  resolveFeatureFlagOverridesMode,
   type RuntimeEnvironment,
 } from "@eli-coach-platform/config";
 import { GetFeatureFlagsUseCase } from "@eli-coach-platform/domain/feature-flag";
@@ -76,7 +76,7 @@ export function createPlatformContainer(options: {
     featureFlags: new PostgresFeatureFlagRepository(database.client),
   });
   const featureFlagOverrides =
-    resolveFeatureFlagOverrides(environment) === "browser"
+    resolveFeatureFlagOverridesMode(environment) === "browser"
       ? composeBrowserFeatureFlagOverrides({
           appBasePath: environment.APP_BASE_PATH,
           featureFlags: databaseFeatureFlags,
