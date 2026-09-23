@@ -197,21 +197,32 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
       render={({ field: controller }) => {
         if (field.kind === 'checkbox') {
           const checked = asText(controller.value) === 'true';
+          const isDeclaration = field.requirement === 'required';
 
           return (
-            <FormItem>
+            <FormItem className={isDeclaration ? undefined : '-mt-2'}>
               <FormControl>
-                <div className="flex items-start gap-3 rounded-card border border-border-subtle bg-surface-quiet/60 p-4">
+                <div
+                  className={
+                    isDeclaration
+                      ? 'flex items-start gap-3 rounded-card border border-border-subtle bg-surface-quiet/60 p-4'
+                      : 'flex items-center gap-2'
+                  }
+                >
                   <Checkbox
                     checked={checked}
-                    className="mt-0.5"
+                    className={isDeclaration ? 'mt-0.5' : undefined}
                     id={legendId}
                     onCheckedChange={(next) =>
                       controller.onChange(next === true ? 'true' : 'false')
                     }
                   />
                   <label
-                    className="text-sm leading-relaxed text-text-primary"
+                    className={
+                      isDeclaration
+                        ? 'text-sm leading-relaxed text-text-primary'
+                        : 'text-sm text-text-primary'
+                    }
                     htmlFor={legendId}
                   >
                     {field.label}
@@ -238,7 +249,7 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
                     <>
                       <ChoiceGroup
                         aria-labelledby={legendId}
-                        className="mt-2 sm:max-w-md"
+                        className="mt-2"
                         onValueChange={controller.onChange}
                         value={asText(controller.value)}
                       >

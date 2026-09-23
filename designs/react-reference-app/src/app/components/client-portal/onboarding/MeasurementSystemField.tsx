@@ -23,7 +23,7 @@ export function MeasurementSystemField() {
       </legend>
       <ChoiceGroup
         aria-labelledby={legendId}
-        className="mt-2 sm:max-w-xs"
+        className="mt-2"
         onValueChange={(next) =>
           setMeasurementSystem(next as MeasurementSystem)
         }

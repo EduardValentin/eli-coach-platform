@@ -35,6 +35,7 @@ export type OnboardingField = {
   placeholder?: string;
   options?: OnboardingOption[];
   section?: string;
+  legend?: string;
   revealedBy?: RevealCondition;
   concealedBy?: RevealCondition;
   requires?: readonly string[];
@@ -128,7 +129,7 @@ const CYCLE_DETAIL_REQUIRES: readonly string[] = [
   'perimenopauseOrMenopause',
 ];
 
-const CYCLE_LENGTH_RANGE_SECTION =
+const CYCLE_LENGTH_RANGE_LEGEND =
   'When it varies, roughly how short and how long does it get?';
 
 const GOAL_FORM: OnboardingFormDefinition = {
@@ -198,7 +199,7 @@ const GOAL_FORM: OnboardingFormDefinition = {
     {
       id: 'experienceLevel',
       label: 'What is your training experience?',
-      kind: 'radio',
+      kind: 'select',
       requirement: 'required',
       options: options([
         'New to training',
@@ -428,7 +429,7 @@ const CYCLE_FORM: OnboardingFormDefinition = {
       id: 'cycleLength',
       label: 'Average cycle length (days)',
       kind: 'number',
-      requirement: 'optional',
+      requirement: 'required',
       hint: 'Most cycles are somewhere between 21 and 35 days.',
       range: { min: 15, max: 60 },
       revealedBy: { id: 'cycleRegularity', value: REGULAR_PERIOD_VALUE },
@@ -448,7 +449,7 @@ const CYCLE_FORM: OnboardingFormDefinition = {
       label: 'Shortest',
       kind: 'number',
       requirement: 'optional',
-      section: CYCLE_LENGTH_RANGE_SECTION,
+      legend: CYCLE_LENGTH_RANGE_LEGEND,
       unitSuffix: 'days',
       range: { min: 15, max: 90 },
       revealedBy: { id: 'cycleRegularity', value: IRREGULAR_PERIOD_VALUE },
@@ -459,7 +460,7 @@ const CYCLE_FORM: OnboardingFormDefinition = {
       label: 'Longest',
       kind: 'number',
       requirement: 'optional',
-      section: CYCLE_LENGTH_RANGE_SECTION,
+      legend: CYCLE_LENGTH_RANGE_LEGEND,
       unitSuffix: 'days',
       range: { min: 15, max: 90 },
       revealedBy: { id: 'cycleRegularity', value: IRREGULAR_PERIOD_VALUE },
@@ -469,7 +470,7 @@ const CYCLE_FORM: OnboardingFormDefinition = {
       id: 'lastPeriodStart',
       label: 'The day your last period started',
       kind: 'date',
-      requirement: 'optional',
+      requirement: 'required',
       recentMonths: LAST_PERIOD_MONTHS,
       revealedBy: {
         id: 'cycleRegularity',

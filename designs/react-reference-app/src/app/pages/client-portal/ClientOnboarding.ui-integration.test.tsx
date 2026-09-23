@@ -357,6 +357,47 @@ describe('the onboarding', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('lets her continue past the cycle step without a cycle length once she ticks that she is not sure', async () => {
+    // arrange
+    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(2));
+    renderOnboarding('?session=client&jstage=onboarding');
+
+    // act
+    await userEvent.click(
+      screen.getByRole('radio', { name: "Yes, and it's regular" }),
+    );
+    await userEvent.click(
+      screen.getByRole('combobox', { name: /Are you using any contraception/ }),
+    );
+    await userEvent.click(await screen.findByRole('option', { name: 'None' }));
+    await userEvent.click(
+      screen.getByRole('checkbox', { name: 'None of these' }),
+    );
+    await userEvent.click(
+      screen.getByRole('combobox', {
+        name: /Are you in perimenopause or menopause/,
+      }),
+    );
+    await userEvent.click(await screen.findByRole('option', { name: 'No' }));
+    await userEvent.click(
+      screen.getByRole('checkbox', { name: "I'm not sure" }),
+    );
+    await userEvent.click(
+      screen.getByRole('checkbox', { name: "I don't remember" }),
+    );
+    await userEvent.click(screen.getByRole('radio', { name: 'No' }));
+    await userEvent.click(screen.getByRole('checkbox', { name: 'None' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
+
+    // assert
+    expect(
+      screen.getByRole('heading', {
+        level: 2,
+        name: 'Food and daily life',
+      }),
+    ).toBeVisible();
+  });
+
   it('counts four forms and leaves out the cycle for a male account', () => {
     // arrange
     renderOnboarding('?session=client&jstage=onboarding&jsex=male');

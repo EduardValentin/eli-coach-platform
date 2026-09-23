@@ -17,6 +17,7 @@ import {
   ONBOARDING_CARD_CLASS,
   ONBOARDING_HEADING_CLASS,
   ONBOARDING_INTRO_CLASS,
+  ONBOARDING_LEGEND_CLASS,
 } from './onboardingCard';
 import {
   toAnswers,
@@ -35,6 +36,10 @@ type OnboardingAnswerFormProps = {
   onContinue: (answers: OnboardingFormAnswers) => void;
   children?: ReactNode;
 };
+
+type FieldItem =
+  | { kind: 'legend'; legend: string; fields: OnboardingField[] }
+  | { kind: 'field'; field: OnboardingField };
 
 type OnboardingFormCardProps = OnboardingAnswerFormProps & {
   consent: ReactNode;
@@ -58,6 +63,27 @@ function groupFields(fields: OnboardingField[]): FieldGroup[] {
   return groups;
 }
 
+function groupByLegend(fields: OnboardingField[]): FieldItem[] {
+  const items: FieldItem[] = [];
+
+  for (const field of fields) {
+    const last = items.at(-1);
+    if (
+      field.legend &&
+      last?.kind === 'legend' &&
+      last.legend === field.legend
+    ) {
+      last.fields.push(field);
+    } else if (field.legend) {
+      items.push({ kind: 'legend', legend: field.legend, fields: [field] });
+    } else {
+      items.push({ kind: 'field', field });
+    }
+  }
+
+  return items;
+}
+
 function OnboardingAnswerForm({
   definition,
   answers,
@@ -67,7 +93,8 @@ function OnboardingAnswerForm({
   onChange,
   onContinue,
   children,
-}: OnboardingAnswerFormProps) {
+  footnote,
+}: OnboardingAnswerFormProps & { footnote?: string }) {
   const units = useMeasureUnits();
   const form = useForm<OnboardingValues>({
     defaultValues: toFormValues(definition.fields, answers, units),
@@ -115,15 +142,36 @@ function OnboardingAnswerForm({
                 {group.section}
               </h3>
             )}
-            {group.fields.map((field) => (
-              <OnboardingFieldControl
-                control={form.control}
-                field={field}
-                key={field.id}
-              />
-            ))}
+            {groupByLegend(group.fields).map((item) =>
+              item.kind === 'legend' ? (
+                <fieldset key={item.legend}>
+                  <legend className={ONBOARDING_LEGEND_CLASS}>
+                    {item.legend}
+                  </legend>
+                  <div className="mt-2 grid gap-4 sm:grid-cols-2">
+                    {item.fields.map((field) => (
+                      <OnboardingFieldControl
+                        control={form.control}
+                        field={field}
+                        key={field.id}
+                      />
+                    ))}
+                  </div>
+                </fieldset>
+              ) : (
+                <OnboardingFieldControl
+                  control={form.control}
+                  field={item.field}
+                  key={item.field.id}
+                />
+              ),
+            )}
           </div>
         ))}
+
+        {footnote && (
+          <p className="mt-6 text-xs text-text-secondary">{footnote}</p>
+        )}
 
         {children}
 
@@ -192,14 +240,9 @@ export function OnboardingFormCard({
 
       <OnboardingAnswerForm
         {...answerForm}
+        footnote={definition.footnote}
         key={`${units.weight}-${units.length}`}
       />
-
-      {definition.footnote && (
-        <p className="mt-6 text-xs text-text-secondary">
-          {definition.footnote}
-        </p>
-      )}
     </section>
   );
 }
