@@ -34,12 +34,12 @@ export function VideoSheet({ exercise, open, onOpenChange }: VideoSheetProps) {
 
         <div className="flex flex-wrap gap-1.5">
           {exercise.equipment.map((eq) => (
-            <Badge key={eq} variant="muted">
+            <Badge key={eq} tone="muted">
               {eq}
             </Badge>
           ))}
           {exercise.primaryMuscles.map((m) => (
-            <Badge key={m} variant="brand-secondary">
+            <Badge key={m} tone="brand-secondary">
               {m}
             </Badge>
           ))}

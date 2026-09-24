@@ -89,7 +89,7 @@ function ActiveClientRow({
       </TableCell>
       {showsCompliance && (
         <TableCell>
-          <Badge variant="success">{client.compliance}</Badge>
+          <Badge tone="success">{client.compliance}</Badge>
         </TableCell>
       )}
       <TableCell>

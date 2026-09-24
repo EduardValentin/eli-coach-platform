@@ -408,7 +408,7 @@ function RecipePickerCard({
         {/* Actions */}
         <div className="flex items-center gap-2 pt-2.5">
           {isCurrent ? (
-            <Badge variant="success" role="status">
+            <Badge tone="success" role="status">
               <Check size={13} aria-hidden="true" />
               Current meal
             </Badge>

@@ -327,7 +327,7 @@ export function CoachMessages() {
                   </p>
                 </div>
                 {conv.unread > 0 && (
-                  <Badge variant="count" className="text-primary shrink-0">
+                  <Badge tone="count" className="text-primary shrink-0">
                     {conv.unread}
                   </Badge>
                 )}
@@ -477,7 +477,7 @@ export function CoachMessages() {
                     </span>
                   </span>
                   {nextCheckin.type === 'recurring' && (
-                    <Badge variant="muted" className="ml-auto">
+                    <Badge tone="muted" className="ml-auto">
                       Weekly
                     </Badge>
                   )}

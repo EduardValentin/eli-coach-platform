@@ -432,7 +432,7 @@ export function WorkoutHistory() {
                   <SlidersHorizontal size={16} aria-hidden="true" />
                   Filters
                   {activeFilterCount > 0 && (
-                    <Badge variant="count">{activeFilterCount}</Badge>
+                    <Badge tone="count">{activeFilterCount}</Badge>
                   )}
                 </Button>
               </CollapsibleTrigger>
@@ -575,7 +575,7 @@ export function WorkoutHistory() {
               <h2 className={cn(LABEL_CLASS, 'mb-3')}>Most Trained</h2>
               <div className="flex flex-wrap gap-2">
                 {topExercises.map(({ exercise, count }) => (
-                  <Badge key={exercise!.id} variant="muted">
+                  <Badge key={exercise!.id} tone="muted">
                     {exercise!.name}
                     <span className="text-text-secondary">{count}x</span>
                   </Badge>

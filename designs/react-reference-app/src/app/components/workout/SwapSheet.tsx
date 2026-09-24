@@ -65,12 +65,12 @@ export function SwapSheet({
               </div>
               <div className="flex gap-1 overflow-x-auto whitespace-nowrap [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {ex.equipment.map((eq) => (
-                  <Badge key={eq} variant="muted" className="shrink-0">
+                  <Badge key={eq} tone="muted" className="shrink-0">
                     {eq}
                   </Badge>
                 ))}
                 {ex.primaryMuscles.map((m) => (
-                  <Badge key={m} variant="brand-secondary" className="shrink-0">
+                  <Badge key={m} tone="brand-secondary" className="shrink-0">
                     {m}
                   </Badge>
                 ))}

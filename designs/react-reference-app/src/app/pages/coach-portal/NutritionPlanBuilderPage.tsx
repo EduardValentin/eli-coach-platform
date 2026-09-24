@@ -209,7 +209,7 @@ export function NutritionPlanBuilderPage() {
             </SelectContent>
           </Select>
         )}
-        {isViewingPast && <Badge variant="muted">Past · read-only</Badge>}
+        {isViewingPast && <Badge tone="muted">Past · read-only</Badge>}
         <div className="ml-auto flex items-center gap-2">
           {viewedBlock && (
             <Dialog open={shoppingListOpen} onOpenChange={setShoppingListOpen}>

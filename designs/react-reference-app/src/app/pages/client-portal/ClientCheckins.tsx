@@ -223,7 +223,7 @@ export function ClientCheckins() {
               >
                 Requests
                 {needsResponseCount > 0 && (
-                  <Badge variant="count">{needsResponseCount}</Badge>
+                  <Badge tone="count">{needsResponseCount}</Badge>
                 )}
               </TabsTrigger>
               <TabsTrigger
@@ -264,7 +264,7 @@ export function ClientCheckins() {
               }}
               when={{ startsAt: reviewCall.startsAt, timeZone }}
               badges={
-                <Badge variant="brand-secondary">{PROGRAM_REVIEW_LABEL}</Badge>
+                <Badge tone="brand-secondary">{PROGRAM_REVIEW_LABEL}</Badge>
               }
               footnote={`You and ${coachName} go through your new program together.`}
             />

@@ -612,7 +612,7 @@ function GoalHero({
 
       {/* Secondary: deficit/surplus delta */}
       {delta !== 0 && (
-        <Badge variant="muted" className="mt-2">
+        <Badge tone="muted" className="mt-2">
           <DeltaIcon size={11} aria-hidden="true" />
           {deltaLabel}
         </Badge>
@@ -821,7 +821,7 @@ export function ClientNutrition() {
                   <p className={cn(VALUE_LG_CLASS, 'mb-1')}>
                     {format(parseISO(selectedDay.date), 'EEEE, MMMM d')}
                     {selectedDay.date === today && (
-                      <Badge variant="muted" className="ml-2 align-middle">
+                      <Badge tone="muted" className="ml-2 align-middle">
                         Today
                       </Badge>
                     )}

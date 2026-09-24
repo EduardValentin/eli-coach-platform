@@ -302,12 +302,12 @@ function LibraryExerciseCard({
       </div>
       <div className="flex flex-wrap gap-1 mt-auto">
         {ex.tags?.map((t) => (
-          <Badge key={t} variant="brand-secondary">
+          <Badge key={t} tone="brand-secondary">
             {t}
           </Badge>
         ))}
         {ex.primaryMuscles.map((m) => (
-          <Badge key={m} variant="muted">
+          <Badge key={m} tone="muted">
             {m}
           </Badge>
         ))}
@@ -433,7 +433,7 @@ function PlanGroupCard({
                     <p className={VALUE_CLASS}>{ex.name}</p>
                     <div className="flex flex-wrap gap-1 mt-0.5">
                       {ex.primaryMuscles.map((m: string) => (
-                        <Badge key={m} variant="muted">
+                        <Badge key={m} tone="muted">
                           {m}
                         </Badge>
                       ))}
@@ -1359,14 +1359,14 @@ export function PlanBuilder({
                           Week {week.order}
                         </span>
                         {week.isDeload && (
-                          <Badge variant="brand-secondary">Deload</Badge>
+                          <Badge tone="brand-secondary">Deload</Badge>
                         )}
                         {isExistingWeek && (
-                          <Badge variant="muted">Existing</Badge>
+                          <Badge tone="muted">Existing</Badge>
                         )}
                         {isNewWeek && (
                           <Badge
-                            variant="outline"
+                            tone="outline"
                             className="border-primary/20 bg-primary-soft text-primary"
                           >
                             New
@@ -1551,7 +1551,7 @@ export function PlanBuilder({
                               <span className="flex items-center gap-1.5">
                                 {dName}
                                 {day.type !== 'Rest' && exCount > 0 && (
-                                  <Badge variant="count">{exCount}</Badge>
+                                  <Badge tone="count">{exCount}</Badge>
                                 )}
                                 {day.type !== 'Rest' && exCount === 0 && (
                                   <span
@@ -1561,7 +1561,7 @@ export function PlanBuilder({
                                 )}
                               </span>
                               <Badge
-                                variant="outline"
+                                tone="outline"
                                 className={getDayTypeBadgeClass(day.type)}
                               >
                                 {day.type !== 'Rest' && day.type}
@@ -1672,7 +1672,7 @@ export function PlanBuilder({
                       Week {activeWeek?.order}
                       {activeWeek && activeWeekIdx >= originalWeekCount && (
                         <Badge
-                          variant="outline"
+                          tone="outline"
                           className="ml-2 border-primary/20 bg-primary-soft text-primary"
                         >
                           New

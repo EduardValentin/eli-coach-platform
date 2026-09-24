@@ -8,7 +8,7 @@ const TYPE_LABEL: Record<CheckIn['type'], string> = {
 
 export function CheckinTypeBadge({ type }: { type: CheckIn['type'] }) {
   return (
-    <Badge variant={type === 'ad-hoc' ? 'pending' : 'muted'}>
+    <Badge tone={type === 'ad-hoc' ? 'pending' : 'muted'}>
       {TYPE_LABEL[type]}
     </Badge>
   );

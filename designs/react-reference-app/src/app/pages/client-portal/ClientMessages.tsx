@@ -406,7 +406,7 @@ export function ClientMessages() {
         {/* Messages */}
         <div className="flex-1 min-w-0 overflow-y-auto p-4 lg:p-6 space-y-6">
           <div className="text-center">
-            <Badge variant="muted">Today</Badge>
+            <Badge tone="muted">Today</Badge>
           </div>
 
           {messages.map((msg) => {

@@ -245,7 +245,7 @@ export function ClientDashboard() {
                       : `+${delta.toLocaleString()} kcal/day surplus`;
                 return (
                   <p className="flex flex-wrap items-center gap-1.5 mb-5 text-xs text-text-secondary">
-                    <Badge variant="muted">{clientProfile.primaryGoal}</Badge>
+                    <Badge tone="muted">{clientProfile.primaryGoal}</Badge>
                     <span>{deltaLabel}</span>
                   </p>
                 );
@@ -315,16 +315,16 @@ export function ClientDashboard() {
             className="h-full lg:col-span-2"
             action={
               todayInfo && !todayInfo.isRest ? (
-                <Badge variant="pending">
+                <Badge tone="pending">
                   {todayInfo.dayName} &middot; {todayInfo.day.type}
                 </Badge>
               ) : todayInfo?.isRest ? (
-                <Badge variant="muted">Rest Day</Badge>
+                <Badge tone="muted">Rest Day</Badge>
               ) : null
             }
           >
             {activeGoal && (
-              <Badge variant="brand-secondary" className="mb-4">
+              <Badge tone="brand-secondary" className="mb-4">
                 <TargetIcon size={12} />
                 {activeGoal.type}
               </Badge>

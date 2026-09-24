@@ -124,7 +124,7 @@ function CallItem({
         titleElement="h2"
         badges={
           <>
-            {isToday && <Badge variant="brand-secondary">Today</Badge>}
+            {isToday && <Badge tone="brand-secondary">Today</Badge>}
             {journey && showsJourneyStage(journey.stage, timing) && (
               <CallStageBadge stage={journey.stage} />
             )}
@@ -202,7 +202,7 @@ function StatusFilter({
           <SelectItem key={option.step} value={option.step}>
             <span className="flex items-center gap-2">
               {option.label}{' '}
-              <Badge variant="count">{counts[option.step]}</Badge>
+              <Badge tone="count">{counts[option.step]}</Badge>
             </span>
           </SelectItem>
         ))}

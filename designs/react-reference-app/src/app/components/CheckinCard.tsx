@@ -27,27 +27,27 @@ export function CheckinStatusBadge({
 
   switch (checkin.status) {
     case 'confirmed':
-      return <Badge variant="success">Confirmed</Badge>;
+      return <Badge tone="success">Confirmed</Badge>;
     case 'completed':
-      return <Badge variant="muted">Completed</Badge>;
+      return <Badge tone="muted">Completed</Badge>;
     case 'declined':
-      return <Badge variant="muted">Declined</Badge>;
+      return <Badge tone="muted">Declined</Badge>;
     case 'cancelled':
-      return <Badge variant="muted">Cancelled</Badge>;
+      return <Badge tone="muted">Cancelled</Badge>;
     case 'rescheduling':
     case 'pending': {
       const viewerOwesResponse = checkin.proposedBy !== viewer;
       if (viewerOwesResponse) {
         return (
-          <Badge variant="pending">
+          <Badge tone="pending">
             {pendingLabel(checkin.status, viewer)}
           </Badge>
         );
       }
       return viewer === 'client' ? (
-        <Badge variant="muted">Awaiting your coach</Badge>
+        <Badge tone="muted">Awaiting your coach</Badge>
       ) : (
-        <Badge variant="muted">Awaiting {clientFirstName}</Badge>
+        <Badge tone="muted">Awaiting {clientFirstName}</Badge>
       );
     }
     default:
@@ -91,7 +91,7 @@ export function CheckinCard({
           <CheckinTypeBadge type={checkin.type} />
           <CheckinStatusBadge checkin={checkin} viewer={viewer} />
           {checkin.rescheduleCount > 0 && !isRescheduling && (
-            <Badge variant="muted">
+            <Badge tone="muted">
               {checkin.rescheduleCount} reschedule
               {checkin.rescheduleCount > 1 ? 's' : ''}
             </Badge>

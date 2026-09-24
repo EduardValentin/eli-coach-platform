@@ -17,7 +17,7 @@ interface SubscriptionBadgeProps {
 export function SubscriptionBadge({ subscription }: SubscriptionBadgeProps) {
   const { tier, status } = subscription;
   return (
-    <Badge variant={status === 'active' ? 'success' : 'muted'}>
+    <Badge tone={status === 'active' ? 'success' : 'muted'}>
       <span className="size-1.5 rounded-full bg-current" aria-hidden="true" />
       {TIER_LABEL[tier]} · {status === 'active' ? 'Active' : 'Expired'}
     </Badge>

@@ -72,7 +72,7 @@ export function ActiveWorkoutBanner() {
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <Badge variant="success">In progress</Badge>
+            <Badge tone="success">In progress</Badge>
             <span className="text-xs font-medium tabular-nums text-surface-inverted-foreground/60">
               {session.completedSets}/{session.totalSets} sets
             </span>

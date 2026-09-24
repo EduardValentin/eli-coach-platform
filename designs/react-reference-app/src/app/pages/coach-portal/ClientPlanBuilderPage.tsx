@@ -306,7 +306,7 @@ export function ClientPlanBuilderPage() {
 
           {isNewPlan && (
             <Badge
-              variant="outline"
+              tone="outline"
               className="hidden sm:inline-flex border-primary/20 bg-primary-soft text-primary shrink-0"
             >
               New
@@ -315,7 +315,7 @@ export function ClientPlanBuilderPage() {
 
           {activeGoal && (
             <Badge
-              variant="brand-secondary"
+              tone="brand-secondary"
               className="hidden sm:inline-flex shrink-0"
             >
               <Target size={12} />
@@ -512,7 +512,7 @@ export function ClientPlanBuilderPage() {
                               Week {week.order}
                             </span>
                             {week.isDeload && (
-                              <Badge variant="brand-secondary">Deload</Badge>
+                              <Badge tone="brand-secondary">Deload</Badge>
                             )}
                             <span className="text-xs text-text-secondary ml-auto">
                               {trainingDays.length}d · {totalExercises}{' '}
@@ -533,7 +533,7 @@ export function ClientPlanBuilderPage() {
                                       {dName}
                                     </span>
                                     <Badge
-                                      variant="outline"
+                                      tone="outline"
                                       className={getDayTypeBadgeClass(day.type)}
                                     >
                                       {day.type}

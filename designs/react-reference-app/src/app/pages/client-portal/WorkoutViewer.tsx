@@ -587,7 +587,7 @@ function WorkoutSummary({
         <h3 className={cn(LABEL_CLASS, 'mb-3')}>Muscles Worked</h3>
         <div className="flex flex-wrap gap-2">
           {sortedMuscles.map(([muscle, count]) => (
-            <Badge key={muscle} variant="brand-secondary">
+            <Badge key={muscle} tone="brand-secondary">
               {muscle} ({count})
             </Badge>
           ))}
@@ -830,7 +830,7 @@ function IncompleteWorkoutDialog({
           {sortedMuscles.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {sortedMuscles.map(([muscle]) => (
-                <Badge key={muscle} variant="brand-secondary">
+                <Badge key={muscle} tone="brand-secondary">
                   {muscle}
                 </Badge>
               ))}

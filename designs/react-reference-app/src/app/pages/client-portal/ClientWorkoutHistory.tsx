@@ -104,7 +104,7 @@ export function ClientWorkoutHistory() {
           </div>
           <div className="flex flex-wrap gap-2">
             {topMuscles.map(({ muscle, count }) => (
-              <Badge key={muscle} variant="brand-secondary">
+              <Badge key={muscle} tone="brand-secondary">
                 {muscle} <span className="font-normal ml-1">{count}x</span>
               </Badge>
             ))}

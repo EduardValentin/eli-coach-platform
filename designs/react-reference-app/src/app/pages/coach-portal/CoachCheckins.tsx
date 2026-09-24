@@ -261,7 +261,7 @@ export function CoachCheckins() {
             <TabsTrigger variant="segmented" value="pending">
               Pending
               {awaitingCoach > 0 && (
-                <Badge variant="count">{awaitingCoach}</Badge>
+                <Badge tone="count">{awaitingCoach}</Badge>
               )}
             </TabsTrigger>
             <TabsTrigger variant="segmented" value="upcoming">
@@ -309,7 +309,7 @@ export function CoachCheckins() {
                 timeZone: browserTimeZone(),
               }}
               badges={
-                <Badge variant="brand-secondary">{PROGRAM_REVIEW_LABEL}</Badge>
+                <Badge tone="brand-secondary">{PROGRAM_REVIEW_LABEL}</Badge>
               }
             />
           )}

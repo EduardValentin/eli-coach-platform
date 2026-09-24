@@ -64,7 +64,7 @@ export function UpcomingAssessmentCalls({
                   when={{ startsAt: call.booking.startsAt, timeZone }}
                   badges={
                     call.isToday && (
-                      <Badge variant="brand-secondary">Today</Badge>
+                      <Badge tone="brand-secondary">Today</Badge>
                     )
                   }
                   action={
