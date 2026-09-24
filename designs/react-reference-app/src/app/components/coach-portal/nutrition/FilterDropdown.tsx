@@ -1,9 +1,13 @@
 import { ChevronDown } from 'lucide-react';
 import { Popover, PopoverTrigger, PopoverContent } from '../../ui/popover';
 import { Button } from '../../ui/button';
+import { Badge } from '../../ui/badge';
 import { Checkbox } from '../../ui/checkbox';
 
-interface FilterOption { value: string; label: string }
+interface FilterOption {
+  value: string;
+  label: string;
+}
 
 interface FilterDropdownProps {
   label: string;
@@ -12,16 +16,21 @@ interface FilterDropdownProps {
   onToggle: (value: string) => void;
 }
 
-export function FilterDropdown({ label, options, selected, onToggle }: FilterDropdownProps) {
+export function FilterDropdown({
+  label,
+  options,
+  selected,
+  onToggle,
+}: FilterDropdownProps) {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-1.5">
+        <Button variant="outline" size="xs" className="gap-1.5">
           {label}
           {selected.length > 0 && (
-            <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary-soft px-1 text-[10px] font-semibold text-primary">
+            <Badge variant="count" className="text-primary">
               {selected.length}
-            </span>
+            </Badge>
           )}
           <ChevronDown size={14} aria-hidden="true" />
         </Button>
@@ -30,8 +39,11 @@ export function FilterDropdown({ label, options, selected, onToggle }: FilterDro
         <ul className="flex flex-col gap-0.5">
           {options.map((opt) => (
             <li key={opt.value}>
-              <label className="flex items-center gap-2 rounded-field px-2 py-1.5 text-sm cursor-pointer hover:bg-muted">
-                <Checkbox checked={selected.includes(opt.value)} onCheckedChange={() => onToggle(opt.value)} />
+              <label className="flex items-center gap-2 rounded-field px-2 py-1.5 text-sm cursor-pointer hover:bg-surface-muted">
+                <Checkbox
+                  checked={selected.includes(opt.value)}
+                  onCheckedChange={() => onToggle(opt.value)}
+                />
                 {opt.label}
               </label>
             </li>

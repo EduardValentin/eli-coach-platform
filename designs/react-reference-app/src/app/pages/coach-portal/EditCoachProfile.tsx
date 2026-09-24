@@ -7,8 +7,26 @@ import { toast } from 'sonner';
 import { useCoachProfile } from '../../context/CoachProfileContext';
 import { getInitials } from '../../utils/clientHelpers';
 import { Button, buttonVariants } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Textarea } from '../../components/ui/textarea';
+import {
+  Avatar,
+  AvatarImage,
+  AvatarFallback,
+} from '../../components/ui/avatar';
+import { cardVariants } from '../../components/ui/card';
+import { cn } from '../../components/ui/utils';
+import { LABEL_CLASS } from '../../components/typography';
+import {
+  SettingsSection,
+  SettingsRows,
+  SettingsRow,
+} from '../../components/SettingsSection';
 
 const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
+
+const NAME_FIELD_ID = 'coach-profile-name';
+const BIO_FIELD_ID = 'coach-profile-bio';
 
 export function EditCoachProfile() {
   const navigate = useNavigate();
@@ -19,6 +37,9 @@ export function EditCoachProfile() {
     name: coachProfile.name,
     bio: coachProfile.bio,
   });
+
+  const isDirty =
+    form.name !== coachProfile.name || form.bio !== coachProfile.bio;
 
   const handleAvatarSelect = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -60,7 +81,7 @@ export function EditCoachProfile() {
     <div className="w-full max-w-3xl">
       <Link
         to="/coach"
-        className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground mb-8 transition-colors"
+        className="inline-flex items-center gap-2 text-sm font-medium text-text-secondary hover:text-text-primary mb-8 transition-colors"
       >
         <ArrowLeft size={16} /> Back to Dashboard
       </Link>
@@ -74,29 +95,30 @@ export function EditCoachProfile() {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-card p-6 lg:p-8 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50 mb-6 lg:mb-8 flex flex-col sm:flex-row items-center gap-6"
+        className={cn(
+          cardVariants({ variant: 'panel' }),
+          'p-6 lg:p-8 mb-6 lg:mb-8 flex flex-col sm:flex-row items-center gap-6',
+        )}
       >
         <div className="shrink-0">
-          {coachProfile.avatarUrl ? (
-            <img
-              src={coachProfile.avatarUrl}
-              alt={`${coachProfile.name}'s profile picture`}
-              className="w-24 h-24 rounded-full object-cover border border-border"
-            />
-          ) : (
-            <div className="w-24 h-24 rounded-full bg-brand-soft text-brand flex items-center justify-center font-serif font-semibold text-2xl">
+          <Avatar className="size-24 border border-border">
+            {coachProfile.avatarUrl && (
+              <AvatarImage
+                src={coachProfile.avatarUrl}
+                alt={`${coachProfile.name}'s profile picture`}
+              />
+            )}
+            <AvatarFallback className="text-2xl">
               {getInitials(coachProfile.name) || (
                 <User size={40} strokeWidth={1.5} />
               )}
-            </div>
-          )}
+            </AvatarFallback>
+          </Avatar>
         </div>
 
         <div className="flex-1 min-w-0 text-center sm:text-left">
-          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">
-            Profile Picture
-          </p>
-          <h2 className="font-serif text-xl lg:text-2xl text-foreground mb-4">
+          <p className={cn(LABEL_CLASS, 'mb-1')}>Profile Picture</p>
+          <h2 className="font-serif text-xl lg:text-2xl text-text-primary mb-4">
             {coachProfile.name}
           </h2>
 
@@ -111,8 +133,8 @@ export function EditCoachProfile() {
             <Button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              variant="default"
-              className="shadow-md"
+              variant="primary"
+              className="shadow-card"
             >
               <Camera size={16} />
               {coachProfile.avatarUrl ? 'Change picture' : 'Upload picture'}
@@ -132,58 +154,51 @@ export function EditCoachProfile() {
       </motion.div>
 
       {/* Details */}
-      <div className="bg-card p-8 lg:p-10 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50 space-y-6">
-        <div>
-          <h2 className="font-serif text-2xl text-foreground mb-2">Details</h2>
-          <p className="text-sm text-muted-foreground">
-            Your name and bio appear to clients in messages and on the platform.
-          </p>
-        </div>
+      <SettingsSection
+        headingId="coach-profile-details-heading"
+        title="Details"
+        description="Your name and bio appear to clients in messages and on the platform."
+        footer={
+          <>
+            <Link
+              to="/coach"
+              className={buttonVariants({ variant: 'ghost', size: 'md' })}
+            >
+              Cancel
+            </Link>
+            <Button
+              onClick={handleSave}
+              variant="primary"
+              size="md"
+              disabled={!isDirty}
+            >
+              <Check size={16} />
+              Save Changes
+            </Button>
+          </>
+        }
+      >
+        <SettingsRows>
+          <SettingsRow htmlFor={NAME_FIELD_ID} title="Name" layout="stacked">
+            <Input
+              id={NAME_FIELD_ID}
+              type="text"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+            />
+          </SettingsRow>
 
-        <div>
-          <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2 block">
-            Name
-          </label>
-          <input
-            type="text"
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-            className="w-full px-3 border-b border-border rounded-field py-3 focus:outline-none transition-colors text-sm"
-          />
-        </div>
-
-        <div>
-          <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2 block">
-            Bio
-          </label>
-          <textarea
-            value={form.bio}
-            onChange={(e) => setForm({ ...form, bio: e.target.value })}
-            rows={5}
-            placeholder="A short bio that clients can read on your profile."
-            className="w-full border border-border rounded-control p-4 focus:outline-none transition-colors text-sm resize-none"
-          />
-        </div>
-      </div>
-
-      {/* Footer */}
-      <div className="mt-8 flex items-center justify-end gap-3">
-        <Link
-          to="/coach"
-          className={buttonVariants({ variant: 'ghost', size: 'lg' })}
-        >
-          Cancel
-        </Link>
-        <Button
-          onClick={handleSave}
-          variant="default"
-          size="lg"
-          className="shadow-md"
-        >
-          <Check size={16} />
-          Save Changes
-        </Button>
-      </div>
+          <SettingsRow htmlFor={BIO_FIELD_ID} title="Bio" layout="stacked">
+            <Textarea
+              id={BIO_FIELD_ID}
+              value={form.bio}
+              onChange={(e) => setForm({ ...form, bio: e.target.value })}
+              rows={5}
+              placeholder="A short bio that clients can read on your profile."
+            />
+          </SettingsRow>
+        </SettingsRows>
+      </SettingsSection>
     </div>
   );
 }

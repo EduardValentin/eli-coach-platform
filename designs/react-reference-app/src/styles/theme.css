@@ -190,6 +190,8 @@
   --text-primary: #121212;
   --text-secondary: #616161;
   --text-muted: #6a6a7a;
+  --portal-accent: var(--brand);
+  --portal-accent-hover: var(--brand-hover);
   --surface-base: #ffffff;
   --container-reading: 45rem;
   --container-content: 70rem;
@@ -205,6 +207,7 @@
      prototype screen to need it. */
   --font-size-display-md: 2rem;
   --font-size-display-sm: 1.5rem;
+  --font-size-value-lg: 1.5rem;
   /* Marketing tracking, radii, shadows */
   --tracking-label: 0.12em;
   --tracking-section-eyebrow: 0.2em;
@@ -263,6 +266,9 @@
   --primary-hover: #2A2A2A;
   --primary-soft: rgba(12, 12, 12, 0.08);
   --ring: #0C0C0C;
+  --focus-ring: var(--primary);
+  --portal-accent: var(--text-secondary);
+  --portal-accent-hover: var(--text-primary);
 }
 
 @theme inline {
@@ -446,6 +452,8 @@
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
   --color-text-muted: var(--text-muted);
+  --color-portal-accent: var(--portal-accent);
+  --color-portal-accent-hover: var(--portal-accent-hover);
   --color-surface-base: var(--surface-base);
   --container-reading: var(--container-reading);
   --radius-panel: var(--radius-panel);
@@ -458,6 +466,10 @@
   --text-display-sm: var(--font-size-display-sm);
   --text-display-sm--line-height: 1.2;
   --text-display-sm--font-weight: var(--font-weight-medium);
+  --text-value-lg: var(--font-size-value-lg);
+  --text-value-lg--line-height: 2rem;
+  --text-value-lg--font-weight: var(--font-weight-medium);
+  --text-value-lg--letter-spacing: -0.025em;
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);

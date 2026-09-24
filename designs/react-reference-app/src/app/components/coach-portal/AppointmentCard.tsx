@@ -1,8 +1,12 @@
 import { Mail, Phone } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import type { ReactNode } from 'react';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { DateTimeLabel } from '../DateTimeLabel';
+import { LABEL_CLASS } from '../typography';
 import { cn } from '../ui/utils';
+import { getInitials } from '../../utils/clientHelpers';
+import { formatShortDay, formatSlotTime } from '../../utils/dateFormatters';
 import type {
   AppointmentAttendee,
   AppointmentDetail,
@@ -12,21 +16,11 @@ import type {
 } from './appointment';
 
 const CARD_CLASS =
-  'flex flex-col md:flex-row md:items-start gap-4 p-5 rounded-card border border-neutral-100/50 bg-card';
+  'flex flex-col md:flex-row md:items-start gap-4 p-5 rounded-card border border-border-subtle bg-card';
 
 const CARD_TONE: Record<AppointmentStatus, string> = {
   scheduled: 'shadow-soft text-text-primary',
   past: 'text-muted-foreground',
-};
-
-const AVATAR_CLASS = 'w-11 h-11 rounded-full border border-neutral-200 shrink-0';
-
-const AVATAR_INITIAL_CLASS =
-  'flex items-center justify-center font-serif text-sm font-semibold';
-
-const AVATAR_TONE: Record<AppointmentStatus, string> = {
-  scheduled: 'bg-neutral-100 text-text-primary',
-  past: 'bg-muted text-muted-foreground',
 };
 
 function AttendeeAvatar({
@@ -36,28 +30,24 @@ function AttendeeAvatar({
   attendee: AppointmentAttendee;
   status: AppointmentStatus;
 }) {
-  if (attendee.imageUrl) {
-    return (
-      <img
-        src={attendee.imageUrl}
-        alt=""
-        className={cn(AVATAR_CLASS, 'object-cover')}
-      />
-    );
-  }
-
   return (
-    <div
-      aria-hidden="true"
-      className={cn(AVATAR_CLASS, AVATAR_INITIAL_CLASS, AVATAR_TONE[status])}
-    >
-      {attendee.name.charAt(0)}
-    </div>
+    <Avatar size="md" className={cn(status === 'past' && 'opacity-70')}>
+      {attendee.imageUrl && <AvatarImage src={attendee.imageUrl} alt="" />}
+      <AvatarFallback aria-hidden="true">
+        {getInitials(attendee.name)}
+      </AvatarFallback>
+    </Avatar>
   );
 }
 
 function AppointmentTimeRow({ when }: { when: AppointmentTime }) {
-  return <DateTimeLabel startsAt={when.startsAt} timeZone={when.timeZone} />;
+  return (
+    <DateTimeLabel
+      size="sm"
+      startsAt={when.startsAt}
+      timeZone={when.timeZone}
+    />
+  );
 }
 
 const CONTACT_LINK_CLASS =
@@ -94,17 +84,19 @@ function AttendeeContactRow({ attendee }: { attendee: AppointmentAttendee }) {
   );
 }
 
-function AppointmentDetails({ details }: { details: readonly AppointmentDetail[] }) {
+function AppointmentDetails({
+  details,
+}: {
+  details: readonly AppointmentDetail[];
+}) {
   if (details.length === 0) return null;
 
   return (
     <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
       {details.map((detail) => (
         <div key={detail.label}>
-          <dt className="font-semibold uppercase tracking-wider text-text-muted">
-            {detail.label}
-          </dt>
-          <dd className="mt-0.5 text-text-secondary">{detail.value}</dd>
+          <dt className={LABEL_CLASS}>{detail.label}</dt>
+          <dd className="mt-0.5 text-sm text-text-secondary">{detail.value}</dd>
         </div>
       ))}
     </dl>
@@ -148,17 +140,16 @@ export function AppointmentCard({
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <Title className="text-sm font-semibold">{attendee.name}</Title>
+            <Title className="text-sm font-medium">{attendee.name}</Title>
             {badges}
           </div>
 
           {supersededWhen && (
-            <div className="text-xs text-text-secondary line-through mb-0.5">
-              <DateTimeLabel
-                startsAt={supersededWhen.startsAt}
-                timeZone={supersededWhen.timeZone}
-              />
-            </div>
+            <s className="mb-0.5 block text-xs text-text-secondary">
+              {formatShortDay(supersededWhen.startsAt, supersededWhen.timeZone)}{' '}
+              ·{' '}
+              {formatSlotTime(supersededWhen.startsAt, supersededWhen.timeZone)}
+            </s>
           )}
 
           <AppointmentTimeRow when={when} />
@@ -174,7 +165,7 @@ export function AppointmentCard({
           )}
 
           {footnote && (
-            <p className="text-[10px] text-text-secondary mt-1.5">{footnote}</p>
+            <p className="text-xs text-text-secondary mt-1.5">{footnote}</p>
           )}
         </div>
       </div>

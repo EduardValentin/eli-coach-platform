@@ -17,6 +17,8 @@ import { useNavigate, useParams } from 'react-router';
 import { PlanBuilder } from '../../components/coach-portal/PlanBuilder';
 import { RirBadge } from '../../components/workout/RirBadge';
 import { Button } from '../../components/ui/button';
+import { Badge } from '../../components/ui/badge';
+import { WIDGET_TITLE_CLASS, LABEL_CLASS } from '../../components/typography';
 
 // ── Constants ────────────────────────────────────────────────────────
 
@@ -30,33 +32,18 @@ const MOCK_CLIENTS: Record<string, string> = {
   c5: 'Mia Thermopolis',
 };
 
-function getDayTypeColor(type: DayType) {
+function getDayTypeBadgeClass(type: DayType) {
   switch (type) {
     case 'Strength':
-      return 'var(--training-strength)';
+      return 'border-training-strength/20 bg-training-strength-soft text-training-strength';
     case 'Hypertrophy':
-      return 'var(--training-hypertrophy)';
+      return 'border-training-hypertrophy/20 bg-training-hypertrophy-soft text-training-hypertrophy';
     case 'Recovery':
-      return 'var(--training-recovery)';
+      return 'border-training-recovery/20 bg-training-recovery-soft text-training-recovery';
     case 'Lighter':
-      return 'var(--training-lighter)';
+      return 'border-training-lighter/20 bg-training-lighter-soft text-training-lighter';
     default:
-      return 'var(--training-rest)';
-  }
-}
-
-function getDayTypeSoftColor(type: DayType) {
-  switch (type) {
-    case 'Strength':
-      return 'var(--training-strength-soft)';
-    case 'Hypertrophy':
-      return 'var(--training-hypertrophy-soft)';
-    case 'Recovery':
-      return 'var(--training-recovery-soft)';
-    case 'Lighter':
-      return 'var(--training-lighter-soft)';
-    default:
-      return 'var(--training-rest-soft)';
+      return 'border-training-rest/20 bg-training-rest-soft text-training-rest';
   }
 }
 
@@ -281,9 +268,11 @@ export function ClientPlanBuilderPage() {
     return (
       <div className="h-screen flex items-center justify-center bg-surface-subtle">
         <div className="text-center">
-          <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-neutral-200 animate-pulse" />
-          <h2 className="text-xl font-bold text-foreground mb-2">Loading...</h2>
-          <p className="text-muted-foreground mb-6">
+          <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-muted animate-pulse" />
+          <h2 className="text-xl font-medium text-text-primary mb-2">
+            Loading...
+          </h2>
+          <p className="text-text-secondary mb-6">
             Preparing the plan builder.
           </p>
         </div>
@@ -303,12 +292,12 @@ export function ClientPlanBuilderPage() {
       headerCenter={
         <div className="flex items-center gap-3 min-w-0">
           <div className="min-w-0">
-            <h1 className="text-lg font-serif font-bold text-foreground leading-tight truncate">
+            <h1 className="font-serif text-lg font-medium text-text-primary leading-tight truncate">
               {clientName}
             </h1>
-            <p className="text-xs text-muted-foreground leading-tight truncate">
+            <p className="text-xs text-text-secondary leading-tight truncate">
               {isNewPlan ? (
-                <span className="text-brand font-semibold">New Plan</span>
+                <span className="text-primary font-medium">New Plan</span>
               ) : (
                 (planInstance?.name ?? planName)
               )}
@@ -316,16 +305,22 @@ export function ClientPlanBuilderPage() {
           </div>
 
           {isNewPlan && (
-            <span className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-brand-soft text-brand text-xs font-bold rounded-full border border-brand/20 shrink-0">
+            <Badge
+              variant="outline"
+              className="hidden sm:inline-flex border-primary/20 bg-primary-soft text-primary shrink-0"
+            >
               New
-            </span>
+            </Badge>
           )}
 
           {activeGoal && (
-            <span className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-brand-secondary-soft text-brand-secondary text-xs font-bold rounded-full border border-brand-secondary/20 shrink-0">
+            <Badge
+              variant="brand-secondary"
+              className="hidden sm:inline-flex shrink-0"
+            >
               <Target size={12} />
               {activeGoal.type}
-            </span>
+            </Badge>
           )}
         </div>
       }
@@ -344,9 +339,9 @@ export function ClientPlanBuilderPage() {
           <Button
             onClick={handleSaveChanges}
             disabled={isSaving}
-            variant="default"
-            size="lg"
-            className="shadow-md"
+            variant="primary"
+            size="md"
+            className="shadow-card"
           >
             <Save size={16} />{' '}
             <span className="hidden sm:inline">
@@ -363,7 +358,7 @@ export function ClientPlanBuilderPage() {
         <Button
           onClick={handleInsertDeload}
           variant="outline"
-          className="w-full border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100"
+          className="w-full border-brand-secondary/20 bg-brand-secondary-soft text-brand-secondary hover:bg-brand-secondary-surface"
         >
           <Calendar size={16} /> Insert Deload
         </Button>
@@ -392,10 +387,10 @@ export function ClientPlanBuilderPage() {
               {/* Header */}
               <div className="px-6 py-4 border-b border-border rounded-field flex items-center justify-between">
                 <div>
-                  <h2 className="text-lg font-serif font-bold text-foreground">
+                  <h2 className="font-serif text-lg font-medium text-text-primary">
                     Use a Template
                   </h2>
-                  <p className="text-xs text-muted-foreground mt-0.5">
+                  <p className="text-xs text-text-secondary mt-0.5">
                     Choose a template to load its structure into this plan. This
                     will replace current weeks.
                   </p>
@@ -406,7 +401,7 @@ export function ClientPlanBuilderPage() {
                     setPreviewingTemplate(null);
                   }}
                   variant="ghost"
-                  size="icon"
+                  size="icon-sm"
                 >
                   <X size={20} />
                 </Button>
@@ -418,7 +413,7 @@ export function ClientPlanBuilderPage() {
                   className={`${previewingTemplate ? 'w-1/2 border-r border-border' : 'w-full'} overflow-y-auto p-4 space-y-2 transition-all`}
                 >
                   {planTemplates.length === 0 ? (
-                    <div className="text-center py-12 text-muted-foreground text-sm">
+                    <div className="text-center py-12 text-text-secondary text-sm">
                       No templates yet. Create templates in the Templates tab.
                     </div>
                   ) : (
@@ -432,17 +427,17 @@ export function ClientPlanBuilderPage() {
                           key={template.id}
                           className={`p-4 rounded-control border-2 transition-all cursor-pointer ${
                             isSelected
-                              ? 'border-primary bg-primary/5'
-                              : 'border-border hover:border-neutral-300 bg-card'
+                              ? 'border-primary bg-primary-soft'
+                              : 'border-border hover:border-muted-foreground/30 bg-card'
                           }`}
                           onClick={() => setPreviewingTemplate(template)}
                         >
                           <div className="flex items-center justify-between">
                             <div>
-                              <h3 className="font-semibold text-sm text-foreground">
+                              <h3 className="text-sm font-medium text-text-primary">
                                 {template.name}
                               </h3>
-                              <p className="text-xs text-muted-foreground mt-0.5">
+                              <p className="text-xs text-text-secondary mt-0.5">
                                 {template.weeks.length}{' '}
                                 {template.weeks.length === 1 ? 'week' : 'weeks'}{' '}
                                 · {trainingDays}d/wk
@@ -457,7 +452,7 @@ export function ClientPlanBuilderPage() {
                                   setPreviewingTemplate(template);
                                 }}
                                 variant="ghost"
-                                size="icon"
+                                size="icon-sm"
                                 className="size-8"
                                 title="Preview"
                               >
@@ -468,8 +463,8 @@ export function ClientPlanBuilderPage() {
                                   e.stopPropagation();
                                   handleLoadTemplate(template);
                                 }}
-                                variant="default"
-                                size="sm"
+                                variant="primary"
+                                size="xs"
                               >
                                 Use
                               </Button>
@@ -489,13 +484,13 @@ export function ClientPlanBuilderPage() {
                     className="w-1/2 overflow-y-auto p-5 bg-surface-page"
                   >
                     <div className="mb-4 flex items-center justify-between">
-                      <h3 className="font-bold text-base text-foreground">
+                      <h3 className={WIDGET_TITLE_CLASS}>
                         {previewingTemplate.name}
                       </h3>
                       <Button
                         onClick={() => handleLoadTemplate(previewingTemplate)}
-                        variant="default"
-                        size="sm"
+                        variant="primary"
+                        size="xs"
                         className="shrink-0"
                       >
                         Use This Template
@@ -513,15 +508,13 @@ export function ClientPlanBuilderPage() {
                       return (
                         <div key={week.id} className="mb-5">
                           <div className="flex items-center gap-2 mb-2.5">
-                            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                            <span className={LABEL_CLASS}>
                               Week {week.order}
                             </span>
                             {week.isDeload && (
-                              <span className="text-[9px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-bold uppercase">
-                                Deload
-                              </span>
+                              <Badge variant="brand-secondary">Deload</Badge>
                             )}
-                            <span className="text-[10px] text-muted-foreground ml-auto">
+                            <span className="text-xs text-text-secondary ml-auto">
                               {trainingDays.length}d · {totalExercises}{' '}
                               exercises
                             </span>
@@ -536,20 +529,15 @@ export function ClientPlanBuilderPage() {
                                   className="bg-card rounded-control px-3.5 py-2.5 border border-border"
                                 >
                                   <div className="flex items-center justify-between mb-2">
-                                    <span className="text-xs font-bold text-foreground">
+                                    <span className="text-xs font-medium text-text-primary">
                                       {dName}
                                     </span>
-                                    <span
-                                      className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                                      style={{
-                                        backgroundColor: getDayTypeSoftColor(
-                                          day.type,
-                                        ),
-                                        color: getDayTypeColor(day.type),
-                                      }}
+                                    <Badge
+                                      variant="outline"
+                                      className={getDayTypeBadgeClass(day.type)}
                                     >
                                       {day.type}
-                                    </span>
+                                    </Badge>
                                   </div>
                                   {day.exercises.length > 0 && (
                                     <div className="space-y-1.5">
@@ -562,19 +550,19 @@ export function ClientPlanBuilderPage() {
                                             key={eIdx}
                                             className="flex items-center gap-2"
                                           >
-                                            <span className="w-4 h-4 rounded-full bg-muted text-[9px] font-bold text-muted-foreground flex items-center justify-center shrink-0">
+                                            <span className="w-4 h-4 rounded-full bg-muted text-xs font-medium text-text-secondary flex items-center justify-center shrink-0">
                                               {eIdx + 1}
                                             </span>
-                                            <span className="text-caption font-medium text-foreground truncate flex-1">
+                                            <span className="text-caption font-medium text-text-primary truncate flex-1">
                                               {ex?.name ?? 'Unknown'}
                                             </span>
                                             <div className="flex items-center gap-1.5 shrink-0">
-                                              <span className="text-[10px] font-semibold text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                                              <span className="text-xs font-medium text-text-secondary bg-muted px-1.5 py-0.5 rounded">
                                                 {pe.sets}×{pe.reps}
                                               </span>
                                               {pe.rir !== undefined && (
-                                                <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
-                                                  <span className="font-medium tracking-wider">
+                                                <span className="inline-flex items-center gap-1 text-xs text-text-secondary">
+                                                  <span className="font-medium">
                                                     RIR
                                                   </span>
                                                   <RirBadge value={pe.rir} />
@@ -587,7 +575,7 @@ export function ClientPlanBuilderPage() {
                                     </div>
                                   )}
                                   {day.exercises.length === 0 && (
-                                    <p className="text-[10px] text-muted-foreground italic">
+                                    <p className="text-xs text-text-secondary italic">
                                       No exercises yet
                                     </p>
                                   )}

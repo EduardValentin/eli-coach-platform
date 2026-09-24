@@ -44,15 +44,20 @@ export function ConfirmDialog({
       <DialogContent className="max-h-[80vh] gap-6 overflow-y-auto p-6 sm:max-w-md">
         <DialogHeader className="gap-2">
           <DialogTitle>{title}</DialogTitle>
-          {description && <DialogDescription className="leading-relaxed">{description}</DialogDescription>}
+          {description && (
+            <DialogDescription className="leading-relaxed">
+              {description}
+            </DialogDescription>
+          )}
         </DialogHeader>
         {children}
         <DialogFooter className="gap-3 pt-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
             {cancelLabel}
           </Button>
           <Button
-            variant={tone === 'destructive' ? 'destructive' : undefined}
+            variant={tone === 'destructive' ? 'destructive' : 'primary'}
+            size="sm"
             onClick={onConfirm}
             disabled={confirmDisabled}
           >

@@ -6,17 +6,13 @@ import { cn } from './ui/utils';
 
 type RowActionTone = 'default' | 'primary' | 'destructive';
 
-const TONE_VARIANT: Record<RowActionTone, 'outline' | 'outline-primary'> = {
+const TONE_VARIANT: Record<
+  RowActionTone,
+  'outline' | 'primary' | 'destructive-outline'
+> = {
   default: 'outline',
-  primary: 'outline-primary',
-  destructive: 'outline',
-};
-
-const TONE_CLASSES: Record<RowActionTone, string> = {
-  default: '',
-  primary: '',
-  destructive:
-    'text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive',
+  primary: 'primary',
+  destructive: 'destructive-outline',
 };
 
 export function RowActionButton({
@@ -36,10 +32,10 @@ export function RowActionButton({
     <Button
       type="button"
       variant={TONE_VARIANT[tone]}
-      size="sm"
+      size="xs"
       disabled={disabled || busy}
       aria-busy={busy || undefined}
-      className={cn(TONE_CLASSES[tone], className)}
+      className={className}
       {...props}
     >
       {busy ? (
@@ -61,11 +57,11 @@ export function RowActionLink({
 }: LinkProps & { icon?: LucideIcon; tone?: RowActionTone }) {
   return (
     <Link
-      className={cn(
-        buttonVariants({ variant: TONE_VARIANT[tone], size: 'sm' }),
-        TONE_CLASSES[tone],
+      className={buttonVariants({
+        variant: TONE_VARIANT[tone],
+        size: 'xs',
         className,
-      )}
+      })}
       {...props}
     >
       {Icon ? <Icon className="size-3.5 shrink-0" aria-hidden="true" /> : null}

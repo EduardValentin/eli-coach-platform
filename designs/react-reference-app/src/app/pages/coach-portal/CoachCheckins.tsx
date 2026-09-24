@@ -1,13 +1,5 @@
 import { useState, useMemo } from 'react';
-import {
-  CalendarDays,
-  CalendarPlus,
-  Clock,
-  CheckCircle2,
-  XCircle,
-  RefreshCw,
-  X,
-} from 'lucide-react';
+import { CalendarDays, CalendarPlus, Clock, X } from 'lucide-react';
 import {
   useCheckins,
   type CheckIn,
@@ -22,15 +14,17 @@ import { browserTimeZone } from '../../utils/dateFormatters';
 import { useNotifications } from '../../context/NotificationContext';
 import { useMessaging } from '../../context/MessagingContext';
 import {
-  checkinInstant,
   formatCheckinDate,
   formatCheckinTime,
   toISODate,
   to24h,
 } from '../../utils/dateFormatters';
 import { AppointmentCard } from '../../components/coach-portal/AppointmentCard';
+import { CheckinCard } from '../../components/CheckinCard';
 import { CheckinSchedulerSheet } from '../../components/CheckinSchedulerSheet';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
+import { EmptyState } from '../../components/EmptyState';
+import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
 import {
   Tabs,
@@ -53,71 +47,6 @@ const CLIENT_AVATARS: Record<string, string | null> = {
   c4: null,
   c5: null,
 };
-
-function requestsWaitingLine(count: number): string {
-  return count === 1
-    ? '1 request waiting on you'
-    : `${count} requests waiting on you`;
-}
-
-function CheckinCard({
-  checkin,
-  actions,
-}: {
-  checkin: CheckIn;
-  actions?: React.ReactNode;
-}) {
-  const isRescheduling = checkin.status === 'rescheduling';
-  const timeZone = browserTimeZone();
-  const supersededWhen =
-    isRescheduling && checkin.previousDate && checkin.previousTime
-      ? {
-          startsAt: checkinInstant(checkin.previousDate, checkin.previousTime),
-          timeZone,
-        }
-      : undefined;
-
-  return (
-    <AppointmentCard
-      attendee={{
-        name: checkin.clientName,
-        imageUrl: CLIENT_AVATARS[checkin.clientId] ?? undefined,
-      }}
-      when={{ startsAt: checkinInstant(checkin.date, checkin.time), timeZone }}
-      supersededWhen={supersededWhen}
-      badges={
-        <>
-          <span
-            className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${
-              checkin.type === 'ad-hoc'
-                ? 'bg-status-pending-soft text-status-pending'
-                : 'bg-neutral-100 text-text-secondary'
-            }`}
-          >
-            {checkin.type}
-          </span>
-          {isRescheduling && (
-            <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-brand bg-brand/10 px-2 py-0.5 rounded-full">
-              <RefreshCw size={10} />
-              Rescheduled by{' '}
-              {checkin.proposedBy === 'coach' ? 'you' : checkin.clientName}
-            </span>
-          )}
-          {checkin.rescheduleCount > 0 && !isRescheduling && (
-            <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-text-secondary">
-              <RefreshCw size={10} />
-              {checkin.rescheduleCount} reschedule
-              {checkin.rescheduleCount > 1 ? 's' : ''}
-            </span>
-          )}
-        </>
-      }
-      quote={checkin.rescheduleMessage || checkin.note || undefined}
-      footnote={checkin.planId ? 'Linked to training plan' : undefined}
-      actions={actions}
-    />
-  );
-}
 
 export function CoachCheckins() {
   const {
@@ -239,48 +168,37 @@ export function CoachCheckins() {
     const canReschedule = c.rescheduleCount < MAX_RESCHEDULES;
     const proposedByClient = c.proposedBy === 'client';
 
-    // Only show actions if proposed by client (coach needs to respond)
-    if (!proposedByClient)
-      return (
-        <span className="text-[10px] font-bold text-brand uppercase tracking-widest">
-          Awaiting response
-        </span>
-      );
+    // The status badge already says Awaiting {clientFirstName} when the coach proposed.
+    if (!proposedByClient) return undefined;
 
     return (
-      <div className="flex flex-col gap-2">
-        <div className="flex gap-2">
-          {isRescheduling ? (
-            <Button
-              onClick={() => handleAcceptReschedule(c)}
-              variant="default"
-              size="sm"
-            >
-              Accept
-            </Button>
-          ) : (
-            <Button
-              onClick={() => handleApprove(c)}
-              variant="default"
-              size="sm"
-            >
-              Approve
-            </Button>
-          )}
-          {canReschedule && (
-            <Button
-              onClick={() => openReschedule(c.id)}
-              variant="outline-primary"
-              size="sm"
-            >
-              Reschedule
-            </Button>
-          )}
-          <Button onClick={() => handleDecline(c)} variant="outline" size="sm">
-            Decline
+      <>
+        <Button onClick={() => handleDecline(c)} variant="ghost" size="xs">
+          Decline
+        </Button>
+        {canReschedule && (
+          <Button
+            onClick={() => openReschedule(c.id)}
+            variant="outline"
+            size="xs"
+          >
+            Reschedule
           </Button>
-        </div>
-      </div>
+        )}
+        {isRescheduling ? (
+          <Button
+            onClick={() => handleAcceptReschedule(c)}
+            variant="primary"
+            size="xs"
+          >
+            Accept
+          </Button>
+        ) : (
+          <Button onClick={() => handleApprove(c)} variant="primary" size="xs">
+            Approve
+          </Button>
+        )}
+      </>
     );
   };
 
@@ -296,6 +214,9 @@ export function CoachCheckins() {
           <TabsList variant="segmented">
             <TabsTrigger variant="segmented" value="pending">
               Pending
+              {awaitingCoach > 0 && (
+                <Badge variant="count">{awaitingCoach}</Badge>
+              )}
             </TabsTrigger>
             <TabsTrigger variant="segmented" value="upcoming">
               Upcoming
@@ -304,32 +225,26 @@ export function CoachCheckins() {
               Past
             </TabsTrigger>
           </TabsList>
-          {awaitingCoach > 0 && (
-            <p className="text-sm text-text-secondary">
-              {requestsWaitingLine(awaitingCoach)}
-            </p>
-          )}
         </div>
 
         <TabsContent value="pending" className="space-y-3">
           {pending.length === 0 ? (
-            <div className="text-center py-16">
-              <CalendarPlus
-                size={40}
-                className="mx-auto text-neutral-300 mb-4"
-              />
-              <p className="text-text-secondary font-medium">
-                No pending check-ins
-              </p>
-              <p className="text-sm text-text-secondary mt-1">
-                All requests have been reviewed.
-              </p>
-            </div>
+            <EmptyState
+              icon={CalendarPlus}
+              title="No pending check-ins"
+              description="All requests have been reviewed."
+            />
           ) : (
             pending.map((c) => (
               <CheckinCard
                 key={c.id}
                 checkin={c}
+                viewer="coach"
+                attendee={{
+                  name: c.clientName,
+                  imageUrl: CLIENT_AVATARS[c.clientId] ?? undefined,
+                }}
+                footnote={c.planId ? 'Linked to training plan' : undefined}
                 actions={renderPendingActions(c)}
               />
             ))
@@ -347,33 +262,27 @@ export function CoachCheckins() {
                 timeZone: browserTimeZone(),
               }}
               badges={
-                <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-brand-secondary-surface text-brand-secondary">
-                  {PROGRAM_REVIEW_LABEL}
-                </span>
+                <Badge variant="brand-secondary">{PROGRAM_REVIEW_LABEL}</Badge>
               }
             />
           )}
           {upcoming.length === 0 && !reviewCall ? (
-            <div className="text-center py-16">
-              <CalendarDays
-                size={40}
-                className="mx-auto text-neutral-300 mb-4"
-              />
-              <p className="text-text-secondary font-medium">
-                No upcoming check-ins
-              </p>
-            </div>
+            <EmptyState
+              icon={CalendarDays}
+              title="No upcoming check-ins"
+              description="Confirmed check-ins with your clients show up here."
+            />
           ) : (
             upcoming.map((c) => (
               <CheckinCard
                 key={c.id}
                 checkin={c}
-                actions={
-                  <span className="flex items-center gap-1.5 text-green-600 text-xs font-semibold">
-                    <CheckCircle2 size={14} />
-                    Confirmed
-                  </span>
-                }
+                viewer="coach"
+                attendee={{
+                  name: c.clientName,
+                  imageUrl: CLIENT_AVATARS[c.clientId] ?? undefined,
+                }}
+                footnote={c.planId ? 'Linked to training plan' : undefined}
               />
             ))
           )}
@@ -381,39 +290,23 @@ export function CoachCheckins() {
 
         <TabsContent value="past" className="space-y-3">
           {past.length === 0 ? (
-            <div className="text-center py-16">
-              <Clock size={40} className="mx-auto text-neutral-300 mb-4" />
-              <p className="text-text-secondary font-medium">
-                No past check-ins yet
-              </p>
-            </div>
+            <EmptyState
+              icon={Clock}
+              title="No past check-ins yet"
+              description="Completed, declined and cancelled check-ins show up here."
+            />
           ) : (
             past.map((c) => (
               <CheckinCard
                 key={c.id}
                 checkin={c}
-                actions={
-                  <span
-                    className={`flex items-center gap-1.5 text-xs font-semibold ${
-                      c.status === 'completed'
-                        ? 'text-green-600'
-                        : c.status === 'cancelled'
-                          ? 'text-text-secondary'
-                          : 'text-red-500'
-                    }`}
-                  >
-                    {c.status === 'completed' ? (
-                      <CheckCircle2 size={14} />
-                    ) : (
-                      <XCircle size={14} />
-                    )}
-                    {c.status === 'completed'
-                      ? 'Completed'
-                      : c.status === 'cancelled'
-                        ? 'Cancelled'
-                        : 'Declined'}
-                  </span>
-                }
+                viewer="coach"
+                attendee={{
+                  name: c.clientName,
+                  imageUrl: CLIENT_AVATARS[c.clientId] ?? undefined,
+                }}
+                footnote={c.planId ? 'Linked to training plan' : undefined}
+                muted
               />
             ))
           )}

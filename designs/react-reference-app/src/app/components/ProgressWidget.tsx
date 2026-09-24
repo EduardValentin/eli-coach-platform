@@ -7,7 +7,6 @@ import {
   type WeightUnit,
 } from '../utils/units';
 import { PortalWidget, type WidgetPresentation } from './PortalWidget';
-import { Reading } from './Reading';
 
 interface ProgressProfile {
   startingWeightKg: number;
@@ -39,7 +38,7 @@ export function ProgressWidget({
     return (
       <PortalWidget
         presentation={presentation}
-        title="Progress"
+        title="Weight"
         icon={<TrendIcon change={null} />}
         headingId={headingId}
         className={className}
@@ -57,21 +56,22 @@ export function ProgressWidget({
   return (
     <PortalWidget
       presentation={presentation}
-      title="Progress"
+      title="Weight"
       icon={<TrendIcon change={change} />}
       headingId={headingId}
       className={className}
-    >
-      <Reading
-        label="Weight change"
-        size="lg"
-        unit={weightUnitLabel(weightUnit)}
-        value={`${change > 0 ? '+' : ''}${displayWeightValue(change, weightUnit, 1)}`}
-      />
-      <p className="mt-2 text-sm text-text-secondary">
-        Since {formatBodyWeight(profile.startingWeightKg, weightUnit)} &rarr;{' '}
-        {formatBodyWeight(profile.currentWeightKg, weightUnit)}
-      </p>
-    </PortalWidget>
+      hero={
+        <span className="tabular-nums">
+          {`${change > 0 ? '+' : ''}${displayWeightValue(change, weightUnit, 1)}`}
+        </span>
+      }
+      heroUnit={weightUnitLabel(weightUnit)}
+      context={
+        <>
+          Since {formatBodyWeight(profile.startingWeightKg, weightUnit)} &rarr;{' '}
+          {formatBodyWeight(profile.currentWeightKg, weightUnit)}
+        </>
+      }
+    />
   );
 }

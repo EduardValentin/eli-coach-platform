@@ -28,7 +28,14 @@ import { useUnitPreferences } from '../../context/UnitPreferencesContext';
 import { useNutrition } from '../../context/NutritionContext';
 import { formatVolume } from '../../utils/units';
 import { getInitials, trainingClientIdFor } from '../../utils/clientHelpers';
-import { PORTAL_PAGE_TITLE_CLASS } from '../../components/PortalPageHeader';
+import {
+  PORTAL_PAGE_TITLE_CLASS,
+  WIDGET_TITLE_CLASS,
+  LABEL_CLASS,
+} from '../../components/typography';
+import { WidgetLink } from '../../components/WidgetLink';
+import { Avatar, AvatarFallback } from '../../components/ui/avatar';
+import { Badge } from '../../components/ui/badge';
 import { SubscriptionBadge } from '../../components/coach-portal/SubscriptionBadge';
 import { JourneyClientDetails } from '../../components/coach-portal/JourneyClientDetails';
 import { OnboardingPanel } from '../../components/coach-portal/OnboardingPanel';
@@ -222,7 +229,7 @@ function RosterClientDetails() {
     <div className="w-full">
       <Link
         to="/coach/clients"
-        className="inline-flex items-center gap-2 text-sm font-semibold text-text-secondary hover:text-text-primary mb-8 transition-colors"
+        className="inline-flex items-center gap-2 text-sm font-medium text-text-secondary hover:text-text-primary mb-8 transition-colors"
       >
         <ArrowLeft size={16} /> Back to Clients
       </Link>
@@ -233,12 +240,12 @@ function RosterClientDetails() {
             <img
               src={profile.avatarUrl}
               alt=""
-              className="w-16 h-16 rounded-full object-cover shrink-0 border border-neutral-100"
+              className="w-16 h-16 rounded-full object-cover shrink-0 border border-border-subtle"
             />
           ) : (
-            <div className="w-16 h-16 rounded-full bg-neutral-100 flex items-center justify-center font-serif text-text-primary font-semibold text-xl shrink-0">
-              {getInitials(clientName)}
-            </div>
+            <Avatar size="lg">
+              <AvatarFallback>{getInitials(clientName)}</AvatarFallback>
+            </Avatar>
           )}
           <div className="min-w-0">
             <h1 className={`${PORTAL_PAGE_TITLE_CLASS} mb-2`}>{clientName}</h1>
@@ -257,14 +264,14 @@ function RosterClientDetails() {
         <div className="flex flex-wrap items-center gap-3">
           <Link
             to={`/coach/clients/${clientId}/edit`}
-            className={buttonVariants({ variant: 'outline', size: 'lg' })}
+            className={buttonVariants({ variant: 'outline', size: 'md' })}
           >
             <UserCog size={16} />
             Edit Profile
           </Link>
           <Link
             to={`/coach/clients/${clientId}/cycle`}
-            className={buttonVariants({ variant: 'outline', size: 'lg' })}
+            className={buttonVariants({ variant: 'outline', size: 'md' })}
           >
             <Droplet size={16} />
             Cycle Log
@@ -272,7 +279,7 @@ function RosterClientDetails() {
           {isPostMvp && (
             <Link
               to={`/coach/messages?client=${clientId}`}
-              className={buttonVariants({ variant: 'outline', size: 'lg' })}
+              className={buttonVariants({ variant: 'outline', size: 'md' })}
             >
               <MessageSquare size={16} />
               Message
@@ -280,8 +287,8 @@ function RosterClientDetails() {
           )}
           <Button
             onClick={() => setShowScheduleDialog(true)}
-            variant="default"
-            size="lg"
+            variant="primary"
+            size="md"
           >
             <Calendar size={16} />
             Schedule Check-in
@@ -342,12 +349,9 @@ function RosterClientDetails() {
           headingId="phase-tile-heading"
           className="h-full"
           footer={
-            <Link
-              to={`/coach/clients/${clientId}/cycle`}
-              className="text-sm font-semibold text-primary hover:text-primary-hover transition-colors"
-            >
+            <WidgetLink arrow to={`/coach/clients/${clientId}/cycle`}>
               View cycle log
-            </Link>
+            </WidgetLink>
           }
         />
 
@@ -364,20 +368,18 @@ function RosterClientDetails() {
             }
             headingId="daily-target-heading"
             className="h-full"
-          >
-            <Reading
-              label="Daily target"
-              size="lg"
-              unit="kcal"
-              value={profile?.dailyCalories.toLocaleString() ?? '--'}
-            />
-            {profile && (
-              <p className="mt-2 text-sm text-text-secondary">
-                {profile.proteinGrams}P / {profile.carbsGrams}C /{' '}
-                {profile.fatsGrams}F
-              </p>
-            )}
-          </PortalWidget>
+            hero={
+              <span className="tabular-nums">
+                {profile?.dailyCalories.toLocaleString() ?? '--'}
+              </span>
+            }
+            heroUnit="kcal"
+            context={
+              profile
+                ? `${profile.proteinGrams}P / ${profile.carbsGrams}C / ${profile.fatsGrams}F`
+                : undefined
+            }
+          />
         )}
 
         {isPostMvp && (
@@ -393,9 +395,9 @@ function RosterClientDetails() {
             }
             headingId="avg-compliance-heading"
             className="h-full"
-          >
-            <Reading label="Avg compliance" size="lg" unit="%" value="95" />
-          </PortalWidget>
+            hero={<span className="tabular-nums">95</span>}
+            heroUnit="%"
+          />
         )}
 
         {isPostMvp && (
@@ -414,7 +416,7 @@ function RosterClientDetails() {
           >
             {activePlan ? (
               <div>
-                <h3 className="font-semibold text-text-primary text-base mb-2">
+                <h3 className="text-base font-medium text-text-primary mb-2">
                   {activePlan.name}
                 </h3>
 
@@ -424,11 +426,11 @@ function RosterClientDetails() {
                       key={week.id}
                       className={`h-2 flex-1 rounded-full ${
                         i < activePlan.currentWeekNumber - 1
-                          ? 'bg-brand'
+                          ? 'bg-primary'
                           : i === activePlan.currentWeekNumber - 1
-                            ? 'bg-brand/50'
-                            : 'bg-neutral-100'
-                      } ${week.isDeload ? 'ring-1 ring-blue-300' : ''}`}
+                            ? 'bg-primary/50'
+                            : 'bg-surface-muted'
+                      } ${week.isDeload ? 'ring-1 ring-training-recovery' : ''}`}
                     />
                   ))}
                 </div>
@@ -448,15 +450,15 @@ function RosterClientDetails() {
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand/10">
-                  <Activity size={22} className="text-brand" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                  <Activity size={22} className="text-primary" />
                 </div>
                 <p className="text-sm text-text-secondary">No active plan</p>
                 <Button
                   onClick={() =>
                     navigate(`/coach/training/builder/${clientId}`)
                   }
-                  variant="default"
+                  variant="primary"
                 >
                   <Plus size={16} /> Create Plan
                 </Button>
@@ -527,12 +529,10 @@ function RosterClientDetails() {
                 className="h-full"
               >
                 <div className="mb-4">
-                  <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2">
-                    Plan
-                  </p>
+                  <p className={cn(LABEL_CLASS, 'mb-2')}>Plan</p>
                   {blockSummary ? (
                     <div className="space-y-1">
-                      <p className="text-sm font-semibold text-text-primary">
+                      <p className="text-sm font-medium text-text-primary">
                         Active block · {blockSummary.dateRange}
                       </p>
                       <p className="text-xs text-text-secondary">
@@ -549,9 +549,7 @@ function RosterClientDetails() {
 
                 {/* Food preferences */}
                 <div className="mb-5">
-                  <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2">
-                    Food preferences
-                  </p>
+                  <p className={cn(LABEL_CLASS, 'mb-2')}>Food preferences</p>
                   {allChips.length > 0 ? (
                     <div
                       className="flex flex-wrap gap-1.5"
@@ -559,31 +557,23 @@ function RosterClientDetails() {
                       aria-label="Food preferences"
                     >
                       {dietaryChips.map((label) => (
-                        <span
+                        <Badge
                           key={label}
                           role="listitem"
-                          className="text-caption font-semibold px-2.5 py-1 rounded-full bg-brand-secondary/10 text-text-primary border border-brand-secondary/20"
+                          variant="brand-secondary"
                         >
                           {label}
-                        </span>
+                        </Badge>
                       ))}
                       {allergenChips.map((label) => (
-                        <span
-                          key={label}
-                          role="listitem"
-                          className="text-caption font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-text-primary border border-amber-200"
-                        >
+                        <Badge key={label} role="listitem" variant="pending">
                           {label} allergy
-                        </span>
+                        </Badge>
                       ))}
                       {dislikedChips.map((label) => (
-                        <span
-                          key={label}
-                          role="listitem"
-                          className="text-caption font-semibold px-2.5 py-1 rounded-full bg-neutral-100 text-text-primary"
-                        >
+                        <Badge key={label} role="listitem" variant="muted">
                           No {label}
-                        </span>
+                        </Badge>
                       ))}
                     </div>
                   ) : (
@@ -595,7 +585,7 @@ function RosterClientDetails() {
                   onClick={() =>
                     navigate(`/coach/nutrition/client/${clientId}/plan`)
                   }
-                  variant="default"
+                  variant="primary"
                   className="w-full"
                 >
                   <UtensilsCrossed size={15} />
@@ -627,12 +617,9 @@ function RosterClientDetails() {
             headingId="workout-history-heading"
             className="lg:col-span-2 self-start"
             action={
-              <Link
-                to={`/coach/clients/${clientId}/history`}
-                className="text-sm font-semibold text-primary hover:text-primary-hover transition-colors"
-              >
+              <WidgetLink arrow to={`/coach/clients/${clientId}/history`}>
                 View All ({getClientWorkoutHistory(dataClientId).length})
-              </Link>
+              </WidgetLink>
             }
           >
             <div className="space-y-4">
@@ -640,7 +627,7 @@ function RosterClientDetails() {
                 <div className="text-center py-8">
                   <Activity
                     size={28}
-                    className="text-neutral-300 mx-auto mb-2"
+                    className="text-text-secondary mx-auto mb-2"
                   />
                   <p className="text-sm text-text-secondary">
                     No completed workouts yet
@@ -669,20 +656,23 @@ function RosterClientDetails() {
                     <Link
                       key={wl.id}
                       to={`/coach/clients/${clientId}/workout/${wl.id}`}
-                      className="flex items-center justify-between p-4 rounded-card border border-neutral-100 bg-neutral-50/50 hover:border-neutral-200 hover:bg-neutral-50 transition-colors group"
+                      className="flex items-center justify-between p-4 rounded-card border border-border-subtle bg-surface-quiet hover:border-border hover:bg-surface-quiet transition-colors group"
                     >
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 mb-0.5">
-                          <p className="font-semibold text-sm text-text-primary truncate">
+                          <p className="text-sm font-medium text-text-primary truncate">
                             {exerciseNames}
                             {wl.exercises.length > 2
                               ? ` +${wl.exercises.length - 2}`
                               : ''}
                           </p>
                           {hasSwaps && (
-                            <span className="text-[8px] bg-brand-secondary/10 text-brand-secondary rounded-full px-1.5 py-0.5 font-bold uppercase shrink-0">
+                            <Badge
+                              variant="brand-secondary"
+                              className="shrink-0"
+                            >
                               Swap
-                            </span>
+                            </Badge>
                           )}
                         </div>
                         <p className="text-xs text-text-secondary">
@@ -690,9 +680,9 @@ function RosterClientDetails() {
                           {formatVolume(wl.totalVolume || 0, weightUnit)}
                         </p>
                       </div>
-                      <span className="px-3 py-1 rounded-field text-[10px] font-bold uppercase tracking-widest bg-green-100 text-green-700 shrink-0 ml-3">
+                      <Badge variant="success" className="shrink-0 ml-3">
                         Completed
-                      </span>
+                      </Badge>
                     </Link>
                   );
                 })
@@ -709,13 +699,15 @@ function RosterClientDetails() {
             profile={profile}
             units={{ weightUnit, heightUnit }}
             headingId="profile-details-heading"
-            footer={
-              <Link
-                to={`/coach/clients/${clientId}/edit`}
-                className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary-hover transition-colors"
-              >
-                <Pencil size={12} /> Edit
-              </Link>
+            action={
+              <Button asChild variant="ghost" size="icon-sm">
+                <Link
+                  to={`/coach/clients/${clientId}/edit`}
+                  aria-label="Edit profile details"
+                >
+                  <Pencil aria-hidden="true" />
+                </Link>
+              </Button>
             }
           >
             {menstrualProfile && (
@@ -738,22 +730,22 @@ function RosterClientDetails() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
+              className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border-subtle"
             >
               <button
                 onClick={() => setPastPlansExpanded(!pastPlansExpanded)}
                 className="w-full flex items-center justify-between"
               >
-                <h2 className="flex items-center gap-2 text-base font-semibold text-text-primary">
+                <h2
+                  className={cn('flex items-center gap-2', WIDGET_TITLE_CLASS)}
+                >
                   <Archive
                     size={18}
                     className="text-brand-secondary"
                     aria-hidden="true"
                   />
                   Past Plans
-                  <span className="text-xs font-medium bg-neutral-100 text-text-secondary px-2 py-0.5 rounded-full">
-                    {pastPlans.length}
-                  </span>
+                  <Badge variant="muted">{pastPlans.length}</Badge>
                 </h2>
                 {pastPlansExpanded ? (
                   <ChevronUp size={18} className="text-text-secondary" />
@@ -775,15 +767,15 @@ function RosterClientDetails() {
                       return (
                         <div
                           key={plan.id}
-                          className="p-4 rounded-control border border-neutral-100 bg-neutral-50/50"
+                          className="p-4 rounded-control border border-border-subtle bg-surface-quiet"
                         >
-                          <p className="font-semibold text-sm text-text-primary mb-1">
+                          <p className="text-sm font-medium text-text-primary mb-1">
                             {plan.name}
                           </p>
                           {goal && (
-                            <span className="inline-block text-[10px] font-bold uppercase tracking-wider bg-neutral-200 text-text-secondary px-2 py-0.5 rounded-full mb-1">
+                            <Badge variant="muted" className="mb-1">
                               {goal.type}
-                            </span>
+                            </Badge>
                           )}
                           <p className="text-xs text-text-secondary">
                             {plan.startDate} — {plan.endDate} ·{' '}
@@ -808,19 +800,20 @@ function RosterClientDetails() {
               End this plan?
             </AlertDialogTitle>
             <AlertDialogDescription className="text-center">
-              <span className="font-semibold text-text-primary">
+              <span className="font-medium text-text-primary">
                 "{activePlan?.name}"
               </span>{' '}
               will be marked as completed and moved to past plans.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="sm:flex-row gap-3 mt-2">
-            <AlertDialogCancel className="flex-1 rounded-control border-neutral-200 text-text-secondary hover:bg-neutral-50 font-semibold">
+            <AlertDialogCancel className="flex-1 rounded-control">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
+              variant="destructive"
               onClick={handleEndPlan}
-              className="flex-1 rounded-control bg-red-600 text-white hover:bg-red-700 font-semibold"
+              className="flex-1 rounded-control"
             >
               End Plan
             </AlertDialogAction>

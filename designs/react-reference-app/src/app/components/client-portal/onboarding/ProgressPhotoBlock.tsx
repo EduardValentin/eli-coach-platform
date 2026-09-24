@@ -63,7 +63,7 @@ function PhotoTile({
           aria-label={`Remove ${VIEW_LABELS[view].toLowerCase()} photo`}
           className="absolute top-1 right-1 size-8 bg-surface-base shadow-card hover:bg-surface-muted"
           onClick={() => onPick(null)}
-          size="icon"
+          size="icon-sm"
           type="button"
           variant="outline"
         >

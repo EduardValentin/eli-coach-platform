@@ -883,7 +883,21 @@ describe('filtering assessment calls by journey step', () => {
 
   it('drops a call that has already moved past the chosen step', () => {
     // act
-    const filtered = filterCalls(calls, selecting({ journey: 'invited' }));
+    const filtered = filterCalls(calls, selecting({ journey: 'paid' }));
+
+    // assert
+    expect(namesOf(filtered)).toEqual(['Invited client']);
+  });
+
+  it('matches a journey further along than invited at the paid step', () => {
+    // arrange
+    const advancedCalls = listed(
+      classifyCalls(bookings, { now, timeZone: BUCHAREST }),
+      { ...stages, 'ac-2026-09-20T15:00:00.000Z': 'onboarding' },
+    );
+
+    // act
+    const filtered = filterCalls(advancedCalls, selecting({ journey: 'paid' }));
 
     // assert
     expect(namesOf(filtered)).toEqual(['Invited client']);
@@ -902,7 +916,7 @@ describe('filtering assessment calls by journey step', () => {
     // act
     const filtered = filterCalls(
       calls,
-      selecting({ status: 'past', journey: 'invited', query: 'invited' }),
+      selecting({ status: 'past', journey: 'paid', query: 'invited' }),
     );
 
     // assert
@@ -913,7 +927,7 @@ describe('filtering assessment calls by journey step', () => {
     // act
     const filtered = filterCalls(
       calls,
-      selecting({ status: 'upcoming', journey: 'invited' }),
+      selecting({ status: 'upcoming', journey: 'paid' }),
     );
 
     // assert
@@ -927,8 +941,9 @@ describe('filtering assessment calls by journey step', () => {
     // assert
     expect(counts).toEqual({
       any: 1,
+      held: 1,
       'payment-link-sent': 0,
-      invited: 0,
+      paid: 0,
     });
   });
 });
@@ -936,12 +951,12 @@ describe('filtering assessment calls by journey step', () => {
 describe('reading the journey step from the URL', () => {
   it('accepts a known journey step and falls back to any', () => {
     // act
-    const invited = parseJourneyStep('invited');
-    const unknown = parseJourneyStep('paid');
+    const paid = parseJourneyStep('paid');
+    const unknown = parseJourneyStep('invited');
     const missing = parseJourneyStep(null);
 
     // assert
-    expect(invited).toBe('invited');
+    expect(paid).toBe('paid');
     expect(unknown).toBe('any');
     expect(missing).toBe('any');
   });
@@ -951,7 +966,7 @@ describe('the message shown when nothing matches', () => {
   it('names the search before anything else', () => {
     // act
     const message = emptyListingMessage(
-      selecting({ status: 'past', journey: 'invited', query: 'ana' }),
+      selecting({ status: 'past', journey: 'paid', query: 'ana' }),
     );
 
     // assert
@@ -976,11 +991,11 @@ describe('the message shown when nothing matches', () => {
   it('names the window and the journey step together', () => {
     // act
     const message = emptyListingMessage(
-      selecting({ status: 'upcoming', journey: 'invited' }),
+      selecting({ status: 'upcoming', journey: 'paid' }),
     );
 
     // assert
-    expect(message).toBe('No upcoming calls match the Invited status.');
+    expect(message).toBe('No upcoming calls match the Paid status.');
   });
 });
 
@@ -996,7 +1011,7 @@ describe('deciding whether any filter is active', () => {
   it('is active when the time window, the journey step, or the search is set', () => {
     // act
     const byStatus = hasActiveFilters(selecting({ status: 'past' }));
-    const byJourney = hasActiveFilters(selecting({ journey: 'invited' }));
+    const byJourney = hasActiveFilters(selecting({ journey: 'paid' }));
     const byQuery = hasActiveFilters(selecting({ query: 'ana' }));
 
     // assert

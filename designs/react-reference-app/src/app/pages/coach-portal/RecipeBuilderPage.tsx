@@ -7,7 +7,6 @@ import {
   GripVertical,
   Plus,
   Trash2,
-  Search,
   X,
   ImagePlus,
   RefreshCw,
@@ -29,10 +28,12 @@ import type {
 } from '../../context/NutritionContext';
 import { Label } from '../../components/ui/label';
 import { Textarea } from '../../components/ui/textarea';
+import { Checkbox } from '../../components/ui/checkbox';
 import { ToggleChip } from '../../components/ToggleChip';
 import { Button, buttonVariants } from '../../components/ui/button';
 import { cn } from '../../components/ui/utils';
 import { Input } from '../../components/ui/input';
+import { SearchField } from '../../components/SearchField';
 import {
   Select,
   SelectTrigger,
@@ -45,6 +46,7 @@ import {
   PopoverTrigger,
   PopoverContent,
 } from '../../components/ui/popover';
+import { LABEL_CLASS, VALUE_CLASS } from '../../components/typography';
 import {
   CATEGORY_SWATCH,
   MACRO_TILE,
@@ -86,19 +88,19 @@ function DraggableFood({
     >
       <GripVertical
         size={14}
-        className="text-muted-foreground"
+        className="text-text-secondary"
         aria-hidden="true"
       />
       <span
         className={`size-2.5 rounded-full ${CATEGORY_SWATCH[food.category]}`}
         aria-hidden="true"
       />
-      <span className="flex-1 text-sm font-medium text-foreground">
+      <span className="flex-1 text-sm font-medium text-text-primary">
         {food.name}
       </span>
       <Button
         variant="ghost"
-        size="icon"
+        size="icon-sm"
         aria-label={`Add ${food.name} to recipe`}
         onClick={() => onAdd(food.id)}
       >
@@ -120,13 +122,13 @@ function DragLayerPreview() {
       className="pointer-events-none fixed left-0 top-0 z-[100]"
       style={{ transform: `translate(${offset.x}px, ${offset.y}px)` }}
     >
-      <div className="inline-flex items-center gap-2 rounded-control border border-brand bg-card px-3 py-2 shadow-lg">
+      <div className="inline-flex items-center gap-2 rounded-control border border-primary bg-card px-3 py-2 shadow-raised">
         <GripVertical
           size={14}
-          className="text-muted-foreground"
+          className="text-text-secondary"
           aria-hidden="true"
         />
-        <span className="text-sm font-semibold text-foreground">
+        <span className="text-sm font-semibold text-text-primary">
           {item.name}
         </span>
       </div>
@@ -145,13 +147,13 @@ function OrphanedTagChip({
 }) {
   return (
     <span
-      className="inline-flex items-center gap-1 rounded-full border border-dashed border-border bg-transparent py-1 pl-3 pr-1 text-xs text-muted-foreground"
+      className="inline-flex items-center gap-1 rounded-full border border-dashed border-border bg-transparent py-1 pl-3 pr-1 text-xs text-text-secondary"
       title="No longer in any ingredient — remove it, or click the label to keep it"
     >
       <button
         type="button"
         onClick={onKeep}
-        className="font-medium transition-colors hover:text-foreground"
+        className="font-medium transition-colors hover:text-text-primary"
         aria-label={`${label} tag is no longer in any ingredient. Click to keep it.`}
       >
         {label}
@@ -160,7 +162,7 @@ function OrphanedTagChip({
         type="button"
         onClick={onRemove}
         aria-label={`Remove ${label} tag`}
-        className="rounded-full p-0.5 transition-colors hover:bg-muted hover:text-foreground"
+        className="rounded-full p-0.5 transition-colors hover:bg-surface-muted hover:text-text-primary"
       >
         <X size={13} aria-hidden="true" />
       </button>
@@ -331,7 +333,7 @@ function RecipeBuilderInner() {
             onClick={() => navigate('/coach/nutrition?tab=recipes')}
             aria-label="Back to Nutrition"
             variant="ghost"
-            size="icon"
+            size="icon-sm"
             className="shrink-0"
           >
             <ArrowLeft size={20} />
@@ -365,21 +367,12 @@ function RecipeBuilderInner() {
           className="w-72 shrink-0 border-r border-border bg-card flex flex-col"
         >
           <div className="p-3 px-3 border-b border-border rounded-field">
-            <div className="relative">
-              <Search
-                size={16}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                aria-hidden="true"
-              />
-              <Input
-                type="search"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search foods…"
-                aria-label="Search foods"
-                className="pl-9"
-              />
-            </div>
+            <SearchField
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search foods…"
+              aria-label="Search foods"
+            />
           </div>
           <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-2">
             {filteredFoods.map((f) => (
@@ -408,9 +401,9 @@ function RecipeBuilderInner() {
                     type="button"
                     aria-label="Replace recipe photo"
                     onClick={() => fileInputRef.current?.click()}
-                    variant="default"
-                    size="sm"
-                    className="bg-black/60 backdrop-blur-sm hover:bg-black/75 focus-visible:ring-white"
+                    variant="ghost"
+                    size="xs"
+                    className="bg-surface-inverted/60 text-surface-inverted-foreground backdrop-blur-sm hover:bg-surface-inverted/75 focus-visible:ring-surface-inverted-foreground"
                   >
                     <RefreshCw size={12} aria-hidden="true" />
                     Replace
@@ -419,9 +412,9 @@ function RecipeBuilderInner() {
                     type="button"
                     aria-label="Remove recipe photo"
                     onClick={() => setImageUrl(undefined)}
-                    variant="default"
-                    size="sm"
-                    className="bg-black/60 backdrop-blur-sm hover:bg-black/75 focus-visible:ring-white"
+                    variant="ghost"
+                    size="xs"
+                    className="bg-surface-inverted/60 text-surface-inverted-foreground backdrop-blur-sm hover:bg-surface-inverted/75 focus-visible:ring-surface-inverted-foreground"
                   >
                     <X size={12} aria-hidden="true" />
                     Remove
@@ -466,9 +459,7 @@ function RecipeBuilderInner() {
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent align="start" className="w-72 p-3">
-                  <p className="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                    Meal icon
-                  </p>
+                  <p className={`mb-2 ${LABEL_CLASS}`}>Meal icon</p>
                   <div
                     role="listbox"
                     aria-label="Meal icons"
@@ -486,8 +477,8 @@ function RecipeBuilderInner() {
                       }}
                       className={`flex flex-col items-center gap-0.5 rounded-compact p-1.5 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${
                         icon === undefined
-                          ? 'bg-primary/10 text-primary ring-1 ring-primary/30'
-                          : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                          ? 'bg-primary-soft text-primary ring-1 ring-primary/30'
+                          : 'text-text-secondary hover:bg-surface-muted hover:text-text-primary'
                       }`}
                     >
                       <X size={18} aria-hidden="true" />
@@ -507,8 +498,8 @@ function RecipeBuilderInner() {
                         }}
                         className={`flex flex-col items-center gap-0.5 rounded-compact p-1.5 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${
                           icon === key
-                            ? 'bg-primary/10 text-primary ring-1 ring-primary/30'
-                            : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                            ? 'bg-primary-soft text-primary ring-1 ring-primary/30'
+                            : 'text-text-secondary hover:bg-surface-muted hover:text-text-primary'
                         }`}
                       >
                         <Icon size={18} aria-hidden="true" />
@@ -534,11 +525,13 @@ function RecipeBuilderInner() {
           <div
             ref={drop}
             className={`rounded-card border-2 border-dashed p-4 min-h-40 transition-colors ${
-              isOver && canDrop ? 'border-brand bg-brand-soft' : 'border-border'
+              isOver && canDrop
+                ? 'border-primary bg-primary-soft'
+                : 'border-border'
             }`}
           >
             {ingredients.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-text-secondary">
                 Drag foods here (or use the + on a food) to add ingredients.
               </p>
             ) : (
@@ -550,10 +543,10 @@ function RecipeBuilderInner() {
                       key={`${ing.foodId}-${index}`}
                       className="flex flex-wrap items-center gap-2 rounded-control border border-border bg-card px-3 py-2"
                     >
-                      <span className="flex-1 min-w-32 text-sm font-medium text-foreground">
+                      <span className="flex-1 min-w-32 text-sm font-medium text-text-primary">
                         {food?.name ?? 'Unknown food'}
                       </span>
-                      <label className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <label className="flex items-center gap-1 text-xs text-text-secondary">
                         <span className="sr-only">Grams for {food?.name}</span>
                         <Input
                           type="number"
@@ -591,7 +584,7 @@ function RecipeBuilderInner() {
                       </Select>
                       <Button
                         variant="ghost"
-                        size="icon"
+                        size="icon-sm"
                         aria-label={`Remove ${food?.name}`}
                         onClick={() => removeIngredient(index)}
                       >
@@ -607,15 +600,14 @@ function RecipeBuilderInner() {
           {/* Macros: auto-computed, with optional manual override */}
           <section aria-label="Macros" className="mt-4 max-w-md">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-sm font-medium text-foreground">
+              <p className="text-sm font-medium text-text-primary">
                 Macros (whole recipe)
               </p>
-              <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                <input
-                  type="checkbox"
+              <label className="flex items-center gap-2 text-xs text-text-secondary">
+                <Checkbox
                   checked={override !== null}
-                  onChange={(e) =>
-                    setOverride(e.target.checked ? { ...macros } : null)
+                  onCheckedChange={(checked) =>
+                    setOverride(checked ? { ...macros } : null)
                   }
                 />
                 Override manually
@@ -625,9 +617,9 @@ function RecipeBuilderInner() {
               {(['kcal', 'protein', 'carb', 'fat'] as const).map((key) => (
                 <div
                   key={key}
-                  className={`rounded-compact py-2 text-center ${key === 'kcal' ? 'bg-muted' : MACRO_TILE[key]}`}
+                  className={`rounded-compact py-2 text-center ${key === 'kcal' ? 'bg-surface-quiet' : MACRO_TILE[key]}`}
                 >
-                  <dt className="text-caption uppercase tracking-wide text-muted-foreground">
+                  <dt className={LABEL_CLASS}>
                     {key === 'kcal'
                       ? 'kcal'
                       : key === 'protein'
@@ -636,7 +628,7 @@ function RecipeBuilderInner() {
                           ? 'C'
                           : 'F'}
                   </dt>
-                  <dd className="text-sm font-semibold text-foreground">
+                  <dd className={`${VALUE_CLASS} tabular-nums`}>
                     {override ? (
                       <Input
                         type="number"
@@ -721,13 +713,13 @@ function RecipeBuilderInner() {
                       aria-label={TAG_FAMILY_LABELS[family]}
                       className={`rounded-control border border-border border-l-[3px] bg-card p-3 ${TAG_FAMILY_BORDER[family]}`}
                     >
-                      <p className="mb-2 inline-flex items-center gap-1.5 text-xs font-semibold text-foreground">
+                      <p className="mb-2 inline-flex items-center gap-1.5 text-xs font-semibold text-text-primary">
                         {(() => {
                           const Icon = TAG_FAMILY_ICON[family];
                           return (
                             <Icon
                               size={14}
-                              className="text-muted-foreground"
+                              className="text-text-secondary"
                               aria-hidden="true"
                             />
                           );

@@ -3,6 +3,9 @@ import { motion, AnimatePresence } from 'motion/react';
 import { X, UploadCloud, Film, PlayCircle, Plus, Trash2 } from 'lucide-react';
 import { useTraining, Exercise } from '../../context/TrainingContext';
 import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Textarea } from '../ui/textarea';
+import { Label } from '../ui/label';
 import { ToggleChip } from '../ToggleChip';
 import { EXERCISE_TAGS } from '../../utils/exerciseFilters';
 import {
@@ -204,12 +207,12 @@ export function ExerciseModal({
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="relative w-full max-w-2xl bg-white rounded-card shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+        className="relative w-full max-w-2xl bg-card rounded-card shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
       >
-        <div className="p-6 px-3 border-b border-neutral-100 rounded-field flex items-center justify-between gap-4 shrink-0">
+        <div className="p-6 px-3 border-b border-border rounded-field flex items-center justify-between gap-4 shrink-0">
           <h2
             id={titleId}
-            className="text-xl font-serif font-bold text-text-primary"
+            className="text-xl font-serif font-medium text-text-primary"
           >
             {exerciseId ? 'Edit Exercise' : 'Create New Exercise'}
           </h2>
@@ -218,7 +221,7 @@ export function ExerciseModal({
             onClick={onClose}
             aria-label="Close"
             variant="ghost"
-            size="icon"
+            size="icon-sm"
           >
             <X size={20} aria-hidden="true" className="text-text-secondary" />
           </Button>
@@ -228,30 +231,26 @@ export function ExerciseModal({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-text-primary mb-1.5">
-                  Exercise Name
-                </label>
-                <input
+                <Label className="mb-1.5">Exercise Name</Label>
+                <Input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. Barbell Back Squat"
-                  className="block w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-control focus:outline-none focus:ring-1 focus:ring-brand transition-all"
+                  className="w-full"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-text-primary mb-1.5">
-                  Difficulty
-                </label>
+                <Label className="mb-1.5">Difficulty</Label>
                 <div className="flex gap-2">
                   {['Beginner', 'Intermediate', 'Advanced'].map((diff) => (
                     <Button
                       key={diff}
                       type="button"
                       onClick={() => setDifficulty(diff as any)}
-                      variant={difficulty === diff ? 'default' : 'outline'}
-                      size="default"
+                      variant={difficulty === diff ? 'primary' : 'outline'}
+                      size="sm"
                       className="flex-1"
                     >
                       {diff}
@@ -261,7 +260,7 @@ export function ExerciseModal({
               </div>
 
               <fieldset>
-                <legend className="block text-sm font-semibold text-text-primary mb-1.5">
+                <legend className="text-sm font-medium text-text-primary mb-1.5">
                   Tags
                 </legend>
                 <div className="flex flex-wrap gap-2">
@@ -280,22 +279,18 @@ export function ExerciseModal({
               </fieldset>
 
               <div>
-                <label className="block text-sm font-semibold text-text-primary mb-1.5">
-                  Description / Form Cues
-                </label>
-                <textarea
+                <Label className="mb-1.5">Description / Form Cues</Label>
+                <Textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={4}
                   placeholder="Keep chest up, drive through heels..."
-                  className="block w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-control focus:outline-none focus:ring-1 focus:ring-brand transition-all resize-none"
+                  className="w-full"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-text-primary mb-1.5">
-                  Equipment
-                </label>
+                <Label className="mb-1.5">Equipment</Label>
                 <div className="flex flex-wrap gap-2">
                   {EQUIPMENT_LIST.map((eq) => (
                     <ToggleChip
@@ -314,9 +309,7 @@ export function ExerciseModal({
 
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-semibold text-text-primary mb-1.5">
-                  Demonstration Video
-                </label>
+                <Label className="mb-1.5">Demonstration Video</Label>
                 {!videoPreview ? (
                   <div
                     onDragOver={handleDragOver}
@@ -324,14 +317,14 @@ export function ExerciseModal({
                     onDrop={handleDrop}
                     className={`border-2 border-dashed rounded-card p-6 text-center transition-all ${
                       isDragging
-                        ? 'border-brand bg-brand/5'
-                        : 'border-neutral-200 bg-neutral-50 hover:bg-neutral-100/50'
+                        ? 'border-primary bg-primary-soft'
+                        : 'border-border bg-surface-quiet hover:bg-surface-muted'
                     }`}
                   >
-                    <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm">
-                      <UploadCloud className="text-brand" size={24} />
+                    <div className="w-12 h-12 bg-card rounded-full flex items-center justify-center mx-auto mb-3 shadow-card">
+                      <UploadCloud className="text-primary" size={24} />
                     </div>
-                    <p className="text-sm font-semibold text-text-primary">
+                    <p className="text-sm font-medium text-text-primary">
                       Drag and drop video
                     </p>
                     <p className="text-xs text-text-secondary mt-1 mb-4">
@@ -355,13 +348,13 @@ export function ExerciseModal({
                       aria-invalid={videoError ? true : undefined}
                       aria-describedby="exercise-video-error"
                       variant="outline"
-                      className="shadow-sm"
+                      className="shadow-card"
                     >
                       Browse Files
                     </Button>
                   </div>
                 ) : (
-                  <div className="relative rounded-card overflow-hidden bg-black aspect-video flex items-center justify-center group">
+                  <div className="relative rounded-card overflow-hidden bg-surface-inverted aspect-video flex items-center justify-center group">
                     <video
                       src={videoPreview}
                       className="w-full h-full object-cover opacity-80"
@@ -369,7 +362,7 @@ export function ExerciseModal({
                     <div className="absolute inset-0 flex items-center justify-center">
                       <PlayCircle
                         size={48}
-                        className="text-white drop-shadow-md"
+                        className="text-surface-inverted-foreground drop-shadow-md"
                       />
                     </div>
                     <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -380,8 +373,9 @@ export function ExerciseModal({
                           setVideoPreview(null);
                         }}
                         variant="ghost"
-                        size="icon"
-                        className="bg-white/10 text-white backdrop-blur-md hover:bg-red-500 hover:text-white"
+                        size="icon-sm"
+                        className="bg-surface-inverted/10 text-surface-inverted-foreground backdrop-blur-md hover:bg-destructive hover:text-destructive-foreground"
+                        aria-label="Remove video"
                       >
                         <Trash2 size={16} />
                       </Button>
@@ -391,16 +385,14 @@ export function ExerciseModal({
                 <p
                   id="exercise-video-error"
                   role="alert"
-                  className="mt-3 text-xs font-semibold text-destructive empty:mt-0"
+                  className="mt-3 text-xs font-medium text-destructive empty:mt-0"
                 >
                   {videoError}
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-text-primary mb-1.5">
-                  Target Muscles
-                </label>
+                <Label className="mb-1.5">Target Muscles</Label>
                 <div className="mb-3">
                   <p className="text-xs text-text-secondary mb-2">Primary</p>
                   <div className="flex flex-wrap gap-2">
@@ -444,16 +436,16 @@ export function ExerciseModal({
           </div>
         </div>
 
-        <div className="p-6 border-t border-neutral-100 bg-neutral-50 flex items-center justify-end gap-3 shrink-0">
-          <Button type="button" onClick={onClose} variant="ghost" size="lg">
+        <div className="p-6 border-t border-border bg-surface-quiet flex items-center justify-end gap-3 shrink-0">
+          <Button type="button" onClick={onClose} variant="ghost" size="md">
             Cancel
           </Button>
           <Button
             type="button"
             onClick={handleSave}
-            variant="default"
-            size="lg"
-            className="shadow-md"
+            variant="primary"
+            size="md"
+            className="shadow-card"
           >
             {exerciseId ? 'Save Changes' : 'Create Exercise'}
           </Button>

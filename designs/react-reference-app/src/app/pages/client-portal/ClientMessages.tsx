@@ -47,6 +47,10 @@ import {
 import { toast } from 'sonner';
 import { ELI_PORTRAIT_SMALL } from '../../utils/eliPortrait';
 import { Button } from '../../components/ui/button';
+import { Badge } from '../../components/ui/badge';
+import { Textarea } from '../../components/ui/textarea';
+import { LABEL_CLASS } from '../../components/typography';
+import { cn } from '../../components/ui/utils';
 
 const COACH_DEFAULT_PHOTO = ELI_PORTRAIT_SMALL;
 
@@ -242,32 +246,28 @@ export function ClientMessages() {
   };
 
   return (
-    <div className="w-full min-h-[540px] h-[calc(100dvh-11rem)] lg:h-[calc(100vh-8rem)] flex bg-white rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 overflow-hidden">
+    <div className="w-full min-h-[540px] h-[calc(100dvh-11rem)] lg:h-[calc(100vh-8rem)] flex bg-card rounded-panel shadow-soft border border-border-subtle/50 overflow-hidden">
       {/* Sidebar - Coach Info */}
-      <div className="hidden lg:flex w-80 flex-col border-r border-neutral-100 bg-surface-page">
-        <div className="p-8 flex flex-col items-center px-3 border-b border-neutral-100 rounded-field bg-white">
+      <div className="hidden lg:flex w-80 flex-col border-r border-border-subtle bg-surface-page">
+        <div className="p-8 flex flex-col items-center px-3 border-b border-border-subtle rounded-field bg-card">
           <img
             src={coachPhoto}
             alt={coachName}
-            className="w-20 h-20 rounded-card object-cover shadow-lg mb-4"
+            className="w-20 h-20 rounded-card object-cover shadow-raised mb-4"
           />
-          <h2 className="font-serif text-xl font-semibold text-text-primary">
-            {coachName}
-          </h2>
-          <p className="text-sm text-brand font-medium mt-1">Lead Trainer</p>
+          <h2 className="font-serif text-xl text-text-primary">{coachName}</h2>
+          <p className="text-sm text-primary font-medium mt-1">Lead Trainer</p>
           <p className="text-xs text-text-secondary text-center mt-4">
             Usually responds within a few hours.
           </p>
         </div>
 
         <div className="p-6">
-          <h3 className="text-xs font-bold text-text-secondary uppercase tracking-widest mb-4">
-            Info
-          </h3>
+          <h3 className={cn(LABEL_CLASS, 'mb-4')}>Info</h3>
           <p className="text-xs text-text-secondary leading-relaxed">
             Your coach reviews messages daily. Regular check-ins are scheduled
             for you automatically. To request an extra one, use{' '}
-            <span className="font-semibold text-text-primary">
+            <span className="font-medium text-text-primary">
               Request check-in
             </span>{' '}
             at the top of the chat — your coach will confirm or suggest another
@@ -279,7 +279,7 @@ export function ClientMessages() {
       {/* Chat Area */}
       <div className="flex-1 min-w-0 flex flex-col h-full bg-surface-page">
         {/* Header */}
-        <div className="h-20 px-6 border-b border-neutral-100 rounded-field bg-white flex items-center justify-between shrink-0">
+        <div className="h-20 px-6 border-b border-border-subtle rounded-field bg-card flex items-center justify-between shrink-0">
           <div className="flex items-center gap-4">
             <img
               src={coachPhoto}
@@ -310,8 +310,8 @@ export function ClientMessages() {
                   ? 'You already have a check-in request awaiting your coach'
                   : 'Request a check-in with your coach'
               }
-              variant={showCheckinPicker ? 'default' : 'outline-primary'}
-              size="sm"
+              variant={showCheckinPicker ? 'primary' : 'outline'}
+              size="xs"
               className="gap-1.5 rounded-control"
             >
               {pendingExists ? (
@@ -324,20 +324,20 @@ export function ClientMessages() {
               </span>
               {!pendingExists && !showCheckinPicker && (
                 <span className="relative flex h-1.5 w-1.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand opacity-75" />
-                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-brand" />
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary" />
                 </span>
               )}
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon-sm">
                   <MoreVertical size={18} />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="end"
-                className="w-52 rounded-control shadow-lg border-neutral-100"
+                className="w-52 rounded-control shadow-raised border-border"
               >
                 <DropdownMenuItem
                   className="gap-3 rounded-compact cursor-pointer"
@@ -370,7 +370,7 @@ export function ClientMessages() {
                   <Archive size={15} /> Archive conversation
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                  className="gap-3 rounded-compact cursor-pointer text-red-600 focus:text-red-600"
+                  className="gap-3 rounded-compact cursor-pointer text-destructive focus:text-destructive"
                   onClick={() => setShowDeleteDialog(true)}
                 >
                   <Trash2 size={15} /> Delete conversation
@@ -385,18 +385,18 @@ export function ClientMessages() {
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mx-4 lg:mx-6 mt-4 px-3 py-2.5 sm:px-4 sm:py-3 bg-brand/5 border border-brand/15 rounded-card flex items-center gap-2.5 min-w-0"
+            className="mx-4 lg:mx-6 mt-4 px-3 py-2.5 sm:px-4 sm:py-3 bg-primary-soft border border-primary/15 rounded-card flex items-center gap-2.5 min-w-0"
           >
-            <CalendarDays size={16} className="text-brand shrink-0" />
+            <CalendarDays size={16} className="text-primary shrink-0" />
             <span className="text-xs sm:text-sm text-text-primary font-medium min-w-0 flex-1 truncate">
               <span className="text-text-secondary">Next check-in </span>
-              <span className="font-semibold">
+              <span className="font-medium">
                 {formatCheckinDate(nextCheckin.date)} ·{' '}
                 {formatCheckinTime(nextCheckin.time)}
               </span>
             </span>
             {nextCheckin.type === 'recurring' && (
-              <span className="shrink-0 text-[9px] sm:text-[10px] font-bold text-brand uppercase tracking-widest">
+              <span className={cn(LABEL_CLASS, 'shrink-0 text-primary')}>
                 Weekly
               </span>
             )}
@@ -406,9 +406,7 @@ export function ClientMessages() {
         {/* Messages */}
         <div className="flex-1 min-w-0 overflow-y-auto p-4 lg:p-6 space-y-6">
           <div className="text-center">
-            <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest bg-neutral-100 px-3 py-1 rounded-full">
-              Today
-            </span>
+            <Badge variant="muted">Today</Badge>
           </div>
 
           {messages.map((msg) => {
@@ -426,12 +424,12 @@ export function ClientMessages() {
                   <div
                     className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-card text-xs font-medium border ${
                       msg.systemType === 'plan-update'
-                        ? 'bg-brand-secondary/5 border-brand-secondary/20 text-brand-secondary'
+                        ? 'bg-brand-secondary-soft border-brand-secondary/20 text-brand-secondary'
                         : msg.systemType === 'checkin-cancelled'
-                          ? 'bg-red-50 border-red-200 text-red-600'
+                          ? 'bg-destructive/10 border-destructive/20 text-destructive'
                           : msg.systemType === 'checkin-rescheduled'
-                            ? 'bg-brand/5 border-brand/20 text-brand'
-                            : 'bg-neutral-50 border-neutral-200 text-text-secondary'
+                            ? 'bg-primary-soft border-primary/20 text-primary'
+                            : 'bg-surface-quiet border-border-subtle text-text-secondary'
                     }`}
                   >
                     <Activity size={14} />
@@ -453,14 +451,14 @@ export function ClientMessages() {
                     <img
                       src={coachPhoto}
                       alt=""
-                      className="w-6 h-6 rounded-field object-cover shrink-0 mb-1 shadow-sm"
+                      className="w-6 h-6 rounded-field object-cover shrink-0 mb-1 shadow-card"
                     />
                   )}
                   <div
                     className={`p-4 rounded-card text-sm break-words min-w-0 ${
                       isClient
-                        ? 'bg-brand text-white rounded-br-tile shadow-md'
-                        : 'bg-white border border-neutral-100 shadow-sm text-text-primary rounded-bl-tile'
+                        ? 'bg-primary text-primary-foreground rounded-br-tile shadow-card'
+                        : 'bg-card border border-border-subtle shadow-card text-text-primary rounded-bl-tile'
                     }`}
                   >
                     {msg.text}
@@ -469,13 +467,13 @@ export function ClientMessages() {
                 <div
                   className={`flex items-center gap-1 mt-1 ${isClient ? '' : 'pl-8'}`}
                 >
-                  <span className="text-[10px] text-text-secondary font-medium">
+                  <span className="text-xs text-text-secondary font-medium">
                     {msg.time}
                   </span>
                   {isClient && (
                     <span className="text-text-secondary">
                       {msg.status === 'read' ? (
-                        <CheckCheck size={12} className="text-blue-500" />
+                        <CheckCheck size={12} className="text-success" />
                       ) : (
                         <Check size={12} />
                       )}
@@ -503,23 +501,23 @@ export function ClientMessages() {
         </div>
 
         {/* Quick Actions + Input */}
-        <div className="bg-white border-t border-neutral-100 shrink-0">
+        <div className="bg-card border-t border-border-subtle shrink-0">
           <form onSubmit={handleSend} className="flex items-end gap-3 p-4">
             <Button
               type="button"
               variant="ghost"
-              size="icon-lg"
+              size="icon-md"
               className="shrink-0"
             >
               <Paperclip size={22} />
             </Button>
-            <div className="flex-1 min-h-[56px] flex items-center bg-neutral-50 rounded-card border border-neutral-200 focus-within:border-brand focus-within:ring-1 focus-within:ring-brand transition-all overflow-hidden shadow-sm">
-              <textarea
+            <div className="flex-1 min-h-[56px] flex items-center bg-surface-quiet rounded-card border border-border focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all overflow-hidden shadow-card">
+              <Textarea
                 rows={1}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder={`Message ${coachName}...`}
-                className="w-full bg-transparent px-4 py-3 outline-none text-sm leading-tight resize-none max-h-32"
+                className="w-full h-auto min-h-0 border-none bg-transparent px-4 py-3 text-sm leading-tight shadow-none outline-none focus-visible:ring-0 max-h-32"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
@@ -531,8 +529,8 @@ export function ClientMessages() {
             <Button
               type="submit"
               disabled={!message.trim()}
-              variant="default"
-              size="icon-lg"
+              variant="primary"
+              size="icon-md"
               className="shrink-0"
             >
               <Send size={20} />
@@ -587,30 +585,29 @@ export function ClientMessages() {
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent className="sm:max-w-md rounded-card">
           <AlertDialogHeader>
-            <div className="mx-auto mb-2 w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
-              <Trash2 size={24} className="text-red-600" />
+            <div className="mx-auto mb-2 w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
+              <Trash2 size={24} className="text-destructive" />
             </div>
             <AlertDialogTitle className="text-center text-text-primary">
               Delete this conversation?
             </AlertDialogTitle>
             <AlertDialogDescription className="text-center">
               Your entire message history with{' '}
-              <span className="font-semibold text-text-primary">
-                {coachName}
-              </span>{' '}
+              <span className="font-medium text-text-primary">{coachName}</span>{' '}
               will be permanently deleted. This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="sm:flex-row gap-3 mt-2">
-            <AlertDialogCancel className="flex-1 rounded-control border-neutral-200 text-text-secondary hover:bg-neutral-50 font-semibold">
+            <AlertDialogCancel className="flex-1 rounded-control">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
+              variant="destructive"
               onClick={() => {
                 setShowDeleteDialog(false);
                 toast.success('Conversation deleted');
               }}
-              className="flex-1 rounded-control bg-red-600 text-white hover:bg-red-700 font-semibold shadow-sm"
+              className="flex-1 rounded-control"
             >
               Delete
             </AlertDialogAction>

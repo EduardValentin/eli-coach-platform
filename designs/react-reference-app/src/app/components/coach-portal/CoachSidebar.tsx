@@ -23,8 +23,18 @@ import { useAppState } from '../../context/AppContext';
 const LINKS = [
   { name: 'Dashboard', href: '/coach', icon: LayoutDashboard },
   { name: 'Training', href: '/coach/training', icon: Activity, postMvp: true },
-  { name: 'Nutrition', href: '/coach/nutrition', icon: Utensils, postMvp: true },
-  { name: 'Messages', href: '/coach/messages', icon: MessageSquare, postMvp: true },
+  {
+    name: 'Nutrition',
+    href: '/coach/nutrition',
+    icon: Utensils,
+    postMvp: true,
+  },
+  {
+    name: 'Messages',
+    href: '/coach/messages',
+    icon: MessageSquare,
+    postMvp: true,
+  },
   { name: 'Clients', href: '/coach/clients', icon: Users },
   { name: 'Schedule', href: '/coach/checkins', icon: CalendarDays },
   { name: 'Assessment calls', href: '/coach/assessment-calls', icon: Video },
@@ -41,7 +51,7 @@ function CoachIdentityLink({ coachAvatarUrl }: { coachAvatarUrl?: string }) {
         <img
           src={coachAvatarUrl}
           alt=""
-          className="w-10 h-10 rounded-compact object-cover shrink-0 shadow-md border border-neutral-100"
+          className="w-10 h-10 rounded-compact object-cover shrink-0 shadow-md border border-border-subtle"
         />
       ) : (
         <div className="w-10 h-10 rounded-compact bg-text-primary text-white flex items-center justify-center shrink-0 shadow-md">
@@ -49,8 +59,12 @@ function CoachIdentityLink({ coachAvatarUrl }: { coachAvatarUrl?: string }) {
         </div>
       )}
       <div className="min-w-0">
-        <p className="font-serif font-semibold text-lg text-text-primary">Evoa</p>
-        <p className="text-[10px] uppercase tracking-widest text-brand font-bold">Coach Portal</p>
+        <p className="font-serif font-semibold text-lg text-text-primary">
+          Evoa
+        </p>
+        <p className="text-micro uppercase tracking-widest text-primary font-bold">
+          Coach Portal
+        </p>
       </div>
     </Link>
   );
@@ -84,7 +98,8 @@ const SidebarNavigation = ({
     {links.map((link, linkIndex) => {
       const Icon = link.icon;
       const isActive =
-        pathname === link.href || (link.href !== '/coach' && pathname.startsWith(link.href));
+        pathname === link.href ||
+        (link.href !== '/coach' && pathname.startsWith(link.href));
 
       return (
         <Link
@@ -100,9 +115,9 @@ const SidebarNavigation = ({
           }`}
         >
           <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
-          <span className="text-sm font-semibold">{link.name}</span>
+          <span className="text-sm font-medium">{link.name}</span>
           {link.name === 'Schedule' && pendingCheckins > 0 && (
-            <span className="ml-auto w-5 h-5 rounded-full bg-status-pending text-white text-[10px] font-bold flex items-center justify-center">
+            <span className="ml-auto w-5 h-5 rounded-full bg-status-pending text-white text-micro font-bold flex items-center justify-center">
               {pendingCheckins}
             </span>
           )}
@@ -184,7 +199,8 @@ export function CoachSidebar() {
   );
   const pendingCount = getPendingCheckins().length;
   const coachAvatarUrl = coachProfile.avatarUrl;
-  const [isTopBarNotificationsOpen, setIsTopBarNotificationsOpen] = useState(false);
+  const [isTopBarNotificationsOpen, setIsTopBarNotificationsOpen] =
+    useState(false);
 
   return (
     <>
@@ -194,7 +210,7 @@ export function CoachSidebar() {
         menuButtonClassName="p-2 -mr-2 text-text-secondary hover:text-text-primary"
         openMenuIcon={<Menu size={24} />}
         renderTopBar={(topBar) => (
-          <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white text-text-primary border-b border-neutral-100 rounded-field flex items-center justify-between px-6 z-50 shadow-sm">
+          <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white text-text-primary border-b border-border-subtle rounded-field flex items-center justify-between px-6 z-50 shadow-sm">
             <Link
               to="/coach/profile"
               className="flex items-center gap-3 min-w-0 hover:opacity-80 transition-opacity"
@@ -203,14 +219,14 @@ export function CoachSidebar() {
                 <img
                   src={coachAvatarUrl}
                   alt=""
-                  className="w-8 h-8 rounded-compact object-cover shrink-0 border border-neutral-100"
+                  className="w-8 h-8 rounded-compact object-cover shrink-0 border border-border-subtle"
                 />
               ) : (
                 <div className="w-8 h-8 rounded-compact bg-text-primary text-white flex items-center justify-center shrink-0">
                   <Dumbbell size={16} className="transform -rotate-45" />
                 </div>
               )}
-              <span className="font-serif font-semibold text-sm">Coach Portal</span>
+              <span className="text-sm font-medium">Coach Portal</span>
             </Link>
             <div className="flex items-center gap-4">
               {topBar.actions}

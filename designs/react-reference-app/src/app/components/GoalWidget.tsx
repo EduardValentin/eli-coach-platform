@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { parseISO } from 'date-fns';
-import { Target } from 'lucide-react';
+import { FlagOff, Target } from 'lucide-react';
 import {
   GOAL_TYPES,
   type Goal,
@@ -74,30 +74,29 @@ export function GoalWidget({
     setShowEndDialog(false);
   };
 
-  const footer =
-    isCoach && management ? (
-      goal ? (
-        <>
-          <Button
-            onClick={() => setShowEndDialog(true)}
-            variant="outline"
-            className="w-full sm:w-auto"
-          >
-            End goal
-          </Button>
-          <ConfirmDialog
-            open={showEndDialog}
-            onOpenChange={setShowEndDialog}
-            title="End this goal?"
-            description="Her plan keeps running. You can start a new goal afterwards."
-            confirmLabel="End goal"
-            cancelLabel="Cancel"
-            onConfirm={handleConfirmEnd}
-          />
-        </>
-      ) : !isEditingStart ? (
-        <Button onClick={handleOpenStart}>Start a goal</Button>
-      ) : undefined
+  const manages = isCoach && Boolean(management);
+
+  const action =
+    manages && goal ? (
+      <>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label="End goal"
+          onClick={() => setShowEndDialog(true)}
+        >
+          <FlagOff aria-hidden="true" />
+        </Button>
+        <ConfirmDialog
+          open={showEndDialog}
+          onOpenChange={setShowEndDialog}
+          title="End this goal?"
+          description="Her plan keeps running. You can start a new goal afterwards."
+          confirmLabel="End goal"
+          cancelLabel="Cancel"
+          onConfirm={handleConfirmEnd}
+        />
+      </>
     ) : undefined;
 
   return (
@@ -107,17 +106,16 @@ export function GoalWidget({
       icon={
         <Target aria-hidden="true" className="text-brand-secondary" size={18} />
       }
-      hero={goal?.type}
+      hero={
+        goal?.type ?? <span className="text-text-secondary">No goal yet</span>
+      }
+      context={goal ? startedLine(goal.startDate) : emptyMessage}
       headingId={headingId}
-      footer={footer}
+      action={action}
       className={className}
     >
-      {goal ? (
-        <p className="text-sm text-text-secondary">
-          {startedLine(goal.startDate)}
-        </p>
-      ) : isCoach && management && isEditingStart ? (
-        <div>
+      {goal ? null : manages && isEditingStart ? (
+        <div className="mt-4">
           <Select
             onValueChange={(value) => setSelectedType(value as GoalType)}
             value={selectedType}
@@ -134,17 +132,17 @@ export function GoalWidget({
             </SelectContent>
           </Select>
           <div className="mt-3 flex gap-2">
-            <Button onClick={handleConfirmStart}>Start goal</Button>
             <Button variant="ghost" onClick={handleCancelStart}>
               Cancel
             </Button>
+            <Button onClick={handleConfirmStart}>Start goal</Button>
           </div>
         </div>
-      ) : (
-        <p className="text-sm text-text-secondary">
-          {emptyMessage ?? 'No goal set yet.'}
-        </p>
-      )}
+      ) : manages ? (
+        <div className="mt-4">
+          <Button onClick={handleOpenStart}>Start a goal</Button>
+        </div>
+      ) : null}
     </PortalWidget>
   );
 }

@@ -31,6 +31,13 @@ import { WorkoutSessionCard } from '../../components/workout/WorkoutSessionCard'
 import { BrandCalendar } from '../../components/BrandCalendar';
 import { Slider } from '../../components/ui/slider';
 import { Input } from '../../components/ui/input';
+import { Badge } from '../../components/ui/badge';
+import { cardVariants } from '../../components/ui/card';
+import { cn } from '../../components/ui/utils';
+import {
+  LABEL_CLASS,
+  WIDGET_SUBHEADING_CLASS,
+} from '../../components/typography';
 import { ToggleChip } from '../../components/ToggleChip';
 import {
   Collapsible,
@@ -69,12 +76,10 @@ function SubscriptionScopeLabel({
   return (
     <span className="inline-flex items-center gap-1.5">
       {subscriptionTermLabel(subscription)}
-      <span aria-hidden="true" className="text-muted-foreground">
+      <span aria-hidden="true" className="text-text-secondary">
         ·
       </span>
-      <span
-        className={`text-xs font-bold uppercase tracking-wide ${active ? 'text-success' : 'text-muted-foreground'}`}
-      >
+      <span className={cn(LABEL_CLASS, active && 'text-success')}>
         {active ? 'Active' : 'Expired'}
       </span>
     </span>
@@ -329,7 +334,7 @@ export function WorkoutHistory() {
       <button
         type="button"
         onClick={() => navigate(`/coach/clients/${clientId}`)}
-        className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
+        className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors"
       >
         <ArrowLeft size={16} aria-hidden="true" /> Back to {clientName}
       </button>
@@ -345,7 +350,7 @@ export function WorkoutHistory() {
           value={count}
         />
         <MetricTile
-          tone="brand"
+          tone="primary"
           icon={<Dumbbell size={16} />}
           label="Total Volume"
           value={formatVolume(totalVolume, weightUnit)}
@@ -413,7 +418,7 @@ export function WorkoutHistory() {
                   {plansInScope.map((p) => (
                     <SelectItem key={p.id} value={p.id}>
                       {p.name}{' '}
-                      <span className="text-muted-foreground">
+                      <span className="text-text-secondary">
                         · {format(parseISO(p.startDate), 'MMM d, yyyy')}
                       </span>
                     </SelectItem>
@@ -427,26 +432,30 @@ export function WorkoutHistory() {
                   <SlidersHorizontal size={16} aria-hidden="true" />
                   Filters
                   {activeFilterCount > 0 && (
-                    <span className="inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold size-5 tabular-nums">
-                      {activeFilterCount}
-                    </span>
+                    <Badge variant="count">{activeFilterCount}</Badge>
                   )}
                 </Button>
               </CollapsibleTrigger>
               {activeFilterCount > 0 && (
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="xs"
                   onClick={clearAll}
-                  className="text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
                 >
                   Clear all
-                </button>
+                </Button>
               )}
             </div>
           </div>
 
           <CollapsibleContent>
-            <div className="bg-card border border-border rounded-card p-5 sm:p-6 shadow-sm space-y-6">
+            <div
+              className={cn(
+                cardVariants({ variant: 'card' }),
+                'p-5 sm:p-6 space-y-6',
+              )}
+            >
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 <FilterField icon={<Calendar size={14} />} label="Date range">
                   <Popover>
@@ -459,15 +468,15 @@ export function WorkoutHistory() {
                         <span
                           className={
                             dateTouched
-                              ? 'text-foreground'
-                              : 'text-muted-foreground'
+                              ? 'text-text-primary'
+                              : 'text-text-secondary'
                           }
                         >
                           {dateRangeLabel}
                         </span>
                         <Calendar
                           size={16}
-                          className="text-muted-foreground shrink-0"
+                          className="text-text-secondary shrink-0"
                           aria-hidden="true"
                         />
                       </Button>
@@ -485,7 +494,7 @@ export function WorkoutHistory() {
                         <Button
                           type="button"
                           variant="ghost"
-                          size="sm"
+                          size="xs"
                           onClick={() => setDateRange(undefined)}
                           className="mt-2 w-full"
                         >
@@ -554,44 +563,37 @@ export function WorkoutHistory() {
         <div className="text-center py-16">
           <Activity
             size={32}
-            className="text-muted-foreground/50 mx-auto mb-3"
+            className="text-text-secondary/50 mx-auto mb-3"
             aria-hidden="true"
           />
-          <p className="text-muted-foreground">No completed workouts yet</p>
+          <p className="text-text-secondary">No completed workouts yet</p>
         </div>
       ) : (
         <>
           {topExercises.length > 0 && (
-            <div className="bg-card rounded-card border border-border p-5 mb-8">
-              <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">
-                Most Trained
-              </h2>
+            <div className={cn(cardVariants({ variant: 'card' }), 'p-5 mb-8')}>
+              <h2 className={cn(LABEL_CLASS, 'mb-3')}>Most Trained</h2>
               <div className="flex flex-wrap gap-2">
                 {topExercises.map(({ exercise, count }) => (
-                  <span
-                    key={exercise!.id}
-                    className="text-xs bg-muted border border-border text-foreground rounded-full px-3 py-1.5 font-medium"
-                  >
-                    {exercise!.name}{' '}
-                    <span className="text-muted-foreground ml-1">{count}x</span>
-                  </span>
+                  <Badge key={exercise!.id} variant="muted">
+                    {exercise!.name}
+                    <span className="text-text-secondary">{count}x</span>
+                  </Badge>
                 ))}
               </div>
             </div>
           )}
 
-          <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4">
-            All Sessions
-          </h2>
+          <h2 className={cn(LABEL_CLASS, 'mb-4')}>All Sessions</h2>
 
           {filtered.length === 0 ? (
             <div className="text-center py-16">
               <Activity
                 size={32}
-                className="text-muted-foreground/50 mx-auto mb-3"
+                className="text-text-secondary/50 mx-auto mb-3"
                 aria-hidden="true"
               />
-              <p className="text-muted-foreground mb-4">
+              <p className="text-text-secondary mb-4">
                 No sessions match your selection
               </p>
               <Button type="button" variant="outline" onClick={clearAll}>
@@ -603,28 +605,27 @@ export function WorkoutHistory() {
               {groups.map((g) => (
                 <section key={g.key}>
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1 px-3 border-b border-border rounded-field pb-2 mb-3">
-                    <h3 className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-semibold text-foreground">
+                    <h3
+                      className={cn(
+                        WIDGET_SUBHEADING_CLASS,
+                        'flex flex-wrap items-center gap-x-2 gap-y-1',
+                      )}
+                    >
                       {g.subscription && (
                         <SubscriptionBadge subscription={g.subscription} />
                       )}
-                      <span
-                        aria-hidden="true"
-                        className="text-muted-foreground"
-                      >
+                      <span aria-hidden="true" className="text-text-secondary">
                         ·
                       </span>
                       <span>{g.planName}</span>
-                      <span
-                        aria-hidden="true"
-                        className="text-muted-foreground"
-                      >
+                      <span aria-hidden="true" className="text-text-secondary">
                         ·
                       </span>
-                      <span className="font-medium text-muted-foreground">
+                      <span className="font-medium text-text-secondary">
                         Week {g.weekIndex + 1}
                       </span>
                     </h3>
-                    <span className="ml-auto text-xs text-muted-foreground tabular-nums">
+                    <span className="ml-auto text-xs text-text-secondary tabular-nums">
                       {g.logs.length}{' '}
                       {g.logs.length === 1 ? 'session' : 'sessions'} ·{' '}
                       {formatVolume(g.volume, weightUnit)}
@@ -663,14 +664,14 @@ function FilterField({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-3">
-        <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+        <span className={cn(LABEL_CLASS, 'inline-flex items-center gap-2')}>
           <span className="text-brand-secondary" aria-hidden="true">
             {icon}
           </span>
           {label}
         </span>
         {value != null && (
-          <span className="text-xs font-semibold text-foreground tabular-nums">
+          <span className="text-xs font-medium text-text-primary tabular-nums">
             {value}
           </span>
         )}
@@ -723,7 +724,7 @@ function RangeControl({
           aria-label={`${ariaLabel} minimum`}
           className="h-9 w-24 tabular-nums"
         />
-        <span className="text-muted-foreground" aria-hidden="true">
+        <span className="text-text-secondary" aria-hidden="true">
           –
         </span>
         <Input
@@ -738,7 +739,7 @@ function RangeControl({
           className="h-9 w-24 tabular-nums"
         />
         {unit && (
-          <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">
+          <span className="text-xs font-medium text-text-secondary whitespace-nowrap">
             {unit}
           </span>
         )}

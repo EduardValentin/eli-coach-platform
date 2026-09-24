@@ -181,7 +181,7 @@ function OnboardingAnswerForm({
               onClick={onBack}
               type="button"
               variant="outline"
-              size="lg"
+              size="md"
               className="w-full sm:w-auto"
             >
               Back
@@ -191,8 +191,8 @@ function OnboardingAnswerForm({
           )}
           <Button
             type="submit"
-            variant="default"
-            size="lg"
+            variant="primary"
+            size="md"
             className="w-full sm:w-auto"
           >
             {continueLabel}

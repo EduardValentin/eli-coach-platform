@@ -31,6 +31,7 @@ import type {
 import { useClientProfile, fullName } from '../../context/ClientProfileContext';
 import { useAppState } from '../../context/AppContext';
 import { Button } from '../../components/ui/button';
+import { Badge } from '../../components/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -39,6 +40,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from '../../components/ui/dialog';
+import { LABEL_CLASS } from '../../components/typography';
 import {
   PHASE_LABEL,
   PHASE_VAR,
@@ -161,7 +163,7 @@ export function NutritionDayEditorPage() {
   if (!block || !day) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-surface-subtle">
-        <p className="text-sm text-muted-foreground">Returning to plan…</p>
+        <p className="text-sm text-text-secondary">Returning to plan…</p>
       </div>
     );
   }
@@ -335,21 +337,21 @@ export function NutritionDayEditorPage() {
           onClick={() => attemptLeave(backUrl)}
           aria-label="Back to plan"
           variant="ghost"
-          size="icon"
+          size="icon-sm"
         >
           <ArrowLeft size={20} />
         </Button>
-        <h1 className="font-serif text-lg text-foreground">
+        <h1 className="font-serif text-lg font-medium text-text-primary">
           {profile ? fullName(profile) : 'Client'} ·{' '}
           {format(parseISO(date), 'EEEE, MMM d')}
         </h1>
         <div className="ml-auto flex items-center gap-3">
           {dirty && (
-            <span className="text-xs font-medium text-muted-foreground">
+            <span className="text-xs font-medium text-text-secondary">
               Unsaved changes
             </span>
           )}
-          <Button size="sm" onClick={() => setSaveOpen(true)} disabled={!dirty}>
+          <Button size="xs" onClick={() => setSaveOpen(true)} disabled={!dirty}>
             Save
           </Button>
         </div>
@@ -394,14 +396,14 @@ export function NutritionDayEditorPage() {
             </DialogHeader>
 
             {affectedDays.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-text-secondary">
                 There are no other {PHASE_LABEL[phase]} days in this block.
               </p>
             ) : (
               <div className="space-y-6">
                 {overrideDays.length > 0 && (
                   <div className="space-y-3">
-                    <p className="flex items-center gap-2 text-xs font-semibold text-foreground">
+                    <p className="flex items-center gap-2 text-xs font-semibold text-text-primary">
                       <AlertTriangle
                         size={14}
                         className="text-destructive"
@@ -413,12 +415,12 @@ export function NutritionDayEditorPage() {
                       {overrideDays.map((d) => (
                         <li
                           key={d.date}
-                          className="flex items-start justify-between gap-4 rounded-compact bg-muted/50 px-3.5 py-3"
+                          className="flex items-start justify-between gap-4 rounded-compact bg-surface-quiet px-3.5 py-3"
                         >
-                          <span className="shrink-0 text-xs font-medium text-foreground">
+                          <span className="shrink-0 text-xs font-medium text-text-primary">
                             {format(parseISO(d.date), 'EEE, MMM d')}
                           </span>
-                          <span className="min-w-0 text-right text-caption leading-relaxed text-muted-foreground">
+                          <span className="min-w-0 text-right text-xs leading-relaxed text-text-secondary">
                             {slotSummary(d)}
                           </span>
                         </li>
@@ -428,19 +430,19 @@ export function NutritionDayEditorPage() {
                 )}
                 {emptyDays.length > 0 && (
                   <div className="space-y-3">
-                    <p className="text-xs font-semibold text-foreground">
+                    <p className="text-xs font-semibold text-text-primary">
                       Will be filled ({emptyDays.length})
                     </p>
                     <ul className="m-0 list-none space-y-2 p-0">
                       {emptyDays.map((d) => (
                         <li
                           key={d.date}
-                          className="flex items-center justify-between gap-4 rounded-compact bg-muted/50 px-3.5 py-3"
+                          className="flex items-center justify-between gap-4 rounded-compact bg-surface-quiet px-3.5 py-3"
                         >
-                          <span className="text-xs font-medium text-foreground">
+                          <span className="text-xs font-medium text-text-primary">
                             {format(parseISO(d.date), 'EEE, MMM d')}
                           </span>
-                          <span className="text-caption text-muted-foreground">
+                          <span className="text-xs text-text-secondary">
                             Empty
                           </span>
                         </li>
@@ -452,7 +454,7 @@ export function NutritionDayEditorPage() {
             )}
 
             {dirty && (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-text-secondary">
                 Your unsaved changes to this day will be saved first.
               </p>
             )}
@@ -491,10 +493,10 @@ export function NutritionDayEditorPage() {
               {changes.map((c, i) => (
                 <li
                   key={i}
-                  className="flex items-start gap-2.5 rounded-compact bg-muted/50 px-3.5 py-2.5 text-sm text-foreground"
+                  className="flex items-start gap-2.5 rounded-compact bg-surface-quiet px-3.5 py-2.5 text-sm text-text-primary"
                 >
                   <span
-                    className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-foreground/40"
+                    className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-text-primary/40"
                     aria-hidden="true"
                   />
                   {c}
@@ -502,7 +504,7 @@ export function NutritionDayEditorPage() {
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-muted-foreground">No changes to save.</p>
+            <p className="text-sm text-text-secondary">No changes to save.</p>
           )}
 
           <DialogFooter className="gap-3 pt-2">
@@ -569,8 +571,9 @@ function DayStrip({
       aria-label="Day picker"
       className="flex shrink-0 items-center justify-center gap-1 border-b border-border rounded-field bg-card px-2 py-1.5 lg:px-4"
     >
-      <button
-        type="button"
+      <Button
+        variant="ghost"
+        size="icon-xs"
         onClick={() => prev && onSelect(prev.date)}
         disabled={!prev}
         aria-label={
@@ -578,10 +581,9 @@ function DayStrip({
             ? `Previous day, ${format(parseISO(prev.date), 'EEEE, MMM d')}`
             : 'No previous day'
         }
-        className="shrink-0 rounded-compact p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
       >
         <ChevronLeft size={18} />
-      </button>
+      </Button>
 
       <ul className="flex min-w-0 list-none gap-1 overflow-x-auto p-0 m-0">
         {days.map((d) => {
@@ -595,11 +597,11 @@ function DayStrip({
                 aria-label={`${format(parseISO(d.date), 'EEEE, MMM d')}${d.phase ? `, ${PHASE_LABEL[d.phase]}` : ''}`}
                 className={`flex min-w-[2.75rem] flex-col items-center gap-0.5 rounded-compact px-2 py-1 text-center transition-colors ${
                   isCurrent
-                    ? 'bg-primary/10 text-primary'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                    ? 'bg-primary-soft text-primary'
+                    : 'text-text-secondary hover:bg-surface-muted hover:text-text-primary'
                 }`}
               >
-                <span className="text-[10px] font-medium uppercase leading-none">
+                <span className="text-xs font-medium uppercase leading-none">
                   {format(parseISO(d.date), 'EEEEEE')}
                 </span>
                 <span className="text-sm font-semibold leading-none tabular-nums">
@@ -620,8 +622,9 @@ function DayStrip({
         })}
       </ul>
 
-      <button
-        type="button"
+      <Button
+        variant="ghost"
+        size="icon-xs"
         onClick={() => next && onSelect(next.date)}
         disabled={!next}
         aria-label={
@@ -629,10 +632,9 @@ function DayStrip({
             ? `Next day, ${format(parseISO(next.date), 'EEEE, MMM d')}`
             : 'No next day'
         }
-        className="shrink-0 rounded-compact p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
       >
         <ChevronRight size={18} />
-      </button>
+      </Button>
     </nav>
   );
 }
@@ -697,7 +699,7 @@ function DayEditor({
         <div className="flex items-center gap-3">
           {day.phase && (
             <span
-              className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium text-foreground"
+              className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium text-text-primary"
               style={{
                 backgroundColor: `color-mix(in srgb, ${PHASE_VAR[day.phase]} 18%, transparent)`,
                 border: `1px solid color-mix(in srgb, ${PHASE_VAR[day.phase]} 40%, transparent)`,
@@ -716,7 +718,7 @@ function DayEditor({
         {day.phase && hasFilledSlot && (
           <Button
             variant="outline"
-            size="sm"
+            size="xs"
             onClick={() => onApplyPhase(day.date)}
             aria-label={`Apply ${format(parseISO(day.date), 'EEE d')} to all ${PHASE_LABEL[day.phase]} days`}
           >
@@ -726,7 +728,7 @@ function DayEditor({
       </div>
       {/* Phase nudge — gentle informational hint, not a directive */}
       {day.phase && (
-        <p className="mb-4 flex items-center gap-1.5 text-sm text-muted-foreground">
+        <p className="mb-4 flex items-center gap-1.5 text-sm text-text-secondary">
           <span
             className="h-1.5 w-1.5 shrink-0 rounded-full"
             style={{ backgroundColor: PHASE_VAR[day.phase] }}
@@ -741,11 +743,11 @@ function DayEditor({
         {/* Calories */}
         <div className="space-y-1">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-foreground">
+            <span className="text-xs font-medium text-text-primary">
               Calories
             </span>
             <span
-              className={`text-sm font-semibold tabular-nums ${over ? 'text-destructive' : 'text-foreground'}`}
+              className={`text-sm font-semibold tabular-nums ${over ? 'text-destructive' : 'text-text-primary'}`}
             >
               {totals.kcal} / {target.kcal} kcal
             </span>
@@ -756,7 +758,7 @@ function DayEditor({
             aria-valuemin={0}
             aria-valuemax={target.kcal}
             aria-label={`Calories: ${totals.kcal} of ${target.kcal} kcal`}
-            className="h-2 w-full overflow-hidden rounded-full bg-muted"
+            className="h-2 w-full overflow-hidden rounded-full bg-surface-quiet"
           >
             <div
               className={`h-full rounded-full transition-all ${over ? 'bg-destructive' : MACRO_BAR.kcal}`}
@@ -800,9 +802,7 @@ function DayEditor({
                   className={`h-2 w-2 shrink-0 rounded-full ${dot}`}
                   aria-hidden="true"
                 />
-                <span className="text-caption text-muted-foreground">
-                  {label}
-                </span>
+                <span className="text-xs text-text-secondary">{label}</span>
               </div>
               <div
                 role="progressbar"
@@ -810,7 +810,7 @@ function DayEditor({
                 aria-valuemin={0}
                 aria-valuemax={t}
                 aria-label={`${label}: ${value} of ${t} g`}
-                className="h-1.5 w-full overflow-hidden rounded-full bg-muted"
+                className="h-1.5 w-full overflow-hidden rounded-full bg-surface-quiet"
               >
                 <div
                   className={`h-full rounded-full transition-all ${bar}`}
@@ -818,7 +818,7 @@ function DayEditor({
                   aria-hidden="true"
                 />
               </div>
-              <p className="text-caption tabular-nums text-muted-foreground">
+              <p className="text-xs tabular-nums text-text-secondary">
                 {value}g / {t}g
               </p>
             </div>
@@ -902,8 +902,8 @@ function DayEditorMealRow({
     <div className="rounded-control border border-border bg-card p-4">
       {/* Row header: role + soft budget */}
       <div className="mb-3 flex items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-foreground">{roleLabel}</h2>
-        <span className="text-xs text-muted-foreground">
+        <h2 className="text-sm font-semibold text-text-primary">{roleLabel}</h2>
+        <span className="text-xs text-text-secondary">
           ~{slot.suggestedKcal} kcal
         </span>
       </div>
@@ -919,12 +919,12 @@ function DayEditorMealRow({
               iconSize={22}
             />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-foreground">
+              <p className="truncate text-sm font-medium text-text-primary">
                 {recipe.name}
               </p>
               {macros && (
-                <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                  <span className="font-medium text-foreground">
+                <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-text-secondary">
+                  <span className="font-medium text-text-primary">
                     {macros.kcal} kcal
                   </span>
                   <span className="inline-flex items-center gap-1">
@@ -957,8 +957,8 @@ function DayEditorMealRow({
               aria-label={`Remove ${recipe.name}`}
               onClick={() => onClear(date, slot.id)}
               variant="ghost"
-              size="icon"
-              className="size-8 self-start text-muted-foreground hover:text-destructive"
+              size="icon-sm"
+              className="size-8 self-start text-text-secondary hover:text-destructive"
             >
               <X size={15} aria-hidden="true" />
             </Button>
@@ -966,10 +966,10 @@ function DayEditorMealRow({
 
           {/* Preference conflict warning */}
           {hasConflict && (
-            <p className="flex items-center gap-1.5 rounded-compact bg-amber-50 dark:bg-amber-950/30 px-3 py-2 text-xs text-foreground">
+            <p className="flex items-center gap-1.5 rounded-compact bg-status-pending-soft px-3 py-2 text-xs text-text-primary">
               <AlertTriangle
                 size={13}
-                className="shrink-0 text-amber-600 dark:text-amber-400"
+                className="shrink-0 text-status-pending"
                 aria-hidden="true"
               />
               Client dislikes: {conflicts.join(', ')}
@@ -980,12 +980,12 @@ function DayEditorMealRow({
           <div className="space-y-1">
             <div className="flex items-center justify-between">
               <label
-                className="text-xs font-medium text-foreground"
+                className="text-xs font-medium text-text-primary"
                 htmlFor={`portion-inline-${slot.id}`}
               >
                 Portion
               </label>
-              <span className="text-xs font-medium text-foreground tabular-nums">
+              <span className="text-xs font-medium text-text-primary tabular-nums">
                 {slot.portionScale}×
               </span>
             </div>
@@ -1000,7 +1000,7 @@ function DayEditorMealRow({
               className="w-full accent-primary"
               aria-valuetext={`${slot.portionScale}×`}
             />
-            <div className="flex justify-between text-[10px] text-muted-foreground">
+            <div className="flex justify-between text-xs text-text-secondary">
               <span>0.5×</span>
               <span>2×</span>
             </div>
@@ -1019,20 +1019,15 @@ function DayEditorMealRow({
           {/* Alternatives */}
           {slot.alternativeRecipeIds.length > 0 && (
             <div className="space-y-1.5">
-              <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                Alternatives
-              </p>
+              <p className={LABEL_CLASS}>Alternatives</p>
               <div className="flex flex-wrap gap-1.5">
                 {slot.alternativeRecipeIds.map((altId) => {
                   const altRecipe = recipes.find((r) => r.id === altId);
                   return altRecipe ? (
-                    <span
-                      key={altId}
-                      className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-caption text-foreground"
-                    >
+                    <Badge key={altId} variant="muted">
                       <Shuffle size={10} aria-hidden="true" />
                       {altRecipe.name}
-                    </span>
+                    </Badge>
                   ) : null;
                 })}
               </div>
@@ -1042,7 +1037,7 @@ function DayEditorMealRow({
           {/* Change recipe — opens RecipePicker dialog */}
           <Button
             variant="outline"
-            size="sm"
+            size="xs"
             className="w-full text-xs"
             aria-label={`Change recipe for ${roleLabel}`}
             onClick={() => setPickerOpen(true)}
@@ -1070,7 +1065,7 @@ function DayEditorMealRow({
             aria-label={`Add a meal for ${roleLabel}`}
             onClick={() => setPickerOpen(true)}
             variant="outline"
-            className="h-auto w-full gap-2 rounded-control border-2 border-dashed py-5 text-muted-foreground hover:text-foreground"
+            className="h-auto w-full gap-2 rounded-control border-2 border-dashed py-5 text-text-secondary hover:text-text-primary"
           >
             <Plus size={16} aria-hidden="true" />
             Add a meal
@@ -1133,9 +1128,7 @@ function IngredientSwaps({
 
   return (
     <div className="space-y-1.5">
-      <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-        Swaps
-      </p>
+      <p className={LABEL_CLASS}>Swaps</p>
       {swappableIngredients.map(({ ing, originalFood, siblings }) => {
         const activeSwapId = slot.ingredientSwaps?.[ing.foodId];
         const activeFood = activeSwapId
@@ -1151,28 +1144,28 @@ function IngredientSwaps({
         return (
           <div
             key={ing.foodId}
-            className="rounded-field bg-muted/60 px-2 py-1.5 space-y-1"
+            className="rounded-field bg-surface-quiet px-2 py-1.5 space-y-1"
           >
             <div className="flex items-center justify-between gap-1">
               <label
                 id={labelId}
                 htmlFor={selectId}
-                className="text-caption font-medium text-foreground truncate cursor-pointer"
+                className="text-xs font-medium text-text-primary truncate cursor-pointer"
               >
                 {displayName}
-                <span className="ml-1 font-normal text-muted-foreground">
+                <span className="ml-1 font-normal text-text-secondary">
                   · {displayGrams} g
                 </span>
               </label>
               {activeSwapId && (
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
                   aria-label={`Revert ${originalFood.name} swap to original`}
                   onClick={() => onClearSwap(date, slot.id, ing.foodId)}
-                  className="shrink-0 rounded p-0.5 text-muted-foreground hover:bg-background hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <RotateCcw size={11} aria-hidden="true" />
-                </button>
+                </Button>
               )}
             </div>
             <select
@@ -1188,7 +1181,7 @@ function IngredientSwaps({
                   onSetSwap(date, slot.id, ing.foodId, val);
                 }
               }}
-              className="w-full rounded border border-border bg-background px-1.5 py-0.5 text-caption text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="w-full rounded border border-border bg-background px-1.5 py-0.5 text-xs text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <option value="">
                 {originalFood.name} (original · {ing.grams} g)

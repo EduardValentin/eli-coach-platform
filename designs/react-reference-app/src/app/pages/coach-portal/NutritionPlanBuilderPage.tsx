@@ -32,6 +32,21 @@ import { useCycle } from '../../context/CycleContext';
 import { useClientProfile, fullName } from '../../context/ClientProfileContext';
 import { useAppState } from '../../context/AppContext';
 import { Button } from '../../components/ui/button';
+import { Badge } from '../../components/ui/badge';
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from '../../components/ui/tabs';
+import { ToggleGroup, ToggleGroupItem } from '../../components/ui/toggle-group';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '../../components/ui/select';
 import {
   Dialog,
   DialogContent,
@@ -40,6 +55,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '../../components/ui/dialog';
+import { LABEL_CLASS, VALUE_LG_CLASS } from '../../components/typography';
 import {
   PHASE_LABEL,
   PHASE_VAR,
@@ -160,49 +176,47 @@ export function NutritionPlanBuilderPage() {
           onClick={() => navigate('/coach/nutrition')}
           aria-label="Back to Nutrition"
           variant="ghost"
-          size="icon"
+          size="icon-sm"
         >
           <ArrowLeft size={20} />
         </Button>
-        <h1 className="font-serif text-lg text-foreground">
+        <h1 className="font-serif text-lg font-medium text-text-primary">
           {profile ? fullName(profile) : 'Client'} · Nutrition plan
         </h1>
         {pastBlocks.length > 0 && (
-          <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span className="sr-only">View plan block</span>
-            <select
+          <Select
+            value={viewedBlock?.id ?? ''}
+            onValueChange={(v) => setViewBlockId(v === block?.id ? null : v)}
+          >
+            <SelectTrigger
               aria-label="View plan block"
-              value={viewedBlock?.id ?? ''}
-              onChange={(e) =>
-                setViewBlockId(
-                  e.target.value === block?.id ? null : e.target.value,
-                )
-              }
-              className="rounded-field border border-border bg-background px-2 py-1 text-xs text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              size="sm"
+              className="w-auto"
             >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
               {block && (
-                <option value={block.id}>Current · {blockRange(block)}</option>
+                <SelectItem value={block.id}>
+                  Current · {blockRange(block)}
+                </SelectItem>
               )}
               {pastBlocks.map((b) => (
-                <option key={b.id} value={b.id}>
+                <SelectItem key={b.id} value={b.id}>
                   Past · {blockRange(b)}
-                </option>
+                </SelectItem>
               ))}
-            </select>
-          </label>
+            </SelectContent>
+          </Select>
         )}
-        {isViewingPast && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-caption font-medium text-muted-foreground">
-            Past · read-only
-          </span>
-        )}
+        {isViewingPast && <Badge variant="muted">Past · read-only</Badge>}
         <div className="ml-auto flex items-center gap-2">
           {viewedBlock && (
             <Dialog open={shoppingListOpen} onOpenChange={setShoppingListOpen}>
               <DialogTrigger asChild>
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size="xs"
                   className="gap-1.5"
                   aria-label="Open shopping list for this block"
                 >
@@ -253,7 +267,7 @@ export function NutritionPlanBuilderPage() {
         )}
         {!viewedBlock ? (
           !reviewBlock && (
-            <p className="mt-10 text-center text-sm text-muted-foreground">
+            <p className="mt-10 text-center text-sm text-text-secondary">
               Preparing plan…
             </p>
           )
@@ -277,28 +291,26 @@ export function NutritionPlanBuilderPage() {
               return (
                 <section aria-label={`Week ${week + 1}`} className="space-y-4">
                   <div className="flex flex-wrap items-center gap-3">
-                    <div
-                      role="group"
+                    <ToggleGroup
+                      type="single"
+                      variant="outline"
+                      size="sm"
+                      value={String(week)}
+                      onValueChange={(v) => v && setWeek(Number(v))}
                       aria-label="Select week"
-                      className="inline-flex rounded-compact border border-border bg-muted/40 p-0.5"
+                      className="w-fit"
                     >
                       {[0, 1].map((w) => (
-                        <button
+                        <ToggleGroupItem
                           key={w}
-                          type="button"
-                          aria-pressed={week === w}
-                          onClick={() => setWeek(w)}
-                          className={`rounded-field px-4 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                            week === w
-                              ? 'bg-background text-foreground shadow-sm'
-                              : 'text-muted-foreground hover:text-foreground'
-                          }`}
+                          value={String(w)}
+                          className="px-4 text-xs font-medium"
                         >
                           Week {w + 1}
-                        </button>
+                        </ToggleGroupItem>
                       ))}
-                    </div>
-                    <span className="text-xs text-muted-foreground">
+                    </ToggleGroup>
+                    <span className="text-xs text-text-secondary">
                       {weekRange}
                     </span>
                   </div>
@@ -343,27 +355,25 @@ function PastReviewBanner({ review }: { review: BlockReview }) {
   return (
     <section
       aria-label="Block review"
-      className="rounded-control border border-border bg-muted/30 p-4"
+      className="rounded-control border border-border bg-surface-quiet p-4"
     >
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
         <div>
-          <p className="text-caption text-muted-foreground">Adherence</p>
-          <p className="text-base font-semibold tabular-nums text-foreground">
+          <p className={LABEL_CLASS}>Adherence</p>
+          <p className="text-base font-semibold tabular-nums text-text-primary">
             {review.adherencePct}%
           </p>
         </div>
         <div>
-          <p className="text-caption text-muted-foreground">Swaps used</p>
-          <p className="text-base font-semibold tabular-nums text-foreground">
+          <p className={LABEL_CLASS}>Swaps used</p>
+          <p className="text-base font-semibold tabular-nums text-text-primary">
             {review.swapsUsed}
           </p>
         </div>
         {review.clientFeedbackNote && (
           <div className="min-w-0 flex-1">
-            <p className="text-caption text-muted-foreground">
-              Client feedback
-            </p>
-            <p className="text-sm text-foreground">
+            <p className={LABEL_CLASS}>Client feedback</p>
+            <p className="text-sm text-text-primary">
               “{review.clientFeedbackNote}”
             </p>
           </div>
@@ -417,36 +427,31 @@ function PlanSummary({ block, plan, recipes, foods }: PlanSummaryProps) {
       aria-label="Plan summary"
       className="rounded-control border border-border bg-card p-4"
     >
-      <p className="mb-3 text-caption font-semibold uppercase tracking-wide text-muted-foreground">
+      <p className={`mb-3 ${LABEL_CLASS}`}>
         Plan · {range} · {n} days
       </p>
       <dl className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
         <div>
-          <dt className="text-caption text-muted-foreground">Avg / day</dt>
-          <dd className="mt-0.5 text-base font-semibold tabular-nums text-foreground">
-            {avgKcal}{' '}
-            <span className="text-caption font-normal text-muted-foreground">
-              kcal
-            </span>
+          <dt className={LABEL_CLASS}>Avg / day</dt>
+          <dd className="mt-0.5 text-base font-semibold tabular-nums text-text-primary">
+            {avgKcal} <span className="text-xs text-text-secondary">kcal</span>
           </dd>
         </div>
         <div>
-          <dt className="text-caption text-muted-foreground">Meals planned</dt>
-          <dd className="mt-0.5 text-base font-semibold tabular-nums text-foreground">
+          <dt className={LABEL_CLASS}>Meals planned</dt>
+          <dd className="mt-0.5 text-base font-semibold tabular-nums text-text-primary">
             {filled}{' '}
-            <span className="text-caption font-normal text-muted-foreground">
-              / {slots}
-            </span>
+            <span className="text-xs text-text-secondary">/ {slots}</span>
           </dd>
         </div>
         <div>
-          <dt className="text-caption text-muted-foreground">Phases</dt>
+          <dt className={LABEL_CLASS}>Phases</dt>
           <dd className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1">
             {orderedPhases.length > 0 ? (
               orderedPhases.map((p) => (
                 <span
                   key={p}
-                  className="inline-flex items-center gap-1 text-xs text-foreground"
+                  className="inline-flex items-center gap-1 text-xs text-text-primary"
                   aria-label={`${PHASE_LABEL[p]}: ${phaseCounts.get(p)} days`}
                 >
                   <span
@@ -458,20 +463,18 @@ function PlanSummary({ block, plan, recipes, foods }: PlanSummaryProps) {
                 </span>
               ))
             ) : (
-              <span className="text-xs text-muted-foreground">—</span>
+              <span className="text-xs text-text-secondary">—</span>
             )}
           </dd>
         </div>
         <div>
-          <dt className="text-caption text-muted-foreground">vs target</dt>
+          <dt className={LABEL_CLASS}>vs target</dt>
           <dd
-            className={`mt-0.5 text-base font-semibold tabular-nums ${avgDiff > 0 ? 'text-destructive' : 'text-foreground'}`}
+            className={`mt-0.5 text-base font-semibold tabular-nums ${avgDiff > 0 ? 'text-destructive' : 'text-text-primary'}`}
           >
             {diffSign}
             {Math.abs(avgDiff)}{' '}
-            <span className="text-caption font-normal text-muted-foreground">
-              avg
-            </span>
+            <span className="text-xs text-text-secondary">avg</span>
           </dd>
         </div>
       </dl>
@@ -545,24 +548,22 @@ function PhaseTargetsBar({ plan, clientId, onCommit }: PhaseTargetsBarProps) {
       aria-label="Per-phase calorie targets"
     >
       <div className="mb-2.5 flex items-center justify-between gap-3">
-        <p className="text-caption font-semibold uppercase tracking-wide text-muted-foreground">
-          Phase targets
-        </p>
+        <p className={LABEL_CLASS}>Phase targets</p>
         <div className="flex items-center gap-3">
           {dirty && (
-            <span className="text-caption font-medium text-muted-foreground">
+            <span className="text-xs font-medium text-text-secondary">
               Unsaved
             </span>
           )}
-          <p className="text-caption text-muted-foreground">
+          <p className="text-xs text-text-secondary">
             Default{' '}
-            <span className="font-semibold tabular-nums text-foreground">
+            <span className="font-semibold tabular-nums text-text-primary">
               {defaultKcal}
             </span>{' '}
             kcal
           </p>
           <Button
-            size="sm"
+            size="xs"
             onClick={() => setConfirmOpen(true)}
             disabled={!dirty}
           >
@@ -601,9 +602,9 @@ function PhaseTargetsBar({ plan, clientId, onCommit }: PhaseTargetsBarProps) {
           {changes.map(({ phase, from, to }) => (
             <li
               key={phase}
-              className="flex items-center justify-between gap-3 rounded-compact bg-muted/50 px-3.5 py-2.5 text-sm"
+              className="flex items-center justify-between gap-3 rounded-compact bg-surface-quiet px-3.5 py-2.5 text-sm"
             >
-              <span className="inline-flex items-center gap-2 font-medium text-foreground">
+              <span className="inline-flex items-center gap-2 font-medium text-text-primary">
                 <span
                   className="h-2 w-2 shrink-0 rounded-full"
                   style={{ backgroundColor: PHASE_VAR[phase] }}
@@ -611,9 +612,9 @@ function PhaseTargetsBar({ plan, clientId, onCommit }: PhaseTargetsBarProps) {
                 />
                 {PHASE_LABEL[phase]}
               </span>
-              <span className="tabular-nums text-muted-foreground">
+              <span className="tabular-nums text-text-secondary">
                 {from} →{' '}
-                <span className="font-semibold text-foreground">
+                <span className="font-semibold text-text-primary">
                   {to === defaultKcal ? `${to} (default)` : to}
                 </span>{' '}
                 kcal
@@ -659,7 +660,7 @@ function PhaseTargetField({
         />
         <label
           htmlFor={inputId}
-          className="text-xs font-medium text-foreground whitespace-nowrap"
+          className="text-xs font-medium text-text-primary whitespace-nowrap"
         >
           {PHASE_LABEL[phase]}
         </label>
@@ -673,22 +674,22 @@ function PhaseTargetField({
           value={value}
           aria-label={`${PHASE_LABEL[phase]} calorie target`}
           onChange={(e) => onChange(e.target.value)}
-          className="w-16 rounded-field border border-border bg-background px-2 py-0.5 text-xs tabular-nums text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="w-16 rounded-field border border-border bg-background px-2 py-0.5 text-xs tabular-nums text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         />
-        <span className="text-caption text-muted-foreground">kcal</span>
+        <span className="text-xs text-text-secondary">kcal</span>
         {isOverride && (
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="icon-xs"
             aria-label={`Reset ${PHASE_LABEL[phase]} to the default target`}
             onClick={onReset}
-            className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <RotateCcw size={12} aria-hidden="true" />
-          </button>
+          </Button>
         )}
       </div>
       <span
-        className={`pl-3.5 text-[10px] ${isOverride ? 'font-medium text-foreground' : 'text-muted-foreground'}`}
+        className={`pl-3.5 text-xs ${isOverride ? 'font-medium text-text-primary' : 'text-text-secondary'}`}
       >
         {isOverride ? 'Overridden' : 'Inherits default'}
       </span>
@@ -716,7 +717,7 @@ function ShoppingListBody({
   const CategoryHeading = categoryAs;
   if (groups.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground">
+      <p className="text-sm text-text-secondary">
         {emptyLabel ??
           'No ingredients yet — fill some slots to see the shopping list.'}
       </p>
@@ -734,7 +735,9 @@ function ShoppingListBody({
               className={`h-2.5 w-2.5 shrink-0 rounded-full ${CATEGORY_SWATCH[group.category]}`}
               aria-hidden="true"
             />
-            <CategoryHeading className="text-xs font-semibold uppercase tracking-wide text-foreground">
+            <CategoryHeading
+              className={`text-label uppercase text-text-primary`}
+            >
               {CATEGORY_LABELS[group.category]}
             </CategoryHeading>
           </div>
@@ -742,10 +745,10 @@ function ShoppingListBody({
             {group.items.map((item) => (
               <li
                 key={item.foodId}
-                className="flex items-center justify-between gap-2 rounded-field px-2 py-1.5 text-sm text-foreground hover:bg-muted"
+                className="flex items-center justify-between gap-2 rounded-field px-2 py-1.5 text-sm text-text-primary hover:bg-surface-muted"
               >
                 <span>{item.name}</span>
-                <span className="shrink-0 tabular-nums text-muted-foreground">
+                <span className="shrink-0 tabular-nums text-text-secondary">
                   {item.grams} g
                 </span>
               </li>
@@ -773,66 +776,55 @@ function ShoppingListView({ block, recipes, foods }: ShoppingListViewProps) {
     `${format(parseISO(days[0].date), 'MMM d')} – ${format(parseISO(days.at(-1)!.date), 'MMM d')}`;
 
   return (
-    <div className="space-y-4">
-      <div
-        role="group"
+    <Tabs
+      value={mode}
+      onValueChange={(v) => setMode(v as typeof mode)}
+      className="gap-4"
+    >
+      <TabsList
+        variant="segmented"
         aria-label="Shopping list view"
-        className="inline-flex rounded-compact border border-border bg-muted/40 p-0.5"
+        className="w-fit"
       >
-        {(
-          [
-            ['block', 'Two-week block'],
-            ['week', 'By week'],
-          ] as const
-        ).map(([value, label]) => (
-          <button
-            key={value}
-            type="button"
-            aria-pressed={mode === value}
-            onClick={() => setMode(value)}
-            className={`rounded-field px-3 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-              mode === value
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+        <TabsTrigger variant="segmented" value="block">
+          Two-week block
+        </TabsTrigger>
+        <TabsTrigger variant="segmented" value="week">
+          By week
+        </TabsTrigger>
+      </TabsList>
 
-      {mode === 'block' ? (
+      <TabsContent value="block">
         <ShoppingListBody
           groups={shoppingListForDays(block.days, recipes, foods)}
         />
-      ) : (
-        <div className="space-y-6">
-          {[0, 1].map((w) => {
-            const weekDays = block.days.slice(w * 7, w * 7 + 7);
-            if (weekDays.length === 0) return null;
-            return (
-              <section
-                key={w}
-                aria-label={`Week ${w + 1}, ${rangeOf(weekDays)}`}
-                className="space-y-3"
-              >
-                <h3 className="flex items-baseline gap-2 px-3 border-b border-border rounded-field pb-2 text-sm font-semibold text-foreground">
-                  Week {w + 1}
-                  <span className="text-caption font-normal text-muted-foreground">
-                    {rangeOf(weekDays)}
-                  </span>
-                </h3>
-                <ShoppingListBody
-                  groups={shoppingListForDays(weekDays, recipes, foods)}
-                  categoryAs="h4"
-                  emptyLabel="No meals set this week."
-                />
-              </section>
-            );
-          })}
-        </div>
-      )}
-    </div>
+      </TabsContent>
+      <TabsContent value="week" className="space-y-6">
+        {[0, 1].map((w) => {
+          const weekDays = block.days.slice(w * 7, w * 7 + 7);
+          if (weekDays.length === 0) return null;
+          return (
+            <section
+              key={w}
+              aria-label={`Week ${w + 1}, ${rangeOf(weekDays)}`}
+              className="space-y-3"
+            >
+              <h3 className="flex items-baseline gap-2 px-3 border-b border-border rounded-field pb-2 text-sm font-semibold text-text-primary">
+                Week {w + 1}
+                <span className="text-xs text-text-secondary">
+                  {rangeOf(weekDays)}
+                </span>
+              </h3>
+              <ShoppingListBody
+                groups={shoppingListForDays(weekDays, recipes, foods)}
+                categoryAs="h4"
+                emptyLabel="No meals set this week."
+              />
+            </section>
+          );
+        })}
+      </TabsContent>
+    </Tabs>
   );
 }
 
@@ -862,23 +854,19 @@ function BlockReviewPanel({
           className="text-success shrink-0"
           aria-hidden="true"
         />
-        <h2 className="font-serif text-lg text-foreground">Block review</h2>
+        <h2 className="font-serif text-lg text-text-primary">Block review</h2>
       </div>
 
       <dl className="grid grid-cols-2 gap-4 mb-4">
         <div className="rounded-control border border-border bg-surface-subtle px-4 py-3">
-          <dt className="text-caption font-medium uppercase tracking-wide text-muted-foreground mb-1">
-            Adherence
-          </dt>
-          <dd className="text-2xl font-semibold text-success">
+          <dt className={`${LABEL_CLASS} mb-1`}>Adherence</dt>
+          <dd className={`${VALUE_LG_CLASS} tabular-nums text-success`}>
             {review.adherencePct}%
           </dd>
         </div>
         <div className="rounded-control border border-border bg-surface-subtle px-4 py-3">
-          <dt className="text-caption font-medium uppercase tracking-wide text-muted-foreground mb-1">
-            Swaps used
-          </dt>
-          <dd className="text-2xl font-semibold text-foreground">
+          <dt className={`${LABEL_CLASS} mb-1`}>Swaps used</dt>
+          <dd className={`${VALUE_LG_CLASS} tabular-nums`}>
             {review.swapsUsed}
           </dd>
         </div>
@@ -886,19 +874,19 @@ function BlockReviewPanel({
 
       {review.clientFeedbackNote && (
         <blockquote className="mb-5 rounded-control border border-border bg-surface-subtle px-4 py-3">
-          <p className="text-caption font-medium uppercase tracking-wide text-muted-foreground mb-1">
-            Client feedback
+          <p className={`${LABEL_CLASS} mb-1`}>Client feedback</p>
+          <p className="text-sm text-text-primary">
+            {review.clientFeedbackNote}
           </p>
-          <p className="text-sm text-foreground">{review.clientFeedbackNote}</p>
         </blockquote>
       )}
 
       <div className="flex flex-col gap-2 sm:flex-row">
-        <Button className="flex-1" onClick={onCarryOver}>
-          Carry over
-        </Button>
         <Button variant="outline" className="flex-1" onClick={onStartNew}>
           Start new block
+        </Button>
+        <Button className="flex-1" onClick={onCarryOver}>
+          Carry over
         </Button>
       </div>
     </section>
@@ -984,7 +972,7 @@ function DayOverviewCell({
             : { borderBottom: '1px solid transparent' }
         }
       >
-        <span className="text-sm font-semibold text-foreground">
+        <span className="text-sm font-semibold text-text-primary">
           {format(parseISO(day.date), 'EEEE, MMM d')}
         </span>
         {day.phase && (
@@ -996,7 +984,7 @@ function DayOverviewCell({
             />
             <abbr
               title={PHASE_LABEL[day.phase]}
-              className="text-[10px] text-muted-foreground no-underline"
+              className="text-xs text-text-secondary no-underline"
             >
               {PHASE_LABEL[day.phase].slice(0, 3)}
             </abbr>
@@ -1008,11 +996,11 @@ function DayOverviewCell({
       <div className="border-b border-border/60 rounded-field px-3 pb-2.5 pt-2.5">
         <div className="mb-1 flex items-baseline justify-between">
           <span
-            className={`text-xs font-semibold tabular-nums ${over ? 'text-destructive' : 'text-foreground'}`}
+            className={`text-xs font-semibold tabular-nums ${over ? 'text-destructive' : 'text-text-primary'}`}
           >
             {totals.kcal} / {target.kcal}
           </span>
-          <span className="text-[10px] text-muted-foreground">kcal</span>
+          <span className="text-xs text-text-secondary">kcal</span>
         </div>
         <div
           role="progressbar"
@@ -1020,7 +1008,7 @@ function DayOverviewCell({
           aria-valuemin={0}
           aria-valuemax={target.kcal}
           aria-label={`${format(parseISO(day.date), 'EEE d')} calories: ${totals.kcal} of ${target.kcal} kcal`}
-          className="h-1.5 w-full overflow-hidden rounded-full bg-muted"
+          className="h-1.5 w-full overflow-hidden rounded-full bg-surface-quiet"
         >
           <div
             className={`h-full rounded-full transition-all ${over ? 'bg-destructive' : 'bg-macro-kcal'}`}
@@ -1035,14 +1023,14 @@ function DayOverviewCell({
         {macros.map((m) => (
           <div key={m.key} className="min-w-0">
             <div className="mb-1 flex items-center justify-between gap-1">
-              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-foreground">
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-text-primary">
                 <span
                   className={`h-1.5 w-1.5 shrink-0 rounded-full ${m.dot}`}
                   aria-hidden="true"
                 />
                 {m.key}
               </span>
-              <span className="text-[10px] tabular-nums text-muted-foreground">
+              <span className="text-xs tabular-nums text-text-secondary">
                 {m.value}/{m.target}g
               </span>
             </div>
@@ -1052,7 +1040,7 @@ function DayOverviewCell({
               aria-valuemin={0}
               aria-valuemax={m.target}
               aria-label={`${m.label}: ${m.value} of ${m.target} g`}
-              className="h-1.5 w-full overflow-hidden rounded-full bg-muted"
+              className="h-1.5 w-full overflow-hidden rounded-full bg-surface-quiet"
             >
               <div
                 className={`h-full rounded-full ${m.bar}`}
@@ -1083,10 +1071,10 @@ function DayOverviewCell({
                   className="h-8 w-8 shrink-0 rounded-compact"
                   iconSize={16}
                 />
-                <span className="min-w-0 flex-1 truncate text-sm text-foreground">
+                <span className="min-w-0 flex-1 truncate text-sm text-text-primary">
                   {recipe.name}
                 </span>
-                <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                <span className="shrink-0 text-xs tabular-nums text-text-secondary">
                   {kcal} kcal
                 </span>
               </li>
@@ -1094,10 +1082,10 @@ function DayOverviewCell({
           }
           return (
             <li key={slot.id} className="flex items-center gap-2.5">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-compact border border-dashed border-border text-muted-foreground">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-compact border border-dashed border-border text-text-secondary">
                 <Plus size={15} />
               </span>
-              <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
+              <span className="min-w-0 flex-1 truncate text-sm text-text-secondary">
                 {roleLabel} — not set
               </span>
             </li>
@@ -1121,7 +1109,7 @@ function DayOverviewCell({
         navigate(`/coach/nutrition/client/${clientId}/plan/day/${day.date}`)
       }
       aria-label={`Edit ${summary}`}
-      className={`${baseClass} transition-all hover:border-muted-foreground/40 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring`}
+      className={`${baseClass} transition-all hover:border-text-secondary/40 hover:shadow-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring`}
     >
       {content}
     </button>

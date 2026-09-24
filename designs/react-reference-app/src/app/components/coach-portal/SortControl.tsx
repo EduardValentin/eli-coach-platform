@@ -91,7 +91,7 @@ export function SortControl({
       <Button
         type="button"
         variant="outline"
-        size="icon"
+        size="icon-sm"
         className="shrink-0 hover:border-primary hover:text-primary aria-pressed:border-primary aria-pressed:bg-active-surface aria-pressed:text-primary-foreground"
         aria-pressed={sort.direction !== defaultDirectionFor(sort.key)}
         aria-label={directionLabel}

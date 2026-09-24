@@ -29,6 +29,7 @@ interface ProfileDetailsWidgetProps {
   profile: ProfileDetailsSubject | null;
   units: ProfileDetailsUnits;
   headingId: string;
+  action?: ReactNode;
   footer?: ReactNode;
   className?: string;
   children?: ReactNode;
@@ -39,6 +40,7 @@ export function ProfileDetailsWidget({
   profile,
   units,
   headingId,
+  action,
   footer,
   className,
   children,
@@ -58,6 +60,7 @@ export function ProfileDetailsWidget({
         <User aria-hidden="true" className="text-brand-secondary" size={18} />
       }
       headingId={headingId}
+      action={action}
       footer={footer}
       className={className}
     >

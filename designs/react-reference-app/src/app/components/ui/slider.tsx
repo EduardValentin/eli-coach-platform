@@ -53,7 +53,7 @@ function Slider({
         <SliderPrimitive.Range
           data-slot="slider-range"
           className={cn(
-            "bg-brand absolute data-[orientation=horizontal]:h-full data-[orientation=vertical]:w-full",
+            "bg-primary absolute data-[orientation=horizontal]:h-full data-[orientation=vertical]:w-full",
           )}
         />
       </SliderPrimitive.Track>
@@ -64,7 +64,7 @@ function Slider({
           id={index === 0 ? id : undefined}
           aria-label={ariaLabel}
           aria-labelledby={ariaLabelledBy}
-          className="border-brand bg-background block size-5 shrink-0 rounded-full border-2 shadow-sm transition-transform hover:scale-110 disabled:pointer-events-none disabled:opacity-50"
+          className="border-primary bg-background block size-5 shrink-0 rounded-full border-2 shadow-sm transition-transform hover:scale-110 disabled:pointer-events-none disabled:opacity-50"
         />
       ))}
     </SliderPrimitive.Root>

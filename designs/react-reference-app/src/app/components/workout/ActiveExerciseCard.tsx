@@ -1,10 +1,30 @@
 import { useState, useCallback } from 'react';
 import { motion } from 'motion/react';
-import { Info, ArrowLeftRight, Check, ChevronDown, ChevronUp, Plus } from 'lucide-react';
-import type { Exercise, PlanExercise, ExerciseLog } from '../../context/TrainingContext';
+import {
+  Info,
+  ArrowLeftRight,
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Plus,
+} from 'lucide-react';
+import type {
+  Exercise,
+  PlanExercise,
+  ExerciseLog,
+} from '../../context/TrainingContext';
 import { useUnitPreferences } from '../../context/UnitPreferencesContext';
-import { weightUnitLabel, displayWeightValue, fromDisplayWeight, type WeightUnit } from '../../utils/units';
+import {
+  weightUnitLabel,
+  displayWeightValue,
+  fromDisplayWeight,
+  type WeightUnit,
+} from '../../utils/units';
 import { RirBadge } from './RirBadge';
+import { Badge } from '../ui/badge';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { LABEL_CLASS } from '../typography';
 
 interface ActiveExerciseCardProps {
   number: number;
@@ -13,7 +33,12 @@ interface ActiveExerciseCardProps {
   exerciseLog: ExerciseLog;
   exerciseLogIndex: number;
   allExercises: Exercise[];
-  onLogSet: (exerciseLogIndex: number, setNumber: number, weight: number, reps: number) => void;
+  onLogSet: (
+    exerciseLogIndex: number,
+    setNumber: number,
+    weight: number,
+    reps: number,
+  ) => void;
   onSetComplete: (exerciseLogIndex: number, setNumber: number) => void;
   onAddSet: (exerciseLogIndex: number) => void;
   onVideoPress: (exercise: Exercise) => void;
@@ -21,39 +46,60 @@ interface ActiveExerciseCardProps {
 }
 
 export function ActiveExerciseCard({
-  number, exercise, planExercise, exerciseLog, exerciseLogIndex,
-  onLogSet, onSetComplete, onAddSet, onVideoPress, onSwapPress
+  number,
+  exercise,
+  planExercise,
+  exerciseLog,
+  exerciseLogIndex,
+  onLogSet,
+  onSetComplete,
+  onAddSet,
+  onVideoPress,
+  onSwapPress,
 }: ActiveExerciseCardProps) {
   const [expandedSets, setExpandedSets] = useState(true);
   const { weightUnit } = useUnitPreferences();
-  const hasSwaps = planExercise.swapVariants && planExercise.swapVariants.length > 0;
-  const completedSets = exerciseLog.sets.filter(s => s.completed).length;
+  const hasSwaps =
+    planExercise.swapVariants && planExercise.swapVariants.length > 0;
+  const completedSets = exerciseLog.sets.filter((s) => s.completed).length;
   const totalSets = exerciseLog.sets.length;
   const isComplete = completedSets === totalSets;
 
   return (
-    <div className={`bg-white rounded-card border transition-colors ${isComplete ? 'border-brand-secondary/30 bg-brand-secondary/[0.02]' : 'border-neutral-200'}`}>
+    <div
+      className={`bg-surface-base rounded-card border transition-colors ${isComplete ? 'border-brand-secondary/30 bg-brand-secondary-soft' : 'border-border-subtle'}`}
+    >
       {/* Header */}
       <div className="p-4 pb-3">
         <div className="flex items-start gap-3">
-          <div className={`w-8 h-8 lg:w-9 lg:h-9 rounded-full flex items-center justify-center text-sm lg:text-base font-bold shrink-0 ${
-            isComplete ? 'bg-brand-secondary text-white' : 'bg-text-primary text-white'
-          }`}>
+          <div
+            className={`w-8 h-8 lg:w-9 lg:h-9 rounded-full flex items-center justify-center text-sm lg:text-base font-semibold shrink-0 ${
+              isComplete
+                ? 'bg-brand-secondary text-brand-secondary-foreground'
+                : 'bg-surface-inverted text-surface-inverted-foreground'
+            }`}
+          >
             {isComplete ? <Check size={16} className="lg:size-5" /> : number}
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <h3 className="text-base lg:text-lg font-semibold text-text-primary leading-tight">{exercise.name}</h3>
+              <h3 className="text-base lg:text-lg font-semibold text-text-primary leading-tight">
+                {exercise.name}
+              </h3>
               {exerciseLog.wasSwapped && (
-                <span className="text-[9px] lg:text-[10px] bg-brand-secondary/10 text-brand-secondary rounded-full px-1.5 py-0.5 font-bold uppercase">Swapped</span>
+                <Badge variant="brand-secondary">Swapped</Badge>
               )}
             </div>
             <div className="flex gap-1 mt-1.5 overflow-x-auto whitespace-nowrap [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {exercise.equipment.map(eq => (
-                <span key={eq} className="shrink-0 text-[10px] lg:text-xs bg-neutral-100 text-text-secondary rounded-full px-2 py-0.5">{eq}</span>
+              {exercise.equipment.map((eq) => (
+                <Badge key={eq} variant="muted" className="shrink-0">
+                  {eq}
+                </Badge>
               ))}
-              {exercise.primaryMuscles.map(m => (
-                <span key={m} className="shrink-0 text-[10px] lg:text-xs bg-brand-secondary/10 text-brand-secondary rounded-full px-2 py-0.5">{m}</span>
+              {exercise.primaryMuscles.map((m) => (
+                <Badge key={m} variant="brand-secondary" className="shrink-0">
+                  {m}
+                </Badge>
               ))}
             </div>
           </div>
@@ -61,23 +107,26 @@ export function ActiveExerciseCard({
           {/* Action buttons */}
           <div className="flex items-center gap-1.5 shrink-0">
             {hasSwaps && (
-              <button
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
                 onClick={() => onSwapPress(exerciseLogIndex)}
                 aria-label={`Swap ${exercise.name}`}
-                className="w-8 h-8 lg:w-9 lg:h-9 flex items-center justify-center rounded-compact hover:bg-neutral-100 transition-colors"
               >
-                <ArrowLeftRight size={16} className="text-brand-secondary lg:size-5" />
-              </button>
+                <ArrowLeftRight className="text-brand-secondary" />
+              </Button>
             )}
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="icon-sm"
               onClick={() => onVideoPress(exercise)}
               aria-label={`${exercise.name} details`}
               title="Exercise details"
-              className="w-8 h-8 lg:w-9 lg:h-9 flex items-center justify-center rounded-compact hover:bg-neutral-100 transition-colors"
             >
-              <Info size={16} className="text-brand lg:size-5" />
-            </button>
+              <Info className="text-primary" />
+            </Button>
           </div>
         </div>
 
@@ -86,15 +135,19 @@ export function ActiveExerciseCard({
           <div className="mt-3 px-1">
             <span className="text-xs lg:text-sm text-text-secondary">
               <span className="text-text-secondary">Rest </span>
-              <span className="font-semibold text-text-primary tabular-nums">{formatRestTime(planExercise.restSeconds)}</span>
+              <span className="font-semibold text-text-primary tabular-nums">
+                {formatRestTime(planExercise.restSeconds)}
+              </span>
             </span>
           </div>
         )}
 
         {/* Coach notes */}
         {planExercise.notes && (
-          <div className="mt-3 bg-brand-secondary/5 border-l-2 border-brand-secondary p-2.5 rounded-r-compact">
-            <p className="text-xs lg:text-sm italic text-text-secondary">{planExercise.notes}</p>
+          <div className="mt-3 bg-brand-secondary-soft border-l-2 border-brand-secondary p-2.5 rounded-r-compact">
+            <p className="text-xs lg:text-sm italic text-text-secondary">
+              {planExercise.notes}
+            </p>
           </div>
         )}
       </div>
@@ -102,26 +155,36 @@ export function ActiveExerciseCard({
       {/* Toggle sets */}
       <button
         onClick={() => setExpandedSets(!expandedSets)}
-        className="w-full px-4 py-2 flex items-center justify-between border-t border-neutral-100 text-xs lg:text-sm font-medium text-text-secondary hover:text-text-secondary transition-colors"
+        className="w-full px-4 py-2 flex items-center justify-between border-t border-border-subtle text-xs lg:text-sm font-medium text-text-secondary hover:text-text-secondary transition-colors"
       >
-        <span>{completedSets}/{totalSets} sets completed</span>
-        {expandedSets ? <ChevronUp size={14} className="lg:size-4" /> : <ChevronDown size={14} className="lg:size-4" />}
+        <span>
+          {completedSets}/{totalSets} sets completed
+        </span>
+        {expandedSets ? (
+          <ChevronUp size={14} className="lg:size-4" />
+        ) : (
+          <ChevronDown size={14} className="lg:size-4" />
+        )}
       </button>
 
       {/* Set rows */}
       {expandedSets && (
         <div className="px-4 pb-4 space-y-2">
           {/* Column headers */}
-          <div className="flex items-center gap-2 sm:gap-3 px-3 pt-1 text-[9px] lg:text-caption font-bold uppercase tracking-wider text-text-secondary">
+          <div
+            className={`flex items-center gap-2 sm:gap-3 px-3 pt-1 ${LABEL_CLASS}`}
+          >
             <span className="w-5 text-center shrink-0">Set</span>
             <span className="flex-1 min-w-0">Target</span>
             <span className="w-10 text-center shrink-0">RIR</span>
-            <span className="w-14 lg:w-16 text-center shrink-0">{weightUnitLabel(weightUnit)}</span>
+            <span className="w-14 lg:w-16 text-center shrink-0">
+              {weightUnitLabel(weightUnit)}
+            </span>
             <span className="w-12 lg:w-14 text-center shrink-0">reps</span>
             <span className="w-9 lg:w-10 shrink-0" aria-hidden="true" />
           </div>
 
-          {exerciseLog.sets.map(setLog => (
+          {exerciseLog.sets.map((setLog) => (
             <SetRow
               key={setLog.setNumber}
               setLog={setLog}
@@ -133,14 +196,16 @@ export function ActiveExerciseCard({
               onSetComplete={onSetComplete}
             />
           ))}
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="sm"
             onClick={() => onAddSet(exerciseLogIndex)}
-            className="w-full flex items-center justify-center gap-1.5 min-h-11 mt-1 rounded-control border border-dashed border-neutral-200 text-text-secondary text-xs lg:text-sm font-semibold hover:border-brand/40 hover:text-brand hover:bg-brand/[0.03] transition-colors"
+            className="w-full mt-1"
           >
-            <Plus size={14} className="lg:size-4" aria-hidden="true" />
+            <Plus aria-hidden="true" />
             Add set
-          </button>
+          </Button>
         </div>
       )}
     </div>
@@ -169,11 +234,24 @@ interface SetRowProps {
   rir: number;
   weightUnit: WeightUnit;
   exerciseLogIndex: number;
-  onLogSet: (exerciseLogIndex: number, setNumber: number, weight: number, reps: number) => void;
+  onLogSet: (
+    exerciseLogIndex: number,
+    setNumber: number,
+    weight: number,
+    reps: number,
+  ) => void;
   onSetComplete: (exerciseLogIndex: number, setNumber: number) => void;
 }
 
-function SetRow({ setLog, prescribedReps, rir, weightUnit, exerciseLogIndex, onLogSet, onSetComplete }: SetRowProps) {
+function SetRow({
+  setLog,
+  prescribedReps,
+  rir,
+  weightUnit,
+  exerciseLogIndex,
+  onLogSet,
+  onSetComplete,
+}: SetRowProps) {
   const [weight, setWeight] = useState(setLog.actualWeight?.toString() || '');
   const [reps, setReps] = useState(setLog.actualReps?.toString() || '');
 
@@ -183,28 +261,48 @@ function SetRow({ setLog, prescribedReps, rir, weightUnit, exerciseLogIndex, onL
     const r = parseInt(reps) || 0;
     onLogSet(exerciseLogIndex, setLog.setNumber, w, r);
     onSetComplete(exerciseLogIndex, setLog.setNumber);
-  }, [weight, reps, weightUnit, exerciseLogIndex, setLog.setNumber, onLogSet, onSetComplete]);
+  }, [
+    weight,
+    reps,
+    weightUnit,
+    exerciseLogIndex,
+    setLog.setNumber,
+    onLogSet,
+    onSetComplete,
+  ]);
 
   // Determine if reps differ from prescribed for diff highlighting
   const actualRepsNum = setLog.actualReps;
   const prescribedNum = parseInt(prescribedReps);
-  const hasDiff = setLog.completed && actualRepsNum != null && !isNaN(prescribedNum) && actualRepsNum !== prescribedNum;
-  const isUnder = hasDiff && actualRepsNum != null && actualRepsNum < prescribedNum;
-  const isOver = hasDiff && actualRepsNum != null && actualRepsNum > prescribedNum;
+  const hasDiff =
+    setLog.completed &&
+    actualRepsNum != null &&
+    !isNaN(prescribedNum) &&
+    actualRepsNum !== prescribedNum;
+  const isUnder =
+    hasDiff && actualRepsNum != null && actualRepsNum < prescribedNum;
+  const isOver =
+    hasDiff && actualRepsNum != null && actualRepsNum > prescribedNum;
 
   return (
     <motion.div
       layout
       className={`flex items-center gap-2 sm:gap-3 p-3 rounded-control transition-colors ${
         setLog.completed
-          ? isUnder ? 'bg-brand/5' : isOver ? 'bg-brand-secondary/5' : 'bg-neutral-50'
-          : 'bg-neutral-50'
+          ? isUnder
+            ? 'bg-primary-soft'
+            : isOver
+              ? 'bg-brand-secondary-soft'
+              : 'bg-surface-quiet'
+          : 'bg-surface-quiet'
       }`}
     >
       {/* Set number */}
-      <span className={`text-xs lg:text-sm font-bold w-5 text-center shrink-0 ${
-        setLog.completed ? 'text-brand-secondary' : 'text-text-secondary'
-      }`}>
+      <span
+        className={`text-xs lg:text-sm font-semibold w-5 text-center shrink-0 ${
+          setLog.completed ? 'text-brand-secondary' : 'text-text-secondary'
+        }`}
+      >
         {setLog.setNumber}
       </span>
 
@@ -222,43 +320,58 @@ function SetRow({ setLog, prescribedReps, rir, weightUnit, exerciseLogIndex, onL
 
       {/* Weight input */}
       <div className="w-14 lg:w-16">
-        <input
+        <Input
           type="number"
           inputMode="decimal"
+          size="sm"
           placeholder={weightUnitLabel(weightUnit)}
-          value={setLog.completed ? (setLog.actualWeight != null ? displayWeightValue(setLog.actualWeight, weightUnit) : '') : weight}
+          value={
+            setLog.completed
+              ? setLog.actualWeight != null
+                ? displayWeightValue(setLog.actualWeight, weightUnit)
+                : ''
+              : weight
+          }
           onChange={(e) => setWeight(e.target.value)}
           disabled={setLog.completed}
-          className="w-full text-center text-sm lg:text-base font-medium bg-white border border-neutral-200 rounded-compact py-1.5 lg:py-2 px-1 focus:outline-none disabled:opacity-60 disabled:bg-neutral-50"
+          className="text-center px-1"
         />
       </div>
 
       {/* Reps input */}
       <div className="w-12 lg:w-14">
-        <input
+        <Input
           type="number"
           inputMode="numeric"
+          size="sm"
           placeholder="reps"
-          value={setLog.completed ? (setLog.actualReps || '') : reps}
+          value={setLog.completed ? setLog.actualReps || '' : reps}
           onChange={(e) => setReps(e.target.value)}
           disabled={setLog.completed}
-          className="w-full text-center text-sm lg:text-base font-medium bg-white border border-neutral-200 rounded-compact py-1.5 lg:py-2 px-1 focus:outline-none disabled:opacity-60 disabled:bg-neutral-50"
+          className="text-center px-1"
         />
       </div>
 
       {/* Complete button */}
-      <button
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-sm"
         onClick={handleComplete}
         disabled={setLog.completed}
-        aria-label={setLog.completed ? `Set ${setLog.setNumber} logged` : `Log set ${setLog.setNumber}`}
-        className={`w-9 h-9 lg:w-10 lg:h-10 flex items-center justify-center rounded-full shrink-0 transition-all ${
+        aria-label={
           setLog.completed
-            ? 'bg-brand-secondary text-white'
-            : 'bg-neutral-200 text-text-secondary hover:bg-brand hover:text-white'
-        }`}
+            ? `Set ${setLog.setNumber} logged`
+            : `Log set ${setLog.setNumber}`
+        }
+        className={
+          setLog.completed
+            ? 'bg-brand-secondary text-brand-secondary-foreground hover:bg-brand-secondary'
+            : 'bg-surface-muted text-text-secondary hover:bg-primary hover:text-primary-foreground'
+        }
       >
-        <Check size={16} className="lg:size-5" />
-      </button>
+        <Check />
+      </Button>
     </motion.div>
   );
 }

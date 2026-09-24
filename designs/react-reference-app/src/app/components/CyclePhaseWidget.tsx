@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 import { Droplet } from 'lucide-react';
 import { PortalWidget, type WidgetPresentation } from './PortalWidget';
-import { Reading } from './Reading';
 
 interface CyclePhase {
   phaseName: string;
@@ -26,8 +25,6 @@ export function CyclePhaseWidget({
   className,
   children,
 }: CyclePhaseWidgetProps) {
-  const isCoach = presentation === 'coach';
-
   return (
     <PortalWidget
       presentation={presentation}
@@ -45,22 +42,16 @@ export function CyclePhaseWidget({
       hero={
         phase ? (
           <span
-            style={
-              isCoach && phase.phaseColor
-                ? { color: phase.phaseColor }
-                : undefined
-            }
+            style={phase.phaseColor ? { color: phase.phaseColor } : undefined}
           >
             {phase.phaseName}
           </span>
         ) : undefined
       }
+      context={phase ? `Day ${phase.dayInCycle}` : undefined}
     >
       {phase ? (
-        <>
-          <Reading label="Day" value={phase.dayInCycle} />
-          {children}
-        </>
+        children
       ) : (
         <p className="text-sm text-text-secondary">No cycle data yet.</p>
       )}

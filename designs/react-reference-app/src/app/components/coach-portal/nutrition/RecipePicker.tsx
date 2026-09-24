@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Check, Clock, Plus, Search, X } from 'lucide-react';
+import { Check, Clock, Plus, X } from 'lucide-react';
 import {
   useNutrition,
   recipeMacros,
@@ -13,10 +13,12 @@ import {
   DialogTitle,
   DialogDescription,
 } from '../../ui/dialog';
-import { Input } from '../../ui/input';
 import { Button } from '../../ui/button';
+import { Badge } from '../../ui/badge';
 import { cn } from '../../ui/utils';
 import { ScrollArea } from '../../ui/scroll-area';
+import { SearchField } from '../../SearchField';
+import { LABEL_CLASS } from '../../typography';
 import { FilterDropdown } from './FilterDropdown';
 import { RecipeVisual } from './RecipeVisual';
 import { TagPill } from './TagPill';
@@ -123,7 +125,7 @@ export function RecipePicker({
       >
         {/* Header */}
         <DialogHeader className="px-5 pt-5 pb-3 border-b border-border rounded-field shrink-0">
-          <DialogTitle className="text-base font-semibold text-foreground">
+          <DialogTitle className="text-base font-semibold text-text-primary">
             Choose a recipe
           </DialogTitle>
           <DialogDescription>for {roleLabel}</DialogDescription>
@@ -132,21 +134,13 @@ export function RecipePicker({
         {/* Filter bar */}
         <div className="px-4 py-3 border-b border-border rounded-field shrink-0 space-y-2.5">
           {/* Search */}
-          <div className="relative">
-            <Search
-              size={15}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-              aria-hidden="true"
-            />
-            <Input
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search recipes…"
-              aria-label="Search recipes by name"
-              className="pl-9 h-9 text-sm"
-            />
-          </div>
+          <SearchField
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search recipes…"
+            aria-label="Search recipes by name"
+            size="sm"
+          />
 
           {/* Dropdown filters */}
           <div className="flex flex-wrap items-center gap-2">
@@ -208,9 +202,9 @@ export function RecipePicker({
             {hasActiveFilters && (
               <Button
                 variant="ghost"
-                size="sm"
+                size="xs"
                 onClick={clearFilters}
-                className="gap-1 text-muted-foreground hover:text-foreground"
+                className="gap-1 text-text-secondary hover:text-text-primary"
               >
                 <X size={13} aria-hidden="true" />
                 Clear
@@ -228,16 +222,16 @@ export function RecipePicker({
                 aria-live="polite"
                 className="flex flex-col items-center justify-center py-16 gap-2 text-center"
               >
-                <p className="text-sm font-medium text-foreground">
+                <p className="text-sm font-medium text-text-primary">
                   No recipes found
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-text-secondary">
                   Try adjusting your search or clearing some filters.
                 </p>
                 {hasActiveFilters && (
                   <Button
                     variant="outline"
-                    size="sm"
+                    size="xs"
                     onClick={clearFilters}
                     className="mt-2"
                   >
@@ -254,7 +248,7 @@ export function RecipePicker({
                 {/* Suggested for this meal */}
                 {suggested.length > 0 && (
                   <section aria-label={`Suggested for ${roleLabel}`}>
-                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                    <p className={`mb-2 ${LABEL_CLASS}`}>
                       Suggested for {roleLabel}
                     </p>
                     <ul className="space-y-2 list-none p-0 m-0">
@@ -279,9 +273,7 @@ export function RecipePicker({
                 {others.length > 0 && (
                   <section aria-label="Other recipes">
                     {suggested.length > 0 && (
-                      <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                        Other recipes
-                      </p>
+                      <p className={`mb-2 ${LABEL_CLASS}`}>Other recipes</p>
                     )}
                     <ul className="space-y-2 list-none p-0 m-0">
                       {others.map((recipe) => (
@@ -345,8 +337,8 @@ function RecipePickerCard({
       aria-label={recipe.name}
       className={`flex gap-3 rounded-control border p-3 transition-colors ${
         isCurrent
-          ? 'border-primary/40 bg-primary/5'
-          : 'border-border bg-card hover:bg-muted/40'
+          ? 'border-primary/40 bg-primary-soft'
+          : 'border-border bg-card hover:bg-surface-muted'
       }`}
     >
       {/* Thumbnail */}
@@ -360,11 +352,11 @@ function RecipePickerCard({
       <div className="min-w-0 flex-1 space-y-1.5">
         {/* Name + cook time */}
         <div className="flex items-start justify-between gap-2">
-          <p className="text-sm font-semibold text-foreground leading-tight truncate">
+          <p className="text-sm font-medium text-text-primary leading-tight truncate">
             {recipe.name}
           </p>
           {totalMinutes > 0 && (
-            <span className="inline-flex shrink-0 items-center gap-1 text-caption text-muted-foreground">
+            <span className="inline-flex shrink-0 items-center gap-1 text-xs text-text-secondary">
               <Clock size={11} aria-hidden="true" />
               {totalMinutes} min
             </span>
@@ -372,8 +364,8 @@ function RecipePickerCard({
         </div>
 
         {/* Macros */}
-        <div className="flex flex-wrap items-center gap-2 text-caption text-muted-foreground">
-          <span className="font-semibold text-foreground tabular-nums">
+        <div className="flex flex-wrap items-center gap-2 text-xs text-text-secondary">
+          <span className="font-medium text-text-primary tabular-nums">
             {macros.kcal} kcal
           </span>
           <span className="inline-flex items-center gap-1">
@@ -416,16 +408,13 @@ function RecipePickerCard({
         {/* Actions */}
         <div className="flex items-center gap-2 pt-2.5">
           {isCurrent ? (
-            <span
-              role="status"
-              className="inline-flex items-center gap-1 rounded-compact bg-primary/10 px-3 py-1 text-xs font-semibold text-primary"
-            >
+            <Badge variant="success" role="status">
               <Check size={13} aria-hidden="true" />
               Current meal
-            </span>
+            </Badge>
           ) : (
             <Button
-              size="sm"
+              size="xs"
               variant="outline"
               onClick={() => onPick(recipe.id)}
               aria-label={`Set ${recipe.name} as the meal`}
@@ -438,7 +427,7 @@ function RecipePickerCard({
           {/* Swap-option toggle — adds this recipe as a client-selectable alternative */}
           {!isCurrent && (
             <Button
-              size="sm"
+              size="xs"
               variant="outline"
               onClick={() => onToggleAlt(recipe.id, isAlt)}
               aria-pressed={isAlt}
@@ -450,7 +439,7 @@ function RecipePickerCard({
               className={cn(
                 'h-7 gap-1 rounded-compact px-2.5 text-xs font-medium',
                 isAlt &&
-                  'border-primary/30 bg-primary/10 text-primary hover:bg-primary/15',
+                  'border-primary/30 bg-primary-soft text-primary hover:bg-primary-soft',
               )}
             >
               {isAlt ? (

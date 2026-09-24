@@ -11,6 +11,12 @@ import {
 import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { BrandCalendar } from '../../components/BrandCalendar';
 import { PortalWidget } from '../../components/PortalWidget';
+import { Badge } from '../../components/ui/badge';
+import { cn } from '../../components/ui/utils';
+import {
+  VALUE_LG_CLASS,
+  WIDGET_SUBHEADING_CLASS,
+} from '../../components/typography';
 import { useCycle, CYCLE_SYMPTOMS } from '../../context/CycleContext';
 
 const MOCK_CLIENTS: Record<string, string> = {
@@ -51,7 +57,7 @@ export function CoachClientCycle() {
     <div className="w-full">
       <Link
         to={`/coach/clients/${clientId}`}
-        className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground mb-8 transition-colors"
+        className="inline-flex items-center gap-2 text-sm font-medium text-text-secondary hover:text-text-primary mb-8 transition-colors"
       >
         <ArrowLeft size={16} /> Back to {clientName}
       </Link>
@@ -78,17 +84,17 @@ export function CoachClientCycle() {
           {phase ? (
             <div className="flex items-baseline gap-2">
               <span
-                className="text-2xl font-semibold tracking-tight"
+                className={cn(VALUE_LG_CLASS, 'tracking-tight')}
                 style={{ color: phase.phaseColor }}
               >
                 {phase.phaseName}
               </span>
-              <span className="text-xs font-semibold text-muted-foreground">
+              <span className="text-xs font-medium text-text-secondary">
                 Day {phase.dayInCycle}
               </span>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">No cycle data</p>
+            <p className="text-sm text-text-secondary">No cycle data</p>
           )}
         </PortalWidget>
 
@@ -106,17 +112,17 @@ export function CoachClientCycle() {
         >
           {profile ? (
             <div>
-              <p className="font-semibold text-sm text-foreground mb-1">
+              <p className={cn(WIDGET_SUBHEADING_CLASS, 'mb-1')}>
                 {profile.regularity === 'regular' ? 'Regular' : 'Irregular'}{' '}
                 &middot; {profile.averageCycleLength}-day cycle
               </p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-text-secondary">
                 Avg period: {profile.averagePeriodLength} days &middot;{' '}
                 {records.length} records logged
               </p>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">No profile set</p>
+            <p className="text-sm text-text-secondary">No profile set</p>
           )}
         </PortalWidget>
 
@@ -135,16 +141,17 @@ export function CoachClientCycle() {
           {profile && profile.conditions.length > 0 ? (
             <div className="flex flex-wrap gap-2">
               {profile.conditions.map((c) => (
-                <span
+                <Badge
                   key={c}
-                  className="text-xs font-semibold bg-cycle-menstrual/10 text-brand px-2.5 py-1 rounded-compact"
+                  variant="outline"
+                  className="border-cycle-menstrual/20 bg-cycle-menstrual-soft text-cycle-menstrual"
                 >
                   {c}
-                </span>
+                </Badge>
               ))}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">None reported</p>
+            <p className="text-sm text-text-secondary">None reported</p>
           )}
         </PortalWidget>
       </div>
@@ -157,7 +164,7 @@ export function CoachClientCycle() {
           headingId="client-notes-heading"
           className="mb-8"
         >
-          <p className="text-sm text-muted-foreground leading-relaxed">
+          <p className="text-sm text-text-secondary leading-relaxed">
             {profile.notes}
           </p>
         </PortalWidget>
@@ -186,16 +193,16 @@ export function CoachClientCycle() {
               period: (date) => periodDates.has(toISO(date)),
             }}
             modifiersClassNames={{
-              period: 'bg-cycle-menstrual/10 text-brand font-semibold',
+              period: 'bg-cycle-menstrual/10 text-primary font-medium',
             }}
           />
-          <div className="flex items-center gap-4 mt-6 pt-4 border-t border-border text-xs text-muted-foreground">
+          <div className="flex items-center gap-4 mt-6 pt-4 border-t border-border text-xs text-text-secondary">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-cycle-menstrual/20 border border-cycle-menstrual/30" />
               <span>Period day</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full ring-2 ring-brand/30" />
+              <div className="w-3 h-3 rounded-full ring-2 ring-primary/30" />
               <span>Today</span>
             </div>
           </div>
@@ -216,8 +223,11 @@ export function CoachClientCycle() {
         >
           {records.length === 0 ? (
             <div className="text-center py-8">
-              <Droplet size={28} className="text-neutral-300 mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">
+              <Droplet
+                size={28}
+                className="text-text-secondary/50 mx-auto mb-2"
+              />
+              <p className="text-sm text-text-secondary">
                 No periods logged yet
               </p>
             </div>
@@ -249,26 +259,23 @@ export function CoachClientCycle() {
                   >
                     <div className="flex items-center gap-2 mb-2">
                       <div className="w-2.5 h-2.5 rounded-full bg-cycle-menstrual" />
-                      <p className="font-semibold text-sm text-foreground">
+                      <p className={WIDGET_SUBHEADING_CLASS}>
                         {startFormatted} &ndash; {endFormatted}
                       </p>
                     </div>
-                    <p className="text-xs text-muted-foreground mb-2">
+                    <p className="text-xs text-text-secondary mb-2">
                       {duration} days logged
                     </p>
                     {allSymptoms.length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {allSymptoms.slice(0, 4).map((s) => (
-                          <span
-                            key={s}
-                            className="text-[10px] font-semibold bg-muted text-muted-foreground px-2 py-0.5 rounded-full"
-                          >
+                          <Badge key={s} variant="muted">
                             {CYCLE_SYMPTOMS.find((cs) => cs.value === s)
                               ?.label ?? s}
-                          </span>
+                          </Badge>
                         ))}
                         {allSymptoms.length > 4 && (
-                          <span className="text-[10px] font-semibold text-muted-foreground">
+                          <span className="text-xs text-text-secondary">
                             +{allSymptoms.length - 4}
                           </span>
                         )}

@@ -7,6 +7,8 @@ import { useMeasureUnits } from '../client-portal/measureUnits';
 import { statedHeightCm } from '../../domain/bodyMetrics';
 import { OnboardingPanel } from './OnboardingPanel';
 import { SubscriptionSummary } from '../SubscriptionSummary';
+import { PORTAL_PAGE_TITLE_CLASS } from '../typography';
+import { Avatar, AvatarFallback } from '../ui/avatar';
 
 function journeyName(journey: ClientJourney): string {
   return `${journey.identity.firstName} ${journey.identity.lastName}`.trim();
@@ -20,24 +22,20 @@ export function JourneyClientDetails({ journey }: { journey: ClientJourney }) {
     <div className="w-full pb-12">
       <Link
         to="/coach/clients"
-        className="mb-8 inline-flex items-center gap-2 text-sm font-semibold text-text-secondary transition-colors hover:text-text-primary"
+        className="mb-8 inline-flex items-center gap-2 text-sm font-medium text-text-secondary transition-colors hover:text-text-primary"
       >
         <ArrowLeft size={16} /> Back to Clients
       </Link>
 
       <header className="mb-10 flex items-center gap-5">
-        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-neutral-100 font-serif text-xl font-semibold text-text-primary">
-          {getInitials(name)}
-        </div>
+        <Avatar size="lg">
+          <AvatarFallback>{getInitials(name)}</AvatarFallback>
+        </Avatar>
         <div className="min-w-0">
           <div className="mb-2 flex flex-wrap items-center gap-3">
-            <h1 className="font-serif text-3xl tracking-tight text-text-primary lg:text-4xl">
-              {name}
-            </h1>
+            <h1 className={PORTAL_PAGE_TITLE_CLASS}>{name}</h1>
           </div>
-          <p className="font-medium text-text-secondary">
-            {journey.identity.email}
-          </p>
+          <p className="text-text-secondary">{journey.identity.email}</p>
         </div>
       </header>
 

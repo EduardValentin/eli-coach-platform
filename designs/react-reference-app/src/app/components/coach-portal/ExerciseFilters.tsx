@@ -1,4 +1,7 @@
 import { ToggleChip } from '../ToggleChip';
+import { Button } from '../ui/button';
+import { LABEL_CLASS } from '../typography';
+import { cn } from '../ui/utils';
 import {
   EXERCISE_TAGS,
   NO_EQUIPMENT_FILTER,
@@ -12,7 +15,7 @@ interface ExerciseFiltersProps {
   onClearFilters?: () => void;
 }
 
-const GROUP_HEADING = 'mb-2 text-xs font-bold text-muted-foreground uppercase tracking-wider';
+const GROUP_HEADING = cn(LABEL_CLASS, 'mb-2');
 
 /**
  * The exercise-library filters, shared by the Training Hub's Exercise Library
@@ -28,13 +31,12 @@ export function ExerciseFilters({
   onToggleFilter,
   onClearFilters,
 }: ExerciseFiltersProps) {
-
   return (
     <div className="space-y-3">
       <fieldset className="min-w-0">
         <legend className={GROUP_HEADING}>Tags</legend>
         <div className="flex flex-wrap gap-2">
-          {EXERCISE_TAGS.map(tag => (
+          {EXERCISE_TAGS.map((tag) => (
             <ToggleChip
               key={tag}
               pressed={activeFilters.includes(tag)}
@@ -59,13 +61,15 @@ export function ExerciseFilters({
       </fieldset>
 
       {onClearFilters && (
-        <button
+        <Button
           type="button"
           onClick={onClearFilters}
-          className="-mx-2 min-h-6 px-2 text-xs font-semibold text-primary hover:text-primary-hover"
+          variant="link"
+          size="xs"
+          className="-mx-2 h-auto p-0"
         >
           Clear search and filters
-        </button>
+        </Button>
       )}
     </div>
   );

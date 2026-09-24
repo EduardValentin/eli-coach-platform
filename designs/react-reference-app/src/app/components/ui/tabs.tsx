@@ -30,7 +30,8 @@ const tabsTriggerVariants = cva(
     variants: {
       variant: {
         default: "",
-        segmented: "h-auto flex-auto px-5 py-2.5 font-semibold",
+        segmented:
+          "h-auto flex-auto px-5 py-2.5 font-semibold data-[state=active]:[&_[data-slot=badge]]:bg-surface-base data-[state=active]:[&_[data-slot=badge]]:text-primary data-[state=active]:[&_[data-slot=badge]]:opacity-100",
       },
     },
     defaultVariants: {

@@ -1,6 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from 'motion/react';
+import {
+  motion,
+  AnimatePresence,
+  useMotionValue,
+  useTransform,
+  PanInfo,
+} from 'motion/react';
 import { Minus, Plus, SkipForward, RotateCcw, Timer } from 'lucide-react';
+import { Button } from '../ui/button';
 
 interface RestTimerProps {
   initialSeconds: number;
@@ -8,7 +15,11 @@ interface RestTimerProps {
   onSkip: (actualSeconds: number) => void;
 }
 
-export function RestTimer({ initialSeconds, onComplete, onSkip }: RestTimerProps) {
+export function RestTimer({
+  initialSeconds,
+  onComplete,
+  onSkip,
+}: RestTimerProps) {
   const [remaining, setRemaining] = useState(initialSeconds);
   const [total, setTotal] = useState(initialSeconds);
   const [minimized, setMinimized] = useState(true);
@@ -22,7 +33,7 @@ export function RestTimer({ initialSeconds, onComplete, onSkip }: RestTimerProps
   useEffect(() => {
     startTimeRef.current = Date.now();
     intervalRef.current = setInterval(() => {
-      setRemaining(prev => {
+      setRemaining((prev) => {
         if (prev <= 1) {
           clearInterval(intervalRef.current);
           return 0;
@@ -48,8 +59,8 @@ export function RestTimer({ initialSeconds, onComplete, onSkip }: RestTimerProps
   }, [onSkip]);
 
   const handleAdjust = useCallback((delta: number) => {
-    setRemaining(prev => Math.max(0, prev + delta));
-    setTotal(prev => Math.max(1, prev + delta));
+    setRemaining((prev) => Math.max(0, prev + delta));
+    setTotal((prev) => Math.max(1, prev + delta));
   }, []);
 
   const handleRestart = useCallback(() => {
@@ -78,24 +89,36 @@ export function RestTimer({ initialSeconds, onComplete, onSkip }: RestTimerProps
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.8, y: 20 }}
         onClick={() => setMinimized(false)}
-        className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2.5 lg:gap-3 bg-text-primary/95 backdrop-blur-sm text-white pl-4 pr-5 py-3 lg:pl-5 lg:pr-6 lg:py-4 rounded-full shadow-xl border border-white/10"
+        className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2.5 lg:gap-3 bg-text-primary/95 backdrop-blur-sm text-surface-inverted-foreground pl-4 pr-5 py-3 lg:pl-5 lg:pr-6 lg:py-4 rounded-full shadow-raised border border-white/10"
       >
         <div className="relative w-8 h-8 lg:w-10 lg:h-10 shrink-0">
           <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
-            <circle cx="60" cy="60" r="54" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="8" />
             <circle
-              cx="60" cy="60" r="54"
+              cx="60"
+              cy="60"
+              r="54"
               fill="none"
-              stroke="var(--brand)"
+              stroke="rgba(255,255,255,0.15)"
+              strokeWidth="8"
+            />
+            <circle
+              cx="60"
+              cy="60"
+              r="54"
+              fill="none"
+              stroke="var(--primary)"
               strokeWidth="8"
               strokeLinecap="round"
               strokeDasharray={circumference}
               strokeDashoffset={strokeDashoffset}
             />
           </svg>
-          <Timer size={14} className="absolute inset-0 m-auto text-white/70 lg:size-[18px]" />
+          <Timer
+            size={14}
+            className="absolute inset-0 m-auto text-surface-inverted-foreground/70 lg:size-[18px]"
+          />
         </div>
-        <span className="text-base lg:text-xl font-bold font-serif tabular-nums">
+        <span className="text-base lg:text-xl font-semibold tabular-nums">
           {minutes}:{seconds.toString().padStart(2, '0')}
         </span>
       </motion.button>
@@ -120,16 +143,27 @@ export function RestTimer({ initialSeconds, onComplete, onSkip }: RestTimerProps
         <div className="w-10 h-1 rounded-full bg-white/25 shrink-0 cursor-grab active:cursor-grabbing" />
 
         {/* REST label */}
-        <p className="text-xs lg:text-sm font-bold uppercase tracking-widest text-white/50">Rest</p>
+        <p className="text-label uppercase text-surface-inverted-foreground/50">
+          Rest
+        </p>
 
         {/* Circular countdown */}
         <div className="relative w-32 h-32 lg:w-40 lg:h-40">
           <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
-            <circle cx="60" cy="60" r="54" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="6" />
-            <motion.circle
-              cx="60" cy="60" r="54"
+            <circle
+              cx="60"
+              cy="60"
+              r="54"
               fill="none"
-              stroke="var(--brand)"
+              stroke="rgba(255,255,255,0.1)"
+              strokeWidth="6"
+            />
+            <motion.circle
+              cx="60"
+              cy="60"
+              r="54"
+              fill="none"
+              stroke="var(--primary)"
               strokeWidth="6"
               strokeLinecap="round"
               strokeDasharray={circumference}
@@ -138,7 +172,7 @@ export function RestTimer({ initialSeconds, onComplete, onSkip }: RestTimerProps
             />
           </svg>
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-3xl lg:text-4xl font-serif font-bold text-white tabular-nums">
+            <span className="text-value-lg text-surface-inverted-foreground tabular-nums">
               {minutes}:{seconds.toString().padStart(2, '0')}
             </span>
           </div>
@@ -146,48 +180,70 @@ export function RestTimer({ initialSeconds, onComplete, onSkip }: RestTimerProps
 
         {/* Time adjust buttons */}
         <div className="flex items-center gap-2">
-          <button
+          <Button
+            type="button"
+            variant="ghost"
+            size="xs"
             onClick={() => handleAdjust(-30)}
-            className="flex items-center gap-1 px-3 py-2 rounded-control bg-white/10 text-white/70 text-xs font-medium hover:bg-white/15 transition-colors"
+            className="bg-white/10 text-surface-inverted-foreground/70 hover:bg-white/15 hover:text-surface-inverted-foreground"
           >
-            <Minus size={12} />30
-          </button>
-          <button
+            <Minus />
+            30
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="xs"
             onClick={() => handleAdjust(-15)}
-            className="flex items-center gap-1 px-3 py-2 rounded-control bg-white/10 text-white/70 text-xs font-medium hover:bg-white/15 transition-colors"
+            className="bg-white/10 text-surface-inverted-foreground/70 hover:bg-white/15 hover:text-surface-inverted-foreground"
           >
-            <Minus size={12} />15
-          </button>
-          <button
+            <Minus />
+            15
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="xs"
             onClick={() => handleAdjust(15)}
-            className="flex items-center gap-1 px-3 py-2 rounded-control bg-white/10 text-white text-xs font-medium hover:bg-white/20 transition-colors"
+            className="bg-white/10 text-surface-inverted-foreground hover:bg-white/20"
           >
-            <Plus size={12} />15
-          </button>
-          <button
+            <Plus />
+            15
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="xs"
             onClick={() => handleAdjust(30)}
-            className="flex items-center gap-1 px-3 py-2 rounded-control bg-white/10 text-white text-xs font-medium hover:bg-white/20 transition-colors"
+            className="bg-white/10 text-surface-inverted-foreground hover:bg-white/20"
           >
-            <Plus size={12} />30
-          </button>
+            <Plus />
+            30
+          </Button>
         </div>
 
         {/* Action buttons */}
         <div className="flex items-center gap-3 w-full max-w-xs">
-          <button
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
             onClick={handleRestart}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 lg:py-3 rounded-control bg-white/10 text-white text-sm lg:text-base font-medium hover:bg-white/20 transition-colors"
+            className="flex-1 border-transparent bg-white/10 text-surface-inverted-foreground hover:bg-white/20"
           >
-            <RotateCcw size={15} className="lg:size-[18px]" />
+            <RotateCcw />
             Restart
-          </button>
-          <button
+          </Button>
+          <Button
+            type="button"
+            variant="primary"
+            size="sm"
             onClick={handleSkip}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 lg:py-3 rounded-control bg-brand text-white text-sm lg:text-base font-semibold hover:bg-brand-hover transition-colors"
+            className="flex-1"
           >
-            <SkipForward size={15} className="lg:size-[18px]" />
+            <SkipForward />
             Skip
-          </button>
+          </Button>
         </div>
       </motion.div>
     </AnimatePresence>

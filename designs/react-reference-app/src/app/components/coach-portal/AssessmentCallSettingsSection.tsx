@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { CalendarClock } from 'lucide-react';
+import { CalendarClock, TriangleAlert } from 'lucide-react';
 import { toast } from 'sonner';
 import { Alert } from '../ui/alert';
 import { Button } from '../ui/button';
@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from '../ui/select';
 import { cn } from '../ui/utils';
+import { SettingsSection, SettingsRows, SettingsRow } from '../SettingsSection';
 import { useAssessmentCalls } from '../../context/AssessmentCallContext';
 import { FIELD_ERROR_CLASS } from '../../utils/formFieldStyles';
 import {
@@ -42,6 +43,7 @@ const END_HOUR_OPTIONS = Array.from({ length: 24 }, (_, hour) => hour + 1);
 const START_HOUR_FIELD_ID = 'assessment-call-start-hour';
 const END_HOUR_FIELD_ID = 'assessment-call-end-hour';
 const MEETING_LINK_FIELD_ID = 'assessment-call-meeting-link';
+const SETTINGS_FORM_ID = 'assessment-call-settings-form';
 
 const REFUSED_FIELD_SELECTORS_IN_DOM_ORDER: ReadonlyArray<
   [AssessmentCallSettingsProblem, string]
@@ -89,6 +91,19 @@ function toDraft(
     endHour: settings.endHour,
     meetingLink: settings.meetingLink ?? '',
   };
+}
+
+function isSameDraft(
+  a: AssessmentCallSettingsDraft,
+  b: AssessmentCallSettingsDraft,
+): boolean {
+  return (
+    a.startHour === b.startHour &&
+    a.endHour === b.endHour &&
+    a.meetingLink === b.meetingLink &&
+    a.weekdays.length === b.weekdays.length &&
+    a.weekdays.every((day, index) => day === b.weekdays[index])
+  );
 }
 
 function FieldError({
@@ -154,43 +169,6 @@ function HourSelect({
   );
 }
 
-function WeekdayFieldset({
-  selectedWeekdays,
-  errorId,
-  onToggleWeekday,
-}: {
-  selectedWeekdays: number[];
-  errorId?: string;
-  onToggleWeekday: (day: number) => void;
-}) {
-  return (
-    <fieldset aria-describedby={errorId}>
-      <legend className="text-sm font-medium text-foreground mb-2">
-        Days I take calls
-      </legend>
-      <div className="flex flex-wrap gap-2">
-        {WEEKDAY_OPTIONS.map(({ value, short, full }) => (
-          <CheckboxChip
-            key={value}
-            checked={selectedWeekdays.includes(value)}
-            onCheckedChange={() => onToggleWeekday(value)}
-            aria-label={full}
-          >
-            {short}
-          </CheckboxChip>
-        ))}
-      </div>
-      {errorId && (
-        <FieldError
-          id={errorId}
-          message={ASSESSMENT_CALL_SETTINGS_PROBLEM_MESSAGES.no_weekday}
-          className="mt-2"
-        />
-      )}
-    </fieldset>
-  );
-}
-
 export function AssessmentCallSettingsSection() {
   const { settings, saveSettings } = useAssessmentCalls();
   const [draft, setDraft] = useState<AssessmentCallSettingsDraft>(() =>
@@ -245,6 +223,7 @@ export function AssessmentCallSettingsSection() {
     }
   };
 
+  const isDirty = !isSameDraft(draft, toDraft(settings));
   const showLinkWarning = draft.meetingLink.trim() === '';
   const weekdaysErrorId = problems.includes('no_weekday')
     ? 'assessment-call-weekdays-error'
@@ -259,121 +238,156 @@ export function AssessmentCallSettingsSection() {
   const timeZoneUnreadable = problems.includes('invalid_time_zone');
 
   return (
-    <section
-      aria-labelledby="assessment-call-heading"
-      className="bg-card rounded-panel border border-border overflow-hidden"
-    >
-      <div className="px-5 sm:px-6 py-4 border-b border-border">
-        <h2
-          id="assessment-call-heading"
-          className="flex items-center gap-2 text-base font-semibold text-foreground"
+    <SettingsSection
+      headingId="assessment-call-heading"
+      title="Assessment calls"
+      icon={
+        <CalendarClock
+          aria-hidden="true"
+          className="text-brand-secondary"
+          size={18}
+        />
+      }
+      description="Visitors book inside the days and hours you set here."
+      footer={
+        <Button
+          type="submit"
+          form={SETTINGS_FORM_ID}
+          variant="primary"
+          size="md"
+          disabled={!isDirty || isSaving}
+          aria-busy={isSaving || undefined}
         >
-          <CalendarClock
-            aria-hidden="true"
-            className="text-brand-secondary"
-            size={18}
-          />
-          Assessment calls
-        </h2>
-      </div>
-
+          {isSaving ? 'Saving…' : 'Save changes'}
+        </Button>
+      }
+    >
       <form
         noValidate
         onSubmit={handleSubmit}
         ref={formRef}
-        className="px-5 sm:px-6 py-5 space-y-6"
+        id={SETTINGS_FORM_ID}
       >
         {timeZoneUnreadable && (
-          <Alert>
-            <p>{ASSESSMENT_CALL_SETTINGS_PROBLEM_MESSAGES.invalid_time_zone}</p>
-          </Alert>
+          <div className="px-5 pt-5 sm:px-6">
+            <Alert>
+              <p>
+                {ASSESSMENT_CALL_SETTINGS_PROBLEM_MESSAGES.invalid_time_zone}
+              </p>
+            </Alert>
+          </div>
         )}
 
-        <WeekdayFieldset
-          selectedWeekdays={draft.weekdays}
-          errorId={weekdaysErrorId}
-          onToggleWeekday={toggleWeekday}
-        />
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <HourSelect
-            id={START_HOUR_FIELD_ID}
-            label="Start"
-            hour={draft.startHour}
-            hourOptions={START_HOUR_OPTIONS}
-            errorId={hoursErrorId}
-            onHourChange={(hour) =>
-              setDraft((previous) => ({ ...previous, startHour: hour }))
-            }
-          />
-          <HourSelect
-            id={END_HOUR_FIELD_ID}
-            label="End"
-            hour={draft.endHour}
-            hourOptions={END_HOUR_OPTIONS}
-            errorId={hoursErrorId}
-            onHourChange={(hour) =>
-              setDraft((previous) => ({ ...previous, endHour: hour }))
-            }
-          />
-        </div>
-        {hoursErrorId && (
-          <FieldError
-            id={hoursErrorId}
-            message={ASSESSMENT_CALL_SETTINGS_PROBLEM_MESSAGES.invalid_hours}
-          />
-        )}
-
-        <div className="space-y-2">
-          <Label htmlFor={MEETING_LINK_FIELD_ID}>Meeting link</Label>
-          <Input
-            id={MEETING_LINK_FIELD_ID}
-            type="url"
-            inputMode="url"
-            placeholder="https://meet.google.com/…"
-            value={draft.meetingLink}
-            onChange={(event) =>
-              setDraft((previous) => ({
-                ...previous,
-                meetingLink: event.target.value,
-              }))
-            }
-            aria-describedby={[linkHintId, linkErrorId]
-              .filter(Boolean)
-              .join(' ')}
-            aria-invalid={Boolean(linkErrorId) || undefined}
-          />
-          <p id={linkHintId} className="text-xs text-muted-foreground">
-            The room every join link opens.
-          </p>
-          {linkErrorId && (
-            <FieldError
-              id={linkErrorId}
-              message={
-                ASSESSMENT_CALL_SETTINGS_PROBLEM_MESSAGES.invalid_meeting_link
-              }
-            />
-          )}
-        </div>
-
-        {showLinkWarning && (
-          <Alert>
-            <p>Visitors cannot join calls until a link is set.</p>
-          </Alert>
-        )}
-
-        <div className="flex justify-end pt-4 -mx-5 sm:-mx-6 px-5 sm:px-6 border-t border-border">
-          <Button
-            type="submit"
-            variant="default"
-            size="lg"
-            disabled={isSaving}
-            aria-busy={isSaving || undefined}
+        <SettingsRows>
+          <SettingsRow
+            as="fieldset"
+            title="Days I take calls"
+            description="Visitors can pick a slot on these days."
+            layout="stacked"
+            aria-describedby={weekdaysErrorId}
           >
-            {isSaving ? 'Saving…' : 'Save changes'}
-          </Button>
-        </div>
+            <div className="flex flex-wrap gap-2">
+              {WEEKDAY_OPTIONS.map(({ value, short, full }) => (
+                <CheckboxChip
+                  key={value}
+                  checked={draft.weekdays.includes(value)}
+                  onCheckedChange={() => toggleWeekday(value)}
+                  aria-label={full}
+                >
+                  {short}
+                </CheckboxChip>
+              ))}
+            </div>
+            {weekdaysErrorId && (
+              <FieldError
+                id={weekdaysErrorId}
+                message={ASSESSMENT_CALL_SETTINGS_PROBLEM_MESSAGES.no_weekday}
+                className="mt-2"
+              />
+            )}
+          </SettingsRow>
+
+          <SettingsRow
+            labelId="assessment-call-hours-label"
+            title="Hours"
+            description="Slots run inside this window in your time zone."
+            layout="stacked"
+          >
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <HourSelect
+                id={START_HOUR_FIELD_ID}
+                label="Start"
+                hour={draft.startHour}
+                hourOptions={START_HOUR_OPTIONS}
+                errorId={hoursErrorId}
+                onHourChange={(hour) =>
+                  setDraft((previous) => ({ ...previous, startHour: hour }))
+                }
+              />
+              <HourSelect
+                id={END_HOUR_FIELD_ID}
+                label="End"
+                hour={draft.endHour}
+                hourOptions={END_HOUR_OPTIONS}
+                errorId={hoursErrorId}
+                onHourChange={(hour) =>
+                  setDraft((previous) => ({ ...previous, endHour: hour }))
+                }
+              />
+            </div>
+            {hoursErrorId && (
+              <FieldError
+                id={hoursErrorId}
+                message={
+                  ASSESSMENT_CALL_SETTINGS_PROBLEM_MESSAGES.invalid_hours
+                }
+                className="mt-2"
+              />
+            )}
+          </SettingsRow>
+
+          <SettingsRow
+            htmlFor={MEETING_LINK_FIELD_ID}
+            descriptionId={linkHintId}
+            title="Meeting link"
+            description="The room every join link opens."
+            layout="stacked"
+          >
+            <Input
+              id={MEETING_LINK_FIELD_ID}
+              type="url"
+              inputMode="url"
+              placeholder="https://meet.google.com/…"
+              value={draft.meetingLink}
+              onChange={(event) =>
+                setDraft((previous) => ({
+                  ...previous,
+                  meetingLink: event.target.value,
+                }))
+              }
+              aria-describedby={[linkHintId, linkErrorId]
+                .filter(Boolean)
+                .join(' ')}
+              aria-invalid={Boolean(linkErrorId) || undefined}
+            />
+            {linkErrorId && (
+              <FieldError
+                id={linkErrorId}
+                message={
+                  ASSESSMENT_CALL_SETTINGS_PROBLEM_MESSAGES.invalid_meeting_link
+                }
+                className="mt-2"
+              />
+            )}
+            {showLinkWarning && (
+              <p className="mt-2 flex items-center gap-1.5 text-xs text-status-pending">
+                <TriangleAlert aria-hidden="true" size={14} />
+                Visitors cannot join calls until a link is set.
+              </p>
+            )}
+          </SettingsRow>
+        </SettingsRows>
       </form>
-    </section>
+    </SettingsSection>
   );
 }

@@ -9,7 +9,7 @@ import {
   History,
   Droplet,
   UserCircle,
-  Menu,
+  MoreHorizontal,
   LogOut,
   ChevronRight,
   Settings,
@@ -19,6 +19,7 @@ import { useState } from 'react';
 import { useAppState } from '../../context/AppContext';
 import { useClientProfile, fullName } from '../../context/ClientProfileContext';
 import { NotificationBell } from '../NotificationBell';
+import { LABEL_CLASS } from '../typography';
 import { BottomSheet } from '../ui/bottom-sheet';
 import { Button } from '../ui/button';
 import { NextCheckinCard } from './NextCheckinCard';
@@ -28,22 +29,33 @@ type NavLink = {
   href: string;
   icon: typeof Activity;
   postMvp?: boolean;
+  tab?: boolean;
 };
 
-const PRIMARY_LINKS: NavLink[] = [
-  { name: 'Dashboard', href: '/portal', icon: Activity },
-  { name: 'My Plan', href: '/portal/plan', icon: Calendar, postMvp: true },
+const NAV_LINKS: NavLink[] = [
+  { name: 'Dashboard', href: '/portal', icon: Activity, tab: true },
+  {
+    name: 'My Plan',
+    href: '/portal/plan',
+    icon: Calendar,
+    postMvp: true,
+    tab: true,
+  },
   {
     name: 'Messages',
     href: '/portal/messages',
     icon: MessageSquare,
     postMvp: true,
+    tab: true,
   },
+  {
+    name: 'Check-ins',
+    href: '/portal/checkins',
+    icon: CalendarCheck,
+    tab: true,
+  },
+  { name: 'Profile', href: '/portal/profile', icon: UserCircle, tab: true },
   { name: 'Cycle', href: '/portal/cycle', icon: Droplet },
-];
-
-const SECONDARY_LINKS: NavLink[] = [
-  { name: 'Check-ins', href: '/portal/checkins', icon: CalendarCheck },
   { name: 'History', href: '/portal/history', icon: History, postMvp: true },
   {
     name: 'Nutrition',
@@ -52,9 +64,15 @@ const SECONDARY_LINKS: NavLink[] = [
     postMvp: true,
   },
   { name: 'Resources', href: '#', icon: PlaySquare },
-  { name: 'Profile', href: '/portal/profile', icon: UserCircle },
   { name: 'Settings', href: '/portal/settings', icon: Settings },
 ];
+
+const MAX_BAR_TABS = 4;
+
+const TAB_CLASS: Record<'active' | 'idle', string> = {
+  active: 'bg-primary-soft text-primary',
+  idle: 'text-text-secondary hover:bg-accent hover:text-accent-foreground',
+};
 
 function isRouteActive(pathname: string, href: string): boolean {
   if (href === '#') return false;
@@ -76,15 +94,15 @@ function ProfileHeader({ onNavigate }: { onNavigate?: () => void }) {
         <img
           src={clientProfile.avatarUrl}
           alt=""
-          className="w-10 h-10 rounded-full object-cover shrink-0 border border-neutral-100"
+          className="w-10 h-10 rounded-full object-cover shrink-0 border border-border-subtle"
         />
       ) : (
-        <div className="w-10 h-10 rounded-full bg-brand/10 text-brand flex items-center justify-center shrink-0">
+        <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
           <User size={20} />
         </div>
       )}
       <div className="min-w-0">
-        <p className="font-semibold text-sm text-text-primary truncate">
+        <p className="text-sm font-medium text-text-primary truncate">
           {displayName}
         </p>
       </div>
@@ -98,9 +116,9 @@ function DesktopSidebar({ links }: { links: NavLink[] }) {
   return (
     <aside
       aria-label="Client portal"
-      className="hidden lg:flex fixed top-0 left-0 bottom-0 w-64 bg-white border-r border-neutral-100 z-40 flex-col"
+      className="hidden lg:flex fixed top-0 left-0 bottom-0 w-64 bg-white border-r border-border-subtle z-40 flex-col"
     >
-      <div className="p-6 mb-4 px-3 border-b border-neutral-50 rounded-field flex items-center justify-between">
+      <div className="p-6 mb-4 px-3 border-b border-border-subtle rounded-field flex items-center justify-between">
         <ProfileHeader />
         <NotificationBell align="left" />
       </div>
@@ -141,19 +159,13 @@ function DesktopSidebar({ links }: { links: NavLink[] }) {
   );
 }
 
-function MobileTopBar({
-  onOpenMore,
-  moreOpen,
-}: {
-  onOpenMore: () => void;
-  moreOpen: boolean;
-}) {
+function MobileTopBar() {
   const { clientProfile } = useClientProfile();
   const displayName = clientProfile ? fullName(clientProfile) : 'Client';
 
   return (
     <div
-      className="lg:hidden fixed top-0 left-0 right-0 bg-white text-text-primary px-3 border-b border-neutral-100 rounded-field z-40 shadow-sm"
+      className="lg:hidden fixed top-0 left-0 right-0 bg-white text-text-primary px-3 border-b border-border-subtle rounded-field z-40 shadow-sm"
       style={{ paddingTop: 'env(safe-area-inset-top)' }}
     >
       <div className="h-14 flex items-center justify-between px-4">
@@ -165,42 +177,41 @@ function MobileTopBar({
             <img
               src={clientProfile.avatarUrl}
               alt=""
-              className="w-9 h-9 rounded-full object-cover shrink-0 border border-neutral-100"
+              className="w-9 h-9 rounded-full object-cover shrink-0 border border-border-subtle"
             />
           ) : (
-            <div className="w-9 h-9 rounded-full bg-brand/10 text-brand flex items-center justify-center shrink-0">
+            <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
               <User size={18} />
             </div>
           )}
-          <span className="font-semibold text-sm truncate">{displayName}</span>
+          <span className="text-sm font-medium truncate">{displayName}</span>
         </Link>
-        <div className="flex items-center gap-2">
-          <NotificationBell />
-          <Button
-            type="button"
-            onClick={onOpenMore}
-            aria-label="Open menu"
-            aria-expanded={moreOpen}
-            aria-controls="portal-more-sheet"
-            variant="ghost"
-            size="icon"
-            className="bg-surface-muted hover:bg-surface-muted-hover text-text-secondary"
-          >
-            <Menu size={20} aria-hidden="true" />
-          </Button>
-        </div>
+        <NotificationBell />
       </div>
     </div>
   );
 }
 
-function MobileTabBar({ links }: { links: NavLink[] }) {
+function MobileTabBar({
+  links,
+  moreLinks,
+  moreOpen,
+  onOpenMore,
+}: {
+  links: NavLink[];
+  moreLinks: NavLink[];
+  moreOpen: boolean;
+  onOpenMore: () => void;
+}) {
   const location = useLocation();
+  const moreActive =
+    moreOpen ||
+    moreLinks.some((link) => isRouteActive(location.pathname, link.href));
 
   return (
     <nav
-      aria-label="Client portal primary"
-      className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-neutral-100 z-40 shadow-[0_-2px_16px_rgba(0,0,0,0.04)]"
+      aria-label="Client portal tabs"
+      className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-border-subtle z-40 shadow-[0_-2px_16px_rgba(0,0,0,0.04)]"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <ul className="flex items-stretch h-16">
@@ -213,9 +224,7 @@ function MobileTabBar({ links }: { links: NavLink[] }) {
                 to={link.href}
                 aria-current={isActive ? 'page' : undefined}
                 className={`flex flex-col items-center justify-center gap-1 h-full w-full transition-colors ${
-                  isActive
-                    ? 'bg-primary-soft text-primary'
-                    : 'text-text-secondary hover:bg-accent hover:text-accent-foreground'
+                  TAB_CLASS[isActive ? 'active' : 'idle']
                 }`}
               >
                 <Icon
@@ -228,6 +237,24 @@ function MobileTabBar({ links }: { links: NavLink[] }) {
             </li>
           );
         })}
+        <li className="flex-1">
+          <button
+            type="button"
+            onClick={onOpenMore}
+            aria-expanded={moreOpen}
+            aria-controls="portal-more-sheet"
+            className={`flex flex-col items-center justify-center gap-1 h-full w-full transition-colors ${
+              TAB_CLASS[moreActive ? 'active' : 'idle']
+            }`}
+          >
+            <MoreHorizontal
+              size={22}
+              strokeWidth={moreActive ? 2.4 : 2}
+              aria-hidden="true"
+            />
+            <span className="text-caption font-semibold">More</span>
+          </button>
+        </li>
       </ul>
     </nav>
   );
@@ -252,7 +279,7 @@ function MoreSheetBody({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-5 pt-6 pb-4 border-b border-neutral-100 rounded-field">
+      <div className="px-5 pt-6 pb-4 border-b border-border-subtle rounded-field">
         <ProfileHeader onNavigate={onClose} />
       </div>
 
@@ -277,9 +304,7 @@ function MoreSheetBody({
                 <span className="text-base font-medium flex-1 text-left">
                   {link.name}
                 </span>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">
-                  Soon
-                </span>
+                <span className={LABEL_CLASS}>Soon</span>
               </button>
             );
           }
@@ -304,7 +329,7 @@ function MoreSheetBody({
               <span className="text-base font-medium flex-1">{link.name}</span>
               <ChevronRight
                 size={18}
-                className="text-neutral-300"
+                className="text-text-secondary"
                 aria-hidden="true"
               />
             </Link>
@@ -317,7 +342,7 @@ function MoreSheetBody({
       </nav>
 
       <div
-        className="border-t border-neutral-100 px-4 py-3"
+        className="border-t border-border-subtle px-4 py-3"
         style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 0.75rem)' }}
       >
         <Button
@@ -339,25 +364,28 @@ export function PortalSidebar() {
   const { appState } = useAppState();
   const includeLink = (link: NavLink) =>
     !link.postMvp || appState.prototypeMode === 'post-mvp';
-  const primaryLinks = PRIMARY_LINKS.filter(includeLink);
-  const secondaryLinks = SECONDARY_LINKS.filter(includeLink);
+  const links = NAV_LINKS.filter(includeLink);
+  const barLinks = links.filter((link) => link.tab).slice(0, MAX_BAR_TABS);
+  const moreLinks = links.filter((link) => !barLinks.includes(link));
 
   return (
     <>
-      <DesktopSidebar links={[...primaryLinks, ...secondaryLinks]} />
-      <MobileTopBar onOpenMore={() => setMoreOpen(true)} moreOpen={moreOpen} />
-      <MobileTabBar links={primaryLinks} />
+      <DesktopSidebar links={links} />
+      <MobileTopBar />
+      <MobileTabBar
+        links={barLinks}
+        moreLinks={moreLinks}
+        moreOpen={moreOpen}
+        onOpenMore={() => setMoreOpen(true)}
+      />
 
       <BottomSheet
         open={moreOpen}
         onOpenChange={setMoreOpen}
-        title="Portal menu"
+        title="More"
         className="h-[90vh] flex flex-col"
       >
-        <MoreSheetBody
-          links={secondaryLinks}
-          onClose={() => setMoreOpen(false)}
-        />
+        <MoreSheetBody links={moreLinks} onClose={() => setMoreOpen(false)} />
       </BottomSheet>
     </>
   );

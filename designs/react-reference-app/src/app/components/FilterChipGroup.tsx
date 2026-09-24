@@ -11,22 +11,22 @@ import { cn } from './ui/utils';
 const CHIP_SURFACE = 'border-control-border-soft bg-card py-2';
 
 const chipVariants = cva(
-  'inline-flex min-h-11 items-center rounded-full border px-4 text-sm text-text-primary outline-none transition-[background-color,border-color,color] duration-150 ease-out',
+  'inline-flex min-h-11 items-center gap-1.5 rounded-full border px-4 text-sm text-text-primary outline-none transition-[background-color,border-color,color] duration-150 ease-out',
   {
     variants: {
       tone: {
-        brand: `${CHIP_SURFACE} data-[state=off]:hover:border-primary data-[state=off]:hover:text-primary data-[state=on]:border-primary data-[state=on]:bg-active-surface data-[state=on]:text-primary-foreground`,
+        primary: `${CHIP_SURFACE} data-[state=off]:hover:border-primary data-[state=off]:hover:text-primary data-[state=on]:border-primary data-[state=on]:bg-active-surface data-[state=on]:text-primary-foreground`,
       },
     },
     defaultVariants: {
-      tone: 'brand',
+      tone: 'primary',
     },
   },
 );
 
 type FilterChipTone = NonNullable<VariantProps<typeof chipVariants>['tone']>;
 
-const FilterChipToneContext = createContext<FilterChipTone>('brand');
+const FilterChipToneContext = createContext<FilterChipTone>('primary');
 
 type FilterChipGroupProps = Omit<
   ComponentPropsWithoutRef<typeof ToggleGroupPrimitive.Root>,
@@ -39,7 +39,7 @@ type FilterChipGroupProps = Omit<
 };
 
 export const FilterChipGroup = forwardRef<HTMLDivElement, FilterChipGroupProps>(
-  ({ className, onValueChange, tone = 'brand', value, ...props }, ref) => (
+  ({ className, onValueChange, tone = 'primary', value, ...props }, ref) => (
     <FilterChipToneContext.Provider value={tone}>
       <ToggleGroupPrimitive.Root
         ref={ref}

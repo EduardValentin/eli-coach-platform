@@ -33,9 +33,14 @@ import {
 } from '../../components/ui/alert-dialog';
 import { BottomSheet } from '../../components/ui/bottom-sheet';
 import { Button } from '../../components/ui/button';
+import { Badge } from '../../components/ui/badge';
 import { RirBadge } from '../../components/workout/RirBadge';
 import { useUnitPreferences } from '../../context/UnitPreferencesContext';
 import { displayWeightValue, weightUnitLabel } from '../../utils/units';
+import { EmptyState } from '../../components/EmptyState';
+import { MetricTile } from '../../components/MetricTile';
+import { LABEL_CLASS, VALUE_LG_CLASS } from '../../components/typography';
+import { cn } from '../../components/ui/utils';
 
 const DAY_NAMES = [
   'Monday',
@@ -190,25 +195,22 @@ export function WorkoutViewer() {
   // Error state
   if (!plan || !week || !day) {
     return (
-      <div className="fixed inset-0 bg-surface-page flex flex-col items-center justify-center text-center px-6">
-        <div className="w-16 h-16 bg-neutral-100 rounded-full flex items-center justify-center mb-4">
-          <Activity size={28} className="text-text-secondary" />
-        </div>
-        <h2 className="text-xl font-serif font-bold text-text-primary mb-2">
-          Workout Not Found
-        </h2>
-        <p className="text-text-secondary text-sm mb-6 max-w-xs">
-          We couldn't find this workout. It may have been removed or the link is
-          incorrect.
-        </p>
-        <Button
-          onClick={() => navigate('/portal/plan')}
-          variant="default"
-          size="lg"
-        >
-          <ArrowLeft size={16} />
-          Back to Plan
-        </Button>
+      <div className="fixed inset-0 bg-surface-page flex flex-col items-center justify-center px-6">
+        <EmptyState
+          icon={Activity}
+          title="Workout not found"
+          description="We couldn't find this workout. It may have been removed or the link is incorrect."
+          action={
+            <Button
+              onClick={() => navigate('/portal/plan')}
+              variant="primary"
+              size="md"
+            >
+              <ArrowLeft size={16} />
+              Back to Plan
+            </Button>
+          }
+        />
       </div>
     );
   }
@@ -232,13 +234,13 @@ export function WorkoutViewer() {
   return (
     <div className="fixed inset-0 bg-surface-page flex flex-col">
       {/* Top bar */}
-      <div className="shrink-0 h-14 lg:h-16 bg-white border-b border-neutral-200 rounded-field flex items-center justify-between gap-2 px-4">
+      <div className="shrink-0 h-14 lg:h-16 bg-card border-b border-border rounded-field flex items-center justify-between gap-2 px-4">
         <Button
           type="button"
           onClick={() => navigate('/portal/plan')}
           aria-label="Back to plan"
           variant="ghost"
-          size="icon"
+          size="icon-sm"
           className="lg:size-11"
         >
           <ArrowLeft size={20} className="text-text-primary lg:size-6" />
@@ -247,9 +249,9 @@ export function WorkoutViewer() {
           <span className="text-sm lg:text-base font-semibold text-text-primary truncate">
             {DAY_NAMES[day.dayOfWeek]} &mdash; {day.type}
           </span>
-          <span className="text-[10px] lg:text-xs font-bold uppercase tracking-wider bg-brand/10 text-brand px-2 py-1 rounded-full shrink-0">
+          <Badge className="border-transparent bg-primary-soft text-primary shrink-0">
             W{week.order}
-          </span>
+          </Badge>
         </div>
         <Button
           type="button"
@@ -258,7 +260,7 @@ export function WorkoutViewer() {
           aria-haspopup="dialog"
           aria-expanded={optionsOpen}
           variant="ghost"
-          size="icon"
+          size="icon-sm"
           className="lg:size-11"
         >
           <MoreVertical size={22} className="text-text-primary lg:size-6" />
@@ -278,21 +280,21 @@ export function WorkoutViewer() {
               handleCompletePress();
             }}
             variant="ghost"
-            size="lg"
+            size="md"
             className="w-full h-14 justify-start gap-4 px-4 rounded-card text-left text-base font-medium"
           >
-            <span className="w-10 h-10 shrink-0 flex items-center justify-center rounded-full bg-brand/10">
-              <Flag size={20} className="text-brand" />
+            <span className="w-10 h-10 shrink-0 flex items-center justify-center rounded-full bg-primary-soft">
+              <Flag size={20} className="text-primary" />
             </span>
             <span className="flex-1">End workout</span>
           </Button>
         </div>
-        <div className="px-4 pt-2 pb-4 border-t border-neutral-100 mt-1">
+        <div className="px-4 pt-2 pb-4 border-t border-border-subtle mt-1">
           <Button
             type="button"
             onClick={() => setOptionsOpen(false)}
             variant="ghost"
-            size="default"
+            size="sm"
             className="w-full h-12 rounded-control text-sm font-semibold"
           >
             Cancel
@@ -305,14 +307,14 @@ export function WorkoutViewer() {
         <span className="text-xs lg:text-sm font-medium text-text-secondary">
           {completedSets}/{totalSets} sets
         </span>
-        <div className="flex-1 h-1.5 lg:h-2 bg-neutral-200 rounded-full overflow-hidden">
+        <div className="flex-1 h-1.5 lg:h-2 bg-surface-quiet rounded-full overflow-hidden">
           <motion.div
-            className="h-full bg-brand rounded-full"
+            className="h-full bg-primary rounded-full"
             animate={{ width: `${progressPercent}%` }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
           />
         </div>
-        <span className="text-xs lg:text-sm font-medium text-brand">
+        <span className="text-xs lg:text-sm font-medium text-primary">
           {Math.round(progressPercent)}%
         </span>
       </div>
@@ -404,8 +406,8 @@ export function WorkoutViewer() {
             <Button
               type="button"
               onClick={handleCompletePress}
-              variant="default"
-              size="lg"
+              variant="primary"
+              size="md"
               className="w-full lg:text-lg"
             >
               <Trophy size={20} className="lg:size-6" aria-hidden="true" />
@@ -523,20 +525,20 @@ function WorkoutSummary({
   return (
     <div className="fixed inset-0 bg-surface-page flex flex-col overflow-y-auto">
       {/* Header */}
-      <div className="shrink-0 pt-12 pb-6 px-6 text-center bg-gradient-to-b from-brand/5 to-transparent">
+      <div className="shrink-0 pt-12 pb-6 px-6 text-center bg-gradient-to-b from-primary-soft to-transparent">
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ type: 'spring', stiffness: 200, delay: 0.1 }}
-          className="w-16 h-16 lg:w-20 lg:h-20 bg-brand rounded-full flex items-center justify-center mx-auto mb-4"
+          className="w-16 h-16 lg:w-20 lg:h-20 bg-primary rounded-full flex items-center justify-center mx-auto mb-4"
         >
-          <Trophy size={28} className="text-white lg:size-9" />
+          <Trophy size={28} className="text-primary-foreground lg:size-9" />
         </motion.div>
         <motion.h1
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="text-2xl lg:text-3xl font-serif font-bold text-text-primary mb-1"
+          className="text-2xl lg:text-3xl font-serif text-text-primary mb-1"
         >
           Great work!
         </motion.h1>
@@ -549,67 +551,52 @@ function WorkoutSummary({
       {/* Stats grid */}
       <div className="px-4 pb-4 w-full max-w-2xl mx-auto">
         <div className="grid grid-cols-3 gap-3 lg:gap-4">
-          <div className="bg-white rounded-control p-4 lg:p-5 text-center border border-neutral-100">
+          <div className="bg-card rounded-control p-4 lg:p-5 text-center border border-border">
             <Clock
               size={18}
               className="text-text-secondary mx-auto mb-1.5 lg:size-6"
             />
-            <p className="text-lg lg:text-2xl font-semibold text-text-primary">
-              {durationMin}
-            </p>
-            <p className="text-[10px] lg:text-xs uppercase tracking-widest text-text-secondary font-bold">
-              min
-            </p>
+            <p className={cn(VALUE_LG_CLASS, 'tabular-nums')}>{durationMin}</p>
+            <p className={LABEL_CLASS}>min</p>
           </div>
-          <div className="bg-white rounded-control p-4 lg:p-5 text-center border border-neutral-100">
+          <div className="bg-card rounded-control p-4 lg:p-5 text-center border border-border">
             <Dumbbell
               size={18}
-              className="text-brand mx-auto mb-1.5 lg:size-6"
+              className="text-primary mx-auto mb-1.5 lg:size-6"
             />
-            <p className="text-lg lg:text-2xl font-semibold text-text-primary">
+            <p className={cn(VALUE_LG_CLASS, 'tabular-nums')}>
               {displayWeightValue(totalVolume, weightUnit, 0).toLocaleString()}
             </p>
-            <p className="text-[10px] lg:text-xs uppercase tracking-widest text-text-secondary font-bold">
-              {weightUnitLabel(weightUnit)} vol
-            </p>
+            <p className={LABEL_CLASS}>{weightUnitLabel(weightUnit)} vol</p>
           </div>
-          <div className="bg-white rounded-control p-4 lg:p-5 text-center border border-neutral-100">
+          <div className="bg-card rounded-control p-4 lg:p-5 text-center border border-border">
             <Flame
               size={18}
               className="text-brand-secondary mx-auto mb-1.5 lg:size-6"
             />
-            <p className="text-lg lg:text-2xl font-semibold text-text-primary">
+            <p className={cn(VALUE_LG_CLASS, 'tabular-nums')}>
               {workout.exercises.length}
             </p>
-            <p className="text-[10px] lg:text-xs uppercase tracking-widest text-text-secondary font-bold">
-              exercises
-            </p>
+            <p className={LABEL_CLASS}>exercises</p>
           </div>
         </div>
       </div>
 
       {/* Muscle groups */}
       <div className="px-4 pb-4 w-full max-w-2xl mx-auto">
-        <h3 className="text-xs lg:text-sm font-bold uppercase tracking-widest text-text-secondary mb-3">
-          Muscles Worked
-        </h3>
+        <h3 className={cn(LABEL_CLASS, 'mb-3')}>Muscles Worked</h3>
         <div className="flex flex-wrap gap-2">
           {sortedMuscles.map(([muscle, count]) => (
-            <span
-              key={muscle}
-              className="text-xs lg:text-sm bg-brand-secondary/10 text-brand-secondary rounded-full px-3 py-1.5 font-medium"
-            >
+            <Badge key={muscle} variant="brand-secondary">
               {muscle} ({count})
-            </span>
+            </Badge>
           ))}
         </div>
       </div>
 
       {/* Exercise breakdown */}
       <div className="px-4 pb-8 w-full max-w-2xl mx-auto">
-        <h3 className="text-xs lg:text-sm font-bold uppercase tracking-widest text-text-secondary mb-3">
-          Exercise Breakdown
-        </h3>
+        <h3 className={cn(LABEL_CLASS, 'mb-3')}>Exercise Breakdown</h3>
         <div className="space-y-3">
           {workout.exercises.map((exLog, i) => {
             const ex = allExercises.find((e) => e.id === exLog.exerciseId);
@@ -621,7 +608,7 @@ function WorkoutSummary({
             return (
               <div
                 key={exLog.planExerciseId}
-                className="bg-white rounded-control border border-neutral-100 overflow-hidden"
+                className="bg-card rounded-control border border-border overflow-hidden"
               >
                 {/* Header */}
                 <div className="p-4 pb-3">
@@ -629,7 +616,7 @@ function WorkoutSummary({
                     <span className="font-semibold text-sm lg:text-base text-text-primary">
                       {ex.name}
                     </span>
-                    <span className="text-[10px] lg:text-xs text-text-secondary inline-flex items-center gap-1.5">
+                    <span className="text-xs text-text-secondary inline-flex items-center gap-1.5">
                       {planEx?.sets}x{planEx?.reps}
                       {planEx?.rir != null && <RirBadge value={planEx.rir} />}
                     </span>
@@ -640,14 +627,14 @@ function WorkoutSummary({
                         size={10}
                         className="text-brand-secondary lg:size-3"
                       />
-                      <span className="text-[10px] lg:text-xs text-brand-secondary font-medium">
+                      <span className="text-xs text-brand-secondary font-medium">
                         Swapped from {originalEx.name}
                       </span>
                     </div>
                   )}
                 </div>
                 {/* Sets */}
-                <div className="border-t border-neutral-100">
+                <div className="border-t border-border-subtle">
                   {exLog.sets
                     .filter((s) => s.completed)
                     .map((s) => {
@@ -661,31 +648,33 @@ function WorkoutSummary({
                       return (
                         <div
                           key={s.setNumber}
-                          className={`flex items-center px-4 py-2 lg:py-2.5 text-xs lg:text-sm border-t border-neutral-50 first:border-t-0 ${
+                          className={`flex items-center px-4 py-2 lg:py-2.5 text-xs lg:text-sm border-t border-border-subtle first:border-t-0 ${
                             isUnder
-                              ? 'bg-brand/[0.03]'
+                              ? 'bg-primary-soft'
                               : isOver
-                                ? 'bg-brand-secondary/[0.03]'
+                                ? 'bg-brand-secondary-soft'
                                 : ''
                           }`}
                         >
-                          <span className="w-8 text-neutral-300 font-bold">
+                          <span className="w-8 font-medium text-text-secondary">
                             {s.setNumber}
                           </span>
                           <span className="text-text-secondary flex-1">
                             {planEx?.reps} reps
                           </span>
-                          <span className="font-semibold text-text-primary mr-1">
+                          <span className="font-medium text-text-primary mr-1">
                             {s.actualWeight != null
                               ? displayWeightValue(s.actualWeight, weightUnit)
                               : 0}
                             {weightUnitLabel(weightUnit)}
                           </span>
-                          <span className="text-neutral-300 mr-1">&times;</span>
+                          <span className="text-text-secondary mr-1">
+                            &times;
+                          </span>
                           <span
-                            className={`font-bold ${
+                            className={`font-medium ${
                               isUnder
-                                ? 'text-brand'
+                                ? 'text-primary'
                                 : isOver
                                   ? 'text-brand-secondary'
                                   : 'text-text-primary'
@@ -694,15 +683,16 @@ function WorkoutSummary({
                             {s.actualReps}
                           </span>
                           {repsDiff !== null && repsDiff !== 0 && (
-                            <span
-                              className={`ml-2 text-[9px] lg:text-caption font-bold rounded-full px-1.5 py-0.5 ${
+                            <Badge
+                              className={cn(
+                                'ml-2 border-transparent',
                                 isUnder
-                                  ? 'bg-brand/10 text-brand'
-                                  : 'bg-brand-secondary/10 text-brand-secondary'
-                              }`}
+                                  ? 'bg-primary-soft text-primary'
+                                  : 'bg-brand-secondary-soft text-brand-secondary',
+                              )}
                             >
                               {repsDiff > 0 ? `+${repsDiff}` : repsDiff}
-                            </span>
+                            </Badge>
                           )}
                         </div>
                       );
@@ -718,8 +708,8 @@ function WorkoutSummary({
       <div className="px-4 pb-10 w-full max-w-2xl mx-auto">
         <Button
           onClick={() => navigate('/portal/plan')}
-          variant="default"
-          size="lg"
+          variant="primary"
+          size="md"
           className="w-full lg:text-base"
         >
           Back to Plan
@@ -800,9 +790,9 @@ function IncompleteWorkoutDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent className="sm:max-w-md rounded-card p-0 overflow-hidden">
         {/* Warning header */}
-        <div className="bg-brand/5 px-6 py-5 flex items-center gap-3">
-          <div className="w-10 h-10 bg-brand/10 rounded-full flex items-center justify-center shrink-0">
-            <AlertTriangle size={20} className="text-brand" />
+        <div className="bg-primary-soft px-6 py-5 flex items-center gap-3">
+          <div className="w-10 h-10 bg-primary-soft rounded-full flex items-center justify-center shrink-0">
+            <AlertTriangle size={20} className="text-primary" />
           </div>
           <AlertDialogHeader className="p-0 space-y-1 text-left sm:text-left">
             <AlertDialogTitle className="text-text-primary text-base">
@@ -818,57 +808,46 @@ function IncompleteWorkoutDialog({
         <div className="px-6 py-4 space-y-4">
           {/* Partial stats */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-neutral-50 rounded-control p-3 text-center">
-              <Dumbbell size={16} className="text-brand mx-auto mb-1" />
-              <p className="text-base font-semibold text-text-primary">
-                {displayWeightValue(
-                  partialVolume,
-                  weightUnit,
-                  0,
-                ).toLocaleString()}
-              </p>
-              <p className="text-[10px] uppercase tracking-widest text-text-secondary font-bold">
-                {weightUnitLabel(weightUnit)} logged
-              </p>
-            </div>
-            <div className="bg-neutral-50 rounded-control p-3 text-center">
-              <Flame size={16} className="text-brand-secondary mx-auto mb-1" />
-              <p className="text-base font-semibold text-text-primary">
-                {sortedMuscles.length}
-              </p>
-              <p className="text-[10px] uppercase tracking-widest text-text-secondary font-bold">
-                muscle groups
-              </p>
-            </div>
+            <MetricTile
+              tone="primary"
+              icon={<Dumbbell size={16} />}
+              label={`${weightUnitLabel(weightUnit)} logged`}
+              value={displayWeightValue(
+                partialVolume,
+                weightUnit,
+                0,
+              ).toLocaleString()}
+            />
+            <MetricTile
+              tone="brand-secondary"
+              icon={<Flame size={16} />}
+              label="Muscle groups"
+              value={sortedMuscles.length}
+            />
           </div>
 
           {/* Muscle pills */}
           {sortedMuscles.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {sortedMuscles.map(([muscle]) => (
-                <span
-                  key={muscle}
-                  className="text-[10px] bg-brand-secondary/10 text-brand-secondary rounded-full px-2 py-0.5 font-medium"
-                >
+                <Badge key={muscle} variant="brand-secondary">
                   {muscle}
-                </span>
+                </Badge>
               ))}
             </div>
           )}
 
           {/* Missing exercises list */}
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-2">
-              Unlogged
-            </p>
+            <p className={cn(LABEL_CLASS, 'mb-2')}>Unlogged</p>
             <div className="space-y-1.5">
               {incomplete.map(({ name, missing, total }) => (
                 <div
                   key={name}
-                  className="flex items-center justify-between text-xs bg-brand/[0.03] rounded-compact px-3 py-2"
+                  className="flex items-center justify-between text-xs bg-primary-soft rounded-compact px-3 py-2"
                 >
                   <span className="font-medium text-text-primary">{name}</span>
-                  <span className="text-brand font-semibold">
+                  <span className="text-primary font-medium">
                     {missing}/{total} sets
                   </span>
                 </div>
@@ -878,7 +857,7 @@ function IncompleteWorkoutDialog({
         </div>
 
         <AlertDialogFooter className="flex-row gap-3 px-6 pb-6 pt-2">
-          <AlertDialogCancel className="flex-1 rounded-control border-neutral-200 text-text-primary hover:bg-neutral-50 font-semibold">
+          <AlertDialogCancel className="flex-1 rounded-control border-border text-text-primary hover:bg-surface-quiet font-semibold">
             Go Back
           </AlertDialogCancel>
           <AlertDialogAction

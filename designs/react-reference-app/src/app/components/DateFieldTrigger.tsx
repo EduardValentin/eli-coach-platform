@@ -3,7 +3,7 @@ import { CalendarDays } from 'lucide-react';
 import { cn } from './ui/utils';
 
 const TRIGGER_CLASS =
-  'flex h-12 w-full items-center justify-between gap-2 rounded-field border border-control-border-soft bg-surface-quiet/50 px-3 text-left text-base transition-[color,box-shadow] outline-none md:text-sm disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive';
+  'flex h-12 w-full items-center justify-between gap-2 rounded-field border border-control-border-soft bg-surface-base px-3 text-left text-base transition-[color,box-shadow] outline-none md:text-sm disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive';
 
 // Safari's default Tab order visits text fields only and skips buttons unless
 // they carry an explicit tabindex; a control that stands in for a form field

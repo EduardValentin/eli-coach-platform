@@ -125,12 +125,12 @@ export function TimeSlotButton({ label, isSelected, isBooked = false, onSelect }
         isBooked
           ? 'bg-surface-base border-brand/30 text-brand pointer-events-none opacity-50'
           : isSelected
-            ? 'bg-surface-strong border-surface-strong text-white shadow-card'
+            ? 'bg-primary border-primary text-primary-foreground shadow-card'
             : 'bg-surface-base border-brand/30 text-brand hover:border-brand hover:bg-brand/5'
       }`}
     >
       <span className={isBooked ? 'line-through' : ''}>{label}</span>
-      {isBooked && <span className="text-[10px] uppercase tracking-wider ml-1">Booked</span>}
+      {isBooked && <span className="ml-1 text-xs uppercase tracking-label">Booked</span>}
     </button>
   );
 }

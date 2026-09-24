@@ -7,6 +7,9 @@ import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { WeekSwitcher } from '../../components/workout/WeekSwitcher';
 import { PlanExerciseRow } from '../../components/workout/PlanExerciseRow';
 import { Button } from '../../components/ui/button';
+import { EmptyState } from '../../components/EmptyState';
+import { LABEL_CLASS } from '../../components/typography';
+import { cn } from '../../components/ui/utils';
 
 const DAY_NAMES = [
   'Monday',
@@ -23,7 +26,7 @@ type DayType = 'Strength' | 'Hypertrophy' | 'Conditioning' | 'Rest' | string;
 const DAY_TYPE_ACCENT: Record<string, string> = {
   Strength: 'text-training-strength',
   Hypertrophy: 'text-training-hypertrophy',
-  Conditioning: 'text-blue-600',
+  Conditioning: 'text-training-lighter',
 };
 
 export function ClientPlan() {
@@ -42,17 +45,12 @@ export function ClientPlan() {
 
   if (!clientActivePlan) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
-        <div className="w-20 h-20 bg-neutral-100 rounded-full flex items-center justify-center mb-4">
-          <CalendarDays size={32} className="text-text-secondary" />
-        </div>
-        <h1 className="text-2xl font-serif font-bold text-text-primary mb-2">
-          No Active Plan
-        </h1>
-        <p className="text-text-secondary max-w-md">
-          You don't have an active training plan assigned right now. Your coach
-          will assign one soon.
-        </p>
+      <div className="flex min-h-[60vh] flex-col items-center justify-center">
+        <EmptyState
+          icon={CalendarDays}
+          title="No active plan"
+          description="You don't have an active training plan assigned right now. Your coach will assign one soon."
+        />
       </div>
     );
   }
@@ -89,9 +87,9 @@ export function ClientPlan() {
               aria-hidden="true"
             />
             <span>
-              <span className="font-semibold text-text-primary">RIR</span> =
-              reps in reserve — how many more reps you could do at the end of a
-              set before reaching failure.
+              <span className="font-medium text-text-primary">RIR</span> = reps
+              in reserve — how many more reps you could do at the end of a set
+              before reaching failure.
             </span>
           </p>
         </div>
@@ -139,12 +137,15 @@ export function ClientPlan() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: dIdx * 0.04 }}
               aria-label={`${DAY_NAMES[dIdx]} — ${day.type}`}
-              className="bg-white rounded-card border border-neutral-200 overflow-hidden"
+              className="bg-card rounded-card border border-border overflow-hidden"
             >
-              <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-b border-neutral-100 rounded-field flex items-center justify-between gap-3">
+              <div className="px-4 sm:px-5 py-3.5 sm:py-4 border-b border-border-subtle rounded-field flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p
-                    className={`text-[10px] font-bold uppercase tracking-widest ${DAY_TYPE_ACCENT[day.type as DayType] ?? 'text-text-secondary'}`}
+                    className={cn(
+                      LABEL_CLASS,
+                      DAY_TYPE_ACCENT[day.type as DayType],
+                    )}
                   >
                     {day.type}
                   </p>
@@ -229,11 +230,9 @@ function RestDayDivider({ dayName }: { dayName: string }) {
       role="separator"
       aria-label={`${dayName} rest day`}
     >
-      <span className="flex-1 h-px bg-neutral-200" aria-hidden="true" />
-      <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-text-secondary">
-        {dayName} · Rest
-      </span>
-      <span className="flex-1 h-px bg-neutral-200" aria-hidden="true" />
+      <span className="flex-1 h-px bg-border-subtle" aria-hidden="true" />
+      <span className={LABEL_CLASS}>{dayName} · Rest</span>
+      <span className="flex-1 h-px bg-border-subtle" aria-hidden="true" />
     </div>
   );
 }
@@ -245,9 +244,7 @@ function SupersetGroup({ children }: { children: React.ReactNode }) {
         aria-hidden="true"
         className="absolute left-0 top-1 bottom-1 w-[3px] rounded-full bg-brand-secondary/60"
       />
-      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-brand-secondary mb-1.5">
-        Superset
-      </p>
+      <p className={cn(LABEL_CLASS, 'text-brand-secondary mb-1.5')}>Superset</p>
       <div className="space-y-2">{children}</div>
     </div>
   );

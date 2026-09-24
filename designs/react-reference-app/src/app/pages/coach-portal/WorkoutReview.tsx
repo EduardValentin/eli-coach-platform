@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import {
+  Activity,
   ArrowLeft,
   ArrowLeftRight,
   ArrowRight,
@@ -16,7 +17,12 @@ import { useUnitPreferences } from '../../context/UnitPreferencesContext';
 import { formatVolume, formatLoad } from '../../utils/units';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { MetricTile } from '../../components/MetricTile';
+import { EmptyState } from '../../components/EmptyState';
+import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
+import { cardVariants } from '../../components/ui/card';
+import { cn } from '../../components/ui/utils';
+import { LABEL_CLASS } from '../../components/typography';
 
 const DAY_NAMES = [
   'Monday',
@@ -38,7 +44,7 @@ const MOCK_CLIENTS: Record<string, string> = {
 };
 
 const PIE_COLORS = [
-  'var(--brand)',
+  'var(--primary)',
   'var(--brand-secondary)',
   'var(--text-primary)',
   'var(--muted-foreground)',
@@ -97,21 +103,20 @@ export function WorkoutReview() {
 
   if (!workout) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-center">
-        <h2 className="text-xl font-serif font-bold text-text-primary mb-2">
-          Workout Not Found
-        </h2>
-        <p className="text-text-secondary text-sm mb-6">
-          This workout log doesn't exist.
-        </p>
-        <Button
-          onClick={() => navigate(`/coach/clients/${clientId}`)}
-          variant="default"
-          size="lg"
-        >
-          <ArrowLeft size={16} /> Back to Client
-        </Button>
-      </div>
+      <EmptyState
+        icon={Activity}
+        title="Workout not found"
+        description="This workout log doesn't exist."
+        action={
+          <Button
+            onClick={() => navigate(`/coach/clients/${clientId}`)}
+            variant="primary"
+            size="md"
+          >
+            <ArrowLeft size={16} /> Back to Client
+          </Button>
+        }
+      />
     );
   }
 
@@ -182,7 +187,7 @@ export function WorkoutReview() {
       <button
         type="button"
         onClick={() => navigate(`/coach/clients/${clientId}`)}
-        className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-text-secondary hover:text-text-primary transition-colors"
+        className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors"
       >
         <ArrowLeft size={16} aria-hidden="true" /> Back to {clientName}
       </button>
@@ -201,7 +206,7 @@ export function WorkoutReview() {
           value={`${durationMin} min`}
         />
         <MetricTile
-          tone="brand"
+          tone="primary"
           icon={<Dumbbell size={16} />}
           label="Volume"
           value={formatVolume(workout.totalVolume || 0, weightUnit)}
@@ -224,10 +229,8 @@ export function WorkoutReview() {
       {/* ── Analytics Section ────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-8">
         {/* Volume per exercise — horizontal bar chart */}
-        <div className="bg-white rounded-card border border-neutral-100 p-5">
-          <h3 className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-4">
-            Volume per Exercise
-          </h3>
+        <div className={cn(cardVariants({ variant: 'card' }), 'p-5')}>
+          <h3 className={cn(LABEL_CLASS, 'mb-4')}>Volume per Exercise</h3>
           <div className="space-y-3">
             {(() => {
               const maxVol = Math.max(
@@ -244,9 +247,9 @@ export function WorkoutReview() {
                       {formatVolume(d.volume, weightUnit)}
                     </span>
                   </div>
-                  <div className="h-5 bg-neutral-100 rounded-field overflow-hidden">
+                  <div className="h-5 bg-surface-quiet rounded-field overflow-hidden">
                     <div
-                      className="h-full bg-brand rounded-field transition-all"
+                      className="h-full bg-primary rounded-field transition-all"
                       style={{ width: `${(d.volume / maxVol) * 100}%` }}
                     />
                   </div>
@@ -257,10 +260,8 @@ export function WorkoutReview() {
         </div>
 
         {/* Muscle group volume split — legend-only (no pie dependency) */}
-        <div className="bg-white rounded-card border border-neutral-100 p-5">
-          <h3 className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-4">
-            Muscle Group Volume
-          </h3>
+        <div className={cn(cardVariants({ variant: 'card' }), 'p-5')}>
+          <h3 className={cn(LABEL_CLASS, 'mb-4')}>Muscle Group Volume</h3>
           {(() => {
             const totalMuscleVol =
               muscleVolumeData.reduce((t, d) => t + d.value, 0) || 1;
@@ -301,7 +302,7 @@ export function WorkoutReview() {
                         <span className="text-xs text-text-secondary">
                           {formatVolume(d.value, weightUnit)}
                         </span>
-                        <span className="text-[10px] text-neutral-300">
+                        <span className="text-xs text-text-secondary">
                           {Math.round((d.value / totalMuscleVol) * 100)}%
                         </span>
                       </div>
@@ -315,24 +316,24 @@ export function WorkoutReview() {
       </div>
 
       {/* ── Estimated Rep Maxes & Fatigue ────────────────────────── */}
-      <div className="bg-white rounded-card border border-neutral-100 p-5 mb-8">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-4">
+      <div className={cn(cardVariants({ variant: 'card' }), 'p-5 mb-8')}>
+        <h3 className={cn(LABEL_CLASS, 'mb-4')}>
           Estimated Rep Maxes & Fatigue
         </h3>
-        <p className="text-[10px] text-text-secondary mb-4">
+        <p className="text-xs text-text-secondary mb-4">
           Estimated from the heaviest set using the Epley formula
         </p>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="text-[9px] uppercase tracking-widest text-text-secondary font-bold px-3 border-b border-neutral-100 rounded-field">
-                <th className="pb-3 pr-4 font-bold">Exercise</th>
-                <th className="pb-3 pr-3 font-bold text-center">Best Set</th>
-                <th className="pb-3 pr-3 font-bold text-center">Est. 1RM</th>
-                <th className="pb-3 pr-3 font-bold text-center">Est. 2RM</th>
-                <th className="pb-3 pr-3 font-bold text-center">Est. 3RM</th>
-                <th className="pb-3 font-bold text-center">Fatigue</th>
+              <tr className={cn(LABEL_CLASS, 'border-b border-border-subtle')}>
+                <th className="pb-3 pr-4">Exercise</th>
+                <th className="pb-3 pr-3 text-center">Best Set</th>
+                <th className="pb-3 pr-3 text-center">Est. 1RM</th>
+                <th className="pb-3 pr-3 text-center">Est. 2RM</th>
+                <th className="pb-3 pr-3 text-center">Est. 3RM</th>
+                <th className="pb-3 text-center">Fatigue</th>
               </tr>
             </thead>
             <tbody>
@@ -350,7 +351,7 @@ export function WorkoutReview() {
                 return (
                   <tr
                     key={exLog.planExerciseId}
-                    className="px-3 border-b border-neutral-50 rounded-field last:border-0"
+                    className="px-3 border-b border-border-subtle last:border-0"
                   >
                     <td className="py-3 pr-4">
                       <span className="text-sm font-medium text-text-primary">
@@ -358,34 +359,34 @@ export function WorkoutReview() {
                       </span>
                     </td>
                     <td className="py-3 pr-3 text-center">
-                      <span className="text-sm font-semibold text-text-primary">
+                      <span className="text-sm font-medium text-text-primary">
                         {formatLoad(best.weight, weightUnit)}
                       </span>
-                      <span className="text-[10px] text-text-secondary ml-1">
+                      <span className="text-xs text-text-secondary ml-1">
                         x{best.reps}
                       </span>
                     </td>
                     <td className="py-3 pr-3 text-center">
-                      <span className="text-sm font-bold text-brand">
+                      <span className="text-sm font-medium text-primary">
                         {formatLoad(e1RM, weightUnit)}
                       </span>
                     </td>
                     <td className="py-3 pr-3 text-center">
-                      <span className="text-sm font-semibold text-text-primary">
+                      <span className="text-sm font-medium text-text-primary">
                         {formatLoad(e2RM, weightUnit)}
                       </span>
                     </td>
                     <td className="py-3 pr-3 text-center">
-                      <span className="text-sm font-semibold text-text-primary">
+                      <span className="text-sm font-medium text-text-primary">
                         {formatLoad(e3RM, weightUnit)}
                       </span>
                     </td>
                     <td className="py-3 text-center">
                       {fatigue !== null ? (
                         <span
-                          className={`text-sm font-bold ${
+                          className={`text-sm font-medium ${
                             fatigue > 25
-                              ? 'text-brand'
+                              ? 'text-primary'
                               : fatigue > 10
                                 ? 'text-text-secondary'
                                 : 'text-brand-secondary'
@@ -394,7 +395,7 @@ export function WorkoutReview() {
                           {fatigue > 0 ? `-${fatigue}%` : `${fatigue}%`}
                         </span>
                       ) : (
-                        <span className="text-xs text-neutral-300">--</span>
+                        <span className="text-xs text-text-secondary">--</span>
                       )}
                     </td>
                   </tr>
@@ -403,16 +404,14 @@ export function WorkoutReview() {
             </tbody>
           </table>
         </div>
-        <p className="text-[9px] text-neutral-300 mt-3">
+        <p className="text-xs text-text-secondary mt-3">
           Fatigue = % rep drop from first to last set. Under 10% = well managed.
           Over 25% = may need longer rest or lighter load.
         </p>
       </div>
 
       {/* ── Exercise detail cards (existing) ─────────────────────── */}
-      <h2 className="text-sm font-bold uppercase tracking-widest text-text-secondary mb-4">
-        Set-by-Set Breakdown
-      </h2>
+      <h2 className={cn(LABEL_CLASS, 'mb-4')}>Set-by-Set Breakdown</h2>
       <div className="space-y-5">
         {workout.exercises.map((exLog, i) => {
           const ex = exercises.find((e) => e.id === exLog.exerciseId);
@@ -434,7 +433,10 @@ export function WorkoutReview() {
           return (
             <div
               key={exLog.planExerciseId}
-              className="bg-white rounded-card border border-neutral-100 overflow-hidden"
+              className={cn(
+                cardVariants({ variant: 'card' }),
+                'overflow-hidden',
+              )}
             >
               {/* Exercise header */}
               <div className="p-5 pb-4">
@@ -445,37 +447,29 @@ export function WorkoutReview() {
                     </h3>
                     <div className="flex flex-wrap gap-1 mt-1.5">
                       {ex.equipment.map((eq) => (
-                        <span
-                          key={eq}
-                          className="text-[10px] bg-neutral-100 text-text-secondary rounded-full px-2 py-0.5"
-                        >
+                        <Badge key={eq} variant="muted">
                           {eq}
-                        </span>
+                        </Badge>
                       ))}
                       {ex.primaryMuscles.map((m) => (
-                        <span
-                          key={m}
-                          className="text-[10px] bg-brand-secondary/10 text-brand-secondary rounded-full px-2 py-0.5"
-                        >
+                        <Badge key={m} variant="brand-secondary">
                           {m}
-                        </span>
+                        </Badge>
                       ))}
                     </div>
                   </div>
                   <div className="shrink-0 text-right">
-                    <span className="text-[10px] text-text-secondary font-bold uppercase tracking-widest">
-                      Prescribed
-                    </span>
+                    <span className={LABEL_CLASS}>Prescribed</span>
                     <p className="text-xs text-text-secondary mt-0.5 inline-flex items-center gap-1.5 justify-end">
                       <span>
                         {planEx?.sets}x{planEx?.reps}
                       </span>
-                      <span className="text-neutral-300">&middot;</span>
+                      <span className="text-text-secondary">&middot;</span>
                       <span>RIR</span>
                       {planEx?.rir != null && <RirBadge value={planEx.rir} />}
                     </p>
                     {prescribedRest && (
-                      <p className="text-[10px] text-text-secondary">
+                      <p className="text-xs text-text-secondary">
                         {prescribedRest}s rest
                       </p>
                     )}
@@ -489,8 +483,13 @@ export function WorkoutReview() {
               )}
 
               {/* Set-by-set comparison */}
-              <div className="border-t border-neutral-100">
-                <div className="grid grid-cols-[2.5rem_1fr_1fr_4rem] gap-2 px-5 py-2.5 bg-neutral-50/80 text-[9px] uppercase tracking-widest text-text-secondary font-bold">
+              <div className="border-t border-border-subtle">
+                <div
+                  className={cn(
+                    LABEL_CLASS,
+                    'grid grid-cols-[2.5rem_1fr_1fr_4rem] gap-2 px-5 py-2.5 bg-surface-quiet',
+                  )}
+                >
                   <span>Set</span>
                   <span>Prescribed</span>
                   <span>Logged</span>
@@ -518,22 +517,25 @@ export function WorkoutReview() {
                   return (
                     <div
                       key={s.setNumber}
-                      className={`grid grid-cols-[2.5rem_1fr_1fr_4rem] gap-2 px-5 py-3 items-center border-t border-neutral-50 ${
+                      className={`grid grid-cols-[2.5rem_1fr_1fr_4rem] gap-2 px-5 py-3 items-center border-t border-border-subtle ${
                         isRepsUnder
-                          ? 'bg-brand/[0.03]'
+                          ? 'bg-primary-soft'
                           : isRepsOver
-                            ? 'bg-brand-secondary/[0.03]'
+                            ? 'bg-brand-secondary-soft'
                             : ''
                       }`}
                     >
-                      <span className="text-xs font-bold text-neutral-300 flex items-center gap-1">
+                      <span className="text-xs font-medium text-text-secondary flex items-center gap-1">
                         {s.setNumber}
                       </span>
                       <div className="flex items-center gap-1.5 flex-wrap">
                         {s.isExtra ? (
-                          <span className="text-[9px] font-bold uppercase tracking-widest bg-brand/10 text-brand rounded-full px-2 py-0.5">
+                          <Badge
+                            variant="outline"
+                            className="border-primary/20 bg-primary-soft text-primary"
+                          >
                             Extra
-                          </span>
+                          </Badge>
                         ) : (
                           <>
                             <span className="text-sm text-text-secondary">
@@ -548,18 +550,18 @@ export function WorkoutReview() {
                       <div className="flex items-center gap-2">
                         {s.completed ? (
                           <>
-                            <span className="text-sm font-semibold text-text-primary">
+                            <span className="text-sm font-medium text-text-primary">
                               {s.actualWeight != null
                                 ? formatLoad(s.actualWeight, weightUnit)
                                 : '—'}
                             </span>
-                            <span className="text-[10px] text-neutral-300">
+                            <span className="text-xs text-text-secondary">
                               &times;
                             </span>
                             <span
-                              className={`text-sm font-bold ${
+                              className={`text-sm font-medium ${
                                 isRepsUnder
-                                  ? 'text-brand'
+                                  ? 'text-primary'
                                   : isRepsOver
                                     ? 'text-brand-secondary'
                                     : 'text-text-primary'
@@ -568,25 +570,26 @@ export function WorkoutReview() {
                               {s.actualReps}
                             </span>
                             {repsDiff !== null && !isRepsMatch && (
-                              <span
-                                className={`text-[9px] font-bold rounded-full px-1.5 py-0.5 ${
+                              <Badge
+                                variant="outline"
+                                className={
                                   isRepsUnder
-                                    ? 'bg-brand/10 text-brand'
-                                    : 'bg-brand-secondary/10 text-brand-secondary'
-                                }`}
+                                    ? 'border-primary/20 bg-primary-soft text-primary'
+                                    : 'border-brand-secondary/20 bg-brand-secondary-soft text-brand-secondary'
+                                }
                               >
                                 {repsDiff > 0 ? `+${repsDiff}` : repsDiff}
-                              </span>
+                              </Badge>
                             )}
                           </>
                         ) : (
-                          <span className="text-sm text-neutral-300 italic">
+                          <span className="text-sm text-text-secondary italic">
                             Skipped
                           </span>
                         )}
                       </div>
                       <span
-                        className={`text-xs text-right ${isRestOver ? 'text-brand font-semibold' : 'text-text-secondary'}`}
+                        className={`text-xs text-right ${isRestOver ? 'text-primary font-medium' : 'text-text-secondary'}`}
                       >
                         {restTaken != null ? `${restTaken}s` : '--'}
                       </span>
@@ -595,12 +598,10 @@ export function WorkoutReview() {
                 })}
 
                 {avgRest !== null && prescribedRest && (
-                  <div className="flex items-center justify-between px-5 py-2.5 border-t border-neutral-100 bg-neutral-50/50">
-                    <span className="text-[10px] uppercase tracking-widest text-text-secondary font-bold">
-                      Avg rest
-                    </span>
+                  <div className="flex items-center justify-between px-5 py-2.5 border-t border-border-subtle bg-surface-quiet">
+                    <span className={LABEL_CLASS}>Avg rest</span>
                     <span
-                      className={`text-xs font-semibold ${avgRest > prescribedRest + 15 ? 'text-brand' : 'text-text-primary'}`}
+                      className={`text-xs font-medium ${avgRest > prescribedRest + 15 ? 'text-primary' : 'text-text-primary'}`}
                     >
                       {avgRest}s
                       <span className="text-text-secondary font-normal">
@@ -629,29 +630,24 @@ function SwapCallout({
   swappedTo: Exercise;
 }) {
   return (
-    <div className="mx-5 mb-4 rounded-control border border-brand-secondary/20 bg-brand-secondary/[0.03] p-4">
+    <div className="mx-5 mb-4 rounded-control border border-brand-secondary/20 bg-brand-secondary-soft p-4">
       <div className="flex items-center gap-1.5 mb-3">
         <ArrowLeftRight size={13} className="text-brand-secondary" />
-        <span className="text-[10px] font-bold uppercase tracking-widest text-brand-secondary">
+        <span className={cn(LABEL_CLASS, 'text-brand-secondary')}>
           Exercise Swapped
         </span>
       </div>
       <div className="flex items-center gap-3">
         <div className="flex-1 min-w-0">
-          <p className="text-[10px] text-text-secondary font-semibold uppercase tracking-wider mb-1">
-            Originally
-          </p>
-          <p className="text-sm font-medium text-text-secondary line-through decoration-neutral-300">
+          <p className={cn(LABEL_CLASS, 'mb-1')}>Originally</p>
+          <p className="text-sm font-medium text-text-secondary line-through decoration-text-secondary">
             {original.name}
           </p>
           <div className="flex flex-wrap gap-1 mt-1">
             {original.primaryMuscles.map((m) => (
-              <span
-                key={m}
-                className="text-[9px] bg-neutral-100 text-text-secondary rounded-full px-1.5 py-0.5"
-              >
+              <Badge key={m} variant="muted">
                 {m}
-              </span>
+              </Badge>
             ))}
           </div>
         </div>
@@ -659,20 +655,17 @@ function SwapCallout({
           <ArrowRight size={16} className="text-brand-secondary" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[10px] text-brand-secondary font-semibold uppercase tracking-wider mb-1">
+          <p className={cn(LABEL_CLASS, 'mb-1 text-brand-secondary')}>
             Performed
           </p>
-          <p className="text-sm font-semibold text-text-primary">
+          <p className="text-sm font-medium text-text-primary">
             {swappedTo.name}
           </p>
           <div className="flex flex-wrap gap-1 mt-1">
             {swappedTo.primaryMuscles.map((m) => (
-              <span
-                key={m}
-                className="text-[9px] bg-brand-secondary/10 text-brand-secondary rounded-full px-1.5 py-0.5"
-              >
+              <Badge key={m} variant="brand-secondary">
                 {m}
-              </span>
+              </Badge>
             ))}
           </div>
         </div>

@@ -1,5 +1,4 @@
-import { ArrowRight, Video } from 'lucide-react';
-import { Link } from 'react-router';
+import { Video } from 'lucide-react';
 import {
   visitorFullName,
   type PrototypeBooking,
@@ -9,6 +8,7 @@ import {
   upcomingCalls,
 } from '../../utils/assessmentCallListing';
 import { PortalWidget } from '../PortalWidget';
+import { WidgetLink } from '../WidgetLink';
 import { Badge } from '../ui/badge';
 import { cn } from '../ui/utils';
 import { DashboardAppointmentRow } from './DashboardAppointmentRow';
@@ -43,13 +43,9 @@ export function UpcomingAssessmentCalls({
       headingId="upcoming-calls-heading"
       className="flex h-full flex-col"
       footer={
-        <Link
-          to={ALL_CALLS_PATH}
-          className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
-        >
+        <WidgetLink arrow to={ALL_CALLS_PATH}>
           View all calls
-          <ArrowRight aria-hidden="true" size={16} />
-        </Link>
+        </WidgetLink>
       }
     >
       <div
@@ -71,7 +67,12 @@ export function UpcomingAssessmentCalls({
                       <Badge variant="brand-secondary">Today</Badge>
                     )
                   }
-                  action={<JoinCallLink joinPath={call.booking.joinPath} />}
+                  action={
+                    <JoinCallLink
+                      joinPath={call.booking.joinPath}
+                      live={call.isToday}
+                    />
+                  }
                 />
               </li>
             ))}
