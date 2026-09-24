@@ -174,7 +174,8 @@ describe("the coach's dashboard", () => {
     const rows = screen.getAllByRole("listitem");
 
     expect(within(rows[0]).getByText("Today")).toBeInTheDocument();
-    expect(rows[0]).toHaveTextContent("Sun, Sep 20 at 6:00 PM");
+    expect(within(rows[0]).getByText("Sun, Sep 20")).toBeInTheDocument();
+    expect(within(rows[0]).getByText("· 6:00 PM")).toBeInTheDocument();
     expect(within(rows[1]).queryByText("Today")).not.toBeInTheDocument();
   });
 
@@ -208,6 +209,21 @@ describe("the coach's dashboard", () => {
     expect(
       screen.getByRole("heading", { level: 2, name: "Upcoming calls" }),
     ).toBeInTheDocument();
+  });
+
+  it("frames the upcoming calls as a region named by the widget heading", async () => {
+    // arrange, act
+    await renderDashboard([LATER_TODAY]);
+
+    // assert
+    const region = screen.getByRole("region", { name: "Upcoming calls" });
+
+    expect(
+      within(region).getByRole("link", { name: "Join call" }),
+    ).toBeInTheDocument();
+    expect(
+      within(region).getByRole("link", { name: /View all calls/ }),
+    ).toHaveAttribute("href", COACH_ASSESSMENT_CALLS_PATH);
   });
 
   it("re-reads today in the browser's zone, where the Bucharest evening is already tomorrow", async () => {
