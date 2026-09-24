@@ -11,11 +11,13 @@ import {
   Scripts,
   ScrollRestoration,
   useLoaderData,
+  useLocation,
   useRouteError,
   type LinksFunction,
   type MetaFunction,
 } from "react-router";
 
+import { portalForPathname } from "~/features/accounts/contracts/paths";
 import {
   AccessDeniedPage,
   resolveAccessDeniedRecovery,
@@ -92,8 +94,13 @@ export const links: LinksFunction = () => [
 // the title along with the route tree, which is what rendered the old bare
 // "Unhandled Thrown Response!" page.
 export function Layout({ children }: PropsWithChildren) {
+  const { pathname } = useLocation();
   return (
-    <html className="relative" lang="en">
+    <html
+      className="relative"
+      data-portal={portalForPathname(pathname)}
+      lang="en"
+    >
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />

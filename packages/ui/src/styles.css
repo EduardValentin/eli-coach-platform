@@ -16,6 +16,7 @@
   --font-size-phone-caption: 0.5625rem;
   --font-size-phone-title: 1rem;
   --font-size-phone-value: 1.5rem;
+  --font-size-value-lg: 1.5rem;
 
   --font-weight-regular: 400;
   --font-weight-medium: 500;
@@ -128,6 +129,13 @@
   --color-brand-primary-on-inverted: #f06ba6;
   --color-focus-ring: var(--color-brand-primary);
 
+  --color-primary: var(--color-brand-primary);
+  --color-primary-hover: var(--color-brand-primary-hover);
+  --color-primary-foreground: var(--color-brand-primary-foreground);
+  --color-primary-soft: var(--color-brand-primary-soft);
+  --color-portal-accent: var(--color-brand-primary);
+  --color-portal-accent-hover: var(--color-brand-primary-hover);
+
   --color-brand-secondary: #00796b;
   --color-brand-secondary-hover: #005a4f;
   --color-brand-secondary-foreground: #ffffff;
@@ -215,6 +223,11 @@
   --text-phone-caption: var(--font-size-phone-caption);
   --text-phone-title: var(--font-size-phone-title);
   --text-phone-value: var(--font-size-phone-value);
+
+  --text-value-lg: var(--font-size-value-lg);
+  --text-value-lg--line-height: 2rem;
+  --text-value-lg--font-weight: var(--font-weight-medium);
+  --text-value-lg--letter-spacing: -0.025em;
 
   --text-public-footer-cta-heading-md: var(
     --font-size-public-footer-cta-heading-md
@@ -306,6 +319,13 @@
   --color-brand-primary-foreground: var(--color-brand-primary-foreground);
   --color-brand-primary-soft: var(--color-brand-primary-soft);
   --color-brand-primary-on-inverted: var(--color-brand-primary-on-inverted);
+
+  --color-primary: var(--color-primary);
+  --color-primary-hover: var(--color-primary-hover);
+  --color-primary-foreground: var(--color-primary-foreground);
+  --color-primary-soft: var(--color-primary-soft);
+  --color-portal-accent: var(--color-portal-accent);
+  --color-portal-accent-hover: var(--color-portal-accent-hover);
 
   --color-brand-secondary: var(--color-brand-secondary);
   --color-brand-secondary-hover: var(--color-brand-secondary-hover);
@@ -460,6 +480,16 @@ label[data-chip-control]:has(:focus-visible) {
 
 [data-surface="inverted"] :focus-visible {
   --color-focus-ring: var(--color-brand-primary-on-inverted);
+}
+
+[data-portal="coach"] {
+  --color-primary: var(--color-surface-inverted);
+  --color-primary-hover: #2a2a2a;
+  --color-primary-foreground: #ffffff;
+  --color-primary-soft: rgba(12, 12, 12, 0.08);
+  --color-focus-ring: var(--color-primary);
+  --color-portal-accent: var(--color-text-secondary);
+  --color-portal-accent-hover: var(--color-text-primary);
 }
 
 @keyframes ui-popover-in {
