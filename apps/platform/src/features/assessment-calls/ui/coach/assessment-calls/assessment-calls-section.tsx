@@ -4,11 +4,13 @@ import {
 } from "@eli-coach-platform/ui/appointments";
 import { DateRangeField } from "@eli-coach-platform/ui/calendar";
 import { cn } from "@eli-coach-platform/ui/lib";
+import { EmptyState } from "@eli-coach-platform/ui/portal";
 import {
   Badge,
+  Button,
   cardVariants,
-  Input,
   Label,
+  SearchField,
 } from "@eli-coach-platform/ui/primitives";
 import {
   Tabs,
@@ -16,6 +18,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@eli-coach-platform/ui/tabs";
+import { CalendarSearch } from "lucide-react";
 import type { CoachAssessmentCall } from "~/features/assessment-calls/contracts/assessment-calls";
 import {
   formatClockTime,
@@ -29,6 +32,7 @@ import {
 } from "~/features/assessment-calls/contracts/visitor-profile";
 import {
   classifyCalls,
+  DEFAULT_CALL_STATUS,
   emptyListingMessage,
   filterCalls,
   orderCallsBy,
@@ -50,11 +54,15 @@ const RANGE_YEARS_AROUND_NOW = 1;
 
 const STATUS_TABS: readonly { label: string; status: CoachCallStatus }[] = [
   { label: "All", status: "all" },
-  { label: "Upcoming", status: "upcoming" },
   { label: "Today", status: "today" },
+  { label: "Upcoming", status: "upcoming" },
   { label: "Past", status: "past" },
   { label: "Custom", status: "custom" },
 ];
+
+const NO_RANGE = { from: null, to: null } as const;
+
+type EmptyCallsCopy = { description: string; title: string };
 
 type AssessmentCallsSectionProps = {
   calls: readonly CoachAssessmentCall[];
@@ -81,12 +89,19 @@ export function AssessmentCallsSection({
     toggleSortDirection,
   } = useCallListingParams();
   const selection: ListingSelection = { query, range, status };
+  const classified = classifyCalls(calls, { now, timeZone });
   const matching = orderCallsBy(
-    filterCalls(classifyCalls(calls, { now, timeZone }), selection),
+    filterCalls(classified, selection),
     sort,
     status,
   );
   const view = pageOfCalls(matching, { page, size: PAGE_SIZE });
+  const emptyCopy = emptyCallsCopy(selection, classified.length);
+
+  const clearFilters = () => {
+    changeQuery("");
+    chooseRange(NO_RANGE);
+  };
 
   return (
     <div
@@ -94,11 +109,15 @@ export function AssessmentCallsSection({
       data-parity-root="AssessmentCallsSection"
     >
       <Tabs className="w-full" onValueChange={chooseStatus} value={status}>
-        <div className="mb-6 grid w-fit max-w-full gap-4 xl:flex xl:w-full xl:items-start xl:justify-between xl:gap-8">
-          <div className="flex max-w-full flex-col gap-2 xl:w-fit">
-            <TabsList aria-label="When">
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+          <div className="grid w-full gap-3 sm:w-fit sm:max-w-full">
+            <TabsList aria-label="When" variant="segmented">
               {STATUS_TABS.map((tab) => (
-                <TabsTrigger key={tab.status} value={tab.status}>
+                <TabsTrigger
+                  key={tab.status}
+                  value={tab.status}
+                  variant="segmented"
+                >
                   {tab.label}
                 </TabsTrigger>
               ))}
@@ -108,6 +127,7 @@ export function AssessmentCallsSection({
               <DateRangeField
                 aria-label="Date range"
                 className="w-full"
+                size="sm"
                 data-parity-root="DateRangeField"
                 onChange={chooseRange}
                 value={range}
@@ -119,35 +139,48 @@ export function AssessmentCallsSection({
             )}
           </div>
 
-          <div className="w-full xl:min-w-0 xl:flex-1">
+          <div className="grid w-full gap-3 sm:w-fit sm:max-w-full">
             <Label className="sr-only" htmlFor={SEARCH_FIELD_ID}>
               Search calls
             </Label>
-            <Input
+            <SearchField
+              className="w-full sm:w-72"
               id={SEARCH_FIELD_ID}
               onChange={(event) => changeQuery(event.target.value)}
               placeholder="Search by name or email"
-              type="search"
+              size="sm"
               value={query}
             />
+            <SortControl
+              onChooseKey={chooseSortKey}
+              onToggleDirection={toggleSortDirection}
+              sort={sort}
+            />
           </div>
-
-          <SortControl
-            onChooseKey={chooseSortKey}
-            onToggleDirection={toggleSortDirection}
-            sort={sort}
-          />
         </div>
 
-        <TabsContent value={status}>
-          <CallList
-            calls={view.calls}
-            emptyMessage={emptyListingMessage(selection)}
-            moment={{ now, timeZone }}
-          />
+        <TabsContent value={status} variant="segmented">
+          {view.calls.length === 0 ? (
+            <EmptyState
+              action={
+                hasClearableFilters(selection) && (
+                  <Button onClick={clearFilters} size="sm" variant="outline">
+                    Clear filters
+                  </Button>
+                )
+              }
+              description={emptyCopy.description}
+              icon={CalendarSearch}
+              title={emptyCopy.title}
+            />
+          ) : (
+            <>
+              <CallList calls={view.calls} moment={{ now, timeZone }} />
 
-          {view.pageCount > 1 && (
-            <CallListPager pathForPage={pathForPage} view={view} />
+              {view.pageCount > 1 && (
+                <CallListPager pathForPage={pathForPage} view={view} />
+              )}
+            </>
           )}
         </TabsContent>
       </Tabs>
@@ -155,18 +188,47 @@ export function AssessmentCallsSection({
   );
 }
 
+function emptyCallsCopy(
+  selection: ListingSelection,
+  totalCalls: number,
+): EmptyCallsCopy {
+  if (totalCalls === 0 && !isNarrowed(selection)) {
+    return {
+      description: "Booked assessment calls appear here.",
+      title: "No calls yet",
+    };
+  }
+
+  return {
+    description: emptyListingMessage(selection),
+    title: "No calls found",
+  };
+}
+
+function isNarrowed(selection: ListingSelection): boolean {
+  return selection.status !== DEFAULT_CALL_STATUS || hasSearch(selection);
+}
+
+function hasClearableFilters(selection: ListingSelection): boolean {
+  return hasSearch(selection) || hasPickedRange(selection);
+}
+
+function hasSearch(selection: ListingSelection): boolean {
+  return selection.query.trim().length > 0;
+}
+
+function hasPickedRange(selection: ListingSelection): boolean {
+  return (
+    selection.status === "custom" &&
+    (selection.range.from !== null || selection.range.to !== null)
+  );
+}
+
 function CallList(props: {
   calls: readonly ClassifiedCall[];
-  emptyMessage: string;
   moment: ListingMoment;
 }) {
-  const { calls, emptyMessage, moment } = props;
-
-  if (calls.length === 0) {
-    return (
-      <p className="py-4 text-center text-sm text-text-muted">{emptyMessage}</p>
-    );
-  }
+  const { calls, moment } = props;
 
   return (
     <ul aria-label="Assessment calls" className="space-y-4">
@@ -209,10 +271,8 @@ function CallCard(props: { call: ClassifiedCall; moment: ListingMoment }) {
   return (
     <AppointmentCard
       actions={
-        call.timing === "upcoming" ? (
-          <JoinCallLink joinPath={call.joinPath} />
-        ) : (
-          <Badge tone="muted">Past</Badge>
+        call.timing === "upcoming" && (
+          <JoinCallLink joinPath={call.joinPath} live={call.isToday} />
         )
       }
       attendee={{
@@ -220,7 +280,12 @@ function CallCard(props: { call: ClassifiedCall; moment: ListingMoment }) {
         name: call.fullName,
         phone: call.phone ?? undefined,
       }}
-      badges={call.isToday && <Badge tone="brand-secondary">Today</Badge>}
+      badges={
+        <>
+          {call.isToday && <Badge tone="brand-secondary">Today</Badge>}
+          {call.timing === "past" && <Badge tone="muted">Past</Badge>}
+        </>
+      }
       details={visitorDetails(call, moment)}
       quote={call.visitorNotes ?? undefined}
       status={call.timing === "past" ? "past" : "scheduled"}
