@@ -1,4 +1,4 @@
-import { Menu, X } from "lucide-react";
+import { Menu, X, type LucideIcon } from "lucide-react";
 import { motion } from "motion/react";
 import type { PropsWithChildren, ReactNode, RefObject } from "react";
 import { Link as RouterLink, useLocation } from "react-router";
@@ -10,7 +10,7 @@ import { NavigationDialog } from "./navigation-dialog";
 export type PortalNavigationLink = {
   href: string;
   label: string;
-  icon: ReactNode;
+  icon: LucideIcon;
   /** Slot after the label for a count badge once a story ships one. */
   trailing?: ReactNode;
 };
@@ -22,6 +22,7 @@ type PortalShellProps = PropsWithChildren<{
   links: readonly PortalNavigationLink[];
   mobileNavigationLabel: string;
   navigationLabel: string;
+  parityRoot?: string;
   /** Slot beside the sidebar brand for the notification bell story. */
   sidebarActions?: ReactNode;
   topBarBrand: ReactNode;
@@ -49,13 +50,14 @@ export function PortalShell(props: PortalShellProps) {
     links,
     mobileNavigationLabel,
     navigationLabel,
+    parityRoot,
     sidebarActions,
     topBarActions,
     topBarBrand,
   } = props;
 
   return (
-    <div className="min-h-dvh bg-surface-page">
+    <div className="min-h-dvh bg-surface-page" data-parity-root={parityRoot}>
       <a className="ui-skip-link" href={`#${MAIN_CONTENT_ID}`}>
         Skip to main content
       </a>
@@ -179,15 +181,16 @@ function PortalSidebarNavigation(props: PortalSidebarNavigationProps) {
     >
       {links.map((link, linkIndex) => {
         const isActive = link.href === activeHref;
+        const Icon = link.icon;
 
         return (
           <RouterLink
             aria-current={isActive ? "page" : undefined}
             className={cn(
-              "flex items-center gap-4 rounded-card px-4 py-3.5 outline-none transition-all",
+              "flex items-center gap-4 rounded-card px-4 py-3.5 transition-all",
               {
-                "bg-text-primary text-text-inverted shadow-action": isActive,
-                "text-text-secondary hover:bg-surface-quiet hover:text-text-primary":
+                "bg-primary-soft text-primary": isActive,
+                "text-text-secondary hover:bg-primary-soft hover:text-primary":
                   !isActive,
               },
             )}
@@ -196,8 +199,12 @@ function PortalSidebarNavigation(props: PortalSidebarNavigationProps) {
             ref={linkIndex === 0 ? firstLinkRef : undefined}
             to={link.href}
           >
-            {link.icon}
-            <span className="text-sm font-semibold">{link.label}</span>
+            <Icon
+              aria-hidden="true"
+              size={18}
+              strokeWidth={isActive ? 2.5 : 2}
+            />
+            <span className="text-sm font-medium">{link.label}</span>
             {link.trailing}
           </RouterLink>
         );

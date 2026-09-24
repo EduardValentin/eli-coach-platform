@@ -10,6 +10,7 @@ import {
   within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { LayoutDashboard, Users } from "lucide-react";
 import { MotionConfig } from "motion/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it } from "vitest";
@@ -30,12 +31,8 @@ afterEach(() => {
 });
 
 const portalLinks = [
-  { href: "/coach", label: "Dashboard", icon: <span aria-hidden="true" /> },
-  {
-    href: "/coach/clients",
-    label: "Clients",
-    icon: <span aria-hidden="true" />,
-  },
+  { href: "/coach", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/coach/clients", label: "Clients", icon: Users },
 ] as const;
 
 type ShellOptions = {
@@ -163,14 +160,14 @@ describe("PortalShell navigation link styling", () => {
     const link = within(sidebar).getByRole("link", { name: "Dashboard" });
 
     expect(link).not.toHaveClass("text-sm");
-    expect(link).not.toHaveClass("font-semibold");
+    expect(link).not.toHaveClass("font-medium");
     expect(within(link).getByText("Dashboard")).toHaveClass(
       "text-sm",
-      "font-semibold",
+      "font-medium",
     );
   });
 
-  it("lifts the current page's link on the inverted fill", () => {
+  it("tints the current page's link with the portal's interaction colour", () => {
     // arrange, act
     renderShell({ initialPath: "/coach" });
 
@@ -181,7 +178,26 @@ describe("PortalShell navigation link styling", () => {
 
     expect(
       within(sidebar).getByRole("link", { name: "Dashboard" }),
-    ).toHaveClass("bg-text-primary", "text-text-inverted", "shadow-action");
+    ).toHaveClass("bg-primary-soft", "text-primary");
+  });
+
+  it("thickens the current page's icon stroke and leaves the others regular", () => {
+    // arrange, act
+    renderShell({ initialPath: "/coach" });
+
+    // assert
+    const sidebar = screen.getByRole("complementary", {
+      name: "Coach portal sidebar",
+    });
+    const currentIcon = within(sidebar)
+      .getByRole("link", { name: "Dashboard" })
+      .querySelector("svg");
+    const otherIcon = within(sidebar)
+      .getByRole("link", { name: "Clients" })
+      .querySelector("svg");
+
+    expect(currentIcon).toHaveAttribute("stroke-width", "2.5");
+    expect(otherIcon).toHaveAttribute("stroke-width", "2");
   });
 });
 

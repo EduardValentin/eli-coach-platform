@@ -1,10 +1,75 @@
 import * as React from "react";
+import { cva, type VariantProps } from "class-variance-authority";
 import { Tabs as RadixTabs } from "radix-ui";
 
 import { cn } from "../lib/cn";
 
 const PAIRS_A_FOURTH_TRIGGER_BELOW_SM =
-  "max-sm:has-[>*:nth-child(4)]:grid max-sm:has-[>*:nth-child(4)]:w-full max-sm:has-[>*:nth-child(4)]:grid-cols-2";
+  "max-sm:has-[>*:nth-child(4)]:grid max-sm:has-[>*:nth-child(4)]:w-full max-sm:has-[>*:nth-child(4)]:grid-cols-2 max-sm:has-[>*:nth-child(4)]:[&>*:nth-child(odd):last-child]:col-span-2";
+
+const tabsListClasses = cva(
+  "inline-flex w-fit items-center justify-center bg-surface-neutral text-text-muted",
+  {
+    variants: {
+      variant: {
+        default: "h-9 rounded-compact p-[3px]",
+        segmented: cn(
+          "h-auto max-w-full flex-wrap gap-1 rounded-compact p-[3px]",
+          PAIRS_A_FOURTH_TRIGGER_BELOW_SM,
+        ),
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  },
+);
+
+const tabsTriggerClasses = cva(
+  "inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-field border border-transparent px-2 py-1 text-sm font-medium text-text-primary transition-[color,box-shadow] hover:text-primary focus-visible:border-border-focus disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  {
+    variants: {
+      variant: {
+        default: "",
+        segmented:
+          "h-auto flex-auto px-5 py-2.5 font-semibold data-[state=active]:[&_[data-slot=badge]]:bg-surface-base data-[state=active]:[&_[data-slot=badge]]:text-primary data-[state=active]:[&_[data-slot=badge]]:opacity-100",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  },
+);
+
+const tabsContentClasses = cva("flex-1 outline-none", {
+  variants: {
+    variant: {
+      default: "",
+      segmented: "rounded-card",
+    },
+  },
+  defaultVariants: {
+    variant: "default",
+  },
+});
+
+type TabsVariant = VariantProps<typeof tabsListClasses>["variant"];
+
+type TabsListProps = React.ComponentPropsWithoutRef<typeof RadixTabs.List> & {
+  variant?: TabsVariant;
+};
+
+type TabsTriggerProps = React.ComponentPropsWithoutRef<
+  typeof RadixTabs.Trigger
+> & {
+  variant?: TabsVariant;
+};
+
+type TabsContentProps = React.ComponentPropsWithoutRef<
+  typeof RadixTabs.Content
+> & {
+  variant?: TabsVariant;
+};
 
 export const Tabs = React.forwardRef<
   HTMLDivElement,
@@ -19,48 +84,39 @@ export const Tabs = React.forwardRef<
 
 Tabs.displayName = "Tabs";
 
-export const TabsList = React.forwardRef<
-  HTMLDivElement,
-  React.ComponentPropsWithoutRef<typeof RadixTabs.List>
->(({ className, ...props }, ref) => (
-  <RadixTabs.List
-    ref={ref}
-    className={cn(
-      "flex h-auto w-fit max-w-full flex-wrap items-center justify-center gap-1 rounded-card bg-surface-neutral p-[3px] text-text-muted",
-      PAIRS_A_FOURTH_TRIGGER_BELOW_SM,
-      className,
-    )}
-    {...props}
-  />
-));
+export const TabsList = React.forwardRef<HTMLDivElement, TabsListProps>(
+  ({ className, variant, ...props }, ref) => (
+    <RadixTabs.List
+      ref={ref}
+      className={cn(tabsListClasses({ variant }), className)}
+      {...props}
+    />
+  ),
+);
 
 TabsList.displayName = "TabsList";
 
 export const TabsTrigger = React.forwardRef<
   HTMLButtonElement,
-  React.ComponentPropsWithoutRef<typeof RadixTabs.Trigger>
->(({ className, ...props }, ref) => (
+  TabsTriggerProps
+>(({ className, variant, ...props }, ref) => (
   <RadixTabs.Trigger
     ref={ref}
-    className={cn(
-      "inline-flex h-auto flex-auto items-center justify-center gap-1.5 whitespace-nowrap rounded-control border border-transparent px-5 py-2.5 text-sm font-semibold text-text-primary transition-[color,box-shadow] focus-visible:border-border-focus disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-surface-base data-[state=active]:shadow-card [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
-      className,
-    )}
+    className={cn(tabsTriggerClasses({ variant }), className)}
     {...props}
   />
 ));
 
 TabsTrigger.displayName = "TabsTrigger";
 
-export const TabsContent = React.forwardRef<
-  HTMLDivElement,
-  React.ComponentPropsWithoutRef<typeof RadixTabs.Content>
->(({ className, ...props }, ref) => (
-  <RadixTabs.Content
-    ref={ref}
-    className={cn("flex-1 rounded-card outline-none", className)}
-    {...props}
-  />
-));
+export const TabsContent = React.forwardRef<HTMLDivElement, TabsContentProps>(
+  ({ className, variant, ...props }, ref) => (
+    <RadixTabs.Content
+      ref={ref}
+      className={cn(tabsContentClasses({ variant }), className)}
+      {...props}
+    />
+  ),
+);
 
 TabsContent.displayName = "TabsContent";
