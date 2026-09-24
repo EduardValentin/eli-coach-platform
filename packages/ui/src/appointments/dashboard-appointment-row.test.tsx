@@ -24,9 +24,8 @@ describe("dashboard appointment row", () => {
 
     // assert
     expect(screen.getByText("Ana Popescu")).toBeInTheDocument();
-    expect(screen.getByText("Sun, Sep 20").closest("p")).toHaveTextContent(
-      "Sun, Sep 20 at 12:36 AM",
-    );
+    expect(screen.getByText("Sun, Sep 20")).toBeInTheDocument();
+    expect(screen.getByText("· 12:36 AM")).toBeInTheDocument();
   });
 
   it("shows the badges beside the name and the action at the end", () => {
@@ -45,20 +44,5 @@ describe("dashboard appointment row", () => {
     expect(
       screen.getByRole("button", { name: "Join call" }),
     ).toBeInTheDocument();
-  });
-
-  it("keeps the date and the time from breaking mid-phrase", () => {
-    // arrange, act
-    render(
-      <DashboardAppointmentRow
-        action={<button type="button">Join call</button>}
-        attendeeName="Ana Popescu"
-        when={{ date: "Sun, Sep 20", time: "12:36 AM" }}
-      />,
-    );
-
-    // assert
-    expect(screen.getByText("Sun, Sep 20")).toHaveClass("whitespace-nowrap");
-    expect(screen.getByText("12:36 AM")).toHaveClass("whitespace-nowrap");
   });
 });

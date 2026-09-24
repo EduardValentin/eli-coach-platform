@@ -1,8 +1,10 @@
-import { CalendarDays, Clock, Mail, Phone } from "lucide-react";
+import { Mail, Phone } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { cn } from "../lib/cn";
+import { LABEL_CLASS } from "../lib/typography";
 import { Avatar } from "../primitives/avatar";
+import { DateTimeLabel } from "../primitives/date-time-label";
 import type {
   AppointmentAttendee,
   AppointmentDetail,
@@ -11,7 +13,7 @@ import type {
   AppointmentTitleElement,
 } from "./appointment";
 
-const APPOINTMENT_GLYPH_SIZE = 13;
+const CONTACT_GLYPH_SIZE = 13;
 
 const CARD_TONE: Record<AppointmentStatus, string> = {
   past: "text-text-muted",
@@ -41,7 +43,7 @@ function AttendeeContactRow({ attendee }: { attendee: AppointmentAttendee }) {
           <Mail
             aria-hidden="true"
             className="shrink-0"
-            size={APPOINTMENT_GLYPH_SIZE}
+            size={CONTACT_GLYPH_SIZE}
           />
           <span className="min-w-0 truncate" title={attendee.email}>
             {attendee.email}
@@ -53,7 +55,7 @@ function AttendeeContactRow({ attendee }: { attendee: AppointmentAttendee }) {
           <Phone
             aria-hidden="true"
             className="shrink-0"
-            size={APPOINTMENT_GLYPH_SIZE}
+            size={CONTACT_GLYPH_SIZE}
           />
           <span className="min-w-0 truncate">{attendee.phone}</span>
         </a>
@@ -75,10 +77,8 @@ function AppointmentDetails({
     <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
       {details.map((detail) => (
         <div key={detail.label}>
-          <dt className="font-semibold uppercase tracking-wider text-text-muted">
-            {detail.label}
-          </dt>
-          <dd className="mt-0.5 text-text-secondary">{detail.value}</dd>
+          <dt className={LABEL_CLASS}>{detail.label}</dt>
+          <dd className="mt-0.5 text-sm text-text-secondary">{detail.value}</dd>
         </div>
       ))}
     </dl>
@@ -109,37 +109,20 @@ export function AppointmentCard({
   return (
     <div
       className={cn(
-        "flex flex-col gap-4 rounded-card border border-stroke-faint/50 bg-surface-base p-5 md:flex-row md:items-start",
+        "flex flex-col gap-4 rounded-card border border-border-subtle bg-surface-base p-5 md:flex-row md:items-start",
         CARD_TONE[status],
       )}
     >
       <div className="flex min-w-0 flex-1 items-start gap-4">
-        <Avatar name={attendee.name} tone={AVATAR_TONE[status]} />
+        <Avatar name={attendee.name} size="md" tone={AVATAR_TONE[status]} />
 
         <div className="min-w-0 flex-1">
           <div className="mb-1 flex flex-wrap items-center gap-2">
-            <Title className="text-sm font-semibold">{attendee.name}</Title>
+            <Title className="text-sm font-medium">{attendee.name}</Title>
             {badges}
           </div>
 
-          <div className="flex flex-col gap-1 text-sm text-text-secondary md:flex-row md:flex-wrap md:items-center md:gap-3">
-            <span className="flex items-center gap-1.5 whitespace-nowrap">
-              <CalendarDays
-                aria-hidden="true"
-                className="shrink-0"
-                size={APPOINTMENT_GLYPH_SIZE}
-              />
-              {when.date}
-            </span>
-            <span className="flex items-center gap-1.5 whitespace-nowrap">
-              <Clock
-                aria-hidden="true"
-                className="shrink-0"
-                size={APPOINTMENT_GLYPH_SIZE}
-              />
-              {when.time}
-            </span>
-          </div>
+          <DateTimeLabel size="sm" when={when} />
 
           <AttendeeContactRow attendee={attendee} />
 

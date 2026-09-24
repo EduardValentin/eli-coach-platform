@@ -13,7 +13,7 @@ const avatarClasses = cva(
       },
       tone: {
         quiet: "bg-surface-neutral text-text-primary",
-        muted: "bg-surface-neutral text-text-muted opacity-70",
+        muted: "bg-surface-neutral text-text-primary opacity-70",
       },
     },
     defaultVariants: {

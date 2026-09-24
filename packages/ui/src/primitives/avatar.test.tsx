@@ -57,7 +57,7 @@ describe("avatar", () => {
     // assert
     expect(container.firstElementChild).toHaveClass(
       "bg-surface-neutral",
-      "text-text-muted",
+      "text-text-primary",
       "opacity-70",
     );
   });
