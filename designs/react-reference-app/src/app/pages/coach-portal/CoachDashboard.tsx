@@ -112,6 +112,8 @@ function ActiveClientRow({
   );
 }
 
+const DASHBOARD_CHECKIN_LIMIT = 3;
+
 export function CoachDashboard() {
   const { getPendingCheckins } = useCheckins();
   const { bookings } = useAssessmentCalls();
@@ -179,24 +181,26 @@ export function CoachDashboard() {
                 No pending check-ins
               </p>
             ) : (
-              pendingCheckins.map((checkin) => (
-                <DashboardAppointmentRow
-                  key={checkin.id}
-                  attendeeName={checkin.clientName}
-                  when={{
-                    startsAt: checkinInstant(checkin.date, checkin.time),
-                    timeZone,
-                  }}
-                  action={
-                    <RowActionLink
-                      to={coachCheckinPath(checkin.id)}
-                      icon={ClipboardCheck}
-                    >
-                      Review
-                    </RowActionLink>
-                  }
-                />
-              ))
+              pendingCheckins
+                .slice(0, DASHBOARD_CHECKIN_LIMIT)
+                .map((checkin) => (
+                  <DashboardAppointmentRow
+                    key={checkin.id}
+                    attendeeName={checkin.clientName}
+                    when={{
+                      startsAt: checkinInstant(checkin.date, checkin.time),
+                      timeZone,
+                    }}
+                    action={
+                      <RowActionLink
+                        to={coachCheckinPath(checkin.id)}
+                        icon={ClipboardCheck}
+                      >
+                        Review
+                      </RowActionLink>
+                    }
+                  />
+                ))
             )}
           </div>
         </PortalWidget>
