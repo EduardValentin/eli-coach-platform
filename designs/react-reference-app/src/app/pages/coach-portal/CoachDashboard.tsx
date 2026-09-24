@@ -3,6 +3,7 @@ import { ArrowRight, ClipboardCheck, Users } from 'lucide-react';
 import { Link, useNavigate } from 'react-router';
 import { PortalWidget } from '../../components/PortalWidget';
 import { RowActionLink } from '../../components/RowActionButton';
+import { coachCheckinPath, coachCheckinsPath } from '../../utils/checkinLinks';
 import { WidgetLink } from '../../components/WidgetLink';
 import { buttonVariants } from '../../components/ui/button';
 import { cn } from '../../components/ui/utils';
@@ -111,6 +112,8 @@ function ActiveClientRow({
   );
 }
 
+const DASHBOARD_CHECKIN_LIMIT = 3;
+
 export function CoachDashboard() {
   const { getPendingCheckins } = useCheckins();
   const { bookings } = useAssessmentCalls();
@@ -167,7 +170,7 @@ export function CoachDashboard() {
           }
           headingId="pending-checkins-heading"
           footer={
-            <WidgetLink arrow to="/coach/checkins">
+            <WidgetLink arrow to={coachCheckinsPath()}>
               View all check-ins
             </WidgetLink>
           }
@@ -178,21 +181,26 @@ export function CoachDashboard() {
                 No pending check-ins
               </p>
             ) : (
-              pendingCheckins.map((checkin) => (
-                <DashboardAppointmentRow
-                  key={checkin.id}
-                  attendeeName={checkin.clientName}
-                  when={{
-                    startsAt: checkinInstant(checkin.date, checkin.time),
-                    timeZone,
-                  }}
-                  action={
-                    <RowActionLink to="/coach/checkins" icon={ClipboardCheck}>
-                      Review
-                    </RowActionLink>
-                  }
-                />
-              ))
+              pendingCheckins
+                .slice(0, DASHBOARD_CHECKIN_LIMIT)
+                .map((checkin) => (
+                  <DashboardAppointmentRow
+                    key={checkin.id}
+                    attendeeName={checkin.clientName}
+                    when={{
+                      startsAt: checkinInstant(checkin.date, checkin.time),
+                      timeZone,
+                    }}
+                    action={
+                      <RowActionLink
+                        to={coachCheckinPath(checkin.id)}
+                        icon={ClipboardCheck}
+                      >
+                        Review
+                      </RowActionLink>
+                    }
+                  />
+                ))
             )}
           </div>
         </PortalWidget>
