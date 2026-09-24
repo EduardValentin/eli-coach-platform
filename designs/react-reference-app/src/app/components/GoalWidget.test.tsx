@@ -46,7 +46,7 @@ describe('GoalWidget on the coach presentation', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('starts the picked goal type through the confirm dialog', async () => {
+  it('starts the picked goal type through the inline editor', async () => {
     const onStart = vi.fn();
     render(
       <GoalWidget
@@ -58,14 +58,60 @@ describe('GoalWidget on the coach presentation', () => {
     );
 
     await userEvent.click(screen.getByRole('button', { name: 'Start a goal' }));
+    expect(
+      screen.queryByRole('button', { name: 'Start a goal' }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText('No goal set yet.')).not.toBeInTheDocument();
+
     await userEvent.click(screen.getByRole('combobox', { name: 'Goal type' }));
     await userEvent.click(screen.getByRole('option', { name: 'Strength' }));
     await userEvent.click(screen.getByRole('button', { name: 'Start goal' }));
 
     expect(onStart).toHaveBeenCalledWith('Strength');
+    expect(screen.getByRole('button', { name: 'Start a goal' })).toBeVisible();
   });
 
-  it('shows the active goal and ends it through management', async () => {
+  it('cancels the inline editor without starting a goal', async () => {
+    const onStart = vi.fn();
+    render(
+      <GoalWidget
+        goal={null}
+        headingId="goal-heading"
+        management={{ onStart, onEnd: vi.fn() }}
+        presentation="coach"
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Start a goal' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(onStart).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Start a goal' })).toBeVisible();
+    expect(screen.getByText('No goal set yet.')).toBeVisible();
+  });
+
+  it('preselects the most recent completed goal type in the inline editor', async () => {
+    render(
+      <GoalWidget
+        goal={null}
+        headingId="goal-heading"
+        management={{
+          onStart: vi.fn(),
+          onEnd: vi.fn(),
+          suggestedType: 'Strength',
+        }}
+        presentation="coach"
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Start a goal' }));
+
+    expect(
+      screen.getByRole('combobox', { name: 'Goal type' }),
+    ).toHaveTextContent('Strength');
+  });
+
+  it('shows the active goal and ends it through a confirm dialog', async () => {
     const onEnd = vi.fn();
     render(
       <GoalWidget
@@ -78,6 +124,18 @@ describe('GoalWidget on the coach presentation', () => {
 
     expect(screen.getByText('Fat Loss')).toBeVisible();
     expect(screen.getByText('Started 6 January')).toBeVisible();
+
+    await userEvent.click(screen.getByRole('button', { name: 'End goal' }));
+
+    expect(
+      screen.getByRole('heading', { name: 'End this goal?' }),
+    ).toBeVisible();
+    expect(
+      screen.getByText(
+        'Her plan keeps running. You can start a new goal afterwards.',
+      ),
+    ).toBeVisible();
+    expect(onEnd).not.toHaveBeenCalled();
 
     await userEvent.click(screen.getByRole('button', { name: 'End goal' }));
 
@@ -103,6 +161,7 @@ describe('GoalWidget on the client presentation', () => {
         headingId="goal-heading"
         management={{ onStart: vi.fn(), onEnd: vi.fn() }}
         presentation="client"
+        emptyMessage="Eli sets your goal when your program is ready."
       />,
     );
 
@@ -112,6 +171,14 @@ describe('GoalWidget on the client presentation', () => {
     expect(
       screen.queryByRole('button', { name: 'Start a goal' }),
     ).not.toBeInTheDocument();
+  });
+
+  it('falls back to the default empty message when none is passed', () => {
+    render(
+      <GoalWidget goal={null} headingId="goal-heading" presentation="client" />,
+    );
+
+    expect(screen.getByText('No goal set yet.')).toBeVisible();
   });
 
   it('shows the active goal without an End goal control', () => {

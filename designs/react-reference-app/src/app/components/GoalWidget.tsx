@@ -21,6 +21,7 @@ import {
 interface GoalManagement {
   onStart: (type: GoalType) => void;
   onEnd: () => void;
+  suggestedType?: GoalType;
 }
 
 interface GoalWidgetProps {
@@ -28,6 +29,7 @@ interface GoalWidgetProps {
   goal: Goal | null;
   headingId: string;
   management?: GoalManagement;
+  emptyMessage?: string;
 }
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}/;
@@ -44,56 +46,56 @@ export function GoalWidget({
   goal,
   headingId,
   management,
+  emptyMessage,
 }: GoalWidgetProps) {
-  const [showStartDialog, setShowStartDialog] = useState(false);
+  const [isEditingStart, setIsEditingStart] = useState(false);
   const [selectedType, setSelectedType] = useState<GoalType>(GOAL_TYPES[0]);
+  const [showEndDialog, setShowEndDialog] = useState(false);
   const isCoach = presentation === 'coach';
+
+  const handleOpenStart = () => {
+    setSelectedType(management?.suggestedType ?? GOAL_TYPES[0]);
+    setIsEditingStart(true);
+  };
 
   const handleConfirmStart = () => {
     management?.onStart(selectedType);
-    setShowStartDialog(false);
+    setIsEditingStart(false);
+  };
+
+  const handleCancelStart = () => {
+    setIsEditingStart(false);
+  };
+
+  const handleConfirmEnd = () => {
+    management?.onEnd();
+    setShowEndDialog(false);
   };
 
   const footer =
     isCoach && management ? (
       goal ? (
-        <Button
-          onClick={management.onEnd}
-          variant="outline"
-          className="w-full sm:w-auto"
-        >
-          End goal
-        </Button>
-      ) : (
         <>
-          <Button onClick={() => setShowStartDialog(true)}>Start a goal</Button>
-          <ConfirmDialog
-            open={showStartDialog}
-            onOpenChange={setShowStartDialog}
-            title="Start a goal"
-            description="Pick the goal this program works toward."
-            confirmLabel="Start goal"
-            cancelLabel="Cancel"
-            onConfirm={handleConfirmStart}
+          <Button
+            onClick={() => setShowEndDialog(true)}
+            variant="outline"
+            className="w-full sm:w-auto"
           >
-            <Select
-              onValueChange={(value) => setSelectedType(value as GoalType)}
-              value={selectedType}
-            >
-              <SelectTrigger aria-label="Goal type">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {GOAL_TYPES.map((type) => (
-                  <SelectItem key={type} value={type}>
-                    {type}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </ConfirmDialog>
+            End goal
+          </Button>
+          <ConfirmDialog
+            open={showEndDialog}
+            onOpenChange={setShowEndDialog}
+            title="End this goal?"
+            description="Her plan keeps running. You can start a new goal afterwards."
+            confirmLabel="End goal"
+            cancelLabel="Cancel"
+            onConfirm={handleConfirmEnd}
+          />
         </>
-      )
+      ) : !isEditingStart ? (
+        <Button onClick={handleOpenStart}>Start a goal</Button>
+      ) : undefined
     ) : undefined;
 
   return (
@@ -111,11 +113,35 @@ export function GoalWidget({
         <p className="text-sm text-text-secondary">
           {startedLine(goal.startDate)}
         </p>
+      ) : isCoach && management && isEditingStart ? (
+        <div>
+          <Select
+            onValueChange={(value) => setSelectedType(value as GoalType)}
+            value={selectedType}
+          >
+            <SelectTrigger aria-label="Goal type" size="sm" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {GOAL_TYPES.map((type) => (
+                <SelectItem key={type} value={type}>
+                  {type}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <div className="mt-3 flex gap-2">
+            <Button size="sm" onClick={handleConfirmStart}>
+              Start goal
+            </Button>
+            <Button size="sm" variant="ghost" onClick={handleCancelStart}>
+              Cancel
+            </Button>
+          </div>
+        </div>
       ) : (
         <p className="text-sm text-text-secondary">
-          {isCoach
-            ? 'No goal set yet.'
-            : 'Eli sets your goal when your program is ready.'}
+          {emptyMessage ?? 'No goal set yet.'}
         </p>
       )}
     </PortalWidget>

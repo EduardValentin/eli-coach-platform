@@ -50,7 +50,7 @@ import {
 } from '../../domain/clientStatus';
 import { format, parseISO } from 'date-fns';
 import { bundleLengthLabel } from '../../domain/bundles';
-import { getInitials } from '../../utils/clientHelpers';
+import { getInitials, trainingClientIdFor } from '../../utils/clientHelpers';
 import { ClientStatusBadge } from '../../components/coach-portal/ClientStatusBadge';
 import { journeyCallIdForClient } from '../../utils/journeyLabels';
 import {
@@ -400,7 +400,7 @@ export function ClientsList() {
   );
 
   const bundleLabelForClient = (id: string) => {
-    const subjectId = id === 'c1' ? 'client-1' : id;
+    const subjectId = trainingClientIdFor(id);
     const activeSubscription =
       getClientActiveSubscription(subjectId) ??
       [...getClientSubscriptions(subjectId)].sort((one, other) =>

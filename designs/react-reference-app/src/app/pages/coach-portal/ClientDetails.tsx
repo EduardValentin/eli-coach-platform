@@ -29,7 +29,7 @@ import {
   displayWeightValue,
   weightUnitLabel,
 } from '../../utils/units';
-import { getInitials } from '../../utils/clientHelpers';
+import { getInitials, trainingClientIdFor } from '../../utils/clientHelpers';
 import { PORTAL_PAGE_TITLE_CLASS } from '../../components/PortalPageHeader';
 import { SubscriptionBadge } from '../../components/coach-portal/SubscriptionBadge';
 import { JourneyClientDetails } from '../../components/coach-portal/JourneyClientDetails';
@@ -120,7 +120,7 @@ function RosterClientDetails() {
 
   const clientId = id || 'client-1';
   // Normalize alias IDs to canonical IDs for data lookups
-  const dataClientId = clientId === 'c1' ? 'client-1' : clientId;
+  const dataClientId = trainingClientIdFor(clientId);
   const profile = getProfile(clientId);
   const clientName = profile ? fullName(profile) : 'Unknown Client';
   const weightChangeKg = profile
@@ -132,8 +132,17 @@ function RosterClientDetails() {
 
   const activePlan = getClientActivePlan(clientId);
   const pastPlans = getClientPastPlans(clientId);
-  const activeGoal = getClientActiveGoal(clientId);
-  const allGoals = getClientGoals(clientId);
+  const activeGoal = getClientActiveGoal(dataClientId);
+  const allGoals = getClientGoals(dataClientId);
+  const suggestedGoalType = useMemo<GoalType | undefined>(() => {
+    const completedGoals = allGoals.filter(
+      (goal) => goal.status === 'completed',
+    );
+    if (completedGoals.length === 0) return undefined;
+    return [...completedGoals].sort((a, b) =>
+      (b.endDate ?? '').localeCompare(a.endDate ?? ''),
+    )[0].type;
+  }, [allGoals]);
   const activeSubscription = getClientActiveSubscription(dataClientId);
 
   const journeyCallId = journeyCallIdForClient(clientId);
@@ -143,7 +152,6 @@ function RosterClientDetails() {
   const heightCm = profile?.heightCm ?? 0;
 
   // Confirm dialogs
-  const [showEndGoal, setShowEndGoal] = useState(false);
   const [showEndPlan, setShowEndPlan] = useState(false);
 
   // Past plans expand
@@ -164,11 +172,10 @@ function RosterClientDetails() {
     if (!activeGoal) return;
     completeGoal(activeGoal.id);
     toast.success('Goal completed');
-    setShowEndGoal(false);
   };
 
   const handleStartGoal = (type: GoalType) => {
-    createGoal(clientId, type);
+    createGoal(dataClientId, type);
     toast.success(`${type} goal created`);
   };
 
@@ -436,7 +443,8 @@ function RosterClientDetails() {
             headingId="goal-widget-heading"
             management={{
               onStart: handleStartGoal,
-              onEnd: () => setShowEndGoal(true),
+              onEnd: handleEndGoal,
+              suggestedType: suggestedGoalType,
             }}
           />
 
@@ -850,36 +858,6 @@ function RosterClientDetails() {
           )}
         </div>
       </div>
-
-      {/* End Goal Dialog */}
-      <AlertDialog open={showEndGoal} onOpenChange={setShowEndGoal}>
-        <AlertDialogContent className="sm:max-w-md rounded-card">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-center text-text-primary">
-              End this goal?
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-center">
-              The{' '}
-              <span className="font-semibold text-text-primary">
-                {activeGoal?.type}
-              </span>{' '}
-              goal will be marked as completed. You can start a new goal
-              afterward.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="sm:flex-row gap-3 mt-2">
-            <AlertDialogCancel className="flex-1 rounded-control border-neutral-200 text-text-secondary hover:bg-neutral-50 font-semibold">
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleEndGoal}
-              className="flex-1 rounded-control bg-text-primary text-white hover:bg-neutral-800 font-semibold"
-            >
-              End Goal
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       {/* End Plan Dialog */}
       <AlertDialog open={showEndPlan} onOpenChange={setShowEndPlan}>

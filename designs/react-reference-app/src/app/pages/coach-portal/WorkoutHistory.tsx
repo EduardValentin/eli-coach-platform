@@ -23,6 +23,7 @@ import {
   fromDisplayWeight,
   weightUnitLabel,
 } from '../../utils/units';
+import { trainingClientIdFor } from '../../utils/clientHelpers';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { MetricTile } from '../../components/MetricTile';
 import { SubscriptionBadge } from '../../components/coach-portal/SubscriptionBadge';
@@ -97,7 +98,7 @@ export function WorkoutHistory() {
     useTraining();
   const { weightUnit } = useUnitPreferences();
 
-  const dataClientId = clientId === 'c1' ? 'client-1' : clientId || 'client-1';
+  const dataClientId = trainingClientIdFor(clientId || 'client-1');
   const clientName = MOCK_CLIENTS[clientId || ''] || 'Unknown Client';
   const history = getClientWorkoutHistory(dataClientId);
 

@@ -4,6 +4,8 @@ import { useTraining } from '../../context/TrainingContext';
 import { useCycle } from '../../context/CycleContext';
 import { useClientProfile } from '../../context/ClientProfileContext';
 import { useUnitPreferences } from '../../context/UnitPreferencesContext';
+import { useClientJourneys } from '../../context/ClientJourneyContext';
+import { isBeforeStage } from '../../domain/journey';
 import { useNavigate, useSearchParams, Link } from 'react-router';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { ProgramStatusCard } from '../../components/client-portal/ProgramStatusCard';
@@ -32,6 +34,7 @@ export function ClientDashboard() {
     useTraining();
   const { clientPhase } = useCycle();
   const { clientProfile } = useClientProfile();
+  const { demoJourney } = useClientJourneys();
   const { appState } = useAppState();
   const isPostMvp = appState.prototypeMode === 'post-mvp';
   const { weightUnit, heightUnit } = useUnitPreferences();
@@ -84,6 +87,9 @@ export function ClientDashboard() {
   }, [clientActivePlan]);
 
   const activeGoal = getClientActiveGoal('client-1');
+  const goalEmptyMessage = isBeforeStage(demoJourney.stage, 'program-ready')
+    ? 'Eli sets your goal when your program is ready.'
+    : 'No goal set yet.';
 
   const handleStartWorkout = () => {
     if (!clientActivePlan || !todayInfo || todayInfo.isRest) return;
@@ -293,6 +299,7 @@ export function ClientDashboard() {
           presentation="client"
           goal={activeGoal}
           headingId="goal-heading"
+          emptyMessage={goalEmptyMessage}
         />
       </div>
 
