@@ -15,8 +15,7 @@ const chipVariants = cva(
   {
     variants: {
       tone: {
-        brand: `${CHIP_SURFACE} data-[state=off]:hover:border-brand data-[state=off]:hover:text-brand data-[state=on]:border-brand data-[state=on]:bg-brand data-[state=on]:text-brand-foreground`,
-        'brand-secondary': `${CHIP_SURFACE} data-[state=off]:hover:border-brand-secondary data-[state=off]:hover:text-brand-secondary data-[state=on]:border-brand-secondary data-[state=on]:bg-brand-secondary data-[state=on]:text-brand-secondary-foreground`,
+        brand: `${CHIP_SURFACE} data-[state=off]:hover:border-primary data-[state=off]:hover:text-primary data-[state=on]:border-primary data-[state=on]:bg-active-surface data-[state=on]:text-primary-foreground`,
       },
     },
     defaultVariants: {

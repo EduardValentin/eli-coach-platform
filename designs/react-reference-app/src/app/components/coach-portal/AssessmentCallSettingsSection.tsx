@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { CalendarClock } from 'lucide-react';
 import { toast } from 'sonner';
 import { Alert } from '../ui/alert';
-import { Button } from '../ThemeButton';
+import { Button } from '../ui/button';
 import { CheckboxChip } from '../CheckboxChip';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -79,7 +80,9 @@ type AssessmentCallSettingsDraft = {
   meetingLink: string;
 };
 
-function toDraft(settings: AssessmentCallSettings): AssessmentCallSettingsDraft {
+function toDraft(
+  settings: AssessmentCallSettings,
+): AssessmentCallSettingsDraft {
   return {
     weekdays: settings.weekdays,
     startHour: settings.startHour,
@@ -126,7 +129,10 @@ function HourSelect({
       <Label htmlFor={id} id={labelId}>
         {label}
       </Label>
-      <Select value={String(hour)} onValueChange={(value) => onHourChange(Number(value))}>
+      <Select
+        value={String(hour)}
+        onValueChange={(value) => onHourChange(Number(value))}
+      >
         <SelectTrigger
           id={id}
           className="w-full"
@@ -159,7 +165,9 @@ function WeekdayFieldset({
 }) {
   return (
     <fieldset aria-describedby={errorId}>
-      <legend className="text-sm font-medium text-foreground mb-2">Days I take calls</legend>
+      <legend className="text-sm font-medium text-foreground mb-2">
+        Days I take calls
+      </legend>
       <div className="flex flex-wrap gap-2">
         {WEEKDAY_OPTIONS.map(({ value, short, full }) => (
           <CheckboxChip
@@ -185,7 +193,9 @@ function WeekdayFieldset({
 
 export function AssessmentCallSettingsSection() {
   const { settings, saveSettings } = useAssessmentCalls();
-  const [draft, setDraft] = useState<AssessmentCallSettingsDraft>(() => toDraft(settings));
+  const [draft, setDraft] = useState<AssessmentCallSettingsDraft>(() =>
+    toDraft(settings),
+  );
   const [problems, setProblems] = useState<AssessmentCallSettingsProblem[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
@@ -214,7 +224,8 @@ export function AssessmentCallSettingsSection() {
       weekdays: draft.weekdays,
       startHour: draft.startHour,
       endHour: draft.endHour,
-      meetingLink: draft.meetingLink.trim() === '' ? null : draft.meetingLink.trim(),
+      meetingLink:
+        draft.meetingLink.trim() === '' ? null : draft.meetingLink.trim(),
     };
 
     const foundProblems = validateAssessmentCallSettings(candidate);
@@ -255,8 +266,13 @@ export function AssessmentCallSettingsSection() {
       <div className="px-5 sm:px-6 py-4 border-b border-border">
         <h2
           id="assessment-call-heading"
-          className="font-serif text-lg font-semibold text-foreground"
+          className="flex items-center gap-2 text-base font-semibold text-foreground"
         >
+          <CalendarClock
+            aria-hidden="true"
+            className="text-brand-secondary"
+            size={18}
+          />
           Assessment calls
         </h2>
       </div>
@@ -286,7 +302,9 @@ export function AssessmentCallSettingsSection() {
             hour={draft.startHour}
             hourOptions={START_HOUR_OPTIONS}
             errorId={hoursErrorId}
-            onHourChange={(hour) => setDraft((previous) => ({ ...previous, startHour: hour }))}
+            onHourChange={(hour) =>
+              setDraft((previous) => ({ ...previous, startHour: hour }))
+            }
           />
           <HourSelect
             id={END_HOUR_FIELD_ID}
@@ -294,7 +312,9 @@ export function AssessmentCallSettingsSection() {
             hour={draft.endHour}
             hourOptions={END_HOUR_OPTIONS}
             errorId={hoursErrorId}
-            onHourChange={(hour) => setDraft((previous) => ({ ...previous, endHour: hour }))}
+            onHourChange={(hour) =>
+              setDraft((previous) => ({ ...previous, endHour: hour }))
+            }
           />
         </div>
         {hoursErrorId && (
@@ -313,9 +333,14 @@ export function AssessmentCallSettingsSection() {
             placeholder="https://meet.google.com/…"
             value={draft.meetingLink}
             onChange={(event) =>
-              setDraft((previous) => ({ ...previous, meetingLink: event.target.value }))
+              setDraft((previous) => ({
+                ...previous,
+                meetingLink: event.target.value,
+              }))
             }
-            aria-describedby={[linkHintId, linkErrorId].filter(Boolean).join(' ')}
+            aria-describedby={[linkHintId, linkErrorId]
+              .filter(Boolean)
+              .join(' ')}
             aria-invalid={Boolean(linkErrorId) || undefined}
           />
           <p id={linkHintId} className="text-xs text-muted-foreground">
@@ -324,7 +349,9 @@ export function AssessmentCallSettingsSection() {
           {linkErrorId && (
             <FieldError
               id={linkErrorId}
-              message={ASSESSMENT_CALL_SETTINGS_PROBLEM_MESSAGES.invalid_meeting_link}
+              message={
+                ASSESSMENT_CALL_SETTINGS_PROBLEM_MESSAGES.invalid_meeting_link
+              }
             />
           )}
         </div>
@@ -336,7 +363,13 @@ export function AssessmentCallSettingsSection() {
         )}
 
         <div className="flex justify-end pt-4 -mx-5 sm:-mx-6 px-5 sm:px-6 border-t border-border">
-          <Button type="submit" disabled={isSaving} aria-busy={isSaving || undefined}>
+          <Button
+            type="submit"
+            variant="default"
+            size="lg"
+            disabled={isSaving}
+            aria-busy={isSaving || undefined}
+          >
             {isSaving ? 'Saving…' : 'Save changes'}
           </Button>
         </div>

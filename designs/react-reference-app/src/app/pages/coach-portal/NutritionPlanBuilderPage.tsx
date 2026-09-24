@@ -1,26 +1,68 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { ArrowLeft, CheckCircle2, Plus, RotateCcw, ShoppingCart } from 'lucide-react';
+import {
+  ArrowLeft,
+  CheckCircle2,
+  Plus,
+  RotateCcw,
+  ShoppingCart,
+} from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import {
-  useNutrition, dayMacros, dayTargetFor, slotMacros, seedDailyTarget, isoLocal, shoppingListForDays,
+  useNutrition,
+  dayMacros,
+  dayTargetFor,
+  slotMacros,
+  seedDailyTarget,
+  isoLocal,
+  shoppingListForDays,
 } from '../../context/NutritionContext';
-import type { PlanDay, ClientNutritionPlan, PlanBlock, Recipe, Food, BlockReview, ShoppingGroup, DailyTarget } from '../../context/NutritionContext';
+import type {
+  PlanDay,
+  ClientNutritionPlan,
+  PlanBlock,
+  Recipe,
+  Food,
+  BlockReview,
+  ShoppingGroup,
+  DailyTarget,
+} from '../../context/NutritionContext';
 import type { CyclePhase } from '../../context/CycleContext';
 import { useCycle } from '../../context/CycleContext';
 import { useClientProfile, fullName } from '../../context/ClientProfileContext';
 import { useAppState } from '../../context/AppContext';
 import { Button } from '../../components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../../components/ui/dialog';
-import { PHASE_LABEL, PHASE_VAR, MEAL_ROLE_LABEL } from '../../components/coach-portal/nutrition/plan-constants';
-import { CATEGORY_LABELS, CATEGORY_SWATCH } from '../../components/coach-portal/nutrition/nutrition-constants';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '../../components/ui/dialog';
+import {
+  PHASE_LABEL,
+  PHASE_VAR,
+  MEAL_ROLE_LABEL,
+} from '../../components/coach-portal/nutrition/plan-constants';
+import {
+  CATEGORY_LABELS,
+  CATEGORY_SWATCH,
+} from '../../components/coach-portal/nutrition/nutrition-constants';
 import { RecipeVisual } from '../../components/coach-portal/nutrition/RecipeVisual';
 import { ConfirmDialog } from '../../components/ui/confirm-dialog';
 
 export function NutritionPlanBuilderPage() {
   const { clientId = '' } = useParams<{ clientId: string }>();
   const navigate = useNavigate();
-  const { getPlan, createBlock, carryOverBlock, setPhaseTargetOverride, recipes, foods } = useNutrition();
+  const {
+    getPlan,
+    createBlock,
+    carryOverBlock,
+    setPhaseTargetOverride,
+    recipes,
+    foods,
+  } = useNutrition();
   const { getPhaseForDate } = useCycle();
   const { getProfile } = useClientProfile();
   const [shoppingListOpen, setShoppingListOpen] = useState(false);
@@ -33,43 +75,55 @@ export function NutritionPlanBuilderPage() {
   const block = plan?.blocks.find((b) => b.status === 'active');
 
   // Past blocks (most-recent first) the coach can switch to for read-only review.
-  const pastBlocks = (plan?.blocks.filter((b) => b.status === 'past') ?? []).slice().reverse();
+  const pastBlocks = (plan?.blocks.filter((b) => b.status === 'past') ?? [])
+    .slice()
+    .reverse();
   // Which block is currently shown — null tracks the active block; otherwise a past block id.
   const [viewBlockId, setViewBlockId] = useState<string | null>(null);
   // Which week of the block the overview is showing (0 = week 1, 1 = week 2).
   const [week, setWeek] = useState(0);
-  const viewedBlock = (viewBlockId ? plan?.blocks.find((b) => b.id === viewBlockId) : block) ?? block;
+  const viewedBlock =
+    (viewBlockId ? plan?.blocks.find((b) => b.id === viewBlockId) : block) ??
+    block;
   const isViewingPast = viewedBlock?.status === 'past';
 
   // Determine if we're in block-review state:
   // 1. Real state: the most-recent block is past AND has a review.
   // 2. Dev toggle: nutritionBlockCompleted is on AND there's an active block — use a mocked review.
   const mostRecentBlock = plan?.blocks[plan.blocks.length - 1];
-  const realReviewBlock = mostRecentBlock?.status === 'past' && mostRecentBlock.review ? mostRecentBlock : undefined;
+  const realReviewBlock =
+    mostRecentBlock?.status === 'past' && mostRecentBlock.review
+      ? mostRecentBlock
+      : undefined;
 
   const mockedReview = {
     adherencePct: 82,
     swapsUsed: 3,
-    clientFeedbackNote: 'Felt great in the follicular phase; struggled with dinners pre-period.',
+    clientFeedbackNote:
+      'Felt great in the follicular phase; struggled with dinners pre-period.',
   };
 
   // When the dev toggle is on and there's an active block (but no real review block), show
   // the review panel for the active block using the mocked review data.
-  const devReviewBlock = nutritionBlockCompleted && block && !realReviewBlock
-    ? { ...block, review: mockedReview }
-    : undefined;
+  const devReviewBlock =
+    nutritionBlockCompleted && block && !realReviewBlock
+      ? { ...block, review: mockedReview }
+      : undefined;
 
   const reviewBlock = realReviewBlock ?? devReviewBlock;
 
   // Helper: compute 14 day-phases starting from today (or the day after a given offset)
   const computeNextPhases = () =>
     Array.from({ length: 14 }, (_, i) => {
-      const d = new Date(); d.setDate(d.getDate() + i);
+      const d = new Date();
+      d.setDate(d.getDate() + i);
       return getPhaseForDate(clientId, isoLocal(d)) ?? undefined;
     });
 
   const handleCreate = () => {
-    const target = profile ? seedDailyTarget(profile) : { kcal: 2000, protein: 150, carb: 200, fat: 65 };
+    const target = profile
+      ? seedDailyTarget(profile)
+      : { kcal: 2000, protein: 150, carb: 200, fat: 65 };
     createBlock(clientId, target, computeNextPhases());
   };
 
@@ -77,15 +131,15 @@ export function NutritionPlanBuilderPage() {
   // The ref prevents a second call on the re-render that follows createBlock's state update.
   const autoCreatedRef = useRef(false);
   useEffect(() => {
-    if (autoCreatedRef.current) return;        // already fired once this mount
-    if (!clientId) return;                     // no client — nothing to do
-    if (block) return;                         // block already exists
-    if (reviewBlock) return;                   // review panel is showing — coach must choose
+    if (autoCreatedRef.current) return; // already fired once this mount
+    if (!clientId) return; // no client — nothing to do
+    if (block) return; // block already exists
+    if (reviewBlock) return; // review panel is showing — coach must choose
     // Guard: only auto-create when there is enough context (profile preferred, but not required)
     autoCreatedRef.current = true;
     handleCreate();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clientId, block, reviewBlock]);          // re-evaluates if deps change; ref prevents double-create
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clientId, block, reviewBlock]); // re-evaluates if deps change; ref prevents double-create
 
   const handleCarryOver = () => {
     if (!reviewBlock) return;
@@ -102,23 +156,37 @@ export function NutritionPlanBuilderPage() {
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-surface-subtle">
       <header className="flex h-14 shrink-0 items-center gap-3 border-b border-border rounded-field bg-card px-4 lg:px-6">
-        <button onClick={() => navigate('/coach/nutrition')} aria-label="Back to Nutrition"
-          className="rounded-control p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+        <Button
+          onClick={() => navigate('/coach/nutrition')}
+          aria-label="Back to Nutrition"
+          variant="ghost"
+          size="icon"
+        >
           <ArrowLeft size={20} />
-        </button>
-        <h1 className="font-serif text-lg text-foreground">{profile ? fullName(profile) : 'Client'} · Nutrition plan</h1>
+        </Button>
+        <h1 className="font-serif text-lg text-foreground">
+          {profile ? fullName(profile) : 'Client'} · Nutrition plan
+        </h1>
         {pastBlocks.length > 0 && (
           <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <span className="sr-only">View plan block</span>
             <select
               aria-label="View plan block"
               value={viewedBlock?.id ?? ''}
-              onChange={(e) => setViewBlockId(e.target.value === block?.id ? null : e.target.value)}
+              onChange={(e) =>
+                setViewBlockId(
+                  e.target.value === block?.id ? null : e.target.value,
+                )
+              }
               className="rounded-field border border-border bg-background px-2 py-1 text-xs text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              {block && <option value={block.id}>Current · {blockRange(block)}</option>}
+              {block && (
+                <option value={block.id}>Current · {blockRange(block)}</option>
+              )}
               {pastBlocks.map((b) => (
-                <option key={b.id} value={b.id}>Past · {blockRange(b)}</option>
+                <option key={b.id} value={b.id}>
+                  Past · {blockRange(b)}
+                </option>
               ))}
             </select>
           </label>
@@ -132,7 +200,12 @@ export function NutritionPlanBuilderPage() {
           {viewedBlock && (
             <Dialog open={shoppingListOpen} onOpenChange={setShoppingListOpen}>
               <DialogTrigger asChild>
-                <Button variant="ghost" size="sm" className="gap-1.5" aria-label="Open shopping list for this block">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-1.5"
+                  aria-label="Open shopping list for this block"
+                >
                   <ShoppingCart size={15} aria-hidden="true" />
                   Shopping list
                 </Button>
@@ -141,19 +214,33 @@ export function NutritionPlanBuilderPage() {
                 <DialogHeader>
                   <DialogTitle>Shopping list</DialogTitle>
                   <DialogDescription>
-                    {format(parseISO(viewedBlock.startDate), 'MMM d')}–{format(parseISO(viewedBlock.days.at(-1)!.date), 'MMM d')}
+                    {format(parseISO(viewedBlock.startDate), 'MMM d')}–
+                    {format(parseISO(viewedBlock.days.at(-1)!.date), 'MMM d')}
                   </DialogDescription>
                 </DialogHeader>
-                <ShoppingListView block={viewedBlock} recipes={recipes} foods={foods} />
+                <ShoppingListView
+                  block={viewedBlock}
+                  recipes={recipes}
+                  foods={foods}
+                />
               </DialogContent>
             </Dialog>
           )}
-          <Button variant="outline" onClick={() => navigate('/coach/nutrition')}>Done</Button>
+          <Button
+            variant="outline"
+            onClick={() => navigate('/coach/nutrition')}
+          >
+            Done
+          </Button>
         </div>
       </header>
 
       {!isViewingPast && block && (
-        <PhaseTargetsBar plan={plan!} clientId={clientId} onCommit={setPhaseTargetOverride} />
+        <PhaseTargetsBar
+          plan={plan!}
+          clientId={clientId}
+          onCommit={setPhaseTargetOverride}
+        />
       )}
 
       <main className="flex-1 overflow-y-auto p-4 lg:p-6">
@@ -166,12 +253,21 @@ export function NutritionPlanBuilderPage() {
         )}
         {!viewedBlock ? (
           !reviewBlock && (
-            <p className="mt-10 text-center text-sm text-muted-foreground">Preparing plan…</p>
+            <p className="mt-10 text-center text-sm text-muted-foreground">
+              Preparing plan…
+            </p>
           )
         ) : (
           <div className="space-y-5">
-            {isViewingPast && viewedBlock.review && <PastReviewBanner review={viewedBlock.review} />}
-            <PlanSummary block={viewedBlock} plan={plan!} recipes={recipes} foods={foods} />
+            {isViewingPast && viewedBlock.review && (
+              <PastReviewBanner review={viewedBlock.review} />
+            )}
+            <PlanSummary
+              block={viewedBlock}
+              plan={plan!}
+              recipes={recipes}
+              foods={foods}
+            />
             {(() => {
               const weekDays = viewedBlock.days.slice(week * 7, week * 7 + 7);
               const weekRange =
@@ -193,18 +289,23 @@ export function NutritionPlanBuilderPage() {
                           aria-pressed={week === w}
                           onClick={() => setWeek(w)}
                           className={`rounded-field px-4 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                            week === w ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                            week === w
+                              ? 'bg-background text-foreground shadow-sm'
+                              : 'text-muted-foreground hover:text-foreground'
                           }`}
                         >
                           Week {w + 1}
                         </button>
                       ))}
                     </div>
-                    <span className="text-xs text-muted-foreground">{weekRange}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {weekRange}
+                    </span>
                   </div>
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     {weekDays.map((day, i) => {
-                      const lastOdd = i === weekDays.length - 1 && weekDays.length % 2 === 1;
+                      const lastOdd =
+                        i === weekDays.length - 1 && weekDays.length % 2 === 1;
                       return (
                         <DayOverviewCell
                           key={day.date}
@@ -247,16 +348,24 @@ function PastReviewBanner({ review }: { review: BlockReview }) {
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
         <div>
           <p className="text-caption text-muted-foreground">Adherence</p>
-          <p className="text-base font-semibold tabular-nums text-foreground">{review.adherencePct}%</p>
+          <p className="text-base font-semibold tabular-nums text-foreground">
+            {review.adherencePct}%
+          </p>
         </div>
         <div>
           <p className="text-caption text-muted-foreground">Swaps used</p>
-          <p className="text-base font-semibold tabular-nums text-foreground">{review.swapsUsed}</p>
+          <p className="text-base font-semibold tabular-nums text-foreground">
+            {review.swapsUsed}
+          </p>
         </div>
         {review.clientFeedbackNote && (
           <div className="min-w-0 flex-1">
-            <p className="text-caption text-muted-foreground">Client feedback</p>
-            <p className="text-sm text-foreground">“{review.clientFeedbackNote}”</p>
+            <p className="text-caption text-muted-foreground">
+              Client feedback
+            </p>
+            <p className="text-sm text-foreground">
+              “{review.clientFeedbackNote}”
+            </p>
           </div>
         )}
       </div>
@@ -289,17 +398,25 @@ function PlanSummary({ block, plan, recipes, foods }: PlanSummaryProps) {
     totalTarget += dayTargetFor(plan, day.phase).kcal;
     filled += day.slots.filter((s) => s.recipeId).length;
     slots += day.slots.length;
-    if (day.phase) phaseCounts.set(day.phase, (phaseCounts.get(day.phase) ?? 0) + 1);
+    if (day.phase)
+      phaseCounts.set(day.phase, (phaseCounts.get(day.phase) ?? 0) + 1);
   }
   const avgKcal = n > 0 ? Math.round(totalKcal / n) : 0;
   const avgDiff = n > 0 ? Math.round((totalKcal - totalTarget) / n) : 0;
   const diffSign = avgDiff > 0 ? '+' : avgDiff < 0 ? '−' : '±';
   const range =
-    n > 0 ? `${format(parseISO(days[0].date), 'MMM d')} – ${format(parseISO(days[n - 1].date), 'MMM d')}` : '';
-  const orderedPhases = (Object.keys(PHASE_LABEL) as CyclePhase[]).filter((p) => phaseCounts.has(p));
+    n > 0
+      ? `${format(parseISO(days[0].date), 'MMM d')} – ${format(parseISO(days[n - 1].date), 'MMM d')}`
+      : '';
+  const orderedPhases = (Object.keys(PHASE_LABEL) as CyclePhase[]).filter((p) =>
+    phaseCounts.has(p),
+  );
 
   return (
-    <section aria-label="Plan summary" className="rounded-control border border-border bg-card p-4">
+    <section
+      aria-label="Plan summary"
+      className="rounded-control border border-border bg-card p-4"
+    >
       <p className="mb-3 text-caption font-semibold uppercase tracking-wide text-muted-foreground">
         Plan · {range} · {n} days
       </p>
@@ -307,13 +424,19 @@ function PlanSummary({ block, plan, recipes, foods }: PlanSummaryProps) {
         <div>
           <dt className="text-caption text-muted-foreground">Avg / day</dt>
           <dd className="mt-0.5 text-base font-semibold tabular-nums text-foreground">
-            {avgKcal} <span className="text-caption font-normal text-muted-foreground">kcal</span>
+            {avgKcal}{' '}
+            <span className="text-caption font-normal text-muted-foreground">
+              kcal
+            </span>
           </dd>
         </div>
         <div>
           <dt className="text-caption text-muted-foreground">Meals planned</dt>
           <dd className="mt-0.5 text-base font-semibold tabular-nums text-foreground">
-            {filled} <span className="text-caption font-normal text-muted-foreground">/ {slots}</span>
+            {filled}{' '}
+            <span className="text-caption font-normal text-muted-foreground">
+              / {slots}
+            </span>
           </dd>
         </div>
         <div>
@@ -344,7 +467,11 @@ function PlanSummary({ block, plan, recipes, foods }: PlanSummaryProps) {
           <dd
             className={`mt-0.5 text-base font-semibold tabular-nums ${avgDiff > 0 ? 'text-destructive' : 'text-foreground'}`}
           >
-            {diffSign}{Math.abs(avgDiff)} <span className="text-caption font-normal text-muted-foreground">avg</span>
+            {diffSign}
+            {Math.abs(avgDiff)}{' '}
+            <span className="text-caption font-normal text-muted-foreground">
+              avg
+            </span>
           </dd>
         </div>
       </dl>
@@ -360,13 +487,23 @@ function PlanSummary({ block, plan, recipes, foods }: PlanSummaryProps) {
 interface PhaseTargetsBarProps {
   plan: ClientNutritionPlan;
   clientId: string;
-  onCommit: (clientId: string, phase: CyclePhase, target: DailyTarget | null) => void;
+  onCommit: (
+    clientId: string,
+    phase: CyclePhase,
+    target: DailyTarget | null,
+  ) => void;
 }
 
 function PhaseTargetsBar({ plan, clientId, onCommit }: PhaseTargetsBarProps) {
   const block = plan.blocks.find((b) => b.status === 'active');
   const distinctPhases = block
-    ? [...new Set(block.days.map((d) => d.phase).filter((p): p is CyclePhase => Boolean(p)))]
+    ? [
+        ...new Set(
+          block.days
+            .map((d) => d.phase)
+            .filter((p): p is CyclePhase => Boolean(p)),
+        ),
+      ]
     : [];
   const defaultKcal = plan.dailyTarget.kcal;
   const effectiveKcal = (phase: CyclePhase) => dayTargetFor(plan, phase).kcal;
@@ -390,22 +527,45 @@ function PhaseTargetsBar({ plan, clientId, onCommit }: PhaseTargetsBarProps) {
   const commit = () => {
     for (const { phase, to } of changes) {
       if (to === defaultKcal) onCommit(clientId, phase, null);
-      else onCommit(clientId, phase, { ...plan.dailyTarget, ...plan.phaseTargetOverrides?.[phase], kcal: to });
+      else
+        onCommit(clientId, phase, {
+          ...plan.dailyTarget,
+          ...plan.phaseTargetOverrides?.[phase],
+          kcal: to,
+        });
     }
     setDraft({});
     setConfirmOpen(false);
   };
 
   return (
-    <div className="shrink-0 border-b border-border rounded-field bg-card px-4 py-3 lg:px-6" role="group" aria-label="Per-phase calorie targets">
+    <div
+      className="shrink-0 border-b border-border rounded-field bg-card px-4 py-3 lg:px-6"
+      role="group"
+      aria-label="Per-phase calorie targets"
+    >
       <div className="mb-2.5 flex items-center justify-between gap-3">
-        <p className="text-caption font-semibold uppercase tracking-wide text-muted-foreground">Phase targets</p>
+        <p className="text-caption font-semibold uppercase tracking-wide text-muted-foreground">
+          Phase targets
+        </p>
         <div className="flex items-center gap-3">
-          {dirty && <span className="text-caption font-medium text-muted-foreground">Unsaved</span>}
+          {dirty && (
+            <span className="text-caption font-medium text-muted-foreground">
+              Unsaved
+            </span>
+          )}
           <p className="text-caption text-muted-foreground">
-            Default <span className="font-semibold tabular-nums text-foreground">{defaultKcal}</span> kcal
+            Default{' '}
+            <span className="font-semibold tabular-nums text-foreground">
+              {defaultKcal}
+            </span>{' '}
+            kcal
           </p>
-          <Button size="sm" onClick={() => setConfirmOpen(true)} disabled={!dirty}>
+          <Button
+            size="sm"
+            onClick={() => setConfirmOpen(true)}
+            disabled={!dirty}
+          >
             Save targets
           </Button>
         </div>
@@ -417,8 +577,12 @@ function PhaseTargetsBar({ plan, clientId, onCommit }: PhaseTargetsBarProps) {
               phase={phase}
               value={draft[phase] ?? String(effectiveKcal(phase))}
               defaultKcal={defaultKcal}
-              onChange={(val) => setDraft((prev) => ({ ...prev, [phase]: val }))}
-              onReset={() => setDraft((prev) => ({ ...prev, [phase]: String(defaultKcal) }))}
+              onChange={(val) =>
+                setDraft((prev) => ({ ...prev, [phase]: val }))
+              }
+              onReset={() =>
+                setDraft((prev) => ({ ...prev, [phase]: String(defaultKcal) }))
+              }
             />
           </li>
         ))}
@@ -435,14 +599,24 @@ function PhaseTargetsBar({ plan, clientId, onCommit }: PhaseTargetsBarProps) {
       >
         <ul className="m-0 list-none space-y-2 p-0">
           {changes.map(({ phase, from, to }) => (
-            <li key={phase} className="flex items-center justify-between gap-3 rounded-compact bg-muted/50 px-3.5 py-2.5 text-sm">
+            <li
+              key={phase}
+              className="flex items-center justify-between gap-3 rounded-compact bg-muted/50 px-3.5 py-2.5 text-sm"
+            >
               <span className="inline-flex items-center gap-2 font-medium text-foreground">
-                <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: PHASE_VAR[phase] }} aria-hidden="true" />
+                <span
+                  className="h-2 w-2 shrink-0 rounded-full"
+                  style={{ backgroundColor: PHASE_VAR[phase] }}
+                  aria-hidden="true"
+                />
                 {PHASE_LABEL[phase]}
               </span>
               <span className="tabular-nums text-muted-foreground">
                 {from} →{' '}
-                <span className="font-semibold text-foreground">{to === defaultKcal ? `${to} (default)` : to}</span> kcal
+                <span className="font-semibold text-foreground">
+                  {to === defaultKcal ? `${to} (default)` : to}
+                </span>{' '}
+                kcal
               </span>
             </li>
           ))}
@@ -464,7 +638,13 @@ interface PhaseTargetFieldProps {
   onReset: () => void;
 }
 
-function PhaseTargetField({ phase, value, defaultKcal, onChange, onReset }: PhaseTargetFieldProps) {
+function PhaseTargetField({
+  phase,
+  value,
+  defaultKcal,
+  onChange,
+  onReset,
+}: PhaseTargetFieldProps) {
   const inputId = `phase-kcal-${phase}`;
   const n = Number(value);
   const isOverride = value.trim() !== '' && !isNaN(n) && n !== defaultKcal;
@@ -472,8 +652,15 @@ function PhaseTargetField({ phase, value, defaultKcal, onChange, onReset }: Phas
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-center gap-1.5">
-        <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: PHASE_VAR[phase] }} aria-hidden="true" />
-        <label htmlFor={inputId} className="text-xs font-medium text-foreground whitespace-nowrap">
+        <span
+          className="h-2 w-2 shrink-0 rounded-full"
+          style={{ backgroundColor: PHASE_VAR[phase] }}
+          aria-hidden="true"
+        />
+        <label
+          htmlFor={inputId}
+          className="text-xs font-medium text-foreground whitespace-nowrap"
+        >
           {PHASE_LABEL[phase]}
         </label>
         <input
@@ -500,7 +687,9 @@ function PhaseTargetField({ phase, value, defaultKcal, onChange, onReset }: Phas
           </button>
         )}
       </div>
-      <span className={`pl-3.5 text-[10px] ${isOverride ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>
+      <span
+        className={`pl-3.5 text-[10px] ${isOverride ? 'font-medium text-foreground' : 'text-muted-foreground'}`}
+      >
         {isOverride ? 'Overridden' : 'Inherits default'}
       </span>
     </div>
@@ -519,19 +708,27 @@ interface ShoppingListBodyProps {
   emptyLabel?: string;
 }
 
-function ShoppingListBody({ groups, categoryAs = 'h3', emptyLabel }: ShoppingListBodyProps) {
+function ShoppingListBody({
+  groups,
+  categoryAs = 'h3',
+  emptyLabel,
+}: ShoppingListBodyProps) {
   const CategoryHeading = categoryAs;
   if (groups.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">
-        {emptyLabel ?? 'No ingredients yet — fill some slots to see the shopping list.'}
+        {emptyLabel ??
+          'No ingredients yet — fill some slots to see the shopping list.'}
       </p>
     );
   }
   return (
     <div className="space-y-5">
       {groups.map((group) => (
-        <section key={group.category} aria-label={CATEGORY_LABELS[group.category]}>
+        <section
+          key={group.category}
+          aria-label={CATEGORY_LABELS[group.category]}
+        >
           <div className="mb-2 flex items-center gap-2">
             <span
               className={`h-2.5 w-2.5 shrink-0 rounded-full ${CATEGORY_SWATCH[group.category]}`}
@@ -543,9 +740,14 @@ function ShoppingListBody({ groups, categoryAs = 'h3', emptyLabel }: ShoppingLis
           </div>
           <ul className="space-y-1 list-none p-0 m-0">
             {group.items.map((item) => (
-              <li key={item.foodId} className="flex items-center justify-between gap-2 rounded-field px-2 py-1.5 text-sm text-foreground hover:bg-muted">
+              <li
+                key={item.foodId}
+                className="flex items-center justify-between gap-2 rounded-field px-2 py-1.5 text-sm text-foreground hover:bg-muted"
+              >
                 <span>{item.name}</span>
-                <span className="shrink-0 tabular-nums text-muted-foreground">{item.grams} g</span>
+                <span className="shrink-0 tabular-nums text-muted-foreground">
+                  {item.grams} g
+                </span>
               </li>
             ))}
           </ul>
@@ -577,14 +779,21 @@ function ShoppingListView({ block, recipes, foods }: ShoppingListViewProps) {
         aria-label="Shopping list view"
         className="inline-flex rounded-compact border border-border bg-muted/40 p-0.5"
       >
-        {([['block', 'Two-week block'], ['week', 'By week']] as const).map(([value, label]) => (
+        {(
+          [
+            ['block', 'Two-week block'],
+            ['week', 'By week'],
+          ] as const
+        ).map(([value, label]) => (
           <button
             key={value}
             type="button"
             aria-pressed={mode === value}
             onClick={() => setMode(value)}
             className={`rounded-field px-3 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-              mode === value ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+              mode === value
+                ? 'bg-background text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             {label}
@@ -593,17 +802,25 @@ function ShoppingListView({ block, recipes, foods }: ShoppingListViewProps) {
       </div>
 
       {mode === 'block' ? (
-        <ShoppingListBody groups={shoppingListForDays(block.days, recipes, foods)} />
+        <ShoppingListBody
+          groups={shoppingListForDays(block.days, recipes, foods)}
+        />
       ) : (
         <div className="space-y-6">
           {[0, 1].map((w) => {
             const weekDays = block.days.slice(w * 7, w * 7 + 7);
             if (weekDays.length === 0) return null;
             return (
-              <section key={w} aria-label={`Week ${w + 1}, ${rangeOf(weekDays)}`} className="space-y-3">
+              <section
+                key={w}
+                aria-label={`Week ${w + 1}, ${rangeOf(weekDays)}`}
+                className="space-y-3"
+              >
                 <h3 className="flex items-baseline gap-2 px-3 border-b border-border rounded-field pb-2 text-sm font-semibold text-foreground">
                   Week {w + 1}
-                  <span className="text-caption font-normal text-muted-foreground">{rangeOf(weekDays)}</span>
+                  <span className="text-caption font-normal text-muted-foreground">
+                    {rangeOf(weekDays)}
+                  </span>
                 </h3>
                 <ShoppingListBody
                   groups={shoppingListForDays(weekDays, recipes, foods)}
@@ -629,47 +846,58 @@ interface BlockReviewPanelProps {
   onStartNew: () => void;
 }
 
-function BlockReviewPanel({ review, onCarryOver, onStartNew }: BlockReviewPanelProps) {
+function BlockReviewPanel({
+  review,
+  onCarryOver,
+  onStartNew,
+}: BlockReviewPanelProps) {
   return (
     <section
       aria-label="Block review"
       className="mx-auto mb-6 max-w-lg rounded-card border border-border bg-card p-6"
     >
       <div className="flex items-center gap-2 mb-4">
-        <CheckCircle2 size={18} className="text-success shrink-0" aria-hidden="true" />
+        <CheckCircle2
+          size={18}
+          className="text-success shrink-0"
+          aria-hidden="true"
+        />
         <h2 className="font-serif text-lg text-foreground">Block review</h2>
       </div>
 
       <dl className="grid grid-cols-2 gap-4 mb-4">
         <div className="rounded-control border border-border bg-surface-subtle px-4 py-3">
-          <dt className="text-caption font-medium uppercase tracking-wide text-muted-foreground mb-1">Adherence</dt>
-          <dd className="text-2xl font-semibold text-success">{review.adherencePct}%</dd>
+          <dt className="text-caption font-medium uppercase tracking-wide text-muted-foreground mb-1">
+            Adherence
+          </dt>
+          <dd className="text-2xl font-semibold text-success">
+            {review.adherencePct}%
+          </dd>
         </div>
         <div className="rounded-control border border-border bg-surface-subtle px-4 py-3">
-          <dt className="text-caption font-medium uppercase tracking-wide text-muted-foreground mb-1">Swaps used</dt>
-          <dd className="text-2xl font-semibold text-foreground">{review.swapsUsed}</dd>
+          <dt className="text-caption font-medium uppercase tracking-wide text-muted-foreground mb-1">
+            Swaps used
+          </dt>
+          <dd className="text-2xl font-semibold text-foreground">
+            {review.swapsUsed}
+          </dd>
         </div>
       </dl>
 
       {review.clientFeedbackNote && (
         <blockquote className="mb-5 rounded-control border border-border bg-surface-subtle px-4 py-3">
-          <p className="text-caption font-medium uppercase tracking-wide text-muted-foreground mb-1">Client feedback</p>
+          <p className="text-caption font-medium uppercase tracking-wide text-muted-foreground mb-1">
+            Client feedback
+          </p>
           <p className="text-sm text-foreground">{review.clientFeedbackNote}</p>
         </blockquote>
       )}
 
       <div className="flex flex-col gap-2 sm:flex-row">
-        <Button
-          className="flex-1"
-          onClick={onCarryOver}
-        >
+        <Button className="flex-1" onClick={onCarryOver}>
           Carry over
         </Button>
-        <Button
-          variant="outline"
-          className="flex-1"
-          onClick={onStartNew}
-        >
+        <Button variant="outline" className="flex-1" onClick={onStartNew}>
           Start new block
         </Button>
       </div>
@@ -693,7 +921,15 @@ interface DayOverviewCellProps {
   className?: string;
 }
 
-function DayOverviewCell({ day, plan, recipes, foods, clientId, editable, className }: DayOverviewCellProps) {
+function DayOverviewCell({
+  day,
+  plan,
+  recipes,
+  foods,
+  clientId,
+  editable,
+  className,
+}: DayOverviewCellProps) {
   const navigate = useNavigate();
   const target = dayTargetFor(plan, day.phase);
   const totals = dayMacros(day, recipes, foods);
@@ -702,10 +938,34 @@ function DayOverviewCell({ day, plan, recipes, foods, clientId, editable, classN
   const kcalPct = target.kcal > 0 ? Math.min(1, totals.kcal / target.kcal) : 0;
   const over = totals.kcal > target.kcal;
   const macros = [
-    { key: 'P', label: 'Protein', value: totals.protein, target: target.protein, bar: 'bg-macro-protein', dot: 'bg-macro-protein' },
-    { key: 'C', label: 'Carbs', value: totals.carb, target: target.carb, bar: 'bg-macro-carb', dot: 'bg-macro-carb' },
-    { key: 'F', label: 'Fat', value: totals.fat, target: target.fat, bar: 'bg-macro-fat', dot: 'bg-macro-fat' },
-  ].map((m) => ({ ...m, pct: m.target > 0 ? Math.min(1, m.value / m.target) : 0 }));
+    {
+      key: 'P',
+      label: 'Protein',
+      value: totals.protein,
+      target: target.protein,
+      bar: 'bg-macro-protein',
+      dot: 'bg-macro-protein',
+    },
+    {
+      key: 'C',
+      label: 'Carbs',
+      value: totals.carb,
+      target: target.carb,
+      bar: 'bg-macro-carb',
+      dot: 'bg-macro-carb',
+    },
+    {
+      key: 'F',
+      label: 'Fat',
+      value: totals.fat,
+      target: target.fat,
+      bar: 'bg-macro-fat',
+      dot: 'bg-macro-fat',
+    },
+  ].map((m) => ({
+    ...m,
+    pct: m.target > 0 ? Math.min(1, m.value / m.target) : 0,
+  }));
 
   const summary = `${format(parseISO(day.date), 'EEEE, MMM d')}${day.phase ? ' — ' + PHASE_LABEL[day.phase] : ''}, ${filledCount} of ${totalSlots} meals set, ${totals.kcal} of ${target.kcal} kcal`;
   const baseClass = `flex w-full flex-col rounded-control border border-border bg-card text-left ${className ?? ''}`;
@@ -734,7 +994,10 @@ function DayOverviewCell({ day, plan, recipes, foods, clientId, editable, classN
               style={{ backgroundColor: PHASE_VAR[day.phase] }}
               aria-hidden="true"
             />
-            <abbr title={PHASE_LABEL[day.phase]} className="text-[10px] text-muted-foreground no-underline">
+            <abbr
+              title={PHASE_LABEL[day.phase]}
+              className="text-[10px] text-muted-foreground no-underline"
+            >
               {PHASE_LABEL[day.phase].slice(0, 3)}
             </abbr>
           </span>
@@ -744,7 +1007,9 @@ function DayOverviewCell({ day, plan, recipes, foods, clientId, editable, classN
       {/* Calorie meter */}
       <div className="border-b border-border/60 rounded-field px-3 pb-2.5 pt-2.5">
         <div className="mb-1 flex items-baseline justify-between">
-          <span className={`text-xs font-semibold tabular-nums ${over ? 'text-destructive' : 'text-foreground'}`}>
+          <span
+            className={`text-xs font-semibold tabular-nums ${over ? 'text-destructive' : 'text-foreground'}`}
+          >
             {totals.kcal} / {target.kcal}
           </span>
           <span className="text-[10px] text-muted-foreground">kcal</span>
@@ -771,10 +1036,15 @@ function DayOverviewCell({ day, plan, recipes, foods, clientId, editable, classN
           <div key={m.key} className="min-w-0">
             <div className="mb-1 flex items-center justify-between gap-1">
               <span className="inline-flex items-center gap-1 text-[10px] font-medium text-foreground">
-                <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${m.dot}`} aria-hidden="true" />
+                <span
+                  className={`h-1.5 w-1.5 shrink-0 rounded-full ${m.dot}`}
+                  aria-hidden="true"
+                />
                 {m.key}
               </span>
-              <span className="text-[10px] tabular-nums text-muted-foreground">{m.value}/{m.target}g</span>
+              <span className="text-[10px] tabular-nums text-muted-foreground">
+                {m.value}/{m.target}g
+              </span>
             </div>
             <div
               role="progressbar"
@@ -784,24 +1054,41 @@ function DayOverviewCell({ day, plan, recipes, foods, clientId, editable, classN
               aria-label={`${m.label}: ${m.value} of ${m.target} g`}
               className="h-1.5 w-full overflow-hidden rounded-full bg-muted"
             >
-              <div className={`h-full rounded-full ${m.bar}`} style={{ width: `${Math.round(m.pct * 100)}%` }} aria-hidden="true" />
+              <div
+                className={`h-full rounded-full ${m.bar}`}
+                style={{ width: `${Math.round(m.pct * 100)}%` }}
+                aria-hidden="true"
+              />
             </div>
           </div>
         ))}
       </div>
 
       {/* Meals — icon + name + kcal per slot (empty slots read as "not set") */}
-      <ul className="m-0 flex flex-1 list-none flex-col gap-2 px-3 py-3" aria-hidden="true">
+      <ul
+        className="m-0 flex flex-1 list-none flex-col gap-2 px-3 py-3"
+        aria-hidden="true"
+      >
         {day.slots.map((slot) => {
-          const recipe = slot.recipeId ? recipes.find((r) => r.id === slot.recipeId) : undefined;
+          const recipe = slot.recipeId
+            ? recipes.find((r) => r.id === slot.recipeId)
+            : undefined;
           const roleLabel = MEAL_ROLE_LABEL[slot.mealRoleId] ?? slot.mealRoleId;
           if (recipe) {
             const kcal = slotMacros(slot, recipes, foods).kcal;
             return (
               <li key={slot.id} className="flex items-center gap-2.5">
-                <RecipeVisual recipe={recipe} className="h-8 w-8 shrink-0 rounded-compact" iconSize={16} />
-                <span className="min-w-0 flex-1 truncate text-sm text-foreground">{recipe.name}</span>
-                <span className="shrink-0 text-xs tabular-nums text-muted-foreground">{kcal} kcal</span>
+                <RecipeVisual
+                  recipe={recipe}
+                  className="h-8 w-8 shrink-0 rounded-compact"
+                  iconSize={16}
+                />
+                <span className="min-w-0 flex-1 truncate text-sm text-foreground">
+                  {recipe.name}
+                </span>
+                <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                  {kcal} kcal
+                </span>
               </li>
             );
           }
@@ -810,7 +1097,9 @@ function DayOverviewCell({ day, plan, recipes, foods, clientId, editable, classN
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-compact border border-dashed border-border text-muted-foreground">
                 <Plus size={15} />
               </span>
-              <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">{roleLabel} — not set</span>
+              <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
+                {roleLabel} — not set
+              </span>
             </li>
           );
         })}
@@ -828,7 +1117,9 @@ function DayOverviewCell({ day, plan, recipes, foods, clientId, editable, classN
   return (
     <button
       type="button"
-      onClick={() => navigate(`/coach/nutrition/client/${clientId}/plan/day/${day.date}`)}
+      onClick={() =>
+        navigate(`/coach/nutrition/client/${clientId}/plan/day/${day.date}`)
+      }
       aria-label={`Edit ${summary}`}
       className={`${baseClass} transition-all hover:border-muted-foreground/40 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring`}
     >
@@ -836,4 +1127,3 @@ function DayOverviewCell({ day, plan, recipes, foods, clientId, editable, classN
     </button>
   );
 }
-

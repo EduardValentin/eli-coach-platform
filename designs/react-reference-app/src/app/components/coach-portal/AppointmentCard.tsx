@@ -1,6 +1,7 @@
-import { CalendarDays, Clock, Mail, Phone } from 'lucide-react';
+import { Mail, Phone } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import type { ReactNode } from 'react';
+import { DateTimeLabel } from '../DateTimeLabel';
 import { cn } from '../ui/utils';
 import type {
   AppointmentAttendee,
@@ -56,18 +57,7 @@ function AttendeeAvatar({
 }
 
 function AppointmentTimeRow({ when }: { when: AppointmentTime }) {
-  return (
-    <div className="flex flex-col gap-1 md:flex-row md:flex-wrap md:items-center md:gap-3 text-sm text-text-secondary">
-      <span className="flex items-center gap-1.5 whitespace-nowrap">
-        <CalendarDays aria-hidden="true" size={13} className="shrink-0" />
-        {when.date}
-      </span>
-      <span className="flex items-center gap-1.5 whitespace-nowrap">
-        <Clock aria-hidden="true" size={13} className="shrink-0" />
-        {when.time}
-      </span>
-    </div>
-  );
+  return <DateTimeLabel startsAt={when.startsAt} timeZone={when.timeZone} />;
 }
 
 const CONTACT_LINK_CLASS =
@@ -163,9 +153,11 @@ export function AppointmentCard({
           </div>
 
           {supersededWhen && (
-            <div className="flex items-center gap-2 text-xs text-text-secondary line-through mb-0.5">
-              <CalendarDays aria-hidden="true" size={12} className="shrink-0" />
-              {supersededWhen.date} at {supersededWhen.time}
+            <div className="text-xs text-text-secondary line-through mb-0.5">
+              <DateTimeLabel
+                startsAt={supersededWhen.startsAt}
+                timeZone={supersededWhen.timeZone}
+              />
             </div>
           )}
 

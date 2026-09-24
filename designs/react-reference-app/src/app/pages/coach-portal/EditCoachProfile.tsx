@@ -6,6 +6,7 @@ import { ArrowLeft, Camera, Trash2, Check, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCoachProfile } from '../../context/CoachProfileContext';
 import { getInitials } from '../../utils/clientHelpers';
+import { Button, buttonVariants } from '../../components/ui/button';
 
 const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
 
@@ -84,14 +85,20 @@ export function EditCoachProfile() {
             />
           ) : (
             <div className="w-24 h-24 rounded-full bg-brand-soft text-brand flex items-center justify-center font-serif font-semibold text-2xl">
-              {getInitials(coachProfile.name) || <User size={40} strokeWidth={1.5} />}
+              {getInitials(coachProfile.name) || (
+                <User size={40} strokeWidth={1.5} />
+              )}
             </div>
           )}
         </div>
 
         <div className="flex-1 min-w-0 text-center sm:text-left">
-          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Profile Picture</p>
-          <h2 className="font-serif text-xl lg:text-2xl text-foreground mb-4">{coachProfile.name}</h2>
+          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">
+            Profile Picture
+          </p>
+          <h2 className="font-serif text-xl lg:text-2xl text-foreground mb-4">
+            {coachProfile.name}
+          </h2>
 
           <input
             ref={fileInputRef}
@@ -101,23 +108,24 @@ export function EditCoachProfile() {
             className="hidden"
           />
           <div className="flex flex-wrap justify-center sm:justify-start gap-3">
-            <button
+            <Button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="px-4 py-2.5 bg-surface-inverted text-white text-sm font-semibold rounded-control hover:bg-neutral-800 transition-colors flex items-center gap-2 shadow-md"
+              variant="default"
+              className="shadow-md"
             >
               <Camera size={16} />
               {coachProfile.avatarUrl ? 'Change picture' : 'Upload picture'}
-            </button>
+            </Button>
             {coachProfile.avatarUrl && (
-              <button
+              <Button
                 type="button"
                 onClick={handleRemoveAvatar}
-                className="px-4 py-2.5 bg-card border border-border text-muted-foreground text-sm font-semibold rounded-control hover:bg-muted transition-colors flex items-center gap-2"
+                variant="outline"
               >
                 <Trash2 size={16} />
                 Remove
-              </button>
+              </Button>
             )}
           </div>
         </div>
@@ -139,7 +147,7 @@ export function EditCoachProfile() {
           <input
             type="text"
             value={form.name}
-            onChange={e => setForm({ ...form, name: e.target.value })}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
             className="w-full px-3 border-b border-border rounded-field py-3 focus:outline-none transition-colors text-sm"
           />
         </div>
@@ -150,7 +158,7 @@ export function EditCoachProfile() {
           </label>
           <textarea
             value={form.bio}
-            onChange={e => setForm({ ...form, bio: e.target.value })}
+            onChange={(e) => setForm({ ...form, bio: e.target.value })}
             rows={5}
             placeholder="A short bio that clients can read on your profile."
             className="w-full border border-border rounded-control p-4 focus:outline-none transition-colors text-sm resize-none"
@@ -162,17 +170,19 @@ export function EditCoachProfile() {
       <div className="mt-8 flex items-center justify-end gap-3">
         <Link
           to="/coach"
-          className="px-6 py-3 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
+          className={buttonVariants({ variant: 'ghost', size: 'lg' })}
         >
           Cancel
         </Link>
-        <button
+        <Button
           onClick={handleSave}
-          className="px-8 py-3 bg-brand text-white text-sm font-semibold rounded-control hover:bg-brand-hover transition-colors shadow-md flex items-center gap-2"
+          variant="default"
+          size="lg"
+          className="shadow-md"
         >
           <Check size={16} />
           Save Changes
-        </button>
+        </Button>
       </div>
     </div>
   );

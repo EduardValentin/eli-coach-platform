@@ -1,28 +1,65 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { motion } from 'motion/react';
-import { Search, Send, Paperclip, Check, CheckCheck, MoreVertical, User, Archive, Trash2, BellOff, Pin, Flag, CalendarPlus, CalendarDays, Activity } from 'lucide-react';
+import {
+  Search,
+  Send,
+  Paperclip,
+  Check,
+  CheckCheck,
+  MoreVertical,
+  User,
+  Archive,
+  Trash2,
+  BellOff,
+  Pin,
+  Flag,
+  CalendarPlus,
+  CalendarDays,
+  Activity,
+} from 'lucide-react';
 import { useSearchParams, Link } from 'react-router';
 import { useNotifications } from '../../context/NotificationContext';
 import { useCheckins } from '../../context/CheckinContext';
 import { useMessaging } from '../../context/MessagingContext';
-import { formatCheckinDate, formatCheckinTime, toISODate, to24h } from '../../utils/dateFormatters';
+import {
+  formatCheckinDate,
+  formatCheckinTime,
+  toISODate,
+  to24h,
+} from '../../utils/dateFormatters';
 import { CheckinActionCard } from '../../components/CheckinActionCard';
 import { CheckinSchedulerSheet } from '../../components/CheckinSchedulerSheet';
+import { Button, buttonVariants } from '../../components/ui/button';
 import {
-  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
-  DropdownMenuItem, DropdownMenuSeparator
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
 } from '../../components/ui/dropdown-menu';
 import {
-  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter,
-  AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogAction
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogCancel,
+  AlertDialogAction,
 } from '../../components/ui/alert-dialog';
 import { toast } from 'sonner';
 
 export function CoachMessages() {
   const [searchParams] = useSearchParams();
-  const { conversations, getMessages, sendMessage: ctxSendMessage, addSystemMessage } = useMessaging();
-  const initialClientId = searchParams.get('client') || conversations[0]?.id || 'c1';
+  const {
+    conversations,
+    getMessages,
+    sendMessage: ctxSendMessage,
+    addSystemMessage,
+  } = useMessaging();
+  const initialClientId =
+    searchParams.get('client') || conversations[0]?.id || 'c1';
 
   const [activeClient, setActiveClient] = useState(initialClientId);
   const [message, setMessage] = useState('');
@@ -33,19 +70,28 @@ export function CoachMessages() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { addNotification } = useNotifications();
   const {
-    getPendingCheckins, getUpcomingCheckins, getActionableCheckins,
-    approveCheckin, declineCheckin, rescheduleCheckin, acceptReschedule,
-    coachInitiateCheckin, getBookedSlots
+    getPendingCheckins,
+    getUpcomingCheckins,
+    getActionableCheckins,
+    approveCheckin,
+    declineCheckin,
+    rescheduleCheckin,
+    acceptReschedule,
+    coachInitiateCheckin,
+    getBookedSlots,
   } = useCheckins();
 
   const messages = getMessages(activeClient);
-  const activeConversation = conversations.find(c => c.id === activeClient);
+  const activeConversation = conversations.find((c) => c.id === activeClient);
 
   const actionableForClient = useMemo(
     () => getActionableCheckins(activeClient, 'coach'),
-    [getActionableCheckins, activeClient]
+    [getActionableCheckins, activeClient],
   );
-  const nextCheckin = useMemo(() => getUpcomingCheckins(activeClient)[0], [getUpcomingCheckins, activeClient]);
+  const nextCheckin = useMemo(
+    () => getUpcomingCheckins(activeClient)[0],
+    [getUpcomingCheckins, activeClient],
+  );
 
   // Coach-initiate check-in state
   const [showSchedulePicker, setShowSchedulePicker] = useState(false);
@@ -60,14 +106,22 @@ export function CoachMessages() {
   const [rescheduleMsg, setRescheduleMsg] = useState('');
 
   const bookedSlots = useMemo(() => {
-    if (showSchedulePicker && scheduleDate) return getBookedSlots(toISODate(scheduleDate));
-    if (rescheduleTarget && rescheduleDate) return getBookedSlots(toISODate(rescheduleDate));
+    if (showSchedulePicker && scheduleDate)
+      return getBookedSlots(toISODate(scheduleDate));
+    if (rescheduleTarget && rescheduleDate)
+      return getBookedSlots(toISODate(rescheduleDate));
     return [];
-  }, [showSchedulePicker, scheduleDate, rescheduleTarget, rescheduleDate, getBookedSlots]);
+  }, [
+    showSchedulePicker,
+    scheduleDate,
+    rescheduleTarget,
+    rescheduleDate,
+    getBookedSlots,
+  ]);
 
   const rescheduleTargetCheckin = useMemo(
-    () => actionableForClient.find(c => c.id === rescheduleTarget) ?? null,
-    [actionableForClient, rescheduleTarget]
+    () => actionableForClient.find((c) => c.id === rescheduleTarget) ?? null,
+    [actionableForClient, rescheduleTarget],
   );
 
   const scrollToBottom = () => {
@@ -86,11 +140,15 @@ export function CoachMessages() {
     setMessage('');
 
     setTimeout(() => {
-      ctxSendMessage(activeClient, 'Got it, thanks for letting me know!', 'client');
+      ctxSendMessage(
+        activeClient,
+        'Got it, thanks for letting me know!',
+        'client',
+      );
       addNotification({
         title: activeConversation?.name || 'Client',
         message: 'Got it, thanks for letting me know!',
-        link: `/coach/messages?client=${activeClient}`
+        link: `/coach/messages?client=${activeClient}`,
       });
     }, 3000);
   };
@@ -107,7 +165,11 @@ export function CoachMessages() {
       note: scheduleNote || undefined,
     });
 
-    addSystemMessage(activeClient, `Coach scheduled a check-in for ${formatCheckinDate(date)} at ${formatCheckinTime(time)}`, 'checkin-scheduled');
+    addSystemMessage(
+      activeClient,
+      `Coach scheduled a check-in for ${formatCheckinDate(date)} at ${formatCheckinTime(time)}`,
+      'checkin-scheduled',
+    );
     if (scheduleNote) {
       ctxSendMessage(activeClient, scheduleNote, 'coach');
     }
@@ -120,10 +182,14 @@ export function CoachMessages() {
   };
 
   const handleApprove = (checkinId: string) => {
-    const checkin = actionableForClient.find(c => c.id === checkinId);
+    const checkin = actionableForClient.find((c) => c.id === checkinId);
     if (!checkin) return;
     approveCheckin(checkinId);
-    addSystemMessage(activeClient, `Check-in confirmed for ${formatCheckinDate(checkin.date)} at ${formatCheckinTime(checkin.time)}`, 'checkin-scheduled');
+    addSystemMessage(
+      activeClient,
+      `Check-in confirmed for ${formatCheckinDate(checkin.date)} at ${formatCheckinTime(checkin.time)}`,
+      'checkin-scheduled',
+    );
     toast.success(`Check-in approved for ${checkin.clientName}`);
   };
 
@@ -144,13 +210,23 @@ export function CoachMessages() {
     if (!rescheduleTarget || !rescheduleDate || !rescheduleTime) return;
     const date = toISODate(rescheduleDate);
     const time = to24h(rescheduleTime);
-    const ok = rescheduleCheckin(rescheduleTarget, date, time, 'coach', rescheduleMsg || undefined);
+    const ok = rescheduleCheckin(
+      rescheduleTarget,
+      date,
+      time,
+      'coach',
+      rescheduleMsg || undefined,
+    );
     if (!ok) {
       toast.error('Maximum reschedule limit reached');
       return;
     }
 
-    addSystemMessage(activeClient, `Coach proposed rescheduling to ${formatCheckinDate(date)} at ${formatCheckinTime(time)}`, 'checkin-rescheduled');
+    addSystemMessage(
+      activeClient,
+      `Coach proposed rescheduling to ${formatCheckinDate(date)} at ${formatCheckinTime(time)}`,
+      'checkin-rescheduled',
+    );
     if (rescheduleMsg) {
       ctxSendMessage(activeClient, rescheduleMsg, 'coach');
     }
@@ -163,15 +239,19 @@ export function CoachMessages() {
   };
 
   const handleAcceptReschedule = (checkinId: string) => {
-    const checkin = actionableForClient.find(c => c.id === checkinId);
+    const checkin = actionableForClient.find((c) => c.id === checkinId);
     if (!checkin) return;
     acceptReschedule(checkinId);
-    addSystemMessage(activeClient, `Check-in confirmed for ${formatCheckinDate(checkin.date)} at ${formatCheckinTime(checkin.time)}`, 'checkin-scheduled');
+    addSystemMessage(
+      activeClient,
+      `Check-in confirmed for ${formatCheckinDate(checkin.date)} at ${formatCheckinTime(checkin.time)}`,
+      'checkin-scheduled',
+    );
     toast.success('Reschedule accepted');
   };
 
-  const filteredConversations = conversations.filter(c =>
-    c.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredConversations = conversations.filter((c) =>
+    c.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   return (
@@ -182,360 +262,463 @@ export function CoachMessages() {
       />
 
       <div className="flex h-[calc(100vh-17rem)] lg:h-[calc(100vh-14rem)] bg-card rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50 overflow-hidden">
+        {/* Sidebar */}
+        <div className="w-full md:w-80 border-r border-border flex flex-col hidden md:flex shrink-0">
+          <div className="p-6 px-3 border-b border-border rounded-field">
+            <h2 className="font-serif text-2xl text-foreground mb-4">
+              Messages
+            </h2>
+            <div className="relative">
+              <Search
+                size={16}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+              />
+              <input
+                type="text"
+                placeholder="Search clients..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 bg-muted border border-border rounded-control text-sm focus:outline-none focus:bg-card transition-all"
+              />
+            </div>
+          </div>
 
-      {/* Sidebar */}
-      <div className="w-full md:w-80 border-r border-border flex flex-col hidden md:flex shrink-0">
-        <div className="p-6 px-3 border-b border-border rounded-field">
-          <h2 className="font-serif text-2xl text-foreground mb-4">Messages</h2>
-          <div className="relative">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Search clients..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-muted border border-border rounded-control text-sm focus:outline-none focus:bg-card transition-all"
-            />
+          <div className="flex-1 overflow-y-auto">
+            {filteredConversations.map((conv) => (
+              <button
+                key={conv.id}
+                onClick={() => {
+                  setActiveClient(conv.id);
+                  setRescheduleTarget(null);
+                  setShowSchedulePicker(false);
+                }}
+                className={`w-full text-left p-4 flex items-start gap-3 border-b border-neutral-50 transition-colors ${
+                  activeClient === conv.id
+                    ? 'bg-primary-soft'
+                    : 'hover:bg-muted'
+                }`}
+              >
+                <div className="relative shrink-0">
+                  {conv.avatar ? (
+                    <img
+                      src={conv.avatar}
+                      alt={conv.name}
+                      className="w-12 h-12 rounded-full object-cover border border-border"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-full bg-card border border-border flex items-center justify-center font-serif text-foreground font-semibold">
+                      {conv.initial}
+                    </div>
+                  )}
+                  {conv.status === 'Active' && (
+                    <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between items-baseline mb-1">
+                    <p
+                      className={`text-sm truncate ${activeClient === conv.id ? 'font-bold text-foreground' : 'font-semibold text-neutral-700'}`}
+                    >
+                      {conv.name}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground shrink-0 ml-2">
+                      {conv.time}
+                    </p>
+                  </div>
+                  <p
+                    className={`text-xs truncate ${conv.unread > 0 ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}
+                  >
+                    {conv.lastMessage}
+                  </p>
+                </div>
+                {conv.unread > 0 && (
+                  <div className="w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center shrink-0">
+                    {conv.unread}
+                  </div>
+                )}
+              </button>
+            ))}
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto">
-          {filteredConversations.map(conv => (
-            <button
-              key={conv.id}
-              onClick={() => { setActiveClient(conv.id); setRescheduleTarget(null); setShowSchedulePicker(false); }}
-              className={`w-full text-left p-4 flex items-start gap-3 border-b border-neutral-50 transition-colors ${
-                activeClient === conv.id ? 'bg-brand/5' : 'hover:bg-muted'
-              }`}
-            >
-              <div className="relative shrink-0">
-                {conv.avatar ? (
-                  <img src={conv.avatar} alt={conv.name} className="w-12 h-12 rounded-full object-cover border border-border" />
-                ) : (
-                  <div className="w-12 h-12 rounded-full bg-card border border-border flex items-center justify-center font-serif text-foreground font-semibold">
-                    {conv.initial}
+        {/* Chat Area */}
+        <div className="flex-1 flex flex-col h-full bg-surface-page">
+          {activeConversation ? (
+            <>
+              {/* Header */}
+              <div className="h-20 px-6 border-b border-border rounded-field bg-card flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-4">
+                  {activeConversation.avatar ? (
+                    <img
+                      src={activeConversation.avatar}
+                      alt={activeConversation.name}
+                      className="w-10 h-10 rounded-full object-cover border border-border"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center font-serif text-foreground font-semibold">
+                      {activeConversation.initial}
+                    </div>
+                  )}
+                  <div>
+                    <h3 className="font-semibold text-foreground">
+                      {activeConversation.name}
+                    </h3>
+                    <p className="text-xs text-success font-medium">Active</p>
                   </div>
-                )}
-                {conv.status === 'Active' && (
-                  <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex justify-between items-baseline mb-1">
-                  <p className={`text-sm truncate ${activeClient === conv.id ? 'font-bold text-foreground' : 'font-semibold text-neutral-700'}`}>
-                    {conv.name}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground shrink-0 ml-2">{conv.time}</p>
                 </div>
-                <p className={`text-xs truncate ${conv.unread > 0 ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>
-                  {conv.lastMessage}
-                </p>
-              </div>
-              {conv.unread > 0 && (
-                <div className="w-5 h-5 rounded-full bg-brand text-white text-[10px] font-bold flex items-center justify-center shrink-0">
-                  {conv.unread}
+                <div className="flex items-center gap-1 text-muted-foreground">
+                  <Button
+                    onClick={() => {
+                      setShowSchedulePicker(!showSchedulePicker);
+                      setRescheduleTarget(null);
+                    }}
+                    variant={showSchedulePicker ? 'default' : 'outline-primary'}
+                    size="sm"
+                  >
+                    <CalendarPlus size={14} />
+                    <span className="hidden sm:inline">Schedule</span>
+                  </Button>
+                  <Link
+                    to={`/coach/clients/${activeConversation.id}`}
+                    className={buttonVariants({
+                      variant: 'ghost',
+                      size: 'icon',
+                    })}
+                    title="View Profile"
+                  >
+                    <User size={18} />
+                  </Link>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <MoreVertical size={18} />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      align="end"
+                      className="w-52 rounded-control shadow-lg border-border"
+                    >
+                      <DropdownMenuItem
+                        className="gap-3 rounded-compact cursor-pointer"
+                        onClick={() => {
+                          setIsPinned(!isPinned);
+                          toast.success(
+                            isPinned
+                              ? 'Conversation unpinned'
+                              : 'Conversation pinned',
+                          );
+                        }}
+                      >
+                        <Pin
+                          size={15}
+                          className={isPinned ? 'text-primary' : ''}
+                        />
+                        {isPinned ? 'Unpin conversation' : 'Pin conversation'}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="gap-3 rounded-compact cursor-pointer"
+                        onClick={() => {
+                          setIsMuted(!isMuted);
+                          toast.success(
+                            isMuted
+                              ? 'Notifications unmuted'
+                              : 'Notifications muted',
+                          );
+                        }}
+                      >
+                        <BellOff
+                          size={15}
+                          className={isMuted ? 'text-primary' : ''}
+                        />
+                        {isMuted
+                          ? 'Unmute notifications'
+                          : 'Mute notifications'}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="gap-3 rounded-compact cursor-pointer"
+                        onClick={() =>
+                          toast.success('Conversation flagged for follow-up')
+                        }
+                      >
+                        <Flag size={15} />
+                        Flag for follow-up
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="gap-3 rounded-compact cursor-pointer"
+                        onClick={() => toast.success('Conversation archived')}
+                      >
+                        <Archive size={15} />
+                        Archive conversation
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="gap-3 rounded-compact cursor-pointer text-red-600 focus:text-red-600"
+                        onClick={() => setShowDeleteDialog(true)}
+                      >
+                        <Trash2 size={15} />
+                        Delete conversation
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
-              )}
-            </button>
-          ))}
-        </div>
-      </div>
+              </div>
 
-      {/* Chat Area */}
-      <div className="flex-1 flex flex-col h-full bg-surface-page">
-        {activeConversation ? (
-          <>
-            {/* Header */}
-            <div className="h-20 px-6 border-b border-border rounded-field bg-card flex items-center justify-between shrink-0">
-              <div className="flex items-center gap-4">
-                {activeConversation.avatar ? (
-                  <img src={activeConversation.avatar} alt={activeConversation.name} className="w-10 h-10 rounded-full object-cover border border-border" />
-                ) : (
-                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center font-serif text-foreground font-semibold">
-                    {activeConversation.initial}
-                  </div>
-                )}
-                <div>
-                  <h3 className="font-semibold text-foreground">{activeConversation.name}</h3>
-                  <p className="text-xs text-success font-medium">Active</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-1 text-muted-foreground">
-                <button
-                  onClick={() => { setShowSchedulePicker(!showSchedulePicker); setRescheduleTarget(null); }}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-control transition-all ${
-                    showSchedulePicker
-                      ? 'bg-brand text-white'
-                      : 'bg-brand-soft text-brand hover:bg-brand hover:text-white'
-                  }`}
+              {/* Upcoming check-in banner */}
+              {nextCheckin && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mx-6 mt-4 px-4 py-3 bg-surface-inverted/5 border border-border rounded-card flex items-center gap-3"
                 >
-                  <CalendarPlus size={14} />
-                  <span className="hidden sm:inline">Schedule</span>
-                </button>
-                <Link to={`/coach/clients/${activeConversation.id}`} className="p-2 hover:text-foreground hover:bg-muted rounded-full transition-colors flex items-center justify-center" title="View Profile">
-                  <User size={18} />
-                </Link>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="p-2 hover:text-foreground hover:bg-muted rounded-full transition-colors">
-                      <MoreVertical size={18} />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-52 rounded-control shadow-lg border-border">
-                    <DropdownMenuItem
-                      className="gap-3 rounded-compact cursor-pointer"
-                      onClick={() => { setIsPinned(!isPinned); toast.success(isPinned ? 'Conversation unpinned' : 'Conversation pinned'); }}
-                    >
-                      <Pin size={15} className={isPinned ? 'text-brand' : ''} />
-                      {isPinned ? 'Unpin conversation' : 'Pin conversation'}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="gap-3 rounded-compact cursor-pointer"
-                      onClick={() => { setIsMuted(!isMuted); toast.success(isMuted ? 'Notifications unmuted' : 'Notifications muted'); }}
-                    >
-                      <BellOff size={15} className={isMuted ? 'text-brand' : ''} />
-                      {isMuted ? 'Unmute notifications' : 'Mute notifications'}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="gap-3 rounded-compact cursor-pointer"
-                      onClick={() => toast.success('Conversation flagged for follow-up')}
-                    >
-                      <Flag size={15} />
-                      Flag for follow-up
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      className="gap-3 rounded-compact cursor-pointer"
-                      onClick={() => toast.success('Conversation archived')}
-                    >
-                      <Archive size={15} />
-                      Archive conversation
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="gap-3 rounded-compact cursor-pointer text-red-600 focus:text-red-600"
-                      onClick={() => setShowDeleteDialog(true)}
-                    >
-                      <Trash2 size={15} />
-                      Delete conversation
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </div>
+                  <CalendarDays
+                    size={16}
+                    className="text-foreground shrink-0"
+                  />
+                  <span className="text-sm text-foreground font-medium">
+                    Next check-in:{' '}
+                    <span className="font-semibold">
+                      {formatCheckinDate(nextCheckin.date)} at{' '}
+                      {formatCheckinTime(nextCheckin.time)}
+                    </span>
+                  </span>
+                  {nextCheckin.type === 'recurring' && (
+                    <span className="ml-auto text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                      Weekly
+                    </span>
+                  )}
+                </motion.div>
+              )}
 
-            {/* Upcoming check-in banner */}
-            {nextCheckin && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mx-6 mt-4 px-4 py-3 bg-surface-inverted/5 border border-border rounded-card flex items-center gap-3"
-              >
-                <CalendarDays size={16} className="text-foreground shrink-0" />
-                <span className="text-sm text-foreground font-medium">
-                  Next check-in: <span className="font-semibold">{formatCheckinDate(nextCheckin.date)} at {formatCheckinTime(nextCheckin.time)}</span>
-                </span>
-                {nextCheckin.type === 'recurring' && (
-                  <span className="ml-auto text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Weekly</span>
-                )}
-              </motion.div>
-            )}
+              {/* Messages */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                {messages.map((msg) => {
+                  const isCoach = msg.sender === 'coach';
+                  const isSystem = msg.sender === 'system';
 
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
-              {messages.map((msg) => {
-                const isCoach = msg.sender === 'coach';
-                const isSystem = msg.sender === 'system';
+                  if (isSystem) {
+                    return (
+                      <motion.div
+                        key={msg.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="flex justify-center"
+                      >
+                        <div
+                          className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-card text-xs font-medium border ${
+                            msg.systemType === 'plan-update'
+                              ? 'bg-brand-secondary/5 border-brand-secondary/20 text-brand-secondary'
+                              : msg.systemType === 'checkin-cancelled'
+                                ? 'bg-red-50 border-red-200 text-red-600'
+                                : msg.systemType === 'checkin-rescheduled'
+                                  ? 'bg-brand/5 border-brand/20 text-brand'
+                                  : 'bg-muted border-border text-muted-foreground'
+                          }`}
+                        >
+                          <Activity size={14} />
+                          {msg.text}
+                        </div>
+                      </motion.div>
+                    );
+                  }
 
-                if (isSystem) {
                   return (
                     <motion.div
-                      key={msg.id}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="flex justify-center"
+                      key={msg.id}
+                      className={`flex flex-col ${isCoach ? 'items-end' : 'items-start'}`}
                     >
-                      <div className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-card text-xs font-medium border ${
-                        msg.systemType === 'plan-update'
-                          ? 'bg-brand-secondary/5 border-brand-secondary/20 text-brand-secondary'
-                          : msg.systemType === 'checkin-cancelled'
-                            ? 'bg-red-50 border-red-200 text-red-600'
-                            : msg.systemType === 'checkin-rescheduled'
-                              ? 'bg-brand/5 border-brand/20 text-brand'
-                              : 'bg-muted border-border text-muted-foreground'
-                      }`}>
-                        <Activity size={14} />
-                        {msg.text}
+                      <div className="flex items-end gap-2 max-w-[80%]">
+                        {!isCoach &&
+                          activeConversation &&
+                          (activeConversation.avatar ? (
+                            <img
+                              src={activeConversation.avatar}
+                              alt=""
+                              className="w-6 h-6 rounded-full object-cover border border-border shrink-0 mb-1"
+                            />
+                          ) : (
+                            <div className="w-6 h-6 rounded-full bg-card border border-border flex items-center justify-center font-serif text-xs shrink-0 mb-1">
+                              {activeConversation.initial}
+                            </div>
+                          ))}
+
+                        <div
+                          className={`p-4 rounded-card text-sm ${
+                            isCoach
+                              ? 'bg-surface-inverted text-white rounded-br-tile'
+                              : 'bg-card border border-border shadow-sm text-foreground rounded-bl-tile'
+                          }`}
+                        >
+                          {msg.text}
+                        </div>
+                      </div>
+
+                      <div
+                        className={`flex items-center gap-1 mt-1 ${isCoach ? '' : 'pl-8'}`}
+                      >
+                        <span className="text-[10px] text-muted-foreground font-medium">
+                          {msg.time}
+                        </span>
+                        {isCoach && (
+                          <span className="text-muted-foreground">
+                            {msg.status === 'read' ? (
+                              <CheckCheck size={12} className="text-blue-500" />
+                            ) : (
+                              <Check size={12} />
+                            )}
+                          </span>
+                        )}
                       </div>
                     </motion.div>
                   );
-                }
+                })}
 
-                return (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    key={msg.id}
-                    className={`flex flex-col ${isCoach ? 'items-end' : 'items-start'}`}
-                  >
-                    <div className="flex items-end gap-2 max-w-[80%]">
-                      {!isCoach && activeConversation && (
-                        activeConversation.avatar ? (
-                          <img src={activeConversation.avatar} alt="" className="w-6 h-6 rounded-full object-cover border border-border shrink-0 mb-1" />
-                        ) : (
-                          <div className="w-6 h-6 rounded-full bg-card border border-border flex items-center justify-center font-serif text-xs shrink-0 mb-1">
-                            {activeConversation.initial}
-                          </div>
-                        )
-                      )}
-
-                      <div className={`p-4 rounded-card text-sm ${
-                        isCoach
-                          ? 'bg-surface-inverted text-white rounded-br-tile'
-                          : 'bg-card border border-border shadow-sm text-foreground rounded-bl-tile'
-                      }`}>
-                        {msg.text}
-                      </div>
-                    </div>
-
-                    <div className={`flex items-center gap-1 mt-1 ${isCoach ? '' : 'pl-8'}`}>
-                      <span className="text-[10px] text-muted-foreground font-medium">
-                        {msg.time}
-                      </span>
-                      {isCoach && (
-                        <span className="text-muted-foreground">
-                          {msg.status === 'read' ? <CheckCheck size={12} className="text-blue-500" /> : <Check size={12} />}
-                        </span>
-                      )}
-                    </div>
-                  </motion.div>
-                );
-              })}
-
-              {/* Actionable check-in cards */}
-              {actionableForClient.map(checkin => (
-                <CheckinActionCard
-                  key={checkin.id}
-                  checkin={checkin}
-                  role="coach"
-                  onApprove={() => handleApprove(checkin.id)}
-                  onDecline={() => handleDecline(checkin.id)}
-                  onReschedule={() => handleReschedule(checkin.id)}
-                  onAcceptReschedule={() => handleAcceptReschedule(checkin.id)}
-                />
-              ))}
-
-              <div ref={messagesEndRef} />
-            </div>
-
-            {/* Composer */}
-            <div className="bg-card border-t border-border shrink-0">
-              <form onSubmit={handleSend} className="flex items-end gap-3 p-4">
-                <button type="button" className="h-[56px] w-[56px] flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors rounded-card hover:bg-muted shrink-0">
-                  <Paperclip size={22} />
-                </button>
-                <div className="flex-1 min-h-[56px] flex items-center bg-muted rounded-card border border-border focus-within:border-brand focus-within:ring-1 focus-within:ring-brand transition-all overflow-hidden">
-                  <textarea
-                    rows={1}
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Type your message..."
-                    className="w-full bg-transparent px-4 py-3 outline-none text-sm leading-tight resize-none max-h-32"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSend(e);
-                      }
-                    }}
+                {/* Actionable check-in cards */}
+                {actionableForClient.map((checkin) => (
+                  <CheckinActionCard
+                    key={checkin.id}
+                    checkin={checkin}
+                    role="coach"
+                    onApprove={() => handleApprove(checkin.id)}
+                    onDecline={() => handleDecline(checkin.id)}
+                    onReschedule={() => handleReschedule(checkin.id)}
+                    onAcceptReschedule={() =>
+                      handleAcceptReschedule(checkin.id)
+                    }
                   />
-                </div>
-                <button
-                  type="submit"
-                  disabled={!message.trim()}
-                  className="h-[56px] w-[56px] flex items-center justify-center bg-brand text-white rounded-card hover:bg-brand-hover transition-colors shrink-0 shadow-md disabled:pointer-events-none disabled:opacity-50"
+                ))}
+
+                <div ref={messagesEndRef} />
+              </div>
+
+              {/* Composer */}
+              <div className="bg-card border-t border-border shrink-0">
+                <form
+                  onSubmit={handleSend}
+                  className="flex items-end gap-3 p-4"
                 >
-                  <Send size={20} />
-                </button>
-              </form>
+                  <Button type="button" variant="ghost" size="icon-lg">
+                    <Paperclip size={22} />
+                  </Button>
+                  <div className="flex-1 min-h-[56px] flex items-center bg-muted rounded-card border border-border focus-within:border-brand focus-within:ring-1 focus-within:ring-brand transition-all overflow-hidden">
+                    <textarea
+                      rows={1}
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
+                      placeholder="Type your message..."
+                      className="w-full bg-transparent px-4 py-3 outline-none text-sm leading-tight resize-none max-h-32"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSend(e);
+                        }
+                      }}
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    disabled={!message.trim()}
+                    variant="default"
+                    size="icon-lg"
+                    className="shadow-md"
+                  >
+                    <Send size={20} />
+                  </Button>
+                </form>
+              </div>
+            </>
+          ) : (
+            <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
+              Select a conversation to start messaging
             </div>
-          </>
-        ) : (
-          <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
-            Select a conversation to start messaging
-          </div>
-        )}
-      </div>
+          )}
+        </div>
 
-      {/* Schedule a check-in with the active client */}
-      <CheckinSchedulerSheet
-        open={showSchedulePicker}
-        onOpenChange={setShowSchedulePicker}
-        variant="schedule"
-        title={activeConversation ? `Schedule a check-in with ${activeConversation.name}` : 'Schedule a check-in'}
-        description="Pick a date and time. The client will be notified and can confirm or propose a different slot."
-        selectedDate={scheduleDate}
-        onDateChange={setScheduleDate}
-        selectedTime={scheduleTime}
-        onTimeChange={setScheduleTime}
-        bookedSlots={bookedSlots}
-        onSubmit={handleCoachSchedule}
-        submitLabel="Schedule"
-        showMessageField
-        message={scheduleNote}
-        onMessageChange={setScheduleNote}
-        messagePlaceholder="Add a note (optional)"
-      />
+        {/* Schedule a check-in with the active client */}
+        <CheckinSchedulerSheet
+          open={showSchedulePicker}
+          onOpenChange={setShowSchedulePicker}
+          variant="schedule"
+          title={
+            activeConversation
+              ? `Schedule a check-in with ${activeConversation.name}`
+              : 'Schedule a check-in'
+          }
+          description="Pick a date and time. The client will be notified and can confirm or propose a different slot."
+          selectedDate={scheduleDate}
+          onDateChange={setScheduleDate}
+          selectedTime={scheduleTime}
+          onTimeChange={setScheduleTime}
+          bookedSlots={bookedSlots}
+          onSubmit={handleCoachSchedule}
+          submitLabel="Schedule"
+          showMessageField
+          message={scheduleNote}
+          onMessageChange={setScheduleNote}
+          messagePlaceholder="Add a note (optional)"
+        />
 
-      {/* Reschedule a check-in */}
-      <CheckinSchedulerSheet
-        open={Boolean(rescheduleTarget)}
-        onOpenChange={(open) => { if (!open) setRescheduleTarget(null); }}
-        variant="reschedule"
-        title="Propose a new time"
-        description={
-          rescheduleTargetCheckin
-            ? `Currently set for ${formatCheckinDate(rescheduleTargetCheckin.date)} · ${formatCheckinTime(rescheduleTargetCheckin.time)}`
-            : undefined
-        }
-        selectedDate={rescheduleDate}
-        onDateChange={setRescheduleDate}
-        selectedTime={rescheduleTime}
-        onTimeChange={setRescheduleTime}
-        bookedSlots={bookedSlots}
-        onSubmit={handleSubmitReschedule}
-        submitLabel="Propose"
-        showMessageField
-        message={rescheduleMsg}
-        onMessageChange={setRescheduleMsg}
-        messagePlaceholder="Add a note for the client (optional)"
-      />
+        {/* Reschedule a check-in */}
+        <CheckinSchedulerSheet
+          open={Boolean(rescheduleTarget)}
+          onOpenChange={(open) => {
+            if (!open) setRescheduleTarget(null);
+          }}
+          variant="reschedule"
+          title="Propose a new time"
+          description={
+            rescheduleTargetCheckin
+              ? `Currently set for ${formatCheckinDate(rescheduleTargetCheckin.date)} · ${formatCheckinTime(rescheduleTargetCheckin.time)}`
+              : undefined
+          }
+          selectedDate={rescheduleDate}
+          onDateChange={setRescheduleDate}
+          selectedTime={rescheduleTime}
+          onTimeChange={setRescheduleTime}
+          bookedSlots={bookedSlots}
+          onSubmit={handleSubmitReschedule}
+          submitLabel="Propose"
+          showMessageField
+          message={rescheduleMsg}
+          onMessageChange={setRescheduleMsg}
+          messagePlaceholder="Add a note for the client (optional)"
+        />
 
-      {/* Delete Confirmation */}
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent className="sm:max-w-md rounded-card">
-          <AlertDialogHeader>
-            <div className="mx-auto mb-2 w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
-              <Trash2 size={24} className="text-red-600" />
-            </div>
-            <AlertDialogTitle className="text-center text-foreground">
-              Delete this conversation?
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-center">
-              Your entire message history with <span className="font-semibold text-foreground">{activeConversation?.name}</span> will be permanently deleted. This cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="sm:flex-row gap-3 mt-2">
-            <AlertDialogCancel className="flex-1 rounded-control border-border text-muted-foreground hover:bg-muted font-semibold">
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => { setShowDeleteDialog(false); toast.success('Conversation deleted'); }}
-              className="flex-1 rounded-control bg-red-600 text-white hover:bg-red-700 font-semibold shadow-sm"
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        {/* Delete Confirmation */}
+        <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+          <AlertDialogContent className="sm:max-w-md rounded-card">
+            <AlertDialogHeader>
+              <div className="mx-auto mb-2 w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                <Trash2 size={24} className="text-red-600" />
+              </div>
+              <AlertDialogTitle className="text-center text-foreground">
+                Delete this conversation?
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-center">
+                Your entire message history with{' '}
+                <span className="font-semibold text-foreground">
+                  {activeConversation?.name}
+                </span>{' '}
+                will be permanently deleted. This cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="sm:flex-row gap-3 mt-2">
+              <AlertDialogCancel className="flex-1 rounded-control border-border text-muted-foreground hover:bg-muted font-semibold">
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  setShowDeleteDialog(false);
+                  toast.success('Conversation deleted');
+                }}
+                className="flex-1 rounded-control bg-red-600 text-white hover:bg-red-700 font-semibold shadow-sm"
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );

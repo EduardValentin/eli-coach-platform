@@ -45,8 +45,7 @@ function stageAfter(stage: JourneyStage, event: JourneyEvent): JourneyStage {
 describe('advancing a journey', () => {
   const legalSteps: [JourneyStage, JourneyEvent, JourneyStage][] = [
     ['held', 'send-payment-link', 'payment-link-sent'],
-    ['payment-link-sent', 'record-payment', 'paid'],
-    ['paid', 'send-invitation', 'invited'],
+    ['payment-link-sent', 'record-payment', 'invited'],
     ['invited', 'create-account', 'account-created'],
     ['account-created', 'start-onboarding', 'onboarding'],
     ['onboarding', 'submit-onboarding', 'submitted'],
@@ -156,13 +155,13 @@ describe('advancing a journey', () => {
     const journey = journeyAt('held');
 
     // act
-    const transition = advance(journey, 'send-invitation');
+    const transition = advance(journey, 'create-account');
 
     // assert
     expect(transition).toEqual({
       status: 'rejected',
       stage: 'held',
-      event: 'send-invitation',
+      event: 'create-account',
     });
   });
 
@@ -183,7 +182,6 @@ describe('journey labels', () => {
     // arrange
     const stages: JourneyStage[] = [
       'payment-link-sent',
-      'paid',
       'invited',
       'account-created',
       'onboarding',
@@ -201,7 +199,6 @@ describe('journey labels', () => {
     // assert
     expect(labels).toEqual([
       'Payment link sent',
-      'Paid',
       'Invited',
       'Invitation accepted',
       'Onboarding',
@@ -246,7 +243,6 @@ describe('ordering stages', () => {
     const stages: JourneyStage[] = [
       'held',
       'payment-link-sent',
-      'paid',
       'invited',
       'account-created',
       'onboarding',
@@ -256,7 +252,7 @@ describe('ordering stages', () => {
     const before = stages.map((stage) => isBeforeStage(stage, 'submitted'));
 
     // assert
-    expect(before).toEqual([true, true, true, true, true, true]);
+    expect(before).toEqual([true, true, true, true, true]);
   });
 
   it('places the review loop after submitted', () => {

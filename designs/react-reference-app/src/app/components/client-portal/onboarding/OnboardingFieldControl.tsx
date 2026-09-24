@@ -3,8 +3,9 @@ import { useId, type ReactElement } from 'react';
 import type { Control, ControllerRenderProps } from 'react-hook-form';
 import type { OnboardingField } from '../../../domain/onboardingSchema';
 import { CheckboxChip } from '../../CheckboxChip';
+import { ChoiceGroup, ChoiceOption } from '../../ChoiceGroup';
+import { Checkbox } from '../../ui/checkbox';
 import { Input } from '../../ui/input';
-import { RadioGroup } from '../../ui/radio-group';
 import {
   Select,
   SelectContent,
@@ -30,7 +31,6 @@ import {
   type MeasureUnits,
 } from '../measureUnits';
 import { ONBOARDING_LEGEND_CLASS } from './onboardingCard';
-import { OnboardingRadioOption } from './OnboardingRadioOption';
 import { entryBounds, fieldRules } from './onboardingValidation';
 import {
   asList,
@@ -87,6 +87,7 @@ function numberEntry(
       min={bounds?.min}
       onBlur={controller.onBlur}
       onChange={controller.onChange}
+      placeholder={field.placeholder}
       ref={controller.ref}
       step={entryStep(field, units)}
       type="number"
@@ -106,6 +107,7 @@ function fieldEntry(
         className="min-h-28"
         onBlur={controller.onBlur}
         onChange={controller.onChange}
+        placeholder={field.placeholder}
         ref={controller.ref}
         value={asText(controller.value)}
       />
@@ -129,6 +131,7 @@ function fieldEntry(
     <Input
       onBlur={controller.onBlur}
       onChange={controller.onChange}
+      placeholder={field.placeholder}
       ref={controller.ref}
       type="text"
       value={asText(controller.value)}
@@ -136,7 +139,31 @@ function fieldEntry(
   );
 }
 
-function LabelText({ field, unit }: { field: OnboardingField; unit: string | null }) {
+function nextChipsValue(
+  field: OnboardingField,
+  current: string | string[] | undefined,
+  option: string,
+  checked: boolean,
+): string[] {
+  const selected = asList(current);
+
+  if (!checked) return selected.filter((picked) => picked !== option);
+  if (field.exclusiveOptions?.includes(option)) return [option];
+
+  const withoutExclusive = selected.filter(
+    (picked) => !field.exclusiveOptions?.includes(picked),
+  );
+
+  return [...withoutExclusive, option];
+}
+
+function LabelText({
+  field,
+  unit,
+}: {
+  field: OnboardingField;
+  unit: string | null;
+}) {
   const suffixes = [
     unit ? `(${unit})` : null,
     field.unitSuffix ? `(${field.unitSuffix})` : null,
@@ -168,6 +195,45 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
       name={field.id}
       rules={fieldRules(field, units)}
       render={({ field: controller }) => {
+        if (field.kind === 'checkbox') {
+          const checked = asText(controller.value) === 'true';
+          const isDeclaration = field.requirement === 'required';
+
+          return (
+            <FormItem className={isDeclaration ? undefined : '-mt-2'}>
+              <FormControl>
+                <div
+                  className={
+                    isDeclaration
+                      ? 'flex items-start gap-3 rounded-card border border-border-subtle bg-surface-quiet/60 p-4'
+                      : 'flex items-center gap-2'
+                  }
+                >
+                  <Checkbox
+                    checked={checked}
+                    className={isDeclaration ? 'mt-0.5' : undefined}
+                    id={legendId}
+                    onCheckedChange={(next) =>
+                      controller.onChange(next === true ? 'true' : 'false')
+                    }
+                  />
+                  <label
+                    className={
+                      isDeclaration
+                        ? 'text-sm leading-relaxed text-text-primary'
+                        : 'text-sm text-text-primary'
+                    }
+                    htmlFor={legendId}
+                  >
+                    {field.label}
+                  </label>
+                </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          );
+        }
+
         if (field.kind === 'radio' || field.kind === 'chips') {
           return (
             <FormItem>
@@ -176,36 +242,48 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
                   <legend className={ONBOARDING_LEGEND_CLASS} id={legendId}>
                     <LabelText field={field} unit={unit} />
                   </legend>
-                  {field.hint && <FormDescription>{field.hint}</FormDescription>}
+                  {field.hint && (
+                    <FormDescription>{field.hint}</FormDescription>
+                  )}
                   {field.kind === 'radio' ? (
-                    <RadioGroup
-                      aria-labelledby={legendId}
-                      className="mt-2 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-x-6"
-                      onValueChange={controller.onChange}
-                      value={asText(controller.value)}
-                    >
-                      {(field.options ?? []).map((option) => (
-                        <OnboardingRadioOption
-                          key={option.value}
-                          label={option.label}
-                          value={option.value}
-                        />
-                      ))}
-                    </RadioGroup>
+                    <>
+                      <ChoiceGroup
+                        aria-labelledby={legendId}
+                        className="mt-2"
+                        onValueChange={controller.onChange}
+                        value={asText(controller.value)}
+                      >
+                        {(field.options ?? []).map((option) => (
+                          <ChoiceOption key={option.value} value={option.value}>
+                            {option.label}
+                          </ChoiceOption>
+                        ))}
+                      </ChoiceGroup>
+                      {field.reassurance &&
+                        asText(controller.value) ===
+                          field.reassurance.value && (
+                          <p className="mt-3 text-sm text-text-secondary">
+                            {field.reassurance.text}
+                          </p>
+                        )}
+                    </>
                   ) : (
                     <div className="mt-2 flex flex-wrap gap-2">
                       {(field.options ?? []).map((option) => (
                         <CheckboxChip
                           aria-label={option.label}
                           key={option.value}
-                          checked={asList(controller.value).includes(option.value)}
+                          checked={asList(controller.value).includes(
+                            option.value,
+                          )}
                           onCheckedChange={(checked) =>
                             controller.onChange(
-                              checked
-                                ? [...asList(controller.value), option.value]
-                                : asList(controller.value).filter(
-                                    (picked) => picked !== option.value,
-                                  ),
+                              nextChipsValue(
+                                field,
+                                controller.value,
+                                option.value,
+                                checked === true,
+                              ),
                             )
                           }
                         >
@@ -232,10 +310,15 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
               <FormDescription>{field.hint}</FormDescription>
             )}
             {field.kind === 'select' ? (
-              <Select onValueChange={controller.onChange} value={asText(controller.value)}>
+              <Select
+                onValueChange={controller.onChange}
+                value={asText(controller.value)}
+              >
                 <FormControl>
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Choose one" />
+                    <SelectValue
+                      placeholder={field.placeholder ?? 'Choose one'}
+                    />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>

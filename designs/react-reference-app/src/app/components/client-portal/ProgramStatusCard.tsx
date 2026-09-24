@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion, useReducedMotion } from 'motion/react';
+import { ClipboardList } from 'lucide-react';
 import { Link, useNavigate } from 'react-router';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
 import { WITHDRAWAL_WAIVER_COPY } from '../../domain/onboardingCopy';
@@ -12,14 +12,18 @@ import {
 } from '../../domain/coachingSubscription';
 import {
   clientStatusLabel,
+  isBeforeStage,
   type ClientJourney,
   type JourneyStage,
 } from '../../domain/journey';
 import { startSubscriptionNow } from '../../services/subscriptionService';
-import { browserTimeZone, formatCallSchedule } from '../../utils/dateFormatters';
+import {
+  browserTimeZone,
+  formatCallSchedule,
+} from '../../utils/dateFormatters';
 import { formatJourneyDate } from '../../utils/journeyLabels';
-import { SectionEyebrow } from '../SectionEyebrow';
-import { Button, buttonVariants } from '../ThemeButton';
+import { Button, buttonVariants } from '../ui/button';
+import { cn } from '../ui/utils';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,9 +34,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '../ui/alert-dialog';
+import { ClientWidget } from './ClientWidget';
 
-const PANEL_CLASS =
-  'rounded-panel border border-neutral-100/50 bg-white p-6 shadow-[0_2px_12px_rgb(0,0,0,0.03)] sm:p-8';
+function eyebrowFor(stage: JourneyStage): string {
+  return isBeforeStage(stage, 'approved') ? 'Your onboarding' : 'Your program';
+}
 
 const SUPPORTING_LINES: Partial<Record<JourneyStage, string>> = {
   submitted: 'Eli has your answers and will start on them soon.',
@@ -71,7 +77,9 @@ function reassuranceLine(
   if (status === 'active') {
     const period = currentPeriod(subscription, now);
     const endsAt = period?.endsAt ?? subscription.periodEndsAt;
-    return endsAt ? `Your coaching renews on ${formatJourneyDate(endsAt)}` : null;
+    return endsAt
+      ? `Your coaching renews on ${formatJourneyDate(endsAt)}`
+      : null;
   }
 
   if (status === 'cancelled' && subscription.periodEndsAt) {
@@ -103,11 +111,15 @@ function StartNowDialog({
       <AlertDialogContent className="rounded-card sm:max-w-md">
         <AlertDialogHeader>
           <AlertDialogTitle>{START_NOW_TITLE}</AlertDialogTitle>
-          <AlertDialogDescription>{WITHDRAWAL_WAIVER_COPY}</AlertDialogDescription>
+          <AlertDialogDescription>
+            {WITHDRAWAL_WAIVER_COPY}
+          </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Not yet</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm}>Start my program now</AlertDialogAction>
+          <AlertDialogAction onClick={onConfirm}>
+            Start my program now
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
@@ -117,7 +129,6 @@ function StartNowDialog({
 export function ProgramStatusCard() {
   const navigate = useNavigate();
   const { demoJourney, startProgramNow } = useClientJourneys();
-  const prefersReducedMotion = useReducedMotion() ?? false;
   const [confirming, setConfirming] = useState(false);
   const [starting, setStarting] = useState(false);
 
@@ -140,20 +151,19 @@ export function ProgramStatusCard() {
   };
 
   return (
-    <section aria-labelledby="program-status-heading" className="mb-8">
-      <motion.div
-        animate={{ opacity: 1, y: 0 }}
-        className={PANEL_CLASS}
-        initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
+    <div className="mb-8">
+      <ClientWidget
+        eyebrow={eyebrowFor(demoJourney.stage)}
+        icon={
+          <ClipboardList
+            aria-hidden="true"
+            className="text-brand-secondary"
+            size={18}
+          />
+        }
+        headingId="program-status-heading"
+        voice={label}
       >
-        <SectionEyebrow className="mb-2">Your program</SectionEyebrow>
-        <h2
-          className="font-serif text-2xl tracking-tight text-text-primary lg:text-3xl"
-          id="program-status-heading"
-        >
-          {label}
-        </h2>
-
         <p className="mt-3 max-w-2xl leading-relaxed text-text-secondary">
           {supportingLine(demoJourney)}
         </p>
@@ -164,12 +174,18 @@ export function ProgramStatusCard() {
           </p>
         )}
 
+        {reassurance && (
+          <p className="mt-2 text-sm text-text-secondary">{reassurance}</p>
+        )}
+
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           {demoJourney.stage === 'needs-details' && (
             <Button
               onClick={() => navigate('/portal/onboarding?answer=1')}
               type="button"
-              width="full-below-sm"
+              variant="default"
+              size="lg"
+              className="w-full sm:w-auto"
             >
               Answer now
             </Button>
@@ -178,7 +194,10 @@ export function ProgramStatusCard() {
           {(demoJourney.stage === 'program-ready' ||
             demoJourney.stage === 'review-call-scheduled') && (
             <Link
-              className={buttonVariants({ width: 'full-below-sm' })}
+              className={cn(
+                buttonVariants({ variant: 'default', size: 'lg' }),
+                'w-full sm:w-auto',
+              )}
               to="/portal/plan"
             >
               See my plan
@@ -191,23 +210,20 @@ export function ProgramStatusCard() {
               onClick={() => setConfirming(true)}
               type="button"
               variant="outline"
-              width="full-below-sm"
+              size="lg"
+              className="w-full sm:w-auto"
             >
               Start my program now
             </Button>
           )}
         </div>
-      </motion.div>
-
-      {reassurance && (
-        <p className="mt-3 px-1 text-sm text-text-secondary">{reassurance}</p>
-      )}
+      </ClientWidget>
 
       <StartNowDialog
         onConfirm={() => void startNow()}
         onOpenChange={setConfirming}
         open={confirming}
       />
-    </section>
+    </div>
   );
 }

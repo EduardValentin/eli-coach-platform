@@ -5,10 +5,13 @@ import { useAssessmentCalls } from '../../context/AssessmentCallContext';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
 import { scheduleReviewCall as sendSchedule } from '../../services/programReviewService';
 import { listOpenSlots } from '../../services/assessmentCallService';
-import { browserTimeZone, formatCallSchedule } from '../../utils/dateFormatters';
+import {
+  browserTimeZone,
+  formatCallSchedule,
+} from '../../utils/dateFormatters';
 import { REVIEW_CALL_BOOKING_WINDOW_DAYS } from '../../utils/reviewCallListing';
 import { AssessmentSlotPicker } from '../AssessmentSlotPicker';
-import { Button } from '../ThemeButton';
+import { Button } from '../ui/button';
 import { ResponsiveSheetDialog } from '../workout/ResponsiveSheetDialog';
 
 const TITLE = 'Book your review call';
@@ -21,7 +24,10 @@ type ReviewCallSchedulerProps = {
   onOpenChange: (open: boolean) => void;
 };
 
-export function ReviewCallScheduler({ open, onOpenChange }: ReviewCallSchedulerProps) {
+export function ReviewCallScheduler({
+  open,
+  onOpenChange,
+}: ReviewCallSchedulerProps) {
   const { bookedStarts, settings } = useAssessmentCalls();
   const { demoJourney, scheduleReviewCall } = useClientJourneys();
   const [slots, setSlots] = useState<Date[]>([]);
@@ -35,10 +41,14 @@ export function ReviewCallScheduler({ open, onOpenChange }: ReviewCallSchedulerP
     const now = new Date();
     const horizon = addDays(now, REVIEW_CALL_BOOKING_WINDOW_DAYS);
 
-    listOpenSlots({ now, bookedStarts, availability: settings }).then((available) => {
-      if (cancelled) return;
-      setSlots(available.filter((slot) => slot.getTime() <= horizon.getTime()));
-    });
+    listOpenSlots({ now, bookedStarts, availability: settings }).then(
+      (available) => {
+        if (cancelled) return;
+        setSlots(
+          available.filter((slot) => slot.getTime() <= horizon.getTime()),
+        );
+      },
+    );
 
     return () => {
       cancelled = true;
@@ -76,7 +86,9 @@ export function ReviewCallScheduler({ open, onOpenChange }: ReviewCallSchedulerP
         <h3 className="pr-10 text-lg font-semibold leading-snug text-text-primary md:text-xl">
           {TITLE}
         </h3>
-        <p className="mt-1 text-xs text-text-secondary sm:text-sm">{DESCRIPTION}</p>
+        <p className="mt-1 text-xs text-text-secondary sm:text-sm">
+          {DESCRIPTION}
+        </p>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-5 pt-5 pb-6 md:px-8 md:pt-6 md:pb-8">
@@ -98,7 +110,9 @@ export function ReviewCallScheduler({ open, onOpenChange }: ReviewCallSchedulerP
         <Button
           disabled={!selected || booking}
           onClick={() => void confirm()}
-          width="full"
+          variant="default"
+          size="lg"
+          className="w-full"
         >
           {selected
             ? `Book ${formatCallSchedule(selected, browserTimeZone())}`

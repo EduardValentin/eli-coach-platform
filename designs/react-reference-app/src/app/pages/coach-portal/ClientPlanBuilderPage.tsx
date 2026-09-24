@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { Save, FileText, Target, Calendar, Eye, X } from 'lucide-react';
 import {
-  Save, FileText, Target, Calendar, Eye, X,
-} from 'lucide-react';
-import {
-  useTraining, PlanWeek, DayType, PlanInstance, PlanTemplate,
+  useTraining,
+  PlanWeek,
+  DayType,
+  PlanInstance,
+  PlanTemplate,
 } from '../../context/TrainingContext';
 import { useProgramDelivery } from '../../hooks/useProgramDelivery';
 import { useJourneyClient } from '../../hooks/useJourneyClient';
@@ -14,6 +16,7 @@ import { toast } from 'sonner';
 import { useNavigate, useParams } from 'react-router';
 import { PlanBuilder } from '../../components/coach-portal/PlanBuilder';
 import { RirBadge } from '../../components/workout/RirBadge';
+import { Button } from '../../components/ui/button';
 
 // ── Constants ────────────────────────────────────────────────────────
 
@@ -21,29 +24,39 @@ const DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 const MOCK_CLIENTS: Record<string, string> = {
   'client-1': 'Jane Doe',
-  'c2': 'Jessica Alba',
-  'c3': 'Emma Stone',
-  'c4': 'Sarah Jenkins',
-  'c5': 'Mia Thermopolis',
+  c2: 'Jessica Alba',
+  c3: 'Emma Stone',
+  c4: 'Sarah Jenkins',
+  c5: 'Mia Thermopolis',
 };
 
 function getDayTypeColor(type: DayType) {
   switch (type) {
-    case 'Strength': return 'var(--training-strength)';
-    case 'Hypertrophy': return 'var(--training-hypertrophy)';
-    case 'Recovery': return 'var(--training-recovery)';
-    case 'Lighter': return 'var(--training-lighter)';
-    default: return 'var(--training-rest)';
+    case 'Strength':
+      return 'var(--training-strength)';
+    case 'Hypertrophy':
+      return 'var(--training-hypertrophy)';
+    case 'Recovery':
+      return 'var(--training-recovery)';
+    case 'Lighter':
+      return 'var(--training-lighter)';
+    default:
+      return 'var(--training-rest)';
   }
 }
 
 function getDayTypeSoftColor(type: DayType) {
   switch (type) {
-    case 'Strength': return 'var(--training-strength-soft)';
-    case 'Hypertrophy': return 'var(--training-hypertrophy-soft)';
-    case 'Recovery': return 'var(--training-recovery-soft)';
-    case 'Lighter': return 'var(--training-lighter-soft)';
-    default: return 'var(--training-rest-soft)';
+    case 'Strength':
+      return 'var(--training-strength-soft)';
+    case 'Hypertrophy':
+      return 'var(--training-hypertrophy-soft)';
+    case 'Recovery':
+      return 'var(--training-recovery-soft)';
+    case 'Lighter':
+      return 'var(--training-lighter-soft)';
+    default:
+      return 'var(--training-rest-soft)';
   }
 }
 
@@ -60,7 +73,10 @@ function deepCloneWeeks(sourceWeeks: PlanWeek[]): PlanWeek[] {
         e.id = `cpb-pe-${Date.now()}-${Math.random().toString(36).slice(2)}`;
         if (e.supersetId) {
           if (!ssMap.has(e.supersetId)) {
-            ssMap.set(e.supersetId, `cpb-ss-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+            ssMap.set(
+              e.supersetId,
+              `cpb-ss-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+            );
           }
           e.supersetId = ssMap.get(e.supersetId);
         }
@@ -90,7 +106,15 @@ function makeEmptyWeek(order: number, isDeload: boolean = false): PlanWeek {
 export function ClientPlanBuilderPage() {
   const { clientId } = useParams<{ clientId: string }>();
   const navigate = useNavigate();
-  const { exercises, planTemplates, getClientActivePlan, updatePlanInstance, createPlanInstance, getClientActiveGoal, goals } = useTraining();
+  const {
+    exercises,
+    planTemplates,
+    getClientActivePlan,
+    updatePlanInstance,
+    createPlanInstance,
+    getClientActiveGoal,
+    goals,
+  } = useTraining();
   const programDelivery = useProgramDelivery(clientId ?? '');
   const journeyClient = useJourneyClient(clientId ?? '');
   const { addSystemMessage } = useMessaging();
@@ -106,7 +130,8 @@ export function ClientPlanBuilderPage() {
 
   // Template picker
   const [showTemplatePicker, setShowTemplatePicker] = useState(false);
-  const [previewingTemplate, setPreviewingTemplate] = useState<PlanTemplate | null>(null);
+  const [previewingTemplate, setPreviewingTemplate] =
+    useState<PlanTemplate | null>(null);
 
   // Track current weeks from the shared builder
   const weeksRef = useRef<PlanWeek[]>([]);
@@ -114,7 +139,7 @@ export function ClientPlanBuilderPage() {
   // ── Derived ────────────────────────────────────────────────────────
   const clientName = journeyClient
     ? `${journeyClient.identity.firstName} ${journeyClient.identity.lastName}`.trim()
-    : MOCK_CLIENTS[clientId ?? ''] ?? 'Unknown Client';
+    : (MOCK_CLIENTS[clientId ?? ''] ?? 'Unknown Client');
   const activeGoal = clientId ? getClientActiveGoal(clientId) : null;
 
   // ── Initialize from existing plan OR blank ─────────────────────────
@@ -171,10 +196,16 @@ export function ClientPlanBuilderPage() {
     const finalWeeks = weeksRef.current.map((w, i) => ({ ...w, order: i + 1 }));
 
     const messagingClientId =
-      clientId === 'client-1' ? 'c1' : clientId.startsWith('c') ? clientId : clientId;
+      clientId === 'client-1'
+        ? 'c1'
+        : clientId.startsWith('c')
+          ? clientId
+          : clientId;
 
     if (isNewPlan) {
-      const activeGoalForClient = goals.find((g) => g.clientId === clientId && g.status === 'active');
+      const activeGoalForClient = goals.find(
+        (g) => g.clientId === clientId && g.status === 'active',
+      );
       const goalId = activeGoalForClient?.id || 'goal-placeholder';
       const newInstance = createPlanInstance(clientId, goalId, planName);
 
@@ -190,7 +221,7 @@ export function ClientPlanBuilderPage() {
       addSystemMessage(
         messagingClientId,
         `A new training plan "${planName}" has been created for you by your coach.`,
-        'plan-update'
+        'plan-update',
       );
 
       addNotification({
@@ -214,7 +245,7 @@ export function ClientPlanBuilderPage() {
       addSystemMessage(
         messagingClientId,
         `Your training plan "${planInstance.name}" has been updated by your coach.`,
-        'plan-update'
+        'plan-update',
       );
 
       addNotification({
@@ -252,7 +283,9 @@ export function ClientPlanBuilderPage() {
         <div className="text-center">
           <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-neutral-200 animate-pulse" />
           <h2 className="text-xl font-bold text-foreground mb-2">Loading...</h2>
-          <p className="text-muted-foreground mb-6">Preparing the plan builder.</p>
+          <p className="text-muted-foreground mb-6">
+            Preparing the plan builder.
+          </p>
         </div>
       </div>
     );
@@ -263,17 +296,21 @@ export function ClientPlanBuilderPage() {
       initialWeeks={initialWeeks}
       originalWeekCount={originalWeekCount}
       onBack={() => navigate('/coach/training')}
-      onWeeksChange={(w) => { weeksRef.current = w; }}
+      onWeeksChange={(w) => {
+        weeksRef.current = w;
+      }}
       idPrefix="cpb"
       headerCenter={
         <div className="flex items-center gap-3 min-w-0">
           <div className="min-w-0">
-            <h1 className="text-lg font-serif font-bold text-foreground leading-tight truncate">{clientName}</h1>
+            <h1 className="text-lg font-serif font-bold text-foreground leading-tight truncate">
+              {clientName}
+            </h1>
             <p className="text-xs text-muted-foreground leading-tight truncate">
               {isNewPlan ? (
                 <span className="text-brand font-semibold">New Plan</span>
               ) : (
-                planInstance?.name ?? planName
+                (planInstance?.name ?? planName)
               )}
             </p>
           </div>
@@ -295,29 +332,41 @@ export function ClientPlanBuilderPage() {
       headerRight={
         <>
           {planTemplates.length > 0 && (
-            <button
+            <Button
               onClick={() => setShowTemplatePicker(true)}
-              className="hidden sm:flex px-4 py-2 font-semibold text-muted-foreground border border-border hover:bg-muted rounded-control transition-colors items-center gap-2 text-sm"
+              variant="outline"
+              className="hidden sm:flex"
             >
-              <FileText size={16} /> <span className="hidden lg:inline">Use Template</span>
-            </button>
+              <FileText size={16} />{' '}
+              <span className="hidden lg:inline">Use Template</span>
+            </Button>
           )}
-          <button
+          <Button
             onClick={handleSaveChanges}
             disabled={isSaving}
-            className="px-4 lg:px-5 py-2 bg-brand text-white font-semibold rounded-control hover:bg-brand-hover transition-colors shadow-md flex items-center gap-2 text-sm disabled:pointer-events-none disabled:opacity-50"
+            variant="default"
+            size="lg"
+            className="shadow-md"
           >
-            <Save size={16} /> <span className="hidden sm:inline">{isSaving ? 'Saving...' : isNewPlan ? 'Create Plan' : 'Save Changes'}</span>
-          </button>
+            <Save size={16} />{' '}
+            <span className="hidden sm:inline">
+              {isSaving
+                ? 'Saving...'
+                : isNewPlan
+                  ? 'Create Plan'
+                  : 'Save Changes'}
+            </span>
+          </Button>
         </>
       }
       sidebarFooterExtra={
-        <button
+        <Button
           onClick={handleInsertDeload}
-          className="w-full py-2.5 flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold text-sm rounded-control transition-colors border border-blue-200"
+          variant="outline"
+          className="w-full border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100"
         >
           <Calendar size={16} /> Insert Deload
-        </button>
+        </Button>
       }
     >
       {/* ── Template Picker Overlay ──────────────────────────────── */}
@@ -328,7 +377,10 @@ export function ClientPlanBuilderPage() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[60] bg-black/40 flex items-center justify-center p-6"
-            onClick={() => { setShowTemplatePicker(false); setPreviewingTemplate(null); }}
+            onClick={() => {
+              setShowTemplatePicker(false);
+              setPreviewingTemplate(null);
+            }}
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
@@ -340,62 +392,87 @@ export function ClientPlanBuilderPage() {
               {/* Header */}
               <div className="px-6 py-4 border-b border-border rounded-field flex items-center justify-between">
                 <div>
-                  <h2 className="text-lg font-serif font-bold text-foreground">Use a Template</h2>
+                  <h2 className="text-lg font-serif font-bold text-foreground">
+                    Use a Template
+                  </h2>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Choose a template to load its structure into this plan. This will replace current weeks.
+                    Choose a template to load its structure into this plan. This
+                    will replace current weeks.
                   </p>
                 </div>
-                <button
-                  onClick={() => { setShowTemplatePicker(false); setPreviewingTemplate(null); }}
-                  className="p-2 hover:bg-muted rounded-control transition-colors text-muted-foreground"
+                <Button
+                  onClick={() => {
+                    setShowTemplatePicker(false);
+                    setPreviewingTemplate(null);
+                  }}
+                  variant="ghost"
+                  size="icon"
                 >
                   <X size={20} />
-                </button>
+                </Button>
               </div>
 
               <div className="flex-1 flex overflow-hidden">
                 {/* Template List */}
-                <div className={`${previewingTemplate ? 'w-1/2 border-r border-border' : 'w-full'} overflow-y-auto p-4 space-y-2 transition-all`}>
+                <div
+                  className={`${previewingTemplate ? 'w-1/2 border-r border-border' : 'w-full'} overflow-y-auto p-4 space-y-2 transition-all`}
+                >
                   {planTemplates.length === 0 ? (
                     <div className="text-center py-12 text-muted-foreground text-sm">
                       No templates yet. Create templates in the Templates tab.
                     </div>
                   ) : (
                     planTemplates.map((template) => {
-                      const trainingDays = template.weeks[0]?.days.filter((d) => d.type !== 'Rest').length || 0;
+                      const trainingDays =
+                        template.weeks[0]?.days.filter((d) => d.type !== 'Rest')
+                          .length || 0;
                       const isSelected = previewingTemplate?.id === template.id;
                       return (
                         <div
                           key={template.id}
                           className={`p-4 rounded-control border-2 transition-all cursor-pointer ${
                             isSelected
-                              ? 'border-brand bg-brand/5'
+                              ? 'border-primary bg-primary/5'
                               : 'border-border hover:border-neutral-300 bg-card'
                           }`}
                           onClick={() => setPreviewingTemplate(template)}
                         >
                           <div className="flex items-center justify-between">
                             <div>
-                              <h3 className="font-semibold text-sm text-foreground">{template.name}</h3>
+                              <h3 className="font-semibold text-sm text-foreground">
+                                {template.name}
+                              </h3>
                               <p className="text-xs text-muted-foreground mt-0.5">
-                                {template.weeks.length} {template.weeks.length === 1 ? 'week' : 'weeks'} · {trainingDays}d/wk
-                                {template.weeks.some((w) => w.isDeload) && ' · Has deload'}
+                                {template.weeks.length}{' '}
+                                {template.weeks.length === 1 ? 'week' : 'weeks'}{' '}
+                                · {trainingDays}d/wk
+                                {template.weeks.some((w) => w.isDeload) &&
+                                  ' · Has deload'}
                               </p>
                             </div>
                             <div className="flex items-center gap-2">
-                              <button
-                                onClick={(e) => { e.stopPropagation(); setPreviewingTemplate(template); }}
-                                className="p-1.5 text-muted-foreground hover:text-muted-foreground hover:bg-muted rounded-compact transition-colors"
+                              <Button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setPreviewingTemplate(template);
+                                }}
+                                variant="ghost"
+                                size="icon"
+                                className="size-8"
                                 title="Preview"
                               >
                                 <Eye size={16} />
-                              </button>
-                              <button
-                                onClick={(e) => { e.stopPropagation(); handleLoadTemplate(template); }}
-                                className="px-3 py-1.5 text-xs font-semibold bg-brand text-white rounded-control hover:bg-brand-hover transition-colors"
+                              </Button>
+                              <Button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleLoadTemplate(template);
+                                }}
+                                variant="default"
+                                size="sm"
                               >
                                 Use
-                              </button>
+                              </Button>
                             </div>
                           </div>
                         </div>
@@ -412,18 +489,27 @@ export function ClientPlanBuilderPage() {
                     className="w-1/2 overflow-y-auto p-5 bg-surface-page"
                   >
                     <div className="mb-4 flex items-center justify-between">
-                      <h3 className="font-bold text-base text-foreground">{previewingTemplate.name}</h3>
-                      <button
+                      <h3 className="font-bold text-base text-foreground">
+                        {previewingTemplate.name}
+                      </h3>
+                      <Button
                         onClick={() => handleLoadTemplate(previewingTemplate)}
-                        className="px-4 py-1.5 text-xs font-semibold bg-brand text-white rounded-control hover:bg-brand-hover transition-colors shrink-0"
+                        variant="default"
+                        size="sm"
+                        className="shrink-0"
                       >
                         Use This Template
-                      </button>
+                      </Button>
                     </div>
 
                     {previewingTemplate.weeks.map((week, wIdx) => {
-                      const trainingDays = week.days.filter(d => d.type !== 'Rest');
-                      const totalExercises = week.days.reduce((sum, d) => sum + d.exercises.length, 0);
+                      const trainingDays = week.days.filter(
+                        (d) => d.type !== 'Rest',
+                      );
+                      const totalExercises = week.days.reduce(
+                        (sum, d) => sum + d.exercises.length,
+                        0,
+                      );
                       return (
                         <div key={week.id} className="mb-5">
                           <div className="flex items-center gap-2 mb-2.5">
@@ -436,7 +522,8 @@ export function ClientPlanBuilderPage() {
                               </span>
                             )}
                             <span className="text-[10px] text-muted-foreground ml-auto">
-                              {trainingDays.length}d · {totalExercises} exercises
+                              {trainingDays.length}d · {totalExercises}{' '}
+                              exercises
                             </span>
                           </div>
                           <div className="space-y-2">
@@ -444,13 +531,20 @@ export function ClientPlanBuilderPage() {
                               const day = week.days[dIdx];
                               if (!day || day.type === 'Rest') return null;
                               return (
-                                <div key={dIdx} className="bg-card rounded-control px-3.5 py-2.5 border border-border">
+                                <div
+                                  key={dIdx}
+                                  className="bg-card rounded-control px-3.5 py-2.5 border border-border"
+                                >
                                   <div className="flex items-center justify-between mb-2">
-                                    <span className="text-xs font-bold text-foreground">{dName}</span>
+                                    <span className="text-xs font-bold text-foreground">
+                                      {dName}
+                                    </span>
                                     <span
                                       className="text-[10px] font-bold px-2 py-0.5 rounded-full"
                                       style={{
-                                        backgroundColor: getDayTypeSoftColor(day.type),
+                                        backgroundColor: getDayTypeSoftColor(
+                                          day.type,
+                                        ),
                                         color: getDayTypeColor(day.type),
                                       }}
                                     >
@@ -460,9 +554,14 @@ export function ClientPlanBuilderPage() {
                                   {day.exercises.length > 0 && (
                                     <div className="space-y-1.5">
                                       {day.exercises.map((pe, eIdx) => {
-                                        const ex = exercises.find((e) => e.id === pe.exerciseId);
+                                        const ex = exercises.find(
+                                          (e) => e.id === pe.exerciseId,
+                                        );
                                         return (
-                                          <div key={eIdx} className="flex items-center gap-2">
+                                          <div
+                                            key={eIdx}
+                                            className="flex items-center gap-2"
+                                          >
                                             <span className="w-4 h-4 rounded-full bg-muted text-[9px] font-bold text-muted-foreground flex items-center justify-center shrink-0">
                                               {eIdx + 1}
                                             </span>
@@ -475,7 +574,9 @@ export function ClientPlanBuilderPage() {
                                               </span>
                                               {pe.rir !== undefined && (
                                                 <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
-                                                  <span className="font-medium tracking-wider">RIR</span>
+                                                  <span className="font-medium tracking-wider">
+                                                    RIR
+                                                  </span>
                                                   <RirBadge value={pe.rir} />
                                                 </span>
                                               )}
@@ -486,7 +587,9 @@ export function ClientPlanBuilderPage() {
                                     </div>
                                   )}
                                   {day.exercises.length === 0 && (
-                                    <p className="text-[10px] text-muted-foreground italic">No exercises yet</p>
+                                    <p className="text-[10px] text-muted-foreground italic">
+                                      No exercises yet
+                                    </p>
                                   )}
                                 </div>
                               );

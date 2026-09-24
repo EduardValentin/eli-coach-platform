@@ -33,9 +33,17 @@ import {
 } from '../domain/coachingSubscription';
 import { heldJourney, seedJourney } from '../services/clientJourneySamples';
 import type { SentPaymentLink } from '../services/paymentLinkService';
-import type { SentInvitation } from '../services/invitationService';
+import { createInvitation } from '../services/invitationService';
 
 export const DEMO_JOURNEY_CALL_ID = 'ac-demo-client-1';
+export const AWAITING_REVIEW_CALL_ID = 'ac-seed-awaiting-review';
+
+const AWAITING_REVIEW_PERSON: DemoPerson = {
+  firstName: 'Andreea',
+  lastName: 'Popescu',
+  email: 'andreea@example.com',
+  age: 31,
+};
 
 export type DemoJourneyOptions = {
   startPath: SubscriptionStartPath;
@@ -60,7 +68,6 @@ type ClientJourneyContextType = {
   seedDemoJourney: (stage: JourneyStage, options: DemoJourneyOptions) => void;
   recordPaymentLinkSent: (callId: string, link: SentPaymentLink) => void;
   recordPaid: (callId: string, payment: JourneyPayment) => void;
-  recordInvitation: (callId: string, invitation: SentInvitation) => void;
   recordAccountCreated: (callId: string) => void;
   markWelcomeSeen: (callId: string) => void;
   saveOnboardingDraft: (callId: string, draft: OnboardingDraft) => void;
@@ -72,10 +79,7 @@ type ClientJourneyContextType = {
   markProgramReady: (callId: string, readyAt: Date) => void;
   scheduleReviewCall: (callId: string, reviewCall: ReviewCall) => void;
   addMeasurements: (callId: string, entry: MeasurementEntry) => void;
-  cancelSubscription: (
-    callId: string,
-    cancelled: CoachingSubscription,
-  ) => void;
+  cancelSubscription: (callId: string, cancelled: CoachingSubscription) => void;
   startProgramNow: (callId: string, started: CoachingSubscription) => void;
 };
 
@@ -161,6 +165,15 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
         pricing: visitorPricing,
         now: new Date(),
       }),
+      [AWAITING_REVIEW_CALL_ID]: seedJourney({
+        callId: AWAITING_REVIEW_CALL_ID,
+        identity: demoIdentity(AWAITING_REVIEW_PERSON, 'female'),
+        stage: 'submitted',
+        startPath: 'immediate',
+        subscriptionStatus: 'active',
+        pricing: 'regular',
+        now: new Date(),
+      }),
     }),
   );
 
@@ -205,6 +218,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
     setJourneys((previous) => {
       const next: Record<string, ClientJourney> = {
         [DEMO_JOURNEY_CALL_ID]: previous[DEMO_JOURNEY_CALL_ID],
+        [AWAITING_REVIEW_CALL_ID]: previous[AWAITING_REVIEW_CALL_ID],
       };
 
       for (const booking of bookings) {
@@ -249,8 +263,13 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
 
   const recordPaid = useCallback(
     (callId: string, payment: JourneyPayment) => {
-      updateJourney(callId, (journey) =>
-        applied(
+      updateJourney(callId, (journey) => {
+        const invitation = createInvitation(
+          journey.identity.email,
+          payment.paidAt,
+        );
+
+        return applied(
           {
             ...journey,
             paidAt: payment.paidAt,
@@ -263,31 +282,16 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
               purchasedAt: payment.paidAt,
               status: 'not-started',
             },
-          },
-          'record-payment',
-        ),
-      );
-    },
-    [updateJourney],
-  );
-
-  const recordInvitation = useCallback(
-    (callId: string, invitation: SentInvitation) => {
-      updateJourney(callId, (journey) =>
-        applied(
-          {
-            ...journey,
             invitation: {
               token: invitation.token,
               sentAt: invitation.sentAt,
               expiresAt: invitation.expiresAt,
-              replaced: invitation.replaced,
               state: 'valid',
             },
           },
-          'send-invitation',
-        ),
-      );
+          'record-payment',
+        );
+      });
     },
     [updateJourney],
   );
@@ -323,7 +327,10 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
         applied(
           {
             ...journey,
-            onboarding: { ...draft, submittedAt: journey.onboarding.submittedAt },
+            onboarding: {
+              ...draft,
+              submittedAt: journey.onboarding.submittedAt,
+            },
           },
           'start-onboarding',
         ),
@@ -472,13 +479,11 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
         journeyForCall,
         journeyForPaymentToken,
         journeyForInvitationToken,
-        demoJourney:
-          journeys[signedInCallId] ?? journeys[DEMO_JOURNEY_CALL_ID],
+        demoJourney: journeys[signedInCallId] ?? journeys[DEMO_JOURNEY_CALL_ID],
         dispatch,
         seedDemoJourney,
         recordPaymentLinkSent,
         recordPaid,
-        recordInvitation,
         recordAccountCreated,
         markWelcomeSeen,
         saveOnboardingDraft,

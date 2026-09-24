@@ -1,7 +1,15 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from 'vitest';
 import { ClientOnboarding } from './ClientOnboarding';
 import { AppProvider } from '../../context/AppContext';
 import { AssessmentCallProvider } from '../../context/AssessmentCallContext';
@@ -56,7 +64,10 @@ function renderOnboarding(devParams: string) {
               <ClientJourneyProvider>
                 <StageProbe />
                 <Routes>
-                  <Route element={<ClientOnboarding />} path="/portal/onboarding" />
+                  <Route
+                    element={<ClientOnboarding />}
+                    path="/portal/onboarding"
+                  />
                   <Route element={<p>portal home</p>} path="/portal" />
                 </Routes>
               </ClientJourneyProvider>
@@ -139,7 +150,9 @@ describe('the onboarding', () => {
     renderOnboarding('?session=client&jstage=onboarding');
 
     // act
-    await userEvent.click(screen.getByRole('button', { name: 'Send to my coach' }));
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Send to my coach' }),
+    );
 
     // assert
     expect(screen.getByText('Tick the box to carry on.')).toBeVisible();
@@ -159,28 +172,25 @@ describe('the onboarding', () => {
     // assert
     expect(within(group).getAllByRole('radio')).toHaveLength(2);
     expect(within(group).getByRole('radio', { name: 'Email' })).toBeVisible();
-    expect(within(group).getByRole('radio', { name: 'WhatsApp' })).toBeVisible();
+    expect(
+      within(group).getByRole('radio', { name: 'WhatsApp' }),
+    ).toBeVisible();
   });
 
-  it('asks how much she drinks as a number', async () => {
+  it('asks how much she drinks and eats as a choice of amounts', async () => {
     // arrange
     await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(3));
     renderOnboarding('?session=client&jstage=onboarding');
 
-    // act
-    const water = screen.getByLabelText(/Water a day/);
-
     // assert
-    expect(water).toHaveAttribute('type', 'number');
-    expect(water).toHaveAttribute('max', '10');
-    expect(screen.getByLabelText(/Coffee a day/)).toHaveAttribute(
-      'type',
-      'number',
-    );
-    expect(screen.getByLabelText(/Meals a day that suit you/)).toHaveAttribute(
-      'type',
-      'number',
-    );
+    expect(
+      screen.getByRole('combobox', { name: /Water in a normal day/ }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole('combobox', {
+        name: /How many main meals do you usually have/,
+      }),
+    ).toBeVisible();
   });
 
   it('offers a choice of more than two options as a select', () => {
@@ -206,10 +216,6 @@ describe('the onboarding', () => {
     expect(weight).toHaveAttribute('inputmode', 'decimal');
     expect(weight).toHaveAttribute('min', '30');
     expect(weight).toHaveAttribute('max', '300');
-    expect(screen.getByLabelText(/Training days a week/)).toHaveAttribute(
-      'inputmode',
-      'numeric',
-    );
   });
 
   it('turns down a weight outside the sensible range', async () => {
@@ -274,10 +280,15 @@ describe('the onboarding', () => {
 
     // assert
     expect(
-      screen.getByRole('heading', { level: 2, name: 'Your cycle and hormonal context' }),
+      screen.getByRole('heading', {
+        level: 2,
+        name: 'Your cycle and hormonal context',
+      }),
     ).toBeVisible();
     expect(screen.getAllByText('Choose one option.').length).toBeGreaterThan(0);
-    expect(screen.getByText('Enter a number.')).toBeVisible();
+    expect(
+      screen.getAllByText('Choose at least one option.').length,
+    ).toBeGreaterThan(0);
   });
 
   it('marks the answers she can skip as optional', () => {
@@ -289,6 +300,102 @@ describe('the onboarding', () => {
 
     // assert
     expect(optional.length).toBeGreaterThan(0);
+  });
+
+  it('reassures her plainly when she has no regular cycle', async () => {
+    // arrange
+    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(2));
+    renderOnboarding('?session=client&jstage=onboarding');
+
+    // act
+    await userEvent.click(
+      screen.getByRole('radio', { name: 'No, or very rarely' }),
+    );
+
+    // assert
+    expect(
+      screen.getByText(
+        "That's completely fine — plenty of people train without a regular cycle. I'll build your plan around how you feel week to week instead.",
+      ),
+    ).toBeVisible();
+  });
+
+  it('hides the cycle length once she says she does not know it', async () => {
+    // arrange
+    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(2));
+    renderOnboarding('?session=client&jstage=onboarding');
+
+    // act
+    await userEvent.click(
+      screen.getByRole('radio', { name: "Yes, and it's regular" }),
+    );
+    await userEvent.click(
+      screen.getByRole('combobox', { name: /Are you using any contraception/ }),
+    );
+    await userEvent.click(await screen.findByRole('option', { name: 'None' }));
+    await userEvent.click(
+      screen.getByRole('checkbox', { name: 'None of these' }),
+    );
+    await userEvent.click(
+      screen.getByRole('combobox', {
+        name: /Are you in perimenopause or menopause/,
+      }),
+    );
+    await userEvent.click(await screen.findByRole('option', { name: 'No' }));
+
+    // assert
+    expect(screen.getByLabelText(/Average cycle length/)).toBeVisible();
+
+    // act
+    await userEvent.click(
+      screen.getByRole('checkbox', { name: "I'm not sure" }),
+    );
+
+    // assert
+    expect(
+      screen.queryByLabelText(/Average cycle length/),
+    ).not.toBeInTheDocument();
+  });
+
+  it('lets her continue past the cycle step without a cycle length once she ticks that she is not sure', async () => {
+    // arrange
+    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(2));
+    renderOnboarding('?session=client&jstage=onboarding');
+
+    // act
+    await userEvent.click(
+      screen.getByRole('radio', { name: "Yes, and it's regular" }),
+    );
+    await userEvent.click(
+      screen.getByRole('combobox', { name: /Are you using any contraception/ }),
+    );
+    await userEvent.click(await screen.findByRole('option', { name: 'None' }));
+    await userEvent.click(
+      screen.getByRole('checkbox', { name: 'None of these' }),
+    );
+    await userEvent.click(
+      screen.getByRole('combobox', {
+        name: /Are you in perimenopause or menopause/,
+      }),
+    );
+    await userEvent.click(await screen.findByRole('option', { name: 'No' }));
+    await userEvent.click(
+      screen.getByRole('checkbox', { name: "I'm not sure" }),
+    );
+    await userEvent.click(
+      screen.getByRole('checkbox', { name: "I don't remember" }),
+    );
+    await userEvent.click(screen.getByRole('radio', { name: 'No' }));
+    await userEvent.click(screen.getByRole('checkbox', { name: 'None' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
+
+    // assert
+    expect(
+      screen.getByRole('heading', {
+        level: 2,
+        name: 'Food and daily life',
+      }),
+    ).toBeVisible();
   });
 
   it('counts four forms and leaves out the cycle for a male account', () => {
@@ -338,13 +445,19 @@ describe('the onboarding', () => {
     renderOnboarding('?session=client&jstage=onboarding');
 
     // act
-    await userEvent.click(screen.getByRole('button', { name: 'Send to my coach' }));
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Send to my coach' }),
+    );
 
     // assert
     expect(
-      await screen.findByText('portal home', undefined, { timeout: SERVICE_TIMEOUT }),
+      await screen.findByText('portal home', undefined, {
+        timeout: SERVICE_TIMEOUT,
+      }),
     ).toBeVisible();
-    await waitFor(() => expect(screen.getByTestId('stage')).toHaveTextContent('submitted'));
+    await waitFor(() =>
+      expect(screen.getByTestId('stage')).toHaveTextContent('submitted'),
+    );
   });
 
   it('lets her pick the measurement system before the first measurement', async () => {
@@ -352,7 +465,9 @@ describe('the onboarding', () => {
     renderOnboarding('?session=client&jstage=account-created');
 
     // act
-    const group = screen.getByRole('radiogroup', { name: 'How do you measure?' });
+    const group = screen.getByRole('radiogroup', {
+      name: 'How do you measure?',
+    });
 
     // assert
     expect(within(group).getByRole('radio', { name: 'kg · cm' })).toBeChecked();
@@ -438,18 +553,23 @@ describe('the onboarding', () => {
     // arrange
     renderOnboarding('?answer=1&session=client&jstage=needs-details');
 
-    // act
-    const heading = screen.getByRole('heading', { level: 1 });
-
     // assert
-    expect(heading).toHaveTextContent('A few more details');
+    expect(
+      screen.getByRole('main', { name: 'A few more details' }),
+    ).toBeVisible();
+    expect(screen.queryByRole('heading', { level: 1 })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Not now' })).toBeVisible();
     expect(
       screen.getByText(
         'Two quick things before I build your plan — tell me a little more about your sleep and about that shoulder.',
       ),
     ).toBeVisible();
-    expect(screen.getByLabelText(/Tell me about it in a line or two/)).toBeVisible();
-    expect(screen.queryByText('Your goal and your week')).not.toBeInTheDocument();
+    expect(
+      screen.getByLabelText(/Please list condition\(s\) here/),
+    ).toBeVisible();
+    expect(
+      screen.queryByText('Your goal and your week'),
+    ).not.toBeInTheDocument();
   });
 
   it('sends her extra answers back and returns the journey to review', async () => {
@@ -457,12 +577,18 @@ describe('the onboarding', () => {
     renderOnboarding('?answer=1&session=client&jstage=needs-details');
 
     // act
-    await userEvent.click(screen.getByRole('button', { name: 'Send my answers' }));
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Send my answers' }),
+    );
 
     // assert
     expect(
-      await screen.findByText('portal home', undefined, { timeout: SERVICE_TIMEOUT }),
+      await screen.findByText('portal home', undefined, {
+        timeout: SERVICE_TIMEOUT,
+      }),
     ).toBeVisible();
-    await waitFor(() => expect(screen.getByTestId('stage')).toHaveTextContent('reviewing'));
+    await waitFor(() =>
+      expect(screen.getByTestId('stage')).toHaveTextContent('reviewing'),
+    );
   });
 });

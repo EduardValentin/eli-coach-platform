@@ -14,7 +14,9 @@ export function CoachSettings() {
 
       <UnitPreferencesSettings />
 
-      <p className="text-xs text-muted-foreground px-1">Preferences are saved to this device.</p>
+      <p className="text-xs text-muted-foreground px-1">
+        Preferences are saved to this device.
+      </p>
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { Save, FileText } from 'lucide-react';
 import { useTraining, PlanWeek, DayType } from '../../context/TrainingContext';
 import { toast } from 'sonner';
 import { useNavigate, useParams } from 'react-router';
+import { Button } from '../../components/ui/button';
 import { PlanBuilder } from '../../components/coach-portal/PlanBuilder';
 
 function makeBlankWeeks(): PlanWeek[] {
@@ -25,11 +26,15 @@ export function PlanBuilderPage() {
   const navigate = useNavigate();
 
   // Load existing template or create blank
-  const existingTemplate = templateId ? planTemplates.find(t => t.id === templateId) : null;
+  const existingTemplate = templateId
+    ? planTemplates.find((t) => t.id === templateId)
+    : null;
 
   const [name, setName] = useState(existingTemplate?.name ?? '');
   const [initialWeeks] = useState<PlanWeek[]>(() =>
-    existingTemplate ? JSON.parse(JSON.stringify(existingTemplate.weeks)) : makeBlankWeeks()
+    existingTemplate
+      ? JSON.parse(JSON.stringify(existingTemplate.weeks))
+      : makeBlankWeeks(),
   );
   const weeksRef = useRef<PlanWeek[]>(initialWeeks);
   const isEditing = !!existingTemplate;
@@ -43,14 +48,15 @@ export function PlanBuilderPage() {
       id: existingTemplate?.id ?? `tmpl-${Date.now()}`,
       name: isDraft ? `${name} (Draft)` : name,
       weeks: weeksRef.current,
-      createdAt: existingTemplate?.createdAt ?? new Date().toISOString().split('T')[0],
+      createdAt:
+        existingTemplate?.createdAt ?? new Date().toISOString().split('T')[0],
     });
     toast.success(
       isEditing
         ? 'Template updated!'
         : isDraft
           ? 'Template saved as draft!'
-          : 'Template saved!'
+          : 'Template saved!',
     );
     navigate('/coach/training');
   };
@@ -60,7 +66,9 @@ export function PlanBuilderPage() {
       initialWeeks={initialWeeks}
       originalWeekCount={0}
       onBack={() => navigate('/coach/training')}
-      onWeeksChange={(w) => { weeksRef.current = w; }}
+      onWeeksChange={(w) => {
+        weeksRef.current = w;
+      }}
       idPrefix="pb"
       headerCenter={
         <input
@@ -73,18 +81,20 @@ export function PlanBuilderPage() {
       }
       headerRight={
         <>
-          <button
+          <Button
             onClick={() => handleSave(true)}
-            className="hidden sm:flex px-4 py-2 font-semibold text-text-secondary border border-neutral-200 hover:bg-neutral-50 rounded-control transition-colors items-center gap-2"
+            variant="outline"
+            className="hidden sm:flex"
           >
-            <FileText size={18} /> <span className="hidden lg:inline">Save Draft</span>
-          </button>
-          <button
-            onClick={() => handleSave(false)}
-            className="px-4 lg:px-5 py-2 bg-text-primary text-white font-semibold rounded-control hover:bg-neutral-800 transition-colors shadow-md flex items-center gap-2"
-          >
-            <Save size={18} /> <span className="hidden sm:inline">{isEditing ? 'Save Template' : 'Save Template'}</span>
-          </button>
+            <FileText size={18} />{' '}
+            <span className="hidden lg:inline">Save Draft</span>
+          </Button>
+          <Button onClick={() => handleSave(false)} variant="default">
+            <Save size={18} />{' '}
+            <span className="hidden sm:inline">
+              {isEditing ? 'Save Template' : 'Save Template'}
+            </span>
+          </Button>
         </>
       }
     />

@@ -1,7 +1,11 @@
-import { CalendarDays, Video, ChevronRight } from 'lucide-react';
-import { Link } from 'react-router';
+import { CalendarCheck, Video } from 'lucide-react';
 import { useCheckins } from '../../context/CheckinContext';
-import { formatCheckinDate, formatCheckinTime } from '../../utils/dateFormatters';
+import { checkinInstant } from '../../utils/dateFormatters';
+import { buttonVariants } from '../ui/button';
+import { cn } from '../ui/utils';
+import { DateTimeLabel } from '../DateTimeLabel';
+import { RowActionLink } from '../RowActionButton';
+import { ClientWidget } from './ClientWidget';
 
 export function NextCheckinCard() {
   const { getUpcomingCheckins } = useCheckins();
@@ -10,29 +14,40 @@ export function NextCheckinCard() {
   if (!nextCheckin) return null;
 
   return (
-    <div className="p-4 rounded-card bg-brand/5 border border-brand/10">
-      <div className="flex items-center gap-2 mb-2">
-        <CalendarDays size={14} className="text-brand" />
-        <span className="text-[10px] font-bold text-brand uppercase tracking-widest">Next Check-in</span>
-      </div>
-      <p className="text-sm font-semibold text-text-primary">{formatCheckinDate(nextCheckin.date)}</p>
-      <p className="text-xs text-text-secondary mb-3">{formatCheckinTime(nextCheckin.time)}</p>
+    <ClientWidget
+      eyebrow="Next check-in"
+      icon={
+        <CalendarCheck
+          aria-hidden="true"
+          className="text-brand-secondary"
+          size={18}
+        />
+      }
+      headingId="next-checkin-heading"
+      hero={
+        <DateTimeLabel
+          startsAt={checkinInstant(nextCheckin.date, nextCheckin.time)}
+        />
+      }
+      heroSize="compact"
+      className="p-4 sm:p-4"
+    >
       <a
         href="https://meet.google.com/mock-eli-checkin"
         target="_blank"
         rel="noopener noreferrer"
-        className="flex items-center justify-center gap-2 w-full min-h-11 px-3 text-xs font-bold rounded-control bg-text-primary text-white hover:bg-neutral-800 transition-colors"
+        className={cn(buttonVariants({ variant: 'default' }), 'mt-3 w-full')}
       >
         <Video size={14} />
         Join Meet
       </a>
-      <Link
+      <RowActionLink
         to="/portal/checkins"
-        className="mt-2 flex items-center justify-center gap-1 w-full min-h-9 text-xs font-semibold text-brand hover:text-brand-hover transition-colors"
+        tone="primary"
+        className="mt-2 w-full"
       >
         Manage check-ins
-        <ChevronRight size={14} aria-hidden="true" />
-      </Link>
-    </div>
+      </RowActionLink>
+    </ClientWidget>
   );
 }

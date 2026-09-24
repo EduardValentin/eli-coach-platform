@@ -7,7 +7,6 @@ import type { ClientJourney, JourneyStage } from './journey';
 export type ClientStatusLabel =
   | 'Call held'
   | 'Payment link sent'
-  | 'Paid'
   | 'Invited'
   | 'Onboarding'
   | 'Awaiting review'
@@ -33,7 +32,6 @@ export type ClientStatus = {
 const STATUS_TONES: Record<ClientStatusLabel, ClientStatusTone> = {
   'Call held': 'neutral',
   'Payment link sent': 'neutral',
-  Paid: 'neutral',
   Invited: 'neutral',
   Onboarding: 'neutral',
   'Awaiting review': 'pending',
@@ -48,7 +46,6 @@ const STATUS_TONES: Record<ClientStatusLabel, ClientStatusTone> = {
 const STAGE_STATUS_LABELS: Record<JourneyStage, ClientStatusLabel> = {
   held: 'Call held',
   'payment-link-sent': 'Payment link sent',
-  paid: 'Paid',
   invited: 'Invited',
   'account-created': 'Onboarding',
   onboarding: 'Onboarding',
@@ -61,7 +58,6 @@ const STAGE_STATUS_LABELS: Record<JourneyStage, ClientStatusLabel> = {
 };
 
 export const ONBOARDING_STATUS_LABELS: readonly ClientStatusLabel[] = [
-  'Paid',
   'Invited',
   'Onboarding',
   'Awaiting review',

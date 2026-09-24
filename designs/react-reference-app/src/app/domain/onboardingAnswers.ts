@@ -33,12 +33,19 @@ export type AnsweredForm = {
   questions: AnsweredQuestion[];
 };
 
-const PREGNANCY_STATUS_KEY = 'pregnancyStatus';
+const PREGNANCY_STATUS_KEY = 'lifeStage';
 
 const PREGNANCY_ANSWERS: ReadonlySet<string> = new Set([
   'Pregnant',
-  'Postpartum',
+  'Postpartum (in the last 12 months)',
 ]);
+
+const MIGRAINE_CONTRACEPTION_SIGNAL = {
+  symptomsKey: 'recurringSymptoms',
+  symptomValue: 'Migraines',
+  contraceptionKey: 'hormonalContraception',
+  contraceptionValue: 'Combined pill',
+};
 
 export function humaniseQuestionId(questionId: string): string {
   const spaced = questionId
@@ -97,23 +104,23 @@ export function answeredQuestions(draft: OnboardingDraft): AnsweredQuestion[] {
   return answeredForms(draft).flatMap((form) => form.questions);
 }
 
-function isPregnancyFlag(questionId: string, answer: OnboardingAnswer): boolean {
-  return (
-    questionId === PREGNANCY_STATUS_KEY &&
-    PREGNANCY_ANSWERS.has(describeAnswer(answer))
-  );
+function matchesPregnancyAnswers(answer: OnboardingAnswer): boolean {
+  const values = Array.isArray(answer) ? answer : [describeAnswer(answer)];
+
+  return values.some((value) => PREGNANCY_ANSWERS.has(value));
+}
+
+function isPregnancyFlag(
+  questionId: string,
+  answer: OnboardingAnswer,
+): boolean {
+  return questionId === PREGNANCY_STATUS_KEY && matchesPregnancyAnswers(answer);
 }
 
 export function hasPregnancyContext(draft: OnboardingDraft): boolean {
   const status = draft.answers['cycle-context'][PREGNANCY_STATUS_KEY];
 
-  return status !== undefined && PREGNANCY_ANSWERS.has(describeAnswer(status));
-}
-
-export function needsSafetyLook(draft: OnboardingDraft): boolean {
-  const screening = Object.values(draft.answers['safety-screening']);
-
-  return screening.some(isAffirmative) || hasPregnancyContext(draft);
+  return status !== undefined && matchesPregnancyAnswers(status);
 }
 
 export function collaborationPreference(
@@ -141,26 +148,79 @@ export type ReviewForm = {
   answeredCount: number;
 };
 
+function hasMigraineContraceptionSignal(
+  questionId: string,
+  given: OnboardingFormAnswers,
+): boolean {
+  if (questionId !== MIGRAINE_CONTRACEPTION_SIGNAL.symptomsKey) return false;
+
+  const symptoms = given[MIGRAINE_CONTRACEPTION_SIGNAL.symptomsKey];
+  const contraception = given[MIGRAINE_CONTRACEPTION_SIGNAL.contraceptionKey];
+  if (!Array.isArray(symptoms) || contraception === undefined) return false;
+
+  return (
+    symptoms.includes(MIGRAINE_CONTRACEPTION_SIGNAL.symptomValue) &&
+    describeAnswer(contraception) ===
+      MIGRAINE_CONTRACEPTION_SIGNAL.contraceptionValue
+  );
+}
+
 function isFlagged(
   formId: OnboardingFormId,
   questionId: string,
   answer: OnboardingAnswer,
+  given: OnboardingFormAnswers,
 ): boolean {
   if (formId === 'safety-screening') return isAffirmative(answer);
-  if (formId === 'cycle-context') return isPregnancyFlag(questionId, answer);
+  if (formId === 'cycle-context') {
+    return (
+      isPregnancyFlag(questionId, answer) ||
+      hasMigraineContraceptionSignal(questionId, given)
+    );
+  }
 
   return false;
+}
+
+function matchesCondition(
+  condition: NonNullable<OnboardingField['revealedBy']>,
+  given: OnboardingFormAnswers,
+): boolean {
+  const trigger = given[condition.id];
+  if (trigger === undefined) return false;
+
+  const expected = Array.isArray(condition.value)
+    ? condition.value
+    : [condition.value];
+
+  return Array.isArray(trigger)
+    ? trigger.some((entry) => expected.includes(entry))
+    : expected.includes(describeAnswer(trigger));
+}
+
+function meetsRequires(
+  requires: OnboardingField['requires'],
+  given: OnboardingFormAnswers,
+): boolean {
+  return (requires ?? []).every((id) => {
+    const answer = given[id];
+
+    return answer !== undefined && isAnswered(answer);
+  });
 }
 
 function isReachable(
   field: OnboardingField,
   given: OnboardingFormAnswers,
 ): boolean {
-  if (!field.revealedBy) return true;
+  if (field.revealedBy && !matchesCondition(field.revealedBy, given)) {
+    return false;
+  }
+  if (field.concealedBy && matchesCondition(field.concealedBy, given)) {
+    return false;
+  }
 
-  const trigger = given[field.revealedBy.id];
-
-  return trigger !== undefined && describeAnswer(trigger) === field.revealedBy.value;
+  return meetsRequires(field.requires, given);
 }
 
 const CANONICAL_UNITS: Record<string, string> = {
@@ -197,11 +257,14 @@ function reviewAnswer(
     questionId: field.id,
     label: humaniseQuestionId(field.id),
     answer: answered ? readAnswer(field, answer) : null,
-    flagged: answer !== undefined && isFlagged(formId, field.id, answer),
+    flagged: answer !== undefined && isFlagged(formId, field.id, answer, given),
   };
 }
 
-export function reviewForms(draft: OnboardingDraft, sex: JourneySex): ReviewForm[] {
+export function reviewForms(
+  draft: OnboardingDraft,
+  sex: JourneySex,
+): ReviewForm[] {
   return formsForSex(sex).map((definition) => {
     const given = draft.answers[definition.id];
     const answers = definition.fields

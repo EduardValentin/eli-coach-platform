@@ -49,10 +49,12 @@ const SEEDED_GOAL_ANSWERS = {
   height: 165,
   goalWeight: 62,
   primaryGoal: 'Lose fat',
-  experienceLevel: 'Some experience',
-  trainingDaysPerWeek: 3,
-  minutesPerSession: 60,
-  realisticTimeframe: 24,
+  blockers: ['Busy schedule'],
+  experienceLevel: 'I train regularly, but without a structured plan',
+  trainingDaysPerWeek: '3 days',
+  minutesPerSession: '45–60 minutes',
+  previousPt: 'No',
+  coachExpectations: 'Someone to keep me consistent and honest.',
   lifestyleActivityLevel: 'Mostly sitting',
   availableEquipment: ['Full gym', 'Dumbbells'],
   trainingPlace: 'Gym',
@@ -62,39 +64,44 @@ const SEEDED_SAFETY_ANSWERS = {
   heartCondition: 'No',
   chestPainOnExertion: 'No',
   dizzinessOrFainting: 'No',
-  boneOrJointProblem: 'Yes',
+  chronicConditionDiagnosed: 'No',
   chronicConditionMedication: 'No',
-  currentInjury: 'Yes',
-  currentInjuryDetail: 'Right shoulder aches on overhead pressing.',
+  boneOrJointProblem: 'Yes',
+  boneOrJointProblemList: 'Right shoulder aches on overhead pressing.',
   doctorProhibitedActivity: 'No',
-  adviceToAvoidExertion: 'No',
+  parqDeclaration: true,
 };
 
 const SEEDED_CYCLE_ANSWERS = {
-  cycleRegularity: 'Regular',
-  averageCycleLength: 29,
+  cycleRegularity: "Yes, and it's regular",
+  cycleLength: 29,
   lastPeriodStart: '2026-09-08',
   hormonalContraception: 'None',
-  pregnancyStatus: 'None',
+  lifeStage: ['None of these'],
   perimenopauseOrMenopause: 'No',
   gynaecologicalCondition: 'No',
   recurringSymptoms: ['Fatigue', 'Appetite changes'],
 };
 
 const SEEDED_LIFESTYLE_ANSWERS = {
-  eatingStyle: 'No particular style',
+  eatingStyle: 'No restrictions',
+  allergiesOrIntolerances: 'Yes',
+  allergiesOrIntolerancesList: 'Lactose, mild',
   foodPreferences: 'Chicken, rice, Greek yoghurt, anything with eggs.',
-  allergiesOrIntolerances: 'Lactose, mild',
   foodsYouAvoid: 'Liver',
-  mealsPerDay: 3,
-  mealSchedule: 'Around 8, 14 and 20',
-  jobType: 'Sedentary',
-  sleepHours: 7,
-  smoking: 'No',
-  whoCooks: 'I cook, about 30 minutes on a weeknight',
-  currentSupplements: 'Vitamin D',
-  coffeePerDay: 2,
-  waterPerDay: 2,
+  mealsPerDay: 'Three',
+  snacksPerDay: 'One',
+  firstMeal: '7–9am',
+  lastMeal: '6–8pm',
+  energyDips: 'Sometimes',
+  energyDipsWhen: ['Afternoon'],
+  jobType: 'Mostly sitting',
+  sleepHours: '6–7 hours',
+  eatingOutFrequency: 'Bring food from home',
+  cookingSetup: 'I do',
+  cookingTime: '15–30 minutes',
+  waterPerDay: '2–5 glasses',
+  nutritionGoal: 'Stop skipping meals when work gets busy.',
   checkInDay: 'Monday',
   checkInChannel: 'Email',
 };
@@ -105,7 +112,7 @@ const SEEDED_MEASUREMENT_ANSWERS = {
 };
 
 const SEEDED_DETAIL_REQUEST = {
-  questionIds: ['sleepHours', 'currentInjuryDetail'],
+  questionIds: ['sleepHours', 'boneOrJointProblemList'],
   raisedFrom: 'reviewing' as const,
   message:
     'Two quick things before I build your plan — tell me a little more about your sleep and about that shoulder.',
@@ -130,7 +137,9 @@ function journeySexFromGender(gender: VisitorGender): JourneySex {
   return gender === 'male' ? 'male' : 'female';
 }
 
-export function identityFromBooking(booking: PrototypeBooking): JourneyIdentity {
+export function identityFromBooking(
+  booking: PrototypeBooking,
+): JourneyIdentity {
   const country = findCountry(booking.country);
 
   return {
@@ -229,8 +238,15 @@ function seedSubscription(seed: SubscriptionSeed): CoachingSubscription {
 }
 
 export function seedJourney(seed: JourneySeed): ClientJourney {
-  const { callId, identity, stage, startPath, subscriptionStatus, pricing, now } =
-    seed;
+  const {
+    callId,
+    identity,
+    stage,
+    startPath,
+    subscriptionStatus,
+    pricing,
+    now,
+  } = seed;
   const reached = (target: JourneyStage) => !isBeforeStage(stage, target);
 
   const paymentLinkSentAt = subDays(now, 6);
@@ -248,16 +264,15 @@ export function seedJourney(seed: JourneySeed): ClientJourney {
       ? {
           token: `pl-seed-${callId}`,
           sentAt: paymentLinkSentAt,
-          state: reached('paid') ? 'used' : 'valid',
+          state: reached('invited') ? 'used' : 'valid',
         }
       : null,
-    paidAt: reached('paid') ? paidAt : null,
+    paidAt: reached('invited') ? paidAt : null,
     invitation: reached('invited')
       ? {
           token: `inv-seed-${callId}`,
           sentAt: invitedAt,
           expiresAt: addDays(invitedAt, INVITATION_VALIDITY_DAYS),
-          replaced: false,
           state: reached('account-created') ? 'used' : 'valid',
         }
       : null,
@@ -266,7 +281,9 @@ export function seedJourney(seed: JourneySeed): ClientJourney {
     review:
       stage === 'needs-details'
         ? {
-            requests: [{ ...SEEDED_DETAIL_REQUEST, createdAt: subDays(now, 2) }],
+            requests: [
+              { ...SEEDED_DETAIL_REQUEST, createdAt: subDays(now, 2) },
+            ],
           }
         : { requests: [] },
     programReadyAt: reached('program-ready') ? programReadyAt : null,
@@ -274,7 +291,7 @@ export function seedJourney(seed: JourneySeed): ClientJourney {
       ? { startsAt: addDays(now, 1), scheduledAt: subDays(now, 1) }
       : undefined,
     measurements: reached('submitted') ? seedMeasurements(submittedAt) : [],
-    subscription: reached('paid')
+    subscription: reached('invited')
       ? seedSubscription({
           purchasedAt: paidAt,
           programReadyAt: reached('program-ready') ? programReadyAt : null,

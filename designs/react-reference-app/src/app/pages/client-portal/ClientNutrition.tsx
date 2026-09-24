@@ -1,7 +1,15 @@
 import { useState } from 'react';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { format, parseISO } from 'date-fns';
-import { ShoppingCart, Clock, Utensils as UtensilsIcon, TrendingDown, TrendingUp, ArrowLeftRight, Check } from 'lucide-react';
+import {
+  ShoppingCart,
+  Clock,
+  Utensils as UtensilsIcon,
+  TrendingDown,
+  TrendingUp,
+  ArrowLeftRight,
+  Check,
+} from 'lucide-react';
 import {
   useNutrition,
   dayMacros,
@@ -21,7 +29,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '../../components/ui/dialog';
-import { PHASE_LABEL, PHASE_VAR, MEAL_ROLE_LABEL } from '../../components/coach-portal/nutrition/plan-constants';
+import {
+  PHASE_LABEL,
+  PHASE_VAR,
+  MEAL_ROLE_LABEL,
+} from '../../components/coach-portal/nutrition/plan-constants';
 import {
   CATEGORY_LABELS,
   CATEGORY_SWATCH,
@@ -31,8 +43,11 @@ import {
 } from '../../components/coach-portal/nutrition/nutrition-constants';
 import { useClientProfile } from '../../context/ClientProfileContext';
 import { ResponsiveSheetDialog } from '../../components/workout/ResponsiveSheetDialog';
+import { SectionEyebrow } from '../../components/SectionEyebrow';
+import { Reading } from '../../components/Reading';
 import { ConfirmDialog } from '../../components/ui/confirm-dialog';
 import { RecipeVisual } from '../../components/coach-portal/nutrition/RecipeVisual';
+import { Button } from '../../components/ui/button';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -107,7 +122,12 @@ interface RecipeDetailBodyProps {
   foods: Food[];
 }
 
-function RecipeDetailBody({ slot, recipe, recipes, foods }: RecipeDetailBodyProps) {
+function RecipeDetailBody({
+  slot,
+  recipe,
+  recipes,
+  foods,
+}: RecipeDetailBodyProps) {
   const macros = slotMacros(slot, recipes, foods);
   const totalTime = recipe.prepMinutes + recipe.cookMinutes;
   const roleLabel = MEAL_ROLE_LABEL[slot.mealRoleId] ?? slot.mealRoleId;
@@ -117,83 +137,87 @@ function RecipeDetailBody({ slot, recipe, recipes, foods }: RecipeDetailBodyProp
       {/* Cover image / icon */}
       <RecipeVisual recipe={recipe} className="h-48 w-full rounded-t-card" />
       <div className="px-5 pt-4 md:px-8 space-y-5">
-      {/* Macros */}
-      <div className="bg-neutral-50 rounded-card px-4 py-3 space-y-2">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">Macros</p>
-        <p className="text-sm font-semibold text-text-primary tabular-nums">
-          {macros.kcal.toLocaleString()} kcal
-        </p>
-        <div className="flex items-center gap-4 flex-wrap">
-          <span className="inline-flex items-center gap-1 text-sm text-text-primary">
-            <MacroDotSpan colorClass={MACRO_DOT.protein} />
-            P {macros.protein}g
-          </span>
-          <span className="inline-flex items-center gap-1 text-sm text-text-primary">
-            <MacroDotSpan colorClass={MACRO_DOT.carb} />
-            C {macros.carb}g
-          </span>
-          <span className="inline-flex items-center gap-1 text-sm text-text-primary">
-            <MacroDotSpan colorClass={MACRO_DOT.fat} />
-            F {macros.fat}g
+        {/* Macros */}
+        <div className="bg-neutral-50 rounded-card px-4 py-3 space-y-2">
+          <Reading
+            label="Macros"
+            value={`${macros.kcal.toLocaleString()} kcal`}
+            className="tabular-nums"
+          />
+          <div className="flex items-center gap-4 flex-wrap">
+            <span className="inline-flex items-center gap-1 text-sm text-text-primary">
+              <MacroDotSpan colorClass={MACRO_DOT.protein} />P {macros.protein}g
+            </span>
+            <span className="inline-flex items-center gap-1 text-sm text-text-primary">
+              <MacroDotSpan colorClass={MACRO_DOT.carb} />C {macros.carb}g
+            </span>
+            <span className="inline-flex items-center gap-1 text-sm text-text-primary">
+              <MacroDotSpan colorClass={MACRO_DOT.fat} />F {macros.fat}g
+            </span>
+          </div>
+        </div>
+
+        {/* Time + role */}
+        <div className="flex items-center gap-4 flex-wrap text-sm text-text-secondary">
+          {totalTime > 0 && (
+            <span className="inline-flex items-center gap-1.5">
+              <Clock size={14} aria-hidden="true" />
+              {totalTime} min
+            </span>
+          )}
+          <span className="inline-flex items-center gap-1.5">
+            <UtensilsIcon size={14} aria-hidden="true" />
+            {roleLabel}
           </span>
         </div>
-      </div>
 
-      {/* Time + role */}
-      <div className="flex items-center gap-4 flex-wrap text-sm text-text-secondary">
-        {totalTime > 0 && (
-          <span className="inline-flex items-center gap-1.5">
-            <Clock size={14} aria-hidden="true" />
-            {totalTime} min
-          </span>
-        )}
-        <span className="inline-flex items-center gap-1.5">
-          <UtensilsIcon size={14} aria-hidden="true" />
-          {roleLabel}
-        </span>
-      </div>
-
-      {/* Ingredients */}
-      <div>
-        <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-2">
-          Ingredients
-        </p>
-        <ul className="space-y-1.5 list-none p-0 m-0">
-          {recipe.ingredients.map((ing, i) => {
-            const food = foods.find((f) => f.id === ing.foodId);
-            const methodLabel = ing.method && ing.method in COOKING_METHOD_LABELS
-              ? COOKING_METHOD_LABELS[ing.method as keyof typeof COOKING_METHOD_LABELS]
-              : undefined;
-            return (
-              <li
-                key={`${ing.foodId}-${i}`}
-                className="flex items-center justify-between gap-2 rounded-compact px-2 py-1.5 text-sm text-text-primary hover:bg-neutral-50"
-              >
-                <span className="flex-1">
-                  {food?.name ?? ing.foodId}
-                  {methodLabel && (
-                    <span className="ml-1.5 text-xs text-text-secondary">· {methodLabel}</span>
-                  )}
-                </span>
-                <span className="shrink-0 tabular-nums text-text-secondary">{ing.grams} g</span>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
-
-      {/* B — Instructions */}
-      {recipe.instructions && recipe.instructions.trim().length > 0 && (
+        {/* Ingredients */}
         <div>
           <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-2">
-            Instructions
+            Ingredients
           </p>
-          <p className="text-sm text-text-primary whitespace-pre-line leading-relaxed">
-            {recipe.instructions}
-          </p>
+          <ul className="space-y-1.5 list-none p-0 m-0">
+            {recipe.ingredients.map((ing, i) => {
+              const food = foods.find((f) => f.id === ing.foodId);
+              const methodLabel =
+                ing.method && ing.method in COOKING_METHOD_LABELS
+                  ? COOKING_METHOD_LABELS[
+                      ing.method as keyof typeof COOKING_METHOD_LABELS
+                    ]
+                  : undefined;
+              return (
+                <li
+                  key={`${ing.foodId}-${i}`}
+                  className="flex items-center justify-between gap-2 rounded-compact px-2 py-1.5 text-sm text-text-primary hover:bg-neutral-50"
+                >
+                  <span className="flex-1">
+                    {food?.name ?? ing.foodId}
+                    {methodLabel && (
+                      <span className="ml-1.5 text-xs text-text-secondary">
+                        · {methodLabel}
+                      </span>
+                    )}
+                  </span>
+                  <span className="shrink-0 tabular-nums text-text-secondary">
+                    {ing.grams} g
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
         </div>
-      )}
 
+        {/* B — Instructions */}
+        {recipe.instructions && recipe.instructions.trim().length > 0 && (
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-2">
+              Instructions
+            </p>
+            <p className="text-sm text-text-primary whitespace-pre-line leading-relaxed">
+              {recipe.instructions}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -223,7 +247,11 @@ function MealSwapChooserBody({
   return (
     <div className="px-5 pb-6 pt-2 md:px-8">
       <p className="text-xs text-text-secondary mb-4">Coach-approved options</p>
-      <ul className="space-y-2 list-none p-0 m-0" role="listbox" aria-label="Meal options">
+      <ul
+        className="space-y-2 list-none p-0 m-0"
+        role="listbox"
+        aria-label="Meal options"
+      >
         {optionIds.map((rid) => {
           const recipe = recipes.find((r) => r.id === rid);
           if (!recipe) return null;
@@ -237,16 +265,18 @@ function MealSwapChooserBody({
                 aria-label={`${recipe.name}, ${kcal} kcal${isSelected ? ', currently selected' : ''}`}
                 aria-pressed={isSelected}
                 onClick={() => onSelect(rid)}
-                className={`w-full text-left rounded-control px-4 py-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 flex items-center gap-3 ${
+                className={`w-full text-left rounded-control px-4 py-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 flex items-center gap-3 ${
                   isSelected
-                    ? 'bg-brand/8 border border-brand/25'
+                    ? 'bg-primary/8 border border-primary/25'
                     : 'bg-neutral-50 border border-neutral-100 hover:border-neutral-200 hover:bg-neutral-100'
                 }`}
               >
                 {/* Check indicator — always present for layout stability, visible only when selected */}
                 <span
                   className={`shrink-0 w-5 h-5 rounded-full flex items-center justify-center transition-colors ${
-                    isSelected ? 'bg-brand text-white' : 'bg-neutral-200'
+                    isSelected
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-neutral-200'
                   }`}
                   aria-hidden="true"
                 >
@@ -265,7 +295,9 @@ function MealSwapChooserBody({
                   <span className="block text-sm font-semibold text-text-primary leading-snug truncate">
                     {recipe.name}
                   </span>
-                  <span className="text-xs text-text-secondary tabular-nums">{kcal} kcal</span>
+                  <span className="text-xs text-text-secondary tabular-nums">
+                    {kcal} kcal
+                  </span>
                 </span>
 
                 {/* Coach's pick — tiny muted label, not a badge */}
@@ -297,29 +329,48 @@ interface SlotCardProps {
   onSelect: (slotId: string, recipeId: string) => void;
 }
 
-function SlotCard({ slot, recipes, foods, onViewRecipe, onSelect }: SlotCardProps) {
+function SlotCard({
+  slot,
+  recipes,
+  foods,
+  onViewRecipe,
+  onSelect,
+}: SlotCardProps) {
   const [swapOpen, setSwapOpen] = useState(false);
   const roleLabel = MEAL_ROLE_LABEL[slot.mealRoleId] ?? slot.mealRoleId;
 
   // Stable option list: coach primary first, then alternatives (deduped, order-preserved)
   const seen = new Set<string>();
   const allOptionIds: string[] = [];
-  if (slot.recipeId) { seen.add(slot.recipeId); allOptionIds.push(slot.recipeId); }
+  if (slot.recipeId) {
+    seen.add(slot.recipeId);
+    allOptionIds.push(slot.recipeId);
+  }
   for (const id of slot.alternativeRecipeIds) {
-    if (!seen.has(id)) { seen.add(id); allOptionIds.push(id); }
+    if (!seen.has(id)) {
+      seen.add(id);
+      allOptionIds.push(id);
+    }
   }
 
   // Effective recipe drives all display
   const effectiveId = effectiveRecipeId(slot);
-  const displayRecipe = effectiveId ? recipes.find((r) => r.id === effectiveId) : undefined;
+  const displayRecipe = effectiveId
+    ? recipes.find((r) => r.id === effectiveId)
+    : undefined;
 
-  const cookTime = displayRecipe ? displayRecipe.prepMinutes + displayRecipe.cookMinutes : 0;
+  const cookTime = displayRecipe
+    ? displayRecipe.prepMinutes + displayRecipe.cookMinutes
+    : 0;
   const cookMethods = displayRecipe
     ? [
         ...new Set(
           displayRecipe.ingredients
             .map((ing) => ing.method)
-            .filter((m): m is keyof typeof COOKING_METHOD_LABELS => m in COOKING_METHOD_LABELS),
+            .filter(
+              (m): m is keyof typeof COOKING_METHOD_LABELS =>
+                m in COOKING_METHOD_LABELS,
+            ),
         ),
       ]
     : [];
@@ -328,7 +379,9 @@ function SlotCard({ slot, recipes, foods, onViewRecipe, onSelect }: SlotCardProp
   const hasSwaps = allOptionIds.length >= 2;
 
   const [pending, setPending] = useState<string | null>(null);
-  const pendingRecipe = pending ? recipes.find((r) => r.id === pending) : undefined;
+  const pendingRecipe = pending
+    ? recipes.find((r) => r.id === pending)
+    : undefined;
 
   // Picking an option closes the chooser and asks to confirm before changing the plan.
   const requestSwap = (recipeId: string) => {
@@ -353,15 +406,17 @@ function SlotCard({ slot, recipes, foods, onViewRecipe, onSelect }: SlotCardProp
             </p>
             {/* Swap button — only shown when there are alternatives */}
             {hasSwaps && (
-              <button
+              <Button
                 type="button"
                 aria-label="Swap this meal"
                 onClick={() => setSwapOpen(true)}
-                className="inline-flex items-center gap-1 px-2 py-1 rounded-control text-caption font-semibold text-text-secondary bg-neutral-100 hover:bg-neutral-200 hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 shrink-0"
+                variant="secondary"
+                size="sm"
+                className="shrink-0"
               >
                 <ArrowLeftRight size={11} aria-hidden="true" />
                 Swap
-              </button>
+              </Button>
             )}
           </div>
 
@@ -378,7 +433,7 @@ function SlotCard({ slot, recipes, foods, onViewRecipe, onSelect }: SlotCardProp
                 {/* Recipe name as a button — opens the recipe detail dialog */}
                 <button
                   type="button"
-                  className="text-left mb-2 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 rounded"
+                  className="text-left mb-2 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 rounded"
                   aria-label={`View ${displayRecipe.name} recipe`}
                   onClick={() => onViewRecipe(slot.id, displayRecipe.id)}
                 >
@@ -388,18 +443,19 @@ function SlotCard({ slot, recipes, foods, onViewRecipe, onSelect }: SlotCardProp
                 </button>
                 {macros && (
                   <div className="flex items-center gap-2.5 flex-wrap mb-2 tabular-nums">
-                    <span className="text-xs text-text-secondary">{macros.kcal} kcal</span>
-                    <span className="inline-flex items-center gap-1 text-xs text-text-primary">
-                      <MacroDotSpan colorClass={MACRO_DOT.protein} />
-                      P {macros.protein}g
+                    <span className="text-xs text-text-secondary">
+                      {macros.kcal} kcal
                     </span>
                     <span className="inline-flex items-center gap-1 text-xs text-text-primary">
-                      <MacroDotSpan colorClass={MACRO_DOT.carb} />
-                      C {macros.carb}g
+                      <MacroDotSpan colorClass={MACRO_DOT.protein} />P{' '}
+                      {macros.protein}g
                     </span>
                     <span className="inline-flex items-center gap-1 text-xs text-text-primary">
-                      <MacroDotSpan colorClass={MACRO_DOT.fat} />
-                      F {macros.fat}g
+                      <MacroDotSpan colorClass={MACRO_DOT.carb} />C{' '}
+                      {macros.carb}g
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-xs text-text-primary">
+                      <MacroDotSpan colorClass={MACRO_DOT.fat} />F {macros.fat}g
                     </span>
                   </div>
                 )}
@@ -413,7 +469,9 @@ function SlotCard({ slot, recipes, foods, onViewRecipe, onSelect }: SlotCardProp
                   {cookMethods.length > 0 && (
                     <span className="inline-flex items-center gap-1">
                       <UtensilsIcon size={12} aria-hidden="true" />
-                      {cookMethods.map((m) => COOKING_METHOD_LABELS[m]).join(', ')}
+                      {cookMethods
+                        .map((m) => COOKING_METHOD_LABELS[m])
+                        .join(', ')}
                     </span>
                   )}
                 </div>
@@ -451,8 +509,14 @@ function SlotCard({ slot, recipes, foods, onViewRecipe, onSelect }: SlotCardProp
 
       <ConfirmDialog
         open={pending !== null}
-        onOpenChange={(o) => { if (!o) setPending(null); }}
-        title={pendingRecipe ? `Switch ${roleLabel} to ${pendingRecipe.name}?` : 'Switch meal?'}
+        onOpenChange={(o) => {
+          if (!o) setPending(null);
+        }}
+        title={
+          pendingRecipe
+            ? `Switch ${roleLabel} to ${pendingRecipe.name}?`
+            : 'Switch meal?'
+        }
         description="This updates your plan for this day."
         confirmLabel="Switch meal"
         onConfirm={confirmSwap}
@@ -480,7 +544,10 @@ function ShoppingListBody({ groups }: ShoppingListBodyProps) {
   return (
     <div className="space-y-5">
       {groups.map((group) => (
-        <section key={group.category} aria-label={CATEGORY_LABELS[group.category]}>
+        <section
+          key={group.category}
+          aria-label={CATEGORY_LABELS[group.category]}
+        >
           <div className="mb-2 flex items-center gap-2">
             <span
               className={`h-2.5 w-2.5 shrink-0 rounded-full ${CATEGORY_SWATCH[group.category]}`}
@@ -497,7 +564,9 @@ function ShoppingListBody({ groups }: ShoppingListBodyProps) {
                 className="flex items-center justify-between gap-2 rounded-compact px-2 py-1.5 text-sm text-text-primary hover:bg-neutral-50"
               >
                 <span>{item.name}</span>
-                <span className="shrink-0 tabular-nums text-text-secondary">{item.grams} g</span>
+                <span className="shrink-0 tabular-nums text-text-secondary">
+                  {item.grams} g
+                </span>
               </li>
             ))}
           </ul>
@@ -517,7 +586,11 @@ interface GoalHeroProps {
   maintenanceCalories: number;
 }
 
-function GoalHero({ primaryGoal, goalTarget, maintenanceCalories }: GoalHeroProps) {
+function GoalHero({
+  primaryGoal,
+  goalTarget,
+  maintenanceCalories,
+}: GoalHeroProps) {
   const delta = goalTarget - maintenanceCalories;
   const isDeficit = delta < 0;
   const absDelta = Math.abs(delta);
@@ -535,10 +608,12 @@ function GoalHero({ primaryGoal, goalTarget, maintenanceCalories }: GoalHeroProp
 
       {/* Hero: calorie target */}
       <div className="flex items-baseline gap-1.5">
-        <span className="font-serif text-4xl font-semibold text-text-primary leading-none tabular-nums">
+        <span className="text-4xl font-semibold text-text-primary leading-none tabular-nums">
           {goalTarget.toLocaleString()}
         </span>
-        <span className="text-sm font-medium text-text-secondary leading-none">kcal/day</span>
+        <span className="text-sm font-medium text-text-secondary leading-none">
+          kcal/day
+        </span>
       </div>
 
       {/* Secondary: deficit/surplus delta */}
@@ -566,13 +641,20 @@ export function ClientNutrition() {
   const today = localToday();
 
   // Selected day state — default to today in the block, fall back to first day
-  const defaultDay = block?.days.find((d) => d.date === today) ?? block?.days[0];
-  const [selectedDate, setSelectedDate] = useState<string>(defaultDay?.date ?? today);
+  const defaultDay =
+    block?.days.find((d) => d.date === today) ?? block?.days[0];
+  const [selectedDate, setSelectedDate] = useState<string>(
+    defaultDay?.date ?? today,
+  );
   const [shoppingOpen, setShoppingOpen] = useState(false);
   // Recipe detail state — tracks { slotId, recipeId } of the open recipe
-  const [openRecipe, setOpenRecipe] = useState<{ slotId: string; recipeId: string } | null>(null);
+  const [openRecipe, setOpenRecipe] = useState<{
+    slotId: string;
+    recipeId: string;
+  } | null>(null);
 
-  const selectedDay = block?.days.find((d) => d.date === selectedDate) ?? block?.days[0];
+  const selectedDay =
+    block?.days.find((d) => d.date === selectedDate) ?? block?.days[0];
 
   if (!plan || !block) {
     return (
@@ -580,9 +662,15 @@ export function ClientNutrition() {
         <PortalPageHeader title="My nutrition" />
         <div className="bg-white rounded-panel border border-neutral-100 p-10 text-center">
           <div className="w-16 h-16 rounded-full bg-neutral-100 flex items-center justify-center mx-auto mb-4">
-            <UtensilsIcon size={28} className="text-text-secondary" aria-hidden="true" />
+            <UtensilsIcon
+              size={28}
+              className="text-text-secondary"
+              aria-hidden="true"
+            />
           </div>
-          <p className="font-serif text-xl text-text-primary mb-2">No plan yet</p>
+          <p className="font-serif text-xl text-text-primary mb-2">
+            No plan yet
+          </p>
           <p className="text-sm text-text-secondary max-w-xs mx-auto">
             Your coach hasn't built your plan yet. Check back soon!
           </p>
@@ -592,7 +680,9 @@ export function ClientNutrition() {
   }
 
   const dayTotals = selectedDay ? dayMacros(selectedDay, recipes, foods) : null;
-  const target = selectedDay ? dayTargetFor(plan, selectedDay.phase) : plan.dailyTarget;
+  const target = selectedDay
+    ? dayTargetFor(plan, selectedDay.phase)
+    : plan.dailyTarget;
 
   // A — slot selection: setSlotSelection keeps the coach's primary stable
   const handleSlotSelect = (slotId: string, recipeId: string) => {
@@ -623,35 +713,37 @@ export function ClientNutrition() {
         subtitle="Your coach-built meal plan for this cycle block."
         actions={
           <Dialog open={shoppingOpen} onOpenChange={setShoppingOpen}>
-          <DialogTrigger asChild>
-            <button
-              type="button"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-control bg-white border border-neutral-200 text-sm font-semibold text-text-primary hover:bg-neutral-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 shrink-0"
-              aria-label="Open shopping list for this meal block"
-            >
-              <ShoppingCart size={16} aria-hidden="true" />
-              Shopping list
-            </button>
-          </DialogTrigger>
-          <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Shopping list</DialogTitle>
-              <DialogDescription>
-                {format(parseISO(block.startDate), 'MMM d')}–
-                {format(parseISO(block.days.at(-1)!.date), 'MMM d')} · full block
-              </DialogDescription>
-            </DialogHeader>
-            <ShoppingListBody groups={shoppingList(block, recipes, foods)} />
-          </DialogContent>
+            <DialogTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                className="shrink-0"
+                aria-label="Open shopping list for this meal block"
+              >
+                <ShoppingCart size={16} aria-hidden="true" />
+                Shopping list
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Shopping list</DialogTitle>
+                <DialogDescription>
+                  {format(parseISO(block.startDate), 'MMM d')}–
+                  {format(parseISO(block.days.at(-1)!.date), 'MMM d')} · full
+                  block
+                </DialogDescription>
+              </DialogHeader>
+              <ShoppingListBody groups={shoppingList(block, recipes, foods)} />
+            </DialogContent>
           </Dialog>
         }
       />
 
       {/* Week strip */}
-      <section aria-label="Week overview">
-        <h2 className="text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-3">
+      <section aria-labelledby="week-strip-heading">
+        <SectionEyebrow as="h2" className="mb-3" id="week-strip-heading">
           This block
-        </h2>
+        </SectionEyebrow>
         <div className="overflow-x-auto -mx-0.5 pb-1">
           <div className="inline-flex gap-2 px-0.5 min-w-max">
             {block.days.map((day) => {
@@ -666,12 +758,12 @@ export function ClientNutrition() {
                   onClick={() => setSelectedDate(day.date)}
                   aria-label={`${format(parseISO(day.date), 'EEEE, MMMM d')}${day.phase ? `, ${PHASE_LABEL[day.phase]} phase` : ''}${isToday ? ', today' : ''}`}
                   aria-pressed={isSelected}
-                  className={`flex flex-col items-center gap-1 rounded-card px-3 py-2.5 min-w-[56px] text-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 ${
+                  className={`flex flex-col items-center gap-1 rounded-card px-3 py-2.5 min-w-[56px] text-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${
                     isSelected
-                      ? 'bg-brand text-white shadow-md'
+                      ? 'bg-primary text-primary-foreground shadow-md'
                       : isToday
-                      ? 'bg-brand/8 text-brand border border-brand/20'
-                      : 'bg-white text-text-primary border border-neutral-100 hover:border-neutral-200 hover:bg-neutral-50'
+                        ? 'bg-brand/8 text-brand border border-brand/20'
+                        : 'bg-white text-text-primary border border-neutral-100 hover:border-neutral-200 hover:bg-neutral-50'
                   }`}
                 >
                   <span className="text-[10px] font-bold uppercase tracking-wide leading-none">
@@ -689,7 +781,9 @@ export function ClientNutrition() {
                     />
                   )}
                   {dayTotalsChip.kcal > 0 && (
-                    <span className={`text-[9px] font-semibold tabular-nums leading-none ${isSelected ? 'text-white' : 'text-text-secondary'}`}>
+                    <span
+                      className={`text-[9px] font-semibold tabular-nums leading-none ${isSelected ? 'text-white' : 'text-text-secondary'}`}
+                    >
                       {dayTotalsChip.kcal}
                     </span>
                   )}
@@ -702,7 +796,9 @@ export function ClientNutrition() {
 
       {/* Selected day card */}
       {selectedDay && (
-        <section aria-label={`Meals for ${format(parseISO(selectedDay.date), 'EEEE, MMMM d')}`}>
+        <section
+          aria-label={`Meals for ${format(parseISO(selectedDay.date), 'EEEE, MMMM d')}`}
+        >
           <div className="bg-white rounded-panel border border-neutral-100 overflow-hidden shadow-[0_2px_12px_rgb(0,0,0,0.03)]">
             {/* Day header */}
             <div
@@ -718,14 +814,25 @@ export function ClientNutrition() {
             >
               <div className="flex items-center justify-between gap-3 flex-wrap">
                 <div>
-                  <h2 className="font-serif text-xl text-text-primary font-semibold leading-none mb-1">
+                  <h2
+                    id="nutrition-day-heading"
+                    className="mb-2 flex items-center gap-2 text-base font-semibold text-text-primary"
+                  >
+                    <UtensilsIcon
+                      aria-hidden="true"
+                      className="text-brand-secondary"
+                      size={18}
+                    />
+                    Today's meals
+                  </h2>
+                  <p className="font-semibold text-2xl tracking-tight text-text-primary lg:text-3xl leading-none mb-1">
                     {format(parseISO(selectedDay.date), 'EEEE, MMMM d')}
                     {selectedDay.date === today && (
                       <span className="ml-2 text-xs font-sans font-semibold uppercase tracking-widest text-text-secondary">
                         Today
                       </span>
                     )}
-                  </h2>
+                  </p>
                   {selectedDay.phase && (
                     <p
                       className="inline-flex items-center gap-1.5 text-sm font-semibold"
@@ -733,7 +840,9 @@ export function ClientNutrition() {
                     >
                       <span
                         className="w-2.5 h-2.5 rounded-full shrink-0"
-                        style={{ backgroundColor: PHASE_VAR[selectedDay.phase] }}
+                        style={{
+                          backgroundColor: PHASE_VAR[selectedDay.phase],
+                        }}
                         aria-hidden="true"
                       />
                       {PHASE_LABEL[selectedDay.phase]} phase
@@ -813,7 +922,9 @@ export function ClientNutrition() {
       {openSlot && openRecipeData && (
         <ResponsiveSheetDialog
           open={!!openRecipe}
-          onOpenChange={(open) => { if (!open) setOpenRecipe(null); }}
+          onOpenChange={(open) => {
+            if (!open) setOpenRecipe(null);
+          }}
           title={openRecipeData.name}
           description={`${MEAL_ROLE_LABEL[openSlot.mealRoleId] ?? openSlot.mealRoleId} recipe details`}
         >

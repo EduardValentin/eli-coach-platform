@@ -32,7 +32,7 @@ export function PlanExerciseRow({ planExercise, exercise }: PlanExerciseRowProps
         type="button"
         onClick={() => setVideoOpen(true)}
         aria-label={`${exercise.name} details`}
-        className="w-full flex items-center gap-3 sm:gap-4 rounded-control px-2 sm:px-3 py-2 hover:bg-neutral-50 transition-colors text-left outline-none focus-visible:ring-[3px] focus-visible:ring-brand/30"
+        className="w-full flex items-center gap-3 sm:gap-4 rounded-control px-2 sm:px-3 py-2 hover:bg-neutral-50 transition-colors text-left outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
       >
         <span aria-hidden="true" className="shrink-0 size-10 rounded-compact overflow-hidden bg-neutral-100 flex items-center justify-center">
           {exercise.thumbnailUrl ? (

@@ -3,7 +3,15 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { subDays } from 'date-fns';
 import { MemoryRouter, useLocation, useNavigationType } from 'react-router';
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from 'vitest';
 import { CoachAssessmentCalls } from './CoachAssessmentCalls';
 import { AppProvider } from '../../context/AppContext';
 import {
@@ -49,33 +57,6 @@ const TOMORROW = bookingAt(localInstant(22, 18), 'Ioana Radu');
 const YESTERDAY = bookingAt(localInstant(20, 18), 'Elena Marin');
 
 const ALL_BOOKINGS = [LATER_TODAY, TOMORROW, YESTERDAY];
-
-vi.mock('../../components/DateRangeField', () => ({
-  DateRangeField: ({
-    value,
-    onChange,
-  }: {
-    value: { from: string | null; to: string | null };
-    onChange: (range: { from: string | null; to: string | null }) => void;
-  }) => (
-    <>
-      <input
-        aria-label="From"
-        value={value.from ?? ''}
-        onChange={(event) =>
-          onChange({ from: event.target.value || null, to: value.to })
-        }
-      />
-      <input
-        aria-label="To"
-        value={value.to ?? ''}
-        onChange={(event) =>
-          onChange({ from: value.from, to: event.target.value || null })
-        }
-      />
-    </>
-  ),
-}));
 
 beforeAll(() => {
   vi.stubGlobal(
@@ -154,21 +135,29 @@ function listedNames(): string[] {
   return screen
     .getAllByRole('listitem')
     .map(
-      (item) => within(item).getByRole('heading', { level: 2 }).textContent ?? '',
+      (item) =>
+        within(item).getByRole('heading', { level: 2 }).textContent ?? '',
     );
 }
 
 describe('the coach assessment calls page when the calls cannot be read', () => {
   it('replaces the listing with the unavailable dead end', () => {
     // arrange
-    window.history.replaceState({}, '', '/coach/assessment-calls?coachcalls=unavailable');
+    window.history.replaceState(
+      {},
+      '',
+      '/coach/assessment-calls?coachcalls=unavailable',
+    );
 
     // act
     renderPage();
 
     // assert
     expect(
-      screen.getByRole('heading', { level: 1, name: 'Assessment calls unavailable' }),
+      screen.getByRole('heading', {
+        level: 1,
+        name: 'Assessment calls unavailable',
+      }),
     ).toBeInTheDocument();
     expect(
       screen.getByText(
@@ -214,7 +203,11 @@ describe('the coach assessment calls page', () => {
     // assert
     expect(whenTab('All')).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByLabelText('Search calls')).toHaveValue('');
-    expect(listedNames()).toEqual(['Maria Ionescu', 'Ioana Radu', 'Elena Marin']);
+    expect(listedNames()).toEqual([
+      'Maria Ionescu',
+      'Ioana Radu',
+      'Elena Marin',
+    ]);
   });
 
   it('opens on the filter and the search the URL carries', () => {
@@ -245,23 +238,20 @@ describe('the coach assessment calls page', () => {
     expect(listedNames()).toEqual(['Elena Marin']);
   });
 
-  it('opens on the journey step and the date range the URL carries', () => {
+  it('opens on the journey step and time window the URL carries', () => {
     // arrange
-    const urlQuery =
-      '?when=custom&from=2026-09-20&to=2026-09-22&status=payment-link-sent';
+    const urlQuery = '?when=past&status=payment-link-sent';
 
     // act
     renderPage({ urlQuery });
 
     // assert
-    expect(whenTab('Custom')).toHaveAttribute('aria-selected', 'true');
-    expect(screen.getByLabelText('From')).toHaveValue('2026-09-20');
-    expect(screen.getByLabelText('To')).toHaveValue('2026-09-22');
+    expect(whenTab('Past')).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('combobox', { name: 'Status' })).toHaveTextContent(
+      'Payment link sent',
+    );
     expect(
-      screen.getByRole('button', { name: 'Payment link sent 0' }),
-    ).toHaveAttribute('aria-pressed', 'true');
-    expect(
-      screen.getByText('No calls with a payment link sent between 20 and 22 September.'),
+      screen.getByText('No past calls match the Payment link sent status.'),
     ).toBeInTheDocument();
   });
 
@@ -271,7 +261,8 @@ describe('the coach assessment calls page', () => {
 
     // act
     await user.click(whenTab('Upcoming'));
-    await user.click(screen.getByRole('button', { name: 'Invited 0' }));
+    await user.click(screen.getByRole('combobox', { name: 'Status' }));
+    await user.click(await screen.findByRole('option', { name: 'Invited 0' }));
 
     // assert
     expect(screen.getByTestId('location-probe')).toHaveTextContent(

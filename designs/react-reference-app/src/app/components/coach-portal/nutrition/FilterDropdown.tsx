@@ -19,7 +19,7 @@ export function FilterDropdown({ label, options, selected, onToggle }: FilterDro
         <Button variant="outline" size="sm" className="gap-1.5">
           {label}
           {selected.length > 0 && (
-            <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-soft px-1 text-[10px] font-semibold text-brand">
+            <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary-soft px-1 text-[10px] font-semibold text-primary">
               {selected.length}
             </span>
           )}

@@ -1,18 +1,56 @@
 import { useState } from 'react';
-import { useTraining, PlanTemplate, PlanInstance } from '../../context/TrainingContext';
-import { Plus, Search, CalendarDays, Activity, PlayCircle, Users, Pencil, UserPlus, Check, FileText, Trash2, AlertTriangle, Target, ChevronDown, Copy, Clock, MoreVertical, Eye, User } from 'lucide-react';
+import {
+  useTraining,
+  PlanTemplate,
+  PlanInstance,
+} from '../../context/TrainingContext';
+import {
+  Plus,
+  Search,
+  CalendarDays,
+  Activity,
+  PlayCircle,
+  Users,
+  Pencil,
+  UserPlus,
+  Check,
+  FileText,
+  Trash2,
+  AlertTriangle,
+  Target,
+  ChevronDown,
+  Copy,
+  Clock,
+  MoreVertical,
+  Eye,
+  User,
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
-  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter,
-  AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogAction
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogCancel,
+  AlertDialogAction,
 } from '../../components/ui/alert-dialog';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { ExerciseModal } from '../../components/coach-portal/ExerciseModal';
 import { ExerciseFilters } from '../../components/coach-portal/ExerciseFilters';
-import { matchesExerciseFilters, type ExerciseFilter } from '../../utils/exerciseFilters';
+import {
+  matchesExerciseFilters,
+  type ExerciseFilter,
+} from '../../utils/exerciseFilters';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router';
-import { Popover, PopoverTrigger, PopoverContent } from '../../components/ui/popover';
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from '../../components/ui/popover';
+import { Button } from '../../components/ui/button';
 
 const MOCK_CLIENTS = [
   { id: 'client-1', name: 'Jane Doe', avatar: 'JD' },
@@ -24,16 +62,22 @@ const MOCK_CLIENTS = [
 
 // ── Plan Instance Card ──────────────────────────────────────────
 
-function PlanInstanceCard({ instance, onClick, onGoToClient, onDelete }: {
+function PlanInstanceCard({
+  instance,
+  onClick,
+  onGoToClient,
+  onDelete,
+}: {
   instance: PlanInstance;
   onClick: () => void;
   onGoToClient: () => void;
   onDelete: () => void;
 }) {
   const { goals } = useTraining();
-  const goal = goals.find(g => g.id === instance.goalId);
-  const client = MOCK_CLIENTS.find(c => c.id === instance.clientId);
-  const trainingDays = instance.weeks[0]?.days.filter(d => d.type !== 'Rest').length || 0;
+  const goal = goals.find((g) => g.id === instance.goalId);
+  const client = MOCK_CLIENTS.find((c) => c.id === instance.clientId);
+  const trainingDays =
+    instance.weeks[0]?.days.filter((d) => d.type !== 'Rest').length || 0;
   const isCompleted = instance.status === 'completed';
 
   const weekCount = instance.weeks.length;
@@ -53,25 +97,35 @@ function PlanInstanceCard({ instance, onClick, onGoToClient, onDelete }: {
       {isCompleted && (
         <div className="absolute -top-2.5 left-4 z-10 inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-success-surface border border-success/20 rounded-full">
           <Check size={11} className="text-success" />
-          <span className="text-xs font-bold text-success uppercase tracking-wider">Completed</span>
+          <span className="text-xs font-bold text-success uppercase tracking-wider">
+            Completed
+          </span>
         </div>
       )}
 
       <div className="p-6 flex-1 flex flex-col">
         {/* Client info + 3-dot menu */}
         <div className="flex items-center gap-3 mb-4">
-          <div className={`w-10 h-10 shrink-0 rounded-full text-sm font-bold flex items-center justify-center ring-2 ring-card ${
-            isCompleted
-              ? 'bg-muted text-muted-foreground'
-              : 'bg-brand text-brand-foreground shadow-sm'
-          }`}>
+          <div
+            className={`w-10 h-10 shrink-0 rounded-full text-sm font-bold flex items-center justify-center ring-2 ring-card ${
+              isCompleted
+                ? 'bg-muted text-muted-foreground'
+                : 'bg-brand text-brand-foreground shadow-sm'
+            }`}
+          >
             {client?.avatar || '?'}
           </div>
           <div className="flex-1 min-w-0">
-            <p title={client?.name || 'Unknown'} className={`font-semibold text-sm truncate ${isCompleted ? 'text-muted-foreground' : 'text-foreground'}`}>
+            <p
+              title={client?.name || 'Unknown'}
+              className={`font-semibold text-sm truncate ${isCompleted ? 'text-muted-foreground' : 'text-foreground'}`}
+            >
               {client?.name || 'Unknown'}
             </p>
-            <p title={instance.name} className="text-xs truncate text-muted-foreground">
+            <p
+              title={instance.name}
+              className="text-xs truncate text-muted-foreground"
+            >
               {instance.name}
             </p>
           </div>
@@ -81,29 +135,46 @@ function PlanInstanceCard({ instance, onClick, onGoToClient, onDelete }: {
             </span>
             <Popover>
               <PopoverTrigger asChild>
-                <button
+                <Button
                   onClick={(e) => e.stopPropagation()}
-                  className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-compact transition-colors"
+                  variant="ghost"
+                  size="icon"
+                  className="size-8"
                 >
                   <MoreVertical size={16} />
-                </button>
+                </Button>
               </PopoverTrigger>
-              <PopoverContent align="end" className="w-48 p-1.5 bg-popover border border-border rounded-control shadow-xl z-50">
-                <button
-                  onClick={(e) => { e.stopPropagation(); onGoToClient(); }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-compact text-left hover:bg-muted transition-colors"
+              <PopoverContent
+                align="end"
+                className="w-48 p-1.5 bg-popover border border-border rounded-control shadow-xl z-50"
+              >
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onGoToClient();
+                  }}
+                  variant="ghost"
+                  className="w-full justify-start gap-2.5 px-3"
                 >
                   <User size={15} className="text-muted-foreground" />
-                  <span className="text-sm font-medium text-foreground">Go to Client</span>
-                </button>
+                  <span className="text-sm font-medium text-foreground">
+                    Go to Client
+                  </span>
+                </Button>
                 <div className="my-1 border-t border-border" />
-                <button
-                  onClick={(e) => { e.stopPropagation(); onDelete(); }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-compact text-left hover:bg-destructive/10 transition-colors"
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete();
+                  }}
+                  variant="ghost"
+                  className="w-full justify-start gap-2.5 px-3 hover:bg-destructive/10"
                 >
                   <Trash2 size={15} className="text-destructive" />
-                  <span className="text-sm font-medium text-destructive">Delete Plan</span>
-                </button>
+                  <span className="text-sm font-medium text-destructive">
+                    Delete Plan
+                  </span>
+                </Button>
               </PopoverContent>
             </Popover>
           </div>
@@ -111,11 +182,13 @@ function PlanInstanceCard({ instance, onClick, onGoToClient, onDelete }: {
 
         {/* Goal badge */}
         {goal && (
-          <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-compact text-caption font-semibold mb-3 self-start ${
-            isCompleted
-              ? 'bg-muted text-muted-foreground'
-              : 'bg-brand-secondary-soft text-brand-secondary'
-          }`}>
+          <div
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-compact text-caption font-semibold mb-3 self-start ${
+              isCompleted
+                ? 'bg-muted text-muted-foreground'
+                : 'bg-brand-secondary-soft text-brand-secondary'
+            }`}
+          >
             <Target size={12} />
             {goal.type}
           </div>
@@ -129,10 +202,14 @@ function PlanInstanceCard({ instance, onClick, onGoToClient, onDelete }: {
                 ? `${weekCount} ${weekCount === 1 ? 'week' : 'weeks'}`
                 : `Week ${instance.currentWeekNumber} of ${weekCount}`}
             </span>
-            {instance.weeks.some(w => w.isDeload) && (
-              <span className={`text-xs font-bold uppercase tracking-wider whitespace-nowrap px-2 py-0.5 rounded-full ${
-                isCompleted ? 'text-muted-foreground bg-muted' : 'text-blue-600 bg-blue-50'
-              }`}>
+            {instance.weeks.some((w) => w.isDeload) && (
+              <span
+                className={`text-xs font-bold uppercase tracking-wider whitespace-nowrap px-2 py-0.5 rounded-full ${
+                  isCompleted
+                    ? 'text-muted-foreground bg-muted'
+                    : 'text-blue-600 bg-blue-50'
+                }`}
+              >
                 Has Deload
               </span>
             )}
@@ -167,13 +244,19 @@ function PlanInstanceCard({ instance, onClick, onGoToClient, onDelete }: {
 
 // ── Template Card ───────────────────────────────────────────────
 
-function TemplateCard({ template, onEdit, onStartPlan, onDelete }: {
+function TemplateCard({
+  template,
+  onEdit,
+  onStartPlan,
+  onDelete,
+}: {
   template: PlanTemplate;
   onEdit: () => void;
   onStartPlan: () => void;
   onDelete: (id: string, name: string) => void;
 }) {
-  const trainingDays = template.weeks[0]?.days.filter(d => d.type !== 'Rest').length || 0;
+  const trainingDays =
+    template.weeks[0]?.days.filter((d) => d.type !== 'Rest').length || 0;
 
   return (
     <motion.div
@@ -190,27 +273,39 @@ function TemplateCard({ template, onEdit, onStartPlan, onDelete }: {
             <span className="text-xs font-medium bg-neutral-100 px-2.5 py-1 rounded-full text-text-secondary">
               {trainingDays} days/week
             </span>
-            <button
+            <Button
               onClick={() => onDelete(template.id, template.name)}
-              className="p-1.5 rounded-compact text-neutral-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+              variant="ghost"
+              size="icon"
+              className="size-8 text-neutral-300 hover:bg-red-50 hover:text-red-500"
               title="Delete template"
             >
               <Trash2 size={15} />
-            </button>
+            </Button>
           </div>
         </div>
 
-        <h3 className="font-semibold text-lg text-text-primary mb-1 leading-snug">{template.name}</h3>
+        <h3 className="font-semibold text-lg text-text-primary mb-1 leading-snug">
+          {template.name}
+        </h3>
         {template.description && (
-          <p className="text-sm text-text-secondary mb-2 line-clamp-2">{template.description}</p>
+          <p className="text-sm text-text-secondary mb-2 line-clamp-2">
+            {template.description}
+          </p>
         )}
-        <p className="text-sm text-text-secondary mb-3">{template.weeks.length} {template.weeks.length === 1 ? 'Week' : 'Weeks'}</p>
+        <p className="text-sm text-text-secondary mb-3">
+          {template.weeks.length}{' '}
+          {template.weeks.length === 1 ? 'Week' : 'Weeks'}
+        </p>
 
         {/* Tags */}
         {template.tags && template.tags.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-4">
-            {template.tags.map(tag => (
-              <span key={tag} className="text-[10px] font-medium bg-brand-secondary/10 text-brand-secondary px-2 py-0.5 rounded-full">
+            {template.tags.map((tag) => (
+              <span
+                key={tag}
+                className="text-[10px] font-medium bg-brand-secondary/10 text-brand-secondary px-2 py-0.5 rounded-full"
+              >
                 {tag}
               </span>
             ))}
@@ -218,20 +313,14 @@ function TemplateCard({ template, onEdit, onStartPlan, onDelete }: {
         )}
 
         <div className="mt-auto pt-4 border-t border-neutral-100 flex items-center gap-2">
-          <button
-            onClick={onStartPlan}
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold text-text-primary bg-neutral-50 hover:bg-neutral-100 rounded-control transition-colors border border-neutral-200"
-          >
+          <Button onClick={onStartPlan} variant="outline" className="flex-1">
             <Copy size={16} />
             Start Plan
-          </button>
-          <button
-            onClick={onEdit}
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-semibold text-white bg-text-primary hover:bg-neutral-800 rounded-control transition-colors"
-          >
+          </Button>
+          <Button onClick={onEdit} variant="default" className="flex-1">
             <Pencil size={16} />
             Edit
-          </button>
+          </Button>
         </div>
       </div>
     </motion.div>
@@ -241,28 +330,51 @@ function TemplateCard({ template, onEdit, onStartPlan, onDelete }: {
 // ── Main Hub ────────────────────────────────────────────────────
 
 export function TrainingHub() {
-  const { exercises, planTemplates, planInstances, deleteTemplate, createPlanInstance, goals } = useTraining();
+  const {
+    exercises,
+    planTemplates,
+    planInstances,
+    deleteTemplate,
+    createPlanInstance,
+    goals,
+  } = useTraining();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'instances' | 'templates' | 'exercises'>('instances');
+  const [activeTab, setActiveTab] = useState<
+    'instances' | 'templates' | 'exercises'
+  >('instances');
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'completed'>('all');
+  const [statusFilter, setStatusFilter] = useState<
+    'all' | 'active' | 'completed'
+  >('all');
   const [activeFilters, setActiveFilters] = useState<ExerciseFilter[]>([]);
 
   const [isExerciseModalOpen, setIsExerciseModalOpen] = useState(false);
-  const [editingExerciseId, setEditingExerciseId] = useState<string | null>(null);
+  const [editingExerciseId, setEditingExerciseId] = useState<string | null>(
+    null,
+  );
 
   // Delete confirmation
-  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string; type: 'template' | 'plan' } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{
+    id: string;
+    name: string;
+    type: 'template' | 'plan';
+  } | null>(null);
 
   // Start plan from template - client selection
-  const [startPlanTemplateId, setStartPlanTemplateId] = useState<string | null>(null);
+  const [startPlanTemplateId, setStartPlanTemplateId] = useState<string | null>(
+    null,
+  );
   const [clientSearch, setClientSearch] = useState('');
 
   // New plan - client selection (no template required)
   const [showNewPlanClientPicker, setShowNewPlanClientPicker] = useState(false);
   const [newPlanClientSearch, setNewPlanClientSearch] = useState('');
 
-  const handleDeleteRequest = (id: string, name: string, type: 'template' | 'plan' = 'template') => setDeleteTarget({ id, name, type });
+  const handleDeleteRequest = (
+    id: string,
+    name: string,
+    type: 'template' | 'plan' = 'template',
+  ) => setDeleteTarget({ id, name, type });
 
   const handleDeleteConfirm = () => {
     if (!deleteTarget) return;
@@ -276,31 +388,43 @@ export function TrainingHub() {
     setDeleteTarget(null);
   };
 
-  const handleStartPlanFromTemplate = (clientId: string, clientName: string) => {
+  const handleStartPlanFromTemplate = (
+    clientId: string,
+    clientName: string,
+  ) => {
     if (!startPlanTemplateId) return;
-    const template = planTemplates.find(t => t.id === startPlanTemplateId);
+    const template = planTemplates.find((t) => t.id === startPlanTemplateId);
     if (!template) return;
 
     // Find or create an active goal for this client
-    const activeGoal = goals.find(g => g.clientId === clientId && g.status === 'active');
+    const activeGoal = goals.find(
+      (g) => g.clientId === clientId && g.status === 'active',
+    );
     const goalId = activeGoal?.id || 'goal-placeholder';
 
-    const instance = createPlanInstance(clientId, goalId, `${template.name} - ${clientName}`, startPlanTemplateId);
+    const instance = createPlanInstance(
+      clientId,
+      goalId,
+      `${template.name} - ${clientName}`,
+      startPlanTemplateId,
+    );
     toast.success(`Plan started for ${clientName}`);
     setStartPlanTemplateId(null);
     setClientSearch('');
     navigate(`/coach/training/builder/${clientId}`);
   };
 
-  const filteredInstances = planInstances.filter(p => {
+  const filteredInstances = planInstances.filter((p) => {
     if (statusFilter === 'active' && p.status !== 'active') return false;
     if (statusFilter === 'completed' && p.status !== 'completed') return false;
     return true;
   });
 
   const toggleFilter = (filter: ExerciseFilter) =>
-    setActiveFilters(prev =>
-      prev.includes(filter) ? prev.filter(active => active !== filter) : [...prev, filter]
+    setActiveFilters((prev) =>
+      prev.includes(filter)
+        ? prev.filter((active) => active !== filter)
+        : [...prev, filter],
     );
 
   const clearFilters = () => {
@@ -308,12 +432,12 @@ export function TrainingHub() {
     setSearchQuery('');
   };
 
-  const filteredExercises = exercises.filter(exercise =>
-    matchesExerciseFilters({ exercise, searchQuery, activeFilters })
+  const filteredExercises = exercises.filter((exercise) =>
+    matchesExerciseFilters({ exercise, searchQuery, activeFilters }),
   );
 
-  const filteredClients = MOCK_CLIENTS.filter(c =>
-    c.name.toLowerCase().includes(clientSearch.toLowerCase())
+  const filteredClients = MOCK_CLIENTS.filter((c) =>
+    c.name.toLowerCase().includes(clientSearch.toLowerCase()),
   );
 
   const handleCreate = () => {
@@ -332,21 +456,28 @@ export function TrainingHub() {
         subtitle="Manage client plans, templates, and exercises."
         actions={
           activeTab === 'instances' ? (
-            <button
-              onClick={() => { setNewPlanClientSearch(''); setShowNewPlanClientPicker(true); }}
-              className="px-5 py-2.5 bg-brand text-white rounded-control font-semibold hover:bg-brand-hover transition-colors flex items-center gap-2 shadow-md"
+            <Button
+              onClick={() => {
+                setNewPlanClientSearch('');
+                setShowNewPlanClientPicker(true);
+              }}
+              variant="default"
+              size="lg"
+              className="shadow-md"
             >
               <Plus size={20} />
               New Client Plan
-            </button>
+            </Button>
           ) : (
-            <button
+            <Button
               onClick={handleCreate}
-              className="px-5 py-2.5 bg-brand text-white rounded-control font-semibold hover:bg-brand-hover transition-colors flex items-center gap-2 shadow-md"
+              variant="default"
+              size="lg"
+              className="shadow-md"
             >
               <Plus size={20} />
               {activeTab === 'exercises' ? 'New Exercise' : 'New Template'}
-            </button>
+            </Button>
           )
         }
       />
@@ -354,22 +485,36 @@ export function TrainingHub() {
       {/* Tabs */}
       <div className="flex items-center gap-6 px-3 border-b border-neutral-200 rounded-field mb-6">
         {[
-          { key: 'instances' as const, label: 'Client Plans', count: planInstances.filter(p => p.status === 'active').length },
-          { key: 'templates' as const, label: 'Templates', count: planTemplates.length },
+          {
+            key: 'instances' as const,
+            label: 'Client Plans',
+            count: planInstances.filter((p) => p.status === 'active').length,
+          },
+          {
+            key: 'templates' as const,
+            label: 'Templates',
+            count: planTemplates.length,
+          },
           { key: 'exercises' as const, label: 'Exercise Library' },
-        ].map(tab => (
+        ].map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
             className={`min-h-11 px-2 font-medium text-sm transition-colors border-b-2 flex items-center gap-2 ${
-              activeTab === tab.key ? 'border-brand text-brand' : 'border-transparent text-text-secondary hover:text-text-primary'
+              activeTab === tab.key
+                ? 'border-primary text-primary'
+                : 'border-transparent text-text-secondary hover:text-text-primary'
             }`}
           >
             {tab.label}
             {tab.count !== undefined && (
-              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                activeTab === tab.key ? 'bg-brand/5 text-brand' : 'bg-neutral-100 text-text-secondary'
-              }`}>
+              <span
+                className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                  activeTab === tab.key
+                    ? 'bg-primary/5 text-primary'
+                    : 'bg-neutral-100 text-text-secondary'
+                }`}
+              >
                 {tab.count}
               </span>
             )}
@@ -381,7 +526,7 @@ export function TrainingHub() {
       {activeTab === 'instances' && (
         <>
           <div className="flex items-center gap-2 mb-6">
-            {(['all', 'active', 'completed'] as const).map(f => (
+            {(['all', 'active', 'completed'] as const).map((f) => (
               <button
                 key={f}
                 onClick={() => setStatusFilter(f)}
@@ -398,20 +543,29 @@ export function TrainingHub() {
 
           {filteredInstances.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6">
-              {filteredInstances.map(instance => (
+              {filteredInstances.map((instance) => (
                 <PlanInstanceCard
                   key={instance.id}
                   instance={instance}
-                  onClick={() => navigate(`/coach/training/builder/${instance.clientId}`)}
-                  onGoToClient={() => navigate(`/coach/clients/${instance.clientId}`)}
-                  onDelete={() => handleDeleteRequest(instance.id, instance.name, 'plan')}
+                  onClick={() =>
+                    navigate(`/coach/training/builder/${instance.clientId}`)
+                  }
+                  onGoToClient={() =>
+                    navigate(`/coach/clients/${instance.clientId}`)
+                  }
+                  onDelete={() =>
+                    handleDeleteRequest(instance.id, instance.name, 'plan')
+                  }
                 />
               ))}
             </div>
           ) : (
             <div className="text-center py-16 text-text-secondary">
               <Users size={32} className="mx-auto mb-3 text-neutral-300" />
-              <p className="text-sm">No client plans yet. Start one from a template or create from scratch.</p>
+              <p className="text-sm">
+                No client plans yet. Start one from a template or create from
+                scratch.
+              </p>
             </div>
           )}
         </>
@@ -420,11 +574,13 @@ export function TrainingHub() {
       {/* ── Templates tab ─── */}
       {activeTab === 'templates' && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {planTemplates.map(template => (
+          {planTemplates.map((template) => (
             <TemplateCard
               key={template.id}
               template={template}
-              onEdit={() => navigate(`/coach/training/template-builder/${template.id}`)}
+              onEdit={() =>
+                navigate(`/coach/training/template-builder/${template.id}`)
+              }
               onStartPlan={() => setStartPlanTemplateId(template.id)}
               onDelete={handleDeleteRequest}
             />
@@ -432,7 +588,9 @@ export function TrainingHub() {
           {planTemplates.length === 0 && (
             <div className="col-span-full text-center py-16 text-text-secondary">
               <FileText size={32} className="mx-auto mb-3 text-neutral-300" />
-              <p className="text-sm">No templates yet. Create one to get started.</p>
+              <p className="text-sm">
+                No templates yet. Create one to get started.
+              </p>
             </div>
           )}
         </div>
@@ -442,12 +600,15 @@ export function TrainingHub() {
       {activeTab === 'exercises' && (
         <div>
           <div className="mb-4 relative max-w-md">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary" size={20} />
+            <Search
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary"
+              size={20}
+            />
             <input
               type="text"
               placeholder="Search exercises by name or muscle..."
               value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-11 pr-4 py-3 bg-white border border-neutral-200 rounded-control focus:outline-none focus:ring-2 focus:ring-brand/20 transition-all text-sm"
             />
           </div>
@@ -464,28 +625,48 @@ export function TrainingHub() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-neutral-50 px-3 border-b border-neutral-200 rounded-field">
-                  <th className="p-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Exercise</th>
-                  <th className="p-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Target Muscles</th>
-                  <th className="p-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Difficulty</th>
-                  <th className="p-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">Video</th>
-                  <th className="p-4 text-xs font-semibold text-text-secondary uppercase tracking-wider text-right">Actions</th>
+                  <th className="p-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                    Exercise
+                  </th>
+                  <th className="p-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                    Target Muscles
+                  </th>
+                  <th className="p-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                    Difficulty
+                  </th>
+                  <th className="p-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                    Video
+                  </th>
+                  <th className="p-4 text-xs font-semibold text-text-secondary uppercase tracking-wider text-right">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                {filteredExercises.map(exercise => (
-                  <tr key={exercise.id} className="px-3 border-b border-neutral-100 rounded-field hover:bg-neutral-50/50 transition-colors">
+                {filteredExercises.map((exercise) => (
+                  <tr
+                    key={exercise.id}
+                    className="px-3 border-b border-neutral-100 rounded-field hover:bg-neutral-50/50 transition-colors"
+                  >
                     <td className="p-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-neutral-100 rounded-compact flex items-center justify-center text-text-secondary shrink-0">
                           <Activity size={20} />
                         </div>
                         <div>
-                          <p className="font-semibold text-sm text-text-primary">{exercise.name}</p>
-                          <p className="text-xs text-text-secondary truncate max-w-[200px]">{exercise.equipment.join(', ')}</p>
+                          <p className="font-semibold text-sm text-text-primary">
+                            {exercise.name}
+                          </p>
+                          <p className="text-xs text-text-secondary truncate max-w-[200px]">
+                            {exercise.equipment.join(', ')}
+                          </p>
                           {exercise.tags && exercise.tags.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-1">
-                              {exercise.tags.map(tag => (
-                                <span key={tag} className="text-[10px] font-medium bg-brand-soft text-brand px-1.5 py-0.5 rounded">
+                              {exercise.tags.map((tag) => (
+                                <span
+                                  key={tag}
+                                  className="text-[10px] font-medium bg-brand-soft text-brand px-1.5 py-0.5 rounded"
+                                >
                                   {tag}
                                 </span>
                               ))}
@@ -496,19 +677,26 @@ export function TrainingHub() {
                     </td>
                     <td className="p-4">
                       <div className="flex flex-wrap gap-1">
-                        {exercise.primaryMuscles.map(m => (
-                          <span key={m} className="text-[10px] font-medium bg-brand-secondary/10 text-brand-secondary px-2 py-0.5 rounded-full">
+                        {exercise.primaryMuscles.map((m) => (
+                          <span
+                            key={m}
+                            className="text-[10px] font-medium bg-brand-secondary/10 text-brand-secondary px-2 py-0.5 rounded-full"
+                          >
                             {m}
                           </span>
                         ))}
                       </div>
                     </td>
                     <td className="p-4">
-                      <span className={`text-[10px] font-bold uppercase tracking-[0.08em] px-2 py-1 rounded-tile ${
-                        exercise.difficulty === 'Beginner' ? 'bg-green-100 text-green-700' :
-                        exercise.difficulty === 'Intermediate' ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-red-100 text-red-700'
-                      }`}>
+                      <span
+                        className={`text-[10px] font-bold uppercase tracking-[0.08em] px-2 py-1 rounded-tile ${
+                          exercise.difficulty === 'Beginner'
+                            ? 'bg-green-100 text-green-700'
+                            : exercise.difficulty === 'Intermediate'
+                              ? 'bg-yellow-100 text-yellow-700'
+                              : 'bg-red-100 text-red-700'
+                        }`}
+                      >
                         {exercise.difficulty}
                       </span>
                     </td>
@@ -518,7 +706,9 @@ export function TrainingHub() {
                           <PlayCircle size={16} /> Attached
                         </div>
                       ) : (
-                        <span className="text-xs text-text-secondary">None</span>
+                        <span className="text-xs text-text-secondary">
+                          None
+                        </span>
                       )}
                     </td>
                     <td className="p-4 text-right">
@@ -527,7 +717,7 @@ export function TrainingHub() {
                           setEditingExerciseId(exercise.id);
                           setIsExerciseModalOpen(true);
                         }}
-                        className="text-sm font-semibold text-brand-secondary hover:text-brand-secondary-hover"
+                        className="text-sm font-semibold text-primary hover:text-primary-hover"
                       >
                         Edit
                       </button>
@@ -538,12 +728,14 @@ export function TrainingHub() {
             </table>
             {filteredExercises.length === 0 && (
               <div className="p-8 text-center">
-                <p className="text-text-secondary text-sm">No exercises match your search and filters.</p>
+                <p className="text-text-secondary text-sm">
+                  No exercises match your search and filters.
+                </p>
                 {(activeFilters.length > 0 || Boolean(searchQuery)) && (
                   <button
                     type="button"
                     onClick={clearFilters}
-                    className="mt-2 min-h-6 px-2 text-xs font-semibold text-brand hover:text-brand-hover"
+                    className="mt-2 min-h-6 px-2 text-xs font-semibold text-primary hover:text-primary-hover"
                   >
                     Clear search and filters
                   </button>
@@ -561,7 +753,10 @@ export function TrainingHub() {
       />
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+      >
         <AlertDialogContent className="sm:max-w-md rounded-card">
           <AlertDialogHeader>
             <div className="mx-auto mb-2 w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
@@ -571,7 +766,10 @@ export function TrainingHub() {
               Delete this {deleteTarget?.type === 'plan' ? 'plan' : 'template'}?
             </AlertDialogTitle>
             <AlertDialogDescription className="text-center">
-              <span className="font-semibold text-text-primary">"{deleteTarget?.name}"</span> will be permanently removed. This action cannot be undone.
+              <span className="font-semibold text-text-primary">
+                "{deleteTarget?.name}"
+              </span>{' '}
+              will be permanently removed. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="sm:flex-row gap-3 mt-2">
@@ -589,37 +787,50 @@ export function TrainingHub() {
       </AlertDialog>
 
       {/* Start Plan from Template - Client Selection */}
-      <AlertDialog open={!!startPlanTemplateId} onOpenChange={(open) => !open && setStartPlanTemplateId(null)}>
+      <AlertDialog
+        open={!!startPlanTemplateId}
+        onOpenChange={(open) => !open && setStartPlanTemplateId(null)}
+      >
         <AlertDialogContent className="sm:max-w-md rounded-card">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-text-primary">Start plan for client</AlertDialogTitle>
+            <AlertDialogTitle className="text-text-primary">
+              Start plan for client
+            </AlertDialogTitle>
             <AlertDialogDescription>
               Choose a client to create a personalized plan from this template.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="py-2">
             <div className="relative mb-3">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={14} />
+              <Search
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary"
+                size={14}
+              />
               <input
                 type="text"
                 placeholder="Search clients..."
                 value={clientSearch}
-                onChange={e => setClientSearch(e.target.value)}
+                onChange={(e) => setClientSearch(e.target.value)}
                 className="w-full pl-9 pr-3 py-2.5 bg-neutral-50 border border-neutral-200 rounded-control text-sm focus:outline-none"
               />
             </div>
             <div className="max-h-48 overflow-y-auto space-y-1">
-              {filteredClients.map(client => (
-                <button
+              {filteredClients.map((client) => (
+                <Button
                   key={client.id}
-                  onClick={() => handleStartPlanFromTemplate(client.id, client.name)}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-control text-left hover:bg-neutral-50 transition-colors"
+                  onClick={() =>
+                    handleStartPlanFromTemplate(client.id, client.name)
+                  }
+                  variant="ghost"
+                  className="w-full justify-start gap-3 px-3"
                 >
                   <div className="w-8 h-8 rounded-full bg-neutral-100 text-text-secondary flex items-center justify-center text-xs font-bold shrink-0">
                     {client.avatar}
                   </div>
-                  <span className="text-sm font-medium text-text-primary">{client.name}</span>
-                </button>
+                  <span className="text-sm font-medium text-text-primary">
+                    {client.name}
+                  </span>
+                </Button>
               ))}
             </div>
           </div>
@@ -632,48 +843,66 @@ export function TrainingHub() {
       </AlertDialog>
 
       {/* New Client Plan - Client Selection (no template required) */}
-      <AlertDialog open={showNewPlanClientPicker} onOpenChange={(open) => !open && setShowNewPlanClientPicker(false)}>
+      <AlertDialog
+        open={showNewPlanClientPicker}
+        onOpenChange={(open) => !open && setShowNewPlanClientPicker(false)}
+      >
         <AlertDialogContent className="sm:max-w-md rounded-card">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-text-primary">Create plan for client</AlertDialogTitle>
+            <AlertDialogTitle className="text-text-primary">
+              Create plan for client
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Choose a client to start building a new plan. You can optionally use a template inside the builder.
+              Choose a client to start building a new plan. You can optionally
+              use a template inside the builder.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="py-2">
             <div className="relative mb-3">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={14} />
+              <Search
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary"
+                size={14}
+              />
               <input
                 type="text"
                 placeholder="Search clients..."
                 value={newPlanClientSearch}
-                onChange={e => setNewPlanClientSearch(e.target.value)}
+                onChange={(e) => setNewPlanClientSearch(e.target.value)}
                 className="w-full pl-9 pr-3 py-2.5 bg-neutral-50 border border-neutral-200 rounded-control text-sm focus:outline-none"
               />
             </div>
             <div className="max-h-48 overflow-y-auto space-y-1">
-              {MOCK_CLIENTS.filter(c => c.name.toLowerCase().includes(newPlanClientSearch.toLowerCase())).map(client => (
-                <button
+              {MOCK_CLIENTS.filter((c) =>
+                c.name
+                  .toLowerCase()
+                  .includes(newPlanClientSearch.toLowerCase()),
+              ).map((client) => (
+                <Button
                   key={client.id}
                   onClick={() => {
                     setShowNewPlanClientPicker(false);
                     setNewPlanClientSearch('');
                     navigate(`/coach/training/builder/${client.id}`);
                   }}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-control text-left hover:bg-neutral-50 transition-colors"
+                  variant="ghost"
+                  className="w-full justify-start gap-3 px-3"
                 >
                   <div className="w-8 h-8 rounded-full bg-brand text-white flex items-center justify-center text-xs font-bold shrink-0">
                     {client.avatar}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <span className="text-sm font-medium text-text-primary">{client.name}</span>
-                    {planInstances.some(p => p.clientId === client.id && p.status === 'active') && (
+                    <span className="text-sm font-medium text-text-primary">
+                      {client.name}
+                    </span>
+                    {planInstances.some(
+                      (p) => p.clientId === client.id && p.status === 'active',
+                    ) && (
                       <span className="ml-2 text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full">
                         Has active plan
                       </span>
                     )}
                   </div>
-                </button>
+                </Button>
               ))}
             </div>
           </div>

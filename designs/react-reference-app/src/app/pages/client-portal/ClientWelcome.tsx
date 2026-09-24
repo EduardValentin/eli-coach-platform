@@ -1,14 +1,14 @@
 import { useNavigate } from 'react-router';
-import { Button, cn } from '../../components/ThemeButton';
+import { Button } from '../../components/ui/button';
 import { cardVariants } from '../../components/ui/card';
+import { cn } from '../../components/ui/utils';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
 import type { JourneySex } from '../../domain/journey';
 
 const FORM_INTRO: Record<JourneySex, string> = {
   female:
     'But first, I need to get to know you. Your next step is a short form in five parts — it takes about 15 minutes — covering your goals, your training experience, your health, your cycle, your nutrition and your measurements.',
-  male:
-    'But first, I need to get to know you. Your next step is a short form in four parts — it takes about 15 minutes — covering your goals, your training experience, your health, your nutrition and your measurements.',
+  male: 'But first, I need to get to know you. Your next step is a short form in four parts — it takes about 15 minutes — covering your goals, your training experience, your health, your nutrition and your measurements.',
 };
 
 const OPENING = "I'm really glad you're here.";
@@ -46,7 +46,9 @@ export function ClientWelcome() {
           Welcome to Evoa Fitness, {demoJourney.identity.firstName}
         </h1>
 
-        <p className="mt-5 text-lg leading-relaxed text-text-primary">{OPENING}</p>
+        <p className="mt-5 text-lg leading-relaxed text-text-primary">
+          {OPENING}
+        </p>
 
         <div className="mt-4 grid gap-4 text-base leading-relaxed text-text-secondary">
           <p>{TOGETHER}</p>
@@ -56,11 +58,10 @@ export function ClientWelcome() {
         </div>
 
         <Button
-          className="mt-10"
-          elevation="raised"
+          className="mt-10 w-full sm:w-auto"
           onClick={start}
+          variant="default"
           size="lg"
-          width="full-below-sm"
         >
           Let's get started
         </Button>

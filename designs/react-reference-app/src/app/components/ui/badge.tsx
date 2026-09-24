@@ -23,6 +23,8 @@ const badgeVariants = cva(
         "brand-secondary":
           "border-brand-secondary/20 bg-brand-secondary-surface text-brand-secondary",
         muted: "border-border text-muted-foreground",
+        count:
+          "rounded-full border-transparent bg-current/12 px-1.5 min-w-5 justify-center text-[11px] font-medium tabular-nums opacity-80",
       },
     },
     defaultVariants: {

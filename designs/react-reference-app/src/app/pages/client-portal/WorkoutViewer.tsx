@@ -2,7 +2,19 @@ import { useMemo, useState, useCallback, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { useTraining } from '../../context/TrainingContext';
 import type { Exercise } from '../../context/TrainingContext';
-import { ArrowLeft, ArrowLeftRight, Activity, Trophy, Dumbbell, Clock, Flame, ArrowRight, AlertTriangle, MoreVertical, Flag } from 'lucide-react';
+import {
+  ArrowLeft,
+  ArrowLeftRight,
+  Activity,
+  Trophy,
+  Dumbbell,
+  Clock,
+  Flame,
+  ArrowRight,
+  AlertTriangle,
+  MoreVertical,
+  Flag,
+} from 'lucide-react';
 import { motion } from 'motion/react';
 import { ActiveExerciseCard } from '../../components/workout/ActiveExerciseCard';
 import { ActiveSupersetGroup } from '../../components/workout/ActiveSupersetGroup';
@@ -10,29 +22,50 @@ import { RestTimer } from '../../components/workout/RestTimer';
 import { VideoSheet } from '../../components/workout/VideoSheet';
 import { SwapSheet } from '../../components/workout/SwapSheet';
 import {
-  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter,
-  AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogAction
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogCancel,
+  AlertDialogAction,
 } from '../../components/ui/alert-dialog';
 import { BottomSheet } from '../../components/ui/bottom-sheet';
+import { Button } from '../../components/ui/button';
 import { RirBadge } from '../../components/workout/RirBadge';
 import { useUnitPreferences } from '../../context/UnitPreferencesContext';
 import { displayWeightValue, weightUnitLabel } from '../../utils/units';
 
-const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const DAY_NAMES = [
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
+];
 
 export function WorkoutViewer() {
   const { planId, weekIdx: weekIdxParam, dayIdx: dayIdxParam } = useParams();
   const navigate = useNavigate();
   const {
-    planInstances, exercises,
-    activeWorkout, startWorkout, logSet, addExtraSet, swapExercise,
-    recordRestTime, completeWorkout
+    planInstances,
+    exercises,
+    activeWorkout,
+    startWorkout,
+    logSet,
+    addExtraSet,
+    swapExercise,
+    recordRestTime,
+    completeWorkout,
   } = useTraining();
 
   const weekIdx = parseInt(weekIdxParam ?? '0', 10);
   const dayIdx = parseInt(dayIdxParam ?? '0', 10);
 
-  const plan = planInstances.find(p => p.id === planId);
+  const plan = planInstances.find((p) => p.id === planId);
   const week = plan?.weeks[weekIdx];
   const day = week?.days[dayIdx];
 
@@ -56,14 +89,20 @@ export function WorkoutViewer() {
   // Group exercises (same logic as before)
   const groupedExercises = useMemo(() => {
     if (!day) return [];
-    const groups: { isSuperset: boolean; id: string; items: typeof day.exercises }[] = [];
+    const groups: {
+      isSuperset: boolean;
+      id: string;
+      items: typeof day.exercises;
+    }[] = [];
     const processedIds = new Set<string>();
-    day.exercises.forEach(pe => {
+    day.exercises.forEach((pe) => {
       if (processedIds.has(pe.id)) return;
       if (pe.supersetId) {
-        const ssItems = day.exercises.filter(e => e.supersetId === pe.supersetId);
+        const ssItems = day.exercises.filter(
+          (e) => e.supersetId === pe.supersetId,
+        );
         groups.push({ isSuperset: true, id: pe.supersetId, items: ssItems });
-        ssItems.forEach(i => processedIds.add(i.id));
+        ssItems.forEach((i) => processedIds.add(i.id));
       } else {
         groups.push({ isSuperset: false, id: pe.id, items: [pe] });
         processedIds.add(pe.id);
@@ -73,32 +112,46 @@ export function WorkoutViewer() {
   }, [day]);
 
   // Progress calculation
-  const totalSets = activeWorkout?.exercises.reduce((t, e) => t + e.sets.length, 0) || 0;
-  const completedSets = activeWorkout?.exercises.reduce((t, e) => t + e.sets.filter(s => s.completed).length, 0) || 0;
+  const totalSets =
+    activeWorkout?.exercises.reduce((t, e) => t + e.sets.length, 0) || 0;
+  const completedSets =
+    activeWorkout?.exercises.reduce(
+      (t, e) => t + e.sets.filter((s) => s.completed).length,
+      0,
+    ) || 0;
   const progressPercent = totalSets > 0 ? (completedSets / totalSets) * 100 : 0;
   const allSetsComplete = completedSets === totalSets && totalSets > 0;
   const isCompleted = activeWorkout?.status === 'completed';
 
   // Handlers
-  const handleSetComplete = useCallback((exerciseLogIndex: number, setNumber: number) => {
-    if (!activeWorkout || !day) return;
-    const pe = day.exercises[exerciseLogIndex];
-    const restSec = pe?.restSeconds || 90;
-    setTimerSeconds(restSec);
-    setTimerExerciseIdx(exerciseLogIndex);
-    setTimerSetIdx(setNumber);
-    setShowTimer(true);
-  }, [activeWorkout, day]);
+  const handleSetComplete = useCallback(
+    (exerciseLogIndex: number, setNumber: number) => {
+      if (!activeWorkout || !day) return;
+      const pe = day.exercises[exerciseLogIndex];
+      const restSec = pe?.restSeconds || 90;
+      setTimerSeconds(restSec);
+      setTimerExerciseIdx(exerciseLogIndex);
+      setTimerSetIdx(setNumber);
+      setShowTimer(true);
+    },
+    [activeWorkout, day],
+  );
 
-  const handleTimerComplete = useCallback((actualSeconds: number) => {
-    recordRestTime(timerExerciseIdx, timerSetIdx, actualSeconds);
-    setShowTimer(false);
-  }, [recordRestTime, timerExerciseIdx, timerSetIdx]);
+  const handleTimerComplete = useCallback(
+    (actualSeconds: number) => {
+      recordRestTime(timerExerciseIdx, timerSetIdx, actualSeconds);
+      setShowTimer(false);
+    },
+    [recordRestTime, timerExerciseIdx, timerSetIdx],
+  );
 
-  const handleTimerSkip = useCallback((actualSeconds: number) => {
-    recordRestTime(timerExerciseIdx, timerSetIdx, actualSeconds);
-    setShowTimer(false);
-  }, [recordRestTime, timerExerciseIdx, timerSetIdx]);
+  const handleTimerSkip = useCallback(
+    (actualSeconds: number) => {
+      recordRestTime(timerExerciseIdx, timerSetIdx, actualSeconds);
+      setShowTimer(false);
+    },
+    [recordRestTime, timerExerciseIdx, timerSetIdx],
+  );
 
   const handleVideoPress = useCallback((ex: Exercise) => {
     setVideoExercise(ex);
@@ -108,11 +161,14 @@ export function WorkoutViewer() {
     setSwapExerciseIdx(exerciseLogIndex);
   }, []);
 
-  const handleSwap = useCallback((newExerciseId: string) => {
-    if (swapExerciseIdx !== null) {
-      swapExercise(swapExerciseIdx, newExerciseId);
-    }
-  }, [swapExercise, swapExerciseIdx]);
+  const handleSwap = useCallback(
+    (newExerciseId: string) => {
+      if (swapExerciseIdx !== null) {
+        swapExercise(swapExerciseIdx, newExerciseId);
+      }
+    },
+    [swapExercise, swapExerciseIdx],
+  );
 
   // Incomplete workout confirmation
   const [showIncompleteDialog, setShowIncompleteDialog] = useState(false);
@@ -138,24 +194,36 @@ export function WorkoutViewer() {
         <div className="w-16 h-16 bg-neutral-100 rounded-full flex items-center justify-center mb-4">
           <Activity size={28} className="text-text-secondary" />
         </div>
-        <h2 className="text-xl font-serif font-bold text-text-primary mb-2">Workout Not Found</h2>
+        <h2 className="text-xl font-serif font-bold text-text-primary mb-2">
+          Workout Not Found
+        </h2>
         <p className="text-text-secondary text-sm mb-6 max-w-xs">
-          We couldn't find this workout. It may have been removed or the link is incorrect.
+          We couldn't find this workout. It may have been removed or the link is
+          incorrect.
         </p>
-        <button
+        <Button
           onClick={() => navigate('/portal/plan')}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-text-primary text-white text-sm font-semibold rounded-control"
+          variant="default"
+          size="lg"
         >
           <ArrowLeft size={16} />
           Back to Plan
-        </button>
+        </Button>
       </div>
     );
   }
 
   // ── Summary view ────────────────────────────────────────────
   if (isCompleted && activeWorkout) {
-    return <WorkoutSummary workout={activeWorkout} exercises={exercises} day={day} week={week} navigate={navigate} />;
+    return (
+      <WorkoutSummary
+        workout={activeWorkout}
+        exercises={exercises}
+        day={day}
+        week={week}
+        navigate={navigate}
+      />
+    );
   }
 
   // ── Active workout view ─────────────────────────────────────
@@ -165,14 +233,16 @@ export function WorkoutViewer() {
     <div className="fixed inset-0 bg-surface-page flex flex-col">
       {/* Top bar */}
       <div className="shrink-0 h-14 lg:h-16 bg-white border-b border-neutral-200 rounded-field flex items-center justify-between gap-2 px-4">
-        <button
+        <Button
           type="button"
           onClick={() => navigate('/portal/plan')}
           aria-label="Back to plan"
-          className="w-9 h-9 lg:w-11 lg:h-11 shrink-0 flex items-center justify-center rounded-control hover:bg-neutral-100 transition-colors"
+          variant="ghost"
+          size="icon"
+          className="lg:size-11"
         >
           <ArrowLeft size={20} className="text-text-primary lg:size-6" />
-        </button>
+        </Button>
         <div className="flex-1 min-w-0 flex items-center justify-center gap-2 text-center">
           <span className="text-sm lg:text-base font-semibold text-text-primary truncate">
             {DAY_NAMES[day.dayOfWeek]} &mdash; {day.type}
@@ -181,42 +251,52 @@ export function WorkoutViewer() {
             W{week.order}
           </span>
         </div>
-        <button
+        <Button
           type="button"
           onClick={() => setOptionsOpen(true)}
           aria-label="Workout options"
           aria-haspopup="dialog"
           aria-expanded={optionsOpen}
-          className="w-11 h-11 shrink-0 flex items-center justify-center rounded-control hover:bg-neutral-100 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+          variant="ghost"
+          size="icon"
+          className="lg:size-11"
         >
           <MoreVertical size={22} className="text-text-primary lg:size-6" />
-        </button>
+        </Button>
       </div>
 
-      <BottomSheet open={optionsOpen} onOpenChange={setOptionsOpen} title="Workout options">
+      <BottomSheet
+        open={optionsOpen}
+        onOpenChange={setOptionsOpen}
+        title="Workout options"
+      >
         <div className="px-3 pb-2 pt-2">
-          <button
+          <Button
             type="button"
             onClick={() => {
               setOptionsOpen(false);
               handleCompletePress();
             }}
-            className="w-full flex items-center gap-4 px-4 min-h-14 rounded-card text-left text-base font-medium text-text-primary hover:bg-neutral-50 transition-colors"
+            variant="ghost"
+            size="lg"
+            className="w-full h-14 justify-start gap-4 px-4 rounded-card text-left text-base font-medium"
           >
             <span className="w-10 h-10 shrink-0 flex items-center justify-center rounded-full bg-brand/10">
               <Flag size={20} className="text-brand" />
             </span>
             <span className="flex-1">End workout</span>
-          </button>
+          </Button>
         </div>
         <div className="px-4 pt-2 pb-4 border-t border-neutral-100 mt-1">
-          <button
+          <Button
             type="button"
             onClick={() => setOptionsOpen(false)}
-            className="w-full min-h-12 rounded-control text-sm font-semibold text-text-secondary hover:bg-neutral-50 transition-colors"
+            variant="ghost"
+            size="default"
+            className="w-full h-12 rounded-control text-sm font-semibold"
           >
             Cancel
-          </button>
+          </Button>
         </div>
       </BottomSheet>
 
@@ -232,26 +312,32 @@ export function WorkoutViewer() {
             transition={{ duration: 0.3, ease: 'easeOut' }}
           />
         </div>
-        <span className="text-xs lg:text-sm font-medium text-brand">{Math.round(progressPercent)}%</span>
+        <span className="text-xs lg:text-sm font-medium text-brand">
+          {Math.round(progressPercent)}%
+        </span>
       </div>
 
       {/* Scrollable exercise list */}
       <div className="flex-1 overflow-y-auto px-4 pb-8 space-y-4">
         {groupedExercises.map((group, gIdx) => {
           if (group.isSuperset && activeWorkout) {
-            const ssExercises = group.items.map(pe => {
-              exerciseCounter++;
-              const logIdx = day.exercises.findIndex(e => e.id === pe.id);
-              const exLog = activeWorkout.exercises[logIdx];
-              const ex = exercises.find(e => e.id === (exLog?.exerciseId || pe.exerciseId));
-              return {
-                exercise: ex!,
-                planExercise: pe,
-                exerciseLog: exLog,
-                exerciseLogIndex: logIdx,
-                number: exerciseCounter,
-              };
-            }).filter(e => e.exercise && e.exerciseLog);
+            const ssExercises = group.items
+              .map((pe) => {
+                exerciseCounter++;
+                const logIdx = day.exercises.findIndex((e) => e.id === pe.id);
+                const exLog = activeWorkout.exercises[logIdx];
+                const ex = exercises.find(
+                  (e) => e.id === (exLog?.exerciseId || pe.exerciseId),
+                );
+                return {
+                  exercise: ex!,
+                  planExercise: pe,
+                  exerciseLog: exLog,
+                  exerciseLogIndex: logIdx,
+                  number: exerciseCounter,
+                };
+              })
+              .filter((e) => e.exercise && e.exerciseLog);
 
             return (
               <motion.div
@@ -275,9 +361,11 @@ export function WorkoutViewer() {
 
           const pe = group.items[0];
           exerciseCounter++;
-          const logIdx = day.exercises.findIndex(e => e.id === pe.id);
+          const logIdx = day.exercises.findIndex((e) => e.id === pe.id);
           const exLog = activeWorkout?.exercises[logIdx];
-          const ex = exercises.find(e => e.id === (exLog?.exerciseId || pe.exerciseId));
+          const ex = exercises.find(
+            (e) => e.id === (exLog?.exerciseId || pe.exerciseId),
+          );
           if (!ex || !exLog) return null;
 
           return (
@@ -313,14 +401,16 @@ export function WorkoutViewer() {
             transition={{ duration: 0.25 }}
             className="pt-4"
           >
-            <button
+            <Button
               type="button"
               onClick={handleCompletePress}
-              className="w-full py-4 lg:py-5 font-semibold rounded-control text-base lg:text-lg flex items-center justify-center gap-2 bg-brand text-white hover:bg-brand-hover transition-colors"
+              variant="default"
+              size="lg"
+              className="w-full lg:text-lg"
             >
               <Trophy size={20} className="lg:size-6" aria-hidden="true" />
               Complete Workout
-            </button>
+            </Button>
           </motion.div>
         )}
       </div>
@@ -355,36 +445,57 @@ export function WorkoutViewer() {
       )}
 
       {/* Swap Sheet */}
-      {swapExerciseIdx !== null && activeWorkout && day && (() => {
-        const pe = day.exercises[swapExerciseIdx];
-        const exLog = activeWorkout.exercises[swapExerciseIdx];
-        if (!pe?.swapVariants?.length || !exLog) return null;
-        const originalEx = exercises.find(e => e.id === exLog.originalExerciseId);
-        const variantExercises = pe.swapVariants
-          .map(id => exercises.find(e => e.id === id))
-          .filter((e): e is NonNullable<typeof e> => !!e);
-        if (!originalEx) return null;
-        return (
-          <SwapSheet
-            currentExerciseId={exLog.exerciseId}
-            variants={variantExercises}
-            originalExercise={originalEx}
-            open={true}
-            onOpenChange={(open) => !open && setSwapExerciseIdx(null)}
-            onSwap={handleSwap}
-          />
-        );
-      })()}
+      {swapExerciseIdx !== null &&
+        activeWorkout &&
+        day &&
+        (() => {
+          const pe = day.exercises[swapExerciseIdx];
+          const exLog = activeWorkout.exercises[swapExerciseIdx];
+          if (!pe?.swapVariants?.length || !exLog) return null;
+          const originalEx = exercises.find(
+            (e) => e.id === exLog.originalExerciseId,
+          );
+          const variantExercises = pe.swapVariants
+            .map((id) => exercises.find((e) => e.id === id))
+            .filter((e): e is NonNullable<typeof e> => !!e);
+          if (!originalEx) return null;
+          return (
+            <SwapSheet
+              currentExerciseId={exLog.exerciseId}
+              variants={variantExercises}
+              originalExercise={originalEx}
+              open={true}
+              onOpenChange={(open) => !open && setSwapExerciseIdx(null)}
+              onSwap={handleSwap}
+            />
+          );
+        })()}
     </div>
   );
 }
 
 // ── Workout Summary sub-component ──────────────────────────────
 
-function WorkoutSummary({ workout, exercises: allExercises, day, week, navigate }: {
+function WorkoutSummary({
+  workout,
+  exercises: allExercises,
+  day,
+  week,
+  navigate,
+}: {
   workout: NonNullable<ReturnType<typeof useTraining>['activeWorkout']>;
   exercises: Exercise[];
-  day: { dayOfWeek: number; type: string; exercises: { id: string; exerciseId: string; sets: number; reps: string; rir: number }[] };
+  day: {
+    dayOfWeek: number;
+    type: string;
+    exercises: {
+      id: string;
+      exerciseId: string;
+      sets: number;
+      reps: string;
+      rir: number;
+    }[];
+  };
   week: { order: number };
   navigate: ReturnType<typeof useNavigate>;
 }) {
@@ -396,16 +507,18 @@ function WorkoutSummary({ workout, exercises: allExercises, day, week, navigate 
 
   // Collect muscle groups
   const muscleGroups: Record<string, number> = {};
-  workout.exercises.forEach(exLog => {
-    const ex = allExercises.find(e => e.id === exLog.exerciseId);
+  workout.exercises.forEach((exLog) => {
+    const ex = allExercises.find((e) => e.id === exLog.exerciseId);
     if (ex) {
-      ex.primaryMuscles.forEach(m => {
+      ex.primaryMuscles.forEach((m) => {
         muscleGroups[m] = (muscleGroups[m] || 0) + 1;
       });
     }
   });
 
-  const sortedMuscles = Object.entries(muscleGroups).sort((a, b) => b[1] - a[1]);
+  const sortedMuscles = Object.entries(muscleGroups).sort(
+    (a, b) => b[1] - a[1],
+  );
 
   return (
     <div className="fixed inset-0 bg-surface-page flex flex-col overflow-y-auto">
@@ -428,7 +541,8 @@ function WorkoutSummary({ workout, exercises: allExercises, day, week, navigate 
           Great work!
         </motion.h1>
         <p className="text-sm lg:text-base text-text-secondary">
-          {DAY_NAMES[day.dayOfWeek]} &mdash; {day.type} &middot; Week {week.order}
+          {DAY_NAMES[day.dayOfWeek]} &mdash; {day.type} &middot; Week{' '}
+          {week.order}
         </p>
       </div>
 
@@ -436,29 +550,55 @@ function WorkoutSummary({ workout, exercises: allExercises, day, week, navigate 
       <div className="px-4 pb-4 w-full max-w-2xl mx-auto">
         <div className="grid grid-cols-3 gap-3 lg:gap-4">
           <div className="bg-white rounded-control p-4 lg:p-5 text-center border border-neutral-100">
-            <Clock size={18} className="text-text-secondary mx-auto mb-1.5 lg:size-6" />
-            <p className="text-lg lg:text-2xl font-serif font-bold text-text-primary">{durationMin}</p>
-            <p className="text-[10px] lg:text-xs uppercase tracking-widest text-text-secondary font-bold">min</p>
+            <Clock
+              size={18}
+              className="text-text-secondary mx-auto mb-1.5 lg:size-6"
+            />
+            <p className="text-lg lg:text-2xl font-semibold text-text-primary">
+              {durationMin}
+            </p>
+            <p className="text-[10px] lg:text-xs uppercase tracking-widest text-text-secondary font-bold">
+              min
+            </p>
           </div>
           <div className="bg-white rounded-control p-4 lg:p-5 text-center border border-neutral-100">
-            <Dumbbell size={18} className="text-brand mx-auto mb-1.5 lg:size-6" />
-            <p className="text-lg lg:text-2xl font-serif font-bold text-text-primary">{displayWeightValue(totalVolume, weightUnit, 0).toLocaleString()}</p>
-            <p className="text-[10px] lg:text-xs uppercase tracking-widest text-text-secondary font-bold">{weightUnitLabel(weightUnit)} vol</p>
+            <Dumbbell
+              size={18}
+              className="text-brand mx-auto mb-1.5 lg:size-6"
+            />
+            <p className="text-lg lg:text-2xl font-semibold text-text-primary">
+              {displayWeightValue(totalVolume, weightUnit, 0).toLocaleString()}
+            </p>
+            <p className="text-[10px] lg:text-xs uppercase tracking-widest text-text-secondary font-bold">
+              {weightUnitLabel(weightUnit)} vol
+            </p>
           </div>
           <div className="bg-white rounded-control p-4 lg:p-5 text-center border border-neutral-100">
-            <Flame size={18} className="text-brand-secondary mx-auto mb-1.5 lg:size-6" />
-            <p className="text-lg lg:text-2xl font-serif font-bold text-text-primary">{workout.exercises.length}</p>
-            <p className="text-[10px] lg:text-xs uppercase tracking-widest text-text-secondary font-bold">exercises</p>
+            <Flame
+              size={18}
+              className="text-brand-secondary mx-auto mb-1.5 lg:size-6"
+            />
+            <p className="text-lg lg:text-2xl font-semibold text-text-primary">
+              {workout.exercises.length}
+            </p>
+            <p className="text-[10px] lg:text-xs uppercase tracking-widest text-text-secondary font-bold">
+              exercises
+            </p>
           </div>
         </div>
       </div>
 
       {/* Muscle groups */}
       <div className="px-4 pb-4 w-full max-w-2xl mx-auto">
-        <h3 className="text-xs lg:text-sm font-bold uppercase tracking-widest text-text-secondary mb-3">Muscles Worked</h3>
+        <h3 className="text-xs lg:text-sm font-bold uppercase tracking-widest text-text-secondary mb-3">
+          Muscles Worked
+        </h3>
         <div className="flex flex-wrap gap-2">
           {sortedMuscles.map(([muscle, count]) => (
-            <span key={muscle} className="text-xs lg:text-sm bg-brand-secondary/10 text-brand-secondary rounded-full px-3 py-1.5 font-medium">
+            <span
+              key={muscle}
+              className="text-xs lg:text-sm bg-brand-secondary/10 text-brand-secondary rounded-full px-3 py-1.5 font-medium"
+            >
               {muscle} ({count})
             </span>
           ))}
@@ -467,19 +607,28 @@ function WorkoutSummary({ workout, exercises: allExercises, day, week, navigate 
 
       {/* Exercise breakdown */}
       <div className="px-4 pb-8 w-full max-w-2xl mx-auto">
-        <h3 className="text-xs lg:text-sm font-bold uppercase tracking-widest text-text-secondary mb-3">Exercise Breakdown</h3>
+        <h3 className="text-xs lg:text-sm font-bold uppercase tracking-widest text-text-secondary mb-3">
+          Exercise Breakdown
+        </h3>
         <div className="space-y-3">
           {workout.exercises.map((exLog, i) => {
-            const ex = allExercises.find(e => e.id === exLog.exerciseId);
-            const originalEx = exLog.wasSwapped ? allExercises.find(e => e.id === exLog.originalExerciseId) : null;
+            const ex = allExercises.find((e) => e.id === exLog.exerciseId);
+            const originalEx = exLog.wasSwapped
+              ? allExercises.find((e) => e.id === exLog.originalExerciseId)
+              : null;
             const planEx = day.exercises[i];
             if (!ex) return null;
             return (
-              <div key={exLog.planExerciseId} className="bg-white rounded-control border border-neutral-100 overflow-hidden">
+              <div
+                key={exLog.planExerciseId}
+                className="bg-white rounded-control border border-neutral-100 overflow-hidden"
+              >
                 {/* Header */}
                 <div className="p-4 pb-3">
                   <div className="flex items-center justify-between">
-                    <span className="font-semibold text-sm lg:text-base text-text-primary">{ex.name}</span>
+                    <span className="font-semibold text-sm lg:text-base text-text-primary">
+                      {ex.name}
+                    </span>
                     <span className="text-[10px] lg:text-xs text-text-secondary inline-flex items-center gap-1.5">
                       {planEx?.sets}x{planEx?.reps}
                       {planEx?.rir != null && <RirBadge value={planEx.rir} />}
@@ -487,7 +636,10 @@ function WorkoutSummary({ workout, exercises: allExercises, day, week, navigate 
                   </div>
                   {exLog.wasSwapped && originalEx && (
                     <div className="flex items-center gap-1.5 mt-1.5">
-                      <ArrowLeftRight size={10} className="text-brand-secondary lg:size-3" />
+                      <ArrowLeftRight
+                        size={10}
+                        className="text-brand-secondary lg:size-3"
+                      />
                       <span className="text-[10px] lg:text-xs text-brand-secondary font-medium">
                         Swapped from {originalEx.name}
                       </span>
@@ -496,34 +648,65 @@ function WorkoutSummary({ workout, exercises: allExercises, day, week, navigate 
                 </div>
                 {/* Sets */}
                 <div className="border-t border-neutral-100">
-                  {exLog.sets.filter(s => s.completed).map(s => {
-                    const prescribedNum = parseInt(planEx?.reps || '0');
-                    const repsDiff = s.actualReps != null && !isNaN(prescribedNum) ? s.actualReps - prescribedNum : null;
-                    const isUnder = repsDiff !== null && repsDiff < 0;
-                    const isOver = repsDiff !== null && repsDiff > 0;
-                    return (
-                      <div key={s.setNumber} className={`flex items-center px-4 py-2 lg:py-2.5 text-xs lg:text-sm border-t border-neutral-50 first:border-t-0 ${
-                        isUnder ? 'bg-brand/[0.03]' : isOver ? 'bg-brand-secondary/[0.03]' : ''
-                      }`}>
-                        <span className="w-8 text-neutral-300 font-bold">{s.setNumber}</span>
-                        <span className="text-text-secondary flex-1">{planEx?.reps} reps</span>
-                        <span className="font-semibold text-text-primary mr-1">{s.actualWeight != null ? displayWeightValue(s.actualWeight, weightUnit) : 0}{weightUnitLabel(weightUnit)}</span>
-                        <span className="text-neutral-300 mr-1">&times;</span>
-                        <span className={`font-bold ${
-                          isUnder ? 'text-brand' : isOver ? 'text-brand-secondary' : 'text-text-primary'
-                        }`}>
-                          {s.actualReps}
-                        </span>
-                        {repsDiff !== null && repsDiff !== 0 && (
-                          <span className={`ml-2 text-[9px] lg:text-caption font-bold rounded-full px-1.5 py-0.5 ${
-                            isUnder ? 'bg-brand/10 text-brand' : 'bg-brand-secondary/10 text-brand-secondary'
-                          }`}>
-                            {repsDiff > 0 ? `+${repsDiff}` : repsDiff}
+                  {exLog.sets
+                    .filter((s) => s.completed)
+                    .map((s) => {
+                      const prescribedNum = parseInt(planEx?.reps || '0');
+                      const repsDiff =
+                        s.actualReps != null && !isNaN(prescribedNum)
+                          ? s.actualReps - prescribedNum
+                          : null;
+                      const isUnder = repsDiff !== null && repsDiff < 0;
+                      const isOver = repsDiff !== null && repsDiff > 0;
+                      return (
+                        <div
+                          key={s.setNumber}
+                          className={`flex items-center px-4 py-2 lg:py-2.5 text-xs lg:text-sm border-t border-neutral-50 first:border-t-0 ${
+                            isUnder
+                              ? 'bg-brand/[0.03]'
+                              : isOver
+                                ? 'bg-brand-secondary/[0.03]'
+                                : ''
+                          }`}
+                        >
+                          <span className="w-8 text-neutral-300 font-bold">
+                            {s.setNumber}
                           </span>
-                        )}
-                      </div>
-                    );
-                  })}
+                          <span className="text-text-secondary flex-1">
+                            {planEx?.reps} reps
+                          </span>
+                          <span className="font-semibold text-text-primary mr-1">
+                            {s.actualWeight != null
+                              ? displayWeightValue(s.actualWeight, weightUnit)
+                              : 0}
+                            {weightUnitLabel(weightUnit)}
+                          </span>
+                          <span className="text-neutral-300 mr-1">&times;</span>
+                          <span
+                            className={`font-bold ${
+                              isUnder
+                                ? 'text-brand'
+                                : isOver
+                                  ? 'text-brand-secondary'
+                                  : 'text-text-primary'
+                            }`}
+                          >
+                            {s.actualReps}
+                          </span>
+                          {repsDiff !== null && repsDiff !== 0 && (
+                            <span
+                              className={`ml-2 text-[9px] lg:text-caption font-bold rounded-full px-1.5 py-0.5 ${
+                                isUnder
+                                  ? 'bg-brand/10 text-brand'
+                                  : 'bg-brand-secondary/10 text-brand-secondary'
+                              }`}
+                            >
+                              {repsDiff > 0 ? `+${repsDiff}` : repsDiff}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
                 </div>
               </div>
             );
@@ -533,13 +716,15 @@ function WorkoutSummary({ workout, exercises: allExercises, day, week, navigate 
 
       {/* Back button */}
       <div className="px-4 pb-10 w-full max-w-2xl mx-auto">
-        <button
+        <Button
           onClick={() => navigate('/portal/plan')}
-          className="w-full py-3.5 lg:py-4 bg-text-primary text-white font-semibold rounded-control text-sm lg:text-base flex items-center justify-center gap-2"
+          variant="default"
+          size="lg"
+          className="w-full lg:text-base"
         >
           Back to Plan
           <ArrowRight size={16} className="lg:size-5" />
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -547,7 +732,15 @@ function WorkoutSummary({ workout, exercises: allExercises, day, week, navigate 
 
 // ── Incomplete Workout Dialog ──────────────────────────────────
 
-function IncompleteWorkoutDialog({ open, onOpenChange, onConfirm, completedSets, totalSets, activeWorkout, exercises: allExercises }: {
+function IncompleteWorkoutDialog({
+  open,
+  onOpenChange,
+  onConfirm,
+  completedSets,
+  totalSets,
+  activeWorkout,
+  exercises: allExercises,
+}: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
@@ -560,33 +753,45 @@ function IncompleteWorkoutDialog({ open, onOpenChange, onConfirm, completedSets,
   if (!activeWorkout) return null;
 
   const missingSets = totalSets - completedSets;
-  const completionPercent = totalSets > 0 ? Math.round((completedSets / totalSets) * 100) : 0;
+  const completionPercent =
+    totalSets > 0 ? Math.round((completedSets / totalSets) * 100) : 0;
 
   // Compute partial stats
-  const partialVolume = activeWorkout.exercises.reduce((total, ex) =>
-    total + ex.sets.reduce((exTotal, s) =>
-      exTotal + (s.completed && s.actualWeight && s.actualReps ? s.actualWeight * s.actualReps : 0), 0
-    ), 0);
+  const partialVolume = activeWorkout.exercises.reduce(
+    (total, ex) =>
+      total +
+      ex.sets.reduce(
+        (exTotal, s) =>
+          exTotal +
+          (s.completed && s.actualWeight && s.actualReps
+            ? s.actualWeight * s.actualReps
+            : 0),
+        0,
+      ),
+    0,
+  );
 
   // Muscle groups from completed exercises (at least 1 set done)
   const muscleGroups: Record<string, number> = {};
-  activeWorkout.exercises.forEach(exLog => {
-    const hasCompletedSet = exLog.sets.some(s => s.completed);
+  activeWorkout.exercises.forEach((exLog) => {
+    const hasCompletedSet = exLog.sets.some((s) => s.completed);
     if (hasCompletedSet) {
-      const ex = allExercises.find(e => e.id === exLog.exerciseId);
-      ex?.primaryMuscles.forEach(m => {
+      const ex = allExercises.find((e) => e.id === exLog.exerciseId);
+      ex?.primaryMuscles.forEach((m) => {
         muscleGroups[m] = (muscleGroups[m] || 0) + 1;
       });
     }
   });
-  const sortedMuscles = Object.entries(muscleGroups).sort((a, b) => b[1] - a[1]);
+  const sortedMuscles = Object.entries(muscleGroups).sort(
+    (a, b) => b[1] - a[1],
+  );
 
   // Exercises with missing sets
   const incomplete = activeWorkout.exercises
-    .map(exLog => {
-      const missing = exLog.sets.filter(s => !s.completed).length;
+    .map((exLog) => {
+      const missing = exLog.sets.filter((s) => !s.completed).length;
       if (missing === 0) return null;
-      const ex = allExercises.find(e => e.id === exLog.exerciseId);
+      const ex = allExercises.find((e) => e.id === exLog.exerciseId);
       return { name: ex?.name || 'Unknown', missing, total: exLog.sets.length };
     })
     .filter(Boolean) as { name: string; missing: number; total: number }[];
@@ -604,8 +809,8 @@ function IncompleteWorkoutDialog({ open, onOpenChange, onConfirm, completedSets,
               {missingSets} unlogged {missingSets === 1 ? 'set' : 'sets'}
             </AlertDialogTitle>
             <AlertDialogDescription className="text-sm text-text-secondary">
-              You've completed {completedSets} of {totalSets} sets ({completionPercent}%).
-              Finish now or go back to log the rest.
+              You've completed {completedSets} of {totalSets} sets (
+              {completionPercent}%). Finish now or go back to log the rest.
             </AlertDialogDescription>
           </AlertDialogHeader>
         </div>
@@ -615,13 +820,25 @@ function IncompleteWorkoutDialog({ open, onOpenChange, onConfirm, completedSets,
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-neutral-50 rounded-control p-3 text-center">
               <Dumbbell size={16} className="text-brand mx-auto mb-1" />
-              <p className="text-base font-serif font-bold text-text-primary">{displayWeightValue(partialVolume, weightUnit, 0).toLocaleString()}</p>
-              <p className="text-[10px] uppercase tracking-widest text-text-secondary font-bold">{weightUnitLabel(weightUnit)} logged</p>
+              <p className="text-base font-semibold text-text-primary">
+                {displayWeightValue(
+                  partialVolume,
+                  weightUnit,
+                  0,
+                ).toLocaleString()}
+              </p>
+              <p className="text-[10px] uppercase tracking-widest text-text-secondary font-bold">
+                {weightUnitLabel(weightUnit)} logged
+              </p>
             </div>
             <div className="bg-neutral-50 rounded-control p-3 text-center">
               <Flame size={16} className="text-brand-secondary mx-auto mb-1" />
-              <p className="text-base font-serif font-bold text-text-primary">{sortedMuscles.length}</p>
-              <p className="text-[10px] uppercase tracking-widest text-text-secondary font-bold">muscle groups</p>
+              <p className="text-base font-semibold text-text-primary">
+                {sortedMuscles.length}
+              </p>
+              <p className="text-[10px] uppercase tracking-widest text-text-secondary font-bold">
+                muscle groups
+              </p>
             </div>
           </div>
 
@@ -629,19 +846,31 @@ function IncompleteWorkoutDialog({ open, onOpenChange, onConfirm, completedSets,
           {sortedMuscles.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {sortedMuscles.map(([muscle]) => (
-                <span key={muscle} className="text-[10px] bg-brand-secondary/10 text-brand-secondary rounded-full px-2 py-0.5 font-medium">{muscle}</span>
+                <span
+                  key={muscle}
+                  className="text-[10px] bg-brand-secondary/10 text-brand-secondary rounded-full px-2 py-0.5 font-medium"
+                >
+                  {muscle}
+                </span>
               ))}
             </div>
           )}
 
           {/* Missing exercises list */}
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-2">Unlogged</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-2">
+              Unlogged
+            </p>
             <div className="space-y-1.5">
               {incomplete.map(({ name, missing, total }) => (
-                <div key={name} className="flex items-center justify-between text-xs bg-brand/[0.03] rounded-compact px-3 py-2">
+                <div
+                  key={name}
+                  className="flex items-center justify-between text-xs bg-brand/[0.03] rounded-compact px-3 py-2"
+                >
                   <span className="font-medium text-text-primary">{name}</span>
-                  <span className="text-brand font-semibold">{missing}/{total} sets</span>
+                  <span className="text-brand font-semibold">
+                    {missing}/{total} sets
+                  </span>
                 </div>
               ))}
             </div>
@@ -654,7 +883,7 @@ function IncompleteWorkoutDialog({ open, onOpenChange, onConfirm, completedSets,
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirm}
-            className="flex-1 rounded-control bg-brand text-white hover:bg-brand-hover font-semibold"
+            className="flex-1 rounded-control bg-primary text-primary-foreground hover:bg-primary-hover font-semibold"
           >
             Finish Anyway
           </AlertDialogAction>

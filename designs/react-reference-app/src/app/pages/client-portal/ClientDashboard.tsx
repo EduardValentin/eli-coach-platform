@@ -1,25 +1,40 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { motion } from 'motion/react';
-import { Flame, Target as TargetIcon, Activity, Droplet, Play, Utensils } from 'lucide-react';
+import { Target as TargetIcon, Activity, Flame, Play } from 'lucide-react';
 import { useTraining } from '../../context/TrainingContext';
 import { useCycle } from '../../context/CycleContext';
-import { useClientProfile, ACTIVITY_LEVEL_LABELS } from '../../context/ClientProfileContext';
+import { useClientProfile } from '../../context/ClientProfileContext';
 import { useUnitPreferences } from '../../context/UnitPreferencesContext';
-import { formatHeight, formatBodyWeight } from '../../utils/units';
+import { useClientJourneys } from '../../context/ClientJourneyContext';
+import { isBeforeStage } from '../../domain/journey';
 import { useNavigate, useSearchParams, Link } from 'react-router';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { ProgramStatusCard } from '../../components/client-portal/ProgramStatusCard';
 import { ReviewCallScheduler } from '../../components/client-portal/ReviewCallScheduler';
+import { ClientWidget } from '../../components/client-portal/ClientWidget';
+import { GoalWidget } from '../../components/GoalWidget';
+import { CyclePhaseWidget } from '../../components/CyclePhaseWidget';
+import { ProfileDetailsWidget } from '../../components/ProfileDetailsWidget';
+import { ProgressWidget } from '../../components/ProgressWidget';
 import { MACRO_BAR } from '../../components/coach-portal/nutrition/nutrition-constants';
 import { useAppState } from '../../context/AppContext';
-import { cn } from '../../components/ui/utils';
+import { Button } from '../../components/ui/button';
 
-const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const DAY_NAMES = [
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
+];
 
 export function ClientDashboard() {
-  const { clientActivePlan, goals, activeWorkout } = useTraining();
+  const { clientActivePlan, getClientActiveGoal, activeWorkout } =
+    useTraining();
   const { clientPhase } = useCycle();
   const { clientProfile } = useClientProfile();
+  const { demoJourney } = useClientJourneys();
   const { appState } = useAppState();
   const isPostMvp = appState.prototypeMode === 'post-mvp';
   const { weightUnit, heightUnit } = useUnitPreferences();
@@ -33,12 +48,23 @@ export function ClientDashboard() {
   const carbsG = clientProfile?.carbsGrams ?? 0;
   const fatsG = clientProfile?.fatsGrams ?? 0;
   const macros = [
-    { label: 'Protein', grams: proteinG, kcal: proteinG * 4, barClass: MACRO_BAR.protein },
-    { label: 'Carbs', grams: carbsG, kcal: carbsG * 4, barClass: MACRO_BAR.carb },
+    {
+      label: 'Protein',
+      grams: proteinG,
+      kcal: proteinG * 4,
+      barClass: MACRO_BAR.protein,
+    },
+    {
+      label: 'Carbs',
+      grams: carbsG,
+      kcal: carbsG * 4,
+      barClass: MACRO_BAR.carb,
+    },
     { label: 'Fats', grams: fatsG, kcal: fatsG * 9, barClass: MACRO_BAR.fat },
   ];
   const macroKcal = macros.reduce((t, m) => t + m.kcal, 0);
-  const pctOf = (kcal: number) => (macroKcal > 0 ? Math.round((kcal / macroKcal) * 100) : 0);
+  const pctOf = (kcal: number) =>
+    macroKcal > 0 ? Math.round((kcal / macroKcal) * 100) : 0;
 
   // Determine today's workout from the active plan
   const todayInfo = useMemo(() => {
@@ -51,17 +77,25 @@ export function ClientDashboard() {
     if (!week) return null;
     const day = week.days[dayIdx];
     if (!day) return null;
-    return { day, dayIdx, weekIdx, dayName: DAY_NAMES[dayIdx], isRest: day.type === 'Rest' };
+    return {
+      day,
+      dayIdx,
+      weekIdx,
+      dayName: DAY_NAMES[dayIdx],
+      isRest: day.type === 'Rest',
+    };
   }, [clientActivePlan]);
 
-  const activeGoal = useMemo(() => {
-    if (!clientActivePlan) return null;
-    return goals.find(g => g.id === clientActivePlan.goalId) || null;
-  }, [clientActivePlan, goals]);
+  const activeGoal = getClientActiveGoal('client-1');
+  const goalEmptyMessage = isBeforeStage(demoJourney.stage, 'program-ready')
+    ? 'Eli sets your goal when your program is ready.'
+    : 'No goal set yet.';
 
   const handleStartWorkout = () => {
     if (!clientActivePlan || !todayInfo || todayInfo.isRest) return;
-    navigate(`/portal/workout/${clientActivePlan.id}/${todayInfo.weekIdx}/${todayInfo.dayIdx}`);
+    navigate(
+      `/portal/workout/${clientActivePlan.id}/${todayInfo.weekIdx}/${todayInfo.dayIdx}`,
+    );
   };
 
   const reviewRequested = searchParams.get('review') === '1';
@@ -73,8 +107,12 @@ export function ClientDashboard() {
     setBookingReview(true);
   }, [reviewRequested]);
 
-  const hasActiveSession = Boolean(activeWorkout && activeWorkout.status === 'in-progress');
-  const showStartCTA = Boolean(todayInfo && !todayInfo.isRest && !hasActiveSession);
+  const hasActiveSession = Boolean(
+    activeWorkout && activeWorkout.status === 'in-progress',
+  );
+  const showStartCTA = Boolean(
+    todayInfo && !todayInfo.isRest && !hasActiveSession,
+  );
 
   return (
     <div className="w-full max-w-5xl mx-auto">
@@ -83,260 +121,285 @@ export function ClientDashboard() {
         subtitle="Here is your daily snapshot and current focus."
       />
 
-      {isPostMvp && <ProgramStatusCard />}
+      <ProgramStatusCard />
 
-      {/* Top Metrics Grid: unified nutrition card + cycle phase */}
-      <div
-        className={cn('grid grid-cols-1 gap-4 mb-8 lg:gap-6', {
-          'lg:grid-cols-3': isPostMvp,
-        })}
-      >
+      <div className="grid grid-cols-1 gap-6 mb-8 sm:grid-cols-2 lg:grid-cols-3">
+        <ProgressWidget
+          presentation="client"
+          profile={clientProfile}
+          weightUnit={weightUnit}
+          headingId="progress-heading"
+          className="h-full"
+        />
 
-        {/* Daily Nutrition Card — BMR, Daily Target + macro split */}
-        {isPostMvp && <motion.section
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          aria-labelledby="nutrition-heading"
-          className="lg:col-span-2 bg-white p-5 sm:p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
-        >
-          <div className="flex items-center justify-between gap-2 mb-5">
-            <h2 id="nutrition-heading" className="text-xs font-bold text-text-secondary uppercase tracking-widest">Daily Nutrition</h2>
-            <span className="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center shrink-0">
-              <Utensils size={16} className="text-brand" strokeWidth={2.5} aria-hidden="true" />
-            </span>
-          </div>
+        <GoalWidget
+          presentation="client"
+          goal={activeGoal}
+          headingId="goal-heading"
+          emptyMessage={goalEmptyMessage}
+          className="h-full"
+        />
 
-          {/* Headline calorie figures: BMR · Maintenance · Daily Target */}
-          <div className="flex flex-wrap items-end gap-x-10 gap-y-4 mb-5">
-            <div>
-              <div className="flex items-center gap-1.5 mb-1">
-                <Flame size={13} className="text-metric-energy" strokeWidth={2.5} aria-hidden="true" />
-                <span className="text-caption font-bold text-text-secondary uppercase tracking-widest">BMR</span>
-              </div>
-              <div className="flex items-baseline gap-1">
-                <span className="font-serif text-3xl lg:text-4xl text-text-primary">{clientProfile?.bmr.toLocaleString() ?? '--'}</span>
-                <span className="text-xs font-semibold text-text-secondary">kcal</span>
-              </div>
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5 mb-1">
-                <Activity size={13} className="text-text-secondary" strokeWidth={2.5} aria-hidden="true" />
-                <span className="text-caption font-bold text-text-secondary uppercase tracking-widest">Maintenance</span>
-              </div>
-              <div className="flex items-baseline gap-1">
-                <span className="font-serif text-3xl lg:text-4xl text-text-primary">{clientProfile?.maintenanceCalories.toLocaleString() ?? '--'}</span>
-                <span className="text-xs font-semibold text-text-secondary">kcal</span>
-              </div>
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5 mb-1">
-                <TargetIcon size={13} className="text-text-primary" strokeWidth={2.5} aria-hidden="true" />
-                <span className="text-caption font-bold text-text-secondary uppercase tracking-widest">Daily Target</span>
-              </div>
-              <div className="flex items-baseline gap-1">
-                <span className="font-serif text-3xl lg:text-4xl text-text-primary">{clientProfile?.dailyCalories.toLocaleString() ?? '--'}</span>
-                <span className="text-xs font-semibold text-text-secondary">kcal</span>
-              </div>
-            </div>
-          </div>
+        <CyclePhaseWidget
+          presentation="client"
+          phase={clientPhase}
+          headingId="phase-heading"
+          className="h-full"
+          footer={
+            <Link
+              to="/portal/cycle"
+              className="text-sm font-medium text-primary hover:underline"
+            >
+              View cycle tracker &rarr;
+            </Link>
+          }
+        />
 
-          {/* Goal / deficit note */}
-          {clientProfile && (() => {
-            const delta = clientProfile.dailyCalories - clientProfile.maintenanceCalories;
-            const deltaLabel =
-              delta === 0
-                ? 'at maintenance'
-                : delta < 0
-                ? `−${Math.abs(delta).toLocaleString()} kcal/day deficit`
-                : `+${delta.toLocaleString()} kcal/day surplus`;
-            return (
-              <p className="flex flex-wrap items-center gap-1.5 mb-5 text-caption font-medium text-text-secondary">
-                <span className="inline-block px-2 py-0.5 rounded-field bg-neutral-100 text-text-secondary font-bold uppercase tracking-wide text-[10px]">
-                  {clientProfile.primaryGoal}
-                </span>
-                <span>{deltaLabel}</span>
-              </p>
-            );
-          })()}
-
-          {/* Macro split */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-caption font-bold text-text-secondary uppercase tracking-widest">Macros</span>
-              <span className="text-caption font-medium text-text-secondary">{macroKcal.toLocaleString()} kcal</span>
-            </div>
-            <div className="flex h-2.5 w-full gap-1 mb-3" aria-hidden="true">
-              {macros.map(m => (
-                <span
-                  key={m.label}
-                  className={`rounded-full ${m.barClass}`}
-                  style={{ width: `${macroKcal > 0 ? (m.kcal / macroKcal) * 100 : 0}%` }}
-                />
-              ))}
-            </div>
-            <ul className="grid grid-cols-3 gap-3">
-              {macros.map(m => (
-                <li key={m.label} className="min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className={`w-2 h-2 rounded-full shrink-0 ${m.barClass}`} aria-hidden="true" />
-                    <span className="text-[10px] sm:text-caption font-bold text-text-secondary uppercase tracking-wide truncate">{m.label}</span>
-                  </div>
-                  <p className="mt-1 text-text-primary">
-                    <span className="font-serif text-lg lg:text-xl">{m.grams}</span>
-                    <span className="text-xs font-semibold text-text-secondary">g</span>
-                    <span className="text-caption font-medium text-text-secondary"> · {pctOf(m.kcal)}%</span>
-                  </p>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </motion.section>}
-
-        {/* Phase Card (kept separate) */}
-        <Link to="/portal/cycle" className="block h-full">
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
-            className="h-full bg-white p-5 sm:p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 hover:border-brand/20 hover:shadow-md transition-all cursor-pointer flex flex-col"
+        {isPostMvp && (
+          <ClientWidget
+            eyebrow="Daily nutrition"
+            icon={
+              <Flame
+                aria-hidden="true"
+                className="text-brand-secondary"
+                size={18}
+              />
+            }
+            headingId="nutrition-heading"
+            className="h-full lg:col-span-2"
           >
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-bold text-text-secondary uppercase tracking-widest">Phase</span>
-              <span className="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center shrink-0">
-                <Droplet size={16} className="text-brand" strokeWidth={2.5} aria-hidden="true" />
-              </span>
+            {/* Headline calorie figures: BMR · Maintenance · Daily Target */}
+            <div className="flex flex-wrap items-end gap-x-10 gap-y-4 mb-5">
+              <div>
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Flame
+                    size={13}
+                    className="text-metric-energy"
+                    strokeWidth={2.5}
+                    aria-hidden="true"
+                  />
+                  <span className="text-caption font-bold text-text-secondary uppercase tracking-widest">
+                    BMR
+                  </span>
+                </div>
+                <div className="flex items-baseline gap-1">
+                  <span className="font-semibold text-3xl lg:text-4xl text-text-primary">
+                    {clientProfile?.bmr.toLocaleString() ?? '--'}
+                  </span>
+                  <span className="text-xs font-semibold text-text-secondary">
+                    kcal
+                  </span>
+                </div>
+              </div>
+              <div>
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Activity
+                    size={13}
+                    className="text-text-secondary"
+                    strokeWidth={2.5}
+                    aria-hidden="true"
+                  />
+                  <span className="text-caption font-bold text-text-secondary uppercase tracking-widest">
+                    Maintenance
+                  </span>
+                </div>
+                <div className="flex items-baseline gap-1">
+                  <span className="font-semibold text-3xl lg:text-4xl text-text-primary">
+                    {clientProfile?.maintenanceCalories.toLocaleString() ??
+                      '--'}
+                  </span>
+                  <span className="text-xs font-semibold text-text-secondary">
+                    kcal
+                  </span>
+                </div>
+              </div>
+              <div>
+                <div className="flex items-center gap-1.5 mb-1">
+                  <TargetIcon
+                    size={13}
+                    className="text-text-primary"
+                    strokeWidth={2.5}
+                    aria-hidden="true"
+                  />
+                  <span className="text-caption font-bold text-text-secondary uppercase tracking-widest">
+                    Daily Target
+                  </span>
+                </div>
+                <div className="flex items-baseline gap-1">
+                  <span className="font-semibold text-3xl lg:text-4xl text-text-primary">
+                    {clientProfile?.dailyCalories.toLocaleString() ?? '--'}
+                  </span>
+                  <span className="text-xs font-semibold text-text-secondary">
+                    kcal
+                  </span>
+                </div>
+              </div>
             </div>
-            <div className="min-w-0 mt-auto pt-4">
-              <span className="font-serif text-3xl lg:text-4xl text-text-primary block truncate">{clientPhase?.phaseName ?? 'N/A'}</span>
-              {clientPhase && (
-                <span className="text-xs font-bold text-text-secondary uppercase tracking-widest block mt-0.5">
-                  Day {clientPhase.dayInCycle}
+
+            {/* Goal / deficit note */}
+            {clientProfile &&
+              (() => {
+                const delta =
+                  clientProfile.dailyCalories -
+                  clientProfile.maintenanceCalories;
+                const deltaLabel =
+                  delta === 0
+                    ? 'at maintenance'
+                    : delta < 0
+                      ? `−${Math.abs(delta).toLocaleString()} kcal/day deficit`
+                      : `+${delta.toLocaleString()} kcal/day surplus`;
+                return (
+                  <p className="flex flex-wrap items-center gap-1.5 mb-5 text-caption font-medium text-text-secondary">
+                    <span className="inline-block px-2 py-0.5 rounded-field bg-neutral-100 text-text-secondary font-bold uppercase tracking-wide text-[10px]">
+                      {clientProfile.primaryGoal}
+                    </span>
+                    <span>{deltaLabel}</span>
+                  </p>
+                );
+              })()}
+
+            {/* Macro split */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-caption font-bold text-text-secondary uppercase tracking-widest">
+                  Macros
                 </span>
-              )}
+                <span className="text-caption font-medium text-text-secondary">
+                  {macroKcal.toLocaleString()} kcal
+                </span>
+              </div>
+              <div className="flex h-2.5 w-full gap-1 mb-3" aria-hidden="true">
+                {macros.map((m) => (
+                  <span
+                    key={m.label}
+                    className={`rounded-full ${m.barClass}`}
+                    style={{
+                      width: `${macroKcal > 0 ? (m.kcal / macroKcal) * 100 : 0}%`,
+                    }}
+                  />
+                ))}
+              </div>
+              <ul className="grid grid-cols-3 gap-3">
+                {macros.map((m) => (
+                  <li key={m.label} className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span
+                        className={`w-2 h-2 rounded-full shrink-0 ${m.barClass}`}
+                        aria-hidden="true"
+                      />
+                      <span className="text-[10px] sm:text-caption font-bold text-text-secondary uppercase tracking-wide truncate">
+                        {m.label}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-text-primary">
+                      <span className="font-semibold text-lg lg:text-xl">
+                        {m.grams}
+                      </span>
+                      <span className="text-xs font-semibold text-text-secondary">
+                        g
+                      </span>
+                      <span className="text-caption font-medium text-text-secondary">
+                        {' '}
+                        · {pctOf(m.kcal)}%
+                      </span>
+                    </p>
+                  </li>
+                ))}
+              </ul>
             </div>
-          </motion.div>
-        </Link>
+          </ClientWidget>
+        )}
 
-      </div>
-
-      {/* Bottom Layout Grid */}
-      <div
-        className={cn('grid grid-cols-1 gap-6 lg:gap-8', {
-          'lg:grid-cols-3': isPostMvp,
-        })}
-      >
-        
-        {/* Focus Card - Spans 2 cols on lg */}
-        {isPostMvp && <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="lg:col-span-2 bg-white p-8 lg:p-10 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col items-start"
-        >
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between w-full mb-4 gap-4">
-            <h2 className="font-serif text-xl lg:text-2xl text-text-primary font-semibold">Today's Focus</h2>
-            {todayInfo && !todayInfo.isRest && (
-              <div className="bg-metric-energy-soft text-metric-energy px-3 py-1.5 rounded-field text-xs font-bold uppercase tracking-widest self-start sm:self-auto">
-                {todayInfo.dayName} &middot; {todayInfo.day.type}
+        {isPostMvp && (
+          <ClientWidget
+            eyebrow="Today's focus"
+            icon={
+              <Activity
+                aria-hidden="true"
+                className="text-brand-secondary"
+                size={18}
+              />
+            }
+            headingId="focus-heading"
+            className="h-full lg:col-span-2"
+            action={
+              todayInfo && !todayInfo.isRest ? (
+                <div className="shrink-0 rounded-field bg-metric-energy-soft px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-metric-energy">
+                  {todayInfo.dayName} &middot; {todayInfo.day.type}
+                </div>
+              ) : todayInfo?.isRest ? (
+                <div className="shrink-0 rounded-field bg-neutral-100 px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-text-secondary">
+                  Rest Day
+                </div>
+              ) : null
+            }
+          >
+            {activeGoal && (
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-brand-secondary/10 text-brand-secondary rounded-compact text-caption font-semibold mb-4">
+                <TargetIcon size={12} />
+                {activeGoal.type}
               </div>
             )}
+
+            {todayInfo?.isRest ? (
+              <p className="text-text-secondary font-medium leading-relaxed mb-10 max-w-2xl">
+                Today is a rest day. Focus on recovery, sleep, and nutrition.
+                Your body builds muscle during rest, not just in the gym.
+              </p>
+            ) : (
+              <p className="text-text-secondary font-medium leading-relaxed mb-10 max-w-2xl">
+                {todayInfo
+                  ? `Today's ${todayInfo.day.type.toLowerCase()} session has ${todayInfo.day.exercises.length} exercises planned. Since you are in your luteal phase, take extra care with your warm-up and listen to your body.`
+                  : 'No active plan assigned yet. Your coach will set one up soon!'}
+              </p>
+            )}
+
             {todayInfo?.isRest && (
-              <div className="bg-neutral-100 text-text-secondary px-3 py-1.5 rounded-field text-xs font-bold uppercase tracking-widest self-start sm:self-auto">
-                Rest Day
+              <div className="mt-auto px-6 py-3.5 bg-neutral-100 text-text-secondary text-sm font-semibold rounded-control flex items-center gap-3">
+                <Activity size={16} />
+                Enjoy your rest day
               </div>
             )}
-          </div>
-
-          {activeGoal && (
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-brand-secondary/10 text-brand-secondary rounded-compact text-caption font-semibold mb-4">
-              <TargetIcon size={12} />
-              {activeGoal.type}
-            </div>
-          )}
-
-          {todayInfo?.isRest ? (
-            <p className="text-text-secondary font-medium leading-relaxed mb-10 max-w-2xl">
-              Today is a rest day. Focus on recovery, sleep, and nutrition. Your body builds muscle during rest, not just in the gym.
-            </p>
-          ) : (
-            <p className="text-text-secondary font-medium leading-relaxed mb-10 max-w-2xl">
-              {todayInfo
-                ? `Today's ${todayInfo.day.type.toLowerCase()} session has ${todayInfo.day.exercises.length} exercises planned. Since you are in your luteal phase, take extra care with your warm-up and listen to your body.`
-                : 'No active plan assigned yet. Your coach will set one up soon!'
-              }
-            </p>
-          )}
-
-          {todayInfo?.isRest && (
-            <div className="mt-auto px-6 py-3.5 bg-neutral-100 text-text-secondary text-sm font-semibold rounded-control flex items-center gap-3">
-              <Activity size={16} />
-              Enjoy your rest day
-            </div>
-          )}
-        </motion.div>}
+          </ClientWidget>
+        )}
 
         {/* Profile Details Card - Spans 1 col */}
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25 }}
-          className="bg-white p-8 lg:p-10 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
-        >
-          <h2 className="font-serif text-xl text-text-primary font-semibold mb-8">Profile Details</h2>
-
-          <div className="space-y-6">
-            <div>
-              <p className="text-xs font-bold text-text-secondary uppercase tracking-widest mb-1">
-                Height & Weight
-              </p>
-              <p className="font-semibold text-sm text-text-primary">
-                {clientProfile ? `${formatHeight(clientProfile.heightCm, heightUnit)} / ${formatBodyWeight(clientProfile.currentWeightKg, weightUnit)}` : '--'}
-              </p>
-            </div>
-
-            <div>
-              <p className="text-xs font-bold text-text-secondary uppercase tracking-widest mb-1">
-                Primary Goal
-              </p>
-              <p className="font-semibold text-sm text-text-primary">
-                {clientProfile?.primaryGoal ?? '--'}
-              </p>
-            </div>
-
-            <div>
-              <p className="text-xs font-bold text-text-secondary uppercase tracking-widest mb-1">
-                Activity Level
-              </p>
-              <p className="font-semibold text-sm text-text-primary">
-                {clientProfile ? ACTIVITY_LEVEL_LABELS[clientProfile.activityLevel] : '--'}
-              </p>
-            </div>
-          </div>
-
-          <Link
-            to="/portal/profile"
-            className="mt-6 inline-flex items-center gap-1.5 text-xs font-semibold text-brand hover:text-brand-hover transition-colors"
-          >
-            View full profile &rarr;
-          </Link>
-        </motion.div>
-
+        <ProfileDetailsWidget
+          presentation="client"
+          profile={clientProfile}
+          units={{ weightUnit, heightUnit }}
+          headingId="profile-details-heading"
+          className="h-full"
+          footer={
+            <Link
+              to="/portal/profile"
+              className="text-sm font-medium text-primary hover:underline"
+            >
+              View full profile &rarr;
+            </Link>
+          }
+        />
       </div>
 
       {isPostMvp && (
-        <ReviewCallScheduler onOpenChange={setBookingReview} open={bookingReview} />
+        <ReviewCallScheduler
+          onOpenChange={setBookingReview}
+          open={bookingReview}
+        />
       )}
 
       {isPostMvp && showStartCTA && (
         <div className="mt-8 flex justify-center sm:justify-start">
-          <button
+          <Button
             type="button"
             onClick={handleStartWorkout}
-            className="inline-flex items-center gap-2 text-base font-semibold text-white bg-brand hover:bg-brand-hover px-6 min-h-12 rounded-control shadow-sm hover:shadow transition-all"
+            variant="default"
+            size="lg"
+            className="shadow-sm hover:shadow"
           >
             Start today's workout
             <Play size={16} className="fill-current" aria-hidden="true" />
-          </button>
+          </Button>
         </div>
       )}
     </div>

@@ -67,7 +67,7 @@ export function FoodLibrary() {
             <Button
               size="sm"
               onClick={openCreate}
-              className="ml-auto bg-brand text-brand-foreground shadow-sm hover:bg-brand-hover"
+              className="ml-auto bg-primary text-primary-foreground shadow-sm hover:bg-primary-hover"
             >
               <Plus size={16} /> Add food
             </Button>

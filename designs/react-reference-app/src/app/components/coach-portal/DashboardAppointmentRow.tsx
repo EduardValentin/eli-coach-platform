@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { DateTimeLabel } from '../DateTimeLabel';
 import type { AppointmentTime } from './appointment';
 
 export function DashboardAppointmentRow({
@@ -19,10 +20,9 @@ export function DashboardAppointmentRow({
           <p className="font-semibold text-sm text-foreground">{attendeeName}</p>
           {badges}
         </div>
-        <p className="text-xs text-muted-foreground mt-0.5">
-          <span className="whitespace-nowrap">{when.date}</span> at{' '}
-          <span className="whitespace-nowrap">{when.time}</span>
-        </p>
+        <div className="mt-0.5">
+          <DateTimeLabel startsAt={when.startsAt} timeZone={when.timeZone} />
+        </div>
       </div>
       {action}
     </div>

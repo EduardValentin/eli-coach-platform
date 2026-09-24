@@ -4,6 +4,9 @@ import { Droplet, Plus, X, Trash2 } from 'lucide-react';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { BrandCalendar } from '../../components/BrandCalendar';
 import { ToggleChip } from '../../components/ToggleChip';
+import { Button } from '../../components/ui/button';
+import { ClientWidget } from '../../components/client-portal/ClientWidget';
+import { CyclePhaseWidget } from '../../components/CyclePhaseWidget';
 import {
   useCycle,
   CYCLE_SYMPTOMS,
@@ -14,11 +17,41 @@ import {
 import { toast } from 'sonner';
 import { showUndoToast } from '../../utils/showUndoToast';
 
-const FLOW_OPTIONS: { value: FlowIntensity; label: string; color: string; softColor: string; onColor: string }[] = [
-  { value: 'light',    label: 'Light',    color: 'var(--flow-light)',    softColor: 'var(--flow-light-soft)', onColor: 'var(--flow-light-foreground)' },
-  { value: 'medium',   label: 'Medium',   color: 'var(--flow-medium)',   softColor: 'var(--flow-medium-soft)', onColor: 'var(--flow-medium-foreground)' },
-  { value: 'heavy',    label: 'Heavy',    color: 'var(--flow-heavy)',    softColor: 'var(--flow-heavy-soft)', onColor: 'var(--flow-heavy-foreground)' },
-  { value: 'spotting', label: 'Spotting', color: 'var(--flow-spotting)', softColor: 'var(--flow-spotting-soft)', onColor: 'var(--flow-spotting-foreground)' },
+const FLOW_OPTIONS: {
+  value: FlowIntensity;
+  label: string;
+  color: string;
+  softColor: string;
+  onColor: string;
+}[] = [
+  {
+    value: 'light',
+    label: 'Light',
+    color: 'var(--flow-light)',
+    softColor: 'var(--flow-light-soft)',
+    onColor: 'var(--flow-light-foreground)',
+  },
+  {
+    value: 'medium',
+    label: 'Medium',
+    color: 'var(--flow-medium)',
+    softColor: 'var(--flow-medium-soft)',
+    onColor: 'var(--flow-medium-foreground)',
+  },
+  {
+    value: 'heavy',
+    label: 'Heavy',
+    color: 'var(--flow-heavy)',
+    softColor: 'var(--flow-heavy-soft)',
+    onColor: 'var(--flow-heavy-foreground)',
+  },
+  {
+    value: 'spotting',
+    label: 'Spotting',
+    color: 'var(--flow-spotting)',
+    softColor: 'var(--flow-spotting-soft)',
+    onColor: 'var(--flow-spotting-foreground)',
+  },
 ];
 
 function toISO(d: Date): string {
@@ -27,29 +60,45 @@ function toISO(d: Date): string {
 
 const DELETE_THRESHOLD = -80;
 
-function SwipeableLogEntry({ entry, onRemove }: { entry: PeriodLogEntry & { recordId: string }; onRemove: (id: string) => void }) {
+function SwipeableLogEntry({
+  entry,
+  onRemove,
+}: {
+  entry: PeriodLogEntry & { recordId: string };
+  onRemove: (id: string) => void;
+}) {
   const x = useMotionValue(0);
   const deleteOpacity = useTransform(x, [-100, -60, 0], [1, 0.8, 0]);
   const touchStartRef = useRef({ x: 0, y: 0 });
   const isDragging = useRef(false);
 
-  const flowOpt = FLOW_OPTIONS.find(f => f.value === entry.flow);
+  const flowOpt = FLOW_OPTIONS.find((f) => f.value === entry.flow);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    touchStartRef.current = {
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY,
+    };
     isDragging.current = false;
   }, []);
 
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    const dx = e.touches[0].clientX - touchStartRef.current.x;
-    const dy = e.touches[0].clientY - touchStartRef.current.y;
-    if (!isDragging.current && Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
-      isDragging.current = true;
-    }
-    if (isDragging.current) {
-      x.set(Math.min(0, dx));
-    }
-  }, [x]);
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      const dx = e.touches[0].clientX - touchStartRef.current.x;
+      const dy = e.touches[0].clientY - touchStartRef.current.y;
+      if (
+        !isDragging.current &&
+        Math.abs(dx) > Math.abs(dy) &&
+        Math.abs(dx) > 10
+      ) {
+        isDragging.current = true;
+      }
+      if (isDragging.current) {
+        x.set(Math.min(0, dx));
+      }
+    },
+    [x],
+  );
 
   const handleTouchEnd = useCallback(() => {
     if (x.get() < DELETE_THRESHOLD) {
@@ -87,18 +136,30 @@ function SwipeableLogEntry({ entry, onRemove }: { entry: PeriodLogEntry & { reco
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <p className="font-semibold text-xs lg:text-sm text-text-primary">
-                {new Date(entry.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                {new Date(entry.date + 'T00:00:00').toLocaleDateString(
+                  'en-US',
+                  { month: 'short', day: 'numeric', year: 'numeric' },
+                )}
               </p>
               <span
                 className="text-[9px] lg:text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full"
-                style={{ backgroundColor: flowOpt?.softColor ?? 'var(--flow-light-soft)', color: 'var(--text-primary)' }}
+                style={{
+                  backgroundColor:
+                    flowOpt?.softColor ?? 'var(--flow-light-soft)',
+                  color: 'var(--text-primary)',
+                }}
               >
                 {entry.flow}
               </span>
             </div>
             {entry.symptoms.length > 0 && (
               <p className="text-caption lg:text-xs text-text-secondary mt-0.5">
-                {entry.symptoms.map(s => CYCLE_SYMPTOMS.find(cs => cs.value === s)?.label ?? s).join(', ')}
+                {entry.symptoms
+                  .map(
+                    (s) =>
+                      CYCLE_SYMPTOMS.find((cs) => cs.value === s)?.label ?? s,
+                  )
+                  .join(', ')}
               </p>
             )}
           </div>
@@ -117,7 +178,8 @@ function SwipeableLogEntry({ entry, onRemove }: { entry: PeriodLogEntry & { reco
 }
 
 export function ClientCycleTracker() {
-  const { clientPhase, clientPeriodRecords, logPeriodDay, removePeriodLog } = useCycle();
+  const { clientPhase, clientPeriodRecords, logPeriodDay, removePeriodLog } =
+    useCycle();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [flow, setFlow] = useState<FlowIntensity>('medium');
   const [symptoms, setSymptoms] = useState<CycleSymptom[]>([]);
@@ -139,7 +201,7 @@ export function ClientCycleTracker() {
     if (!selectedDate) return undefined;
     const iso = toISO(selectedDate);
     for (const record of clientPeriodRecords) {
-      const found = record.entries.find(e => e.date === iso);
+      const found = record.entries.find((e) => e.date === iso);
       if (found) return found;
     }
     return undefined;
@@ -160,8 +222,8 @@ export function ClientCycleTracker() {
     if (date) {
       const iso = toISO(date);
       const existing = clientPeriodRecords
-        .flatMap(r => r.entries)
-        .find(e => e.date === iso);
+        .flatMap((r) => r.entries)
+        .find((e) => e.date === iso);
       if (existing) {
         setFlow(existing.flow);
         setSymptoms([...existing.symptoms]);
@@ -175,13 +237,23 @@ export function ClientCycleTracker() {
   };
 
   const toggleSymptom = (s: CycleSymptom) => {
-    setSymptoms(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]);
+    setSymptoms((prev) =>
+      prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s],
+    );
   };
 
   const handleLog = () => {
     if (!selectedDate) return;
-    logPeriodDay('client-1', toISO(selectedDate), flow, symptoms, notes || undefined);
-    toast.success(`Period logged for ${selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`);
+    logPeriodDay(
+      'client-1',
+      toISO(selectedDate),
+      flow,
+      symptoms,
+      notes || undefined,
+    );
+    toast.success(
+      `Period logged for ${selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
+    );
     setSelectedDate(undefined);
     setSymptoms([]);
     setNotes('');
@@ -189,17 +261,22 @@ export function ClientCycleTracker() {
 
   const handleRemove = (entryId: string) => {
     const entry = clientPeriodRecords
-      .flatMap(r => r.entries)
-      .find(e => e.id === entryId);
+      .flatMap((r) => r.entries)
+      .find((e) => e.id === entryId);
     if (!entry) return;
     removePeriodLog(entryId);
     showUndoToast({
       message: 'Log entry removed',
-      onUndo: () => logPeriodDay('client-1', entry.date, entry.flow, entry.symptoms, entry.notes),
+      onUndo: () =>
+        logPeriodDay(
+          'client-1',
+          entry.date,
+          entry.flow,
+          entry.symptoms,
+          entry.notes,
+        ),
     });
   };
-
-  const PhaseIcon = Droplet;
 
   return (
     <div className="w-full max-w-5xl mx-auto">
@@ -210,45 +287,28 @@ export function ClientCycleTracker() {
 
       {/* Phase Summary */}
       {clientPhase && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 mb-8 flex items-center gap-5"
+        <CyclePhaseWidget
+          presentation="client"
+          phase={clientPhase}
+          headingId="phase-summary-heading"
+          className="mb-8"
         >
-          <div
-            className="w-14 h-14 rounded-full flex items-center justify-center shrink-0"
-            style={{ backgroundColor: clientPhase.phaseSoftColor, color: clientPhase.phaseColor }}
-          >
-            <PhaseIcon size={24} strokeWidth={2.5} />
-          </div>
-          <div>
-            <div className="flex items-center gap-3">
-              <h2 className="font-serif text-lg lg:text-xl font-semibold" style={{ color: clientPhase.phaseColor }}>
-                {clientPhase.phaseName} Phase
-              </h2>
-              <span className="text-xs font-bold text-text-secondary tracking-widest uppercase">
-                Day {clientPhase.dayInCycle}
-              </span>
-            </div>
-            <p className="text-sm text-text-secondary mt-1 font-medium">
-              {clientPhase.phase === 'menstrual' && 'Focus on iron-rich foods and gentle movement.'}
-              {clientPhase.phase === 'follicular' && 'Energy is rising. Great time to increase intensity.'}
-              {clientPhase.phase === 'ovulatory' && 'Peak energy. Push your training and eat lighter.'}
-              {clientPhase.phase === 'luteal' && 'Prioritize complex carbs and recovery. Listen to your body.'}
-            </p>
-          </div>
-        </motion.div>
+          <p className="text-sm text-text-secondary mt-2 font-medium">
+            {clientPhase.phase === 'menstrual' &&
+              'Focus on iron-rich foods and gentle movement.'}
+            {clientPhase.phase === 'follicular' &&
+              'Energy is rising. Great time to increase intensity.'}
+            {clientPhase.phase === 'ovulatory' &&
+              'Peak energy. Push your training and eat lighter.'}
+            {clientPhase.phase === 'luteal' &&
+              'Prioritize complex carbs and recovery. Listen to your body.'}
+          </p>
+        </CyclePhaseWidget>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
         {/* Calendar */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-white p-6 lg:p-8 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
-        >
-          <h2 className="font-serif text-lg lg:text-xl text-text-primary font-semibold mb-6">Your Calendar</h2>
+        <ClientWidget eyebrow="Your calendar" headingId="calendar-heading">
           <BrandCalendar
             mode="single"
             selected={selectedDate}
@@ -258,7 +318,8 @@ export function ClientCycleTracker() {
               period: (date) => periodDates.has(toISO(date)),
             }}
             modifiersClassNames={{
-              period: 'bg-cycle-menstrual/10 text-brand font-semibold hover:bg-cycle-menstrual/20',
+              period:
+                'bg-cycle-menstrual/10 text-brand font-semibold hover:bg-cycle-menstrual/20',
             }}
           />
 
@@ -276,36 +337,42 @@ export function ClientCycleTracker() {
               <span>Selected</span>
             </div>
           </div>
-        </motion.div>
+        </ClientWidget>
 
         {/* Log Panel */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="bg-white p-6 lg:p-8 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 self-start"
+        <ClientWidget
+          eyebrow="Log period"
+          headingId="log-period-heading"
+          hero={
+            selectedDate
+              ? selectedDate.toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                })
+              : undefined
+          }
+          className="self-start"
+          action={
+            selectedDate && (
+              <button
+                aria-label="Clear selected date"
+                onClick={() => setSelectedDate(undefined)}
+                className="text-text-secondary hover:text-text-secondary transition-colors"
+              >
+                <X size={18} />
+              </button>
+            )
+          }
         >
           {selectedDate ? (
-            <div>
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="font-serif text-lg lg:text-xl text-text-primary font-semibold">
-                  {selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                </h2>
-                <button
-                  onClick={() => setSelectedDate(undefined)}
-                  className="text-text-secondary hover:text-text-secondary transition-colors"
-                >
-                  <X size={18} />
-                </button>
-              </div>
-
+            <div className="mt-4">
               {/* Flow intensity */}
               <div className="mb-6">
                 <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3 block">
                   Flow Intensity
                 </label>
                 <div className="grid grid-cols-2 gap-2">
-                  {FLOW_OPTIONS.map(opt => (
+                  {FLOW_OPTIONS.map((opt) => (
                     <button
                       key={opt.value}
                       onClick={() => setFlow(opt.value)}
@@ -314,7 +381,11 @@ export function ClientCycleTracker() {
                           ? 'shadow-md'
                           : 'bg-neutral-50 text-text-secondary hover:bg-neutral-100 border border-neutral-100'
                       }`}
-                      style={flow === opt.value ? { backgroundColor: opt.color, color: opt.onColor } : undefined}
+                      style={
+                        flow === opt.value
+                          ? { backgroundColor: opt.color, color: opt.onColor }
+                          : undefined
+                      }
                     >
                       {opt.label}
                     </button>
@@ -328,7 +399,10 @@ export function ClientCycleTracker() {
                   Symptoms
                 </label>
                 <div className="flex flex-wrap gap-2">
-                  {(symptomsExpanded ? CYCLE_SYMPTOMS : CYCLE_SYMPTOMS.slice(0, VISIBLE_SYMPTOMS_COUNT)).map(s => (
+                  {(symptomsExpanded
+                    ? CYCLE_SYMPTOMS
+                    : CYCLE_SYMPTOMS.slice(0, VISIBLE_SYMPTOMS_COUNT)
+                  ).map((s) => (
                     <ToggleChip
                       key={s.value}
                       pressed={symptoms.includes(s.value)}
@@ -338,16 +412,18 @@ export function ClientCycleTracker() {
                     </ToggleChip>
                   ))}
                   {CYCLE_SYMPTOMS.length > VISIBLE_SYMPTOMS_COUNT && (
-                    <button
+                    <Button
                       type="button"
-                      onClick={() => setSymptomsExpanded(expanded => !expanded)}
+                      onClick={() =>
+                        setSymptomsExpanded((expanded) => !expanded)
+                      }
                       aria-expanded={symptomsExpanded}
-                      className="min-h-10 px-3 rounded-control text-xs font-semibold text-text-primary bg-white border border-neutral-200 hover:border-brand/40 transition-colors"
+                      variant="outline"
                     >
                       {symptomsExpanded
                         ? 'Show less'
                         : `+${CYCLE_SYMPTOMS.length - VISIBLE_SYMPTOMS_COUNT} more`}
-                    </button>
+                    </Button>
                   )}
                 </div>
               </div>
@@ -359,49 +435,53 @@ export function ClientCycleTracker() {
                 </label>
                 <textarea
                   value={notes}
-                  onChange={e => setNotes(e.target.value)}
+                  onChange={(e) => setNotes(e.target.value)}
                   placeholder="How are you feeling today?"
                   className="w-full border border-neutral-200 rounded-control p-3 min-h-[80px] focus:outline-none transition-colors text-sm resize-none"
                 />
               </div>
 
-              <button
+              <Button
                 onClick={handleLog}
-                className="w-full py-3 bg-brand text-white text-sm font-semibold rounded-control hover:bg-brand-hover transition-colors shadow-md flex items-center justify-center gap-2"
+                variant="default"
+                size="lg"
+                className="w-full"
               >
                 <Plus size={16} />
                 {existingEntry ? 'Update Log' : 'Log Period'}
-              </button>
+              </Button>
             </div>
           ) : (
             <div className="text-center py-8">
               <div className="w-16 h-16 rounded-full bg-cycle-menstrual/10 text-cycle-menstrual flex items-center justify-center mx-auto mb-4">
                 <Droplet size={28} />
               </div>
-              <h3 className="font-serif text-lg text-text-primary mb-2">Log a Period Day</h3>
               <p className="text-sm text-text-secondary max-w-xs mx-auto">
-                Select a date on the calendar to log your flow, symptoms, and notes.
+                Select a date on the calendar to log your flow, symptoms, and
+                notes.
               </p>
             </div>
           )}
-        </motion.div>
+        </ClientWidget>
       </div>
 
       {/* Recent Logs */}
       {recentEntries.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="mt-8 bg-white p-6 lg:p-8 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
+        <ClientWidget
+          eyebrow="Recent logs"
+          headingId="recent-logs-heading"
+          className="mt-8"
         >
-          <h2 className="font-serif text-lg lg:text-xl text-text-primary font-semibold mb-4 lg:mb-6">Recent Logs</h2>
           <div className="space-y-3">
-            {recentEntries.map(entry => (
-              <SwipeableLogEntry key={entry.id} entry={entry} onRemove={handleRemove} />
+            {recentEntries.map((entry) => (
+              <SwipeableLogEntry
+                key={entry.id}
+                entry={entry}
+                onRemove={handleRemove}
+              />
             ))}
           </div>
-        </motion.div>
+        </ClientWidget>
       )}
     </div>
   );

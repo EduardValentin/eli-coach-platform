@@ -14,8 +14,8 @@ const tabsListVariants = cva(
   {
     variants: {
       variant: {
-        default: "h-9 rounded-control p-[3px]",
-        segmented: `h-auto max-w-full flex-wrap gap-1 rounded-card p-[3px] ${PAIRS_A_FOURTH_TRIGGER_BELOW_SM}`,
+        default: "h-9 rounded-compact p-[3px]",
+        segmented: `h-auto max-w-full flex-wrap gap-1 rounded-compact p-[3px] ${PAIRS_A_FOURTH_TRIGGER_BELOW_SM}`,
       },
     },
     defaultVariants: {
@@ -25,13 +25,12 @@ const tabsListVariants = cva(
 );
 
 const tabsTriggerVariants = cva(
-  "data-[state=active]:bg-card dark:data-[state=active]:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring dark:data-[state=active]:border-input dark:data-[state=active]:bg-input/30 text-foreground dark:text-muted-foreground inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-control border border-transparent px-2 py-1 text-sm font-medium whitespace-nowrap transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "data-[state=active]:bg-active-surface data-[state=active]:text-primary-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring text-foreground hover:text-primary inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-field border border-transparent px-2 py-1 text-sm font-medium whitespace-nowrap transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
         default: "",
-        segmented:
-          "h-auto flex-auto px-5 py-2.5 font-semibold data-[state=active]:shadow-card",
+        segmented: "h-auto flex-auto px-5 py-2.5 font-semibold",
       },
     },
     defaultVariants: {

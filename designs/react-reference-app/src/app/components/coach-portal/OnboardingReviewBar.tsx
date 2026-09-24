@@ -12,12 +12,12 @@ function flaggedCountLabel(count: number): string {
 export function OnboardingReviewBar({
   flagged,
   onSend,
-  onDone,
+  onCancel,
   onApprove,
 }: {
   flagged: readonly string[];
   onSend: (note: string) => void;
-  onDone: () => void;
+  onCancel: () => void;
   onApprove?: () => void;
 }) {
   const noteId = useId();
@@ -42,7 +42,11 @@ export function OnboardingReviewBar({
           {flaggedCountLabel(flagged.length)}
         </p>
         <div className="flex flex-col gap-3 sm:flex-row-reverse">
-          {onApprove && <Button onClick={onApprove}>Approve answers</Button>}
+          {onApprove && (
+            <Button variant="default" onClick={onApprove}>
+              Approve answers
+            </Button>
+          )}
           <Button
             disabled={!ready}
             variant="outline"
@@ -50,8 +54,8 @@ export function OnboardingReviewBar({
           >
             Ask for more details
           </Button>
-          <Button variant="outline" onClick={onDone}>
-            Done
+          <Button variant="ghost" onClick={onCancel}>
+            Cancel
           </Button>
         </div>
       </div>

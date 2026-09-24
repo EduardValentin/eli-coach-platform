@@ -1,13 +1,39 @@
 import { useState } from 'react';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { motion } from 'motion/react';
-import { UserX, ArrowRight, ShieldAlert } from 'lucide-react';
-import { Link } from 'react-router';
-import { Input } from '../../components/ui/input';
-import { Label } from '../../components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
+import { UserX, ArrowRight, ShieldAlert, Users } from 'lucide-react';
+import { Link, useNavigate, useSearchParams } from 'react-router';
+import { Button, buttonVariants } from '../../components/ui/button';
+import { cn } from '../../components/ui/utils';
+import { RowActionButton } from '../../components/RowActionButton';
+import { ConfirmDialog } from '../../components/ui/confirm-dialog';
+import { Badge } from '../../components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+} from '../../components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '../../components/ui/table';
+import { SearchField } from '../../components/SearchField';
+import { EmptyState } from '../../components/EmptyState';
+import { SortableTableHead } from '../../components/SortableTableHead';
 import { useClientProfile } from '../../context/ClientProfileContext';
-import { useTraining, subscriptionTermLabel } from '../../context/TrainingContext';
+import {
+  useTraining,
+  subscriptionTermLabel,
+} from '../../context/TrainingContext';
 import {
   DEMO_JOURNEY_CALL_ID,
   useClientJourneys,
@@ -21,16 +47,29 @@ import {
   clientStatus,
   clientStatusNamed,
   ONBOARDING_STATUS_LABELS,
-  type ClientStatus,
-  type ClientStatusLabel,
 } from '../../domain/clientStatus';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { bundleLengthLabel } from '../../domain/bundles';
-import { getInitials } from '../../utils/clientHelpers';
+import { getInitials, trainingClientIdFor } from '../../utils/clientHelpers';
 import { ClientStatusBadge } from '../../components/coach-portal/ClientStatusBadge';
 import { journeyCallIdForClient } from '../../utils/journeyLabels';
-
-type RosterStatus = Extract<ClientStatusLabel, 'Active' | 'Inactive'>;
+import {
+  countsByStatus,
+  defaultRosterSortDirectionFor,
+  emptyRosterMessage,
+  hasActiveRosterFilters,
+  parseRosterSortDirection,
+  parseRosterSortKey,
+  parseRosterStatus,
+  rowsMatching,
+  sortRows,
+  type RosterRow,
+  type RosterSelection,
+  type RosterSort,
+  type RosterSortKey,
+  type RosterStatus,
+  type RosterStatusOption,
+} from '../../utils/clientRosterListing';
 
 type RosterClient = {
   id: string;
@@ -41,35 +80,61 @@ type RosterClient = {
 };
 
 const MOCK_CLIENTS: RosterClient[] = [
-  { id: 'c1', name: 'Jane Doe', email: 'jane@example.com', status: 'Active', joinDate: 'Oct 01, 2025' },
-  { id: 'c2', name: 'Jessica Alba', email: 'jessica@example.com', status: 'Active', joinDate: 'Nov 15, 2025' },
-  { id: 'c3', name: 'Emma Stone', email: 'emma@example.com', status: 'Active', joinDate: 'Dec 05, 2025' },
-  { id: 'c4', name: 'Sarah Jenkins', email: 'sarah@example.com', status: 'Inactive', joinDate: 'Jan 10, 2025' },
-  { id: 'c5', name: 'Mia Thermopolis', email: 'mia@example.com', status: 'Inactive', joinDate: 'Mar 22, 2025' },
+  {
+    id: 'c1',
+    name: 'Jane Doe',
+    email: 'jane@example.com',
+    status: 'Active',
+    joinDate: '2025-10-01',
+  },
+  {
+    id: 'c2',
+    name: 'Jessica Alba',
+    email: 'jessica@example.com',
+    status: 'Active',
+    joinDate: '2025-11-15',
+  },
+  {
+    id: 'c3',
+    name: 'Emma Stone',
+    email: 'emma@example.com',
+    status: 'Active',
+    joinDate: '2025-12-05',
+  },
+  {
+    id: 'c4',
+    name: 'Sarah Jenkins',
+    email: 'sarah@example.com',
+    status: 'Inactive',
+    joinDate: '2025-01-10',
+  },
+  {
+    id: 'c5',
+    name: 'Mia Thermopolis',
+    email: 'mia@example.com',
+    status: 'Inactive',
+    joinDate: '2025-03-22',
+  },
 ];
 
-const FILTERS = ['All', 'Active', 'Inactive', 'Onboarding'] as const;
+const STATUS_GROUPS: {
+  label: string;
+  options: readonly RosterStatusOption[];
+}[] = [
+  { label: 'Onboarding', options: ONBOARDING_STATUS_LABELS },
+  { label: 'Active', options: ['Active'] },
+  { label: 'Inactive', options: ['Cancelled', 'Inactive'] },
+];
 
-type RosterFilter = (typeof FILTERS)[number];
-
+const STATUS_PARAM = 'status';
+const QUERY_PARAM = 'q';
+const SORT_PARAM = 'sort';
+const DIRECTION_PARAM = 'dir';
+const DEFAULT_SORT_KEY: RosterSortKey = 'joined';
 const SEARCH_FIELD_ID = 'clients-search';
 
-function parseRosterFilter(value: string): RosterFilter {
-  return FILTERS.find((filter) => filter === value) ?? 'All';
-}
-
 function hasStarted(journey: ClientJourney): boolean {
-  return !isBeforeStage(journey.stage, 'paid');
-}
-
-function matchesFilter(status: ClientStatus, filter: RosterFilter): boolean {
-  if (filter === 'All') return true;
-  if (filter === 'Onboarding') {
-    return ONBOARDING_STATUS_LABELS.includes(status.label);
-  }
-  if (filter === 'Active') return status.label === 'Active';
-
-  return status.label === 'Cancelled' || status.label === 'Inactive';
+  return !isBeforeStage(journey.stage, 'invited');
 }
 
 function journeyBundleLabel(journey: ClientJourney): string {
@@ -78,123 +143,371 @@ function journeyBundleLabel(journey: ClientJourney): string {
     : '—';
 }
 
-function journeyJoinDate(journey: ClientJourney): string {
-  return journey.subscription
-    ? format(journey.subscription.purchasedAt, 'MMM dd, yyyy')
-    : '—';
-}
-
 function journeyName(journey: ClientJourney): string {
   return `${journey.identity.firstName} ${journey.identity.lastName}`.trim();
 }
 
-function rowActionLabel(journey: ClientJourney, name: string): string {
-  return awaitsCoachReview(journey.stage)
+function rowActionLabel(name: string, awaitsReview: boolean): string {
+  return awaitsReview
     ? `Review onboarding for ${name}`
     : `View details for ${name}`;
 }
 
-function JourneyRow({ journey }: { journey: ClientJourney }) {
+function journeyDetailPath(journey: ClientJourney): string {
+  return journey.callId === DEMO_JOURNEY_CALL_ID
+    ? '/coach/clients/c1'
+    : `/coach/clients/${journey.callId}`;
+}
+
+function journeyRosterRow(journey: ClientJourney, now: Date): RosterRow {
   const name = journeyName(journey);
-  const actionLabel = rowActionLabel(journey, name);
-  const detailPath =
-    journey.callId === DEMO_JOURNEY_CALL_ID
-      ? '/coach/clients/c1'
-      : `/coach/clients/${journey.callId}`;
+
+  return {
+    id: journey.callId,
+    name,
+    email: journey.identity.email,
+    status: clientStatus(journey, now),
+    bundleLabel: journeyBundleLabel(journey),
+    joinedAt: journey.subscription?.purchasedAt ?? null,
+    detailPath: journeyDetailPath(journey),
+    actionLabel: rowActionLabel(name, awaitsCoachReview(journey.stage)),
+  };
+}
+
+function mockRosterRow(
+  client: RosterClient,
+  avatarUrl: string | undefined,
+  bundleLabel: string,
+): RosterRow {
+  return {
+    id: client.id,
+    name: client.name,
+    email: client.email,
+    status: clientStatusNamed(client.status),
+    bundleLabel,
+    joinedAt: parseISO(client.joinDate),
+    detailPath: `/coach/clients/${client.id}`,
+    actionLabel: rowActionLabel(client.name, false),
+    avatarUrl,
+    terminable: { status: client.status },
+  };
+}
+
+function StatusFilter({
+  counts,
+  status,
+  onChoose,
+}: {
+  counts: Record<RosterStatusOption, number>;
+  status: RosterStatusOption;
+  onChoose: (option: RosterStatusOption) => void;
+}) {
+  return (
+    <Select
+      value={status}
+      onValueChange={(value) => onChoose(parseRosterStatus(value))}
+    >
+      <SelectTrigger aria-label="Status" size="sm" className="w-full sm:w-56">
+        <SelectValue>{status === 'all' ? 'All statuses' : status}</SelectValue>
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="all">
+          <span className="flex items-center gap-2">
+            All statuses <Badge variant="count">{counts.all}</Badge>
+          </span>
+        </SelectItem>
+        <SelectSeparator />
+        {STATUS_GROUPS.map((group) => (
+          <SelectGroup key={group.label}>
+            <SelectLabel>{group.label}</SelectLabel>
+            {group.options.map((option) => (
+              <SelectItem key={option} value={option}>
+                <span className="flex items-center gap-2">
+                  {option} <Badge variant="count">{counts[option]}</Badge>
+                </span>
+              </SelectItem>
+            ))}
+          </SelectGroup>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+function RosterAvatar({ row }: { row: RosterRow }) {
+  if (row.avatarUrl) {
+    return (
+      <img
+        src={row.avatarUrl}
+        alt=""
+        className="w-10 h-10 rounded-full object-cover shrink-0 border border-border/50"
+      />
+    );
+  }
 
   return (
-    <tr className="px-3 border-b border-neutral-50 rounded-field hover:bg-neutral-50/50 transition-colors group">
-      <td className="py-4 px-6">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-neutral-100 flex items-center justify-center font-serif text-text-primary font-semibold shrink-0">
-            {getInitials(name)}
-          </div>
-          <div>
-            <p className="font-semibold text-sm text-text-primary">{name}</p>
-            <p className="text-xs text-text-secondary mt-0.5">
-              {journey.identity.email}
-            </p>
-          </div>
-        </div>
-      </td>
-      <td className="py-4 px-6">
-        <ClientStatusBadge status={clientStatus(journey, new Date())} />
-      </td>
-      <td className="py-4 px-6 text-sm text-text-secondary font-medium">
-        {journeyBundleLabel(journey)}
-      </td>
-      <td className="py-4 px-6 text-sm text-text-secondary">
-        {journeyJoinDate(journey)}
-      </td>
-      <td className="py-4 px-6">
-        <div className="flex items-center justify-end gap-3">
-          <Link
-            to={detailPath}
-            aria-label={actionLabel}
-            className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white border border-neutral-200 text-text-secondary hover:bg-text-primary hover:text-white hover:border-text-primary transition-all"
-            title={actionLabel}
-          >
-            <ArrowRight size={14} aria-hidden="true" />
-          </Link>
-        </div>
-      </td>
-    </tr>
+    <div className="w-10 h-10 rounded-full bg-surface-quiet flex items-center justify-center font-serif text-text-primary font-semibold shrink-0">
+      {getInitials(row.name)}
+    </div>
   );
+}
+
+function RosterActions({
+  row,
+  onTerminate,
+}: {
+  row: RosterRow;
+  onTerminate: (row: RosterRow) => void;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <div>
+        {row.terminable &&
+          (row.terminable.status === 'Active' ? (
+            <RowActionButton
+              icon={ShieldAlert}
+              tone="destructive"
+              onClick={(event) => {
+                event.stopPropagation();
+                onTerminate(row);
+              }}
+              title="Terminate subscription"
+            >
+              Terminate
+            </RowActionButton>
+          ) : (
+            <RowActionButton
+              icon={UserX}
+              onClick={(event) => {
+                event.stopPropagation();
+                onTerminate(row);
+              }}
+              title="Remove from system"
+            >
+              Remove
+            </RowActionButton>
+          ))}
+      </div>
+
+      <Link
+        to={row.detailPath}
+        aria-label={row.actionLabel}
+        title={row.actionLabel}
+        onClick={(event) => event.stopPropagation()}
+        className={cn(
+          buttonVariants({ variant: 'outline', size: 'icon' }),
+          'opacity-0 hover:bg-text-primary hover:text-white hover:border-text-primary group-hover:opacity-100 focus-visible:opacity-100',
+        )}
+      >
+        <ArrowRight size={14} aria-hidden="true" />
+      </Link>
+    </div>
+  );
+}
+
+function RosterTableRow({
+  row,
+  onTerminate,
+}: {
+  row: RosterRow;
+  onTerminate: (row: RosterRow) => void;
+}) {
+  const navigate = useNavigate();
+  return (
+    <TableRow
+      className="group cursor-pointer"
+      onClick={() => navigate(row.detailPath)}
+    >
+      <TableCell>
+        <div className="flex items-center gap-3">
+          <RosterAvatar row={row} />
+          <div>
+            <p className="font-semibold text-sm text-text-primary">
+              {row.name}
+            </p>
+            <p className="text-xs text-text-secondary mt-0.5">{row.email}</p>
+          </div>
+        </div>
+      </TableCell>
+      <TableCell>
+        <ClientStatusBadge status={row.status} />
+      </TableCell>
+      <TableCell className="text-sm text-text-secondary font-medium">
+        {row.bundleLabel}
+      </TableCell>
+      <TableCell className="text-sm text-text-secondary">
+        {row.joinedAt ? format(row.joinedAt, 'MMM dd, yyyy') : '—'}
+      </TableCell>
+      <TableCell>
+        <RosterActions row={row} onTerminate={onTerminate} />
+      </TableCell>
+    </TableRow>
+  );
+}
+
+function emptyRosterCopy(
+  selection: RosterSelection,
+  totalRows: number,
+): { title: string; description: string } {
+  if (totalRows === 0 && !hasActiveRosterFilters(selection)) {
+    return {
+      title: 'No clients yet',
+      description: 'Clients appear here once they pay for a bundle.',
+    };
+  }
+
+  return {
+    title: 'No clients found',
+    description: emptyRosterMessage(selection),
+  };
+}
+
+function removalCopy(row: RosterRow): {
+  title: string;
+  description: string;
+  confirmLabel: string;
+} {
+  if (row.terminable?.status === 'Active') {
+    return {
+      title: `Terminate ${row.name}'s subscription?`,
+      description:
+        'She loses access to her program at the end of the current period. This cannot be undone.',
+      confirmLabel: 'Terminate',
+    };
+  }
+
+  return {
+    title: `Remove ${row.name}?`,
+    description:
+      'Her record is removed from your roster. This cannot be undone.',
+    confirmLabel: 'Remove',
+  };
 }
 
 export function ClientsList() {
   const [clients, setClients] = useState(MOCK_CLIENTS);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filter, setFilter] = useState<RosterFilter>('All');
+  const [pendingRemoval, setPendingRemoval] = useState<RosterRow | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
   const { getProfile } = useClientProfile();
   const { getClientActiveSubscription, getClientSubscriptions } = useTraining();
   const { journeys } = useClientJourneys();
+
+  const now = new Date();
 
   const startedJourneys = Object.values(journeys).filter(hasStarted);
   const startedCallIds = new Set(
     startedJourneys.map((journey) => journey.callId),
   );
 
-  const subClientId = (id: string) => (id === 'c1' ? 'client-1' : id);
-  const bundleLabel = (id: string) => {
-    const cid = subClientId(id);
-    const sub = getClientActiveSubscription(cid)
-      ?? [...getClientSubscriptions(cid)].sort((a, b) => (b.startDate || '').localeCompare(a.startDate || ''))[0];
-    return sub ? subscriptionTermLabel(sub) : '—';
+  const bundleLabelForClient = (id: string) => {
+    const subjectId = trainingClientIdFor(id);
+    const activeSubscription =
+      getClientActiveSubscription(subjectId) ??
+      [...getClientSubscriptions(subjectId)].sort((one, other) =>
+        (other.startDate || '').localeCompare(one.startDate || ''),
+      )[0];
+
+    return activeSubscription ? subscriptionTermLabel(activeSubscription) : '—';
   };
 
-  const matchesSearch = (name: string, email: string) => {
-    const needle = searchQuery.toLowerCase();
-    return (
-      name.toLowerCase().includes(needle) || email.toLowerCase().includes(needle)
-    );
-  };
-
-  const filteredClients = clients.filter(client => {
-    const callId = journeyCallIdForClient(client.id);
-    const hasJourney = callId !== null && startedCallIds.has(callId);
-
-    return (
-      !hasJourney &&
-      matchesFilter(clientStatusNamed(client.status), filter) &&
-      matchesSearch(client.name, client.email)
-    );
-  });
-
-  const filteredJourneys = startedJourneys.filter(
-    journey =>
-      matchesFilter(clientStatus(journey, new Date()), filter) &&
-      matchesSearch(journeyName(journey), journey.identity.email),
+  const journeyRows = startedJourneys.map((journey) =>
+    journeyRosterRow(journey, now),
   );
 
-  const rowCount = filteredClients.length + filteredJourneys.length;
+  const mockRows = clients
+    .filter((client) => {
+      const callId = journeyCallIdForClient(client.id);
+      return !(callId !== null && startedCallIds.has(callId));
+    })
+    .map((client) =>
+      mockRosterRow(
+        client,
+        getProfile(client.id)?.avatarUrl,
+        bundleLabelForClient(client.id),
+      ),
+    );
 
-  const handleRemoveClient = (id: string, name: string, status: RosterStatus) => {
-    const actionText = status === 'Active' ? 'terminate the subscription for' : 'remove';
-    if (window.confirm(`Are you sure you want to ${actionText} ${name}? This action cannot be undone.`)) {
-      setClients(prev => prev.filter(c => c.id !== id));
-    }
+  const rows: RosterRow[] = [...journeyRows, ...mockRows];
+
+  const status = parseRosterStatus(searchParams.get(STATUS_PARAM));
+  const query = searchParams.get(QUERY_PARAM) ?? '';
+  const sortKey = parseRosterSortKey(searchParams.get(SORT_PARAM));
+  const sort: RosterSort = {
+    key: sortKey,
+    direction: parseRosterSortDirection(
+      searchParams.get(DIRECTION_PARAM),
+      sortKey,
+    ),
   };
+
+  const selection: RosterSelection = { status, query };
+  const matchingRows = sortRows(rowsMatching(rows, selection), sort);
+  const counts = countsByStatus(rows, selection);
+  const emptyCopy = emptyRosterCopy(selection, rows.length);
+
+  const directionFor = (key: RosterSortKey) =>
+    sort.key === key ? sort.direction : defaultRosterSortDirectionFor(key);
+
+  const updateSearchParams = (edit: (params: URLSearchParams) => void) => {
+    const next = new URLSearchParams(searchParams);
+    edit(next);
+    setSearchParams(next, { replace: true });
+  };
+
+  const chooseStatus = (chosen: RosterStatusOption) => {
+    updateSearchParams((params) => {
+      if (chosen === 'all') params.delete(STATUS_PARAM);
+      else params.set(STATUS_PARAM, chosen);
+    });
+  };
+
+  const changeQuery = (value: string) => {
+    updateSearchParams((params) => {
+      if (value.length === 0) params.delete(QUERY_PARAM);
+      else params.set(QUERY_PARAM, value);
+    });
+  };
+
+  const chooseSort = (key: RosterSortKey) => {
+    const chosen: RosterSort =
+      key === sort.key
+        ? { key, direction: sort.direction === 'asc' ? 'desc' : 'asc' }
+        : { key, direction: defaultRosterSortDirectionFor(key) };
+
+    updateSearchParams((params) => {
+      if (chosen.key === DEFAULT_SORT_KEY) params.delete(SORT_PARAM);
+      else params.set(SORT_PARAM, chosen.key);
+
+      if (chosen.direction === defaultRosterSortDirectionFor(chosen.key)) {
+        params.delete(DIRECTION_PARAM);
+      } else {
+        params.set(DIRECTION_PARAM, chosen.direction);
+      }
+    });
+  };
+
+  const clearFilters = () => {
+    updateSearchParams((params) => {
+      params.delete(STATUS_PARAM);
+      params.delete(QUERY_PARAM);
+    });
+  };
+
+  const handleTerminate = (row: RosterRow) => {
+    if (!row.terminable) return;
+    setPendingRemoval(row);
+  };
+
+  const confirmRemoval = () => {
+    if (!pendingRemoval) return;
+
+    setClients((previous) =>
+      previous.filter((client) => client.id !== pendingRemoval.id),
+    );
+    setPendingRemoval(null);
+  };
+
+  const removal = pendingRemoval ? removalCopy(pendingRemoval) : null;
 
   return (
     <div className="w-full">
@@ -203,127 +516,105 @@ export function ClientsList() {
         subtitle="Manage your active roster and past client records."
       />
 
-      <Tabs
-        value={filter}
-        onValueChange={(value) => setFilter(parseRosterFilter(value))}
-        className="w-full"
-      >
-        <div className="mb-6 flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between xl:gap-8">
-          <TabsList aria-label="Show" variant="segmented">
-            {FILTERS.map((option) => (
-              <TabsTrigger key={option} variant="segmented" value={option}>
-                {option}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-
-          <div className="w-full xl:w-72 xl:shrink-0">
-            <Label className="sr-only" htmlFor={SEARCH_FIELD_ID}>
-              Search clients
-            </Label>
-            <Input
-              id={SEARCH_FIELD_ID}
-              type="search"
-              placeholder="Search by name or email"
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-            />
-          </div>
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+        <div className="grid w-full gap-3 sm:w-fit sm:max-w-full">
+          <StatusFilter
+            counts={counts}
+            status={status}
+            onChoose={chooseStatus}
+          />
         </div>
 
-        <TabsContent variant="segmented" value={filter}>
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 overflow-hidden"
-          >
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="px-3 border-b border-neutral-100 rounded-field bg-neutral-50/50">
-                    <th className="py-4 px-6 text-[10px] font-bold text-text-secondary uppercase tracking-widest">Client</th>
-                    <th className="py-4 px-6 text-[10px] font-bold text-text-secondary uppercase tracking-widest">Status</th>
-                    <th className="py-4 px-6 text-[10px] font-bold text-text-secondary uppercase tracking-widest">Bundle / Plan</th>
-                    <th className="py-4 px-6 text-[10px] font-bold text-text-secondary uppercase tracking-widest">Join Date</th>
-                    <th className="py-4 px-6 text-[10px] font-bold text-text-secondary uppercase tracking-widest text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredJourneys.map(journey => (
-                    <JourneyRow key={journey.callId} journey={journey} />
-                  ))}
-                  {filteredClients.map(client => {
-                      const profile = getProfile(client.id);
-                      const avatarUrl = profile?.avatarUrl;
-                      return (
-                      <tr key={client.id} className="px-3 border-b border-neutral-50 rounded-field hover:bg-neutral-50/50 transition-colors group">
-                        <td className="py-4 px-6">
-                          <div className="flex items-center gap-3">
-                            {avatarUrl ? (
-                              <img
-                                src={avatarUrl}
-                                alt=""
-                                className="w-10 h-10 rounded-full object-cover shrink-0 border border-neutral-100"
-                              />
-                            ) : (
-                              <div className="w-10 h-10 rounded-full bg-neutral-100 flex items-center justify-center font-serif text-text-primary font-semibold shrink-0">
-                                {getInitials(client.name)}
-                              </div>
-                            )}
-                            <div>
-                              <p className="font-semibold text-sm text-text-primary">{client.name}</p>
-                              <p className="text-xs text-text-secondary mt-0.5">{client.email}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="py-4 px-6">
-                          <ClientStatusBadge
-                            status={clientStatusNamed(client.status)}
-                          />
-                        </td>
-                        <td className="py-4 px-6 text-sm text-text-secondary font-medium">{bundleLabel(client.id)}</td>
-                        <td className="py-4 px-6 text-sm text-text-secondary">{client.joinDate}</td>
-                        <td className="py-4 px-6">
-                          <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                        
-                            <button 
-                              onClick={() => handleRemoveClient(client.id, client.name, client.status)}
-                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-control text-xs font-semibold transition-colors ${
-                                client.status === 'Active'
-                                  ? 'text-red-600 hover:bg-red-50'
-                                  : 'text-text-secondary hover:bg-neutral-100 hover:text-neutral-900'
-                              }`}
-                              title={client.status === 'Active' ? 'Terminate Subscription' : 'Remove from System'}
-                            >
-                              {client.status === 'Active' ? <ShieldAlert size={14} /> : <UserX size={14} />}
-                              {client.status === 'Active' ? 'Terminate' : 'Remove'}
-                            </button>
+        <div className="grid w-full gap-3 sm:w-fit sm:max-w-full">
+          <SearchField
+            id={SEARCH_FIELD_ID}
+            aria-label="Search clients"
+            placeholder="Search by name or email"
+            size="sm"
+            className="w-full sm:w-72"
+            value={query}
+            onChange={(event) => changeQuery(event.target.value)}
+          />
+        </div>
+      </div>
 
-                            <Link 
-                              to={`/coach/clients/${client.id}`}
-                              className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white border border-neutral-200 text-text-secondary hover:bg-text-primary hover:text-white hover:border-text-primary transition-all"
-                              title="View Details"
-                            >
-                              <ArrowRight size={14} />
-                            </Link>
-                          </div>
-                        </td>
-                      </tr>
-                      );
-                    })}
-                  {rowCount === 0 && (
-                    <tr>
-                      <td colSpan={5} className="py-12 text-center text-text-secondary text-sm">
-                        No clients found matching your criteria.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-              </motion.div>
-        </TabsContent>
-      </Tabs>
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50 overflow-hidden"
+      >
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <SortableTableHead
+                label="Client"
+                active={sort.key === 'name'}
+                direction={directionFor('name')}
+                onSort={() => chooseSort('name')}
+              />
+              <SortableTableHead
+                label="Status"
+                active={sort.key === 'status'}
+                direction={directionFor('status')}
+                onSort={() => chooseSort('status')}
+              />
+              <SortableTableHead
+                label="Bundle / Plan"
+                active={sort.key === 'bundle'}
+                direction={directionFor('bundle')}
+                onSort={() => chooseSort('bundle')}
+              />
+              <SortableTableHead
+                label="Join date"
+                active={sort.key === 'joined'}
+                direction={directionFor('joined')}
+                onSort={() => chooseSort('joined')}
+              />
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {matchingRows.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="p-0">
+                  <EmptyState
+                    icon={Users}
+                    title={emptyCopy.title}
+                    description={emptyCopy.description}
+                    action={
+                      hasActiveRosterFilters(selection) ? (
+                        <Button variant="outline" onClick={clearFilters}>
+                          Clear filters
+                        </Button>
+                      ) : undefined
+                    }
+                  />
+                </TableCell>
+              </TableRow>
+            ) : (
+              matchingRows.map((row) => (
+                <RosterTableRow
+                  key={row.id}
+                  row={row}
+                  onTerminate={handleTerminate}
+                />
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </motion.div>
+
+      <ConfirmDialog
+        open={pendingRemoval !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingRemoval(null);
+        }}
+        title={removal?.title ?? ''}
+        description={removal?.description}
+        confirmLabel={removal?.confirmLabel}
+        tone="destructive"
+        onConfirm={confirmRemoval}
+      />
     </div>
   );
 }

@@ -1,14 +1,31 @@
 import { useRef, ChangeEvent } from 'react';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { motion } from 'motion/react';
-import { User, Target, Flame, Utensils, FileText, Droplet, Camera, Trash2 } from 'lucide-react';
+import {
+  User,
+  FileText,
+  Camera,
+  ClipboardList,
+  Droplet,
+  Ruler,
+  Trash2,
+  Utensils,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { showUndoToast } from '../../utils/showUndoToast';
-import { useClientProfile, fullName, ACTIVITY_LEVEL_LABELS } from '../../context/ClientProfileContext';
+import {
+  useClientProfile,
+  fullName,
+  ACTIVITY_LEVEL_LABELS,
+} from '../../context/ClientProfileContext';
 import { useCycle } from '../../context/CycleContext';
 import { useUnitPreferences } from '../../context/UnitPreferencesContext';
 import { formatHeight, formatBodyWeight } from '../../utils/units';
 import { MeasurementsSection } from '../../components/client-portal/MeasurementsSection';
+import { ClientWidget } from '../../components/client-portal/ClientWidget';
+import { SectionEyebrow } from '../../components/SectionEyebrow';
+import { Reading } from '../../components/Reading';
+import { Button } from '../../components/ui/button';
 
 const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
 
@@ -67,6 +84,7 @@ export function ClientProfile() {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
+        aria-labelledby="profile-picture-heading"
         className="bg-white p-6 lg:p-8 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 mb-6 lg:mb-8 flex flex-col sm:flex-row items-center gap-6"
       >
         <div className="relative shrink-0">
@@ -84,8 +102,12 @@ export function ClientProfile() {
         </div>
 
         <div className="flex-1 min-w-0 text-center sm:text-left">
-          <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">Profile Picture</p>
-          <h2 className="font-serif text-xl lg:text-2xl text-text-primary mb-4">{fullName(clientProfile)}</h2>
+          <SectionEyebrow as="h2" className="mb-1" id="profile-picture-heading">
+            Profile Picture
+          </SectionEyebrow>
+          <p className="font-semibold text-xl lg:text-2xl text-text-primary mb-4">
+            {fullName(clientProfile)}
+          </p>
 
           <input
             ref={fileInputRef}
@@ -95,23 +117,23 @@ export function ClientProfile() {
             className="hidden"
           />
           <div className="flex flex-wrap justify-center sm:justify-start gap-3">
-            <button
+            <Button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="px-4 py-2.5 bg-text-primary text-white text-sm font-semibold rounded-control hover:bg-neutral-800 transition-colors flex items-center gap-2 shadow-md"
+              variant="default"
             >
               <Camera size={16} />
               {clientProfile.avatarUrl ? 'Change picture' : 'Upload picture'}
-            </button>
+            </Button>
             {clientProfile.avatarUrl && (
-              <button
+              <Button
                 type="button"
                 onClick={handleRemoveAvatar}
-                className="px-4 py-2.5 bg-white border border-neutral-200 text-text-secondary text-sm font-semibold rounded-control hover:bg-neutral-50 transition-colors flex items-center gap-2"
+                variant="outline"
               >
                 <Trash2 size={16} />
                 Remove
-              </button>
+              </Button>
             )}
           </div>
         </div>
@@ -119,123 +141,150 @@ export function ClientProfile() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
         {/* Basic info */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white p-6 lg:p-8 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
+        <ClientWidget
+          eyebrow="About you"
+          icon={
+            <User
+              aria-hidden="true"
+              className="text-brand-secondary"
+              size={18}
+            />
+          }
+          headingId="about-you-heading"
         >
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-card bg-brand/10 text-brand flex items-center justify-center">
-              <User size={18} strokeWidth={2.5} />
-            </div>
-            <h2 className="font-serif text-xl text-text-primary font-semibold">About You</h2>
+          <div className="space-y-4">
+            <Reading label="Full Name" value={fullName(clientProfile)} />
+            <Reading label="Email" value={clientProfile.email} />
+            <Reading label="Age" value={`${clientProfile.age} years`} />
+            <Reading label="Gender" value={clientProfile.gender} />
           </div>
-          <ProfileField label="Full Name" value={fullName(clientProfile)} />
-          <ProfileField label="Email" value={clientProfile.email} />
-          <ProfileField label="Age" value={`${clientProfile.age} years`} />
-          <ProfileField label="Gender" value={clientProfile.gender} />
-        </motion.div>
+        </ClientWidget>
 
         {/* Body metrics */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05 }}
-          className="bg-white p-6 lg:p-8 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
+        <ClientWidget
+          eyebrow="Body & goals"
+          icon={
+            <Ruler
+              aria-hidden="true"
+              className="text-brand-secondary"
+              size={18}
+            />
+          }
+          headingId="body-goals-heading"
         >
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-card bg-brand-secondary/10 text-brand-secondary flex items-center justify-center">
-              <Target size={18} strokeWidth={2.5} />
-            </div>
-            <h2 className="font-serif text-xl text-text-primary font-semibold">Body & Goals</h2>
+          <div className="space-y-4">
+            <Reading
+              label="Height"
+              value={formatHeight(clientProfile.heightCm, heightUnit)}
+            />
+            <Reading
+              label="Starting Weight / Current"
+              value={`${formatBodyWeight(clientProfile.startingWeightKg, weightUnit)} / ${formatBodyWeight(clientProfile.currentWeightKg, weightUnit)}`}
+            />
+            <Reading
+              label="Activity Level"
+              value={ACTIVITY_LEVEL_LABELS[clientProfile.activityLevel]}
+            />
+            <Reading label="Primary Goal" value={clientProfile.primaryGoal} />
           </div>
-          <ProfileField label="Height" value={formatHeight(clientProfile.heightCm, heightUnit)} />
-          <ProfileField
-            label="Starting Weight / Current"
-            value={`${formatBodyWeight(clientProfile.startingWeightKg, weightUnit)} / ${formatBodyWeight(clientProfile.currentWeightKg, weightUnit)}`}
-          />
-          <ProfileField label="Activity Level" value={ACTIVITY_LEVEL_LABELS[clientProfile.activityLevel]} />
-          <ProfileField label="Primary Goal" value={clientProfile.primaryGoal} />
-        </motion.div>
+        </ClientWidget>
 
         {/* Nutrition */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-white p-6 lg:p-8 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
+        <ClientWidget
+          eyebrow="Nutrition"
+          icon={
+            <Utensils
+              aria-hidden="true"
+              className="text-brand-secondary"
+              size={18}
+            />
+          }
+          headingId="profile-nutrition-heading"
         >
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-card bg-metric-energy-soft text-metric-energy flex items-center justify-center">
-              <Flame size={18} strokeWidth={2.5} />
-            </div>
-            <h2 className="font-serif text-xl text-text-primary font-semibold">Nutrition</h2>
+          <div className="space-y-4">
+            <Reading
+              label="BMR"
+              value={`${clientProfile.bmr.toLocaleString()} kcal`}
+            />
+            <Reading
+              label="Daily Target"
+              value={`${clientProfile.dailyCalories.toLocaleString()} kcal`}
+            />
+            <Reading
+              label="Macros"
+              value={`${clientProfile.proteinGrams}g Protein · ${clientProfile.carbsGrams}g Carbs · ${clientProfile.fatsGrams}g Fats`}
+            />
           </div>
-          <ProfileField label="BMR" value={`${clientProfile.bmr.toLocaleString()} kcal`} />
-          <ProfileField label="Daily Target" value={`${clientProfile.dailyCalories.toLocaleString()} kcal`} />
-          <ProfileField
-            label="Macros"
-            value={`${clientProfile.proteinGrams}g Protein · ${clientProfile.carbsGrams}g Carbs · ${clientProfile.fatsGrams}g Fats`}
-          />
-        </motion.div>
+        </ClientWidget>
 
         {/* Dietary restrictions */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="bg-white p-6 lg:p-8 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
+        <ClientWidget
+          eyebrow="Dietary restrictions"
+          icon={
+            <ClipboardList
+              aria-hidden="true"
+              className="text-brand-secondary"
+              size={18}
+            />
+          }
+          headingId="dietary-restrictions-heading"
         >
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-card bg-neutral-100 text-text-secondary flex items-center justify-center">
-              <Utensils size={18} strokeWidth={2.5} />
-            </div>
-            <h2 className="font-serif text-xl text-text-primary font-semibold">Dietary Restrictions</h2>
-          </div>
           <p className="text-sm text-text-secondary leading-relaxed">
             {clientProfile.dietaryRestrictions || 'None on file.'}
           </p>
-        </motion.div>
+        </ClientWidget>
 
         {/* Menstrual profile */}
         {menstrualProfile && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="bg-white p-6 lg:p-8 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 lg:col-span-2"
-          >
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-card bg-cycle-menstrual/10 text-cycle-menstrual flex items-center justify-center">
-                <Droplet size={18} strokeWidth={2.5} />
-              </div>
-              <h2 className="font-serif text-xl text-text-primary font-semibold">Menstrual Health</h2>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8">
-              <ProfileField
-                label="Cycle"
-                value={menstrualProfile.regularity === 'regular' ? 'Regular' : 'Irregular'}
+          <ClientWidget
+            eyebrow="Menstrual health"
+            icon={
+              <Droplet
+                aria-hidden="true"
+                className="text-brand-secondary"
+                size={18}
               />
-              <ProfileField
+            }
+            headingId="menstrual-health-heading"
+            className="lg:col-span-2"
+          >
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
+              <Reading
+                label="Cycle"
+                value={
+                  menstrualProfile.regularity === 'regular'
+                    ? 'Regular'
+                    : 'Irregular'
+                }
+              />
+              <Reading
                 label="Average Cycle Length"
                 value={`${menstrualProfile.averageCycleLength} days`}
               />
-              <ProfileField
+              <Reading
                 label="Average Period Length"
                 value={`${menstrualProfile.averagePeriodLength} days`}
               />
-              <ProfileField
+              <Reading
                 label="Conditions"
-                value={menstrualProfile.conditions.length > 0 ? menstrualProfile.conditions.join(', ') : 'None reported'}
+                value={
+                  menstrualProfile.conditions.length > 0
+                    ? menstrualProfile.conditions.join(', ')
+                    : 'None reported'
+                }
               />
             </div>
             {menstrualProfile.notes && (
               <div className="mt-4 pt-4 border-t border-neutral-100">
-                <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2">Your Notes</p>
-                <p className="text-sm text-text-secondary leading-relaxed">{menstrualProfile.notes}</p>
+                <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2">
+                  Your Notes
+                </p>
+                <p className="text-sm text-text-secondary leading-relaxed">
+                  {menstrualProfile.notes}
+                </p>
               </div>
             )}
-          </motion.div>
+          </ClientWidget>
         )}
       </div>
 
@@ -244,18 +293,10 @@ export function ClientProfile() {
       <div className="mt-8 p-5 rounded-card bg-brand/5 border border-brand/10 flex items-start gap-3">
         <FileText size={18} className="text-brand mt-0.5 shrink-0" />
         <p className="text-sm text-text-secondary leading-relaxed">
-          Something out of date? Message your coach and she&apos;ll update your profile.
+          Something out of date? Message your coach and she&apos;ll update your
+          profile.
         </p>
       </div>
-    </div>
-  );
-}
-
-function ProfileField({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="py-3 px-3 border-b border-neutral-100 rounded-field last:border-b-0 last:pb-0">
-      <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">{label}</p>
-      <p className="font-semibold text-sm text-text-primary">{value}</p>
     </div>
   );
 }

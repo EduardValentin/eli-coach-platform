@@ -1,4 +1,3 @@
-import { format, isValid, parseISO } from 'date-fns';
 import {
   ASSESSMENT_CALL_DURATION_MINUTES,
   visitorFullName,
@@ -6,21 +5,15 @@ import {
 } from '../services/assessmentCallService';
 import type { JourneyStage } from '../domain/journey';
 
-export type AssessmentCallStatus =
-  | 'upcoming'
-  | 'today'
-  | 'past'
-  | 'all'
-  | 'custom';
+export type AssessmentCallStatus = 'all' | 'today' | 'upcoming' | 'past';
 
 export type AssessmentCallTiming = 'upcoming' | 'past';
 
-export type JourneyStep = 'any' | 'payment-link-sent' | 'paid' | 'invited';
+export type JourneyStep = 'any' | 'payment-link-sent' | 'invited';
 
 export const JOURNEY_STEPS: readonly JourneyStep[] = [
   'any',
   'payment-link-sent',
-  'paid',
   'invited',
 ];
 
@@ -36,12 +29,6 @@ export const SORT_KEYS: readonly SortKey[] = [
   'name',
   'email',
 ];
-
-export type DateRange = { from: string | null; to: string | null };
-
-export type ChosenDateRange = { from: string; to: string };
-
-export const NO_DATE_RANGE: DateRange = { from: null, to: null };
 
 export type ClassifiedCall = {
   booking: PrototypeBooking;
@@ -61,14 +48,9 @@ export type ListingSelection = {
   status: AssessmentCallStatus;
   query: string;
   journey: JourneyStep;
-  range: DateRange;
 };
 
 const MINUTE_MS = 60 * 1000;
-
-const ISO_DATE = 'yyyy-MM-dd';
-
-const ISO_DATE_SHAPE = /^\d{4}-\d{2}-\d{2}$/;
 
 function calendarDayOf(instant: Date, timeZone: string): string {
   const parts = new Intl.DateTimeFormat('en-CA', {
@@ -116,20 +98,13 @@ export function withJourneyStages(
   return calls.map((call) => ({ ...call, stage: stageOf(call.booking.id) }));
 }
 
-export function isChosenRange(range: DateRange): range is ChosenDateRange {
-  return range.from !== null && range.to !== null;
-}
-
-function withinRange(call: ClassifiedCall, range: DateRange): boolean {
-  if (!isChosenRange(range)) return true;
-  return call.day >= range.from && call.day <= range.to;
-}
-
 function hasStatus(call: ClassifiedCall, selection: ListingSelection): boolean {
   if (selection.status === 'all') return true;
-  if (selection.status === 'custom') return withinRange(call, selection.range);
   if (selection.status === 'today') return call.isToday;
-  return call.timing === selection.status;
+  if (selection.status === 'upcoming') {
+    return call.timing === 'upcoming' && !call.isToday;
+  }
+  return call.timing === 'past';
 }
 
 function isAtJourneyStep(call: ListedCall, step: JourneyStep): boolean {
@@ -141,8 +116,8 @@ function matchesQuery(call: ClassifiedCall, query: string): boolean {
   const needle = query.trim().toLowerCase();
   if (needle.length === 0) return true;
 
-  return [visitorFullName(call.booking), call.booking.visitorEmail].some((value) =>
-    value.toLowerCase().includes(needle),
+  return [visitorFullName(call.booking), call.booking.visitorEmail].some(
+    (value) => value.toLowerCase().includes(needle),
   );
 }
 
@@ -180,20 +155,11 @@ export function orderCalls<Call extends ClassifiedCall>(calls: Call[]): Call[] {
     calls.filter((call) => call.timing === timing);
 
   return [
-    ...withTiming('upcoming').sort((one, other) => startOf(one) - startOf(other)),
+    ...withTiming('upcoming').sort(
+      (one, other) => startOf(one) - startOf(other),
+    ),
     ...withTiming('past').sort((one, other) => startOf(other) - startOf(one)),
   ];
-}
-
-function orderCallsByScheduledDate(
-  calls: ListedCall[],
-  status: AssessmentCallStatus,
-): ListedCall[] {
-  if (status === 'custom') {
-    return [...calls].sort((one, other) => startOf(one) - startOf(other));
-  }
-
-  return orderCalls(calls);
 }
 
 function bookedAtOf(call: ClassifiedCall): number {
@@ -207,16 +173,20 @@ function compareText(one: string, other: string): number {
 function orderCallsInDefaultDirection(
   calls: ListedCall[],
   key: SortKey,
-  status: AssessmentCallStatus,
 ): ListedCall[] {
   switch (key) {
     case 'scheduled':
-      return orderCallsByScheduledDate(calls, status);
+      return orderCalls(calls);
     case 'booked':
-      return [...calls].sort((one, other) => bookedAtOf(other) - bookedAtOf(one));
+      return [...calls].sort(
+        (one, other) => bookedAtOf(other) - bookedAtOf(one),
+      );
     case 'name':
       return [...calls].sort((one, other) =>
-        compareText(visitorFullName(one.booking), visitorFullName(other.booking)),
+        compareText(
+          visitorFullName(one.booking),
+          visitorFullName(other.booking),
+        ),
       );
     case 'email':
       return [...calls].sort((one, other) =>
@@ -228,9 +198,8 @@ function orderCallsInDefaultDirection(
 export function orderCallsBy(
   calls: ListedCall[],
   sort: CallSort,
-  status: AssessmentCallStatus,
 ): ListedCall[] {
-  const ordered = orderCallsInDefaultDirection(calls, sort.key, status);
+  const ordered = orderCallsInDefaultDirection(calls, sort.key);
   if (sort.direction === defaultDirectionFor(sort.key)) return ordered;
   return ordered.reverse();
 }
@@ -266,41 +235,17 @@ export function countCallsLeftToday(calls: ClassifiedCall[]): number {
 }
 
 export function parseStatus(raw: string | null): AssessmentCallStatus {
-  if (
-    raw === 'upcoming' ||
-    raw === 'today' ||
-    raw === 'past' ||
-    raw === 'custom'
-  ) {
+  if (raw === 'upcoming' || raw === 'today' || raw === 'past') {
     return raw;
   }
   return 'all';
 }
 
 export function parseJourneyStep(raw: string | null): JourneyStep {
-  if (raw === 'payment-link-sent' || raw === 'paid' || raw === 'invited') {
+  if (raw === 'payment-link-sent' || raw === 'invited') {
     return raw;
   }
   return 'any';
-}
-
-function parseIsoDay(raw: string | null): string | null {
-  if (raw === null || !ISO_DATE_SHAPE.test(raw)) return null;
-  const parsed = parseISO(raw);
-  if (!isValid(parsed) || format(parsed, ISO_DATE) !== raw) return null;
-  return raw;
-}
-
-export function parseDateRange(
-  rawFrom: string | null,
-  rawTo: string | null,
-): DateRange {
-  const from = parseIsoDay(rawFrom);
-  const to = parseIsoDay(rawTo);
-
-  if (from !== null && to !== null && from > to) return { from: to, to: from };
-
-  return { from, to };
 }
 
 const STATUS_EMPTY_MESSAGES: Record<AssessmentCallStatus, string> = {
@@ -308,7 +253,6 @@ const STATUS_EMPTY_MESSAGES: Record<AssessmentCallStatus, string> = {
   today: 'No calls today.',
   past: 'No past calls.',
   all: 'No calls yet.',
-  custom: 'No calls yet.',
 };
 
 const STATUS_PHRASES: Record<AssessmentCallStatus, string> = {
@@ -316,47 +260,31 @@ const STATUS_PHRASES: Record<AssessmentCallStatus, string> = {
   today: 'calls today',
   past: 'past calls',
   all: 'calls',
-  custom: 'calls',
 };
 
-const JOURNEY_STEP_PHRASES: Record<JourneyStep, string> = {
+const JOURNEY_STEP_LABELS: Record<JourneyStep, string> = {
   any: '',
-  'payment-link-sent': ' with a payment link sent',
-  paid: ' with a payment recorded',
-  invited: ' with an invitation sent',
+  'payment-link-sent': 'Payment link sent',
+  invited: 'Invited',
 };
 
 export const NO_SEARCH_MATCH_MESSAGE = 'No calls match your search.';
 
-export function describeDateRange(range: ChosenDateRange): string {
-  const from = parseISO(range.from);
-  const to = parseISO(range.to);
-
-  if (from.getFullYear() !== to.getFullYear()) {
-    return `${format(from, 'd MMMM yyyy')} and ${format(to, 'd MMMM yyyy')}`;
-  }
-
-  if (from.getMonth() !== to.getMonth()) {
-    return `${format(from, 'd MMMM')} and ${format(to, 'd MMMM')}`;
-  }
-
-  return `${format(from, 'd')} and ${format(to, 'd MMMM')}`;
+export function hasActiveFilters(selection: ListingSelection): boolean {
+  return (
+    selection.status !== 'all' ||
+    selection.journey !== 'any' ||
+    selection.query.trim().length > 0
+  );
 }
 
 export function emptyListingMessage(selection: ListingSelection): string {
   if (selection.query.trim().length > 0) return NO_SEARCH_MATCH_MESSAGE;
 
-  const journeyPhrase = JOURNEY_STEP_PHRASES[selection.journey];
-  const rangePhrase =
-    selection.status === 'custom' && isChosenRange(selection.range)
-      ? ` between ${describeDateRange(selection.range)}`
-      : '';
-
-  if (journeyPhrase.length === 0 && rangePhrase.length === 0) {
+  if (selection.journey === 'any')
     return STATUS_EMPTY_MESSAGES[selection.status];
-  }
 
-  return `No ${STATUS_PHRASES[selection.status]}${journeyPhrase}${rangePhrase}.`;
+  return `No ${STATUS_PHRASES[selection.status]} match the ${JOURNEY_STEP_LABELS[selection.journey]} status.`;
 }
 
 export type CallPageView = {
@@ -409,7 +337,11 @@ export function paginationSteps(
   }
 
   const shown = new Set([1, pageCount]);
-  for (let around = page - PAGES_AROUND_CURRENT; around <= page + PAGES_AROUND_CURRENT; around += 1) {
+  for (
+    let around = page - PAGES_AROUND_CURRENT;
+    around <= page + PAGES_AROUND_CURRENT;
+    around += 1
+  ) {
     if (around >= 1 && around <= pageCount) shown.add(around);
   }
 

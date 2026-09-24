@@ -95,8 +95,8 @@ const SidebarNavigation = ({
           ref={linkIndex === 0 ? firstLinkRef : undefined}
           className={`flex items-center gap-4 px-4 py-3.5 rounded-card transition-all ${
             isActive
-              ? 'bg-text-primary text-white shadow-md'
-              : 'text-text-secondary hover:bg-surface-quiet hover:text-text-primary'
+              ? 'bg-primary-soft text-primary'
+              : 'text-text-secondary hover:bg-accent hover:text-accent-foreground'
           }`}
         >
           <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />

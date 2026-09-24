@@ -2,9 +2,14 @@ import { useId, useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, UploadCloud, Film, PlayCircle, Plus, Trash2 } from 'lucide-react';
 import { useTraining, Exercise } from '../../context/TrainingContext';
+import { Button } from '../ui/button';
 import { ToggleChip } from '../ToggleChip';
 import { EXERCISE_TAGS } from '../../utils/exerciseFilters';
-import { MP4_ACCEPT, isMp4File, mp4RejectionMessage } from '../../utils/exerciseVideo';
+import {
+  MP4_ACCEPT,
+  isMp4File,
+  mp4RejectionMessage,
+} from '../../utils/exerciseVideo';
 import { toast } from 'sonner';
 
 interface ExerciseModalProps {
@@ -13,15 +18,41 @@ interface ExerciseModalProps {
   exerciseId: string | null;
 }
 
-const MUSCLE_GROUPS = ['Chest', 'Back', 'Shoulders', 'Quadriceps', 'Hamstrings', 'Glutes', 'Calves', 'Core', 'Biceps', 'Triceps'];
-const EQUIPMENT_LIST = ['Barbell', 'Dumbbells', 'Kettlebell', 'Machine', 'Cable', 'Bands', 'Bodyweight', 'Bench'];
+const MUSCLE_GROUPS = [
+  'Chest',
+  'Back',
+  'Shoulders',
+  'Quadriceps',
+  'Hamstrings',
+  'Glutes',
+  'Calves',
+  'Core',
+  'Biceps',
+  'Triceps',
+];
+const EQUIPMENT_LIST = [
+  'Barbell',
+  'Dumbbells',
+  'Kettlebell',
+  'Machine',
+  'Cable',
+  'Bands',
+  'Bodyweight',
+  'Bench',
+];
 
-export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProps) {
+export function ExerciseModal({
+  isOpen,
+  onClose,
+  exerciseId,
+}: ExerciseModalProps) {
   const { exercises, addExercise, updateExercise } = useTraining();
-  
+
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [difficulty, setDifficulty] = useState<'Beginner' | 'Intermediate' | 'Advanced'>('Beginner');
+  const [difficulty, setDifficulty] = useState<
+    'Beginner' | 'Intermediate' | 'Advanced'
+  >('Beginner');
   const [equipment, setEquipment] = useState<string[]>([]);
   const [primaryMuscles, setPrimaryMuscles] = useState<string[]>([]);
   const [secondaryMuscles, setSecondaryMuscles] = useState<string[]>([]);
@@ -37,7 +68,7 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
   useEffect(() => {
     if (isOpen) {
       if (exerciseId) {
-        const ex = exercises.find(e => e.id === exerciseId);
+        const ex = exercises.find((e) => e.id === exerciseId);
         if (ex) {
           setName(ex.name);
           setDescription(ex.description);
@@ -97,9 +128,13 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
     setVideoPreview(URL.createObjectURL(file));
   };
 
-  const toggleSelection = (item: string, list: string[], setList: (val: string[]) => void) => {
+  const toggleSelection = (
+    item: string,
+    list: string[],
+    setList: (val: string[]) => void,
+  ) => {
     if (list.includes(item)) {
-      setList(list.filter(i => i !== item));
+      setList(list.filter((i) => i !== item));
     } else {
       setList([...list, item]);
     }
@@ -111,7 +146,9 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
       return;
     }
 
-    const edited = exerciseId ? exercises.find(e => e.id === exerciseId) : undefined;
+    const edited = exerciseId
+      ? exercises.find((e) => e.id === exerciseId)
+      : undefined;
 
     const newExercise: Exercise = {
       id: exerciseId || `e-${Date.now()}`,
@@ -123,7 +160,11 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
       primaryMuscles,
       secondaryMuscles,
       tags,
-      videoUrl: videoFile ? videoFile.name : (videoPreview ? edited?.videoUrl : undefined)
+      videoUrl: videoFile
+        ? videoFile.name
+        : videoPreview
+          ? edited?.videoUrl
+          : undefined,
     };
 
     if (exerciseId) {
@@ -151,9 +192,12 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div className="fixed inset-0 bg-text-primary/40 backdrop-blur-sm" onClick={onClose} />
-      
-      <motion.div 
+      <div
+        className="fixed inset-0 bg-text-primary/40 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      <motion.div
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
@@ -163,60 +207,71 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
         className="relative w-full max-w-2xl bg-white rounded-card shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
       >
         <div className="p-6 px-3 border-b border-neutral-100 rounded-field flex items-center justify-between gap-4 shrink-0">
-          <h2 id={titleId} className="text-xl font-serif font-bold text-text-primary">
+          <h2
+            id={titleId}
+            className="text-xl font-serif font-bold text-text-primary"
+          >
             {exerciseId ? 'Edit Exercise' : 'Create New Exercise'}
           </h2>
-          <button
+          <Button
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="inline-flex size-9 shrink-0 items-center justify-center hover:bg-neutral-100 rounded-full transition-colors"
+            variant="ghost"
+            size="icon"
           >
             <X size={20} aria-hidden="true" className="text-text-secondary" />
-          </button>
+          </Button>
         </div>
 
         <div className="flex flex-1 flex-col gap-6 overflow-y-auto p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-text-primary mb-1.5">Exercise Name</label>
-                <input 
-                  type="text" 
+                <label className="block text-sm font-semibold text-text-primary mb-1.5">
+                  Exercise Name
+                </label>
+                <input
+                  type="text"
                   value={name}
-                  onChange={e => setName(e.target.value)}
+                  onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. Barbell Back Squat"
                   className="block w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-control focus:outline-none focus:ring-1 focus:ring-brand transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-text-primary mb-1.5">Difficulty</label>
+                <label className="block text-sm font-semibold text-text-primary mb-1.5">
+                  Difficulty
+                </label>
                 <div className="flex gap-2">
-                  {['Beginner', 'Intermediate', 'Advanced'].map(diff => (
-                    <button
+                  {['Beginner', 'Intermediate', 'Advanced'].map((diff) => (
+                    <Button
                       key={diff}
+                      type="button"
                       onClick={() => setDifficulty(diff as any)}
-                      className={`flex flex-1 items-center justify-center py-2 text-sm font-medium rounded-control border transition-all ${
-                        difficulty === diff 
-                          ? 'bg-text-primary border-text-primary text-white' 
-                          : 'bg-white border-neutral-200 text-text-secondary hover:bg-neutral-50'
-                      }`}
+                      variant={difficulty === diff ? 'default' : 'outline'}
+                      size="default"
+                      className="flex-1"
                     >
                       {diff}
-                    </button>
+                    </Button>
                   ))}
                 </div>
               </div>
 
               <fieldset>
-                <legend className="block text-sm font-semibold text-text-primary mb-1.5">Tags</legend>
+                <legend className="block text-sm font-semibold text-text-primary mb-1.5">
+                  Tags
+                </legend>
                 <div className="flex flex-wrap gap-2">
-                  {EXERCISE_TAGS.map(tag => (
+                  {EXERCISE_TAGS.map((tag) => (
                     <ToggleChip
                       key={tag}
                       pressed={tags.includes(tag)}
-                      onPressedChange={() => toggleSelection(tag, tags, setTags)}
+                      onPressedChange={() =>
+                        toggleSelection(tag, tags, setTags)
+                      }
                     >
                       {tag}
                     </ToggleChip>
@@ -225,10 +280,12 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
               </fieldset>
 
               <div>
-                <label className="block text-sm font-semibold text-text-primary mb-1.5">Description / Form Cues</label>
-                <textarea 
+                <label className="block text-sm font-semibold text-text-primary mb-1.5">
+                  Description / Form Cues
+                </label>
+                <textarea
                   value={description}
-                  onChange={e => setDescription(e.target.value)}
+                  onChange={(e) => setDescription(e.target.value)}
                   rows={4}
                   placeholder="Keep chest up, drive through heels..."
                   className="block w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-control focus:outline-none focus:ring-1 focus:ring-brand transition-all resize-none"
@@ -236,13 +293,17 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-text-primary mb-1.5">Equipment</label>
+                <label className="block text-sm font-semibold text-text-primary mb-1.5">
+                  Equipment
+                </label>
                 <div className="flex flex-wrap gap-2">
-                  {EQUIPMENT_LIST.map(eq => (
+                  {EQUIPMENT_LIST.map((eq) => (
                     <ToggleChip
                       key={eq}
                       pressed={equipment.includes(eq)}
-                      onPressedChange={() => toggleSelection(eq, equipment, setEquipment)}
+                      onPressedChange={() =>
+                        toggleSelection(eq, equipment, setEquipment)
+                      }
                     >
                       {eq}
                     </ToggleChip>
@@ -253,26 +314,34 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
 
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-semibold text-text-primary mb-1.5">Demonstration Video</label>
+                <label className="block text-sm font-semibold text-text-primary mb-1.5">
+                  Demonstration Video
+                </label>
                 {!videoPreview ? (
-                  <div 
+                  <div
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
                     onDrop={handleDrop}
                     className={`border-2 border-dashed rounded-card p-6 text-center transition-all ${
-                      isDragging ? 'border-brand bg-brand/5' : 'border-neutral-200 bg-neutral-50 hover:bg-neutral-100/50'
+                      isDragging
+                        ? 'border-brand bg-brand/5'
+                        : 'border-neutral-200 bg-neutral-50 hover:bg-neutral-100/50'
                     }`}
                   >
                     <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm">
                       <UploadCloud className="text-brand" size={24} />
                     </div>
-                    <p className="text-sm font-semibold text-text-primary">Drag and drop video</p>
-                    <p className="text-xs text-text-secondary mt-1 mb-4">MP4 up to 50MB</p>
-                    
-                    <input 
-                      type="file" 
-                      accept={MP4_ACCEPT} 
-                      className="hidden" 
+                    <p className="text-sm font-semibold text-text-primary">
+                      Drag and drop video
+                    </p>
+                    <p className="text-xs text-text-secondary mt-1 mb-4">
+                      MP4 up to 50MB
+                    </p>
+
+                    <input
+                      type="file"
+                      accept={MP4_ACCEPT}
+                      className="hidden"
                       ref={fileInputRef}
                       onChange={(e) => {
                         handleFileSelection(e.target.files?.[0]);
@@ -280,32 +349,42 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
                         e.target.value = '';
                       }}
                     />
-                    <button 
+                    <Button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
                       aria-invalid={videoError ? true : undefined}
                       aria-describedby="exercise-video-error"
-                      className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-white border border-neutral-200 text-sm font-medium rounded-control hover:bg-neutral-50 transition-colors shadow-sm"
+                      variant="outline"
+                      className="shadow-sm"
                     >
                       Browse Files
-                    </button>
+                    </Button>
                   </div>
                 ) : (
                   <div className="relative rounded-card overflow-hidden bg-black aspect-video flex items-center justify-center group">
-                    <video src={videoPreview} className="w-full h-full object-cover opacity-80" />
+                    <video
+                      src={videoPreview}
+                      className="w-full h-full object-cover opacity-80"
+                    />
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <PlayCircle size={48} className="text-white drop-shadow-md" />
+                      <PlayCircle
+                        size={48}
+                        className="text-white drop-shadow-md"
+                      />
                     </div>
                     <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button 
+                      <Button
+                        type="button"
                         onClick={() => {
                           setVideoFile(null);
                           setVideoPreview(null);
                         }}
-                        className="p-2 bg-white/10 hover:bg-red-500 text-white rounded-compact backdrop-blur-md transition-colors"
+                        variant="ghost"
+                        size="icon"
+                        className="bg-white/10 text-white backdrop-blur-md hover:bg-red-500 hover:text-white"
                       >
                         <Trash2 size={16} />
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 )}
@@ -319,15 +398,19 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-text-primary mb-1.5">Target Muscles</label>
+                <label className="block text-sm font-semibold text-text-primary mb-1.5">
+                  Target Muscles
+                </label>
                 <div className="mb-3">
                   <p className="text-xs text-text-secondary mb-2">Primary</p>
                   <div className="flex flex-wrap gap-2">
-                    {MUSCLE_GROUPS.map(m => (
+                    {MUSCLE_GROUPS.map((m) => (
                       <ToggleChip
                         key={`pri-${m}`}
                         pressed={primaryMuscles.includes(m)}
-                        onPressedChange={() => toggleSelection(m, primaryMuscles, setPrimaryMuscles)}
+                        onPressedChange={() =>
+                          toggleSelection(m, primaryMuscles, setPrimaryMuscles)
+                        }
                       >
                         {m}
                       </ToggleChip>
@@ -337,11 +420,19 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
                 <div>
                   <p className="text-xs text-text-secondary mb-2">Secondary</p>
                   <div className="flex flex-wrap gap-2">
-                    {MUSCLE_GROUPS.filter(m => !primaryMuscles.includes(m)).map(m => (
+                    {MUSCLE_GROUPS.filter(
+                      (m) => !primaryMuscles.includes(m),
+                    ).map((m) => (
                       <ToggleChip
                         key={`sec-${m}`}
                         pressed={secondaryMuscles.includes(m)}
-                        onPressedChange={() => toggleSelection(m, secondaryMuscles, setSecondaryMuscles)}
+                        onPressedChange={() =>
+                          toggleSelection(
+                            m,
+                            secondaryMuscles,
+                            setSecondaryMuscles,
+                          )
+                        }
                       >
                         {m}
                       </ToggleChip>
@@ -354,18 +445,18 @@ export function ExerciseModal({ isOpen, onClose, exerciseId }: ExerciseModalProp
         </div>
 
         <div className="p-6 border-t border-neutral-100 bg-neutral-50 flex items-center justify-end gap-3 shrink-0">
-          <button 
-            onClick={onClose}
-            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 font-semibold text-text-secondary hover:bg-neutral-200 rounded-control transition-colors"
-          >
+          <Button type="button" onClick={onClose} variant="ghost" size="lg">
             Cancel
-          </button>
-          <button 
+          </Button>
+          <Button
+            type="button"
             onClick={handleSave}
-            className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-brand text-white font-semibold rounded-control hover:bg-brand-hover transition-colors shadow-md"
+            variant="default"
+            size="lg"
+            className="shadow-md"
           >
             {exerciseId ? 'Save Changes' : 'Create Exercise'}
-          </button>
+          </Button>
         </div>
       </motion.div>
     </div>

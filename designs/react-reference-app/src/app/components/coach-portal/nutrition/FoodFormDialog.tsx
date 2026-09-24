@@ -123,7 +123,7 @@ export function FoodFormDialog({ open, food, onOpenChange }: FoodFormDialogProps
                     aria-label={label}
                     aria-pressed={draft.icon === key}
                     onClick={() => set('icon', key)}
-                    className={`flex size-9 items-center justify-center rounded-compact border transition-colors ${draft.icon === key ? 'border-brand bg-brand-soft text-brand' : 'border-border text-muted-foreground hover:bg-muted'}`}
+                    className={`flex size-9 items-center justify-center rounded-compact border transition-colors ${draft.icon === key ? 'border-primary bg-primary-soft text-primary' : 'border-border text-muted-foreground hover:bg-muted'}`}
                   >
                     <Icon size={18} aria-hidden="true" />
                   </button>

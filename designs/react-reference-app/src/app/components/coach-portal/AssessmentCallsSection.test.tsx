@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { subDays } from 'date-fns';
 import { useEffect } from 'react';
@@ -94,14 +94,12 @@ const JOURNEY_BOOKINGS = [
 
 const JOURNEY_STAGES: Record<string, JourneyStage> = {
   [YESTERDAY.id]: 'payment-link-sent',
-  [TWO_DAYS_AGO.id]: 'paid',
   [THREE_DAYS_AGO.id]: 'invited',
 };
 
 const REACHABLE_STAGES: JourneyStage[] = [
   'held',
   'payment-link-sent',
-  'paid',
   'invited',
 ];
 
@@ -138,36 +136,8 @@ beforeAll(() => {
   );
 });
 
-vi.mock('../DateRangeField', () => ({
-  DateRangeField: ({
-    value,
-    onChange,
-  }: {
-    value: { from: string | null; to: string | null };
-    onChange: (range: { from: string | null; to: string | null }) => void;
-  }) => (
-    <>
-      <input
-        aria-label="From"
-        value={value.from ?? ''}
-        onChange={(event) =>
-          onChange({ from: event.target.value || null, to: value.to })
-        }
-      />
-      <input
-        aria-label="To"
-        value={value.to ?? ''}
-        onChange={(event) =>
-          onChange({ from: value.from, to: event.target.value || null })
-        }
-      />
-    </>
-  ),
-}));
-
 function AdvanceJourneys({ stages }: { stages: Record<string, JourneyStage> }) {
-  const { journeys, recordPaymentLinkSent, recordPaid, recordInvitation } =
-    useClientJourneys();
+  const { journeys, recordPaymentLinkSent, recordPaid } = useClientJourneys();
 
   useEffect(() => {
     for (const [callId, target] of Object.entries(stages)) {
@@ -179,23 +149,15 @@ function AdvanceJourneys({ stages }: { stages: Record<string, JourneyStage> }) {
 
       if (reached === 0) {
         recordPaymentLinkSent(callId, { token: `pl-${callId}`, sentAt: NOW });
-      } else if (reached === 1) {
+      } else {
         recordPaid(callId, {
           paidAt: NOW,
           bundle: 3,
           startPath: 'immediate',
         });
-      } else {
-        recordInvitation(callId, {
-          token: `inv-${callId}`,
-          email: journey.identity.email,
-          sentAt: NOW,
-          expiresAt: NOW,
-          replaced: false,
-        });
       }
     }
-  }, [journeys, stages, recordPaymentLinkSent, recordPaid, recordInvitation]);
+  }, [journeys, stages, recordPaymentLinkSent, recordPaid]);
 
   return null;
 }
@@ -251,8 +213,9 @@ function callRows(): HTMLElement[] {
 }
 
 function listedNames(): string[] {
-  return callRows()
-    .map((item) => within(item).getByRole('heading', { level: 2 }).textContent ?? '');
+  return callRows().map(
+    (item) => within(item).getByRole('heading', { level: 2 }).textContent ?? '',
+  );
 }
 
 function whenTab(name: string): HTMLElement {
@@ -266,8 +229,24 @@ async function chooseWhen(
   await user.click(whenTab(name));
 }
 
+function statusSelect(): HTMLElement {
+  return screen.getByRole('combobox', { name: 'Status' });
+}
+
+async function chooseJourneyOption(
+  user: ReturnType<typeof userEvent.setup>,
+  label: string,
+) {
+  await user.click(statusSelect());
+  await user.click(
+    await screen.findByRole('option', {
+      name: new RegExp(`^${label}( \\d+)?$`),
+    }),
+  );
+}
+
 describe('the assessment calls section', () => {
-  it('shows each visitor\'s age, gender, goal, country and phone on her card', () => {
+  it("shows each visitor's age, gender, goal, country and phone on her card", () => {
     // arrange
     renderSection();
 
@@ -275,19 +254,19 @@ describe('the assessment calls section', () => {
     const [maria, ioana] = callRows();
 
     // assert
-    expect(within(maria).getAllByRole('term').map((term) => term.textContent)).toEqual([
-      'Age',
-      'Gender',
-      'Goal',
-      'Country',
-    ]);
     expect(
-      within(maria).getAllByRole('definition').map((definition) => definition.textContent),
+      within(maria)
+        .getAllByRole('term')
+        .map((term) => term.textContent),
+    ).toEqual(['Age', 'Gender', 'Goal', 'Country']);
+    expect(
+      within(maria)
+        .getAllByRole('definition')
+        .map((definition) => definition.textContent),
     ).toEqual(['32 (14 Mar 1994)', 'Female', 'Lose weight', 'Romania']);
-    expect(within(maria).getByRole('link', { name: '+40712345678' })).toHaveAttribute(
-      'href',
-      'tel:+40712345678',
-    );
+    expect(
+      within(maria).getByRole('link', { name: '+40712345678' }),
+    ).toHaveAttribute('href', 'tel:+40712345678');
     expect(within(ioana).queryByRole('link', { name: /^\+/ })).toBeNull();
   });
 
@@ -327,13 +306,14 @@ describe('the assessment calls section', () => {
     const item = callRows()[0];
 
     // assert
-    expect(within(item).getByRole('link', { name: 'maria@example.com' })).toHaveAttribute(
-      'href',
-      'mailto:maria@example.com',
-    );
+    expect(
+      within(item).getByRole('link', { name: 'maria@example.com' }),
+    ).toHaveAttribute('href', 'mailto:maria@example.com');
     expect(
       within(item).getByText(/Shoulder injury last year\./),
-    ).toHaveTextContent('Training three times a week. Shoulder injury last year.');
+    ).toHaveTextContent(
+      'Training three times a week. Shoulder injury last year.',
+    );
   });
 
   it('offers a join link while the call has not ended and none once it has', async () => {
@@ -346,11 +326,12 @@ describe('the assessment calls section', () => {
     const pastItem = callRows()[0];
 
     // assert
-    expect(within(upcomingItem).getByRole('link', { name: 'Join call' })).toHaveAttribute(
-      'href',
-      `/book/${LATER_TODAY.id}/join`,
-    );
-    expect(within(pastItem).queryByRole('link', { name: 'Join call' })).toBeNull();
+    expect(
+      within(upcomingItem).getByRole('link', { name: 'Join call' }),
+    ).toHaveAttribute('href', `/book/${LATER_TODAY.id}/join`);
+    expect(
+      within(pastItem).queryByRole('link', { name: 'Join call' }),
+    ).toBeNull();
   });
 
   it('badges every call that starts today, ended or not', async () => {
@@ -367,6 +348,17 @@ describe('the assessment calls section', () => {
     expect(within(items[1]).getByText('Today')).toBeInTheDocument();
   });
 
+  it('keeps a call later today out of upcoming, since it belongs under today', async () => {
+    // arrange
+    const user = renderSection();
+
+    // act
+    await chooseWhen(user, 'Upcoming');
+
+    // assert
+    expect(listedNames()).toEqual(['Ioana Radu']);
+  });
+
   it('marks an ended call as held instead of offering it an action', async () => {
     // arrange
     const user = renderSection();
@@ -377,7 +369,9 @@ describe('the assessment calls section', () => {
 
     // assert
     expect(within(pastItem).getByText('Call held')).toBeInTheDocument();
-    expect(within(pastItem).queryByRole('link', { name: 'Join call' })).toBeNull();
+    expect(
+      within(pastItem).queryByRole('link', { name: 'Join call' }),
+    ).toBeNull();
   });
 
   it('still offers a way to reach the visitor after the call has ended', async () => {
@@ -573,7 +567,13 @@ describe('the assessment calls section', () => {
     await chooseWhen(user, 'All');
 
     // assert
-    expect(screen.getByText('No calls yet.')).toBeInTheDocument();
+    expect(screen.getByText('No calls yet')).toBeInTheDocument();
+    expect(
+      screen.getByText('Booked assessment calls appear here.'),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Clear filters' }),
+    ).not.toBeInTheDocument();
   });
 });
 
@@ -598,7 +598,7 @@ describe('sorting the assessment call list', () => {
     const toggle = screen.getByRole('button', { name: 'Soonest first' });
 
     // assert
-    expect(sortSelect()).toHaveTextContent('Scheduled date');
+    expect(sortSelect()).toHaveTextContent('Call date: soonest first');
     expect(toggle).toHaveAttribute('aria-pressed', 'false');
   });
 
@@ -666,7 +666,9 @@ describe('sorting the assessment call list', () => {
 
     // assert
     expect(listedNames()).toEqual(['Booked yesterday', 'Booked last week']);
-    expect(screen.getByRole('button', { name: 'Newest first' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Newest first' }),
+    ).toBeInTheDocument();
   });
 
   it('drops the direction when the coach picks another sort', async () => {
@@ -689,7 +691,7 @@ describe('sorting the assessment call list', () => {
     const user = renderSection({ urlQuery: '?sort=email&dir=desc' });
 
     // act
-    await chooseSort(user, 'Scheduled date');
+    await chooseSort(user, 'Call date');
 
     // assert
     expect(currentLocation()).toBe(' REPLACE');
@@ -697,7 +699,10 @@ describe('sorting the assessment call list', () => {
 
   it('returns to the first page when the coach changes the sort', async () => {
     // arrange
-    const user = renderSection({ bookings: MANY_UPCOMING, urlQuery: '?page=3' });
+    const user = renderSection({
+      bookings: MANY_UPCOMING,
+      urlQuery: '?page=3',
+    });
 
     // act
     await user.click(screen.getByRole('button', { name: 'Soonest first' }));
@@ -737,7 +742,10 @@ describe('paging a long assessment call list', () => {
 
   it('opens on the page the URL carries and keeps the first page out of it', async () => {
     // arrange
-    const user = renderSection({ bookings: MANY_UPCOMING, urlQuery: '?page=2' });
+    const user = renderSection({
+      bookings: MANY_UPCOMING,
+      urlQuery: '?page=2',
+    });
 
     // assert
     expect(listedNames()[0]).toBe('Visitor 11');
@@ -771,7 +779,10 @@ describe('paging a long assessment call list', () => {
 
   it('returns to the first page when the coach searches', async () => {
     // arrange
-    const user = renderSection({ bookings: MANY_UPCOMING, urlQuery: '?page=3' });
+    const user = renderSection({
+      bookings: MANY_UPCOMING,
+      urlQuery: '?page=3',
+    });
 
     // act
     await user.type(screen.getByLabelText('Search calls'), 'visitor1');
@@ -783,7 +794,10 @@ describe('paging a long assessment call list', () => {
 
   it('returns to the first page when the coach changes the filter', async () => {
     // arrange
-    const user = renderSection({ bookings: MANY_UPCOMING, urlQuery: '?page=3' });
+    const user = renderSection({
+      bookings: MANY_UPCOMING,
+      urlQuery: '?page=3',
+    });
 
     // act
     await chooseWhen(user, 'Upcoming');
@@ -798,7 +812,9 @@ describe('paging a long assessment call list', () => {
     renderSection({ bookings: MANY_UPCOMING });
 
     // act
-    const previous = screen.getByRole('button', { name: 'Go to previous page' });
+    const previous = screen.getByRole('button', {
+      name: 'Go to previous page',
+    });
 
     // assert
     expect(previous).toBeDisabled();
@@ -843,42 +859,39 @@ describe('filtering assessment calls by journey step', () => {
     });
   }
 
-  it('counts the calls waiting at each step within the chosen window', () => {
+  it('counts the calls waiting at each step within the chosen window', async () => {
     // arrange
-    renderJourneys('?when=all');
+    const user = renderJourneys('?when=all');
+    expect(statusSelect()).toHaveTextContent('All statuses');
 
     // act
-    const group = screen.getByRole('group', { name: 'Status' });
+    await user.click(statusSelect());
 
     // assert
-    expect(within(group).getByRole('button', { name: 'Any 5' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
     expect(
-      within(group).getByRole('button', { name: 'Payment link sent 1' }),
+      await screen.findByRole('option', { name: 'All statuses 5' }),
     ).toBeInTheDocument();
     expect(
-      within(group).getByRole('button', { name: 'Paid 1' }),
+      screen.getByRole('option', { name: 'Payment link sent 1' }),
     ).toBeInTheDocument();
     expect(
-      within(group).getByRole('button', { name: 'Invited 1' }),
+      screen.getByRole('option', { name: 'Invited 1' }),
     ).toBeInTheDocument();
   });
 
-  it('counts only within the window the coach is looking at', () => {
+  it('counts only within the window the coach is looking at', async () => {
     // arrange
-    renderJourneys('?when=upcoming');
+    const user = renderJourneys('?when=upcoming');
 
     // act
-    const group = screen.getByRole('group', { name: 'Status' });
+    await user.click(statusSelect());
 
     // assert
     expect(
-      within(group).getByRole('button', { name: 'Any 1' }),
+      await screen.findByRole('option', { name: 'All statuses 1' }),
     ).toBeInTheDocument();
     expect(
-      within(group).getByRole('button', { name: 'Payment link sent 0' }),
+      screen.getByRole('option', { name: 'Payment link sent 0' }),
     ).toBeInTheDocument();
   });
 
@@ -887,31 +900,33 @@ describe('filtering assessment calls by journey step', () => {
     const user = renderJourneys('?when=all');
 
     // act
-    await user.click(screen.getByRole('button', { name: 'Paid 1' }));
+    await chooseJourneyOption(user, 'Payment link sent');
 
     // assert
-    expect(listedNames()).toEqual(['Dana Pop']);
-    expect(currentLocation()).toBe('?when=all&status=paid REPLACE');
+    expect(listedNames()).toEqual(['Elena Marin']);
+    expect(currentLocation()).toBe(
+      '?when=all&status=payment-link-sent REPLACE',
+    );
   });
 
-  it('leaves a call with no action yet to the any chip', async () => {
+  it('leaves a call with no journey step to the all-statuses option only', async () => {
     // arrange
     const user = renderJourneys('?when=all');
 
     // act
-    await user.click(screen.getByRole('button', { name: 'Invited 1' }));
+    await chooseJourneyOption(user, 'Invited');
 
     // assert
     expect(listedNames()).toEqual(['Carmen Iliescu']);
-    expect(listedNames()).not.toContain('Sofia Dinu');
+    expect(listedNames()).not.toContain('Ioana Radu');
   });
 
-  it('keeps the any chip out of the URL when the coach goes back to it', async () => {
+  it('keeps the all-statuses option out of the URL when the coach goes back to it', async () => {
     // arrange
-    const user = renderJourneys('?when=all&status=paid');
+    const user = renderJourneys('?when=all&status=invited');
 
     // act
-    await user.click(screen.getByRole('button', { name: 'Any 5' }));
+    await chooseJourneyOption(user, 'All statuses');
 
     // assert
     expect(currentLocation()).toBe('?when=all REPLACE');
@@ -922,17 +937,14 @@ describe('filtering assessment calls by journey step', () => {
     // arrange
     renderJourneys('?when=all&status=payment-link-sent');
 
-    // act
-    const chip = screen.getByRole('button', { name: 'Payment link sent 1' });
-
     // assert
-    expect(chip).toHaveAttribute('aria-pressed', 'true');
+    expect(statusSelect()).toHaveTextContent('Payment link sent');
     expect(listedNames()).toEqual(['Elena Marin']);
   });
 
   it('combines the journey step with the search', async () => {
     // arrange
-    const user = renderJourneys('?when=all&status=paid');
+    const user = renderJourneys('?when=all&status=payment-link-sent');
 
     // act
     await user.type(screen.getByLabelText('Search calls'), 'carmen');
@@ -947,7 +959,7 @@ describe('filtering assessment calls by journey step', () => {
 
     // act
     const message = screen.getByText(
-      'No upcoming calls with a payment link sent.',
+      'No upcoming calls match the Payment link sent status.',
     );
 
     // assert
@@ -962,96 +974,23 @@ describe('filtering assessment calls by journey step', () => {
     });
 
     // act
-    await user.click(screen.getByRole('button', { name: 'Invited 0' }));
+    await chooseJourneyOption(user, 'Invited');
 
     // assert
     expect(currentLocation()).toBe('?status=invited REPLACE');
   });
-});
 
-describe('filtering assessment calls by a custom date range', () => {
-  function renderCustom(urlQuery: string) {
-    return renderSection({
-      bookings: JOURNEY_BOOKINGS,
-      stages: JOURNEY_STAGES,
-      urlQuery,
-    });
-  }
-
-  it('holds nothing back until both days are picked', () => {
+  it('offers a way to clear every filter once one narrows the list to nothing, and resets the URL', async () => {
     // arrange
+    const user = renderJourneys('?when=all&status=payment-link-sent');
+    await user.type(screen.getByLabelText('Search calls'), 'carmen');
+    expect(screen.getByText('No calls match your search.')).toBeInTheDocument();
+
     // act
-    renderCustom('?when=custom');
+    await user.click(screen.getByRole('button', { name: 'Clear filters' }));
 
     // assert
-    expect(screen.getByLabelText('From')).toHaveValue('');
-    expect(screen.getByLabelText('To')).toHaveValue('');
+    expect(currentLocation()).toBe(' REPLACE');
     expect(listedNames()).toHaveLength(5);
-  });
-
-  it('offers the range picker only under the custom window', async () => {
-    // arrange
-    const user = renderCustom('');
-
-    // assert
-    expect(screen.queryByLabelText('From')).toBeNull();
-
-    // act
-    await chooseWhen(user, 'Custom');
-
-    // assert
-    expect(screen.getByLabelText('From')).toBeInTheDocument();
-  });
-
-  it('writes the picked days to the URL and keeps both of them', () => {
-    // arrange
-    renderCustom('?when=custom');
-
-    // act
-    fireEvent.change(screen.getByLabelText('From'), {
-      target: { value: '2026-09-18' },
-    });
-    fireEvent.change(screen.getByLabelText('To'), {
-      target: { value: '2026-09-20' },
-    });
-
-    // assert
-    expect(currentLocation()).toBe(
-      '?when=custom&from=2026-09-18&to=2026-09-20 REPLACE',
-    );
-  });
-
-  it('opens on the range the URL carries, both days included', () => {
-    // arrange
-    renderCustom('?when=custom&from=2026-09-18&to=2026-09-20');
-
-    // act
-    const names = listedNames();
-
-    // assert
-    expect(whenTab('Custom')).toHaveAttribute('aria-selected', 'true');
-    expect(names).toEqual(['Carmen Iliescu', 'Dana Pop', 'Elena Marin']);
-  });
-
-  it('names the picked days when nothing falls inside them', () => {
-    // arrange
-    renderCustom('?when=custom&from=2026-09-12&to=2026-09-16');
-
-    // act
-    const message = screen.getByText('No calls between 12 and 16 September.');
-
-    // assert
-    expect(message).toBeInTheDocument();
-  });
-
-  it('combines the range with the journey step', () => {
-    // arrange
-    renderCustom('?when=custom&from=2026-09-18&to=2026-09-20&status=paid');
-
-    // act
-    const names = listedNames();
-
-    // assert
-    expect(names).toEqual(['Dana Pop']);
   });
 });

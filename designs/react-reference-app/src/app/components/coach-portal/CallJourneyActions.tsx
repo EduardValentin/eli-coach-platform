@@ -1,13 +1,8 @@
 import { useState } from 'react';
-import { MoreVertical } from 'lucide-react';
+import { Send, type LucideIcon } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button } from '../ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '../ui/dropdown-menu';
+import { RowActionButton } from '../RowActionButton';
+import { ConfirmDialog } from '../ui/confirm-dialog';
 import { useAppState } from '../../context/AppContext';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
 import type { ClientJourney, JourneyStage } from '../../domain/journey';
@@ -15,50 +10,55 @@ import {
   PAYMENT_LINK_ERROR_MESSAGES,
   sendPaymentLink,
 } from '../../services/paymentLinkService';
-import {
-  InvitationError,
-  sendInvitation,
-  type SentInvitation,
-} from '../../services/invitationService';
 
-const REPLACED_NOTE = 'Her earlier invitation no longer works.';
+type JourneyAction = {
+  icon: LucideIcon;
+  buttonLabel: string;
+  title: string;
+  description: string;
+  confirmLabel: string;
+  run: () => Promise<void>;
+};
 
-const ALREADY_CLIENT_MESSAGE = 'This email already belongs to a client.';
-
-const INVITATION_DELIVERY_FAILURE_MESSAGE =
-  'Saved, but the email could not be sent. Try again in a moment.';
-
-const PAYMENT_LINK_STAGES: readonly JourneyStage[] = [
-  'held',
-  'payment-link-sent',
-];
-
-function invitationSentMessage(invitation: SentInvitation): string {
-  const sent = `Invitation sent to ${invitation.email}.`;
-
-  return invitation.replaced ? `${sent} ${REPLACED_NOTE}` : sent;
+function journeyAction(
+  stage: JourneyStage,
+  name: string,
+  email: string,
+  sendLink: () => Promise<void>,
+): JourneyAction | null {
+  switch (stage) {
+    case 'held':
+      return {
+        icon: Send,
+        buttonLabel: 'Send payment link',
+        title: 'Send payment link?',
+        description: `${name} gets an email with a link to choose her bundle and pay.`,
+        confirmLabel: 'Send link',
+        run: sendLink,
+      };
+    case 'payment-link-sent':
+      return {
+        icon: Send,
+        buttonLabel: 'Re-send payment link',
+        title: 'Re-send payment link?',
+        description: `A fresh link goes to ${email}. Her earlier link stops working.`,
+        confirmLabel: 'Re-send link',
+        run: sendLink,
+      };
+    default:
+      return null;
+  }
 }
 
-function invitationFailureMessage(error: unknown): string {
-  return error instanceof InvitationError && error.code === 'already-client'
-    ? ALREADY_CLIENT_MESSAGE
-    : INVITATION_DELIVERY_FAILURE_MESSAGE;
-}
-
-export function CallJourneyActions({
-  journey,
-  visitorName,
-}: {
-  journey: ClientJourney;
-  visitorName: string;
-}) {
+export function CallJourneyActions({ journey }: { journey: ClientJourney }) {
   const { appState } = useAppState();
-  const { recordPaymentLinkSent, recordInvitation } = useClientJourneys();
-  const [menuOpen, setMenuOpen] = useState(false);
+  const { recordPaymentLinkSent } = useClientJourneys();
   const [sending, setSending] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
-  const offersPaymentLink = PAYMENT_LINK_STAGES.includes(journey.stage);
-  const offersInvitation = journey.stage === 'paid';
+  const name =
+    `${journey.identity.firstName} ${journey.identity.lastName}`.trim();
+  const email = journey.identity.email;
 
   const sendLink = async () => {
     setSending(true);
@@ -66,74 +66,42 @@ export function CallJourneyActions({
     try {
       const link = await sendPaymentLink(appState.paymentLinkOutcome);
       recordPaymentLinkSent(journey.callId, link);
-      toast.success(`Payment link sent to ${journey.identity.email}.`);
+      toast.success(`Payment link sent to ${email}.`);
     } catch {
       toast.error(PAYMENT_LINK_ERROR_MESSAGES['delivery-failure']);
     } finally {
       setSending(false);
-      setMenuOpen(false);
     }
   };
 
-  const invite = async () => {
-    setSending(true);
+  const action = journeyAction(journey.stage, name, email, sendLink);
 
-    try {
-      const invitation = await sendInvitation(
-        journey.identity,
-        appState.invitationOutcome,
-      );
-      recordInvitation(journey.callId, invitation);
-      toast.success(invitationSentMessage(invitation));
-    } catch (error) {
-      toast.error(invitationFailureMessage(error));
-    } finally {
-      setSending(false);
-      setMenuOpen(false);
-    }
+  if (!action) return null;
+
+  const confirm = () => {
+    setConfirmOpen(false);
+    void action.run();
   };
-
-  if (!offersPaymentLink && !offersInvitation) return null;
 
   return (
-    <DropdownMenu modal={false} open={menuOpen} onOpenChange={setMenuOpen}>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label={`Journey actions for ${visitorName}`}
-          aria-busy={sending}
-          className="self-end md:self-auto"
-        >
-          <MoreVertical aria-hidden="true" />
-        </Button>
-      </DropdownMenuTrigger>
+    <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+      <RowActionButton
+        icon={action.icon}
+        busy={sending}
+        onClick={() => setConfirmOpen(true)}
+        className="w-full md:w-auto"
+      >
+        {action.buttonLabel}
+      </RowActionButton>
 
-      <DropdownMenuContent align="end" className="w-64">
-        {offersPaymentLink && (
-          <DropdownMenuItem
-            disabled={sending}
-            onSelect={(event) => {
-              event.preventDefault();
-              void sendLink();
-            }}
-          >
-            {sending ? 'Sending payment link…' : 'Send payment link'}
-          </DropdownMenuItem>
-        )}
-
-        {offersInvitation && (
-          <DropdownMenuItem
-            disabled={sending}
-            onSelect={(event) => {
-              event.preventDefault();
-              void invite();
-            }}
-          >
-            {sending ? 'Sending invitation…' : 'Invite'}
-          </DropdownMenuItem>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title={action.title}
+        description={action.description}
+        confirmLabel={action.confirmLabel}
+        onConfirm={confirm}
+      />
+    </div>
   );
 }

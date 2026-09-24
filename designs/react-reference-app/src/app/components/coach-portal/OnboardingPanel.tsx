@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { motion } from 'motion/react';
 import { ClipboardList } from 'lucide-react';
 import { Link } from 'react-router';
 import {
@@ -8,9 +7,9 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '../ui/accordion';
-import { Alert } from '../ui/alert';
 import { Button } from '../ui/button';
 import { Checkbox } from '../ui/checkbox';
+import { ConfirmDialog } from '../ui/confirm-dialog';
 import { cn } from '../ui/utils';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
 import {
@@ -19,6 +18,7 @@ import {
   type CoachingSubscription,
 } from '../../domain/coachingSubscription';
 import { formatRatio, waistToHeightRatio } from '../../domain/bodyMetrics';
+import { CYCLE_MODE_LABELS, cycleModeOf } from '../../domain/cycleMode';
 import {
   awaitsCoachReview,
   type ClientJourney,
@@ -29,21 +29,22 @@ import {
   CHECK_IN_DAY_KEY,
   collaborationPreference,
   hasPregnancyContext,
-  needsSafetyLook,
   reviewForms,
   type ReviewAnswer,
   type ReviewForm,
 } from '../../domain/onboardingAnswers';
+import {
+  PARQ_QUESTION_IDS,
+  screeningOutcome,
+  withholdsNutritionAdvice,
+} from '../../domain/safetyScreening';
 import { formatJourneyDate } from '../../utils/journeyLabels';
+import { PortalWidget } from '../PortalWidget';
 import { JourneyStageBadge } from './JourneyStageBadge';
-import { OnboardingReviewBar } from './OnboardingReviewBar';
+import { OnboardingReviewDialog } from './OnboardingReviewDialog';
 import { ReviewAnswerValue } from './ReviewAnswerValue';
 import { useAppState } from '../../context/AppContext';
 
-const PANEL_CLASS =
-  'bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50';
-
-const SAFETY_FLAG = 'Needs a look: safety screening';
 const RATIO_HIDDEN_NOTE = 'Not shown during pregnancy or right after birth.';
 const BUILD_ACTION = 'Build her program';
 
@@ -53,12 +54,12 @@ const REVIEW_ACTIONS: Partial<Record<JourneyStage, string>> = {
   approved: 'Review again',
 };
 
-type ReviewSession = {
+export type ReviewSession = {
   flagged: readonly string[];
   toggleFlag: (questionId: string) => void;
 };
 
-type AnswersView = {
+export type AnswersView = {
   openForms: string[];
   onOpenForms: (formIds: string[]) => void;
   review: ReviewSession | null;
@@ -95,7 +96,54 @@ function RatioReading({
   }
 
   return (
-    <p className="font-serif text-2xl text-text-primary">{formatRatio(ratio)}</p>
+    <p className="text-2xl font-semibold tracking-tight text-text-primary">
+      {formatRatio(ratio)}
+    </p>
+  );
+}
+
+function SafetyScreeningReading({ journey }: { journey: ClientJourney }) {
+  const outcome = screeningOutcome(
+    journey.onboarding,
+    journey.identity,
+    new Date(),
+  );
+  const yesCount = PARQ_QUESTION_IDS.filter(
+    (id) => journey.onboarding.answers['safety-screening'][id] === 'Yes',
+  ).length;
+
+  const text =
+    outcome === 'cleared'
+      ? 'Cleared'
+      : outcome === 'needs-review'
+        ? `Needs a look: ${yesCount} yes ${yesCount === 1 ? 'answer' : 'answers'}`
+        : outcome === 'manual'
+          ? 'Manual screening (age)'
+          : 'Not answered yet';
+
+  return (
+    <div>
+      <p className="text-sm font-medium text-text-primary">{text}</p>
+      {withholdsNutritionAdvice(journey.onboarding) && (
+        <p className="text-xs text-text-secondary">Nutrition advice on hold</p>
+      )}
+    </div>
+  );
+}
+
+function CycleModeReading({ journey }: { journey: ClientJourney }) {
+  if (journey.identity.sex === 'male') {
+    return (
+      <p className="text-sm font-medium text-text-primary">Not applicable</p>
+    );
+  }
+
+  const mode = cycleModeOf(journey.onboarding);
+
+  return (
+    <p className="text-sm font-medium text-text-primary">
+      {mode ? CYCLE_MODE_LABELS[mode] : 'Not answered yet'}
+    </p>
   );
 }
 
@@ -167,7 +215,7 @@ function AnswerRow({
   );
 }
 
-function AnswerGroups({
+export function AnswerGroups({
   forms,
   view,
 }: {
@@ -274,10 +322,12 @@ function StageActions({
   journey,
   clientId,
   onReview,
+  onApprove,
 }: {
   journey: ClientJourney;
   clientId: string;
   onReview: () => void;
+  onApprove: () => void;
 }) {
   const { appState } = useAppState();
 
@@ -285,6 +335,8 @@ function StageActions({
 
   const reviewAction = REVIEW_ACTIONS[journey.stage];
   const isPostMvp = appState.prototypeMode === 'post-mvp';
+  const canApprove =
+    journey.stage === 'submitted' || journey.stage === 'reviewing';
 
   if (!isPostMvp && !reviewAction) return null;
 
@@ -292,8 +344,15 @@ function StageActions({
     <div className="flex flex-col gap-2">
       <div className="flex flex-col gap-3 sm:flex-row">
         {isPostMvp && (
-          <Button asChild>
-            <Link to={`/coach/training/builder/${clientId}`}>{BUILD_ACTION}</Link>
+          <Button variant="default" asChild>
+            <Link to={`/coach/training/builder/${clientId}`}>
+              {BUILD_ACTION}
+            </Link>
+          </Button>
+        )}
+        {!isPostMvp && canApprove && (
+          <Button variant="default" onClick={onApprove}>
+            Approve answers
           </Button>
         )}
         {reviewAction && (
@@ -319,12 +378,12 @@ export function OnboardingPanel({
   const { startReview, approveAnswers, requestDetails } = useClientJourneys();
   const [openForms, setOpenForms] = useState<string[]>([]);
   const [flagged, setFlagged] = useState<string[] | null>(null);
+  const [confirmApproveOpen, setConfirmApproveOpen] = useState(false);
 
   const forms = reviewForms(journey.onboarding, journey.identity.sex);
 
   const enterReview = () => {
     if (journey.stage === 'submitted') startReview(journey.callId);
-    setOpenForms(forms.map((form) => form.formId));
     setFlagged([]);
   };
 
@@ -353,67 +412,87 @@ export function OnboardingPanel({
     setFlagged(null);
   };
 
+  const confirmApprove = () => {
+    if (journey.stage === 'submitted') startReview(journey.callId);
+    approveAnswers(journey.callId);
+    setConfirmApproveOpen(false);
+  };
+
   return (
-    <motion.section
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className={`${PANEL_CLASS} mb-8 space-y-6`}
-      aria-labelledby="onboarding-panel-heading"
+    <PortalWidget
+      presentation="coach"
+      title="Onboarding"
+      icon={
+        <ClipboardList
+          aria-hidden="true"
+          className="text-brand-secondary"
+          size={18}
+        />
+      }
+      headingId="onboarding-panel-heading"
+      action={<JourneyStageBadge stage={journey.stage} />}
+      className="mb-8"
     >
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2
-          id="onboarding-panel-heading"
-          className="flex items-center gap-2 font-serif text-lg font-semibold text-text-primary"
-        >
-          <ClipboardList size={18} className="text-brand" aria-hidden="true" />
-          Onboarding
-        </h2>
-        <JourneyStageBadge stage={journey.stage} />
-      </div>
+      <div className="space-y-6">
+        <PendingRequest journey={journey} forms={forms} />
 
-      {needsSafetyLook(journey.onboarding) && (
-        <Alert role="status">{SAFETY_FLAG}</Alert>
-      )}
-
-      <PendingRequest journey={journey} forms={forms} />
-
-      <div className="grid gap-6 sm:grid-cols-2">
-        <div className="space-y-2">
-          <SubHeading>Waist-to-height ratio</SubHeading>
-          <RatioReading journey={journey} heightCm={heightCm} />
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="space-y-2">
+            <SubHeading>Waist-to-height ratio</SubHeading>
+            <RatioReading journey={journey} heightCm={heightCm} />
+          </div>
+          <div className="space-y-2">
+            <SubHeading>How she wants to work together</SubHeading>
+            <CollaborationReading journey={journey} />
+          </div>
+          <div className="space-y-2">
+            <SubHeading>Safety screening</SubHeading>
+            <SafetyScreeningReading journey={journey} />
+          </div>
+          <div className="space-y-2">
+            <SubHeading>Cycle mode</SubHeading>
+            <CycleModeReading journey={journey} />
+          </div>
         </div>
-        <div className="space-y-2">
-          <SubHeading>How she wants to work together</SubHeading>
-          <CollaborationReading journey={journey} />
+
+        <div className="space-y-3">
+          <SubHeading>Her answers</SubHeading>
+          <AnswerGroups
+            forms={forms}
+            view={{ openForms, onOpenForms: setOpenForms, review: null }}
+          />
         </div>
-      </div>
 
-      <div className="space-y-3">
-        <SubHeading>Her answers</SubHeading>
-        <AnswerGroups
-          forms={forms}
-          view={{
-            openForms,
-            onOpenForms: setOpenForms,
-            review: flagged ? { flagged, toggleFlag } : null,
-          }}
-        />
-      </div>
-
-      {flagged ? (
-        <OnboardingReviewBar
-          flagged={flagged}
-          onSend={askForDetails}
-          onDone={() => setFlagged(null)}
-          onApprove={journey.stage === 'reviewing' ? approve : undefined}
-        />
-      ) : (
         <StageActions
           journey={journey}
           clientId={clientId}
           onReview={enterReview}
+          onApprove={() => setConfirmApproveOpen(true)}
         />
-      )}
-    </motion.section>
+      </div>
+
+      <OnboardingReviewDialog
+        open={flagged !== null}
+        onOpenChange={(open) => {
+          if (!open) setFlagged(null);
+        }}
+        journey={journey}
+        forms={forms}
+        flagged={flagged ?? []}
+        toggleFlag={toggleFlag}
+        onApprove={journey.stage === 'reviewing' ? approve : undefined}
+        onSend={askForDetails}
+        onCancel={() => setFlagged(null)}
+      />
+
+      <ConfirmDialog
+        open={confirmApproveOpen}
+        onOpenChange={setConfirmApproveOpen}
+        title={`Approve ${journey.identity.firstName}'s answers?`}
+        description="You can still ask for more details later from her onboarding."
+        confirmLabel="Approve"
+        onConfirm={confirmApprove}
+      />
+    </PortalWidget>
   );
 }

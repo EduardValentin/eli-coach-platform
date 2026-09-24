@@ -10,9 +10,10 @@ interface CheckboxChipProps {
 
 const BASE_CLASS =
   'relative inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border px-4 text-sm font-semibold transition-colors';
-const SELECTED_CLASS = 'border-brand/30 bg-brand-soft text-brand hover:border-brand';
+const SELECTED_CLASS =
+  'border-primary bg-active-surface text-primary-foreground hover:bg-primary-hover';
 const UNSELECTED_CLASS =
-  'border-border text-muted-foreground hover:border-brand hover:text-brand';
+  'border-border text-muted-foreground hover:border-primary hover:text-primary';
 
 export function CheckboxChip({
   checked,

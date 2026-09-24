@@ -5,6 +5,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { JourneyClientDetails } from './JourneyClientDetails';
 import { AppProvider } from '../../context/AppContext';
 import { AssessmentCallProvider } from '../../context/AssessmentCallContext';
+import { UnitPreferencesProvider } from '../../context/UnitPreferencesContext';
 import {
   ClientJourneyProvider,
   useClientJourneys,
@@ -48,8 +49,10 @@ function DemoJourneyDetails() {
   );
 }
 
-function renderDetails(urlQuery: string) {
-  const url = `/coach/clients/c1?scope=post-mvp&${urlQuery.slice(1)}`;
+function renderDetails(urlQuery: string, options: { postMvp?: boolean } = {}) {
+  const { postMvp = true } = options;
+  const scopePrefix = postMvp ? 'scope=post-mvp&' : '';
+  const url = `/coach/clients/c1?${scopePrefix}${urlQuery.slice(1)}`;
   window.history.replaceState({}, '', url);
 
   render(
@@ -58,7 +61,9 @@ function renderDetails(urlQuery: string) {
         <ClientProfileProvider>
           <AssessmentCallProvider>
             <ClientJourneyProvider>
-              <DemoJourneyDetails />
+              <UnitPreferencesProvider>
+                <DemoJourneyDetails />
+              </UnitPreferencesProvider>
             </ClientJourneyProvider>
           </AssessmentCallProvider>
         </ClientProfileProvider>
@@ -70,7 +75,11 @@ function renderDetails(urlQuery: string) {
 }
 
 function onboardingWidget(): HTMLElement {
-  return screen.getByRole('region', { name: 'Onboarding' });
+  return screen.getByRole('region', { name: 'Onboarding', hidden: true });
+}
+
+function subscriptionPanel(): HTMLElement {
+  return screen.getByRole('region', { name: 'Subscription' });
 }
 
 function pageHeader(): HTMLElement {
@@ -80,8 +89,12 @@ function pageHeader(): HTMLElement {
   return header;
 }
 
+function reviewDialog(): HTMLElement {
+  return screen.getByRole('dialog');
+}
+
 describe('the coach view of a client in onboarding', () => {
-  it('badges an immediate start beside her name and keeps the stage out of the header', () => {
+  it('keeps the start path and the stage out of the header, showing it in the subscription panel', () => {
     // arrange
     const urlQuery = '?jstage=submitted';
 
@@ -90,11 +103,16 @@ describe('the coach view of a client in onboarding', () => {
 
     // assert
     const header = pageHeader();
-    expect(within(header).getByText('Immediate start')).toBeInTheDocument();
+    expect(
+      within(header).queryByText('Immediate start'),
+    ).not.toBeInTheDocument();
     expect(within(header).queryByText('Sent to coach')).not.toBeInTheDocument();
+    expect(
+      within(subscriptionPanel()).getByText('Immediate start'),
+    ).toBeInTheDocument();
   });
 
-  it('names the day a waiting client starts beside her name', () => {
+  it('names the day a waiting client starts in the subscription panel, not beside her name', () => {
     // arrange
     const urlQuery = '?jstage=submitted&jstart=waiting';
 
@@ -102,7 +120,12 @@ describe('the coach view of a client in onboarding', () => {
     renderDetails(urlQuery);
 
     // assert
-    expect(within(pageHeader()).getByText(/^Starts on /)).toBeInTheDocument();
+    expect(
+      within(pageHeader()).queryByText(/^Starts on /),
+    ).not.toBeInTheDocument();
+    expect(
+      within(subscriptionPanel()).getByText(/^Starts on /),
+    ).toBeInTheDocument();
   });
 
   it('shows the journey status only inside the onboarding widget', () => {
@@ -131,7 +154,9 @@ describe('the coach view of a client in onboarding', () => {
       within(widget).getByRole('button', { name: /Your measurements/ }),
     ).toHaveTextContent('2 of 4 answered');
     expect(
-      within(widget).getByRole('button', { name: /Your cycle and hormonal context/ }),
+      within(widget).getByRole('button', {
+        name: /Your cycle and hormonal context/,
+      }),
     ).toBeInTheDocument();
   });
 
@@ -141,7 +166,9 @@ describe('the coach view of a client in onboarding', () => {
 
     // act
     await user.click(
-      within(onboardingWidget()).getByRole('button', { name: /Your measurements/ }),
+      within(onboardingWidget()).getByRole('button', {
+        name: /Your measurements/,
+      }),
     );
 
     // assert
@@ -161,7 +188,9 @@ describe('the coach view of a client in onboarding', () => {
 
     // act
     await user.click(
-      within(onboardingWidget()).getByRole('button', { name: /Your goal and your week/ }),
+      within(onboardingWidget()).getByRole('button', {
+        name: /Your goal and your week/,
+      }),
     );
 
     // assert
@@ -183,7 +212,9 @@ describe('the coach view of a client in onboarding', () => {
 
     // assert
     const widget = onboardingWidget();
-    const injury = within(widget).getByText('Bone or joint problem').nextSibling;
+    const injury = within(widget).getByText(
+      'Bone or joint problem',
+    ).nextSibling;
     expect(injury).toHaveTextContent('Yes');
     expect(
       within(injury as HTMLElement).getByLabelText('Needs a look'),
@@ -212,7 +243,7 @@ describe('the coach view of a client in onboarding', () => {
     ).toBeInTheDocument();
   });
 
-  it('opens every answer for flagging the moment the coach reviews', async () => {
+  it('opens every answer for flagging inside a review dialog the moment the coach reviews', async () => {
     // arrange
     const user = renderDetails('?jstage=submitted');
 
@@ -220,39 +251,44 @@ describe('the coach view of a client in onboarding', () => {
     await user.click(screen.getByRole('button', { name: 'Review answers' }));
 
     // assert
-    const widget = onboardingWidget();
+    const dialog = reviewDialog();
     expect(
-      within(widget).getByRole('checkbox', { name: 'Flag Sleep hours' }),
+      within(dialog).getByRole('heading', { name: /Review .+’s answers/ }),
+    ).toBeInTheDocument();
+    expect(
+      within(dialog).getByRole('checkbox', { name: 'Flag Sleep hours' }),
     ).not.toBeChecked();
-    expect(within(widget).getByText('0 questions flagged')).toBeVisible();
-    expect(within(widget).getByText('Reviewing')).toBeInTheDocument();
+    expect(within(dialog).getByText('0 questions flagged')).toBeVisible();
+    expect(screen.getByText('Reviewing')).toBeInTheDocument();
   });
 
-  it('keeps the review open and the flags out of the way once she is done', async () => {
+  it('closes the review dialog and reopens it with the flags cleared', async () => {
     // arrange
     const user = renderDetails('?jstage=submitted');
     await user.click(screen.getByRole('button', { name: 'Review answers' }));
     await user.click(
-      within(onboardingWidget()).getByRole('checkbox', {
+      within(reviewDialog()).getByRole('checkbox', {
         name: 'Flag Sleep hours',
       }),
     );
 
     // act
-    await user.click(screen.getByRole('button', { name: 'Done' }));
+    await user.click(
+      within(reviewDialog()).getByRole('button', { name: 'Cancel' }),
+    );
 
     // assert
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     const widget = onboardingWidget();
     expect(
       within(widget).getByRole('button', { name: 'Continue review' }),
     ).toBeInTheDocument();
-    expect(within(widget).queryByRole('checkbox')).not.toBeInTheDocument();
 
     await user.click(
       within(widget).getByRole('button', { name: 'Continue review' }),
     );
     expect(
-      within(onboardingWidget()).getByRole('checkbox', {
+      within(reviewDialog()).getByRole('checkbox', {
         name: 'Flag Sleep hours',
       }),
     ).not.toBeChecked();
@@ -266,20 +302,20 @@ describe('the coach view of a client in onboarding', () => {
     await user.click(screen.getByRole('button', { name: 'Continue review' }));
 
     // assert
-    const widget = onboardingWidget();
-    const send = within(widget).getByRole('button', {
+    const dialog = reviewDialog();
+    const send = within(dialog).getByRole('button', {
       name: 'Ask for more details',
     });
     expect(send).toBeDisabled();
 
     await user.click(
-      within(widget).getByRole('checkbox', { name: 'Flag Sleep hours' }),
+      within(dialog).getByRole('checkbox', { name: 'Flag Sleep hours' }),
     );
-    expect(within(widget).getByText('1 question flagged')).toBeVisible();
+    expect(within(dialog).getByText('1 question flagged')).toBeVisible();
     expect(send).toBeDisabled();
 
     await user.type(
-      within(widget).getByRole('textbox', { name: 'What is missing?' }),
+      within(dialog).getByRole('textbox', { name: 'What is missing?' }),
       'Tell me more about your sleep.',
     );
     expect(send).toBeEnabled();
@@ -289,23 +325,26 @@ describe('the coach view of a client in onboarding', () => {
     // arrange
     const user = renderDetails('?jstage=reviewing');
     await user.click(screen.getByRole('button', { name: 'Continue review' }));
-    const widget = onboardingWidget();
+    const dialog = reviewDialog();
 
     // act
     await user.click(
-      within(widget).getByRole('checkbox', { name: 'Flag Sleep hours' }),
+      within(dialog).getByRole('checkbox', { name: 'Flag Sleep hours' }),
     );
     await user.type(
-      within(widget).getByRole('textbox', { name: 'What is missing?' }),
+      within(dialog).getByRole('textbox', { name: 'What is missing?' }),
       'Tell me more about your sleep.',
     );
     await user.click(
-      within(widget).getByRole('button', { name: 'Ask for more details' }),
+      within(dialog).getByRole('button', { name: 'Ask for more details' }),
     );
 
     // assert
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     const reviewed = onboardingWidget();
-    expect(within(reviewed).getByText('Needs more details')).toBeInTheDocument();
+    expect(
+      within(reviewed).getByText('Needs more details'),
+    ).toBeInTheDocument();
     expect(
       within(reviewed).getByText('Tell me more about your sleep.'),
     ).toBeInTheDocument();
@@ -317,22 +356,20 @@ describe('the coach view of a client in onboarding', () => {
     ).toBeInTheDocument();
   });
 
-  it('approves the answers and turns the widget to building her program', async () => {
+  it('approves the answers from the dialog and turns the widget to building her program', async () => {
     // arrange
     const user = renderDetails('?jstage=reviewing');
     await user.click(screen.getByRole('button', { name: 'Continue review' }));
 
     // act
     await user.click(
-      within(onboardingWidget()).getByRole('button', {
-        name: 'Approve answers',
-      }),
+      within(reviewDialog()).getByRole('button', { name: 'Approve answers' }),
     );
 
     // assert
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     const widget = onboardingWidget();
     expect(within(widget).getByText('Approved')).toBeInTheDocument();
-    expect(within(widget).queryByRole('checkbox')).not.toBeInTheDocument();
     expect(
       within(widget).getByRole('link', { name: 'Build her program' }),
     ).toBeInTheDocument();
@@ -341,7 +378,7 @@ describe('the coach view of a client in onboarding', () => {
     ).toBeInTheDocument();
   });
 
-  it('reopens the approved answers without approving them twice', async () => {
+  it('reopens the approved answers without offering to approve them twice', async () => {
     // arrange
     const user = renderDetails('?jstage=approved');
 
@@ -349,13 +386,13 @@ describe('the coach view of a client in onboarding', () => {
     await user.click(screen.getByRole('button', { name: 'Review again' }));
 
     // assert
-    const widget = onboardingWidget();
+    const dialog = reviewDialog();
     expect(
-      within(widget).getByRole('checkbox', { name: 'Flag Sleep hours' }),
+      within(dialog).getByRole('checkbox', { name: 'Flag Sleep hours' }),
     ).not.toBeChecked();
-    expect(within(widget).getByText('Approved')).toBeInTheDocument();
+    expect(screen.getByText('Approved')).toBeInTheDocument();
     expect(
-      within(widget).queryByRole('button', { name: 'Approve answers' }),
+      within(dialog).queryByRole('button', { name: 'Approve answers' }),
     ).not.toBeInTheDocument();
   });
 
@@ -363,7 +400,7 @@ describe('the coach view of a client in onboarding', () => {
     // arrange
     const user = renderDetails('?jstage=approved');
     await user.click(screen.getByRole('button', { name: 'Review again' }));
-    const reopened = onboardingWidget();
+    const reopened = reviewDialog();
     await user.click(
       within(reopened).getByRole('checkbox', { name: 'Flag Sleep hours' }),
     );
@@ -385,7 +422,36 @@ describe('the coach view of a client in onboarding', () => {
     await user.click(
       screen.getByRole('button', { name: 'stand in for her answer' }),
     );
-    expect(within(onboardingWidget()).getByText('Approved')).toBeInTheDocument();
+    expect(
+      within(onboardingWidget()).getByText('Approved'),
+    ).toBeInTheDocument();
+  });
+
+  it('approves answers from the widget through a confirmation, landing on approved', async () => {
+    // arrange
+    const user = renderDetails('?jstage=submitted', { postMvp: false });
+
+    // act
+    await user.click(
+      within(onboardingWidget()).getByRole('button', {
+        name: 'Approve answers',
+      }),
+    );
+
+    // assert
+    const confirm = screen.getByRole('dialog');
+    expect(
+      within(confirm).getByRole('heading', { name: /Approve .+'s answers\?/ }),
+    ).toBeInTheDocument();
+
+    // act
+    await user.click(within(confirm).getByRole('button', { name: 'Approve' }));
+
+    // assert
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(
+      within(onboardingWidget()).getByText('Approved'),
+    ).toBeInTheDocument();
   });
 
   it('leaves a client with her program ready nothing to act on', () => {

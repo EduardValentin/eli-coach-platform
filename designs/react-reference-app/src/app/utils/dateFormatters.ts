@@ -25,6 +25,10 @@ export function formatCheckinTime(time24: string): string {
   return `${h12}:${m.toString().padStart(2, '0')} ${ampm}`;
 }
 
+export function checkinInstant(isoDate: string, time24: string): Date {
+  return new Date(`${isoDate}T${time24}:00`);
+}
+
 export function isUpcoming(isoDate: string): boolean {
   return new Date(isoDate) >= new Date(new Date().toDateString());
 }
