@@ -298,7 +298,7 @@ describe("the coach's assessment calls page", () => {
     const user = await renderCallsPage();
 
     // act
-    await user.click(screen.getByRole("tab", { name: "Upcoming" }));
+    await user.click(screen.getByRole("tab", { name: "All" }));
     await user.keyboard("{ArrowRight}");
 
     // assert
