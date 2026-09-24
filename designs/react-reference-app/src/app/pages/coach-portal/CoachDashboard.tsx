@@ -3,6 +3,7 @@ import { ArrowRight, ClipboardCheck, Users } from 'lucide-react';
 import { Link, useNavigate } from 'react-router';
 import { PortalWidget } from '../../components/PortalWidget';
 import { RowActionLink } from '../../components/RowActionButton';
+import { coachCheckinPath, coachCheckinsPath } from '../../utils/checkinLinks';
 import { WidgetLink } from '../../components/WidgetLink';
 import { buttonVariants } from '../../components/ui/button';
 import { cn } from '../../components/ui/utils';
@@ -167,7 +168,7 @@ export function CoachDashboard() {
           }
           headingId="pending-checkins-heading"
           footer={
-            <WidgetLink arrow to="/coach/checkins">
+            <WidgetLink arrow to={coachCheckinsPath()}>
               View all check-ins
             </WidgetLink>
           }
@@ -187,7 +188,10 @@ export function CoachDashboard() {
                     timeZone,
                   }}
                   action={
-                    <RowActionLink to="/coach/checkins" icon={ClipboardCheck}>
+                    <RowActionLink
+                      to={coachCheckinPath(checkin.id)}
+                      icon={ClipboardCheck}
+                    >
                       Review
                     </RowActionLink>
                   }

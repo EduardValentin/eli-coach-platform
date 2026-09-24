@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useSearchParams } from 'react-router';
 import { CalendarDays, CalendarPlus, Clock, X } from 'lucide-react';
 import {
   useCheckins,
@@ -24,6 +25,7 @@ import { CheckinCard } from '../../components/CheckinCard';
 import { CheckinSchedulerSheet } from '../../components/CheckinSchedulerSheet';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { EmptyState } from '../../components/EmptyState';
+import { checkinAnchorId, checkinIdFromSearch } from '../../utils/checkinLinks';
 import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
 import {
@@ -47,6 +49,33 @@ const CLIENT_AVATARS: Record<string, string | null> = {
   c4: null,
   c5: null,
 };
+
+type CheckinTab = 'pending' | 'upcoming' | 'past';
+
+function tabHoldingCheckin(
+  checkinId: string | null,
+  groups: Record<CheckinTab, CheckIn[]>,
+): CheckinTab {
+  if (!checkinId) return 'pending';
+  const tabs = Object.keys(groups) as CheckinTab[];
+  return (
+    tabs.find((tab) => groups[tab].some((c) => c.id === checkinId)) ?? 'pending'
+  );
+}
+
+function CheckinAnchor({
+  checkinId,
+  children,
+}: {
+  checkinId: string;
+  children: ReactNode;
+}) {
+  return (
+    <div id={checkinAnchorId(checkinId)} tabIndex={-1} className="rounded-card">
+      {children}
+    </div>
+  );
+}
 
 export function CoachCheckins() {
   const {
@@ -73,6 +102,19 @@ export function CoachCheckins() {
       c.status === 'declined' ||
       c.status === 'cancelled',
   );
+
+  const [searchParams] = useSearchParams();
+  const focusedCheckinId = checkinIdFromSearch(searchParams);
+  const [tab, setTab] = useState<CheckinTab>(() =>
+    tabHoldingCheckin(focusedCheckinId, { pending, upcoming, past }),
+  );
+
+  useEffect(() => {
+    if (!focusedCheckinId) return;
+    const card = document.getElementById(checkinAnchorId(focusedCheckinId));
+    card?.scrollIntoView({ block: 'center' });
+    card?.focus({ preventScroll: true });
+  }, [focusedCheckinId]);
 
   // Reschedule state
   const [rescheduleTarget, setRescheduleTarget] = useState<string | null>(null);
@@ -209,7 +251,11 @@ export function CoachCheckins() {
         subtitle="Manage all client check-ins in one place."
       />
 
-      <Tabs defaultValue="pending" className="w-full">
+      <Tabs
+        value={tab}
+        onValueChange={(value) => setTab(value as CheckinTab)}
+        className="w-full"
+      >
         <div className="mb-6 flex flex-col gap-2">
           <TabsList variant="segmented">
             <TabsTrigger variant="segmented" value="pending">
@@ -236,17 +282,18 @@ export function CoachCheckins() {
             />
           ) : (
             pending.map((c) => (
-              <CheckinCard
-                key={c.id}
-                checkin={c}
-                viewer="coach"
-                attendee={{
-                  name: c.clientName,
-                  imageUrl: CLIENT_AVATARS[c.clientId] ?? undefined,
-                }}
-                footnote={c.planId ? 'Linked to training plan' : undefined}
-                actions={renderPendingActions(c)}
-              />
+              <CheckinAnchor key={c.id} checkinId={c.id}>
+                <CheckinCard
+                  checkin={c}
+                  viewer="coach"
+                  attendee={{
+                    name: c.clientName,
+                    imageUrl: CLIENT_AVATARS[c.clientId] ?? undefined,
+                  }}
+                  footnote={c.planId ? 'Linked to training plan' : undefined}
+                  actions={renderPendingActions(c)}
+                />
+              </CheckinAnchor>
             ))
           )}
         </TabsContent>
@@ -274,16 +321,17 @@ export function CoachCheckins() {
             />
           ) : (
             upcoming.map((c) => (
-              <CheckinCard
-                key={c.id}
-                checkin={c}
-                viewer="coach"
-                attendee={{
-                  name: c.clientName,
-                  imageUrl: CLIENT_AVATARS[c.clientId] ?? undefined,
-                }}
-                footnote={c.planId ? 'Linked to training plan' : undefined}
-              />
+              <CheckinAnchor key={c.id} checkinId={c.id}>
+                <CheckinCard
+                  checkin={c}
+                  viewer="coach"
+                  attendee={{
+                    name: c.clientName,
+                    imageUrl: CLIENT_AVATARS[c.clientId] ?? undefined,
+                  }}
+                  footnote={c.planId ? 'Linked to training plan' : undefined}
+                />
+              </CheckinAnchor>
             ))
           )}
         </TabsContent>
@@ -297,17 +345,18 @@ export function CoachCheckins() {
             />
           ) : (
             past.map((c) => (
-              <CheckinCard
-                key={c.id}
-                checkin={c}
-                viewer="coach"
-                attendee={{
-                  name: c.clientName,
-                  imageUrl: CLIENT_AVATARS[c.clientId] ?? undefined,
-                }}
-                footnote={c.planId ? 'Linked to training plan' : undefined}
-                muted
-              />
+              <CheckinAnchor key={c.id} checkinId={c.id}>
+                <CheckinCard
+                  checkin={c}
+                  viewer="coach"
+                  attendee={{
+                    name: c.clientName,
+                    imageUrl: CLIENT_AVATARS[c.clientId] ?? undefined,
+                  }}
+                  footnote={c.planId ? 'Linked to training plan' : undefined}
+                  muted
+                />
+              </CheckinAnchor>
             ))
           )}
         </TabsContent>
