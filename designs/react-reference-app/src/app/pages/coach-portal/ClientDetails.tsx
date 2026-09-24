@@ -9,10 +9,8 @@ import {
   Flame,
   CalendarDays,
   History,
-  Target,
   Pencil,
   Plus,
-  X,
   ChevronDown,
   ChevronUp,
   Droplet,
@@ -20,23 +18,13 @@ import {
   UtensilsCrossed,
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
-import {
-  useTraining,
-  GoalType,
-  GOAL_TYPES,
-} from '../../context/TrainingContext';
+import { useTraining, type GoalType } from '../../context/TrainingContext';
 import { useCheckins } from '../../context/CheckinContext';
 import { useCycle } from '../../context/CycleContext';
-import {
-  useClientProfile,
-  fullName,
-  ACTIVITY_LEVEL_LABELS,
-} from '../../context/ClientProfileContext';
+import { useClientProfile, fullName } from '../../context/ClientProfileContext';
 import { useUnitPreferences } from '../../context/UnitPreferencesContext';
 import { useNutrition } from '../../context/NutritionContext';
 import {
-  formatBodyWeight,
-  formatHeight,
   formatVolume,
   displayWeightValue,
   weightUnitLabel,
@@ -48,6 +36,9 @@ import { JourneyClientDetails } from '../../components/coach-portal/JourneyClien
 import { OnboardingPanel } from '../../components/coach-portal/OnboardingPanel';
 import { SubscriptionSummary } from '../../components/SubscriptionSummary';
 import { MeasurementsTable } from '../../components/MeasurementsTable';
+import { GoalWidget } from '../../components/GoalWidget';
+import { CyclePhaseWidget } from '../../components/CyclePhaseWidget';
+import { ProfileDetailsWidget } from '../../components/ProfileDetailsWidget';
 import { useMeasureUnits } from '../../components/client-portal/measureUnits';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
 import { journeyCallIdForClient } from '../../utils/journeyLabels';
@@ -151,10 +142,6 @@ function RosterClientDetails() {
     journey !== null && !isBeforeStage(journey.stage, 'account-created');
   const heightCm = profile?.heightCm ?? 0;
 
-  // Goal creation form
-  const [showNewGoal, setShowNewGoal] = useState(false);
-  const [newGoalType, setNewGoalType] = useState<GoalType>('Muscle Building');
-
   // Confirm dialogs
   const [showEndGoal, setShowEndGoal] = useState(false);
   const [showEndPlan, setShowEndPlan] = useState(false);
@@ -173,17 +160,16 @@ function RosterClientDetails() {
     [scheduleDate, getBookedSlots],
   );
 
-  const handleCreateGoal = () => {
-    createGoal(clientId, newGoalType);
-    toast.success(`${newGoalType} goal created`);
-    setShowNewGoal(false);
-  };
-
   const handleEndGoal = () => {
     if (!activeGoal) return;
     completeGoal(activeGoal.id);
     toast.success('Goal completed');
     setShowEndGoal(false);
+  };
+
+  const handleStartGoal = (type: GoalType) => {
+    createGoal(clientId, type);
+    toast.success(`${type} goal created`);
   };
 
   const handleEndPlan = () => {
@@ -389,34 +375,19 @@ function RosterClientDetails() {
           </motion.div>
         )}
 
-        <Link to={`/coach/clients/${clientId}/cycle`} className="block">
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36 hover:border-brand/20 hover:shadow-md transition-all cursor-pointer"
-          >
-            <div className="flex justify-between items-start w-full">
-              <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">
-                Current Phase
-              </span>
-              <Droplet size={16} className="text-brand" strokeWidth={2.5} />
-            </div>
-            <div className="mt-auto min-w-0">
-              <span
-                className="font-serif text-2xl block truncate"
-                style={phase ? { color: phase.phaseColor } : undefined}
-              >
-                {phase?.phaseName ?? 'N/A'}
-              </span>
-              {phase && (
-                <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest block mt-0.5">
-                  Day {phase.dayInCycle}
-                </span>
-              )}
-            </div>
-          </motion.div>
-        </Link>
+        <CyclePhaseWidget
+          presentation="coach"
+          phase={phase}
+          headingId="phase-tile-heading"
+          footer={
+            <Link
+              to={`/coach/clients/${clientId}/cycle`}
+              className="text-sm font-semibold text-primary hover:text-primary-hover transition-colors"
+            >
+              View cycle log
+            </Link>
+          }
+        />
 
         {isPostMvp && (
           <motion.div
@@ -459,87 +430,15 @@ function RosterClientDetails() {
           })}
         >
           {/* Current Goal */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col h-full"
-          >
-            <h2 className="font-serif text-lg text-text-primary font-semibold mb-4 flex items-center gap-2">
-              <Target size={18} className="text-brand-secondary" />
-              Current Goal
-            </h2>
-
-            {activeGoal ? (
-              <div className="flex flex-col flex-1">
-                <h3 className="font-semibold text-text-primary text-base mb-3">
-                  {activeGoal.type}
-                </h3>
-                <p className="text-xs text-text-secondary mb-4">
-                  Started {activeGoal.startDate}
-                </p>
-                <Button
-                  onClick={() => setShowEndGoal(true)}
-                  variant="outline"
-                  className="mt-auto w-full"
-                >
-                  End Goal
-                </Button>
-              </div>
-            ) : (
-              <div className="flex flex-col flex-1">
-                {!showNewGoal ? (
-                  <div className="flex flex-1 flex-col items-center justify-center gap-3 py-8 text-center">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-secondary/10">
-                      <Target size={22} className="text-brand-secondary" />
-                    </div>
-                    <p className="text-sm text-text-secondary">
-                      No active goal set
-                    </p>
-                    <Button
-                      onClick={() => setShowNewGoal(true)}
-                      variant="default"
-                    >
-                      <Plus size={16} /> Start New Goal
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex flex-1 flex-col justify-center space-y-3">
-                    <select
-                      aria-label="Goal type"
-                      value={newGoalType}
-                      onChange={(e) =>
-                        setNewGoalType(e.target.value as GoalType)
-                      }
-                      className="w-full px-3 py-2.5 text-sm border border-neutral-200 rounded-control focus:outline-none bg-neutral-50"
-                    >
-                      {GOAL_TYPES.map((t) => (
-                        <option key={t} value={t}>
-                          {t}
-                        </option>
-                      ))}
-                    </select>
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={handleCreateGoal}
-                        variant="default"
-                        className="flex-1"
-                      >
-                        Create
-                      </Button>
-                      <Button
-                        onClick={() => setShowNewGoal(false)}
-                        variant="outline"
-                        size="icon"
-                      >
-                        <X size={16} />
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </motion.div>
+          <GoalWidget
+            presentation="coach"
+            goal={activeGoal}
+            headingId="goal-widget-heading"
+            management={{
+              onStart: handleStartGoal,
+              onEnd: () => setShowEndGoal(true),
+            }}
+          />
 
           {/* Active Plan */}
           {isPostMvp && (
@@ -849,87 +748,44 @@ function RosterClientDetails() {
         {/* Right column: Profile Details + Past Plans */}
         <div className="lg:col-span-1 space-y-6">
           {/* Profile Details */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.35 }}
-            className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-serif text-lg text-text-primary font-semibold">
-                Profile Details
-              </h2>
+          <ProfileDetailsWidget
+            presentation="coach"
+            profile={profile}
+            units={{ weightUnit, heightUnit }}
+            headingId="profile-details-heading"
+            footer={
               <Link
                 to={`/coach/clients/${clientId}/edit`}
-                className="text-xs font-semibold text-primary hover:text-primary-hover transition-colors flex items-center gap-1"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary-hover transition-colors"
               >
                 <Pencil size={12} /> Edit
               </Link>
-            </div>
-            <div className="space-y-4">
-              {profile && (
-                <>
-                  <div>
-                    <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">
-                      Starting Weight / Current
-                    </p>
-                    <p className="font-semibold text-sm text-text-primary">
-                      {formatBodyWeight(profile.startingWeightKg, weightUnit)} /{' '}
-                      {formatBodyWeight(profile.currentWeightKg, weightUnit)}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">
-                      Height / Age
-                    </p>
-                    <p className="font-semibold text-sm text-text-primary">
-                      {formatHeight(profile.heightCm, heightUnit)} /{' '}
-                      {profile.age}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">
-                      Activity Level
-                    </p>
-                    <p className="font-semibold text-sm text-text-primary">
-                      {ACTIVITY_LEVEL_LABELS[profile.activityLevel]}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">
-                      Dietary Restrictions
-                    </p>
-                    <p className="font-semibold text-sm text-text-primary">
-                      {profile.dietaryRestrictions || 'None'}
-                    </p>
-                  </div>
-                </>
-              )}
-              {menstrualProfile && (
-                <div>
-                  <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">
-                    Cycle
-                  </p>
-                  <p className="font-semibold text-sm text-text-primary">
-                    {menstrualProfile.regularity === 'regular'
-                      ? 'Regular'
-                      : 'Irregular'}{' '}
-                    &middot; {menstrualProfile.averageCycleLength}-day cycle
-                  </p>
-                </div>
-              )}
-              {menstrualProfile && menstrualProfile.conditions.length > 0 && (
-                <div>
-                  <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">
-                    Conditions
-                  </p>
-                  <p className="font-semibold text-sm text-text-primary">
-                    {menstrualProfile.conditions.join(', ')}
-                  </p>
-                </div>
-              )}
-            </div>
-          </motion.div>
+            }
+          >
+            {menstrualProfile && (
+              <div>
+                <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-text-secondary">
+                  Cycle
+                </p>
+                <p className="text-sm font-semibold text-text-primary">
+                  {menstrualProfile.regularity === 'regular'
+                    ? 'Regular'
+                    : 'Irregular'}{' '}
+                  &middot; {menstrualProfile.averageCycleLength}-day cycle
+                </p>
+              </div>
+            )}
+            {menstrualProfile && menstrualProfile.conditions.length > 0 && (
+              <div>
+                <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-text-secondary">
+                  Conditions
+                </p>
+                <p className="text-sm font-semibold text-text-primary">
+                  {menstrualProfile.conditions.join(', ')}
+                </p>
+              </div>
+            )}
+          </ProfileDetailsWidget>
 
           {/* Past Plans */}
           {isPostMvp && pastPlans.length > 0 && (

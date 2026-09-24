@@ -154,7 +154,7 @@ export function ProgramStatusCard() {
       <ClientWidget
         eyebrow={eyebrowFor(demoJourney.stage)}
         headingId="program-status-heading"
-        hero={label}
+        voice={label}
       >
         <p className="mt-3 max-w-2xl leading-relaxed text-text-secondary">
           {supportingLine(demoJourney)}

@@ -608,7 +608,7 @@ function GoalHero({
 
       {/* Hero: calorie target */}
       <div className="flex items-baseline gap-1.5">
-        <span className="font-serif text-4xl font-semibold text-text-primary leading-none tabular-nums">
+        <span className="text-4xl font-semibold text-text-primary leading-none tabular-nums">
           {goalTarget.toLocaleString()}
         </span>
         <span className="text-sm font-medium text-text-secondary leading-none">
@@ -821,7 +821,7 @@ export function ClientNutrition() {
                   >
                     Today's meals
                   </SectionEyebrow>
-                  <p className="font-serif text-2xl tracking-tight text-text-primary lg:text-3xl leading-none mb-1">
+                  <p className="font-semibold text-2xl tracking-tight text-text-primary lg:text-3xl leading-none mb-1">
                     {format(parseISO(selectedDay.date), 'EEEE, MMMM d')}
                     {selectedDay.date === today && (
                       <span className="ml-2 text-xs font-sans font-semibold uppercase tracking-widest text-text-secondary">

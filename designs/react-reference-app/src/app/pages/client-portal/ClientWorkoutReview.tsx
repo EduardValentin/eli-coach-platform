@@ -189,7 +189,7 @@ export function ClientWorkoutReview() {
               Duration
             </span>
           </div>
-          <p className="text-xl font-serif font-bold text-text-primary">
+          <p className="text-xl font-semibold text-text-primary">
             {durationMin} min
           </p>
         </div>
@@ -200,7 +200,7 @@ export function ClientWorkoutReview() {
               Volume
             </span>
           </div>
-          <p className="text-xl font-serif font-bold text-text-primary">
+          <p className="text-xl font-semibold text-text-primary">
             {formatVolume(workout.totalVolume || 0, weightUnit)}
           </p>
         </div>
@@ -211,7 +211,7 @@ export function ClientWorkoutReview() {
               Completed
             </span>
           </div>
-          <p className="text-xl font-serif font-bold text-text-primary">
+          <p className="text-xl font-semibold text-text-primary">
             {completedSets}/{totalSets}
           </p>
         </div>
@@ -222,7 +222,7 @@ export function ClientWorkoutReview() {
               Density
             </span>
           </div>
-          <p className="text-xl font-serif font-bold text-text-primary">
+          <p className="text-xl font-semibold text-text-primary">
             {displayWeightValue(density, weightUnit)}
           </p>
           <p className="text-[10px] text-text-secondary">
@@ -236,7 +236,7 @@ export function ClientWorkoutReview() {
               Day
             </span>
           </div>
-          <p className="text-lg font-serif font-bold text-text-primary">
+          <p className="text-lg font-semibold text-text-primary">
             {day ? DAY_NAMES[day.dayOfWeek] : 'N/A'}
           </p>
         </div>

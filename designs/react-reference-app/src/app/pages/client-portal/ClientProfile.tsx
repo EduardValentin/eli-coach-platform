@@ -95,7 +95,7 @@ export function ClientProfile() {
           <SectionEyebrow as="h2" className="mb-1" id="profile-picture-heading">
             Profile Picture
           </SectionEyebrow>
-          <p className="font-serif text-xl lg:text-2xl text-text-primary mb-4">
+          <p className="font-semibold text-xl lg:text-2xl text-text-primary mb-4">
             {fullName(clientProfile)}
           </p>
 

@@ -554,7 +554,7 @@ function WorkoutSummary({
               size={18}
               className="text-text-secondary mx-auto mb-1.5 lg:size-6"
             />
-            <p className="text-lg lg:text-2xl font-serif font-bold text-text-primary">
+            <p className="text-lg lg:text-2xl font-semibold text-text-primary">
               {durationMin}
             </p>
             <p className="text-[10px] lg:text-xs uppercase tracking-widest text-text-secondary font-bold">
@@ -566,7 +566,7 @@ function WorkoutSummary({
               size={18}
               className="text-brand mx-auto mb-1.5 lg:size-6"
             />
-            <p className="text-lg lg:text-2xl font-serif font-bold text-text-primary">
+            <p className="text-lg lg:text-2xl font-semibold text-text-primary">
               {displayWeightValue(totalVolume, weightUnit, 0).toLocaleString()}
             </p>
             <p className="text-[10px] lg:text-xs uppercase tracking-widest text-text-secondary font-bold">
@@ -578,7 +578,7 @@ function WorkoutSummary({
               size={18}
               className="text-brand-secondary mx-auto mb-1.5 lg:size-6"
             />
-            <p className="text-lg lg:text-2xl font-serif font-bold text-text-primary">
+            <p className="text-lg lg:text-2xl font-semibold text-text-primary">
               {workout.exercises.length}
             </p>
             <p className="text-[10px] lg:text-xs uppercase tracking-widest text-text-secondary font-bold">
@@ -820,7 +820,7 @@ function IncompleteWorkoutDialog({
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-neutral-50 rounded-control p-3 text-center">
               <Dumbbell size={16} className="text-brand mx-auto mb-1" />
-              <p className="text-base font-serif font-bold text-text-primary">
+              <p className="text-base font-semibold text-text-primary">
                 {displayWeightValue(
                   partialVolume,
                   weightUnit,
@@ -833,7 +833,7 @@ function IncompleteWorkoutDialog({
             </div>
             <div className="bg-neutral-50 rounded-control p-3 text-center">
               <Flame size={16} className="text-brand-secondary mx-auto mb-1" />
-              <p className="text-base font-serif font-bold text-text-primary">
+              <p className="text-base font-semibold text-text-primary">
                 {sortedMuscles.length}
               </p>
               <p className="text-[10px] uppercase tracking-widest text-text-secondary font-bold">

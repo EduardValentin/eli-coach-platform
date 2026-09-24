@@ -2,17 +2,16 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Target as TargetIcon, Activity, Flame, Play } from 'lucide-react';
 import { useTraining } from '../../context/TrainingContext';
 import { useCycle } from '../../context/CycleContext';
-import {
-  useClientProfile,
-  ACTIVITY_LEVEL_LABELS,
-} from '../../context/ClientProfileContext';
+import { useClientProfile } from '../../context/ClientProfileContext';
 import { useUnitPreferences } from '../../context/UnitPreferencesContext';
-import { formatHeight, formatBodyWeight } from '../../utils/units';
 import { useNavigate, useSearchParams, Link } from 'react-router';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { ProgramStatusCard } from '../../components/client-portal/ProgramStatusCard';
 import { ReviewCallScheduler } from '../../components/client-portal/ReviewCallScheduler';
 import { ClientWidget } from '../../components/client-portal/ClientWidget';
+import { GoalWidget } from '../../components/GoalWidget';
+import { CyclePhaseWidget } from '../../components/CyclePhaseWidget';
+import { ProfileDetailsWidget } from '../../components/ProfileDetailsWidget';
 import { MACRO_BAR } from '../../components/coach-portal/nutrition/nutrition-constants';
 import { useAppState } from '../../context/AppContext';
 import { cn } from '../../components/ui/utils';
@@ -29,7 +28,8 @@ const DAY_NAMES = [
 ];
 
 export function ClientDashboard() {
-  const { clientActivePlan, goals, activeWorkout } = useTraining();
+  const { clientActivePlan, getClientActiveGoal, activeWorkout } =
+    useTraining();
   const { clientPhase } = useCycle();
   const { clientProfile } = useClientProfile();
   const { appState } = useAppState();
@@ -83,10 +83,7 @@ export function ClientDashboard() {
     };
   }, [clientActivePlan]);
 
-  const activeGoal = useMemo(() => {
-    if (!clientActivePlan) return null;
-    return goals.find((g) => g.id === clientActivePlan.goalId) || null;
-  }, [clientActivePlan, goals]);
+  const activeGoal = getClientActiveGoal('client-1');
 
   const handleStartWorkout = () => {
     if (!clientActivePlan || !todayInfo || todayInfo.isRest) return;
@@ -148,7 +145,7 @@ export function ClientDashboard() {
                   </span>
                 </div>
                 <div className="flex items-baseline gap-1">
-                  <span className="font-serif text-3xl lg:text-4xl text-text-primary">
+                  <span className="font-semibold text-3xl lg:text-4xl text-text-primary">
                     {clientProfile?.bmr.toLocaleString() ?? '--'}
                   </span>
                   <span className="text-xs font-semibold text-text-secondary">
@@ -169,7 +166,7 @@ export function ClientDashboard() {
                   </span>
                 </div>
                 <div className="flex items-baseline gap-1">
-                  <span className="font-serif text-3xl lg:text-4xl text-text-primary">
+                  <span className="font-semibold text-3xl lg:text-4xl text-text-primary">
                     {clientProfile?.maintenanceCalories.toLocaleString() ??
                       '--'}
                   </span>
@@ -191,7 +188,7 @@ export function ClientDashboard() {
                   </span>
                 </div>
                 <div className="flex items-baseline gap-1">
-                  <span className="font-serif text-3xl lg:text-4xl text-text-primary">
+                  <span className="font-semibold text-3xl lg:text-4xl text-text-primary">
                     {clientProfile?.dailyCalories.toLocaleString() ?? '--'}
                   </span>
                   <span className="text-xs font-semibold text-text-secondary">
@@ -257,7 +254,7 @@ export function ClientDashboard() {
                       </span>
                     </div>
                     <p className="mt-1 text-text-primary">
-                      <span className="font-serif text-lg lg:text-xl">
+                      <span className="font-semibold text-lg lg:text-xl">
                         {m.grams}
                       </span>
                       <span className="text-xs font-semibold text-text-secondary">
@@ -276,20 +273,27 @@ export function ClientDashboard() {
         )}
 
         {/* Phase Card (kept separate) */}
-        <Link to="/portal/cycle" className="block h-full">
-          <ClientWidget
-            eyebrow="Cycle phase"
-            headingId="phase-heading"
-            hero={clientPhase?.phaseName ?? 'N/A'}
-            className="h-full transition-all hover:border-brand/20 hover:shadow-md"
-          >
-            {clientPhase && (
-              <p className="mt-0.5 text-[10px] font-bold uppercase tracking-widest text-text-secondary">
-                Day {clientPhase.dayInCycle}
-              </p>
-            )}
-          </ClientWidget>
-        </Link>
+        <CyclePhaseWidget
+          presentation="client"
+          phase={clientPhase}
+          headingId="phase-heading"
+          className="h-full"
+          footer={
+            <Link
+              to="/portal/cycle"
+              className="text-sm font-medium text-primary hover:underline"
+            >
+              View cycle tracker &rarr;
+            </Link>
+          }
+        />
+
+        {/* Goal Card */}
+        <GoalWidget
+          presentation="client"
+          goal={activeGoal}
+          headingId="goal-heading"
+        />
       </div>
 
       {/* Bottom Layout Grid */}
@@ -346,50 +350,20 @@ export function ClientDashboard() {
         )}
 
         {/* Profile Details Card - Spans 1 col */}
-        <ClientWidget
-          eyebrow="Profile details"
+        <ProfileDetailsWidget
+          presentation="client"
+          profile={clientProfile}
+          units={{ weightUnit, heightUnit }}
           headingId="profile-details-heading"
-        >
-          <div className="space-y-6">
-            <div>
-              <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">
-                Height & Weight
-              </p>
-              <p className="font-semibold text-sm text-text-primary">
-                {clientProfile
-                  ? `${formatHeight(clientProfile.heightCm, heightUnit)} / ${formatBodyWeight(clientProfile.currentWeightKg, weightUnit)}`
-                  : '--'}
-              </p>
-            </div>
-
-            <div>
-              <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">
-                Primary Goal
-              </p>
-              <p className="font-semibold text-sm text-text-primary">
-                {clientProfile?.primaryGoal ?? '--'}
-              </p>
-            </div>
-
-            <div>
-              <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">
-                Activity Level
-              </p>
-              <p className="font-semibold text-sm text-text-primary">
-                {clientProfile
-                  ? ACTIVITY_LEVEL_LABELS[clientProfile.activityLevel]
-                  : '--'}
-              </p>
-            </div>
-          </div>
-
-          <Link
-            to="/portal/profile"
-            className="mt-6 inline-block text-sm font-medium text-primary hover:underline"
-          >
-            View full profile &rarr;
-          </Link>
-        </ClientWidget>
+          footer={
+            <Link
+              to="/portal/profile"
+              className="text-sm font-medium text-primary hover:underline"
+            >
+              View full profile &rarr;
+            </Link>
+          }
+        />
       </div>
 
       {isPostMvp && (

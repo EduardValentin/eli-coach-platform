@@ -19,22 +19,24 @@ export function NextCheckinCard() {
     <ClientWidget
       eyebrow="Next check-in"
       headingId="next-checkin-heading"
-      hero={formatCheckinDate(nextCheckin.date)}
+      hero={`${formatCheckinDate(nextCheckin.date)} · ${formatCheckinTime(nextCheckin.time)}`}
+      heroSize="compact"
       className="p-4 sm:p-4"
     >
-      <p className="mb-3 text-xs text-text-secondary">
-        {formatCheckinTime(nextCheckin.time)}
-      </p>
       <a
         href="https://meet.google.com/mock-eli-checkin"
         target="_blank"
         rel="noopener noreferrer"
-        className={cn(buttonVariants({ variant: 'default' }), 'w-full')}
+        className={cn(buttonVariants({ variant: 'default' }), 'mt-3 w-full')}
       >
         <Video size={14} />
         Join Meet
       </a>
-      <RowActionLink to="/portal/checkins" className="mt-2 w-full">
+      <RowActionLink
+        to="/portal/checkins"
+        tone="primary"
+        className="mt-2 w-full"
+      >
         Manage check-ins
       </RowActionLink>
     </ClientWidget>

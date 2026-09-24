@@ -6,6 +6,7 @@ import { BrandCalendar } from '../../components/BrandCalendar';
 import { ToggleChip } from '../../components/ToggleChip';
 import { Button } from '../../components/ui/button';
 import { ClientWidget } from '../../components/client-portal/ClientWidget';
+import { CyclePhaseWidget } from '../../components/CyclePhaseWidget';
 import {
   useCycle,
   CYCLE_SYMPTOMS,
@@ -286,19 +287,12 @@ export function ClientCycleTracker() {
 
       {/* Phase Summary */}
       {clientPhase && (
-        <ClientWidget
-          eyebrow="Cycle phase"
+        <CyclePhaseWidget
+          presentation="client"
+          phase={clientPhase}
           headingId="phase-summary-heading"
-          hero={
-            <span style={{ color: clientPhase.phaseColor }}>
-              {clientPhase.phaseName}
-            </span>
-          }
           className="mb-8"
         >
-          <p className="mt-0.5 text-[10px] font-bold uppercase tracking-widest text-text-secondary">
-            Day {clientPhase.dayInCycle}
-          </p>
           <p className="text-sm text-text-secondary mt-2 font-medium">
             {clientPhase.phase === 'menstrual' &&
               'Focus on iron-rich foods and gentle movement.'}
@@ -309,7 +303,7 @@ export function ClientCycleTracker() {
             {clientPhase.phase === 'luteal' &&
               'Prioritize complex carbs and recovery. Listen to your body.'}
           </p>
-        </ClientWidget>
+        </CyclePhaseWidget>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
