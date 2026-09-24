@@ -1,3 +1,4 @@
+import { PortalPageHeader } from "@eli-coach-platform/ui/portal";
 import { toast } from "@eli-coach-platform/ui/toast";
 import { useEffect } from "react";
 import {
@@ -56,17 +57,13 @@ function RecoveredCoachSettingsPage() {
 function CoachSettingsPage(props: { settings: AssessmentCallSettings }) {
   return (
     <div
-      className="mx-auto max-w-3xl space-y-6 pb-12 sm:space-y-8"
+      className="w-full max-w-3xl space-y-6 sm:space-y-8"
       data-parity-root="CoachSettings"
     >
-      <header className="space-y-2">
-        <h1 className="font-heading text-2xl font-bold leading-tight text-text-primary md:text-3xl">
-          Settings
-        </h1>
-        <p className="text-sm text-text-muted">
-          Manage how you take assessment calls and how measurements are shown.
-        </p>
-      </header>
+      <PortalPageHeader
+        subtitle="Manage how you take assessment calls and how measurements are shown."
+        title="Settings"
+      />
 
       <AssessmentCallSettingsSection settings={props.settings} />
     </div>

@@ -1,5 +1,10 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
+  SettingsRow,
+  SettingsRows,
+  SettingsSection,
+} from "@eli-coach-platform/ui/portal";
+import {
   Alert,
   Button,
   CheckboxChip,
@@ -13,13 +18,13 @@ import {
 } from "@eli-coach-platform/ui/primitives";
 import { cn } from "@eli-coach-platform/ui/lib";
 import { toast } from "@eli-coach-platform/ui/toast";
+import { CalendarClock, TriangleAlert } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import {
   Controller,
   useForm,
   type Control,
   type SubmitHandler,
-  type UseFormRegister,
 } from "react-hook-form";
 
 import {
@@ -59,7 +64,10 @@ const FIELD_BY_ERROR_CODE: Partial<
 };
 
 const FIELD_ERROR_CLASS = "text-sm font-medium text-feedback-danger";
+const FORM_ID = "assessment-call-settings-form";
 const START_HOUR_FIELD_ID = "start-hour";
+const END_HOUR_FIELD_ID = "end-hour";
+const MEETING_LINK_FIELD_ID = "meeting-link";
 
 const REFUSED_FIELD_SELECTOR_BY_ERROR_CODE: Partial<
   Record<AssessmentCallSettingsErrorCode, string>
@@ -78,15 +86,21 @@ export function AssessmentCallSettingsSection(
 ) {
   const { settings } = props;
   const headingId = useId();
+  const weekdaysLabelId = useId();
+  const weekdaysErrorId = useId();
+  const hoursLabelId = useId();
   const hoursErrorId = useId();
+  const meetingLinkHintId = useId();
+  const meetingLinkErrorId = useId();
   const { isSubmitting, response, submit } =
     useSaveAssessmentCallSettingsFetcher();
   const formRef = useRef<HTMLFormElement>(null);
   const {
     control,
-    formState: { errors },
+    formState: { errors, isDirty },
     handleSubmit,
     register,
+    reset,
     setError,
     watch,
   } = useForm<AssessmentCallSettings>({
@@ -107,6 +121,7 @@ export function AssessmentCallSettingsSection(
     setTimeZoneUnreadable(errorCode === "invalid_time_zone");
 
     if (response.success) {
+      reset(response.settings);
       toast.success(ASSESSMENT_CALL_SETTINGS_TOASTS.saved);
       return;
     }
@@ -135,144 +150,152 @@ export function AssessmentCallSettingsSection(
         ?.querySelector<HTMLElement>(refusedFieldSelector)
         ?.focus();
     }
-  }, [response, setError]);
+  }, [reset, response, setError]);
 
   const submitSettings: SubmitHandler<AssessmentCallSettings> = (values) => {
     submit({ ...values, timeZone: readBrowserTimeZone() });
   };
 
   const hoursError = errors.endHour?.message ?? errors.startHour?.message;
+  const meetingLinkError = errors.meetingLink?.message;
 
   return (
-    <section
-      aria-labelledby={headingId}
-      className="overflow-hidden rounded-panel border bg-surface-base"
-      data-parity-root="AssessmentCallSettingsSection"
-    >
-      <div className="border-b px-5 py-4 sm:px-6">
-        <h2
-          className="font-heading text-lg font-semibold text-text-primary"
-          id={headingId}
-        >
-          Assessment calls
-        </h2>
-      </div>
-
-      <form
-        className="space-y-6 px-5 py-5 sm:px-6"
-        noValidate
-        onSubmit={handleSubmit(submitSettings)}
-        ref={formRef}
-      >
-        {timeZoneUnreadable ? (
-          <Alert>
-            <p>{ASSESSMENT_CALL_SETTINGS_MESSAGES.invalid_time_zone}</p>
-          </Alert>
-        ) : null}
-
-        <WeekdayChoiceField
-          error={errors.weekdays}
-          register={register}
-          weekdays={weekdays}
-        />
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <HourSelectField
-            control={control}
-            errorId={hoursError ? hoursErrorId : null}
-            id={START_HOUR_FIELD_ID}
-            label="Start"
-            name="startHour"
-            options={HOUR_OPTIONS.start}
-          />
-          <HourSelectField
-            control={control}
-            errorId={hoursError ? hoursErrorId : null}
-            id="end-hour"
-            label="End"
-            name="endHour"
-            options={HOUR_OPTIONS.end}
-          />
-        </div>
-        <FieldErrorText id={hoursErrorId} message={hoursError} />
-
-        <MeetingLinkField error={errors.meetingLink} register={register} />
-
-        {meetingLink ? null : (
-          <Alert>
-            <p>Visitors cannot join calls until a link is set.</p>
-          </Alert>
-        )}
-
-        <div className="-mx-5 flex justify-end border-t px-5 pt-4 sm:-mx-6 sm:px-6">
+    <div data-parity-root="AssessmentCallSettingsSection">
+      <SettingsSection
+        description="Visitors book inside the days and hours you set here."
+        footer={
           <Button
             aria-busy={isSubmitting || undefined}
-            disabled={isSubmitting}
+            disabled={!isDirty || isSubmitting}
+            form={FORM_ID}
+            size="md"
             type="submit"
+            variant="primary"
           >
             {isSubmitting ? "Saving…" : "Save changes"}
           </Button>
-        </div>
-      </form>
-    </section>
-  );
-}
+        }
+        headingId={headingId}
+        icon={
+          <CalendarClock
+            aria-hidden="true"
+            className="text-brand-secondary"
+            size={18}
+          />
+        }
+        title="Assessment calls"
+      >
+        <form
+          id={FORM_ID}
+          noValidate
+          onSubmit={handleSubmit(submitSettings)}
+          ref={formRef}
+        >
+          {timeZoneUnreadable ? (
+            <div className="px-5 pt-5 sm:px-6">
+              <Alert>
+                <p>{ASSESSMENT_CALL_SETTINGS_MESSAGES.invalid_time_zone}</p>
+              </Alert>
+            </div>
+          ) : null}
 
-function WeekdayChoiceField(props: {
-  error: { message?: string } | undefined;
-  register: UseFormRegister<AssessmentCallSettings>;
-  weekdays: readonly Weekday[];
-}) {
-  const { error, register, weekdays } = props;
-  const errorId = useId();
+          <SettingsRows>
+            <SettingsRow
+              aria-describedby={errors.weekdays ? weekdaysErrorId : undefined}
+              as="fieldset"
+              description="Visitors can pick a slot on these days."
+              labelId={weekdaysLabelId}
+              layout="stacked"
+              title="Days I take calls"
+            >
+              <div className="flex flex-wrap gap-2">
+                {WEEKDAY_DISPLAY_ORDER.map((weekday) => (
+                  <CheckboxChip
+                    aria-label={WEEKDAY_LABELS[weekday].full}
+                    isChecked={weekdays.includes(weekday)}
+                    key={weekday}
+                    value={weekday}
+                    {...register("weekdays")}
+                  >
+                    {WEEKDAY_LABELS[weekday].short}
+                  </CheckboxChip>
+                ))}
+              </div>
+              <FieldErrorText
+                className="mt-2"
+                id={weekdaysErrorId}
+                message={errors.weekdays?.message}
+              />
+            </SettingsRow>
 
-  return (
-    <fieldset aria-describedby={error ? errorId : undefined}>
-      <legend className="mb-2 text-sm font-medium text-text-primary">
-        Days I take calls
-      </legend>
-      <div className="flex flex-wrap gap-2">
-        {WEEKDAY_DISPLAY_ORDER.map((weekday) => (
-          <CheckboxChip
-            aria-label={WEEKDAY_LABELS[weekday].full}
-            isChecked={weekdays.includes(weekday)}
-            key={weekday}
-            value={weekday}
-            {...register("weekdays")}
-          >
-            {WEEKDAY_LABELS[weekday].short}
-          </CheckboxChip>
-        ))}
-      </div>
-      <FieldErrorText className="mt-2" id={errorId} message={error?.message} />
-    </fieldset>
-  );
-}
+            <SettingsRow
+              description="Slots run inside this window in your time zone."
+              labelId={hoursLabelId}
+              layout="stacked"
+              title="Hours"
+            >
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <HourSelectField
+                  control={control}
+                  errorId={hoursError ? hoursErrorId : null}
+                  id={START_HOUR_FIELD_ID}
+                  label="Start"
+                  name="startHour"
+                  options={HOUR_OPTIONS.start}
+                />
+                <HourSelectField
+                  control={control}
+                  errorId={hoursError ? hoursErrorId : null}
+                  id={END_HOUR_FIELD_ID}
+                  label="End"
+                  name="endHour"
+                  options={HOUR_OPTIONS.end}
+                />
+              </div>
+              <FieldErrorText
+                className="mt-2"
+                id={hoursErrorId}
+                message={hoursError}
+              />
+            </SettingsRow>
 
-function MeetingLinkField(props: {
-  error: { message?: string } | undefined;
-  register: UseFormRegister<AssessmentCallSettings>;
-}) {
-  const { error, register } = props;
-  const linkId = useId();
-  const hintId = `${linkId}-hint`;
-  const errorId = `${linkId}-error`;
-
-  return (
-    <div className="space-y-2">
-      <Label htmlFor={linkId}>Meeting link</Label>
-      <Input
-        aria-describedby={error ? `${hintId} ${errorId}` : hintId}
-        aria-invalid={error ? true : undefined}
-        id={linkId}
-        placeholder="https://meet.google.com/…"
-        type="url"
-        {...register("meetingLink")}
-      />
-      <p className="text-xs text-text-muted" id={hintId}>
-        The room every join link opens.
-      </p>
-      <FieldErrorText id={errorId} message={error?.message} />
+            <SettingsRow
+              description="The room every join link opens."
+              descriptionId={meetingLinkHintId}
+              htmlFor={MEETING_LINK_FIELD_ID}
+              layout="stacked"
+              title="Meeting link"
+            >
+              <Input
+                aria-describedby={
+                  meetingLinkError
+                    ? `${meetingLinkHintId} ${meetingLinkErrorId}`
+                    : meetingLinkHintId
+                }
+                aria-invalid={meetingLinkError ? true : undefined}
+                id={MEETING_LINK_FIELD_ID}
+                inputMode="url"
+                placeholder="https://meet.google.com/…"
+                type="url"
+                {...register("meetingLink", {
+                  setValueAs: toMeetingLinkValue,
+                })}
+              />
+              <FieldErrorText
+                className="mt-2"
+                id={meetingLinkErrorId}
+                message={meetingLinkError}
+              />
+              {meetingLink ? null : (
+                <p className="mt-2 flex items-center gap-1.5 text-xs text-status-pending">
+                  <TriangleAlert aria-hidden="true" size={14} />
+                  Visitors cannot join calls until a link is set.
+                </p>
+              )}
+            </SettingsRow>
+          </SettingsRows>
+        </form>
+      </SettingsSection>
     </div>
   );
 }
@@ -350,6 +373,10 @@ function labelForSelectedHour(
   value: number,
 ): string {
   return options.find((option) => option.value === value)?.label ?? "";
+}
+
+function toMeetingLinkValue(value: string | null): string | null {
+  return value ? value : null;
 }
 
 function readBrowserTimeZone(): string {

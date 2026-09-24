@@ -64,6 +64,65 @@ describe("assessment call settings section", () => {
     ).toBeInTheDocument();
   });
 
+  it("keeps Save disabled until a setting changes", async () => {
+    // arrange, act
+    await renderSection();
+
+    // assert
+    expect(screen.getByRole("button", { name: "Save changes" })).toBeDisabled();
+  });
+
+  it("enables Save once a setting changes", async () => {
+    // arrange
+    const user = userEvent.setup();
+    await renderSection();
+
+    // act
+    await user.click(screen.getByRole("checkbox", { name: "Saturday" }));
+
+    // assert
+    expect(screen.getByRole("button", { name: "Save changes" })).toBeEnabled();
+  });
+
+  it("disables Save again when a change is undone", async () => {
+    // arrange
+    const user = userEvent.setup();
+    await renderSection();
+    const link = screen.getByLabelText("Meeting link");
+
+    // act
+    await user.type(link, "https://meet.example/eli-room");
+    await user.clear(link);
+
+    // assert
+    expect(screen.getByRole("button", { name: "Save changes" })).toBeDisabled();
+  });
+
+  it("disables Save again after a successful save", async () => {
+    // arrange
+    server.use(
+      http.put(SETTINGS_URL, async ({ request }) =>
+        HttpResponse.json({ success: true, settings: await request.json() }),
+      ),
+    );
+    const user = userEvent.setup();
+    await renderSection();
+
+    // act
+    await user.type(
+      screen.getByLabelText("Meeting link"),
+      "https://meet.example/eli-room",
+    );
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
+
+    // assert
+    expect(await screen.findByText("Settings saved")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save changes" })).toBeDisabled();
+    expect(screen.getByLabelText("Meeting link")).toHaveValue(
+      "https://meet.example/eli-room",
+    );
+  });
+
   it("shows and hides the no-link warning as the link field changes", async () => {
     // arrange
     const user = userEvent.setup();
@@ -282,6 +341,7 @@ describe("assessment call settings section", () => {
     await renderSection();
 
     // act
+    await user.click(screen.getByRole("checkbox", { name: "Saturday" }));
     await user.click(screen.getByRole("button", { name: "Save changes" }));
 
     // assert
@@ -305,6 +365,7 @@ describe("assessment call settings section", () => {
     await renderSection();
 
     // act
+    await user.click(screen.getByRole("checkbox", { name: "Saturday" }));
     await user.click(screen.getByRole("button", { name: "Save changes" }));
 
     // assert
