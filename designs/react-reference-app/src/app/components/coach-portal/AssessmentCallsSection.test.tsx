@@ -872,11 +872,12 @@ describe('filtering assessment calls by journey step', () => {
       await screen.findByRole('option', { name: 'All statuses 5' }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('option', { name: 'Payment link sent 1' }),
+      screen.getByRole('option', { name: 'Call held 3' }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('option', { name: 'Invited 1' }),
+      screen.getByRole('option', { name: 'Payment link sent 1' }),
     ).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Paid 1' })).toBeInTheDocument();
   });
 
   it('counts only within the window the coach is looking at', async () => {
@@ -914,7 +915,7 @@ describe('filtering assessment calls by journey step', () => {
     const user = renderJourneys('?when=all');
 
     // act
-    await chooseJourneyOption(user, 'Invited');
+    await chooseJourneyOption(user, 'Paid');
 
     // assert
     expect(listedNames()).toEqual(['Carmen Iliescu']);
@@ -923,7 +924,7 @@ describe('filtering assessment calls by journey step', () => {
 
   it('keeps the all-statuses option out of the URL when the coach goes back to it', async () => {
     // arrange
-    const user = renderJourneys('?when=all&status=invited');
+    const user = renderJourneys('?when=all&status=paid');
 
     // act
     await chooseJourneyOption(user, 'All statuses');
@@ -974,10 +975,10 @@ describe('filtering assessment calls by journey step', () => {
     });
 
     // act
-    await chooseJourneyOption(user, 'Invited');
+    await chooseJourneyOption(user, 'Paid');
 
     // assert
-    expect(currentLocation()).toBe('?status=invited REPLACE');
+    expect(currentLocation()).toBe('?status=paid REPLACE');
   });
 
   it('offers a way to clear every filter once one narrows the list to nothing, and resets the URL', async () => {

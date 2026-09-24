@@ -13,17 +13,21 @@ async function renderLibrary() {
       <TrainingProvider>
         <TrainingHub />
       </TrainingProvider>
-    </MemoryRouter>
+    </MemoryRouter>,
   );
-  await user.click(screen.getByRole('button', { name: 'Exercise Library' }));
+  await user.click(screen.getByRole('tab', { name: 'Exercise Library' }));
   return user;
 }
 
 const tagChip = (name: string) =>
-  within(screen.getByRole('group', { name: 'Tags' })).getByRole('button', { name });
+  within(screen.getByRole('group', { name: 'Tags' })).getByRole('button', {
+    name,
+  });
 
 const noEquipmentChip = () =>
-  within(screen.getByRole('group', { name: 'Equipment' })).getByRole('button', { name: 'No equipment' });
+  within(screen.getByRole('group', { name: 'Equipment' })).getByRole('button', {
+    name: 'No equipment',
+  });
 
 describe('the Exercise Library filters', () => {
   it('lists the whole library before anything is filtered', async () => {
@@ -138,7 +142,9 @@ describe('the Exercise Library filters', () => {
     expect(screen.queryByText('Barbell Back Squat')).not.toBeInTheDocument();
 
     // act
-    await user.click(screen.getByRole('button', { name: 'Clear search and filters' }));
+    await user.click(
+      screen.getByRole('button', { name: 'Clear search and filters' }),
+    );
 
     // assert
     expect(screen.getByText('Barbell Back Squat')).toBeInTheDocument();
@@ -150,7 +156,9 @@ describe('the Exercise Library filters', () => {
     // arrange
     const user = await renderLibrary();
     await user.click(tagChip('Recovery'));
-    const clear = screen.getByRole('button', { name: 'Clear search and filters' });
+    const clear = screen.getByRole('button', {
+      name: 'Clear search and filters',
+    });
     clear.focus();
 
     // act
@@ -174,7 +182,8 @@ describe('the Exercise Library filters', () => {
   it('shows a tag added through the modal on the exercise row', async () => {
     // arrange
     const user = await renderLibrary();
-    const plankRow = () => screen.getByText('Plank').closest('tr') as HTMLElement;
+    const plankRow = () =>
+      screen.getByText('Plank').closest('tr') as HTMLElement;
     expect(within(plankRow()).queryByText('Strength')).not.toBeInTheDocument();
 
     // act — edit Plank through the real modal and add a tag
@@ -183,7 +192,9 @@ describe('the Exercise Library filters', () => {
     // the point; the modal's group is the later of the two in the DOM.
     const tagGroups = screen.getAllByRole('group', { name: 'Tags' });
     const modalTags = tagGroups[tagGroups.length - 1];
-    await user.click(within(modalTags).getByRole('button', { name: 'Strength' }));
+    await user.click(
+      within(modalTags).getByRole('button', { name: 'Strength' }),
+    );
     await user.click(screen.getByRole('button', { name: 'Save Changes' }));
 
     // assert — the visible row, not provider state
@@ -195,10 +206,16 @@ describe('the Exercise Library filters', () => {
     const user = await renderLibrary();
     await user.click(tagChip('Strength'));
     await user.click(noEquipmentChip());
-    expect(screen.getByText('No exercises match your search and filters.')).toBeInTheDocument();
+    expect(
+      screen.getByText('No exercises match your search and filters.'),
+    ).toBeInTheDocument();
 
     // act
-    await user.click(screen.getAllByRole('button', { name: 'Clear search and filters' }).at(-1)!);
+    await user.click(
+      screen
+        .getAllByRole('button', { name: 'Clear search and filters' })
+        .at(-1)!,
+    );
 
     // assert
     expect(screen.getByText('Barbell Back Squat')).toBeInTheDocument();
@@ -212,7 +229,9 @@ describe('the Exercise Library filters', () => {
     await user.click(tagChip('Recovery'));
 
     // act
-    await user.click(screen.getByRole('button', { name: 'Clear search and filters' }));
+    await user.click(
+      screen.getByRole('button', { name: 'Clear search and filters' }),
+    );
 
     // assert
     expect(search).toHaveValue('');

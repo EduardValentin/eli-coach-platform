@@ -27,7 +27,7 @@ function RadioGroupItem({
     <RadioGroupPrimitive.Item
       data-slot="radio-group-item"
       className={cn(
-        "border-border-subtle bg-surface-base data-[state=checked]:border-brand aspect-square size-5 shrink-0 rounded-full border shadow-soft outline-none transition-[background-color,border-color,box-shadow] disabled:cursor-not-allowed disabled:opacity-50",
+        "border-border-subtle bg-surface-base data-[state=checked]:border-primary aspect-square size-5 shrink-0 rounded-full border shadow-soft outline-none transition-[background-color,border-color,box-shadow] disabled:cursor-not-allowed disabled:opacity-50",
         className,
       )}
       {...props}
@@ -36,7 +36,7 @@ function RadioGroupItem({
         data-slot="radio-group-indicator"
         className="relative flex items-center justify-center"
       >
-        <CircleIcon className="fill-brand text-brand absolute top-1/2 left-1/2 size-2.5 -translate-x-1/2 -translate-y-1/2" />
+        <CircleIcon className="fill-primary text-primary absolute top-1/2 left-1/2 size-2.5 -translate-x-1/2 -translate-y-1/2" />
       </RadioGroupPrimitive.Indicator>
     </RadioGroupPrimitive.Item>
   );

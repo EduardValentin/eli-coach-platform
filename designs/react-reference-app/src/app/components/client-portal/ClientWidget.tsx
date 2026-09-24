@@ -1,11 +1,11 @@
 import type { ReactNode } from 'react';
-import { PortalWidget, type WidgetHeroSize } from '../PortalWidget';
+import { PortalWidget, type WidgetDensity } from '../PortalWidget';
 
 interface ClientWidgetProps {
   eyebrow: ReactNode;
   icon?: ReactNode;
   hero?: ReactNode;
-  heroSize?: WidgetHeroSize;
+  density?: WidgetDensity;
   voice?: ReactNode;
   headingId: string;
   children?: ReactNode;
@@ -18,7 +18,7 @@ export function ClientWidget({
   eyebrow,
   icon,
   hero,
-  heroSize,
+  density,
   voice,
   headingId,
   children,
@@ -32,7 +32,7 @@ export function ClientWidget({
       title={eyebrow}
       icon={icon}
       hero={hero}
-      heroSize={heroSize}
+      density={density}
       voice={voice}
       headingId={headingId}
       action={action}

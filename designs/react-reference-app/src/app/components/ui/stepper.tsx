@@ -7,8 +7,8 @@ type StepperProps = {
 };
 
 function barClass(index: number, current: number): string {
-  if (index < current) return 'bg-brand/40';
-  if (index === current) return 'bg-brand';
+  if (index < current) return 'bg-primary/40';
+  if (index === current) return 'bg-primary';
 
   return 'bg-surface-muted';
 }

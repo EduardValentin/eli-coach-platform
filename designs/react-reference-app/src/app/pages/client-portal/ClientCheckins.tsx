@@ -1,15 +1,10 @@
-import { useState, useMemo, ReactNode } from 'react';
-import { motion } from 'motion/react';
-import {
-  CalendarDays,
-  CalendarPlus,
-  Clock,
-  CheckCircle2,
-  XCircle,
-  RefreshCw,
-  Video,
-} from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { CalendarDays, CalendarPlus, Clock, Video } from 'lucide-react';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
+import { AppointmentCard } from '../../components/coach-portal/AppointmentCard';
+import { CheckinCard } from '../../components/CheckinCard';
+import { EmptyState } from '../../components/EmptyState';
+import { Badge } from '../../components/ui/badge';
 import {
   useCheckins,
   type CheckIn,
@@ -20,7 +15,7 @@ import {
   PROGRAM_REVIEW_LABEL,
   upcomingReviewCall,
 } from '../../utils/reviewCallListing';
-import { browserTimeZone, checkinInstant } from '../../utils/dateFormatters';
+import { browserTimeZone } from '../../utils/dateFormatters';
 import { useMessaging } from '../../context/MessagingContext';
 import { useCoachProfile } from '../../context/CoachProfileContext';
 import {
@@ -30,7 +25,6 @@ import {
   to24h,
 } from '../../utils/dateFormatters';
 import { CheckinSchedulerSheet } from '../../components/CheckinSchedulerSheet';
-import { DateTimeLabel } from '../../components/DateTimeLabel';
 import {
   Tabs,
   TabsContent,
@@ -62,6 +56,7 @@ export function ClientCheckins() {
   const reviewCall = upcomingReviewCall(demoJourney, new Date());
   const { coachProfile } = useCoachProfile();
   const coachName = coachProfile.name;
+  const timeZone = browserTimeZone();
 
   const upcoming = getUpcomingCheckins(CLIENT_ID);
   const pending = getPendingCheckins(CLIENT_ID); // pending + rescheduling
@@ -204,7 +199,7 @@ export function ClientCheckins() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="w-full">
       <PortalPageHeader
         title="Check-ins"
         subtitle={`Request time with ${coachName}, respond to proposals, and review past sessions.`}
@@ -227,6 +222,9 @@ export function ClientCheckins() {
                 className="px-4 sm:px-5"
               >
                 Requests
+                {needsResponseCount > 0 && (
+                  <Badge variant="count">{needsResponseCount}</Badge>
+                )}
               </TabsTrigger>
               <TabsTrigger
                 variant="segmented"
@@ -246,60 +244,74 @@ export function ClientCheckins() {
                   ? 'You already have a check-in request awaiting your coach'
                   : 'Request a check-in with your coach'
               }
-              variant="default"
+              variant="primary"
+              size="md"
               className="hidden shrink-0 sm:inline-flex"
             >
-              {pendingExists ? (
-                <Clock size={16} aria-hidden="true" />
-              ) : (
-                <CalendarPlus size={16} aria-hidden="true" />
-              )}
-              {pendingExists ? 'Check-in pending' : 'Request check-in'}
+              <CalendarPlus size={16} aria-hidden="true" />
+              Request check-in
             </Button>
           </div>
-          {needsResponseCount > 0 && (
-            <p className="text-sm text-text-secondary">
-              {proposalsWaitingLine(needsResponseCount)}
-            </p>
-          )}
         </div>
 
         {/* Upcoming */}
         <TabsContent value="upcoming" className="space-y-3">
           {reviewCall && (
-            <ProgramReviewCard
-              coachName={coachName}
-              startsAt={reviewCall.startsAt}
+            <AppointmentCard
+              attendee={{
+                name: coachName,
+                imageUrl: coachProfile.avatarUrl ?? undefined,
+              }}
+              when={{ startsAt: reviewCall.startsAt, timeZone }}
+              badges={
+                <Badge variant="brand-secondary">{PROGRAM_REVIEW_LABEL}</Badge>
+              }
+              footnote={`You and ${coachName} go through your new program together.`}
             />
           )}
           {upcoming.length === 0 && !reviewCall ? (
             <EmptyState
               icon={CalendarDays}
               title="No upcoming check-ins"
-              hint="Request one any time using the button above."
+              description="Request one any time using the button above."
             />
           ) : (
             upcoming.map((c) => (
-              <CheckinCard key={c.id} checkin={c}>
-                <a
-                  href={MEET_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={buttonVariants({ variant: 'default' })}
-                >
-                  <Video size={14} aria-hidden="true" />
-                  Join Meet
-                </a>
-                {c.rescheduleCount < MAX_RESCHEDULES && (
-                  <Button
-                    type="button"
-                    onClick={() => openReschedule(c.id)}
-                    variant="outline-primary"
-                  >
-                    Reschedule
-                  </Button>
-                )}
-              </CheckinCard>
+              <CheckinCard
+                key={c.id}
+                checkin={c}
+                viewer="client"
+                attendee={{
+                  name: coachName,
+                  imageUrl: coachProfile.avatarUrl ?? undefined,
+                }}
+                actions={
+                  <>
+                    {c.rescheduleCount < MAX_RESCHEDULES && (
+                      <Button
+                        type="button"
+                        onClick={() => openReschedule(c.id)}
+                        variant="outline"
+                        size="sm"
+                      >
+                        Reschedule
+                      </Button>
+                    )}
+                    <a
+                      href={MEET_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={buttonVariants({
+                        variant: 'outline',
+                        size: 'sm',
+                      })}
+                    >
+                      <Video size={14} aria-hidden="true" />
+                      Join Meet
+                    </a>
+                  </>
+                }
+              />
             ))
           )}
         </TabsContent>
@@ -310,7 +322,7 @@ export function ClientCheckins() {
             <EmptyState
               icon={CalendarPlus}
               title="No open requests"
-              hint="Requests you send and proposals from your coach show up here."
+              description="Requests you send and proposals from your coach show up here."
             />
           ) : (
             pending.map((c) => {
@@ -318,47 +330,60 @@ export function ClientCheckins() {
               const isRescheduling = c.status === 'rescheduling';
               const canReschedule = c.rescheduleCount < MAX_RESCHEDULES;
               return (
-                <CheckinCard key={c.id} checkin={c}>
-                  {needsResponse ? (
-                    <>
-                      <Button
-                        type="button"
-                        onClick={() =>
-                          isRescheduling
-                            ? handleAcceptReschedule(c)
-                            : handleApprove(c)
-                        }
-                        variant="default"
-                      >
-                        {isRescheduling ? 'Accept' : 'Approve'}
-                      </Button>
-                      {canReschedule && (
+                <CheckinCard
+                  key={c.id}
+                  checkin={c}
+                  viewer="client"
+                  attendee={{
+                    name: coachName,
+                    imageUrl: coachProfile.avatarUrl ?? undefined,
+                  }}
+                  actions={
+                    needsResponse ? (
+                      <>
                         <Button
                           type="button"
-                          onClick={() => openReschedule(c.id)}
-                          variant="outline-primary"
+                          onClick={() => handleDecline(c)}
+                          variant="ghost"
+                          size="sm"
                         >
-                          Reschedule
+                          Decline
                         </Button>
-                      )}
+                        {canReschedule && (
+                          <Button
+                            type="button"
+                            onClick={() => openReschedule(c.id)}
+                            variant="outline"
+                            size="sm"
+                          >
+                            Reschedule
+                          </Button>
+                        )}
+                        <Button
+                          type="button"
+                          onClick={() =>
+                            isRescheduling
+                              ? handleAcceptReschedule(c)
+                              : handleApprove(c)
+                          }
+                          variant="primary"
+                          size="sm"
+                        >
+                          {isRescheduling ? 'Accept' : 'Approve'}
+                        </Button>
+                      </>
+                    ) : (
                       <Button
                         type="button"
-                        onClick={() => handleDecline(c)}
+                        onClick={() => handleCancelRequest(c)}
                         variant="outline"
+                        size="sm"
                       >
-                        Decline
+                        Cancel request
                       </Button>
-                    </>
-                  ) : (
-                    <Button
-                      type="button"
-                      onClick={() => handleCancelRequest(c)}
-                      variant="outline"
-                    >
-                      Cancel request
-                    </Button>
-                  )}
-                </CheckinCard>
+                    )
+                  }
+                />
               );
             })
           )}
@@ -370,10 +395,21 @@ export function ClientCheckins() {
             <EmptyState
               icon={Clock}
               title="No past check-ins yet"
-              hint="Completed and cancelled check-ins will appear here."
+              description="Completed and cancelled check-ins will appear here."
             />
           ) : (
-            past.map((c) => <CheckinCard key={c.id} checkin={c} muted />)
+            past.map((c) => (
+              <CheckinCard
+                key={c.id}
+                checkin={c}
+                viewer="client"
+                attendee={{
+                  name: coachName,
+                  imageUrl: coachProfile.avatarUrl ?? undefined,
+                }}
+                muted
+              />
+            ))
           )}
         </TabsContent>
       </Tabs>
@@ -434,219 +470,13 @@ export function ClientCheckins() {
             ? 'You already have a check-in request awaiting your coach'
             : 'Request a check-in with your coach'
         }
-        variant="default"
-        size="lg"
+        variant="primary"
+        size="md"
         className="fixed left-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-40 shadow-lg sm:hidden"
       >
-        {pendingExists ? (
-          <Clock size={18} aria-hidden="true" />
-        ) : (
-          <CalendarPlus size={18} aria-hidden="true" />
-        )}
-        {pendingExists ? 'Pending' : 'Request check-in'}
+        <CalendarPlus size={18} aria-hidden="true" />
+        Request check-in
       </Button>
-    </div>
-  );
-}
-
-function proposalsWaitingLine(count: number): string {
-  return count === 1
-    ? '1 proposal waiting on you'
-    : `${count} proposals waiting on you`;
-}
-
-function ProgramReviewCard({
-  coachName,
-  startsAt,
-}: {
-  coachName: string;
-  startsAt: Date;
-}) {
-  const timeZone = browserTimeZone();
-
-  return (
-    <div className="bg-white p-4 sm:p-5 rounded-card border border-neutral-100/50 shadow-[0_2px_12px_rgb(0,0,0,0.03)]">
-      <div className="flex items-start gap-3 sm:gap-4">
-        <span className="w-10 h-10 sm:w-11 sm:h-11 rounded-control flex items-center justify-center shrink-0 bg-brand/10 text-brand">
-          <CalendarDays size={18} aria-hidden="true" />
-        </span>
-
-        <div className="flex-1 min-w-0">
-          <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-brand-secondary-surface text-brand-secondary">
-            {PROGRAM_REVIEW_LABEL}
-          </span>
-
-          <div className="mt-1">
-            <DateTimeLabel startsAt={startsAt} timeZone={timeZone} />
-          </div>
-
-          <p className="text-xs text-text-secondary mt-2">
-            You and {coachName} go through your new program together.
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Check-in card ──────────────────────────────────────────────
-
-function CheckinCard({
-  checkin,
-  children,
-  muted,
-}: {
-  checkin: CheckIn;
-  children?: ReactNode;
-  muted?: boolean;
-}) {
-  const isAdHoc = checkin.type === 'ad-hoc';
-  const isRescheduling = checkin.status === 'rescheduling';
-  const Icon = isAdHoc ? CalendarPlus : CalendarDays;
-
-  const chip = getStatusChip(checkin);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className={`bg-white p-4 sm:p-5 rounded-card border border-neutral-100/50 shadow-[0_2px_12px_rgb(0,0,0,0.03)] ${muted ? 'opacity-90' : ''}`}
-    >
-      <div className="flex items-start gap-3 sm:gap-4">
-        <span
-          className={`w-10 h-10 sm:w-11 sm:h-11 rounded-control flex items-center justify-center shrink-0 ${
-            isAdHoc
-              ? 'bg-status-pending-soft text-status-pending'
-              : 'bg-brand-secondary/10 text-brand-secondary'
-          }`}
-        >
-          <Icon size={18} aria-hidden="true" />
-        </span>
-
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <span
-              className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${
-                isAdHoc
-                  ? 'bg-status-pending-soft text-status-pending'
-                  : 'bg-neutral-100 text-text-secondary'
-              }`}
-            >
-              {isAdHoc ? 'Ad-hoc' : 'Weekly'}
-            </span>
-            {chip && (
-              <span
-                className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${chip.cls}`}
-              >
-                <chip.Icon size={10} aria-hidden="true" />
-                {chip.label}
-              </span>
-            )}
-          </div>
-
-          {isRescheduling && checkin.previousDate && checkin.previousTime && (
-            <div className="text-xs text-text-secondary line-through mb-0.5">
-              <DateTimeLabel
-                startsAt={checkinInstant(
-                  checkin.previousDate,
-                  checkin.previousTime,
-                )}
-              />
-            </div>
-          )}
-
-          <DateTimeLabel
-            startsAt={checkinInstant(checkin.date, checkin.time)}
-          />
-
-          {(checkin.rescheduleMessage || checkin.note) && (
-            <p className="text-xs text-text-secondary italic mt-2">
-              &ldquo;{checkin.rescheduleMessage || checkin.note}&rdquo;
-            </p>
-          )}
-        </div>
-      </div>
-
-      {children && <div className="mt-3 flex flex-wrap gap-2">{children}</div>}
-    </motion.div>
-  );
-}
-
-function getStatusChip(
-  checkin: CheckIn,
-): { label: string; cls: string; Icon: typeof Clock } | null {
-  switch (checkin.status) {
-    case 'confirmed':
-      return {
-        label: 'Confirmed',
-        cls: 'text-brand-secondary bg-brand-secondary/10',
-        Icon: CheckCircle2,
-      };
-    case 'completed':
-      return {
-        label: 'Completed',
-        cls: 'text-brand-secondary bg-brand-secondary/10',
-        Icon: CheckCircle2,
-      };
-    case 'declined':
-      return {
-        label: 'Declined',
-        cls: 'text-red-500 bg-red-50',
-        Icon: XCircle,
-      };
-    case 'cancelled':
-      return {
-        label: 'Cancelled',
-        cls: 'text-text-secondary bg-neutral-100',
-        Icon: XCircle,
-      };
-    case 'rescheduling':
-      return checkin.proposedBy === 'coach'
-        ? {
-            label: 'Coach proposed a time',
-            cls: 'text-brand bg-brand/10',
-            Icon: RefreshCw,
-          }
-        : {
-            label: 'Awaiting your coach',
-            cls: 'text-text-secondary bg-neutral-100',
-            Icon: RefreshCw,
-          };
-    case 'pending':
-      return checkin.proposedBy === 'coach'
-        ? {
-            label: 'From your coach',
-            cls: 'text-status-pending bg-status-pending-soft',
-            Icon: Clock,
-          }
-        : {
-            label: 'Awaiting your coach',
-            cls: 'text-text-secondary bg-neutral-100',
-            Icon: Clock,
-          };
-    default:
-      return null;
-  }
-}
-
-function EmptyState({
-  icon: Icon,
-  title,
-  hint,
-}: {
-  icon: typeof Clock;
-  title: string;
-  hint: string;
-}) {
-  return (
-    <div className="text-center py-16">
-      <Icon
-        size={40}
-        className="mx-auto text-neutral-300 mb-4"
-        aria-hidden="true"
-      />
-      <p className="text-text-secondary font-medium">{title}</p>
-      <p className="text-sm text-text-secondary mt-1">{hint}</p>
     </div>
   );
 }

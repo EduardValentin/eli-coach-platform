@@ -1,8 +1,20 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AppointmentCard } from './AppointmentCard';
 
+class ImmediatelyLoadedImage {
+  complete = true;
+  naturalWidth = 1;
+  src = '';
+  addEventListener() {}
+  removeEventListener() {}
+}
+
 const WHEN = { startsAt: new Date('2026-09-21T18:00:00Z'), timeZone: 'UTC' };
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe('the appointment card', () => {
   it('shows the attendee, the day and the time', () => {
@@ -15,16 +27,18 @@ describe('the appointment card', () => {
     expect(screen.getByText('· 6:00 PM')).toBeInTheDocument();
   });
 
-  it('falls back to the attendee initial when there is no photo', () => {
+  it('falls back to the attendee initials when there is no photo', () => {
     const attendee = { name: 'Maria Ionescu' };
 
     render(<AppointmentCard attendee={attendee} when={WHEN} />);
 
     expect(screen.queryByRole('img')).toBeNull();
-    expect(screen.getByText('M')).toHaveAttribute('aria-hidden', 'true');
+    expect(screen.getByText('MI')).toHaveAttribute('aria-hidden', 'true');
   });
 
   it('shows the attendee photo without repeating the name to a screen reader', () => {
+    vi.stubGlobal('Image', ImmediatelyLoadedImage);
+
     const attendee = {
       name: 'Maria Ionescu',
       imageUrl: 'https://example.com/maria.jpg',
@@ -34,7 +48,7 @@ describe('the appointment card', () => {
       <AppointmentCard attendee={attendee} when={WHEN} />,
     );
 
-    expect(screen.queryByText('M')).toBeNull();
+    expect(screen.queryByText('MI')).toBeNull();
     expect(container.querySelector('img')).toHaveAttribute('alt', '');
   });
 
@@ -119,9 +133,7 @@ describe('the appointment card', () => {
       />,
     );
 
-    const strikethrough = screen.getByText('Sun, Sep 20').closest('div');
-    expect(strikethrough).toHaveClass('line-through');
-    expect(screen.getByText('· 9:00 AM')).toBeInTheDocument();
+    expect(screen.getByText('Sun, Sep 20 · 9:00 AM').tagName).toBe('S');
   });
 
   it('quotes the note and keeps its line breaks', () => {

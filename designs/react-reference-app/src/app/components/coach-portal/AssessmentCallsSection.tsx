@@ -51,7 +51,7 @@ import { useClientJourneys } from '../../context/ClientJourneyContext';
 import type { JourneyStage } from '../../domain/journey';
 import { AppointmentCard } from './AppointmentCard';
 import { CallJourneyActions } from './CallJourneyActions';
-import { JourneyStageBadge } from './JourneyStageBadge';
+import { CallStageBadge } from './CallStageBadge';
 import { CallListPager } from './CallListPager';
 import { JoinCallLink } from './JoinCallLink';
 import { SortControl } from './SortControl';
@@ -77,8 +77,9 @@ const WHEN_TABS: { status: AssessmentCallStatus; label: string }[] = [
 
 const JOURNEY_FILTER_OPTIONS: { step: JourneyStep; label: string }[] = [
   { step: 'any', label: 'All statuses' },
+  { step: 'held', label: 'Call held' },
   { step: 'payment-link-sent', label: 'Payment link sent' },
-  { step: 'invited', label: 'Invited' },
+  { step: 'paid', label: 'Paid' },
 ];
 
 function visitorDetails(
@@ -125,7 +126,7 @@ function CallItem({
           <>
             {isToday && <Badge variant="brand-secondary">Today</Badge>}
             {journey && showsJourneyStage(journey.stage, timing) && (
-              <JourneyStageBadge stage={journey.stage} />
+              <CallStageBadge stage={journey.stage} />
             )}
           </>
         }
@@ -133,7 +134,7 @@ function CallItem({
         actions={
           <>
             {timing === 'upcoming' && (
-              <JoinCallLink joinPath={booking.joinPath} />
+              <JoinCallLink joinPath={booking.joinPath} live={isToday} />
             )}
             {journey && timing === 'past' && (
               <CallJourneyActions journey={journey} />

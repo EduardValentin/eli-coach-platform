@@ -28,10 +28,16 @@ export function NutritionHub() {
         value={activeTab}
         onValueChange={(v) => setSearchParams({ tab: v }, { replace: true })}
       >
-        <TabsList>
-          <TabsTrigger value="foods">Foods</TabsTrigger>
-          <TabsTrigger value="recipes">Recipes</TabsTrigger>
-          <TabsTrigger value="plans">Meal Plans</TabsTrigger>
+        <TabsList variant="segmented">
+          <TabsTrigger variant="segmented" value="foods">
+            Foods
+          </TabsTrigger>
+          <TabsTrigger variant="segmented" value="recipes">
+            Recipes
+          </TabsTrigger>
+          <TabsTrigger variant="segmented" value="plans">
+            Meal Plans
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="foods" className="pt-6">

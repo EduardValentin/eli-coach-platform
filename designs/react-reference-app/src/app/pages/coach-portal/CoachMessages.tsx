@@ -2,7 +2,6 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { motion } from 'motion/react';
 import {
-  Search,
   Send,
   Paperclip,
   Check,
@@ -30,7 +29,19 @@ import {
 } from '../../utils/dateFormatters';
 import { CheckinActionCard } from '../../components/CheckinActionCard';
 import { CheckinSchedulerSheet } from '../../components/CheckinSchedulerSheet';
+import { SearchField } from '../../components/SearchField';
 import { Button, buttonVariants } from '../../components/ui/button';
+import { Badge } from '../../components/ui/badge';
+import {
+  Avatar,
+  AvatarImage,
+  AvatarFallback,
+} from '../../components/ui/avatar';
+import { cn } from '../../components/ui/utils';
+import {
+  WIDGET_TITLE_CLASS,
+  WIDGET_SUBHEADING_CLASS,
+} from '../../components/typography';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -261,26 +272,17 @@ export function CoachMessages() {
         subtitle="Every conversation with your clients in one place."
       />
 
-      <div className="flex h-[calc(100vh-17rem)] lg:h-[calc(100vh-14rem)] bg-card rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50 overflow-hidden">
+      <div className="flex h-[calc(100vh-17rem)] lg:h-[calc(100vh-14rem)] bg-card rounded-panel shadow-soft border border-border/50 overflow-hidden">
         {/* Sidebar */}
         <div className="w-full md:w-80 border-r border-border flex flex-col hidden md:flex shrink-0">
           <div className="p-6 px-3 border-b border-border rounded-field">
-            <h2 className="font-serif text-2xl text-foreground mb-4">
-              Messages
-            </h2>
-            <div className="relative">
-              <Search
-                size={16}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-              />
-              <input
-                type="text"
-                placeholder="Search clients..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 bg-muted border border-border rounded-control text-sm focus:outline-none focus:bg-card transition-all"
-              />
-            </div>
+            <h2 className={cn(WIDGET_TITLE_CLASS, 'mb-4')}>Messages</h2>
+            <SearchField
+              placeholder="Search clients..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              aria-label="Search clients"
+            />
           </div>
 
           <div className="flex-1 overflow-y-auto">
@@ -292,49 +294,42 @@ export function CoachMessages() {
                   setRescheduleTarget(null);
                   setShowSchedulePicker(false);
                 }}
-                className={`w-full text-left p-4 flex items-start gap-3 border-b border-neutral-50 transition-colors ${
+                className={`w-full text-left p-4 flex items-start gap-3 border-b border-border-subtle transition-colors ${
                   activeClient === conv.id
                     ? 'bg-primary-soft'
                     : 'hover:bg-muted'
                 }`}
               >
                 <div className="relative shrink-0">
-                  {conv.avatar ? (
-                    <img
-                      src={conv.avatar}
-                      alt={conv.name}
-                      className="w-12 h-12 rounded-full object-cover border border-border"
-                    />
-                  ) : (
-                    <div className="w-12 h-12 rounded-full bg-card border border-border flex items-center justify-center font-serif text-foreground font-semibold">
-                      {conv.initial}
-                    </div>
-                  )}
+                  <Avatar className="size-12 border border-border">
+                    {conv.avatar && (
+                      <AvatarImage src={conv.avatar} alt={conv.name} />
+                    )}
+                    <AvatarFallback>{conv.initial}</AvatarFallback>
+                  </Avatar>
                   {conv.status === 'Active' && (
-                    <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
+                    <span className="absolute bottom-0 right-0 size-3 bg-success border-2 border-surface-base rounded-full" />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-baseline mb-1">
-                    <p
-                      className={`text-sm truncate ${activeClient === conv.id ? 'font-bold text-foreground' : 'font-semibold text-neutral-700'}`}
-                    >
+                    <p className="text-sm font-medium text-text-primary truncate">
                       {conv.name}
                     </p>
-                    <p className="text-[10px] text-muted-foreground shrink-0 ml-2">
+                    <p className="text-xs text-text-secondary shrink-0 ml-2">
                       {conv.time}
                     </p>
                   </div>
                   <p
-                    className={`text-xs truncate ${conv.unread > 0 ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}
+                    className={`text-xs truncate ${conv.unread > 0 ? 'font-medium text-text-primary' : 'text-text-secondary'}`}
                   >
                     {conv.lastMessage}
                   </p>
                 </div>
                 {conv.unread > 0 && (
-                  <div className="w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center shrink-0">
+                  <Badge variant="count" className="text-primary shrink-0">
                     {conv.unread}
-                  </div>
+                  </Badge>
                 )}
               </button>
             ))}
@@ -348,32 +343,32 @@ export function CoachMessages() {
               {/* Header */}
               <div className="h-20 px-6 border-b border-border rounded-field bg-card flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-4">
-                  {activeConversation.avatar ? (
-                    <img
-                      src={activeConversation.avatar}
-                      alt={activeConversation.name}
-                      className="w-10 h-10 rounded-full object-cover border border-border"
-                    />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center font-serif text-foreground font-semibold">
+                  <Avatar className="border border-border">
+                    {activeConversation.avatar && (
+                      <AvatarImage
+                        src={activeConversation.avatar}
+                        alt={activeConversation.name}
+                      />
+                    )}
+                    <AvatarFallback>
                       {activeConversation.initial}
-                    </div>
-                  )}
+                    </AvatarFallback>
+                  </Avatar>
                   <div>
-                    <h3 className="font-semibold text-foreground">
+                    <h3 className={WIDGET_SUBHEADING_CLASS}>
                       {activeConversation.name}
                     </h3>
                     <p className="text-xs text-success font-medium">Active</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 text-muted-foreground">
+                <div className="flex items-center gap-1 text-text-secondary">
                   <Button
                     onClick={() => {
                       setShowSchedulePicker(!showSchedulePicker);
                       setRescheduleTarget(null);
                     }}
-                    variant={showSchedulePicker ? 'default' : 'outline-primary'}
-                    size="sm"
+                    variant={showSchedulePicker ? 'primary' : 'outline'}
+                    size="xs"
                   >
                     <CalendarPlus size={14} />
                     <span className="hidden sm:inline">Schedule</span>
@@ -382,7 +377,7 @@ export function CoachMessages() {
                     to={`/coach/clients/${activeConversation.id}`}
                     className={buttonVariants({
                       variant: 'ghost',
-                      size: 'icon',
+                      size: 'icon-sm',
                     })}
                     title="View Profile"
                   >
@@ -390,13 +385,13 @@ export function CoachMessages() {
                   </Link>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
+                      <Button variant="ghost" size="icon-sm">
                         <MoreVertical size={18} />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
                       align="end"
-                      className="w-52 rounded-control shadow-lg border-border"
+                      className="w-52 rounded-control shadow-raised border-border"
                     >
                       <DropdownMenuItem
                         className="gap-3 rounded-compact cursor-pointer"
@@ -452,7 +447,7 @@ export function CoachMessages() {
                         Archive conversation
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        className="gap-3 rounded-compact cursor-pointer text-red-600 focus:text-red-600"
+                        className="gap-3 rounded-compact cursor-pointer text-destructive focus:text-destructive"
                         onClick={() => setShowDeleteDialog(true)}
                       >
                         <Trash2 size={15} />
@@ -472,19 +467,19 @@ export function CoachMessages() {
                 >
                   <CalendarDays
                     size={16}
-                    className="text-foreground shrink-0"
+                    className="text-text-primary shrink-0"
                   />
-                  <span className="text-sm text-foreground font-medium">
+                  <span className="text-sm text-text-primary font-medium">
                     Next check-in:{' '}
-                    <span className="font-semibold">
+                    <span className="font-medium">
                       {formatCheckinDate(nextCheckin.date)} at{' '}
                       {formatCheckinTime(nextCheckin.time)}
                     </span>
                   </span>
                   {nextCheckin.type === 'recurring' && (
-                    <span className="ml-auto text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                    <Badge variant="muted" className="ml-auto">
                       Weekly
-                    </span>
+                    </Badge>
                   )}
                 </motion.div>
               )}
@@ -506,12 +501,12 @@ export function CoachMessages() {
                         <div
                           className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-card text-xs font-medium border ${
                             msg.systemType === 'plan-update'
-                              ? 'bg-brand-secondary/5 border-brand-secondary/20 text-brand-secondary'
+                              ? 'bg-brand-secondary-soft border-brand-secondary/20 text-brand-secondary'
                               : msg.systemType === 'checkin-cancelled'
-                                ? 'bg-red-50 border-red-200 text-red-600'
+                                ? 'bg-destructive/5 border-destructive/30 text-destructive'
                                 : msg.systemType === 'checkin-rescheduled'
-                                  ? 'bg-brand/5 border-brand/20 text-brand'
-                                  : 'bg-muted border-border text-muted-foreground'
+                                  ? 'bg-primary-soft border-primary/20 text-primary'
+                                  : 'bg-muted border-border text-text-secondary'
                           }`}
                         >
                           <Activity size={14} />
@@ -529,25 +524,25 @@ export function CoachMessages() {
                       className={`flex flex-col ${isCoach ? 'items-end' : 'items-start'}`}
                     >
                       <div className="flex items-end gap-2 max-w-[80%]">
-                        {!isCoach &&
-                          activeConversation &&
-                          (activeConversation.avatar ? (
-                            <img
-                              src={activeConversation.avatar}
-                              alt=""
-                              className="w-6 h-6 rounded-full object-cover border border-border shrink-0 mb-1"
-                            />
-                          ) : (
-                            <div className="w-6 h-6 rounded-full bg-card border border-border flex items-center justify-center font-serif text-xs shrink-0 mb-1">
+                        {!isCoach && activeConversation && (
+                          <Avatar className="size-6 border border-border shrink-0 mb-1">
+                            {activeConversation.avatar && (
+                              <AvatarImage
+                                src={activeConversation.avatar}
+                                alt=""
+                              />
+                            )}
+                            <AvatarFallback>
                               {activeConversation.initial}
-                            </div>
-                          ))}
+                            </AvatarFallback>
+                          </Avatar>
+                        )}
 
                         <div
                           className={`p-4 rounded-card text-sm ${
                             isCoach
-                              ? 'bg-surface-inverted text-white rounded-br-tile'
-                              : 'bg-card border border-border shadow-sm text-foreground rounded-bl-tile'
+                              ? 'bg-surface-inverted text-surface-inverted-foreground rounded-br-tile'
+                              : 'bg-card border border-border shadow-card text-text-primary rounded-bl-tile'
                           }`}
                         >
                           {msg.text}
@@ -557,13 +552,16 @@ export function CoachMessages() {
                       <div
                         className={`flex items-center gap-1 mt-1 ${isCoach ? '' : 'pl-8'}`}
                       >
-                        <span className="text-[10px] text-muted-foreground font-medium">
+                        <span className="text-xs text-text-secondary font-medium">
                           {msg.time}
                         </span>
                         {isCoach && (
-                          <span className="text-muted-foreground">
+                          <span className="text-text-secondary">
                             {msg.status === 'read' ? (
-                              <CheckCheck size={12} className="text-blue-500" />
+                              <CheckCheck
+                                size={12}
+                                className="text-brand-secondary"
+                              />
                             ) : (
                               <Check size={12} />
                             )}
@@ -598,10 +596,10 @@ export function CoachMessages() {
                   onSubmit={handleSend}
                   className="flex items-end gap-3 p-4"
                 >
-                  <Button type="button" variant="ghost" size="icon-lg">
+                  <Button type="button" variant="ghost" size="icon-md">
                     <Paperclip size={22} />
                   </Button>
-                  <div className="flex-1 min-h-[56px] flex items-center bg-muted rounded-card border border-border focus-within:border-brand focus-within:ring-1 focus-within:ring-brand transition-all overflow-hidden">
+                  <div className="flex-1 min-h-[56px] flex items-center bg-muted rounded-card border border-border focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all overflow-hidden">
                     <textarea
                       rows={1}
                       value={message}
@@ -619,9 +617,9 @@ export function CoachMessages() {
                   <Button
                     type="submit"
                     disabled={!message.trim()}
-                    variant="default"
-                    size="icon-lg"
-                    className="shadow-md"
+                    variant="primary"
+                    size="icon-md"
+                    className="shadow-card"
                   >
                     <Send size={20} />
                   </Button>
@@ -629,7 +627,7 @@ export function CoachMessages() {
               </div>
             </>
           ) : (
-            <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
+            <div className="flex-1 flex items-center justify-center text-text-secondary text-sm">
               Select a conversation to start messaging
             </div>
           )}
@@ -689,30 +687,29 @@ export function CoachMessages() {
         <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
           <AlertDialogContent className="sm:max-w-md rounded-card">
             <AlertDialogHeader>
-              <div className="mx-auto mb-2 w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
-                <Trash2 size={24} className="text-red-600" />
+              <div className="mx-auto mb-2 w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
+                <Trash2 size={24} className="text-destructive" />
               </div>
-              <AlertDialogTitle className="text-center text-foreground">
+              <AlertDialogTitle className="text-center text-text-primary">
                 Delete this conversation?
               </AlertDialogTitle>
               <AlertDialogDescription className="text-center">
                 Your entire message history with{' '}
-                <span className="font-semibold text-foreground">
+                <span className="font-medium text-text-primary">
                   {activeConversation?.name}
                 </span>{' '}
                 will be permanently deleted. This cannot be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter className="sm:flex-row gap-3 mt-2">
-              <AlertDialogCancel className="flex-1 rounded-control border-border text-muted-foreground hover:bg-muted font-semibold">
-                Cancel
-              </AlertDialogCancel>
+              <AlertDialogCancel className="flex-1">Cancel</AlertDialogCancel>
               <AlertDialogAction
+                variant="destructive"
                 onClick={() => {
                   setShowDeleteDialog(false);
                   toast.success('Conversation deleted');
                 }}
-                className="flex-1 rounded-control bg-red-600 text-white hover:bg-red-700 font-semibold shadow-sm"
+                className="flex-1"
               >
                 Delete
               </AlertDialogAction>

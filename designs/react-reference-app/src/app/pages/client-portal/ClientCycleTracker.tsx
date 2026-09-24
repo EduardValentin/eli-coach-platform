@@ -5,8 +5,13 @@ import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { BrandCalendar } from '../../components/BrandCalendar';
 import { ToggleChip } from '../../components/ToggleChip';
 import { Button } from '../../components/ui/button';
+import { Badge } from '../../components/ui/badge';
+import { Label } from '../../components/ui/label';
+import { Textarea } from '../../components/ui/textarea';
 import { ClientWidget } from '../../components/client-portal/ClientWidget';
 import { CyclePhaseWidget } from '../../components/CyclePhaseWidget';
+import { LABEL_CLASS } from '../../components/typography';
+import { cn } from '../../components/ui/utils';
 import {
   useCycle,
   CYCLE_SYMPTOMS,
@@ -114,10 +119,10 @@ function SwipeableLogEntry({
     <div className="relative overflow-hidden rounded-card">
       {/* Delete background revealed on swipe */}
       <motion.div
-        className="absolute inset-y-0 right-0 w-24 bg-red-500 flex items-center justify-center rounded-r-card"
+        className="absolute inset-y-0 right-0 w-24 bg-destructive flex items-center justify-center rounded-r-card"
         style={{ opacity: deleteOpacity }}
       >
-        <Trash2 size={20} className="text-white" />
+        <Trash2 size={20} className="text-destructive-foreground" />
       </motion.div>
 
       {/* Swipeable content */}
@@ -126,7 +131,7 @@ function SwipeableLogEntry({
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        className="flex items-center justify-between p-4 min-h-[60px] rounded-card border border-neutral-100 bg-neutral-50/50 relative z-10 bg-white touch-pan-y"
+        className="flex items-center justify-between p-4 min-h-[60px] rounded-card border border-border-subtle bg-card relative z-10 touch-pan-y"
       >
         <div className="flex items-center gap-3 lg:gap-4 min-w-0">
           <div
@@ -135,14 +140,14 @@ function SwipeableLogEntry({
           />
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <p className="font-semibold text-xs lg:text-sm text-text-primary">
+              <p className="font-medium text-xs lg:text-sm text-text-primary">
                 {new Date(entry.date + 'T00:00:00').toLocaleDateString(
                   'en-US',
                   { month: 'short', day: 'numeric', year: 'numeric' },
                 )}
               </p>
-              <span
-                className="text-[9px] lg:text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full"
+              <Badge
+                className="border-transparent uppercase tracking-label"
                 style={{
                   backgroundColor:
                     flowOpt?.softColor ?? 'var(--flow-light-soft)',
@@ -150,7 +155,7 @@ function SwipeableLogEntry({
                 }}
               >
                 {entry.flow}
-              </span>
+              </Badge>
             </div>
             {entry.symptoms.length > 0 && (
               <p className="text-caption lg:text-xs text-text-secondary mt-0.5">
@@ -165,13 +170,15 @@ function SwipeableLogEntry({
           </div>
         </div>
         {/* Trash icon: desktop only */}
-        <button
+        <Button
           onClick={() => onRemove(entry.id)}
-          className="text-neutral-300 hover:text-red-500 transition-colors shrink-0 ml-3"
+          variant="ghost"
+          size="icon-xs"
+          className="text-text-secondary hover:text-destructive shrink-0 ml-3"
           aria-label="Remove log entry"
         >
           <Trash2 size={16} />
-        </button>
+        </Button>
       </motion.div>
     </div>
   );
@@ -318,22 +325,21 @@ export function ClientCycleTracker() {
               period: (date) => periodDates.has(toISO(date)),
             }}
             modifiersClassNames={{
-              period:
-                'bg-cycle-menstrual/10 text-brand font-semibold hover:bg-cycle-menstrual/20',
+              period: 'bg-cycle-menstrual-soft text-primary font-medium',
             }}
           />
 
-          <div className="flex items-center gap-4 mt-6 pt-4 border-t border-neutral-100 text-xs text-text-secondary">
+          <div className="flex items-center gap-4 mt-6 pt-4 border-t border-border-subtle text-xs text-text-secondary">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-cycle-menstrual/20 border border-cycle-menstrual/30" />
               <span>Period day</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full ring-2 ring-brand/30" />
+              <div className="w-3 h-3 rounded-full ring-2 ring-primary/30" />
               <span>Today</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-brand" />
+              <div className="w-3 h-3 rounded-full bg-primary" />
               <span>Selected</span>
             </div>
           </div>
@@ -354,13 +360,14 @@ export function ClientCycleTracker() {
           className="self-start"
           action={
             selectedDate && (
-              <button
+              <Button
                 aria-label="Clear selected date"
                 onClick={() => setSelectedDate(undefined)}
-                className="text-text-secondary hover:text-text-secondary transition-colors"
+                variant="ghost"
+                size="icon-xs"
               >
                 <X size={18} />
-              </button>
+              </Button>
             )
           }
         >
@@ -368,18 +375,18 @@ export function ClientCycleTracker() {
             <div className="mt-4">
               {/* Flow intensity */}
               <div className="mb-6">
-                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3 block">
+                <Label className={cn(LABEL_CLASS, 'mb-3 block')}>
                   Flow Intensity
-                </label>
+                </Label>
                 <div className="grid grid-cols-2 gap-2">
                   {FLOW_OPTIONS.map((opt) => (
                     <button
                       key={opt.value}
                       onClick={() => setFlow(opt.value)}
-                      className={`px-3 py-2.5 rounded-control text-sm font-semibold transition-all ${
+                      className={`px-3 py-2.5 rounded-control text-sm font-medium transition-all ${
                         flow === opt.value
-                          ? 'shadow-md'
-                          : 'bg-neutral-50 text-text-secondary hover:bg-neutral-100 border border-neutral-100'
+                          ? 'shadow-card'
+                          : 'bg-surface-quiet text-text-secondary hover:bg-surface-muted border border-border-subtle'
                       }`}
                       style={
                         flow === opt.value
@@ -395,9 +402,9 @@ export function ClientCycleTracker() {
 
               {/* Symptoms */}
               <div className="mb-6">
-                <label className="text-xs font-bold text-text-secondary uppercase tracking-widest mb-3 block">
+                <Label className={cn(LABEL_CLASS, 'mb-3 block')}>
                   Symptoms
-                </label>
+                </Label>
                 <div className="flex flex-wrap gap-2">
                   {(symptomsExpanded
                     ? CYCLE_SYMPTOMS
@@ -430,21 +437,25 @@ export function ClientCycleTracker() {
 
               {/* Notes */}
               <div className="mb-6">
-                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 block">
+                <Label
+                  htmlFor="cycle-log-notes"
+                  className={cn(LABEL_CLASS, 'mb-2 block')}
+                >
                   Notes
-                </label>
-                <textarea
+                </Label>
+                <Textarea
+                  id="cycle-log-notes"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="How are you feeling today?"
-                  className="w-full border border-neutral-200 rounded-control p-3 min-h-[80px] focus:outline-none transition-colors text-sm resize-none"
+                  className="rounded-control min-h-[80px]"
                 />
               </div>
 
               <Button
                 onClick={handleLog}
-                variant="default"
-                size="lg"
+                variant="primary"
+                size="md"
                 className="w-full"
               >
                 <Plus size={16} />

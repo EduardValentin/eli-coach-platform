@@ -6,7 +6,7 @@ import { useClientProfile } from '../../context/ClientProfileContext';
 import { useUnitPreferences } from '../../context/UnitPreferencesContext';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
 import { isBeforeStage } from '../../domain/journey';
-import { useNavigate, useSearchParams, Link } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { ProgramStatusCard } from '../../components/client-portal/ProgramStatusCard';
 import { ReviewCallScheduler } from '../../components/client-portal/ReviewCallScheduler';
@@ -18,6 +18,10 @@ import { ProgressWidget } from '../../components/ProgressWidget';
 import { MACRO_BAR } from '../../components/coach-portal/nutrition/nutrition-constants';
 import { useAppState } from '../../context/AppContext';
 import { Button } from '../../components/ui/button';
+import { Badge } from '../../components/ui/badge';
+import { cn } from '../../components/ui/utils';
+import { WidgetLink } from '../../components/WidgetLink';
+import { LABEL_CLASS, VALUE_LG_CLASS } from '../../components/typography';
 
 const DAY_NAMES = [
   'Monday',
@@ -146,12 +150,9 @@ export function ClientDashboard() {
           headingId="phase-heading"
           className="h-full"
           footer={
-            <Link
-              to="/portal/cycle"
-              className="text-sm font-medium text-primary hover:underline"
-            >
-              View cycle tracker &rarr;
-            </Link>
+            <WidgetLink arrow to="/portal/cycle">
+              View cycle tracker
+            </WidgetLink>
           }
         />
 
@@ -178,15 +179,13 @@ export function ClientDashboard() {
                     strokeWidth={2.5}
                     aria-hidden="true"
                   />
-                  <span className="text-caption font-bold text-text-secondary uppercase tracking-widest">
-                    BMR
-                  </span>
+                  <span className={LABEL_CLASS}>BMR</span>
                 </div>
                 <div className="flex items-baseline gap-1">
-                  <span className="font-semibold text-3xl lg:text-4xl text-text-primary">
+                  <span className={cn(VALUE_LG_CLASS, 'tabular-nums')}>
                     {clientProfile?.bmr.toLocaleString() ?? '--'}
                   </span>
-                  <span className="text-xs font-semibold text-text-secondary">
+                  <span className="text-sm font-medium text-text-secondary">
                     kcal
                   </span>
                 </div>
@@ -199,16 +198,14 @@ export function ClientDashboard() {
                     strokeWidth={2.5}
                     aria-hidden="true"
                   />
-                  <span className="text-caption font-bold text-text-secondary uppercase tracking-widest">
-                    Maintenance
-                  </span>
+                  <span className={LABEL_CLASS}>Maintenance</span>
                 </div>
                 <div className="flex items-baseline gap-1">
-                  <span className="font-semibold text-3xl lg:text-4xl text-text-primary">
+                  <span className={cn(VALUE_LG_CLASS, 'tabular-nums')}>
                     {clientProfile?.maintenanceCalories.toLocaleString() ??
                       '--'}
                   </span>
-                  <span className="text-xs font-semibold text-text-secondary">
+                  <span className="text-sm font-medium text-text-secondary">
                     kcal
                   </span>
                 </div>
@@ -221,15 +218,13 @@ export function ClientDashboard() {
                     strokeWidth={2.5}
                     aria-hidden="true"
                   />
-                  <span className="text-caption font-bold text-text-secondary uppercase tracking-widest">
-                    Daily Target
-                  </span>
+                  <span className={LABEL_CLASS}>Daily Target</span>
                 </div>
                 <div className="flex items-baseline gap-1">
-                  <span className="font-semibold text-3xl lg:text-4xl text-text-primary">
+                  <span className={cn(VALUE_LG_CLASS, 'tabular-nums')}>
                     {clientProfile?.dailyCalories.toLocaleString() ?? '--'}
                   </span>
-                  <span className="text-xs font-semibold text-text-secondary">
+                  <span className="text-sm font-medium text-text-secondary">
                     kcal
                   </span>
                 </div>
@@ -249,10 +244,8 @@ export function ClientDashboard() {
                       ? `−${Math.abs(delta).toLocaleString()} kcal/day deficit`
                       : `+${delta.toLocaleString()} kcal/day surplus`;
                 return (
-                  <p className="flex flex-wrap items-center gap-1.5 mb-5 text-caption font-medium text-text-secondary">
-                    <span className="inline-block px-2 py-0.5 rounded-field bg-neutral-100 text-text-secondary font-bold uppercase tracking-wide text-[10px]">
-                      {clientProfile.primaryGoal}
-                    </span>
+                  <p className="flex flex-wrap items-center gap-1.5 mb-5 text-xs text-text-secondary">
+                    <Badge variant="muted">{clientProfile.primaryGoal}</Badge>
                     <span>{deltaLabel}</span>
                   </p>
                 );
@@ -261,10 +254,8 @@ export function ClientDashboard() {
             {/* Macro split */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-caption font-bold text-text-secondary uppercase tracking-widest">
-                  Macros
-                </span>
-                <span className="text-caption font-medium text-text-secondary">
+                <span className={LABEL_CLASS}>Macros</span>
+                <span className="text-xs text-text-secondary">
                   {macroKcal.toLocaleString()} kcal
                 </span>
               </div>
@@ -287,18 +278,18 @@ export function ClientDashboard() {
                         className={`w-2 h-2 rounded-full shrink-0 ${m.barClass}`}
                         aria-hidden="true"
                       />
-                      <span className="text-[10px] sm:text-caption font-bold text-text-secondary uppercase tracking-wide truncate">
+                      <span className={cn(LABEL_CLASS, 'truncate')}>
                         {m.label}
                       </span>
                     </div>
                     <p className="mt-1 text-text-primary">
-                      <span className="font-semibold text-lg lg:text-xl">
+                      <span className="text-xl font-medium tracking-tight tabular-nums">
                         {m.grams}
                       </span>
-                      <span className="text-xs font-semibold text-text-secondary">
+                      <span className="text-sm font-medium text-text-secondary">
                         g
                       </span>
-                      <span className="text-caption font-medium text-text-secondary">
+                      <span className="text-xs text-text-secondary">
                         {' '}
                         · {pctOf(m.kcal)}%
                       </span>
@@ -324,30 +315,28 @@ export function ClientDashboard() {
             className="h-full lg:col-span-2"
             action={
               todayInfo && !todayInfo.isRest ? (
-                <div className="shrink-0 rounded-field bg-metric-energy-soft px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-metric-energy">
+                <Badge variant="pending">
                   {todayInfo.dayName} &middot; {todayInfo.day.type}
-                </div>
+                </Badge>
               ) : todayInfo?.isRest ? (
-                <div className="shrink-0 rounded-field bg-neutral-100 px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-text-secondary">
-                  Rest Day
-                </div>
+                <Badge variant="muted">Rest Day</Badge>
               ) : null
             }
           >
             {activeGoal && (
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-brand-secondary/10 text-brand-secondary rounded-compact text-caption font-semibold mb-4">
+              <Badge variant="brand-secondary" className="mb-4">
                 <TargetIcon size={12} />
                 {activeGoal.type}
-              </div>
+              </Badge>
             )}
 
             {todayInfo?.isRest ? (
-              <p className="text-text-secondary font-medium leading-relaxed mb-10 max-w-2xl">
+              <p className="text-sm text-text-secondary leading-relaxed mb-10 max-w-2xl">
                 Today is a rest day. Focus on recovery, sleep, and nutrition.
                 Your body builds muscle during rest, not just in the gym.
               </p>
             ) : (
-              <p className="text-text-secondary font-medium leading-relaxed mb-10 max-w-2xl">
+              <p className="text-sm text-text-secondary leading-relaxed mb-10 max-w-2xl">
                 {todayInfo
                   ? `Today's ${todayInfo.day.type.toLowerCase()} session has ${todayInfo.day.exercises.length} exercises planned. Since you are in your luteal phase, take extra care with your warm-up and listen to your body.`
                   : 'No active plan assigned yet. Your coach will set one up soon!'}
@@ -355,7 +344,7 @@ export function ClientDashboard() {
             )}
 
             {todayInfo?.isRest && (
-              <div className="mt-auto px-6 py-3.5 bg-neutral-100 text-text-secondary text-sm font-semibold rounded-control flex items-center gap-3">
+              <div className="mt-auto px-6 py-3.5 bg-surface-muted text-text-secondary text-sm font-medium rounded-control flex items-center gap-3">
                 <Activity size={16} />
                 Enjoy your rest day
               </div>
@@ -371,12 +360,9 @@ export function ClientDashboard() {
           headingId="profile-details-heading"
           className="h-full"
           footer={
-            <Link
-              to="/portal/profile"
-              className="text-sm font-medium text-primary hover:underline"
-            >
-              View full profile &rarr;
-            </Link>
+            <WidgetLink arrow to="/portal/profile">
+              View full profile
+            </WidgetLink>
           }
         />
       </div>
@@ -393,8 +379,8 @@ export function ClientDashboard() {
           <Button
             type="button"
             onClick={handleStartWorkout}
-            variant="default"
-            size="lg"
+            variant="primary"
+            size="md"
             className="shadow-sm hover:shadow"
           >
             Start today's workout

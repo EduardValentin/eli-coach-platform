@@ -1,7 +1,5 @@
 import type { ReactNode } from 'react';
-
-export const PORTAL_PAGE_TITLE_CLASS =
-  'font-serif text-3xl lg:text-4xl tracking-tight text-text-primary';
+import { PORTAL_PAGE_TITLE_CLASS } from './typography';
 
 export function PortalPageHeader({
   title,

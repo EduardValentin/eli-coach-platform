@@ -14,7 +14,7 @@ describe('Reading', () => {
     render(<Reading label="Weight change" size="lg" unit="kg" value="-1.9" />);
 
     const value = screen.getByText('-1.9');
-    expect(value).toHaveClass('text-2xl');
+    expect(value).toHaveClass('text-value-lg');
     expect(screen.getByText('kg')).toBeVisible();
   });
 

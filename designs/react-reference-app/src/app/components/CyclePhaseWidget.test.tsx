@@ -32,8 +32,7 @@ describe('CyclePhaseWidget on the coach presentation', () => {
 
     const name = screen.getByText('Luteal');
     expect(name).toHaveStyle({ color: '#a855f7' });
-    expect(screen.getByText('Day')).toBeVisible();
-    expect(screen.getByText('21')).toBeVisible();
+    expect(screen.getByText('Day 21')).toBeVisible();
   });
 
   it('shows the empty state when there is no phase', () => {
@@ -50,7 +49,7 @@ describe('CyclePhaseWidget on the coach presentation', () => {
 });
 
 describe('CyclePhaseWidget on the client presentation', () => {
-  it('renders the phase name in plain text, not coloured', () => {
+  it('colours the phase name with the phase colour', () => {
     render(
       <CyclePhaseWidget
         headingId="phase-heading"
@@ -60,9 +59,8 @@ describe('CyclePhaseWidget on the client presentation', () => {
     );
 
     const name = screen.getByText('Luteal');
-    expect(name).not.toHaveAttribute('style');
-    expect(screen.getByText('Day')).toBeVisible();
-    expect(screen.getByText('21')).toBeVisible();
+    expect(name).toHaveStyle({ color: '#a855f7' });
+    expect(screen.getByText('Day 21')).toBeVisible();
   });
 
   it('renders extra children under the day line', () => {

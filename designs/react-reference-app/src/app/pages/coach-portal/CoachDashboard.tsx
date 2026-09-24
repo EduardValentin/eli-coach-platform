@@ -3,8 +3,11 @@ import { ArrowRight, ClipboardCheck, Users } from 'lucide-react';
 import { Link, useNavigate } from 'react-router';
 import { PortalWidget } from '../../components/PortalWidget';
 import { RowActionLink } from '../../components/RowActionButton';
+import { WidgetLink } from '../../components/WidgetLink';
 import { buttonVariants } from '../../components/ui/button';
 import { cn } from '../../components/ui/utils';
+import { Avatar, AvatarFallback } from '../../components/ui/avatar';
+import { Badge } from '../../components/ui/badge';
 import {
   Table,
   TableBody,
@@ -71,12 +74,10 @@ function ActiveClientRow({
     >
       <TableCell>
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-surface-quiet flex items-center justify-center font-serif text-text-primary font-semibold shrink-0">
-            {getInitials(client.name)}
-          </div>
-          <p className="font-semibold text-sm text-text-primary">
-            {client.name}
-          </p>
+          <Avatar size="md">
+            <AvatarFallback>{getInitials(client.name)}</AvatarFallback>
+          </Avatar>
+          <p className="text-sm font-medium text-text-primary">{client.name}</p>
         </div>
       </TableCell>
       <TableCell className="text-sm text-text-secondary">
@@ -87,9 +88,7 @@ function ActiveClientRow({
       </TableCell>
       {showsCompliance && (
         <TableCell>
-          <span className="inline-flex items-center px-2 py-1 rounded-field bg-success-soft text-success text-xs font-bold">
-            {client.compliance}
-          </span>
+          <Badge variant="success">{client.compliance}</Badge>
         </TableCell>
       )}
       <TableCell>
@@ -100,8 +99,8 @@ function ActiveClientRow({
             title={actionLabel}
             onClick={(event) => event.stopPropagation()}
             className={cn(
-              buttonVariants({ variant: 'outline', size: 'icon' }),
-              'opacity-0 hover:bg-text-primary hover:text-white hover:border-text-primary group-hover:opacity-100 focus-visible:opacity-100',
+              buttonVariants({ variant: 'ghost', size: 'icon-xs' }),
+              'opacity-0 hover:bg-text-primary hover:text-white group-hover:opacity-100 focus-visible:opacity-100',
             )}
           >
             <ArrowRight size={14} aria-hidden="true" />
@@ -167,6 +166,11 @@ export function CoachDashboard() {
             />
           }
           headingId="pending-checkins-heading"
+          footer={
+            <WidgetLink arrow to="/coach/checkins">
+              View all check-ins
+            </WidgetLink>
+          }
         >
           <div className="space-y-4">
             {pendingCheckins.length === 0 ? (
@@ -183,11 +187,7 @@ export function CoachDashboard() {
                     timeZone,
                   }}
                   action={
-                    <RowActionLink
-                      to="/coach/checkins"
-                      icon={ClipboardCheck}
-                      tone="primary"
-                    >
+                    <RowActionLink to="/coach/checkins" icon={ClipboardCheck}>
                       Review
                     </RowActionLink>
                   }
@@ -209,13 +209,10 @@ export function CoachDashboard() {
           />
         }
         headingId="active-clients-heading"
-        action={
-          <Link
-            to="/coach/clients"
-            className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
-          >
-            View all
-          </Link>
+        footer={
+          <WidgetLink arrow to="/coach/clients">
+            View all clients
+          </WidgetLink>
         }
       >
         <div className="-mx-6 overflow-x-auto">

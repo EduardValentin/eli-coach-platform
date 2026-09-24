@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Plus } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { MeasurementsTable } from '../MeasurementsTable';
 import { statedHeightCm } from '../../domain/bodyMetrics';
@@ -63,7 +64,7 @@ function AddMeasurementsForm({
 
   return (
     <>
-      <div className="shrink-0 border-b border-neutral-100 px-5 pt-6 pb-4 md:px-8 md:pt-8">
+      <div className="shrink-0 border-b border-border-subtle px-5 pt-6 pb-4 md:px-8 md:pt-8">
         <h3 className="pr-10 text-lg font-semibold leading-snug text-text-primary md:text-xl">
           {SHEET_TITLE}
         </h3>
@@ -93,16 +94,16 @@ function AddMeasurementsForm({
             <div className="flex flex-col-reverse gap-3 sm:flex-row-reverse">
               <Button
                 type="submit"
-                variant="default"
-                size="lg"
+                variant="primary"
+                size="md"
                 className="w-full sm:w-auto"
               >
                 Save measurements
               </Button>
               <Button
                 onClick={onClose}
-                variant="outline"
-                size="lg"
+                variant="ghost"
+                size="md"
                 className="w-full sm:w-auto"
               >
                 Cancel
@@ -134,16 +135,18 @@ export function MeasurementsSection() {
       emptyMessage="Nothing recorded yet. Your first set goes in with your answers."
       className="mt-6 lg:mt-8"
       perspective="client"
+      action={
+        <Button onClick={() => setAdding(true)} variant="outline" size="sm">
+          <Plus aria-hidden="true" size={16} />
+          Add
+        </Button>
+      }
+      emptyAction={
+        <Button onClick={() => setAdding(true)} variant="primary" size="sm">
+          Add your first measurements
+        </Button>
+      }
     >
-      <Button
-        className="mt-6 w-full sm:w-auto"
-        onClick={() => setAdding(true)}
-        variant="default"
-        size="lg"
-      >
-        {SHEET_TITLE}
-      </Button>
-
       <ResponsiveSheetDialog
         description={SHEET_DESCRIPTION}
         onOpenChange={setAdding}

@@ -301,7 +301,7 @@ describe('the assessment call row actions', () => {
     ).toBeInTheDocument();
   });
 
-  it('moves straight to invited and leaves no journey action once she has paid', async () => {
+  it('moves straight to paid and leaves no journey action once she has paid', async () => {
     // arrange
     const user = renderPage();
 
@@ -309,17 +309,17 @@ describe('the assessment call row actions', () => {
     await markPaid(user);
 
     // assert
-    expect(await findStageBadge('Invited')).toBeInTheDocument();
+    expect(await findStageBadge('Paid')).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: 'Send payment link' }),
     ).toBeNull();
   });
 
-  it('shows the accepted invitation once she has created her account', async () => {
+  it('still shows Paid and links to the client once she has created her account', async () => {
     // arrange
     const user = renderPage();
     await markPaid(user);
-    await findStageBadge('Invited');
+    await findStageBadge('Paid');
 
     // act
     await user.click(
@@ -327,7 +327,10 @@ describe('the assessment call row actions', () => {
     );
 
     // assert
-    expect(screen.getByText('Invitation accepted')).toBeInTheDocument();
+    expect(screen.getByText('Paid')).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: 'View client' }),
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: 'Send payment link' }),
     ).toBeNull();

@@ -92,9 +92,7 @@ describe('the program status card', () => {
     // act & assert
     expect(screen.getByText('Your answers are approved')).toBeVisible();
     expect(
-      screen.getByText(
-        "Eli is putting your program together. You'll find it here as soon as it's ready.",
-      ),
+      screen.getByText('Eli is putting your program together.'),
     ).toBeVisible();
   });
 
@@ -139,7 +137,7 @@ describe('the program status card', () => {
     );
   });
 
-  it('names the delivery date and the reassurance line on the waiting path', () => {
+  it('names the delivery date on the waiting path', () => {
     // arrange
     renderCard('?session=client&jstage=reviewing&jstart=waiting');
 
@@ -149,10 +147,8 @@ describe('the program status card', () => {
     // assert
     expect(delivery).toBeVisible();
     expect(
-      screen.getByText(
-        /^Your subscription starts on .+, when your program is delivered\.$/,
-      ),
-    ).toBeVisible();
+      screen.queryByText(/Your subscription starts on/),
+    ).not.toBeInTheDocument();
   });
 
   it('asks her to give up the withdrawal right before starting early', async () => {
@@ -194,14 +190,14 @@ describe('the program status card', () => {
     );
   });
 
-  it('reassures her about the renewal once the coaching runs', () => {
+  it('keeps billing off the program card once the coaching runs', () => {
     // arrange
     renderCard('?session=client&jstage=program-ready&jsub=active');
 
     // act
-    const reassurance = screen.getByText(/Your coaching renews on/);
+    const reassurance = screen.queryByText(/Your coaching renews on/);
 
     // assert
-    expect(reassurance).toBeVisible();
+    expect(reassurance).not.toBeInTheDocument();
   });
 });

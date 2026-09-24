@@ -5,15 +5,24 @@ import {
 } from '../utils/dateFormatters';
 import { cn } from './ui/utils';
 
+type DateTimeLabelSize = 'sm' | 'md';
+
+const DAY_CLASS: Record<DateTimeLabelSize, string> = {
+  sm: 'text-sm font-medium text-text-primary',
+  md: 'text-base font-medium text-text-primary',
+};
+
 interface DateTimeLabelProps {
   startsAt: Date;
   timeZone?: string;
+  size?: DateTimeLabelSize;
   className?: string;
 }
 
 export function DateTimeLabel({
   startsAt,
   timeZone = browserTimeZone(),
+  size = 'md',
   className,
 }: DateTimeLabelProps) {
   return (
@@ -23,7 +32,7 @@ export function DateTimeLabel({
         className,
       )}
     >
-      <span className="text-base font-semibold text-text-primary">
+      <span className={DAY_CLASS[size]}>
         {formatShortDay(startsAt, timeZone)}
       </span>
       <span className="text-sm text-text-secondary">

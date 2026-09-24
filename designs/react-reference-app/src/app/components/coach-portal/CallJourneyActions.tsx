@@ -1,11 +1,16 @@
 import { useState } from 'react';
-import { Send, type LucideIcon } from 'lucide-react';
+import { Send, UserRound, type LucideIcon } from 'lucide-react';
 import { toast } from 'sonner';
-import { RowActionButton } from '../RowActionButton';
+import { RowActionButton, RowActionLink } from '../RowActionButton';
 import { ConfirmDialog } from '../ui/confirm-dialog';
 import { useAppState } from '../../context/AppContext';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
-import type { ClientJourney, JourneyStage } from '../../domain/journey';
+import {
+  isBeforeStage,
+  type ClientJourney,
+  type JourneyStage,
+} from '../../domain/journey';
+import { clientDetailPathForJourney } from '../../utils/journeyLabels';
 import {
   PAYMENT_LINK_ERROR_MESSAGES,
   sendPaymentLink,
@@ -73,6 +78,18 @@ export function CallJourneyActions({ journey }: { journey: ClientJourney }) {
       setSending(false);
     }
   };
+
+  if (!isBeforeStage(journey.stage, 'invited')) {
+    return (
+      <RowActionLink
+        to={clientDetailPathForJourney(journey)}
+        icon={UserRound}
+        className="w-full md:w-auto"
+      >
+        View client
+      </RowActionLink>
+    );
+  }
 
   const action = journeyAction(journey.stage, name, email, sendLink);
 

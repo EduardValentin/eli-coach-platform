@@ -3,18 +3,19 @@ import {
   visitorFullName,
   type PrototypeBooking,
 } from '../services/assessmentCallService';
-import type { JourneyStage } from '../domain/journey';
+import { isBeforeStage, type JourneyStage } from '../domain/journey';
 
 export type AssessmentCallStatus = 'all' | 'today' | 'upcoming' | 'past';
 
 export type AssessmentCallTiming = 'upcoming' | 'past';
 
-export type JourneyStep = 'any' | 'payment-link-sent' | 'invited';
+export type JourneyStep = 'any' | 'held' | 'payment-link-sent' | 'paid';
 
 export const JOURNEY_STEPS: readonly JourneyStep[] = [
   'any',
+  'held',
   'payment-link-sent',
-  'invited',
+  'paid',
 ];
 
 export type SortKey = 'scheduled' | 'booked' | 'name' | 'email';
@@ -109,6 +110,9 @@ function hasStatus(call: ClassifiedCall, selection: ListingSelection): boolean {
 
 function isAtJourneyStep(call: ListedCall, step: JourneyStep): boolean {
   if (step === 'any') return true;
+  if (step === 'paid') {
+    return call.stage !== null && !isBeforeStage(call.stage, 'invited');
+  }
   return call.stage === step;
 }
 
@@ -242,7 +246,7 @@ export function parseStatus(raw: string | null): AssessmentCallStatus {
 }
 
 export function parseJourneyStep(raw: string | null): JourneyStep {
-  if (raw === 'payment-link-sent' || raw === 'invited') {
+  if (raw === 'held' || raw === 'payment-link-sent' || raw === 'paid') {
     return raw;
   }
   return 'any';
@@ -264,8 +268,9 @@ const STATUS_PHRASES: Record<AssessmentCallStatus, string> = {
 
 const JOURNEY_STEP_LABELS: Record<JourneyStep, string> = {
   any: '',
+  held: 'Call held',
   'payment-link-sent': 'Payment link sent',
-  invited: 'Invited',
+  paid: 'Paid',
 };
 
 export const NO_SEARCH_MATCH_MESSAGE = 'No calls match your search.';

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ClipboardList } from 'lucide-react';
+import { ClipboardList, MessageSquareText, TriangleAlert } from 'lucide-react';
 import { Link } from 'react-router';
 import {
   Accordion,
@@ -7,6 +7,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '../ui/accordion';
+import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Checkbox } from '../ui/checkbox';
 import { ConfirmDialog } from '../ui/confirm-dialog';
@@ -22,6 +23,7 @@ import { CYCLE_MODE_LABELS, cycleModeOf } from '../../domain/cycleMode';
 import {
   awaitsCoachReview,
   type ClientJourney,
+  type DetailRequest,
   type JourneyStage,
 } from '../../domain/journey';
 import {
@@ -40,6 +42,9 @@ import {
 } from '../../domain/safetyScreening';
 import { formatJourneyDate } from '../../utils/journeyLabels';
 import { PortalWidget } from '../PortalWidget';
+import { Reading } from '../Reading';
+import { StatusHint } from '../StatusHint';
+import { WIDGET_SUBHEADING_CLASS } from '../typography';
 import { JourneyStageBadge } from './JourneyStageBadge';
 import { OnboardingReviewDialog } from './OnboardingReviewDialog';
 import { ReviewAnswerValue } from './ReviewAnswerValue';
@@ -63,46 +68,31 @@ export type AnswersView = {
   openForms: string[];
   onOpenForms: (formIds: string[]) => void;
   review: ReviewSession | null;
+  asked?: ReadonlySet<string>;
 };
 
-function SubHeading({ children }: { children: string }) {
-  return (
-    <h3 className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">
-      {children}
-    </h3>
-  );
+const NO_QUESTIONS: ReadonlySet<string> = new Set();
+
+function openRequest(journey: ClientJourney): DetailRequest | null {
+  const request = journey.review.requests.at(-1);
+  if (journey.stage !== 'needs-details' || !request || request.answeredAt) {
+    return null;
+  }
+  return request;
 }
 
-function RatioReading({
-  journey,
-  heightCm,
-}: {
-  journey: ClientJourney;
-  heightCm: number;
-}) {
-  if (hasPregnancyContext(journey.onboarding)) {
-    return <p className="text-sm text-text-secondary">{RATIO_HIDDEN_NOTE}</p>;
-  }
+function ratioValue(journey: ClientJourney, heightCm: number): string {
+  if (hasPregnancyContext(journey.onboarding)) return RATIO_HIDDEN_NOTE;
 
   const latest = journey.measurements.at(-1);
   const ratio = latest ? waistToHeightRatio(latest.waistCm, heightCm) : null;
 
-  if (ratio === null) {
-    return (
-      <p className="text-sm text-text-secondary">
-        Waiting on her first measurements.
-      </p>
-    );
-  }
-
-  return (
-    <p className="text-2xl font-semibold tracking-tight text-text-primary">
-      {formatRatio(ratio)}
-    </p>
-  );
+  return ratio === null
+    ? 'Waiting on her first measurements'
+    : formatRatio(ratio);
 }
 
-function SafetyScreeningReading({ journey }: { journey: ClientJourney }) {
+function screeningWarnings(journey: ClientJourney): string[] {
   const outcome = screeningOutcome(
     journey.onboarding,
     journey.identity,
@@ -112,42 +102,52 @@ function SafetyScreeningReading({ journey }: { journey: ClientJourney }) {
     (id) => journey.onboarding.answers['safety-screening'][id] === 'Yes',
   ).length;
 
-  const text =
-    outcome === 'cleared'
-      ? 'Cleared'
-      : outcome === 'needs-review'
-        ? `Needs a look: ${yesCount} yes ${yesCount === 1 ? 'answer' : 'answers'}`
-        : outcome === 'manual'
-          ? 'Manual screening (age)'
-          : 'Not answered yet';
-
-  return (
-    <div>
-      <p className="text-sm font-medium text-text-primary">{text}</p>
-      {withholdsNutritionAdvice(journey.onboarding) && (
-        <p className="text-xs text-text-secondary">Nutrition advice on hold</p>
-      )}
-    </div>
-  );
-}
-
-function CycleModeReading({ journey }: { journey: ClientJourney }) {
-  if (journey.identity.sex === 'male') {
-    return (
-      <p className="text-sm font-medium text-text-primary">Not applicable</p>
+  const warnings: string[] = [];
+  if (outcome === 'needs-review') {
+    warnings.push(
+      `Safety screening needs a look: ${yesCount} yes ${yesCount === 1 ? 'answer' : 'answers'}`,
     );
   }
+  if (outcome === 'manual') {
+    warnings.push('Safety screening: manual screening (age)');
+  }
+  if (withholdsNutritionAdvice(journey.onboarding)) {
+    warnings.push('Nutrition advice on hold');
+  }
+  return warnings;
+}
 
-  const mode = cycleModeOf(journey.onboarding);
+function ScreeningWarning({ journey }: { journey: ClientJourney }) {
+  const warnings = screeningWarnings(journey);
+  if (warnings.length === 0) return null;
 
   return (
-    <p className="text-sm font-medium text-text-primary">
-      {mode ? CYCLE_MODE_LABELS[mode] : 'Not answered yet'}
-    </p>
+    <StatusHint
+      label={warnings.join('. ')}
+      icon={<TriangleAlert aria-hidden="true" size={16} />}
+      className="text-destructive"
+    >
+      {warnings.map((warning) => (
+        <p key={warning}>{warning}</p>
+      ))}
+    </StatusHint>
   );
 }
 
-function CollaborationReading({ journey }: { journey: ClientJourney }) {
+function cycleModeValue(journey: ClientJourney): string {
+  if (journey.identity.sex === 'male') return 'Not applicable';
+
+  const mode = cycleModeOf(journey.onboarding);
+  return mode ? CYCLE_MODE_LABELS[mode] : 'Not answered yet';
+}
+
+function OnboardingFacts({
+  journey,
+  heightCm,
+}: {
+  journey: ClientJourney;
+  heightCm: number;
+}) {
   const day = collaborationPreference(journey.onboarding, CHECK_IN_DAY_KEY);
   const channel = collaborationPreference(
     journey.onboarding,
@@ -155,19 +155,29 @@ function CollaborationReading({ journey }: { journey: ClientJourney }) {
   );
 
   return (
-    <dl className="grid gap-3 sm:grid-cols-2">
-      <div>
-        <dt className="text-xs text-text-secondary">Check-in day</dt>
-        <dd className="text-sm font-medium text-text-primary">
-          {day ?? 'Not chosen yet'}
-        </dd>
-      </div>
-      <div>
-        <dt className="text-xs text-text-secondary">Channel</dt>
-        <dd className="text-sm font-medium text-text-primary">
-          {channel ?? 'Not chosen yet'}
-        </dd>
-      </div>
+    <dl className="grid grid-cols-2 gap-5 lg:grid-cols-4">
+      <Reading
+        as="dl-item"
+        label="Waist-to-height ratio"
+        value={
+          <span className="tabular-nums">{ratioValue(journey, heightCm)}</span>
+        }
+      />
+      <Reading
+        as="dl-item"
+        label="Check-in day"
+        value={day ?? 'Not chosen yet'}
+      />
+      <Reading
+        as="dl-item"
+        label="Channel"
+        value={channel ?? 'Not chosen yet'}
+      />
+      <Reading
+        as="dl-item"
+        label="Cycle mode"
+        value={cycleModeValue(journey)}
+      />
     </dl>
   );
 }
@@ -199,20 +209,32 @@ function AnswerQuestion({
 function AnswerRow({
   answer,
   review,
+  asked,
 }: {
   answer: ReviewAnswer;
   review: ReviewSession | null;
+  asked: boolean;
 }) {
   return (
     <div className="grid gap-1 py-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] sm:gap-6">
       <dt className="text-sm text-text-secondary">
         <AnswerQuestion answer={answer} review={review} />
       </dt>
-      <dd className={cn('text-sm text-text-primary', review && 'pl-8 sm:pl-0')}>
+      <dd
+        className={cn(
+          'flex flex-wrap items-center justify-between gap-2 text-sm text-text-primary',
+          review && 'pl-8 sm:pl-0',
+        )}
+      >
         <ReviewAnswerValue answer={answer} />
+        {asked && <Badge variant="pending">Asked again</Badge>}
       </dd>
     </div>
   );
+}
+
+function askedCount(form: ReviewForm, asked: ReadonlySet<string>): number {
+  return form.answers.filter((answer) => asked.has(answer.questionId)).length;
 }
 
 export function AnswerGroups({
@@ -222,6 +244,8 @@ export function AnswerGroups({
   forms: ReviewForm[];
   view: AnswersView;
 }) {
+  const asked = view.asked ?? NO_QUESTIONS;
+
   return (
     <Accordion
       type="multiple"
@@ -233,10 +257,13 @@ export function AnswerGroups({
         <AccordionItem key={form.formId} value={form.formId}>
           <AccordionTrigger>
             <span className="flex flex-1 flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-              <span className="font-serif text-base font-medium">
-                {form.title}
-              </span>
-              <span className="text-xs font-normal text-text-secondary">
+              <span className="text-base font-medium">{form.title}</span>
+              <span className="flex items-center gap-2 text-xs font-normal text-text-secondary">
+                {askedCount(form, asked) > 0 && (
+                  <Badge variant="pending">
+                    {askedCount(form, asked)} asked again
+                  </Badge>
+                )}
                 {form.answeredCount} of {form.answers.length} answered
               </span>
             </span>
@@ -248,6 +275,7 @@ export function AnswerGroups({
                   answer={answer}
                   key={answer.questionId}
                   review={view.review}
+                  asked={asked.has(answer.questionId)}
                 />
               ))}
             </dl>
@@ -258,43 +286,19 @@ export function AnswerGroups({
   );
 }
 
-function questionLabels(forms: ReviewForm[], questionIds: string[]): string[] {
-  const asked = new Set(questionIds);
-
-  return forms
-    .flatMap((form) => form.answers)
-    .filter((answer) => asked.has(answer.questionId))
-    .map((answer) => answer.label);
-}
-
-function PendingRequest({
-  journey,
-  forms,
-}: {
-  journey: ClientJourney;
-  forms: ReviewForm[];
-}) {
-  const request = journey.review.requests.at(-1);
-  if (journey.stage !== 'needs-details' || !request || request.answeredAt) {
-    return null;
-  }
+function RequestStatus({ request }: { request: DetailRequest }) {
+  const count = request.questionIds.length;
 
   return (
-    <div className="space-y-3 rounded-card border border-border-subtle bg-surface-quiet/60 p-4">
-      <SubHeading>What you asked her for</SubHeading>
-      <p className="text-sm leading-relaxed text-text-primary">
-        {request.message}
+    <div className="space-y-1 text-sm text-text-secondary">
+      <p className="flex items-center gap-2">
+        <MessageSquareText aria-hidden="true" size={16} />
+        Waiting on {count} {count === 1 ? 'answer' : 'answers'} · asked{' '}
+        {formatJourneyDate(request.createdAt)}
       </p>
-      <ul className="flex flex-wrap gap-2">
-        {questionLabels(forms, request.questionIds).map((label) => (
-          <li
-            key={label}
-            className="rounded-tile bg-surface-base px-2 py-1 text-xs text-text-secondary"
-          >
-            {label}
-          </li>
-        ))}
-      </ul>
+      <blockquote className="border-l-2 border-border-subtle pl-3 italic">
+        {request.message}
+      </blockquote>
     </div>
   );
 }
@@ -343,21 +347,21 @@ function StageActions({
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-col gap-3 sm:flex-row">
+        {reviewAction && (
+          <Button variant="outline" onClick={onReview}>
+            {reviewAction}
+          </Button>
+        )}
         {isPostMvp && (
-          <Button variant="default" asChild>
+          <Button variant="primary" asChild>
             <Link to={`/coach/training/builder/${clientId}`}>
               {BUILD_ACTION}
             </Link>
           </Button>
         )}
         {!isPostMvp && canApprove && (
-          <Button variant="default" onClick={onApprove}>
+          <Button variant="primary" onClick={onApprove}>
             Approve answers
-          </Button>
-        )}
-        {reviewAction && (
-          <Button variant="outline" onClick={onReview}>
-            {reviewAction}
           </Button>
         )}
       </div>
@@ -377,6 +381,7 @@ export function OnboardingPanel({
 }) {
   const { startReview, approveAnswers, requestDetails } = useClientJourneys();
   const [openForms, setOpenForms] = useState<string[]>([]);
+  const request = openRequest(journey);
   const [flagged, setFlagged] = useState<string[] | null>(null);
   const [confirmApproveOpen, setConfirmApproveOpen] = useState(false);
 
@@ -430,36 +435,24 @@ export function OnboardingPanel({
         />
       }
       headingId="onboarding-panel-heading"
+      titleAdornment={<ScreeningWarning journey={journey} />}
       action={<JourneyStageBadge stage={journey.stage} />}
       className="mb-8"
     >
       <div className="space-y-6">
-        <PendingRequest journey={journey} forms={forms} />
+        <OnboardingFacts journey={journey} heightCm={heightCm} />
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="space-y-2">
-            <SubHeading>Waist-to-height ratio</SubHeading>
-            <RatioReading journey={journey} heightCm={heightCm} />
-          </div>
-          <div className="space-y-2">
-            <SubHeading>How she wants to work together</SubHeading>
-            <CollaborationReading journey={journey} />
-          </div>
-          <div className="space-y-2">
-            <SubHeading>Safety screening</SubHeading>
-            <SafetyScreeningReading journey={journey} />
-          </div>
-          <div className="space-y-2">
-            <SubHeading>Cycle mode</SubHeading>
-            <CycleModeReading journey={journey} />
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          <SubHeading>Her answers</SubHeading>
+        <div className="space-y-3 border-t border-border-subtle pt-6">
+          <h3 className={WIDGET_SUBHEADING_CLASS}>Answers</h3>
+          {request && <RequestStatus request={request} />}
           <AnswerGroups
             forms={forms}
-            view={{ openForms, onOpenForms: setOpenForms, review: null }}
+            view={{
+              openForms,
+              onOpenForms: setOpenForms,
+              review: null,
+              asked: request ? new Set(request.questionIds) : undefined,
+            }}
           />
         </div>
 

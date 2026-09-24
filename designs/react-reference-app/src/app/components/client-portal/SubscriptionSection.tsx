@@ -1,13 +1,18 @@
 import { useState } from 'react';
-import { SubscriptionSummary } from '../SubscriptionSummary';
+import { CreditCard } from 'lucide-react';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
 import {
   canDeliverProgram,
+  deliveryDate,
   deriveStatus,
   type CoachingSubscription,
+  type SubscriptionStatus,
 } from '../../domain/coachingSubscription';
 import { cancelSubscription as sendCancellation } from '../../services/subscriptionService';
-import { formatJourneyDate } from '../../utils/journeyLabels';
+import {
+  bundleLengthLabel,
+  formatJourneyDate,
+} from '../../utils/journeyLabels';
 import { Button } from '../ui/button';
 import {
   AlertDialog,
@@ -19,6 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '../ui/alert-dialog';
+import { SettingsRow, SettingsRows, SettingsSection } from '../SettingsSection';
 
 const REFUND_CANCEL_LABEL = 'Cancel and get a full refund';
 
@@ -35,6 +41,13 @@ function cancellationFacts(periodEndsAt: Date | undefined): string {
   return `You won't be charged again, there is no refund for the coaching already paid, and ${access}.`;
 }
 
+function refundFacts(subscription: CoachingSubscription): string {
+  const deadline = deliveryDate(subscription);
+  const until = deadline ? `Until ${formatJourneyDate(deadline)} you` : 'You';
+
+  return `${until} can cancel for a full refund. Your access ends right away.`;
+}
+
 function cancelAction(
   subscription: CoachingSubscription,
   now: Date,
@@ -42,6 +55,45 @@ function cancelAction(
   if (!canDeliverProgram(subscription, now)) return REFUND_CANCEL_LABEL;
 
   return deriveStatus(subscription, now) === 'active' ? CANCEL_LABEL : null;
+}
+
+function planDescription(
+  subscription: CoachingSubscription,
+  status: Exclude<SubscriptionStatus, 'ended'>,
+): string {
+  const paid = `Paid ${formatJourneyDate(subscription.purchasedAt)}`;
+  if (status === 'cancelled' && subscription.cancelledAt) {
+    return `${paid} · cancelled ${formatJourneyDate(subscription.cancelledAt)}.`;
+  }
+  if (status === 'active' && subscription.day1) {
+    return `${paid} · started ${formatJourneyDate(subscription.day1)}.`;
+  }
+  return `${paid} · starts when your program is ready.`;
+}
+
+function renewalRow(
+  subscription: CoachingSubscription,
+  status: Exclude<SubscriptionStatus, 'ended'>,
+): { title: string; description: string } | null {
+  const endsAt = subscription.periodEndsAt;
+  if (!endsAt) {
+    if (status === 'cancelled') return null;
+    return {
+      title: 'Renews once your program starts',
+      description: 'Your first term runs from your start date.',
+    };
+  }
+  if (status === 'cancelled') {
+    return {
+      title: `Access until ${formatJourneyDate(endsAt)}`,
+      description: "You won't be charged again.",
+    };
+  }
+  return {
+    title: `Renews on ${formatJourneyDate(endsAt)}`,
+    description:
+      'Your next term is charged on this date unless you cancel first.',
+  };
 }
 
 export function SubscriptionSection() {
@@ -58,6 +110,7 @@ export function SubscriptionSection() {
 
   const refundable = !canDeliverProgram(subscription, now);
   const action = cancelAction(subscription, now);
+  const renewal = renewalRow(subscription, status);
 
   const confirm = async () => {
     setCancelling(true);
@@ -68,22 +121,54 @@ export function SubscriptionSection() {
   };
 
   return (
-    <SubscriptionSummary
-      subscription={subscription}
-      perspective="client"
+    <SettingsSection
       headingId="subscription-heading"
+      title="Subscription"
+      icon={
+        <CreditCard
+          aria-hidden="true"
+          className="text-brand-secondary"
+          size={18}
+        />
+      }
+      description="Your coaching plan, when it renews, and how to cancel."
     >
-      {action && (
-        <Button
-          className="mt-6 w-full sm:w-auto"
-          disabled={cancelling}
-          onClick={() => setConfirming(true)}
-          variant="outline"
-          size="lg"
-        >
-          {action}
-        </Button>
-      )}
+      <SettingsRows>
+        <SettingsRow
+          labelId="subscription-plan-label"
+          title={`${bundleLengthLabel(subscription.bundle)} of coaching`}
+          description={planDescription(subscription, status)}
+        />
+
+        {renewal && (
+          <SettingsRow
+            labelId="subscription-renewal-label"
+            title={renewal.title}
+            description={renewal.description}
+          />
+        )}
+
+        {action && (
+          <SettingsRow
+            labelId="subscription-cancel-label"
+            title="Cancellation"
+            description={
+              refundable
+                ? refundFacts(subscription)
+                : cancellationFacts(subscription.periodEndsAt)
+            }
+          >
+            <Button
+              disabled={cancelling}
+              onClick={() => setConfirming(true)}
+              variant="destructive-outline"
+              size="sm"
+            >
+              Cancel
+            </Button>
+          </SettingsRow>
+        )}
+      </SettingsRows>
 
       <AlertDialog onOpenChange={setConfirming} open={confirming}>
         <AlertDialogContent className="rounded-card sm:max-w-md">
@@ -97,12 +182,15 @@ export function SubscriptionSection() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Keep my coaching</AlertDialogCancel>
-            <AlertDialogAction onClick={() => void confirm()}>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={() => void confirm()}
+            >
               {action ?? CANCEL_LABEL}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </SubscriptionSummary>
+    </SettingsSection>
   );
 }

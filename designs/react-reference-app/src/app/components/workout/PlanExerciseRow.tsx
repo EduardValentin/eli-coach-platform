@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { Exercise } from '../../context/TrainingContext';
 import { VideoSheet } from './VideoSheet';
 import { RirBadge } from './RirBadge';
+import { LABEL_CLASS } from '../typography';
 
 type PlanExercise = {
   id: string;
@@ -19,10 +20,17 @@ function abbreviate(name: string): string {
   const words = name.trim().split(/\s+/).filter(Boolean);
   if (words.length === 0) return '?';
   if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
-  return words.slice(0, 3).map(w => w[0]).join('').toUpperCase();
+  return words
+    .slice(0, 3)
+    .map((w) => w[0])
+    .join('')
+    .toUpperCase();
 }
 
-export function PlanExerciseRow({ planExercise, exercise }: PlanExerciseRowProps) {
+export function PlanExerciseRow({
+  planExercise,
+  exercise,
+}: PlanExerciseRowProps) {
   const [videoOpen, setVideoOpen] = useState(false);
   const initials = abbreviate(exercise.name);
 
@@ -32,13 +40,20 @@ export function PlanExerciseRow({ planExercise, exercise }: PlanExerciseRowProps
         type="button"
         onClick={() => setVideoOpen(true)}
         aria-label={`${exercise.name} details`}
-        className="w-full flex items-center gap-3 sm:gap-4 rounded-control px-2 sm:px-3 py-2 hover:bg-neutral-50 transition-colors text-left outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+        className="w-full flex items-center gap-3 sm:gap-4 rounded-control px-2 sm:px-3 py-2 hover:bg-surface-muted transition-colors text-left outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
       >
-        <span aria-hidden="true" className="shrink-0 size-10 rounded-compact overflow-hidden bg-neutral-100 flex items-center justify-center">
+        <span
+          aria-hidden="true"
+          className="shrink-0 size-10 rounded-compact overflow-hidden bg-surface-quiet flex items-center justify-center"
+        >
           {exercise.thumbnailUrl ? (
-            <img src={exercise.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+            <img
+              src={exercise.thumbnailUrl}
+              alt=""
+              className="w-full h-full object-cover"
+            />
           ) : (
-            <span className="text-caption font-bold text-text-secondary tracking-wider">{initials}</span>
+            <span className={LABEL_CLASS}>{initials}</span>
           )}
         </span>
 
@@ -47,17 +62,21 @@ export function PlanExerciseRow({ planExercise, exercise }: PlanExerciseRowProps
         </span>
 
         <span className="shrink-0 text-right leading-tight flex flex-col items-end gap-1">
-          <span className="font-serif font-semibold text-base text-text-primary tabular-nums">
+          <span className="font-semibold text-base text-text-primary tabular-nums">
             {planExercise.sets} &times; {planExercise.reps}
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="text-caption text-text-secondary font-medium tracking-wider">RIR</span>
+            <span className={LABEL_CLASS}>RIR</span>
             <RirBadge value={planExercise.rir} />
           </span>
         </span>
       </button>
 
-      <VideoSheet exercise={exercise} open={videoOpen} onOpenChange={setVideoOpen} />
+      <VideoSheet
+        exercise={exercise}
+        open={videoOpen}
+        onOpenChange={setVideoOpen}
+      />
     </>
   );
 }

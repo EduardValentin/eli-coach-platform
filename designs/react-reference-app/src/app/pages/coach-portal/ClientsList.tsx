@@ -34,10 +34,7 @@ import {
   useTraining,
   subscriptionTermLabel,
 } from '../../context/TrainingContext';
-import {
-  DEMO_JOURNEY_CALL_ID,
-  useClientJourneys,
-} from '../../context/ClientJourneyContext';
+import { useClientJourneys } from '../../context/ClientJourneyContext';
 import {
   awaitsCoachReview,
   isBeforeStage,
@@ -52,7 +49,10 @@ import { format, parseISO } from 'date-fns';
 import { bundleLengthLabel } from '../../domain/bundles';
 import { getInitials, trainingClientIdFor } from '../../utils/clientHelpers';
 import { ClientStatusBadge } from '../../components/coach-portal/ClientStatusBadge';
-import { journeyCallIdForClient } from '../../utils/journeyLabels';
+import {
+  clientDetailPathForJourney,
+  journeyCallIdForClient,
+} from '../../utils/journeyLabels';
 import {
   countsByStatus,
   defaultRosterSortDirectionFor,
@@ -153,12 +153,6 @@ function rowActionLabel(name: string, awaitsReview: boolean): string {
     : `View details for ${name}`;
 }
 
-function journeyDetailPath(journey: ClientJourney): string {
-  return journey.callId === DEMO_JOURNEY_CALL_ID
-    ? '/coach/clients/c1'
-    : `/coach/clients/${journey.callId}`;
-}
-
 function journeyRosterRow(journey: ClientJourney, now: Date): RosterRow {
   const name = journeyName(journey);
 
@@ -169,7 +163,7 @@ function journeyRosterRow(journey: ClientJourney, now: Date): RosterRow {
     status: clientStatus(journey, now),
     bundleLabel: journeyBundleLabel(journey),
     joinedAt: journey.subscription?.purchasedAt ?? null,
-    detailPath: journeyDetailPath(journey),
+    detailPath: clientDetailPathForJourney(journey),
     actionLabel: rowActionLabel(name, awaitsCoachReview(journey.stage)),
   };
 }
@@ -295,8 +289,8 @@ function RosterActions({
         title={row.actionLabel}
         onClick={(event) => event.stopPropagation()}
         className={cn(
-          buttonVariants({ variant: 'outline', size: 'icon' }),
-          'opacity-0 hover:bg-text-primary hover:text-white hover:border-text-primary group-hover:opacity-100 focus-visible:opacity-100',
+          buttonVariants({ variant: 'ghost', size: 'icon-xs' }),
+          'opacity-0 hover:bg-text-primary hover:text-white group-hover:opacity-100 focus-visible:opacity-100',
         )}
       >
         <ArrowRight size={14} aria-hidden="true" />

@@ -76,10 +76,10 @@ export function ReviewCallScheduler({
       open={open}
       title={TITLE}
     >
-      <div className="shrink-0 border-b border-neutral-100 px-5 pt-6 pb-4 md:px-8 md:pt-8">
+      <div className="shrink-0 border-b border-border-subtle px-5 pt-6 pb-4 md:px-8 md:pt-8">
         <div className="mb-1.5 flex items-center gap-1.5">
-          <CalendarPlus size={13} className="text-brand" aria-hidden="true" />
-          <span className="text-[10px] font-bold uppercase tracking-widest text-brand">
+          <CalendarPlus size={13} className="text-primary" aria-hidden="true" />
+          <span className="text-label uppercase text-primary">
             Program review
           </span>
         </div>
@@ -106,12 +106,12 @@ export function ReviewCallScheduler({
         )}
       </div>
 
-      <div className="shrink-0 border-t border-neutral-100 bg-white px-5 py-3 md:px-8 md:py-4">
+      <div className="shrink-0 border-t border-border-subtle bg-surface-base px-5 py-3 md:px-8 md:py-4">
         <Button
           disabled={!selected || booking}
           onClick={() => void confirm()}
-          variant="default"
-          size="lg"
+          variant="primary"
+          size="sm"
           className="w-full"
         >
           {selected

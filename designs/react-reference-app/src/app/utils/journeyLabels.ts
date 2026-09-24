@@ -1,6 +1,7 @@
 import { format } from 'date-fns';
 import { bundleLengthLabel } from '../domain/bundles';
 import { DEMO_JOURNEY_CALL_ID } from '../context/ClientJourneyContext';
+import type { ClientJourney } from '../domain/journey';
 import {
   deliveryDate,
   type CoachingSubscription,
@@ -24,6 +25,12 @@ export function formatJourneyDate(instant: Date): string {
 
 export function journeyCallIdForClient(clientId: string): string | null {
   return DEMO_CLIENT_IDS.includes(clientId) ? DEMO_JOURNEY_CALL_ID : null;
+}
+
+export function clientDetailPathForJourney(journey: ClientJourney): string {
+  return journey.callId === DEMO_JOURNEY_CALL_ID
+    ? '/coach/clients/c1'
+    : `/coach/clients/${journey.callId}`;
 }
 
 export function startPathLabel(

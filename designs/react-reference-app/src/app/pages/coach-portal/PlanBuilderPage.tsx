@@ -76,7 +76,7 @@ export function PlanBuilderPage() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Enter Template Name..."
-          className="text-lg lg:text-xl font-serif font-bold text-text-primary focus:outline-none placeholder:text-neutral-300 bg-transparent min-w-0 flex-1"
+          className="font-serif text-lg font-medium text-text-primary focus:outline-none placeholder:text-text-secondary bg-transparent min-w-0 flex-1"
         />
       }
       headerRight={
@@ -89,7 +89,7 @@ export function PlanBuilderPage() {
             <FileText size={18} />{' '}
             <span className="hidden lg:inline">Save Draft</span>
           </Button>
-          <Button onClick={() => handleSave(false)} variant="default">
+          <Button onClick={() => handleSave(false)} variant="primary">
             <Save size={18} />{' '}
             <span className="hidden sm:inline">
               {isEditing ? 'Save Template' : 'Save Template'}

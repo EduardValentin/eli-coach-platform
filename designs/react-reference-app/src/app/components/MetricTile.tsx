@@ -1,12 +1,13 @@
 import { ReactNode } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from './ui/utils';
+import { LABEL_CLASS } from './typography';
 
 const iconTone = cva('shrink-0', {
   variants: {
     tone: {
-      neutral: 'text-muted-foreground',
-      brand: 'text-brand',
+      neutral: 'text-text-secondary',
+      primary: 'text-primary',
       'brand-secondary': 'text-brand-secondary',
       success: 'text-success',
     },
@@ -24,18 +25,33 @@ interface MetricTileProps extends VariantProps<typeof iconTone> {
   icon: ReactNode;
 }
 
-export function MetricTile({ label, suffix, value, hint, icon, tone }: MetricTileProps) {
+export function MetricTile({
+  label,
+  suffix,
+  value,
+  hint,
+  icon,
+  tone,
+}: MetricTileProps) {
   return (
     <div className="bg-card rounded-control p-4 border border-border">
       <div className="flex items-center gap-2 mb-2">
-        <span className={cn(iconTone({ tone }))} aria-hidden="true">{icon}</span>
-        <span className="text-xs uppercase tracking-widest text-muted-foreground font-bold">
+        <span className={cn(iconTone({ tone }))} aria-hidden="true">
+          {icon}
+        </span>
+        <span className={LABEL_CLASS}>
           {label}
-          {suffix && <span className="text-[10px] font-semibold normal-case tracking-normal"> {suffix}</span>}
+          {suffix && (
+            <span className="ml-1 normal-case tracking-normal font-medium text-text-secondary">
+              {suffix}
+            </span>
+          )}
         </span>
       </div>
-      <p className="text-xl font-serif font-bold text-foreground">{value}</p>
-      {hint && <p className="text-xs text-muted-foreground mt-0.5">{hint}</p>}
+      <p className="text-xl font-medium tracking-tight tabular-nums text-text-primary">
+        {value}
+      </p>
+      {hint && <p className="text-xs text-text-secondary mt-0.5">{hint}</p>}
     </div>
   );
 }

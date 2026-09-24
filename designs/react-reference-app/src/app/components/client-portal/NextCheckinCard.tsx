@@ -2,10 +2,11 @@ import { CalendarCheck, Video } from 'lucide-react';
 import { useCheckins } from '../../context/CheckinContext';
 import { checkinInstant } from '../../utils/dateFormatters';
 import { buttonVariants } from '../ui/button';
-import { cn } from '../ui/utils';
 import { DateTimeLabel } from '../DateTimeLabel';
-import { RowActionLink } from '../RowActionButton';
+import { WidgetLink } from '../WidgetLink';
 import { ClientWidget } from './ClientWidget';
+
+const MEET_URL = 'https://meet.google.com/mock-eli-checkin';
 
 export function NextCheckinCard() {
   const { getUpcomingCheckins } = useCheckins();
@@ -20,34 +21,36 @@ export function NextCheckinCard() {
         <CalendarCheck
           aria-hidden="true"
           className="text-brand-secondary"
-          size={18}
+          size={16}
         />
       }
       headingId="next-checkin-heading"
+      density="compact"
       hero={
         <DateTimeLabel
+          size="sm"
           startsAt={checkinInstant(nextCheckin.date, nextCheckin.time)}
         />
       }
-      heroSize="compact"
-      className="p-4 sm:p-4"
+      footer={
+        <WidgetLink to="/portal/checkins" className="w-full justify-center">
+          Manage check-ins
+        </WidgetLink>
+      }
     >
       <a
-        href="https://meet.google.com/mock-eli-checkin"
+        href={MEET_URL}
         target="_blank"
         rel="noopener noreferrer"
-        className={cn(buttonVariants({ variant: 'default' }), 'mt-3 w-full')}
+        className={buttonVariants({
+          variant: 'primary',
+          size: 'sm',
+          className: 'mt-3 w-full',
+        })}
       >
-        <Video size={14} />
+        <Video aria-hidden="true" size={16} />
         Join Meet
       </a>
-      <RowActionLink
-        to="/portal/checkins"
-        tone="primary"
-        className="mt-2 w-full"
-      >
-        Manage check-ins
-      </RowActionLink>
     </ClientWidget>
   );
 }

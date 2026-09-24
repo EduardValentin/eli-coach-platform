@@ -8,14 +8,14 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        primary: 'bg-brand text-brand-foreground hover:bg-brand-hover',
+        primary: 'bg-primary text-primary-foreground hover:bg-primary-hover',
         secondary:
           'bg-brand-secondary text-brand-secondary-foreground hover:bg-brand-secondary-hover',
         inverted:
-          'bg-surface-inverted text-surface-inverted-foreground hover:bg-brand',
+          'bg-surface-inverted text-surface-inverted-foreground hover:bg-primary',
         outline:
           'border border-control-border-soft bg-surface-base text-text-label hover:bg-surface-quiet hover:text-text-primary',
-        'outline-brand': 'border border-brand text-brand hover:bg-brand/5',
+        'outline-brand': 'border border-primary text-primary hover:bg-primary/5',
         glass:
           'border border-surface-inverted-foreground/30 bg-surface-inverted-foreground/15 text-surface-inverted-foreground backdrop-blur-sm hover:bg-surface-inverted-foreground/25',
       },

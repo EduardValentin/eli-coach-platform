@@ -1,3 +1,5 @@
+import { Badge } from '../ui/badge';
+
 interface RirBadgeProps {
   value: number | string;
   size?: 'sm' | 'md';
@@ -7,25 +9,23 @@ export function RirBadge({ value, size = 'sm' }: RirBadgeProps) {
   const num = typeof value === 'number' ? value : parseInt(String(value), 10);
   const isNum = !Number.isNaN(num);
 
-  const colorClass = !isNum
-    ? 'bg-neutral-500'
+  const toneClass = !isNum
+    ? 'border-transparent bg-text-secondary text-brand-secondary-foreground'
     : num <= 1
-      ? 'bg-effort-critical'
+      ? 'border-transparent bg-effort-critical text-brand-secondary-foreground'
       : num <= 3
-        ? 'bg-metric-energy'
-        : 'bg-training-recovery';
+        ? 'border-transparent bg-metric-energy text-brand-secondary-foreground'
+        : 'border-transparent bg-training-recovery text-brand-secondary-foreground';
 
-  const sizeClass = size === 'md'
-    ? 'w-6 h-6 text-caption'
-    : 'w-5 h-5 text-[10px]';
+  const sizeClass = size === 'md' ? 'size-6' : 'size-5';
 
   return (
-    <span
+    <Badge
       title={isNum ? `RIR ${value} — reps in reserve` : `RIR ${value}`}
       aria-label={`RIR ${value}`}
-      className={`inline-flex items-center justify-center rounded-full font-bold text-white tabular-nums shrink-0 ${colorClass} ${sizeClass}`}
+      className={`rounded-full p-0 justify-center font-semibold tabular-nums ${sizeClass} ${toneClass}`}
     >
       {value}
-    </span>
+    </Badge>
   );
 }

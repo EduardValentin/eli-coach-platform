@@ -5,10 +5,7 @@ import { useClientJourneys } from '../../context/ClientJourneyContext';
 import { WITHDRAWAL_WAIVER_COPY } from '../../domain/onboardingCopy';
 import {
   canDeliverProgram,
-  currentPeriod,
   deliveryDate,
-  deriveStatus,
-  type CoachingSubscription,
 } from '../../domain/coachingSubscription';
 import {
   clientStatusLabel,
@@ -44,8 +41,7 @@ const SUPPORTING_LINES: Partial<Record<JourneyStage, string>> = {
   submitted: 'Eli has your answers and will start on them soon.',
   reviewing:
     "You'll see the next step here as soon as she has looked through your answers.",
-  approved:
-    "Eli is putting your program together. You'll find it here as soon as it's ready.",
+  approved: 'Eli is putting your program together.',
   'program-ready': "Head to your plan whenever you're ready.",
 };
 
@@ -64,37 +60,6 @@ function supportingLine(journey: ClientJourney): string {
   }
 
   return SUPPORTING_LINES[journey.stage] ?? '';
-}
-
-function reassuranceLine(
-  subscription: CoachingSubscription | undefined,
-  now: Date,
-): string | null {
-  if (!subscription) return null;
-
-  const status = deriveStatus(subscription, now);
-
-  if (status === 'active') {
-    const period = currentPeriod(subscription, now);
-    const endsAt = period?.endsAt ?? subscription.periodEndsAt;
-    return endsAt
-      ? `Your coaching renews on ${formatJourneyDate(endsAt)}`
-      : null;
-  }
-
-  if (status === 'cancelled' && subscription.periodEndsAt) {
-    return `Your coaching continues until ${formatJourneyDate(subscription.periodEndsAt)}`;
-  }
-
-  if (status === 'not-started') {
-    const delivery = deliveryDate(subscription);
-
-    return delivery
-      ? `Your subscription starts on ${formatJourneyDate(delivery)}, when your program is delivered.`
-      : 'Your subscription starts the day your program is ready.';
-  }
-
-  return null;
 }
 
 function StartNowDialog({
@@ -139,7 +104,6 @@ export function ProgramStatusCard() {
   const { subscription } = demoJourney;
   const waiting = subscription ? !canDeliverProgram(subscription, now) : false;
   const delivery = subscription ? deliveryDate(subscription) : null;
-  const reassurance = reassuranceLine(subscription, now);
 
   const startNow = async () => {
     if (!subscription) return;
@@ -164,27 +128,23 @@ export function ProgramStatusCard() {
         headingId="program-status-heading"
         voice={label}
       >
-        <p className="mt-3 max-w-2xl leading-relaxed text-text-secondary">
+        <p className="mt-1 max-w-2xl text-sm text-text-secondary">
           {supportingLine(demoJourney)}
+          {waiting && delivery && (
+            <>
+              {' '}
+              Your program will be delivered on {formatJourneyDate(delivery)}.
+            </>
+          )}
         </p>
-
-        {waiting && delivery && (
-          <p className="mt-2 text-sm text-text-secondary">
-            Your program will be delivered on {formatJourneyDate(delivery)}.
-          </p>
-        )}
-
-        {reassurance && (
-          <p className="mt-2 text-sm text-text-secondary">{reassurance}</p>
-        )}
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           {demoJourney.stage === 'needs-details' && (
             <Button
               onClick={() => navigate('/portal/onboarding?answer=1')}
               type="button"
-              variant="default"
-              size="lg"
+              variant="primary"
+              size="sm"
               className="w-full sm:w-auto"
             >
               Answer now
@@ -195,7 +155,7 @@ export function ProgramStatusCard() {
             demoJourney.stage === 'review-call-scheduled') && (
             <Link
               className={cn(
-                buttonVariants({ variant: 'default', size: 'lg' }),
+                buttonVariants({ variant: 'primary', size: 'sm' }),
                 'w-full sm:w-auto',
               )}
               to="/portal/plan"
@@ -210,7 +170,7 @@ export function ProgramStatusCard() {
               onClick={() => setConfirming(true)}
               type="button"
               variant="outline"
-              size="lg"
+              size="sm"
               className="w-full sm:w-auto"
             >
               Start my program now

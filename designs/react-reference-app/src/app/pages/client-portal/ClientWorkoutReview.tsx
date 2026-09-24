@@ -21,6 +21,15 @@ import {
 } from '../../utils/units';
 import type { Exercise, ExerciseLog } from '../../context/TrainingContext';
 import { Button } from '../../components/ui/button';
+import { Badge } from '../../components/ui/badge';
+import { MetricTile } from '../../components/MetricTile';
+import { EmptyState } from '../../components/EmptyState';
+import {
+  LABEL_CLASS,
+  VALUE_CLASS,
+  WIDGET_TITLE_CLASS,
+} from '../../components/typography';
+import { cn } from '../../components/ui/utils';
 
 const DAY_NAMES = [
   'Monday',
@@ -32,7 +41,7 @@ const DAY_NAMES = [
   'Sunday',
 ];
 const PIE_COLORS = [
-  'var(--brand)',
+  'var(--primary)',
   'var(--brand-secondary)',
   'var(--text-primary)',
   'var(--muted-foreground)',
@@ -88,20 +97,21 @@ export function ClientWorkoutReview() {
 
   if (!workout) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-center">
-        <h2 className="text-xl font-serif font-bold text-text-primary mb-2">
-          Session Not Found
-        </h2>
-        <p className="text-text-secondary text-sm mb-6">
-          This workout session couldn't be found.
-        </p>
-        <Button
-          onClick={() => navigate('/portal/history')}
-          variant="default"
-          size="lg"
-        >
-          <ArrowLeft size={16} /> Back to History
-        </Button>
+      <div className="py-20">
+        <EmptyState
+          icon={Dumbbell}
+          title="Session not found"
+          description="This workout session couldn't be found."
+          action={
+            <Button
+              onClick={() => navigate('/portal/history')}
+              variant="primary"
+              size="md"
+            >
+              <ArrowLeft size={16} /> Back to History
+            </Button>
+          }
+        />
       </div>
     );
   }
@@ -167,13 +177,15 @@ export function ClientWorkoutReview() {
 
   return (
     <div>
-      <button
+      <Button
         type="button"
         onClick={() => navigate('/portal/history')}
-        className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-text-secondary hover:text-text-primary transition-colors"
+        variant="ghost"
+        size="sm"
+        className="mb-6"
       >
         <ArrowLeft size={16} aria-hidden="true" /> Back to history
-      </button>
+      </Button>
 
       <PortalPageHeader
         title="Session Review"
@@ -182,73 +194,44 @@ export function ClientWorkoutReview() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
-        <div className="bg-white rounded-control p-4 border border-neutral-100">
-          <div className="flex items-center gap-2 mb-2">
-            <Clock size={16} className="text-text-secondary" />
-            <span className="text-[10px] uppercase tracking-widest text-text-secondary font-bold">
-              Duration
-            </span>
-          </div>
-          <p className="text-xl font-semibold text-text-primary">
-            {durationMin} min
-          </p>
-        </div>
-        <div className="bg-white rounded-control p-4 border border-neutral-100">
-          <div className="flex items-center gap-2 mb-2">
-            <Dumbbell size={16} className="text-brand" />
-            <span className="text-[10px] uppercase tracking-widest text-text-secondary font-bold">
-              Volume
-            </span>
-          </div>
-          <p className="text-xl font-semibold text-text-primary">
-            {formatVolume(workout.totalVolume || 0, weightUnit)}
-          </p>
-        </div>
-        <div className="bg-white rounded-control p-4 border border-neutral-100">
-          <div className="flex items-center gap-2 mb-2">
-            <TrendingUp size={16} className="text-brand-secondary" />
-            <span className="text-[10px] uppercase tracking-widest text-text-secondary font-bold">
-              Completed
-            </span>
-          </div>
-          <p className="text-xl font-semibold text-text-primary">
-            {completedSets}/{totalSets}
-          </p>
-        </div>
-        <div className="bg-white rounded-control p-4 border border-neutral-100">
-          <div className="flex items-center gap-2 mb-2">
-            <Zap size={16} className="text-brand" />
-            <span className="text-[10px] uppercase tracking-widest text-text-secondary font-bold">
-              Density
-            </span>
-          </div>
-          <p className="text-xl font-semibold text-text-primary">
-            {displayWeightValue(density, weightUnit)}
-          </p>
-          <p className="text-[10px] text-text-secondary">
-            {weightUnitLabel(weightUnit)}/min
-          </p>
-        </div>
-        <div className="bg-white rounded-control p-4 border border-neutral-100">
-          <div className="flex items-center gap-2 mb-2">
-            <Timer size={16} className="text-text-secondary" />
-            <span className="text-[10px] uppercase tracking-widest text-text-secondary font-bold">
-              Day
-            </span>
-          </div>
-          <p className="text-lg font-semibold text-text-primary">
-            {day ? DAY_NAMES[day.dayOfWeek] : 'N/A'}
-          </p>
-        </div>
+        <MetricTile
+          tone="neutral"
+          icon={<Clock size={16} />}
+          label="Duration"
+          value={`${durationMin} min`}
+        />
+        <MetricTile
+          tone="primary"
+          icon={<Dumbbell size={16} />}
+          label="Volume"
+          value={formatVolume(workout.totalVolume || 0, weightUnit)}
+        />
+        <MetricTile
+          tone="brand-secondary"
+          icon={<TrendingUp size={16} />}
+          label="Completed"
+          value={`${completedSets}/${totalSets}`}
+        />
+        <MetricTile
+          tone="primary"
+          icon={<Zap size={16} />}
+          label="Density"
+          value={displayWeightValue(density, weightUnit)}
+          hint={`${weightUnitLabel(weightUnit)}/min`}
+        />
+        <MetricTile
+          tone="neutral"
+          icon={<Timer size={16} />}
+          label="Day"
+          value={day ? DAY_NAMES[day.dayOfWeek] : 'N/A'}
+        />
       </div>
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-8">
         {/* Volume per exercise */}
-        <div className="bg-white rounded-card border border-neutral-100 p-5">
-          <h3 className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-4">
-            Volume per Exercise
-          </h3>
+        <div className="bg-card rounded-card border border-border p-5">
+          <h3 className={cn(LABEL_CLASS, 'mb-4')}>Volume per Exercise</h3>
           <div className="space-y-3">
             {(() => {
               const maxVol = Math.max(
@@ -265,9 +248,9 @@ export function ClientWorkoutReview() {
                       {formatVolume(d.volume, weightUnit)}
                     </span>
                   </div>
-                  <div className="h-5 bg-neutral-100 rounded-field overflow-hidden">
+                  <div className="h-5 bg-surface-quiet rounded-field overflow-hidden">
                     <div
-                      className="h-full bg-brand rounded-field transition-all"
+                      className="h-full bg-primary rounded-field transition-all"
                       style={{ width: `${(d.volume / maxVol) * 100}%` }}
                     />
                   </div>
@@ -278,10 +261,8 @@ export function ClientWorkoutReview() {
         </div>
 
         {/* Muscle group split */}
-        <div className="bg-white rounded-card border border-neutral-100 p-5">
-          <h3 className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-4">
-            Muscle Groups
-          </h3>
+        <div className="bg-card rounded-card border border-border p-5">
+          <h3 className={cn(LABEL_CLASS, 'mb-4')}>Muscle Groups</h3>
           {(() => {
             const total =
               muscleVolumeData.reduce((t, d) => t + d.value, 0) || 1;
@@ -320,7 +301,7 @@ export function ClientWorkoutReview() {
                         <span className="text-xs text-text-secondary">
                           {formatVolume(d.value, weightUnit)}
                         </span>
-                        <span className="text-[10px] text-neutral-300">
+                        <span className="text-xs text-text-secondary">
                           {Math.round((d.value / total) * 100)}%
                         </span>
                       </div>
@@ -334,10 +315,8 @@ export function ClientWorkoutReview() {
       </div>
 
       {/* Estimated Rep Maxes */}
-      <div className="bg-white rounded-card border border-neutral-100 p-4 sm:p-5 mb-8">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-text-secondary mb-2">
-          Your Estimated Maxes
-        </h3>
+      <div className="bg-card rounded-card border border-border p-4 sm:p-5 mb-8">
+        <h3 className={cn(LABEL_CLASS, 'mb-2')}>Your Estimated Maxes</h3>
         <p className="text-xs text-text-secondary mb-4">
           Based on your heaviest set this session (Epley formula)
         </p>
@@ -353,23 +332,23 @@ export function ClientWorkoutReview() {
             const e3RM = estimateRM(best.weight, best.reps, 3);
             const fatigueColor =
               fatigue === null
-                ? 'text-neutral-300'
+                ? 'text-text-secondary'
                 : fatigue > 25
-                  ? 'text-brand'
+                  ? 'text-primary'
                   : fatigue > 10
                     ? 'text-text-secondary'
                     : 'text-brand-secondary';
             return (
               <li
                 key={exLog.planExerciseId}
-                className="rounded-control bg-neutral-50/70 border border-neutral-100 p-3"
+                className="rounded-control bg-surface-quiet border border-border-subtle p-3"
               >
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-text-primary truncate">
+                    <p className="text-sm font-medium text-text-primary truncate">
                       {ex.name}
                     </p>
-                    <p className="text-caption text-text-secondary mt-0.5">
+                    <p className="text-xs text-text-secondary mt-0.5">
                       Best set: {formatLoad(best.weight, weightUnit)} &times;{' '}
                       {best.reps}
                     </p>
@@ -405,12 +384,18 @@ export function ClientWorkoutReview() {
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="text-[9px] uppercase tracking-widest text-text-secondary font-bold px-3 border-b border-neutral-100 rounded-field">
-                <th className="pb-3 pr-4 font-bold">Exercise</th>
-                <th className="pb-3 pr-3 font-bold text-center">Best Set</th>
-                <th className="pb-3 pr-3 font-bold text-center">Est. 1RM</th>
-                <th className="pb-3 pr-3 font-bold text-center">Est. 3RM</th>
-                <th className="pb-3 font-bold text-center">Fatigue</th>
+              <tr className="px-3 border-b border-border-subtle rounded-field">
+                <th className={cn(LABEL_CLASS, 'pb-3 pr-4')}>Exercise</th>
+                <th className={cn(LABEL_CLASS, 'pb-3 pr-3 text-center')}>
+                  Best Set
+                </th>
+                <th className={cn(LABEL_CLASS, 'pb-3 pr-3 text-center')}>
+                  Est. 1RM
+                </th>
+                <th className={cn(LABEL_CLASS, 'pb-3 pr-3 text-center')}>
+                  Est. 3RM
+                </th>
+                <th className={cn(LABEL_CLASS, 'pb-3 text-center')}>Fatigue</th>
               </tr>
             </thead>
             <tbody>
@@ -425,7 +410,7 @@ export function ClientWorkoutReview() {
                 return (
                   <tr
                     key={exLog.planExerciseId}
-                    className="px-3 border-b border-neutral-50 rounded-field last:border-0"
+                    className="px-3 border-b border-border-subtle rounded-field last:border-0"
                   >
                     <td className="py-3 pr-4">
                       <span className="text-sm font-medium text-text-primary">
@@ -433,32 +418,32 @@ export function ClientWorkoutReview() {
                       </span>
                     </td>
                     <td className="py-3 pr-3 text-center">
-                      <span className="text-sm font-semibold text-text-primary">
+                      <span className="text-sm font-medium text-text-primary">
                         {formatLoad(best.weight, weightUnit)}
                       </span>
-                      <span className="text-[10px] text-text-secondary ml-1">
+                      <span className="text-xs text-text-secondary ml-1">
                         x{best.reps}
                       </span>
                     </td>
                     <td className="py-3 pr-3 text-center">
-                      <span className="text-sm font-bold text-brand">
+                      <span className="text-sm font-medium text-primary">
                         {formatLoad(e1RM, weightUnit)}
                       </span>
                     </td>
                     <td className="py-3 pr-3 text-center">
-                      <span className="text-sm font-semibold text-text-primary">
+                      <span className="text-sm font-medium text-text-primary">
                         {formatLoad(e3RM, weightUnit)}
                       </span>
                     </td>
                     <td className="py-3 text-center">
                       {fatigue !== null ? (
                         <span
-                          className={`text-sm font-bold ${fatigue > 25 ? 'text-brand' : fatigue > 10 ? 'text-text-secondary' : 'text-brand-secondary'}`}
+                          className={`text-sm font-medium ${fatigue > 25 ? 'text-primary' : fatigue > 10 ? 'text-text-secondary' : 'text-brand-secondary'}`}
                         >
                           {fatigue > 0 ? `-${fatigue}%` : `${fatigue}%`}
                         </span>
                       ) : (
-                        <span className="text-xs text-neutral-300">--</span>
+                        <span className="text-xs text-text-secondary">--</span>
                       )}
                     </td>
                   </tr>
@@ -470,9 +455,7 @@ export function ClientWorkoutReview() {
       </div>
 
       {/* Exercise breakdown */}
-      <h2 className="text-sm font-bold uppercase tracking-widest text-text-secondary mb-4">
-        Your Sets
-      </h2>
+      <h2 className={cn(LABEL_CLASS, 'mb-4')}>Your Sets</h2>
       <div className="space-y-4">
         {workout.exercises.map((exLog, i) => {
           const ex = exercises.find((e) => e.id === exLog.exerciseId);
@@ -481,29 +464,26 @@ export function ClientWorkoutReview() {
           return (
             <div
               key={exLog.planExerciseId}
-              className="bg-white rounded-card border border-neutral-100 overflow-hidden"
+              className="bg-card rounded-card border border-border overflow-hidden"
             >
               <div className="p-5 pb-3">
                 <div className="flex items-center gap-2">
-                  <h3 className="font-semibold text-text-primary">{ex.name}</h3>
+                  <h3 className={WIDGET_TITLE_CLASS}>{ex.name}</h3>
                   {exLog.wasSwapped && (
-                    <span className="inline-flex items-center gap-1 text-[9px] bg-brand-secondary/10 text-brand-secondary rounded-full px-2 py-0.5 font-bold">
-                      <ArrowLeftRight size={9} /> Swapped
-                    </span>
+                    <Badge variant="brand-secondary">
+                      <ArrowLeftRight aria-hidden="true" /> Swapped
+                    </Badge>
                   )}
                 </div>
                 <div className="flex flex-wrap gap-1 mt-1.5">
                   {ex.primaryMuscles.map((m) => (
-                    <span
-                      key={m}
-                      className="text-[10px] bg-brand-secondary/10 text-brand-secondary rounded-full px-2 py-0.5"
-                    >
+                    <Badge key={m} variant="brand-secondary">
                       {m}
-                    </span>
+                    </Badge>
                   ))}
                 </div>
               </div>
-              <div className="border-t border-neutral-100">
+              <div className="border-t border-border-subtle">
                 {exLog.sets
                   .filter((s) => s.completed)
                   .map((s) => {
@@ -519,28 +499,35 @@ export function ClientWorkoutReview() {
                     return (
                       <div
                         key={s.setNumber}
-                        className={`flex items-center px-5 py-2.5 text-sm border-t border-neutral-50 first:border-t-0 ${isUnder ? 'bg-brand/[0.03]' : isOver ? 'bg-brand-secondary/[0.03]' : ''}`}
+                        className={`flex items-center px-5 py-2.5 text-sm border-t border-border-subtle first:border-t-0 ${isUnder ? 'bg-primary-soft' : isOver ? 'bg-brand-secondary-soft' : ''}`}
                       >
-                        <span className="w-8 text-xs text-neutral-300 font-bold">
+                        <span className="w-8 text-xs font-medium text-text-secondary">
                           {s.setNumber}
                         </span>
-                        <span className="font-semibold text-text-primary">
+                        <span className="font-medium text-text-primary">
                           {s.actualWeight != null
                             ? formatLoad(s.actualWeight, weightUnit)
                             : '—'}
                         </span>
-                        <span className="text-neutral-300 mx-1.5">&times;</span>
+                        <span className="text-text-secondary mx-1.5">
+                          &times;
+                        </span>
                         <span
-                          className={`font-bold ${isUnder ? 'text-brand' : isOver ? 'text-brand-secondary' : 'text-text-primary'}`}
+                          className={`font-medium ${isUnder ? 'text-primary' : isOver ? 'text-brand-secondary' : 'text-text-primary'}`}
                         >
                           {s.actualReps}
                         </span>
                         {repsDiff !== null && repsDiff !== 0 && (
-                          <span
-                            className={`ml-2 text-[9px] font-bold rounded-full px-1.5 py-0.5 ${isUnder ? 'bg-brand/10 text-brand' : 'bg-brand-secondary/10 text-brand-secondary'}`}
+                          <Badge
+                            className={cn(
+                              'ml-2 border-transparent',
+                              isUnder
+                                ? 'bg-primary-soft text-primary'
+                                : 'bg-brand-secondary-soft text-brand-secondary',
+                            )}
                           >
                             {repsDiff > 0 ? `+${repsDiff}` : repsDiff}
-                          </span>
+                          </Badge>
                         )}
                       </div>
                     );
@@ -555,8 +542,8 @@ export function ClientWorkoutReview() {
       <div className="mt-8">
         <Button
           onClick={() => navigate('/portal/history')}
-          variant="default"
-          size="lg"
+          variant="primary"
+          size="md"
           className="w-full"
         >
           Back to History <ArrowRight size={16} />
@@ -578,14 +565,13 @@ function MaxStat({
   valueClassName?: string;
 }) {
   return (
-    <div className="rounded-compact bg-white border border-neutral-100 px-2 py-2 text-center">
-      <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">
-        {label}
-      </p>
+    <div className="rounded-compact bg-card border border-border px-2 py-2 text-center">
+      <p className={cn(LABEL_CLASS, 'mb-1')}>{label}</p>
       <p
-        className={`text-sm font-bold ${
-          valueClassName ?? (accent ? 'text-brand' : 'text-text-primary')
-        }`}
+        className={cn(
+          VALUE_CLASS,
+          valueClassName ?? (accent ? 'text-primary' : ''),
+        )}
       >
         {value}
       </p>

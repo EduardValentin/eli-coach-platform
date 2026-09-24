@@ -36,6 +36,8 @@ export function MeasurementsTable({
   headingId,
   emptyMessage,
   intro,
+  action,
+  emptyAction,
   className,
   children,
   perspective = 'coach',
@@ -46,6 +48,8 @@ export function MeasurementsTable({
   headingId: string;
   emptyMessage: string;
   intro?: ReactNode;
+  action?: ReactNode;
+  emptyAction?: ReactNode;
   className?: string;
   children?: ReactNode;
   perspective?: MeasurementsPerspective;
@@ -56,6 +60,7 @@ export function MeasurementsTable({
     <PortalWidget
       presentation={perspective}
       title="Measurements"
+      action={history.length > 0 ? action : undefined}
       icon={
         <Ruler aria-hidden="true" className="text-brand-secondary" size={18} />
       }
@@ -65,7 +70,10 @@ export function MeasurementsTable({
       {intro}
 
       {history.length === 0 ? (
-        <p className="text-sm text-text-secondary">{emptyMessage}</p>
+        <>
+          <p className="text-sm text-text-secondary">{emptyMessage}</p>
+          {emptyAction && <div className="mt-4">{emptyAction}</div>}
+        </>
       ) : (
         <div className="-mx-6 overflow-x-auto">
           <Table>

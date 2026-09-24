@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
@@ -58,9 +58,12 @@ describe('PortalSidebar prototype mode', () => {
     renderSidebar();
 
     // act
-    const postMvpLinks = ['My Plan', 'Messages', 'History', 'Nutrition'].flatMap((name) =>
-      screen.queryAllByRole('link', { name }),
-    );
+    const postMvpLinks = [
+      'My Plan',
+      'Messages',
+      'History',
+      'Nutrition',
+    ].flatMap((name) => screen.queryAllByRole('link', { name }));
 
     // assert
     expect(postMvpLinks).toHaveLength(0);
@@ -71,11 +74,47 @@ describe('PortalSidebar prototype mode', () => {
     renderSidebar('?scope=post-mvp');
 
     // act
-    const postMvpLinks = ['My Plan', 'Messages', 'History', 'Nutrition'].flatMap((name) =>
-      screen.queryAllByRole('link', { name }),
-    );
+    const postMvpLinks = [
+      'My Plan',
+      'Messages',
+      'History',
+      'Nutrition',
+    ].flatMap((name) => screen.queryAllByRole('link', { name }));
 
     // assert
     expect(postMvpLinks).not.toHaveLength(0);
+  });
+});
+
+describe('PortalSidebar mobile tabs', () => {
+  it('puts Dashboard, Check-ins and Profile on the bar and Cycle under More in MVP', () => {
+    // arrange
+    renderSidebar();
+
+    // act
+    const bar = screen.getByRole('navigation', { name: 'Client portal tabs' });
+    const tabNames = within(bar)
+      .getAllByRole('link')
+      .map((link) => link.textContent);
+
+    // assert
+    expect(tabNames).toEqual(['Dashboard', 'Check-ins', 'Profile']);
+    expect(within(bar).getByRole('button', { name: 'More' })).toBeVisible();
+    expect(within(bar).queryByRole('link', { name: 'Cycle' })).toBeNull();
+  });
+
+  it('caps the bar at four tabs in Post-MVP and moves Profile under More', () => {
+    // arrange
+    renderSidebar('?scope=post-mvp');
+
+    // act
+    const bar = screen.getByRole('navigation', { name: 'Client portal tabs' });
+    const tabNames = within(bar)
+      .getAllByRole('link')
+      .map((link) => link.textContent);
+
+    // assert
+    expect(tabNames).toEqual(['Dashboard', 'My Plan', 'Messages', 'Check-ins']);
+    expect(within(bar).queryByRole('link', { name: 'Profile' })).toBeNull();
   });
 });

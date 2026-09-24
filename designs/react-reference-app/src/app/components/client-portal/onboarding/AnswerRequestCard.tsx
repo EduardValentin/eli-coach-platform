@@ -123,7 +123,7 @@ export function AnswerRequestCard({ request }: { request: DetailRequest }) {
       <h2 className={ONBOARDING_HEADING_CLASS} id="answer-request-heading">
         What your coach asked
       </h2>
-      <p className="mt-3 rounded-card border border-brand/10 bg-brand/5 px-4 py-3 text-sm leading-relaxed text-text-primary">
+      <p className="mt-3 rounded-card border border-primary/10 bg-primary/5 px-4 py-3 text-sm leading-relaxed text-text-primary">
         {request.message}
       </p>
 
@@ -143,7 +143,7 @@ export function AnswerRequestCard({ request }: { request: DetailRequest }) {
             <Button
               type="button"
               variant="ghost"
-              size="lg"
+              size="md"
               className="w-full sm:w-auto"
               onClick={() => navigate('/portal')}
             >
@@ -152,8 +152,8 @@ export function AnswerRequestCard({ request }: { request: DetailRequest }) {
             <Button
               disabled={form.formState.isSubmitting}
               type="submit"
-              variant="default"
-              size="lg"
+              variant="primary"
+              size="md"
               className="w-full sm:w-auto"
             >
               {form.formState.isSubmitting ? 'Sending…' : 'Send my answers'}

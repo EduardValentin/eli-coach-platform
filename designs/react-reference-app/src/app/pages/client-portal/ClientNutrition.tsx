@@ -43,11 +43,20 @@ import {
 } from '../../components/coach-portal/nutrition/nutrition-constants';
 import { useClientProfile } from '../../context/ClientProfileContext';
 import { ResponsiveSheetDialog } from '../../components/workout/ResponsiveSheetDialog';
-import { SectionEyebrow } from '../../components/SectionEyebrow';
 import { Reading } from '../../components/Reading';
 import { ConfirmDialog } from '../../components/ui/confirm-dialog';
 import { RecipeVisual } from '../../components/coach-portal/nutrition/RecipeVisual';
 import { Button } from '../../components/ui/button';
+import { Badge } from '../../components/ui/badge';
+import { ToggleGroup, ToggleGroupItem } from '../../components/ui/toggle-group';
+import { FilterChipGroup, FilterChip } from '../../components/FilterChipGroup';
+import { EmptyState } from '../../components/EmptyState';
+import {
+  LABEL_CLASS,
+  VALUE_LG_CLASS,
+  WIDGET_TITLE_CLASS,
+} from '../../components/typography';
+import { cn } from '../../components/ui/utils';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -95,7 +104,7 @@ function MacroBar({ value, max, colorClass, label }: MacroBarProps) {
         </span>
       </div>
       <div
-        className="h-2 w-full rounded-full bg-neutral-100 overflow-hidden"
+        className="h-2 w-full rounded-full bg-surface-quiet overflow-hidden"
         role="progressbar"
         aria-valuenow={value}
         aria-valuemin={0}
@@ -138,7 +147,7 @@ function RecipeDetailBody({
       <RecipeVisual recipe={recipe} className="h-48 w-full rounded-t-card" />
       <div className="px-5 pt-4 md:px-8 space-y-5">
         {/* Macros */}
-        <div className="bg-neutral-50 rounded-card px-4 py-3 space-y-2">
+        <div className="bg-surface-quiet rounded-card px-4 py-3 space-y-2">
           <Reading
             label="Macros"
             value={`${macros.kcal.toLocaleString()} kcal`}
@@ -173,9 +182,7 @@ function RecipeDetailBody({
 
         {/* Ingredients */}
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-2">
-            Ingredients
-          </p>
+          <p className={cn(LABEL_CLASS, 'mb-2')}>Ingredients</p>
           <ul className="space-y-1.5 list-none p-0 m-0">
             {recipe.ingredients.map((ing, i) => {
               const food = foods.find((f) => f.id === ing.foodId);
@@ -188,7 +195,7 @@ function RecipeDetailBody({
               return (
                 <li
                   key={`${ing.foodId}-${i}`}
-                  className="flex items-center justify-between gap-2 rounded-compact px-2 py-1.5 text-sm text-text-primary hover:bg-neutral-50"
+                  className="flex items-center justify-between gap-2 rounded-compact px-2 py-1.5 text-sm text-text-primary hover:bg-surface-quiet"
                 >
                   <span className="flex-1">
                     {food?.name ?? ing.foodId}
@@ -210,9 +217,7 @@ function RecipeDetailBody({
         {/* B — Instructions */}
         {recipe.instructions && recipe.instructions.trim().length > 0 && (
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-2">
-              Instructions
-            </p>
+            <p className={cn(LABEL_CLASS, 'mb-2')}>Instructions</p>
             <p className="text-sm text-text-primary whitespace-pre-line leading-relaxed">
               {recipe.instructions}
             </p>
@@ -247,10 +252,11 @@ function MealSwapChooserBody({
   return (
     <div className="px-5 pb-6 pt-2 md:px-8">
       <p className="text-xs text-text-secondary mb-4">Coach-approved options</p>
-      <ul
-        className="space-y-2 list-none p-0 m-0"
-        role="listbox"
+      <FilterChipGroup
         aria-label="Meal options"
+        value={selectedId ?? null}
+        onValueChange={() => {}}
+        className="flex-col gap-2"
       >
         {optionIds.map((rid) => {
           const recipe = recipes.find((r) => r.id === rid);
@@ -259,58 +265,52 @@ function MealSwapChooserBody({
           const isCoachPick = rid === slot.recipeId;
           const kcal = recipeMacros(recipe, foods).kcal;
           return (
-            <li key={rid} role="option" aria-selected={isSelected}>
-              <button
-                type="button"
-                aria-label={`${recipe.name}, ${kcal} kcal${isSelected ? ', currently selected' : ''}`}
-                aria-pressed={isSelected}
-                onClick={() => onSelect(rid)}
-                className={`w-full text-left rounded-control px-4 py-3 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 flex items-center gap-3 ${
+            <FilterChip
+              key={rid}
+              value={rid}
+              onClick={() => onSelect(rid)}
+              aria-label={`${recipe.name}, ${kcal} kcal${isSelected ? ', currently selected' : ''}`}
+              className="w-full min-h-0 items-center justify-start gap-3 rounded-control border border-border-subtle bg-surface-quiet px-4 py-3 text-left text-text-primary data-[state=off]:hover:border-border data-[state=off]:hover:bg-surface-muted data-[state=off]:hover:text-text-primary data-[state=on]:border-primary/25 data-[state=on]:bg-primary-soft data-[state=on]:text-text-primary"
+            >
+              {/* Check indicator — always present for layout stability, visible only when selected */}
+              <span
+                className={`shrink-0 w-5 h-5 rounded-full flex items-center justify-center transition-colors ${
                   isSelected
-                    ? 'bg-primary/8 border border-primary/25'
-                    : 'bg-neutral-50 border border-neutral-100 hover:border-neutral-200 hover:bg-neutral-100'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-surface-muted'
                 }`}
+                aria-hidden="true"
               >
-                {/* Check indicator — always present for layout stability, visible only when selected */}
-                <span
-                  className={`shrink-0 w-5 h-5 rounded-full flex items-center justify-center transition-colors ${
-                    isSelected
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-neutral-200'
-                  }`}
-                  aria-hidden="true"
-                >
-                  {isSelected && <Check size={11} strokeWidth={2.5} />}
+                {isSelected && <Check size={11} strokeWidth={2.5} />}
+              </span>
+
+              {/* Recipe thumbnail */}
+              <RecipeVisual
+                recipe={recipe}
+                className="h-10 w-10 rounded-compact shrink-0"
+                iconSize={18}
+              />
+
+              {/* Name + kcal */}
+              <span className="flex-1 min-w-0">
+                <span className="block text-sm font-medium text-text-primary leading-snug truncate">
+                  {recipe.name}
                 </span>
-
-                {/* Recipe thumbnail */}
-                <RecipeVisual
-                  recipe={recipe}
-                  className="h-10 w-10 rounded-compact shrink-0"
-                  iconSize={18}
-                />
-
-                {/* Name + kcal */}
-                <span className="flex-1 min-w-0">
-                  <span className="block text-sm font-semibold text-text-primary leading-snug truncate">
-                    {recipe.name}
-                  </span>
-                  <span className="text-xs text-text-secondary tabular-nums">
-                    {kcal} kcal
-                  </span>
+                <span className="text-xs text-text-secondary tabular-nums">
+                  {kcal} kcal
                 </span>
+              </span>
 
-                {/* Coach's pick — tiny muted label, not a badge */}
-                {isCoachPick && (
-                  <span className="shrink-0 text-[10px] text-text-secondary font-medium">
-                    Coach's pick
-                  </span>
-                )}
-              </button>
-            </li>
+              {/* Coach's pick — tiny muted label, not a badge */}
+              {isCoachPick && (
+                <span className="shrink-0 text-xs text-text-secondary font-medium">
+                  Coach's pick
+                </span>
+              )}
+            </FilterChip>
           );
         })}
-      </ul>
+      </FilterChipGroup>
     </div>
   );
 }
@@ -396,22 +396,20 @@ function SlotCard({
   return (
     <>
       <article
-        className="bg-white rounded-card border border-neutral-100 overflow-hidden"
+        className="bg-card rounded-card border border-border overflow-hidden"
         aria-label={`${roleLabel} meal`}
       >
         <div className="px-4 pt-3 pb-3">
           <div className="flex items-start justify-between gap-2 mb-1">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">
-              {roleLabel}
-            </p>
+            <p className={LABEL_CLASS}>{roleLabel}</p>
             {/* Swap button — only shown when there are alternatives */}
             {hasSwaps && (
               <Button
                 type="button"
                 aria-label="Swap this meal"
                 onClick={() => setSwapOpen(true)}
-                variant="secondary"
-                size="sm"
+                variant="outline"
+                size="xs"
                 className="shrink-0"
               >
                 <ArrowLeftRight size={11} aria-hidden="true" />
@@ -437,7 +435,7 @@ function SlotCard({
                   aria-label={`View ${displayRecipe.name} recipe`}
                   onClick={() => onViewRecipe(slot.id, displayRecipe.id)}
                 >
-                  <p className="font-semibold text-sm text-text-primary leading-snug group-hover:underline">
+                  <p className="font-medium text-sm text-text-primary leading-snug group-hover:underline">
                     {displayRecipe.name}
                   </p>
                 </button>
@@ -553,15 +551,13 @@ function ShoppingListBody({ groups }: ShoppingListBodyProps) {
               className={`h-2.5 w-2.5 shrink-0 rounded-full ${CATEGORY_SWATCH[group.category]}`}
               aria-hidden="true"
             />
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-text-primary">
-              {CATEGORY_LABELS[group.category]}
-            </h3>
+            <h3 className={LABEL_CLASS}>{CATEGORY_LABELS[group.category]}</h3>
           </div>
           <ul className="space-y-1 list-none p-0 m-0">
             {group.items.map((item) => (
               <li
                 key={item.foodId}
-                className="flex items-center justify-between gap-2 rounded-compact px-2 py-1.5 text-sm text-text-primary hover:bg-neutral-50"
+                className="flex items-center justify-between gap-2 rounded-compact px-2 py-1.5 text-sm text-text-primary hover:bg-surface-quiet"
               >
                 <span>{item.name}</span>
                 <span className="shrink-0 tabular-nums text-text-secondary">
@@ -600,15 +596,13 @@ function GoalHero({
     : `+${absDelta.toLocaleString()} kcal/day vs maintenance`;
 
   return (
-    <div className="px-5 py-5 border-b border-neutral-50 rounded-field">
+    <div className="px-5 py-5 border-b border-border-subtle rounded-field">
       {/* Eyebrow: goal label */}
-      <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary mb-1">
-        {primaryGoal}
-      </p>
+      <p className={cn(LABEL_CLASS, 'mb-1')}>{primaryGoal}</p>
 
       {/* Hero: calorie target */}
       <div className="flex items-baseline gap-1.5">
-        <span className="text-4xl font-semibold text-text-primary leading-none tabular-nums">
+        <span className={cn(VALUE_LG_CLASS, 'leading-none tabular-nums')}>
           {goalTarget.toLocaleString()}
         </span>
         <span className="text-sm font-medium text-text-secondary leading-none">
@@ -618,10 +612,10 @@ function GoalHero({
 
       {/* Secondary: deficit/surplus delta */}
       {delta !== 0 && (
-        <p className="mt-2 inline-flex items-center gap-1 rounded-full bg-neutral-100 px-2.5 py-1 text-caption font-medium text-text-secondary">
+        <Badge variant="muted" className="mt-2">
           <DeltaIcon size={11} aria-hidden="true" />
           {deltaLabel}
-        </p>
+        </Badge>
       )}
     </div>
   );
@@ -660,20 +654,12 @@ export function ClientNutrition() {
     return (
       <div className="w-full max-w-3xl mx-auto">
         <PortalPageHeader title="My nutrition" />
-        <div className="bg-white rounded-panel border border-neutral-100 p-10 text-center">
-          <div className="w-16 h-16 rounded-full bg-neutral-100 flex items-center justify-center mx-auto mb-4">
-            <UtensilsIcon
-              size={28}
-              className="text-text-secondary"
-              aria-hidden="true"
-            />
-          </div>
-          <p className="font-serif text-xl text-text-primary mb-2">
-            No plan yet
-          </p>
-          <p className="text-sm text-text-secondary max-w-xs mx-auto">
-            Your coach hasn't built your plan yet. Check back soon!
-          </p>
+        <div className="bg-card rounded-panel border border-border p-10">
+          <EmptyState
+            icon={UtensilsIcon}
+            title="No plan yet"
+            description="Your coach hasn't built your plan yet. Check back soon!"
+          />
         </div>
       </div>
     );
@@ -741,35 +727,39 @@ export function ClientNutrition() {
 
       {/* Week strip */}
       <section aria-labelledby="week-strip-heading">
-        <SectionEyebrow as="h2" className="mb-3" id="week-strip-heading">
+        <h2 className={cn(LABEL_CLASS, 'mb-3')} id="week-strip-heading">
           This block
-        </SectionEyebrow>
+        </h2>
         <div className="overflow-x-auto -mx-0.5 pb-1">
-          <div className="inline-flex gap-2 px-0.5 min-w-max">
+          <ToggleGroup
+            type="single"
+            value={selectedDate}
+            onValueChange={(value) => value && setSelectedDate(value)}
+            aria-label="Select day"
+            className="inline-flex gap-2 px-0.5 min-w-max"
+          >
             {block.days.map((day) => {
               const isSelected = day.date === selectedDate;
               const isToday = day.date === today;
               const dayTotalsChip = dayMacros(day, recipes, foods);
               const phaseVar = day.phase ? PHASE_VAR[day.phase] : undefined;
               return (
-                <button
+                <ToggleGroupItem
                   key={day.date}
-                  type="button"
-                  onClick={() => setSelectedDate(day.date)}
+                  value={day.date}
                   aria-label={`${format(parseISO(day.date), 'EEEE, MMMM d')}${day.phase ? `, ${PHASE_LABEL[day.phase]} phase` : ''}${isToday ? ', today' : ''}`}
-                  aria-pressed={isSelected}
-                  className={`flex flex-col items-center gap-1 rounded-card px-3 py-2.5 min-w-[56px] text-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${
+                  className={`flex h-auto min-w-[56px] flex-none flex-col items-center gap-1 rounded-card px-3 py-2.5 text-center transition-all first:rounded-card last:rounded-card ${
                     isSelected
-                      ? 'bg-primary text-primary-foreground shadow-md'
+                      ? 'bg-primary text-primary-foreground shadow-card'
                       : isToday
-                        ? 'bg-brand/8 text-brand border border-brand/20'
-                        : 'bg-white text-text-primary border border-neutral-100 hover:border-neutral-200 hover:bg-neutral-50'
+                        ? 'bg-primary-soft text-primary border border-primary/20'
+                        : 'bg-card text-text-primary border border-border-subtle hover:border-border hover:bg-surface-quiet'
                   }`}
                 >
-                  <span className="text-[10px] font-bold uppercase tracking-wide leading-none">
+                  <span className="text-label uppercase leading-none">
                     {format(parseISO(day.date), 'EEE')}
                   </span>
-                  <span className="text-base font-semibold leading-none">
+                  <span className="text-base font-medium leading-none tabular-nums">
                     {format(parseISO(day.date), 'd')}
                   </span>
                   {/* Phase color dot */}
@@ -782,15 +772,15 @@ export function ClientNutrition() {
                   )}
                   {dayTotalsChip.kcal > 0 && (
                     <span
-                      className={`text-[9px] font-semibold tabular-nums leading-none ${isSelected ? 'text-white' : 'text-text-secondary'}`}
+                      className={`text-xs tabular-nums leading-none ${isSelected ? 'text-primary-foreground' : 'text-text-secondary'}`}
                     >
                       {dayTotalsChip.kcal}
                     </span>
                   )}
-                </button>
+                </ToggleGroupItem>
               );
             })}
-          </div>
+          </ToggleGroup>
         </div>
       </section>
 
@@ -799,10 +789,10 @@ export function ClientNutrition() {
         <section
           aria-label={`Meals for ${format(parseISO(selectedDay.date), 'EEEE, MMMM d')}`}
         >
-          <div className="bg-white rounded-panel border border-neutral-100 overflow-hidden shadow-[0_2px_12px_rgb(0,0,0,0.03)]">
+          <div className="bg-card rounded-panel border border-border overflow-hidden shadow-soft">
             {/* Day header */}
             <div
-              className="px-5 py-4 border-b border-neutral-50 rounded-field"
+              className="px-5 py-4 border-b border-border-subtle rounded-field"
               style={
                 selectedDay.phase
                   ? {
@@ -816,7 +806,10 @@ export function ClientNutrition() {
                 <div>
                   <h2
                     id="nutrition-day-heading"
-                    className="mb-2 flex items-center gap-2 text-base font-semibold text-text-primary"
+                    className={cn(
+                      WIDGET_TITLE_CLASS,
+                      'mb-2 flex items-center gap-2',
+                    )}
                   >
                     <UtensilsIcon
                       aria-hidden="true"
@@ -825,19 +818,16 @@ export function ClientNutrition() {
                     />
                     Today's meals
                   </h2>
-                  <p className="font-semibold text-2xl tracking-tight text-text-primary lg:text-3xl leading-none mb-1">
+                  <p className={cn(VALUE_LG_CLASS, 'mb-1')}>
                     {format(parseISO(selectedDay.date), 'EEEE, MMMM d')}
                     {selectedDay.date === today && (
-                      <span className="ml-2 text-xs font-sans font-semibold uppercase tracking-widest text-text-secondary">
+                      <Badge variant="muted" className="ml-2 align-middle">
                         Today
-                      </span>
+                      </Badge>
                     )}
                   </p>
                   {selectedDay.phase && (
-                    <p
-                      className="inline-flex items-center gap-1.5 text-sm font-semibold"
-                      style={{ color: 'var(--text-primary)' }}
-                    >
+                    <p className="inline-flex items-center gap-1.5 text-sm font-medium text-text-primary">
                       <span
                         className="w-2.5 h-2.5 rounded-full shrink-0"
                         style={{
@@ -863,10 +853,8 @@ export function ClientNutrition() {
 
             {/* Day macro meter */}
             {dayTotals && (
-              <div className="px-5 py-4 border-b border-neutral-50 rounded-field space-y-3">
-                <h3 className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">
-                  Daily totals
-                </h3>
+              <div className="px-5 py-4 border-b border-border-subtle rounded-field space-y-3">
+                <h3 className={LABEL_CLASS}>Daily totals</h3>
                 <MacroBar
                   value={dayTotals.kcal}
                   max={target.kcal}
@@ -898,9 +886,7 @@ export function ClientNutrition() {
 
             {/* Meal slots */}
             <div className="px-5 py-4 space-y-3">
-              <h3 className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">
-                Meals
-              </h3>
+              <h3 className={LABEL_CLASS}>Meals</h3>
               {selectedDay.slots.map((slot) => (
                 <SlotCard
                   key={slot.id}

@@ -1,16 +1,6 @@
 import { useRef, ChangeEvent } from 'react';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
-import { motion } from 'motion/react';
-import {
-  User,
-  FileText,
-  Camera,
-  ClipboardList,
-  Droplet,
-  Ruler,
-  Trash2,
-  Utensils,
-} from 'lucide-react';
+import { User, Camera, Droplet, Ruler, Trash2, Utensils } from 'lucide-react';
 import { toast } from 'sonner';
 import { showUndoToast } from '../../utils/showUndoToast';
 import {
@@ -23,9 +13,18 @@ import { useUnitPreferences } from '../../context/UnitPreferencesContext';
 import { formatHeight, formatBodyWeight } from '../../utils/units';
 import { MeasurementsSection } from '../../components/client-portal/MeasurementsSection';
 import { ClientWidget } from '../../components/client-portal/ClientWidget';
-import { SectionEyebrow } from '../../components/SectionEyebrow';
 import { Reading } from '../../components/Reading';
+import { LABEL_CLASS, VALUE_LG_CLASS } from '../../components/typography';
+import { useAppState } from '../../context/AppContext';
+import { getInitials } from '../../utils/clientHelpers';
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from '../../components/ui/avatar';
 import { Button } from '../../components/ui/button';
+import { cardVariants } from '../../components/ui/card';
+import { cn } from '../../components/ui/utils';
 
 const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
 
@@ -33,6 +32,8 @@ export function ClientProfile() {
   const { clientProfile, updateProfile } = useClientProfile();
   const { clientProfile: menstrualProfile } = useCycle();
   const { weightUnit, heightUnit } = useUnitPreferences();
+  const { appState } = useAppState();
+  const isPostMvp = appState.prototypeMode === 'post-mvp';
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleAvatarSelect = (e: ChangeEvent<HTMLInputElement>) => {
@@ -77,36 +78,34 @@ export function ClientProfile() {
     <div className="w-full max-w-4xl mx-auto">
       <PortalPageHeader
         title="Your Profile"
-        subtitle="Review the information your coach has set up for you. Reach out in chat if anything needs updating."
+        subtitle="Your coach keeps this up to date. Mention any changes at your next check-in."
       />
 
-      {/* Avatar */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        aria-labelledby="profile-picture-heading"
-        className="bg-white p-6 lg:p-8 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 mb-6 lg:mb-8 flex flex-col sm:flex-row items-center gap-6"
+      <section
+        aria-labelledby="profile-identity-heading"
+        className={cn(
+          cardVariants({ variant: 'panel' }),
+          'mb-6 flex flex-col items-center gap-6 p-6 sm:flex-row lg:mb-8 lg:p-8',
+        )}
       >
-        <div className="relative shrink-0">
-          {clientProfile.avatarUrl ? (
-            <img
+        <Avatar size="lg">
+          {clientProfile.avatarUrl && (
+            <AvatarImage
               src={clientProfile.avatarUrl}
               alt={`${fullName(clientProfile)}'s profile picture`}
-              className="w-24 h-24 rounded-full object-cover border border-neutral-100"
             />
-          ) : (
-            <div className="w-24 h-24 rounded-full bg-brand/10 text-brand flex items-center justify-center">
-              <User size={44} strokeWidth={1.5} />
-            </div>
           )}
-        </div>
+          <AvatarFallback>
+            {getInitials(fullName(clientProfile))}
+          </AvatarFallback>
+        </Avatar>
 
         <div className="flex-1 min-w-0 text-center sm:text-left">
-          <SectionEyebrow as="h2" className="mb-1" id="profile-picture-heading">
-            Profile Picture
-          </SectionEyebrow>
-          <p className="font-semibold text-xl lg:text-2xl text-text-primary mb-4">
+          <h2 id="profile-identity-heading" className={VALUE_LG_CLASS}>
             {fullName(clientProfile)}
+          </h2>
+          <p className="mt-1 mb-4 text-sm text-text-secondary">
+            {clientProfile.email}
           </p>
 
           <input
@@ -117,27 +116,29 @@ export function ClientProfile() {
             className="hidden"
           />
           <div className="flex flex-wrap justify-center sm:justify-start gap-3">
-            <Button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              variant="default"
-            >
-              <Camera size={16} />
-              {clientProfile.avatarUrl ? 'Change picture' : 'Upload picture'}
-            </Button>
             {clientProfile.avatarUrl && (
               <Button
                 type="button"
                 onClick={handleRemoveAvatar}
-                variant="outline"
+                variant="ghost"
+                size="sm"
               >
-                <Trash2 size={16} />
+                <Trash2 aria-hidden="true" size={16} />
                 Remove
               </Button>
             )}
+            <Button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              variant="outline"
+              size="sm"
+            >
+              <Camera aria-hidden="true" size={16} />
+              {clientProfile.avatarUrl ? 'Change picture' : 'Upload picture'}
+            </Button>
           </div>
         </div>
-      </motion.div>
+      </section>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
         {/* Basic info */}
@@ -178,8 +179,8 @@ export function ClientProfile() {
               value={formatHeight(clientProfile.heightCm, heightUnit)}
             />
             <Reading
-              label="Starting Weight / Current"
-              value={`${formatBodyWeight(clientProfile.startingWeightKg, weightUnit)} / ${formatBodyWeight(clientProfile.currentWeightKg, weightUnit)}`}
+              label="Weight"
+              value={`${formatBodyWeight(clientProfile.startingWeightKg, weightUnit)} → ${formatBodyWeight(clientProfile.currentWeightKg, weightUnit)}`}
             />
             <Reading
               label="Activity Level"
@@ -189,50 +190,38 @@ export function ClientProfile() {
           </div>
         </ClientWidget>
 
-        {/* Nutrition */}
-        <ClientWidget
-          eyebrow="Nutrition"
-          icon={
-            <Utensils
-              aria-hidden="true"
-              className="text-brand-secondary"
-              size={18}
-            />
-          }
-          headingId="profile-nutrition-heading"
-        >
-          <div className="space-y-4">
-            <Reading
-              label="BMR"
-              value={`${clientProfile.bmr.toLocaleString()} kcal`}
-            />
-            <Reading
-              label="Daily Target"
-              value={`${clientProfile.dailyCalories.toLocaleString()} kcal`}
-            />
-            <Reading
-              label="Macros"
-              value={`${clientProfile.proteinGrams}g Protein · ${clientProfile.carbsGrams}g Carbs · ${clientProfile.fatsGrams}g Fats`}
-            />
-          </div>
-        </ClientWidget>
-
-        {/* Dietary restrictions */}
-        <ClientWidget
-          eyebrow="Dietary restrictions"
-          icon={
-            <ClipboardList
-              aria-hidden="true"
-              className="text-brand-secondary"
-              size={18}
-            />
-          }
-          headingId="dietary-restrictions-heading"
-        >
-          <p className="text-sm text-text-secondary leading-relaxed">
-            {clientProfile.dietaryRestrictions || 'None on file.'}
-          </p>
-        </ClientWidget>
+        {isPostMvp && (
+          <ClientWidget
+            eyebrow="Nutrition"
+            icon={
+              <Utensils
+                aria-hidden="true"
+                className="text-brand-secondary"
+                size={18}
+              />
+            }
+            headingId="profile-nutrition-heading"
+          >
+            <div className="space-y-4">
+              <Reading
+                label="BMR"
+                value={`${clientProfile.bmr.toLocaleString()} kcal`}
+              />
+              <Reading
+                label="Daily Target"
+                value={`${clientProfile.dailyCalories.toLocaleString()} kcal`}
+              />
+              <Reading
+                label="Macros"
+                value={`${clientProfile.proteinGrams}g Protein · ${clientProfile.carbsGrams}g Carbs · ${clientProfile.fatsGrams}g Fats`}
+              />
+              <Reading
+                label="Dietary restrictions"
+                value={clientProfile.dietaryRestrictions || 'None on file'}
+              />
+            </div>
+          </ClientWidget>
+        )}
 
         {/* Menstrual profile */}
         {menstrualProfile && (
@@ -275,10 +264,8 @@ export function ClientProfile() {
               />
             </div>
             {menstrualProfile.notes && (
-              <div className="mt-4 pt-4 border-t border-neutral-100">
-                <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2">
-                  Your Notes
-                </p>
+              <div className="mt-4 pt-4 border-t border-border-subtle">
+                <p className={cn(LABEL_CLASS, 'mb-2')}>Your notes</p>
                 <p className="text-sm text-text-secondary leading-relaxed">
                   {menstrualProfile.notes}
                 </p>
@@ -289,14 +276,6 @@ export function ClientProfile() {
       </div>
 
       <MeasurementsSection />
-
-      <div className="mt-8 p-5 rounded-card bg-brand/5 border border-brand/10 flex items-start gap-3">
-        <FileText size={18} className="text-brand mt-0.5 shrink-0" />
-        <p className="text-sm text-text-secondary leading-relaxed">
-          Something out of date? Message your coach and she&apos;ll update your
-          profile.
-        </p>
-      </div>
     </div>
   );
 }

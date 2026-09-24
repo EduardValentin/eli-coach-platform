@@ -1,4 +1,8 @@
-import type { FoodCategory, TagFamily, CookingMethod } from '../../../context/NutritionContext';
+import type {
+  FoodCategory,
+  TagFamily,
+  CookingMethod,
+} from '../../../context/NutritionContext';
 
 export const CATEGORY_LABELS: Record<FoodCategory, string> = {
   protein: 'Protein',

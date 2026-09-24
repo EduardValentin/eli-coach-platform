@@ -60,8 +60,8 @@ export function ClientWelcome() {
         <Button
           className="mt-10 w-full sm:w-auto"
           onClick={start}
-          variant="default"
-          size="lg"
+          variant="primary"
+          size="md"
         >
           Let's get started
         </Button>

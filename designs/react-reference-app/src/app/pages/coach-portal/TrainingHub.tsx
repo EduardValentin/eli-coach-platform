@@ -39,6 +39,8 @@ import {
 import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { ExerciseModal } from '../../components/coach-portal/ExerciseModal';
 import { ExerciseFilters } from '../../components/coach-portal/ExerciseFilters';
+import { RowActionButton } from '../../components/RowActionButton';
+import { SearchField } from '../../components/SearchField';
 import {
   matchesExerciseFilters,
   type ExerciseFilter,
@@ -51,6 +53,17 @@ import {
   PopoverContent,
 } from '../../components/ui/popover';
 import { Button } from '../../components/ui/button';
+import { Badge } from '../../components/ui/badge';
+import { Avatar, AvatarFallback } from '../../components/ui/avatar';
+import { Tabs, TabsList, TabsTrigger } from '../../components/ui/tabs';
+import { FilterChipGroup, FilterChip } from '../../components/FilterChipGroup';
+import { EmptyState } from '../../components/EmptyState';
+import { cn } from '../../components/ui/utils';
+import {
+  WIDGET_TITLE_CLASS,
+  LABEL_CLASS,
+  VALUE_CLASS,
+} from '../../components/typography';
 
 const MOCK_CLIENTS = [
   { id: 'client-1', name: 'Jane Doe', avatar: 'JD' },
@@ -90,55 +103,60 @@ function PlanInstanceCard({
       className={`rounded-card flex flex-col relative cursor-pointer transition-all duration-150 ${
         isCompleted
           ? 'bg-muted/40 border border-dashed border-border hover:border-muted-foreground/30'
-          : 'bg-card shadow-sm border border-border hover:shadow-md hover:border-muted-foreground/30'
+          : 'bg-card shadow-card border border-border hover:shadow-card hover:border-muted-foreground/30'
       }`}
     >
-      {/* Completed badge — floating pill at top */}
       {isCompleted && (
-        <div className="absolute -top-2.5 left-4 z-10 inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-success-surface border border-success/20 rounded-full">
-          <Check size={11} className="text-success" />
-          <span className="text-xs font-bold text-success uppercase tracking-wider">
-            Completed
-          </span>
-        </div>
+        <Badge variant="success" className="absolute -top-2.5 left-4 z-10">
+          <Check size={11} />
+          Completed
+        </Badge>
       )}
 
       <div className="p-6 flex-1 flex flex-col">
         {/* Client info + 3-dot menu */}
         <div className="flex items-center gap-3 mb-4">
-          <div
-            className={`w-10 h-10 shrink-0 rounded-full text-sm font-bold flex items-center justify-center ring-2 ring-card ${
-              isCompleted
-                ? 'bg-muted text-muted-foreground'
-                : 'bg-brand text-brand-foreground shadow-sm'
-            }`}
+          <Avatar
+            className={cn('ring-2 ring-card', !isCompleted && 'shadow-card')}
           >
-            {client?.avatar || '?'}
-          </div>
+            <AvatarFallback
+              className={
+                isCompleted
+                  ? 'bg-muted text-text-secondary'
+                  : 'bg-primary text-primary-foreground'
+              }
+            >
+              {client?.avatar || '?'}
+            </AvatarFallback>
+          </Avatar>
           <div className="flex-1 min-w-0">
             <p
               title={client?.name || 'Unknown'}
-              className={`font-semibold text-sm truncate ${isCompleted ? 'text-muted-foreground' : 'text-foreground'}`}
+              className={cn(
+                WIDGET_TITLE_CLASS,
+                'truncate',
+                isCompleted && 'text-text-secondary',
+              )}
             >
               {client?.name || 'Unknown'}
             </p>
             <p
               title={instance.name}
-              className="text-xs truncate text-muted-foreground"
+              className="text-xs truncate text-text-secondary"
             >
               {instance.name}
             </p>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
-            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground whitespace-nowrap">
+            <Badge variant="muted" className="whitespace-nowrap">
               {trainingDays}d/wk
-            </span>
+            </Badge>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
                   onClick={(e) => e.stopPropagation()}
                   variant="ghost"
-                  size="icon"
+                  size="icon-sm"
                   className="size-8"
                 >
                   <MoreVertical size={16} />
@@ -156,8 +174,8 @@ function PlanInstanceCard({
                   variant="ghost"
                   className="w-full justify-start gap-2.5 px-3"
                 >
-                  <User size={15} className="text-muted-foreground" />
-                  <span className="text-sm font-medium text-foreground">
+                  <User size={15} className="text-text-secondary" />
+                  <span className="text-sm font-medium text-text-primary">
                     Go to Client
                   </span>
                 </Button>
@@ -182,36 +200,30 @@ function PlanInstanceCard({
 
         {/* Goal badge */}
         {goal && (
-          <div
-            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-compact text-caption font-semibold mb-3 self-start ${
-              isCompleted
-                ? 'bg-muted text-muted-foreground'
-                : 'bg-brand-secondary-soft text-brand-secondary'
-            }`}
+          <Badge
+            variant={isCompleted ? 'muted' : 'brand-secondary'}
+            className="mb-3 self-start"
           >
             <Target size={12} />
             {goal.type}
-          </div>
+          </Badge>
         )}
 
         {/* Week progress */}
         <div className="mb-4">
           <div className="flex items-center justify-between gap-2 mb-1.5">
-            <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">
+            <span className="text-xs font-medium text-text-secondary whitespace-nowrap">
               {isCompleted
                 ? `${weekCount} ${weekCount === 1 ? 'week' : 'weeks'}`
                 : `Week ${instance.currentWeekNumber} of ${weekCount}`}
             </span>
             {instance.weeks.some((w) => w.isDeload) && (
-              <span
-                className={`text-xs font-bold uppercase tracking-wider whitespace-nowrap px-2 py-0.5 rounded-full ${
-                  isCompleted
-                    ? 'text-muted-foreground bg-muted'
-                    : 'text-blue-600 bg-blue-50'
-                }`}
+              <Badge
+                variant={isCompleted ? 'muted' : 'brand-secondary'}
+                className="whitespace-nowrap"
               >
-                Has Deload
-              </span>
+                Has deload
+              </Badge>
             )}
           </div>
           <div className="flex gap-1">
@@ -222,18 +234,18 @@ function PlanInstanceCard({
                   isCompleted
                     ? 'bg-muted'
                     : i < instance.currentWeekNumber - 1
-                      ? 'bg-brand'
+                      ? 'bg-primary'
                       : i === instance.currentWeekNumber - 1
-                        ? 'bg-brand/50'
+                        ? 'bg-primary/50'
                         : 'bg-muted'
-                } ${!isCompleted && week.isDeload ? 'ring-1 ring-blue-300' : ''}`}
+                } ${!isCompleted && week.isDeload ? 'ring-1 ring-brand-secondary/40' : ''}`}
               />
             ))}
           </div>
         </div>
 
         {/* Date info */}
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-text-secondary">
           Started {instance.startDate}
           {instance.endDate && ` · Ended ${instance.endDate}`}
         </p>
@@ -262,22 +274,20 @@ function TemplateCard({
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-card shadow-sm border border-neutral-100 flex flex-col overflow-hidden"
+      className="bg-card rounded-card shadow-card border border-border-subtle flex flex-col overflow-hidden"
     >
       <div className="p-5 flex-1 flex flex-col">
         <div className="flex items-start justify-between mb-3">
-          <div className="w-11 h-11 rounded-control bg-brand-secondary/10 text-brand-secondary flex items-center justify-center">
+          <div className="w-11 h-11 rounded-control bg-brand-secondary-soft text-brand-secondary flex items-center justify-center">
             <CalendarDays size={22} />
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs font-medium bg-neutral-100 px-2.5 py-1 rounded-full text-text-secondary">
-              {trainingDays} days/week
-            </span>
+            <Badge variant="muted">{trainingDays} days/week</Badge>
             <Button
               onClick={() => onDelete(template.id, template.name)}
               variant="ghost"
-              size="icon"
-              className="size-8 text-neutral-300 hover:bg-red-50 hover:text-red-500"
+              size="icon-sm"
+              className="size-8 text-icon-muted hover:bg-destructive/10 hover:text-destructive"
               title="Delete template"
             >
               <Trash2 size={15} />
@@ -285,7 +295,7 @@ function TemplateCard({
           </div>
         </div>
 
-        <h3 className="font-semibold text-lg text-text-primary mb-1 leading-snug">
+        <h3 className={cn(WIDGET_TITLE_CLASS, 'mb-1 leading-snug')}>
           {template.name}
         </h3>
         {template.description && (
@@ -302,22 +312,19 @@ function TemplateCard({
         {template.tags && template.tags.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-4">
             {template.tags.map((tag) => (
-              <span
-                key={tag}
-                className="text-[10px] font-medium bg-brand-secondary/10 text-brand-secondary px-2 py-0.5 rounded-full"
-              >
+              <Badge key={tag} variant="brand-secondary">
                 {tag}
-              </span>
+              </Badge>
             ))}
           </div>
         )}
 
-        <div className="mt-auto pt-4 border-t border-neutral-100 flex items-center gap-2">
+        <div className="mt-auto pt-4 border-t border-border-subtle flex items-center gap-2">
           <Button onClick={onStartPlan} variant="outline" className="flex-1">
             <Copy size={16} />
             Start Plan
           </Button>
-          <Button onClick={onEdit} variant="default" className="flex-1">
+          <Button onClick={onEdit} variant="primary" className="flex-1">
             <Pencil size={16} />
             Edit
           </Button>
@@ -461,9 +468,9 @@ export function TrainingHub() {
                 setNewPlanClientSearch('');
                 setShowNewPlanClientPicker(true);
               }}
-              variant="default"
-              size="lg"
-              className="shadow-md"
+              variant="primary"
+              size="md"
+              className="shadow-card"
             >
               <Plus size={20} />
               New Client Plan
@@ -471,9 +478,9 @@ export function TrainingHub() {
           ) : (
             <Button
               onClick={handleCreate}
-              variant="default"
-              size="lg"
-              className="shadow-md"
+              variant="primary"
+              size="md"
+              className="shadow-card"
             >
               <Plus size={20} />
               {activeTab === 'exercises' ? 'New Exercise' : 'New Template'}
@@ -482,269 +489,245 @@ export function TrainingHub() {
         }
       />
 
-      {/* Tabs */}
-      <div className="flex items-center gap-6 px-3 border-b border-neutral-200 rounded-field mb-6">
-        {[
-          {
-            key: 'instances' as const,
-            label: 'Client Plans',
-            count: planInstances.filter((p) => p.status === 'active').length,
-          },
-          {
-            key: 'templates' as const,
-            label: 'Templates',
-            count: planTemplates.length,
-          },
-          { key: 'exercises' as const, label: 'Exercise Library' },
-        ].map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`min-h-11 px-2 font-medium text-sm transition-colors border-b-2 flex items-center gap-2 ${
-              activeTab === tab.key
-                ? 'border-primary text-primary'
-                : 'border-transparent text-text-secondary hover:text-text-primary'
-            }`}
-          >
-            {tab.label}
-            {tab.count !== undefined && (
-              <span
-                className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                  activeTab === tab.key
-                    ? 'bg-primary/5 text-primary'
-                    : 'bg-neutral-100 text-text-secondary'
-                }`}
-              >
-                {tab.count}
-              </span>
-            )}
-          </button>
-        ))}
-      </div>
-
-      {/* ── Client Plans tab ─── */}
-      {activeTab === 'instances' && (
-        <>
-          <div className="flex items-center gap-2 mb-6">
-            {(['all', 'active', 'completed'] as const).map((f) => (
-              <button
-                key={f}
-                onClick={() => setStatusFilter(f)}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-compact transition-colors ${
-                  statusFilter === f
-                    ? 'bg-text-primary text-white'
-                    : 'bg-neutral-100 text-text-secondary hover:bg-neutral-200'
-                }`}
-              >
-                {f.charAt(0).toUpperCase() + f.slice(1)}
-              </button>
-            ))}
-          </div>
-
-          {filteredInstances.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6">
-              {filteredInstances.map((instance) => (
-                <PlanInstanceCard
-                  key={instance.id}
-                  instance={instance}
-                  onClick={() =>
-                    navigate(`/coach/training/builder/${instance.clientId}`)
-                  }
-                  onGoToClient={() =>
-                    navigate(`/coach/clients/${instance.clientId}`)
-                  }
-                  onDelete={() =>
-                    handleDeleteRequest(instance.id, instance.name, 'plan')
-                  }
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-16 text-text-secondary">
-              <Users size={32} className="mx-auto mb-3 text-neutral-300" />
-              <p className="text-sm">
-                No client plans yet. Start one from a template or create from
-                scratch.
-              </p>
-            </div>
+      <Tabs
+        value={activeTab}
+        onValueChange={(value) => setActiveTab(value as typeof activeTab)}
+        className="w-full"
+      >
+        <div className="mb-6 flex flex-col gap-2">
+          <TabsList variant="segmented">
+            <TabsTrigger variant="segmented" value="instances">
+              Client Plans
+            </TabsTrigger>
+            <TabsTrigger variant="segmented" value="templates">
+              Templates
+            </TabsTrigger>
+            <TabsTrigger variant="segmented" value="exercises">
+              Exercise Library
+            </TabsTrigger>
+          </TabsList>
+          {activeTab === 'instances' && (
+            <p className="text-sm text-text-secondary">
+              {planInstances.filter((p) => p.status === 'active').length} active
+              plans
+            </p>
           )}
-        </>
-      )}
-
-      {/* ── Templates tab ─── */}
-      {activeTab === 'templates' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {planTemplates.map((template) => (
-            <TemplateCard
-              key={template.id}
-              template={template}
-              onEdit={() =>
-                navigate(`/coach/training/template-builder/${template.id}`)
-              }
-              onStartPlan={() => setStartPlanTemplateId(template.id)}
-              onDelete={handleDeleteRequest}
-            />
-          ))}
-          {planTemplates.length === 0 && (
-            <div className="col-span-full text-center py-16 text-text-secondary">
-              <FileText size={32} className="mx-auto mb-3 text-neutral-300" />
-              <p className="text-sm">
-                No templates yet. Create one to get started.
-              </p>
-            </div>
+          {activeTab === 'templates' && (
+            <p className="text-sm text-text-secondary">
+              {planTemplates.length}{' '}
+              {planTemplates.length === 1 ? 'template' : 'templates'}
+            </p>
           )}
         </div>
-      )}
 
-      {/* ── Exercise Library tab ─── */}
-      {activeTab === 'exercises' && (
-        <div>
-          <div className="mb-4 relative max-w-md">
-            <Search
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary"
-              size={20}
-            />
-            <input
-              type="text"
-              placeholder="Search exercises by name or muscle..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-11 pr-4 py-3 bg-white border border-neutral-200 rounded-control focus:outline-none focus:ring-2 focus:ring-brand/20 transition-all text-sm"
-            />
-          </div>
-
-          <div className="mb-6">
-            <ExerciseFilters
-              activeFilters={activeFilters}
-              onToggleFilter={toggleFilter}
-              onClearFilters={clearFilters}
-            />
-          </div>
-
-          <div className="bg-white rounded-card border border-neutral-200 overflow-x-auto shadow-sm">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-neutral-50 px-3 border-b border-neutral-200 rounded-field">
-                  <th className="p-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                    Exercise
-                  </th>
-                  <th className="p-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                    Target Muscles
-                  </th>
-                  <th className="p-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                    Difficulty
-                  </th>
-                  <th className="p-4 text-xs font-semibold text-text-secondary uppercase tracking-wider">
-                    Video
-                  </th>
-                  <th className="p-4 text-xs font-semibold text-text-secondary uppercase tracking-wider text-right">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredExercises.map((exercise) => (
-                  <tr
-                    key={exercise.id}
-                    className="px-3 border-b border-neutral-100 rounded-field hover:bg-neutral-50/50 transition-colors"
-                  >
-                    <td className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-neutral-100 rounded-compact flex items-center justify-center text-text-secondary shrink-0">
-                          <Activity size={20} />
-                        </div>
-                        <div>
-                          <p className="font-semibold text-sm text-text-primary">
-                            {exercise.name}
-                          </p>
-                          <p className="text-xs text-text-secondary truncate max-w-[200px]">
-                            {exercise.equipment.join(', ')}
-                          </p>
-                          {exercise.tags && exercise.tags.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              {exercise.tags.map((tag) => (
-                                <span
-                                  key={tag}
-                                  className="text-[10px] font-medium bg-brand-soft text-brand px-1.5 py-0.5 rounded"
-                                >
-                                  {tag}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex flex-wrap gap-1">
-                        {exercise.primaryMuscles.map((m) => (
-                          <span
-                            key={m}
-                            className="text-[10px] font-medium bg-brand-secondary/10 text-brand-secondary px-2 py-0.5 rounded-full"
-                          >
-                            {m}
-                          </span>
-                        ))}
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <span
-                        className={`text-[10px] font-bold uppercase tracking-[0.08em] px-2 py-1 rounded-tile ${
-                          exercise.difficulty === 'Beginner'
-                            ? 'bg-green-100 text-green-700'
-                            : exercise.difficulty === 'Intermediate'
-                              ? 'bg-yellow-100 text-yellow-700'
-                              : 'bg-red-100 text-red-700'
-                        }`}
-                      >
-                        {exercise.difficulty}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      {exercise.videoUrl ? (
-                        <div className="text-brand flex items-center gap-1 text-xs font-medium">
-                          <PlayCircle size={16} /> Attached
-                        </div>
-                      ) : (
-                        <span className="text-xs text-text-secondary">
-                          None
-                        </span>
-                      )}
-                    </td>
-                    <td className="p-4 text-right">
-                      <button
-                        onClick={() => {
-                          setEditingExerciseId(exercise.id);
-                          setIsExerciseModalOpen(true);
-                        }}
-                        className="text-sm font-semibold text-primary hover:text-primary-hover"
-                      >
-                        Edit
-                      </button>
-                    </td>
-                  </tr>
+        {/* ── Client Plans tab ─── */}
+        {activeTab === 'instances' && (
+          <>
+            <div className="mb-6 flex flex-col gap-2">
+              <span className={LABEL_CLASS}>Status</span>
+              <FilterChipGroup
+                aria-label="Filter plans by status"
+                value={statusFilter}
+                onValueChange={(value) =>
+                  setStatusFilter((value as typeof statusFilter) ?? 'all')
+                }
+              >
+                {(['all', 'active', 'completed'] as const).map((f) => (
+                  <FilterChip key={f} value={f}>
+                    {f.charAt(0).toUpperCase() + f.slice(1)}
+                  </FilterChip>
                 ))}
-              </tbody>
-            </table>
-            {filteredExercises.length === 0 && (
-              <div className="p-8 text-center">
-                <p className="text-text-secondary text-sm">
-                  No exercises match your search and filters.
-                </p>
-                {(activeFilters.length > 0 || Boolean(searchQuery)) && (
-                  <button
-                    type="button"
-                    onClick={clearFilters}
-                    className="mt-2 min-h-6 px-2 text-xs font-semibold text-primary hover:text-primary-hover"
-                  >
-                    Clear search and filters
-                  </button>
-                )}
+              </FilterChipGroup>
+            </div>
+
+            {filteredInstances.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6">
+                {filteredInstances.map((instance) => (
+                  <PlanInstanceCard
+                    key={instance.id}
+                    instance={instance}
+                    onClick={() =>
+                      navigate(`/coach/training/builder/${instance.clientId}`)
+                    }
+                    onGoToClient={() =>
+                      navigate(`/coach/clients/${instance.clientId}`)
+                    }
+                    onDelete={() =>
+                      handleDeleteRequest(instance.id, instance.name, 'plan')
+                    }
+                  />
+                ))}
+              </div>
+            ) : (
+              <EmptyState
+                icon={Users}
+                title="No client plans yet"
+                description="Start one from a template or create from scratch."
+              />
+            )}
+          </>
+        )}
+
+        {/* ── Templates tab ─── */}
+        {activeTab === 'templates' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {planTemplates.map((template) => (
+              <TemplateCard
+                key={template.id}
+                template={template}
+                onEdit={() =>
+                  navigate(`/coach/training/template-builder/${template.id}`)
+                }
+                onStartPlan={() => setStartPlanTemplateId(template.id)}
+                onDelete={handleDeleteRequest}
+              />
+            ))}
+            {planTemplates.length === 0 && (
+              <div className="col-span-full">
+                <EmptyState
+                  icon={FileText}
+                  title="No templates yet"
+                  description="Create one to get started."
+                />
               </div>
             )}
           </div>
-        </div>
-      )}
+        )}
+
+        {/* ── Exercise Library tab ─── */}
+        {activeTab === 'exercises' && (
+          <div>
+            <SearchField
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search exercises by name or muscle..."
+              className="mb-4 max-w-md"
+            />
+
+            <div className="mb-6">
+              <ExerciseFilters
+                activeFilters={activeFilters}
+                onToggleFilter={toggleFilter}
+                onClearFilters={clearFilters}
+              />
+            </div>
+
+            <div className="bg-card rounded-card border border-border overflow-x-auto shadow-card">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-surface-quiet px-3 border-b border-border rounded-field">
+                    <th className={cn('p-4', LABEL_CLASS)}>Exercise</th>
+                    <th className={cn('p-4', LABEL_CLASS)}>Target Muscles</th>
+                    <th className={cn('p-4', LABEL_CLASS)}>Difficulty</th>
+                    <th className={cn('p-4', LABEL_CLASS)}>Video</th>
+                    <th className={cn('p-4 text-right', LABEL_CLASS)}>
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredExercises.map((exercise) => (
+                    <tr
+                      key={exercise.id}
+                      className="px-3 border-b border-border-subtle rounded-field hover:bg-surface-muted transition-colors"
+                    >
+                      <td className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-surface-quiet rounded-compact flex items-center justify-center text-text-secondary shrink-0">
+                            <Activity size={20} />
+                          </div>
+                          <div>
+                            <p className={VALUE_CLASS}>{exercise.name}</p>
+                            <p className="text-xs text-text-secondary truncate max-w-[200px]">
+                              {exercise.equipment.join(', ')}
+                            </p>
+                            {exercise.tags && exercise.tags.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {exercise.tags.map((tag) => (
+                                  <Badge key={tag} variant="brand-secondary">
+                                    {tag}
+                                  </Badge>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex flex-wrap gap-1">
+                          {exercise.primaryMuscles.map((m) => (
+                            <Badge key={m} variant="brand-secondary">
+                              {m}
+                            </Badge>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <Badge
+                          variant={
+                            exercise.difficulty === 'Beginner'
+                              ? 'success'
+                              : exercise.difficulty === 'Intermediate'
+                                ? 'pending'
+                                : 'outline'
+                          }
+                          className={
+                            exercise.difficulty === 'Advanced'
+                              ? 'border-destructive/20 bg-destructive/10 text-destructive'
+                              : undefined
+                          }
+                        >
+                          {exercise.difficulty}
+                        </Badge>
+                      </td>
+                      <td className="p-4">
+                        {exercise.videoUrl ? (
+                          <div className="text-primary flex items-center gap-1 text-xs font-medium">
+                            <PlayCircle size={16} /> Attached
+                          </div>
+                        ) : (
+                          <span className="text-xs text-text-secondary">
+                            None
+                          </span>
+                        )}
+                      </td>
+                      <td className="p-4 text-right">
+                        <RowActionButton
+                          onClick={() => {
+                            setEditingExerciseId(exercise.id);
+                            setIsExerciseModalOpen(true);
+                          }}
+                        >
+                          Edit
+                        </RowActionButton>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {filteredExercises.length === 0 && (
+                <EmptyState
+                  icon={Search}
+                  title="No exercises match your search and filters."
+                  description="Try a different search term or clear your filters."
+                  action={
+                    (activeFilters.length > 0 || Boolean(searchQuery)) && (
+                      <Button
+                        type="button"
+                        variant="link"
+                        size="xs"
+                        onClick={clearFilters}
+                      >
+                        Clear search and filters
+                      </Button>
+                    )
+                  }
+                />
+              )}
+            </div>
+          </div>
+        )}
+      </Tabs>
 
       <ExerciseModal
         isOpen={isExerciseModalOpen}
@@ -759,26 +742,25 @@ export function TrainingHub() {
       >
         <AlertDialogContent className="sm:max-w-md rounded-card">
           <AlertDialogHeader>
-            <div className="mx-auto mb-2 w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
-              <AlertTriangle size={24} className="text-red-600" />
+            <div className="mx-auto mb-2 w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
+              <AlertTriangle size={24} className="text-destructive" />
             </div>
             <AlertDialogTitle className="text-center text-text-primary">
               Delete this {deleteTarget?.type === 'plan' ? 'plan' : 'template'}?
             </AlertDialogTitle>
             <AlertDialogDescription className="text-center">
-              <span className="font-semibold text-text-primary">
+              <span className="font-medium text-text-primary">
                 "{deleteTarget?.name}"
               </span>{' '}
               will be permanently removed. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="sm:flex-row gap-3 mt-2">
-            <AlertDialogCancel className="flex-1 rounded-control border-neutral-200 text-text-secondary hover:bg-neutral-50 font-semibold">
-              Cancel
-            </AlertDialogCancel>
+            <AlertDialogCancel className="flex-1">Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
-              className="flex-1 rounded-control bg-red-600 text-white hover:bg-red-700 font-semibold shadow-sm"
+              variant="destructive"
+              className="flex-1"
             >
               Delete
             </AlertDialogAction>
@@ -801,19 +783,12 @@ export function TrainingHub() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="py-2">
-            <div className="relative mb-3">
-              <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary"
-                size={14}
-              />
-              <input
-                type="text"
-                placeholder="Search clients..."
-                value={clientSearch}
-                onChange={(e) => setClientSearch(e.target.value)}
-                className="w-full pl-9 pr-3 py-2.5 bg-neutral-50 border border-neutral-200 rounded-control text-sm focus:outline-none"
-              />
-            </div>
+            <SearchField
+              value={clientSearch}
+              onChange={(e) => setClientSearch(e.target.value)}
+              placeholder="Search clients..."
+              className="mb-3"
+            />
             <div className="max-h-48 overflow-y-auto space-y-1">
               {filteredClients.map((client) => (
                 <Button
@@ -824,9 +799,9 @@ export function TrainingHub() {
                   variant="ghost"
                   className="w-full justify-start gap-3 px-3"
                 >
-                  <div className="w-8 h-8 rounded-full bg-neutral-100 text-text-secondary flex items-center justify-center text-xs font-bold shrink-0">
-                    {client.avatar}
-                  </div>
+                  <Avatar size="sm">
+                    <AvatarFallback>{client.avatar}</AvatarFallback>
+                  </Avatar>
                   <span className="text-sm font-medium text-text-primary">
                     {client.name}
                   </span>
@@ -835,9 +810,7 @@ export function TrainingHub() {
             </div>
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-control border-neutral-200 text-text-secondary hover:bg-neutral-50 font-semibold">
-              Cancel
-            </AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -858,19 +831,12 @@ export function TrainingHub() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="py-2">
-            <div className="relative mb-3">
-              <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary"
-                size={14}
-              />
-              <input
-                type="text"
-                placeholder="Search clients..."
-                value={newPlanClientSearch}
-                onChange={(e) => setNewPlanClientSearch(e.target.value)}
-                className="w-full pl-9 pr-3 py-2.5 bg-neutral-50 border border-neutral-200 rounded-control text-sm focus:outline-none"
-              />
-            </div>
+            <SearchField
+              value={newPlanClientSearch}
+              onChange={(e) => setNewPlanClientSearch(e.target.value)}
+              placeholder="Search clients..."
+              className="mb-3"
+            />
             <div className="max-h-48 overflow-y-auto space-y-1">
               {MOCK_CLIENTS.filter((c) =>
                 c.name
@@ -887,9 +853,11 @@ export function TrainingHub() {
                   variant="ghost"
                   className="w-full justify-start gap-3 px-3"
                 >
-                  <div className="w-8 h-8 rounded-full bg-brand text-white flex items-center justify-center text-xs font-bold shrink-0">
-                    {client.avatar}
-                  </div>
+                  <Avatar size="sm">
+                    <AvatarFallback className="bg-primary text-primary-foreground">
+                      {client.avatar}
+                    </AvatarFallback>
+                  </Avatar>
                   <div className="flex-1 min-w-0">
                     <span className="text-sm font-medium text-text-primary">
                       {client.name}
@@ -897,9 +865,9 @@ export function TrainingHub() {
                     {planInstances.some(
                       (p) => p.clientId === client.id && p.status === 'active',
                     ) && (
-                      <span className="ml-2 text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full">
+                      <Badge variant="pending" className="ml-2">
                         Has active plan
-                      </span>
+                      </Badge>
                     )}
                   </div>
                 </Button>
@@ -907,9 +875,7 @@ export function TrainingHub() {
             </div>
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-control border-neutral-200 text-text-secondary hover:bg-neutral-50 font-semibold">
-              Cancel
-            </AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

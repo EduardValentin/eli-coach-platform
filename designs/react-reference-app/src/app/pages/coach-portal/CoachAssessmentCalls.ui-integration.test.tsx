@@ -262,11 +262,11 @@ describe('the coach assessment calls page', () => {
     // act
     await user.click(whenTab('Upcoming'));
     await user.click(screen.getByRole('combobox', { name: 'Status' }));
-    await user.click(await screen.findByRole('option', { name: 'Invited 0' }));
+    await user.click(await screen.findByRole('option', { name: 'Paid 0' }));
 
     // assert
     expect(screen.getByTestId('location-probe')).toHaveTextContent(
-      '?when=upcoming&status=invited REPLACE',
+      '?when=upcoming&status=paid REPLACE',
     );
   });
 

@@ -18,7 +18,11 @@ interface RecipeVisualProps {
  * Size/shape are controlled entirely by `className` (consumer sets h-*, w-*, rounded-*).
  * The icon scales via `iconSize` (default 28).
  */
-export function RecipeVisual({ recipe, className = '', iconSize = 28 }: RecipeVisualProps) {
+export function RecipeVisual({
+  recipe,
+  className = '',
+  iconSize = 28,
+}: RecipeVisualProps) {
   const [imgFailed, setImgFailed] = useState(false);
 
   if (recipe.imageUrl && !imgFailed) {
@@ -37,7 +41,7 @@ export function RecipeVisual({ recipe, className = '', iconSize = 28 }: RecipeVi
 
   return (
     <div
-      className={`flex items-center justify-center bg-muted ${className}`}
+      className={`flex items-center justify-center bg-surface-quiet ${className}`}
       role="img"
       aria-label={recipe.name}
     >

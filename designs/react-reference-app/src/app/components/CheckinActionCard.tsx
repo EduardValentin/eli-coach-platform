@@ -2,6 +2,7 @@ import { motion } from 'motion/react';
 import { CalendarPlus, CalendarDays, Clock, RefreshCw } from 'lucide-react';
 import { type CheckIn, MAX_RESCHEDULES } from '../context/CheckinContext';
 import { formatCheckinDate, formatCheckinTime } from '../utils/dateFormatters';
+import { Button } from './ui/button';
 
 interface CheckinActionCardProps {
   checkin: CheckIn;
@@ -25,9 +26,14 @@ export function CheckinActionCard({
   const canReschedule = checkin.rescheduleCount < MAX_RESCHEDULES;
   const proposedByOther = checkin.proposedBy !== role;
 
-  const proposerLabel = checkin.proposedBy === 'coach' ? 'Coach' : checkin.clientName;
-  const headerLabel = isRescheduling ? 'Reschedule Proposal' : 'Check-in Request';
-  const accentColor = isRescheduling ? 'var(--brand)' : 'var(--status-pending)';
+  const proposerLabel =
+    checkin.proposedBy === 'coach' ? 'Coach' : checkin.clientName;
+  const headerLabel = isRescheduling
+    ? 'Reschedule Proposal'
+    : 'Check-in Request';
+  const accentColor = isRescheduling
+    ? 'var(--primary)'
+    : 'var(--status-pending)';
   const HeaderIcon = isRescheduling ? RefreshCw : CalendarPlus;
 
   const message = checkin.rescheduleMessage || checkin.note;
@@ -43,14 +49,21 @@ export function CheckinActionCard({
       <div
         className={`rounded-card rounded-bl-tile border-2 p-4 space-y-2.5 ${
           isRescheduling
-            ? 'border-brand/30 bg-brand/5'
+            ? 'border-primary/30 bg-primary/5'
             : 'border-status-pending/30 bg-status-pending/5'
         }`}
       >
         {/* Eyebrow — label + count */}
         <div className="flex items-center gap-1.5">
-          <HeaderIcon size={13} style={{ color: accentColor }} aria-hidden="true" />
-          <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: accentColor }}>
+          <HeaderIcon
+            size={13}
+            style={{ color: accentColor }}
+            aria-hidden="true"
+          />
+          <span
+            className="text-[10px] font-bold uppercase tracking-widest"
+            style={{ color: accentColor }}
+          >
             {headerLabel}
             {checkin.rescheduleCount > 0 && (
               <span className="text-text-secondary font-medium ml-1.5">
@@ -64,8 +77,7 @@ export function CheckinActionCard({
         <p className="text-sm text-text-primary">
           {isPending && !isRescheduling
             ? `${proposerLabel} requested a check-in`
-            : `${proposerLabel} proposed a new time`
-          }
+            : `${proposerLabel} proposed a new time`}
         </p>
 
         {/* Times */}
@@ -73,7 +85,8 @@ export function CheckinActionCard({
           {isRescheduling && checkin.previousDate && checkin.previousTime && (
             <div className="flex items-center gap-1.5 text-xs text-text-secondary line-through">
               <CalendarDays size={12} aria-hidden="true" />
-              {formatCheckinDate(checkin.previousDate)} at {formatCheckinTime(checkin.previousTime)}
+              {formatCheckinDate(checkin.previousDate)} at{' '}
+              {formatCheckinTime(checkin.previousTime)}
             </div>
           )}
           <div className="flex items-center gap-x-3 gap-y-0.5 text-sm font-medium text-text-primary flex-wrap">
@@ -98,29 +111,35 @@ export function CheckinActionCard({
         {/* Actions */}
         {proposedByOther && (
           <div className="flex flex-wrap gap-1.5 pt-1">
-            <button
+            <Button
               type="button"
-              onClick={primaryAction}
-              className="flex-1 sm:flex-none min-h-10 px-3 bg-text-primary text-white text-xs font-semibold rounded-control hover:bg-neutral-800 transition-colors"
-            >
-              {primaryLabel}
-            </button>
-            {canReschedule && (
-              <button
-                type="button"
-                onClick={onReschedule}
-                className="flex-1 sm:flex-none min-h-10 px-3 bg-white border border-brand/30 text-brand text-xs font-semibold rounded-control hover:bg-brand/5 transition-colors"
-              >
-                Reschedule
-              </button>
-            )}
-            <button
-              type="button"
+              variant="ghost"
+              size="sm"
               onClick={onDecline}
-              className="flex-1 sm:flex-none min-h-10 px-3 bg-white border border-neutral-200 text-text-secondary text-xs font-semibold rounded-control hover:bg-neutral-50 transition-colors"
+              className="flex-1 sm:flex-none"
             >
               Decline
-            </button>
+            </Button>
+            {canReschedule && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={onReschedule}
+                className="flex-1 sm:flex-none"
+              >
+                Reschedule
+              </Button>
+            )}
+            <Button
+              type="button"
+              variant="primary"
+              size="sm"
+              onClick={primaryAction}
+              className="flex-1 sm:flex-none"
+            >
+              {primaryLabel}
+            </Button>
           </div>
         )}
       </div>
