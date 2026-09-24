@@ -15,6 +15,7 @@
     "./lib": "./src/lib/index.ts",
     "./motion": "./src/motion/index.ts",
     "./overlays": "./src/overlays/index.ts",
+    "./portal": "./src/portal/index.ts",
     "./primitives": "./src/primitives/index.ts",
     "./tabs": "./src/tabs/index.ts",
     "./toast": "./src/toast/index.ts",

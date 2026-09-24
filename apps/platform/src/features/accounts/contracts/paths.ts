@@ -14,7 +14,7 @@ export const PORTAL_PATH_BY_ROLE = {
   COACH: COACH_PORTAL_PATH,
 } satisfies Record<AccountRole, string>;
 
-export const PORTAL_ROUTE_SEGMENTS = [
+const PORTAL_ROUTE_SEGMENTS = [
   COACH_PORTAL_ROUTE_SEGMENT,
   CLIENT_PORTAL_ROUTE_SEGMENT,
 ] as const;
