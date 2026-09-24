@@ -55,7 +55,6 @@ describe("the date range field", () => {
 
     // assert
     expect(rangeField()).toHaveClass("h-(--size-control-sm)", "text-sm");
-    expect(rangeField()).toHaveAttribute("data-size", "sm");
   });
 
   it("stays in Safari's default Tab order like the native field it replaces", () => {

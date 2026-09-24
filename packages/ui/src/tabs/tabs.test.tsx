@@ -16,21 +16,13 @@ function renderTabs() {
   const user = userEvent.setup();
 
   render(
-    <Tabs defaultValue="upcoming">
-      <TabsList aria-label="Call status" variant="segmented">
-        <TabsTrigger value="upcoming" variant="segmented">
-          Upcoming
-        </TabsTrigger>
-        <TabsTrigger value="past" variant="segmented">
-          Past
-        </TabsTrigger>
+    <Tabs defaultValue="upcoming" variant="segmented">
+      <TabsList aria-label="Call status">
+        <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
+        <TabsTrigger value="past">Past</TabsTrigger>
       </TabsList>
-      <TabsContent value="upcoming" variant="segmented">
-        Two upcoming calls
-      </TabsContent>
-      <TabsContent value="past" variant="segmented">
-        One past call
-      </TabsContent>
+      <TabsContent value="upcoming">Two upcoming calls</TabsContent>
+      <TabsContent value="past">One past call</TabsContent>
     </Tabs>,
   );
 

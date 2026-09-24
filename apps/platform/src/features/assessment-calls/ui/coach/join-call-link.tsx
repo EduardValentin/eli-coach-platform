@@ -2,17 +2,24 @@ import { buttonVariants } from "@eli-coach-platform/ui/primitives";
 import { Video } from "lucide-react";
 import { Link } from "react-router";
 
-type JoinCallLinkProps = {
-  joinPath: string;
-  live?: boolean;
+type JoinCallTone = "default" | "live";
+
+const BUTTON_VARIANT_BY_TONE: Record<JoinCallTone, "outline" | "primary"> = {
+  default: "outline",
+  live: "primary",
 };
 
-export function JoinCallLink({ joinPath, live = false }: JoinCallLinkProps) {
+type JoinCallLinkProps = {
+  joinPath: string;
+  tone: JoinCallTone;
+};
+
+export function JoinCallLink({ joinPath, tone }: JoinCallLinkProps) {
   return (
     <Link
       className={buttonVariants({
         size: "xs",
-        variant: live ? "primary" : "outline",
+        variant: BUTTON_VARIANT_BY_TONE[tone],
       })}
       data-parity-root="JoinCallLink"
       to={joinPath}

@@ -252,7 +252,7 @@ describe("the coach's assessment calls page", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("badges every ended call Past beside the visitor's name and leaves it without actions", async () => {
+  it("badges every ended call Call held beside the visitor's name and leaves it without actions", async () => {
     // arrange
     const user = await renderCallsPage();
 
@@ -261,13 +261,13 @@ describe("the coach's assessment calls page", () => {
 
     // assert
     for (const shown of shownCalls().map((item) => within(item))) {
-      expect(shown.getByText("Past")).toBeInTheDocument();
+      expect(shown.getByText("Call held")).toBeInTheDocument();
       expect(shown.queryByRole("link", { name: "Join call" })).toBeNull();
       expect(shown.queryByRole("button")).toBeNull();
     }
   });
 
-  it("gives no Past badge to a call still to come", async () => {
+  it("gives no Call held badge to a call still to come", async () => {
     // arrange
     const user = await renderCallsPage();
 
@@ -276,7 +276,7 @@ describe("the coach's assessment calls page", () => {
 
     // assert
     for (const shown of shownCalls().map((item) => within(item))) {
-      expect(shown.queryByText("Past")).not.toBeInTheDocument();
+      expect(shown.queryByText("Call held")).not.toBeInTheDocument();
       expect(
         shown.getByRole("link", { name: "Join call" }),
       ).toBeInTheDocument();

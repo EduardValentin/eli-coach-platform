@@ -37,20 +37,15 @@ describe("SettingsSection", () => {
     ).toHaveClass("mt-1", "text-sm", "text-text-secondary");
   });
 
-  it("renders the footer only when given", () => {
+  it("shows the footer when given", () => {
     // arrange
     // act
     render(
       <SettingsSection
-        headingId="with-footer"
-        title="With footer"
+        headingId="calls-heading"
+        title="Assessment calls"
         footer={<button type="button">Save changes</button>}
       >
-        <p>Rows</p>
-      </SettingsSection>,
-    );
-    render(
-      <SettingsSection headingId="without-footer" title="Without footer">
         <p>Rows</p>
       </SettingsSection>,
     );
@@ -59,11 +54,19 @@ describe("SettingsSection", () => {
     expect(
       screen.getByRole("button", { name: "Save changes" }).parentElement,
     ).toHaveClass("flex", "justify-end", "gap-3", "border-t");
-    expect(
-      screen
-        .getByRole("region", { name: "Without footer" })
-        .querySelector(".border-t"),
-    ).toBeNull();
+  });
+
+  it("renders no footer without one", () => {
+    // arrange
+    // act
+    render(
+      <SettingsSection headingId="calls-heading" title="Assessment calls">
+        <p>Rows</p>
+      </SettingsSection>,
+    );
+
+    // assert
+    expect(screen.queryByText("Save changes")).toBeNull();
   });
 });
 
@@ -160,9 +163,9 @@ describe("SettingsRow", () => {
       "mt-3",
       "w-full",
     );
-    expect(screen.getByText("Meeting link").closest("div")).not.toHaveClass(
-      "sm:flex-row",
-    );
+    const row = screen.getByRole("textbox").parentElement?.parentElement;
+    expect(row).toHaveClass("px-5", "py-5", "sm:px-6");
+    expect(row).not.toHaveClass("sm:flex-row");
   });
 
   it("sits the control beside the text in the inline layout", () => {

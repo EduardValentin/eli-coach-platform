@@ -32,14 +32,16 @@ import {
 } from "~/features/assessment-calls/contracts/visitor-profile";
 import {
   classifyCalls,
-  DEFAULT_CALL_STATUS,
-  emptyListingMessage,
+  emptyListingCopy,
   filterCalls,
+  hasClearableFilters,
   orderCallsBy,
   pageOfCalls,
   PAGE_SIZE,
+  type CallPageView,
   type ClassifiedCall,
   type CoachCallStatus,
+  type EmptyListingCopy,
   type ListingMoment,
   type ListingSelection,
 } from "~/features/assessment-calls/ui/coach/assessment-call-listing";
@@ -61,8 +63,6 @@ const STATUS_TABS: readonly { label: string; status: CoachCallStatus }[] = [
 ];
 
 const NO_RANGE = { from: null, to: null } as const;
-
-type EmptyCallsCopy = { description: string; title: string };
 
 type AssessmentCallsSectionProps = {
   calls: readonly CoachAssessmentCall[];
@@ -96,7 +96,7 @@ export function AssessmentCallsSection({
     status,
   );
   const view = pageOfCalls(matching, { page, size: PAGE_SIZE });
-  const emptyCopy = emptyCallsCopy(selection, classified.length);
+  const emptyCopy = emptyListingCopy(selection);
 
   const clearFilters = () => {
     changeQuery("");
@@ -108,16 +108,17 @@ export function AssessmentCallsSection({
       className={cn(cardVariants({ variant: "portal-panel" }), "p-5 sm:p-8")}
       data-parity-root="AssessmentCallsSection"
     >
-      <Tabs className="w-full" onValueChange={chooseStatus} value={status}>
+      <Tabs
+        className="w-full"
+        onValueChange={chooseStatus}
+        value={status}
+        variant="segmented"
+      >
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
           <div className="grid w-full gap-3 sm:w-fit sm:max-w-full">
-            <TabsList aria-label="When" variant="segmented">
+            <TabsList aria-label="When">
               {STATUS_TABS.map((tab) => (
-                <TabsTrigger
-                  key={tab.status}
-                  value={tab.status}
-                  variant="segmented"
-                >
+                <TabsTrigger key={tab.status} value={tab.status}>
                   {tab.label}
                 </TabsTrigger>
               ))}
@@ -159,68 +160,62 @@ export function AssessmentCallsSection({
           </div>
         </div>
 
-        <TabsContent value={status} variant="segmented">
-          {view.calls.length === 0 ? (
-            <EmptyState
-              action={
-                hasClearableFilters(selection) && (
-                  <Button onClick={clearFilters} size="sm" variant="outline">
-                    Clear filters
-                  </Button>
-                )
-              }
-              description={emptyCopy.description}
-              icon={CalendarSearch}
-              title={emptyCopy.title}
-            />
-          ) : (
-            <>
-              <CallList calls={view.calls} moment={{ now, timeZone }} />
-
-              {view.pageCount > 1 && (
-                <CallListPager pathForPage={pathForPage} view={view} />
-              )}
-            </>
-          )}
+        <TabsContent value={status}>
+          <CallResults
+            emptyCopy={emptyCopy}
+            moment={{ now, timeZone }}
+            onClearFilters={
+              hasClearableFilters(selection) ? clearFilters : undefined
+            }
+            pathForPage={pathForPage}
+            view={view}
+          />
         </TabsContent>
       </Tabs>
     </div>
   );
 }
 
-function emptyCallsCopy(
-  selection: ListingSelection,
-  totalCalls: number,
-): EmptyCallsCopy {
-  if (totalCalls === 0 && !isNarrowed(selection)) {
-    return {
-      description: "Booked assessment calls appear here.",
-      title: "No calls yet",
-    };
+type CallResultsProps = {
+  emptyCopy: EmptyListingCopy;
+  moment: ListingMoment;
+  onClearFilters?: () => void;
+  pathForPage: (page: number) => string;
+  view: CallPageView;
+};
+
+function CallResults({
+  emptyCopy,
+  moment,
+  onClearFilters,
+  pathForPage,
+  view,
+}: CallResultsProps) {
+  if (view.calls.length === 0) {
+    return (
+      <EmptyState
+        action={
+          onClearFilters && (
+            <Button onClick={onClearFilters} size="sm" variant="outline">
+              Clear filters
+            </Button>
+          )
+        }
+        description={emptyCopy.description}
+        icon={CalendarSearch}
+        title={emptyCopy.title}
+      />
+    );
   }
 
-  return {
-    description: emptyListingMessage(selection),
-    title: "No calls found",
-  };
-}
-
-function isNarrowed(selection: ListingSelection): boolean {
-  return selection.status !== DEFAULT_CALL_STATUS || hasSearch(selection);
-}
-
-function hasClearableFilters(selection: ListingSelection): boolean {
-  return hasSearch(selection) || hasPickedRange(selection);
-}
-
-function hasSearch(selection: ListingSelection): boolean {
-  return selection.query.trim().length > 0;
-}
-
-function hasPickedRange(selection: ListingSelection): boolean {
   return (
-    selection.status === "custom" &&
-    (selection.range.from !== null || selection.range.to !== null)
+    <>
+      <CallList calls={view.calls} moment={moment} />
+
+      {view.pageCount > 1 && (
+        <CallListPager pathForPage={pathForPage} view={view} />
+      )}
+    </>
   );
 }
 
@@ -272,7 +267,10 @@ function CallCard(props: { call: ClassifiedCall; moment: ListingMoment }) {
     <AppointmentCard
       actions={
         call.timing === "upcoming" && (
-          <JoinCallLink joinPath={call.joinPath} live={call.isToday} />
+          <JoinCallLink
+            joinPath={call.joinPath}
+            tone={call.isToday ? "live" : "default"}
+          />
         )
       }
       attendee={{
@@ -283,7 +281,7 @@ function CallCard(props: { call: ClassifiedCall; moment: ListingMoment }) {
       badges={
         <>
           {call.isToday && <Badge tone="brand-secondary">Today</Badge>}
-          {call.timing === "past" && <Badge tone="muted">Past</Badge>}
+          {call.timing === "past" && <Badge tone="muted">Call held</Badge>}
         </>
       }
       details={visitorDetails(call, moment)}

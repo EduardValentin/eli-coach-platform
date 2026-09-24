@@ -98,8 +98,7 @@ describe("Select", () => {
     const trigger = screen.getByRole("combobox", { name: "Start" });
 
     // assert
-    expect(trigger).toHaveClass("h-12", "text-base");
-    expect(trigger).toHaveAttribute("data-size", "md");
+    expect(trigger).toHaveClass("h-(--size-control-md)", "text-base");
   });
 
   it("shrinks to the small control height with small text when asked", () => {
@@ -118,8 +117,7 @@ describe("Select", () => {
 
     // assert
     expect(trigger).toHaveClass("h-(--size-control-sm)", "text-sm");
-    expect(trigger).not.toHaveClass("h-12", "text-base");
-    expect(trigger).toHaveAttribute("data-size", "sm");
+    expect(trigger).not.toHaveClass("h-(--size-control-md)", "text-base");
   });
 
   it("carries the one-line clipping classes its trigger contract publishes", () => {

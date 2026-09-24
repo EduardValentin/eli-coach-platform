@@ -43,7 +43,7 @@ describe("WidgetLink", () => {
     // act
     render(
       <MemoryRouter>
-        <WidgetLink arrow to="/coach/calls">
+        <WidgetLink to="/coach/calls" trailing="arrow">
           View all calls
         </WidgetLink>
       </MemoryRouter>,

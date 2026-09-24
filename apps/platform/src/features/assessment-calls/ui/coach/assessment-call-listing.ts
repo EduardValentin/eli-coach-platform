@@ -260,26 +260,64 @@ export function haveOnlyListingParamsChanged(
   );
 }
 
+export type EmptyListingCopy = { description: string; title: string };
+
+const NO_CALLS_YET_COPY: EmptyListingCopy = {
+  description: "Booked assessment calls appear here.",
+  title: "No calls yet",
+};
+
+const NO_CALLS_FOUND_TITLE = "No calls found";
+
 const NO_SEARCH_MATCH_MESSAGE = "No calls match your search.";
 
-const STATUS_EMPTY_MESSAGES: Record<CoachCallStatus, string> = {
-  all: "No calls yet.",
+const STATUS_EMPTY_MESSAGES: Record<Exclude<CoachCallStatus, "all">, string> = {
   custom: "No calls yet.",
   past: "No past calls.",
   today: "No calls today.",
   upcoming: "No upcoming calls.",
 };
 
-export function emptyListingMessage(selection: ListingSelection): string {
-  if (selection.query.trim().length > 0) {
-    return NO_SEARCH_MATCH_MESSAGE;
+export function emptyListingCopy(
+  selection: ListingSelection,
+): EmptyListingCopy {
+  if (hasSearchQuery(selection)) {
+    return {
+      description: NO_SEARCH_MATCH_MESSAGE,
+      title: NO_CALLS_FOUND_TITLE,
+    };
+  }
+
+  if (selection.status === "all") {
+    return NO_CALLS_YET_COPY;
   }
 
   if (selection.status === "custom" && isChosenRange(selection.range)) {
-    return `No calls between ${describeDateRange(selection.range)}.`;
+    return {
+      description: `No calls between ${describeDateRange(selection.range)}.`,
+      title: NO_CALLS_FOUND_TITLE,
+    };
   }
 
-  return STATUS_EMPTY_MESSAGES[selection.status];
+  return {
+    description: STATUS_EMPTY_MESSAGES[selection.status],
+    title: NO_CALLS_FOUND_TITLE,
+  };
+}
+
+export function hasSearchQuery(selection: ListingSelection): boolean {
+  return selection.query.trim().length > 0;
+}
+
+export function hasClearableFilters(selection: ListingSelection): boolean {
+  return hasSearchQuery(selection) || hasPickedRange(selection);
+}
+
+function hasPickedRange(selection: ListingSelection): boolean {
+  return (
+    selection.status === "custom" &&
+    (selection.range.from !== null || selection.range.to !== null)
+  );
 }
 
 const ISO_DAY = /^(\d{4})-(\d{2})-(\d{2})$/;

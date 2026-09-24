@@ -65,7 +65,6 @@ export default function CoachLayoutRoute() {
       links={coachSurfaceLinks}
       mobileNavigationLabel="Coach portal mobile navigation"
       navigationLabel="Coach portal navigation"
-      parityRoot="CoachShell"
       topBarBrand={<CoachTopBarBrand />}
     >
       <Outlet />

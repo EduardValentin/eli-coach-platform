@@ -7,8 +7,10 @@ import {
   classifyCalls,
   countCallsLeftToday,
   defaultDirectionFor,
-  emptyListingMessage,
+  emptyListingCopy,
   filterCalls,
+  hasClearableFilters,
+  hasSearchQuery,
   haveOnlyListingParamsChanged,
   orderCalls,
   orderCallsBy,
@@ -689,10 +691,10 @@ describe("reading the listing's URL", () => {
   });
 });
 
-describe("the message shown when nothing matches", () => {
+describe("the copy shown when nothing matches", () => {
   it("names the search before anything else", () => {
     // arrange, act
-    const message = emptyListingMessage(
+    const copy = emptyListingCopy(
       selecting({
         query: "zzz",
         range: { from: "2026-09-12", to: "2026-09-20" },
@@ -701,31 +703,50 @@ describe("the message shown when nothing matches", () => {
     );
 
     // assert
-    expect(message).toBe("No calls match your search.");
+    expect(copy).toEqual({
+      description: "No calls match your search.",
+      title: "No calls found",
+    });
+  });
+
+  it("invites the first booking when the whole history is empty", () => {
+    // arrange, act
+    const copy = emptyListingCopy(selecting({ status: "all" }));
+
+    // assert
+    expect(copy).toEqual({
+      description: "Booked assessment calls appear here.",
+      title: "No calls yet",
+    });
   });
 
   it("keeps the plain window messages when no range is picked", () => {
     // arrange
-    const statuses = ["upcoming", "today", "past", "all", "custom"] as const;
+    const statuses = ["upcoming", "today", "past", "custom"] as const;
 
     // act
-    const messages = statuses.map((status) =>
-      emptyListingMessage(selecting({ status })),
+    const copies = statuses.map((status) =>
+      emptyListingCopy(selecting({ status })),
     );
 
     // assert
-    expect(messages).toEqual([
+    expect(copies.map((copy) => copy.title)).toEqual([
+      "No calls found",
+      "No calls found",
+      "No calls found",
+      "No calls found",
+    ]);
+    expect(copies.map((copy) => copy.description)).toEqual([
       "No upcoming calls.",
       "No calls today.",
       "No past calls.",
-      "No calls yet.",
       "No calls yet.",
     ]);
   });
 
   it("names the picked days, dropping a month both days share", () => {
     // arrange, act
-    const message = emptyListingMessage(
+    const copy = emptyListingCopy(
       selecting({
         range: { from: "2026-09-12", to: "2026-09-20" },
         status: "custom",
@@ -733,18 +754,18 @@ describe("the message shown when nothing matches", () => {
     );
 
     // assert
-    expect(message).toBe("No calls between 12 and 20 September.");
+    expect(copy.description).toBe("No calls between 12 and 20 September.");
   });
 
   it("names both months, and both years when the range crosses one", () => {
     // arrange, act
-    const acrossMonths = emptyListingMessage(
+    const acrossMonths = emptyListingCopy(
       selecting({
         range: { from: "2026-09-12", to: "2026-10-03" },
         status: "custom",
       }),
     );
-    const acrossYears = emptyListingMessage(
+    const acrossYears = emptyListingCopy(
       selecting({
         range: { from: "2026-12-28", to: "2027-01-03" },
         status: "custom",
@@ -752,20 +773,82 @@ describe("the message shown when nothing matches", () => {
     );
 
     // assert
-    expect(acrossMonths).toBe("No calls between 12 September and 3 October.");
-    expect(acrossYears).toBe(
+    expect(acrossMonths.description).toBe(
+      "No calls between 12 September and 3 October.",
+    );
+    expect(acrossYears.description).toBe(
       "No calls between 28 December 2026 and 3 January 2027.",
     );
   });
 
   it("falls back to the plain message while the range is half picked", () => {
     // arrange, act
-    const message = emptyListingMessage(
+    const copy = emptyListingCopy(
       selecting({ range: { from: "2026-09-12", to: null }, status: "custom" }),
     );
 
     // assert
-    expect(message).toBe("No calls yet.");
+    expect(copy.description).toBe("No calls yet.");
+  });
+});
+
+describe("telling what narrows the listing", () => {
+  it("counts a search only once it holds more than spaces", () => {
+    // arrange
+    const queries = ["", "   ", " ana "];
+
+    // act
+    const searching = queries.map((query) =>
+      hasSearchQuery(selecting({ query })),
+    );
+
+    // assert
+    expect(searching).toEqual([false, false, true]);
+  });
+
+  it("offers to clear a search on any tab", () => {
+    // arrange, act
+    const clearable = hasClearableFilters(
+      selecting({ query: "ana", status: "upcoming" }),
+    );
+
+    // assert
+    expect(clearable).toBe(true);
+  });
+
+  it("offers to clear a range once either day is picked on the Custom tab", () => {
+    // arrange
+    const ranges = [
+      { from: "2026-09-12", to: null },
+      { from: null, to: "2026-09-20" },
+      { from: "2026-09-12", to: "2026-09-20" },
+    ];
+
+    // act
+    const clearable = ranges.map((range) =>
+      hasClearableFilters(selecting({ range, status: "custom" })),
+    );
+
+    // assert
+    expect(clearable).toEqual([true, true, true]);
+  });
+
+  it("has nothing to clear with an empty range or a range left outside Custom", () => {
+    // arrange
+    const selections = [
+      selecting({ status: "custom" }),
+      selecting({
+        range: { from: "2026-09-12", to: "2026-09-20" },
+        status: "past",
+      }),
+      selecting({ status: "all" }),
+    ];
+
+    // act
+    const clearable = selections.map(hasClearableFilters);
+
+    // assert
+    expect(clearable).toEqual([false, false, false]);
   });
 });
 

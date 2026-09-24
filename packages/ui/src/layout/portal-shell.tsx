@@ -22,7 +22,6 @@ type PortalShellProps = PropsWithChildren<{
   links: readonly PortalNavigationLink[];
   mobileNavigationLabel: string;
   navigationLabel: string;
-  parityRoot?: string;
   /** Slot beside the sidebar brand for the notification bell story. */
   sidebarActions?: ReactNode;
   topBarBrand: ReactNode;
@@ -50,14 +49,13 @@ export function PortalShell(props: PortalShellProps) {
     links,
     mobileNavigationLabel,
     navigationLabel,
-    parityRoot,
     sidebarActions,
     topBarActions,
     topBarBrand,
   } = props;
 
   return (
-    <div className="min-h-dvh bg-surface-page" data-parity-root={parityRoot}>
+    <div className="min-h-dvh bg-surface-page" data-parity-root="PortalShell">
       <a className="ui-skip-link" href={`#${MAIN_CONTENT_ID}`}>
         Skip to main content
       </a>

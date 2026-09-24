@@ -53,70 +53,75 @@ const tabsContentClasses = cva("flex-1 outline-none", {
   },
 });
 
-type TabsVariant = VariantProps<typeof tabsListClasses>["variant"];
+type TabsVariant = NonNullable<VariantProps<typeof tabsListClasses>["variant"]>;
 
-type TabsListProps = React.ComponentPropsWithoutRef<typeof RadixTabs.List> & {
+const TabsVariantContext = React.createContext<TabsVariant>("default");
+
+type TabsProps = React.ComponentPropsWithoutRef<typeof RadixTabs.Root> & {
   variant?: TabsVariant;
 };
 
-type TabsTriggerProps = React.ComponentPropsWithoutRef<
-  typeof RadixTabs.Trigger
-> & {
-  variant?: TabsVariant;
-};
-
-type TabsContentProps = React.ComponentPropsWithoutRef<
-  typeof RadixTabs.Content
-> & {
-  variant?: TabsVariant;
-};
-
-export const Tabs = React.forwardRef<
-  HTMLDivElement,
-  React.ComponentPropsWithoutRef<typeof RadixTabs.Root>
->(({ className, ...props }, ref) => (
-  <RadixTabs.Root
-    ref={ref}
-    className={cn("flex flex-col gap-2", className)}
-    {...props}
-  />
-));
+export const Tabs = React.forwardRef<HTMLDivElement, TabsProps>(
+  ({ className, variant = "default", ...props }, ref) => (
+    <TabsVariantContext.Provider value={variant}>
+      <RadixTabs.Root
+        ref={ref}
+        className={cn("flex flex-col gap-2", className)}
+        {...props}
+      />
+    </TabsVariantContext.Provider>
+  ),
+);
 
 Tabs.displayName = "Tabs";
 
-export const TabsList = React.forwardRef<HTMLDivElement, TabsListProps>(
-  ({ className, variant, ...props }, ref) => (
+export const TabsList = React.forwardRef<
+  HTMLDivElement,
+  React.ComponentPropsWithoutRef<typeof RadixTabs.List>
+>(({ className, ...props }, ref) => {
+  const variant = React.useContext(TabsVariantContext);
+
+  return (
     <RadixTabs.List
       ref={ref}
       className={cn(tabsListClasses({ variant }), className)}
       {...props}
     />
-  ),
-);
+  );
+});
 
 TabsList.displayName = "TabsList";
 
 export const TabsTrigger = React.forwardRef<
   HTMLButtonElement,
-  TabsTriggerProps
->(({ className, variant, ...props }, ref) => (
-  <RadixTabs.Trigger
-    ref={ref}
-    className={cn(tabsTriggerClasses({ variant }), className)}
-    {...props}
-  />
-));
+  React.ComponentPropsWithoutRef<typeof RadixTabs.Trigger>
+>(({ className, ...props }, ref) => {
+  const variant = React.useContext(TabsVariantContext);
+
+  return (
+    <RadixTabs.Trigger
+      ref={ref}
+      className={cn(tabsTriggerClasses({ variant }), className)}
+      {...props}
+    />
+  );
+});
 
 TabsTrigger.displayName = "TabsTrigger";
 
-export const TabsContent = React.forwardRef<HTMLDivElement, TabsContentProps>(
-  ({ className, variant, ...props }, ref) => (
+export const TabsContent = React.forwardRef<
+  HTMLDivElement,
+  React.ComponentPropsWithoutRef<typeof RadixTabs.Content>
+>(({ className, ...props }, ref) => {
+  const variant = React.useContext(TabsVariantContext);
+
+  return (
     <RadixTabs.Content
       ref={ref}
       className={cn(tabsContentClasses({ variant }), className)}
       {...props}
     />
-  ),
-);
+  );
+});
 
 TabsContent.displayName = "TabsContent";

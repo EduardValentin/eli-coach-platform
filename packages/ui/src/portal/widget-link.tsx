@@ -4,15 +4,17 @@ import { Link, type LinkProps } from "react-router";
 
 import { cn } from "../lib/cn";
 
+type WidgetLinkTrailing = "arrow";
+
 type WidgetLinkProps = LinkProps & {
-  arrow?: boolean;
+  trailing?: WidgetLinkTrailing;
   children: ReactNode;
 };
 
 export function WidgetLink({
   className,
   children,
-  arrow = false,
+  trailing,
   ...props
 }: WidgetLinkProps) {
   return (
@@ -24,7 +26,7 @@ export function WidgetLink({
       {...props}
     >
       {children}
-      {arrow && <ArrowRight aria-hidden="true" size={16} />}
+      {trailing === "arrow" && <ArrowRight aria-hidden="true" size={16} />}
     </Link>
   );
 }

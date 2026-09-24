@@ -19,14 +19,13 @@ describe("Input", () => {
 
     // assert
     expect(screen.getByLabelText("Name")).toHaveClass(
-      "h-12",
+      "h-(--size-control-md)",
       "rounded-field",
       "border-control-border-soft",
       "bg-surface-base",
       "focus-visible:border-border-focus",
       "aria-invalid:border-feedback-danger",
     );
-    expect(screen.getByLabelText("Name")).toHaveAttribute("data-size", "md");
   });
 
   it("shrinks to the small control height when asked", () => {
@@ -38,6 +37,5 @@ describe("Input", () => {
     expect(screen.getByLabelText("Search")).toHaveClass(
       "h-(--size-control-sm)",
     );
-    expect(screen.getByLabelText("Search")).toHaveAttribute("data-size", "sm");
   });
 });

@@ -1,6 +1,6 @@
 import { cn } from "../lib/cn";
 
-export type AppointmentTime = {
+export type DateTimeParts = {
   date: string;
   time: string;
 };
@@ -15,7 +15,7 @@ const DATE_CLASS: Record<DateTimeLabelSize, string> = {
 type DateTimeLabelProps = {
   className?: string;
   size?: DateTimeLabelSize;
-  when: AppointmentTime;
+  when: DateTimeParts;
 };
 
 export function DateTimeLabel({

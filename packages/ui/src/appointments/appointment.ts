@@ -1,4 +1,6 @@
-export type { AppointmentTime } from "../primitives/date-time-label";
+import type { DateTimeParts } from "../primitives/date-time-label";
+
+export type AppointmentTime = DateTimeParts;
 
 export type AppointmentStatus = "scheduled" | "past";
 

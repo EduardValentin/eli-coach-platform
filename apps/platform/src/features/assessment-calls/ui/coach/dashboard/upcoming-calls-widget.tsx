@@ -36,7 +36,7 @@ export function UpcomingCallsWidget({
       <PortalWidget
         className="flex h-full flex-col"
         footer={
-          <WidgetLink arrow to={COACH_ASSESSMENT_CALLS_PATH}>
+          <WidgetLink to={COACH_ASSESSMENT_CALLS_PATH} trailing="arrow">
             View all calls
           </WidgetLink>
         }
@@ -65,7 +65,7 @@ export function UpcomingCallsWidget({
                     action={
                       <JoinCallLink
                         joinPath={call.joinPath}
-                        live={call.isToday}
+                        tone={call.isToday ? "live" : "default"}
                       />
                     }
                     attendeeName={call.fullName}

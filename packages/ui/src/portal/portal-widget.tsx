@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import { cn } from "../lib/cn";
+import { cardVariants } from "../primitives/card";
 import { VALUE_LG_CLASS, WIDGET_TITLE_CLASS } from "../lib/typography";
 
 type WidgetDensity = "default" | "compact";
@@ -22,8 +23,7 @@ type PortalWidgetProps = {
 };
 
 const PANEL_CLASS: Record<WidgetDensity, string> = {
-  default:
-    "flex flex-col rounded-panel border border-border-default/50 bg-surface-base p-6 shadow-soft",
+  default: cn(cardVariants({ variant: "portal-panel" }), "flex flex-col p-6"),
   compact:
     "flex flex-col rounded-card border border-border-default/50 bg-surface-base p-4",
 };

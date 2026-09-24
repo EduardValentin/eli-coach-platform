@@ -25,6 +25,7 @@ import {
   useForm,
   type Control,
   type SubmitHandler,
+  type UseFormRegister,
 } from "react-hook-form";
 
 import {
@@ -86,12 +87,6 @@ export function AssessmentCallSettingsSection(
 ) {
   const { settings } = props;
   const headingId = useId();
-  const weekdaysLabelId = useId();
-  const weekdaysErrorId = useId();
-  const hoursLabelId = useId();
-  const hoursErrorId = useId();
-  const meetingLinkHintId = useId();
-  const meetingLinkErrorId = useId();
   const { isSubmitting, response, submit } =
     useSaveAssessmentCallSettingsFetcher();
   const formRef = useRef<HTMLFormElement>(null);
@@ -156,9 +151,6 @@ export function AssessmentCallSettingsSection(
     submit({ ...values, timeZone: readBrowserTimeZone() });
   };
 
-  const hoursError = errors.endHour?.message ?? errors.startHour?.message;
-  const meetingLinkError = errors.meetingLink?.message;
-
   return (
     <div data-parity-root="AssessmentCallSettingsSection">
       <SettingsSection
@@ -200,103 +192,146 @@ export function AssessmentCallSettingsSection(
           ) : null}
 
           <SettingsRows>
-            <SettingsRow
-              aria-describedby={errors.weekdays ? weekdaysErrorId : undefined}
-              as="fieldset"
-              description="Visitors can pick a slot on these days."
-              labelId={weekdaysLabelId}
-              layout="stacked"
-              title="Days I take calls"
-            >
-              <div className="flex flex-wrap gap-2">
-                {WEEKDAY_DISPLAY_ORDER.map((weekday) => (
-                  <CheckboxChip
-                    aria-label={WEEKDAY_LABELS[weekday].full}
-                    isChecked={weekdays.includes(weekday)}
-                    key={weekday}
-                    value={weekday}
-                    {...register("weekdays")}
-                  >
-                    {WEEKDAY_LABELS[weekday].short}
-                  </CheckboxChip>
-                ))}
-              </div>
-              <FieldErrorText
-                className="mt-2"
-                id={weekdaysErrorId}
-                message={errors.weekdays?.message}
-              />
-            </SettingsRow>
-
-            <SettingsRow
-              description="Slots run inside this window in your time zone."
-              labelId={hoursLabelId}
-              layout="stacked"
-              title="Hours"
-            >
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <HourSelectField
-                  control={control}
-                  errorId={hoursError ? hoursErrorId : null}
-                  id={START_HOUR_FIELD_ID}
-                  label="Start"
-                  name="startHour"
-                  options={HOUR_OPTIONS.start}
-                />
-                <HourSelectField
-                  control={control}
-                  errorId={hoursError ? hoursErrorId : null}
-                  id={END_HOUR_FIELD_ID}
-                  label="End"
-                  name="endHour"
-                  options={HOUR_OPTIONS.end}
-                />
-              </div>
-              <FieldErrorText
-                className="mt-2"
-                id={hoursErrorId}
-                message={hoursError}
-              />
-            </SettingsRow>
-
-            <SettingsRow
-              description="The room every join link opens."
-              descriptionId={meetingLinkHintId}
-              htmlFor={MEETING_LINK_FIELD_ID}
-              layout="stacked"
-              title="Meeting link"
-            >
-              <Input
-                aria-describedby={
-                  meetingLinkError
-                    ? `${meetingLinkHintId} ${meetingLinkErrorId}`
-                    : meetingLinkHintId
-                }
-                aria-invalid={meetingLinkError ? true : undefined}
-                id={MEETING_LINK_FIELD_ID}
-                inputMode="url"
-                placeholder="https://meet.google.com/…"
-                type="url"
-                {...register("meetingLink", {
-                  setValueAs: toMeetingLinkValue,
-                })}
-              />
-              <FieldErrorText
-                className="mt-2"
-                id={meetingLinkErrorId}
-                message={meetingLinkError}
-              />
-              {meetingLink ? null : (
-                <p className="mt-2 flex items-center gap-1.5 text-xs text-status-pending">
-                  <TriangleAlert aria-hidden="true" size={14} />
-                  Visitors cannot join calls until a link is set.
-                </p>
-              )}
-            </SettingsRow>
+            <WeekdaysRow
+              error={errors.weekdays?.message}
+              register={register}
+              selected={weekdays}
+            />
+            <HoursRow
+              control={control}
+              error={errors.endHour?.message ?? errors.startHour?.message}
+            />
+            <MeetingLinkRow
+              error={errors.meetingLink?.message}
+              register={register}
+              value={meetingLink}
+            />
           </SettingsRows>
         </form>
       </SettingsSection>
     </div>
+  );
+}
+
+type SettingsFieldRegister = UseFormRegister<AssessmentCallSettings>;
+
+type WeekdaysRowProps = {
+  error: string | undefined;
+  register: SettingsFieldRegister;
+  selected: readonly Weekday[];
+};
+
+function WeekdaysRow({ error, register, selected }: WeekdaysRowProps) {
+  const labelId = useId();
+  const errorId = useId();
+
+  return (
+    <SettingsRow
+      aria-describedby={error ? errorId : undefined}
+      as="fieldset"
+      description="Visitors can pick a slot on these days."
+      labelId={labelId}
+      layout="stacked"
+      title="Days I take calls"
+    >
+      <div className="flex flex-wrap gap-2">
+        {WEEKDAY_DISPLAY_ORDER.map((weekday) => (
+          <CheckboxChip
+            aria-label={WEEKDAY_LABELS[weekday].full}
+            isChecked={selected.includes(weekday)}
+            key={weekday}
+            value={weekday}
+            {...register("weekdays")}
+          >
+            {WEEKDAY_LABELS[weekday].short}
+          </CheckboxChip>
+        ))}
+      </div>
+      <FieldErrorText className="mt-2" id={errorId} message={error} />
+    </SettingsRow>
+  );
+}
+
+type HoursRowProps = {
+  control: Control<AssessmentCallSettings>;
+  error: string | undefined;
+};
+
+function HoursRow({ control, error }: HoursRowProps) {
+  const labelId = useId();
+  const errorId = useId();
+
+  return (
+    <SettingsRow
+      description="Slots run inside this window in your time zone."
+      labelId={labelId}
+      layout="stacked"
+      title="Hours"
+    >
+      <div
+        aria-labelledby={labelId}
+        className="grid grid-cols-1 gap-4 sm:grid-cols-2"
+        role="group"
+      >
+        <HourSelectField
+          control={control}
+          errorId={error ? errorId : null}
+          id={START_HOUR_FIELD_ID}
+          label="Start"
+          name="startHour"
+          options={HOUR_OPTIONS.start}
+        />
+        <HourSelectField
+          control={control}
+          errorId={error ? errorId : null}
+          id={END_HOUR_FIELD_ID}
+          label="End"
+          name="endHour"
+          options={HOUR_OPTIONS.end}
+        />
+      </div>
+      <FieldErrorText className="mt-2" id={errorId} message={error} />
+    </SettingsRow>
+  );
+}
+
+type MeetingLinkRowProps = {
+  error: string | undefined;
+  register: SettingsFieldRegister;
+  value: string | null;
+};
+
+function MeetingLinkRow({ error, register, value }: MeetingLinkRowProps) {
+  const hintId = useId();
+  const errorId = useId();
+
+  return (
+    <SettingsRow
+      description="The room every join link opens."
+      descriptionId={hintId}
+      htmlFor={MEETING_LINK_FIELD_ID}
+      layout="stacked"
+      title="Meeting link"
+    >
+      <Input
+        aria-describedby={error ? `${hintId} ${errorId}` : hintId}
+        aria-invalid={error ? true : undefined}
+        id={MEETING_LINK_FIELD_ID}
+        inputMode="url"
+        placeholder="https://meet.google.com/…"
+        type="url"
+        {...register("meetingLink", {
+          setValueAs: toMeetingLinkValue,
+        })}
+      />
+      <FieldErrorText className="mt-2" id={errorId} message={error} />
+      {value ? null : (
+        <p className="mt-2 flex items-center gap-1.5 text-xs text-status-pending">
+          <TriangleAlert aria-hidden="true" size={14} />
+          Visitors cannot join calls until a link is set.
+        </p>
+      )}
+    </SettingsRow>
   );
 }
 

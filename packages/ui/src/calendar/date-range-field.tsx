@@ -2,11 +2,9 @@ import * as React from "react";
 import type { DateRange } from "react-day-picker";
 
 import { Popover, PopoverContent, PopoverTrigger } from "../primitives";
+import type { FieldSize } from "../primitives/field-size";
 import { Calendar, type CalendarYearRange } from "./calendar";
-import {
-  DateFieldTrigger,
-  type DateFieldTriggerSize,
-} from "./date-field-trigger";
+import { DateFieldTrigger } from "./date-field-trigger";
 
 export type IsoDateRange = { from: string | null; to: string | null };
 
@@ -22,7 +20,7 @@ type DateRangeFieldProps = Omit<
   "aria-label": string;
   onChange: (range: IsoDateRange) => void;
   placeholder?: string;
-  size?: DateFieldTriggerSize;
+  size?: FieldSize;
   value: IsoDateRange;
   yearRange?: CalendarYearRange;
 };

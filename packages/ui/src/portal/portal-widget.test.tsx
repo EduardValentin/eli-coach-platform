@@ -56,7 +56,7 @@ describe("PortalWidget", () => {
     );
   });
 
-  it("renders the footer only when given", () => {
+  it("shows the footer when given", () => {
     // arrange
     // act
     render(
@@ -66,17 +66,20 @@ describe("PortalWidget", () => {
         footer={<a href="/coach/calls">View all calls</a>}
       />,
     );
-    render(<PortalWidget headingId="quiet-heading" title="Quiet widget" />);
 
     // assert
     expect(
       screen.getByRole("link", { name: "View all calls" }).parentElement,
     ).toHaveClass("mt-auto", "pt-6");
-    expect(
-      screen
-        .getByRole("region", { name: "Quiet widget" })
-        .querySelector(".mt-auto"),
-    ).toBeNull();
+  });
+
+  it("renders no footer without one", () => {
+    // arrange
+    // act
+    render(<PortalWidget headingId="calls-heading" title="Upcoming calls" />);
+
+    // assert
+    expect(screen.queryByText("View all calls")).toBeNull();
   });
 
   it("tightens the frame in the compact density", () => {
