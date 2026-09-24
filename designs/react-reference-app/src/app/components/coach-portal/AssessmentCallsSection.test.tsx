@@ -598,7 +598,7 @@ describe('sorting the assessment call list', () => {
     const toggle = screen.getByRole('button', { name: 'Soonest first' });
 
     // assert
-    expect(sortSelect()).toHaveTextContent('Call date: soonest first');
+    expect(sortSelect()).toHaveTextContent('Scheduled date: soonest first');
     expect(toggle).toHaveAttribute('aria-pressed', 'false');
   });
 
@@ -691,7 +691,7 @@ describe('sorting the assessment call list', () => {
     const user = renderSection({ urlQuery: '?sort=email&dir=desc' });
 
     // act
-    await chooseSort(user, 'Call date');
+    await chooseSort(user, 'Scheduled date');
 
     // assert
     expect(currentLocation()).toBe(' REPLACE');
