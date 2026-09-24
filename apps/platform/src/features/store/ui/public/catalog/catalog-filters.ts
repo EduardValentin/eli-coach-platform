@@ -14,7 +14,7 @@ const STORE_FILTER_DIMENSIONS = [
   {
     label: "Type",
     param: "type",
-    tone: "brand",
+    tone: "primary",
     valuesOf: (product) => product.types,
   },
   {

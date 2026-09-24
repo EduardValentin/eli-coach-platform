@@ -20,9 +20,9 @@ describe("badge", () => {
     expect(screen.getByText("Today")).toBeInTheDocument();
   });
 
-  it("tints an accent badge with the secondary brand", () => {
+  it("tints a brand-secondary badge with the secondary brand", () => {
     // arrange, act
-    render(<Badge tone="accent">Today</Badge>);
+    render(<Badge tone="brand-secondary">Today</Badge>);
 
     // assert
     expect(screen.getByText("Today")).toHaveClass(
@@ -31,15 +31,69 @@ describe("badge", () => {
     );
   });
 
-  it("keeps a neutral badge quiet against its surface", () => {
+  it("keeps a muted badge quiet against its surface", () => {
     // arrange, act
-    render(<Badge tone="neutral">Past</Badge>);
+    render(<Badge tone="muted">Past</Badge>);
 
     // assert
     expect(screen.getByText("Past")).toHaveClass(
       "border-border-default",
       "text-text-muted",
     );
+  });
+
+  it("stays muted when no tone is named", () => {
+    // arrange, act
+    render(<Badge>Past</Badge>);
+
+    // assert
+    expect(screen.getByText("Past")).toHaveClass(
+      "border-border-default",
+      "text-text-muted",
+    );
+  });
+
+  it("warms a pending badge with the pending status colour", () => {
+    // arrange, act
+    render(<Badge tone="pending">Pending</Badge>);
+
+    // assert
+    expect(screen.getByText("Pending")).toHaveClass(
+      "bg-status-pending-soft",
+      "text-status-pending",
+    );
+  });
+
+  it("greens a success badge with the success feedback colour", () => {
+    // arrange, act
+    render(<Badge tone="success">Paid</Badge>);
+
+    // assert
+    expect(screen.getByText("Paid")).toHaveClass(
+      "bg-feedback-success-soft",
+      "text-feedback-success",
+    );
+  });
+
+  it("draws a count as a small pill in the current ink", () => {
+    // arrange, act
+    render(<Badge tone="count">3</Badge>);
+
+    // assert
+    expect(screen.getByText("3")).toHaveClass(
+      "rounded-full",
+      "bg-current/12",
+      "text-caption",
+      "tabular-nums",
+    );
+  });
+
+  it("names its slot so a container can restyle it", () => {
+    // arrange, act
+    render(<Badge tone="count">3</Badge>);
+
+    // assert
+    expect(screen.getByText("3")).toHaveAttribute("data-slot", "badge");
   });
 
   it("takes extra classes from the caller", () => {

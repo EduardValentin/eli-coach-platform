@@ -1,5 +1,6 @@
 import { Check, ChevronDown, ChevronUp } from "lucide-react";
 import * as React from "react";
+import { cva, type VariantProps } from "class-variance-authority";
 import { Select as RadixSelect } from "radix-ui";
 
 import { cn } from "../lib/cn";
@@ -7,9 +8,22 @@ import { cn } from "../lib/cn";
 export const Select = RadixSelect.Root;
 export const SelectValue = RadixSelect.Value;
 
+const triggerSizeClasses = cva("", {
+  variants: {
+    size: {
+      sm: "h-(--size-control-sm) text-sm",
+      md: "h-12 text-base md:text-sm",
+    },
+  },
+  defaultVariants: {
+    size: "md",
+  },
+});
+
 type SelectTriggerProps = React.ComponentPropsWithoutRef<
   typeof RadixSelect.Trigger
->;
+> &
+  VariantProps<typeof triggerSizeClasses>;
 
 // Safari's default Tab order visits text fields only and skips buttons unless
 // they carry an explicit tabindex; a control that stands in for a form field
@@ -19,12 +33,14 @@ const FIELD_TAB_INDEX = 0;
 export const SelectTrigger = React.forwardRef<
   React.ElementRef<typeof RadixSelect.Trigger>,
   SelectTriggerProps
->(({ children, className, ...props }, ref) => (
+>(({ children, className, size = "md", ...props }, ref) => (
   <RadixSelect.Trigger
     className={cn(
-      "flex h-12 w-full min-w-0 items-center justify-between gap-2 whitespace-nowrap rounded-field border border-control-border-soft bg-surface-quiet/50 px-3 py-1 text-base outline-none transition-[color,box-shadow] data-[placeholder]:text-text-muted focus-visible:border-border-focus aria-invalid:border-feedback-danger disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 [&>span:first-child]:flex [&>span:first-child]:items-center [&>span:first-child]:gap-2 [&>span:first-child]:overflow-hidden [&>span:first-child]:whitespace-nowrap md:text-sm",
+      "flex w-full min-w-0 items-center justify-between gap-2 whitespace-nowrap rounded-field border border-control-border-soft bg-surface-base px-3 py-1 outline-none transition-[color,box-shadow] data-[placeholder]:text-text-muted focus-visible:border-border-focus aria-invalid:border-feedback-danger disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 [&>span:first-child]:flex [&>span:first-child]:items-center [&>span:first-child]:gap-2 [&>span:first-child]:overflow-hidden [&>span:first-child]:whitespace-nowrap",
+      triggerSizeClasses({ size }),
       className,
     )}
+    data-size={size}
     ref={ref}
     tabIndex={FIELD_TAB_INDEX}
     {...props}

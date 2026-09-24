@@ -28,6 +28,28 @@ describe("avatar", () => {
     expect(container.firstElementChild).toHaveAttribute("aria-hidden", "true");
   });
 
+  it("sits at the medium size on the neutral surface by default", () => {
+    // arrange, act
+    const { container } = render(<Avatar name="Ana Popescu" />);
+
+    // assert
+    expect(container.firstElementChild).toHaveClass(
+      "size-10",
+      "text-sm",
+      "font-medium",
+      "bg-surface-neutral",
+      "text-text-primary",
+    );
+  });
+
+  it("grows to the large size with larger initials", () => {
+    // arrange, act
+    const { container } = render(<Avatar name="Ana Popescu" size="lg" />);
+
+    // assert
+    expect(container.firstElementChild).toHaveClass("size-16", "text-xl");
+  });
+
   it("mutes the stand-in when the moment it belongs to has passed", () => {
     // arrange, act
     const { container } = render(<Avatar name="Ana" tone="muted" />);
@@ -36,6 +58,7 @@ describe("avatar", () => {
     expect(container.firstElementChild).toHaveClass(
       "bg-surface-neutral",
       "text-text-muted",
+      "opacity-70",
     );
   });
 });

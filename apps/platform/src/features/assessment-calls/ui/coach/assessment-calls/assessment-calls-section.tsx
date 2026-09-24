@@ -212,7 +212,7 @@ function CallCard(props: { call: ClassifiedCall; moment: ListingMoment }) {
         call.timing === "upcoming" ? (
           <JoinCallLink joinPath={call.joinPath} />
         ) : (
-          <Badge tone="neutral">Past</Badge>
+          <Badge tone="muted">Past</Badge>
         )
       }
       attendee={{
@@ -220,7 +220,7 @@ function CallCard(props: { call: ClassifiedCall; moment: ListingMoment }) {
         name: call.fullName,
         phone: call.phone ?? undefined,
       }}
-      badges={call.isToday && <Badge tone="accent">Today</Badge>}
+      badges={call.isToday && <Badge tone="brand-secondary">Today</Badge>}
       details={visitorDetails(call, moment)}
       quote={call.visitorNotes ?? undefined}
       status={call.timing === "past" ? "past" : "scheduled"}

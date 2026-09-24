@@ -2,34 +2,34 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "../lib/cn";
 
-const AVATAR_CLASSES =
-  "size-11 shrink-0 rounded-full border border-control-border-soft";
-
-const initialClasses = cva(
-  "flex items-center justify-center font-heading text-sm font-semibold",
+const avatarClasses = cva(
+  "flex shrink-0 items-center justify-center rounded-full font-medium",
   {
     variants: {
+      size: {
+        sm: "size-8 text-sm",
+        md: "size-10 text-sm",
+        lg: "size-16 text-xl",
+      },
       tone: {
-        quiet: "bg-surface-muted text-text-primary",
-        muted: "bg-surface-neutral text-text-muted",
+        quiet: "bg-surface-neutral text-text-primary",
+        muted: "bg-surface-neutral text-text-muted opacity-70",
       },
     },
     defaultVariants: {
+      size: "md",
       tone: "quiet",
     },
   },
 );
 
-type AvatarProps = VariantProps<typeof initialClasses> & {
+type AvatarProps = VariantProps<typeof avatarClasses> & {
   name: string;
 };
 
-export function Avatar({ name, tone }: AvatarProps) {
+export function Avatar({ name, size, tone }: AvatarProps) {
   return (
-    <div
-      aria-hidden="true"
-      className={cn(AVATAR_CLASSES, initialClasses({ tone }))}
-    >
+    <div aria-hidden="true" className={cn(avatarClasses({ size, tone }))}>
       {name.charAt(0)}
     </div>
   );

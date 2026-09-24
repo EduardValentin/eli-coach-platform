@@ -23,7 +23,7 @@ describe("Textarea", () => {
     expect(field).toHaveClass(
       "rounded-field",
       "border-control-border-soft",
-      "bg-surface-quiet/50",
+      "bg-surface-base",
       "focus-visible:border-border-focus",
       "aria-invalid:border-feedback-danger",
       "resize-none",

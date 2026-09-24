@@ -92,6 +92,36 @@ describe("Select", () => {
     expect(option).toHaveClass("*:[span]:last:flex");
   });
 
+  it("stands at the field height with the field text by default", () => {
+    // arrange, act
+    renderHourSelect();
+    const trigger = screen.getByRole("combobox", { name: "Start" });
+
+    // assert
+    expect(trigger).toHaveClass("h-12", "text-base");
+    expect(trigger).toHaveAttribute("data-size", "md");
+  });
+
+  it("shrinks to the small control height with small text when asked", () => {
+    // arrange, act
+    render(
+      <Select defaultValue="9" name="hour">
+        <SelectTrigger aria-label="Sort by" size="sm">
+          <SelectValue>09:00</SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="9">09:00</SelectItem>
+        </SelectContent>
+      </Select>,
+    );
+    const trigger = screen.getByRole("combobox", { name: "Sort by" });
+
+    // assert
+    expect(trigger).toHaveClass("h-(--size-control-sm)", "text-sm");
+    expect(trigger).not.toHaveClass("h-12", "text-base");
+    expect(trigger).toHaveAttribute("data-size", "sm");
+  });
+
   it("carries the one-line clipping classes its trigger contract publishes", () => {
     // arrange, act
     renderHourSelect();

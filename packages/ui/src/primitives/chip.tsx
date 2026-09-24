@@ -7,13 +7,13 @@ export const chipVariants = cva(
   {
     variants: {
       tone: {
-        brand: `${CHIP_FILLED_SURFACE} data-[state=off]:hover:border-brand-primary data-[state=off]:hover:text-brand-primary data-[state=on]:border-brand-primary data-[state=on]:bg-brand-primary data-[state=on]:text-brand-primary-foreground`,
+        primary: `${CHIP_FILLED_SURFACE} data-[state=off]:hover:border-primary data-[state=off]:hover:text-primary data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground`,
         "brand-secondary": `${CHIP_FILLED_SURFACE} data-[state=off]:hover:border-brand-secondary data-[state=off]:hover:text-brand-secondary data-[state=on]:border-brand-secondary data-[state=on]:bg-brand-secondary data-[state=on]:text-brand-secondary-foreground`,
-        soft: "text-text-muted data-[state=off]:hover:border-brand-primary data-[state=off]:hover:text-brand-primary data-[state=on]:border-brand-primary/30 data-[state=on]:bg-brand-primary-soft data-[state=on]:text-brand-primary data-[state=on]:hover:border-brand-primary",
+        soft: "min-w-11 font-semibold data-[state=off]:border-border-default data-[state=off]:text-text-muted data-[state=off]:hover:border-primary data-[state=off]:hover:text-primary data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:hover:bg-primary-hover",
       },
     },
     defaultVariants: {
-      tone: "brand",
+      tone: "primary",
     },
   },
 );
