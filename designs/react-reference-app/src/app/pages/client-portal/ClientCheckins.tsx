@@ -20,11 +20,7 @@ import {
   PROGRAM_REVIEW_LABEL,
   upcomingReviewCall,
 } from '../../utils/reviewCallListing';
-import {
-  browserTimeZone,
-  formatSlotTime,
-  formatZonedDate,
-} from '../../utils/dateFormatters';
+import { browserTimeZone, checkinInstant } from '../../utils/dateFormatters';
 import { useMessaging } from '../../context/MessagingContext';
 import { useCoachProfile } from '../../context/CoachProfileContext';
 import {
@@ -34,6 +30,7 @@ import {
   to24h,
 } from '../../utils/dateFormatters';
 import { CheckinSchedulerSheet } from '../../components/CheckinSchedulerSheet';
+import { DateTimeLabel } from '../../components/DateTimeLabel';
 import {
   Tabs,
   TabsContent,
@@ -479,15 +476,8 @@ function ProgramReviewCard({
             {PROGRAM_REVIEW_LABEL}
           </span>
 
-          <div className="mt-1 flex items-center gap-x-3 gap-y-0.5 text-sm font-medium text-text-primary flex-wrap">
-            <span className="inline-flex items-center gap-1.5">
-              <CalendarDays size={13} aria-hidden="true" />
-              {formatZonedDate(startsAt, timeZone, 'EEE, MMM d')}
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <Clock size={13} aria-hidden="true" />
-              {formatSlotTime(startsAt, timeZone)}
-            </span>
+          <div className="mt-1">
+            <DateTimeLabel startsAt={startsAt} timeZone={timeZone} />
           </div>
 
           <p className="text-xs text-text-secondary mt-2">
@@ -555,23 +545,19 @@ function CheckinCard({
           </div>
 
           {isRescheduling && checkin.previousDate && checkin.previousTime && (
-            <div className="flex items-center gap-1.5 text-xs text-text-secondary line-through mb-0.5">
-              <CalendarDays size={12} aria-hidden="true" />
-              {formatCheckinDate(checkin.previousDate)} at{' '}
-              {formatCheckinTime(checkin.previousTime)}
+            <div className="text-xs text-text-secondary line-through mb-0.5">
+              <DateTimeLabel
+                startsAt={checkinInstant(
+                  checkin.previousDate,
+                  checkin.previousTime,
+                )}
+              />
             </div>
           )}
 
-          <div className="flex items-center gap-x-3 gap-y-0.5 text-sm font-medium text-text-primary flex-wrap">
-            <span className="inline-flex items-center gap-1.5">
-              <CalendarDays size={13} aria-hidden="true" />
-              {formatCheckinDate(checkin.date)}
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <Clock size={13} aria-hidden="true" />
-              {formatCheckinTime(checkin.time)}
-            </span>
-          </div>
+          <DateTimeLabel
+            startsAt={checkinInstant(checkin.date, checkin.time)}
+          />
 
           {(checkin.rescheduleMessage || checkin.note) && (
             <p className="text-xs text-text-secondary italic mt-2">

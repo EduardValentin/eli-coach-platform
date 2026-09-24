@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { CalendarClock } from 'lucide-react';
 import { toast } from 'sonner';
 import { Alert } from '../ui/alert';
 import { Button } from '../ui/button';
@@ -265,8 +266,13 @@ export function AssessmentCallSettingsSection() {
       <div className="px-5 sm:px-6 py-4 border-b border-border">
         <h2
           id="assessment-call-heading"
-          className="font-serif text-lg font-semibold text-foreground"
+          className="flex items-center gap-2 text-base font-semibold text-foreground"
         >
+          <CalendarClock
+            aria-hidden="true"
+            className="text-brand-secondary"
+            size={18}
+          />
           Assessment calls
         </h2>
       </div>

@@ -1,5 +1,4 @@
 import { ArrowRight, Video } from 'lucide-react';
-import { motion, useReducedMotion } from 'motion/react';
 import { Link } from 'react-router';
 import {
   visitorFullName,
@@ -9,7 +8,7 @@ import {
   classifyCalls,
   upcomingCalls,
 } from '../../utils/assessmentCallListing';
-import { formatShortDay, formatSlotTime } from '../../utils/dateFormatters';
+import { PortalWidget } from '../PortalWidget';
 import { Badge } from '../ui/badge';
 import { cn } from '../ui/utils';
 import { DashboardAppointmentRow } from './DashboardAppointmentRow';
@@ -28,7 +27,6 @@ export function UpcomingAssessmentCalls({
   now: Date;
   timeZone: string;
 }) {
-  const prefersReducedMotion = useReducedMotion() ?? false;
   const calls = upcomingCalls(
     classifyCalls(bookings, { now, timeZone }),
     DASHBOARD_CALL_LIMIT,
@@ -36,21 +34,24 @@ export function UpcomingAssessmentCalls({
   const isEmpty = calls.length === 0;
 
   return (
-    <motion.div
-      initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={prefersReducedMotion ? { duration: 0 } : undefined}
-      className="bg-card p-8 rounded-panel shadow-soft border border-border/50 flex flex-col h-full"
+    <PortalWidget
+      presentation="coach"
+      title="Upcoming calls"
+      icon={
+        <Video aria-hidden="true" className="text-brand-secondary" size={18} />
+      }
+      headingId="upcoming-calls-heading"
+      className="flex h-full flex-col"
+      footer={
+        <Link
+          to={ALL_CALLS_PATH}
+          className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
+        >
+          View all calls
+          <ArrowRight aria-hidden="true" size={16} />
+        </Link>
+      }
     >
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 rounded-full bg-brand-secondary-soft text-brand-secondary flex items-center justify-center">
-          <Video aria-hidden="true" size={20} />
-        </div>
-        <h2 className="font-serif text-xl text-foreground font-semibold">
-          Upcoming calls
-        </h2>
-      </div>
-
       <div
         className={cn('flex-1', {
           'flex items-center justify-center': isEmpty,
@@ -64,10 +65,7 @@ export function UpcomingAssessmentCalls({
               <li key={call.booking.id}>
                 <DashboardAppointmentRow
                   attendeeName={visitorFullName(call.booking)}
-                  when={{
-                    date: formatShortDay(call.booking.startsAt, timeZone),
-                    time: formatSlotTime(call.booking.startsAt, timeZone),
-                  }}
+                  when={{ startsAt: call.booking.startsAt, timeZone }}
                   badges={
                     call.isToday && (
                       <Badge variant="brand-secondary">Today</Badge>
@@ -80,14 +78,6 @@ export function UpcomingAssessmentCalls({
           </ul>
         )}
       </div>
-
-      <Link
-        to={ALL_CALLS_PATH}
-        className="mt-auto pt-6 self-start inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
-      >
-        View all calls
-        <ArrowRight aria-hidden="true" size={16} />
-      </Link>
-    </motion.div>
+    </PortalWidget>
   );
 }

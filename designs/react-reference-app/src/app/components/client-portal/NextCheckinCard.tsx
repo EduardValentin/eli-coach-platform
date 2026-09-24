@@ -1,11 +1,9 @@
-import { Video } from 'lucide-react';
+import { CalendarCheck, Video } from 'lucide-react';
 import { useCheckins } from '../../context/CheckinContext';
-import {
-  formatCheckinDate,
-  formatCheckinTime,
-} from '../../utils/dateFormatters';
+import { checkinInstant } from '../../utils/dateFormatters';
 import { buttonVariants } from '../ui/button';
 import { cn } from '../ui/utils';
+import { DateTimeLabel } from '../DateTimeLabel';
 import { RowActionLink } from '../RowActionButton';
 import { ClientWidget } from './ClientWidget';
 
@@ -18,8 +16,19 @@ export function NextCheckinCard() {
   return (
     <ClientWidget
       eyebrow="Next check-in"
+      icon={
+        <CalendarCheck
+          aria-hidden="true"
+          className="text-brand-secondary"
+          size={18}
+        />
+      }
       headingId="next-checkin-heading"
-      hero={`${formatCheckinDate(nextCheckin.date)} · ${formatCheckinTime(nextCheckin.time)}`}
+      hero={
+        <DateTimeLabel
+          startsAt={checkinInstant(nextCheckin.date, nextCheckin.time)}
+        />
+      }
       heroSize="compact"
       className="p-4 sm:p-4"
     >

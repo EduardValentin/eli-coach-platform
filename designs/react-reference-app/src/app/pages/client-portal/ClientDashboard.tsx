@@ -14,9 +14,9 @@ import { ClientWidget } from '../../components/client-portal/ClientWidget';
 import { GoalWidget } from '../../components/GoalWidget';
 import { CyclePhaseWidget } from '../../components/CyclePhaseWidget';
 import { ProfileDetailsWidget } from '../../components/ProfileDetailsWidget';
+import { ProgressWidget } from '../../components/ProgressWidget';
 import { MACRO_BAR } from '../../components/coach-portal/nutrition/nutrition-constants';
 import { useAppState } from '../../context/AppContext';
-import { cn } from '../../components/ui/utils';
 import { Button } from '../../components/ui/button';
 
 const DAY_NAMES = [
@@ -123,18 +123,50 @@ export function ClientDashboard() {
 
       <ProgramStatusCard />
 
-      {/* Top Metrics Grid: unified nutrition card + cycle phase */}
-      <div
-        className={cn('grid grid-cols-1 gap-4 mb-8 lg:gap-6', {
-          'lg:grid-cols-3': isPostMvp,
-        })}
-      >
-        {/* Daily Nutrition Card — BMR, Daily Target + macro split */}
+      <div className="grid grid-cols-1 gap-6 mb-8 sm:grid-cols-2 lg:grid-cols-3">
+        <ProgressWidget
+          presentation="client"
+          profile={clientProfile}
+          weightUnit={weightUnit}
+          headingId="progress-heading"
+          className="h-full"
+        />
+
+        <GoalWidget
+          presentation="client"
+          goal={activeGoal}
+          headingId="goal-heading"
+          emptyMessage={goalEmptyMessage}
+          className="h-full"
+        />
+
+        <CyclePhaseWidget
+          presentation="client"
+          phase={clientPhase}
+          headingId="phase-heading"
+          className="h-full"
+          footer={
+            <Link
+              to="/portal/cycle"
+              className="text-sm font-medium text-primary hover:underline"
+            >
+              View cycle tracker &rarr;
+            </Link>
+          }
+        />
+
         {isPostMvp && (
           <ClientWidget
             eyebrow="Daily nutrition"
+            icon={
+              <Flame
+                aria-hidden="true"
+                className="text-brand-secondary"
+                size={18}
+              />
+            }
             headingId="nutrition-heading"
-            className="lg:col-span-2"
+            className="h-full lg:col-span-2"
           >
             {/* Headline calorie figures: BMR · Maintenance · Daily Target */}
             <div className="flex flex-wrap items-end gap-x-10 gap-y-4 mb-5">
@@ -278,43 +310,18 @@ export function ClientDashboard() {
           </ClientWidget>
         )}
 
-        {/* Phase Card (kept separate) */}
-        <CyclePhaseWidget
-          presentation="client"
-          phase={clientPhase}
-          headingId="phase-heading"
-          className="h-full"
-          footer={
-            <Link
-              to="/portal/cycle"
-              className="text-sm font-medium text-primary hover:underline"
-            >
-              View cycle tracker &rarr;
-            </Link>
-          }
-        />
-
-        {/* Goal Card */}
-        <GoalWidget
-          presentation="client"
-          goal={activeGoal}
-          headingId="goal-heading"
-          emptyMessage={goalEmptyMessage}
-        />
-      </div>
-
-      {/* Bottom Layout Grid */}
-      <div
-        className={cn('grid grid-cols-1 gap-6 lg:gap-8', {
-          'lg:grid-cols-3': isPostMvp,
-        })}
-      >
-        {/* Focus Card - Spans 2 cols on lg */}
         {isPostMvp && (
           <ClientWidget
             eyebrow="Today's focus"
+            icon={
+              <Activity
+                aria-hidden="true"
+                className="text-brand-secondary"
+                size={18}
+              />
+            }
             headingId="focus-heading"
-            className="lg:col-span-2"
+            className="h-full lg:col-span-2"
             action={
               todayInfo && !todayInfo.isRest ? (
                 <div className="shrink-0 rounded-field bg-metric-energy-soft px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-metric-energy">
@@ -362,6 +369,7 @@ export function ClientDashboard() {
           profile={clientProfile}
           units={{ weightUnit, heightUnit }}
           headingId="profile-details-heading"
+          className="h-full"
           footer={
             <Link
               to="/portal/profile"

@@ -1,11 +1,11 @@
 import { type ReactNode } from 'react';
-import { motion, useReducedMotion } from 'motion/react';
 import { Ruler } from 'lucide-react';
 import { formatRatio, waistToHeightRatio } from '../domain/bodyMetrics';
 import type { MeasurementEntry } from '../domain/journey';
 import { formatJourneyDate } from '../utils/journeyLabels';
 import { formatBodyWeight, formatCircumference } from '../utils/units';
 import type { MeasureUnits } from './client-portal/measureUnits';
+import { PortalWidget, type WidgetPresentation } from './PortalWidget';
 import {
   Table,
   TableBody,
@@ -14,13 +14,8 @@ import {
   TableHeader,
   TableRow,
 } from './ui/table';
-import { cn } from './ui/utils';
-import { SectionEyebrow } from './SectionEyebrow';
 
-export type MeasurementsPerspective = 'coach' | 'client';
-
-const PANEL_CLASS =
-  'rounded-panel border border-border/50 bg-card p-6 shadow-[0_2px_12px_rgb(0,0,0,0.03)]';
+export type MeasurementsPerspective = WidgetPresentation;
 
 const COLUMNS = ['Date', 'Weight', 'Waist', 'Hips', 'Thigh', 'Arm', 'Ratio'];
 
@@ -55,34 +50,18 @@ export function MeasurementsTable({
   children?: ReactNode;
   perspective?: MeasurementsPerspective;
 }) {
-  const prefersReducedMotion = useReducedMotion() ?? false;
   const history = newestFirst(measurements);
 
   return (
-    <motion.section
-      initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className={cn(PANEL_CLASS, className)}
-      aria-labelledby={headingId}
+    <PortalWidget
+      presentation={perspective}
+      title="Measurements"
+      icon={
+        <Ruler aria-hidden="true" className="text-brand-secondary" size={18} />
+      }
+      headingId={headingId}
+      className={className}
     >
-      {perspective === 'client' ? (
-        <SectionEyebrow as="h2" className="mb-2" id={headingId}>
-          Measurements
-        </SectionEyebrow>
-      ) : (
-        <h2
-          id={headingId}
-          className="mb-4 flex items-center gap-2 font-serif text-lg font-semibold text-text-primary"
-        >
-          <Ruler
-            size={18}
-            className="text-brand-secondary"
-            aria-hidden="true"
-          />
-          Measurements
-        </h2>
-      )}
-
       {intro}
 
       {history.length === 0 ? (
@@ -136,6 +115,6 @@ export function MeasurementsTable({
       )}
 
       {children}
-    </motion.section>
+    </PortalWidget>
   );
 }

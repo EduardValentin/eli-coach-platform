@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { motion } from 'motion/react';
 import { ClipboardList } from 'lucide-react';
 import { Link } from 'react-router';
 import {
@@ -40,13 +39,11 @@ import {
   withholdsNutritionAdvice,
 } from '../../domain/safetyScreening';
 import { formatJourneyDate } from '../../utils/journeyLabels';
+import { PortalWidget } from '../PortalWidget';
 import { JourneyStageBadge } from './JourneyStageBadge';
 import { OnboardingReviewDialog } from './OnboardingReviewDialog';
 import { ReviewAnswerValue } from './ReviewAnswerValue';
 import { useAppState } from '../../context/AppContext';
-
-const PANEL_CLASS =
-  'bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50';
 
 const RATIO_HIDDEN_NOTE = 'Not shown during pregnancy or right after birth.';
 const BUILD_ACTION = 'Build her program';
@@ -99,7 +96,7 @@ function RatioReading({
   }
 
   return (
-    <p className="font-serif text-2xl text-text-primary">
+    <p className="text-2xl font-semibold tracking-tight text-text-primary">
       {formatRatio(ratio)}
     </p>
   );
@@ -422,58 +419,57 @@ export function OnboardingPanel({
   };
 
   return (
-    <motion.section
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className={`${PANEL_CLASS} mb-8 space-y-6`}
-      aria-labelledby="onboarding-panel-heading"
+    <PortalWidget
+      presentation="coach"
+      title="Onboarding"
+      icon={
+        <ClipboardList
+          aria-hidden="true"
+          className="text-brand-secondary"
+          size={18}
+        />
+      }
+      headingId="onboarding-panel-heading"
+      action={<JourneyStageBadge stage={journey.stage} />}
+      className="mb-8"
     >
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2
-          id="onboarding-panel-heading"
-          className="flex items-center gap-2 font-serif text-lg font-semibold text-text-primary"
-        >
-          <ClipboardList size={18} className="text-brand" aria-hidden="true" />
-          Onboarding
-        </h2>
-        <JourneyStageBadge stage={journey.stage} />
-      </div>
+      <div className="space-y-6">
+        <PendingRequest journey={journey} forms={forms} />
 
-      <PendingRequest journey={journey} forms={forms} />
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="space-y-2">
+            <SubHeading>Waist-to-height ratio</SubHeading>
+            <RatioReading journey={journey} heightCm={heightCm} />
+          </div>
+          <div className="space-y-2">
+            <SubHeading>How she wants to work together</SubHeading>
+            <CollaborationReading journey={journey} />
+          </div>
+          <div className="space-y-2">
+            <SubHeading>Safety screening</SubHeading>
+            <SafetyScreeningReading journey={journey} />
+          </div>
+          <div className="space-y-2">
+            <SubHeading>Cycle mode</SubHeading>
+            <CycleModeReading journey={journey} />
+          </div>
+        </div>
 
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="space-y-2">
-          <SubHeading>Waist-to-height ratio</SubHeading>
-          <RatioReading journey={journey} heightCm={heightCm} />
+        <div className="space-y-3">
+          <SubHeading>Her answers</SubHeading>
+          <AnswerGroups
+            forms={forms}
+            view={{ openForms, onOpenForms: setOpenForms, review: null }}
+          />
         </div>
-        <div className="space-y-2">
-          <SubHeading>How she wants to work together</SubHeading>
-          <CollaborationReading journey={journey} />
-        </div>
-        <div className="space-y-2">
-          <SubHeading>Safety screening</SubHeading>
-          <SafetyScreeningReading journey={journey} />
-        </div>
-        <div className="space-y-2">
-          <SubHeading>Cycle mode</SubHeading>
-          <CycleModeReading journey={journey} />
-        </div>
-      </div>
 
-      <div className="space-y-3">
-        <SubHeading>Her answers</SubHeading>
-        <AnswerGroups
-          forms={forms}
-          view={{ openForms, onOpenForms: setOpenForms, review: null }}
+        <StageActions
+          journey={journey}
+          clientId={clientId}
+          onReview={enterReview}
+          onApprove={() => setConfirmApproveOpen(true)}
         />
       </div>
-
-      <StageActions
-        journey={journey}
-        clientId={clientId}
-        onReview={enterReview}
-        onApprove={() => setConfirmApproveOpen(true)}
-      />
 
       <OnboardingReviewDialog
         open={flagged !== null}
@@ -497,6 +493,6 @@ export function OnboardingPanel({
         confirmLabel="Approve"
         onConfirm={confirmApprove}
       />
-    </motion.section>
+    </PortalWidget>
   );
 }

@@ -6,15 +6,17 @@ import {
   MessageSquare,
   Calendar,
   Activity,
+  Archive,
   Flame,
-  CalendarDays,
   History,
   Pencil,
+  Percent,
   Plus,
   ChevronDown,
   ChevronUp,
   Droplet,
   UserCog,
+  Utensils,
   UtensilsCrossed,
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
@@ -24,11 +26,7 @@ import { useCycle } from '../../context/CycleContext';
 import { useClientProfile, fullName } from '../../context/ClientProfileContext';
 import { useUnitPreferences } from '../../context/UnitPreferencesContext';
 import { useNutrition } from '../../context/NutritionContext';
-import {
-  formatVolume,
-  displayWeightValue,
-  weightUnitLabel,
-} from '../../utils/units';
+import { formatVolume } from '../../utils/units';
 import { getInitials, trainingClientIdFor } from '../../utils/clientHelpers';
 import { PORTAL_PAGE_TITLE_CLASS } from '../../components/PortalPageHeader';
 import { SubscriptionBadge } from '../../components/coach-portal/SubscriptionBadge';
@@ -39,6 +37,9 @@ import { MeasurementsTable } from '../../components/MeasurementsTable';
 import { GoalWidget } from '../../components/GoalWidget';
 import { CyclePhaseWidget } from '../../components/CyclePhaseWidget';
 import { ProfileDetailsWidget } from '../../components/ProfileDetailsWidget';
+import { ProgressWidget } from '../../components/ProgressWidget';
+import { PortalWidget } from '../../components/PortalWidget';
+import { Reading } from '../../components/Reading';
 import { useMeasureUnits } from '../../components/client-portal/measureUnits';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
 import { journeyCallIdForClient } from '../../utils/journeyLabels';
@@ -123,9 +124,6 @@ function RosterClientDetails() {
   const dataClientId = trainingClientIdFor(clientId);
   const profile = getProfile(clientId);
   const clientName = profile ? fullName(profile) : 'Unknown Client';
-  const weightChangeKg = profile
-    ? profile.currentWeightKg - profile.startingWeightKg
-    : 0;
 
   const phase = getCurrentPhase(clientId);
   const menstrualProfile = getClientProfile(clientId);
@@ -317,75 +315,32 @@ function RosterClientDetails() {
         </>
       )}
 
-      {/* Stats Grid */}
-      <div
-        className={cn('grid grid-cols-1 gap-4 mb-8 sm:grid-cols-2 lg:gap-6', {
-          'lg:grid-cols-4': isPostMvp,
-        })}
-      >
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36"
-        >
-          <div className="flex justify-between items-start w-full">
-            <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">
-              Progress
-            </span>
-            <Activity size={16} className="text-green-600" strokeWidth={2.5} />
-          </div>
-          <div className="flex items-baseline gap-1 mt-auto">
-            <span className="font-serif text-3xl text-text-primary">
-              {profile
-                ? `${weightChangeKg > 0 ? '+' : ''}${displayWeightValue(weightChangeKg, weightUnit, 1)}`
-                : '--'}
-            </span>
-            <span className="text-xs font-semibold text-text-secondary">
-              {weightUnitLabel(weightUnit)}
-            </span>
-          </div>
-        </motion.div>
+      <div className="grid grid-cols-1 gap-6 mb-8 sm:grid-cols-2 lg:grid-cols-3">
+        <ProgressWidget
+          presentation="coach"
+          profile={profile}
+          weightUnit={weightUnit}
+          headingId="progress-heading"
+          className="h-full"
+        />
 
-        {isPostMvp && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.05 }}
-            className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36"
-          >
-            <div className="flex justify-between items-start w-full">
-              <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">
-                Daily Target
-              </span>
-              <Flame
-                size={16}
-                className="text-metric-energy"
-                strokeWidth={2.5}
-              />
-            </div>
-            <div className="flex flex-col mt-auto">
-              <div className="flex items-baseline gap-1">
-                <span className="font-serif text-2xl text-text-primary">
-                  {profile?.dailyCalories.toLocaleString() ?? '--'}
-                </span>
-                <span className="text-xs font-semibold text-text-secondary">
-                  kcal
-                </span>
-              </div>
-              {profile && (
-                <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mt-1">
-                  {profile.proteinGrams}P / {profile.carbsGrams}C /{' '}
-                  {profile.fatsGrams}F
-                </p>
-              )}
-            </div>
-          </motion.div>
-        )}
+        <GoalWidget
+          presentation="coach"
+          goal={activeGoal}
+          headingId="goal-widget-heading"
+          management={{
+            onStart: handleStartGoal,
+            onEnd: handleEndGoal,
+            suggestedType: suggestedGoalType,
+          }}
+          className="h-full"
+        />
 
         <CyclePhaseWidget
           presentation="coach"
           phase={phase}
           headingId="phase-tile-heading"
+          className="h-full"
           footer={
             <Link
               to={`/coach/clients/${clientId}/cycle`}
@@ -397,269 +352,259 @@ function RosterClientDetails() {
         />
 
         {isPostMvp && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
-            className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col justify-between h-36"
-          >
-            <div className="flex justify-between items-start w-full">
-              <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">
-                Avg Compliance
-              </span>
-              <History
-                size={16}
-                className="text-brand-secondary"
-                strokeWidth={2.5}
-              />
-            </div>
-            <div className="flex items-baseline gap-1 mt-auto">
-              <span className="font-serif text-3xl text-text-primary">95</span>
-              <span className="text-xs font-semibold text-text-secondary">
-                %
-              </span>
-            </div>
-          </motion.div>
-        )}
-      </div>
-
-      {/* Current focus section */}
-      <section aria-labelledby="current-focus-heading" className="mb-8">
-        <h2
-          id="current-focus-heading"
-          className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-4"
-        >
-          Current focus
-        </h2>
-        <div
-          className={cn('grid grid-cols-1 gap-6', {
-            'lg:grid-cols-3': isPostMvp,
-          })}
-        >
-          {/* Current Goal */}
-          <GoalWidget
+          <PortalWidget
             presentation="coach"
-            goal={activeGoal}
-            headingId="goal-widget-heading"
-            management={{
-              onStart: handleStartGoal,
-              onEnd: handleEndGoal,
-              suggestedType: suggestedGoalType,
-            }}
-          />
+            title="Daily Target"
+            icon={
+              <Flame
+                aria-hidden="true"
+                className="text-brand-secondary"
+                size={18}
+              />
+            }
+            headingId="daily-target-heading"
+            className="h-full"
+          >
+            <Reading
+              label="Daily target"
+              size="lg"
+              unit="kcal"
+              value={profile?.dailyCalories.toLocaleString() ?? '--'}
+            />
+            {profile && (
+              <p className="mt-2 text-sm text-text-secondary">
+                {profile.proteinGrams}P / {profile.carbsGrams}C /{' '}
+                {profile.fatsGrams}F
+              </p>
+            )}
+          </PortalWidget>
+        )}
 
-          {/* Active Plan */}
-          {isPostMvp && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.25 }}
-              className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col h-full"
-            >
-              <h2 className="font-serif text-lg text-text-primary font-semibold mb-4 flex items-center gap-2">
-                <Activity size={18} className="text-brand" />
-                Active Plan
-              </h2>
+        {isPostMvp && (
+          <PortalWidget
+            presentation="coach"
+            title="Avg Compliance"
+            icon={
+              <Percent
+                aria-hidden="true"
+                className="text-brand-secondary"
+                size={18}
+              />
+            }
+            headingId="avg-compliance-heading"
+            className="h-full"
+          >
+            <Reading label="Avg compliance" size="lg" unit="%" value="95" />
+          </PortalWidget>
+        )}
 
-              {activePlan ? (
-                <div className="flex flex-col flex-1">
-                  <h3 className="font-semibold text-text-primary text-base mb-2">
-                    {activePlan.name}
-                  </h3>
+        {isPostMvp && (
+          <PortalWidget
+            presentation="coach"
+            title="Active Plan"
+            icon={
+              <Activity
+                aria-hidden="true"
+                className="text-brand-secondary"
+                size={18}
+              />
+            }
+            headingId="active-plan-heading"
+            className="h-full"
+          >
+            {activePlan ? (
+              <div>
+                <h3 className="font-semibold text-text-primary text-base mb-2">
+                  {activePlan.name}
+                </h3>
 
-                  {/* Week progress dots */}
-                  <div className="flex gap-1 mb-3">
-                    {activePlan.weeks.map((week, i) => (
-                      <div
-                        key={week.id}
-                        className={`h-2 flex-1 rounded-full ${
-                          i < activePlan.currentWeekNumber - 1
-                            ? 'bg-brand'
-                            : i === activePlan.currentWeekNumber - 1
-                              ? 'bg-brand/50'
-                              : 'bg-neutral-100'
-                        } ${week.isDeload ? 'ring-1 ring-blue-300' : ''}`}
-                      />
-                    ))}
-                  </div>
-
-                  <p className="text-xs text-text-secondary mb-4">
-                    Week {activePlan.currentWeekNumber} of{' '}
-                    {activePlan.weeks.length} · Started {activePlan.startDate}
-                  </p>
-
-                  <Button
-                    onClick={() => setShowEndPlan(true)}
-                    variant="outline"
-                    className="mt-auto w-full"
-                  >
-                    End Plan
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex flex-1 flex-col items-center justify-center gap-3 py-8 text-center">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand/10">
-                    <Activity size={22} className="text-brand" />
-                  </div>
-                  <p className="text-sm text-text-secondary">No active plan</p>
-                  <Button
-                    onClick={() =>
-                      navigate(`/coach/training/builder/${clientId}`)
-                    }
-                    variant="default"
-                  >
-                    <Plus size={16} /> Create Plan
-                  </Button>
-                </div>
-              )}
-            </motion.div>
-          )}
-
-          {/* Nutrition */}
-          {isPostMvp &&
-            (() => {
-              const nutritionPlan = getNutritionPlan(clientId);
-              const activeBlock = nutritionPlan?.blocks.find(
-                (b) => b.status === 'active',
-              );
-              const preferences = getNutritionPreferences(clientId);
-
-              // Compute active block summary
-              let blockSummary: {
-                dateRange: string;
-                kcalPerDay: number;
-                mealCount: number;
-              } | null = null;
-              if (activeBlock) {
-                const start = parseISO(activeBlock.startDate);
-                const lastDay = activeBlock.days[activeBlock.days.length - 1];
-                const end = parseISO(lastDay.date);
-                const dateRange = `${format(start, 'MMM d')}–${format(end, 'MMM d')}`;
-                const mealCount = activeBlock.days
-                  .flatMap((d) => d.slots)
-                  .filter((s) => !!s.recipeId).length;
-                blockSummary = {
-                  dateRange,
-                  kcalPerDay: nutritionPlan!.dailyTarget.kcal,
-                  mealCount,
-                };
-              }
-
-              // Resolve preference chip labels
-              const dietaryChips =
-                preferences?.dietaryFlags.map((flagId) => {
-                  const tag = nutritionTags.find((t) => t.id === flagId);
-                  return tag?.label ?? flagId;
-                }) ?? [];
-              const allergenChips = preferences?.allergens ?? [];
-              const dislikedChips =
-                preferences?.dislikedFoodIds.map((foodId) => {
-                  const food = nutritionFoods.find((f) => f.id === foodId);
-                  return food?.name ?? foodId;
-                }) ?? [];
-              const allChips = [
-                ...dietaryChips,
-                ...allergenChips,
-                ...dislikedChips,
-              ];
-
-              return (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4 }}
-                  className="bg-white p-6 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 flex flex-col h-full"
-                >
-                  <h2 className="font-serif text-lg text-text-primary font-semibold mb-4 flex items-center gap-2">
-                    <UtensilsCrossed
-                      size={18}
-                      className="text-brand-secondary"
+                <div className="flex gap-1 mb-3">
+                  {activePlan.weeks.map((week, i) => (
+                    <div
+                      key={week.id}
+                      className={`h-2 flex-1 rounded-full ${
+                        i < activePlan.currentWeekNumber - 1
+                          ? 'bg-brand'
+                          : i === activePlan.currentWeekNumber - 1
+                            ? 'bg-brand/50'
+                            : 'bg-neutral-100'
+                      } ${week.isDeload ? 'ring-1 ring-blue-300' : ''}`}
                     />
-                    Nutrition
-                  </h2>
+                  ))}
+                </div>
 
-                  {/* Plan summary */}
-                  <div className="mb-4">
-                    <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2">
-                      Plan
-                    </p>
-                    {blockSummary ? (
-                      <div className="space-y-1">
-                        <p className="text-sm font-semibold text-text-primary">
-                          Active block · {blockSummary.dateRange}
-                        </p>
-                        <p className="text-xs text-text-secondary">
-                          {blockSummary.kcalPerDay.toLocaleString()} kcal/day ·{' '}
-                          {blockSummary.mealCount} meals planned
-                        </p>
-                      </div>
-                    ) : (
-                      <p className="text-sm text-text-secondary">
-                        No nutrition plan yet
+                <p className="text-xs text-text-secondary mb-4">
+                  Week {activePlan.currentWeekNumber} of{' '}
+                  {activePlan.weeks.length} · Started {activePlan.startDate}
+                </p>
+
+                <Button
+                  onClick={() => setShowEndPlan(true)}
+                  variant="outline"
+                  className="w-full"
+                >
+                  End Plan
+                </Button>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand/10">
+                  <Activity size={22} className="text-brand" />
+                </div>
+                <p className="text-sm text-text-secondary">No active plan</p>
+                <Button
+                  onClick={() =>
+                    navigate(`/coach/training/builder/${clientId}`)
+                  }
+                  variant="default"
+                >
+                  <Plus size={16} /> Create Plan
+                </Button>
+              </div>
+            )}
+          </PortalWidget>
+        )}
+
+        {isPostMvp &&
+          (() => {
+            const nutritionPlan = getNutritionPlan(clientId);
+            const activeBlock = nutritionPlan?.blocks.find(
+              (b) => b.status === 'active',
+            );
+            const preferences = getNutritionPreferences(clientId);
+
+            // Compute active block summary
+            let blockSummary: {
+              dateRange: string;
+              kcalPerDay: number;
+              mealCount: number;
+            } | null = null;
+            if (activeBlock) {
+              const start = parseISO(activeBlock.startDate);
+              const lastDay = activeBlock.days[activeBlock.days.length - 1];
+              const end = parseISO(lastDay.date);
+              const dateRange = `${format(start, 'MMM d')}–${format(end, 'MMM d')}`;
+              const mealCount = activeBlock.days
+                .flatMap((d) => d.slots)
+                .filter((s) => !!s.recipeId).length;
+              blockSummary = {
+                dateRange,
+                kcalPerDay: nutritionPlan!.dailyTarget.kcal,
+                mealCount,
+              };
+            }
+
+            // Resolve preference chip labels
+            const dietaryChips =
+              preferences?.dietaryFlags.map((flagId) => {
+                const tag = nutritionTags.find((t) => t.id === flagId);
+                return tag?.label ?? flagId;
+              }) ?? [];
+            const allergenChips = preferences?.allergens ?? [];
+            const dislikedChips =
+              preferences?.dislikedFoodIds.map((foodId) => {
+                const food = nutritionFoods.find((f) => f.id === foodId);
+                return food?.name ?? foodId;
+              }) ?? [];
+            const allChips = [
+              ...dietaryChips,
+              ...allergenChips,
+              ...dislikedChips,
+            ];
+
+            return (
+              <PortalWidget
+                presentation="coach"
+                title="Nutrition"
+                icon={
+                  <Utensils
+                    aria-hidden="true"
+                    className="text-brand-secondary"
+                    size={18}
+                  />
+                }
+                headingId="nutrition-tile-heading"
+                className="h-full"
+              >
+                <div className="mb-4">
+                  <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2">
+                    Plan
+                  </p>
+                  {blockSummary ? (
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold text-text-primary">
+                        Active block · {blockSummary.dateRange}
                       </p>
-                    )}
-                  </div>
-
-                  {/* Food preferences */}
-                  <div className="mb-5">
-                    <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2">
-                      Food preferences
+                      <p className="text-xs text-text-secondary">
+                        {blockSummary.kcalPerDay.toLocaleString()} kcal/day ·{' '}
+                        {blockSummary.mealCount} meals planned
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-text-secondary">
+                      No nutrition plan yet
                     </p>
-                    {allChips.length > 0 ? (
-                      <div
-                        className="flex flex-wrap gap-1.5"
-                        role="list"
-                        aria-label="Food preferences"
-                      >
-                        {dietaryChips.map((label) => (
-                          <span
-                            key={label}
-                            role="listitem"
-                            className="text-caption font-semibold px-2.5 py-1 rounded-full bg-brand-secondary/10 text-text-primary border border-brand-secondary/20"
-                          >
-                            {label}
-                          </span>
-                        ))}
-                        {allergenChips.map((label) => (
-                          <span
-                            key={label}
-                            role="listitem"
-                            className="text-caption font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-text-primary border border-amber-200"
-                          >
-                            {label} allergy
-                          </span>
-                        ))}
-                        {dislikedChips.map((label) => (
-                          <span
-                            key={label}
-                            role="listitem"
-                            className="text-caption font-semibold px-2.5 py-1 rounded-full bg-neutral-100 text-text-primary"
-                          >
-                            No {label}
-                          </span>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-text-secondary">None set</p>
-                    )}
-                  </div>
+                  )}
+                </div>
 
-                  {/* Actions */}
-                  <Button
-                    onClick={() =>
-                      navigate(`/coach/nutrition/client/${clientId}/plan`)
-                    }
-                    variant="default"
-                    className="mt-auto w-full"
-                  >
-                    <UtensilsCrossed size={15} />
-                    Open plan builder
-                  </Button>
-                </motion.div>
-              );
-            })()}
-        </div>
-      </section>
+                {/* Food preferences */}
+                <div className="mb-5">
+                  <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2">
+                    Food preferences
+                  </p>
+                  {allChips.length > 0 ? (
+                    <div
+                      className="flex flex-wrap gap-1.5"
+                      role="list"
+                      aria-label="Food preferences"
+                    >
+                      {dietaryChips.map((label) => (
+                        <span
+                          key={label}
+                          role="listitem"
+                          className="text-caption font-semibold px-2.5 py-1 rounded-full bg-brand-secondary/10 text-text-primary border border-brand-secondary/20"
+                        >
+                          {label}
+                        </span>
+                      ))}
+                      {allergenChips.map((label) => (
+                        <span
+                          key={label}
+                          role="listitem"
+                          className="text-caption font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-text-primary border border-amber-200"
+                        >
+                          {label} allergy
+                        </span>
+                      ))}
+                      {dislikedChips.map((label) => (
+                        <span
+                          key={label}
+                          role="listitem"
+                          className="text-caption font-semibold px-2.5 py-1 rounded-full bg-neutral-100 text-text-primary"
+                        >
+                          No {label}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-text-secondary">None set</p>
+                  )}
+                </div>
+
+                <Button
+                  onClick={() =>
+                    navigate(`/coach/nutrition/client/${clientId}/plan`)
+                  }
+                  variant="default"
+                  className="w-full"
+                >
+                  <UtensilsCrossed size={15} />
+                  Open plan builder
+                </Button>
+              </PortalWidget>
+            );
+          })()}
+      </div>
 
       {/* Secondary detail section */}
       <div
@@ -669,24 +614,27 @@ function RosterClientDetails() {
       >
         {/* Workout History */}
         {isPostMvp && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="lg:col-span-2 bg-white p-8 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-neutral-100/50 self-start"
-          >
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="font-serif text-xl text-text-primary font-semibold">
-                Workout History
-              </h2>
+          <PortalWidget
+            presentation="coach"
+            title="Workout History"
+            icon={
+              <History
+                aria-hidden="true"
+                className="text-brand-secondary"
+                size={18}
+              />
+            }
+            headingId="workout-history-heading"
+            className="lg:col-span-2 self-start"
+            action={
               <Link
                 to={`/coach/clients/${clientId}/history`}
                 className="text-sm font-semibold text-primary hover:text-primary-hover transition-colors"
               >
                 View All ({getClientWorkoutHistory(dataClientId).length})
               </Link>
-            </div>
-
+            }
+          >
             <div className="space-y-4">
               {getClientWorkoutHistory(dataClientId).length === 0 ? (
                 <div className="text-center py-8">
@@ -750,7 +698,7 @@ function RosterClientDetails() {
                 })
               )}
             </div>
-          </motion.div>
+          </PortalWidget>
         )}
 
         {/* Right column: Profile Details + Past Plans */}
@@ -771,27 +719,16 @@ function RosterClientDetails() {
             }
           >
             {menstrualProfile && (
-              <div>
-                <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-text-secondary">
-                  Cycle
-                </p>
-                <p className="text-sm font-semibold text-text-primary">
-                  {menstrualProfile.regularity === 'regular'
-                    ? 'Regular'
-                    : 'Irregular'}{' '}
-                  &middot; {menstrualProfile.averageCycleLength}-day cycle
-                </p>
-              </div>
+              <Reading
+                label="Cycle"
+                value={`${menstrualProfile.regularity === 'regular' ? 'Regular' : 'Irregular'} · ${menstrualProfile.averageCycleLength}-day cycle`}
+              />
             )}
             {menstrualProfile && menstrualProfile.conditions.length > 0 && (
-              <div>
-                <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-text-secondary">
-                  Conditions
-                </p>
-                <p className="text-sm font-semibold text-text-primary">
-                  {menstrualProfile.conditions.join(', ')}
-                </p>
-              </div>
+              <Reading
+                label="Conditions"
+                value={menstrualProfile.conditions.join(', ')}
+              />
             )}
           </ProfileDetailsWidget>
 
@@ -807,8 +744,12 @@ function RosterClientDetails() {
                 onClick={() => setPastPlansExpanded(!pastPlansExpanded)}
                 className="w-full flex items-center justify-between"
               >
-                <h2 className="font-serif text-lg text-text-primary font-semibold flex items-center gap-2">
-                  <History size={18} className="text-text-secondary" />
+                <h2 className="flex items-center gap-2 text-base font-semibold text-text-primary">
+                  <Archive
+                    size={18}
+                    className="text-brand-secondary"
+                    aria-hidden="true"
+                  />
                   Past Plans
                   <span className="text-xs font-medium bg-neutral-100 text-text-secondary px-2 py-0.5 rounded-full">
                     {pastPlans.length}

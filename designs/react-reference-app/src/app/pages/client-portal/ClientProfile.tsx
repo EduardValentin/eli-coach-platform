@@ -1,7 +1,16 @@
 import { useRef, ChangeEvent } from 'react';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { motion } from 'motion/react';
-import { User, FileText, Camera, Trash2 } from 'lucide-react';
+import {
+  User,
+  FileText,
+  Camera,
+  ClipboardList,
+  Droplet,
+  Ruler,
+  Trash2,
+  Utensils,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { showUndoToast } from '../../utils/showUndoToast';
 import {
@@ -15,6 +24,7 @@ import { formatHeight, formatBodyWeight } from '../../utils/units';
 import { MeasurementsSection } from '../../components/client-portal/MeasurementsSection';
 import { ClientWidget } from '../../components/client-portal/ClientWidget';
 import { SectionEyebrow } from '../../components/SectionEyebrow';
+import { Reading } from '../../components/Reading';
 import { Button } from '../../components/ui/button';
 
 const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
@@ -131,52 +141,92 @@ export function ClientProfile() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
         {/* Basic info */}
-        <ClientWidget eyebrow="About you" headingId="about-you-heading">
-          <ProfileField label="Full Name" value={fullName(clientProfile)} />
-          <ProfileField label="Email" value={clientProfile.email} />
-          <ProfileField label="Age" value={`${clientProfile.age} years`} />
-          <ProfileField label="Gender" value={clientProfile.gender} />
+        <ClientWidget
+          eyebrow="About you"
+          icon={
+            <User
+              aria-hidden="true"
+              className="text-brand-secondary"
+              size={18}
+            />
+          }
+          headingId="about-you-heading"
+        >
+          <div className="space-y-4">
+            <Reading label="Full Name" value={fullName(clientProfile)} />
+            <Reading label="Email" value={clientProfile.email} />
+            <Reading label="Age" value={`${clientProfile.age} years`} />
+            <Reading label="Gender" value={clientProfile.gender} />
+          </div>
         </ClientWidget>
 
         {/* Body metrics */}
-        <ClientWidget eyebrow="Body & goals" headingId="body-goals-heading">
-          <ProfileField
-            label="Height"
-            value={formatHeight(clientProfile.heightCm, heightUnit)}
-          />
-          <ProfileField
-            label="Starting Weight / Current"
-            value={`${formatBodyWeight(clientProfile.startingWeightKg, weightUnit)} / ${formatBodyWeight(clientProfile.currentWeightKg, weightUnit)}`}
-          />
-          <ProfileField
-            label="Activity Level"
-            value={ACTIVITY_LEVEL_LABELS[clientProfile.activityLevel]}
-          />
-          <ProfileField
-            label="Primary Goal"
-            value={clientProfile.primaryGoal}
-          />
+        <ClientWidget
+          eyebrow="Body & goals"
+          icon={
+            <Ruler
+              aria-hidden="true"
+              className="text-brand-secondary"
+              size={18}
+            />
+          }
+          headingId="body-goals-heading"
+        >
+          <div className="space-y-4">
+            <Reading
+              label="Height"
+              value={formatHeight(clientProfile.heightCm, heightUnit)}
+            />
+            <Reading
+              label="Starting Weight / Current"
+              value={`${formatBodyWeight(clientProfile.startingWeightKg, weightUnit)} / ${formatBodyWeight(clientProfile.currentWeightKg, weightUnit)}`}
+            />
+            <Reading
+              label="Activity Level"
+              value={ACTIVITY_LEVEL_LABELS[clientProfile.activityLevel]}
+            />
+            <Reading label="Primary Goal" value={clientProfile.primaryGoal} />
+          </div>
         </ClientWidget>
 
         {/* Nutrition */}
-        <ClientWidget eyebrow="Nutrition" headingId="profile-nutrition-heading">
-          <ProfileField
-            label="BMR"
-            value={`${clientProfile.bmr.toLocaleString()} kcal`}
-          />
-          <ProfileField
-            label="Daily Target"
-            value={`${clientProfile.dailyCalories.toLocaleString()} kcal`}
-          />
-          <ProfileField
-            label="Macros"
-            value={`${clientProfile.proteinGrams}g Protein · ${clientProfile.carbsGrams}g Carbs · ${clientProfile.fatsGrams}g Fats`}
-          />
+        <ClientWidget
+          eyebrow="Nutrition"
+          icon={
+            <Utensils
+              aria-hidden="true"
+              className="text-brand-secondary"
+              size={18}
+            />
+          }
+          headingId="profile-nutrition-heading"
+        >
+          <div className="space-y-4">
+            <Reading
+              label="BMR"
+              value={`${clientProfile.bmr.toLocaleString()} kcal`}
+            />
+            <Reading
+              label="Daily Target"
+              value={`${clientProfile.dailyCalories.toLocaleString()} kcal`}
+            />
+            <Reading
+              label="Macros"
+              value={`${clientProfile.proteinGrams}g Protein · ${clientProfile.carbsGrams}g Carbs · ${clientProfile.fatsGrams}g Fats`}
+            />
+          </div>
         </ClientWidget>
 
         {/* Dietary restrictions */}
         <ClientWidget
           eyebrow="Dietary restrictions"
+          icon={
+            <ClipboardList
+              aria-hidden="true"
+              className="text-brand-secondary"
+              size={18}
+            />
+          }
           headingId="dietary-restrictions-heading"
         >
           <p className="text-sm text-text-secondary leading-relaxed">
@@ -188,11 +238,18 @@ export function ClientProfile() {
         {menstrualProfile && (
           <ClientWidget
             eyebrow="Menstrual health"
+            icon={
+              <Droplet
+                aria-hidden="true"
+                className="text-brand-secondary"
+                size={18}
+              />
+            }
             headingId="menstrual-health-heading"
             className="lg:col-span-2"
           >
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8">
-              <ProfileField
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
+              <Reading
                 label="Cycle"
                 value={
                   menstrualProfile.regularity === 'regular'
@@ -200,15 +257,15 @@ export function ClientProfile() {
                     : 'Irregular'
                 }
               />
-              <ProfileField
+              <Reading
                 label="Average Cycle Length"
                 value={`${menstrualProfile.averageCycleLength} days`}
               />
-              <ProfileField
+              <Reading
                 label="Average Period Length"
                 value={`${menstrualProfile.averagePeriodLength} days`}
               />
-              <ProfileField
+              <Reading
                 label="Conditions"
                 value={
                   menstrualProfile.conditions.length > 0
@@ -240,17 +297,6 @@ export function ClientProfile() {
           profile.
         </p>
       </div>
-    </div>
-  );
-}
-
-function ProfileField({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="py-3 px-3 border-b border-neutral-100 rounded-field last:border-b-0 last:pb-0">
-      <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-1">
-        {label}
-      </p>
-      <p className="font-semibold text-sm text-text-primary">{value}</p>
     </div>
   );
 }

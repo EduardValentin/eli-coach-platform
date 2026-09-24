@@ -3,6 +3,7 @@ import { PortalWidget, type WidgetHeroSize } from '../PortalWidget';
 
 interface ClientWidgetProps {
   eyebrow: ReactNode;
+  icon?: ReactNode;
   hero?: ReactNode;
   heroSize?: WidgetHeroSize;
   voice?: ReactNode;
@@ -15,6 +16,7 @@ interface ClientWidgetProps {
 
 export function ClientWidget({
   eyebrow,
+  icon,
   hero,
   heroSize,
   voice,
@@ -28,6 +30,7 @@ export function ClientWidget({
     <PortalWidget
       presentation="client"
       title={eyebrow}
+      icon={icon}
       hero={hero}
       heroSize={heroSize}
       voice={voice}

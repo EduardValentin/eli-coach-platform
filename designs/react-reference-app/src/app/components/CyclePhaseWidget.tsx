@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Droplet } from 'lucide-react';
 import { PortalWidget, type WidgetPresentation } from './PortalWidget';
+import { Reading } from './Reading';
 
 interface CyclePhase {
   phaseName: string;
@@ -57,9 +58,7 @@ export function CyclePhaseWidget({
     >
       {phase ? (
         <>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">
-            Day {phase.dayInCycle}
-          </p>
+          <Reading label="Day" value={phase.dayInCycle} />
           {children}
         </>
       ) : (

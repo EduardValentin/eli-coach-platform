@@ -1,7 +1,7 @@
 import { PortalPageHeader } from '../../components/PortalPageHeader';
-import { motion, useReducedMotion } from 'motion/react';
-import { ArrowRight, ClipboardCheck, User } from 'lucide-react';
+import { ArrowRight, ClipboardCheck, Users } from 'lucide-react';
 import { Link, useNavigate } from 'react-router';
+import { PortalWidget } from '../../components/PortalWidget';
 import { RowActionLink } from '../../components/RowActionButton';
 import { buttonVariants } from '../../components/ui/button';
 import { cn } from '../../components/ui/utils';
@@ -25,11 +25,7 @@ import {
   classifyCalls,
   countCallsLeftToday,
 } from '../../utils/assessmentCallListing';
-import {
-  browserTimeZone,
-  formatCheckinDate,
-  formatCheckinTime,
-} from '../../utils/dateFormatters';
+import { browserTimeZone, checkinInstant } from '../../utils/dateFormatters';
 
 const MOCK_CLIENTS = [
   {
@@ -117,7 +113,6 @@ function ActiveClientRow({
 }
 
 export function CoachDashboard() {
-  const prefersReducedMotion = useReducedMotion() ?? false;
   const { getPendingCheckins } = useCheckins();
   const { bookings } = useAssessmentCalls();
   const { appState } = useAppState();
@@ -161,22 +156,18 @@ export function CoachDashboard() {
           timeZone={timeZone}
         />
 
-        {/* Pending Check-ins */}
-        <motion.div
-          initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={prefersReducedMotion ? { duration: 0 } : { delay: 0.1 }}
-          className="bg-card p-8 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50"
+        <PortalWidget
+          presentation="coach"
+          title="Pending Check-ins"
+          icon={
+            <ClipboardCheck
+              aria-hidden="true"
+              className="text-brand-secondary"
+              size={18}
+            />
+          }
+          headingId="pending-checkins-heading"
         >
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-full bg-status-pending-soft text-status-pending flex items-center justify-center">
-              <ClipboardCheck size={20} />
-            </div>
-            <h2 className="font-serif text-xl text-foreground font-semibold">
-              Pending Check-ins
-            </h2>
-          </div>
-
           <div className="space-y-4">
             {pendingCheckins.length === 0 ? (
               <p className="text-sm text-muted-foreground">
@@ -188,8 +179,8 @@ export function CoachDashboard() {
                   key={checkin.id}
                   attendeeName={checkin.clientName}
                   when={{
-                    date: formatCheckinDate(checkin.date),
-                    time: formatCheckinTime(checkin.time),
+                    startsAt: checkinInstant(checkin.date, checkin.time),
+                    timeZone,
                   }}
                   action={
                     <RowActionLink
@@ -204,33 +195,29 @@ export function CoachDashboard() {
               ))
             )}
           </div>
-        </motion.div>
+        </PortalWidget>
       </div>
 
-      {/* Active Clients Table */}
-      <motion.div
-        initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={prefersReducedMotion ? { duration: 0 } : { delay: 0.2 }}
-        className="bg-card p-8 rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50"
-      >
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-brand-soft text-brand flex items-center justify-center">
-              <User size={20} />
-            </div>
-            <h2 className="font-serif text-xl text-foreground font-semibold">
-              Active Clients
-            </h2>
-          </div>
+      <PortalWidget
+        presentation="coach"
+        title="Active Clients"
+        icon={
+          <Users
+            aria-hidden="true"
+            className="text-brand-secondary"
+            size={18}
+          />
+        }
+        headingId="active-clients-heading"
+        action={
           <Link
             to="/coach/clients"
             className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
           >
             View all
           </Link>
-        </div>
-
+        }
+      >
         <div className="-mx-6 overflow-x-auto">
           <Table>
             <TableHeader>
@@ -255,7 +242,7 @@ export function CoachDashboard() {
             </TableBody>
           </Table>
         </div>
-      </motion.div>
+      </PortalWidget>
     </div>
   );
 }

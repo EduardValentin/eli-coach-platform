@@ -44,6 +44,7 @@ import {
 import { useClientProfile } from '../../context/ClientProfileContext';
 import { ResponsiveSheetDialog } from '../../components/workout/ResponsiveSheetDialog';
 import { SectionEyebrow } from '../../components/SectionEyebrow';
+import { Reading } from '../../components/Reading';
 import { ConfirmDialog } from '../../components/ui/confirm-dialog';
 import { RecipeVisual } from '../../components/coach-portal/nutrition/RecipeVisual';
 import { Button } from '../../components/ui/button';
@@ -138,12 +139,11 @@ function RecipeDetailBody({
       <div className="px-5 pt-4 md:px-8 space-y-5">
         {/* Macros */}
         <div className="bg-neutral-50 rounded-card px-4 py-3 space-y-2">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">
-            Macros
-          </p>
-          <p className="text-sm font-semibold text-text-primary tabular-nums">
-            {macros.kcal.toLocaleString()} kcal
-          </p>
+          <Reading
+            label="Macros"
+            value={`${macros.kcal.toLocaleString()} kcal`}
+            className="tabular-nums"
+          />
           <div className="flex items-center gap-4 flex-wrap">
             <span className="inline-flex items-center gap-1 text-sm text-text-primary">
               <MacroDotSpan colorClass={MACRO_DOT.protein} />P {macros.protein}g
@@ -814,13 +814,17 @@ export function ClientNutrition() {
             >
               <div className="flex items-center justify-between gap-3 flex-wrap">
                 <div>
-                  <SectionEyebrow
-                    as="h2"
-                    className="mb-2"
+                  <h2
                     id="nutrition-day-heading"
+                    className="mb-2 flex items-center gap-2 text-base font-semibold text-text-primary"
                   >
+                    <UtensilsIcon
+                      aria-hidden="true"
+                      className="text-brand-secondary"
+                      size={18}
+                    />
                     Today's meals
-                  </SectionEyebrow>
+                  </h2>
                   <p className="font-semibold text-2xl tracking-tight text-text-primary lg:text-3xl leading-none mb-1">
                     {format(parseISO(selectedDay.date), 'EEEE, MMMM d')}
                     {selectedDay.date === today && (

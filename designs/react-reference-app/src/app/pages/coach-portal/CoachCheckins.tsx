@@ -18,14 +18,11 @@ import {
   PROGRAM_REVIEW_LABEL,
   upcomingReviewCall,
 } from '../../utils/reviewCallListing';
-import {
-  browserTimeZone,
-  formatSlotTime,
-  formatZonedDate,
-} from '../../utils/dateFormatters';
+import { browserTimeZone } from '../../utils/dateFormatters';
 import { useNotifications } from '../../context/NotificationContext';
 import { useMessaging } from '../../context/MessagingContext';
 import {
+  checkinInstant,
   formatCheckinDate,
   formatCheckinTime,
   toISODate,
@@ -71,11 +68,12 @@ function CheckinCard({
   actions?: React.ReactNode;
 }) {
   const isRescheduling = checkin.status === 'rescheduling';
+  const timeZone = browserTimeZone();
   const supersededWhen =
     isRescheduling && checkin.previousDate && checkin.previousTime
       ? {
-          date: formatCheckinDate(checkin.previousDate),
-          time: formatCheckinTime(checkin.previousTime),
+          startsAt: checkinInstant(checkin.previousDate, checkin.previousTime),
+          timeZone,
         }
       : undefined;
 
@@ -85,10 +83,7 @@ function CheckinCard({
         name: checkin.clientName,
         imageUrl: CLIENT_AVATARS[checkin.clientId] ?? undefined,
       }}
-      when={{
-        date: formatCheckinDate(checkin.date),
-        time: formatCheckinTime(checkin.time),
-      }}
+      when={{ startsAt: checkinInstant(checkin.date, checkin.time), timeZone }}
       supersededWhen={supersededWhen}
       badges={
         <>
@@ -348,12 +343,8 @@ export function CoachCheckins() {
                 name: `${demoJourney.identity.firstName} ${demoJourney.identity.lastName}`.trim(),
               }}
               when={{
-                date: formatZonedDate(
-                  reviewCall.startsAt,
-                  browserTimeZone(),
-                  'EEE, MMM d',
-                ),
-                time: formatSlotTime(reviewCall.startsAt, browserTimeZone()),
+                startsAt: reviewCall.startsAt,
+                timeZone: browserTimeZone(),
               }}
               badges={
                 <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-brand-secondary-surface text-brand-secondary">

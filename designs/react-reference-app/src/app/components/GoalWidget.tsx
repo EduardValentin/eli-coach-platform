@@ -30,6 +30,7 @@ interface GoalWidgetProps {
   headingId: string;
   management?: GoalManagement;
   emptyMessage?: string;
+  className?: string;
 }
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}/;
@@ -47,6 +48,7 @@ export function GoalWidget({
   headingId,
   management,
   emptyMessage,
+  className,
 }: GoalWidgetProps) {
   const [isEditingStart, setIsEditingStart] = useState(false);
   const [selectedType, setSelectedType] = useState<GoalType>(GOAL_TYPES[0]);
@@ -108,6 +110,7 @@ export function GoalWidget({
       hero={goal?.type}
       headingId={headingId}
       footer={footer}
+      className={className}
     >
       {goal ? (
         <p className="text-sm text-text-secondary">
@@ -131,10 +134,8 @@ export function GoalWidget({
             </SelectContent>
           </Select>
           <div className="mt-3 flex gap-2">
-            <Button size="sm" onClick={handleConfirmStart}>
-              Start goal
-            </Button>
-            <Button size="sm" variant="ghost" onClick={handleCancelStart}>
+            <Button onClick={handleConfirmStart}>Start goal</Button>
+            <Button variant="ghost" onClick={handleCancelStart}>
               Cancel
             </Button>
           </div>

@@ -11,6 +11,7 @@ import {
   type WeightUnit,
 } from '../utils/units';
 import { PortalWidget, type WidgetPresentation } from './PortalWidget';
+import { Reading } from './Reading';
 
 interface ProfileDetailsSubject {
   heightCm: number;
@@ -29,18 +30,8 @@ interface ProfileDetailsWidgetProps {
   units: ProfileDetailsUnits;
   headingId: string;
   footer?: ReactNode;
+  className?: string;
   children?: ReactNode;
-}
-
-function Reading({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-text-secondary">
-        {label}
-      </p>
-      <p className="text-sm font-semibold text-text-primary">{value}</p>
-    </div>
-  );
 }
 
 export function ProfileDetailsWidget({
@@ -49,6 +40,7 @@ export function ProfileDetailsWidget({
   units,
   headingId,
   footer,
+  className,
   children,
 }: ProfileDetailsWidgetProps) {
   const heightWeight = profile
@@ -67,6 +59,7 @@ export function ProfileDetailsWidget({
       }
       headingId={headingId}
       footer={footer}
+      className={className}
     >
       <div className="space-y-4">
         <Reading label="Height & weight" value={heightWeight} />

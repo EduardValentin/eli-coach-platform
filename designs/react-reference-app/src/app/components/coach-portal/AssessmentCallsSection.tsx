@@ -35,7 +35,6 @@ import {
   type ListingSelection,
   type SortKey,
 } from '../../utils/assessmentCallListing';
-import { formatShortDay, formatSlotTime } from '../../utils/dateFormatters';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import {
@@ -119,10 +118,7 @@ function CallItem({
           phone: booking.phone ?? undefined,
         }}
         details={visitorDetails(booking, now)}
-        when={{
-          date: formatShortDay(booking.startsAt, timeZone),
-          time: formatSlotTime(booking.startsAt, timeZone),
-        }}
+        when={{ startsAt: booking.startsAt, timeZone }}
         status={timing === 'past' ? 'past' : 'scheduled'}
         titleElement="h2"
         badges={

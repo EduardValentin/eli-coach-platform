@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ClipboardList } from 'lucide-react';
 import { Link, useNavigate } from 'react-router';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
 import { WITHDRAWAL_WAIVER_COPY } from '../../domain/onboardingCopy';
@@ -153,6 +154,13 @@ export function ProgramStatusCard() {
     <div className="mb-8">
       <ClientWidget
         eyebrow={eyebrowFor(demoJourney.stage)}
+        icon={
+          <ClipboardList
+            aria-hidden="true"
+            className="text-brand-secondary"
+            size={18}
+          />
+        }
         headingId="program-status-heading"
         voice={label}
       >
