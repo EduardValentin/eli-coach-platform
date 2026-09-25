@@ -121,7 +121,6 @@
   --placeholder-soft: oklch(0.552 0 0);
   --icon-muted: oklch(0.708 0 0);
   --control-border-soft: oklch(0.922 0 0);
-  --border-focus: oklch(0.708 0 0);
   --border-default: rgba(0, 0, 0, 0.1);
   --stroke-quiet: oklch(0.985 0 0);
   --stroke-faint: oklch(0.97 0 0);
@@ -345,7 +344,7 @@
   --color-placeholder-soft: var(--placeholder-soft);
   --color-icon-muted: var(--icon-muted);
   --color-control-border-soft: var(--control-border-soft);
-  --color-border-focus: var(--border-focus);
+  --color-focus-ring: var(--focus-ring);
   --color-border-default: var(--border-default);
   --color-stroke-quiet: var(--stroke-quiet);
   --color-stroke-faint: var(--stroke-faint);

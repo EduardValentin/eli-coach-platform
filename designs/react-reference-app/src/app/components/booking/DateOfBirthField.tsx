@@ -14,7 +14,7 @@ const PLACEHOLDER = 'Select a date';
 // The trigger is a button that has to read as one of the form's fields, so it
 // carries the Input primitive's frame rather than a button variant.
 const FIELD_BUTTON_CLASS =
-  'flex h-12 w-full min-w-0 items-center justify-between gap-2 rounded-field border border-control-border-soft bg-surface-quiet/50 px-3 py-1 text-left text-base outline-none transition-[color,box-shadow] md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] data-[invalid]:border-destructive';
+  'flex h-12 w-full min-w-0 items-center justify-between gap-2 rounded-field border border-control-border-soft bg-surface-quiet/50 px-3 py-1 text-left text-base outline-none transition-[color,box-shadow] md:text-sm focus-visible:border-focus-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] data-[invalid]:border-destructive';
 
 // The public header is fixed, so the calendar must not flip up into the
 // 80px it covers; 96px matches the page's scroll margin under that header.

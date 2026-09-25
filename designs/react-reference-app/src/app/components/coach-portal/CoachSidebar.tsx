@@ -216,7 +216,7 @@ export function CoachSidebar() {
         })}
         openMenuIcon={<Menu className="size-6" />}
         renderTopBar={(topBar) => (
-          <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white text-text-primary border-b border-border-subtle rounded-field flex items-center justify-between px-6 z-50 shadow-sm">
+          <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-surface-base text-text-primary border-b border-border-subtle rounded-field flex items-center justify-between px-6 z-50 shadow-card">
             <Link
               to="/coach/profile"
               className="flex items-center gap-3 min-w-0 hover:opacity-80 transition-opacity"
@@ -269,7 +269,7 @@ export function CoachSidebar() {
       {/* Desktop Sidebar */}
       <aside
         aria-label="Coach portal sidebar"
-        className="hidden lg:block fixed top-0 left-0 bottom-0 w-64 bg-white z-50"
+        className="hidden lg:block fixed top-0 left-0 bottom-0 w-64 bg-surface-base z-50"
       >
         <DesktopSidebar
           actions={<NotificationBell align="left" />}
