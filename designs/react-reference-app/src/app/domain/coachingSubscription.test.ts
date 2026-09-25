@@ -1,9 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   cancel,
-  canDeliverProgram,
+  canStartWork,
   currentPeriod,
-  deliveryDate,
   deriveStatus,
   periodEnd,
   resolveDay1,
@@ -11,6 +10,7 @@ import {
   type CoachingSubscription,
   type SubscriptionBundle,
   type SubscriptionStartPath,
+  workStartDate,
 } from './coachingSubscription';
 
 const PURCHASED_AT = new Date(2026, 0, 10, 12);
@@ -81,9 +81,9 @@ describe('resolveDay1', () => {
     expect(day1).toBeNull();
   });
 
-  it('starts the waiting path fourteen days after the purchase', () => {
+  it('starts the waiting path the day the program is ready', () => {
     // arrange
-    const programReadyAt = new Date(2026, 0, 12, 9);
+    const programReadyAt = new Date(2026, 0, 30, 9);
 
     // act
     const day1 = resolveDay1({
@@ -93,67 +93,79 @@ describe('resolveDay1', () => {
     });
 
     // assert
-    expect(day1).toEqual(WITHDRAWAL_DEADLINE);
+    expect(day1).toEqual(programReadyAt);
+  });
+
+  it('leaves the waiting path without a day 1 until the program is ready', () => {
+    // arrange
+    const programReadyAt = null;
+
+    // act
+    const day1 = resolveDay1({
+      purchasedAt: PURCHASED_AT,
+      programReadyAt,
+      startPath: 'waiting',
+    });
+
+    // assert
+    expect(day1).toBeNull();
   });
 });
 
-describe('delivering the program', () => {
-  it('dates the delivery of a waiting subscription', () => {
+describe('starting work on the program', () => {
+  it('holds work on a waiting subscription until the withdrawal deadline', () => {
     // arrange
     const waiting = subscription({ startPath: 'waiting' });
 
     // act
-    const delivery = deliveryDate(waiting);
+    const workStart = workStartDate(waiting);
 
     // assert
-    expect(delivery).toEqual(WITHDRAWAL_DEADLINE);
+    expect(workStart).toEqual(WITHDRAWAL_DEADLINE);
   });
 
-  it('gives an immediate subscription no delivery date to wait for', () => {
+  it('gives an immediate subscription no work start date to wait for', () => {
     // arrange
     const immediate = subscription({ startPath: 'immediate' });
 
     // act
-    const delivery = deliveryDate(immediate);
+    const workStart = workStartDate(immediate);
 
     // assert
-    expect(delivery).toBeNull();
+    expect(workStart).toBeNull();
   });
 
-  it('holds a waiting program back before day 1', () => {
+  it('keeps Eli from starting a waiting program before the deadline', () => {
     // arrange
     const waiting = subscription({ startPath: 'waiting' });
 
     // act
-    const deliverable = canDeliverProgram(
-      waiting,
-      new Date(2026, 0, 20, 12),
-    );
+    const startable = canStartWork(waiting, new Date(2026, 0, 20, 12));
 
     // assert
-    expect(deliverable).toBe(false);
+    expect(startable).toBe(false);
   });
 
-  it('releases a waiting program on day 1', () => {
+  it('lets Eli start a waiting program on the deadline', () => {
     // arrange
     const waiting = subscription({ startPath: 'waiting' });
 
     // act
-    const deliverable = canDeliverProgram(waiting, WITHDRAWAL_DEADLINE);
+    const startable = canStartWork(waiting, WITHDRAWAL_DEADLINE);
 
     // assert
-    expect(deliverable).toBe(true);
+    expect(startable).toBe(true);
   });
 
-  it('never holds an immediate program back', () => {
+  it('never holds work on an immediate program', () => {
     // arrange
     const immediate = subscription({ startPath: 'immediate' });
 
     // act
-    const deliverable = canDeliverProgram(immediate, PURCHASED_AT);
+    const startable = canStartWork(immediate, PURCHASED_AT);
 
     // assert
-    expect(deliverable).toBe(true);
+    expect(startable).toBe(true);
   });
 });
 
@@ -215,12 +227,9 @@ describe('renewal periods', () => {
 });
 
 describe('cancelling', () => {
-  it('refunds a waiting subscription cancelled before day 1', () => {
+  it('refunds a waiting subscription cancelled before the withdrawal deadline', () => {
     // arrange
-    const waiting = subscription({
-      startPath: 'waiting',
-      day1: WITHDRAWAL_DEADLINE,
-    });
+    const waiting = subscription({ startPath: 'waiting' });
     const now = new Date(2026, 0, 20, 12);
 
     // act

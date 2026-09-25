@@ -12,7 +12,7 @@ import { formsForSex, type OnboardingField } from './onboardingSchema';
 export const ONBOARDING_FORM_LABELS: Record<OnboardingFormId, string> = {
   'goal-availability': 'Goal and availability',
   'safety-screening': 'Safety screening',
-  'cycle-context': 'Cycle and hormonal context',
+  'cycle-context': 'Cycle and hormonal health',
   'nutrition-lifestyle': 'Nutrition and lifestyle',
   measurements: 'Measurements',
 };
@@ -47,7 +47,15 @@ const MIGRAINE_CONTRACEPTION_SIGNAL = {
   contraceptionValue: 'Combined pill',
 };
 
+const QUESTION_LABEL_OVERRIDES: Record<string, string> = {
+  goalWeight: 'Target weight',
+};
+
 export function humaniseQuestionId(questionId: string): string {
+  if (QUESTION_LABEL_OVERRIDES[questionId]) {
+    return QUESTION_LABEL_OVERRIDES[questionId];
+  }
+
   const spaced = questionId
     .replace(/[-_]+/g, ' ')
     .replace(/([a-z0-9])([A-Z])/g, '$1 $2')

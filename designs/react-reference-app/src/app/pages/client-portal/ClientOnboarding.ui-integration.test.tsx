@@ -238,7 +238,7 @@ describe('the onboarding', () => {
 
     // act
     await userEvent.type(screen.getByLabelText(/Your weight/), '66');
-    await userEvent.type(screen.getByLabelText(/Goal weight/), '200');
+    await userEvent.type(screen.getByLabelText(/Target weight/), '200');
     await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
 
     // assert
@@ -282,7 +282,7 @@ describe('the onboarding', () => {
     expect(
       screen.getByRole('heading', {
         level: 2,
-        name: 'Your cycle and hormonal context',
+        name: 'Your cycle and hormonal health',
       }),
     ).toBeVisible();
     expect(screen.getAllByText('Choose one option.').length).toBeGreaterThan(0);

@@ -137,57 +137,84 @@ describe('the program status card', () => {
     );
   });
 
-  it('names the delivery date on the waiting path', () => {
+  it('tells her when Eli starts working while she keeps her 14 days', () => {
     // arrange
     renderCard('?session=client&jstage=reviewing&jstart=waiting');
 
     // act
-    const delivery = screen.getByText(/Your program will be delivered on/);
-
-    // assert
-    expect(delivery).toBeVisible();
-    expect(
-      screen.queryByText(/Your subscription starts on/),
-    ).not.toBeInTheDocument();
-  });
-
-  it('asks her to give up the withdrawal right before starting early', async () => {
-    // arrange
-    renderCard('?session=client&jstage=reviewing&jstart=waiting');
-
-    // act
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Start my program now' }),
+    const line = screen.getByText(
+      /^Eli has your answers\. You chose to keep your 14-day right of withdrawal, so she starts working on your program on \d{1,2} \w+\. Your program will be delivered as soon as it is completed\.$/,
     );
 
     // assert
+    expect(line).toBeVisible();
     expect(
       screen.getByText(
-        "Start my program as soon as it's ready. I understand that by confirming I give up my 14-day right to withdraw and to a refund.",
+        'Want Eli to start sooner? You can give up your 14-day right of withdrawal and let her begin now.',
       ),
     ).toBeVisible();
   });
 
-  it('drops the waiting line once she starts her program now', async () => {
+  it('keeps the stage line before her answers reach Eli on the waiting path', () => {
+    // arrange
+    renderCard('?session=client&jstage=needs-details&jstart=waiting');
+
+    // act
+    const line = screen.getByText(
+      'Two quick things before I build your plan — tell me a little more about your sleep and about that shoulder.',
+    );
+
+    // assert
+    expect(line).toBeVisible();
+    expect(
+      screen.queryByText(/she starts working on your program on/),
+    ).not.toBeInTheDocument();
+  });
+
+  it('asks her to give up the withdrawal right before letting Eli start', async () => {
+    // arrange
+    renderCard('?session=client&jstage=reviewing&jstart=waiting');
+
+    // act
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Let Eli start now' }),
+    );
+
+    // assert
+    const dialog = screen.getByRole('alertdialog', {
+      name: 'Let Eli start now?',
+    });
+    expect(dialog).toHaveAccessibleDescription(
+      /^I expressly request that my program begins before the end of the 14-day withdrawal period\./,
+    );
+    expect(
+      screen.getByRole('button', { name: 'Keep my 14 days' }),
+    ).toBeVisible();
+  });
+
+  it('drops the waiting line once she lets Eli start now', async () => {
     // arrange
     renderCard('?session=client&jstage=reviewing&jstart=waiting');
     await userEvent.click(
-      screen.getByRole('button', { name: 'Start my program now' }),
+      screen.getByRole('button', { name: 'Let Eli start now' }),
     );
 
     // act
     await userEvent.click(
-      screen.getByRole('button', { name: 'Start my program now' }),
+      screen.getByRole('button', { name: 'Yes, start now' }),
     );
 
     // assert
     await waitFor(
       () =>
         expect(
-          screen.queryByText(/Your program will be delivered on/),
+          screen.queryByText(/she starts working on your program on/),
         ).not.toBeInTheDocument(),
       { timeout: SERVICE_TIMEOUT },
     );
+    expect(
+      screen.queryByRole('button', { name: 'Let Eli start now' }),
+    ).not.toBeInTheDocument();
   });
 
   it('keeps billing off the program card once the coaching runs', () => {

@@ -2,17 +2,15 @@ import { useState } from 'react';
 import { ClipboardList } from 'lucide-react';
 import { Link, useNavigate } from 'react-router';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
-import { WITHDRAWAL_WAIVER_COPY } from '../../domain/onboardingCopy';
+import { canStartWork, workStartDate } from '../../domain/coachingSubscription';
 import {
-  canDeliverProgram,
-  deliveryDate,
-} from '../../domain/coachingSubscription';
-import {
+  awaitsCoachReview,
   clientStatusLabel,
   isBeforeStage,
   type ClientJourney,
   type JourneyStage,
 } from '../../domain/journey';
+import { IMMEDIATE_START_BODY } from '../../domain/startChoiceCopy';
 import { startSubscriptionNow } from '../../services/subscriptionService';
 import {
   browserTimeZone,
@@ -45,9 +43,25 @@ const SUPPORTING_LINES: Partial<Record<JourneyStage, string>> = {
   'program-ready': "Head to your plan whenever you're ready.",
 };
 
-const START_NOW_TITLE = 'Start your program now';
+const START_SOONER_NOTE =
+  'Want Eli to start sooner? You can give up your 14-day right of withdrawal and let her begin now.';
 
-function supportingLine(journey: ClientJourney): string {
+function waitingForWorkLine(workStart: Date): string {
+  return `Eli has your answers. You chose to keep your 14-day right of withdrawal, so she starts working on your program on ${formatJourneyDate(workStart)}. Your program will be delivered as soon as it is completed.`;
+}
+
+function answersWithCoach(stage: JourneyStage): boolean {
+  return awaitsCoachReview(stage) && stage !== 'needs-details';
+}
+
+function supportingLine(
+  journey: ClientJourney,
+  workStart: Date | null,
+): string {
+  if (workStart && answersWithCoach(journey.stage)) {
+    return waitingForWorkLine(workStart);
+  }
+
   if (journey.stage === 'needs-details') {
     return journey.review.requests.at(-1)?.message ?? '';
   }
@@ -75,15 +89,15 @@ function StartNowDialog({
     <AlertDialog onOpenChange={onOpenChange} open={open}>
       <AlertDialogContent className="rounded-card sm:max-w-md">
         <AlertDialogHeader>
-          <AlertDialogTitle>{START_NOW_TITLE}</AlertDialogTitle>
+          <AlertDialogTitle>Let Eli start now?</AlertDialogTitle>
           <AlertDialogDescription>
-            {WITHDRAWAL_WAIVER_COPY}
+            {IMMEDIATE_START_BODY}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Not yet</AlertDialogCancel>
+          <AlertDialogCancel>Keep my 14 days</AlertDialogCancel>
           <AlertDialogAction onClick={onConfirm}>
-            Start my program now
+            Yes, start now
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -102,8 +116,9 @@ export function ProgramStatusCard() {
 
   const now = new Date();
   const { subscription } = demoJourney;
-  const waiting = subscription ? !canDeliverProgram(subscription, now) : false;
-  const delivery = subscription ? deliveryDate(subscription) : null;
+  const waiting = subscription ? !canStartWork(subscription, now) : false;
+  const workStart =
+    waiting && subscription ? workStartDate(subscription) : null;
 
   const startNow = async () => {
     if (!subscription) return;
@@ -129,14 +144,14 @@ export function ProgramStatusCard() {
         voice={label}
       >
         <p className="mt-1 max-w-2xl text-sm text-text-secondary">
-          {supportingLine(demoJourney)}
-          {waiting && delivery && (
-            <>
-              {' '}
-              Your program will be delivered on {formatJourneyDate(delivery)}.
-            </>
-          )}
+          {supportingLine(demoJourney, workStart)}
         </p>
+
+        {waiting && (
+          <p className="mt-3 max-w-2xl text-sm text-text-secondary">
+            {START_SOONER_NOTE}
+          </p>
+        )}
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           {demoJourney.stage === 'needs-details' && (
@@ -173,7 +188,7 @@ export function ProgramStatusCard() {
               size="sm"
               className="w-full sm:w-auto"
             >
-              Start my program now
+              Let Eli start now
             </Button>
           )}
         </div>

@@ -1,13 +1,13 @@
 import { type ReactNode } from 'react';
 import { CreditCard } from 'lucide-react';
 import {
-  deliveryDate,
   deriveStatus,
   type CoachingSubscription,
 } from '../domain/coachingSubscription';
 import {
   bundleLengthLabel,
   formatJourneyDate,
+  IMMEDIATE_START_LABEL,
   startPathLabel,
 } from '../utils/journeyLabels';
 import { PortalWidget, type WidgetPresentation } from './PortalWidget';
@@ -21,18 +21,8 @@ function possessiveFor(perspective: SubscriptionPerspective): string {
   return perspective === 'coach' ? 'her' : 'your';
 }
 
-function startDateLine(
-  subscription: CoachingSubscription,
-  perspective: SubscriptionPerspective,
-): Line {
-  const planned = subscription.day1 ?? deliveryDate(subscription);
-
-  return {
-    term: 'Start date',
-    value: planned
-      ? formatJourneyDate(planned)
-      : `When ${possessiveFor(perspective)} program is ready`,
-  };
+function startProgramValue(subscription: CoachingSubscription): string {
+  return subscription.day1 ? formatJourneyDate(subscription.day1) : '—';
 }
 
 function periodLine(
@@ -74,7 +64,6 @@ export function SubscriptionSummary({
 }) {
   const now = new Date();
   const period = periodLine(subscription, now, perspective);
-  const start = startDateLine(subscription, perspective);
 
   return (
     <PortalWidget
@@ -98,15 +87,19 @@ export function SubscriptionSummary({
         />
         <Reading
           as="dl-item"
-          label="Start"
-          value={startPathLabel(subscription) ?? 'Immediate start'}
-        />
-        <Reading
-          as="dl-item"
           label="Payment date"
           value={formatJourneyDate(subscription.purchasedAt)}
         />
-        <Reading as="dl-item" label={start.term} value={start.value} />
+        <Reading
+          as="dl-item"
+          label="Start"
+          value={startPathLabel(subscription) ?? IMMEDIATE_START_LABEL}
+        />
+        <Reading
+          as="dl-item"
+          label="Start program"
+          value={startProgramValue(subscription)}
+        />
         <Reading as="dl-item" label={period.term} value={period.value} />
       </dl>
 

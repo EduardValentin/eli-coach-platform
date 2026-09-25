@@ -106,7 +106,7 @@ export type JourneyOnboarding = OnboardingDraft & {
   submittedAt: Date | null;
 };
 
-export type ReviewStage = Extract<JourneyStage, 'reviewing' | 'approved'>;
+export type ReviewStage = Extract<JourneyStage, 'reviewing'>;
 
 export type DetailRequest = {
   questionIds: string[];
@@ -178,16 +178,11 @@ const TRANSITIONS: Record<
   },
   'needs-details': { 'answer-request': 'reviewing' },
   approved: {
-    'request-details': 'needs-details',
     'mark-program-ready': 'program-ready',
   },
   'program-ready': { 'schedule-review-call': 'review-call-scheduled' },
   'review-call-scheduled': {},
 };
-
-function reopenedStage(journey: ClientJourney): ReviewStage {
-  return journey.review.requests.at(-1)?.raisedFrom ?? 'reviewing';
-}
 
 export function advance(
   journey: ClientJourney,
@@ -199,10 +194,7 @@ export function advance(
     return { status: 'rejected', stage: journey.stage, event };
   }
 
-  const stage =
-    event === 'answer-request' ? reopenedStage(journey) : nextStage;
-
-  return { status: 'advanced', journey: { ...journey, stage } };
+  return { status: 'advanced', journey: { ...journey, stage: nextStage } };
 }
 
 export const COACH_STAGE_LABELS: Record<JourneyStage, string> = {

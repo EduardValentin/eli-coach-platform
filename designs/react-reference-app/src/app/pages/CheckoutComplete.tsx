@@ -28,7 +28,7 @@ export function CheckoutComplete() {
   const startSummary =
     startPath === 'immediate'
       ? IMMEDIATE_START_SUMMARY
-      : `Your program will be delivered on ${format(withdrawalDeadline(purchasedAt), 'd MMMM yyyy')} — you can change your mind and start sooner from your account`;
+      : `After your 14-day withdrawal period — Eli starts working on your program on ${format(withdrawalDeadline(purchasedAt), 'd MMMM yyyy')}. You can let her start sooner from your account`;
 
   return (
     <main

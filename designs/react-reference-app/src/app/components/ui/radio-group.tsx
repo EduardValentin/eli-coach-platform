@@ -19,12 +19,13 @@ function RadioGroup({
   );
 }
 
-function RadioGroupItem({
-  className,
-  ...props
-}: React.ComponentProps<typeof RadioGroupPrimitive.Item>) {
+const RadioGroupItem = React.forwardRef<
+  React.ElementRef<typeof RadioGroupPrimitive.Item>,
+  React.ComponentPropsWithoutRef<typeof RadioGroupPrimitive.Item>
+>(function RadioGroupItem({ className, ...props }, ref) {
   return (
     <RadioGroupPrimitive.Item
+      ref={ref}
       data-slot="radio-group-item"
       className={cn(
         "border-border-subtle bg-surface-base data-[state=checked]:border-primary aspect-square size-5 shrink-0 rounded-full border shadow-soft outline-none transition-[background-color,border-color,box-shadow] disabled:cursor-not-allowed disabled:opacity-50",
@@ -40,6 +41,6 @@ function RadioGroupItem({
       </RadioGroupPrimitive.Indicator>
     </RadioGroupPrimitive.Item>
   );
-}
+});
 
 export { RadioGroup, RadioGroupItem };

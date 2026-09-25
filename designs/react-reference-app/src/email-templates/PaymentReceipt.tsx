@@ -43,7 +43,7 @@ const START_PATH_COPY: Record<PaymentReceiptVariant, string> = {
   immediate:
     'You asked to start as soon as your payment cleared, so your coach begins building your program straight away.',
   waiting:
-    'You kept your 14-day right to withdraw, so your program is delivered once those 14 days have passed.',
+    'You kept your 14-day right to withdraw, so Eli starts working on your program once those 14 days have passed and delivers it as soon as it is completed.',
 };
 
 const RENEWAL_TERM = 'Renews every';

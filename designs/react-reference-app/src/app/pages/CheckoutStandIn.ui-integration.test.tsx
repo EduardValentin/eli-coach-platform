@@ -116,7 +116,7 @@ describe('the Stripe checkout stand-in', () => {
     expect(screen.getByText('Every 3 months')).toBeVisible();
     expect(
       screen.getByText(
-        'Starts 14 days after payment, unless you ask to start sooner',
+        'Eli starts working on your program 14 days after payment, unless you let her start sooner',
       ),
     ).toBeVisible();
     expect(screen.getByLabelText('Card number')).toBeDisabled();

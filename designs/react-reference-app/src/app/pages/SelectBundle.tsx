@@ -1,15 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router';
 import { AlertCircle, Calendar, X } from 'lucide-react';
 import { Navbar } from '../components/Navbar';
 import { BundleSelector } from '../components/BundleSelector';
 import { LegalFooter } from '../components/legal/LegalNav';
-import { Checkbox } from '../components/ui/checkbox';
-import { Label } from '../components/ui/label';
+import { StartChoice } from '../components/StartChoice';
 import { Button } from '../components/ThemeButton';
 import { useAppState } from '../context/AppContext';
 import { useClientJourneys } from '../context/ClientJourneyContext';
 import { bundleById, type BundleId } from '../domain/bundles';
+import type { SubscriptionStartPath } from '../domain/coachingSubscription';
+import { START_CHOICE_REQUIRED } from '../domain/startChoiceCopy';
 import {
   resolvePaymentLink,
   type ResolvedPaymentLink,
@@ -18,9 +19,6 @@ import { createCheckoutSession } from '../services/checkoutService';
 
 const SUBSCRIPTION_NOTE =
   'Each bundle is a subscription: it renews at its own length — every 1, 3 or 6 months — and each renewal is charged up front.';
-
-const WAIVER_LABEL =
-  'Start my program as soon as my payment clears. I understand that by ticking this I give up my 14-day right to withdraw and to a refund.';
 
 const CANCELLED_NOTICE =
   "No payment was taken. Pick a bundle whenever you're ready.";
@@ -35,7 +33,9 @@ export function SelectBundle() {
 
   const token = searchParams.get('token') ?? '';
   const [link, setLink] = useState<PaymentLinkResolution>({ status: 'loading' });
-  const [startsImmediately, setStartsImmediately] = useState(false);
+  const [startPath, setStartPath] = useState<SubscriptionStartPath | null>(null);
+  const [startPathMissing, setStartPathMissing] = useState(false);
+  const firstStartOption = useRef<HTMLButtonElement>(null);
   const [opening, setOpening] = useState(false);
   const [cancelledNoticeShown, setCancelledNoticeShown] = useState(
     searchParams.get('payment') === 'cancelled',
@@ -72,13 +72,24 @@ export function SelectBundle() {
     setSearchParams(next, { replace: true });
   };
 
+  const chooseStartPath = (chosen: SubscriptionStartPath) => {
+    setStartPath(chosen);
+    setStartPathMissing(false);
+  };
+
   const openCheckout = async (bundleId: BundleId) => {
+    if (!startPath) {
+      setStartPathMissing(true);
+      firstStartOption.current?.focus();
+      return;
+    }
+
     setOpening(true);
 
     try {
       const session = await createCheckoutSession(token, {
         bundle: bundleById(bundleId).months,
-        startPath: startsImmediately ? 'immediate' : 'waiting',
+        startPath,
       });
       navigate(`/checkout/${session.sessionId}`);
     } finally {
@@ -160,27 +171,13 @@ export function SelectBundle() {
               disabled={!isValidToken}
               busy={opening}
               note={SUBSCRIPTION_NOTE}
-              payFooter={
-                <div className="flex items-start gap-3">
-                  <Checkbox
-                    checked={startsImmediately}
-                    className="mt-0.5"
-                    id="start-immediately"
-                    onCheckedChange={(checked) => setStartsImmediately(checked === true)}
-                  />
-                  <Label
-                    className="block text-sm font-normal leading-relaxed text-copy-muted"
-                    htmlFor="start-immediately"
-                  >
-                    {WAIVER_LABEL}{' '}
-                    <Link
-                      className="font-medium text-brand underline underline-offset-4 hover:text-brand-hover"
-                      to="/terms#immediate-digital-delivery-and-withdrawal"
-                    >
-                      See how this works in the terms
-                    </Link>
-                  </Label>
-                </div>
+              beforeCheckout={
+                <StartChoice
+                  error={startPathMissing ? START_CHOICE_REQUIRED : null}
+                  firstOptionRef={firstStartOption}
+                  onChange={chooseStartPath}
+                  value={startPath}
+                />
               }
             />
           </div>

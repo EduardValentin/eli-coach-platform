@@ -1,3 +1,4 @@
+import { Heart } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { Button } from '../../components/ui/button';
 import { cardVariants } from '../../components/ui/card';
@@ -47,7 +48,13 @@ export function ClientWelcome() {
         </h1>
 
         <p className="mt-5 text-lg leading-relaxed text-text-primary">
-          {OPENING}
+          {OPENING}{' '}
+          <Heart
+            aria-hidden="true"
+            fill="currentColor"
+            size="0.9em"
+            className="ml-0.5 inline align-[-0.1em] text-brand animate-heartbeat motion-reduce:animate-none"
+          />
         </p>
 
         <div className="mt-4 grid gap-4 text-base leading-relaxed text-text-secondary">

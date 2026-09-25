@@ -1,14 +1,14 @@
 import { useCallback } from 'react';
 import { useClientJourneys } from '../context/ClientJourneyContext';
 import {
-  canDeliverProgram,
-  deliveryDate,
+  canStartWork,
+  workStartDate,
 } from '../domain/coachingSubscription';
 import { useJourneyClient } from './useJourneyClient';
 
 export type ProgramDelivery = {
   status: 'no-journey' | 'ready' | 'waiting';
-  deliverOn: Date | null;
+  workStartsOn: Date | null;
   deliver: () => void;
 };
 
@@ -17,22 +17,22 @@ export function useProgramDelivery(clientId: string): ProgramDelivery {
   const journey = useJourneyClient(clientId);
   const callId = journey?.callId ?? null;
   const subscription = journey?.subscription;
-  const ready = subscription ? canDeliverProgram(subscription, new Date()) : false;
+  const ready = subscription ? canStartWork(subscription, new Date()) : false;
 
   const deliver = useCallback(() => {
     if (!callId || !subscription) return;
-    if (!canDeliverProgram(subscription, new Date())) return;
+    if (!canStartWork(subscription, new Date())) return;
 
     markProgramReady(callId, new Date());
   }, [callId, subscription, markProgramReady]);
 
   if (!journey || !subscription) {
-    return { status: 'no-journey', deliverOn: null, deliver };
+    return { status: 'no-journey', workStartsOn: null, deliver };
   }
 
   return {
     status: ready ? 'ready' : 'waiting',
-    deliverOn: deliveryDate(subscription),
+    workStartsOn: workStartDate(subscription),
     deliver,
   };
 }

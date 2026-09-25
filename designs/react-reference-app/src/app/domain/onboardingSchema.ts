@@ -1,5 +1,4 @@
 import type { JourneySex, OnboardingFormId } from './journey';
-import { CYCLE_CONFIDENTIALITY_NOTICE } from './onboardingCopy';
 
 export type OnboardingFieldKind =
   | 'text'
@@ -68,7 +67,6 @@ export type OnboardingFormDefinition = {
   intro: OnboardingFormIntro;
   audience: FormAudience;
   sensitivity: FormSensitivity;
-  notice?: string;
   footnote?: string;
   fields: OnboardingField[];
 };
@@ -155,7 +153,7 @@ const GOAL_FORM: OnboardingFormDefinition = {
     },
     {
       id: 'goalWeight',
-      label: 'Goal weight',
+      label: 'Target weight',
       kind: 'weight',
       requirement: 'required',
       range: WEIGHT_RANGE_KG,
@@ -295,7 +293,6 @@ const SAFETY_FORM: OnboardingFormDefinition = {
   },
   audience: 'everyone',
   sensitivity: 'special-category',
-  footnote: 'Adapted from the PAR-Q+ © 2026 PAR-Q+ Collaboration',
   fields: [
     yesNo(
       'heartCondition',
@@ -333,7 +330,7 @@ const SAFETY_FORM: OnboardingFormDefinition = {
     },
     yesNo(
       'boneOrJointProblem',
-      'Do you currently have (or have had within the past 12 months) a bone, joint, or soft tissue (muscle, ligament, or tendon) problem that could be made worse by becoming more physically active? Please answer NO if you had a problem in the past, but it does not limit your current ability to be physically active.',
+      'Do you currently have (or have had within the past 12 months) a bone, joint, or soft tissue (muscle, ligament, or tendon) problem that could be made worse by becoming more physically active?\nPlease answer NO if you had a problem in the past, but it does not limit your current ability to be physically active.',
     ),
     {
       id: 'boneOrJointProblemList',
@@ -357,12 +354,11 @@ const SAFETY_FORM: OnboardingFormDefinition = {
 
 const CYCLE_FORM: OnboardingFormDefinition = {
   id: 'cycle-context',
-  title: 'Your cycle and hormonal context',
+  title: 'Your cycle and hormonal health',
   intro:
-    'Your cycle can affect your energy, your sleep and how you feel from one week to the next. Knowing where you are in it lets me build a plan that works with those weeks instead of against them.',
+    'Your cycle can affect your energy, your sleep and how you feel from one week to the next. Knowing where you are in it lets me build a plan that works with those weeks.',
   audience: 'female',
   sensitivity: 'special-category',
-  notice: CYCLE_CONFIDENTIALITY_NOTICE,
   fields: [
     {
       id: 'cycleRegularity',
@@ -555,7 +551,7 @@ const LIFESTYLE_FORM: OnboardingFormDefinition = {
   fields: [
     {
       id: 'eatingStyle',
-      label: 'How you eat',
+      label: 'Current diet',
       kind: 'select',
       requirement: 'required',
       section: HOW_YOU_EAT_SECTION,
@@ -794,7 +790,7 @@ const MEASUREMENTS_FORM: OnboardingFormDefinition = {
       label: 'Waist',
       kind: 'circumference',
       requirement: 'required',
-      hint: "Narrowest point, usually just above the navel. Relaxed, don't pull the tape tight.",
+      hint: "Narrowest point, usually just above the belly button. Relaxed, don't pull the tape tight.",
       range: { min: 40, max: 200 },
     },
     {

@@ -34,7 +34,7 @@ interface BundleSelectorProps {
   disabled?: boolean;
   busy?: boolean;
   note?: ReactNode;
-  payFooter?: ReactNode;
+  beforeCheckout?: ReactNode;
 }
 
 export function BundleSelector({
@@ -44,7 +44,7 @@ export function BundleSelector({
   disabled = false,
   busy = false,
   note,
-  payFooter,
+  beforeCheckout,
 }: BundleSelectorProps) {
   const [selectedBundleId, setSelectedBundleId] = useState<BundleId | null>(
     mode === 'checkout' ? DEFAULT_BUNDLE_ID : null
@@ -199,6 +199,10 @@ export function BundleSelector({
           transition={{ delay: 0.4 }}
           className="flex flex-col items-center"
         >
+          {beforeCheckout && (
+            <div className="mb-8 w-full max-w-xl">{beforeCheckout}</div>
+          )}
+
           <button
             onClick={handleCheckoutClick}
             disabled={!selectedBundleId || busy}
@@ -208,7 +212,6 @@ export function BundleSelector({
             {busy ? 'Opening checkout…' : 'Continue to Checkout'}
           </button>
 
-          {payFooter && <div className="mt-6 w-full max-w-xl">{payFooter}</div>}
         </motion.div>
       )}
     </div>

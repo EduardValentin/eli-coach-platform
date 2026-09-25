@@ -53,7 +53,6 @@ describe('advancing a journey', () => {
     ['reviewing', 'approve-answers', 'approved'],
     ['reviewing', 'mark-program-ready', 'program-ready'],
     ['approved', 'mark-program-ready', 'program-ready'],
-    ['approved', 'request-details', 'needs-details'],
     ['program-ready', 'schedule-review-call', 'review-call-scheduled'],
   ];
 
@@ -83,30 +82,18 @@ describe('advancing a journey', () => {
     expect([flagged, answered]).toEqual(['needs-details', 'reviewing']);
   });
 
-  it('returns her to the approved answers once she has answered a reopened review', () => {
+  it('refuses to reopen review once the answers are approved', () => {
     // arrange
-    const journey = journeyAt('needs-details');
-    const reopened = {
-      ...journey,
-      review: {
-        requests: [
-          {
-            questionIds: ['sleepHours'],
-            message: 'One more thing about your sleep.',
-            createdAt: new Date(2026, 8, 20, 9),
-            raisedFrom: 'approved' as const,
-          },
-        ],
-      },
-    };
+    const journey = journeyAt('approved');
 
     // act
-    const transition = advance(reopened, 'answer-request');
+    const transition = advance(journey, 'request-details');
 
     // assert
     expect(transition).toEqual({
-      status: 'advanced',
-      journey: { ...reopened, stage: 'approved' },
+      status: 'rejected',
+      stage: 'approved',
+      event: 'request-details',
     });
   });
 

@@ -14,8 +14,8 @@ import { ConfirmDialog } from '../ui/confirm-dialog';
 import { cn } from '../ui/utils';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
 import {
-  canDeliverProgram,
-  deliveryDate,
+  canStartWork,
+  workStartDate,
   type CoachingSubscription,
 } from '../../domain/coachingSubscription';
 import { formatRatio, waistToHeightRatio } from '../../domain/bodyMetrics';
@@ -56,7 +56,6 @@ const BUILD_ACTION = 'Build her program';
 const REVIEW_ACTIONS: Partial<Record<JourneyStage, string>> = {
   submitted: 'Review answers',
   reviewing: 'Continue review',
-  approved: 'Review again',
 };
 
 export type ReviewSession = {
@@ -303,21 +302,21 @@ function RequestStatus({ request }: { request: DetailRequest }) {
   );
 }
 
-function DeliveryNote({
+function WorkStartNote({
   subscription,
 }: {
   subscription: CoachingSubscription | undefined;
 }) {
-  const deliverOn =
-    subscription && !canDeliverProgram(subscription, new Date())
-      ? deliveryDate(subscription)
+  const startsOn =
+    subscription && !canStartWork(subscription, new Date())
+      ? workStartDate(subscription)
       : null;
 
-  if (!deliverOn) return null;
+  if (!startsOn) return null;
 
   return (
     <p className="text-xs text-text-secondary">
-      Her program will be delivered on {formatJourneyDate(deliverOn)}.
+      You can start building her program on {formatJourneyDate(startsOn)}.
     </p>
   );
 }
@@ -341,6 +340,8 @@ function StageActions({
   const isPostMvp = appState.prototypeMode === 'post-mvp';
   const canApprove =
     journey.stage === 'submitted' || journey.stage === 'reviewing';
+  const canBuild =
+    !journey.subscription || canStartWork(journey.subscription, new Date());
 
   if (!isPostMvp && !reviewAction) return null;
 
@@ -352,7 +353,7 @@ function StageActions({
             {reviewAction}
           </Button>
         )}
-        {isPostMvp && (
+        {isPostMvp && canBuild && (
           <Button variant="primary" asChild>
             <Link to={`/coach/training/builder/${clientId}`}>
               {BUILD_ACTION}
@@ -365,7 +366,7 @@ function StageActions({
           </Button>
         )}
       </div>
-      {isPostMvp && <DeliveryNote subscription={journey.subscription} />}
+      {isPostMvp && <WorkStartNote subscription={journey.subscription} />}
     </div>
   );
 }
@@ -412,7 +413,7 @@ export function OnboardingPanel({
       questionIds: flagged ?? [],
       message: note,
       createdAt: new Date(),
-      raisedFrom: journey.stage === 'approved' ? 'approved' : 'reviewing',
+      raisedFrom: 'reviewing',
     });
     setFlagged(null);
   };
@@ -482,7 +483,7 @@ export function OnboardingPanel({
         open={confirmApproveOpen}
         onOpenChange={setConfirmApproveOpen}
         title={`Approve ${journey.identity.firstName}'s answers?`}
-        description="You can still ask for more details later from her onboarding."
+        description="You won't be able to ask for more details once you approve."
         confirmLabel="Approve"
         onConfirm={confirmApprove}
       />

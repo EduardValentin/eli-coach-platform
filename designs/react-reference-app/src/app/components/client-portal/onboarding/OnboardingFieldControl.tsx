@@ -170,9 +170,15 @@ function LabelText({
     field.requirement === 'optional' ? OPTIONAL_SUFFIX : null,
   ].filter((part): part is string => part !== null);
 
+  const lines = field.label.split('\n');
+
   return (
     <>
-      {field.label}
+      {lines.map((line, index) => (
+        <span className={index > 0 ? 'block' : undefined} key={line}>
+          {line}
+        </span>
+      ))}
       {suffixes.map((suffix) => (
         <span key={suffix} className="font-normal text-text-secondary">
           {suffix}

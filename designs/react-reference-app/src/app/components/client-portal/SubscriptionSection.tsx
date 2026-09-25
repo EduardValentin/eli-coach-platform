@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { CreditCard } from 'lucide-react';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
 import {
-  canDeliverProgram,
-  deliveryDate,
+  canStartWork,
+  workStartDate,
   deriveStatus,
   type CoachingSubscription,
   type SubscriptionStatus,
@@ -42,7 +42,7 @@ function cancellationFacts(periodEndsAt: Date | undefined): string {
 }
 
 function refundFacts(subscription: CoachingSubscription): string {
-  const deadline = deliveryDate(subscription);
+  const deadline = workStartDate(subscription);
   const until = deadline ? `Until ${formatJourneyDate(deadline)} you` : 'You';
 
   return `${until} can cancel for a full refund. Your access ends right away.`;
@@ -52,7 +52,7 @@ function cancelAction(
   subscription: CoachingSubscription,
   now: Date,
 ): string | null {
-  if (!canDeliverProgram(subscription, now)) return REFUND_CANCEL_LABEL;
+  if (!canStartWork(subscription, now)) return REFUND_CANCEL_LABEL;
 
   return deriveStatus(subscription, now) === 'active' ? CANCEL_LABEL : null;
 }
@@ -108,7 +108,7 @@ export function SubscriptionSection() {
   const status = deriveStatus(subscription, now);
   if (status === 'ended') return null;
 
-  const refundable = !canDeliverProgram(subscription, now);
+  const refundable = !canStartWork(subscription, now);
   const action = cancelAction(subscription, now);
   const renewal = renewalRow(subscription, status);
 
