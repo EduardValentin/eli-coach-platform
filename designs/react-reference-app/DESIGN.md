@@ -37,7 +37,7 @@ The production source of truth is `packages/ui/src/styles.css` for tokens and, f
 | `Select` and its compound parts | Styled Radix selection control. Its trigger carries an explicit `tabindex="0"`, as does every button that stands in for a form field (`DateFieldTrigger`, the booking form's date-of-birth trigger): Safari's default Tab order visits text fields only and skips buttons without one | Trigger `size`: `sm` (40px), `md` (48px), the same axis as `Input` |
 | `TextArea` | Multi-line form control with the `Input` look | No variants |
 | `FilterChipGroup`, `FilterChip` | Filter chips offering one choice per group | `tone`: `brand`, `brand-secondary` |
-| `DateField`, `DateRangeField` | Popover date pickers built on `BrandCalendar`, sharing one `DateFieldTrigger`: the 48px field trigger with its muted calendar glyph. `DateField` picks one day and is reference app only; `DateRangeField` picks an inclusive span, closes the popover on the second pick, and is production only, where the coach assessment-calls Custom filter composes it with `DateFieldTrigger` from `packages/ui/src/calendar` | No variants |
+| `DateField` | Popover date picker built on `BrandCalendar` over `DateFieldTrigger`: the 48px field trigger with its muted calendar glyph, picking one day. Reference app only | No variants |
 | `PortalPageHeader` | The one page header of both portals: a serif `<h1>`, an optional subtitle and an optional action slot, with the gap to the content set once | No variants |
 | `SidebarSurfaceLayout` | Portal shell with sidebar navigation and main content | No variants |
 | `PortalShell` | Portal chrome: sidebar, mobile top bar and navigation, main landmark | No variants |
