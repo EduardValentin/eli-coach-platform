@@ -3,7 +3,7 @@ import { RowActionLink } from '../RowActionButton';
 
 type JoinCallTone = 'default' | 'live';
 
-const ROW_ACTION_TONE_BY_TONE: Record<JoinCallTone, 'default' | 'primary'> = {
+const ROW_ACTION_TONE_BY_JOIN_CALL_TONE: Record<JoinCallTone, 'default' | 'primary'> = {
   default: 'default',
   live: 'primary',
 };
@@ -19,7 +19,7 @@ export function JoinCallLink({
     <RowActionLink
       to={joinPath}
       icon={Video}
-      tone={ROW_ACTION_TONE_BY_TONE[tone]}
+      tone={ROW_ACTION_TONE_BY_JOIN_CALL_TONE[tone]}
     >
       Join call
     </RowActionLink>
