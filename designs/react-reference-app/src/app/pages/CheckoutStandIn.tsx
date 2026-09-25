@@ -20,7 +20,7 @@ const HOSTED_PAGE_NOTE =
 
 const START_PATH_SUMMARY: Record<SubscriptionStartPath, string> = {
   immediate: 'Starts as soon as your payment clears',
-  waiting: 'Starts 14 days after payment, unless you ask to start sooner',
+  waiting: 'Eli starts working on your program 14 days after payment, unless you let her start sooner',
 };
 
 const CARD_FIELDS = [

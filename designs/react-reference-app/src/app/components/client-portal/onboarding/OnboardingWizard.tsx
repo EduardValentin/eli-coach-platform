@@ -254,21 +254,21 @@ export function OnboardingWizard() {
 
   return (
     <>
-      <div className="mb-6 grid gap-2">
-        <div className="flex items-end justify-between gap-4">
-          <Stepper
-            className="w-full max-w-xs"
-            current={stepIndex + 1}
-            total={steps.length}
-          />
-          <p
-            aria-live="polite"
-            className="shrink-0 text-caption font-medium text-text-secondary"
-            role="status"
-          >
-            {SAVE_LABELS[saveState]}
-          </p>
-        </div>
+      <div className="mb-6 grid gap-2 px-6 sm:px-8 lg:px-10">
+        <Stepper
+          className="w-full"
+          current={stepIndex + 1}
+          total={steps.length}
+          status={
+            <p
+              aria-live="polite"
+              className="shrink-0 text-caption font-medium text-text-secondary"
+              role="status"
+            >
+              {SAVE_LABELS[saveState]}
+            </p>
+          }
+        />
         {savedDraft && (
           <p className="text-sm text-text-secondary" role="status">
             {RESUME_NOTE}

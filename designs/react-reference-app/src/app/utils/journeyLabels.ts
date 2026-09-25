@@ -3,7 +3,7 @@ import { bundleLengthLabel } from '../domain/bundles';
 import { DEMO_JOURNEY_CALL_ID } from '../context/ClientJourneyContext';
 import type { ClientJourney } from '../domain/journey';
 import {
-  deliveryDate,
+  workStartDate,
   type CoachingSubscription,
   type SubscriptionStatus,
 } from '../domain/coachingSubscription';
@@ -38,10 +38,10 @@ export function startPathLabel(
 ): string | null {
   if (!subscription) return null;
 
-  const delivery = deliveryDate(subscription);
+  const workStart = workStartDate(subscription);
 
-  return delivery
-    ? `Starts on ${formatJourneyDate(delivery)}`
+  return workStart
+    ? `After the 14 days (${formatJourneyDate(workStart)})`
     : IMMEDIATE_START_LABEL;
 }
 

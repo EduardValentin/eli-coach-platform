@@ -15,6 +15,7 @@ import {
 import {
   periodEnd,
   resolveDay1,
+  WITHDRAWAL_WINDOW_DAYS,
   type CoachingSubscription,
   type SubscriptionStartPath,
   type SubscriptionStatus,
@@ -237,6 +238,18 @@ function seedSubscription(seed: SubscriptionSeed): CoachingSubscription {
   return { ...base, day1, periodEndsAt };
 }
 
+function seededPaidAt(
+  startPath: SubscriptionStartPath,
+  stage: JourneyStage,
+  now: Date,
+): Date {
+  if (startPath === 'waiting' && !isBeforeStage(stage, 'program-ready')) {
+    return subDays(now, WITHDRAWAL_WINDOW_DAYS + 2);
+  }
+
+  return subDays(now, 5);
+}
+
 export function seedJourney(seed: JourneySeed): ClientJourney {
   const {
     callId,
@@ -249,9 +262,9 @@ export function seedJourney(seed: JourneySeed): ClientJourney {
   } = seed;
   const reached = (target: JourneyStage) => !isBeforeStage(stage, target);
 
-  const paymentLinkSentAt = subDays(now, 6);
-  const paidAt = subDays(now, 5);
-  const invitedAt = subDays(now, 5);
+  const paidAt = seededPaidAt(startPath, stage, now);
+  const paymentLinkSentAt = subDays(paidAt, 1);
+  const invitedAt = paidAt;
   const submittedAt = subDays(now, 3);
   const programReadyAt = subDays(now, 1);
 

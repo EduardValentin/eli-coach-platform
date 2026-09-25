@@ -124,7 +124,7 @@ describe('the coach clients list', () => {
 
     // assert
     expect(
-      within(rowFor('Jane Doe')).queryByText('Starts on 30 September'),
+      within(rowFor('Jane Doe')).queryByText(/^After the 14 days \(/),
     ).not.toBeInTheDocument();
   });
 

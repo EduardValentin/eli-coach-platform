@@ -50,30 +50,30 @@ export function resolveDay1({
   programReadyAt,
   startPath,
 }: Day1Request): Date | null {
-  const deadline = withdrawalDeadline(purchasedAt);
-
-  if (startPath === 'waiting') return deadline;
   if (programReadyAt === null) return null;
+  if (startPath === 'waiting') return programReadyAt;
+
+  const deadline = withdrawalDeadline(purchasedAt);
 
   return programReadyAt.getTime() < deadline.getTime()
     ? programReadyAt
     : deadline;
 }
 
-export function deliveryDate(subscription: CoachingSubscription): Date | null {
+export function workStartDate(subscription: CoachingSubscription): Date | null {
   if (subscription.startPath !== 'waiting') return null;
 
   return withdrawalDeadline(subscription.purchasedAt);
 }
 
-export function canDeliverProgram(
+export function canStartWork(
   subscription: CoachingSubscription,
   now: Date,
 ): boolean {
-  const delivery = deliveryDate(subscription);
-  if (delivery === null) return true;
+  const workStart = workStartDate(subscription);
+  if (workStart === null) return true;
 
-  return now.getTime() >= delivery.getTime();
+  return now.getTime() >= workStart.getTime();
 }
 
 export function periodEnd(
@@ -108,7 +108,7 @@ export function cancel(
   subscription: CoachingSubscription,
   now: Date,
 ): SubscriptionCancellation {
-  if (!canDeliverProgram(subscription, now)) {
+  if (!canStartWork(subscription, now)) {
     return {
       subscription: {
         ...subscription,

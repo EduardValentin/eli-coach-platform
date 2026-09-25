@@ -121,11 +121,23 @@ describe('the coach view of a client in onboarding', () => {
 
     // assert
     expect(
-      within(pageHeader()).queryByText(/^Starts on /),
+      within(pageHeader()).queryByText(/^After the 14 days \(/),
     ).not.toBeInTheDocument();
     expect(
-      within(subscriptionPanel()).getByText(/^Starts on /),
+      within(subscriptionPanel()).getByText(/^After the 14 days \(\d{1,2} \w+\)$/),
     ).toBeInTheDocument();
+  });
+
+  it('leaves the program start blank in the subscription panel until her program is ready', () => {
+    // arrange
+    const urlQuery = '?jstage=submitted&jstart=waiting';
+
+    // act
+    renderDetails(urlQuery);
+
+    // assert
+    const startProgram = within(subscriptionPanel()).getByText('Start program');
+    expect(startProgram.nextElementSibling).toHaveTextContent(/^—$/);
   });
 
   it('shows the journey status only inside the onboarding widget', () => {
@@ -155,7 +167,7 @@ describe('the coach view of a client in onboarding', () => {
     ).toHaveTextContent('2 of 4 answered');
     expect(
       within(widget).getByRole('button', {
-        name: /Your cycle and hormonal context/,
+        name: /Your cycle and hormonal health/,
       }),
     ).toBeInTheDocument();
   });
@@ -373,57 +385,37 @@ describe('the coach view of a client in onboarding', () => {
     expect(
       within(widget).getByRole('link', { name: 'Build her program' }),
     ).toBeInTheDocument();
-    expect(
-      within(widget).getByRole('button', { name: 'Review again' }),
-    ).toBeInTheDocument();
   });
 
-  it('reopens the approved answers without offering to approve them twice', async () => {
+  it('offers no way to reopen review once approved', () => {
     // arrange
-    const user = renderDetails('?jstage=approved');
+    const urlQuery = '?jstage=approved';
 
     // act
-    await user.click(screen.getByRole('button', { name: 'Review again' }));
+    renderDetails(urlQuery);
 
     // assert
-    const dialog = reviewDialog();
+    const widget = onboardingWidget();
+    expect(within(widget).getByText('Approved')).toBeInTheDocument();
     expect(
-      within(dialog).getByRole('checkbox', { name: 'Flag Sleep hours' }),
-    ).not.toBeChecked();
-    expect(screen.getByText('Approved')).toBeInTheDocument();
-    expect(
-      within(dialog).queryByRole('button', { name: 'Approve answers' }),
+      within(widget).queryByRole('button', { name: /review/i }),
     ).not.toBeInTheDocument();
   });
 
-  it('brings her back to the approved answers after a reopened question', async () => {
+  it('hides the build action and explains the wait on the withdrawal-window path', () => {
     // arrange
-    const user = renderDetails('?jstage=approved');
-    await user.click(screen.getByRole('button', { name: 'Review again' }));
-    const reopened = reviewDialog();
-    await user.click(
-      within(reopened).getByRole('checkbox', { name: 'Flag Sleep hours' }),
-    );
-    await user.type(
-      within(reopened).getByRole('textbox', { name: 'What is missing?' }),
-      'Tell me more about your sleep.',
-    );
+    const urlQuery = '?jstage=approved&jstart=waiting';
 
     // act
-    await user.click(
-      within(reopened).getByRole('button', { name: 'Ask for more details' }),
-    );
+    renderDetails(urlQuery);
 
     // assert
+    const widget = onboardingWidget();
     expect(
-      within(onboardingWidget()).getByText('Needs more details'),
-    ).toBeInTheDocument();
-
-    await user.click(
-      screen.getByRole('button', { name: 'stand in for her answer' }),
-    );
+      within(widget).queryByRole('link', { name: 'Build her program' }),
+    ).not.toBeInTheDocument();
     expect(
-      within(onboardingWidget()).getByText('Approved'),
+      within(widget).getByText(/You can start building her program on/),
     ).toBeInTheDocument();
   });
 

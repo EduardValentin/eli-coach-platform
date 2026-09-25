@@ -230,10 +230,6 @@ export function OnboardingFormCard({
         {resolveIntro(definition.intro, sex)}
       </p>
 
-      {definition.notice && (
-        <p className="mt-4 text-sm text-text-secondary">{definition.notice}</p>
-      )}
-
       {consent && <div className="mt-5">{consent}</div>}
 
       {unitsChoice && <div className="mt-7">{unitsChoice}</div>}
