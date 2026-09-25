@@ -2,7 +2,6 @@ import {
   AppointmentCard,
   type AppointmentDetail,
 } from "@eli-coach-platform/ui/appointments";
-import { DateRangeField } from "@eli-coach-platform/ui/calendar";
 import { cn } from "@eli-coach-platform/ui/lib";
 import { EmptyState } from "@eli-coach-platform/ui/portal";
 import {
@@ -34,7 +33,7 @@ import {
   classifyCalls,
   emptyListingCopy,
   filterCalls,
-  hasClearableFilters,
+  hasSearchQuery,
   orderCallsBy,
   pageOfCalls,
   PAGE_SIZE,
@@ -52,17 +51,13 @@ import { SortControl } from "./sort-control";
 import { useCallListingParams } from "./use-call-listing-params";
 
 const SEARCH_FIELD_ID = "assessment-call-search";
-const RANGE_YEARS_AROUND_NOW = 1;
 
 const STATUS_TABS: readonly { label: string; status: CoachCallStatus }[] = [
   { label: "All", status: "all" },
   { label: "Today", status: "today" },
   { label: "Upcoming", status: "upcoming" },
   { label: "Past", status: "past" },
-  { label: "Custom", status: "custom" },
 ];
-
-const NO_RANGE = { from: null, to: null } as const;
 
 type AssessmentCallsSectionProps = {
   calls: readonly CoachAssessmentCall[];
@@ -77,31 +72,22 @@ export function AssessmentCallsSection({
 }: AssessmentCallsSectionProps) {
   const {
     changeQuery,
-    chooseRange,
     chooseSortKey,
     chooseStatus,
     page,
     pathForPage,
     query,
-    range,
     sort,
     status,
     toggleSortDirection,
   } = useCallListingParams();
-  const selection: ListingSelection = { query, range, status };
+  const selection: ListingSelection = { query, status };
   const classified = classifyCalls(calls, { now, timeZone });
-  const matching = orderCallsBy(
-    filterCalls(classified, selection),
-    sort,
-    status,
-  );
+  const matching = orderCallsBy(filterCalls(classified, selection), sort);
   const view = pageOfCalls(matching, { page, size: PAGE_SIZE });
   const emptyCopy = emptyListingCopy(selection);
 
-  const clearFilters = () => {
-    changeQuery("");
-    chooseRange(NO_RANGE);
-  };
+  const clearFilters = () => changeQuery("");
 
   return (
     <div
@@ -123,21 +109,6 @@ export function AssessmentCallsSection({
                 </TabsTrigger>
               ))}
             </TabsList>
-
-            {status === "custom" && (
-              <DateRangeField
-                aria-label="Date range"
-                className="w-full"
-                size="sm"
-                data-parity-root="DateRangeField"
-                onChange={chooseRange}
-                value={range}
-                yearRange={{
-                  from: now.getFullYear() - RANGE_YEARS_AROUND_NOW,
-                  to: now.getFullYear() + RANGE_YEARS_AROUND_NOW,
-                }}
-              />
-            )}
           </div>
 
           <div className="grid w-full gap-3 sm:w-fit sm:max-w-full">
@@ -165,7 +136,7 @@ export function AssessmentCallsSection({
             emptyCopy={emptyCopy}
             moment={{ now, timeZone }}
             onClearFilters={
-              hasClearableFilters(selection) ? clearFilters : undefined
+              hasSearchQuery(selection) ? clearFilters : undefined
             }
             pathForPage={pathForPage}
             view={view}

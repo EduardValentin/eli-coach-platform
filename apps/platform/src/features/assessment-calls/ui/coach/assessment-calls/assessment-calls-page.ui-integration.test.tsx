@@ -152,7 +152,6 @@ describe("the coach's assessment calls page", () => {
       "Today",
       "Upcoming",
       "Past",
-      "Custom",
     ]);
   });
 
@@ -616,103 +615,6 @@ describe("sorting the coach's assessment calls", () => {
 
     // assert
     expect(shownCallNames()).toEqual(["Bea Ionescu", "Carla Marin"]);
-  });
-});
-
-describe("narrowing the coach's assessment calls to a date range", () => {
-  it("offers the date range picker only under Custom", async () => {
-    // arrange
-    const { router, user } = await renderCallsRouter();
-    expect(
-      screen.queryByRole("button", { name: "Date range" }),
-    ).not.toBeInTheDocument();
-
-    // act
-    await user.click(screen.getByRole("tab", { name: "Custom" }));
-
-    // assert
-    await waitFor(() => {
-      expect(router.state.location.search).toBe("?status=custom");
-    });
-    expect(
-      screen.getByRole("button", { name: "Date range" }),
-    ).toHaveTextContent("Pick dates");
-  });
-
-  it("lists the calls on both boundary days, soonest first", async () => {
-    // arrange, act
-    await renderCallsPage({
-      url: `${COACH_ASSESSMENT_CALLS_PATH}?status=custom&from=2026-09-19&to=2026-09-20`,
-    });
-
-    // assert
-    expect(
-      screen.getByRole("tab", { name: "Custom", selected: true }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Date range" }),
-    ).toHaveTextContent("19 Sep – 20 Sep 2026");
-    expect(shownCallNames()).toEqual([
-      "Bea Ionescu",
-      "Carla Marin",
-      "Ana Popescu",
-    ]);
-  });
-
-  it("names the picked days when nothing falls in them", async () => {
-    // arrange, act
-    await renderCallsPage({
-      url: `${COACH_ASSESSMENT_CALLS_PATH}?status=custom&from=2026-09-01&to=2026-09-02`,
-    });
-
-    // assert
-    expect(screen.getByText("No calls found")).toBeInTheDocument();
-    expect(
-      screen.getByText("No calls between 1 and 2 September."),
-    ).toBeInTheDocument();
-  });
-
-  it("clears a date range that holds no call and stays under Custom", async () => {
-    // arrange
-    const { router, user } = await renderCallsRouter({
-      url: `${COACH_ASSESSMENT_CALLS_PATH}?status=custom&from=2026-09-01&to=2026-09-02`,
-    });
-
-    // act
-    await user.click(screen.getByRole("button", { name: "Clear filters" }));
-
-    // assert
-    await waitFor(() => {
-      expect(router.state.location.search).toBe("?status=custom");
-    });
-    expect(
-      screen.getByRole("button", { name: "Date range" }),
-    ).toHaveTextContent("Pick dates");
-    expect(shownCalls()).toHaveLength(4);
-  });
-
-  it("writes the picked days into the URL and returns to the first page", async () => {
-    // arrange
-    const { router, user } = await renderCallsRouter({
-      url: `${COACH_ASSESSMENT_CALLS_PATH}?status=custom&page=2`,
-    });
-
-    // act
-    await user.click(screen.getByRole("button", { name: "Date range" }));
-    await user.click(
-      screen.getByRole("button", { name: /September 19th, 2026/ }),
-    );
-    await user.click(
-      screen.getByRole("button", { name: /September 20th, 2026/ }),
-    );
-
-    // assert
-    await waitFor(() => {
-      expect(router.state.location.search).toBe(
-        "?status=custom&from=2026-09-19&to=2026-09-20",
-      );
-    });
-    expect(screen.queryByRole("grid")).not.toBeInTheDocument();
   });
 });
 

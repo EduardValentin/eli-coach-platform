@@ -42,21 +42,6 @@ describe("the date range field", () => {
     expect(rangeField()).toHaveTextContent("Pick dates");
   });
 
-  it("shrinks to the small control height when asked", () => {
-    // arrange, act
-    render(
-      <DateRangeField
-        aria-label="Date range"
-        onChange={() => undefined}
-        size="sm"
-        value={NO_RANGE}
-      />,
-    );
-
-    // assert
-    expect(rangeField()).toHaveClass("h-(--size-control-sm)", "text-sm");
-  });
-
   it("stays in Safari's default Tab order like the native field it replaces", () => {
     // arrange, act
     render(<RangeHarness />);

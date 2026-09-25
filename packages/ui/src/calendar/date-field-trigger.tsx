@@ -2,7 +2,7 @@ import { CalendarDays } from "lucide-react";
 import * as React from "react";
 
 import { cn } from "../lib/cn";
-import { fieldSizeClasses, type FieldSize } from "../primitives/field-size";
+import { fieldSizeClasses } from "../primitives/field-size";
 
 const GLYPH_SIZE = 16;
 // Safari's default Tab order visits text fields only and skips buttons unless
@@ -20,20 +20,19 @@ type DateFieldTriggerProps = Omit<
   "children" | "type"
 > & {
   placeholder: string;
-  size?: FieldSize;
   text: string;
 };
 
 export const DateFieldTrigger = React.forwardRef<
   HTMLButtonElement,
   DateFieldTriggerProps
->(({ className, placeholder, size = "md", text, ...buttonProps }, ref) => {
+>(({ className, placeholder, text, ...buttonProps }, ref) => {
   const isEmpty = text.length === 0;
 
   return (
     <button
       ref={ref}
-      className={cn(FIELD_TRIGGER_CLASS, fieldSizeClasses({ size }), className)}
+      className={cn(FIELD_TRIGGER_CLASS, fieldSizeClasses(), className)}
       tabIndex={FIELD_TAB_INDEX}
       type="button"
       {...buttonProps}
