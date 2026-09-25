@@ -28,7 +28,7 @@ export function FilterDropdown({
         <Button variant="outline" size="xs" className="gap-1.5">
           {label}
           {selected.length > 0 && (
-            <Badge variant="count" className="text-primary">
+            <Badge tone="count" className="text-primary">
               {selected.length}
             </Badge>
           )}

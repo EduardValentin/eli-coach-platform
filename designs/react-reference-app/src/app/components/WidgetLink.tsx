@@ -3,12 +3,14 @@ import { Link, type LinkProps } from 'react-router';
 import { ArrowRight } from 'lucide-react';
 import { cn } from './ui/utils';
 
+type WidgetLinkTrailing = 'arrow';
+
 export function WidgetLink({
   className,
   children,
-  arrow = false,
+  trailing,
   ...props
-}: LinkProps & { arrow?: boolean; children: ReactNode }) {
+}: LinkProps & { trailing?: WidgetLinkTrailing; children: ReactNode }) {
   return (
     <Link
       className={cn(
@@ -18,7 +20,7 @@ export function WidgetLink({
       {...props}
     >
       {children}
-      {arrow && <ArrowRight aria-hidden="true" size={16} />}
+      {trailing === 'arrow' && <ArrowRight aria-hidden="true" size={16} />}
     </Link>
   );
 }

@@ -3,11 +3,19 @@
 import "@testing-library/jest-dom/vitest";
 
 import { cleanup, render, screen } from "@testing-library/react";
+import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { afterEach, describe, expect, it } from "vitest";
-import { createMemoryRouter, RouterProvider } from "react-router";
+import {
+  createMemoryRouter,
+  createRoutesStub,
+  RouterProvider,
+} from "react-router";
 import { configureAxe } from "vitest-axe";
 
-import { ErrorBoundary, meta } from "./root";
+import { COACH_PORTAL_ROUTE_SEGMENT } from "~/features/accounts/contracts/paths";
+
+import { ErrorBoundary, Layout, meta } from "./root";
 
 const axe = configureAxe({
   rules: {
@@ -41,8 +49,72 @@ function renderRouteWithRootErrorBoundary(options: {
   return render(<RouterProvider router={router} />);
 }
 
+function renderLayoutAt(pathname: string) {
+  const RoutesStub = createRoutesStub([
+    {
+      Component: () => (
+        <Layout>
+          <p>Page</p>
+        </Layout>
+      ),
+      path: "*",
+    },
+  ]);
+
+  return render(<RoutesStub initialEntries={[pathname]} />);
+}
+
+function readUiStylesheet() {
+  const stylesheetPath = createRequire(import.meta.url).resolve(
+    "@eli-coach-platform/ui/styles.css",
+  );
+  return readFileSync(stylesheetPath, "utf8");
+}
+
 afterEach(() => {
   cleanup();
+});
+
+describe("root Layout", () => {
+  it("marks the document with the coach portal on a coach page", () => {
+    // arrange
+    const coachPage = "/coach/settings";
+
+    // act
+    renderLayoutAt(coachPage);
+
+    // assert
+    expect(screen.getByText("Page")).toBeInTheDocument();
+    expect(document.documentElement).toHaveAttribute(
+      "data-portal",
+      COACH_PORTAL_ROUTE_SEGMENT,
+    );
+  });
+
+  it("leaves the document unmarked on a public page", () => {
+    // arrange
+    const publicPage = "/store";
+
+    // act
+    renderLayoutAt(publicPage);
+
+    // assert
+    expect(screen.getByText("Page")).toBeInTheDocument();
+    expect(document.documentElement).not.toHaveAttribute("data-portal");
+  });
+
+  it("finds the coach colour scope in the stylesheet under the same segment", () => {
+    // arrange
+    const stylesheet = readUiStylesheet();
+
+    // act
+    const coachScope = stylesheet.includes(
+      `[data-portal="${COACH_PORTAL_ROUTE_SEGMENT}"] {`,
+    );
+
+    // assert
+    expect(coachScope).toBe(true);
+  });
 });
 
 describe("root ErrorBoundary", () => {

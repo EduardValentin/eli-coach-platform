@@ -6,8 +6,6 @@ export const QUERY_PARAM = "q";
 export const PAGE_PARAM = "page";
 export const SORT_PARAM = "sort";
 export const DIRECTION_PARAM = "dir";
-export const FROM_PARAM = "from";
-export const TO_PARAM = "to";
 export const PAGE_SIZE = 10;
 
 const LISTING_PARAMS = [
@@ -16,15 +14,13 @@ const LISTING_PARAMS = [
   PAGE_PARAM,
   SORT_PARAM,
   DIRECTION_PARAM,
-  FROM_PARAM,
-  TO_PARAM,
 ];
 
 export const FIRST_PAGE = 1;
 const PAGES_AROUND_CURRENT = 1;
 const PAGES_SHOWN_WITHOUT_GAPS = 7;
 
-export type CoachCallStatus = "upcoming" | "today" | "past" | "all" | "custom";
+export type CoachCallStatus = "upcoming" | "today" | "past" | "all";
 
 export const DEFAULT_CALL_STATUS: CoachCallStatus = "all";
 
@@ -45,12 +41,7 @@ export const SORT_KEYS: readonly SortKey[] = [
 
 export const DEFAULT_SORT_KEY: SortKey = "scheduled";
 
-export type DateRange = { from: string | null; to: string | null };
-
-type ChosenDateRange = { from: string; to: string };
-
 export type ClassifiedCall = CoachAssessmentCall & {
-  day: string;
   isToday: boolean;
   timing: CoachCallTiming;
 };
@@ -62,7 +53,6 @@ export type ListingMoment = {
 
 export type ListingSelection = {
   query: string;
-  range: DateRange;
   status: CoachCallStatus;
 };
 
@@ -88,7 +78,6 @@ export function classifyCalls(
 
     return {
       ...call,
-      day,
       isToday: day === today,
       timing:
         new Date(call.endsAt).getTime() <= moment.now.getTime()
@@ -122,9 +111,8 @@ export function orderCalls(calls: readonly ClassifiedCall[]): ClassifiedCall[] {
 export function orderCallsBy(
   calls: readonly ClassifiedCall[],
   sort: CallSort,
-  status: CoachCallStatus,
 ): ClassifiedCall[] {
-  const ordered = orderCallsInDefaultDirection(calls, sort.key, status);
+  const ordered = orderCallsInDefaultDirection(calls, sort.key);
 
   return sort.direction === defaultDirectionFor(sort.key)
     ? ordered
@@ -150,12 +138,7 @@ export function countCallsLeftToday(calls: readonly ClassifiedCall[]): number {
 }
 
 export function toCallStatus(raw: string | null): CoachCallStatus {
-  if (
-    raw === "upcoming" ||
-    raw === "today" ||
-    raw === "past" ||
-    raw === "custom"
-  ) {
+  if (raw === "upcoming" || raw === "today" || raw === "past") {
     return raw;
   }
 
@@ -175,20 +158,6 @@ export function parseSortDirectionParam(
   }
 
   return defaultDirectionFor(key);
-}
-
-export function parseDateRangeParams(
-  rawFrom: string | null,
-  rawTo: string | null,
-): DateRange {
-  const from = parseIsoDay(rawFrom);
-  const to = parseIsoDay(rawTo);
-
-  if (from !== null && to !== null && from > to) {
-    return { from: to, to: from };
-  }
-
-  return { from, to };
 }
 
 export function parsePageParam(raw: string | null): number {
@@ -260,83 +229,45 @@ export function haveOnlyListingParamsChanged(
   );
 }
 
+export type EmptyListingCopy = { description: string; title: string };
+
+const NO_CALLS_YET_COPY: EmptyListingCopy = {
+  description: "Booked assessment calls appear here.",
+  title: "No calls yet",
+};
+
+const NO_CALLS_FOUND_TITLE = "No calls found";
+
 const NO_SEARCH_MATCH_MESSAGE = "No calls match your search.";
 
-const STATUS_EMPTY_MESSAGES: Record<CoachCallStatus, string> = {
-  all: "No calls yet.",
-  custom: "No calls yet.",
+const STATUS_EMPTY_MESSAGES: Record<Exclude<CoachCallStatus, "all">, string> = {
   past: "No past calls.",
   today: "No calls today.",
   upcoming: "No upcoming calls.",
 };
 
-export function emptyListingMessage(selection: ListingSelection): string {
-  if (selection.query.trim().length > 0) {
-    return NO_SEARCH_MATCH_MESSAGE;
+export function emptyListingCopy(
+  selection: ListingSelection,
+): EmptyListingCopy {
+  if (hasSearchQuery(selection)) {
+    return {
+      description: NO_SEARCH_MATCH_MESSAGE,
+      title: NO_CALLS_FOUND_TITLE,
+    };
   }
 
-  if (selection.status === "custom" && isChosenRange(selection.range)) {
-    return `No calls between ${describeDateRange(selection.range)}.`;
+  if (selection.status === "all") {
+    return NO_CALLS_YET_COPY;
   }
 
-  return STATUS_EMPTY_MESSAGES[selection.status];
+  return {
+    description: STATUS_EMPTY_MESSAGES[selection.status],
+    title: NO_CALLS_FOUND_TITLE,
+  };
 }
 
-const ISO_DAY = /^(\d{4})-(\d{2})-(\d{2})$/;
-
-function parseIsoDay(raw: string | null): string | null {
-  const match = raw === null ? null : ISO_DAY.exec(raw);
-
-  if (match === null) {
-    return null;
-  }
-
-  const [, year, month, day] = match.map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day));
-  const roundTrips =
-    date.getUTCFullYear() === year &&
-    date.getUTCMonth() === month - 1 &&
-    date.getUTCDate() === day;
-
-  return roundTrips ? raw : null;
-}
-
-function isChosenRange(range: DateRange): range is ChosenDateRange {
-  return range.from !== null && range.to !== null;
-}
-
-function describeDateRange(range: ChosenDateRange): string {
-  const from = noonUtcOf(range.from);
-  const to = noonUtcOf(range.to);
-
-  if (from.getUTCFullYear() !== to.getUTCFullYear()) {
-    return `${formatDay(from, "dayMonthYear")} and ${formatDay(to, "dayMonthYear")}`;
-  }
-
-  if (from.getUTCMonth() !== to.getUTCMonth()) {
-    return `${formatDay(from, "dayMonth")} and ${formatDay(to, "dayMonth")}`;
-  }
-
-  return `${formatDay(from, "day")} and ${formatDay(to, "dayMonth")}`;
-}
-
-type DayWording = "day" | "dayMonth" | "dayMonthYear";
-
-const DAY_WORDINGS: Record<DayWording, Intl.DateTimeFormatOptions> = {
-  day: { day: "numeric" },
-  dayMonth: { day: "numeric", month: "long" },
-  dayMonthYear: { day: "numeric", month: "long", year: "numeric" },
-};
-
-function formatDay(date: Date, wording: DayWording): string {
-  return new Intl.DateTimeFormat("en-GB", {
-    ...DAY_WORDINGS[wording],
-    timeZone: "UTC",
-  }).format(date);
-}
-
-function noonUtcOf(isoDay: string): Date {
-  return new Date(`${isoDay}T12:00:00.000Z`);
+export function hasSearchQuery(selection: ListingSelection): boolean {
+  return selection.query.trim().length > 0;
 }
 
 function startOf(call: ClassifiedCall): number {
@@ -351,25 +282,13 @@ function compareText(one: string, other: string): number {
   return one.localeCompare(other, undefined, { sensitivity: "base" });
 }
 
-function orderCallsByScheduledDate(
-  calls: readonly ClassifiedCall[],
-  status: CoachCallStatus,
-): ClassifiedCall[] {
-  if (status === "custom") {
-    return [...calls].sort((one, other) => startOf(one) - startOf(other));
-  }
-
-  return orderCalls(calls);
-}
-
 function orderCallsInDefaultDirection(
   calls: readonly ClassifiedCall[],
   key: SortKey,
-  status: CoachCallStatus,
 ): ClassifiedCall[] {
   switch (key) {
     case "scheduled":
-      return orderCallsByScheduledDate(calls, status);
+      return orderCalls(calls);
     case "booked":
       return [...calls].sort(
         (one, other) => bookedAtOf(other) - bookedAtOf(one),
@@ -390,23 +309,11 @@ function hasStatus(call: ClassifiedCall, selection: ListingSelection): boolean {
     return true;
   }
 
-  if (selection.status === "custom") {
-    return withinRange(call, selection.range);
-  }
-
   if (selection.status === "today") {
     return call.isToday;
   }
 
   return call.timing === selection.status;
-}
-
-function withinRange(call: ClassifiedCall, range: DateRange): boolean {
-  if (!isChosenRange(range)) {
-    return true;
-  }
-
-  return call.day >= range.from && call.day <= range.to;
 }
 
 function matchesQuery(call: ClassifiedCall, query: string): boolean {

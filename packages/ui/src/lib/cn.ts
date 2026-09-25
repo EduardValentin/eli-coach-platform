@@ -17,6 +17,7 @@ const twMerge = extendTailwindMerge({
         "phone-caption",
         "phone-title",
         "phone-value",
+        "value-lg",
         "public-footer-cta-heading-sm",
         "public-footer-cta-heading-md",
       ],

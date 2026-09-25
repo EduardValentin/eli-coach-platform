@@ -349,7 +349,7 @@ function RosterClientDetails() {
           headingId="phase-tile-heading"
           className="h-full"
           footer={
-            <WidgetLink arrow to={`/coach/clients/${clientId}/cycle`}>
+            <WidgetLink trailing="arrow" to={`/coach/clients/${clientId}/cycle`}>
               View cycle log
             </WidgetLink>
           }
@@ -560,18 +560,18 @@ function RosterClientDetails() {
                         <Badge
                           key={label}
                           role="listitem"
-                          variant="brand-secondary"
+                          tone="brand-secondary"
                         >
                           {label}
                         </Badge>
                       ))}
                       {allergenChips.map((label) => (
-                        <Badge key={label} role="listitem" variant="pending">
+                        <Badge key={label} role="listitem" tone="pending">
                           {label} allergy
                         </Badge>
                       ))}
                       {dislikedChips.map((label) => (
-                        <Badge key={label} role="listitem" variant="muted">
+                        <Badge key={label} role="listitem" tone="muted">
                           No {label}
                         </Badge>
                       ))}
@@ -617,7 +617,7 @@ function RosterClientDetails() {
             headingId="workout-history-heading"
             className="lg:col-span-2 self-start"
             action={
-              <WidgetLink arrow to={`/coach/clients/${clientId}/history`}>
+              <WidgetLink trailing="arrow" to={`/coach/clients/${clientId}/history`}>
                 View All ({getClientWorkoutHistory(dataClientId).length})
               </WidgetLink>
             }
@@ -668,7 +668,7 @@ function RosterClientDetails() {
                           </p>
                           {hasSwaps && (
                             <Badge
-                              variant="brand-secondary"
+                              tone="brand-secondary"
                               className="shrink-0"
                             >
                               Swap
@@ -680,7 +680,7 @@ function RosterClientDetails() {
                           {formatVolume(wl.totalVolume || 0, weightUnit)}
                         </p>
                       </div>
-                      <Badge variant="success" className="shrink-0 ml-3">
+                      <Badge tone="success" className="shrink-0 ml-3">
                         Completed
                       </Badge>
                     </Link>
@@ -745,7 +745,7 @@ function RosterClientDetails() {
                     aria-hidden="true"
                   />
                   Past Plans
-                  <Badge variant="muted">{pastPlans.length}</Badge>
+                  <Badge tone="muted">{pastPlans.length}</Badge>
                 </h2>
                 {pastPlansExpanded ? (
                   <ChevronUp size={18} className="text-text-secondary" />
@@ -773,7 +773,7 @@ function RosterClientDetails() {
                             {plan.name}
                           </p>
                           {goal && (
-                            <Badge variant="muted" className="mb-1">
+                            <Badge tone="muted" className="mb-1">
                               {goal.type}
                             </Badge>
                           )}

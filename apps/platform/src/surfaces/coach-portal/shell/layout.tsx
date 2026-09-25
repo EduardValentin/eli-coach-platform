@@ -36,7 +36,7 @@ function CoachBrand() {
         <p className="font-heading text-lg font-semibold text-text-primary">
           Evoa
         </p>
-        <p className="text-micro font-bold uppercase tracking-widest text-brand-primary">
+        <p className="text-micro font-bold uppercase tracking-widest text-primary">
           Coach Portal
         </p>
       </div>
@@ -50,7 +50,7 @@ function CoachTopBarBrand() {
       <div className="flex size-8 shrink-0 items-center justify-center rounded-compact bg-text-primary text-text-inverted">
         <Dumbbell aria-hidden="true" className="-rotate-45" size={16} />
       </div>
-      <span className="font-heading text-sm font-semibold text-text-primary">
+      <span className="text-sm font-medium text-text-primary">
         Coach Portal
       </span>
     </div>

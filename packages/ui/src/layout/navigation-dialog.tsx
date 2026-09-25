@@ -9,7 +9,6 @@ import {
   useId,
   useRef,
   useState,
-  type ComponentProps,
   type MouseEvent,
   type ReactNode,
   type RefObject,
@@ -17,13 +16,11 @@ import {
 
 import { cn } from "../lib/cn";
 import { MAIN_CONTENT_ID } from "../lib/constants";
-import { IconButton } from "../primitives/icon-button";
 import { useCloseMobileNavigationOnDesktop } from "./use-close-mobile-navigation-on-desktop";
 
 type NavigationMenuState = "closed" | "closing" | "open";
 type FocusAfterClose = "menu-button" | "main-content" | "unchanged";
 type NavigationPanelVariant = "closed" | "open";
-type MenuButtonVariant = ComponentProps<typeof IconButton>["variant"];
 
 export type NavigationMenu = {
   close: () => void;
@@ -42,7 +39,6 @@ type NavigationDialogProps = {
   closeMenuIcon: ReactNode;
   contentClassName: string;
   menuButtonClassName: string;
-  menuButtonVariant?: MenuButtonVariant;
   openMenuIcon: ReactNode;
   renderTopBar: (topBar: NavigationTopBar) => ReactNode;
   title: string;
@@ -56,7 +52,6 @@ export function NavigationDialog(props: NavigationDialogProps) {
     closeMenuIcon,
     contentClassName,
     menuButtonClassName,
-    menuButtonVariant,
     openMenuIcon,
     renderTopBar,
     title,
@@ -118,7 +113,7 @@ export function NavigationDialog(props: NavigationDialogProps) {
     "aria-label": isOpen ? "Close menu" : "Open menu",
     children: isOpen ? closeMenuIcon : openMenuIcon,
     className: menuButtonClassName,
-    variant: menuButtonVariant,
+    type: "button" as const,
   };
 
   const focusFirstLink = (event: Event) => {
@@ -164,7 +159,7 @@ export function NavigationDialog(props: NavigationDialogProps) {
           menu,
           menuButton: (
             <RadixDialog.Trigger asChild>
-              <IconButton {...menuButtonProps} ref={menuButtonRef} />
+              <button {...menuButtonProps} ref={menuButtonRef} />
             </RadixDialog.Trigger>
           ),
         })}
@@ -189,10 +184,7 @@ export function NavigationDialog(props: NavigationDialogProps) {
               actions: renderActions(topBarActions),
               menu,
               menuButton: (
-                <IconButton
-                  {...menuButtonProps}
-                  onClick={isOpen ? close : open}
-                />
+                <button {...menuButtonProps} onClick={isOpen ? close : open} />
               ),
             })}
             <RadixDialog.Title className="sr-only">{title}</RadixDialog.Title>

@@ -23,7 +23,7 @@ import { Button } from '../ui/button';
 import { cn } from '../ui/utils';
 
 const SORT_OPTIONS: { key: SortKey; label: string }[] = [
-  { key: 'scheduled', label: 'Call date' },
+  { key: 'scheduled', label: 'Scheduled date' },
   { key: 'booked', label: 'Booking date' },
   { key: 'name', label: 'Name' },
   { key: 'email', label: 'Email' },

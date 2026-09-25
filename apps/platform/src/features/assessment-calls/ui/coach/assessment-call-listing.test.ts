@@ -7,14 +7,14 @@ import {
   classifyCalls,
   countCallsLeftToday,
   defaultDirectionFor,
-  emptyListingMessage,
+  emptyListingCopy,
   filterCalls,
+  hasSearchQuery,
   haveOnlyListingParamsChanged,
   orderCalls,
   orderCallsBy,
   pageOfCalls,
   paginationSteps,
-  parseDateRangeParams,
   parsePageParam,
   parseSortDirectionParam,
   toSortKey,
@@ -71,7 +71,6 @@ function visitorProfile() {
 function selecting(overrides: Partial<ListingSelection>): ListingSelection {
   return {
     query: "",
-    range: { from: null, to: null },
     status: "all",
     ...overrides,
   };
@@ -301,92 +300,6 @@ describe("choosing which calls to show", () => {
   });
 });
 
-describe("choosing the calls in a date range", () => {
-  const calls = classifyCalls(
-    [
-      callAt("2026-09-17T15:00:00.000Z", { id: "before" }),
-      callAt("2026-09-18T15:00:00.000Z", { id: "first-day" }),
-      callAt("2026-09-19T15:00:00.000Z", { id: "between" }),
-      callAt("2026-09-20T15:00:00.000Z", { id: "last-day" }),
-      callAt("2026-09-21T15:00:00.000Z", { id: "after" }),
-    ],
-    { now: NOON, timeZone: BUCHAREST },
-  );
-
-  it("keeps both boundary days of the range", () => {
-    // arrange, act
-    const shown = filterCalls(
-      calls,
-      selecting({
-        range: { from: "2026-09-18", to: "2026-09-20" },
-        status: "custom",
-      }),
-    );
-
-    // assert
-    expect(shown.map((call) => call.id)).toEqual([
-      "first-day",
-      "between",
-      "last-day",
-    ]);
-  });
-
-  it("reads the day of a call in the coach's zone, not in UTC", () => {
-    // arrange
-    const lateInBucharest = classifyCalls(
-      [callAt("2026-09-20T21:30:00.000Z", { id: "already-tomorrow" })],
-      { now: NOON, timeZone: BUCHAREST },
-    );
-
-    // act
-    const onTheTwentieth = filterCalls(
-      lateInBucharest,
-      selecting({
-        range: { from: "2026-09-20", to: "2026-09-20" },
-        status: "custom",
-      }),
-    );
-    const onTheTwentyFirst = filterCalls(
-      lateInBucharest,
-      selecting({
-        range: { from: "2026-09-21", to: "2026-09-21" },
-        status: "custom",
-      }),
-    );
-
-    // assert
-    expect(onTheTwentieth).toHaveLength(0);
-    expect(onTheTwentyFirst.map((call) => call.id)).toEqual([
-      "already-tomorrow",
-    ]);
-  });
-
-  it("keeps every call while the range is still half picked", () => {
-    // arrange, act
-    const shown = filterCalls(
-      calls,
-      selecting({ range: { from: "2026-09-18", to: null }, status: "custom" }),
-    );
-
-    // assert
-    expect(shown).toHaveLength(5);
-  });
-
-  it("ignores the range outside the Custom tab", () => {
-    // arrange, act
-    const shown = filterCalls(
-      calls,
-      selecting({
-        range: { from: "2026-09-18", to: "2026-09-20" },
-        status: "all",
-      }),
-    );
-
-    // assert
-    expect(shown).toHaveLength(5);
-  });
-});
-
 describe("sorting the calls by a chosen key", () => {
   const now = new Date("2026-09-21T09:00:00.000Z");
   const calls = classifyCalls(
@@ -415,8 +328,8 @@ describe("sorting the calls by a chosen key", () => {
     { now, timeZone: BUCHAREST },
   );
 
-  function sorted(sort: CallSort, status: "all" | "custom" = "all"): string[] {
-    return orderCallsBy(calls, sort, status).map((call) => call.fullName);
+  function sorted(sort: CallSort): string[] {
+    return orderCallsBy(calls, sort).map((call) => call.fullName);
   }
 
   it("keeps the listing order for the scheduled date by default", () => {
@@ -448,38 +361,6 @@ describe("sorting the calls by a chosen key", () => {
       "Recent past",
       "Later upcoming",
       "Next upcoming",
-    ]);
-  });
-
-  it("lists a custom range soonest first across the present", () => {
-    // arrange
-    const sort: CallSort = { direction: "desc", key: "scheduled" };
-
-    // act
-    const ordered = sorted(sort, "custom");
-
-    // assert
-    expect(ordered).toEqual([
-      "Older past",
-      "Recent past",
-      "Next upcoming",
-      "Later upcoming",
-    ]);
-  });
-
-  it("lists a reversed custom range latest first", () => {
-    // arrange
-    const sort: CallSort = { direction: "asc", key: "scheduled" };
-
-    // act
-    const ordered = sorted(sort, "custom");
-
-    // assert
-    expect(ordered).toEqual([
-      "Later upcoming",
-      "Next upcoming",
-      "Recent past",
-      "Older past",
     ]);
   });
 
@@ -629,7 +510,6 @@ describe("reading the listing's URL", () => {
     expect(toCallStatus(null)).toBe("all");
     expect(toCallStatus("nonsense")).toBe("all");
     expect(toCallStatus("past")).toBe("past");
-    expect(toCallStatus("custom")).toBe("custom");
   });
 
   it("falls back to the first page for anything that is not a page number", () => {
@@ -640,28 +520,6 @@ describe("reading the listing's URL", () => {
     expect(parsePageParam("2.5")).toBe(1);
     expect(parsePageParam("nonsense")).toBe(1);
     expect(parsePageParam("3")).toBe(3);
-  });
-
-  it("keeps a pair of ISO days and drops anything else", () => {
-    // arrange, act
-    const pair = parseDateRangeParams("2026-09-18", "2026-09-20");
-    const halfPicked = parseDateRangeParams("2026-09-18", null);
-    const impossibleDay = parseDateRangeParams("2026-02-30", "2026-09-20");
-    const unpaddedDay = parseDateRangeParams("2026-9-1", "nonsense");
-
-    // assert
-    expect(pair).toEqual({ from: "2026-09-18", to: "2026-09-20" });
-    expect(halfPicked).toEqual({ from: "2026-09-18", to: null });
-    expect(impossibleDay).toEqual({ from: null, to: "2026-09-20" });
-    expect(unpaddedDay).toEqual({ from: null, to: null });
-  });
-
-  it("puts a reversed pair of days back in order", () => {
-    // arrange, act
-    const range = parseDateRangeParams("2026-09-20", "2026-09-18");
-
-    // assert
-    expect(range).toEqual({ from: "2026-09-18", to: "2026-09-20" });
   });
 
   it("recognises a change that only the browser has to answer", () => {
@@ -675,97 +533,79 @@ describe("reading the listing's URL", () => {
     const sorted = new URL(
       "https://evoa.test/coach/assessment-calls?status=past&sort=name&dir=desc",
     );
-    const ranged = new URL(
-      "https://evoa.test/coach/assessment-calls?status=custom&from=2026-09-18&to=2026-09-20",
-    );
     const elsewhere = new URL("https://evoa.test/coach/");
 
     // act, assert
     expect(haveOnlyListingParamsChanged(listing, paged)).toBe(true);
     expect(haveOnlyListingParamsChanged(listing, sorted)).toBe(true);
-    expect(haveOnlyListingParamsChanged(listing, ranged)).toBe(true);
     expect(haveOnlyListingParamsChanged(listing, listing)).toBe(false);
     expect(haveOnlyListingParamsChanged(listing, elsewhere)).toBe(false);
   });
 });
 
-describe("the message shown when nothing matches", () => {
+describe("the copy shown when nothing matches", () => {
   it("names the search before anything else", () => {
     // arrange, act
-    const message = emptyListingMessage(
-      selecting({
-        query: "zzz",
-        range: { from: "2026-09-12", to: "2026-09-20" },
-        status: "custom",
-      }),
-    );
+    const copy = emptyListingCopy(selecting({ query: "zzz", status: "past" }));
 
     // assert
-    expect(message).toBe("No calls match your search.");
+    expect(copy).toEqual({
+      description: "No calls match your search.",
+      title: "No calls found",
+    });
   });
 
-  it("keeps the plain window messages when no range is picked", () => {
+  it("invites the first booking when the whole history is empty", () => {
+    // arrange, act
+    const copy = emptyListingCopy(selecting({ status: "all" }));
+
+    // assert
+    expect(copy).toEqual({
+      description: "Booked assessment calls appear here.",
+      title: "No calls yet",
+    });
+  });
+
+  it("keeps the plain window messages for every status", () => {
     // arrange
-    const statuses = ["upcoming", "today", "past", "all", "custom"] as const;
+    const statuses = ["upcoming", "today", "past"] as const;
 
     // act
-    const messages = statuses.map((status) =>
-      emptyListingMessage(selecting({ status })),
+    const copies = statuses.map((status) =>
+      emptyListingCopy(selecting({ status })),
     );
 
     // assert
-    expect(messages).toEqual([
+    expect(copies.map((copy) => copy.title)).toEqual([
+      "No calls found",
+      "No calls found",
+      "No calls found",
+    ]);
+    expect(copies.map((copy) => copy.description)).toEqual([
       "No upcoming calls.",
       "No calls today.",
       "No past calls.",
-      "No calls yet.",
-      "No calls yet.",
     ]);
   });
+});
 
-  it("names the picked days, dropping a month both days share", () => {
-    // arrange, act
-    const message = emptyListingMessage(
-      selecting({
-        range: { from: "2026-09-12", to: "2026-09-20" },
-        status: "custom",
-      }),
+describe("telling what narrows the listing", () => {
+  it("counts a search only once it holds more than spaces", () => {
+    // arrange
+    const cases = [
+      { query: "" },
+      { query: "   " },
+      { query: " ana " },
+      { query: " ana ", status: "upcoming" as const },
+    ];
+
+    // act
+    const searching = cases.map((selection) =>
+      hasSearchQuery(selecting(selection)),
     );
 
     // assert
-    expect(message).toBe("No calls between 12 and 20 September.");
-  });
-
-  it("names both months, and both years when the range crosses one", () => {
-    // arrange, act
-    const acrossMonths = emptyListingMessage(
-      selecting({
-        range: { from: "2026-09-12", to: "2026-10-03" },
-        status: "custom",
-      }),
-    );
-    const acrossYears = emptyListingMessage(
-      selecting({
-        range: { from: "2026-12-28", to: "2027-01-03" },
-        status: "custom",
-      }),
-    );
-
-    // assert
-    expect(acrossMonths).toBe("No calls between 12 September and 3 October.");
-    expect(acrossYears).toBe(
-      "No calls between 28 December 2026 and 3 January 2027.",
-    );
-  });
-
-  it("falls back to the plain message while the range is half picked", () => {
-    // arrange, act
-    const message = emptyListingMessage(
-      selecting({ range: { from: "2026-09-12", to: null }, status: "custom" }),
-    );
-
-    // assert
-    expect(message).toBe("No calls yet.");
+    expect(searching).toEqual([false, false, true, true]);
   });
 });
 

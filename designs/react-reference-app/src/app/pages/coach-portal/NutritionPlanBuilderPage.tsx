@@ -209,7 +209,7 @@ export function NutritionPlanBuilderPage() {
             </SelectContent>
           </Select>
         )}
-        {isViewingPast && <Badge variant="muted">Past · read-only</Badge>}
+        {isViewingPast && <Badge tone="muted">Past · read-only</Badge>}
         <div className="ml-auto flex items-center gap-2">
           {viewedBlock && (
             <Dialog open={shoppingListOpen} onOpenChange={setShoppingListOpen}>
@@ -777,19 +777,19 @@ function ShoppingListView({ block, recipes, foods }: ShoppingListViewProps) {
 
   return (
     <Tabs
+      variant="segmented"
       value={mode}
       onValueChange={(v) => setMode(v as typeof mode)}
       className="gap-4"
     >
       <TabsList
-        variant="segmented"
         aria-label="Shopping list view"
         className="w-fit"
       >
-        <TabsTrigger variant="segmented" value="block">
+        <TabsTrigger value="block">
           Two-week block
         </TabsTrigger>
-        <TabsTrigger variant="segmented" value="week">
+        <TabsTrigger value="week">
           By week
         </TabsTrigger>
       </TabsList>

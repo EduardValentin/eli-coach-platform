@@ -124,7 +124,7 @@ function CallItem({
         titleElement="h2"
         badges={
           <>
-            {isToday && <Badge variant="brand-secondary">Today</Badge>}
+            {isToday && <Badge tone="brand-secondary">Today</Badge>}
             {journey && showsJourneyStage(journey.stage, timing) && (
               <CallStageBadge stage={journey.stage} />
             )}
@@ -134,7 +134,10 @@ function CallItem({
         actions={
           <>
             {timing === 'upcoming' && (
-              <JoinCallLink joinPath={booking.joinPath} live={isToday} />
+              <JoinCallLink
+                joinPath={booking.joinPath}
+                tone={isToday ? 'live' : 'default'}
+              />
             )}
             {journey && timing === 'past' && (
               <CallJourneyActions journey={journey} />
@@ -202,7 +205,7 @@ function StatusFilter({
           <SelectItem key={option.step} value={option.step}>
             <span className="flex items-center gap-2">
               {option.label}{' '}
-              <Badge variant="count">{counts[option.step]}</Badge>
+              <Badge tone="count">{counts[option.step]}</Badge>
             </span>
           </SelectItem>
         ))}
@@ -334,16 +337,17 @@ export function AssessmentCallsSection({
       transition={prefersReducedMotion ? { duration: 0 } : undefined}
       className="bg-card p-5 sm:p-8 rounded-panel shadow-soft border border-border/50"
     >
-      <Tabs value={status} onValueChange={chooseStatus} className="w-full">
+      <Tabs
+        variant="segmented"
+        value={status}
+        onValueChange={chooseStatus}
+        className="w-full"
+      >
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
           <div className="grid w-full gap-3 sm:w-fit sm:max-w-full">
-            <TabsList aria-label="When" variant="segmented">
+            <TabsList aria-label="When">
               {WHEN_TABS.map((tab) => (
-                <TabsTrigger
-                  key={tab.status}
-                  variant="segmented"
-                  value={tab.status}
-                >
+                <TabsTrigger key={tab.status} value={tab.status}>
                   {tab.label}
                 </TabsTrigger>
               ))}
@@ -369,7 +373,7 @@ export function AssessmentCallsSection({
           </div>
         </div>
 
-        <TabsContent variant="segmented" value={status}>
+        <TabsContent value={status}>
           {view.calls.length === 0 ? (
             <EmptyState
               icon={CalendarSearch}

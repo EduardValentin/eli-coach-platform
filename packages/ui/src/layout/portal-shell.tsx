@@ -1,16 +1,17 @@
-import { Menu, X } from "lucide-react";
+import { Menu, X, type LucideIcon } from "lucide-react";
 import { motion } from "motion/react";
 import type { PropsWithChildren, ReactNode, RefObject } from "react";
 import { Link as RouterLink, useLocation } from "react-router";
 
 import { MAIN_CONTENT_ID } from "../lib/constants";
 import { cn } from "../lib/cn";
+import { buttonVariants } from "../primitives/button";
 import { NavigationDialog } from "./navigation-dialog";
 
 export type PortalNavigationLink = {
   href: string;
   label: string;
-  icon: ReactNode;
+  icon: LucideIcon;
   /** Slot after the label for a count badge once a story ships one. */
   trailing?: ReactNode;
 };
@@ -55,17 +56,22 @@ export function PortalShell(props: PortalShellProps) {
   } = props;
 
   return (
-    <div className="min-h-dvh bg-surface-page">
+    <div className="min-h-dvh bg-surface-page" data-parity-root="PortalShell">
       <a className="ui-skip-link" href={`#${MAIN_CONTENT_ID}`}>
         Skip to main content
       </a>
       <NavigationDialog
         closeMenuIcon={<X aria-hidden="true" className="size-6" />}
         contentClassName="fixed inset-0 z-40 outline-none lg:hidden"
-        menuButtonClassName="relative z-[60] -mr-2 text-text-secondary hover:text-text-primary"
+        menuButtonClassName={buttonVariants({
+          className:
+            "relative z-[60] -mr-2 text-text-secondary hover:text-text-primary",
+          size: "icon-sm",
+          variant: "ghost",
+        })}
         openMenuIcon={<Menu aria-hidden="true" className="size-6" />}
         renderTopBar={(topBar) => (
-          <header className="fixed inset-x-0 top-0 z-50 flex h-16 items-center justify-between border-b border-border-subtle bg-surface-base px-6 shadow-soft lg:hidden">
+          <header className="fixed inset-x-0 top-0 z-50 flex h-16 items-center justify-between rounded-field border-b border-border-subtle bg-surface-base px-6 text-text-primary shadow-card lg:hidden">
             <div className="flex min-w-0 items-center gap-3">{topBarBrand}</div>
             <div className="flex items-center gap-2">
               {topBar.actions}
@@ -91,7 +97,7 @@ export function PortalShell(props: PortalShellProps) {
       </NavigationDialog>
       <aside
         aria-label={asideLabel}
-        className="fixed inset-y-0 left-0 z-30 hidden w-64 lg:block"
+        className="fixed inset-y-0 left-0 z-50 hidden w-64 bg-surface-base lg:block"
       >
         <PortalSidebarSurface>
           <div className="mb-4 flex items-center justify-between rounded-field border-b border-stroke-quiet px-3 py-6">
@@ -109,7 +115,7 @@ export function PortalShell(props: PortalShellProps) {
         id={MAIN_CONTENT_ID}
         tabIndex={-1}
       >
-        <div className="mx-auto max-w-portal p-6 lg:px-8 lg:py-8">
+        <div className="mx-auto max-w-portal px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
           {children}
         </div>
       </main>
@@ -179,15 +185,16 @@ function PortalSidebarNavigation(props: PortalSidebarNavigationProps) {
     >
       {links.map((link, linkIndex) => {
         const isActive = link.href === activeHref;
+        const Icon = link.icon;
 
         return (
           <RouterLink
             aria-current={isActive ? "page" : undefined}
             className={cn(
-              "flex items-center gap-4 rounded-card px-4 py-3.5 outline-none transition-all",
+              "flex items-center gap-4 rounded-card px-4 py-3.5 transition-all",
               {
-                "bg-text-primary text-text-inverted shadow-action": isActive,
-                "text-text-secondary hover:bg-surface-quiet hover:text-text-primary":
+                "bg-primary-soft text-primary": isActive,
+                "text-text-secondary hover:bg-primary-soft hover:text-primary":
                   !isActive,
               },
             )}
@@ -196,8 +203,12 @@ function PortalSidebarNavigation(props: PortalSidebarNavigationProps) {
             ref={linkIndex === 0 ? firstLinkRef : undefined}
             to={link.href}
           >
-            {link.icon}
-            <span className="text-sm font-semibold">{link.label}</span>
+            <Icon
+              aria-hidden="true"
+              size={18}
+              strokeWidth={isActive ? 2.5 : 2}
+            />
+            <span className="text-sm font-medium">{link.label}</span>
             {link.trailing}
           </RouterLink>
         );

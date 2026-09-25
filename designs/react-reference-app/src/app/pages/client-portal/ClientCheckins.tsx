@@ -205,29 +205,26 @@ export function ClientCheckins() {
         subtitle={`Request time with ${coachName}, respond to proposals, and review past sessions.`}
       />
 
-      <Tabs defaultValue="upcoming" className="w-full">
+      <Tabs variant="segmented" defaultValue="upcoming" className="w-full">
         <div className="mb-6 flex flex-col gap-2">
           <div className="flex items-center justify-between gap-4">
-            <TabsList variant="segmented">
+            <TabsList>
               <TabsTrigger
-                variant="segmented"
                 value="upcoming"
                 className="px-4 sm:px-5"
               >
                 Upcoming
               </TabsTrigger>
               <TabsTrigger
-                variant="segmented"
                 value="requests"
                 className="px-4 sm:px-5"
               >
                 Requests
                 {needsResponseCount > 0 && (
-                  <Badge variant="count">{needsResponseCount}</Badge>
+                  <Badge tone="count">{needsResponseCount}</Badge>
                 )}
               </TabsTrigger>
               <TabsTrigger
-                variant="segmented"
                 value="past"
                 className="px-4 sm:px-5"
               >
@@ -264,7 +261,7 @@ export function ClientCheckins() {
               }}
               when={{ startsAt: reviewCall.startsAt, timeZone }}
               badges={
-                <Badge variant="brand-secondary">{PROGRAM_REVIEW_LABEL}</Badge>
+                <Badge tone="brand-secondary">{PROGRAM_REVIEW_LABEL}</Badge>
               }
               footnote={`You and ${coachName} go through your new program together.`}
             />

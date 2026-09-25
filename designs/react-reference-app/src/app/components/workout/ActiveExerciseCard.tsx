@@ -87,17 +87,17 @@ export function ActiveExerciseCard({
                 {exercise.name}
               </h3>
               {exerciseLog.wasSwapped && (
-                <Badge variant="brand-secondary">Swapped</Badge>
+                <Badge tone="brand-secondary">Swapped</Badge>
               )}
             </div>
             <div className="flex gap-1 mt-1.5 overflow-x-auto whitespace-nowrap [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {exercise.equipment.map((eq) => (
-                <Badge key={eq} variant="muted" className="shrink-0">
+                <Badge key={eq} tone="muted" className="shrink-0">
                   {eq}
                 </Badge>
               ))}
               {exercise.primaryMuscles.map((m) => (
-                <Badge key={m} variant="brand-secondary" className="shrink-0">
+                <Badge key={m} tone="brand-secondary" className="shrink-0">
                   {m}
                 </Badge>
               ))}

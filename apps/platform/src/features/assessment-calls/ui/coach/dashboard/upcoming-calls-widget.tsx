@@ -1,8 +1,9 @@
 import { DashboardAppointmentRow } from "@eli-coach-platform/ui/appointments";
 import { cn } from "@eli-coach-platform/ui/lib";
-import { Badge, cardVariants } from "@eli-coach-platform/ui/primitives";
-import { ArrowRight, Video } from "lucide-react";
-import { Link } from "react-router";
+import { PortalWidget, WidgetLink } from "@eli-coach-platform/ui/portal";
+import { Badge } from "@eli-coach-platform/ui/primitives";
+import { Video } from "lucide-react";
+import { useId } from "react";
 
 import {
   formatClockTime,
@@ -26,59 +27,64 @@ export function UpcomingCallsWidget({
   calls,
   timeZone,
 }: UpcomingCallsWidgetProps) {
+  const headingId = useId();
   const soonest = upcomingCalls(calls, CALLS_ON_THE_DASHBOARD);
   const isEmpty = soonest.length === 0;
 
   return (
-    <div
-      className={cn(
-        cardVariants({ variant: "portal-panel" }),
-        "flex h-full flex-col p-8",
-      )}
-      data-parity-root="UpcomingCallsWidget"
-    >
-      <div className="mb-6 flex items-center gap-3">
-        <div className="flex size-10 items-center justify-center rounded-full bg-brand-secondary-soft text-brand-secondary">
-          <Video aria-hidden="true" size={20} />
+    <div data-parity-root="UpcomingCallsWidget">
+      <PortalWidget
+        className="flex h-full flex-col"
+        footer={
+          <WidgetLink to={COACH_ASSESSMENT_CALLS_PATH} trailing="arrow">
+            View all calls
+          </WidgetLink>
+        }
+        headingId={headingId}
+        icon={
+          <Video
+            aria-hidden="true"
+            className="text-brand-secondary"
+            size={18}
+          />
+        }
+        title="Upcoming calls"
+      >
+        <div
+          className={cn("flex-1", {
+            "flex items-center justify-center": isEmpty,
+          })}
+        >
+          {isEmpty ? (
+            <p className="text-sm text-text-muted">No upcoming calls.</p>
+          ) : (
+            <ul className="space-y-4">
+              {soonest.map((call) => (
+                <li key={call.id}>
+                  <DashboardAppointmentRow
+                    action={
+                      <JoinCallLink
+                        joinPath={call.joinPath}
+                        tone={call.isToday ? "live" : "default"}
+                      />
+                    }
+                    attendeeName={call.fullName}
+                    badges={
+                      call.isToday && (
+                        <Badge tone="brand-secondary">Today</Badge>
+                      )
+                    }
+                    when={{
+                      date: formatShortDay(new Date(call.startsAt), timeZone),
+                      time: formatClockTime(new Date(call.startsAt), timeZone),
+                    }}
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
-        <h2 className="font-heading text-xl font-semibold text-text-primary">
-          Upcoming calls
-        </h2>
-      </div>
-
-      <div
-        className={cn("flex-1", {
-          "flex items-center justify-center": isEmpty,
-        })}
-      >
-        {isEmpty ? (
-          <p className="text-sm text-text-muted">No upcoming calls.</p>
-        ) : (
-          <ul className="space-y-4">
-            {soonest.map((call) => (
-              <li key={call.id}>
-                <DashboardAppointmentRow
-                  action={<JoinCallLink joinPath={call.joinPath} />}
-                  attendeeName={call.fullName}
-                  badges={call.isToday && <Badge tone="accent">Today</Badge>}
-                  when={{
-                    date: formatShortDay(new Date(call.startsAt), timeZone),
-                    time: formatClockTime(new Date(call.startsAt), timeZone),
-                  }}
-                />
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-
-      <Link
-        className="mt-auto inline-flex items-center gap-2 self-start pt-6 text-sm font-semibold text-text-muted transition-colors hover:text-text-primary"
-        to={COACH_ASSESSMENT_CALLS_PATH}
-      >
-        View all calls
-        <ArrowRight aria-hidden="true" size={16} />
-      </Link>
+      </PortalWidget>
     </div>
   );
 }

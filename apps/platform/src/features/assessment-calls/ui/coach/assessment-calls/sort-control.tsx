@@ -1,5 +1,5 @@
 import {
-  IconButton,
+  Button,
   Select,
   SelectContent,
   SelectItem,
@@ -22,8 +22,6 @@ import {
   type SortDirection,
   type SortKey,
 } from "~/features/assessment-calls/ui/coach/assessment-call-listing";
-
-const ICON_SIZE = 16;
 
 const SORT_KEY_LABELS: Record<SortKey, string> = {
   booked: "Booking date",
@@ -74,36 +72,41 @@ export function SortControl({
 
   return (
     <div
-      className="flex flex-col gap-2 xl:w-fit"
+      className="flex w-full items-center gap-2"
       data-parity-root="SortControl"
     >
-      <span className="text-sm font-medium text-text-secondary">Sort by</span>
-      <div className="flex items-center gap-2">
-        <Select
-          onValueChange={(value) => onChooseKey(toSortKey(value))}
-          value={sort.key}
+      <Select
+        onValueChange={(value) => onChooseKey(toSortKey(value))}
+        value={sort.key}
+      >
+        <SelectTrigger
+          aria-label="Sort by"
+          className="min-w-0 flex-1"
+          size="sm"
         >
-          <SelectTrigger aria-label="Sort by" className="h-8 w-40 text-sm">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {SORT_KEYS.map((key) => (
-              <SelectItem key={key} value={key}>
-                {SORT_KEY_LABELS[key]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <IconButton
-          aria-label={direction.label}
-          aria-pressed={sort.direction !== defaultDirectionFor(sort.key)}
-          className="inline-flex size-8 shrink-0 items-center justify-center rounded-control border border-control-border-soft p-0 text-text-primary transition-colors hover:bg-surface-quiet"
-          onClick={onToggleDirection}
-          variant="plain"
-        >
-          <DirectionIcon aria-hidden="true" size={ICON_SIZE} />
-        </IconButton>
-      </div>
+          <SelectValue>
+            {`${SORT_KEY_LABELS[sort.key]}: ${direction.label.toLowerCase()}`}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          {SORT_KEYS.map((key) => (
+            <SelectItem key={key} value={key}>
+              {SORT_KEY_LABELS[key]}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Button
+        aria-label={direction.label}
+        aria-pressed={sort.direction !== defaultDirectionFor(sort.key)}
+        className="shrink-0 hover:border-primary hover:text-primary aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground"
+        onClick={onToggleDirection}
+        size="icon-sm"
+        type="button"
+        variant="outline"
+      >
+        <DirectionIcon aria-hidden="true" className="size-4" />
+      </Button>
     </div>
   );
 }

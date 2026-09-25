@@ -447,12 +447,12 @@ export function WorkoutReview() {
                     </h3>
                     <div className="flex flex-wrap gap-1 mt-1.5">
                       {ex.equipment.map((eq) => (
-                        <Badge key={eq} variant="muted">
+                        <Badge key={eq} tone="muted">
                           {eq}
                         </Badge>
                       ))}
                       {ex.primaryMuscles.map((m) => (
-                        <Badge key={m} variant="brand-secondary">
+                        <Badge key={m} tone="brand-secondary">
                           {m}
                         </Badge>
                       ))}
@@ -531,7 +531,7 @@ export function WorkoutReview() {
                       <div className="flex items-center gap-1.5 flex-wrap">
                         {s.isExtra ? (
                           <Badge
-                            variant="outline"
+                            tone="outline"
                             className="border-primary/20 bg-primary-soft text-primary"
                           >
                             Extra
@@ -571,7 +571,7 @@ export function WorkoutReview() {
                             </span>
                             {repsDiff !== null && !isRepsMatch && (
                               <Badge
-                                variant="outline"
+                                tone="outline"
                                 className={
                                   isRepsUnder
                                     ? 'border-primary/20 bg-primary-soft text-primary'
@@ -645,7 +645,7 @@ function SwapCallout({
           </p>
           <div className="flex flex-wrap gap-1 mt-1">
             {original.primaryMuscles.map((m) => (
-              <Badge key={m} variant="muted">
+              <Badge key={m} tone="muted">
                 {m}
               </Badge>
             ))}
@@ -663,7 +663,7 @@ function SwapCallout({
           </p>
           <div className="flex flex-wrap gap-1 mt-1">
             {swappedTo.primaryMuscles.map((m) => (
-              <Badge key={m} variant="brand-secondary">
+              <Badge key={m} tone="brand-secondary">
                 {m}
               </Badge>
             ))}

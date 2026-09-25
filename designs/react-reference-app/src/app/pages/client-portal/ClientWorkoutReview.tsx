@@ -470,14 +470,14 @@ export function ClientWorkoutReview() {
                 <div className="flex items-center gap-2">
                   <h3 className={WIDGET_TITLE_CLASS}>{ex.name}</h3>
                   {exLog.wasSwapped && (
-                    <Badge variant="brand-secondary">
+                    <Badge tone="brand-secondary">
                       <ArrowLeftRight aria-hidden="true" /> Swapped
                     </Badge>
                   )}
                 </div>
                 <div className="flex flex-wrap gap-1 mt-1.5">
                   {ex.primaryMuscles.map((m) => (
-                    <Badge key={m} variant="brand-secondary">
+                    <Badge key={m} tone="brand-secondary">
                       {m}
                     </Badge>
                   ))}

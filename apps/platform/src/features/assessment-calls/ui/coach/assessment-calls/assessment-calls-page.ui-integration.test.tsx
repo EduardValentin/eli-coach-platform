@@ -105,13 +105,16 @@ afterEach(() => {
 });
 
 describe("the coach's assessment calls page", () => {
-  it("heads the page", async () => {
+  it("heads the page and says whose calls it lists", async () => {
     // arrange, act
     await renderCallsPage();
 
     // assert
     expect(
       screen.getByRole("heading", { level: 1, name: "Assessment calls" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Everyone who booked a call with you."),
     ).toBeInTheDocument();
   });
 
@@ -146,10 +149,9 @@ describe("the coach's assessment calls page", () => {
     // assert
     expect(screen.getAllByRole("tab").map((tab) => tab.textContent)).toEqual([
       "All",
-      "Upcoming",
       "Today",
+      "Upcoming",
       "Past",
-      "Custom",
     ]);
   });
 
@@ -161,7 +163,7 @@ describe("the coach's assessment calls page", () => {
     const soonest = within(shownCalls()[0]);
 
     expect(soonest.getByText("Sun, Sep 20")).toBeInTheDocument();
-    expect(soonest.getByText("6:00 PM")).toBeInTheDocument();
+    expect(soonest.getByText("· 6:00 PM")).toBeInTheDocument();
     expect(
       soonest.getByRole("link", { name: /ana@example.com/ }),
     ).toHaveAttribute("href", "mailto:ana@example.com");
@@ -247,7 +249,37 @@ describe("the coach's assessment calls page", () => {
     expect(
       screen.queryByRole("link", { name: "Join call" }),
     ).not.toBeInTheDocument();
-    expect(screen.getAllByText("Past").length).toBeGreaterThan(0);
+  });
+
+  it("badges every ended call Call held beside the visitor's name and leaves it without actions", async () => {
+    // arrange
+    const user = await renderCallsPage();
+
+    // act
+    await user.click(screen.getByRole("tab", { name: "Past" }));
+
+    // assert
+    for (const shown of shownCalls().map((item) => within(item))) {
+      expect(shown.getByText("Call held")).toBeInTheDocument();
+      expect(shown.queryByRole("link", { name: "Join call" })).toBeNull();
+      expect(shown.queryByRole("button")).toBeNull();
+    }
+  });
+
+  it("gives no Call held badge to a call still to come", async () => {
+    // arrange
+    const user = await renderCallsPage();
+
+    // act
+    await user.click(screen.getByRole("tab", { name: "Upcoming" }));
+
+    // assert
+    for (const shown of shownCalls().map((item) => within(item))) {
+      expect(shown.queryByText("Call held")).not.toBeInTheDocument();
+      expect(
+        shown.getByRole("link", { name: "Join call" }),
+      ).toBeInTheDocument();
+    }
   });
 
   it("points each join link at the booking's own room", async () => {
@@ -265,7 +297,7 @@ describe("the coach's assessment calls page", () => {
     const user = await renderCallsPage();
 
     // act
-    await user.click(screen.getByRole("tab", { name: "Upcoming" }));
+    await user.click(screen.getByRole("tab", { name: "All" }));
     await user.keyboard("{ArrowRight}");
 
     // assert
@@ -311,10 +343,32 @@ describe("the coach's assessment calls page", () => {
 
     // assert
     await waitFor(() => {
-      expect(
-        screen.getByText("No calls match your search."),
-      ).toBeInTheDocument();
+      expect(screen.getByText("No calls found")).toBeInTheDocument();
     });
+    expect(screen.getByText("No calls match your search.")).toBeInTheDocument();
+  });
+
+  it("clears a search that matches nothing and lists every call again", async () => {
+    // arrange
+    const { router, user } = await renderCallsRouter();
+    await user.type(screen.getByLabelText("Search calls"), "zzz");
+
+    // act
+    await user.click(
+      await screen.findByRole("button", { name: "Clear filters" }),
+    );
+
+    // assert
+    await waitFor(() => {
+      expect(router.state.location.search).toBe("");
+    });
+    expect(screen.getByLabelText("Search calls")).toHaveValue("");
+    expect(shownCallNames()).toEqual([
+      "Ana Popescu",
+      "Dana Radu",
+      "Carla Marin",
+      "Bea Ionescu",
+    ]);
   });
 
   it("keeps the filter and the search in the URL without stacking history", async () => {
@@ -380,7 +434,21 @@ describe("the coach's assessment calls page", () => {
     await user.click(screen.getByRole("tab", { name: "Upcoming" }));
 
     // assert
+    expect(screen.getByText("No calls found")).toBeInTheDocument();
     expect(screen.getByText("No upcoming calls.")).toBeInTheDocument();
+  });
+
+  it("offers no Clear filters when only the chosen tab is empty", async () => {
+    // arrange
+    const user = await renderCallsPage({ calls: [] });
+
+    // act
+    await user.click(screen.getByRole("tab", { name: "Upcoming" }));
+
+    // assert
+    expect(
+      screen.queryByRole("button", { name: "Clear filters" }),
+    ).not.toBeInTheDocument();
   });
 
   it("says nothing is on today when no call falls today", async () => {
@@ -410,7 +478,13 @@ describe("the coach's assessment calls page", () => {
     await renderCallsPage({ calls: [] });
 
     // assert
-    expect(screen.getByText("No calls yet.")).toBeInTheDocument();
+    expect(screen.getByText("No calls yet")).toBeInTheDocument();
+    expect(
+      screen.getByText("Booked assessment calls appear here."),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Clear filters" }),
+    ).not.toBeInTheDocument();
   });
 
   it("declines to re-read the calls when only the listing parameters change", async () => {
@@ -433,7 +507,7 @@ describe("sorting the coach's assessment calls", () => {
 
     // assert
     expect(screen.getByRole("combobox", { name: "Sort by" })).toHaveTextContent(
-      "Scheduled date",
+      /^Scheduled date: soonest first$/,
     );
     expect(
       screen.getByRole("button", { name: "Soonest first" }),
@@ -458,6 +532,9 @@ describe("sorting the coach's assessment calls", () => {
       ]);
     });
     expect(router.state.location.search).toBe("?sort=name");
+    expect(screen.getByRole("combobox", { name: "Sort by" })).toHaveTextContent(
+      /^Name: a to z$/,
+    );
     expect(screen.getByRole("button", { name: "A to Z" })).toHaveAttribute(
       "aria-pressed",
       "false",
@@ -481,6 +558,9 @@ describe("sorting the coach's assessment calls", () => {
       ]);
     });
     expect(router.state.location.search).toBe("?dir=asc");
+    expect(screen.getByRole("combobox", { name: "Sort by" })).toHaveTextContent(
+      /^Scheduled date: latest first$/,
+    );
     expect(
       screen.getByRole("button", { name: "Latest first" }),
     ).toHaveAttribute("aria-pressed", "true");
@@ -513,7 +593,7 @@ describe("sorting the coach's assessment calls", () => {
 
     // assert
     expect(screen.getByRole("combobox", { name: "Sort by" })).toHaveTextContent(
-      "Email",
+      /^Email: z to a$/,
     );
     expect(screen.getByRole("button", { name: "Z to A" })).toHaveAttribute(
       "aria-pressed",
@@ -535,83 +615,6 @@ describe("sorting the coach's assessment calls", () => {
 
     // assert
     expect(shownCallNames()).toEqual(["Bea Ionescu", "Carla Marin"]);
-  });
-});
-
-describe("narrowing the coach's assessment calls to a date range", () => {
-  it("offers the date range picker only under Custom", async () => {
-    // arrange
-    const { router, user } = await renderCallsRouter();
-    expect(
-      screen.queryByRole("button", { name: "Date range" }),
-    ).not.toBeInTheDocument();
-
-    // act
-    await user.click(screen.getByRole("tab", { name: "Custom" }));
-
-    // assert
-    await waitFor(() => {
-      expect(router.state.location.search).toBe("?status=custom");
-    });
-    expect(
-      screen.getByRole("button", { name: "Date range" }),
-    ).toHaveTextContent("Pick dates");
-  });
-
-  it("lists the calls on both boundary days, soonest first", async () => {
-    // arrange, act
-    await renderCallsPage({
-      url: `${COACH_ASSESSMENT_CALLS_PATH}?status=custom&from=2026-09-19&to=2026-09-20`,
-    });
-
-    // assert
-    expect(
-      screen.getByRole("tab", { name: "Custom", selected: true }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Date range" }),
-    ).toHaveTextContent("19 Sep – 20 Sep 2026");
-    expect(shownCallNames()).toEqual([
-      "Bea Ionescu",
-      "Carla Marin",
-      "Ana Popescu",
-    ]);
-  });
-
-  it("names the picked days when nothing falls in them", async () => {
-    // arrange, act
-    await renderCallsPage({
-      url: `${COACH_ASSESSMENT_CALLS_PATH}?status=custom&from=2026-09-01&to=2026-09-02`,
-    });
-
-    // assert
-    expect(
-      screen.getByText("No calls between 1 and 2 September."),
-    ).toBeInTheDocument();
-  });
-
-  it("writes the picked days into the URL and returns to the first page", async () => {
-    // arrange
-    const { router, user } = await renderCallsRouter({
-      url: `${COACH_ASSESSMENT_CALLS_PATH}?status=custom&page=2`,
-    });
-
-    // act
-    await user.click(screen.getByRole("button", { name: "Date range" }));
-    await user.click(
-      screen.getByRole("button", { name: /September 19th, 2026/ }),
-    );
-    await user.click(
-      screen.getByRole("button", { name: /September 20th, 2026/ }),
-    );
-
-    // assert
-    await waitFor(() => {
-      expect(router.state.location.search).toBe(
-        "?status=custom&from=2026-09-19&to=2026-09-20",
-      );
-    });
-    expect(screen.queryByRole("grid")).not.toBeInTheDocument();
   });
 });
 

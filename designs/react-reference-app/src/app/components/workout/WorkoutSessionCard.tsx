@@ -58,11 +58,11 @@ export function WorkoutSessionCard({ log, to }: WorkoutSessionCardProps) {
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
           {hasSwaps && (
-            <Badge variant="brand-secondary">
+            <Badge tone="brand-secondary">
               <ArrowLeftRight aria-hidden="true" /> Swap
             </Badge>
           )}
-          <Badge variant="success" className="tabular-nums">
+          <Badge tone="success" className="tabular-nums">
             {completedSets}/{totalSets}
           </Badge>
         </div>
@@ -81,7 +81,7 @@ export function WorkoutSessionCard({ log, to }: WorkoutSessionCardProps) {
       {muscles.size > 0 && (
         <div className="flex flex-wrap gap-1 mt-2.5">
           {Array.from(muscles).map((m) => (
-            <Badge key={m} variant="brand-secondary">
+            <Badge key={m} tone="brand-secondary">
               {m}
             </Badge>
           ))}

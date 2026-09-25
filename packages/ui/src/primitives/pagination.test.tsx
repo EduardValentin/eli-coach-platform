@@ -54,15 +54,49 @@ describe("pagination", () => {
     expect(within(pages).getAllByRole("listitem")).toHaveLength(5);
   });
 
-  it("marks the page being read as the current one", () => {
+  it("marks the page being read as the current one and outlines it", () => {
     // arrange, act
     renderPagination({ nextPath: "/calls?page=3", previousPath: "/calls" });
 
     // assert
-    expect(screen.getByRole("link", { name: "Go to page 2" })).toHaveAttribute(
-      "aria-current",
-      "page",
+    const currentPage = screen.getByRole("link", { name: "Go to page 2" });
+    expect(currentPage).toHaveAttribute("aria-current", "page");
+    expect(currentPage).toHaveClass(
+      "border-control-border-soft",
+      "bg-surface-base",
+      "size-(--size-control-xs)",
+      "rounded-full",
     );
+  });
+
+  it("draws the other pages as quiet round buttons", () => {
+    // arrange, act
+    renderPagination({ nextPath: "/calls?page=3", previousPath: "/calls" });
+
+    // assert
+    const otherPage = screen.getByRole("link", { name: "Go to page 1" });
+    expect(otherPage).toHaveClass(
+      "hover:bg-surface-quiet",
+      "size-(--size-control-xs)",
+      "rounded-full",
+    );
+    expect(otherPage).not.toHaveClass("border");
+  });
+
+  it("draws the steps either side as quiet text buttons with tight spacing", () => {
+    // arrange, act
+    renderPagination({ nextPath: "/calls?page=3", previousPath: "/calls" });
+
+    // assert
+    const previous = screen.getByRole("link", { name: "Go to previous page" });
+    expect(previous).toHaveClass(
+      "hover:bg-surface-quiet",
+      "h-(--size-control-xs)",
+      "gap-1",
+      "px-2.5",
+      "text-sm",
+    );
+    expect(previous).not.toHaveClass("rounded-full", "px-3", "gap-2");
   });
 
   it("offers the steps either side as links while there is somewhere to go", () => {

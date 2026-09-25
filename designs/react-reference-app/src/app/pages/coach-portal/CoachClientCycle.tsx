@@ -143,7 +143,7 @@ export function CoachClientCycle() {
               {profile.conditions.map((c) => (
                 <Badge
                   key={c}
-                  variant="outline"
+                  tone="outline"
                   className="border-cycle-menstrual/20 bg-cycle-menstrual-soft text-cycle-menstrual"
                 >
                   {c}
@@ -269,7 +269,7 @@ export function CoachClientCycle() {
                     {allSymptoms.length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {allSymptoms.slice(0, 4).map((s) => (
-                          <Badge key={s} variant="muted">
+                          <Badge key={s} tone="muted">
                             {CYCLE_SYMPTOMS.find((cs) => cs.value === s)
                               ?.label ?? s}
                           </Badge>

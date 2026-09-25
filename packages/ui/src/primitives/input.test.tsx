@@ -2,10 +2,14 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it } from "vitest";
 
 import { Input } from "./input";
+
+afterEach(() => {
+  cleanup();
+});
 
 describe("Input", () => {
   it("uses the field surface by default", () => {
@@ -15,12 +19,23 @@ describe("Input", () => {
 
     // assert
     expect(screen.getByLabelText("Name")).toHaveClass(
-      "h-12",
+      "h-(--size-control-md)",
       "rounded-field",
       "border-control-border-soft",
-      "bg-surface-quiet/50",
-      "focus-visible:border-border-focus",
+      "bg-surface-base",
+      "focus-visible:border-focus-ring",
       "aria-invalid:border-feedback-danger",
+    );
+  });
+
+  it("shrinks to the small control height when asked", () => {
+    // arrange
+    // act
+    render(<Input aria-label="Search" size="sm" />);
+
+    // assert
+    expect(screen.getByLabelText("Search")).toHaveClass(
+      "h-(--size-control-sm)",
     );
   });
 });

@@ -89,7 +89,7 @@ function ActiveClientRow({
       </TableCell>
       {showsCompliance && (
         <TableCell>
-          <Badge variant="success">{client.compliance}</Badge>
+          <Badge tone="success">{client.compliance}</Badge>
         </TableCell>
       )}
       <TableCell>
@@ -170,7 +170,7 @@ export function CoachDashboard() {
           }
           headingId="pending-checkins-heading"
           footer={
-            <WidgetLink arrow to={coachCheckinsPath()}>
+            <WidgetLink trailing="arrow" to={coachCheckinsPath()}>
               View all check-ins
             </WidgetLink>
           }
@@ -218,7 +218,7 @@ export function CoachDashboard() {
         }
         headingId="active-clients-heading"
         footer={
-          <WidgetLink arrow to="/coach/clients">
+          <WidgetLink trailing="arrow" to="/coach/clients">
             View all clients
           </WidgetLink>
         }

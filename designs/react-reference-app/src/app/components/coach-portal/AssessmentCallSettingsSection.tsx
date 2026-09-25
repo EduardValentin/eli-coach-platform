@@ -1,56 +1,56 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { CalendarClock, TriangleAlert } from 'lucide-react';
-import { toast } from 'sonner';
-import { Alert } from '../ui/alert';
-import { Button } from '../ui/button';
-import { CheckboxChip } from '../CheckboxChip';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import { CalendarClock, TriangleAlert } from "lucide-react";
+import { toast } from "sonner";
+import { Alert } from "../ui/alert";
+import { Button } from "../ui/button";
+import { CheckboxChip } from "../CheckboxChip";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '../ui/select';
-import { cn } from '../ui/utils';
-import { SettingsSection, SettingsRows, SettingsRow } from '../SettingsSection';
-import { useAssessmentCalls } from '../../context/AssessmentCallContext';
-import { FIELD_ERROR_CLASS } from '../../utils/formFieldStyles';
+} from "../ui/select";
+import { cn } from "../ui/utils";
+import { SettingsSection, SettingsRows, SettingsRow } from "../SettingsSection";
+import { useAssessmentCalls } from "../../context/AssessmentCallContext";
+import { FIELD_ERROR_CLASS } from "../../utils/formFieldStyles";
 import {
   AssessmentCallError,
   ASSESSMENT_CALL_SETTINGS_PROBLEM_MESSAGES,
   validateAssessmentCallSettings,
   type AssessmentCallSettings,
   type AssessmentCallSettingsProblem,
-} from '../../services/assessmentCallService';
+} from "../../services/assessmentCallService";
 
 type WeekdayOption = { value: number; short: string; full: string };
 
 const WEEKDAY_OPTIONS: WeekdayOption[] = [
-  { value: 1, short: 'Mon', full: 'Monday' },
-  { value: 2, short: 'Tue', full: 'Tuesday' },
-  { value: 3, short: 'Wed', full: 'Wednesday' },
-  { value: 4, short: 'Thu', full: 'Thursday' },
-  { value: 5, short: 'Fri', full: 'Friday' },
-  { value: 6, short: 'Sat', full: 'Saturday' },
-  { value: 0, short: 'Sun', full: 'Sunday' },
+  { value: 1, short: "Mon", full: "Monday" },
+  { value: 2, short: "Tue", full: "Tuesday" },
+  { value: 3, short: "Wed", full: "Wednesday" },
+  { value: 4, short: "Thu", full: "Thursday" },
+  { value: 5, short: "Fri", full: "Friday" },
+  { value: 6, short: "Sat", full: "Saturday" },
+  { value: 0, short: "Sun", full: "Sunday" },
 ];
 
 const START_HOUR_OPTIONS = Array.from({ length: 24 }, (_, hour) => hour);
 const END_HOUR_OPTIONS = Array.from({ length: 24 }, (_, hour) => hour + 1);
 
-const START_HOUR_FIELD_ID = 'assessment-call-start-hour';
-const END_HOUR_FIELD_ID = 'assessment-call-end-hour';
-const MEETING_LINK_FIELD_ID = 'assessment-call-meeting-link';
-const SETTINGS_FORM_ID = 'assessment-call-settings-form';
+const START_HOUR_FIELD_ID = "assessment-call-start-hour";
+const END_HOUR_FIELD_ID = "assessment-call-end-hour";
+const MEETING_LINK_FIELD_ID = "assessment-call-meeting-link";
+const SETTINGS_FORM_ID = "assessment-call-settings-form";
 
 const REFUSED_FIELD_SELECTORS_IN_DOM_ORDER: ReadonlyArray<
   [AssessmentCallSettingsProblem, string]
 > = [
-  ['no_weekday', 'input[type="checkbox"]'],
-  ['invalid_hours', `#${START_HOUR_FIELD_ID}`],
-  ['invalid_meeting_link', `#${MEETING_LINK_FIELD_ID}`],
+  ["no_weekday", 'input[type="checkbox"]'],
+  ["invalid_hours", `#${START_HOUR_FIELD_ID}`],
+  ["invalid_meeting_link", `#${MEETING_LINK_FIELD_ID}`],
 ];
 
 function focusFirstRefusedField(
@@ -68,7 +68,7 @@ function focusFirstRefusedField(
 }
 
 function formatHourLabel(hour: number): string {
-  return `${String(hour).padStart(2, '0')}:00`;
+  return `${String(hour).padStart(2, "0")}:00`;
 }
 
 function readBrowserTimeZone(): string {
@@ -89,7 +89,7 @@ function toDraft(
     weekdays: settings.weekdays,
     startHour: settings.startHour,
     endHour: settings.endHour,
-    meetingLink: settings.meetingLink ?? '',
+    meetingLink: settings.meetingLink ?? "",
   };
 }
 
@@ -203,7 +203,7 @@ export function AssessmentCallSettingsSection() {
       startHour: draft.startHour,
       endHour: draft.endHour,
       meetingLink:
-        draft.meetingLink.trim() === '' ? null : draft.meetingLink.trim(),
+        draft.meetingLink.trim() === "" ? null : draft.meetingLink.trim(),
     };
 
     const foundProblems = validateAssessmentCallSettings(candidate);
@@ -214,7 +214,7 @@ export function AssessmentCallSettingsSection() {
     setIsSaving(true);
     try {
       await saveSettings(candidate);
-      toast.success('Settings saved');
+      toast.success("Settings saved");
     } catch (error) {
       if (!(error instanceof AssessmentCallError)) throw error;
       toast.error(error.message);
@@ -224,18 +224,18 @@ export function AssessmentCallSettingsSection() {
   };
 
   const isDirty = !isSameDraft(draft, toDraft(settings));
-  const showLinkWarning = draft.meetingLink.trim() === '';
-  const weekdaysErrorId = problems.includes('no_weekday')
-    ? 'assessment-call-weekdays-error'
+  const showLinkWarning = draft.meetingLink.trim() === "";
+  const weekdaysErrorId = problems.includes("no_weekday")
+    ? "assessment-call-weekdays-error"
     : undefined;
-  const hoursErrorId = problems.includes('invalid_hours')
-    ? 'assessment-call-hours-error'
+  const hoursErrorId = problems.includes("invalid_hours")
+    ? "assessment-call-hours-error"
     : undefined;
-  const linkErrorId = problems.includes('invalid_meeting_link')
-    ? 'assessment-call-meeting-link-error'
+  const linkErrorId = problems.includes("invalid_meeting_link")
+    ? "assessment-call-meeting-link-error"
     : undefined;
-  const linkHintId = 'assessment-call-meeting-link-hint';
-  const timeZoneUnreadable = problems.includes('invalid_time_zone');
+  const linkHintId = "assessment-call-meeting-link-hint";
+  const timeZoneUnreadable = problems.includes("invalid_time_zone");
 
   return (
     <SettingsSection
@@ -258,7 +258,7 @@ export function AssessmentCallSettingsSection() {
           disabled={!isDirty || isSaving}
           aria-busy={isSaving || undefined}
         >
-          {isSaving ? 'Saving…' : 'Save changes'}
+          {isSaving ? "Saving…" : "Save changes"}
         </Button>
       }
     >
@@ -281,6 +281,7 @@ export function AssessmentCallSettingsSection() {
         <SettingsRows>
           <SettingsRow
             as="fieldset"
+            labelId="assessment-call-weekdays-label"
             title="Days I take calls"
             description="Visitors can pick a slot on these days."
             layout="stacked"
@@ -367,7 +368,7 @@ export function AssessmentCallSettingsSection() {
               }
               aria-describedby={[linkHintId, linkErrorId]
                 .filter(Boolean)
-                .join(' ')}
+                .join(" ")}
               aria-invalid={Boolean(linkErrorId) || undefined}
             />
             {linkErrorId && (

@@ -2,13 +2,13 @@ import {
   AppointmentCard,
   type AppointmentDetail,
 } from "@eli-coach-platform/ui/appointments";
-import { DateRangeField } from "@eli-coach-platform/ui/calendar";
 import { cn } from "@eli-coach-platform/ui/lib";
+import { EmptyState } from "@eli-coach-platform/ui/portal";
 import {
   Badge,
+  Button,
   cardVariants,
-  Input,
-  Label,
+  SearchField,
 } from "@eli-coach-platform/ui/primitives";
 import {
   Tabs,
@@ -16,6 +16,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@eli-coach-platform/ui/tabs";
+import { CalendarSearch } from "lucide-react";
 import type { CoachAssessmentCall } from "~/features/assessment-calls/contracts/assessment-calls";
 import {
   formatClockTime,
@@ -29,13 +30,16 @@ import {
 } from "~/features/assessment-calls/contracts/visitor-profile";
 import {
   classifyCalls,
-  emptyListingMessage,
+  emptyListingCopy,
   filterCalls,
+  hasSearchQuery,
   orderCallsBy,
   pageOfCalls,
   PAGE_SIZE,
+  type CallPageView,
   type ClassifiedCall,
   type CoachCallStatus,
+  type EmptyListingCopy,
   type ListingMoment,
   type ListingSelection,
 } from "~/features/assessment-calls/ui/coach/assessment-call-listing";
@@ -45,15 +49,11 @@ import { CallListPager } from "./call-list-pager";
 import { SortControl } from "./sort-control";
 import { useCallListingParams } from "./use-call-listing-params";
 
-const SEARCH_FIELD_ID = "assessment-call-search";
-const RANGE_YEARS_AROUND_NOW = 1;
-
 const STATUS_TABS: readonly { label: string; status: CoachCallStatus }[] = [
   { label: "All", status: "all" },
-  { label: "Upcoming", status: "upcoming" },
   { label: "Today", status: "today" },
+  { label: "Upcoming", status: "upcoming" },
   { label: "Past", status: "past" },
-  { label: "Custom", status: "custom" },
 ];
 
 type AssessmentCallsSectionProps = {
@@ -69,33 +69,36 @@ export function AssessmentCallsSection({
 }: AssessmentCallsSectionProps) {
   const {
     changeQuery,
-    chooseRange,
     chooseSortKey,
     chooseStatus,
     page,
     pathForPage,
     query,
-    range,
     sort,
     status,
     toggleSortDirection,
   } = useCallListingParams();
-  const selection: ListingSelection = { query, range, status };
-  const matching = orderCallsBy(
-    filterCalls(classifyCalls(calls, { now, timeZone }), selection),
-    sort,
-    status,
-  );
+  const selection: ListingSelection = { query, status };
+  const classified = classifyCalls(calls, { now, timeZone });
+  const matching = orderCallsBy(filterCalls(classified, selection), sort);
   const view = pageOfCalls(matching, { page, size: PAGE_SIZE });
+  const emptyCopy = emptyListingCopy(selection);
+
+  const clearFilters = () => changeQuery("");
 
   return (
     <div
       className={cn(cardVariants({ variant: "portal-panel" }), "p-5 sm:p-8")}
       data-parity-root="AssessmentCallsSection"
     >
-      <Tabs className="w-full" onValueChange={chooseStatus} value={status}>
-        <div className="mb-6 grid w-fit max-w-full gap-4 xl:flex xl:w-full xl:items-start xl:justify-between xl:gap-8">
-          <div className="flex max-w-full flex-col gap-2 xl:w-fit">
+      <Tabs
+        className="w-full"
+        onValueChange={chooseStatus}
+        value={status}
+        variant="segmented"
+      >
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+          <div className="grid w-full gap-3 sm:w-fit sm:max-w-full">
             <TabsList aria-label="When">
               {STATUS_TABS.map((tab) => (
                 <TabsTrigger key={tab.status} value={tab.status}>
@@ -103,70 +106,89 @@ export function AssessmentCallsSection({
                 </TabsTrigger>
               ))}
             </TabsList>
-
-            {status === "custom" && (
-              <DateRangeField
-                aria-label="Date range"
-                className="w-full"
-                data-parity-root="DateRangeField"
-                onChange={chooseRange}
-                value={range}
-                yearRange={{
-                  from: now.getFullYear() - RANGE_YEARS_AROUND_NOW,
-                  to: now.getFullYear() + RANGE_YEARS_AROUND_NOW,
-                }}
-              />
-            )}
           </div>
 
-          <div className="w-full xl:min-w-0 xl:flex-1">
-            <Label className="sr-only" htmlFor={SEARCH_FIELD_ID}>
-              Search calls
-            </Label>
-            <Input
-              id={SEARCH_FIELD_ID}
+          <div className="grid w-full gap-3 sm:w-fit sm:max-w-full">
+            <SearchField
+              aria-label="Search calls"
+              className="w-full sm:w-72"
               onChange={(event) => changeQuery(event.target.value)}
               placeholder="Search by name or email"
-              type="search"
+              size="sm"
               value={query}
             />
+            <SortControl
+              onChooseKey={chooseSortKey}
+              onToggleDirection={toggleSortDirection}
+              sort={sort}
+            />
           </div>
-
-          <SortControl
-            onChooseKey={chooseSortKey}
-            onToggleDirection={toggleSortDirection}
-            sort={sort}
-          />
         </div>
 
         <TabsContent value={status}>
-          <CallList
-            calls={view.calls}
-            emptyMessage={emptyListingMessage(selection)}
+          <CallResults
+            emptyCopy={emptyCopy}
             moment={{ now, timeZone }}
+            onClearFilters={
+              hasSearchQuery(selection) ? clearFilters : undefined
+            }
+            pathForPage={pathForPage}
+            view={view}
           />
-
-          {view.pageCount > 1 && (
-            <CallListPager pathForPage={pathForPage} view={view} />
-          )}
         </TabsContent>
       </Tabs>
     </div>
   );
 }
 
-function CallList(props: {
-  calls: readonly ClassifiedCall[];
-  emptyMessage: string;
+type CallResultsProps = {
+  emptyCopy: EmptyListingCopy;
   moment: ListingMoment;
-}) {
-  const { calls, emptyMessage, moment } = props;
+  onClearFilters?: () => void;
+  pathForPage: (page: number) => string;
+  view: CallPageView;
+};
 
-  if (calls.length === 0) {
+function CallResults({
+  emptyCopy,
+  moment,
+  onClearFilters,
+  pathForPage,
+  view,
+}: CallResultsProps) {
+  if (view.calls.length === 0) {
     return (
-      <p className="py-4 text-center text-sm text-text-muted">{emptyMessage}</p>
+      <EmptyState
+        action={
+          onClearFilters && (
+            <Button onClick={onClearFilters} size="sm" variant="outline">
+              Clear filters
+            </Button>
+          )
+        }
+        description={emptyCopy.description}
+        icon={CalendarSearch}
+        title={emptyCopy.title}
+      />
     );
   }
+
+  return (
+    <>
+      <CallList calls={view.calls} moment={moment} />
+
+      {view.pageCount > 1 && (
+        <CallListPager pathForPage={pathForPage} view={view} />
+      )}
+    </>
+  );
+}
+
+function CallList(props: {
+  calls: readonly ClassifiedCall[];
+  moment: ListingMoment;
+}) {
+  const { calls, moment } = props;
 
   return (
     <ul aria-label="Assessment calls" className="space-y-4">
@@ -209,10 +231,11 @@ function CallCard(props: { call: ClassifiedCall; moment: ListingMoment }) {
   return (
     <AppointmentCard
       actions={
-        call.timing === "upcoming" ? (
-          <JoinCallLink joinPath={call.joinPath} />
-        ) : (
-          <Badge tone="neutral">Past</Badge>
+        call.timing === "upcoming" && (
+          <JoinCallLink
+            joinPath={call.joinPath}
+            tone={call.isToday ? "live" : "default"}
+          />
         )
       }
       attendee={{
@@ -220,7 +243,12 @@ function CallCard(props: { call: ClassifiedCall; moment: ListingMoment }) {
         name: call.fullName,
         phone: call.phone ?? undefined,
       }}
-      badges={call.isToday && <Badge tone="accent">Today</Badge>}
+      badges={
+        <>
+          {call.isToday && <Badge tone="brand-secondary">Today</Badge>}
+          {call.timing === "past" && <Badge tone="muted">Call held</Badge>}
+        </>
+      }
       details={visitorDetails(call, moment)}
       quote={call.visitorNotes ?? undefined}
       status={call.timing === "past" ? "past" : "scheduled"}

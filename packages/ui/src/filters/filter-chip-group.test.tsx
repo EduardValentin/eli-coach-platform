@@ -14,7 +14,7 @@ afterEach(() => {
 
 function renderGroup(options: {
   onValueChange: (value: string | null) => void;
-  tone?: "brand" | "brand-secondary";
+  tone?: "primary" | "brand-secondary";
   value: string | null;
 }) {
   return render(
@@ -169,7 +169,7 @@ describe("filter chip group appearance", () => {
     }
   });
 
-  it("falls back to the brand tone", () => {
+  it("falls back to the primary tone", () => {
     // arrange
     const onValueChange = vi.fn();
 
@@ -178,7 +178,11 @@ describe("filter chip group appearance", () => {
 
     // assert
     expect(screen.getByRole("radio", { name: "Workouts" })).toHaveClass(
-      "data-[state=on]:bg-brand-primary",
+      "data-[state=on]:bg-primary",
+      "data-[state=on]:border-primary",
+      "data-[state=on]:text-primary-foreground",
+      "data-[state=off]:hover:border-primary",
+      "data-[state=off]:hover:text-primary",
     );
   });
 

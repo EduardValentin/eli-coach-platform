@@ -11,19 +11,7 @@ import {
 // stories append here (Clients, Training, Nutrition, Schedule) without
 // touching the layout.
 export const coachSurfaceLinks: readonly PortalNavigationLink[] = [
-  {
-    href: COACH_PORTAL_PATH,
-    label: "Dashboard",
-    icon: <LayoutDashboard aria-hidden="true" size={18} />,
-  },
-  {
-    href: COACH_ASSESSMENT_CALLS_PATH,
-    label: "Assessment calls",
-    icon: <Video aria-hidden="true" size={18} />,
-  },
-  {
-    href: COACH_SETTINGS_PATH,
-    label: "Settings",
-    icon: <Settings aria-hidden="true" size={18} />,
-  },
+  { href: COACH_PORTAL_PATH, label: "Dashboard", icon: LayoutDashboard },
+  { href: COACH_ASSESSMENT_CALLS_PATH, label: "Assessment calls", icon: Video },
+  { href: COACH_SETTINGS_PATH, label: "Settings", icon: Settings },
 ];

@@ -43,7 +43,7 @@ export function UpcomingAssessmentCalls({
       headingId="upcoming-calls-heading"
       className="flex h-full flex-col"
       footer={
-        <WidgetLink arrow to={ALL_CALLS_PATH}>
+        <WidgetLink trailing="arrow" to={ALL_CALLS_PATH}>
           View all calls
         </WidgetLink>
       }
@@ -64,13 +64,13 @@ export function UpcomingAssessmentCalls({
                   when={{ startsAt: call.booking.startsAt, timeZone }}
                   badges={
                     call.isToday && (
-                      <Badge variant="brand-secondary">Today</Badge>
+                      <Badge tone="brand-secondary">Today</Badge>
                     )
                   }
                   action={
                     <JoinCallLink
                       joinPath={call.booking.joinPath}
-                      live={call.isToday}
+                      tone={call.isToday ? 'live' : 'default'}
                     />
                   }
                 />

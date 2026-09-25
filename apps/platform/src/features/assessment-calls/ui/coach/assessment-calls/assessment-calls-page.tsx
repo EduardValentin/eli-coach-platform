@@ -1,3 +1,4 @@
+import { PortalPageHeader } from "@eli-coach-platform/ui/portal";
 import {
   useLoaderData,
   type LoaderFunctionArgs,
@@ -35,11 +36,12 @@ export default function CoachAssessmentCallsRoute() {
 
   return (
     <div className="w-full">
-      <header className="mb-8" data-parity-root="CoachAssessmentCallsHeader">
-        <h1 className="font-heading text-3xl font-medium text-text-primary lg:text-4xl">
-          Assessment calls
-        </h1>
-      </header>
+      <div data-parity-root="CoachAssessmentCallsHeader">
+        <PortalPageHeader
+          subtitle="Everyone who booked a call with you."
+          title="Assessment calls"
+        />
+      </div>
 
       <AssessmentCallsSection
         calls={listing.calls}

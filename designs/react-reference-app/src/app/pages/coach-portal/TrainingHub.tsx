@@ -107,7 +107,7 @@ function PlanInstanceCard({
       }`}
     >
       {isCompleted && (
-        <Badge variant="success" className="absolute -top-2.5 left-4 z-10">
+        <Badge tone="success" className="absolute -top-2.5 left-4 z-10">
           <Check size={11} />
           Completed
         </Badge>
@@ -148,7 +148,7 @@ function PlanInstanceCard({
             </p>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
-            <Badge variant="muted" className="whitespace-nowrap">
+            <Badge tone="muted" className="whitespace-nowrap">
               {trainingDays}d/wk
             </Badge>
             <Popover>
@@ -201,7 +201,7 @@ function PlanInstanceCard({
         {/* Goal badge */}
         {goal && (
           <Badge
-            variant={isCompleted ? 'muted' : 'brand-secondary'}
+            tone={isCompleted ? 'muted' : 'brand-secondary'}
             className="mb-3 self-start"
           >
             <Target size={12} />
@@ -219,7 +219,7 @@ function PlanInstanceCard({
             </span>
             {instance.weeks.some((w) => w.isDeload) && (
               <Badge
-                variant={isCompleted ? 'muted' : 'brand-secondary'}
+                tone={isCompleted ? 'muted' : 'brand-secondary'}
                 className="whitespace-nowrap"
               >
                 Has deload
@@ -282,7 +282,7 @@ function TemplateCard({
             <CalendarDays size={22} />
           </div>
           <div className="flex items-center gap-2">
-            <Badge variant="muted">{trainingDays} days/week</Badge>
+            <Badge tone="muted">{trainingDays} days/week</Badge>
             <Button
               onClick={() => onDelete(template.id, template.name)}
               variant="ghost"
@@ -312,7 +312,7 @@ function TemplateCard({
         {template.tags && template.tags.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-4">
             {template.tags.map((tag) => (
-              <Badge key={tag} variant="brand-secondary">
+              <Badge key={tag} tone="brand-secondary">
                 {tag}
               </Badge>
             ))}
@@ -490,19 +490,20 @@ export function TrainingHub() {
       />
 
       <Tabs
+        variant="segmented"
         value={activeTab}
         onValueChange={(value) => setActiveTab(value as typeof activeTab)}
         className="w-full"
       >
         <div className="mb-6 flex flex-col gap-2">
-          <TabsList variant="segmented">
-            <TabsTrigger variant="segmented" value="instances">
+          <TabsList>
+            <TabsTrigger value="instances">
               Client Plans
             </TabsTrigger>
-            <TabsTrigger variant="segmented" value="templates">
+            <TabsTrigger value="templates">
               Templates
             </TabsTrigger>
-            <TabsTrigger variant="segmented" value="exercises">
+            <TabsTrigger value="exercises">
               Exercise Library
             </TabsTrigger>
           </TabsList>
@@ -644,7 +645,7 @@ export function TrainingHub() {
                             {exercise.tags && exercise.tags.length > 0 && (
                               <div className="flex flex-wrap gap-1 mt-1">
                                 {exercise.tags.map((tag) => (
-                                  <Badge key={tag} variant="brand-secondary">
+                                  <Badge key={tag} tone="brand-secondary">
                                     {tag}
                                   </Badge>
                                 ))}
@@ -656,7 +657,7 @@ export function TrainingHub() {
                       <td className="p-4">
                         <div className="flex flex-wrap gap-1">
                           {exercise.primaryMuscles.map((m) => (
-                            <Badge key={m} variant="brand-secondary">
+                            <Badge key={m} tone="brand-secondary">
                               {m}
                             </Badge>
                           ))}
@@ -664,7 +665,7 @@ export function TrainingHub() {
                       </td>
                       <td className="p-4">
                         <Badge
-                          variant={
+                          tone={
                             exercise.difficulty === 'Beginner'
                               ? 'success'
                               : exercise.difficulty === 'Intermediate'
@@ -865,7 +866,7 @@ export function TrainingHub() {
                     {planInstances.some(
                       (p) => p.clientId === client.id && p.status === 'active',
                     ) && (
-                      <Badge variant="pending" className="ml-2">
+                      <Badge tone="pending" className="ml-2">
                         Has active plan
                       </Badge>
                     )}

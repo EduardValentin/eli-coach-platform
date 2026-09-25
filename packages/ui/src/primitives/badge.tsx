@@ -8,13 +8,19 @@ const badgeClasses = cva(
   {
     variants: {
       tone: {
-        accent:
+        "brand-secondary":
           "border-brand-secondary/20 bg-brand-secondary-surface text-brand-secondary",
-        neutral: "border-border-default text-text-muted",
+        muted: "border-border-default text-text-muted",
+        pending:
+          "border-status-pending/20 bg-status-pending-soft text-status-pending",
+        success:
+          "border-feedback-success/20 bg-feedback-success-soft text-feedback-success",
+        count:
+          "min-w-5 rounded-full border-transparent bg-current/12 px-1.5 text-caption font-medium tabular-nums opacity-80",
       },
     },
     defaultVariants: {
-      tone: "accent",
+      tone: "muted",
     },
   },
 );
@@ -27,6 +33,7 @@ export const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
     <span
       ref={ref}
       className={cn(badgeClasses({ tone }), className)}
+      data-slot="badge"
       {...props}
     />
   ),

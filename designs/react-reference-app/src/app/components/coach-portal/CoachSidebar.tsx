@@ -18,6 +18,7 @@ import { NotificationBell } from '../NotificationBell';
 import { useCheckins } from '../../context/CheckinContext';
 import { useCoachProfile } from '../../context/CoachProfileContext';
 import { NavigationDialog } from '../ui/navigation-dialog';
+import { buttonVariants } from '../ui/button';
 import { useAppState } from '../../context/AppContext';
 
 const LINKS = [
@@ -205,12 +206,17 @@ export function CoachSidebar() {
   return (
     <>
       <NavigationDialog
-        closeMenuIcon={<X size={24} />}
+        closeMenuIcon={<X className="size-6" />}
         contentClassName="lg:hidden fixed inset-0 z-40 outline-none"
-        menuButtonClassName="p-2 -mr-2 text-text-secondary hover:text-text-primary"
-        openMenuIcon={<Menu size={24} />}
+        menuButtonClassName={buttonVariants({
+          variant: 'ghost',
+          size: 'icon-sm',
+          className:
+            'relative z-[60] -mr-2 text-text-secondary hover:text-text-primary',
+        })}
+        openMenuIcon={<Menu className="size-6" />}
         renderTopBar={(topBar) => (
-          <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white text-text-primary border-b border-border-subtle rounded-field flex items-center justify-between px-6 z-50 shadow-sm">
+          <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-surface-base text-text-primary border-b border-border-subtle rounded-field flex items-center justify-between px-6 z-50 shadow-card">
             <Link
               to="/coach/profile"
               className="flex items-center gap-3 min-w-0 hover:opacity-80 transition-opacity"
@@ -232,7 +238,7 @@ export function CoachSidebar() {
               {topBar.actions}
               {topBar.menuButton}
             </div>
-          </div>
+          </header>
         )}
         title="Coach portal mobile navigation"
         topBarActions={
@@ -261,7 +267,10 @@ export function CoachSidebar() {
       </NavigationDialog>
 
       {/* Desktop Sidebar */}
-      <div className="hidden lg:block fixed top-0 left-0 bottom-0 w-64 bg-white z-50">
+      <aside
+        aria-label="Coach portal sidebar"
+        className="hidden lg:block fixed top-0 left-0 bottom-0 w-64 bg-surface-base z-50"
+      >
         <DesktopSidebar
           actions={<NotificationBell align="left" />}
           brand={<CoachIdentityLink coachAvatarUrl={coachAvatarUrl} />}
@@ -269,7 +278,7 @@ export function CoachSidebar() {
           pathname={location.pathname}
           pendingCheckins={pendingCount}
         />
-      </div>
+      </aside>
     </>
   );
 }

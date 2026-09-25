@@ -227,7 +227,7 @@ function AnswerRow({
         )}
       >
         <ReviewAnswerValue answer={answer} />
-        {asked && <Badge variant="pending">Asked again</Badge>}
+        {asked && <Badge tone="pending">Asked again</Badge>}
       </dd>
     </div>
   );
@@ -260,7 +260,7 @@ export function AnswerGroups({
               <span className="text-base font-medium">{form.title}</span>
               <span className="flex items-center gap-2 text-xs font-normal text-text-secondary">
                 {askedCount(form, asked) > 0 && (
-                  <Badge variant="pending">
+                  <Badge tone="pending">
                     {askedCount(form, asked)} asked again
                   </Badge>
                 )}

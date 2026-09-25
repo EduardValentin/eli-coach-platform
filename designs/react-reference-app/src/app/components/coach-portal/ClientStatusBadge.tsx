@@ -2,9 +2,9 @@ import type { ComponentProps } from 'react';
 import type { ClientStatus, ClientStatusTone } from '../../domain/clientStatus';
 import { Badge } from '../ui/badge';
 
-type BadgeVariant = ComponentProps<typeof Badge>['variant'];
+type BadgeTone = ComponentProps<typeof Badge>['tone'];
 
-const TONE_VARIANTS: Record<ClientStatusTone, BadgeVariant> = {
+const BADGE_TONES: Record<ClientStatusTone, BadgeTone> = {
   neutral: 'secondary',
   pending: 'pending',
   info: 'brand-secondary',
@@ -13,5 +13,5 @@ const TONE_VARIANTS: Record<ClientStatusTone, BadgeVariant> = {
 };
 
 export function ClientStatusBadge({ status }: { status: ClientStatus }) {
-  return <Badge variant={TONE_VARIANTS[status.tone]}>{status.label}</Badge>;
+  return <Badge tone={BADGE_TONES[status.tone]}>{status.label}</Badge>;
 }

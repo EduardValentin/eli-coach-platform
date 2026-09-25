@@ -3,7 +3,7 @@ import { Badge } from '../ui/badge';
 
 export function JourneyStageBadge({ stage }: { stage: JourneyStage }) {
   return (
-    <Badge variant={stage === 'held' ? 'muted' : 'secondary'}>
+    <Badge tone={stage === 'held' ? 'muted' : 'secondary'}>
       {COACH_STAGE_LABELS[stage]}
     </Badge>
   );

@@ -1024,7 +1024,7 @@ function DayEditorMealRow({
                 {slot.alternativeRecipeIds.map((altId) => {
                   const altRecipe = recipes.find((r) => r.id === altId);
                   return altRecipe ? (
-                    <Badge key={altId} variant="muted">
+                    <Badge key={altId} tone="muted">
                       <Shuffle size={10} aria-hidden="true" />
                       {altRecipe.name}
                     </Badge>

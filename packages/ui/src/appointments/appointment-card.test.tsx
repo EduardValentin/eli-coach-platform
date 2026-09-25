@@ -22,7 +22,7 @@ describe("appointment card", () => {
     // assert
     expect(screen.getByText("Ana Popescu")).toBeInTheDocument();
     expect(screen.getByText("Sun, Sep 20")).toBeInTheDocument();
-    expect(screen.getByText("12:36 AM")).toBeInTheDocument();
+    expect(screen.getByText("· 12:36 AM")).toBeInTheDocument();
   });
 
   it("offers the attendee's address as a mail link", () => {
@@ -88,6 +88,20 @@ describe("appointment card", () => {
         .getAllByRole("definition")
         .map((definition) => definition.textContent),
     ).toEqual(["32 (14 Mar 1994)", "Weight loss"]);
+  });
+
+  it("sets each detail label in the label rung", () => {
+    // arrange, act
+    render(
+      <AppointmentCard
+        attendee={ATTENDEE}
+        details={[{ label: "Goal", value: "Weight loss" }]}
+        when={WHEN}
+      />,
+    );
+
+    // assert
+    expect(screen.getByRole("term")).toHaveClass("text-label", "uppercase");
   });
 
   it("renders no detail list when there are no details", () => {

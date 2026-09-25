@@ -3,7 +3,6 @@ import { useLocation } from "react-router";
 
 import {
   defaultDirectionFor,
-  parseDateRangeParams,
   parsePageParam,
   parseSortDirectionParam,
   toSortKey,
@@ -12,27 +11,22 @@ import {
   DEFAULT_SORT_KEY,
   DIRECTION_PARAM,
   FIRST_PAGE,
-  FROM_PARAM,
   PAGE_PARAM,
   QUERY_PARAM,
   SORT_PARAM,
   STATUS_PARAM,
-  TO_PARAM,
   type CallSort,
   type CoachCallStatus,
-  type DateRange,
   type SortKey,
 } from "~/features/assessment-calls/ui/coach/assessment-call-listing";
 
 export type CallListingParams = {
   changeQuery: (value: string) => void;
-  chooseRange: (range: DateRange) => void;
   chooseSortKey: (key: SortKey) => void;
   chooseStatus: (value: string) => void;
   page: number;
   pathForPage: (page: number) => string;
   query: string;
-  range: DateRange;
   sort: CallSort;
   status: CoachCallStatus;
   toggleSortDirection: () => void;
@@ -66,20 +60,6 @@ export function useCallListingParams(): CallListingParams {
     replaceSearchParams((params) => {
       params.delete(PAGE_PARAM);
       setParamUnlessDefault(params, QUERY_PARAM, { defaultValue: "", value });
-    });
-  };
-
-  const chooseRange = (range: DateRange) => {
-    replaceSearchParams((params) => {
-      params.delete(PAGE_PARAM);
-      setParamUnlessDefault(params, FROM_PARAM, {
-        defaultValue: null,
-        value: range.from,
-      });
-      setParamUnlessDefault(params, TO_PARAM, {
-        defaultValue: null,
-        value: range.to,
-      });
     });
   };
 
@@ -122,30 +102,25 @@ export function useCallListingParams(): CallListingParams {
 
   return {
     changeQuery,
-    chooseRange,
     chooseSortKey,
     chooseStatus,
     page: parsePageParam(searchParams.get(PAGE_PARAM)),
     pathForPage,
     query: searchParams.get(QUERY_PARAM) ?? "",
-    range: parseDateRangeParams(
-      searchParams.get(FROM_PARAM),
-      searchParams.get(TO_PARAM),
-    ),
     sort,
     status: toCallStatus(searchParams.get(STATUS_PARAM)),
     toggleSortDirection,
   };
 }
 
-type ParamChoice = { defaultValue: string | null; value: string | null };
+type ParamChoice = { defaultValue: string; value: string };
 
 function setParamUnlessDefault(
   params: URLSearchParams,
   name: string,
   choice: ParamChoice,
 ): void {
-  if (choice.value === null || choice.value === choice.defaultValue) {
+  if (choice.value === choice.defaultValue) {
     params.delete(name);
     return;
   }

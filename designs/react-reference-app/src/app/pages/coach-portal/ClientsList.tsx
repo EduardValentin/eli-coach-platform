@@ -207,7 +207,7 @@ function StatusFilter({
       <SelectContent>
         <SelectItem value="all">
           <span className="flex items-center gap-2">
-            All statuses <Badge variant="count">{counts.all}</Badge>
+            All statuses <Badge tone="count">{counts.all}</Badge>
           </span>
         </SelectItem>
         <SelectSeparator />
@@ -217,7 +217,7 @@ function StatusFilter({
             {group.options.map((option) => (
               <SelectItem key={option} value={option}>
                 <span className="flex items-center gap-2">
-                  {option} <Badge variant="count">{counts[option]}</Badge>
+                  {option} <Badge tone="count">{counts[option]}</Badge>
                 </span>
               </SelectItem>
             ))}

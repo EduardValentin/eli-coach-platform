@@ -4,11 +4,11 @@ import { ToggleGroup as RadixToggleGroup } from "radix-ui";
 import { cn } from "../lib/cn";
 import { chipVariants, type ChipTone } from "../primitives/chip";
 
-export type FilterChipTone = Extract<ChipTone, "brand" | "brand-secondary">;
+export type FilterChipTone = Extract<ChipTone, "primary" | "brand-secondary">;
 
 // The tone belongs to the group: chips in one row cannot disagree about it,
 // and no caller can leave it off a single chip and get a stray colour.
-const FilterChipToneContext = React.createContext<FilterChipTone>("brand");
+const FilterChipToneContext = React.createContext<FilterChipTone>("primary");
 
 type FilterChipGroupProps = Omit<
   React.ComponentPropsWithoutRef<typeof RadixToggleGroup.Root>,
@@ -23,7 +23,7 @@ type FilterChipGroupProps = Omit<
 export const FilterChipGroup = React.forwardRef<
   HTMLDivElement,
   FilterChipGroupProps
->(({ className, onValueChange, tone = "brand", value, ...props }, ref) => (
+>(({ className, onValueChange, tone = "primary", value, ...props }, ref) => (
   <FilterChipToneContext.Provider value={tone}>
     <RadixToggleGroup.Root
       ref={ref}
