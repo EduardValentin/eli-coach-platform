@@ -116,7 +116,7 @@ describe("Select", () => {
     const trigger = screen.getByRole("combobox", { name: "Sort by" });
 
     // assert
-    expect(trigger).toHaveClass("h-(--size-control-sm)", "text-sm");
+    expect(trigger).toHaveClass("h-(--size-control-sm)", "md:text-sm");
     expect(trigger).not.toHaveClass("h-(--size-control-md)", "text-base");
   });
 

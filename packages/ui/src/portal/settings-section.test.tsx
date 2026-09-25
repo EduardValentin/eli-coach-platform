@@ -66,7 +66,9 @@ describe("SettingsSection", () => {
     );
 
     // assert
-    expect(screen.queryByText("Save changes")).toBeNull();
+    expect(
+      screen.getByRole("region", { name: "Assessment calls" }).lastElementChild,
+    ).toHaveTextContent("Rows");
   });
 });
 

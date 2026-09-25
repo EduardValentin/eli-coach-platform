@@ -76,10 +76,16 @@ describe("PortalWidget", () => {
   it("renders no footer without one", () => {
     // arrange
     // act
-    render(<PortalWidget headingId="calls-heading" title="Upcoming calls" />);
+    render(
+      <PortalWidget headingId="calls-heading" title="Upcoming calls">
+        <p>Two calls this week</p>
+      </PortalWidget>,
+    );
 
     // assert
-    expect(screen.queryByText("View all calls")).toBeNull();
+    expect(
+      screen.getByRole("region", { name: "Upcoming calls" }).lastElementChild,
+    ).toHaveTextContent("Two calls this week");
   });
 
   it("tightens the frame in the compact density", () => {

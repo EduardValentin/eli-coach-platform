@@ -13,7 +13,7 @@ const FIELD_TAB_INDEX = 0;
 // A button that has to read as one of the form's fields, so it carries the
 // Input primitive's frame rather than a button variant.
 const FIELD_TRIGGER_CLASS =
-  "flex w-full min-w-0 items-center justify-between gap-2 rounded-field border border-control-border-soft bg-surface-base px-3 text-left transition-[color,box-shadow] outline-none focus-visible:border-border-focus aria-invalid:border-feedback-danger disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50";
+  "flex w-full min-w-0 items-center justify-between gap-2 rounded-field border border-control-border-soft bg-surface-base text-left transition-[color,box-shadow] outline-none focus-visible:border-border-focus aria-invalid:border-feedback-danger disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50";
 
 type DateFieldTriggerProps = Omit<
   React.ComponentPropsWithoutRef<"button">,
