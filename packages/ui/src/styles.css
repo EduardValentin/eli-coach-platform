@@ -319,6 +319,7 @@
   --color-brand-primary-foreground: var(--color-brand-primary-foreground);
   --color-brand-primary-soft: var(--color-brand-primary-soft);
   --color-brand-primary-on-inverted: var(--color-brand-primary-on-inverted);
+  --color-focus-ring: var(--color-focus-ring);
 
   --color-primary: var(--color-primary);
   --color-primary-hover: var(--color-primary-hover);

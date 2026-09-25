@@ -5,6 +5,7 @@ import { Link as RouterLink, useLocation } from "react-router";
 
 import { MAIN_CONTENT_ID } from "../lib/constants";
 import { cn } from "../lib/cn";
+import { buttonVariants } from "../primitives/button";
 import { NavigationDialog } from "./navigation-dialog";
 
 export type PortalNavigationLink = {
@@ -62,10 +63,15 @@ export function PortalShell(props: PortalShellProps) {
       <NavigationDialog
         closeMenuIcon={<X aria-hidden="true" className="size-6" />}
         contentClassName="fixed inset-0 z-40 outline-none lg:hidden"
-        menuButtonClassName="relative z-[60] -mr-2 text-text-secondary hover:text-text-primary"
+        menuButtonClassName={buttonVariants({
+          className:
+            "relative z-[60] -mr-2 text-text-secondary hover:text-text-primary",
+          size: "icon-sm",
+          variant: "ghost",
+        })}
         openMenuIcon={<Menu aria-hidden="true" className="size-6" />}
         renderTopBar={(topBar) => (
-          <header className="fixed inset-x-0 top-0 z-50 flex h-16 items-center justify-between border-b border-border-subtle bg-surface-base px-6 shadow-soft lg:hidden">
+          <header className="fixed inset-x-0 top-0 z-50 flex h-16 items-center justify-between rounded-field border-b border-border-subtle bg-surface-base px-6 text-text-primary shadow-card lg:hidden">
             <div className="flex min-w-0 items-center gap-3">{topBarBrand}</div>
             <div className="flex items-center gap-2">
               {topBar.actions}
@@ -91,7 +97,7 @@ export function PortalShell(props: PortalShellProps) {
       </NavigationDialog>
       <aside
         aria-label={asideLabel}
-        className="fixed inset-y-0 left-0 z-30 hidden w-64 lg:block"
+        className="fixed inset-y-0 left-0 z-50 hidden w-64 bg-surface-base lg:block"
       >
         <PortalSidebarSurface>
           <div className="mb-4 flex items-center justify-between rounded-field border-b border-stroke-quiet px-3 py-6">
@@ -109,7 +115,7 @@ export function PortalShell(props: PortalShellProps) {
         id={MAIN_CONTENT_ID}
         tabIndex={-1}
       >
-        <div className="mx-auto max-w-portal p-6 lg:px-8 lg:py-8">
+        <div className="mx-auto max-w-portal px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
           {children}
         </div>
       </main>

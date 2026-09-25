@@ -23,7 +23,7 @@ describe("Input", () => {
       "rounded-field",
       "border-control-border-soft",
       "bg-surface-base",
-      "focus-visible:border-border-focus",
+      "focus-visible:border-focus-ring",
       "aria-invalid:border-feedback-danger",
     );
   });

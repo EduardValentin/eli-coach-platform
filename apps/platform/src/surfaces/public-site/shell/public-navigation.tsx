@@ -69,8 +69,7 @@ export function PublicNavigation(props: PublicNavigationProps) {
     <NavigationDialog
       closeMenuIcon={<X aria-hidden="true" size={28} />}
       contentClassName="fixed inset-0 z-[55] outline-none md:hidden"
-      menuButtonClassName="relative z-[60] md:hidden"
-      menuButtonVariant="plain"
+      menuButtonClassName="relative z-[60] p-2 outline-none md:hidden"
       openMenuIcon={<Menu aria-hidden="true" size={28} />}
       renderTopBar={(topBar) => (
         <PublicNavigationHeader

@@ -24,7 +24,7 @@ const NOON_UTC = 12;
 // The trigger is a button that has to read as one of the form's fields, so it
 // carries the Input primitive's frame rather than a button variant.
 const FIELD_BUTTON_CLASS =
-  "flex h-12 w-full min-w-0 items-center justify-between gap-2 rounded-field border border-control-border-soft bg-surface-quiet/50 px-3 py-1 text-left text-base transition-[color,box-shadow] outline-none focus-visible:border-border-focus data-[invalid]:border-feedback-danger md:text-sm";
+  "flex h-12 w-full min-w-0 items-center justify-between gap-2 rounded-field border border-control-border-soft bg-surface-quiet/50 px-3 py-1 text-left text-base transition-[color,box-shadow] outline-none focus-visible:border-focus-ring data-[invalid]:border-feedback-danger md:text-sm";
 
 const birthDateFormatter = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",

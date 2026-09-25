@@ -8,7 +8,6 @@ import {
   Badge,
   Button,
   cardVariants,
-  Label,
   SearchField,
 } from "@eli-coach-platform/ui/primitives";
 import {
@@ -112,10 +111,8 @@ export function AssessmentCallsSection({
           </div>
 
           <div className="grid w-full gap-3 sm:w-fit sm:max-w-full">
-            <Label className="sr-only" htmlFor={SEARCH_FIELD_ID}>
-              Search calls
-            </Label>
             <SearchField
+              aria-label="Search calls"
               className="w-full sm:w-72"
               id={SEARCH_FIELD_ID}
               onChange={(event) => changeQuery(event.target.value)}

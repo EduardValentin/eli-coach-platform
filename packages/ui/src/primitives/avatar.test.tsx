@@ -3,6 +3,7 @@
 import "@testing-library/jest-dom/vitest";
 
 import { cleanup, render } from "@testing-library/react";
+import type { ReactElement } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { Avatar } from "./avatar";
@@ -11,54 +12,74 @@ afterEach(() => {
   cleanup();
 });
 
+function renderAvatar(avatar: ReactElement) {
+  const { container } = render(avatar);
+  const root = container.firstElementChild;
+
+  return { fallback: root?.firstElementChild, root };
+}
+
 describe("avatar", () => {
-  it("stands in for a missing picture with the first letter of the name", () => {
+  it("stands in for a missing picture with the initials of the first two names", () => {
     // arrange, act
-    const { container } = render(<Avatar name="Ana Popescu" />);
+    const { root } = renderAvatar(<Avatar name="ana maria Popescu" />);
 
     // assert
-    expect(container.textContent).toBe("A");
+    expect(root?.textContent).toBe("AM");
+  });
+
+  it("stands in with one initial for a single name", () => {
+    // arrange, act
+    const { root } = renderAvatar(<Avatar name="Ana" />);
+
+    // assert
+    expect(root?.textContent).toBe("A");
   });
 
   it("hides the stand-in from assistive technology, since the name is beside it", () => {
     // arrange, act
-    const { container } = render(<Avatar name="Ana Popescu" />);
+    const { fallback } = renderAvatar(<Avatar name="Ana Popescu" />);
 
     // assert
-    expect(container.firstElementChild).toHaveAttribute("aria-hidden", "true");
+    expect(fallback).toHaveAttribute("aria-hidden", "true");
   });
 
-  it("sits at the medium size on the neutral surface by default", () => {
+  it("sits at the medium size with the initials on the neutral surface by default", () => {
     // arrange, act
-    const { container } = render(<Avatar name="Ana Popescu" />);
+    const { fallback, root } = renderAvatar(<Avatar name="Ana Popescu" />);
 
     // assert
-    expect(container.firstElementChild).toHaveClass(
+    expect(root).toHaveClass(
       "size-10",
-      "text-sm",
+      "[&_[data-slot=avatar-fallback]]:text-sm",
+      "rounded-full",
+      "overflow-hidden",
+    );
+    expect(fallback).toHaveClass(
       "font-medium",
       "bg-surface-neutral",
       "text-text-primary",
+      "rounded-full",
     );
   });
 
   it("grows to the large size with larger initials", () => {
     // arrange, act
-    const { container } = render(<Avatar name="Ana Popescu" size="lg" />);
+    const { root } = renderAvatar(<Avatar name="Ana Popescu" size="lg" />);
 
     // assert
-    expect(container.firstElementChild).toHaveClass("size-16", "text-xl");
+    expect(root).toHaveClass(
+      "size-16",
+      "[&_[data-slot=avatar-fallback]]:text-xl",
+    );
   });
 
-  it("mutes the stand-in when the moment it belongs to has passed", () => {
+  it("mutes the whole avatar when the moment it belongs to has passed, keeping the primary ink", () => {
     // arrange, act
-    const { container } = render(<Avatar name="Ana" tone="muted" />);
+    const { fallback, root } = renderAvatar(<Avatar name="Ana" tone="muted" />);
 
     // assert
-    expect(container.firstElementChild).toHaveClass(
-      "bg-surface-neutral",
-      "text-text-primary",
-      "opacity-70",
-    );
+    expect(root).toHaveClass("opacity-70");
+    expect(fallback).toHaveClass("text-text-primary");
   });
 });
