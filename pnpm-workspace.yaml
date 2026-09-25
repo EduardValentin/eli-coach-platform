@@ -17,7 +17,7 @@ catalog:
   "@playwright/test": 1.62.1
   "@react-router/dev": 7.18.2
   "@react-router/node": 7.18.2
-  "@react-router/serve": 7.18.2
+  "@react-router/serve": 8.4.0
   "@tailwindcss/vite": 4.2.4
   "@testcontainers/postgresql": 12.1.0
   "@testing-library/jest-dom": 6.9.1
