@@ -49,8 +49,6 @@ import { CallListPager } from "./call-list-pager";
 import { SortControl } from "./sort-control";
 import { useCallListingParams } from "./use-call-listing-params";
 
-const SEARCH_FIELD_ID = "assessment-call-search";
-
 const STATUS_TABS: readonly { label: string; status: CoachCallStatus }[] = [
   { label: "All", status: "all" },
   { label: "Today", status: "today" },
@@ -114,7 +112,6 @@ export function AssessmentCallsSection({
             <SearchField
               aria-label="Search calls"
               className="w-full sm:w-72"
-              id={SEARCH_FIELD_ID}
               onChange={(event) => changeQuery(event.target.value)}
               placeholder="Search by name or email"
               size="sm"

@@ -118,7 +118,6 @@
   --color-stroke-quiet: oklch(0.985 0 0);
   --color-stroke-faint: oklch(0.97 0 0);
   --color-divider: oklch(0.87 0 0);
-  --color-border-focus: oklch(0.708 0 0);
   --color-border-default: rgba(0, 0, 0, 0.1);
   --color-bundle-muted: oklch(0.52 0 0);
 
@@ -310,7 +309,6 @@
   --color-stroke-quiet: var(--color-stroke-quiet);
   --color-stroke-faint: var(--color-stroke-faint);
   --color-divider: var(--color-divider);
-  --color-border-focus: var(--color-border-focus);
   --color-border-default: var(--color-border-default);
   --color-bundle-muted: var(--color-bundle-muted);
 
@@ -371,7 +369,7 @@
     border-color: var(--color-border-default);
     outline-color: color-mix(
       in oklab,
-      var(--color-border-focus) 50%,
+      var(--color-focus-ring) 50%,
       transparent
     );
   }
