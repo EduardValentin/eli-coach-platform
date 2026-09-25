@@ -150,7 +150,7 @@ export function ClientDashboard() {
           headingId="phase-heading"
           className="h-full"
           footer={
-            <WidgetLink arrow to="/portal/cycle">
+            <WidgetLink trailing="arrow" to="/portal/cycle">
               View cycle tracker
             </WidgetLink>
           }
@@ -360,7 +360,7 @@ export function ClientDashboard() {
           headingId="profile-details-heading"
           className="h-full"
           footer={
-            <WidgetLink arrow to="/portal/profile">
+            <WidgetLink trailing="arrow" to="/portal/profile">
               View full profile
             </WidgetLink>
           }

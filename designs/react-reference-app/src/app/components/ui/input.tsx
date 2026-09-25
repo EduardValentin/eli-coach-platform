@@ -6,12 +6,12 @@ import { cn } from "./utils";
 const inputVariants = cva("", {
   variants: {
     size: {
-      default: "h-(--size-control-md) px-3",
+      md: "h-(--size-control-md) px-3",
       sm: "h-(--size-control-sm) px-2.5",
     },
   },
   defaultVariants: {
-    size: "default",
+    size: "md",
   },
 });
 
@@ -19,7 +19,7 @@ type InputProps = Omit<React.ComponentProps<"input">, "size"> &
   VariantProps<typeof inputVariants>;
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type, size = "default", ...props }, ref) => (
+  ({ className, type, size = "md", ...props }, ref) => (
     <input
       ref={ref}
       type={type}

@@ -20,10 +20,10 @@ const buttonVariants = cva(
           'border border-surface-inverted-foreground/30 bg-surface-inverted-foreground/15 text-surface-inverted-foreground backdrop-blur-sm hover:bg-surface-inverted-foreground/25',
       },
       size: {
-        xs: 'h-(--size-control-xs) px-3 has-[>svg]:px-2.5',
-        md: 'h-(--size-control-md) px-6 has-[>svg]:px-5',
-        lg: 'h-(--size-control-lg) px-8',
-        'lg-tight': 'h-(--size-control-lg) px-4',
+        xs: 'h-(--size-control-xs) px-3 text-sm has-[>svg]:px-2.5',
+        md: 'h-(--size-control-md) px-6 text-base has-[>svg]:px-5',
+        lg: 'h-(--size-control-lg) px-8 text-base',
+        'lg-tight': 'h-(--size-control-lg) px-4 text-base',
       },
       width: {
         content: '',
@@ -59,7 +59,6 @@ const buttonVariants = cva(
       size: 'md',
       width: 'content',
       weight: 'medium',
-      textSize: 'base',
       lettering: 'plain',
       elevation: 'flat',
       press: 'none',

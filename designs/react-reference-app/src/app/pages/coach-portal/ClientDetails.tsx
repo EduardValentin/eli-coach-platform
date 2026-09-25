@@ -349,7 +349,7 @@ function RosterClientDetails() {
           headingId="phase-tile-heading"
           className="h-full"
           footer={
-            <WidgetLink arrow to={`/coach/clients/${clientId}/cycle`}>
+            <WidgetLink trailing="arrow" to={`/coach/clients/${clientId}/cycle`}>
               View cycle log
             </WidgetLink>
           }
@@ -617,7 +617,7 @@ function RosterClientDetails() {
             headingId="workout-history-heading"
             className="lg:col-span-2 self-start"
             action={
-              <WidgetLink arrow to={`/coach/clients/${clientId}/history`}>
+              <WidgetLink trailing="arrow" to={`/coach/clients/${clientId}/history`}>
                 View All ({getClientWorkoutHistory(dataClientId).length})
               </WidgetLink>
             }

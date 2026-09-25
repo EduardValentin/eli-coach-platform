@@ -490,19 +490,20 @@ export function TrainingHub() {
       />
 
       <Tabs
+        variant="segmented"
         value={activeTab}
         onValueChange={(value) => setActiveTab(value as typeof activeTab)}
         className="w-full"
       >
         <div className="mb-6 flex flex-col gap-2">
-          <TabsList variant="segmented">
-            <TabsTrigger variant="segmented" value="instances">
+          <TabsList>
+            <TabsTrigger value="instances">
               Client Plans
             </TabsTrigger>
-            <TabsTrigger variant="segmented" value="templates">
+            <TabsTrigger value="templates">
               Templates
             </TabsTrigger>
-            <TabsTrigger variant="segmented" value="exercises">
+            <TabsTrigger value="exercises">
               Exercise Library
             </TabsTrigger>
           </TabsList>

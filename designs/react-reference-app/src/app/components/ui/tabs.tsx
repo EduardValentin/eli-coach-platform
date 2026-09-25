@@ -52,25 +52,34 @@ const tabsContentVariants = cva("flex-1 outline-none", {
   },
 });
 
+type TabsVariant = NonNullable<VariantProps<typeof tabsListVariants>["variant"]>;
+
+const TabsVariantContext = React.createContext<TabsVariant>("default");
+
 function Tabs({
   className,
+  variant = "default",
   ...props
-}: React.ComponentProps<typeof TabsPrimitive.Root>) {
+}: React.ComponentProps<typeof TabsPrimitive.Root> & {
+  variant?: TabsVariant;
+}) {
   return (
-    <TabsPrimitive.Root
-      data-slot="tabs"
-      className={cn("flex flex-col gap-2", className)}
-      {...props}
-    />
+    <TabsVariantContext.Provider value={variant}>
+      <TabsPrimitive.Root
+        data-slot="tabs"
+        className={cn("flex flex-col gap-2", className)}
+        {...props}
+      />
+    </TabsVariantContext.Provider>
   );
 }
 
 function TabsList({
   className,
-  variant,
   ...props
-}: React.ComponentProps<typeof TabsPrimitive.List> &
-  VariantProps<typeof tabsListVariants>) {
+}: React.ComponentProps<typeof TabsPrimitive.List>) {
+  const variant = React.useContext(TabsVariantContext);
+
   return (
     <TabsPrimitive.List
       data-slot="tabs-list"
@@ -82,10 +91,10 @@ function TabsList({
 
 function TabsTrigger({
   className,
-  variant,
   ...props
-}: React.ComponentProps<typeof TabsPrimitive.Trigger> &
-  VariantProps<typeof tabsTriggerVariants>) {
+}: React.ComponentProps<typeof TabsPrimitive.Trigger>) {
+  const variant = React.useContext(TabsVariantContext);
+
   return (
     <TabsPrimitive.Trigger
       data-slot="tabs-trigger"
@@ -97,10 +106,10 @@ function TabsTrigger({
 
 function TabsContent({
   className,
-  variant,
   ...props
-}: React.ComponentProps<typeof TabsPrimitive.Content> &
-  VariantProps<typeof tabsContentVariants>) {
+}: React.ComponentProps<typeof TabsPrimitive.Content>) {
+  const variant = React.useContext(TabsVariantContext);
+
   return (
     <TabsPrimitive.Content
       data-slot="tabs-content"

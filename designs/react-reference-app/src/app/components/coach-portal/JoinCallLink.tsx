@@ -1,18 +1,25 @@
 import { Video } from 'lucide-react';
 import { RowActionLink } from '../RowActionButton';
 
+type JoinCallTone = 'default' | 'live';
+
+const ROW_ACTION_TONE_BY_TONE: Record<JoinCallTone, 'default' | 'primary'> = {
+  default: 'default',
+  live: 'primary',
+};
+
 export function JoinCallLink({
   joinPath,
-  live = false,
+  tone,
 }: {
   joinPath: string;
-  live?: boolean;
+  tone: JoinCallTone;
 }) {
   return (
     <RowActionLink
       to={joinPath}
       icon={Video}
-      tone={live ? 'primary' : 'default'}
+      tone={ROW_ACTION_TONE_BY_TONE[tone]}
     >
       Join call
     </RowActionLink>

@@ -43,7 +43,7 @@ export function UpcomingAssessmentCalls({
       headingId="upcoming-calls-heading"
       className="flex h-full flex-col"
       footer={
-        <WidgetLink arrow to={ALL_CALLS_PATH}>
+        <WidgetLink trailing="arrow" to={ALL_CALLS_PATH}>
           View all calls
         </WidgetLink>
       }
@@ -70,7 +70,7 @@ export function UpcomingAssessmentCalls({
                   action={
                     <JoinCallLink
                       joinPath={call.booking.joinPath}
-                      live={call.isToday}
+                      tone={call.isToday ? 'live' : 'default'}
                     />
                   }
                 />

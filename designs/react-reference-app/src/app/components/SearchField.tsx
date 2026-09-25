@@ -5,11 +5,11 @@ import { cn } from './ui/utils';
 
 type SearchFieldProps = Omit<React.ComponentProps<'input'>, 'size'> & {
   className?: string;
-  size?: 'default' | 'sm';
+  size?: 'md' | 'sm';
 };
 
 export const SearchField = React.forwardRef<HTMLInputElement, SearchFieldProps>(
-  ({ className, size = 'default', ...inputProps }, ref) => (
+  ({ className, size = 'md', ...inputProps }, ref) => (
     <div className={cn('relative', className)}>
       <Search
         aria-hidden="true"

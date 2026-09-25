@@ -252,22 +252,23 @@ export function CoachCheckins() {
       />
 
       <Tabs
+        variant="segmented"
         value={tab}
         onValueChange={(value) => setTab(value as CheckinTab)}
         className="w-full"
       >
         <div className="mb-6 flex flex-col gap-2">
-          <TabsList variant="segmented">
-            <TabsTrigger variant="segmented" value="pending">
+          <TabsList>
+            <TabsTrigger value="pending">
               Pending
               {awaitingCoach > 0 && (
                 <Badge tone="count">{awaitingCoach}</Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger variant="segmented" value="upcoming">
+            <TabsTrigger value="upcoming">
               Upcoming
             </TabsTrigger>
-            <TabsTrigger variant="segmented" value="past">
+            <TabsTrigger value="past">
               Past
             </TabsTrigger>
           </TabsList>
