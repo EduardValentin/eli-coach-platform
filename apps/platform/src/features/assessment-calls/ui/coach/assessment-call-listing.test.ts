@@ -592,25 +592,20 @@ describe("the copy shown when nothing matches", () => {
 describe("telling what narrows the listing", () => {
   it("counts a search only once it holds more than spaces", () => {
     // arrange
-    const queries = ["", "   ", " ana "];
+    const cases = [
+      { query: "" },
+      { query: "   " },
+      { query: " ana " },
+      { query: " ana ", status: "upcoming" as const },
+    ];
 
     // act
-    const searching = queries.map((query) =>
-      hasSearchQuery(selecting({ query })),
+    const searching = cases.map((selection) =>
+      hasSearchQuery(selecting(selection)),
     );
 
     // assert
-    expect(searching).toEqual([false, false, true]);
-  });
-
-  it("offers to clear a search on any tab", () => {
-    // arrange, act
-    const clearable = hasSearchQuery(
-      selecting({ query: "ana", status: "upcoming" }),
-    );
-
-    // assert
-    expect(clearable).toBe(true);
+    expect(searching).toEqual([false, false, true, true]);
   });
 });
 

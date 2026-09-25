@@ -42,7 +42,6 @@ export const SORT_KEYS: readonly SortKey[] = [
 export const DEFAULT_SORT_KEY: SortKey = "scheduled";
 
 export type ClassifiedCall = CoachAssessmentCall & {
-  day: string;
   isToday: boolean;
   timing: CoachCallTiming;
 };
@@ -79,7 +78,6 @@ export function classifyCalls(
 
     return {
       ...call,
-      day,
       isToday: day === today,
       timing:
         new Date(call.endsAt).getTime() <= moment.now.getTime()

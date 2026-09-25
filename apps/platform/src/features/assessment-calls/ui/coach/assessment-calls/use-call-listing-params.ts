@@ -113,14 +113,14 @@ export function useCallListingParams(): CallListingParams {
   };
 }
 
-type ParamChoice = { defaultValue: string | null; value: string | null };
+type ParamChoice = { defaultValue: string; value: string };
 
 function setParamUnlessDefault(
   params: URLSearchParams,
   name: string,
   choice: ParamChoice,
 ): void {
-  if (choice.value === null || choice.value === choice.defaultValue) {
+  if (choice.value === choice.defaultValue) {
     params.delete(name);
     return;
   }
