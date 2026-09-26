@@ -1,4 +1,6 @@
 [
+  { "waitFor": "[data-parity=\"payment-link-action\"]" },
+  { "wait": 1500 },
   { "hover": "[data-parity=\"payment-link-action\"]" },
   { "wait": 400 }
 ]

@@ -1,0 +1,4 @@
+[
+  { "waitFor": "[data-parity=\"call-first-banner\"]" },
+  { "wait": 1500 }
+]

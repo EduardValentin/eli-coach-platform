@@ -4,6 +4,8 @@ import { Link } from "react-router";
 
 import { BOOK_PATH } from "~/features/assessment-calls/contracts/paths";
 
+export const CALL_FIRST_HEADING = "A Call Comes First";
+
 type CallFirstBannerProps = {
   heading: "h1" | "h2";
 };
@@ -25,7 +27,7 @@ export function CallFirstBanner(props: CallFirstBannerProps) {
           />
           <div>
             <Heading className="mb-1 font-heading text-xl font-medium md:text-2xl">
-              A Call Comes First
+              {CALL_FIRST_HEADING}
             </Heading>
             <p className="text-sm text-brand-primary-foreground/90 md:text-base">
               You need a unique, secure token from your call with Eli to

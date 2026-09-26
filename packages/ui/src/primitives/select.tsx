@@ -129,33 +129,33 @@ type SelectItemProps = React.ComponentPropsWithoutRef<
 export const SelectItem = React.forwardRef<
   React.ElementRef<typeof RadixSelect.Item>,
   SelectItemProps
->(({ children, className, count, countParity, ...props }, ref) => {
-  const countId = React.useId();
-  const hasCount = count !== undefined;
-
-  return (
-    <RadixSelect.Item
-      aria-describedby={hasCount ? countId : undefined}
-      className={cn(
-        "relative flex w-full cursor-default items-center gap-2 rounded-tile py-1.5 pr-8 pl-2 text-sm outline-none select-none hover:bg-primary-soft hover:text-primary focus:bg-primary-soft focus:text-primary data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[highlighted]:bg-primary-soft data-[highlighted]:text-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
-        className,
+>(({ children, className, count, countParity, ...props }, ref) => (
+  <RadixSelect.Item
+    className={cn(
+      "relative flex w-full cursor-default items-center gap-2 rounded-tile py-1.5 pr-8 pl-2 text-sm outline-none select-none hover:bg-primary-soft hover:text-primary focus:bg-primary-soft focus:text-primary data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[highlighted]:bg-primary-soft data-[highlighted]:text-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
+      className,
+    )}
+    ref={ref}
+    {...props}
+  >
+    <span className="absolute right-2 flex size-3.5 items-center justify-center">
+      <RadixSelect.ItemIndicator>
+        <Check aria-hidden="true" className="size-4 text-current" />
+      </RadixSelect.ItemIndicator>
+    </span>
+    <RadixSelect.ItemText>
+      {count === undefined ? (
+        children
+      ) : (
+        <span className="flex items-center gap-2">
+          {children}{" "}
+          <Badge data-parity={countParity} tone="count">
+            {count}
+          </Badge>
+        </span>
       )}
-      ref={ref}
-      {...props}
-    >
-      <span className="absolute right-2 flex size-3.5 items-center justify-center">
-        <RadixSelect.ItemIndicator>
-          <Check aria-hidden="true" className="size-4 text-current" />
-        </RadixSelect.ItemIndicator>
-      </span>
-      <RadixSelect.ItemText>{children}</RadixSelect.ItemText>
-      {hasCount && (
-        <Badge data-parity={countParity} id={countId} tone="count">
-          {count}
-        </Badge>
-      )}
-    </RadixSelect.Item>
-  );
-});
+    </RadixSelect.ItemText>
+  </RadixSelect.Item>
+));
 
 SelectItem.displayName = "SelectItem";

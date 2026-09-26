@@ -797,11 +797,13 @@ describe("where each ended call stands in the sale", () => {
     await user.click(screen.getByRole("combobox", { name: "Status" }));
 
     // assert
-    expect(countedStatuses()).toEqual([
-      ["All statuses", "2"],
-      ["Call held", "0"],
-      ["Payment link sent", "1"],
-      ["Paid", "0"],
+    expect(
+      screen.getAllByRole("option").map((option) => option.textContent),
+    ).toEqual([
+      "All statuses 2",
+      "Call held 0",
+      "Payment link sent 1",
+      "Paid 0",
     ]);
   });
 
@@ -824,7 +826,7 @@ describe("where each ended call stands in the sale", () => {
 
     // act
     await user.click(screen.getByRole("combobox", { name: "Status" }));
-    await user.click(screen.getByRole("option", { name: "Paid" }));
+    await user.click(screen.getByRole("option", { name: /^Paid \d+$/ }));
 
     // assert
     await waitFor(() => {
@@ -844,7 +846,9 @@ describe("where each ended call stands in the sale", () => {
 
     // act
     await user.click(screen.getByRole("combobox", { name: "Status" }));
-    await user.click(screen.getByRole("option", { name: "All statuses" }));
+    await user.click(
+      screen.getByRole("option", { name: /^All statuses \d+$/ }),
+    );
 
     // assert
     await waitFor(() => {
@@ -933,17 +937,6 @@ describe("where each ended call stands in the sale", () => {
     });
   });
 });
-
-function countedStatuses(): [string, string][] {
-  return ["All statuses", "Call held", "Payment link sent", "Paid"].map(
-    (label) => {
-      const option = screen.getByRole("option", { name: label });
-      const countId = option.getAttribute("aria-describedby") ?? "";
-
-      return [label, document.getElementById(countId)?.textContent ?? ""];
-    },
-  );
-}
 
 describe("the coach assessment calls page when the calls cannot be read", () => {
   it("replaces the listing with the unavailable dead end", async () => {

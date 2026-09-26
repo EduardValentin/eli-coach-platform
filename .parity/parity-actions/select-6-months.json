@@ -1,0 +1,6 @@
+[
+  { "waitFor": "[data-parity=\"continue\"]" },
+  { "wait": 1500 },
+  { "click": "[data-parity=\"bundle-6-months\"]" },
+  { "wait": 600 }
+]

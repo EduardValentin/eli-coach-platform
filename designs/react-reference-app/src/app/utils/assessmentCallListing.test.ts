@@ -946,6 +946,37 @@ describe('filtering assessment calls by journey step', () => {
       paid: 0,
     });
   });
+
+  it('leaves a call that has not ended out of Call held', () => {
+    // arrange
+    const withUpcomingHeld = listed(
+      classifyCalls(
+        [
+          ...bookings,
+          bookingAt('2026-09-22T15:00:00.000Z', {
+            firstName: 'Upcoming',
+            lastName: 'call',
+          }),
+        ],
+        { now, timeZone: BUCHAREST },
+      ),
+      { ...stages, 'ac-2026-09-22T15:00:00.000Z': 'held' },
+    );
+
+    // act
+    const counts = countsByJourneyStep(
+      withUpcomingHeld,
+      selecting({ query: 'call' }),
+    );
+
+    // assert
+    expect(counts).toEqual({
+      any: 2,
+      held: 1,
+      'payment-link-sent': 0,
+      paid: 0,
+    });
+  });
 });
 
 describe('reading the journey step from the URL', () => {

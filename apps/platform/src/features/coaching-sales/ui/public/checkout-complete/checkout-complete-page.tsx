@@ -14,7 +14,10 @@ import {
 
 import type { CheckoutConfirmation } from "~/features/coaching-sales/contracts/coaching-sales";
 import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
-import { CallFirstBanner } from "~/features/coaching-sales/ui/public/call-first-banner";
+import {
+  CALL_FIRST_HEADING,
+  CallFirstBanner,
+} from "~/features/coaching-sales/ui/public/call-first-banner";
 
 import {
   IMMEDIATE_START_SUMMARY,
@@ -36,10 +39,16 @@ export function headers({ loaderHeaders }: HeadersArgs) {
   return loaderHeaders;
 }
 
-export const meta: MetaFunction = () => [
-  { title: "Payment confirmed | Evoa" },
+export const meta: MetaFunction<typeof loader> = ({ data }) => [
+  { title: `${confirmationHeading(data)} | Evoa` },
   { name: "robots", content: "noindex" },
 ];
+
+function confirmationHeading(confirmation?: CheckoutConfirmation): string {
+  return confirmation?.state === "call-first"
+    ? CALL_FIRST_HEADING
+    : PAYMENT_CONFIRMED_HEADING;
+}
 
 export const handle = { publicContentFrame: "full-bleed" } as const;
 

@@ -47,6 +47,7 @@ export function BundleSelector({
   beforeCheckout,
 }: BundleSelectorProps) {
   const choiceId = useId();
+  const headingId = useId();
   const [selectedBundleId, setSelectedBundleId] = useState<BundleId | null>(
     mode === 'checkout' ? DEFAULT_BUNDLE_ID : null
   );
@@ -74,6 +75,10 @@ export function BundleSelector({
 
   return (
     <div className="w-full max-w-4xl mx-auto" data-parity-root="BundleSelector">
+      <h2 className="sr-only" id={headingId}>
+        Coaching bundle options
+      </h2>
+
       {banner && (
         <div className="flex justify-center mb-8">
           <span className="inline-flex items-center gap-2 rounded-full bg-brand-secondary-soft px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-brand-secondary">
@@ -90,7 +95,7 @@ export function BundleSelector({
 
       {/* Compact price cards */}
       <div
-        aria-label={mode === 'checkout' ? 'Coaching bundle options' : undefined}
+        aria-labelledby={mode === 'checkout' ? headingId : undefined}
         className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-8 mb-10"
         role={mode === 'checkout' ? 'radiogroup' : undefined}
       >
@@ -99,12 +104,13 @@ export function BundleSelector({
           const displayPrice = bundlePerMonth(bundle, journeyPricing);
           const displayTotal = bundleTotal(bundle, journeyPricing);
           const regularTotal = bundleTotal(bundle, 'regular');
+          const titleLower = bundle.title.toLowerCase();
           const savingsPct = baselinePerMonth != null && bundle.months > 1
             ? Math.floor(((baselinePerMonth - displayPrice) / baselinePerMonth) * 100)
             : 0;
 
           return (
-            <motion.div
+            <motion.article
               key={bundle.id}
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
@@ -144,9 +150,17 @@ export function BundleSelector({
                 data-parity={`price-${bundle.id}`}
               >
                 {isDiscounted && (
-                  <span className="text-lg font-bold text-bundle-muted line-through mr-1">€{bundle.regularPerMonth}</span>
+                  <span
+                    aria-label={`Original ${titleLower} monthly price €${bundle.regularPerMonth}`}
+                    className="text-lg font-bold text-bundle-muted line-through mr-1"
+                  >
+                    €{bundle.regularPerMonth}
+                  </span>
                 )}
-                <span className={`text-3xl font-bold ${isDiscounted ? 'text-brand' : 'text-foreground'}`}>
+                <span
+                  aria-label={`${bundle.title} monthly price €${displayPrice}`}
+                  className={`text-3xl font-bold ${isDiscounted ? 'text-brand' : 'text-foreground'}`}
+                >
                   €{displayPrice}
                 </span>
                 <span className="text-link-muted text-sm font-medium mb-0.5">/mo</span>
@@ -165,7 +179,12 @@ export function BundleSelector({
                 ) : (
                   <>
                     {isDiscounted && (
-                      <span className="line-through mr-1">€{regularTotal}</span>
+                      <span
+                        aria-label={`Original ${titleLower} billing total €${regularTotal}`}
+                        className="line-through mr-1"
+                      >
+                        €{regularTotal}
+                      </span>
                     )}
                     Billed as €{displayTotal}
                   </>
@@ -186,11 +205,20 @@ export function BundleSelector({
               )}
 
               {mode === 'checkout' && (
-                <div aria-hidden="true" className={`w-5 h-5 rounded-full border-2 mx-auto mt-4 flex items-center justify-center transition-colors ${
-                  isSelected ? 'border-brand bg-brand' : 'border-control-border-soft'
-                }`}>
-                  {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-brand-foreground" />}
-                </div>
+                <span
+                  aria-hidden="true"
+                  className={`w-5 h-5 rounded-full border-2 mx-auto mt-4 flex items-center justify-center transition-colors ${
+                    isSelected ? 'border-brand bg-brand' : 'border-control-border-soft'
+                  }`}
+                  data-parity={`bundle-indicator-${bundle.id}`}
+                >
+                  {isSelected && (
+                    <span
+                      className="w-1.5 h-1.5 rounded-full bg-brand-foreground"
+                      data-parity={`bundle-dot-${bundle.id}`}
+                    />
+                  )}
+                </span>
               )}
 
               {mode === 'checkout' && (
@@ -201,13 +229,13 @@ export function BundleSelector({
                   <span className="sr-only">{bundle.title}</span>
                 </label>
               )}
-            </motion.div>
+            </motion.article>
           );
         })}
       </div>
 
       {/* Shared benefits section */}
-      <motion.div
+      <motion.section
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
@@ -224,7 +252,7 @@ export function BundleSelector({
             </li>
           ))}
         </ul>
-      </motion.div>
+      </motion.section>
 
       {mode === 'checkout' && !disabled && (
         <motion.div

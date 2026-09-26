@@ -122,6 +122,7 @@ function StartOption(props: {
     >
       <RadioGroupItem
         className="mt-0.5"
+        data-parity={`start-radio-${props.value}`}
         id={props.id}
         ref={props.itemRef}
         value={props.value}

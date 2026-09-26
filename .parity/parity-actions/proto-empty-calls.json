@@ -1,0 +1,8 @@
+[
+  { "click": "[aria-label=\"Open Dev Toggle\"]" },
+  { "click": "role=tab[name=\"Booking\"]" },
+  { "click": "#dev-dashboard-calls" },
+  { "click": "role=option[name=\"None\"]" },
+  { "click": "[aria-label=\"Close Dev Settings\"]" },
+  { "wait": 800 }
+]

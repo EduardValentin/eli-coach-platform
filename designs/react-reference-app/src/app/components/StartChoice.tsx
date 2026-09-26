@@ -40,7 +40,13 @@ function StartOption({
       data-parity={parityHook}
       htmlFor={id}
     >
-      <RadioGroupItem className="mt-0.5" id={id} ref={itemRef} value={value} />
+      <RadioGroupItem
+        className="mt-0.5"
+        data-parity={`start-radio-${value}`}
+        id={id}
+        ref={itemRef}
+        value={value}
+      />
       <span className="flex flex-col gap-1 text-sm leading-relaxed text-foreground">
         <span className="font-semibold">{lead}</span>
         <span>{children}</span>

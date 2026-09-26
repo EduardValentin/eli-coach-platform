@@ -877,7 +877,7 @@ describe('filtering assessment calls by journey step', () => {
       await screen.findByRole('option', { name: 'All statuses 5' }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('option', { name: 'Call held 3' }),
+      screen.getByRole('option', { name: 'Call held 2' }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('option', { name: 'Payment link sent 1' }),

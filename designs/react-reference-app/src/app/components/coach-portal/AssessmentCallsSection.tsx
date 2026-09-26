@@ -343,6 +343,7 @@ export function AssessmentCallsSection({
       animate={{ opacity: 1, y: 0 }}
       transition={prefersReducedMotion ? { duration: 0 } : undefined}
       className="bg-card p-5 sm:p-8 rounded-panel shadow-soft border border-border/50"
+      data-parity-root="AssessmentCallsSection"
     >
       <Tabs
         variant="segmented"

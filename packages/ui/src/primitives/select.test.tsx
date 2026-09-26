@@ -2,7 +2,7 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
 
@@ -131,13 +131,13 @@ describe("Select", () => {
     expect(trigger).toHaveClass("[&>span:first-child]:whitespace-nowrap");
   });
 
-  it("counts an option with a badge beside its label that the chosen value leaves out", async () => {
+  it("names a counted option by its label and count, while the chosen value shows the label alone", async () => {
     // arrange
     const user = userEvent.setup();
     render(
       <Select defaultValue="any">
         <SelectTrigger aria-label="Status">
-          <SelectValue />
+          <SelectValue>All statuses</SelectValue>
         </SelectTrigger>
         <SelectContent>
           <SelectItem count={4} value="any">
@@ -156,13 +156,42 @@ describe("Select", () => {
     await user.keyboard("{Enter}");
 
     // assert
+    expect(screen.getByRole("option", { name: "Paid 0" })).not.toHaveAttribute(
+      "aria-describedby",
+    );
     expect(
-      screen.getByRole("option", { description: "0", name: "Paid" }),
-    ).toHaveTextContent(/^Paid0$/);
-    expect(
-      screen.getByRole("option", { description: "4", name: "All statuses" }),
+      screen.getByRole("option", { name: "All statuses 4" }),
     ).toBeInTheDocument();
     expect(trigger).toHaveTextContent(/^All statuses$/);
+  });
+
+  it("lays the count badge out inside the option text, a gap after the label", async () => {
+    // arrange
+    const user = userEvent.setup();
+    render(
+      <Select defaultValue="paid">
+        <SelectTrigger aria-label="Status">
+          <SelectValue>Paid</SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem count={2} countParity="status-count-paid" value="paid">
+            Paid
+          </SelectItem>
+        </SelectContent>
+      </Select>,
+    );
+
+    // act
+    screen.getByRole("combobox", { name: "Status" }).focus();
+    await user.keyboard("{Enter}");
+    const option = screen.getByRole("option", { name: "Paid 2" });
+    const badge = within(option).getByText("2");
+
+    // assert
+    expect(badge).toHaveAttribute("data-parity", "status-count-paid");
+    expect(badge.parentElement).toHaveClass("flex", "items-center", "gap-2");
+    expect(badge.parentElement).toHaveTextContent(/^Paid 2$/);
+    expect(option.lastElementChild).toContainElement(badge);
   });
 
   it("leaves an option without a count free of any badge", async () => {

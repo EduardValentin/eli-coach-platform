@@ -103,9 +103,13 @@ function BundleChoiceControl(props: {
             "border-control-border-soft": !choice.isSelected,
           },
         )}
+        data-parity={`bundle-indicator-${card.id}`}
       >
         {choice.isSelected ? (
-          <span className="size-1.5 rounded-full bg-brand-primary-foreground" />
+          <span
+            className="size-1.5 rounded-full bg-brand-primary-foreground"
+            data-parity={`bundle-dot-${card.id}`}
+          />
         ) : null}
       </span>
       <label className="absolute inset-0 rounded-card" htmlFor={inputId}>

@@ -1,0 +1,10 @@
+[
+  { "waitFor": "[data-parity=\"payment-link-action\"]" },
+  { "wait": 1000 },
+  { "click": "[data-parity=\"payment-link-action\"]" },
+  { "waitFor": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]" },
+  { "wait": 400 },
+  { "click": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]" },
+  { "waitFor": "[data-sonner-toast]" },
+  { "wait": 800 }
+]
