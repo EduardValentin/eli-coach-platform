@@ -93,6 +93,20 @@ npm install
 npm run dev
 ```
 
+## Local Payments
+
+`PAYMENTS_PROVIDER` picks how coaching bundle checkout runs locally.
+
+`memory` (the default in `.env.example`) needs no Stripe account: checkout skips the hosted page and lands straight on the confirmation. No webhook fires, so a local run never records a client and a call never reads "Paid".
+
+`stripe` runs the real flow in Stripe test mode. Put the test-mode secret key in `STRIPE_SECRET_KEY` and forward webhooks with the [Stripe CLI](https://docs.stripe.com/stripe-cli):
+
+```bash
+stripe listen --forward-to localhost:3000/api/stripe/webhooks
+```
+
+`stripe listen` prints a `whsec_…` signing secret; put it in `STRIPE_WEBHOOK_SIGNING_SECRET` and restart the dev server. The forward URL matches the local server, which is served at the root with no base path. "Paid" is exercised only this way. Production configuration and the Stripe Dashboard steps are in [docs/SECRET_MANAGEMENT.md](docs/SECRET_MANAGEMENT.md).
+
 ## Checks
 
 ```bash

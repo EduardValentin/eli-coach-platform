@@ -182,7 +182,7 @@ export class CheckoutsController {
   }
 
   private redirectInApp(path: string): Response {
-    return redirect(joinBasePath(this.options.appBasePath, path), SEE_OTHER);
+    return redirect(path, SEE_OTHER);
   }
 
   private publicUrl(path: string): string {

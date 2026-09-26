@@ -34,18 +34,8 @@ import { createCoachingSalesNotifications } from "~/features/coaching-sales/emai
 export type CoachingSalesFeature = {
   checkouts: CheckoutsController;
   coachSales: CoachSalesController;
-  paymentEvents: PaymentEvents;
   paymentLinks: PaymentLinksController;
   stripeWebhooks: StripeWebhookController;
-  useCases: {
-    readCallSalesStates: ReadCallSalesStatesUseCase;
-    readCheckoutConfirmation: ReadCheckoutConfirmationUseCase;
-    recordCheckoutCompleted: RecordCheckoutCompletedUseCase;
-    resolvePaymentLink: ResolvePaymentLinkUseCase;
-    sendPaymentLink: SendPaymentLinkUseCase;
-    startCheckout: StartCheckoutUseCase;
-  };
-  webhookSigningSecret: string | undefined;
 };
 
 type CoachingSalesComposition = {
@@ -139,7 +129,6 @@ export function composeCoachingSalesFeature(
       coachSales: new CoachSalesController({
         readCallSalesStates: useCases.readCallSalesStates,
       }),
-      paymentEvents: handles.paymentEvents,
       paymentLinks: new PaymentLinksController({
         sendPaymentLink: useCases.sendPaymentLink,
       }),
@@ -148,8 +137,6 @@ export function composeCoachingSalesFeature(
         recordCheckoutCompleted: useCases.recordCheckoutCompleted,
         signingSecret: handles.webhookSigningSecret,
       }),
-      useCases,
-      webhookSigningSecret: handles.webhookSigningSecret,
     },
     handles: {},
   };

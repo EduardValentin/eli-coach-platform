@@ -203,7 +203,7 @@ describe("CheckoutsController checkout start", () => {
       // assert
       expect(response.status).toBe(303);
       expect(response.headers.get("Location")).toBe(
-        `/coaching/select-bundle?token=${TOKEN}`,
+        `/select-bundle?token=${TOKEN}`,
       );
     },
   );
@@ -222,7 +222,7 @@ describe("CheckoutsController checkout start", () => {
     // assert
     expect(response.status).toBe(303);
     expect(response.headers.get("Location")).toBe(
-      `/coaching/select-bundle?token=${TOKEN}&bundle=6-months`,
+      `/select-bundle?token=${TOKEN}&bundle=6-months`,
     );
     expect(resolvePaymentLink).toHaveBeenCalledWith(TOKEN);
     expect(startCheckout).not.toHaveBeenCalled();
@@ -243,7 +243,7 @@ describe("CheckoutsController checkout start", () => {
 
     // assert
     expect(response.headers.get("Location")).toBe(
-      `/coaching/select-bundle?token=${TOKEN}`,
+      `/select-bundle?token=${TOKEN}`,
     );
   });
 

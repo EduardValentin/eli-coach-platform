@@ -12,6 +12,7 @@ import {
   RESEND_EMAILS_PATH,
   resendAcceptsEveryEmail,
 } from "./wire-mock/expectations/resend-emails";
+import { stripeApiStubs } from "./wire-mock/expectations/stripe-api";
 import { turnstileSiteverifyStubs } from "./wire-mock/expectations/turnstile-siteverify";
 
 export type SentEmailAttachment = {
@@ -52,6 +53,7 @@ export class ApiIntegrationTestSuite extends IntegrationTestSuite {
   readonly wireMock = new WireMockContainer([
     ...clerkBackendApiStubs,
     resendAcceptsEveryEmail,
+    ...stripeApiStubs,
     ...turnstileSiteverifyStubs,
   ]);
   protected readonly containers = [this.postgres, this.wireMock];

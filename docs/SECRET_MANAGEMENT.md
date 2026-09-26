@@ -113,6 +113,25 @@ It now also carries the database bootstrap and migration-role inputs used by pro
 - `APP_DB_MIGRATION_USER`
 - `APP_DB_MIGRATION_PASSWORD`
 
+## Payments (Stripe)
+
+Coaching bundles are paid on Stripe's hosted Checkout. The application runtime file should expose:
+
+- `PAYMENTS_PROVIDER` (`memory | stripe`; a production runtime rejects `memory` at startup)
+- `STRIPE_SECRET_KEY`
+- `STRIPE_WEBHOOK_SIGNING_SECRET`
+
+With `PAYMENTS_PROVIDER=stripe` both secrets are required and the `replace-me` placeholder is rejected. Local defaults keep `PAYMENTS_PROVIDER=memory`; the README covers a local run against Stripe test mode.
+
+`STRIPE_API_BASE_URL` points the Stripe client at the integration suites' WireMock container. It is an integration-test rig override only and never belongs in a TEST or PROD env file: a production runtime refuses to start with it set.
+
+The per-environment values of both secrets, and the Stripe Dashboard webhook endpoint whose signing secret becomes `STRIPE_WEBHOOK_SIGNING_SECRET`, are provisioned by `terraform-infra` like every other runtime secret. `PAYMENTS_PROVIDER=stripe` and both secrets must be present in the TEST and PROD env files before the next deploy: TEST also runs as a production runtime, so a runtime still on the `memory` default fails config validation and the container exits at startup.
+
+Each deployed environment's Stripe Dashboard needs:
+
+- Customer receipt emails turned on. Stripe's receipt is the payment record; the platform sends no receipt of its own.
+- The webhook endpoint `<PUBLIC_APP_URL>/api/stripe/webhooks`, registered for the `checkout.session.completed` event. Where the app is served under a mount path, the path precedes `/api/`: on TEST the endpoint is `<PUBLIC_APP_URL>/eli-coach-platform/api/stripe/webhooks`. Its signing secret is `STRIPE_WEBHOOK_SIGNING_SECRET`. TEST has no public DNS today (Clerk reaches it through the TEST relay in `docs/CLERK.md`), so Stripe cannot deliver there until TEST gains a public route or a relay of its own; that is a `terraform-infra` step.
+
 ## Local authoring model
 
 Local development uses gitignored files in the repository root:

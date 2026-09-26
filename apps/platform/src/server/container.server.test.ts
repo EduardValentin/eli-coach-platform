@@ -7,6 +7,7 @@ import { join } from "node:path";
 import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
 
 import { createPlatformContainer } from "./container.server";
+import { createRequestArgs } from "~/server/test-support/request-args";
 
 const storeAssetRoot = mkdtempSync(
   join(tmpdir(), "eli-coach-store-assets-container-unit-"),
@@ -115,11 +116,15 @@ describe("platform container", () => {
 
     // act
     const confirmation =
-      await container.coachingSales.feature.useCases.readCheckoutConfirmation.execute(
-        "cs_test_1",
+      container.coachingSales.feature.checkouts.loadConfirmation(
+        createRequestArgs({
+          request: new Request(
+            "https://eli.example/checkout/complete?session=cs_test_1",
+          ),
+        }),
       );
 
     // assert
-    expect(confirmation).toEqual({ status: "closed" });
+    await expect(confirmation).rejects.toMatchObject({ status: 404 });
   });
 });
