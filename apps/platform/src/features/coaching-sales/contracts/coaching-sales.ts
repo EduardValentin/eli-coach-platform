@@ -1,4 +1,4 @@
-import type { CallSalesState } from "@eli-coach-platform/domain/payment-link";
+import type { CallSalesState as DomainCallSalesState } from "@eli-coach-platform/domain/payment-link";
 import { START_CHOICES } from "@eli-coach-platform/domain/coaching-subscription";
 import { z } from "zod";
 
@@ -8,9 +8,11 @@ export const CALL_SALES_STATES = [
   "held",
   "payment-link-sent",
   "paid",
-] as const satisfies readonly CallSalesState[];
+] as const satisfies readonly DomainCallSalesState[];
 
-export const callSalesStateSchema = z.enum(CALL_SALES_STATES);
+const callSalesStateSchema = z.enum(CALL_SALES_STATES);
+
+export type CallSalesState = z.infer<typeof callSalesStateSchema>;
 
 export const salesStatesSchema = z.record(z.string(), callSalesStateSchema);
 

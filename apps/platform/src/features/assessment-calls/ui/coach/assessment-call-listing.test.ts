@@ -9,7 +9,7 @@ import {
   defaultDirectionFor,
   emptyListingCopy,
   filterCalls,
-  hasSearchQuery,
+  hasActiveFilters,
   haveOnlyListingParamsChanged,
   orderCalls,
   orderCallsBy,
@@ -18,7 +18,7 @@ import {
   parsePageParam,
   parseSortDirectionParam,
   toSortKey,
-  toCallStatus,
+  toCallWhen,
   upcomingCalls,
   type CallSort,
   type ListingSelection,
@@ -71,7 +71,7 @@ function visitorProfile() {
 function selecting(overrides: Partial<ListingSelection>): ListingSelection {
   return {
     query: "",
-    status: "all",
+    when: "all",
     ...overrides,
   };
 }
@@ -216,7 +216,7 @@ describe("choosing which calls to show", () => {
 
   it("shows only the calls that have not ended under Upcoming", () => {
     // arrange, act
-    const shown = filterCalls(calls, selecting({ status: "upcoming" }));
+    const shown = filterCalls(calls, selecting({ when: "upcoming" }));
 
     // assert
     expect(shown.map((call) => call.id)).toEqual(["later-today", "next-week"]);
@@ -224,7 +224,7 @@ describe("choosing which calls to show", () => {
 
   it("shows every call starting today under Today, ended or not", () => {
     // arrange, act
-    const shown = filterCalls(calls, selecting({ status: "today" }));
+    const shown = filterCalls(calls, selecting({ when: "today" }));
 
     // assert
     expect(shown.map((call) => call.id)).toEqual([
@@ -235,7 +235,7 @@ describe("choosing which calls to show", () => {
 
   it("shows only the ended calls under Past", () => {
     // arrange, act
-    const shown = filterCalls(calls, selecting({ status: "past" }));
+    const shown = filterCalls(calls, selecting({ when: "past" }));
 
     // assert
     expect(shown.map((call) => call.id)).toEqual([
@@ -246,7 +246,7 @@ describe("choosing which calls to show", () => {
 
   it("shows the whole history under All", () => {
     // arrange, act
-    const shown = filterCalls(calls, selecting({ status: "all" }));
+    const shown = filterCalls(calls, selecting({ when: "all" }));
 
     // assert
     expect(shown).toHaveLength(4);
@@ -507,9 +507,9 @@ describe("reading the sort from the URL", () => {
 describe("reading the listing's URL", () => {
   it("falls back to All for anything it does not recognise", () => {
     // arrange, act, assert
-    expect(toCallStatus(null)).toBe("all");
-    expect(toCallStatus("nonsense")).toBe("all");
-    expect(toCallStatus("past")).toBe("past");
+    expect(toCallWhen(null)).toBe("all");
+    expect(toCallWhen("nonsense")).toBe("all");
+    expect(toCallWhen("past")).toBe("past");
   });
 
   it("falls back to the first page for anything that is not a page number", () => {
@@ -525,28 +525,42 @@ describe("reading the listing's URL", () => {
   it("recognises a change that only the browser has to answer", () => {
     // arrange
     const listing = new URL(
-      "https://evoa.test/coach/assessment-calls?status=past",
+      "https://evoa.test/coach/assessment-calls?when=past",
     );
     const paged = new URL(
-      "https://evoa.test/coach/assessment-calls?status=past&page=2",
+      "https://evoa.test/coach/assessment-calls?when=past&page=2",
     );
     const sorted = new URL(
-      "https://evoa.test/coach/assessment-calls?status=past&sort=name&dir=desc",
+      "https://evoa.test/coach/assessment-calls?when=past&sort=name&dir=desc",
     );
     const elsewhere = new URL("https://evoa.test/coach/");
 
     // act, assert
-    expect(haveOnlyListingParamsChanged(listing, paged)).toBe(true);
-    expect(haveOnlyListingParamsChanged(listing, sorted)).toBe(true);
-    expect(haveOnlyListingParamsChanged(listing, listing)).toBe(false);
-    expect(haveOnlyListingParamsChanged(listing, elsewhere)).toBe(false);
+    expect(haveOnlyListingParamsChanged(listing, paged, [])).toBe(true);
+    expect(haveOnlyListingParamsChanged(listing, sorted, [])).toBe(true);
+    expect(haveOnlyListingParamsChanged(listing, listing, [])).toBe(false);
+    expect(haveOnlyListingParamsChanged(listing, elsewhere, [])).toBe(false);
+  });
+
+  it("answers a change of a parameter the page adds to the listing in the browser too", () => {
+    // arrange
+    const listing = new URL("https://evoa.test/coach/assessment-calls");
+    const filtered = new URL(
+      "https://evoa.test/coach/assessment-calls?status=paid",
+    );
+
+    // act, assert
+    expect(haveOnlyListingParamsChanged(listing, filtered, ["status"])).toBe(
+      true,
+    );
+    expect(haveOnlyListingParamsChanged(listing, filtered, [])).toBe(false);
   });
 });
 
 describe("the copy shown when nothing matches", () => {
   it("names the search before anything else", () => {
     // arrange, act
-    const copy = emptyListingCopy(selecting({ query: "zzz", status: "past" }));
+    const copy = emptyListingCopy(selecting({ query: "zzz", when: "past" }));
 
     // assert
     expect(copy).toEqual({
@@ -557,7 +571,7 @@ describe("the copy shown when nothing matches", () => {
 
   it("invites the first booking when the whole history is empty", () => {
     // arrange, act
-    const copy = emptyListingCopy(selecting({ status: "all" }));
+    const copy = emptyListingCopy(selecting({ when: "all" }));
 
     // assert
     expect(copy).toEqual({
@@ -566,14 +580,12 @@ describe("the copy shown when nothing matches", () => {
     });
   });
 
-  it("keeps the plain window messages for every status", () => {
+  it("keeps the plain window messages for every window", () => {
     // arrange
-    const statuses = ["upcoming", "today", "past"] as const;
+    const windows = ["upcoming", "today", "past"] as const;
 
     // act
-    const copies = statuses.map((status) =>
-      emptyListingCopy(selecting({ status })),
-    );
+    const copies = windows.map((when) => emptyListingCopy(selecting({ when })));
 
     // assert
     expect(copies.map((copy) => copy.title)).toEqual([
@@ -587,25 +599,89 @@ describe("the copy shown when nothing matches", () => {
       "No past calls.",
     ]);
   });
+  it("names the window and the active filter's label when the filter leaves nothing", () => {
+    // arrange
+    const filter = { isActive: true, label: "Payment link sent" };
+    const windows = ["all", "upcoming", "today", "past"] as const;
+
+    // act
+    const copies = windows.map((when) =>
+      emptyListingCopy(selecting({ when }), filter),
+    );
+
+    // assert
+    expect(copies.map((copy) => copy.title)).toEqual([
+      "No calls found",
+      "No calls found",
+      "No calls found",
+      "No calls found",
+    ]);
+    expect(copies.map((copy) => copy.description)).toEqual([
+      "No calls match the Payment link sent status.",
+      "No upcoming calls match the Payment link sent status.",
+      "No calls today match the Payment link sent status.",
+      "No past calls match the Payment link sent status.",
+    ]);
+  });
+
+  it("still names the search first while a filter is active", () => {
+    // arrange, act
+    const copy = emptyListingCopy(selecting({ query: "zzz" }), {
+      isActive: true,
+      label: "Paid",
+    });
+
+    // assert
+    expect(copy.description).toBe("No calls match your search.");
+  });
+
+  it("ignores a filter that is not active", () => {
+    // arrange, act
+    const copy = emptyListingCopy(selecting({ when: "all" }), {
+      isActive: false,
+      label: "All statuses",
+    });
+
+    // assert
+    expect(copy.title).toBe("No calls yet");
+  });
 });
 
 describe("telling what narrows the listing", () => {
   it("counts a search only once it holds more than spaces", () => {
     // arrange
-    const cases = [
-      { query: "" },
-      { query: "   " },
-      { query: " ana " },
-      { query: " ana ", status: "upcoming" as const },
-    ];
+    const queries = ["", "   ", " ana "];
 
     // act
-    const searching = cases.map((selection) =>
-      hasSearchQuery(selecting(selection)),
+    const narrowing = queries.map((query) =>
+      hasActiveFilters(selecting({ query })),
     );
 
     // assert
-    expect(searching).toEqual([false, false, true, true]);
+    expect(narrowing).toEqual([false, false, true]);
+  });
+
+  it("counts any window other than All", () => {
+    // arrange
+    const windows = ["all", "today", "upcoming", "past"] as const;
+
+    // act
+    const narrowing = windows.map((when) =>
+      hasActiveFilters(selecting({ when })),
+    );
+
+    // assert
+    expect(narrowing).toEqual([false, true, true, true]);
+  });
+
+  it("counts a filter the page adds only while that filter is active", () => {
+    // arrange, act
+    const withActive = hasActiveFilters(selecting({}), { isActive: true });
+    const withInactive = hasActiveFilters(selecting({}), { isActive: false });
+
+    // assert
+    expect(withActive).toBe(true);
+    expect(withInactive).toBe(false);
   });
 });
 

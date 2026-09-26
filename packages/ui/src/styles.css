@@ -170,6 +170,7 @@
   --color-overlay-strong: rgba(0, 0, 0, 0.56);
   --color-overlay-medium: rgba(0, 0, 0, 0.32);
   --color-overlay-soft: rgba(0, 0, 0, 0.14);
+  --color-overlay-modal: rgba(0, 0, 0, 0.5);
 }
 
 @theme inline {
@@ -361,6 +362,7 @@
   --color-overlay-strong: var(--color-overlay-strong);
   --color-overlay-medium: var(--color-overlay-medium);
   --color-overlay-soft: var(--color-overlay-soft);
+  --color-overlay-modal: var(--color-overlay-modal);
 }
 
 @layer base {
@@ -510,6 +512,24 @@ label[data-chip-control]:has(:focus-visible) {
   to {
     opacity: 0;
     transform: scale(0.95);
+  }
+}
+
+@keyframes ui-overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes ui-overlay-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
   }
 }
 

@@ -2,6 +2,7 @@
 
 import "@testing-library/jest-dom/vitest";
 
+import { Toaster } from "@eli-coach-platform/ui/toast";
 import {
   cleanup,
   render,
@@ -11,19 +12,29 @@ import {
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { UserEvent } from "@testing-library/user-event";
-import { createMemoryRouter, RouterProvider } from "react-router";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { http, HttpResponse } from "msw";
+import { setupServer } from "msw/node";
+import { createMemoryRouter, Outlet, RouterProvider } from "react-router";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 
-import type {
-  CoachAssessmentCall,
-  CoachAssessmentCalls,
-} from "~/features/assessment-calls/contracts/assessment-calls";
+import type { CoachAssessmentCall } from "~/features/assessment-calls/contracts/assessment-calls";
 import { COACH_ASSESSMENT_CALLS_PATH } from "~/features/assessment-calls/contracts/paths";
+import type { SalesStates } from "~/features/coaching-sales/contracts/coaching-sales";
+import { COACHING_SALES_API_PATHS } from "~/features/coaching-sales/contracts/paths";
 
 import CoachAssessmentCallsRoute, {
   ErrorBoundary as CoachAssessmentCallsErrorBoundary,
   shouldRevalidate,
-} from "./assessment-calls-page";
+} from "./assessment-calls";
 
 const COACH_TIME_ZONE = "Europe/Bucharest";
 const KIRITIMATI = "Pacific/Kiritimati";
@@ -92,6 +103,21 @@ const NEXT_WEEK = call("2026-09-22T15:00:00.000Z", {
 
 const FOUR_CALLS = [YESTERDAY, EARLIER_TODAY, LATER_TODAY, NEXT_WEEK];
 
+const BOTH_ENDED_CALLS_HELD: SalesStates = {
+  "earlier-today": "held",
+  yesterday: "held",
+};
+
+const server = setupServer();
+
+beforeAll(() => {
+  server.listen({ onUnhandledRequest: "error" });
+});
+
+afterAll(() => {
+  server.close();
+});
+
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(NOW);
@@ -100,6 +126,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  server.resetHandlers();
   vi.useRealTimers();
   vi.unstubAllEnvs();
 });
@@ -195,7 +222,7 @@ describe("the coach's assessment calls page", () => {
   it("finds a visitor by her last name alone", async () => {
     // arrange
     const user = await renderCallsPage({
-      url: `${COACH_ASSESSMENT_CALLS_PATH}?status=all`,
+      url: `${COACH_ASSESSMENT_CALLS_PATH}?when=all`,
     });
 
     // act
@@ -224,7 +251,7 @@ describe("the coach's assessment calls page", () => {
 
     // act
     await renderCallsPage({
-      url: `${COACH_ASSESSMENT_CALLS_PATH}?status=upcoming`,
+      url: `${COACH_ASSESSMENT_CALLS_PATH}?when=upcoming`,
     });
 
     // assert
@@ -251,7 +278,7 @@ describe("the coach's assessment calls page", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("badges every ended call Call held beside the visitor's name and leaves it without actions", async () => {
+  it("badges every held call Call held beside the visitor's name and offers only the payment link", async () => {
     // arrange
     const user = await renderCallsPage();
 
@@ -262,7 +289,9 @@ describe("the coach's assessment calls page", () => {
     for (const shown of shownCalls().map((item) => within(item))) {
       expect(shown.getByText("Call held")).toBeInTheDocument();
       expect(shown.queryByRole("link", { name: "Join call" })).toBeNull();
-      expect(shown.queryByRole("button")).toBeNull();
+      expect(
+        shown.getAllByRole("button").map((button) => button.textContent),
+      ).toEqual(["Send payment link"]);
     }
   });
 
@@ -381,7 +410,7 @@ describe("the coach's assessment calls page", () => {
 
     // assert
     await waitFor(() => {
-      expect(router.state.location.search).toBe("?status=past&q=bea");
+      expect(router.state.location.search).toBe("?when=past&q=bea");
     });
     expect(router.state.historyAction).toBe("REPLACE");
   });
@@ -389,7 +418,7 @@ describe("the coach's assessment calls page", () => {
   it("keeps the default filter and an empty search out of the URL", async () => {
     // arrange
     const { router, user } = await renderCallsRouter({
-      url: `${COACH_ASSESSMENT_CALLS_PATH}?status=past`,
+      url: `${COACH_ASSESSMENT_CALLS_PATH}?when=past`,
     });
 
     // act
@@ -404,7 +433,7 @@ describe("the coach's assessment calls page", () => {
   it("restores the filter and the search a shared URL carries", async () => {
     // arrange, act
     await renderCallsPage({
-      url: `${COACH_ASSESSMENT_CALLS_PATH}?status=all&q=carla`,
+      url: `${COACH_ASSESSMENT_CALLS_PATH}?when=all&q=carla`,
     });
 
     // assert
@@ -414,10 +443,10 @@ describe("the coach's assessment calls page", () => {
     expect(shownCallNames()).toEqual(["Carla Marin"]);
   });
 
-  it("falls back to All for a filter it does not recognise", async () => {
+  it("falls back to All for a window it does not recognise", async () => {
     // arrange, act
     await renderCallsPage({
-      url: `${COACH_ASSESSMENT_CALLS_PATH}?status=nonsense`,
+      url: `${COACH_ASSESSMENT_CALLS_PATH}?when=nonsense`,
     });
 
     // assert
@@ -438,17 +467,23 @@ describe("the coach's assessment calls page", () => {
     expect(screen.getByText("No upcoming calls.")).toBeInTheDocument();
   });
 
-  it("offers no Clear filters when only the chosen tab is empty", async () => {
+  it("offers Clear filters when the chosen window is empty and returns to All from it", async () => {
     // arrange
-    const user = await renderCallsPage({ calls: [] });
-
-    // act
+    const { router, user } = await renderCallsRouter({ calls: [] });
     await user.click(screen.getByRole("tab", { name: "Upcoming" }));
 
+    // act
+    await user.click(
+      await screen.findByRole("button", { name: "Clear filters" }),
+    );
+
     // assert
+    await waitFor(() => {
+      expect(router.state.location.search).toBe("");
+    });
     expect(
-      screen.queryByRole("button", { name: "Clear filters" }),
-    ).not.toBeInTheDocument();
+      screen.getByRole("tab", { name: "All", selected: true }),
+    ).toBeInTheDocument();
   });
 
   it("says nothing is on today when no call falls today", async () => {
@@ -610,7 +645,7 @@ describe("sorting the coach's assessment calls", () => {
   it("sorts inside the active filter", async () => {
     // arrange, act
     await renderCallsPage({
-      url: `${COACH_ASSESSMENT_CALLS_PATH}?status=past&sort=name`,
+      url: `${COACH_ASSESSMENT_CALLS_PATH}?when=past&sort=name`,
     });
 
     // assert
@@ -712,6 +747,204 @@ describe("paging through a long history of calls", () => {
   });
 });
 
+describe("where each ended call stands in the sale", () => {
+  const SALE_UNDER_WAY: SalesStates = {
+    "earlier-today": "payment-link-sent",
+    yesterday: "paid",
+  };
+
+  it("badges each ended call with its sales state and a call still to come with none", async () => {
+    // arrange, act
+    await renderCallsPage({ salesStates: SALE_UNDER_WAY });
+
+    // assert
+    const [laterToday, nextWeek, earlierToday, yesterday] = shownCalls().map(
+      (item) => within(item),
+    );
+
+    expect(earlierToday.getByText("Payment link sent")).toBeInTheDocument();
+    expect(yesterday.getByText("Paid")).toBeInTheDocument();
+    for (const upcoming of [laterToday, nextWeek]) {
+      expect(upcoming.queryByText("Call held")).not.toBeInTheDocument();
+      expect(upcoming.queryByText("Payment link sent")).not.toBeInTheDocument();
+      expect(upcoming.queryByText("Paid")).not.toBeInTheDocument();
+    }
+  });
+
+  it("offers a re-send once a link is out and nothing once the call is paid", async () => {
+    // arrange, act
+    await renderCallsPage({ salesStates: SALE_UNDER_WAY });
+
+    // assert
+    const [, , earlierToday, yesterday] = shownCalls().map((item) =>
+      within(item),
+    );
+
+    expect(
+      earlierToday.getByRole("button", { name: "Re-send payment link" }),
+    ).toBeInTheDocument();
+    expect(yesterday.queryByRole("button")).not.toBeInTheDocument();
+  });
+
+  it("counts every status under the window and search in view", async () => {
+    // arrange
+    const user = await renderCallsPage({
+      salesStates: SALE_UNDER_WAY,
+      url: `${COACH_ASSESSMENT_CALLS_PATH}?when=today`,
+    });
+
+    // act
+    await user.click(screen.getByRole("combobox", { name: "Status" }));
+
+    // assert
+    expect(countedStatuses()).toEqual([
+      ["All statuses", "2"],
+      ["Call held", "0"],
+      ["Payment link sent", "1"],
+      ["Paid", "0"],
+    ]);
+  });
+
+  it("opens on every status", async () => {
+    // arrange, act
+    await renderCallsPage();
+
+    // assert
+    expect(screen.getByRole("combobox", { name: "Status" })).toHaveTextContent(
+      /^All statuses$/,
+    );
+  });
+
+  it("narrows the list to one status, back on the first page, and keeps it in the URL", async () => {
+    // arrange
+    const { router, user } = await renderCallsRouter({
+      salesStates: SALE_UNDER_WAY,
+      url: `${COACH_ASSESSMENT_CALLS_PATH}?page=2`,
+    });
+
+    // act
+    await user.click(screen.getByRole("combobox", { name: "Status" }));
+    await user.click(screen.getByRole("option", { name: "Paid" }));
+
+    // assert
+    await waitFor(() => {
+      expect(router.state.location.search).toBe("?status=paid");
+    });
+    expect(shownCallNames()).toEqual(["Bea Ionescu"]);
+    expect(screen.getByRole("combobox", { name: "Status" })).toHaveTextContent(
+      /^Paid$/,
+    );
+  });
+
+  it("keeps every status out of the URL", async () => {
+    // arrange
+    const { router, user } = await renderCallsRouter({
+      url: `${COACH_ASSESSMENT_CALLS_PATH}?status=held`,
+    });
+
+    // act
+    await user.click(screen.getByRole("combobox", { name: "Status" }));
+    await user.click(screen.getByRole("option", { name: "All statuses" }));
+
+    // assert
+    await waitFor(() => {
+      expect(router.state.location.search).toBe("");
+    });
+  });
+
+  it("restores the status a shared URL carries", async () => {
+    // arrange, act
+    await renderCallsPage({
+      salesStates: SALE_UNDER_WAY,
+      url: `${COACH_ASSESSMENT_CALLS_PATH}?status=payment-link-sent`,
+    });
+
+    // assert
+    expect(screen.getByRole("combobox", { name: "Status" })).toHaveTextContent(
+      /^Payment link sent$/,
+    );
+    expect(shownCallNames()).toEqual(["Carla Marin"]);
+  });
+
+  it("names the window and the status when nothing matches both", async () => {
+    // arrange, act
+    await renderCallsPage({
+      url: `${COACH_ASSESSMENT_CALLS_PATH}?when=past&status=paid`,
+    });
+
+    // assert
+    expect(screen.getByText("No calls found")).toBeInTheDocument();
+    expect(
+      screen.getByText("No past calls match the Paid status."),
+    ).toBeInTheDocument();
+  });
+
+  it("clears the window, the status, the search and the page but keeps the sort", async () => {
+    // arrange
+    const { router, user } = await renderCallsRouter({
+      url: `${COACH_ASSESSMENT_CALLS_PATH}?when=past&status=paid&q=bea&sort=name&page=2`,
+    });
+
+    // act
+    await user.click(
+      await screen.findByRole("button", { name: "Clear filters" }),
+    );
+
+    // assert
+    await waitFor(() => {
+      expect(router.state.location.search).toBe("?sort=name");
+    });
+    expect(shownCallNames()).toEqual([
+      "Ana Popescu",
+      "Bea Ionescu",
+      "Carla Marin",
+      "Dana Radu",
+    ]);
+  });
+
+  it("sends a payment link and shows the call as sent once it is out", async () => {
+    // arrange
+    server.use(
+      http.post(COACHING_SALES_API_PATHS.paymentLinks, () =>
+        HttpResponse.json({ email: "bea@example.com", status: "sent" }),
+      ),
+    );
+    const { loaded, user } = await renderCallsRouter({
+      url: `${COACH_ASSESSMENT_CALLS_PATH}?when=past`,
+    });
+    const bea = within(shownCalls()[1]);
+    await user.click(bea.getByRole("button", { name: "Send payment link" }));
+    loaded.salesStates = {
+      ...BOTH_ENDED_CALLS_HELD,
+      yesterday: "payment-link-sent",
+    };
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Send link" }));
+
+    // assert
+    expect(
+      await screen.findByText("Payment link sent to bea@example.com."),
+    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(
+        within(shownCalls()[1]).getByText("Payment link sent"),
+      ).toBeInTheDocument();
+    });
+  });
+});
+
+function countedStatuses(): [string, string][] {
+  return ["All statuses", "Call held", "Payment link sent", "Paid"].map(
+    (label) => {
+      const option = screen.getByRole("option", { name: label });
+      const countId = option.getAttribute("aria-describedby") ?? "";
+
+      return [label, document.getElementById(countId)?.textContent ?? ""];
+    },
+  );
+}
+
 describe("the coach assessment calls page when the calls cannot be read", () => {
   it("replaces the listing with the unavailable dead end", async () => {
     // arrange
@@ -760,23 +993,44 @@ function shownCallNames(): string[] {
     .map((heading) => heading.textContent ?? "");
 }
 
-async function renderCallsRouter(options?: {
+type CallsPageOptions = {
   calls?: CoachAssessmentCall[];
+  salesStates?: SalesStates;
   url?: string;
-}) {
+};
+
+async function renderCallsRouter(options?: CallsPageOptions) {
   const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
-  const listing: CoachAssessmentCalls = {
+  const loaded = {
     calls: options?.calls ?? FOUR_CALLS,
-    coachTimeZone: COACH_TIME_ZONE,
-    now: NOW.toISOString(),
+    salesStates: options?.salesStates ?? BOTH_ENDED_CALLS_HELD,
   };
   const router = createMemoryRouter(
     [
       {
-        Component: CoachAssessmentCallsRoute,
-        loader: () => listing,
-        path: COACH_ASSESSMENT_CALLS_PATH,
-        shouldRevalidate,
+        Component: () => (
+          <>
+            <Outlet />
+            <Toaster />
+          </>
+        ),
+        children: [
+          {
+            Component: CoachAssessmentCallsRoute,
+            loader: () => ({
+              calls: loaded.calls,
+              coachTimeZone: COACH_TIME_ZONE,
+              now: NOW.toISOString(),
+              salesStates: loaded.salesStates,
+            }),
+            path: COACH_ASSESSMENT_CALLS_PATH,
+            shouldRevalidate,
+          },
+        ],
+      },
+      {
+        action: ({ request }: { request: Request }) => fetch(request),
+        path: COACHING_SALES_API_PATHS.paymentLinks,
       },
     ],
     { initialEntries: [options?.url ?? COACH_ASSESSMENT_CALLS_PATH] },
@@ -785,13 +1039,10 @@ async function renderCallsRouter(options?: {
   render(<RouterProvider router={router} />);
   await screen.findByRole("heading", { level: 1, name: "Assessment calls" });
 
-  return { router, user };
+  return { loaded, router, user };
 }
 
-async function renderCallsPage(options?: {
-  calls?: CoachAssessmentCall[];
-  url?: string;
-}): Promise<UserEvent> {
+async function renderCallsPage(options?: CallsPageOptions): Promise<UserEvent> {
   const { user } = await renderCallsRouter(options);
 
   return user;

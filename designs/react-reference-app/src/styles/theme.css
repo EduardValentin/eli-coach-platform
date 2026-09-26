@@ -244,6 +244,7 @@
   --overlay-strong: rgba(0, 0, 0, 0.56);
   --overlay-medium: rgba(0, 0, 0, 0.32);
   --overlay-soft: rgba(0, 0, 0, 0.14);
+  --overlay-modal: rgba(0, 0, 0, 0.5);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -439,6 +440,7 @@
   --color-overlay-strong: var(--overlay-strong);
   --color-overlay-medium: var(--overlay-medium);
   --color-overlay-soft: var(--overlay-soft);
+  --color-overlay-modal: var(--overlay-modal);
   --shadow-public-footer-cta-sheet: var(--shadow-public-footer-cta-sheet);
   --shadow-public-platform-cloud: var(--shadow-public-platform-cloud);
   --shadow-public-platform-cloud-active: var(--shadow-public-platform-cloud-active);

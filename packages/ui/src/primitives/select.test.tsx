@@ -130,4 +130,53 @@ describe("Select", () => {
     expect(trigger).toHaveClass("[&>span:first-child]:overflow-hidden");
     expect(trigger).toHaveClass("[&>span:first-child]:whitespace-nowrap");
   });
+
+  it("counts an option with a badge beside its label that the chosen value leaves out", async () => {
+    // arrange
+    const user = userEvent.setup();
+    render(
+      <Select defaultValue="any">
+        <SelectTrigger aria-label="Status">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem count={4} value="any">
+            All statuses
+          </SelectItem>
+          <SelectItem count={0} value="paid">
+            Paid
+          </SelectItem>
+        </SelectContent>
+      </Select>,
+    );
+    const trigger = screen.getByRole("combobox", { name: "Status" });
+
+    // act
+    trigger.focus();
+    await user.keyboard("{Enter}");
+
+    // assert
+    expect(
+      screen.getByRole("option", { description: "0", name: "Paid" }),
+    ).toHaveTextContent(/^Paid0$/);
+    expect(
+      screen.getByRole("option", { description: "4", name: "All statuses" }),
+    ).toBeInTheDocument();
+    expect(trigger).toHaveTextContent(/^All statuses$/);
+  });
+
+  it("leaves an option without a count free of any badge", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderHourSelect();
+
+    // act
+    screen.getByRole("combobox", { name: "Start" }).focus();
+    await user.keyboard("{Enter}");
+
+    // assert
+    expect(screen.getByRole("option", { name: "10:00" })).toHaveTextContent(
+      /^10:00$/,
+    );
+  });
 });

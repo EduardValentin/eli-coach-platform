@@ -1,0 +1,4 @@
+[
+  { "hover": "[data-parity=\"payment-link-action\"]" },
+  { "wait": 400 }
+]

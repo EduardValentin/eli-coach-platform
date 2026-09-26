@@ -21,3 +21,5 @@ export function assessmentCallJoinPath(bookingId: string): string {
 export const COACH_ASSESSMENT_CALLS_ROUTE_SEGMENT = "assessment-calls";
 
 export const COACH_ASSESSMENT_CALLS_PATH = `${COACH_PORTAL_PATH}/${COACH_ASSESSMENT_CALLS_ROUTE_SEGMENT}`;
+
+export const COACH_CALLS_PAGE_PARAM = "page";
