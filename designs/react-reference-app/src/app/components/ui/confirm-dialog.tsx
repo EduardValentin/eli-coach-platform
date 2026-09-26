@@ -41,7 +41,10 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[80vh] gap-6 overflow-y-auto p-6 sm:max-w-md">
+      <DialogContent
+        className="max-h-[80vh] gap-6 overflow-y-auto p-6 sm:max-w-md"
+        data-parity-root="ConfirmDialog"
+      >
         <DialogHeader className="gap-2">
           <DialogTitle>{title}</DialogTitle>
           {description && (
@@ -52,10 +55,16 @@ export function ConfirmDialog({
         </DialogHeader>
         {children}
         <DialogFooter className="gap-3 pt-2">
-          <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
+          <Button
+            data-parity="cancel"
+            variant="ghost"
+            size="sm"
+            onClick={() => onOpenChange(false)}
+          >
             {cancelLabel}
           </Button>
           <Button
+            data-parity="confirm"
             variant={tone === 'destructive' ? 'destructive' : 'primary'}
             size="sm"
             onClick={onConfirm}

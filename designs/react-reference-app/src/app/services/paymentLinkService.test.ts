@@ -1,5 +1,7 @@
+import { addDays } from 'date-fns';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  PAYMENT_LINK_VALIDITY_DAYS,
   PaymentLinkError,
   resolvePaymentLink,
   sendPaymentLink,
@@ -26,6 +28,20 @@ describe('sending a payment link', () => {
     const link = await sending;
     expect(link.token).toMatch(/^pl-/);
     expect(link.sentAt).toBeInstanceOf(Date);
+  });
+
+  it('holds the link valid for 30 days from when it was sent', async () => {
+    // arrange
+    const sending = sendPaymentLink('sent');
+
+    // act
+    await vi.advanceTimersByTimeAsync(SIMULATED_LATENCY_MS);
+
+    // assert
+    const link = await sending;
+    expect(link.expiresAt).toEqual(
+      addDays(link.sentAt, PAYMENT_LINK_VALIDITY_DAYS),
+    );
   });
 
   it('reports a delivery failure with its own code', async () => {

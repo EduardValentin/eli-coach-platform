@@ -126,3 +126,81 @@ describe("button ladder", () => {
     expect(classes).not.toContain("gap-2");
   });
 });
+
+describe("button call-to-action options", () => {
+  it("rounds a button to the control corner when asked", () => {
+    // arrange
+    // act
+    const classes = buttonVariants({ corner: "control" }).split(" ");
+
+    // assert
+    expect(classes).toContain("rounded-control");
+    expect(classes).not.toContain("rounded-field");
+  });
+
+  it("keeps an icon button fully round whatever the corner", () => {
+    // arrange
+    // act
+    const classes = buttonVariants({
+      corner: "control",
+      size: "icon-sm",
+    }).split(" ");
+
+    // assert
+    expect(classes).toContain("rounded-full");
+    expect(classes).not.toContain("rounded-control");
+  });
+
+  it("gives the extra large size its height, padding and text size", () => {
+    // arrange
+    // act
+    const classes = buttonVariants({ size: "xl" }).split(" ");
+
+    // assert
+    expect(classes).toEqual(
+      expect.arrayContaining(["h-(--size-control-xl)", "px-12", "text-lg"]),
+    );
+  });
+
+  it("keeps the wide medium size's padding beside an icon", () => {
+    // arrange
+    // act
+    const classes = buttonVariants({ size: "md-wide" }).split(" ");
+
+    // assert
+    expect(classes).toEqual(
+      expect.arrayContaining(["h-(--size-control-md)", "px-6", "text-base"]),
+    );
+    expect(classes.some((name) => name.startsWith("has-"))).toBe(false);
+  });
+
+  it("fills an ink button with the text colour and turns it brand on hover", () => {
+    // arrange
+    // act
+    const classes = buttonVariants({ variant: "ink" }).split(" ");
+
+    // assert
+    expect(classes).toEqual(
+      expect.arrayContaining([
+        "bg-text-primary",
+        "text-surface-base",
+        "hover:bg-brand-primary",
+      ]),
+    );
+  });
+
+  it("fills an on-brand button with the base surface and brand text", () => {
+    // arrange
+    // act
+    const classes = buttonVariants({ variant: "on-brand" }).split(" ");
+
+    // assert
+    expect(classes).toEqual(
+      expect.arrayContaining([
+        "bg-surface-base",
+        "text-brand-primary",
+        "hover:bg-surface-subtle",
+      ]),
+    );
+  });
+});

@@ -157,10 +157,10 @@ describe.sequential("coach assessment calls integration", () => {
     // act
     const dashboard = await visibleDocument(await requestAsCoach(DASHBOARD));
     const upcoming = await visibleDocument(
-      await requestAsCoach(`${CALLS_PAGE}?status=upcoming`),
+      await requestAsCoach(`${CALLS_PAGE}?when=upcoming`),
     );
     const past = await visibleDocument(
-      await requestAsCoach(`${CALLS_PAGE}?status=past`),
+      await requestAsCoach(`${CALLS_PAGE}?when=past`),
     );
 
     // assert
@@ -284,7 +284,7 @@ describe.sequential("coach assessment calls integration", () => {
 
     // act
     const secondPage = await visibleDocument(
-      await requestAsCoach(`${CALLS_PAGE}?status=all&page=2`),
+      await requestAsCoach(`${CALLS_PAGE}?when=all&page=2`),
     );
     const dashboard = await visibleDocument(await requestAsCoach(DASHBOARD));
 

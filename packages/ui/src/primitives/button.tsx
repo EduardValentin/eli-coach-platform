@@ -4,7 +4,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../lib/cn";
 
 const buttonClasses = cva(
-  "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-field transition-colors outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+  "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap transition-colors outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
   {
     variants: {
       variant: {
@@ -24,13 +24,22 @@ const buttonClasses = cva(
           "border border-feedback-danger/30 bg-surface-base text-feedback-danger hover:bg-feedback-danger-soft",
         glass:
           "border border-text-inverted/30 bg-text-inverted/15 text-text-inverted backdrop-blur-sm hover:bg-text-inverted/25",
+        ink: "bg-text-primary text-surface-base hover:bg-brand-primary",
+        "on-brand":
+          "bg-surface-base text-brand-primary hover:bg-surface-subtle",
+      },
+      corner: {
+        field: "rounded-field",
+        control: "rounded-control",
       },
       size: {
         xs: "h-(--size-control-xs) px-3 text-sm has-[>svg]:px-2.5",
         sm: "h-(--size-control-sm) px-4 text-sm has-[>svg]:px-3",
         md: "h-(--size-control-md) px-6 text-base has-[>svg]:px-5",
+        "md-wide": "h-(--size-control-md) px-6 text-base",
         lg: "h-(--size-control-lg) px-8 text-base",
         "lg-tight": "h-(--size-control-lg) px-4 text-base",
+        xl: "h-(--size-control-xl) px-12 text-lg",
         "icon-xs": "size-(--size-control-xs) rounded-full",
         "icon-sm": "size-(--size-control-sm) rounded-full",
         "icon-md":
@@ -67,6 +76,7 @@ const buttonClasses = cva(
     },
     defaultVariants: {
       variant: "primary",
+      corner: "field",
       size: "md",
       width: "content",
       weight: "medium",
@@ -95,6 +105,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
       className,
+      corner,
       elevation,
       lettering,
       press,
@@ -113,6 +124,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       type={type}
       className={buttonVariants({
         className,
+        corner,
         elevation,
         lettering,
         press,

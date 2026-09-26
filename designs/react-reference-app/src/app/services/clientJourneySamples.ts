@@ -21,6 +21,7 @@ import {
   type SubscriptionStatus,
 } from '../domain/coachingSubscription';
 import { INVITATION_VALIDITY_DAYS } from './invitationService';
+import { paymentLinkExpiresAt } from './paymentLinkService';
 import type { PrototypeBooking } from './assessmentCallService';
 import { findCountry } from './countries';
 import type { VisitorGender } from './visitorProfile';
@@ -277,6 +278,7 @@ export function seedJourney(seed: JourneySeed): ClientJourney {
       ? {
           token: `pl-seed-${callId}`,
           sentAt: paymentLinkSentAt,
+          expiresAt: paymentLinkExpiresAt(paymentLinkSentAt),
           state: reached('invited') ? 'used' : 'valid',
         }
       : null,

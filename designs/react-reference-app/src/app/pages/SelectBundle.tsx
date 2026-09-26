@@ -5,7 +5,7 @@ import { Navbar } from '../components/Navbar';
 import { BundleSelector } from '../components/BundleSelector';
 import { LegalFooter } from '../components/legal/LegalNav';
 import { StartChoice } from '../components/StartChoice';
-import { Button } from '../components/ThemeButton';
+import { Button, buttonVariants } from '../components/ThemeButton';
 import { useAppState } from '../context/AppContext';
 import { useClientJourneys } from '../context/ClientJourneyContext';
 import { bundleById, type BundleId } from '../domain/bundles';
@@ -16,6 +16,7 @@ import {
   type ResolvedPaymentLink,
 } from '../services/paymentLinkService';
 import { createCheckoutSession } from '../services/checkoutService';
+import { NotFound } from './NotFound';
 
 const SUBSCRIPTION_NOTE =
   'Each bundle is a subscription: it renews at its own length — every 1, 3 or 6 months — and each renewal is charged up front.';
@@ -61,6 +62,8 @@ export function SelectBundle() {
     };
   }, [token, paymentLinkState]);
 
+  if (appState.isWaitlistMode) return <NotFound />;
+
   const journey = journeyForPaymentToken(token) ?? demoJourney;
   const isLoading = link.status === 'loading';
   const isValidToken = link.status === 'valid';
@@ -99,11 +102,17 @@ export function SelectBundle() {
 
   return (
     <>
-    <main className="w-full min-h-screen bg-surface-page pb-24">
+    <main
+      className="w-full min-h-screen bg-surface-page pb-24"
+      data-parity-root="SelectBundle"
+    >
       <Navbar theme="dark" />
 
       {!isValidToken && !isLoading && (
-        <div className="w-full bg-brand text-brand-foreground pt-24 pb-8 px-6 shadow-md relative z-10">
+        <div
+          className="w-full bg-brand text-brand-foreground pt-24 pb-8 px-6 shadow-md relative z-10"
+          data-parity="call-first-banner"
+        >
           <div className="max-w-3xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
             <div className="flex items-start md:items-center gap-4">
               <AlertCircle size={32} className="shrink-0 hidden md:block" />
@@ -116,7 +125,11 @@ export function SelectBundle() {
             </div>
             <Link
               to="/book"
-              className="shrink-0 px-6 py-3 bg-card text-brand font-medium rounded-control hover:bg-surface-subtle transition-colors flex items-center gap-2"
+              className={buttonVariants({
+                corner: 'control',
+                size: 'md-wide',
+                variant: 'on-brand',
+              })}
             >
               <Calendar size={18} />
               Book a Call
@@ -147,6 +160,7 @@ export function SelectBundle() {
           {cancelledNoticeShown && (
             <div
               className="mx-auto flex max-w-xl items-start gap-3 rounded-control border border-border-subtle bg-surface-base px-4 py-3 text-left"
+              data-parity="cancelled-notice"
               role="status"
             >
               <p className="flex-1 text-sm text-text-secondary">{CANCELLED_NOTICE}</p>

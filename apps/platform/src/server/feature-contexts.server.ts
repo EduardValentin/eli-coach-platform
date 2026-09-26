@@ -2,6 +2,7 @@ import type { MiddlewareFunction } from "react-router";
 
 import { accountsContext } from "~/features/accounts/server/guards/accounts-context.server";
 import { assessmentCallsContext } from "~/features/assessment-calls/server/guards/assessment-calls-context.server";
+import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
 import { storeContext } from "~/features/store/server/guards/store-context.server";
 import { waitlistContext } from "~/features/waitlist/server/guards/waitlist-context.server";
 import type { PlatformContainer } from "~/server/container.server";
@@ -15,7 +16,8 @@ export function createFeatureContextMiddleware(
     const container = getContainer();
 
     context.set(accountsContext, container.accounts);
-    context.set(assessmentCallsContext, container.assessmentCalls);
+    context.set(assessmentCallsContext, container.assessmentCalls.feature);
+    context.set(coachingSalesContext, container.coachingSales.feature);
     context.set(platformContext, {
       featureFlags: container.platform.featureFlags,
       metadata: container.platform.metadata,
@@ -26,7 +28,7 @@ export function createFeatureContextMiddleware(
       botDetection: container.platform.botDetection,
     });
     context.set(storeContext, container.store);
-    context.set(waitlistContext, container.waitlist);
+    context.set(waitlistContext, container.waitlist.feature);
 
     return next();
   };

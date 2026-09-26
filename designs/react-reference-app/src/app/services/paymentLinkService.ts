@@ -1,4 +1,8 @@
+import { addDays } from 'date-fns';
+
 export type PrototypePaymentLinkOutcome = 'sent' | 'delivery-failure';
+
+export const PAYMENT_LINK_VALIDITY_DAYS = 30;
 
 export type PaymentLinkErrorCode = Exclude<
   PrototypePaymentLinkOutcome,
@@ -26,6 +30,7 @@ export const PAYMENT_LINK_ERROR_MESSAGES: Record<
 export type SentPaymentLink = {
   token: string;
   sentAt: Date;
+  expiresAt: Date;
 };
 
 export type PrototypePaymentLinkState = 'valid' | 'expired' | 'used' | 'invalid';
@@ -42,6 +47,10 @@ function paymentLinkToken(): string {
   return `pl-${Math.random().toString(36).slice(2, 10)}`;
 }
 
+export function paymentLinkExpiresAt(sentAt: Date): Date {
+  return addDays(sentAt, PAYMENT_LINK_VALIDITY_DAYS);
+}
+
 export async function sendPaymentLink(
   outcome: PrototypePaymentLinkOutcome,
 ): Promise<SentPaymentLink> {
@@ -51,7 +60,12 @@ export async function sendPaymentLink(
     throw new PaymentLinkError(outcome, PAYMENT_LINK_ERROR_MESSAGES[outcome]);
   }
 
-  return { token: paymentLinkToken(), sentAt: new Date() };
+  const sentAt = new Date();
+  return {
+    token: paymentLinkToken(),
+    sentAt,
+    expiresAt: paymentLinkExpiresAt(sentAt),
+  };
 }
 
 export async function resolvePaymentLink(

@@ -23,7 +23,7 @@ This document is the source of product behavior, business rules, and vocabulary.
 
 ## Users
 
-**Visitor.** A woman discovering the coach through the public site. She can browse the landing page, blog, pricing, and store, acquire store products with her email, and book a free assessment call with the coach. She cannot create an account. She can see 1-on-1 coaching bundles but cannot check out for coaching without the unique token issued after an assessment call.
+**Visitor.** A woman discovering the coach through the public site. She can browse the landing page, blog, pricing, and store, acquire store products with her email, and book a free assessment call with the coach. She cannot create an account. She can see 1-on-1 coaching bundles but cannot check out for coaching without a payment link.
 
 **Client.** An invited, paying woman with an active coaching subscription. In the MVP she uses the client portal to complete onboarding, manage check-ins, track her menstrual cycle, and maintain her profile and subscription. Post-MVP adds assigned training and nutritional programs, workout logging, and in-app messaging. Clients with a regular cycle and clients without an active cycle (amenorrhea, post-menopause, hormonal contraception) receive the same level of personalized coaching.
 
@@ -65,9 +65,11 @@ The product is modelled first in a reference prototype application before it is 
 
 ## Coaching Sales
 
-6. **Three coaching bundles: 1 Month, 3 Months, and 6 Months.** Longer commitments have lower per-month pricing; all bundles include the same benefits. Pricing is public, but checkout is available only through a unique token in the URL, sent by email after the assessment call.
+A **payment link** is the unique link, sent by email after an assessment call, through which the visitor chooses a coaching bundle and pays for it. Her **price tier** is regular or reduced and is resolved from the call's email: reduced when that email holds a reduced-price waitlist allocation (Business Rule 17) in any campaign, regular otherwise. Her **start choice** decides when her program starts: immediately, or after the 14-day withdrawal period. A **coaching subscription** records what she paid for: the coaching bundle, price tier, amount, start choice, and whether it has started. Every assessment call that has ended has a **sales state**: held (no working payment link), payment link sent (a working payment link, not yet paid), or paid (the call's payment created a client).
+
+6. **Three coaching bundles: 1 Month, 3 Months, and 6 Months.** Longer commitments have lower per-month pricing; all bundles include the same benefits. Pricing is public, but checkout is available only through a payment link. The coach can send a payment link only for an assessment call that has ended. A payment link works for 30 days from when it is sent; a re-send replaces it and the earlier link stops working at once; a payment spends it. The platform records at most one payment per assessment call. Before paying, the visitor chooses a coaching bundle and a start choice; the start choice has no default and is required. The payment is a recurring subscription charged in euros once per bundle length (every 1, 3, or 6 months) at her price tier, and the buyer's email is fixed to the call's email. A completed payment creates the client with the call's booking profile (first name, last name, email, date of birth, gender, primary goal, country, and phone) and a coaching subscription that has not started. The payment provider's receipt is the payment record; the platform sends no receipt.
 7. **The 3- and 6-month plans have a 7-day cancellation window.** Within the first 7 days the client may cancel if coaching is not the right fit; afterwards the full term applies. The 1-month plan is month-to-month with no term commitment.
-8. **The coach can see each client's subscription**: its term and whether it is active or expired.
+8. **The coach can see each client's subscription**: its term and whether it is active or expired. She also sees each ended assessment call's sales state.
 
 ## Assessment Calls
 
@@ -165,7 +167,7 @@ While enabled, the navigation shows the brand logo, Home, Store, Pricing, and th
 
 ### Pricing (`/pricing`)
 
-Shows the three coaching bundles and their pricing. Accessible in waiting list mode, where it also offers waitlist capture and shows reduced prices alongside regular prices only while reduced-price places remain open. Checkout is token-gated per Business Rule 6.
+Shows the three coaching bundles and their pricing. Accessible in waiting list mode, where it also offers waitlist capture and shows reduced prices alongside regular prices only while reduced-price places remain open. Checkout is available only through a payment link (Business Rule 6).
 
 ### Assessment call booking (`/book`)
 
@@ -177,7 +179,7 @@ Visitors book a free 30-minute assessment call with the coach, reached from the 
 4. Confirmation: a successful booking is stored and confirmed on screen with the date, the time in the visitor's zone with no zone named, and the 30-minute duration, and tells the visitor the join link is on its way by email; the two emails of Business Rule 13 are sent. A refresh returns to the first step; the email is the durable record.
 5. Error outcomes: a slot taken meanwhile returns the visitor to the date and time step with refreshed slots and an explanation, keeping her details; an email address that already holds an upcoming call gets the generic refusal of Business Rule 12 and stays on the details step; a server failure asks her to try again.
 6. Each call's join link (`/book/:bookingId/join`) behaves per Business Rule 14.
-7. After the call, the visitor receives an email with a unique tokenized link that opens the coaching bundle page with checkout enabled.
+7. Once the call has ended, the coach can email the visitor a payment link from the coach portal (Business Rule 6). The link opens the coaching bundle page: a valid link shows the three coaching bundles at her price tier; an unknown, expired, replaced, or spent link shows "a call comes first" and reveals nothing about any call. She picks a coaching bundle and a start choice, pays on the payment provider's hosted checkout, and lands on a confirmation of her payment. Cancelling checkout returns her to the coaching bundle page with her selection kept and a note that no payment was taken. In waiting list mode the coaching bundle page and the confirmation do not exist and answer with a not-found page.
 
 ### Blog (`/blog`)
 
@@ -203,7 +205,7 @@ Per Business Rule 53.
 
 ### Coach-side onboarding
 
-4. The coach creates a client from the coach portal, entering client details and coach-defined calorie and macro formulas for that client.
+4. A client is created when she pays for a coaching bundle, carrying the booking profile of her assessment call (Business Rule 6); the coach never creates a client by hand. From the coach portal the coach enters coach-defined calorie and macro formulas for that client.
 5. Completing onboarding sends the client an invitation email to sign in.
 
 ### Client self-onboarding
@@ -261,7 +263,7 @@ Per Business Rule 53.
 
 ### Assessment calls (`/coach/assessment-calls`)
 
-3. Reached from the sidebar "Assessment calls" entry. Lists every assessment call with the visitor's full name, her email as a mail link, her phone as a tel link when given, her age with date of birth, gender, primary goal, and country, the call's date and time, her notes when she left any, a Today badge when the call is today, and its join link while the call has not ended. A call is upcoming until it ends and past afterwards; upcoming and past calls are visually distinct, upcoming calls list soonest first, past calls list most recent first, and past calls carry no join link. A filter offers All (the default), Upcoming, Today, and Past. The coach sorts the list by scheduled date, booking date, name, or email, with a direction toggle: dates start soonest or newest first and text starts A to Z, and reversing the scheduled date reverses the whole listing order. A search box narrows the list by the visitor's first name, last name, or email. The list shows ten calls per page with page controls and a "Showing a–b of n" line; the active filter, sort, search, and page survive a reload and a return from another page, and the page resets to the first when the filter, sort, or search changes. Each filter has its own empty state: no upcoming calls, no calls today, no past calls, no calls yet, and no matches for a search. A call booked on `/book` appears on the next load, and a call that has ended moves from Upcoming to Past without any action. There is no action on a call.
+3. Reached from the sidebar "Assessment calls" entry. Lists every assessment call with the visitor's full name, her email as a mail link, her phone as a tel link when given, her age with date of birth, gender, primary goal, and country, the call's date and time, her notes when she left any, a Today badge when the call is today, and its join link while the call has not ended. A call is upcoming until it ends and past afterwards; upcoming and past calls are visually distinct, upcoming calls list soonest first, past calls list most recent first, and past calls carry no join link. A filter offers All (the default), Upcoming, Today, and Past. A Status filter narrows the list to one sales state (held, payment link sent, or paid) or shows all of them (the default), and each option shows how many calls it matches under the current filter and search. The coach sorts the list by scheduled date, booking date, name, or email, with a direction toggle: dates start soonest or newest first and text starts A to Z, and reversing the scheduled date reverses the whole listing order. A search box narrows the list by the visitor's first name, last name, or email. The list shows ten calls per page with page controls and a "Showing a–b of n" line; the active filters, sort, search, and page survive a reload and a return from another page, and the page resets to the first when a filter, the sort, or the search changes. Each filter has its own empty state: no upcoming calls, no calls today, no past calls, no calls yet, no matches for a search, and no calls in the chosen sales state. A call booked on `/book` appears on the next load, and a call that has ended moves from Upcoming to Past without any action. Each ended call shows its sales state (Business Rule 8). A held call offers to send a payment link and a call whose payment link was sent offers to re-send it; either asks the coach to confirm, then emails the payment link to the call's email (Business Rule 6), and an email that cannot be sent is reported so she can send it again. A paid call has no sales action.
 
 ### Clients (`/coach/clients`)
 
@@ -349,7 +351,7 @@ Per Business Rule 53.
 # Deferred
 
 - Full blog CMS, authoring workflow, categories, and search
-- Real payment processing for coaching bundles and paid store products
+- Real payment processing for paid store products
 - Per-call meeting room generation through a video provider. Every assessment call shares the coach's single meeting room (Business Rule 14); check-ins have no meeting room set up yet
 - Rich analytics and reporting; advanced search across clients
 - Plan version history or changelog

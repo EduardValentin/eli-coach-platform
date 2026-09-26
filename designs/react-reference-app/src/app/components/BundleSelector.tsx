@@ -1,7 +1,7 @@
-import { useState, type ReactNode } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import { CheckCircle2, Star, Tag } from 'lucide-react';
 import { motion } from 'motion/react';
-import { cn } from './ThemeButton';
+import { buttonVariants, cn } from './ThemeButton';
 import { cardVariants } from './ui/card';
 import {
   bundlePerMonth,
@@ -46,6 +46,8 @@ export function BundleSelector({
   note,
   beforeCheckout,
 }: BundleSelectorProps) {
+  const choiceId = useId();
+  const headingId = useId();
   const [selectedBundleId, setSelectedBundleId] = useState<BundleId | null>(
     mode === 'checkout' ? DEFAULT_BUNDLE_ID : null
   );
@@ -72,7 +74,11 @@ export function BundleSelector({
     : null;
 
   return (
-    <div className="w-full max-w-4xl mx-auto">
+    <div className="w-full max-w-4xl mx-auto" data-parity-root="BundleSelector">
+      <h2 className="sr-only" id={headingId}>
+        Coaching bundle options
+      </h2>
+
       {banner && (
         <div className="flex justify-center mb-8">
           <span className="inline-flex items-center gap-2 rounded-full bg-brand-secondary-soft px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-brand-secondary">
@@ -88,23 +94,29 @@ export function BundleSelector({
       )}
 
       {/* Compact price cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-8 mb-10">
+      <div
+        aria-labelledby={mode === 'checkout' ? headingId : undefined}
+        className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-8 mb-10"
+        role={mode === 'checkout' ? 'radiogroup' : undefined}
+      >
         {COACHING_BUNDLES.map((bundle, index) => {
           const isSelected = selectedBundleId === bundle.id;
           const displayPrice = bundlePerMonth(bundle, journeyPricing);
           const displayTotal = bundleTotal(bundle, journeyPricing);
           const regularTotal = bundleTotal(bundle, 'regular');
+          const titleLower = bundle.title.toLowerCase();
           const savingsPct = baselinePerMonth != null && bundle.months > 1
             ? Math.floor(((baselinePerMonth - displayPrice) / baselinePerMonth) * 100)
             : 0;
 
           return (
-            <motion.div
+            <motion.article
               key={bundle.id}
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.06, duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-              onClick={() => handleSelect(bundle.id)}
+              data-chip-control={mode === 'checkout' ? '' : undefined}
+              data-parity={`bundle-${bundle.id}`}
               className={`relative rounded-card px-6 py-7 border-2 text-center ${
                 bundle.popular ? 'bg-[color-mix(in_srgb,var(--brand-secondary)_5%,var(--card))]' : 'bg-card'
               } ${
@@ -133,11 +145,22 @@ export function BundleSelector({
 
               <h3 className="font-serif text-lg text-foreground mb-1">{bundle.title}</h3>
 
-              <div className="flex items-end justify-center gap-0.5 mb-1">
+              <div
+                className="flex items-end justify-center gap-0.5 mb-1"
+                data-parity={`price-${bundle.id}`}
+              >
                 {isDiscounted && (
-                  <span className="text-lg font-bold text-bundle-muted line-through mr-1">€{bundle.regularPerMonth}</span>
+                  <span
+                    aria-label={`Original ${titleLower} monthly price €${bundle.regularPerMonth}`}
+                    className="text-lg font-bold text-bundle-muted line-through mr-1"
+                  >
+                    €{bundle.regularPerMonth}
+                  </span>
                 )}
-                <span className={`text-3xl font-bold ${isDiscounted ? 'text-brand' : 'text-foreground'}`}>
+                <span
+                  aria-label={`${bundle.title} monthly price €${displayPrice}`}
+                  className={`text-3xl font-bold ${isDiscounted ? 'text-brand' : 'text-foreground'}`}
+                >
                   €{displayPrice}
                 </span>
                 <span className="text-link-muted text-sm font-medium mb-0.5">/mo</span>
@@ -147,13 +170,21 @@ export function BundleSelector({
                 <div className="mx-auto mt-1 mb-2.5 h-px w-12 bg-[color-mix(in_srgb,var(--brand-secondary)_50%,transparent)]" aria-hidden="true" />
               )}
 
-              <p className="text-xs text-bundle-muted font-medium">
+              <p
+                className="text-xs text-bundle-muted font-medium"
+                data-parity={`billed-${bundle.id}`}
+              >
                 {bundle.months === 1 ? (
                   'Billed monthly'
                 ) : (
                   <>
                     {isDiscounted && (
-                      <span className="line-through mr-1">€{regularTotal}</span>
+                      <span
+                        aria-label={`Original ${titleLower} billing total €${regularTotal}`}
+                        className="line-through mr-1"
+                      >
+                        €{regularTotal}
+                      </span>
                     )}
                     Billed as €{displayTotal}
                   </>
@@ -161,19 +192,50 @@ export function BundleSelector({
               </p>
 
               {mode === 'checkout' && (
-                <div className={`w-5 h-5 rounded-full border-2 mx-auto mt-4 flex items-center justify-center transition-colors ${
-                  isSelected ? 'border-brand bg-brand' : 'border-control-border-soft'
-                }`}>
-                  {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-brand-foreground" />}
-                </div>
+                <input
+                  checked={isSelected}
+                  className="sr-only"
+                  disabled={disabled}
+                  id={`${choiceId}-${bundle.id}`}
+                  name="bundleId"
+                  onChange={() => handleSelect(bundle.id)}
+                  type="radio"
+                  value={bundle.id}
+                />
               )}
-            </motion.div>
+
+              {mode === 'checkout' && (
+                <span
+                  aria-hidden="true"
+                  className={`w-5 h-5 rounded-full border-2 mx-auto mt-4 flex items-center justify-center transition-colors ${
+                    isSelected ? 'border-brand bg-brand' : 'border-control-border-soft'
+                  }`}
+                  data-parity={`bundle-indicator-${bundle.id}`}
+                >
+                  {isSelected && (
+                    <span
+                      className="w-1.5 h-1.5 rounded-full bg-brand-foreground"
+                      data-parity={`bundle-dot-${bundle.id}`}
+                    />
+                  )}
+                </span>
+              )}
+
+              {mode === 'checkout' && (
+                <label
+                  className="absolute inset-0 rounded-card"
+                  htmlFor={`${choiceId}-${bundle.id}`}
+                >
+                  <span className="sr-only">{bundle.title}</span>
+                </label>
+              )}
+            </motion.article>
           );
         })}
       </div>
 
       {/* Shared benefits section */}
-      <motion.div
+      <motion.section
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
@@ -190,7 +252,7 @@ export function BundleSelector({
             </li>
           ))}
         </ul>
-      </motion.div>
+      </motion.section>
 
       {mode === 'checkout' && !disabled && (
         <motion.div
@@ -207,7 +269,13 @@ export function BundleSelector({
             onClick={handleCheckoutClick}
             disabled={!selectedBundleId || busy}
             aria-busy={busy}
-            className="px-12 py-4 bg-foreground text-background text-lg font-medium rounded-control hover:bg-brand transition-colors shadow-action hover:shadow-action-hover disabled:pointer-events-none disabled:opacity-50"
+            data-parity="continue"
+            className={buttonVariants({
+              corner: 'control',
+              elevation: 'raised',
+              size: 'xl',
+              variant: 'ink',
+            })}
           >
             {busy ? 'Opening checkout…' : 'Continue to Checkout'}
           </button>

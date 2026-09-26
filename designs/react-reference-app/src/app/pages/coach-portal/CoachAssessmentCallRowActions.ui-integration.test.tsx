@@ -17,6 +17,7 @@ import {
 } from '../../context/ClientJourneyContext';
 import { ClientProfileProvider } from '../../context/ClientProfileContext';
 import type { PrototypeBooking } from '../../services/assessmentCallService';
+import { paymentLinkExpiresAt } from '../../services/paymentLinkService';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const VISITOR_FIRST_NAME = 'Maria';
@@ -93,6 +94,7 @@ function JourneyDriver() {
           recordPaymentLinkSent(BOOKING.id, {
             token: 'pl-driver',
             sentAt: new Date(),
+            expiresAt: paymentLinkExpiresAt(new Date()),
           });
           recordPaid(BOOKING.id, {
             paidAt: new Date(),

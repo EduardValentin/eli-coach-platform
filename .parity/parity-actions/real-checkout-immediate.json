@@ -1,0 +1,8 @@
+[
+  { "waitFor": "[data-parity=\"continue\"]" },
+  { "wait": 1500 },
+  { "click": "[data-parity=\"option-immediate\"]" },
+  { "click": "[data-parity=\"continue\"]" },
+  { "waitFor": "[data-parity-root=\"CheckoutComplete\"]" },
+  { "wait": 600 }
+]
