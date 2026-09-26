@@ -160,6 +160,9 @@ catalogs:
     sonner:
       specifier: 2.0.3
       version: 2.0.3
+    stripe:
+      specifier: 22.6.2
+      version: 22.6.2
     tailwind-merge:
       specifier: 3.5.0
       version: 3.5.0
@@ -445,6 +448,9 @@ importers:
       resend:
         specifier: 'catalog:'
         version: 6.12.3
+      stripe:
+        specifier: 'catalog:'
+        version: 22.6.2(@types/node@24.13.3)
       zod:
         specifier: 'catalog:'
         version: 4.3.6
@@ -6077,6 +6083,15 @@ packages:
   strip-json-comments@5.0.3:
     resolution: {integrity: sha512-1tB5mhVo7U+ETBKNf92xT4hrQa3pm0MZ0PQvuDnWgAAGHDsfp4lPSpiS6psrSiet87wyGPh9ft6wmhOMQ0hDiw==}
     engines: {node: '>=14.16'}
+
+  stripe@22.6.2:
+    resolution: {integrity: sha512-PwRE2scocvXqDKPiskMa5vRJEAEkq46W69XyUYmAwrNSLr675lQnfqLwnsndAWizwgihOWw/irLmoFRo3ez7ew==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      '@types/node': 24.13.3
+    peerDependenciesMeta:
+      '@types/node':
+        optional: true
 
   supports-color@5.5.0:
     resolution: {integrity: sha512-QjVjwdXIt408MIiAqCX4oUKsgU2EqAGzs2Ppkm4aQYbjm+ZEWEcW4SfFNTr4uMNZma0ey4f5lgLrkB0aX0QMow==}
@@ -12247,6 +12262,10 @@ snapshots:
   strip-json-comments@3.1.1: {}
 
   strip-json-comments@5.0.3: {}
+
+  stripe@22.6.2(@types/node@24.13.3):
+    optionalDependencies:
+      '@types/node': 24.13.3
 
   supports-color@5.5.0:
     dependencies:

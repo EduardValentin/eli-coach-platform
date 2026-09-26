@@ -16,6 +16,7 @@ import {
   managementApiShape,
   refineManagementApi,
 } from "./concerns/management-api";
+import { paymentsShape, refinePayments } from "./concerns/payments";
 import {
   productEmailShape,
   refineProductEmail,
@@ -31,6 +32,7 @@ export const runtimeEnvironmentSchema = z
     ...waitlistShape,
     ...botDetectionShape,
     ...productEmailShape,
+    ...paymentsShape,
     ...storeAssetsShape,
     ...managementApiShape,
     ...assessmentCallsShape,
@@ -41,6 +43,7 @@ export const runtimeEnvironmentSchema = z
   .superRefine(refineClerk)
   .superRefine(refineManagementApi)
   .superRefine(refineProductEmail)
+  .superRefine(refinePayments)
   .superRefine(refineStoreAssets);
 
 export type RuntimeEnvironment = z.infer<typeof runtimeEnvironmentSchema>;
