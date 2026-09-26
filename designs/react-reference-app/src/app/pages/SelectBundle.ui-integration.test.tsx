@@ -173,6 +173,35 @@ describe('choosing a bundle from a payment link', () => {
     );
   }, TEST_TIMEOUT_MS);
 
+  it('lets her choose a bundle from the keyboard', async () => {
+    // arrange
+    renderPage(`?token=${DEMO_TOKEN}`);
+    const bundles = await screen.findByRole(
+      'radiogroup',
+      { name: 'Coaching bundle options' },
+      WAIT,
+    );
+    expect(within(bundles).getByRole('radio', { name: '3 Months' })).toBeChecked();
+    const sixMonths = within(bundles).getByRole('radio', { name: '6 Months' });
+
+    // act
+    sixMonths.focus();
+    await userEvent.keyboard(' ');
+    await userEvent.click(screen.getByRole('radio', { name: WAITING_OPTION }));
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Continue to Checkout' }),
+    );
+
+    // assert
+    await waitFor(
+      () =>
+        expect(screen.getByTestId('session-summary')).toHaveTextContent(
+          '6:waiting',
+        ),
+      WAIT,
+    );
+  }, TEST_TIMEOUT_MS);
+
   it('carries the immediate start path when she asks to start right away', async () => {
     // arrange
     renderPage(`?token=${DEMO_TOKEN}`);

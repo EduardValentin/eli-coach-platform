@@ -4,7 +4,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from './ui/utils';
 
 const buttonVariants = cva(
-  'inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-field transition-colors outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0',
+  'inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap transition-colors outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0',
   {
     variants: {
       variant: {
@@ -18,12 +18,20 @@ const buttonVariants = cva(
         'outline-brand': 'border border-primary text-primary hover:bg-primary/5',
         glass:
           'border border-surface-inverted-foreground/30 bg-surface-inverted-foreground/15 text-surface-inverted-foreground backdrop-blur-sm hover:bg-surface-inverted-foreground/25',
+        ink: 'bg-foreground text-background hover:bg-brand',
+        'on-brand': 'bg-card text-brand hover:bg-surface-subtle',
+      },
+      corner: {
+        field: 'rounded-field',
+        control: 'rounded-control',
       },
       size: {
         xs: 'h-(--size-control-xs) px-3 text-sm has-[>svg]:px-2.5',
         md: 'h-(--size-control-md) px-6 text-base has-[>svg]:px-5',
+        'md-wide': 'h-(--size-control-md) px-6 text-base',
         lg: 'h-(--size-control-lg) px-8 text-base',
         'lg-tight': 'h-(--size-control-lg) px-4 text-base',
+        xl: 'h-(--size-control-xl) px-12 text-lg',
       },
       width: {
         content: '',
@@ -56,6 +64,7 @@ const buttonVariants = cva(
     },
     defaultVariants: {
       variant: 'primary',
+      corner: 'field',
       size: 'md',
       width: 'content',
       weight: 'medium',
@@ -79,6 +88,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
       className,
+      corner,
       elevation,
       lettering,
       press,
@@ -97,6 +107,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       type={type}
       className={cn(
         buttonVariants({
+          corner,
           elevation,
           lettering,
           press,

@@ -308,6 +308,28 @@ describe("StripePaymentCheckout", () => {
   });
 
   it.each([
+    "",
+    "..",
+    "cs_test_",
+    "cs_other_abc",
+    "cs_test_abc/../../customers",
+  ])(
+    "finds nothing without asking Stripe for the malformed session id %j",
+    async (sessionId) => {
+      // arrange
+      const client = createStubClient();
+      const checkout = new StripePaymentCheckout(client);
+
+      // act
+      const completion = await checkout.findCompletedSession(sessionId);
+
+      // assert
+      expect(completion).toBeNull();
+      expect(client.checkout.sessions.retrieve).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([
     ["another invalid request", invalidRequest("parameter_invalid_empty")],
     [
       "a connection failure",

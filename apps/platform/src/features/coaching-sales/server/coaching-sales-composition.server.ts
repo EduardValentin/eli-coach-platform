@@ -19,6 +19,8 @@ import type { Clock } from "@eli-coach-platform/domain/shared";
 import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 import type { PaymentEvents } from "@eli-coach-platform/infrastructure/payments/server";
 
+import { CheckoutsController } from "~/features/coaching-sales/api/public/checkouts-controller.server";
+import { StripeWebhookController } from "~/features/coaching-sales/api/webhooks/stripe-webhook-controller.server";
 import {
   PaymentLinkTokenSha256,
   RandomPaymentLinkTokenGenerator,
@@ -28,7 +30,9 @@ import { PostgresCoachingPurchases } from "~/features/coaching-sales/data/purcha
 import { createCoachingSalesNotifications } from "~/features/coaching-sales/email/create-coaching-sales-notifications.server";
 
 export type CoachingSalesFeature = {
+  checkouts: CheckoutsController;
   paymentEvents: PaymentEvents;
+  stripeWebhooks: StripeWebhookController;
   useCases: {
     readCallSalesStates: ReadCallSalesStatesUseCase;
     readCheckoutConfirmation: ReadCheckoutConfirmationUseCase;
@@ -81,27 +85,50 @@ export function composeCoachingSalesFeature(
     salesWindow,
   };
 
+  const readCheckoutConfirmation = new ReadCheckoutConfirmationUseCase({
+    paymentCheckout: handles.paymentCheckout,
+    salesWindow,
+  });
+  const recordCheckoutCompleted = new RecordCheckoutCompletedUseCase({
+    calls: handles.assessmentCallReader,
+    clock,
+    incidents: handles.incidents,
+    purchases,
+  });
+  const resolvePaymentLink = new ResolvePaymentLinkUseCase({
+    ...paymentLinkPorts,
+    tokenHasher,
+  });
+  const startCheckout = new StartCheckoutUseCase({
+    ...paymentLinkPorts,
+    checkoutSessions: paymentLinks,
+    paymentCheckout: handles.paymentCheckout,
+    tokenHasher,
+  });
+
   return {
     feature: {
+      checkouts: new CheckoutsController({
+        appBasePath: handles.appBasePath,
+        clock,
+        publicAppUrl: handles.publicAppUrl,
+        readCheckoutConfirmation,
+        resolvePaymentLink,
+        startCheckout,
+      }),
       paymentEvents: handles.paymentEvents,
+      stripeWebhooks: new StripeWebhookController({
+        paymentEvents: handles.paymentEvents,
+        recordCheckoutCompleted,
+        signingSecret: handles.webhookSigningSecret,
+      }),
       useCases: {
         readCallSalesStates: new ReadCallSalesStatesUseCase({
           callSalesStates: purchases,
         }),
-        readCheckoutConfirmation: new ReadCheckoutConfirmationUseCase({
-          paymentCheckout: handles.paymentCheckout,
-          salesWindow,
-        }),
-        recordCheckoutCompleted: new RecordCheckoutCompletedUseCase({
-          calls: handles.assessmentCallReader,
-          clock,
-          incidents: handles.incidents,
-          purchases,
-        }),
-        resolvePaymentLink: new ResolvePaymentLinkUseCase({
-          ...paymentLinkPorts,
-          tokenHasher,
-        }),
+        readCheckoutConfirmation,
+        recordCheckoutCompleted,
+        resolvePaymentLink,
         sendPaymentLink: new SendPaymentLinkUseCase({
           ...paymentLinkPorts,
           incidents: handles.incidents,
@@ -116,12 +143,7 @@ export function composeCoachingSalesFeature(
           ),
           tokenGenerator: new RandomPaymentLinkTokenGenerator(),
         }),
-        startCheckout: new StartCheckoutUseCase({
-          ...paymentLinkPorts,
-          checkoutSessions: paymentLinks,
-          paymentCheckout: handles.paymentCheckout,
-          tokenHasher,
-        }),
+        startCheckout,
       },
       webhookSigningSecret: handles.webhookSigningSecret,
     },

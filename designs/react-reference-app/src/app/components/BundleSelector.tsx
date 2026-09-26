@@ -1,7 +1,7 @@
-import { useState, type ReactNode } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import { CheckCircle2, Star, Tag } from 'lucide-react';
 import { motion } from 'motion/react';
-import { cn } from './ThemeButton';
+import { buttonVariants, cn } from './ThemeButton';
 import { cardVariants } from './ui/card';
 import {
   bundlePerMonth,
@@ -46,6 +46,7 @@ export function BundleSelector({
   note,
   beforeCheckout,
 }: BundleSelectorProps) {
+  const choiceId = useId();
   const [selectedBundleId, setSelectedBundleId] = useState<BundleId | null>(
     mode === 'checkout' ? DEFAULT_BUNDLE_ID : null
   );
@@ -88,7 +89,11 @@ export function BundleSelector({
       )}
 
       {/* Compact price cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-8 mb-10">
+      <div
+        aria-label={mode === 'checkout' ? 'Coaching bundle options' : undefined}
+        className="grid grid-cols-1 md:grid-cols-3 gap-x-4 gap-y-8 mb-10"
+        role={mode === 'checkout' ? 'radiogroup' : undefined}
+      >
         {COACHING_BUNDLES.map((bundle, index) => {
           const isSelected = selectedBundleId === bundle.id;
           const displayPrice = bundlePerMonth(bundle, journeyPricing);
@@ -104,7 +109,7 @@ export function BundleSelector({
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.06, duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-              onClick={() => handleSelect(bundle.id)}
+              data-chip-control={mode === 'checkout' ? '' : undefined}
               data-parity={`bundle-${bundle.id}`}
               className={`relative rounded-card px-6 py-7 border-2 text-center ${
                 bundle.popular ? 'bg-[color-mix(in_srgb,var(--brand-secondary)_5%,var(--card))]' : 'bg-card'
@@ -168,11 +173,33 @@ export function BundleSelector({
               </p>
 
               {mode === 'checkout' && (
-                <div className={`w-5 h-5 rounded-full border-2 mx-auto mt-4 flex items-center justify-center transition-colors ${
+                <input
+                  checked={isSelected}
+                  className="sr-only"
+                  disabled={disabled}
+                  id={`${choiceId}-${bundle.id}`}
+                  name="bundleId"
+                  onChange={() => handleSelect(bundle.id)}
+                  type="radio"
+                  value={bundle.id}
+                />
+              )}
+
+              {mode === 'checkout' && (
+                <div aria-hidden="true" className={`w-5 h-5 rounded-full border-2 mx-auto mt-4 flex items-center justify-center transition-colors ${
                   isSelected ? 'border-brand bg-brand' : 'border-control-border-soft'
                 }`}>
                   {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-brand-foreground" />}
                 </div>
+              )}
+
+              {mode === 'checkout' && (
+                <label
+                  className="absolute inset-0 rounded-card"
+                  htmlFor={`${choiceId}-${bundle.id}`}
+                >
+                  <span className="sr-only">{bundle.title}</span>
+                </label>
               )}
             </motion.div>
           );
@@ -215,7 +242,12 @@ export function BundleSelector({
             disabled={!selectedBundleId || busy}
             aria-busy={busy}
             data-parity="continue"
-            className="px-12 py-4 bg-foreground text-background text-lg font-medium rounded-control hover:bg-brand transition-colors shadow-action hover:shadow-action-hover disabled:pointer-events-none disabled:opacity-50"
+            className={buttonVariants({
+              corner: 'control',
+              elevation: 'raised',
+              size: 'xl',
+              variant: 'ink',
+            })}
           >
             {busy ? 'Opening checkout…' : 'Continue to Checkout'}
           </button>

@@ -2,7 +2,11 @@ import type { CallSalesState } from "@eli-coach-platform/domain/payment-link";
 import { START_CHOICES } from "@eli-coach-platform/domain/coaching-subscription";
 import { z } from "zod";
 
-import { coachingBundleCardSchema, priceTierSchema } from "./bundle-cards";
+import {
+  coachingBundleCardSchema,
+  coachingBundleIdSchema,
+  priceTierSchema,
+} from "./bundle-cards";
 
 export const CALL_SALES_STATES = [
   "held",
@@ -39,6 +43,27 @@ export const PAYMENT_LINK_MESSAGES = {
 
 const callFirstStateSchema = z.object({ state: z.literal("call-first") });
 
+const PAYMENT_LINK_TOKEN_MAX_LENGTH = 256;
+
+export const paymentLinkTokenSchema = z
+  .string()
+  .max(PAYMENT_LINK_TOKEN_MAX_LENGTH)
+  .catch("");
+
+const CHECKOUT_SESSION_ID_MAX_LENGTH = 255;
+
+export const checkoutSessionIdSchema = z
+  .string()
+  .max(CHECKOUT_SESSION_ID_MAX_LENGTH)
+  .catch("");
+
+export const checkoutChoiceSchema = z.object({
+  bundleId: coachingBundleIdSchema,
+  startChoice: startChoiceSchema,
+});
+
+export type CheckoutChoice = z.infer<typeof checkoutChoiceSchema>;
+
 export const bundlePageSchema = z.discriminatedUnion("state", [
   z.object({
     state: z.literal("valid"),
@@ -46,7 +71,7 @@ export const bundlePageSchema = z.discriminatedUnion("state", [
     cards: z.array(coachingBundleCardSchema),
     waitingStartsOn: z.iso.date(),
   }),
-  callFirstStateSchema,
+  callFirstStateSchema.extend({ cards: z.array(coachingBundleCardSchema) }),
 ]);
 
 export type BundlePage = z.infer<typeof bundlePageSchema>;

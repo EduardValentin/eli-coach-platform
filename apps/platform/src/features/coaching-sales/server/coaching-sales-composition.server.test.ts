@@ -4,6 +4,8 @@ import { InMemoryProductEmail } from "@eli-coach-platform/infrastructure/email/s
 import { createPaymentCheckout } from "@eli-coach-platform/infrastructure/payments/server";
 import { describe, expect, it, vi } from "vitest";
 
+import { createRequestArgs } from "~/server/test-support/request-args";
+
 import {
   composeCoachingSalesFeature,
   type CoachingSalesFeatureHandles,
@@ -110,6 +112,77 @@ describe("composeCoachingSalesFeature", () => {
     // assert
     expect(feature.webhookSigningSecret).toBe("whsec_unit");
     expect(feature.paymentEvents).toBe(handles.paymentEvents);
+  });
+});
+
+describe("composeCoachingSalesFeature buyer controllers", () => {
+  it("hides the bundle page and the checkout while the site is in waitlist mode", async () => {
+    // arrange
+    const { feature } = composeCoachingSalesFeature(
+      createHandles({ WAITLIST_MODE: true }),
+    );
+    const request = new Request(
+      "https://evoa.fit/api/coaching-sales/checkouts",
+      {
+        body: new URLSearchParams({
+          bundleId: "3-months",
+          startChoice: "immediate",
+          token: "raw-token-value",
+        }),
+        method: "POST",
+      },
+    );
+
+    // act
+    const loading = feature.checkouts.loadBundlePage(
+      createRequestArgs({
+        request: new Request("https://evoa.fit/select-bundle?token=abc"),
+      }),
+    );
+    const checkout = await feature.checkouts.startCheckout(
+      createRequestArgs({ request }),
+    );
+
+    // assert
+    await expect(loading).rejects.toMatchObject({ status: 404 });
+    expect(checkout.status).toBe(404);
+  });
+
+  it("answers the webhook with 503 when no signing secret is configured", async () => {
+    // arrange
+    const { feature } = composeCoachingSalesFeature({
+      ...createHandles({}),
+      webhookSigningSecret: undefined,
+    });
+
+    // act
+    const response = await feature.stripeWebhooks.handleEvent(
+      new Request("https://evoa.fit/api/stripe/webhooks", {
+        body: "{}",
+        method: "POST",
+      }),
+    );
+
+    // assert
+    expect(response.status).toBe(503);
+  });
+
+  it("keeps the webhook reachable while the site is in waitlist mode", async () => {
+    // arrange
+    const { feature } = composeCoachingSalesFeature(
+      createHandles({ WAITLIST_MODE: true }),
+    );
+
+    // act
+    const response = await feature.stripeWebhooks.handleEvent(
+      new Request("https://evoa.fit/api/stripe/webhooks", {
+        body: "{}",
+        method: "POST",
+      }),
+    );
+
+    // assert
+    expect(response.status).toBe(400);
   });
 });
 

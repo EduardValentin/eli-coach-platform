@@ -5,7 +5,7 @@ import { Navbar } from '../components/Navbar';
 import { BundleSelector } from '../components/BundleSelector';
 import { LegalFooter } from '../components/legal/LegalNav';
 import { StartChoice } from '../components/StartChoice';
-import { Button } from '../components/ThemeButton';
+import { Button, buttonVariants } from '../components/ThemeButton';
 import { useAppState } from '../context/AppContext';
 import { useClientJourneys } from '../context/ClientJourneyContext';
 import { bundleById, type BundleId } from '../domain/bundles';
@@ -125,7 +125,11 @@ export function SelectBundle() {
             </div>
             <Link
               to="/book"
-              className="shrink-0 px-6 py-3 bg-card text-brand font-medium rounded-control hover:bg-surface-subtle transition-colors flex items-center gap-2"
+              className={buttonVariants({
+                corner: 'control',
+                size: 'md-wide',
+                variant: 'on-brand',
+              })}
             >
               <Calendar size={18} />
               Book a Call
