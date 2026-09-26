@@ -71,7 +71,7 @@ export const bundlePageSchema = z.discriminatedUnion("state", [
     state: z.literal("valid"),
     tier: priceTierSchema,
     cards: z.array(coachingBundleCardSchema),
-    waitingStartsOn: z.iso.date(),
+    waitingStartsOn: z.iso.datetime(),
   }),
   callFirstStateSchema.extend({ cards: z.array(coachingBundleCardSchema) }),
 ]);
@@ -86,7 +86,7 @@ export const checkoutConfirmationSchema = z.discriminatedUnion("state", [
     email: z.string().min(1),
     renewalLabel: z.string().min(1),
     startChoice: startChoiceSchema,
-    waitingStartsOn: z.iso.date(),
+    waitingStartsOn: z.iso.datetime(),
   }),
   callFirstStateSchema,
 ]);

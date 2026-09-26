@@ -18,6 +18,7 @@ import {
   CALL_FIRST_HEADING,
   CallFirstBanner,
 } from "~/features/coaching-sales/ui/public/call-first-banner";
+import { useCalendarDayTimeZone } from "~/features/coaching-sales/ui/public/calendar-day-format";
 
 import {
   IMMEDIATE_START_SUMMARY,
@@ -68,10 +69,11 @@ export default function CheckoutCompleteRoute() {
 
 function PaymentConfirmation(props: { confirmation: PaidConfirmation }) {
   const { confirmation } = props;
+  const timeZone = useCalendarDayTimeZone();
   const startSummary =
     confirmation.startChoice === "immediate"
       ? IMMEDIATE_START_SUMMARY
-      : waitingStartSummary(confirmation.waitingStartsOn);
+      : waitingStartSummary(confirmation.waitingStartsOn, timeZone);
 
   return (
     <div

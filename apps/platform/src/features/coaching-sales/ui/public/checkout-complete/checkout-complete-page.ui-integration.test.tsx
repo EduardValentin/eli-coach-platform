@@ -2,9 +2,15 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { cleanup, render, screen, within } from "@testing-library/react";
+import {
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { BOOK_PATH } from "~/features/assessment-calls/contracts/paths";
 import type { CheckoutConfirmation } from "~/features/coaching-sales/contracts/coaching-sales";
@@ -18,12 +24,22 @@ const paidConfirmation: CheckoutConfirmation = {
   email: "ana@example.com",
   renewalLabel: "Every 3 months",
   startChoice: "immediate",
-  waitingStartsOn: "2026-10-10",
+  waitingStartsOn: "2026-10-10T10:00:00.000Z",
 };
 
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
 });
+
+function readerIsIn(timeZone: string) {
+  const actual = new Intl.DateTimeFormat().resolvedOptions();
+
+  vi.spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions").mockReturnValue({
+    ...actual,
+    timeZone,
+  });
+}
 
 function renderConfirmation(confirmation: CheckoutConfirmation) {
   const router = createMemoryRouter(
@@ -102,6 +118,26 @@ describe("CheckoutCompleteRoute", () => {
     expect(readings()["Your start"]).toBe(
       "After your 14-day withdrawal period — Eli starts working on your program on 10 October 2026. You can let her start sooner from your account",
     );
+  });
+
+  it("dates the waiting start on the reader's own calendar", async () => {
+    // arrange
+    readerIsIn("Europe/Bucharest");
+    const confirmation: CheckoutConfirmation = {
+      ...paidConfirmation,
+      startChoice: "waiting",
+      waitingStartsOn: "2026-10-10T21:25:00.000Z",
+    };
+
+    // act
+    renderConfirmation(confirmation);
+
+    // assert
+    await waitFor(() => {
+      expect(readings()["Your start"]).toBe(
+        "After your 14-day withdrawal period — Eli starts working on your program on 11 October 2026. You can let her start sooner from your account",
+      );
+    });
   });
 
   it("falls back to the call-first state for a checkout that is not paid", async () => {

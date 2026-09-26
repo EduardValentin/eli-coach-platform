@@ -5,42 +5,61 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createRef } from "react";
-import { createMemoryRouter, RouterProvider } from "react-router";
+import { renderToString } from "react-dom/server";
+import { createMemoryRouter, MemoryRouter, RouterProvider } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { CheckoutChoice } from "~/features/coaching-sales/contracts/coaching-sales";
 
 import { StartChoice } from "./start-choice";
 
+const MIDDAY_IN_UTC = "2026-10-10T10:00:00.000Z";
+const LATE_EVENING_IN_UTC = "2026-10-10T21:25:00.000Z";
+
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
 });
 
 type RenderOptions = {
   error?: string | null;
   onChange?: (choice: CheckoutChoice["startChoice"]) => void;
   value?: CheckoutChoice["startChoice"] | null;
+  waitingStartsOn?: string;
 };
+
+function startChoiceElement(
+  options: RenderOptions,
+  firstOptionRef = createRef<HTMLButtonElement>(),
+) {
+  return (
+    <StartChoice
+      error={options.error ?? null}
+      firstOptionRef={firstOptionRef}
+      onChange={options.onChange ?? vi.fn()}
+      value={options.value ?? null}
+      waitingStartsOn={options.waitingStartsOn ?? MIDDAY_IN_UTC}
+    />
+  );
+}
 
 function renderStartChoice(options: RenderOptions) {
   const firstOptionRef = createRef<HTMLButtonElement>();
   const router = createMemoryRouter([
-    {
-      element: (
-        <StartChoice
-          error={options.error ?? null}
-          firstOptionRef={firstOptionRef}
-          onChange={options.onChange ?? vi.fn()}
-          value={options.value ?? null}
-          waitingStartsOn="2026-10-10"
-        />
-      ),
-      path: "/",
-    },
+    { element: startChoiceElement(options, firstOptionRef), path: "/" },
   ]);
   render(<RouterProvider router={router} />);
 
   return { firstOptionRef };
+}
+
+function readerIsIn(timeZone: string) {
+  const actual = new Intl.DateTimeFormat().resolvedOptions();
+
+  vi.spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions").mockReturnValue({
+    ...actual,
+    timeZone,
+  });
 }
 
 describe("StartChoice", () => {
@@ -66,6 +85,33 @@ describe("StartChoice", () => {
       "href",
       "/terms#immediate-digital-delivery-and-withdrawal",
     );
+  });
+
+  it("dates the waiting start on the reader's own calendar", () => {
+    // arrange
+    readerIsIn("Europe/Bucharest");
+
+    // act
+    renderStartChoice({ waitingStartsOn: LATE_EVENING_IN_UTC });
+
+    // assert
+    expect(screen.getByText("11 October")).toBeInTheDocument();
+  });
+
+  it("paints the waiting start in UTC before the browser runs so hydration matches", () => {
+    // arrange
+    readerIsIn("Europe/Bucharest");
+
+    // act
+    const painted = renderToString(
+      <MemoryRouter>
+        {startChoiceElement({ waitingStartsOn: LATE_EVENING_IN_UTC })}
+      </MemoryRouter>,
+    );
+
+    // assert
+    expect(painted).toContain("10 October");
+    expect(painted).not.toContain("11 October");
   });
 
   it("reports the start a person picks", async () => {

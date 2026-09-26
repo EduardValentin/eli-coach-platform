@@ -1,23 +1,25 @@
+import { useDisplayTimeZone } from "@eli-coach-platform/ui/lib";
+
 const CALENDAR_DAY_LOCALE = "en-GB";
-const CALENDAR_DAY_ZONE = "UTC";
+const SERVER_RENDER_TIME_ZONE = "UTC";
 
-const dayMonth = new Intl.DateTimeFormat(CALENDAR_DAY_LOCALE, {
-  day: "numeric",
-  month: "long",
-  timeZone: CALENDAR_DAY_ZONE,
-});
-
-const dayMonthYear = new Intl.DateTimeFormat(CALENDAR_DAY_LOCALE, {
-  day: "numeric",
-  month: "long",
-  timeZone: CALENDAR_DAY_ZONE,
-  year: "numeric",
-});
-
-export function formatDayMonth(calendarDay: string): string {
-  return dayMonth.format(new Date(calendarDay));
+export function useCalendarDayTimeZone(): string {
+  return useDisplayTimeZone(SERVER_RENDER_TIME_ZONE);
 }
 
-export function formatDayMonthYear(calendarDay: string): string {
-  return dayMonthYear.format(new Date(calendarDay));
+export function formatDayMonth(instant: string, timeZone: string): string {
+  return new Intl.DateTimeFormat(CALENDAR_DAY_LOCALE, {
+    day: "numeric",
+    month: "long",
+    timeZone,
+  }).format(new Date(instant));
+}
+
+export function formatDayMonthYear(instant: string, timeZone: string): string {
+  return new Intl.DateTimeFormat(CALENDAR_DAY_LOCALE, {
+    day: "numeric",
+    month: "long",
+    timeZone,
+    year: "numeric",
+  }).format(new Date(instant));
 }

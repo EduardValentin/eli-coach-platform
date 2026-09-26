@@ -35,7 +35,7 @@ const validResolution = {
 } as unknown as Resolution;
 
 describe("CheckoutsController bundle page", () => {
-  it("serves the valid page with the tier's cards and the waiting start day only", async () => {
+  it("serves the valid page with the tier's cards and the waiting start instant only", async () => {
     // arrange
     const { controller, resolvePaymentLink } = createController({
       resolution: validResolution,
@@ -57,7 +57,7 @@ describe("CheckoutsController bundle page", () => {
     expect(page.data).toMatchObject({
       state: "valid",
       tier: "reduced",
-      waitingStartsOn: "2026-10-10",
+      waitingStartsOn: "2026-10-10T10:00:00.000Z",
     });
     expect(
       page.data.cards.map((card) => [card.id, card.pricePerMonth]),
@@ -294,7 +294,7 @@ describe("CheckoutsController confirmation", () => {
         startChoice: "waiting",
         paidAt: NOW,
         email: "ana@example.com",
-        waitingStartsOn: new Date("2026-10-10T10:00:00.000Z"),
+        waitingStartsOn: new Date("2026-10-10T21:25:00.000Z"),
       },
     });
 
@@ -312,7 +312,7 @@ describe("CheckoutsController confirmation", () => {
       email: "ana@example.com",
       renewalLabel: "Every 3 months",
       startChoice: "waiting",
-      waitingStartsOn: "2026-10-10",
+      waitingStartsOn: "2026-10-10T21:25:00.000Z",
     });
     const headers = new Headers(page.init?.headers);
     expect(headers.get("Cache-Control")).toBe("no-store");

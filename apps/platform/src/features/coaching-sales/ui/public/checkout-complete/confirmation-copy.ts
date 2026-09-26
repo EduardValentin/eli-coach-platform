@@ -11,6 +11,9 @@ export const INVITATION_LEAD =
 export const INVITATION_TAIL =
   ", and it works for 30 days once it arrives — you'll create your account from it.";
 
-export function waitingStartSummary(waitingStartsOn: string): string {
-  return `After your 14-day withdrawal period — Eli starts working on your program on ${formatDayMonthYear(waitingStartsOn)}. You can let her start sooner from your account`;
+export function waitingStartSummary(
+  waitingStartsOn: string,
+  timeZone: string,
+): string {
+  return `After your 14-day withdrawal period — Eli starts working on your program on ${formatDayMonthYear(waitingStartsOn, timeZone)}. You can let her start sooner from your account`;
 }

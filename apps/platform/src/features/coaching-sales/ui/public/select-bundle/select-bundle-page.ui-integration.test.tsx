@@ -20,7 +20,7 @@ const validPage: BundlePage = {
   state: "valid",
   tier: "reduced",
   cards: presentBundleCards(COACHING_BUNDLES, "reduced"),
-  waitingStartsOn: "2026-10-10",
+  waitingStartsOn: "2026-10-10T10:00:00.000Z",
 };
 
 const callFirstPage: BundlePage = {

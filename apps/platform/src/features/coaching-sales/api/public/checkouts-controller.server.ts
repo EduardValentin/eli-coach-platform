@@ -77,9 +77,9 @@ export class CheckoutsController {
             state: "valid",
             tier: link.tier,
             cards: this.loadPricingCards({ tier: link.tier }),
-            waitingStartsOn: toCalendarDay(
-              withdrawalDeadline(this.options.clock.now()),
-            ),
+            waitingStartsOn: withdrawalDeadline(
+              this.options.clock.now(),
+            ).toISOString(),
           }
         : {
             state: "call-first",
@@ -208,7 +208,7 @@ function presentPaidConfirmation(checkout: PaidCheckout) {
     email: checkout.email,
     renewalLabel: renewalLabel(bundle.months),
     startChoice: checkout.startChoice,
-    waitingStartsOn: toCalendarDay(checkout.waitingStartsOn),
+    waitingStartsOn: checkout.waitingStartsOn.toISOString(),
   };
 }
 
@@ -216,10 +216,6 @@ function readQueryToken(request: Request): string {
   return paymentLinkTokenSchema.parse(
     new URL(request.url).searchParams.get("token"),
   );
-}
-
-function toCalendarDay(instant: Date): string {
-  return instant.toISOString().slice(0, 10);
 }
 
 function createNotFoundResponse(): Response {

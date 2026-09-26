@@ -100,13 +100,13 @@ describe("bundlePageSchema", () => {
     expect(parsed).toEqual({ state: "call-first", cards: [] });
   });
 
-  it("refuses a valid page whose waiting start is not a calendar day", () => {
+  it("refuses a valid page whose waiting start is a calendar day rather than an instant", () => {
     // arrange
     const page = {
       state: "valid",
       tier: "regular",
       cards: [],
-      waitingStartsOn: "2026-10-10T00:00:00.000Z",
+      waitingStartsOn: "2026-10-10",
     };
 
     // act
@@ -127,7 +127,7 @@ describe("checkoutConfirmationSchema", () => {
       email: "ana@example.com",
       renewalLabel: "Every 3 months",
       startChoice: "waiting",
-      waitingStartsOn: "2026-10-10",
+      waitingStartsOn: "2026-10-10T21:25:00.000Z",
     };
 
     // act
@@ -135,6 +135,25 @@ describe("checkoutConfirmationSchema", () => {
 
     // assert
     expect(parsed.success).toBe(true);
+  });
+
+  it("refuses a paid confirmation whose waiting start is a calendar day rather than an instant", () => {
+    // arrange
+    const confirmation = {
+      state: "paid",
+      amount: "€447",
+      bundleTitle: "3 Months",
+      email: "ana@example.com",
+      renewalLabel: "Every 3 months",
+      startChoice: "waiting",
+      waitingStartsOn: "2026-10-10",
+    };
+
+    // act
+    const parsed = checkoutConfirmationSchema.safeParse(confirmation);
+
+    // assert
+    expect(parsed.success).toBe(false);
   });
 
   it("refuses an unknown start choice", () => {
@@ -146,7 +165,7 @@ describe("checkoutConfirmationSchema", () => {
       email: "ana@example.com",
       renewalLabel: "Every 3 months",
       startChoice: "later",
-      waitingStartsOn: "2026-10-10",
+      waitingStartsOn: "2026-10-10T21:25:00.000Z",
     };
 
     // act

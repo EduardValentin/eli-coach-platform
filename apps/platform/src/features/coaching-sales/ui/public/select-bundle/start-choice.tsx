@@ -7,7 +7,10 @@ import {
   startChoiceSchema,
   type CheckoutChoice,
 } from "~/features/coaching-sales/contracts/coaching-sales";
-import { formatDayMonth } from "~/features/coaching-sales/ui/public/calendar-day-format";
+import {
+  formatDayMonth,
+  useCalendarDayTimeZone,
+} from "~/features/coaching-sales/ui/public/calendar-day-format";
 
 import {
   IMMEDIATE_START_BODY,
@@ -34,6 +37,7 @@ export function StartChoice(props: StartChoiceProps) {
   const baseId = useId();
   const legendId = `${baseId}-legend`;
   const errorId = `${baseId}-error`;
+  const timeZone = useCalendarDayTimeZone();
 
   return (
     <fieldset className="text-left" data-parity-root="StartChoice">
@@ -74,7 +78,7 @@ export function StartChoice(props: StartChoiceProps) {
         >
           {WAITING_START_BODY}{" "}
           <strong className="font-semibold">
-            {formatDayMonth(props.waitingStartsOn)}
+            {formatDayMonth(props.waitingStartsOn, timeZone)}
           </strong>
           .
         </StartOption>
