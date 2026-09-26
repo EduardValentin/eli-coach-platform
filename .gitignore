@@ -71,4 +71,6 @@ apps/platform/e2e/.auth/
 apps/platform/e2e/.runtime/
 
 # Prototype parity session artifacts, rebuilt per session (see AGENTS.md)
-.parity/
+# .parity/parity-map.md, .parity/parity-pairings.json and .parity/parity-actions/
+# are committed; only per-session folders are ignored.
+.parity/sessions/
