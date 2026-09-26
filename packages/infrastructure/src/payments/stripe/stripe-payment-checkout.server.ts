@@ -11,6 +11,8 @@ import {
   readPaidCheckoutSession,
 } from "../checkout-session-completion.server";
 
+const CHECKOUT_SESSION_ID_SHAPE = /^cs_(test|live)_[A-Za-z0-9]+$/;
+
 type StripeCheckoutClient = {
   customers: {
     create(
@@ -93,6 +95,10 @@ export class StripePaymentCheckout implements PaymentCheckout {
   }
 
   async findCompletedSession(id: string): Promise<CheckoutCompletion | null> {
+    if (!CHECKOUT_SESSION_ID_SHAPE.test(id)) {
+      return null;
+    }
+
     try {
       return readPaidSessionWithSubscription(
         await this.client.checkout.sessions.retrieve(

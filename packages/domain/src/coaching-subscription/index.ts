@@ -11,7 +11,6 @@ export {
   START_CHOICES,
   withdrawalDeadline,
   type CheckoutCompletion,
-  type StartChoice,
 } from "./coaching-subscription";
 export {
   type CreateCheckoutSessionCommand,

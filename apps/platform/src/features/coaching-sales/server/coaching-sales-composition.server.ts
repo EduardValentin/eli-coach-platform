@@ -19,20 +19,24 @@ import type { Clock } from "@eli-coach-platform/domain/shared";
 import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 import type { PaymentEvents } from "@eli-coach-platform/infrastructure/payments/server";
 
+import { CoachSalesController } from "~/features/coaching-sales/api/coach/coach-sales-controller.server";
+import { PaymentLinksController } from "~/features/coaching-sales/api/coach/payment-links-controller.server";
+import { CheckoutsController } from "~/features/coaching-sales/api/public/checkouts-controller.server";
+import { StripeWebhookController } from "~/features/coaching-sales/api/webhooks/stripe-webhook-controller.server";
 import {
   PaymentLinkTokenSha256,
   RandomPaymentLinkTokenGenerator,
 } from "~/features/coaching-sales/data/payment-links/payment-link-token.server";
 import { PostgresPaymentLinks } from "~/features/coaching-sales/data/payment-links/payment-links-repository.server";
-import { CoachSalesController } from "~/features/coaching-sales/api/coach/coach-sales-controller.server";
-import { PaymentLinksController } from "~/features/coaching-sales/api/coach/payment-links-controller.server";
 import { PostgresCoachingPurchases } from "~/features/coaching-sales/data/purchases/purchases-repository.server";
 import { createCoachingSalesNotifications } from "~/features/coaching-sales/email/create-coaching-sales-notifications.server";
 
 export type CoachingSalesFeature = {
+  checkouts: CheckoutsController;
   coachSales: CoachSalesController;
   paymentEvents: PaymentEvents;
   paymentLinks: PaymentLinksController;
+  stripeWebhooks: StripeWebhookController;
   useCases: {
     readCallSalesStates: ReadCallSalesStatesUseCase;
     readCheckoutConfirmation: ReadCheckoutConfirmationUseCase;
@@ -124,12 +128,25 @@ export function composeCoachingSalesFeature(
 
   return {
     feature: {
+      checkouts: new CheckoutsController({
+        appBasePath: handles.appBasePath,
+        clock,
+        publicAppUrl: handles.publicAppUrl,
+        readCheckoutConfirmation: useCases.readCheckoutConfirmation,
+        resolvePaymentLink: useCases.resolvePaymentLink,
+        startCheckout: useCases.startCheckout,
+      }),
       coachSales: new CoachSalesController({
         readCallSalesStates: useCases.readCallSalesStates,
       }),
       paymentEvents: handles.paymentEvents,
       paymentLinks: new PaymentLinksController({
         sendPaymentLink: useCases.sendPaymentLink,
+      }),
+      stripeWebhooks: new StripeWebhookController({
+        paymentEvents: handles.paymentEvents,
+        recordCheckoutCompleted: useCases.recordCheckoutCompleted,
+        signingSecret: handles.webhookSigningSecret,
       }),
       useCases,
       webhookSigningSecret: handles.webhookSigningSecret,

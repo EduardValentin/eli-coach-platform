@@ -80,8 +80,6 @@ export const COACHING_BUNDLES: readonly CoachingBundle[] = Object.values(
   COACHING_BUNDLES_BY_ID,
 );
 
-export const DEFAULT_COACHING_BUNDLE_ID: CoachingBundleId = "3-months";
-
 export function getCoachingBundle(id: CoachingBundleId): CoachingBundle {
   return COACHING_BUNDLES_BY_ID[id];
 }

@@ -51,6 +51,7 @@
   --size-control-sm: 2.5rem;
   --size-control-md: 3rem;
   --size-control-lg: 3.5rem;
+  --size-control-xl: 3.75rem;
   --size-avatar-sm: 3rem;
   --size-avatar-md: 3.5rem;
   --size-avatar-lg: 4rem;
@@ -146,6 +147,7 @@
   --color-feedback-danger-soft: rgba(209, 24, 60, 0.1);
   --color-feedback-success: #0f7a36;
   --color-feedback-success-soft: rgba(15, 122, 54, 0.1);
+  --color-success-surface: #e8f6ed;
   --color-savings-badge-text: oklch(0.43 0.17 150.069);
   --color-savings-badge-surface: oklch(0.962 0.044 156.743);
   --color-feedback-info: #2563eb;
@@ -254,6 +256,7 @@
   --size-control-sm: var(--size-control-sm);
   --size-control-md: var(--size-control-md);
   --size-control-lg: var(--size-control-lg);
+  --size-control-xl: var(--size-control-xl);
   --size-avatar-sm: var(--size-avatar-sm);
   --size-avatar-md: var(--size-avatar-md);
   --size-avatar-lg: var(--size-avatar-lg);
@@ -338,6 +341,7 @@
   --color-feedback-danger-soft: var(--color-feedback-danger-soft);
   --color-feedback-success: var(--color-feedback-success);
   --color-feedback-success-soft: var(--color-feedback-success-soft);
+  --color-success-surface: var(--color-success-surface);
   --color-savings-badge-text: var(--color-savings-badge-text);
   --color-savings-badge-surface: var(--color-savings-badge-surface);
   --color-feedback-info: var(--color-feedback-info);
@@ -466,11 +470,11 @@
   }
 }
 
-/* label[data-chip-control] covers a chip whose real control is an opacity:0 input, which cannot show its own outline. */
+/* [data-chip-control] covers a chip or a choice card whose real control is a visually hidden input, which cannot show its own outline. */
 :focus-visible:not([role="option"]):not([role="menuitem"]):not(
     [role="menuitemcheckbox"]
   ):not([role="menuitemradio"]):not([tabindex="-1"]),
-label[data-chip-control]:has(:focus-visible) {
+[data-chip-control]:has(:focus-visible) {
   outline-style: solid;
   outline-width: 2px;
   outline-color: var(--color-focus-ring);
@@ -655,6 +659,15 @@ label[data-chip-control]:has(:focus-visible) {
     );
     --ui-public-bundle-featured-shadow: 0 20px 50px -16px
       color-mix(in srgb, var(--color-brand-secondary) 30%, transparent);
+  }
+
+  .ui-public-bundle-card-selected {
+    border-color: var(--color-brand-primary);
+    --ui-public-bundle-selected-shadow-color: color-mix(
+      in srgb,
+      var(--color-brand-primary) 10%,
+      transparent
+    );
   }
 
   .ui-public-bundle-featured-rule {

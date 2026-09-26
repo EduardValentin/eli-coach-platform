@@ -1,1 +1,1 @@
-export { Client, type ClientSnapshot } from "./client";
+export { Client } from "./client";

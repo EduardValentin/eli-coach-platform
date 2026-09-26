@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import {
   bundlePageSchema,
+  checkoutChoiceSchema,
   checkoutConfirmationSchema,
   PAYMENT_LINK_MESSAGES,
+  paymentLinkTokenSchema,
   salesStatesSchema,
   sendPaymentLinkRequestSchema,
 } from "./coaching-sales";
@@ -76,15 +78,26 @@ describe("PAYMENT_LINK_MESSAGES", () => {
 });
 
 describe("bundlePageSchema", () => {
-  it("accepts the call-first state without any pricing", () => {
+  it("accepts the call-first state with the cards its disabled selector shows", () => {
     // arrange
-    const page = { state: "call-first" };
+    const page = { state: "call-first", cards: [] };
 
     // act
     const parsed = bundlePageSchema.safeParse(page);
 
     // assert
     expect(parsed.success).toBe(true);
+  });
+
+  it("drops anything beyond the call-first fields", () => {
+    // arrange
+    const page = { state: "call-first", cards: [], tier: "reduced" };
+
+    // act
+    const parsed = bundlePageSchema.parse(page);
+
+    // assert
+    expect(parsed).toEqual({ state: "call-first", cards: [] });
   });
 
   it("refuses a valid page whose waiting start is not a calendar day", () => {
@@ -138,6 +151,54 @@ describe("checkoutConfirmationSchema", () => {
 
     // act
     const parsed = checkoutConfirmationSchema.safeParse(confirmation);
+
+    // assert
+    expect(parsed.success).toBe(false);
+  });
+});
+
+describe("paymentLinkTokenSchema", () => {
+  it("reads a missing token as an empty one", () => {
+    // arrange
+    const token = null;
+
+    // act
+    const parsed = paymentLinkTokenSchema.parse(token);
+
+    // assert
+    expect(parsed).toBe("");
+  });
+
+  it("reads an oversized token as an empty one", () => {
+    // arrange
+    const token = "a".repeat(257);
+
+    // act
+    const parsed = paymentLinkTokenSchema.parse(token);
+
+    // assert
+    expect(parsed).toBe("");
+  });
+});
+
+describe("checkoutChoiceSchema", () => {
+  it("accepts a known bundle with a start choice", () => {
+    // arrange
+    const choice = { bundleId: "6-months", startChoice: "waiting" };
+
+    // act
+    const parsed = checkoutChoiceSchema.safeParse(choice);
+
+    // assert
+    expect(parsed.success).toBe(true);
+  });
+
+  it("refuses a checkout without a start choice", () => {
+    // arrange
+    const choice = { bundleId: "6-months", startChoice: null };
+
+    // act
+    const parsed = checkoutChoiceSchema.safeParse(choice);
 
     // assert
     expect(parsed.success).toBe(false);

@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import {
   COACHING_BUNDLES,
-  DEFAULT_COACHING_BUNDLE_ID,
   findCoachingBundle,
   getCoachingBundle,
   type CoachingBundleId,
@@ -96,10 +95,5 @@ describe("COACHING_BUNDLES", () => {
       { id: "3-months", popular: true },
       { id: "6-months", popular: false },
     ]);
-  });
-
-  it("defaults to the 3 months bundle", () => {
-    // assert
-    expect(DEFAULT_COACHING_BUNDLE_ID).toBe("3-months");
   });
 });

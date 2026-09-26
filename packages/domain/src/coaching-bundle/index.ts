@@ -1,7 +1,6 @@
 export {
   COACHING_BUNDLES,
   CoachingBundle,
-  DEFAULT_COACHING_BUNDLE_ID,
   findCoachingBundle,
   getCoachingBundle,
   type CoachingBundleId,

@@ -1,6 +1,6 @@
 export const SELECT_BUNDLE_ROUTE_SEGMENT = "select-bundle";
 
-export const SELECT_BUNDLE_PATH = `/${SELECT_BUNDLE_ROUTE_SEGMENT}`;
+const SELECT_BUNDLE_PATH = `/${SELECT_BUNDLE_ROUTE_SEGMENT}`;
 
 export const CHECKOUT_COMPLETE_ROUTE_SEGMENT = "checkout/complete";
 
