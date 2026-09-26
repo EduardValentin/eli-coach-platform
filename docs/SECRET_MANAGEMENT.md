@@ -125,12 +125,14 @@ With `PAYMENTS_PROVIDER=stripe` both secrets are required and the `replace-me` p
 
 `STRIPE_API_BASE_URL` points the Stripe client at the integration suites' WireMock container. It is an integration-test rig override only and never belongs in a TEST or PROD env file: a production runtime refuses to start with it set.
 
-The per-environment values of both secrets, and the Stripe Dashboard webhook endpoint whose signing secret becomes `STRIPE_WEBHOOK_SIGNING_SECRET`, are provisioned by `terraform-infra` like every other runtime secret. `PAYMENTS_PROVIDER=stripe` and both secrets must be present in the TEST and PROD env files before the next deploy: TEST also runs as a production runtime, so a runtime still on the `memory` default fails config validation and the container exits at startup.
+The per-environment values of both secrets are provisioned by `terraform-infra` like every other runtime secret. `PAYMENTS_PROVIDER=stripe` and both secrets must be present in the TEST and PROD env files before the next deploy: TEST also runs as a production runtime, so a runtime still on the `memory` default fails config validation and the container exits at startup.
 
-Each deployed environment's Stripe Dashboard needs:
+Webhook delivery differs per environment:
 
-- Customer receipt emails turned on. Stripe's receipt is the payment record; the platform sends no receipt of its own.
-- The webhook endpoint `<PUBLIC_APP_URL>/api/stripe/webhooks`, registered for the `checkout.session.completed` event. Where the app is served under a mount path, the path precedes `/api/`: on TEST the endpoint is `<PUBLIC_APP_URL>/eli-coach-platform/api/stripe/webhooks`. Its signing secret is `STRIPE_WEBHOOK_SIGNING_SECRET`. TEST has no public DNS today (Clerk reaches it through the TEST relay in `docs/CLERK.md`), so Stripe cannot deliver there until TEST gains a public route or a relay of its own; that is a `terraform-infra` step.
+- **TEST** has no public DNS, so Stripe cannot post to it. The opt-in sidecar `stripe-webhook-relay` in `deploy/test/docker-compose.webhook-relay.yml` (beside the Clerk relay) runs `stripe listen` inside the stack: it dials out to Stripe with `STRIPE_SECRET_KEY`, receives the account's test-mode `checkout.session.completed` events and forwards them to the app over the compose network with the CLI's own signature. No Dashboard endpoint is registered for TEST. The signing secret is derived from the API key: run `stripe listen --api-key <the TEST STRIPE_SECRET_KEY> --print-secret` once and put its output in the TEST env file as `STRIPE_WEBHOOK_SIGNING_SECRET`; a rotated key needs the command run again. The key must be one `stripe listen` accepts (a test-mode secret key, or a restricted key that the command accepts on a dry run). Bring the relay up with `docker compose -f deploy/test/docker-compose.webhook-relay.yml up -d`; events that arrive while it is down are not redelivered.
+- **PROD** (future, with a public domain) registers the Dashboard endpoint `<PUBLIC_APP_URL>/api/stripe/webhooks` for the `checkout.session.completed` event, and that endpoint's signing secret becomes `STRIPE_WEBHOOK_SIGNING_SECRET`. Where the app is served under a mount path, the path precedes `/api/`.
+
+Each deployed environment's Stripe Dashboard also needs customer receipt emails turned on: Stripe's receipt is the payment record; the platform sends no receipt of its own.
 
 ## Local authoring model
 
