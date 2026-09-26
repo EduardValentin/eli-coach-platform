@@ -1,3 +1,7 @@
+import type {
+  PriceTier,
+  PricingEligibility,
+} from "@eli-coach-platform/domain/coaching-bundle";
 import {
   WAITLIST_REDUCED_PRICING_CAP,
   type WaitlistEntries,
@@ -20,6 +24,7 @@ type RegularPricingSignupOptions = Parameters<
   WaitlistEntries["registerRegularPricingSignup"]
 >[0];
 type SignupOptions = ReducedPricingSignupOptions | RegularPricingSignupOptions;
+type EligibleEmail = Parameters<PricingEligibility["tierForEmail"]>[0];
 
 type EntryPlacement =
   | { pricing: "reduced"; reducedSlot: number }
@@ -33,8 +38,25 @@ type FreeReducedSlotRow = {
   reducedSlot: number;
 };
 
-export class PostgresWaitlistRepository implements WaitlistEntries {
+export class PostgresWaitlistRepository
+  implements WaitlistEntries, PricingEligibility
+{
   constructor(private readonly database: DatabaseClient) {}
+
+  async tierForEmail(email: EligibleEmail): Promise<PriceTier> {
+    const reducedAllocations = await this.database
+      .select({ id: waitlistEntriesTable.id })
+      .from(waitlistEntriesTable)
+      .where(
+        and(
+          eq(waitlistEntriesTable.email, email.value),
+          eq(waitlistEntriesTable.pricingEligibility, "reduced"),
+        ),
+      )
+      .limit(1);
+
+    return reducedAllocations.length > 0 ? "reduced" : "regular";
+  }
 
   async countReducedPricingSignupsCreatedBefore(options: {
     campaignSlug: string;

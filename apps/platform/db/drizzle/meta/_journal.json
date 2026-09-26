@@ -183,6 +183,13 @@
       "when": 1790021408061,
       "tag": "0025_visitor_profile_on_assessment_calls",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1790425461932,
+      "tag": "0026_coaching_sales",
+      "breakpoints": true
     }
   ]
 }

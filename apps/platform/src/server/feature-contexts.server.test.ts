@@ -2,6 +2,8 @@ import { RouterContextProvider } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
 import { accountsContext } from "~/features/accounts/server/guards/accounts-context.server";
+import { assessmentCallsContext } from "~/features/assessment-calls/server/guards/assessment-calls-context.server";
+import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
 import { storeContext } from "~/features/store/server/guards/store-context.server";
 import { waitlistContext } from "~/features/waitlist/server/guards/waitlist-context.server";
 import type { PlatformContainer } from "~/server/container.server";
@@ -14,6 +16,14 @@ describe("createFeatureContextMiddleware", () => {
     // arrange
     const container = {
       accounts: { kind: "accounts" },
+      assessmentCalls: {
+        feature: { kind: "assessment-calls" },
+        handles: { kind: "assessment-calls-handles" },
+      },
+      coachingSales: {
+        feature: { kind: "coaching-sales" },
+        handles: {},
+      },
       platform: {
         appBasePath: "/",
         botDetection: { provider: "static", token: "t" },
@@ -22,7 +32,10 @@ describe("createFeatureContextMiddleware", () => {
         readyz: { kind: "readyz" },
       },
       store: { kind: "store" },
-      waitlist: { kind: "waitlist" },
+      waitlist: {
+        feature: { kind: "waitlist" },
+        handles: { kind: "waitlist-handles" },
+      },
     } as unknown as PlatformContainer;
     const getContainer = vi.fn(() => container);
     const context = new RouterContextProvider();
@@ -41,6 +54,12 @@ describe("createFeatureContextMiddleware", () => {
     // assert
     expect(getContainer).toHaveBeenCalledTimes(1);
     expect(context.get(accountsContext)).toBe(container.accounts);
+    expect(context.get(assessmentCallsContext)).toBe(
+      container.assessmentCalls.feature,
+    );
+    expect(context.get(coachingSalesContext)).toBe(
+      container.coachingSales.feature,
+    );
     expect(context.get(platformContext)).toEqual({
       featureFlags: container.platform.featureFlags,
       metadata: container.platform.metadata,
@@ -51,7 +70,7 @@ describe("createFeatureContextMiddleware", () => {
       botDetection: container.platform.botDetection,
     });
     expect(context.get(storeContext)).toBe(container.store);
-    expect(context.get(waitlistContext)).toBe(container.waitlist);
+    expect(context.get(waitlistContext)).toBe(container.waitlist.feature);
     expect(response).toBeInstanceOf(Response);
   });
 });

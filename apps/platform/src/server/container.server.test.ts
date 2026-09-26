@@ -31,6 +31,7 @@ describe("platform container", () => {
 
   afterEach(() => {
     vi.unstubAllEnvs();
+    vi.restoreAllMocks();
   });
 
   it("is composed without database configuration", () => {
@@ -96,12 +97,29 @@ describe("platform container", () => {
     });
 
     // act
-    const waitlist = await container.waitlist.waitlist.getWaitlist();
+    const waitlist = await container.waitlist.feature.waitlist.getWaitlist();
 
     // assert
     expect(waitlist).toMatchObject({
       availability: null,
       enabled: true,
     });
+  });
+
+  it("closes coaching sales when the sales mode cannot be read without a database", async () => {
+    // arrange
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const container = createPlatformContainer({
+      runtimeEnvironment: createRuntimeEnvironmentWithoutDatabase(),
+    });
+
+    // act
+    const confirmation =
+      await container.coachingSales.feature.useCases.readCheckoutConfirmation.execute(
+        "cs_test_1",
+      );
+
+    // assert
+    expect(confirmation).toEqual({ status: "closed" });
   });
 });
