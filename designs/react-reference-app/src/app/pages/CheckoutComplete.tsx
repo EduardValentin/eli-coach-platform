@@ -3,10 +3,12 @@ import { Check } from 'lucide-react';
 import { format } from 'date-fns';
 import { buttonVariants, cn } from '../components/ThemeButton';
 import { cardVariants } from '../components/ui/card';
+import { useAppState } from '../context/AppContext';
 import { useClientJourneys } from '../context/ClientJourneyContext';
 import { bundleForMonths, bundleTotal, renewalLabel } from '../domain/bundles';
 import { withdrawalDeadline } from '../domain/coachingSubscription';
 import { findCheckoutSession } from '../services/checkoutService';
+import { NotFound } from './NotFound';
 
 const HEADING = 'Payment confirmed';
 
@@ -14,7 +16,10 @@ const IMMEDIATE_START_SUMMARY = "Your program starts as soon as it's ready";
 
 export function CheckoutComplete() {
   const [searchParams] = useSearchParams();
+  const { appState } = useAppState();
   const { demoJourney, journeyForPaymentToken } = useClientJourneys();
+
+  if (appState.isWaitlistMode) return <NotFound />;
 
   const session = findCheckoutSession(searchParams.get('order') ?? '');
   const journey = session
@@ -34,6 +39,7 @@ export function CheckoutComplete() {
     <main
       aria-label="Payment confirmation"
       className="min-h-screen bg-surface-page px-4 py-16 sm:px-6"
+      data-parity-root="CheckoutComplete"
     >
       <div className={cn(cardVariants({ variant: 'panel' }), 'mx-auto w-full max-w-xl px-6 py-10 sm:px-10')}>
         <span className="mx-auto flex size-14 items-center justify-center rounded-full bg-success-surface text-success">
@@ -67,9 +73,16 @@ export function CheckoutComplete() {
   );
 }
 
+function readingParityHook(term: string): string {
+  return `reading-${term.toLowerCase().replace(/\s+/g, '-')}`;
+}
+
 function Reading({ term, value }: { term: string; value: string }) {
   return (
-    <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6">
+    <div
+      className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6"
+      data-parity={readingParityHook(term)}
+    >
       <dt className="text-text-secondary">{term}</dt>
       <dd className="font-medium text-text-primary sm:text-right">{value}</dd>
     </div>

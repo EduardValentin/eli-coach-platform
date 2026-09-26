@@ -6,6 +6,7 @@ import { MemoryRouter, useLocation, useNavigationType } from 'react-router';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { AssessmentCallsSection } from './AssessmentCallsSection';
 import type { PrototypeBooking } from '../../services/assessmentCallService';
+import { paymentLinkExpiresAt } from '../../services/paymentLinkService';
 import { AppProvider } from '../../context/AppContext';
 import {
   AssessmentCallProvider,
@@ -148,7 +149,11 @@ function AdvanceJourneys({ stages }: { stages: Record<string, JourneyStage> }) {
       if (reached < 0 || reached >= REACHABLE_STAGES.indexOf(target)) continue;
 
       if (reached === 0) {
-        recordPaymentLinkSent(callId, { token: `pl-${callId}`, sentAt: NOW });
+        recordPaymentLinkSent(callId, {
+          token: `pl-${callId}`,
+          sentAt: NOW,
+          expiresAt: paymentLinkExpiresAt(NOW),
+        });
       } else {
         recordPaid(callId, {
           paidAt: NOW,

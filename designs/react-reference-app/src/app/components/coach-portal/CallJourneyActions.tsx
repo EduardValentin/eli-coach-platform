@@ -101,10 +101,14 @@ export function CallJourneyActions({ journey }: { journey: ClientJourney }) {
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+    <div
+      className="flex flex-wrap items-center gap-2 w-full md:w-auto"
+      data-parity-root="CallJourneyActions"
+    >
       <RowActionButton
         icon={action.icon}
         busy={sending}
+        data-parity="payment-link-action"
         onClick={() => setConfirmOpen(true)}
         className="w-full md:w-auto"
       >

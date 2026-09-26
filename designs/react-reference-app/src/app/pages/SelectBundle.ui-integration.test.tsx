@@ -214,6 +214,24 @@ describe('choosing a bundle from a payment link', () => {
     expect(screen.getByText('€125')).toBeInTheDocument();
   }, TEST_TIMEOUT_MS);
 
+  it('answers not found while the waiting list is open', async () => {
+    // arrange
+    renderPage(`?token=${DEMO_TOKEN}&waitlist=1`);
+
+    // act
+    const heading = await screen.findByRole(
+      'heading',
+      { name: 'Page not found' },
+      WAIT,
+    );
+
+    // assert
+    expect(heading).toBeVisible();
+    expect(
+      screen.queryByRole('heading', { name: 'Choose Your Bundle' }),
+    ).not.toBeInTheDocument();
+  }, TEST_TIMEOUT_MS);
+
   it('reassures her and lets her dismiss the notice after a cancelled payment', async () => {
     // arrange
     renderPage(`?token=${DEMO_TOKEN}&payment=cancelled`);

@@ -25,16 +25,19 @@ function StartOption({
   lead,
   children,
   itemRef,
+  parityHook,
 }: {
   id: string;
   value: SubscriptionStartPath;
   lead: string;
   children: ReactNode;
   itemRef?: Ref<HTMLButtonElement>;
+  parityHook: string;
 }) {
   return (
     <label
       className="flex cursor-pointer items-start gap-3 rounded-card border border-stroke-faint bg-surface-base px-5 py-4 text-left shadow-card transition-[border-color,box-shadow] has-[[data-state=checked]]:border-brand"
+      data-parity={parityHook}
       htmlFor={id}
     >
       <RadioGroupItem className="mt-0.5" id={id} ref={itemRef} value={value} />
@@ -63,7 +66,7 @@ export function StartChoice({
   const startsOn = formatJourneyDate(withdrawalDeadline(new Date()));
 
   return (
-    <fieldset className="text-left">
+    <fieldset className="text-left" data-parity-root="StartChoice">
       <legend className="mb-4 font-serif text-xl text-foreground" id={legendId}>
         {START_CHOICE_QUESTION}
       </legend>
@@ -81,6 +84,7 @@ export function StartChoice({
           id={`${baseId}-immediate`}
           itemRef={firstOptionRef}
           lead={IMMEDIATE_START_LEAD}
+          parityHook="option-immediate"
           value="immediate"
         >
           {IMMEDIATE_START_BODY}
@@ -88,6 +92,7 @@ export function StartChoice({
         <StartOption
           id={`${baseId}-waiting`}
           lead={WAITING_START_LEAD}
+          parityHook="option-waiting"
           value="waiting"
         >
           {WAITING_START_BODY}{' '}
@@ -98,6 +103,7 @@ export function StartChoice({
       {error && (
         <p
           className="mt-3 flex items-start gap-2 text-sm leading-snug text-destructive"
+          data-parity="error"
           id={errorId}
           role="alert"
         >

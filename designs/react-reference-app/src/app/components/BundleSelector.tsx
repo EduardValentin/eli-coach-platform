@@ -72,7 +72,7 @@ export function BundleSelector({
     : null;
 
   return (
-    <div className="w-full max-w-4xl mx-auto">
+    <div className="w-full max-w-4xl mx-auto" data-parity-root="BundleSelector">
       {banner && (
         <div className="flex justify-center mb-8">
           <span className="inline-flex items-center gap-2 rounded-full bg-brand-secondary-soft px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-brand-secondary">
@@ -105,6 +105,7 @@ export function BundleSelector({
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.06, duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
               onClick={() => handleSelect(bundle.id)}
+              data-parity={`bundle-${bundle.id}`}
               className={`relative rounded-card px-6 py-7 border-2 text-center ${
                 bundle.popular ? 'bg-[color-mix(in_srgb,var(--brand-secondary)_5%,var(--card))]' : 'bg-card'
               } ${
@@ -133,7 +134,10 @@ export function BundleSelector({
 
               <h3 className="font-serif text-lg text-foreground mb-1">{bundle.title}</h3>
 
-              <div className="flex items-end justify-center gap-0.5 mb-1">
+              <div
+                className="flex items-end justify-center gap-0.5 mb-1"
+                data-parity={`price-${bundle.id}`}
+              >
                 {isDiscounted && (
                   <span className="text-lg font-bold text-bundle-muted line-through mr-1">€{bundle.regularPerMonth}</span>
                 )}
@@ -147,7 +151,10 @@ export function BundleSelector({
                 <div className="mx-auto mt-1 mb-2.5 h-px w-12 bg-[color-mix(in_srgb,var(--brand-secondary)_50%,transparent)]" aria-hidden="true" />
               )}
 
-              <p className="text-xs text-bundle-muted font-medium">
+              <p
+                className="text-xs text-bundle-muted font-medium"
+                data-parity={`billed-${bundle.id}`}
+              >
                 {bundle.months === 1 ? (
                   'Billed monthly'
                 ) : (
@@ -207,6 +214,7 @@ export function BundleSelector({
             onClick={handleCheckoutClick}
             disabled={!selectedBundleId || busy}
             aria-busy={busy}
+            data-parity="continue"
             className="px-12 py-4 bg-foreground text-background text-lg font-medium rounded-control hover:bg-brand transition-colors shadow-action hover:shadow-action-hover disabled:pointer-events-none disabled:opacity-50"
           >
             {busy ? 'Opening checkout…' : 'Continue to Checkout'}
