@@ -30,7 +30,7 @@ function createAdapter(client = createClerkClient()) {
 }
 
 describe("ClerkIdentityInvitations#create", () => {
-  it("creates a silent thirty-day invitation that carries our invitation id and returns through the hosted sign-up to our portal", async () => {
+  it("creates a silent thirty-day invitation that carries our invitation id, is created even when one is already pending for the email, and returns through the hosted sign-up to our portal", async () => {
     // arrange
     const { client, identity } = createAdapter();
 
@@ -47,6 +47,7 @@ describe("ClerkIdentityInvitations#create", () => {
     });
     expect(client.invitations.createInvitation).toHaveBeenCalledWith({
       emailAddress: "ana@example.com",
+      ignoreExisting: true,
       notify: false,
       expiresInDays: 30,
       publicMetadata: { invitationId: "invitation-1" },

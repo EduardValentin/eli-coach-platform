@@ -62,6 +62,7 @@ type InvitationRow = {
 type ClerkInvitationRequest = {
   email_address: string;
   expires_in_days: number;
+  ignore_existing: boolean;
   notify: boolean;
   public_metadata: Record<string, unknown>;
   redirect_url: string;
@@ -120,6 +121,7 @@ describe.sequential("invitations on payment integration", () => {
     expect(clerkRequests[0]).toEqual({
       email_address: ANA.email,
       expires_in_days: 30,
+      ignore_existing: true,
       notify: false,
       public_metadata: { invitationId: invitation?.id },
       redirect_url: `${HOSTED_SIGN_UP_URL}?${new URLSearchParams({
@@ -128,9 +130,7 @@ describe.sequential("invitations on payment integration", () => {
     });
     expect(emails).toHaveLength(1);
     expect(emails[0]).toMatchObject({
-      idempotencyKey: expect.stringContaining(
-        `client-invitation:${invitation?.id}`,
-      ),
+      idempotencyKey: `client-invitation:${invitation?.id}:${CALL_ENDED_INSTANT.toISOString()}`,
       replyTo: "contact@evoa.fit",
       to: ANA.email,
     });

@@ -212,6 +212,24 @@ module.exports = {
       },
     },
     {
+      name: "clerk-confined",
+      comment:
+        "Clerk stays behind the accounts feature, the app root modules, the identity adapter and the test harnesses: nothing else names @clerk/*.",
+      severity: "error",
+      from: {
+        pathNot: [
+          `${FEATURES}accounts/`,
+          "^apps/platform/src/(root\\.tsx|root\\.server\\.ts|root-error-page\\.tsx)$",
+          "^packages/infrastructure/src/identity/",
+          "^packages/test-support/",
+          "^apps/platform/e2e/",
+          "^apps/platform/integration-test-config/",
+          "^lighthouserc\\.cjs$",
+        ],
+      },
+      to: { path: "(^|/)@clerk/" },
+    },
+    {
       name: "feature-api-to-data",
       comment:
         "A controller or route never imports its feature's repositories or email adapters; the composition hands them in through ports.",
@@ -427,7 +445,7 @@ module.exports = {
       path: [
         TESTS,
         "^apps/platform/src/.*\\.integration\\.test\\.",
-        "\\.d\\.ts$",
+        "^(?!node_modules/).*\\.d\\.ts$",
       ],
     },
     tsPreCompilationDeps: "specify",

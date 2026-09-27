@@ -40,6 +40,7 @@ import { CoachSalesController } from "~/features/coaching-sales/api/coach/coach-
 import { PaymentLinksController } from "~/features/coaching-sales/api/coach/payment-links-controller.server";
 import { CoachingPurchaseCompletionHandler } from "~/features/coaching-sales/api/payments/coaching-purchase-completion-handler.server";
 import { CheckoutsController } from "~/features/coaching-sales/api/public/checkouts-controller.server";
+import { InvitationsController } from "~/features/coaching-sales/api/public/invitations-controller.server";
 import { PostgresClientJourneys } from "~/features/coaching-sales/data/client-journeys/client-journeys-repository.server";
 import { RandomClientInvitationIdGenerator } from "~/features/coaching-sales/data/invitations/client-invitation-ids.server";
 import { PostgresInvitedClients } from "~/features/coaching-sales/data/invitations/invited-clients-repository.server";
@@ -56,6 +57,7 @@ import { EmailClientInvitationNotifications } from "~/features/coaching-sales/em
 export type CoachingSalesFeature = {
   checkouts: CheckoutsController;
   coachSales: CoachSalesController;
+  invitations: InvitationsController;
   paymentLinks: PaymentLinksController;
   readClientJourney: ReadClientJourneyUseCase;
 };
@@ -202,6 +204,9 @@ export function composeCoachingSalesFeature(
       coachSales: new CoachSalesController({
         readCallSalesStates: useCases.readCallSalesStates,
         readPricingTiers: useCases.readPricingTiers,
+      }),
+      invitations: new InvitationsController({
+        resolveInvitation: invitationUseCases.resolveInvitation,
       }),
       paymentLinks: new PaymentLinksController({
         sendPaymentLink: useCases.sendPaymentLink,

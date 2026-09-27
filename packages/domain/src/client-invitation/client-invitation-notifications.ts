@@ -3,6 +3,7 @@ export type ClientInvitationMessage = {
   email: string;
   firstName: string;
   rawToken: string;
+  sentAt: Date;
   expiresAt: Date;
 };
 

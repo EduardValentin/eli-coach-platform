@@ -116,6 +116,7 @@ describe("createIdentityInvitations", () => {
     expect(request.headers.authorization).toBe("Bearer sk_test_unit");
     expect(JSON.parse(request.body)).toEqual({
       email_address: "ana@example.com",
+      ignore_existing: true,
       notify: false,
       expires_in_days: 30,
       public_metadata: { invitationId: "invitation-1" },

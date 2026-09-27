@@ -168,6 +168,7 @@ describe("AdmitPaidClientUseCase", () => {
       email: invitedClient.email,
       firstName: invitedClient.firstName,
       rawToken: RAW_TOKEN,
+      sentAt: NOW,
       expiresAt: new Date("2026-10-27T10:00:00.000Z"),
     });
     expect(dependencies.invitations.recordEmailSent).toHaveBeenCalledWith({
@@ -257,6 +258,7 @@ describe("AdmitPaidClientUseCase", () => {
     expect(dependencies.notifications.sendInvitation).toHaveBeenCalledWith(
       expect.objectContaining({
         rawToken: RAW_TOKEN,
+        sentAt: NOW,
         expiresAt: new Date("2026-10-27T10:00:00.000Z"),
       }),
     );

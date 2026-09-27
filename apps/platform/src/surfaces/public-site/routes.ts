@@ -5,7 +5,10 @@ import {
   assessmentCallsBookingRoutes,
   assessmentCallsJoinRoutes,
 } from "../../features/assessment-calls/routes";
-import { coachingSalesPublicRoutes } from "../../features/coaching-sales/routes";
+import {
+  coachingSalesInvitationRoutes,
+  coachingSalesPublicRoutes,
+} from "../../features/coaching-sales/routes";
 import { storePublicRoutes } from "../../features/store/routes";
 
 import { PRICING_PATH } from "./paths";
@@ -24,5 +27,6 @@ export const publicSiteRoutes = [
     ...storePublicRoutes,
   ]),
   ...accountsDeadEndRoutes,
+  ...coachingSalesInvitationRoutes,
   ...assessmentCallsJoinRoutes,
 ];

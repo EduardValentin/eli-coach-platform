@@ -1,4 +1,4 @@
-import { SignInButton, SignOutButton } from "@clerk/react-router";
+import { SignInButton } from "@clerk/react-router";
 import type { AccountRole } from "@eli-coach-platform/domain/account";
 import { cn } from "@eli-coach-platform/ui/lib";
 import { buttonVariants } from "@eli-coach-platform/ui/primitives";
@@ -7,6 +7,7 @@ import { Link } from "react-router";
 
 import type { PublicSessionState } from "~/features/accounts/contracts/account";
 import { PORTAL_PATH_BY_ROLE } from "~/features/accounts/contracts/paths";
+import { SignOutControl } from "~/features/accounts/ui/shared/sign-out-control";
 
 type AuthNavActionsPlacement =
   "header-solid" | "header-transparent" | "mobile-menu";
@@ -115,10 +116,10 @@ function AuthControl(props: {
   }
 
   return (
-    <SignOutButton redirectUrl={storePath}>
+    <SignOutControl redirectUrl={storePath}>
       <button className={className} type="button">
         Sign Out
       </button>
-    </SignOutButton>
+    </SignOutControl>
   );
 }

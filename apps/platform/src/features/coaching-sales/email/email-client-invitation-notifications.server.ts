@@ -34,7 +34,7 @@ export class EmailClientInvitationNotifications implements ClientInvitationNotif
     });
     const result = await this.productEmail.send({
       html: content.html,
-      idempotencyKey: `client-invitation:${message.invitationId}`,
+      idempotencyKey: `client-invitation:${message.invitationId}:${message.sentAt.toISOString()}`,
       replyTo: this.options.contactEmail,
       subject: content.subject,
       text: content.text,

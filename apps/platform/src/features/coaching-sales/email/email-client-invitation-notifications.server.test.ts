@@ -15,6 +15,7 @@ function invitationMessage(): ClientInvitationMessage {
     email: "ana@example.com",
     firstName: "Ana",
     rawToken: RAW_TOKEN,
+    sentAt: new Date("2026-10-21T10:00:00.000Z"),
     expiresAt: new Date("2026-11-20T10:00:00.000Z"),
   };
 }
@@ -47,7 +48,7 @@ describe("EmailClientInvitationNotifications", () => {
     );
   });
 
-  it("keys the send by the invitation id so a retry cannot double-send", async () => {
+  it("keys the send by the invitation and the moment its token was sent, so a retry cannot double-send and a reissued token is not swallowed", async () => {
     // arrange
     const productEmail = new InMemoryProductEmail();
     const notifications = createNotifications(productEmail);
@@ -57,7 +58,7 @@ describe("EmailClientInvitationNotifications", () => {
 
     // assert
     expect(productEmail.sent[0]?.idempotencyKey).toBe(
-      "client-invitation:5b1c7a52-8f4f-4e5a-a2b7-5c3f6a9c1d22",
+      "client-invitation:5b1c7a52-8f4f-4e5a-a2b7-5c3f6a9c1d22:2026-10-21T10:00:00.000Z",
     );
   });
 

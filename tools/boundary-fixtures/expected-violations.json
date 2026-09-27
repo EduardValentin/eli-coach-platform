@@ -2,6 +2,10 @@
   "apps/platform/src/features/assessment-calls/contracts/reaches-coaching-sales.ts": [
     "assessment-calls-never-reach-coaching-sales"
   ],
+  "apps/platform/src/features/coaching-sales/ui/public/clerk-confined.tsx": [
+    "clerk-confined",
+    "not-to-unresolvable"
+  ],
   "apps/platform/src/features/store/api/catalog/deeper/not-a-route.ts": [
     "feature-api-to-data"
   ],

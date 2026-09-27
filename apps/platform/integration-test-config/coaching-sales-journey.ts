@@ -49,6 +49,7 @@ export const PAYMENT_LINK_EMAIL_SUBJECTS = {
 } as const;
 
 const SELECT_BUNDLE_LINK = /https?:\/\/[^\s"<]+\/select-bundle#([\w-]+)/;
+const INVITATION_LINK = /https?:\/\/[^\s"<]+\/invitation#([\w-]+)/;
 const VISITOR_TIME_ZONE = "Europe/London";
 
 const openSlotsSchema = z.object({ slots: z.array(z.string()).min(1) });
@@ -152,6 +153,19 @@ export class CoachingSalesJourney {
 
     if (!token) {
       throw new Error("No payment link email has been sent.");
+    }
+
+    return token;
+  }
+
+  async latestInvitationToken(): Promise<string> {
+    const emails = await this.rig.suite.sentEmails();
+    const token = emails
+      .flatMap((email) => INVITATION_LINK.exec(email.text)?.[1] ?? [])
+      .at(-1);
+
+    if (!token) {
+      throw new Error("No invitation email has been sent.");
     }
 
     return token;

@@ -10,6 +10,7 @@ type ClerkInvitationClient = {
   invitations: {
     createInvitation(params: {
       emailAddress: string;
+      ignoreExisting: boolean;
       notify: boolean;
       expiresInDays: number;
       publicMetadata: { invitationId: string };
@@ -40,6 +41,7 @@ export class ClerkIdentityInvitations implements IdentityInvitations {
     const invitation = await this.client.invitations
       .createInvitation({
         emailAddress: input.email,
+        ignoreExisting: true,
         notify: false,
         expiresInDays: INVITATION_VALIDITY_DAYS,
         publicMetadata: { invitationId: input.invitationId },

@@ -6,14 +6,15 @@ export const CHECKOUT_COMPLETE_ROUTE_SEGMENT = "checkout/complete";
 
 export const CHECKOUT_COMPLETE_PATH = `/${CHECKOUT_COMPLETE_ROUTE_SEGMENT}`;
 
-const INVITATION_ROUTE_SEGMENT = "invitation";
+export const INVITATION_ROUTE_SEGMENT = "invitation";
 
-const INVITATION_PATH = `/${INVITATION_ROUTE_SEGMENT}`;
+export const INVITATION_PATH = `/${INVITATION_ROUTE_SEGMENT}`;
 
 export const COACHING_SALES_API_PATHS = {
   paymentLinks: "/api/coaching-sales/payment-links",
   bundlePage: "/api/coaching-sales/bundle-page",
   checkouts: "/api/coaching-sales/checkouts",
+  invitation: "/api/coaching-sales/invitation",
 } as const;
 
 type SelectBundleLink = {

@@ -147,6 +147,7 @@ export class AdmitPaidClientUseCase {
       email: sending.invitation.email,
       firstName: sending.firstName,
       rawToken: sending.rawToken,
+      sentAt: sending.invitation.sentAt,
       expiresAt: sending.invitation.expiresAt,
     });
 
