@@ -7,7 +7,7 @@ import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { AssessmentCallsSection } from './AssessmentCallsSection';
 import type { PrototypeBooking } from '../../services/assessmentCallService';
 import { paymentLinkExpiresAt } from '../../services/paymentLinkService';
-import { AppProvider } from '../../context/AppContext';
+import { AppProvider, useAppState } from '../../context/AppContext';
 import {
   AssessmentCallProvider,
   useAssessmentCalls,
@@ -167,6 +167,19 @@ function AdvanceJourneys({ stages }: { stages: Record<string, JourneyStage> }) {
   return null;
 }
 
+function ReducedPricingDriver() {
+  const { setAppState } = useAppState();
+
+  return (
+    <button
+      type="button"
+      onClick={() => setAppState({ journeyReducedPricing: true })}
+    >
+      driver: reduced pricing
+    </button>
+  );
+}
+
 function SeedBookings({ bookings }: { bookings: PrototypeBooking[] }) {
   const { replaceBookings } = useAssessmentCalls();
   useEffect(() => {
@@ -197,6 +210,7 @@ function renderSection(
                 timeZone={TIME_ZONE}
               />
               <LocationProbe />
+              <ReducedPricingDriver />
             </ClientJourneyProvider>
           </AssessmentCallProvider>
         </ClientProfileProvider>
@@ -251,7 +265,7 @@ async function chooseJourneyOption(
 }
 
 describe('the assessment calls section', () => {
-  it("shows each visitor's age, gender, goal, country and phone on her card", () => {
+  it("shows each visitor's age, gender, goal, country, pricing and phone on her card", () => {
     // arrange
     renderSection();
 
@@ -263,16 +277,44 @@ describe('the assessment calls section', () => {
       within(maria)
         .getAllByRole('term')
         .map((term) => term.textContent),
-    ).toEqual(['Age', 'Gender', 'Goal', 'Country']);
+    ).toEqual(['Age', 'Gender', 'Goal', 'Country', 'Pricing']);
     expect(
       within(maria)
         .getAllByRole('definition')
         .map((definition) => definition.textContent),
-    ).toEqual(['32 (14 Mar 1994)', 'Female', 'Lose weight', 'Romania']);
+    ).toEqual([
+      '32 (14 Mar 1994)',
+      'Female',
+      'Lose weight',
+      'Romania',
+      'Regular',
+    ]);
     expect(
       within(maria).getByRole('link', { name: '+40712345678' }),
     ).toHaveAttribute('href', 'tel:+40712345678');
     expect(within(ioana).queryByRole('link', { name: /^\+/ })).toBeNull();
+  });
+
+  it('marks every card Reduced (waitlist) once the visitor holds a reduced waitlist allocation', async () => {
+    // arrange
+    const user = renderSection();
+
+    // act
+    await user.click(
+      screen.getByRole('button', { name: 'driver: reduced pricing' }),
+    );
+
+    // assert
+    expect(
+      callRows().map(
+        (row) => within(row).getAllByRole('definition').at(-1)?.textContent,
+      ),
+    ).toEqual([
+      'Reduced (waitlist)',
+      'Reduced (waitlist)',
+      'Reduced (waitlist)',
+      'Reduced (waitlist)',
+    ]);
   });
 
   it('finds a visitor by her last name alone', async () => {

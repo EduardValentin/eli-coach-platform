@@ -131,7 +131,10 @@ function createPaymentLinks(found: PaymentLink | null): PaymentLinks {
 function createPricingEligibility(
   tier: Awaited<ReturnType<PricingEligibility["tierForEmail"]>>,
 ): PricingEligibility {
-  return { tierForEmail: vi.fn().mockResolvedValue(tier) };
+  return {
+    tierForEmail: vi.fn().mockResolvedValue(tier),
+    tiersForEmails: vi.fn(),
+  };
 }
 
 function createNotifications(

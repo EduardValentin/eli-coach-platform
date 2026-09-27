@@ -141,7 +141,10 @@ function createPaymentLinks(options: {
 }
 
 function createPricingEligibility(tier: PriceTier): PricingEligibility {
-  return { tierForEmail: vi.fn().mockResolvedValue(tier) };
+  return {
+    tierForEmail: vi.fn().mockResolvedValue(tier),
+    tiersForEmails: vi.fn(),
+  };
 }
 
 function createTokenHasher(): PaymentLinkTokenHasher {

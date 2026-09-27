@@ -51,6 +51,44 @@ describe("PostgresWaitlistRepository pricing eligibility", () => {
   });
 });
 
+describe("PostgresWaitlistRepository pricing tiers for many emails", () => {
+  it("prices each email at the reduced tier only when it holds a reduced allocation", async () => {
+    // arrange
+    const database = createDatabaseWithReducedEmails([
+      { email: "ana@example.com" },
+    ]);
+    const repository = new PostgresWaitlistRepository(database.client);
+
+    // act
+    const tiers = await repository.tiersForEmails([
+      emailOf("ana@example.com"),
+      emailOf("bea@example.com"),
+    ]);
+
+    // assert
+    expect(tiers).toEqual(
+      new Map([
+        ["ana@example.com", "reduced"],
+        ["bea@example.com", "regular"],
+      ]),
+    );
+    expect(database.select).toHaveBeenCalledTimes(1);
+  });
+
+  it("asks the database nothing when no email is named", async () => {
+    // arrange
+    const database = createDatabaseWithReducedEmails([]);
+    const repository = new PostgresWaitlistRepository(database.client);
+
+    // act
+    const tiers = await repository.tiersForEmails([]);
+
+    // assert
+    expect(tiers).toEqual(new Map());
+    expect(database.select).not.toHaveBeenCalled();
+  });
+});
+
 function emailOf(value: string): TierEmail {
   return { value } as TierEmail;
 }
@@ -62,6 +100,17 @@ function createDatabaseWithReducedAllocations(rows: readonly unknown[]) {
   const select = vi.fn().mockReturnValue({ from });
 
   return { client: { select } as unknown as DatabaseClient, limit };
+}
+
+function createDatabaseWithReducedEmails(rows: readonly unknown[]) {
+  const where = vi.fn().mockResolvedValue(rows);
+  const from = vi.fn().mockReturnValue({ where });
+  const selectDistinct = vi.fn().mockReturnValue({ from });
+
+  return {
+    client: { selectDistinct } as unknown as DatabaseClient,
+    select: selectDistinct,
+  };
 }
 
 function createDatabaseWithCount(entryCount: number): DatabaseClient {

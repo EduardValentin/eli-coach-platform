@@ -28,7 +28,10 @@ import {
 
 import type { CoachAssessmentCall } from "~/features/assessment-calls/contracts/assessment-calls";
 import { COACH_ASSESSMENT_CALLS_PATH } from "~/features/assessment-calls/contracts/paths";
-import type { SalesStates } from "~/features/coaching-sales/contracts/coaching-sales";
+import type {
+  PricingTiers,
+  SalesStates,
+} from "~/features/coaching-sales/contracts/coaching-sales";
 import { COACHING_SALES_API_PATHS } from "~/features/coaching-sales/contracts/paths";
 
 import CoachAssessmentCallsRoute, {
@@ -199,7 +202,7 @@ describe("the coach's assessment calls page", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows each visitor's age, gender, goal, country and phone", async () => {
+  it("shows each visitor's age, gender, goal, country, pricing and phone", async () => {
     // arrange, act
     await renderCallsPage();
 
@@ -208,15 +211,47 @@ describe("the coach's assessment calls page", () => {
 
     expect(
       soonest.getAllByRole("term").map((term) => term.textContent),
-    ).toEqual(["Age", "Gender", "Goal", "Country"]);
+    ).toEqual(["Age", "Gender", "Goal", "Country", "Pricing"]);
     expect(
       soonest.getAllByRole("definition").map((entry) => entry.textContent),
-    ).toEqual(["32 (14 Mar 1994)", "Female", "Lose weight", "Romania"]);
+    ).toEqual([
+      "32 (14 Mar 1994)",
+      "Female",
+      "Lose weight",
+      "Romania",
+      "Regular",
+    ]);
     expect(soonest.getByRole("link", { name: "+40712345678" })).toHaveAttribute(
       "href",
       "tel:+40712345678",
     );
     expect(next.queryByRole("link", { name: /^\+/ })).not.toBeInTheDocument();
+  });
+
+  it("marks a visitor holding a reduced waitlist allocation on every one of her calls, ended or still to come", async () => {
+    // arrange
+    const pricingTiers: PricingTiers = {
+      "earlier-today": "regular",
+      "later-today": "reduced",
+      "next-week": "regular",
+      yesterday: "reduced",
+    };
+
+    // act
+    await renderCallsPage({ pricingTiers });
+
+    // assert
+    expect(
+      shownCalls().map((item) => [
+        within(item).getByRole("heading", { level: 2 }).textContent,
+        within(item).getAllByRole("definition").at(-1)?.textContent,
+      ]),
+    ).toEqual([
+      ["Ana Popescu", "Reduced (waitlist)"],
+      ["Dana Radu", "Regular"],
+      ["Carla Marin", "Regular"],
+      ["Bea Ionescu", "Reduced (waitlist)"],
+    ]);
   });
 
   it("finds a visitor by her last name alone", async () => {
@@ -986,16 +1021,23 @@ function shownCallNames(): string[] {
     .map((heading) => heading.textContent ?? "");
 }
 
+function everyCallRegular(calls: readonly CoachAssessmentCall[]): PricingTiers {
+  return Object.fromEntries(calls.map((call) => [call.id, "regular"]));
+}
+
 type CallsPageOptions = {
   calls?: CoachAssessmentCall[];
+  pricingTiers?: PricingTiers;
   salesStates?: SalesStates;
   url?: string;
 };
 
 async function renderCallsRouter(options?: CallsPageOptions) {
   const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+  const calls = options?.calls ?? FOUR_CALLS;
   const loaded = {
-    calls: options?.calls ?? FOUR_CALLS,
+    calls,
+    pricingTiers: options?.pricingTiers ?? everyCallRegular(calls),
     salesStates: options?.salesStates ?? BOTH_ENDED_CALLS_HELD,
   };
   const router = createMemoryRouter(
@@ -1014,6 +1056,7 @@ async function renderCallsRouter(options?: CallsPageOptions) {
               calls: loaded.calls,
               coachTimeZone: COACH_TIME_ZONE,
               now: NOW.toISOString(),
+              pricingTiers: loaded.pricingTiers,
               salesStates: loaded.salesStates,
             }),
             path: COACH_ASSESSMENT_CALLS_PATH,

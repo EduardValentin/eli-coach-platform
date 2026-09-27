@@ -2,6 +2,7 @@
 
 import "@testing-library/jest-dom/vitest";
 
+import type { AppointmentDetail } from "@eli-coach-platform/ui/appointments";
 import {
   cleanup,
   render,
@@ -121,6 +122,30 @@ describe("the ended-call slot", () => {
   });
 });
 
+describe("the extra details slot", () => {
+  it("appends its details after the visitor's own on every call", async () => {
+    // arrange
+    const extraDetails = (call: ClassifiedCall) => [
+      { label: "Reference", value: call.id },
+    ];
+
+    // act
+    await renderSection({ extraDetails });
+
+    // assert
+    const cards = shownCalls().map((item) => within(item));
+
+    for (const card of cards) {
+      expect(card.getAllByRole("term").map((term) => term.textContent)).toEqual(
+        ["Age", "Gender", "Goal", "Country", "Reference"],
+      );
+    }
+    expect(
+      cards.map((card) => card.getAllByRole("definition").at(-1)?.textContent),
+    ).toEqual(["later-today", "earlier-today", "yesterday"]);
+  });
+});
+
 describe("the toolbar filter slot", () => {
   const flaggedFilter = {
     control: (scopedCalls: readonly ClassifiedCall[]) => (
@@ -197,6 +222,7 @@ function shownCallNames(): string[] {
 }
 
 async function renderSection(options: {
+  extraDetails?: (call: ClassifiedCall) => AppointmentDetail[];
   renderEndedCallExtras?: (call: ClassifiedCall) => EndedCallExtras;
   toolbarFilter?: ToolbarFilter;
   url?: string;
@@ -207,6 +233,7 @@ async function renderSection(options: {
         Component: () => (
           <AssessmentCallsSection
             calls={CALLS}
+            extraDetails={options.extraDetails}
             now={NOW}
             renderEndedCallExtras={options.renderEndedCallExtras}
             timeZone={TIME_ZONE}

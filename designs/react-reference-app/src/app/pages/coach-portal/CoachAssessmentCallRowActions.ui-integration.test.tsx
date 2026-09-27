@@ -72,12 +72,14 @@ afterEach(() => {
   window.history.replaceState({}, '', '/');
 });
 
-function SeedBookings() {
+const SEEDED_BOOKINGS = [BOOKING, UPCOMING_BOOKING];
+
+function SeedBookings({ bookings }: { bookings: PrototypeBooking[] }) {
   const { replaceBookings } = useAssessmentCalls();
 
   useEffect(() => {
-    replaceBookings([BOOKING, UPCOMING_BOOKING]);
-  }, [replaceBookings]);
+    replaceBookings(bookings);
+  }, [bookings, replaceBookings]);
 
   return null;
 }
@@ -117,7 +119,7 @@ function heldCallsQuery(urlQuery: string) {
   return `?when=past${urlQuery.replace(/^\?/, '&')}`;
 }
 
-function renderPage(urlQuery = '') {
+function renderPage(urlQuery = '', bookings = SEEDED_BOOKINGS) {
   const query = heldCallsQuery(urlQuery);
   window.history.replaceState({}, '', `/coach/assessment-calls${query}`);
 
@@ -126,7 +128,7 @@ function renderPage(urlQuery = '') {
       <AppProvider>
         <ClientProfileProvider>
           <AssessmentCallProvider>
-            <SeedBookings />
+            <SeedBookings bookings={bookings} />
             <ClientJourneyProvider>
               <CoachAssessmentCalls />
               <JourneyDriver />
@@ -217,6 +219,53 @@ describe('the assessment call row actions', () => {
     expect(
       within(dialog).getByText(
         `${VISITOR} gets an email with a link to choose her bundle and pay.`,
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('words the send dialog for a man', async () => {
+    // arrange
+    const user = renderPage('', [{ ...BOOKING, gender: 'male' }]);
+
+    // act
+    const dialog = await openDialog(user, 'Send payment link');
+
+    // assert
+    expect(
+      within(dialog).getByText(
+        `${VISITOR} gets an email with a link to choose his bundle and pay.`,
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('words the send dialog neutrally when the visitor preferred not to say', async () => {
+    // arrange
+    const user = renderPage('', [{ ...BOOKING, gender: 'prefer_not_to_say' }]);
+
+    // act
+    const dialog = await openDialog(user, 'Send payment link');
+
+    // assert
+    expect(
+      within(dialog).getByText(
+        `${VISITOR} gets an email with a link to choose their bundle and pay.`,
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('words the re-send warning for a man', async () => {
+    // arrange
+    const user = renderPage('', [{ ...BOOKING, gender: 'male' }]);
+    await sendPaymentLink(user);
+    await findStageBadge('Payment link sent');
+
+    // act
+    const dialog = await openDialog(user, 'Re-send payment link');
+
+    // assert
+    expect(
+      within(dialog).getByText(
+        `A fresh link goes to ${VISITOR_EMAIL}. His earlier link stops working.`,
       ),
     ).toBeInTheDocument();
   });

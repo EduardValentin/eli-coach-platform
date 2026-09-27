@@ -86,11 +86,9 @@ describe("CheckoutCompleteRoute", () => {
       }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(
-        /Your invitation is on its way\. Eli sends it personally to/,
-      ),
+      screen.getByText(/Your invitation is on its way to/),
     ).toHaveTextContent(
-      "Your invitation is on its way. Eli sends it personally to ana@example.com, and it works for 30 days once it arrives — you'll create your account from it.",
+      "Your invitation is on its way to ana@example.com. It works for 30 days once it arrives — you'll create your account from it.",
     );
     expect(readings()).toEqual({
       Bundle: "3 Months",

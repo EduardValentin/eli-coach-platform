@@ -51,9 +51,9 @@ export function CheckoutComplete() {
         </h1>
 
         <p className="mt-4 text-center text-base leading-relaxed text-text-secondary">
-          Your invitation is on its way. Eli sends it personally to{' '}
-          <span className="font-medium text-text-primary">{journey.identity.email}</span>, and it
-          works for 30 days once it arrives — you'll create your account from it.
+          Your invitation is on its way to{' '}
+          <span className="font-medium text-text-primary">{journey.identity.email}</span>. It works
+          for 30 days once it arrives — you'll create your account from it.
         </p>
 
         <dl className="mt-8 grid gap-3 rounded-card border border-border-subtle bg-surface-quiet px-5 py-4 text-sm">

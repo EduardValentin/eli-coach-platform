@@ -5,6 +5,7 @@ import "@testing-library/jest-dom/vitest";
 import { Toaster } from "@eli-coach-platform/ui/toast";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { ComponentProps } from "react";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import {
@@ -23,9 +24,17 @@ const PAYMENT_LINKS_URL = COACHING_SALES_API_PATHS.paymentLinks;
 
 const CALL = {
   fullName: "Ana Popescu",
+  gender: "female",
   id: "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11",
   visitorEmail: "ana@example.com",
-};
+} as const;
+
+const MALE_CALL = {
+  ...CALL,
+  fullName: "Andrei Popescu",
+  gender: "male",
+  visitorEmail: "andrei@example.com",
+} as const;
 
 const server = setupServer();
 
@@ -111,6 +120,42 @@ describe("the payment link action on an ended call", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Re-send link" }),
+    ).toBeInTheDocument();
+  });
+
+  it("words the send dialog for a man", async () => {
+    // arrange
+    const user = await renderAction({ state: "held" }, MALE_CALL);
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Send payment link" }));
+
+    // assert
+    expect(
+      screen.getByRole("dialog", {
+        description:
+          "Andrei Popescu gets an email with a link to choose his bundle and pay.",
+        name: "Send payment link?",
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("words the re-send warning for a man", async () => {
+    // arrange
+    const user = await renderAction({ state: "payment-link-sent" }, MALE_CALL);
+
+    // act
+    await user.click(
+      screen.getByRole("button", { name: "Re-send payment link" }),
+    );
+
+    // assert
+    expect(
+      screen.getByRole("dialog", {
+        description:
+          "A fresh link goes to andrei@example.com. His earlier link stops working.",
+        name: "Re-send payment link?",
+      }),
     ).toBeInTheDocument();
   });
 
@@ -223,19 +268,23 @@ function recordSendRequests(response: Response): unknown[] {
   return requests;
 }
 
-function ActionRoute() {
-  const { state } = useLoaderData<{ state: CallSalesState }>();
+type ActionCall = ComponentProps<typeof PaymentLinkAction>["call"];
 
-  return (
-    <>
-      <PaymentLinkAction call={CALL} state={state} />
-      <Toaster />
-    </>
-  );
-}
-
-async function renderAction(loaded: { state: CallSalesState }) {
+async function renderAction(
+  loaded: { state: CallSalesState },
+  call: ActionCall = CALL,
+) {
   const user = userEvent.setup();
+  const ActionRoute = () => {
+    const { state } = useLoaderData<{ state: CallSalesState }>();
+
+    return (
+      <>
+        <PaymentLinkAction call={call} state={state} />
+        <Toaster />
+      </>
+    );
+  };
   const router = createMemoryRouter(
     [
       {

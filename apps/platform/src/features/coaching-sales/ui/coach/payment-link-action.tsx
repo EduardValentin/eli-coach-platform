@@ -5,6 +5,9 @@ import { Loader2, Send } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useFetcher } from "react-router";
 
+import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
+
+import { possessivePronoun } from "~/features/assessment-calls/contracts/visitor-profile";
 import {
   PAYMENT_LINK_MESSAGES,
   sendPaymentLinkSuccessSchema,
@@ -14,6 +17,7 @@ import { COACHING_SALES_API_PATHS } from "~/features/coaching-sales/contracts/pa
 
 type PaymentLinkCall = {
   fullName: string;
+  gender: VisitorGender;
   id: string;
   visitorEmail: string;
 };
@@ -34,11 +38,13 @@ function sendingCopy(
   state: Exclude<CallSalesState, "paid">,
   call: PaymentLinkCall,
 ): SendingCopy {
+  const pronoun = possessivePronoun(call.gender);
+
   if (state === "held") {
     return {
       buttonLabel: "Send payment link",
       confirmLabel: "Send link",
-      description: `${call.fullName} gets an email with a link to choose her bundle and pay.`,
+      description: `${call.fullName} gets an email with a link to choose ${pronoun.lower} bundle and pay.`,
       title: "Send payment link?",
     };
   }
@@ -46,7 +52,7 @@ function sendingCopy(
   return {
     buttonLabel: "Re-send payment link",
     confirmLabel: "Re-send link",
-    description: `A fresh link goes to ${call.visitorEmail}. Her earlier link stops working.`,
+    description: `A fresh link goes to ${call.visitorEmail}. ${pronoun.capitalised} earlier link stops working.`,
     title: "Re-send payment link?",
   };
 }

@@ -38,6 +38,18 @@ export function labelForGender(gender: VisitorGender): string {
   return VISITOR_GENDERS.find((option) => option.value === gender)?.label ?? gender;
 }
 
+export type PossessivePronoun = { lower: string; capitalised: string };
+
+const POSSESSIVE_PRONOUNS: Record<VisitorGender, PossessivePronoun> = {
+  female: { lower: 'her', capitalised: 'Her' },
+  male: { lower: 'his', capitalised: 'His' },
+  prefer_not_to_say: { lower: 'their', capitalised: 'Their' },
+};
+
+export function possessivePronoun(gender: VisitorGender): PossessivePronoun {
+  return POSSESSIVE_PRONOUNS[gender];
+}
+
 export function labelForPrimaryGoal(goal: VisitorPrimaryGoal): string {
   return VISITOR_PRIMARY_GOALS.find((option) => option.value === goal)?.label ?? goal;
 }

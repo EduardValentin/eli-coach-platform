@@ -126,6 +126,22 @@ export function labelForPrimaryGoal(goal: VisitorPrimaryGoal): string {
   return labelFor(VISITOR_PRIMARY_GOAL_OPTIONS, goal);
 }
 
+export type PossessivePronoun = {
+  readonly capitalised: string;
+  readonly lower: string;
+};
+
+const POSSESSIVE_PRONOUNS: Readonly<Record<VisitorGender, PossessivePronoun>> =
+  {
+    female: { capitalised: "Her", lower: "her" },
+    male: { capitalised: "His", lower: "his" },
+    prefer_not_to_say: { capitalised: "Their", lower: "their" },
+  };
+
+export function possessivePronoun(gender: VisitorGender): PossessivePronoun {
+  return POSSESSIVE_PRONOUNS[gender];
+}
+
 export function normalizePhone(parts: PhoneParts): PhoneNormalization {
   const compact = parts.nationalNumber.replace(PHONE_SEPARATORS, "");
 

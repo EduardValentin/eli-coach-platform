@@ -50,16 +50,23 @@ const LISTING = {
 const CALLS_URL = "http://localhost/coach/assessment-calls";
 
 describe("coach assessment calls page loader", () => {
-  it("carries every booked call and the sales state of each ended one into the server-rendered page", async () => {
+  it("carries every booked call, the sales state of each ended one and the price tier of every one into the server-rendered page", async () => {
     // arrange
     const loadSalesStates = vi
       .fn()
       .mockResolvedValue({ ended: "paid", "ending-now": "held" });
+    const pricingTiers = {
+      ended: "reduced",
+      "ending-now": "regular",
+      upcoming: "regular",
+    };
+    const loadPricingTiers = vi.fn().mockResolvedValue(pricingTiers);
 
     // act
     const loaded = await loader(
       createLoaderArguments({
         loadCalls: vi.fn().mockResolvedValue(LISTING),
+        loadPricingTiers,
         loadSalesStates,
       }),
     );
@@ -67,9 +74,15 @@ describe("coach assessment calls page loader", () => {
     // assert
     expect(loaded).toEqual({
       ...LISTING,
+      pricingTiers,
       salesStates: { ended: "paid", "ending-now": "held" },
     });
     expect(loadSalesStates).toHaveBeenCalledWith(["ended", "ending-now"]);
+    expect(loadPricingTiers).toHaveBeenCalledWith([
+      { email: "ana@example.com", id: "ended" },
+      { email: "ana@example.com", id: "ending-now" },
+      { email: "ana@example.com", id: "upcoming" },
+    ]);
   });
 
   it("leaves the denial the portal middleware raises alone", async () => {
@@ -154,13 +167,17 @@ describe("coach assessment calls page revalidation", () => {
 
 function createLoaderArguments(readers: {
   loadCalls: ReturnType<typeof vi.fn>;
+  loadPricingTiers?: ReturnType<typeof vi.fn>;
   loadSalesStates?: ReturnType<typeof vi.fn>;
 }) {
   const assessmentCalls = {
     coachAssessmentCalls: { loadCalls: readers.loadCalls },
   } as unknown as AssessmentCallsFeature;
   const coachingSales = {
-    coachSales: { loadSalesStates: readers.loadSalesStates ?? vi.fn() },
+    coachSales: {
+      loadPricingTiers: readers.loadPricingTiers ?? vi.fn(),
+      loadSalesStates: readers.loadSalesStates ?? vi.fn(),
+    },
   } as unknown as CoachingSalesFeature;
 
   return createRequestArgs({

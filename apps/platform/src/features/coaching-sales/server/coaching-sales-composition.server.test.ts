@@ -179,7 +179,10 @@ function createHandles(
     featureFlags: { execute: async () => featureFlags },
     incidents: createIncidents(),
     paymentCheckout: createPaymentCheckout({ PAYMENTS_PROVIDER: "memory" }),
-    pricingEligibility: { tierForEmail: async () => "regular" },
+    pricingEligibility: {
+      tierForEmail: async () => "regular",
+      tiersForEmails: async () => new Map(),
+    },
     productEmail: new InMemoryProductEmail(),
     publicAppUrl: "https://evoa.fit",
   };

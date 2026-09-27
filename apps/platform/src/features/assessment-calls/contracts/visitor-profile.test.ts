@@ -9,6 +9,7 @@ import {
   MAX_BOOKING_AGE,
   MIN_BOOKING_AGE,
   normalizePhone,
+  possessivePronoun,
   VISITOR_GENDER_OPTIONS,
   VISITOR_PRIMARY_GOAL_OPTIONS,
 } from "./visitor-profile";
@@ -331,5 +332,40 @@ describe("formatAgeForEmail", () => {
 
     // assert
     expect(line).toBe("32 (born 14 March 1994)");
+  });
+});
+
+describe("possessivePronoun", () => {
+  it("uses her for a woman", () => {
+    // arrange
+    const gender = "female";
+
+    // act
+    const pronoun = possessivePronoun(gender);
+
+    // assert
+    expect(pronoun).toEqual({ capitalised: "Her", lower: "her" });
+  });
+
+  it("uses his for a man", () => {
+    // arrange
+    const gender = "male";
+
+    // act
+    const pronoun = possessivePronoun(gender);
+
+    // assert
+    expect(pronoun).toEqual({ capitalised: "His", lower: "his" });
+  });
+
+  it("uses their when the visitor preferred not to say", () => {
+    // arrange
+    const gender = "prefer_not_to_say";
+
+    // act
+    const pronoun = possessivePronoun(gender);
+
+    // assert
+    expect(pronoun).toEqual({ capitalised: "Their", lower: "their" });
   });
 });

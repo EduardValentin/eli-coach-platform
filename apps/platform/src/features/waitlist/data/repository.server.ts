@@ -10,7 +10,7 @@ import {
   type RegularPricingSignupResult,
 } from "@eli-coach-platform/domain/waitlist";
 import type { DatabaseClient } from "@eli-coach-platform/db";
-import { and, count, eq, lt, sql } from "drizzle-orm";
+import { and, count, eq, inArray, lt, sql } from "drizzle-orm";
 import { waitlistEntriesTable } from "./schema.server";
 import {
   rejectsDuplicateSignup,
@@ -56,6 +56,33 @@ export class PostgresWaitlistRepository
       .limit(1);
 
     return reducedAllocations.length > 0 ? "reduced" : "regular";
+  }
+
+  async tiersForEmails(
+    emails: readonly EligibleEmail[],
+  ): Promise<ReadonlyMap<string, PriceTier>> {
+    if (emails.length === 0) {
+      return new Map();
+    }
+
+    const addresses = emails.map((email) => email.value);
+    const reducedRows = await this.database
+      .selectDistinct({ email: waitlistEntriesTable.email })
+      .from(waitlistEntriesTable)
+      .where(
+        and(
+          inArray(waitlistEntriesTable.email, addresses),
+          eq(waitlistEntriesTable.pricingEligibility, "reduced"),
+        ),
+      );
+    const reduced = new Set(reducedRows.map((row) => row.email));
+
+    return new Map(
+      addresses.map((address) => [
+        address,
+        reduced.has(address) ? "reduced" : "regular",
+      ]),
+    );
   }
 
   async countReducedPricingSignupsCreatedBefore(options: {

@@ -1,3 +1,4 @@
+import type { AppointmentDetail } from "@eli-coach-platform/ui/appointments";
 import { PortalPageHeader } from "@eli-coach-platform/ui/portal";
 import {
   useLoaderData,
@@ -20,6 +21,10 @@ import { coachingSalesContext } from "~/features/coaching-sales/server/guards/co
 import { CallSalesStateBadge } from "~/features/coaching-sales/ui/coach/call-sales-state-badge";
 import { PaymentLinkAction } from "~/features/coaching-sales/ui/coach/payment-link-action";
 import {
+  PRICING_DETAIL_LABEL,
+  pricingTierLabel,
+} from "~/features/coaching-sales/ui/coach/pricing-tier-label";
+import {
   matchesSalesFilter,
   SalesStatusFilter,
   SALES_STATUS_PARAM,
@@ -38,11 +43,15 @@ export async function loader({ context }: LoaderFunctionArgs) {
   })
     .filter(isEndedCall)
     .map((call) => call.id);
-  const salesStates = await context
-    .get(coachingSalesContext)
-    .coachSales.loadSalesStates(endedCallIds);
+  const { coachSales } = context.get(coachingSalesContext);
+  const [salesStates, pricingTiers] = await Promise.all([
+    coachSales.loadSalesStates(endedCallIds),
+    coachSales.loadPricingTiers(
+      listing.calls.map((call) => ({ email: call.visitorEmail, id: call.id })),
+    ),
+  ]);
 
-  return { ...listing, salesStates };
+  return { ...listing, pricingTiers, salesStates };
 }
 
 export function shouldRevalidate({
@@ -65,6 +74,13 @@ export default function CoachAssessmentCallsRoute() {
     listing.salesStates[call.id] ?? "held";
   const salesStateOf = (call: ClassifiedCall): CallSalesState | null =>
     isEndedCall(call) ? endedCallState(call) : null;
+  const pricingDetails = (call: ClassifiedCall): AppointmentDetail[] => {
+    const tier = listing.pricingTiers[call.id];
+
+    return tier
+      ? [{ label: PRICING_DETAIL_LABEL, value: pricingTierLabel(tier) }]
+      : [];
+  };
 
   return (
     <div className="w-full">
@@ -77,6 +93,7 @@ export default function CoachAssessmentCallsRoute() {
 
       <AssessmentCallsSection
         calls={listing.calls}
+        extraDetails={pricingDetails}
         now={now}
         renderEndedCallExtras={(call) => {
           const state = endedCallState(call);

@@ -70,8 +70,11 @@ export type EndedCallExtras = { action?: ReactNode; badge?: ReactNode };
 
 type RenderEndedCallExtras = (call: ClassifiedCall) => EndedCallExtras;
 
+type ExtraDetails = (call: ClassifiedCall) => AppointmentDetail[];
+
 type AssessmentCallsSectionProps = {
   calls: readonly CoachAssessmentCall[];
+  extraDetails?: ExtraDetails;
   now: Date;
   renderEndedCallExtras?: RenderEndedCallExtras;
   timeZone: string;
@@ -80,6 +83,7 @@ type AssessmentCallsSectionProps = {
 
 export function AssessmentCallsSection({
   calls,
+  extraDetails,
   now,
   renderEndedCallExtras,
   timeZone,
@@ -153,6 +157,7 @@ export function AssessmentCallsSection({
         <TabsContent value={when}>
           <CallResults
             emptyCopy={emptyCopy}
+            extraDetails={extraDetails}
             moment={{ now, timeZone }}
             onClearFilters={
               canClearFilters
@@ -169,22 +174,19 @@ export function AssessmentCallsSection({
   );
 }
 
-type CallResultsProps = {
+type CallResultsProps = CallRowProps & {
   emptyCopy: EmptyListingCopy;
-  moment: ListingMoment;
   onClearFilters?: () => void;
   pathForPage: (page: number) => string;
-  renderEndedCallExtras?: RenderEndedCallExtras;
   view: CallPageView;
 };
 
 function CallResults({
   emptyCopy,
-  moment,
   onClearFilters,
   pathForPage,
-  renderEndedCallExtras,
   view,
+  ...row
 }: CallResultsProps) {
   if (view.calls.length === 0) {
     return (
@@ -205,11 +207,7 @@ function CallResults({
 
   return (
     <>
-      <CallList
-        calls={view.calls}
-        moment={moment}
-        renderEndedCallExtras={renderEndedCallExtras}
-      />
+      <CallList calls={view.calls} {...row} />
 
       {view.pageCount > 1 && (
         <CallListPager pathForPage={pathForPage} view={view} />
@@ -219,6 +217,7 @@ function CallResults({
 }
 
 type CallRowProps = {
+  extraDetails?: ExtraDetails;
   moment: ListingMoment;
   renderEndedCallExtras?: RenderEndedCallExtras;
 };
@@ -260,7 +259,7 @@ function visitorDetails(
 }
 
 function CallCard(props: CallRowProps & { call: ClassifiedCall }) {
-  const { call, moment, renderEndedCallExtras } = props;
+  const { call, extraDetails, moment, renderEndedCallExtras } = props;
   const { timeZone } = moment;
   const startsAt = new Date(call.startsAt);
   const extras = isEndedCall(call) ? renderEndedCallExtras?.(call) : undefined;
@@ -288,7 +287,10 @@ function CallCard(props: CallRowProps & { call: ClassifiedCall }) {
           {extras?.badge}
         </>
       }
-      details={visitorDetails(call, moment)}
+      details={[
+        ...visitorDetails(call, moment),
+        ...(extraDetails?.(call) ?? []),
+      ]}
       quote={call.visitorNotes ?? undefined}
       status={call.timing === "past" ? "past" : "scheduled"}
       titleElement="h2"

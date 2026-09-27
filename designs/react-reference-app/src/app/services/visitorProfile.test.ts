@@ -8,6 +8,7 @@ import {
   labelForGender,
   labelForPrimaryGoal,
   normalizePhone,
+  possessivePronoun,
 } from './visitorProfile';
 
 const BOOKING_DAY = new Date('2026-03-02T06:00:00.000Z');
@@ -124,5 +125,34 @@ describe('age formatting', () => {
     // assert
     expect(card).toBe('31 (14 Mar 1994)');
     expect(email).toBe('31 (born 14 March 1994)');
+  });
+});
+
+describe('possessivePronoun', () => {
+  it('uses her for a woman', () => {
+    // arrange
+    // act
+    const pronoun = possessivePronoun('female');
+
+    // assert
+    expect(pronoun).toEqual({ lower: 'her', capitalised: 'Her' });
+  });
+
+  it('uses his for a man', () => {
+    // arrange
+    // act
+    const pronoun = possessivePronoun('male');
+
+    // assert
+    expect(pronoun).toEqual({ lower: 'his', capitalised: 'His' });
+  });
+
+  it('uses their when the visitor preferred not to say', () => {
+    // arrange
+    // act
+    const pronoun = possessivePronoun('prefer_not_to_say');
+
+    // assert
+    expect(pronoun).toEqual({ lower: 'their', capitalised: 'Their' });
   });
 });

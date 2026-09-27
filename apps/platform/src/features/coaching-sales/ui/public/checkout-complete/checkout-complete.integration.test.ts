@@ -27,8 +27,7 @@ const rig = new PlatformRig(suite);
 const PAID_ON = new Date("2026-10-21T08:00:00.000Z");
 const CONFIRMATION_PAGE = `/checkout/complete?session=${STRIPE_CHECKOUT_SESSION_ID}`;
 const PAYMENT_CONFIRMED_HEADING = /<h1[^>]*>Payment confirmed<\/h1>/;
-const INVITATION_LEAD =
-  "Your invitation is on its way. Eli sends it personally to";
+const INVITATION_LEAD = "Your invitation is on its way to";
 const CALL_FIRST_HEADING = "A Call Comes First";
 
 const threeMonthsBought: CheckoutSessionContent = {

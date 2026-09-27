@@ -22,6 +22,12 @@ export const salesStatesSchema = z.record(z.string(), callSalesStateSchema);
 
 export type SalesStates = z.infer<typeof salesStatesSchema>;
 
+export type PriceTier = z.infer<typeof priceTierSchema>;
+
+export const pricingTiersSchema = z.record(z.string(), priceTierSchema);
+
+export type PricingTiers = z.infer<typeof pricingTiersSchema>;
+
 export const startChoiceSchema = z.enum(START_CHOICES);
 
 export const sendPaymentLinkRequestSchema = z.object({

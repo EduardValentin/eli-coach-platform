@@ -9,7 +9,10 @@ import {
 } from "vitest";
 
 import { ApiIntegrationTestSuite } from "~integration-test-config/api-integration-test-suite";
-import { CoachingSalesJourney } from "~integration-test-config/coaching-sales-journey";
+import {
+  ANA,
+  CoachingSalesJourney,
+} from "~integration-test-config/coaching-sales-journey";
 import {
   COACH_SESSION,
   PlatformRig,
@@ -21,6 +24,8 @@ const rig = new PlatformRig(suite);
 const journey = new CoachingSalesJourney(rig);
 
 const PAST_CALLS = "/coach/assessment-calls/?when=past";
+const ALL_CALLS = "/coach/assessment-calls/";
+const BEA = { email: "bea@example.com", firstName: "Bea", lastName: "Ionescu" };
 
 describe.sequential("coach assessment calls page sales integration", () => {
   beforeAll(async () => {
@@ -77,6 +82,23 @@ describe.sequential("coach assessment calls page sales integration", () => {
     expect(texts).not.toContain("Paid");
   });
 
+  it("reads each visitor's pricing from her waitlist allocation", async () => {
+    // arrange
+    await journey.joinWaitlist(ANA.email);
+    await journey.bookCall(ANA);
+    await journey.bookEndedCall(BEA);
+
+    // act
+    const response = await rig.requestAs(COACH_SESSION, ALL_CALLS);
+
+    // assert
+    const page = await visibleDocument(response);
+
+    expect(response.status).toBe(200);
+    expect(pricingOnCardOf(page, "Ana Popescu")).toBe("Reduced (waitlist)");
+    expect(pricingOnCardOf(page, "Bea Ionescu")).toBe("Regular");
+  });
+
   it("reads Paid once the payment has been recorded", async () => {
     // arrange
     await journey.payForCall();
@@ -94,6 +116,15 @@ describe.sequential("coach assessment calls page sales integration", () => {
     expect(texts).not.toContain("Re-send payment link");
   });
 });
+
+function pricingOnCardOf(page: string, fullName: string): string | undefined {
+  const card = page
+    .split('data-parity-root="AppointmentCard"')
+    .find((chunk) => chunk.includes(`>${fullName}<`));
+  const texts = textNodes(card ?? "");
+
+  return texts[texts.indexOf("Pricing") + 1];
+}
 
 function textNodes(page: string): string[] {
   return [...page.matchAll(/>([^<>]+)</g)].map(([, text = ""]) => text.trim());

@@ -12,6 +12,7 @@ import { useAssessmentCalls } from './AssessmentCallContext';
 import { useClientProfile } from './ClientProfileContext';
 import {
   advance,
+  isBeforeStage,
   type ClientJourney,
   type DetailRequest,
   type JourneyEvent,
@@ -222,8 +223,10 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
       };
 
       for (const booking of bookings) {
-        next[booking.id] =
-          previous[booking.id] ?? heldJourney(booking, visitorPricing);
+        const journey = previous[booking.id];
+        next[booking.id] = journey
+          ? repricedUntilPaid(journey, visitorPricing)
+          : heldJourney(booking, visitorPricing);
       }
 
       return next;
@@ -502,6 +505,14 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
       {children}
     </ClientJourneyContext.Provider>
   );
+}
+
+function repricedUntilPaid(
+  journey: ClientJourney,
+  pricing: JourneyPricing,
+): ClientJourney {
+  if (!isBeforeStage(journey.stage, 'invited')) return journey;
+  return { ...journey, pricing };
 }
 
 type DemoPerson = {

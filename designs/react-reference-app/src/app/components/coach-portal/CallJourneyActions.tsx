@@ -15,6 +15,10 @@ import {
   PAYMENT_LINK_ERROR_MESSAGES,
   sendPaymentLink,
 } from '../../services/paymentLinkService';
+import {
+  possessivePronoun,
+  type VisitorGender,
+} from '../../services/visitorProfile';
 
 type JourneyAction = {
   icon: LucideIcon;
@@ -25,19 +29,26 @@ type JourneyAction = {
   run: () => Promise<void>;
 };
 
+type LinkRecipient = {
+  name: string;
+  email: string;
+  gender: VisitorGender;
+};
+
 function journeyAction(
   stage: JourneyStage,
-  name: string,
-  email: string,
+  recipient: LinkRecipient,
   sendLink: () => Promise<void>,
 ): JourneyAction | null {
+  const pronoun = possessivePronoun(recipient.gender);
+
   switch (stage) {
     case 'held':
       return {
         icon: Send,
         buttonLabel: 'Send payment link',
         title: 'Send payment link?',
-        description: `${name} gets an email with a link to choose her bundle and pay.`,
+        description: `${recipient.name} gets an email with a link to choose ${pronoun.lower} bundle and pay.`,
         confirmLabel: 'Send link',
         run: sendLink,
       };
@@ -46,7 +57,7 @@ function journeyAction(
         icon: Send,
         buttonLabel: 'Re-send payment link',
         title: 'Re-send payment link?',
-        description: `A fresh link goes to ${email}. Her earlier link stops working.`,
+        description: `A fresh link goes to ${recipient.email}. ${pronoun.capitalised} earlier link stops working.`,
         confirmLabel: 'Re-send link',
         run: sendLink,
       };
@@ -55,7 +66,13 @@ function journeyAction(
   }
 }
 
-export function CallJourneyActions({ journey }: { journey: ClientJourney }) {
+export function CallJourneyActions({
+  journey,
+  gender,
+}: {
+  journey: ClientJourney;
+  gender: VisitorGender;
+}) {
   const { appState } = useAppState();
   const { recordPaymentLinkSent } = useClientJourneys();
   const [sending, setSending] = useState(false);
@@ -91,7 +108,7 @@ export function CallJourneyActions({ journey }: { journey: ClientJourney }) {
     );
   }
 
-  const action = journeyAction(journey.stage, name, email, sendLink);
+  const action = journeyAction(journey.stage, { name, email, gender }, sendLink);
 
   if (!action) return null;
 

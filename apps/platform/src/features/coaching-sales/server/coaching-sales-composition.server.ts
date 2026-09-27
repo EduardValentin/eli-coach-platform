@@ -1,5 +1,8 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
-import type { PricingEligibility } from "@eli-coach-platform/domain/coaching-bundle";
+import {
+  ReadPricingTiersUseCase,
+  type PricingEligibility,
+} from "@eli-coach-platform/domain/coaching-bundle";
 import {
   ReadCheckoutConfirmationUseCase,
   RecordCheckoutCompletedUseCase,
@@ -80,6 +83,9 @@ export function composeCoachingSalesFeature(
     readCallSalesStates: new ReadCallSalesStatesUseCase({
       callSalesStates: purchases,
     }),
+    readPricingTiers: new ReadPricingTiersUseCase({
+      pricingEligibility: handles.pricingEligibility,
+    }),
     readCheckoutConfirmation: new ReadCheckoutConfirmationUseCase({
       paymentCheckout: handles.paymentCheckout,
       salesWindow,
@@ -125,6 +131,7 @@ export function composeCoachingSalesFeature(
       }),
       coachSales: new CoachSalesController({
         readCallSalesStates: useCases.readCallSalesStates,
+        readPricingTiers: useCases.readPricingTiers,
       }),
       paymentLinks: new PaymentLinksController({
         sendPaymentLink: useCases.sendPaymentLink,
