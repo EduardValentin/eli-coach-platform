@@ -22,7 +22,7 @@ const command: CreateCheckoutSessionCommand = {
   },
   successUrl:
     "https://evoa.fit/checkout/complete?session={CHECKOUT_SESSION_ID}",
-  cancelUrl: "https://evoa.fit/select-bundle?token=abc&payment=cancelled",
+  cancelUrl: "https://evoa.fit/select-bundle?payment=cancelled",
 };
 
 function paidSession() {
@@ -129,7 +129,7 @@ describe("StripePaymentCheckout", () => {
       subscription_data: { metadata },
       success_url:
         "https://evoa.fit/checkout/complete?session={CHECKOUT_SESSION_ID}",
-      cancel_url: "https://evoa.fit/select-bundle?token=abc&payment=cancelled",
+      cancel_url: "https://evoa.fit/select-bundle?payment=cancelled",
     });
     expect(session).toEqual({
       id: "cs_test_created",

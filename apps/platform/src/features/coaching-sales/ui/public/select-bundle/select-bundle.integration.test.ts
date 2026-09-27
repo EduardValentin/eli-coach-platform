@@ -28,12 +28,22 @@ const DAY_IN_MILLISECONDS = 24 * 60 * 60 * 1000;
 const THIRTY_ONE_DAYS_AFTER_THE_SEND = new Date(
   CALL_ENDED_INSTANT.getTime() + 31 * DAY_IN_MILLISECONDS,
 );
+const BUNDLE_PAGE_API = "/api/coaching-sales/bundle-page";
 const PAGE_HEADING = "Choose Your Bundle";
-const VALID_LINK_SUBTITLE =
-  "Based on our call, select the commitment timeframe that works best for you.";
+const CHECKING_LINK = "Checking your link…";
 const CALL_FIRST_HEADING = "A Call Comes First";
 const CANCELLED_NOTICE =
   "No payment was taken. Pick a bundle whenever you&#x27;re ready.";
+
+type BundlePageAnswer = {
+  state: string;
+  tier?: string;
+  cards: {
+    id: string;
+    pricePerMonth: number;
+    originalPricePerMonth?: number;
+  }[];
+};
 
 describe.sequential("select bundle page integration", () => {
   beforeAll(async () => {
@@ -56,12 +66,14 @@ describe.sequential("select bundle page integration", () => {
     delete process.env.BOOTSTRAP_COACH_AUTH_SUBJECT_ID;
   });
 
-  it("offers the three coaching bundles at the regular price on a valid link", async () => {
+  it("serves the page shell uncached while the browser checks the link", async () => {
     // arrange
-    const { token } = await journey.sendPaymentLinkAfterEndedCall();
+    await journey.sendPaymentLinkAfterEndedCall();
 
     // act
-    const response = await requestBundlePage(token);
+    const response = await suite.request(
+      new Request(suite.url("/select-bundle")),
+    );
 
     // assert
     const page = await visibleDocument(response);
@@ -69,35 +81,22 @@ describe.sequential("select bundle page integration", () => {
     expect(response.status).toBe(200);
     expect(response.headers.get("cache-control")).toBe("no-store");
     expect(page).toContain(PAGE_HEADING);
-    expect(page).toContain(VALID_LINK_SUBTITLE);
+    expect(page).toContain(CHECKING_LINK);
     expect(page).not.toContain(CALL_FIRST_HEADING);
-    expect(page).toContain("1 Month monthly price €159");
-    expect(page).toContain("3 Months monthly price €149");
-    expect(page).toContain("6 Months monthly price €139");
-  });
-
-  it("offers the reduced prices when the call's email holds a reduced waitlist allocation", async () => {
-    // arrange
-    await journey.joinWaitlist(ANA.email);
-    const { token } = await journey.sendPaymentLinkAfterEndedCall();
-
-    // act
-    const response = await requestBundlePage(token);
-
-    // assert
-    const page = await visibleDocument(response);
-
-    expect(response.status).toBe(200);
-    expect(page).toContain("3 Months monthly price €125");
-    expect(page).toContain("Original 3 months monthly price €149");
   });
 
   it("tells her no payment was taken when she returns from a cancelled checkout", async () => {
     // arrange
-    const { token } = await journey.sendPaymentLinkAfterEndedCall();
+    await journey.sendPaymentLinkAfterEndedCall();
 
     // act
-    const response = await requestBundlePageAfterCancelledCheckout(token);
+    const response = await suite.request(
+      new Request(
+        suite.url(
+          "/select-bundle?payment=cancelled&bundle=3-months&start=immediate",
+        ),
+      ),
+    );
 
     // assert
     const page = await visibleDocument(response);
@@ -106,12 +105,65 @@ describe.sequential("select bundle page integration", () => {
     expect(page).toContain(CANCELLED_NOTICE);
   });
 
+  it("answers the page shell with 404 in waiting-list mode", async () => {
+    // arrange
+    await rig.switchWaitlistModeOn();
+
+    // act
+    const response = await suite.request(
+      new Request(suite.url("/select-bundle")),
+    );
+
+    // assert
+    expect(response.status).toBe(404);
+  });
+
+  it("offers the three coaching bundles at the regular price on a valid link", async () => {
+    // arrange
+    const { token } = await journey.sendPaymentLinkAfterEndedCall();
+
+    // act
+    const response = await resolveBundlePage(token);
+
+    // assert
+    const page = (await response.json()) as BundlePageAnswer;
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    expect(page.state).toBe("valid");
+    expect(page.tier).toBe("regular");
+    expect(monthlyPrices(page)).toEqual([
+      ["1-month", 159],
+      ["3-months", 149],
+      ["6-months", 139],
+    ]);
+  });
+
+  it("offers the reduced prices when the call's email holds a reduced waitlist allocation", async () => {
+    // arrange
+    await journey.joinWaitlist(ANA.email);
+    const { token } = await journey.sendPaymentLinkAfterEndedCall();
+
+    // act
+    const response = await resolveBundlePage(token);
+
+    // assert
+    const page = (await response.json()) as BundlePageAnswer;
+
+    expect(response.status).toBe(200);
+    expect(page.tier).toBe("reduced");
+    expect(page.cards.find((card) => card.id === "3-months")).toMatchObject({
+      originalPricePerMonth: 149,
+      pricePerMonth: 125,
+    });
+  });
+
   it("asks for a call first on a token it does not know", async () => {
     // arrange
     await journey.sendPaymentLinkAfterEndedCall();
 
     // act
-    const response = await requestBundlePage("not-a-payment-link-token");
+    const response = await resolveBundlePage("not-a-payment-link-token");
 
     // assert
     await expectCallFirst(response);
@@ -124,7 +176,7 @@ describe.sequential("select bundle page integration", () => {
     await journey.sendPaymentLink(callId);
 
     // act
-    const response = await requestBundlePage(replacedToken);
+    const response = await resolveBundlePage(replacedToken);
 
     // assert
     await expectCallFirst(response);
@@ -136,7 +188,7 @@ describe.sequential("select bundle page integration", () => {
     await rig.holdClock(THIRTY_ONE_DAYS_AFTER_THE_SEND);
 
     // act
-    const response = await requestBundlePage(token);
+    const response = await resolveBundlePage(token);
 
     // assert
     await expectCallFirst(response);
@@ -147,7 +199,7 @@ describe.sequential("select bundle page integration", () => {
     const { token } = await journey.payForCall();
 
     // act
-    const response = await requestBundlePage(token);
+    const response = await resolveBundlePage(token);
 
     // assert
     await expectCallFirst(response);
@@ -159,34 +211,36 @@ describe.sequential("select bundle page integration", () => {
     await rig.switchWaitlistModeOn();
 
     // act
-    const response = await requestBundlePage(token);
+    const response = await resolveBundlePage(token);
 
     // assert
     expect(response.status).toBe(404);
   });
 });
 
-async function requestBundlePage(token: string): Promise<Response> {
-  return suite.request(new Request(suite.url(`/select-bundle?token=${token}`)));
-}
-
-async function requestBundlePageAfterCancelledCheckout(
-  token: string,
-): Promise<Response> {
+async function resolveBundlePage(token: string): Promise<Response> {
   return suite.request(
-    new Request(
-      suite.url(
-        `/select-bundle?token=${token}&payment=cancelled&bundle=3-months&start=immediate`,
-      ),
-    ),
+    new Request(suite.url(BUNDLE_PAGE_API), {
+      body: JSON.stringify({ token }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    }),
   );
 }
 
+function monthlyPrices(page: BundlePageAnswer): [string, number][] {
+  return page.cards.map((card) => [card.id, card.pricePerMonth]);
+}
+
 async function expectCallFirst(response: Response): Promise<void> {
-  const page = await visibleDocument(response);
+  const page = (await response.json()) as BundlePageAnswer;
 
   expect(response.status).toBe(200);
-  expect(page).toContain(PAGE_HEADING);
-  expect(page).toContain(CALL_FIRST_HEADING);
-  expect(page).not.toContain(VALID_LINK_SUBTITLE);
+  expect(response.headers.get("cache-control")).toBe("no-store");
+  expect(page.state).toBe("call-first");
+  expect(monthlyPrices(page)).toEqual([
+    ["1-month", 159],
+    ["3-months", 149],
+    ["6-months", 139],
+  ]);
 }

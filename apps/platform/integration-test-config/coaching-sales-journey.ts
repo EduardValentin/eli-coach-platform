@@ -48,7 +48,7 @@ export const PAYMENT_LINK_EMAIL_SUBJECTS = {
   regular: "Your coaching bundles — pick the one that fits.",
 } as const;
 
-const SELECT_BUNDLE_LINK = /https?:\/\/[^\s"<]+\/select-bundle\?token=([\w-]+)/;
+const SELECT_BUNDLE_LINK = /https?:\/\/[^\s"<]+\/select-bundle#([\w-]+)/;
 const VISITOR_TIME_ZONE = "Europe/London";
 
 const openSlotsSchema = z.object({ slots: z.array(z.string()).min(1) });

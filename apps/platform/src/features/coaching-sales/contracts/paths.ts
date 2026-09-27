@@ -8,26 +8,31 @@ export const CHECKOUT_COMPLETE_PATH = `/${CHECKOUT_COMPLETE_ROUTE_SEGMENT}`;
 
 export const COACHING_SALES_API_PATHS = {
   paymentLinks: "/api/coaching-sales/payment-links",
+  bundlePage: "/api/coaching-sales/bundle-page",
   checkouts: "/api/coaching-sales/checkouts",
 } as const;
 
-type SelectBundleQuery = {
-  token: string;
+type SelectBundleLink = {
+  token?: string;
   payment?: "cancelled";
   bundle?: string;
   start?: string;
 };
 
-export function selectBundlePath(query: SelectBundleQuery): string {
-  const params = new URLSearchParams({ token: query.token });
+export function selectBundlePath(link: SelectBundleLink): string {
+  const params = new URLSearchParams();
 
   for (const name of ["payment", "bundle", "start"] as const) {
-    const value = query[name];
+    const value = link[name];
 
     if (value) {
       params.set(name, value);
     }
   }
 
-  return `${SELECT_BUNDLE_PATH}?${params.toString()}`;
+  const search = params.toString();
+  const query = search ? `?${search}` : "";
+  const fragment = link.token ? `#${link.token}` : "";
+
+  return `${SELECT_BUNDLE_PATH}${query}${fragment}`;
 }

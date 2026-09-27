@@ -250,13 +250,15 @@ export function DevToggle() {
   const { journeys } = useClientJourneys();
   const { search } = useLocation();
   const withDevParams = (path: string) => {
-    const [pathname, query = ''] = path.split('?');
+    const [address, fragment = ''] = path.split('#');
+    const [pathname, query = ''] = address.split('?');
     const params = new URLSearchParams(search);
     params.delete('session');
     new URLSearchParams(query).forEach((value, key) => params.set(key, value));
     const joined = params.toString();
+    const hash = fragment.length > 0 ? `#${fragment}` : '';
 
-    return joined.length > 0 ? `${pathname}?${joined}` : pathname;
+    return joined.length > 0 ? `${pathname}?${joined}${hash}` : `${pathname}${hash}`;
   };
 
   const journeyLinks = Object.values(journeys).flatMap((journey) => [
@@ -265,9 +267,7 @@ export function DevToggle() {
           {
             key: `${journey.callId}-payment`,
             label: `Open payment link · ${journey.identity.firstName} ${journey.identity.lastName}`,
-            to: withDevParams(
-              `/select-bundle?token=${journey.paymentLink.token}`,
-            ),
+            to: withDevParams(`/select-bundle#${journey.paymentLink.token}`),
           },
         ]
       : []),

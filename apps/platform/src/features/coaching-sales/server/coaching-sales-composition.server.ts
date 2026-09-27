@@ -127,6 +127,7 @@ export function composeCoachingSalesFeature(
         publicAppUrl: handles.publicAppUrl,
         readCheckoutConfirmation: useCases.readCheckoutConfirmation,
         resolvePaymentLink: useCases.resolvePaymentLink,
+        salesWindow,
         startCheckout: useCases.startCheckout,
       }),
       coachSales: new CoachSalesController({

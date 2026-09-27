@@ -60,6 +60,10 @@ export const paymentLinkTokenSchema = z
   .max(PAYMENT_LINK_TOKEN_MAX_LENGTH)
   .catch("");
 
+export const bundlePageRequestSchema = z.object({
+  token: paymentLinkTokenSchema,
+});
+
 const CHECKOUT_SESSION_ID_MAX_LENGTH = 255;
 
 export const checkoutSessionIdSchema = z

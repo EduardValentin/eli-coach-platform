@@ -9,6 +9,7 @@ import { buttonVariants } from '../components/ThemeButton';
 import { Button } from '../components/ui/button';
 import { useAppState } from '../context/AppContext';
 import { useClientJourneys } from '../context/ClientJourneyContext';
+import { usePaymentLinkToken } from '../hooks/usePaymentLinkToken';
 import { bundleById, type BundleId } from '../domain/bundles';
 import type { SubscriptionStartPath } from '../domain/coachingSubscription';
 import { START_CHOICE_REQUIRED } from '../domain/startChoiceCopy';
@@ -33,7 +34,7 @@ export function SelectBundle() {
   const { appState } = useAppState();
   const { demoJourney, journeyForPaymentToken } = useClientJourneys();
 
-  const token = searchParams.get('token') ?? '';
+  const token = usePaymentLinkToken();
   const [link, setLink] = useState<PaymentLinkResolution>({ status: 'loading' });
   const [startPath, setStartPath] = useState<SubscriptionStartPath | null>(null);
   const [startPathMissing, setStartPathMissing] = useState(false);
@@ -46,6 +47,8 @@ export function SelectBundle() {
   const { paymentLinkState } = appState;
 
   useEffect(() => {
+    if (token === null) return;
+
     if (token.length < 6) {
       setLink({ status: 'invalid' });
       return;
@@ -65,7 +68,7 @@ export function SelectBundle() {
 
   if (appState.isWaitlistMode) return <NotFound />;
 
-  const journey = journeyForPaymentToken(token) ?? demoJourney;
+  const journey = journeyForPaymentToken(token ?? '') ?? demoJourney;
   const isLoading = link.status === 'loading';
   const isValidToken = link.status === 'valid';
 
@@ -91,7 +94,7 @@ export function SelectBundle() {
     setOpening(true);
 
     try {
-      const session = await createCheckoutSession(token, {
+      const session = await createCheckoutSession(token ?? '', {
         bundle: bundleById(bundleId).months,
         startPath,
       });

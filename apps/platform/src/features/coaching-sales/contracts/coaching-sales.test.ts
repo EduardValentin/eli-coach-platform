@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  bundlePageRequestSchema,
   bundlePageSchema,
   checkoutChoiceSchema,
   checkoutConfirmationSchema,
@@ -197,6 +198,41 @@ describe("paymentLinkTokenSchema", () => {
 
     // assert
     expect(parsed).toBe("");
+  });
+});
+
+describe("bundlePageRequestSchema", () => {
+  it("reads the payment link token the page sends", () => {
+    // arrange
+    const body = { token: "abc-DEF_123" };
+
+    // act
+    const parsed = bundlePageRequestSchema.parse(body);
+
+    // assert
+    expect(parsed).toEqual({ token: "abc-DEF_123" });
+  });
+
+  it("reads a body without a usable token as an empty one", () => {
+    // arrange
+    const body = { token: 42 };
+
+    // act
+    const parsed = bundlePageRequestSchema.parse(body);
+
+    // assert
+    expect(parsed).toEqual({ token: "" });
+  });
+
+  it("refuses a body that is not an object", () => {
+    // arrange
+    const body = "abc-DEF_123";
+
+    // act
+    const parsed = bundlePageRequestSchema.safeParse(body);
+
+    // assert
+    expect(parsed.success).toBe(false);
   });
 });
 

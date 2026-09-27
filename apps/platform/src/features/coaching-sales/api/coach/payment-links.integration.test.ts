@@ -89,7 +89,7 @@ describe.sequential("payment links integration", () => {
     expect(emails[0]?.text).toContain(
       "6 months: €139 per month, €834 in total",
     );
-    expect(emails[0]?.text.match(/\/select-bundle\?token=/g)).toHaveLength(1);
+    expect(emails[0]?.text.match(/\/select-bundle#/g)).toHaveLength(1);
   });
 
   it("sends the reduced prices when the call's email holds a reduced waitlist allocation", async () => {
