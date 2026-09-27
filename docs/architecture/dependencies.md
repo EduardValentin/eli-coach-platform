@@ -1,21 +1,21 @@
 # Dependencies
 
-Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; last update 2026-09-23 at commit 9747d171, change review.
+Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; last update 2026-09-27 at commit 0c9758d9, change review.
 
 ## Component graph
 
 | From | To | Modules | Notes |
 |---|---|---|---|
-| C6 infrastructure | C1 domain | 4 | the feature-flags repository implements the C1 `FeatureFlags` port and `PostgresCoachCalendar` implements `CoachCalendar` from `/coach-availability`; since GEN-192, `PostgresCoachAvailability` implements `CoachAvailabilitySource` and the new `CoachAvailabilityChanges` from `/coach-availability`, and `PostgresCoachMeetingRoom` implements the new `CoachMeetingRoomSource` and `CoachMeetingRoomChanges` from the new `/coach-meeting-room`; both name `/shared` for the `Clock` port their `save` reads (Q19) — C6's first import of `/shared`; the adapter-facing contracts are C6's own |
-| C6 infrastructure | C2 db | 8 | feature-flags repository and table; the coach calendar, the reservation writers and the `coach_time_reservations` table; since GEN-192, `PostgresCoachAvailability`, `PostgresCoachMeetingRoom` and `coach-meeting-room/schema.server.ts` |
-| C6 infrastructure | C3 config | 6 | concern types the factories read |
+| C6 infrastructure | C1 domain | 8 | the feature-flags repository implements `FeatureFlags`; `PostgresCoachCalendar`, `PostgresCoachAvailability` and `PostgresCoachMeetingRoom` implement the `/coach-availability` and `/coach-meeting-room` ports and take `/shared`'s `Clock`; the payments concern implements `/coaching-subscription`'s `PaymentCheckout` (Stripe and memory) and reads `/coaching-bundle`'s catalog; the adapter-facing contracts are C6's own |
+| C6 infrastructure | C2 db | 10 | the feature-flags, coach-calendar, coach-meeting-room and payment-event tables and their adapters |
+| C6 infrastructure | C3 config | 10 | concern types the factories read, including `PaymentsConfig` |
 | C7 store | C1 domain | 18 | entities, ports, use cases, publication types across `/product`, `/acquisition`, `/download-grant`, `/cart`, `/shared` |
 | C7 store | C2 db | 6 | DatabaseClient, appSchema |
 | C7 store | C3 config | 5 | joinBasePath and concern types |
 | C7 store | C4 content | 2 | consent copy |
 | C7 store | C5 ui | 6 | primitives in ui/public |
 | C7 store | C6 infrastructure | 17 | bot-detection (browser and server), email/server, management-auth/server, http/server; adapter-facing contracts now live in C6 |
-| C8 waitlist | C1 domain | 8 | `/feature-flag`, `/waitlist` and `/shared`; `data/schema.server.ts` joined with PR #232 (`e2d86a3a`), its range check reading `WAITLIST_REDUCED_PRICING_CAP` |
+| C8 waitlist | C1 domain | 8 | `/feature-flag`, `/waitlist`, `/shared`, and `/coaching-bundle`'s `PricingEligibility`, which the repository implements; `data/schema.server.ts`'s range check reads `WAITLIST_REDUCED_PRICING_CAP` |
 | C8 waitlist | C2 db | 3 | |
 | C8 waitlist | C3 config | 2 | |
 | C8 waitlist | C4 content | 2 | |
@@ -29,41 +29,52 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 | C9 accounts | C7 store | 2 | the store path literal from `contracts/paths.ts` |
 | C11 public-site | C3 config | 3 | |
 | C11 public-site | C4 content | 4 | legal documents; Eli's portrait paths (`about-content.ts`) |
-| C11 public-site | C5 ui | 16 | |
+| C11 public-site | C5 ui | 15 |  |
 | C11 public-site | C6 infrastructure | 4 | `BotDetectionConfig` type and the widget |
 | C11 public-site | C7 store | 5 | cart drawer and provider, store paths |
 | C11 public-site | C8 waitlist | 7 | contracts, `ui/shared` presentation, `ui/public` |
 | C11 public-site | C9 accounts | 3 | contracts, guards, `ui/public/auth-nav-actions` |
 | C11 public-site | C14 server | 1 | `shell/layout.server.ts` reads `runtimeConfigContext` |
 | C11 public-site | C17 assessment-calls | 4 | `routes.ts` takes the public route fragment (`assessmentCallsBookingRoutes`, renamed from `assessmentCallsPublicRoutes` by the rebase-resolution round) and, since GEN-192, the join route fragment (`assessmentCallsJoinRoutes`), registered outside the layout beside `accountsDeadEndRoutes`; `pages/pricing.tsx`, `sections/hero/hero.tsx` and `sections/about/about.tsx` take `BOOK_PATH` from `contracts/paths.ts` and nothing else |
+| C11 public-site | C18 coaching-sales | 2 | `routes.ts` spreads `coachingSalesPublicRoutes` inside the shell; `pages/pricing.tsx` reads `coachingSalesContext` and renders `ui/public/bundle-selector/bundle-selector.tsx` |
 | C12 client-portal | C3 config | 1 | |
 | C12 client-portal | C5 ui | 2 | |
 | C12 client-portal | C6 infrastructure | 2 | pwa |
 | C12 client-portal | C9 accounts | 4 | portal guard and paths |
-| C13 coach-portal | C5 ui | 3 | the shell and its navigation links; `pages/home.tsx` stopped importing `./layout` with GEN-193; since GEN-192, `shell/layout.tsx` also takes `Toaster` from `./toast` beside its existing `./layout` import; the remediation round moved the module the count refers to from `./overlays` to `./toast` |
+| C13 coach-portal | C5 ui | 4 | the shell and its navigation links; the dashboard and the assessment-calls page compose portal and appointment primitives |
 | C13 coach-portal | C9 accounts | 3 | portal guard and paths |
-| C13 coach-portal | C17 assessment-calls | 5 | `pages/home.tsx` composes the coach greeting and the upcoming-calls widget from `ui/coach/` and reads the feature's request-context key; `routes.ts` spreads `assessmentCallsCoachRoutes`, now two fragments (the assessment-calls listing and, since GEN-192, the settings page); `shell/navigation-links.tsx` takes `COACH_ASSESSMENT_CALLS_PATH` and, since GEN-192, `COACH_SETTINGS_PATH` from `contracts/paths.ts` for its two nav links |
-| C14 server | C1 domain | 7 | the container and platform composition name ports and use cases; the `feature-flag-overrides/` reader, store and composition name `FeatureFlagReader` and `FeatureFlagSet`, and its middleware reads `WAITLIST_MODE_FEATURE_FLAG` for the allowlist |
+| C13 coach-portal | C17 assessment-calls | 4 | `routes.ts` takes the settings fragment and the calls segment; `pages/home.tsx` composes the dashboard blocks; `pages/assessment-calls.tsx` composes the listing, section, clock and error boundary |
+| C13 coach-portal | C18 coaching-sales | 1 | `pages/assessment-calls.tsx` reads `coachingSalesContext` and fills the section's slots from `ui/coach/` (sales filter, badge, payment-link action, pricing label) |
+| C14 server | C1 domain | 8 | the container and platform composition name ports and use cases; the console logger implements the incident ports of `/acquisition`, `/waitlist`, `/assessment-call` and `/payment-link` |
 | C14 server | C2 db | 1 | `platform-composition.server.ts` no longer imports `DatabaseClient` |
-| C14 server | C3 config | 7 | the container reads `resolveFeatureFlagOverridesMode`; the override middleware reads `normalizeBasePath` for the cookie path |
+| C14 server | C3 config | 6 | the container reads `resolveFeatureFlagOverridesMode` and the payments secrets; the runtime environment loader |
 | C14 server | C4 content | 1 | privacy email |
-| C14 server | C6 infrastructure | 5 | bot verifier, product email, management auth, feature-flags repository, http/server |
+| C14 server | C6 infrastructure | 8 | bot verifier, product email, management auth, feature-flag repository, the payments factories and contracts, http helpers for the webhook route |
 | C14 server | C7 store | 2 | the container calls `composeStoreFeature` |
 | C14 server | C8 waitlist | 2 | the container calls `composeWaitlistFeature` |
 | C14 server | C9 accounts | 2 | the container calls `composeAccountsFeature` |
 | C14 server | C17 assessment-calls | 2 | the container calls `composeAssessmentCallsFeature`; `feature-contexts.server.ts` sets `assessmentCallsContext` |
-| C17 assessment-calls | C1 domain | 12 | `/assessment-call`, `/coach-availability` (since GEN-192, `contracts/assessment-call-settings.ts` alone, reading `WEEKDAYS`/`Weekday`), `/feature-flag` (the composition's `FeatureFlagReader` type), `/shared`; the two controllers (`api/booking/assessment-calls-controller.server.ts`, `api/settings/assessment-call-settings-controller.server.ts`), the two `contracts/` modules (`assessment-calls.ts`, `assessment-call-settings.ts`), the composition, the one `data/` adapter (`PostgresAssessmentCallRepository`), the notification factory and adapter, the calendar-invite and the two content builders, and in the browser half `call-overview.tsx` alone, reading `ASSESSMENT_CALL_RULES`. No C17 module imports `/coach-meeting-room`: the composition builds C6's `PostgresCoachMeetingRoom` directly and names no domain type from that slice |
+| C14 server | C18 coaching-sales | 2 | the container calls `composeCoachingSalesFeature` and hands its `paymentCompletionHandler` to the platform composition; the feature-context middleware sets `coachingSalesContext` |
+| C17 assessment-calls | C1 domain | 15 | `/assessment-call`, `/coach-availability`, `/coach-meeting-room`, `/feature-flag`, `/shared`, and `/payment-link`'s `AssessmentCallReader`, which the composition satisfies |
 | C17 assessment-calls | C2 db | 3 | DatabaseClient, appSchema |
 | C17 assessment-calls | C3 config | 4 | `joinBasePath` (the emails and the booking overview's portrait) and `AssessmentCallsConfig` |
 | C17 assessment-calls | C4 content | 2 | the support address on the error state; Eli's portrait path on the booking overview |
-| C17 assessment-calls | C5 ui | 14 | `./primitives` (the booking page, the details form, the confirmation, the unavailable state, `call-overview.tsx`, `slot-picker.tsx`, the coach's listing section, pager, widget and join link, and since GEN-192 `ui/public/join/join-page.tsx`'s `buttonVariants` and `ui/coach/settings/assessment-call-settings-section.tsx`'s primitives), `./lib` (`call-overview.tsx`, `slot-picker.tsx`, `book-page.tsx`, the coach's listing section and widget, `use-coach-clock.ts` and, since GEN-192, `assessment-call-settings-section.tsx`), `./calendar` (`slot-calendar.tsx`), `./tabs` (the coach's listing section), `./appointments` (the coach's listing section and widget) and, since GEN-192, `./layout` (`join-page.tsx`'s `DeadEndPage` — this feature's first import of that subpath) and `./toast` (`assessment-call-settings-section.tsx` and `ui/coach/settings/settings-page.tsx`, both reading `toast`/`Toaster`; moved from `./overlays` in the remediation round) |
-| C17 assessment-calls | C6 infrastructure | 13 | bot-detection (browser and server; the controller and the composition type `BotVerifier` from its contract), email/server (the notification factory, the adapter and the composition take `ProductEmail`, `ProductEmailCommand` and `EmailAttachment` from its contract), http/server, coach-calendar/server (the repository's reservation writers and the composition's `PostgresCoachCalendar`); since GEN-192, `coach-calendar/server` also supplies the composition's `PostgresCoachAvailability` and the new `coach-meeting-room/server` supplies its `PostgresCoachMeetingRoom` — both from the same composition module already counted, so that module contributes no new count — but `api/settings/settings.ts` is a new module reading `http/server` on its own, raising the count 12 → 13 |
-| C17 assessment-calls | C9 accounts | 2 | new (GEN-192): `api/settings/assessment-call-settings-controller.server.ts` takes `requireApiAccount` from `server/guards/require-account.server` — this feature's first cross-feature consumer of that guard, previously read only inside C9 itself (U400) and by the client/coach portal layouts through `requirePortalAccess`; `contracts/paths.ts` takes `COACH_PORTAL_PATH` from `contracts/paths.ts` — this feature's first import of another feature's `contracts/paths.ts` |
+| C17 assessment-calls | C5 ui | 21 | `./primitives`, `./appointments`, `./calendar`, `./tabs`, `./filters`, `./lib`, `./layout`, `./portal`, `./toast` |
+| C17 assessment-calls | C6 infrastructure | 14 | bot-detection (browser and server), email/server (the notification contract, the Email* primitives and the email theme), http/server, coach-calendar/server and coach-meeting-room/server (the composition's adapters and the repository's reservation writers) |
+| C17 assessment-calls | C9 accounts | 2 | `api/settings/assessment-call-settings-controller.server.ts` takes `requireApiAccount` from `server/guards/`; `contracts/paths.ts` takes `COACH_PORTAL_PATH` from `contracts/paths.ts` |
+| C18 coaching-sales | C1 domain | 18 | `/payment-link`, `/coaching-subscription`, `/coaching-bundle`, `/assessment-call` (visitor vocabularies for the clients table), `/feature-flag`, `/email-address`, `/shared` |
+| C18 coaching-sales | C2 db | 4 | `DatabaseClient`, `DatabaseTransaction`, `appSchema`, `isCausedByDatabaseError` |
+| C18 coaching-sales | C3 config | 3 | `joinBasePath` |
+| C18 coaching-sales | C5 ui | 11 | `./primitives`, `./overlays` (`ConfirmDialog`), `./lib`, `./motion`, `./toast` |
+| C18 coaching-sales | C6 infrastructure | 11 | `./payments/server` (the completion-handler contract, `recordPaymentEvent`, `toCheckoutCompletion`), `./email/server` (the Email* primitives and the email theme), `./http/server` |
+| C18 coaching-sales | C9 accounts | 1 | `requireApiAccount` from `server/guards/` |
+| C18 coaching-sales | C17 assessment-calls | 4 | `contracts/paths.ts` (`BOOK_PATH`, `COACH_CALLS_PAGE_PARAM`), `contracts/visitor-profile.ts` (`possessivePronoun`), and `data/schema.server.ts` for foreign keys |
 | C15 app root | C3 config | 1 | |
 | C15 app root | C5 ui | 1 | `root-error-page.tsx` renders the shared `DeadEndPage` from `./layout`; `app.css`'s `@import` of `styles.css` is not followed by the cruise |
 | C15 app root | C7 store | 1 | the registry imports `storePublicRoutes`/`storeApiRoutes` |
 | C15 app root | C8 waitlist | 1 | the registry imports `waitlistApiRoutes` |
 | C15 app root | C17 assessment-calls | 1 | the registry imports `assessmentCallsApiRoutes` |
+| C15 app root | C18 coaching-sales | 1 | the registry imports `coachingSalesApiRoutes` |
 | C15 app root | C9 accounts | 3 | the registry, `root.tsx` (access-denied page) and `root.server.ts` (account resolution) |
 | C15 app root | C11 public-site | 1 | the registry imports `publicSiteRoutes` |
 | C15 app root | C12 client-portal | 1 | the registry imports `clientPortalRoutes` |
@@ -76,6 +87,7 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 |---|---|---|---|
 | any module | a dependency cycle, including between domain slices | R30 | `no-circular` |
 | features/A | features/B outside contracts/, ui/shared/, server/guards/ | R3 | `feature-internals` |
+| features/assessment-calls | features/coaching-sales (any folder) | R30 (coaching sales is downstream of assessment calls; the reverse edge would close a component cycle `no-circular` cannot see at module level) | `assessment-calls-never-reach-coaching-sales` (fixture-covered) |
 | features/A/data/schema.server.ts | anything private in features/B except its `data/schema.server.ts` (foreign keys) | R3 carve-out | `feature-schema-foreign-key` (still unexercised at HEAD) |
 | surfaces/public-site | a feature outside ui/public/, ui/shared/, contracts/, server/guards/, routes.ts | R2 | `surface-public-site-to-feature` |
 | surfaces/client-portal | a feature outside ui/client/, ui/shared/, contracts/, server/guards/, routes.ts | R2 | `surface-client-portal-to-feature` |
@@ -119,10 +131,10 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 
 | Need | Satisfied at | Mechanism | Enforced by | Exercised at HEAD |
 |---|---|---|---|---|
-| Use another entity's types, ports and rules in policy code | domain folder to domain folder | import through the folder entry (`@eli-coach-platform/domain/<entity>`, or `../<entity>` inside the package) | `domain-slices`, `no-circular` | thirteen edges: `acquisition`→`/product`, `acquisition`→`/email-address`, `acquisition`→`/shared`, `assessment-call`→`/coach-availability`, `assessment-call`→`/coach-meeting-room` (GEN-192), `assessment-call`→`/email-address`, `assessment-call`→`/feature-flag`, `assessment-call`→`/shared`, `download-grant`→`/product`, `download-grant`→`/shared`, `waitlist`→`/email-address`, `waitlist`→`/feature-flag`, `waitlist`→`/shared` |
+| Use another entity's types, ports and rules in policy code | domain folder to domain folder | import through the folder entry (`@eli-coach-platform/domain/<entity>`, or `../<entity>` inside the package) | `domain-slices`, `no-circular` | yes: `acquisition`→`product`, `email-address`, `shared`; `assessment-call`→`coach-availability`, `coach-meeting-room`, `email-address`, `feature-flag`, `shared`; `client`→`assessment-call`; `coaching-bundle`→`email-address`; `coaching-subscription`→`assessment-call`, `client`, `coaching-bundle`, `email-address`, `payment-link`, `shared`; `download-grant`→`product`, `shared`; `payment-link`→`assessment-call`, `coaching-bundle`, `email-address`, `feature-flag`, `shared`; `waitlist`→`email-address`, `feature-flag`, `shared` |
 | Know the current account | request context | read the accounts feature's `server/guards/` key | `guards-construct-nothing`, `server-guards-consumers` | yes |
-| Look another feature's data up | a port the consumer declares | the consuming slice declares the narrow interface; the composition satisfies it | `feature-internals`, `feature-api-to-data` | no exercising edge |
-| Reference another feature's table | persistence | `data/schema.server.ts` may import the other feature's `data/schema.server.ts` for a foreign key | `feature-schema-foreign-key` | no exercising edge |
+| Look another feature's data up | a port the consumer declares | the consuming slice declares the narrow interface; the producing feature's composition returns an implementation under `handles`, and the container hands it to the consumer's composition | `feature-internals`, `feature-api-to-data`, `composition-root` | yes: `AssessmentCallReader` (C1 `/payment-link`, satisfied by C17's composition), `PricingEligibility` (C1 `/coaching-bundle`, satisfied by C8's repository), both consumed by C18 |
+| Reference another feature's table | persistence | `data/schema.server.ts` may import the other feature's `data/schema.server.ts` for a foreign key | `feature-schema-foreign-key` | yes: C18's `payment_links`, `clients` and `coaching_subscriptions` reference C17's `assessment_calls` |
 | Compose another feature's UI | `ui/shared/` | the owning feature publishes the component or presenter | `feature-internals`, the three `surface-<s>-to-feature` rules | yes |
 | Exchange wire data | `contracts/` | zod schemas and path literals | `feature-internals`, the three `surface-<s>-to-feature` rules | yes |
 | E1490 | apps/platform/src/features/assessment-calls/api/coach/coach-assessment-calls-controller.server.ts | apps/platform/src/features/assessment-calls/contracts/assessment-calls.ts | import | no | no | lateral | present |
@@ -132,7 +144,6 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 | E1494 | apps/platform/src/features/assessment-calls/contracts/paths.ts | apps/platform/src/features/accounts/contracts/paths.ts | import | yes | no | lateral | present |
 | E1495 | apps/platform/src/features/assessment-calls/server/assessment-calls-composition.server.ts | apps/platform/src/features/assessment-calls/api/coach/coach-assessment-calls-controller.server.ts | import | no | no | lateral | present |
 | E1496 | apps/platform/src/features/assessment-calls/ui/coach/assessment-call-listing.ts | apps/platform/src/features/assessment-calls/contracts/assessment-calls.ts | import | no | no | lateral | present |
-| E1497 | apps/platform/src/features/assessment-calls/ui/coach/assessment-call-listing.ts | apps/platform/src/features/assessment-calls/ui/shared/day-key.ts | import | no | no | lateral | present |
 | E1567 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls-error-boundary.tsx | apps/platform/src/features/assessment-calls/contracts/assessment-calls.ts | import | no | no | lateral | added (coach follow-ups) |
 | E1568 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls-error-boundary.tsx | apps/platform/src/features/assessment-calls/ui/coach/coach-calls-page-frame.ts | import | no | no | lateral | added (coach follow-ups) |
 | E1569 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls-error-boundary.tsx | external:lucide-react | import | n/a | no | lateral | added (coach follow-ups) |
@@ -140,17 +151,10 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 | E1571 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls-error-boundary.tsx | packages/ui/src/layout/index.ts | import | yes | no | lateral | added (coach follow-ups) |
 | E1572 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls-error-boundary.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | added (coach follow-ups) |
 | E1573 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls-error-boundary.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | added (coach follow-ups) |
-| E1499 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-page.tsx | apps/platform/src/features/assessment-calls/server/guards/assessment-calls-context.server.ts | import | no | no | lateral | present |
-| E1500 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-page.tsx | apps/platform/src/features/assessment-calls/ui/coach/assessment-call-listing.ts | import | no | no | lateral | present |
-| E1574 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-page.tsx | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls-error-boundary.tsx | re-export | no | no | lateral | added (coach follow-ups; the route's `ErrorBoundary` export) |
-| E1501 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-page.tsx | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | import | no | no | lateral | present |
-| E1575 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-page.tsx | apps/platform/src/features/assessment-calls/ui/coach/coach-calls-page-frame.ts | import | no | no | lateral | added (coach follow-ups) |
-| E1502 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-page.tsx | apps/platform/src/features/assessment-calls/ui/coach/use-coach-clock.ts | import | no | no | lateral | present |
 | E1503 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | apps/platform/src/features/assessment-calls/contracts/assessment-calls.ts | import | no | no | lateral | present |
 | E1504 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | apps/platform/src/features/assessment-calls/contracts/call-moment.ts | import | no | no | lateral | present |
 | E1505 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | apps/platform/src/features/assessment-calls/ui/coach/assessment-call-listing.ts | import | no | no | lateral | present |
 | E1506 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/call-list-pager.tsx | import | no | no | lateral | present |
-| E1507 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | apps/platform/src/features/assessment-calls/ui/coach/join-call-link.tsx | import | no | no | lateral | present |
 | E1508 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | packages/ui/src/appointments/index.ts | import | yes | no | lateral | present |
 | E1509 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
 | E1510 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
@@ -168,7 +172,6 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 | E1519 | apps/platform/src/features/assessment-calls/ui/coach/dashboard/upcoming-calls-widget.tsx | packages/ui/src/appointments/index.ts | import | yes | no | lateral | present |
 | E1520 | apps/platform/src/features/assessment-calls/ui/coach/dashboard/upcoming-calls-widget.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
 | E1521 | apps/platform/src/features/assessment-calls/ui/coach/dashboard/upcoming-calls-widget.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
-| E1522 | apps/platform/src/features/assessment-calls/ui/coach/join-call-link.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
 | E1523 | apps/platform/src/features/assessment-calls/ui/coach/use-coach-clock.ts | external:react | import | n/a | no | lateral | present |
 | E1524 | apps/platform/src/features/assessment-calls/ui/coach/use-coach-clock.ts | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
 | E1525 | apps/platform/src/features/assessment-calls/ui/public/book/book-page.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
@@ -194,8 +197,6 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 | E1544 | packages/ui/src/appointments/appointment-card.tsx | packages/ui/src/primitives/avatar.tsx | import | no | no | lateral | present |
 | E1546 | packages/ui/src/appointments/dashboard-appointment-row.tsx | external:react | import | n/a | no | lateral | present |
 | E1547 | packages/ui/src/appointments/dashboard-appointment-row.tsx | packages/ui/src/appointments/appointment.ts | import | no | no | lateral | present |
-| E1548 | packages/ui/src/appointments/index.ts | packages/ui/src/appointments/appointment-card.tsx | import | no | no | lateral | present |
-| E1549 | packages/ui/src/appointments/index.ts | packages/ui/src/appointments/dashboard-appointment-row.tsx | import | no | no | lateral | present |
 | E1550 | packages/ui/src/lib/index.ts | packages/ui/src/lib/use-display-time-zone.ts | import | no | no | lateral | present |
 | E1551 | packages/ui/src/lib/use-display-time-zone.ts | external:react | import | n/a | no | lateral | present |
 | E1552 | packages/ui/src/primitives/avatar.tsx | external:class-variance-authority | import | n/a | no | lateral | present |
@@ -256,9 +257,9 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 | B123 | React Router loader contract | framework | U231, U247, U604, U415, U521 | routes.ts, page modules | loader data types; no domain instance crosses it (`conventions.md`) | page view | React Router strips `.server` modules from the client build; `browser-half` and `route-thinness-domain` |
 | B140 | sessionContext RouterContext<ResolvedSession> (U408) | C9 server/guards (frameworks) | U410 sets it | U411, U412, U604 | `ResolvedSession` with `account: AccountSnapshot`; default `{ kind: "anonymous" }` | React Router context | `guards-construct-nothing`, `server-guards-consumers` |
 | B143 | requirePortalAccess (U411) | C9 server/guards | portal layout middleware in C12, C13 | U705, U711 | `(args, { role })`, reading `accountsContext.portal`; returns `AccountSnapshot` | caller | `server-guards-consumers` |
-| B144 | the six request-context keys | C7, C8, C9, C17 `server/guards/` and C14 `server/guards/` | `createFeatureContextMiddleware` (U517) sets all six from the container | `accountsContext` (accounts routes, the resolution middleware, the portal guards), `storeContext` (store routes and loaders), `waitlistContext` (the waitlist route and the public-site layout loader), `assessmentCallsContext` (the two assessment-call routes and the two booking pages), `platformContext` (`server/api/*` only), `runtimeConfigContext` (the public-site layout loader only) | the feature slice or `{ appBasePath, botDetection }` | the context key | each is created with `createContext<…>()` and constructs nothing (`guards-construct-nothing`); `server-guards-consumers` fences `platformContext` |
+| B144 | the eight request-context keys | C7, C8, C9, C17, C18 `server/guards/` and C14 `server/guards/` | `createFeatureContextMiddleware` (U517) sets all eight from the container, publishing each composition's `feature` and never its `handles` | `accountsContext` and `sessionContext` (accounts routes, the resolution middleware, the portal guards), `storeContext` (store routes and loaders), `waitlistContext` (the waitlist route, the public-site layout loader and the pricing loader), `assessmentCallsContext` (the assessment-call routes and pages, and the coach portal's dashboard and calls page), `coachingSalesContext` (the coaching-sales routes and pages, the pricing loader and the coach calls page), `platformContext` (`server/api/*` only, including the Stripe webhook), `runtimeConfigContext` (the public-site layout loader only) | the feature's controllers or `{ appBasePath, botDetection }` | the context key | each is created with `createContext<…>()` and constructs nothing (`guards-construct-nothing`); `server-guards-consumers` fences `platformContext` |
 | B151 | PlatformDatabase.client deferred DatabaseClient proxy | C14 (frameworks) | private createDeferredDatabaseClient in U503 | every repository built by a feature composition | DatabaseClient (Drizzle type) | proxy | none |
-| B152 | PlatformContainer (U502) composition output | C14 composition | U500 | `root.server.ts` only | a record of feature slices `{ accounts, assessmentCalls, closeDatabase, featureFlagOverrides, platform, store, waitlist }` | root.server.ts | `composition-root` |
+| B152 | PlatformContainer (U502) composition output | C14 composition | U500 | `root.server.ts` only | a record of feature slices `{ accounts, assessmentCalls, closeDatabase, coachingSales, featureFlagOverrides, platform, store, waitlist }`, with waitlist, assessment calls and coaching sales as `{ feature, handles }` | root.server.ts | `composition-root` |
 | B180 | Radix wrapper boundary in C5 | C5 frameworks | checkbox, filter-chip-group, sheet, navigation-dialog, select, popover, tabs | apps through the concern subpaths | React props | C5 component | none |
 | B181 | SearchParamsWriter (U805) | C5 lib (adapters) | C5 | U237 catalog-view | { searchParams, writeSearchParams } | consumer | none |
 | B182 | packages/ui export map | C5 | seven concern `index.ts` entries plus `styles.css`; no root barrel | apps/platform/src, app.css | components, CSS | consumers | exports, `ui-subpaths`, `ui-primitives-import-only-lib`, `ui-lib-is-the-base` |
@@ -270,18 +271,33 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 
 | B277 | the request's feature-flag override set (U1352: `runWithFeatureFlagOverrides(overrides, run)`, `currentFeatureFlagOverrides()`; no interface, one `AsyncLocalStorage<Readonly<FeatureFlagSet>>`) | C14 adapters | node `AsyncLocalStorage` | writer U1355 around `next()`; reader U1353 | `Readonly<FeatureFlagSet>` (C1 boundary data) | the store module | `feature-flag-overrides-root-only` keeps every importer inside the folder or the container |
 | B278 | FeatureFlagOverrides (U1354) composition output | C14 composition | composeBrowserFeatureFlagOverrides, composeWithoutFeatureFlagOverrides | U500, which hands `featureFlags` to the compositions and keeps the whole on `PlatformContainer`; `root.server.ts` calls `.middleware` off the container | `{ featureFlags: FeatureFlagReader; middleware: MiddlewareFunction<Response> }` | container.server.ts | `feature-flag-overrides-root-only`, `composition-root` |
+| B279 | PricingEligibility (U1377) | C1 coaching-bundle (use-cases) | U303 PostgresWaitlistRepository (adapters, C8), handed out as the waitlist composition's `handles.pricingEligibility` | U1378, U1395, U1396, U1384 | an `EmailAddress` in; a `PriceTier` or a map of tiers out | implementer | dependency-absence; composition injection; `feature-internals` keeps C18 from importing C8's repository |
+| B280 | CheckoutSessions (U1381) | C1 coaching-subscription (use-cases) | U1433 PostgresPaymentLinks (adapters, C18) | U1384 | plain `CheckoutSessionRecord`s; `{ id }` lists | implementer | dependency-absence |
+| B281 | CoachingPurchases (U1382) | C1 coaching-subscription (use-cases) | U1434 PostgresCoachingPurchases (adapters, C18) | U1385 | a `CoachingPurchase` (event id, `Client` and `CoachingSubscription` instances, read by the adapter through `toSnapshot()`) in; `recorded \| duplicate_event \| call_already_paid` out | implementer | dependency-absence; the write-port instance allowance in decisions.md |
+| B282 | PaymentCheckout (U1383) | C1 coaching-subscription (use-cases) | U1412 InMemoryPaymentCheckout and U1416 StripePaymentCheckout (adapters, C6), selected by U1402 on `PAYMENTS_PROVIDER` | U1384, U1386 | a plain `CreateCheckoutSessionCommand` in; `{ id }`, `{ id, url }` and a plain `CheckoutCompletion` out; provider-neutral names | implementer | dependency-absence; `./payments/server` publishes only the factory |
+| B283 | PaymentLinks (U1389) | C1 payment-link (use-cases) | U1433 PostgresPaymentLinks (adapters, C18) | U1384, U1395, U1396 | a plain `NewPaymentLink` in; `PaymentLink` instances out | implementer | dependency-absence |
+| B284 | PaymentLinkTokenGenerator (U1389) | C1 payment-link (use-cases) | U1432 RandomPaymentLinkTokenGenerator (adapters, C18) | U1395 | `{ rawToken, sha256 }` | implementer | dependency-absence |
+| B285 | PaymentLinkTokenHasher (U1389) | C1 payment-link (use-cases) | U1432 PaymentLinkTokenSha256 (adapters, C18) | U1384, U1396 | strings | implementer | dependency-absence |
+| B286 | AssessmentCallReader (U1390) | C1 payment-link (use-cases) | an object over `PostgresAssessmentCallRepository.findById(...).toSnapshot()` in U1235 (composition, C17), handed out as `handles.assessmentCallReader` | U1384, U1385, U1395, U1396 | a call id in; an `AssessmentCallSnapshot` or `null` out | implementer | dependency-absence; composition injection |
+| B287 | CallSalesStates (U1391) | C1 payment-link (use-cases) | U1434 PostgresCoachingPurchases (adapters, C18) | U1397, U1384, U1395, U1396 | call ids in; a map of recorded `CallSalesState`s out | implementer | dependency-absence |
+| B288 | CoachingSalesIncidents (U1392) | C1 payment-link (use-cases) | U519 createConsoleLogger (C14) | U1394, U1395, U1385, U1428 | the failed read, a call id, or a rejection reason | implementer | dependency-absence, composition injection |
+| B289 | CoachingSalesNotifications (U1393) | C1 payment-link (use-cases) | U1437 EmailCoachingSalesNotifications (adapters, C18), built by `createCoachingSalesNotifications` | U1395 | a `PaymentLinkMessage` (call snapshot, link id, raw token, tier) in; `sent \| failed` out | implementer | dependency-absence |
+| B290 | PaymentCompletionHandler (U1404) | C6 payments (adapters; adapter-facing contract) | U1428 CoachingPurchaseCompletionHandler (adapters, C18), handed out as `handles.paymentCompletionHandler` | U518 (purpose-keyed map), U1458 | an event id and a `PaidCheckoutSession` in; `recorded \| duplicate \| ignored` out | implementer | composition injection; the platform composition throws at startup on a duplicate purpose |
+| B291 | PaymentEvents (U1405) | C6 payments (adapters; adapter-facing contract) | U1415 StripePaymentEvents and U1413 InMemoryPaymentEvents (adapters, C6), both reading events through `readPaymentEvent`, selected by U1403 on `PAYMENTS_PROVIDER` | U1458 | the raw body and signature header in; `PaymentEventVerdict` out | implementer | `./payments/server` publishes the contract and the factory only |
+| B292 | PaymentWebhookIncidents (U1406) | C6 payments (adapters; adapter-facing contract) | U519 createConsoleLogger (C14) | U1458 | `{ eventId, purpose }` | implementer | composition injection |
 
 ## Entry points and composition roots
 
 | Kind | Path | Constructs |
 |---|---|---|
-| composition-root | apps/platform/src/server/container.server.ts (createPlatformContainer, memoised by getPlatformContainer) | the shared handles once — `createPlatformDatabase`, the `Clock` implementation, `createConsoleLogger()`, `createBotVerifier()`, `createManagementAuthConfig()` and `createManagementAuthenticator()`, `createProductEmail()`, one `PostgresFeatureFlagRepository` and one `GetFeatureFlagsUseCase`, and the override selection by `resolveFeatureFlagOverridesMode(environment)`: `composeBrowserFeatureFlagOverrides({ appBasePath, featureFlags })` (decorator reader and override middleware) or `composeWithoutFeatureFlagOverrides(featureFlags)` (raw reader and a pass-through middleware) — then `composeAccountsFeature`, `composeAssessmentCallsFeature`, `composePlatformFeature`, `composeStoreFeature`, `composeWaitlistFeature`, passing the selected feature-flag reader to the platform, waitlist and assessment-calls compositions; `featureFlagOverrides` is a field of the container. One console logger implements B266, B267 and B273 |
+| composition-root | apps/platform/src/server/container.server.ts (createPlatformContainer, memoised by getPlatformContainer) | the shared handles once — `createPlatformDatabase`, the `Clock` implementation, `createConsoleLogger()`, `createBotVerifier()`, `createManagementAuthConfig()` and `createManagementAuthenticator()`, `createProductEmail()`, `createPaymentCheckout()` and `createPaymentEvents()`, one `PostgresFeatureFlagRepository` and one `GetFeatureFlagsUseCase`, and the override selection by `resolveFeatureFlagOverridesMode(environment)` — then, in order, `composeWaitlistFeature`, `composeAssessmentCallsFeature`, `composeCoachingSalesFeature` (given `assessmentCalls.handles.assessmentCallReader` and `waitlist.handles.pricingEligibility`), `composePlatformFeature` (given `[coachingSales.handles.paymentCompletionHandler]`, the payment events verifier and the webhook signing secret), `composeAccountsFeature`, `composeStoreFeature`; the selected feature-flag reader goes to the platform, waitlist, assessment-calls and coaching-sales compositions; `featureFlagOverrides` is a field of the container. One console logger implements B266, B267, B273, B288 and B292 |
 | composition-root (second) | apps/platform/src/root.server.ts | `clerkMiddleware()`, the container's `featureFlagOverrides.middleware`, `createFeatureContextMiddleware(getPlatformContainer)`, `createAccountResolutionMiddleware()`, in that order; the container's only importer |
 | composition-site | apps/platform/src/features/accounts/server/accounts-composition.server.ts | the account repository, `ProvisionAccountUseCase`, `DeleteAccountUseCase`, and the account and webhook controllers; `AccountsFeatureHandles` names only what the feature reads |
 | composition-site | apps/platform/src/features/store/server/store-composition.server.ts | the store repositories, asset store and digests, token generators, zip stream, `EmailProductDelivery`, the eight `/product`, `/acquisition` and `/download-grant` use cases, and the five store controllers; `StoreFeatureHandles` names only what the feature reads |
-| composition-site | apps/platform/src/features/assessment-calls/server/assessment-calls-composition.server.ts | `PostgresAssessmentCallRepository`, `PostgresCoachCalendar` (C6, for `ListOpenSlotsUseCase`), `createAssessmentCallNotifications(...)`, the five `/assessment-call` use cases and both controllers, `AssessmentCallsController` and `AssessmentCallSettingsController`. Synchronous, and no use case receives a value read off an adapter at composition: `BookAssessmentCallUseCase` reads the coach's zone from `availability.current()` inside `execute()`. The one remaining assessment-call variable arrives as the handle `assessmentCallsConfig` (the container passes the runtime environment, typed as `AssessmentCallsConfig`). The container's shared `FeatureFlagReader` and incidents handle arrive as `featureFlags` and `incidents`; the composition builds one `AssessmentCallBookingWindow` from them, held by the two booking use cases, not by the controller (CH-F). Changed (GEN-192): builds one `PostgresCoachAvailability` (C6) in place of the deleted `StaticCoachAvailability`, and one `PostgresCoachMeetingRoom` (C6) in place of the deleted `ConfiguredMeetingRoomLink`; both instances are shared across every use case that takes them (`BookAssessmentCallUseCase`, `ListOpenSlotsUseCase`, `ResolveJoinLinkUseCase`, `GetAssessmentCallSettingsUseCase`, `UpdateAssessmentCallSettingsUseCase`) |
-| composition-site | apps/platform/src/features/waitlist/server/waitlist-composition.server.ts | `Waitlist.configure(...)` from the offer config, the waitlist repository, `EmailWaitlistConfirmation`, `GetWaitlistUseCase` with the supplied `FeatureFlagReader`, `JoinWaitlistUseCase` and the waitlist controller; `WaitlistFeatureHandles` is module-private |
-| composition-site | apps/platform/src/server/platform-composition.server.ts | readyz, metadata and feature-flag controllers plus the runtime config the public site reads; it receives `FeatureFlagReader`, no longer constructs its persistence, and keeps `PlatformFeatureHandles` module-private |
+| composition-site | apps/platform/src/features/assessment-calls/server/assessment-calls-composition.server.ts | `PostgresAssessmentCallRepository`, `PostgresCoachCalendar` (C6, for `ListOpenSlotsUseCase`), `createAssessmentCallNotifications(...)`, the five `/assessment-call` use cases and both controllers, `AssessmentCallsController` and `AssessmentCallSettingsController`. Synchronous, and no use case receives a value read off an adapter at composition: `BookAssessmentCallUseCase` reads the coach's zone from `availability.current()` inside `execute()`. The one remaining assessment-call variable arrives as the handle `assessmentCallsConfig` (the container passes the runtime environment, typed as `AssessmentCallsConfig`). The container's shared `FeatureFlagReader` and incidents handle arrive as `featureFlags` and `incidents`; the composition builds one `AssessmentCallBookingWindow` from them, held by the two booking use cases, not by the controller (CH-F). Changed (GEN-192): builds one `PostgresCoachAvailability` (C6) in place of the deleted `StaticCoachAvailability`, and one `PostgresCoachMeetingRoom` (C6) in place of the deleted `ConfiguredMeetingRoomLink`; both instances are shared across every use case that takes them (`BookAssessmentCallUseCase`, `ListOpenSlotsUseCase`, `ResolveJoinLinkUseCase`, `GetAssessmentCallSettingsUseCase`, `UpdateAssessmentCallSettingsUseCase`); returns `{ feature, handles: { assessmentCallReader } }` |
+| composition-site | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | `PostgresPaymentLinks`, `PostgresCoachingPurchases`, the token generator and hasher, `CoachingSalesWindow`, the eight `/payment-link`, `/coaching-subscription` and `/coaching-bundle` use cases, `createCoachingSalesNotifications(...)`, the three controllers (`CheckoutsController`, `CoachSalesController`, `PaymentLinksController`) and `CoachingPurchaseCompletionHandler`; returns `{ feature, handles: { paymentCompletionHandler } }` |
+| composition-site | apps/platform/src/features/waitlist/server/waitlist-composition.server.ts | `Waitlist.configure(...)` from the offer config, the waitlist repository, `EmailWaitlistConfirmation`, `GetWaitlistUseCase` with the supplied `FeatureFlagReader`, `JoinWaitlistUseCase` and the waitlist controller; returns `{ feature, handles: { pricingEligibility } }`; its input handles type is module-private |
+| composition-site | apps/platform/src/server/platform-composition.server.ts | readyz, metadata, feature-flag and Stripe webhook controllers plus the runtime config the public site reads; it receives `FeatureFlagReader`, `PaymentEvents`, the signing secret and the completion handlers, builds a purpose-keyed map that throws at startup on a duplicate purpose, constructs no persistence, and keeps `PlatformFeatureHandles` module-private |
 | composition-site | apps/platform/src/server/feature-flag-overrides/feature-flag-overrides-composition.server.ts | `createFeatureFlagOverrideReader(reader)` over the container's raw reader and `createFeatureFlagOverrideMiddleware({ appBasePath })` in `browser` mode; the raw reader and `(_args, next) => next()` in `none` mode; both branches return `{ featureFlags, middleware }`; reachable only from the container |
 | construction-site | apps/platform/src/server/database.server.ts (openPool, lazy) | pg Pool via createManagedDatabasePool; Drizzle client via createDatabaseClient |
 | construction-site | apps/platform/src/features/store/email/create-product-delivery.server.ts | EmailProductDelivery over the `ProductEmail` it is handed; no provider branch |
@@ -289,18 +305,22 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 | construction-site | packages/infrastructure/src/email/create-product-email.server.ts | InMemoryProductEmail or `new Resend()` + ResendProductEmail, selected on `PRODUCT_EMAIL_PROVIDER` (`memory \| resend`) |
 | construction-site | packages/infrastructure/src/bot-detection/verifier/create-bot-verifier.server.ts | StaticTokenBotVerifier or TurnstileBotVerifier, selected on `BOT_DETECTION_PROVIDER`; no `ENVIRONMENT` sniff |
 | construction-site | packages/infrastructure/src/management-auth/create-management-authenticator.server.ts | BearerSecretManagementAuthenticator (bearer only) |
+| construction-site | apps/platform/src/features/coaching-sales/email/create-coaching-sales-notifications.server.ts | EmailCoachingSalesNotifications over the `ProductEmail` it is handed; no provider branch |
+| construction-site | packages/infrastructure/src/payments/create-payment-checkout.server.ts, create-payment-events.server.ts | InMemoryPaymentCheckout / InMemoryPaymentEvents, or the Stripe client with StripePaymentCheckout / StripePaymentEvents, selected on `PAYMENTS_PROVIDER` (`memory \| stripe`); the Stripe SDK is constructed nowhere else |
 | construction-site | apps/platform/src/features/store/api/downloads/zip-stream.server.ts (ZipDeliveryStream.create) | archiver ZipArchive at request time |
 | construction-site | apps/platform/src/features/store/ui/public/cart/cart.ts, cart-provider.tsx | Zustand store with persist over localStorage (`cart-storage.ts`); one store per provider |
-| route registry | apps/platform/src/routes.ts | a concatenation of eight fragments (`publicSiteRoutes`, `platformApiRoutes`, `accountsApiRoutes`, `waitlistApiRoutes`, `storeApiRoutes`, `assessmentCallsApiRoutes`, `clientPortalRoutes`, `coachPortalRoutes`), each built with `relative(import.meta.dirname)` in its own feature or surface, with no path literals of its own. The registered route table is identical to the baseline in paths and files, but React Router assigns different route ids to `relative()`-built routes; nothing in the app consumes a route id, so the difference is inert. `surfaces/public-site/routes.ts` imports `index` unscoped while destructuring `layout` and `route` from `relative(…)`, so the index child's file path is app-root-relative where its siblings are directory-relative |
-| route (page) | surfaces/public-site/shell/layout.tsx (+ layout.server.ts loader), pages/{home,pricing,blog,privacy,terms}.tsx | the loader reads `waitlistContext`, `sessionContext` and `runtimeConfigContext` off `args.context` and returns `presentWaitlist(...)`. `pages/pricing.tsx` exports `handle.publicContentFrame = "full-bleed"`, as the booking page does, so the layout drops its padded frame for both |
+| route registry | apps/platform/src/routes.ts | a concatenation of nine fragments (`publicSiteRoutes`, `platformApiRoutes`, `accountsApiRoutes`, `waitlistApiRoutes`, `storeApiRoutes`, `assessmentCallsApiRoutes`, `coachingSalesApiRoutes`, `clientPortalRoutes`, `coachPortalRoutes`), each built with `relative(import.meta.dirname)` in its own feature or surface, with no path literals of its own |
+| route (page) | surfaces/public-site/shell/layout.tsx (+ layout.server.ts loader), pages/{home,pricing,blog,privacy,terms}.tsx | the layout loader reads `waitlistContext`, `sessionContext` and `runtimeConfigContext` off `args.context` and returns `presentWaitlist(...)`. `pages/pricing.tsx`'s loader reads `waitlistContext` and `coachingSalesContext` (`checkouts.loadPricingCards`); it exports `handle.publicContentFrame = "full-bleed"`, as the booking page does |
 | route (page) | features/store/ui/public/{catalog/catalog-page,product/product-page,download/download-page}.tsx (+ .server.ts loaders) | the loaders read `storeContext` |
 | route (page) | features/accounts/ui/public/sign-in-failed-page.tsx (+ .server.ts) | reads `accountsContext`. Registered through `accountsDeadEndRoutes`, which `surfaces/public-site/routes.ts` spreads after the layout route rather than inside it, so the page renders as a dead end with no public shell |
 | route (page) | features/assessment-calls/ui/public/book/book-page.tsx, ui/public/join/join-page.tsx | both loaders read `assessmentCallsContext` and nothing else. The booking loader returns an `unavailable` presentation rather than throwing when slots cannot be read (D21), and 404s while booking is closed because `ListOpenSlotsUseCase` answers `closed`. The join loader redirects 302 to the meeting room for a known id, throws a 404 `Response` for any id that does not resolve (a malformed one included) that the root `ErrorBoundary` in `root.tsx` renders as the app's standard "Page not found" page, which echoes no id, and since GEN-192 returns `{ status: "link_not_set" }` instead of throwing when the coach has not yet saved a meeting room, which the page renders as its own "call link not ready" view built from C5's `DeadEndPage`. The module keeps a default export so it stays a page route: before GEN-192 that export always returned `null`, since the loader always threw; now it renders conditionally. The loader does not read the mode, so a join link keeps working if the site returns to waiting-list mode. The booking page module also exports `handle.publicContentFrame` as `"full-bleed"`, which the public-site layout reads through `useMatches` to drop its padded content frame |
-| route (page) | features/assessment-calls/ui/coach/settings/settings-page.tsx | new (GEN-192). The loader reads `assessmentCallsContext` alone and calls `assessmentCallSettings.loadSettingsPage()`; a 401/403 `ErrorBoundary` recovers into the same page with a `toast.error` side effect instead of the portal's shared access-denied page. Registered through `assessmentCallsCoachRoutes`, which `surfaces/coach-portal/routes.ts` composes inside the coach layout — this surface's first feature route |
+| route (page) | features/assessment-calls/ui/coach/settings/settings-page.tsx | the loader reads `assessmentCallsContext` alone; a 401/403 `ErrorBoundary` recovers into the same page with a `toast.error` side effect. Registered through `assessmentCallsCoachRoutes`, which `surfaces/coach-portal/routes.ts` composes inside the coach layout |
+| route (page) | surfaces/coach-portal/pages/assessment-calls.tsx | the loader reads `assessmentCallsContext` for the listing and `coachingSalesContext` for the ended calls' sales states and the callers' pricing tiers; re-exports C17's `AssessmentCallsErrorBoundary` |
+| route (page) | features/coaching-sales/ui/public/select-bundle/select-bundle-page.tsx, ui/public/checkout-complete/checkout-complete-page.tsx | both loaders read `coachingSalesContext` alone and 404 while sales are closed: the select-bundle loader serves the page shell (`checkouts.loadBundlePageShell`) and the browser posts the fragment's payment-link token to `POST /api/coaching-sales/bundle-page` for the bundle page itself; the confirmation loader calls `checkouts.loadConfirmation`. Registered through `coachingSalesPublicRoutes` inside the public-site shell |
 | route (page) | surfaces/client-portal/shell/layout.tsx (+ middleware), pages/home.tsx; surfaces/coach-portal/shell/layout.tsx (+ middleware), pages/home.tsx | middleware calls `requirePortalAccess(args, { role })` |
 | route (resource) | features/store/api/{acquisitions/acquisitions,catalog/catalog,covers/covers,downloads/downloads,management/management-product-validations,management/management-products,management/management-product,management/management-product-versions}.ts | read `storeContext` |
-| route (resource) | features/waitlist/api/waitlist.ts; features/accounts/api/{account,clerk-webhooks}.ts; features/assessment-calls/api/booking/{slots,bookings}.ts; features/assessment-calls/api/settings/settings.ts | read `waitlistContext` / `accountsContext` / `assessmentCallsContext` |
-| route (resource) | server/api/{readyz/readyz,meta/meta,feature-flags/feature-flags}.ts | read `platformContext` |
+| route (resource) | features/waitlist/api/waitlist.ts; features/accounts/api/{account,clerk-webhooks}.ts; features/assessment-calls/api/booking/{slots,bookings}.ts; features/assessment-calls/api/settings/settings.ts; features/coaching-sales/api/{coach/payment-links,public/checkouts,public/bundle-page}.ts | read `waitlistContext` / `accountsContext` / `assessmentCallsContext` / `coachingSalesContext` |
+| route (resource) | server/api/{readyz/readyz,meta/meta,feature-flags/feature-flags,stripe-webhooks/stripe-webhooks}.ts | read `platformContext`; `api/stripe/webhooks` accepts POST only |
 | route (resource) | surfaces/client-portal/api/{manifest,sw,readyz}.ts; surfaces/coach-portal/api/readyz.ts | pwa definitions; static Response |
 | middleware | root.server.ts (Clerk, feature-flag overrides, feature contexts, account resolution); portal layout.server.ts (role guards) | see above; the override middleware runs `next()` inside the override store, so every loader, action and controller under it sees the request's overrides through the reader |
 | CLI/build | apps/platform/db/drizzle.config.ts (schema globs), vite.config.ts, react-router.config.ts | tooling entry points, not imported by app code |
@@ -310,7 +330,7 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 
 | Shape | Components reading or writing it | Owning component |
 |---|---|---|
-| Postgres namespace `app` (appSchema) and the migration journal apps/platform/db/drizzle | C2 declares the namespace; C7 (store tables), C8 (waitlist_entries), C9 (accounts, account_role enum), C6 (feature_flags, coach_time_reservations and, since GEN-192, coach_availability and coach_meeting_room, migration `0024`) attach tables; C15 drizzle.config.ts discovers them by glob | C2 owns the namespace; each table is owned by the feature that declares it |
+| Postgres namespace `app` (appSchema) and the migration journal apps/platform/db/drizzle | C2 declares the namespace; C7 (store tables), C8 (waitlist_entries), C9 (accounts, account_role enum), C17 (assessment_calls), C18 (payment_links, checkout_sessions, clients, coaching_subscriptions), C6 (feature_flags, coach_time_reservations, coach_availability, coach_meeting_room, payment_events) attach tables; C15 drizzle.config.ts discovers them by glob | C2 owns the namespace; each table is owned by the component that declares it |
 | `app.coach_availability` and `app.coach_meeting_room` (the two one-row singleton tables migration `0024_create_coach_availability_and_meeting_room.sql` creates) | C6 declares both (`coach-calendar/schema.server.ts`'s `availability/`-adjacent table and the new `coach-meeting-room/schema.server.ts`) and reads/writes them through `PostgresCoachAvailability`/`PostgresCoachMeetingRoom`; C1's `CoachAvailabilitySource`/`CoachAvailabilityChanges` and `CoachMeetingRoomSource`/`CoachMeetingRoomChanges` ports are the only way any other component reaches them; C17's composition constructs both adapters and its two settings use cases are the sole consumers | C6 owns the tables; C1 owns the ports and the validation |
 | `app.waitlist_entries.reduced_slot` and its constraints | C8 declares them in U304 and migration 0019 (U1212); U303 allocates slots; U1211 reads the constraint names | C8 owns the table; N is U911's `WAITLIST_REDUCED_PRICING_CAP`, and changing it is a migration in the same PR (b3eb2653) |
 | `app.feature_flags`, including `WAITLIST_MODE` | C6 declares and reads it; C15 migration 0018 seeds `WAITLIST_MODE=true`; C14 constructs the generic reader and, in `browser` mode, overlays the request's overrides on the read without writing the table; integration tests write it only for test arrangement; the Playwright suite reaches the flag only through the public `ff.WAITLIST_MODE` override | C6 owns the table; U963 owns the waitlist-mode interpretation and U1300 the booking one, both through `WAITLIST_MODE_FEATURE_FLAG` |
@@ -323,13 +343,18 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 | BotDetectionConfig (zod schema in C6) | C6; C7 ui; C8 ui; C11 loader data and props | C6 |
 | FeatureFlagSnapshot (featureFlagSnapshotSchema) | C14 controller and route; integration tests | C14 (`server/api/feature-flags/feature-flags-contract.ts`) |
 | The request's feature-flag override set (`Readonly<FeatureFlagSet>` in an `AsyncLocalStorage`) and the `__eli_feature_flags` cookie | C14 only: the override middleware writes the store around `next()` and serialises the cookie (`Path=normalizeBasePath(APP_BASE_PATH)`, `HttpOnly`, `SameSite=Lax`); the decorator reader reads the store; the browser holds the cookie | C14 (`server/feature-flag-overrides/`) |
-| RuntimeEnvironment | ten concern shapes, each owned by its `concerns/*.ts` module; consumers read the concern type, and only `apps/platform/src/server/runtime-environment.server.ts` loads the process environment | C3 |
-| Route path literals | one owner each: `features/<feature>/contracts/paths.ts` and `surfaces/public-site/paths.ts`. The `client` and `coach` portal segments are owned by the accounts feature because `surface-import` forbids a feature importing a surface; `BOOK_PATH` is owned by the assessment-calls feature and read by three public-site modules; since GEN-192, `COACH_SETTINGS_PATH` is owned by the assessment-calls feature (built from the accounts feature's `COACH_PORTAL_PATH`, the assessment-calls feature's first read of another feature's `contracts/paths.ts`) and read by the coach portal's navigation links | C7, C8, C9, C11, C13, C17 |
+| RuntimeEnvironment | eleven concern shapes, each owned by its `concerns/*.ts` module; consumers read the concern type, and only `apps/platform/src/server/runtime-environment.server.ts` loads the process environment | C3 |
+| Route path literals | one owner each: `features/<feature>/contracts/paths.ts`, `surfaces/public-site/paths.ts` and, for the endpoints no surface owns, `server/api/routes.ts` (`api/stripe/webhooks`). The `client` and `coach` portal segments are owned by the accounts feature because `surface-import` forbids a feature importing a surface; `BOOK_PATH` is owned by the assessment-calls feature and read by the public site and by coaching sales; the coach calls and settings paths and `COACH_CALLS_PAGE_PARAM` are owned by the assessment-calls feature (built from the accounts feature's `COACH_PORTAL_PATH`) and read by the coach portal and by coaching sales; the select-bundle, checkout-complete and coaching-sales API paths are owned by the coaching-sales feature | C7, C8, C9, C11, C13, C14, C17, C18 |
 | The offer-plan literal `"all-bundles"` | C1 `/waitlist` owns it (`waitlist.ts:WaitlistOfferPlan`); read by C8 `ui/shared` (`bundleOfferPlan` on `WaitlistPresentation`), and re-declared as a bare string in C8 `contracts/waitlist.ts`, C8 `email/waitlist-confirmation-email.server.ts` and C3 `concerns/waitlist.ts` | C1 |
 | WaitlistPresentation (mode, isClosed, isUnavailable, showsAuthControls, availabilityStatus, bundleOfferPlan) | C11 shell, hero, about, footer CTA, pricing and the email form. The closed/unavailable/open **copy** branch is re-derived in `hero.tsx`, `footer-cta.tsx` and `pricing.tsx` rather than carried on the presentation (owner ruling: copy tables stay in views) | C8 `ui/shared` |
-| CoachingBundleCard (+ the presenter's `benefits` and `showsWaitlistPricing`) | consumers `BundleSelector` and `pages/pricing.tsx`, both inside C11; no longer a cross-component shape | C11 `surfaces/public-site/sections/pricing` |
+| C18's tables (`app.payment_links`, `app.checkout_sessions`, `app.clients`, `app.coaching_subscriptions`) with foreign keys to C17's `app.assessment_calls`; migrations 0026 and 0027 | C18 declares and writes them; `clients_assessment_call_id_unique` is shared by the schema and the purchase repository's one classified rejection; `coaching_subscriptions_one_open_per_client` is a partial unique index | C18 (the referenced table stays C17's) |
+| `app.payment_events` (the payment-event ledger: event id, received at) | C6 declares it and writes it through `recordPaymentEvent`, which a feature adapter calls inside its own transaction (C18's `PostgresCoachingPurchases.recordCompletion`); a repeated event id answers `duplicate` and the feature writes nothing else | C6 |
+| Checkout metadata key `purpose` (`PAYMENT_PURPOSE_METADATA_KEY`) and its values | C1 owns each value (`COACHING_SUBSCRIPTION_PURPOSE`) and carries it on `CreateCheckoutSessionCommand.metadata`; C6 writes it into the provider's session metadata; C14's webhook controller routes a paid session to the handler registered for it; each handler (C18) declares the purpose it serves | key C6; values C1 |
+| Coaching bundle value lists (`COACHING_BUNDLE_IDS`, `COACHING_BUNDLE_MONTHS`, `PRICE_TIERS`, and each bundle's `currency`) | C1 publishes them from `/coaching-bundle` (each tuple checked against the catalog by a test); C6's coaching checkout mapper, C18's contracts (zod enums) and C18's schema (column enums and checks) import them; the checkout use case reads the currency off the bundle | C1 |
+| coaching-sales zod contracts (contracts/coaching-sales.ts, bundle-cards.ts, paths.ts) and loader data (`BundlePage`, `CheckoutConfirmation`, sales states, pricing tiers, bundle cards) | C18 server and ui halves; C13 (`CallSalesState`, loader data); C11 (bundle cards) | C18 |
+| PaymentsConfig (`PAYMENTS_PROVIDER`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SIGNING_SECRET`, `STRIPE_API_BASE_URL`) | C3 declares and refines; C6 factories read it; C14 passes the environment and the signing secret; the integration rig points the API base URL at WireMock | C3 |
 | localStorage cart (STORE_CART_STORAGE_KEY) | C7 ui only | C7 |
-| Email HTML rendered from React primitives (Email*) | C6 owns the primitives; the content builders live in each feature's `email/` folder (accepted exception) | C6 |
+| Email HTML rendered from React primitives (Email*) and the email theme (`EMAIL_COLORS`, `EMAIL_FONTS`) | C6 owns the primitives and the theme; the content builders and their style constants live in each feature's `email/` folder (C7, C8, C17, C18; accepted exception) and read the one theme | C6 |
 | CLERK_TEST_ENVIRONMENT | read only by tests | C16 |
 
 ## Edges
@@ -407,7 +432,6 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E1233 | apps/platform/src/features/assessment-calls/data/schema.server.ts | packages/db/src/index.ts | import | yes | no | lateral | present |
 | E1235 | apps/platform/src/features/assessment-calls/email/assessment-call-email-actions.server.tsx | apps/platform/src/features/assessment-calls/email/assessment-call-email-styles.server.ts | import | no | no | lateral | present |
 | E1236 | apps/platform/src/features/assessment-calls/email/assessment-call-email-actions.server.tsx | packages/infrastructure/src/email/index.server.ts | import | yes | no | lateral | present |
-| E1237 | apps/platform/src/features/assessment-calls/email/assessment-call-email-styles.server.ts | external:react | import | n/a | no | lateral | present |
 | E1238 | apps/platform/src/features/assessment-calls/email/calendar-invite.server.ts | packages/domain/src/assessment-call/index.ts | import | yes | no | lateral | present |
 | E1240 | apps/platform/src/features/assessment-calls/email/coach-notification-email-template.server.tsx | apps/platform/src/features/assessment-calls/email/assessment-call-email-actions.server.tsx | import | no | no | lateral | present |
 | E1241 | apps/platform/src/features/assessment-calls/email/coach-notification-email-template.server.tsx | apps/platform/src/features/assessment-calls/email/assessment-call-email-styles.server.ts | import | no | no | lateral | present |
@@ -450,8 +474,6 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E1280 | apps/platform/src/features/assessment-calls/server/assessment-calls-composition.server.ts | packages/infrastructure/src/bot-detection/index.ts | import | yes | yes | inward | present |
 | E1441 | apps/platform/src/features/assessment-calls/server/assessment-calls-composition.server.ts | packages/infrastructure/src/coach-calendar/index.server.ts | import | yes | yes | inward | present; changed (GEN-192): also imports `PostgresCoachAvailability`, no new edge (same module pair) |
 | E1479 | apps/platform/src/features/assessment-calls/server/assessment-calls-composition.server.ts | packages/infrastructure/src/email/index.server.ts | import | yes | yes | inward | added (main merge) |
-| E1500 | apps/platform/src/features/assessment-calls/server/assessment-calls-composition.server.ts | packages/infrastructure/src/coach-meeting-room/index.server.ts | import | yes | yes | inward | new (GEN-192): `PostgresCoachMeetingRoom` — C6's new subpath |
-| E1501 | apps/platform/src/features/assessment-calls/server/assessment-calls-composition.server.ts | apps/platform/src/features/assessment-calls/api/settings/assessment-call-settings-controller.server.ts | import | no | yes | inward | new (GEN-192) |
 | E1281 | apps/platform/src/features/assessment-calls/server/guards/assessment-calls-context.server.ts | apps/platform/src/features/assessment-calls/server/assessment-calls-composition.server.ts | import | no | yes | outward | present |
 | E1282 | apps/platform/src/features/assessment-calls/ui/public/book/api-client.ts | apps/platform/src/features/assessment-calls/contracts/assessment-calls.ts | import | no | no | lateral | present |
 | E1283 | apps/platform/src/features/assessment-calls/ui/public/book/api-client.ts | apps/platform/src/features/assessment-calls/contracts/paths.ts | import | no | no | lateral | present |
@@ -507,7 +529,6 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E1324 | apps/platform/src/features/assessment-calls/ui/public/book/submission.ts | packages/infrastructure/src/bot-detection/index.ts | import | yes | yes | inward | present |
 | E1325 | apps/platform/src/features/assessment-calls/ui/public/book/unavailable-slots.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
 | E1326 | apps/platform/src/features/assessment-calls/ui/public/join/join-page.tsx | apps/platform/src/features/assessment-calls/server/guards/assessment-calls-context.server.ts | import | no | no | lateral | present |
-| E1502 | apps/platform/src/features/assessment-calls/ui/public/join/join-page.tsx | packages/ui/src/layout/index.ts | import | yes | no | lateral | new (GEN-192): `DeadEndPage` — this feature's first import of `./layout` |
 | E1503 | apps/platform/src/features/assessment-calls/ui/public/join/join-page.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | new (GEN-192): `buttonVariants` |
 | E1572 | apps/platform/src/features/assessment-calls/ui/public/join/join-page.tsx | external:lucide-react | import | n/a | no | lateral | new (GEN-192): `ArrowRight`, `VideoOff` |
 | E1504 | apps/platform/src/features/assessment-calls/api/settings/assessment-call-settings-controller.server.ts | apps/platform/src/features/accounts/server/guards/require-account.server.ts | import | no | no | lateral | new (GEN-192): `requireApiAccount` — this feature's first cross-feature consumer of that guard |
@@ -532,7 +553,6 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E1527 | apps/platform/src/features/assessment-calls/ui/coach/settings/settings-page.tsx | packages/ui/src/toast/index.ts | import | yes | no | lateral | new (GEN-192): moved from `./overlays` to `./toast` in the remediation round |
 | E1528 | apps/platform/src/features/assessment-calls/ui/coach/settings/settings-page.tsx | external:react | import | n/a | no | lateral | new (GEN-192) |
 | E1529 | apps/platform/src/features/assessment-calls/contracts/assessment-call-settings.ts | external:zod | import | n/a | no | lateral | new (GEN-192) |
-| E1507 | apps/platform/src/features/assessment-calls/contracts/paths.ts | apps/platform/src/features/accounts/contracts/paths.ts | import | no | no | lateral | new (GEN-192): `COACH_PORTAL_PATH` — this feature's first import of another feature's `contracts/paths.ts` |
 | E1508 | apps/platform/src/features/assessment-calls/contracts/assessment-call-settings.ts | packages/domain/src/coach-availability/index.ts | import | yes | no | lateral | new (GEN-192): `WEEKDAYS`, `Weekday` |
 | E1509 | apps/platform/src/features/assessment-calls/contracts/assessment-call-settings.ts | apps/platform/src/features/assessment-calls/contracts/assessment-calls.ts | import | no | no | lateral | new (GEN-192): `timeZoneSchema` |
 | E55 | apps/platform/src/features/store/api/acquisitions/acquisitions-controller.server.ts | apps/platform/src/features/store/contracts/store.ts | import | no | yes | outward | present |
@@ -619,8 +639,6 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E795 | apps/platform/src/features/store/email/email-product-delivery.server.ts | packages/domain/src/acquisition/index.ts | import | yes | no | lateral | present |
 | E796 | apps/platform/src/features/store/email/email-product-delivery.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | removed in a79f507d |
 | E1032 | apps/platform/src/features/store/email/email-product-delivery.server.ts | packages/infrastructure/src/email/index.server.ts | import | yes | no | lateral | present |
-| E797 | apps/platform/src/features/store/email/store-delivery-email-template.server.tsx | external:react | import | n/a | yes | outward | present |
-| E134 | apps/platform/src/features/store/email/store-delivery-email-template.server.tsx | packages/infrastructure/src/email/index.server.ts | import | yes | no | lateral | present |
 | E135 | apps/platform/src/features/store/email/store-delivery-email.server.ts | apps/platform/src/features/store/email/store-delivery-email-template.server.tsx | import | no | no | lateral | present |
 | E798 | apps/platform/src/features/store/email/store-delivery-email.server.ts | external:react | import | n/a | yes | outward | present |
 | E799 | apps/platform/src/features/store/email/store-delivery-email.server.ts | external:react-dom/server | import | n/a | yes | outward | present |
@@ -744,8 +762,6 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E829 | apps/platform/src/features/waitlist/email/email-waitlist-confirmation.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | removed in a79f507d |
 | E830 | apps/platform/src/features/waitlist/email/email-waitlist-confirmation.server.ts | packages/domain/src/waitlist/index.ts | import | yes | no | lateral | present |
 | E1036 | apps/platform/src/features/waitlist/email/email-waitlist-confirmation.server.ts | packages/infrastructure/src/email/index.server.ts | import | yes | no | lateral | present |
-| E831 | apps/platform/src/features/waitlist/email/waitlist-confirmation-email-template.server.tsx | external:react | import | n/a | yes | outward | present |
-| E253 | apps/platform/src/features/waitlist/email/waitlist-confirmation-email-template.server.tsx | packages/infrastructure/src/email/index.server.ts | import | yes | no | lateral | present |
 | E254 | apps/platform/src/features/waitlist/email/waitlist-confirmation-email.server.ts | apps/platform/src/features/waitlist/email/waitlist-confirmation-email-template.server.tsx | import | no | no | lateral | present |
 | E832 | apps/platform/src/features/waitlist/email/waitlist-confirmation-email.server.ts | external:react | import | n/a | yes | outward | present |
 | E833 | apps/platform/src/features/waitlist/email/waitlist-confirmation-email.server.ts | external:react-dom/server | import | n/a | yes | outward | present |
@@ -855,7 +871,6 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E353 | apps/platform/src/server/guards/runtime-config-context.server.ts | apps/platform/src/server/platform-composition.server.ts | import | no | yes | outward | present |
 | E1018 | apps/platform/src/server/logger.server.ts | packages/domain/src/acquisition/index.ts | import | yes | yes | inward | present |
 | E1480 | apps/platform/src/server/logger.server.ts | packages/domain/src/assessment-call/index.ts | import | yes | yes | inward | added (main merge) |
-| E354 | apps/platform/src/server/logger.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | removed in a79f507d |
 | E1019 | apps/platform/src/server/logger.server.ts | packages/domain/src/waitlist/index.ts | import | yes | yes | inward | present |
 | E356 | apps/platform/src/server/platform-composition.server.ts | apps/platform/src/server/api/feature-flags/feature-flags-controller.server.ts | import | no | yes | inward | present |
 | E355 | apps/platform/src/server/platform-composition.server.ts | apps/platform/src/server/api/meta/app-metadata-controller.server.ts | import | no | yes | inward | present |
@@ -897,8 +912,6 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E1330 | apps/platform/src/surfaces/public-site/pages/pricing.tsx | apps/platform/src/features/assessment-calls/contracts/paths.ts | import | yes | yes | inward | present |
 | E397 | apps/platform/src/surfaces/public-site/pages/pricing.tsx | apps/platform/src/features/waitlist/ui/public/availability-status.tsx | import | yes | no | lateral | present |
 | E398 | apps/platform/src/surfaces/public-site/pages/pricing.tsx | apps/platform/src/features/waitlist/ui/public/email-form.tsx | import | yes | no | lateral | present |
-| E849 | apps/platform/src/surfaces/public-site/pages/pricing.tsx | apps/platform/src/surfaces/public-site/sections/pricing/bundle-selector.tsx | import | no | no | lateral | present |
-| E850 | apps/platform/src/surfaces/public-site/pages/pricing.tsx | apps/platform/src/surfaces/public-site/sections/pricing/coaching-bundles.ts | import | no | no | lateral | present |
 | E399 | apps/platform/src/surfaces/public-site/pages/pricing.tsx | apps/platform/src/surfaces/public-site/shell/layout.tsx | import | no | no | lateral | present |
 | E851 | apps/platform/src/surfaces/public-site/pages/pricing.tsx | external:lucide-react | import | n/a | no | lateral | present |
 | E1472 | apps/platform/src/surfaces/public-site/pages/pricing.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
@@ -909,9 +922,6 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E404 | apps/platform/src/surfaces/public-site/pages/terms.tsx | packages/content/src/index.ts | import | yes | yes | inward | present |
 | E405 | apps/platform/src/surfaces/public-site/routes.ts | apps/platform/src/features/accounts/routes.ts | import | yes | no | lateral | present |
 | E1331 | apps/platform/src/surfaces/public-site/routes.ts | apps/platform/src/features/assessment-calls/routes.ts | import | yes | no | lateral | present; changed (GEN-192): also imports `assessmentCallsJoinRoutes`, no new edge (same module pair) |
-| E1497 | apps/platform/src/surfaces/coach-portal/routes.ts | apps/platform/src/features/assessment-calls/routes.ts | import | yes | no | lateral | new (GEN-192): `assessmentCallsCoachRoutes` — this surface's first feature route |
-| E1498 | apps/platform/src/surfaces/coach-portal/shell/navigation-links.tsx | apps/platform/src/features/assessment-calls/contracts/paths.ts | import | no | no | lateral | new (GEN-192): `COACH_SETTINGS_PATH` |
-| E1499 | apps/platform/src/surfaces/coach-portal/shell/layout.tsx | packages/ui/src/toast/index.ts | import | yes | no | lateral | new (GEN-192): `Toaster`, moved from `./overlays` to `./toast` in the remediation round |
 | E406 | apps/platform/src/surfaces/public-site/routes.ts | apps/platform/src/features/store/routes.ts | import | yes | no | lateral | present |
 | E407 | apps/platform/src/surfaces/public-site/routes.ts | apps/platform/src/surfaces/public-site/paths.ts | import | no | no | lateral | present |
 | E408 | apps/platform/src/surfaces/public-site/sections/about/about-content.ts | packages/config/src/index.ts | import | yes | no | lateral | present |
@@ -974,11 +984,6 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E464 | apps/platform/src/surfaces/public-site/sections/platform/platform.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
 | E465 | apps/platform/src/surfaces/public-site/sections/platform/platform.tsx | packages/ui/src/motion/index.ts | import | yes | no | lateral | present |
 | E466 | apps/platform/src/surfaces/public-site/sections/platform/platform.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
-| E864 | apps/platform/src/surfaces/public-site/sections/pricing/bundle-selector.tsx | apps/platform/src/surfaces/public-site/sections/pricing/coaching-bundles.ts | import | no | no | lateral | present |
-| E865 | apps/platform/src/surfaces/public-site/sections/pricing/bundle-selector.tsx | external:lucide-react | import | n/a | no | lateral | present |
-| E866 | apps/platform/src/surfaces/public-site/sections/pricing/bundle-selector.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
-| E867 | apps/platform/src/surfaces/public-site/sections/pricing/bundle-selector.tsx | packages/ui/src/motion/index.ts | import | yes | no | lateral | present |
-| E1474 | apps/platform/src/surfaces/public-site/sections/pricing/bundle-selector.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
 | E467 | apps/platform/src/surfaces/public-site/sections/workouts/workouts.tsx | apps/platform/src/surfaces/public-site/sections/workouts/swipe-intent.ts | import | no | no | lateral | present |
 | E868 | apps/platform/src/surfaces/public-site/sections/workouts/workouts.tsx | external:lucide-react | import | n/a | no | lateral | present |
 | E869 | apps/platform/src/surfaces/public-site/sections/workouts/workouts.tsx | external:react | import | n/a | no | lateral | present |
@@ -1302,10 +1307,6 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E984 | packages/infrastructure/src/email/email-primitives.server.tsx | external:react | import | n/a | yes | outward | present |
 | E653 | packages/infrastructure/src/email/in-memory-product-email.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | removed in a79f507d |
 | E1027 | packages/infrastructure/src/email/in-memory-product-email.server.ts | packages/infrastructure/src/email/product-email-contract.server.ts | import | no | no | lateral | present |
-| E654 | packages/infrastructure/src/email/index.server.ts | packages/infrastructure/src/email/create-product-email.server.ts | import | no | no | lateral | present |
-| E655 | packages/infrastructure/src/email/index.server.ts | packages/infrastructure/src/email/email-primitives.server.tsx | import | no | no | lateral | present |
-| E656 | packages/infrastructure/src/email/index.server.ts | packages/infrastructure/src/email/in-memory-product-email.server.ts | import | no | no | lateral | present |
-| E1025 | packages/infrastructure/src/email/index.server.ts | packages/infrastructure/src/email/product-email-contract.server.ts | import | no | no | lateral | present |
 | E985 | packages/infrastructure/src/email/resend-product-email.server.ts | external:resend | import | n/a | yes | outward | present |
 | E658 | packages/infrastructure/src/email/resend-product-email.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | removed in a79f507d |
 | E1028 | packages/infrastructure/src/email/resend-product-email.server.ts | packages/infrastructure/src/email/product-email-contract.server.ts | import | no | no | lateral | present |
@@ -1451,3 +1452,443 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E1641 | packages/config/src/runtime-environment.ts | packages/config/src/concerns/feature-flags.ts | import | no | no | lateral | new (9747d171) |
 | E1642 | packages/config/src/index.ts | packages/config/src/concerns/feature-flags.ts | import (re-export `resolveFeatureFlagOverridesMode`) | no | no | lateral | new (9747d171) |
 | E1643 | packages/config/src/concerns/feature-flags.ts | external:zod | import | n/a | no | lateral | new (9747d171) |
+| E1644 | packages/config/src/index.ts | packages/config/src/concerns/payments.ts | type-only import | no | no | lateral | present |
+| E1645 | packages/config/src/concerns/payments.ts | packages/config/src/concerns/app.ts | import | no | no | lateral | present |
+| E1646 | packages/config/src/concerns/payments.ts | external:zod | import | n/a | no | lateral | present |
+| E1647 | packages/config/src/runtime-environment.ts | packages/config/src/concerns/payments.ts | import | no | no | lateral | present |
+| E1648 | packages/ui/src/primitives/index.ts | packages/ui/src/primitives/popover.tsx | re-export | no | no | lateral | present |
+| E1649 | packages/ui/src/primitives/index.ts | packages/ui/src/primitives/radio-group.tsx | re-export | no | no | lateral | present |
+| E1650 | packages/ui/src/primitives/index.ts | packages/ui/src/primitives/search-field.tsx | re-export | no | no | lateral | present |
+| E1651 | packages/ui/src/primitives/radio-group.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
+| E1652 | packages/ui/src/primitives/radio-group.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E1653 | packages/ui/src/primitives/radio-group.tsx | external:radix-ui | import | n/a | no | lateral | present |
+| E1654 | packages/ui/src/primitives/radio-group.tsx | external:react | import | n/a | no | lateral | present |
+| E1655 | packages/ui/src/primitives/select.tsx | packages/ui/src/primitives/badge.tsx | import | no | no | lateral | present |
+| E1656 | packages/ui/src/primitives/select.tsx | packages/ui/src/primitives/field-size.ts | import | no | no | lateral | present |
+| E1657 | apps/platform/src/features/assessment-calls/contracts/visitor-profile.ts | apps/platform/src/features/assessment-calls/contracts/countries.ts | import | no | no | lateral | present |
+| E1658 | apps/platform/src/features/assessment-calls/contracts/visitor-profile.ts | packages/domain/src/assessment-call/index.ts | type-only import | yes | yes | inward | present |
+| E1659 | apps/platform/src/features/assessment-calls/contracts/visitor-profile.ts | external:zod | import | n/a | yes | outward | present |
+| E1660 | apps/platform/src/features/assessment-calls/server/assessment-calls-composition.server.ts | packages/domain/src/payment-link/index.ts | type-only import | yes | yes | inward | present |
+| E1661 | packages/domain/src/payment-link/index.ts | packages/domain/src/payment-link/assessment-call-reader.ts | type-only import | no | no | lateral | present |
+| E1662 | packages/domain/src/payment-link/index.ts | packages/domain/src/payment-link/call-sales-states.ts | type-only import | no | no | lateral | present |
+| E1663 | packages/domain/src/payment-link/index.ts | packages/domain/src/payment-link/coaching-sales-incidents.ts | type-only import | no | no | lateral | present |
+| E1664 | packages/domain/src/payment-link/index.ts | packages/domain/src/payment-link/coaching-sales-notifications.ts | type-only import | no | no | lateral | present |
+| E1665 | packages/domain/src/payment-link/index.ts | packages/domain/src/payment-link/coaching-sales-window.ts | re-export | no | no | lateral | present |
+| E1666 | packages/domain/src/payment-link/index.ts | packages/domain/src/payment-link/payment-link.ts | re-export | no | no | lateral | present |
+| E1667 | packages/domain/src/payment-link/index.ts | packages/domain/src/payment-link/payment-links.ts | type-only import | no | no | lateral | present |
+| E1668 | packages/domain/src/payment-link/index.ts | packages/domain/src/payment-link/read-call-sales-states-use-case.ts | re-export | no | no | lateral | present |
+| E1669 | packages/domain/src/payment-link/index.ts | packages/domain/src/payment-link/resolve-payment-link-use-case.ts | re-export | no | no | lateral | present |
+| E1670 | packages/domain/src/payment-link/index.ts | packages/domain/src/payment-link/send-payment-link-use-case.ts | re-export | no | no | lateral | present |
+| E2083 | packages/domain/src/payment-link/index.ts | packages/domain/src/payment-link/open-bundle-page-use-case.ts | re-export | no | no | lateral | present |
+| E1671 | packages/domain/src/payment-link/assessment-call-reader.ts | packages/domain/src/assessment-call/index.ts | type-only import | no | no | lateral | present |
+| E1672 | packages/domain/src/payment-link/coaching-sales-notifications.ts | packages/domain/src/assessment-call/index.ts | type-only import | no | no | lateral | present |
+| E1673 | packages/domain/src/payment-link/coaching-sales-notifications.ts | packages/domain/src/coaching-bundle/index.ts | type-only import | no | no | lateral | present |
+| E1677 | packages/domain/src/coaching-bundle/pricing-eligibility.ts | packages/domain/src/email-address/index.ts | type-only import | no | no | lateral | present |
+| E1678 | packages/domain/src/coaching-bundle/pricing-eligibility.ts | packages/domain/src/coaching-bundle/coaching-bundle.ts | type-only import | no | no | lateral | present |
+| E1679 | packages/domain/src/coaching-bundle/read-pricing-tiers-use-case.ts | packages/domain/src/email-address/index.ts | type-only import | no | no | lateral | present |
+| E1680 | packages/domain/src/coaching-bundle/read-pricing-tiers-use-case.ts | packages/domain/src/coaching-bundle/coaching-bundle.ts | type-only import | no | no | lateral | present |
+| E1681 | packages/domain/src/coaching-bundle/read-pricing-tiers-use-case.ts | packages/domain/src/coaching-bundle/pricing-eligibility.ts | type-only import | no | no | lateral | present |
+| E1682 | packages/domain/src/payment-link/coaching-sales-window.ts | packages/domain/src/feature-flag/index.ts | import | no | no | lateral | present |
+| E1683 | packages/domain/src/payment-link/coaching-sales-window.ts | packages/domain/src/payment-link/coaching-sales-incidents.ts | type-only import | no | no | lateral | present |
+| E1684 | packages/domain/src/payment-link/payment-links.ts | packages/domain/src/payment-link/payment-link.ts | type-only import | no | no | lateral | present |
+| E1685 | packages/domain/src/payment-link/read-call-sales-states-use-case.ts | packages/domain/src/payment-link/call-sales-states.ts | type-only import | no | no | lateral | present |
+| E1686 | packages/domain/src/payment-link/resolve-payment-link-use-case.ts | packages/domain/src/assessment-call/index.ts | type-only import | no | no | lateral | present |
+| E1687 | packages/domain/src/payment-link/resolve-payment-link-use-case.ts | packages/domain/src/coaching-bundle/index.ts | type-only import | no | no | lateral | present |
+| E1688 | packages/domain/src/payment-link/resolve-payment-link-use-case.ts | packages/domain/src/email-address/index.ts | import | no | no | lateral | present |
+| E1689 | packages/domain/src/payment-link/resolve-payment-link-use-case.ts | packages/domain/src/shared/index.ts | type-only import | no | no | lateral | present |
+| E1690 | packages/domain/src/payment-link/resolve-payment-link-use-case.ts | packages/domain/src/payment-link/assessment-call-reader.ts | type-only import | no | no | lateral | present |
+| E1691 | packages/domain/src/payment-link/resolve-payment-link-use-case.ts | packages/domain/src/payment-link/call-sales-states.ts | type-only import | no | no | lateral | present |
+| E1692 | packages/domain/src/payment-link/resolve-payment-link-use-case.ts | packages/domain/src/payment-link/coaching-sales-window.ts | type-only import | no | no | lateral | present |
+| E1693 | packages/domain/src/payment-link/resolve-payment-link-use-case.ts | packages/domain/src/payment-link/payment-link.ts | import | no | no | lateral | present |
+| E1694 | packages/domain/src/payment-link/resolve-payment-link-use-case.ts | packages/domain/src/payment-link/payment-links.ts | type-only import | no | no | lateral | present |
+| E1695 | packages/domain/src/payment-link/send-payment-link-use-case.ts | packages/domain/src/assessment-call/index.ts | import | no | no | lateral | present |
+| E1696 | packages/domain/src/payment-link/send-payment-link-use-case.ts | packages/domain/src/coaching-bundle/index.ts | type-only import | no | no | lateral | present |
+| E1697 | packages/domain/src/payment-link/send-payment-link-use-case.ts | packages/domain/src/email-address/index.ts | import | no | no | lateral | present |
+| E1698 | packages/domain/src/payment-link/send-payment-link-use-case.ts | packages/domain/src/shared/index.ts | type-only import | no | no | lateral | present |
+| E1699 | packages/domain/src/payment-link/send-payment-link-use-case.ts | packages/domain/src/payment-link/assessment-call-reader.ts | type-only import | no | no | lateral | present |
+| E1700 | packages/domain/src/payment-link/send-payment-link-use-case.ts | packages/domain/src/payment-link/call-sales-states.ts | type-only import | no | no | lateral | present |
+| E1701 | packages/domain/src/payment-link/send-payment-link-use-case.ts | packages/domain/src/payment-link/coaching-sales-incidents.ts | type-only import | no | no | lateral | present |
+| E1702 | packages/domain/src/payment-link/send-payment-link-use-case.ts | packages/domain/src/payment-link/coaching-sales-notifications.ts | type-only import | no | no | lateral | present |
+| E1703 | packages/domain/src/payment-link/send-payment-link-use-case.ts | packages/domain/src/payment-link/coaching-sales-window.ts | type-only import | no | no | lateral | present |
+| E1704 | packages/domain/src/payment-link/send-payment-link-use-case.ts | packages/domain/src/payment-link/payment-link.ts | import | no | no | lateral | present |
+| E1705 | packages/domain/src/payment-link/send-payment-link-use-case.ts | packages/domain/src/payment-link/payment-links.ts | type-only import | no | no | lateral | present |
+| E2084 | packages/domain/src/payment-link/open-bundle-page-use-case.ts | packages/domain/src/payment-link/coaching-sales-window.ts | type-only import | no | no | lateral | present |
+| E1706 | apps/platform/src/features/assessment-calls/ui/coach/assessment-call-listing.ts | apps/platform/src/features/assessment-calls/contracts/paths.ts | import | no | yes | inward | present |
+| E1707 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/sort-control.tsx | import | no | no | lateral | present |
+| E1708 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/use-call-listing-params.ts | import | no | no | lateral | present |
+| E1709 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | packages/ui/src/portal/index.ts | import | yes | no | lateral | present |
+| E1710 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | apps/platform/src/features/assessment-calls/contracts/countries.ts | import | no | yes | inward | present |
+| E1711 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | apps/platform/src/features/assessment-calls/contracts/visitor-profile.ts | import | no | yes | inward | present |
+| E1712 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E1713 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | external:react | type-only import | n/a | no | lateral | present |
+| E1714 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/use-call-listing-params.ts | apps/platform/src/features/assessment-calls/contracts/paths.ts | import | no | yes | inward | present |
+| E1715 | apps/platform/src/features/coaching-sales/api/coach/coach-sales-controller.server.ts | packages/domain/src/coaching-bundle/index.ts | type-only import | yes | yes | inward | present |
+| E1716 | apps/platform/src/features/coaching-sales/api/coach/coach-sales-controller.server.ts | packages/domain/src/email-address/index.ts | import | yes | yes | inward | present |
+| E1717 | apps/platform/src/features/coaching-sales/api/coach/coach-sales-controller.server.ts | packages/domain/src/payment-link/index.ts | type-only import | yes | yes | inward | present |
+| E1718 | apps/platform/src/features/coaching-sales/api/coach/coach-sales-controller.server.ts | apps/platform/src/features/coaching-sales/contracts/coaching-sales.ts | import | no | no | lateral | present |
+| E1725 | packages/domain/src/coaching-subscription/index.ts | packages/domain/src/coaching-subscription/checkout-sessions.ts | type-only import | no | no | lateral | present |
+| E1726 | packages/domain/src/coaching-subscription/index.ts | packages/domain/src/coaching-subscription/coaching-purchases.ts | type-only import | no | no | lateral | present |
+| E1727 | packages/domain/src/coaching-subscription/index.ts | packages/domain/src/coaching-subscription/coaching-subscription.ts | re-export | no | no | lateral | present |
+| E1728 | packages/domain/src/coaching-subscription/index.ts | packages/domain/src/coaching-subscription/payment-checkout.ts | type-only import | no | no | lateral | present |
+| E1729 | packages/domain/src/coaching-subscription/index.ts | packages/domain/src/coaching-subscription/read-checkout-confirmation-use-case.ts | re-export | no | no | lateral | present |
+| E1730 | packages/domain/src/coaching-subscription/index.ts | packages/domain/src/coaching-subscription/record-checkout-completed-use-case.ts | re-export | no | no | lateral | present |
+| E1731 | packages/domain/src/coaching-subscription/index.ts | packages/domain/src/coaching-subscription/start-checkout-use-case.ts | re-export | no | no | lateral | present |
+| E1732 | packages/domain/src/coaching-subscription/checkout-sessions.ts | packages/domain/src/coaching-bundle/index.ts | type-only import | no | no | lateral | present |
+| E1733 | packages/domain/src/coaching-subscription/checkout-sessions.ts | packages/domain/src/coaching-subscription/coaching-subscription.ts | type-only import | no | no | lateral | present |
+| E1734 | packages/domain/src/coaching-subscription/coaching-subscription.ts | packages/domain/src/coaching-bundle/index.ts | import | no | no | lateral | present |
+| E1735 | packages/domain/src/coaching-subscription/coaching-purchases.ts | packages/domain/src/client/index.ts | type-only import | no | no | lateral | present |
+| E1736 | packages/domain/src/coaching-subscription/coaching-purchases.ts | packages/domain/src/coaching-subscription/coaching-subscription.ts | type-only import | no | no | lateral | present |
+| E1737 | packages/domain/src/client/index.ts | packages/domain/src/client/client.ts | re-export | no | no | lateral | present |
+| E1738 | packages/domain/src/client/client.ts | packages/domain/src/assessment-call/index.ts | type-only import | no | no | lateral | present |
+| E1739 | packages/domain/src/coaching-subscription/payment-checkout.ts | packages/domain/src/coaching-bundle/index.ts | type-only import | no | no | lateral | present |
+| E1740 | packages/domain/src/coaching-subscription/payment-checkout.ts | packages/domain/src/coaching-subscription/coaching-subscription.ts | type-only import | no | no | lateral | present |
+| E1741 | packages/domain/src/coaching-subscription/read-checkout-confirmation-use-case.ts | packages/domain/src/coaching-bundle/index.ts | type-only import | no | no | lateral | present |
+| E1742 | packages/domain/src/coaching-subscription/read-checkout-confirmation-use-case.ts | packages/domain/src/payment-link/index.ts | type-only import | no | no | lateral | present |
+| E1743 | packages/domain/src/coaching-subscription/read-checkout-confirmation-use-case.ts | packages/domain/src/coaching-subscription/coaching-subscription.ts | import | no | no | lateral | present |
+| E1744 | packages/domain/src/coaching-subscription/read-checkout-confirmation-use-case.ts | packages/domain/src/coaching-subscription/payment-checkout.ts | type-only import | no | no | lateral | present |
+| E1745 | packages/domain/src/coaching-subscription/record-checkout-completed-use-case.ts | packages/domain/src/client/index.ts | import | no | no | lateral | present |
+| E1746 | packages/domain/src/coaching-subscription/record-checkout-completed-use-case.ts | packages/domain/src/payment-link/index.ts | type-only import | no | no | lateral | present |
+| E1747 | packages/domain/src/coaching-subscription/record-checkout-completed-use-case.ts | packages/domain/src/shared/index.ts | type-only import | no | no | lateral | present |
+| E1748 | packages/domain/src/coaching-subscription/record-checkout-completed-use-case.ts | packages/domain/src/coaching-subscription/coaching-purchases.ts | type-only import | no | no | lateral | present |
+| E1749 | packages/domain/src/coaching-subscription/record-checkout-completed-use-case.ts | packages/domain/src/coaching-subscription/coaching-subscription.ts | import | no | no | lateral | present |
+| E1758 | apps/platform/src/features/coaching-sales/api/coach/payment-links-controller.server.ts | packages/domain/src/payment-link/index.ts | type-only import | yes | yes | inward | present |
+| E1759 | apps/platform/src/features/coaching-sales/api/coach/payment-links-controller.server.ts | apps/platform/src/features/accounts/server/guards/require-account.server.ts | import | yes | yes | outward | present |
+| E1760 | apps/platform/src/features/coaching-sales/api/coach/payment-links-controller.server.ts | apps/platform/src/features/coaching-sales/contracts/coaching-sales.ts | import | no | no | lateral | present |
+| E1761 | apps/platform/src/features/coaching-sales/api/coach/payment-links.ts | packages/infrastructure/src/http/index.server.ts | import | yes | yes | inward | present |
+| E1762 | apps/platform/src/features/coaching-sales/api/coach/payment-links.ts | apps/platform/src/features/coaching-sales/server/guards/coaching-sales-context.server.ts | import | no | no | lateral | present |
+| E1763 | apps/platform/src/features/coaching-sales/server/guards/coaching-sales-context.server.ts | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | type-only import | no | yes | inward | present |
+| E1780 | packages/infrastructure/src/payments/index.server.ts | packages/infrastructure/src/payments/checkout-session-completion.server.ts | type-only import | no | no | lateral | present |
+| E1781 | packages/infrastructure/src/payments/index.server.ts | packages/infrastructure/src/payments/coaching-checkout-completion.server.ts | re-export | no | no | lateral | present |
+| E1782 | packages/infrastructure/src/payments/index.server.ts | packages/infrastructure/src/payments/create-payment-checkout.server.ts | re-export | no | no | lateral | present |
+| E1783 | packages/infrastructure/src/payments/index.server.ts | packages/infrastructure/src/payments/create-payment-events.server.ts | re-export | no | no | lateral | present |
+| E1784 | packages/infrastructure/src/payments/index.server.ts | packages/infrastructure/src/payments/payment-completion-handler.server.ts | re-export | no | no | lateral | present |
+| E1785 | packages/infrastructure/src/payments/index.server.ts | packages/infrastructure/src/payments/payment-event-ledger.server.ts | re-export | no | no | lateral | present |
+| E1786 | packages/infrastructure/src/payments/index.server.ts | packages/infrastructure/src/payments/payment-events.server.ts | type-only import | no | no | lateral | present |
+| E1787 | packages/infrastructure/src/payments/index.server.ts | packages/infrastructure/src/payments/payment-webhook-incidents.server.ts | type-only import | no | no | lateral | present |
+| E1788 | packages/infrastructure/src/payments/checkout-session-completion.server.ts | external:zod | import | n/a | yes | outward | present |
+| E1794 | packages/infrastructure/src/payments/payment-completion-handler.server.ts | packages/infrastructure/src/payments/checkout-session-completion.server.ts | type-only import | no | no | lateral | present |
+| E1795 | packages/infrastructure/src/payments/create-payment-checkout.server.ts | packages/infrastructure/src/payments/memory/in-memory-payment-checkout.server.ts | import | no | no | lateral | present |
+| E1796 | packages/infrastructure/src/payments/create-payment-checkout.server.ts | packages/infrastructure/src/payments/stripe/stripe-client.server.ts | import | no | no | lateral | present |
+| E1797 | packages/infrastructure/src/payments/create-payment-checkout.server.ts | packages/infrastructure/src/payments/stripe/stripe-payment-checkout.server.ts | import | no | no | lateral | present |
+| E1798 | packages/infrastructure/src/payments/create-payment-checkout.server.ts | packages/config/src/index.ts | type-only import | yes | yes | outward | present |
+| E1799 | packages/infrastructure/src/payments/create-payment-checkout.server.ts | packages/domain/src/coaching-subscription/index.ts | type-only import | yes | yes | inward | present |
+| E1800 | packages/infrastructure/src/payments/memory/in-memory-payment-checkout.server.ts | packages/infrastructure/src/payments/coaching-checkout-completion.server.ts | import | no | no | lateral | present |
+| E1801 | packages/infrastructure/src/payments/memory/in-memory-payment-checkout.server.ts | packages/domain/src/coaching-subscription/index.ts | type-only import | yes | yes | inward | present |
+| E1802 | packages/infrastructure/src/payments/memory/in-memory-payment-checkout.server.ts | external:node:crypto | import | n/a | yes | outward | present |
+| E1803 | packages/infrastructure/src/payments/stripe/stripe-client.server.ts | packages/config/src/index.ts | type-only import | yes | yes | outward | present |
+| E1804 | packages/infrastructure/src/payments/stripe/stripe-client.server.ts | external:stripe | import | n/a | yes | outward | present |
+| E1805 | packages/infrastructure/src/payments/stripe/stripe-payment-checkout.server.ts | packages/infrastructure/src/payments/checkout-session-completion.server.ts | import | no | no | lateral | present |
+| E1806 | packages/infrastructure/src/payments/stripe/stripe-payment-checkout.server.ts | packages/infrastructure/src/payments/coaching-checkout-completion.server.ts | import | no | no | lateral | present |
+| E1807 | packages/infrastructure/src/payments/stripe/stripe-payment-checkout.server.ts | packages/domain/src/coaching-subscription/index.ts | type-only import | yes | yes | inward | present |
+| E1808 | packages/infrastructure/src/payments/stripe/stripe-payment-checkout.server.ts | external:stripe | import | n/a | yes | outward | present |
+| E1809 | packages/infrastructure/src/payments/stripe/stripe-payment-checkout.server.ts | external:zod | import | n/a | yes | outward | present |
+| E1810 | packages/infrastructure/src/payments/create-payment-events.server.ts | packages/infrastructure/src/payments/memory/in-memory-payment-events.server.ts | import | no | no | lateral | present |
+| E1811 | packages/infrastructure/src/payments/create-payment-events.server.ts | packages/infrastructure/src/payments/payment-events.server.ts | type-only import | no | no | lateral | present |
+| E1812 | packages/infrastructure/src/payments/create-payment-events.server.ts | packages/infrastructure/src/payments/stripe/stripe-payment-events.server.ts | import | no | no | lateral | present |
+| E1813 | packages/infrastructure/src/payments/create-payment-events.server.ts | packages/config/src/index.ts | type-only import | yes | yes | outward | present |
+| E1816 | packages/infrastructure/src/payments/payment-events.server.ts | packages/infrastructure/src/payments/payment-event-verdict.server.ts | type-only import | no | no | lateral | present |
+| E1817 | packages/infrastructure/src/payments/payment-event-verdict.server.ts | packages/infrastructure/src/payments/checkout-session-completion.server.ts | import | no | no | lateral | present |
+| E1818 | packages/infrastructure/src/payments/payment-event-verdict.server.ts | external:zod | import | n/a | yes | outward | present |
+| E1819 | packages/infrastructure/src/payments/stripe/stripe-payment-events.server.ts | packages/infrastructure/src/payments/payment-event-verdict.server.ts | import | no | no | lateral | present |
+| E1820 | packages/infrastructure/src/payments/stripe/stripe-payment-events.server.ts | packages/infrastructure/src/payments/payment-events.server.ts | type-only import | no | no | lateral | present |
+| E1821 | packages/infrastructure/src/payments/stripe/stripe-payment-events.server.ts | packages/config/src/index.ts | type-only import | yes | yes | outward | present |
+| E1822 | packages/infrastructure/src/payments/stripe/stripe-payment-events.server.ts | external:stripe | import | n/a | yes | outward | present |
+| E1823 | packages/infrastructure/src/payments/payment-event-ledger.server.ts | packages/infrastructure/src/payments/payment-events-schema.server.ts | import | no | yes | outward | present |
+| E1824 | packages/infrastructure/src/payments/payment-event-ledger.server.ts | packages/db/src/index.ts | type-only import | yes | yes | outward | present |
+| E1825 | packages/infrastructure/src/payments/payment-events-schema.server.ts | packages/db/src/index.ts | import | yes | no | lateral | present |
+| E1826 | apps/platform/src/features/coaching-sales/api/payments/coaching-purchase-completion-handler.server.ts | packages/domain/src/coaching-subscription/index.ts | import | yes | yes | inward | present |
+| E1827 | apps/platform/src/features/coaching-sales/api/payments/coaching-purchase-completion-handler.server.ts | packages/domain/src/payment-link/index.ts | type-only import | yes | yes | inward | present |
+| E1828 | apps/platform/src/features/coaching-sales/api/payments/coaching-purchase-completion-handler.server.ts | packages/infrastructure/src/payments/index.server.ts | import | yes | no | lateral | present |
+| E1838 | apps/platform/src/features/coaching-sales/data/payment-links/payment-link-token.server.ts | packages/domain/src/payment-link/index.ts | type-only import | yes | yes | inward | present |
+| E1839 | apps/platform/src/features/coaching-sales/data/payment-links/payment-link-token.server.ts | external:node:crypto | import | n/a | yes | outward | present |
+| E1840 | apps/platform/src/features/coaching-sales/data/payment-links/payment-links-repository.server.ts | packages/db/src/index.ts | type-only import | yes | yes | outward | present |
+| E1841 | apps/platform/src/features/coaching-sales/data/payment-links/payment-links-repository.server.ts | packages/domain/src/coaching-subscription/index.ts | type-only import | yes | yes | inward | present |
+| E1842 | apps/platform/src/features/coaching-sales/data/payment-links/payment-links-repository.server.ts | packages/domain/src/payment-link/index.ts | import | yes | yes | inward | present |
+| E1843 | apps/platform/src/features/coaching-sales/data/payment-links/payment-links-repository.server.ts | packages/domain/src/shared/index.ts | type-only import | yes | yes | inward | present |
+| E1844 | apps/platform/src/features/coaching-sales/data/payment-links/payment-links-repository.server.ts | apps/platform/src/features/coaching-sales/data/schema.server.ts | import | no | yes | outward | present |
+| E1851 | apps/platform/src/features/coaching-sales/data/purchases/purchases-repository.server.ts | packages/db/src/index.ts | import | yes | yes | outward | present |
+| E1852 | apps/platform/src/features/coaching-sales/data/purchases/purchases-repository.server.ts | packages/domain/src/coaching-subscription/index.ts | type-only import | yes | yes | inward | present |
+| E1853 | apps/platform/src/features/coaching-sales/data/purchases/purchases-repository.server.ts | packages/domain/src/payment-link/index.ts | type-only import | yes | yes | inward | present |
+| E1854 | apps/platform/src/features/coaching-sales/data/purchases/purchases-repository.server.ts | packages/domain/src/shared/index.ts | type-only import | yes | yes | inward | present |
+| E1855 | apps/platform/src/features/coaching-sales/data/purchases/purchases-repository.server.ts | packages/infrastructure/src/payments/index.server.ts | import | yes | no | lateral | present |
+| E1856 | apps/platform/src/features/coaching-sales/data/purchases/purchases-repository.server.ts | apps/platform/src/features/coaching-sales/data/schema.server.ts | import | no | yes | outward | present |
+| E1857 | apps/platform/src/features/coaching-sales/email/create-coaching-sales-notifications.server.ts | apps/platform/src/features/coaching-sales/email/email-coaching-sales-notifications.server.ts | import | no | no | lateral | present |
+| E1858 | apps/platform/src/features/coaching-sales/email/create-coaching-sales-notifications.server.ts | packages/domain/src/payment-link/index.ts | type-only import | yes | yes | inward | present |
+| E1859 | apps/platform/src/features/coaching-sales/email/create-coaching-sales-notifications.server.ts | packages/infrastructure/src/email/index.server.ts | type-only import | yes | no | lateral | present |
+| E1860 | apps/platform/src/features/coaching-sales/email/email-coaching-sales-notifications.server.ts | apps/platform/src/features/coaching-sales/email/payment-link-email.server.ts | import | no | no | lateral | present |
+| E1861 | apps/platform/src/features/coaching-sales/email/email-coaching-sales-notifications.server.ts | packages/config/src/index.ts | import | yes | yes | outward | present |
+| E1862 | apps/platform/src/features/coaching-sales/email/email-coaching-sales-notifications.server.ts | packages/domain/src/payment-link/index.ts | type-only import | yes | yes | inward | present |
+| E1863 | apps/platform/src/features/coaching-sales/email/email-coaching-sales-notifications.server.ts | packages/domain/src/shared/index.ts | type-only import | yes | yes | inward | present |
+| E1864 | apps/platform/src/features/coaching-sales/email/email-coaching-sales-notifications.server.ts | packages/infrastructure/src/email/index.server.ts | type-only import | yes | no | lateral | present |
+| E1865 | apps/platform/src/features/coaching-sales/email/email-coaching-sales-notifications.server.ts | apps/platform/src/features/coaching-sales/contracts/paths.ts | import | no | no | lateral | present |
+| E1874 | apps/platform/src/features/coaching-sales/api/public/checkouts.ts | packages/infrastructure/src/http/index.server.ts | import | yes | yes | inward | present |
+| E1875 | apps/platform/src/features/coaching-sales/api/public/checkouts.ts | apps/platform/src/features/coaching-sales/server/guards/coaching-sales-context.server.ts | import | no | no | lateral | present |
+| E1877 | apps/platform/src/features/coaching-sales/ui/coach/call-sales-state-badge.tsx | apps/platform/src/features/coaching-sales/ui/coach/call-sales-state-labels.ts | import | no | no | lateral | present |
+| E1878 | apps/platform/src/features/coaching-sales/ui/coach/call-sales-state-badge.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E1879 | apps/platform/src/features/coaching-sales/ui/coach/call-sales-state-badge.tsx | apps/platform/src/features/coaching-sales/contracts/coaching-sales.ts | type-only import | no | yes | inward | present |
+| E1880 | apps/platform/src/features/coaching-sales/ui/coach/call-sales-state-labels.ts | apps/platform/src/features/coaching-sales/contracts/coaching-sales.ts | type-only import | no | yes | inward | present |
+| E1890 | packages/ui/src/overlays/index.ts | packages/ui/src/overlays/confirm-dialog.tsx | re-export | no | no | lateral | present |
+| E1891 | packages/ui/src/overlays/confirm-dialog.tsx | packages/ui/src/primitives/button.tsx | import | no | no | lateral | present |
+| E1892 | packages/ui/src/overlays/confirm-dialog.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E1893 | packages/ui/src/overlays/confirm-dialog.tsx | external:radix-ui | import | n/a | no | lateral | present |
+| E1894 | packages/ui/src/overlays/confirm-dialog.tsx | external:react | import | n/a | no | lateral | present |
+| E1895 | apps/platform/src/features/coaching-sales/ui/coach/pricing-tier-label.ts | apps/platform/src/features/coaching-sales/contracts/coaching-sales.ts | type-only import | no | yes | inward | present |
+| E1896 | apps/platform/src/features/coaching-sales/ui/coach/sales-status-filter.tsx | apps/platform/src/features/coaching-sales/ui/coach/call-sales-state-labels.ts | import | no | no | lateral | present |
+| E1897 | apps/platform/src/features/coaching-sales/ui/coach/sales-status-filter.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
+| E1898 | apps/platform/src/features/coaching-sales/ui/coach/sales-status-filter.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E1899 | apps/platform/src/features/coaching-sales/ui/coach/sales-status-filter.tsx | apps/platform/src/features/assessment-calls/contracts/paths.ts | import | yes | yes | inward | present |
+| E1900 | apps/platform/src/features/coaching-sales/ui/coach/sales-status-filter.tsx | apps/platform/src/features/coaching-sales/contracts/coaching-sales.ts | import | no | yes | inward | present |
+| E1901 | apps/platform/src/features/coaching-sales/ui/public/bundle-selector/bundle-benefits.tsx | apps/platform/src/features/coaching-sales/ui/public/bundle-selector/benefits.ts | import | no | no | lateral | present |
+| E1902 | apps/platform/src/features/coaching-sales/ui/public/bundle-selector/bundle-benefits.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
+| E1903 | apps/platform/src/features/coaching-sales/ui/public/bundle-selector/bundle-benefits.tsx | packages/ui/src/motion/index.ts | import | yes | no | lateral | present |
+| E1904 | apps/platform/src/features/coaching-sales/ui/public/bundle-selector/bundle-benefits.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E1905 | apps/platform/src/features/coaching-sales/ui/public/bundle-selector/bundle-benefits.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E1906 | apps/platform/src/features/coaching-sales/ui/public/bundle-selector/bundle-card.tsx | packages/domain/src/coaching-bundle/index.ts | type-only import | yes | yes | inward | present |
+| E1907 | apps/platform/src/features/coaching-sales/ui/public/bundle-selector/bundle-card.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
+| E1908 | apps/platform/src/features/coaching-sales/ui/public/bundle-selector/bundle-card.tsx | packages/ui/src/motion/index.ts | import | yes | no | lateral | present |
+| E1909 | apps/platform/src/features/coaching-sales/ui/public/bundle-selector/bundle-card.tsx | apps/platform/src/features/coaching-sales/contracts/bundle-cards.ts | import | no | yes | inward | present |
+| E1910 | apps/platform/src/features/coaching-sales/ui/public/bundle-selector/bundle-card.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E1911 | apps/platform/src/features/coaching-sales/ui/public/bundle-selector/bundle-card.tsx | external:react | import | n/a | no | lateral | present |
+| E1912 | apps/platform/src/features/coaching-sales/ui/public/bundle-selector/bundle-selector.tsx | apps/platform/src/features/coaching-sales/ui/public/bundle-selector/bundle-benefits.tsx | import | no | no | lateral | present |
+| E1913 | apps/platform/src/features/coaching-sales/ui/public/bundle-selector/bundle-selector.tsx | apps/platform/src/features/coaching-sales/ui/public/bundle-selector/bundle-card.tsx | import | no | no | lateral | present |
+| E1914 | apps/platform/src/features/coaching-sales/ui/public/bundle-selector/bundle-selector.tsx | packages/domain/src/coaching-bundle/index.ts | type-only import | yes | yes | inward | present |
+| E1915 | apps/platform/src/features/coaching-sales/ui/public/bundle-selector/bundle-selector.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E1916 | apps/platform/src/features/coaching-sales/ui/public/bundle-selector/bundle-selector.tsx | apps/platform/src/features/coaching-sales/contracts/bundle-cards.ts | type-only import | no | yes | inward | present |
+| E1917 | apps/platform/src/features/coaching-sales/ui/public/bundle-selector/bundle-selector.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E1918 | apps/platform/src/features/coaching-sales/ui/public/bundle-selector/bundle-selector.tsx | external:react | import | n/a | no | lateral | present |
+| E1919 | apps/platform/src/features/coaching-sales/ui/public/calendar-day-format.ts | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
+| E1920 | apps/platform/src/features/coaching-sales/ui/public/call-first-banner.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E1921 | apps/platform/src/features/coaching-sales/ui/public/call-first-banner.tsx | apps/platform/src/features/assessment-calls/contracts/paths.ts | import | yes | yes | inward | present |
+| E1922 | apps/platform/src/features/coaching-sales/ui/public/call-first-banner.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E1923 | apps/platform/src/features/coaching-sales/ui/public/checkout-complete/checkout-complete-page.tsx | apps/platform/src/features/coaching-sales/ui/public/checkout-complete/confirmation-copy.ts | import | no | no | lateral | present |
+| E1924 | apps/platform/src/features/coaching-sales/ui/public/checkout-complete/checkout-complete-page.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
+| E1925 | apps/platform/src/features/coaching-sales/ui/public/checkout-complete/checkout-complete-page.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E1926 | apps/platform/src/features/coaching-sales/ui/public/checkout-complete/checkout-complete-page.tsx | apps/platform/src/features/coaching-sales/contracts/coaching-sales.ts | type-only import | no | yes | inward | present |
+| E1927 | apps/platform/src/features/coaching-sales/ui/public/checkout-complete/checkout-complete-page.tsx | apps/platform/src/features/coaching-sales/server/guards/coaching-sales-context.server.ts | import | no | no | lateral | present |
+| E1928 | apps/platform/src/features/coaching-sales/ui/public/checkout-complete/checkout-complete-page.tsx | apps/platform/src/features/coaching-sales/ui/public/calendar-day-format.ts | import | no | no | lateral | present |
+| E1929 | apps/platform/src/features/coaching-sales/ui/public/checkout-complete/checkout-complete-page.tsx | apps/platform/src/features/coaching-sales/ui/public/call-first-banner.tsx | import | no | no | lateral | present |
+| E1930 | apps/platform/src/features/coaching-sales/ui/public/checkout-complete/checkout-complete-page.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E1931 | apps/platform/src/features/coaching-sales/ui/public/checkout-complete/confirmation-copy.ts | apps/platform/src/features/coaching-sales/ui/public/calendar-day-format.ts | import | no | no | lateral | present |
+| E1945 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/start-choice.tsx | apps/platform/src/features/coaching-sales/ui/public/select-bundle/start-choice-copy.ts | import | no | no | lateral | present |
+| E1946 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/start-choice.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E1947 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/start-choice.tsx | apps/platform/src/features/coaching-sales/contracts/coaching-sales.ts | import | no | yes | inward | present |
+| E1948 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/start-choice.tsx | apps/platform/src/features/coaching-sales/ui/public/calendar-day-format.ts | import | no | no | lateral | present |
+| E1949 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/start-choice.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E1950 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/start-choice.tsx | external:react | import | n/a | no | lateral | present |
+| E1951 | apps/platform/src/features/waitlist/server/waitlist-composition.server.ts | packages/domain/src/coaching-bundle/index.ts | type-only import | yes | yes | inward | present |
+| E1952 | apps/platform/src/features/waitlist/data/repository.server.ts | packages/domain/src/coaching-bundle/index.ts | type-only import | yes | yes | inward | present |
+| E1953 | apps/platform/src/features/waitlist/email/waitlist-confirmation-email.server.ts | external:react-dom | import | n/a | yes | outward | present |
+| E1954 | apps/platform/src/server/container.server.ts | packages/infrastructure/src/payments/index.server.ts | import | yes | no | lateral | present |
+| E1955 | apps/platform/src/server/container.server.ts | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | import | yes | no | lateral | present |
+| E1956 | apps/platform/src/server/logger.server.ts | packages/domain/src/payment-link/index.ts | type-only import | yes | yes | inward | present |
+| E1957 | apps/platform/src/server/logger.server.ts | packages/infrastructure/src/payments/index.server.ts | type-only import | yes | no | lateral | present |
+| E1958 | apps/platform/src/server/platform-composition.server.ts | packages/infrastructure/src/payments/index.server.ts | type-only import | yes | no | lateral | present |
+| E1959 | apps/platform/src/server/platform-composition.server.ts | apps/platform/src/server/api/stripe-webhooks/stripe-webhook-controller.server.ts | import | no | no | lateral | present |
+| E1960 | apps/platform/src/server/api/stripe-webhooks/stripe-webhook-controller.server.ts | packages/infrastructure/src/http/index.server.ts | import | yes | no | lateral | present |
+| E1961 | apps/platform/src/server/api/stripe-webhooks/stripe-webhook-controller.server.ts | packages/infrastructure/src/payments/index.server.ts | import | yes | no | lateral | present |
+| E1962 | apps/platform/src/server/feature-contexts.server.ts | apps/platform/src/features/coaching-sales/server/guards/coaching-sales-context.server.ts | import | yes | yes | outward | present |
+| E1963 | apps/platform/src/routes.ts | apps/platform/src/features/coaching-sales/routes.ts | import | yes | no | lateral | present |
+| E1964 | apps/platform/src/surfaces/coach-portal/routes.ts | apps/platform/src/features/assessment-calls/contracts/paths.ts | import | yes | yes | inward | present |
+| E1965 | apps/platform/src/surfaces/public-site/routes.ts | apps/platform/src/features/coaching-sales/routes.ts | import | yes | no | lateral | present |
+| E1966 | apps/platform/src/server/api/stripe-webhooks/stripe-webhooks.ts | packages/infrastructure/src/http/index.server.ts | import | yes | yes | inward | present |
+| E1967 | apps/platform/src/server/api/stripe-webhooks/stripe-webhooks.ts | apps/platform/src/server/guards/platform-context.server.ts | import | no | no | lateral | present |
+| E1981 | apps/platform/src/surfaces/public-site/pages/pricing.tsx | apps/platform/src/features/coaching-sales/server/guards/coaching-sales-context.server.ts | import | yes | no | lateral | present |
+| E1982 | apps/platform/src/surfaces/public-site/pages/pricing.tsx | apps/platform/src/features/coaching-sales/ui/public/bundle-selector/bundle-selector.tsx | import | yes | no | lateral | present |
+| E1983 | apps/platform/src/surfaces/public-site/pages/pricing.tsx | apps/platform/src/features/waitlist/server/guards/waitlist-context.server.ts | import | yes | no | lateral | present |
+| E1984 | apps/platform/src/surfaces/public-site/pages/pricing.tsx | apps/platform/src/features/waitlist/ui/shared/waitlist-presentation.ts | import | yes | no | lateral | present |
+| E1985 | apps/platform/src/features/assessment-calls/contracts/visitor-profile.ts | external:zod | import | n/a | no | lateral | present |
+| E1986 | apps/platform/src/features/assessment-calls/routes.ts | external:@react-router/dev | import | n/a | no | lateral | present |
+| E1987 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E1988 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | external:react | type-only import | n/a | no | lateral | present |
+| E1989 | apps/platform/src/features/coaching-sales/api/coach/payment-links-controller.server.ts | external:react-router | type-only import | n/a | no | lateral | present |
+| E1990 | apps/platform/src/features/coaching-sales/api/coach/payment-links.ts | external:react-router | type-only import | n/a | no | lateral | present |
+| E1992 | apps/platform/src/features/coaching-sales/api/public/checkouts.ts | external:react-router | type-only import | n/a | no | lateral | present |
+| E1995 | apps/platform/src/features/coaching-sales/data/payment-links/payment-link-token.server.ts | external:node:crypto | import | n/a | no | lateral | present |
+| E1996 | apps/platform/src/features/coaching-sales/data/payment-links/payment-links-repository.server.ts | external:drizzle-orm | import | n/a | no | lateral | present |
+| E1997 | apps/platform/src/features/coaching-sales/data/purchases/purchases-repository.server.ts | external:drizzle-orm | import | n/a | no | lateral | present |
+| E2004 | apps/platform/src/features/coaching-sales/server/guards/coaching-sales-context.server.ts | external:react-router | import | n/a | no | lateral | present |
+| E2008 | apps/platform/src/features/coaching-sales/ui/public/bundle-selector/bundle-benefits.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E2009 | apps/platform/src/features/coaching-sales/ui/public/bundle-selector/bundle-benefits.tsx | external:motion/react | import | n/a | no | lateral | present |
+| E2010 | apps/platform/src/features/coaching-sales/ui/public/bundle-selector/bundle-card.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E2011 | apps/platform/src/features/coaching-sales/ui/public/bundle-selector/bundle-card.tsx | external:motion/react | import | n/a | no | lateral | present |
+| E2012 | apps/platform/src/features/coaching-sales/ui/public/bundle-selector/bundle-card.tsx | external:react | import | n/a | no | lateral | present |
+| E2013 | apps/platform/src/features/coaching-sales/ui/public/bundle-selector/bundle-selector.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E2014 | apps/platform/src/features/coaching-sales/ui/public/bundle-selector/bundle-selector.tsx | external:motion/react | import | n/a | no | lateral | present |
+| E2015 | apps/platform/src/features/coaching-sales/ui/public/bundle-selector/bundle-selector.tsx | external:react | import | n/a | no | lateral | present |
+| E2016 | apps/platform/src/features/coaching-sales/ui/public/call-first-banner.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E2017 | apps/platform/src/features/coaching-sales/ui/public/call-first-banner.tsx | external:react-router | import | n/a | no | lateral | present |
+| E2018 | apps/platform/src/features/coaching-sales/ui/public/checkout-complete/checkout-complete-page.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E2019 | apps/platform/src/features/coaching-sales/ui/public/checkout-complete/checkout-complete-page.tsx | external:react-router | import | n/a | no | lateral | present |
+| E2023 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/start-choice.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E2024 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/start-choice.tsx | external:react | import | n/a | no | lateral | present |
+| E2025 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/start-choice.tsx | external:react-router | import | n/a | no | lateral | present |
+| E2026 | apps/platform/src/features/waitlist/data/repository.server.ts | external:drizzle-orm | import | n/a | no | lateral | present |
+| E2027 | apps/platform/src/routes.ts | external:@react-router/dev | type-only import | n/a | no | lateral | present |
+| E2028 | apps/platform/src/server/api/routes.ts | external:@react-router/dev | import | n/a | no | lateral | present |
+| E2029 | apps/platform/src/server/api/stripe-webhooks/stripe-webhooks.ts | external:react-router | type-only import | n/a | no | lateral | present |
+| E2030 | apps/platform/src/server/feature-contexts.server.ts | external:react-router | type-only import | n/a | no | lateral | present |
+| E2032 | apps/platform/src/surfaces/coach-portal/routes.ts | external:@react-router/dev | import | n/a | no | lateral | present |
+| E2033 | apps/platform/src/surfaces/public-site/pages/pricing.tsx | external:react-router | import | n/a | no | lateral | present |
+| E2034 | apps/platform/src/surfaces/public-site/routes.ts | external:@react-router/dev | import | n/a | no | lateral | present |
+| E2035 | packages/config/src/concerns/payments.ts | external:zod | import | n/a | no | lateral | present |
+| E2036 | packages/infrastructure/src/payments/checkout-session-completion.server.ts | external:zod | import | n/a | no | lateral | present |
+| E2038 | packages/infrastructure/src/payments/memory/in-memory-payment-checkout.server.ts | external:node:crypto | import | n/a | no | lateral | present |
+| E2039 | packages/infrastructure/src/payments/payment-event-verdict.server.ts | external:zod | import | n/a | no | lateral | present |
+| E2040 | packages/infrastructure/src/payments/payment-events-schema.server.ts | external:drizzle-orm/pg-core | import | n/a | no | lateral | present |
+| E2041 | packages/infrastructure/src/payments/stripe/stripe-client.server.ts | external:stripe | import | n/a | no | lateral | present |
+| E2042 | packages/infrastructure/src/payments/stripe/stripe-payment-checkout.server.ts | external:stripe | import | n/a | no | lateral | present |
+| E2043 | packages/infrastructure/src/payments/stripe/stripe-payment-checkout.server.ts | external:zod | import | n/a | no | lateral | present |
+| E2044 | packages/infrastructure/src/payments/stripe/stripe-payment-events.server.ts | external:stripe | import | n/a | no | lateral | present |
+| E2045 | packages/ui/src/overlays/confirm-dialog.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E2046 | packages/ui/src/overlays/confirm-dialog.tsx | external:radix-ui | import | n/a | no | lateral | present |
+| E2047 | packages/ui/src/overlays/confirm-dialog.tsx | external:react | import | n/a | no | lateral | present |
+| E2048 | packages/ui/src/primitives/radio-group.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E2049 | packages/ui/src/primitives/radio-group.tsx | external:react | import | n/a | no | lateral | present |
+| E2050 | packages/ui/src/primitives/radio-group.tsx | external:radix-ui | import | n/a | no | lateral | present |
+| E134 | apps/platform/src/features/store/email/store-delivery-email-template.server.tsx | packages/infrastructure/src/email/index.server.ts | import | yes | no | lateral | present |
+| E253 | apps/platform/src/features/waitlist/email/waitlist-confirmation-email-template.server.tsx | packages/infrastructure/src/email/index.server.ts | import | yes | no | lateral | present |
+| E654 | packages/infrastructure/src/email/index.server.ts | packages/infrastructure/src/email/create-product-email.server.ts | re-export | no | no | lateral | present |
+| E655 | packages/infrastructure/src/email/index.server.ts | packages/infrastructure/src/email/email-primitives.server.tsx | re-export | no | no | lateral | present |
+| E656 | packages/infrastructure/src/email/index.server.ts | packages/infrastructure/src/email/in-memory-product-email.server.ts | re-export | no | no | lateral | present |
+| E797 | apps/platform/src/features/store/email/store-delivery-email-template.server.tsx | external:react | type-only import | n/a | yes | outward | present |
+| E831 | apps/platform/src/features/waitlist/email/waitlist-confirmation-email-template.server.tsx | external:react | type-only import | n/a | yes | outward | present |
+| E1025 | packages/infrastructure/src/email/index.server.ts | packages/infrastructure/src/email/product-email-contract.server.ts | type-only import | no | no | lateral | present |
+| E1237 | apps/platform/src/features/assessment-calls/email/assessment-call-email-styles.server.ts | external:react | type-only import | n/a | yes | outward | present |
+| E1548 | packages/ui/src/appointments/index.ts | packages/ui/src/appointments/appointment-card.tsx | re-export | no | no | lateral | present |
+| E1549 | packages/ui/src/appointments/index.ts | packages/ui/src/appointments/dashboard-appointment-row.tsx | re-export | no | no | lateral | present |
+| E1674 | packages/domain/src/coaching-bundle/index.ts | packages/domain/src/coaching-bundle/coaching-bundle.ts | re-export | no | no | lateral | present |
+| E1675 | packages/domain/src/coaching-bundle/index.ts | packages/domain/src/coaching-bundle/pricing-eligibility.ts | type-only import | no | no | lateral | present |
+| E1676 | packages/domain/src/coaching-bundle/index.ts | packages/domain/src/coaching-bundle/read-pricing-tiers-use-case.ts | re-export | no | no | lateral | present |
+| E1719 | apps/platform/src/features/coaching-sales/contracts/coaching-sales.ts | apps/platform/src/features/coaching-sales/contracts/bundle-cards.ts | import | no | no | lateral | present |
+| E1720 | apps/platform/src/features/coaching-sales/contracts/coaching-sales.ts | packages/domain/src/coaching-subscription/index.ts | import | yes | yes | inward | present |
+| E1721 | apps/platform/src/features/coaching-sales/contracts/coaching-sales.ts | packages/domain/src/payment-link/index.ts | type-only import | yes | yes | inward | present |
+| E1723 | apps/platform/src/features/coaching-sales/contracts/bundle-cards.ts | packages/domain/src/coaching-bundle/index.ts | import | yes | yes | inward | present |
+| E1750 | packages/domain/src/coaching-subscription/start-checkout-use-case.ts | packages/domain/src/assessment-call/index.ts | type-only import | no | no | lateral | present |
+| E1751 | packages/domain/src/coaching-subscription/start-checkout-use-case.ts | packages/domain/src/coaching-bundle/index.ts | import | no | no | lateral | present |
+| E1752 | packages/domain/src/coaching-subscription/start-checkout-use-case.ts | packages/domain/src/email-address/index.ts | import | no | no | lateral | present |
+| E1753 | packages/domain/src/coaching-subscription/start-checkout-use-case.ts | packages/domain/src/payment-link/index.ts | import | no | no | lateral | present |
+| E1754 | packages/domain/src/coaching-subscription/start-checkout-use-case.ts | packages/domain/src/shared/index.ts | type-only import | no | no | lateral | present |
+| E1755 | packages/domain/src/coaching-subscription/start-checkout-use-case.ts | packages/domain/src/coaching-subscription/checkout-sessions.ts | type-only import | no | no | lateral | present |
+| E1756 | packages/domain/src/coaching-subscription/start-checkout-use-case.ts | packages/domain/src/coaching-subscription/coaching-subscription.ts | import | no | no | lateral | present |
+| E1757 | packages/domain/src/coaching-subscription/start-checkout-use-case.ts | packages/domain/src/coaching-subscription/payment-checkout.ts | type-only import | no | no | lateral | present |
+| E1764 | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | packages/db/src/index.ts | type-only import | yes | yes | outward | present |
+| E1765 | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | packages/domain/src/coaching-bundle/index.ts | import | yes | yes | inward | present |
+| E1766 | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | packages/domain/src/coaching-subscription/index.ts | import | yes | yes | inward | present |
+| E1767 | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | packages/domain/src/feature-flag/index.ts | type-only import | yes | yes | inward | present |
+| E1768 | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | packages/domain/src/payment-link/index.ts | import | yes | yes | inward | present |
+| E1769 | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | packages/domain/src/shared/index.ts | type-only import | yes | yes | inward | present |
+| E1770 | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | packages/infrastructure/src/email/index.server.ts | type-only import | yes | no | lateral | present |
+| E1771 | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | packages/infrastructure/src/payments/index.server.ts | type-only import | yes | no | lateral | present |
+| E1772 | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | apps/platform/src/features/coaching-sales/api/coach/coach-sales-controller.server.ts | import | no | no | lateral | present |
+| E1773 | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | apps/platform/src/features/coaching-sales/api/coach/payment-links-controller.server.ts | import | no | no | lateral | present |
+| E1774 | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | apps/platform/src/features/coaching-sales/api/payments/coaching-purchase-completion-handler.server.ts | import | no | no | lateral | present |
+| E1775 | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | apps/platform/src/features/coaching-sales/api/public/checkouts-controller.server.ts | import | no | no | lateral | present |
+| E1776 | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | apps/platform/src/features/coaching-sales/data/payment-links/payment-link-token.server.ts | import | no | no | lateral | present |
+| E1777 | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | apps/platform/src/features/coaching-sales/data/payment-links/payment-links-repository.server.ts | import | no | no | lateral | present |
+| E1778 | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | apps/platform/src/features/coaching-sales/data/purchases/purchases-repository.server.ts | import | no | no | lateral | present |
+| E1779 | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | apps/platform/src/features/coaching-sales/email/create-coaching-sales-notifications.server.ts | import | no | no | lateral | present |
+| E1789 | packages/infrastructure/src/payments/coaching-checkout-completion.server.ts | packages/infrastructure/src/payments/checkout-session-completion.server.ts | type-only import | no | no | lateral | present |
+| E1790 | packages/infrastructure/src/payments/coaching-checkout-completion.server.ts | packages/infrastructure/src/payments/payment-completion-handler.server.ts | import | no | no | lateral | present |
+| E1791 | packages/infrastructure/src/payments/coaching-checkout-completion.server.ts | packages/domain/src/coaching-bundle/index.ts | import | yes | yes | inward | present |
+| E1792 | packages/infrastructure/src/payments/coaching-checkout-completion.server.ts | packages/domain/src/coaching-subscription/index.ts | import | yes | yes | inward | present |
+| E1814 | packages/infrastructure/src/payments/memory/in-memory-payment-events.server.ts | packages/infrastructure/src/payments/payment-events.server.ts | type-only import | no | no | lateral | present |
+| E1829 | apps/platform/src/features/coaching-sales/api/public/checkouts-controller.server.ts | packages/config/src/index.ts | import | yes | yes | outward | present |
+| E1830 | apps/platform/src/features/coaching-sales/api/public/checkouts-controller.server.ts | packages/domain/src/coaching-bundle/index.ts | import | yes | yes | inward | present |
+| E1831 | apps/platform/src/features/coaching-sales/api/public/checkouts-controller.server.ts | packages/domain/src/coaching-subscription/index.ts | import | yes | yes | inward | present |
+| E1832 | apps/platform/src/features/coaching-sales/api/public/checkouts-controller.server.ts | packages/domain/src/payment-link/index.ts | type-only import | yes | yes | inward | present |
+| E1833 | apps/platform/src/features/coaching-sales/api/public/checkouts-controller.server.ts | packages/domain/src/shared/index.ts | type-only import | yes | yes | inward | present |
+| E1834 | apps/platform/src/features/coaching-sales/api/public/checkouts-controller.server.ts | packages/infrastructure/src/http/index.server.ts | import | yes | no | lateral | present |
+| E1835 | apps/platform/src/features/coaching-sales/api/public/checkouts-controller.server.ts | apps/platform/src/features/coaching-sales/contracts/bundle-cards.ts | import | no | no | lateral | present |
+| E1836 | apps/platform/src/features/coaching-sales/api/public/checkouts-controller.server.ts | apps/platform/src/features/coaching-sales/contracts/coaching-sales.ts | import | no | no | lateral | present |
+| E1837 | apps/platform/src/features/coaching-sales/api/public/checkouts-controller.server.ts | apps/platform/src/features/coaching-sales/contracts/paths.ts | import | no | no | lateral | present |
+| E1845 | apps/platform/src/features/coaching-sales/data/schema.server.ts | packages/db/src/index.ts | import | yes | no | lateral | present |
+| E1846 | apps/platform/src/features/coaching-sales/data/schema.server.ts | packages/domain/src/assessment-call/index.ts | import | yes | yes | inward | present |
+| E1847 | apps/platform/src/features/coaching-sales/data/schema.server.ts | packages/domain/src/coaching-subscription/index.ts | import | yes | yes | inward | present |
+| E1848 | apps/platform/src/features/coaching-sales/data/schema.server.ts | packages/domain/src/payment-link/index.ts | type-only import | yes | yes | inward | present |
+| E1849 | apps/platform/src/features/coaching-sales/data/schema.server.ts | apps/platform/src/features/assessment-calls/data/schema.server.ts | import | yes | no | lateral | present |
+| E1866 | apps/platform/src/features/coaching-sales/email/payment-link-email.server.ts | apps/platform/src/features/coaching-sales/email/payment-link-email-template.server.tsx | import | no | no | lateral | present |
+| E1867 | apps/platform/src/features/coaching-sales/email/payment-link-email.server.ts | packages/domain/src/coaching-bundle/index.ts | import | yes | yes | inward | present |
+| E1868 | apps/platform/src/features/coaching-sales/email/payment-link-email.server.ts | apps/platform/src/features/coaching-sales/contracts/bundle-cards.ts | import | no | no | lateral | present |
+| E1870 | apps/platform/src/features/coaching-sales/email/payment-link-email.server.ts | external:react-dom | import | n/a | yes | outward | present |
+| E1871 | apps/platform/src/features/coaching-sales/email/payment-link-email-template.server.tsx | apps/platform/src/features/coaching-sales/email/coaching-sales-email-styles.server.ts | import | no | no | lateral | present |
+| E1872 | apps/platform/src/features/coaching-sales/email/payment-link-email-template.server.tsx | packages/infrastructure/src/email/index.server.ts | import | yes | no | lateral | present |
+| E1876 | apps/platform/src/features/coaching-sales/routes.ts | apps/platform/src/features/coaching-sales/contracts/paths.ts | import | no | yes | inward | present |
+| E1881 | apps/platform/src/features/coaching-sales/ui/coach/payment-link-action.tsx | packages/domain/src/assessment-call/index.ts | type-only import | yes | yes | inward | present |
+| E1882 | apps/platform/src/features/coaching-sales/ui/coach/payment-link-action.tsx | packages/ui/src/overlays/index.ts | import | yes | no | lateral | present |
+| E1884 | apps/platform/src/features/coaching-sales/ui/coach/payment-link-action.tsx | packages/ui/src/toast/index.ts | import | yes | no | lateral | present |
+| E1885 | apps/platform/src/features/coaching-sales/ui/coach/payment-link-action.tsx | apps/platform/src/features/assessment-calls/contracts/visitor-profile.ts | import | yes | yes | inward | present |
+| E1886 | apps/platform/src/features/coaching-sales/ui/coach/payment-link-action.tsx | apps/platform/src/features/coaching-sales/contracts/coaching-sales.ts | import | no | yes | inward | present |
+| E1887 | apps/platform/src/features/coaching-sales/ui/coach/payment-link-action.tsx | apps/platform/src/features/coaching-sales/contracts/paths.ts | import | no | yes | inward | present |
+| E1932 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/select-bundle-page.tsx | apps/platform/src/features/coaching-sales/ui/public/select-bundle/start-choice.tsx | import | no | no | lateral | present |
+| E1933 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/select-bundle-page.tsx | apps/platform/src/features/coaching-sales/ui/public/select-bundle/start-choice-copy.ts | import | no | no | lateral | present |
+| E1934 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/select-bundle-page.tsx | packages/config/src/index.ts | import | yes | no | lateral | present |
+| E1935 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/select-bundle-page.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
+| E1936 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/select-bundle-page.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E1937 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/select-bundle-page.tsx | apps/platform/src/features/coaching-sales/contracts/bundle-cards.ts | import | no | yes | inward | present |
+| E1938 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/select-bundle-page.tsx | apps/platform/src/features/coaching-sales/contracts/coaching-sales.ts | import | no | yes | inward | present |
+| E1939 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/select-bundle-page.tsx | apps/platform/src/features/coaching-sales/contracts/paths.ts | import | no | yes | inward | present |
+| E1940 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/select-bundle-page.tsx | apps/platform/src/features/coaching-sales/server/guards/coaching-sales-context.server.ts | import | no | no | lateral | present |
+| E1941 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/select-bundle-page.tsx | apps/platform/src/features/coaching-sales/ui/public/bundle-selector/bundle-selector.tsx | import | no | no | lateral | present |
+| E1942 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/select-bundle-page.tsx | apps/platform/src/features/coaching-sales/ui/public/call-first-banner.tsx | import | no | no | lateral | present |
+| E1968 | apps/platform/src/surfaces/coach-portal/pages/assessment-calls.tsx | packages/ui/src/appointments/index.ts | type-only import | yes | no | lateral | present |
+| E1969 | apps/platform/src/surfaces/coach-portal/pages/assessment-calls.tsx | packages/ui/src/portal/index.ts | import | yes | no | lateral | present |
+| E1970 | apps/platform/src/surfaces/coach-portal/pages/assessment-calls.tsx | apps/platform/src/features/assessment-calls/server/guards/assessment-calls-context.server.ts | import | yes | no | lateral | present |
+| E1971 | apps/platform/src/surfaces/coach-portal/pages/assessment-calls.tsx | apps/platform/src/features/assessment-calls/ui/coach/assessment-call-listing.ts | import | yes | no | lateral | present |
+| E1972 | apps/platform/src/surfaces/coach-portal/pages/assessment-calls.tsx | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls-error-boundary.tsx | re-export | yes | no | lateral | present |
+| E1973 | apps/platform/src/surfaces/coach-portal/pages/assessment-calls.tsx | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | import | yes | no | lateral | present |
+| E1974 | apps/platform/src/surfaces/coach-portal/pages/assessment-calls.tsx | apps/platform/src/features/assessment-calls/ui/coach/use-coach-clock.ts | import | yes | no | lateral | present |
+| E1975 | apps/platform/src/surfaces/coach-portal/pages/assessment-calls.tsx | apps/platform/src/features/coaching-sales/contracts/coaching-sales.ts | type-only import | yes | yes | inward | present |
+| E1976 | apps/platform/src/surfaces/coach-portal/pages/assessment-calls.tsx | apps/platform/src/features/coaching-sales/server/guards/coaching-sales-context.server.ts | import | yes | no | lateral | present |
+| E1977 | apps/platform/src/surfaces/coach-portal/pages/assessment-calls.tsx | apps/platform/src/features/coaching-sales/ui/coach/call-sales-state-badge.tsx | import | yes | no | lateral | present |
+| E1978 | apps/platform/src/surfaces/coach-portal/pages/assessment-calls.tsx | apps/platform/src/features/coaching-sales/ui/coach/payment-link-action.tsx | import | yes | no | lateral | present |
+| E1979 | apps/platform/src/surfaces/coach-portal/pages/assessment-calls.tsx | apps/platform/src/features/coaching-sales/ui/coach/pricing-tier-label.ts | import | yes | no | lateral | present |
+| E1980 | apps/platform/src/surfaces/coach-portal/pages/assessment-calls.tsx | apps/platform/src/features/coaching-sales/ui/coach/sales-status-filter.tsx | import | yes | no | lateral | present |
+| E1991 | apps/platform/src/features/coaching-sales/api/public/checkouts-controller.server.ts | external:react-router | import | n/a | no | lateral | present |
+| E1993 | apps/platform/src/features/coaching-sales/contracts/bundle-cards.ts | external:zod | import | n/a | yes | outward | present |
+| E1994 | apps/platform/src/features/coaching-sales/contracts/coaching-sales.ts | external:zod | import | n/a | yes | outward | present |
+| E1998 | apps/platform/src/features/coaching-sales/data/schema.server.ts | external:drizzle-orm | import | n/a | no | lateral | present |
+| E1999 | apps/platform/src/features/coaching-sales/data/schema.server.ts | external:drizzle-orm/pg-core | import | n/a | no | lateral | present |
+| E2000 | apps/platform/src/features/coaching-sales/email/coaching-sales-email-styles.server.ts | external:react | type-only import | n/a | yes | outward | present |
+| E2001 | apps/platform/src/features/coaching-sales/email/payment-link-email.server.ts | external:react | import | n/a | yes | outward | present |
+| E2002 | apps/platform/src/features/coaching-sales/email/payment-link-email.server.ts | external:react-dom/server | import | n/a | no | lateral | present |
+| E2003 | apps/platform/src/features/coaching-sales/routes.ts | external:@react-router/dev | import | n/a | no | lateral | present |
+| E2005 | apps/platform/src/features/coaching-sales/ui/coach/payment-link-action.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E2006 | apps/platform/src/features/coaching-sales/ui/coach/payment-link-action.tsx | external:react | import | n/a | no | lateral | present |
+| E2007 | apps/platform/src/features/coaching-sales/ui/coach/payment-link-action.tsx | external:react-router | import | n/a | no | lateral | present |
+| E2020 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/select-bundle-page.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E2021 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/select-bundle-page.tsx | external:react | import | n/a | no | lateral | present |
+| E2022 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/select-bundle-page.tsx | external:react-router | import | n/a | no | lateral | present |
+| E2031 | apps/platform/src/surfaces/coach-portal/pages/assessment-calls.tsx | external:react-router | import | n/a | no | lateral | present |
+| E2037 | packages/infrastructure/src/payments/coaching-checkout-completion.server.ts | external:zod | import | n/a | yes | outward | present |
+| E2051 | packages/infrastructure/src/email/index.server.ts | packages/infrastructure/src/email/email-theme.server.ts | re-export | no | no | lateral | present |
+| E2052 | apps/platform/src/features/assessment-calls/email/assessment-call-email-styles.server.ts | packages/infrastructure/src/email/index.server.ts | import | yes | no | lateral | present |
+| E2053 | packages/ui/src/appointments/index.ts | packages/ui/src/appointments/appointment.ts | type-only import | no | no | lateral | present |
+| E2054 | packages/ui/src/appointments/index.ts | packages/ui/src/appointments/row-action.tsx | re-export | no | no | lateral | present |
+| E2055 | packages/ui/src/appointments/row-action.tsx | packages/ui/src/primitives/button.tsx | import | no | no | lateral | present |
+| E2056 | packages/ui/src/appointments/row-action.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E2057 | packages/ui/src/appointments/row-action.tsx | external:react | type-only import | n/a | no | lateral | present |
+| E2058 | apps/platform/src/features/assessment-calls/ui/coach/join-call-link.tsx | packages/ui/src/appointments/index.ts | import | yes | no | lateral | present |
+| E2059 | apps/platform/src/features/assessment-calls/ui/coach/join-call-link.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E2060 | packages/infrastructure/src/payments/memory/in-memory-payment-events.server.ts | packages/infrastructure/src/payments/payment-event-verdict.server.ts | import | no | no | lateral | present |
+| E2061 | apps/platform/src/features/coaching-sales/api/public/checkouts-controller.server.ts | apps/platform/src/features/coaching-sales/contracts/checkout-confirmation.ts | import | no | no | lateral | present |
+| E2062 | apps/platform/src/features/coaching-sales/contracts/checkout-confirmation.ts | apps/platform/src/features/coaching-sales/contracts/bundle-cards.ts | import | no | no | lateral | present |
+| E2063 | apps/platform/src/features/coaching-sales/contracts/checkout-confirmation.ts | apps/platform/src/features/coaching-sales/contracts/coaching-sales.ts | type-only import | no | no | lateral | present |
+| E2064 | apps/platform/src/features/coaching-sales/contracts/checkout-confirmation.ts | packages/domain/src/coaching-bundle/index.ts | import | yes | yes | inward | present |
+| E2065 | apps/platform/src/features/coaching-sales/contracts/checkout-confirmation.ts | packages/domain/src/coaching-subscription/index.ts | type-only import | yes | yes | inward | present |
+| E2066 | apps/platform/src/features/coaching-sales/data/schema.server.ts | packages/domain/src/coaching-bundle/index.ts | import | yes | yes | inward | present |
+| E2067 | apps/platform/src/features/coaching-sales/email/payment-link-email.server.ts | apps/platform/src/features/coaching-sales/contracts/coaching-sales.ts | import | no | no | lateral | present |
+| E2068 | apps/platform/src/features/coaching-sales/email/payment-link-email-template.server.tsx | apps/platform/src/features/coaching-sales/contracts/coaching-sales.ts | import | no | no | lateral | present |
+| E2069 | apps/platform/src/features/coaching-sales/email/coaching-sales-email-styles.server.ts | packages/infrastructure/src/email/index.server.ts | import | yes | no | lateral | present |
+| E2070 | apps/platform/src/features/coaching-sales/api/public/bundle-page.ts | packages/infrastructure/src/http/index.server.ts | import | yes | yes | inward | present |
+| E2071 | apps/platform/src/features/coaching-sales/api/public/bundle-page.ts | apps/platform/src/features/coaching-sales/server/guards/coaching-sales-context.server.ts | import | no | no | lateral | present |
+| E2072 | apps/platform/src/features/coaching-sales/ui/coach/payment-link-action.tsx | packages/ui/src/appointments/index.ts | import | yes | no | lateral | present |
+| E2073 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/bundle-page-resolution.ts | apps/platform/src/features/coaching-sales/ui/public/select-bundle/payment-link-token.ts | import | no | no | lateral | present |
+| E2074 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/bundle-page-resolution.ts | apps/platform/src/features/coaching-sales/contracts/coaching-sales.ts | import | no | yes | inward | present |
+| E2075 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/bundle-page-resolution.ts | apps/platform/src/features/coaching-sales/contracts/paths.ts | import | no | yes | inward | present |
+| E2076 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/bundle-page-resolution.ts | external:react | import | n/a | no | lateral | present |
+| E2077 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/payment-link-token.ts | external:react | import | n/a | no | lateral | present |
+| E2078 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/select-bundle-page.tsx | apps/platform/src/features/coaching-sales/ui/public/select-bundle/bundle-page-resolution.ts | import | no | no | lateral | present |
+| E2079 | apps/platform/src/features/coaching-sales/api/public/bundle-page.ts | external:react-router | type-only import | n/a | no | lateral | present |
+| E2080 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/bundle-page-resolution.ts | external:react-router | import | n/a | no | lateral | present |
+| E2081 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/payment-link-token.ts | external:react-router | import | n/a | no | lateral | present |
+| E2082 | packages/ui/src/appointments/row-action.tsx | external:react-router | import | n/a | no | lateral | present |
