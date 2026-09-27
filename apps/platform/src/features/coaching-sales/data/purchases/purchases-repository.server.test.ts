@@ -5,7 +5,7 @@ import {
   CoachingSubscription,
   type CoachingPurchase,
 } from "@eli-coach-platform/domain/coaching-subscription";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { PostgresCoachingPurchases } from "./purchases-repository.server";
 
@@ -15,30 +15,39 @@ const LINK_SENT_CALL_ID = "0b8d2f7e-2f55-4d3e-9d7c-7d7a3f1c2b10";
 const PAID_CALL_ID = "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22";
 
 describe("PostgresCoachingPurchases#recordCompletion", () => {
-  it("records a purchase the database accepts", async () => {
+  it("records the event in the ledger and then the purchase", async () => {
     // arrange
-    const purchases = createPurchases(createDatabaseCommittingTransaction());
+    const database = createDatabaseWithLedgerAnswering([{ id: "evt_1" }]);
+    const purchases = createPurchases(database.client);
 
     // act
     const outcome = await purchases.recordCompletion(purchase());
 
     // assert
     expect(outcome).toBe("recorded");
+    expect(database.insertedRows).toEqual([
+      { id: "evt_1", receivedAt: NOW },
+      expect.objectContaining({ assessmentCallId: PAID_CALL_ID }),
+      expect.objectContaining({
+        clientId: "client-1",
+        stripeCheckoutSessionId: "cs_1",
+      }),
+    ]);
+    expect(database.update).toHaveBeenCalledTimes(1);
   });
 
-  it("answers a duplicate event when the event ledger already holds the event", async () => {
+  it("answers a duplicate event and writes nothing else when the ledger already holds the event", async () => {
     // arrange
-    const purchases = createPurchases(
-      createDatabaseFailingTransactionWith(
-        uniqueViolation("payment_events_pkey"),
-      ),
-    );
+    const database = createDatabaseWithLedgerAnswering([]);
+    const purchases = createPurchases(database.client);
 
     // act
     const outcome = await purchases.recordCompletion(purchase());
 
     // assert
     expect(outcome).toBe("duplicate_event");
+    expect(database.insertedRows).toEqual([{ id: "evt_1", receivedAt: NOW }]);
+    expect(database.update).not.toHaveBeenCalled();
   });
 
   it("answers an already paid call when the call already has a client", async () => {
@@ -76,7 +85,7 @@ describe("PostgresCoachingPurchases#recordCompletion", () => {
     // arrange
     const failure = Object.assign(new Error("connection reset"), {
       code: "08006",
-      constraint: "payment_events_pkey",
+      constraint: "clients_assessment_call_id_unique",
     });
     const purchases = createPurchases(
       createDatabaseFailingTransactionWith(failure),
@@ -178,8 +187,28 @@ function uniqueViolation(constraint: string): Error {
   });
 }
 
-function createDatabaseCommittingTransaction(): DatabaseClient {
-  return { transaction: async () => undefined } as unknown as DatabaseClient;
+function createDatabaseWithLedgerAnswering(ledgerRows: readonly unknown[]) {
+  const insertedRows: unknown[] = [];
+  const update = vi.fn(() => ({ set: () => ({ where: async () => [] }) }));
+  const transaction = {
+    insert: () => ({
+      values: (row: unknown) => {
+        insertedRows.push(row);
+
+        return Object.assign(Promise.resolve(), {
+          onConflictDoNothing: () => ({ returning: async () => ledgerRows }),
+          returning: async () => [{ id: "client-1" }],
+        });
+      },
+    }),
+    select: () => ({ from: () => ({ where: () => ({}) }) }),
+    update,
+  };
+  const client = {
+    transaction: (work: (tx: unknown) => Promise<unknown>) => work(transaction),
+  } as unknown as DatabaseClient;
+
+  return { client, insertedRows, update };
 }
 
 function createDatabaseFailingTransactionWith(failure: Error): DatabaseClient {

@@ -1,16 +1,16 @@
-import type { CheckoutCompletion } from "@eli-coach-platform/domain/coaching-subscription";
 import { z } from "zod";
 
 import {
   fromUnixSeconds,
   readPaidCheckoutSession,
+  type PaidCheckoutSession,
 } from "./checkout-session-completion.server";
 
 export type PaymentEventVerdict =
   | {
       kind: "checkout_completed";
       eventId: string;
-      completion: CheckoutCompletion;
+      session: PaidCheckoutSession;
     }
   | { kind: "ignored" }
   | { kind: "invalid" };
@@ -35,14 +35,14 @@ export function readPaymentEvent(event: unknown): PaymentEventVerdict {
     return { kind: "ignored" };
   }
 
-  const completion = readPaidCheckoutSession(
+  const session = readPaidCheckoutSession(
     parsed.data.data.object,
     fromUnixSeconds(parsed.data.created),
   );
 
-  if (!completion) {
+  if (!session) {
     return { kind: "ignored" };
   }
 
-  return { kind: "checkout_completed", eventId: parsed.data.id, completion };
+  return { kind: "checkout_completed", eventId: parsed.data.id, session };
 }

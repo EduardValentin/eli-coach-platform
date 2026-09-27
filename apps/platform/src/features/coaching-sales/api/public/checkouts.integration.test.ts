@@ -102,6 +102,7 @@ describe.sequential("checkouts integration", () => {
       "line_items[0][price_data][recurring][interval]": "month",
       "line_items[0][price_data][recurring][interval_count]": "3",
       "line_items[0][price_data][unit_amount]": "44700",
+      "metadata[purpose]": "coaching-subscription",
       "metadata[assessmentCallId]": callId,
       "metadata[bundleId]": "3-months",
       "metadata[months]": "3",
@@ -109,6 +110,7 @@ describe.sequential("checkouts integration", () => {
       "metadata[tier]": "regular",
       mode: "subscription",
       "payment_method_types[0]": "card",
+      "subscription_data[metadata][purpose]": "coaching-subscription",
       "subscription_data[metadata][assessmentCallId]": callId,
       "line_items[0][price_data][product_data][name]": "3 Months",
       success_url:

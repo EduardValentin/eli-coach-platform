@@ -6,6 +6,11 @@ import type {
   PaymentCheckout,
 } from "@eli-coach-platform/domain/coaching-subscription";
 
+import {
+  coachingCheckoutMetadata,
+  toCheckoutCompletion,
+} from "../coaching-checkout-completion.server";
+
 const CHECKOUT_SESSION_ID_PLACEHOLDER = "{CHECKOUT_SESSION_ID}";
 
 type RememberedSession = {
@@ -57,18 +62,16 @@ export class InMemoryPaymentCheckout implements PaymentCheckout {
       return null;
     }
 
-    return {
-      checkoutSessionId: id,
-      paymentCustomerId: command.customerId,
-      paymentSubscriptionId: `sub_memory_${id}`,
+    return toCheckoutCompletion({
+      id,
+      customerId: command.customerId,
+      subscriptionId: `sub_memory_${id}`,
+      paymentIntentId: null,
       amountCents: command.bundle.amountCents,
       currency: command.currency,
       customerEmail,
       paidAt: createdAt,
-      assessmentCallId: command.metadata.assessmentCallId,
-      bundleId: command.metadata.bundleId,
-      tier: command.metadata.tier,
-      startChoice: command.metadata.startChoice,
-    };
+      metadata: coachingCheckoutMetadata(command),
+    });
   }
 }

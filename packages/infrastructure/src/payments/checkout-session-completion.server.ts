@@ -1,50 +1,39 @@
-import {
-  findCoachingBundle,
-  type PriceTier,
-} from "@eli-coach-platform/domain/coaching-bundle";
-import {
-  START_CHOICES,
-  type CheckoutCompletion,
-} from "@eli-coach-platform/domain/coaching-subscription";
 import { z } from "zod";
 
+export type PaidCheckoutSession = {
+  id: string;
+  customerId: string;
+  subscriptionId: string | null;
+  paymentIntentId: string | null;
+  amountCents: number;
+  currency: string;
+  customerEmail: string;
+  paidAt: Date;
+  metadata: Record<string, string>;
+};
+
 const MILLISECONDS_PER_SECOND = 1000;
-const PRICE_TIERS = [
-  "regular",
-  "reduced",
-] as const satisfies readonly PriceTier[];
-
-const coachingBundleIdSchema = z.string().transform((id, context) => {
-  const bundle = findCoachingBundle(id);
-
-  if (!bundle) {
-    context.addIssue({ code: "custom", message: "Unknown coaching bundle." });
-    return z.NEVER;
-  }
-
-  return bundle.id;
-});
 
 const referencedIdSchema = z.union([
   z.string().min(1),
   z.object({ id: z.string().min(1) }).transform((resource) => resource.id),
 ]);
 
+const optionalReferencedIdSchema = referencedIdSchema
+  .nullish()
+  .transform((id) => id ?? null);
+
 const paidCheckoutSessionSchema = z.object({
   id: z.string().min(1),
   status: z.literal("complete"),
   payment_status: z.literal("paid"),
   customer: referencedIdSchema,
-  subscription: referencedIdSchema,
+  subscription: optionalReferencedIdSchema,
+  payment_intent: optionalReferencedIdSchema,
   amount_total: z.number().int().nonnegative(),
   currency: z.string().min(1),
   customer_details: z.object({ email: z.string().min(1) }),
-  metadata: z.object({
-    assessmentCallId: z.string().min(1),
-    bundleId: coachingBundleIdSchema,
-    tier: z.enum(PRICE_TIERS),
-    startChoice: z.enum(START_CHOICES),
-  }),
+  metadata: z.record(z.string(), z.string()),
 });
 
 export function fromUnixSeconds(seconds: number): Date {
@@ -54,7 +43,7 @@ export function fromUnixSeconds(seconds: number): Date {
 export function readPaidCheckoutSession(
   session: unknown,
   paidAt: Date,
-): CheckoutCompletion | null {
+): PaidCheckoutSession | null {
   const parsed = paidCheckoutSessionSchema.safeParse(session);
 
   if (!parsed.success) {
@@ -64,16 +53,14 @@ export function readPaidCheckoutSession(
   const paid = parsed.data;
 
   return {
-    checkoutSessionId: paid.id,
-    paymentCustomerId: paid.customer,
-    paymentSubscriptionId: paid.subscription,
+    id: paid.id,
+    customerId: paid.customer,
+    subscriptionId: paid.subscription,
+    paymentIntentId: paid.payment_intent,
     amountCents: paid.amount_total,
     currency: paid.currency,
     customerEmail: paid.customer_details.email,
     paidAt,
-    assessmentCallId: paid.metadata.assessmentCallId,
-    bundleId: paid.metadata.bundleId,
-    tier: paid.metadata.tier,
-    startChoice: paid.metadata.startChoice,
+    metadata: paid.metadata,
   };
 }

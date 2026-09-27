@@ -37,6 +37,7 @@ const threeMonthsBought: CheckoutSessionContent = {
   customerEmail: ANA.email,
   id: STRIPE_CHECKOUT_SESSION_ID,
   metadata: {
+    purpose: "coaching-subscription",
     assessmentCallId: "5d0c8a4e-2f7b-4c1e-9b3a-8e6f1d2c3b4a",
     bundleId: "3-months",
     months: "3",

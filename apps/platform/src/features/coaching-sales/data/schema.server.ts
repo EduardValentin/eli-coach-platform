@@ -37,7 +37,6 @@ const COACHING_BUNDLE_MONTHS = [1, 3, 6] as const;
 
 export const coachingSalesConstraints = {
   clientPerCall: "clients_assessment_call_id_unique",
-  paymentEventId: "payment_events_pkey",
 } as const;
 
 export const paymentLinksTable = appSchema.table(
@@ -201,11 +200,6 @@ export const coachingSubscriptionsTable = appSchema.table(
     ),
   ],
 );
-
-export const paymentEventsTable = appSchema.table("payment_events", {
-  id: varchar("id", { length: 255 }).primaryKey(),
-  receivedAt: timestamp("received_at", { withTimezone: true }).notNull(),
-});
 
 function bundleIdCheck(table: string, column: AnyPgColumn) {
   return check(

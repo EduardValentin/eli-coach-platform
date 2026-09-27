@@ -3,6 +3,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { InMemoryPaymentCheckout } from "./in-memory-payment-checkout.server";
 
+const ASSESSMENT_CALL_ID = "5d7f0a52-7a55-4c38-9d8e-3f4d8c3b8f10";
+
 function sessionCommand(customerId: string): CreateCheckoutSessionCommand {
   return {
     customerId,
@@ -14,7 +16,8 @@ function sessionCommand(customerId: string): CreateCheckoutSessionCommand {
     },
     currency: "eur",
     metadata: {
-      assessmentCallId: "call-1",
+      purpose: "coaching-subscription",
+      assessmentCallId: ASSESSMENT_CALL_ID,
       bundleId: "6-months",
       tier: "reduced",
       startChoice: "waiting",
@@ -36,7 +39,7 @@ describe("InMemoryPaymentCheckout", () => {
     const checkout = new InMemoryPaymentCheckout();
     const customer = await checkout.createCustomer({
       email: "sofia@example.com",
-      assessmentCallId: "call-1",
+      assessmentCallId: ASSESSMENT_CALL_ID,
     });
 
     // act
@@ -55,7 +58,7 @@ describe("InMemoryPaymentCheckout", () => {
     const checkout = new InMemoryPaymentCheckout();
     const customer = await checkout.createCustomer({
       email: "sofia@example.com",
-      assessmentCallId: "call-1",
+      assessmentCallId: ASSESSMENT_CALL_ID,
     });
     const session = await checkout.createSession(sessionCommand(customer.id));
 
@@ -71,7 +74,7 @@ describe("InMemoryPaymentCheckout", () => {
       currency: "eur",
       customerEmail: "sofia@example.com",
       paidAt: new Date("2026-09-26T10:00:00.000Z"),
-      assessmentCallId: "call-1",
+      assessmentCallId: ASSESSMENT_CALL_ID,
       bundleId: "6-months",
       tier: "reduced",
       startChoice: "waiting",
@@ -83,7 +86,7 @@ describe("InMemoryPaymentCheckout", () => {
     const checkout = new InMemoryPaymentCheckout();
     const customer = await checkout.createCustomer({
       email: "sofia@example.com",
-      assessmentCallId: "call-1",
+      assessmentCallId: ASSESSMENT_CALL_ID,
     });
 
     // act
@@ -110,7 +113,7 @@ describe("InMemoryPaymentCheckout", () => {
     const checkout = new InMemoryPaymentCheckout();
     const customer = await checkout.createCustomer({
       email: "sofia@example.com",
-      assessmentCallId: "call-1",
+      assessmentCallId: ASSESSMENT_CALL_ID,
     });
     const session = await checkout.createSession(sessionCommand(customer.id));
     await checkout.expireSession(session.id);

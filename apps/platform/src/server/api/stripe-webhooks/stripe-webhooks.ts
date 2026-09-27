@@ -4,7 +4,7 @@ import {
   handleHttpErrorResponse,
   throwMethodNotAllowedResponse,
 } from "@eli-coach-platform/infrastructure/http/server";
-import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
+import { platformContext } from "~/server/guards/platform-context.server";
 
 export async function action({ context, request }: ActionFunctionArgs) {
   return handleHttpErrorResponse(() => {
@@ -12,9 +12,7 @@ export async function action({ context, request }: ActionFunctionArgs) {
       throwMethodNotAllowedResponse({ allowedMethods: ["POST"] });
     }
 
-    return context
-      .get(coachingSalesContext)
-      .stripeWebhooks.handleEvent(request);
+    return context.get(platformContext).stripeWebhooks.handleEvent(request);
   });
 }
 

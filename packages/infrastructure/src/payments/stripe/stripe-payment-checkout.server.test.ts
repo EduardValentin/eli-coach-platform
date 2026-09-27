@@ -14,6 +14,7 @@ const command: CreateCheckoutSessionCommand = {
   },
   currency: "eur",
   metadata: {
+    purpose: "coaching-subscription",
     assessmentCallId: "5d7f0a52-7a55-4c38-9d8e-3f4d8c3b8f10",
     bundleId: "3-months",
     tier: "reduced",
@@ -40,6 +41,7 @@ function paidSession() {
     created: 1790000000,
     customer_details: { email: "sofia@example.com" },
     metadata: {
+      purpose: "coaching-subscription",
       assessmentCallId: "5d7f0a52-7a55-4c38-9d8e-3f4d8c3b8f10",
       bundleId: "3-months",
       months: "3",
@@ -101,6 +103,7 @@ describe("StripePaymentCheckout", () => {
 
     // assert
     const metadata = {
+      purpose: "coaching-subscription",
       assessmentCallId: "5d7f0a52-7a55-4c38-9d8e-3f4d8c3b8f10",
       bundleId: "3-months",
       months: "3",
@@ -291,6 +294,22 @@ describe("StripePaymentCheckout", () => {
       expect(completion).toBeNull();
     },
   );
+
+  it("finds nothing for a paid session the platform did not sell as coaching", async () => {
+    // arrange
+    const client = createStubClient();
+    client.checkout.sessions.retrieve.mockResolvedValue({
+      ...paidSession(),
+      metadata: { ...paidSession().metadata, purpose: "store-order" },
+    });
+    const checkout = new StripePaymentCheckout(client);
+
+    // act
+    const completion = await checkout.findCompletedSession("cs_test_paid");
+
+    // assert
+    expect(completion).toBeNull();
+  });
 
   it("finds nothing for a session Stripe does not know", async () => {
     // arrange

@@ -1,13 +1,19 @@
-import type { RecordCheckoutCompletedUseCase } from "@eli-coach-platform/domain/coaching-subscription";
 import {
   createBadRequestResponse,
   readTextRequestBody,
 } from "@eli-coach-platform/infrastructure/http/server";
-import type { PaymentEvents } from "@eli-coach-platform/infrastructure/payments/server";
+import {
+  PAYMENT_PURPOSE_METADATA_KEY,
+  type PaidCheckoutSession,
+  type PaymentCompletionHandler,
+  type PaymentEvents,
+  type PaymentWebhookIncidents,
+} from "@eli-coach-platform/infrastructure/payments/server";
 
 type StripeWebhookControllerOptions = {
+  handlersByPurpose: ReadonlyMap<string, PaymentCompletionHandler>;
+  incidents: PaymentWebhookIncidents;
   paymentEvents: PaymentEvents;
-  recordCheckoutCompleted: RecordCheckoutCompletedUseCase;
   signingSecret: string | undefined;
 };
 
@@ -43,12 +49,26 @@ export class StripeWebhookController {
     }
 
     if (verdict.kind === "checkout_completed") {
-      await this.options.recordCheckoutCompleted.execute({
-        ...verdict.completion,
-        eventId: verdict.eventId,
-      });
+      await this.routePaidSession(verdict.eventId, verdict.session);
     }
 
     return new Response(null, { status: 200 });
+  }
+
+  private async routePaidSession(
+    eventId: string,
+    session: PaidCheckoutSession,
+  ): Promise<void> {
+    const purpose = session.metadata[PAYMENT_PURPOSE_METADATA_KEY] ?? null;
+    const handler = purpose
+      ? this.options.handlersByPurpose.get(purpose)
+      : undefined;
+
+    if (!handler) {
+      this.options.incidents.paymentEventUnrouted({ eventId, purpose });
+      return;
+    }
+
+    await handler.handle(eventId, session);
   }
 }

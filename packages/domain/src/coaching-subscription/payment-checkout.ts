@@ -1,6 +1,10 @@
 import type { CoachingBundleId, PriceTier } from "../coaching-bundle";
 
-import type { CheckoutCompletion, StartChoice } from "./coaching-subscription";
+import type {
+  CheckoutCompletion,
+  COACHING_SUBSCRIPTION_PURPOSE,
+  StartChoice,
+} from "./coaching-subscription";
 
 export type CreateCheckoutSessionCommand = {
   customerId: string;
@@ -12,6 +16,7 @@ export type CreateCheckoutSessionCommand = {
   };
   currency: string;
   metadata: {
+    purpose: typeof COACHING_SUBSCRIPTION_PURPOSE;
     assessmentCallId: string;
     bundleId: CoachingBundleId;
     tier: PriceTier;

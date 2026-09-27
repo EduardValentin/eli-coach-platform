@@ -1,0 +1,59 @@
+import {
+  COACHING_SUBSCRIPTION_PURPOSE,
+  type RecordCheckoutCompletedUseCase,
+} from "@eli-coach-platform/domain/coaching-subscription";
+import type { CoachingSalesIncidents } from "@eli-coach-platform/domain/payment-link";
+import {
+  toCheckoutCompletion,
+  type PaidCheckoutSession,
+  type PaymentCompletionHandler,
+} from "@eli-coach-platform/infrastructure/payments/server";
+
+type HandlerOutcome = Awaited<ReturnType<PaymentCompletionHandler["handle"]>>;
+
+type RecordStatus = Awaited<
+  ReturnType<RecordCheckoutCompletedUseCase["execute"]>
+>["status"];
+
+type CoachingPurchaseCompletionHandlerOptions = {
+  incidents: CoachingSalesIncidents;
+  recordCheckoutCompleted: RecordCheckoutCompletedUseCase;
+};
+
+const OUTCOME_BY_RECORD_STATUS: Record<RecordStatus, HandlerOutcome> = {
+  recorded: "recorded",
+  duplicate: "duplicate",
+  already_paid: "ignored",
+  call_not_found: "ignored",
+};
+
+export class CoachingPurchaseCompletionHandler implements PaymentCompletionHandler {
+  readonly purpose = COACHING_SUBSCRIPTION_PURPOSE;
+
+  constructor(
+    private readonly options: CoachingPurchaseCompletionHandlerOptions,
+  ) {}
+
+  async handle(
+    eventId: string,
+    session: PaidCheckoutSession,
+  ): Promise<HandlerOutcome> {
+    const completion = toCheckoutCompletion(session);
+
+    if (!completion) {
+      this.options.incidents.paymentEventRejected({
+        eventId,
+        reason: "unreadable_checkout",
+      });
+
+      return "ignored";
+    }
+
+    const recorded = await this.options.recordCheckoutCompleted.execute({
+      ...completion,
+      eventId,
+    });
+
+    return OUTCOME_BY_RECORD_STATUS[recorded.status];
+  }
+}

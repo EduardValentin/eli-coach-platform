@@ -83,12 +83,6 @@ export function createPlatformContainer(options: {
         })
       : composeWithoutFeatureFlagOverrides(databaseFeatureFlags);
   const featureFlags = featureFlagOverrides.featureFlags;
-  const platform = composePlatformFeature({
-    app: environment,
-    botDetection,
-    featureFlags,
-    version: process.env.GIT_SHA ?? "dev",
-  });
   const waitlist = composeWaitlistFeature({
     botVerifier,
     clock,
@@ -113,6 +107,29 @@ export function createPlatformContainer(options: {
     productEmail,
     publicAppUrl: environment.PUBLIC_APP_URL,
   });
+  const coachingSales = composeCoachingSalesFeature({
+    appBasePath: environment.APP_BASE_PATH,
+    assessmentCallReader: assessmentCalls.handles.assessmentCallReader,
+    clock,
+    contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
+    database: database.client,
+    featureFlags,
+    incidents,
+    paymentCheckout: createPaymentCheckout(environment),
+    pricingEligibility: waitlist.handles.pricingEligibility,
+    productEmail,
+    publicAppUrl: environment.PUBLIC_APP_URL,
+  });
+  const platform = composePlatformFeature({
+    app: environment,
+    botDetection,
+    featureFlags,
+    incidents,
+    paymentCompletionHandlers: [coachingSales.handles.paymentCompletionHandler],
+    paymentEvents: createPaymentEvents(environment),
+    version: process.env.GIT_SHA ?? "dev",
+    webhookSigningSecret: environment.STRIPE_WEBHOOK_SIGNING_SECRET,
+  });
 
   return {
     accounts: composeAccountsFeature({
@@ -127,21 +144,7 @@ export function createPlatformContainer(options: {
     }),
     assessmentCalls,
     closeDatabase: () => database.close(),
-    coachingSales: composeCoachingSalesFeature({
-      appBasePath: environment.APP_BASE_PATH,
-      assessmentCallReader: assessmentCalls.handles.assessmentCallReader,
-      clock,
-      contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
-      database: database.client,
-      featureFlags,
-      incidents,
-      paymentCheckout: createPaymentCheckout(environment),
-      paymentEvents: createPaymentEvents(environment),
-      pricingEligibility: waitlist.handles.pricingEligibility,
-      productEmail,
-      publicAppUrl: environment.PUBLIC_APP_URL,
-      webhookSigningSecret: environment.STRIPE_WEBHOOK_SIGNING_SECRET,
-    }),
+    coachingSales,
     featureFlagOverrides,
     platform,
     store: composeStoreFeature({

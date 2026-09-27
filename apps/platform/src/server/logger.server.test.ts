@@ -251,4 +251,25 @@ describe("createConsoleLogger", () => {
       },
     );
   });
+
+  it("logs a paid session no payment handler serves with its purpose", () => {
+    // arrange
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+
+    // act
+    logger.paymentEventUnrouted({ eventId: "evt_1", purpose: "gift-card" });
+
+    // assert
+    expect(consoleError).toHaveBeenCalledWith(
+      "Payment event matched no payment handler.",
+      {
+        errorCategory: "payment_event_unrouted",
+        eventId: "evt_1",
+        purpose: "gift-card",
+      },
+    );
+  });
 });

@@ -12,106 +12,101 @@ function paidCheckoutSession(overrides: Record<string, unknown> = {}) {
     payment_status: "paid",
     customer: "cus_test",
     subscription: "sub_test",
+    payment_intent: null,
     amount_total: 44700,
     currency: "eur",
     created: 1790000000,
     customer_details: { email: "sofia@example.com" },
-    metadata: {
-      assessmentCallId: "5d7f0a52-7a55-4c38-9d8e-3f4d8c3b8f10",
-      bundleId: "3-months",
-      months: "3",
-      tier: "regular",
-      startChoice: "waiting",
-    },
+    metadata: { purpose: "coaching-subscription", bundleId: "3-months" },
     ...overrides,
   };
 }
 
 describe("readPaidCheckoutSession", () => {
-  it("reads a complete and paid session into a checkout completion paid at the given moment", () => {
+  it("reads a complete and paid session paid at the given moment, keeping its metadata as sent", () => {
     // arrange
     const session = paidCheckoutSession();
 
     // act
-    const completion = readPaidCheckoutSession(session, paidAt);
+    const paid = readPaidCheckoutSession(session, paidAt);
 
     // assert
-    expect(completion).toEqual({
-      checkoutSessionId: "cs_test_paid",
-      paymentCustomerId: "cus_test",
-      paymentSubscriptionId: "sub_test",
+    expect(paid).toEqual({
+      id: "cs_test_paid",
+      customerId: "cus_test",
+      subscriptionId: "sub_test",
+      paymentIntentId: null,
       amountCents: 44700,
       currency: "eur",
       customerEmail: "sofia@example.com",
       paidAt,
-      assessmentCallId: "5d7f0a52-7a55-4c38-9d8e-3f4d8c3b8f10",
-      bundleId: "3-months",
-      tier: "regular",
-      startChoice: "waiting",
+      metadata: { purpose: "coaching-subscription", bundleId: "3-months" },
     });
   });
 
-  it("reads the ids of an expanded customer and subscription", () => {
+  it("reads the ids of an expanded customer, subscription and payment intent", () => {
     // arrange
     const session = paidCheckoutSession({
       customer: { id: "cus_expanded", object: "customer" },
       subscription: { id: "sub_expanded", object: "subscription" },
+      payment_intent: { id: "pi_expanded", object: "payment_intent" },
     });
 
     // act
-    const completion = readPaidCheckoutSession(session, paidAt);
+    const paid = readPaidCheckoutSession(session, paidAt);
 
     // assert
-    expect(completion).toMatchObject({
-      paymentCustomerId: "cus_expanded",
-      paymentSubscriptionId: "sub_expanded",
+    expect(paid).toMatchObject({
+      customerId: "cus_expanded",
+      subscriptionId: "sub_expanded",
+      paymentIntentId: "pi_expanded",
     });
+  });
+
+  it("reads a one-off payment without a subscription", () => {
+    // arrange
+    const session = paidCheckoutSession({
+      subscription: null,
+      payment_intent: "pi_test",
+    });
+
+    // act
+    const paid = readPaidCheckoutSession(session, paidAt);
+
+    // assert
+    expect(paid).toMatchObject({
+      subscriptionId: null,
+      paymentIntentId: "pi_test",
+    });
+  });
+
+  it("reads a session created outside the platform with empty metadata", () => {
+    // arrange
+    const session = paidCheckoutSession({ metadata: {} });
+
+    // act
+    const paid = readPaidCheckoutSession(session, paidAt);
+
+    // assert
+    expect(paid).toMatchObject({ metadata: {} });
   });
 
   it.each([
     ["an open session", { status: "open", payment_status: "unpaid" }],
     ["an expired session", { status: "expired", payment_status: "unpaid" }],
     ["a complete but unpaid session", { payment_status: "unpaid" }],
+    ["a session without a customer", { customer: null }],
     ["a session without a total", { amount_total: null }],
     ["a session without a customer email", { customer_details: null }],
-    ["a session without a subscription", { subscription: null }],
+    ["a session without metadata", { metadata: null }],
   ])("reads nothing from %s", (_description, overrides) => {
     // arrange
     const session = paidCheckoutSession(overrides);
 
     // act
-    const completion = readPaidCheckoutSession(session, paidAt);
+    const paid = readPaidCheckoutSession(session, paidAt);
 
     // assert
-    expect(completion).toBeNull();
-  });
-
-  it.each([
-    ["an unknown coaching bundle", { bundleId: "12-months" }],
-    ["an unknown price tier", { tier: "discounted" }],
-    ["an unknown start choice", { startChoice: "later" }],
-    ["no assessment call", { assessmentCallId: undefined }],
-  ])("reads nothing from metadata naming %s", (_description, metadata) => {
-    // arrange
-    const session = paidCheckoutSession({
-      metadata: { ...paidCheckoutSession().metadata, ...metadata },
-    });
-
-    // act
-    const completion = readPaidCheckoutSession(session, paidAt);
-
-    // assert
-    expect(completion).toBeNull();
-  });
-
-  it("reads nothing from a session created outside the platform", () => {
-    // arrange
-    const session = paidCheckoutSession({ metadata: {} });
-
-    // act
-    const completion = readPaidCheckoutSession(session, paidAt);
-
-    // assert
-    expect(completion).toBeNull();
+    expect(paid).toBeNull();
   });
 });

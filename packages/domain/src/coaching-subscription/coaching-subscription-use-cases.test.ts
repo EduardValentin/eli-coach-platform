@@ -479,6 +479,7 @@ describe("StartCheckoutUseCase", () => {
         bundle: { id: "3-months", title: "3 Months", months: 3, amountCents },
         currency: "eur",
         metadata: {
+          purpose: "coaching-subscription",
           assessmentCallId: call.id,
           bundleId: "3-months",
           tier,

@@ -80,44 +80,36 @@ describe("composeCoachingSalesFeature", () => {
     expect(page.data).toMatchObject({ state: "call-first" });
   });
 
-  it("keeps recording completed checkouts while the site is in waitlist mode", async () => {
+  it("hands a completed checkout to purchase recording while the site is in waitlist mode", async () => {
     // arrange
     const incidents = createIncidents();
-    const { feature } = composeCoachingSalesFeature({
+    const { handles } = composeCoachingSalesFeature({
       ...createHandles({ WAITLIST_MODE: true }),
       incidents,
-      paymentEvents: {
-        verify: async () => ({
-          kind: "checkout_completed",
-          eventId: "evt_1",
-          completion: {
-            checkoutSessionId: "cs_test_1",
-            paymentCustomerId: "cus_1",
-            paymentSubscriptionId: "sub_1",
-            amountCents: 44700,
-            currency: "eur",
-            customerEmail: "ana@example.com",
-            paidAt: new Date("2026-10-20T10:00:00.000Z"),
-            assessmentCallId: CALL_ID,
-            bundleId: "3-months",
-            tier: "regular",
-            startChoice: "waiting",
-          },
-        }),
-      },
     });
 
     // act
-    const response = await feature.stripeWebhooks.handleEvent(
-      new Request("https://evoa.fit/api/stripe/webhooks", {
-        body: "{}",
-        headers: { "stripe-signature": "t=1,v1=signed" },
-        method: "POST",
-      }),
-    );
+    const outcome = await handles.paymentCompletionHandler.handle("evt_1", {
+      id: "cs_test_1",
+      customerId: "cus_1",
+      subscriptionId: "sub_1",
+      paymentIntentId: null,
+      amountCents: 44700,
+      currency: "eur",
+      customerEmail: "ana@example.com",
+      paidAt: new Date("2026-10-20T10:00:00.000Z"),
+      metadata: {
+        purpose: "coaching-subscription",
+        assessmentCallId: CALL_ID,
+        bundleId: "3-months",
+        months: "3",
+        tier: "regular",
+        startChoice: "waiting",
+      },
+    });
 
     // assert
-    expect(response.status).toBe(200);
+    expect(outcome).toBe("ignored");
     expect(incidents.paymentEventRejected).toHaveBeenCalledWith({
       eventId: "evt_1",
       reason: "call_not_found",
@@ -145,43 +137,6 @@ describe("composeCoachingSalesFeature buyer controllers", () => {
     // assert
     await expect(loading).rejects.toMatchObject({ status: 404 });
     expect(checkout.status).toBe(404);
-  });
-
-  it("answers the webhook with 503 when no signing secret is configured", async () => {
-    // arrange
-    const { feature } = composeCoachingSalesFeature({
-      ...createHandles({}),
-      webhookSigningSecret: undefined,
-    });
-
-    // act
-    const response = await feature.stripeWebhooks.handleEvent(
-      new Request("https://evoa.fit/api/stripe/webhooks", {
-        body: "{}",
-        method: "POST",
-      }),
-    );
-
-    // assert
-    expect(response.status).toBe(503);
-  });
-
-  it("keeps the webhook reachable while the site is in waitlist mode", async () => {
-    // arrange
-    const { feature } = composeCoachingSalesFeature(
-      createHandles({ WAITLIST_MODE: true }),
-    );
-
-    // act
-    const response = await feature.stripeWebhooks.handleEvent(
-      new Request("https://evoa.fit/api/stripe/webhooks", {
-        body: "{}",
-        method: "POST",
-      }),
-    );
-
-    // assert
-    expect(response.status).toBe(400);
   });
 });
 
@@ -224,11 +179,9 @@ function createHandles(
     featureFlags: { execute: async () => featureFlags },
     incidents: createIncidents(),
     paymentCheckout: createPaymentCheckout({ PAYMENTS_PROVIDER: "memory" }),
-    paymentEvents: { verify: async () => ({ kind: "invalid" }) },
     pricingEligibility: { tierForEmail: async () => "regular" },
     productEmail: new InMemoryProductEmail(),
     publicAppUrl: "https://evoa.fit",
-    webhookSigningSecret: "whsec_unit",
   };
 }
 

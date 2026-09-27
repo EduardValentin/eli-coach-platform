@@ -7,6 +7,7 @@ export {
   type CoachingPurchases,
 } from "./coaching-purchases";
 export {
+  COACHING_SUBSCRIPTION_PURPOSE,
   CoachingSubscription,
   START_CHOICES,
   withdrawalDeadline,

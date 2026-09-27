@@ -17,12 +17,12 @@ import {
 } from "@eli-coach-platform/domain/payment-link";
 import type { Clock } from "@eli-coach-platform/domain/shared";
 import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
-import type { PaymentEvents } from "@eli-coach-platform/infrastructure/payments/server";
+import type { PaymentCompletionHandler } from "@eli-coach-platform/infrastructure/payments/server";
 
 import { CoachSalesController } from "~/features/coaching-sales/api/coach/coach-sales-controller.server";
 import { PaymentLinksController } from "~/features/coaching-sales/api/coach/payment-links-controller.server";
+import { CoachingPurchaseCompletionHandler } from "~/features/coaching-sales/api/payments/coaching-purchase-completion-handler.server";
 import { CheckoutsController } from "~/features/coaching-sales/api/public/checkouts-controller.server";
-import { StripeWebhookController } from "~/features/coaching-sales/api/webhooks/stripe-webhook-controller.server";
 import {
   PaymentLinkTokenSha256,
   RandomPaymentLinkTokenGenerator,
@@ -35,12 +35,11 @@ export type CoachingSalesFeature = {
   checkouts: CheckoutsController;
   coachSales: CoachSalesController;
   paymentLinks: PaymentLinksController;
-  stripeWebhooks: StripeWebhookController;
 };
 
 type CoachingSalesComposition = {
   feature: CoachingSalesFeature;
-  handles: Record<string, never>;
+  handles: { paymentCompletionHandler: PaymentCompletionHandler };
 };
 
 export type CoachingSalesFeatureHandles = {
@@ -52,11 +51,9 @@ export type CoachingSalesFeatureHandles = {
   featureFlags: FeatureFlagReader;
   incidents: CoachingSalesIncidents;
   paymentCheckout: PaymentCheckout;
-  paymentEvents: PaymentEvents;
   pricingEligibility: PricingEligibility;
   productEmail: ProductEmail;
   publicAppUrl: string;
-  webhookSigningSecret: string | undefined;
 };
 
 export function composeCoachingSalesFeature(
@@ -132,12 +129,12 @@ export function composeCoachingSalesFeature(
       paymentLinks: new PaymentLinksController({
         sendPaymentLink: useCases.sendPaymentLink,
       }),
-      stripeWebhooks: new StripeWebhookController({
-        paymentEvents: handles.paymentEvents,
+    },
+    handles: {
+      paymentCompletionHandler: new CoachingPurchaseCompletionHandler({
+        incidents: handles.incidents,
         recordCheckoutCompleted: useCases.recordCheckoutCompleted,
-        signingSecret: handles.webhookSigningSecret,
       }),
     },
-    handles: {},
   };
 }

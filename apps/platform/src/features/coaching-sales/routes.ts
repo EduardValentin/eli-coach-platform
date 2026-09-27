@@ -28,8 +28,4 @@ export const coachingSalesApiRoutes = [
     COACHING_SALES_API_PATHS.checkouts.slice(1),
     "./api/public/checkouts.ts",
   ),
-  route(
-    COACHING_SALES_API_PATHS.stripeWebhooks.slice(1),
-    "./api/webhooks/stripe-webhooks.ts",
-  ),
 ];

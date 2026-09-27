@@ -226,6 +226,26 @@ describe.sequential("stripe webhooks integration", () => {
     expect(await readPaymentLinkStates(callId)).toEqual(["valid"]);
   });
 
+  it("acknowledges a paid session whose purpose no handler serves and stores nothing", async () => {
+    // arrange
+    const { callId } = await openCheckout();
+    const session = await journey.completionOfCheckoutRequest({
+      requestIndex: FIRST_CHECKOUT_REQUEST,
+      sessionId: STRIPE_CHECKOUT_SESSION_ID,
+    });
+
+    // act
+    const response = await journey.deliverCheckoutCompleted(
+      { ...session, metadata: { ...session.metadata, purpose: "gift-card" } },
+      COMPLETED_EVENT_ID,
+    );
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(await countPurchases()).toEqual(NOTHING_PURCHASED);
+    expect(await readPaymentLinkStates(callId)).toEqual(["valid"]);
+  });
+
   it("records nothing new when a second session for an already paid call completes", async () => {
     // arrange
     const { token } = await openCheckout();

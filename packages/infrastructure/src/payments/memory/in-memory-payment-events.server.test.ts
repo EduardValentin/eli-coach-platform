@@ -18,13 +18,7 @@ function paidCheckoutEvent(type = "checkout.session.completed") {
         currency: "eur",
         created: 1790000000,
         customer_details: { email: "sofia@example.com" },
-        metadata: {
-          assessmentCallId: "call-1",
-          bundleId: "1-month",
-          months: "1",
-          tier: "regular",
-          startChoice: "immediate",
-        },
+        metadata: { purpose: "coaching-subscription" },
       },
     },
   });
@@ -42,18 +36,16 @@ describe("InMemoryPaymentEvents", () => {
     expect(verdict).toEqual({
       kind: "checkout_completed",
       eventId: "evt_memory",
-      completion: {
-        checkoutSessionId: "cs_memory",
-        paymentCustomerId: "cus_memory",
-        paymentSubscriptionId: "sub_memory",
+      session: {
+        id: "cs_memory",
+        customerId: "cus_memory",
+        subscriptionId: "sub_memory",
+        paymentIntentId: null,
         amountCents: 15900,
         currency: "eur",
         customerEmail: "sofia@example.com",
         paidAt: new Date(1790003600 * 1000),
-        assessmentCallId: "call-1",
-        bundleId: "1-month",
-        tier: "regular",
-        startChoice: "immediate",
+        metadata: { purpose: "coaching-subscription" },
       },
     });
   });

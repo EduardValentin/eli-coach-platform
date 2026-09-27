@@ -24,6 +24,7 @@ function paidCheckoutEvent(metadataOverrides: Record<string, unknown> = {}) {
         created: 1790000000,
         customer_details: { email: "sofia@example.com" },
         metadata: {
+          purpose: "coaching-subscription",
           assessmentCallId: "5d7f0a52-7a55-4c38-9d8e-3f4d8c3b8f10",
           bundleId: "3-months",
           months: "3",
@@ -56,18 +57,16 @@ describe("StripePaymentEvents", () => {
     expect(verdict).toEqual({
       kind: "checkout_completed",
       eventId: "evt_paid",
-      completion: {
-        checkoutSessionId: "cs_test_paid",
-        paymentCustomerId: "cus_test",
-        paymentSubscriptionId: "sub_test",
+      session: {
+        id: "cs_test_paid",
+        customerId: "cus_test",
+        subscriptionId: "sub_test",
+        paymentIntentId: null,
         amountCents: 44700,
         currency: "eur",
         customerEmail: "sofia@example.com",
         paidAt: new Date(1790003600 * 1000),
-        assessmentCallId: "5d7f0a52-7a55-4c38-9d8e-3f4d8c3b8f10",
-        bundleId: "3-months",
-        tier: "regular",
-        startChoice: "immediate",
+        metadata: paidCheckoutEvent().data.object.metadata,
       },
     });
   });
@@ -82,21 +81,6 @@ describe("StripePaymentEvents", () => {
       ...paidCheckoutEvent(),
       type: "invoice.paid",
     });
-
-    // act
-    const verdict = await events.verify(rawBody, sign(rawBody, signingSecret));
-
-    // assert
-    expect(verdict).toEqual({ kind: "ignored" });
-  });
-
-  it("ignores a signed paid checkout the platform did not create", async () => {
-    // arrange
-    const events = new StripePaymentEvents({
-      webhooks: Stripe.webhooks,
-      signingSecret,
-    });
-    const rawBody = JSON.stringify(paidCheckoutEvent({ bundleId: "gift" }));
 
     // act
     const verdict = await events.verify(rawBody, sign(rawBody, signingSecret));

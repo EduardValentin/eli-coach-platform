@@ -4,6 +4,8 @@ import {
   type PriceTier,
 } from "../coaching-bundle";
 
+export const COACHING_SUBSCRIPTION_PURPOSE = "coaching-subscription";
+
 export const START_CHOICES = ["immediate", "waiting"] as const;
 
 export type StartChoice = (typeof START_CHOICES)[number];

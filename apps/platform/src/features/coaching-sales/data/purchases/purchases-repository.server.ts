@@ -12,6 +12,7 @@ import type {
   CallSalesStates,
 } from "@eli-coach-platform/domain/payment-link";
 import type { Clock } from "@eli-coach-platform/domain/shared";
+import { recordPaymentEvent } from "@eli-coach-platform/infrastructure/payments/server";
 import { and, eq, gt, inArray, sql } from "drizzle-orm";
 
 import {
@@ -19,7 +20,6 @@ import {
   clientsTable,
   coachingSalesConstraints,
   coachingSubscriptionsTable,
-  paymentEventsTable,
   paymentLinksTable,
 } from "~/features/coaching-sales/data/schema.server";
 
@@ -27,19 +27,12 @@ type PurchaseOutcome = Awaited<
   ReturnType<CoachingPurchases["recordCompletion"]>
 >;
 
-type RefusedPurchase = Exclude<PurchaseOutcome, "recorded">;
-
 type PostgresCoachingPurchasesOptions = {
   clock: Clock;
   database: DatabaseClient;
 };
 
 const UNIQUE_VIOLATION_CODE = "23505";
-
-const REFUSALS_BY_CONSTRAINT: ReadonlyMap<string, RefusedPurchase> = new Map([
-  [coachingSalesConstraints.paymentEventId, "duplicate_event"],
-  [coachingSalesConstraints.clientPerCall, "call_already_paid"],
-]);
 
 const SALES_STATE_PRECEDENCE: readonly CallSalesState[] = [
   "held",
@@ -56,13 +49,17 @@ export class PostgresCoachingPurchases
     const receivedAt = this.options.clock.now();
 
     try {
-      await this.options.database.transaction((transaction) =>
+      return await this.options.database.transaction((transaction) =>
         recordPurchase(transaction, { purchase, receivedAt }),
       );
-
-      return "recorded";
     } catch (error) {
-      return refusedPurchaseOf(error);
+      if (
+        violatesUniqueConstraint(error, coachingSalesConstraints.clientPerCall)
+      ) {
+        return "call_already_paid";
+      }
+
+      throw error;
     }
   }
 
@@ -103,12 +100,16 @@ export class PostgresCoachingPurchases
 async function recordPurchase(
   transaction: DatabaseTransaction,
   recording: { purchase: CoachingPurchase; receivedAt: Date },
-): Promise<void> {
+): Promise<PurchaseOutcome> {
   const { client, eventId, subscription } = recording.purchase;
+  const ledgerOutcome = await recordPaymentEvent(transaction, {
+    eventId,
+    receivedAt: recording.receivedAt,
+  });
 
-  await transaction
-    .insert(paymentEventsTable)
-    .values({ id: eventId, receivedAt: recording.receivedAt });
+  if (ledgerOutcome === "duplicate") {
+    return "duplicate_event";
+  }
 
   const [clientRow] = await transaction
     .insert(clientsTable)
@@ -148,16 +149,8 @@ async function recordPurchase(
           .where(eq(checkoutSessionsTable.id, subscription.checkoutSessionId)),
       ),
     );
-}
 
-function refusedPurchaseOf(error: unknown): RefusedPurchase {
-  for (const [constraint, refusal] of REFUSALS_BY_CONSTRAINT) {
-    if (violatesUniqueConstraint(error, constraint)) {
-      return refusal;
-    }
-  }
-
-  throw error;
+  return "recorded";
 }
 
 function violatesUniqueConstraint(error: unknown, constraint: string): boolean {

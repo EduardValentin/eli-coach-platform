@@ -10,6 +10,10 @@ import {
   fromUnixSeconds,
   readPaidCheckoutSession,
 } from "../checkout-session-completion.server";
+import {
+  coachingCheckoutMetadata,
+  toCheckoutCompletion,
+} from "../coaching-checkout-completion.server";
 
 const CHECKOUT_SESSION_ID_SHAPE = /^cs_(test|live)_[A-Za-z0-9]+$/;
 
@@ -100,7 +104,7 @@ export class StripePaymentCheckout implements PaymentCheckout {
     }
 
     try {
-      return readPaidSessionWithSubscription(
+      return readCoachingCompletion(
         await this.client.checkout.sessions.retrieve(
           id,
           SUBSCRIPTION_EXPANSION,
@@ -126,19 +130,19 @@ export class StripePaymentCheckout implements PaymentCheckout {
   }
 }
 
-function readPaidSessionWithSubscription(
-  session: unknown,
-): CheckoutCompletion | null {
+function readCoachingCompletion(session: unknown): CheckoutCompletion | null {
   const expanded = expandedSubscriptionSchema.safeParse(session);
 
   if (!expanded.success) {
     return null;
   }
 
-  return readPaidCheckoutSession(
+  const paid = readPaidCheckoutSession(
     session,
     fromUnixSeconds(expanded.data.subscription.created),
   );
+
+  return paid ? toCheckoutCompletion(paid) : null;
 }
 
 function isMissingResource(error: unknown): boolean {
@@ -151,13 +155,7 @@ function isMissingResource(error: unknown): boolean {
 function checkoutSessionRequest(
   command: CreateCheckoutSessionCommand,
 ): Stripe.Checkout.SessionCreateParams {
-  const metadata = {
-    assessmentCallId: command.metadata.assessmentCallId,
-    bundleId: command.metadata.bundleId,
-    months: String(command.bundle.months),
-    tier: command.metadata.tier,
-    startChoice: command.metadata.startChoice,
-  };
+  const metadata = coachingCheckoutMetadata(command);
 
   return {
     mode: "subscription",

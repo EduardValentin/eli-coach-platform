@@ -22,6 +22,7 @@ export function createFeatureContextMiddleware(
       featureFlags: container.platform.featureFlags,
       metadata: container.platform.metadata,
       readyz: container.platform.readyz,
+      stripeWebhooks: container.platform.stripeWebhooks,
     });
     context.set(runtimeConfigContext, {
       appBasePath: container.platform.appBasePath,

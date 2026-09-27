@@ -8,6 +8,7 @@ export const STRIPE_SUBSCRIPTION_ID = "sub_integration";
 
 const HOSTED_CHECKOUT_BASE_URL = "https://checkout.stripe.com/c/pay/";
 const jsonHeaders = { "Content-Type": "application/json" };
+const coachingSubscriptionMetadata = { purpose: "coaching-subscription" };
 
 export type StripeCheckoutSession = {
   amount_total: number;
@@ -78,6 +79,7 @@ const stripeExpiresSession: WireMockStub = {
     status: 200,
     jsonBody: {
       id: STRIPE_CHECKOUT_SESSION_ID,
+      metadata: coachingSubscriptionMetadata,
       mode: "subscription",
       object: "checkout.session",
       payment_status: "unpaid",
@@ -130,6 +132,7 @@ export function stripeRetrievesExpiredSession(sessionId: string): WireMockStub {
       jsonBody: {
         customer: STRIPE_CUSTOMER_ID,
         id: sessionId,
+        metadata: coachingSubscriptionMetadata,
         mode: "subscription",
         object: "checkout.session",
         payment_status: "unpaid",
@@ -204,6 +207,7 @@ function openSessionResponse(sessionId: string): WireMockStub["response"] {
     jsonBody: {
       customer: STRIPE_CUSTOMER_ID,
       id: sessionId,
+      metadata: coachingSubscriptionMetadata,
       mode: "subscription",
       object: "checkout.session",
       payment_status: "unpaid",

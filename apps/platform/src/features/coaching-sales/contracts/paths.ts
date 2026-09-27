@@ -9,7 +9,6 @@ export const CHECKOUT_COMPLETE_PATH = `/${CHECKOUT_COMPLETE_ROUTE_SEGMENT}`;
 export const COACHING_SALES_API_PATHS = {
   paymentLinks: "/api/coaching-sales/payment-links",
   checkouts: "/api/coaching-sales/checkouts",
-  stripeWebhooks: "/api/stripe/webhooks",
 } as const;
 
 type SelectBundleQuery = {

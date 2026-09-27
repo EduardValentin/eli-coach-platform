@@ -15,7 +15,10 @@ import {
 import type { Clock } from "../shared";
 
 import type { CheckoutSessions } from "./checkout-sessions";
-import type { StartChoice } from "./coaching-subscription";
+import {
+  COACHING_SUBSCRIPTION_PURPOSE,
+  type StartChoice,
+} from "./coaching-subscription";
 import type { PaymentCheckout } from "./payment-checkout";
 
 type StartCheckoutCommand = {
@@ -105,6 +108,7 @@ export class StartCheckoutUseCase {
       },
       currency: COACHING_CURRENCY,
       metadata: {
+        purpose: COACHING_SUBSCRIPTION_PURPOSE,
         assessmentCallId: call.id,
         bundleId: bundle.id,
         tier,

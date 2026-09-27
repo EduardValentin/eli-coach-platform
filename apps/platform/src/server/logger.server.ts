@@ -2,10 +2,12 @@ import type { AcquisitionIncidents } from "@eli-coach-platform/domain/acquisitio
 import type { AssessmentCallIncidents } from "@eli-coach-platform/domain/assessment-call";
 import type { CoachingSalesIncidents } from "@eli-coach-platform/domain/payment-link";
 import type { WaitlistIncidents } from "@eli-coach-platform/domain/waitlist";
+import type { PaymentWebhookIncidents } from "@eli-coach-platform/infrastructure/payments/server";
 
 type ConsoleLogger = AcquisitionIncidents &
   AssessmentCallIncidents &
   CoachingSalesIncidents &
+  PaymentWebhookIncidents &
   WaitlistIncidents;
 
 export function createConsoleLogger(): ConsoleLogger {
@@ -52,6 +54,13 @@ export function createConsoleLogger(): ConsoleLogger {
         errorCategory: "payment_event_rejected",
         eventId,
         reason,
+      });
+    },
+    paymentEventUnrouted: ({ eventId, purpose }) => {
+      console.error("Payment event matched no payment handler.", {
+        errorCategory: "payment_event_unrouted",
+        eventId,
+        purpose,
       });
     },
     paymentLinkEmailFailed: (assessmentCallId) => {

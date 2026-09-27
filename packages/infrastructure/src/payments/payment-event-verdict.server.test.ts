@@ -15,6 +15,7 @@ function paidCheckoutSession(overrides: Record<string, unknown> = {}) {
     created: 1790000000,
     customer_details: { email: "sofia@example.com" },
     metadata: {
+      purpose: "coaching-subscription",
       assessmentCallId: "5d7f0a52-7a55-4c38-9d8e-3f4d8c3b8f10",
       bundleId: "3-months",
       months: "3",
@@ -42,18 +43,16 @@ describe("readPaymentEvent", () => {
     expect(verdict).toEqual({
       kind: "checkout_completed",
       eventId: "evt_paid",
-      completion: {
-        checkoutSessionId: "cs_test_paid",
-        paymentCustomerId: "cus_test",
-        paymentSubscriptionId: "sub_test",
+      session: {
+        id: "cs_test_paid",
+        customerId: "cus_test",
+        subscriptionId: "sub_test",
+        paymentIntentId: null,
         amountCents: 44700,
         currency: "eur",
         customerEmail: "sofia@example.com",
         paidAt: new Date(1790003600 * 1000),
-        assessmentCallId: "5d7f0a52-7a55-4c38-9d8e-3f4d8c3b8f10",
-        bundleId: "3-months",
-        tier: "regular",
-        startChoice: "waiting",
+        metadata: paidCheckoutSession().metadata,
       },
     });
   });
@@ -72,6 +71,26 @@ describe("readPaymentEvent", () => {
 
     // assert
     expect(verdict).toEqual({ kind: "ignored" });
+  });
+
+  it("reads a paid checkout whatever its metadata, leaving routing to the caller", () => {
+    // arrange
+    const event = {
+      id: "evt_foreign",
+      type: "checkout.session.completed",
+      created: 1790003600,
+      data: { object: paidCheckoutSession({ metadata: { purpose: "gift" } }) },
+    };
+
+    // act
+    const verdict = readPaymentEvent(event);
+
+    // assert
+    expect(verdict).toMatchObject({
+      kind: "checkout_completed",
+      eventId: "evt_foreign",
+      session: { metadata: { purpose: "gift" } },
+    });
   });
 
   it("ignores every other event type", () => {
