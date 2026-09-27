@@ -176,7 +176,9 @@ export const coachingSubscriptionsTable = appSchema.table(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
   },
   (table) => [
-    uniqueIndex("coaching_subscriptions_client_id_unique").on(table.clientId),
+    uniqueIndex("coaching_subscriptions_one_open_per_client")
+      .on(table.clientId)
+      .where(sql`${table.status} <> 'ended'`),
     uniqueIndex("coaching_subscriptions_stripe_subscription_id_unique").on(
       table.stripeSubscriptionId,
     ),
