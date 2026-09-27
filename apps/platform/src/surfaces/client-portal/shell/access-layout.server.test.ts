@@ -92,6 +92,7 @@ describe("client portal access middleware", () => {
         clientId: "client_1",
         firstName: "Ana",
         gender: "female",
+        lastName: "Popescu",
         welcomeSeenAt: null,
       }),
       session: {
@@ -121,6 +122,7 @@ describe("client portal access middleware", () => {
         clientId: "client_1",
         firstName: "Ana",
         gender: "female",
+        lastName: "Popescu",
         welcomeSeenAt: null,
       }),
       session: {

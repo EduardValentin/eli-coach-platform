@@ -13,6 +13,7 @@ import {
   sessionContext,
   type ResolvedSession,
 } from "~/features/accounts/server/guards/session-context.server";
+import { clientJourneyContext } from "~/features/coaching-sales/server/guards/client-journey-context.server";
 import {
   contextEntry,
   createRequestArgs,
@@ -102,6 +103,42 @@ describe("ClientJourneyController welcome", () => {
   });
 });
 
+describe("ClientJourneyController identity", () => {
+  it("names the client from the journey the gate handed over", () => {
+    // arrange
+    const { controller, readClientJourney } = createController({});
+    const args = createRequestArgs({
+      contexts: [
+        contextEntry(
+          clientJourneyContext,
+          journeyOf({ gender: "female" }).toSnapshot(),
+        ),
+      ],
+    });
+
+    // act
+    const identity = controller.loadIdentity(args);
+
+    // assert
+    expect(identity).toEqual({ firstName: "Ana", lastName: "Popescu" });
+    expect(readClientJourney).not.toHaveBeenCalled();
+  });
+
+  it("names no one for a client account with no client record", () => {
+    // arrange
+    const { controller } = createController({});
+    const args = createRequestArgs({
+      contexts: [contextEntry(clientJourneyContext, null)],
+    });
+
+    // act
+    const identity = controller.loadIdentity(args);
+
+    // assert
+    expect(identity).toBeNull();
+  });
+});
+
 describe("ClientJourneyController mark welcome seen", () => {
   it("records her welcome as seen and moves her on to onboarding", async () => {
     // arrange
@@ -160,6 +197,7 @@ function journeyOf(options: { gender: VisitorGender }): ClientJourney {
     clientId: "client_ana",
     firstName: "Ana",
     gender: options.gender,
+    lastName: "Popescu",
     welcomeSeenAt: null,
   });
 }
