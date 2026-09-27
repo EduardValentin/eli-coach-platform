@@ -53,13 +53,15 @@ function PortalPillLink(props: {
 
   if (placement === "mobile-menu") {
     return (
-      <Link
-        className="text-2xl font-medium tracking-wide text-brand-primary"
-        data-parity="portal-link"
-        to={destination.href}
-      >
-        {destination.label}
-      </Link>
+      <div>
+        <Link
+          className="text-2xl font-medium tracking-wide text-brand-primary"
+          data-parity="portal-link"
+          to={destination.href}
+        >
+          {destination.label}
+        </Link>
+      </div>
     );
   }
 

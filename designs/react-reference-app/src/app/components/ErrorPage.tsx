@@ -26,7 +26,10 @@ export function DeadEndContent({
 }) {
   return (
     <>
-      <div className="w-20 h-20 bg-surface-subtle text-muted-foreground rounded-full flex items-center justify-center mb-6">
+      <div
+        className="w-20 h-20 bg-surface-subtle text-muted-foreground rounded-full flex items-center justify-center mb-6"
+        data-parity="dead-end-icon"
+      >
         <Icon size={36} aria-hidden="true" />
       </div>
       {eyebrow ? <SectionEyebrow variant="muted">{eyebrow}</SectionEyebrow> : null}

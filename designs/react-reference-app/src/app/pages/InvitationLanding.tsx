@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type MouseEvent } from 'react';
 import { ArrowRight, MailQuestion, UserRound } from 'lucide-react';
 import { Link, useNavigate } from 'react-router';
 import { ERROR_PAGE_ACTION_CLASS, ErrorPage } from '../components/ErrorPage';
-import { Button, cn } from '../components/ThemeButton';
+import { Button, buttonVariants, cn } from '../components/ThemeButton';
 import { cardVariants } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -30,6 +30,8 @@ const SIGNED_IN_BODY =
   'This invitation creates a new account. Sign out first, then open the link again.';
 
 const INVITATION_STORAGE_KEY = 'invitation';
+
+const HOSTED_SIGN_UP_URL = 'https://accounts.evoa.fit/sign-up?__clerk_ticket=mock';
 
 type InvitationResolution = ResolvedInvitation | { status: 'loading' };
 
@@ -68,7 +70,10 @@ export function InvitationLanding() {
     setAppState({ session: 'anonymous' });
   };
 
-  const createAccount = async () => {
+  const createAccount = async (event: MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
+    if (creating) return;
+
     setCreating(true);
 
     try {
@@ -158,16 +163,15 @@ export function InvitationLanding() {
           </p>
         </div>
 
-        <Button
+        <a
           aria-busy={creating}
-          className="mt-8"
+          className={cn(buttonVariants({ width: 'full' }), 'mt-8')}
           data-parity="continue"
-          disabled={creating}
+          href={HOSTED_SIGN_UP_URL}
           onClick={createAccount}
-          width="full"
         >
           {creating ? 'Opening secure sign-in…' : 'Continue to create my account'}
-        </Button>
+        </a>
       </div>
     </main>
   );

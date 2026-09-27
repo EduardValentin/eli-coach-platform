@@ -6,5 +6,5 @@
   { "click": "role=option[name=\"Male\"]" },
   { "click": "[aria-label=\"Close Dev Settings\"]" },
   { "waitFor": "text=short form in four parts" },
-  { "wait": 800 }
+  { "wait": 1800 }
 ]

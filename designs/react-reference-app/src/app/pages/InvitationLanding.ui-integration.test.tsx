@@ -120,7 +120,7 @@ describe('opening an invitation link', () => {
     renderInvitation(invitationAddress('?jstage=invited'));
 
     // act
-    await screen.findByRole('button', { name: CONTINUE }, WAIT);
+    await screen.findByRole('link', { name: CONTINUE }, WAIT);
 
     // assert
     expect(window.location.hash).toBe('');
@@ -152,12 +152,16 @@ describe('accepting an invitation', () => {
   it('hands her to the hosted sign-in and lands her on the welcome page', async () => {
     // arrange
     renderInvitation(invitationAddress('?jstage=invited'));
-    const create = await screen.findByRole('button', { name: CONTINUE }, WAIT);
+    const create = await screen.findByRole('link', { name: CONTINUE }, WAIT);
 
     // act
     await userEvent.click(create);
 
     // assert
+    expect(create).toHaveAttribute(
+      'href',
+      'https://accounts.evoa.fit/sign-up?__clerk_ticket=mock',
+    );
     expect(await screen.findByText('welcome page', undefined, WAIT)).toBeVisible();
     expect(screen.getByTestId('session')).toHaveTextContent('client');
     expect(screen.getByTestId('stage')).toHaveTextContent('account-created');
@@ -203,7 +207,7 @@ describe('accepting an invitation', () => {
         '/',
       );
       expect(
-        screen.queryByRole('button', { name: CONTINUE }),
+        screen.queryByRole('link', { name: CONTINUE }),
       ).not.toBeInTheDocument();
     },
     TEST_TIMEOUT_MS,
@@ -230,7 +234,7 @@ describe('opening an invitation while signed in', () => {
       expect(screen.getByRole('button', { name: 'Sign out' })).toBeVisible();
       expect(screen.queryByRole('status')).not.toBeInTheDocument();
       expect(
-        screen.queryByRole('button', { name: CONTINUE }),
+        screen.queryByRole('link', { name: CONTINUE }),
       ).not.toBeInTheDocument();
     },
   );
@@ -245,7 +249,7 @@ describe('opening an invitation while signed in', () => {
     // assert
     expect(screen.getByTestId('session')).toHaveTextContent('anonymous');
     expect(
-      await screen.findByRole('button', { name: CONTINUE }, WAIT),
+      await screen.findByRole('link', { name: CONTINUE }, WAIT),
     ).toBeVisible();
     expect(screen.getByLabelText('Email')).toHaveValue('jane@example.com');
     expect(
@@ -258,7 +262,7 @@ describe('the invitation lands her in the onboarding wizard', () => {
   it('reaches step 1 of the wizard after signing up and continuing past the welcome page', async () => {
     // arrange
     renderInvitationThroughPortal(invitationAddress('?jstage=invited'));
-    const create = await screen.findByRole('button', { name: CONTINUE }, WAIT);
+    const create = await screen.findByRole('link', { name: CONTINUE }, WAIT);
 
     // act
     await userEvent.click(create);
