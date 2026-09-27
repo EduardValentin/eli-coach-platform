@@ -72,6 +72,17 @@ describe("toCheckoutCompletion", () => {
     });
   });
 
+  it("reads nothing from a paid session without a customer", () => {
+    // arrange
+    const session = paidSession({ customerId: null });
+
+    // act
+    const completion = toCheckoutCompletion(session);
+
+    // assert
+    expect(completion).toBeNull();
+  });
+
   it("reads nothing from a paid session without a subscription", () => {
     // arrange
     const session = paidSession({ subscriptionId: null });

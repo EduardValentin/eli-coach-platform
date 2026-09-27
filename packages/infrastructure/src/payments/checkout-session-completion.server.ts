@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export type PaidCheckoutSession = {
   id: string;
-  customerId: string;
+  customerId: string | null;
   subscriptionId: string | null;
   paymentIntentId: string | null;
   amountCents: number;
@@ -27,7 +27,7 @@ const paidCheckoutSessionSchema = z.object({
   id: z.string().min(1),
   status: z.literal("complete"),
   payment_status: z.literal("paid"),
-  customer: referencedIdSchema,
+  customer: optionalReferencedIdSchema,
   subscription: optionalReferencedIdSchema,
   payment_intent: optionalReferencedIdSchema,
   amount_total: z.number().int().nonnegative(),

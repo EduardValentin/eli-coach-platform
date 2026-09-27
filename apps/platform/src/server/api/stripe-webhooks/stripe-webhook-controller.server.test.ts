@@ -163,6 +163,33 @@ describe("StripeWebhookController", () => {
   );
 });
 
+describe("StripeWebhookController with a paid session without a customer", () => {
+  it("reports it unrouted when its purpose names no handler", async () => {
+    // arrange
+    const { controller, coachingHandler, incidents } = createController({
+      verdict: {
+        kind: "checkout_completed",
+        eventId: "evt_guest",
+        session: {
+          ...paidSession({ purpose: "store-order" }),
+          customerId: null,
+        },
+      },
+    });
+
+    // act
+    const response = await controller.handleEvent(createWebhookRequest());
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(coachingHandler.handle).not.toHaveBeenCalled();
+    expect(incidents.paymentEventUnrouted).toHaveBeenCalledWith({
+      eventId: "evt_guest",
+      purpose: "store-order",
+    });
+  });
+});
+
 function createController(options: {
   outcome?: HandlerOutcome;
   signingSecret?: string | undefined;

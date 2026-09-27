@@ -86,16 +86,23 @@ describe("CoachingPurchaseCompletionHandler", () => {
   );
 
   it.each([
-    ["an unknown bundle", { ...coachingMetadata, bundleId: "12-months" }],
-    ["another purpose", { ...coachingMetadata, purpose: "store-order" }],
+    [
+      "an unknown bundle",
+      paidSession({ ...coachingMetadata, bundleId: "12-months" }),
+    ],
+    [
+      "another purpose",
+      paidSession({ ...coachingMetadata, purpose: "store-order" }),
+    ],
+    ["no customer", { ...paidSession(coachingMetadata), customerId: null }],
   ])(
-    "ignores a paid session whose metadata names %s and reports it",
-    async (_description, metadata) => {
+    "ignores a paid session with %s and reports it",
+    async (_description, session) => {
       // arrange
       const { handler, incidents, recordCompletion } = createHandler();
 
       // act
-      const outcome = await handler.handle("evt_1", paidSession(metadata));
+      const outcome = await handler.handle("evt_1", session);
 
       // assert
       expect(outcome).toBe("ignored");

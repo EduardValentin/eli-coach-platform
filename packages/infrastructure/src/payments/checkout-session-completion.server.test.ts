@@ -80,6 +80,25 @@ describe("readPaidCheckoutSession", () => {
     });
   });
 
+  it("reads a guest payment without a customer", () => {
+    // arrange
+    const session = paidCheckoutSession({
+      customer: null,
+      subscription: null,
+      payment_intent: "pi_test",
+    });
+
+    // act
+    const paid = readPaidCheckoutSession(session, paidAt);
+
+    // assert
+    expect(paid).toMatchObject({
+      customerId: null,
+      subscriptionId: null,
+      paymentIntentId: "pi_test",
+    });
+  });
+
   it("reads a session created outside the platform with empty metadata", () => {
     // arrange
     const session = paidCheckoutSession({ metadata: {} });
@@ -95,7 +114,6 @@ describe("readPaidCheckoutSession", () => {
     ["an open session", { status: "open", payment_status: "unpaid" }],
     ["an expired session", { status: "expired", payment_status: "unpaid" }],
     ["a complete but unpaid session", { payment_status: "unpaid" }],
-    ["a session without a customer", { customer: null }],
     ["a session without a total", { amount_total: null }],
     ["a session without a customer email", { customer_details: null }],
     ["a session without metadata", { metadata: null }],

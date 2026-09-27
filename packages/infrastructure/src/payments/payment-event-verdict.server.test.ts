@@ -93,6 +93,37 @@ describe("readPaymentEvent", () => {
     });
   });
 
+  it("reads a paid session without a customer so it can be routed by purpose", () => {
+    // arrange
+    const event = {
+      id: "evt_guest",
+      type: "checkout.session.completed",
+      created: 1790003600,
+      data: {
+        object: paidCheckoutSession({
+          customer: null,
+          subscription: null,
+          payment_intent: "pi_guest",
+          metadata: { purpose: "store-order" },
+        }),
+      },
+    };
+
+    // act
+    const verdict = readPaymentEvent(event);
+
+    // assert
+    expect(verdict).toMatchObject({
+      kind: "checkout_completed",
+      eventId: "evt_guest",
+      session: {
+        customerId: null,
+        paymentIntentId: "pi_guest",
+        metadata: { purpose: "store-order" },
+      },
+    });
+  });
+
   it("ignores every other event type", () => {
     // arrange
     const event = {
