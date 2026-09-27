@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
-import { ArrowRight, MailQuestion } from 'lucide-react';
-import { Link, useNavigate, useParams } from 'react-router';
+import { ArrowRight, MailQuestion, UserRound } from 'lucide-react';
+import { Link, useNavigate } from 'react-router';
 import { ERROR_PAGE_ACTION_CLASS, ErrorPage } from '../components/ErrorPage';
 import { Button, cn } from '../components/ThemeButton';
 import { cardVariants } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { SectionEyebrow } from '../components/SectionEyebrow';
-import { useAppState } from '../context/AppContext';
+import { isSignedIn, useAppState } from '../context/AppContext';
 import { useClientJourneys } from '../context/ClientJourneyContext';
+import { useFragmentToken } from '../hooks/useFragmentToken';
 import { completeSignIn } from '../services/authService';
 import {
   resolveInvitation,
@@ -21,12 +22,19 @@ const UNAVAILABLE_BODY =
   'It may have expired or already been used. Ask your coach for a new one.';
 
 const HAND_OFF_NOTE =
-  "You'll confirm your email with a one-time code through Evoa's secure sign-in and come straight back here.";
+  "Your email is already confirmed by this invitation — there's no code to type. You'll create your account on Evoa's secure sign-up page and land straight in your account.";
+
+const SIGNED_IN_TITLE = "You're already signed in";
+
+const SIGNED_IN_BODY =
+  'This invitation creates a new account. Sign out first, then open the link again.';
+
+const INVITATION_STORAGE_KEY = 'invitation';
 
 type InvitationResolution = ResolvedInvitation | { status: 'loading' };
 
 export function InvitationLanding() {
-  const { token = '' } = useParams();
+  const token = useFragmentToken(INVITATION_STORAGE_KEY);
   const navigate = useNavigate();
   const { appState, setAppState } = useAppState();
   const { demoJourney, journeyForInvitationToken, recordAccountCreated } =
@@ -37,8 +45,11 @@ export function InvitationLanding() {
   const [creating, setCreating] = useState(false);
 
   const { invitationLinkState } = appState;
+  const signedIn = isSignedIn(appState.session);
 
   useEffect(() => {
+    if (signedIn || token === null) return;
+
     let current = true;
 
     resolveInvitation(token, invitationLinkState).then((resolved) => {
@@ -48,9 +59,14 @@ export function InvitationLanding() {
     return () => {
       current = false;
     };
-  }, [token, invitationLinkState]);
+  }, [signedIn, token, invitationLinkState]);
 
-  const journey = journeyForInvitationToken(token) ?? demoJourney;
+  const journey = journeyForInvitationToken(token ?? '') ?? demoJourney;
+
+  const signOut = () => {
+    setInvitation({ status: 'loading' });
+    setAppState({ session: 'anonymous' });
+  };
 
   const createAccount = async () => {
     setCreating(true);
@@ -64,6 +80,21 @@ export function InvitationLanding() {
       setCreating(false);
     }
   };
+
+  if (signedIn) {
+    return (
+      <ErrorPage
+        eyebrow="Invitation"
+        icon={UserRound}
+        title={SIGNED_IN_TITLE}
+        description={SIGNED_IN_BODY}
+      >
+        <Button onClick={signOut} size="lg" variant="inverted">
+          Sign out
+        </Button>
+      </ErrorPage>
+    );
+  }
 
   if (invitation.status === 'loading') {
     return (
@@ -97,6 +128,7 @@ export function InvitationLanding() {
     <main
       aria-label="Invitation"
       className="flex min-h-screen items-center justify-center bg-surface-page px-4 py-16 sm:px-6"
+      data-parity-root="InvitationLanding"
     >
       <div className={cn(cardVariants({ variant: 'panel' }), 'mx-auto w-full max-w-md px-6 py-10 sm:px-10')}>
         <SectionEyebrow>Your invitation</SectionEyebrow>
@@ -115,6 +147,7 @@ export function InvitationLanding() {
           </Label>
           <Input
             className="mt-2"
+            data-parity="invited-email"
             id="invited-email"
             readOnly
             type="email"
@@ -128,6 +161,7 @@ export function InvitationLanding() {
         <Button
           aria-busy={creating}
           className="mt-8"
+          data-parity="continue"
           disabled={creating}
           onClick={createAccount}
           width="full"

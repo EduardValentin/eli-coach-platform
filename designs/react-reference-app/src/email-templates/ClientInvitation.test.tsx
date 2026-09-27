@@ -6,7 +6,7 @@ import {
   type ClientInvitationProps,
 } from './ClientInvitation';
 
-const ACCEPT_URL = 'https://evoa.fit/portal/onboarding';
+const ACCEPT_URL = 'https://evoa.fit/invitation#inv-1';
 const CONTACT_HREF = 'mailto:contact@evoa.fit';
 
 // The template renders a whole document, so it is rendered the way the preview
@@ -39,7 +39,7 @@ describe('ClientInvitation', () => {
 
     // assert
     expect(
-      screen.getByRole('heading', { level: 1, name: /you're all set up/i }),
+      screen.getByRole('heading', { level: 1, name: 'Your place is booked.' }),
     ).toBeInTheDocument();
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
     // The accept link is the only destination in the email that is not a way
@@ -53,6 +53,54 @@ describe('ClientInvitation', () => {
     expect(
       screen.getByText(/have to create your account from it/i),
     ).toBeInTheDocument();
+  });
+
+  it('tells a paying client her place is booked and what comes after the account', async () => {
+    // arrange
+    const props: ClientInvitationProps = { variant: 'first' };
+
+    // act
+    await mountInvitation(props);
+
+    // assert
+    expect(screen.getByText("Let's get you set up.")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Thank you — your place in my coaching is booked. Create your account from the button below; it takes a minute. Then you'll answer a short form about you, and I'll build your program from your answers.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "This link works for the next 30 days. You have to create your account from it — reading this email isn't enough. If it runs out, tell me and I'll send you a new one.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Create your account from the button above.'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Answer a short form about your goals, your health and your day-to-day.',
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "I build your program, and you'll find it right here in your account.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/five minutes/i)).not.toBeInTheDocument();
+  });
+
+  it('links the preview to the invitation page with the token in the fragment', async () => {
+    // arrange
+    const props: ClientInvitationProps = { acceptUrl: undefined };
+
+    // act
+    await mountInvitation(props);
+
+    // assert
+    expect(
+      screen.getByRole('link', { name: 'Create your account' }),
+    ).toHaveAttribute('href', '/invitation#inv-demo');
   });
 
   it('tells a re-invited client that the earlier link stopped working', async () => {
@@ -90,7 +138,7 @@ describe('ClientInvitation', () => {
   // The title carries the subject line, so asserting it per variant is what
   // catches a send wired to the wrong copy.
   it.each([
-    ['first', 'Your targets are ready — create your account.'],
+    ['first', 'Your place is booked — create your account.'],
     ['replaced', 'A fresh link — create your account with this one.'],
   ] as const)(
     'declares language, direction and the %s send’s subject line',

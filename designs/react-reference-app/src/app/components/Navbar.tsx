@@ -126,6 +126,7 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
           {appState.session === 'client' && (
             <Link
               to={clientPortal.to}
+              data-parity="portal-link"
               className={buttonVariants({
                 lettering: 'wide',
                 size: 'xs',
@@ -313,6 +314,7 @@ export function Navbar({ theme = 'transparent' }: { theme?: 'dark' | 'transparen
               >
                 <Link
                   to={clientPortal.to}
+                  data-parity="portal-link"
                   onClick={menu.close}
                   className="text-2xl font-medium tracking-wide text-brand"
                 >

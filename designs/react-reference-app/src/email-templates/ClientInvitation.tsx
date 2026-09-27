@@ -35,10 +35,6 @@ const FONT_SANS = EMAIL_FONT_SANS;
 const EYEBROW = 'Invitation — 1-on-1 coaching';
 const BUTTON_LABEL = 'Create your account';
 
-// The card below lists what she does next, so the letter only has to set the
-// expectation of how long it takes.
-const SHARED_NEXT_PARAGRAPH = 'The whole thing takes about five minutes.';
-
 // Both sends grant the same 30 days; only the lines explaining why this email
 // arrived differ between them.
 const SHARED_VALIDITY =
@@ -54,11 +50,11 @@ const copy: Record<
   }
 > = {
   first: {
-    previewText: 'Your targets are ready — create your account.',
-    heading: "You're all set up.",
-    subhead: "Everything's waiting for you.",
+    previewText: 'Your place is booked — create your account.',
+    heading: 'Your place is booked.',
+    subhead: "Let's get you set up.",
     opening:
-      "I've set up your profile, your starting targets and your first goal. Create your account from the button below and it's all waiting for you.",
+      "Thank you — your place in my coaching is booked. Create your account from the button below; it takes a minute. Then you'll answer a short form about you, and I'll build your program from your answers.",
   },
   replaced: {
     previewText: 'A fresh link — create your account with this one.',
@@ -71,8 +67,8 @@ const copy: Record<
 
 const nextSteps = [
   'Create your account from the button above.',
-  'Answer a few questions — your cycle, your food preferences, anything I should know.',
-  'Your targets and my notes are waiting in your portal.',
+  'Answer a short form about your goals, your health and your day-to-day.',
+  "I build your program, and you'll find it right here in your account.",
 ];
 
 export function ClientInvitation({
@@ -80,13 +76,12 @@ export function ClientInvitation({
   clientName = DEFAULT_CLIENT_NAME,
   coachName = DEFAULT_COACH_NAME,
   contactEmail = DEFAULT_CONTACT_EMAIL,
-  acceptUrl = '/portal/onboarding',
+  acceptUrl = '/invitation#inv-demo',
 }: ClientInvitationProps) {
   const content = copy[variant];
   const bodyParagraphs = [
     `Hi ${clientName},`,
     content.opening,
-    SHARED_NEXT_PARAGRAPH,
     SHARED_VALIDITY,
     `— ${coachName}`,
   ];

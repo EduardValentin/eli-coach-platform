@@ -276,7 +276,7 @@ export function DevToggle() {
           {
             key: `${journey.callId}-invitation`,
             label: `Open invitation link · ${journey.identity.firstName} ${journey.identity.lastName}`,
-            to: withDevParams(`/invitation/${journey.invitation.token}`),
+            to: withDevParams(`/invitation#${journey.invitation.token}`),
           },
         ]
       : []),

@@ -37,7 +37,7 @@ describe('EmailPreview', () => {
     ).toBeInTheDocument();
     const markup = await previewedEmail(
       'Client invitation — first',
-      'starting targets',
+      'place in my coaching is booked',
     );
     expect(markup).toContain('Create your account');
   });
@@ -47,7 +47,7 @@ describe('EmailPreview', () => {
     const user = userEvent.setup();
     render(<EmailPreview />);
     await user.click(screen.getByRole('button', { name: 'Client invitation' }));
-    await previewedEmail('Client invitation — first', 'starting targets');
+    await previewedEmail('Client invitation — first', 'place in my coaching is booked');
 
     // act
     await user.click(screen.getByRole('button', { name: 'Replaced invitation' }));
