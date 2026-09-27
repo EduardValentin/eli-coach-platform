@@ -59,6 +59,11 @@ export function CheckoutStandIn() {
   const bundle = bundleForMonths(session.bundle);
   const journey = journeyForPaymentToken(session.token) ?? demoJourney;
   const total = bundleTotal(bundle, journey.pricing);
+  const cancelledReturn = new URLSearchParams({
+    payment: 'cancelled',
+    bundle: bundle.id,
+    start: session.startPath,
+  });
 
   const pay = async () => {
     setPaying(true);
@@ -118,7 +123,7 @@ export function CheckoutStandIn() {
 
       <Link
         className="mt-5 block text-center text-sm text-muted-foreground underline underline-offset-4 hover:text-text-primary"
-        to="/select-bundle?payment=cancelled"
+        to={`/select-bundle?${cancelledReturn.toString()}`}
       >
         Back
       </Link>

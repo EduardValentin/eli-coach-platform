@@ -358,6 +358,42 @@ describe('choosing a bundle from a payment link', () => {
     ).not.toBeInTheDocument();
   }, TEST_TIMEOUT_MS);
 
+  it('restores her bundle and start choice when she returns from a cancelled checkout', async () => {
+    // arrange
+    window.sessionStorage.setItem(PAYMENT_LINK_STORAGE_KEY, DEMO_TOKEN);
+
+    // act
+    renderPage('?payment=cancelled&bundle=6-months&start=waiting');
+
+    // assert
+    const bundles = await screen.findByRole(
+      'radiogroup',
+      { name: 'Coaching bundle options' },
+      WAIT,
+    );
+    expect(within(bundles).getByRole('radio', { name: '6 Months' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: WAITING_OPTION })).toBeChecked();
+    expect(screen.getByRole('radio', { name: IMMEDIATE_OPTION })).not.toBeChecked();
+  }, TEST_TIMEOUT_MS);
+
+  it('falls back to the popular bundle and no start choice when the returned choices are unknown', async () => {
+    // arrange
+    window.sessionStorage.setItem(PAYMENT_LINK_STORAGE_KEY, DEMO_TOKEN);
+
+    // act
+    renderPage('?payment=cancelled&bundle=12-months&start=later');
+
+    // assert
+    const bundles = await screen.findByRole(
+      'radiogroup',
+      { name: 'Coaching bundle options' },
+      WAIT,
+    );
+    expect(within(bundles).getByRole('radio', { name: '3 Months' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: WAITING_OPTION })).not.toBeChecked();
+    expect(screen.getByRole('radio', { name: IMMEDIATE_OPTION })).not.toBeChecked();
+  }, TEST_TIMEOUT_MS);
+
   it('asks for a call first when she arrives without a link', async () => {
     // arrange
     const address = '';

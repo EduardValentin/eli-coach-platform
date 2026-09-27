@@ -10,8 +10,11 @@ import { Button } from '../components/ui/button';
 import { useAppState } from '../context/AppContext';
 import { useClientJourneys } from '../context/ClientJourneyContext';
 import { usePaymentLinkToken } from '../hooks/usePaymentLinkToken';
-import { bundleById, type BundleId } from '../domain/bundles';
-import type { SubscriptionStartPath } from '../domain/coachingSubscription';
+import { bundleById, parseBundleId, type BundleId } from '../domain/bundles';
+import {
+  parseStartPath,
+  type SubscriptionStartPath,
+} from '../domain/coachingSubscription';
 import { START_CHOICE_REQUIRED } from '../domain/startChoiceCopy';
 import {
   resolvePaymentLink,
@@ -22,6 +25,8 @@ import { NotFound } from './NotFound';
 
 const SUBSCRIPTION_NOTE =
   'Each bundle is a subscription: it renews at its own length — every 1, 3 or 6 months — and each renewal is charged up front.';
+
+const PAYMENT_PARAM = 'payment';
 
 const CANCELLED_NOTICE =
   "No payment was taken. Pick a bundle whenever you're ready.";
@@ -36,12 +41,14 @@ export function SelectBundle() {
 
   const token = usePaymentLinkToken();
   const [link, setLink] = useState<PaymentLinkResolution>({ status: 'loading' });
-  const [startPath, setStartPath] = useState<SubscriptionStartPath | null>(null);
+  const [startPath, setStartPath] = useState<SubscriptionStartPath | null>(
+    () => parseStartPath(searchParams.get('start')) ?? null,
+  );
   const [startPathMissing, setStartPathMissing] = useState(false);
   const firstStartOption = useRef<HTMLButtonElement>(null);
   const [opening, setOpening] = useState(false);
   const [cancelledNoticeShown, setCancelledNoticeShown] = useState(
-    searchParams.get('payment') === 'cancelled',
+    searchParams.get(PAYMENT_PARAM) === 'cancelled',
   );
 
   const { paymentLinkState } = appState;
@@ -74,9 +81,15 @@ export function SelectBundle() {
 
   const dismissNotice = () => {
     setCancelledNoticeShown(false);
-    const next = new URLSearchParams(searchParams);
-    next.delete('payment');
-    setSearchParams(next, { replace: true });
+    setSearchParams(
+      (current) => {
+        const next = new URLSearchParams(current);
+        next.delete(PAYMENT_PARAM);
+
+        return next;
+      },
+      { preventScrollReset: true, replace: true },
+    );
   };
 
   const chooseStartPath = (chosen: SubscriptionStartPath) => {
@@ -185,6 +198,7 @@ export function SelectBundle() {
           <div className={!isValidToken ? 'opacity-50 grayscale-[0.5] pointer-events-none' : ''}>
             <BundleSelector
               mode="checkout"
+              initialBundleId={parseBundleId(searchParams.get('bundle'))}
               pricing={journey.pricing}
               onCheckout={openCheckout}
               disabled={!isValidToken}
