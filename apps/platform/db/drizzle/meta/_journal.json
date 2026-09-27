@@ -197,6 +197,13 @@
       "when": 1790506323937,
       "tag": "0027_one_open_subscription_per_client",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1790527680548,
+      "tag": "0028_client_invitations",
+      "breakpoints": true
     }
   ]
 }

@@ -2,15 +2,12 @@ import { createHash } from "node:crypto";
 
 import { describe, expect, it } from "vitest";
 
-import {
-  PaymentLinkTokenSha256,
-  RandomPaymentLinkTokenGenerator,
-} from "./payment-link-token.server";
+import { LinkTokenSha256, RandomLinkTokenGenerator } from "./link-token.server";
 
-describe("payment link tokens", () => {
-  it("creates an unguessable url-safe token of at least 128 bits for every link", () => {
+describe("link tokens", () => {
+  it("creates an unguessable url-safe token of at least 128 bits for every payment link and invitation", () => {
     // arrange
-    const generator = new RandomPaymentLinkTokenGenerator();
+    const generator = new RandomLinkTokenGenerator();
 
     // act
     const token = generator.create();
@@ -24,8 +21,8 @@ describe("payment link tokens", () => {
 
   it("stores only the hex sha256 of the raw token, the same digest the hasher computes", () => {
     // arrange
-    const generator = new RandomPaymentLinkTokenGenerator();
-    const hasher = new PaymentLinkTokenSha256();
+    const generator = new RandomLinkTokenGenerator();
+    const hasher = new LinkTokenSha256();
 
     // act
     const token = generator.create();

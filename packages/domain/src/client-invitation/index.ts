@@ -4,7 +4,6 @@ export {
   ClientInvitation,
   INVITATION_VALIDITY_DAYS,
   type IdentityInvitation,
-  type InvitationResolution,
 } from "./client-invitation";
 export { type ClientInvitationIncidents } from "./client-invitation-incidents";
 export {

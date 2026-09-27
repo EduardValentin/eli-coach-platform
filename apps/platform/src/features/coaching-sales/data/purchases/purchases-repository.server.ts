@@ -1,7 +1,6 @@
-import {
-  isCausedByDatabaseError,
-  type DatabaseClient,
-  type DatabaseTransaction,
+import type {
+  DatabaseClient,
+  DatabaseTransaction,
 } from "@eli-coach-platform/db";
 import type {
   CoachingPurchase,
@@ -23,13 +22,12 @@ import {
   coachingSubscriptionsTable,
   paymentLinksTable,
 } from "~/features/coaching-sales/data/schema.server";
+import { violatesUniqueConstraint } from "~/features/coaching-sales/data/unique-violation.server";
 
 type PostgresCoachingPurchasesOptions = {
   clock: Clock;
   database: DatabaseClient;
 };
-
-const UNIQUE_VIOLATION_CODE = "23505";
 
 const SALES_STATE_PRECEDENCE: readonly CallSalesState[] = [
   "held",
@@ -172,14 +170,6 @@ async function findClientIdForCall(
   }
 
   return clientRow.id;
-}
-
-function violatesUniqueConstraint(error: unknown, constraint: string): boolean {
-  return isCausedByDatabaseError(
-    error,
-    (fields) =>
-      fields.code === UNIQUE_VIOLATION_CODE && fields.constraint === constraint,
-  );
 }
 
 function salesStatesOf(

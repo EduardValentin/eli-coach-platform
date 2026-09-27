@@ -272,4 +272,52 @@ describe("createConsoleLogger", () => {
       },
     );
   });
+
+  it("logs a failed client invitation email by invitation id only", () => {
+    // arrange
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+
+    // act
+    logger.invitationEmailFailed({
+      invitationId: "5b1c7a52-8f4f-4e5a-a2b7-5c3f6a9c1d22",
+    });
+
+    // assert
+    expect(consoleError).toHaveBeenCalledWith(
+      "Client invitation email failed.",
+      {
+        errorCategory: "client_invitation_email_failure",
+        invitationId: "5b1c7a52-8f4f-4e5a-a2b7-5c3f6a9c1d22",
+      },
+    );
+  });
+
+  it("logs a failed payment event handler by event, purpose and error class only", () => {
+    // arrange
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+
+    // act
+    logger.paymentEventHandlingFailed({
+      errorClass: "DrizzleQueryError",
+      eventId: "evt_1",
+      purpose: "coaching-subscription",
+    });
+
+    // assert
+    expect(consoleError).toHaveBeenCalledWith(
+      "Payment event handler failed; Stripe will redeliver.",
+      {
+        errorCategory: "payment_event_handling_failure",
+        errorClass: "DrizzleQueryError",
+        eventId: "evt_1",
+        purpose: "coaching-subscription",
+      },
+    );
+  });
 });

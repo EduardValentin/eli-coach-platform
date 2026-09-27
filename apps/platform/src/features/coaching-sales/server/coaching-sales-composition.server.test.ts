@@ -115,6 +115,21 @@ describe("composeCoachingSalesFeature", () => {
   });
 });
 
+describe("composeCoachingSalesFeature invitation acceptance", () => {
+  it("refuses a subject whose identity carries no invitation without reading any invitation", async () => {
+    // arrange
+    const { handles } = composeCoachingSalesFeature(createHandles({}));
+
+    // act
+    const outcome = await handles.invitationAcceptance.accept({
+      authSubjectId: "user_uninvited",
+    });
+
+    // assert
+    expect(outcome).toBe("refused");
+  });
+});
+
 describe("composeCoachingSalesFeature buyer controllers", () => {
   it("hides the bundle page, its link resolution and the checkout while the site is in waitlist mode", async () => {
     // arrange
@@ -183,8 +198,13 @@ function createHandles(
     contactEmail: "contact@evoa.fit",
     database: createUnreachableDatabase(),
     featureFlags: { execute: async () => featureFlags },
+    identityInvitations: {
+      create: async () => {
+        throw new Error("no identity invitation expected");
+      },
+      findInvitationIdForSubject: async () => null,
+    },
     incidents: createIncidents(),
-    paidClientAdmission: { admit: async () => undefined },
     paymentCheckout: createPaymentCheckout({ PAYMENTS_PROVIDER: "memory" }),
     pricingEligibility: {
       tierForEmail: async () => "regular",
@@ -197,6 +217,7 @@ function createHandles(
 
 function createIncidents() {
   return {
+    invitationEmailFailed: vi.fn(),
     paymentEventRejected: vi.fn(),
     paymentLinkEmailFailed: vi.fn(),
     salesModeReadFailed: vi.fn(),

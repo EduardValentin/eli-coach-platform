@@ -1,14 +1,9 @@
-import type {
-  IdentityInvitation,
-  IdentityInvitations,
-} from "@eli-coach-platform/domain/client-invitation";
-
-export class InMemoryIdentityInvitations implements IdentityInvitations {
+export class InMemoryIdentityInvitations {
   private createdCount = 0;
 
   constructor(private readonly options: { signUpUrl: string }) {}
 
-  async create(): Promise<IdentityInvitation> {
+  async create(): Promise<{ id: string; url: string }> {
     this.createdCount += 1;
 
     return {

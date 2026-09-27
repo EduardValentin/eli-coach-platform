@@ -6,6 +6,10 @@ export const CHECKOUT_COMPLETE_ROUTE_SEGMENT = "checkout/complete";
 
 export const CHECKOUT_COMPLETE_PATH = `/${CHECKOUT_COMPLETE_ROUTE_SEGMENT}`;
 
+const INVITATION_ROUTE_SEGMENT = "invitation";
+
+const INVITATION_PATH = `/${INVITATION_ROUTE_SEGMENT}`;
+
 export const COACHING_SALES_API_PATHS = {
   paymentLinks: "/api/coaching-sales/payment-links",
   bundlePage: "/api/coaching-sales/bundle-page",
@@ -35,4 +39,8 @@ export function selectBundlePath(link: SelectBundleLink): string {
   const fragment = link.token ? `#${link.token}` : "";
 
   return `${SELECT_BUNDLE_PATH}${query}${fragment}`;
+}
+
+export function invitationPath(link: { token: string }): string {
+  return `${INVITATION_PATH}#${link.token}`;
 }

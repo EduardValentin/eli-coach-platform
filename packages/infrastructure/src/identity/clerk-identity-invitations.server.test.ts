@@ -73,11 +73,14 @@ describe("ClerkIdentityInvitations#create", () => {
     await expect(creation).rejects.toThrow("inv_clerk_1");
   });
 
-  it("propagates a Clerk failure", async () => {
+  it("reports a Clerk failure by our invitation id and Clerk's status, never by Clerk's message, which may name the email", async () => {
     // arrange
-    const failure = new Error("Clerk unavailable");
     const client = createClerkClient();
-    client.invitations.createInvitation.mockRejectedValue(failure);
+    client.invitations.createInvitation.mockRejectedValue(
+      Object.assign(new Error("ana@example.com already has a pending invite"), {
+        status: 422,
+      }),
+    );
     const { identity } = createAdapter(client);
 
     // act
@@ -87,7 +90,30 @@ describe("ClerkIdentityInvitations#create", () => {
     });
 
     // assert
-    await expect(creation).rejects.toBe(failure);
+    await expect(creation).rejects.toThrow(
+      "Clerk did not create the identity invitation for invitation-1 (status 422).",
+    );
+    await expect(creation).rejects.not.toHaveProperty("cause");
+  });
+
+  it("reports a Clerk failure without a status as unknown", async () => {
+    // arrange
+    const client = createClerkClient();
+    client.invitations.createInvitation.mockRejectedValue(
+      new Error("socket hang up"),
+    );
+    const { identity } = createAdapter(client);
+
+    // act
+    const creation = identity.create({
+      email: "ana@example.com",
+      invitationId: "invitation-1",
+    });
+
+    // assert
+    await expect(creation).rejects.toThrow(
+      "Clerk did not create the identity invitation for invitation-1 (status unknown).",
+    );
   });
 });
 

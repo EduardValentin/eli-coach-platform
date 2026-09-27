@@ -37,13 +37,19 @@ export class ClerkIdentityInvitations implements IdentityInvitations {
     email: string;
     invitationId: string;
   }): Promise<IdentityInvitation> {
-    const invitation = await this.client.invitations.createInvitation({
-      emailAddress: input.email,
-      notify: false,
-      expiresInDays: INVITATION_VALIDITY_DAYS,
-      publicMetadata: { invitationId: input.invitationId },
-      redirectUrl: this.redirectUrl,
-    });
+    const invitation = await this.client.invitations
+      .createInvitation({
+        emailAddress: input.email,
+        notify: false,
+        expiresInDays: INVITATION_VALIDITY_DAYS,
+        publicMetadata: { invitationId: input.invitationId },
+        redirectUrl: this.redirectUrl,
+      })
+      .catch((error: unknown) => {
+        throw new Error(
+          `Clerk did not create the identity invitation for ${input.invitationId} (status ${clerkStatusOf(error)}).`,
+        );
+      });
 
     if (!invitation.url) {
       throw new Error(`Clerk invitation ${invitation.id} carries no URL.`);
@@ -67,4 +73,13 @@ function hostedSignUpReturningTo(urls: IdentityInvitationUrls): string {
   signUp.searchParams.set("redirect_url", urls.returnUrl);
 
   return signUp.toString();
+}
+
+function clerkStatusOf(error: unknown): string {
+  const status =
+    typeof error === "object" && error !== null && "status" in error
+      ? error.status
+      : null;
+
+  return typeof status === "number" ? String(status) : "unknown";
 }
