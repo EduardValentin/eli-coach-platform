@@ -118,7 +118,7 @@ export function CheckoutStandIn() {
 
       <Link
         className="mt-5 block text-center text-sm text-muted-foreground underline underline-offset-4 hover:text-text-primary"
-        to={`/select-bundle?token=${session.token}&payment=cancelled`}
+        to="/select-bundle?payment=cancelled"
       >
         Back
       </Link>

@@ -34,7 +34,7 @@ function renderDevToggle(search = '') {
   window.history.replaceState(null, '', `/${search}`);
 
   return render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[`/${search}`]}>
       <AppProvider>
         <ClientProfileProvider>
           <AssessmentCallProvider>
@@ -78,5 +78,28 @@ describe('DevToggle prototype mode', () => {
     // assert
     expect(screen.getByRole('combobox', { name: 'Prototype mode' })).toHaveTextContent('Post-MVP');
     expect(screen.getByRole('tab', { name: 'Nutrition' })).toBeInTheDocument();
+  });
+});
+
+describe('DevToggle links sent by the coach', () => {
+  it('opens the payment link with its token in the fragment and the dev settings in the query', async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderDevToggle('?jstage=payment-link-sent');
+    await openDevSettings();
+
+    // act
+    await user.click(screen.getByRole('tab', { name: 'Journey' }));
+
+    // assert
+    const [paymentLink] = screen.getAllByRole('link', {
+      name: /^Open payment link · /,
+    });
+    expect(paymentLink).toHaveAttribute(
+      'href',
+      expect.stringMatching(
+        /^\/select-bundle\?jstage=payment-link-sent#pl-seed-[\w-]+$/,
+      ),
+    );
   });
 });

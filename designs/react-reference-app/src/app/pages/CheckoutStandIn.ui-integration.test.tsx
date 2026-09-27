@@ -100,7 +100,7 @@ describe('the Stripe checkout stand-in', () => {
     // assert
     expect(await screen.findByText('bundle page', undefined, WAIT)).toBeVisible();
     expect(screen.getByTestId('route')).toHaveTextContent(
-      `/select-bundle?token=${DEMO_TOKEN}&payment=cancelled`,
+      '/select-bundle?payment=cancelled',
     );
   }, TEST_TIMEOUT_MS);
 
@@ -122,7 +122,7 @@ describe('the Stripe checkout stand-in', () => {
     expect(screen.getByLabelText('Card number')).toBeDisabled();
     expect(screen.getByRole('link', { name: 'Back' })).toHaveAttribute(
       'href',
-      `/select-bundle?token=${DEMO_TOKEN}&payment=cancelled`,
+      '/select-bundle?payment=cancelled',
     );
   }, TEST_TIMEOUT_MS);
 });

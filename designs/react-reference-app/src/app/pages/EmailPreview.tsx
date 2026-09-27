@@ -130,7 +130,7 @@ export function EmailPreview() {
           variant={variant as PaymentLinkVariant}
           clientName="Jane"
           coachName="Eli"
-          chooseUrl={`${window.location.origin}/select-bundle?token=pl-preview`}
+          chooseUrl={`${window.location.origin}/select-bundle#pl-preview`}
           termsUrl={`${window.location.origin}/terms`}
         />
       );

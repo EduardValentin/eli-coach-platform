@@ -115,7 +115,8 @@ describe.sequential("checkouts integration", () => {
       "line_items[0][price_data][product_data][name]": "3 Months",
       success_url:
         "https://localhost:3000/eli-coach-platform/checkout/complete?session={CHECKOUT_SESSION_ID}",
-      cancel_url: `https://localhost:3000/eli-coach-platform/select-bundle?token=${token}&payment=cancelled&bundle=3-months&start=immediate`,
+      cancel_url:
+        "https://localhost:3000/eli-coach-platform/select-bundle?payment=cancelled&bundle=3-months&start=immediate",
     });
     expect(await readCheckoutSessions()).toEqual([
       {
@@ -207,7 +208,7 @@ describe.sequential("checkouts integration", () => {
     // assert
     expect(response.status).toBe(303);
     expect(response.headers.get("location")).toBe(
-      suite.path(`/select-bundle?token=${token}&bundle=3-months`),
+      suite.path(`/select-bundle?bundle=3-months#${token}`),
     );
     expect(await stripeRequests()).toEqual([]);
   });
@@ -226,7 +227,7 @@ describe.sequential("checkouts integration", () => {
     // assert
     expect(response.status).toBe(303);
     expect(response.headers.get("location")).toBe(
-      suite.path(`/select-bundle?token=${UNKNOWN_TOKEN}`),
+      suite.path(`/select-bundle#${UNKNOWN_TOKEN}`),
     );
     expect(await stripeRequests()).toEqual([]);
   });

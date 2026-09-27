@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { PaymentLink, type PaymentLinkProps } from './PaymentLink';
 
-const CHOOSE_URL = 'https://evoa.fit/select-bundle?token=pl-1';
+const CHOOSE_URL = 'https://evoa.fit/select-bundle#pl-1';
 const TERMS_URL = 'https://evoa.fit/terms';
 const CONTACT_HREF = 'mailto:contact@evoa.fit';
 

@@ -70,7 +70,7 @@ export function PaymentLink({
   clientName = DEFAULT_CLIENT_NAME,
   coachName = DEFAULT_COACH_NAME,
   contactEmail = DEFAULT_CONTACT_EMAIL,
-  chooseUrl = '/select-bundle',
+  chooseUrl = '/select-bundle#pl-preview',
   termsUrl = '/terms',
 }: PaymentLinkProps) {
   const content = copy[variant];

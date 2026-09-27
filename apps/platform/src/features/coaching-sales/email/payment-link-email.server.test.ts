@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { createPaymentLinkEmailContent } from "./payment-link-email.server";
 
 const BASE_OPTIONS = {
-  chooseUrl: "https://evoa.fit/eli-coach-platform/select-bundle?token=raw",
+  chooseUrl: "https://evoa.fit/eli-coach-platform/select-bundle#raw",
   contactEmail: "contact@evoa.fit",
   currentYear: 2026,
   firstName: "Ana",
