@@ -7,6 +7,7 @@ import {
   ReadCheckoutConfirmationUseCase,
   RecordCheckoutCompletedUseCase,
   StartCheckoutUseCase,
+  type PaidClientAdmission,
   type PaymentCheckout,
 } from "@eli-coach-platform/domain/coaching-subscription";
 import type { FeatureFlagReader } from "@eli-coach-platform/domain/feature-flag";
@@ -54,6 +55,7 @@ export type CoachingSalesFeatureHandles = {
   database: DatabaseClient;
   featureFlags: FeatureFlagReader;
   incidents: CoachingSalesIncidents;
+  paidClientAdmission: PaidClientAdmission;
   paymentCheckout: PaymentCheckout;
   pricingEligibility: PricingEligibility;
   productEmail: ProductEmail;
@@ -93,6 +95,7 @@ export function composeCoachingSalesFeature(
       salesWindow,
     }),
     recordCheckoutCompleted: new RecordCheckoutCompletedUseCase({
+      admission: handles.paidClientAdmission,
       calls: handles.assessmentCallReader,
       clock,
       incidents: handles.incidents,

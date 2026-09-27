@@ -10,6 +10,7 @@ import {
   CoachingSubscription,
   type CheckoutCompletion,
 } from "./coaching-subscription";
+import type { PaidClientAdmission } from "./paid-client-admission";
 
 type RecordCheckoutCompletedResult =
   | { status: "recorded" }
@@ -18,6 +19,7 @@ type RecordCheckoutCompletedResult =
   | { status: "call_not_found" };
 
 type RecordCheckoutCompletedUseCaseOptions = {
+  admission: PaidClientAdmission;
   calls: AssessmentCallReader;
   clock: Clock;
   incidents: CoachingSalesIncidents;
@@ -27,7 +29,6 @@ type RecordCheckoutCompletedUseCaseOptions = {
 const STATUS_BY_PURCHASE_OUTCOME = {
   recorded: "recorded",
   duplicate_event: "duplicate",
-  call_already_paid: "already_paid",
 } as const;
 
 export class RecordCheckoutCompletedUseCase {
@@ -49,19 +50,23 @@ export class RecordCheckoutCompletedUseCase {
       return { status: "call_not_found" };
     }
 
-    const outcome = await this.options.purchases.recordCompletion({
+    const purchase = await this.options.purchases.recordCompletion({
       eventId: completion.eventId,
       client: Client.fromAssessmentCall(call, this.options.clock.now()),
       subscription: CoachingSubscription.fromCompletedCheckout(completion),
     });
 
-    if (outcome === "call_already_paid") {
+    if (purchase.outcome === "call_already_paid") {
       this.options.incidents.paymentEventRejected({
         eventId: completion.eventId,
         reason: "call_already_paid",
       });
+
+      return { status: "already_paid" };
     }
 
-    return { status: STATUS_BY_PURCHASE_OUTCOME[outcome] };
+    await this.options.admission.admit({ clientId: purchase.clientId });
+
+    return { status: STATUS_BY_PURCHASE_OUTCOME[purchase.outcome] };
   }
 }

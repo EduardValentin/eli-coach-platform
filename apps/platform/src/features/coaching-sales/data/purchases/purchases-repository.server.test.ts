@@ -24,7 +24,7 @@ describe("PostgresCoachingPurchases#recordCompletion", () => {
     const outcome = await purchases.recordCompletion(purchase());
 
     // assert
-    expect(outcome).toBe("recorded");
+    expect(outcome).toEqual({ outcome: "recorded", clientId: "client-1" });
     expect(database.insertedRows).toEqual([
       { id: "evt_1", receivedAt: NOW },
       expect.objectContaining({ assessmentCallId: PAID_CALL_ID }),
@@ -36,7 +36,7 @@ describe("PostgresCoachingPurchases#recordCompletion", () => {
     expect(database.update).toHaveBeenCalledTimes(1);
   });
 
-  it("answers a duplicate event and writes nothing else when the ledger already holds the event", async () => {
+  it("answers a duplicate event with the client it recorded and writes nothing else when the ledger already holds the event", async () => {
     // arrange
     const database = createDatabaseWithLedgerAnswering([]);
     const purchases = createPurchases(database.client);
@@ -45,9 +45,26 @@ describe("PostgresCoachingPurchases#recordCompletion", () => {
     const outcome = await purchases.recordCompletion(purchase());
 
     // assert
-    expect(outcome).toBe("duplicate_event");
+    expect(outcome).toEqual({
+      outcome: "duplicate_event",
+      clientId: "client-recorded-earlier",
+    });
     expect(database.insertedRows).toEqual([{ id: "evt_1", receivedAt: NOW }]);
     expect(database.update).not.toHaveBeenCalled();
+  });
+
+  it("refuses a duplicate event whose recorded client cannot be found", async () => {
+    // arrange
+    const database = createDatabaseWithLedgerAnswering([], {
+      recordedClients: [],
+    });
+    const purchases = createPurchases(database.client);
+
+    // act
+    const recording = purchases.recordCompletion(purchase());
+
+    // assert
+    await expect(recording).rejects.toThrow(PAID_CALL_ID);
   });
 
   it("answers an already paid call when the call already has a client", async () => {
@@ -62,7 +79,7 @@ describe("PostgresCoachingPurchases#recordCompletion", () => {
     const outcome = await purchases.recordCompletion(purchase());
 
     // assert
-    expect(outcome).toBe("call_already_paid");
+    expect(outcome).toEqual({ outcome: "call_already_paid" });
   });
 
   it("rethrows any other unique violation", async () => {
@@ -187,7 +204,12 @@ function uniqueViolation(constraint: string): Error {
   });
 }
 
-function createDatabaseWithLedgerAnswering(ledgerRows: readonly unknown[]) {
+function createDatabaseWithLedgerAnswering(
+  ledgerRows: readonly unknown[],
+  options: { recordedClients: readonly unknown[] } = {
+    recordedClients: [{ id: "client-recorded-earlier" }],
+  },
+) {
   const insertedRows: unknown[] = [];
   const update = vi.fn(() => ({ set: () => ({ where: async () => [] }) }));
   const transaction = {
@@ -201,7 +223,14 @@ function createDatabaseWithLedgerAnswering(ledgerRows: readonly unknown[]) {
         });
       },
     }),
-    select: () => ({ from: () => ({ where: () => ({}) }) }),
+    select: () => ({
+      from: () => ({
+        where: () =>
+          Object.assign(Promise.resolve(options.recordedClients), {
+            limit: async () => options.recordedClients,
+          }),
+      }),
+    }),
     update,
   };
   const client = {

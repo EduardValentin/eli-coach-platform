@@ -8,8 +8,12 @@ export type CoachingPurchase = {
   subscription: CoachingSubscription;
 };
 
+export type CoachingPurchaseOutcome =
+  | { outcome: "recorded" | "duplicate_event"; clientId: string }
+  | { outcome: "call_already_paid" };
+
 export interface CoachingPurchases {
   recordCompletion(
     purchase: CoachingPurchase,
-  ): Promise<"recorded" | "duplicate_event" | "call_already_paid">;
+  ): Promise<CoachingPurchaseOutcome>;
 }

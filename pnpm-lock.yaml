@@ -433,6 +433,9 @@ importers:
 
   packages/infrastructure:
     dependencies:
+      '@clerk/backend':
+        specifier: 'catalog:'
+        version: 3.16.12(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@eli-coach-platform/config':
         specifier: workspace:*
         version: link:../config

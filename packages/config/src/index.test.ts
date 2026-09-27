@@ -369,6 +369,7 @@ describe("provider settings", () => {
     ["BOT_DETECTION_PROVIDER", "static"],
     ["PRODUCT_EMAIL_PROVIDER", "memory"],
     ["PAYMENTS_PROVIDER", "memory"],
+    ["IDENTITY_PROVIDER", "memory"],
     ["FEATURE_FLAG_OVERRIDES", "browser"],
   ])("refuses %s=%s in a production runtime", (name, value) => {
     // arrange
@@ -648,6 +649,11 @@ describe("@eli-coach-platform/config Clerk runtime environment", () => {
     expect(environment.CLERK_SIGN_IN_URL).toBe(
       CLERK_TEST_ENVIRONMENT.CLERK_SIGN_IN_URL,
     );
+    expect(environment.CLERK_SIGN_UP_URL).toBe(
+      CLERK_TEST_ENVIRONMENT.CLERK_SIGN_UP_URL,
+    );
+    expect(environment.CLERK_API_URL).toBeUndefined();
+    expect(environment.IDENTITY_PROVIDER).toBe("clerk");
     expect(environment.CLERK_WEBHOOK_SIGNING_SECRET).toBeUndefined();
     expect(environment.BOOTSTRAP_COACH_AUTH_SUBJECT_ID).toBeUndefined();
   });
@@ -680,6 +686,57 @@ describe("@eli-coach-platform/config Clerk runtime environment", () => {
     const act = () => loadRuntimeEnvironment(source);
     // assert
     expect(act).toThrow(/CLERK_SIGN_IN_URL/);
+  });
+
+  it.each([
+    ["missing", undefined],
+    ["not a URL", "not-a-url"],
+  ])("requires CLERK_SIGN_UP_URL, refusing one %s", (_label, value) => {
+    // arrange
+    const source = { ...validClerkEnvironment, CLERK_SIGN_UP_URL: value };
+    // act
+    const act = () => loadRuntimeEnvironment(source);
+    // assert
+    expect(act).toThrow(/CLERK_SIGN_UP_URL/);
+  });
+
+  it("accepts the in-memory identity provider and a Backend API override outside production", () => {
+    // arrange
+    const source = {
+      ...validClerkEnvironment,
+      CLERK_API_URL: "http://127.0.0.1:8089",
+      IDENTITY_PROVIDER: "memory",
+    };
+    // act
+    const environment = loadRuntimeEnvironment(source);
+    // assert
+    expect(environment.IDENTITY_PROVIDER).toBe("memory");
+    expect(environment.CLERK_API_URL).toBe("http://127.0.0.1:8089");
+  });
+
+  it("rejects an unknown identity provider", () => {
+    // arrange
+    const source = { ...validClerkEnvironment, IDENTITY_PROVIDER: "auth0" };
+    // act
+    const act = () => loadRuntimeEnvironment(source);
+    // assert
+    expect(act).toThrow(/IDENTITY_PROVIDER/);
+  });
+
+  it("refuses a Backend API override in a production runtime", () => {
+    // arrange
+    const source = {
+      ...validClerkEnvironment,
+      CLERK_API_URL: "https://api.example.com",
+      ENVIRONMENT: "production",
+      NODE_ENV: "production",
+    };
+    // act
+    const act = () => loadRuntimeEnvironment(source);
+    // assert
+    expect(act).toThrow(
+      "CLERK_API_URL is a test override and is refused in a production runtime.",
+    );
   });
 
   it("accepts a well-formed webhook signing secret", () => {

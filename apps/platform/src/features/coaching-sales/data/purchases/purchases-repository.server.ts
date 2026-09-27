@@ -5,6 +5,7 @@ import {
 } from "@eli-coach-platform/db";
 import type {
   CoachingPurchase,
+  CoachingPurchaseOutcome,
   CoachingPurchases,
 } from "@eli-coach-platform/domain/coaching-subscription";
 import type {
@@ -22,10 +23,6 @@ import {
   coachingSubscriptionsTable,
   paymentLinksTable,
 } from "~/features/coaching-sales/data/schema.server";
-
-type PurchaseOutcome = Awaited<
-  ReturnType<CoachingPurchases["recordCompletion"]>
->;
 
 type PostgresCoachingPurchasesOptions = {
   clock: Clock;
@@ -45,7 +42,9 @@ export class PostgresCoachingPurchases
 {
   constructor(private readonly options: PostgresCoachingPurchasesOptions) {}
 
-  async recordCompletion(purchase: CoachingPurchase): Promise<PurchaseOutcome> {
+  async recordCompletion(
+    purchase: CoachingPurchase,
+  ): Promise<CoachingPurchaseOutcome> {
     const receivedAt = this.options.clock.now();
 
     try {
@@ -56,7 +55,7 @@ export class PostgresCoachingPurchases
       if (
         violatesUniqueConstraint(error, coachingSalesConstraints.clientPerCall)
       ) {
-        return "call_already_paid";
+        return { outcome: "call_already_paid" };
       }
 
       throw error;
@@ -100,7 +99,7 @@ export class PostgresCoachingPurchases
 async function recordPurchase(
   transaction: DatabaseTransaction,
   recording: { purchase: CoachingPurchase; receivedAt: Date },
-): Promise<PurchaseOutcome> {
+): Promise<CoachingPurchaseOutcome> {
   const { client, eventId, subscription } = recording.purchase;
   const ledgerOutcome = await recordPaymentEvent(transaction, {
     eventId,
@@ -108,7 +107,10 @@ async function recordPurchase(
   });
 
   if (ledgerOutcome === "duplicate") {
-    return "duplicate_event";
+    return {
+      outcome: "duplicate_event",
+      clientId: await findClientIdForCall(transaction, client.assessmentCallId),
+    };
   }
 
   const [clientRow] = await transaction
@@ -150,7 +152,26 @@ async function recordPurchase(
       ),
     );
 
-  return "recorded";
+  return { outcome: "recorded", clientId: clientRow.id };
+}
+
+async function findClientIdForCall(
+  transaction: DatabaseTransaction,
+  assessmentCallId: string,
+): Promise<string> {
+  const [clientRow] = await transaction
+    .select({ id: clientsTable.id })
+    .from(clientsTable)
+    .where(eq(clientsTable.assessmentCallId, assessmentCallId))
+    .limit(1);
+
+  if (!clientRow) {
+    throw new Error(
+      `No client was recorded for assessment call ${assessmentCallId}.`,
+    );
+  }
+
+  return clientRow.id;
 }
 
 function violatesUniqueConstraint(error: unknown, constraint: string): boolean {

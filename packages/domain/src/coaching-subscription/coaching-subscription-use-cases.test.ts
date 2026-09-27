@@ -20,11 +20,15 @@ import {
 } from "../payment-link";
 
 import type { CheckoutSessions } from "./checkout-sessions";
-import type { CoachingPurchases } from "./coaching-purchases";
+import type {
+  CoachingPurchaseOutcome,
+  CoachingPurchases,
+} from "./coaching-purchases";
 import {
   CoachingSubscription,
   type CheckoutCompletion,
 } from "./coaching-subscription";
+import type { PaidClientAdmission } from "./paid-client-admission";
 import type { PaymentCheckout } from "./payment-checkout";
 import { ReadCheckoutConfirmationUseCase } from "./read-checkout-confirmation-use-case";
 import { RecordCheckoutCompletedUseCase } from "./record-checkout-completed-use-case";
@@ -174,10 +178,16 @@ function createCheckoutSessions(
   };
 }
 
-function createPurchases(
-  outcome: Awaited<ReturnType<CoachingPurchases["recordCompletion"]>>,
-): CoachingPurchases {
+const PAID_CLIENT_ID = "client-1";
+
+function createPurchases(outcome: CoachingPurchaseOutcome): CoachingPurchases {
   return { recordCompletion: vi.fn().mockResolvedValue(outcome) };
+}
+
+function createAdmission() {
+  return {
+    admit: vi.fn().mockResolvedValue(undefined),
+  } satisfies PaidClientAdmission;
 }
 
 function startCheckoutDependencies(
@@ -506,10 +516,15 @@ describe("StartCheckoutUseCase", () => {
 });
 
 describe("RecordCheckoutCompletedUseCase", () => {
-  it("records the client profile from the booking and the paid subscription, with no sales window consulted", async () => {
+  it("records the client profile from the booking and the paid subscription, then admits the paid client, with no sales window consulted", async () => {
     // arrange
-    const purchases = createPurchases("recorded");
+    const purchases = createPurchases({
+      outcome: "recorded",
+      clientId: PAID_CLIENT_ID,
+    });
+    const admission = createAdmission();
     const useCase = new RecordCheckoutCompletedUseCase({
+      admission,
       calls: createCalls(call),
       clock,
       incidents: createIncidents(),
@@ -526,16 +541,22 @@ describe("RecordCheckoutCompletedUseCase", () => {
       client: Client.fromAssessmentCall(call, NOW),
       subscription: CoachingSubscription.fromCompletedCheckout(completion),
     });
+    expect(admission.admit).toHaveBeenCalledWith({ clientId: PAID_CLIENT_ID });
   });
 
-  it("answers duplicate for a replayed event without raising an incident", async () => {
+  it("answers duplicate for a replayed event without raising an incident and admits the paid client again", async () => {
     // arrange
     const incidents = createIncidents();
+    const admission = createAdmission();
     const useCase = new RecordCheckoutCompletedUseCase({
+      admission,
       calls: createCalls(call),
       clock,
       incidents,
-      purchases: createPurchases("duplicate_event"),
+      purchases: createPurchases({
+        outcome: "duplicate_event",
+        clientId: PAID_CLIENT_ID,
+      }),
     });
 
     // act
@@ -544,16 +565,19 @@ describe("RecordCheckoutCompletedUseCase", () => {
     // assert
     expect(result).toEqual({ status: "duplicate" });
     expect(incidents.paymentEventRejected).not.toHaveBeenCalled();
+    expect(admission.admit).toHaveBeenCalledWith({ clientId: PAID_CLIENT_ID });
   });
 
-  it("answers already_paid and reports the unrecorded charge when the call was already paid", async () => {
+  it("answers already_paid, reports the unrecorded charge and admits nobody when the call was already paid", async () => {
     // arrange
     const incidents = createIncidents();
+    const admission = createAdmission();
     const useCase = new RecordCheckoutCompletedUseCase({
+      admission,
       calls: createCalls(call),
       clock,
       incidents,
-      purchases: createPurchases("call_already_paid"),
+      purchases: createPurchases({ outcome: "call_already_paid" }),
     });
 
     // act
@@ -565,14 +589,43 @@ describe("RecordCheckoutCompletedUseCase", () => {
       eventId: "evt_2",
       reason: "call_already_paid",
     });
+    expect(admission.admit).not.toHaveBeenCalled();
   });
 
-  it("rejects the event and records nothing when the call does not exist", async () => {
+  it("propagates an admission failure so the payment event is delivered again", async () => {
+    // arrange
+    const failure = new Error("identity provider unavailable");
+    const admission = createAdmission();
+    admission.admit.mockRejectedValue(failure);
+    const useCase = new RecordCheckoutCompletedUseCase({
+      admission,
+      calls: createCalls(call),
+      clock,
+      incidents: createIncidents(),
+      purchases: createPurchases({
+        outcome: "recorded",
+        clientId: PAID_CLIENT_ID,
+      }),
+    });
+
+    // act
+    const recording = useCase.execute({ ...completion, eventId: "evt_1" });
+
+    // assert
+    await expect(recording).rejects.toBe(failure);
+  });
+
+  it("rejects the event, records nothing and admits nobody when the call does not exist", async () => {
     // arrange
     const incidents = createIncidents();
-    const purchases = createPurchases("recorded");
+    const purchases = createPurchases({
+      outcome: "recorded",
+      clientId: PAID_CLIENT_ID,
+    });
+    const admission = createAdmission();
     const calls = createCalls(null);
     const useCase = new RecordCheckoutCompletedUseCase({
+      admission,
       calls,
       clock,
       incidents,
@@ -590,6 +643,7 @@ describe("RecordCheckoutCompletedUseCase", () => {
       reason: "call_not_found",
     });
     expect(purchases.recordCompletion).not.toHaveBeenCalled();
+    expect(admission.admit).not.toHaveBeenCalled();
   });
 });
 

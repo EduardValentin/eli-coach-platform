@@ -115,6 +115,8 @@ export function createPlatformContainer(options: {
     database: database.client,
     featureFlags,
     incidents,
+    // Replaced by the invitation composition in GEN-201 unit U2.
+    paidClientAdmission: { admit: async () => undefined },
     paymentCheckout: createPaymentCheckout(environment),
     pricingEligibility: waitlist.handles.pricingEligibility,
     productEmail,
@@ -136,6 +138,8 @@ export function createPlatformContainer(options: {
       bootstrapCoachAuthSubjectId: environment.BOOTSTRAP_COACH_AUTH_SUBJECT_ID,
       clerkWebhookSigningSecret: environment.CLERK_WEBHOOK_SIGNING_SECRET,
       database: database.client,
+      // Replaced by the invitation composition in GEN-201 unit U2.
+      invitationAcceptance: { accept: async () => "refused" },
       portal: {
         appBasePath: environment.APP_BASE_PATH,
         publicAppUrl: environment.PUBLIC_APP_URL,

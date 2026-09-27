@@ -1,7 +1,7 @@
 # Clerk
 
 Clerk is the identity provider: email one-time-code sign-in, session
-management, and account deletion events. This document is the configuration
+management, client invitations, and account deletion events. This document is the configuration
 of record — what the Clerk Dashboard is set to, what each environment's
 runtime needs, and how to exercise the integration locally.
 
@@ -15,6 +15,9 @@ runtime needs, and how to exercise the integration locally.
 - Account Portal sign-in URL for the Development instance (the LOCAL/TEST
   value of `CLERK_SIGN_IN_URL`):
   `https://distinct-mastiff-1353.accounts.dev/sign-in`
+- Account Portal sign-up URL for the Development instance (the LOCAL/TEST
+  value of `CLERK_SIGN_UP_URL`):
+  `https://distinct-mastiff-1353.accounts.dev/sign-up`
 
 ## Instance configuration
 
@@ -75,13 +78,17 @@ live via the Clerk CLI against the Dashboard/FAPI:
 | `CLERK_PUBLISHABLE_KEY` | Development instance value, in `.env` | Development instance value, sops-encrypted, infra-owned | Production instance value (future) |
 | `CLERK_SECRET_KEY` | Development instance value, in `.env` | Development instance value, sops-encrypted, infra-owned | Production instance value (future) |
 | `CLERK_SIGN_IN_URL` | `https://distinct-mastiff-1353.accounts.dev/sign-in` | same as LOCAL (shared Development instance) | Production instance's Account Portal URL (future) |
+| `CLERK_SIGN_UP_URL` | `https://distinct-mastiff-1353.accounts.dev/sign-up` | same as LOCAL (shared Development instance) | Production instance's Account Portal sign-up URL (future) |
+| `IDENTITY_PROVIDER` | `clerk` (default); `memory` only for runs that must not reach Clerk | `clerk` | `clerk` (`memory` is refused in production) |
+| `CLERK_API_URL` | unset (the SDK's Backend API default) | unset | unset (refused in production; the integration harness points it at WireMock) |
 | `CLERK_WEBHOOK_SIGNING_SECRET` | optional; only needed to receive real webhook deliveries (see below) | required once the TEST relay is in use | required (`ENVIRONMENT=production` enforces this) |
 | `BOOTSTRAP_COACH_AUTH_SUBJECT_ID` | optional | optional | set once, to the operator's Clerk subject id |
 
-All five are read by `packages/config`'s runtime environment schema; the
-first three are required unconditionally, the last two are optional and
-validated only where present (a malformed value fails at boot rather than at
-first use). LOCAL and TEST's actual values live in the gitignored root
+All eight are read by `packages/config`'s runtime environment schema; the
+publishable key, secret key, sign-in URL and sign-up URL are required
+unconditionally, `IDENTITY_PROVIDER` defaults to `clerk`, and the rest are
+optional and validated only where present (a malformed value fails at boot
+rather than at first use). LOCAL and TEST's actual values live in the gitignored root
 `.env` and in `terraform-infra`'s sops-encrypted TEST env file respectively —
 this repository does not own either value; see
 [SECRET_MANAGEMENT.md](SECRET_MANAGEMENT.md).
@@ -95,6 +102,26 @@ this repository does not own either value; see
 - **`CLERK_SIGN_IN_URL` is added.** The app redirects signed-out visitors to
   Clerk's hosted Account Portal; this variable is that redirect target and
   has no other source of truth in the runtime env.
+
+## Invitations
+
+A paid client gets her account through a Clerk application invitation that
+the app creates itself, in the same webhook delivery that records her
+payment (`ClerkIdentityInvitations` in
+`packages/infrastructure/src/identity/`, selected by `IDENTITY_PROVIDER`):
+
+- `notify: false` — Clerk sends nothing; the app sends its own branded
+  invitation email with a link to its `/invitation` landing page.
+- `expiresInDays: 30`, matching the validity of the app's own invitation.
+- `publicMetadata: { invitationId }` — the app's invitation id, which Clerk
+  copies onto the user it creates; provisioning reads it back from the user
+  to admit her.
+- `redirectUrl` — the Account Portal sign-up URL (`CLERK_SIGN_UP_URL`) with
+  our client portal (`PUBLIC_APP_URL` + base path + `/client`) as its
+  `redirect_url`. The landing page's Continue button links to the invitation
+  URL Clerk returns, the hosted sign-up accepts the ticket without a code,
+  and the Account Portal returns her to the portal signed in. The
+  Production instance's allowed origins must admit that return origin.
 
 ## Webhook endpoint
 
@@ -149,25 +176,23 @@ delivery.
 ## Bootstrap-coach procedure
 
 Set `BOOTSTRAP_COACH_AUTH_SUBJECT_ID` to a Clerk user id (`user_...`) before
-that person's first sign-in. Account provisioning
-(`AccountProvisioningService.ensureAccount` in
-`packages/domain/src/accounts/account-provisioning-service.ts`) first looks up
-the signing-in Clerk subject by `auth_subject_id`. If no row exists and the
+that person's first sign-in. Account provisioning (`ProvisionAccountUseCase`
+in `packages/domain/src/account/provision-account-use-case.ts`) first looks
+up the signing-in Clerk subject by `auth_subject_id`. If no row exists and the
 subject matches this configured value, it inserts a `COACH` row — a plain
 `INSERT`, not an upsert; `auth_subject_id` is unique, and the table carries
 no `updated_at` column to refresh. Any other subject without a row is
-refused: the session is revoked and the visitor lands on `/sign-in-failed`,
-exactly as a deleted account does. Accounts for everyone else are created by
-the coach's invitation flow ahead of first sign-in. Two
-concurrent first-sign-ins for the same brand-new subject (both tabs finishing
-at once) can both reach that `INSERT`; the loser's unique-constraint violation
-is caught and answered by re-reading the row the winner just inserted
-(`PostgresAccountRepository.insert` in
-`apps/platform/src/features/accounts/data/account-repository.server.ts`), so
-both converge on the same row instead of one surfacing a database error.
+admitted only through a pending client invitation (see Invitations above):
+its acceptance inserts a `CLIENT` row. A subject with no pending invitation
+is refused: the session is revoked and the visitor lands on
+`/sign-in-failed`, exactly as a deleted account does. Two concurrent
+first-sign-ins for the same brand-new subject (both tabs finishing at once)
+can both reach that `INSERT`; the use case catches the loser's failure and
+re-reads the row the winner just inserted, so both converge on the same row
+instead of one surfacing a database error.
 
 **This only applies on first sign-in — it does not retroactively promote an
-existing account.** Once a row exists for a subject, `ensureAccount` returns
+existing account.** Once a row exists for a subject, provisioning returns
 it as-is; nothing in this path ever updates `role` on an existing row. So:
 
 - Setting the variable before the named subject's first-ever sign-in works as

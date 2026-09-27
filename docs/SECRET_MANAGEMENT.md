@@ -68,6 +68,7 @@ It should also expose the Clerk identity provider configuration:
 - `CLERK_PUBLISHABLE_KEY`
 - `CLERK_SECRET_KEY`
 - `CLERK_SIGN_IN_URL`
+- `CLERK_SIGN_UP_URL` (required; TEST and PROD env files must add it — TEST uses the Development instance's Account Portal sign-up URL)
 - `CLERK_WEBHOOK_SIGNING_SECRET` (required once `ENVIRONMENT=production`; validated wherever present)
 - `BOOTSTRAP_COACH_AUTH_SUBJECT_ID` (optional)
 
@@ -87,7 +88,7 @@ PROD like every other runtime secret.
 Local development can use Cloudflare's published testing keys from `.env.example`. Production runtime config must provide real Cloudflare keys; the app rejects production startup with the testing keys.
 
 Product transactional emails are sent by the app only when `PRODUCT_EMAIL_PROVIDER=resend`.
-Clerk remains responsible for auth, sign-in, verification, and invitation emails.
+Clerk remains responsible for auth, sign-in and verification emails. Client invitation emails are the app's own: the Clerk invitations behind them are created with notifications off (see [CLERK.md](CLERK.md)).
 
 Resend runtime config is:
 

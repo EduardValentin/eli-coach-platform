@@ -4,7 +4,7 @@ services:
     container_name: eli-coach-platform-test-platform-${STACK_COLOR}
     restart: unless-stopped
     # Every application secret and Clerk runtime var (CLERK_PUBLISHABLE_KEY,
-    # CLERK_SECRET_KEY, CLERK_SIGN_IN_URL, the optional
+    # CLERK_SECRET_KEY, CLERK_SIGN_IN_URL, CLERK_SIGN_UP_URL, the optional
     # CLERK_WEBHOOK_SIGNING_SECRET, the optional
     # BOOTSTRAP_COACH_AUTH_SUBJECT_ID) reaches the container through this
     # file, terraform-infra-owned per docs/SECRET_MANAGEMENT.md. They must

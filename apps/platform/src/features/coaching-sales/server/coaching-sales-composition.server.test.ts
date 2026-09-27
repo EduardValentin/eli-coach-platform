@@ -184,6 +184,7 @@ function createHandles(
     database: createUnreachableDatabase(),
     featureFlags: { execute: async () => featureFlags },
     incidents: createIncidents(),
+    paidClientAdmission: { admit: async () => undefined },
     paymentCheckout: createPaymentCheckout({ PAYMENTS_PROVIDER: "memory" }),
     pricingEligibility: {
       tierForEmail: async () => "regular",
