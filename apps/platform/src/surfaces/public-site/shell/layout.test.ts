@@ -76,6 +76,7 @@ describe("public layout loader", () => {
         clientId: "client_1",
         firstName: "Ana",
         gender: "female",
+        lastName: "Popescu",
         welcomeSeenAt: null,
       }),
       session: {

@@ -9,6 +9,7 @@ function journey(
     clientId: "client-1",
     firstName: "Ana",
     gender: "female",
+    lastName: "Popescu",
     welcomeSeenAt: null,
     ...overrides,
   });
@@ -48,5 +49,25 @@ describe("ClientJourney#welcomeWording", () => {
 
     // assert
     expect(wording).toBe(expected);
+  });
+});
+
+describe("ClientJourney#toSnapshot", () => {
+  it("carries her names, gender and the moment she saw welcome", () => {
+    // arrange
+    const welcomeSeenAt = new Date("2026-09-27T10:00:00.000Z");
+    const clientJourney = journey({ welcomeSeenAt });
+
+    // act
+    const snapshot = clientJourney.toSnapshot();
+
+    // assert
+    expect(snapshot).toEqual({
+      clientId: "client-1",
+      firstName: "Ana",
+      gender: "female",
+      lastName: "Popescu",
+      welcomeSeenAt,
+    });
   });
 });

@@ -1,5 +1,8 @@
 import { buildRedirectPath } from "@eli-coach-platform/config";
-import type { ClientJourneyStep } from "@eli-coach-platform/domain/client-journey";
+import type {
+  ClientJourney,
+  ClientJourneyStep,
+} from "@eli-coach-platform/domain/client-journey";
 import { redirect, type RouterContextProvider } from "react-router";
 
 import { accountsContext } from "~/features/accounts/server/guards/accounts-context.server";
@@ -9,6 +12,7 @@ import {
   clientJourneyOpenPaths,
 } from "~/features/coaching-sales/contracts/client-journey";
 
+import { clientJourneyContext } from "./client-journey-context.server";
 import { coachingSalesContext } from "./coaching-sales-context.server";
 
 type JourneyRequest = {
@@ -19,15 +23,7 @@ type JourneyRequest = {
 export async function readClientJourneyStep(
   args: JourneyRequest,
 ): Promise<ClientJourneyStep | null> {
-  const session = args.context.get(sessionContext);
-
-  if (session.kind === "anonymous" || session.account.role !== "CLIENT") {
-    return null;
-  }
-
-  const journey = await args.context
-    .get(coachingSalesContext)
-    .readClientJourney.execute(session.account.authSubjectId);
+  const journey = await readSignedInClientJourney(args);
 
   return journey?.step() ?? null;
 }
@@ -35,12 +31,14 @@ export async function readClientJourneyStep(
 export async function requireClientJourneyStep(
   args: JourneyRequest,
 ): Promise<void> {
-  const step = await readClientJourneyStep(args);
+  const journey = await readSignedInClientJourney(args);
+  args.context.set(clientJourneyContext, journey?.toSnapshot() ?? null);
 
-  if (!step) {
+  if (!journey) {
     return;
   }
 
+  const step = journey.step();
   const { appBasePath } = args.context.get(accountsContext).portal;
   const requestedPath = new URL(args.request.url).pathname;
   const isOpenAtStep = clientJourneyOpenPaths(step).some(
@@ -55,4 +53,18 @@ export async function requireClientJourneyStep(
   throw redirect(
     buildRedirectPath(appBasePath, clientJourneyDestination(step)),
   );
+}
+
+async function readSignedInClientJourney(
+  args: JourneyRequest,
+): Promise<ClientJourney | null> {
+  const session = args.context.get(sessionContext);
+
+  if (session.kind === "anonymous" || session.account.role !== "CLIENT") {
+    return null;
+  }
+
+  return args.context
+    .get(coachingSalesContext)
+    .readClientJourney.execute(session.account.authSubjectId);
 }

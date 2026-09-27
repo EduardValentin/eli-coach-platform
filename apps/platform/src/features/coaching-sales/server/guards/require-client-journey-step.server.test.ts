@@ -14,6 +14,7 @@ import {
   createRequestArgs,
 } from "~/server/test-support/request-args";
 
+import { clientJourneyContext } from "./client-journey-context.server";
 import { coachingSalesContext } from "./coaching-sales-context.server";
 import {
   readClientJourneyStep,
@@ -111,6 +112,40 @@ describe("requireClientJourneyStep", () => {
     expect(thrown).toBeUndefined();
   });
 
+  it.each(["/app/client", "/app/client/welcome"])(
+    "hands the loaders under %s a snapshot of her journey",
+    async (pathname) => {
+      // arrange
+      const args = journeyArgs({
+        journey: journeyOf({ welcomeSeenAt: null }),
+        pathname,
+      });
+
+      // act
+      await captureThrown(() => requireClientJourneyStep(args));
+
+      // assert
+      expect(args.context.get(clientJourneyContext)).toEqual({
+        clientId: "client_ana",
+        firstName: "Ana",
+        gender: "female",
+        lastName: "Popescu",
+        welcomeSeenAt: null,
+      });
+    },
+  );
+
+  it("hands the loaders no journey for a client account with no client record", async () => {
+    // arrange
+    const args = journeyArgs({ journey: null, pathname: "/app/client" });
+
+    // act
+    await requireClientJourneyStep(args);
+
+    // assert
+    expect(args.context.get(clientJourneyContext)).toBeNull();
+  });
+
   it("asks for the journey of the signed-in client's own subject", async () => {
     // arrange
     const args = journeyArgs({ journey: null, pathname: "/app/client" });
@@ -136,6 +171,22 @@ describe("readClientJourneyStep", () => {
 
     // assert
     expect(step).toBe("welcome");
+  });
+
+  it("hands over no journey snapshot, which only the gate does", async () => {
+    // arrange
+    const args = journeyArgs({
+      journey: journeyOf({ welcomeSeenAt: null }),
+      pathname: "/app/",
+    });
+
+    // act
+    await readClientJourneyStep(args);
+
+    // assert
+    expect(() => args.context.get(clientJourneyContext)).toThrow(
+      "No value found for context",
+    );
   });
 
   it("names no step for a client account with no client record", async () => {
@@ -187,6 +238,7 @@ function journeyOf(options: { welcomeSeenAt: Date | null }): ClientJourney {
     clientId: "client_ana",
     firstName: "Ana",
     gender: "female",
+    lastName: "Popescu",
     welcomeSeenAt: options.welcomeSeenAt,
   });
 }

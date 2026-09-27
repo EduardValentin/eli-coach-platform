@@ -10,10 +10,13 @@ import {
 
 import { requirePortalAccess } from "~/features/accounts/server/guards/require-portal-access.server";
 import {
+  clientIdentitySchema,
   welcomePageSchema,
+  type ClientIdentity,
   type WelcomePage,
 } from "~/features/coaching-sales/contracts/client-journey";
 import { CLIENT_ONBOARDING_PATH } from "~/features/coaching-sales/contracts/paths";
+import { clientJourneyContext } from "~/features/coaching-sales/server/guards/client-journey-context.server";
 
 type ClientJourneyControllerOptions = {
   markWelcomeSeen: MarkWelcomeSeenUseCase;
@@ -36,6 +39,19 @@ export class ClientJourneyController {
     return welcomePageSchema.parse({
       firstName: journey.firstName,
       wording: journey.welcomeWording(),
+    });
+  }
+
+  loadIdentity(args: LoaderFunctionArgs): ClientIdentity | null {
+    const journey = args.context.get(clientJourneyContext);
+
+    if (!journey) {
+      return null;
+    }
+
+    return clientIdentitySchema.parse({
+      firstName: journey.firstName,
+      lastName: journey.lastName,
     });
   }
 
