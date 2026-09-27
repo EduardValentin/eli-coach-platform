@@ -47,6 +47,8 @@ export const PAYMENT_LINK_MESSAGES = {
   sent: (email: string) => `Payment link sent to ${email}.`,
   deliveryFailed:
     "The payment link was created, but the email could not be sent. Send it again in a moment.",
+  unavailable:
+    "This call can't take a payment link right now. Reload the page to see its latest state.",
 } as const;
 
 const callFirstStateSchema = z.object({ state: z.literal("call-first") });

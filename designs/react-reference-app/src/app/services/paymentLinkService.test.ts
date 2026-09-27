@@ -61,6 +61,22 @@ describe('sending a payment link', () => {
     await isDomainError;
     await carriesCode;
   });
+
+  it('reports a call that cannot take a link with its own code', async () => {
+    // arrange
+    const sending = sendPaymentLink('unavailable');
+    const carriesCode = expect(sending).rejects.toMatchObject({
+      code: 'unavailable',
+      message:
+        "This call can't take a payment link right now. Reload the page to see its latest state.",
+    });
+
+    // act
+    await vi.advanceTimersByTimeAsync(SIMULATED_LATENCY_MS);
+
+    // assert
+    await carriesCode;
+  });
 });
 
 describe('resolving a payment link', () => {

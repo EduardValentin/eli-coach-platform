@@ -342,6 +342,26 @@ describe('the assessment call row actions', () => {
     ).toBeInTheDocument();
   });
 
+  it('asks for a reload when the call can no longer take a payment link', async () => {
+    // arrange
+    const user = renderPage('?paylink=unavailable');
+
+    // act
+    await sendPaymentLink(user);
+
+    // assert
+    expect(
+      await screen.findByText(
+        "This call can't take a payment link right now. Reload the page to see its latest state.",
+        {},
+        WAIT,
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/the payment link was created/i),
+    ).toBeNull();
+  });
+
   it('offers only the payment link until she has paid', () => {
     // arrange
     renderPage();

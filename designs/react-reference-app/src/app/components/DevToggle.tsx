@@ -127,7 +127,7 @@ function parseJourneySexControl(value: string): JourneySex {
 function parsePaymentLinkOutcomeControl(
   value: string,
 ): PrototypePaymentLinkOutcome {
-  if (value === 'delivery-failure') return value;
+  if (value === 'delivery-failure' || value === 'unavailable') return value;
 
   return 'sent';
 }
@@ -929,6 +929,9 @@ export function DevToggle() {
                       <SelectItem value="sent">Payment link sent</SelectItem>
                       <SelectItem value="delivery-failure">
                         Email delivery failed
+                      </SelectItem>
+                      <SelectItem value="unavailable">
+                        Link unavailable
                       </SelectItem>
                     </SelectContent>
                   </Select>

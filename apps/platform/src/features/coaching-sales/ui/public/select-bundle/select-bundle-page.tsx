@@ -147,8 +147,9 @@ function CancelledPaymentNotice(props: { onDismissed: () => void }) {
       <p className="flex-1 text-sm text-text-secondary">{CANCELLED_NOTICE}</p>
       <Button
         aria-label="Dismiss"
-        className="-mt-1 -mr-2 h-8 w-8 px-0 text-text-secondary hover:bg-surface-quiet hover:text-text-primary"
+        className="-mt-1 -mr-2 text-text-secondary"
         onClick={dismiss}
+        size="icon-xs"
         variant="outline"
       >
         <X aria-hidden="true" size={16} />

@@ -5,7 +5,8 @@ import { Navbar } from '../components/Navbar';
 import { BundleSelector } from '../components/BundleSelector';
 import { LegalFooter } from '../components/legal/LegalNav';
 import { StartChoice } from '../components/StartChoice';
-import { Button, buttonVariants } from '../components/ThemeButton';
+import { buttonVariants } from '../components/ThemeButton';
+import { Button } from '../components/ui/button';
 import { useAppState } from '../context/AppContext';
 import { useClientJourneys } from '../context/ClientJourneyContext';
 import { bundleById, type BundleId } from '../domain/bundles';
@@ -166,8 +167,9 @@ export function SelectBundle() {
               <p className="flex-1 text-sm text-text-secondary">{CANCELLED_NOTICE}</p>
               <Button
                 aria-label="Dismiss"
-                className="-mr-2 -mt-1 h-8 w-8 px-0 text-text-secondary hover:bg-surface-quiet hover:text-text-primary"
+                className="-mr-2 -mt-1 text-text-secondary"
                 onClick={dismissNotice}
+                size="icon-xs"
                 variant="outline"
               >
                 <X aria-hidden="true" size={16} />

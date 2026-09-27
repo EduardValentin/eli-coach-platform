@@ -1,6 +1,9 @@
 import { addDays } from 'date-fns';
 
-export type PrototypePaymentLinkOutcome = 'sent' | 'delivery-failure';
+export type PrototypePaymentLinkOutcome =
+  | 'sent'
+  | 'delivery-failure'
+  | 'unavailable';
 
 export const PAYMENT_LINK_VALIDITY_DAYS = 30;
 
@@ -25,6 +28,8 @@ export const PAYMENT_LINK_ERROR_MESSAGES: Record<
 > = {
   'delivery-failure':
     'The payment link was created, but the email could not be sent. Send it again in a moment.',
+  unavailable:
+    "This call can't take a payment link right now. Reload the page to see its latest state.",
 };
 
 export type SentPaymentLink = {
