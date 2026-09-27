@@ -250,7 +250,7 @@ docker compose \
   --env-file /dev/null \
   -p "${APP_NAME}-test-infra" \
   -f "${INFRA_COMPOSE_FILE}" \
-  up -d postgres
+  up -d postgres stripe-webhook-relay
 
 wait_for_postgres
 run_migrations

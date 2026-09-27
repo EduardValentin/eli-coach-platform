@@ -54,42 +54,6 @@ services:
     networks:
       - internal
 
-  # The Stripe counterpart: `stripe listen` dials out to Stripe, receives the
-  # account's test-mode events and forwards each one back in over the compose
-  # network, signing it with the CLI's own secret. That secret is derived
-  # from the API key, so `stripe listen --api-key "$STRIPE_SECRET_KEY"
-  # --print-secret` prints the value `STRIPE_WEBHOOK_SIGNING_SECRET` must
-  # hold; rotating the key changes the secret. The app is mounted under
-  # /eli-coach-platform on TEST, so the forward path carries the base path.
-  # Stripe does not redeliver events the relay missed while it was down.
-  stripe-webhook-relay:
-    # Pinned to the digest of the v1.35.0 release, the CLI version verified
-    # locally; bump deliberately.
-    image: stripe/stripe-cli@sha256:8c600a76e784d667c0557d0482b3c3dd53b89576ed8c512074c56e17569dc9b9
-    container_name: eli-coach-platform-test-stripe-webhook-relay
-    restart: unless-stopped
-    env_file:
-      - ${APP_ENV_FILE:-/srv/apps/eli-coach-platform/.env}
-    # The key comes from the env file inside the container, not from compose
-    # interpolation on the host, hence the shell and the escaped variable.
-    entrypoint:
-      - sh
-      - -c
-    command:
-      - >-
-        exec stripe listen
-        --api-key "$${STRIPE_SECRET_KEY}"
-        --events checkout.session.completed
-        --forward-to http://platform:3000/eli-coach-platform/api/stripe/webhooks
-    labels:
-      logging: promtail
-      env: test
-      app: eli-coach-platform
-      service: stripe-webhook-relay
-      host: ${HOST_LABEL}
-    networks:
-      - internal
-
 networks:
   internal:
     external: true
