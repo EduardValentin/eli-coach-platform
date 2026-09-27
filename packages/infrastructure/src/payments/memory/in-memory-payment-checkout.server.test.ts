@@ -24,8 +24,7 @@ function sessionCommand(customerId: string): CreateCheckoutSessionCommand {
     },
     successUrl:
       "http://localhost:3000/checkout/complete?session={CHECKOUT_SESSION_ID}",
-    cancelUrl:
-      "http://localhost:3000/select-bundle?token=abc&payment=cancelled",
+    cancelUrl: "http://localhost:3000/select-bundle?payment=cancelled",
   };
 }
 

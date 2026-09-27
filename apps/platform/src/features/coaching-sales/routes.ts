@@ -25,6 +25,10 @@ export const coachingSalesApiRoutes = [
     "./api/coach/payment-links.ts",
   ),
   route(
+    COACHING_SALES_API_PATHS.bundlePage.slice(1),
+    "./api/public/bundle-page.ts",
+  ),
+  route(
     COACHING_SALES_API_PATHS.checkouts.slice(1),
     "./api/public/checkouts.ts",
   ),

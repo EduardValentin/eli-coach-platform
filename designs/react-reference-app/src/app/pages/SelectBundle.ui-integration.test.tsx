@@ -1,6 +1,6 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes, useParams } from 'react-router';
+import { MemoryRouter, Route, Routes, useNavigate, useParams } from 'react-router';
 import { afterEach, describe, expect, it } from 'vitest';
 import { withdrawalDeadline } from '../domain/coachingSubscription';
 import { formatJourneyDate } from '../utils/journeyLabels';
@@ -13,6 +13,7 @@ import { StoreProvider } from '../context/StoreContext';
 import { findCheckoutSession } from '../services/checkoutService';
 
 const DEMO_TOKEN = 'pl-seed-ac-demo-client-1';
+const PAYMENT_LINK_STORAGE_KEY = 'coaching-sales:payment-link';
 const WAIT = { timeout: 4000 };
 const TEST_TIMEOUT_MS = 20000;
 const START_QUESTION = 'When would you like your program to start?';
@@ -31,16 +32,29 @@ function CheckoutProbe() {
   );
 }
 
-function renderPage(query: string) {
-  window.history.replaceState({}, '', `/select-bundle${query}`);
+const SECOND_TOKEN = 'pl-second-payment-link';
+
+function SecondLinkProbe() {
+  const navigate = useNavigate();
+
+  return (
+    <button onClick={() => navigate(`/select-bundle#${SECOND_TOKEN}`)} type="button">
+      Open the second link
+    </button>
+  );
+}
+
+function renderPage(address: string) {
+  window.history.replaceState({}, '', `/select-bundle${address}`);
 
   render(
-    <MemoryRouter initialEntries={[`/select-bundle${query}`]}>
+    <MemoryRouter initialEntries={[`/select-bundle${address}`]}>
       <AppProvider>
         <StoreProvider>
           <ClientProfileProvider>
             <AssessmentCallProvider>
               <ClientJourneyProvider>
+                <SecondLinkProbe />
                 <Routes>
                   <Route element={<SelectBundle />} path="/select-bundle" />
                   <Route element={<CheckoutProbe />} path="/checkout/:sessionId" />
@@ -54,14 +68,27 @@ function renderPage(query: string) {
   );
 }
 
+const nodesAddedOutsideReact: HTMLElement[] = [];
+
+function appendSkipTarget() {
+  const skipTarget = document.createElement('main');
+  skipTarget.id = 'main-content';
+  document.body.append(skipTarget);
+  nodesAddedOutsideReact.push(skipTarget);
+}
+
 afterEach(() => {
   window.history.replaceState({}, '', '/');
+  window.sessionStorage.clear();
+  while (nodesAddedOutsideReact.length > 0) {
+    nodesAddedOutsideReact.pop()?.remove();
+  }
 });
 
 describe('choosing a bundle from a payment link', () => {
   it('asks when her program should start without choosing for her', async () => {
     // arrange
-    renderPage(`?token=${DEMO_TOKEN}`);
+    renderPage(`#${DEMO_TOKEN}`);
 
     // act
     const group = await screen.findByRole(
@@ -95,7 +122,7 @@ describe('choosing a bundle from a payment link', () => {
 
   it('holds checkout back and points her at the start question until she answers it', async () => {
     // arrange
-    renderPage(`?token=${DEMO_TOKEN}`);
+    renderPage(`#${DEMO_TOKEN}`);
     const pay = await screen.findByRole(
       'button',
       { name: 'Continue to Checkout' },
@@ -115,7 +142,7 @@ describe('choosing a bundle from a payment link', () => {
 
   it('clears the start question error once she answers it', async () => {
     // arrange
-    renderPage(`?token=${DEMO_TOKEN}`);
+    renderPage(`#${DEMO_TOKEN}`);
     await userEvent.click(
       await screen.findByRole('button', { name: 'Continue to Checkout' }, WAIT),
     );
@@ -132,7 +159,7 @@ describe('choosing a bundle from a payment link', () => {
 
   it('keeps the assessment-required state when the link has expired', async () => {
     // arrange
-    renderPage(`?token=${DEMO_TOKEN}&paylinkstate=expired`);
+    renderPage(`?paylinkstate=expired#${DEMO_TOKEN}`);
 
     // act
     const heading = await screen.findByRole(
@@ -150,7 +177,7 @@ describe('choosing a bundle from a payment link', () => {
 
   it('carries the waiting start path when she keeps her 14 days', async () => {
     // arrange
-    renderPage(`?token=${DEMO_TOKEN}`);
+    renderPage(`#${DEMO_TOKEN}`);
     const waiting = await screen.findByRole(
       'radio',
       { name: WAITING_OPTION },
@@ -175,7 +202,7 @@ describe('choosing a bundle from a payment link', () => {
 
   it('lets her choose a bundle from the keyboard', async () => {
     // arrange
-    renderPage(`?token=${DEMO_TOKEN}`);
+    renderPage(`#${DEMO_TOKEN}`);
     const bundles = await screen.findByRole(
       'radiogroup',
       { name: 'Coaching bundle options' },
@@ -204,7 +231,7 @@ describe('choosing a bundle from a payment link', () => {
 
   it('carries the immediate start path when she asks to start right away', async () => {
     // arrange
-    renderPage(`?token=${DEMO_TOKEN}`);
+    renderPage(`#${DEMO_TOKEN}`);
     const immediate = await screen.findByRole(
       'radio',
       { name: IMMEDIATE_OPTION },
@@ -229,7 +256,7 @@ describe('choosing a bundle from a payment link', () => {
 
   it('shows her reduced price when the journey earned one', async () => {
     // arrange
-    renderPage(`?token=${DEMO_TOKEN}&jreduced=1`);
+    renderPage(`?jreduced=1#${DEMO_TOKEN}`);
 
     // act
     const badge = await screen.findByText(
@@ -245,7 +272,7 @@ describe('choosing a bundle from a payment link', () => {
 
   it('answers not found while the waiting list is open', async () => {
     // arrange
-    renderPage(`?token=${DEMO_TOKEN}&waitlist=1`);
+    renderPage(`?waitlist=1#${DEMO_TOKEN}`);
 
     // act
     const heading = await screen.findByRole(
@@ -263,7 +290,7 @@ describe('choosing a bundle from a payment link', () => {
 
   it('reassures her and lets her dismiss the notice after a cancelled payment', async () => {
     // arrange
-    renderPage(`?token=${DEMO_TOKEN}&payment=cancelled`);
+    renderPage(`?payment=cancelled#${DEMO_TOKEN}`);
     const notice = await screen.findByText(
       "No payment was taken. Pick a bundle whenever you're ready.",
       undefined,
@@ -275,5 +302,151 @@ describe('choosing a bundle from a payment link', () => {
 
     // assert
     expect(notice).not.toBeInTheDocument();
+  }, TEST_TIMEOUT_MS);
+  it('tells her the link is being checked before the bundles appear', async () => {
+    // arrange
+    const address = `#${DEMO_TOKEN}`;
+
+    // act
+    renderPage(address);
+
+    // assert
+    const checking = screen.getByRole('status');
+    expect(checking).toHaveTextContent('Checking your link…');
+    expect(checking).toHaveAttribute('aria-busy', 'true');
+    expect(
+      screen.queryByRole('button', { name: 'Continue to Checkout' }),
+    ).not.toBeInTheDocument();
+    expect(
+      await screen.findByRole('button', { name: 'Continue to Checkout' }, WAIT),
+    ).toBeEnabled();
+  }, TEST_TIMEOUT_MS);
+
+  it('takes the link out of the address and keeps it for this tab', async () => {
+    // arrange
+    const address = `?jreduced=1#${DEMO_TOKEN}`;
+
+    // act
+    renderPage(address);
+
+    // assert
+    await screen.findByRole('button', { name: 'Continue to Checkout' }, WAIT);
+    expect(window.location.hash).toBe('');
+    expect(window.location.pathname).toBe('/select-bundle');
+    expect(window.location.search).toContain('jreduced=1');
+    expect(window.sessionStorage.getItem(PAYMENT_LINK_STORAGE_KEY)).toBe(
+      DEMO_TOKEN,
+    );
+  }, TEST_TIMEOUT_MS);
+
+  it('brings her link back when she returns from a cancelled checkout', async () => {
+    // arrange
+    window.sessionStorage.setItem(PAYMENT_LINK_STORAGE_KEY, DEMO_TOKEN);
+
+    // act
+    renderPage('?payment=cancelled');
+
+    // assert
+    expect(
+      await screen.findByRole('button', { name: 'Continue to Checkout' }, WAIT),
+    ).toBeEnabled();
+    expect(
+      screen.getByText("No payment was taken. Pick a bundle whenever you're ready."),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole('heading', { name: 'A Call Comes First' }),
+    ).not.toBeInTheDocument();
+  }, TEST_TIMEOUT_MS);
+
+  it('restores her bundle and start choice when she returns from a cancelled checkout', async () => {
+    // arrange
+    window.sessionStorage.setItem(PAYMENT_LINK_STORAGE_KEY, DEMO_TOKEN);
+
+    // act
+    renderPage('?payment=cancelled&bundle=6-months&start=waiting');
+
+    // assert
+    const bundles = await screen.findByRole(
+      'radiogroup',
+      { name: 'Coaching bundle options' },
+      WAIT,
+    );
+    expect(within(bundles).getByRole('radio', { name: '6 Months' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: WAITING_OPTION })).toBeChecked();
+    expect(screen.getByRole('radio', { name: IMMEDIATE_OPTION })).not.toBeChecked();
+  }, TEST_TIMEOUT_MS);
+
+  it('falls back to the popular bundle and no start choice when the returned choices are unknown', async () => {
+    // arrange
+    window.sessionStorage.setItem(PAYMENT_LINK_STORAGE_KEY, DEMO_TOKEN);
+
+    // act
+    renderPage('?payment=cancelled&bundle=12-months&start=later');
+
+    // assert
+    const bundles = await screen.findByRole(
+      'radiogroup',
+      { name: 'Coaching bundle options' },
+      WAIT,
+    );
+    expect(within(bundles).getByRole('radio', { name: '3 Months' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: WAITING_OPTION })).not.toBeChecked();
+    expect(screen.getByRole('radio', { name: IMMEDIATE_OPTION })).not.toBeChecked();
+  }, TEST_TIMEOUT_MS);
+
+  it('asks for a call first when she arrives without a link', async () => {
+    // arrange
+    const address = '';
+
+    // act
+    renderPage(address);
+
+    // assert
+    expect(
+      await screen.findByRole('heading', { name: 'A Call Comes First' }, WAIT),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole('button', { name: 'Continue to Checkout' }),
+    ).not.toBeInTheDocument();
+  }, TEST_TIMEOUT_MS);
+
+  it('keeps her link when the fragment names an anchor on the page', async () => {
+    // arrange
+    appendSkipTarget();
+    window.sessionStorage.setItem(PAYMENT_LINK_STORAGE_KEY, DEMO_TOKEN);
+
+    // act
+    renderPage('#main-content');
+
+    // assert
+    expect(
+      await screen.findByRole('button', { name: 'Continue to Checkout' }, WAIT),
+    ).toBeEnabled();
+    expect(window.sessionStorage.getItem(PAYMENT_LINK_STORAGE_KEY)).toBe(
+      DEMO_TOKEN,
+    );
+  }, TEST_TIMEOUT_MS);
+
+  it('switches to a second link opened in the same tab', async () => {
+    // arrange
+    renderPage(`#${DEMO_TOKEN}`);
+    await screen.findByRole('button', { name: 'Continue to Checkout' }, WAIT);
+
+    // act
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Open the second link' }),
+    );
+
+    // assert
+    await waitFor(
+      () =>
+        expect(window.sessionStorage.getItem(PAYMENT_LINK_STORAGE_KEY)).toBe(
+          SECOND_TOKEN,
+        ),
+      WAIT,
+    );
+    expect(
+      await screen.findByRole('button', { name: 'Continue to Checkout' }, WAIT),
+    ).toBeEnabled();
   }, TEST_TIMEOUT_MS);
 });

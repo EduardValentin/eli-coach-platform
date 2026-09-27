@@ -35,6 +35,7 @@ interface BundleSelectorProps {
   busy?: boolean;
   note?: ReactNode;
   beforeCheckout?: ReactNode;
+  initialBundleId?: BundleId;
 }
 
 export function BundleSelector({
@@ -45,11 +46,12 @@ export function BundleSelector({
   busy = false,
   note,
   beforeCheckout,
+  initialBundleId = DEFAULT_BUNDLE_ID,
 }: BundleSelectorProps) {
   const choiceId = useId();
   const headingId = useId();
   const [selectedBundleId, setSelectedBundleId] = useState<BundleId | null>(
-    mode === 'checkout' ? DEFAULT_BUNDLE_ID : null
+    mode === 'checkout' ? initialBundleId : null
   );
 
   const handleSelect = (id: BundleId) => {

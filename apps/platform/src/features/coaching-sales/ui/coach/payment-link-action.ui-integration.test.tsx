@@ -216,6 +216,36 @@ describe("the payment link action on an ended call", () => {
     ).toBeEnabled();
   });
 
+  it.each([
+    [404, "closed"],
+    [404, "call_not_found"],
+    [409, "call_not_ended"],
+    [409, "already_paid"],
+  ])(
+    "asks for a reload when the call cannot take a link (%i %s)",
+    async (status, error) => {
+      // arrange
+      recordSendRequests(HttpResponse.json({ error }, { status }));
+      const user = await renderAction({ state: "held" });
+      await user.click(
+        screen.getByRole("button", { name: "Send payment link" }),
+      );
+
+      // act
+      await user.click(screen.getByRole("button", { name: "Send link" }));
+
+      // assert
+      expect(
+        await screen.findByText(
+          "This call can't take a payment link right now. Reload the page to see its latest state.",
+        ),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByText(/the payment link was created/i),
+      ).not.toBeInTheDocument();
+    },
+  );
+
   it("holds the button busy while the link is on its way", async () => {
     // arrange
     let release: () => void = () => {};

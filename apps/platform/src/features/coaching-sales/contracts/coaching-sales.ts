@@ -47,6 +47,8 @@ export const PAYMENT_LINK_MESSAGES = {
   sent: (email: string) => `Payment link sent to ${email}.`,
   deliveryFailed:
     "The payment link was created, but the email could not be sent. Send it again in a moment.",
+  unavailable:
+    "This call can't take a payment link right now. Reload the page to see its latest state.",
 } as const;
 
 const callFirstStateSchema = z.object({ state: z.literal("call-first") });
@@ -57,6 +59,10 @@ export const paymentLinkTokenSchema = z
   .string()
   .max(PAYMENT_LINK_TOKEN_MAX_LENGTH)
   .catch("");
+
+export const bundlePageRequestSchema = z.object({
+  token: paymentLinkTokenSchema,
+});
 
 const CHECKOUT_SESSION_ID_MAX_LENGTH = 255;
 
@@ -99,5 +105,8 @@ export const checkoutConfirmationSchema = z.discriminatedUnion("state", [
 
 export type CheckoutConfirmation = z.infer<typeof checkoutConfirmationSchema>;
 
-export const SUBSCRIPTION_NOTE =
+export const BUNDLE_PAGE_SUBSCRIPTION_NOTE =
   "Each bundle is a subscription: it renews at its own length — every 1, 3 or 6 months — and each renewal is charged up front.";
+
+export const PAYMENT_LINK_EMAIL_SUBSCRIPTION_NOTE =
+  "Each bundle is a subscription that renews at its own length — every 1, 3 or 6 months — and our terms apply.";

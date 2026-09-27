@@ -106,11 +106,6 @@ const NEXT_WEEK = call("2026-09-22T15:00:00.000Z", {
 
 const FOUR_CALLS = [YESTERDAY, EARLIER_TODAY, LATER_TODAY, NEXT_WEEK];
 
-const BOTH_ENDED_CALLS_HELD: SalesStates = {
-  "earlier-today": "held",
-  yesterday: "held",
-};
-
 const server = setupServer();
 
 beforeAll(() => {
@@ -784,6 +779,7 @@ describe("paging through a long history of calls", () => {
 
 describe("where each ended call stands in the sale", () => {
   const SALE_UNDER_WAY: SalesStates = {
+    ...everyCallHeld(FOUR_CALLS),
     "earlier-today": "payment-link-sent",
     yesterday: "paid",
   };
@@ -954,7 +950,7 @@ describe("where each ended call stands in the sale", () => {
     const bea = within(shownCalls()[1]);
     await user.click(bea.getByRole("button", { name: "Send payment link" }));
     loaded.salesStates = {
-      ...BOTH_ENDED_CALLS_HELD,
+      ...everyCallHeld(FOUR_CALLS),
       yesterday: "payment-link-sent",
     };
 
@@ -1025,6 +1021,10 @@ function everyCallRegular(calls: readonly CoachAssessmentCall[]): PricingTiers {
   return Object.fromEntries(calls.map((call) => [call.id, "regular"]));
 }
 
+function everyCallHeld(calls: readonly CoachAssessmentCall[]): SalesStates {
+  return Object.fromEntries(calls.map((call) => [call.id, "held"]));
+}
+
 type CallsPageOptions = {
   calls?: CoachAssessmentCall[];
   pricingTiers?: PricingTiers;
@@ -1038,7 +1038,7 @@ async function renderCallsRouter(options?: CallsPageOptions) {
   const loaded = {
     calls,
     pricingTiers: options?.pricingTiers ?? everyCallRegular(calls),
-    salesStates: options?.salesStates ?? BOTH_ENDED_CALLS_HELD,
+    salesStates: options?.salesStates ?? everyCallHeld(calls),
   };
   const router = createMemoryRouter(
     [

@@ -89,7 +89,7 @@ describe('the Stripe checkout stand-in', () => {
     expect(screen.getByTestId('invitation')).not.toHaveTextContent('none');
   }, TEST_TIMEOUT_MS);
 
-  it('sends her back to the bundles with a cancellation notice', async () => {
+  it('sends her back to the bundles with a cancellation notice and her choices', async () => {
     // arrange
     const session = await openSession();
     renderStandIn(session, '?jstage=payment-link-sent');
@@ -100,7 +100,7 @@ describe('the Stripe checkout stand-in', () => {
     // assert
     expect(await screen.findByText('bundle page', undefined, WAIT)).toBeVisible();
     expect(screen.getByTestId('route')).toHaveTextContent(
-      `/select-bundle?token=${DEMO_TOKEN}&payment=cancelled`,
+      '/select-bundle?payment=cancelled&bundle=3-months&start=waiting',
     );
   }, TEST_TIMEOUT_MS);
 
@@ -122,7 +122,7 @@ describe('the Stripe checkout stand-in', () => {
     expect(screen.getByLabelText('Card number')).toBeDisabled();
     expect(screen.getByRole('link', { name: 'Back' })).toHaveAttribute(
       'href',
-      `/select-bundle?token=${DEMO_TOKEN}&payment=cancelled`,
+      '/select-bundle?payment=cancelled&bundle=3-months&start=waiting',
     );
   }, TEST_TIMEOUT_MS);
 });

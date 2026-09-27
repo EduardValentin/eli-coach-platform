@@ -9,7 +9,6 @@ import {
 
 import { assessmentCallsContext } from "~/features/assessment-calls/server/guards/assessment-calls-context.server";
 import {
-  classifyCalls,
   haveOnlyListingParamsChanged,
   isEndedCall,
   type ClassifiedCall,
@@ -37,15 +36,9 @@ export async function loader({ context }: LoaderFunctionArgs) {
   const listing = await context
     .get(assessmentCallsContext)
     .coachAssessmentCalls.loadCalls();
-  const endedCallIds = classifyCalls(listing.calls, {
-    now: new Date(listing.now),
-    timeZone: listing.coachTimeZone,
-  })
-    .filter(isEndedCall)
-    .map((call) => call.id);
   const { coachSales } = context.get(coachingSalesContext);
   const [salesStates, pricingTiers] = await Promise.all([
-    coachSales.loadSalesStates(endedCallIds),
+    coachSales.loadSalesStates(listing.calls.map((call) => call.id)),
     coachSales.loadPricingTiers(
       listing.calls.map((call) => ({ email: call.visitorEmail, id: call.id })),
     ),
@@ -70,10 +63,8 @@ export default function CoachAssessmentCallsRoute() {
   const listing = useLoaderData<typeof loader>();
   const { now, timeZone } = useCoachClock(listing.now, listing.coachTimeZone);
   const salesFilter = useSalesFilterParam();
-  const endedCallState = (call: ClassifiedCall): CallSalesState =>
-    listing.salesStates[call.id] ?? "held";
   const salesStateOf = (call: ClassifiedCall): CallSalesState | null =>
-    isEndedCall(call) ? endedCallState(call) : null;
+    isEndedCall(call) ? listing.salesStates[call.id] : null;
   const pricingDetails = (call: ClassifiedCall): AppointmentDetail[] => {
     const tier = listing.pricingTiers[call.id];
 
@@ -96,7 +87,7 @@ export default function CoachAssessmentCallsRoute() {
         extraDetails={pricingDetails}
         now={now}
         renderEndedCallExtras={(call) => {
-          const state = endedCallState(call);
+          const state = listing.salesStates[call.id];
 
           return {
             action: <PaymentLinkAction call={call} state={state} />,

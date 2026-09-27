@@ -1,4 +1,6 @@
 import {
+  EMAIL_COLORS,
+  EMAIL_FONTS,
   EmailBody,
   EmailContainer,
   EmailDivider,
@@ -145,28 +147,10 @@ export function StoreDeliveryEmailTemplate(
   );
 }
 
-const BRAND = {
-  body: "#4A4A4A",
-  cardBorder: "#EFE6E2",
-  faint: "#6E6D6D",
-  ink: "#121212",
-  inkSoft: "#3A3A3A",
-  muted: "#616161",
-  page: "#F4EFEC",
-  pink: "#C81D6B",
-  pinkOnDark: "#E03A7E",
-  pinkBorder: "#F4D8E4",
-  pinkSoft: "#FFF5F8",
-  white: "#FFFFFF",
-} as const;
-const FONT_SERIF =
-  '"Playfair Display", Georgia, "Times New Roman", Times, serif';
-const FONT_SANS =
-  '"DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif';
 const bodyStyle: CSSProperties = {
   WebkitFontSmoothing: "antialiased",
-  backgroundColor: BRAND.page,
-  fontFamily: FONT_SANS,
+  backgroundColor: EMAIL_COLORS.page,
+  fontFamily: EMAIL_FONTS.sans,
   margin: 0,
   padding: 0,
   width: "100%",
@@ -182,8 +166,8 @@ const wordmarkSectionStyle: CSSProperties = {
   textAlign: "center",
 };
 const wordmarkStyle: CSSProperties = {
-  color: BRAND.ink,
-  fontFamily: FONT_SERIF,
+  color: EMAIL_COLORS.ink,
+  fontFamily: EMAIL_FONTS.serif,
   fontSize: "22px",
   fontWeight: 500,
   letterSpacing: "0.32em",
@@ -191,8 +175,8 @@ const wordmarkStyle: CSSProperties = {
   margin: 0,
 };
 const wordmarkSubStyle: CSSProperties = {
-  color: BRAND.muted,
-  fontFamily: FONT_SANS,
+  color: EMAIL_COLORS.muted,
+  fontFamily: EMAIL_FONTS.sans,
   fontSize: "11px",
   letterSpacing: "0.22em",
   lineHeight: 1.4,
@@ -200,8 +184,8 @@ const wordmarkSubStyle: CSSProperties = {
   textTransform: "uppercase",
 };
 const cardStyle: CSSProperties = {
-  backgroundColor: BRAND.white,
-  border: `1px solid ${BRAND.cardBorder}`,
+  backgroundColor: EMAIL_COLORS.white,
+  border: `1px solid ${EMAIL_COLORS.cardBorder}`,
   borderRadius: "20px",
   margin: "0 auto",
   maxWidth: "568px",
@@ -209,13 +193,13 @@ const cardStyle: CSSProperties = {
   width: "100%",
 };
 const heroSectionStyle: CSSProperties = {
-  backgroundColor: BRAND.ink,
+  backgroundColor: EMAIL_COLORS.ink,
   padding: "48px 36px 44px",
   textAlign: "center",
 };
 const heroEyebrowStyle: CSSProperties = {
-  color: BRAND.pinkOnDark,
-  fontFamily: FONT_SANS,
+  color: EMAIL_COLORS.pinkOnDark,
+  fontFamily: EMAIL_FONTS.sans,
   fontSize: "11px",
   fontWeight: 600,
   letterSpacing: "0.22em",
@@ -223,8 +207,8 @@ const heroEyebrowStyle: CSSProperties = {
   margin: 0,
 };
 const heroHeadingStyle: CSSProperties = {
-  color: BRAND.white,
-  fontFamily: FONT_SERIF,
+  color: EMAIL_COLORS.white,
+  fontFamily: EMAIL_FONTS.serif,
   fontSize: "40px",
   fontWeight: 500,
   letterSpacing: "-0.01em",
@@ -232,15 +216,15 @@ const heroHeadingStyle: CSSProperties = {
   margin: "14px 0 0",
 };
 const heroAccentRuleStyle: CSSProperties = {
-  backgroundColor: BRAND.pinkOnDark,
+  backgroundColor: EMAIL_COLORS.pinkOnDark,
   borderRadius: "2px",
   height: "2px",
   margin: "20px auto 18px",
   width: "40px",
 };
 const heroSubheadStyle: CSSProperties = {
-  color: "#D9D9D9",
-  fontFamily: FONT_SANS,
+  color: EMAIL_COLORS.mutedOnDark,
+  fontFamily: EMAIL_FONTS.sans,
   fontSize: "15px",
   fontWeight: 400,
   lineHeight: 1.55,
@@ -251,16 +235,16 @@ const letterSectionStyle: CSSProperties = {
   padding: "40px 36px 4px",
 };
 const letterParagraphStyle: CSSProperties = {
-  color: BRAND.body,
-  fontFamily: FONT_SANS,
+  color: EMAIL_COLORS.body,
+  fontFamily: EMAIL_FONTS.sans,
   fontSize: "16px",
   fontWeight: 400,
   lineHeight: 1.65,
   margin: "0 0 18px",
 };
 const signoffStyle: CSSProperties = {
-  color: BRAND.ink,
-  fontFamily: FONT_SERIF,
+  color: EMAIL_COLORS.ink,
+  fontFamily: EMAIL_FONTS.serif,
   fontSize: "20px",
   fontStyle: "italic",
   fontWeight: 500,
@@ -272,11 +256,11 @@ const buttonSectionStyle: CSSProperties = {
   textAlign: "center",
 };
 const downloadButtonStyle: CSSProperties = {
-  backgroundColor: BRAND.pink,
+  backgroundColor: EMAIL_COLORS.pink,
   borderRadius: "14px",
-  color: BRAND.white,
+  color: EMAIL_COLORS.white,
   display: "inline-block",
-  fontFamily: FONT_SANS,
+  fontFamily: EMAIL_FONTS.sans,
   fontSize: "16px",
   fontWeight: 600,
   lineHeight: 1,
@@ -287,14 +271,14 @@ const resourcesOuterStyle: CSSProperties = {
   padding: "24px 24px 32px",
 };
 const resourcesCardStyle: CSSProperties = {
-  backgroundColor: BRAND.pinkSoft,
-  border: `1px solid ${BRAND.pinkBorder}`,
+  backgroundColor: EMAIL_COLORS.pinkSoft,
+  border: `1px solid ${EMAIL_COLORS.pinkBorder}`,
   borderRadius: "16px",
   padding: "28px 28px 12px",
 };
 const resourcesEyebrowStyle: CSSProperties = {
-  color: BRAND.pink,
-  fontFamily: FONT_SANS,
+  color: EMAIL_COLORS.pink,
+  fontFamily: EMAIL_FONTS.sans,
   fontSize: "11px",
   fontWeight: 600,
   letterSpacing: "0.22em",
@@ -305,8 +289,8 @@ const resourceRowStyle: CSSProperties = {
   marginBottom: "16px",
 };
 const resourceBulletStyle: CSSProperties = {
-  color: BRAND.pink,
-  fontFamily: FONT_SERIF,
+  color: EMAIL_COLORS.pink,
+  fontFamily: EMAIL_FONTS.serif,
   fontSize: "14px",
   fontWeight: 500,
   letterSpacing: "0.08em",
@@ -314,16 +298,16 @@ const resourceBulletStyle: CSSProperties = {
   margin: "0 0 4px",
 };
 const resourceTitleStyle: CSSProperties = {
-  color: BRAND.inkSoft,
-  fontFamily: FONT_SANS,
+  color: EMAIL_COLORS.inkSoft,
+  fontFamily: EMAIL_FONTS.sans,
   fontSize: "15px",
   fontWeight: 500,
   lineHeight: 1.55,
   margin: 0,
 };
 const resourceTypeStyle: CSSProperties = {
-  color: BRAND.muted,
-  fontFamily: FONT_SANS,
+  color: EMAIL_COLORS.muted,
+  fontFamily: EMAIL_FONTS.sans,
   fontSize: "12px",
   fontWeight: 400,
   letterSpacing: "0.08em",
@@ -333,7 +317,7 @@ const resourceTypeStyle: CSSProperties = {
 };
 const dividerStyle: CSSProperties = {
   border: "none",
-  borderTop: `1px solid ${BRAND.cardBorder}`,
+  borderTop: `1px solid ${EMAIL_COLORS.cardBorder}`,
   margin: "0 36px",
   width: "auto",
 };
@@ -342,23 +326,23 @@ const reassuranceSectionStyle: CSSProperties = {
   textAlign: "center",
 };
 const reassuranceTextStyle: CSSProperties = {
-  color: BRAND.muted,
-  fontFamily: FONT_SANS,
+  color: EMAIL_COLORS.muted,
+  fontFamily: EMAIL_FONTS.sans,
   fontSize: "14px",
   fontWeight: 500,
   lineHeight: 1.55,
   margin: "0 0 12px",
 };
 const contactLineStyle: CSSProperties = {
-  color: BRAND.muted,
-  fontFamily: FONT_SANS,
+  color: EMAIL_COLORS.muted,
+  fontFamily: EMAIL_FONTS.sans,
   fontSize: "13px",
   fontWeight: 400,
   lineHeight: 1.55,
   margin: 0,
 };
 const contactLinkStyle: CSSProperties = {
-  color: BRAND.pink,
+  color: EMAIL_COLORS.pink,
   textDecoration: "underline",
   textUnderlineOffset: "2px",
 };
@@ -367,21 +351,21 @@ const footerSectionStyle: CSSProperties = {
   textAlign: "center",
 };
 const footerLineStyle: CSSProperties = {
-  color: BRAND.faint,
-  fontFamily: FONT_SANS,
+  color: EMAIL_COLORS.faint,
+  fontFamily: EMAIL_FONTS.sans,
   fontSize: "12px",
   fontWeight: 400,
   lineHeight: 1.55,
   margin: "0 0 8px",
 };
 const footerLinkStyle: CSSProperties = {
-  color: BRAND.muted,
+  color: EMAIL_COLORS.muted,
   textDecoration: "underline",
   textUnderlineOffset: "2px",
 };
 const footerCreditStyle: CSSProperties = {
-  color: BRAND.faint,
-  fontFamily: FONT_SANS,
+  color: EMAIL_COLORS.faint,
+  fontFamily: EMAIL_FONTS.sans,
   fontSize: "11px",
   fontWeight: 400,
   letterSpacing: "0.08em",

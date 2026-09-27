@@ -1,24 +1,12 @@
+import { readPaymentEvent } from "../payment-event-verdict.server";
 import type {
   PaymentEvents,
   PaymentEventVerdict,
 } from "../payment-events.server";
-import { StripePaymentEvents } from "../stripe/stripe-payment-events.server";
 
 const MEMORY_SIGNATURE = "memory";
-const UNUSED_SIGNING_SECRET = "unsigned";
-
-const unsignedWebhooks = {
-  constructEvent(payload: string): unknown {
-    return JSON.parse(payload);
-  },
-};
 
 export class InMemoryPaymentEvents implements PaymentEvents {
-  private readonly unsignedEventReader = new StripePaymentEvents({
-    webhooks: unsignedWebhooks,
-    signingSecret: UNUSED_SIGNING_SECRET,
-  });
-
   async verify(
     rawBody: string,
     signature: string | null,
@@ -27,6 +15,14 @@ export class InMemoryPaymentEvents implements PaymentEvents {
       return { kind: "invalid" };
     }
 
-    return this.unsignedEventReader.verify(rawBody, signature);
+    try {
+      return readPaymentEvent(JSON.parse(rawBody));
+    } catch (error) {
+      if (error instanceof SyntaxError) {
+        return { kind: "invalid" };
+      }
+
+      throw error;
+    }
   }
 }

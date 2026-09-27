@@ -12,6 +12,7 @@ import {
 import type { FeatureFlagReader } from "@eli-coach-platform/domain/feature-flag";
 import {
   CoachingSalesWindow,
+  OpenBundlePageUseCase,
   ReadCallSalesStatesUseCase,
   ResolvePaymentLinkUseCase,
   SendPaymentLinkUseCase,
@@ -80,6 +81,7 @@ export function composeCoachingSalesFeature(
   };
 
   const useCases = {
+    openBundlePage: new OpenBundlePageUseCase({ salesWindow }),
     readCallSalesStates: new ReadCallSalesStatesUseCase({
       callSalesStates: purchases,
     }),
@@ -124,6 +126,7 @@ export function composeCoachingSalesFeature(
       checkouts: new CheckoutsController({
         appBasePath: handles.appBasePath,
         clock,
+        openBundlePage: useCases.openBundlePage,
         publicAppUrl: handles.publicAppUrl,
         readCheckoutConfirmation: useCases.readCheckoutConfirmation,
         resolvePaymentLink: useCases.resolvePaymentLink,

@@ -1,13 +1,12 @@
-import { buttonVariants } from "@eli-coach-platform/ui/primitives";
+import { RowActionLink } from "@eli-coach-platform/ui/appointments";
 import { Video } from "lucide-react";
-import { Link } from "react-router";
 
 type JoinCallTone = "default" | "live";
 
-const BUTTON_VARIANT_BY_TONE: Record<JoinCallTone, "outline" | "primary"> = {
-  default: "outline",
+const ROW_ACTION_TONE_BY_JOIN_CALL_TONE = {
+  default: "default",
   live: "primary",
-};
+} as const satisfies Record<JoinCallTone, string>;
 
 type JoinCallLinkProps = {
   joinPath: string;
@@ -16,16 +15,13 @@ type JoinCallLinkProps = {
 
 export function JoinCallLink({ joinPath, tone }: JoinCallLinkProps) {
   return (
-    <Link
-      className={buttonVariants({
-        size: "xs",
-        variant: BUTTON_VARIANT_BY_TONE[tone],
-      })}
+    <RowActionLink
       data-parity-root="JoinCallLink"
+      icon={Video}
       to={joinPath}
+      tone={ROW_ACTION_TONE_BY_JOIN_CALL_TONE[tone]}
     >
-      <Video aria-hidden="true" className="size-3.5 shrink-0" />
       Join call
-    </Link>
+    </RowActionLink>
   );
 }

@@ -17,6 +17,7 @@ export function JoinCallLink({
 }) {
   return (
     <RowActionLink
+      data-parity-root="JoinCallLink"
       to={joinPath}
       icon={Video}
       tone={ROW_ACTION_TONE_BY_JOIN_CALL_TONE[tone]}

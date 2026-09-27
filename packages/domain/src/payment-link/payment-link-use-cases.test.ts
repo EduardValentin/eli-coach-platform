@@ -13,6 +13,7 @@ import type { CallSalesState, CallSalesStates } from "./call-sales-states";
 import type { CoachingSalesIncidents } from "./coaching-sales-incidents";
 import type { CoachingSalesNotifications } from "./coaching-sales-notifications";
 import { CoachingSalesWindow } from "./coaching-sales-window";
+import { OpenBundlePageUseCase } from "./open-bundle-page-use-case";
 import { PaymentLink, type PaymentLinkState } from "./payment-link";
 import type {
   PaymentLinks,
@@ -527,8 +528,36 @@ describe("ResolvePaymentLinkUseCase", () => {
   });
 });
 
+describe("OpenBundlePageUseCase", () => {
+  it("answers open while sales are open", async () => {
+    // arrange
+    const useCase = new OpenBundlePageUseCase({
+      salesWindow: openSalesWindow(),
+    });
+
+    // act
+    const result = await useCase.execute();
+
+    // assert
+    expect(result).toEqual({ status: "open" });
+  });
+
+  it("answers closed while sales are closed", async () => {
+    // arrange
+    const useCase = new OpenBundlePageUseCase({
+      salesWindow: closedSalesWindow(),
+    });
+
+    // act
+    const result = await useCase.execute();
+
+    // assert
+    expect(result).toEqual({ status: "closed" });
+  });
+});
+
 describe("ReadCallSalesStatesUseCase", () => {
-  it("answers the sales state of each requested call", async () => {
+  it("answers a sales state for every requested call", async () => {
     // arrange
     const states = new Map<string, CallSalesState>([
       ["call-1", "held"],

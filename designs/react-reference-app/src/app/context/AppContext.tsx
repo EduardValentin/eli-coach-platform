@@ -137,7 +137,11 @@ const validSubscriptionStatuses = [
   'ended',
 ] as const;
 const validJourneySexes = ['female', 'male'] as const;
-const validPaymentLinkOutcomes = ['sent', 'delivery-failure'] as const;
+const validPaymentLinkOutcomes = [
+  'sent',
+  'delivery-failure',
+  'unavailable',
+] as const;
 const validPaymentLinkStates = ['valid', 'expired', 'used', 'invalid'] as const;
 const validInvitationLinkStates = [
   'valid',

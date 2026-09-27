@@ -70,14 +70,12 @@ describe("composeCoachingSalesFeature", () => {
     const { feature } = composeCoachingSalesFeature(createHandles({}));
 
     // act
-    const page = await feature.checkouts.loadBundlePage(
-      createRequestArgs({
-        request: new Request("https://evoa.fit/select-bundle?token=abc"),
-      }),
+    const response = await feature.checkouts.resolveBundlePage(
+      createRequestArgs({ request: bundlePageRequest("abc") }),
     );
 
     // assert
-    expect(page.data).toMatchObject({ state: "call-first" });
+    expect(await response.json()).toMatchObject({ state: "call-first" });
   });
 
   it("hands a completed checkout to purchase recording while the site is in waitlist mode", async () => {
@@ -118,17 +116,16 @@ describe("composeCoachingSalesFeature", () => {
 });
 
 describe("composeCoachingSalesFeature buyer controllers", () => {
-  it("hides the bundle page and the checkout while the site is in waitlist mode", async () => {
+  it("hides the bundle page, its link resolution and the checkout while the site is in waitlist mode", async () => {
     // arrange
     const { feature } = composeCoachingSalesFeature(
       createHandles({ WAITLIST_MODE: true }),
     );
 
     // act
-    const loading = feature.checkouts.loadBundlePage(
-      createRequestArgs({
-        request: new Request("https://evoa.fit/select-bundle?token=abc"),
-      }),
+    const loading = feature.checkouts.loadBundlePageShell();
+    const resolution = await feature.checkouts.resolveBundlePage(
+      createRequestArgs({ request: bundlePageRequest("raw-token-value") }),
     );
     const checkout = await feature.checkouts.startCheckout(
       createRequestArgs({ request: checkoutRequest() }),
@@ -136,9 +133,18 @@ describe("composeCoachingSalesFeature buyer controllers", () => {
 
     // assert
     await expect(loading).rejects.toMatchObject({ status: 404 });
+    expect(resolution.status).toBe(404);
     expect(checkout.status).toBe(404);
   });
 });
+
+function bundlePageRequest(token: string): Request {
+  return new Request("https://evoa.fit/api/coaching-sales/bundle-page", {
+    body: JSON.stringify({ token }),
+    headers: { "Content-Type": "application/json" },
+    method: "POST",
+  });
+}
 
 function checkoutRequest(): Request {
   return new Request("https://evoa.fit/api/coaching-sales/checkouts", {

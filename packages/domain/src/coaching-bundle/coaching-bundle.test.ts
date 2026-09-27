@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  COACHING_BUNDLE_IDS,
+  COACHING_BUNDLE_MONTHS,
   COACHING_BUNDLES,
   findCoachingBundle,
   getCoachingBundle,
@@ -44,6 +46,14 @@ describe("CoachingBundle", () => {
 
     // assert
     expect(cents).toBe(expectedCents);
+  });
+
+  it("charges every bundle in euros", () => {
+    // act
+    const currencies = COACHING_BUNDLES.map((bundle) => bundle.currency);
+
+    // assert
+    expect(currencies).toEqual(["eur", "eur", "eur"]);
   });
 });
 
@@ -95,5 +105,17 @@ describe("COACHING_BUNDLES", () => {
       { id: "3-months", popular: true },
       { id: "6-months", popular: false },
     ]);
+  });
+});
+
+describe("the published bundle values", () => {
+  it("name every catalog bundle id and length in catalog order", () => {
+    // act
+    const ids = COACHING_BUNDLES.map((bundle) => bundle.id);
+    const months = COACHING_BUNDLES.map((bundle) => bundle.months);
+
+    // assert
+    expect(ids).toEqual([...COACHING_BUNDLE_IDS]);
+    expect(months).toEqual([...COACHING_BUNDLE_MONTHS]);
   });
 });

@@ -1,7 +1,7 @@
+import { RowActionButton } from "@eli-coach-platform/ui/appointments";
 import { ConfirmDialog } from "@eli-coach-platform/ui/overlays";
-import { Button } from "@eli-coach-platform/ui/primitives";
 import { toast } from "@eli-coach-platform/ui/toast";
-import { Loader2, Send } from "lucide-react";
+import { Send } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useFetcher } from "react-router";
 
@@ -10,6 +10,7 @@ import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
 import { possessivePronoun } from "~/features/assessment-calls/contracts/visitor-profile";
 import {
   PAYMENT_LINK_MESSAGES,
+  sendPaymentLinkErrorSchema,
   sendPaymentLinkSuccessSchema,
   type CallSalesState,
 } from "~/features/coaching-sales/contracts/coaching-sales";
@@ -77,22 +78,15 @@ export function PaymentLinkAction({ call, state }: PaymentLinkActionProps) {
       className="flex w-full flex-wrap items-center gap-2 md:w-auto"
       data-parity-root="CallJourneyActions"
     >
-      <Button
-        aria-busy={isSending || undefined}
+      <RowActionButton
+        busy={isSending}
         className="w-full md:w-auto"
         data-parity="payment-link-action"
-        disabled={isSending}
+        icon={Send}
         onClick={() => setConfirming(true)}
-        size="xs"
-        variant="outline"
       >
-        {isSending ? (
-          <Loader2 aria-hidden="true" className="size-3.5 animate-spin" />
-        ) : (
-          <Send aria-hidden="true" className="size-3.5 shrink-0" />
-        )}
         {copy.buttonLabel}
-      </Button>
+      </RowActionButton>
 
       <ConfirmDialog
         confirmLabel={copy.confirmLabel}
@@ -123,7 +117,7 @@ function usePaymentLinkSender(assessmentCallId: string) {
       return;
     }
 
-    toast.error(PAYMENT_LINK_MESSAGES.deliveryFailed);
+    toast.error(paymentLinkFailureMessage(data));
   }, [data]);
 
   const send = () => {
@@ -138,4 +132,14 @@ function usePaymentLinkSender(assessmentCallId: string) {
   };
 
   return { isSending, send };
+}
+
+function paymentLinkFailureMessage(sendResponse: unknown): string {
+  const refusal = sendPaymentLinkErrorSchema.safeParse(sendResponse);
+
+  if (refusal.data?.error === "delivery_failed") {
+    return PAYMENT_LINK_MESSAGES.deliveryFailed;
+  }
+
+  return PAYMENT_LINK_MESSAGES.unavailable;
 }

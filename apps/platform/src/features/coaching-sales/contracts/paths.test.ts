@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { selectBundlePath } from "./paths";
 
 describe("selectBundlePath", () => {
-  it("carries the payment link token", () => {
+  it("carries the payment link token in the fragment", () => {
     // arrange
     const token = "abc-DEF_123";
 
@@ -11,13 +11,12 @@ describe("selectBundlePath", () => {
     const path = selectBundlePath({ token });
 
     // assert
-    expect(path).toBe("/select-bundle?token=abc-DEF_123");
+    expect(path).toBe("/select-bundle#abc-DEF_123");
   });
 
-  it("carries the cancelled payment and the chosen bundle and start back to the page", () => {
+  it("carries the cancelled payment and the chosen bundle and start back without the token", () => {
     // arrange
     const query = {
-      token: "abc-DEF_123",
       payment: "cancelled",
       bundle: "3-months",
       start: "waiting",
@@ -28,18 +27,18 @@ describe("selectBundlePath", () => {
 
     // assert
     expect(path).toBe(
-      "/select-bundle?token=abc-DEF_123&payment=cancelled&bundle=3-months&start=waiting",
+      "/select-bundle?payment=cancelled&bundle=3-months&start=waiting",
     );
   });
 
-  it("encodes a token that would otherwise break the query", () => {
+  it("keeps the token in the fragment after the chosen bundle", () => {
     // arrange
-    const token = "a&b=c d";
+    const link = { token: "abc-DEF_123", bundle: "6-months" };
 
     // act
-    const path = selectBundlePath({ token });
+    const path = selectBundlePath(link);
 
     // assert
-    expect(new URLSearchParams(path.split("?")[1]).get("token")).toBe(token);
+    expect(path).toBe("/select-bundle?bundle=6-months#abc-DEF_123");
   });
 });

@@ -4,18 +4,16 @@ import { Button } from "@eli-coach-platform/ui/primitives";
 import { X } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
-  useLoaderData,
   useSearchParams,
   type HeadersArgs,
   type LoaderFunctionArgs,
   type MetaFunction,
-  type ShouldRevalidateFunctionArgs,
 } from "react-router";
 
 import { coachingBundleIdSchema } from "~/features/coaching-sales/contracts/bundle-cards";
 import {
   startChoiceSchema,
-  SUBSCRIPTION_NOTE,
+  BUNDLE_PAGE_SUBSCRIPTION_NOTE,
   type BundlePage,
   type CheckoutChoice,
 } from "~/features/coaching-sales/contracts/coaching-sales";
@@ -24,6 +22,10 @@ import { coachingSalesContext } from "~/features/coaching-sales/server/guards/co
 import { BundleSelector } from "~/features/coaching-sales/ui/public/bundle-selector/bundle-selector";
 import { CallFirstBanner } from "~/features/coaching-sales/ui/public/call-first-banner";
 
+import {
+  useBundlePageResolution,
+  type BundlePageView,
+} from "./bundle-page-resolution";
 import { StartChoice } from "./start-choice";
 import { CANCELLED_NOTICE, START_CHOICE_REQUIRED } from "./start-choice-copy";
 
@@ -32,28 +34,18 @@ const CHECKOUTS_API_URL = joinBasePath(
   COACHING_SALES_API_PATHS.checkouts,
 );
 
-const TOKEN_PARAM = "token";
 const PAYMENT_PARAM = "payment";
 
-export async function loader(args: LoaderFunctionArgs) {
-  return args.context.get(coachingSalesContext).checkouts.loadBundlePage(args);
+export async function loader({ context }: LoaderFunctionArgs) {
+  return context.get(coachingSalesContext).checkouts.loadBundlePageShell();
 }
 
 export function headers({ loaderHeaders }: HeadersArgs) {
   return loaderHeaders;
 }
 
-export function shouldRevalidate({
-  currentUrl,
-  defaultShouldRevalidate,
-  nextUrl,
-}: ShouldRevalidateFunctionArgs) {
-  const keepsTheLink =
-    currentUrl.pathname === nextUrl.pathname &&
-    currentUrl.searchParams.get(TOKEN_PARAM) ===
-      nextUrl.searchParams.get(TOKEN_PARAM);
-
-  return keepsTheLink ? false : defaultShouldRevalidate;
+export function shouldRevalidate() {
+  return false;
 }
 
 export const meta: MetaFunction = () => [
@@ -64,29 +56,31 @@ export const meta: MetaFunction = () => [
 export const handle = { publicContentFrame: "full-bleed" } as const;
 
 export default function SelectBundleRoute() {
-  const page = useLoaderData<typeof loader>();
-  const isValidLink = page.state === "valid";
+  const { page, token } = useBundlePageResolution();
+  const asksForACallFirst = page.state === "call-first";
 
   return (
     <div
       className="min-h-screen w-full bg-surface-page pb-24"
       data-parity-root="SelectBundle"
     >
-      {isValidLink ? null : <CallFirstBanner heading="h2" />}
+      {asksForACallFirst ? <CallFirstBanner heading="h2" /> : null}
       <div
         className={cn("mx-auto max-w-7xl px-6", {
-          "pt-32": isValidLink,
-          "pt-16": !isValidLink,
+          "pt-32": !asksForACallFirst,
+          "pt-16": asksForACallFirst,
         })}
       >
-        <BundlePageHeader linkState={page.state} />
-        <BundleCheckoutForm page={page} />
+        <BundlePageHeader pageState={page.state} />
+        {page.state === "checking" ? null : (
+          <BundleCheckoutForm page={page} token={token} />
+        )}
       </div>
     </div>
   );
 }
 
-function BundlePageHeader(props: { linkState: BundlePage["state"] }) {
+function BundlePageHeader(props: { pageState: BundlePageView["state"] }) {
   const headingRef = useRef<HTMLHeadingElement>(null);
 
   return (
@@ -98,19 +92,39 @@ function BundlePageHeader(props: { linkState: BundlePage["state"] }) {
       >
         Choose Your Bundle
       </h1>
-      {props.linkState === "valid" ? (
-        <p className="mb-8 text-lg text-copy-muted">
-          Based on our call, select the commitment timeframe that works best for
-          you.
-        </p>
-      ) : (
-        <p className="mb-8 text-lg text-link-muted italic">
-          These bundles are available for purchase exclusively after your call
-          with Eli.
-        </p>
-      )}
+      <BundlePageSubtitle pageState={props.pageState} />
       <CancelledPaymentNotice onDismissed={() => headingRef.current?.focus()} />
     </div>
+  );
+}
+
+function BundlePageSubtitle(props: { pageState: BundlePageView["state"] }) {
+  if (props.pageState === "valid") {
+    return (
+      <p className="mb-8 text-lg text-copy-muted">
+        Based on our call, select the commitment timeframe that works best for
+        you.
+      </p>
+    );
+  }
+
+  if (props.pageState === "checking") {
+    return (
+      <p
+        aria-busy="true"
+        className="mb-8 text-lg text-copy-muted"
+        role="status"
+      >
+        Checking your link…
+      </p>
+    );
+  }
+
+  return (
+    <p className="mb-8 text-lg text-link-muted italic">
+      These bundles are available for purchase exclusively after your call with
+      Eli.
+    </p>
   );
 }
 
@@ -147,8 +161,9 @@ function CancelledPaymentNotice(props: { onDismissed: () => void }) {
       <p className="flex-1 text-sm text-text-secondary">{CANCELLED_NOTICE}</p>
       <Button
         aria-label="Dismiss"
-        className="-mt-1 -mr-2 h-8 w-8 px-0 text-text-secondary hover:bg-surface-quiet hover:text-text-primary"
+        className="-mt-1 -mr-2 text-text-secondary"
         onClick={dismiss}
+        size="icon-xs"
         variant="outline"
       >
         <X aria-hidden="true" size={16} />
@@ -157,7 +172,7 @@ function CancelledPaymentNotice(props: { onDismissed: () => void }) {
   );
 }
 
-function BundleCheckoutForm(props: { page: BundlePage }) {
+function BundleCheckoutForm(props: { page: BundlePage; token: string }) {
   const { page } = props;
   const [searchParams] = useSearchParams();
   const [bundleId, setBundleId] = useState<CheckoutChoice["bundleId"] | null>(
@@ -213,11 +228,7 @@ function BundleCheckoutForm(props: { page: BundlePage }) {
       })}
     >
       <form action={CHECKOUTS_API_URL} method="post" onSubmit={openCheckout}>
-        <input
-          name="token"
-          type="hidden"
-          value={searchParams.get(TOKEN_PARAM) ?? ""}
-        />
+        <input name="token" type="hidden" value={props.token} />
         <input name="startChoice" type="hidden" value={startChoice ?? ""} />
         <BundleSelector
           beforeCheckout={
@@ -235,7 +246,7 @@ function BundleCheckoutForm(props: { page: BundlePage }) {
           cards={page.cards}
           disabled={!isValidLink}
           mode="checkout"
-          note={SUBSCRIPTION_NOTE}
+          note={BUNDLE_PAGE_SUBSCRIPTION_NOTE}
           onChooseBundle={setBundleId}
           pricing={isValidLink ? page.tier : "regular"}
           selectedBundleId={bundleId}

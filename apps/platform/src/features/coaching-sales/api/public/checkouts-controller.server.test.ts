@@ -2,7 +2,10 @@ import type {
   ReadCheckoutConfirmationUseCase,
   StartCheckoutUseCase,
 } from "@eli-coach-platform/domain/coaching-subscription";
-import type { ResolvePaymentLinkUseCase } from "@eli-coach-platform/domain/payment-link";
+import type {
+  OpenBundlePageUseCase,
+  ResolvePaymentLinkUseCase,
+} from "@eli-coach-platform/domain/payment-link";
 import { describe, expect, it, vi } from "vitest";
 
 import { createRequestArgs } from "~/server/test-support/request-args";
@@ -25,6 +28,7 @@ type ControllerOptions = {
   checkout?: CheckoutStart;
   confirmation?: Confirmation;
   resolution?: Resolution;
+  bundlePage?: "open" | "closed";
 };
 
 const validResolution = {
@@ -34,63 +38,93 @@ const validResolution = {
   tier: "reduced",
 } as unknown as Resolution;
 
-describe("CheckoutsController bundle page", () => {
-  it("serves the valid page with the tier's cards and the waiting start instant only", async () => {
+describe("CheckoutsController bundle page shell", () => {
+  it("serves the page shell uncached without looking up any link", async () => {
+    // arrange
+    const { controller, resolvePaymentLink } = createController({});
+
+    // act
+    const shell = await controller.loadBundlePageShell();
+
+    // assert
+    expect(shell.data).toBeNull();
+    expect(new Headers(shell.init?.headers).get("Cache-Control")).toBe(
+      "no-store",
+    );
+    expect(resolvePaymentLink).not.toHaveBeenCalled();
+  });
+
+  it("answers not found while coaching sales are closed", async () => {
+    // arrange
+    const { controller } = createController({ bundlePage: "closed" });
+
+    // act
+    const loading = controller.loadBundlePageShell();
+
+    // assert
+    await expect(loading).rejects.toMatchObject({ status: 404 });
+  });
+});
+
+describe("CheckoutsController bundle page resolution", () => {
+  it("answers the valid page with the tier's cards and the waiting start instant only", async () => {
     // arrange
     const { controller, resolvePaymentLink } = createController({
       resolution: validResolution,
     });
 
     // act
-    const page = await controller.loadBundlePage(
-      pageArgs(`/select-bundle?token=${TOKEN}`),
+    const response = await controller.resolveBundlePage(
+      bundlePageArgs(JSON.stringify({ token: TOKEN })),
     );
 
     // assert
+    const page = await response.json();
+    expect(response.status).toBe(200);
     expect(resolvePaymentLink).toHaveBeenCalledWith(TOKEN);
-    expect(Object.keys(page.data).sort()).toEqual([
+    expect(Object.keys(page).sort()).toEqual([
       "cards",
       "state",
       "tier",
       "waitingStartsOn",
     ]);
-    expect(page.data).toMatchObject({
+    expect(page).toMatchObject({
       state: "valid",
       tier: "reduced",
       waitingStartsOn: "2026-10-10T10:00:00.000Z",
     });
     expect(
-      page.data.cards.map((card) => [card.id, card.pricePerMonth]),
+      page.cards.map((card: { id: string; pricePerMonth: number }) => [
+        card.id,
+        card.pricePerMonth,
+      ]),
     ).toEqual([
       ["1-month", 139],
       ["3-months", 125],
       ["6-months", 119],
     ]);
-    expect(new Headers(page.init?.headers).get("Cache-Control")).toBe(
-      "no-store",
-    );
+    expect(response.headers.get("Cache-Control")).toBe("no-store");
   });
 
-  it("serves the call-first page with the regular cards for a link that does not work", async () => {
+  it("answers the call-first page with the regular cards for a link that does not work", async () => {
     // arrange
     const { controller } = createController({
       resolution: { status: "invalid" },
     });
 
     // act
-    const page = await controller.loadBundlePage(
-      pageArgs(`/select-bundle?token=${TOKEN}`),
+    const response = await controller.resolveBundlePage(
+      bundlePageArgs(JSON.stringify({ token: TOKEN })),
     );
 
     // assert
-    expect(page.data.state).toBe("call-first");
-    expect(Object.keys(page.data).sort()).toEqual(["cards", "state"]);
-    expect(page.data.cards.map((card) => card.pricePerMonth)).toEqual([
-      159, 149, 139,
-    ]);
-    expect(new Headers(page.init?.headers).get("Cache-Control")).toBe(
-      "no-store",
-    );
+    const page = await response.json();
+    expect(page.state).toBe("call-first");
+    expect(Object.keys(page).sort()).toEqual(["cards", "state"]);
+    expect(
+      page.cards.map((card: { pricePerMonth: number }) => card.pricePerMonth),
+    ).toEqual([159, 149, 139]);
+    expect(response.headers.get("Cache-Control")).toBe("no-store");
   });
 
   it("reads an oversized token as no token at all", async () => {
@@ -100,8 +134,8 @@ describe("CheckoutsController bundle page", () => {
     });
 
     // act
-    await controller.loadBundlePage(
-      pageArgs(`/select-bundle?token=${"a".repeat(300)}`),
+    await controller.resolveBundlePage(
+      bundlePageArgs(JSON.stringify({ token: "a".repeat(300) })),
     );
 
     // assert
@@ -115,12 +149,30 @@ describe("CheckoutsController bundle page", () => {
     });
 
     // act
-    const loading = controller.loadBundlePage(
-      pageArgs(`/select-bundle?token=${TOKEN}`),
+    const response = await controller.resolveBundlePage(
+      bundlePageArgs(JSON.stringify({ token: TOKEN })),
     );
 
     // assert
-    await expect(loading).rejects.toMatchObject({ status: 404 });
+    expect(response.status).toBe(404);
+  });
+
+  it.each([
+    ["a body that is not JSON", `token=${TOKEN}`],
+    ["a body that is not an object", JSON.stringify(TOKEN)],
+    ["a body over the size limit", JSON.stringify({ token: "a".repeat(2048) })],
+  ])("refuses %s without looking up any link", async (_case, body) => {
+    // arrange
+    const { controller, resolvePaymentLink } = createController({
+      resolution: validResolution,
+    });
+
+    // act
+    const response = await controller.resolveBundlePage(bundlePageArgs(body));
+
+    // assert
+    expect(response.status).toBe(400);
+    expect(resolvePaymentLink).not.toHaveBeenCalled();
   });
 });
 
@@ -162,7 +214,8 @@ describe("CheckoutsController checkout start", () => {
       startChoice: "waiting",
       successUrl:
         "https://evoa.example/coaching/checkout/complete?session={CHECKOUT_SESSION_ID}",
-      cancelUrl: `https://evoa.example/coaching/select-bundle?token=${TOKEN}&payment=cancelled&bundle=6-months&start=waiting`,
+      cancelUrl:
+        "https://evoa.example/coaching/select-bundle?payment=cancelled&bundle=6-months&start=waiting",
     });
   });
 
@@ -202,9 +255,7 @@ describe("CheckoutsController checkout start", () => {
 
       // assert
       expect(response.status).toBe(303);
-      expect(response.headers.get("Location")).toBe(
-        `/select-bundle?token=${TOKEN}`,
-      );
+      expect(response.headers.get("Location")).toBe(`/select-bundle#${TOKEN}`);
     },
   );
 
@@ -222,7 +273,7 @@ describe("CheckoutsController checkout start", () => {
     // assert
     expect(response.status).toBe(303);
     expect(response.headers.get("Location")).toBe(
-      `/select-bundle?token=${TOKEN}&bundle=6-months`,
+      `/select-bundle?bundle=6-months#${TOKEN}`,
     );
     expect(resolvePaymentLink).toHaveBeenCalledWith(TOKEN);
     expect(startCheckout).not.toHaveBeenCalled();
@@ -242,9 +293,7 @@ describe("CheckoutsController checkout start", () => {
     );
 
     // assert
-    expect(response.headers.get("Location")).toBe(
-      `/select-bundle?token=${TOKEN}`,
-    );
+    expect(response.headers.get("Location")).toBe(`/select-bundle#${TOKEN}`);
   });
 
   it("answers not found for an incomplete checkout while coaching sales are closed", async () => {
@@ -360,9 +409,15 @@ function createController(options: ControllerOptions) {
   const readCheckoutConfirmation = vi
     .fn()
     .mockResolvedValue(options.confirmation ?? { status: "not_paid" });
+  const openBundlePage = vi
+    .fn()
+    .mockResolvedValue({ status: options.bundlePage ?? "open" });
   const controller = new CheckoutsController({
     appBasePath: APP_BASE_PATH,
     clock: { now: () => NOW },
+    openBundlePage: {
+      execute: openBundlePage,
+    } as unknown as OpenBundlePageUseCase,
     publicAppUrl: PUBLIC_APP_URL,
     readCheckoutConfirmation: {
       execute: readCheckoutConfirmation,
@@ -386,6 +441,19 @@ function createController(options: ControllerOptions) {
 function pageArgs(path: string) {
   return createRequestArgs({
     request: new Request(`https://attacker.example${path}`),
+  });
+}
+
+function bundlePageArgs(body: string) {
+  return createRequestArgs({
+    request: new Request(
+      "https://attacker.example/api/coaching-sales/bundle-page",
+      {
+        body,
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      },
+    ),
   });
 }
 

@@ -1,20 +1,10 @@
-import type {
-  CoachingBundle,
-  CoachingBundleId,
-  PriceTier,
+import {
+  COACHING_BUNDLE_IDS,
+  PRICE_TIERS,
+  type CoachingBundle,
+  type PriceTier,
 } from "@eli-coach-platform/domain/coaching-bundle";
 import { z } from "zod";
-
-export const COACHING_BUNDLE_IDS = [
-  "1-month",
-  "3-months",
-  "6-months",
-] as const satisfies readonly CoachingBundleId[];
-
-export const PRICE_TIERS = [
-  "regular",
-  "reduced",
-] as const satisfies readonly PriceTier[];
 
 export const coachingBundleIdSchema = z.enum(COACHING_BUNDLE_IDS);
 
@@ -43,6 +33,10 @@ export function presentBundleCards(
   const baselinePerMonth = baseline?.perMonth(tier) ?? 0;
 
   return bundles.map((bundle) => toCard(bundle, { tier, baselinePerMonth }));
+}
+
+export function bundleLengthLabel(months: number): string {
+  return months === 1 ? "1 month" : `${months} months`;
 }
 
 export function renewalLabel(months: number): string {

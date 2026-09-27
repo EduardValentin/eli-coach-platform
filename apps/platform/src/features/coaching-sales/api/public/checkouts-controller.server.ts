@@ -1,7 +1,6 @@
 import { joinBasePath } from "@eli-coach-platform/config";
 import {
   COACHING_BUNDLES,
-  getCoachingBundle,
   type PriceTier,
 } from "@eli-coach-platform/domain/coaching-bundle";
 import {
@@ -9,11 +8,15 @@ import {
   type ReadCheckoutConfirmationUseCase,
   type StartCheckoutUseCase,
 } from "@eli-coach-platform/domain/coaching-subscription";
-import type { ResolvePaymentLinkUseCase } from "@eli-coach-platform/domain/payment-link";
+import type {
+  OpenBundlePageUseCase,
+  ResolvePaymentLinkUseCase,
+} from "@eli-coach-platform/domain/payment-link";
 import type { Clock } from "@eli-coach-platform/domain/shared";
 import {
   createBadRequestResponse,
   readFormDataRequestBody,
+  readTextRequestBody,
 } from "@eli-coach-platform/infrastructure/http/server";
 import {
   data,
@@ -24,12 +27,12 @@ import {
 
 import {
   coachingBundleIdSchema,
-  formatEuros,
   presentBundleCards,
-  renewalLabel,
   type CoachingBundleCard,
 } from "~/features/coaching-sales/contracts/bundle-cards";
+import { presentPaidConfirmation } from "~/features/coaching-sales/contracts/checkout-confirmation";
 import {
+  bundlePageRequestSchema,
   bundlePageSchema,
   checkoutChoiceSchema,
   checkoutConfirmationSchema,
@@ -44,14 +47,24 @@ import {
 type CheckoutsControllerOptions = {
   appBasePath: string;
   clock: Clock;
+  openBundlePage: OpenBundlePageUseCase;
   publicAppUrl: string;
   readCheckoutConfirmation: ReadCheckoutConfirmationUseCase;
   resolvePaymentLink: ResolvePaymentLinkUseCase;
   startCheckout: StartCheckoutUseCase;
 };
 
+type PaymentLinkResolution = Awaited<
+  ReturnType<ResolvePaymentLinkUseCase["execute"]>
+>;
+
+type OpenPaymentLinkResolution = Exclude<
+  PaymentLinkResolution,
+  { status: "closed" }
+>;
+
+const BUNDLE_PAGE_REQUEST_MAX_BYTES = 1024;
 const CHECKOUT_FORM_MAX_BYTES = 4096;
-const CENTS_PER_EURO = 100;
 const CHECKOUT_SESSION_ID_PLACEHOLDER = "{CHECKOUT_SESSION_ID}";
 const SEE_OTHER = 303;
 const UNCACHED_PAGE_HEADERS = { "Cache-Control": "no-store" };
@@ -63,30 +76,34 @@ const CONFIRMATION_PAGE_HEADERS = {
 export class CheckoutsController {
   constructor(private readonly options: CheckoutsControllerOptions) {}
 
-  async loadBundlePage({ request }: LoaderFunctionArgs) {
-    const token = readQueryToken(request);
-    const link = await this.options.resolvePaymentLink.execute(token);
+  async loadBundlePageShell() {
+    const bundlePage = await this.options.openBundlePage.execute();
 
-    if (link.status === "closed") {
+    if (bundlePage.status === "closed") {
       throw createNotFoundResponse();
     }
 
-    const page =
-      link.status === "valid"
-        ? {
-            state: "valid",
-            tier: link.tier,
-            cards: this.loadPricingCards({ tier: link.tier }),
-            waitingStartsOn: withdrawalDeadline(
-              this.options.clock.now(),
-            ).toISOString(),
-          }
-        : {
-            state: "call-first",
-            cards: this.loadPricingCards({ tier: "regular" }),
-          };
+    return data(null, { headers: UNCACHED_PAGE_HEADERS });
+  }
 
-    return data(bundlePageSchema.parse(page), {
+  async resolveBundlePage({ request }: ActionFunctionArgs): Promise<Response> {
+    const submission = bundlePageRequestSchema.safeParse(
+      await readJsonRequestBody(request),
+    );
+
+    if (!submission.success) {
+      return createBadRequestResponse("The payment link could not be read.");
+    }
+
+    const link = await this.options.resolvePaymentLink.execute(
+      submission.data.token,
+    );
+
+    if (link.status === "closed") {
+      return createNotFoundResponse();
+    }
+
+    return Response.json(this.presentBundlePage(link), {
       headers: UNCACHED_PAGE_HEADERS,
     });
   }
@@ -128,7 +145,6 @@ export class CheckoutsController {
       successUrl: `${this.publicUrl(CHECKOUT_COMPLETE_PATH)}?session=${CHECKOUT_SESSION_ID_PLACEHOLDER}`,
       cancelUrl: this.publicUrl(
         selectBundlePath({
-          token,
           payment: "cancelled",
           bundle: bundleId,
           start: startChoice,
@@ -168,6 +184,25 @@ export class CheckoutsController {
     });
   }
 
+  private presentBundlePage(link: OpenPaymentLinkResolution) {
+    const page =
+      link.status === "valid"
+        ? {
+            state: "valid",
+            tier: link.tier,
+            cards: this.loadPricingCards({ tier: link.tier }),
+            waitingStartsOn: withdrawalDeadline(
+              this.options.clock.now(),
+            ).toISOString(),
+          }
+        : {
+            state: "call-first",
+            cards: this.loadPricingCards({ tier: "regular" }),
+          };
+
+    return bundlePageSchema.parse(page);
+  }
+
   private async returnToBundlePage(query: {
     token: string;
     bundle?: string;
@@ -193,29 +228,20 @@ export class CheckoutsController {
   }
 }
 
-type PaidCheckout = Extract<
-  Awaited<ReturnType<ReadCheckoutConfirmationUseCase["execute"]>>,
-  { status: "paid" }
->;
+async function readJsonRequestBody(request: Request): Promise<unknown> {
+  const body = await readTextRequestBody(request, {
+    maxBytes: BUNDLE_PAGE_REQUEST_MAX_BYTES,
+  });
 
-function presentPaidConfirmation(checkout: PaidCheckout) {
-  const bundle = getCoachingBundle(checkout.bundleId);
+  if (body.status !== "valid") {
+    return undefined;
+  }
 
-  return {
-    state: "paid",
-    amount: formatEuros(checkout.amountCents / CENTS_PER_EURO),
-    bundleTitle: bundle.title,
-    email: checkout.email,
-    renewalLabel: renewalLabel(bundle.months),
-    startChoice: checkout.startChoice,
-    waitingStartsOn: checkout.waitingStartsOn.toISOString(),
-  };
-}
-
-function readQueryToken(request: Request): string {
-  return paymentLinkTokenSchema.parse(
-    new URL(request.url).searchParams.get("token"),
-  );
+  try {
+    return JSON.parse(body.text);
+  } catch {
+    return undefined;
+  }
 }
 
 function createNotFoundResponse(): Response {

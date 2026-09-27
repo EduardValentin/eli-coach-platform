@@ -1,11 +1,21 @@
-export type CoachingBundleId = "1-month" | "3-months" | "6-months";
+export const COACHING_BUNDLE_IDS = ["1-month", "3-months", "6-months"] as const;
 
-export type PriceTier = "regular" | "reduced";
+export type CoachingBundleId = (typeof COACHING_BUNDLE_IDS)[number];
+
+export const COACHING_BUNDLE_MONTHS = [1, 3, 6] as const;
+
+type CoachingBundleMonths = (typeof COACHING_BUNDLE_MONTHS)[number];
+
+export const PRICE_TIERS = ["regular", "reduced"] as const;
+
+export type PriceTier = (typeof PRICE_TIERS)[number];
+
+const COACHING_CURRENCY = "eur";
 
 type CoachingBundleProps = {
   id: CoachingBundleId;
   title: string;
-  months: number;
+  months: CoachingBundleMonths;
   regularPerMonth: number;
   reducedPerMonth: number;
   popular: boolean;
@@ -16,10 +26,11 @@ const CENTS_PER_EURO = 100;
 export class CoachingBundle {
   readonly id: CoachingBundleId;
   readonly title: string;
-  readonly months: number;
+  readonly months: CoachingBundleMonths;
   readonly regularPerMonth: number;
   readonly reducedPerMonth: number;
   readonly popular: boolean;
+  readonly currency = COACHING_CURRENCY;
 
   private constructor(props: CoachingBundleProps) {
     this.id = props.id;

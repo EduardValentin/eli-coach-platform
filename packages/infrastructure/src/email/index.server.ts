@@ -17,3 +17,4 @@ export {
   EmailSection,
   EmailText,
 } from "./email-primitives.server";
+export { EMAIL_COLORS, EMAIL_FONTS } from "./email-theme.server";

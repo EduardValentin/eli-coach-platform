@@ -12,6 +12,17 @@ export type SubscriptionStatus =
 
 export const SUBSCRIPTION_BUNDLES: readonly SubscriptionBundle[] = [1, 3, 6];
 
+const SUBSCRIPTION_START_PATHS: readonly SubscriptionStartPath[] = [
+  'immediate',
+  'waiting',
+];
+
+export function parseStartPath(
+  value: string | null,
+): SubscriptionStartPath | undefined {
+  return SUBSCRIPTION_START_PATHS.find((startPath) => startPath === value);
+}
+
 export const WITHDRAWAL_WINDOW_DAYS = 14;
 
 export type CoachingSubscription = {

@@ -87,7 +87,7 @@ describe("EmailCoachingSalesNotifications", () => {
     const productEmail = new InMemoryProductEmail();
     const notifications = createNotifications(productEmail);
     const expectedUrl =
-      "https://evoa.fit/eli-coach-platform/select-bundle?token=raw-token-value";
+      "https://evoa.fit/eli-coach-platform/select-bundle#raw-token-value";
 
     // act
     await notifications.sendPaymentLink({

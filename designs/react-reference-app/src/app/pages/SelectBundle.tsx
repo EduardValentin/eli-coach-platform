@@ -5,11 +5,16 @@ import { Navbar } from '../components/Navbar';
 import { BundleSelector } from '../components/BundleSelector';
 import { LegalFooter } from '../components/legal/LegalNav';
 import { StartChoice } from '../components/StartChoice';
-import { Button, buttonVariants } from '../components/ThemeButton';
+import { buttonVariants } from '../components/ThemeButton';
+import { Button } from '../components/ui/button';
 import { useAppState } from '../context/AppContext';
 import { useClientJourneys } from '../context/ClientJourneyContext';
-import { bundleById, type BundleId } from '../domain/bundles';
-import type { SubscriptionStartPath } from '../domain/coachingSubscription';
+import { usePaymentLinkToken } from '../hooks/usePaymentLinkToken';
+import { bundleById, parseBundleId, type BundleId } from '../domain/bundles';
+import {
+  parseStartPath,
+  type SubscriptionStartPath,
+} from '../domain/coachingSubscription';
 import { START_CHOICE_REQUIRED } from '../domain/startChoiceCopy';
 import {
   resolvePaymentLink,
@@ -20,6 +25,8 @@ import { NotFound } from './NotFound';
 
 const SUBSCRIPTION_NOTE =
   'Each bundle is a subscription: it renews at its own length — every 1, 3 or 6 months — and each renewal is charged up front.';
+
+const PAYMENT_PARAM = 'payment';
 
 const CANCELLED_NOTICE =
   "No payment was taken. Pick a bundle whenever you're ready.";
@@ -32,19 +39,23 @@ export function SelectBundle() {
   const { appState } = useAppState();
   const { demoJourney, journeyForPaymentToken } = useClientJourneys();
 
-  const token = searchParams.get('token') ?? '';
+  const token = usePaymentLinkToken();
   const [link, setLink] = useState<PaymentLinkResolution>({ status: 'loading' });
-  const [startPath, setStartPath] = useState<SubscriptionStartPath | null>(null);
+  const [startPath, setStartPath] = useState<SubscriptionStartPath | null>(
+    () => parseStartPath(searchParams.get('start')) ?? null,
+  );
   const [startPathMissing, setStartPathMissing] = useState(false);
   const firstStartOption = useRef<HTMLButtonElement>(null);
   const [opening, setOpening] = useState(false);
   const [cancelledNoticeShown, setCancelledNoticeShown] = useState(
-    searchParams.get('payment') === 'cancelled',
+    searchParams.get(PAYMENT_PARAM) === 'cancelled',
   );
 
   const { paymentLinkState } = appState;
 
   useEffect(() => {
+    if (token === null) return;
+
     if (token.length < 6) {
       setLink({ status: 'invalid' });
       return;
@@ -64,15 +75,21 @@ export function SelectBundle() {
 
   if (appState.isWaitlistMode) return <NotFound />;
 
-  const journey = journeyForPaymentToken(token) ?? demoJourney;
+  const journey = journeyForPaymentToken(token ?? '') ?? demoJourney;
   const isLoading = link.status === 'loading';
   const isValidToken = link.status === 'valid';
 
   const dismissNotice = () => {
     setCancelledNoticeShown(false);
-    const next = new URLSearchParams(searchParams);
-    next.delete('payment');
-    setSearchParams(next, { replace: true });
+    setSearchParams(
+      (current) => {
+        const next = new URLSearchParams(current);
+        next.delete(PAYMENT_PARAM);
+
+        return next;
+      },
+      { preventScrollReset: true, replace: true },
+    );
   };
 
   const chooseStartPath = (chosen: SubscriptionStartPath) => {
@@ -90,7 +107,7 @@ export function SelectBundle() {
     setOpening(true);
 
     try {
-      const session = await createCheckoutSession(token, {
+      const session = await createCheckoutSession(token ?? '', {
         bundle: bundleById(bundleId).months,
         startPath,
       });
@@ -166,8 +183,9 @@ export function SelectBundle() {
               <p className="flex-1 text-sm text-text-secondary">{CANCELLED_NOTICE}</p>
               <Button
                 aria-label="Dismiss"
-                className="-mr-2 -mt-1 h-8 w-8 px-0 text-text-secondary hover:bg-surface-quiet hover:text-text-primary"
+                className="-mr-2 -mt-1 text-text-secondary"
                 onClick={dismissNotice}
+                size="icon-xs"
                 variant="outline"
               >
                 <X aria-hidden="true" size={16} />
@@ -180,6 +198,7 @@ export function SelectBundle() {
           <div className={!isValidToken ? 'opacity-50 grayscale-[0.5] pointer-events-none' : ''}>
             <BundleSelector
               mode="checkout"
+              initialBundleId={parseBundleId(searchParams.get('bundle'))}
               pricing={journey.pricing}
               onCheckout={openCheckout}
               disabled={!isValidToken}

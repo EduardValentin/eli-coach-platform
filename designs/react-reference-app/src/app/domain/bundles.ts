@@ -59,6 +59,10 @@ export function bundleById(id: BundleId): CoachingBundle {
   return COACHING_BUNDLES.find((bundle) => bundle.id === id) ?? COACHING_BUNDLES[0];
 }
 
+export function parseBundleId(value: string | null): BundleId | undefined {
+  return COACHING_BUNDLES.find((bundle) => bundle.id === value)?.id;
+}
+
 export function bundleForMonths(months: SubscriptionBundle): CoachingBundle {
   return (
     COACHING_BUNDLES.find((bundle) => bundle.months === months) ??

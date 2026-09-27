@@ -3,6 +3,11 @@ import {
   VISITOR_GENDERS,
   VISITOR_PRIMARY_GOALS,
 } from "@eli-coach-platform/domain/assessment-call";
+import {
+  COACHING_BUNDLE_IDS,
+  COACHING_BUNDLE_MONTHS,
+  PRICE_TIERS,
+} from "@eli-coach-platform/domain/coaching-bundle";
 import { START_CHOICES } from "@eli-coach-platform/domain/coaching-subscription";
 import type { PaymentLinkState } from "@eli-coach-platform/domain/payment-link";
 import { sql, type SQL } from "drizzle-orm";
@@ -20,10 +25,6 @@ import {
 } from "drizzle-orm/pg-core";
 
 import { assessmentCallsTable } from "~/features/assessment-calls/data/schema.server";
-import {
-  COACHING_BUNDLE_IDS,
-  PRICE_TIERS,
-} from "~/features/coaching-sales/contracts/bundle-cards";
 
 const PAYMENT_LINK_STATES = [
   "valid",
@@ -32,8 +33,6 @@ const PAYMENT_LINK_STATES = [
 ] as const satisfies readonly PaymentLinkState[];
 
 const COACHING_SUBSCRIPTION_STATUSES = ["not-started"] as const;
-
-const COACHING_BUNDLE_MONTHS = [1, 3, 6] as const;
 
 export const coachingSalesConstraints = {
   clientPerCall: "clients_assessment_call_id_unique",

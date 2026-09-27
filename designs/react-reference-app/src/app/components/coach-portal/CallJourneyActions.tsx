@@ -13,7 +13,9 @@ import {
 import { clientDetailPathForJourney } from '../../utils/journeyLabels';
 import {
   PAYMENT_LINK_ERROR_MESSAGES,
+  PaymentLinkError,
   sendPaymentLink,
+  type PaymentLinkErrorCode,
 } from '../../services/paymentLinkService';
 import {
   possessivePronoun,
@@ -66,6 +68,12 @@ function journeyAction(
   }
 }
 
+function paymentLinkErrorCode(error: unknown): PaymentLinkErrorCode {
+  if (error instanceof PaymentLinkError) return error.code;
+
+  return 'unavailable';
+}
+
 export function CallJourneyActions({
   journey,
   gender,
@@ -89,8 +97,8 @@ export function CallJourneyActions({
       const link = await sendPaymentLink(appState.paymentLinkOutcome);
       recordPaymentLinkSent(journey.callId, link);
       toast.success(`Payment link sent to ${email}.`);
-    } catch {
-      toast.error(PAYMENT_LINK_ERROR_MESSAGES['delivery-failure']);
+    } catch (error) {
+      toast.error(PAYMENT_LINK_ERROR_MESSAGES[paymentLinkErrorCode(error)]);
     } finally {
       setSending(false);
     }
