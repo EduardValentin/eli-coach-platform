@@ -29,6 +29,16 @@ import { AuthNavActions } from "./auth-nav-actions";
 
 const STORE_PATH = "/app/store";
 
+const CLIENT_SESSION = {
+  kind: "authenticated",
+  portalDestination: { href: "/client", label: "Client Portal" },
+} as const;
+
+const COACH_SESSION = {
+  kind: "authenticated",
+  portalDestination: { href: "/coach", label: "Coach Portal" },
+} as const;
+
 function renderAuthNavActions(
   props: Omit<Parameters<typeof AuthNavActions>[0], "storePath" | "placement">,
 ) {
@@ -59,7 +69,7 @@ describe("AuthNavActions", () => {
   it("offers a Client Portal link plus Sign Out to a signed-in CLIENT", () => {
     // arrange & act
     renderAuthNavActions({
-      session: { kind: "authenticated", role: "CLIENT" },
+      session: CLIENT_SESSION,
     });
 
     // assert
@@ -72,7 +82,7 @@ describe("AuthNavActions", () => {
 
   it("offers a Coach Portal link plus Sign Out to a signed-in COACH", () => {
     // arrange & act
-    renderAuthNavActions({ session: { kind: "authenticated", role: "COACH" } });
+    renderAuthNavActions({ session: COACH_SESSION });
 
     // assert
     const portalLink = screen.getByRole("link", { name: "Coach Portal" });
@@ -82,9 +92,28 @@ describe("AuthNavActions", () => {
     ).toBeInTheDocument();
   });
 
+  it("offers a client before her onboarding the link to finish it", () => {
+    // arrange & act
+    renderAuthNavActions({
+      session: {
+        kind: "authenticated",
+        portalDestination: {
+          href: "/client/welcome",
+          label: "Finish your onboarding",
+        },
+      },
+    });
+
+    // assert
+    const portalLink = screen.getByRole("link", {
+      name: "Finish your onboarding",
+    });
+    expect(portalLink).toHaveAttribute("href", "/client/welcome");
+  });
+
   it("never renders an account or profile menu", () => {
     // arrange & act
-    renderAuthNavActions({ session: { kind: "authenticated", role: "COACH" } });
+    renderAuthNavActions({ session: COACH_SESSION });
 
     // assert
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();
@@ -97,7 +126,7 @@ describe("AuthNavActions", () => {
     // arrange & act
     const { container } = renderAuthNavActions({
       children: <span data-testid="cart-slot">Cart</span>,
-      session: { kind: "authenticated", role: "CLIENT" },
+      session: CLIENT_SESSION,
     });
 
     // assert
@@ -135,7 +164,7 @@ describe("AuthNavActions", () => {
 
     // act
     renderAuthNavActions({
-      session: { kind: "authenticated", role: "CLIENT" },
+      session: CLIENT_SESSION,
     });
 
     // assert

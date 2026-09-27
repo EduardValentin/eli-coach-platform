@@ -36,6 +36,7 @@ import type { Clock } from "@eli-coach-platform/domain/shared";
 import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 import type { PaymentCompletionHandler } from "@eli-coach-platform/infrastructure/payments/server";
 
+import { ClientJourneyController } from "~/features/coaching-sales/api/client/client-journey-controller.server";
 import { CoachSalesController } from "~/features/coaching-sales/api/coach/coach-sales-controller.server";
 import { PaymentLinksController } from "~/features/coaching-sales/api/coach/payment-links-controller.server";
 import { CoachingPurchaseCompletionHandler } from "~/features/coaching-sales/api/payments/coaching-purchase-completion-handler.server";
@@ -56,6 +57,7 @@ import { EmailClientInvitationNotifications } from "~/features/coaching-sales/em
 
 export type CoachingSalesFeature = {
   checkouts: CheckoutsController;
+  clientJourney: ClientJourneyController;
   coachSales: CoachSalesController;
   invitations: InvitationsController;
   paymentLinks: PaymentLinksController;
@@ -201,6 +203,7 @@ export function composeCoachingSalesFeature(
         resolvePaymentLink: useCases.resolvePaymentLink,
         startCheckout: useCases.startCheckout,
       }),
+      clientJourney: new ClientJourneyController(clientJourneyUseCases),
       coachSales: new CoachSalesController({
         readCallSalesStates: useCases.readCallSalesStates,
         readPricingTiers: useCases.readPricingTiers,

@@ -107,6 +107,10 @@
   "apps/platform/src/surfaces/client-portal/pages/surface-to-surface.tsx": [
     "surface-to-surface"
   ],
+  "apps/platform/src/surfaces/client-portal/shell/access-layout.server.ts": [
+    "route-thinness",
+    "workspace-by-name-app"
+  ],
   "apps/platform/src/surfaces/coach-portal/pages/surface-to-feature.tsx": [
     "route-thinness",
     "surface-coach-portal-to-feature"

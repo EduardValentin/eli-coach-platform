@@ -1,4 +1,5 @@
 import type { AccountSnapshot } from "@eli-coach-platform/domain/account";
+import { ClientJourney } from "@eli-coach-platform/domain/client-journey";
 import type { LoaderFunctionArgs } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
@@ -6,6 +7,8 @@ import {
   sessionContext,
   type ResolvedSession,
 } from "~/features/accounts/server/guards/session-context.server";
+import type { CoachingSalesFeature } from "~/features/coaching-sales/server/coaching-sales-composition.server";
+import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
 import { waitlistContext } from "~/features/waitlist/server/guards/waitlist-context.server";
 import type { WaitlistFeature } from "~/features/waitlist/server/waitlist-composition.server";
 import { presentWaitlist } from "~/features/waitlist/ui/shared/waitlist-presentation";
@@ -48,7 +51,7 @@ describe("public layout loader", () => {
     });
   });
 
-  it("maps an authenticated session down to its role, never the account id", async () => {
+  it("points the coach's nav at her portal and never carries the account id", async () => {
     // arrange
     const account = buildAccount({ id: "acct_should_not_leak", role: "COACH" });
     const args = createLoaderArgs({
@@ -61,9 +64,56 @@ describe("public layout loader", () => {
     // assert
     expect(loaderData.session).toEqual({
       kind: "authenticated",
-      role: "COACH",
+      portalDestination: { href: "/coach", label: "Coach Portal" },
     });
     expect(JSON.stringify(loaderData)).not.toContain("acct_should_not_leak");
+  });
+
+  it("points a client before her onboarding at the step she is on", async () => {
+    // arrange
+    const args = createLoaderArgs({
+      journey: ClientJourney.from({
+        clientId: "client_1",
+        firstName: "Ana",
+        gender: "female",
+        welcomeSeenAt: null,
+      }),
+      session: {
+        account: buildAccount({ role: "CLIENT" }),
+        kind: "authenticated",
+      },
+    });
+
+    // act
+    const loaderData = await loader(args);
+
+    // assert
+    expect(loaderData.session).toEqual({
+      kind: "authenticated",
+      portalDestination: {
+        href: "/client/welcome",
+        label: "Finish your onboarding",
+      },
+    });
+  });
+
+  it("points a client account with no journey at the client portal", async () => {
+    // arrange
+    const args = createLoaderArgs({
+      session: {
+        account: buildAccount({ role: "CLIENT" }),
+        kind: "authenticated",
+      },
+    });
+
+    // act
+    const loaderData = await loader(args);
+
+    // assert
+    expect(loaderData.session).toEqual({
+      kind: "authenticated",
+      portalDestination: { href: "/client", label: "Client Portal" },
+    });
   });
 
   it("joins the store path under a non-root base path", async () => {
@@ -150,8 +200,15 @@ function createRevalidationArguments(currentUrl: URL, nextUrl: URL) {
 
 function createLoaderArgs(options: {
   appBasePath?: string;
+  journey?: ClientJourney;
   session: ResolvedSession;
 }): LoaderFunctionArgs {
+  const coachingSales = {
+    readClientJourney: {
+      execute: vi.fn().mockResolvedValue(options.journey ?? null),
+    },
+  } as unknown as CoachingSalesFeature;
+
   const waitlist = {
     waitlist: { getWaitlist: vi.fn().mockResolvedValue(liveWaitlist) },
   } as unknown as WaitlistFeature;
@@ -162,6 +219,7 @@ function createLoaderArgs(options: {
         appBasePath: options.appBasePath ?? "/",
         botDetection: botDetectionConfig,
       }),
+      contextEntry(coachingSalesContext, coachingSales),
       contextEntry(sessionContext, options.session),
       contextEntry(waitlistContext, waitlist),
     ],

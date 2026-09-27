@@ -92,7 +92,10 @@ function renderClientMobileAuthActions() {
   return (
     <AuthNavActions
       placement="mobile-menu"
-      session={{ kind: "authenticated", role: "CLIENT" }}
+      session={{
+        kind: "authenticated",
+        portalDestination: { href: "/client", label: "Client Portal" },
+      }}
       storePath="/store"
     />
   );

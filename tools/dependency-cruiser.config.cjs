@@ -19,7 +19,7 @@ const ROUTE_MODULES = flatOrInConceptFolder([
   `${FEATURES}[^/]+/api/${CONCEPT}[^/]+(?<!\\.server)\\.ts$`,
   `${FEATURES}[^/]+/ui/(public|client|coach)/${CONCEPT}[^/]+-page\\.tsx$`,
   `${SURFACES}[^/]+/(pages|api)/`,
-  `${SURFACES}[^/]+/shell/layout(\\.server)?\\.tsx?$`,
+  `${SURFACES}[^/]+/shell/(access-)?layout(\\.server)?\\.tsx?$`,
   `${APP}server/api/${CONCEPT}[^/]+(?<!\\.server)\\.ts$`,
 ]);
 

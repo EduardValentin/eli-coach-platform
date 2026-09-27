@@ -1,26 +1,17 @@
 import { SignInButton } from "@clerk/react-router";
-import type { AccountRole } from "@eli-coach-platform/domain/account";
 import { cn } from "@eli-coach-platform/ui/lib";
 import { buttonVariants } from "@eli-coach-platform/ui/primitives";
 import type { ReactNode } from "react";
 import { Link } from "react-router";
 
-import type { PublicSessionState } from "~/features/accounts/contracts/account";
-import { PORTAL_PATH_BY_ROLE } from "~/features/accounts/contracts/paths";
+import type {
+  PortalDestination,
+  PublicSessionState,
+} from "~/features/accounts/contracts/account";
 import { SignOutControl } from "~/features/accounts/ui/shared/sign-out-control";
 
 type AuthNavActionsPlacement =
   "header-solid" | "header-transparent" | "mobile-menu";
-
-type PortalDestination = {
-  href: string;
-  label: string;
-};
-
-const PORTAL_DESTINATION_BY_ROLE: Record<AccountRole, PortalDestination> = {
-  CLIENT: { href: PORTAL_PATH_BY_ROLE.CLIENT, label: "Client Portal" },
-  COACH: { href: PORTAL_PATH_BY_ROLE.COACH, label: "Coach Portal" },
-};
 
 export type AuthNavActionsProps = {
   children?: ReactNode;
@@ -32,9 +23,7 @@ export type AuthNavActionsProps = {
 export function AuthNavActions(props: AuthNavActionsProps) {
   const { children, placement, session, storePath } = props;
   const portalDestination =
-    session.kind === "authenticated"
-      ? PORTAL_DESTINATION_BY_ROLE[session.role]
-      : undefined;
+    session.kind === "authenticated" ? session.portalDestination : undefined;
 
   return (
     <>
@@ -66,6 +55,7 @@ function PortalPillLink(props: {
     return (
       <Link
         className="text-2xl font-medium tracking-wide text-brand-primary"
+        data-parity="portal-link"
         to={destination.href}
       >
         {destination.label}
@@ -84,6 +74,7 @@ function PortalPillLink(props: {
         }),
         "hidden md:inline-flex",
       )}
+      data-parity="portal-link"
       to={destination.href}
     >
       {destination.label}

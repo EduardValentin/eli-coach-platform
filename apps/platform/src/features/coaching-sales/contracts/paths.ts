@@ -1,3 +1,5 @@
+import { CLIENT_PORTAL_PATH } from "../../accounts/contracts/paths";
+
 export const SELECT_BUNDLE_ROUTE_SEGMENT = "select-bundle";
 
 const SELECT_BUNDLE_PATH = `/${SELECT_BUNDLE_ROUTE_SEGMENT}`;
@@ -9,6 +11,14 @@ export const CHECKOUT_COMPLETE_PATH = `/${CHECKOUT_COMPLETE_ROUTE_SEGMENT}`;
 export const INVITATION_ROUTE_SEGMENT = "invitation";
 
 export const INVITATION_PATH = `/${INVITATION_ROUTE_SEGMENT}`;
+
+export const CLIENT_WELCOME_ROUTE_SEGMENT = "welcome";
+
+export const CLIENT_WELCOME_PATH = `${CLIENT_PORTAL_PATH}/${CLIENT_WELCOME_ROUTE_SEGMENT}`;
+
+const CLIENT_ONBOARDING_ROUTE_SEGMENT = "onboarding";
+
+export const CLIENT_ONBOARDING_PATH = `${CLIENT_PORTAL_PATH}/${CLIENT_ONBOARDING_ROUTE_SEGMENT}`;
 
 export const COACHING_SALES_API_PATHS = {
   paymentLinks: "/api/coaching-sales/payment-links",

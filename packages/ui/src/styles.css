@@ -283,6 +283,8 @@
     --shadow-public-platform-cloud-active
   );
 
+  --animate-heartbeat: heartbeat 1.2s ease-in-out 1;
+
   --color-surface-page: var(--color-surface-page);
   --color-surface-base: var(--color-surface-base);
   --color-surface-subtle: var(--color-surface-subtle);
@@ -495,6 +497,25 @@
   --color-focus-ring: var(--color-primary);
   --color-portal-accent: var(--color-text-secondary);
   --color-portal-accent-hover: var(--color-text-primary);
+}
+
+@keyframes heartbeat {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  20% {
+    transform: scale(1.18);
+  }
+  40% {
+    transform: scale(1);
+  }
+  60% {
+    transform: scale(1.18);
+  }
+  80% {
+    transform: scale(1);
+  }
 }
 
 @keyframes ui-popover-in {

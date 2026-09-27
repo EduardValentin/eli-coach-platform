@@ -12,6 +12,7 @@ import { ApiIntegrationTestSuite } from "~integration-test-config/api-integratio
 import {
   ANA,
   CoachingSalesJourney,
+  type Visitor,
 } from "~integration-test-config/coaching-sales-journey";
 import {
   COACH_SESSION,
@@ -25,7 +26,12 @@ const journey = new CoachingSalesJourney(rig);
 
 const PAST_CALLS = "/coach/assessment-calls/?when=past";
 const ALL_CALLS = "/coach/assessment-calls/";
-const BEA = { email: "bea@example.com", firstName: "Bea", lastName: "Ionescu" };
+const BEA: Visitor = {
+  email: "bea@example.com",
+  firstName: "Bea",
+  gender: "female",
+  lastName: "Ionescu",
+};
 
 describe.sequential("coach assessment calls page sales integration", () => {
   beforeAll(async () => {

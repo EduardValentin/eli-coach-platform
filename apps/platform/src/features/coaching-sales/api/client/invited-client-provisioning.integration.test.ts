@@ -28,6 +28,7 @@ const rig = new PlatformRig(suite);
 const journey = new CoachingSalesJourney(rig);
 
 const CLIENT_PORTAL = "/client";
+const WELCOME = "/client/welcome";
 
 const INVITED_CLIENT: AccountSession = {
   sessionId: "sess_invited_1",
@@ -74,7 +75,7 @@ describe.sequential("invited client provisioning integration", () => {
     delete process.env.BOOTSTRAP_COACH_AUTH_SUBJECT_ID;
   });
 
-  it("admits the paid client on her first signed-in request: a CLIENT account, her client bound, her invitation used", async () => {
+  it("admits the paid client on her first signed-in request and sends her to the welcome screen: a CLIENT account, her client bound, her invitation used", async () => {
     // arrange
     const invitation = await payAndReadInvitation();
     await suite.wireMock.stub(
@@ -87,7 +88,8 @@ describe.sequential("invited client provisioning integration", () => {
     const response = await rig.requestAs(INVITED_CLIENT, CLIENT_PORTAL);
 
     // assert
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(302);
+    expect(response.headers.get("location")).toBe(suite.path(WELCOME));
     expect(await accountsOf(INVITED_CLIENT)).toEqual([
       { id: expect.any(String), role: "CLIENT" },
     ]);
@@ -115,7 +117,8 @@ describe.sequential("invited client provisioning integration", () => {
     const response = await rig.requestAs(INVITED_CLIENT, CLIENT_PORTAL);
 
     // assert
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(302);
+    expect(response.headers.get("location")).toBe(suite.path(WELCOME));
     expect(await accountsOf(INVITED_CLIENT)).toEqual(accountsAfterAdmission);
     expect(await identityLookupsOf(INVITED_CLIENT)).toHaveLength(1);
   });

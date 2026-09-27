@@ -3,10 +3,8 @@ import type { LoaderFunctionArgs } from "react-router";
 
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 import type { PublicSessionState } from "~/features/accounts/contracts/account";
-import {
-  sessionContext,
-  type ResolvedSession,
-} from "~/features/accounts/server/guards/session-context.server";
+import { sessionContext } from "~/features/accounts/server/guards/session-context.server";
+import { readClientJourneyStep } from "~/features/coaching-sales/server/guards/require-client-journey-step.server";
 import { STORE_PATH } from "~/features/store/contracts/paths";
 import {
   presentWaitlist,
@@ -15,6 +13,8 @@ import {
 import { waitlistContext } from "~/features/waitlist/server/guards/waitlist-context.server";
 
 import { runtimeConfigContext } from "~/server/guards/runtime-config-context.server";
+
+import { resolvePortalDestination } from "./portal-destination";
 
 export type PublicLayoutLoaderData = {
   botDetection: BotDetectionConfig;
@@ -31,17 +31,26 @@ export async function loader(
 
   return {
     botDetection: runtimeConfig.botDetection,
-    session: toPublicSessionState(args.context.get(sessionContext)),
+    session: await readPublicSessionState(args),
     storePath: buildRedirectPath(runtimeConfig.appBasePath, STORE_PATH),
     waitlist: presentWaitlist(await waitlist.getWaitlist()),
   };
 }
 
-// Maps the server-only ResolvedSession (which carries an AccountSnapshot,
-// including its id) down to the role-only shape the public nav needs — the
-// account id has no reason to reach the browser and never should.
-function toPublicSessionState(session: ResolvedSession): PublicSessionState {
-  return session.kind === "anonymous"
-    ? { kind: "anonymous" }
-    : { kind: "authenticated", role: session.account.role };
+async function readPublicSessionState(
+  args: LoaderFunctionArgs,
+): Promise<PublicSessionState> {
+  const session = args.context.get(sessionContext);
+
+  if (session.kind === "anonymous") {
+    return { kind: "anonymous" };
+  }
+
+  return {
+    kind: "authenticated",
+    portalDestination: resolvePortalDestination({
+      journeyStep: await readClientJourneyStep(args),
+      role: session.account.role,
+    }),
+  };
 }
