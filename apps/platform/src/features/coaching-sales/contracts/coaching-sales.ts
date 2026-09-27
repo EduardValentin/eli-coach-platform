@@ -105,5 +105,8 @@ export const checkoutConfirmationSchema = z.discriminatedUnion("state", [
 
 export type CheckoutConfirmation = z.infer<typeof checkoutConfirmationSchema>;
 
-export const SUBSCRIPTION_NOTE =
+export const BUNDLE_PAGE_SUBSCRIPTION_NOTE =
   "Each bundle is a subscription: it renews at its own length — every 1, 3 or 6 months — and each renewal is charged up front.";
+
+export const PAYMENT_LINK_EMAIL_SUBSCRIPTION_NOTE =
+  "Each bundle is a subscription that renews at its own length — every 1, 3 or 6 months — and our terms apply.";

@@ -6,10 +6,13 @@ import {
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import { formatEuros } from "~/features/coaching-sales/contracts/bundle-cards";
+import {
+  bundleLengthLabel,
+  formatEuros,
+} from "~/features/coaching-sales/contracts/bundle-cards";
+import { PAYMENT_LINK_EMAIL_SUBSCRIPTION_NOTE } from "~/features/coaching-sales/contracts/coaching-sales";
 
 import {
-  PAYMENT_LINK_EMAIL_SUBSCRIPTION_NOTE,
   PaymentLinkEmailTemplate,
   type PaymentLinkEmailBundleViewModel,
   type PaymentLinkEmailViewModel,
@@ -101,10 +104,6 @@ function toBundleViewModel(
     perMonth: formatEuros(bundle.perMonth(tier)),
     total: formatEuros(bundle.total(tier)),
   };
-}
-
-function bundleLengthLabel(months: number): string {
-  return months === 1 ? "1 month" : `${months} months`;
 }
 
 function renderText(viewModel: PaymentLinkEmailViewModel): string {

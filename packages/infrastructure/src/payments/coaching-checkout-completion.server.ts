@@ -1,6 +1,6 @@
 import {
   findCoachingBundle,
-  type PriceTier,
+  PRICE_TIERS,
 } from "@eli-coach-platform/domain/coaching-bundle";
 import {
   COACHING_SUBSCRIPTION_PURPOSE,
@@ -12,11 +12,6 @@ import { z } from "zod";
 
 import type { PaidCheckoutSession } from "./checkout-session-completion.server";
 import { PAYMENT_PURPOSE_METADATA_KEY } from "./payment-completion-handler.server";
-
-const PRICE_TIERS = [
-  "regular",
-  "reduced",
-] as const satisfies readonly PriceTier[];
 
 const coachingCheckoutMetadataSchema = z
   .object({

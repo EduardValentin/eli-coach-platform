@@ -68,9 +68,21 @@ function renderPage(address: string) {
   );
 }
 
+const nodesAddedOutsideReact: HTMLElement[] = [];
+
+function appendSkipTarget() {
+  const skipTarget = document.createElement('main');
+  skipTarget.id = 'main-content';
+  document.body.append(skipTarget);
+  nodesAddedOutsideReact.push(skipTarget);
+}
+
 afterEach(() => {
   window.history.replaceState({}, '', '/');
   window.sessionStorage.clear();
+  while (nodesAddedOutsideReact.length > 0) {
+    nodesAddedOutsideReact.pop()?.remove();
+  }
 });
 
 describe('choosing a bundle from a payment link', () => {
@@ -361,11 +373,10 @@ describe('choosing a bundle from a payment link', () => {
       screen.queryByRole('button', { name: 'Continue to Checkout' }),
     ).not.toBeInTheDocument();
   }, TEST_TIMEOUT_MS);
+
   it('keeps her link when the fragment names an anchor on the page', async () => {
     // arrange
-    const skipTarget = document.createElement('main');
-    skipTarget.id = 'main-content';
-    document.body.append(skipTarget);
+    appendSkipTarget();
     window.sessionStorage.setItem(PAYMENT_LINK_STORAGE_KEY, DEMO_TOKEN);
 
     // act
@@ -378,7 +389,6 @@ describe('choosing a bundle from a payment link', () => {
     expect(window.sessionStorage.getItem(PAYMENT_LINK_STORAGE_KEY)).toBe(
       DEMO_TOKEN,
     );
-    skipTarget.remove();
   }, TEST_TIMEOUT_MS);
 
   it('switches to a second link opened in the same tab', async () => {

@@ -51,8 +51,6 @@ type SessionsClearingOutcome = "cleared" | "already_paid";
 
 type SessionExpiryOutcome = "expired" | "already_paid";
 
-const COACHING_CURRENCY = "eur";
-
 export class StartCheckoutUseCase {
   constructor(private readonly options: StartCheckoutUseCaseOptions) {}
 
@@ -106,7 +104,7 @@ export class StartCheckoutUseCase {
         months: bundle.months,
         amountCents,
       },
-      currency: COACHING_CURRENCY,
+      currency: bundle.currency,
       metadata: {
         purpose: COACHING_SUBSCRIPTION_PURPOSE,
         assessmentCallId: call.id,
@@ -124,7 +122,7 @@ export class StartCheckoutUseCase {
       bundleId: bundle.id,
       tier,
       amountCents,
-      currency: COACHING_CURRENCY,
+      currency: bundle.currency,
       startChoice: command.startChoice,
       createdAt: now,
     });

@@ -528,7 +528,7 @@ describe("ResolvePaymentLinkUseCase", () => {
 });
 
 describe("ReadCallSalesStatesUseCase", () => {
-  it("answers the sales state of each requested call", async () => {
+  it("answers a sales state for every requested call", async () => {
     // arrange
     const states = new Map<string, CallSalesState>([
       ["call-1", "held"],

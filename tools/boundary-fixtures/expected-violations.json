@@ -1,4 +1,7 @@
 {
+  "apps/platform/src/features/assessment-calls/contracts/reaches-coaching-sales.ts": [
+    "assessment-calls-never-reach-coaching-sales"
+  ],
   "apps/platform/src/features/store/api/catalog/deeper/not-a-route.ts": [
     "feature-api-to-data"
   ],

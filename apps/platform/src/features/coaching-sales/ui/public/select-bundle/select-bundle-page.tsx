@@ -13,7 +13,7 @@ import {
 import { coachingBundleIdSchema } from "~/features/coaching-sales/contracts/bundle-cards";
 import {
   startChoiceSchema,
-  SUBSCRIPTION_NOTE,
+  BUNDLE_PAGE_SUBSCRIPTION_NOTE,
   type BundlePage,
   type CheckoutChoice,
 } from "~/features/coaching-sales/contracts/coaching-sales";
@@ -246,7 +246,7 @@ function BundleCheckoutForm(props: { page: BundlePage; token: string }) {
           cards={page.cards}
           disabled={!isValidLink}
           mode="checkout"
-          note={SUBSCRIPTION_NOTE}
+          note={BUNDLE_PAGE_SUBSCRIPTION_NOTE}
           onChooseBundle={setBundleId}
           pricing={isValidLink ? page.tier : "regular"}
           selectedBundleId={bundleId}

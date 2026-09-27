@@ -50,11 +50,14 @@ const LISTING = {
 const CALLS_URL = "http://localhost/coach/assessment-calls";
 
 describe("coach assessment calls page loader", () => {
-  it("carries every booked call, the sales state of each ended one and the price tier of every one into the server-rendered page", async () => {
+  it("carries every booked call with its sales state and its price tier into the server-rendered page", async () => {
     // arrange
-    const loadSalesStates = vi
-      .fn()
-      .mockResolvedValue({ ended: "paid", "ending-now": "held" });
+    const salesStates = {
+      ended: "paid",
+      "ending-now": "held",
+      upcoming: "held",
+    };
+    const loadSalesStates = vi.fn().mockResolvedValue(salesStates);
     const pricingTiers = {
       ended: "reduced",
       "ending-now": "regular",
@@ -75,9 +78,13 @@ describe("coach assessment calls page loader", () => {
     expect(loaded).toEqual({
       ...LISTING,
       pricingTiers,
-      salesStates: { ended: "paid", "ending-now": "held" },
+      salesStates,
     });
-    expect(loadSalesStates).toHaveBeenCalledWith(["ended", "ending-now"]);
+    expect(loadSalesStates).toHaveBeenCalledWith([
+      "ended",
+      "ending-now",
+      "upcoming",
+    ]);
     expect(loadPricingTiers).toHaveBeenCalledWith([
       { email: "ana@example.com", id: "ended" },
       { email: "ana@example.com", id: "ending-now" },

@@ -45,6 +45,15 @@ const callFirstPage: BundlePage = {
 
 const server = setupServer();
 
+const nodesAddedOutsideReact: HTMLElement[] = [];
+
+function appendSkipTarget() {
+  const skipTarget = document.createElement("main");
+  skipTarget.id = "main-content";
+  document.body.append(skipTarget);
+  nodesAddedOutsideReact.push(skipTarget);
+}
+
 let submissions: FormData[] = [];
 let resolutions: unknown[] = [];
 
@@ -76,6 +85,9 @@ afterEach(() => {
   server.resetHandlers();
   window.sessionStorage.clear();
   window.history.replaceState(null, "", "/");
+  while (nodesAddedOutsideReact.length > 0) {
+    nodesAddedOutsideReact.pop()?.remove();
+  }
 });
 
 afterAll(() => {
@@ -374,11 +386,10 @@ describe("SelectBundleRoute", () => {
       screen.queryByRole("button", { name: "Continue to Checkout" }),
     ).not.toBeInTheDocument();
   });
+
   it("keeps her link when the fragment names an anchor on the page", async () => {
     // arrange
-    const skipTarget = document.createElement("main");
-    skipTarget.id = "main-content";
-    document.body.append(skipTarget);
+    appendSkipTarget();
     window.sessionStorage.setItem(PAYMENT_LINK_STORAGE_KEY, TOKEN);
 
     // act
@@ -390,7 +401,6 @@ describe("SelectBundleRoute", () => {
     ).toBeEnabled();
     expect(resolutions).toEqual([{ token: TOKEN }]);
     expect(window.sessionStorage.getItem(PAYMENT_LINK_STORAGE_KEY)).toBe(TOKEN);
-    skipTarget.remove();
   });
 
   it("switches to a second link opened in the same tab", async () => {

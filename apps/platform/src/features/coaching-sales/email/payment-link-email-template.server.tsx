@@ -11,6 +11,8 @@ import {
   EmailText,
 } from "@eli-coach-platform/infrastructure/email/server";
 
+import { PAYMENT_LINK_EMAIL_SUBSCRIPTION_NOTE } from "~/features/coaching-sales/contracts/coaching-sales";
+
 import {
   bodyStyle,
   bundleCardStyle,
@@ -68,8 +70,6 @@ export type PaymentLinkEmailViewModel = {
 
 const EYEBROW = "Your bundles — 1-on-1 coaching";
 const BUTTON_LABEL = "Choose your bundle";
-export const PAYMENT_LINK_EMAIL_SUBSCRIPTION_NOTE =
-  "Each bundle is a subscription that renews at its own length — every 1, 3 or 6 months — and our terms apply.";
 
 export function PaymentLinkEmailTemplate({
   bundles,

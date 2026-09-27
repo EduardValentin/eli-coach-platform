@@ -100,7 +100,7 @@ describe("PostgresCoachingPurchases#recordCompletion", () => {
 });
 
 describe("PostgresCoachingPurchases#forCalls", () => {
-  it("answers held for every call without a valid link or a client, and lets paid outrank a sent link", async () => {
+  it("answers a state for every requested call, held when nothing is recorded, and lets paid outrank a sent link", async () => {
     // arrange
     const purchases = createPurchases(
       createDatabaseAnsweringSalesRows([

@@ -1,7 +1,6 @@
 import { joinBasePath } from "@eli-coach-platform/config";
 import {
   COACHING_BUNDLES,
-  getCoachingBundle,
   type PriceTier,
 } from "@eli-coach-platform/domain/coaching-bundle";
 import {
@@ -28,11 +27,10 @@ import {
 
 import {
   coachingBundleIdSchema,
-  formatEuros,
   presentBundleCards,
-  renewalLabel,
   type CoachingBundleCard,
 } from "~/features/coaching-sales/contracts/bundle-cards";
+import { presentPaidConfirmation } from "~/features/coaching-sales/contracts/checkout-confirmation";
 import {
   bundlePageRequestSchema,
   bundlePageSchema,
@@ -67,7 +65,6 @@ type OpenPaymentLinkResolution = Exclude<
 
 const BUNDLE_PAGE_REQUEST_MAX_BYTES = 1024;
 const CHECKOUT_FORM_MAX_BYTES = 4096;
-const CENTS_PER_EURO = 100;
 const CHECKOUT_SESSION_ID_PLACEHOLDER = "{CHECKOUT_SESSION_ID}";
 const SEE_OTHER = 303;
 const UNCACHED_PAGE_HEADERS = { "Cache-Control": "no-store" };
@@ -227,25 +224,6 @@ export class CheckoutsController {
       this.options.publicAppUrl,
     ).toString();
   }
-}
-
-type PaidCheckout = Extract<
-  Awaited<ReturnType<ReadCheckoutConfirmationUseCase["execute"]>>,
-  { status: "paid" }
->;
-
-function presentPaidConfirmation(checkout: PaidCheckout) {
-  const bundle = getCoachingBundle(checkout.bundleId);
-
-  return {
-    state: "paid",
-    amount: formatEuros(checkout.amountCents / CENTS_PER_EURO),
-    bundleTitle: bundle.title,
-    email: checkout.email,
-    renewalLabel: renewalLabel(bundle.months),
-    startChoice: checkout.startChoice,
-    waitingStartsOn: checkout.waitingStartsOn.toISOString(),
-  };
 }
 
 async function readJsonRequestBody(request: Request): Promise<unknown> {
