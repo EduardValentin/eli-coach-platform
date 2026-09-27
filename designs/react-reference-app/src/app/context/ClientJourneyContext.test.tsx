@@ -15,6 +15,7 @@ import {
   useClientJourneys,
 } from './ClientJourneyContext';
 import type { PrototypeBooking } from '../services/assessmentCallService';
+import { paymentLinkExpiresAt } from '../services/paymentLinkService';
 
 function JourneyProbe() {
   const { demoJourney, recordPaymentLinkSent, recordPaid } =
@@ -35,6 +36,7 @@ function JourneyProbe() {
           recordPaymentLinkSent(DEMO_JOURNEY_CALL_ID, {
             token: 'pl-first',
             sentAt: new Date(),
+            expiresAt: paymentLinkExpiresAt(new Date()),
           })
         }
       >
@@ -46,6 +48,7 @@ function JourneyProbe() {
           recordPaymentLinkSent(DEMO_JOURNEY_CALL_ID, {
             token: 'pl-second',
             sentAt: new Date(),
+            expiresAt: paymentLinkExpiresAt(new Date()),
           })
         }
       >

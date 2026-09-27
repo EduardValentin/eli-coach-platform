@@ -18,7 +18,10 @@ import { createMemoryRouter, Outlet, RouterProvider } from "react-router";
 
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 
+import { COACHING_BUNDLES } from "@eli-coach-platform/domain/coaching-bundle";
+
 import { BOOK_PATH } from "~/features/assessment-calls/contracts/paths";
+import { presentBundleCards } from "~/features/coaching-sales/contracts/bundle-cards";
 
 import type { PublicOutletContext } from "~/surfaces/public-site/shell/layout";
 import PricingRoute from "./pricing";
@@ -62,13 +65,25 @@ afterAll(() => {
   server.close();
 });
 
+function pricingPageFor(context: PublicOutletContext) {
+  const tier = context.waitlist.showsBundleOffer ? "reduced" : "regular";
+
+  return {
+    cards: presentBundleCards(COACHING_BUNDLES, tier),
+    pricing: context.waitlist.showsBundleOffer ? "waitlist" : "regular",
+  } as const;
+}
+
 function renderPricingRoute(context: PublicOutletContext) {
+  const pricingPage = pricingPageFor(context);
   const router = createMemoryRouter(
     [
       {
         children: [
           {
             element: <PricingRoute />,
+            id: "pricing",
+            loader: () => pricingPage,
             path: "pricing",
           },
           {
@@ -84,7 +99,10 @@ function renderPricingRoute(context: PublicOutletContext) {
         path: WAITLIST_API_PATH,
       },
     ],
-    { initialEntries: ["/pricing"] },
+    {
+      hydrationData: { loaderData: { pricing: pricingPage } },
+      initialEntries: ["/pricing"],
+    },
   );
 
   return {

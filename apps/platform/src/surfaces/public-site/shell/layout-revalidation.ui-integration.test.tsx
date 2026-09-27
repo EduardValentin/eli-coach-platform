@@ -28,7 +28,9 @@ vi.mock("@clerk/react-router", () => ({
   SignOutButton: ({ children }: PropsWithChildren) => children,
 }));
 
+import { COACHING_BUNDLES } from "@eli-coach-platform/domain/coaching-bundle";
 import type { WaitlistSnapshot } from "@eli-coach-platform/domain/waitlist";
+import { presentBundleCards } from "~/features/coaching-sales/contracts/bundle-cards";
 import { presentWaitlist } from "~/features/waitlist/ui/shared/waitlist-presentation";
 import CatalogRoute, {
   shouldRevalidate as catalogShouldRevalidate,
@@ -158,7 +160,14 @@ function renderPublicSite() {
             path: "store",
             shouldRevalidate: catalogShouldRevalidate,
           },
-          { Component: PricingRoute, path: "pricing" },
+          {
+            Component: PricingRoute,
+            loader: () => ({
+              cards: presentBundleCards(COACHING_BUNDLES, "regular"),
+              pricing: "regular" as const,
+            }),
+            path: "pricing",
+          },
         ],
         Component: PublicLayoutRoute,
         loader: ({ url }) => {

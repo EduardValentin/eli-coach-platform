@@ -1,0 +1,5 @@
+[
+  { "click": "[data-parity=\"payment-link-action\"]" },
+  { "waitFor": "[data-parity-root=\"ConfirmDialog\"]" },
+  { "wait": 400 }
+]

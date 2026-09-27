@@ -1,3 +1,7 @@
+import type {
+  PriceTier,
+  PricingEligibility,
+} from "@eli-coach-platform/domain/coaching-bundle";
 import {
   WAITLIST_REDUCED_PRICING_CAP,
   type WaitlistEntries,
@@ -6,7 +10,7 @@ import {
   type RegularPricingSignupResult,
 } from "@eli-coach-platform/domain/waitlist";
 import type { DatabaseClient } from "@eli-coach-platform/db";
-import { and, count, eq, lt, sql } from "drizzle-orm";
+import { and, count, eq, inArray, lt, sql } from "drizzle-orm";
 import { waitlistEntriesTable } from "./schema.server";
 import {
   rejectsDuplicateSignup,
@@ -20,6 +24,7 @@ type RegularPricingSignupOptions = Parameters<
   WaitlistEntries["registerRegularPricingSignup"]
 >[0];
 type SignupOptions = ReducedPricingSignupOptions | RegularPricingSignupOptions;
+type EligibleEmail = Parameters<PricingEligibility["tierForEmail"]>[0];
 
 type EntryPlacement =
   | { pricing: "reduced"; reducedSlot: number }
@@ -33,8 +38,52 @@ type FreeReducedSlotRow = {
   reducedSlot: number;
 };
 
-export class PostgresWaitlistRepository implements WaitlistEntries {
+export class PostgresWaitlistRepository
+  implements WaitlistEntries, PricingEligibility
+{
   constructor(private readonly database: DatabaseClient) {}
+
+  async tierForEmail(email: EligibleEmail): Promise<PriceTier> {
+    const reducedAllocations = await this.database
+      .select({ id: waitlistEntriesTable.id })
+      .from(waitlistEntriesTable)
+      .where(
+        and(
+          eq(waitlistEntriesTable.email, email.value),
+          eq(waitlistEntriesTable.pricingEligibility, "reduced"),
+        ),
+      )
+      .limit(1);
+
+    return reducedAllocations.length > 0 ? "reduced" : "regular";
+  }
+
+  async tiersForEmails(
+    emails: readonly EligibleEmail[],
+  ): Promise<ReadonlyMap<string, PriceTier>> {
+    if (emails.length === 0) {
+      return new Map();
+    }
+
+    const addresses = emails.map((email) => email.value);
+    const reducedRows = await this.database
+      .selectDistinct({ email: waitlistEntriesTable.email })
+      .from(waitlistEntriesTable)
+      .where(
+        and(
+          inArray(waitlistEntriesTable.email, addresses),
+          eq(waitlistEntriesTable.pricingEligibility, "reduced"),
+        ),
+      );
+    const reduced = new Set(reducedRows.map((row) => row.email));
+
+    return new Map(
+      addresses.map((address) => [
+        address,
+        reduced.has(address) ? "reduced" : "regular",
+      ]),
+    );
+  }
 
   async countReducedPricingSignupsCreatedBefore(options: {
     campaignSlug: string;

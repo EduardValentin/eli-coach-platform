@@ -53,6 +53,35 @@ describe("EmailWaitlistConfirmation", () => {
     },
   );
 
+  it("keeps the reduced-pricing round small without naming who it is for", async () => {
+    // arrange
+    const productEmail = {
+      provider: "resend",
+      send: vi.fn().mockResolvedValue({
+        kind: "sent",
+        providerMessageId: "email_123",
+      }),
+    } satisfies ProductEmail;
+    const confirmation = new EmailWaitlistConfirmation(productEmail, {
+      contactEmail: "contact@evoa.fit",
+      privacyEmail: "privacy@evoa.fit",
+    });
+
+    // act
+    await confirmation.sendConfirmation({
+      email: "reduced@example.com",
+      offer: { plan: "all-bundles", campaignSlug: "all-bundles-launch-1" },
+      pricing: "reduced",
+    });
+    const sentEmail = productEmail.send.mock.calls[0]?.[0];
+
+    // assert
+    expect(sentEmail?.text).toContain(
+      "Thanks for jumping on the waitlist. I keep this round small on purpose — only a handful of people, so I can actually be there for each of you.",
+    );
+    expect(sentEmail?.html).not.toContain("handful of women");
+  });
+
   it("selects distinct confirmation output for each pricing outcome", async () => {
     // arrange
     const productEmail = {

@@ -200,6 +200,7 @@
   --size-control-sm: 2.5rem;
   --size-control-md: 3rem;
   --size-control-lg: 3.5rem;
+  --size-control-xl: 3.75rem;
   --font-size-display-lg: clamp(2.75rem, 6vw, 4.5rem);
   /* The middle stop of the scale DESIGN.md already documents; production has
      carried it as --font-size-display-md all along. The 404 page is the first
@@ -244,6 +245,7 @@
   --overlay-strong: rgba(0, 0, 0, 0.56);
   --overlay-medium: rgba(0, 0, 0, 0.32);
   --overlay-soft: rgba(0, 0, 0, 0.14);
+  --overlay-modal: rgba(0, 0, 0, 0.5);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -431,6 +433,7 @@
   --size-control-sm: var(--size-control-sm);
   --size-control-md: var(--size-control-md);
   --size-control-lg: var(--size-control-lg);
+  --size-control-xl: var(--size-control-xl);
   --container-content: var(--container-content);
   --container-portal: var(--container-portal);
   --container-stage: var(--container-stage);
@@ -439,6 +442,7 @@
   --color-overlay-strong: var(--overlay-strong);
   --color-overlay-medium: var(--overlay-medium);
   --color-overlay-soft: var(--overlay-soft);
+  --color-overlay-modal: var(--overlay-modal);
   --shadow-public-footer-cta-sheet: var(--shadow-public-footer-cta-sheet);
   --shadow-public-platform-cloud: var(--shadow-public-platform-cloud);
   --shadow-public-platform-cloud-active: var(--shadow-public-platform-cloud-active);
@@ -620,8 +624,8 @@
   --focus-ring: var(--brand-on-inverted);
 }
 
-/* label[data-chip-control] covers a chip whose real control is an opacity:0 input, which cannot show its own outline. */
-label[data-chip-control]:has(:focus-visible) {
+/* [data-chip-control] covers a chip or a choice card whose real control is a visually hidden input, which cannot show its own outline. */
+[data-chip-control]:has(:focus-visible) {
   outline-style: solid;
   outline-width: 2px;
   outline-color: var(--focus-ring);

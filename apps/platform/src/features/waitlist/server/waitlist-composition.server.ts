@@ -1,5 +1,6 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
 import type { WaitlistConfig } from "@eli-coach-platform/config";
+import type { PricingEligibility } from "@eli-coach-platform/domain/coaching-bundle";
 import {
   PRIVACY_POLICY_VERSION,
   WAITLIST_MARKETING_CONSENT_VERSION,
@@ -24,6 +25,11 @@ export type WaitlistFeature = {
   waitlist: WaitlistController;
 };
 
+type WaitlistComposition = {
+  feature: WaitlistFeature;
+  handles: { pricingEligibility: PricingEligibility };
+};
+
 type WaitlistFeatureHandles = {
   botVerifier: BotVerifier;
   clock: Clock;
@@ -43,7 +49,7 @@ const WAITLIST_CONSENT_VERSIONS = {
 
 export function composeWaitlistFeature(
   handles: WaitlistFeatureHandles,
-): WaitlistFeature {
+): WaitlistComposition {
   const waitlist = Waitlist.configure({
     offer: {
       plan: handles.waitlist.WAITLIST_ACTIVE_OFFER_PLAN,
@@ -53,25 +59,28 @@ export function composeWaitlistFeature(
   const waitlistEntries = new PostgresWaitlistRepository(handles.database);
 
   return {
-    waitlist: new WaitlistController({
-      botVerifier: handles.botVerifier,
-      getWaitlist: new GetWaitlistUseCase({
-        clock: handles.clock,
-        featureFlags: handles.featureFlags,
-        incidents: handles.incidents,
-        waitlist,
-        waitlistEntries,
-      }),
-      joinWaitlist: new JoinWaitlistUseCase({
-        confirmation: createWaitlistConfirmation(handles.productEmail, {
-          contactEmail: handles.contactEmail,
-          privacyEmail: handles.privacyEmail,
+    feature: {
+      waitlist: new WaitlistController({
+        botVerifier: handles.botVerifier,
+        getWaitlist: new GetWaitlistUseCase({
+          clock: handles.clock,
+          featureFlags: handles.featureFlags,
+          incidents: handles.incidents,
+          waitlist,
+          waitlistEntries,
         }),
-        consentVersions: WAITLIST_CONSENT_VERSIONS,
-        incidents: handles.incidents,
-        waitlist,
-        waitlistEntries,
+        joinWaitlist: new JoinWaitlistUseCase({
+          confirmation: createWaitlistConfirmation(handles.productEmail, {
+            contactEmail: handles.contactEmail,
+            privacyEmail: handles.privacyEmail,
+          }),
+          consentVersions: WAITLIST_CONSENT_VERSIONS,
+          incidents: handles.incidents,
+          waitlist,
+          waitlistEntries,
+        }),
       }),
-    }),
+    },
+    handles: { pricingEligibility: waitlistEntries },
   };
 }

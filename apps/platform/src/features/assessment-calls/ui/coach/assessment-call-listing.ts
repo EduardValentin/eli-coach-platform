@@ -1,28 +1,24 @@
 import type { CoachAssessmentCall } from "~/features/assessment-calls/contracts/assessment-calls";
+import { COACH_CALLS_PAGE_PARAM } from "~/features/assessment-calls/contracts/paths";
 import { dayKeyOf } from "~/features/assessment-calls/ui/shared/day-key";
 
-export const STATUS_PARAM = "status";
+export const WHEN_PARAM = "when";
 export const QUERY_PARAM = "q";
-export const PAGE_PARAM = "page";
 export const SORT_PARAM = "sort";
 export const DIRECTION_PARAM = "dir";
 export const PAGE_SIZE = 10;
 
-const LISTING_PARAMS = [
-  STATUS_PARAM,
-  QUERY_PARAM,
-  PAGE_PARAM,
-  SORT_PARAM,
-  DIRECTION_PARAM,
-];
+export const FILTER_PARAMS = [WHEN_PARAM, QUERY_PARAM, COACH_CALLS_PAGE_PARAM];
+
+const LISTING_PARAMS = [...FILTER_PARAMS, SORT_PARAM, DIRECTION_PARAM];
 
 export const FIRST_PAGE = 1;
 const PAGES_AROUND_CURRENT = 1;
 const PAGES_SHOWN_WITHOUT_GAPS = 7;
 
-export type CoachCallStatus = "upcoming" | "today" | "past" | "all";
+export type CoachCallWhen = "upcoming" | "today" | "past" | "all";
 
-export const DEFAULT_CALL_STATUS: CoachCallStatus = "all";
+export const DEFAULT_CALL_WHEN: CoachCallWhen = "all";
 
 type CoachCallTiming = "upcoming" | "past";
 
@@ -53,8 +49,10 @@ export type ListingMoment = {
 
 export type ListingSelection = {
   query: string;
-  status: CoachCallStatus;
+  when: CoachCallWhen;
 };
+
+type ToolbarFilterState = { isActive: boolean; label: string };
 
 export type CallPageView = {
   calls: ClassifiedCall[];
@@ -87,12 +85,17 @@ export function classifyCalls(
   });
 }
 
+export function isEndedCall(call: ClassifiedCall): boolean {
+  return call.timing === "past";
+}
+
 export function filterCalls(
   calls: readonly ClassifiedCall[],
   selection: ListingSelection,
 ): ClassifiedCall[] {
   return calls.filter(
-    (call) => hasStatus(call, selection) && matchesQuery(call, selection.query),
+    (call) =>
+      isInWindow(call, selection) && matchesQuery(call, selection.query),
   );
 }
 
@@ -137,12 +140,12 @@ export function countCallsLeftToday(calls: readonly ClassifiedCall[]): number {
     .length;
 }
 
-export function toCallStatus(raw: string | null): CoachCallStatus {
+export function toCallWhen(raw: string | null): CoachCallWhen {
   if (raw === "upcoming" || raw === "today" || raw === "past") {
     return raw;
   }
 
-  return DEFAULT_CALL_STATUS;
+  return DEFAULT_CALL_WHEN;
 }
 
 export function toSortKey(raw: string | null): SortKey {
@@ -218,14 +221,18 @@ export function paginationSteps(
 export function haveOnlyListingParamsChanged(
   currentUrl: URL,
   nextUrl: URL,
+  extraParams: readonly string[],
 ): boolean {
   if (currentUrl.href === nextUrl.href) {
     return false;
   }
 
+  const listingParams = [...LISTING_PARAMS, ...extraParams];
+
   return (
     currentUrl.pathname === nextUrl.pathname &&
-    withoutListingParams(currentUrl) === withoutListingParams(nextUrl)
+    withoutParams(currentUrl, listingParams) ===
+      withoutParams(nextUrl, listingParams)
   );
 }
 
@@ -240,14 +247,22 @@ const NO_CALLS_FOUND_TITLE = "No calls found";
 
 const NO_SEARCH_MATCH_MESSAGE = "No calls match your search.";
 
-const STATUS_EMPTY_MESSAGES: Record<Exclude<CoachCallStatus, "all">, string> = {
+const WHEN_EMPTY_MESSAGES: Record<Exclude<CoachCallWhen, "all">, string> = {
   past: "No past calls.",
   today: "No calls today.",
   upcoming: "No upcoming calls.",
 };
 
+const WHEN_PHRASES: Record<CoachCallWhen, string> = {
+  all: "calls",
+  past: "past calls",
+  today: "calls today",
+  upcoming: "upcoming calls",
+};
+
 export function emptyListingCopy(
   selection: ListingSelection,
+  toolbarFilter?: ToolbarFilterState,
 ): EmptyListingCopy {
   if (hasSearchQuery(selection)) {
     return {
@@ -256,17 +271,35 @@ export function emptyListingCopy(
     };
   }
 
-  if (selection.status === "all") {
+  if (toolbarFilter?.isActive) {
+    return {
+      description: `No ${WHEN_PHRASES[selection.when]} match the ${toolbarFilter.label} status.`,
+      title: NO_CALLS_FOUND_TITLE,
+    };
+  }
+
+  if (selection.when === "all") {
     return NO_CALLS_YET_COPY;
   }
 
   return {
-    description: STATUS_EMPTY_MESSAGES[selection.status],
+    description: WHEN_EMPTY_MESSAGES[selection.when],
     title: NO_CALLS_FOUND_TITLE,
   };
 }
 
-export function hasSearchQuery(selection: ListingSelection): boolean {
+export function hasActiveFilters(
+  selection: ListingSelection,
+  toolbarFilter?: Pick<ToolbarFilterState, "isActive">,
+): boolean {
+  return (
+    selection.when !== DEFAULT_CALL_WHEN ||
+    hasSearchQuery(selection) ||
+    toolbarFilter?.isActive === true
+  );
+}
+
+function hasSearchQuery(selection: ListingSelection): boolean {
   return selection.query.trim().length > 0;
 }
 
@@ -304,16 +337,19 @@ function orderCallsInDefaultDirection(
   }
 }
 
-function hasStatus(call: ClassifiedCall, selection: ListingSelection): boolean {
-  if (selection.status === "all") {
+function isInWindow(
+  call: ClassifiedCall,
+  selection: ListingSelection,
+): boolean {
+  if (selection.when === "all") {
     return true;
   }
 
-  if (selection.status === "today") {
+  if (selection.when === "today") {
     return call.isToday;
   }
 
-  return call.timing === selection.status;
+  return call.timing === selection.when;
 }
 
 function matchesQuery(call: ClassifiedCall, query: string): boolean {
@@ -344,10 +380,10 @@ function withGaps(pages: number[]): PaginationStep[] {
   return steps;
 }
 
-function withoutListingParams(url: URL): string {
+function withoutParams(url: URL, params: readonly string[]): string {
   const searchParams = new URLSearchParams(url.search);
 
-  for (const param of LISTING_PARAMS) {
+  for (const param of params) {
     searchParams.delete(param);
   }
 

@@ -10,6 +10,7 @@ import {
 import * as featureFlagsRoute from "./feature-flags/feature-flags";
 import * as metadataRoute from "./meta/meta";
 import * as readyzRoute from "./readyz/readyz";
+import * as stripeWebhooksRoute from "./stripe-webhooks/stripe-webhooks";
 
 function platformArgs(
   controllers: Partial<PlatformControllers>,
@@ -88,5 +89,39 @@ describe("internal routes", () => {
     expect(response.status).toBe(405);
     expect(response.headers.get("Allow")).toBe("GET");
     expect(getSnapshot).not.toHaveBeenCalled();
+  });
+
+  it("hands a posted Stripe event to the platform's webhook controller", async () => {
+    // arrange
+    const response = new Response(null, { status: 200 });
+    const handleEvent = vi.fn().mockResolvedValue(response);
+    const request = new Request("https://eli.example/api/stripe/webhooks", {
+      body: "{}",
+      method: "POST",
+    });
+
+    // act
+    const answered = await stripeWebhooksRoute.action(
+      platformArgs({ stripeWebhooks: { handleEvent } as never }, request),
+    );
+
+    // assert
+    expect(answered).toBe(response);
+    expect(handleEvent).toHaveBeenCalledWith(request);
+  });
+
+  it("refuses to read Stripe webhooks", async () => {
+    // arrange
+    const handleEvent = vi.fn();
+
+    // act
+    const response = await stripeWebhooksRoute.loader(
+      platformArgs({ stripeWebhooks: { handleEvent } as never }),
+    );
+
+    // assert
+    expect(response.status).toBe(405);
+    expect(response.headers.get("Allow")).toBe("POST");
+    expect(handleEvent).not.toHaveBeenCalled();
   });
 });

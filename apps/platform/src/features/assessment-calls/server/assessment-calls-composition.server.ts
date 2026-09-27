@@ -11,6 +11,7 @@ import {
   type AssessmentCallIncidents,
 } from "@eli-coach-platform/domain/assessment-call";
 import type { FeatureFlagReader } from "@eli-coach-platform/domain/feature-flag";
+import type { AssessmentCallReader } from "@eli-coach-platform/domain/payment-link";
 import type { Clock } from "@eli-coach-platform/domain/shared";
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 import type { BotVerifier } from "@eli-coach-platform/infrastructure/bot-detection/server";
@@ -33,6 +34,11 @@ export type AssessmentCallsFeature = {
   coachAssessmentCalls: CoachAssessmentCallsController;
 };
 
+type AssessmentCallsComposition = {
+  feature: AssessmentCallsFeature;
+  handles: { assessmentCallReader: AssessmentCallReader };
+};
+
 export type AssessmentCallsFeatureHandles = {
   appBasePath: string;
   assessmentCallsConfig: AssessmentCallsConfig;
@@ -49,7 +55,7 @@ export type AssessmentCallsFeatureHandles = {
 
 export function composeAssessmentCallsFeature(
   handles: AssessmentCallsFeatureHandles,
-): AssessmentCallsFeature {
+): AssessmentCallsComposition {
   const availability = new PostgresCoachAvailability({
     clock: handles.clock,
     database: handles.database,
@@ -65,52 +71,64 @@ export function composeAssessmentCallsFeature(
   });
 
   return {
-    assessmentCalls: new AssessmentCallsController({
-      botDetection: handles.botDetection,
-      botVerifier: handles.botVerifier,
-      bookAssessmentCall: new BookAssessmentCallUseCase({
-        availability,
-        bookingWindow,
-        clock: handles.clock,
-        incidents: handles.incidents,
-        notifications: createAssessmentCallNotifications(handles.productEmail, {
-          appBasePath: handles.appBasePath,
-          coachEmail: handles.assessmentCallsConfig.ASSESSMENT_CALL_COACH_EMAIL,
-          contactEmail: handles.contactEmail,
-          publicAppUrl: handles.publicAppUrl,
+    feature: {
+      assessmentCalls: new AssessmentCallsController({
+        botDetection: handles.botDetection,
+        botVerifier: handles.botVerifier,
+        bookAssessmentCall: new BookAssessmentCallUseCase({
+          availability,
+          bookingWindow,
+          clock: handles.clock,
+          incidents: handles.incidents,
+          notifications: createAssessmentCallNotifications(
+            handles.productEmail,
+            {
+              appBasePath: handles.appBasePath,
+              coachEmail:
+                handles.assessmentCallsConfig.ASSESSMENT_CALL_COACH_EMAIL,
+              contactEmail: handles.contactEmail,
+              publicAppUrl: handles.publicAppUrl,
+            },
+          ),
+          reservations,
         }),
-        reservations,
-      }),
-      clock: handles.clock,
-      listOpenSlots: new ListOpenSlotsUseCase({
-        availability,
-        bookingWindow,
-        calendar: new PostgresCoachCalendar(handles.database),
         clock: handles.clock,
-        incidents: handles.incidents,
+        listOpenSlots: new ListOpenSlotsUseCase({
+          availability,
+          bookingWindow,
+          calendar: new PostgresCoachCalendar(handles.database),
+          clock: handles.clock,
+          incidents: handles.incidents,
+        }),
+        resolveJoinLink: new ResolveJoinLinkUseCase({
+          meetingRoom,
+          reservations,
+        }),
       }),
-      resolveJoinLink: new ResolveJoinLinkUseCase({
-        meetingRoom,
-        reservations,
+      assessmentCallSettings: new AssessmentCallSettingsController({
+        getSettings: new GetAssessmentCallSettingsUseCase({
+          availability,
+          meetingRoom,
+        }),
+        updateSettings: new UpdateAssessmentCallSettingsUseCase({
+          availabilityChanges: availability,
+          meetingRoomChanges: meetingRoom,
+        }),
       }),
-    }),
-    assessmentCallSettings: new AssessmentCallSettingsController({
-      getSettings: new GetAssessmentCallSettingsUseCase({
-        availability,
-        meetingRoom,
+      coachAssessmentCalls: new CoachAssessmentCallsController({
+        clock: handles.clock,
+        listAssessmentCalls: new ListAssessmentCallsUseCase({
+          availability,
+          incidents: handles.incidents,
+          reservations,
+        }),
       }),
-      updateSettings: new UpdateAssessmentCallSettingsUseCase({
-        availabilityChanges: availability,
-        meetingRoomChanges: meetingRoom,
-      }),
-    }),
-    coachAssessmentCalls: new CoachAssessmentCallsController({
-      clock: handles.clock,
-      listAssessmentCalls: new ListAssessmentCallsUseCase({
-        availability,
-        incidents: handles.incidents,
-        reservations,
-      }),
-    }),
+    },
+    handles: {
+      assessmentCallReader: {
+        findById: async (id) =>
+          (await reservations.findById(id))?.toSnapshot() ?? null,
+      },
+    },
   };
 }

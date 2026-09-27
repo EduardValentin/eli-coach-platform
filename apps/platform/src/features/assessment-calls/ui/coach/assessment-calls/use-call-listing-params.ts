@@ -1,35 +1,38 @@
 import { useSearchParamsWriter } from "@eli-coach-platform/ui/lib";
 import { useLocation } from "react-router";
 
+import { COACH_CALLS_PAGE_PARAM } from "~/features/assessment-calls/contracts/paths";
+
 import {
   defaultDirectionFor,
   parsePageParam,
   parseSortDirectionParam,
+  toCallWhen,
   toSortKey,
-  toCallStatus,
-  DEFAULT_CALL_STATUS,
+  DEFAULT_CALL_WHEN,
   DEFAULT_SORT_KEY,
   DIRECTION_PARAM,
+  FILTER_PARAMS,
   FIRST_PAGE,
-  PAGE_PARAM,
   QUERY_PARAM,
   SORT_PARAM,
-  STATUS_PARAM,
+  WHEN_PARAM,
   type CallSort,
-  type CoachCallStatus,
+  type CoachCallWhen,
   type SortKey,
 } from "~/features/assessment-calls/ui/coach/assessment-call-listing";
 
 export type CallListingParams = {
   changeQuery: (value: string) => void;
   chooseSortKey: (key: SortKey) => void;
-  chooseStatus: (value: string) => void;
+  chooseWhen: (value: string) => void;
+  clearFilters: (extraParams: readonly string[]) => void;
   page: number;
   pathForPage: (page: number) => string;
   query: string;
   sort: CallSort;
-  status: CoachCallStatus;
   toggleSortDirection: () => void;
+  when: CoachCallWhen;
 };
 
 export function useCallListingParams(): CallListingParams {
@@ -44,28 +47,36 @@ export function useCallListingParams(): CallListingParams {
     key: sortKey,
   };
 
-  const chooseStatus = (value: string) => {
-    const chosen = toCallStatus(value);
+  const chooseWhen = (value: string) => {
+    const chosen = toCallWhen(value);
 
     replaceSearchParams((params) => {
-      params.delete(PAGE_PARAM);
-      setParamUnlessDefault(params, STATUS_PARAM, {
-        defaultValue: DEFAULT_CALL_STATUS,
+      params.delete(COACH_CALLS_PAGE_PARAM);
+      setParamUnlessDefault(params, WHEN_PARAM, {
+        defaultValue: DEFAULT_CALL_WHEN,
         value: chosen,
       });
     });
   };
 
+  const clearFilters = (extraParams: readonly string[]) => {
+    replaceSearchParams((params) => {
+      for (const param of [...FILTER_PARAMS, ...extraParams]) {
+        params.delete(param);
+      }
+    });
+  };
+
   const changeQuery = (value: string) => {
     replaceSearchParams((params) => {
-      params.delete(PAGE_PARAM);
+      params.delete(COACH_CALLS_PAGE_PARAM);
       setParamUnlessDefault(params, QUERY_PARAM, { defaultValue: "", value });
     });
   };
 
   const chooseSortKey = (key: SortKey) => {
     replaceSearchParams((params) => {
-      params.delete(PAGE_PARAM);
+      params.delete(COACH_CALLS_PAGE_PARAM);
       params.delete(DIRECTION_PARAM);
       setParamUnlessDefault(params, SORT_PARAM, {
         defaultValue: DEFAULT_SORT_KEY,
@@ -78,7 +89,7 @@ export function useCallListingParams(): CallListingParams {
     const reversed = sort.direction === "asc" ? "desc" : "asc";
 
     replaceSearchParams((params) => {
-      params.delete(PAGE_PARAM);
+      params.delete(COACH_CALLS_PAGE_PARAM);
       setParamUnlessDefault(params, DIRECTION_PARAM, {
         defaultValue: defaultDirectionFor(sort.key),
         value: reversed,
@@ -90,9 +101,9 @@ export function useCallListingParams(): CallListingParams {
     const params = new URLSearchParams(searchParams);
 
     if (chosen === FIRST_PAGE) {
-      params.delete(PAGE_PARAM);
+      params.delete(COACH_CALLS_PAGE_PARAM);
     } else {
-      params.set(PAGE_PARAM, String(chosen));
+      params.set(COACH_CALLS_PAGE_PARAM, String(chosen));
     }
 
     const search = params.toString();
@@ -103,13 +114,14 @@ export function useCallListingParams(): CallListingParams {
   return {
     changeQuery,
     chooseSortKey,
-    chooseStatus,
-    page: parsePageParam(searchParams.get(PAGE_PARAM)),
+    chooseWhen,
+    clearFilters,
+    page: parsePageParam(searchParams.get(COACH_CALLS_PAGE_PARAM)),
     pathForPage,
     query: searchParams.get(QUERY_PARAM) ?? "",
     sort,
-    status: toCallStatus(searchParams.get(STATUS_PARAM)),
     toggleSortDirection,
+    when: toCallWhen(searchParams.get(WHEN_PARAM)),
   };
 }
 

@@ -12,6 +12,10 @@ import {
 } from "@eli-coach-platform/infrastructure/bot-detection/server";
 import { createProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 import {
+  createPaymentCheckout,
+  createPaymentEvents,
+} from "@eli-coach-platform/infrastructure/payments/server";
+import {
   createManagementAuthConfig,
   createManagementAuthenticator,
 } from "@eli-coach-platform/infrastructure/management-auth/server";
@@ -20,18 +24,13 @@ import {
   composeAccountsFeature,
   type AccountsFeature,
 } from "~/features/accounts/server/accounts-composition.server";
-import {
-  composeAssessmentCallsFeature,
-  type AssessmentCallsFeature,
-} from "~/features/assessment-calls/server/assessment-calls-composition.server";
+import { composeAssessmentCallsFeature } from "~/features/assessment-calls/server/assessment-calls-composition.server";
+import { composeCoachingSalesFeature } from "~/features/coaching-sales/server/coaching-sales-composition.server";
 import {
   composeStoreFeature,
   type StoreFeature,
 } from "~/features/store/server/store-composition.server";
-import {
-  composeWaitlistFeature,
-  type WaitlistFeature,
-} from "~/features/waitlist/server/waitlist-composition.server";
+import { composeWaitlistFeature } from "~/features/waitlist/server/waitlist-composition.server";
 import { createPlatformDatabase } from "~/server/database.server";
 import {
   composeBrowserFeatureFlagOverrides,
@@ -47,12 +46,13 @@ import { getRuntimeEnvironment } from "~/server/runtime-environment.server";
 
 export type PlatformContainer = {
   accounts: AccountsFeature;
-  assessmentCalls: AssessmentCallsFeature;
+  assessmentCalls: ReturnType<typeof composeAssessmentCallsFeature>;
   closeDatabase: () => Promise<void>;
+  coachingSales: ReturnType<typeof composeCoachingSalesFeature>;
   featureFlagOverrides: FeatureFlagOverrides;
   platform: PlatformFeature;
   store: StoreFeature;
-  waitlist: WaitlistFeature;
+  waitlist: ReturnType<typeof composeWaitlistFeature>;
 };
 
 let platformContainer: PlatformContainer | null = null;
@@ -83,11 +83,52 @@ export function createPlatformContainer(options: {
         })
       : composeWithoutFeatureFlagOverrides(databaseFeatureFlags);
   const featureFlags = featureFlagOverrides.featureFlags;
+  const waitlist = composeWaitlistFeature({
+    botVerifier,
+    clock,
+    contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
+    database: database.client,
+    featureFlags,
+    incidents,
+    privacyEmail: EVOA_FITNESS_PRIVACY_EMAIL,
+    productEmail,
+    waitlist: environment,
+  });
+  const assessmentCalls = composeAssessmentCallsFeature({
+    appBasePath: environment.APP_BASE_PATH,
+    assessmentCallsConfig: environment,
+    botDetection,
+    botVerifier,
+    clock,
+    contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
+    database: database.client,
+    featureFlags,
+    incidents,
+    productEmail,
+    publicAppUrl: environment.PUBLIC_APP_URL,
+  });
+  const coachingSales = composeCoachingSalesFeature({
+    appBasePath: environment.APP_BASE_PATH,
+    assessmentCallReader: assessmentCalls.handles.assessmentCallReader,
+    clock,
+    contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
+    database: database.client,
+    featureFlags,
+    incidents,
+    paymentCheckout: createPaymentCheckout(environment),
+    pricingEligibility: waitlist.handles.pricingEligibility,
+    productEmail,
+    publicAppUrl: environment.PUBLIC_APP_URL,
+  });
   const platform = composePlatformFeature({
     app: environment,
     botDetection,
     featureFlags,
+    incidents,
+    paymentCompletionHandlers: [coachingSales.handles.paymentCompletionHandler],
+    paymentEvents: createPaymentEvents(environment),
     version: process.env.GIT_SHA ?? "dev",
+    webhookSigningSecret: environment.STRIPE_WEBHOOK_SIGNING_SECRET,
   });
 
   return {
@@ -101,20 +142,9 @@ export function createPlatformContainer(options: {
         signInUrl: environment.CLERK_SIGN_IN_URL,
       },
     }),
-    assessmentCalls: composeAssessmentCallsFeature({
-      appBasePath: environment.APP_BASE_PATH,
-      assessmentCallsConfig: environment,
-      botDetection,
-      botVerifier,
-      clock,
-      contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
-      database: database.client,
-      featureFlags,
-      incidents,
-      productEmail,
-      publicAppUrl: environment.PUBLIC_APP_URL,
-    }),
+    assessmentCalls,
     closeDatabase: () => database.close(),
+    coachingSales,
     featureFlagOverrides,
     platform,
     store: composeStoreFeature({
@@ -132,17 +162,7 @@ export function createPlatformContainer(options: {
       publicAppUrl: environment.PUBLIC_APP_URL,
       storeAssetRoot: environment.STORE_ASSET_ROOT,
     }),
-    waitlist: composeWaitlistFeature({
-      botVerifier,
-      clock,
-      contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
-      database: database.client,
-      featureFlags,
-      incidents,
-      privacyEmail: EVOA_FITNESS_PRIVACY_EMAIL,
-      productEmail,
-      waitlist: environment,
-    }),
+    waitlist,
   };
 }
 

@@ -33,7 +33,7 @@ const copy: Record<
   reduced: {
     bodyParagraphs: [
       "Hi there,",
-      "Thanks for jumping on the waitlist. I keep this round small on purpose — only a handful of women, so I can actually be there for each of you.",
+      "Thanks for jumping on the waitlist. I keep this round small on purpose — only a handful of people, so I can actually be there for each of you.",
       "Here's what happens next: when spots open, you'll hear from me with the link, reduced pricing on every plan, reserved only for early signups, and everything you need to decide if we're a fit. No pressure either way.",
       "If you've got questions in the meantime, hit reply. I read every message.",
       "— Eli",

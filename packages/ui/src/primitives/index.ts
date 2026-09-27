@@ -18,6 +18,7 @@ export {
   PaginationPrevious,
 } from "./pagination";
 export { Popover, PopoverContent, PopoverTrigger } from "./popover";
+export { RadioGroup, RadioGroupItem } from "./radio-group";
 export { SearchField } from "./search-field";
 export { SectionEyebrow } from "./section-eyebrow";
 export {

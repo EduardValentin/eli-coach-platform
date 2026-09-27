@@ -3,7 +3,6 @@ import { relative } from "@react-router/dev/routes";
 import {
   ASSESSMENT_CALL_API_PATHS,
   BOOK_ROUTE_SEGMENT,
-  COACH_ASSESSMENT_CALLS_ROUTE_SEGMENT,
   COACH_SETTINGS_ROUTE_SEGMENT,
 } from "./contracts/paths";
 
@@ -21,10 +20,6 @@ export const assessmentCallsJoinRoutes = [
 ];
 
 export const assessmentCallsCoachRoutes = [
-  route(
-    COACH_ASSESSMENT_CALLS_ROUTE_SEGMENT,
-    "./ui/coach/assessment-calls/assessment-calls-page.tsx",
-  ),
   route(COACH_SETTINGS_ROUTE_SEGMENT, "./ui/coach/settings/settings-page.tsx"),
 ];
 

@@ -30,7 +30,7 @@ const BOOKED_ROW = {
 describe("composeAssessmentCallsFeature", () => {
   it("hides the booking page while the site is in waitlist mode", async () => {
     // arrange
-    const feature = composeAssessmentCallsFeature(
+    const { feature } = composeAssessmentCallsFeature(
       createHandles({ WAITLIST_MODE: true }),
     );
 
@@ -43,7 +43,7 @@ describe("composeAssessmentCallsFeature", () => {
 
   it("reports unreadable availability when the database is unreachable", async () => {
     // arrange
-    const feature = composeAssessmentCallsFeature(
+    const { feature } = composeAssessmentCallsFeature(
       createHandles({ WAITLIST_MODE: false }),
     );
 
@@ -59,7 +59,7 @@ describe("composeAssessmentCallsFeature", () => {
 
   it("serves the coach every booked call in her own time zone", async () => {
     // arrange
-    const feature = composeAssessmentCallsFeature({
+    const { feature } = composeAssessmentCallsFeature({
       ...createHandles({ WAITLIST_MODE: false }),
       database: createDatabaseWithoutSavedAvailability([BOOKED_ROW]),
     });
@@ -73,6 +73,41 @@ describe("composeAssessmentCallsFeature", () => {
     ]);
     expect(listing.coachTimeZone).toBe("Europe/Bucharest");
     expect(listing.now).toBe("2026-10-19T08:00:00.000Z");
+  });
+});
+
+describe("composeAssessmentCallsFeature assessment call reader", () => {
+  it("reads a booked call as a snapshot for coaching sales", async () => {
+    // arrange
+    const { handles } = composeAssessmentCallsFeature({
+      ...createHandles({ WAITLIST_MODE: false }),
+      database: createDatabaseWithoutSavedAvailability([BOOKED_ROW]),
+    });
+
+    // act
+    const call = await handles.assessmentCallReader.findById(BOOKED_ROW.id);
+
+    // assert
+    expect(call).toMatchObject({
+      endsAt: new Date("2026-10-20T14:30:00.000Z"),
+      fullName: "Ana Popescu",
+      id: BOOKED_ROW.id,
+      visitorEmail: "ana@example.com",
+    });
+  });
+
+  it("answers null for a call that was never booked", async () => {
+    // arrange
+    const { handles } = composeAssessmentCallsFeature({
+      ...createHandles({ WAITLIST_MODE: false }),
+      database: createDatabaseWithoutSavedAvailability([]),
+    });
+
+    // act
+    const call = await handles.assessmentCallReader.findById(BOOKED_ROW.id);
+
+    // assert
+    expect(call).toBeNull();
   });
 });
 

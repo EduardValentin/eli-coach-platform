@@ -113,6 +113,9 @@ function isAtJourneyStep(call: ListedCall, step: JourneyStep): boolean {
   if (step === 'paid') {
     return call.stage !== null && !isBeforeStage(call.stage, 'invited');
   }
+  if (step === 'held') {
+    return call.stage === 'held' && call.timing === 'past';
+  }
   return call.stage === step;
 }
 

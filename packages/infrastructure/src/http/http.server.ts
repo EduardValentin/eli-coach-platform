@@ -2,9 +2,12 @@ type MethodNotAllowedResponseOptions = {
   allowedMethods: readonly string[];
 };
 
-type ReadFormDataRequestBodyOptions = {
+type ReadRequestBodyOptions = {
   maxBytes: number;
 };
+
+type TextRequestBodyResult =
+  { status: "valid"; text: string } | { status: "too_large" };
 
 type FormDataRequestBodyResult =
   | { status: "valid"; formData: FormData }
@@ -79,7 +82,7 @@ export function createBadRequestResponse(message: string): Response {
 
 export async function readFormDataRequestBody(
   request: Request,
-  options: ReadFormDataRequestBodyOptions,
+  options: ReadRequestBodyOptions,
 ): Promise<FormDataRequestBodyResult> {
   const contentType = request.headers.get("Content-Type");
 
@@ -91,12 +94,7 @@ export async function readFormDataRequestBody(
     return { status: "invalid" };
   }
 
-  const declaredLength = request.headers.get("Content-Length");
-
-  if (
-    declaredLength &&
-    (!/^\d+$/.test(declaredLength) || Number(declaredLength) > options.maxBytes)
-  ) {
+  if (declaresLengthOver(request, options.maxBytes)) {
     return { status: "too_large" };
   }
 
@@ -120,6 +118,32 @@ export async function readFormDataRequestBody(
   } catch {
     return { status: "invalid" };
   }
+}
+
+export async function readTextRequestBody(
+  request: Request,
+  options: ReadRequestBodyOptions,
+): Promise<TextRequestBodyResult> {
+  if (declaresLengthOver(request, options.maxBytes)) {
+    return { status: "too_large" };
+  }
+
+  const body = await readRequestBodyWithinLimit(request, options.maxBytes);
+
+  if (body.status === "too_large") {
+    return body;
+  }
+
+  return { status: "valid", text: new TextDecoder().decode(body.bytes) };
+}
+
+function declaresLengthOver(request: Request, maxBytes: number): boolean {
+  const declaredLength = request.headers.get("Content-Length");
+
+  return Boolean(
+    declaredLength &&
+    (!/^\d+$/.test(declaredLength) || Number(declaredLength) > maxBytes),
+  );
 }
 
 async function readRequestBodyWithinLimit(

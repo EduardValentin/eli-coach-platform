@@ -3,6 +3,7 @@ import * as React from "react";
 import { Select as RadixSelect } from "radix-ui";
 
 import { cn } from "../lib/cn";
+import { Badge } from "./badge";
 import { fieldSizeClasses, type FieldSize } from "./field-size";
 
 export const Select = RadixSelect.Root;
@@ -118,15 +119,20 @@ function SelectScrollDownButton(
   );
 }
 
-type SelectItemProps = React.ComponentPropsWithoutRef<typeof RadixSelect.Item>;
+type SelectItemProps = React.ComponentPropsWithoutRef<
+  typeof RadixSelect.Item
+> & {
+  count?: number;
+  countParity?: string;
+};
 
 export const SelectItem = React.forwardRef<
   React.ElementRef<typeof RadixSelect.Item>,
   SelectItemProps
->(({ children, className, ...props }, ref) => (
+>(({ children, className, count, countParity, ...props }, ref) => (
   <RadixSelect.Item
     className={cn(
-      "relative flex w-full cursor-default items-center gap-2 rounded-tile py-1.5 pr-8 pl-2 text-sm outline-none select-none focus:bg-surface-neutral focus:text-text-primary data-[disabled]:pointer-events-none data-[disabled]:opacity-50 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
+      "relative flex w-full cursor-default items-center gap-2 rounded-tile py-1.5 pr-8 pl-2 text-sm outline-none select-none hover:bg-primary-soft hover:text-primary focus:bg-primary-soft focus:text-primary data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[highlighted]:bg-primary-soft data-[highlighted]:text-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
       className,
     )}
     ref={ref}
@@ -134,10 +140,21 @@ export const SelectItem = React.forwardRef<
   >
     <span className="absolute right-2 flex size-3.5 items-center justify-center">
       <RadixSelect.ItemIndicator>
-        <Check aria-hidden="true" className="size-4 text-text-muted" />
+        <Check aria-hidden="true" className="size-4 text-current" />
       </RadixSelect.ItemIndicator>
     </span>
-    <RadixSelect.ItemText>{children}</RadixSelect.ItemText>
+    <RadixSelect.ItemText>
+      {count === undefined ? (
+        children
+      ) : (
+        <span className="flex items-center gap-2">
+          {children}{" "}
+          <Badge data-parity={countParity} tone="count">
+            {count}
+          </Badge>
+        </span>
+      )}
+    </RadixSelect.ItemText>
   </RadixSelect.Item>
 ));
 

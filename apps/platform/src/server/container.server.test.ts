@@ -7,6 +7,7 @@ import { join } from "node:path";
 import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
 
 import { createPlatformContainer } from "./container.server";
+import { createRequestArgs } from "~/server/test-support/request-args";
 
 const storeAssetRoot = mkdtempSync(
   join(tmpdir(), "eli-coach-store-assets-container-unit-"),
@@ -31,6 +32,7 @@ describe("platform container", () => {
 
   afterEach(() => {
     vi.unstubAllEnvs();
+    vi.restoreAllMocks();
   });
 
   it("is composed without database configuration", () => {
@@ -96,12 +98,33 @@ describe("platform container", () => {
     });
 
     // act
-    const waitlist = await container.waitlist.waitlist.getWaitlist();
+    const waitlist = await container.waitlist.feature.waitlist.getWaitlist();
 
     // assert
     expect(waitlist).toMatchObject({
       availability: null,
       enabled: true,
     });
+  });
+
+  it("closes coaching sales when the sales mode cannot be read without a database", async () => {
+    // arrange
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const container = createPlatformContainer({
+      runtimeEnvironment: createRuntimeEnvironmentWithoutDatabase(),
+    });
+
+    // act
+    const confirmation =
+      container.coachingSales.feature.checkouts.loadConfirmation(
+        createRequestArgs({
+          request: new Request(
+            "https://eli.example/checkout/complete?session=cs_test_1",
+          ),
+        }),
+      );
+
+    // assert
+    await expect(confirmation).rejects.toMatchObject({ status: 404 });
   });
 });

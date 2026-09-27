@@ -1,0 +1,7 @@
+[
+  { "waitFor": "[data-parity=\"continue\"]" },
+  { "wait": 1500 },
+  { "click": "[data-parity=\"continue\"]" },
+  { "waitFor": "[data-parity-root=\"StartChoice\"] [data-parity=\"error\"]" },
+  { "wait": 400 }
+]

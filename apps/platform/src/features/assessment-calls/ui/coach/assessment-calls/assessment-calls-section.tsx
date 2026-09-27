@@ -17,6 +17,7 @@ import {
   TabsTrigger,
 } from "@eli-coach-platform/ui/tabs";
 import { CalendarSearch } from "lucide-react";
+import type { ReactNode } from "react";
 import type { CoachAssessmentCall } from "~/features/assessment-calls/contracts/assessment-calls";
 import {
   formatClockTime,
@@ -32,13 +33,14 @@ import {
   classifyCalls,
   emptyListingCopy,
   filterCalls,
-  hasSearchQuery,
+  hasActiveFilters,
+  isEndedCall,
   orderCallsBy,
   pageOfCalls,
   PAGE_SIZE,
   type CallPageView,
   type ClassifiedCall,
-  type CoachCallStatus,
+  type CoachCallWhen,
   type EmptyListingCopy,
   type ListingMoment,
   type ListingSelection,
@@ -49,42 +51,68 @@ import { CallListPager } from "./call-list-pager";
 import { SortControl } from "./sort-control";
 import { useCallListingParams } from "./use-call-listing-params";
 
-const STATUS_TABS: readonly { label: string; status: CoachCallStatus }[] = [
-  { label: "All", status: "all" },
-  { label: "Today", status: "today" },
-  { label: "Upcoming", status: "upcoming" },
-  { label: "Past", status: "past" },
+const WHEN_TABS: readonly { label: string; when: CoachCallWhen }[] = [
+  { label: "All", when: "all" },
+  { label: "Today", when: "today" },
+  { label: "Upcoming", when: "upcoming" },
+  { label: "Past", when: "past" },
 ];
+
+export type ToolbarFilter = {
+  control: (scopedCalls: readonly ClassifiedCall[]) => ReactNode;
+  isActive: boolean;
+  label: string;
+  matches: (call: ClassifiedCall) => boolean;
+  params: readonly string[];
+};
+
+export type EndedCallExtras = { action?: ReactNode; badge?: ReactNode };
+
+type RenderEndedCallExtras = (call: ClassifiedCall) => EndedCallExtras;
+
+type ExtraDetails = (call: ClassifiedCall) => AppointmentDetail[];
 
 type AssessmentCallsSectionProps = {
   calls: readonly CoachAssessmentCall[];
+  extraDetails?: ExtraDetails;
   now: Date;
+  renderEndedCallExtras?: RenderEndedCallExtras;
   timeZone: string;
+  toolbarFilter?: ToolbarFilter;
 };
 
 export function AssessmentCallsSection({
   calls,
+  extraDetails,
   now,
+  renderEndedCallExtras,
   timeZone,
+  toolbarFilter,
 }: AssessmentCallsSectionProps) {
   const {
     changeQuery,
     chooseSortKey,
-    chooseStatus,
+    chooseWhen,
+    clearFilters,
     page,
     pathForPage,
     query,
     sort,
-    status,
     toggleSortDirection,
+    when,
   } = useCallListingParams();
-  const selection: ListingSelection = { query, status };
+  const selection: ListingSelection = { query, when };
   const classified = classifyCalls(calls, { now, timeZone });
-  const matching = orderCallsBy(filterCalls(classified, selection), sort);
-  const view = pageOfCalls(matching, { page, size: PAGE_SIZE });
-  const emptyCopy = emptyListingCopy(selection);
-
-  const clearFilters = () => changeQuery("");
+  const scoped = filterCalls(classified, selection);
+  const filtered = toolbarFilter
+    ? scoped.filter(toolbarFilter.matches)
+    : scoped;
+  const view = pageOfCalls(orderCallsBy(filtered, sort), {
+    page,
+    size: PAGE_SIZE,
+  });
+  const emptyCopy = emptyListingCopy(selection, toolbarFilter);
+  const canClearFilters = hasActiveFilters(selection, toolbarFilter);
 
   return (
     <div
@@ -93,19 +121,20 @@ export function AssessmentCallsSection({
     >
       <Tabs
         className="w-full"
-        onValueChange={chooseStatus}
-        value={status}
+        onValueChange={chooseWhen}
+        value={when}
         variant="segmented"
       >
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
           <div className="grid w-full gap-3 sm:w-fit sm:max-w-full">
             <TabsList aria-label="When">
-              {STATUS_TABS.map((tab) => (
-                <TabsTrigger key={tab.status} value={tab.status}>
+              {WHEN_TABS.map((tab) => (
+                <TabsTrigger key={tab.when} value={tab.when}>
                   {tab.label}
                 </TabsTrigger>
               ))}
             </TabsList>
+            {toolbarFilter?.control(scoped)}
           </div>
 
           <div className="grid w-full gap-3 sm:w-fit sm:max-w-full">
@@ -125,14 +154,18 @@ export function AssessmentCallsSection({
           </div>
         </div>
 
-        <TabsContent value={status}>
+        <TabsContent value={when}>
           <CallResults
             emptyCopy={emptyCopy}
+            extraDetails={extraDetails}
             moment={{ now, timeZone }}
             onClearFilters={
-              hasSearchQuery(selection) ? clearFilters : undefined
+              canClearFilters
+                ? () => clearFilters(toolbarFilter?.params ?? [])
+                : undefined
             }
             pathForPage={pathForPage}
+            renderEndedCallExtras={renderEndedCallExtras}
             view={view}
           />
         </TabsContent>
@@ -141,9 +174,8 @@ export function AssessmentCallsSection({
   );
 }
 
-type CallResultsProps = {
+type CallResultsProps = CallRowProps & {
   emptyCopy: EmptyListingCopy;
-  moment: ListingMoment;
   onClearFilters?: () => void;
   pathForPage: (page: number) => string;
   view: CallPageView;
@@ -151,10 +183,10 @@ type CallResultsProps = {
 
 function CallResults({
   emptyCopy,
-  moment,
   onClearFilters,
   pathForPage,
   view,
+  ...row
 }: CallResultsProps) {
   if (view.calls.length === 0) {
     return (
@@ -175,7 +207,7 @@ function CallResults({
 
   return (
     <>
-      <CallList calls={view.calls} moment={moment} />
+      <CallList calls={view.calls} {...row} />
 
       {view.pageCount > 1 && (
         <CallListPager pathForPage={pathForPage} view={view} />
@@ -184,17 +216,20 @@ function CallResults({
   );
 }
 
-function CallList(props: {
-  calls: readonly ClassifiedCall[];
+type CallRowProps = {
+  extraDetails?: ExtraDetails;
   moment: ListingMoment;
-}) {
-  const { calls, moment } = props;
+  renderEndedCallExtras?: RenderEndedCallExtras;
+};
+
+function CallList(props: CallRowProps & { calls: readonly ClassifiedCall[] }) {
+  const { calls, ...row } = props;
 
   return (
     <ul aria-label="Assessment calls" className="space-y-4">
       {calls.map((call) => (
         <li data-parity-root="AppointmentCard" key={call.id}>
-          <CallCard call={call} moment={moment} />
+          <CallCard call={call} {...row} />
         </li>
       ))}
     </ul>
@@ -223,19 +258,22 @@ function visitorDetails(
   ];
 }
 
-function CallCard(props: { call: ClassifiedCall; moment: ListingMoment }) {
-  const { call, moment } = props;
+function CallCard(props: CallRowProps & { call: ClassifiedCall }) {
+  const { call, extraDetails, moment, renderEndedCallExtras } = props;
   const { timeZone } = moment;
   const startsAt = new Date(call.startsAt);
+  const extras = isEndedCall(call) ? renderEndedCallExtras?.(call) : undefined;
 
   return (
     <AppointmentCard
       actions={
-        call.timing === "upcoming" && (
+        call.timing === "upcoming" ? (
           <JoinCallLink
             joinPath={call.joinPath}
             tone={call.isToday ? "live" : "default"}
           />
+        ) : (
+          extras?.action
         )
       }
       attendee={{
@@ -246,10 +284,13 @@ function CallCard(props: { call: ClassifiedCall; moment: ListingMoment }) {
       badges={
         <>
           {call.isToday && <Badge tone="brand-secondary">Today</Badge>}
-          {call.timing === "past" && <Badge tone="muted">Call held</Badge>}
+          {extras?.badge}
         </>
       }
-      details={visitorDetails(call, moment)}
+      details={[
+        ...visitorDetails(call, moment),
+        ...(extraDetails?.(call) ?? []),
+      ]}
       quote={call.visitorNotes ?? undefined}
       status={call.timing === "past" ? "past" : "scheduled"}
       titleElement="h2"

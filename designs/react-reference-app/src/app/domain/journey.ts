@@ -61,6 +61,7 @@ export type JourneyIdentity = {
 export type JourneyPaymentLink = {
   token: string;
   sentAt: Date;
+  expiresAt: Date;
   state: JourneyLinkState;
 };
 

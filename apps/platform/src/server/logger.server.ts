@@ -1,9 +1,13 @@
 import type { AcquisitionIncidents } from "@eli-coach-platform/domain/acquisition";
 import type { AssessmentCallIncidents } from "@eli-coach-platform/domain/assessment-call";
+import type { CoachingSalesIncidents } from "@eli-coach-platform/domain/payment-link";
 import type { WaitlistIncidents } from "@eli-coach-platform/domain/waitlist";
+import type { PaymentWebhookIncidents } from "@eli-coach-platform/infrastructure/payments/server";
 
 type ConsoleLogger = AcquisitionIncidents &
   AssessmentCallIncidents &
+  CoachingSalesIncidents &
+  PaymentWebhookIncidents &
   WaitlistIncidents;
 
 export function createConsoleLogger(): ConsoleLogger {
@@ -45,10 +49,36 @@ export function createConsoleLogger(): ConsoleLogger {
         recipient,
       });
     },
+    paymentEventRejected: ({ eventId, reason }) => {
+      console.error("Payment event was not recorded.", {
+        errorCategory: "payment_event_rejected",
+        eventId,
+        reason,
+      });
+    },
+    paymentEventUnrouted: ({ eventId, purpose }) => {
+      console.error("Payment event matched no payment handler.", {
+        errorCategory: "payment_event_unrouted",
+        eventId,
+        purpose,
+      });
+    },
+    paymentLinkEmailFailed: (assessmentCallId) => {
+      console.error("Payment link email failed.", {
+        assessmentCallId,
+        errorCategory: "payment_link_email_failure",
+      });
+    },
     retryableDeliveryAuditPending: ({ requestId }) => {
       console.error("Store retryable delivery audit requires reconciliation.", {
         errorCategory: "store_delivery_retryable_audit_pending",
         requestId,
+      });
+    },
+    salesModeReadFailed: (error) => {
+      console.error("Coaching sales mode feature flag read failed.", {
+        errorCategory: "coaching_sales_mode_read_failure",
+        ...describeError(error),
       });
     },
     slotsReadFailed: () => {
@@ -62,4 +92,12 @@ export function createConsoleLogger(): ConsoleLogger {
       });
     },
   };
+}
+
+function describeError(
+  error: unknown,
+): { errorClass: string; errorMessage: string } | { errorClass: string } {
+  return error instanceof Error
+    ? { errorClass: error.name, errorMessage: error.message }
+    : { errorClass: typeof error };
 }

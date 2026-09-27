@@ -1,0 +1,2 @@
+DROP INDEX "app"."coaching_subscriptions_client_id_unique";--> statement-breakpoint
+CREATE UNIQUE INDEX "coaching_subscriptions_one_open_per_client" ON "app"."coaching_subscriptions" USING btree ("client_id") WHERE "app"."coaching_subscriptions"."status" <> 'ended';

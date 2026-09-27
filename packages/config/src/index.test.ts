@@ -12,6 +12,11 @@ import { CLERK_TEST_ENVIRONMENT } from "@eli-coach-platform/test-support";
 import { describe, expect, it } from "vitest";
 
 const TEST_CLERK_WEBHOOK_SIGNING_SECRET = "whsec_test1234567890abcdef";
+const STRIPE_TEST_ENVIRONMENT = {
+  PAYMENTS_PROVIDER: "stripe",
+  STRIPE_SECRET_KEY: "sk_test_payments",
+  STRIPE_WEBHOOK_SIGNING_SECRET: "whsec_payments",
+} as const;
 
 function buildEnvironment(
   overrides: Parameters<typeof loadRuntimeEnvironment>[0] = {},
@@ -118,6 +123,7 @@ describe("@eli-coach-platform/config runtime environment", () => {
     const environment = loadTestRuntimeEnvironment({
       BOT_DETECTION_PROVIDER: "turnstile",
       NODE_ENV: "production",
+      ...STRIPE_TEST_ENVIRONMENT,
       PRODUCT_EMAIL_FROM_ADDRESS: "contact@evoa.fit",
       PRODUCT_EMAIL_FROM_NAME: "Eli",
       PRODUCT_EMAIL_PROVIDER: "resend",
@@ -317,6 +323,7 @@ describe("@eli-coach-platform/config runtime environment", () => {
     const testDeploymentConfiguration = {
       BOT_DETECTION_PROVIDER: "turnstile",
       NODE_ENV: "production",
+      ...STRIPE_TEST_ENVIRONMENT,
       PRODUCT_EMAIL_FROM_ADDRESS: "hello@test.evoa.fit",
       PRODUCT_EMAIL_FROM_NAME: "Evoa",
       PRODUCT_EMAIL_PROVIDER: "resend",
@@ -340,6 +347,7 @@ describe("@eli-coach-platform/config runtime environment", () => {
     expect(environment.PRODUCT_EMAIL_REPLY_TO).toBe("support@test.evoa.fit");
     expect(environment.TURNSTILE_SITE_KEY).toBe("real-site-key");
     expect(environment.TURNSTILE_SECRET_KEY).toBe("real-secret");
+    expect(environment.PAYMENTS_PROVIDER).toBe("stripe");
   });
 });
 
@@ -354,11 +362,13 @@ describe("provider settings", () => {
     // assert
     expect(environment.BOT_DETECTION_PROVIDER).toBe("static");
     expect(environment.PRODUCT_EMAIL_PROVIDER).toBe("memory");
+    expect(environment.PAYMENTS_PROVIDER).toBe("memory");
   });
 
   it.each([
     ["BOT_DETECTION_PROVIDER", "static"],
     ["PRODUCT_EMAIL_PROVIDER", "memory"],
+    ["PAYMENTS_PROVIDER", "memory"],
     ["FEATURE_FLAG_OVERRIDES", "browser"],
   ])("refuses %s=%s in a production runtime", (name, value) => {
     // arrange
@@ -384,6 +394,104 @@ describe("provider settings", () => {
 
     // assert
     expect(load).toThrow("PUBLIC_APP_URL");
+  });
+});
+
+describe("payments settings", () => {
+  it("loads the Stripe provider with its secrets and an API base URL override", () => {
+    // arrange
+    const source = buildEnvironment({
+      ...STRIPE_TEST_ENVIRONMENT,
+      STRIPE_API_BASE_URL: "http://127.0.0.1:8089",
+    });
+
+    // act
+    const environment = loadRuntimeEnvironment(source);
+
+    // assert
+    expect(environment.PAYMENTS_PROVIDER).toBe("stripe");
+    expect(environment.STRIPE_SECRET_KEY).toBe("sk_test_payments");
+    expect(environment.STRIPE_WEBHOOK_SIGNING_SECRET).toBe("whsec_payments");
+    expect(environment.STRIPE_API_BASE_URL).toBe("http://127.0.0.1:8089");
+  });
+
+  it.each(["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SIGNING_SECRET"])(
+    "refuses the Stripe provider without %s",
+    (name) => {
+      // arrange
+      const source = buildEnvironment({
+        ...STRIPE_TEST_ENVIRONMENT,
+        [name]: undefined,
+      });
+
+      // act
+      const load = () => loadRuntimeEnvironment(source);
+
+      // assert
+      expect(load).toThrow(`Stripe payments require ${name}.`);
+    },
+  );
+
+  it.each(["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SIGNING_SECRET"])(
+    "refuses the Stripe provider with a placeholder %s",
+    (name) => {
+      // arrange
+      const source = buildEnvironment({
+        ...STRIPE_TEST_ENVIRONMENT,
+        [name]: "replace-me",
+      });
+
+      // act
+      const load = () => loadRuntimeEnvironment(source);
+
+      // assert
+      expect(load).toThrow(
+        `Stripe payments require a non-placeholder ${name}.`,
+      );
+    },
+  );
+
+  it("refuses a Stripe API base URL that is not http or https", () => {
+    // arrange
+    const source = buildEnvironment({
+      ...STRIPE_TEST_ENVIRONMENT,
+      STRIPE_API_BASE_URL: "ftp://127.0.0.1:8089",
+    });
+
+    // act
+    const load = () => loadRuntimeEnvironment(source);
+
+    // assert
+    expect(load).toThrow("STRIPE_API_BASE_URL");
+  });
+
+  it("refuses a Stripe API base URL override in a production runtime", () => {
+    // arrange
+    const source = buildEnvironment({
+      ...STRIPE_TEST_ENVIRONMENT,
+      NODE_ENV: "production",
+      STRIPE_API_BASE_URL: "https://127.0.0.1:8089",
+    });
+
+    // act
+    const load = () => loadRuntimeEnvironment(source);
+
+    // assert
+    expect(load).toThrow(
+      "STRIPE_API_BASE_URL is a test override and is refused in a production runtime.",
+    );
+  });
+
+  it("accepts the memory provider without Stripe secrets outside production", () => {
+    // arrange
+    const source = buildEnvironment({ PAYMENTS_PROVIDER: "memory" });
+
+    // act
+    const environment = loadRuntimeEnvironment(source);
+
+    // assert
+    expect(environment.PAYMENTS_PROVIDER).toBe("memory");
+    expect(environment.STRIPE_SECRET_KEY).toBeUndefined();
   });
 });
 

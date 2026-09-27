@@ -75,6 +75,7 @@ export class WireMockContainer extends BaseTestContainer {
       // for the application's own Clerk adapter to talk to this container.
       CLERK_API_URL: this.baseUrl(),
       RESEND_BASE_URL: this.baseUrl(),
+      STRIPE_API_BASE_URL: this.baseUrl(),
       TURNSTILE_SITEVERIFY_URL: `${this.baseUrl()}/turnstile/v0/siteverify`,
     };
   }

@@ -4,14 +4,34 @@ import {
   buttonVariants,
   cardVariants,
 } from "@eli-coach-platform/ui/primitives";
-import { Link, useOutletContext, type MetaFunction } from "react-router";
+import {
+  Link,
+  useLoaderData,
+  useOutletContext,
+  type LoaderFunctionArgs,
+  type MetaFunction,
+} from "react-router";
 
 import type { PublicOutletContext } from "~/surfaces/public-site/shell/layout";
-import { BundleSelector } from "~/surfaces/public-site/sections/pricing/bundle-selector";
-import { presentCoachingBundles } from "~/surfaces/public-site/sections/pricing/coaching-bundles";
 import { BOOK_PATH } from "~/features/assessment-calls/contracts/paths";
+import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
+import { BundleSelector } from "~/features/coaching-sales/ui/public/bundle-selector/bundle-selector";
+import { waitlistContext } from "~/features/waitlist/server/guards/waitlist-context.server";
 import { WaitlistAvailabilityStatus } from "~/features/waitlist/ui/public/availability-status";
 import { WaitlistEmailForm } from "~/features/waitlist/ui/public/email-form";
+import { presentWaitlist } from "~/features/waitlist/ui/shared/waitlist-presentation";
+
+export async function loader({ context }: LoaderFunctionArgs) {
+  const { waitlist } = context.get(waitlistContext);
+  const { showsBundleOffer } = presentWaitlist(await waitlist.getWaitlist());
+
+  return {
+    cards: context.get(coachingSalesContext).checkouts.loadPricingCards({
+      tier: showsBundleOffer ? "reduced" : "regular",
+    }),
+    pricing: showsBundleOffer ? "waitlist" : "regular",
+  } as const;
+}
 
 export const meta: MetaFunction = () => [
   { title: "Pricing | Evoa" },
@@ -26,9 +46,7 @@ export const handle = { publicContentFrame: "full-bleed" } as const;
 
 export default function PricingRoute() {
   const { botDetection, waitlist } = useOutletContext<PublicOutletContext>();
-  const bundlePresentation = presentCoachingBundles({
-    waitlistPricing: waitlist.showsBundleOffer,
-  });
+  const { cards, pricing } = useLoaderData<typeof loader>();
 
   return (
     <section className="mx-auto max-w-7xl px-6 pt-32 pb-24">
@@ -45,11 +63,7 @@ export default function PricingRoute() {
         </p>
       </header>
 
-      <BundleSelector
-        benefits={bundlePresentation.benefits}
-        cards={bundlePresentation.cards}
-        showsWaitlistPricing={bundlePresentation.showsWaitlistPricing}
-      />
+      <BundleSelector cards={cards} mode="public" pricing={pricing} />
 
       <p className="mx-auto mb-14 max-w-2xl text-center text-sm leading-5 text-copy-muted">
         On the 3- and 6-month plans, you may cancel within the first 7 days if

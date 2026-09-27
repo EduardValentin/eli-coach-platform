@@ -48,7 +48,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { EmptyState } from '../EmptyState';
 import { SearchField } from '../SearchField';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
-import type { JourneyStage } from '../../domain/journey';
+import type { ClientJourney, JourneyStage } from '../../domain/journey';
+import { PRICING_LABELS } from '../../utils/journeyLabels';
 import { AppointmentCard } from './AppointmentCard';
 import { CallJourneyActions } from './CallJourneyActions';
 import { CallStageBadge } from './CallStageBadge';
@@ -97,6 +98,11 @@ function visitorDetails(
   ];
 }
 
+function pricingDetails(journey: ClientJourney | null): AppointmentDetail[] {
+  if (!journey) return [];
+  return [{ label: 'Pricing', value: PRICING_LABELS[journey.pricing] }];
+}
+
 function CallItem({
   call,
   now,
@@ -118,7 +124,7 @@ function CallItem({
           email: booking.visitorEmail,
           phone: booking.phone ?? undefined,
         }}
-        details={visitorDetails(booking, now)}
+        details={[...visitorDetails(booking, now), ...pricingDetails(journey)]}
         when={{ startsAt: booking.startsAt, timeZone }}
         status={timing === 'past' ? 'past' : 'scheduled'}
         titleElement="h2"
@@ -140,7 +146,7 @@ function CallItem({
               />
             )}
             {journey && timing === 'past' && (
-              <CallJourneyActions journey={journey} />
+              <CallJourneyActions journey={journey} gender={booking.gender} />
             )}
           </>
         }
@@ -197,7 +203,12 @@ function StatusFilter({
       value={journey}
       onValueChange={(value) => onChoose(parseJourneyStep(value))}
     >
-      <SelectTrigger aria-label="Status" size="sm" className="w-full">
+      <SelectTrigger
+        aria-label="Status"
+        data-parity="status-filter"
+        size="sm"
+        className="w-full"
+      >
         <SelectValue>{chosenLabel}</SelectValue>
       </SelectTrigger>
       <SelectContent>
@@ -205,7 +216,9 @@ function StatusFilter({
           <SelectItem key={option.step} value={option.step}>
             <span className="flex items-center gap-2">
               {option.label}{' '}
-              <Badge tone="count">{counts[option.step]}</Badge>
+              <Badge data-parity={`status-count-${option.step}`} tone="count">
+                {counts[option.step]}
+              </Badge>
             </span>
           </SelectItem>
         ))}
@@ -336,6 +349,7 @@ export function AssessmentCallsSection({
       animate={{ opacity: 1, y: 0 }}
       transition={prefersReducedMotion ? { duration: 0 } : undefined}
       className="bg-card p-5 sm:p-8 rounded-panel shadow-soft border border-border/50"
+      data-parity-root="AssessmentCallsSection"
     >
       <Tabs
         variant="segmented"
