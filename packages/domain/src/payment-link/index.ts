@@ -6,6 +6,7 @@ export {
   type PaymentLinkMessage,
 } from "./coaching-sales-notifications";
 export { CoachingSalesWindow } from "./coaching-sales-window";
+export { OpenBundlePageUseCase } from "./open-bundle-page-use-case";
 export {
   PaymentLink,
   type NewPaymentLink,

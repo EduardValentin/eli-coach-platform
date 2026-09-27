@@ -9,7 +9,7 @@ import {
   type StartCheckoutUseCase,
 } from "@eli-coach-platform/domain/coaching-subscription";
 import type {
-  CoachingSalesWindow,
+  OpenBundlePageUseCase,
   ResolvePaymentLinkUseCase,
 } from "@eli-coach-platform/domain/payment-link";
 import type { Clock } from "@eli-coach-platform/domain/shared";
@@ -47,10 +47,10 @@ import {
 type CheckoutsControllerOptions = {
   appBasePath: string;
   clock: Clock;
+  openBundlePage: OpenBundlePageUseCase;
   publicAppUrl: string;
   readCheckoutConfirmation: ReadCheckoutConfirmationUseCase;
   resolvePaymentLink: ResolvePaymentLinkUseCase;
-  salesWindow: CoachingSalesWindow;
   startCheckout: StartCheckoutUseCase;
 };
 
@@ -77,7 +77,9 @@ export class CheckoutsController {
   constructor(private readonly options: CheckoutsControllerOptions) {}
 
   async loadBundlePageShell() {
-    if (!(await this.options.salesWindow.isOpen())) {
+    const bundlePage = await this.options.openBundlePage.execute();
+
+    if (bundlePage.status === "closed") {
       throw createNotFoundResponse();
     }
 

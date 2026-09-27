@@ -80,7 +80,7 @@ module.exports = {
     {
       name: "assessment-calls-never-reach-coaching-sales",
       comment:
-        "F611: coaching-sales builds on assessment-calls, so assessment-calls never imports coaching-sales, not even its public folders.",
+        "coaching-sales builds on assessment-calls, so assessment-calls never imports coaching-sales, not even its public folders.",
       severity: "error",
       from: { path: `${FEATURES}assessment-calls/` },
       to: { path: `${FEATURES}coaching-sales/` },

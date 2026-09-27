@@ -3,7 +3,7 @@ import type {
   StartCheckoutUseCase,
 } from "@eli-coach-platform/domain/coaching-subscription";
 import type {
-  CoachingSalesWindow,
+  OpenBundlePageUseCase,
   ResolvePaymentLinkUseCase,
 } from "@eli-coach-platform/domain/payment-link";
 import { describe, expect, it, vi } from "vitest";
@@ -28,7 +28,7 @@ type ControllerOptions = {
   checkout?: CheckoutStart;
   confirmation?: Confirmation;
   resolution?: Resolution;
-  salesWindow?: "open" | "closed";
+  bundlePage?: "open" | "closed";
 };
 
 const validResolution = {
@@ -56,7 +56,7 @@ describe("CheckoutsController bundle page shell", () => {
 
   it("answers not found while coaching sales are closed", async () => {
     // arrange
-    const { controller } = createController({ salesWindow: "closed" });
+    const { controller } = createController({ bundlePage: "closed" });
 
     // act
     const loading = controller.loadBundlePageShell();
@@ -409,12 +409,15 @@ function createController(options: ControllerOptions) {
   const readCheckoutConfirmation = vi
     .fn()
     .mockResolvedValue(options.confirmation ?? { status: "not_paid" });
-  const isSalesWindowOpen = vi
+  const openBundlePage = vi
     .fn()
-    .mockResolvedValue(options.salesWindow !== "closed");
+    .mockResolvedValue({ status: options.bundlePage ?? "open" });
   const controller = new CheckoutsController({
     appBasePath: APP_BASE_PATH,
     clock: { now: () => NOW },
+    openBundlePage: {
+      execute: openBundlePage,
+    } as unknown as OpenBundlePageUseCase,
     publicAppUrl: PUBLIC_APP_URL,
     readCheckoutConfirmation: {
       execute: readCheckoutConfirmation,
@@ -422,9 +425,6 @@ function createController(options: ControllerOptions) {
     resolvePaymentLink: {
       execute: resolvePaymentLink,
     } as unknown as ResolvePaymentLinkUseCase,
-    salesWindow: {
-      isOpen: isSalesWindowOpen,
-    } as unknown as CoachingSalesWindow,
     startCheckout: {
       execute: startCheckout,
     } as unknown as StartCheckoutUseCase,
