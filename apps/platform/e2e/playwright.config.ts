@@ -3,13 +3,14 @@ import { resolve } from "node:path";
 import { defineConfig, devices } from "@playwright/test";
 
 import { E2E_APP_URL } from "./support/e2e-app";
-import { EMAIL_CAPTURE_URL } from "./support/email-capture";
-import { loadE2eEnvironment } from "./support/env";
 import { e2eDirectory, repoRootDirectory } from "./support/repo-paths";
-import { requireStripeTestEnvironment } from "./support/stripe-environment";
+import {
+  readWebServerEnvironment,
+  webServerLaunchFor,
+} from "./support/web-server";
 
-loadE2eEnvironment();
-const stripeTestEnvironment = requireStripeTestEnvironment();
+// knip imports this config: a missing .env.e2e fails the web server start, not the import.
+const webServerLaunch = webServerLaunchFor(readWebServerEnvironment());
 
 // Local-only suite: no CI wiring yet (see docs/CLERK.md's "E2E lane"), so
 // there is no CI-vs-local branching here the way a shipped Playwright config
@@ -57,7 +58,7 @@ export default defineConfig({
   // support/global-teardown.ts and docs/CLERK.md's E2E lane section.
   globalTeardown: "./support/global-teardown.ts",
   webServer: {
-    command: "pnpm dev:e2e",
+    ...webServerLaunch,
     // The e2e tree lives under apps/platform, but `pnpm dev:e2e` is a root
     // script (it also carries the LOCAL_POSTGRES_PORT/DATABASE_PORT wiring the
     // bare `apps/platform` script doesn't) — the webServer has to run from the
@@ -65,16 +66,6 @@ export default defineConfig({
     cwd: repoRootDirectory,
     url: `${E2E_APP_URL}/readyz`,
     reuseExistingServer: false,
-    env: {
-      IDENTITY_PROVIDER: "clerk",
-      PAYMENTS_PROVIDER: "stripe",
-      PRODUCT_EMAIL_PROVIDER: "resend",
-      PUBLIC_APP_URL: E2E_APP_URL,
-      RESEND_API_KEY: "re_e2e_email_capture",
-      RESEND_BASE_URL: EMAIL_CAPTURE_URL,
-      STRIPE_SECRET_KEY: stripeTestEnvironment.secretKey,
-      STRIPE_WEBHOOK_SIGNING_SECRET: stripeTestEnvironment.webhookSigningSecret,
-    },
     // The dev server compiles the full Vite/React Router graph on first
     // request; a generous ceiling keeps a cold start from racing the suite.
     timeout: 120_000,

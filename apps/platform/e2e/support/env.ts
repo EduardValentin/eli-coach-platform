@@ -4,14 +4,19 @@ import { repoRootE2eEnvPath, repoRootEnvPath } from "./repo-paths";
 
 const PLACEHOLDER_VALUES = new Set(["replace-me", ""]);
 
+export const MISSING_E2E_ENVIRONMENT_FILE =
+  "The repo root .env.e2e is missing. Copy .env.e2e.example to .env.e2e " +
+  "and fill in the Stripe test-mode keys the e2e suite pays with.";
+
+export function hasE2eEnvironmentFile(): boolean {
+  return existsSync(repoRootE2eEnvPath);
+}
+
 // process.loadEnvFile never overwrites a variable that is already set, so the
 // e2e-only file loads first to take precedence over the shared one.
 export function loadE2eEnvironment(): void {
-  if (!existsSync(repoRootE2eEnvPath)) {
-    throw new Error(
-      "The repo root .env.e2e is missing. Copy .env.e2e.example to .env.e2e " +
-        "and fill in the Stripe test-mode keys the e2e suite pays with.",
-    );
+  if (!hasE2eEnvironmentFile()) {
+    throw new Error(MISSING_E2E_ENVIRONMENT_FILE);
   }
 
   process.loadEnvFile(repoRootE2eEnvPath);
