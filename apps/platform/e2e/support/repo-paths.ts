@@ -13,3 +13,4 @@ export const e2eDirectory = resolve(supportDirectory, "..");
 // apps/platform/e2e/support -> apps/platform/e2e -> apps/platform -> apps -> repo root
 export const repoRootDirectory = resolve(supportDirectory, "../../../..");
 export const repoRootEnvPath = resolve(repoRootDirectory, ".env");
+export const repoRootE2eEnvPath = resolve(repoRootDirectory, ".env.e2e");

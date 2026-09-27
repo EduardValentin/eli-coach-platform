@@ -1,23 +1,14 @@
-import {
-  appendFileSync,
-  existsSync,
-  mkdirSync,
-  readdirSync,
-  readFileSync,
-  rmSync,
-  statSync,
-} from "node:fs";
-import { resolve } from "node:path";
+import { statSync } from "node:fs";
 
-import { e2eDirectory } from "./repo-paths";
+import { runRegistry } from "./run-registry";
 
 // Every Clerk Development-instance user this suite creates has to be deleted
 // again — the instance carries a hard 100-user cap, and letting
 // `+clerk_test` users accumulate here already caused an outage (see
 // docs/CLERK.md's E2E lane section). Each test records its generated email
 // here as soon as it's minted (see fixtures.ts's testEmail fixture);
-// global-teardown.ts reads its own run's file back at the end of the run and
-// deletes every user it resolves to via the Clerk Backend API.
+// run-cleanup.ts's cleanUpRun reads the run's file back at the end of the run
+// and deletes every user it resolves to via the Clerk Backend API.
 //
 // File-based rather than an in-memory registry: Playwright runs
 // globalSetup/globalTeardown in the runner process, separate from the
@@ -30,50 +21,30 @@ import { e2eDirectory } from "./repo-paths";
 // only record of whatever that aborted run leaked — permanently. Two
 // concurrent runs would also stomp each other's file. Splitting the
 // registry per run turns that into a recoverable problem: global-setup.ts
-// sweeps every leftover file it finds from prior runs before this run
+// sweeps (through cleanUpRun) every leftover file it finds from prior runs before this run
 // starts recording its own.
-const runtimeDirectory = resolve(e2eDirectory, ".runtime");
-const registryFilePrefix = "created-emails-";
-const registryFileSuffix = ".log";
+const createdEmails = runRegistry("created-emails-");
 
 export function registryFileName(runId: string): string {
-  return `${registryFilePrefix}${runId}${registryFileSuffix}`;
-}
-
-function registryFilePath(runId: string): string {
-  return resolve(runtimeDirectory, registryFileName(runId));
+  return createdEmails.fileName(runId);
 }
 
 // Single worker, sequential tests (see playwright.config.ts) — a plain
 // synchronous append needs no cross-process locking.
 export function recordCreatedEmail(email: string, runId: string): void {
-  mkdirSync(runtimeDirectory, { recursive: true });
-  appendFileSync(registryFilePath(runId), `${email}\n`);
+  createdEmails.record(email, runId);
 }
 
 export function readCreatedEmails(runId: string): string[] {
-  const path = registryFilePath(runId);
-
-  if (!existsSync(path)) {
-    return [];
-  }
-
-  return readFileSync(path, "utf8")
-    .split("\n")
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0);
+  return createdEmails.read(runId);
 }
 
 // Deletes this run's own registry file — called once a run's users have all
-// been accounted for (see global-teardown.ts and global-setup.ts's sweep),
+// been accounted for (see run-cleanup.ts's cleanUpRun),
 // never unconditionally, so a run that leaves genuine deletion failures
 // behind keeps its file around for the next sweep to retry.
 export function deleteRegistryFile(runId: string): void {
-  const path = registryFilePath(runId);
-
-  if (existsSync(path)) {
-    rmSync(path);
-  }
+  createdEmails.remove(runId);
 }
 
 // A suite that's still running keeps appending to its own registry file
@@ -95,20 +66,9 @@ type ForeignRegistryFile = { runId: string; mtimeMs: number };
 // partition of the same listing rather than two independent directory scans
 // that could drift apart.
 function listForeignRegistryFiles(currentRunId: string): ForeignRegistryFile[] {
-  if (!existsSync(runtimeDirectory)) {
-    return [];
-  }
-
   return (
-    readdirSync(runtimeDirectory)
-      .filter(
-        (name) =>
-          name.startsWith(registryFilePrefix) &&
-          name.endsWith(registryFileSuffix),
-      )
-      .map((name) =>
-        name.slice(registryFilePrefix.length, -registryFileSuffix.length),
-      )
+    createdEmails
+      .recordedRunIds()
       .filter((runId) => runId !== currentRunId)
       // A concurrent run's own deleteRegistryFile (called once its users are
       // all accounted for) can remove a file between this readdir and the stat
@@ -118,7 +78,7 @@ function listForeignRegistryFiles(currentRunId: string): ForeignRegistryFile[] {
       .flatMap((runId) => {
         try {
           return [
-            { runId, mtimeMs: statSync(registryFilePath(runId)).mtimeMs },
+            { runId, mtimeMs: statSync(createdEmails.filePath(runId)).mtimeMs },
           ];
         } catch (error) {
           if ((error as NodeJS.ErrnoException).code === "ENOENT") {
@@ -152,7 +112,7 @@ export function findPossiblyActiveRunIds(currentRunId: string): string[] {
     .map((file) => file.runId);
 }
 
-// The suite's own test-email convention (fixtures.ts's nextTestEmail) is the
+// The suite's own test-email convention (fixtures.ts's mintRecordedTestEmail) is the
 // second half of the double guard before deleting anything: a recorded
 // address is only actionable if it also carries this Clerk test-email
 // subaddress, so a bug that recorded the wrong string can't reach a real
@@ -163,9 +123,8 @@ export function isClerkTestEmail(email: string): boolean {
 }
 
 // The narrow slice of the Clerk Backend client this module actually needs —
-// letting global-setup.ts's sweep and global-teardown.ts's own-run cleanup
-// share one deletion routine without either depending on the full
-// `ClerkClient` type, and letting a test stub this out with a fake instead
+// letting run-cleanup.ts's cleanUpRun use one deletion routine without
+// depending on the full `ClerkClient` type, and letting a test stub this out with a fake instead
 // of a real Backend client.
 export type ClerkUsersApi = {
   getUserList(params: {
@@ -183,10 +142,9 @@ export type EmailDeletionResult = {
   reason?: string;
 };
 
-// Shared by global-teardown.ts (this run's own users) and global-setup.ts's
-// leftover sweep (prior runs' users) — the exact-match + `+clerk_test`
-// double guard has to be identical at both call sites, or a bug fixed in one
-// place could silently reappear in the other. Deletion failures are
+// Called by run-cleanup.ts's cleanUpRun for this run's own users (teardown)
+// and for prior runs' users (the setup sweep), so the exact-match +
+// `+clerk_test` double guard is the same for both. Deletion failures are
 // reported, never thrown: a cleanup problem shouldn't flip an otherwise-
 // green run red, and there's no meaningful retry target from inside a
 // teardown or setup hook — see deleteRegistryFile's callers for the actual

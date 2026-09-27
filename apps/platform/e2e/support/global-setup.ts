@@ -2,21 +2,18 @@ import { createClerkClient } from "@clerk/backend";
 import { clerkSetup } from "@clerk/testing/playwright";
 
 import {
-  deleteRecordedClerkUser,
-  deleteRegistryFile,
   findLeftoverRunIds,
   findPossiblyActiveRunIds,
-  hasDeletionFailures,
-  readCreatedEmails,
   registryFileName,
-  summarizeDeletionResults,
 } from "./clerk-users";
+import { startEmailCapture } from "./email-capture";
 import {
   isPlaceholderValue,
-  loadRepoRootEnv,
+  loadE2eEnvironment,
   requireEnv,
   requireRealEnv,
 } from "./env";
+import { cleanUpRun } from "./run-cleanup";
 import { resolveRunId } from "./run-id";
 
 // requirePortalAccess redirects an anonymous visitor here when they hit a
@@ -70,25 +67,12 @@ async function sweepLeftoverRegistries(currentRunId: string): Promise<void> {
   });
 
   for (const runId of leftoverRunIds) {
-    const emails = readCreatedEmails(runId);
-    const results = [];
-
-    for (const email of emails) {
-      results.push(await deleteRecordedClerkUser(clerkClient.users, email));
-    }
-
-    console.log(
-      `[e2e cleanup sweep] run ${runId}: ${summarizeDeletionResults(results)}`,
-    );
-
-    if (!hasDeletionFailures(results)) {
-      deleteRegistryFile(runId);
-    }
+    await cleanUpRun(clerkClient, runId, `[e2e cleanup sweep] run ${runId}`);
   }
 }
 
 export default async function globalSetup() {
-  loadRepoRootEnv();
+  loadE2eEnvironment();
 
   requireRealEnv("CLERK_PUBLISHABLE_KEY");
   requireRealEnv("CLERK_SECRET_KEY");
@@ -102,4 +86,5 @@ export default async function globalSetup() {
 
   await sweepLeftoverRegistries(runId);
   await clerkSetup();
+  await startEmailCapture();
 }

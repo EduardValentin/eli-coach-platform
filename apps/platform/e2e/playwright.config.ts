@@ -2,7 +2,14 @@ import { resolve } from "node:path";
 
 import { defineConfig, devices } from "@playwright/test";
 
+import { E2E_APP_URL } from "./support/e2e-app";
+import { EMAIL_CAPTURE_URL } from "./support/email-capture";
+import { loadE2eEnvironment } from "./support/env";
 import { e2eDirectory, repoRootDirectory } from "./support/repo-paths";
+import { requireStripeTestEnvironment } from "./support/stripe-environment";
+
+loadE2eEnvironment();
+const stripeTestEnvironment = requireStripeTestEnvironment();
 
 // Local-only suite: no CI wiring yet (see docs/CLERK.md's "E2E lane"), so
 // there is no CI-vs-local branching here the way a shipped Playwright config
@@ -36,7 +43,7 @@ export default defineConfig({
   // than Playwright's 30s default to absorb that without going flaky.
   timeout: 90_000,
   use: {
-    baseURL: "http://localhost:3000",
+    baseURL: E2E_APP_URL,
     trace: "on-first-retry",
   },
   projects: [
@@ -50,14 +57,24 @@ export default defineConfig({
   // support/global-teardown.ts and docs/CLERK.md's E2E lane section.
   globalTeardown: "./support/global-teardown.ts",
   webServer: {
-    command: "pnpm dev:platform",
-    // The e2e tree lives under apps/platform, but `pnpm dev:platform` is a
-    // root script (it also carries the LOCAL_POSTGRES_PORT/DATABASE_PORT
-    // wiring the bare `apps/platform` "dev" script doesn't) — the webServer
-    // has to run from the repo root to resolve it.
+    command: "pnpm dev:e2e",
+    // The e2e tree lives under apps/platform, but `pnpm dev:e2e` is a root
+    // script (it also carries the LOCAL_POSTGRES_PORT/DATABASE_PORT wiring the
+    // bare `apps/platform` script doesn't) — the webServer has to run from the
+    // repo root to resolve it.
     cwd: repoRootDirectory,
-    url: "http://localhost:3000/readyz",
-    reuseExistingServer: true,
+    url: `${E2E_APP_URL}/readyz`,
+    reuseExistingServer: false,
+    env: {
+      IDENTITY_PROVIDER: "clerk",
+      PAYMENTS_PROVIDER: "stripe",
+      PRODUCT_EMAIL_PROVIDER: "resend",
+      PUBLIC_APP_URL: E2E_APP_URL,
+      RESEND_API_KEY: "re_e2e_email_capture",
+      RESEND_BASE_URL: EMAIL_CAPTURE_URL,
+      STRIPE_SECRET_KEY: stripeTestEnvironment.secretKey,
+      STRIPE_WEBHOOK_SIGNING_SECRET: stripeTestEnvironment.webhookSigningSecret,
+    },
     // The dev server compiles the full Vite/React Router graph on first
     // request; a generous ceiling keeps a cold start from racing the suite.
     timeout: 120_000,

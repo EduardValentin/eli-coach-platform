@@ -28,7 +28,7 @@ const CLIENT: AccountSnapshot = {
 };
 
 describe("requireClientJourneyStep", () => {
-  it.each(["/app/client", "/app/client/plan", "/app/client/onboarding"])(
+  it.each(["/app/client", "/app/client/plan"])(
     "holds a client who has not seen her welcome on the welcome screen when she opens %s",
     async (pathname) => {
       // arrange
@@ -49,19 +49,22 @@ describe("requireClientJourneyStep", () => {
     },
   );
 
-  it("lets a client who has not seen her welcome open the welcome screen", async () => {
-    // arrange
-    const args = journeyArgs({
-      journey: journeyOf({ welcomeSeenAt: null }),
-      pathname: "/app/client/welcome",
-    });
+  it.each(["/app/client/welcome", "/app/client/onboarding"])(
+    "lets a client who has not seen her welcome open %s",
+    async (pathname) => {
+      // arrange
+      const args = journeyArgs({
+        journey: journeyOf({ welcomeSeenAt: null }),
+        pathname,
+      });
 
-    // act
-    const thrown = await captureThrown(() => requireClientJourneyStep(args));
+      // act
+      const thrown = await captureThrown(() => requireClientJourneyStep(args));
 
-    // assert
-    expect(thrown).toBeUndefined();
-  });
+      // assert
+      expect(thrown).toBeUndefined();
+    },
+  );
 
   it.each(["/app/client", "/app/client/welcome", "/app/client/plan"])(
     "holds a client who has seen her welcome on onboarding when she opens %s",

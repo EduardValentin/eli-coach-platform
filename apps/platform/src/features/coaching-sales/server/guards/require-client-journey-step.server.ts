@@ -4,7 +4,10 @@ import { redirect, type RouterContextProvider } from "react-router";
 
 import { accountsContext } from "~/features/accounts/server/guards/accounts-context.server";
 import { sessionContext } from "~/features/accounts/server/guards/session-context.server";
-import { clientJourneyDestination } from "~/features/coaching-sales/contracts/client-journey";
+import {
+  clientJourneyDestination,
+  clientJourneyOpenPaths,
+} from "~/features/coaching-sales/contracts/client-journey";
 
 import { coachingSalesContext } from "./coaching-sales-context.server";
 
@@ -39,15 +42,17 @@ export async function requireClientJourneyStep(
   }
 
   const { appBasePath } = args.context.get(accountsContext).portal;
-  const destination = buildRedirectPath(
-    appBasePath,
-    clientJourneyDestination(step),
+  const requestedPath = new URL(args.request.url).pathname;
+  const isOpenAtStep = clientJourneyOpenPaths(step).some(
+    (path) => buildRedirectPath(appBasePath, path) === requestedPath,
   );
 
-  if (new URL(args.request.url).pathname === destination) {
+  if (isOpenAtStep) {
     return;
   }
 
   // Middleware redirects skip the router's basename, so the target carries it.
-  throw redirect(destination);
+  throw redirect(
+    buildRedirectPath(appBasePath, clientJourneyDestination(step)),
+  );
 }

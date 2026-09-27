@@ -381,6 +381,9 @@ importers:
       pdfjs-dist:
         specifier: 'catalog:'
         version: 6.1.200
+      stripe:
+        specifier: 'catalog:'
+        version: 22.6.2(@types/node@24.13.3)
       tailwindcss:
         specifier: 'catalog:'
         version: 4.2.4

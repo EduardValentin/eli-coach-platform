@@ -1,12 +1,20 @@
-import { repoRootEnvPath } from "./repo-paths";
+import { existsSync } from "node:fs";
+
+import { repoRootE2eEnvPath, repoRootEnvPath } from "./repo-paths";
 
 const PLACEHOLDER_VALUES = new Set(["replace-me", ""]);
 
-// The app's own dev server loads `.env` via `node --env-file`; every process
-// in this suite (fixtures' worker process, global-setup.ts, global-
-// teardown.ts) is a plain node/Playwright run with no such flag, so the repo
-// root file has to be loaded explicitly to see the same Clerk keys.
-export function loadRepoRootEnv(): void {
+// process.loadEnvFile never overwrites a variable that is already set, so the
+// e2e-only file loads first to take precedence over the shared one.
+export function loadE2eEnvironment(): void {
+  if (!existsSync(repoRootE2eEnvPath)) {
+    throw new Error(
+      "The repo root .env.e2e is missing. Copy .env.e2e.example to .env.e2e " +
+        "and fill in the Stripe test-mode keys the e2e suite pays with.",
+    );
+  }
+
+  process.loadEnvFile(repoRootE2eEnvPath);
   process.loadEnvFile(repoRootEnvPath);
 }
 
@@ -19,8 +27,8 @@ export function requireEnv(name: string): string {
   if (!value) {
     throw new Error(
       `${name} is required for the Playwright e2e suite. Run it through ` +
-        "the platform's test:e2e script so global-setup.ts has loaded the " +
-        "repo root .env first.",
+        "the platform's test:e2e script so the repo root .env and .env.e2e " +
+        "are loaded first.",
     );
   }
 

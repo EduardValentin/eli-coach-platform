@@ -2,6 +2,8 @@ import { expect, type Page } from "@playwright/test";
 
 export type PortalRole = "CLIENT" | "COACH";
 
+const FINISH_ONBOARDING_LABEL = "Finish your onboarding";
+
 const PORTAL_LABEL: Record<PortalRole, string> = {
   CLIENT: "Client Portal",
   COACH: "Coach Portal",
@@ -49,6 +51,12 @@ export class PublicNav {
 
   async expectSignedIn(): Promise<void> {
     await expect(this.signOutButton).toBeVisible();
+  }
+
+  async expectFinishOnboardingLink(target: string): Promise<void> {
+    await expect(
+      this.page.getByRole("link", { name: FINISH_ONBOARDING_LABEL }),
+    ).toHaveAttribute("href", target);
   }
 
   async expectPortalPillVisible(role: PortalRole): Promise<void> {

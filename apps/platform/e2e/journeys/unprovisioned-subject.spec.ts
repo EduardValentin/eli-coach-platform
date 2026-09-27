@@ -1,6 +1,7 @@
 import { expect, test } from "../support/fixtures";
 
 test("a Clerk user nobody provisioned is signed out again and told sign-in failed", async ({
+  accountPortal,
   page,
   publicNav,
   createClerkUser,
@@ -19,5 +20,10 @@ test("a Clerk user nobody provisioned is signed out again and told sign-in faile
   await expect(
     page.getByRole("heading", { name: "We couldn't finish signing you in" }),
   ).toBeVisible();
-  await publicNav.expectSignedOut();
+
+  // act
+  await page.getByRole("button", { name: "Try Again" }).click();
+
+  // assert
+  await accountPortal.expectEmailStepVisible();
 });

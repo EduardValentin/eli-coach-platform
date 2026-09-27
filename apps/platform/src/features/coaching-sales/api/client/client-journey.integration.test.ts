@@ -113,6 +113,18 @@ describe.sequential("client journey integration", () => {
     expect(await welcomeSeenAtOf(INVITED_CLIENT)).toEqual(CALL_ENDED_INSTANT);
   });
 
+  it("lets her open onboarding before her welcome is seen, and onboarding is not built yet", async () => {
+    // arrange
+    await admitInvitedClient(ANA);
+
+    // act
+    const onboarding = await rig.requestAs(INVITED_CLIENT, ONBOARDING);
+
+    // assert
+    expect(onboarding.status).toBe(404);
+    expect(await welcomeSeenAtOf(INVITED_CLIENT)).toBeNull();
+  });
+
   it("holds her on onboarding once her welcome is seen, and onboarding is not built yet", async () => {
     // arrange
     await admitInvitedClient(ANA);

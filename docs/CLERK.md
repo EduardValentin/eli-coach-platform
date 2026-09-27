@@ -206,7 +206,9 @@ it as-is; nothing in this path ever updates `role` on an existing row. So:
 ## E2E lane
 
 `pnpm test:e2e` runs the Playwright suite under `apps/platform/e2e/`. It is
-**local-only** — there is no CI wiring for it.
+**local-only** — there is no CI wiring for it. It starts its own dev server on
+port 3100 with the e2e-only settings and keys described in the README's
+"End-to-End Journeys" section.
 
 Prerequisites:
 
@@ -218,18 +220,27 @@ Prerequisites:
   hosted Account Portal, there is no mock instance to fall back to, and
   `global-setup.ts` fails loudly on a placeholder value rather than letting a
   journey time out mid-run.
-- `CLERK_SIGN_IN_URL` set to the real Account Portal URL above.
+- `CLERK_SIGN_IN_URL` set to the real Account Portal URL above, and
+  `CLERK_SIGN_UP_URL` set to the same instance's Account Portal sign-up URL
+  (`https://<your-instance-slug>.accounts.dev/sign-up`). The invitation the
+  app creates for a paid client hands her to that page, which creates her
+  account from the invitation ticket and returns her to the suite's own
+  origin.
 - The local database bootstrapped and migrated. An auto-running fixture
   visits `/?ff.WAITLIST_MODE=false` before each journey's own navigation, so
   the browser's session cookie carries the override for the rest of the test
   and public authentication controls stay available without touching the
   persisted flag.
-- The instance in Invite-only mode (see above). Journeys create their Clerk
-  users through the Backend API and insert the matching `app.accounts` row
-  directly, then sign in through the hosted portal with the `+clerk_test`
-  one-time code; nothing signs up. `sign-up-unavailable.spec.ts` asserts the
-  mode from the public environment endpoint and fails until the flip lands.
-  No journey needs a webhook delivery, so the suite does not start the relay.
+- The instance in Invite-only mode (see above). Most journeys create their
+  Clerk users through the Backend API and insert the matching `app.accounts`
+  row directly, then sign in through the hosted portal with the `+clerk_test`
+  one-time code. `paid-client-invitation.spec.ts` is the one journey that
+  signs up: a visitor books a call with a `+clerk_test` address, pays through
+  Stripe test mode, and creates her account from the app's invitation on the
+  hosted sign-up page, which asks for no code. `sign-up-unavailable.spec.ts`
+  asserts the mode from the public environment endpoint and fails until the
+  flip lands. No journey needs a Clerk webhook delivery, so the suite does not
+  start the relay.
 - Every other variable the runtime schema requires, `MANAGEMENT_API_SECRET`
   and `STORE_ASSET_ROOT` included — `pnpm secrets:local:prepare` and
   `pnpm store:assets:local:prepare` provide them. A `.env` predating one of
@@ -250,7 +261,10 @@ starts failing at the email/code step with no other explanation, wait a few
 minutes before rerunning rather than assuming a regression.
 
 **Cleanup:** the suite deletes every Clerk user it creates. This is what
-keeps the shared Development instance under its hard 100-user cap.
+keeps the shared Development instance under its hard 100-user cap. After the
+users, teardown revokes every invitation still pending for the run's
+`+clerk_test` addresses, so a journey that stopped between the payment and
+the sign-up leaves no open invitation behind.
 
 Each journey records the `+clerk_test` email it generates to a run-scoped
 registry file, `e2e/.runtime/created-emails-<run-id>.log` (gitignored;
@@ -289,7 +303,9 @@ retrying.
 ### Test-email convention
 
 Every journey uses a fresh address of the form
-`e2e-<run-id>-<sequence>+clerk_test@evoa.fit`. Clerk treats any address
+`e2e-<run-id>-<worker-index>-<sequence>+clerk_test@evoa.fit`; the worker index
+keeps a worker Playwright restarts after a failure from reusing an address an
+earlier worker of the same run already created. Clerk treats any address
 carrying a `+clerk_test` subaddress as a test email: instead of sending a
 real code, it accepts the fixed code `424242` at the verification step (see
 [Clerk's test emails and phones docs](https://clerk.com/docs/guides/development/testing/test-emails-and-phones)).
