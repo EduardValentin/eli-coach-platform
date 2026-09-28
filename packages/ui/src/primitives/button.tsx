@@ -18,6 +18,8 @@ const buttonClasses = cva(
         "outline-brand":
           "border border-brand-primary text-brand-primary hover:bg-brand-primary/5",
         ghost: "text-text-label hover:bg-surface-quiet hover:text-text-primary",
+        "ghost-ink":
+          "text-text-label hover:bg-text-primary hover:text-surface-base",
         "ghost-muted":
           "text-text-secondary hover:bg-surface-quiet hover:text-text-primary",
         destructive:
