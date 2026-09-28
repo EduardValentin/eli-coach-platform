@@ -59,6 +59,40 @@ export function createConsoleLogger(): ConsoleLogger {
         recipient,
       });
     },
+    onboardingAnswersApproved: ({ clientId }) => {
+      console.info("Client onboarding answers approved.", {
+        clientId,
+        eventCategory: "client_onboarding_answers_approved",
+      });
+    },
+    onboardingDetailsAnswered: ({ clientId, questionCount }) => {
+      console.info("Client onboarding details answered.", {
+        clientId,
+        eventCategory: "client_onboarding_details_answered",
+        questionCount,
+      });
+    },
+    onboardingDetailsRefused: ({ clientId, reason }) => {
+      console.warn("Client onboarding details refused.", {
+        clientId,
+        eventCategory: "client_onboarding_details_refused",
+        reason,
+      });
+    },
+    onboardingDetailsRequestEmailFailed: ({ clientId, requestId }) => {
+      console.error("Client onboarding details request email failed.", {
+        clientId,
+        errorCategory: "client_onboarding_details_request_email_failure",
+        requestId,
+      });
+    },
+    onboardingDetailsRequested: ({ clientId, questionCount }) => {
+      console.info("Client onboarding details requested.", {
+        clientId,
+        eventCategory: "client_onboarding_details_requested",
+        questionCount,
+      });
+    },
     onboardingDraftSaved: ({ clientId, formId }) => {
       console.info("Client onboarding draft saved.", {
         clientId,
@@ -71,6 +105,18 @@ export function createConsoleLogger(): ConsoleLogger {
         clientId,
         errorCategory: "client_onboarding_draft_save_failure",
         formId,
+      });
+    },
+    onboardingReviewOpened: ({ clientId }) => {
+      console.info("Client onboarding review opened.", {
+        clientId,
+        eventCategory: "client_onboarding_review_opened",
+      });
+    },
+    onboardingReviewStampsRepaired: ({ clientId }) => {
+      console.warn("Client onboarding review stamps repaired.", {
+        clientId,
+        eventCategory: "client_onboarding_review_stamps_repaired",
       });
     },
     onboardingSubmissionAccepted: ({ clientId, screeningOutcome }) => {
