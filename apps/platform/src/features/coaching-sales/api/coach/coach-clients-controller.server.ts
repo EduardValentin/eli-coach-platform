@@ -46,6 +46,14 @@ const RESEND_REQUEST_MAX_BYTES = 1024;
 
 type ListedClient = ClientRosterEntry & { status: ClientStatus };
 
+type ClientRecord = NonNullable<
+  Awaited<ReturnType<ReadClientRecordUseCase["execute"]>>
+>;
+
+type ClientInvitationReading = Awaited<
+  ReturnType<ReadClientInvitationUseCase["execute"]>
+>;
+
 export class CoachClientsController {
   constructor(private readonly options: CoachClientsControllerOptions) {}
 
@@ -86,23 +94,9 @@ export class CoachClientsController {
 
     return coachClientSchema.parse({
       ...identityOf(record),
-      profile: {
-        dateOfBirth: record.profile.dateOfBirth,
-        gender: record.profile.gender,
-        country: record.profile.country,
-        phone: record.profile.phone,
-        primaryGoal: record.profile.primaryGoal,
-        bookingNotes: record.bookingNotes,
-      },
+      profile: profileOf(record),
       subscription: subscriptionOf(record),
-      invitation:
-        record.accountBound || !invitation
-          ? null
-          : {
-              state: invitation.state,
-              sentAt: invitation.sentAt.toISOString(),
-              expiresAt: invitation.expiresAt.toISOString(),
-            },
+      invitation: invitationOf(record, invitation),
     });
   }
 
@@ -137,6 +131,32 @@ function identityOf(client: ListedClient) {
     lastName: client.journey.lastName,
     email: client.profile.email,
     status: client.status,
+  };
+}
+
+function profileOf(record: ClientRecord) {
+  return {
+    dateOfBirth: record.profile.dateOfBirth,
+    gender: record.profile.gender,
+    country: record.profile.country,
+    phone: record.profile.phone,
+    primaryGoal: record.profile.primaryGoal,
+    bookingNotes: record.bookingNotes,
+  };
+}
+
+function invitationOf(
+  record: ClientRecord,
+  invitation: ClientInvitationReading | null,
+) {
+  if (record.accountBound || !invitation) {
+    return null;
+  }
+
+  return {
+    state: invitation.state,
+    sentAt: invitation.sentAt.toISOString(),
+    expiresAt: invitation.expiresAt.toISOString(),
   };
 }
 
