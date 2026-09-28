@@ -1,27 +1,43 @@
 import { PortalWidget } from "@eli-coach-platform/ui/portal";
+import { buttonVariants } from "@eli-coach-platform/ui/primitives";
 import { ClipboardList } from "lucide-react";
+import { Link } from "react-router";
 
 import type { ProgramStatus } from "~/features/coaching-sales/contracts/client-journey";
+import {
+  CLIENT_ANSWER_QUERY,
+  CLIENT_ONBOARDING_PATH,
+} from "~/features/coaching-sales/contracts/paths";
 import {
   formatDayMonth,
   useCalendarDayTimeZone,
 } from "~/features/coaching-sales/ui/shared/calendar-day-format";
 
 import {
-  PROGRAM_STATUS_EYEBROW,
-  PROGRAM_STATUS_LABEL,
+  ANSWER_NOW_LABEL,
+  programStatusEyebrow,
+  programStatusLabel,
   programStatusLine,
 } from "./program-status-copy";
 
+type DetailsRequest = { note: string };
+
 type ProgramStatusCardProps = {
   status: ProgramStatus;
+  request?: DetailsRequest | null;
 };
 
-export function ProgramStatusCard({ status }: ProgramStatusCardProps) {
+const ANSWER_PATH = `${CLIENT_ONBOARDING_PATH}?${CLIENT_ANSWER_QUERY}`;
+
+export function ProgramStatusCard({
+  status,
+  request = null,
+}: ProgramStatusCardProps) {
   const timeZone = useCalendarDayTimeZone();
   const workStartDay = status.workStartsOn
     ? formatDayMonth(status.workStartsOn, timeZone)
     : null;
+  const needsDetails = status.kind === "needs-details";
 
   return (
     <div
@@ -39,17 +55,41 @@ export function ProgramStatusCard({ status }: ProgramStatusCardProps) {
           />
         }
         title={
-          <span data-parity="status-eyebrow">{PROGRAM_STATUS_EYEBROW}</span>
+          <span data-parity="status-eyebrow">
+            {programStatusEyebrow(status.kind)}
+          </span>
         }
-        voice={<span data-parity="status-label">{PROGRAM_STATUS_LABEL}</span>}
+        voice={
+          <span data-parity="status-label">
+            {programStatusLabel(status.kind)}
+          </span>
+        }
       >
         <p
           className="mt-1 max-w-2xl text-sm text-text-secondary"
           data-parity="status-line"
         >
-          {programStatusLine(workStartDay)}
+          {programStatusLine({
+            kind: status.kind,
+            requestNote: request?.note ?? null,
+            workStartDay,
+          })}
         </p>
-        <div className="mt-6 flex flex-col gap-3 sm:flex-row" />
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+          {needsDetails && (
+            <Link
+              className={buttonVariants({
+                size: "sm",
+                variant: "primary",
+                width: "full-below-sm",
+              })}
+              data-parity="answer-now"
+              to={ANSWER_PATH}
+            >
+              {ANSWER_NOW_LABEL}
+            </Link>
+          )}
+        </div>
       </PortalWidget>
     </div>
   );
