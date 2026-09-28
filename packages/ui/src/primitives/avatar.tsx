@@ -14,6 +14,8 @@ const avatarClasses = cva(
       tone: {
         quiet: "",
         muted: "opacity-70",
+        heading:
+          "[&_[data-slot=avatar-fallback]]:bg-surface-quiet [&_[data-slot=avatar-fallback]]:font-heading [&_[data-slot=avatar-fallback]]:font-semibold",
       },
     },
     defaultVariants: {

@@ -5,6 +5,7 @@ export {
   AccordionTrigger,
 } from "./accordion";
 export { Alert } from "./alert";
+export { Avatar } from "./avatar";
 export { Badge } from "./badge";
 export { Button, buttonVariants } from "./button";
 export { Card, cardVariants } from "./card";
