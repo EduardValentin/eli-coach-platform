@@ -141,6 +141,7 @@ A **Check-in** has a client, a coach, a date and time, a type (`ad-hoc` or `recu
 
 53. **The current Privacy Policy and Terms & Conditions are dedicated public pages** at `/privacy` and `/terms`, each showing its version and effective date. Every public page ends with links to both, in normal and waiting list mode.
 54. **Every public submission rejects bot-driven attempts before it affects system state.** This covers waitlist capture (hero, footer, pricing page), store acquisition for logged-out buyers, assessment call booking, and any future public submission point. The mechanism must offer accessible alternatives or require no visual or motor input, in keeping with the WCAG AA target.
+55. **On the production site, forms accept only a person's main email address; a subaddressed address (name+tag@domain) is refused.** Test environments accept subaddresses.
 
 ---
 

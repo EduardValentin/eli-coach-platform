@@ -3,7 +3,10 @@
 import "@testing-library/jest-dom/vitest";
 
 import { TURNSTILE_TEST_RESPONSE_TOKEN } from "@eli-coach-platform/config";
-import { ELI_COACH_CONTACT_EMAIL } from "@eli-coach-platform/content";
+import {
+  ELI_COACH_CONTACT_EMAIL,
+  EMAIL_SUBADDRESS_REFUSED_MESSAGE,
+} from "@eli-coach-platform/content";
 import {
   cleanup,
   render,
@@ -525,6 +528,49 @@ describe("booking an assessment call: the outcome", BOOKING_FLOW, () => {
 
     // assert
     await expectEnteredDetails();
+  });
+
+  it("shows a refused subaddress under the email field and moves focus to it", async () => {
+    // arrange
+    mockBooking(
+      {
+        error: {
+          code: "email_subaddress_refused",
+          message: EMAIL_SUBADDRESS_REFUSED_MESSAGE,
+        },
+        success: false,
+      },
+      { status: 400 },
+    );
+    const user = renderBookingPage();
+    await reachDetails(user);
+    const chosenCall = chosenCallSummary();
+    await fillDetails(user);
+    await user.clear(screen.getByLabelText("Email Address"));
+    await user.type(
+      screen.getByLabelText("Email Address"),
+      "jane+coaching@example.com",
+    );
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Schedule Call" }));
+
+    // assert
+    await waitFor(() => {
+      expect(screen.getByLabelText("Email Address")).toHaveFocus();
+    });
+    expect(screen.getByLabelText("Email Address")).toHaveAccessibleDescription(
+      EMAIL_SUBADDRESS_REFUSED_MESSAGE,
+    );
+    expect(screen.getByLabelText("Email Address")).toHaveAttribute(
+      "aria-invalid",
+      "true",
+    );
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Almost there" }),
+    ).toBeInTheDocument();
+    expect(chosenCallSummary()).toBe(chosenCall);
   });
 
   it("refuses a repeat booking without revealing any call, and offers a way to reach Eli", async () => {

@@ -206,6 +206,31 @@ describe("StoreAcquisitionController", () => {
     expect(failed.status).toBe(503);
   });
 
+  it("answers a refused subaddress with the status an invalid email gets", async () => {
+    // arrange
+    const controller = new StoreAcquisitionController(
+      {
+        execute: vi.fn().mockResolvedValue({ status: "subaddress_refused" }),
+      } as unknown as AcquireProductsUseCase,
+      {
+        verifySubmission: vi.fn().mockResolvedValue({ status: "verified" }),
+      },
+    );
+
+    // act
+    const response = await controller.acquire(createRequest());
+
+    // assert
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({
+      success: false,
+      error: {
+        code: "email_subaddress_refused",
+        message: "Unable to deliver store resources.",
+      },
+    });
+  });
+
   it("rejects an oversized streamed body before bot verification or acquisition", async () => {
     // arrange
     const acquireProducts = {

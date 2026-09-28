@@ -83,6 +83,8 @@ http://localhost:3000/?ff.WAITLIST_MODE=default
 `ENVIRONMENT` is `local` or `test`) or `none` (the default everywhere else).
 `ENVIRONMENT=production` refuses `browser` at startup.
 
+Booking, store requests and the waitlist refuse a subaddressed email (`name+tag@domain`) when `ENVIRONMENT=production` and accept it on LOCAL and TEST.
+
 `pnpm test` builds `apps/platform/build` for the integration suites with `APP_BASE_PATH=/eli-coach-platform` baked in (see `integration-test-config/platform-build.ts`), overwriting whatever a prior `pnpm build` produced. Run a fresh `pnpm build` before `pnpm start:platform` if you ran `pnpm test` in between — otherwise the served app answers on the integration base path instead of the one local development expects.
 
 The reference prototype sits outside the pnpm workspace and uses npm on the same Node version:

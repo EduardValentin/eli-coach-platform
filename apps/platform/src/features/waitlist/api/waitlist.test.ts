@@ -155,6 +155,30 @@ describe("WaitlistController", () => {
     expect(joinWaitlist).not.toHaveBeenCalled();
   });
 
+  it("answers a refused subaddress with the email error shape an invalid email gets", async () => {
+    // arrange
+    const joinWaitlist = vi
+      .fn()
+      .mockResolvedValue({ status: "subaddress_refused" });
+    const controller = createController({ joinWaitlist });
+
+    // act
+    const response = await handleHttpErrorResponse(() =>
+      controller.join(createJoinRequest({ email: "eli+launch@example.com" })),
+    );
+    const body = waitlistJoinResponseSchema.parse(await response.json());
+
+    // assert
+    expect(response.status).toBe(400);
+    expect(body).toEqual({
+      success: false,
+      error: {
+        code: "email_subaddress_refused",
+        message: "Unable to process waitlist signup.",
+      },
+    });
+  });
+
   it("reports bot verification infrastructure failures as server errors", async () => {
     // arrange
     const joinWaitlist = vi.fn();

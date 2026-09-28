@@ -60,6 +60,10 @@ export class WaitlistController {
       requestBody.data.email,
     );
 
+    if (result.status === "subaddress_refused") {
+      throwSubaddressRefusedError();
+    }
+
     return createJoinResponse({
       email: requestBody.data.email,
       result,
@@ -120,6 +124,13 @@ function throwJoinServerError(): never {
   throw new HttpJsonError({
     body: createJoinErrorResponseBody("server_error"),
     status: 500,
+  });
+}
+
+function throwSubaddressRefusedError(): never {
+  throw new HttpJsonError({
+    body: createJoinErrorResponseBody("email_subaddress_refused"),
+    status: 400,
   });
 }
 

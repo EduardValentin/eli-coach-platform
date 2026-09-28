@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
+import type { EmailSubaddressPolicy } from "../email-address";
 import type { FeatureFlagReader } from "../feature-flag";
 import { GetWaitlistUseCase } from "./get-waitlist-use-case";
 import { JoinWaitlistUseCase } from "./join-waitlist-use-case";
@@ -63,12 +64,14 @@ function createConfirmation(): WaitlistConfirmation {
 
 function createJoinWaitlist(options: {
   confirmation: WaitlistConfirmation;
+  emailSubaddresses?: EmailSubaddressPolicy;
   incidents: ReturnType<typeof createWaitlistIncidents>;
   waitlistEntries: WaitlistEntries;
 }): JoinWaitlistUseCase {
   return new JoinWaitlistUseCase({
     confirmation: options.confirmation,
     consentVersions,
+    emailSubaddresses: options.emailSubaddresses ?? "allowed",
     incidents: options.incidents,
     waitlist: createWaitlist(),
     waitlistEntries: options.waitlistEntries,
@@ -517,5 +520,67 @@ describe("JoinWaitlistUseCase", () => {
       status: "already_registered",
     });
     expect(confirmation.sendConfirmation).not.toHaveBeenCalled();
+  });
+
+  it("refuses a subaddressed email without registering or confirming anything", async () => {
+    // arrange
+    const confirmation = createConfirmation();
+    const waitlistEntries = createWaitlistEntries();
+    const joinWaitlist = createJoinWaitlist({
+      confirmation,
+      emailSubaddresses: "refused",
+      incidents: createWaitlistIncidents(),
+      waitlistEntries,
+    });
+
+    // act
+    const result = await joinWaitlist.execute({
+      email: "Eli+Launch@Example.com",
+    });
+
+    // assert
+    expect(result).toEqual({ status: "subaddress_refused" });
+    expect(waitlistEntries.registerReducedPricingSignup).not.toHaveBeenCalled();
+    expect(waitlistEntries.registerRegularPricingSignup).not.toHaveBeenCalled();
+    expect(confirmation.sendConfirmation).not.toHaveBeenCalled();
+  });
+
+  it("registers a main address where subaddresses are refused", async () => {
+    // arrange
+    const waitlistEntries = createWaitlistEntries();
+    const joinWaitlist = createJoinWaitlist({
+      confirmation: createConfirmation(),
+      emailSubaddresses: "refused",
+      incidents: createWaitlistIncidents(),
+      waitlistEntries,
+    });
+
+    // act
+    const result = await joinWaitlist.execute({ email: "eli@example.com" });
+
+    // assert
+    expect(result).toEqual({ status: "registered" });
+  });
+
+  it("registers a subaddressed email as entered where subaddresses are allowed", async () => {
+    // arrange
+    const waitlistEntries = createWaitlistEntries();
+    const joinWaitlist = createJoinWaitlist({
+      confirmation: createConfirmation(),
+      emailSubaddresses: "allowed",
+      incidents: createWaitlistIncidents(),
+      waitlistEntries,
+    });
+
+    // act
+    const result = await joinWaitlist.execute({
+      email: "Eli+Launch@Example.com",
+    });
+
+    // assert
+    expect(result).toEqual({ status: "registered" });
+    expect(waitlistEntries.registerReducedPricingSignup).toHaveBeenCalledWith(
+      expect.objectContaining({ normalizedEmail: "eli+launch@example.com" }),
+    );
   });
 });

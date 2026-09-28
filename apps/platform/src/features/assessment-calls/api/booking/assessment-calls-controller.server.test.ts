@@ -9,6 +9,7 @@ import {
 } from "@eli-coach-platform/domain/assessment-call";
 import type { BotVerifier } from "@eli-coach-platform/infrastructure/bot-detection/server";
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
+import { EMAIL_SUBADDRESS_REFUSED_MESSAGE } from "@eli-coach-platform/content";
 import { describe, expect, it, vi } from "vitest";
 
 import { bookAssessmentCallResponseSchema } from "~/features/assessment-calls/contracts/assessment-calls";
@@ -426,6 +427,26 @@ describe("AssessmentCallsController booking submissions", () => {
     expect(text).not.toContain("2026-10-19");
     expect(text).not.toContain("/join");
     expect(text).not.toMatch(/already|booked|upcoming/i);
+  });
+
+  it("answers a refused subaddress as an email field error with the approved copy", async () => {
+    // arrange
+    const { controller } = createController({
+      bookings: { status: "subaddress_refused" },
+    });
+
+    // act
+    const response = await controller.book(createBookingRequest());
+
+    // assert
+    expect(response.status).toBe(400);
+    await expect(readBody(response)).resolves.toEqual({
+      success: false,
+      error: {
+        code: "email_subaddress_refused",
+        message: EMAIL_SUBADDRESS_REFUSED_MESSAGE,
+      },
+    });
   });
 
   it("answers a failed booking as a server error", async () => {

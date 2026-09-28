@@ -1,8 +1,12 @@
+import { EMAIL_SUBADDRESS_REFUSED_MESSAGE } from "@eli-coach-platform/content";
 import { describe, expect, it } from "vitest";
 
 import type { StoreAcquisitionResponse } from "~/features/store/contracts/store";
 
-import { reduceAcquisitionFlow } from "./acquisition-flow";
+import {
+  reduceAcquisitionFlow,
+  resolveAcquisitionError,
+} from "./acquisition-flow";
 
 const createIdempotencyKey = () => "new-key";
 
@@ -79,5 +83,35 @@ describe("reduceAcquisitionFlow", () => {
     // assert
     expect(result.state).toEqual(state);
     expect(result.effects).toEqual([{ type: "reset-challenge" }]);
+  });
+
+  it("keeps the details step and puts a refused subaddress on the email field", () => {
+    // arrange
+    const state = { idempotencyKey: "current-key", step: "details" as const };
+    const response: StoreAcquisitionResponse = {
+      success: false,
+      error: {
+        code: "email_subaddress_refused",
+        message: "Unable to deliver store resources.",
+      },
+    };
+
+    // act
+    const result = reduceAcquisitionFlow(
+      state,
+      { type: "response", response },
+      createIdempotencyKey,
+    );
+
+    // assert
+    expect(result.state).toEqual({
+      idempotencyKey: "new-key",
+      step: "details",
+    });
+    expect(result.effects).toEqual([
+      { type: "show-email-error", message: EMAIL_SUBADDRESS_REFUSED_MESSAGE },
+      { type: "reset-challenge" },
+    ]);
+    expect(resolveAcquisitionError(response)).toBeNull();
   });
 });

@@ -112,6 +112,7 @@ const storeAcquisitionSuccessSchema = z.object({
 
 const storeAcquisitionErrorCodeSchema = z.enum([
   "invalid_request",
+  "email_subaddress_refused",
   "bot_verification_failed",
   "unavailable_products",
   "idempotency_conflict",

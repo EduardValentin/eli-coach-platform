@@ -3,7 +3,10 @@
 import "@testing-library/jest-dom/vitest";
 
 import { TURNSTILE_TEST_RESPONSE_TOKEN } from "@eli-coach-platform/config";
-import { ELI_COACH_CONTACT_EMAIL } from "@eli-coach-platform/content";
+import {
+  ELI_COACH_CONTACT_EMAIL,
+  EMAIL_SUBADDRESS_REFUSED_MESSAGE,
+} from "@eli-coach-platform/content";
 import {
   cleanup,
   render,
@@ -475,6 +478,33 @@ describe("WaitlistEmailForm", () => {
     expect(alert.id).toBeTruthy();
     expect(input).toHaveAttribute("aria-invalid", "true");
     expect(input).toHaveAttribute("aria-describedby", alert.id);
+  });
+
+  it("shows a refused subaddress as the email control's error", async () => {
+    // arrange
+    mockWaitlistSubmit(
+      {
+        success: false,
+        error: {
+          code: "email_subaddress_refused",
+          message: "api-error",
+        },
+      },
+      { status: 400 },
+    );
+
+    renderForm();
+
+    // act
+    await typeEmailAndSubmit();
+
+    // assert
+    const alert = await screen.findByRole("alert");
+    const input = getEmailInput();
+
+    expect(alert).toHaveTextContent(EMAIL_SUBADDRESS_REFUSED_MESSAGE);
+    expect(input).toHaveAttribute("aria-invalid", "true");
+    expect(input).toHaveAccessibleDescription(EMAIL_SUBADDRESS_REFUSED_MESSAGE);
   });
 
   it("renders server errors with a support email fallback", async () => {

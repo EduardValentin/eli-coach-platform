@@ -1,5 +1,5 @@
 import type { CoachAvailabilitySource } from "../coach-availability";
-import { EmailAddress } from "../email-address";
+import { EmailAddress, type EmailSubaddressPolicy } from "../email-address";
 import type { Clock } from "../shared";
 
 import type { AssessmentCall } from "./assessment-call";
@@ -31,12 +31,14 @@ export type BookAssessmentCallResult =
   | { status: "booked"; call: AssessmentCall }
   | { status: "slot_unavailable" }
   | { status: "email_already_booked" }
+  | { status: "subaddress_refused" }
   | { status: "closed" };
 
 type BookAssessmentCallUseCaseOptions = {
   availability: CoachAvailabilitySource;
   bookingWindow: AssessmentCallBookingWindow;
   clock: Clock;
+  emailSubaddresses: EmailSubaddressPolicy;
   incidents: AssessmentCallIncidents;
   notifications: AssessmentCallNotifications;
   reservations: AssessmentCallReservations;
@@ -50,11 +52,16 @@ export class BookAssessmentCallUseCase {
   async execute(
     command: BookAssessmentCallCommand,
   ): Promise<BookAssessmentCallResult> {
+    const email = EmailAddress.normalize(command.email);
+
+    if (!email.isAcceptedBy(this.options.emailSubaddresses)) {
+      return { status: "subaddress_refused" };
+    }
+
     if (!(await this.options.bookingWindow.isOpen())) {
       return { status: "closed" };
     }
 
-    const normalizedEmail = EmailAddress.normalize(command.email).value;
     const now = this.options.clock.now();
     const availability = await this.options.availability.current();
 
@@ -76,7 +83,7 @@ export class BookAssessmentCallUseCase {
       firstName: command.firstName,
       gender: command.gender,
       lastName: command.lastName,
-      normalizedEmail,
+      normalizedEmail: email.value,
       notes: command.notes,
       now,
       phone: command.phone,

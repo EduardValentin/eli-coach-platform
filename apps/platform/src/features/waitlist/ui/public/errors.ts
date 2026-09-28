@@ -1,3 +1,4 @@
+import { EMAIL_SUBADDRESS_REFUSED_MESSAGE } from "@eli-coach-platform/content";
 import {
   type WaitlistJoinErrorCode,
   type WaitlistJoinResponse,
@@ -10,6 +11,7 @@ export type WaitlistClientError = Extract<
 
 const waitlistErrorMessages = {
   bot_verification_failed: "We couldn't verify this signup. Please try again.",
+  email_subaddress_refused: EMAIL_SUBADDRESS_REFUSED_MESSAGE,
   email_too_long: "Please enter an email address under 320 characters.",
   invalid_email: "That email doesn't look quite right — give it one more look.",
   server_error: "Something went wrong on our end. Try again in a moment.",

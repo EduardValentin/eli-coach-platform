@@ -1,3 +1,4 @@
+import type { EmailSubaddressPolicy } from "../email-address";
 import type { PublishedProduct, StoreCatalog } from "../product";
 import type { Clock } from "../shared";
 
@@ -30,6 +31,7 @@ export type AcquireProductsResult =
   | { status: "delivery_unavailable" }
   | { status: "delivery_retryable" }
   | { status: "idempotency_conflict" }
+  | { status: "subaddress_refused" }
   | {
       status: "unavailable_products";
       availableProductSlugs: readonly string[];
@@ -45,6 +47,7 @@ type AcquireProductsUseCaseOptions = {
   clock: Clock;
   consentVersions: StoreConsentVersions;
   delivery: ProductDelivery;
+  emailSubaddresses: EmailSubaddressPolicy;
   incidents: AcquisitionIncidents;
   payloadDigestGenerator: PayloadDigestGenerator;
   tokenGenerator: DownloadTokenGenerator;
@@ -57,6 +60,11 @@ export class AcquireProductsUseCase {
     command: AcquireProductsCommand,
   ): Promise<AcquireProductsResult> {
     const request = AcquisitionRequest.from(command, this.options.clock.now());
+
+    if (!request.email.isAcceptedBy(this.options.emailSubaddresses)) {
+      return { status: "subaddress_refused" };
+    }
+
     const payloadDigest = this.options.payloadDigestGenerator.digest(
       request.canonicalPayload(),
     );

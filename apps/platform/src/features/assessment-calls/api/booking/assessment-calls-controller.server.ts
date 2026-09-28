@@ -8,6 +8,7 @@ import {
   type ResolveJoinLinkUseCase,
 } from "@eli-coach-platform/domain/assessment-call";
 import type { Clock } from "@eli-coach-platform/domain/shared";
+import { EMAIL_SUBADDRESS_REFUSED_MESSAGE } from "@eli-coach-platform/content";
 import type { BotVerifier } from "@eli-coach-platform/infrastructure/bot-detection/server";
 import {
   ASSESSMENT_CALL_BOOKING_TURNSTILE_ACTION,
@@ -64,6 +65,7 @@ const ERROR_MESSAGES = {
     "We couldn't book this call. Email us and we'll sort it out.",
   bot_verification_failed:
     "We could not confirm this request. Please try again.",
+  email_subaddress_refused: EMAIL_SUBADDRESS_REFUSED_MESSAGE,
   invalid_country: "Please choose your country.",
   invalid_date_of_birth:
     "Please enter a date of birth that makes you at least 18.",
@@ -215,6 +217,13 @@ function createBookingResponse(result: BookAssessmentCallResult): Response {
     return createBookingErrorResponse({
       code: "slot_unavailable",
       status: 409,
+    });
+  }
+
+  if (result.status === "subaddress_refused") {
+    return createBookingErrorResponse({
+      code: "email_subaddress_refused",
+      status: 400,
     });
   }
 
