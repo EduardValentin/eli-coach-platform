@@ -130,7 +130,7 @@ export function ProgramStatusCard() {
   };
 
   return (
-    <div className="mb-8">
+    <div className="mb-8" data-parity="program-status">
       <ClientWidget
         eyebrow={eyebrowFor(demoJourney.stage)}
         icon={

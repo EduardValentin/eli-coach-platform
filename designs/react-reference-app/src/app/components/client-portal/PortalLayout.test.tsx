@@ -72,3 +72,21 @@ describe('PortalLayout portal attribute', () => {
     expect(document.documentElement.dataset.portal).toBeUndefined();
   });
 });
+
+describe('PortalLayout skip link', () => {
+  it('offers a skip link to the main content', () => {
+    // arrange
+    renderLayout();
+
+    // act
+    const skipLink = screen.getByRole('link', {
+      name: 'Skip to main content',
+    });
+
+    // assert
+    expect(skipLink).toHaveAttribute(
+      'href',
+      `#${screen.getByRole('main').id}`,
+    );
+  });
+});
