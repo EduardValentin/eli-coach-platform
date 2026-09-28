@@ -9,11 +9,11 @@ export type PaidClientIdentity = {
   firstName: string;
   lastName: string;
   gender: VisitorGender;
+  dateOfBirth: string;
 };
 
 export type PaidClient = { firstName: string; paidAt: Date };
 
-const ADULT_DATE_OF_BIRTH = "1994-03-14";
 const PRIMARY_GOAL = "build_strength";
 const COUNTRY = "RO";
 const TIME_ZONE = "Europe/Bucharest";
@@ -64,7 +64,7 @@ export async function insertPaidClientRecords(
       identity.firstName,
       identity.lastName,
       identity.email,
-      ADULT_DATE_OF_BIRTH,
+      identity.dateOfBirth,
       identity.gender,
       PRIMARY_GOAL,
       COUNTRY,
@@ -76,7 +76,7 @@ export async function insertPaidClientRecords(
       identity.firstName,
       identity.lastName,
       identity.email,
-      ADULT_DATE_OF_BIRTH,
+      identity.dateOfBirth,
       identity.gender,
       PRIMARY_GOAL,
       COUNTRY,

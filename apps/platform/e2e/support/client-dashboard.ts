@@ -15,4 +15,9 @@ export class ClientDashboard {
     ).toBeVisible();
     await expect(this.onboardingStatus.getByText(line)).toBeVisible();
   }
+
+  async expectNoOnboardingActions(): Promise<void> {
+    await expect(this.onboardingStatus.getByRole("button")).toHaveCount(0);
+    await expect(this.onboardingStatus.getByRole("link")).toHaveCount(0);
+  }
 }
