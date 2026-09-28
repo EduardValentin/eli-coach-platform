@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState, type RefObject } from 'react'
 import { useAppState } from '../../context/AppContext';
 import { useClientProfile, fullName } from '../../context/ClientProfileContext';
 import { NotificationBell } from '../NotificationBell';
+import { navigationLinkSlug } from '../navigation-link-slug';
 import { LABEL_CLASS } from '../typography';
 import { BottomSheet } from '../ui/bottom-sheet';
 import { Button } from '../ui/button';
@@ -110,7 +111,7 @@ function DesktopSidebar({ links }: { links: ClientPortalLink[] }) {
                 key={link.name}
                 to={link.href}
                 aria-current={isActive ? 'page' : undefined}
-                data-parity={`link-${link.slug}`}
+                data-parity={`link-${navigationLinkSlug(link.name)}`}
                 className={cn(
                   'flex items-center gap-4 px-4 py-3.5 rounded-card transition-all',
                   {
@@ -187,7 +188,7 @@ function MobileTabBar({
               <Link
                 to={link.href}
                 aria-current={isActive ? 'page' : undefined}
-                data-parity={`tab-${link.slug}`}
+                data-parity={`tab-${navigationLinkSlug(link.name)}`}
                 className={cn(
                   'flex flex-col items-center justify-center gap-1 h-full w-full transition-colors',
                   {
@@ -262,7 +263,7 @@ function MoreSheetNavigation({
               key={link.name}
               type="button"
               disabled
-              data-parity={`sheet-link-${link.slug}`}
+              data-parity={`sheet-link-${navigationLinkSlug(link.name)}`}
               className="w-full flex items-center gap-4 px-4 min-h-14 rounded-card text-text-secondary pointer-events-none opacity-50"
             >
               <Icon size={22} aria-hidden="true" />
@@ -280,7 +281,7 @@ function MoreSheetNavigation({
             to={link.href}
             onClick={onClose}
             aria-current={isActive ? 'page' : undefined}
-            data-parity={`sheet-link-${link.slug}`}
+            data-parity={`sheet-link-${navigationLinkSlug(link.name)}`}
             className={cn(
               'flex items-center gap-4 px-4 min-h-14 rounded-card transition-colors',
               {
