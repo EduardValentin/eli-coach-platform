@@ -58,18 +58,18 @@ The product is modelled first in a reference prototype application before it is 
 ## Access and Roles
 
 1. **Accounts exist only by invitation.** Nobody can sign up on her own. The coach's account is provisioned by the operator; a client's account is created from the invitation her payment triggers. Sign-in uses an email one-time code; creating an account from an invitation needs no code.
-2. **Client accounts are invite-only.** A completed payment creates the client and sends her invitation. The invitation is valid for 30 days and can be used once. An expired, used, or unknown invitation link shows the same unavailable page, whichever the reason.
+2. **Client accounts are invite-only.** A completed payment creates the client and sends her invitation. The invitation is valid for 30 days and can be used once. An expired, used, or unknown invitation link shows the same unavailable page, whichever the reason. Until the client's account exists, the coach can re-send the invitation from her client detail page; each re-send replaces the earlier link, which stops working at once, and restarts the 30 days. A re-send whose email cannot be sent is reported to the coach so she can send it again.
 3. **Client portal access requires invitation, an active subscription, and submitted onboarding.** A client signing in before her onboarding is submitted is held on the welcome screen or her onboarding and cannot reach the rest of the portal until she submits it.
 4. **Coach portal access is restricted to the coach role.** Signed-in accounts without the required role see a clear denied-access page.
 5. **Every account has exactly one role, client or coach.** There is no account without a portal.
 
 ## Coaching Sales
 
-A **payment link** is the unique link, sent by email after an assessment call, through which the visitor chooses a coaching bundle and pays for it. Her **price tier** is regular or reduced and is resolved from the call's email: reduced when that email holds a reduced-price waitlist allocation (Business Rule 17) in any campaign, regular otherwise. Her **start choice** decides when her program starts: immediately, or after the 14-day withdrawal period. A **coaching subscription** records what she paid for: the coaching bundle, price tier, amount, start choice, and whether it has started. Every assessment call that has ended has a **sales state**: held (no working payment link), payment link sent (a working payment link, not yet paid), or paid (the call's payment created a client).
+A **payment link** is the unique link, sent by email after an assessment call, through which the visitor chooses a coaching bundle and pays for it. Her **price tier** is regular or reduced and is resolved from the call's email: reduced when that email holds a reduced-price waitlist allocation (Business Rule 17) in any campaign, regular otherwise. Her **start choice** decides when her program starts: immediately, or after the 14-day withdrawal period. A **coaching subscription** records what she paid for: the coaching bundle, price tier, amount, start choice, and whether it has started. Every assessment call that has ended has a **sales state**: held (no working payment link), payment link sent (a working payment link, not yet paid), or paid (the call's payment created a client). Every client has one **client status**: Invited (she has paid and has no account yet), Onboarding (her account exists and her onboarding is not yet submitted), Awaiting review (her onboarding is submitted and the coach has not opened it), In review (the coach has opened it, or the client has answered a detail request), Needs details (a detail request is open), or Approved (the coach has approved her answers); Active, Cancelled, and Inactive are reserved for the subscription lifecycle. A **detail request** is the coach's request that the client revisit named questions of her submitted onboarding, with a note on what is missing; a client has at most one open detail request at a time, and it closes when she answers it.
 
 6. **Three coaching bundles: 1 Month, 3 Months, and 6 Months.** Longer commitments have lower per-month pricing; all bundles include the same benefits. Pricing is public, but checkout is available only through a payment link. The coach can send a payment link only for an assessment call that has ended. A payment link works for 30 days from when it is sent; a re-send replaces it and the earlier link stops working at once; a payment spends it. The platform records at most one payment per assessment call. Before paying, the visitor chooses a coaching bundle and a start choice; the start choice has no default and is required. The payment is a recurring subscription charged in euros once per bundle length (every 1, 3, or 6 months) at her price tier, and the buyer's email is fixed to the call's email. A completed payment creates the client with the call's booking profile (first name, last name, email, date of birth, gender, primary goal, country, and phone) and a coaching subscription that has not started. The payment provider's receipt is the payment record; the platform sends no receipt. A client may hold several coaching subscriptions over time, at most one that is not ended.
-7. **The 3- and 6-month plans have a 7-day cancellation window.** Within the first 7 days the client may cancel if coaching is not the right fit; afterwards the full term applies. The 1-month plan is month-to-month with no term commitment.
-8. **The coach can see each client's subscription**: its term and whether it is active or expired. She also sees each ended assessment call's sales state.
+7. **Every coaching subscription has a 14-day withdrawal period from the payment.** Her start choice decides whether her program starts immediately or once the withdrawal period ends (Business Rule 6). Cancellation and refunds within and after the withdrawal period are not yet defined (Open Question 9).
+8. **The coach sees each client's coaching subscription**: its coaching bundle, payment date, start choice, and whether her program has started. She also sees each ended assessment call's sales state.
 
 ## Assessment Calls
 
@@ -220,44 +220,51 @@ Per Business Rule 53.
 12. The last part records her body measurements and her progress-photo consent. She can send her onboarding only after acknowledging the disclaimer.
 13. Sending freezes her answers as her submission and records her measurements, with the weight from the first part, as her first dated measurement entry. She moves to "Sent to your coach", and the dashboard opens showing that status. When her start choice is to start after the 14-day withdrawal period, the dashboard also tells her the date the coach starts working on her program. An onboarding is sent once; a second send is refused.
 14. Once her onboarding is submitted, the welcome screen and the onboarding are no longer reachable, and the public navigation offers the Client Portal.
-15. The coach reads her submission.
+15. The coach reads her submission from the moment it is sent. Before then she sees only the client's client status, never her unsent answers. Opening the submission starts the review.
+16. From the review the coach either approves the answers or asks for more details, naming the questions to revisit and what is missing. While a detail request is open she can neither approve nor ask again.
+17. Asking for more details tells the client by one email and on her dashboard. The email repeats neither the questions nor the coach's note. From her dashboard the client answers only the asked questions, and her submission returns to review with those answers updated. The loop may repeat.
+18. Approval is final: it closes the review, and no detail request can follow.
 
 ## 4. Client Portal (`/client`)
 
+### Dashboard
+
+1. The dashboard shows where her onboarding stands. After "Sent to your coach" it reads "Your coach is reviewing your answers" once the coach opens her submission or she answers a detail request; "Your coach needs a few more details" with the coach's note and a way to answer the asked questions while a detail request is open; and "Your answers are approved" with the news that her program is being built once the coach approves. When her start choice is to start after the withdrawal period, the date the coach starts working on her program stays on every state while her answers are with the coach; while a detail request is open, the coach's note takes its place.
+
 ### Training dashboard and plan — Post-MVP
 
-1. The dashboard shows the client's next workout or day from the assigned plan and her current cycle phase.
-2. Clients are notified when a new plan is assigned or updated.
-3. The plan view offers week navigation limited to current and past weeks, day cards with Past, Current, and Upcoming status, and a way to start each training day.
-4. Clients can adjust the default schedule within the allowed bounds (Business Rule 35).
+2. The dashboard shows the client's next workout or day from the assigned plan and her current cycle phase.
+3. Clients are notified when a new plan is assigned or updated.
+4. The plan view offers week navigation limited to current and past weeks, day cards with Past, Current, and Upcoming status, and a way to start each training day.
+5. Clients can adjust the default schedule within the allowed bounds (Business Rule 35).
 
 ### Workout Viewer and active tracking — Post-MVP
 
-5. A distraction-free, mobile-optimized Workout Viewer shows exercises in order with number, name, equipment, primary muscles, sets, reps, RIR, coach notes, and demo video. Superset exercises appear as a visually connected group and follow an alternating set pattern (A1, B1, A2, B2) during tracking.
-6. Clients log actual weight and reps per set. After a set, a rest countdown starts from the coach-configured rest time; the client can extend it by 15 seconds per press or skip it, and actual rest is recorded.
-7. Clients can swap the current exercise for any coach-defined variant at any time.
-8. On completion the client sees total duration, total volume (weight × reps), muscle groups worked, a per-exercise comparison of logged against prescribed values, and highlighted all-time personal records. Completing early uses an "End workout" action in the viewer's options menu (Business Rule 39).
+6. A distraction-free, mobile-optimized Workout Viewer shows exercises in order with number, name, equipment, primary muscles, sets, reps, RIR, coach notes, and demo video. Superset exercises appear as a visually connected group and follow an alternating set pattern (A1, B1, A2, B2) during tracking.
+7. Clients log actual weight and reps per set. After a set, a rest countdown starts from the coach-configured rest time; the client can extend it by 15 seconds per press or skip it, and actual rest is recorded.
+8. Clients can swap the current exercise for any coach-defined variant at any time.
+9. On completion the client sees total duration, total volume (weight × reps), muscle groups worked, a per-exercise comparison of logged against prescribed values, and highlighted all-time personal records. Completing early uses an "End workout" action in the viewer's options menu (Business Rule 39).
 
 ### Messaging (`/client/messages`) — Post-MVP
 
-9. Chat with the coach shows a coach profile sidebar (photo, name, role, response-time note), message bubbles with timestamps and read receipts, and a menu with Search in chat, Mute/Unmute notifications, Archive conversation, and Delete conversation. Delete confirmation uses a styled modal dialog, never a browser-native confirm. There is no call or video button.
-10. A "Schedule check-in" action submits an ad-hoc request per Business Rules 43–45 and is disabled while a request is pending.
-11. An upcoming check-in banner at the top of the chat shows the next confirmed check-in's date, time, and type.
-12. The sidebar has a "Next Check-in" widget with date, time, a "Join Meet" button, and a link to the Check-ins page.
+10. Chat with the coach shows a coach profile sidebar (photo, name, role, response-time note), message bubbles with timestamps and read receipts, and a menu with Search in chat, Mute/Unmute notifications, Archive conversation, and Delete conversation. Delete confirmation uses a styled modal dialog, never a browser-native confirm. There is no call or video button.
+11. A "Schedule check-in" action submits an ad-hoc request per Business Rules 43–45 and is disabled while a request is pending.
+12. An upcoming check-in banner at the top of the chat shows the next confirmed check-in's date, time, and type.
+13. The sidebar has a "Next Check-in" widget with date, time, a "Join Meet" button, and a link to the Check-ins page.
 
 ### Check-ins (`/client/checkins`)
 
-13. Organized into Upcoming (confirmed check-ins with Join Meet and the option to propose a new time), Requests (coach-proposed check-ins the client can approve, reschedule, or decline; the client's own pending request, which she can cancel), and Past (completed, declined, and cancelled).
-14. New ad-hoc requests can be made from this page under the one-pending limit. The page is reachable from portal navigation and from the Next Check-in widget. Post-MVP, actions here and in chat stay in sync.
+14. Organized into Upcoming (confirmed check-ins with Join Meet and the option to propose a new time), Requests (coach-proposed check-ins the client can approve, reschedule, or decline; the client's own pending request, which she can cancel), and Past (completed, declined, and cancelled).
+15. New ad-hoc requests can be made from this page under the one-pending limit. The page is reachable from portal navigation and from the Next Check-in widget. Post-MVP, actions here and in chat stay in sync.
 
 ### Menstrual cycle tracking (`/client/cycle`)
 
-15. Clients log period entries by date with flow intensity (spotting, light, medium, heavy), symptoms (cramps, bloating, headache, fatigue, mood swings, back pain, breast tenderness, nausea, acne, insomnia), and optional notes.
-16. A cycle calendar shows logged period days and the current phase.
+16. Clients log period entries by date with flow intensity (spotting, light, medium, heavy), symptoms (cramps, bloating, headache, fatigue, mood swings, back pain, breast tenderness, nausea, acne, insomnia), and optional notes.
+17. A cycle calendar shows logged period days and the current phase.
 
 ### Settings (`/client/settings`)
 
-17. Clients choose units for body weight and training loads (kilograms or pounds) and height (centimetres or feet and inches). The choice applies everywhere a weight or height appears, including profile, dashboard, live logging, and the completion summary, and persists across sessions.
+18. Clients choose units for body weight and training loads (kilograms or pounds) and height (centimetres or feet and inches). The choice applies everywhere a weight or height appears, including profile, dashboard, live logging, and the completion summary, and persists across sessions.
 
 ## 5. Coach Portal (`/coach`)
 
@@ -268,11 +275,11 @@ Per Business Rule 53.
 
 ### Assessment calls (`/coach/assessment-calls`)
 
-3. Reached from the sidebar "Assessment calls" entry. Lists every assessment call with the visitor's full name, her email as a mail link, her phone as a tel link when given, her age with date of birth, gender, primary goal, and country, the call's date and time, her notes when she left any, a Today badge when the call is today, and its join link while the call has not ended. A call is upcoming until it ends and past afterwards; upcoming and past calls are visually distinct, upcoming calls list soonest first, past calls list most recent first, and past calls carry no join link. A filter offers All (the default), Upcoming, Today, and Past. A Status filter narrows the list to one sales state (held, payment link sent, or paid) or shows all of them (the default), and each option shows how many calls it matches under the current filter and search. The coach sorts the list by scheduled date, booking date, name, or email, with a direction toggle: dates start soonest or newest first and text starts A to Z, and reversing the scheduled date reverses the whole listing order. A search box narrows the list by the visitor's first name, last name, or email. The list shows ten calls per page with page controls and a "Showing a–b of n" line; the active filters, sort, search, and page survive a reload and a return from another page, and the page resets to the first when a filter, the sort, or the search changes. Each filter has its own empty state: no upcoming calls, no calls today, no past calls, no calls yet, no matches for a search, and no calls in the chosen sales state. A call booked on `/book` appears on the next load, and a call that has ended moves from Upcoming to Past without any action. Each ended call shows its sales state (Business Rule 8). A held call offers to send a payment link and a call whose payment link was sent offers to re-send it; either asks the coach to confirm, then emails the payment link to the call's email (Business Rule 6), and an email that cannot be sent is reported so she can send it again. A paid call has no sales action.
+3. Reached from the sidebar "Assessment calls" entry. Lists every assessment call with the visitor's full name, her email as a mail link, her phone as a tel link when given, her age with date of birth, gender, primary goal, and country, the call's date and time, her notes when she left any, a Today badge when the call is today, and its join link while the call has not ended. A call is upcoming until it ends and past afterwards; upcoming and past calls are visually distinct, upcoming calls list soonest first, past calls list most recent first, and past calls carry no join link. A filter offers All (the default), Upcoming, Today, and Past. A Status filter narrows the list to one sales state (held, payment link sent, or paid) or shows all of them (the default), and each option shows how many calls it matches under the current filter and search. The coach sorts the list by scheduled date, booking date, name, or email, with a direction toggle: dates start soonest or newest first and text starts A to Z, and reversing the scheduled date reverses the whole listing order. A search box narrows the list by the visitor's first name, last name, or email. The list shows ten calls per page with page controls and a "Showing a–b of n" line; the active filters, sort, search, and page survive a reload and a return from another page, and the page resets to the first when a filter, the sort, or the search changes. Each filter has its own empty state: no upcoming calls, no calls today, no past calls, no calls yet, no matches for a search, and no calls in the chosen sales state. A call booked on `/book` appears on the next load, and a call that has ended moves from Upcoming to Past without any action. Each ended call shows its sales state (Business Rule 8). A held call offers to send a payment link and a call whose payment link was sent offers to re-send it; either asks the coach to confirm, then emails the payment link to the call's email (Business Rule 6), and an email that cannot be sent is reported so she can send it again. A paid call links, in place of a sales action, to the client detail page of the client its payment created.
 
 ### Clients (`/coach/clients`)
 
-4. A client list and a client detail page. The detail page shows the client's subscription term and status, current cycle phase, cycle regularity, average cycle and period length, conditions, and notes, and links to the client's read-only period log. Post-MVP it also shows assigned training and nutritional programs and links to completed workout history.
+4. Reached from the sidebar "Clients" entry. Lists every client from the moment she pays, with her name and email, client status, coaching bundle, and join date (her payment date). A Status filter narrows the list to one of three groups, Onboarding (Invited through Approved), Active, and Inactive (Cancelled and Inactive), or shows all of them (the default), and each option shows how many clients it matches under the current search. A search box narrows the list by name or email. The coach sorts the list by name, client status, coaching bundle, or join date; join date newest first is the default. The active filter, sort, and search survive a reload. The list has its own empty states for no clients yet and for no matches. Each client has a client detail page showing her profile (age, gender, country, phone, primary goal, price tier, and the notes she left when booking); her invitation's state with a re-send until her account exists (Business Rule 2); her coaching subscription (coaching bundle, payment date, start choice, program start, and renewal); her client status and, once her onboarding is submitted, her answers with the safety and cycle signals that need the coach's attention and the review actions; and her first measurements. Post-MVP it also shows assigned training and nutritional programs and links to completed workout history.
 
 ### Messaging (`/coach/messages`) — Post-MVP
 
@@ -376,3 +383,4 @@ Per Business Rule 53.
 6. The Post-MVP prototype includes a nutrition module (recipe builder, per-client nutrition plans, client nutrition view) that this document does not yet specify.
 7. Check-in scheduling (Business Rule 45) still uses fixed 9 AM to 4 PM hours, while assessment calls use the coach-configured availability of Business Rule 10. Do check-ins adopt that availability when they are built?
 8. Business Rule 12 treats a call as upcoming until it starts, while the coach portal treats it as upcoming until it ends. May a visitor whose call is in progress book another one?
+9. How do cancellation and refunds work within and after the 14-day withdrawal period?
