@@ -1,17 +1,22 @@
-import type { ReactNode } from "react";
+import type { ComponentPropsWithoutRef, ReactNode } from "react";
 
 import { cn } from "../lib/cn";
 
-type StepperProps = {
-  className?: string;
+type StepperProps = Omit<ComponentPropsWithoutRef<"div">, "children"> & {
   current: number;
   status?: ReactNode;
   total: number;
 };
 
-export function Stepper({ className, current, status, total }: StepperProps) {
+export function Stepper({
+  className,
+  current,
+  status,
+  total,
+  ...props
+}: StepperProps) {
   return (
-    <div className={cn("flex flex-col gap-2", className)}>
+    <div className={cn("flex flex-col gap-2", className)} {...props}>
       <div className="flex items-end justify-between gap-4">
         <p className="text-caption font-semibold uppercase tracking-widest text-text-secondary">
           Step {current} of {total}

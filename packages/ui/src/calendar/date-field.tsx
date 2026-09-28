@@ -5,11 +5,13 @@ import type { Matcher } from "react-day-picker";
 import { cn } from "../lib/cn";
 import { useDisplayTimeZone } from "../lib/use-display-time-zone";
 import { Popover, PopoverContent, PopoverTrigger } from "../primitives";
-import { fieldSizeClasses } from "../primitives/field-size";
+import {
+  FIELD_FRAME_CLASS,
+  fieldSizeClasses,
+} from "../primitives/field-size";
 import { Calendar, type CalendarYearRange } from "./calendar";
 
-const TRIGGER_CLASS =
-  "flex w-full items-center justify-between gap-2 rounded-field border border-control-border-soft bg-surface-base text-left transition-[color,box-shadow] outline-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-feedback-danger";
+const TRIGGER_CLASS = "flex items-center justify-between gap-2 text-left";
 
 const ICON_SIZE = 16;
 
@@ -17,7 +19,7 @@ const NOON_UTC = 12;
 
 const FIELD_TAB_INDEX = 0;
 
-const spelledOutDate = new Intl.DateTimeFormat("en-GB", {
+const spelledOutDateFormatter = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",
   month: "long",
   timeZone: "UTC",
@@ -70,6 +72,7 @@ export const DateField = React.forwardRef<HTMLButtonElement, DateFieldProps>(
         <PopoverTrigger asChild>
           <button
             className={cn(
+              FIELD_FRAME_CLASS,
               TRIGGER_CLASS,
               fieldSizeClasses({ size: "md" }),
               className,
@@ -80,7 +83,7 @@ export const DateField = React.forwardRef<HTMLButtonElement, DateFieldProps>(
             {...buttonProps}
           >
             <span className={cn({ "text-text-muted": !selected })}>
-              {selected ? spelledOutDate.format(selected) : placeholder}
+              {selected ? spelledOutDateFormatter.format(selected) : placeholder}
             </span>
             <CalendarDays
               aria-hidden="true"

@@ -11,6 +11,12 @@ afterEach(() => {
   cleanup();
 });
 
+function stepBarsOf(container: HTMLElement) {
+  return Array.from(
+    container.querySelector('[aria-hidden="true"]')?.children ?? [],
+  );
+}
+
 describe("Stepper", () => {
   it("names the current step and the length of the run", () => {
     // arrange
@@ -31,8 +37,7 @@ describe("Stepper", () => {
     const { container } = render(<Stepper {...props} />);
 
     // assert
-    const barRow = container.querySelector('[aria-hidden="true"]');
-    expect(barRow?.children).toHaveLength(5);
+    expect(stepBarsOf(container)).toHaveLength(5);
     expect(screen.getByText("Step 2 of 5")).not.toHaveAttribute("aria-hidden");
   });
 
@@ -44,9 +49,7 @@ describe("Stepper", () => {
     const { container } = render(<Stepper {...props} />);
 
     // assert
-    const [done, current, upcoming] = Array.from(
-      container.querySelector('[aria-hidden="true"]')?.children ?? [],
-    );
+    const [done, current, upcoming] = stepBarsOf(container);
     expect(done).toHaveClass("bg-primary/40");
     expect(current).toHaveClass("bg-primary");
     expect(upcoming).toHaveClass("bg-surface-muted");
@@ -61,5 +64,18 @@ describe("Stepper", () => {
 
     // assert
     expect(screen.getByRole("status")).toHaveTextContent("Saved");
+  });
+
+  it("passes its remaining attributes to its outer element", () => {
+    // arrange
+    const props = { current: 1, total: 4, title: "Onboarding progress" };
+
+    // act
+    render(<Stepper {...props} />);
+
+    // assert
+    expect(screen.getByTitle("Onboarding progress")).toHaveTextContent(
+      "Step 1 of 4",
+    );
   });
 });

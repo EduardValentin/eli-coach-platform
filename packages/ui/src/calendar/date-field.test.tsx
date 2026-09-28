@@ -15,7 +15,7 @@ afterEach(() => {
 
 function renderBirthDate(props: Partial<ComponentProps<typeof DateField>>) {
   const chosen: string[] = [];
-  const view = render(
+  render(
     <>
       <label htmlFor="birth-date">Date of birth</label>
       <DateField
@@ -28,7 +28,7 @@ function renderBirthDate(props: Partial<ComponentProps<typeof DateField>>) {
     </>,
   );
 
-  return { chosen, view };
+  return { chosen };
 }
 
 function trigger() {

@@ -4,7 +4,11 @@ import { Select as RadixSelect } from "radix-ui";
 
 import { cn } from "../lib/cn";
 import { Badge } from "./badge";
-import { fieldSizeClasses, type FieldSize } from "./field-size";
+import {
+  FIELD_FRAME_CLASS,
+  fieldSizeClasses,
+  type FieldSize,
+} from "./field-size";
 
 export const Select = RadixSelect.Root;
 export const SelectValue = RadixSelect.Value;
@@ -26,7 +30,8 @@ export const SelectTrigger = React.forwardRef<
 >(({ children, className, size = "md", ...props }, ref) => (
   <RadixSelect.Trigger
     className={cn(
-      "flex w-full min-w-0 items-center justify-between gap-2 whitespace-nowrap rounded-field border border-control-border-soft bg-surface-base py-1 outline-none transition-[color,box-shadow] data-[placeholder]:text-text-muted focus-visible:border-focus-ring aria-invalid:border-feedback-danger disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 [&>span:first-child]:flex [&>span:first-child]:items-center [&>span:first-child]:gap-2 [&>span:first-child]:overflow-hidden [&>span:first-child]:whitespace-nowrap",
+      FIELD_FRAME_CLASS,
+      "flex min-w-0 items-center justify-between gap-2 whitespace-nowrap py-1 data-[placeholder]:text-text-muted focus-visible:border-focus-ring [&>span:first-child]:flex [&>span:first-child]:items-center [&>span:first-child]:gap-2 [&>span:first-child]:overflow-hidden [&>span:first-child]:whitespace-nowrap",
       fieldSizeClasses({ size }),
       className,
     )}
