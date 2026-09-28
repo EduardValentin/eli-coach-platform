@@ -157,9 +157,9 @@ function ClientRow({ client, position, timeZone }: ClientRowProps) {
             aria-label={linkLabel}
             className={buttonVariants({
               className:
-                "opacity-0 group-hover:opacity-100 hover:bg-text-primary hover:text-text-inverted focus-visible:opacity-100",
+                "opacity-0 group-hover:opacity-100 focus-visible:opacity-100",
               size: "icon-xs",
-              variant: "ghost",
+              variant: "ghost-ink",
             })}
             data-parity="row-link"
             onClick={(event) => event.stopPropagation()}
