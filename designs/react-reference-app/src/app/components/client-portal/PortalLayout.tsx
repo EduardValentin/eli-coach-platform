@@ -17,10 +17,7 @@ export function PortalLayout() {
 
   return (
     <div className="min-h-screen bg-surface-page">
-      <a
-        href={`#${PORTAL_MAIN_ID}`}
-        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:rounded-control focus:bg-text-primary focus:text-white focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary"
-      >
+      <a className="ui-skip-link" href={`#${PORTAL_MAIN_ID}`}>
         Skip to main content
       </a>
 

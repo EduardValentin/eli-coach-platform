@@ -92,7 +92,10 @@ function DesktopSidebar({ links }: { links: ClientPortalLink[] }) {
       className="hidden lg:block fixed top-0 left-0 bottom-0 w-64 bg-surface-base z-50"
     >
       <div className="flex flex-col h-full bg-surface-base text-text-primary border-r border-stroke-faint">
-        <div className="p-6 mb-4 px-3 border-b border-stroke-quiet rounded-field flex items-center justify-between">
+        <div
+          className="p-6 mb-4 px-3 border-b border-stroke-quiet rounded-field flex items-center justify-between"
+          data-parity="sidebar-header"
+        >
           <ClientNameBlock size="md" />
           <div className="contents" data-parity="notification-bell">
             <NotificationBell align="left" />
@@ -248,6 +251,7 @@ function MoreSheetNavigation({
   return (
     <nav
       aria-label="Client portal more"
+      data-parity="more-navigation"
       className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4"
     >
       {links.map((link) => {
