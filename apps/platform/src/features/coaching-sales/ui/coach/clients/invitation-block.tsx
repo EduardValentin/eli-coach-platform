@@ -2,16 +2,15 @@ import { cn } from "@eli-coach-platform/ui/lib";
 import { ConfirmDialog } from "@eli-coach-platform/ui/overlays";
 import { PortalWidget } from "@eli-coach-platform/ui/portal";
 import { Button } from "@eli-coach-platform/ui/primitives";
-import { toast } from "@eli-coach-platform/ui/toast";
 import { Loader2, Mail, Send } from "lucide-react";
-import { useEffect, useState } from "react";
-import { useFetcher, useRevalidator } from "react-router";
+import { useRevalidator } from "react-router";
 
 import {
   resendInvitationSuccessSchema,
   type ClientInvitationReading,
 } from "~/features/coaching-sales/contracts/coach-clients";
 import { COACHING_SALES_API_PATHS } from "~/features/coaching-sales/contracts/paths";
+import { useConfirmedJsonAction } from "~/features/coaching-sales/ui/coach/use-confirmed-json-action";
 import { useCalendarDayTimeZone } from "~/features/coaching-sales/ui/shared/calendar-day-format";
 
 import { invitationStateLine } from "./invitation-state-line";
@@ -30,14 +29,16 @@ export function InvitationBlock({
   email,
   invitation,
 }: InvitationBlockProps) {
-  const [confirming, setConfirming] = useState(false);
-  const { isSending, resend } = useInvitationResender(clientId);
+  const { revalidate } = useRevalidator();
+  const { askToConfirm, confirmDialog, isSending } = useConfirmedJsonAction({
+    action: COACHING_SALES_API_PATHS.invitationResends,
+    body: { clientId },
+    failureMessage: () => RESEND_FAILURE_MESSAGE,
+    onFailure: () => void revalidate(),
+    sentMessage: (sent) => `Invitation sent to ${sent.email}.`,
+    sentSchema: resendInvitationSuccessSchema,
+  });
   const timeZone = useCalendarDayTimeZone();
-
-  const confirm = () => {
-    setConfirming(false);
-    resend();
-  };
 
   return (
     <PortalWidget
@@ -47,7 +48,7 @@ export function InvitationBlock({
           aria-busy={isSending || undefined}
           data-parity="resend-invitation"
           disabled={isSending}
-          onClick={() => setConfirming(true)}
+          onClick={askToConfirm}
           size="sm"
           variant="outline"
         >
@@ -77,49 +78,11 @@ export function InvitationBlock({
       </p>
 
       <ConfirmDialog
+        {...confirmDialog}
         confirmLabel="Re-send"
         description={`A fresh invitation goes to ${email}. Her earlier link stops working.`}
-        onConfirm={confirm}
-        onOpenChange={setConfirming}
-        open={confirming}
         title="Re-send invitation?"
       />
     </PortalWidget>
   );
-}
-
-function useInvitationResender(clientId: string) {
-  const fetcher = useFetcher<unknown>();
-  const { revalidate } = useRevalidator();
-  const { data, state, submit } = fetcher;
-  const isSending = state !== "idle";
-
-  useEffect(() => {
-    if (data === undefined) {
-      return;
-    }
-
-    const sent = resendInvitationSuccessSchema.safeParse(data);
-
-    if (sent.success) {
-      toast.success(`Invitation sent to ${sent.data.email}.`);
-      return;
-    }
-
-    toast.error(RESEND_FAILURE_MESSAGE);
-    void revalidate();
-  }, [data, revalidate]);
-
-  const resend = () => {
-    void submit(
-      { clientId },
-      {
-        action: COACHING_SALES_API_PATHS.invitationResends,
-        encType: "application/json",
-        method: "post",
-      },
-    );
-  };
-
-  return { isSending, resend };
 }

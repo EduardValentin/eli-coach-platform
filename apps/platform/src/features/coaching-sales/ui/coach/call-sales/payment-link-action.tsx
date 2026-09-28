@@ -1,9 +1,6 @@
 import { RowActionButton } from "@eli-coach-platform/ui/appointments";
 import { ConfirmDialog } from "@eli-coach-platform/ui/overlays";
-import { toast } from "@eli-coach-platform/ui/toast";
 import { Send } from "lucide-react";
-import { useEffect, useState } from "react";
-import { useFetcher } from "react-router";
 
 import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
 
@@ -15,6 +12,7 @@ import {
   type CallSalesState,
 } from "~/features/coaching-sales/contracts/coaching-sales";
 import { COACHING_SALES_API_PATHS } from "~/features/coaching-sales/contracts/paths";
+import { useConfirmedJsonAction } from "~/features/coaching-sales/ui/coach/use-confirmed-json-action";
 
 type PaymentLinkCall = {
   fullName: string;
@@ -59,19 +57,19 @@ function sendingCopy(
 }
 
 export function PaymentLinkAction({ call, state }: PaymentLinkActionProps) {
-  const [confirming, setConfirming] = useState(false);
-  const { isSending, send } = usePaymentLinkSender(call.id);
+  const { askToConfirm, confirmDialog, isSending } = useConfirmedJsonAction({
+    action: COACHING_SALES_API_PATHS.paymentLinks,
+    body: { assessmentCallId: call.id },
+    failureMessage: paymentLinkFailureMessage,
+    sentMessage: (sent) => PAYMENT_LINK_MESSAGES.sent(sent.email),
+    sentSchema: sendPaymentLinkSuccessSchema,
+  });
 
   if (state === "paid") {
     return null;
   }
 
   const copy = sendingCopy(state, call);
-
-  const confirm = () => {
-    setConfirming(false);
-    send();
-  };
 
   return (
     <div
@@ -83,55 +81,19 @@ export function PaymentLinkAction({ call, state }: PaymentLinkActionProps) {
         className="w-full md:w-auto"
         data-parity="payment-link-action"
         icon={Send}
-        onClick={() => setConfirming(true)}
+        onClick={askToConfirm}
       >
         {copy.buttonLabel}
       </RowActionButton>
 
       <ConfirmDialog
+        {...confirmDialog}
         confirmLabel={copy.confirmLabel}
         description={copy.description}
-        onConfirm={confirm}
-        onOpenChange={setConfirming}
-        open={confirming}
         title={copy.title}
       />
     </div>
   );
-}
-
-function usePaymentLinkSender(assessmentCallId: string) {
-  const fetcher = useFetcher<unknown>();
-  const { data, state, submit } = fetcher;
-  const isSending = state !== "idle";
-
-  useEffect(() => {
-    if (data === undefined) {
-      return;
-    }
-
-    const sent = sendPaymentLinkSuccessSchema.safeParse(data);
-
-    if (sent.success) {
-      toast.success(PAYMENT_LINK_MESSAGES.sent(sent.data.email));
-      return;
-    }
-
-    toast.error(paymentLinkFailureMessage(data));
-  }, [data]);
-
-  const send = () => {
-    void submit(
-      { assessmentCallId },
-      {
-        action: COACHING_SALES_API_PATHS.paymentLinks,
-        encType: "application/json",
-        method: "post",
-      },
-    );
-  };
-
-  return { isSending, send };
 }
 
 function paymentLinkFailureMessage(sendResponse: unknown): string {
