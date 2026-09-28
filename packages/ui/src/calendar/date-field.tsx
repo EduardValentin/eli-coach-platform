@@ -5,10 +5,8 @@ import type { Matcher } from "react-day-picker";
 import { cn } from "../lib/cn";
 import { useDisplayTimeZone } from "../lib/use-display-time-zone";
 import { Popover, PopoverContent, PopoverTrigger } from "../primitives";
-import {
-  FIELD_FRAME_CLASS,
-  fieldSizeClasses,
-} from "../primitives/field-size";
+import { FIELD_FRAME_CLASS } from "../primitives/field-frame";
+import { fieldSizeClasses } from "../primitives/field-size";
 import { Calendar, type CalendarYearRange } from "./calendar";
 
 const TRIGGER_CLASS = "flex items-center justify-between gap-2 text-left";
@@ -83,7 +81,9 @@ export const DateField = React.forwardRef<HTMLButtonElement, DateFieldProps>(
             {...buttonProps}
           >
             <span className={cn({ "text-text-muted": !selected })}>
-              {selected ? spelledOutDateFormatter.format(selected) : placeholder}
+              {selected
+                ? spelledOutDateFormatter.format(selected)
+                : placeholder}
             </span>
             <CalendarDays
               aria-hidden="true"

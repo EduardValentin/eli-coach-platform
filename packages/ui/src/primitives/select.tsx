@@ -4,11 +4,8 @@ import { Select as RadixSelect } from "radix-ui";
 
 import { cn } from "../lib/cn";
 import { Badge } from "./badge";
-import {
-  FIELD_FRAME_CLASS,
-  fieldSizeClasses,
-  type FieldSize,
-} from "./field-size";
+import { FIELD_FRAME_CLASS } from "./field-frame";
+import { fieldSizeClasses, type FieldSize } from "./field-size";
 
 export const Select = RadixSelect.Root;
 export const SelectValue = RadixSelect.Value;

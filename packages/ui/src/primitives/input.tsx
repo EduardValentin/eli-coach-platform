@@ -1,11 +1,8 @@
 import * as React from "react";
 
 import { cn } from "../lib/cn";
-import {
-  FIELD_FRAME_CLASS,
-  fieldSizeClasses,
-  type FieldSize,
-} from "./field-size";
+import { FIELD_FRAME_CLASS } from "./field-frame";
+import { fieldSizeClasses, type FieldSize } from "./field-size";
 
 const INPUT_CLASS =
   "flex min-w-0 py-1 placeholder:text-text-muted focus-visible:border-focus-ring";
