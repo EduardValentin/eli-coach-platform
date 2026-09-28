@@ -1,4 +1,4 @@
-export type OnboardingDetailsRequestMessage = {
+type OnboardingDetailsRequestMessage = {
   requestId: string;
   clientId: string;
   email: string;

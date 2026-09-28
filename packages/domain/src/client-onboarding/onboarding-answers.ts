@@ -1,10 +1,5 @@
 import type { OnboardingField, OnboardingFormId } from "./onboarding-schema";
 import { ONBOARDING_FORM_IDS } from "./onboarding-schema";
-import {
-  hasMigraineContraceptionSignal,
-  isPregnancyFlagged,
-  PARQ_QUESTION_IDS,
-} from "./onboarding-submission";
 
 export type OnboardingAnswer = string | string[] | number | boolean | null;
 
@@ -106,22 +101,6 @@ export function answeredOfTotal(
     answered: reachable.filter((field) => isAnswered(answers[field.id])).length,
     total: reachable.length,
   };
-}
-
-export function flaggedAnswerIds(
-  answers: OnboardingAnswersByForm,
-): OnboardingQuestionId[] {
-  const safety = answers["safety-screening"];
-  const flagged: OnboardingQuestionId[] = PARQ_QUESTION_IDS.filter(
-    (fieldId) => safety[fieldId] === "Yes",
-  ).map((fieldId) => ({ formId: "safety-screening", fieldId }));
-
-  if (isPregnancyFlagged(answers))
-    flagged.push({ formId: "cycle-context", fieldId: "lifeStage" });
-  if (hasMigraineContraceptionSignal(answers))
-    flagged.push({ formId: "cycle-context", fieldId: "recurringSymptoms" });
-
-  return flagged;
 }
 
 export function withoutUnreachable(

@@ -7,11 +7,8 @@ import {
   type OnboardingAnswersByForm,
 } from "./onboarding-answers";
 import type { OnboardingClient } from "./onboarding-clients";
-import {
-  OnboardingReview,
-  reviewStageOf,
-  type ReviewStamps,
-} from "./onboarding-review";
+import { OnboardingReview, reviewStageOf } from "./onboarding-review";
+import type { ReviewStamps } from "./onboarding-review-stamps";
 import type { OnboardingSubmission } from "./onboarding-submission";
 
 const SUBMITTED_AT = new Date("2026-09-27T10:00:00.000Z");

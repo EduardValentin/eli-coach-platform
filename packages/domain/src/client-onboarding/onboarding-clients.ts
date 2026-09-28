@@ -1,6 +1,6 @@
 import type { VisitorGender } from "../assessment-call";
 
-import type { ReviewStamps } from "./onboarding-review";
+import type { ReviewStamps } from "./onboarding-review-stamps";
 
 export type OnboardingClient = {
   clientId: string;

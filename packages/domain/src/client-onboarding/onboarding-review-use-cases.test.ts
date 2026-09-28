@@ -7,8 +7,10 @@ import { DetailRequest } from "./detail-request";
 import { emptyAnswers } from "./onboarding-answers";
 import type { OnboardingClient, OnboardingClients } from "./onboarding-clients";
 import type { OnboardingDetailsNotifications } from "./onboarding-details-notifications";
-import type { ReviewStamps } from "./onboarding-review";
-import type { OnboardingReviewStamps } from "./onboarding-review-stamps";
+import type {
+  OnboardingReviewStamps,
+  ReviewStamps,
+} from "./onboarding-review-stamps";
 import type {
   DetailRequestIdGenerator,
   OnboardingReviews,

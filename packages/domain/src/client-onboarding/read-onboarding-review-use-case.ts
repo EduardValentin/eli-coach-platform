@@ -6,7 +6,6 @@ import type { ClientOnboardingSource } from "./client-onboarding-source";
 import type { DetailRequestSnapshot } from "./detail-request";
 import {
   answeredOfTotal,
-  flaggedAnswerIds,
   reachableFields,
   type OnboardingAnswersByForm,
   type OnboardingQuestionId,
@@ -21,6 +20,7 @@ import type { OnboardingReviews } from "./onboarding-reviews";
 import type { OnboardingFormId } from "./onboarding-schema";
 import {
   cycleModeOf,
+  flaggedAnswerIds,
   isPregnancyFlagged,
   screeningOutcome,
   withholdsNutritionAdvice,

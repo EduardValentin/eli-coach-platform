@@ -26,9 +26,11 @@ export {
   OnboardingReview,
   reviewStageOf,
   type OnboardingReviewStage,
-  type ReviewStamps,
 } from "./onboarding-review";
-export { type OnboardingReviewStamps } from "./onboarding-review-stamps";
+export {
+  type OnboardingReviewStamps,
+  type ReviewStamps,
+} from "./onboarding-review-stamps";
 export {
   type DetailRequestIdGenerator,
   type OnboardingReviews,

@@ -11,6 +11,7 @@ import {
   type OnboardingQuestionId,
 } from "./onboarding-answers";
 import type { OnboardingClient } from "./onboarding-clients";
+import type { ReviewStamps } from "./onboarding-review-stamps";
 import {
   formsForGender,
   type OnboardingField,
@@ -22,13 +23,6 @@ import {
   type OnboardingSubmission,
 } from "./onboarding-submission";
 import { fieldProblem } from "./onboarding-validation";
-
-export type ReviewStamps = {
-  reviewOpenedAt: Date | null;
-  detailsRequestedAt: Date | null;
-  detailsAnsweredAt: Date | null;
-  answersApprovedAt: Date | null;
-};
 
 export type OnboardingReviewStage =
   "awaiting-review" | "in-review" | "needs-details" | "approved";
