@@ -10,7 +10,7 @@ import {
   type RosterParams,
   type RosterSort,
   type RosterSortKey,
-} from "~/features/coaching-sales/contracts/coach-clients";
+} from "./roster-listing";
 
 export type RosterParamsWriter = RosterParams & {
   changeQuery: (value: string) => void;

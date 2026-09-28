@@ -3,9 +3,9 @@ import { Badge } from "@eli-coach-platform/ui/primitives";
 import {
   CLIENT_STATUS_LABELS,
   clientStatusTone,
-  type ClientStatus,
   type ClientStatusTone,
-} from "~/features/coaching-sales/contracts/coach-clients";
+} from "~/features/coaching-sales/contracts/client-status";
+import type { ClientStatus } from "~/features/coaching-sales/contracts/coach-clients";
 
 const BADGE_TONES = {
   neutral: "secondary",

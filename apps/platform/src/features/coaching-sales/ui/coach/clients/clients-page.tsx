@@ -17,6 +17,11 @@ import {
   type ShouldRevalidateFunctionArgs,
 } from "react-router";
 
+import type { RosterClient } from "~/features/coaching-sales/contracts/coach-clients";
+import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
+
+import { ClientStatusFilter } from "./client-status-filter";
+import { ClientsTable } from "./clients-table";
 import {
   countsByStatus,
   emptyRosterCopy,
@@ -24,12 +29,7 @@ import {
   hasActiveRosterFilters,
   haveOnlyRosterParamsChanged,
   sortRoster,
-  type RosterClient,
-} from "~/features/coaching-sales/contracts/coach-clients";
-import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
-
-import { ClientStatusFilter } from "./client-status-filter";
-import { ClientsTable } from "./clients-table";
+} from "./roster-listing";
 import { useRosterParams } from "./use-roster-params";
 
 const SEARCH_FIELD_ID = "clients-search";

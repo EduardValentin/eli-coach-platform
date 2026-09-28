@@ -13,18 +13,18 @@ import type { ReactNode } from "react";
 import { Link, useNavigate } from "react-router";
 
 import { bundleLengthLabel } from "~/features/coaching-sales/contracts/bundle-cards";
-import {
-  formatJoinDate,
-  rosterClientName,
-  rowLinkLabel,
-  type RosterClient,
-  type RosterSort,
-  type RosterSortKey,
-} from "~/features/coaching-sales/contracts/coach-clients";
+import type { RosterClient } from "~/features/coaching-sales/contracts/coach-clients";
 import { coachClientPath } from "~/features/coaching-sales/contracts/paths";
 import { useCalendarDayTimeZone } from "~/features/coaching-sales/ui/shared/calendar-day-format";
 
 import { ClientStatusBadge } from "./client-status-badge";
+import {
+  formatJoinDate,
+  rosterClientName,
+  rowLinkLabel,
+  type RosterSort,
+  type RosterSortKey,
+} from "./roster-listing";
 
 const ABSENT_CELL = "—";
 const COLUMN_COUNT = 5;

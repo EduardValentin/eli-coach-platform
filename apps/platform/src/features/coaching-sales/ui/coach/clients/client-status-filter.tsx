@@ -10,11 +10,11 @@ import {
 } from "@eli-coach-platform/ui/primitives";
 
 import {
-  ALL_STATUSES_OPTION,
   CLIENT_STATUS_GROUPS,
   CLIENT_STATUS_LABELS,
-  type RosterStatusOption,
-} from "~/features/coaching-sales/contracts/coach-clients";
+} from "~/features/coaching-sales/contracts/client-status";
+
+import { ALL_STATUSES_OPTION, type RosterStatusOption } from "./roster-listing";
 
 const ALL_STATUSES_LABEL = "All statuses";
 
