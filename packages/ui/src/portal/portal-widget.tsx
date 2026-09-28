@@ -1,17 +1,13 @@
-import type { ComponentPropsWithoutRef, ReactNode } from "react";
+import type { ReactNode } from "react";
 
 import { cn } from "../lib/cn";
+import type { DataAttributes } from "../lib/data-attributes";
 import { cardVariants } from "../primitives/card";
 import { VALUE_LG_CLASS, WIDGET_TITLE_CLASS } from "../lib/typography";
 
 type WidgetDensity = "default" | "compact";
 
-type SectionProps = Omit<
-  ComponentPropsWithoutRef<"section">,
-  "aria-labelledby" | "children" | "className" | "title"
->;
-
-type PortalWidgetProps = SectionProps & {
+type PortalWidgetProps = DataAttributes & {
   title: ReactNode;
   icon?: ReactNode;
   titleAdornment?: ReactNode;
@@ -69,11 +65,11 @@ export function PortalWidget({
   footer,
   className,
   children,
-  ...sectionProps
+  ...dataAttributes
 }: PortalWidgetProps) {
   return (
     <section
-      {...sectionProps}
+      {...dataAttributes}
       aria-labelledby={headingId}
       className={cn(PANEL_CLASS[density], className)}
     >
