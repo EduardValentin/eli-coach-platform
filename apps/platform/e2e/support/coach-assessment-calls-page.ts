@@ -9,6 +9,20 @@ export class CoachAssessmentCallsPage {
     await this.page.goto("/coach/assessment-calls");
   }
 
+  async search(term: string): Promise<void> {
+    const searchField = this.page.getByRole("searchbox", {
+      name: "Search calls",
+    });
+
+    await expect(async () => {
+      await searchField.fill(term);
+      await expect(this.page).toHaveURL(
+        (url) => url.searchParams.get("q") === term,
+        { timeout: HYDRATION_RETRY_TIMEOUT_MS },
+      );
+    }).toPass();
+  }
+
   call(visitorName: string): Locator {
     return this.page
       .getByRole("list", { name: "Assessment calls" })

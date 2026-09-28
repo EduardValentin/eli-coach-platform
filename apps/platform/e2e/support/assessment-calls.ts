@@ -1,18 +1,71 @@
+import type pg from "pg";
+
+import { isClerkTestEmail, readCreatedEmails } from "./clerk-users";
 import { createE2eDatabasePool } from "./database";
+import { runEmailPrefix } from "./run-id";
 
 const ASSESSMENT_CALL_APPOINTMENT_KIND = "assessment_call";
-const DELETE_CALLS_AND_THEIR_SALES = [
-  "delete from app.coaching_subscriptions",
-  "delete from app.client_invitations",
-  "delete from app.clients",
-  "delete from app.checkout_sessions",
-  "delete from app.payment_links",
-  "delete from app.assessment_calls",
-];
-const RELEASE_RESERVED_COACH_TIME = `
-  delete from app.coach_time_reservations
-  where appointment_kind = $1
+const FIND_CALLS_BOOKED_BY = `
+  select id from app.assessment_calls
+  where visitor_email = any($1::text[])
 `;
+const DELETE_CALLS_AND_THEIR_SALES: readonly RowRemoval[] = [
+  {
+    rows: "coaching subscriptions",
+    statement: `
+      delete from app.coaching_subscriptions
+      where assessment_call_id = any($1::uuid[])
+    `,
+  },
+  {
+    rows: "client invitations",
+    statement: `
+      delete from app.client_invitations
+      where client_id in (
+        select id from app.clients where assessment_call_id = any($1::uuid[])
+      )
+    `,
+  },
+  {
+    rows: "clients",
+    statement: `
+      delete from app.clients
+      where assessment_call_id = any($1::uuid[])
+    `,
+  },
+  {
+    rows: "checkout sessions",
+    statement: `
+      delete from app.checkout_sessions
+      where payment_link_id in (
+        select id from app.payment_links
+        where assessment_call_id = any($1::uuid[])
+      )
+    `,
+  },
+  {
+    rows: "payment links",
+    statement: `
+      delete from app.payment_links
+      where assessment_call_id = any($1::uuid[])
+    `,
+  },
+  {
+    rows: "coach time reservations",
+    statement: `
+      delete from app.coach_time_reservations
+      where appointment_kind = 'assessment_call'
+        and appointment_id = any($1::uuid[])
+    `,
+  },
+  {
+    rows: "assessment calls",
+    statement: `
+      delete from app.assessment_calls
+      where id = any($1::uuid[])
+    `,
+  },
+];
 const FIND_LATEST_CALL_BY_EMAIL = `
   select id from app.assessment_calls
   where visitor_email = $1
@@ -31,23 +84,80 @@ const MOVE_RESERVATION_TWO_HOURS_INTO_THE_PAST = `
   where appointment_kind = $1 and appointment_id = $2
 `;
 
-// The coach sees every call ever booked, and the booking journey always takes
-// the soonest open slot, so calls left behind by an earlier run would push the
-// one this run books off the dashboard's next-three widget. The sales rows go
-// with them because they reference the calls.
-export async function clearAssessmentCallsAndTheirSales(): Promise<void> {
+type RowRemoval = { rows: string; statement: string };
+
+type RemovedRows = { rows: string; count: number };
+
+export function emailsOwnedByRun(
+  recordedEmails: readonly string[],
+  runId: string,
+): string[] {
+  return recordedEmails.filter(
+    (email) =>
+      email.startsWith(runEmailPrefix(runId)) && isClerkTestEmail(email),
+  );
+}
+
+export async function cleanUpRunAssessmentCalls(
+  runId: string,
+  logPrefix: string,
+): Promise<{ allCleaned: boolean }> {
+  const visitorEmails = emailsOwnedByRun(readCreatedEmails(runId), runId);
+
+  if (visitorEmails.length === 0) {
+    return { allCleaned: true };
+  }
+
   const pool = createE2eDatabasePool();
 
   try {
-    for (const statement of DELETE_CALLS_AND_THEIR_SALES) {
-      await pool.query(statement);
-    }
-    await pool.query(RELEASE_RESERVED_COACH_TIME, [
-      ASSESSMENT_CALL_APPOINTMENT_KIND,
-    ]);
+    const removed = await deleteCallsBookedBy(pool, visitorEmails);
+    console.log(`${logPrefix} Database: ${summarize(removed)}`);
+
+    return { allCleaned: true };
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    console.log(`${logPrefix} Database: failed: ${reason}`);
+
+    return { allCleaned: false };
   } finally {
     await pool.end();
   }
+}
+
+async function deleteCallsBookedBy(
+  pool: pg.Pool,
+  visitorEmails: readonly string[],
+): Promise<RemovedRows[]> {
+  const client = await pool.connect();
+
+  try {
+    await client.query("begin");
+    const { rows: calls } = await client.query<{ id: string }>(
+      FIND_CALLS_BOOKED_BY,
+      [visitorEmails],
+    );
+    const callIds = calls.map((call) => call.id);
+    const removed: RemovedRows[] = [];
+
+    for (const removal of DELETE_CALLS_AND_THEIR_SALES) {
+      const { rowCount } = await client.query(removal.statement, [callIds]);
+      removed.push({ rows: removal.rows, count: rowCount ?? 0 });
+    }
+
+    await client.query("commit");
+
+    return removed;
+  } catch (error) {
+    await client.query("rollback");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+function summarize(removed: readonly RemovedRows[]): string {
+  return `removed ${removed.map((entry) => `${entry.rows} ${entry.count}`).join(", ")}`;
 }
 
 export async function findCallIdByEmail(email: string): Promise<string> {

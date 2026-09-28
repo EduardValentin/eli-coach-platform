@@ -1,4 +1,3 @@
-import { clearAssessmentCallsAndTheirSales } from "../support/assessment-calls";
 import { BOOKING_PROFILE } from "../support/booking-page";
 import { expect, test } from "../support/fixtures";
 import { resolveRunId } from "../support/run-id";
@@ -7,23 +6,23 @@ const RUN_ID = resolveRunId();
 const VISITOR_FIRST_NAME = "Visitor";
 const VISITOR_LAST_NAME = RUN_ID;
 const VISITOR_NAME = `${VISITOR_FIRST_NAME} ${VISITOR_LAST_NAME}`;
-const VISITOR_EMAIL = `booking-${RUN_ID}@evoa.fit`;
 const VISITOR_NOTES = "Recovering from a knee injury.";
 
 test("a visitor books an assessment call and the coach sees it", async ({
   bookingPage,
+  coachAssessmentCalls,
   page,
   provisionAccount,
   publicNav,
   signIn,
+  visitorEmail,
 }) => {
   // arrange
-  await clearAssessmentCallsAndTheirSales();
   await provisionAccount("COACH");
 
   // act
   await bookingPage.bookSoonestCall({
-    email: VISITOR_EMAIL,
+    email: visitorEmail,
     firstName: VISITOR_FIRST_NAME,
     lastName: VISITOR_LAST_NAME,
     notes: VISITOR_NOTES,
@@ -33,7 +32,7 @@ test("a visitor books an assessment call and the coach sees it", async ({
   await expect(
     page.getByRole("heading", { name: "You're booked!" }),
   ).toBeVisible();
-  await expect(page.getByText(VISITOR_EMAIL)).toBeVisible();
+  await expect(page.getByText(visitorEmail)).toBeVisible();
 
   // act
   await page.goto("/store");
@@ -44,20 +43,17 @@ test("a visitor books an assessment call and the coach sees it", async ({
   await expect(
     page.getByRole("heading", { name: "Upcoming calls" }),
   ).toBeVisible();
-  await expect(page.getByText(VISITOR_NAME)).toBeVisible();
 
   // act
-  await page.goto("/coach/assessment-calls");
+  await coachAssessmentCalls.open();
+  await coachAssessmentCalls.search(visitorEmail);
 
   // assert
   await expect(
     page.getByRole("heading", { level: 1, name: "Assessment calls" }),
   ).toBeVisible();
-  const bookedCall = page
-    .getByRole("list", { name: "Assessment calls" })
-    .getByRole("listitem")
-    .filter({ hasText: VISITOR_NAME });
-  await expect(bookedCall.getByText(VISITOR_EMAIL)).toBeVisible();
+  const bookedCall = coachAssessmentCalls.call(VISITOR_NAME);
+  await expect(bookedCall.getByText(visitorEmail)).toBeVisible();
   await expect(
     bookedCall.getByRole("link", { name: BOOKING_PROFILE.phoneNumberE164 }),
   ).toHaveAttribute("href", `tel:${BOOKING_PROFILE.phoneNumberE164}`);

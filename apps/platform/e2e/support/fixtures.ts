@@ -11,7 +11,7 @@ import { recordCreatedEmail } from "./clerk-users";
 import { createE2eDatabasePool } from "./database";
 import { requireEnv } from "./env";
 import { PublicNav } from "./public-nav";
-import { resolveRunId } from "./run-id";
+import { resolveRunId, runEmailPrefix } from "./run-id";
 import { StripeCheckoutPage } from "./stripe-checkout";
 import {
   cleanUpRecordedCheckoutSessions,
@@ -64,7 +64,7 @@ function mintRecordedTestEmail(workerIndex: number): string {
   // recognize.
   // The worker index keeps a restarted worker, whose sequence starts over,
   // from minting an address an earlier worker of the same run already used.
-  const email = `e2e-${RUN_ID}-${workerIndex}-${sequence}+clerk_test@evoa.fit`;
+  const email = `${runEmailPrefix(RUN_ID)}${workerIndex}-${sequence}+clerk_test@evoa.fit`;
   // Recorded before any test does anything with it, so a run-scoped cleanup
   // registry exists even for the failure paths that never reach
   // createClerkUser (see clerk-users.ts and global-teardown.ts).

@@ -1,8 +1,4 @@
-import {
-  clearAssessmentCallsAndTheirSales,
-  endCall,
-  findCallIdByEmail,
-} from "../support/assessment-calls";
+import { endCall, findCallIdByEmail } from "../support/assessment-calls";
 import { E2E_APP_URL } from "../support/e2e-app";
 import { latestEmailTo, type CapturedEmail } from "../support/email-capture";
 import { expect, test } from "../support/fixtures";
@@ -35,7 +31,6 @@ test("a paid client receives her invitation, creates her account and lands on th
   test.setTimeout(JOURNEY_TIMEOUT_MS);
 
   // arrange
-  await clearAssessmentCallsAndTheirSales();
   await provisionAccount("COACH");
 
   // act
@@ -55,6 +50,7 @@ test("a paid client receives her invitation, creates her account and lands on th
   await page.goto("/store");
   await signIn();
   await coachAssessmentCalls.open();
+  await coachAssessmentCalls.search(visitorEmail);
 
   // act
   await coachAssessmentCalls.sendPaymentLink(CLIENT_NAME);
@@ -93,6 +89,7 @@ test("a paid client receives her invitation, creates her account and lands on th
     sessionId,
   });
   await coachAssessmentCalls.open();
+  await coachAssessmentCalls.search(visitorEmail);
   const invitationEmail = await latestEmailTo(visitorEmail);
 
   // assert

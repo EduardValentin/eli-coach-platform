@@ -1,5 +1,6 @@
 import type { ClerkClient } from "@clerk/backend";
 
+import { cleanUpRunAssessmentCalls } from "./assessment-calls";
 import {
   revokePendingInvitations,
   summarizeRevocations,
@@ -37,11 +38,13 @@ export async function cleanUpRun(
     `${logPrefix} Clerk invitations: ${summarizeRevocations(revocations)}`,
   );
   const stripe = await cleanUpRecordedCheckoutSessions(runId, logPrefix);
+  const database = await cleanUpRunAssessmentCalls(runId, logPrefix);
 
   if (
     !hasDeletionFailures(deletions) &&
     revocations.failed.length === 0 &&
-    stripe.allCleaned
+    stripe.allCleaned &&
+    database.allCleaned
   ) {
     deleteRegistryFile(runId);
   }
