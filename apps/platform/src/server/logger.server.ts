@@ -2,6 +2,7 @@ import type { AcquisitionIncidents } from "@eli-coach-platform/domain/acquisitio
 import type { AssessmentCallIncidents } from "@eli-coach-platform/domain/assessment-call";
 import type { ClientInvitationIncidents } from "@eli-coach-platform/domain/client-invitation";
 import type { ClientOnboardingIncidents } from "@eli-coach-platform/domain/client-onboarding";
+import type { ClientRosterIncidents } from "@eli-coach-platform/domain/client-roster";
 import type { CoachingSalesIncidents } from "@eli-coach-platform/domain/payment-link";
 import type { WaitlistIncidents } from "@eli-coach-platform/domain/waitlist";
 import type { PaymentWebhookIncidents } from "@eli-coach-platform/infrastructure/payments/server";
@@ -10,6 +11,7 @@ type ConsoleLogger = AcquisitionIncidents &
   AssessmentCallIncidents &
   ClientInvitationIncidents &
   ClientOnboardingIncidents &
+  ClientRosterIncidents &
   CoachingSalesIncidents &
   PaymentWebhookIncidents &
   WaitlistIncidents;
@@ -50,6 +52,19 @@ export function createConsoleLogger(): ConsoleLogger {
     invitationEmailFailed: ({ invitationId }) => {
       console.error("Client invitation email failed.", {
         errorCategory: "client_invitation_email_failure",
+        invitationId,
+      });
+    },
+    invitationResendFailed: ({ invitationId, step }) => {
+      console.error("Client invitation re-send failed.", {
+        errorCategory: "client_invitation_resend_failure",
+        invitationId,
+        step,
+      });
+    },
+    invitationResent: ({ invitationId }) => {
+      console.info("Client invitation re-sent.", {
+        eventCategory: "client_invitation_resent",
         invitationId,
       });
     },
@@ -167,6 +182,12 @@ export function createConsoleLogger(): ConsoleLogger {
         requestId,
       });
     },
+    rosterReadFailed: (error) => {
+      console.error("Client roster could not be read.", {
+        errorCategory: "client_roster_read_failure",
+        errorClass: errorClassOf(error),
+      });
+    },
     salesModeReadFailed: (error) => {
       console.error("Coaching sales mode feature flag read failed.", {
         errorCategory: "coaching_sales_mode_read_failure",
@@ -191,5 +212,9 @@ function describeError(
 ): { errorClass: string; errorMessage: string } | { errorClass: string } {
   return error instanceof Error
     ? { errorClass: error.name, errorMessage: error.message }
-    : { errorClass: typeof error };
+    : { errorClass: errorClassOf(error) };
+}
+
+function errorClassOf(error: unknown): string {
+  return error instanceof Error ? error.name : typeof error;
 }
