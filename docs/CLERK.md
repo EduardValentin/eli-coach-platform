@@ -237,7 +237,12 @@ Prerequisites:
   one-time code. `paid-client-invitation.spec.ts` is the one journey that
   signs up: a visitor books a call with a `+clerk_test` address, pays through
   Stripe test mode, and creates her account from the app's invitation on the
-  hosted sign-up page, which asks for no code. `sign-up-unavailable.spec.ts`
+  hosted sign-up page, which asks for no code. `client-onboarding.spec.ts`
+  starts from a client who has already paid: the `provisionPaidClient(gender)`
+  fixture creates her Clerk user and inserts her account, an ended assessment
+  call, her bound client record and a coaching subscription that waits out
+  the withdrawal window (`e2e/support/paid-clients.ts`), then she signs in
+  like any other journey. `sign-up-unavailable.spec.ts`
   asserts the mode from the public environment endpoint and fails until the
   flip lands. No journey needs a Clerk webhook delivery, so the suite does not
   start the relay.
@@ -264,7 +269,10 @@ minutes before rerunning rather than assuming a regression.
 keeps the shared Development instance under its hard 100-user cap. After the
 users, teardown revokes every invitation still pending for the run's
 `+clerk_test` addresses, so a journey that stopped between the payment and
-the sign-up leaves no open invitation behind.
+the sign-up leaves no open invitation behind. Last, it deletes the database
+rows booked under those addresses: the assessment calls, the clients bound
+to them with their onboarding drafts, submissions, measurements and unit
+preferences, and the payment links, checkouts and subscriptions around them.
 
 Each journey records the `+clerk_test` email it generates to a run-scoped
 registry file, `e2e/.runtime/created-emails-<run-id>.log` (gitignored;

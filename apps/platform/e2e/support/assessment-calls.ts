@@ -26,6 +26,10 @@ const DELETE_CALLS_AND_THEIR_SALES: readonly RowRemoval[] = [
       )
     `,
   },
+  clientOwnedRows("onboarding drafts", "client_onboarding_drafts"),
+  clientOwnedRows("onboarding submissions", "client_onboarding_submissions"),
+  clientOwnedRows("measurements", "client_measurements"),
+  clientOwnedRows("unit preferences", "client_unit_preferences"),
   {
     rows: "clients",
     statement: `
@@ -85,6 +89,18 @@ const MOVE_RESERVATION_TWO_HOURS_INTO_THE_PAST = `
 `;
 
 type RowRemoval = { rows: string; statement: string };
+
+function clientOwnedRows(rows: string, table: string): RowRemoval {
+  return {
+    rows,
+    statement: `
+      delete from app.${table}
+      where client_id in (
+        select id from app.clients where assessment_call_id = any($1::uuid[])
+      )
+    `,
+  };
+}
 
 type RemovedRows = { rows: string; count: number };
 
