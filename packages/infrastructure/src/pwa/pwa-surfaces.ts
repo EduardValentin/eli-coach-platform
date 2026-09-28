@@ -2,10 +2,10 @@
 // a PWA in MVP, and the public site never was.
 export const pwaSurfaceDefinitions = {
   client: {
-    name: "Evoa Client Portal",
-    shortName: "Evoa Client",
-    description:
-      "Client-facing coaching portal for workouts, progress, check-ins, and messaging.",
-    themeColor: "#17212f",
+    name: "Evoa",
+    shortName: "Evoa",
+    description: "Your coaching home: your program, check-ins and progress.",
+    themeColor: "#ffffff",
+    backgroundColor: "#fafafa",
   },
 } as const;

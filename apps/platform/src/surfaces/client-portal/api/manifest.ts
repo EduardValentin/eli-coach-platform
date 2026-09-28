@@ -23,7 +23,7 @@ export function loader() {
       short_name: pwaSurfaceDefinitions.client.shortName,
       description: pwaSurfaceDefinitions.client.description,
       display: "standalone",
-      background_color: "#f7f3ea",
+      background_color: pwaSurfaceDefinitions.client.backgroundColor,
       theme_color: pwaSurfaceDefinitions.client.themeColor,
       start_url: clientPortalUrl,
       scope: clientPortalUrl,

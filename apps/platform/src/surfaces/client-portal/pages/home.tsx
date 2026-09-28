@@ -1,14 +1,25 @@
-import { AppShell } from "@eli-coach-platform/ui/layout";
-import type { MetaFunction } from "react-router";
+import { PortalPageHeader } from "@eli-coach-platform/ui/portal";
+import { useOutletContext, type MetaFunction } from "react-router";
 
-export const meta: MetaFunction = () => [{ title: "Client Dashboard | Evoa" }];
+import type { ClientShellPresentation } from "~/surfaces/client-portal/shell/client-identity-presentation";
+
+export const meta: MetaFunction = () => [{ title: "Dashboard | Evoa" }];
 
 export default function ClientHomeRoute() {
+  const { greeting } = useOutletContext<ClientShellPresentation>();
+
   return (
-    <AppShell
-      eyebrow="Client Portal"
-      title="Client portal"
-      description="Your workouts, check-ins, and support will live here."
-    />
+    <div className="w-full">
+      <div data-parity-root="ClientGreeting">
+        <PortalPageHeader
+          subtitle={
+            <span data-parity="subtitle">
+              Here is your daily snapshot and current focus.
+            </span>
+          }
+          title={<span data-parity="greeting">{greeting}</span>}
+        />
+      </div>
+    </div>
   );
 }

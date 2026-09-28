@@ -353,7 +353,7 @@ function MoreSheetBody({
           data-parity="sheet-sign-out"
           className="w-full text-text-secondary hover:text-text-primary"
         >
-          <LogOut size={18} aria-hidden="true" />
+          <LogOut size={16} aria-hidden="true" />
           Sign out
         </Button>
       </div>

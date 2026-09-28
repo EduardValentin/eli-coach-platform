@@ -181,6 +181,30 @@ describe.sequential("account API integration", () => {
     );
   });
 
+  it("serves the client portal's manifest anonymously with the installed identity", async () => {
+    // arrange, act
+    const response = await suite.request(
+      new Request(suite.url("/client/manifest.webmanifest")),
+    );
+    const manifest = await response.json();
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toBe(
+      "application/manifest+json; charset=utf-8",
+    );
+    expect(manifest).toMatchObject({
+      background_color: "#fafafa",
+      description: "Your coaching home: your program, check-ins and progress.",
+      display: "standalone",
+      name: "Evoa",
+      short_name: "Evoa",
+      theme_color: "#ffffff",
+    });
+    expect(manifest.scope).toMatch(/\/client\/$/);
+    expect(manifest.start_url).toMatch(/\/client\/$/);
+  });
+
   it("keeps a COACH out of the client portal and names where they belong", async () => {
     // arrange
     await provisionAccount(signedIn, "COACH");
