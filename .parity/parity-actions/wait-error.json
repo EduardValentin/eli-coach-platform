@@ -1,0 +1,4 @@
+[
+  { "waitFor": "main[aria-label=\"Error\"]" },
+  { "wait": 800 }
+]

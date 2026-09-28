@@ -1,14 +1,14 @@
 # Dependencies
 
-Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; last update 2026-09-27 at commit 0c9758d9, change review.
+Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; last update 2026-09-28 at commit f9ecc1e5, change review.
 
 ## Component graph
 
 | From | To | Modules | Notes |
 |---|---|---|---|
-| C6 infrastructure | C1 domain | 8 | the feature-flags repository implements `FeatureFlags`; `PostgresCoachCalendar`, `PostgresCoachAvailability` and `PostgresCoachMeetingRoom` implement the `/coach-availability` and `/coach-meeting-room` ports and take `/shared`'s `Clock`; the payments concern implements `/coaching-subscription`'s `PaymentCheckout` (Stripe and memory) and reads `/coaching-bundle`'s catalog; the adapter-facing contracts are C6's own |
+| C6 infrastructure | C1 domain | 10 | the feature-flags repository implements `FeatureFlags`; `PostgresCoachCalendar`, `PostgresCoachAvailability` and `PostgresCoachMeetingRoom` implement the `/coach-availability` and `/coach-meeting-room` ports and take `/shared`'s `Clock`; the payments concern implements `/coaching-subscription`'s `PaymentCheckout` (Stripe and memory) and reads `/coaching-bundle`'s catalog; the identity concern implements `/client-invitation`'s `IdentityInvitations` (Clerk and memory); the adapter-facing contracts are C6's own |
 | C6 infrastructure | C2 db | 10 | the feature-flags, coach-calendar, coach-meeting-room and payment-event tables and their adapters |
-| C6 infrastructure | C3 config | 10 | concern types the factories read, including `PaymentsConfig` |
+| C6 infrastructure | C3 config | 11 | concern types the factories read, including `PaymentsConfig` and `IdentityConfig` |
 | C7 store | C1 domain | 18 | entities, ports, use cases, publication types across `/product`, `/acquisition`, `/download-grant`, `/cart`, `/shared` |
 | C7 store | C2 db | 6 | DatabaseClient, appSchema |
 | C7 store | C3 config | 5 | joinBasePath and concern types |
@@ -21,40 +21,42 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 | C8 waitlist | C4 content | 2 | |
 | C8 waitlist | C5 ui | 2 | |
 | C8 waitlist | C6 infrastructure | 8 | bot-detection, email/server, http/server; adapter-facing contracts now live in C6 |
-| C9 accounts | C1 domain | 11 | `/account` |
+| C9 accounts | C1 domain | 9 | `/account` (including the `InvitationAcceptance` the composition takes) |
 | C9 accounts | C2 db | 3 | |
 | C9 accounts | C3 config | 2 | |
 | C9 accounts | C5 ui | 3 | |
 | C9 accounts | C6 infrastructure | 3 | http/server |
 | C9 accounts | C7 store | 2 | the store path literal from `contracts/paths.ts` |
-| C11 public-site | C3 config | 3 | |
+| C11 public-site | C3 config | 4 | `buildRedirectPath` in the invitation page |
 | C11 public-site | C4 content | 4 | legal documents; Eli's portrait paths (`about-content.ts`) |
-| C11 public-site | C5 ui | 15 |  |
+| C11 public-site | C5 ui | 16 |  |
 | C11 public-site | C6 infrastructure | 4 | `BotDetectionConfig` type and the widget |
 | C11 public-site | C7 store | 5 | cart drawer and provider, store paths |
 | C11 public-site | C8 waitlist | 7 | contracts, `ui/shared` presentation, `ui/public` |
-| C11 public-site | C9 accounts | 3 | contracts, guards, `ui/public/auth-nav-actions` |
+| C11 public-site | C9 accounts | 5 | contracts (`PortalDestination`, the role paths), guards (the layout and the invitation page), `ui/public/auth-nav-actions`, `ui/shared/sign-out-control` |
 | C11 public-site | C14 server | 1 | `shell/layout.server.ts` reads `runtimeConfigContext` |
 | C11 public-site | C17 assessment-calls | 4 | `routes.ts` takes the public route fragment (`assessmentCallsBookingRoutes`, renamed from `assessmentCallsPublicRoutes` by the rebase-resolution round) and, since GEN-192, the join route fragment (`assessmentCallsJoinRoutes`), registered outside the layout beside `accountsDeadEndRoutes`; `pages/pricing.tsx`, `sections/hero/hero.tsx` and `sections/about/about.tsx` take `BOOK_PATH` from `contracts/paths.ts` and nothing else |
-| C11 public-site | C18 coaching-sales | 2 | `routes.ts` spreads `coachingSalesPublicRoutes` inside the shell; `pages/pricing.tsx` reads `coachingSalesContext` and renders `ui/public/bundle-selector/bundle-selector.tsx` |
+| C11 public-site | C18 coaching-sales | 5 | `routes.ts` spreads `coachingSalesPublicRoutes` inside the shell and registers the invitation page at `INVITATION_ROUTE_SEGMENT` outside it; `pages/pricing.tsx` reads `coachingSalesContext` and renders `ui/public/bundle-selector/bundle-selector.tsx`; `pages/invitation.tsx` renders `ui/public/invitation/invitation-states.tsx`; `shell/layout.server.ts` reads the `readClientJourneyStep` guard and `shell/portal-destination.ts` the journey label and path from `contracts/client-journey.ts` |
+| C11 public-site | C1 domain | 1 | `shell/portal-destination.ts` names `AccountRole` and `ClientJourneyStep` (types) |
 | C12 client-portal | C3 config | 1 | |
 | C12 client-portal | C5 ui | 2 | |
 | C12 client-portal | C6 infrastructure | 2 | pwa |
-| C12 client-portal | C9 accounts | 4 | portal guard and paths |
+| C12 client-portal | C9 accounts | 4 | portal guard (from the access layout) and paths |
+| C12 client-portal | C18 coaching-sales | 2 | `routes.ts` spreads `coachingSalesClientRoutes` inside the access layout; `shell/access-layout.server.ts` runs `requireClientJourneyStep` |
 | C13 coach-portal | C5 ui | 4 | the shell and its navigation links; the dashboard and the assessment-calls page compose portal and appointment primitives |
 | C13 coach-portal | C9 accounts | 3 | portal guard and paths |
 | C13 coach-portal | C17 assessment-calls | 4 | `routes.ts` takes the settings fragment and the calls segment; `pages/home.tsx` composes the dashboard blocks; `pages/assessment-calls.tsx` composes the listing, section, clock and error boundary |
 | C13 coach-portal | C18 coaching-sales | 1 | `pages/assessment-calls.tsx` reads `coachingSalesContext` and fills the section's slots from `ui/coach/` (sales filter, badge, payment-link action, pricing label) |
-| C14 server | C1 domain | 8 | the container and platform composition name ports and use cases; the console logger implements the incident ports of `/acquisition`, `/waitlist`, `/assessment-call` and `/payment-link` |
+| C14 server | C1 domain | 8 | the container and platform composition name ports and use cases; the console logger implements the incident ports of `/acquisition`, `/waitlist`, `/assessment-call`, `/payment-link` and `/client-invitation` |
 | C14 server | C2 db | 1 | `platform-composition.server.ts` no longer imports `DatabaseClient` |
 | C14 server | C3 config | 6 | the container reads `resolveFeatureFlagOverridesMode` and the payments secrets; the runtime environment loader |
 | C14 server | C4 content | 1 | privacy email |
-| C14 server | C6 infrastructure | 8 | bot verifier, product email, management auth, feature-flag repository, the payments factories and contracts, http helpers for the webhook route |
+| C14 server | C6 infrastructure | 8 | bot verifier, product email, management auth, feature-flag repository, the payments factories and contracts, the identity-invitations factory, http helpers for the webhook route |
 | C14 server | C7 store | 2 | the container calls `composeStoreFeature` |
 | C14 server | C8 waitlist | 2 | the container calls `composeWaitlistFeature` |
-| C14 server | C9 accounts | 2 | the container calls `composeAccountsFeature` |
+| C14 server | C9 accounts | 2 | the container calls `composeAccountsFeature`, handing it coaching sales' `invitationAcceptance`, and reads `CLIENT_PORTAL_PATH` for the identity provider's return URL |
 | C14 server | C17 assessment-calls | 2 | the container calls `composeAssessmentCallsFeature`; `feature-contexts.server.ts` sets `assessmentCallsContext` |
-| C14 server | C18 coaching-sales | 2 | the container calls `composeCoachingSalesFeature` and hands its `paymentCompletionHandler` to the platform composition; the feature-context middleware sets `coachingSalesContext` |
+| C14 server | C18 coaching-sales | 2 | the container calls `composeCoachingSalesFeature` with the identity invitations, hands its `invitationAcceptance` to accounts and its `paymentCompletionHandler` to the platform composition; the feature-context middleware sets `coachingSalesContext` |
 | C17 assessment-calls | C1 domain | 15 | `/assessment-call`, `/coach-availability`, `/coach-meeting-room`, `/feature-flag`, `/shared`, and `/payment-link`'s `AssessmentCallReader`, which the composition satisfies |
 | C17 assessment-calls | C2 db | 3 | DatabaseClient, appSchema |
 | C17 assessment-calls | C3 config | 4 | `joinBasePath` (the emails and the booking overview's portrait) and `AssessmentCallsConfig` |
@@ -62,12 +64,12 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 | C17 assessment-calls | C5 ui | 21 | `./primitives`, `./appointments`, `./calendar`, `./tabs`, `./filters`, `./lib`, `./layout`, `./portal`, `./toast` |
 | C17 assessment-calls | C6 infrastructure | 14 | bot-detection (browser and server), email/server (the notification contract, the Email* primitives and the email theme), http/server, coach-calendar/server and coach-meeting-room/server (the composition's adapters and the repository's reservation writers) |
 | C17 assessment-calls | C9 accounts | 2 | `api/settings/assessment-call-settings-controller.server.ts` takes `requireApiAccount` from `server/guards/`; `contracts/paths.ts` takes `COACH_PORTAL_PATH` from `contracts/paths.ts` |
-| C18 coaching-sales | C1 domain | 18 | `/payment-link`, `/coaching-subscription`, `/coaching-bundle`, `/assessment-call` (visitor vocabularies for the clients table), `/feature-flag`, `/email-address`, `/shared` |
-| C18 coaching-sales | C2 db | 4 | `DatabaseClient`, `DatabaseTransaction`, `appSchema`, `isCausedByDatabaseError` |
-| C18 coaching-sales | C3 config | 3 | `joinBasePath` |
-| C18 coaching-sales | C5 ui | 11 | `./primitives`, `./overlays` (`ConfirmDialog`), `./lib`, `./motion`, `./toast` |
-| C18 coaching-sales | C6 infrastructure | 11 | `./payments/server` (the completion-handler contract, `recordPaymentEvent`, `toCheckoutCompletion`), `./email/server` (the Email* primitives and the email theme), `./http/server` |
-| C18 coaching-sales | C9 accounts | 1 | `requireApiAccount` from `server/guards/` |
+| C18 coaching-sales | C1 domain | 27 | `/payment-link`, `/coaching-subscription`, `/coaching-bundle`, `/assessment-call` (visitor vocabularies for the clients table), `/feature-flag`, `/email-address`, `/client-invitation`, `/client-journey`, `/account` (`InvitationAcceptance`, type), `/shared` |
+| C18 coaching-sales | C2 db | 8 | `DatabaseClient`, `DatabaseTransaction`, `appSchema`, `isCausedByDatabaseError` (through `data/unique-violation.server.ts`) |
+| C18 coaching-sales | C3 config | 5 | `joinBasePath`, `buildRedirectPath` |
+| C18 coaching-sales | C5 ui | 13 | `./primitives`, `./overlays` (`ConfirmDialog`), `./lib`, `./motion`, `./toast`, `./layout` (`DeadEndPage`) |
+| C18 coaching-sales | C6 infrastructure | 16 | `./payments/server` (the completion-handler contract, `recordPaymentEvent`, `toCheckoutCompletion`), `./email/server` (the Email* primitives and the email theme), `./http/server` |
+| C18 coaching-sales | C9 accounts | 4 | `contracts/paths.ts` (`CLIENT_PORTAL_PATH`); `server/guards/` (`requireApiAccount`, `requirePortalAccess`, `sessionContext`, `accountsContext`) from the payment-link and client-journey controllers and the journey guard |
 | C18 coaching-sales | C17 assessment-calls | 4 | `contracts/paths.ts` (`BOOK_PATH`, `COACH_CALLS_PAGE_PARAM`), `contracts/visitor-profile.ts` (`possessivePronoun`), and `data/schema.server.ts` for foreign keys |
 | C15 app root | C3 config | 1 | |
 | C15 app root | C5 ui | 1 | `root-error-page.tsx` renders the shared `DeadEndPage` from `./layout`; `app.css`'s `@import` of `styles.css` is not followed by the cruise |
@@ -87,6 +89,7 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 |---|---|---|---|
 | any module | a dependency cycle, including between domain slices | R30 | `no-circular` |
 | features/A | features/B outside contracts/, ui/shared/, server/guards/ | R3 | `feature-internals` |
+| any module outside C9 features/accounts, the C15 root modules, C6 `identity/` and C16 | `@clerk/*` | R23 (Clerk stays behind the accounts feature, the root and the identity adapter) | `clerk-confined` (fixture-covered) |
 | features/assessment-calls | features/coaching-sales (any folder) | R30 (coaching sales is downstream of assessment calls; the reverse edge would close a component cycle `no-circular` cannot see at module level) | `assessment-calls-never-reach-coaching-sales` (fixture-covered) |
 | features/A/data/schema.server.ts | anything private in features/B except its `data/schema.server.ts` (foreign keys) | R3 carve-out | `feature-schema-foreign-key` (still unexercised at HEAD) |
 | surfaces/public-site | a feature outside ui/public/, ui/shared/, contracts/, server/guards/, routes.ts | R2 | `surface-public-site-to-feature` |
@@ -273,18 +276,29 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 | B278 | FeatureFlagOverrides (U1354) composition output | C14 composition | composeBrowserFeatureFlagOverrides, composeWithoutFeatureFlagOverrides | U500, which hands `featureFlags` to the compositions and keeps the whole on `PlatformContainer`; `root.server.ts` calls `.middleware` off the container | `{ featureFlags: FeatureFlagReader; middleware: MiddlewareFunction<Response> }` | container.server.ts | `feature-flag-overrides-root-only`, `composition-root` |
 | B279 | PricingEligibility (U1377) | C1 coaching-bundle (use-cases) | U303 PostgresWaitlistRepository (adapters, C8), handed out as the waitlist composition's `handles.pricingEligibility` | U1378, U1395, U1396, U1384 | an `EmailAddress` in; a `PriceTier` or a map of tiers out | implementer | dependency-absence; composition injection; `feature-internals` keeps C18 from importing C8's repository |
 | B280 | CheckoutSessions (U1381) | C1 coaching-subscription (use-cases) | U1433 PostgresPaymentLinks (adapters, C18) | U1384 | plain `CheckoutSessionRecord`s; `{ id }` lists | implementer | dependency-absence |
-| B281 | CoachingPurchases (U1382) | C1 coaching-subscription (use-cases) | U1434 PostgresCoachingPurchases (adapters, C18) | U1385 | a `CoachingPurchase` (event id, `Client` and `CoachingSubscription` instances, read by the adapter through `toSnapshot()`) in; `recorded \| duplicate_event \| call_already_paid` out | implementer | dependency-absence; the write-port instance allowance in decisions.md |
+| B281 | CoachingPurchases (U1382) | C1 coaching-subscription (use-cases) | U1434 PostgresCoachingPurchases (adapters, C18) | U1385 | a `CoachingPurchase` (event id, `Client` and `CoachingSubscription` instances, read by the adapter through `toSnapshot()`) in; `recorded \| duplicate_event` with the client id, or `call_already_paid`, out | implementer | dependency-absence; the write-port instance allowance in decisions.md |
 | B282 | PaymentCheckout (U1383) | C1 coaching-subscription (use-cases) | U1412 InMemoryPaymentCheckout and U1416 StripePaymentCheckout (adapters, C6), selected by U1402 on `PAYMENTS_PROVIDER` | U1384, U1386 | a plain `CreateCheckoutSessionCommand` in; `{ id }`, `{ id, url }` and a plain `CheckoutCompletion` out; provider-neutral names | implementer | dependency-absence; `./payments/server` publishes only the factory |
 | B283 | PaymentLinks (U1389) | C1 payment-link (use-cases) | U1433 PostgresPaymentLinks (adapters, C18) | U1384, U1395, U1396 | a plain `NewPaymentLink` in; `PaymentLink` instances out | implementer | dependency-absence |
-| B284 | PaymentLinkTokenGenerator (U1389) | C1 payment-link (use-cases) | U1432 RandomPaymentLinkTokenGenerator (adapters, C18) | U1395 | `{ rawToken, sha256 }` | implementer | dependency-absence |
-| B285 | PaymentLinkTokenHasher (U1389) | C1 payment-link (use-cases) | U1432 PaymentLinkTokenSha256 (adapters, C18) | U1384, U1396 | strings | implementer | dependency-absence |
+| B284 | PaymentLinkTokenGenerator (U1389) | C1 payment-link (use-cases) | U1432 RandomLinkTokenGenerator (adapters, C18) | U1395 | `{ rawToken, sha256 }` | implementer | dependency-absence |
+| B285 | PaymentLinkTokenHasher (U1389) | C1 payment-link (use-cases) | U1432 LinkTokenSha256 (adapters, C18) | U1384, U1396 | strings | implementer | dependency-absence |
 | B286 | AssessmentCallReader (U1390) | C1 payment-link (use-cases) | an object over `PostgresAssessmentCallRepository.findById(...).toSnapshot()` in U1235 (composition, C17), handed out as `handles.assessmentCallReader` | U1384, U1385, U1395, U1396 | a call id in; an `AssessmentCallSnapshot` or `null` out | implementer | dependency-absence; composition injection |
 | B287 | CallSalesStates (U1391) | C1 payment-link (use-cases) | U1434 PostgresCoachingPurchases (adapters, C18) | U1397, U1384, U1395, U1396 | call ids in; a map of recorded `CallSalesState`s out | implementer | dependency-absence |
 | B288 | CoachingSalesIncidents (U1392) | C1 payment-link (use-cases) | U519 createConsoleLogger (C14) | U1394, U1395, U1385, U1428 | the failed read, a call id, or a rejection reason | implementer | dependency-absence, composition injection |
 | B289 | CoachingSalesNotifications (U1393) | C1 payment-link (use-cases) | U1437 EmailCoachingSalesNotifications (adapters, C18), built by `createCoachingSalesNotifications` | U1395 | a `PaymentLinkMessage` (call snapshot, link id, raw token, tier) in; `sent \| failed` out | implementer | dependency-absence |
 | B290 | PaymentCompletionHandler (U1404) | C6 payments (adapters; adapter-facing contract) | U1428 CoachingPurchaseCompletionHandler (adapters, C18), handed out as `handles.paymentCompletionHandler` | U518 (purpose-keyed map), U1458 | an event id and a `PaidCheckoutSession` in; `recorded \| duplicate \| ignored` out | implementer | composition injection; the platform composition throws at startup on a duplicate purpose |
 | B291 | PaymentEvents (U1405) | C6 payments (adapters; adapter-facing contract) | U1415 StripePaymentEvents and U1413 InMemoryPaymentEvents (adapters, C6), both reading events through `readPaymentEvent`, selected by U1403 on `PAYMENTS_PROVIDER` | U1458 | the raw body and signature header in; `PaymentEventVerdict` out | implementer | `./payments/server` publishes the contract and the factory only |
-| B292 | PaymentWebhookIncidents (U1406) | C6 payments (adapters; adapter-facing contract) | U519 createConsoleLogger (C14) | U1458 | `{ eventId, purpose }` | implementer | composition injection |
+| B292 | PaymentWebhookIncidents (U1406) | C6 payments (adapters; adapter-facing contract) | U519 createConsoleLogger (C14) | U1458 | `{ eventId, purpose }`; a handler failure adds the error class | implementer | composition injection |
+| B293 | InvitationAcceptance (U1474) | C1 use-cases (`/account`) | an inline object in U1423 over U1483 (composition, C18) | U902 | `{ authSubjectId }` in; `accepted \| refused` out | implementer | dependency-absence; the `/account` slice imports no other slice; the container hands the handle from the coaching-sales to the accounts composition |
+| B294 | PaidClientAdmission (U1491) | C1 use-cases (`/coaching-subscription`) | an inline object in U1423 over U1482 (composition, C18) | U1385 | `{ clientId }` in | implementer | dependency-absence; composition injection |
+| B295 | ClientInvitations (U1476) | C1 use-cases (`/client-invitation`) | U1509 PostgresClientInvitations (adapters, C18) | U1482, U1483, U1484 | `ClientInvitation` instances out of the finders and into `insert` and `reissue`; plain bookkeeping writes; `accept` answers `accepted \| raced` | implementer | dependency-absence; `feature-api-to-data`; the composition hands it in |
+| B296 | ClientInvitationIdGenerator (U1476) | C1 use-cases | U1508 (adapters, C18) | U1482 | string | implementer | dependency-absence |
+| B297 | IdentityInvitations (U1477) | C1 use-cases | U1492 ClerkIdentityInvitations, U1493 InMemoryIdentityInvitations (adapters, C6), selected by U1494 | U1482, U1483 | plain: `{ email, invitationId }` in, `IdentityInvitation { id, url }` out; subject → invitation id | implementer | dependency-absence; C6 publishes only the factory; `clerk-confined` |
+| B298 | InvitationTokenGenerator (U1478) | C1 use-cases | U1432 (adapters, C18) | U1482 | `{ rawToken, sha256 }` | implementer | dependency-absence |
+| B299 | InvitationTokenHasher (U1478) | C1 use-cases | U1432 (adapters, C18) | U1484 | string | implementer | dependency-absence |
+| B300 | InvitedClients (U1479) | C1 use-cases | U1510 (adapters, C18) | U1482 | plain `InvitedClient` | implementer | dependency-absence |
+| B301 | ClientInvitationNotifications (U1480) | C1 use-cases | U1514 EmailClientInvitationNotifications (adapters, C18) over C6 `ProductEmail` | U1482 | plain `ClientInvitationMessage` in, `sent \| failed` out | implementer | dependency-absence |
+| B302 | ClientInvitationIncidents (U1481) | C1 use-cases | U519 createConsoleLogger (adapters, C14) | U1482 | `{ invitationId }` | implementer | dependency-absence |
+| B303 | ClientJourneys (U1487) | C1 use-cases (`/client-journey`) | U1507 PostgresClientJourneys (adapters, C18) | U1488, U1489 | `ClientJourney` instance out; `{ clientId, at }` in | implementer | dependency-absence |
 
 ## Entry points and composition roots
 
@@ -292,10 +306,10 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 |---|---|---|
 | composition-root | apps/platform/src/server/container.server.ts (createPlatformContainer, memoised by getPlatformContainer) | the shared handles once — `createPlatformDatabase`, the `Clock` implementation, `createConsoleLogger()`, `createBotVerifier()`, `createManagementAuthConfig()` and `createManagementAuthenticator()`, `createProductEmail()`, `createPaymentCheckout()` and `createPaymentEvents()`, one `PostgresFeatureFlagRepository` and one `GetFeatureFlagsUseCase`, and the override selection by `resolveFeatureFlagOverridesMode(environment)` — then, in order, `composeWaitlistFeature`, `composeAssessmentCallsFeature`, `composeCoachingSalesFeature` (given `assessmentCalls.handles.assessmentCallReader` and `waitlist.handles.pricingEligibility`), `composePlatformFeature` (given `[coachingSales.handles.paymentCompletionHandler]`, the payment events verifier and the webhook signing secret), `composeAccountsFeature`, `composeStoreFeature`; the selected feature-flag reader goes to the platform, waitlist, assessment-calls and coaching-sales compositions; `featureFlagOverrides` is a field of the container. One console logger implements B266, B267, B273, B288 and B292 |
 | composition-root (second) | apps/platform/src/root.server.ts | `clerkMiddleware()`, the container's `featureFlagOverrides.middleware`, `createFeatureContextMiddleware(getPlatformContainer)`, `createAccountResolutionMiddleware()`, in that order; the container's only importer |
-| composition-site | apps/platform/src/features/accounts/server/accounts-composition.server.ts | the account repository, `ProvisionAccountUseCase`, `DeleteAccountUseCase`, and the account and webhook controllers; `AccountsFeatureHandles` names only what the feature reads |
+| composition-site | apps/platform/src/features/accounts/server/accounts-composition.server.ts | the account repository, `ProvisionAccountUseCase` (with the `InvitationAcceptance` it is handed), `DeleteAccountUseCase`, and the account and webhook controllers; `AccountsFeatureHandles` names only what the feature reads |
 | composition-site | apps/platform/src/features/store/server/store-composition.server.ts | the store repositories, asset store and digests, token generators, zip stream, `EmailProductDelivery`, the eight `/product`, `/acquisition` and `/download-grant` use cases, and the five store controllers; `StoreFeatureHandles` names only what the feature reads |
 | composition-site | apps/platform/src/features/assessment-calls/server/assessment-calls-composition.server.ts | `PostgresAssessmentCallRepository`, `PostgresCoachCalendar` (C6, for `ListOpenSlotsUseCase`), `createAssessmentCallNotifications(...)`, the five `/assessment-call` use cases and both controllers, `AssessmentCallsController` and `AssessmentCallSettingsController`. Synchronous, and no use case receives a value read off an adapter at composition: `BookAssessmentCallUseCase` reads the coach's zone from `availability.current()` inside `execute()`. The one remaining assessment-call variable arrives as the handle `assessmentCallsConfig` (the container passes the runtime environment, typed as `AssessmentCallsConfig`). The container's shared `FeatureFlagReader` and incidents handle arrive as `featureFlags` and `incidents`; the composition builds one `AssessmentCallBookingWindow` from them, held by the two booking use cases, not by the controller (CH-F). Changed (GEN-192): builds one `PostgresCoachAvailability` (C6) in place of the deleted `StaticCoachAvailability`, and one `PostgresCoachMeetingRoom` (C6) in place of the deleted `ConfiguredMeetingRoomLink`; both instances are shared across every use case that takes them (`BookAssessmentCallUseCase`, `ListOpenSlotsUseCase`, `ResolveJoinLinkUseCase`, `GetAssessmentCallSettingsUseCase`, `UpdateAssessmentCallSettingsUseCase`); returns `{ feature, handles: { assessmentCallReader } }` |
-| composition-site | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | `PostgresPaymentLinks`, `PostgresCoachingPurchases`, the token generator and hasher, `CoachingSalesWindow`, the eight `/payment-link`, `/coaching-subscription` and `/coaching-bundle` use cases, `createCoachingSalesNotifications(...)`, the three controllers (`CheckoutsController`, `CoachSalesController`, `PaymentLinksController`) and `CoachingPurchaseCompletionHandler`; returns `{ feature, handles: { paymentCompletionHandler } }` |
+| composition-site | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | `PostgresPaymentLinks`, `PostgresCoachingPurchases`, `PostgresClientInvitations`, `PostgresInvitedClients`, `PostgresClientJourneys`, the invitation id generator, the token generator and hasher, `EmailClientInvitationNotifications`, the three `/client-invitation` and two `/client-journey` use cases, the inline `PaidClientAdmission` and `InvitationAcceptance`, the invitations and client-journey controllers, `CoachingSalesWindow`, the eight `/payment-link`, `/coaching-subscription` and `/coaching-bundle` use cases, `createCoachingSalesNotifications(...)`, the three controllers (`CheckoutsController`, `CoachSalesController`, `PaymentLinksController`) and `CoachingPurchaseCompletionHandler`; returns `{ feature, handles: { paymentCompletionHandler } }` |
 | composition-site | apps/platform/src/features/waitlist/server/waitlist-composition.server.ts | `Waitlist.configure(...)` from the offer config, the waitlist repository, `EmailWaitlistConfirmation`, `GetWaitlistUseCase` with the supplied `FeatureFlagReader`, `JoinWaitlistUseCase` and the waitlist controller; returns `{ feature, handles: { pricingEligibility } }`; its input handles type is module-private |
 | composition-site | apps/platform/src/server/platform-composition.server.ts | readyz, metadata, feature-flag and Stripe webhook controllers plus the runtime config the public site reads; it receives `FeatureFlagReader`, `PaymentEvents`, the signing secret and the completion handlers, builds a purpose-keyed map that throws at startup on a duplicate purpose, constructs no persistence, and keeps `PlatformFeatureHandles` module-private |
 | composition-site | apps/platform/src/server/feature-flag-overrides/feature-flag-overrides-composition.server.ts | `createFeatureFlagOverrideReader(reader)` over the container's raw reader and `createFeatureFlagOverrideMiddleware({ appBasePath })` in `browser` mode; the raw reader and `(_args, next) => next()` in `none` mode; both branches return `{ featureFlags, middleware }`; reachable only from the container |
@@ -307,22 +321,25 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 | construction-site | packages/infrastructure/src/management-auth/create-management-authenticator.server.ts | BearerSecretManagementAuthenticator (bearer only) |
 | construction-site | apps/platform/src/features/coaching-sales/email/create-coaching-sales-notifications.server.ts | EmailCoachingSalesNotifications over the `ProductEmail` it is handed; no provider branch |
 | construction-site | packages/infrastructure/src/payments/create-payment-checkout.server.ts, create-payment-events.server.ts | InMemoryPaymentCheckout / InMemoryPaymentEvents, or the Stripe client with StripePaymentCheckout / StripePaymentEvents, selected on `PAYMENTS_PROVIDER` (`memory \| stripe`); the Stripe SDK is constructed nowhere else |
+| construction-site | packages/infrastructure/src/identity/create-identity-invitations.server.ts | InMemoryIdentityInvitations, or `createClerkClient` + ClerkIdentityInvitations, selected on `IDENTITY_PROVIDER` (`memory \| clerk`) |
 | construction-site | apps/platform/src/features/store/api/downloads/zip-stream.server.ts (ZipDeliveryStream.create) | archiver ZipArchive at request time |
 | construction-site | apps/platform/src/features/store/ui/public/cart/cart.ts, cart-provider.tsx | Zustand store with persist over localStorage (`cart-storage.ts`); one store per provider |
 | route registry | apps/platform/src/routes.ts | a concatenation of nine fragments (`publicSiteRoutes`, `platformApiRoutes`, `accountsApiRoutes`, `waitlistApiRoutes`, `storeApiRoutes`, `assessmentCallsApiRoutes`, `coachingSalesApiRoutes`, `clientPortalRoutes`, `coachPortalRoutes`), each built with `relative(import.meta.dirname)` in its own feature or surface, with no path literals of its own |
 | route (page) | surfaces/public-site/shell/layout.tsx (+ layout.server.ts loader), pages/{home,pricing,blog,privacy,terms}.tsx | the layout loader reads `waitlistContext`, `sessionContext` and `runtimeConfigContext` off `args.context` and returns `presentWaitlist(...)`. `pages/pricing.tsx`'s loader reads `waitlistContext` and `coachingSalesContext` (`checkouts.loadPricingCards`); it exports `handle.publicContentFrame = "full-bleed"`, as the booking page does |
 | route (page) | features/store/ui/public/{catalog/catalog-page,product/product-page,download/download-page}.tsx (+ .server.ts loaders) | the loaders read `storeContext` |
+| route (page) | surfaces/public-site/pages/invitation.tsx | the loader reads `accountsContext` and `sessionContext` and returns `{ signedIn, invitationPath }`; the browser resolves the fragment's token through C18's `api/public/invitation.ts`. Registered by `surfaces/public-site/routes.ts` after the layout route, outside the shell |
 | route (page) | features/accounts/ui/public/sign-in-failed-page.tsx (+ .server.ts) | reads `accountsContext`. Registered through `accountsDeadEndRoutes`, which `surfaces/public-site/routes.ts` spreads after the layout route rather than inside it, so the page renders as a dead end with no public shell |
 | route (page) | features/assessment-calls/ui/public/book/book-page.tsx, ui/public/join/join-page.tsx | both loaders read `assessmentCallsContext` and nothing else. The booking loader returns an `unavailable` presentation rather than throwing when slots cannot be read (D21), and 404s while booking is closed because `ListOpenSlotsUseCase` answers `closed`. The join loader redirects 302 to the meeting room for a known id, throws a 404 `Response` for any id that does not resolve (a malformed one included) that the root `ErrorBoundary` in `root.tsx` renders as the app's standard "Page not found" page, which echoes no id, and since GEN-192 returns `{ status: "link_not_set" }` instead of throwing when the coach has not yet saved a meeting room, which the page renders as its own "call link not ready" view built from C5's `DeadEndPage`. The module keeps a default export so it stays a page route: before GEN-192 that export always returned `null`, since the loader always threw; now it renders conditionally. The loader does not read the mode, so a join link keeps working if the site returns to waiting-list mode. The booking page module also exports `handle.publicContentFrame` as `"full-bleed"`, which the public-site layout reads through `useMatches` to drop its padded content frame |
 | route (page) | features/assessment-calls/ui/coach/settings/settings-page.tsx | the loader reads `assessmentCallsContext` alone; a 401/403 `ErrorBoundary` recovers into the same page with a `toast.error` side effect. Registered through `assessmentCallsCoachRoutes`, which `surfaces/coach-portal/routes.ts` composes inside the coach layout |
 | route (page) | surfaces/coach-portal/pages/assessment-calls.tsx | the loader reads `assessmentCallsContext` for the listing and `coachingSalesContext` for the ended calls' sales states and the callers' pricing tiers; re-exports C17's `AssessmentCallsErrorBoundary` |
 | route (page) | features/coaching-sales/ui/public/select-bundle/select-bundle-page.tsx, ui/public/checkout-complete/checkout-complete-page.tsx | both loaders read `coachingSalesContext` alone and 404 while sales are closed: the select-bundle loader serves the page shell (`checkouts.loadBundlePageShell`) and the browser posts the fragment's payment-link token to `POST /api/coaching-sales/bundle-page` for the bundle page itself; the confirmation loader calls `checkouts.loadConfirmation`. Registered through `coachingSalesPublicRoutes` inside the public-site shell |
-| route (page) | surfaces/client-portal/shell/layout.tsx (+ middleware), pages/home.tsx; surfaces/coach-portal/shell/layout.tsx (+ middleware), pages/home.tsx | middleware calls `requirePortalAccess(args, { role })` |
+| route (page) | surfaces/client-portal/shell/access-layout.tsx (+ middleware), shell/layout.tsx, pages/home.tsx; surfaces/coach-portal/shell/layout.tsx (+ middleware), pages/home.tsx | middleware calls `requirePortalAccess(args, { role })`; the client portal's access layout then runs C18's `requireClientJourneyStep`, which redirects a client whose journey step does not open the requested path |
+| route (page) | features/coaching-sales/ui/client/welcome/welcome-page.tsx | loader and action each make one call on `coachingSalesContext`'s `clientJourney` controller; registered through `coachingSalesClientRoutes` inside the client portal's access layout |
 | route (resource) | features/store/api/{acquisitions/acquisitions,catalog/catalog,covers/covers,downloads/downloads,management/management-product-validations,management/management-products,management/management-product,management/management-product-versions}.ts | read `storeContext` |
 | route (resource) | features/waitlist/api/waitlist.ts; features/accounts/api/{account,clerk-webhooks}.ts; features/assessment-calls/api/booking/{slots,bookings}.ts; features/assessment-calls/api/settings/settings.ts; features/coaching-sales/api/{coach/payment-links,public/checkouts,public/bundle-page}.ts | read `waitlistContext` / `accountsContext` / `assessmentCallsContext` / `coachingSalesContext` |
 | route (resource) | server/api/{readyz/readyz,meta/meta,feature-flags/feature-flags,stripe-webhooks/stripe-webhooks}.ts | read `platformContext`; `api/stripe/webhooks` accepts POST only |
 | route (resource) | surfaces/client-portal/api/{manifest,sw,readyz}.ts; surfaces/coach-portal/api/readyz.ts | pwa definitions; static Response |
-| middleware | root.server.ts (Clerk, feature-flag overrides, feature contexts, account resolution); portal layout.server.ts (role guards) | see above; the override middleware runs `next()` inside the override store, so every loader, action and controller under it sees the request's overrides through the reader |
+| middleware | root.server.ts (Clerk, feature-flag overrides, feature contexts, account resolution); portal layout.server.ts and the client portal's access-layout.server.ts (role and journey guards) | see above; the override middleware runs `next()` inside the override store, so every loader, action and controller under it sees the request's overrides through the reader |
 | CLI/build | apps/platform/db/drizzle.config.ts (schema globs), vite.config.ts, react-router.config.ts | tooling entry points, not imported by app code |
 | package deployment | package manifests and docker/Dockerfile.react-router | `apps/platform` emits only `build`; runtime config, content, domain, infrastructure, and UI packages retain production source/artifacts while excluding `src/**/*.test.*` and `src/**/*.spec.*`; the Docker builder requires `build/server/index.js`, rejects top-level `src` and `e2e`, recursively rejects test/spec files under `node_modules/@eli-coach-platform`, and rejects `@eli-coach-platform/test-support` |
 
@@ -347,7 +364,7 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 | Route path literals | one owner each: `features/<feature>/contracts/paths.ts`, `surfaces/public-site/paths.ts` and, for the endpoints no surface owns, `server/api/routes.ts` (`api/stripe/webhooks`). The `client` and `coach` portal segments are owned by the accounts feature because `surface-import` forbids a feature importing a surface; `BOOK_PATH` is owned by the assessment-calls feature and read by the public site and by coaching sales; the coach calls and settings paths and `COACH_CALLS_PAGE_PARAM` are owned by the assessment-calls feature (built from the accounts feature's `COACH_PORTAL_PATH`) and read by the coach portal and by coaching sales; the select-bundle, checkout-complete and coaching-sales API paths are owned by the coaching-sales feature | C7, C8, C9, C11, C13, C14, C17, C18 |
 | The offer-plan literal `"all-bundles"` | C1 `/waitlist` owns it (`waitlist.ts:WaitlistOfferPlan`); read by C8 `ui/shared` (`bundleOfferPlan` on `WaitlistPresentation`), and re-declared as a bare string in C8 `contracts/waitlist.ts`, C8 `email/waitlist-confirmation-email.server.ts` and C3 `concerns/waitlist.ts` | C1 |
 | WaitlistPresentation (mode, isClosed, isUnavailable, showsAuthControls, availabilityStatus, bundleOfferPlan) | C11 shell, hero, about, footer CTA, pricing and the email form. The closed/unavailable/open **copy** branch is re-derived in `hero.tsx`, `footer-cta.tsx` and `pricing.tsx` rather than carried on the presentation (owner ruling: copy tables stay in views) | C8 `ui/shared` |
-| C18's tables (`app.payment_links`, `app.checkout_sessions`, `app.clients`, `app.coaching_subscriptions`) with foreign keys to C17's `app.assessment_calls`; migrations 0026 and 0027 | C18 declares and writes them; `clients_assessment_call_id_unique` is shared by the schema and the purchase repository's one classified rejection; `coaching_subscriptions_one_open_per_client` is a partial unique index | C18 (the referenced table stays C17's) |
+| C18's tables (`app.payment_links`, `app.checkout_sessions`, `app.clients`, `app.client_invitations`, `app.coaching_subscriptions`) with foreign keys to C17's `app.assessment_calls`; migrations 0026, 0027 and 0028 | C18 declares and writes them; `clients_assessment_call_id_unique` and `clients_auth_subject_id_unique` are shared by the schema (`coachingSalesConstraints`) and the repositories' classified rejections; `client_invitations` keeps one invitation per client and one per token hash; `coaching_subscriptions_one_open_per_client` is a partial unique index | C18 (the referenced table stays C17's) |
 | `app.payment_events` (the payment-event ledger: event id, received at) | C6 declares it and writes it through `recordPaymentEvent`, which a feature adapter calls inside its own transaction (C18's `PostgresCoachingPurchases.recordCompletion`); a repeated event id answers `duplicate` and the feature writes nothing else | C6 |
 | Checkout metadata key `purpose` (`PAYMENT_PURPOSE_METADATA_KEY`) and its values | C1 owns each value (`COACHING_SUBSCRIPTION_PURPOSE`) and carries it on `CreateCheckoutSessionCommand.metadata`; C6 writes it into the provider's session metadata; C14's webhook controller routes a paid session to the handler registered for it; each handler (C18) declares the purpose it serves | key C6; values C1 |
 | Coaching bundle value lists (`COACHING_BUNDLE_IDS`, `COACHING_BUNDLE_MONTHS`, `PRICE_TIERS`, and each bundle's `currency`) | C1 publishes them from `/coaching-bundle` (each tuple checked against the catalog by a test); C6's coaching checkout mapper, C18's contracts (zod enums) and C18's schema (column enums and checks) import them; the checkout use case reads the currency off the bundle | C1 |
@@ -355,7 +372,10 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 | PaymentsConfig (`PAYMENTS_PROVIDER`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SIGNING_SECRET`, `STRIPE_API_BASE_URL`) | C3 declares and refines; C6 factories read it; C14 passes the environment and the signing secret; the integration rig points the API base URL at WireMock | C3 |
 | localStorage cart (STORE_CART_STORAGE_KEY) | C7 ui only | C7 |
 | Email HTML rendered from React primitives (Email*) and the email theme (`EMAIL_COLORS`, `EMAIL_FONTS`) | C6 owns the primitives and the theme; the content builders and their style constants live in each feature's `email/` folder (C7, C8, C17, C18; accepted exception) and read the one theme | C6 |
-| CLERK_TEST_ENVIRONMENT | read only by tests | C16 |
+| CLERK_TEST_ENVIRONMENT and the Stripe webhook signature scheme (`./stripe-webhook-signature`) | read only by tests (the integration rig and the e2e suite) | C16 |
+| The auth subject id: `app.accounts.auth_subject_id` (C9) and `app.clients.auth_subject_id` (C18, unique, no foreign key) | C9 writes the account on provisioning; C18's `PostgresClientInvitations.accept` binds the client in the acceptance transaction; C1's `InvitationAcceptance` carries it between the two; account deletion leaves the client bound | C9 (the identity provider's user id) |
+| The client journey step (`ClientJourneyStep`: `welcome \| onboarding`) and its paths | C1 `/client-journey` owns the steps; C18 `contracts/client-journey.ts` maps each to its destination and open paths; C11's portal destination and C12's access layout read them through C18 | C1 (steps) / C18 (paths) |
+| Clerk invitation public metadata `invitationId` | C6's Clerk adapter writes it on the provider invitation and reads it back from the signed-up user | C6 |
 
 ## Edges
 
@@ -372,7 +392,6 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E738 | apps/platform/src/features/accounts/api/webhook-controller.server.ts | packages/domain/src/account/index.ts | import | yes | no | lateral | present |
 | E8 | apps/platform/src/features/accounts/api/webhook-controller.server.ts | packages/infrastructure/src/http/index.server.ts | import | yes | no | lateral | present |
 | E739 | apps/platform/src/features/accounts/contracts/account.ts | external:zod | import | n/a | no | lateral | present |
-| E740 | apps/platform/src/features/accounts/contracts/account.ts | packages/domain/src/account/index.ts | import | yes | yes | inward | present |
 | E741 | apps/platform/src/features/accounts/contracts/paths.ts | packages/domain/src/account/index.ts | import | yes | yes | inward | present |
 | E12 | apps/platform/src/features/accounts/data/account-repository.server.ts | apps/platform/src/features/accounts/data/schema.server.ts | import | no | no | lateral | present |
 | E13 | apps/platform/src/features/accounts/data/account-repository.server.ts | packages/db/src/index.ts | import | yes | no | lateral | present |
@@ -398,9 +417,7 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E747 | apps/platform/src/features/accounts/server/guards/require-portal-access.server.ts | packages/domain/src/account/index.ts | import | yes | yes | inward | present |
 | E748 | apps/platform/src/features/accounts/server/guards/session-context.server.ts | packages/domain/src/account/index.ts | import | yes | yes | inward | present |
 | E35 | apps/platform/src/features/accounts/ui/public/auth-nav-actions.tsx | apps/platform/src/features/accounts/contracts/account.ts | import | no | no | lateral | present |
-| E36 | apps/platform/src/features/accounts/ui/public/auth-nav-actions.tsx | apps/platform/src/features/accounts/contracts/paths.ts | import | no | no | lateral | present |
 | E749 | apps/platform/src/features/accounts/ui/public/auth-nav-actions.tsx | external:react | import | n/a | no | lateral | present |
-| E750 | apps/platform/src/features/accounts/ui/public/auth-nav-actions.tsx | packages/domain/src/account/index.ts | import | yes | yes | inward | present |
 | E39 | apps/platform/src/features/accounts/ui/public/auth-nav-actions.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
 | E1463 | apps/platform/src/features/accounts/ui/public/auth-nav-actions.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
 | E40 | apps/platform/src/features/accounts/ui/public/sign-in-failed-page.tsx | apps/platform/src/features/accounts/server/guards/accounts-context.server.ts | import | no | no | lateral | present |
@@ -886,8 +903,7 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E368 | apps/platform/src/surfaces/client-portal/api/sw.ts | apps/platform/src/surfaces/client-portal/api/service-worker.js | import | no | no | lateral | present |
 | E369 | apps/platform/src/surfaces/client-portal/pages/home.tsx | packages/ui/src/layout/index.ts | import | yes | no | lateral | present |
 | E370 | apps/platform/src/surfaces/client-portal/routes.ts | apps/platform/src/features/accounts/contracts/paths.ts | import | yes | no | lateral | present |
-| E371 | apps/platform/src/surfaces/client-portal/shell/layout.server.ts | apps/platform/src/features/accounts/server/guards/require-portal-access.server.ts | import | yes | no | lateral | present |
-| E372 | apps/platform/src/surfaces/client-portal/shell/layout.tsx | apps/platform/src/surfaces/client-portal/shell/layout.server.ts | import | no | no | lateral | present |
+| E371 | apps/platform/src/surfaces/client-portal/shell/access-layout.server.ts | apps/platform/src/features/accounts/server/guards/require-portal-access.server.ts | import | yes | no | lateral | present |
 | E373 | apps/platform/src/surfaces/client-portal/shell/layout.tsx | apps/platform/src/surfaces/client-portal/shell/navigation-links.ts | import | no | no | lateral | present |
 | E374 | apps/platform/src/surfaces/client-portal/shell/layout.tsx | packages/infrastructure/src/pwa/index.ts | import | yes | yes | inward | present |
 | E375 | apps/platform/src/surfaces/client-portal/shell/layout.tsx | packages/ui/src/layout/index.ts | import | yes | no | lateral | present |
@@ -1599,8 +1615,8 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E1826 | apps/platform/src/features/coaching-sales/api/payments/coaching-purchase-completion-handler.server.ts | packages/domain/src/coaching-subscription/index.ts | import | yes | yes | inward | present |
 | E1827 | apps/platform/src/features/coaching-sales/api/payments/coaching-purchase-completion-handler.server.ts | packages/domain/src/payment-link/index.ts | type-only import | yes | yes | inward | present |
 | E1828 | apps/platform/src/features/coaching-sales/api/payments/coaching-purchase-completion-handler.server.ts | packages/infrastructure/src/payments/index.server.ts | import | yes | no | lateral | present |
-| E1838 | apps/platform/src/features/coaching-sales/data/payment-links/payment-link-token.server.ts | packages/domain/src/payment-link/index.ts | type-only import | yes | yes | inward | present |
-| E1839 | apps/platform/src/features/coaching-sales/data/payment-links/payment-link-token.server.ts | external:node:crypto | import | n/a | yes | outward | present |
+| E1838 | apps/platform/src/features/coaching-sales/data/link-tokens/link-token.server.ts | packages/domain/src/payment-link/index.ts | type-only import | yes | yes | inward | present |
+| E1839 | apps/platform/src/features/coaching-sales/data/link-tokens/link-token.server.ts | external:node:crypto | import | n/a | yes | outward | present |
 | E1840 | apps/platform/src/features/coaching-sales/data/payment-links/payment-links-repository.server.ts | packages/db/src/index.ts | type-only import | yes | yes | outward | present |
 | E1841 | apps/platform/src/features/coaching-sales/data/payment-links/payment-links-repository.server.ts | packages/domain/src/coaching-subscription/index.ts | type-only import | yes | yes | inward | present |
 | E1842 | apps/platform/src/features/coaching-sales/data/payment-links/payment-links-repository.server.ts | packages/domain/src/payment-link/index.ts | import | yes | yes | inward | present |
@@ -1703,7 +1719,6 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E1989 | apps/platform/src/features/coaching-sales/api/coach/payment-links-controller.server.ts | external:react-router | type-only import | n/a | no | lateral | present |
 | E1990 | apps/platform/src/features/coaching-sales/api/coach/payment-links.ts | external:react-router | type-only import | n/a | no | lateral | present |
 | E1992 | apps/platform/src/features/coaching-sales/api/public/checkouts.ts | external:react-router | type-only import | n/a | no | lateral | present |
-| E1995 | apps/platform/src/features/coaching-sales/data/payment-links/payment-link-token.server.ts | external:node:crypto | import | n/a | no | lateral | present |
 | E1996 | apps/platform/src/features/coaching-sales/data/payment-links/payment-links-repository.server.ts | external:drizzle-orm | import | n/a | no | lateral | present |
 | E1997 | apps/platform/src/features/coaching-sales/data/purchases/purchases-repository.server.ts | external:drizzle-orm | import | n/a | no | lateral | present |
 | E2004 | apps/platform/src/features/coaching-sales/server/guards/coaching-sales-context.server.ts | external:react-router | import | n/a | no | lateral | present |
@@ -1783,7 +1798,7 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E1773 | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | apps/platform/src/features/coaching-sales/api/coach/payment-links-controller.server.ts | import | no | no | lateral | present |
 | E1774 | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | apps/platform/src/features/coaching-sales/api/payments/coaching-purchase-completion-handler.server.ts | import | no | no | lateral | present |
 | E1775 | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | apps/platform/src/features/coaching-sales/api/public/checkouts-controller.server.ts | import | no | no | lateral | present |
-| E1776 | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | apps/platform/src/features/coaching-sales/data/payment-links/payment-link-token.server.ts | import | no | no | lateral | present |
+| E1776 | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | apps/platform/src/features/coaching-sales/data/link-tokens/link-token.server.ts | import | no | no | lateral | present |
 | E1777 | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | apps/platform/src/features/coaching-sales/data/payment-links/payment-links-repository.server.ts | import | no | no | lateral | present |
 | E1778 | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | apps/platform/src/features/coaching-sales/data/purchases/purchases-repository.server.ts | import | no | no | lateral | present |
 | E1779 | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | apps/platform/src/features/coaching-sales/email/create-coaching-sales-notifications.server.ts | import | no | no | lateral | present |
@@ -1886,9 +1901,181 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E2074 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/bundle-page-resolution.ts | apps/platform/src/features/coaching-sales/contracts/coaching-sales.ts | import | no | yes | inward | present |
 | E2075 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/bundle-page-resolution.ts | apps/platform/src/features/coaching-sales/contracts/paths.ts | import | no | yes | inward | present |
 | E2076 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/bundle-page-resolution.ts | external:react | import | n/a | no | lateral | present |
-| E2077 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/payment-link-token.ts | external:react | import | n/a | no | lateral | present |
 | E2078 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/select-bundle-page.tsx | apps/platform/src/features/coaching-sales/ui/public/select-bundle/bundle-page-resolution.ts | import | no | no | lateral | present |
 | E2079 | apps/platform/src/features/coaching-sales/api/public/bundle-page.ts | external:react-router | type-only import | n/a | no | lateral | present |
 | E2080 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/bundle-page-resolution.ts | external:react-router | import | n/a | no | lateral | present |
-| E2081 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/payment-link-token.ts | external:react-router | import | n/a | no | lateral | present |
 | E2082 | packages/ui/src/appointments/row-action.tsx | external:react-router | import | n/a | no | lateral | present |
+| E2085 | apps/platform/src/features/accounts/ui/public/auth-nav-actions.tsx | apps/platform/src/features/accounts/ui/shared/sign-out-control.tsx | import | no | no | lateral | present |
+| E2086 | apps/platform/src/features/accounts/ui/public/auth-nav-actions.tsx | external:@clerk/react-router | import | n/a | no | lateral | present |
+| E2087 | apps/platform/src/features/accounts/ui/public/auth-nav-actions.tsx | external:react-router | import | n/a | no | lateral | present |
+| E2088 | apps/platform/src/features/accounts/ui/shared/sign-out-control.tsx | external:@clerk/react-router | import | n/a | no | lateral | present |
+| E2089 | apps/platform/src/features/accounts/ui/shared/sign-out-control.tsx | external:react | type-only import | n/a | no | lateral | present |
+| E2090 | apps/platform/src/features/coaching-sales/api/client/client-journey-controller.server.ts | apps/platform/src/features/accounts/server/guards/require-portal-access.server.ts | import | yes | no | lateral | present |
+| E2091 | apps/platform/src/features/coaching-sales/api/client/client-journey-controller.server.ts | apps/platform/src/features/coaching-sales/contracts/client-journey.ts | import | no | no | lateral | present |
+| E2092 | apps/platform/src/features/coaching-sales/api/client/client-journey-controller.server.ts | apps/platform/src/features/coaching-sales/contracts/paths.ts | import | no | no | lateral | present |
+| E2093 | apps/platform/src/features/coaching-sales/api/client/client-journey-controller.server.ts | external:react-router | import | n/a | no | lateral | present |
+| E2094 | apps/platform/src/features/coaching-sales/api/client/client-journey-controller.server.ts | packages/domain/src/client-journey/index.ts | type-only import | yes | yes | inward | present |
+| E2095 | apps/platform/src/features/coaching-sales/api/public/checkouts-controller.server.ts | apps/platform/src/features/coaching-sales/api/public/read-json-request-body.server.ts | import | no | no | lateral | present |
+| E2096 | apps/platform/src/features/coaching-sales/api/public/invitation.ts | apps/platform/src/features/coaching-sales/server/guards/coaching-sales-context.server.ts | import | no | no | lateral | present |
+| E2097 | apps/platform/src/features/coaching-sales/api/public/invitation.ts | external:react-router | type-only import | n/a | no | lateral | present |
+| E2098 | apps/platform/src/features/coaching-sales/api/public/invitation.ts | packages/infrastructure/src/http/index.server.ts | import | yes | no | lateral | present |
+| E2099 | apps/platform/src/features/coaching-sales/api/public/invitations-controller.server.ts | apps/platform/src/features/coaching-sales/api/public/read-json-request-body.server.ts | import | no | no | lateral | present |
+| E2101 | apps/platform/src/features/coaching-sales/api/public/invitations-controller.server.ts | external:react-router | type-only import | n/a | no | lateral | present |
+| E2102 | apps/platform/src/features/coaching-sales/api/public/invitations-controller.server.ts | packages/domain/src/client-invitation/index.ts | type-only import | yes | yes | inward | present |
+| E2103 | apps/platform/src/features/coaching-sales/api/public/invitations-controller.server.ts | packages/infrastructure/src/http/index.server.ts | import | yes | no | lateral | present |
+| E2104 | apps/platform/src/features/coaching-sales/api/public/read-json-request-body.server.ts | packages/infrastructure/src/http/index.server.ts | import | yes | no | lateral | present |
+| E2105 | apps/platform/src/features/coaching-sales/contracts/client-journey.ts | apps/platform/src/features/coaching-sales/contracts/paths.ts | import | no | no | lateral | present |
+| E2106 | apps/platform/src/features/coaching-sales/contracts/client-journey.ts | external:zod | import | n/a | no | lateral | present |
+| E2107 | apps/platform/src/features/coaching-sales/contracts/client-journey.ts | packages/domain/src/client-journey/index.ts | type-only import | yes | yes | inward | present |
+| E2108 | apps/platform/src/features/coaching-sales/contracts/paths.ts | apps/platform/src/features/accounts/contracts/paths.ts | import | yes | no | lateral | present |
+| E2109 | apps/platform/src/features/coaching-sales/data/client-journeys/client-journeys-repository.server.ts | apps/platform/src/features/coaching-sales/data/schema.server.ts | import | no | no | lateral | present |
+| E2110 | apps/platform/src/features/coaching-sales/data/client-journeys/client-journeys-repository.server.ts | external:drizzle-orm | import | n/a | no | lateral | present |
+| E2111 | apps/platform/src/features/coaching-sales/data/client-journeys/client-journeys-repository.server.ts | packages/db/src/index.ts | type-only import | yes | yes | outward | present |
+| E2112 | apps/platform/src/features/coaching-sales/data/client-journeys/client-journeys-repository.server.ts | packages/domain/src/client-journey/index.ts | import | yes | yes | inward | present |
+| E2113 | apps/platform/src/features/coaching-sales/data/invitations/client-invitation-ids.server.ts | external:crypto | import | n/a | no | lateral | present |
+| E2114 | apps/platform/src/features/coaching-sales/data/invitations/client-invitation-ids.server.ts | packages/domain/src/client-invitation/index.ts | type-only import | yes | yes | inward | present |
+| E2115 | apps/platform/src/features/coaching-sales/data/invitations/invitations-repository.server.ts | apps/platform/src/features/coaching-sales/data/schema.server.ts | import | no | no | lateral | present |
+| E2116 | apps/platform/src/features/coaching-sales/data/invitations/invitations-repository.server.ts | apps/platform/src/features/coaching-sales/data/unique-violation.server.ts | import | no | no | lateral | present |
+| E2117 | apps/platform/src/features/coaching-sales/data/invitations/invitations-repository.server.ts | external:drizzle-orm | import | n/a | no | lateral | present |
+| E2118 | apps/platform/src/features/coaching-sales/data/invitations/invitations-repository.server.ts | packages/db/src/index.ts | type-only import | yes | yes | outward | present |
+| E2119 | apps/platform/src/features/coaching-sales/data/invitations/invitations-repository.server.ts | packages/domain/src/client-invitation/index.ts | import | yes | yes | inward | present |
+| E2120 | apps/platform/src/features/coaching-sales/data/invitations/invited-clients-repository.server.ts | apps/platform/src/features/coaching-sales/data/schema.server.ts | import | no | no | lateral | present |
+| E2121 | apps/platform/src/features/coaching-sales/data/invitations/invited-clients-repository.server.ts | external:drizzle-orm | import | n/a | no | lateral | present |
+| E2122 | apps/platform/src/features/coaching-sales/data/invitations/invited-clients-repository.server.ts | packages/db/src/index.ts | type-only import | yes | yes | outward | present |
+| E2123 | apps/platform/src/features/coaching-sales/data/invitations/invited-clients-repository.server.ts | packages/domain/src/client-invitation/index.ts | type-only import | yes | yes | inward | present |
+| E2124 | apps/platform/src/features/coaching-sales/data/link-tokens/link-token.server.ts | external:crypto | import | n/a | no | lateral | present |
+| E2125 | apps/platform/src/features/coaching-sales/data/link-tokens/link-token.server.ts | packages/domain/src/client-invitation/index.ts | type-only import | yes | yes | inward | present |
+| E2126 | apps/platform/src/features/coaching-sales/data/purchases/purchases-repository.server.ts | apps/platform/src/features/coaching-sales/data/unique-violation.server.ts | import | no | no | lateral | present |
+| E2127 | apps/platform/src/features/coaching-sales/data/unique-violation.server.ts | packages/db/src/index.ts | import | yes | yes | outward | present |
+| E2128 | apps/platform/src/features/coaching-sales/email/client-invitation-email-template.server.tsx | apps/platform/src/features/coaching-sales/email/coaching-sales-email-styles.server.ts | import | no | no | lateral | present |
+| E2129 | apps/platform/src/features/coaching-sales/email/client-invitation-email-template.server.tsx | packages/infrastructure/src/email/index.server.ts | import | yes | no | lateral | present |
+| E2130 | apps/platform/src/features/coaching-sales/email/client-invitation-email.server.ts | apps/platform/src/features/coaching-sales/email/client-invitation-email-template.server.tsx | import | no | no | lateral | present |
+| E2131 | apps/platform/src/features/coaching-sales/email/client-invitation-email.server.ts | external:react | import | n/a | no | lateral | present |
+| E2132 | apps/platform/src/features/coaching-sales/email/client-invitation-email.server.ts | external:react-dom | import | n/a | no | lateral | present |
+| E2133 | apps/platform/src/features/coaching-sales/email/email-client-invitation-notifications.server.ts | apps/platform/src/features/coaching-sales/contracts/paths.ts | import | no | no | lateral | present |
+| E2134 | apps/platform/src/features/coaching-sales/email/email-client-invitation-notifications.server.ts | apps/platform/src/features/coaching-sales/email/client-invitation-email.server.ts | import | no | no | lateral | present |
+| E2135 | apps/platform/src/features/coaching-sales/email/email-client-invitation-notifications.server.ts | packages/config/src/index.ts | import | yes | no | lateral | present |
+| E2136 | apps/platform/src/features/coaching-sales/email/email-client-invitation-notifications.server.ts | packages/domain/src/client-invitation/index.ts | type-only import | yes | yes | inward | present |
+| E2137 | apps/platform/src/features/coaching-sales/email/email-client-invitation-notifications.server.ts | packages/domain/src/shared/index.ts | type-only import | yes | yes | inward | present |
+| E2138 | apps/platform/src/features/coaching-sales/email/email-client-invitation-notifications.server.ts | packages/infrastructure/src/email/index.server.ts | type-only import | yes | no | lateral | present |
+| E2139 | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | apps/platform/src/features/coaching-sales/api/client/client-journey-controller.server.ts | import | no | no | lateral | present |
+| E2140 | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | apps/platform/src/features/coaching-sales/api/public/invitations-controller.server.ts | import | no | no | lateral | present |
+| E2141 | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | apps/platform/src/features/coaching-sales/data/client-journeys/client-journeys-repository.server.ts | import | no | no | lateral | present |
+| E2142 | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | apps/platform/src/features/coaching-sales/data/invitations/client-invitation-ids.server.ts | import | no | no | lateral | present |
+| E2143 | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | apps/platform/src/features/coaching-sales/data/invitations/invitations-repository.server.ts | import | no | no | lateral | present |
+| E2144 | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | apps/platform/src/features/coaching-sales/data/invitations/invited-clients-repository.server.ts | import | no | no | lateral | present |
+| E2145 | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | apps/platform/src/features/coaching-sales/email/email-client-invitation-notifications.server.ts | import | no | no | lateral | present |
+| E2146 | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | packages/domain/src/account/index.ts | type-only import | yes | yes | inward | present |
+| E2147 | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | packages/domain/src/client-invitation/index.ts | import | yes | yes | inward | present |
+| E2148 | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | packages/domain/src/client-journey/index.ts | import | yes | yes | inward | present |
+| E2149 | apps/platform/src/features/coaching-sales/server/guards/require-client-journey-step.server.ts | apps/platform/src/features/accounts/server/guards/accounts-context.server.ts | import | yes | no | lateral | present |
+| E2150 | apps/platform/src/features/coaching-sales/server/guards/require-client-journey-step.server.ts | apps/platform/src/features/accounts/server/guards/session-context.server.ts | import | yes | no | lateral | present |
+| E2151 | apps/platform/src/features/coaching-sales/server/guards/require-client-journey-step.server.ts | apps/platform/src/features/coaching-sales/contracts/client-journey.ts | import | no | no | lateral | present |
+| E2152 | apps/platform/src/features/coaching-sales/server/guards/require-client-journey-step.server.ts | apps/platform/src/features/coaching-sales/server/guards/coaching-sales-context.server.ts | import | no | no | lateral | present |
+| E2153 | apps/platform/src/features/coaching-sales/server/guards/require-client-journey-step.server.ts | external:react-router | import | n/a | no | lateral | present |
+| E2154 | apps/platform/src/features/coaching-sales/server/guards/require-client-journey-step.server.ts | packages/config/src/index.ts | import | yes | no | lateral | present |
+| E2155 | apps/platform/src/features/coaching-sales/server/guards/require-client-journey-step.server.ts | packages/domain/src/client-journey/index.ts | type-only import | yes | yes | inward | present |
+| E2156 | apps/platform/src/features/coaching-sales/ui/client/welcome/welcome-copy.ts | apps/platform/src/features/coaching-sales/contracts/client-journey.ts | type-only import | no | no | lateral | present |
+| E2157 | apps/platform/src/features/coaching-sales/ui/client/welcome/welcome-page.tsx | apps/platform/src/features/coaching-sales/contracts/client-journey.ts | type-only import | no | no | lateral | present |
+| E2158 | apps/platform/src/features/coaching-sales/ui/client/welcome/welcome-page.tsx | apps/platform/src/features/coaching-sales/server/guards/coaching-sales-context.server.ts | import | no | no | lateral | present |
+| E2159 | apps/platform/src/features/coaching-sales/ui/client/welcome/welcome-page.tsx | apps/platform/src/features/coaching-sales/ui/client/welcome/welcome-copy.ts | import | no | no | lateral | present |
+| E2160 | apps/platform/src/features/coaching-sales/ui/client/welcome/welcome-page.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E2161 | apps/platform/src/features/coaching-sales/ui/client/welcome/welcome-page.tsx | external:react-router | import | n/a | no | lateral | present |
+| E2162 | apps/platform/src/features/coaching-sales/ui/client/welcome/welcome-page.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
+| E2163 | apps/platform/src/features/coaching-sales/ui/client/welcome/welcome-page.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E2164 | apps/platform/src/features/coaching-sales/ui/public/fragment-token.ts | external:react | import | n/a | no | lateral | present |
+| E2165 | apps/platform/src/features/coaching-sales/ui/public/fragment-token.ts | external:react-router | import | n/a | no | lateral | present |
+| E2178 | apps/platform/src/features/coaching-sales/ui/public/invitation/invitation-resolution.ts | apps/platform/src/features/coaching-sales/contracts/paths.ts | import | no | no | lateral | present |
+| E2179 | apps/platform/src/features/coaching-sales/ui/public/invitation/invitation-resolution.ts | apps/platform/src/features/coaching-sales/ui/public/fragment-token.ts | import | no | no | lateral | present |
+| E2180 | apps/platform/src/features/coaching-sales/ui/public/invitation/invitation-resolution.ts | external:react | import | n/a | no | lateral | present |
+| E2181 | apps/platform/src/features/coaching-sales/ui/public/invitation/invitation-resolution.ts | external:react-router | import | n/a | no | lateral | present |
+| E2182 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/payment-link-token.ts | apps/platform/src/features/coaching-sales/ui/public/fragment-token.ts | import | no | no | lateral | present |
+| E2183 | apps/platform/src/server/container.server.ts | apps/platform/src/features/accounts/contracts/paths.ts | import | yes | no | lateral | present |
+| E2184 | apps/platform/src/server/container.server.ts | packages/infrastructure/src/identity/index.server.ts | import | yes | no | lateral | present |
+| E2185 | apps/platform/src/server/logger.server.ts | packages/domain/src/client-invitation/index.ts | type-only import | yes | yes | inward | present |
+| E2186 | apps/platform/src/surfaces/client-portal/routes.ts | apps/platform/src/features/coaching-sales/routes.ts | import | yes | no | lateral | present |
+| E2187 | apps/platform/src/surfaces/client-portal/routes.ts | external:@react-router/dev | import | n/a | no | lateral | present |
+| E2188 | apps/platform/src/surfaces/client-portal/shell/access-layout.server.ts | apps/platform/src/features/coaching-sales/server/guards/require-client-journey-step.server.ts | import | yes | no | lateral | present |
+| E2189 | apps/platform/src/surfaces/client-portal/shell/access-layout.server.ts | external:react-router | type-only import | n/a | no | lateral | present |
+| E2190 | apps/platform/src/surfaces/client-portal/shell/access-layout.tsx | apps/platform/src/surfaces/client-portal/shell/access-layout.server.ts | import | no | no | lateral | present |
+| E2191 | apps/platform/src/surfaces/client-portal/shell/access-layout.tsx | external:react-router | import | n/a | no | lateral | present |
+| E2192 | apps/platform/src/surfaces/client-portal/shell/layout.tsx | external:react-router | import | n/a | no | lateral | present |
+| E2193 | apps/platform/src/surfaces/public-site/shell/layout.server.ts | apps/platform/src/features/coaching-sales/server/guards/require-client-journey-step.server.ts | import | yes | no | lateral | present |
+| E2194 | apps/platform/src/surfaces/public-site/shell/layout.server.ts | apps/platform/src/surfaces/public-site/shell/portal-destination.ts | import | no | no | lateral | present |
+| E2195 | apps/platform/src/surfaces/public-site/shell/layout.server.ts | external:react-router | type-only import | n/a | no | lateral | present |
+| E2196 | apps/platform/src/surfaces/public-site/shell/portal-destination.ts | apps/platform/src/features/accounts/contracts/account.ts | type-only import | yes | no | lateral | present |
+| E2197 | apps/platform/src/surfaces/public-site/shell/portal-destination.ts | apps/platform/src/features/accounts/contracts/paths.ts | import | yes | no | lateral | present |
+| E2198 | apps/platform/src/surfaces/public-site/shell/portal-destination.ts | apps/platform/src/features/coaching-sales/contracts/client-journey.ts | import | yes | no | lateral | present |
+| E2199 | apps/platform/src/surfaces/public-site/shell/portal-destination.ts | packages/domain/src/account/index.ts | type-only import | yes | yes | inward | present |
+| E2200 | apps/platform/src/surfaces/public-site/shell/portal-destination.ts | packages/domain/src/client-journey/index.ts | type-only import | yes | yes | inward | present |
+| E2201 | packages/config/src/index.ts | packages/config/src/concerns/clerk.ts | type-only import | no | no | lateral | present |
+| E2202 | packages/domain/src/account/index.ts | packages/domain/src/account/invitation-acceptance.ts | type-only import | no | no | lateral | present |
+| E2203 | packages/domain/src/account/provision-account-use-case.ts | packages/domain/src/account/invitation-acceptance.ts | type-only import | no | no | lateral | present |
+| E2204 | packages/domain/src/client-invitation/accept-invitation-use-case.ts | packages/domain/src/client-invitation/client-invitation.ts | type-only import | no | no | lateral | present |
+| E2205 | packages/domain/src/client-invitation/accept-invitation-use-case.ts | packages/domain/src/client-invitation/client-invitations.ts | type-only import | no | no | lateral | present |
+| E2206 | packages/domain/src/client-invitation/accept-invitation-use-case.ts | packages/domain/src/client-invitation/identity-invitations.ts | type-only import | no | no | lateral | present |
+| E2207 | packages/domain/src/client-invitation/accept-invitation-use-case.ts | packages/domain/src/shared/index.ts | type-only import | no | no | lateral | present |
+| E2208 | packages/domain/src/client-invitation/admit-paid-client-use-case.ts | packages/domain/src/client-invitation/client-invitation-incidents.ts | type-only import | no | no | lateral | present |
+| E2209 | packages/domain/src/client-invitation/admit-paid-client-use-case.ts | packages/domain/src/client-invitation/client-invitation-notifications.ts | type-only import | no | no | lateral | present |
+| E2210 | packages/domain/src/client-invitation/admit-paid-client-use-case.ts | packages/domain/src/client-invitation/client-invitation.ts | import | no | no | lateral | present |
+| E2211 | packages/domain/src/client-invitation/admit-paid-client-use-case.ts | packages/domain/src/client-invitation/client-invitations.ts | type-only import | no | no | lateral | present |
+| E2212 | packages/domain/src/client-invitation/admit-paid-client-use-case.ts | packages/domain/src/client-invitation/identity-invitations.ts | type-only import | no | no | lateral | present |
+| E2213 | packages/domain/src/client-invitation/admit-paid-client-use-case.ts | packages/domain/src/client-invitation/invitation-token.ts | type-only import | no | no | lateral | present |
+| E2214 | packages/domain/src/client-invitation/admit-paid-client-use-case.ts | packages/domain/src/client-invitation/invited-client.ts | type-only import | no | no | lateral | present |
+| E2215 | packages/domain/src/client-invitation/admit-paid-client-use-case.ts | packages/domain/src/shared/index.ts | type-only import | no | no | lateral | present |
+| E2216 | packages/domain/src/client-invitation/client-invitations.ts | packages/domain/src/client-invitation/client-invitation.ts | type-only import | no | no | lateral | present |
+| E2217 | packages/domain/src/client-invitation/identity-invitations.ts | packages/domain/src/client-invitation/client-invitation.ts | type-only import | no | no | lateral | present |
+| E2218 | packages/domain/src/client-invitation/index.ts | packages/domain/src/client-invitation/accept-invitation-use-case.ts | import | no | no | lateral | present |
+| E2219 | packages/domain/src/client-invitation/index.ts | packages/domain/src/client-invitation/admit-paid-client-use-case.ts | import | no | no | lateral | present |
+| E2220 | packages/domain/src/client-invitation/index.ts | packages/domain/src/client-invitation/client-invitation-incidents.ts | type-only import | no | no | lateral | present |
+| E2221 | packages/domain/src/client-invitation/index.ts | packages/domain/src/client-invitation/client-invitation-notifications.ts | type-only import | no | no | lateral | present |
+| E2222 | packages/domain/src/client-invitation/index.ts | packages/domain/src/client-invitation/client-invitation.ts | import | no | no | lateral | present |
+| E2223 | packages/domain/src/client-invitation/index.ts | packages/domain/src/client-invitation/client-invitations.ts | type-only import | no | no | lateral | present |
+| E2224 | packages/domain/src/client-invitation/index.ts | packages/domain/src/client-invitation/identity-invitations.ts | type-only import | no | no | lateral | present |
+| E2225 | packages/domain/src/client-invitation/index.ts | packages/domain/src/client-invitation/invitation-token.ts | type-only import | no | no | lateral | present |
+| E2226 | packages/domain/src/client-invitation/index.ts | packages/domain/src/client-invitation/invited-client.ts | type-only import | no | no | lateral | present |
+| E2227 | packages/domain/src/client-invitation/index.ts | packages/domain/src/client-invitation/resolve-invitation-use-case.ts | import | no | no | lateral | present |
+| E2228 | packages/domain/src/client-invitation/resolve-invitation-use-case.ts | packages/domain/src/client-invitation/client-invitations.ts | type-only import | no | no | lateral | present |
+| E2229 | packages/domain/src/client-invitation/resolve-invitation-use-case.ts | packages/domain/src/client-invitation/invitation-token.ts | type-only import | no | no | lateral | present |
+| E2230 | packages/domain/src/client-invitation/resolve-invitation-use-case.ts | packages/domain/src/shared/index.ts | type-only import | no | no | lateral | present |
+| E2231 | packages/domain/src/client-journey/client-journey.ts | packages/domain/src/assessment-call/index.ts | type-only import | no | no | lateral | present |
+| E2232 | packages/domain/src/client-journey/client-journeys.ts | packages/domain/src/client-journey/client-journey.ts | type-only import | no | no | lateral | present |
+| E2233 | packages/domain/src/client-journey/index.ts | packages/domain/src/client-journey/client-journey.ts | import | no | no | lateral | present |
+| E2234 | packages/domain/src/client-journey/index.ts | packages/domain/src/client-journey/client-journeys.ts | type-only import | no | no | lateral | present |
+| E2235 | packages/domain/src/client-journey/index.ts | packages/domain/src/client-journey/mark-welcome-seen-use-case.ts | import | no | no | lateral | present |
+| E2236 | packages/domain/src/client-journey/index.ts | packages/domain/src/client-journey/read-client-journey-use-case.ts | import | no | no | lateral | present |
+| E2237 | packages/domain/src/client-journey/mark-welcome-seen-use-case.ts | packages/domain/src/client-journey/client-journeys.ts | type-only import | no | no | lateral | present |
+| E2238 | packages/domain/src/client-journey/mark-welcome-seen-use-case.ts | packages/domain/src/shared/index.ts | type-only import | no | no | lateral | present |
+| E2239 | packages/domain/src/client-journey/read-client-journey-use-case.ts | packages/domain/src/client-journey/client-journey.ts | type-only import | no | no | lateral | present |
+| E2240 | packages/domain/src/client-journey/read-client-journey-use-case.ts | packages/domain/src/client-journey/client-journeys.ts | type-only import | no | no | lateral | present |
+| E2241 | packages/domain/src/coaching-subscription/index.ts | packages/domain/src/coaching-subscription/paid-client-admission.ts | type-only import | no | no | lateral | present |
+| E2242 | packages/domain/src/coaching-subscription/record-checkout-completed-use-case.ts | packages/domain/src/coaching-subscription/paid-client-admission.ts | type-only import | no | no | lateral | present |
+| E2243 | packages/infrastructure/src/identity/clerk-identity-invitations.server.ts | packages/domain/src/client-invitation/index.ts | import | yes | yes | inward | present |
+| E2244 | packages/infrastructure/src/identity/clerk-identity-invitations.server.ts | packages/infrastructure/src/identity/identity-invitation-urls.server.ts | type-only import | no | no | lateral | present |
+| E2245 | packages/infrastructure/src/identity/create-identity-invitations.server.ts | external:@clerk/backend | import | n/a | no | lateral | present |
+| E2246 | packages/infrastructure/src/identity/create-identity-invitations.server.ts | packages/config/src/index.ts | type-only import | yes | no | lateral | present |
+| E2247 | packages/infrastructure/src/identity/create-identity-invitations.server.ts | packages/domain/src/client-invitation/index.ts | type-only import | yes | yes | inward | present |
+| E2248 | packages/infrastructure/src/identity/create-identity-invitations.server.ts | packages/infrastructure/src/identity/clerk-identity-invitations.server.ts | import | no | no | lateral | present |
+| E2249 | packages/infrastructure/src/identity/create-identity-invitations.server.ts | packages/infrastructure/src/identity/identity-invitation-urls.server.ts | type-only import | no | no | lateral | present |
+| E2250 | packages/infrastructure/src/identity/create-identity-invitations.server.ts | packages/infrastructure/src/identity/in-memory-identity-invitations.server.ts | import | no | no | lateral | present |
+| E2251 | packages/infrastructure/src/identity/index.server.ts | packages/infrastructure/src/identity/create-identity-invitations.server.ts | import | no | no | lateral | present |
+| E2252 | packages/test-support/src/stripe-webhook-signature.ts | external:crypto | import | n/a | no | lateral | present |
+| E2166 | apps/platform/src/features/coaching-sales/api/public/invitations-controller.server.ts | apps/platform/src/features/coaching-sales/contracts/invitation.ts | import | no | no | lateral | present |
+| E2167 | apps/platform/src/features/coaching-sales/contracts/invitation.ts | external:zod | import | n/a | no | lateral | present |
+| E2168 | apps/platform/src/features/coaching-sales/ui/public/invitation/invitation-resolution.ts | apps/platform/src/features/coaching-sales/contracts/invitation.ts | import | no | no | lateral | present |
+| E2169 | apps/platform/src/features/coaching-sales/ui/public/invitation/invitation-states.tsx | apps/platform/src/features/coaching-sales/ui/public/invitation/invitation-resolution.ts | import | no | no | lateral | present |
+| E2170 | apps/platform/src/features/coaching-sales/ui/public/invitation/invitation-states.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E2171 | apps/platform/src/features/coaching-sales/ui/public/invitation/invitation-states.tsx | external:react | type-only import | n/a | no | lateral | present |
+| E2172 | apps/platform/src/features/coaching-sales/ui/public/invitation/invitation-states.tsx | external:react-router | import | n/a | no | lateral | present |
+| E2173 | apps/platform/src/features/coaching-sales/ui/public/invitation/invitation-states.tsx | packages/ui/src/layout/index.ts | import | yes | no | lateral | present |
+| E2174 | apps/platform/src/features/coaching-sales/ui/public/invitation/invitation-states.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
+| E2175 | apps/platform/src/features/coaching-sales/ui/public/invitation/invitation-states.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E2176 | apps/platform/src/surfaces/public-site/pages/invitation.tsx | apps/platform/src/features/accounts/server/guards/accounts-context.server.ts | import | yes | no | lateral | present |
+| E2253 | apps/platform/src/surfaces/public-site/pages/invitation.tsx | apps/platform/src/features/accounts/server/guards/session-context.server.ts | import | yes | no | lateral | present |
+| E2254 | apps/platform/src/surfaces/public-site/pages/invitation.tsx | apps/platform/src/features/accounts/ui/shared/sign-out-control.tsx | import | yes | no | lateral | present |
+| E2255 | apps/platform/src/surfaces/public-site/pages/invitation.tsx | apps/platform/src/features/coaching-sales/contracts/paths.ts | import | yes | no | lateral | present |
+| E2256 | apps/platform/src/surfaces/public-site/pages/invitation.tsx | apps/platform/src/features/coaching-sales/ui/public/invitation/invitation-states.tsx | import | yes | no | lateral | present |
+| E2257 | apps/platform/src/surfaces/public-site/pages/invitation.tsx | external:react-router | import | n/a | no | lateral | present |
+| E2258 | apps/platform/src/surfaces/public-site/pages/invitation.tsx | packages/config/src/index.ts | import | yes | no | lateral | present |
+| E2259 | apps/platform/src/surfaces/public-site/pages/invitation.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E2260 | apps/platform/src/surfaces/public-site/routes.ts | apps/platform/src/features/coaching-sales/contracts/paths.ts | import | yes | no | lateral | present |

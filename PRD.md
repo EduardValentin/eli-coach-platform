@@ -57,8 +57,8 @@ The product is modelled first in a reference prototype application before it is 
 
 ## Access and Roles
 
-1. **Accounts exist only by invitation.** Nobody can sign up on her own. The coach's account is provisioned by the operator; client accounts are created when the coach invites a client. Sign-in uses an email one-time code.
-2. **Client accounts are invite-only.** The coach onboards a client from the coach portal; the client then receives an invitation email to sign in.
+1. **Accounts exist only by invitation.** Nobody can sign up on her own. The coach's account is provisioned by the operator; a client's account is created from the invitation her payment triggers. Sign-in uses an email one-time code; creating an account from an invitation needs no code.
+2. **Client accounts are invite-only.** A completed payment creates the client and sends her invitation. The invitation is valid for 30 days and can be used once. An expired, used, or unknown invitation link shows the same unavailable page, whichever the reason.
 3. **Client portal access requires invitation, an active subscription, and completed self-onboarding.** A client signing in before completing onboarding is sent to the onboarding wizard and cannot reach the portal until it is complete.
 4. **Coach portal access is restricted to the coach role.** Signed-in accounts without the required role see a clear denied-access page.
 5. **Every account has exactly one role, client or coach.** There is no account without a portal.
@@ -206,11 +206,11 @@ Per Business Rule 53.
 ### Coach-side onboarding
 
 4. A client is created when she pays for a coaching bundle, carrying the booking profile of her assessment call (Business Rule 6); the coach never creates a client by hand. From the coach portal the coach enters coach-defined calorie and macro formulas for that client.
-5. Completing onboarding sends the client an invitation email to sign in.
+5. A completed payment sends the client one invitation email; she creates her account from it in one step and lands on a welcome screen shown once.
 
 ### Client self-onboarding
 
-6. On first sign-in without completed onboarding, the client is redirected to a multi-step wizard and cannot reach the portal until it completes.
+6. Until her onboarding is submitted, the client portal holds her on the welcome screen or the onboarding, and the public navigation offers to finish her onboarding.
 7. Step 1, Basic information: the client reviews and corrects the name, age, and gender the coach pre-filled.
 8. Step 2, Cycle information: regularity, average cycle length, average period length.
 9. Step 3, Conditions and symptoms: any applicable conditions and common symptoms.

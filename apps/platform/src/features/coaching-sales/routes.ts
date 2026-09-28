@@ -2,6 +2,7 @@ import { relative } from "@react-router/dev/routes";
 
 import {
   CHECKOUT_COMPLETE_ROUTE_SEGMENT,
+  CLIENT_WELCOME_ROUTE_SEGMENT,
   COACHING_SALES_API_PATHS,
   SELECT_BUNDLE_ROUTE_SEGMENT,
 } from "./contracts/paths";
@@ -19,6 +20,10 @@ export const coachingSalesPublicRoutes = [
   ),
 ];
 
+export const coachingSalesClientRoutes = [
+  route(CLIENT_WELCOME_ROUTE_SEGMENT, "./ui/client/welcome/welcome-page.tsx"),
+];
+
 export const coachingSalesApiRoutes = [
   route(
     COACHING_SALES_API_PATHS.paymentLinks.slice(1),
@@ -31,5 +36,9 @@ export const coachingSalesApiRoutes = [
   route(
     COACHING_SALES_API_PATHS.checkouts.slice(1),
     "./api/public/checkouts.ts",
+  ),
+  route(
+    COACHING_SALES_API_PATHS.invitation.slice(1),
+    "./api/public/invitation.ts",
   ),
 ];

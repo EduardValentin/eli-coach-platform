@@ -20,6 +20,7 @@ type StripeWebhookControllerOptions = {
 const SIGNATURE_HEADER = "stripe-signature";
 const EVENT_MAX_BYTES = 512 * 1024;
 const PAYLOAD_TOO_LARGE = 413;
+const HANDLER_FAILED = 500;
 
 export class StripeWebhookController {
   constructor(private readonly options: StripeWebhookControllerOptions) {}
@@ -49,26 +50,42 @@ export class StripeWebhookController {
     }
 
     if (verdict.kind === "checkout_completed") {
-      await this.routePaidSession(verdict.eventId, verdict.session);
+      return this.routePaidSession(verdict.eventId, verdict.session);
     }
 
-    return new Response(null, { status: 200 });
+    return acknowledged();
   }
 
   private async routePaidSession(
     eventId: string,
     session: PaidCheckoutSession,
-  ): Promise<void> {
+  ): Promise<Response> {
     const purpose = session.metadata[PAYMENT_PURPOSE_METADATA_KEY] ?? null;
     const handler = purpose
       ? this.options.handlersByPurpose.get(purpose)
       : undefined;
 
-    if (!handler) {
+    if (!purpose || !handler) {
       this.options.incidents.paymentEventUnrouted({ eventId, purpose });
-      return;
+      return acknowledged();
     }
 
-    await handler.handle(eventId, session);
+    return handler.handle(eventId, session).then(acknowledged, (error) => {
+      this.options.incidents.paymentEventHandlingFailed({
+        errorClass: errorClassOf(error),
+        eventId,
+        purpose,
+      });
+
+      return new Response(null, { status: HANDLER_FAILED });
+    });
   }
+}
+
+function acknowledged(): Response {
+  return new Response(null, { status: 200 });
+}
+
+function errorClassOf(error: unknown): string {
+  return error instanceof Error ? error.name : typeof error;
 }

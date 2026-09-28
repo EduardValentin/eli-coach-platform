@@ -22,6 +22,7 @@
     "db:setup:local": "./packages/db/scripts/setup-local.sh",
     "dev": "LOCAL_POSTGRES_PORT=${LOCAL_POSTGRES_PORT:-55437} DATABASE_PORT=${DATABASE_PORT:-${LOCAL_POSTGRES_PORT:-55437}} pnpm --filter @eli-coach-platform/platform dev",
     "dev:all": "./scripts/dev/start_local_stack.sh",
+    "dev:e2e": "LOCAL_POSTGRES_PORT=${LOCAL_POSTGRES_PORT:-55437} DATABASE_PORT=${DATABASE_PORT:-${LOCAL_POSTGRES_PORT:-55437}} pnpm --filter @eli-coach-platform/platform dev:e2e",
     "dev:platform": "LOCAL_POSTGRES_PORT=${LOCAL_POSTGRES_PORT:-55437} DATABASE_PORT=${DATABASE_PORT:-${LOCAL_POSTGRES_PORT:-55437}} pnpm --filter @eli-coach-platform/platform dev",
     "docker:local:down": "docker compose -f docker-compose.local.yml down",
     "docker:local:up": "docker compose -f docker-compose.local.yml up -d",

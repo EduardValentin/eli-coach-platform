@@ -4,6 +4,7 @@ export {
 } from "./checkout-sessions";
 export {
   type CoachingPurchase,
+  type CoachingPurchaseOutcome,
   type CoachingPurchases,
 } from "./coaching-purchases";
 export {
@@ -13,6 +14,7 @@ export {
   withdrawalDeadline,
   type CheckoutCompletion,
 } from "./coaching-subscription";
+export { type PaidClientAdmission } from "./paid-client-admission";
 export {
   type CreateCheckoutSessionCommand,
   type PaymentCheckout,

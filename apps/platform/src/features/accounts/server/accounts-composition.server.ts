@@ -2,6 +2,7 @@ import type { DatabaseClient } from "@eli-coach-platform/db";
 import {
   DeleteAccountUseCase,
   ProvisionAccountUseCase,
+  type InvitationAcceptance,
 } from "@eli-coach-platform/domain/account";
 
 import { AccountController } from "~/features/accounts/api/account-controller.server";
@@ -23,6 +24,7 @@ export type AccountsFeatureHandles = {
   bootstrapCoachAuthSubjectId: string | undefined;
   clerkWebhookSigningSecret: string | undefined;
   database: DatabaseClient;
+  invitationAcceptance: InvitationAcceptance;
   portal: AccountsFeature["portal"];
 };
 
@@ -37,6 +39,7 @@ export function composeAccountsFeature(
     provisioning: new ProvisionAccountUseCase({
       accounts: repository,
       bootstrapCoachAuthSubjectId: handles.bootstrapCoachAuthSubjectId,
+      invitationAcceptance: handles.invitationAcceptance,
     }),
     webhooks: new AccountWebhookController({
       deletion: new DeleteAccountUseCase({ accounts: repository }),

@@ -19,7 +19,7 @@ const ROUTE_MODULES = flatOrInConceptFolder([
   `${FEATURES}[^/]+/api/${CONCEPT}[^/]+(?<!\\.server)\\.ts$`,
   `${FEATURES}[^/]+/ui/(public|client|coach)/${CONCEPT}[^/]+-page\\.tsx$`,
   `${SURFACES}[^/]+/(pages|api)/`,
-  `${SURFACES}[^/]+/shell/layout(\\.server)?\\.tsx?$`,
+  `${SURFACES}[^/]+/shell/(access-)?layout(\\.server)?\\.tsx?$`,
   `${APP}server/api/${CONCEPT}[^/]+(?<!\\.server)\\.ts$`,
 ]);
 
@@ -210,6 +210,24 @@ module.exports = {
         ],
         dependencyTypesNot: ["type-only"],
       },
+    },
+    {
+      name: "clerk-confined",
+      comment:
+        "Clerk stays behind the accounts feature, the app root modules, the identity adapter and the test harnesses: nothing else names @clerk/*.",
+      severity: "error",
+      from: {
+        pathNot: [
+          `${FEATURES}accounts/`,
+          "^apps/platform/src/(root\\.tsx|root\\.server\\.ts|root-error-page\\.tsx)$",
+          "^packages/infrastructure/src/identity/",
+          "^packages/test-support/",
+          "^apps/platform/e2e/",
+          "^apps/platform/integration-test-config/",
+          "^lighthouserc\\.cjs$",
+        ],
+      },
+      to: { path: "(^|/)@clerk/" },
     },
     {
       name: "feature-api-to-data",
@@ -427,7 +445,7 @@ module.exports = {
       path: [
         TESTS,
         "^apps/platform/src/.*\\.integration\\.test\\.",
-        "\\.d\\.ts$",
+        "^(?!node_modules/).*\\.d\\.ts$",
       ],
     },
     tsPreCompilationDeps: "specify",

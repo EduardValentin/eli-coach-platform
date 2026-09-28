@@ -190,6 +190,36 @@ describe("StripeWebhookController with a paid session without a customer", () =>
   });
 });
 
+describe("StripeWebhookController when the handler fails", () => {
+  it("answers 500 so Stripe redelivers, reporting the event and the failure's kind but never its message", async () => {
+    // arrange
+    const { controller, coachingHandler, incidents } = createController({
+      verdict: {
+        kind: "checkout_completed",
+        eventId: "evt_failing",
+        session: coachingSession,
+      },
+    });
+    coachingHandler.handle.mockRejectedValue(
+      new TypeError(
+        "Failed query: update ... params: https://accounts.evoa.fit/sign-up?__clerk_ticket=secret,ana@example.com",
+      ),
+    );
+
+    // act
+    const response = await controller.handleEvent(createWebhookRequest());
+
+    // assert
+    expect(response.status).toBe(500);
+    expect(await response.text()).toBe("");
+    expect(incidents.paymentEventHandlingFailed).toHaveBeenCalledWith({
+      errorClass: "TypeError",
+      eventId: "evt_failing",
+      purpose: "coaching-subscription",
+    });
+  });
+});
+
 function createController(options: {
   outcome?: HandlerOutcome;
   signingSecret?: string | undefined;
@@ -200,7 +230,10 @@ function createController(options: {
     purpose: "coaching-subscription",
     handle: vi.fn().mockResolvedValue(options.outcome ?? "recorded"),
   };
-  const incidents = { paymentEventUnrouted: vi.fn() };
+  const incidents = {
+    paymentEventHandlingFailed: vi.fn(),
+    paymentEventUnrouted: vi.fn(),
+  };
   const paymentEvents: PaymentEvents = { verify };
   const controller = new StripeWebhookController({
     handlersByPurpose: new Map([[coachingHandler.purpose, coachingHandler]]),

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { selectBundlePath } from "./paths";
+import { invitationPath, selectBundlePath } from "./paths";
 
 describe("selectBundlePath", () => {
   it("carries the payment link token in the fragment", () => {
@@ -40,5 +40,18 @@ describe("selectBundlePath", () => {
 
     // assert
     expect(path).toBe("/select-bundle?bundle=6-months#abc-DEF_123");
+  });
+});
+
+describe("invitationPath", () => {
+  it("carries the invitation token in the fragment so it never reaches the server", () => {
+    // arrange
+    const token = "abc-DEF_123";
+
+    // act
+    const path = invitationPath({ token });
+
+    // assert
+    expect(path).toBe("/invitation#abc-DEF_123");
   });
 });

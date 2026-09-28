@@ -1,4 +1,16 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
+import type { InvitationAcceptance } from "@eli-coach-platform/domain/account";
+import {
+  AcceptInvitationUseCase,
+  AdmitPaidClientUseCase,
+  ResolveInvitationUseCase,
+  type ClientInvitationIncidents,
+  type IdentityInvitations,
+} from "@eli-coach-platform/domain/client-invitation";
+import {
+  MarkWelcomeSeenUseCase,
+  ReadClientJourneyUseCase,
+} from "@eli-coach-platform/domain/client-journey";
 import {
   ReadPricingTiersUseCase,
   type PricingEligibility,
@@ -7,6 +19,7 @@ import {
   ReadCheckoutConfirmationUseCase,
   RecordCheckoutCompletedUseCase,
   StartCheckoutUseCase,
+  type PaidClientAdmission,
   type PaymentCheckout,
 } from "@eli-coach-platform/domain/coaching-subscription";
 import type { FeatureFlagReader } from "@eli-coach-platform/domain/feature-flag";
@@ -23,27 +36,40 @@ import type { Clock } from "@eli-coach-platform/domain/shared";
 import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 import type { PaymentCompletionHandler } from "@eli-coach-platform/infrastructure/payments/server";
 
+import { ClientJourneyController } from "~/features/coaching-sales/api/client/client-journey-controller.server";
 import { CoachSalesController } from "~/features/coaching-sales/api/coach/coach-sales-controller.server";
 import { PaymentLinksController } from "~/features/coaching-sales/api/coach/payment-links-controller.server";
 import { CoachingPurchaseCompletionHandler } from "~/features/coaching-sales/api/payments/coaching-purchase-completion-handler.server";
 import { CheckoutsController } from "~/features/coaching-sales/api/public/checkouts-controller.server";
+import { InvitationsController } from "~/features/coaching-sales/api/public/invitations-controller.server";
+import { PostgresClientJourneys } from "~/features/coaching-sales/data/client-journeys/client-journeys-repository.server";
+import { RandomClientInvitationIdGenerator } from "~/features/coaching-sales/data/invitations/client-invitation-ids.server";
+import { PostgresInvitedClients } from "~/features/coaching-sales/data/invitations/invited-clients-repository.server";
+import { PostgresClientInvitations } from "~/features/coaching-sales/data/invitations/invitations-repository.server";
 import {
-  PaymentLinkTokenSha256,
-  RandomPaymentLinkTokenGenerator,
-} from "~/features/coaching-sales/data/payment-links/payment-link-token.server";
+  LinkTokenSha256,
+  RandomLinkTokenGenerator,
+} from "~/features/coaching-sales/data/link-tokens/link-token.server";
 import { PostgresPaymentLinks } from "~/features/coaching-sales/data/payment-links/payment-links-repository.server";
 import { PostgresCoachingPurchases } from "~/features/coaching-sales/data/purchases/purchases-repository.server";
 import { createCoachingSalesNotifications } from "~/features/coaching-sales/email/create-coaching-sales-notifications.server";
+import { EmailClientInvitationNotifications } from "~/features/coaching-sales/email/email-client-invitation-notifications.server";
 
 export type CoachingSalesFeature = {
   checkouts: CheckoutsController;
+  clientJourney: ClientJourneyController;
   coachSales: CoachSalesController;
+  invitations: InvitationsController;
   paymentLinks: PaymentLinksController;
+  readClientJourney: ReadClientJourneyUseCase;
 };
 
 type CoachingSalesComposition = {
   feature: CoachingSalesFeature;
-  handles: { paymentCompletionHandler: PaymentCompletionHandler };
+  handles: {
+    invitationAcceptance: InvitationAcceptance;
+    paymentCompletionHandler: PaymentCompletionHandler;
+  };
 };
 
 export type CoachingSalesFeatureHandles = {
@@ -53,7 +79,8 @@ export type CoachingSalesFeatureHandles = {
   contactEmail: string;
   database: DatabaseClient;
   featureFlags: FeatureFlagReader;
-  incidents: CoachingSalesIncidents;
+  identityInvitations: IdentityInvitations;
+  incidents: CoachingSalesIncidents & ClientInvitationIncidents;
   paymentCheckout: PaymentCheckout;
   pricingEligibility: PricingEligibility;
   productEmail: ProductEmail;
@@ -66,7 +93,16 @@ export function composeCoachingSalesFeature(
   const { clock, database } = handles;
   const paymentLinks = new PostgresPaymentLinks({ clock, database });
   const purchases = new PostgresCoachingPurchases({ clock, database });
-  const tokenHasher = new PaymentLinkTokenSha256();
+  const invitations = new PostgresClientInvitations(database);
+  const journeys = new PostgresClientJourneys(database);
+  const tokenGenerator = new RandomLinkTokenGenerator();
+  const tokenHasher = new LinkTokenSha256();
+  const emailOptions = {
+    appBasePath: handles.appBasePath,
+    clock,
+    contactEmail: handles.contactEmail,
+    publicAppUrl: handles.publicAppUrl,
+  };
   const salesWindow = new CoachingSalesWindow({
     featureFlags: handles.featureFlags,
     incidents: handles.incidents,
@@ -78,6 +114,42 @@ export function composeCoachingSalesFeature(
     paymentLinks,
     pricingEligibility: handles.pricingEligibility,
     salesWindow,
+  };
+
+  const invitationUseCases = {
+    acceptInvitation: new AcceptInvitationUseCase({
+      clock,
+      identity: handles.identityInvitations,
+      invitations,
+    }),
+    admitPaidClient: new AdmitPaidClientUseCase({
+      clients: new PostgresInvitedClients(database),
+      clock,
+      identity: handles.identityInvitations,
+      incidents: handles.incidents,
+      invitationIds: new RandomClientInvitationIdGenerator(),
+      invitations,
+      notifications: new EmailClientInvitationNotifications(
+        handles.productEmail,
+        emailOptions,
+      ),
+      tokenGenerator,
+    }),
+    resolveInvitation: new ResolveInvitationUseCase({
+      clock,
+      invitations,
+      tokenHasher,
+    }),
+  };
+
+  const clientJourneyUseCases = {
+    markWelcomeSeen: new MarkWelcomeSeenUseCase({ clock, journeys }),
+    readClientJourney: new ReadClientJourneyUseCase({ journeys }),
+  };
+
+  const paidClientAdmission: PaidClientAdmission = {
+    admit: (input) =>
+      invitationUseCases.admitPaidClient.execute(input).then(() => undefined),
   };
 
   const useCases = {
@@ -93,6 +165,7 @@ export function composeCoachingSalesFeature(
       salesWindow,
     }),
     recordCheckoutCompleted: new RecordCheckoutCompletedUseCase({
+      admission: paidClientAdmission,
       calls: handles.assessmentCallReader,
       clock,
       incidents: handles.incidents,
@@ -105,13 +178,11 @@ export function composeCoachingSalesFeature(
     sendPaymentLink: new SendPaymentLinkUseCase({
       ...paymentLinkPorts,
       incidents: handles.incidents,
-      notifications: createCoachingSalesNotifications(handles.productEmail, {
-        appBasePath: handles.appBasePath,
-        clock,
-        contactEmail: handles.contactEmail,
-        publicAppUrl: handles.publicAppUrl,
-      }),
-      tokenGenerator: new RandomPaymentLinkTokenGenerator(),
+      notifications: createCoachingSalesNotifications(
+        handles.productEmail,
+        emailOptions,
+      ),
+      tokenGenerator,
     }),
     startCheckout: new StartCheckoutUseCase({
       ...paymentLinkPorts,
@@ -132,15 +203,23 @@ export function composeCoachingSalesFeature(
         resolvePaymentLink: useCases.resolvePaymentLink,
         startCheckout: useCases.startCheckout,
       }),
+      clientJourney: new ClientJourneyController(clientJourneyUseCases),
       coachSales: new CoachSalesController({
         readCallSalesStates: useCases.readCallSalesStates,
         readPricingTiers: useCases.readPricingTiers,
       }),
+      invitations: new InvitationsController({
+        resolveInvitation: invitationUseCases.resolveInvitation,
+      }),
       paymentLinks: new PaymentLinksController({
         sendPaymentLink: useCases.sendPaymentLink,
       }),
+      readClientJourney: clientJourneyUseCases.readClientJourney,
     },
     handles: {
+      invitationAcceptance: {
+        accept: (input) => invitationUseCases.acceptInvitation.execute(input),
+      },
       paymentCompletionHandler: new CoachingPurchaseCompletionHandler({
         incidents: handles.incidents,
         recordCheckoutCompleted: useCases.recordCheckoutCompleted,

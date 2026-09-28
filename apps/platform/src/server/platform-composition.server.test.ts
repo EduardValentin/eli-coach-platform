@@ -52,7 +52,10 @@ function composeWith(options: {
     app: createRuntimeEnvironment(),
     botDetection: { provider: "static", token: "XXXX.DUMMY.TOKEN.XXXX" },
     featureFlags: { execute: async () => ({ WAITLIST_MODE: true }) },
-    incidents: { paymentEventUnrouted: vi.fn() },
+    incidents: {
+      paymentEventHandlingFailed: vi.fn(),
+      paymentEventUnrouted: vi.fn(),
+    },
     paymentCompletionHandlers: options.paymentCompletionHandlers,
     paymentEvents: options.paymentEvents ?? {
       verify: async () => ({ kind: "invalid" }),

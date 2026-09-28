@@ -1,4 +1,5 @@
 import type { AccountSnapshot } from "@eli-coach-platform/domain/account";
+import { ClientJourney } from "@eli-coach-platform/domain/client-journey";
 import { describe, expect, it, vi } from "vitest";
 
 import {
@@ -12,12 +13,14 @@ import {
   sessionContext,
   type ResolvedSession,
 } from "~/features/accounts/server/guards/session-context.server";
+import type { CoachingSalesFeature } from "~/features/coaching-sales/server/coaching-sales-composition.server";
+import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
 
-const { middleware } = await import("./layout.server");
+import { middleware } from "./access-layout.server";
 
 const [guardClientPortal] = middleware;
 
-describe("client portal middleware", () => {
+describe("client portal access middleware", () => {
   it("sends a visitor with no session to sign in without running anything below it", async () => {
     // arrange
     const next = vi.fn();
@@ -80,6 +83,60 @@ describe("client portal middleware", () => {
     expect(next).toHaveBeenCalledOnce();
     expect(result).toBe(portalDocument);
   });
+
+  it("holds a client before her onboarding on her journey step without running anything below it", async () => {
+    // arrange
+    const next = vi.fn();
+    const args = createMiddlewareArgs({
+      journey: ClientJourney.from({
+        clientId: "client_1",
+        firstName: "Ana",
+        gender: "female",
+        welcomeSeenAt: null,
+      }),
+      session: {
+        account: buildAccount({ role: "CLIENT" }),
+        kind: "authenticated",
+      },
+      url: "https://evoa.fit/client",
+    });
+
+    // act
+    const thrown = await captureThrown(() => guardClientPortal(args, next));
+
+    // assert
+    expect(next).not.toHaveBeenCalled();
+    expect((thrown as Response).status).toBe(302);
+    expect((thrown as Response).headers.get("Location")).toBe(
+      "/client/welcome",
+    );
+  });
+
+  it("runs the rest of the request for a client on the page of her journey step", async () => {
+    // arrange
+    const welcomeDocument = new Response("welcome");
+    const next = vi.fn().mockResolvedValue(welcomeDocument);
+    const args = createMiddlewareArgs({
+      journey: ClientJourney.from({
+        clientId: "client_1",
+        firstName: "Ana",
+        gender: "female",
+        welcomeSeenAt: null,
+      }),
+      session: {
+        account: buildAccount({ role: "CLIENT" }),
+        kind: "authenticated",
+      },
+      url: "https://evoa.fit/client/welcome",
+    });
+
+    // act
+    const result = await guardClientPortal(args, next);
+
+    // assert
+    expect(next).toHaveBeenCalledOnce();
+    expect(result).toBe(welcomeDocument);
+  });
 });
 
 async function captureThrown(thunk: () => unknown): Promise<unknown> {
@@ -101,9 +158,16 @@ function buildAccount(overrides: Partial<AccountSnapshot>): AccountSnapshot {
 }
 
 function createMiddlewareArgs(options: {
+  journey?: ClientJourney;
   session: ResolvedSession;
   url: string;
 }): Parameters<typeof guardClientPortal>[0] {
+  const coachingSales = {
+    readClientJourney: {
+      execute: vi.fn().mockResolvedValue(options.journey ?? null),
+    },
+  } as unknown as CoachingSalesFeature;
+
   return createRequestArgs({
     contexts: [
       contextEntry(accountsContext, {
@@ -113,6 +177,7 @@ function createMiddlewareArgs(options: {
           signInUrl: "https://accounts.evoa.fit/sign-in",
         },
       } as AccountsFeature),
+      contextEntry(coachingSalesContext, coachingSales),
       contextEntry(sessionContext, options.session),
     ],
     request: new Request(options.url),

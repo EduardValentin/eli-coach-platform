@@ -16,7 +16,6 @@ import type { Clock } from "@eli-coach-platform/domain/shared";
 import {
   createBadRequestResponse,
   readFormDataRequestBody,
-  readTextRequestBody,
 } from "@eli-coach-platform/infrastructure/http/server";
 import {
   data,
@@ -43,6 +42,8 @@ import {
   CHECKOUT_COMPLETE_PATH,
   selectBundlePath,
 } from "~/features/coaching-sales/contracts/paths";
+
+import { readJsonRequestBody } from "./read-json-request-body.server";
 
 type CheckoutsControllerOptions = {
   appBasePath: string;
@@ -88,7 +89,9 @@ export class CheckoutsController {
 
   async resolveBundlePage({ request }: ActionFunctionArgs): Promise<Response> {
     const submission = bundlePageRequestSchema.safeParse(
-      await readJsonRequestBody(request),
+      await readJsonRequestBody(request, {
+        maxBytes: BUNDLE_PAGE_REQUEST_MAX_BYTES,
+      }),
     );
 
     if (!submission.success) {
@@ -225,22 +228,6 @@ export class CheckoutsController {
       joinBasePath(this.options.appBasePath, path),
       this.options.publicAppUrl,
     ).toString();
-  }
-}
-
-async function readJsonRequestBody(request: Request): Promise<unknown> {
-  const body = await readTextRequestBody(request, {
-    maxBytes: BUNDLE_PAGE_REQUEST_MAX_BYTES,
-  });
-
-  if (body.status !== "valid") {
-    return undefined;
-  }
-
-  try {
-    return JSON.parse(body.text);
-  } catch {
-    return undefined;
   }
 }
 

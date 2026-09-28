@@ -125,7 +125,7 @@ export const router = createBrowserRouter(
         { path: "select-bundle", Component: SelectBundle },
         { path: "checkout/complete", Component: CheckoutComplete },
         { path: "checkout/:sessionId", Component: CheckoutStandIn },
-        { path: "invitation/:token", Component: InvitationLanding },
+        { path: "invitation", Component: InvitationLanding },
         { path: "email-preview", Component: EmailPreview },
         { path: "downloads", Component: DownloadPage },
         { path: "privacy", Component: Privacy },

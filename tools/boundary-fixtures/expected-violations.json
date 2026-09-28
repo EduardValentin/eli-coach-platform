@@ -2,6 +2,10 @@
   "apps/platform/src/features/assessment-calls/contracts/reaches-coaching-sales.ts": [
     "assessment-calls-never-reach-coaching-sales"
   ],
+  "apps/platform/src/features/coaching-sales/ui/public/clerk-confined.tsx": [
+    "clerk-confined",
+    "not-to-unresolvable"
+  ],
   "apps/platform/src/features/store/api/catalog/deeper/not-a-route.ts": [
     "feature-api-to-data"
   ],
@@ -102,6 +106,10 @@
   ],
   "apps/platform/src/surfaces/client-portal/pages/surface-to-surface.tsx": [
     "surface-to-surface"
+  ],
+  "apps/platform/src/surfaces/client-portal/shell/access-layout.server.ts": [
+    "route-thinness",
+    "workspace-by-name-app"
   ],
   "apps/platform/src/surfaces/coach-portal/pages/surface-to-feature.tsx": [
     "route-thinness",

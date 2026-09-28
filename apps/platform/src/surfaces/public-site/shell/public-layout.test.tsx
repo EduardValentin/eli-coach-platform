@@ -138,7 +138,10 @@ describe("PublicLayout", () => {
           contentFrame="padded"
           navigationActions={cart}
           scrollBehavior="solid"
-          session={{ kind: "authenticated", role: "CLIENT" }}
+          session={{
+            kind: "authenticated",
+            portalDestination: { href: "/client", label: "Client Portal" },
+          }}
           storePath={STORE_PATH}
           waitlist={waitlist}
         >
@@ -175,7 +178,10 @@ describe("PublicLayout", () => {
           contentFrame="padded"
           navigationActions={cart}
           scrollBehavior="solid"
-          session={{ kind: "authenticated", role: "COACH" }}
+          session={{
+            kind: "authenticated",
+            portalDestination: { href: "/coach", label: "Coach Portal" },
+          }}
           storePath={STORE_PATH}
           waitlist={waitlist}
         >

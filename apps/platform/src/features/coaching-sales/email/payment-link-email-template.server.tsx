@@ -22,7 +22,7 @@ import {
   bundleTotalStyle,
   buttonSectionStyle,
   cardStyle,
-  chooseButtonStyle,
+  primaryButtonStyle,
   contactLineStyle,
   contactLinkStyle,
   dividerStyle,
@@ -134,7 +134,7 @@ export function PaymentLinkEmailTemplate({
             </EmailSection>
 
             <EmailSection style={buttonSectionStyle}>
-              <EmailLink href={chooseUrl} style={chooseButtonStyle}>
+              <EmailLink href={chooseUrl} style={primaryButtonStyle}>
                 {BUTTON_LABEL}
               </EmailLink>
             </EmailSection>

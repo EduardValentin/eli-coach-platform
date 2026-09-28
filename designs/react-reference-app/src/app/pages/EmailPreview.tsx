@@ -120,7 +120,7 @@ export function EmailPreview() {
           variant={variant as ClientInvitationVariant}
           clientName="Jane"
           coachName="Eli"
-          acceptUrl={`${window.location.origin}/portal/onboarding`}
+          acceptUrl={`${window.location.origin}/invitation#inv-demo`}
         />
       );
     }

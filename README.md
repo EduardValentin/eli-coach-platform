@@ -107,6 +107,20 @@ stripe listen --forward-to localhost:3000/api/stripe/webhooks
 
 `stripe listen` prints a `whsec_…` signing secret; put it in `STRIPE_WEBHOOK_SIGNING_SECRET` and restart the dev server. The forward URL matches the local server, which is served at the root with no base path. "Paid" is exercised only this way. Production configuration and the Stripe Dashboard steps are in [docs/SECRET_MANAGEMENT.md](docs/SECRET_MANAGEMENT.md).
 
+## End-to-End Journeys
+
+`pnpm test:e2e` runs the Playwright journeys in `apps/platform/e2e/` against the real Clerk Development instance and Stripe test mode. It is local-only and not part of `pnpm validate`.
+
+The suite starts its own dev server on `localhost:3100` with e2e-only settings (Stripe payments, Resend email pointed at a capture server, `PUBLIC_APP_URL=http://localhost:3100`) and never reuses a server already running there; your server on `3000` is untouched. Before running it:
+
+- Install Google Chrome; the journeys run in it rather than Playwright's bundled Chromium.
+- Keep the real Clerk Development keys, `CLERK_SIGN_IN_URL` and `CLERK_SIGN_UP_URL` in `/.env`, with the local database bootstrapped and migrated.
+- Copy `.env.e2e.example` to `/.env.e2e` (gitignored) and fill in its two keys. `STRIPE_SECRET_KEY` is a test-mode key (`sk_test_…` or `rk_test_…`) of the Stripe account the app's checkout is configured for, because the journeys pay on the hosted Checkout with the test card. `STRIPE_WEBHOOK_SIGNING_SECRET` is a random `whsec_…` value you make up: the journeys deliver the completed-checkout webhook themselves, signed with it, so no Stripe CLI is needed. The suite reads both files, and a value in `/.env.e2e` takes precedence over the same value in `/.env`.
+- A shared local database is safe: the journeys book every call under a run-scoped `e2e-<run>-…+clerk_test@evoa.fit` address and remove only those calls, with their reservations, payment links, checkout sessions, clients, invitations and subscriptions. A run cut short is cleaned up when a later run starts, once it is two hours old.
+- Leave port `3199` free. The suite answers the app's Resend calls there and reads the payment-link and invitation emails from what it captured; nothing is sent.
+
+The suite deletes the Clerk users it creates, revokes any invitation still pending for them, and cancels the Stripe subscription and deletes the Stripe customer each purchase created. [docs/CLERK.md](docs/CLERK.md) describes the Clerk side.
+
 ## Checks
 
 ```bash
@@ -117,7 +131,7 @@ pnpm test            # typecheck, then run the unit and integration Vitest proje
 pnpm build           # build the platform app only
 pnpm validate        # lint, boundaries, test, and build: the workspace CI gate
 pnpm test:lighthouse # Lighthouse CI over the built SSR server's public pages
-pnpm test:e2e        # Playwright: local-only, drives real Clerk sign-in journeys (see docs/CLERK.md)
+pnpm test:e2e        # Playwright: local-only, real Clerk and Stripe test mode (see End-to-End Journeys)
 ```
 
 The reference prototype is covered by its own `npm test` — which typechecks with `tsc --noEmit` before running vitest, as `pnpm test` does for the workspace — and `npm run build`, both of which CI runs as a separate step; no workspace gate reaches it.

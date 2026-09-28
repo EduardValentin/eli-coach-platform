@@ -1,0 +1,4 @@
+[
+  { "waitFor": "[data-parity-root=\"ClientWelcome\"]" },
+  { "wait": 1800 }
+]

@@ -1,12 +1,18 @@
-import { index, relative } from "@react-router/dev/routes";
+import { index, prefix, relative } from "@react-router/dev/routes";
 
 import { CLIENT_PORTAL_ROUTE_SEGMENT } from "../../features/accounts/contracts/paths";
+import { coachingSalesClientRoutes } from "../../features/coaching-sales/routes";
 
-const { route } = relative(import.meta.dirname);
+const { layout, route } = relative(import.meta.dirname);
 
 export const clientPortalRoutes = [
-  route(CLIENT_PORTAL_ROUTE_SEGMENT, "./shell/layout.tsx", [
-    index("./surfaces/client-portal/pages/home.tsx"),
+  ...prefix(CLIENT_PORTAL_ROUTE_SEGMENT, [
+    layout("./shell/access-layout.tsx", [
+      layout("./shell/layout.tsx", [
+        index("./surfaces/client-portal/pages/home.tsx"),
+      ]),
+      ...coachingSalesClientRoutes,
+    ]),
   ]),
   // Deploy healthchecks and PWA installs read these without a session, so
   // they sit outside the guarded "client" route rather than as its children

@@ -1,4 +1,5 @@
 import {
+  buildRedirectPath,
   resolveFeatureFlagOverridesMode,
   type RuntimeEnvironment,
 } from "@eli-coach-platform/config";
@@ -11,6 +12,7 @@ import {
   createBotVerifier,
 } from "@eli-coach-platform/infrastructure/bot-detection/server";
 import { createProductEmail } from "@eli-coach-platform/infrastructure/email/server";
+import { createIdentityInvitations } from "@eli-coach-platform/infrastructure/identity/server";
 import {
   createPaymentCheckout,
   createPaymentEvents,
@@ -20,6 +22,7 @@ import {
   createManagementAuthenticator,
 } from "@eli-coach-platform/infrastructure/management-auth/server";
 
+import { CLIENT_PORTAL_PATH } from "~/features/accounts/contracts/paths";
 import {
   composeAccountsFeature,
   type AccountsFeature,
@@ -114,6 +117,10 @@ export function createPlatformContainer(options: {
     contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
     database: database.client,
     featureFlags,
+    identityInvitations: createIdentityInvitations(environment, {
+      signUpUrl: environment.CLERK_SIGN_UP_URL,
+      returnUrl: clientPortalUrl(environment),
+    }),
     incidents,
     paymentCheckout: createPaymentCheckout(environment),
     pricingEligibility: waitlist.handles.pricingEligibility,
@@ -136,6 +143,7 @@ export function createPlatformContainer(options: {
       bootstrapCoachAuthSubjectId: environment.BOOTSTRAP_COACH_AUTH_SUBJECT_ID,
       clerkWebhookSigningSecret: environment.CLERK_WEBHOOK_SIGNING_SECRET,
       database: database.client,
+      invitationAcceptance: coachingSales.handles.invitationAcceptance,
       portal: {
         appBasePath: environment.APP_BASE_PATH,
         publicAppUrl: environment.PUBLIC_APP_URL,
@@ -172,4 +180,11 @@ export function getPlatformContainer(): PlatformContainer {
   });
 
   return platformContainer;
+}
+
+function clientPortalUrl(environment: RuntimeEnvironment): string {
+  return new URL(
+    buildRedirectPath(environment.APP_BASE_PATH, CLIENT_PORTAL_PATH),
+    environment.PUBLIC_APP_URL,
+  ).toString();
 }

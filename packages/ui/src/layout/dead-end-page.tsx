@@ -28,7 +28,10 @@ export function DeadEndContent(props: DeadEndContentProps) {
 
   return (
     <>
-      <div className="mb-6 flex size-20 items-center justify-center rounded-full bg-surface-subtle text-text-muted">
+      <div
+        className="mb-6 flex size-20 items-center justify-center rounded-full bg-surface-subtle text-text-muted"
+        data-parity="dead-end-icon"
+      >
         {icon}
       </div>
       {eyebrow ? (

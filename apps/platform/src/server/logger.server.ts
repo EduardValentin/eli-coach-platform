@@ -1,11 +1,13 @@
 import type { AcquisitionIncidents } from "@eli-coach-platform/domain/acquisition";
 import type { AssessmentCallIncidents } from "@eli-coach-platform/domain/assessment-call";
+import type { ClientInvitationIncidents } from "@eli-coach-platform/domain/client-invitation";
 import type { CoachingSalesIncidents } from "@eli-coach-platform/domain/payment-link";
 import type { WaitlistIncidents } from "@eli-coach-platform/domain/waitlist";
 import type { PaymentWebhookIncidents } from "@eli-coach-platform/infrastructure/payments/server";
 
 type ConsoleLogger = AcquisitionIncidents &
   AssessmentCallIncidents &
+  ClientInvitationIncidents &
   CoachingSalesIncidents &
   PaymentWebhookIncidents &
   WaitlistIncidents;
@@ -43,10 +45,24 @@ export function createConsoleLogger(): ConsoleLogger {
         requestId,
       });
     },
+    invitationEmailFailed: ({ invitationId }) => {
+      console.error("Client invitation email failed.", {
+        errorCategory: "client_invitation_email_failure",
+        invitationId,
+      });
+    },
     notificationFailed: ({ recipient }) => {
       console.error("Assessment call notification failed.", {
         errorCategory: "assessment_call_notification_failure",
         recipient,
+      });
+    },
+    paymentEventHandlingFailed: ({ errorClass, eventId, purpose }) => {
+      console.error("Payment event handler failed; Stripe will redeliver.", {
+        errorCategory: "payment_event_handling_failure",
+        errorClass,
+        eventId,
+        purpose,
       });
     },
     paymentEventRejected: ({ eventId, reason }) => {

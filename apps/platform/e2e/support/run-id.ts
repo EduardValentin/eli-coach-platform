@@ -25,3 +25,7 @@ export function resolveRunId(): string {
 
   return runId;
 }
+
+export function runEmailPrefix(runId: string): string {
+  return `e2e-${runId}-`;
+}

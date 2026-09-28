@@ -42,6 +42,7 @@ export function ClientWelcome() {
           cardVariants({ variant: 'panel' }),
           'w-full max-w-reading px-6 py-10 sm:px-10 sm:py-12 lg:px-14 lg:py-16',
         )}
+        data-parity-root="ClientWelcome"
       >
         <h1 className="font-serif text-display-sm tracking-tight text-text-primary lg:text-display-md">
           Welcome to Evoa Fitness, {demoJourney.identity.firstName}

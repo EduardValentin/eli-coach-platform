@@ -16,8 +16,15 @@ import { ClientProfileProvider } from '../context/ClientProfileContext';
 import { UnitPreferencesProvider } from '../context/UnitPreferencesContext';
 
 const DEMO_TOKEN = 'inv-seed-ac-demo-client-1';
+const INVITATION_STORAGE_KEY = 'invitation';
 const WAIT = { timeout: 4000 };
 const TEST_TIMEOUT_MS = 20000;
+const CONTINUE = 'Continue to create my account';
+const HAND_OFF_NOTE =
+  "Click the button below to create your account.";
+const SIGNED_IN_TITLE = "You're already signed in";
+const SIGNED_IN_BODY =
+  'This invitation creates a new account. Sign out first, then open the link again.';
 
 function SessionProbe() {
   const { appState } = useAppState();
@@ -31,19 +38,22 @@ function SessionProbe() {
   );
 }
 
-function renderInvitation(devParams: string) {
-  const url = `/invitation/${DEMO_TOKEN}${devParams}`;
-  window.history.replaceState({}, '', url);
+function invitationAddress(devParams: string) {
+  return `/invitation${devParams}#${DEMO_TOKEN}`;
+}
+
+function renderInvitation(address: string) {
+  window.history.replaceState({}, '', address);
 
   render(
-    <MemoryRouter initialEntries={[url]}>
+    <MemoryRouter initialEntries={[address]}>
       <AppProvider>
         <ClientProfileProvider>
           <AssessmentCallProvider>
             <ClientJourneyProvider>
               <SessionProbe />
               <Routes>
-                <Route element={<InvitationLanding />} path="/invitation/:token" />
+                <Route element={<InvitationLanding />} path="/invitation" />
                 <Route element={<p>welcome page</p>} path="/portal/welcome" />
               </Routes>
             </ClientJourneyProvider>
@@ -54,26 +64,18 @@ function renderInvitation(devParams: string) {
   );
 }
 
-afterEach(() => {
-  window.history.replaceState({}, '', '/');
-});
-
-function renderInvitationThroughPortal(devParams: string) {
-  const url = `/invitation/${DEMO_TOKEN}${devParams}`;
-  window.history.replaceState({}, '', url);
+function renderInvitationThroughPortal(address: string) {
+  window.history.replaceState({}, '', address);
 
   render(
-    <MemoryRouter initialEntries={[url]}>
+    <MemoryRouter initialEntries={[address]}>
       <AppProvider>
         <ClientProfileProvider>
           <UnitPreferencesProvider>
             <AssessmentCallProvider>
               <ClientJourneyProvider>
                 <Routes>
-                  <Route
-                    element={<InvitationLanding />}
-                    path="/invitation/:token"
-                  />
+                  <Route element={<InvitationLanding />} path="/invitation" />
                   <Route element={<ClientJourneyGate />}>
                     <Route element={<ClientWelcome />} path="/portal/welcome" />
                     <Route
@@ -91,20 +93,75 @@ function renderInvitationThroughPortal(devParams: string) {
   );
 }
 
-describe('accepting an invitation', () => {
-  it('hands her to the hosted sign-in and lands her on the welcome page', async () => {
+afterEach(() => {
+  window.history.replaceState({}, '', '/');
+  window.sessionStorage.clear();
+});
+
+describe('opening an invitation link', () => {
+  it('checks the invitation before showing the account card', async () => {
     // arrange
-    renderInvitation('?jstage=invited');
-    const create = await screen.findByRole(
-      'button',
-      { name: 'Continue to create my account' },
+    renderInvitation(invitationAddress('?jstage=invited'));
+
+    // act
+    const checking = screen.getByRole('status');
+
+    // assert
+    expect(checking).toHaveTextContent('Checking your invitation…');
+    expect(checking).toHaveAttribute('aria-busy', 'true');
+    expect(
+      await screen.findByRole('heading', { name: 'Create your account' }, WAIT),
+    ).toBeVisible();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  }, TEST_TIMEOUT_MS);
+
+  it('moves the token out of the address bar and keeps it for the tab', async () => {
+    // arrange
+    renderInvitation(invitationAddress('?jstage=invited'));
+
+    // act
+    await screen.findByRole('link', { name: CONTINUE }, WAIT);
+
+    // assert
+    expect(window.location.hash).toBe('');
+    expect(window.sessionStorage.getItem(INVITATION_STORAGE_KEY)).toBe(
+      DEMO_TOKEN,
+    );
+  }, TEST_TIMEOUT_MS);
+});
+
+describe('accepting an invitation', () => {
+  it('tells her to create her account from the button before the hosted sign-up', async () => {
+    // arrange
+    renderInvitation(invitationAddress('?jstage=invited'));
+
+    // act
+    const heading = await screen.findByRole(
+      'heading',
+      { level: 1, name: 'Create your account' },
       WAIT,
     );
+
+    // assert
+    expect(heading).toBeVisible();
+    expect(screen.getByText('Your invitation')).toBeVisible();
+    expect(screen.getByText(HAND_OFF_NOTE)).toBeVisible();
+    expect(screen.queryByText(/one-time code/i)).not.toBeInTheDocument();
+  }, TEST_TIMEOUT_MS);
+
+  it('hands her to the hosted sign-in and lands her on the welcome page', async () => {
+    // arrange
+    renderInvitation(invitationAddress('?jstage=invited'));
+    const create = await screen.findByRole('link', { name: CONTINUE }, WAIT);
 
     // act
     await userEvent.click(create);
 
     // assert
+    expect(create).toHaveAttribute(
+      'href',
+      'https://accounts.evoa.fit/sign-up?__clerk_ticket=mock',
+    );
     expect(await screen.findByText('welcome page', undefined, WAIT)).toBeVisible();
     expect(screen.getByTestId('session')).toHaveTextContent('client');
     expect(screen.getByTestId('stage')).toHaveTextContent('account-created');
@@ -112,7 +169,7 @@ describe('accepting an invitation', () => {
 
   it('shows the invited email as a read-only field', async () => {
     // arrange
-    renderInvitation('?jstage=invited');
+    renderInvitation(invitationAddress('?jstage=invited'));
 
     // act
     const email = await screen.findByLabelText('Email', undefined, WAIT);
@@ -127,7 +184,9 @@ describe('accepting an invitation', () => {
     'gives the same privacy-safe dead end for a %s link',
     async (linkState) => {
       // arrange
-      renderInvitation(`?jstage=invited&invitationstate=${linkState}`);
+      renderInvitation(
+        invitationAddress(`?jstage=invited&invitationstate=${linkState}`),
+      );
 
       // act
       const heading = await screen.findByRole(
@@ -147,20 +206,63 @@ describe('accepting an invitation', () => {
         'href',
         '/',
       );
+      expect(
+        screen.queryByRole('link', { name: CONTINUE }),
+      ).not.toBeInTheDocument();
     },
     TEST_TIMEOUT_MS,
   );
 });
 
+describe('opening an invitation while signed in', () => {
+  it.each(['coach', 'client'])(
+    'asks a signed-in %s to sign out first without checking the invitation',
+    (session) => {
+      // arrange
+      renderInvitation(invitationAddress(`?jstage=invited&session=${session}`));
+
+      // act
+      const heading = screen.getByRole('heading', {
+        level: 1,
+        name: SIGNED_IN_TITLE,
+      });
+
+      // assert
+      expect(heading).toBeVisible();
+      expect(screen.getByText('Invitation')).toBeVisible();
+      expect(screen.getByText(SIGNED_IN_BODY)).toBeVisible();
+      expect(screen.getByRole('button', { name: 'Sign out' })).toBeVisible();
+      expect(screen.queryByRole('status')).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('link', { name: CONTINUE }),
+      ).not.toBeInTheDocument();
+    },
+  );
+
+  it('returns to the account card for the same link after signing out', async () => {
+    // arrange
+    renderInvitation(invitationAddress('?jstage=invited&session=coach'));
+
+    // act
+    await userEvent.click(screen.getByRole('button', { name: 'Sign out' }));
+
+    // assert
+    expect(screen.getByTestId('session')).toHaveTextContent('anonymous');
+    expect(
+      await screen.findByRole('link', { name: CONTINUE }, WAIT),
+    ).toBeVisible();
+    expect(screen.getByLabelText('Email')).toHaveValue('jane@example.com');
+    expect(
+      screen.queryByRole('heading', { name: SIGNED_IN_TITLE }),
+    ).not.toBeInTheDocument();
+  }, TEST_TIMEOUT_MS);
+});
+
 describe('the invitation lands her in the onboarding wizard', () => {
   it('reaches step 1 of the wizard after signing up and continuing past the welcome page', async () => {
     // arrange
-    renderInvitationThroughPortal('?jstage=invited');
-    const create = await screen.findByRole(
-      'button',
-      { name: 'Continue to create my account' },
-      WAIT,
-    );
+    renderInvitationThroughPortal(invitationAddress('?jstage=invited'));
+    const create = await screen.findByRole('link', { name: CONTINUE }, WAIT);
 
     // act
     await userEvent.click(create);

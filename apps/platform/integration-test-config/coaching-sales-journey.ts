@@ -18,7 +18,12 @@ import {
 } from "./wire-mock/expectations/stripe-api";
 import { turnstileTokenForAction } from "./wire-mock/expectations/turnstile-siteverify";
 
-export type Visitor = { email: string; firstName: string; lastName: string };
+export type Visitor = {
+  email: string;
+  firstName: string;
+  gender: "female" | "male" | "prefer_not_to_say";
+  lastName: string;
+};
 
 export type CheckoutChoice = {
   bundleId?: string;
@@ -33,6 +38,7 @@ export type RequestedCheckout = { requestIndex: number; sessionId: string };
 export const ANA: Visitor = {
   email: "ana@example.com",
   firstName: "Ana",
+  gender: "female",
   lastName: "Popescu",
 };
 
@@ -49,6 +55,7 @@ export const PAYMENT_LINK_EMAIL_SUBJECTS = {
 } as const;
 
 const SELECT_BUNDLE_LINK = /https?:\/\/[^\s"<]+\/select-bundle#([\w-]+)/;
+const INVITATION_LINK = /https?:\/\/[^\s"<]+\/invitation#([\w-]+)/;
 const VISITOR_TIME_ZONE = "Europe/London";
 
 const openSlotsSchema = z.object({ slots: z.array(z.string()).min(1) });
@@ -157,6 +164,19 @@ export class CoachingSalesJourney {
     return token;
   }
 
+  async latestInvitationToken(): Promise<string> {
+    const emails = await this.rig.suite.sentEmails();
+    const token = emails
+      .flatMap((email) => INVITATION_LINK.exec(email.text)?.[1] ?? [])
+      .at(-1);
+
+    if (!token) {
+      throw new Error("No invitation email has been sent.");
+    }
+
+    return token;
+  }
+
   async startCheckout(choice: CheckoutChoice): Promise<Response> {
     const form = new URLSearchParams({ token: choice.token });
 
@@ -227,8 +247,8 @@ export class CoachingSalesJourney {
     );
   }
 
-  async payForCall(): Promise<SentPaymentLink> {
-    const sentLink = await this.sendPaymentLinkAfterEndedCall();
+  async payForCall(visitor: Visitor = ANA): Promise<SentPaymentLink> {
+    const sentLink = await this.sendPaymentLinkAfterEndedCall(visitor);
     await this.startCheckout({
       bundleId: "3-months",
       startChoice: "immediate",
@@ -267,7 +287,7 @@ function bookingForm(visitor: Visitor, startsAt: string): URLSearchParams {
     dateOfBirth: "1994-03-14",
     email: visitor.email,
     firstName: visitor.firstName,
-    gender: "female",
+    gender: visitor.gender,
     lastName: visitor.lastName,
     phoneCountry: "RO",
     phoneNumber: "0712 345 678",

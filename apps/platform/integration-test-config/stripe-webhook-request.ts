@@ -1,12 +1,14 @@
-import { createHmac } from "node:crypto";
+import {
+  signStripeWebhook,
+  type StripeWebhookEvent,
+} from "@eli-coach-platform/test-support/stripe-webhook-signature";
 
 import { loadIntegrationTestEnvironment } from "./runtime-environment";
-import { toUnixSeconds } from "./wire-mock/expectations/stripe-api";
 
 const ANOTHER_ACCOUNTS_SIGNING_SECRET = "whsec_another_stripe_account_secret";
 
 export type StripeWebhookOptions = {
-  event: { data: { object: unknown }; id: string; type: string };
+  event: StripeWebhookEvent;
   /**
    * The server refuses a signature older than five minutes by its own clock,
    * so a case holding that clock signs at the instant it holds.
@@ -28,32 +30,21 @@ export function stripeWebhookFromAnotherAccount(
   return signedWebhookRequest(options, ANOTHER_ACCOUNTS_SIGNING_SECRET);
 }
 
-/**
- * A Stripe webhook as Stripe delivers one: the header carries
- * `t=<unix seconds>,v1=<hex HMAC-SHA256 of "<t>.<body>">` keyed by the whole
- * `whsec_` secret. The scheme is restated here rather than signed through the
- * SDK, so the application's own Stripe adapter is the only verifier.
- */
 function signedWebhookRequest(
   options: StripeWebhookOptions,
   signingSecret: string,
 ): Request {
-  const timestamp = toUnixSeconds(options.signedAt);
-  const body = JSON.stringify({
-    ...options.event,
-    created: timestamp,
-    livemode: false,
-    object: "event",
+  const signed = signStripeWebhook({
+    event: options.event,
+    signedAt: options.signedAt,
+    signingSecret,
   });
-  const signature = createHmac("sha256", signingSecret)
-    .update(`${timestamp}.${body}`)
-    .digest("hex");
 
   return new Request(options.url, {
-    body,
+    body: signed.body,
     headers: {
       "Content-Type": "application/json",
-      "stripe-signature": `t=${timestamp},v1=${signature}`,
+      "stripe-signature": signed.signature,
     },
     method: "POST",
   });

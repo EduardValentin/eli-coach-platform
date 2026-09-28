@@ -21,6 +21,8 @@ const LIGHTHOUSE_CLERK_PUBLISHABLE_KEY =
   "pk_test_ZGlzdGluY3QtbWFzdGlmZi0xMzUzLmNsZXJrLmFjY291bnRzLmRldiQ";
 const LIGHTHOUSE_CLERK_SIGN_IN_URL =
   "https://distinct-mastiff-1353.accounts.dev/sign-in";
+const LIGHTHOUSE_CLERK_SIGN_UP_URL =
+  "https://distinct-mastiff-1353.accounts.dev/sign-up";
 const LIGHTHOUSE_MANAGEMENT_API_SECRET =
   "lighthouse-audit-dummy-management-api-secret-value";
 
@@ -70,6 +72,7 @@ Object.assign(process.env, {
   CLERK_PUBLISHABLE_KEY: LIGHTHOUSE_CLERK_PUBLISHABLE_KEY,
   CLERK_SECRET_KEY: requireRealClerkSecretKey(),
   CLERK_SIGN_IN_URL: LIGHTHOUSE_CLERK_SIGN_IN_URL,
+  CLERK_SIGN_UP_URL: LIGHTHOUSE_CLERK_SIGN_UP_URL,
   MANAGEMENT_API_SECRET: LIGHTHOUSE_MANAGEMENT_API_SECRET,
   PRODUCT_EMAIL_PROVIDER: "memory",
   PUBLIC_APP_URL: "http://localhost:3000",

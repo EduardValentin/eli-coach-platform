@@ -17,6 +17,7 @@ describe("composeAccountsFeature", () => {
       bootstrapCoachAuthSubjectId: "user_coach",
       clerkWebhookSigningSecret: undefined,
       database: {} as DatabaseClient,
+      invitationAcceptance: { accept: async () => "refused" },
       portal,
     });
 

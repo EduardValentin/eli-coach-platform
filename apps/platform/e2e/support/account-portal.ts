@@ -1,4 +1,4 @@
-import { expect, type Page } from "@playwright/test";
+import { expect, type Frame, type Locator, type Page } from "@playwright/test";
 
 // Every test email is a Clerk `+clerk_test` address (see fixtures.ts), so the
 // hosted Account Portal always accepts this fixed code instead of sending a
@@ -17,6 +17,12 @@ const CLERK_TEST_OTP_CODE = "424242";
 // moved anywhere.
 const SUBMIT_ATTEMPTS = 4;
 const ADVANCE_TIMEOUT_MS = 8_000;
+
+const VERIFICATION_STEP = /verify/;
+
+function isAccountPortalHost(hostname: string): boolean {
+  return hostname.endsWith(".accounts.dev");
+}
 
 export class AccountPortal {
   constructor(private readonly page: Page) {}
@@ -68,6 +74,27 @@ export class AccountPortal {
           timeout: ADVANCE_TIMEOUT_MS,
         }),
     });
+  }
+
+  async signUpFromInvitation(continueLink: Locator): Promise<void> {
+    const portalPaths: string[] = [];
+    const recordPortalPath = (frame: Frame) => {
+      const url = new URL(frame.url());
+
+      if (isAccountPortalHost(url.hostname)) {
+        portalPaths.push(url.pathname);
+      }
+    };
+
+    this.page.on("framenavigated", recordPortalPath);
+    await continueLink.click();
+    await expect.poll(() => portalPaths.length).toBeGreaterThan(0);
+    await this.page.waitForURL((url) => !isAccountPortalHost(url.hostname));
+    this.page.off("framenavigated", recordPortalPath);
+
+    expect(portalPaths.filter((path) => VERIFICATION_STEP.test(path))).toEqual(
+      [],
+    );
   }
 
   private async submitUntilAdvanced(options: {

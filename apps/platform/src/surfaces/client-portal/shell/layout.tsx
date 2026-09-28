@@ -7,8 +7,6 @@ import { Outlet, type LinksFunction, type MetaFunction } from "react-router";
 
 import { clientSurfaceLinks } from "./navigation-links";
 
-export { middleware } from "./layout.server";
-
 const pwaRegistration = createPwaRegistration({
   assetBasePath: import.meta.env.BASE_URL,
   surface: "client",

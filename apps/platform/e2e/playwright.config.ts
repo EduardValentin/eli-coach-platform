@@ -2,7 +2,15 @@ import { resolve } from "node:path";
 
 import { defineConfig, devices } from "@playwright/test";
 
+import { E2E_APP_URL } from "./support/e2e-app";
 import { e2eDirectory, repoRootDirectory } from "./support/repo-paths";
+import {
+  readWebServerEnvironment,
+  webServerLaunchFor,
+} from "./support/web-server";
+
+// knip imports this config: a missing .env.e2e fails the web server start, not the import.
+const webServerLaunch = webServerLaunchFor(readWebServerEnvironment());
 
 // Local-only suite: no CI wiring yet (see docs/CLERK.md's "E2E lane"), so
 // there is no CI-vs-local branching here the way a shipped Playwright config
@@ -36,7 +44,7 @@ export default defineConfig({
   // than Playwright's 30s default to absorb that without going flaky.
   timeout: 90_000,
   use: {
-    baseURL: "http://localhost:3000",
+    baseURL: E2E_APP_URL,
     trace: "on-first-retry",
   },
   projects: [
@@ -50,14 +58,14 @@ export default defineConfig({
   // support/global-teardown.ts and docs/CLERK.md's E2E lane section.
   globalTeardown: "./support/global-teardown.ts",
   webServer: {
-    command: "pnpm dev:platform",
-    // The e2e tree lives under apps/platform, but `pnpm dev:platform` is a
-    // root script (it also carries the LOCAL_POSTGRES_PORT/DATABASE_PORT
-    // wiring the bare `apps/platform` "dev" script doesn't) — the webServer
-    // has to run from the repo root to resolve it.
+    ...webServerLaunch,
+    // The e2e tree lives under apps/platform, but `pnpm dev:e2e` is a root
+    // script (it also carries the LOCAL_POSTGRES_PORT/DATABASE_PORT wiring the
+    // bare `apps/platform` script doesn't) — the webServer has to run from the
+    // repo root to resolve it.
     cwd: repoRootDirectory,
-    url: "http://localhost:3000/readyz",
-    reuseExistingServer: true,
+    url: `${E2E_APP_URL}/readyz`,
+    reuseExistingServer: false,
     // The dev server compiles the full Vite/React Router graph on first
     // request; a generous ceiling keeps a cold start from racing the suite.
     timeout: 120_000,

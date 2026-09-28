@@ -72,6 +72,7 @@ describe("platform container", () => {
     );
     vi.stubEnv("CLERK_SECRET_KEY", CLERK_TEST_ENVIRONMENT.CLERK_SECRET_KEY);
     vi.stubEnv("CLERK_SIGN_IN_URL", CLERK_TEST_ENVIRONMENT.CLERK_SIGN_IN_URL);
+    vi.stubEnv("CLERK_SIGN_UP_URL", CLERK_TEST_ENVIRONMENT.CLERK_SIGN_UP_URL);
     vi.stubEnv("ENVIRONMENT", "local");
     vi.stubEnv(
       "MANAGEMENT_API_SECRET",

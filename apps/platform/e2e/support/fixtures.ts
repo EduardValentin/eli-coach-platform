@@ -5,17 +5,29 @@ import type { AccountRole } from "@eli-coach-platform/domain/account";
 import type pg from "pg";
 
 import { AccountPortal } from "./account-portal";
+import { BookingPage } from "./booking-page";
+import { CoachAssessmentCallsPage } from "./coach-assessment-calls-page";
 import { recordCreatedEmail } from "./clerk-users";
 import { createE2eDatabasePool } from "./database";
 import { requireEnv } from "./env";
 import { PublicNav } from "./public-nav";
-import { resolveRunId } from "./run-id";
+import { resolveRunId, runEmailPrefix } from "./run-id";
+import { StripeCheckoutPage } from "./stripe-checkout";
+import {
+  cleanUpRecordedCheckoutSessions,
+  registerCheckoutSessionForCleanup,
+} from "./stripe-cleanup";
 
 type PlatformFixtures = {
   siteOutOfWaitlistMode: void;
   publicNav: PublicNav;
   accountPortal: AccountPortal;
   testEmail: string;
+  visitorEmail: string;
+  stripeCheckout: StripeCheckoutPage;
+  registerCheckoutSessionForCleanup: (sessionId: string) => void;
+  bookingPage: BookingPage;
+  coachAssessmentCalls: CoachAssessmentCallsPage;
   createClerkUser: () => Promise<string>;
   // Inserts the accounts row directly because no entry point creates one yet.
   // Once the coach's invitation flow lands, arrange through it instead: sign
@@ -41,7 +53,7 @@ type WorkerFixtures = {
 const RUN_ID = resolveRunId();
 let sequence = 0;
 
-function nextTestEmail(): string {
+function mintRecordedTestEmail(workerIndex: number): string {
   sequence += 1;
   // Clerk treats any address carrying a `+clerk_test` subaddress as a test
   // email that accepts the fixed OTP code instead of sending a real one —
@@ -50,7 +62,15 @@ function nextTestEmail(): string {
   // *before* that subaddress so `+clerk_test` stays the exact tag Clerk
   // documents, rather than risking a second `+` segment its matcher may not
   // recognize.
-  return `e2e-${RUN_ID}-${sequence}+clerk_test@evoa.fit`;
+  // The worker index keeps a restarted worker, whose sequence starts over,
+  // from minting an address an earlier worker of the same run already used.
+  const email = `${runEmailPrefix(RUN_ID)}${workerIndex}-${sequence}+clerk_test@evoa.fit`;
+  // Recorded before any test does anything with it, so a run-scoped cleanup
+  // registry exists even for the failure paths that never reach
+  // createClerkUser (see clerk-users.ts and global-teardown.ts).
+  recordCreatedEmail(email, RUN_ID);
+
+  return email;
 }
 
 export const test = base.extend<PlatformFixtures, WorkerFixtures>({
@@ -113,13 +133,33 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
   // the first param must stay a destructuring pattern even when this
   // fixture needs none of them.
   // eslint-disable-next-line no-empty-pattern
-  testEmail: async ({}, use) => {
-    const email = nextTestEmail();
-    // Recorded before this test does anything with it, so a run-scoped
-    // cleanup registry exists even for the failure paths that never reach
-    // createClerkUser (see clerk-users.ts and global-teardown.ts).
-    recordCreatedEmail(email, RUN_ID);
-    await use(email);
+  testEmail: async ({}, use, testInfo) => {
+    await use(mintRecordedTestEmail(testInfo.workerIndex));
+  },
+
+  // eslint-disable-next-line no-empty-pattern
+  visitorEmail: async ({}, use, testInfo) => {
+    await use(mintRecordedTestEmail(testInfo.workerIndex));
+  },
+
+  stripeCheckout: async ({ page }, use) => {
+    await use(new StripeCheckoutPage(page));
+  },
+
+  // eslint-disable-next-line no-empty-pattern
+  registerCheckoutSessionForCleanup: async ({}, use) => {
+    await use((sessionId) =>
+      registerCheckoutSessionForCleanup(sessionId, RUN_ID),
+    );
+    await cleanUpRecordedCheckoutSessions(RUN_ID, "[e2e cleanup]");
+  },
+
+  bookingPage: async ({ page }, use) => {
+    await use(new BookingPage(page));
+  },
+
+  coachAssessmentCalls: async ({ page }, use) => {
+    await use(new CoachAssessmentCallsPage(page));
   },
 
   createClerkUser: async ({ clerkBackendClient, testEmail }, use) => {

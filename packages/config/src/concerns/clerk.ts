@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import type { AppConfig } from "./app";
+import { isProductionRuntime, type AppConfig } from "./app";
 
 export const clerkShape = {
   CLERK_PUBLISHABLE_KEY: z.string().regex(/^pk_(test|live)_[A-Za-z0-9=]+$/, {
@@ -10,6 +10,9 @@ export const clerkShape = {
     message: "CLERK_SECRET_KEY must be a real Clerk secret key.",
   }),
   CLERK_SIGN_IN_URL: z.url(),
+  CLERK_SIGN_UP_URL: z.url(),
+  CLERK_API_URL: z.url().optional(),
+  IDENTITY_PROVIDER: z.enum(["clerk", "memory"]).default("clerk"),
   CLERK_WEBHOOK_SIGNING_SECRET: z
     .string()
     .regex(/^whsec_.+$/, {
@@ -26,7 +29,46 @@ export const clerkShape = {
 
 export type ClerkConfig = z.infer<z.ZodObject<typeof clerkShape>>;
 
+export type IdentityConfig = Pick<
+  ClerkConfig,
+  "CLERK_API_URL" | "CLERK_SECRET_KEY" | "IDENTITY_PROVIDER"
+>;
+
 export function refineClerk(
+  environment: ClerkConfig & AppConfig,
+  context: z.RefinementCtx,
+): void {
+  refineWebhookSigningSecret(environment, context);
+  refineIdentityProvider(environment, context);
+}
+
+function refineIdentityProvider(
+  environment: ClerkConfig & AppConfig,
+  context: z.RefinementCtx,
+): void {
+  if (!isProductionRuntime(environment)) {
+    return;
+  }
+
+  if (environment.IDENTITY_PROVIDER === "memory") {
+    context.addIssue({
+      code: "custom",
+      message: "IDENTITY_PROVIDER must be clerk in a production runtime.",
+      path: ["IDENTITY_PROVIDER"],
+    });
+  }
+
+  if (environment.CLERK_API_URL) {
+    context.addIssue({
+      code: "custom",
+      message:
+        "CLERK_API_URL is a test override and is refused in a production runtime.",
+      path: ["CLERK_API_URL"],
+    });
+  }
+}
+
+function refineWebhookSigningSecret(
   environment: ClerkConfig & AppConfig,
   context: z.RefinementCtx,
 ): void {
