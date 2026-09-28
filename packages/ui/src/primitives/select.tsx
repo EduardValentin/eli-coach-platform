@@ -8,6 +8,7 @@ import { FIELD_FRAME_CLASS } from "./field-frame";
 import { fieldSizeClasses, type FieldSize } from "./field-size";
 
 export const Select = RadixSelect.Root;
+export const SelectGroup = RadixSelect.Group;
 export const SelectValue = RadixSelect.Value;
 
 type SelectTriggerProps = React.ComponentPropsWithoutRef<
@@ -161,3 +162,34 @@ export const SelectItem = React.forwardRef<
 ));
 
 SelectItem.displayName = "SelectItem";
+
+export const SelectLabel = React.forwardRef<
+  React.ElementRef<typeof RadixSelect.Label>,
+  React.ComponentPropsWithoutRef<typeof RadixSelect.Label>
+>(({ className, ...props }, ref) => (
+  <RadixSelect.Label
+    className={cn("px-2 py-1.5 text-xs text-text-muted", className)}
+    data-slot="select-label"
+    ref={ref}
+    {...props}
+  />
+));
+
+SelectLabel.displayName = "SelectLabel";
+
+export const SelectSeparator = React.forwardRef<
+  React.ElementRef<typeof RadixSelect.Separator>,
+  React.ComponentPropsWithoutRef<typeof RadixSelect.Separator>
+>(({ className, ...props }, ref) => (
+  <RadixSelect.Separator
+    className={cn(
+      "pointer-events-none -mx-1 my-1 h-px bg-border-default",
+      className,
+    )}
+    data-slot="select-separator"
+    ref={ref}
+    {...props}
+  />
+));
+
+SelectSeparator.displayName = "SelectSeparator";
