@@ -14,6 +14,7 @@ export {
   START_CHOICES,
   withdrawalDeadline,
   type CheckoutCompletion,
+  type CoachingSubscriptionStatus,
   type StartChoice,
 } from "./coaching-subscription";
 export { type PaidClientAdmission } from "./paid-client-admission";
