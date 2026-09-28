@@ -20,6 +20,7 @@ import type {
   AskedAnswers,
   OnboardingAnswerPage,
   QuestionId,
+  SubmissionProblem,
 } from "~/features/client-onboarding/contracts/onboarding";
 import { ANSWER_REQUEST_COPY } from "~/features/client-onboarding/contracts/onboarding-review-copy";
 
@@ -43,18 +44,19 @@ function definitionOf({ formId, fieldId }: QuestionId): OnboardingField | null {
 }
 
 function askedFormsOf(questions: readonly QuestionId[]): AskedForm[] {
-  const forms: AskedForm[] = [];
+  const fieldsByForm = new Map<OnboardingFormId, OnboardingField[]>();
 
   for (const question of questions) {
     const field = definitionOf(question);
     if (!field) continue;
 
-    const form = forms.find((asked) => asked.formId === question.formId);
-    if (form) form.fields.push(field);
-    else forms.push({ formId: question.formId, fields: [field] });
+    fieldsByForm.set(question.formId, [
+      ...(fieldsByForm.get(question.formId) ?? []),
+      field,
+    ]);
   }
 
-  return forms;
+  return [...fieldsByForm].map(([formId, fields]) => ({ formId, fields }));
 }
 
 function prefilledValues(
@@ -70,7 +72,7 @@ function prefilledValues(
   ) as OnboardingValues;
 }
 
-function askedAnswersOf(
+function sentAnswersOf(
   forms: readonly AskedForm[],
   values: OnboardingValues,
   units: MeasureUnits,
@@ -97,11 +99,20 @@ export function AnswerRequestCard({ page }: AnswerRequestCardProps) {
   });
   const sending = form.formState.isSubmitting;
 
+  const showServerProblems = (problems: readonly SubmissionProblem[]) => {
+    for (const problem of problems) {
+      form.setError(problem.fieldId, {
+        message: problem.message,
+        type: "server",
+      });
+    }
+  };
+
   const send = form.handleSubmit(async (values) => {
     setSendProblem(null);
 
     const outcome = await answerDetails({
-      answers: askedAnswersOf(forms, values, units),
+      answers: sentAnswersOf(forms, values, units),
     });
 
     if (outcome.kind === "accepted") {
@@ -110,12 +121,7 @@ export function AnswerRequestCard({ page }: AnswerRequestCardProps) {
     }
 
     if (outcome.kind === "invalid") {
-      for (const problem of outcome.problems) {
-        form.setError(problem.fieldId, {
-          message: problem.message,
-          type: "server",
-        });
-      }
+      showServerProblems(outcome.problems);
       return;
     }
 

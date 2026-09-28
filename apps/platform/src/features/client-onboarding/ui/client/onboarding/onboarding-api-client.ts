@@ -59,7 +59,7 @@ export type SubmissionOutcome =
 
 export type AnswerDetailsOutcome = Accepted | Invalid | Failed;
 
-const SUBMISSION_FAILED: Failed = { kind: "failed" };
+const REQUEST_FAILED: Failed = { kind: "failed" };
 
 type JsonRequest = { method: "POST" | "PUT"; body: unknown };
 
@@ -117,7 +117,7 @@ function acceptedOutcome(body: unknown): Accepted | Failed {
 
   return accepted.success
     ? { kind: "accepted", redirectTo: accepted.data.redirectTo }
-    : SUBMISSION_FAILED;
+    : REQUEST_FAILED;
 }
 
 function problemsOutcome(body: unknown): Invalid | Failed {
@@ -125,7 +125,7 @@ function problemsOutcome(body: unknown): Invalid | Failed {
 
   return problems.success
     ? { kind: "invalid", problems: problems.data.problems }
-    : SUBMISSION_FAILED;
+    : REQUEST_FAILED;
 }
 
 function unprocessableSubmissionOutcome(body: unknown): SubmissionOutcome {
@@ -137,7 +137,7 @@ function unprocessableSubmissionOutcome(body: unknown): SubmissionOutcome {
 
   return missingConsent.success
     ? { kind: "consent-missing", consent: missingConsent.data.consent }
-    : SUBMISSION_FAILED;
+    : REQUEST_FAILED;
 }
 
 export async function submitOnboarding(
@@ -148,7 +148,7 @@ export async function submitOnboarding(
     method: "POST",
   });
 
-  if (!response) return SUBMISSION_FAILED;
+  if (!response) return REQUEST_FAILED;
   if (response.status === ALREADY_SUBMITTED_STATUS) {
     return { kind: "already-submitted" };
   }
@@ -157,7 +157,7 @@ export async function submitOnboarding(
     return unprocessableSubmissionOutcome(await readJson(response));
   }
 
-  return SUBMISSION_FAILED;
+  return REQUEST_FAILED;
 }
 
 export async function answerDetails(
@@ -168,11 +168,11 @@ export async function answerDetails(
     method: "POST",
   });
 
-  if (!response) return SUBMISSION_FAILED;
+  if (!response) return REQUEST_FAILED;
   if (response.ok) return acceptedOutcome(await readJson(response));
   if (response.status === UNPROCESSABLE_STATUS) {
     return problemsOutcome(await readJson(response));
   }
 
-  return SUBMISSION_FAILED;
+  return REQUEST_FAILED;
 }

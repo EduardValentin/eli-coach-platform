@@ -14,7 +14,7 @@ import {
 } from "~/features/client-onboarding/contracts/onboarding-review-copy";
 import { CLIENT_ONBOARDING_API_PATHS } from "~/features/client-onboarding/contracts/paths";
 
-type ReviewedClient = {
+type ReviewActionTarget = {
   clientId: string;
   email: string;
 };
@@ -24,13 +24,13 @@ type ReviewActionOutcomes = {
   onDetailsRequested: () => void;
 };
 
-type DetailRequest = {
+type DetailRequestDraft = {
   note: string;
   questions: QuestionId[];
 };
 
-type ReviewActionPath =
-  (typeof CLIENT_ONBOARDING_API_PATHS)[keyof typeof CLIENT_ONBOARDING_API_PATHS];
+type ReviewActionPath = (typeof CLIENT_ONBOARDING_API_PATHS)[
+  "reviewOpenings" | "detailRequests" | "approvals"];
 
 function noOutcome() {}
 
@@ -62,7 +62,7 @@ function useReviewAction(path: ReviewActionPath, onAccepted: () => void) {
 }
 
 export function useOnboardingReviewActions(
-  client: ReviewedClient,
+  client: ReviewActionTarget,
   outcomes: ReviewActionOutcomes,
 ) {
   const submitOpening = useReviewAction(
@@ -83,7 +83,7 @@ export function useOnboardingReviewActions(
 
   return {
     approve: () => submitApproval({ clientId: client.clientId }),
-    askForDetails: ({ note, questions }: DetailRequest) =>
+    askForDetails: ({ note, questions }: DetailRequestDraft) =>
       submitDetailRequest({ clientId: client.clientId, note, questions }),
     openReview: () => submitOpening({ clientId: client.clientId }),
   };

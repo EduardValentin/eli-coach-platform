@@ -29,7 +29,7 @@ function newestFirst(measurements: MeasurementRow[]): MeasurementRow[] {
   );
 }
 
-function circumference(valueCm: number | null): string {
+function circumferenceCell(valueCm: number | null): string {
   return valueCm === null
     ? MEASUREMENTS_COPY.missing
     : `${roundToTenth(valueCm)} cm`;
@@ -83,16 +83,16 @@ export function MeasurementsTable({
                       {`${roundToTenth(entry.weightKg)} kg`}
                     </TableCell>
                     <TableCell className={CELL_CLASS}>
-                      {circumference(entry.waistCm)}
+                      {circumferenceCell(entry.waistCm)}
                     </TableCell>
                     <TableCell className={CELL_CLASS}>
-                      {circumference(entry.hipsCm)}
+                      {circumferenceCell(entry.hipsCm)}
                     </TableCell>
                     <TableCell className={CELL_CLASS}>
-                      {circumference(entry.thighCm)}
+                      {circumferenceCell(entry.thighCm)}
                     </TableCell>
                     <TableCell className={CELL_CLASS}>
-                      {circumference(entry.armCm)}
+                      {circumferenceCell(entry.armCm)}
                     </TableCell>
                     <TableCell className={CELL_CLASS}>
                       {waistToHeightRatio(entry.waistCm, heightCm) ??

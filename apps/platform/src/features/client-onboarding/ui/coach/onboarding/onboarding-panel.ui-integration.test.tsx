@@ -143,7 +143,9 @@ describe("the onboarding panel on a client page", () => {
 
   it("offers to review or approve answers awaiting review", async () => {
     // arrange, act
-    await renderPanel({ review: reviewView(submittedAt("awaiting-review")) });
+    await renderPanel({
+      review: reviewView(submittedReviewIn("awaiting-review")),
+    });
 
     // assert
     expect(
@@ -160,7 +162,7 @@ describe("the onboarding panel on a client page", () => {
 
   it("offers to continue or approve a review in progress", async () => {
     // arrange, act
-    await renderPanel({ review: reviewView(submittedAt("in-review")) });
+    await renderPanel({ review: reviewView(submittedReviewIn("in-review")) });
 
     // assert
     expect(
@@ -175,7 +177,7 @@ describe("the onboarding panel on a client page", () => {
     // arrange
     const user = await renderPanel({
       review: reviewView({
-        ...submittedAt("needs-details"),
+        ...submittedReviewIn("needs-details"),
         openRequest: OPEN_REQUEST,
       }),
     });
@@ -206,7 +208,7 @@ describe("the onboarding panel on a client page", () => {
 
   it("offers nothing once her answers are approved", async () => {
     // arrange, act
-    await renderPanel({ review: reviewView(submittedAt("approved")) });
+    await renderPanel({ review: reviewView(submittedReviewIn("approved")) });
 
     // assert
     expect(
@@ -373,9 +375,9 @@ describe("reviewing her answers", () => {
       CLIENT_ONBOARDING_API_PATHS.reviewOpenings,
       HttpResponse.json({ outcome: "opened" }),
     );
-    const loaded = { review: reviewView(submittedAt("awaiting-review")) };
+    const loaded = { review: reviewView(submittedReviewIn("awaiting-review")) };
     const user = await renderPanel(loaded);
-    loaded.review = reviewView(submittedAt("in-review"));
+    loaded.review = reviewView(submittedReviewIn("in-review"));
 
     // act
     await user.click(screen.getByRole("button", { name: "Review answers" }));
@@ -404,7 +406,7 @@ describe("reviewing her answers", () => {
       HttpResponse.json({ outcome: "already-open" }),
     );
     const user = await renderPanel({
-      review: reviewView(submittedAt("in-review")),
+      review: reviewView(submittedReviewIn("in-review")),
     });
 
     // act
@@ -471,7 +473,7 @@ describe("reviewing her answers", () => {
       CLIENT_ONBOARDING_API_PATHS.detailRequests,
       HttpResponse.json({ outcome: "requested" }),
     );
-    const loaded = { review: reviewView(submittedAt("in-review")) };
+    const loaded = { review: reviewView(submittedReviewIn("in-review")) };
     const user = await openReview(loaded);
     const dialog = screen.getByRole("dialog");
     await user.click(
@@ -482,7 +484,7 @@ describe("reviewing her answers", () => {
       "  Tell me more about your heart.  ",
     );
     loaded.review = reviewView({
-      ...submittedAt("needs-details"),
+      ...submittedReviewIn("needs-details"),
       openRequest: OPEN_REQUEST,
     });
 
@@ -548,14 +550,14 @@ describe("reviewing her answers", () => {
       CLIENT_ONBOARDING_API_PATHS.approvals,
       HttpResponse.json({ outcome: "approved" }),
     );
-    const loaded = { review: reviewView(submittedAt("in-review")) };
+    const loaded = { review: reviewView(submittedReviewIn("in-review")) };
     const user = await openReview(loaded);
     await user.click(
       within(screen.getByRole("dialog")).getByRole("button", {
         name: "Approve answers",
       }),
     );
-    loaded.review = reviewView(submittedAt("approved"));
+    loaded.review = reviewView(submittedReviewIn("approved"));
 
     // act
     await user.click(
@@ -614,10 +616,10 @@ describe("reviewing her answers", () => {
       CLIENT_ONBOARDING_API_PATHS.approvals,
       HttpResponse.json({ outcome: "approved" }),
     );
-    const loaded = { review: reviewView(submittedAt("awaiting-review")) };
+    const loaded = { review: reviewView(submittedReviewIn("awaiting-review")) };
     const user = await renderPanel(loaded);
     await user.click(screen.getByRole("button", { name: "Approve answers" }));
-    loaded.review = reviewView(submittedAt("approved"));
+    loaded.review = reviewView(submittedReviewIn("approved"));
 
     // act
     await user.click(screen.getByRole("button", { name: "Approve" }));
@@ -651,7 +653,7 @@ describe("reviewing her answers", () => {
   });
 });
 
-function submittedAt(stage: ReviewStage): SubmittedReview {
+function submittedReviewIn(stage: ReviewStage): SubmittedReview {
   return { ...SUBMITTED, stage };
 }
 
@@ -679,7 +681,7 @@ function recordRequests(path: string, response: Response): unknown[] {
 }
 
 async function openReview(
-  loaded = { review: reviewView(submittedAt("in-review")) },
+  loaded = { review: reviewView(submittedReviewIn("in-review")) },
 ) {
   const user = await renderPanel(loaded);
   await user.click(screen.getByRole("button", { name: "Continue review" }));

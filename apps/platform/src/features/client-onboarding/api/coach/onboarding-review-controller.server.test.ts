@@ -174,12 +174,12 @@ describe("OnboardingReviewController loadReview", () => {
             answered: 5,
             total: 6,
             answers: [
-              answer("weight", "Weight", "66.1 kg"),
-              answer("height", "Height", "165 cm"),
-              answer("goalWeight", "Target weight", "60 kg"),
-              answer("primaryGoal", "Primary goal", "Lose fat"),
-              answer("blockers", "Blockers", "Busy schedule, Something else"),
-              answer("additionalInfo", "Additional info", null),
+              answer(["weight", "Weight", "66.1 kg"]),
+              answer(["height", "Height", "165 cm"]),
+              answer(["goalWeight", "Target weight", "60 kg"]),
+              answer(["primaryGoal", "Primary goal", "Lose fat"]),
+              answer(["blockers", "Blockers", "Busy schedule, Something else"]),
+              answer(["additionalInfo", "Additional info", null]),
             ],
           },
           {
@@ -188,7 +188,7 @@ describe("OnboardingReviewController loadReview", () => {
             answered: 1,
             total: 1,
             answers: [
-              answer("chestPainOnExertion", "Chest pain on exertion", "Yes", {
+              answer(["chestPainOnExertion", "Chest pain on exertion", "Yes"], {
                 flagged: true,
               }),
             ],
@@ -198,7 +198,9 @@ describe("OnboardingReviewController loadReview", () => {
             title: "Your cycle and hormonal health",
             answered: 1,
             total: 1,
-            answers: [answer("cycleLengthMin", "Cycle length min", "29 days")],
+            answers: [
+              answer(["cycleLengthMin", "Cycle length min", "29 days"]),
+            ],
           },
           {
             formId: "nutrition-lifestyle",
@@ -206,8 +208,8 @@ describe("OnboardingReviewController loadReview", () => {
             answered: 2,
             total: 2,
             answers: [
-              answer("checkInDay", "Check in day", "Friday"),
-              answer("checkInChannel", "Check in channel", "WhatsApp"),
+              answer(["checkInDay", "Check in day", "Friday"]),
+              answer(["checkInChannel", "Check in channel", "WhatsApp"]),
             ],
           },
           {
@@ -215,7 +217,7 @@ describe("OnboardingReviewController loadReview", () => {
             title: "Your measurements",
             answered: 1,
             total: 1,
-            answers: [answer("waist", "Waist", "74 cm")],
+            answers: [answer(["waist", "Waist", "74 cm"])],
           },
         ],
         openRequest: {
@@ -633,12 +635,10 @@ describe("OnboardingReviewController approveAnswers", () => {
 });
 
 function answer(
-  fieldId: string,
-  label: string,
-  value: string | null,
-  options: { flagged?: boolean } = {},
+  [fieldId, label, value]: [string, string, string | null],
+  flagging: { flagged?: boolean } = {},
 ) {
-  return { fieldId, label, value, flagged: options.flagged ?? false };
+  return { fieldId, label, value, flagged: flagging.flagged ?? false };
 }
 
 function answersWith(

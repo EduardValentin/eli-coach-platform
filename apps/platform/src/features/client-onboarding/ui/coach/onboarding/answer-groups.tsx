@@ -4,6 +4,7 @@ import {
   AccordionItem,
   AccordionTrigger,
   Badge,
+  cardVariants,
   Checkbox,
 } from "@eli-coach-platform/ui/primitives";
 import { cn } from "@eli-coach-platform/ui/lib";
@@ -103,7 +104,7 @@ function askedInForm(form: ReviewForm, asked: readonly QuestionId[]): number {
 export function AnswerGroups({ forms, view }: AnswerGroupsProps) {
   return (
     <Accordion
-      className="rounded-card border border-border-subtle bg-surface-quiet/60 px-4 sm:px-5"
+      className={cn(cardVariants({ variant: "inset" }), "px-4 py-0 sm:px-5")}
       onValueChange={view.onOpenForms}
       type="multiple"
       value={view.openForms}

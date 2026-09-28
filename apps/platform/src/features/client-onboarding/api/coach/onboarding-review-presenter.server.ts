@@ -143,7 +143,7 @@ function presentAnswer(input: {
   return {
     fieldId: input.field.id,
     label: humaniseFieldId(input.field.id),
-    value: isAnswered(answer) ? readAnswer(input.field, answer) : null,
+    value: isAnswered(answer) ? answerWithUnit(input.field, answer) : null,
     flagged: input.flagged,
   };
 }
@@ -196,7 +196,7 @@ function measureKindOf(field: OnboardingField): MeasureKind | null {
     : null;
 }
 
-function readAnswer(
+function answerWithUnit(
   field: OnboardingField,
   answer: Exclude<OnboardingAnswer, null>,
 ): string {
