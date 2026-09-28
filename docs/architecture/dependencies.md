@@ -1,6 +1,6 @@
 # Dependencies
 
-Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; last update 2026-09-28 at commit f9ecc1e5, change review.
+Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; last update 2026-09-28 at commit 6f4dc94b, change review.
 
 ## Component graph
 
@@ -9,16 +9,16 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 | C6 infrastructure | C1 domain | 10 | the feature-flags repository implements `FeatureFlags`; `PostgresCoachCalendar`, `PostgresCoachAvailability` and `PostgresCoachMeetingRoom` implement the `/coach-availability` and `/coach-meeting-room` ports and take `/shared`'s `Clock`; the payments concern implements `/coaching-subscription`'s `PaymentCheckout` (Stripe and memory) and reads `/coaching-bundle`'s catalog; the identity concern implements `/client-invitation`'s `IdentityInvitations` (Clerk and memory); the adapter-facing contracts are C6's own |
 | C6 infrastructure | C2 db | 10 | the feature-flags, coach-calendar, coach-meeting-room and payment-event tables and their adapters |
 | C6 infrastructure | C3 config | 11 | concern types the factories read, including `PaymentsConfig` and `IdentityConfig` |
-| C7 store | C1 domain | 18 | entities, ports, use cases, publication types across `/product`, `/acquisition`, `/download-grant`, `/cart`, `/shared` |
+| C7 store | C1 domain | 18 | entities, ports, use cases, publication types across `/product`, `/acquisition`, `/download-grant`, `/cart`, `/email-address` (the composition's `EmailSubaddressPolicy`), `/shared` |
 | C7 store | C2 db | 6 | DatabaseClient, appSchema |
 | C7 store | C3 config | 5 | joinBasePath and concern types |
-| C7 store | C4 content | 2 | consent copy |
+| C7 store | C4 content | 3 | consent copy; the subaddress refusal copy in the acquisition flow |
 | C7 store | C5 ui | 6 | primitives in ui/public |
 | C7 store | C6 infrastructure | 17 | bot-detection (browser and server), email/server, management-auth/server, http/server; adapter-facing contracts now live in C6 |
-| C8 waitlist | C1 domain | 8 | `/feature-flag`, `/waitlist`, `/shared`, and `/coaching-bundle`'s `PricingEligibility`, which the repository implements; `data/schema.server.ts`'s range check reads `WAITLIST_REDUCED_PRICING_CAP` |
+| C8 waitlist | C1 domain | 8 | `/feature-flag`, `/waitlist`, `/email-address` (the composition's `EmailSubaddressPolicy`), `/shared`, and `/coaching-bundle`'s `PricingEligibility`, which the repository implements; `data/schema.server.ts`'s range check reads `WAITLIST_REDUCED_PRICING_CAP` |
 | C8 waitlist | C2 db | 3 | |
 | C8 waitlist | C3 config | 2 | |
-| C8 waitlist | C4 content | 2 | |
+| C8 waitlist | C4 content | 3 | consent versions and copy; the subaddress refusal copy in `ui/public/errors.ts` |
 | C8 waitlist | C5 ui | 2 | |
 | C8 waitlist | C6 infrastructure | 8 | bot-detection, email/server, http/server; adapter-facing contracts now live in C6 |
 | C9 accounts | C1 domain | 9 | `/account` (including the `InvitationAcceptance` the composition takes) |
@@ -47,9 +47,9 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 | C13 coach-portal | C9 accounts | 3 | portal guard and paths |
 | C13 coach-portal | C17 assessment-calls | 4 | `routes.ts` takes the settings fragment and the calls segment; `pages/home.tsx` composes the dashboard blocks; `pages/assessment-calls.tsx` composes the listing, section, clock and error boundary |
 | C13 coach-portal | C18 coaching-sales | 1 | `pages/assessment-calls.tsx` reads `coachingSalesContext` and fills the section's slots from `ui/coach/` (sales filter, badge, payment-link action, pricing label) |
-| C14 server | C1 domain | 8 | the container and platform composition name ports and use cases; the console logger implements the incident ports of `/acquisition`, `/waitlist`, `/assessment-call`, `/payment-link` and `/client-invitation` |
+| C14 server | C1 domain | 9 | the container and platform composition name ports and use cases; `email-subaddress-policy.server.ts` returns `/email-address`'s `EmailSubaddressPolicy`; the console logger implements the incident ports of `/acquisition`, `/waitlist`, `/assessment-call`, `/payment-link` and `/client-invitation` |
 | C14 server | C2 db | 1 | `platform-composition.server.ts` no longer imports `DatabaseClient` |
-| C14 server | C3 config | 6 | the container reads `resolveFeatureFlagOverridesMode` and the payments secrets; the runtime environment loader |
+| C14 server | C3 config | 7 | the container reads `resolveFeatureFlagOverridesMode` and the payments secrets; the subaddress policy reads `AppConfig`'s `ENVIRONMENT`; the runtime environment loader |
 | C14 server | C4 content | 1 | privacy email |
 | C14 server | C6 infrastructure | 8 | bot verifier, product email, management auth, feature-flag repository, the payments factories and contracts, the identity-invitations factory, http helpers for the webhook route |
 | C14 server | C7 store | 2 | the container calls `composeStoreFeature` |
@@ -57,10 +57,10 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 | C14 server | C9 accounts | 2 | the container calls `composeAccountsFeature`, handing it coaching sales' `invitationAcceptance`, and reads `CLIENT_PORTAL_PATH` for the identity provider's return URL |
 | C14 server | C17 assessment-calls | 2 | the container calls `composeAssessmentCallsFeature`; `feature-contexts.server.ts` sets `assessmentCallsContext` |
 | C14 server | C18 coaching-sales | 2 | the container calls `composeCoachingSalesFeature` with the identity invitations, hands its `invitationAcceptance` to accounts and its `paymentCompletionHandler` to the platform composition; the feature-context middleware sets `coachingSalesContext` |
-| C17 assessment-calls | C1 domain | 15 | `/assessment-call`, `/coach-availability`, `/coach-meeting-room`, `/feature-flag`, `/shared`, and `/payment-link`'s `AssessmentCallReader`, which the composition satisfies |
+| C17 assessment-calls | C1 domain | 15 | `/assessment-call`, `/coach-availability`, `/coach-meeting-room`, `/email-address` (the composition's `EmailSubaddressPolicy`), `/feature-flag`, `/shared`, and `/payment-link`'s `AssessmentCallReader`, which the composition satisfies |
 | C17 assessment-calls | C2 db | 3 | DatabaseClient, appSchema |
 | C17 assessment-calls | C3 config | 4 | `joinBasePath` (the emails and the booking overview's portrait) and `AssessmentCallsConfig` |
-| C17 assessment-calls | C4 content | 2 | the support address on the error state; Eli's portrait path on the booking overview |
+| C17 assessment-calls | C4 content | 3 | the support address on the error state; Eli's portrait path on the booking overview; the subaddress refusal copy in the booking controller's messages |
 | C17 assessment-calls | C5 ui | 21 | `./primitives`, `./appointments`, `./calendar`, `./tabs`, `./filters`, `./lib`, `./layout`, `./portal`, `./toast` |
 | C17 assessment-calls | C6 infrastructure | 14 | bot-detection (browser and server), email/server (the notification contract, the Email* primitives and the email theme), http/server, coach-calendar/server and coach-meeting-room/server (the composition's adapters and the repository's reservation writers) |
 | C17 assessment-calls | C9 accounts | 2 | `api/settings/assessment-call-settings-controller.server.ts` takes `requireApiAccount` from `server/guards/`; `contracts/paths.ts` takes `COACH_PORTAL_PATH` from `contracts/paths.ts` |
@@ -304,7 +304,7 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 
 | Kind | Path | Constructs |
 |---|---|---|
-| composition-root | apps/platform/src/server/container.server.ts (createPlatformContainer, memoised by getPlatformContainer) | the shared handles once — `createPlatformDatabase`, the `Clock` implementation, `createConsoleLogger()`, `createBotVerifier()`, `createManagementAuthConfig()` and `createManagementAuthenticator()`, `createProductEmail()`, `createPaymentCheckout()` and `createPaymentEvents()`, one `PostgresFeatureFlagRepository` and one `GetFeatureFlagsUseCase`, and the override selection by `resolveFeatureFlagOverridesMode(environment)` — then, in order, `composeWaitlistFeature`, `composeAssessmentCallsFeature`, `composeCoachingSalesFeature` (given `assessmentCalls.handles.assessmentCallReader` and `waitlist.handles.pricingEligibility`), `composePlatformFeature` (given `[coachingSales.handles.paymentCompletionHandler]`, the payment events verifier and the webhook signing secret), `composeAccountsFeature`, `composeStoreFeature`; the selected feature-flag reader goes to the platform, waitlist, assessment-calls and coaching-sales compositions; `featureFlagOverrides` is a field of the container. One console logger implements B266, B267, B273, B288 and B292 |
+| composition-root | apps/platform/src/server/container.server.ts (createPlatformContainer, memoised by getPlatformContainer) | the shared handles once — the `EmailSubaddressPolicy` from `resolveEmailSubaddressPolicy(environment)`, handed to the waitlist, assessment-calls and store compositions, `createPlatformDatabase`, the `Clock` implementation, `createConsoleLogger()`, `createBotVerifier()`, `createManagementAuthConfig()` and `createManagementAuthenticator()`, `createProductEmail()`, `createPaymentCheckout()` and `createPaymentEvents()`, one `PostgresFeatureFlagRepository` and one `GetFeatureFlagsUseCase`, and the override selection by `resolveFeatureFlagOverridesMode(environment)` — then, in order, `composeWaitlistFeature`, `composeAssessmentCallsFeature`, `composeCoachingSalesFeature` (given `assessmentCalls.handles.assessmentCallReader` and `waitlist.handles.pricingEligibility`), `composePlatformFeature` (given `[coachingSales.handles.paymentCompletionHandler]`, the payment events verifier and the webhook signing secret), `composeAccountsFeature`, `composeStoreFeature`; the selected feature-flag reader goes to the platform, waitlist, assessment-calls and coaching-sales compositions; `featureFlagOverrides` is a field of the container. One console logger implements B266, B267, B273, B288 and B292 |
 | composition-root (second) | apps/platform/src/root.server.ts | `clerkMiddleware()`, the container's `featureFlagOverrides.middleware`, `createFeatureContextMiddleware(getPlatformContainer)`, `createAccountResolutionMiddleware()`, in that order; the container's only importer |
 | composition-site | apps/platform/src/features/accounts/server/accounts-composition.server.ts | the account repository, `ProvisionAccountUseCase` (with the `InvitationAcceptance` it is handed), `DeleteAccountUseCase`, and the account and webhook controllers; `AccountsFeatureHandles` names only what the feature reads |
 | composition-site | apps/platform/src/features/store/server/store-composition.server.ts | the store repositories, asset store and digests, token generators, zip stream, `EmailProductDelivery`, the eight `/product`, `/acquisition` and `/download-grant` use cases, and the five store controllers; `StoreFeatureHandles` names only what the feature reads |
@@ -356,6 +356,7 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 | assessment-call zod contracts (contracts/assessment-calls.ts, and since GEN-192 contracts/assessment-call-settings.ts) | C17 server half and C17 ui half only; no other component reads them | C17 |
 | The call-moment wording (contracts/call-moment.ts: `formatCallMoment`, `formatDayFirstDate`, `formatMonthFirstDate`, `formatMonthFirstDay`, `formatClockTime`, `nameTimeZone`) | C17 only: the two email content builders read `formatCallMoment`, which is built on `formatDayFirstDate` and `formatClockTime`; `slot-calendar.tsx` reads `formatDayFirstDate` for the days' accessible names; the booking confirmation, the call overview and the slot picker read the on-screen date (`formatMonthFirstDate`), day heading (`formatMonthFirstDay`), time (`formatClockTime`) and zone (`nameTimeZone`). One module words a call for the emails and the screen, each formatter is named for its wording and every wording names its locale, so the server and the browser render a call identically; every function takes `(instant, timeZone)`, and one `Intl.DateTimeFormat` per wording and zone is cached for the life of the process | C17 |
 | The assessment-call rule literals (ASSESSMENT_CALL_RULES: duration, buffer, step, horizon, lead) | C1 `/assessment-call` owns them as a `SlotPolicy` since the coach-calendar refactor; `/coach-availability` defines the `SlotPolicy` shape and names no appointment kind. `stepMinutes` is not a literal: it is derived as duration plus buffer from two module constants. `AssessmentCall` reads the duration to derive `endsAt`; `CoachAvailability` reads the duration, step, horizon and lead time off whichever policy it is handed, the duration so that a start is offered only if the call ends inside the window; `SlotPolicy.of` rejects an invalid policy, so a wrong literal fails at module load; `SlotPolicy.coachTimeFrom` reads the duration and the buffer to size the coach's held interval, which the slot filter tests for overlap and the repository reserves. No adapter re-applies the duration to compute an end: C17 reads `durationMinutes` only as a label (the controller's response and the wire literal, the email copy and `.ics` description, `CallOverview` on the page) and no longer reads `horizonDays`: since the booking-card rebuild the calendar's months are unbounded and a day with no open slot is disabled | C1 |
+| The subaddress refusal: `EmailSubaddressPolicy` (`allowed \| refused`) and the error code `email_subaddress_refused` | C1 `/email-address` owns the policy and `EmailAddress.isAcceptedBy`; C14 selects it (`refused` only when `ENVIRONMENT` is `production`); C7, C8 and C17 each carry the code in their own `contracts/` error enum and map it to C4's `EMAIL_SUBADDRESS_REFUSED_MESSAGE` at their existing copy site (C17 controller, C8 `ui/public/errors.ts`, C7 `ui/public/acquisition/acquisition-flow.ts`) | C1 (policy) / C4 (wording) |
 | accounts contracts (PublicSessionState, accountResponseSchema, AccountRole) | C9; C11; AccountRole originates in C1 | C9 (wire) / C1 (role) |
 | BotDetectionConfig (zod schema in C6) | C6; C7 ui; C8 ui; C11 loader data and props | C6 |
 | FeatureFlagSnapshot (featureFlagSnapshotSchema) | C14 controller and route; integration tests | C14 (`server/api/feature-flags/feature-flags-contract.ts`) |
@@ -575,7 +576,6 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E55 | apps/platform/src/features/store/api/acquisitions/acquisitions-controller.server.ts | apps/platform/src/features/store/contracts/store.ts | import | no | yes | outward | present |
 | E753 | apps/platform/src/features/store/api/acquisitions/acquisitions-controller.server.ts | external:crypto | import | n/a | yes | outward | present |
 | E754 | apps/platform/src/features/store/api/acquisitions/acquisitions-controller.server.ts | packages/domain/src/acquisition/index.ts | import | yes | no | lateral | present |
-| E57 | apps/platform/src/features/store/api/acquisitions/acquisitions-controller.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | removed in a79f507d |
 | E59 | apps/platform/src/features/store/api/acquisitions/acquisitions-controller.server.ts | packages/infrastructure/src/bot-detection/index.server.ts | import | yes | no | lateral | present |
 | E60 | apps/platform/src/features/store/api/acquisitions/acquisitions-controller.server.ts | packages/infrastructure/src/bot-detection/index.ts | import | yes | no | lateral | present |
 | E61 | apps/platform/src/features/store/api/acquisitions/acquisitions-controller.server.ts | packages/infrastructure/src/http/index.server.ts | import | yes | no | lateral | present |
@@ -756,7 +756,6 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E230 | apps/platform/src/features/store/ui/public/product/product-page.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
 | E231 | apps/platform/src/features/waitlist/api/waitlist-controller.server.ts | apps/platform/src/features/waitlist/contracts/waitlist.ts | import | no | yes | outward | present |
 | E822 | apps/platform/src/features/waitlist/api/waitlist-controller.server.ts | external:crypto | import | n/a | yes | outward | present |
-| E233 | apps/platform/src/features/waitlist/api/waitlist-controller.server.ts | packages/domain/src/shared/index.ts | import | yes | yes | inward | removed in a79f507d |
 | E234 | apps/platform/src/features/waitlist/api/waitlist-controller.server.ts | packages/domain/src/waitlist/index.ts | import | yes | no | lateral | present |
 | E235 | apps/platform/src/features/waitlist/api/waitlist-controller.server.ts | packages/infrastructure/src/bot-detection/index.server.ts | import | yes | no | lateral | present |
 | E236 | apps/platform/src/features/waitlist/api/waitlist-controller.server.ts | packages/infrastructure/src/bot-detection/index.ts | import | yes | no | lateral | present |
@@ -1257,7 +1256,6 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E1017 | packages/domain/src/waitlist/index.ts | packages/domain/src/waitlist/waitlist-incidents.ts | import | no | yes | inward | present |
 | E971 | packages/domain/src/waitlist/index.ts | packages/domain/src/waitlist/waitlist.ts | import | no | yes | inward | present |
 | E972 | packages/domain/src/waitlist/join-waitlist-use-case.ts | packages/domain/src/email-address/index.ts | import | no | no | lateral | present |
-| E973 | packages/domain/src/waitlist/join-waitlist-use-case.ts | packages/domain/src/shared/index.ts | import | no | no | lateral | removed in a79f507d |
 | E974 | packages/domain/src/waitlist/join-waitlist-use-case.ts | packages/domain/src/waitlist/waitlist-confirmation.ts | import | no | no | lateral | present |
 | E975 | packages/domain/src/waitlist/join-waitlist-use-case.ts | packages/domain/src/waitlist/waitlist-entries.ts | import | no | no | lateral | present |
 | E1016 | packages/domain/src/waitlist/join-waitlist-use-case.ts | packages/domain/src/waitlist/waitlist-incidents.ts | import | no | no | lateral | present |
@@ -2079,3 +2077,33 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E2258 | apps/platform/src/surfaces/public-site/pages/invitation.tsx | packages/config/src/index.ts | import | yes | no | lateral | present |
 | E2259 | apps/platform/src/surfaces/public-site/pages/invitation.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
 | E2260 | apps/platform/src/surfaces/public-site/routes.ts | apps/platform/src/features/coaching-sales/contracts/paths.ts | import | yes | no | lateral | present |
+| E2261 | apps/platform/src/features/assessment-calls/api/booking/assessment-calls-controller.server.ts | packages/content/src/index.ts | import | yes | no | lateral | present |
+| E2262 | apps/platform/src/features/assessment-calls/api/booking/assessment-calls-controller.server.ts | packages/domain/src/shared/index.ts | type-only import | yes | yes | inward | present |
+| E2263 | apps/platform/src/features/assessment-calls/contracts/assessment-calls.ts | apps/platform/src/features/assessment-calls/contracts/countries.ts | import | no | no | lateral | present |
+| E2264 | apps/platform/src/features/assessment-calls/contracts/assessment-calls.ts | apps/platform/src/features/assessment-calls/contracts/visitor-profile.ts | import | no | no | lateral | present |
+| E2265 | apps/platform/src/features/assessment-calls/server/assessment-calls-composition.server.ts | apps/platform/src/features/assessment-calls/api/settings/assessment-call-settings-controller.server.ts | import | no | no | lateral | present |
+| E2266 | apps/platform/src/features/assessment-calls/server/assessment-calls-composition.server.ts | packages/domain/src/email-address/index.ts | type-only import | yes | yes | inward | present |
+| E2267 | apps/platform/src/features/assessment-calls/server/assessment-calls-composition.server.ts | packages/infrastructure/src/coach-meeting-room/index.server.ts | import | yes | no | lateral | present |
+| E2268 | apps/platform/src/features/assessment-calls/ui/public/book/booking-details-form.tsx | apps/platform/src/features/assessment-calls/contracts/countries.ts | import | no | no | lateral | present |
+| E2269 | apps/platform/src/features/assessment-calls/ui/public/book/booking-details-form.tsx | apps/platform/src/features/assessment-calls/contracts/visitor-profile.ts | import | no | no | lateral | present |
+| E2270 | apps/platform/src/features/assessment-calls/ui/public/book/booking-details-form.tsx | apps/platform/src/features/assessment-calls/ui/public/book/choice-select-field.tsx | import | no | no | lateral | present |
+| E2271 | apps/platform/src/features/assessment-calls/ui/public/book/booking-details-form.tsx | apps/platform/src/features/assessment-calls/ui/public/book/date-of-birth-field.tsx | import | no | no | lateral | present |
+| E2272 | apps/platform/src/features/assessment-calls/ui/public/book/booking-details-form.tsx | apps/platform/src/features/assessment-calls/ui/public/book/field-error.tsx | import | no | no | lateral | present |
+| E2273 | apps/platform/src/features/assessment-calls/ui/public/book/booking-details-form.tsx | apps/platform/src/features/assessment-calls/ui/public/book/phone-field.tsx | import | no | no | lateral | present |
+| E2274 | apps/platform/src/features/assessment-calls/ui/public/book/booking-details-form.tsx | external:@hookform/resolvers | import | n/a | no | lateral | present |
+| E2275 | apps/platform/src/features/assessment-calls/ui/public/book/booking-details-form.tsx | external:motion | import | n/a | no | lateral | present |
+| E2276 | apps/platform/src/features/assessment-calls/ui/public/book/booking-details-form.tsx | external:react-hook-form | import | n/a | no | lateral | present |
+| E2277 | apps/platform/src/features/store/server/store-composition.server.ts | packages/domain/src/email-address/index.ts | type-only import | yes | yes | inward | present |
+| E2278 | apps/platform/src/features/store/ui/public/acquisition/acquisition-flow.ts | packages/content/src/index.ts | import | yes | no | lateral | present |
+| E2279 | apps/platform/src/features/store/ui/public/acquisition/acquisition-form.ts | external:@hookform/resolvers | import | n/a | no | lateral | present |
+| E2280 | apps/platform/src/features/store/ui/public/acquisition/acquisition-form.ts | external:react-hook-form | import | n/a | no | lateral | present |
+| E2281 | apps/platform/src/features/waitlist/server/waitlist-composition.server.ts | packages/domain/src/email-address/index.ts | type-only import | yes | yes | inward | present |
+| E2282 | apps/platform/src/features/waitlist/ui/public/errors.ts | packages/content/src/index.ts | import | yes | no | lateral | present |
+| E2283 | apps/platform/src/server/container.server.ts | apps/platform/src/server/email-subaddress-policy.server.ts | import | no | no | lateral | present |
+| E2284 | apps/platform/src/server/email-subaddress-policy.server.ts | packages/config/src/index.ts | type-only import | yes | no | lateral | present |
+| E2285 | apps/platform/src/server/email-subaddress-policy.server.ts | packages/domain/src/email-address/index.ts | type-only import | yes | yes | inward | present |
+| E2286 | packages/content/src/index.ts | packages/content/src/email-address-copy.ts | import | no | no | lateral | present |
+| E2287 | packages/domain/src/acquisition/acquire-products-use-case.ts | packages/domain/src/email-address/index.ts | type-only import | no | no | lateral | present |
+| E2288 | packages/domain/src/assessment-call/book-assessment-call-use-case.ts | packages/domain/src/assessment-call/visitor-profile.ts | type-only import | no | no | lateral | present |
+| E2289 | packages/domain/src/email-address/email-address.ts | packages/domain/src/email-address/email-subaddress-policy.ts | type-only import | no | no | lateral | present |
+| E2290 | packages/domain/src/email-address/index.ts | packages/domain/src/email-address/email-subaddress-policy.ts | type-only import | no | no | lateral | present |
