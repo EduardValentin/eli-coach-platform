@@ -17,18 +17,18 @@ import { AssessmentCallsSection } from "~/features/assessment-calls/ui/coach/ass
 import { useCoachClock } from "~/features/assessment-calls/ui/coach/use-coach-clock";
 import type { CallSalesState } from "~/features/coaching-sales/contracts/coaching-sales";
 import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
-import { CallSalesStateBadge } from "~/features/coaching-sales/ui/coach/call-sales-state-badge";
-import { PaymentLinkAction } from "~/features/coaching-sales/ui/coach/payment-link-action";
+import { CallSalesStateBadge } from "~/features/coaching-sales/ui/coach/call-sales/call-sales-state-badge";
+import { PaymentLinkAction } from "~/features/coaching-sales/ui/coach/call-sales/payment-link-action";
 import {
   PRICING_DETAIL_LABEL,
   pricingTierLabel,
-} from "~/features/coaching-sales/ui/coach/pricing-tier-label";
+} from "~/features/coaching-sales/ui/coach/call-sales/pricing-tier-label";
 import {
   matchesSalesFilter,
   SalesStatusFilter,
   SALES_STATUS_PARAM,
   useSalesFilterParam,
-} from "~/features/coaching-sales/ui/coach/sales-status-filter";
+} from "~/features/coaching-sales/ui/coach/call-sales/sales-status-filter";
 
 export { AssessmentCallsErrorBoundary as ErrorBoundary } from "~/features/assessment-calls/ui/coach/assessment-calls-error-boundary";
 
