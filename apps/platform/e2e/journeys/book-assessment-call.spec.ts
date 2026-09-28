@@ -69,3 +69,17 @@ test("a visitor books an assessment call and the coach sees it", async ({
   ).toBeVisible();
   await expect(bookedCall.getByText(VISITOR_NOTES)).toBeVisible();
 });
+
+test("a visitor describes her gender as female, male or prefer not to say", async ({
+  bookingPage,
+}) => {
+  // act
+  await bookingPage.openDetails();
+
+  // assert
+  await bookingPage.expectGenderOptions([
+    "Female",
+    "Male",
+    "Prefer not to say",
+  ]);
+});
