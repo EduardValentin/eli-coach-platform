@@ -3,3 +3,4 @@ export const PORTAL_PAGE_TITLE_CLASS =
 export const WIDGET_TITLE_CLASS = "text-base font-semibold text-text-primary";
 export const LABEL_CLASS = "text-label uppercase text-text-secondary";
 export const VALUE_LG_CLASS = "text-value-lg text-text-primary";
+export const VALUE_CLASS = "text-sm font-medium text-text-primary";
