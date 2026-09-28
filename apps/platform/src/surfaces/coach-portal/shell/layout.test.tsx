@@ -77,10 +77,10 @@ describe("CoachLayoutRoute", () => {
     expect(links).toHaveLength(4);
     expect(links[0]).toHaveAccessibleName("Dashboard");
     expect(links[0]).toHaveAttribute("href", "/coach");
-    expect(links[1]).toHaveAccessibleName("Assessment calls");
-    expect(links[1]).toHaveAttribute("href", "/coach/assessment-calls");
-    expect(links[2]).toHaveAccessibleName("Clients");
-    expect(links[2]).toHaveAttribute("href", "/coach/clients");
+    expect(links[1]).toHaveAccessibleName("Clients");
+    expect(links[1]).toHaveAttribute("href", "/coach/clients");
+    expect(links[2]).toHaveAccessibleName("Assessment calls");
+    expect(links[2]).toHaveAttribute("href", "/coach/assessment-calls");
     expect(links[3]).toHaveAccessibleName("Settings");
     expect(links[3]).toHaveAttribute("href", "/coach/settings");
   });
