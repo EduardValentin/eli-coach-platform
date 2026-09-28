@@ -16,7 +16,7 @@ function journeyName(journey: ClientJourney): string {
   return `${journey.identity.firstName} ${journey.identity.lastName}`.trim();
 }
 
-function pendingInvitation(journey: ClientJourney) {
+function invitationAwaitingAccount(journey: ClientJourney) {
   return isBeforeStage(journey.stage, 'account-created')
     ? journey.invitation
     : null;
@@ -25,7 +25,7 @@ function pendingInvitation(journey: ClientJourney) {
 export function JourneyClientDetails({ journey }: { journey: ClientJourney }) {
   const name = journeyName(journey);
   const units = useMeasureUnits();
-  const invitation = pendingInvitation(journey);
+  const invitation = invitationAwaitingAccount(journey);
 
   return (
     <div className="w-full pb-12">

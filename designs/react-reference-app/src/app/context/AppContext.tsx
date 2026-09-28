@@ -11,9 +11,9 @@ import type {
   PrototypeSignInOutcome,
 } from '../services/authService';
 import {
-  PROTOTYPE_COACH_INVITATIONS,
+  PROTOTYPE_INVITATION_STANDINGS,
   PROTOTYPE_INVITATION_RESEND_OUTCOMES,
-  type PrototypeCoachInvitation,
+  type PrototypeInvitationStanding,
   type PrototypeInvitationLinkState,
   type PrototypeInvitationResendOutcome,
 } from '../services/invitationService';
@@ -83,7 +83,7 @@ type AppState = {
   journeyAgeBand: JourneyAgeBand;
   journeyConnection: OnboardingConnection;
   journeyReducedPricing: boolean;
-  journeyInvitation: PrototypeCoachInvitation;
+  journeyInvitation: PrototypeInvitationStanding;
   invitationResendOutcome: PrototypeInvitationResendOutcome;
   paymentLinkOutcome: PrototypePaymentLinkOutcome;
   paymentLinkState: PrototypePaymentLinkState;
@@ -302,9 +302,9 @@ function parseDevParamsFromURL(): AppState {
   const journeyInvitation = params.get('jinv');
   if (
     journeyInvitation &&
-    (PROTOTYPE_COACH_INVITATIONS as readonly string[]).includes(journeyInvitation)
+    (PROTOTYPE_INVITATION_STANDINGS as readonly string[]).includes(journeyInvitation)
   ) {
-    state.journeyInvitation = journeyInvitation as PrototypeCoachInvitation;
+    state.journeyInvitation = journeyInvitation as PrototypeInvitationStanding;
   }
   const invitationResendOutcome = params.get('jresend');
   if (

@@ -136,13 +136,11 @@ export function AnswerRequestCard({ request }: { request: DetailRequest }) {
       <Form {...form}>
         <form className="mt-7 grid gap-6" noValidate onSubmit={send}>
           {fields.map((field) => (
-            <div
-              className="contents"
-              data-parity={`answer-field-${field.id}`}
+            <OnboardingFieldControl
+              control={form.control}
+              field={field}
               key={field.id}
-            >
-              <OnboardingFieldControl control={form.control} field={field} />
-            </div>
+            />
           ))}
 
           <div className="mt-2 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">

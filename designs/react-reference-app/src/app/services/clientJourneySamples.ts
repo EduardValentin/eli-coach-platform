@@ -24,7 +24,7 @@ import {
 } from '../domain/coachingSubscription';
 import {
   INVITATION_VALIDITY_DAYS,
-  type PrototypeCoachInvitation,
+  type PrototypeInvitationStanding,
 } from './invitationService';
 import { paymentLinkExpiresAt } from './paymentLinkService';
 import type { PrototypeBooking } from './assessmentCallService';
@@ -41,7 +41,7 @@ export type JourneySeed = {
   subscriptionStatus: SubscriptionStatus;
   pricing: JourneyPricing;
   bookingNotes: string | null;
-  coachInvitation: PrototypeCoachInvitation;
+  invitationStanding: PrototypeInvitationStanding;
   now: Date;
 };
 
@@ -226,7 +226,7 @@ function seedInvitation(
     sentAt: invitedAt,
     expiresAt,
     state: seededInvitationState(seed.stage, expiresAt, seed.now),
-    emailDelivery: seed.coachInvitation === 'email-failed' ? 'failed' : 'sent',
+    emailDelivery: seed.invitationStanding === 'email-failed' ? 'failed' : 'sent',
   };
 }
 
@@ -272,10 +272,10 @@ function seedSubscription(seed: SubscriptionSeed): CoachingSubscription {
 const EXPIRED_INVITATION_AGE_DAYS = INVITATION_VALIDITY_DAYS + 5;
 
 function seededPaidAt(seed: JourneySeed): Date {
-  const { startPath, stage, coachInvitation, now } = seed;
+  const { startPath, stage, invitationStanding, now } = seed;
 
   const invitationPending = isBeforeStage(stage, 'account-created');
-  if (coachInvitation === 'expired' && invitationPending) {
+  if (invitationStanding === 'expired' && invitationPending) {
     return subDays(now, EXPIRED_INVITATION_AGE_DAYS);
   }
   if (startPath === 'waiting' && !isBeforeStage(stage, 'program-ready')) {

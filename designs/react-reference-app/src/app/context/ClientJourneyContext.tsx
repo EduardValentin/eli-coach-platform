@@ -17,6 +17,7 @@ import {
   type DetailRequest,
   type JourneyEvent,
   type JourneyIdentity,
+  type JourneyInvitation,
   type JourneyPhone,
   type JourneyPricing,
   type JourneyGender,
@@ -38,7 +39,7 @@ import { PARQ_MAX_AGE, PARQ_MIN_AGE } from '../domain/safetyScreening';
 import type { SentPaymentLink } from '../services/paymentLinkService';
 import {
   createInvitation,
-  type PrototypeCoachInvitation,
+  type PrototypeInvitationStanding,
   type SentInvitation,
 } from '../services/invitationService';
 import type { VisitorPrimaryGoal } from '../services/visitorProfile';
@@ -64,7 +65,7 @@ export type DemoJourneyOptions = {
   subscriptionStatus: SubscriptionStatus;
   gender: JourneyGender;
   reducedPricing: boolean;
-  coachInvitation: PrototypeCoachInvitation;
+  invitationStanding: PrototypeInvitationStanding;
 };
 
 export type JourneyPayment = {
@@ -136,6 +137,16 @@ function withProgramReady(
   };
 }
 
+function journeyInvitationFrom(sent: SentInvitation): JourneyInvitation {
+  return {
+    token: sent.token,
+    sentAt: sent.sentAt,
+    expiresAt: sent.expiresAt,
+    state: 'valid',
+    emailDelivery: 'sent',
+  };
+}
+
 function answeredLastRequest(
   requests: DetailRequest[],
   answeredAt: Date,
@@ -185,7 +196,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
         subscriptionStatus: journeySubscriptionStatus,
         pricing: visitorPricing,
         bookingNotes: DEMO_BOOKING_NOTES,
-        coachInvitation: journeyInvitation,
+        invitationStanding: journeyInvitation,
         now: new Date(),
       }),
       [AWAITING_REVIEW_CALL_ID]: seedJourney({
@@ -196,7 +207,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
         subscriptionStatus: 'active',
         pricing: 'regular',
         bookingNotes: null,
-        coachInvitation: 'sent',
+        invitationStanding: 'sent',
         now: new Date(),
       }),
     }),
@@ -217,7 +228,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
           subscriptionStatus: options.subscriptionStatus,
           pricing: options.reducedPricing ? 'reduced' : 'regular',
           bookingNotes: DEMO_BOOKING_NOTES,
-          coachInvitation: options.coachInvitation,
+          invitationStanding: options.invitationStanding,
           now: new Date(),
         }),
       }));
@@ -231,7 +242,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
       subscriptionStatus: journeySubscriptionStatus,
       gender: journeyGender,
       reducedPricing: journeyReducedPricing,
-      coachInvitation: journeyInvitation,
+      invitationStanding: journeyInvitation,
     });
   }, [
     seedDemoJourney,
@@ -295,13 +306,8 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
 
   const recordPaid = useCallback(
     (callId: string, payment: JourneyPayment) => {
-      updateJourney(callId, (journey) => {
-        const invitation = createInvitation(
-          journey.identity.email,
-          payment.paidAt,
-        );
-
-        return applied(
+      updateJourney(callId, (journey) =>
+        applied(
           {
             ...journey,
             paidAt: payment.paidAt,
@@ -314,17 +320,13 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
               purchasedAt: payment.paidAt,
               status: 'not-started',
             },
-            invitation: {
-              token: invitation.token,
-              sentAt: invitation.sentAt,
-              expiresAt: invitation.expiresAt,
-              state: 'valid',
-              emailDelivery: 'sent',
-            },
+            invitation: journeyInvitationFrom(
+              createInvitation(journey.identity.email, payment.paidAt),
+            ),
           },
           'record-payment',
-        );
-      });
+        ),
+      );
     },
     [updateJourney],
   );
@@ -351,13 +353,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
     (callId: string, invitation: SentInvitation) => {
       updateJourney(callId, (journey) => ({
         ...journey,
-        invitation: {
-          token: invitation.token,
-          sentAt: invitation.sentAt,
-          expiresAt: invitation.expiresAt,
-          state: 'valid',
-          emailDelivery: 'sent',
-        },
+        invitation: journeyInvitationFrom(invitation),
       }));
     },
     [updateJourney],

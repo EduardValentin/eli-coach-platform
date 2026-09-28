@@ -1,5 +1,9 @@
 import { format } from 'date-fns';
 import { bundleLengthLabel } from '../domain/bundles';
+import {
+  labelForGender,
+  type VisitorGender,
+} from '../services/visitorProfile';
 import { DEMO_JOURNEY_CALL_ID } from '../context/ClientJourneyContext';
 import type {
   ClientJourney,
@@ -26,11 +30,15 @@ export const PRICING_TIER_LABELS: Record<JourneyPricing, string> = {
   regular: 'Regular',
 };
 
-export const GENDER_LABELS: Record<JourneyGender, string> = {
-  female: 'Female',
-  male: 'Male',
-  'prefer-not-to-say': 'Prefer not to say',
+const VISITOR_GENDER_OF: Record<JourneyGender, VisitorGender> = {
+  female: 'female',
+  male: 'male',
+  'prefer-not-to-say': 'prefer_not_to_say',
 };
+
+export function journeyGenderLabel(gender: JourneyGender): string {
+  return labelForGender(VISITOR_GENDER_OF[gender]);
+}
 
 export const SUBSCRIPTION_STATUS_LABELS: Record<SubscriptionStatus, string> = {
   'not-started': 'Not started yet',

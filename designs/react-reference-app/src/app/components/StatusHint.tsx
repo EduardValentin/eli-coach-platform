@@ -7,6 +7,7 @@ interface StatusHintProps {
   icon: ReactNode;
   children: ReactNode;
   className?: string;
+  parity?: string;
 }
 
 export function StatusHint({
@@ -14,6 +15,7 @@ export function StatusHint({
   icon,
   children,
   className,
+  parity,
 }: StatusHintProps) {
   const [open, setOpen] = useState(false);
 
@@ -23,6 +25,7 @@ export function StatusHint({
         <button
           type="button"
           aria-label={label}
+          data-parity={parity}
           onPointerEnter={(event) => {
             if (event.pointerType === 'mouse') setOpen(true);
           }}

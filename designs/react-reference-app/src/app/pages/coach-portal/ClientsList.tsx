@@ -309,7 +309,7 @@ function RosterTableRow({
   onTerminate: (row: RosterRow) => void;
 }) {
   const navigate = useNavigate();
-  const hook = (cell: string) => `row-${position}-${cell}`;
+  const rowParity = (cell: string) => `row-${position}-${cell}`;
   return (
     <TableRow
       className="group cursor-pointer"
@@ -321,7 +321,7 @@ function RosterTableRow({
           <div>
             <p
               className="font-semibold text-sm text-text-primary"
-              data-parity={hook('name')}
+              data-parity={rowParity('name')}
             >
               {row.name}
             </p>
@@ -329,18 +329,18 @@ function RosterTableRow({
           </div>
         </div>
       </TableCell>
-      <TableCell data-parity={hook('status')}>
+      <TableCell data-parity={rowParity('status')}>
         <ClientStatusBadge status={row.status} />
       </TableCell>
       <TableCell
         className="text-sm text-text-secondary font-medium"
-        data-parity={hook('bundle')}
+        data-parity={rowParity('bundle')}
       >
         {row.bundleLabel}
       </TableCell>
       <TableCell
         className="text-sm text-text-secondary"
-        data-parity={hook('joined')}
+        data-parity={rowParity('joined')}
       >
         {row.joinedAt ? format(row.joinedAt, 'MMM dd, yyyy') : '—'}
       </TableCell>

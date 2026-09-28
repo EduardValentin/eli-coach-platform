@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Mail, Send } from 'lucide-react';
+import { Loader2, Mail, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAppState } from '../../context/AppContext';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
@@ -14,7 +14,7 @@ import {
 } from '../../services/invitationService';
 import { formatJourneyDate } from '../../utils/journeyLabels';
 import { PortalWidget } from '../PortalWidget';
-import { RowActionButton } from '../RowActionButton';
+import { Button } from '../ui/button';
 import { ConfirmDialog } from '../ui/confirm-dialog';
 import { cn } from '../ui/utils';
 
@@ -77,14 +77,21 @@ export function InvitationBlock({
       headingId="invitation-panel-heading"
       parityRoot="InvitationBlock"
       action={
-        <RowActionButton
-          icon={Send}
-          busy={sending}
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={sending}
+          aria-busy={sending || undefined}
           data-parity="resend-invitation"
           onClick={() => setConfirmOpen(true)}
         >
+          {sending ? (
+            <Loader2 aria-hidden="true" size={16} className="animate-spin" />
+          ) : (
+            <Send aria-hidden="true" size={16} />
+          )}
           Re-send invitation
-        </RowActionButton>
+        </Button>
       }
       className="mb-8"
     >

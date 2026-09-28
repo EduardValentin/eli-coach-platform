@@ -13,9 +13,9 @@ import {
 import type { PrototypeStoreCheckoutOutcome } from '../services/storeAcquisitionService';
 import type { PrototypeSignInOutcome } from '../services/authService';
 import {
-  PROTOTYPE_COACH_INVITATIONS,
+  PROTOTYPE_INVITATION_STANDINGS,
   PROTOTYPE_INVITATION_RESEND_OUTCOMES,
-  type PrototypeCoachInvitation,
+  type PrototypeInvitationStanding,
   type PrototypeInvitationLinkState,
   type PrototypeInvitationResendOutcome,
 } from '../services/invitationService';
@@ -178,8 +178,8 @@ function parseInvitationLinkStateControl(
   return 'valid';
 }
 
-function parseCoachInvitationControl(value: string): PrototypeCoachInvitation {
-  const invitation = PROTOTYPE_COACH_INVITATIONS.find(
+function parseInvitationStandingControl(value: string): PrototypeInvitationStanding {
+  const invitation = PROTOTYPE_INVITATION_STANDINGS.find(
     (candidate) => candidate === value,
   );
 
@@ -1116,7 +1116,7 @@ export function DevToggle() {
                     value={appState.journeyInvitation}
                     onValueChange={(value) =>
                       setAppState({
-                        journeyInvitation: parseCoachInvitationControl(value),
+                        journeyInvitation: parseInvitationStandingControl(value),
                       })
                     }
                   >

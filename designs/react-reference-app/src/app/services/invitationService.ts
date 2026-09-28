@@ -21,9 +21,9 @@ export type ResolvedInvitation =
   | { status: 'used' }
   | { status: 'unknown' };
 
-export type PrototypeCoachInvitation = 'sent' | 'expired' | 'email-failed';
+export type PrototypeInvitationStanding = 'sent' | 'expired' | 'email-failed';
 
-export const PROTOTYPE_COACH_INVITATIONS: readonly PrototypeCoachInvitation[] = [
+export const PROTOTYPE_INVITATION_STANDINGS: readonly PrototypeInvitationStanding[] = [
   'sent',
   'expired',
   'email-failed',

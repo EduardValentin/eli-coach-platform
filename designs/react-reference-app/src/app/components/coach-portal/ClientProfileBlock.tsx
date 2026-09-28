@@ -1,7 +1,10 @@
 import { UserRound } from 'lucide-react';
 import type { ClientJourney, JourneyPhone } from '../../domain/journey';
 import { ageOn, labelForPrimaryGoal } from '../../services/visitorProfile';
-import { GENDER_LABELS, PRICING_TIER_LABELS } from '../../utils/journeyLabels';
+import {
+  journeyGenderLabel,
+  PRICING_TIER_LABELS,
+} from '../../utils/journeyLabels';
 import { PortalWidget } from '../PortalWidget';
 import { Reading } from '../Reading';
 
@@ -47,7 +50,7 @@ export function ClientProfileBlock({ journey }: { journey: ClientJourney }) {
         <Reading
           as="dl-item"
           label="Gender"
-          value={GENDER_LABELS[identity.gender]}
+          value={journeyGenderLabel(identity.gender)}
           valueParity="profile-gender"
         />
         <Reading

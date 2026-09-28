@@ -125,17 +125,16 @@ function ScreeningWarning({ journey }: { journey: ClientJourney }) {
   if (warnings.length === 0) return null;
 
   return (
-    <span className="contents" data-parity="screening-warning">
-      <StatusHint
-        label={warnings.join('. ')}
-        icon={<TriangleAlert aria-hidden="true" size={16} />}
-        className="text-destructive"
-      >
-        {warnings.map((warning) => (
-          <p key={warning}>{warning}</p>
-        ))}
-      </StatusHint>
-    </span>
+    <StatusHint
+      label={warnings.join('. ')}
+      icon={<TriangleAlert aria-hidden="true" size={16} />}
+      className="text-destructive"
+      parity="screening-warning"
+    >
+      {warnings.map((warning) => (
+        <p key={warning}>{warning}</p>
+      ))}
+    </StatusHint>
   );
 }
 
@@ -400,7 +399,7 @@ function StageActions({
   );
 }
 
-function OnboardingReview({
+function SubmittedOnboarding({
   journey,
   clientId,
   heightCm,
@@ -534,7 +533,7 @@ export function OnboardingPanel({
       className="mb-8"
     >
       {submitted ? (
-        <OnboardingReview
+        <SubmittedOnboarding
           journey={journey}
           clientId={clientId}
           heightCm={heightCm}
