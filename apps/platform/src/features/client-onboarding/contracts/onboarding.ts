@@ -37,10 +37,7 @@ const formAnswersSchema = z.record(
 
 export const answersByFormSchema = z.record(formIdSchema, formAnswersSchema);
 
-export const askedAnswersSchema = z.partialRecord(
-  formIdSchema,
-  formAnswersSchema,
-);
+const askedAnswersSchema = z.partialRecord(formIdSchema, formAnswersSchema);
 
 export type AskedAnswers = z.infer<typeof askedAnswersSchema>;
 
@@ -80,7 +77,7 @@ export const unitPreferenceSchema = z.object({
   heightUnit: z.enum(HEIGHT_UNITS),
 }) satisfies z.ZodType<UnitPreferenceSnapshot>;
 
-export const onboardingWizardPageSchema = z.object({
+const onboardingWizardPageSchema = z.object({
   mode: z.literal("wizard"),
   clientId: z.string().min(1),
   formIds: z.array(formIdSchema).min(1),
@@ -98,7 +95,7 @@ export const onboardingWizardPageSchema = z.object({
 
 export type OnboardingWizardPage = z.infer<typeof onboardingWizardPageSchema>;
 
-export const onboardingAnswerPageSchema = z.object({
+const onboardingAnswerPageSchema = z.object({
   mode: z.literal("answer"),
   request: z.object({
     note: z.string().min(1),

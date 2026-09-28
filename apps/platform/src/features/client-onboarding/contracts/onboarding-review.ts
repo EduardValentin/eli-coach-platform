@@ -6,7 +6,7 @@ import { questionIdSchema } from "./onboarding";
 const NOTE_MAX_LENGTH = 2000;
 const QUESTIONS_MAX_COUNT = 200;
 
-export const REVIEW_STAGES = [
+const REVIEW_STAGES = [
   "awaiting-review",
   "in-review",
   "needs-details",
@@ -15,14 +15,12 @@ export const REVIEW_STAGES = [
 
 export type ReviewStage = (typeof REVIEW_STAGES)[number];
 
-export const CYCLE_MODES = [
+const CYCLE_MODES = [
   "phase-based",
   "symptom-based",
   "manual",
   "not-applicable",
 ] as const;
-
-export type ReviewCycleMode = (typeof CYCLE_MODES)[number];
 
 const reviewAnswerSchema = z.object({
   fieldId: z.string().min(1),
