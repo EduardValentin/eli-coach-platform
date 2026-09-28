@@ -22,9 +22,11 @@
     "./download-grant": "./src/download-grant/index.ts",
     "./email-address": "./src/email-address/index.ts",
     "./feature-flag": "./src/feature-flag/index.ts",
+    "./measurement": "./src/measurement/index.ts",
     "./payment-link": "./src/payment-link/index.ts",
     "./product": "./src/product/index.ts",
     "./shared": "./src/shared/index.ts",
+    "./unit-preference": "./src/unit-preference/index.ts",
     "./waitlist": "./src/waitlist/index.ts"
   },
   "scripts": {
