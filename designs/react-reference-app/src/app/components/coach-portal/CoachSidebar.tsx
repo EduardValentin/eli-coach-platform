@@ -178,7 +178,10 @@ const DesktopSidebar = ({
   pendingCheckins = 0,
 }: DesktopSidebarProps) => (
   <SidebarSurface>
-    <div className="p-6 mb-4 px-3 border-b border-stroke-quiet rounded-field flex items-center justify-between">
+    <div
+      className="p-6 mb-4 px-3 border-b border-stroke-quiet rounded-field flex items-center justify-between"
+      data-parity="sidebar-header"
+    >
       {brand}
       {actions}
     </div>
@@ -243,16 +246,18 @@ export function CoachSidebar() {
         )}
         title="Coach portal mobile navigation"
         topBarActions={
-          <NotificationBell
-            onOpenChange={setIsTopBarNotificationsOpen}
-            open={isTopBarNotificationsOpen}
-          />
+          <div className="contents" data-parity="notification-bell">
+            <NotificationBell
+              onOpenChange={setIsTopBarNotificationsOpen}
+              open={isTopBarNotificationsOpen}
+            />
+          </div>
         }
       >
         {(menu) => (
           <>
             <motion.div
-              className="pointer-events-none absolute inset-0 bg-text-primary/20 backdrop-blur-sm"
+              className="pointer-events-none absolute inset-0 bg-overlay-soft backdrop-blur-sm"
               transition={prefersReducedMotion ? { duration: 0 } : undefined}
               variants={{ closed: { opacity: 0 }, open: { opacity: 1 } }}
             />
@@ -273,7 +278,11 @@ export function CoachSidebar() {
         className="hidden lg:block fixed top-0 left-0 bottom-0 w-64 bg-surface-base z-50"
       >
         <DesktopSidebar
-          actions={<NotificationBell align="left" />}
+          actions={
+            <div className="contents" data-parity="notification-bell">
+              <NotificationBell align="left" />
+            </div>
+          }
           brand={<CoachIdentityLink coachAvatarUrl={coachAvatarUrl} />}
           links={links}
           pathname={location.pathname}

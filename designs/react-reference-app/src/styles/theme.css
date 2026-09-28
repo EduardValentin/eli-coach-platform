@@ -634,3 +634,32 @@
   outline-offset: 2px;
   box-shadow: 0 0 0 6px color-mix(in srgb, var(--focus-ring) 16%, transparent);
 }
+
+@layer components {
+  .ui-skip-link {
+    position: absolute;
+    left: var(--space-5);
+    top: var(--space-5);
+    z-index: 60;
+    border-radius: calc(infinity * 1px);
+    background: var(--surface-base);
+    border: 1px solid var(--border-subtle);
+    box-shadow: var(--shadow-raised);
+    color: var(--text-primary);
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-semibold);
+    opacity: 0;
+    padding: var(--space-3) var(--space-5);
+    pointer-events: none;
+    transform: translateY(-150%);
+    transition:
+      opacity 120ms ease-out,
+      transform 120ms ease-out;
+  }
+
+  .ui-skip-link:focus-visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+  }
+}
