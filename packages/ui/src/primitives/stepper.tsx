@@ -18,10 +18,10 @@ export function Stepper({
   return (
     <div className={cn("flex flex-col gap-2", className)} {...props}>
       <div className="flex items-end justify-between gap-4">
-        <p className="text-caption font-semibold uppercase tracking-widest text-text-secondary">
+        <p className="shrink-0 text-caption font-semibold uppercase tracking-widest text-text-secondary">
           Step {current} of {total}
         </p>
-        {status}
+        <div className="min-w-0 text-right">{status}</div>
       </div>
       <div aria-hidden="true" className="flex items-center gap-1.5">
         {Array.from({ length: total }, (_, index) => index + 1).map((step) => (

@@ -66,6 +66,34 @@ describe("Stepper", () => {
     expect(screen.getByRole("status")).toHaveTextContent("Saved");
   });
 
+  it("keeps the step count from shrinking and gives the status its own truncating column", () => {
+    // arrange
+    const status = <p role="status">Saved</p>;
+
+    // act
+    render(<Stepper current={1} status={status} total={4} />);
+
+    // assert
+    expect(screen.getByText("Step 1 of 4")).toHaveClass("shrink-0");
+    expect(screen.getByRole("status").parentElement).toHaveClass(
+      "min-w-0",
+      "text-right",
+    );
+  });
+
+  it("renders the status column even without a status", () => {
+    // arrange
+    const props = { current: 1, total: 4 };
+
+    // act
+    render(<Stepper {...props} />);
+
+    // assert
+    expect(
+      screen.getByText("Step 1 of 4").parentElement?.lastElementChild,
+    ).toHaveClass("min-w-0", "text-right");
+  });
+
   it("passes its remaining attributes to its outer element", () => {
     // arrange
     const props = { current: 1, total: 4, title: "Onboarding progress" };
