@@ -1,0 +1,11 @@
+[
+  {
+    "waitFor": "[data-parity-root=\"OnboardingWizard\"]"
+  },
+  {
+    "waitFor": "[data-parity=\"resume-note\"]"
+  },
+  {
+    "wait": 400
+  }
+]

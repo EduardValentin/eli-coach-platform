@@ -1,0 +1,11 @@
+[
+  {
+    "waitFor": "[data-parity-root=\"OnboardingWizard\"]"
+  },
+  {
+    "click": "[data-parity=\"units-choice\"] >> text=lb · in"
+  },
+  {
+    "wait": 400
+  }
+]
