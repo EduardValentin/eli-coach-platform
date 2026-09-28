@@ -83,6 +83,7 @@
     0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
   --shadow-raised: 0 8px 24px rgba(0, 0, 0, 0.08);
   --shadow-floating: 0 8px 40px rgba(0, 0, 0, 0.04);
+  --shadow-tab-bar: 0 -2px 16px rgba(0, 0, 0, 0.04);
   --shadow-public-footer-cta-sheet: 0 -20px 60px -10px rgba(200, 29, 107, 0.15);
   --shadow-public-platform-cloud-active:
     0 0 0 2px rgba(200, 29, 107, 0.3), 0 8px 24px -12px rgba(0, 0, 0, 0.18);
@@ -276,6 +277,7 @@
   --shadow-action-hover: var(--shadow-action-hover);
   --shadow-raised: var(--shadow-raised);
   --shadow-floating: var(--shadow-floating);
+  --shadow-tab-bar: var(--shadow-tab-bar);
   --shadow-public-footer-cta-sheet: var(--shadow-public-footer-cta-sheet);
   --shadow-phone-frame: var(--shadow-phone-frame);
   --shadow-public-platform-cloud: var(--shadow-public-platform-cloud);
