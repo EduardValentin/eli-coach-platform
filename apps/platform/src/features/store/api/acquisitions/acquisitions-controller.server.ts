@@ -111,6 +111,10 @@ function createAcquisitionResponse(result: AcquireProductsResult): Response {
     });
   }
 
+  if (result.status === "subaddress_refused") {
+    return createErrorResponse("email_subaddress_refused", 400);
+  }
+
   if (result.status === "idempotency_conflict") {
     return createErrorResponse("idempotency_conflict", 409);
   }

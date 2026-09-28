@@ -42,7 +42,7 @@ export function useStoreAcquisition(options: UseStoreAcquisitionOptions) {
     },
     resolver: zodResolver(storeAcquisitionFormSchema),
   });
-  const { clearErrors, getValues, reset, watch } = form;
+  const { clearErrors, getValues, reset, setError, watch } = form;
   const acquisition = useStoreAcquisitionFetcher();
   const {
     reset: resetAcquisition,
@@ -92,6 +92,9 @@ export function useStoreAcquisition(options: UseStoreAcquisitionOptions) {
         case "reset-challenge":
           resetChallenge();
           break;
+        case "show-email-error":
+          setError("email", { message: effect.message }, { shouldFocus: true });
+          break;
       }
     }
   }, [
@@ -101,6 +104,7 @@ export function useStoreAcquisition(options: UseStoreAcquisitionOptions) {
     reset,
     resetChallenge,
     response,
+    setError,
   ]);
 
   const submit: SubmitHandler<StoreAcquisitionForm> = (values) => {

@@ -10,6 +10,7 @@ import {
   UpdateAssessmentCallSettingsUseCase,
   type AssessmentCallIncidents,
 } from "@eli-coach-platform/domain/assessment-call";
+import type { EmailSubaddressPolicy } from "@eli-coach-platform/domain/email-address";
 import type { FeatureFlagReader } from "@eli-coach-platform/domain/feature-flag";
 import type { AssessmentCallReader } from "@eli-coach-platform/domain/payment-link";
 import type { Clock } from "@eli-coach-platform/domain/shared";
@@ -47,6 +48,7 @@ export type AssessmentCallsFeatureHandles = {
   clock: Clock;
   contactEmail: string;
   database: DatabaseClient;
+  emailSubaddresses: EmailSubaddressPolicy;
   featureFlags: FeatureFlagReader;
   incidents: AssessmentCallIncidents;
   productEmail: ProductEmail;
@@ -79,6 +81,7 @@ export function composeAssessmentCallsFeature(
           availability,
           bookingWindow,
           clock: handles.clock,
+          emailSubaddresses: handles.emailSubaddresses,
           incidents: handles.incidents,
           notifications: createAssessmentCallNotifications(
             handles.productEmail,

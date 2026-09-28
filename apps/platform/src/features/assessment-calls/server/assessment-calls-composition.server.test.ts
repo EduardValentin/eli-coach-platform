@@ -76,6 +76,42 @@ describe("composeAssessmentCallsFeature", () => {
   });
 });
 
+describe("composeAssessmentCallsFeature subaddress policy", () => {
+  it("hands the subaddress policy to the booking", async () => {
+    // arrange
+    const { feature } = composeAssessmentCallsFeature({
+      ...createHandles({ WAITLIST_MODE: false }),
+      emailSubaddresses: "refused",
+    });
+    const formData = new FormData();
+    formData.set("country", "RO");
+    formData.set("dateOfBirth", "1994-03-14");
+    formData.set("email", "ana+coaching@example.com");
+    formData.set("firstName", "Ana");
+    formData.set("gender", "female");
+    formData.set("lastName", "Popescu");
+    formData.set("primaryGoal", "build_strength");
+    formData.set("startsAt", "2026-10-20T14:00:00.000Z");
+    formData.set("visitorTimeZone", "Europe/Bucharest");
+
+    // act
+    const response = await feature.assessmentCalls.book(
+      new Request("http://localhost/api/bookings", {
+        method: "POST",
+        body: formData,
+      }),
+    );
+    const body = await response.json();
+
+    // assert
+    expect(response.status).toBe(400);
+    expect(body).toMatchObject({
+      success: false,
+      error: { code: "email_subaddress_refused" },
+    });
+  });
+});
+
 describe("composeAssessmentCallsFeature assessment call reader", () => {
   it("reads a booked call as a snapshot for coaching sales", async () => {
     // arrange
@@ -115,6 +151,7 @@ function createHandles(
   featureFlags: FeatureFlagSet,
 ): AssessmentCallsFeatureHandles {
   return {
+    emailSubaddresses: "allowed",
     appBasePath: "/eli-coach-platform",
     assessmentCallsConfig: {
       ASSESSMENT_CALL_COACH_EMAIL: "coach@evoa.fit",

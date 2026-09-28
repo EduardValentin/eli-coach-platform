@@ -5,6 +5,7 @@ import {
   PRIVACY_POLICY_VERSION,
   WAITLIST_MARKETING_CONSENT_VERSION,
 } from "@eli-coach-platform/content";
+import type { EmailSubaddressPolicy } from "@eli-coach-platform/domain/email-address";
 import type { FeatureFlagReader } from "@eli-coach-platform/domain/feature-flag";
 import type { Clock } from "@eli-coach-platform/domain/shared";
 import {
@@ -35,6 +36,7 @@ type WaitlistFeatureHandles = {
   clock: Clock;
   contactEmail: string;
   database: DatabaseClient;
+  emailSubaddresses: EmailSubaddressPolicy;
   featureFlags: FeatureFlagReader;
   incidents: WaitlistIncidents;
   privacyEmail: string;
@@ -75,6 +77,7 @@ export function composeWaitlistFeature(
             privacyEmail: handles.privacyEmail,
           }),
           consentVersions: WAITLIST_CONSENT_VERSIONS,
+          emailSubaddresses: handles.emailSubaddresses,
           incidents: handles.incidents,
           waitlist,
           waitlistEntries,

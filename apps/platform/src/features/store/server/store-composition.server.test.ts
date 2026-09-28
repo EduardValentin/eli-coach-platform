@@ -59,6 +59,7 @@ describe("composeStoreFeature", () => {
       clock: { now: () => new Date() },
       database: createDatabaseStub(),
       contactEmail: "contact@evoa.fit",
+      emailSubaddresses: "allowed",
       incidents: createAcquisitionIncidents(),
       managementAuth: createManagementAuth(),
       productEmail: new InMemoryProductEmail(),
@@ -83,6 +84,7 @@ describe("composeStoreFeature", () => {
       clock: { now: () => new Date() },
       database: createDatabaseStub(),
       contactEmail: "contact@evoa.fit",
+      emailSubaddresses: "allowed",
       incidents: createAcquisitionIncidents(),
       managementAuth: createManagementAuth(),
       productEmail: new InMemoryProductEmail(),
@@ -104,5 +106,44 @@ describe("composeStoreFeature", () => {
     // assert
     expect(response.status).toBe(503);
     expect(body).toContain("Downloads temporarily unavailable");
+  });
+
+  it("hands the subaddress policy to the store request", async () => {
+    // arrange
+    const feature = composeStoreFeature({
+      appBasePath: "/",
+      botVerifier: { verifySubmission: async () => ({ status: "verified" }) },
+      clock: { now: () => new Date() },
+      database: createDatabaseStub(),
+      contactEmail: "contact@evoa.fit",
+      emailSubaddresses: "refused",
+      incidents: createAcquisitionIncidents(),
+      managementAuth: createManagementAuth(),
+      productEmail: new InMemoryProductEmail(),
+      publicAppUrl: "https://eli.example",
+      storeAssetRoot,
+    });
+    const formData = new FormData();
+    formData.set("email", "woman+guides@example.com");
+    formData.set("idempotencyKey", "d744ad8e-632c-4dfe-ac70-033bd3221522");
+    formData.set("marketingConsent", "false");
+    formData.set("productSlugs", JSON.stringify(["hormone-harmony"]));
+    formData.set("termsAccepted", "true");
+
+    // act
+    const response = await feature.acquisitions.acquire(
+      new Request("http://localhost/api/store/acquisitions", {
+        method: "POST",
+        body: formData,
+      }),
+    );
+    const body = await response.json();
+
+    // assert
+    expect(response.status).toBe(400);
+    expect(body).toMatchObject({
+      success: false,
+      error: { code: "email_subaddress_refused" },
+    });
   });
 });

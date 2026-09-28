@@ -5,6 +5,7 @@ export const ELI_PORTRAIT_PATHS = {
   small: "media/eli/eli-portrait-192.webp",
 } as const;
 
+export { EMAIL_SUBADDRESS_REFUSED_MESSAGE } from "./email-address-copy";
 export {
   formatEffectiveDate,
   type LegalDocument,

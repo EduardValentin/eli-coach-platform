@@ -4,6 +4,7 @@ import {
   type AcquisitionIncidents,
 } from "@eli-coach-platform/domain/acquisition";
 import { ResolveDownloadGrantUseCase } from "@eli-coach-platform/domain/download-grant";
+import type { EmailSubaddressPolicy } from "@eli-coach-platform/domain/email-address";
 import {
   FindPublishedCoverUseCase,
   FindPublishedProductUseCase,
@@ -60,6 +61,7 @@ export type StoreFeatureHandles = {
   clock: Clock;
   contactEmail: string;
   database: DatabaseClient;
+  emailSubaddresses: EmailSubaddressPolicy;
   incidents: AcquisitionIncidents;
   managementAuth: {
     authenticator: ManagementAuthenticator;
@@ -103,6 +105,7 @@ export function composeStoreFeature(
       contactEmail: handles.contactEmail,
       publicAppUrl: handles.publicAppUrl,
     }),
+    emailSubaddresses: handles.emailSubaddresses,
     incidents: handles.incidents,
     payloadDigestGenerator: new PayloadSha256Digest(),
     tokenGenerator: new RandomDownloadTokenGenerator(),

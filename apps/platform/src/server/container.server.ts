@@ -40,6 +40,7 @@ import {
   composeWithoutFeatureFlagOverrides,
   type FeatureFlagOverrides,
 } from "~/server/feature-flag-overrides/feature-flag-overrides-composition.server";
+import { resolveEmailSubaddressPolicy } from "~/server/email-subaddress-policy.server";
 import { createConsoleLogger } from "~/server/logger.server";
 import {
   composePlatformFeature,
@@ -86,11 +87,13 @@ export function createPlatformContainer(options: {
         })
       : composeWithoutFeatureFlagOverrides(databaseFeatureFlags);
   const featureFlags = featureFlagOverrides.featureFlags;
+  const emailSubaddresses = resolveEmailSubaddressPolicy(environment);
   const waitlist = composeWaitlistFeature({
     botVerifier,
     clock,
     contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
     database: database.client,
+    emailSubaddresses,
     featureFlags,
     incidents,
     privacyEmail: EVOA_FITNESS_PRIVACY_EMAIL,
@@ -105,6 +108,7 @@ export function createPlatformContainer(options: {
     clock,
     contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
     database: database.client,
+    emailSubaddresses,
     featureFlags,
     incidents,
     productEmail,
@@ -161,6 +165,7 @@ export function createPlatformContainer(options: {
       clock,
       contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
       database: database.client,
+      emailSubaddresses,
       incidents,
       managementAuth: {
         authenticator: managementAuthenticator,

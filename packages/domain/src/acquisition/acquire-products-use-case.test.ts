@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
+import type { EmailSubaddressPolicy } from "../email-address";
 import { PublishedProduct, type StoreCatalog } from "../product";
 
 import { AcquireProductsUseCase } from "./acquire-products-use-case";
@@ -99,6 +100,7 @@ function createUseCase(options: {
   acquisitions?: StoreAcquisitions;
   catalog?: StoreCatalog;
   delivery?: ProductDelivery;
+  emailSubaddresses?: EmailSubaddressPolicy;
   incidents?: ReturnType<typeof createAcquisitionIncidents>;
 }) {
   const events: string[] = [];
@@ -151,6 +153,7 @@ function createUseCase(options: {
         termsVersion: "1.0",
       },
       delivery,
+      emailSubaddresses: options.emailSubaddresses ?? "allowed",
       incidents,
       payloadDigestGenerator,
       tokenGenerator: {
@@ -274,6 +277,7 @@ describe("AcquireProductsUseCase", () => {
         termsVersion: "1.0",
       },
       delivery,
+      emailSubaddresses: "allowed",
       incidents: createAcquisitionIncidents(),
       payloadDigestGenerator: { digest: () => "payload-digest" },
       tokenGenerator,
@@ -464,6 +468,7 @@ describe("AcquireProductsUseCase", () => {
         termsVersion: "2.0",
       },
       delivery,
+      emailSubaddresses: "allowed",
       incidents: createAcquisitionIncidents(),
       payloadDigestGenerator: { digest: () => "payload-digest" },
       tokenGenerator,
@@ -516,6 +521,7 @@ describe("AcquireProductsUseCase", () => {
         termsVersion: "1.0",
       },
       delivery,
+      emailSubaddresses: "allowed",
       incidents: createAcquisitionIncidents(),
       payloadDigestGenerator: { digest: () => "payload-digest" },
       tokenGenerator: {
@@ -551,6 +557,7 @@ describe("AcquireProductsUseCase", () => {
         termsVersion: "1.0",
       },
       delivery,
+      emailSubaddresses: "allowed",
       incidents: createAcquisitionIncidents(),
       payloadDigestGenerator: { digest: () => "payload-digest" },
       tokenGenerator: {
@@ -644,4 +651,43 @@ describe("AcquireProductsUseCase", () => {
       expect(acquisitions.recordDeliveryRetryable).not.toHaveBeenCalled();
     },
   );
+
+  it("refuses a subaddressed email before reading the idempotency record, the catalog or the delivery allowance", async () => {
+    // arrange
+    const acquisitions = createAcquisitions();
+    const catalog = createCatalog();
+    const delivery = createDelivery();
+    const { acquireProducts } = createUseCase({
+      acquisitions,
+      catalog,
+      delivery,
+      emailSubaddresses: "refused",
+    });
+
+    // act
+    const result = await acquireProducts.execute({
+      ...command,
+      email: "Woman+Guides@Example.com",
+    });
+
+    // assert
+    expect(result).toEqual({ status: "subaddress_refused" });
+    expect(acquisitions.resolveIdempotency).not.toHaveBeenCalled();
+    expect(catalog.getPublishedCatalog).not.toHaveBeenCalled();
+    expect(acquisitions.prepareAcquisition).not.toHaveBeenCalled();
+    expect(delivery.deliver).not.toHaveBeenCalled();
+  });
+
+  it("delivers to a main address where subaddresses are refused", async () => {
+    // arrange
+    const { acquireProducts } = createUseCase({
+      emailSubaddresses: "refused",
+    });
+
+    // act
+    const result = await acquireProducts.execute(command);
+
+    // assert
+    expect(result).toEqual({ status: "delivered" });
+  });
 });

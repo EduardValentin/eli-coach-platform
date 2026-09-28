@@ -662,6 +662,31 @@ describe.sequential("Store integration", () => {
     });
   });
 
+  it("delivers to a subaddressed email on a test runtime exactly as to a main address", async () => {
+    // arrange
+    await seedPublishedProductVersion();
+
+    // act
+    const response = await requestAcquisition({
+      email: "Woman+Guides@Example.com",
+      idempotencyKey: "c0000000-0000-4000-8000-000000000003",
+    });
+
+    // assert
+    expect(response.status).toBe(201);
+    const [delivered] = await suite.sentEmails();
+    expect(delivered).toMatchObject({ to: "woman+guides@example.com" });
+    const recipients = await suite.postgres.queryRows<{
+      normalizedEmail: string;
+    }>({
+      sql: `select normalized_email as "normalizedEmail" from app.store_recipients`,
+      values: [],
+    });
+    expect(recipients).toEqual([
+      { normalizedEmail: "woman+guides@example.com" },
+    ]);
+  });
+
   it("shares one allowance across sub-addressed variants of an inbox", async () => {
     // arrange
     await seedPublishedProductVersion();

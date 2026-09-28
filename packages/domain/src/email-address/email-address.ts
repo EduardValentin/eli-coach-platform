@@ -1,3 +1,7 @@
+import type { EmailSubaddressPolicy } from "./email-subaddress-policy";
+
+const SUBADDRESS_SEPARATOR = "+";
+
 export class EmailAddress {
   private constructor(readonly value: string) {}
 
@@ -12,12 +16,25 @@ export class EmailAddress {
       return this.value;
     }
 
-    const localPart = this.value.slice(0, domainIndex);
-    const tagIndex = localPart.indexOf("+");
+    const tagIndex = this.localPart.indexOf(SUBADDRESS_SEPARATOR);
 
     return tagIndex < 0
       ? this.value
-      : `${localPart.slice(0, tagIndex)}${this.value.slice(domainIndex)}`;
+      : `${this.localPart.slice(0, tagIndex)}${this.value.slice(domainIndex)}`;
+  }
+
+  hasSubaddress(): boolean {
+    return this.localPart.includes(SUBADDRESS_SEPARATOR);
+  }
+
+  isAcceptedBy(policy: EmailSubaddressPolicy): boolean {
+    return policy === "allowed" || !this.hasSubaddress();
+  }
+
+  private get localPart(): string {
+    const domainIndex = this.value.lastIndexOf("@");
+
+    return domainIndex < 0 ? this.value : this.value.slice(0, domainIndex);
   }
 }
 

@@ -1,4 +1,4 @@
-import { EmailAddress } from "../email-address";
+import { EmailAddress, type EmailSubaddressPolicy } from "../email-address";
 
 import type {
   Waitlist,
@@ -15,12 +15,13 @@ export type JoinWaitlistCommand = {
 };
 
 export type JoinWaitlistResult = {
-  status: "registered" | "already_registered";
+  status: "registered" | "already_registered" | "subaddress_refused";
 };
 
 type JoinWaitlistUseCaseOptions = {
   confirmation: WaitlistConfirmation;
   consentVersions: WaitlistConsentVersions;
+  emailSubaddresses: EmailSubaddressPolicy;
   incidents: WaitlistIncidents;
   waitlist: Waitlist;
   waitlistEntries: WaitlistEntries;
@@ -30,7 +31,13 @@ export class JoinWaitlistUseCase {
   constructor(private readonly options: JoinWaitlistUseCaseOptions) {}
 
   async execute(command: JoinWaitlistCommand): Promise<JoinWaitlistResult> {
-    const normalizedEmail = EmailAddress.normalize(command.email).value;
+    const email = EmailAddress.normalize(command.email);
+
+    if (!email.isAcceptedBy(this.options.emailSubaddresses)) {
+      return { status: "subaddress_refused" };
+    }
+
+    const normalizedEmail = email.value;
 
     const reducedPricingSignup =
       await this.options.waitlistEntries.registerReducedPricingSignup({

@@ -226,6 +226,28 @@ describe.sequential("assessment call booking integration", () => {
     expect(coachEmail?.attachments.at(0)?.filename).toBe("invite.ics");
   });
 
+  it("books a subaddressed email on a test runtime exactly as a main address", async () => {
+    // arrange
+    await suite.setServerClock(MONDAY_MORNING);
+
+    // act
+    const response = await requestBooking({
+      email: "Ana+Coaching@Example.com",
+    });
+
+    // assert
+    const [row] = await readCalls();
+
+    expect(response.status).toBe(201);
+    expect(row?.visitorEmail).toBe("ana+coaching@example.com");
+
+    await expect.poll(async () => (await suite.sentEmails()).length).toBe(2);
+
+    const recipients = (await suite.sentEmails()).map((email) => email.to);
+
+    expect(recipients).toContain("ana+coaching@example.com");
+  });
+
   it("stores no phone when the visitor leaves the number blank", async () => {
     // arrange
     await suite.setServerClock(MONDAY_MORNING);

@@ -7,6 +7,7 @@ import {
   type CoachCalendar,
 } from "../coach-availability";
 import type { CoachMeetingRoomSource } from "../coach-meeting-room";
+import type { EmailSubaddressPolicy } from "../email-address";
 import type { FeatureFlagReader } from "../feature-flag";
 
 import { AssessmentCall } from "./assessment-call";
@@ -161,6 +162,7 @@ function createListOpenSlots(options: {
 
 function createBookAssessmentCall(options: {
   availability: CoachAvailabilitySource;
+  emailSubaddresses?: EmailSubaddressPolicy;
   incidents: ReturnType<typeof createIncidents>;
   notifications: AssessmentCallNotifications;
   reservations: AssessmentCallReservations;
@@ -169,6 +171,7 @@ function createBookAssessmentCall(options: {
     availability: options.availability,
     bookingWindow: openBookingWindow(),
     clock,
+    emailSubaddresses: options.emailSubaddresses ?? "allowed",
     incidents: options.incidents,
     notifications: options.notifications,
     reservations: options.reservations,
@@ -478,6 +481,7 @@ describe("BookAssessmentCallUseCase", () => {
       availability: createAvailabilitySource(),
       bookingWindow: closedBookingWindow(),
       clock,
+      emailSubaddresses: "allowed",
       incidents: createIncidents(),
       notifications: createNotifications(),
       reservations,
@@ -651,6 +655,79 @@ describe("BookAssessmentCallUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "email_already_booked" });
+  });
+
+  it("refuses a subaddressed email before reading the booking window, the availability or the reservations", async () => {
+    // arrange
+    const featureFlags = {
+      execute: vi.fn().mockResolvedValue({ WAITLIST_MODE: false }),
+    };
+    const availability = createAvailabilitySource();
+    const notifications = createNotifications();
+    const reservations = createReservations();
+    const bookAssessmentCall = new BookAssessmentCallUseCase({
+      availability,
+      bookingWindow: createBookingWindow({ featureFlags }),
+      clock,
+      emailSubaddresses: "refused",
+      incidents: createIncidents(),
+      notifications,
+      reservations,
+    });
+
+    // act
+    const result = await bookAssessmentCall.execute({
+      ...bookingCommand,
+      email: "Ana+Coaching@Example.com",
+    });
+
+    // assert
+    expect(result).toEqual({ status: "subaddress_refused" });
+    expect(featureFlags.execute).not.toHaveBeenCalled();
+    expect(availability.current).not.toHaveBeenCalled();
+    expect(reservations.reserve).not.toHaveBeenCalled();
+    expect(notifications.notifyBooked).not.toHaveBeenCalled();
+  });
+
+  it("books a main address where subaddresses are refused", async () => {
+    // arrange
+    const bookAssessmentCall = createBookAssessmentCall({
+      availability: createAvailabilitySource(),
+      emailSubaddresses: "refused",
+      incidents: createIncidents(),
+      notifications: createNotifications(),
+      reservations: createReservations(),
+    });
+
+    // act
+    const result = await bookAssessmentCall.execute(bookingCommand);
+
+    // assert
+    expect(result).toEqual({ status: "booked", call: existingCall() });
+  });
+
+  it("reserves a subaddressed email as entered where subaddresses are allowed", async () => {
+    // arrange
+    const reservations = createReservations();
+    const bookAssessmentCall = createBookAssessmentCall({
+      availability: createAvailabilitySource(),
+      emailSubaddresses: "allowed",
+      incidents: createIncidents(),
+      notifications: createNotifications(),
+      reservations,
+    });
+
+    // act
+    const result = await bookAssessmentCall.execute({
+      ...bookingCommand,
+      email: "Ana+Coaching@Example.com",
+    });
+
+    // assert
+    expect(result).toEqual({ status: "booked", call: existingCall() });
+    expect(reservations.reserve).toHaveBeenCalledWith(
+      expect.objectContaining({ normalizedEmail: "ana+coaching@example.com" }),
+    );
   });
 });
 

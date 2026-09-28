@@ -523,6 +523,7 @@ describe("bookAssessmentCallResponseSchema", () => {
     "invalid_first_name",
     "invalid_last_name",
     "invalid_email",
+    "email_subaddress_refused",
     "invalid_date_of_birth",
     "invalid_gender",
     "invalid_primary_goal",

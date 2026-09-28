@@ -1,4 +1,8 @@
-import type { StoreAcquisitionResponse } from "~/features/store/contracts/store";
+import { EMAIL_SUBADDRESS_REFUSED_MESSAGE } from "@eli-coach-platform/content";
+import type {
+  StoreAcquisitionErrorCode,
+  StoreAcquisitionResponse,
+} from "~/features/store/contracts/store";
 
 type StoreAcquisitionStep = "cart" | "details" | "success";
 
@@ -17,7 +21,17 @@ export type AcquisitionFlowEffect =
   | { type: "clear-cart" }
   | { type: "reconcile-products"; availableProductSlugs: readonly string[] }
   | { type: "reset-form" }
-  | { type: "reset-challenge" };
+  | { type: "reset-challenge" }
+  | { type: "show-email-error"; message: string };
+
+type EmailFieldErrorCode = Extract<
+  StoreAcquisitionErrorCode,
+  "email_subaddress_refused"
+>;
+
+const EMAIL_FIELD_ERROR_MESSAGES = {
+  email_subaddress_refused: EMAIL_SUBADDRESS_REFUSED_MESSAGE,
+} satisfies Record<EmailFieldErrorCode, string>;
 
 export function reduceAcquisitionFlow(
   state: AcquisitionFlowState,
@@ -42,7 +56,7 @@ export function reduceAcquisitionFlow(
 export function resolveAcquisitionError(
   response: StoreAcquisitionResponse | null,
 ): string | null {
-  if (!response || response.success) {
+  if (!response || response.success || isEmailFieldError(response.error.code)) {
     return null;
   }
 
@@ -66,7 +80,7 @@ export function resolveAcquisitionError(
     unavailable_products:
       "One or more resources are no longer available. Your cart has been updated.",
   } satisfies Record<
-    Exclude<StoreAcquisitionResponse, { success: true }>["error"]["code"],
+    Exclude<StoreAcquisitionErrorCode, EmailFieldErrorCode>,
     string
   >;
 
@@ -103,6 +117,13 @@ function reduceResponse(
     step = "cart";
   }
 
+  if (isEmailFieldError(response.error.code)) {
+    effects.push({
+      type: "show-email-error",
+      message: EMAIL_FIELD_ERROR_MESSAGES[response.error.code],
+    });
+  }
+
   effects.push({ type: "reset-challenge" });
 
   return {
@@ -115,4 +136,10 @@ function reduceResponse(
       step,
     },
   };
+}
+
+function isEmailFieldError(
+  code: StoreAcquisitionErrorCode,
+): code is EmailFieldErrorCode {
+  return code in EMAIL_FIELD_ERROR_MESSAGES;
 }

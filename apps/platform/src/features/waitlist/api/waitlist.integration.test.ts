@@ -152,6 +152,20 @@ describe.sequential("waitlist API integration", () => {
     expect(row?.updatedAt).toBeInstanceOf(Date);
   });
 
+  it("registers a subaddressed email on a test runtime exactly as a main address", async () => {
+    // arrange, act
+    const response = await requestJoin("Eli+Launch@Example.com");
+
+    // assert
+    const rows = await readWaitlistEntries("eli+launch@example.com");
+
+    expect(response.status).toBe(201);
+    expect(rows).toHaveLength(1);
+    await expect
+      .poll(async () => suite.sentEmails())
+      .toEqual([expect.objectContaining({ to: "eli+launch@example.com" })]);
+  });
+
   it("confirms a new signup by email", async () => {
     // arrange, act
     await requestJoin("eli@example.com");

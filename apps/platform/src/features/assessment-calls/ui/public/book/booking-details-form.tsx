@@ -12,7 +12,7 @@ import {
 import { ChevronLeft, Mail, User, type LucideIcon } from "lucide-react";
 import { motion } from "motion/react";
 import type { ReactNode, Ref } from "react";
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import {
   Controller,
   useForm,
@@ -47,6 +47,9 @@ const SUPPORT_CONTACT_CODES: ReadonlySet<BookingClientError["code"]> = new Set([
   "booking_refused",
   "server_error",
 ]);
+
+const EMAIL_FIELD_ERROR_CODES: ReadonlySet<BookingClientError["code"]> =
+  new Set(["email_subaddress_refused"]);
 
 const COUNTRY_OPTIONS = COUNTRIES.map((country) => ({
   label: country.name,
@@ -161,11 +164,25 @@ export function BookingDetailsForm(props: BookingDetailsFormProps) {
     getValues,
     handleSubmit,
     register,
+    setError,
     setValue,
   } = useForm<BookingDetails>({
     defaultValues: enteredDetails,
     resolver: zodResolver(createBookingDetailsSchema({ now, timeZone })),
   });
+  const emailFieldError =
+    error !== null && EMAIL_FIELD_ERROR_CODES.has(error.code) ? error : null;
+
+  useEffect(() => {
+    if (emailFieldError) {
+      setError(
+        "email",
+        { message: emailFieldError.message },
+        { shouldFocus: true },
+      );
+    }
+  }, [emailFieldError, setError]);
+
   const phoneCountry = useWatch({ control, name: "phoneCountry" });
   const phoneCountryChosen = useWatch({ control, name: "phoneCountryChosen" });
   const submitDetails: SubmitHandler<BookingDetails> = (details) => {
@@ -208,7 +225,7 @@ export function BookingDetailsForm(props: BookingDetailsFormProps) {
 
       <BookingErrorAlert
         botDetectionError={submission.botDetectionError}
-        error={error}
+        error={emailFieldError ? null : error}
       />
 
       <form

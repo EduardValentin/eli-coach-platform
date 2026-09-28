@@ -11,7 +11,10 @@ import {
   within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { STORE_MARKETING_CONSENT } from "@eli-coach-platform/content";
+import {
+  EMAIL_SUBADDRESS_REFUSED_MESSAGE,
+  STORE_MARKETING_CONSENT,
+} from "@eli-coach-platform/content";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { useState } from "react";
@@ -372,6 +375,67 @@ describe("StoreCartDrawer", () => {
     expect(
       within(dialog).getByRole("textbox", { name: "Email address" }),
     ).toHaveValue("woman@example.com");
+    expect(readStoredProductSlugs()).toEqual(["hormone-harmony"]);
+  });
+
+  it("shows a refused subaddress as the email field's own error, not as a form alert", async () => {
+    // arrange
+    const user = userEvent.setup();
+    seedCart(["hormone-harmony"]);
+    server.use(
+      http.get(STORE_CATALOG_API_URL, () =>
+        HttpResponse.json({
+          products: [createProduct()],
+          success: true,
+        }),
+      ),
+      http.post(STORE_ACQUISITIONS_API_URL, () =>
+        HttpResponse.json(
+          {
+            error: {
+              code: "email_subaddress_refused",
+              message: "Unable to deliver store resources.",
+            },
+            success: false,
+          },
+          { status: 400 },
+        ),
+      ),
+    );
+    renderCart();
+    await user.click(
+      await screen.findByRole("button", { name: "Cart, 1 item" }),
+    );
+    const dialog = await screen.findByRole("dialog", { name: "Your cart" });
+    await continueToAcquisitionDetails(dialog, user);
+    const emailInput = within(dialog).getByRole("textbox", {
+      name: "Email address",
+    });
+    await user.type(emailInput, "woman+guides@example.com");
+    await user.click(
+      within(dialog).getByRole("checkbox", {
+        name: /agree to the terms/i,
+      }),
+    );
+
+    // act
+    await user.click(
+      within(dialog).getByRole("button", { name: "Send my resources" }),
+    );
+
+    // assert
+    expect(await within(dialog).findByRole("alert")).toHaveTextContent(
+      EMAIL_SUBADDRESS_REFUSED_MESSAGE,
+    );
+    expect(within(dialog).getAllByRole("alert")).toHaveLength(1);
+    expect(emailInput).toHaveAccessibleDescription(
+      EMAIL_SUBADDRESS_REFUSED_MESSAGE,
+    );
+    expect(emailInput).toHaveAttribute("aria-invalid", "true");
+    await waitFor(() => {
+      expect(emailInput).toHaveFocus();
+    });
+    expect(emailInput).toHaveValue("woman+guides@example.com");
     expect(readStoredProductSlugs()).toEqual(["hormone-harmony"]);
   });
 
