@@ -190,22 +190,29 @@ export function OnboardingWizard() {
     }
   };
 
-  const consentMissing = (consents: OnboardingConsents) => {
-    if (asksSpecialCategory && !consents.specialCategory) return true;
+  const specialCategoryMissing = (consents: OnboardingConsents) =>
+    asksSpecialCategory && !consents.specialCategory;
 
-    return isLastStep && !consents.disclaimer;
-  };
+  const disclaimerMissing = (consents: OnboardingConsents) =>
+    isLastStep && !consents.disclaimer;
 
   const reviewConsent = () => {
     setConsentProblem(
-      consentMissing(draftRef.current.consents) ? MISSING_CONSENT : null,
+      specialCategoryMissing(draftRef.current.consents)
+        ? MISSING_CONSENT
+        : null,
     );
   };
 
   const continueFrom = (answers: OnboardingFormAnswers) => {
     const current = draftRef.current;
 
-    if (consentMissing(current.consents)) return;
+    if (
+      specialCategoryMissing(current.consents) ||
+      disclaimerMissing(current.consents)
+    ) {
+      return;
+    }
 
     const next: OnboardingDraft = {
       ...current,
@@ -288,6 +295,7 @@ export function OnboardingWizard() {
                 />
               ) : null
             }
+            continueDisabled={disclaimerMissing(draft.consents)}
             continueLabel={
               isLastStep
                 ? sending

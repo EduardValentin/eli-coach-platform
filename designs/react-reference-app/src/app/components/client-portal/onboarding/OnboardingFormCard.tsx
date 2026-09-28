@@ -30,6 +30,7 @@ type OnboardingAnswerFormProps = {
   definition: OnboardingFormDefinition;
   answers: OnboardingFormAnswers;
   continueLabel: string;
+  continueDisabled: boolean;
   onAttempt: () => void;
   onBack: (() => void) | null;
   onChange: (answers: OnboardingFormAnswers) => void;
@@ -88,6 +89,7 @@ function OnboardingAnswerForm({
   definition,
   answers,
   continueLabel,
+  continueDisabled,
   onAttempt,
   onBack,
   onChange,
@@ -192,6 +194,7 @@ function OnboardingAnswerForm({
           )}
           <Button
             data-parity="continue"
+            disabled={continueDisabled}
             type="submit"
             variant="primary"
             size="md"

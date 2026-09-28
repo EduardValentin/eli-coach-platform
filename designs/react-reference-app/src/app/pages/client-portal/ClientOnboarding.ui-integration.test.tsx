@@ -126,6 +126,15 @@ const GIVEN_CONSENTS: OnboardingConsents = {
   progressPhotos: false,
 };
 
+const DISCLAIMER_WITHHELD: OnboardingConsents = {
+  disclaimer: false,
+  specialCategory: true,
+  progressPhotos: false,
+};
+
+const DISCLAIMER =
+  'The information I give is correct and complete, and I understand this program does not replace medical advice or a consultation with a doctor.';
+
 const WITHHELD_CONSENTS: OnboardingConsents = {
   disclaimer: false,
   specialCategory: false,
@@ -210,22 +219,24 @@ describe('the onboarding', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('asks for the disclaimer on the last form and refuses to send without it', async () => {
+  it('keeps the send button disabled until she ticks the disclaimer', async () => {
     // arrange
     await saveDraft(
       DEMO_JOURNEY_CALL_ID,
-      draftAt(4, WITHHELD_CONSENTS),
+      draftAt(4, DISCLAIMER_WITHHELD),
       'working',
     );
     renderOnboarding('?session=client&jstage=onboarding');
+    const send = screen.getByRole('button', { name: 'Send to my coach' });
+    const disabledBeforeTicking = send.hasAttribute('disabled');
 
     // act
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Send to my coach' }),
-    );
+    await userEvent.click(screen.getByRole('checkbox', { name: DISCLAIMER }));
 
     // assert
-    expect(screen.getByText('Tick the box to carry on.')).toBeVisible();
+    expect(disabledBeforeTicking).toBe(true);
+    expect(send).toBeEnabled();
+    expect(screen.queryByText('Tick the box to carry on.')).not.toBeInTheDocument();
     expect(screen.getByTestId('stage')).toHaveTextContent('onboarding');
   });
 
@@ -636,8 +647,13 @@ describe('the onboarding', () => {
 
   it('sends the last form to her coach and closes the onboarding', async () => {
     // arrange
-    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(4), 'working');
+    await saveDraft(
+      DEMO_JOURNEY_CALL_ID,
+      draftAt(4, DISCLAIMER_WITHHELD),
+      'working',
+    );
     renderOnboarding('?session=client&jstage=onboarding');
+    await userEvent.click(screen.getByRole('checkbox', { name: DISCLAIMER }));
 
     // act
     await userEvent.click(
