@@ -9,15 +9,10 @@ import {
   labelForPrimaryGoal,
 } from "~/features/assessment-calls/contracts/visitor-profile";
 import type { CoachClient } from "~/features/coaching-sales/contracts/coach-clients";
-import type { PriceTier } from "~/features/coaching-sales/contracts/coaching-sales";
+import { shortPricingTierLabel } from "~/features/coaching-sales/ui/coach/call-sales/pricing-tier-label";
 import { useCalendarDayTimeZone } from "~/features/coaching-sales/ui/shared/calendar-day-format";
 
 const ABSENT = "—";
-
-const PRICING_TIER_LABELS: Readonly<Record<PriceTier, string>> = {
-  reduced: "Reduced",
-  regular: "Regular",
-};
 
 type ClientProfileBlockProps = {
   client: Pick<CoachClient, "profile" | "subscription">;
@@ -92,7 +87,9 @@ export function ClientProfileBlock({ client }: ClientProfileBlockProps) {
         <Reading
           as="dl-item"
           label="Pricing tier"
-          value={subscription ? PRICING_TIER_LABELS[subscription.tier] : ABSENT}
+          value={
+            subscription ? shortPricingTierLabel(subscription.tier) : ABSENT
+          }
           valueParity="profile-tier"
         />
         <Reading
