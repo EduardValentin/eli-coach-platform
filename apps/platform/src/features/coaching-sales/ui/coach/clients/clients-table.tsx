@@ -1,4 +1,5 @@
 import {
+  Avatar,
   buttonVariants,
   Table,
   TableBody,
@@ -49,14 +50,6 @@ function tableSortFor(sort: RosterSort, key: RosterSortKey): TableSort {
   }
 
   return sort.direction === "asc" ? "ascending" : "descending";
-}
-
-function initialsOf(name: string): string {
-  return name
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part.charAt(0).toUpperCase())
-    .join("");
 }
 
 export function ClientsTable({
@@ -126,12 +119,7 @@ function ClientRow({ client, position, timeZone }: ClientRowProps) {
     >
       <TableCell>
         <div className="flex items-center gap-3">
-          <div
-            aria-hidden="true"
-            className="flex size-10 shrink-0 items-center justify-center rounded-full bg-surface-quiet font-heading font-semibold text-text-primary"
-          >
-            {initialsOf(name)}
-          </div>
+          <Avatar name={name} tone="heading" />
           <div>
             <p
               className="text-sm font-semibold text-text-primary"
