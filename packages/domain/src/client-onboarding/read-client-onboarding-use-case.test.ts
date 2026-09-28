@@ -10,12 +10,22 @@ const CLIENT: OnboardingClient = {
   clientId: "client-1",
   gender: "female",
   dateOfBirth: "1994-05-12",
+  firstName: "Ana",
+  email: "ana@example.com",
+  submittedAt: null,
+  reviewStamps: {
+    reviewOpenedAt: null,
+    detailsRequestedAt: null,
+    detailsAnsweredAt: null,
+    answersApprovedAt: null,
+  },
 };
 const DRAFT = emptyDraft(new Date("2026-09-28T10:00:00.000Z"));
 
 function createClients(found: OnboardingClient | null) {
   return {
     findByAuthSubjectId: vi.fn().mockResolvedValue(found),
+    findByClientId: vi.fn().mockResolvedValue(found),
   } satisfies OnboardingClients;
 }
 

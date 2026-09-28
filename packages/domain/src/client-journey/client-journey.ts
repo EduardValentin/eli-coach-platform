@@ -1,11 +1,21 @@
 import type { VisitorGender } from "../assessment-call";
-import { formsForGender } from "../client-onboarding";
+import {
+  formsForGender,
+  reviewStageOf,
+  type ReviewStamps,
+} from "../client-onboarding";
 
-export type ClientJourneyStep = "welcome" | "onboarding" | "submitted";
+export type ClientJourneyStep =
+  | "welcome"
+  | "onboarding"
+  | "submitted"
+  | "in-review"
+  | "needs-details"
+  | "approved";
 
 export type WelcomeWording = "five-part" | "four-part";
 
-export type ClientJourneySnapshot = {
+export type ClientJourneySnapshot = ReviewStamps & {
   clientId: string;
   firstName: string;
   lastName: string;
@@ -21,6 +31,10 @@ export class ClientJourney {
   readonly gender: VisitorGender;
   readonly welcomeSeenAt: Date | null;
   readonly onboardingSubmittedAt: Date | null;
+  readonly reviewOpenedAt: Date | null;
+  readonly detailsRequestedAt: Date | null;
+  readonly detailsAnsweredAt: Date | null;
+  readonly answersApprovedAt: Date | null;
 
   private constructor(snapshot: ClientJourneySnapshot) {
     this.clientId = snapshot.clientId;
@@ -29,6 +43,10 @@ export class ClientJourney {
     this.gender = snapshot.gender;
     this.welcomeSeenAt = snapshot.welcomeSeenAt;
     this.onboardingSubmittedAt = snapshot.onboardingSubmittedAt;
+    this.reviewOpenedAt = snapshot.reviewOpenedAt;
+    this.detailsRequestedAt = snapshot.detailsRequestedAt;
+    this.detailsAnsweredAt = snapshot.detailsAnsweredAt;
+    this.answersApprovedAt = snapshot.answersApprovedAt;
   }
 
   static from(snapshot: ClientJourneySnapshot): ClientJourney {
@@ -36,8 +54,16 @@ export class ClientJourney {
   }
 
   step(): ClientJourneyStep {
-    if (this.onboardingSubmittedAt) {
+    const reviewStage = reviewStageOf({
+      submittedAt: this.onboardingSubmittedAt,
+      stamps: this,
+    });
+
+    if (reviewStage === "awaiting-review") {
       return "submitted";
+    }
+    if (reviewStage) {
+      return reviewStage;
     }
 
     return this.welcomeSeenAt ? "onboarding" : "welcome";
@@ -59,6 +85,10 @@ export class ClientJourney {
       gender: this.gender,
       welcomeSeenAt: this.welcomeSeenAt,
       onboardingSubmittedAt: this.onboardingSubmittedAt,
+      reviewOpenedAt: this.reviewOpenedAt,
+      detailsRequestedAt: this.detailsRequestedAt,
+      detailsAnsweredAt: this.detailsAnsweredAt,
+      answersApprovedAt: this.answersApprovedAt,
     };
   }
 }

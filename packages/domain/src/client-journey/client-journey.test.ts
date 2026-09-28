@@ -12,6 +12,10 @@ function journey(
     lastName: "Popescu",
     welcomeSeenAt: null,
     onboardingSubmittedAt: null,
+    reviewOpenedAt: null,
+    detailsRequestedAt: null,
+    detailsAnsweredAt: null,
+    answersApprovedAt: null,
     ...overrides,
   });
 }
@@ -44,6 +48,53 @@ describe("ClientJourney#step", () => {
       expect(step).toBe(expected);
     },
   );
+});
+
+describe("ClientJourney#step, once she has submitted", () => {
+  const SUBMITTED_AT = new Date("2026-09-28T10:00:00.000Z");
+  const OPENED_AT = new Date("2026-09-28T11:00:00.000Z");
+  const ASKED_AT = new Date("2026-09-28T12:00:00.000Z");
+  const ANSWERED_AT = new Date("2026-09-29T10:00:00.000Z");
+
+  it.each([
+    [
+      "in-review once the coach opens her answers",
+      { reviewOpenedAt: OPENED_AT },
+      "in-review",
+    ],
+    [
+      "needs-details while the coach's request is unanswered",
+      { reviewOpenedAt: OPENED_AT, detailsRequestedAt: ASKED_AT },
+      "needs-details",
+    ],
+    [
+      "in-review again once she answers",
+      {
+        reviewOpenedAt: OPENED_AT,
+        detailsRequestedAt: ASKED_AT,
+        detailsAnsweredAt: ANSWERED_AT,
+      },
+      "in-review",
+    ],
+    [
+      "approved once the coach approves",
+      { reviewOpenedAt: OPENED_AT, answersApprovedAt: ANSWERED_AT },
+      "approved",
+    ],
+  ] as const)("is %s", (_label, stamps, expected) => {
+    // arrange
+    const clientJourney = journey({
+      welcomeSeenAt: SUBMITTED_AT,
+      onboardingSubmittedAt: SUBMITTED_AT,
+      ...stamps,
+    });
+
+    // act
+    const step = clientJourney.step();
+
+    // assert
+    expect(step).toBe(expected);
+  });
 });
 
 describe("ClientJourney#welcomeWording", () => {
@@ -81,6 +132,10 @@ describe("ClientJourney#toSnapshot", () => {
       lastName: "Popescu",
       welcomeSeenAt,
       onboardingSubmittedAt,
+      reviewOpenedAt: null,
+      detailsRequestedAt: null,
+      detailsAnsweredAt: null,
+      answersApprovedAt: null,
     });
   });
 });

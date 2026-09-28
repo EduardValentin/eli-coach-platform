@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  answeredOfTotal,
   applyExclusiveOptions,
   emptyAnswers,
+  flaggedAnswerIds,
   hasStartedAnswering,
   isFieldReachable,
   reachableFields,
@@ -228,5 +230,96 @@ describe("hasStartedAnswering", () => {
 
     // assert
     expect(started).toBe(true);
+  });
+});
+
+describe("answeredOfTotal", () => {
+  it("counts only the questions her answers made reachable", () => {
+    // arrange
+    const answers: OnboardingFormAnswers = {
+      weight: 70,
+      blockers: ["Something else"],
+      blockersOther: "",
+    };
+
+    // act
+    const counts = answeredOfTotal(goalFields, answers);
+
+    // assert
+    expect(counts).toEqual({
+      answered: 2,
+      total: reachableFields(goalFields, answers).length,
+    });
+    expect(reachableFields(goalFields, answers)).toContainEqual(
+      blockersOtherField,
+    );
+  });
+});
+
+describe("flaggedAnswerIds", () => {
+  it("flags every safety question answered Yes and never the declaration", () => {
+    // arrange
+    const answers: OnboardingAnswersByForm = {
+      ...emptyAnswers(),
+      "safety-screening": {
+        heartCondition: "Yes",
+        chestPainOnExertion: "No",
+        boneOrJointProblem: "Yes",
+        parqDeclaration: true,
+      },
+    };
+
+    // act
+    const flagged = flaggedAnswerIds(answers);
+
+    // assert
+    expect(flagged).toEqual([
+      { formId: "safety-screening", fieldId: "heartCondition" },
+      { formId: "safety-screening", fieldId: "boneOrJointProblem" },
+    ]);
+  });
+
+  it("flags a pregnant or postpartum life stage", () => {
+    // arrange
+    const answers: OnboardingAnswersByForm = {
+      ...emptyAnswers(),
+      "cycle-context": { lifeStage: ["Postpartum (in the last 12 months)"] },
+    };
+
+    // act
+    const flagged = flaggedAnswerIds(answers);
+
+    // assert
+    expect(flagged).toEqual([
+      { formId: "cycle-context", fieldId: "lifeStage" },
+    ]);
+  });
+
+  it("flags migraines only together with the combined pill", () => {
+    // arrange
+    const withPill: OnboardingAnswersByForm = {
+      ...emptyAnswers(),
+      "cycle-context": {
+        recurringSymptoms: ["Migraines"],
+        hormonalContraception: "Combined pill",
+      },
+    };
+    const withoutPill: OnboardingAnswersByForm = {
+      ...emptyAnswers(),
+      "cycle-context": {
+        recurringSymptoms: ["Migraines"],
+        hormonalContraception: "None",
+      },
+    };
+
+    // act
+    const flaggedWithPill = flaggedAnswerIds(withPill);
+    const flaggedWithoutPill = flaggedAnswerIds(withoutPill);
+
+    // assert
+    expect(flaggedWithPill).toEqual([
+      { formId: "cycle-context", fieldId: "recurringSymptoms" },
+    ]);
+    expect(flaggedWithoutPill).toEqual([]);
   });
 });
