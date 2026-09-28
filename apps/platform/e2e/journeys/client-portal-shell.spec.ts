@@ -1,6 +1,5 @@
-import { devices } from "@playwright/test";
-
 import { expect, test } from "../support/fixtures";
+import { useDesktopViewport, usePhoneViewport } from "../support/viewport";
 
 test("a client finds her way around her portal on a laptop and on her phone", async ({
   page,
@@ -22,15 +21,16 @@ test("a client finds her way around her portal on a laptop and on her phone", as
   await clientPortalShell.expectSidebar("Client");
   await clientPortalShell.expectDashboardCurrent();
   await clientPortalShell.expectGreeting("Welcome back.");
+  await clientPortalShell.expectSkipLinkFocusedAfterTab();
 
   // act
-  await clientPortalShell.skipToMainContent();
+  await clientPortalShell.followSkipLink();
 
   // assert
   await clientPortalShell.expectMainContentFocused();
 
   // act
-  await clientPortalShell.usePhoneViewport();
+  await usePhoneViewport(page);
 
   // assert
   await clientPortalShell.expectTopBar("Client");
@@ -55,6 +55,10 @@ test("a client finds her way around her portal on a laptop and on her phone", as
 
   // assert
   await expect(page).toHaveURL("/");
-  await page.setViewportSize(devices["Desktop Chrome"].viewport);
+
+  // act
+  await useDesktopViewport(page);
+
+  // assert
   await publicNav.expectSignedOut();
 });

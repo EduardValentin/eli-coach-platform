@@ -12,8 +12,6 @@ export type ClientJourneySnapshot = {
   welcomeSeenAt: Date | null;
 };
 
-type ClientJourneyProps = ClientJourneySnapshot;
-
 export class ClientJourney {
   readonly clientId: string;
   readonly firstName: string;
@@ -21,16 +19,16 @@ export class ClientJourney {
   readonly gender: VisitorGender;
   readonly welcomeSeenAt: Date | null;
 
-  private constructor(props: ClientJourneyProps) {
-    this.clientId = props.clientId;
-    this.firstName = props.firstName;
-    this.lastName = props.lastName;
-    this.gender = props.gender;
-    this.welcomeSeenAt = props.welcomeSeenAt;
+  private constructor(snapshot: ClientJourneySnapshot) {
+    this.clientId = snapshot.clientId;
+    this.firstName = snapshot.firstName;
+    this.lastName = snapshot.lastName;
+    this.gender = snapshot.gender;
+    this.welcomeSeenAt = snapshot.welcomeSeenAt;
   }
 
-  static from(props: ClientJourneyProps): ClientJourney {
-    return new ClientJourney(props);
+  static from(snapshot: ClientJourneySnapshot): ClientJourney {
+    return new ClientJourney(snapshot);
   }
 
   step(): ClientJourneyStep {

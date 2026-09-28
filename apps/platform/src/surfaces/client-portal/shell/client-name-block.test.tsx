@@ -12,20 +12,13 @@ afterEach(() => {
 });
 
 describe("ClientNameBlock", () => {
-  it("shows the client's name beside her avatar medallion", () => {
+  it("shows the client's name beside a decorative medallion", () => {
     // arrange, act
-    const { container } = render(
-      <ClientNameBlock displayName="Ana Popescu" size="md" />,
-    );
+    render(<ClientNameBlock displayName="Ana Popescu" size="md" />);
 
     // assert
-    expect(screen.getByText("Ana Popescu")).toHaveAttribute(
-      "data-parity",
-      "name",
-    );
-    expect(
-      container.querySelector('[data-parity="avatar"] svg'),
-    ).toHaveAttribute("aria-hidden", "true");
+    expect(screen.getByText("Ana Popescu")).toBeVisible();
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
   });
 
   it("stays a block rather than a link until a profile page exists", () => {
@@ -33,7 +26,7 @@ describe("ClientNameBlock", () => {
     render(<ClientNameBlock displayName="Client" size="sm" />);
 
     // assert
+    expect(screen.getByText("Client")).toBeVisible();
     expect(screen.queryByRole("link")).not.toBeInTheDocument();
-    expect(screen.getByText("Client").closest("a")).toBeNull();
   });
 });

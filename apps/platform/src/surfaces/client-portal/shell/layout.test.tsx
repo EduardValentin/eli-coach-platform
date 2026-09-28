@@ -125,7 +125,10 @@ describe("ClientLayoutRoute", () => {
       name: "Client portal sidebar",
     });
 
-    expect(within(sidebar).getByText("Ana Popescu").closest("a")).toBeNull();
+    expect(within(sidebar).getByText("Ana Popescu")).toBeVisible();
+    expect(
+      within(sidebar).queryByRole("link", { name: "Ana Popescu" }),
+    ).not.toBeInTheDocument();
   });
 
   it("carries no notification bell and no way back to the public site", async () => {

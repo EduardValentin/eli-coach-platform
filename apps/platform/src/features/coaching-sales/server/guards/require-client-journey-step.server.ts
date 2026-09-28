@@ -32,7 +32,7 @@ export async function requireClientJourneyStep(
   args: JourneyRequest,
 ): Promise<void> {
   const journey = await readSignedInClientJourney(args);
-  args.context.set(clientJourneyContext, journey?.toSnapshot() ?? null);
+  handOverClientJourney(args, journey);
 
   if (!journey) {
     return;
@@ -53,6 +53,13 @@ export async function requireClientJourneyStep(
   throw redirect(
     buildRedirectPath(appBasePath, clientJourneyDestination(step)),
   );
+}
+
+function handOverClientJourney(
+  args: JourneyRequest,
+  journey: ClientJourney | null,
+): void {
+  args.context.set(clientJourneyContext, journey?.toSnapshot() ?? null);
 }
 
 async function readSignedInClientJourney(

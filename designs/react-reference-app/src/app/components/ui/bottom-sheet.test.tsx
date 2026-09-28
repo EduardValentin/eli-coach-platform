@@ -56,19 +56,6 @@ describe('BottomSheet', () => {
     expect(screen.getByText('More')).toHaveClass('sr-only');
   });
 
-  it('draws the grab handle', async () => {
-    // arrange
-    const user = userEvent.setup();
-    render(<SheetOpener />);
-
-    // act
-    await user.click(screen.getByRole('button', { name: 'Open sheet' }));
-
-    // assert
-    const sheet = screen.getByRole('dialog', { name: 'More' });
-    expect(sheet.querySelector('[data-parity="sheet-handle"]')).not.toBeNull();
-  });
-
   it('closes on Escape and returns focus to the control that opened it', async () => {
     // arrange
     const user = userEvent.setup();

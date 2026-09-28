@@ -5,7 +5,7 @@ export type ClientShellPresentation = {
   greeting: string;
 };
 
-const ANONYMOUS_CLIENT_PRESENTATION: ClientShellPresentation = {
+const UNNAMED_CLIENT_PRESENTATION: ClientShellPresentation = {
   displayName: "Client",
   greeting: "Welcome back.",
 };
@@ -14,7 +14,7 @@ export function presentClientIdentity(
   identity: ClientIdentity | null,
 ): ClientShellPresentation {
   if (!identity) {
-    return ANONYMOUS_CLIENT_PRESENTATION;
+    return UNNAMED_CLIENT_PRESENTATION;
   }
 
   return {

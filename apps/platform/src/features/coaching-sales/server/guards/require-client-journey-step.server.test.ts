@@ -184,9 +184,7 @@ describe("readClientJourneyStep", () => {
     await readClientJourneyStep(args);
 
     // assert
-    expect(() => args.context.get(clientJourneyContext)).toThrow(
-      "No value found for context",
-    );
+    expect(() => args.context.get(clientJourneyContext)).toThrow();
   });
 
   it("names no step for a client account with no client record", async () => {

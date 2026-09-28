@@ -15,7 +15,7 @@ import {
 } from "react";
 
 import { cn } from "../lib/cn";
-import { MAIN_CONTENT_ID } from "../lib/constants";
+import { focusMainContent } from "../lib/focus-main-content";
 import { useCloseMobileNavigationOnDesktop } from "./use-close-mobile-navigation-on-desktop";
 
 type NavigationMenuState = "closed" | "closing" | "open";
@@ -130,7 +130,7 @@ export function NavigationDialog(props: NavigationDialogProps) {
     }
     event.preventDefault();
     if (focusAfterClose.current === "main-content") {
-      document.getElementById(MAIN_CONTENT_ID)?.focus({ preventScroll: true });
+      focusMainContent();
     }
   };
   const closeOnBackdropClick = (event: MouseEvent<HTMLDivElement>) => {

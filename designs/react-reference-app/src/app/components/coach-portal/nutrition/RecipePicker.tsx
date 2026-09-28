@@ -201,10 +201,10 @@ export function RecipePicker({
             />
             {hasActiveFilters && (
               <Button
-                variant="ghost"
+                variant="ghost-muted"
                 size="xs"
                 onClick={clearFilters}
-                className="gap-1 text-text-secondary hover:text-text-primary"
+                className="gap-1"
               >
                 <X size={13} aria-hidden="true" />
                 Clear

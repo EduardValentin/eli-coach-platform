@@ -48,7 +48,7 @@ export function BottomSheet({
       opener.current?.focus();
     }
   };
-  const unlessDescribed = description ? {} : { 'aria-describedby': undefined };
+  const descriptionAttributes = description ? {} : { 'aria-describedby': undefined };
   const overlayMotionProps = shouldReduceMotion
     ? {}
     : {
@@ -57,7 +57,7 @@ export function BottomSheet({
         exit: { opacity: 0 },
         transition: SCRIM_TRANSITION,
       };
-  const motionProps = shouldReduceMotion
+  const sheetMotionProps = shouldReduceMotion
     ? {}
     : {
         initial: { y: '100%' },
@@ -85,17 +85,16 @@ export function BottomSheet({
             <DialogPrimitive.Content
               asChild
               id={id}
-              {...unlessDescribed}
+              {...descriptionAttributes}
               onCloseAutoFocus={returnFocusToOpener}
               onOpenAutoFocus={rememberOpener}
             >
               <motion.div
                 className={cn(
-                  'fixed inset-x-0 bottom-0 z-50 flex max-h-[90vh] flex-col rounded-t-panel bg-surface-base shadow-floating outline-none',
+                  'fixed inset-x-0 bottom-0 z-50 flex max-h-[90vh] flex-col rounded-t-panel bg-surface-base shadow-floating outline-none pb-[env(safe-area-inset-bottom)]',
                   className,
                 )}
-                style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-                {...motionProps}
+                {...sheetMotionProps}
               >
                 <div
                   className="mx-auto mt-4 h-2 w-[100px] shrink-0 rounded-full bg-surface-muted"
