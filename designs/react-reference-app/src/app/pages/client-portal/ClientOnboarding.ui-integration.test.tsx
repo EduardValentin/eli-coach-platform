@@ -107,6 +107,19 @@ function renderOnboarding(devParams: string) {
   );
 }
 
+async function leaveAnAnswerUnsavedThenReconnect(
+  user: Pick<typeof userEvent, 'type' | 'click'>,
+) {
+  renderOnboarding('?session=client&jstage=account-created&jconn=lost');
+  await user.type(screen.getByLabelText(/Your weight/), '66');
+  await screen.findByText(UNSAVED_LINE, undefined, {
+    timeout: SERVICE_TIMEOUT,
+  });
+  await user.click(
+    screen.getByRole('button', { name: 'Restore the connection' }),
+  );
+}
+
 const GIVEN_CONSENTS: OnboardingConsents = {
   disclaimer: true,
   specialCategory: true,
@@ -516,14 +529,7 @@ describe('the onboarding', () => {
 
   it('saves the unsent answers once the browser is back online', async () => {
     // arrange
-    renderOnboarding('?session=client&jstage=account-created&jconn=lost');
-    await userEvent.type(screen.getByLabelText(/Your weight/), '66');
-    await screen.findByText(UNSAVED_LINE, undefined, {
-      timeout: SERVICE_TIMEOUT,
-    });
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Restore the connection' }),
-    );
+    await leaveAnAnswerUnsavedThenReconnect(userEvent);
 
     // act
     fireEvent(window, new Event('online'));
@@ -539,14 +545,7 @@ describe('the onboarding', () => {
 
   it('saves the unsent answers with her next change', async () => {
     // arrange
-    renderOnboarding('?session=client&jstage=account-created&jconn=lost');
-    await userEvent.type(screen.getByLabelText(/Your weight/), '66');
-    await screen.findByText(UNSAVED_LINE, undefined, {
-      timeout: SERVICE_TIMEOUT,
-    });
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Restore the connection' }),
-    );
+    await leaveAnAnswerUnsavedThenReconnect(userEvent);
 
     // act
     await userEvent.type(screen.getByLabelText(/Your height/), '165');
@@ -566,14 +565,7 @@ describe('the onboarding', () => {
     // arrange
     vi.useFakeTimers({ shouldAdvanceTime: true });
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
-    renderOnboarding('?session=client&jstage=account-created&jconn=lost');
-    await user.type(screen.getByLabelText(/Your weight/), '66');
-    await screen.findByText(UNSAVED_LINE, undefined, {
-      timeout: SERVICE_TIMEOUT,
-    });
-    await user.click(
-      screen.getByRole('button', { name: 'Restore the connection' }),
-    );
+    await leaveAnAnswerUnsavedThenReconnect(user);
 
     // act
     await act(() => vi.advanceTimersByTimeAsync(RETRY_INTERVAL_MS));

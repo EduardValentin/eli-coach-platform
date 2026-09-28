@@ -15,7 +15,10 @@ import type {
   PrototypePaymentLinkOutcome,
   PrototypePaymentLinkState,
 } from '../services/paymentLinkService';
-import type { OnboardingConnection } from '../services/onboardingService';
+import {
+  ONBOARDING_CONNECTIONS,
+  type OnboardingConnection,
+} from '../services/onboardingService';
 import {
   JOURNEY_GENDERS,
   type JourneyGender,
@@ -143,7 +146,6 @@ const validSubscriptionStatuses = [
   'cancelled',
   'ended',
 ] as const;
-const validOnboardingConnections = ['working', 'lost'] as const;
 const validPaymentLinkOutcomes = [
   'sent',
   'delivery-failure',
@@ -263,9 +265,7 @@ function parseDevParamsFromURL(): AppState {
   const journeyConnection = params.get('jconn');
   if (
     journeyConnection &&
-    (validOnboardingConnections as readonly string[]).includes(
-      journeyConnection,
-    )
+    (ONBOARDING_CONNECTIONS as readonly string[]).includes(journeyConnection)
   ) {
     state.journeyConnection = journeyConnection as OnboardingConnection;
   }

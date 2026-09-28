@@ -4,28 +4,33 @@ import { Checkbox } from '../../ui/checkbox';
 
 const PRIVACY_LINK_LABEL = 'How I handle your data →';
 
+type ConsentAgreement = 'special-category' | 'disclaimer';
+
+const PARITY_HOOKS: Record<ConsentAgreement, string> = {
+  'special-category': 'consent',
+  disclaimer: 'disclaimer',
+};
+
 type OnboardingConsentProps = {
+  agreement: ConsentAgreement;
   statement: string;
   checked: boolean;
   problem: string | null;
   onChange: (checked: boolean) => void;
-  parityHook: 'consent' | 'disclaimer';
-  showPrivacyLink?: boolean;
 };
 
 export function OnboardingConsent({
+  agreement,
   statement,
   checked,
   problem,
   onChange,
-  parityHook,
-  showPrivacyLink,
 }: OnboardingConsentProps) {
   const checkboxId = useId();
   const errorId = useId();
 
   return (
-    <div className="grid gap-2" data-parity={parityHook}>
+    <div className="grid gap-2" data-parity={PARITY_HOOKS[agreement]}>
       <div className="flex items-start gap-3 rounded-card border border-border-subtle bg-surface-quiet/60 p-4">
         <Checkbox
           aria-describedby={problem ? errorId : undefined}
@@ -43,7 +48,7 @@ export function OnboardingConsent({
         </label>
       </div>
 
-      {showPrivacyLink && (
+      {agreement === 'special-category' && (
         <Link
           className="mt-1 inline-flex text-sm font-medium text-primary underline-offset-4 hover:underline"
           data-parity="consent-link"

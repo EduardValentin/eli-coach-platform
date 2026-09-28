@@ -6,6 +6,11 @@ import type {
 
 export type OnboardingConnection = 'working' | 'lost';
 
+export const ONBOARDING_CONNECTIONS: readonly OnboardingConnection[] = [
+  'working',
+  'lost',
+];
+
 export type OnboardingErrorCode = 'connection-lost';
 
 export class OnboardingError extends Error {

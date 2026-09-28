@@ -22,7 +22,10 @@ import {
   type JourneyGender,
   type JourneyStage,
 } from '../domain/journey';
-import type { OnboardingConnection } from '../services/onboardingService';
+import {
+  ONBOARDING_CONNECTIONS,
+  type OnboardingConnection,
+} from '../services/onboardingService';
 import type {
   SubscriptionStartPath,
   SubscriptionStatus,
@@ -127,9 +130,11 @@ function parseJourneyGenderControl(value: string): JourneyGender {
 }
 
 function parseOnboardingConnectionControl(value: string): OnboardingConnection {
-  if (value === 'lost') return value;
+  const connection = ONBOARDING_CONNECTIONS.find(
+    (candidate) => candidate === value,
+  );
 
-  return 'working';
+  return connection ?? 'working';
 }
 
 function parsePaymentLinkOutcomeControl(

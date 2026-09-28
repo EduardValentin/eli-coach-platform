@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
@@ -27,7 +27,6 @@ import type {
 import {
   forgetDraft,
   loadDraft,
-  saveDraft,
   submit,
 } from '../../../services/onboardingService';
 import { Alert } from '../../ui/alert';
@@ -40,10 +39,7 @@ import {
   ProgressPhotoBlock,
   type ProgressPhotos,
 } from './ProgressPhotoBlock';
-
-const SAVE_DEBOUNCE_MS = 400;
-
-const SAVE_RETRY_INTERVAL_MS = 15_000;
+import { useDraftAutosave, type SaveState } from './useDraftAutosave';
 
 const SUBMIT_PROBLEM =
   "Your answers could not be sent just now. They're saved — try again in a moment.";
@@ -59,8 +55,6 @@ const SCREENING_CLEARED_MESSAGE =
   "Thank you. Nothing here needs a doctor's sign-off — let's keep going.";
 
 type ConsentKey = 'specialCategory' | 'disclaimer';
-
-type SaveState = 'idle' | 'saving' | 'saved' | 'unsaved';
 
 const SAVE_LABELS: Record<SaveState, string> = {
   idle: '',
@@ -104,6 +98,8 @@ export function OnboardingWizard() {
   } = useClientJourneys();
   const prefersReducedMotion = useReducedMotion() ?? false;
   const journeyId = demoJourney.callId;
+  const { saveState, queueDraftSave, cancelQueuedSave, pendingSave } =
+    useDraftAutosave(journeyId);
 
   const { gender } = demoJourney.identity;
   const steps = useMemo(() => formsForGender(gender), [gender]);
@@ -113,18 +109,12 @@ export function OnboardingWizard() {
     () => savedDraft ?? draftOf(demoJourney.onboarding),
   );
   const [photos, setPhotos] = useState<ProgressPhotos>(EMPTY_PROGRESS_PHOTOS);
-  const [saveState, setSaveState] = useState<SaveState>('idle');
   const [problem, setProblem] = useState<string | null>(null);
   const [consentProblem, setConsentProblem] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
 
   const draftRef = useRef(draft);
   draftRef.current = draft;
-  const saveTimer = useRef<number | null>(null);
-  const saving = useRef<Promise<unknown> | null>(null);
-  const unsentDraft = useRef<OnboardingDraft | null>(null);
-  const connection = useRef(appState.journeyConnection);
-  connection.current = appState.journeyConnection;
   const focusPending = useRef(false);
 
   const stepIndex = Math.min(draft.currentFormIndex, steps.length - 1);
@@ -136,51 +126,14 @@ export function OnboardingWizard() {
     needsManualScreening(demoJourney.identity.dateOfBirth, new Date());
   const cardDefinition = manualScreening ? { ...step, fields: [] } : step;
 
-  const sendDraft = useCallback(
-    (next: OnboardingDraft) => {
-      unsentDraft.current = next;
-      saving.current = saveDraft(journeyId, next, connection.current)
-        .then(() => {
-          if (unsentDraft.current !== next) return;
-          unsentDraft.current = null;
-          setSaveState('saved');
-        })
-        .catch(() => {
-          if (unsentDraft.current === next) setSaveState('unsaved');
-        });
-    },
-    [journeyId],
-  );
-
   const persist = useCallback(
     (next: OnboardingDraft) => {
       setDraft(next);
-      setSaveState('saving');
       setProblem(null);
-
-      if (saveTimer.current !== null) window.clearTimeout(saveTimer.current);
-      saveTimer.current = window.setTimeout(() => {
-        saveOnboardingDraft(journeyId, next);
-        sendDraft(next);
-      }, SAVE_DEBOUNCE_MS);
+      queueDraftSave(next);
     },
-    [journeyId, saveOnboardingDraft, sendDraft],
+    [queueDraftSave],
   );
-
-  useEffect(() => {
-    if (saveState !== 'unsaved') return;
-
-    const retry = () => {
-      if (unsentDraft.current) sendDraft(unsentDraft.current);
-    };
-    const retryTimer = window.setInterval(retry, SAVE_RETRY_INTERVAL_MS);
-    window.addEventListener('online', retry);
-
-    return () => {
-      window.clearInterval(retryTimer);
-      window.removeEventListener('online', retry);
-    };
-  }, [saveState, sendDraft]);
 
   const headingRef = useCallback((heading: HTMLHeadingElement | null) => {
     if (!heading || !focusPending.current) return;
@@ -219,12 +172,12 @@ export function OnboardingWizard() {
   const sendToCoach = async (next: OnboardingDraft) => {
     setSending(true);
     setProblem(null);
-    if (saveTimer.current !== null) window.clearTimeout(saveTimer.current);
+    cancelQueuedSave();
     saveOnboardingDraft(journeyId, next);
 
     try {
-      const submitted = await submit(journeyId, connection.current);
-      await saving.current;
+      const submitted = await submit(journeyId, appState.journeyConnection);
+      await pendingSave();
       const entry = submittedMeasurementEntry(
         next.answers,
         submitted.submittedAt,
@@ -292,7 +245,7 @@ export function OnboardingWizard() {
           status={
             <p
               aria-live="polite"
-              className="min-w-0 text-right text-caption font-medium text-text-secondary"
+              className="text-caption font-medium text-text-secondary"
               data-parity="save-status"
               role="status"
             >
@@ -326,11 +279,10 @@ export function OnboardingWizard() {
             consent={
               asksSpecialCategory ? (
                 <OnboardingConsent
+                  agreement="special-category"
                   checked={draft.consents.specialCategory}
                   onChange={agree('specialCategory')}
-                  parityHook="consent"
                   problem={consentProblem}
-                  showPrivacyLink
                   statement={copyForGender(
                     SPECIAL_CATEGORY_CONSENT_COPY,
                     gender,
@@ -377,9 +329,9 @@ export function OnboardingWizard() {
                   photos={photos}
                 />
                 <OnboardingConsent
+                  agreement="disclaimer"
                   checked={draft.consents.disclaimer}
                   onChange={agree('disclaimer')}
-                  parityHook="disclaimer"
                   problem={consentProblem}
                   statement={DISCLAIMER_ACKNOWLEDGEMENT}
                 />
