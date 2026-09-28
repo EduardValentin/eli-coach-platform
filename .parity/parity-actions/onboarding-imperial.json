@@ -3,9 +3,12 @@
     "waitFor": "[data-parity-root=\"OnboardingWizard\"]"
   },
   {
-    "click": "[data-parity=\"units-choice\"] >> text=lb · in"
+    "click": "[data-parity=\"units-choice\"] >> text=lb \u00b7 in"
   },
   {
     "wait": 400
+  },
+  {
+    "wait": 700
   }
 ]

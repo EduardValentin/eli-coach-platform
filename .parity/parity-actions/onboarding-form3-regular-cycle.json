@@ -39,7 +39,7 @@
     "click": "[data-parity=\"field-trainingDaysPerWeek\"] >> role=radio[name=\"3 days\"]"
   },
   {
-    "click": "[data-parity=\"field-minutesPerSession\"] >> role=radio[name=\"30–45 minutes\"]"
+    "click": "[data-parity=\"field-minutesPerSession\"] >> role=radio[name=\"30\u201345 minutes\"]"
   },
   {
     "click": "[data-parity=\"field-previousPt\"] >> role=radio[name=\"No\"]"
@@ -124,5 +124,8 @@
   },
   {
     "wait": 400
+  },
+  {
+    "wait": 700
   }
 ]
