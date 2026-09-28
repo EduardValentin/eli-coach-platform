@@ -45,7 +45,8 @@ export function ClientDashboard() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [bookingReview, setBookingReview] = useState(false);
-  const firstName = clientProfile?.firstName ?? 'there';
+  const firstName = clientProfile?.firstName;
+  const greeting = firstName ? `Welcome back, ${firstName}.` : 'Welcome back.';
 
   // Macro split for the nutrition card (protein/carbs 4 kcal/g, fats 9 kcal/g)
   const proteinG = clientProfile?.proteinGrams ?? 0;
@@ -120,10 +121,16 @@ export function ClientDashboard() {
 
   return (
     <div className="w-full max-w-5xl mx-auto">
-      <PortalPageHeader
-        title={`Welcome back, ${firstName}.`}
-        subtitle="Here is your daily snapshot and current focus."
-      />
+      <div data-parity-root="ClientGreeting">
+        <PortalPageHeader
+          title={<span data-parity="greeting">{greeting}</span>}
+          subtitle={
+            <span data-parity="subtitle">
+              Here is your daily snapshot and current focus.
+            </span>
+          }
+        />
+      </div>
 
       <ProgramStatusCard />
 
