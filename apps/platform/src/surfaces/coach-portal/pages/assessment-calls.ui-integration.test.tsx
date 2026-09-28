@@ -14,7 +14,12 @@ import userEvent from "@testing-library/user-event";
 import type { UserEvent } from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
-import { createMemoryRouter, Outlet, RouterProvider } from "react-router";
+import {
+  createMemoryRouter,
+  Outlet,
+  RouterProvider,
+  useParams,
+} from "react-router";
 import {
   afterAll,
   afterEach,
@@ -32,7 +37,11 @@ import type {
   PricingTiers,
   CallSales,
 } from "~/features/coaching-sales/contracts/coaching-sales";
-import { COACHING_SALES_API_PATHS } from "~/features/coaching-sales/contracts/paths";
+import {
+  COACH_CLIENTS_PATH,
+  COACHING_SALES_API_PATHS,
+  coachClientPath,
+} from "~/features/coaching-sales/contracts/paths";
 
 import CoachAssessmentCallsRoute, {
   ErrorBoundary as CoachAssessmentCallsErrorBoundary,
@@ -105,6 +114,8 @@ const NEXT_WEEK = call("2026-09-22T15:00:00.000Z", {
 });
 
 const FOUR_CALLS = [YESTERDAY, EARLIER_TODAY, LATER_TODAY, NEXT_WEEK];
+
+const PAID_CLIENT_ID = "2d3e4f50-6172-4839-9a0b-1c2d3e4f5061";
 
 const server = setupServer();
 
@@ -781,10 +792,7 @@ describe("where each ended call stands in the sale", () => {
   const SALE_UNDER_WAY: CallSales = {
     ...everyCallHeld(FOUR_CALLS),
     "earlier-today": { state: "payment-link-sent", clientId: null },
-    yesterday: {
-      state: "paid",
-      clientId: "2d3e4f50-6172-4839-9a0b-1c2d3e4f5061",
-    },
+    yesterday: { state: "paid", clientId: PAID_CLIENT_ID },
   };
 
   it("badges each ended call with its sales state and a call still to come with none", async () => {
@@ -805,7 +813,7 @@ describe("where each ended call stands in the sale", () => {
     }
   });
 
-  it("offers a re-send once a link is out and nothing once the call is paid", async () => {
+  it("offers a re-send once a link is out and her client page once the call is paid", async () => {
     // arrange, act
     await renderCallsPage({ callSales: SALE_UNDER_WAY });
 
@@ -818,6 +826,31 @@ describe("where each ended call stands in the sale", () => {
       earlierToday.getByRole("button", { name: "Re-send payment link" }),
     ).toBeInTheDocument();
     expect(yesterday.queryByRole("button")).not.toBeInTheDocument();
+    expect(
+      yesterday.getByRole("link", { name: "View client" }),
+    ).toHaveAttribute("href", coachClientPath(PAID_CLIENT_ID));
+  });
+
+  it("opens the paid client's page from View client", async () => {
+    // arrange
+    const { router, user } = await renderCallsRouter({
+      callSales: SALE_UNDER_WAY,
+    });
+    const [, , , yesterday] = shownCalls().map((item) => within(item));
+
+    // act
+    await user.click(yesterday.getByRole("link", { name: "View client" }));
+
+    // assert
+    expect(router.state.location.pathname).toBe(
+      coachClientPath(PAID_CLIENT_ID),
+    );
+    expect(
+      await screen.findByRole("heading", {
+        level: 1,
+        name: `Client ${PAID_CLIENT_ID}`,
+      }),
+    ).toBeInTheDocument();
   });
 
   it("counts every status under the window and search in view", async () => {
@@ -1030,6 +1063,12 @@ function everyCallHeld(calls: readonly CoachAssessmentCall[]): CallSales {
   );
 }
 
+function ClientPageStandIn() {
+  const { clientId } = useParams();
+
+  return <h1>{`Client ${clientId}`}</h1>;
+}
+
 type CallsPageOptions = {
   calls?: CoachAssessmentCall[];
   pricingTiers?: PricingTiers;
@@ -1066,6 +1105,10 @@ async function renderCallsRouter(options?: CallsPageOptions) {
             }),
             path: COACH_ASSESSMENT_CALLS_PATH,
             shouldRevalidate,
+          },
+          {
+            Component: ClientPageStandIn,
+            path: `${COACH_CLIENTS_PATH}/:clientId`,
           },
         ],
       },

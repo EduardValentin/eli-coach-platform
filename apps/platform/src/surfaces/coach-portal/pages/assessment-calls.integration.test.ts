@@ -105,18 +105,27 @@ describe.sequential("coach assessment calls page sales integration", () => {
     expect(pricingOnCardOf(page, "Bea Ionescu")).toBe("Regular");
   });
 
-  it("reads Paid once the payment has been recorded", async () => {
+  it("reads Paid once the payment has been recorded and offers her client page", async () => {
     // arrange
     await journey.payForCall();
+    const [client] = await suite.postgres.queryRows<{ id: string }>({
+      sql: "select id from app.clients",
+      values: [],
+    });
 
     // act
     const response = await rig.requestAs(COACH_SESSION, PAST_CALLS);
 
     // assert
-    const texts = textNodes(await visibleDocument(response));
+    const page = await visibleDocument(response);
+    const texts = textNodes(page);
 
     expect(response.status).toBe(200);
     expect(texts).toContain("Paid");
+    expect(texts).toContain("View client");
+    expect(page).toContain(
+      `href="${suite.path(`/coach/clients/${client?.id}`)}"`,
+    );
     expect(texts).not.toContain("Payment link sent");
     expect(texts).not.toContain("Send payment link");
     expect(texts).not.toContain("Re-send payment link");

@@ -29,6 +29,7 @@ import {
   SALES_STATUS_PARAM,
   useSalesFilterParam,
 } from "~/features/coaching-sales/ui/coach/call-sales/sales-status-filter";
+import { ViewClientLink } from "~/features/coaching-sales/ui/coach/clients/view-client-link";
 
 export { AssessmentCallsErrorBoundary as ErrorBoundary } from "~/features/assessment-calls/ui/coach/assessment-calls-error-boundary";
 
@@ -87,10 +88,14 @@ export default function CoachAssessmentCallsRoute() {
         extraDetails={pricingDetails}
         now={now}
         renderEndedCallExtras={(call) => {
-          const { state } = listing.callSales[call.id];
+          const { clientId, state } = listing.callSales[call.id];
 
           return {
-            action: <PaymentLinkAction call={call} state={state} />,
+            action: clientId ? (
+              <ViewClientLink clientId={clientId} />
+            ) : (
+              <PaymentLinkAction call={call} state={state} />
+            ),
             badge: <CallSalesStateBadge state={state} />,
           };
         }}
