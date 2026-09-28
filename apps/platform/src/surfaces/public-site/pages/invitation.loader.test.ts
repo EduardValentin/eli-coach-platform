@@ -11,7 +11,7 @@ import {
   createRequestArgs,
 } from "~/server/test-support/request-args";
 
-import { loader, meta } from "./invitation-page";
+import { loader, meta } from "./invitation";
 
 describe("invitation page loader", () => {
   it("tells an anonymous visitor's page to resolve the invitation", () => {

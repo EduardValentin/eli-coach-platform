@@ -5,7 +5,7 @@ import type { ActionFunctionArgs } from "react-router";
 import {
   invitationResolutionRequestSchema,
   invitationResolutionSchema,
-} from "~/features/coaching-sales/contracts/client-journey";
+} from "~/features/coaching-sales/contracts/invitation";
 
 import { readJsonRequestBody } from "./read-json-request-body.server";
 

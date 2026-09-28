@@ -1,8 +1,6 @@
-import { buildRedirectPath } from "@eli-coach-platform/config";
 import { DeadEndPage } from "@eli-coach-platform/ui/layout";
 import { cn } from "@eli-coach-platform/ui/lib";
 import {
-  Button,
   buttonVariants,
   cardVariants,
   Input,
@@ -10,56 +8,19 @@ import {
   SectionEyebrow,
 } from "@eli-coach-platform/ui/primitives";
 import { ArrowRight, MailQuestion, UserRound } from "lucide-react";
-import {
-  Link,
-  useLoaderData,
-  type LoaderFunctionArgs,
-  type MetaFunction,
-} from "react-router";
-
-import { accountsContext } from "~/features/accounts/server/guards/accounts-context.server";
-import { sessionContext } from "~/features/accounts/server/guards/session-context.server";
-import { SignOutControl } from "~/features/accounts/ui/shared/sign-out-control";
-import { INVITATION_PATH } from "~/features/coaching-sales/contracts/paths";
+import type { ReactNode } from "react";
+import { Link } from "react-router";
 
 import {
   useInvitationResolution,
   useInvitationToken,
 } from "./invitation-resolution";
 
-export type InvitationLoaderData = {
-  invitationPath: string;
-  signedIn: boolean;
-};
-
 const INVITED_EMAIL_FIELD_ID = "invited-email";
 
-export function loader({ context }: LoaderFunctionArgs): InvitationLoaderData {
-  const { appBasePath } = context.get(accountsContext).portal;
+export function SignedInInvitation(props: { children: ReactNode }) {
+  useInvitationToken();
 
-  return {
-    invitationPath: buildRedirectPath(appBasePath, INVITATION_PATH),
-    signedIn: context.get(sessionContext).kind === "authenticated",
-  };
-}
-
-export const meta: MetaFunction = () => [
-  { title: "Your invitation | Evoa" },
-  { name: "robots", content: "noindex" },
-];
-
-export default function InvitationRoute() {
-  const { invitationPath, signedIn } = useLoaderData<typeof loader>();
-  const token = useInvitationToken();
-
-  if (signedIn) {
-    return <SignedInInvitation invitationPath={invitationPath} />;
-  }
-
-  return <AnonymousInvitation token={token} />;
-}
-
-function SignedInInvitation(props: { invitationPath: string }) {
   return (
     <DeadEndPage
       description="This invitation creates a new account. Sign out first, then open the link again."
@@ -68,17 +29,14 @@ function SignedInInvitation(props: { invitationPath: string }) {
       landmarkLabel="Error"
       title="You're already signed in"
     >
-      <SignOutControl redirectUrl={props.invitationPath}>
-        <Button size="lg" variant="inverted">
-          Sign out
-        </Button>
-      </SignOutControl>
+      {props.children}
     </DeadEndPage>
   );
 }
 
-function AnonymousInvitation(props: { token: string | null }) {
-  const invitation = useInvitationResolution(props.token);
+export function AnonymousInvitation() {
+  const token = useInvitationToken();
+  const invitation = useInvitationResolution(token);
 
   if (invitation.state === "checking") {
     return (

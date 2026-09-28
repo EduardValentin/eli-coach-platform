@@ -5,10 +5,8 @@ import {
   assessmentCallsBookingRoutes,
   assessmentCallsJoinRoutes,
 } from "../../features/assessment-calls/routes";
-import {
-  coachingSalesInvitationRoutes,
-  coachingSalesPublicRoutes,
-} from "../../features/coaching-sales/routes";
+import { INVITATION_ROUTE_SEGMENT } from "../../features/coaching-sales/contracts/paths";
+import { coachingSalesPublicRoutes } from "../../features/coaching-sales/routes";
 import { storePublicRoutes } from "../../features/store/routes";
 
 import { PRICING_PATH } from "./paths";
@@ -27,6 +25,6 @@ export const publicSiteRoutes = [
     ...storePublicRoutes,
   ]),
   ...accountsDeadEndRoutes,
-  ...coachingSalesInvitationRoutes,
+  route(INVITATION_ROUTE_SEGMENT, "./pages/invitation.tsx"),
   ...assessmentCallsJoinRoutes,
 ];

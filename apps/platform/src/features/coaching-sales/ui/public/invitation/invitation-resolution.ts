@@ -5,7 +5,7 @@ import {
   invitationResolutionRequestSchema,
   invitationResolutionSchema,
   type InvitationResolution,
-} from "~/features/coaching-sales/contracts/client-journey";
+} from "~/features/coaching-sales/contracts/invitation";
 import { COACHING_SALES_API_PATHS } from "~/features/coaching-sales/contracts/paths";
 import { useFragmentToken } from "~/features/coaching-sales/ui/public/fragment-token";
 

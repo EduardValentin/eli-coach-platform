@@ -4,7 +4,6 @@ import {
   CHECKOUT_COMPLETE_ROUTE_SEGMENT,
   CLIENT_WELCOME_ROUTE_SEGMENT,
   COACHING_SALES_API_PATHS,
-  INVITATION_ROUTE_SEGMENT,
   SELECT_BUNDLE_ROUTE_SEGMENT,
 } from "./contracts/paths";
 
@@ -19,10 +18,6 @@ export const coachingSalesPublicRoutes = [
     CHECKOUT_COMPLETE_ROUTE_SEGMENT,
     "./ui/public/checkout-complete/checkout-complete-page.tsx",
   ),
-];
-
-export const coachingSalesInvitationRoutes = [
-  route(INVITATION_ROUTE_SEGMENT, "./ui/public/invitation/invitation-page.tsx"),
 ];
 
 export const coachingSalesClientRoutes = [

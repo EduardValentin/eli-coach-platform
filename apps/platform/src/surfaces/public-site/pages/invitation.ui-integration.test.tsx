@@ -19,14 +19,14 @@ import {
   vi,
 } from "vitest";
 
-import type { InvitationResolution } from "~/features/coaching-sales/contracts/client-journey";
+import type { InvitationResolution } from "~/features/coaching-sales/contracts/invitation";
 import { COACHING_SALES_API_PATHS } from "~/features/coaching-sales/contracts/paths";
 
 vi.mock("@clerk/react-router", () => ({
   SignOutButton: vi.fn(({ children }: PropsWithChildren) => children),
 }));
 
-import InvitationRoute, { type InvitationLoaderData } from "./invitation-page";
+import InvitationRoute, { type InvitationLoaderData } from "./invitation";
 
 const TOKEN = "tok_live_invitation_token";
 const INVITATION_STORAGE_KEY = "coaching-sales:invitation";
