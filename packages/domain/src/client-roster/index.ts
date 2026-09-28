@@ -1,6 +1,5 @@
 export {
   CLIENT_STATUSES,
-  clientStatusOf,
   type ClientRoster,
   type ClientRosterEntry,
   type ClientStatus,
