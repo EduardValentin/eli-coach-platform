@@ -37,7 +37,8 @@
     "test:e2e": "pnpm --filter @eli-coach-platform/platform test:e2e",
     "test:lighthouse": "lhci autorun --config=./lighthouserc.cjs",
     "typecheck": "pnpm -r --if-present typecheck",
-    "validate": "pnpm lint && pnpm check:boundaries && pnpm test && STORE_ASSET_ROOT=/tmp/eli-coach-store-assets-build MANAGEMENT_API_SECRET=validation-build-management-api-secret-value pnpm build"
+    "validate": "pnpm lint && pnpm check:boundaries && pnpm test && STORE_ASSET_ROOT=/tmp/eli-coach-store-assets-build MANAGEMENT_API_SECRET=validation-build-management-api-secret-value pnpm build && pnpm check:deploy",
+    "check:deploy": "rm -rf /tmp/eli-coach-platform-deploy-check && pnpm --filter @eli-coach-platform/platform --prod deploy /tmp/eli-coach-platform-deploy-check && node tools/check-deploy-resolves.mjs /tmp/eli-coach-platform-deploy-check"
   },
   "devDependencies": {
     "@eslint/js": "catalog:",
