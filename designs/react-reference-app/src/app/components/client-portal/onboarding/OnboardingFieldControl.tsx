@@ -191,6 +191,7 @@ function LabelText({
 export function OnboardingFieldControl({ control, field }: FieldControlProps) {
   const units = useMeasureUnits();
   const legendId = useId();
+  const parityHook = `field-${field.id}`;
   const unit = isMeasureField(field)
     ? measureUnitLabel(field.kind as MeasureKind, units)
     : null;
@@ -206,7 +207,10 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
           const isDeclaration = field.requirement === 'required';
 
           return (
-            <FormItem className={isDeclaration ? undefined : '-mt-2'}>
+            <FormItem
+              className={isDeclaration ? undefined : '-mt-2'}
+              data-parity={parityHook}
+            >
               <FormControl>
                 <div
                   className={
@@ -242,7 +246,7 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
 
         if (field.kind === 'radio' || field.kind === 'chips') {
           return (
-            <FormItem>
+            <FormItem data-parity={parityHook}>
               <FormControl>
                 <fieldset>
                   <legend className={ONBOARDING_LEGEND_CLASS} id={legendId}>
@@ -308,7 +312,7 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
         const equivalent = feetAndInchesHint(field, controller.value, units);
 
         return (
-          <FormItem>
+          <FormItem data-parity={parityHook}>
             <FormLabel className="flex flex-wrap items-baseline gap-1.5">
               <LabelText field={field} unit={unit} />
             </FormLabel>

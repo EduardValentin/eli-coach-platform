@@ -1,13 +1,13 @@
 import {
   ONBOARDING_FORM_IDS,
-  type JourneySex,
+  type JourneyGender,
   type OnboardingAnswer,
   type OnboardingDraft,
   type OnboardingFormAnswers,
   type OnboardingFormId,
 } from './journey';
 import { displayLengthValue, displayWeightValue } from '../utils/units';
-import { formsForSex, type OnboardingField } from './onboardingSchema';
+import { formsForGender, type OnboardingField } from './onboardingSchema';
 
 export const ONBOARDING_FORM_LABELS: Record<OnboardingFormId, string> = {
   'goal-availability': 'Goal and availability',
@@ -271,9 +271,9 @@ function reviewAnswer(
 
 export function reviewForms(
   draft: OnboardingDraft,
-  sex: JourneySex,
+  gender: JourneyGender,
 ): ReviewForm[] {
-  return formsForSex(sex).map((definition) => {
+  return formsForGender(gender).map((definition) => {
     const given = draft.answers[definition.id];
     const answers = definition.fields
       .filter((field) => isReachable(field, given))

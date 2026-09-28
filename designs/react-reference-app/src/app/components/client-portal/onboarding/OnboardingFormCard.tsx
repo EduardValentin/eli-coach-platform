@@ -1,7 +1,7 @@
 import { useEffect, useMemo, type FormEvent, type ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 import type {
-  JourneySex,
+  JourneyGender,
   OnboardingFormAnswers,
 } from '../../../domain/journey';
 import {
@@ -45,7 +45,7 @@ type OnboardingFormCardProps = OnboardingAnswerFormProps & {
   consent: ReactNode;
   headingRef: (node: HTMLHeadingElement | null) => void;
   unitsChoice: ReactNode;
-  sex: JourneySex;
+  gender: JourneyGender;
 };
 
 type FieldGroup = { section: string | null; fields: OnboardingField[] };
@@ -178,6 +178,7 @@ function OnboardingAnswerForm({
         <div className="mt-2 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
           {onBack ? (
             <Button
+              data-parity="back"
               onClick={onBack}
               type="button"
               variant="outline"
@@ -190,6 +191,7 @@ function OnboardingAnswerForm({
             <span />
           )}
           <Button
+            data-parity="continue"
             type="submit"
             variant="primary"
             size="md"
@@ -207,7 +209,7 @@ export function OnboardingFormCard({
   consent,
   headingRef,
   unitsChoice,
-  sex,
+  gender,
   ...answerForm
 }: OnboardingFormCardProps) {
   const units = useMeasureUnits();
@@ -220,19 +222,24 @@ export function OnboardingFormCard({
     >
       <h2
         className={ONBOARDING_HEADING_CLASS}
+        data-parity="form-heading"
         id="onboarding-form-heading"
         ref={headingRef}
         tabIndex={-1}
       >
         {definition.title}
       </h2>
-      <p className={ONBOARDING_INTRO_CLASS}>
-        {resolveIntro(definition.intro, sex)}
+      <p className={ONBOARDING_INTRO_CLASS} data-parity="form-intro">
+        {resolveIntro(definition.intro, gender)}
       </p>
 
       {consent && <div className="mt-5">{consent}</div>}
 
-      {unitsChoice && <div className="mt-7">{unitsChoice}</div>}
+      {unitsChoice && (
+        <div className="mt-7" data-parity="units-choice">
+          {unitsChoice}
+        </div>
+      )}
 
       <OnboardingAnswerForm
         {...answerForm}

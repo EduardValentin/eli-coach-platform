@@ -1,10 +1,9 @@
-import type { ReactNode } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 import { cn } from './utils';
 
-type StepperProps = {
+type StepperProps = Omit<ComponentProps<'div'>, 'children'> & {
   current: number;
   total: number;
-  className?: string;
   status?: ReactNode;
 };
 
@@ -15,11 +14,17 @@ function barClass(index: number, current: number): string {
   return 'bg-surface-muted';
 }
 
-export function Stepper({ current, total, className, status }: StepperProps) {
+export function Stepper({
+  current,
+  total,
+  className,
+  status,
+  ...props
+}: StepperProps) {
   return (
-    <div className={cn('flex flex-col gap-2', className)}>
+    <div className={cn('flex flex-col gap-2', className)} {...props}>
       <div className="flex items-end justify-between gap-4">
-        <p className="text-caption font-semibold uppercase tracking-widest text-text-secondary">
+        <p className="shrink-0 text-caption font-semibold uppercase tracking-widest text-text-secondary">
           Step {current} of {total}
         </p>
         {status}

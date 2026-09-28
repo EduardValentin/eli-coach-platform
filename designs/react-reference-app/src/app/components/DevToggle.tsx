@@ -17,10 +17,12 @@ import type {
 } from '../services/paymentLinkService';
 import {
   COACH_STAGE_LABELS,
+  JOURNEY_GENDERS,
   JOURNEY_STAGES,
-  type JourneySex,
+  type JourneyGender,
   type JourneyStage,
 } from '../domain/journey';
+import type { OnboardingConnection } from '../services/onboardingService';
 import type {
   SubscriptionStartPath,
   SubscriptionStatus,
@@ -118,10 +120,16 @@ function parseSubscriptionStatusControl(value: string): SubscriptionStatus {
   return 'active';
 }
 
-function parseJourneySexControl(value: string): JourneySex {
-  if (value === 'male') return value;
+function parseJourneyGenderControl(value: string): JourneyGender {
+  const gender = JOURNEY_GENDERS.find((candidate) => candidate === value);
 
-  return 'female';
+  return gender ?? 'female';
+}
+
+function parseOnboardingConnectionControl(value: string): OnboardingConnection {
+  if (value === 'lost') return value;
+
+  return 'working';
 }
 
 function parsePaymentLinkOutcomeControl(
@@ -875,21 +883,58 @@ export function DevToggle() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="dev-journey-sex" className={DEV_LABEL_CLASS}>
-                    Sex
+                  <Label
+                    htmlFor="dev-journey-gender"
+                    className={DEV_LABEL_CLASS}
+                  >
+                    Gender
                   </Label>
                   <Select
-                    value={appState.journeySex}
+                    value={appState.journeyGender}
                     onValueChange={(value) =>
-                      setAppState({ journeySex: parseJourneySexControl(value) })
+                      setAppState({
+                        journeyGender: parseJourneyGenderControl(value),
+                      })
                     }
                   >
-                    <SelectTrigger id="dev-journey-sex" className="w-full">
+                    <SelectTrigger id="dev-journey-gender" className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className={SELECT_CONTENT_CLASS}>
                       <SelectItem value="female">Female</SelectItem>
                       <SelectItem value="male">Male</SelectItem>
+                      <SelectItem value="prefer-not-to-say">
+                        Prefer not to say
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="dev-onboarding-connection"
+                    className={DEV_LABEL_CLASS}
+                  >
+                    Onboarding connection
+                  </Label>
+                  <Select
+                    value={appState.journeyConnection}
+                    onValueChange={(value) =>
+                      setAppState({
+                        journeyConnection:
+                          parseOnboardingConnectionControl(value),
+                      })
+                    }
+                  >
+                    <SelectTrigger
+                      id="dev-onboarding-connection"
+                      className="w-full"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="working">Working</SelectItem>
+                      <SelectItem value="lost">Lost</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

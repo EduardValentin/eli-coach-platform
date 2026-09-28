@@ -9,6 +9,7 @@ type OnboardingConsentProps = {
   checked: boolean;
   problem: string | null;
   onChange: (checked: boolean) => void;
+  parityHook: 'consent' | 'disclaimer';
   showPrivacyLink?: boolean;
 };
 
@@ -17,13 +18,14 @@ export function OnboardingConsent({
   checked,
   problem,
   onChange,
+  parityHook,
   showPrivacyLink,
 }: OnboardingConsentProps) {
   const checkboxId = useId();
   const errorId = useId();
 
   return (
-    <div className="grid gap-2">
+    <div className="grid gap-2" data-parity={parityHook}>
       <div className="flex items-start gap-3 rounded-card border border-border-subtle bg-surface-quiet/60 p-4">
         <Checkbox
           aria-describedby={problem ? errorId : undefined}
@@ -44,6 +46,7 @@ export function OnboardingConsent({
       {showPrivacyLink && (
         <Link
           className="mt-1 inline-flex text-sm font-medium text-primary underline-offset-4 hover:underline"
+          data-parity="consent-link"
           to="/privacy"
         >
           {PRIVACY_LINK_LABEL}

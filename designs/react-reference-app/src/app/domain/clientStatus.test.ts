@@ -18,7 +18,7 @@ function journeyAt(
       lastName: 'Doe',
       dateOfBirth: '1998-03-14',
       email: 'jane@example.com',
-      sex: 'female',
+      gender: 'female',
       country: 'Romania',
     },
     pricing: 'regular',

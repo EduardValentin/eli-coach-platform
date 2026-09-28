@@ -18,7 +18,7 @@ function identityBornOn(dateOfBirth: string): JourneyIdentity {
     lastName: 'Doe',
     dateOfBirth,
     email: 'jane@example.com',
-    sex: 'female',
+    gender: 'female',
     country: 'Romania',
   };
 }

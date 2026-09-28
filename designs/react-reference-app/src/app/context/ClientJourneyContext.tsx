@@ -18,7 +18,7 @@ import {
   type JourneyEvent,
   type JourneyIdentity,
   type JourneyPricing,
-  type JourneySex,
+  type JourneyGender,
   type JourneyStage,
   type MeasurementEntry,
   type OnboardingDraft,
@@ -49,7 +49,7 @@ const AWAITING_REVIEW_PERSON: DemoPerson = {
 export type DemoJourneyOptions = {
   startPath: SubscriptionStartPath;
   subscriptionStatus: SubscriptionStatus;
-  sex: JourneySex;
+  gender: JourneyGender;
   reducedPricing: boolean;
 };
 
@@ -137,7 +137,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
     journeyStage,
     journeyStartPath,
     journeySubscriptionStatus,
-    journeySex,
+    journeyGender,
     journeyReducedPricing,
   } = appState;
 
@@ -159,7 +159,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
     () => ({
       [DEMO_JOURNEY_CALL_ID]: seedJourney({
         callId: DEMO_JOURNEY_CALL_ID,
-        identity: demoIdentity(demoPerson, journeySex),
+        identity: demoIdentity(demoPerson, journeyGender),
         stage: journeyStage,
         startPath: journeyStartPath,
         subscriptionStatus: journeySubscriptionStatus,
@@ -187,7 +187,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
         ...previous,
         [DEMO_JOURNEY_CALL_ID]: seedJourney({
           callId: DEMO_JOURNEY_CALL_ID,
-          identity: demoIdentity(demoPersonRef.current, options.sex),
+          identity: demoIdentity(demoPersonRef.current, options.gender),
           stage,
           startPath: options.startPath,
           subscriptionStatus: options.subscriptionStatus,
@@ -203,7 +203,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
     seedDemoJourney(journeyStage, {
       startPath: journeyStartPath,
       subscriptionStatus: journeySubscriptionStatus,
-      sex: journeySex,
+      gender: journeyGender,
       reducedPricing: journeyReducedPricing,
     });
   }, [
@@ -211,7 +211,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
     journeyStage,
     journeyStartPath,
     journeySubscriptionStatus,
-    journeySex,
+    journeyGender,
     journeyReducedPricing,
   ]);
 
@@ -527,13 +527,16 @@ function dateOfBirthForAge(age: number): string {
   return `${birthYear}-06-15`;
 }
 
-function demoIdentity(person: DemoPerson, sex: JourneySex): JourneyIdentity {
+function demoIdentity(
+  person: DemoPerson,
+  gender: JourneyGender,
+): JourneyIdentity {
   return {
     firstName: person.firstName,
     lastName: person.lastName,
     dateOfBirth: dateOfBirthForAge(person.age),
     email: person.email,
-    sex,
+    gender,
     country: 'Romania',
   };
 }
