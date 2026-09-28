@@ -21,6 +21,7 @@ import {
   type ClientShellPresentation,
 } from "./client-identity-presentation";
 import { ClientNameBlock } from "./client-name-block";
+import { clientPortalPageMeta } from "./client-portal-meta";
 import { clientSurfaceLinks, clientTabLinks } from "./navigation-links";
 
 const pwaRegistration = createPwaRegistration({
@@ -34,17 +35,8 @@ export function loader(args: LoaderFunctionArgs): ClientShellPresentation {
   );
 }
 
-export const meta: MetaFunction = () => [
-  { title: pwaSurfaceDefinitions.client.name },
-  {
-    name: "description",
-    content: pwaSurfaceDefinitions.client.description,
-  },
-  {
-    name: "theme-color",
-    content: pwaSurfaceDefinitions.client.themeColor,
-  },
-];
+export const meta: MetaFunction = () =>
+  clientPortalPageMeta(pwaSurfaceDefinitions.client.name);
 
 export const links: LinksFunction = () => [
   { rel: "manifest", href: pwaRegistration.manifestPath },
@@ -67,6 +59,7 @@ export default function ClientLayoutRoute() {
               <SignOutControl redirectUrl="/">
                 <Button
                   data-parity="sheet-sign-out"
+                  size="sm"
                   variant="ghost-muted"
                   className="w-full"
                 >

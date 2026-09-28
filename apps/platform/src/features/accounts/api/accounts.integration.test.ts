@@ -230,7 +230,9 @@ describe.sequential("account API integration", () => {
 
     // assert
     expect(response.status).toBe(200);
-    expect(await response.text()).toContain("Client portal navigation");
+    const html = await response.text();
+    expect(html).toContain("Client portal navigation");
+    expect(html).toContain('<meta name="theme-color" content="#ffffff"');
   });
 
   it("keeps a CLIENT out of the coach portal and names where they belong", async () => {

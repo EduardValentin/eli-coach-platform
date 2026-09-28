@@ -1,0 +1,5 @@
+[
+  { "click": "[aria-label=\"Open menu\"]" },
+  { "waitFor": "[role=\"dialog\"] [data-parity=\"link-dashboard\"]" },
+  { "wait": 1500 }
+]

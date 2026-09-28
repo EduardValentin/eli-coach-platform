@@ -1,0 +1,5 @@
+[
+  { "press": "Tab" },
+  { "press": "Tab" },
+  { "wait": 400 }
+]
