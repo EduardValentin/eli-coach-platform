@@ -22,7 +22,7 @@ type RecordDetailsAnswer = {
 export interface OnboardingReviews {
   findByClientId(clientId: string): Promise<StoredOnboardingReview>;
   recordOpened(moment: ReviewMoment): Promise<void>;
-  recordRequest(request: DetailRequest): Promise<void>;
+  recordRequest(request: DetailRequest): Promise<"recorded" | "already-open">;
   recordAnswer(input: RecordDetailsAnswer): Promise<void>;
   recordApproval(moment: ReviewMoment): Promise<void>;
 }

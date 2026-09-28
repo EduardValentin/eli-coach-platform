@@ -1,4 +1,7 @@
-import type { DatabaseClient } from "@eli-coach-platform/db";
+import {
+  isCausedByDatabaseError,
+  type DatabaseClient,
+} from "@eli-coach-platform/db";
 import {
   DetailRequest,
   ONBOARDING_FORM_IDS,
@@ -8,10 +11,13 @@ import {
 import { and, asc, eq, isNull, sql, type SQL } from "drizzle-orm";
 
 import {
+  clientOnboardingConstraints,
   clientOnboardingDetailRequestsTable,
   clientOnboardingReviewsTable,
   clientOnboardingSubmissionsTable,
 } from "~/features/client-onboarding/data/schema.server";
+
+const UNIQUE_VIOLATION_CODE = "23505";
 
 type StoredOnboardingReview = Awaited<
   ReturnType<OnboardingReviews["findByClientId"]>
@@ -67,17 +73,29 @@ export class PostgresOnboardingReviews implements OnboardingReviews {
       });
   }
 
-  async recordRequest(request: DetailRequest): Promise<void> {
+  async recordRequest(
+    request: DetailRequest,
+  ): Promise<"recorded" | "already-open"> {
     const snapshot = request.toSnapshot();
 
-    await this.database.insert(clientOnboardingDetailRequestsTable).values({
-      id: snapshot.id,
-      clientId: snapshot.clientId,
-      questionIds: [...snapshot.questionIds],
-      note: snapshot.note,
-      askedAt: snapshot.askedAt,
-      answeredAt: snapshot.answeredAt,
-    });
+    try {
+      await this.database.insert(clientOnboardingDetailRequestsTable).values({
+        id: snapshot.id,
+        clientId: snapshot.clientId,
+        questionIds: [...snapshot.questionIds],
+        note: snapshot.note,
+        askedAt: snapshot.askedAt,
+        answeredAt: snapshot.answeredAt,
+      });
+
+      return "recorded";
+    } catch (error) {
+      if (violatesOpenDetailRequestPerClient(error)) {
+        return "already-open";
+      }
+
+      throw error;
+    }
   }
 
   async recordAnswer(input: RecordDetailsAnswer): Promise<void> {
@@ -127,5 +145,15 @@ function mergedAnswersExpression(merged: OnboardingAnswersByForm): SQL {
     (expression, formId) =>
       sql`jsonb_set(${expression}, array[${formId}]::text[], coalesce(${answers} -> ${formId}, '{}'::jsonb) || ${JSON.stringify(merged[formId])}::jsonb)`,
     sql`${answers}`,
+  );
+}
+
+function violatesOpenDetailRequestPerClient(error: unknown): boolean {
+  return isCausedByDatabaseError(
+    error,
+    (fields) =>
+      fields.code === UNIQUE_VIOLATION_CODE &&
+      fields.constraint ===
+        clientOnboardingConstraints.openDetailRequestPerClient,
   );
 }

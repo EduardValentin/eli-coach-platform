@@ -76,7 +76,12 @@ export class RequestOnboardingDetailsUseCase {
       return outcome;
     }
 
-    await this.options.reviews.recordRequest(outcome.request);
+    const recorded = await this.options.reviews.recordRequest(outcome.request);
+
+    if (recorded === "already-open") {
+      return { status: "not-in-review" };
+    }
+
     await this.options.stamps.record({
       clientId,
       stamps: outcome.review.stamps(),

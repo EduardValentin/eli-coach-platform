@@ -93,7 +93,7 @@ function createReviews(stored: Partial<StoredReview> = {}) {
       ...stored,
     }),
     recordOpened: vi.fn().mockResolvedValue(undefined),
-    recordRequest: vi.fn().mockResolvedValue(undefined),
+    recordRequest: vi.fn().mockResolvedValue("recorded"),
     recordAnswer: vi.fn().mockResolvedValue(undefined),
     recordApproval: vi.fn().mockResolvedValue(undefined),
   } satisfies OnboardingReviews;
@@ -323,6 +323,27 @@ describe("RequestOnboardingDetailsUseCase", () => {
       clientId: CLIENT.clientId,
       requestId: "request-1",
     });
+  });
+
+  it("answers not-in-review without stamping or emailing when another request was recorded first", async () => {
+    // arrange
+    const ports = reviewPorts({ stored: { openedAt: OPENED_AT } });
+    ports.reviews.recordRequest.mockResolvedValue("already-open");
+    const notifications = createNotifications();
+    const useCase = requestUseCase(ports, notifications);
+
+    // act
+    const result = await useCase.execute({
+      clientId: CLIENT.clientId,
+      questionIds: [WEIGHT],
+      note: NOTE,
+    });
+
+    // assert
+    expect(result).toEqual({ status: "not-in-review" });
+    expect(ports.stamps.record).not.toHaveBeenCalled();
+    expect(notifications.sendDetailsRequest).not.toHaveBeenCalled();
+    expect(ports.incidents.onboardingDetailsRequested).not.toHaveBeenCalled();
   });
 
   it("refuses a second request while one is open and writes nothing", async () => {

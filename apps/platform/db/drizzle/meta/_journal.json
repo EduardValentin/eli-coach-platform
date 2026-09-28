@@ -225,6 +225,13 @@
       "when": 1790632566234,
       "tag": "0031_client_onboarding_review",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1790633709713,
+      "tag": "0032_client_onboarding_open_request_per_client",
+      "breakpoints": true
     }
   ]
 }

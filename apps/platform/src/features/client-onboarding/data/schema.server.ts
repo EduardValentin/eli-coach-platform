@@ -25,6 +25,8 @@ import { clientsTable } from "~/features/coaching-sales/data/schema.server";
 
 export const clientOnboardingConstraints = {
   submissionPerClient: "client_onboarding_submissions_client_id_unique",
+  openDetailRequestPerClient:
+    "client_onboarding_detail_requests_open_per_client_unique",
 } as const;
 
 export const clientOnboardingDraftsTable = appSchema.table(
@@ -104,6 +106,9 @@ export const clientOnboardingDetailRequestsTable = appSchema.table(
       table.clientId,
       table.askedAt,
     ),
+    uniqueIndex(clientOnboardingConstraints.openDetailRequestPerClient)
+      .on(table.clientId)
+      .where(sql`${table.answeredAt} is null`),
   ],
 );
 

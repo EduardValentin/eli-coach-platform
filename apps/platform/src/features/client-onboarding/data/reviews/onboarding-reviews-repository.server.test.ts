@@ -9,6 +9,7 @@ import { PgDialect } from "drizzle-orm/pg-core";
 import { describe, expect, it } from "vitest";
 
 import {
+  clientOnboardingConstraints,
   clientOnboardingDetailRequestsTable,
   clientOnboardingReviewsTable,
   clientOnboardingSubmissionsTable,
@@ -193,9 +194,10 @@ describe("PostgresOnboardingReviews#recordRequest", () => {
     });
 
     // act
-    await reviews.recordRequest(request);
+    const outcome = await reviews.recordRequest(request);
 
     // assert
+    expect(outcome).toBe("recorded");
     expect(database.inserted).toEqual([
       {
         table: clientOnboardingDetailRequestsTable,
@@ -212,6 +214,51 @@ describe("PostgresOnboardingReviews#recordRequest", () => {
         },
       },
     ]);
+  });
+});
+
+describe("PostgresOnboardingReviews#recordRequest while another request is open", () => {
+  it("answers already open when the open-request-per-client index refuses the insert", async () => {
+    // arrange
+    const reviews = new PostgresOnboardingReviews(
+      createDatabaseRefusingInsertWith(
+        uniqueViolation(clientOnboardingConstraints.openDetailRequestPerClient),
+      ),
+    );
+
+    // act
+    const outcome = await reviews.recordRequest(raisedRequest());
+
+    // assert
+    expect(outcome).toBe("already-open");
+  });
+
+  it("rethrows a unique violation on any other constraint", async () => {
+    // arrange
+    const failure = uniqueViolation("client_onboarding_detail_requests_pkey");
+    const reviews = new PostgresOnboardingReviews(
+      createDatabaseRefusingInsertWith(failure),
+    );
+
+    // act
+    const recording = reviews.recordRequest(raisedRequest());
+
+    // assert
+    await expect(recording).rejects.toBe(failure);
+  });
+
+  it("rethrows a database failure it cannot name", async () => {
+    // arrange
+    const failure = new Error("connection terminated");
+    const reviews = new PostgresOnboardingReviews(
+      createDatabaseRefusingInsertWith(failure),
+    );
+
+    // act
+    const recording = reviews.recordRequest(raisedRequest());
+
+    // assert
+    await expect(recording).rejects.toBe(failure);
   });
 });
 
@@ -471,4 +518,30 @@ function createDatabaseRecordingAnswer(stampedRows: readonly unknown[]) {
       return transactions;
     },
   };
+}
+
+function raisedRequest(): DetailRequest {
+  return DetailRequest.raise({
+    id: FIRST_REQUEST_ID,
+    clientId: CLIENT_ID,
+    questionIds: [{ formId: "goal-availability", fieldId: "weight" }],
+    note: "Please check your weight.",
+    askedAt: FIRST_ASKED_AT,
+  });
+}
+
+function uniqueViolation(constraint: string): Error {
+  return Object.assign(new Error("duplicate key value"), {
+    cause: { code: "23505", constraint },
+  });
+}
+
+function createDatabaseRefusingInsertWith(failure: Error): DatabaseClient {
+  return {
+    insert: () => ({
+      values: async () => {
+        throw failure;
+      },
+    }),
+  } as unknown as DatabaseClient;
 }

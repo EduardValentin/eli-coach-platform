@@ -193,6 +193,35 @@ describe.sequential("onboarding review integration", () => {
     expect(await detailsEmails()).toHaveLength(1);
   });
 
+  it("two requests raised at once leave one open request", async () => {
+    // arrange
+    const clientId = await clientInReview();
+    await rig.holdClock(ASKED_INSTANT);
+
+    // act
+    const responses = await Promise.all([
+      askForDetails(clientId, {
+        questions: [WEIGHT_QUESTION],
+        note: WEIGHT_NOTE,
+      }),
+      askForDetails(clientId, {
+        questions: [CHECK_IN_DAY_QUESTION],
+        note: CHECK_IN_NOTE,
+      }),
+    ]);
+
+    // assert
+    expect(responses.map((response) => response.status).sort()).toEqual([
+      200, 409,
+    ]);
+    const refused = responses.find((response) => response.status === 409);
+    expect(await refused?.json()).toEqual({ error: "not-in-review" });
+    expect(await requestRowsOf(clientId)).toEqual([
+      expect.objectContaining({ answeredAt: null }),
+    ]);
+    expect(await detailsEmails()).toHaveLength(1);
+  });
+
   it("refuses a request before the review is opened and one with no note", async () => {
     // arrange
     const clientId = await submittedClient();
