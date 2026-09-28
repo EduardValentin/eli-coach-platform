@@ -156,6 +156,68 @@ describe("composeCoachingSalesFeature client onboarding handles", () => {
     // assert
     await expect(stamping).rejects.toThrow("database down");
   });
+
+  it("projects the review stamps on the clients table", async () => {
+    // arrange
+    const { handles } = composeCoachingSalesFeature(createHandles({}));
+
+    // act
+    const stamping = handles.onboardingReviewStamps.record({
+      clientId: "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22",
+      stamps: {
+        reviewOpenedAt: new Date("2026-10-20T10:00:00.000Z"),
+        detailsRequestedAt: null,
+        detailsAnsweredAt: null,
+        answersApprovedAt: null,
+      },
+    });
+
+    // assert
+    await expect(stamping).rejects.toThrow("database down");
+  });
+});
+
+describe("composeCoachingSalesFeature coach clients", () => {
+  it("answers no clients and reports the failure when the roster cannot be read", async () => {
+    // arrange
+    const incidents = createIncidents();
+    const { feature } = composeCoachingSalesFeature({
+      ...createHandles({}),
+      incidents,
+    });
+
+    // act
+    const roster = await feature.coachClients.loadRoster(
+      coachArgs(new Request("https://evoa.fit/coach/clients")),
+    );
+
+    // assert
+    expect(roster).toEqual({ clients: null });
+    expect(incidents.rosterReadFailed).toHaveBeenCalledWith(
+      new Error("database down"),
+    );
+  });
+
+  it("re-sends an invitation through the clients table", async () => {
+    // arrange
+    const { feature } = composeCoachingSalesFeature(createHandles({}));
+
+    // act
+    const resending = feature.coachClients.resendInvitation(
+      coachArgs(
+        new Request("https://evoa.fit/api/coaching-sales/invitation-resends", {
+          body: JSON.stringify({
+            clientId: "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22",
+          }),
+          headers: { "Content-Type": "application/json" },
+          method: "POST",
+        }),
+      ),
+    );
+
+    // assert
+    await expect(resending).rejects.toThrow("database down");
+  });
 });
 
 describe("composeCoachingSalesFeature buyer controllers", () => {
@@ -201,6 +263,16 @@ function checkoutRequest(): Request {
 }
 
 function coachSendsPaymentLinkArgs() {
+  return coachArgs(
+    new Request("https://evoa.fit/api/coaching-sales/payment-links", {
+      body: JSON.stringify({ assessmentCallId: CALL_ID }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    }),
+  );
+}
+
+function coachArgs(request: Request) {
   return createRequestArgs({
     contexts: [
       contextEntry(sessionContext, {
@@ -208,11 +280,7 @@ function coachSendsPaymentLinkArgs() {
         kind: "authenticated",
       }),
     ],
-    request: new Request("https://evoa.fit/api/coaching-sales/payment-links", {
-      body: JSON.stringify({ assessmentCallId: CALL_ID }),
-      headers: { "Content-Type": "application/json" },
-      method: "POST",
-    }),
+    request,
   });
 }
 
@@ -231,6 +299,9 @@ function createHandles(
         throw new Error("no identity invitation expected");
       },
       findInvitationIdForSubject: async () => null,
+      replace: async () => {
+        throw new Error("no identity invitation expected");
+      },
     },
     incidents: createIncidents(),
     paymentCheckout: createPaymentCheckout({ PAYMENTS_PROVIDER: "memory" }),
@@ -246,8 +317,11 @@ function createHandles(
 function createIncidents() {
   return {
     invitationEmailFailed: vi.fn(),
+    invitationResendFailed: vi.fn(),
+    invitationResent: vi.fn(),
     paymentEventRejected: vi.fn(),
     paymentLinkEmailFailed: vi.fn(),
+    rosterReadFailed: vi.fn(),
     salesModeReadFailed: vi.fn(),
   };
 }

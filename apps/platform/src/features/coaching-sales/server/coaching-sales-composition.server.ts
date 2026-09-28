@@ -3,6 +3,8 @@ import type { InvitationAcceptance } from "@eli-coach-platform/domain/account";
 import {
   AcceptInvitationUseCase,
   AdmitPaidClientUseCase,
+  ReadClientInvitationUseCase,
+  ResendInvitationUseCase,
   ResolveInvitationUseCase,
   type ClientInvitationIncidents,
   type IdentityInvitations,
@@ -14,8 +16,14 @@ import {
 } from "@eli-coach-platform/domain/client-journey";
 import type {
   OnboardingClients,
+  OnboardingReviewStamps,
   OnboardingSubmissionStamps,
 } from "@eli-coach-platform/domain/client-onboarding";
+import {
+  ListClientsUseCase,
+  ReadClientRecordUseCase,
+  type ClientRosterIncidents,
+} from "@eli-coach-platform/domain/client-roster";
 import {
   ReadPricingTiersUseCase,
   type PricingEligibility,
@@ -43,12 +51,14 @@ import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/serv
 import type { PaymentCompletionHandler } from "@eli-coach-platform/infrastructure/payments/server";
 
 import { ClientJourneyController } from "~/features/coaching-sales/api/client/client-journey-controller.server";
+import { CoachClientsController } from "~/features/coaching-sales/api/coach/coach-clients-controller.server";
 import { CoachSalesController } from "~/features/coaching-sales/api/coach/coach-sales-controller.server";
 import { PaymentLinksController } from "~/features/coaching-sales/api/coach/payment-links-controller.server";
 import { CoachingPurchaseCompletionHandler } from "~/features/coaching-sales/api/payments/coaching-purchase-completion-handler.server";
 import { CheckoutsController } from "~/features/coaching-sales/api/public/checkouts-controller.server";
 import { InvitationsController } from "~/features/coaching-sales/api/public/invitations-controller.server";
 import { PostgresClientJourneys } from "~/features/coaching-sales/data/client-journeys/client-journeys-repository.server";
+import { PostgresClientRoster } from "~/features/coaching-sales/data/clients/client-roster-reader.server";
 import { PostgresOnboardingClients } from "~/features/coaching-sales/data/clients/onboarding-clients-reader.server";
 import { RandomClientInvitationIdGenerator } from "~/features/coaching-sales/data/invitations/client-invitation-ids.server";
 import { PostgresInvitedClients } from "~/features/coaching-sales/data/invitations/invited-clients-repository.server";
@@ -65,6 +75,7 @@ import { EmailClientInvitationNotifications } from "~/features/coaching-sales/em
 export type CoachingSalesFeature = {
   checkouts: CheckoutsController;
   clientJourney: ClientJourneyController;
+  coachClients: CoachClientsController;
   coachSales: CoachSalesController;
   invitations: InvitationsController;
   paymentLinks: PaymentLinksController;
@@ -76,6 +87,7 @@ type CoachingSalesComposition = {
   handles: {
     invitationAcceptance: InvitationAcceptance;
     onboardingClients: OnboardingClients & UnitPreferenceClients;
+    onboardingReviewStamps: OnboardingReviewStamps;
     onboardingSubmissionStamps: OnboardingSubmissionStamps;
     paymentCompletionHandler: PaymentCompletionHandler;
   };
@@ -89,7 +101,9 @@ export type CoachingSalesFeatureHandles = {
   database: DatabaseClient;
   featureFlags: FeatureFlagReader;
   identityInvitations: IdentityInvitations;
-  incidents: CoachingSalesIncidents & ClientInvitationIncidents;
+  incidents: CoachingSalesIncidents &
+    ClientInvitationIncidents &
+    ClientRosterIncidents;
   paymentCheckout: PaymentCheckout;
   pricingEligibility: PricingEligibility;
   productEmail: ProductEmail;
@@ -125,6 +139,19 @@ export function composeCoachingSalesFeature(
     salesWindow,
   };
 
+  const invitationPorts = {
+    clients: new PostgresInvitedClients(database),
+    clock,
+    identity: handles.identityInvitations,
+    incidents: handles.incidents,
+    invitations,
+    notifications: new EmailClientInvitationNotifications(
+      handles.productEmail,
+      emailOptions,
+    ),
+    tokenGenerator,
+  };
+
   const invitationUseCases = {
     acceptInvitation: new AcceptInvitationUseCase({
       clock,
@@ -132,18 +159,14 @@ export function composeCoachingSalesFeature(
       invitations,
     }),
     admitPaidClient: new AdmitPaidClientUseCase({
-      clients: new PostgresInvitedClients(database),
-      clock,
-      identity: handles.identityInvitations,
-      incidents: handles.incidents,
+      ...invitationPorts,
       invitationIds: new RandomClientInvitationIdGenerator(),
-      invitations,
-      notifications: new EmailClientInvitationNotifications(
-        handles.productEmail,
-        emailOptions,
-      ),
-      tokenGenerator,
     }),
+    readClientInvitation: new ReadClientInvitationUseCase({
+      clock,
+      invitations,
+    }),
+    resendInvitation: new ResendInvitationUseCase(invitationPorts),
     resolveInvitation: new ResolveInvitationUseCase({
       clock,
       invitations,
@@ -157,6 +180,18 @@ export function composeCoachingSalesFeature(
     readProgramStatus: new ReadProgramStatusUseCase({
       journeys,
       subscriptionStarts: purchases,
+    }),
+  };
+
+  const roster = new PostgresClientRoster(database);
+  const rosterUseCases = {
+    listClients: new ListClientsUseCase({
+      incidents: handles.incidents,
+      roster,
+    }),
+    readClientRecord: new ReadClientRecordUseCase({
+      calls: handles.assessmentCallReader,
+      roster,
     }),
   };
 
@@ -217,6 +252,11 @@ export function composeCoachingSalesFeature(
         startCheckout: useCases.startCheckout,
       }),
       clientJourney: new ClientJourneyController(clientJourneyUseCases),
+      coachClients: new CoachClientsController({
+        ...rosterUseCases,
+        readClientInvitation: invitationUseCases.readClientInvitation,
+        resendInvitation: invitationUseCases.resendInvitation,
+      }),
       coachSales: new CoachSalesController({
         readCallSalesStates: useCases.readCallSalesStates,
         readPricingTiers: useCases.readPricingTiers,
@@ -234,6 +274,7 @@ export function composeCoachingSalesFeature(
         accept: (input) => invitationUseCases.acceptInvitation.execute(input),
       },
       onboardingClients: new PostgresOnboardingClients(database),
+      onboardingReviewStamps: journeys,
       onboardingSubmissionStamps: journeys,
       paymentCompletionHandler: new CoachingPurchaseCompletionHandler({
         incidents: handles.incidents,

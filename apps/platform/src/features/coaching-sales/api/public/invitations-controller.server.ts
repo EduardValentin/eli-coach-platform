@@ -2,12 +2,11 @@ import type { ResolveInvitationUseCase } from "@eli-coach-platform/domain/client
 import { createBadRequestResponse } from "@eli-coach-platform/infrastructure/http/server";
 import type { ActionFunctionArgs } from "react-router";
 
+import { readJsonRequestBody } from "~/features/coaching-sales/api/read-json-request-body.server";
 import {
   invitationResolutionRequestSchema,
   invitationResolutionSchema,
 } from "~/features/coaching-sales/contracts/invitation";
-
-import { readJsonRequestBody } from "./read-json-request-body.server";
 
 type InvitationsControllerOptions = {
   resolveInvitation: ResolveInvitationUseCase;
