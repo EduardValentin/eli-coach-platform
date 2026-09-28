@@ -64,6 +64,12 @@ function renderLayoutAt(pathname: string) {
   return render(<RoutesStub initialEntries={[pathname]} />);
 }
 
+function viewportContent() {
+  return document
+    .querySelector('meta[name="viewport"]')
+    ?.getAttribute("content");
+}
+
 function readUiStylesheet() {
   const stylesheetPath = createRequire(import.meta.url).resolve(
     "@eli-coach-platform/ui/styles.css",
@@ -102,6 +108,30 @@ describe("root Layout", () => {
     expect(screen.getByText("Page")).toBeInTheDocument();
     expect(document.documentElement).not.toHaveAttribute("data-portal");
   });
+
+  it("lets the client portal draw under the phone's notch and home indicator", () => {
+    // arrange
+    const clientPage = "/client";
+
+    // act
+    renderLayoutAt(clientPage);
+
+    // assert
+    expect(viewportContent()).toBe(
+      "width=device-width, initial-scale=1, viewport-fit=cover",
+    );
+  });
+
+  it.each(["/coach", "/store"])(
+    "keeps the default viewport on %s",
+    (pathname) => {
+      // arrange, act
+      renderLayoutAt(pathname);
+
+      // assert
+      expect(viewportContent()).toBe("width=device-width, initial-scale=1");
+    },
+  );
 
   it("finds the coach colour scope in the stylesheet under the same segment", () => {
     // arrange
