@@ -1,5 +1,5 @@
 import { expect, test } from "../support/fixtures";
-import { useDesktopViewport, usePhoneViewport } from "../support/viewport";
+import { setDesktopViewport, setPhoneViewport } from "../support/viewport";
 
 test("a client finds her way around her portal on a laptop and on her phone", async ({
   page,
@@ -21,7 +21,12 @@ test("a client finds her way around her portal on a laptop and on her phone", as
   await clientPortalShell.expectSidebar("Client");
   await clientPortalShell.expectDashboardCurrent();
   await clientPortalShell.expectGreeting("Welcome back.");
-  await clientPortalShell.expectSkipLinkFocusedAfterTab();
+
+  // act
+  await clientPortalShell.tabToSkipLink();
+
+  // assert
+  await clientPortalShell.expectSkipLinkFocused();
 
   // act
   await clientPortalShell.followSkipLink();
@@ -30,7 +35,7 @@ test("a client finds her way around her portal on a laptop and on her phone", as
   await clientPortalShell.expectMainContentFocused();
 
   // act
-  await usePhoneViewport(page);
+  await setPhoneViewport(page);
 
   // assert
   await clientPortalShell.expectTopBar("Client");
@@ -57,7 +62,7 @@ test("a client finds her way around her portal on a laptop and on her phone", as
   await expect(page).toHaveURL("/");
 
   // act
-  await useDesktopViewport(page);
+  await setDesktopViewport(page);
 
   // assert
   await publicNav.expectSignedOut();

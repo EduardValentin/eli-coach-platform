@@ -53,8 +53,11 @@ export class ClientPortalShell {
     ).toBeVisible();
   }
 
-  async expectSkipLinkFocusedAfterTab(): Promise<void> {
+  async tabToSkipLink(): Promise<void> {
     await this.page.keyboard.press("Tab");
+  }
+
+  async expectSkipLinkFocused(): Promise<void> {
     await expect(this.skipLink).toBeFocused();
   }
 
