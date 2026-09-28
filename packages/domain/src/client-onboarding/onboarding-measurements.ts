@@ -1,5 +1,8 @@
 import { measurementEntryOf, type MeasurementEntry } from "../measurement";
-import type { OnboardingAnswersByForm } from "./onboarding-answers";
+import type {
+  OnboardingAnswersByForm,
+  OnboardingFormAnswers,
+} from "./onboarding-answers";
 
 export const MEASUREMENT_FIELD_IDS = {
   weight: "weight",
@@ -10,7 +13,7 @@ export const MEASUREMENT_FIELD_IDS = {
 } as const;
 
 function numericAnswer(
-  formAnswers: OnboardingAnswersByForm[keyof OnboardingAnswersByForm],
+  formAnswers: OnboardingFormAnswers,
   fieldId: string,
 ): number | undefined {
   const answer = formAnswers[fieldId];
