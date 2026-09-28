@@ -85,6 +85,7 @@ type AppState = {
   journeyReducedPricing: boolean;
   journeyInvitation: PrototypeInvitationStanding;
   invitationResendOutcome: PrototypeInvitationResendOutcome;
+  isClientsRosterEmpty: boolean;
   paymentLinkOutcome: PrototypePaymentLinkOutcome;
   paymentLinkState: PrototypePaymentLinkState;
   invitationLinkState: PrototypeInvitationLinkState;
@@ -120,6 +121,7 @@ const defaultState: AppState = {
   journeyReducedPricing: false,
   journeyInvitation: 'sent',
   invitationResendOutcome: 'sent',
+  isClientsRosterEmpty: false,
   paymentLinkOutcome: 'sent',
   paymentLinkState: 'valid',
   invitationLinkState: 'valid',
@@ -316,6 +318,9 @@ function parseDevParamsFromURL(): AppState {
     state.invitationResendOutcome =
       invitationResendOutcome as PrototypeInvitationResendOutcome;
   }
+  if (params.has('jroster')) {
+    state.isClientsRosterEmpty = params.get('jroster') === 'empty';
+  }
   const paymentLink = params.get('paylink');
   if (
     paymentLink &&
@@ -379,6 +384,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     url.searchParams.delete('jreduced');
     url.searchParams.delete('jinv');
     url.searchParams.delete('jresend');
+    url.searchParams.delete('jroster');
     url.searchParams.delete('paylink');
     url.searchParams.delete('paylinkstate');
     url.searchParams.delete('invitationstate');
@@ -453,6 +459,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       appState.invitationResendOutcome !== defaultState.invitationResendOutcome
     ) {
       url.searchParams.set('jresend', appState.invitationResendOutcome);
+    }
+    if (appState.isClientsRosterEmpty) {
+      url.searchParams.set('jroster', 'empty');
     }
     if (appState.paymentLinkOutcome !== defaultState.paymentLinkOutcome) {
       url.searchParams.set('paylink', appState.paymentLinkOutcome);

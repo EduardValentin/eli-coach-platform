@@ -196,6 +196,10 @@ function parseInvitationResendOutcomeControl(
   return outcome ?? 'sent';
 }
 
+function parseClientsRosterControl(value: string): boolean {
+  return value === 'empty';
+}
+
 function parseBookingOutcomeControl(value: string): PrototypeBookingOutcome {
   if (
     value === 'slot_unavailable' ||
@@ -823,6 +827,30 @@ export function DevToggle() {
                       <SelectItem value="unavailable">
                         Assessment calls unavailable
                       </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="dev-clients-roster"
+                    className="text-xs font-semibold text-copy-muted uppercase tracking-wider"
+                  >
+                    Clients roster
+                  </Label>
+                  <Select
+                    value={appState.isClientsRosterEmpty ? 'empty' : 'seeded'}
+                    onValueChange={(value) =>
+                      setAppState({
+                        isClientsRosterEmpty: parseClientsRosterControl(value),
+                      })
+                    }
+                  >
+                    <SelectTrigger id="dev-clients-roster" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="seeded">Seeded</SelectItem>
+                      <SelectItem value="empty">Empty</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

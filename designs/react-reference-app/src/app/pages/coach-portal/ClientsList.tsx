@@ -33,6 +33,7 @@ import { useClientProfile } from '../../context/ClientProfileContext';
 import {
   useTraining,
 } from '../../context/TrainingContext';
+import { useAppState } from '../../context/AppContext';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
 import {
   awaitsCoachReview,
@@ -392,9 +393,11 @@ export function ClientsList() {
   const { getProfile } = useClientProfile();
   const { getClientActiveSubscription, getClientSubscriptions } = useTraining();
   const { journeys } = useClientJourneys();
+  const { appState } = useAppState();
 
   const now = new Date();
 
+  const isPostMvp = appState.prototypeMode === 'post-mvp';
   const startedJourneys = Object.values(journeys).filter(hasStarted);
   const startedCallIds = new Set(
     startedJourneys.map((journey) => journey.callId),
@@ -411,11 +414,13 @@ export function ClientsList() {
     return activeSubscription?.months ?? null;
   };
 
-  const journeyRows = startedJourneys.map((journey) =>
-    journeyRosterRow(journey, now),
-  );
+  const journeyRows = appState.isClientsRosterEmpty
+    ? []
+    : startedJourneys.map((journey) => journeyRosterRow(journey, now));
 
-  const mockRows = clients
+  const showsMockRows = isPostMvp && !appState.isClientsRosterEmpty;
+
+  const mockRows = (showsMockRows ? clients : [])
     .filter((client) => {
       const callId = journeyCallIdForClient(client.id);
       return !(callId !== null && startedCallIds.has(callId));
