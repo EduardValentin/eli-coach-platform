@@ -130,6 +130,34 @@ describe("composeCoachingSalesFeature invitation acceptance", () => {
   });
 });
 
+describe("composeCoachingSalesFeature client onboarding handles", () => {
+  it("reads the onboarding client from the clients table", async () => {
+    // arrange
+    const { handles } = composeCoachingSalesFeature(createHandles({}));
+
+    // act
+    const reading = handles.onboardingClients.findByAuthSubjectId("user_ana");
+
+    // assert
+    await expect(reading).rejects.toThrow("database down");
+  });
+
+  it("stamps the submitted onboarding on the clients table", async () => {
+    // arrange
+    const { handles } = composeCoachingSalesFeature(createHandles({}));
+
+    // act
+    const stamping =
+      handles.onboardingSubmissionStamps.recordOnboardingSubmitted({
+        clientId: "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22",
+        at: new Date("2026-10-20T10:00:00.000Z"),
+      });
+
+    // assert
+    await expect(stamping).rejects.toThrow("database down");
+  });
+});
+
 describe("composeCoachingSalesFeature buyer controllers", () => {
   it("hides the bundle page, its link resolution and the checkout while the site is in waitlist mode", async () => {
     // arrange

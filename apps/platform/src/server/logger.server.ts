@@ -1,6 +1,7 @@
 import type { AcquisitionIncidents } from "@eli-coach-platform/domain/acquisition";
 import type { AssessmentCallIncidents } from "@eli-coach-platform/domain/assessment-call";
 import type { ClientInvitationIncidents } from "@eli-coach-platform/domain/client-invitation";
+import type { ClientOnboardingIncidents } from "@eli-coach-platform/domain/client-onboarding";
 import type { CoachingSalesIncidents } from "@eli-coach-platform/domain/payment-link";
 import type { WaitlistIncidents } from "@eli-coach-platform/domain/waitlist";
 import type { PaymentWebhookIncidents } from "@eli-coach-platform/infrastructure/payments/server";
@@ -8,6 +9,7 @@ import type { PaymentWebhookIncidents } from "@eli-coach-platform/infrastructure
 type ConsoleLogger = AcquisitionIncidents &
   AssessmentCallIncidents &
   ClientInvitationIncidents &
+  ClientOnboardingIncidents &
   CoachingSalesIncidents &
   PaymentWebhookIncidents &
   WaitlistIncidents;
@@ -55,6 +57,34 @@ export function createConsoleLogger(): ConsoleLogger {
       console.error("Assessment call notification failed.", {
         errorCategory: "assessment_call_notification_failure",
         recipient,
+      });
+    },
+    onboardingDraftSaved: ({ clientId, formId }) => {
+      console.info("Client onboarding draft saved.", {
+        clientId,
+        eventCategory: "client_onboarding_draft_saved",
+        formId,
+      });
+    },
+    onboardingDraftSaveFailed: ({ clientId, formId }) => {
+      console.error("Client onboarding draft save failed.", {
+        clientId,
+        errorCategory: "client_onboarding_draft_save_failure",
+        formId,
+      });
+    },
+    onboardingSubmissionAccepted: ({ clientId, screeningOutcome }) => {
+      console.info("Client onboarding submission accepted.", {
+        clientId,
+        eventCategory: "client_onboarding_submission_accepted",
+        screeningOutcome,
+      });
+    },
+    onboardingSubmissionRefused: ({ clientId, reason }) => {
+      console.warn("Client onboarding submission refused.", {
+        clientId,
+        eventCategory: "client_onboarding_submission_refused",
+        reason,
       });
     },
     paymentEventHandlingFailed: ({ errorClass, eventId, purpose }) => {

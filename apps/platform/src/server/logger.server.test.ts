@@ -320,4 +320,97 @@ describe("createConsoleLogger", () => {
       },
     );
   });
+
+  it("logs a saved onboarding draft by client and form only", () => {
+    // arrange
+    const consoleInfo = vi
+      .spyOn(console, "info")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+
+    // act
+    logger.onboardingDraftSaved({
+      clientId: "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22",
+      formId: "safety-screening",
+    });
+
+    // assert
+    expect(consoleInfo).toHaveBeenCalledWith("Client onboarding draft saved.", {
+      clientId: "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22",
+      eventCategory: "client_onboarding_draft_saved",
+      formId: "safety-screening",
+    });
+  });
+
+  it("logs a failed onboarding draft save by client and form only", () => {
+    // arrange
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+
+    // act
+    logger.onboardingDraftSaveFailed({
+      clientId: "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22",
+      formId: "measurements",
+    });
+
+    // assert
+    expect(consoleError).toHaveBeenCalledWith(
+      "Client onboarding draft save failed.",
+      {
+        clientId: "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22",
+        errorCategory: "client_onboarding_draft_save_failure",
+        formId: "measurements",
+      },
+    );
+  });
+
+  it("logs an accepted onboarding submission by client and screening outcome only", () => {
+    // arrange
+    const consoleInfo = vi
+      .spyOn(console, "info")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+
+    // act
+    logger.onboardingSubmissionAccepted({
+      clientId: "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22",
+      screeningOutcome: "needs-review",
+    });
+
+    // assert
+    expect(consoleInfo).toHaveBeenCalledWith(
+      "Client onboarding submission accepted.",
+      {
+        clientId: "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22",
+        eventCategory: "client_onboarding_submission_accepted",
+        screeningOutcome: "needs-review",
+      },
+    );
+  });
+
+  it("logs a refused onboarding submission by client and reason only", () => {
+    // arrange
+    const consoleWarn = vi
+      .spyOn(console, "warn")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+
+    // act
+    logger.onboardingSubmissionRefused({
+      clientId: "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22",
+      reason: "invalid",
+    });
+
+    // assert
+    expect(consoleWarn).toHaveBeenCalledWith(
+      "Client onboarding submission refused.",
+      {
+        clientId: "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22",
+        eventCategory: "client_onboarding_submission_refused",
+        reason: "invalid",
+      },
+    );
+  });
 });

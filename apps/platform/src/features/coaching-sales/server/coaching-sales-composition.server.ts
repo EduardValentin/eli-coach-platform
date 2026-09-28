@@ -12,6 +12,10 @@ import {
   ReadClientJourneyUseCase,
   ReadProgramStatusUseCase,
 } from "@eli-coach-platform/domain/client-journey";
+import type {
+  OnboardingClients,
+  OnboardingSubmissionStamps,
+} from "@eli-coach-platform/domain/client-onboarding";
 import {
   ReadPricingTiersUseCase,
   type PricingEligibility,
@@ -34,6 +38,7 @@ import {
   type CoachingSalesIncidents,
 } from "@eli-coach-platform/domain/payment-link";
 import type { Clock } from "@eli-coach-platform/domain/shared";
+import type { UnitPreferenceClients } from "@eli-coach-platform/domain/unit-preference";
 import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 import type { PaymentCompletionHandler } from "@eli-coach-platform/infrastructure/payments/server";
 
@@ -44,6 +49,7 @@ import { CoachingPurchaseCompletionHandler } from "~/features/coaching-sales/api
 import { CheckoutsController } from "~/features/coaching-sales/api/public/checkouts-controller.server";
 import { InvitationsController } from "~/features/coaching-sales/api/public/invitations-controller.server";
 import { PostgresClientJourneys } from "~/features/coaching-sales/data/client-journeys/client-journeys-repository.server";
+import { PostgresOnboardingClients } from "~/features/coaching-sales/data/clients/onboarding-clients-reader.server";
 import { RandomClientInvitationIdGenerator } from "~/features/coaching-sales/data/invitations/client-invitation-ids.server";
 import { PostgresInvitedClients } from "~/features/coaching-sales/data/invitations/invited-clients-repository.server";
 import { PostgresClientInvitations } from "~/features/coaching-sales/data/invitations/invitations-repository.server";
@@ -69,6 +75,8 @@ type CoachingSalesComposition = {
   feature: CoachingSalesFeature;
   handles: {
     invitationAcceptance: InvitationAcceptance;
+    onboardingClients: OnboardingClients & UnitPreferenceClients;
+    onboardingSubmissionStamps: OnboardingSubmissionStamps;
     paymentCompletionHandler: PaymentCompletionHandler;
   };
 };
@@ -225,6 +233,8 @@ export function composeCoachingSalesFeature(
       invitationAcceptance: {
         accept: (input) => invitationUseCases.acceptInvitation.execute(input),
       },
+      onboardingClients: new PostgresOnboardingClients(database),
+      onboardingSubmissionStamps: journeys,
       paymentCompletionHandler: new CoachingPurchaseCompletionHandler({
         incidents: handles.incidents,
         recordCheckoutCompleted: useCases.recordCheckoutCompleted,

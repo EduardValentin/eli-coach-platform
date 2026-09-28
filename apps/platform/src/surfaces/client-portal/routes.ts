@@ -1,6 +1,7 @@
 import { index, prefix, relative } from "@react-router/dev/routes";
 
 import { CLIENT_PORTAL_ROUTE_SEGMENT } from "../../features/accounts/contracts/paths";
+import { clientOnboardingClientRoutes } from "../../features/client-onboarding/routes";
 import { coachingSalesClientRoutes } from "../../features/coaching-sales/routes";
 
 const { layout, route } = relative(import.meta.dirname);
@@ -12,6 +13,7 @@ export const clientPortalRoutes = [
         index("./surfaces/client-portal/pages/home.tsx"),
       ]),
       ...coachingSalesClientRoutes,
+      ...clientOnboardingClientRoutes,
     ]),
   ]),
   // Deploy healthchecks and PWA installs read these without a session, so
