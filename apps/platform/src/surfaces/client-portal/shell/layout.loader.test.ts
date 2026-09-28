@@ -25,6 +25,10 @@ const ANA: ClientJourneySnapshot = {
   lastName: "Popescu",
   welcomeSeenAt: null,
   onboardingSubmittedAt: null,
+  reviewOpenedAt: null,
+  detailsRequestedAt: null,
+  detailsAnsweredAt: null,
+  answersApprovedAt: null,
 };
 
 describe("client shell loader", () => {

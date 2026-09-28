@@ -1,5 +1,6 @@
 import type { AccountSnapshot } from "@eli-coach-platform/domain/account";
 import { ClientJourney } from "@eli-coach-platform/domain/client-journey";
+import type { ReviewStamps } from "@eli-coach-platform/domain/client-onboarding";
 import { describe, expect, it, vi } from "vitest";
 
 import type { AccountsFeature } from "~/features/accounts/server/accounts-composition.server";
@@ -142,6 +143,64 @@ describe("requireClientJourneyStep", () => {
     },
   );
 
+  it.each(
+    Object.keys(REVIEW_JOURNEYS).flatMap((label) =>
+      ["/app/client", "/app/client/plan"].map(
+        (pathname) => [label as ReviewJourney, pathname] as const,
+      ),
+    ),
+  )("lets a client whose onboarding is %s open %s", async (label, pathname) => {
+    // arrange
+    const args = journeyArgs({
+      journey: journeyOf(REVIEW_JOURNEYS[label]),
+      pathname,
+    });
+
+    // act
+    const thrown = await captureThrown(() => requireClientJourneyStep(args));
+
+    // assert
+    expect(thrown).toBeUndefined();
+  });
+
+  it.each([
+    ["in review", "/app/client/welcome"],
+    ["in review", "/app/client/onboarding"],
+    ["asked for more details", "/app/client/welcome"],
+    ["approved", "/app/client/welcome"],
+    ["approved", "/app/client/onboarding"],
+  ] as const)(
+    "sends a client whose onboarding is %s from %s to the client portal",
+    async (label, pathname) => {
+      // arrange
+      const args = journeyArgs({
+        journey: journeyOf(REVIEW_JOURNEYS[label]),
+        pathname,
+      });
+
+      // act
+      const thrown = await captureThrown(() => requireClientJourneyStep(args));
+
+      // assert
+      expect((thrown as Response).status).toBe(302);
+      expect((thrown as Response).headers.get("Location")).toBe("/app/client");
+    },
+  );
+
+  it("lets a client asked for more details open onboarding to answer them", async () => {
+    // arrange
+    const args = journeyArgs({
+      journey: journeyOf(REVIEW_JOURNEYS["asked for more details"]),
+      pathname: "/app/client/onboarding",
+    });
+
+    // act
+    const thrown = await captureThrown(() => requireClientJourneyStep(args));
+
+    // assert
+    expect(thrown).toBeUndefined();
+  });
+
   it("gates the paths of an app served at the root", async () => {
     // arrange
     const args = journeyArgs({
@@ -191,6 +250,10 @@ describe("requireClientJourneyStep", () => {
         lastName: "Popescu",
         welcomeSeenAt: null,
         onboardingSubmittedAt: null,
+        reviewOpenedAt: null,
+        detailsRequestedAt: null,
+        detailsAnsweredAt: null,
+        answersApprovedAt: null,
       });
     },
   );
@@ -291,10 +354,12 @@ describe("readClientJourneyStep", () => {
   );
 });
 
-function journeyOf(options: {
-  welcomeSeenAt: Date | null;
-  onboardingSubmittedAt?: Date;
-}): ClientJourney {
+function journeyOf(
+  options: {
+    welcomeSeenAt: Date | null;
+    onboardingSubmittedAt?: Date;
+  } & Partial<ReviewStamps>,
+): ClientJourney {
   return ClientJourney.from({
     clientId: "client_ana",
     firstName: "Ana",
@@ -302,8 +367,33 @@ function journeyOf(options: {
     lastName: "Popescu",
     welcomeSeenAt: options.welcomeSeenAt,
     onboardingSubmittedAt: options.onboardingSubmittedAt ?? null,
+    reviewOpenedAt: options.reviewOpenedAt ?? null,
+    detailsRequestedAt: options.detailsRequestedAt ?? null,
+    detailsAnsweredAt: options.detailsAnsweredAt ?? null,
+    answersApprovedAt: options.answersApprovedAt ?? null,
   });
 }
+
+const SUBMITTED = {
+  welcomeSeenAt: new Date("2026-10-21T09:00Z"),
+  onboardingSubmittedAt: new Date("2026-10-22T09:00Z"),
+};
+
+const REVIEW_JOURNEYS = {
+  "in review": { ...SUBMITTED, reviewOpenedAt: new Date("2026-10-23T09:00Z") },
+  "asked for more details": {
+    ...SUBMITTED,
+    reviewOpenedAt: new Date("2026-10-23T09:00Z"),
+    detailsRequestedAt: new Date("2026-10-23T10:00Z"),
+  },
+  approved: {
+    ...SUBMITTED,
+    reviewOpenedAt: new Date("2026-10-23T09:00Z"),
+    answersApprovedAt: new Date("2026-10-24T09:00Z"),
+  },
+} as const;
+
+type ReviewJourney = keyof typeof REVIEW_JOURNEYS;
 
 function journeyArgs(options: {
   appBasePath?: string;

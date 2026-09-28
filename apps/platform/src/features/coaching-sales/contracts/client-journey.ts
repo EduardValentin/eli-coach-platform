@@ -17,6 +17,11 @@ type ClientJourneyGate = {
   admits: (requestedPath: string) => boolean;
 };
 
+const SUBMITTED_GATE: ClientJourneyGate = {
+  destination: CLIENT_PORTAL_PATH,
+  admits: (requestedPath) => !ONBOARDING_JOURNEY_PATHS.includes(requestedPath),
+};
+
 const CLIENT_JOURNEY_GATE_BY_STEP = {
   welcome: {
     destination: CLIENT_WELCOME_PATH,
@@ -26,11 +31,15 @@ const CLIENT_JOURNEY_GATE_BY_STEP = {
     destination: CLIENT_ONBOARDING_PATH,
     admits: (requestedPath) => requestedPath === CLIENT_ONBOARDING_PATH,
   },
-  submitted: {
+  submitted: SUBMITTED_GATE,
+  "in-review": SUBMITTED_GATE,
+  "needs-details": {
     destination: CLIENT_PORTAL_PATH,
     admits: (requestedPath) =>
-      !ONBOARDING_JOURNEY_PATHS.includes(requestedPath),
+      SUBMITTED_GATE.admits(requestedPath) ||
+      requestedPath === CLIENT_ONBOARDING_PATH,
   },
+  approved: SUBMITTED_GATE,
 } satisfies Record<ClientJourneyStep, ClientJourneyGate>;
 
 export function clientJourneyRedirect(
@@ -45,7 +54,7 @@ export function clientJourneyRedirect(
 export function clientJourneyPortalLink(
   step: ClientJourneyStep,
 ): { href: string; label: string } | null {
-  if (step === "submitted") {
+  if (isAfterSubmission(step)) {
     return null;
   }
 
@@ -63,6 +72,10 @@ const PROGRAM_STATUS_KINDS = [
 ] as const satisfies readonly ClientJourneyStep[];
 
 export type ProgramStatusKind = (typeof PROGRAM_STATUS_KINDS)[number];
+
+function isAfterSubmission(step: ClientJourneyStep): boolean {
+  return PROGRAM_STATUS_KINDS.some((kind) => kind === step);
+}
 
 export const programStatusSchema = z.object({
   kind: z.enum(PROGRAM_STATUS_KINDS),

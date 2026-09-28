@@ -79,6 +79,10 @@ describe("public layout loader", () => {
         lastName: "Popescu",
         welcomeSeenAt: null,
         onboardingSubmittedAt: null,
+        reviewOpenedAt: null,
+        detailsRequestedAt: null,
+        detailsAnsweredAt: null,
+        answersApprovedAt: null,
       }),
       session: {
         account: buildAccount({ role: "CLIENT" }),
