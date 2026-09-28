@@ -1,0 +1,9 @@
+[
+  { "waitFor": "[data-parity=\"status-filter\"]" },
+  { "wait": 1000 },
+  { "click": "[data-parity=\"status-filter\"]" },
+  { "waitFor": "[data-parity=\"status-count-all\"]" },
+  { "click": "role=option[name=\"Awaiting review\"]" },
+  { "waitFor": "[data-parity=\"row-1-name\"]" },
+  { "wait": 600 }
+]

@@ -1,0 +1,6 @@
+[
+  { "waitFor": "[data-parity-root=\"OnboardingPanel\"] [data-parity=\"form-safety-screening\"]" },
+  { "wait": 1500 },
+  { "click": "[data-parity-root=\"OnboardingPanel\"] [data-parity=\"form-safety-screening\"]" },
+  { "wait": 600 }
+]

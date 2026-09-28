@@ -1,0 +1,7 @@
+[
+  { "waitFor": "[data-parity=\"clients-search\"]" },
+  { "wait": 1000 },
+  { "fill": ["[data-parity=\"clients-search\"]", "no such client"] },
+  { "waitFor": "role=button[name=\"Clear filters\"]" },
+  { "wait": 600 }
+]

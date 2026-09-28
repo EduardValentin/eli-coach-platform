@@ -1,0 +1,10 @@
+[
+  { "waitFor": "[data-parity-root=\"ProgramStatusCard\"]" },
+  { "click": "[aria-label=\"Open Dev Toggle\"]" },
+  { "click": "role=tab[name=\"Journey\"]" },
+  { "click": "#dev-journey-stage" },
+  { "click": "role=option[name=\"needs-details\"]" },
+  { "click": "[aria-label=\"Close Dev Settings\"]" },
+  { "waitFor": "[data-parity=\"answer-now\"]" },
+  { "wait": 600 }
+]

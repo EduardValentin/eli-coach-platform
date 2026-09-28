@@ -1,0 +1,12 @@
+[
+  { "waitFor": "[data-parity-root=\"OnboardingPanel\"]" },
+  { "click": "[aria-label=\"Open Dev Toggle\"]" },
+  { "click": "role=tab[name=\"Journey\"]" },
+  { "click": "#dev-journey-stage" },
+  { "click": "role=option[name=\"invited\"]" },
+  { "click": "#dev-coach-invitation" },
+  { "click": "role=option[name=\"Expired\"]" },
+  { "click": "[aria-label=\"Close Dev Settings\"]" },
+  { "waitFor": "[data-parity-root=\"InvitationBlock\"] [data-parity=\"invitation-state\"]" },
+  { "wait": 1500 }
+]

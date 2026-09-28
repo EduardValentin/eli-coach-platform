@@ -1,0 +1,7 @@
+[
+  { "waitFor": "[data-parity=\"status-filter\"]" },
+  { "wait": 1000 },
+  { "click": "[data-parity=\"status-filter\"]" },
+  { "waitFor": "[data-parity=\"status-count-all\"]" },
+  { "wait": 400 }
+]

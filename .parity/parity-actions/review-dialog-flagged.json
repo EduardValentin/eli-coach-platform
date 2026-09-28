@@ -1,0 +1,11 @@
+[
+  { "waitFor": "[data-parity=\"review-action\"]" },
+  { "wait": 1500 },
+  { "click": "[data-parity=\"review-action\"]" },
+  { "waitFor": "[data-parity-root=\"OnboardingReviewDialog\"] [data-parity=\"dialog-approve\"]" },
+  { "wait": 600 },
+  { "click": "[data-parity-root=\"OnboardingReviewDialog\"] [data-parity=\"flag-sleepHours\"]" },
+  { "fill": ["[data-parity-root=\"OnboardingReviewDialog\"] [data-parity=\"review-note\"]", "Two quick things before I build your plan — tell me a little more about your sleep and about that shoulder."] },
+  { "waitFor": "[data-parity-root=\"OnboardingReviewDialog\"] [data-parity=\"ask-details\"]:not([disabled])" },
+  { "wait": 400 }
+]

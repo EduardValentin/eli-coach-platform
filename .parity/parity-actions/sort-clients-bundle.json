@@ -1,0 +1,7 @@
+[
+  { "waitFor": "[data-parity=\"sort-bundle\"] button" },
+  { "wait": 1000 },
+  { "click": "[data-parity=\"sort-bundle\"] button" },
+  { "waitFor": "[data-parity=\"sort-bundle\"][aria-sort=\"ascending\"]" },
+  { "wait": 600 }
+]
