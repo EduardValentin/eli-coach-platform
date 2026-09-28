@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ClipboardList } from 'lucide-react';
-import { Link, useNavigate } from 'react-router';
+import { Link } from 'react-router';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
 import { canStartWork, workStartDate } from '../../domain/coachingSubscription';
 import {
@@ -106,7 +106,6 @@ function StartNowDialog({
 }
 
 export function ProgramStatusCard() {
-  const navigate = useNavigate();
   const { demoJourney, startProgramNow } = useClientJourneys();
   const [confirming, setConfirming] = useState(false);
   const [starting, setStarting] = useState(false);
@@ -170,14 +169,13 @@ export function ProgramStatusCard() {
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           {demoJourney.stage === 'needs-details' && (
             <Button
-              data-parity="answer-now"
-              onClick={() => navigate('/portal/onboarding?answer=1')}
-              type="button"
+              asChild
               variant="primary"
               size="sm"
               className="w-full sm:w-auto"
+              data-parity="answer-now"
             >
-              Answer now
+              <Link to="/portal/onboarding?answer=1">Answer now</Link>
             </Button>
           )}
 

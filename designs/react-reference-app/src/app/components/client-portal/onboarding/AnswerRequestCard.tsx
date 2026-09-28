@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { useClientJourneys } from '../../../context/ClientJourneyContext';
 import type {
   ClientJourney,
@@ -145,14 +145,13 @@ export function AnswerRequestCard({ request }: { request: DetailRequest }) {
 
           <div className="mt-2 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
             <Button
-              type="button"
+              asChild
               variant="ghost"
               size="md"
               className="w-full sm:w-auto"
               data-parity="not-now"
-              onClick={() => navigate('/portal')}
             >
-              Not now
+              <Link to="/portal">Not now</Link>
             </Button>
             <Button
               disabled={form.formState.isSubmitting}

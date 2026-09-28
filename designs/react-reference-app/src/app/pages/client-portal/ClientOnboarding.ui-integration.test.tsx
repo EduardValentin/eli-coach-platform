@@ -895,7 +895,11 @@ describe('the onboarding', () => {
     expect(
       screen.getByRole('heading', { level: 2, name: 'What your coach asked' }),
     ).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Not now' })).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Not now' })).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Not now' })).toHaveAttribute(
+      'href',
+      '/portal',
+    );
     expect(
       screen.getByText(
         'Two quick things before I build your plan — tell me a little more about your sleep and about that shoulder.',
