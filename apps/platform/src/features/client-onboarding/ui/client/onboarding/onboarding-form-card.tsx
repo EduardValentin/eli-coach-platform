@@ -26,10 +26,15 @@ import { useMeasureUnits } from "./unit-preference-store";
 export type ContinueAttempt =
   { kind: "complete"; answers: OnboardingFormAnswers } | { kind: "incomplete" };
 
+export type ContinueAction = {
+  label: string;
+  availability: "enabled" | "disabled";
+};
+
 type OnboardingAnswerFormProps = {
   answers: OnboardingFormAnswers;
   children?: ReactNode;
-  continueLabel: string;
+  continueAction: ContinueAction;
   definition: OnboardingFormDefinition;
   onBack: (() => void) | null;
   onChange: (answers: OnboardingFormAnswers) => void;
@@ -84,7 +89,7 @@ function groupByLegend(fields: readonly OnboardingField[]): FieldItem[] {
 function OnboardingAnswerForm({
   answers,
   children,
-  continueLabel,
+  continueAction,
   definition,
   onBack,
   onChange,
@@ -198,12 +203,13 @@ function OnboardingAnswerForm({
         )}
         <Button
           data-parity="continue"
+          disabled={continueAction.availability === "disabled"}
           size="md"
           type="submit"
           variant="primary"
           width="full-below-sm"
         >
-          {continueLabel}
+          {continueAction.label}
         </Button>
       </div>
     </form>

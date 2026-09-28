@@ -27,6 +27,7 @@ import { MeasurementSystemField } from "./measurement-system-field";
 import { OnboardingConsent, ProgressPhotoConsent } from "./onboarding-consent";
 import {
   OnboardingFormCard,
+  type ContinueAction,
   type ContinueAttempt,
 } from "./onboarding-form-card";
 import {
@@ -47,12 +48,17 @@ type OnboardingWizardProps = {
   page: OnboardingPage;
 };
 
-type ContinueStage = "answering" | "ready-to-send" | "sending";
+type ContinueStage =
+  "answering" | "awaiting-disclaimer" | "ready-to-send" | "sending";
 
-const CONTINUE_LABELS: Record<ContinueStage, string> = {
-  answering: "Continue",
-  "ready-to-send": "Send to my coach",
-  sending: "Sending…",
+const CONTINUE_ACTIONS: Record<ContinueStage, ContinueAction> = {
+  answering: { label: "Continue", availability: "enabled" },
+  "awaiting-disclaimer": {
+    label: "Send to my coach",
+    availability: "disabled",
+  },
+  "ready-to-send": { label: "Send to my coach", availability: "enabled" },
+  sending: { label: "Sending…", availability: "enabled" },
 };
 
 const STEP_OFFSET_PX = 16;
@@ -158,22 +164,23 @@ export function OnboardingWizard({ page }: OnboardingWizardProps) {
     setConsentProblem(MISSING_CONSENT);
   }
 
-  function consentMissing(consents: OnboardingConsentInstants) {
-    if (asksSpecialCategory && consents.specialCategoryAt === null) {
-      return true;
-    }
+  function specialCategoryMissing(consents: OnboardingConsentInstants) {
+    return asksSpecialCategory && consents.specialCategoryAt === null;
+  }
 
+  function disclaimerMissing(consents: OnboardingConsentInstants) {
     return isLastStep && consents.disclaimerAt === null;
   }
 
   function continueFrom(attempt: ContinueAttempt) {
     const current = latestDraft();
-    const missingConsent = consentMissing(current.consents);
-    setConsentProblem(missingConsent ? MISSING_CONSENT : null);
+    const missingSpecialCategory = specialCategoryMissing(current.consents);
+    setConsentProblem(missingSpecialCategory ? MISSING_CONSENT : null);
 
     if (
       attempt.kind === "incomplete" ||
-      missingConsent ||
+      missingSpecialCategory ||
+      disclaimerMissing(current.consents) ||
       sendState === "sending"
     ) {
       return;
@@ -206,6 +213,7 @@ export function OnboardingWizard({ page }: OnboardingWizardProps) {
   function continueStage(): ContinueStage {
     if (!isLastStep) return "answering";
     if (sendState === "sending") return "sending";
+    if (disclaimerMissing(draft.consents)) return "awaiting-disclaimer";
 
     return "ready-to-send";
   }
@@ -275,7 +283,7 @@ export function OnboardingWizard({ page }: OnboardingWizardProps) {
                 />
               ) : null
             }
-            continueLabel={CONTINUE_LABELS[continueStage()]}
+            continueAction={CONTINUE_ACTIONS[continueStage()]}
             definition={cardDefinition}
             headingRef={headingRef}
             intro={resolveIntro(step.intro, page.gender)}

@@ -75,6 +75,13 @@ const GIVEN_CONSENTS: OnboardingConsentInstants = {
   disclaimerAt: CONSENTED_AT,
   progressPhotosAt: null,
 };
+const DISCLAIMER_WITHHELD: OnboardingConsentInstants = {
+  specialCategoryAt: CONSENTED_AT,
+  disclaimerAt: null,
+  progressPhotosAt: null,
+};
+const DISCLAIMER =
+  "The information I give is correct and complete, and I understand this program does not replace medical advice or a consultation with a doctor.";
 const WITHHELD_CONSENTS: OnboardingConsentInstants = {
   specialCategoryAt: null,
   disclaimerAt: null,
@@ -356,22 +363,20 @@ describe("the onboarding", { timeout: 15_000 }, () => {
     });
   });
 
-  it("asks for the disclaimer on the last form and refuses to send without it", async () => {
+  it("keeps the send button disabled until she ticks the disclaimer", async () => {
     // arrange
     const user = userEvent.setup();
-    answerSubmission(200, { redirectTo: CLIENT_PORTAL_PATH });
-    await openOnboarding(pageAt(4, { consents: WITHHELD_CONSENTS }));
+    await openOnboarding(pageAt(4, { consents: DISCLAIMER_WITHHELD }));
+    const send = screen.getByRole("button", { name: "Send to my coach" });
+    const disabledBeforeTicking = send.hasAttribute("disabled");
 
     // act
-    await user.click(screen.getByRole("button", { name: "Send to my coach" }));
+    await user.click(screen.getByRole("checkbox", { name: DISCLAIMER }));
 
     // assert
-    expect(screen.getByText(MISSING_CONSENT)).toBeVisible();
-    expect(
-      screen.getByRole("checkbox", {
-        name: "The information I give is correct and complete, and I understand this program does not replace medical advice or a consultation with a doctor.",
-      }),
-    ).not.toBeChecked();
+    expect(disabledBeforeTicking).toBe(true);
+    expect(send).toBeEnabled();
+    expect(screen.queryByText(MISSING_CONSENT)).not.toBeInTheDocument();
     expect(submitRequests).toEqual([]);
   });
 
@@ -1039,7 +1044,8 @@ describe("the onboarding", { timeout: 15_000 }, () => {
     // arrange
     const user = userEvent.setup();
     answerSubmission(200, { redirectTo: CLIENT_PORTAL_PATH });
-    await openOnboarding(pageAt(4));
+    await openOnboarding(pageAt(4, { consents: DISCLAIMER_WITHHELD }));
+    await user.click(screen.getByRole("checkbox", { name: DISCLAIMER }));
 
     // act
     await user.click(screen.getByRole("button", { name: "Send to my coach" }));
@@ -1049,7 +1055,7 @@ describe("the onboarding", { timeout: 15_000 }, () => {
     expect(submitRequests).toEqual([
       {
         answers: answeredDraft(),
-        consents: GIVEN_CONSENTS,
+        consents: { ...DISCLAIMER_WITHHELD, disclaimerAt: expect.any(String) },
       },
     ]);
   });
