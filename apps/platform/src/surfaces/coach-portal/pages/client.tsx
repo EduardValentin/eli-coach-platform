@@ -14,12 +14,12 @@ import {
 import { clientOnboardingContext } from "~/features/client-onboarding/server/guards/client-onboarding-context.server";
 import { MeasurementsTable } from "~/features/client-onboarding/ui/coach/onboarding/measurements-table";
 import { OnboardingPanel } from "~/features/client-onboarding/ui/coach/onboarding/onboarding-panel";
-import type { CoachClient } from "~/features/coaching-sales/contracts/coach-clients";
 import { COACH_CLIENTS_PATH } from "~/features/coaching-sales/contracts/paths";
 import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
 import { ClientProfileBlock } from "~/features/coaching-sales/ui/coach/clients/client-profile-block";
 import { ClientStatusBadge } from "~/features/coaching-sales/ui/coach/clients/client-status-badge";
 import { InvitationBlock } from "~/features/coaching-sales/ui/coach/clients/invitation-block";
+import { clientFullName } from "~/features/coaching-sales/ui/coach/clients/roster-listing";
 import { SubscriptionSummary } from "~/features/coaching-sales/ui/coach/clients/subscription-summary";
 
 const CLIENT_NOT_FOUND_STATUS = 404;
@@ -44,7 +44,7 @@ export async function loader(args: LoaderFunctionArgs) {
 }
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => [
-  { title: data ? `${fullNameOf(data.client)} | Evoa` : "Clients | Evoa" },
+  { title: data ? `${clientFullName(data.client)} | Evoa` : "Clients | Evoa" },
 ];
 
 export function ErrorBoundary() {
@@ -59,7 +59,7 @@ export function ErrorBoundary() {
 
 export default function CoachClientRoute() {
   const { client, review } = useLoaderData<typeof loader>();
-  const name = fullNameOf(client);
+  const name = clientFullName(client);
 
   return (
     <div className="w-full pb-12" data-parity-root="JourneyClientDetails">
@@ -117,8 +117,4 @@ function ClientNotFound() {
       />
     </div>
   );
-}
-
-function fullNameOf(client: Pick<CoachClient, "firstName" | "lastName">) {
-  return `${client.firstName} ${client.lastName}`.trim();
 }

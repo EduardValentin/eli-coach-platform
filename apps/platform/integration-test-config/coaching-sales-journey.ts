@@ -269,6 +269,19 @@ export class CoachingSalesJourney {
     return sentLink;
   }
 
+  async paidClientId(): Promise<string> {
+    const [client] = await this.rig.suite.postgres.queryRows<{ id: string }>({
+      sql: "select id from app.clients",
+      values: [],
+    });
+
+    if (!client) {
+      throw new Error("The payment created no client.");
+    }
+
+    return client.id;
+  }
+
   private async openSlots(): Promise<string[]> {
     const response = await this.rig.suite.request(
       new Request(this.rig.suite.url("/api/assessment-calls/slots")),

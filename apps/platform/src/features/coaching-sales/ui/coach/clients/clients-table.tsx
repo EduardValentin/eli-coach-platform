@@ -22,7 +22,7 @@ import { ABSENT_VALUE } from "./absent-value";
 import { ClientStatusBadge } from "./client-status-badge";
 import {
   formatJoinDate,
-  rosterClientName,
+  clientFullName,
   rowLinkLabel,
   type RosterSort,
   type RosterSortKey,
@@ -107,7 +107,7 @@ type ClientRowProps = {
 
 function ClientRow({ client, position, timeZone }: ClientRowProps) {
   const navigate = useNavigate();
-  const name = rosterClientName(client);
+  const name = clientFullName(client);
   const detailPath = coachClientPath(client.clientId);
   const linkLabel = rowLinkLabel(client);
   const cellParity = (cell: string) => `row-${position}-${cell}`;

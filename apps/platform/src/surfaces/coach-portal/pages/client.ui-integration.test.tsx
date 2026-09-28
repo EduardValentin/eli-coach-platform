@@ -267,7 +267,7 @@ describe("the coach's client page", () => {
 
   it("says the client cannot be found when no one on the roster has that id", async () => {
     // arrange, act
-    await renderClientRouter({ missing: true });
+    await renderClientRouter(clientNotFound);
 
     // assert
     expect(
@@ -293,18 +293,22 @@ function coachIsIn(timeZone: string) {
   });
 }
 
-type ClientPageOptions = {
-  client?: CoachClient;
-  missing?: true;
-  review?: OnboardingReviewView;
+type ClientPageData = {
+  client: CoachClient;
+  review: OnboardingReviewView;
 };
 
-async function renderClientRouter(options: ClientPageOptions = {}) {
+function clientNotFound(): never {
+  throw new Response("Not Found", { status: 404 });
+}
+
+async function renderClientRouter(
+  load: () => ClientPageData = () => ({
+    client: INVITED,
+    review: NOT_SUBMITTED,
+  }),
+) {
   const user = userEvent.setup();
-  const loaded = {
-    client: options.client ?? INVITED,
-    review: options.review ?? NOT_SUBMITTED,
-  };
   const forwardToServer = ({ request }: { request: Request }) => fetch(request);
   const router = createMemoryRouter(
     [
@@ -319,13 +323,7 @@ async function renderClientRouter(options: ClientPageOptions = {}) {
           {
             Component: CoachClientRoute,
             ErrorBoundary,
-            loader: () => {
-              if (options.missing) {
-                throw new Response("Not Found", { status: 404 });
-              }
-
-              return loaded;
-            },
+            loader: load,
             path: `${COACH_CLIENTS_PATH}/:clientId`,
           },
           {
@@ -348,8 +346,11 @@ async function renderClientRouter(options: ClientPageOptions = {}) {
   return { router, user };
 }
 
-async function renderClientPage(options?: ClientPageOptions) {
-  const { user } = await renderClientRouter(options);
+async function renderClientPage(options: Partial<ClientPageData> = {}) {
+  const { user } = await renderClientRouter(() => ({
+    client: options.client ?? INVITED,
+    review: options.review ?? NOT_SUBMITTED,
+  }));
 
   return user;
 }

@@ -8,9 +8,6 @@ import {
 } from "~/features/assessment-calls/contracts/paths";
 import { COACH_CLIENTS_PATH } from "~/features/coaching-sales/contracts/paths";
 
-// Each link ships in the release that ships its destination page: later
-// stories append here (Training, Nutrition, Schedule) without
-// touching the layout.
 export const coachSurfaceLinks: readonly PortalNavigationLink[] = [
   { href: COACH_PORTAL_PATH, label: "Dashboard", icon: LayoutDashboard },
   { href: COACH_ASSESSMENT_CALLS_PATH, label: "Assessment calls", icon: Video },

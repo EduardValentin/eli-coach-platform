@@ -91,7 +91,9 @@ export function parseRosterParams(params: URLSearchParams): RosterParams {
   };
 }
 
-export function rosterClientName(client: RosterClient): string {
+export function clientFullName(
+  client: Pick<RosterClient, "firstName" | "lastName">,
+): string {
   return `${client.firstName} ${client.lastName}`.trim();
 }
 
@@ -109,7 +111,7 @@ function matchesQuery(client: RosterClient, query: string): boolean {
     return true;
   }
 
-  return [rosterClientName(client), client.email].some((value) =>
+  return [clientFullName(client), client.email].some((value) =>
     value.toLowerCase().includes(needle),
   );
 }
@@ -179,7 +181,7 @@ function withoutValueLastBy(
 }
 
 const byName: CompareClients = (one, other) =>
-  compareText(rosterClientName(one), rosterClientName(other)) ||
+  compareText(clientFullName(one), clientFullName(other)) ||
   compareText(one.email, other.email);
 
 const byStatus: CompareClients = (one, other) =>
@@ -257,7 +259,7 @@ export function emptyRosterCopy(empty: {
 }
 
 export function rowLinkLabel(client: RosterClient): string {
-  const name = rosterClientName(client);
+  const name = clientFullName(client);
 
   return REVIEW_STATUSES.includes(client.status)
     ? `Review onboarding for ${name}`

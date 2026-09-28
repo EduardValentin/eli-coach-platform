@@ -3,3 +3,7 @@ export async function visibleDocument(response: Response): Promise<string> {
 
   return rendered.replaceAll("<!-- -->", "");
 }
+
+export function textNodesOf(page: string): string[] {
+  return [...page.matchAll(/>([^<>]+)</g)].map(([, text = ""]) => text.trim());
+}

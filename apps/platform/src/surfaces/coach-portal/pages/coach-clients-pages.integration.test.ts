@@ -20,7 +20,10 @@ import {
   PlatformRig,
   type AccountSession,
 } from "~integration-test-config/platform-rig";
-import { visibleDocument } from "~integration-test-config/rendered-page";
+import {
+  textNodesOf,
+  visibleDocument,
+} from "~integration-test-config/rendered-page";
 
 const suite = new ApiIntegrationTestSuite();
 const rig = new PlatformRig(suite);
@@ -65,7 +68,7 @@ describe.sequential("coach clients pages integration", () => {
       const response = await rig.requestAs(COACH_SESSION, CLIENTS_PAGE);
 
       // assert
-      const texts = textNodes(await visibleDocument(response));
+      const texts = textNodesOf(await visibleDocument(response));
 
       expect(response.status).toBe(200);
       expect(texts).toContain("Clients");
@@ -84,7 +87,7 @@ describe.sequential("coach clients pages integration", () => {
       const response = await rig.requestAs(COACH_SESSION, CLIENTS_PAGE);
 
       // assert
-      const texts = textNodes(await visibleDocument(response));
+      const texts = textNodesOf(await visibleDocument(response));
 
       expect(response.status).toBe(200);
       expect(texts).toContain("Ana Popescu");
@@ -97,7 +100,7 @@ describe.sequential("coach clients pages integration", () => {
       const response = await rig.requestAs(COACH_SESSION, CLIENTS_PAGE);
 
       // assert
-      const texts = textNodes(await visibleDocument(response));
+      const texts = textNodesOf(await visibleDocument(response));
 
       expect(response.status).toBe(200);
       expect(texts).toContain("No clients yet");
@@ -145,7 +148,7 @@ describe.sequential("coach clients pages integration", () => {
     it("reads an invited client's profile, invitation, subscription and the panel line before she has answered", async () => {
       // arrange
       await sales.payForCall();
-      const clientId = await onlyClientId();
+      const clientId = await sales.paidClientId();
 
       // act
       const response = await rig.requestAs(
@@ -155,7 +158,7 @@ describe.sequential("coach clients pages integration", () => {
 
       // assert
       const page = await visibleDocument(response);
-      const texts = textNodes(page);
+      const texts = textNodesOf(page);
 
       expect(response.status).toBe(200);
       expect(page).toContain("<title>Ana Popescu | Evoa</title>");
@@ -188,7 +191,7 @@ describe.sequential("coach clients pages integration", () => {
       );
 
       // assert
-      const texts = textNodes(await visibleDocument(response));
+      const texts = textNodesOf(await visibleDocument(response));
 
       expect(response.status).toBe(200);
       expect(texts).toContain("Awaiting review");
@@ -214,7 +217,7 @@ describe.sequential("coach clients pages integration", () => {
 
       // assert
       expect(unknown.status).toBe(404);
-      expect(textNodes(await visibleDocument(unknown))).toContain(
+      expect(textNodesOf(await visibleDocument(unknown))).toContain(
         "Client not found",
       );
       expect(malformed.status).toBe(404);
@@ -224,7 +227,7 @@ describe.sequential("coach clients pages integration", () => {
       // arrange
       await rig.provisionClient();
       await sales.payForCall();
-      const clientId = await onlyClientId();
+      const clientId = await sales.paidClientId();
 
       // act
       const response = await rig.requestAs(
@@ -239,7 +242,7 @@ describe.sequential("coach clients pages integration", () => {
     it("sends an anonymous visitor to sign in", async () => {
       // arrange
       await sales.payForCall();
-      const clientId = await onlyClientId();
+      const clientId = await sales.paidClientId();
 
       // act
       const response = await suite.request(
@@ -252,20 +255,3 @@ describe.sequential("coach clients pages integration", () => {
     });
   });
 });
-
-async function onlyClientId(): Promise<string> {
-  const [client] = await suite.postgres.queryRows<{ id: string }>({
-    sql: "select id from app.clients",
-    values: [],
-  });
-
-  if (!client) {
-    throw new Error("The payment created no client.");
-  }
-
-  return client.id;
-}
-
-function textNodes(page: string): string[] {
-  return [...page.matchAll(/>([^<>]+)</g)].map(([, text = ""]) => text.trim());
-}

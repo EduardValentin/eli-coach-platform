@@ -9,20 +9,17 @@ import { afterEach, describe, expect, it } from "vitest";
 import type { ProgramStatus } from "~/features/coaching-sales/contracts/client-journey";
 import type { ClientShellPresentation } from "~/surfaces/client-portal/shell/client-identity-presentation";
 
-import ClientHomeRoute from "./home";
+import ClientHomeRoute, { type loader } from "./home";
 
 afterEach(() => {
   cleanup();
 });
 
-type DashboardData = {
-  detailsRequest: { note: string } | null;
-  programStatus: ProgramStatus | null;
-};
+type ClientDashboardLoad = Awaited<ReturnType<typeof loader>>;
 
 function renderDashboard(
   presentation: ClientShellPresentation,
-  loaded: DashboardData = { detailsRequest: null, programStatus: null },
+  loaded: ClientDashboardLoad = { detailsRequest: null, programStatus: null },
 ) {
   const RoutesStub = createRoutesStub([
     {
