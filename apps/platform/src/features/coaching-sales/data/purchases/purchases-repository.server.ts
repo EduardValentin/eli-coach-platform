@@ -97,7 +97,7 @@ export class PostgresCoachingPurchases
           ),
       );
 
-    return salesStatesOf(callIds, advancedSales);
+    return callSalesOf(callIds, advancedSales);
   }
 
   async findOpenForClient(
@@ -199,7 +199,7 @@ async function findClientIdForCall(
   return clientRow.id;
 }
 
-function salesStatesOf(
+function callSalesOf(
   callIds: readonly string[],
   advancedSales: readonly ({ assessmentCallId: string } & CallSale)[],
 ): ReadonlyMap<string, CallSale> {

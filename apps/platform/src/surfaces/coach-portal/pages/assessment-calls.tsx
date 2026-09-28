@@ -37,14 +37,14 @@ export async function loader({ context }: LoaderFunctionArgs) {
     .get(assessmentCallsContext)
     .coachAssessmentCalls.loadCalls();
   const { coachSales } = context.get(coachingSalesContext);
-  const [salesStates, pricingTiers] = await Promise.all([
-    coachSales.loadSalesStates(listing.calls.map((call) => call.id)),
+  const [callSales, pricingTiers] = await Promise.all([
+    coachSales.loadCallSales(listing.calls.map((call) => call.id)),
     coachSales.loadPricingTiers(
       listing.calls.map((call) => ({ email: call.visitorEmail, id: call.id })),
     ),
   ]);
 
-  return { ...listing, pricingTiers, salesStates };
+  return { ...listing, pricingTiers, callSales };
 }
 
 export function shouldRevalidate({
@@ -64,7 +64,7 @@ export default function CoachAssessmentCallsRoute() {
   const { now, timeZone } = useCoachClock(listing.now, listing.coachTimeZone);
   const salesFilter = useSalesFilterParam();
   const salesStateOf = (call: ClassifiedCall): CallSalesState | null =>
-    isEndedCall(call) ? listing.salesStates[call.id].state : null;
+    isEndedCall(call) ? listing.callSales[call.id].state : null;
   const pricingDetails = (call: ClassifiedCall): AppointmentDetail[] => {
     const tier = listing.pricingTiers[call.id];
 
@@ -87,7 +87,7 @@ export default function CoachAssessmentCallsRoute() {
         extraDetails={pricingDetails}
         now={now}
         renderEndedCallExtras={(call) => {
-          const { state } = listing.salesStates[call.id];
+          const { state } = listing.callSales[call.id];
 
           return {
             action: <PaymentLinkAction call={call} state={state} />,

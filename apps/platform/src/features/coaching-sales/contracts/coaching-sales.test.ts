@@ -7,14 +7,14 @@ import {
   checkoutConfirmationSchema,
   PAYMENT_LINK_MESSAGES,
   paymentLinkTokenSchema,
-  salesStatesSchema,
+  callSalesSchema,
   sendPaymentLinkRequestSchema,
 } from "./coaching-sales";
 
 const CALL_ID = "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11";
 const CLIENT_ID = "2d3e4f50-6172-4839-9a0b-1c2d3e4f5061";
 
-describe("salesStatesSchema", () => {
+describe("callSalesSchema", () => {
   it("accepts the three sales states keyed by call, a paid one naming the client it created", () => {
     // arrange
     const states = {
@@ -27,7 +27,7 @@ describe("salesStatesSchema", () => {
     };
 
     // act
-    const parsed = salesStatesSchema.safeParse(states);
+    const parsed = callSalesSchema.safeParse(states);
 
     // assert
     expect(parsed.success).toBe(true);
@@ -38,7 +38,7 @@ describe("salesStatesSchema", () => {
     const states = { [CALL_ID]: { state: "invited", clientId: null } };
 
     // act
-    const parsed = salesStatesSchema.safeParse(states);
+    const parsed = callSalesSchema.safeParse(states);
 
     // assert
     expect(parsed.success).toBe(false);
@@ -49,7 +49,7 @@ describe("salesStatesSchema", () => {
     const states = { [CALL_ID]: { state: "paid", clientId: "client-1" } };
 
     // act
-    const parsed = salesStatesSchema.safeParse(states);
+    const parsed = callSalesSchema.safeParse(states);
 
     // assert
     expect(parsed.success).toBe(false);

@@ -23,9 +23,9 @@ const callSaleSchema = z.object({
   clientId: z.uuid().nullable(),
 });
 
-export const salesStatesSchema = z.record(z.string(), callSaleSchema);
+export const callSalesSchema = z.record(z.string(), callSaleSchema);
 
-export type SalesStates = z.infer<typeof salesStatesSchema>;
+export type CallSales = z.infer<typeof callSalesSchema>;
 
 export type PriceTier = z.infer<typeof priceTierSchema>;
 

@@ -21,7 +21,7 @@ describe("CoachSalesController", () => {
     });
 
     // act
-    const states = await controller.loadSalesStates([
+    const states = await controller.loadCallSales([
       "call-1",
       "call-2",
       "call-3",

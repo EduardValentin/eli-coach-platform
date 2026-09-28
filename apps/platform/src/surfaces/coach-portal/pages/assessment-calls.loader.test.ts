@@ -52,7 +52,7 @@ const CALLS_URL = "http://localhost/coach/assessment-calls";
 describe("coach assessment calls page loader", () => {
   it("carries every booked call with its sales state and its price tier into the server-rendered page", async () => {
     // arrange
-    const salesStates = {
+    const callSales = {
       ended: {
         state: "paid",
         clientId: "2d3e4f50-6172-4839-9a0b-1c2d3e4f5061",
@@ -60,7 +60,7 @@ describe("coach assessment calls page loader", () => {
       "ending-now": { state: "held", clientId: null },
       upcoming: { state: "held", clientId: null },
     };
-    const loadSalesStates = vi.fn().mockResolvedValue(salesStates);
+    const loadCallSales = vi.fn().mockResolvedValue(callSales);
     const pricingTiers = {
       ended: "reduced",
       "ending-now": "regular",
@@ -73,7 +73,7 @@ describe("coach assessment calls page loader", () => {
       createLoaderArguments({
         loadCalls: vi.fn().mockResolvedValue(LISTING),
         loadPricingTiers,
-        loadSalesStates,
+        loadCallSales,
       }),
     );
 
@@ -81,9 +81,9 @@ describe("coach assessment calls page loader", () => {
     expect(loaded).toEqual({
       ...LISTING,
       pricingTiers,
-      salesStates,
+      callSales,
     });
-    expect(loadSalesStates).toHaveBeenCalledWith([
+    expect(loadCallSales).toHaveBeenCalledWith([
       "ended",
       "ending-now",
       "upcoming",
@@ -178,7 +178,7 @@ describe("coach assessment calls page revalidation", () => {
 function createLoaderArguments(readers: {
   loadCalls: ReturnType<typeof vi.fn>;
   loadPricingTiers?: ReturnType<typeof vi.fn>;
-  loadSalesStates?: ReturnType<typeof vi.fn>;
+  loadCallSales?: ReturnType<typeof vi.fn>;
 }) {
   const assessmentCalls = {
     coachAssessmentCalls: { loadCalls: readers.loadCalls },
@@ -186,7 +186,7 @@ function createLoaderArguments(readers: {
   const coachingSales = {
     coachSales: {
       loadPricingTiers: readers.loadPricingTiers ?? vi.fn(),
-      loadSalesStates: readers.loadSalesStates ?? vi.fn(),
+      loadCallSales: readers.loadCallSales ?? vi.fn(),
     },
   } as unknown as CoachingSalesFeature;
 
