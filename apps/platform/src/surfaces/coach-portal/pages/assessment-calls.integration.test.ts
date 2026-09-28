@@ -110,8 +110,8 @@ describe.sequential("coach assessment calls page sales integration", () => {
 
   it("reads Paid once the payment has been recorded and offers her client page", async () => {
     // arrange
-    await journey.payForCall();
-    const clientId = await journey.paidClientId();
+    const { callId } = await journey.payForCall();
+    const clientId = await journey.clientIdPaidFor(callId);
 
     // act
     const response = await rig.requestAs(COACH_SESSION, PAST_CALLS);

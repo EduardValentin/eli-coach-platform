@@ -147,8 +147,8 @@ describe.sequential("coach clients pages integration", () => {
   describe("a client's page", () => {
     it("reads an invited client's profile, invitation, subscription and the panel line before she has answered", async () => {
       // arrange
-      await sales.payForCall();
-      const clientId = await sales.paidClientId();
+      const { callId } = await sales.payForCall();
+      const clientId = await sales.clientIdPaidFor(callId);
 
       // act
       const response = await rig.requestAs(
@@ -226,8 +226,8 @@ describe.sequential("coach clients pages integration", () => {
     it("keeps a CLIENT out", async () => {
       // arrange
       await rig.provisionClient();
-      await sales.payForCall();
-      const clientId = await sales.paidClientId();
+      const { callId } = await sales.payForCall();
+      const clientId = await sales.clientIdPaidFor(callId);
 
       // act
       const response = await rig.requestAs(
@@ -241,8 +241,8 @@ describe.sequential("coach clients pages integration", () => {
 
     it("sends an anonymous visitor to sign in", async () => {
       // arrange
-      await sales.payForCall();
-      const clientId = await sales.paidClientId();
+      const { callId } = await sales.payForCall();
+      const clientId = await sales.clientIdPaidFor(callId);
 
       // act
       const response = await suite.request(
