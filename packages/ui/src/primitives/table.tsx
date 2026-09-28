@@ -122,7 +122,7 @@ function SortButton({
 
   return (
     <button
-      className="inline-flex items-center gap-1 rounded-field transition-colors hover:text-primary"
+      className="inline-flex items-center gap-1 rounded-field uppercase transition-colors hover:text-primary"
       onClick={onSort}
       type="button"
     >

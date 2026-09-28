@@ -53,21 +53,25 @@ export function DialogContent({
   const opener = React.useRef<HTMLElement | null>(null);
   const sizeClasses = SIZE_CLASSES[size];
 
+  const rememberOpener = () => {
+    opener.current =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+  };
+
+  const returnFocusToOpener = (event: Event) => {
+    event.preventDefault();
+    opener.current?.focus();
+  };
+
   return (
     <RadixDialog.Portal>
       <RadixDialog.Overlay className="fixed inset-0 z-50 bg-overlay-modal motion-safe:data-[state=closed]:animate-[ui-overlay-out_150ms_ease] motion-safe:data-[state=open]:animate-[ui-overlay-in_150ms_ease]" />
       <RadixDialog.Content
         className={cn(CONTENT_CLASS, sizeClasses.content, className)}
-        onCloseAutoFocus={(event) => {
-          event.preventDefault();
-          opener.current?.focus();
-        }}
-        onOpenAutoFocus={() => {
-          opener.current =
-            document.activeElement instanceof HTMLElement
-              ? document.activeElement
-              : null;
-        }}
+        onCloseAutoFocus={returnFocusToOpener}
+        onOpenAutoFocus={rememberOpener}
         {...props}
       >
         <div className={cn(HEADER_CLASS, sizeClasses.header)}>
