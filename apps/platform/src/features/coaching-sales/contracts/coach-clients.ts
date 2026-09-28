@@ -148,7 +148,7 @@ const REVIEW_STATUSES: readonly ClientStatus[] = [
   "approved",
 ];
 
-export const ROSTER_SORT_KEYS = ["name", "status", "bundle", "joined"] as const;
+const ROSTER_SORT_KEYS = ["name", "status", "bundle", "joined"] as const;
 
 export type RosterSortKey = (typeof ROSTER_SORT_KEYS)[number];
 
@@ -160,7 +160,7 @@ export const ALL_STATUSES_OPTION = "all";
 
 export type RosterStatusOption = ClientStatus | typeof ALL_STATUSES_OPTION;
 
-export const ROSTER_STATUS_OPTIONS: readonly RosterStatusOption[] = [
+const ROSTER_STATUS_OPTIONS: readonly RosterStatusOption[] = [
   ALL_STATUSES_OPTION,
   ...CLIENT_STATUS_ORDER,
 ];
