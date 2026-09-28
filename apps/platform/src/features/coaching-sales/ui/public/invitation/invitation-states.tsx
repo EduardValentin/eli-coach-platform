@@ -105,8 +105,7 @@ function InvitationCard(props: { continueUrl: string; email: string }) {
           Create your account
         </h1>
         <p className="mt-4 text-base leading-relaxed text-text-secondary">
-          Next, you'll create your account and step into your client portal,
-          where you'll manage your fitness plan.
+          Click the button below to create your account.
         </p>
         <div className="mt-8">
           <Label className="text-text-label" htmlFor={INVITED_EMAIL_FIELD_ID}>

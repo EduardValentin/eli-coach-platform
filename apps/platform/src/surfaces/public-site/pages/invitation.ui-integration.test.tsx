@@ -188,9 +188,7 @@ describe("InvitationRoute", () => {
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(screen.getByText("Your invitation")).toBeInTheDocument();
     expect(
-      screen.getByText(
-        "Next, you'll create your account and step into your client portal, where you'll manage your fitness plan.",
-      ),
+      screen.getByText("Click the button below to create your account."),
     ).toBeInTheDocument();
     const email = screen.getByRole("textbox", { name: "Email" });
     expect(email).toHaveValue("ana@example.com");

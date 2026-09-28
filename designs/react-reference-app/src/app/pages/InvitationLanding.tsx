@@ -22,7 +22,7 @@ const UNAVAILABLE_BODY =
   'It may have expired or already been used. Ask your coach for a new one.';
 
 const HAND_OFF_NOTE =
-  "Next, you'll create your account and step into your client portal, where you'll manage your fitness plan.";
+  "Click the button below to create your account.";
 
 const SIGNED_IN_TITLE = "You're already signed in";
 
