@@ -113,7 +113,7 @@ describe.sequential("client journey integration", () => {
     expect(await welcomeSeenAtOf(INVITED_CLIENT)).toEqual(CALL_ENDED_INSTANT);
   });
 
-  it("lets her open onboarding before her welcome is seen, and onboarding is not built yet", async () => {
+  it("lets her open onboarding before her welcome is seen", async () => {
     // arrange
     await admitInvitedClient(ANA);
 
@@ -121,11 +121,14 @@ describe.sequential("client journey integration", () => {
     const onboarding = await rig.requestAs(INVITED_CLIENT, ONBOARDING);
 
     // assert
-    expect(onboarding.status).toBe(404);
+    expect(onboarding.status).toBe(200);
+    expect(await visibleDocument(onboarding)).toContain(
+      "Let&#x27;s get you set up",
+    );
     expect(await welcomeSeenAtOf(INVITED_CLIENT)).toBeNull();
   });
 
-  it("holds her on onboarding once her welcome is seen, and onboarding is not built yet", async () => {
+  it("holds her on onboarding once her welcome is seen", async () => {
     // arrange
     await admitInvitedClient(ANA);
     await startOnboarding();
@@ -140,7 +143,7 @@ describe.sequential("client journey integration", () => {
     expect(welcome.headers.get("location")).toBe(suite.path(ONBOARDING));
     expect(portalHome.status).toBe(302);
     expect(portalHome.headers.get("location")).toBe(suite.path(ONBOARDING));
-    expect(onboarding.status).toBe(404);
+    expect(onboarding.status).toBe(200);
   });
 
   it("points her public nav at the step of her onboarding she is on", async () => {
