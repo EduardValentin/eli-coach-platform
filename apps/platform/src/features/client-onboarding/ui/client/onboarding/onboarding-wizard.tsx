@@ -59,18 +59,6 @@ const STEP_OFFSET_PX = 16;
 
 const STEP_DURATION_S = 0.2;
 
-function continueStageOf({
-  isLastStep,
-  sending,
-}: {
-  isLastStep: boolean;
-  sending: boolean;
-}): ContinueStage {
-  if (!isLastStep) return "answering";
-
-  return sending ? "sending" : "ready-to-send";
-}
-
 export function OnboardingWizard({ page }: OnboardingWizardProps) {
   const reduceMotion = useClientReducedMotionPreference();
   const steps = useMemo(() => stepsOf(page.formIds), [page.formIds]);
@@ -78,22 +66,22 @@ export function OnboardingWizard({ page }: OnboardingWizardProps) {
   const {
     draft,
     formResetKey,
-    grant,
+    grantConsent,
     latestDraft,
     resumed,
     saveDraft,
     saveState,
-    withdraw,
+    withdrawConsent,
   } = onboardingDraft;
   const {
     answerProblems,
     clearAnswerProblems,
     clearSubmitProblem,
     send,
-    sending,
+    sendState,
     submitProblem,
   } = useSendToCoach({
-    draft: onboardingDraft,
+    draftControls: onboardingDraft,
     onRefused: (refusal) => showRefusal(refusal),
   });
   const [navigated, setNavigated] = useState(false);
@@ -138,8 +126,8 @@ export function OnboardingWizard({ page }: OnboardingWizardProps) {
     return (agreed: boolean) => {
       setConsentProblem(null);
       clearSubmitProblem();
-      if (agreed) grant(consent);
-      else withdraw(consent);
+      if (agreed) grantConsent(consent);
+      else withdrawConsent(consent);
     };
   }
 
@@ -183,7 +171,13 @@ export function OnboardingWizard({ page }: OnboardingWizardProps) {
     const missingConsent = consentMissing(current.consents);
     setConsentProblem(missingConsent ? MISSING_CONSENT : null);
 
-    if (attempt.kind === "incomplete" || missingConsent || sending) return;
+    if (
+      attempt.kind === "incomplete" ||
+      missingConsent ||
+      sendState === "sending"
+    ) {
+      return;
+    }
 
     const next: WizardDraft = {
       ...current,
@@ -207,6 +201,13 @@ export function OnboardingWizard({ page }: OnboardingWizardProps) {
     }
 
     moveTo(next);
+  }
+
+  function continueStage(): ContinueStage {
+    if (!isLastStep) return "answering";
+    if (sendState === "sending") return "sending";
+
+    return "ready-to-send";
   }
 
   function back() {
@@ -274,9 +275,7 @@ export function OnboardingWizard({ page }: OnboardingWizardProps) {
                 />
               ) : null
             }
-            continueLabel={
-              CONTINUE_LABELS[continueStageOf({ isLastStep, sending })]
-            }
+            continueLabel={CONTINUE_LABELS[continueStage()]}
             definition={cardDefinition}
             headingRef={headingRef}
             intro={resolveIntro(step.intro, page.gender)}

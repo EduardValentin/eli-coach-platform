@@ -1,6 +1,7 @@
 import {
   Card,
   CheckboxField,
+  FieldCaption,
   LabelSuffix,
 } from "@eli-coach-platform/ui/primitives";
 import { Link } from "react-router";
@@ -73,9 +74,9 @@ export function ProgressPhotoConsent({
 }: ProgressPhotoConsentProps) {
   return (
     <Card className="grid gap-4" variant="inset">
-      <p className="text-sm font-medium text-text-label">
+      <FieldCaption>
         {PROGRESS_PHOTOS_HEADING} <LabelSuffix>{OPTIONAL_SUFFIX}</LabelSuffix>
-      </p>
+      </FieldCaption>
       <CheckboxField
         checked={consented}
         label={PROGRESS_PHOTO_CONSENT_COPY}

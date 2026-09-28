@@ -10,7 +10,7 @@ export { FieldError } from "./field-error";
 export { FieldHint } from "./field-hint";
 export { IconButton } from "./icon-button";
 export { Input } from "./input";
-export { Label, LabelSuffix, Legend } from "./label";
+export { FieldCaption, Label, LabelSuffix, Legend } from "./label";
 export { Link, linkVariants } from "./link";
 export {
   Pagination,

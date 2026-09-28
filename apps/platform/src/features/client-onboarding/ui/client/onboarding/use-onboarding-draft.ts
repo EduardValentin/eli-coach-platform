@@ -29,14 +29,14 @@ type OnboardingDraftOptions = {
   steps: readonly OnboardingFormDefinition[];
 };
 
-function grantConsent(
+function consentsGranted(
   consents: OnboardingConsentInstants,
   consent: Consent,
 ): OnboardingConsentInstants {
   return { ...consents, [CONSENT_KEYS[consent]]: new Date().toISOString() };
 }
 
-function withdrawConsent(
+function consentsWithdrawn(
   consents: OnboardingConsentInstants,
   consent: Consent,
 ): OnboardingConsentInstants {
@@ -76,23 +76,23 @@ export function useOnboardingDraft({ page, steps }: OnboardingDraftOptions) {
     [queue, replaceDraft, steps],
   );
 
-  const grant = useCallback(
+  const grantConsent = useCallback(
     (consent: Consent) => {
       const current = draftRef.current;
       saveDraft({
         ...current,
-        consents: grantConsent(current.consents, consent),
+        consents: consentsGranted(current.consents, consent),
       });
     },
     [saveDraft],
   );
 
-  const withdraw = useCallback(
+  const withdrawConsent = useCallback(
     (consent: Consent) => {
       const current = draftRef.current;
       saveDraft({
         ...current,
-        consents: withdrawConsent(current.consents, consent),
+        consents: consentsWithdrawn(current.consents, consent),
       });
     },
     [saveDraft],
@@ -116,14 +116,14 @@ export function useOnboardingDraft({ page, steps }: OnboardingDraftOptions) {
     discardUnsentDraft,
     draft,
     formResetKey,
-    grant,
+    grantConsent,
     latestDraft,
     replaceDraft,
     resumed,
     saveDraft,
     saveState,
     stopSaving,
-    withdraw,
+    withdrawConsent,
   };
 }
 

@@ -386,11 +386,7 @@ function EntryField({
 
   return (
     <div className="grid gap-2" data-parity={`field-${field.id}`}>
-      <Label
-        className="flex flex-wrap items-baseline gap-1.5"
-        htmlFor={ids.control}
-        invalid={invalid}
-      >
+      <Label htmlFor={ids.control} invalid={invalid} layout="wrap">
         <LabelText field={field} unit={unitOf(field, units)} />
       </Label>
       {!equivalent && hintLine}

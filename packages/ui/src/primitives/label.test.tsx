@@ -5,7 +5,7 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { Label, LabelSuffix, Legend } from "./label";
+import { FieldCaption, Label, LabelSuffix, Legend } from "./label";
 
 afterEach(() => {
   cleanup();
@@ -53,6 +53,51 @@ describe("Label", () => {
 
     // assert
     expect(label).not.toHaveAttribute("data-error");
+  });
+});
+
+describe("Label layouts", () => {
+  it("lets a long name and its qualifiers wrap on a shared baseline", () => {
+    // arrange
+    render(
+      <Label htmlFor="weight" layout="wrap">
+        Your weight
+      </Label>,
+    );
+
+    // act
+    const label = screen.getByText("Your weight");
+
+    // assert
+    expect(label).toHaveClass("flex-wrap", "items-baseline", "gap-1.5");
+    expect(label).not.toHaveClass("items-center", "gap-2");
+  });
+
+  it("keeps a short name centred on one line by default", () => {
+    // arrange
+    render(<Label htmlFor="email">Email</Label>);
+
+    // act
+    const label = screen.getByText("Email");
+
+    // assert
+    expect(label).toHaveClass("flex", "items-center", "gap-2");
+    expect(label).not.toHaveClass("flex-wrap");
+  });
+});
+
+describe("FieldCaption", () => {
+  it("titles a block of fields in the label ink without heading a fieldset", () => {
+    // arrange
+    render(<FieldCaption>Progress photos</FieldCaption>);
+
+    // act
+    const caption = screen.getByText("Progress photos");
+
+    // assert
+    expect(caption.tagName).toBe("P");
+    expect(caption).toHaveClass("text-sm", "font-medium", "text-text-label");
+    expect(caption).not.toHaveClass("mb-1");
   });
 });
 

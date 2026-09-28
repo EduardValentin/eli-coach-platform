@@ -25,7 +25,7 @@ export type SubmissionRefusal = Extract<
 >;
 
 type SendToCoachOptions = {
-  draft: Pick<
+  draftControls: Pick<
     OnboardingDraftControls,
     "discardUnsentDraft" | "replaceDraft" | "saveDraft" | "stopSaving"
   >;
@@ -45,9 +45,14 @@ function reachableAnswers(
   ) as OnboardingAnswersByForm;
 }
 
-export function useSendToCoach({ draft, onRefused }: SendToCoachOptions) {
+export type SendState = "idle" | "sending";
+
+export function useSendToCoach({
+  draftControls,
+  onRefused,
+}: SendToCoachOptions) {
   const navigate = useNavigate();
-  const [sending, setSending] = useState(false);
+  const [sendState, setSendState] = useState<SendState>("idle");
   const [submitProblem, setSubmitProblem] = useState<string | null>(null);
   const [answerProblems, setAnswerProblems] =
     useState<readonly SubmissionProblem[]>(NO_PROBLEMS);
@@ -60,10 +65,10 @@ export function useSendToCoach({ draft, onRefused }: SendToCoachOptions) {
   );
 
   const send = async (next: WizardDraft) => {
-    setSending(true);
+    setSendState("sending");
     setSubmitProblem(null);
-    draft.stopSaving();
-    draft.replaceDraft(next);
+    draftControls.stopSaving();
+    draftControls.replaceDraft(next);
 
     const outcome = await submitOnboarding({
       answers: reachableAnswers(next.answers),
@@ -71,22 +76,27 @@ export function useSendToCoach({ draft, onRefused }: SendToCoachOptions) {
     });
 
     if (outcome.kind === "accepted" || outcome.kind === "already-submitted") {
-      draft.discardUnsentDraft();
+      draftControls.discardUnsentDraft();
       void navigate(
         outcome.kind === "accepted" ? outcome.redirectTo : CLIENT_PORTAL_PATH,
       );
       return;
     }
 
-    setSending(false);
+    setSendState("idle");
 
-    if (outcome.kind === "invalid" || outcome.kind === "consent-missing") {
+    if (outcome.kind === "invalid") {
       onRefused(outcome);
-      if (outcome.kind === "invalid") setAnswerProblems(outcome.problems);
+      setAnswerProblems(outcome.problems);
       return;
     }
 
-    draft.saveDraft(next);
+    if (outcome.kind === "consent-missing") {
+      onRefused(outcome);
+      return;
+    }
+
+    draftControls.saveDraft(next);
     setSubmitProblem(SUBMIT_PROBLEM);
   };
 
@@ -95,7 +105,7 @@ export function useSendToCoach({ draft, onRefused }: SendToCoachOptions) {
     clearAnswerProblems,
     clearSubmitProblem,
     send,
-    sending,
+    sendState,
     submitProblem,
   };
 }
