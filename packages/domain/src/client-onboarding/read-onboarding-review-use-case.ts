@@ -31,7 +31,7 @@ import {
 
 type ReviewedForm = {
   formId: OnboardingFormId;
-  questionIds: string[];
+  fieldIds: string[];
   answered: number;
   total: number;
 };
@@ -78,7 +78,7 @@ function reviewedForms(review: OnboardingReview): ReviewedForm[] {
 
   return review.reviewableForms().map((form) => ({
     formId: form.id,
-    questionIds: reachableFields(form.fields, answers[form.id]).map(
+    fieldIds: reachableFields(form.fields, answers[form.id]).map(
       (field) => field.id,
     ),
     ...answeredOfTotal(form.fields, answers[form.id]),
@@ -87,13 +87,13 @@ function reviewedForms(review: OnboardingReview): ReviewedForm[] {
 
 function cycleModeFor(
   review: OnboardingReview,
-  answers: OnboardingAnswersByForm,
+  submission: OnboardingSubmission,
 ): CycleMode | "not-applicable" | null {
   const asksCycle = review
     .reviewableForms()
     .some((form) => form.id === "cycle-context");
 
-  return asksCycle ? cycleModeOf(answers) : "not-applicable";
+  return asksCycle ? cycleModeOf(submission.answers) : "not-applicable";
 }
 
 export class ReadOnboardingReviewUseCase {
@@ -143,7 +143,7 @@ export class ReadOnboardingReviewUseCase {
       },
       withholdsNutritionAdvice: withholdsNutritionAdvice(answers),
       pregnancyContext: isPregnancyFlagged(answers),
-      cycleMode: cycleModeFor(review, answers),
+      cycleMode: cycleModeFor(review, submission),
       flaggedQuestions,
       forms: reviewedForms(review),
       openRequest: review.openRequest()?.toSnapshot() ?? null,

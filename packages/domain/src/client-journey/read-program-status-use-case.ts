@@ -1,10 +1,11 @@
 import { programWorkStart } from "../coaching-subscription";
 
+import type { ClientJourneyStep } from "./client-journey";
 import type { ClientJourneys } from "./client-journeys";
 import type { ClientSubscriptionStarts } from "./client-subscription-starts";
 
 type ProgramStatus = {
-  kind: "submitted" | "in-review" | "needs-details" | "approved";
+  kind: Exclude<ClientJourneyStep, "welcome" | "onboarding">;
   submittedAt: Date;
   workStartsOn: Date | null;
 };

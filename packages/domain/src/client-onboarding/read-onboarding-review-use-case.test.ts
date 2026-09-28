@@ -200,11 +200,11 @@ describe("ReadOnboardingReviewUseCase", () => {
       "nutrition-lifestyle",
       "measurements",
     ]);
-    expect(safety?.questionIds).toContain("chronicConditionDiagnosedList");
-    expect(safety?.questionIds).not.toContain("chronicConditionMedicationList");
+    expect(safety?.fieldIds).toContain("chronicConditionDiagnosedList");
+    expect(safety?.fieldIds).not.toContain("chronicConditionMedicationList");
     expect(safety).toMatchObject({
       answered: 10,
-      total: safety?.questionIds.length,
+      total: safety?.fieldIds.length,
     });
   });
 

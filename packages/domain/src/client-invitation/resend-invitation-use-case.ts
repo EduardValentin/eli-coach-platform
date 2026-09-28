@@ -70,17 +70,14 @@ export class ResendInvitationUseCase {
       provider,
     });
 
-    return this.sendInvitation(
-      {
-        invitationId: reissued.id,
-        email: reissued.email,
-        firstName: client.firstName,
-        rawToken: token.rawToken,
-        sentAt: reissued.sentAt,
-        expiresAt: reissued.expiresAt,
-      },
-      now,
-    );
+    return this.sendInvitation({
+      invitationId: reissued.id,
+      email: reissued.email,
+      firstName: client.firstName,
+      rawToken: token.rawToken,
+      sentAt: reissued.sentAt,
+      expiresAt: reissued.expiresAt,
+    });
   }
 
   private async replaceIdentityInvitation(
@@ -98,15 +95,17 @@ export class ResendInvitationUseCase {
 
   private async sendInvitation(
     message: ClientInvitationMessage,
-    now: Date,
   ): Promise<ResendInvitationResult> {
-    const { invitationId } = message;
+    const { invitationId, sentAt } = message;
     const delivery = await this.options.notifications
       .sendInvitation(message)
       .catch(() => "failed" as const);
 
     if (delivery === "sent") {
-      await this.options.invitations.recordEmailSent({ invitationId, at: now });
+      await this.options.invitations.recordEmailSent({
+        invitationId,
+        at: sentAt,
+      });
       this.options.incidents.invitationResent({ invitationId });
 
       return { status: "sent" };
@@ -114,7 +113,7 @@ export class ResendInvitationUseCase {
 
     await this.options.invitations.recordEmailDeliveryFailed({
       invitationId,
-      at: now,
+      at: sentAt,
     });
     this.options.incidents.invitationResendFailed({
       invitationId,

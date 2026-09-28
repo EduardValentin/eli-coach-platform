@@ -51,7 +51,7 @@ export class ApproveOnboardingAnswersUseCase {
       return outcome;
     }
 
-    if (!review.openedAt) {
+    if (outcome.review.openedAt !== review.openedAt) {
       await this.options.reviews.recordOpened({ clientId, at: now });
     }
     await this.options.reviews.recordApproval({ clientId, at: now });

@@ -1,7 +1,7 @@
 import type { ClientOnboardingIncidents } from "./client-onboarding-incidents";
 import type { ClientOnboardingSource } from "./client-onboarding-source";
 import type { OnboardingQuestionId } from "./onboarding-answers";
-import type { OnboardingClients } from "./onboarding-clients";
+import type { OnboardingClient, OnboardingClients } from "./onboarding-clients";
 import { OnboardingReview } from "./onboarding-review";
 import type { OnboardingReviewStamps } from "./onboarding-review-stamps";
 import type { OnboardingReviews } from "./onboarding-reviews";
@@ -43,15 +43,7 @@ export class ReadOpenDetailRequestUseCase {
       ...reviewed,
     });
 
-    if (!review.matchesStamps(client.reviewStamps)) {
-      await this.options.stamps.record({
-        clientId: client.clientId,
-        stamps: review.stamps(),
-      });
-      this.options.incidents.onboardingReviewStampsRepaired({
-        clientId: client.clientId,
-      });
-    }
+    await this.repairLaggingStamps(client, review);
 
     const request = review.openRequest();
 
@@ -62,5 +54,22 @@ export class ReadOpenDetailRequestUseCase {
           fields: request.questionIds,
         }
       : null;
+  }
+
+  private async repairLaggingStamps(
+    client: OnboardingClient,
+    review: OnboardingReview,
+  ): Promise<void> {
+    if (review.matchesStamps(client.reviewStamps)) {
+      return;
+    }
+
+    await this.options.stamps.record({
+      clientId: client.clientId,
+      stamps: review.stamps(),
+    });
+    this.options.incidents.onboardingReviewStampsRepaired({
+      clientId: client.clientId,
+    });
   }
 }

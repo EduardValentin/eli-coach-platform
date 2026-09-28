@@ -369,6 +369,56 @@ describe("OnboardingReview#answer", () => {
     });
   });
 
+  it("clears an asked answer that her other asked answer made unreachable", () => {
+    // arrange
+    const diagnosed = {
+      formId: "safety-screening",
+      fieldId: "chronicConditionDiagnosed",
+    } as const;
+    const diagnosedList = {
+      formId: "safety-screening",
+      fieldId: "chronicConditionDiagnosedList",
+    } as const;
+    const onboardingReview = review({
+      submission: {
+        ...submission(),
+        answers: {
+          ...submittedAnswers(),
+          "safety-screening": {
+            chronicConditionDiagnosed: "Yes",
+            chronicConditionDiagnosedList: "Asthma",
+          },
+        },
+      },
+      openedAt: OPENED_AT,
+      requests: [request({ questionIds: [diagnosed, diagnosedList] })],
+    });
+
+    // act
+    const outcome = onboardingReview.answer({
+      answers: {
+        "safety-screening": {
+          chronicConditionDiagnosed: "No",
+          chronicConditionDiagnosedList: 42,
+        },
+      },
+      units: METRIC,
+      now: ANSWERED_AT,
+    });
+
+    // assert
+    expect(outcome.status).toBe("answered");
+    if (outcome.status !== "answered") return;
+    expect(outcome.mergedAnswers["safety-screening"]).toEqual({
+      chronicConditionDiagnosed: "No",
+      chronicConditionDiagnosedList: null,
+    });
+    expect(
+      outcome.review.submission?.answers["safety-screening"]
+        .chronicConditionDiagnosedList,
+    ).toBeNull();
+  });
+
   it("refuses an answer to a question she was not asked", () => {
     // arrange
     const onboardingReview = review({

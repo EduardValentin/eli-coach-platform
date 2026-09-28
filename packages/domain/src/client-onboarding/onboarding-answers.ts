@@ -15,6 +15,13 @@ export type OnboardingQuestionId = {
   fieldId: string;
 };
 
+export function isSameQuestion(
+  left: OnboardingQuestionId,
+  right: OnboardingQuestionId,
+): boolean {
+  return left.formId === right.formId && left.fieldId === right.fieldId;
+}
+
 export function emptyAnswers(): OnboardingAnswersByForm {
   return Object.fromEntries(
     ONBOARDING_FORM_IDS.map((formId) => [formId, {}]),

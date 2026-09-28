@@ -6,7 +6,10 @@ import type { DetailRequest } from "./detail-request";
 import type { OnboardingQuestionId } from "./onboarding-answers";
 import type { OnboardingClient, OnboardingClients } from "./onboarding-clients";
 import type { OnboardingDetailsNotifications } from "./onboarding-details-notifications";
-import { OnboardingReview } from "./onboarding-review";
+import {
+  OnboardingReview,
+  type DetailRequestRefusal,
+} from "./onboarding-review";
 import type { OnboardingReviewStamps } from "./onboarding-review-stamps";
 import type {
   DetailRequestIdGenerator,
@@ -23,10 +26,7 @@ type RequestOnboardingDetailsResult =
   | { status: "requested" }
   | { status: "not-found" }
   | { status: "not-in-review" }
-  | {
-      status: "invalid";
-      reason: "empty-note" | "no-question" | "unknown-question";
-    };
+  | { status: "invalid"; reason: DetailRequestRefusal };
 
 type RequestOnboardingDetailsUseCaseOptions = {
   clients: OnboardingClients;

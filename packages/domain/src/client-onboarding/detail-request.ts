@@ -1,4 +1,11 @@
-import type { OnboardingQuestionId } from "./onboarding-answers";
+import type { OnboardingSubmissionProblem } from "./client-onboarding";
+import {
+  emptyAnswers,
+  isSameQuestion,
+  type OnboardingAnswersByForm,
+  type OnboardingQuestionId,
+} from "./onboarding-answers";
+import type { OnboardingFormId } from "./onboarding-schema";
 
 export type DetailRequestSnapshot = {
   id: string;
@@ -8,6 +15,8 @@ export type DetailRequestSnapshot = {
   askedAt: Date;
   answeredAt: Date | null;
 };
+
+const NOT_ASKED_MESSAGE = "This question was not asked.";
 
 export class DetailRequest {
   readonly id: string;
@@ -45,10 +54,36 @@ export class DetailRequest {
   }
 
   asks(question: OnboardingQuestionId): boolean {
-    return this.questionIds.some(
-      (asked) =>
-        asked.formId === question.formId && asked.fieldId === question.fieldId,
+    return this.questionIds.some((asked) => isSameQuestion(asked, question));
+  }
+
+  unaskedProblemsIn(
+    answers: Partial<OnboardingAnswersByForm>,
+  ): OnboardingSubmissionProblem[] {
+    return Object.entries(answers).flatMap(([formId, formAnswers]) =>
+      Object.keys(formAnswers ?? {})
+        .filter(
+          (fieldId) =>
+            !this.asks({ formId: formId as OnboardingFormId, fieldId }),
+        )
+        .map((fieldId) => ({
+          formId: formId as OnboardingFormId,
+          fieldId,
+          message: NOT_ASKED_MESSAGE,
+        })),
     );
+  }
+
+  answersFrom(
+    answers: Partial<OnboardingAnswersByForm>,
+  ): OnboardingAnswersByForm {
+    const asked = emptyAnswers();
+
+    for (const { formId, fieldId } of this.questionIds) {
+      asked[formId][fieldId] = answers[formId]?.[fieldId] ?? null;
+    }
+
+    return asked;
   }
 
   answer(at: Date): DetailRequest {

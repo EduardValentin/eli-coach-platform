@@ -6,6 +6,7 @@ import { DetailRequest } from "./detail-request";
 import {
   emptyAnswers,
   isFieldReachable,
+  isSameQuestion,
   reachableFields,
   type OnboardingAnswersByForm,
   type OnboardingQuestionId,
@@ -14,9 +15,9 @@ import type { OnboardingClient } from "./onboarding-clients";
 import type { ReviewStamps } from "./onboarding-review-stamps";
 import {
   formsForGender,
+  ONBOARDING_FORM_IDS,
   type OnboardingField,
   type OnboardingFormDefinition,
-  type OnboardingFormId,
 } from "./onboarding-schema";
 import {
   needsManualScreening,
@@ -27,7 +28,8 @@ import { fieldProblem } from "./onboarding-validation";
 export type OnboardingReviewStage =
   "awaiting-review" | "in-review" | "needs-details" | "approved";
 
-type DetailRequestRefusal = "empty-note" | "no-question" | "unknown-question";
+export type DetailRequestRefusal =
+  "empty-note" | "no-question" | "unknown-question";
 
 type OpenReviewOutcome =
   | { status: "opened"; review: OnboardingReview }
@@ -75,8 +77,6 @@ type AnswerDetailsInput = {
   now: Date;
 };
 
-const NOT_ASKED_MESSAGE = "This question was not asked.";
-
 export function reviewStageOf(input: {
   submittedAt: Date | null;
   stamps: ReviewStamps;
@@ -85,17 +85,17 @@ export function reviewStageOf(input: {
 
   if (!submittedAt) return null;
   if (stamps.answersApprovedAt) return "approved";
-  if (
-    stamps.detailsRequestedAt &&
-    !(
-      stamps.detailsAnsweredAt &&
-      stamps.detailsAnsweredAt >= stamps.detailsRequestedAt
-    )
-  )
-    return "needs-details";
+  if (awaitsDetails(stamps)) return "needs-details";
   if (stamps.reviewOpenedAt) return "in-review";
 
   return "awaiting-review";
+}
+
+function awaitsDetails(stamps: ReviewStamps): boolean {
+  const { detailsRequestedAt, detailsAnsweredAt } = stamps;
+  if (!detailsRequestedAt) return false;
+
+  return !detailsAnsweredAt || detailsAnsweredAt < detailsRequestedAt;
 }
 
 function sameMoment(left: Date | null, right: Date | null): boolean {
@@ -107,11 +107,8 @@ function uniqueQuestions(
 ): OnboardingQuestionId[] {
   return questionIds.filter(
     (question, index) =>
-      questionIds.findIndex(
-        (other) =>
-          other.formId === question.formId &&
-          other.fieldId === question.fieldId,
-      ) === index,
+      questionIds.findIndex((other) => isSameQuestion(other, question)) ===
+      index,
   );
 }
 
@@ -230,14 +227,17 @@ export class OnboardingReview {
     const request = this.openRequest();
     if (!request || !this.submission) return { status: "no-open-request" };
 
-    const unasked = this.unaskedProblems(request, input.answers);
+    const unasked = request.unaskedProblemsIn(input.answers);
     if (unasked.length > 0) return { status: "invalid", problems: unasked };
 
-    const mergedAnswers = this.askedAnswersFrom(request, input.answers);
-    const answers = this.overlay(mergedAnswers, request);
+    const askedAnswers = this.reachableAskedAnswers(
+      request,
+      this.overlay(request.answersFrom(input.answers)),
+    );
+    const overlaidAnswers = this.overlay(askedAnswers);
     const problems = this.askedProblems({
       request,
-      answers,
+      answers: overlaidAnswers,
       units: input.units,
       today: input.now,
     });
@@ -248,9 +248,9 @@ export class OnboardingReview {
     return {
       status: "answered",
       request: answered,
-      mergedAnswers,
+      mergedAnswers: askedAnswers,
       review: this.with({
-        submission: { ...this.submission, answers },
+        submission: { ...this.submission, answers: overlaidAnswers },
         requests: this.requests.map((existing) =>
           existing.id === answered.id ? answered : existing,
         ),
@@ -302,49 +302,36 @@ export class OnboardingReview {
     );
   }
 
-  private unaskedProblems(
-    request: DetailRequest,
-    answers: Partial<OnboardingAnswersByForm>,
-  ): OnboardingSubmissionProblem[] {
-    return Object.entries(answers).flatMap(([formId, formAnswers]) =>
-      Object.keys(formAnswers ?? {})
-        .filter(
-          (fieldId) =>
-            !request.asks({ formId: formId as OnboardingFormId, fieldId }),
-        )
-        .map((fieldId) => ({
-          formId: formId as OnboardingFormId,
-          fieldId,
-          message: NOT_ASKED_MESSAGE,
-        })),
-    );
-  }
-
-  private askedAnswersFrom(
-    request: DetailRequest,
-    answers: Partial<OnboardingAnswersByForm>,
-  ): OnboardingAnswersByForm {
-    const asked = emptyAnswers();
-
-    for (const { formId, fieldId } of request.questionIds) {
-      asked[formId][fieldId] = answers[formId]?.[fieldId] ?? null;
-    }
-
-    return asked;
-  }
-
   private overlay(
     askedAnswers: OnboardingAnswersByForm,
-    request: DetailRequest,
   ): OnboardingAnswersByForm {
     const current = this.submission?.answers ?? emptyAnswers();
     const answers = { ...current };
 
-    for (const formId of new Set(request.questionIds.map((q) => q.formId))) {
+    for (const formId of ONBOARDING_FORM_IDS) {
       answers[formId] = { ...current[formId], ...askedAnswers[formId] };
     }
 
     return answers;
+  }
+
+  private reachableAskedAnswers(
+    request: DetailRequest,
+    provisional: OnboardingAnswersByForm,
+  ): OnboardingAnswersByForm {
+    const asked = emptyAnswers();
+
+    for (const question of request.questionIds) {
+      const field = this.fieldOf(question);
+      const formAnswers = provisional[question.formId];
+      const reachable = field !== null && isFieldReachable(field, formAnswers);
+
+      asked[question.formId][question.fieldId] = reachable
+        ? (formAnswers[question.fieldId] ?? null)
+        : null;
+    }
+
+    return asked;
   }
 
   private askedProblems(input: {
