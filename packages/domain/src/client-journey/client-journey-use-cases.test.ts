@@ -12,6 +12,7 @@ function journey(welcomeSeenAt: Date | null): ClientJourney {
     clientId: "client-1",
     firstName: "Ana",
     gender: "female",
+    lastName: "Popescu",
     welcomeSeenAt,
   });
 }

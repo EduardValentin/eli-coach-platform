@@ -17,6 +17,7 @@ export class PostgresClientJourneys implements ClientJourneys {
       .select({
         clientId: clientsTable.id,
         firstName: clientsTable.firstName,
+        lastName: clientsTable.lastName,
         gender: clientsTable.gender,
         welcomeSeenAt: clientsTable.welcomeSeenAt,
       })

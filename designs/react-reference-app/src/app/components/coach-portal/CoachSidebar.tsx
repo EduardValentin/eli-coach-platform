@@ -15,6 +15,7 @@ import {
 import { useState, type ReactNode, type RefObject } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import { NotificationBell } from '../NotificationBell';
+import { navigationLinkSlug } from '../navigation-link-slug';
 import { useCheckins } from '../../context/CheckinContext';
 import { useCoachProfile } from '../../context/CoachProfileContext';
 import { NavigationDialog } from '../ui/navigation-dialog';
@@ -109,6 +110,7 @@ const SidebarNavigation = ({
           aria-current={isActive ? 'page' : undefined}
           onClick={onNavigate}
           ref={linkIndex === 0 ? firstLinkRef : undefined}
+          data-parity={`link-${navigationLinkSlug(link.name)}`}
           className={`flex items-center gap-4 px-4 py-3.5 rounded-card transition-all ${
             isActive
               ? 'bg-primary-soft text-primary'
@@ -176,7 +178,10 @@ const DesktopSidebar = ({
   pendingCheckins = 0,
 }: DesktopSidebarProps) => (
   <SidebarSurface>
-    <div className="p-6 mb-4 px-3 border-b border-stroke-quiet rounded-field flex items-center justify-between">
+    <div
+      className="p-6 mb-4 px-3 border-b border-stroke-quiet rounded-field flex items-center justify-between"
+      data-parity="sidebar-header"
+    >
       {brand}
       {actions}
     </div>
@@ -209,14 +214,13 @@ export function CoachSidebar() {
         closeMenuIcon={<X className="size-6" />}
         contentClassName="lg:hidden fixed inset-0 z-40 outline-none"
         menuButtonClassName={buttonVariants({
-          variant: 'ghost',
+          variant: 'ghost-muted',
           size: 'icon-sm',
-          className:
-            'relative z-[60] -mr-2 text-text-secondary hover:text-text-primary',
+          className: 'relative z-[60] -mr-2',
         })}
         openMenuIcon={<Menu className="size-6" />}
         renderTopBar={(topBar) => (
-          <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-surface-base text-text-primary border-b border-border-subtle rounded-field flex items-center justify-between px-6 z-50 shadow-card">
+          <header aria-label="Coach portal top bar" className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-surface-base text-text-primary border-b border-border-subtle rounded-field flex items-center justify-between px-6 z-50 shadow-card">
             <Link
               to="/coach/profile"
               className="flex items-center gap-3 min-w-0 hover:opacity-80 transition-opacity"
@@ -242,16 +246,18 @@ export function CoachSidebar() {
         )}
         title="Coach portal mobile navigation"
         topBarActions={
-          <NotificationBell
-            onOpenChange={setIsTopBarNotificationsOpen}
-            open={isTopBarNotificationsOpen}
-          />
+          <div className="contents" data-parity="notification-bell">
+            <NotificationBell
+              onOpenChange={setIsTopBarNotificationsOpen}
+              open={isTopBarNotificationsOpen}
+            />
+          </div>
         }
       >
         {(menu) => (
           <>
             <motion.div
-              className="pointer-events-none absolute inset-0 bg-text-primary/20 backdrop-blur-sm"
+              className="pointer-events-none absolute inset-0 bg-overlay-soft backdrop-blur-sm"
               transition={prefersReducedMotion ? { duration: 0 } : undefined}
               variants={{ closed: { opacity: 0 }, open: { opacity: 1 } }}
             />
@@ -272,7 +278,11 @@ export function CoachSidebar() {
         className="hidden lg:block fixed top-0 left-0 bottom-0 w-64 bg-surface-base z-50"
       >
         <DesktopSidebar
-          actions={<NotificationBell align="left" />}
+          actions={
+            <div className="contents" data-parity="notification-bell">
+              <NotificationBell align="left" />
+            </div>
+          }
           brand={<CoachIdentityLink coachAvatarUrl={coachAvatarUrl} />}
           links={links}
           pathname={location.pathname}

@@ -17,7 +17,11 @@ import {
   type MetaFunction,
 } from "react-router";
 
-import { portalForPathname } from "~/features/accounts/contracts/paths";
+import {
+  CLIENT_PORTAL_ROUTE_SEGMENT,
+  portalForPathname,
+  type PortalRouteSegment,
+} from "~/features/accounts/contracts/paths";
 import {
   AccessDeniedPage,
   resolveAccessDeniedRecovery,
@@ -95,15 +99,12 @@ export const links: LinksFunction = () => [
 // "Unhandled Thrown Response!" page.
 export function Layout({ children }: PropsWithChildren) {
   const { pathname } = useLocation();
+  const portal = portalForPathname(pathname);
   return (
-    <html
-      className="relative"
-      data-portal={portalForPathname(pathname)}
-      lang="en"
-    >
+    <html className="relative" data-portal={portal} lang="en">
       <head>
         <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="viewport" content={viewportContentFor(portal)} />
         <Meta />
         <Links />
       </head>
@@ -156,6 +157,14 @@ export function ErrorBoundary() {
       statusLabel={resolveErrorStatusLabel(error)}
     />
   );
+}
+
+function viewportContentFor(portal: PortalRouteSegment | undefined) {
+  if (portal === CLIENT_PORTAL_ROUTE_SEGMENT) {
+    return "width=device-width, initial-scale=1, viewport-fit=cover";
+  }
+
+  return "width=device-width, initial-scale=1";
 }
 
 function resolveErrorStatusLabel(error: unknown) {

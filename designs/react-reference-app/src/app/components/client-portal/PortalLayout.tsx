@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Outlet } from 'react-router';
-import { PortalSidebar } from './PortalSidebar';
+import { PORTAL_MAIN_ID, PortalSidebar } from './PortalSidebar';
+import { CLIENT_PORTAL_LINKS } from './navigation-links';
 import { ActiveWorkoutBanner } from './ActiveWorkoutBanner';
 import { useAppState } from '../../context/AppContext';
 
@@ -16,19 +17,16 @@ export function PortalLayout() {
 
   return (
     <div className="min-h-screen bg-surface-page">
-      <a
-        href="#portal-main"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:rounded-control focus:bg-text-primary focus:text-white focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary"
-      >
-        Skip to content
+      <a className="ui-skip-link" href={`#${PORTAL_MAIN_ID}`}>
+        Skip to main content
       </a>
 
-      <PortalSidebar />
+      <PortalSidebar links={CLIENT_PORTAL_LINKS} />
 
       <main
-        id="portal-main"
+        id={PORTAL_MAIN_ID}
         tabIndex={-1}
-        className="lg:pl-64 pt-[calc(env(safe-area-inset-top)+3.5rem)] lg:pt-0 pb-[calc(env(safe-area-inset-bottom)+5rem)] lg:pb-0 focus:outline-none"
+        className="lg:pl-64 pt-[calc(env(safe-area-inset-top)+4rem)] lg:pt-0 pb-[calc(env(safe-area-inset-bottom)+5rem)] lg:pb-0 focus:outline-none"
       >
         <div className="max-w-portal mx-auto px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
           {appState.prototypeMode === 'post-mvp' && <ActiveWorkoutBanner />}

@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { clientJourneyDestination, welcomePageSchema } from "./client-journey";
+import {
+  clientIdentitySchema,
+  clientJourneyDestination,
+  welcomePageSchema,
+} from "./client-journey";
 
 describe("clientJourneyDestination", () => {
   it.each([
@@ -36,6 +40,30 @@ describe("welcomePageSchema", () => {
 
     // act
     const parsed = welcomePageSchema.safeParse(page);
+
+    // assert
+    expect(parsed.success).toBe(false);
+  });
+});
+
+describe("clientIdentitySchema", () => {
+  it("accepts her first and last name", () => {
+    // arrange
+    const identity = { firstName: "Ana", lastName: "Popescu" };
+
+    // act
+    const parsed = clientIdentitySchema.safeParse(identity);
+
+    // assert
+    expect(parsed.success).toBe(true);
+  });
+
+  it("refuses an identity with no first name to greet her by", () => {
+    // arrange
+    const identity = { firstName: "", lastName: "Popescu" };
+
+    // act
+    const parsed = clientIdentitySchema.safeParse(identity);
 
     // assert
     expect(parsed.success).toBe(false);

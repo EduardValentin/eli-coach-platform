@@ -31,3 +31,10 @@ export const welcomePageSchema = z.object({
 });
 
 export type WelcomePage = z.infer<typeof welcomePageSchema>;
+
+export const clientIdentitySchema = z.object({
+  firstName: z.string().min(1),
+  lastName: z.string(),
+});
+
+export type ClientIdentity = z.infer<typeof clientIdentitySchema>;

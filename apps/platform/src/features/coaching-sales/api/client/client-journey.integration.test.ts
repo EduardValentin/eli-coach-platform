@@ -192,6 +192,9 @@ describe.sequential("client journey integration", () => {
 
     // assert
     expect(portalHome.status).toBe(200);
+    const portalPage = await visibleDocument(portalHome);
+    expect(portalPage).toContain("Welcome back.");
+    expect(portalPage).toContain(">Client<");
     expect(portalLinksIn(await visibleDocument(publicHome))).toContainEqual({
       href: suite.path(CLIENT_PORTAL),
       label: "Client Portal",

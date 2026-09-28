@@ -1,36 +1,36 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Target as TargetIcon, Activity, Flame, Play } from 'lucide-react';
-import { useTraining } from '../../context/TrainingContext';
-import { useCycle } from '../../context/CycleContext';
-import { useClientProfile } from '../../context/ClientProfileContext';
-import { useUnitPreferences } from '../../context/UnitPreferencesContext';
-import { useClientJourneys } from '../../context/ClientJourneyContext';
-import { isBeforeStage } from '../../domain/journey';
-import { useNavigate, useSearchParams } from 'react-router';
-import { PortalPageHeader } from '../../components/PortalPageHeader';
-import { ProgramStatusCard } from '../../components/client-portal/ProgramStatusCard';
-import { ReviewCallScheduler } from '../../components/client-portal/ReviewCallScheduler';
-import { ClientWidget } from '../../components/client-portal/ClientWidget';
-import { GoalWidget } from '../../components/GoalWidget';
-import { CyclePhaseWidget } from '../../components/CyclePhaseWidget';
-import { ProfileDetailsWidget } from '../../components/ProfileDetailsWidget';
-import { ProgressWidget } from '../../components/ProgressWidget';
-import { MACRO_BAR } from '../../components/coach-portal/nutrition/nutrition-constants';
-import { useAppState } from '../../context/AppContext';
-import { Button } from '../../components/ui/button';
-import { Badge } from '../../components/ui/badge';
-import { cn } from '../../components/ui/utils';
-import { WidgetLink } from '../../components/WidgetLink';
-import { LABEL_CLASS, VALUE_LG_CLASS } from '../../components/typography';
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Target as TargetIcon, Activity, Flame, Play } from "lucide-react";
+import { useTraining } from "../../context/TrainingContext";
+import { useCycle } from "../../context/CycleContext";
+import { useClientProfile } from "../../context/ClientProfileContext";
+import { useUnitPreferences } from "../../context/UnitPreferencesContext";
+import { useClientJourneys } from "../../context/ClientJourneyContext";
+import { isBeforeStage } from "../../domain/journey";
+import { useNavigate, useSearchParams } from "react-router";
+import { PortalPageHeader } from "../../components/PortalPageHeader";
+import { ProgramStatusCard } from "../../components/client-portal/ProgramStatusCard";
+import { ReviewCallScheduler } from "../../components/client-portal/ReviewCallScheduler";
+import { ClientWidget } from "../../components/client-portal/ClientWidget";
+import { GoalWidget } from "../../components/GoalWidget";
+import { CyclePhaseWidget } from "../../components/CyclePhaseWidget";
+import { ProfileDetailsWidget } from "../../components/ProfileDetailsWidget";
+import { ProgressWidget } from "../../components/ProgressWidget";
+import { MACRO_BAR } from "../../components/coach-portal/nutrition/nutrition-constants";
+import { useAppState } from "../../context/AppContext";
+import { Button } from "../../components/ui/button";
+import { Badge } from "../../components/ui/badge";
+import { cn } from "../../components/ui/utils";
+import { WidgetLink } from "../../components/WidgetLink";
+import { LABEL_CLASS, VALUE_LG_CLASS } from "../../components/typography";
 
 const DAY_NAMES = [
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday',
-  'Sunday',
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
 ];
 
 export function ClientDashboard() {
@@ -40,12 +40,13 @@ export function ClientDashboard() {
   const { clientProfile } = useClientProfile();
   const { demoJourney } = useClientJourneys();
   const { appState } = useAppState();
-  const isPostMvp = appState.prototypeMode === 'post-mvp';
+  const isPostMvp = appState.prototypeMode === "post-mvp";
   const { weightUnit, heightUnit } = useUnitPreferences();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [bookingReview, setBookingReview] = useState(false);
-  const firstName = clientProfile?.firstName ?? 'there';
+  const firstName = clientProfile?.firstName;
+  const greeting = firstName ? `Welcome back, ${firstName}.` : "Welcome back.";
 
   // Macro split for the nutrition card (protein/carbs 4 kcal/g, fats 9 kcal/g)
   const proteinG = clientProfile?.proteinGrams ?? 0;
@@ -53,18 +54,18 @@ export function ClientDashboard() {
   const fatsG = clientProfile?.fatsGrams ?? 0;
   const macros = [
     {
-      label: 'Protein',
+      label: "Protein",
       grams: proteinG,
       kcal: proteinG * 4,
       barClass: MACRO_BAR.protein,
     },
     {
-      label: 'Carbs',
+      label: "Carbs",
       grams: carbsG,
       kcal: carbsG * 4,
       barClass: MACRO_BAR.carb,
     },
-    { label: 'Fats', grams: fatsG, kcal: fatsG * 9, barClass: MACRO_BAR.fat },
+    { label: "Fats", grams: fatsG, kcal: fatsG * 9, barClass: MACRO_BAR.fat },
   ];
   const macroKcal = macros.reduce((t, m) => t + m.kcal, 0);
   const pctOf = (kcal: number) =>
@@ -86,14 +87,14 @@ export function ClientDashboard() {
       dayIdx,
       weekIdx,
       dayName: DAY_NAMES[dayIdx],
-      isRest: day.type === 'Rest',
+      isRest: day.type === "Rest",
     };
   }, [clientActivePlan]);
 
-  const activeGoal = getClientActiveGoal('client-1');
-  const goalEmptyMessage = isBeforeStage(demoJourney.stage, 'program-ready')
-    ? 'Eli sets your goal when your program is ready.'
-    : 'No goal set yet.';
+  const activeGoal = getClientActiveGoal("client-1");
+  const goalEmptyMessage = isBeforeStage(demoJourney.stage, "program-ready")
+    ? "Eli sets your goal when your program is ready."
+    : "No goal set yet.";
 
   const handleStartWorkout = () => {
     if (!clientActivePlan || !todayInfo || todayInfo.isRest) return;
@@ -102,7 +103,7 @@ export function ClientDashboard() {
     );
   };
 
-  const reviewRequested = searchParams.get('review') === '1';
+  const reviewRequested = searchParams.get("review") === "1";
   const reviewOpened = useRef(false);
 
   useEffect(() => {
@@ -112,18 +113,24 @@ export function ClientDashboard() {
   }, [reviewRequested]);
 
   const hasActiveSession = Boolean(
-    activeWorkout && activeWorkout.status === 'in-progress',
+    activeWorkout && activeWorkout.status === "in-progress",
   );
   const showStartCTA = Boolean(
     todayInfo && !todayInfo.isRest && !hasActiveSession,
   );
 
   return (
-    <div className="w-full max-w-5xl mx-auto">
-      <PortalPageHeader
-        title={`Welcome back, ${firstName}.`}
-        subtitle="Here is your daily snapshot and current focus."
-      />
+    <div className="w-full" data-parity="dashboard-page">
+      <div data-parity-root="ClientGreeting">
+        <PortalPageHeader
+          title={<span data-parity="greeting">{greeting}</span>}
+          subtitle={
+            <span data-parity="subtitle">
+              Here is your daily snapshot and current focus.
+            </span>
+          }
+        />
+      </div>
 
       <ProgramStatusCard />
 
@@ -182,8 +189,8 @@ export function ClientDashboard() {
                   <span className={LABEL_CLASS}>BMR</span>
                 </div>
                 <div className="flex items-baseline gap-1">
-                  <span className={cn(VALUE_LG_CLASS, 'tabular-nums')}>
-                    {clientProfile?.bmr.toLocaleString() ?? '--'}
+                  <span className={cn(VALUE_LG_CLASS, "tabular-nums")}>
+                    {clientProfile?.bmr.toLocaleString() ?? "--"}
                   </span>
                   <span className="text-sm font-medium text-text-secondary">
                     kcal
@@ -201,9 +208,9 @@ export function ClientDashboard() {
                   <span className={LABEL_CLASS}>Maintenance</span>
                 </div>
                 <div className="flex items-baseline gap-1">
-                  <span className={cn(VALUE_LG_CLASS, 'tabular-nums')}>
+                  <span className={cn(VALUE_LG_CLASS, "tabular-nums")}>
                     {clientProfile?.maintenanceCalories.toLocaleString() ??
-                      '--'}
+                      "--"}
                   </span>
                   <span className="text-sm font-medium text-text-secondary">
                     kcal
@@ -221,8 +228,8 @@ export function ClientDashboard() {
                   <span className={LABEL_CLASS}>Daily Target</span>
                 </div>
                 <div className="flex items-baseline gap-1">
-                  <span className={cn(VALUE_LG_CLASS, 'tabular-nums')}>
-                    {clientProfile?.dailyCalories.toLocaleString() ?? '--'}
+                  <span className={cn(VALUE_LG_CLASS, "tabular-nums")}>
+                    {clientProfile?.dailyCalories.toLocaleString() ?? "--"}
                   </span>
                   <span className="text-sm font-medium text-text-secondary">
                     kcal
@@ -239,7 +246,7 @@ export function ClientDashboard() {
                   clientProfile.maintenanceCalories;
                 const deltaLabel =
                   delta === 0
-                    ? 'at maintenance'
+                    ? "at maintenance"
                     : delta < 0
                       ? `−${Math.abs(delta).toLocaleString()} kcal/day deficit`
                       : `+${delta.toLocaleString()} kcal/day surplus`;
@@ -278,7 +285,7 @@ export function ClientDashboard() {
                         className={`w-2 h-2 rounded-full shrink-0 ${m.barClass}`}
                         aria-hidden="true"
                       />
-                      <span className={cn(LABEL_CLASS, 'truncate')}>
+                      <span className={cn(LABEL_CLASS, "truncate")}>
                         {m.label}
                       </span>
                     </div>
@@ -290,7 +297,7 @@ export function ClientDashboard() {
                         g
                       </span>
                       <span className="text-xs text-text-secondary">
-                        {' '}
+                        {" "}
                         · {pctOf(m.kcal)}%
                       </span>
                     </p>
@@ -339,7 +346,7 @@ export function ClientDashboard() {
               <p className="text-sm text-text-secondary leading-relaxed mb-10 max-w-2xl">
                 {todayInfo
                   ? `Today's ${todayInfo.day.type.toLowerCase()} session has ${todayInfo.day.exercises.length} exercises planned. Since you are in your luteal phase, take extra care with your warm-up and listen to your body.`
-                  : 'No active plan assigned yet. Your coach will set one up soon!'}
+                  : "No active plan assigned yet. Your coach will set one up soon!"}
               </p>
             )}
 

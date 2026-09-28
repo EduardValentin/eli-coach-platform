@@ -6,6 +6,7 @@ import type pg from "pg";
 
 import { AccountPortal } from "./account-portal";
 import { BookingPage } from "./booking-page";
+import { ClientPortalShell } from "./client-portal-shell";
 import { CoachAssessmentCallsPage } from "./coach-assessment-calls-page";
 import { recordCreatedEmail } from "./clerk-users";
 import { createE2eDatabasePool } from "./database";
@@ -21,6 +22,7 @@ import {
 type PlatformFixtures = {
   siteOutOfWaitlistMode: void;
   publicNav: PublicNav;
+  clientPortalShell: ClientPortalShell;
   accountPortal: AccountPortal;
   testEmail: string;
   visitorEmail: string;
@@ -123,6 +125,10 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
 
   publicNav: async ({ page }, use) => {
     await use(new PublicNav(page));
+  },
+
+  clientPortalShell: async ({ page }, use) => {
+    await use(new ClientPortalShell(page));
   },
 
   accountPortal: async ({ page }, use) => {

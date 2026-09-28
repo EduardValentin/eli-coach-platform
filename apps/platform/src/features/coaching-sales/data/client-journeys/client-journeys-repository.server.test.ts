@@ -15,6 +15,7 @@ describe("PostgresClientJourneys#findByAuthSubjectId", () => {
           clientId: CLIENT_ID,
           firstName: "Ana",
           gender: "male",
+          lastName: "Popescu",
           welcomeSeenAt: WELCOME_SEEN_AT,
         },
       ]),
@@ -26,6 +27,7 @@ describe("PostgresClientJourneys#findByAuthSubjectId", () => {
     // assert
     expect(journey?.clientId).toBe(CLIENT_ID);
     expect(journey?.firstName).toBe("Ana");
+    expect(journey?.lastName).toBe("Popescu");
     expect(journey?.step()).toBe("onboarding");
     expect(journey?.welcomeWording()).toBe("four-part");
   });
@@ -59,14 +61,27 @@ describe("PostgresClientJourneys#recordWelcomeSeen", () => {
   });
 });
 
-function createDatabaseAnswering(rows: readonly unknown[]): DatabaseClient {
-  const selection = {
-    from: () => selection,
-    where: () => selection,
-    limit: () => Promise.resolve(rows),
-  };
+function createDatabaseAnswering(
+  rows: readonly Record<string, unknown>[],
+): DatabaseClient {
+  return {
+    select: (columns: Record<string, unknown>) => {
+      const selection = {
+        from: () => selection,
+        where: () => selection,
+        limit: () =>
+          Promise.resolve(
+            rows.map((row) =>
+              Object.fromEntries(
+                Object.keys(columns).map((column) => [column, row[column]]),
+              ),
+            ),
+          ),
+      };
 
-  return { select: () => selection } as unknown as DatabaseClient;
+      return selection;
+    },
+  } as unknown as DatabaseClient;
 }
 
 function createDatabaseRecordingUpdates() {

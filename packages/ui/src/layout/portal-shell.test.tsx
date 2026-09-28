@@ -10,7 +10,17 @@ import {
   within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { LayoutDashboard, Users } from "lucide-react";
+import {
+  Activity,
+  Calendar,
+  CalendarCheck,
+  Droplet,
+  LayoutDashboard,
+  MessageSquare,
+  Settings,
+  UserCircle,
+  Users,
+} from "lucide-react";
 import { MotionConfig } from "motion/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it } from "vitest";
@@ -18,7 +28,7 @@ import { MemoryRouter } from "react-router";
 import { configureAxe } from "vitest-axe";
 
 import { MAIN_CONTENT_ID } from "../lib/constants";
-import { PortalShell } from "./portal-shell";
+import { PortalShell, type PortalNavigationLink } from "./portal-shell";
 
 const axe = configureAxe({
   rules: {
@@ -55,10 +65,14 @@ function renderShell(options: ShellOptions = {}) {
           asideLabel="Coach portal sidebar"
           brand={<p>Evoa</p>}
           links={portalLinks}
-          mobileNavigationLabel="Coach portal mobile navigation"
+          mobileNavigation={{
+            kind: "drawer",
+            label: "Coach portal mobile navigation",
+          }}
           navigationLabel="Coach portal navigation"
           topBarActions={topBarActions}
           topBarBrand={<p>Coach Portal</p>}
+          topBarLabel="Coach portal top bar"
         >
           <div>Coach content</div>
         </PortalShell>
@@ -71,6 +85,70 @@ function queryMobileNavigation() {
   return screen.queryByRole("dialog", {
     name: "Coach portal mobile navigation",
   });
+}
+
+const clientLinks = [
+  { href: "/client", label: "Dashboard", icon: Activity },
+  { href: "/client/checkins", label: "Check-ins", icon: CalendarCheck },
+  { href: "/client/profile", label: "Profile", icon: UserCircle },
+  { href: "/client/plan", label: "My Plan", icon: Calendar },
+  { href: "/client/messages", label: "Messages", icon: MessageSquare },
+  { href: "/client/cycle", label: "Cycle", icon: Droplet },
+  { href: "/client/settings", label: "Settings", icon: Settings },
+] as const;
+
+type ClientShellOptions = {
+  initialPath?: string;
+  links?: readonly PortalNavigationLink[];
+  reducedMotion?: "always" | "never";
+  tabs?: readonly PortalNavigationLink[];
+};
+
+function renderClientShell(options: ClientShellOptions = {}) {
+  const {
+    initialPath = "/client",
+    links = clientLinks,
+    reducedMotion = "always",
+    tabs = clientLinks.slice(0, 5),
+  } = options;
+
+  return render(
+    <MotionConfig reducedMotion={reducedMotion}>
+      <MemoryRouter initialEntries={[initialPath]}>
+        <PortalShell
+          asideLabel="Client portal sidebar"
+          brand={<p>Sidebar name block</p>}
+          links={links}
+          mobileNavigation={{
+            kind: "tabs",
+            sheet: {
+              footer: <button type="button">Sign out</button>,
+              header: <p>Sheet name block</p>,
+              navigationLabel: "Client portal more",
+              title: "More",
+            },
+            tabs,
+            tabsLabel: "Client portal tabs",
+          }}
+          navigationLabel="Client portal navigation"
+          topBarBrand={<p>Top bar name block</p>}
+          topBarLabel="Client portal top bar"
+        >
+          <div>Client content</div>
+        </PortalShell>
+      </MemoryRouter>
+    </MotionConfig>,
+  );
+}
+
+function getMoreButton() {
+  return screen.getByRole("button", { name: "More" });
+}
+
+async function openMoreSheet(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(getMoreButton());
+
+  return screen.findByRole("dialog", { name: "More" });
 }
 
 async function openMobileMenu(user: ReturnType<typeof userEvent.setup>) {
@@ -94,6 +172,9 @@ describe("PortalShell landmarks", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByRole("navigation", { name: "Coach portal navigation" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("banner", { name: "Coach portal top bar" }),
     ).toBeInTheDocument();
     expect(screen.getByRole("main")).toHaveAttribute("id", MAIN_CONTENT_ID);
     expect(
@@ -371,6 +452,246 @@ describe("PortalShell accessibility", () => {
     const user = userEvent.setup();
     const { baseElement } = renderShell();
     await openMobileMenu(user);
+
+    // act
+    const results = await axe(baseElement);
+
+    // assert
+    expect(results.violations).toEqual([]);
+  });
+});
+
+describe("PortalShell tab navigation", () => {
+  it("renders a labeled top bar, tab bar, sidebar and navigation without a menu toggle", () => {
+    // arrange, act
+    renderClientShell();
+
+    // assert
+    expect(
+      screen.getByRole("banner", { name: "Client portal top bar" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("navigation", { name: "Client portal tabs" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("complementary", { name: "Client portal sidebar" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("navigation", { name: "Client portal navigation" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Open menu" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText("Top bar name block")).toBeInTheDocument();
+    expect(screen.getByText("Client content")).toBeInTheDocument();
+  });
+
+  it("puts at most four tabs on the bar, followed by More", () => {
+    // arrange, act
+    renderClientShell();
+
+    // assert
+    const tabBar = screen.getByRole("navigation", {
+      name: "Client portal tabs",
+    });
+    const tabs = within(tabBar).getAllByRole("link");
+
+    expect(tabs.map((tab) => tab.textContent)).toEqual([
+      "Dashboard",
+      "Check-ins",
+      "Profile",
+      "My Plan",
+    ]);
+    expect(within(tabBar).getByRole("button", { name: "More" })).toBeVisible();
+  });
+
+  it("marks the current page's tab and tints it with the portal's interaction colour", () => {
+    // arrange, act
+    renderClientShell({ initialPath: "/client/checkins" });
+
+    // assert
+    const tabBar = screen.getByRole("navigation", {
+      name: "Client portal tabs",
+    });
+    const currentTab = within(tabBar).getByRole("link", { name: "Check-ins" });
+
+    expect(currentTab).toHaveAttribute("aria-current", "page");
+    expect(currentTab).toHaveClass("bg-primary-soft", "text-primary");
+    expect(
+      within(tabBar).getByRole("link", { name: "Dashboard" }),
+    ).not.toHaveAttribute("aria-current");
+  });
+
+  it("lists every link left off the bar in the sheet", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderClientShell();
+
+    // act
+    const sheet = await openMoreSheet(user);
+
+    // assert
+    const sheetNavigation = within(sheet).getByRole("navigation", {
+      name: "Client portal more",
+    });
+
+    expect(
+      within(sheetNavigation)
+        .getAllByRole("link")
+        .map((link) => link.textContent),
+    ).toEqual(["Messages", "Cycle", "Settings"]);
+  });
+
+  it("renders the sheet with its header and footer but no navigation when every link is on the bar", async () => {
+    // arrange
+    const user = userEvent.setup();
+    const dashboardOnly = clientLinks.slice(0, 1);
+    renderClientShell({ links: dashboardOnly, tabs: dashboardOnly });
+
+    // act
+    const sheet = await openMoreSheet(user);
+
+    // assert
+    expect(within(sheet).queryByRole("navigation")).not.toBeInTheDocument();
+    expect(within(sheet).getByText("Sheet name block")).toBeInTheDocument();
+    expect(
+      within(sheet).getByRole("button", { name: "Sign out" }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows More collapsed while the sheet is closed", () => {
+    // arrange, act
+    renderClientShell();
+
+    // assert
+    expect(getMoreButton()).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("expands More and points it at the open sheet", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderClientShell();
+
+    // act
+    const sheet = await openMoreSheet(user);
+
+    // assert
+    const moreBehindTheSheet = screen.getByRole("button", {
+      hidden: true,
+      name: "More",
+    });
+
+    expect(moreBehindTheSheet).toHaveAttribute("aria-expanded", "true");
+    expect(moreBehindTheSheet).toHaveAttribute("aria-controls", sheet.id);
+  });
+
+  it("marks More active while a sheet link is the current page", () => {
+    // arrange, act
+    renderClientShell({ initialPath: "/client/cycle" });
+
+    // assert
+    expect(getMoreButton()).toHaveClass("bg-primary-soft", "text-primary");
+  });
+
+  it("marks the current page's link inside the sheet", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderClientShell({ initialPath: "/client/cycle" });
+
+    // act
+    const sheet = await openMoreSheet(user);
+
+    // assert
+    expect(within(sheet).getByRole("link", { name: "Cycle" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+  });
+
+  it("closes the sheet on Escape and returns focus to More", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderClientShell();
+    await openMoreSheet(user);
+
+    // act
+    await user.keyboard("{Escape}");
+
+    // assert
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+    expect(getMoreButton()).toHaveFocus();
+    expect(getMoreButton()).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("closes the sheet when one of its links is activated", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderClientShell();
+    const sheet = await openMoreSheet(user);
+
+    // act
+    await user.click(within(sheet).getByRole("link", { name: "Cycle" }));
+
+    // assert
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+  });
+
+  it("closes the sheet when the viewport crosses the desktop breakpoint and focuses the main content", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderClientShell();
+    const tabBar = screen.getByRole("navigation", {
+      name: "Client portal tabs",
+    });
+    await openMoreSheet(user);
+
+    // act
+    tabBar.style.display = "none";
+    window.dispatchEvent(new Event("resize"));
+
+    // assert
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(screen.getByRole("main")).toHaveFocus();
+    });
+  });
+
+  it("renders the sheet in place under reduced motion", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderClientShell({ reducedMotion: "always" });
+
+    // act
+    const sheet = await openMoreSheet(user);
+
+    // assert
+    expect(sheet.style.transform).toBe("");
+  });
+});
+
+describe("PortalShell tab navigation accessibility", () => {
+  it("has no obvious axe violations with the sheet closed", async () => {
+    // arrange
+    const { baseElement } = renderClientShell();
+
+    // act
+    const results = await axe(baseElement);
+
+    // assert
+    expect(results.violations).toEqual([]);
+  });
+
+  it("has no obvious axe violations with the sheet open", async () => {
+    // arrange
+    const user = userEvent.setup();
+    const { baseElement } = renderClientShell();
+    await openMoreSheet(user);
 
     // act
     const results = await axe(baseElement);
