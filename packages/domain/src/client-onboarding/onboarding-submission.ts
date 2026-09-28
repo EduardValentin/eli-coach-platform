@@ -2,6 +2,13 @@ import type {
   OnboardingAnswer,
   OnboardingAnswersByForm,
 } from "./onboarding-answers";
+import type { OnboardingConsents } from "./onboarding-consents";
+
+export type OnboardingSubmission = {
+  answers: OnboardingAnswersByForm;
+  consents: OnboardingConsents;
+  submittedAt: Date;
+};
 
 export const PARQ_MIN_AGE = 15;
 

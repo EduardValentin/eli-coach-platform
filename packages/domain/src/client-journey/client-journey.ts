@@ -1,4 +1,5 @@
 import type { VisitorGender } from "../assessment-call";
+import { formsForGender } from "../client-onboarding";
 
 export type ClientJourneyStep = "welcome" | "onboarding" | "submitted";
 
@@ -43,7 +44,11 @@ export class ClientJourney {
   }
 
   welcomeWording(): WelcomeWording {
-    return this.gender === "male" ? "four-part" : "five-part";
+    const includesCycleForm = formsForGender(this.gender).some(
+      (form) => form.id === "cycle-context",
+    );
+
+    return includesCycleForm ? "five-part" : "four-part";
   }
 
   toSnapshot(): ClientJourneySnapshot {

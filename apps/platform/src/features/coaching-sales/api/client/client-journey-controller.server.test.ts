@@ -31,7 +31,7 @@ const CLIENT: AccountSnapshot = {
 describe("ClientJourneyController welcome", () => {
   it.each<[VisitorGender, "five-part" | "four-part"]>([
     ["female", "five-part"],
-    ["prefer_not_to_say", "five-part"],
+    ["prefer_not_to_say", "four-part"],
     ["male", "four-part"],
   ])(
     "greets a %s client by her first name with the %s form wording",

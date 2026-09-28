@@ -49,7 +49,7 @@ describe("ClientJourney#step", () => {
 describe("ClientJourney#welcomeWording", () => {
   it.each([
     ["female", "five-part"],
-    ["prefer_not_to_say", "five-part"],
+    ["prefer_not_to_say", "four-part"],
     ["male", "four-part"],
   ] as const)("reads the %s client the %s wording", (gender, expected) => {
     // arrange
