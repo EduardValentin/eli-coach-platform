@@ -12,7 +12,7 @@ type ConfirmedJsonAction<Sent> = {
   onFailure?: () => void;
 };
 
-export type ConfirmDialogWiring = {
+type ConfirmDialogWiring = {
   onConfirm: () => void;
   onOpenChange: (open: boolean) => void;
   open: boolean;
