@@ -209,7 +209,7 @@ describe("ClientOnboardingController load", () => {
           "goal-availability": { weight: 66.1, height: 165 },
           "nutrition-lifestyle": { checkInDay: "Monday", checkInChannel: null },
         }),
-        unitPreference: { weightUnit: "lb", heightUnit: "ft-in" },
+        unitPreference: UnitPreference.of("imperial"),
       }),
       openRequest: OPEN_REQUEST,
     });

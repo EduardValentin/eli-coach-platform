@@ -1,7 +1,7 @@
 import type { Clock } from "../shared";
 import {
-  DEFAULT_UNIT_PREFERENCE,
   measureUnitsOf,
+  UnitPreference,
   type ClientUnitPreferences,
 } from "../unit-preference";
 
@@ -65,7 +65,9 @@ export class AnswerOnboardingDetailsUseCase {
     const now = this.options.clock.now();
     const outcome = review.answer({
       answers: command.answers,
-      units: measureUnitsOf(preference ?? DEFAULT_UNIT_PREFERENCE),
+      units: measureUnitsOf(
+        (preference ?? UnitPreference.metric()).toSnapshot(),
+      ),
       now,
     });
 

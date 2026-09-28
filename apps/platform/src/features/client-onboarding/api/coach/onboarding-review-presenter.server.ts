@@ -8,9 +8,9 @@ import {
 } from "@eli-coach-platform/domain/client-onboarding";
 import type { MeasurementEntry } from "@eli-coach-platform/domain/measurement";
 import {
-  DEFAULT_UNIT_PREFERENCE,
   measureUnitsOf,
   toDisplayMeasure,
+  UnitPreference,
   type MeasureKind,
 } from "@eli-coach-platform/domain/unit-preference";
 
@@ -34,7 +34,7 @@ type ReviewedForm = SubmittedReading["forms"][number];
 
 type QuestionId = SubmittedReading["flaggedQuestions"][number];
 
-const CANONICAL_UNITS = measureUnitsOf(DEFAULT_UNIT_PREFERENCE);
+const CANONICAL_UNITS = measureUnitsOf(UnitPreference.metric().toSnapshot());
 
 const CANONICAL_UNIT_LABELS: Record<MeasureKind, string> = {
   weight: "kg",
