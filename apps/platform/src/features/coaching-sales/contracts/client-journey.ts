@@ -55,8 +55,17 @@ export function clientJourneyPortalLink(
   };
 }
 
+const PROGRAM_STATUS_KINDS = [
+  "submitted",
+  "in-review",
+  "needs-details",
+  "approved",
+] as const satisfies readonly ClientJourneyStep[];
+
+export type ProgramStatusKind = (typeof PROGRAM_STATUS_KINDS)[number];
+
 export const programStatusSchema = z.object({
-  kind: z.literal("submitted"),
+  kind: z.enum(PROGRAM_STATUS_KINDS),
   submittedAt: z.iso.datetime(),
   workStartsOn: z.iso.datetime().nullable(),
 });

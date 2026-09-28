@@ -1,4 +1,7 @@
-import { CLIENT_PORTAL_PATH } from "../../accounts/contracts/paths";
+import {
+  CLIENT_PORTAL_PATH,
+  COACH_PORTAL_PATH,
+} from "../../accounts/contracts/paths";
 
 export const SELECT_BUNDLE_ROUTE_SEGMENT = "select-bundle";
 
@@ -20,11 +23,22 @@ export const CLIENT_ONBOARDING_ROUTE_SEGMENT = "onboarding";
 
 export const CLIENT_ONBOARDING_PATH = `${CLIENT_PORTAL_PATH}/${CLIENT_ONBOARDING_ROUTE_SEGMENT}`;
 
+export const CLIENT_ANSWER_QUERY = "answer=1";
+
+export const COACH_CLIENTS_ROUTE_SEGMENT = "clients";
+
+export const COACH_CLIENTS_PATH = `${COACH_PORTAL_PATH}/${COACH_CLIENTS_ROUTE_SEGMENT}`;
+
+export function coachClientPath(clientId: string): string {
+  return `${COACH_CLIENTS_PATH}/${encodeURIComponent(clientId)}`;
+}
+
 export const COACHING_SALES_API_PATHS = {
   paymentLinks: "/api/coaching-sales/payment-links",
   bundlePage: "/api/coaching-sales/bundle-page",
   checkouts: "/api/coaching-sales/checkouts",
   invitation: "/api/coaching-sales/invitation",
+  invitationResends: "/api/coaching-sales/invitation-resends",
 } as const;
 
 type SelectBundleLink = {
