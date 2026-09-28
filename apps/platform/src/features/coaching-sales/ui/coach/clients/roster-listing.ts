@@ -173,9 +173,9 @@ function withoutValueLastBy(
     ordering.compareAscending,
     direction,
   );
-  const placeholders = clients.filter((client) => !ordering.hasValue(client));
+  const withoutValue = clients.filter((client) => !ordering.hasValue(client));
 
-  return [...valued, ...placeholders];
+  return [...valued, ...withoutValue];
 }
 
 const byName: CompareClients = (one, other) =>

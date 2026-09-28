@@ -50,8 +50,8 @@ type ClientRecord = NonNullable<
   Awaited<ReturnType<ReadClientRecordUseCase["execute"]>>
 >;
 
-type ClientInvitationReading = Awaited<
-  ReturnType<ReadClientInvitationUseCase["execute"]>
+type InvitationRecord = NonNullable<
+  Awaited<ReturnType<ReadClientInvitationUseCase["execute"]>>
 >;
 
 export class CoachClientsController {
@@ -147,7 +147,7 @@ function profileOf(record: ClientRecord) {
 
 function invitationOf(
   record: ClientRecord,
-  invitation: ClientInvitationReading | null,
+  invitation: InvitationRecord | null,
 ) {
   if (record.accountBound || !invitation) {
     return null;
