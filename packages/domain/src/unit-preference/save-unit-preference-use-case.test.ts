@@ -3,10 +3,13 @@ import { describe, expect, it, vi } from "vitest";
 import type { ClientUnitPreferences } from "./client-unit-preferences";
 import { SaveUnitPreferenceUseCase } from "./save-unit-preference-use-case";
 import type { UnitPreferenceClients } from "./unit-preference-clients";
-import type { UnitPreference } from "./unit-preference";
+import { UnitPreference, type UnitPreferenceSnapshot } from "./unit-preference";
 
 const NOW = new Date("2026-09-28T10:00:00.000Z");
-const IMPERIAL: UnitPreference = { weightUnit: "lb", heightUnit: "ft-in" };
+const IMPERIAL: UnitPreferenceSnapshot = {
+  weightUnit: "lb",
+  heightUnit: "ft-in",
+};
 
 function createClients(found: { clientId: string } | null) {
   return {
@@ -43,7 +46,7 @@ describe("SaveUnitPreferenceUseCase", () => {
     expect(clients.findByAuthSubjectId).toHaveBeenCalledWith("user_ana");
     expect(preferences.save).toHaveBeenCalledWith({
       clientId: "client-1",
-      preference: IMPERIAL,
+      preference: UnitPreference.from(IMPERIAL),
       at: NOW,
     });
   });

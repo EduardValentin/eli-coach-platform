@@ -13,9 +13,11 @@ type CheckboxFieldProps = Omit<
   React.ComponentPropsWithoutRef<"div">,
   "onChange"
 > & {
+  checkboxParity?: string;
   checkboxRef?: React.Ref<HTMLButtonElement>;
   checked: boolean;
   error?: string;
+  errorParity?: string;
   errorRole?: "alert";
   frame?: CheckboxFieldFrame;
   label: React.ReactNode;
@@ -29,11 +31,13 @@ export const CheckboxField = React.forwardRef<
 >(
   (
     {
+      checkboxParity,
       checkboxRef,
       checked,
       children,
       className,
       error,
+      errorParity,
       errorRole,
       frame = "none",
       label,
@@ -62,6 +66,7 @@ export const CheckboxField = React.forwardRef<
             aria-invalid={invalid}
             checked={checked}
             className={cn({ "mt-0.5": isStatement })}
+            data-parity={checkboxParity}
             id={checkboxId}
             onCheckedChange={(next) => onCheckedChange(next === true)}
             ref={checkboxRef}
@@ -76,7 +81,12 @@ export const CheckboxField = React.forwardRef<
           </label>
         </div>
         {children}
-        <FieldError id={errorId} message={error} role={errorRole} />
+        <FieldError
+          data-parity={errorParity}
+          id={errorId}
+          message={error}
+          role={errorRole}
+        />
       </div>
     );
   },

@@ -52,7 +52,10 @@ export default function WelcomeRoute() {
         )}
         data-parity-root="ClientWelcome"
       >
-        <h1 className="font-heading text-display-sm tracking-tight text-text-primary lg:text-display-md">
+        <h1
+          className="font-heading text-display-sm tracking-tight text-text-primary lg:text-display-md"
+          data-parity="welcome-heading"
+        >
           {welcomeHeading(firstName)}
         </h1>
         <p className="mt-5 text-lg leading-relaxed text-text-primary">

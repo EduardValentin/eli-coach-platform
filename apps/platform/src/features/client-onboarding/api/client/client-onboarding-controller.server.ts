@@ -76,7 +76,7 @@ export class ClientOnboardingController {
         consents: consentInstantsOf(draft.consents),
         updatedAt: onboarding.draft?.updatedAt.toISOString() ?? null,
       },
-      unitPreference,
+      unitPreference: unitPreference.toSnapshot(),
       resumed: hasStartedAnswering(draft.answers),
     });
   }

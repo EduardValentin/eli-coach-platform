@@ -1,11 +1,13 @@
+import type { UnitPreferenceSnapshot } from "@eli-coach-platform/domain/unit-preference";
 import { z } from "zod";
 
 import {
   saveDraftRequestSchema,
+  unitPreferenceSchema,
   type SaveDraftRequest,
 } from "~/features/client-onboarding/contracts/onboarding";
 
-import type { DraftSaveOutcome } from "./onboarding-api-client";
+import type { SaveOutcome } from "./onboarding-api-client";
 
 export type SaveState = "idle" | "saving" | "saved" | "unsaved";
 
@@ -18,23 +20,43 @@ const pendingDraftSchema = z.object({
   editedAt: z.iso.datetime(),
 });
 
-export type PendingDraft = z.infer<typeof pendingDraftSchema>;
+const storedEditsSchema = z.union([
+  pendingDraftSchema.extend({
+    unitPreference: unitPreferenceSchema.optional(),
+  }),
+  z.strictObject({ unitPreference: unitPreferenceSchema }),
+]);
+
+type StoredEdits = z.infer<typeof storedEditsSchema>;
+
+type PendingDraft = z.infer<typeof pendingDraftSchema>;
+
+export type UnsentEdits = {
+  draft: PendingDraft | null;
+  unitPreference: UnitPreferenceSnapshot | null;
+};
+
+const NOTHING_UNSENT: UnsentEdits = { draft: null, unitPreference: null };
 
 type DraftSyncOptions = {
   clientId: string;
   onSaveStateChange: (state: SaveState) => void;
-  save: (draft: SaveDraftRequest) => Promise<DraftSaveOutcome>;
+  save: (draft: SaveDraftRequest) => Promise<SaveOutcome>;
+  saveUnitPreference: (
+    preference: UnitPreferenceSnapshot,
+  ) => Promise<SaveOutcome>;
 };
 
 export type DraftSync = {
   queue: (draft: SaveDraftRequest) => void;
-  resend: (pending: PendingDraft) => void;
+  queueUnitPreference: (preference: UnitPreferenceSnapshot) => void;
+  resend: (unsent: UnsentEdits) => void;
   stopSaving: () => void;
   discardUnsentDraft: () => void;
   dispose: () => void;
 };
 
-type PendingDraftLookup = {
+type UnsentEditsLookup = {
   clientId: string;
   serverUpdatedAt: string | null;
 };
@@ -67,11 +89,35 @@ function removeStoredItem(key: string): void {
   }
 }
 
-function parsePendingDraft(raw: string): PendingDraft | null {
-  try {
-    const parsed = pendingDraftSchema.safeParse(JSON.parse(raw));
+function hasUnsent(unsent: UnsentEdits): boolean {
+  return unsent.draft !== null || unsent.unitPreference !== null;
+}
 
-    return parsed.success ? parsed.data : null;
+function storedEditsOf({
+  draft,
+  unitPreference,
+}: UnsentEdits): StoredEdits | null {
+  if (draft) return unitPreference ? { ...draft, unitPreference } : draft;
+
+  return unitPreference ? { unitPreference } : null;
+}
+
+function unsentEditsOf(stored: StoredEdits): UnsentEdits {
+  const unitPreference = stored.unitPreference ?? null;
+
+  if (!("draft" in stored)) return { draft: null, unitPreference };
+
+  return {
+    draft: { draft: stored.draft, editedAt: stored.editedAt },
+    unitPreference,
+  };
+}
+
+function parseStoredEdits(raw: string): UnsentEdits | null {
+  try {
+    const parsed = storedEditsSchema.safeParse(JSON.parse(raw));
+
+    return parsed.success ? unsentEditsOf(parsed.data) : null;
   } catch {
     return null;
   }
@@ -87,30 +133,56 @@ function isNewerThan(
   );
 }
 
-export function readNewerPendingDraft({
+export function readUnsentEdits({
   clientId,
   serverUpdatedAt,
-}: PendingDraftLookup): PendingDraft | null {
+}: UnsentEditsLookup): UnsentEdits | null {
   const key = pendingDraftKey(clientId);
   const raw = readStoredItem(key);
   if (raw === null) return null;
 
-  const pending = parsePendingDraft(raw);
+  const stored = parseStoredEdits(raw) ?? NOTHING_UNSENT;
+  const unsent: UnsentEdits = {
+    draft:
+      stored.draft && isNewerThan(stored.draft, serverUpdatedAt)
+        ? stored.draft
+        : null,
+    unitPreference: stored.unitPreference,
+  };
 
-  if (pending && isNewerThan(pending, serverUpdatedAt)) return pending;
+  if (hasUnsent(unsent)) return unsent;
 
   removeStoredItem(key);
 
   return null;
 }
 
+function sendIfPresent<Edit>(
+  edit: Edit | null,
+  save: (edit: Edit) => Promise<SaveOutcome>,
+): Promise<SaveOutcome | null> {
+  if (edit === null) return Promise.resolve(null);
+
+  return save(edit).catch((): SaveOutcome => "failed");
+}
+
+function remainingAfter<Edit>(
+  current: Edit | null,
+  sent: Edit | null,
+  outcome: SaveOutcome | null,
+): Edit | null {
+  return outcome !== "failed" && current === sent ? null : current;
+}
+
 export function createDraftSync({
   clientId,
   onSaveStateChange,
   save,
+  saveUnitPreference,
 }: DraftSyncOptions): DraftSync {
   const key = pendingDraftKey(clientId);
-  let latest: PendingDraft | null = null;
+  let unsent: UnsentEdits = NOTHING_UNSENT;
+  let editCount = 0;
   let saveState: SaveState = "idle";
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
   let retryTimer: ReturnType<typeof setInterval> | null = null;
@@ -132,54 +204,91 @@ export function createDraftSync({
     onSaveStateChange(next);
   };
 
-  const settle = (next: SaveState) => {
-    latest = null;
+  const storeUnsent = () => {
+    const stored = storedEditsOf(unsent);
+
+    if (stored) {
+      writeStoredItem(key, JSON.stringify(stored));
+      return;
+    }
+
     removeStoredItem(key);
-    changeState(next);
   };
 
-  const keepUnsaved = (pending: PendingDraft) => {
-    writeStoredItem(key, JSON.stringify(pending));
-    changeState("unsaved");
-    retryTimer ??= setInterval(retry, SAVE_RETRY_INTERVAL_MS);
+  const recordEdit = (next: UnsentEdits) => {
+    unsent = next;
+    editCount += 1;
+    cancelQueuedSave();
+    changeState("saving");
   };
 
-  const send = (pending: PendingDraft) => {
-    void save(pending.draft)
-      .catch((): DraftSaveOutcome => "failed")
-      .then((outcome) => {
-        if (disposed || latest !== pending) return;
-        if (outcome === "saved") return settle("saved");
-        if (outcome === "refused") return settle("idle");
+  const send = () => {
+    const sending = unsent;
+    const sentAtEdit = editCount;
 
-        keepUnsaved(pending);
-      });
+    void Promise.all([
+      sendIfPresent(sending.draft, (pending) => save(pending.draft)),
+      sendIfPresent(sending.unitPreference, saveUnitPreference),
+    ]).then(([draftOutcome, unitOutcome]) => {
+      if (disposed) return;
+
+      unsent = {
+        draft: remainingAfter(unsent.draft, sending.draft, draftOutcome),
+        unitPreference: remainingAfter(
+          unsent.unitPreference,
+          sending.unitPreference,
+          unitOutcome,
+        ),
+      };
+
+      if (sentAtEdit !== editCount) return;
+
+      storeUnsent();
+
+      if (hasUnsent(unsent)) {
+        changeState("unsaved");
+        retryTimer ??= setInterval(retry, SAVE_RETRY_INTERVAL_MS);
+        return;
+      }
+
+      const refused = draftOutcome === "refused" || unitOutcome === "refused";
+      changeState(refused ? "idle" : "saved");
+    });
   };
 
   function retry() {
-    if (saveState === "unsaved" && latest) send(latest);
+    if (saveState === "unsaved" && hasUnsent(unsent)) send();
   }
 
   window.addEventListener("online", retry);
 
   return {
     queue: (draft) => {
-      const pending = { draft, editedAt: new Date().toISOString() };
-      latest = pending;
-      cancelQueuedSave();
-      changeState("saving");
-      debounceTimer = setTimeout(() => send(pending), SAVE_DEBOUNCE_MS);
+      recordEdit({
+        ...unsent,
+        draft: { draft, editedAt: new Date().toISOString() },
+      });
+      debounceTimer = setTimeout(send, SAVE_DEBOUNCE_MS);
     },
-    resend: (pending) => {
-      latest = pending;
-      send(pending);
+    queueUnitPreference: (preference) => {
+      recordEdit({ ...unsent, unitPreference: preference });
+      send();
+    },
+    resend: (next) => {
+      unsent = next;
+      editCount += 1;
+      send();
     },
     stopSaving: () => {
       cancelQueuedSave();
-      stopRetrying();
-      latest = null;
+      unsent = { ...unsent, draft: null };
+      editCount += 1;
+      if (!hasUnsent(unsent)) stopRetrying();
     },
-    discardUnsentDraft: () => removeStoredItem(key),
+    discardUnsentDraft: () => {
+      unsent = { ...unsent, draft: null };
+      storeUnsent();
+    },
     dispose: () => {
       disposed = true;
       cancelQueuedSave();

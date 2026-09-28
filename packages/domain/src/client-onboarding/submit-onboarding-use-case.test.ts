@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ClientUnitPreferences, UnitPreference } from "../unit-preference";
+import { UnitPreference, type ClientUnitPreferences } from "../unit-preference";
 import type { ClientOnboardingChanges } from "./client-onboarding-changes";
 import type { ClientOnboardingIncidents } from "./client-onboarding-incidents";
 import type { ClientOnboardingSource } from "./client-onboarding-source";
@@ -22,7 +22,7 @@ const CLIENT: OnboardingClient = {
   gender: "male",
   dateOfBirth: "1990-03-02",
 };
-const IMPERIAL: UnitPreference = { weightUnit: "lb", heightUnit: "ft-in" };
+const IMPERIAL = UnitPreference.of("imperial");
 
 function completeAnswers(): OnboardingAnswersByForm {
   return {

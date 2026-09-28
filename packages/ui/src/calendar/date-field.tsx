@@ -44,6 +44,7 @@ export const DateField = React.forwardRef<HTMLButtonElement, DateFieldProps>(
       className,
       defaultMonth,
       disabledDays,
+      onBlur,
       onChange,
       placeholder = "Pick a date",
       value,
@@ -55,6 +56,14 @@ export const DateField = React.forwardRef<HTMLButtonElement, DateFieldProps>(
     const [open, setOpen] = React.useState(false);
     const timeZone = useDisplayTimeZone(null);
     const selected = noonUtcOf(value);
+
+    const leaveField = (event: React.FocusEvent<HTMLButtonElement>) => {
+      if (open) {
+        return;
+      }
+
+      onBlur?.(event);
+    };
 
     const choose = (date: Date | undefined) => {
       if (!date) {
@@ -75,6 +84,7 @@ export const DateField = React.forwardRef<HTMLButtonElement, DateFieldProps>(
               fieldSizeClasses({ size: "md" }),
               className,
             )}
+            onBlur={leaveField}
             ref={ref}
             tabIndex={FIELD_TAB_INDEX}
             type="button"

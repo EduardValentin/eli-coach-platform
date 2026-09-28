@@ -2,6 +2,7 @@ import {
   hasStartedAnswering,
   type OnboardingFormDefinition,
 } from "@eli-coach-platform/domain/client-onboarding";
+import type { UnitPreferenceSnapshot } from "@eli-coach-platform/domain/unit-preference";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import type {
@@ -10,8 +11,9 @@ import type {
   SaveDraftRequest,
 } from "~/features/client-onboarding/contracts/onboarding";
 
-import { readNewerPendingDraft } from "./draft-sync";
+import { readUnsentEdits } from "./draft-sync";
 import { currentStepOf } from "./onboarding-steps";
+import { useUnitPreference } from "./unit-preference-store";
 import { useDraftSync } from "./use-draft-sync";
 
 export type WizardDraft = Omit<SaveDraftRequest, "formId">;
@@ -52,8 +54,15 @@ function wizardDraftOf({
 }
 
 export function useOnboardingDraft({ page, steps }: OnboardingDraftOptions) {
-  const { discardUnsentDraft, queue, resend, saveState, stopSaving } =
-    useDraftSync(page.clientId);
+  const {
+    discardUnsentDraft,
+    queue,
+    queueUnitPreference,
+    resend,
+    saveState,
+    stopSaving,
+  } = useDraftSync(page.clientId);
+  const choosePreference = useUnitPreference((state) => state.choosePreference);
   const [draft, setDraft] = useState<WizardDraft>(() =>
     wizardDraftOf(page.draft),
   );
@@ -98,19 +107,41 @@ export function useOnboardingDraft({ page, steps }: OnboardingDraftOptions) {
     [saveDraft],
   );
 
+  const saveUnitPreference = useCallback(
+    (preference: UnitPreferenceSnapshot) => {
+      choosePreference(preference);
+      queueUnitPreference(preference);
+    },
+    [choosePreference, queueUnitPreference],
+  );
+
+  const restoreDraft = useCallback(
+    (unsentDraft: SaveDraftRequest) => {
+      const restored = wizardDraftOf(unsentDraft);
+      replaceDraft(restored);
+      setFormResetKey((current) => current + 1);
+      setResumed((current) => current || hasStartedAnswering(restored.answers));
+    },
+    [replaceDraft],
+  );
+
   useEffect(() => {
-    const pending = readNewerPendingDraft({
+    const unsent = readUnsentEdits({
       clientId: page.clientId,
       serverUpdatedAt: page.draft.updatedAt,
     });
-    if (!pending) return;
+    if (!unsent) return;
 
-    const restored = wizardDraftOf(pending.draft);
-    replaceDraft(restored);
-    setFormResetKey((current) => current + 1);
-    setResumed((current) => current || hasStartedAnswering(restored.answers));
-    resend(pending);
-  }, [page.clientId, page.draft.updatedAt, replaceDraft, resend]);
+    if (unsent.draft) restoreDraft(unsent.draft.draft);
+    if (unsent.unitPreference) choosePreference(unsent.unitPreference);
+    resend(unsent);
+  }, [
+    choosePreference,
+    page.clientId,
+    page.draft.updatedAt,
+    resend,
+    restoreDraft,
+  ]);
 
   return {
     discardUnsentDraft,
@@ -122,6 +153,7 @@ export function useOnboardingDraft({ page, steps }: OnboardingDraftOptions) {
     resumed,
     saveDraft,
     saveState,
+    saveUnitPreference,
     stopSaving,
     withdrawConsent,
   };

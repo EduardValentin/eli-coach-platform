@@ -1,8 +1,4 @@
-import {
-  DEFAULT_UNIT_PREFERENCE,
-  type ClientUnitPreferences,
-  type UnitPreference,
-} from "../unit-preference";
+import { UnitPreference, type ClientUnitPreferences } from "../unit-preference";
 
 import { ClientOnboarding } from "./client-onboarding";
 import type { ClientOnboardingSource } from "./client-onboarding-source";
@@ -39,7 +35,7 @@ export class ReadClientOnboardingUseCase {
 
     return {
       onboarding: ClientOnboarding.reconstitute({ client, ...stored }),
-      unitPreference: unitPreference ?? DEFAULT_UNIT_PREFERENCE,
+      unitPreference: unitPreference ?? UnitPreference.metric(),
     };
   }
 }

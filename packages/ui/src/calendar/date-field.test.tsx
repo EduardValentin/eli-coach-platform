@@ -5,7 +5,7 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import type { ComponentProps } from "react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { DateField } from "./date-field";
 
@@ -101,6 +101,23 @@ describe("DateField calendar", () => {
     expect(chosen).toEqual(["1990-03-10"]);
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(trigger()).toHaveFocus();
+  });
+
+  it("reports leaving the field only once focus leaves it, not while she picks a day", async () => {
+    // arrange
+    const user = userEvent.setup();
+    const onBlur = vi.fn();
+    renderBirthDate({ onBlur, value: "1990-03-05" });
+    await user.click(trigger());
+    await user.click(screen.getByRole("button", { name: /March 10th, 1990/ }));
+    const blurredWhilePicking = onBlur.mock.calls.length;
+
+    // act
+    await user.tab();
+
+    // assert
+    expect(blurredWhilePicking).toBe(0);
+    expect(onBlur).toHaveBeenCalledTimes(1);
   });
 
   it("closes on Escape without choosing a day", async () => {

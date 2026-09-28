@@ -1,4 +1,5 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
+import { UnitPreference } from "@eli-coach-platform/domain/unit-preference";
 import { describe, expect, it } from "vitest";
 
 import { PostgresClientUnitPreferences } from "./client-unit-preferences-repository.server";
@@ -17,7 +18,10 @@ describe("PostgresClientUnitPreferences#findByClientId", () => {
     const preference = await preferences.findByClientId(CLIENT_ID);
 
     // assert
-    expect(preference).toEqual({ weightUnit: "lb", heightUnit: "ft-in" });
+    expect(preference?.toSnapshot()).toEqual({
+      weightUnit: "lb",
+      heightUnit: "ft-in",
+    });
   });
 
   it("answers null before she chooses any units", async () => {
@@ -43,7 +47,7 @@ describe("PostgresClientUnitPreferences#save", () => {
     // act
     await preferences.save({
       clientId: CLIENT_ID,
-      preference: { weightUnit: "lb", heightUnit: "ft-in" },
+      preference: UnitPreference.of("imperial"),
       at: SAVED_AT,
     });
 

@@ -46,6 +46,7 @@ const DRAFT_UPDATED_AT = "2026-09-27T10:00:00.000Z";
 const CONSENTED_AT = "2026-09-27T09:00:00.000Z";
 const RETRY_INTERVAL_MS = 15_000;
 const SERVICE_TIMEOUT = 4000;
+const IMPERIAL = { heightUnit: "ft-in", weightUnit: "lb" };
 
 const UNSAVED_LINE = "Not saved yet. We'll try again when you're back online.";
 const SUBMIT_PROBLEM =
@@ -165,6 +166,21 @@ function answerDrafts(status: number) {
   );
 }
 
+function answerUnitPreferences(status: number) {
+  server.use(
+    http.put(
+      `*${CLIENT_ONBOARDING_API_PATHS.unitPreference}`,
+      async ({ request }) => {
+        unitPreferenceRequests.push(await request.json());
+
+        return status === 204
+          ? new HttpResponse(null, { status })
+          : HttpResponse.json({ message: "Unavailable" }, { status });
+      },
+    ),
+  );
+}
+
 function answerSubmission(
   status: number,
   body: Record<string, unknown> | null = null,
@@ -238,6 +254,13 @@ async function answerRegularCycleDetails(
   });
 }
 
+function firstOfThisMonth(): RegExp {
+  const today = new Date();
+  const month = today.toLocaleString("en-US", { month: "long" });
+
+  return new RegExp(`${month} 1st, ${today.getFullYear()}`);
+}
+
 beforeAll(() => {
   server.listen({ onUnhandledRequest: "error" });
   Element.prototype.scrollIntoView = () => {};
@@ -267,16 +290,7 @@ beforeAll(() => {
 beforeEach(() => {
   window.localStorage.clear();
   answerDrafts(204);
-  server.use(
-    http.put(
-      `*${CLIENT_ONBOARDING_API_PATHS.unitPreference}`,
-      async ({ request }) => {
-        unitPreferenceRequests.push(await request.json());
-
-        return new HttpResponse(null, { status: 204 });
-      },
-    ),
-  );
+  answerUnitPreferences(204);
 });
 
 afterEach(() => {
@@ -567,6 +581,24 @@ describe("the onboarding", { timeout: 15_000 }, () => {
     ).toBeGreaterThan(0);
   });
 
+  it("takes her to the first answer still missing when she tries to continue", async () => {
+    // arrange
+    const user = userEvent.setup();
+    await openOnboarding(pageAt(1));
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Continue" }));
+
+    // assert
+    await waitFor(() =>
+      expect(
+        screen.getByRole("radiogroup", {
+          name: /Has your doctor ever said that you have a heart condition/,
+        }),
+      ).toContainElement(document.activeElement as HTMLElement),
+    );
+  });
+
   it("marks the answers she can skip as optional", async () => {
     // arrange
     await openOnboarding(firstVisit());
@@ -655,6 +687,30 @@ describe("the onboarding", { timeout: 15_000 }, () => {
     });
   });
 
+  it("keeps the day her last period started quiet while she picks it, so her next answer lands", async () => {
+    // arrange
+    const user = userEvent.setup();
+    await openOnboarding(pageAt(2));
+    await answerRegularCycleDetails(user);
+    await user.click(
+      screen.getByRole("button", { name: /The day your last period started/ }),
+    );
+    const openedQuietly = screen.queryByText("Pick a date.") === null;
+
+    // act
+    await user.click(
+      within(screen.getByRole("dialog")).getByRole("button", {
+        name: firstOfThisMonth(),
+      }),
+    );
+    await user.click(screen.getByRole("radio", { name: "No" }));
+
+    // assert
+    expect(openedQuietly).toBe(true);
+    expect(screen.queryByText("Pick a date.")).not.toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "No" })).toBeChecked();
+  });
+
   it("clears the other choices when she picks one that stands alone", async () => {
     // arrange
     const user = userEvent.setup();
@@ -687,6 +743,23 @@ describe("the onboarding", { timeout: 15_000 }, () => {
       name: "Your cycle and hormonal health",
     });
     await waitFor(() => expect(heading).toHaveFocus());
+  });
+
+  it("reads the step count with the next form's title when focus lands on it", async () => {
+    // arrange
+    const user = userEvent.setup();
+    await openOnboarding(pageAt(1, { manualScreening: true }));
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Continue" }));
+
+    // assert
+    const heading = await screen.findByRole("heading", {
+      level: 2,
+      name: "Your cycle and hormonal health",
+    });
+    await waitFor(() => expect(heading).toHaveFocus());
+    expect(heading).toHaveAccessibleDescription("Step 3 of 5");
   });
 
   it("counts four forms and leaves out the cycle for a male account", async () => {
@@ -1154,6 +1227,51 @@ describe("the onboarding", { timeout: 15_000 }, () => {
         1,
       ),
     );
+  });
+
+  it("keeps her units chosen and tries them again when saving them fails", async () => {
+    // arrange
+    const user = userEvent.setup();
+    answerUnitPreferences(500);
+    await openOnboarding(firstVisit());
+    await user.click(screen.getByRole("radio", { name: "lb · in" }));
+    await screen.findByText(UNSAVED_LINE, undefined, {
+      timeout: SERVICE_TIMEOUT,
+    });
+    const unsentEntry = JSON.parse(
+      window.localStorage.getItem(PENDING_DRAFT_KEY) ?? "null",
+    );
+    answerUnitPreferences(204);
+
+    // act
+    await user.type(screen.getByLabelText(/Your weight/), "150");
+
+    // assert
+    expect(unsentEntry).toEqual({ unitPreference: IMPERIAL });
+    expect(await screen.findByText("Saved")).toBeVisible();
+    expect(screen.getByRole("radio", { name: "lb · in" })).toBeChecked();
+    expect(unitPreferenceRequests).toEqual([IMPERIAL, IMPERIAL]);
+    expect(window.localStorage.getItem(PENDING_DRAFT_KEY)).toBeNull();
+  });
+
+  it("brings back the units this device could not send when she returns", async () => {
+    // arrange
+    window.localStorage.setItem(
+      PENDING_DRAFT_KEY,
+      JSON.stringify({ unitPreference: IMPERIAL }),
+    );
+
+    // act
+    await openOnboarding(pageAt(0));
+
+    // assert
+    await waitFor(() =>
+      expect(screen.getByRole("radio", { name: "lb · in" })).toBeChecked(),
+    );
+    expect(screen.getByLabelText(/Your weight/)).toHaveValue(145.7);
+    expect(await screen.findByText("Saved")).toBeVisible();
+    expect(unitPreferenceRequests).toEqual([IMPERIAL]);
+    expect(window.localStorage.getItem(PENDING_DRAFT_KEY)).toBeNull();
   });
 
   it("turns down a weight outside the sensible range in pounds", async () => {

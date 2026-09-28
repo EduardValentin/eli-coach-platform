@@ -8,7 +8,10 @@ import {
   type SaveOnboardingDraftUseCase,
   type SubmitOnboardingUseCase,
 } from "@eli-coach-platform/domain/client-onboarding";
-import type { SaveUnitPreferenceUseCase } from "@eli-coach-platform/domain/unit-preference";
+import {
+  UnitPreference,
+  type SaveUnitPreferenceUseCase,
+} from "@eli-coach-platform/domain/unit-preference";
 import { describe, expect, it, vi } from "vitest";
 
 import type { AccountsFeature } from "~/features/accounts/server/accounts-composition.server";
@@ -122,7 +125,7 @@ describe("ClientOnboardingController load", () => {
       reading: readingOf({
         gender: "female",
         draft,
-        unitPreference: { weightUnit: "lb", heightUnit: "ft-in" },
+        unitPreference: UnitPreference.of("imperial"),
       }),
     });
 
@@ -577,10 +580,7 @@ function readingOf(options: {
       draft: options.draft ?? null,
       submission: null,
     }),
-    unitPreference: options.unitPreference ?? {
-      weightUnit: "kg",
-      heightUnit: "cm",
-    },
+    unitPreference: options.unitPreference ?? UnitPreference.metric(),
   };
 }
 

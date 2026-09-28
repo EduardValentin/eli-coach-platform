@@ -46,9 +46,11 @@ export function OnboardingConsent({
 }: OnboardingConsentProps) {
   return (
     <CheckboxField
+      checkboxParity={`${PARITY_HOOKS[agreement]}-checkbox`}
       checked={checked}
       data-parity={PARITY_HOOKS[agreement]}
       error={problem ?? undefined}
+      errorParity={`${PARITY_HOOKS[agreement]}-error`}
       errorRole="alert"
       frame="inset"
       label={statement}
@@ -73,11 +75,15 @@ export function ProgressPhotoConsent({
   onConsentChange,
 }: ProgressPhotoConsentProps) {
   return (
-    <Card className="grid gap-4" variant="inset">
-      <FieldCaption>
-        {PROGRESS_PHOTOS_HEADING} <LabelSuffix>{OPTIONAL_SUFFIX}</LabelSuffix>
+    <Card className="grid gap-4" data-parity="progress-photos" variant="inset">
+      <FieldCaption data-parity="progress-photos-caption">
+        {PROGRESS_PHOTOS_HEADING}{" "}
+        <LabelSuffix data-parity="progress-photos-suffix">
+          {OPTIONAL_SUFFIX}
+        </LabelSuffix>
       </FieldCaption>
       <CheckboxField
+        checkboxParity="progress-photos-checkbox"
         checked={consented}
         label={PROGRESS_PHOTO_CONSENT_COPY}
         layout="statement"

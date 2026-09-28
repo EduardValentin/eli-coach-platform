@@ -1,7 +1,7 @@
 import {
   measureUnitsOf,
   type MeasureUnits,
-  type UnitPreference,
+  type UnitPreferenceSnapshot,
 } from "@eli-coach-platform/domain/unit-preference";
 import {
   createContext,
@@ -14,14 +14,14 @@ import { useStore } from "zustand";
 import { createStore, type StoreApi } from "zustand/vanilla";
 
 type UnitPreferenceState = {
-  preference: UnitPreference;
-  choosePreference: (preference: UnitPreference) => void;
+  preference: UnitPreferenceSnapshot;
+  choosePreference: (preference: UnitPreferenceSnapshot) => void;
 };
 
 type UnitPreferenceStore = StoreApi<UnitPreferenceState>;
 
 function createUnitPreferenceStore(
-  preference: UnitPreference,
+  preference: UnitPreferenceSnapshot,
 ): UnitPreferenceStore {
   return createStore<UnitPreferenceState>()((set) => ({
     preference,
@@ -32,7 +32,7 @@ function createUnitPreferenceStore(
 const UnitPreferenceContext = createContext<UnitPreferenceStore | null>(null);
 
 type UnitPreferenceProviderProps = PropsWithChildren<{
-  preference: UnitPreference;
+  preference: UnitPreferenceSnapshot;
 }>;
 
 export function UnitPreferenceProvider({

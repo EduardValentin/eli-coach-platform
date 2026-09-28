@@ -1,3 +1,4 @@
+import type { UnitPreferenceSnapshot } from "@eli-coach-platform/domain/unit-preference";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { SaveDraftRequest } from "~/features/client-onboarding/contracts/onboarding";
@@ -5,10 +6,10 @@ import type { SaveDraftRequest } from "~/features/client-onboarding/contracts/on
 import {
   createDraftSync,
   type DraftSync,
-  type PendingDraft,
   type SaveState,
+  type UnsentEdits,
 } from "./draft-sync";
-import { saveDraft } from "./onboarding-api-client";
+import { saveDraft, saveUnitPreference } from "./onboarding-api-client";
 
 export function useDraftSync(clientId: string) {
   const [saveState, setSaveState] = useState<SaveState>("idle");
@@ -19,6 +20,7 @@ export function useDraftSync(clientId: string) {
       clientId,
       onSaveStateChange: setSaveState,
       save: saveDraft,
+      saveUnitPreference,
     });
     syncRef.current = sync;
 
@@ -32,8 +34,15 @@ export function useDraftSync(clientId: string) {
     syncRef.current?.queue(draft);
   }, []);
 
-  const resend = useCallback((pending: PendingDraft) => {
-    syncRef.current?.resend(pending);
+  const queueUnitPreference = useCallback(
+    (preference: UnitPreferenceSnapshot) => {
+      syncRef.current?.queueUnitPreference(preference);
+    },
+    [],
+  );
+
+  const resend = useCallback((unsent: UnsentEdits) => {
+    syncRef.current?.resend(unsent);
   }, []);
 
   const stopSaving = useCallback(() => {
@@ -44,5 +53,12 @@ export function useDraftSync(clientId: string) {
     syncRef.current?.discardUnsentDraft();
   }, []);
 
-  return { discardUnsentDraft, queue, resend, saveState, stopSaving };
+  return {
+    discardUnsentDraft,
+    queue,
+    queueUnitPreference,
+    resend,
+    saveState,
+    stopSaving,
+  };
 }

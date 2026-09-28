@@ -117,6 +117,27 @@ function feetAndInchesHint(
     : null;
 }
 
+type SuffixRole = "unit" | "optional";
+
+type LabelSuffixEntry = { role: SuffixRole; text: string };
+
+function labelSuffixesOf(
+  field: OnboardingField,
+  unit: string | null,
+): LabelSuffixEntry[] {
+  const suffixes: (LabelSuffixEntry | null)[] = [
+    unit ? { role: "unit", text: `(${unit})` } : null,
+    field.unitSuffix ? { role: "unit", text: `(${field.unitSuffix})` } : null,
+    field.requirement === "optional"
+      ? { role: "optional", text: OPTIONAL_SUFFIX }
+      : null,
+  ];
+
+  return suffixes.filter(
+    (suffix): suffix is LabelSuffixEntry => suffix !== null,
+  );
+}
+
 function LabelText({
   field,
   unit,
@@ -124,12 +145,6 @@ function LabelText({
   field: OnboardingField;
   unit: string | null;
 }) {
-  const suffixes = [
-    unit ? `(${unit})` : null,
-    field.unitSuffix ? `(${field.unitSuffix})` : null,
-    field.requirement === "optional" ? OPTIONAL_SUFFIX : null,
-  ].filter((part): part is string => part !== null);
-
   return (
     <>
       {field.label.split("\n").map((line, index) => (
@@ -137,8 +152,13 @@ function LabelText({
           {line}
         </span>
       ))}
-      {suffixes.map((suffix) => (
-        <LabelSuffix key={suffix}>{suffix}</LabelSuffix>
+      {labelSuffixesOf(field, unit).map((suffix) => (
+        <LabelSuffix
+          data-parity={`field-${field.id}-suffix-${suffix.role}`}
+          key={suffix.text}
+        >
+          {suffix.text}
+        </LabelSuffix>
       ))}
     </>
   );
@@ -189,6 +209,7 @@ function SelectEntry({
         aria-describedby={describedBy}
         aria-invalid={invalid}
         className="w-full"
+        data-parity={`field-${field.id}-trigger`}
         id={ids.control}
       >
         <SelectValue placeholder={field.placeholder ?? SELECT_PLACEHOLDER} />
@@ -232,6 +253,7 @@ function FieldEntry(props: FieldEntryProps): ReactElement {
         aria-describedby={describedBy}
         aria-invalid={invalid}
         calendarLabel={field.label}
+        data-parity={`field-${field.id}-trigger`}
         disabledDays={{ after: new Date() }}
         id={ids.control}
         onBlur={controller.onBlur}
@@ -262,11 +284,13 @@ function CheckboxAnswer({ controller, error, field }: FieldLayoutProps) {
 
   return (
     <CheckboxField
+      checkboxParity={`field-${field.id}-checkbox`}
       checkboxRef={controller.ref}
       checked={isTicked(controller.value)}
       className={cn({ "-mt-2": !isDeclaration })}
       data-parity={`field-${field.id}`}
       error={error}
+      errorParity={`field-${field.id}-error`}
       frame={isDeclaration ? "inset" : "none"}
       label={field.label}
       layout={isDeclaration ? "statement" : "inline"}
@@ -310,7 +334,11 @@ function ChoiceFieldset({
         {field.hint && <FieldHint id={ids.hint}>{field.hint}</FieldHint>}
         {children}
       </fieldset>
-      <FieldError id={ids.message} message={error} />
+      <FieldError
+        data-parity={`field-${field.id}-error`}
+        id={ids.message}
+        message={error}
+      />
     </div>
   );
 }
@@ -399,7 +427,11 @@ function EntryField({
         units={units}
       />
       {equivalent && hintLine}
-      <FieldError id={ids.message} message={error} />
+      <FieldError
+        data-parity={`field-${field.id}-error`}
+        id={ids.message}
+        message={error}
+      />
     </div>
   );
 }

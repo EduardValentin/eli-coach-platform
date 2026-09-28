@@ -1,4 +1,8 @@
-import type { HeightUnit, UnitPreference, WeightUnit } from "./unit-preference";
+import type {
+  HeightUnit,
+  UnitPreferenceSnapshot,
+  WeightUnit,
+} from "./unit-preference";
 
 type LengthUnit = "cm" | "in";
 
@@ -63,7 +67,9 @@ function fromDisplayLength(value: number, unit: LengthUnit): number {
   return unit === "cm" ? value : inToCm(value);
 }
 
-export function measureUnitsOf(preference: UnitPreference): MeasureUnits {
+export function measureUnitsOf(
+  preference: UnitPreferenceSnapshot,
+): MeasureUnits {
   return {
     weight: preference.weightUnit,
     length: lengthUnitOf(preference.heightUnit),

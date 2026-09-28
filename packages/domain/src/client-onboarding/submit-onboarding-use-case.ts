@@ -1,7 +1,7 @@
 import type { Clock } from "../shared";
 import {
-  DEFAULT_UNIT_PREFERENCE,
   measureUnitsOf,
+  UnitPreference,
   type ClientUnitPreferences,
 } from "../unit-preference";
 
@@ -66,7 +66,9 @@ export class SubmitOnboardingUseCase {
     const outcome = onboarding.submit({
       answers: command.answers,
       consents: command.consents,
-      units: measureUnitsOf(preference ?? DEFAULT_UNIT_PREFERENCE),
+      units: measureUnitsOf(
+        (preference ?? UnitPreference.metric()).toSnapshot(),
+      ),
       now,
     });
 

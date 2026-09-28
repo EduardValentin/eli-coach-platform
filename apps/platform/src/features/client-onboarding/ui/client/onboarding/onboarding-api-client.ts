@@ -1,6 +1,6 @@
 import { joinBasePath } from "@eli-coach-platform/config";
 import type { OnboardingConsent } from "@eli-coach-platform/domain/client-onboarding";
-import type { UnitPreference } from "@eli-coach-platform/domain/unit-preference";
+import type { UnitPreferenceSnapshot } from "@eli-coach-platform/domain/unit-preference";
 
 import {
   missingConsentSchema,
@@ -36,7 +36,7 @@ const REFUSED_STATUSES: readonly number[] = [
   ALREADY_SUBMITTED_STATUS,
 ];
 
-export type DraftSaveOutcome = "saved" | "refused" | "failed";
+export type SaveOutcome = "saved" | "refused" | "failed";
 
 export type SubmissionOutcome =
   | { kind: "accepted"; redirectTo: string }
@@ -72,24 +72,30 @@ async function readJson(response: Response): Promise<unknown> {
   }
 }
 
-export async function saveDraft(
-  request: SaveDraftRequest,
-): Promise<DraftSaveOutcome> {
-  const response = await sendJson(DRAFT_API_URL, {
-    body: request,
-    method: "PUT",
-  });
-
+function saveOutcomeOf(response: Response | null): SaveOutcome {
   if (!response) return "failed";
   if (response.ok) return "saved";
 
   return REFUSED_STATUSES.includes(response.status) ? "refused" : "failed";
 }
 
+export async function saveDraft(
+  request: SaveDraftRequest,
+): Promise<SaveOutcome> {
+  return saveOutcomeOf(
+    await sendJson(DRAFT_API_URL, { body: request, method: "PUT" }),
+  );
+}
+
 export async function saveUnitPreference(
-  preference: UnitPreference,
-): Promise<void> {
-  await sendJson(UNIT_PREFERENCE_API_URL, { body: preference, method: "PUT" });
+  preference: UnitPreferenceSnapshot,
+): Promise<SaveOutcome> {
+  return saveOutcomeOf(
+    await sendJson(UNIT_PREFERENCE_API_URL, {
+      body: preference,
+      method: "PUT",
+    }),
+  );
 }
 
 function acceptedOutcome(body: unknown): SubmissionOutcome {

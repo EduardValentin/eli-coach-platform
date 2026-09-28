@@ -37,7 +37,7 @@ export default function OnboardingRoute() {
         className="min-h-screen bg-surface-page px-4 py-10 sm:px-6 lg:py-16"
       >
         <div className="mx-auto w-full max-w-2xl">
-          <div className="mb-8 text-center">
+          <div className="mb-8 text-center" data-parity-root="OnboardingHeader">
             <SectionEyebrow className="mb-2">
               {ONBOARDING_EYEBROW}
             </SectionEyebrow>

@@ -46,6 +46,7 @@ type OnboardingFormCardProps = OnboardingAnswerFormProps & {
   consent: ReactNode;
   headingRef: (heading: HTMLHeadingElement | null) => void;
   intro: string;
+  stepCountId: string;
   unitsChoice: ReactNode;
 };
 
@@ -54,6 +55,18 @@ type FieldGroup = { section: string | null; fields: OnboardingField[] };
 type FieldItem =
   | { kind: "legend"; legend: string; fields: OnboardingField[] }
   | { kind: "field"; field: OnboardingField };
+
+const MAIN_SECTION = "main";
+
+function sectionHookOf(section: string | null): string {
+  const slug = (section ?? MAIN_SECTION)
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, "")
+    .trim()
+    .replace(/\s+/g, "-");
+
+  return `section-${slug}`;
+}
 
 function groupFields(fields: readonly OnboardingField[]): FieldGroup[] {
   const groups: FieldGroup[] = [];
@@ -158,7 +171,11 @@ function OnboardingAnswerForm({
       }}
     >
       {groupFields(shown).map((group) => (
-        <div className="grid gap-6" key={group.section ?? "main"}>
+        <div
+          className="grid gap-6"
+          data-parity={sectionHookOf(group.section)}
+          key={group.section ?? MAIN_SECTION}
+        >
           {group.section && (
             <h3 className="font-heading text-lg text-text-primary">
               {group.section}
@@ -220,6 +237,7 @@ export function OnboardingFormCard({
   consent,
   headingRef,
   intro,
+  stepCountId,
   unitsChoice,
   ...answerForm
 }: OnboardingFormCardProps) {
@@ -232,6 +250,7 @@ export function OnboardingFormCard({
       className={cn(cardVariants({ variant: "panel" }), "p-6 sm:p-8 lg:p-10")}
     >
       <h2
+        aria-describedby={stepCountId}
         className="font-heading text-2xl tracking-tight text-text-primary focus:outline-none"
         data-parity="form-heading"
         id={headingId}

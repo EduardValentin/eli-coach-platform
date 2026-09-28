@@ -1,12 +1,12 @@
 import type { Clock } from "../shared";
 
 import type { ClientUnitPreferences } from "./client-unit-preferences";
-import type { UnitPreference } from "./unit-preference";
+import { UnitPreference, type UnitPreferenceSnapshot } from "./unit-preference";
 import type { UnitPreferenceClients } from "./unit-preference-clients";
 
 type SaveUnitPreferenceCommand = {
   authSubjectId: string;
-  preference: UnitPreference;
+  preference: UnitPreferenceSnapshot;
 };
 
 type SaveUnitPreferenceResult =
@@ -34,7 +34,7 @@ export class SaveUnitPreferenceUseCase {
 
     await this.options.preferences.save({
       clientId: client.clientId,
-      preference: command.preference,
+      preference: UnitPreference.from(command.preference),
       at: this.options.clock.now(),
     });
 

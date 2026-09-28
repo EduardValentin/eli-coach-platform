@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ClientUnitPreferences } from "../unit-preference";
+import { UnitPreference, type ClientUnitPreferences } from "../unit-preference";
 import type { ClientOnboardingSource } from "./client-onboarding-source";
 import { emptyDraft } from "./onboarding-draft";
 import type { OnboardingClient, OnboardingClients } from "./onboarding-clients";
@@ -40,10 +40,9 @@ describe("ReadClientOnboardingUseCase", () => {
   it("reads her onboarding with the units she chose", async () => {
     // arrange
     const onboardings = createOnboardings();
-    const unitPreferences = createUnitPreferences({
-      weightUnit: "lb",
-      heightUnit: "ft-in",
-    });
+    const unitPreferences = createUnitPreferences(
+      UnitPreference.of("imperial"),
+    );
     const useCase = new ReadClientOnboardingUseCase({
       clients: createClients(CLIENT),
       onboardings,
@@ -61,7 +60,7 @@ describe("ReadClientOnboardingUseCase", () => {
       draft: DRAFT,
       submission: null,
     });
-    expect(result?.unitPreference).toEqual({
+    expect(result?.unitPreference.toSnapshot()).toEqual({
       weightUnit: "lb",
       heightUnit: "ft-in",
     });
@@ -81,7 +80,7 @@ describe("ReadClientOnboardingUseCase", () => {
     const result = await useCase.execute("user_ana");
 
     // assert
-    expect(result?.unitPreference).toEqual({
+    expect(result?.unitPreference.toSnapshot()).toEqual({
       weightUnit: "kg",
       heightUnit: "cm",
     });

@@ -7,7 +7,7 @@ import { useClientReducedMotionPreference } from "@eli-coach-platform/ui/motion"
 import { Alert, Stepper } from "@eli-coach-platform/ui/primitives";
 import { toast } from "@eli-coach-platform/ui/toast";
 import { AnimatePresence, motion } from "motion/react";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useId, useMemo, useRef, useState } from "react";
 
 import type {
   OnboardingConsentInstants,
@@ -67,6 +67,7 @@ const STEP_DURATION_S = 0.2;
 
 export function OnboardingWizard({ page }: OnboardingWizardProps) {
   const reduceMotion = useClientReducedMotionPreference();
+  const stepCountId = useId();
   const steps = useMemo(() => stepsOf(page.formIds), [page.formIds]);
   const onboardingDraft = useOnboardingDraft({ page, steps });
   const {
@@ -77,6 +78,7 @@ export function OnboardingWizard({ page }: OnboardingWizardProps) {
     resumed,
     saveDraft,
     saveState,
+    saveUnitPreference,
     withdrawConsent,
   } = onboardingDraft;
   const {
@@ -227,9 +229,13 @@ export function OnboardingWizard({ page }: OnboardingWizardProps) {
 
   return (
     <div data-parity-root="OnboardingWizard">
-      <div className="mb-6 grid gap-2 px-6 sm:px-8 lg:px-10">
+      <div
+        className="mb-6 grid gap-2 px-6 sm:px-8 lg:px-10"
+        data-parity="wizard-progress"
+      >
         <Stepper
           className="w-full"
+          countId={stepCountId}
           current={stepIndex + 1}
           data-parity="stepper"
           status={
@@ -292,7 +298,12 @@ export function OnboardingWizard({ page }: OnboardingWizardProps) {
             onChange={handleAnswers}
             onContinue={continueFrom}
             problems={stepProblems}
-            unitsChoice={stepIndex === 0 ? <MeasurementSystemField /> : null}
+            stepCountId={stepCountId}
+            unitsChoice={
+              stepIndex === 0 ? (
+                <MeasurementSystemField onChoose={saveUnitPreference} />
+              ) : null
+            }
           >
             {manualScreening && (
               <p className="text-sm text-text-secondary">

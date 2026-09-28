@@ -1,7 +1,7 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
-import type {
-  ClientUnitPreferences,
+import {
   UnitPreference,
+  type ClientUnitPreferences,
 } from "@eli-coach-platform/domain/unit-preference";
 import { eq } from "drizzle-orm";
 
@@ -20,7 +20,7 @@ export class PostgresClientUnitPreferences implements ClientUnitPreferences {
       .where(eq(clientUnitPreferencesTable.clientId, clientId))
       .limit(1);
 
-    return row ?? null;
+    return row ? UnitPreference.from(row) : null;
   }
 
   async save(input: {
@@ -28,11 +28,7 @@ export class PostgresClientUnitPreferences implements ClientUnitPreferences {
     preference: UnitPreference;
     at: Date;
   }): Promise<void> {
-    const units = {
-      weightUnit: input.preference.weightUnit,
-      heightUnit: input.preference.heightUnit,
-      updatedAt: input.at,
-    };
+    const units = { ...input.preference.toSnapshot(), updatedAt: input.at };
 
     await this.database
       .insert(clientUnitPreferencesTable)

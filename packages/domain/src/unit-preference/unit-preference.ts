@@ -6,32 +6,44 @@ export const HEIGHT_UNITS = ["cm", "ft-in"] as const;
 
 export type HeightUnit = (typeof HEIGHT_UNITS)[number];
 
-export type UnitPreference = {
+export type MeasurementSystem = "metric" | "imperial";
+
+export type UnitPreferenceSnapshot = {
   weightUnit: WeightUnit;
   heightUnit: HeightUnit;
 };
 
-export const DEFAULT_UNIT_PREFERENCE: UnitPreference = {
-  weightUnit: "kg",
-  heightUnit: "cm",
-};
-
-export type MeasurementSystem = "metric" | "imperial";
-
-const MEASUREMENT_SYSTEM_PREFERENCES: Record<
+const MEASUREMENT_SYSTEM_UNITS: Record<
   MeasurementSystem,
-  UnitPreference
+  UnitPreferenceSnapshot
 > = {
   metric: { weightUnit: "kg", heightUnit: "cm" },
   imperial: { weightUnit: "lb", heightUnit: "ft-in" },
 };
 
-export function unitPreferenceOf(system: MeasurementSystem): UnitPreference {
-  return MEASUREMENT_SYSTEM_PREFERENCES[system];
-}
+export class UnitPreference {
+  private constructor(
+    readonly weightUnit: WeightUnit,
+    readonly heightUnit: HeightUnit,
+  ) {}
 
-export function measurementSystemOf(
-  preference: UnitPreference,
-): MeasurementSystem {
-  return preference.weightUnit === "kg" ? "metric" : "imperial";
+  static of(system: MeasurementSystem): UnitPreference {
+    return UnitPreference.from(MEASUREMENT_SYSTEM_UNITS[system]);
+  }
+
+  static from(snapshot: UnitPreferenceSnapshot): UnitPreference {
+    return new UnitPreference(snapshot.weightUnit, snapshot.heightUnit);
+  }
+
+  static metric(): UnitPreference {
+    return UnitPreference.of("metric");
+  }
+
+  measurementSystem(): MeasurementSystem {
+    return this.weightUnit === "kg" ? "metric" : "imperial";
+  }
+
+  toSnapshot(): UnitPreferenceSnapshot {
+    return { weightUnit: this.weightUnit, heightUnit: this.heightUnit };
+  }
 }
