@@ -11,7 +11,6 @@ import {
   CoachingSalesWindow,
   PaymentLink,
   type AssessmentCallReader,
-  type CallSalesState,
   type CallSalesStates,
   type CoachingSalesIncidents,
   type PaymentLinks,
@@ -123,7 +122,7 @@ function createCalls(
 }
 
 function createCallSalesStates(
-  states: ReadonlyMap<string, CallSalesState>,
+  states: Awaited<ReturnType<CallSalesStates["forCalls"]>>,
 ): CallSalesStates {
   return { forCalls: vi.fn().mockResolvedValue(states) };
 }
@@ -196,7 +195,7 @@ function startCheckoutDependencies(
   return {
     calls: createCalls(call),
     callSalesStates: createCallSalesStates(
-      new Map([[call.id, "payment-link-sent"]]),
+      new Map([[call.id, { state: "payment-link-sent", clientId: null }]]),
     ),
     checkoutSessions: createCheckoutSessions([]),
     clock,
@@ -308,7 +307,9 @@ describe("StartCheckoutUseCase", () => {
   it("answers invalid_link for a still-valid link whose call is already paid, without provider calls", async () => {
     // arrange
     const dependencies = startCheckoutDependencies({
-      callSalesStates: createCallSalesStates(new Map([[call.id, "paid"]])),
+      callSalesStates: createCallSalesStates(
+        new Map([[call.id, { state: "paid", clientId: "client-1" }]]),
+      ),
       checkoutSessions: createCheckoutSessions([{ id: "cs_1" }]),
     });
     const useCase = new StartCheckoutUseCase(dependencies);

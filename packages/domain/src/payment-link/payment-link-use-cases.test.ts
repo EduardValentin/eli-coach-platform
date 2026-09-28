@@ -106,7 +106,7 @@ function createCalls(
 }
 
 function createCallSalesStates(
-  states: ReadonlyMap<string, CallSalesState>,
+  states: Awaited<ReturnType<CallSalesStates["forCalls"]>>,
 ): CallSalesStates {
   return { forCalls: vi.fn().mockResolvedValue(states) };
 }
@@ -181,7 +181,7 @@ function resolvePaymentLinkDependencies(
   return {
     calls: createCalls(call),
     callSalesStates: createCallSalesStates(
-      new Map([[call.id, "payment-link-sent"]]),
+      new Map([[call.id, { state: "payment-link-sent", clientId: null }]]),
     ),
     clock: clockAt(NOW),
     paymentLinks: createPaymentLinks(usableLink),
@@ -299,7 +299,9 @@ describe("SendPaymentLinkUseCase", () => {
   it("answers already_paid without issuing a link for a paid call", async () => {
     // arrange
     const dependencies = sendPaymentLinkDependencies({
-      callSalesStates: createCallSalesStates(new Map([[call.id, "paid"]])),
+      callSalesStates: createCallSalesStates(
+        new Map([[call.id, { state: "paid", clientId: "client-1" }]]),
+      ),
     });
     const useCase = new SendPaymentLinkUseCase(dependencies);
 
@@ -320,7 +322,7 @@ describe("SendPaymentLinkUseCase", () => {
     // arrange
     const dependencies = sendPaymentLinkDependencies({
       callSalesStates: createCallSalesStates(
-        new Map([[call.id, "payment-link-sent"]]),
+        new Map([[call.id, { state: "payment-link-sent", clientId: null }]]),
       ),
       pricingEligibility: createPricingEligibility("reduced"),
     });
@@ -483,7 +485,9 @@ describe("ResolvePaymentLinkUseCase", () => {
   it("answers invalid for a still-valid link whose call is already paid", async () => {
     // arrange
     const dependencies = resolvePaymentLinkDependencies({
-      callSalesStates: createCallSalesStates(new Map([[call.id, "paid"]])),
+      callSalesStates: createCallSalesStates(
+        new Map([[call.id, { state: "paid", clientId: "client-1" }]]),
+      ),
     });
     const useCase = new ResolvePaymentLinkUseCase(dependencies);
 
@@ -557,12 +561,15 @@ describe("OpenBundlePageUseCase", () => {
 });
 
 describe("ReadCallSalesStatesUseCase", () => {
-  it("answers a sales state for every requested call", async () => {
+  it("answers a sales state for every requested call with the client a paid call created", async () => {
     // arrange
-    const states = new Map<string, CallSalesState>([
-      ["call-1", "held"],
-      ["call-2", "payment-link-sent"],
-      ["call-3", "paid"],
+    const states = new Map<
+      string,
+      { state: CallSalesState; clientId: string | null }
+    >([
+      ["call-1", { state: "held", clientId: null }],
+      ["call-2", { state: "payment-link-sent", clientId: null }],
+      ["call-3", { state: "paid", clientId: "client-3" }],
     ]);
     const callSalesStates = createCallSalesStates(states);
     const useCase = new ReadCallSalesStatesUseCase({ callSalesStates });

@@ -61,7 +61,7 @@ export class SendPaymentLinkUseCase {
 
     const salesStates = await this.options.callSalesStates.forCalls([call.id]);
 
-    if (salesStates.get(call.id) === "paid") {
+    if (salesStates.get(call.id)?.state === "paid") {
       return { status: "already_paid" };
     }
 
