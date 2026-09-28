@@ -4,6 +4,8 @@ const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 
 export type InvitationResolution = "valid" | "expired" | "used";
 
+export type InvitationStanding = "pending" | "expired" | "email-failed";
+
 export type IdentityInvitation = { id: string; url: string };
 
 type ClientInvitationProps = {
@@ -106,5 +108,13 @@ export class ClientInvitation {
 
   awaitsEmail(): boolean {
     return this.emailSentAt === null && this.emailDeliveryFailedAt === null;
+  }
+
+  standing(now: Date): InvitationStanding {
+    if (this.emailDeliveryFailedAt || this.awaitsEmail()) {
+      return "email-failed";
+    }
+
+    return now < this.expiresAt ? "pending" : "expired";
   }
 }

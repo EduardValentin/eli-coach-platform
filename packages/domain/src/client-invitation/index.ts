@@ -20,4 +20,6 @@ export {
   type InvitationTokenHasher,
 } from "./invitation-token";
 export { type InvitedClient, type InvitedClients } from "./invited-client";
+export { ReadClientInvitationUseCase } from "./read-client-invitation-use-case";
+export { ResendInvitationUseCase } from "./resend-invitation-use-case";
 export { ResolveInvitationUseCase } from "./resolve-invitation-use-case";

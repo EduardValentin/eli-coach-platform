@@ -74,6 +74,7 @@ function createInvitations(
 function createIdentity(invitationIdForSubject: string | null = null) {
   return {
     create: vi.fn().mockResolvedValue(PROVIDER),
+    replace: vi.fn().mockResolvedValue(PROVIDER),
     findInvitationIdForSubject: vi
       .fn()
       .mockResolvedValue(invitationIdForSubject),
@@ -87,7 +88,11 @@ function createNotifications(delivery: "sent" | "failed") {
 }
 
 function createIncidents() {
-  return { invitationEmailFailed: vi.fn() } satisfies ClientInvitationIncidents;
+  return {
+    invitationEmailFailed: vi.fn(),
+    invitationResent: vi.fn(),
+    invitationResendFailed: vi.fn(),
+  } satisfies ClientInvitationIncidents;
 }
 
 function createInvitedClients(found: InvitedClient | null) {
@@ -278,6 +283,25 @@ describe("AdmitPaidClientUseCase", () => {
     expect(dependencies.invitations.reissue).toHaveBeenCalledTimes(1);
     expect(dependencies.identity.create).not.toHaveBeenCalled();
     expect(dependencies.notifications.sendInvitation).toHaveBeenCalledTimes(1);
+  });
+
+  it("admitting again after a reissue creates no second provider invitation", async () => {
+    // arrange
+    const reissuedByResend = invitation({ provider: PROVIDER }).reissue({
+      tokenHash: NEW_TOKEN_HASH,
+      sentAt: EARLIER,
+    });
+    const dependencies = admitDependencies({ existing: reissuedByResend });
+    const useCase = new AdmitPaidClientUseCase(dependencies);
+
+    // act
+    const result = await useCase.execute({ clientId: invitedClient.id });
+
+    // assert
+    expect(result).toEqual({ status: "invited" });
+    expect(dependencies.identity.create).not.toHaveBeenCalled();
+    expect(dependencies.identity.replace).not.toHaveBeenCalled();
+    expect(dependencies.invitations.recordProvider).not.toHaveBeenCalled();
   });
 
   it("propagates an identity provider failure before any email is sent", async () => {
