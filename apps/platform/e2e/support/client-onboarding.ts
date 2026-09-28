@@ -248,6 +248,16 @@ export class ClientOnboarding {
     ).toBeVisible();
   }
 
+  async expectStepHeadingDescribed(
+    title: string,
+    step: number,
+    total: number,
+  ): Promise<void> {
+    await expect(
+      this.page.getByRole("heading", { level: 2, name: title }),
+    ).toHaveAccessibleDescription(`Step ${step} of ${total}`);
+  }
+
   async expectStepHeadingFocused(title: string): Promise<void> {
     await expect(
       this.page.getByRole("heading", { level: 2, name: title }),
@@ -368,6 +378,10 @@ export class ClientOnboarding {
     await this.page.route(UNIT_PREFERENCE_API, (route) => route.abort(), {
       times: 1,
     });
+  }
+
+  async keepUnitPreferenceOffline(): Promise<void> {
+    await this.page.route(UNIT_PREFERENCE_API, (route) => route.abort());
   }
 
   async restoreConnection(): Promise<void> {

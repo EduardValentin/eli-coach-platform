@@ -801,6 +801,11 @@ test("a client answers the safety questions with the keyboard alone", async ({
   await answerGoalFormInKilograms(clientOnboarding);
   await clientOnboarding.continueStep();
   await clientOnboarding.expectStepHeadingFocused("A few safety questions");
+  await clientOnboarding.expectStepHeadingDescribed(
+    "A few safety questions",
+    2,
+    4,
+  );
 
   // act
   await clientOnboarding.keyboardContinue();
@@ -825,6 +830,11 @@ test("a client answers the safety questions with the keyboard alone", async ({
   await clientOnboarding.expectScreeningCleared();
   await clientOnboarding.expectStep(3, 4);
   await clientOnboarding.expectStepHeadingFocused("Food and daily life");
+  await clientOnboarding.expectStepHeadingDescribed(
+    "Food and daily life",
+    3,
+    4,
+  );
   await clientOnboarding.expectOnePageHeading();
 });
 
@@ -904,10 +914,21 @@ test("a client answers the next question right after picking the day her last pe
 
   // assert
   await clientOnboarding.expectChosen(GYNAECOLOGICAL_QUESTION, "No");
+
+  // act
+  await clientOnboarding.pickDate(
+    "The day your last period started",
+    isoDaysAgo(LAST_PERIOD_DAYS_AGO + 1),
+  );
+  await clientOnboarding.choose(GYNAECOLOGICAL_QUESTION, "Yes");
+
+  // assert
+  await clientOnboarding.expectChosen(GYNAECOLOGICAL_QUESTION, "Yes");
 });
 
 test("a client's units stay chosen when saving them fails the first time", async ({
   clientOnboarding,
+  onboardingRecords,
   page,
   provisionPaidClient,
   signIn,
@@ -922,12 +943,66 @@ test("a client's units stay chosen when saving them fails the first time", async
 
   // act
   await clientOnboarding.chooseUnits("lb · in");
+
+  // assert
+  await clientOnboarding.expectUnsaved();
+  expect(await onboardingRecords.unitPreference()).toBeNull();
+
+  // act
   await clientOnboarding.answerText("Your weight", "150");
+
+  // assert
   await clientOnboarding.expectSaved();
+  await expect
+    .poll(() => onboardingRecords.unitPreference())
+    .toEqual({ weightUnit: "lb", heightUnit: "ft-in" });
+
+  // act
   await clientOnboarding.restoreConnection();
   await page.reload();
 
   // assert
   await clientOnboarding.expectUnits("lb · in");
   await clientOnboarding.expectAnswer("Your weight", "150");
+});
+
+test("a client's unsaved units come back on reload and are saved once she is online", async ({
+  clientOnboarding,
+  onboardingRecords,
+  page,
+  provisionPaidClient,
+  signIn,
+}) => {
+  // arrange
+  await provisionPaidClient("male");
+  await page.goto("/store");
+  await signIn();
+  await page.goto("/client");
+  await clientOnboarding.startOnboarding();
+  await clientOnboarding.keepUnitPreferenceOffline();
+
+  // act
+  await clientOnboarding.chooseUnits("lb · in");
+  await clientOnboarding.expectUnsaved();
+  await page.reload();
+
+  // assert
+  await clientOnboarding.expectUnits("lb · in");
+  await clientOnboarding.expectUnsaved();
+  expect(await onboardingRecords.unitPreference()).toBeNull();
+
+  // act
+  await clientOnboarding.restoreConnection();
+
+  // assert
+  await clientOnboarding.expectSaved();
+  await expect
+    .poll(() => onboardingRecords.unitPreference())
+    .toEqual({ weightUnit: "lb", heightUnit: "ft-in" });
+
+  // act
+  await page.reload();
+
+  // assert
+  await clientOnboarding.expectUnits("lb · in");
 });
