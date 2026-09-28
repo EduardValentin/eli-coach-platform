@@ -11,7 +11,7 @@ export default function ClientHomeRoute() {
   const { greeting } = useOutletContext<ClientShellPresentation>();
 
   return (
-    <div className="w-full">
+    <div className="w-full" data-parity="dashboard-page">
       <div data-parity-root="ClientGreeting">
         <PortalPageHeader
           subtitle={
