@@ -21,7 +21,7 @@ const WAIT = { timeout: 4000 };
 const TEST_TIMEOUT_MS = 20000;
 const CONTINUE = 'Continue to create my account';
 const HAND_OFF_NOTE =
-  "Your email is already confirmed by this invitation — there's no code to type. You'll create your account on Evoa's secure sign-up page and land straight in your account.";
+  "Next, you'll create your account and step into your client portal, where you'll manage your fitness plan.";
 const SIGNED_IN_TITLE = "You're already signed in";
 const SIGNED_IN_BODY =
   'This invitation creates a new account. Sign out first, then open the link again.';
@@ -131,7 +131,7 @@ describe('opening an invitation link', () => {
 });
 
 describe('accepting an invitation', () => {
-  it('explains there is no code to type before handing her to the hosted sign-up', async () => {
+  it('tells her she creates her account and steps into her portal before the hosted sign-up', async () => {
     // arrange
     renderInvitation(invitationAddress('?jstage=invited'));
 

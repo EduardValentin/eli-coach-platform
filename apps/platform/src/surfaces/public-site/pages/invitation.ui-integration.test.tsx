@@ -189,7 +189,7 @@ describe("InvitationRoute", () => {
     expect(screen.getByText("Your invitation")).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Your email is already confirmed by this invitation — there's no code to type. You'll create your account on Evoa's secure sign-up page and land straight in your account.",
+        "Next, you'll create your account and step into your client portal, where you'll manage your fitness plan.",
       ),
     ).toBeInTheDocument();
     const email = screen.getByRole("textbox", { name: "Email" });
