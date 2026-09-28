@@ -1,6 +1,7 @@
 import { Calendar } from "@eli-coach-platform/ui/calendar";
 import { cn } from "@eli-coach-platform/ui/lib";
 import {
+  FieldError,
   Label,
   Popover,
   PopoverContent,
@@ -14,8 +15,6 @@ import {
   MIN_BOOKING_AGE,
 } from "~/features/assessment-calls/contracts/visitor-profile";
 import { dayKeyOf } from "~/features/assessment-calls/ui/shared/day-key";
-
-import { FieldError } from "./field-error";
 
 const DEFAULT_YEARS_BACK = 30;
 const PLACEHOLDER = "Select a date";

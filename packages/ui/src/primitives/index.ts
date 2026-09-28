@@ -4,6 +4,8 @@ export { Button, buttonVariants } from "./button";
 export { Card, cardVariants } from "./card";
 export { Checkbox } from "./checkbox";
 export { CheckboxChip } from "./checkbox-chip";
+export { ChoiceGroup, ChoiceOption } from "./choice-group";
+export { FieldError } from "./field-error";
 export { IconButton } from "./icon-button";
 export { Input } from "./input";
 export { Label } from "./label";
@@ -28,4 +30,5 @@ export {
   SelectTrigger,
   SelectValue,
 } from "./select";
+export { Stepper } from "./stepper";
 export { Textarea } from "./textarea";

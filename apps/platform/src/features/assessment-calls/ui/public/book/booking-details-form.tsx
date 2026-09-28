@@ -4,6 +4,7 @@ import { BotDetectionWidget } from "@eli-coach-platform/infrastructure/bot-detec
 import {
   Alert,
   Button,
+  FieldError,
   IconButton,
   Input,
   Label,
@@ -39,7 +40,6 @@ import {
 import type { BookingClientError, BookingDetails } from "./booking-flow";
 import { ChoiceSelectField } from "./choice-select-field";
 import { DateOfBirthField } from "./date-of-birth-field";
-import { FieldError } from "./field-error";
 import { PhoneField } from "./phone-field";
 import type { BookAssessmentCallSubmission } from "./submission";
 

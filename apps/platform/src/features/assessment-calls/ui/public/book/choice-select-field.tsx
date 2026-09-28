@@ -1,4 +1,5 @@
 import {
+  FieldError,
   Label,
   Select,
   SelectContent,
@@ -6,8 +7,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@eli-coach-platform/ui/primitives";
-
-import { FieldError } from "./field-error";
 
 type ChoiceOption = {
   readonly label: string;
