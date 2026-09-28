@@ -363,7 +363,10 @@ describe("the empty roster", () => {
 
   it("says no client has paid yet when the roster itself is empty", () => {
     // arrange
-    const empty = { rosterSize: 0, selection: { query: "", status: "all" } };
+    const empty = {
+      rosterSize: 0,
+      selection: { query: "", status: "all" },
+    } as const;
 
     // act
     const copy = emptyRosterCopy(empty);
