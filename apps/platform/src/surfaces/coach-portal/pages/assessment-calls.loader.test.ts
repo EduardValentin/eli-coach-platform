@@ -53,9 +53,12 @@ describe("coach assessment calls page loader", () => {
   it("carries every booked call with its sales state and its price tier into the server-rendered page", async () => {
     // arrange
     const salesStates = {
-      ended: "paid",
-      "ending-now": "held",
-      upcoming: "held",
+      ended: {
+        state: "paid",
+        clientId: "2d3e4f50-6172-4839-9a0b-1c2d3e4f5061",
+      },
+      "ending-now": { state: "held", clientId: null },
+      upcoming: { state: "held", clientId: null },
     };
     const loadSalesStates = vi.fn().mockResolvedValue(salesStates);
     const pricingTiers = {

@@ -64,7 +64,7 @@ export default function CoachAssessmentCallsRoute() {
   const { now, timeZone } = useCoachClock(listing.now, listing.coachTimeZone);
   const salesFilter = useSalesFilterParam();
   const salesStateOf = (call: ClassifiedCall): CallSalesState | null =>
-    isEndedCall(call) ? listing.salesStates[call.id] : null;
+    isEndedCall(call) ? listing.salesStates[call.id].state : null;
   const pricingDetails = (call: ClassifiedCall): AppointmentDetail[] => {
     const tier = listing.pricingTiers[call.id];
 
@@ -87,7 +87,7 @@ export default function CoachAssessmentCallsRoute() {
         extraDetails={pricingDetails}
         now={now}
         renderEndedCallExtras={(call) => {
-          const state = listing.salesStates[call.id];
+          const { state } = listing.salesStates[call.id];
 
           return {
             action: <PaymentLinkAction call={call} state={state} />,

@@ -780,8 +780,11 @@ describe("paging through a long history of calls", () => {
 describe("where each ended call stands in the sale", () => {
   const SALE_UNDER_WAY: SalesStates = {
     ...everyCallHeld(FOUR_CALLS),
-    "earlier-today": "payment-link-sent",
-    yesterday: "paid",
+    "earlier-today": { state: "payment-link-sent", clientId: null },
+    yesterday: {
+      state: "paid",
+      clientId: "2d3e4f50-6172-4839-9a0b-1c2d3e4f5061",
+    },
   };
 
   it("badges each ended call with its sales state and a call still to come with none", async () => {
@@ -951,7 +954,7 @@ describe("where each ended call stands in the sale", () => {
     await user.click(bea.getByRole("button", { name: "Send payment link" }));
     loaded.salesStates = {
       ...everyCallHeld(FOUR_CALLS),
-      yesterday: "payment-link-sent",
+      yesterday: { state: "payment-link-sent", clientId: null },
     };
 
     // act
@@ -1022,7 +1025,9 @@ function everyCallRegular(calls: readonly CoachAssessmentCall[]): PricingTiers {
 }
 
 function everyCallHeld(calls: readonly CoachAssessmentCall[]): SalesStates {
-  return Object.fromEntries(calls.map((call) => [call.id, "held"]));
+  return Object.fromEntries(
+    calls.map((call) => [call.id, { state: "held", clientId: null }]),
+  );
 }
 
 type CallsPageOptions = {

@@ -12,14 +12,18 @@ import {
 } from "./coaching-sales";
 
 const CALL_ID = "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11";
+const CLIENT_ID = "2d3e4f50-6172-4839-9a0b-1c2d3e4f5061";
 
 describe("salesStatesSchema", () => {
-  it("accepts the three sales states keyed by call", () => {
+  it("accepts the three sales states keyed by call, a paid one naming the client it created", () => {
     // arrange
     const states = {
-      [CALL_ID]: "payment-link-sent",
-      "0b8d2f7e-2f55-4d3e-9d7c-7d7a3f1c2b10": "paid",
-      "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22": "held",
+      [CALL_ID]: { state: "payment-link-sent", clientId: null },
+      "0b8d2f7e-2f55-4d3e-9d7c-7d7a3f1c2b10": {
+        state: "paid",
+        clientId: CLIENT_ID,
+      },
+      "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22": { state: "held", clientId: null },
     };
 
     // act
@@ -31,7 +35,18 @@ describe("salesStatesSchema", () => {
 
   it("refuses a state outside the sales vocabulary", () => {
     // arrange
-    const states = { [CALL_ID]: "invited" };
+    const states = { [CALL_ID]: { state: "invited", clientId: null } };
+
+    // act
+    const parsed = salesStatesSchema.safeParse(states);
+
+    // assert
+    expect(parsed.success).toBe(false);
+  });
+
+  it("refuses a client id that is not a uuid", () => {
+    // arrange
+    const states = { [CALL_ID]: { state: "paid", clientId: "client-1" } };
 
     // act
     const parsed = salesStatesSchema.safeParse(states);

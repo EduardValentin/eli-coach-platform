@@ -3,14 +3,16 @@ import { describe, expect, it, vi } from "vitest";
 
 import { CoachSalesController } from "./coach-sales-controller.server";
 
+const CLIENT_ID = "2d3e4f50-6172-4839-9a0b-1c2d3e4f5061";
+
 describe("CoachSalesController", () => {
-  it("reads the sales state of each named call into a plain record", async () => {
+  it("reads the sales state of each named call, and the client a paid one created, into a plain record", async () => {
     // arrange
     const execute = vi.fn().mockResolvedValue(
       new Map([
-        ["call-1", "held"],
-        ["call-2", "payment-link-sent"],
-        ["call-3", "paid"],
+        ["call-1", { state: "held", clientId: null }],
+        ["call-2", { state: "payment-link-sent", clientId: null }],
+        ["call-3", { state: "paid", clientId: CLIENT_ID }],
       ]),
     );
     const controller = new CoachSalesController({
@@ -27,9 +29,9 @@ describe("CoachSalesController", () => {
 
     // assert
     expect(states).toEqual({
-      "call-1": "held",
-      "call-2": "payment-link-sent",
-      "call-3": "paid",
+      "call-1": { state: "held", clientId: null },
+      "call-2": { state: "payment-link-sent", clientId: null },
+      "call-3": { state: "paid", clientId: CLIENT_ID },
     });
     expect(execute).toHaveBeenCalledWith(["call-1", "call-2", "call-3"]);
   });

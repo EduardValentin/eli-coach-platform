@@ -18,7 +18,12 @@ const callSalesStateSchema = z.enum(CALL_SALES_STATES);
 
 export type CallSalesState = z.infer<typeof callSalesStateSchema>;
 
-export const salesStatesSchema = z.record(z.string(), callSalesStateSchema);
+const callSaleSchema = z.object({
+  state: callSalesStateSchema,
+  clientId: z.uuid().nullable(),
+});
+
+export const salesStatesSchema = z.record(z.string(), callSaleSchema);
 
 export type SalesStates = z.infer<typeof salesStatesSchema>;
 
