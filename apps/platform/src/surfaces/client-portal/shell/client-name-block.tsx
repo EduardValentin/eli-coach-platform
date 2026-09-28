@@ -25,7 +25,7 @@ export function ClientNameBlock(props: ClientNameBlockProps) {
       <div
         className={cn(
           avatar.className,
-          "flex shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary",
+          "flex shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary",
         )}
         data-parity="avatar"
       >

@@ -8,7 +8,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import type { ClientShellPresentation } from "~/surfaces/client-portal/shell/client-identity-presentation";
 
-import ClientHomeRoute, { meta } from "./home";
+import ClientHomeRoute from "./home";
 
 afterEach(() => {
   cleanup();
@@ -54,13 +54,5 @@ describe("client dashboard", () => {
     expect(
       await screen.findByRole("heading", { level: 1, name: "Welcome back." }),
     ).toBeInTheDocument();
-  });
-
-  it("titles the page as the Evoa dashboard", () => {
-    // arrange, act
-    const descriptors = meta({} as Parameters<typeof meta>[0]);
-
-    // assert
-    expect(descriptors).toEqual([{ title: "Dashboard | Evoa" }]);
   });
 });

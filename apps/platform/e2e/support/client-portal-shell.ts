@@ -1,7 +1,5 @@
 import { expect, type Page } from "@playwright/test";
 
-const PHONE_VIEWPORT = { height: 844, width: 390 };
-
 export class ClientPortalShell {
   constructor(private readonly page: Page) {}
 
@@ -55,18 +53,17 @@ export class ClientPortalShell {
     ).toBeVisible();
   }
 
-  async skipToMainContent(): Promise<void> {
+  async expectSkipLinkFocusedAfterTab(): Promise<void> {
     await this.page.keyboard.press("Tab");
     await expect(this.skipLink).toBeFocused();
+  }
+
+  async followSkipLink(): Promise<void> {
     await this.page.keyboard.press("Enter");
   }
 
   async expectMainContentFocused(): Promise<void> {
     await expect(this.page.getByRole("main")).toBeFocused();
-  }
-
-  async usePhoneViewport(): Promise<void> {
-    await this.page.setViewportSize(PHONE_VIEWPORT);
   }
 
   async expectTopBar(displayName: string): Promise<void> {

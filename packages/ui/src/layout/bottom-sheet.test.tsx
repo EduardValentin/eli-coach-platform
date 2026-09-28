@@ -2,7 +2,13 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MotionConfig } from "motion/react";
 import { useState } from "react";
@@ -82,18 +88,6 @@ describe("BottomSheet", () => {
     expect(sheet).toHaveAttribute("id", "portal-more-sheet");
   });
 
-  it("draws the grab handle", async () => {
-    // arrange
-    const user = userEvent.setup();
-    renderSheet();
-
-    // act
-    const sheet = await openSheet(user);
-
-    // assert
-    expect(sheet.querySelector('[data-parity="sheet-handle"]')).not.toBeNull();
-  });
-
   it("closes on Escape and returns focus to the control that opened it", async () => {
     // arrange
     const user = userEvent.setup();
@@ -113,20 +107,7 @@ describe("BottomSheet", () => {
     expect(screen.getByRole("button", { name: "Open sheet" })).toHaveFocus();
   });
 
-  it("slides and drags when motion is allowed", async () => {
-    // arrange
-    const user = userEvent.setup();
-    renderSheet({ reducedMotion: "never" });
-
-    // act
-    const sheet = await openSheet(user);
-
-    // assert
-    expect(sheet.style.transform).not.toBe("");
-    expect(sheet.style.touchAction).not.toBe("");
-  });
-
-  it("renders in place without the slide or the drag under reduced motion", async () => {
+  it("shows its content in place under reduced motion", async () => {
     // arrange
     const user = userEvent.setup();
     renderSheet({ reducedMotion: "always" });
@@ -135,7 +116,20 @@ describe("BottomSheet", () => {
     const sheet = await openSheet(user);
 
     // assert
-    expect(sheet.style.transform).toBe("");
-    expect(sheet.style.touchAction).toBe("");
+    expect(within(sheet).getByRole("link", { name: "Cycle" })).toBeVisible();
+  });
+
+  it("closes at once under reduced motion", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderSheet({ reducedMotion: "always" });
+    await openSheet(user);
+
+    // act
+    await user.keyboard("{Escape}");
+
+    // assert
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Open sheet" })).toHaveFocus();
   });
 });

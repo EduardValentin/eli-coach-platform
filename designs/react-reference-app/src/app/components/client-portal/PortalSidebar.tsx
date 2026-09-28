@@ -65,7 +65,7 @@ function ClientNameBlock({
           data-parity="avatar"
           className={cn(
             avatar.className,
-            'rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0',
+            'rounded-full bg-primary-soft text-primary flex items-center justify-center shrink-0',
           )}
         >
           <User size={avatar.iconSize} />
@@ -91,7 +91,7 @@ function DesktopSidebar({ links }: { links: ClientPortalLink[] }) {
       aria-label="Client portal sidebar"
       className="hidden lg:block fixed top-0 left-0 bottom-0 w-64 bg-surface-base z-50"
     >
-      <div className="flex flex-col h-full bg-white text-text-primary border-r border-stroke-faint">
+      <div className="flex flex-col h-full bg-surface-base text-text-primary border-r border-stroke-faint">
         <div className="p-6 mb-4 px-3 border-b border-stroke-quiet rounded-field flex items-center justify-between">
           <ClientNameBlock size="md" />
           <div className="contents" data-parity="notification-bell">
@@ -116,7 +116,7 @@ function DesktopSidebar({ links }: { links: ClientPortalLink[] }) {
                   'flex items-center gap-4 px-4 py-3.5 rounded-card transition-all',
                   {
                     'bg-primary-soft text-primary': isActive,
-                    'text-text-secondary hover:bg-accent hover:text-accent-foreground':
+                    'text-text-secondary hover:bg-primary-soft hover:text-primary':
                       !isActive,
                   },
                 )}
@@ -144,8 +144,7 @@ function MobileTopBar() {
   return (
     <header
       aria-label="Client portal top bar"
-      className="lg:hidden fixed top-0 left-0 right-0 h-[calc(env(safe-area-inset-top)+4rem)] bg-surface-base text-text-primary border-b border-border-subtle rounded-field flex items-center justify-between px-6 z-50 shadow-card"
-      style={{ paddingTop: 'env(safe-area-inset-top)' }}
+      className="lg:hidden fixed top-0 left-0 right-0 h-[calc(env(safe-area-inset-top)+4rem)] bg-surface-base text-text-primary border-b border-border-subtle rounded-field flex items-center justify-between px-6 z-50 shadow-card pt-[env(safe-area-inset-top)]"
     >
       <ClientNameBlock size="sm" />
       <div className="contents" data-parity="notification-bell">
@@ -176,8 +175,7 @@ function MobileTabBar({
   return (
     <nav
       aria-label="Client portal tabs"
-      className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-border-subtle z-40 shadow-tab-bar"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      className="lg:hidden fixed bottom-0 left-0 right-0 bg-surface-base border-t border-border-subtle z-40 shadow-tab-bar pb-[env(safe-area-inset-bottom)]"
     >
       <ul className="flex items-stretch h-16">
         {links.map((link) => {
@@ -193,7 +191,7 @@ function MobileTabBar({
                   'flex flex-col items-center justify-center gap-1 h-full w-full transition-colors',
                   {
                     'bg-primary-soft text-primary': isActive,
-                    'text-text-secondary hover:bg-accent hover:text-accent-foreground':
+                    'text-text-secondary hover:bg-primary-soft hover:text-primary':
                       !isActive,
                   },
                 )}
@@ -220,7 +218,7 @@ function MobileTabBar({
               'flex flex-col items-center justify-center gap-1 h-full w-full transition-colors',
               {
                 'bg-primary-soft text-primary': moreActive,
-                'text-text-secondary hover:bg-accent hover:text-accent-foreground':
+                'text-text-secondary hover:bg-primary-soft hover:text-primary':
                   !moreActive,
               },
             )}
@@ -286,7 +284,7 @@ function MoreSheetNavigation({
               'flex items-center gap-4 px-4 min-h-14 rounded-card transition-colors',
               {
                 'bg-primary-soft text-primary': isActive,
-                'text-text-primary hover:bg-accent hover:text-accent-foreground':
+                'text-text-primary hover:bg-primary-soft hover:text-primary':
                   !isActive,
               },
             )}
@@ -342,16 +340,13 @@ function MoreSheetBody({
         <MoreSheetNavigation links={links} onClose={onClose} />
       )}
 
-      <div
-        className="mt-auto border-t border-border-subtle px-4 py-3"
-        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 0.75rem)' }}
-      >
+      <div className="mt-auto border-t border-border-subtle px-4 py-3">
         <Button
           type="button"
           onClick={handleSignOut}
-          variant="ghost"
+          variant="ghost-muted"
           data-parity="sheet-sign-out"
-          className="w-full text-text-secondary hover:text-text-primary"
+          className="w-full"
         >
           <LogOut size={16} aria-hidden="true" />
           Sign out

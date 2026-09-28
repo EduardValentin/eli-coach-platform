@@ -67,8 +67,8 @@ export default function ClientLayoutRoute() {
               <SignOutControl redirectUrl="/">
                 <Button
                   data-parity="sheet-sign-out"
-                  variant="ghost"
-                  className="w-full text-text-secondary hover:text-text-primary"
+                  variant="ghost-muted"
+                  className="w-full"
                 >
                   <LogOut aria-hidden="true" size={16} />
                   Sign out

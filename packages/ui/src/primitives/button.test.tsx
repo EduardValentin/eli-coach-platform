@@ -77,6 +77,21 @@ describe("button ladder", () => {
     );
   });
 
+  it("rests a muted ghost button in secondary ink until it is hovered", () => {
+    // arrange
+    // act
+    render(<Button variant="ghost-muted">Sign out</Button>);
+
+    // assert
+    const button = screen.getByRole("button", { name: "Sign out" });
+    expect(button).toHaveClass(
+      "text-text-secondary",
+      "hover:bg-surface-quiet",
+      "hover:text-text-primary",
+    );
+    expect(button).not.toHaveClass("text-text-label");
+  });
+
   it("gives the small size its height and its own text size", () => {
     // arrange
     // act

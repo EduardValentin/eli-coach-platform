@@ -13,6 +13,7 @@ import { Link as RouterLink, useLocation } from "react-router";
 
 import { MAIN_CONTENT_ID } from "../lib/constants";
 import { cn } from "../lib/cn";
+import { focusMainContent } from "../lib/focus-main-content";
 import { buttonVariants } from "../primitives/button";
 import { BottomSheet } from "./bottom-sheet";
 import { NavigationDialog } from "./navigation-dialog";
@@ -26,7 +27,7 @@ export type PortalNavigationLink = {
   trailing?: ReactNode;
 };
 
-type PortalMoreSheet = {
+type PortalMoreSheetContent = {
   footer: ReactNode;
   header: ReactNode;
   navigationLabel: string;
@@ -37,7 +38,7 @@ type PortalMobileNavigation =
   | { kind: "drawer"; label: string }
   | {
       kind: "tabs";
-      sheet: PortalMoreSheet;
+      sheet: PortalMoreSheetContent;
       tabs: readonly PortalNavigationLink[];
       tabsLabel: string;
     };
@@ -52,7 +53,7 @@ type PortalShellProps = PropsWithChildren<{
   /** Slot beside the sidebar brand for the notification bell story. */
   sidebarActions?: ReactNode;
   topBarBrand: ReactNode;
-  /** Slot before the menu toggle for the notification bell story. */
+  /** Top bar slot for the notification bell story. */
   topBarActions?: ReactNode;
   topBarLabel: string;
 }>;
@@ -65,10 +66,28 @@ type PortalTopBarContent = {
 
 type MoreSheetState = "open" | "closed" | "closed-for-desktop";
 
+type NavigationItemState = "current" | "idle";
+
 const MAX_BAR_TABS = 4;
 const MORE_SHEET_ID = "portal-more-sheet";
 const TAB_CLASS_NAME =
   "flex h-full w-full flex-col items-center justify-center gap-1 transition-colors";
+const NAVIGATION_ITEM_CLASS_NAMES: Record<NavigationItemState, string> = {
+  current: "bg-primary-soft text-primary",
+  idle: "text-text-secondary hover:bg-primary-soft hover:text-primary",
+};
+const SHEET_LINK_CLASS_NAMES: Record<NavigationItemState, string> = {
+  current: "bg-primary-soft text-primary",
+  idle: "text-text-primary hover:bg-primary-soft hover:text-primary",
+};
+const MOBILE_ICON_STROKE_WIDTHS: Record<NavigationItemState, number> = {
+  current: 2.4,
+  idle: 2,
+};
+const SIDEBAR_ICON_STROKE_WIDTHS: Record<NavigationItemState, number> = {
+  current: 2.5,
+  idle: 2,
+};
 
 const BACKDROP_VARIANTS = {
   closed: { opacity: 0 },
@@ -165,8 +184,7 @@ function PortalTopBar(props: PortalTopBarProps) {
   return (
     <header
       aria-label={label}
-      className="fixed inset-x-0 top-0 z-50 flex h-[calc(env(safe-area-inset-top)+4rem)] items-center justify-between rounded-field border-b border-border-subtle bg-surface-base px-6 text-text-primary shadow-card lg:hidden"
-      style={{ paddingTop: "env(safe-area-inset-top)" }}
+      className="fixed inset-x-0 top-0 z-50 flex h-[calc(env(safe-area-inset-top)+4rem)] items-center justify-between rounded-field border-b border-border-subtle bg-surface-base px-6 pt-[env(safe-area-inset-top)] text-text-primary shadow-card lg:hidden"
     >
       <div className="flex min-w-0 items-center gap-3">{brand}</div>
       {children && <div className="flex items-center gap-2">{children}</div>}
@@ -189,10 +207,9 @@ function PortalDrawerNavigation(props: PortalDrawerNavigationProps) {
       closeMenuIcon={<X aria-hidden="true" className="size-6" />}
       contentClassName="fixed inset-0 z-40 outline-none lg:hidden"
       menuButtonClassName={buttonVariants({
-        className:
-          "relative z-[60] -mr-2 text-text-secondary hover:text-text-primary",
+        className: "relative z-[60] -mr-2",
         size: "icon-sm",
-        variant: "ghost",
+        variant: "ghost-muted",
       })}
       openMenuIcon={<Menu aria-hidden="true" className="size-6" />}
       renderTopBar={(dialogTopBar) => (
@@ -237,13 +254,14 @@ function PortalTabNavigation(props: PortalTabNavigationProps) {
   );
   const activeHref = useActiveHref([...barTabs, ...sheetLinks]);
   const isMoreOpen = moreSheet === "open";
-  const isMoreActive =
-    isMoreOpen || sheetLinks.some((link) => link.href === activeHref);
+  const moreState: NavigationItemState =
+    isMoreOpen || sheetLinks.some((link) => link.href === activeHref)
+      ? "current"
+      : "idle";
 
   const closeMoreForDesktop = useCallback(() => {
     setMoreSheet("closed-for-desktop");
   }, []);
-  const closeMore = () => setMoreSheet("closed");
 
   useCloseMobileNavigationOnDesktop({
     close: closeMoreForDesktop,
@@ -253,7 +271,7 @@ function PortalTabNavigation(props: PortalTabNavigationProps) {
 
   useEffect(() => {
     if (moreSheet === "closed-for-desktop") {
-      document.getElementById(MAIN_CONTENT_ID)?.focus({ preventScroll: true });
+      focusMainContent();
     }
   }, [moreSheet]);
 
@@ -262,97 +280,144 @@ function PortalTabNavigation(props: PortalTabNavigationProps) {
       <PortalTopBar brand={topBar.brand} label={topBar.label}>
         {topBar.actions}
       </PortalTopBar>
-      <nav
-        aria-label={tabsLabel}
-        className="fixed inset-x-0 bottom-0 z-40 border-t border-border-subtle bg-surface-base shadow-tab-bar lg:hidden"
-        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
-      >
-        <ul className="flex h-16 items-stretch">
-          {barTabs.map((tab) => {
-            const isActive = tab.href === activeHref;
-            const Icon = tab.icon;
-
-            return (
-              <li className="flex-1" key={tab.href}>
-                <RouterLink
-                  aria-current={isActive ? "page" : undefined}
-                  className={cn(TAB_CLASS_NAME, {
-                    "bg-primary-soft text-primary": isActive,
-                    "text-text-secondary hover:bg-primary-soft hover:text-primary":
-                      !isActive,
-                  })}
-                  data-parity={`tab-${parityHookSlug(tab.label)}`}
-                  to={tab.href}
-                >
-                  <Icon
-                    aria-hidden="true"
-                    size={22}
-                    strokeWidth={isActive ? 2.4 : 2}
-                  />
-                  <span className="text-caption font-semibold">
-                    {tab.label}
-                  </span>
-                </RouterLink>
-              </li>
-            );
-          })}
-          <li className="flex-1">
-            <button
-              aria-controls={MORE_SHEET_ID}
-              aria-expanded={isMoreOpen}
-              className={cn(TAB_CLASS_NAME, {
-                "bg-primary-soft text-primary": isMoreActive,
-                "text-text-secondary hover:bg-primary-soft hover:text-primary":
-                  !isMoreActive,
-              })}
-              data-parity="tab-more"
-              onClick={() => setMoreSheet("open")}
-              ref={moreButtonRef}
-              type="button"
-            >
-              <Ellipsis
-                aria-hidden="true"
-                size={22}
-                strokeWidth={isMoreActive ? 2.4 : 2}
-              />
-              <span className="text-caption font-semibold">More</span>
-            </button>
-          </li>
-        </ul>
-      </nav>
-      <BottomSheet
-        className="flex h-[90vh] flex-col"
-        id={MORE_SHEET_ID}
+      <PortalTabBar
+        activeHref={activeHref}
+        isMoreOpen={isMoreOpen}
+        label={tabsLabel}
+        moreButtonRef={moreButtonRef}
+        moreState={moreState}
+        onOpenMore={() => setMoreSheet("open")}
+        tabs={barTabs}
+      />
+      <PortalMoreSheet
+        activeHref={activeHref}
+        content={sheet}
+        links={sheetLinks}
         onOpenChange={(open) => setMoreSheet(open ? "open" : "closed")}
         open={isMoreOpen}
-        title={sheet.title}
-      >
-        <div className="flex h-full flex-col">
-          <div
-            className="rounded-field border-b border-border-subtle px-5 pt-6 pb-4"
-            data-parity="sheet-name-block"
-          >
-            {sheet.header}
-          </div>
-          {sheetLinks.length > 0 && (
-            <PortalSheetNavigation
-              activeHref={activeHref}
-              links={sheetLinks}
-              navigationLabel={sheet.navigationLabel}
-              onNavigate={closeMore}
-            />
-          )}
-          <div
-            className="mt-auto border-t border-border-subtle px-4 py-3"
-            style={{
-              paddingBottom: "calc(env(safe-area-inset-bottom) + 0.75rem)",
-            }}
-          >
-            {sheet.footer}
-          </div>
-        </div>
-      </BottomSheet>
+      />
     </>
+  );
+}
+
+type PortalTabBarProps = {
+  activeHref: string | null;
+  isMoreOpen: boolean;
+  label: string;
+  moreButtonRef: RefObject<HTMLButtonElement | null>;
+  moreState: NavigationItemState;
+  onOpenMore: () => void;
+  tabs: readonly PortalNavigationLink[];
+};
+
+function PortalTabBar(props: PortalTabBarProps) {
+  const {
+    activeHref,
+    isMoreOpen,
+    label,
+    moreButtonRef,
+    moreState,
+    onOpenMore,
+    tabs,
+  } = props;
+
+  return (
+    <nav
+      aria-label={label}
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-border-subtle bg-surface-base pb-[env(safe-area-inset-bottom)] shadow-tab-bar lg:hidden"
+    >
+      <ul className="flex h-16 items-stretch">
+        {tabs.map((tab) => {
+          const state: NavigationItemState =
+            tab.href === activeHref ? "current" : "idle";
+          const Icon = tab.icon;
+
+          return (
+            <li className="flex-1" key={tab.href}>
+              <RouterLink
+                aria-current={state === "current" ? "page" : undefined}
+                className={cn(
+                  TAB_CLASS_NAME,
+                  NAVIGATION_ITEM_CLASS_NAMES[state],
+                )}
+                data-parity={`tab-${parityHookSlug(tab.label)}`}
+                to={tab.href}
+              >
+                <Icon
+                  aria-hidden="true"
+                  size={22}
+                  strokeWidth={MOBILE_ICON_STROKE_WIDTHS[state]}
+                />
+                <span className="text-caption font-semibold">{tab.label}</span>
+              </RouterLink>
+            </li>
+          );
+        })}
+        <li className="flex-1">
+          <button
+            aria-controls={MORE_SHEET_ID}
+            aria-expanded={isMoreOpen}
+            className={cn(
+              TAB_CLASS_NAME,
+              NAVIGATION_ITEM_CLASS_NAMES[moreState],
+            )}
+            data-parity="tab-more"
+            onClick={onOpenMore}
+            ref={moreButtonRef}
+            type="button"
+          >
+            <Ellipsis
+              aria-hidden="true"
+              size={22}
+              strokeWidth={MOBILE_ICON_STROKE_WIDTHS[moreState]}
+            />
+            <span className="text-caption font-semibold">More</span>
+          </button>
+        </li>
+      </ul>
+    </nav>
+  );
+}
+
+type PortalMoreSheetProps = {
+  activeHref: string | null;
+  content: PortalMoreSheetContent;
+  links: readonly PortalNavigationLink[];
+  onOpenChange: (open: boolean) => void;
+  open: boolean;
+};
+
+function PortalMoreSheet(props: PortalMoreSheetProps) {
+  const { activeHref, content, links, onOpenChange, open } = props;
+
+  return (
+    <BottomSheet
+      className="flex h-[90vh] flex-col"
+      id={MORE_SHEET_ID}
+      onOpenChange={onOpenChange}
+      open={open}
+      title={content.title}
+    >
+      <div className="flex h-full flex-col">
+        <div
+          className="rounded-field border-b border-border-subtle px-5 pt-6 pb-4"
+          data-parity="sheet-name-block"
+        >
+          {content.header}
+        </div>
+        {links.length > 0 && (
+          <PortalSheetNavigation
+            activeHref={activeHref}
+            links={links}
+            navigationLabel={content.navigationLabel}
+            onNavigate={() => onOpenChange(false)}
+          />
+        )}
+        <div className="mt-auto border-t border-border-subtle px-4 py-3">
+          {content.footer}
+        </div>
+      </div>
+    </BottomSheet>
   );
 }
 
@@ -372,19 +437,16 @@ function PortalSheetNavigation(props: PortalSheetNavigationProps) {
       className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4"
     >
       {links.map((link) => {
-        const isActive = link.href === activeHref;
+        const state: NavigationItemState =
+          link.href === activeHref ? "current" : "idle";
         const Icon = link.icon;
 
         return (
           <RouterLink
-            aria-current={isActive ? "page" : undefined}
+            aria-current={state === "current" ? "page" : undefined}
             className={cn(
               "flex min-h-14 items-center gap-4 rounded-card px-4 transition-colors",
-              {
-                "bg-primary-soft text-primary": isActive,
-                "text-text-primary hover:bg-primary-soft hover:text-primary":
-                  !isActive,
-              },
+              SHEET_LINK_CLASS_NAMES[state],
             )}
             data-parity={`sheet-link-${parityHookSlug(link.label)}`}
             key={link.href}
@@ -394,7 +456,7 @@ function PortalSheetNavigation(props: PortalSheetNavigationProps) {
             <Icon
               aria-hidden="true"
               size={22}
-              strokeWidth={isActive ? 2.4 : 2}
+              strokeWidth={MOBILE_ICON_STROKE_WIDTHS[state]}
             />
             <span className="flex-1 text-base font-medium">{link.label}</span>
             <ChevronRight
@@ -482,19 +544,16 @@ function PortalSidebarNavigation(props: PortalSidebarNavigationProps) {
       className="flex flex-1 flex-col gap-1 overflow-y-auto px-4 py-2"
     >
       {links.map((link, linkIndex) => {
-        const isActive = link.href === activeHref;
+        const state: NavigationItemState =
+          link.href === activeHref ? "current" : "idle";
         const Icon = link.icon;
 
         return (
           <RouterLink
-            aria-current={isActive ? "page" : undefined}
+            aria-current={state === "current" ? "page" : undefined}
             className={cn(
               "flex items-center gap-4 rounded-card px-4 py-3.5 transition-all",
-              {
-                "bg-primary-soft text-primary": isActive,
-                "text-text-secondary hover:bg-primary-soft hover:text-primary":
-                  !isActive,
-              },
+              NAVIGATION_ITEM_CLASS_NAMES[state],
             )}
             data-parity={`link-${parityHookSlug(link.label)}`}
             key={link.href}
@@ -505,7 +564,7 @@ function PortalSidebarNavigation(props: PortalSidebarNavigationProps) {
             <Icon
               aria-hidden="true"
               size={18}
-              strokeWidth={isActive ? 2.5 : 2}
+              strokeWidth={SIDEBAR_ICON_STROKE_WIDTHS[state]}
             />
             <span className="text-sm font-medium">{link.label}</span>
             {link.trailing}

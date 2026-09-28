@@ -559,11 +559,18 @@ describe("PortalShell tab navigation", () => {
     ).toBeInTheDocument();
   });
 
-  it("toggles More's expanded state and points it at the open sheet", async () => {
+  it("shows More collapsed while the sheet is closed", () => {
+    // arrange, act
+    renderClientShell();
+
+    // assert
+    expect(getMoreButton()).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("expands More and points it at the open sheet", async () => {
     // arrange
     const user = userEvent.setup();
     renderClientShell();
-    expect(getMoreButton()).toHaveAttribute("aria-expanded", "false");
 
     // act
     const sheet = await openMoreSheet(user);

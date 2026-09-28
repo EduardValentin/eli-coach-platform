@@ -211,10 +211,9 @@ export function CoachSidebar() {
         closeMenuIcon={<X className="size-6" />}
         contentClassName="lg:hidden fixed inset-0 z-40 outline-none"
         menuButtonClassName={buttonVariants({
-          variant: 'ghost',
+          variant: 'ghost-muted',
           size: 'icon-sm',
-          className:
-            'relative z-[60] -mr-2 text-text-secondary hover:text-text-primary',
+          className: 'relative z-[60] -mr-2',
         })}
         openMenuIcon={<Menu className="size-6" />}
         renderTopBar={(topBar) => (
