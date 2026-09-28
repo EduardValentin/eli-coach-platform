@@ -28,6 +28,30 @@ describe("InMemoryIdentityInvitations", () => {
     expect(second.id).toBe("inv_memory_2");
   });
 
+  it("replaces an invitation with the next numbered one", async () => {
+    // arrange
+    const identity: IdentityInvitations = new InMemoryIdentityInvitations({
+      signUpUrl: "https://accounts.evoa.example/sign-up",
+    });
+    const previous = await identity.create({
+      email: "ana@example.com",
+      invitationId: "invitation-1",
+    });
+
+    // act
+    const replacement = await identity.replace({
+      email: "ana@example.com",
+      invitationId: "invitation-1",
+      previous,
+    });
+
+    // assert
+    expect(replacement).toEqual({
+      id: "inv_memory_2",
+      url: "https://accounts.evoa.example/sign-up?__clerk_ticket=memory",
+    });
+  });
+
   it("knows no subject that carries an invitation", async () => {
     // arrange
     const identity: IdentityInvitations = new InMemoryIdentityInvitations({
