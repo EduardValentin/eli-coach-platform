@@ -1,4 +1,5 @@
 export { cn } from "./cn";
 export { MAIN_CONTENT_ID } from "./constants";
+export { PORTAL_PAGE_TITLE_CLASS } from "./typography";
 export { useDisplayTimeZone } from "./use-display-time-zone";
 export { useSearchParamsWriter } from "./use-search-params-writer";
