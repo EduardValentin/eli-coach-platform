@@ -26,6 +26,20 @@ export type MeasurementRecord = {
   armCm: string | null;
 };
 
+export type ReviewStampsRecord = {
+  reviewOpenedAt: Date | null;
+  detailsRequestedAt: Date | null;
+  detailsAnsweredAt: Date | null;
+  answersApprovedAt: Date | null;
+};
+
+export type DetailRequestRecord = {
+  questionIds: { formId: string; fieldId: string }[];
+  note: string;
+  askedAt: Date;
+  answeredAt: Date | null;
+};
+
 const CLIENT_ID_BY_EMAIL = "select id from app.clients where email = $1";
 
 const DRAFT = `
@@ -70,6 +84,27 @@ const ONBOARDING_SUBMITTED_AT = `
   where email = $1
 `;
 
+const REVIEW_STAMPS = `
+  select
+    review_opened_at as "reviewOpenedAt",
+    details_requested_at as "detailsRequestedAt",
+    details_answered_at as "detailsAnsweredAt",
+    answers_approved_at as "answersApprovedAt"
+  from app.clients
+  where email = $1
+`;
+
+const DETAIL_REQUESTS = `
+  select
+    question_ids as "questionIds",
+    note,
+    asked_at as "askedAt",
+    answered_at as "answeredAt"
+  from app.client_onboarding_detail_requests
+  where client_id = (${CLIENT_ID_BY_EMAIL})
+  order by asked_at
+`;
+
 export class OnboardingRecords {
   constructor(
     private readonly pool: pg.Pool,
@@ -110,5 +145,15 @@ export class OnboardingRecords {
     );
 
     return row?.submittedAt ?? null;
+  }
+
+  async reviewStamps(): Promise<ReviewStampsRecord | null> {
+    const [row] = await this.rows<ReviewStampsRecord>(REVIEW_STAMPS);
+
+    return row ?? null;
+  }
+
+  async detailRequests(): Promise<DetailRequestRecord[]> {
+    return this.rows<DetailRequestRecord>(DETAIL_REQUESTS);
   }
 }

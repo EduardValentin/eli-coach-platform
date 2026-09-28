@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+
 import { createClerkClient, type ClerkClient } from "@clerk/backend";
 import { setupClerkTestingToken } from "@clerk/testing/playwright";
 import { test as base, expect } from "@playwright/test";
@@ -11,8 +13,21 @@ import { ClientDashboard } from "./client-dashboard";
 import { ClientOnboarding } from "./client-onboarding";
 import { ClientPortalShell } from "./client-portal-shell";
 import { CoachAssessmentCallsPage } from "./coach-assessment-calls-page";
+import { CoachClientPage } from "./coach-client-page";
+import { CoachClientsPage } from "./coach-clients-page";
 import { OnboardingRecords } from "./onboarding-records";
-import { insertPaidClientRecords, type PaidClient } from "./paid-clients";
+import {
+  insertInvitedClientRecords,
+  insertPaidClientRecords,
+  type InvitationStanding,
+  type InvitedClient,
+  type PaidClient,
+  type StartChoice,
+} from "./paid-clients";
+import {
+  insertSubmittedClientRecords,
+  type SubmittedClient,
+} from "./submitted-clients";
 import { recordCreatedEmail } from "./clerk-users";
 import { createE2eDatabasePool } from "./database";
 import { requireEnv } from "./env";
@@ -37,6 +52,10 @@ type PlatformFixtures = {
   registerCheckoutSessionForCleanup: (sessionId: string) => void;
   bookingPage: BookingPage;
   coachAssessmentCalls: CoachAssessmentCallsPage;
+  coachClients: CoachClientsPage;
+  coachClient: CoachClientPage;
+  coachEmail: string;
+  scenarioTag: string;
   createClerkUser: () => Promise<string>;
   // Inserts the accounts row directly because no entry point creates one yet.
   // Once the coach's invitation flow lands, arrange through it instead: sign
@@ -47,8 +66,14 @@ type PlatformFixtures = {
     gender: VisitorGender,
     options?: PaidClientOptions,
   ) => Promise<PaidClient>;
+  provisionInvitedClient: (
+    standing: InvitationStanding,
+  ) => Promise<InvitedClient>;
+  provisionSubmittedClient: (start: StartChoice) => Promise<SubmittedClient>;
+  provisionCoach: () => Promise<void>;
   onboardingRecords: OnboardingRecords;
   signIn: () => Promise<void>;
+  signInAsCoach: () => Promise<void>;
 };
 
 // Shared per worker process: both are cheap to reuse across a worker's tests.
@@ -70,6 +95,12 @@ const INSERT_ACCOUNT =
 const PAID_CLIENT_FIRST_NAME = "Ana";
 const PAID_CLIENT_LAST_NAME = `Onboarding ${RUN_ID}`;
 const ADULT_DATE_OF_BIRTH = "1994-03-14";
+const INVITED_CLIENT_FIRST_NAME = "Bianca";
+const INVITED_CLIENT_SURNAME: Record<InvitationStanding, string> = {
+  pending: "Pending",
+  expired: "Expired",
+  "email-failed": "Unsent",
+};
 
 type PaidClientOptions = { dateOfBirth: string };
 let sequence = 0;
@@ -92,6 +123,14 @@ function mintRecordedTestEmail(workerIndex: number): string {
   recordCreatedEmail(email, RUN_ID);
 
   return email;
+}
+
+function requireProviderUrl(invitation: { id: string; url?: string }): string {
+  if (!invitation.url) {
+    throw new Error(`Clerk invitation ${invitation.id} carries no URL.`);
+  }
+
+  return invitation.url;
 }
 
 export const test = base.extend<PlatformFixtures, WorkerFixtures>({
@@ -195,6 +234,24 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
     await use(new CoachAssessmentCallsPage(page));
   },
 
+  coachClients: async ({ page }, use) => {
+    await use(new CoachClientsPage(page));
+  },
+
+  coachClient: async ({ page }, use) => {
+    await use(new CoachClientPage(page));
+  },
+
+  // eslint-disable-next-line no-empty-pattern
+  coachEmail: async ({}, use, testInfo) => {
+    await use(mintRecordedTestEmail(testInfo.workerIndex));
+  },
+
+  // eslint-disable-next-line no-empty-pattern
+  scenarioTag: async ({}, use) => {
+    await use(randomUUID().slice(0, 8));
+  },
+
   createClerkUser: async ({ clerkBackendClient, testEmail }, use) => {
     await use(async () => {
       const user = await clerkBackendClient.users.createUser({
@@ -238,6 +295,76 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
     );
   },
 
+  provisionSubmittedClient: async (
+    { createClerkUser, databasePool, scenarioTag, testEmail },
+    use,
+  ) => {
+    await use(async (start: StartChoice) => {
+      const authSubjectId = await createClerkUser();
+
+      await databasePool.query(INSERT_ACCOUNT, [authSubjectId, "CLIENT"]);
+
+      return insertSubmittedClientRecords(
+        databasePool,
+        {
+          authSubjectId,
+          email: testEmail,
+          firstName: PAID_CLIENT_FIRST_NAME,
+          lastName: `Onboarding ${scenarioTag}`,
+          gender: "female",
+          dateOfBirth: ADULT_DATE_OF_BIRTH,
+        },
+        start,
+      );
+    });
+  },
+
+  provisionInvitedClient: async (
+    { clerkBackendClient, databasePool, scenarioTag },
+    use,
+    testInfo,
+  ) => {
+    await use(async (standing: InvitationStanding) => {
+      const email = mintRecordedTestEmail(testInfo.workerIndex);
+      const invitationId = randomUUID();
+      const provider = await clerkBackendClient.invitations.createInvitation({
+        emailAddress: email,
+        ignoreExisting: true,
+        notify: false,
+        publicMetadata: { invitationId },
+      });
+
+      return insertInvitedClientRecords(
+        databasePool,
+        {
+          email,
+          firstName: INVITED_CLIENT_FIRST_NAME,
+          lastName: `${INVITED_CLIENT_SURNAME[standing]} ${scenarioTag}`,
+          gender: "female",
+          dateOfBirth: ADULT_DATE_OF_BIRTH,
+        },
+        {
+          id: invitationId,
+          standing,
+          provider: { id: provider.id, url: requireProviderUrl(provider) },
+        },
+      );
+    });
+  },
+
+  provisionCoach: async (
+    { clerkBackendClient, coachEmail, databasePool },
+    use,
+  ) => {
+    await use(async () => {
+      const coach = await clerkBackendClient.users.createUser({
+        emailAddress: [coachEmail],
+      });
+
+      await databasePool.query(INSERT_ACCOUNT, [coach.id, "COACH"]);
+    });
+  },
+
   onboardingRecords: async ({ databasePool, testEmail }, use) => {
     await use(new OnboardingRecords(databasePool, testEmail));
   },
@@ -246,6 +373,14 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
     await use(async () => {
       await publicNav.openSignIn();
       await accountPortal.signInWithEmail(testEmail);
+      await accountPortal.completeEmailOtp();
+    });
+  },
+
+  signInAsCoach: async ({ publicNav, accountPortal, coachEmail }, use) => {
+    await use(async () => {
+      await publicNav.openSignIn();
+      await accountPortal.signInWithEmail(coachEmail);
       await accountPortal.completeEmailOtp();
     });
   },

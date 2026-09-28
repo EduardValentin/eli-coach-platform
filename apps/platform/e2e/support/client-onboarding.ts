@@ -46,6 +46,10 @@ const SCREENING_CLEARED_MESSAGE =
 
 const MEASUREMENT_SYSTEM_LEGEND = "How do you measure?";
 
+const ANSWER_PAGE_HEADING = "A few more details";
+
+const ANSWER_REQUEST_HEADING = "What your coach asked";
+
 const MONTH_NAMES: readonly string[] = Array.from({ length: 12 }, (_, month) =>
   new Intl.DateTimeFormat("en-GB", { month: "long", timeZone: "UTC" }).format(
     new Date(Date.UTC(2000, month, 1)),
@@ -90,6 +94,10 @@ function monthsBetween(from: MonthYear, to: MonthYear): number {
 
 export class ClientOnboarding {
   constructor(private readonly page: Page) {}
+
+  private get answerRequest() {
+    return this.page.getByRole("region", { name: ANSWER_REQUEST_HEADING });
+  }
 
   private get measurementSystem() {
     return this.page.getByRole("radiogroup", {
@@ -427,6 +435,47 @@ export class ClientOnboarding {
   async sendToCoach(): Promise<void> {
     await this.click(
       this.page.getByRole("button", { name: "Send to my coach" }),
+    );
+  }
+
+  async expectAnswerPage(note: string): Promise<void> {
+    await expect(this.page.getByRole("heading", { level: 1 })).toHaveCount(1);
+    await expect(
+      this.page.getByRole("heading", { level: 1, name: ANSWER_PAGE_HEADING }),
+    ).toBeVisible();
+    await expect(
+      this.answerRequest.getByText(note, { exact: true }),
+    ).toBeVisible();
+  }
+
+  async expectOnlyQuestions(labels: readonly string[]): Promise<void> {
+    const controls = this.answerRequest
+      .getByRole("textbox")
+      .or(this.answerRequest.getByRole("combobox"))
+      .or(this.answerRequest.getByRole("radiogroup"))
+      .or(this.answerRequest.getByRole("checkbox"))
+      .or(this.answerRequest.getByRole("spinbutton"));
+
+    await expect(controls).toHaveCount(labels.length);
+
+    for (const label of labels) {
+      await expect(this.answerRequest.getByLabel(label)).toBeVisible();
+    }
+  }
+
+  async expectSelected(label: string, option: string): Promise<void> {
+    await expect(this.page.getByRole("combobox", { name: label })).toHaveText(
+      option,
+    );
+  }
+
+  async notNow(): Promise<void> {
+    await this.click(this.page.getByRole("link", { name: "Not now" }));
+  }
+
+  async sendMyAnswers(): Promise<void> {
+    await this.click(
+      this.page.getByRole("button", { name: "Send my answers" }),
     );
   }
 }

@@ -23,11 +23,11 @@ export class CoachAssessmentCallsPage {
     }).toPass();
   }
 
-  call(visitorName: string): Locator {
+  call(visitor: string): Locator {
     return this.page
       .getByRole("list", { name: "Assessment calls" })
       .getByRole("listitem")
-      .filter({ hasText: visitorName });
+      .filter({ hasText: visitor });
   }
 
   async sendPaymentLink(visitorName: string): Promise<void> {
@@ -44,5 +44,9 @@ export class CoachAssessmentCallsPage {
       });
     }).toPass();
     await confirmation.getByRole("button", { name: "Send link" }).click();
+  }
+
+  async viewClient(visitor: string): Promise<void> {
+    await this.call(visitor).getByRole("link", { name: "View client" }).click();
   }
 }
