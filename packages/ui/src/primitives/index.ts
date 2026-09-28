@@ -1,3 +1,9 @@
+export {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "./accordion";
 export { Alert } from "./alert";
 export { Badge } from "./badge";
 export { Button, buttonVariants } from "./button";
@@ -33,4 +39,13 @@ export {
   SelectValue,
 } from "./select";
 export { Stepper } from "./stepper";
+export {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+  type TableSort,
+} from "./table";
 export { Textarea } from "./textarea";

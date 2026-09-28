@@ -101,6 +101,8 @@
   --color-surface-muted-hover: oklch(0.922 0 0);
   --color-surface-strong: oklch(0.269 0 0);
   --color-surface-neutral: #ececf0;
+  --color-secondary: oklch(0.95 0.0058 264.53);
+  --color-secondary-foreground: #030213;
 
   --color-text-primary: #121212;
   --color-text-secondary: #616161;
@@ -298,6 +300,8 @@
   --color-surface-muted-hover: var(--color-surface-muted-hover);
   --color-surface-strong: var(--color-surface-strong);
   --color-surface-neutral: var(--color-surface-neutral);
+  --color-secondary: var(--color-secondary);
+  --color-secondary-foreground: var(--color-secondary-foreground);
 
   --color-text-primary: var(--color-text-primary);
   --color-text-secondary: var(--color-text-secondary);
@@ -539,6 +543,24 @@
   to {
     opacity: 0;
     transform: scale(0.95);
+  }
+}
+
+@keyframes ui-accordion-down {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
+}
+
+@keyframes ui-accordion-up {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
   }
 }
 
