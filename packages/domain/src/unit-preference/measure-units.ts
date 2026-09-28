@@ -1,11 +1,6 @@
-import type {
-  HeightUnit,
-  MeasurementSystem,
-  UnitPreference,
-  WeightUnit,
-} from "./unit-preference";
+import type { HeightUnit, UnitPreference, WeightUnit } from "./unit-preference";
 
-export type LengthUnit = "cm" | "in";
+type LengthUnit = "cm" | "in";
 
 export type MeasureKind = "weight" | "height" | "circumference";
 
@@ -115,8 +110,3 @@ export function formatFeetAndInches(inches: number): string {
 
   return `${Math.floor(whole / IN_PER_FT)} ft ${whole % IN_PER_FT} in`;
 }
-
-export const MEASUREMENT_SYSTEM_LABELS: Record<MeasurementSystem, string> = {
-  metric: "kg · cm",
-  imperial: "lb · in",
-};

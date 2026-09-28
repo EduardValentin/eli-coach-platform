@@ -16,7 +16,7 @@ export function emptyAnswers(): OnboardingAnswersByForm {
   ) as OnboardingAnswersByForm;
 }
 
-export function describeAnswer(answer: OnboardingAnswer): string {
+function describeAnswer(answer: OnboardingAnswer): string {
   if (answer === null) return "Not answered";
   if (typeof answer === "boolean") return answer ? "Yes" : "No";
   if (Array.isArray(answer)) return answer.join(", ");
@@ -30,7 +30,7 @@ function conditionTriggerValue(trigger: OnboardingAnswer): string {
     : describeAnswer(trigger);
 }
 
-export function isAnswered(answer: OnboardingAnswer | undefined): boolean {
+function isAnswered(answer: OnboardingAnswer | undefined): boolean {
   if (answer === undefined || answer === null) return false;
   if (Array.isArray(answer)) return answer.length > 0;
   if (typeof answer === "string") return answer.trim().length > 0;

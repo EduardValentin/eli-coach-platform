@@ -15,7 +15,7 @@ export const ONBOARDING_FORM_IDS: readonly OnboardingFormId[] = [
   "measurements",
 ];
 
-export type OnboardingFieldKind =
+type OnboardingFieldKind =
   | "text"
   | "textarea"
   | "number"
@@ -28,17 +28,17 @@ export type OnboardingFieldKind =
   | "height"
   | "circumference";
 
-export type OnboardingOption = { value: string; label: string };
+type OnboardingOption = { value: string; label: string };
 
-export type FieldRequirement = "required" | "optional";
+type FieldRequirement = "required" | "optional";
 
 export type NumericRange = { min: number; max: number };
 
-export type RelativeRange = { id: string; spread: number };
+type RelativeRange = { id: string; spread: number };
 
-export type RevealCondition = { id: string; value: string | readonly string[] };
+type RevealCondition = { id: string; value: string | readonly string[] };
 
-export type FieldReassurance = { value: string; text: string };
+type FieldReassurance = { value: string; text: string };
 
 export type OnboardingField = {
   id: string;
@@ -62,17 +62,17 @@ export type OnboardingField = {
   reassurance?: FieldReassurance;
 };
 
-export const WEIGHT_RANGE_KG: NumericRange = { min: 30, max: 300 };
+const WEIGHT_RANGE_KG: NumericRange = { min: 30, max: 300 };
 
-export const HEIGHT_RANGE_CM: NumericRange = { min: 120, max: 230 };
+const HEIGHT_RANGE_CM: NumericRange = { min: 120, max: 230 };
 
-export const GOAL_WEIGHT_SPREAD_KG = 60;
+const GOAL_WEIGHT_SPREAD_KG = 60;
 
-export const LAST_PERIOD_MONTHS = 12;
+const LAST_PERIOD_MONTHS = 12;
 
-export type FormAudience = "everyone" | "female";
+type FormAudience = "everyone" | "female";
 
-export type FormSensitivity = "ordinary" | "special-category";
+type FormSensitivity = "ordinary" | "special-category";
 
 export type OnboardingFormIntro = string | { female: string; other: string };
 
@@ -97,7 +97,7 @@ export function resolveIntro(
       : intro.other;
 }
 
-export const YES_NO_OPTIONS: readonly OnboardingOption[] = [
+const YES_NO_OPTIONS: readonly OnboardingOption[] = [
   { value: "Yes", label: "Yes" },
   { value: "No", label: "No" },
 ];
@@ -126,7 +126,7 @@ function yesNo(id: string, label: string): OnboardingField {
   };
 }
 
-export const COLLABORATION_SECTION = "How we'll work together";
+const COLLABORATION_SECTION = "How we'll work together";
 
 const HOW_YOU_EAT_SECTION = "How you eat";
 const YOUR_DAY_SECTION = "Your day";
@@ -789,15 +789,6 @@ const LIFESTYLE_FORM: OnboardingFormDefinition = {
   ],
 };
 
-const WEIGHT_MEASUREMENT_FIELD: OnboardingField = {
-  id: "weight",
-  label: "Weight",
-  kind: "weight",
-  requirement: "required",
-  hint: "First thing in the morning, before eating, after the bathroom.",
-  range: WEIGHT_RANGE_KG,
-};
-
 const MEASUREMENTS_FORM: OnboardingFormDefinition = {
   id: "measurements",
   title: "Your measurements",
@@ -848,11 +839,6 @@ export const ONBOARDING_FORMS: readonly OnboardingFormDefinition[] = [
   MEASUREMENTS_FORM,
 ];
 
-export const MEASUREMENT_FIELDS: readonly OnboardingField[] = [
-  WEIGHT_MEASUREMENT_FIELD,
-  ...MEASUREMENTS_FORM.fields,
-];
-
 export function formsForGender(
   gender: VisitorGender,
 ): OnboardingFormDefinition[] {
@@ -867,14 +853,6 @@ export function findOnboardingField(
   for (const form of ONBOARDING_FORMS) {
     const field = form.fields.find((candidate) => candidate.id === questionId);
     if (field) return field;
-  }
-
-  return null;
-}
-
-export function formIdOfField(questionId: string): OnboardingFormId | null {
-  for (const form of ONBOARDING_FORMS) {
-    if (form.fields.some((field) => field.id === questionId)) return form.id;
   }
 
   return null;

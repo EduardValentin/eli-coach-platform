@@ -1,5 +1,1 @@
-export {
-  measurementEntryOf,
-  type MeasurementEntry,
-  type MeasurementValues,
-} from "./measurement";
+export { measurementEntryOf, type MeasurementEntry } from "./measurement";
