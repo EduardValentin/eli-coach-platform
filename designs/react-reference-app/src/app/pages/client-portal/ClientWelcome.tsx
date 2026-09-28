@@ -56,7 +56,10 @@ export function ClientWelcome() {
         )}
         data-parity-root="ClientWelcome"
       >
-        <h1 className="font-serif text-display-sm tracking-tight text-text-primary lg:text-display-md">
+        <h1
+          className="font-serif text-display-sm tracking-tight text-text-primary lg:text-display-md"
+          data-parity="welcome-heading"
+        >
           Welcome to Evoa Fitness, {demoJourney.identity.firstName}
         </h1>
 

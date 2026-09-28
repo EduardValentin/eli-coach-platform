@@ -120,6 +120,32 @@ async function leaveAnAnswerUnsavedThenReconnect(
   );
 }
 
+async function answerRegularCycleDetails() {
+  await userEvent.click(
+    screen.getByRole('radio', { name: "Yes, and it's regular" }),
+  );
+  await userEvent.click(
+    screen.getByRole('combobox', { name: /Are you using any contraception/ }),
+  );
+  await userEvent.click(await screen.findByRole('option', { name: 'None' }));
+  await userEvent.click(
+    screen.getByRole('checkbox', { name: 'None of these' }),
+  );
+  await userEvent.click(
+    screen.getByRole('combobox', {
+      name: /Are you in perimenopause or menopause/,
+    }),
+  );
+  await userEvent.click(await screen.findByRole('option', { name: 'No' }));
+}
+
+function firstOfThisMonth(): RegExp {
+  const today = new Date();
+  const month = today.toLocaleString('en-US', { month: 'long' });
+
+  return new RegExp(`${month} 1st, ${today.getFullYear()}`);
+}
+
 const GIVEN_CONSENTS: OnboardingConsents = {
   disclaimer: true,
   specialCategory: true,
@@ -372,6 +398,22 @@ describe('the onboarding', () => {
     ).toBeGreaterThan(0);
   });
 
+  it('takes her to the first answer still missing when she tries to continue', async () => {
+    // arrange
+    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(1), 'working');
+    renderOnboarding('?session=client&jstage=onboarding');
+
+    // act
+    await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
+
+    // assert
+    expect(
+      screen.getByRole('radiogroup', {
+        name: /Has your doctor ever said that you have a heart condition/,
+      }),
+    ).toContainElement(document.activeElement as HTMLElement);
+  });
+
   it('marks the answers she can skip as optional', () => {
     // arrange
     renderOnboarding('?session=client&jstage=onboarding');
@@ -477,6 +519,48 @@ describe('the onboarding', () => {
         name: 'Food and daily life',
       }),
     ).toBeVisible();
+  });
+
+  it('keeps the day her last period started quiet while she picks it, so her next answer lands', async () => {
+    // arrange
+    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(2), 'working');
+    renderOnboarding('?session=client&jstage=onboarding');
+    await answerRegularCycleDetails();
+    const trigger = screen.getByRole('button', {
+      name: /The day your last period started/,
+    });
+    await userEvent.click(trigger);
+    const openedQuietly = screen.queryByText('Pick a date.') === null;
+
+    // act
+    await userEvent.click(
+      within(screen.getByRole('dialog')).getByRole('button', {
+        name: firstOfThisMonth(),
+      }),
+    );
+    await userEvent.click(screen.getByRole('radio', { name: 'No' }));
+
+    // assert
+    expect(openedQuietly).toBe(true);
+    expect(screen.queryByText('Pick a date.')).not.toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'No' })).toBeChecked();
+  });
+
+  it("reads the step count with the next form's title when focus lands on it", async () => {
+    // arrange
+    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(1, GIVEN_CONSENTS), 'working');
+    renderOnboarding('?session=client&jstage=onboarding&jage=under-15');
+
+    // act
+    await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
+
+    // assert
+    const heading = await screen.findByRole('heading', {
+      level: 2,
+      name: 'Your cycle and hormonal health',
+    });
+    await waitFor(() => expect(heading).toHaveFocus());
+    expect(heading).toHaveAccessibleDescription('Step 3 of 5');
   });
 
   it('counts four forms and leaves out the cycle for a male account', () => {

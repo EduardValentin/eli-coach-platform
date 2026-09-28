@@ -47,9 +47,22 @@ type OnboardingFormCardProps = OnboardingAnswerFormProps & {
   headingRef: (node: HTMLHeadingElement | null) => void;
   unitsChoice: ReactNode;
   gender: JourneyGender;
+  stepCountId: string;
 };
 
 type FieldGroup = { section: string | null; fields: OnboardingField[] };
+
+const MAIN_SECTION = 'main';
+
+function sectionHookOf(section: string | null): string {
+  const slug = (section ?? MAIN_SECTION)
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '')
+    .trim()
+    .replace(/\s+/g, '-');
+
+  return `section-${slug}`;
+}
 
 function groupFields(fields: OnboardingField[]): FieldGroup[] {
   const groups: FieldGroup[] = [];
@@ -138,7 +151,11 @@ function OnboardingAnswerForm({
     <Form {...form}>
       <form className="mt-7 grid gap-6" noValidate onSubmit={submit}>
         {groupFields(shown).map((group) => (
-          <div className="grid gap-6" key={group.section ?? 'main'}>
+          <div
+            className="grid gap-6"
+            data-parity={sectionHookOf(group.section)}
+            key={group.section ?? MAIN_SECTION}
+          >
             {group.section && (
               <h3 className="font-serif text-lg text-text-primary">
                 {group.section}
@@ -213,6 +230,7 @@ export function OnboardingFormCard({
   headingRef,
   unitsChoice,
   gender,
+  stepCountId,
   ...answerForm
 }: OnboardingFormCardProps) {
   const units = useMeasureUnits();
@@ -224,6 +242,7 @@ export function OnboardingFormCard({
       className={ONBOARDING_CARD_CLASS}
     >
       <h2
+        aria-describedby={stepCountId}
         className={ONBOARDING_HEADING_CLASS}
         data-parity="form-heading"
         id="onboarding-form-heading"

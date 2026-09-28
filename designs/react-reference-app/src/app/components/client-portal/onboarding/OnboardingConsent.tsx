@@ -42,6 +42,7 @@ export function OnboardingConsent({
           aria-invalid={problem !== null}
           checked={checked}
           className="mt-0.5"
+          data-parity={`${PARITY_HOOKS[agreement]}-checkbox`}
           id={checkboxId}
           onCheckedChange={(next) => onChange(next === true)}
         />
@@ -64,7 +65,12 @@ export function OnboardingConsent({
       )}
 
       {problem && (
-        <p className={FIELD_ERROR_CLASS} id={errorId} role="alert">
+        <p
+          className={FIELD_ERROR_CLASS}
+          data-parity={`${PARITY_HOOKS[agreement]}-error`}
+          id={errorId}
+          role="alert"
+        >
           {problem}
         </p>
       )}

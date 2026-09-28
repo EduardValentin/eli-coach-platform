@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useId, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
@@ -95,6 +95,7 @@ export function OnboardingWizard() {
     submitOnboarding,
   } = useClientJourneys();
   const prefersReducedMotion = useReducedMotion() ?? false;
+  const stepCountId = useId();
   const journeyId = demoJourney.callId;
   const { saveState, queueDraftSave, cancelQueuedSave, pendingSave } =
     useDraftAutosave(journeyId);
@@ -241,9 +242,13 @@ export function OnboardingWizard() {
 
   return (
     <div data-parity-root="OnboardingWizard">
-      <div className="mb-6 grid gap-2 px-6 sm:px-8 lg:px-10">
+      <div
+        className="mb-6 grid gap-2 px-6 sm:px-8 lg:px-10"
+        data-parity="wizard-progress"
+      >
         <Stepper
           className="w-full"
+          countId={stepCountId}
           data-parity="stepper"
           current={stepIndex + 1}
           total={steps.length}
@@ -311,6 +316,7 @@ export function OnboardingWizard() {
             onChange={handleAnswers}
             onContinue={continueFrom}
             gender={gender}
+            stepCountId={stepCountId}
             unitsChoice={stepIndex === 0 ? <MeasurementSystemField /> : null}
           >
             {manualScreening && (
