@@ -10,7 +10,7 @@ import {
 import {
   formatDayMonth,
   useCalendarDayTimeZone,
-} from "~/features/coaching-sales/ui/public/calendar-day-format";
+} from "~/features/coaching-sales/ui/shared/calendar-day-format";
 
 import {
   IMMEDIATE_START_BODY,
