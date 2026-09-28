@@ -113,7 +113,7 @@ describe("ResendInvitationUseCase", () => {
     const result = await useCase.execute(invitedClient.id);
 
     // assert
-    expect(result).toEqual({ status: "sent" });
+    expect(result).toEqual({ status: "sent", email: "ana@example.com" });
     expect(dependencies.invitations.reissue).toHaveBeenCalledWith(
       invitation.reissue({ tokenHash: FRESH_TOKEN_HASH, sentAt: NOW }),
     );
@@ -162,7 +162,7 @@ describe("ResendInvitationUseCase", () => {
     const result = await useCase.execute(invitedClient.id);
 
     // assert
-    expect(result).toEqual({ status: "sent" });
+    expect(result).toEqual({ status: "sent", email: "ana@example.com" });
     expect(dependencies.identity.create).toHaveBeenCalledWith({
       email: invitedClient.email,
       invitationId: "invitation-1",
@@ -205,7 +205,7 @@ describe("ResendInvitationUseCase", () => {
       firstDependencies.incidents.invitationResendFailed,
     ).toHaveBeenCalledWith({ invitationId: "invitation-1", step: "provider" });
     expect(reissuedRecord.provider).toEqual(EARLIER_PROVIDER);
-    expect(retryResult).toEqual({ status: "sent" });
+    expect(retryResult).toEqual({ status: "sent", email: "ana@example.com" });
     expect(retryDependencies.identity.replace).toHaveBeenCalledWith({
       email: invitedClient.email,
       invitationId: "invitation-1",

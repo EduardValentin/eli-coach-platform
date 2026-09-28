@@ -12,7 +12,7 @@ import type { InvitationTokenGenerator } from "./invitation-token";
 import type { InvitedClients } from "./invited-client";
 
 type ResendInvitationResult =
-  | { status: "sent" }
+  | { status: "sent"; email: string }
   | { status: "failed" }
   | { status: "already-admitted" }
   | { status: "not-found" };
@@ -96,7 +96,7 @@ export class ResendInvitationUseCase {
   private async sendInvitation(
     message: ClientInvitationMessage,
   ): Promise<ResendInvitationResult> {
-    const { invitationId, sentAt } = message;
+    const { email, invitationId, sentAt } = message;
     const delivery = await this.options.notifications
       .sendInvitation(message)
       .catch(() => "failed" as const);
@@ -108,7 +108,7 @@ export class ResendInvitationUseCase {
       });
       this.options.incidents.invitationResent({ invitationId });
 
-      return { status: "sent" };
+      return { status: "sent", email };
     }
 
     await this.options.invitations.recordEmailDeliveryFailed({
