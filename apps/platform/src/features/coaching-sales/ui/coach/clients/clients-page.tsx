@@ -1,8 +1,5 @@
 import { cn } from "@eli-coach-platform/ui/lib";
-import {
-  DeadEndContent,
-  DEAD_END_BODY_CLASS_NAME,
-} from "@eli-coach-platform/ui/layout";
+import { DeadEndPanel } from "@eli-coach-platform/ui/layout";
 import { EmptyState, PortalPageHeader } from "@eli-coach-platform/ui/portal";
 import {
   Button,
@@ -63,19 +60,11 @@ export default function CoachClientsRoute() {
 function ClientsUnavailable() {
   return (
     <div className="w-full" data-parity-root="ClientsUnavailable">
-      <div
-        className={cn(
-          cardVariants({ variant: "portal-panel" }),
-          DEAD_END_BODY_CLASS_NAME,
-        )}
-        role="alert"
-      >
-        <DeadEndContent
-          description="Your clients could not be loaded. Try again in a moment."
-          icon={<UserX aria-hidden="true" size={36} />}
-          title="Clients unavailable"
-        />
-      </div>
+      <DeadEndPanel
+        description="Your clients could not be loaded. Try again in a moment."
+        icon={<UserX aria-hidden="true" size={36} />}
+        title="Clients unavailable"
+      />
     </div>
   );
 }
