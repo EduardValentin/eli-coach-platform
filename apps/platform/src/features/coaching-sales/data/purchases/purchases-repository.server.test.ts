@@ -13,6 +13,7 @@ const NOW = new Date("2026-10-20T10:00:00.000Z");
 const HELD_CALL_ID = "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11";
 const LINK_SENT_CALL_ID = "0b8d2f7e-2f55-4d3e-9d7c-7d7a3f1c2b10";
 const PAID_CALL_ID = "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22";
+const CLIENT_ID = "2d3e4f50-6172-4839-9a0b-1c2d3e4f5061";
 
 describe("PostgresCoachingPurchases#recordCompletion", () => {
   it("records the event in the ledger and then the purchase", async () => {
@@ -121,9 +122,17 @@ describe("PostgresCoachingPurchases#forCalls", () => {
     // arrange
     const purchases = createPurchases(
       createDatabaseAnsweringSalesRows([
-        { assessmentCallId: PAID_CALL_ID, state: "payment-link-sent" },
-        { assessmentCallId: LINK_SENT_CALL_ID, state: "payment-link-sent" },
-        { assessmentCallId: PAID_CALL_ID, state: "paid" },
+        {
+          assessmentCallId: PAID_CALL_ID,
+          state: "payment-link-sent",
+          clientId: null,
+        },
+        {
+          assessmentCallId: LINK_SENT_CALL_ID,
+          state: "payment-link-sent",
+          clientId: null,
+        },
+        { assessmentCallId: PAID_CALL_ID, state: "paid", clientId: CLIENT_ID },
       ]),
     );
 
@@ -136,9 +145,32 @@ describe("PostgresCoachingPurchases#forCalls", () => {
 
     // assert
     expect(Object.fromEntries(states)).toEqual({
-      [HELD_CALL_ID]: "held",
-      [LINK_SENT_CALL_ID]: "payment-link-sent",
-      [PAID_CALL_ID]: "paid",
+      [HELD_CALL_ID]: { state: "held", clientId: null },
+      [LINK_SENT_CALL_ID]: { state: "payment-link-sent", clientId: null },
+      [PAID_CALL_ID]: { state: "paid", clientId: CLIENT_ID },
+    });
+  });
+
+  it("keeps the client a paid call created when a sent link is read after it", async () => {
+    // arrange
+    const purchases = createPurchases(
+      createDatabaseAnsweringSalesRows([
+        { assessmentCallId: PAID_CALL_ID, state: "paid", clientId: CLIENT_ID },
+        {
+          assessmentCallId: PAID_CALL_ID,
+          state: "payment-link-sent",
+          clientId: null,
+        },
+      ]),
+    );
+
+    // act
+    const states = await purchases.forCalls([PAID_CALL_ID]);
+
+    // assert
+    expect(states.get(PAID_CALL_ID)).toEqual({
+      state: "paid",
+      clientId: CLIENT_ID,
     });
   });
 

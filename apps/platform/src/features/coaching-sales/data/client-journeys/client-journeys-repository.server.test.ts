@@ -6,6 +6,18 @@ import { PostgresClientJourneys } from "./client-journeys-repository.server";
 const CLIENT_ID = "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22";
 const WELCOME_SEEN_AT = new Date("2026-10-22T09:00:00.000Z");
 const ONBOARDING_SUBMITTED_AT = new Date("2026-10-23T09:00:00.000Z");
+const NO_REVIEW_STAMPS = {
+  reviewOpenedAt: null,
+  detailsRequestedAt: null,
+  detailsAnsweredAt: null,
+  answersApprovedAt: null,
+};
+const REQUESTED_STAMPS = {
+  reviewOpenedAt: new Date("2026-10-24T09:00:00.000Z"),
+  detailsRequestedAt: new Date("2026-10-24T10:00:00.000Z"),
+  detailsAnsweredAt: null,
+  answersApprovedAt: null,
+};
 
 describe("PostgresClientJourneys#findByAuthSubjectId", () => {
   it("reads the journey of the client bound to the subject", async () => {
@@ -19,6 +31,7 @@ describe("PostgresClientJourneys#findByAuthSubjectId", () => {
           lastName: "Popescu",
           welcomeSeenAt: WELCOME_SEEN_AT,
           onboardingSubmittedAt: null,
+          ...NO_REVIEW_STAMPS,
         },
       ]),
     );
@@ -45,6 +58,7 @@ describe("PostgresClientJourneys#findByAuthSubjectId", () => {
           lastName: "Popescu",
           welcomeSeenAt: WELCOME_SEEN_AT,
           onboardingSubmittedAt: ONBOARDING_SUBMITTED_AT,
+          ...NO_REVIEW_STAMPS,
         },
       ]),
     );
@@ -55,6 +69,30 @@ describe("PostgresClientJourneys#findByAuthSubjectId", () => {
     // assert
     expect(journey?.onboardingSubmittedAt).toEqual(ONBOARDING_SUBMITTED_AT);
     expect(journey?.step()).toBe("submitted");
+  });
+
+  it("reads the review stamps the coach's review projected", async () => {
+    // arrange
+    const journeys = new PostgresClientJourneys(
+      createDatabaseAnswering([
+        {
+          clientId: CLIENT_ID,
+          firstName: "Ana",
+          gender: "female",
+          lastName: "Popescu",
+          welcomeSeenAt: WELCOME_SEEN_AT,
+          onboardingSubmittedAt: ONBOARDING_SUBMITTED_AT,
+          ...REQUESTED_STAMPS,
+        },
+      ]),
+    );
+
+    // act
+    const journey = await journeys.findByAuthSubjectId("user_invited");
+
+    // assert
+    expect(journey?.toSnapshot()).toMatchObject(REQUESTED_STAMPS);
+    expect(journey?.step()).toBe("needs-details");
   });
 
   it("answers null for a subject no client is bound to", async () => {
@@ -105,6 +143,47 @@ describe("PostgresClientJourneys#recordOnboardingSubmitted", () => {
   });
 });
 
+describe("PostgresClientJourneys#record", () => {
+  it("writes the full set of review stamps of the client", async () => {
+    // arrange
+    const database = createDatabaseRecordingUpdates();
+    const journeys = new PostgresClientJourneys(database.client);
+
+    // act
+    await journeys.record({ clientId: CLIENT_ID, stamps: REQUESTED_STAMPS });
+
+    // assert
+    expect(database.updates).toEqual([REQUESTED_STAMPS]);
+    expect(database.filters).toHaveLength(1);
+  });
+
+  it("writes the same row when the same stamps are recorded twice", async () => {
+    // arrange
+    const database = createDatabaseRecordingUpdates();
+    const journeys = new PostgresClientJourneys(database.client);
+
+    // act
+    await journeys.record({ clientId: CLIENT_ID, stamps: REQUESTED_STAMPS });
+    await journeys.record({ clientId: CLIENT_ID, stamps: REQUESTED_STAMPS });
+
+    // assert
+    expect(database.updates).toEqual([REQUESTED_STAMPS, REQUESTED_STAMPS]);
+    expect(database.filters[1]).toEqual(database.filters[0]);
+  });
+
+  it("clears a stamp the review no longer carries", async () => {
+    // arrange
+    const database = createDatabaseRecordingUpdates();
+    const journeys = new PostgresClientJourneys(database.client);
+
+    // act
+    await journeys.record({ clientId: CLIENT_ID, stamps: NO_REVIEW_STAMPS });
+
+    // assert
+    expect(database.updates).toEqual([NO_REVIEW_STAMPS]);
+  });
+});
+
 function createDatabaseAnswering(
   rows: readonly Record<string, unknown>[],
 ): DatabaseClient {
@@ -130,15 +209,20 @@ function createDatabaseAnswering(
 
 function createDatabaseRecordingUpdates() {
   const updates: unknown[] = [];
+  const filters: unknown[] = [];
   const client = {
     update: () => ({
       set: (values: unknown) => {
         updates.push(values);
 
-        return { where: async () => undefined };
+        return {
+          where: async (filter: unknown) => {
+            filters.push(filter);
+          },
+        };
       },
     }),
   } as unknown as DatabaseClient;
 
-  return { client, updates };
+  return { client, filters, updates };
 }
