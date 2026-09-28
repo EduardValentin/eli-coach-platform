@@ -3,6 +3,7 @@
 import "@testing-library/jest-dom/vitest";
 
 import { cleanup, render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 import { MemoryRouter } from "react-router";
 
@@ -34,6 +35,32 @@ describe("CoachLayoutRoute", () => {
     expect(within(sidebar).getByText("Coach Portal")).toBeInTheDocument();
     expect(
       screen.getByRole("navigation", { name: "Coach portal navigation" }),
+    ).toBeInTheDocument();
+  });
+
+  it("names the mobile top bar for the coach portal", () => {
+    // arrange, act
+    renderCoachLayout();
+
+    // assert
+    expect(
+      screen.getByRole("banner", { name: "Coach portal top bar" }),
+    ).toBeInTheDocument();
+  });
+
+  it("opens the coach portal's mobile navigation from the top bar", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderCoachLayout();
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Open menu" }));
+
+    // assert
+    expect(
+      await screen.findByRole("dialog", {
+        name: "Coach portal mobile navigation",
+      }),
     ).toBeInTheDocument();
   });
 

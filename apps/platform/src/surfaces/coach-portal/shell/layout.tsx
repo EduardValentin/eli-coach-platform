@@ -63,9 +63,13 @@ export default function CoachLayoutRoute() {
       asideLabel="Coach portal sidebar"
       brand={<CoachBrand />}
       links={coachSurfaceLinks}
-      mobileNavigationLabel="Coach portal mobile navigation"
+      mobileNavigation={{
+        kind: "drawer",
+        label: "Coach portal mobile navigation",
+      }}
       navigationLabel="Coach portal navigation"
       topBarBrand={<CoachTopBarBrand />}
+      topBarLabel="Coach portal top bar"
     >
       <Outlet />
       <Toaster />

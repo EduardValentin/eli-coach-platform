@@ -38,6 +38,7 @@ const twMerge = extendTailwindMerge({
         "action-hover",
         "raised",
         "floating",
+        "tab-bar",
         "public-footer-cta-sheet",
         "phone-frame",
         "public-platform-cloud",
