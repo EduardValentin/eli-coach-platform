@@ -282,11 +282,13 @@ function PortalTabNavigation(props: PortalTabNavigationProps) {
       </PortalTopBar>
       <PortalTabBar
         activeHref={activeHref}
-        isMoreOpen={isMoreOpen}
         label={tabsLabel}
-        moreButtonRef={moreButtonRef}
-        moreState={moreState}
-        onOpenMore={() => setMoreSheet("open")}
+        more={{
+          buttonRef: moreButtonRef,
+          expanded: isMoreOpen,
+          onOpen: () => setMoreSheet("open"),
+          state: moreState,
+        }}
         tabs={barTabs}
       />
       <PortalMoreSheet
@@ -300,26 +302,22 @@ function PortalTabNavigation(props: PortalTabNavigationProps) {
   );
 }
 
+type PortalMoreControl = {
+  buttonRef: RefObject<HTMLButtonElement | null>;
+  expanded: boolean;
+  onOpen: () => void;
+  state: NavigationItemState;
+};
+
 type PortalTabBarProps = {
   activeHref: string | null;
-  isMoreOpen: boolean;
   label: string;
-  moreButtonRef: RefObject<HTMLButtonElement | null>;
-  moreState: NavigationItemState;
-  onOpenMore: () => void;
+  more: PortalMoreControl;
   tabs: readonly PortalNavigationLink[];
 };
 
 function PortalTabBar(props: PortalTabBarProps) {
-  const {
-    activeHref,
-    isMoreOpen,
-    label,
-    moreButtonRef,
-    moreState,
-    onOpenMore,
-    tabs,
-  } = props;
+  const { activeHref, label, more, tabs } = props;
 
   return (
     <nav
@@ -356,20 +354,20 @@ function PortalTabBar(props: PortalTabBarProps) {
         <li className="flex-1">
           <button
             aria-controls={MORE_SHEET_ID}
-            aria-expanded={isMoreOpen}
+            aria-expanded={more.expanded}
             className={cn(
               TAB_CLASS_NAME,
-              NAVIGATION_ITEM_CLASS_NAMES[moreState],
+              NAVIGATION_ITEM_CLASS_NAMES[more.state],
             )}
             data-parity="tab-more"
-            onClick={onOpenMore}
-            ref={moreButtonRef}
+            onClick={more.onOpen}
+            ref={more.buttonRef}
             type="button"
           >
             <Ellipsis
               aria-hidden="true"
               size={22}
-              strokeWidth={MOBILE_ICON_STROKE_WIDTHS[moreState]}
+              strokeWidth={MOBILE_ICON_STROKE_WIDTHS[more.state]}
             />
             <span className="text-caption font-semibold">More</span>
           </button>
