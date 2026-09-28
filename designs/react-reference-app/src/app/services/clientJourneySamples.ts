@@ -30,6 +30,7 @@ import { paymentLinkExpiresAt } from './paymentLinkService';
 import type { PrototypeBooking } from './assessmentCallService';
 import { findCountry } from './countries';
 import type { VisitorGender } from './visitorProfile';
+import type { PrototypeMode } from '../context/AppContext';
 
 export const SEEDED_BUNDLE = 3;
 
@@ -42,6 +43,7 @@ export type JourneySeed = {
   pricing: JourneyPricing;
   bookingNotes: string | null;
   invitationStanding: PrototypeInvitationStanding;
+  prototypeMode: PrototypeMode;
   now: Date;
 };
 
@@ -166,13 +168,18 @@ const MEASUREMENT_HISTORY: readonly Omit<MeasurementEntry, 'recordedAt'>[] = [
   { weightKg: 66.1, waistCm: 74, hipsCm: 98, thighCm: 57, armCm: 28 },
 ];
 
-function seedMeasurements(latestRecordedAt: Date): MeasurementEntry[] {
-  return MEASUREMENT_HISTORY.map((readings, index) => ({
+function seedMeasurements(
+  submittedAt: Date,
+  prototypeMode: PrototypeMode,
+): MeasurementEntry[] {
+  const history =
+    prototypeMode === 'post-mvp'
+      ? MEASUREMENT_HISTORY
+      : MEASUREMENT_HISTORY.slice(-1);
+
+  return history.map((readings, index) => ({
     ...readings,
-    recordedAt: subDays(
-      latestRecordedAt,
-      (MEASUREMENT_HISTORY.length - 1 - index) * 7,
-    ),
+    recordedAt: subDays(submittedAt, (history.length - 1 - index) * 7),
   }));
 }
 
@@ -294,6 +301,7 @@ export function seedJourney(seed: JourneySeed): ClientJourney {
     subscriptionStatus,
     pricing,
     bookingNotes,
+    prototypeMode,
     now,
   } = seed;
   const reached = (target: JourneyStage) => !isBeforeStage(stage, target);
@@ -334,7 +342,9 @@ export function seedJourney(seed: JourneySeed): ClientJourney {
     reviewCall: reached('review-call-scheduled')
       ? { startsAt: addDays(now, 1), scheduledAt: subDays(now, 1) }
       : undefined,
-    measurements: reached('submitted') ? seedMeasurements(submittedAt) : [],
+    measurements: reached('submitted')
+      ? seedMeasurements(submittedAt, prototypeMode)
+      : [],
     subscription: reached('invited')
       ? seedSubscription({
           purchasedAt: paidAt,

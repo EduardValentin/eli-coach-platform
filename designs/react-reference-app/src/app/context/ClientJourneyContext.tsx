@@ -7,7 +7,11 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { useAppState, type JourneyAgeBand } from './AppContext';
+import {
+  useAppState,
+  type JourneyAgeBand,
+  type PrototypeMode,
+} from './AppContext';
 import { useAssessmentCalls } from './AssessmentCallContext';
 import { useClientProfile } from './ClientProfileContext';
 import {
@@ -66,6 +70,7 @@ export type DemoJourneyOptions = {
   gender: JourneyGender;
   reducedPricing: boolean;
   invitationStanding: PrototypeInvitationStanding;
+  prototypeMode: PrototypeMode;
 };
 
 export type JourneyPayment = {
@@ -156,6 +161,21 @@ function answeredLastRequest(
   );
 }
 
+function seedAwaitingReviewJourney(prototypeMode: PrototypeMode) {
+  return seedJourney({
+    callId: AWAITING_REVIEW_CALL_ID,
+    identity: demoIdentity(AWAITING_REVIEW_PERSON, 'female'),
+    stage: 'submitted',
+    startPath: 'immediate',
+    subscriptionStatus: 'active',
+    pricing: 'regular',
+    bookingNotes: null,
+    invitationStanding: 'sent',
+    prototypeMode,
+    now: new Date(),
+  });
+}
+
 export function ClientJourneyProvider({ children }: { children: ReactNode }) {
   const { appState } = useAppState();
   const { bookings } = useAssessmentCalls();
@@ -168,6 +188,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
     journeyAgeBand,
     journeyReducedPricing,
     journeyInvitation,
+    prototypeMode,
   } = appState;
 
   const visitorPricing: JourneyPricing = journeyReducedPricing
@@ -197,19 +218,10 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
         pricing: visitorPricing,
         bookingNotes: DEMO_BOOKING_NOTES,
         invitationStanding: journeyInvitation,
+        prototypeMode,
         now: new Date(),
       }),
-      [AWAITING_REVIEW_CALL_ID]: seedJourney({
-        callId: AWAITING_REVIEW_CALL_ID,
-        identity: demoIdentity(AWAITING_REVIEW_PERSON, 'female'),
-        stage: 'submitted',
-        startPath: 'immediate',
-        subscriptionStatus: 'active',
-        pricing: 'regular',
-        bookingNotes: null,
-        invitationStanding: 'sent',
-        now: new Date(),
-      }),
+      [AWAITING_REVIEW_CALL_ID]: seedAwaitingReviewJourney(prototypeMode),
     }),
   );
 
@@ -229,6 +241,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
           pricing: options.reducedPricing ? 'reduced' : 'regular',
           bookingNotes: DEMO_BOOKING_NOTES,
           invitationStanding: options.invitationStanding,
+          prototypeMode: options.prototypeMode,
           now: new Date(),
         }),
       }));
@@ -243,6 +256,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
       gender: journeyGender,
       reducedPricing: journeyReducedPricing,
       invitationStanding: journeyInvitation,
+      prototypeMode,
     });
   }, [
     seedDemoJourney,
@@ -253,7 +267,15 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
     journeyAgeBand,
     journeyReducedPricing,
     journeyInvitation,
+    prototypeMode,
   ]);
+
+  useEffect(() => {
+    setJourneys((previous) => ({
+      ...previous,
+      [AWAITING_REVIEW_CALL_ID]: seedAwaitingReviewJourney(prototypeMode),
+    }));
+  }, [prototypeMode]);
 
   useEffect(() => {
     setJourneys((previous) => {
