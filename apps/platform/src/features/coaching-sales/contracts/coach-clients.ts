@@ -48,8 +48,6 @@ const clientProfileSchema = z.object({
   bookingNotes: z.string().nullable(),
 });
 
-export type ClientProfile = z.infer<typeof clientProfileSchema>;
-
 const clientSubscriptionSchema = z.object({
   bundleId: coachingBundleIdSchema,
   months: z.number().int().positive(),
@@ -399,51 +397,18 @@ export function rowLinkLabel(client: RosterClient): string {
 }
 
 const JOIN_DATE_LOCALE = "en-US";
-const DAY_MONTH_LOCALE = "en-GB";
-
-function formatParts(
-  instant: string,
-  format: { locale: string; options: Intl.DateTimeFormatOptions },
-) {
-  const parts = new Intl.DateTimeFormat(
-    format.locale,
-    format.options,
-  ).formatToParts(new Date(instant));
-
-  return (type: Intl.DateTimeFormatPartTypes) =>
-    parts.find((part) => part.type === type)?.value ?? "";
-}
 
 export function formatJoinDate(instant: string, timeZone: string): string {
-  const part = formatParts(instant, {
-    locale: JOIN_DATE_LOCALE,
-    options: { day: "2-digit", month: "short", timeZone, year: "numeric" },
-  });
+  const parts = new Intl.DateTimeFormat(JOIN_DATE_LOCALE, {
+    day: "2-digit",
+    month: "short",
+    timeZone,
+    year: "numeric",
+  }).formatToParts(new Date(instant));
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((candidate) => candidate.type === type)?.value ?? "";
 
   return `${part("month")} ${part("day")}, ${part("year")}`;
-}
-
-function formatInvitationDay(instant: string, timeZone: string): string {
-  const part = formatParts(instant, {
-    locale: DAY_MONTH_LOCALE,
-    options: { day: "numeric", month: "long", timeZone },
-  });
-
-  return `${part("day")} ${part("month")}`;
-}
-
-export function invitationStateLine(
-  invitation: ClientInvitationReading,
-  timeZone: string,
-): string {
-  switch (invitation.state) {
-    case "email-failed":
-      return "Invitation email could not be sent";
-    case "expired":
-      return `Invitation expired ${formatInvitationDay(invitation.expiresAt, timeZone)}`;
-    case "pending":
-      return `Invited ${formatInvitationDay(invitation.sentAt, timeZone)} · expires ${formatInvitationDay(invitation.expiresAt, timeZone)}`;
-  }
 }
 
 const ROSTER_URL_PARAMS: readonly string[] = Object.values(ROSTER_PARAMS);

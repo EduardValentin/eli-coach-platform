@@ -8,12 +8,13 @@ import { useEffect, useState } from "react";
 import { useFetcher, useRevalidator } from "react-router";
 
 import {
-  invitationStateLine,
   resendInvitationSuccessSchema,
   type ClientInvitationReading,
 } from "~/features/coaching-sales/contracts/coach-clients";
 import { COACHING_SALES_API_PATHS } from "~/features/coaching-sales/contracts/paths";
 import { useCalendarDayTimeZone } from "~/features/coaching-sales/ui/shared/calendar-day-format";
+
+import { invitationStateLine } from "./invitation-state-line";
 
 const RESEND_FAILURE_MESSAGE =
   "The invitation email could not be sent. Try again.";
@@ -39,52 +40,51 @@ export function InvitationBlock({
   };
 
   return (
-    <div data-parity-root="InvitationBlock">
-      <PortalWidget
-        action={
-          <Button
-            aria-busy={isSending || undefined}
-            data-parity="resend-invitation"
-            disabled={isSending}
-            onClick={() => setConfirming(true)}
-            size="sm"
-            variant="outline"
-          >
-            {isSending ? (
-              <Loader2 aria-hidden="true" className="animate-spin" size={16} />
-            ) : (
-              <Send aria-hidden="true" size={16} />
-            )}
-            Re-send invitation
-          </Button>
-        }
-        className="mb-8"
-        headingId="invitation-panel-heading"
-        icon={
-          <Mail aria-hidden="true" className="text-brand-secondary" size={18} />
-        }
-        title="Invitation"
-      >
-        <p
-          className={cn("text-sm", {
-            "text-feedback-danger": invitation.state === "email-failed",
-            "text-text-secondary": invitation.state !== "email-failed",
-          })}
-          data-parity="invitation-state"
+    <PortalWidget
+      data-parity-root="InvitationBlock"
+      action={
+        <Button
+          aria-busy={isSending || undefined}
+          data-parity="resend-invitation"
+          disabled={isSending}
+          onClick={() => setConfirming(true)}
+          size="sm"
+          variant="outline"
         >
-          {invitationStateLine(invitation, timeZone)}
-        </p>
+          {isSending ? (
+            <Loader2 aria-hidden="true" className="animate-spin" size={16} />
+          ) : (
+            <Send aria-hidden="true" size={16} />
+          )}
+          Re-send invitation
+        </Button>
+      }
+      className="mb-8"
+      headingId="invitation-panel-heading"
+      icon={
+        <Mail aria-hidden="true" className="text-brand-secondary" size={18} />
+      }
+      title="Invitation"
+    >
+      <p
+        className={cn("text-sm", {
+          "text-feedback-danger": invitation.state === "email-failed",
+          "text-text-secondary": invitation.state !== "email-failed",
+        })}
+        data-parity="invitation-state"
+      >
+        {invitationStateLine(invitation, timeZone)}
+      </p>
 
-        <ConfirmDialog
-          confirmLabel="Re-send"
-          description={`A fresh invitation goes to ${email}. Her earlier link stops working.`}
-          onConfirm={confirm}
-          onOpenChange={setConfirming}
-          open={confirming}
-          title="Re-send invitation?"
-        />
-      </PortalWidget>
-    </div>
+      <ConfirmDialog
+        confirmLabel="Re-send"
+        description={`A fresh invitation goes to ${email}. Her earlier link stops working.`}
+        onConfirm={confirm}
+        onOpenChange={setConfirming}
+        open={confirming}
+        title="Re-send invitation?"
+      />
+    </PortalWidget>
   );
 }
 
