@@ -246,6 +246,32 @@ describe("onboardingPageSchema", () => {
   });
 });
 
+describe("onboardingPageSchema before her first save", () => {
+  it("describes a page with no saved draft yet", () => {
+    // arrange
+    const page = {
+      clientId: "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22",
+      formIds: ["goal-availability"],
+      gender: "female",
+      manualScreening: false,
+      draft: {
+        answers: emptyAnswers(),
+        currentFormIndex: 0,
+        consents: noConsents(),
+        updatedAt: null,
+      },
+      unitPreference: { weightUnit: "kg", heightUnit: "cm" },
+      resumed: false,
+    };
+
+    // act
+    const parsed = onboardingPageSchema.safeParse(page);
+
+    // assert
+    expect(parsed.success).toBe(true);
+  });
+});
+
 describe("submission response schemas", () => {
   it("names each problem by its form and field", () => {
     // arrange

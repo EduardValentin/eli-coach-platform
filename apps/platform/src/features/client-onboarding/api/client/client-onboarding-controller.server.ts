@@ -74,7 +74,7 @@ export class ClientOnboardingController {
         answers: draft.answers,
         currentFormIndex: draft.currentFormIndex,
         consents: consentInstantsOf(draft.consents),
-        updatedAt: draft.updatedAt.toISOString(),
+        updatedAt: onboarding.draft?.updatedAt.toISOString() ?? null,
       },
       unitPreference,
       resumed: hasStartedAnswering(draft.answers),

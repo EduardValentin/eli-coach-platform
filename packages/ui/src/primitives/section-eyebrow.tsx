@@ -1,6 +1,8 @@
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 
+import { cn } from "../lib/cn";
+
 const sectionEyebrowVariants = cva(
   "block font-body uppercase tracking-section-eyebrow",
   {
@@ -23,9 +25,7 @@ function getSectionEyebrowClassName({
   className,
   variant,
 }: Pick<SectionEyebrowProps, "className" | "variant">) {
-  const variantClassName = sectionEyebrowVariants({ variant });
-
-  return className ? `${variantClassName} ${className}` : variantClassName;
+  return cn(sectionEyebrowVariants({ variant }), className);
 }
 
 export const SectionEyebrow = React.forwardRef<

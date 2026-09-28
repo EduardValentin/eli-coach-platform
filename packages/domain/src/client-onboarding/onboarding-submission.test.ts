@@ -7,6 +7,7 @@ import {
 } from "./onboarding-answers";
 import {
   ageOn,
+  clearsSafetyScreening,
   cycleModeOf,
   hasMigraineContraceptionSignal,
   isPregnancyFlagged,
@@ -107,6 +108,36 @@ describe("needsManualScreening", () => {
 
     // assert
     expect(flagged).toBe(false);
+  });
+});
+
+describe("clearsSafetyScreening", () => {
+  it("clears her when every question is answered No", () => {
+    // arrange
+    const answers = answersWithSafety(clearedSafetyAnswers());
+
+    // act
+    const cleared = clearsSafetyScreening(answers);
+
+    // assert
+    expect(cleared).toBe(true);
+  });
+
+  it.each([
+    ["one question is answered Yes", { heartCondition: "Yes" }],
+    ["one question is unanswered", { heartCondition: null }],
+  ])("does not clear her when %s", (_label, override) => {
+    // arrange
+    const answers = answersWithSafety({
+      ...clearedSafetyAnswers(),
+      ...override,
+    });
+
+    // act
+    const cleared = clearsSafetyScreening(answers);
+
+    // assert
+    expect(cleared).toBe(false);
   });
 });
 

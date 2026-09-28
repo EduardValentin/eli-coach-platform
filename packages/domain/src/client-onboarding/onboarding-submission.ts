@@ -55,6 +55,14 @@ export function withholdsNutritionAdvice(
   );
 }
 
+export function clearsSafetyScreening(
+  answers: OnboardingAnswersByForm,
+): boolean {
+  const safety = answers["safety-screening"];
+
+  return PARQ_QUESTION_IDS.every((id) => safety[id] === "No");
+}
+
 export type ScreeningOutcomeInput = {
   answers: OnboardingAnswersByForm;
   dateOfBirth: string;
@@ -73,7 +81,7 @@ export function screeningOutcome({
 
   if (responses.some((response) => response === undefined || response === null))
     return "pending";
-  if (responses.every((response) => response === "No")) return "cleared";
+  if (clearsSafetyScreening(answers)) return "cleared";
 
   return "needs-review";
 }

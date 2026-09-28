@@ -1,12 +1,18 @@
 export {
   DEFAULT_UNIT_PREFERENCE,
   HEIGHT_UNITS,
+  measurementSystemOf,
+  unitPreferenceOf,
   WEIGHT_UNITS,
+  type MeasurementSystem,
   type UnitPreference,
 } from "./unit-preference";
 export {
+  formatFeetAndInches,
+  measureStep,
   measureUnitLabel,
   measureUnitsOf,
+  toCanonicalMeasure,
   toDisplayMeasure,
   type MeasureKind,
   type MeasureUnits,

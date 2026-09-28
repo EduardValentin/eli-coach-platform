@@ -94,7 +94,7 @@ describe("ClientOnboardingController load", () => {
             disclaimerAt: null,
             progressPhotosAt: null,
           },
-          updatedAt: NOW.toISOString(),
+          updatedAt: null,
         },
         unitPreference: { weightUnit: "kg", heightUnit: "cm" },
         resumed: false,

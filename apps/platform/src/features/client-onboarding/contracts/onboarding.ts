@@ -49,10 +49,14 @@ export const saveDraftRequestSchema = z.object({
   consents: consentsSchema,
 });
 
+export type SaveDraftRequest = z.infer<typeof saveDraftRequestSchema>;
+
 export const submitRequestSchema = z.object({
   answers: answersByFormSchema,
   consents: consentsSchema,
 });
+
+export type SubmitRequest = z.infer<typeof submitRequestSchema>;
 
 export const unitPreferenceSchema = z.object({
   weightUnit: z.enum(WEIGHT_UNITS),
@@ -68,7 +72,7 @@ export const onboardingPageSchema = z.object({
     answers: answersByFormSchema,
     currentFormIndex: z.number().int().min(0),
     consents: consentsSchema,
-    updatedAt: z.iso.datetime(),
+    updatedAt: z.iso.datetime().nullable(),
   }),
   unitPreference: unitPreferenceSchema,
   resumed: z.boolean(),
@@ -87,6 +91,10 @@ export const submissionProblemsSchema = z.object({
     )
     .min(1),
 });
+
+export type SubmissionProblem = z.infer<
+  typeof submissionProblemsSchema
+>["problems"][number];
 
 export const missingConsentSchema = z.object({
   consent: z.enum(ONBOARDING_CONSENTS),
