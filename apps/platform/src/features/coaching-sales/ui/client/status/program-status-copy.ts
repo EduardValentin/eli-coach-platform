@@ -42,9 +42,9 @@ export function programStatusLabel(kind: ProgramStatusKind): string {
   return LABELS[kind];
 }
 
-export function programStatusLine(moment: ProgramStatusMoment): string {
+export function programStatusLine(moment: ProgramStatusMoment): string | null {
   if (moment.kind === "needs-details") {
-    return moment.requestNote ?? "";
+    return moment.requestNote;
   }
 
   if (moment.workStartDay) {

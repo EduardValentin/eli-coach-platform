@@ -2,7 +2,7 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -128,7 +128,7 @@ describe("the program status card when her coach needs more details", () => {
   it("says her coach needs more details and quotes what she asked", () => {
     // arrange, act
     renderCard({
-      request: { note: "Tell me more about your knee." },
+      detailsRequest: { note: "Tell me more about your knee." },
       status: statusOf("needs-details", WORK_STARTS_ON),
     });
 
@@ -145,11 +145,27 @@ describe("the program status card when her coach needs more details", () => {
     expect(screen.queryByText(WAITING_LINE)).not.toBeInTheDocument();
   });
 
+  it("leaves the status line out when no note came with the request", () => {
+    // arrange, act
+    renderCard({ detailsRequest: null, status: statusOf("needs-details") });
+
+    // assert
+    const card = screen.getByRole("region", { name: "Your onboarding" });
+    expect(
+      within(card)
+        .getAllByRole("paragraph")
+        .map((line) => line.textContent),
+    ).toEqual(["Your coach needs a few more details"]);
+    expect(
+      within(card).getByRole("link", { name: "Answer now" }),
+    ).toBeInTheDocument();
+  });
+
   it("opens the answer page from Answer now", async () => {
     // arrange
     const user = userEvent.setup();
     const router = renderCard({
-      request: { note: "Tell me more about your knee." },
+      detailsRequest: { note: "Tell me more about your knee." },
       status: statusOf("needs-details"),
     });
     const answerNow = screen.getByRole("link", { name: "Answer now" });
@@ -172,7 +188,7 @@ describe("the program status card when her coach needs more details", () => {
 describe("the program status card once her answers are approved", () => {
   it("moves on to her program and says Eli is putting it together", () => {
     // arrange, act
-    renderCard({ request: null, status: statusOf("approved") });
+    renderCard({ detailsRequest: null, status: statusOf("approved") });
 
     // assert
     expect(

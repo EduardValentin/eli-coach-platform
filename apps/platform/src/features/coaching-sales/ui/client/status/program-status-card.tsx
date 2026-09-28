@@ -24,20 +24,25 @@ type DetailsRequest = { note: string };
 
 type ProgramStatusCardProps = {
   status: ProgramStatus;
-  request?: DetailsRequest | null;
+  detailsRequest?: DetailsRequest | null;
 };
 
 const ANSWER_PATH = `${CLIENT_ONBOARDING_PATH}?${CLIENT_ANSWER_QUERY}`;
 
 export function ProgramStatusCard({
   status,
-  request = null,
+  detailsRequest = null,
 }: ProgramStatusCardProps) {
   const timeZone = useCalendarDayTimeZone();
   const workStartDay = status.workStartsOn
     ? formatDayMonth(status.workStartsOn, timeZone)
     : null;
   const needsDetails = status.kind === "needs-details";
+  const statusLine = programStatusLine({
+    kind: status.kind,
+    requestNote: detailsRequest?.note ?? null,
+    workStartDay,
+  });
 
   return (
     <div
@@ -65,16 +70,14 @@ export function ProgramStatusCard({
           </span>
         }
       >
-        <p
-          className="mt-1 max-w-2xl text-sm text-text-secondary"
-          data-parity="status-line"
-        >
-          {programStatusLine({
-            kind: status.kind,
-            requestNote: request?.note ?? null,
-            workStartDay,
-          })}
-        </p>
+        {statusLine !== null && (
+          <p
+            className="mt-1 max-w-2xl text-sm text-text-secondary"
+            data-parity="status-line"
+          >
+            {statusLine}
+          </p>
+        )}
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           {needsDetails && (
             <Link
