@@ -42,6 +42,14 @@ export type PrototypeSession = 'anonymous' | PrototypeAccountRole;
 
 export type PrototypeMode = 'mvp' | 'post-mvp';
 
+export type JourneyAgeBand = 'adult' | 'under-15' | 'over-69';
+
+export const JOURNEY_AGE_BANDS: readonly JourneyAgeBand[] = [
+  'adult',
+  'under-15',
+  'over-69',
+];
+
 export function isSignedIn(session: PrototypeSession): boolean {
   return session !== 'anonymous';
 }
@@ -66,6 +74,7 @@ type AppState = {
   journeyStartPath: SubscriptionStartPath;
   journeySubscriptionStatus: SubscriptionStatus;
   journeyGender: JourneyGender;
+  journeyAgeBand: JourneyAgeBand;
   journeyConnection: OnboardingConnection;
   journeyReducedPricing: boolean;
   paymentLinkOutcome: PrototypePaymentLinkOutcome;
@@ -98,6 +107,7 @@ const defaultState: AppState = {
   journeyStartPath: 'immediate',
   journeySubscriptionStatus: 'active',
   journeyGender: 'female',
+  journeyAgeBand: 'adult',
   journeyConnection: 'working',
   journeyReducedPricing: false,
   paymentLinkOutcome: 'sent',
@@ -262,6 +272,13 @@ function parseDevParamsFromURL(): AppState {
   ) {
     state.journeyGender = journeyGender as JourneyGender;
   }
+  const journeyAgeBand = params.get('jage');
+  if (
+    journeyAgeBand &&
+    (JOURNEY_AGE_BANDS as readonly string[]).includes(journeyAgeBand)
+  ) {
+    state.journeyAgeBand = journeyAgeBand as JourneyAgeBand;
+  }
   const journeyConnection = params.get('jconn');
   if (
     journeyConnection &&
@@ -330,6 +347,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     url.searchParams.delete('jstart');
     url.searchParams.delete('jsub');
     url.searchParams.delete('jgender');
+    url.searchParams.delete('jage');
     url.searchParams.delete('jconn');
     url.searchParams.delete('jreduced');
     url.searchParams.delete('paylink');
@@ -391,6 +409,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     if (appState.journeyGender !== defaultState.journeyGender) {
       url.searchParams.set('jgender', appState.journeyGender);
+    }
+    if (appState.journeyAgeBand !== defaultState.journeyAgeBand) {
+      url.searchParams.set('jage', appState.journeyAgeBand);
     }
     if (appState.journeyConnection !== defaultState.journeyConnection) {
       url.searchParams.set('jconn', appState.journeyConnection);

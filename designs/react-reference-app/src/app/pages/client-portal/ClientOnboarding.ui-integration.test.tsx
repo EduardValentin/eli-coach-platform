@@ -190,6 +190,26 @@ describe('the onboarding', () => {
     expect(screen.getByText('Step 2 of 5')).toBeVisible();
   });
 
+  it('replaces the safety questions with the manual-screening message for a client under 15', async () => {
+    // arrange
+    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(1, GIVEN_CONSENTS), 'working');
+
+    // act
+    renderOnboarding('?session=client&jstage=onboarding&jage=under-15');
+
+    // assert
+    expect(
+      screen.getByText(
+        "These safety questions are designed for ages 15 to 69. I'll go through your health questions with you directly before building your program.",
+      ),
+    ).toBeVisible();
+    expect(
+      screen.queryByText(
+        'Has your doctor ever said that you have a heart condition OR high blood pressure?',
+      ),
+    ).not.toBeInTheDocument();
+  });
+
   it('asks for the disclaimer on the last form and refuses to send without it', async () => {
     // arrange
     await saveDraft(

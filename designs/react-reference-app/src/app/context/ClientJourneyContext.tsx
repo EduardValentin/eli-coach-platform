@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { useAppState } from './AppContext';
+import { useAppState, type JourneyAgeBand } from './AppContext';
 import { useAssessmentCalls } from './AssessmentCallContext';
 import { useClientProfile } from './ClientProfileContext';
 import {
@@ -33,6 +33,7 @@ import {
   type SubscriptionStatus,
 } from '../domain/coachingSubscription';
 import { heldJourney, seedJourney } from '../services/clientJourneySamples';
+import { PARQ_MAX_AGE, PARQ_MIN_AGE } from '../domain/safetyScreening';
 import type { SentPaymentLink } from '../services/paymentLinkService';
 import { createInvitation } from '../services/invitationService';
 
@@ -138,6 +139,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
     journeyStartPath,
     journeySubscriptionStatus,
     journeyGender,
+    journeyAgeBand,
     journeyReducedPricing,
   } = appState;
 
@@ -149,7 +151,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
     firstName: clientProfile?.firstName ?? 'Jane',
     lastName: clientProfile?.lastName ?? 'Doe',
     email: clientProfile?.email ?? 'jane@example.com',
-    age: clientProfile?.age ?? 28,
+    age: ageForBand(journeyAgeBand, clientProfile?.age ?? 28),
   };
 
   const demoPersonRef = useRef(demoPerson);
@@ -212,6 +214,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
     journeyStartPath,
     journeySubscriptionStatus,
     journeyGender,
+    journeyAgeBand,
     journeyReducedPricing,
   ]);
 
@@ -525,6 +528,16 @@ type DemoPerson = {
 function dateOfBirthForAge(age: number): string {
   const birthYear = new Date().getFullYear() - age;
   return `${birthYear}-06-15`;
+}
+
+const AGE_BAND_AGES: Record<JourneyAgeBand, number | null> = {
+  adult: null,
+  'under-15': PARQ_MIN_AGE - 1,
+  'over-69': PARQ_MAX_AGE + 1,
+};
+
+function ageForBand(band: JourneyAgeBand, fallback: number): number {
+  return AGE_BAND_AGES[band] ?? fallback;
 }
 
 function demoIdentity(

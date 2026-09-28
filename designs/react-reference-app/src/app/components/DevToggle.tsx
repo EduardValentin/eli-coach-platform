@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ArrowRight, Settings, X } from 'lucide-react';
 import {
   useAppState,
+  JOURNEY_AGE_BANDS,
+  type JourneyAgeBand,
   type PrototypeMode,
   type PrototypeSession,
   type PrototypeWaitlistAvailability,
@@ -127,6 +129,12 @@ function parseJourneyGenderControl(value: string): JourneyGender {
   const gender = JOURNEY_GENDERS.find((candidate) => candidate === value);
 
   return gender ?? 'female';
+}
+
+function parseJourneyAgeBandControl(value: string): JourneyAgeBand {
+  const band = JOURNEY_AGE_BANDS.find((candidate) => candidate === value);
+
+  return band ?? 'adult';
 }
 
 function parseOnboardingConnectionControl(value: string): OnboardingConnection {
@@ -911,6 +919,35 @@ export function DevToggle() {
                       <SelectItem value="prefer-not-to-say">
                         Prefer not to say
                       </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="dev-journey-age-band"
+                    className={DEV_LABEL_CLASS}
+                  >
+                    Client age
+                  </Label>
+                  <Select
+                    value={appState.journeyAgeBand}
+                    onValueChange={(value) =>
+                      setAppState({
+                        journeyAgeBand: parseJourneyAgeBandControl(value),
+                      })
+                    }
+                  >
+                    <SelectTrigger
+                      id="dev-journey-age-band"
+                      className="w-full"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="adult">Adult (default)</SelectItem>
+                      <SelectItem value="under-15">Under 15</SelectItem>
+                      <SelectItem value="over-69">Over 69</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
