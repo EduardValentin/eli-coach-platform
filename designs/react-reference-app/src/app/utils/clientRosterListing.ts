@@ -34,7 +34,7 @@ export type RosterRow = {
   name: string;
   email: string;
   status: ClientStatus;
-  bundleLabel: string;
+  bundleMonths: number | null;
   joinedAt: Date | null;
   detailPath: string;
   actionLabel: string;
@@ -172,8 +172,9 @@ export function sortRows(rows: RosterRow[], sort: RosterSort): RosterRow[] {
     case 'bundle':
       return placeholderLastBy(
         rows,
-        (row) => row.bundleLabel !== '—',
-        (one, other) => compareText(one.bundleLabel, other.bundleLabel),
+        (row) => row.bundleMonths !== null,
+        (one, other) =>
+          (one.bundleMonths as number) - (other.bundleMonths as number),
         sort.direction,
       );
     case 'joined':

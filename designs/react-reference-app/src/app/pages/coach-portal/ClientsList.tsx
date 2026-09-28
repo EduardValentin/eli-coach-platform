@@ -32,7 +32,6 @@ import { SortableTableHead } from '../../components/SortableTableHead';
 import { useClientProfile } from '../../context/ClientProfileContext';
 import {
   useTraining,
-  subscriptionTermLabel,
 } from '../../context/TrainingContext';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
 import {
@@ -128,12 +127,6 @@ function hasStarted(journey: ClientJourney): boolean {
   return !isBeforeStage(journey.stage, 'invited');
 }
 
-function journeyBundleLabel(journey: ClientJourney): string {
-  return journey.subscription
-    ? bundleLengthLabel(journey.subscription.bundle)
-    : '—';
-}
-
 function journeyName(journey: ClientJourney): string {
   return `${journey.identity.firstName} ${journey.identity.lastName}`.trim();
 }
@@ -152,7 +145,7 @@ function journeyRosterRow(journey: ClientJourney, now: Date): RosterRow {
     name,
     email: journey.identity.email,
     status: clientStatus(journey, now),
-    bundleLabel: journeyBundleLabel(journey),
+    bundleMonths: journey.subscription?.bundle ?? null,
     joinedAt: journey.subscription?.purchasedAt ?? null,
     detailPath: clientDetailPathForJourney(journey),
     actionLabel: rowActionLabel(name, awaitsCoachReview(journey.stage)),
@@ -162,14 +155,14 @@ function journeyRosterRow(journey: ClientJourney, now: Date): RosterRow {
 function mockRosterRow(
   client: RosterClient,
   avatarUrl: string | undefined,
-  bundleLabel: string,
+  bundleMonths: number | null,
 ): RosterRow {
   return {
     id: client.id,
     name: client.name,
     email: client.email,
     status: clientStatusNamed(client.status),
-    bundleLabel,
+    bundleMonths,
     joinedAt: parseISO(client.joinDate),
     detailPath: `/coach/clients/${client.id}`,
     actionLabel: rowActionLabel(client.name, false),
@@ -336,7 +329,9 @@ function RosterTableRow({
         className="text-sm text-text-secondary font-medium"
         data-parity={rowParity('bundle')}
       >
-        {row.bundleLabel}
+        {row.bundleMonths === null
+          ? '—'
+          : bundleLengthLabel(row.bundleMonths)}
       </TableCell>
       <TableCell
         className="text-sm text-text-secondary"
@@ -405,7 +400,7 @@ export function ClientsList() {
     startedJourneys.map((journey) => journey.callId),
   );
 
-  const bundleLabelForClient = (id: string) => {
+  const bundleMonthsForClient = (id: string) => {
     const subjectId = trainingClientIdFor(id);
     const activeSubscription =
       getClientActiveSubscription(subjectId) ??
@@ -413,7 +408,7 @@ export function ClientsList() {
         (other.startDate || '').localeCompare(one.startDate || ''),
       )[0];
 
-    return activeSubscription ? subscriptionTermLabel(activeSubscription) : '—';
+    return activeSubscription?.months ?? null;
   };
 
   const journeyRows = startedJourneys.map((journey) =>
@@ -429,7 +424,7 @@ export function ClientsList() {
       mockRosterRow(
         client,
         getProfile(client.id)?.avatarUrl,
-        bundleLabelForClient(client.id),
+        bundleMonthsForClient(client.id),
       ),
     );
 
