@@ -365,7 +365,9 @@ export class ClientOnboarding {
   }
 
   async blockUnitPreference(): Promise<void> {
-    await this.page.route(UNIT_PREFERENCE_API, (route) => route.abort());
+    await this.page.route(UNIT_PREFERENCE_API, (route) => route.abort(), {
+      times: 1,
+    });
   }
 
   async restoreConnection(): Promise<void> {

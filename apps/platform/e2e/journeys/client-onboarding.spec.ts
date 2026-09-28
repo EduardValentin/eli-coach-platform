@@ -868,65 +868,66 @@ test("the onboarding draft is refused to a coach and to a visitor who is not sig
   expect(coachSave.status()).toBe(403);
 });
 
-test.fail(
-  "a client answers the next question right after picking the day her last period started",
-  async ({ clientOnboarding, page, provisionPaidClient, signIn }) => {
-    test.setTimeout(JOURNEY_TIMEOUT_MS);
+test("a client answers the next question right after picking the day her last period started", async ({
+  clientOnboarding,
+  page,
+  provisionPaidClient,
+  signIn,
+}) => {
+  test.setTimeout(JOURNEY_TIMEOUT_MS);
 
-    // arrange
-    await provisionPaidClient("female");
-    await page.goto("/store");
-    await signIn();
-    await page.goto("/client");
-    await clientOnboarding.startOnboarding();
-    await answerGoalFormInKilograms(clientOnboarding);
-    await clientOnboarding.continueStep();
-    await clearSafetyScreening(clientOnboarding, FEMALE_HEALTH_CONSENT);
-    await clientOnboarding.continueStep();
-    await clientOnboarding.expectStep(3, 5);
-    await clientOnboarding.choose(
-      "Do you currently get a period?",
-      "Yes, and it's regular",
-    );
-    await clientOnboarding.choose("Are you using any contraception?", "None");
-    await clientOnboarding.tick("None of these");
-    await clientOnboarding.choose(
-      "Are you in perimenopause or menopause?",
-      "No",
-    );
+  // arrange
+  await provisionPaidClient("female");
+  await page.goto("/store");
+  await signIn();
+  await page.goto("/client");
+  await clientOnboarding.startOnboarding();
+  await answerGoalFormInKilograms(clientOnboarding);
+  await clientOnboarding.continueStep();
+  await clearSafetyScreening(clientOnboarding, FEMALE_HEALTH_CONSENT);
+  await clientOnboarding.continueStep();
+  await clientOnboarding.expectStep(3, 5);
+  await clientOnboarding.choose(
+    "Do you currently get a period?",
+    "Yes, and it's regular",
+  );
+  await clientOnboarding.choose("Are you using any contraception?", "None");
+  await clientOnboarding.tick("None of these");
+  await clientOnboarding.choose("Are you in perimenopause or menopause?", "No");
 
-    // act
-    await clientOnboarding.pickDate(
-      "The day your last period started",
-      isoDaysAgo(LAST_PERIOD_DAYS_AGO),
-    );
-    await clientOnboarding.clickChoice(GYNAECOLOGICAL_QUESTION, "No");
+  // act
+  await clientOnboarding.pickDate(
+    "The day your last period started",
+    isoDaysAgo(LAST_PERIOD_DAYS_AGO),
+  );
+  await clientOnboarding.clickChoice(GYNAECOLOGICAL_QUESTION, "No");
 
-    // assert
-    await clientOnboarding.expectChosen(GYNAECOLOGICAL_QUESTION, "No");
-  },
-);
+  // assert
+  await clientOnboarding.expectChosen(GYNAECOLOGICAL_QUESTION, "No");
+});
 
-test.fail(
-  "a client's units stay chosen when saving them fails the first time",
-  async ({ clientOnboarding, page, provisionPaidClient, signIn }) => {
-    // arrange
-    await provisionPaidClient("male");
-    await page.goto("/store");
-    await signIn();
-    await page.goto("/client");
-    await clientOnboarding.startOnboarding();
-    await clientOnboarding.blockUnitPreference();
+test("a client's units stay chosen when saving them fails the first time", async ({
+  clientOnboarding,
+  page,
+  provisionPaidClient,
+  signIn,
+}) => {
+  // arrange
+  await provisionPaidClient("male");
+  await page.goto("/store");
+  await signIn();
+  await page.goto("/client");
+  await clientOnboarding.startOnboarding();
+  await clientOnboarding.blockUnitPreference();
 
-    // act
-    await clientOnboarding.chooseUnits("lb · in");
-    await clientOnboarding.answerText("Your weight", "150");
-    await clientOnboarding.expectSaved();
-    await clientOnboarding.restoreConnection();
-    await page.reload();
+  // act
+  await clientOnboarding.chooseUnits("lb · in");
+  await clientOnboarding.answerText("Your weight", "150");
+  await clientOnboarding.expectSaved();
+  await clientOnboarding.restoreConnection();
+  await page.reload();
 
-    // assert
-    await clientOnboarding.expectUnits("lb · in");
-    await clientOnboarding.expectAnswer("Your weight", "150");
-  },
-);
+  // assert
+  await clientOnboarding.expectUnits("lb · in");
+  await clientOnboarding.expectAnswer("Your weight", "150");
+});
