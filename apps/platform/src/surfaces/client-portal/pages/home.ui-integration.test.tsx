@@ -67,11 +67,14 @@ describe("client dashboard", () => {
   });
 
   it("shows no program status card before she has submitted her onboarding", async () => {
-    // arrange, act
-    renderDashboard(
-      { displayName: "Ana Popescu", greeting: "Welcome back, Ana." },
-      null,
-    );
+    // arrange
+    const presentation = {
+      displayName: "Ana Popescu",
+      greeting: "Welcome back, Ana.",
+    };
+
+    // act
+    renderDashboard(presentation);
     await screen.findByRole("heading", { level: 1 });
 
     // assert
@@ -81,15 +84,19 @@ describe("client dashboard", () => {
   });
 
   it("shows her the program status card once she has sent her onboarding", async () => {
-    // arrange, act
-    renderDashboard(
-      { displayName: "Ana Popescu", greeting: "Welcome back, Ana." },
-      {
-        kind: "submitted",
-        submittedAt: "2026-10-01T09:00:00.000Z",
-        workStartsOn: null,
-      },
-    );
+    // arrange
+    const presentation = {
+      displayName: "Ana Popescu",
+      greeting: "Welcome back, Ana.",
+    };
+    const programStatus: ProgramStatus = {
+      kind: "submitted",
+      submittedAt: "2026-10-01T09:00:00.000Z",
+      workStartsOn: null,
+    };
+
+    // act
+    renderDashboard(presentation, programStatus);
     await screen.findByRole("heading", { level: 1 });
 
     // assert

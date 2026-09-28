@@ -7,7 +7,8 @@ import type { SaveDraftRequest } from "~/features/client-onboarding/contracts/on
 import type { DraftSaveOutcome } from "./onboarding-api-client";
 import {
   createDraftSync,
-  takePendingDraft,
+  type DraftSync,
+  readNewerPendingDraft,
   type SaveState,
 } from "./draft-sync";
 
@@ -36,6 +37,8 @@ function draftWithWeight(weight: number): SaveDraftRequest {
   };
 }
 
+let startedSyncs: DraftSync[] = [];
+
 function startSync(outcomes: DraftSaveOutcome[]) {
   const states: SaveState[] = [];
   const save = vi.fn(async (_draft: SaveDraftRequest) => {
@@ -46,6 +49,7 @@ function startSync(outcomes: DraftSaveOutcome[]) {
     onSaveStateChange: (state) => states.push(state),
     save,
   });
+  startedSyncs.push(sync);
 
   return { save, states, sync };
 }
@@ -63,6 +67,8 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  for (const sync of startedSyncs) sync.dispose();
+  startedSyncs = [];
   vi.useRealTimers();
   window.localStorage.clear();
 });
@@ -82,7 +88,6 @@ describe("createDraftSync", () => {
     expect(save).toHaveBeenCalledWith(draftWithWeight(66));
     expect(states.at(0)).toBe("saving");
     expect(states.at(-1)).toBe("saved");
-    sync.dispose();
   });
 
   it("keeps an unsaved draft on the device and says it is not saved yet", async () => {
@@ -99,7 +104,6 @@ describe("createDraftSync", () => {
       draft: draftWithWeight(66),
       editedAt: NOW.toISOString(),
     });
-    sync.dispose();
   });
 
   it("saves the unsent draft once the browser is back online", async () => {
@@ -116,7 +120,6 @@ describe("createDraftSync", () => {
     expect(save).toHaveBeenCalledTimes(2);
     expect(states.at(-1)).toBe("saved");
     expect(bufferedEntry()).toBeNull();
-    sync.dispose();
   });
 
   it("tries the unsent draft again every fifteen seconds", async () => {
@@ -131,7 +134,6 @@ describe("createDraftSync", () => {
     // assert
     expect(save).toHaveBeenCalledTimes(3);
     expect(states.at(-1)).toBe("saved");
-    sync.dispose();
   });
 
   it("sends the unsent draft with her next change", async () => {
@@ -148,7 +150,6 @@ describe("createDraftSync", () => {
     expect(save).toHaveBeenLastCalledWith(draftWithWeight(67));
     expect(states.at(-1)).toBe("saved");
     expect(bufferedEntry()).toBeNull();
-    sync.dispose();
   });
 
   it("stops trying once the server refuses the draft", async () => {
@@ -164,7 +165,6 @@ describe("createDraftSync", () => {
     // assert
     expect(save).toHaveBeenCalledTimes(1);
     expect(bufferedEntry()).toBeNull();
-    sync.dispose();
   });
 
   it("drops the queued save once her answers are being sent", async () => {
@@ -173,16 +173,15 @@ describe("createDraftSync", () => {
     sync.queue(draftWithWeight(66));
 
     // act
-    sync.stop();
+    sync.stopSaving();
     await vi.advanceTimersByTimeAsync(DEBOUNCE_MS);
 
     // assert
     expect(save).not.toHaveBeenCalled();
-    sync.dispose();
   });
 });
 
-describe("takePendingDraft", () => {
+describe("readNewerPendingDraft", () => {
   it("hands back an unsent draft edited after the server's draft", () => {
     // arrange
     const entry = {
@@ -192,7 +191,7 @@ describe("takePendingDraft", () => {
     window.localStorage.setItem(PENDING_DRAFT_KEY, JSON.stringify(entry));
 
     // act
-    const pending = takePendingDraft({
+    const pending = readNewerPendingDraft({
       clientId: CLIENT_ID,
       serverUpdatedAt: "2026-09-28T08:00:00.000Z",
     });
@@ -210,7 +209,7 @@ describe("takePendingDraft", () => {
     window.localStorage.setItem(PENDING_DRAFT_KEY, JSON.stringify(entry));
 
     // act
-    const pending = takePendingDraft({
+    const pending = readNewerPendingDraft({
       clientId: CLIENT_ID,
       serverUpdatedAt: null,
     });
@@ -230,7 +229,7 @@ describe("takePendingDraft", () => {
     );
 
     // act
-    const pending = takePendingDraft({
+    const pending = readNewerPendingDraft({
       clientId: CLIENT_ID,
       serverUpdatedAt: "2026-09-28T08:00:00.000Z",
     });
@@ -254,7 +253,7 @@ describe("takePendingDraft", () => {
     window.localStorage.setItem(PENDING_DRAFT_KEY, raw);
 
     // act
-    const pending = takePendingDraft({
+    const pending = readNewerPendingDraft({
       clientId: CLIENT_ID,
       serverUpdatedAt: "2026-09-28T08:00:00.000Z",
     });

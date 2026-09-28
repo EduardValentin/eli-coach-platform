@@ -29,8 +29,8 @@ type DraftSyncOptions = {
 export type DraftSync = {
   queue: (draft: SaveDraftRequest) => void;
   resend: (pending: PendingDraft) => void;
-  stop: () => void;
-  forget: () => void;
+  stopSaving: () => void;
+  discardUnsentDraft: () => void;
   dispose: () => void;
 };
 
@@ -87,7 +87,7 @@ function isNewerThan(
   );
 }
 
-export function takePendingDraft({
+export function readNewerPendingDraft({
   clientId,
   serverUpdatedAt,
 }: PendingDraftLookup): PendingDraft | null {
@@ -174,12 +174,12 @@ export function createDraftSync({
       latest = pending;
       send(pending);
     },
-    stop: () => {
+    stopSaving: () => {
       cancelQueuedSave();
       stopRetrying();
       latest = null;
     },
-    forget: () => removeStoredItem(key),
+    discardUnsentDraft: () => removeStoredItem(key),
     dispose: () => {
       disposed = true;
       cancelQueuedSave();

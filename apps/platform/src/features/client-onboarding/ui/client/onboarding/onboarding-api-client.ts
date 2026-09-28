@@ -100,7 +100,7 @@ function acceptedOutcome(body: unknown): SubmissionOutcome {
     : SUBMISSION_FAILED;
 }
 
-function refusedOutcome(body: unknown): SubmissionOutcome {
+function unprocessableSubmissionOutcome(body: unknown): SubmissionOutcome {
   const problems = submissionProblemsSchema.safeParse(body);
 
   if (problems.success) {
@@ -128,7 +128,7 @@ export async function submitOnboarding(
   }
   if (response.ok) return acceptedOutcome(await readJson(response));
   if (response.status === UNPROCESSABLE_STATUS) {
-    return refusedOutcome(await readJson(response));
+    return unprocessableSubmissionOutcome(await readJson(response));
   }
 
   return SUBMISSION_FAILED;

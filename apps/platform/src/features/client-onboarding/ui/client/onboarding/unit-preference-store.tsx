@@ -1,7 +1,5 @@
 import {
   measureUnitsOf,
-  unitPreferenceOf,
-  type MeasurementSystem,
   type MeasureUnits,
   type UnitPreference,
 } from "@eli-coach-platform/domain/unit-preference";
@@ -15,11 +13,9 @@ import {
 import { useStore } from "zustand";
 import { createStore, type StoreApi } from "zustand/vanilla";
 
-import { saveUnitPreference } from "./onboarding-api-client";
-
 type UnitPreferenceState = {
   preference: UnitPreference;
-  chooseMeasurementSystem: (system: MeasurementSystem) => void;
+  choosePreference: (preference: UnitPreference) => void;
 };
 
 type UnitPreferenceStore = StoreApi<UnitPreferenceState>;
@@ -29,11 +25,7 @@ function createUnitPreferenceStore(
 ): UnitPreferenceStore {
   return createStore<UnitPreferenceState>()((set) => ({
     preference,
-    chooseMeasurementSystem: (system) => {
-      const chosen = unitPreferenceOf(system);
-      set({ preference: chosen });
-      void saveUnitPreference(chosen);
-    },
+    choosePreference: (chosen) => set({ preference: chosen }),
   }));
 }
 

@@ -19,7 +19,7 @@ type ProgramStatusCardProps = {
 
 export function ProgramStatusCard({ status }: ProgramStatusCardProps) {
   const timeZone = useCalendarDayTimeZone();
-  const workStartsOn = status.workStartsOn
+  const workStartDay = status.workStartsOn
     ? formatDayMonth(status.workStartsOn, timeZone)
     : null;
 
@@ -47,7 +47,7 @@ export function ProgramStatusCard({ status }: ProgramStatusCardProps) {
           className="mt-1 max-w-2xl text-sm text-text-secondary"
           data-parity="status-line"
         >
-          {programStatusLine(workStartsOn)}
+          {programStatusLine(workStartDay)}
         </p>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row" />
       </PortalWidget>

@@ -4,13 +4,16 @@ import type {
   OnboardingFormDefinition,
 } from "@eli-coach-platform/domain/client-onboarding";
 import { cn } from "@eli-coach-platform/ui/lib";
-import { Button, cardVariants } from "@eli-coach-platform/ui/primitives";
-import { useEffect, useId, useMemo, type ReactNode } from "react";
+import {
+  Button,
+  cardVariants,
+  Legend,
+} from "@eli-coach-platform/ui/primitives";
+import { useCallback, useEffect, useId, useMemo, type ReactNode } from "react";
 import { useForm } from "react-hook-form";
 
 import type { SubmissionProblem } from "~/features/client-onboarding/contracts/onboarding";
 
-import { ONBOARDING_LEGEND_CLASS } from "./onboarding-card";
 import { OnboardingFieldControl } from "./onboarding-field-control";
 import {
   toAnswers,
@@ -20,15 +23,17 @@ import {
 } from "./onboarding-values";
 import { useMeasureUnits } from "./unit-preference-store";
 
+export type ContinueAttempt =
+  { kind: "complete"; answers: OnboardingFormAnswers } | { kind: "incomplete" };
+
 type OnboardingAnswerFormProps = {
   answers: OnboardingFormAnswers;
   children?: ReactNode;
   continueLabel: string;
   definition: OnboardingFormDefinition;
-  onAttempt: () => void;
   onBack: (() => void) | null;
   onChange: (answers: OnboardingFormAnswers) => void;
-  onContinue: (answers: OnboardingFormAnswers) => void;
+  onContinue: (attempt: ContinueAttempt) => void;
   problems: readonly SubmissionProblem[];
 };
 
@@ -81,7 +86,6 @@ function OnboardingAnswerForm({
   children,
   continueLabel,
   definition,
-  onAttempt,
   onBack,
   onChange,
   onContinue,
@@ -99,21 +103,23 @@ function OnboardingAnswerForm({
     [definition, values, units],
   );
 
+  const answersFrom = useCallback(
+    (formValues: OnboardingValues) =>
+      toAnswers(
+        visibleFields(definition.fields, formValues, units),
+        formValues,
+        units,
+      ),
+    [definition, units],
+  );
+
   useEffect(() => {
     const subscription = form.watch((next) => {
-      const nextValues = next as OnboardingValues;
-
-      onChange(
-        toAnswers(
-          visibleFields(definition.fields, nextValues, units),
-          nextValues,
-          units,
-        ),
-      );
+      onChange(answersFrom(next as OnboardingValues));
     });
 
     return () => subscription.unsubscribe();
-  }, [form, definition, onChange, units]);
+  }, [form, answersFrom, onChange]);
 
   useEffect(() => {
     for (const problem of problems) {
@@ -124,10 +130,9 @@ function OnboardingAnswerForm({
     }
   }, [form, problems]);
 
-  const continueWith = form.handleSubmit((next) =>
-    onContinue(
-      toAnswers(visibleFields(definition.fields, next, units), next, units),
-    ),
+  const continueWith = form.handleSubmit(
+    (next) => onContinue({ kind: "complete", answers: answersFrom(next) }),
+    () => onContinue({ kind: "incomplete" }),
   );
 
   const fieldControl = (field: OnboardingField) => (
@@ -144,7 +149,6 @@ function OnboardingAnswerForm({
       className="mt-7 grid gap-6"
       noValidate
       onSubmit={(event) => {
-        onAttempt();
         void continueWith(event);
       }}
     >
@@ -158,9 +162,7 @@ function OnboardingAnswerForm({
           {groupByLegend(group.fields).map((item) =>
             item.kind === "legend" ? (
               <fieldset key={item.legend}>
-                <legend className={ONBOARDING_LEGEND_CLASS}>
-                  {item.legend}
-                </legend>
+                <Legend>{item.legend}</Legend>
                 <div className="mt-2 grid gap-4 sm:grid-cols-2">
                   {item.fields.map(fieldControl)}
                 </div>

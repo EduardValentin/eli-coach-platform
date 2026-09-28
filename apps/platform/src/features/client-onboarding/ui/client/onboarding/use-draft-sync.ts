@@ -36,13 +36,13 @@ export function useDraftSync(clientId: string) {
     syncRef.current?.resend(pending);
   }, []);
 
-  const stop = useCallback(() => {
-    syncRef.current?.stop();
+  const stopSaving = useCallback(() => {
+    syncRef.current?.stopSaving();
   }, []);
 
-  const forget = useCallback(() => {
-    syncRef.current?.forget();
+  const discardUnsentDraft = useCallback(() => {
+    syncRef.current?.discardUnsentDraft();
   }, []);
 
-  return { forget, queue, resend, saveState, stop };
+  return { discardUnsentDraft, queue, resend, saveState, stopSaving };
 }

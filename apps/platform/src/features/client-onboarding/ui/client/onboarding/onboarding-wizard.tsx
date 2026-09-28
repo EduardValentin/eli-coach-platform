@@ -1,27 +1,17 @@
 import {
   clearsSafetyScreening,
-  hasStartedAnswering,
-  ONBOARDING_FORMS,
   resolveIntro,
-  withoutUnreachable,
-  type OnboardingAnswersByForm,
   type OnboardingFormAnswers,
-  type OnboardingFormDefinition,
-  type OnboardingFormId,
 } from "@eli-coach-platform/domain/client-onboarding";
 import { useClientReducedMotionPreference } from "@eli-coach-platform/ui/motion";
 import { Alert, Stepper } from "@eli-coach-platform/ui/primitives";
 import { toast } from "@eli-coach-platform/ui/toast";
 import { AnimatePresence, motion } from "motion/react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router";
+import { useCallback, useMemo, useRef, useState } from "react";
 
-import { CLIENT_PORTAL_PATH } from "~/features/accounts/contracts/paths";
 import type {
   OnboardingConsentInstants,
   OnboardingPage,
-  SaveDraftRequest,
-  SubmissionProblem,
 } from "~/features/client-onboarding/contracts/onboarding";
 import {
   DISCLAIMER_ACKNOWLEDGEMENT,
@@ -31,141 +21,87 @@ import {
   SAVE_LABELS,
   SCREENING_CLEARED_MESSAGE,
   SPECIAL_CATEGORY_CONSENT_COPY,
-  SUBMIT_PROBLEM,
 } from "~/features/client-onboarding/contracts/onboarding-copy";
 
-import { takePendingDraft } from "./draft-sync";
 import { MeasurementSystemField } from "./measurement-system-field";
-import { submitOnboarding } from "./onboarding-api-client";
+import { OnboardingConsent, ProgressPhotoConsent } from "./onboarding-consent";
 import {
-  OnboardingConsent,
-  ProgressPhotoConsent,
-  type ConsentAgreement,
-} from "./onboarding-consent";
-import { OnboardingFormCard } from "./onboarding-form-card";
-import { useDraftSync } from "./use-draft-sync";
-
-type WizardDraft = Omit<SaveDraftRequest, "formId">;
+  OnboardingFormCard,
+  type ContinueAttempt,
+} from "./onboarding-form-card";
+import {
+  currentStepOf,
+  firstSpecialCategoryIndex,
+  stepIndexOf,
+  stepIndexOfForm,
+  stepsOf,
+} from "./onboarding-steps";
+import {
+  useOnboardingDraft,
+  type Consent,
+  type WizardDraft,
+} from "./use-onboarding-draft";
+import { useSendToCoach, type SubmissionRefusal } from "./use-send-to-coach";
 
 type OnboardingWizardProps = {
   page: OnboardingPage;
 };
 
-type ConsentKey = keyof OnboardingConsentInstants;
+type ContinueStage = "answering" | "ready-to-send" | "sending";
 
-const CONSENT_KEYS: Record<ConsentAgreement, ConsentKey> = {
-  specialCategory: "specialCategoryAt",
-  disclaimer: "disclaimerAt",
+const CONTINUE_LABELS: Record<ContinueStage, string> = {
+  answering: "Continue",
+  "ready-to-send": "Send to my coach",
+  sending: "Sending…",
 };
 
 const STEP_OFFSET_PX = 16;
 
 const STEP_DURATION_S = 0.2;
 
-const CONTINUE_LABEL = "Continue";
-
-const SEND_LABEL = "Send to my coach";
-
-const SENDING_LABEL = "Sending…";
-
-const NO_PROBLEMS: readonly SubmissionProblem[] = [];
-
-function stepsOf(
-  formIds: readonly OnboardingFormId[],
-): OnboardingFormDefinition[] {
-  return formIds.flatMap((formId) =>
-    ONBOARDING_FORMS.filter((form) => form.id === formId),
-  );
-}
-
-function wizardDraftOf({
-  answers,
-  consents,
-  currentFormIndex,
-}: WizardDraft): WizardDraft {
-  return { answers, consents, currentFormIndex };
-}
-
-function stepIndexOf(
-  steps: readonly OnboardingFormDefinition[],
-  currentFormIndex: number,
-): number {
-  return Math.min(currentFormIndex, steps.length - 1);
-}
-
-function saveRequestOf(
-  steps: readonly OnboardingFormDefinition[],
-  draft: WizardDraft,
-): SaveDraftRequest {
-  const step = steps[stepIndexOf(steps, draft.currentFormIndex)];
-
-  return { ...draft, formId: step.id };
-}
-
-function reachableAnswers(
-  answers: OnboardingAnswersByForm,
-): OnboardingAnswersByForm {
-  return Object.fromEntries(
-    ONBOARDING_FORMS.map((form) => [
-      form.id,
-      withoutUnreachable(form.fields, answers[form.id]),
-    ]),
-  ) as OnboardingAnswersByForm;
-}
-
-function firstSpecialCategoryIndex(
-  steps: readonly OnboardingFormDefinition[],
-): number {
-  return steps.findIndex((step) => step.sensitivity === "special-category");
-}
-
-function withConsent(
-  consents: OnboardingConsentInstants,
-  { agreement, agreed }: { agreement: ConsentAgreement; agreed: boolean },
-): OnboardingConsentInstants {
-  return {
-    ...consents,
-    [CONSENT_KEYS[agreement]]: agreed ? new Date().toISOString() : null,
-  };
-}
-
-function continueLabelOf({
+function continueStageOf({
   isLastStep,
   sending,
 }: {
   isLastStep: boolean;
   sending: boolean;
-}): string {
-  if (!isLastStep) return CONTINUE_LABEL;
+}): ContinueStage {
+  if (!isLastStep) return "answering";
 
-  return sending ? SENDING_LABEL : SEND_LABEL;
+  return sending ? "sending" : "ready-to-send";
 }
 
 export function OnboardingWizard({ page }: OnboardingWizardProps) {
-  const navigate = useNavigate();
   const reduceMotion = useClientReducedMotionPreference();
   const steps = useMemo(() => stepsOf(page.formIds), [page.formIds]);
-  const { forget, queue, resend, saveState, stop } = useDraftSync(
-    page.clientId,
-  );
-
-  const [draft, setDraft] = useState<WizardDraft>(() =>
-    wizardDraftOf(page.draft),
-  );
-  const [resumed, setResumed] = useState(page.resumed);
-  const [revision, setRevision] = useState(0);
+  const onboardingDraft = useOnboardingDraft({ page, steps });
+  const {
+    draft,
+    formResetKey,
+    grant,
+    latestDraft,
+    resumed,
+    saveDraft,
+    saveState,
+    withdraw,
+  } = onboardingDraft;
+  const {
+    answerProblems,
+    clearAnswerProblems,
+    clearSubmitProblem,
+    send,
+    sending,
+    submitProblem,
+  } = useSendToCoach({
+    draft: onboardingDraft,
+    onRefused: (refusal) => showRefusal(refusal),
+  });
   const [navigated, setNavigated] = useState(false);
-  const [problem, setProblem] = useState<string | null>(null);
   const [consentProblem, setConsentProblem] = useState<string | null>(null);
-  const [answerProblems, setAnswerProblems] =
-    useState<readonly SubmissionProblem[]>(NO_PROBLEMS);
-  const [sending, setSending] = useState(false);
-
-  const draftRef = useRef(draft);
   const focusPending = useRef(false);
 
-  const stepIndex = stepIndexOf(steps, draft.currentFormIndex);
-  const step = steps[stepIndex];
+  const stepIndex = stepIndexOf(steps, draft);
+  const step = currentStepOf(steps, draft);
   const isLastStep = stepIndex === steps.length - 1;
   const specialCategoryIndex = firstSpecialCategoryIndex(steps);
   const asksSpecialCategory = stepIndex === specialCategoryIndex;
@@ -177,31 +113,6 @@ export function OnboardingWizard({ page }: OnboardingWizardProps) {
     [answerProblems, step.id],
   );
 
-  const persist = useCallback(
-    (next: WizardDraft) => {
-      draftRef.current = next;
-      setDraft(next);
-      setProblem(null);
-      queue(saveRequestOf(steps, next));
-    },
-    [queue, steps],
-  );
-
-  useEffect(() => {
-    const pending = takePendingDraft({
-      clientId: page.clientId,
-      serverUpdatedAt: page.draft.updatedAt,
-    });
-    if (!pending) return;
-
-    const buffered = wizardDraftOf(pending.draft);
-    draftRef.current = buffered;
-    setDraft(buffered);
-    setRevision((current) => current + 1);
-    setResumed((current) => current || hasStartedAnswering(buffered.answers));
-    resend(pending);
-  }, [page.clientId, page.draft.updatedAt, resend]);
-
   const headingRef = useCallback((heading: HTMLHeadingElement | null) => {
     if (!heading || !focusPending.current) return;
     focusPending.current = false;
@@ -210,109 +121,73 @@ export function OnboardingWizard({ page }: OnboardingWizardProps) {
 
   const handleAnswers = useCallback(
     (answers: OnboardingFormAnswers) => {
-      const current = draftRef.current;
-      const formId = steps[stepIndexOf(steps, current.currentFormIndex)].id;
-
-      persist({
+      const current = latestDraft();
+      clearSubmitProblem();
+      saveDraft({
         ...current,
-        answers: { ...current.answers, [formId]: answers },
+        answers: {
+          ...current.answers,
+          [currentStepOf(steps, current).id]: answers,
+        },
       });
     },
-    [persist, steps],
+    [clearSubmitProblem, latestDraft, saveDraft, steps],
   );
 
-  const agree = (agreement: ConsentAgreement) => (agreed: boolean) => {
-    const current = draftRef.current;
-    setConsentProblem(null);
-    persist({
-      ...current,
-      consents: withConsent(current.consents, { agreement, agreed }),
-    });
-  };
+  function recordConsent(consent: Consent) {
+    return (agreed: boolean) => {
+      setConsentProblem(null);
+      clearSubmitProblem();
+      if (agreed) grant(consent);
+      else withdraw(consent);
+    };
+  }
 
-  const moveTo = (next: WizardDraft) => {
+  function moveTo(next: WizardDraft) {
     focusPending.current =
-      next.currentFormIndex !== draftRef.current.currentFormIndex;
+      next.currentFormIndex !== latestDraft().currentFormIndex;
     setNavigated(true);
     setConsentProblem(null);
-    setAnswerProblems(NO_PROBLEMS);
-    persist(next);
-  };
+    clearSubmitProblem();
+    saveDraft(next);
+  }
 
-  const goToStep = (index: number) => {
-    moveTo({ ...draftRef.current, currentFormIndex: index });
-  };
+  function goToStep(index: number) {
+    moveTo({ ...latestDraft(), currentFormIndex: index });
+  }
 
-  const consentMissing = (consents: OnboardingConsentInstants) => {
+  function showRefusal(refusal: SubmissionRefusal) {
+    if (refusal.kind === "invalid") {
+      goToStep(stepIndexOfForm(steps, refusal.problems[0].formId));
+      return;
+    }
+
+    goToStep(
+      refusal.consent === "special-category"
+        ? Math.max(0, specialCategoryIndex)
+        : steps.length - 1,
+    );
+    setConsentProblem(MISSING_CONSENT);
+  }
+
+  function consentMissing(consents: OnboardingConsentInstants) {
     if (asksSpecialCategory && consents.specialCategoryAt === null) {
       return true;
     }
 
     return isLastStep && consents.disclaimerAt === null;
-  };
+  }
 
-  const reviewConsent = () => {
-    setConsentProblem(
-      consentMissing(draftRef.current.consents) ? MISSING_CONSENT : null,
-    );
-  };
+  function continueFrom(attempt: ContinueAttempt) {
+    const current = latestDraft();
+    const missingConsent = consentMissing(current.consents);
+    setConsentProblem(missingConsent ? MISSING_CONSENT : null);
 
-  const sendToCoach = async (next: WizardDraft) => {
-    setSending(true);
-    setProblem(null);
-    stop();
-    draftRef.current = next;
-    setDraft(next);
-
-    const outcome = await submitOnboarding({
-      answers: reachableAnswers(next.answers),
-      consents: next.consents,
-    });
-
-    if (outcome.kind === "accepted" || outcome.kind === "already-submitted") {
-      forget();
-      void navigate(
-        outcome.kind === "accepted" ? outcome.redirectTo : CLIENT_PORTAL_PATH,
-      );
-      return;
-    }
-
-    setSending(false);
-
-    if (outcome.kind === "invalid") {
-      const [first] = outcome.problems;
-      goToStep(
-        Math.max(
-          0,
-          steps.findIndex((form) => form.id === first.formId),
-        ),
-      );
-      setAnswerProblems(outcome.problems);
-      return;
-    }
-
-    if (outcome.kind === "consent-missing") {
-      goToStep(
-        outcome.consent === "special-category"
-          ? Math.max(0, specialCategoryIndex)
-          : steps.length - 1,
-      );
-      setConsentProblem(MISSING_CONSENT);
-      return;
-    }
-
-    persist(next);
-    setProblem(SUBMIT_PROBLEM);
-  };
-
-  const continueFrom = (answers: OnboardingFormAnswers) => {
-    const current = draftRef.current;
-
-    if (sending || consentMissing(current.consents)) return;
+    if (attempt.kind === "incomplete" || missingConsent || sending) return;
 
     const next: WizardDraft = {
       ...current,
-      answers: { ...current.answers, [step.id]: answers },
+      answers: { ...current.answers, [step.id]: attempt.answers },
       currentFormIndex: isLastStep ? stepIndex : stepIndex + 1,
     };
 
@@ -324,15 +199,21 @@ export function OnboardingWizard({ page }: OnboardingWizardProps) {
       toast.success(SCREENING_CLEARED_MESSAGE);
     }
 
+    clearAnswerProblems();
+
     if (isLastStep) {
-      void sendToCoach(next);
+      void send(next);
       return;
     }
 
     moveTo(next);
-  };
+  }
 
-  const back = stepIndex === 0 ? null : () => goToStep(stepIndex - 1);
+  function back() {
+    clearAnswerProblems();
+    goToStep(stepIndex - 1);
+  }
+
   const offset = reduceMotion ? 0 : STEP_OFFSET_PX;
 
   return (
@@ -365,7 +246,7 @@ export function OnboardingWizard({ page }: OnboardingWizardProps) {
         )}
       </div>
 
-      {problem && <Alert className="mb-4">{problem}</Alert>}
+      {submitProblem && <Alert className="mb-4">{submitProblem}</Alert>}
 
       <AnimatePresence mode="wait">
         <motion.div
@@ -384,7 +265,7 @@ export function OnboardingWizard({ page }: OnboardingWizardProps) {
                 <OnboardingConsent
                   agreement="specialCategory"
                   checked={draft.consents.specialCategoryAt !== null}
-                  onChange={agree("specialCategory")}
+                  onChange={recordConsent("specialCategory")}
                   problem={consentProblem}
                   statement={resolveIntro(
                     SPECIAL_CATEGORY_CONSENT_COPY,
@@ -393,13 +274,14 @@ export function OnboardingWizard({ page }: OnboardingWizardProps) {
                 />
               ) : null
             }
-            continueLabel={continueLabelOf({ isLastStep, sending })}
+            continueLabel={
+              CONTINUE_LABELS[continueStageOf({ isLastStep, sending })]
+            }
             definition={cardDefinition}
             headingRef={headingRef}
             intro={resolveIntro(step.intro, page.gender)}
-            key={`${step.id}-${revision}`}
-            onAttempt={reviewConsent}
-            onBack={back}
+            key={`${step.id}-${formResetKey}`}
+            onBack={stepIndex === 0 ? null : back}
             onChange={handleAnswers}
             onContinue={continueFrom}
             problems={stepProblems}
@@ -414,22 +296,12 @@ export function OnboardingWizard({ page }: OnboardingWizardProps) {
               <>
                 <ProgressPhotoConsent
                   consented={draft.consents.progressPhotosAt !== null}
-                  onConsentChange={(consented) =>
-                    persist({
-                      ...draftRef.current,
-                      consents: {
-                        ...draftRef.current.consents,
-                        progressPhotosAt: consented
-                          ? new Date().toISOString()
-                          : null,
-                      },
-                    })
-                  }
+                  onConsentChange={recordConsent("progressPhotos")}
                 />
                 <OnboardingConsent
                   agreement="disclaimer"
                   checked={draft.consents.disclaimerAt !== null}
-                  onChange={agree("disclaimer")}
+                  onChange={recordConsent("disclaimer")}
                   problem={consentProblem}
                   statement={DISCLAIMER_ACKNOWLEDGEMENT}
                 />

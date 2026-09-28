@@ -1,11 +1,16 @@
 import {
   measurementSystemOf,
+  unitPreferenceOf,
   type MeasurementSystem,
 } from "@eli-coach-platform/domain/unit-preference";
-import { ChoiceGroup, ChoiceOption } from "@eli-coach-platform/ui/primitives";
+import {
+  ChoiceGroup,
+  ChoiceOption,
+  Legend,
+} from "@eli-coach-platform/ui/primitives";
 import { useId } from "react";
 
-import { ONBOARDING_LEGEND_CLASS } from "./onboarding-card";
+import { saveUnitPreference } from "./onboarding-api-client";
 import { useUnitPreference } from "./unit-preference-store";
 
 const LEGEND = "How do you measure?";
@@ -24,20 +29,22 @@ function isMeasurementSystem(value: string): value is MeasurementSystem {
 export function MeasurementSystemField() {
   const legendId = useId();
   const preference = useUnitPreference((state) => state.preference);
-  const chooseMeasurementSystem = useUnitPreference(
-    (state) => state.chooseMeasurementSystem,
-  );
+  const choosePreference = useUnitPreference((state) => state.choosePreference);
+
+  const chooseSystem = (system: MeasurementSystem) => {
+    const chosen = unitPreferenceOf(system);
+    choosePreference(chosen);
+    void saveUnitPreference(chosen);
+  };
 
   return (
     <fieldset>
-      <legend className={ONBOARDING_LEGEND_CLASS} id={legendId}>
-        {LEGEND}
-      </legend>
+      <Legend id={legendId}>{LEGEND}</Legend>
       <ChoiceGroup
         aria-labelledby={legendId}
         className="mt-2"
         onValueChange={(next) => {
-          if (isMeasurementSystem(next)) chooseMeasurementSystem(next);
+          if (isMeasurementSystem(next)) chooseSystem(next);
         }}
         value={measurementSystemOf(preference)}
       >

@@ -1,13 +1,16 @@
-import { cn } from "@eli-coach-platform/ui/lib";
-import { Checkbox } from "@eli-coach-platform/ui/primitives";
-import { useId } from "react";
+import {
+  Card,
+  CheckboxField,
+  LabelSuffix,
+} from "@eli-coach-platform/ui/primitives";
 import { Link } from "react-router";
 
-import { PROGRESS_PHOTO_CONSENT_COPY } from "~/features/client-onboarding/contracts/onboarding-copy";
+import {
+  OPTIONAL_SUFFIX,
+  PROGRESS_PHOTO_CONSENT_COPY,
+} from "~/features/client-onboarding/contracts/onboarding-copy";
 
-import { ONBOARDING_AGREEMENT_BOX_CLASS } from "./onboarding-card";
-
-export type ConsentAgreement = "specialCategory" | "disclaimer";
+type ConsentAgreement = "specialCategory" | "disclaimer";
 
 const PRIVACY_PATH = "/privacy";
 
@@ -19,8 +22,6 @@ const PARITY_HOOKS: Record<ConsentAgreement, string> = {
 };
 
 const PROGRESS_PHOTOS_HEADING = "Progress photos";
-
-const OPTIONAL_SUFFIX = "(optional)";
 
 type OnboardingConsentProps = {
   agreement: ConsentAgreement;
@@ -42,30 +43,17 @@ export function OnboardingConsent({
   problem,
   statement,
 }: OnboardingConsentProps) {
-  const checkboxId = useId();
-  const errorId = useId();
-
   return (
-    <div className="grid gap-2" data-parity={PARITY_HOOKS[agreement]}>
-      <div
-        className={cn("flex items-start gap-3", ONBOARDING_AGREEMENT_BOX_CLASS)}
-      >
-        <Checkbox
-          aria-describedby={problem ? errorId : undefined}
-          aria-invalid={problem !== null}
-          checked={checked}
-          className="mt-0.5"
-          id={checkboxId}
-          onCheckedChange={(next) => onChange(next === true)}
-        />
-        <label
-          className="text-sm leading-relaxed text-text-primary"
-          htmlFor={checkboxId}
-        >
-          {statement}
-        </label>
-      </div>
-
+    <CheckboxField
+      checked={checked}
+      data-parity={PARITY_HOOKS[agreement]}
+      error={problem ?? undefined}
+      errorRole="alert"
+      frame="inset"
+      label={statement}
+      layout="statement"
+      onCheckedChange={onChange}
+    >
       {agreement === "specialCategory" && (
         <Link
           className="mt-1 inline-flex text-sm font-medium text-primary underline-offset-4 hover:underline"
@@ -75,13 +63,7 @@ export function OnboardingConsent({
           {PRIVACY_LINK_LABEL}
         </Link>
       )}
-
-      {problem && (
-        <p className="text-sm text-feedback-danger" id={errorId} role="alert">
-          {problem}
-        </p>
-      )}
-    </div>
+    </CheckboxField>
   );
 }
 
@@ -89,31 +71,17 @@ export function ProgressPhotoConsent({
   consented,
   onConsentChange,
 }: ProgressPhotoConsentProps) {
-  const checkboxId = useId();
-
   return (
-    <div className={cn("grid gap-4", ONBOARDING_AGREEMENT_BOX_CLASS)}>
+    <Card className="grid gap-4" variant="inset">
       <p className="text-sm font-medium text-text-label">
-        {PROGRESS_PHOTOS_HEADING}{" "}
-        <span className="font-normal text-text-secondary">
-          {OPTIONAL_SUFFIX}
-        </span>
+        {PROGRESS_PHOTOS_HEADING} <LabelSuffix>{OPTIONAL_SUFFIX}</LabelSuffix>
       </p>
-
-      <div className="flex items-start gap-3">
-        <Checkbox
-          checked={consented}
-          className="mt-0.5"
-          id={checkboxId}
-          onCheckedChange={(next) => onConsentChange(next === true)}
-        />
-        <label
-          className="text-sm leading-relaxed text-text-primary"
-          htmlFor={checkboxId}
-        >
-          {PROGRESS_PHOTO_CONSENT_COPY}
-        </label>
-      </div>
-    </div>
+      <CheckboxField
+        checked={consented}
+        label={PROGRESS_PHOTO_CONSENT_COPY}
+        layout="statement"
+        onCheckedChange={onConsentChange}
+      />
+    </Card>
   );
 }

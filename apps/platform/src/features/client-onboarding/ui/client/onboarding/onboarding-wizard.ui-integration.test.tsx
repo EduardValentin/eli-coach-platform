@@ -88,7 +88,7 @@ type PageOptions = {
   manualScreening?: boolean;
   resumed?: boolean;
   unitPreference?: OnboardingPage["unitPreference"];
-  withAnswers?: boolean;
+  answers?: OnboardingPage["draft"]["answers"];
 };
 
 function emptyAnswers(): OnboardingPage["draft"]["answers"] {
@@ -122,7 +122,7 @@ function pageAt(
     gender,
     manualScreening: options.manualScreening ?? false,
     draft: {
-      answers: options.withAnswers === false ? emptyAnswers() : answeredDraft(),
+      answers: options.answers ?? answeredDraft(),
       currentFormIndex,
       consents: options.consents ?? GIVEN_CONSENTS,
       updatedAt: DRAFT_UPDATED_AT,
@@ -136,7 +136,7 @@ function pageAt(
 }
 
 function firstVisit(): OnboardingPage {
-  return pageAt(0, { consents: WITHHELD_CONSENTS, withAnswers: false });
+  return pageAt(0, { answers: emptyAnswers(), consents: WITHHELD_CONSENTS });
 }
 
 const server = setupServer();
@@ -325,7 +325,7 @@ describe("the onboarding", { timeout: 15_000 }, () => {
     await user.click(screen.getByRole("button", { name: "Continue" }));
 
     // assert
-    expect(screen.getByRole("alert")).toHaveTextContent(MISSING_CONSENT);
+    expect(await screen.findByRole("alert")).toHaveTextContent(MISSING_CONSENT);
     expect(screen.getByText("Step 2 of 5")).toBeVisible();
     expect(
       screen.getByRole("link", { name: "How I handle your data →" }),
@@ -394,31 +394,45 @@ describe("the onboarding", { timeout: 15_000 }, () => {
 
   it("asks how much she drinks and eats as a choice of amounts", async () => {
     // arrange
+    const user = userEvent.setup();
     await openOnboarding(pageAt(3));
-
-    // act
-    const water = screen.getByRole("combobox", {
-      name: /Water in a normal day/,
+    const meals = screen.getByRole("combobox", {
+      name: /How many main meals do you usually have/,
     });
 
+    // act
+    screen.getByRole("combobox", { name: /Water in a normal day/ }).focus();
+    await user.keyboard("{Enter}");
+
     // assert
-    expect(water).toBeVisible();
     expect(
-      screen.getByRole("combobox", {
-        name: /How many main meals do you usually have/,
-      }),
-    ).toBeVisible();
+      (await screen.findAllByRole("option")).map(
+        (option) => option.textContent,
+      ),
+    ).toEqual([
+      "Not more than 2 glasses",
+      "2–5 glasses",
+      "5–8 glasses",
+      "More than 8 glasses",
+    ]);
+    expect(meals).toHaveTextContent("Choose one");
   });
 
   it("offers a choice of more than two options as a select", async () => {
     // arrange
+    const user = userEvent.setup();
     await openOnboarding(firstVisit());
 
     // act
-    const control = screen.getByRole("combobox", { name: /Where you train/ });
+    screen.getByRole("combobox", { name: /Where you train/ }).focus();
+    await user.keyboard("{Enter}");
 
     // assert
-    expect(control).toBeVisible();
+    expect(
+      (await screen.findAllByRole("option")).map(
+        (option) => option.textContent,
+      ),
+    ).toEqual(["Home", "Gym", "Both"]);
   });
 
   it("asks for every number as a number, bounded by the range the schema sets", async () => {
@@ -550,13 +564,21 @@ describe("the onboarding", { timeout: 15_000 }, () => {
 
   it("marks the answers she can skip as optional", async () => {
     // arrange
-    await openOnboarding(pageAt(2));
+    await openOnboarding(firstVisit());
 
     // act
-    const optional = screen.getAllByText("(optional)");
+    const note = screen.getByRole("textbox", {
+      name: /Is there anything else I should know when putting your program together\?\s*\(optional\)/,
+    });
 
     // assert
-    expect(optional.length).toBeGreaterThan(0);
+    expect(note).toBeVisible();
+    expect(
+      screen.getByRole("combobox", { name: /Where you train$/ }),
+    ).toBeVisible();
+    expect(screen.getByLabelText(/Your weight/)).not.toHaveAccessibleName(
+      /\(optional\)/,
+    );
   });
 
   it("reassures her plainly when she has no regular cycle", async () => {

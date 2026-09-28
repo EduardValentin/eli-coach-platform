@@ -17,9 +17,9 @@ export type OnboardingValues = Record<string, OnboardingValue>;
 
 const MEASURE_KINDS: readonly string[] = ["weight", "height", "circumference"];
 
-const TICKED = "true";
+export const TICKED = "true";
 
-const UNTICKED = "false";
+export const UNTICKED = "false";
 
 export function measureKindOf(field: OnboardingField): MeasureKind | null {
   return MEASURE_KINDS.includes(field.kind)
@@ -43,17 +43,13 @@ export function isTicked(value: OnboardingValue | undefined): boolean {
   return asText(value) === TICKED;
 }
 
-export function tickedValue(ticked: boolean): string {
-  return ticked ? TICKED : UNTICKED;
-}
-
 function answerToValue(
   field: OnboardingField,
   answer: OnboardingAnswer | undefined,
   units: MeasureUnits,
 ): OnboardingValue {
   if (field.kind === "chips") return Array.isArray(answer) ? answer : [];
-  if (field.kind === "checkbox") return tickedValue(answer === true);
+  if (field.kind === "checkbox") return answer === true ? TICKED : UNTICKED;
   if (answer === undefined || answer === null) return "";
 
   const measureKind = measureKindOf(field);

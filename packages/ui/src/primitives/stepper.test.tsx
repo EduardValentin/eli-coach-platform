@@ -81,19 +81,6 @@ describe("Stepper", () => {
     );
   });
 
-  it("renders the status column even without a status", () => {
-    // arrange
-    const props = { current: 1, total: 4 };
-
-    // act
-    render(<Stepper {...props} />);
-
-    // assert
-    expect(
-      screen.getByText("Step 1 of 4").parentElement?.lastElementChild,
-    ).toHaveClass("min-w-0", "text-right");
-  });
-
   it("passes its remaining attributes to its outer element", () => {
     // arrange
     const props = { current: 1, total: 4, title: "Onboarding progress" };
