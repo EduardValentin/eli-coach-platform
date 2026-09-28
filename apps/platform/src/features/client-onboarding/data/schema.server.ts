@@ -1,5 +1,8 @@
 import { appSchema } from "@eli-coach-platform/db";
-import type { OnboardingAnswersByForm } from "@eli-coach-platform/domain/client-onboarding";
+import type {
+  OnboardingAnswersByForm,
+  OnboardingFormId,
+} from "@eli-coach-platform/domain/client-onboarding";
 import {
   HEIGHT_UNITS,
   WEIGHT_UNITS,
@@ -11,6 +14,7 @@ import {
   integer,
   jsonb,
   numeric,
+  text,
   timestamp,
   uniqueIndex,
   uuid,
@@ -66,6 +70,39 @@ export const clientOnboardingSubmissionsTable = appSchema.table(
   (table) => [
     uniqueIndex(clientOnboardingConstraints.submissionPerClient).on(
       table.clientId,
+    ),
+  ],
+);
+
+export const clientOnboardingReviewsTable = appSchema.table(
+  "client_onboarding_reviews",
+  {
+    clientId: uuid("client_id")
+      .primaryKey()
+      .references(() => clientsTable.id),
+    openedAt: timestamp("opened_at", { withTimezone: true }),
+    approvedAt: timestamp("approved_at", { withTimezone: true }),
+  },
+);
+
+export const clientOnboardingDetailRequestsTable = appSchema.table(
+  "client_onboarding_detail_requests",
+  {
+    id: uuid("id").primaryKey(),
+    clientId: uuid("client_id")
+      .notNull()
+      .references(() => clientsTable.id),
+    questionIds: jsonb("question_ids")
+      .$type<{ formId: OnboardingFormId; fieldId: string }[]>()
+      .notNull(),
+    note: text("note").notNull(),
+    askedAt: timestamp("asked_at", { withTimezone: true }).notNull(),
+    answeredAt: timestamp("answered_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("client_onboarding_detail_requests_client_id_asked_at_idx").on(
+      table.clientId,
+      table.askedAt,
     ),
   ],
 );
