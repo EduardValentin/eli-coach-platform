@@ -1,0 +1,5 @@
+[
+  { "click": "[data-parity=\"tab-more\"]" },
+  { "waitFor": "[role=\"dialog\"] [data-parity=\"sheet-handle\"]" },
+  { "wait": 1200 }
+]
