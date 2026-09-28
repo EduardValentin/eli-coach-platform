@@ -18,6 +18,7 @@ import type { RosterClient } from "~/features/coaching-sales/contracts/coach-cli
 import { coachClientPath } from "~/features/coaching-sales/contracts/paths";
 import { useCalendarDayTimeZone } from "~/features/coaching-sales/ui/shared/calendar-day-format";
 
+import { ABSENT_VALUE } from "./absent-value";
 import { ClientStatusBadge } from "./client-status-badge";
 import {
   formatJoinDate,
@@ -27,7 +28,6 @@ import {
   type RosterSortKey,
 } from "./roster-listing";
 
-const ABSENT_CELL = "—";
 const COLUMN_COUNT = 5;
 
 const SORTABLE_COLUMNS: readonly { key: RosterSortKey; label: string }[] = [
@@ -139,7 +139,7 @@ function ClientRow({ client, position, timeZone }: ClientRowProps) {
         data-parity={cellParity("bundle")}
       >
         {client.bundleMonths === null
-          ? ABSENT_CELL
+          ? ABSENT_VALUE
           : bundleLengthLabel(client.bundleMonths)}
       </TableCell>
       <TableCell
@@ -147,7 +147,7 @@ function ClientRow({ client, position, timeZone }: ClientRowProps) {
         data-parity={cellParity("joined")}
       >
         {client.paidAt === null
-          ? ABSENT_CELL
+          ? ABSENT_VALUE
           : formatJoinDate(client.paidAt, timeZone)}
       </TableCell>
       <TableCell>

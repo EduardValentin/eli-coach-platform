@@ -8,7 +8,7 @@ import {
   useCalendarDayTimeZone,
 } from "~/features/coaching-sales/ui/shared/calendar-day-format";
 
-const ABSENT = "—";
+import { ABSENT_VALUE } from "./absent-value";
 
 const IMMEDIATE_START_LABEL = "Immediate start";
 const RENEWS_BEFORE_PROGRAM_LABEL = "Once her program starts";
@@ -69,7 +69,7 @@ export function SubscriptionSummary({
         <Reading
           as="dl-item"
           label="Start program"
-          value={ABSENT}
+          value={ABSENT_VALUE}
           valueParity="subscription-program-start"
         />
         <Reading

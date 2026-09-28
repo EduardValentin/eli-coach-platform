@@ -12,7 +12,7 @@ import type { CoachClient } from "~/features/coaching-sales/contracts/coach-clie
 import { shortPricingTierLabel } from "~/features/coaching-sales/ui/coach/call-sales/pricing-tier-label";
 import { useCalendarDayTimeZone } from "~/features/coaching-sales/ui/shared/calendar-day-format";
 
-const ABSENT = "—";
+import { ABSENT_VALUE } from "./absent-value";
 
 type ClientProfileBlockProps = {
   client: Pick<CoachClient, "profile" | "subscription">;
@@ -20,7 +20,7 @@ type ClientProfileBlockProps = {
 
 function PhoneLink({ phone }: { phone: string | null }) {
   if (!phone) {
-    return <>{ABSENT}</>;
+    return <>{ABSENT_VALUE}</>;
   }
 
   return (
@@ -88,7 +88,9 @@ export function ClientProfileBlock({ client }: ClientProfileBlockProps) {
           as="dl-item"
           label="Pricing tier"
           value={
-            subscription ? shortPricingTierLabel(subscription.tier) : ABSENT
+            subscription
+              ? shortPricingTierLabel(subscription.tier)
+              : ABSENT_VALUE
           }
           valueParity="profile-tier"
         />
@@ -96,7 +98,7 @@ export function ClientProfileBlock({ client }: ClientProfileBlockProps) {
           as="dl-item"
           className="col-span-full"
           label="Booking notes"
-          value={profile.bookingNotes ?? ABSENT}
+          value={profile.bookingNotes ?? ABSENT_VALUE}
           valueParity="profile-notes"
         />
       </dl>
