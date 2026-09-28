@@ -25,7 +25,7 @@ This document is the source of product behavior, business rules, and vocabulary.
 
 **Visitor.** A woman discovering the coach through the public site. She can browse the landing page, blog, pricing, and store, acquire store products with her email, and book a free assessment call with the coach. She cannot create an account. She can see 1-on-1 coaching bundles but cannot check out for coaching without a payment link.
 
-**Client.** An invited, paying woman with an active coaching subscription. In the MVP she uses the client portal to complete onboarding, manage check-ins, track her menstrual cycle, and maintain her profile and subscription. Post-MVP adds assigned training and nutritional programs, workout logging, and in-app messaging. Clients with a regular cycle and clients without an active cycle (amenorrhea, post-menopause, hormonal contraception) receive the same level of personalized coaching.
+**Client.** An invited, paying woman with an active coaching subscription. In the MVP she uses the client portal to submit her onboarding, manage check-ins, track her menstrual cycle, and maintain her profile and subscription. Post-MVP adds assigned training and nutritional programs, workout logging, and in-app messaging. Clients with a regular cycle and clients without an active cycle (amenorrhea, post-menopause, hormonal contraception) receive the same level of personalized coaching.
 
 **Coach.** The trainer running the business. In the MVP she uses the coach portal to manage assessment calls, onboard clients, manage check-ins, and review client profiles and cycle data. Post-MVP adds training and nutritional program creation and assignment, in-app messaging, and workout review.
 
@@ -59,7 +59,7 @@ The product is modelled first in a reference prototype application before it is 
 
 1. **Accounts exist only by invitation.** Nobody can sign up on her own. The coach's account is provisioned by the operator; a client's account is created from the invitation her payment triggers. Sign-in uses an email one-time code; creating an account from an invitation needs no code.
 2. **Client accounts are invite-only.** A completed payment creates the client and sends her invitation. The invitation is valid for 30 days and can be used once. An expired, used, or unknown invitation link shows the same unavailable page, whichever the reason.
-3. **Client portal access requires invitation, an active subscription, and completed self-onboarding.** A client signing in before completing onboarding is sent to the onboarding wizard and cannot reach the portal until it is complete.
+3. **Client portal access requires invitation, an active subscription, and submitted onboarding.** A client signing in before her onboarding is submitted is held on the welcome screen or her onboarding and cannot reach the rest of the portal until she submits it.
 4. **Coach portal access is restricted to the coach role.** Signed-in accounts without the required role see a clear denied-access page.
 5. **Every account has exactly one role, client or coach.** There is no account without a portal.
 
@@ -133,7 +133,7 @@ A **Check-in** has a client, a coach, a date and time, a type (`ad-hoc` or `recu
 
 ## Menstrual Cycle
 
-50. **Every client has a menstrual cycle profile**, created during self-onboarding and visible to the coach: regularity (regular or irregular), average cycle length, average period length, conditions (PCOS, Endometriosis, PMDD, Heavy periods, Amenorrhea, Fibroids), and common symptoms.
+50. **Every female client has a menstrual cycle profile**, created during self-onboarding and visible to the coach. It records whether she currently gets a period and how regular it is, her contraception, whether she is pregnant, postpartum, or breastfeeding, and whether she is in perimenopause or menopause. When she gets a period, it records her average cycle length, or her shortest and longest cycle when it is irregular, and the day her last period started; she may say she is not sure of her cycle length or her last period start. It also records any gynecological condition a doctor has diagnosed, the symptoms that come back regularly, and whether she tracks her cycle in an app. The coach's program adapts to her cycle phases only when she gets a period, is not on the combined pill, is not pregnant, postpartum, or breastfeeding, and is not in perimenopause or menopause; otherwise it adapts to the symptoms she reports. When her contraception is one the product does not classify, the coach decides how her program adapts.
 51. **Current cycle phase is derived** from the last recorded period start date and the client's average cycle length, and shown on the client dashboard and the coach's client detail page.
 52. **Clients without an active cycle are fully supported.** Cycle tracking and cycle-driven adjustments are gracefully skipped or replaced with non-cycle-based coaching.
 
@@ -212,11 +212,15 @@ Per Business Rule 53.
 ### Client self-onboarding
 
 6. Until her onboarding is submitted, the client portal holds her on the welcome screen or the onboarding, and the public navigation offers to finish her onboarding.
-7. Step 1, Basic information: the client reviews and corrects the name, age, and gender the coach pre-filled.
-8. Step 2, Cycle information: regularity, average cycle length, average period length.
-9. Step 3, Conditions and symptoms: any applicable conditions and common symptoms.
-10. Step 4, Notes: optional notes for the coach.
-11. On completion the menstrual cycle profile is saved and the client lands on the portal dashboard.
+7. The onboarding has five parts: her goal and her week, safety questions, her cycle and hormonal health, food and daily life, and her measurements. A client whose gender is male or prefer not to say has four parts; the cycle part is skipped.
+8. She completes the onboarding in her own time. Every change is saved to her account as she goes, and on any device she resumes where she left off. While her connection is down, her unsent changes stay on her device and she is told they are not saved yet; they are saved once her connection returns.
+9. She chooses her measurement units once, in the first part, and every screen shows her weights, height, and body measurements in those units. Values are kept in metric whichever units she chooses.
+10. Her health and cycle answers need her explicit consent: the safety part asks for it first, and she cannot continue without giving it.
+11. The safety questions are the PAR-Q+ questions followed by a declaration, and all of them are required. A client younger than 15 or older than 69 answers none of them; the coach screens her directly. When every answer is no, she is told she is clear to continue.
+12. The last part records her body measurements and her progress-photo consent. She can send her onboarding only after acknowledging the disclaimer.
+13. Sending freezes her answers as her submission and records her measurements, with the weight from the first part, as her first dated measurement entry. She moves to "Sent to your coach", and the dashboard opens showing that status. When her start choice is to start after the 14-day withdrawal period, the dashboard also tells her the date the coach starts working on her program. An onboarding is sent once; a second send is refused.
+14. Once her onboarding is submitted, the welcome screen and the onboarding are no longer reachable, and the public navigation offers the Client Portal.
+15. The coach reads her submission.
 
 ## 4. Client Portal (`/client`)
 
