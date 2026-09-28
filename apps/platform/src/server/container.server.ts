@@ -137,12 +137,17 @@ export function createPlatformContainer(options: {
     publicAppUrl: environment.PUBLIC_APP_URL,
   });
   const clientOnboarding = composeClientOnboardingFeature({
+    appBasePath: environment.APP_BASE_PATH,
     clock,
+    contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
     database: database.client,
     incidents,
     onboardingClients: coachingSales.handles.onboardingClients,
+    onboardingReviewStamps: coachingSales.handles.onboardingReviewStamps,
     onboardingSubmissionStamps:
       coachingSales.handles.onboardingSubmissionStamps,
+    productEmail,
+    publicAppUrl: environment.PUBLIC_APP_URL,
   });
   const platform = composePlatformFeature({
     app: environment,

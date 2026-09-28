@@ -7,7 +7,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import type {
   OnboardingConsentInstants,
-  OnboardingPage,
+  OnboardingWizardPage,
   SaveDraftRequest,
 } from "~/features/client-onboarding/contracts/onboarding";
 
@@ -27,7 +27,7 @@ const CONSENT_KEYS: Record<Consent, keyof OnboardingConsentInstants> = {
 };
 
 type OnboardingDraftOptions = {
-  page: OnboardingPage;
+  page: OnboardingWizardPage;
   steps: readonly OnboardingFormDefinition[];
 };
 

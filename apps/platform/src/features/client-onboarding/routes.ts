@@ -24,4 +24,20 @@ export const clientOnboardingApiRoutes = [
     CLIENT_ONBOARDING_API_PATHS.unitPreference.slice(1),
     "./api/client/unit-preference.ts",
   ),
+  route(
+    CLIENT_ONBOARDING_API_PATHS.detailAnswers.slice(1),
+    "./api/client/detail-answers.ts",
+  ),
+  route(
+    CLIENT_ONBOARDING_API_PATHS.reviewOpenings.slice(1),
+    "./api/coach/review-openings.ts",
+  ),
+  route(
+    CLIENT_ONBOARDING_API_PATHS.detailRequests.slice(1),
+    "./api/coach/detail-requests.ts",
+  ),
+  route(
+    CLIENT_ONBOARDING_API_PATHS.approvals.slice(1),
+    "./api/coach/approvals.ts",
+  ),
 ];

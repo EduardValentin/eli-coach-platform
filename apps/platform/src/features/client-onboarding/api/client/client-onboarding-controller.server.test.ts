@@ -3,8 +3,11 @@ import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
 import {
   ClientOnboarding,
   emptyDraft,
+  type AnswerOnboardingDetailsUseCase,
   type OnboardingDraft,
+  type OnboardingSubmission,
   type ReadClientOnboardingUseCase,
+  type ReadOpenDetailRequestUseCase,
   type SaveOnboardingDraftUseCase,
   type SubmitOnboardingUseCase,
 } from "@eli-coach-platform/domain/client-onboarding";
@@ -50,6 +53,22 @@ type SubmitResult = Awaited<ReturnType<SubmitOnboardingUseCase["execute"]>>;
 type SaveUnitPreferenceResult = Awaited<
   ReturnType<SaveUnitPreferenceUseCase["execute"]>
 >;
+type OpenRequestResult = Awaited<
+  ReturnType<ReadOpenDetailRequestUseCase["execute"]>
+>;
+type AnswerResult = Awaited<
+  ReturnType<AnswerOnboardingDetailsUseCase["execute"]>
+>;
+
+const OPEN_REQUEST: NonNullable<OpenRequestResult> = {
+  requestId: "0b5f2f0e-3a1c-4c47-9a57-8f2d7f1e6a01",
+  note: "Your weight and check-in day look off.",
+  fields: [
+    { formId: "goal-availability", fieldId: "weight" },
+    { formId: "nutrition-lifestyle", fieldId: "checkInDay" },
+    { formId: "nutrition-lifestyle", fieldId: "checkInChannel" },
+  ],
+};
 
 describe("ClientOnboardingController load", () => {
   it.each<[VisitorGender, string[]]>([
@@ -85,6 +104,7 @@ describe("ClientOnboardingController load", () => {
 
       // assert
       expect(page).toEqual({
+        mode: "wizard",
         clientId: CLIENT_ID,
         formIds,
         gender,
@@ -164,7 +184,7 @@ describe("ClientOnboardingController load", () => {
     const page = await controller.loadOnboarding(clientArgs());
 
     // assert
-    expect(page.resumed).toBe(false);
+    expect(page).toMatchObject({ mode: "wizard", resumed: false });
   });
 
   it("asks for manual screening when her age falls outside the screening range", async () => {
@@ -177,7 +197,37 @@ describe("ClientOnboardingController load", () => {
     const page = await controller.loadOnboarding(clientArgs());
 
     // assert
-    expect(page.manualScreening).toBe(true);
+    expect(page).toMatchObject({ mode: "wizard", manualScreening: true });
+  });
+
+  it("hands her only the asked questions with her submitted answers while a request is open", async () => {
+    // arrange
+    const { controller, readOpenDetailRequest } = createController({
+      reading: readingOf({
+        gender: "female",
+        submission: submissionWith({
+          "goal-availability": { weight: 66.1, height: 165 },
+          "nutrition-lifestyle": { checkInDay: "Monday", checkInChannel: null },
+        }),
+        unitPreference: { weightUnit: "lb", heightUnit: "ft-in" },
+      }),
+      openRequest: OPEN_REQUEST,
+    });
+
+    // act
+    const page = await controller.loadOnboarding(clientArgs());
+
+    // assert
+    expect(page).toEqual({
+      mode: "answer",
+      request: { note: OPEN_REQUEST.note, fields: OPEN_REQUEST.fields },
+      answers: {
+        "goal-availability": { weight: 66.1 },
+        "nutrition-lifestyle": { checkInDay: "Monday", checkInChannel: null },
+      },
+      unitPreference: { weightUnit: "lb", heightUnit: "ft-in" },
+    });
+    expect(readOpenDetailRequest).toHaveBeenCalledWith("user_ana");
   });
 
   it("answers not found to a client account with no client record", async () => {
@@ -480,6 +530,152 @@ describe("ClientOnboardingController submit", () => {
   });
 });
 
+describe("ClientOnboardingController open request", () => {
+  it("hands her dashboard the note of her open request", async () => {
+    // arrange
+    const { controller } = createController({ openRequest: OPEN_REQUEST });
+
+    // act
+    const summary = await controller.loadOpenRequest(clientArgs());
+
+    // assert
+    expect(summary).toEqual({ note: OPEN_REQUEST.note });
+  });
+
+  it("hands her dashboard nothing while no request is open", async () => {
+    // arrange
+    const { controller } = createController({ openRequest: null });
+
+    // act
+    const summary = await controller.loadOpenRequest(clientArgs());
+
+    // assert
+    expect(summary).toBeNull();
+  });
+
+  it("refuses the coach without reading any request", async () => {
+    // arrange
+    const { controller, readOpenDetailRequest } = createController({
+      openRequest: OPEN_REQUEST,
+    });
+
+    // act
+    const thrown = await captureThrown(() =>
+      controller.loadOpenRequest(clientArgs({ session: COACH_SESSION })),
+    );
+
+    // assert
+    expect((thrown as Response).status).toBe(403);
+    expect(readOpenDetailRequest).not.toHaveBeenCalled();
+  });
+});
+
+describe("ClientOnboardingController answer details", () => {
+  it("sends her back to her portal once her answers are in", async () => {
+    // arrange
+    const { controller, answerOnboardingDetails } = createController({
+      answerResult: { status: "answered" },
+    });
+    const answers = { "goal-availability": { weight: 64.5 } };
+
+    // act
+    const response = await controller.answerDetails(
+      clientArgs({ method: "POST", body: JSON.stringify({ answers }) }),
+    );
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ redirectTo: "/client" });
+    expect(answerOnboardingDetails).toHaveBeenCalledWith({
+      authSubjectId: "user_ana",
+      answers,
+    });
+  });
+
+  it("names every problem with her answers by form and field", async () => {
+    // arrange
+    const problem = {
+      formId: "goal-availability" as const,
+      fieldId: "height",
+      message: "This question was not asked.",
+    };
+    const { controller } = createController({
+      answerResult: { status: "invalid", problems: [problem] },
+    });
+
+    // act
+    const response = await controller.answerDetails(
+      clientArgs({
+        method: "POST",
+        body: JSON.stringify({
+          answers: { "goal-availability": { height: 170 } },
+        }),
+      }),
+    );
+
+    // assert
+    expect(response.status).toBe(422);
+    expect(await response.json()).toEqual({ problems: [problem] });
+  });
+
+  it.each([
+    ["no-open-request" as const, 409],
+    ["not-on-journey" as const, 404],
+  ])("refuses her answers when %s", async (status, httpStatus) => {
+    // arrange
+    const { controller } = createController({ answerResult: { status } });
+
+    // act
+    const response = await controller.answerDetails(
+      clientArgs({
+        method: "POST",
+        body: JSON.stringify({ answers: {} }),
+      }),
+    );
+
+    // assert
+    expect(response.status).toBe(httpStatus);
+    expect(await response.json()).toEqual({ error: status });
+  });
+
+  it("refuses answers it cannot read without answering anything", async () => {
+    // arrange
+    const { controller, answerOnboardingDetails } = createController({});
+
+    // act
+    const response = await controller.answerDetails(
+      clientArgs({
+        method: "POST",
+        body: JSON.stringify({ answers: { "not-a-form": { weight: 64 } } }),
+      }),
+    );
+
+    // assert
+    expect(response.status).toBe(400);
+    expect(answerOnboardingDetails).not.toHaveBeenCalled();
+  });
+
+  it("refuses the coach without answering anything", async () => {
+    // arrange
+    const { controller, answerOnboardingDetails } = createController({});
+
+    // act
+    const thrown = await captureThrown(() =>
+      controller.answerDetails(
+        clientArgs({
+          method: "POST",
+          body: JSON.stringify({ answers: {} }),
+          session: COACH_SESSION,
+        }),
+      ),
+    );
+
+    // assert
+    expect((thrown as Response).status).toBe(403);
+    expect(answerOnboardingDetails).not.toHaveBeenCalled();
+  });
+});
+
 describe("ClientOnboardingController save unit preference", () => {
   it("saves the units she chose and answers no content", async () => {
     // arrange
@@ -568,6 +764,7 @@ function readingOf(options: {
   gender: VisitorGender;
   dateOfBirth?: string;
   draft?: OnboardingDraft;
+  submission?: OnboardingSubmission;
   unitPreference?: NonNullable<ReadResult>["unitPreference"];
 }): NonNullable<ReadResult> {
   return {
@@ -578,9 +775,23 @@ function readingOf(options: {
         dateOfBirth: options.dateOfBirth ?? "1994-03-14",
       },
       draft: options.draft ?? null,
-      submission: null,
+      submission: options.submission ?? null,
     }),
     unitPreference: options.unitPreference ?? UnitPreference.metric(),
+  };
+}
+
+function submissionWith(
+  answers: Partial<OnboardingSubmission["answers"]>,
+): OnboardingSubmission {
+  return {
+    answers: { ...emptyDraft(NOW).answers, ...answers },
+    consents: {
+      specialCategoryAt: new Date(CONSENTED_AT),
+      disclaimerAt: new Date(CONSENTED_AT),
+      progressPhotosAt: null,
+    },
+    submittedAt: NOW,
   };
 }
 
@@ -615,6 +826,8 @@ function submitRequest() {
 }
 
 function createController(options: {
+  answerResult?: AnswerResult;
+  openRequest?: OpenRequestResult;
   reading?: ReadResult;
   saveDraftResult?: SaveDraftResult;
   submitResult?: SubmitResult;
@@ -630,11 +843,23 @@ function createController(options: {
   const saveUnitPreference = vi
     .fn()
     .mockResolvedValue(options.unitPreferenceResult);
+  const readOpenDetailRequest = vi
+    .fn()
+    .mockResolvedValue(options.openRequest ?? null);
+  const answerOnboardingDetails = vi
+    .fn()
+    .mockResolvedValue(options.answerResult);
   const controller = new ClientOnboardingController({
+    answerOnboardingDetails: {
+      execute: answerOnboardingDetails,
+    } as unknown as AnswerOnboardingDetailsUseCase,
     clock: { now: () => NOW },
     readClientOnboarding: {
       execute: readClientOnboarding,
     } as unknown as ReadClientOnboardingUseCase,
+    readOpenDetailRequest: {
+      execute: readOpenDetailRequest,
+    } as unknown as ReadOpenDetailRequestUseCase,
     saveOnboardingDraft: {
       execute: saveOnboardingDraft,
     } as unknown as SaveOnboardingDraftUseCase,
@@ -647,8 +872,10 @@ function createController(options: {
   });
 
   return {
+    answerOnboardingDetails,
     controller,
     readClientOnboarding,
+    readOpenDetailRequest,
     saveOnboardingDraft,
     saveUnitPreference,
     submitOnboarding,

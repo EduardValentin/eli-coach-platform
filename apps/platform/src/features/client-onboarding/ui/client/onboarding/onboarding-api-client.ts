@@ -6,6 +6,7 @@ import {
   missingConsentSchema,
   submissionAcceptedSchema,
   submissionProblemsSchema,
+  type AnswerDetailsRequest,
   type SaveDraftRequest,
   type SubmissionProblem,
   type SubmitRequest,
@@ -27,6 +28,11 @@ const UNIT_PREFERENCE_API_URL = joinBasePath(
   CLIENT_ONBOARDING_API_PATHS.unitPreference,
 );
 
+const DETAIL_ANSWERS_API_URL = joinBasePath(
+  import.meta.env.BASE_URL,
+  CLIENT_ONBOARDING_API_PATHS.detailAnswers,
+);
+
 const NOT_ON_JOURNEY_STATUS = 404;
 const ALREADY_SUBMITTED_STATUS = 409;
 const UNPROCESSABLE_STATUS = 422;
@@ -38,14 +44,22 @@ const REFUSED_STATUSES: readonly number[] = [
 
 export type SaveOutcome = "saved" | "refused" | "failed";
 
+type Accepted = { kind: "accepted"; redirectTo: string };
+
+type Invalid = { kind: "invalid"; problems: SubmissionProblem[] };
+
+type Failed = { kind: "failed" };
+
 export type SubmissionOutcome =
-  | { kind: "accepted"; redirectTo: string }
-  | { kind: "invalid"; problems: SubmissionProblem[] }
+  | Accepted
+  | Invalid
   | { kind: "consent-missing"; consent: OnboardingConsent }
   | { kind: "already-submitted" }
-  | { kind: "failed" };
+  | Failed;
 
-const SUBMISSION_FAILED: SubmissionOutcome = { kind: "failed" };
+export type AnswerDetailsOutcome = Accepted | Invalid | Failed;
+
+const SUBMISSION_FAILED: Failed = { kind: "failed" };
 
 type JsonRequest = { method: "POST" | "PUT"; body: unknown };
 
@@ -98,7 +112,7 @@ export async function saveUnitPreference(
   );
 }
 
-function acceptedOutcome(body: unknown): SubmissionOutcome {
+function acceptedOutcome(body: unknown): Accepted | Failed {
   const accepted = submissionAcceptedSchema.safeParse(body);
 
   return accepted.success
@@ -106,12 +120,18 @@ function acceptedOutcome(body: unknown): SubmissionOutcome {
     : SUBMISSION_FAILED;
 }
 
-function unprocessableSubmissionOutcome(body: unknown): SubmissionOutcome {
+function problemsOutcome(body: unknown): Invalid | Failed {
   const problems = submissionProblemsSchema.safeParse(body);
 
-  if (problems.success) {
-    return { kind: "invalid", problems: problems.data.problems };
-  }
+  return problems.success
+    ? { kind: "invalid", problems: problems.data.problems }
+    : SUBMISSION_FAILED;
+}
+
+function unprocessableSubmissionOutcome(body: unknown): SubmissionOutcome {
+  const problems = problemsOutcome(body);
+
+  if (problems.kind === "invalid") return problems;
 
   const missingConsent = missingConsentSchema.safeParse(body);
 
@@ -135,6 +155,23 @@ export async function submitOnboarding(
   if (response.ok) return acceptedOutcome(await readJson(response));
   if (response.status === UNPROCESSABLE_STATUS) {
     return unprocessableSubmissionOutcome(await readJson(response));
+  }
+
+  return SUBMISSION_FAILED;
+}
+
+export async function answerDetails(
+  request: AnswerDetailsRequest,
+): Promise<AnswerDetailsOutcome> {
+  const response = await sendJson(DETAIL_ANSWERS_API_URL, {
+    body: request,
+    method: "POST",
+  });
+
+  if (!response) return SUBMISSION_FAILED;
+  if (response.ok) return acceptedOutcome(await readJson(response));
+  if (response.status === UNPROCESSABLE_STATUS) {
+    return problemsOutcome(await readJson(response));
   }
 
   return SUBMISSION_FAILED;

@@ -1,10 +1,17 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
 import {
+  AnswerOnboardingDetailsUseCase,
+  ApproveOnboardingAnswersUseCase,
+  OpenOnboardingReviewUseCase,
   ReadClientOnboardingUseCase,
+  ReadOnboardingReviewUseCase,
+  ReadOpenDetailRequestUseCase,
+  RequestOnboardingDetailsUseCase,
   SaveOnboardingDraftUseCase,
   SubmitOnboardingUseCase,
   type ClientOnboardingIncidents,
   type OnboardingClients,
+  type OnboardingReviewStamps,
   type OnboardingSubmissionStamps,
 } from "@eli-coach-platform/domain/client-onboarding";
 import type { Clock } from "@eli-coach-platform/domain/shared";
@@ -12,21 +19,33 @@ import {
   SaveUnitPreferenceUseCase,
   type UnitPreferenceClients,
 } from "@eli-coach-platform/domain/unit-preference";
+import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 
 import { ClientOnboardingController } from "~/features/client-onboarding/api/client/client-onboarding-controller.server";
+import { OnboardingReviewController } from "~/features/client-onboarding/api/coach/onboarding-review-controller.server";
+import { PostgresClientMeasurements } from "~/features/client-onboarding/data/measurements/client-measurements-reader.server";
 import { PostgresClientOnboardings } from "~/features/client-onboarding/data/onboardings/client-onboardings-repository.server";
+import { RandomDetailRequestIds } from "~/features/client-onboarding/data/reviews/detail-request-ids.server";
+import { PostgresOnboardingReviews } from "~/features/client-onboarding/data/reviews/onboarding-reviews-repository.server";
 import { PostgresClientUnitPreferences } from "~/features/client-onboarding/data/unit-preferences/client-unit-preferences-repository.server";
+import { EmailOnboardingDetailsNotifications } from "~/features/client-onboarding/email/email-onboarding-details-notifications.server";
 
 export type ClientOnboardingFeature = {
   controller: ClientOnboardingController;
+  coachReview: OnboardingReviewController;
 };
 
 type ClientOnboardingFeatureHandles = {
+  appBasePath: string;
   clock: Clock;
+  contactEmail: string;
   database: DatabaseClient;
   incidents: ClientOnboardingIncidents;
   onboardingClients: OnboardingClients & UnitPreferenceClients;
+  onboardingReviewStamps: OnboardingReviewStamps;
   onboardingSubmissionStamps: OnboardingSubmissionStamps;
+  productEmail: ProductEmail;
+  publicAppUrl: string;
 };
 
 export function composeClientOnboardingFeature(
@@ -35,15 +54,24 @@ export function composeClientOnboardingFeature(
   const { clock, incidents, onboardingClients: clients } = handles;
   const onboardings = new PostgresClientOnboardings(handles.database);
   const unitPreferences = new PostgresClientUnitPreferences(handles.database);
+  const reviews = new PostgresOnboardingReviews(handles.database);
+  const stamps = handles.onboardingReviewStamps;
+  const reviewPorts = { clients, onboardings, reviews, stamps, incidents };
 
   return {
     controller: new ClientOnboardingController({
+      answerOnboardingDetails: new AnswerOnboardingDetailsUseCase({
+        ...reviewPorts,
+        clock,
+        unitPreferences,
+      }),
       clock,
       readClientOnboarding: new ReadClientOnboardingUseCase({
         clients,
         onboardings,
         unitPreferences,
       }),
+      readOpenDetailRequest: new ReadOpenDetailRequestUseCase(reviewPorts),
       saveOnboardingDraft: new SaveOnboardingDraftUseCase({
         changes: onboardings,
         clients,
@@ -64,6 +92,34 @@ export function composeClientOnboardingFeature(
         onboardings,
         stamps: handles.onboardingSubmissionStamps,
         unitPreferences,
+      }),
+    }),
+    coachReview: new OnboardingReviewController({
+      approveOnboardingAnswers: new ApproveOnboardingAnswersUseCase({
+        ...reviewPorts,
+        clock,
+      }),
+      openOnboardingReview: new OpenOnboardingReviewUseCase({
+        ...reviewPorts,
+        clock,
+      }),
+      readOnboardingReview: new ReadOnboardingReviewUseCase({
+        ...reviewPorts,
+        measurements: new PostgresClientMeasurements(handles.database),
+      }),
+      requestOnboardingDetails: new RequestOnboardingDetailsUseCase({
+        ...reviewPorts,
+        clock,
+        notifications: new EmailOnboardingDetailsNotifications(
+          handles.productEmail,
+          {
+            appBasePath: handles.appBasePath,
+            clock,
+            contactEmail: handles.contactEmail,
+            publicAppUrl: handles.publicAppUrl,
+          },
+        ),
+        requestIds: new RandomDetailRequestIds(),
       }),
     }),
   };
