@@ -3,6 +3,7 @@ import {
   ClientJourney,
   type MarkWelcomeSeenUseCase,
   type ReadClientJourneyUseCase,
+  type ReadProgramStatusUseCase,
 } from "@eli-coach-platform/domain/client-journey";
 import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
 import { describe, expect, it, vi } from "vitest";
@@ -192,6 +193,72 @@ describe("ClientJourneyController mark welcome seen", () => {
   });
 });
 
+describe("ClientJourneyController program status", () => {
+  it.each([
+    [
+      "with the day the work starts",
+      new Date("2026-10-10T10:00:00.000Z"),
+      "2026-10-10T10:00:00.000Z",
+    ],
+    ["with no start day", null, null],
+  ])(
+    "answers her submitted onboarding %s",
+    async (_label, workStartsOn, expectedWorkStartsOn) => {
+      // arrange
+      const { controller, readProgramStatus } = createController({
+        programStatus: {
+          kind: "submitted",
+          submittedAt: new Date("2026-09-28T10:00:00.000Z"),
+          workStartsOn,
+        },
+      });
+
+      // act
+      const status = await controller.loadProgramStatus(clientArgs());
+
+      // assert
+      expect(status).toEqual({
+        kind: "submitted",
+        submittedAt: "2026-09-28T10:00:00.000Z",
+        workStartsOn: expectedWorkStartsOn,
+      });
+      expect(readProgramStatus).toHaveBeenCalledWith("user_ana");
+    },
+  );
+
+  it("answers no status before she has sent her onboarding", async () => {
+    // arrange
+    const { controller } = createController({ programStatus: null });
+
+    // act
+    const status = await controller.loadProgramStatus(clientArgs());
+
+    // assert
+    expect(status).toBeNull();
+  });
+
+  it("refuses the coach without reading any status", async () => {
+    // arrange
+    const { controller, readProgramStatus } = createController({
+      programStatus: null,
+    });
+
+    // act
+    const thrown = await captureThrown(() =>
+      controller.loadProgramStatus(
+        clientArgs({
+          account: { ...CLIENT, role: "COACH" },
+          kind: "authenticated",
+        }),
+      ),
+    );
+
+    // assert
+    expect((thrown as Response).status).toBe(403);
+    expect(readProgramStatus).not.toHaveBeenCalled();
+  });
+});
+
 function journeyOf(options: { gender: VisitorGender }): ClientJourney {
   return ClientJourney.from({
     clientId: "client_ana",
@@ -199,15 +266,20 @@ function journeyOf(options: { gender: VisitorGender }): ClientJourney {
     gender: options.gender,
     lastName: "Popescu",
     welcomeSeenAt: null,
+    onboardingSubmittedAt: null,
   });
 }
 
 function createController(options: {
   journey?: ClientJourney | null;
   markResult?: Awaited<ReturnType<MarkWelcomeSeenUseCase["execute"]>>;
+  programStatus?: Awaited<ReturnType<ReadProgramStatusUseCase["execute"]>>;
 }) {
   const readClientJourney = vi.fn().mockResolvedValue(options.journey ?? null);
   const markWelcomeSeen = vi.fn().mockResolvedValue(options.markResult);
+  const readProgramStatus = vi
+    .fn()
+    .mockResolvedValue(options.programStatus ?? null);
   const controller = new ClientJourneyController({
     markWelcomeSeen: {
       execute: markWelcomeSeen,
@@ -215,9 +287,12 @@ function createController(options: {
     readClientJourney: {
       execute: readClientJourney,
     } as unknown as ReadClientJourneyUseCase,
+    readProgramStatus: {
+      execute: readProgramStatus,
+    } as unknown as ReadProgramStatusUseCase,
   });
 
-  return { controller, markWelcomeSeen, readClientJourney };
+  return { controller, markWelcomeSeen, readClientJourney, readProgramStatus };
 }
 
 function clientArgs(

@@ -3,10 +3,7 @@ import type { ClientJourneyStep } from "@eli-coach-platform/domain/client-journe
 
 import type { PortalDestination } from "~/features/accounts/contracts/account";
 import { PORTAL_PATH_BY_ROLE } from "~/features/accounts/contracts/paths";
-import {
-  clientJourneyDestination,
-  FINISH_ONBOARDING_LABEL,
-} from "~/features/coaching-sales/contracts/client-journey";
+import { clientJourneyPortalLink } from "~/features/coaching-sales/contracts/client-journey";
 
 const PORTAL_DESTINATION_BY_ROLE: Record<AccountRole, PortalDestination> = {
   CLIENT: { href: PORTAL_PATH_BY_ROLE.CLIENT, label: "Client Portal" },
@@ -21,12 +18,11 @@ type SignedInPosition = {
 export function resolvePortalDestination(
   position: SignedInPosition,
 ): PortalDestination {
-  if (position.role === "CLIENT" && position.journeyStep) {
-    return {
-      href: clientJourneyDestination(position.journeyStep),
-      label: FINISH_ONBOARDING_LABEL,
-    };
+  const roleDestination = PORTAL_DESTINATION_BY_ROLE[position.role];
+
+  if (position.role !== "CLIENT" || !position.journeyStep) {
+    return roleDestination;
   }
 
-  return PORTAL_DESTINATION_BY_ROLE[position.role];
+  return clientJourneyPortalLink(position.journeyStep) ?? roleDestination;
 }

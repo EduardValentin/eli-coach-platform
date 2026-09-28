@@ -3,6 +3,10 @@ import type {
   DatabaseTransaction,
 } from "@eli-coach-platform/db";
 import type {
+  ClientSubscriptionStart,
+  ClientSubscriptionStarts,
+} from "@eli-coach-platform/domain/client-journey";
+import type {
   CoachingPurchase,
   CoachingPurchaseOutcome,
   CoachingPurchases,
@@ -36,7 +40,7 @@ const SALES_STATE_PRECEDENCE: readonly CallSalesState[] = [
 ];
 
 export class PostgresCoachingPurchases
-  implements CoachingPurchases, CallSalesStates
+  implements CoachingPurchases, CallSalesStates, ClientSubscriptionStarts
 {
   constructor(private readonly options: PostgresCoachingPurchasesOptions) {}
 
@@ -91,6 +95,26 @@ export class PostgresCoachingPurchases
       );
 
     return salesStatesOf(callIds, advancedStates);
+  }
+
+  async findOpenForClient(
+    clientId: string,
+  ): Promise<ClientSubscriptionStart | null> {
+    const [start] = await this.options.database
+      .select({
+        startChoice: coachingSubscriptionsTable.startChoice,
+        purchasedAt: coachingSubscriptionsTable.paidAt,
+      })
+      .from(coachingSubscriptionsTable)
+      .where(
+        and(
+          eq(coachingSubscriptionsTable.clientId, clientId),
+          sql`${coachingSubscriptionsTable.status} <> 'ended'`,
+        ),
+      )
+      .limit(1);
+
+    return start ?? null;
   }
 }
 

@@ -10,6 +10,7 @@ import {
 import {
   MarkWelcomeSeenUseCase,
   ReadClientJourneyUseCase,
+  ReadProgramStatusUseCase,
 } from "@eli-coach-platform/domain/client-journey";
 import {
   ReadPricingTiersUseCase,
@@ -145,6 +146,10 @@ export function composeCoachingSalesFeature(
   const clientJourneyUseCases = {
     markWelcomeSeen: new MarkWelcomeSeenUseCase({ clock, journeys }),
     readClientJourney: new ReadClientJourneyUseCase({ journeys }),
+    readProgramStatus: new ReadProgramStatusUseCase({
+      journeys,
+      subscriptionStarts: purchases,
+    }),
   };
 
   const paidClientAdmission: PaidClientAdmission = {

@@ -1,4 +1,7 @@
-import { buildRedirectPath } from "@eli-coach-platform/config";
+import {
+  buildRedirectPath,
+  normalizeBasePath,
+} from "@eli-coach-platform/config";
 import type {
   ClientJourney,
   ClientJourneyStep,
@@ -7,10 +10,7 @@ import { redirect, type RouterContextProvider } from "react-router";
 
 import { accountsContext } from "~/features/accounts/server/guards/accounts-context.server";
 import { sessionContext } from "~/features/accounts/server/guards/session-context.server";
-import {
-  clientJourneyDestination,
-  clientJourneyOpenPaths,
-} from "~/features/coaching-sales/contracts/client-journey";
+import { clientJourneyRedirect } from "~/features/coaching-sales/contracts/client-journey";
 
 import { clientJourneyContext } from "./client-journey-context.server";
 import { coachingSalesContext } from "./coaching-sales-context.server";
@@ -38,21 +38,28 @@ export async function requireClientJourneyStep(
     return;
   }
 
-  const step = journey.step();
   const { appBasePath } = args.context.get(accountsContext).portal;
-  const requestedPath = new URL(args.request.url).pathname;
-  const isOpenAtStep = clientJourneyOpenPaths(step).some(
-    (path) => buildRedirectPath(appBasePath, path) === requestedPath,
+  const redirectTo = clientJourneyRedirect(
+    journey.step(),
+    appPathOf(new URL(args.request.url).pathname, appBasePath),
   );
 
-  if (isOpenAtStep) {
+  if (!redirectTo) {
     return;
   }
 
   // Middleware redirects skip the router's basename, so the target carries it.
-  throw redirect(
-    buildRedirectPath(appBasePath, clientJourneyDestination(step)),
-  );
+  throw redirect(buildRedirectPath(appBasePath, redirectTo));
+}
+
+function appPathOf(requestedPathname: string, appBasePath: string): string {
+  const basePath = normalizeBasePath(appBasePath);
+
+  if (!requestedPathname.startsWith(`${basePath}/`)) {
+    return requestedPathname;
+  }
+
+  return requestedPathname.slice(basePath.length);
 }
 
 function handOverClientJourney(

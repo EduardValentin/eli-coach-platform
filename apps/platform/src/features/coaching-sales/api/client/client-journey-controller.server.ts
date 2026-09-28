@@ -1,6 +1,7 @@
 import type {
   MarkWelcomeSeenUseCase,
   ReadClientJourneyUseCase,
+  ReadProgramStatusUseCase,
 } from "@eli-coach-platform/domain/client-journey";
 import {
   redirect,
@@ -11,8 +12,10 @@ import {
 import { requirePortalAccess } from "~/features/accounts/server/guards/require-portal-access.server";
 import {
   clientIdentitySchema,
+  programStatusSchema,
   welcomePageSchema,
   type ClientIdentity,
+  type ProgramStatus,
   type WelcomePage,
 } from "~/features/coaching-sales/contracts/client-journey";
 import { CLIENT_ONBOARDING_PATH } from "~/features/coaching-sales/contracts/paths";
@@ -21,6 +24,7 @@ import { clientJourneyContext } from "~/features/coaching-sales/server/guards/cl
 type ClientJourneyControllerOptions = {
   markWelcomeSeen: MarkWelcomeSeenUseCase;
   readClientJourney: ReadClientJourneyUseCase;
+  readProgramStatus: ReadProgramStatusUseCase;
 };
 
 export class ClientJourneyController {
@@ -52,6 +56,25 @@ export class ClientJourneyController {
     return clientIdentitySchema.parse({
       firstName: journey.firstName,
       lastName: journey.lastName,
+    });
+  }
+
+  async loadProgramStatus(
+    args: LoaderFunctionArgs,
+  ): Promise<ProgramStatus | null> {
+    const client = requirePortalAccess(args, { role: "CLIENT" });
+    const status = await this.options.readProgramStatus.execute(
+      client.authSubjectId,
+    );
+
+    if (!status) {
+      return null;
+    }
+
+    return programStatusSchema.parse({
+      kind: status.kind,
+      submittedAt: status.submittedAt.toISOString(),
+      workStartsOn: status.workStartsOn?.toISOString() ?? null,
     });
   }
 

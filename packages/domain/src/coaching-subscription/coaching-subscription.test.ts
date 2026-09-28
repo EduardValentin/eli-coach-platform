@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   CoachingSubscription,
+  programWorkStart,
   START_CHOICES,
   withdrawalDeadline,
   type CheckoutCompletion,
@@ -67,6 +68,36 @@ describe("withdrawalDeadline", () => {
 
     // assert
     expect(deadline).toEqual(new Date("2026-10-10T10:00:00.000Z"));
+  });
+});
+
+describe("programWorkStart", () => {
+  it("starts the work once the withdrawal window closes when she chose to wait it out", () => {
+    // arrange
+    const purchasedAt = new Date("2026-09-26T10:00:00.000Z");
+
+    // act
+    const workStartsOn = programWorkStart({
+      startChoice: "waiting",
+      purchasedAt,
+    });
+
+    // assert
+    expect(workStartsOn).toEqual(new Date("2026-10-10T10:00:00.000Z"));
+  });
+
+  it("names no later start when she chose to start immediately", () => {
+    // arrange
+    const purchasedAt = new Date("2026-09-26T10:00:00.000Z");
+
+    // act
+    const workStartsOn = programWorkStart({
+      startChoice: "immediate",
+      purchasedAt,
+    });
+
+    // assert
+    expect(workStartsOn).toBeNull();
   });
 });
 

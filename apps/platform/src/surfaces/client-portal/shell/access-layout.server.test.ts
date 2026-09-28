@@ -94,6 +94,7 @@ describe("client portal access middleware", () => {
         gender: "female",
         lastName: "Popescu",
         welcomeSeenAt: null,
+        onboardingSubmittedAt: null,
       }),
       session: {
         account: buildAccount({ role: "CLIENT" }),
@@ -124,6 +125,7 @@ describe("client portal access middleware", () => {
         gender: "female",
         lastName: "Popescu",
         welcomeSeenAt: null,
+        onboardingSubmittedAt: null,
       }),
       session: {
         account: buildAccount({ role: "CLIENT" }),
