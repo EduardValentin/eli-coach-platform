@@ -640,7 +640,7 @@
     position: absolute;
     left: var(--space-5);
     top: var(--space-5);
-    z-index: 60;
+    z-index: 65;
     border-radius: calc(infinity * 1px);
     background: var(--surface-base);
     border: 1px solid var(--border-subtle);
