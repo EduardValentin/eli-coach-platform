@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { ComponentPropsWithoutRef, ReactNode } from "react";
 
 import { cn } from "../lib/cn";
 import { cardVariants } from "../primitives/card";
@@ -6,7 +6,12 @@ import { VALUE_LG_CLASS, WIDGET_TITLE_CLASS } from "../lib/typography";
 
 type WidgetDensity = "default" | "compact";
 
-type PortalWidgetProps = {
+type SectionProps = Omit<
+  ComponentPropsWithoutRef<"section">,
+  "aria-labelledby" | "children" | "className" | "title"
+>;
+
+type PortalWidgetProps = SectionProps & {
   title: ReactNode;
   icon?: ReactNode;
   titleAdornment?: ReactNode;
@@ -64,9 +69,11 @@ export function PortalWidget({
   footer,
   className,
   children,
+  ...sectionProps
 }: PortalWidgetProps) {
   return (
     <section
+      {...sectionProps}
       aria-labelledby={headingId}
       className={cn(PANEL_CLASS[density], className)}
     >

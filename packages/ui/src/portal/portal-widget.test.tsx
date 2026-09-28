@@ -157,4 +157,22 @@ describe("PortalWidget", () => {
       "text-text-secondary",
     );
   });
+
+  it("carries a data attribute such as its parity root on its own section", () => {
+    // arrange
+    // act
+    render(
+      <PortalWidget
+        data-parity-root="ClientProfileBlock"
+        headingId="profile-heading"
+        title="Profile"
+      />,
+    );
+
+    // assert
+    expect(screen.getByRole("region", { name: "Profile" })).toHaveAttribute(
+      "data-parity-root",
+      "ClientProfileBlock",
+    );
+  });
 });
