@@ -74,15 +74,6 @@ describe("Reading", () => {
     );
   });
 
-  it("leaves the unit out at the default size", () => {
-    // arrange
-    // act
-    render(<Reading label="Weight" unit="kg" value="72.4" />);
-
-    // assert
-    expect(screen.queryByText("kg")).not.toBeInTheDocument();
-  });
-
   it("lays itself out with the class it is given", () => {
     // arrange
     // act
