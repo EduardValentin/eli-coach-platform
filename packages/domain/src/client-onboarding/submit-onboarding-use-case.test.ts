@@ -346,6 +346,47 @@ describe("SubmitOnboardingUseCase", () => {
     });
   });
 
+  it("stamps her journey at her concurrent submission's time, not now, when it was recorded meanwhile", async () => {
+    // arrange
+    const stamps = createStamps();
+    const incidents = createIncidents();
+    const concurrentSubmittedAt = new Date("2026-09-28T09:55:00.000Z");
+    const onboardings: ClientOnboardingSource = {
+      findByClientId: vi
+        .fn()
+        .mockResolvedValueOnce({ draft: null, submission: null })
+        .mockResolvedValueOnce({
+          draft: null,
+          submission: {
+            answers: completeAnswers(),
+            consents: givenConsents(),
+            submittedAt: concurrentSubmittedAt,
+          },
+        }),
+    };
+    const useCase = createUseCase({
+      onboardings,
+      changes: createChanges("already-submitted"),
+      stamps,
+      incidents,
+    });
+
+    // act
+    const result = await useCase.execute({
+      authSubjectId: "user_radu",
+      answers: completeAnswers(),
+      consents: givenConsents(),
+    });
+
+    // assert
+    expect(result).toEqual({ status: "already-submitted" });
+    expect(onboardings.findByClientId).toHaveBeenCalledTimes(2);
+    expect(stamps.recordOnboardingSubmitted).toHaveBeenCalledWith({
+      clientId: "client-1",
+      at: concurrentSubmittedAt,
+    });
+  });
+
   it("submits nothing for a subject bound to no client", async () => {
     // arrange
     const onboardings = createOnboardings();

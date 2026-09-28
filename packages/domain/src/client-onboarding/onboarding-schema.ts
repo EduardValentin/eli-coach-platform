@@ -90,11 +90,10 @@ export function resolveIntro(
   intro: OnboardingFormIntro,
   gender: VisitorGender,
 ): string {
-  return typeof intro === "string"
-    ? intro
-    : gender === "female"
-      ? intro.female
-      : intro.other;
+  if (typeof intro === "string") return intro;
+  if (gender === "female") return intro.female;
+
+  return intro.other;
 }
 
 const YES_NO_OPTIONS: readonly OnboardingOption[] = [

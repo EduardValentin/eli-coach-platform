@@ -28,13 +28,14 @@ export type ScreeningOutcome =
   "manual" | "cleared" | "needs-review" | "pending";
 
 export function ageOn(dateOfBirth: string, now: Date): number {
-  const dob = new Date(dateOfBirth);
-  let age = now.getUTCFullYear() - dob.getUTCFullYear();
-  const monthDiff = now.getUTCMonth() - dob.getUTCMonth();
+  const birthDate = new Date(dateOfBirth);
+  const yearsSinceBirthYear = now.getUTCFullYear() - birthDate.getUTCFullYear();
+  const monthsSinceBirthMonth = now.getUTCMonth() - birthDate.getUTCMonth();
   const beforeBirthdayThisYear =
-    monthDiff < 0 || (monthDiff === 0 && now.getUTCDate() < dob.getUTCDate());
+    monthsSinceBirthMonth < 0 ||
+    (monthsSinceBirthMonth === 0 && now.getUTCDate() < birthDate.getUTCDate());
 
-  return beforeBirthdayThisYear ? age - 1 : age;
+  return beforeBirthdayThisYear ? yearsSinceBirthYear - 1 : yearsSinceBirthYear;
 }
 
 export function needsManualScreening(dateOfBirth: string, now: Date): boolean {

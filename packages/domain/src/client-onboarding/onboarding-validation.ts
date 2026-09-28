@@ -167,25 +167,38 @@ function dateProblem(
     : null;
 }
 
-function numberProblem(
-  field: OnboardingField,
-  answer: OnboardingAnswer,
-  answers: OnboardingFormAnswers,
-  units: MeasureUnits,
-): string | null {
+type NumericFieldProblemInput = {
+  field: OnboardingField;
+  answers: OnboardingFormAnswers;
+  units: MeasureUnits;
+};
+
+function amountProblem({
+  field,
+  answers,
+  units,
+}: NumericFieldProblemInput): string | null {
+  const answer = answers[field.id];
   if (typeof answer !== "number") return amountMessage(field);
 
   const entered = displayAmount(field, answer, units);
 
-  if (field.range) {
-    const bounds = displayRange(field, field.range, units);
-    if (entered < bounds.min || entered > bounds.max)
-      return rangeMessage(field, field.range, units);
-  } else if (entered <= 0) {
-    return amountMessage(field);
-  }
+  if (!field.range) return entered > 0 ? null : amountMessage(field);
 
-  if (!field.relativeTo) return null;
+  const bounds = displayRange(field, field.range, units);
+
+  return entered < bounds.min || entered > bounds.max
+    ? rangeMessage(field, field.range, units)
+    : null;
+}
+
+function goalSpreadProblem({
+  field,
+  answers,
+  units,
+}: NumericFieldProblemInput): string | null {
+  const answer = answers[field.id];
+  if (typeof answer !== "number" || !field.relativeTo) return null;
 
   const reference = answers[field.relativeTo.id];
   if (typeof reference !== "number") return null;
@@ -193,6 +206,7 @@ function numberProblem(
   const referenceDisplay = displayAmount(field, reference, units);
   if (referenceDisplay <= 0) return null;
 
+  const entered = displayAmount(field, answer, units);
   const allowed = displayAmount(field, field.relativeTo.spread, units);
 
   return Math.abs(entered - referenceDisplay) > allowed
@@ -228,7 +242,13 @@ export function fieldProblem(
   if (field.kind === "date") return dateProblem(field, answer, options.today);
   if (!isNumericField(field)) return null;
 
-  return numberProblem(field, answer, answers, options.units);
+  const numericInput: NumericFieldProblemInput = {
+    field,
+    answers,
+    units: options.units,
+  };
+
+  return amountProblem(numericInput) ?? goalSpreadProblem(numericInput);
 }
 
 export function formProblems(

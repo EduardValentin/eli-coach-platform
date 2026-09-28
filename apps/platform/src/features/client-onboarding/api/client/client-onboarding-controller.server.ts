@@ -1,6 +1,6 @@
 import {
   emptyDraft,
-  type OnboardingAnswersByForm,
+  hasStartedAnswering,
   type OnboardingConsents,
   type ReadClientOnboardingUseCase,
   type SaveOnboardingDraftUseCase,
@@ -25,7 +25,7 @@ import {
   submissionAcceptedSchema,
   submissionProblemsSchema,
   submitRequestSchema,
-  unitPreferenceRequestSchema,
+  unitPreferenceSchema,
   type OnboardingConsentInstants,
   type OnboardingPage,
 } from "~/features/client-onboarding/contracts/onboarding";
@@ -77,7 +77,7 @@ export class ClientOnboardingController {
         updatedAt: draft.updatedAt.toISOString(),
       },
       unitPreference,
-      resumed: hasAnyAnswer(draft.answers),
+      resumed: hasStartedAnswering(draft.answers),
     });
   }
 
@@ -148,7 +148,7 @@ export class ClientOnboardingController {
 
   async saveUnitPreference(args: ActionFunctionArgs): Promise<Response> {
     const client = requireApiAccount(args, { role: "CLIENT" });
-    const request = unitPreferenceRequestSchema.safeParse(
+    const request = unitPreferenceSchema.safeParse(
       await readJsonRequestBody(
         args.request,
         UNIT_PREFERENCE_REQUEST_MAX_BYTES,
@@ -187,17 +187,6 @@ async function readJsonRequestBody(
   } catch {
     return undefined;
   }
-}
-
-function hasAnyAnswer(answers: OnboardingAnswersByForm): boolean {
-  return Object.values(answers).some((formAnswers) =>
-    Object.values(formAnswers).some(
-      (answer) =>
-        answer !== null &&
-        answer !== "" &&
-        !(Array.isArray(answer) && answer.length === 0),
-    ),
-  );
 }
 
 function consentInstantsOf(

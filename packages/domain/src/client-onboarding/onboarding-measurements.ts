@@ -9,11 +9,11 @@ export const MEASUREMENT_FIELD_IDS = {
   arm: "arm",
 } as const;
 
-function reading(
-  answers: OnboardingAnswersByForm[keyof OnboardingAnswersByForm],
-  key: string,
+function numericAnswer(
+  formAnswers: OnboardingAnswersByForm[keyof OnboardingAnswersByForm],
+  fieldId: string,
 ): number | undefined {
-  const answer = answers[key];
+  const answer = formAnswers[fieldId];
 
   return typeof answer === "number" ? answer : undefined;
 }
@@ -26,14 +26,14 @@ export function submittedMeasurementEntry(
 
   return measurementEntryOf(
     {
-      weightKg: reading(
+      weightKg: numericAnswer(
         answers["goal-availability"],
         MEASUREMENT_FIELD_IDS.weight,
       ),
-      waistCm: reading(measurements, MEASUREMENT_FIELD_IDS.waist),
-      hipsCm: reading(measurements, MEASUREMENT_FIELD_IDS.hips),
-      thighCm: reading(measurements, MEASUREMENT_FIELD_IDS.thigh),
-      armCm: reading(measurements, MEASUREMENT_FIELD_IDS.arm),
+      waistCm: numericAnswer(measurements, MEASUREMENT_FIELD_IDS.waist),
+      hipsCm: numericAnswer(measurements, MEASUREMENT_FIELD_IDS.hips),
+      thighCm: numericAnswer(measurements, MEASUREMENT_FIELD_IDS.thigh),
+      armCm: numericAnswer(measurements, MEASUREMENT_FIELD_IDS.arm),
     },
     recordedAt,
   );

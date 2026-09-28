@@ -2,7 +2,10 @@ export { ClientOnboarding, type OnboardingConsent } from "./client-onboarding";
 export { type ClientOnboardingChanges } from "./client-onboarding-changes";
 export { type ClientOnboardingIncidents } from "./client-onboarding-incidents";
 export { type ClientOnboardingSource } from "./client-onboarding-source";
-export { type OnboardingAnswersByForm } from "./onboarding-answers";
+export {
+  hasStartedAnswering,
+  type OnboardingAnswersByForm,
+} from "./onboarding-answers";
 export {
   type OnboardingClient,
   type OnboardingClients,

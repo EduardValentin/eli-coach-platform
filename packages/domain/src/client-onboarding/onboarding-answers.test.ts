@@ -2,9 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import {
   applyExclusiveOptions,
+  emptyAnswers,
+  hasStartedAnswering,
   isFieldReachable,
   reachableFields,
   withoutUnreachable,
+  type OnboardingAnswersByForm,
   type OnboardingFormAnswers,
 } from "./onboarding-answers";
 import { findOnboardingField, ONBOARDING_FORMS } from "./onboarding-schema";
@@ -170,5 +173,60 @@ describe("applyExclusiveOptions", () => {
 
     // assert
     expect(selection).toEqual(["Breastfeeding"]);
+  });
+});
+
+describe("hasStartedAnswering", () => {
+  it("is false for a fresh set of empty answers", () => {
+    // arrange
+    const answers = emptyAnswers();
+
+    // act
+    const started = hasStartedAnswering(answers);
+
+    // assert
+    expect(started).toBe(false);
+  });
+
+  it("is false when every given answer was cleared", () => {
+    // arrange
+    const answers: OnboardingAnswersByForm = {
+      ...emptyAnswers(),
+      "goal-availability": { primaryGoal: null, notes: "", days: [] },
+    };
+
+    // act
+    const started = hasStartedAnswering(answers);
+
+    // assert
+    expect(started).toBe(false);
+  });
+
+  it("is false when a text answer is only whitespace", () => {
+    // arrange
+    const answers: OnboardingAnswersByForm = {
+      ...emptyAnswers(),
+      "goal-availability": { coachExpectations: "   " },
+    };
+
+    // act
+    const started = hasStartedAnswering(answers);
+
+    // assert
+    expect(started).toBe(false);
+  });
+
+  it("is true once any form holds a real answer", () => {
+    // arrange
+    const answers: OnboardingAnswersByForm = {
+      ...emptyAnswers(),
+      "goal-availability": { primaryGoal: "Lose fat" },
+    };
+
+    // act
+    const started = hasStartedAnswering(answers);
+
+    // assert
+    expect(started).toBe(true);
   });
 });

@@ -9,7 +9,7 @@ import {
   submissionAcceptedSchema,
   submissionProblemsSchema,
   submitRequestSchema,
-  unitPreferenceRequestSchema,
+  unitPreferenceSchema,
 } from "./onboarding";
 
 const CONSENTED_AT = "2026-09-28T10:00:00.000Z";
@@ -191,13 +191,13 @@ describe("submitRequestSchema", () => {
   });
 });
 
-describe("unitPreferenceRequestSchema", () => {
+describe("unitPreferenceSchema", () => {
   it("accepts pounds with feet and inches", () => {
     // arrange
     const request = { weightUnit: "lb", heightUnit: "ft-in" };
 
     // act
-    const parsed = unitPreferenceRequestSchema.safeParse(request);
+    const parsed = unitPreferenceSchema.safeParse(request);
 
     // assert
     expect(parsed.success).toBe(true);
@@ -208,7 +208,7 @@ describe("unitPreferenceRequestSchema", () => {
     const request = { weightUnit: "stone", heightUnit: "cm" };
 
     // act
-    const parsed = unitPreferenceRequestSchema.safeParse(request);
+    const parsed = unitPreferenceSchema.safeParse(request);
 
     // assert
     expect(parsed.success).toBe(false);

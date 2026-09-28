@@ -54,7 +54,7 @@ export const submitRequestSchema = z.object({
   consents: consentsSchema,
 });
 
-export const unitPreferenceRequestSchema = z.object({
+export const unitPreferenceSchema = z.object({
   weightUnit: z.enum(WEIGHT_UNITS),
   heightUnit: z.enum(HEIGHT_UNITS),
 });
@@ -70,7 +70,7 @@ export const onboardingPageSchema = z.object({
     consents: consentsSchema,
     updatedAt: z.iso.datetime(),
   }),
-  unitPreference: unitPreferenceRequestSchema,
+  unitPreference: unitPreferenceSchema,
   resumed: z.boolean(),
 });
 

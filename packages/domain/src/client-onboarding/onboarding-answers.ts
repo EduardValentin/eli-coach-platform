@@ -38,6 +38,12 @@ function isAnswered(answer: OnboardingAnswer | undefined): boolean {
   return true;
 }
 
+export function hasStartedAnswering(answers: OnboardingAnswersByForm): boolean {
+  return Object.values(answers).some((formAnswers) =>
+    Object.values(formAnswers).some((answer) => isAnswered(answer)),
+  );
+}
+
 function matchesCondition(
   condition: NonNullable<OnboardingField["revealedBy"]>,
   answers: OnboardingFormAnswers,

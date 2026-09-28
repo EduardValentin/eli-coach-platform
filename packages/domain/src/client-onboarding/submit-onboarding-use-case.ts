@@ -71,7 +71,7 @@ export class SubmitOnboardingUseCase {
     });
 
     if (outcome.status === "already-submitted") {
-      return this.restamp({
+      return this.refuseAlreadySubmitted({
         clientId: client.clientId,
         at: onboarding.submission?.submittedAt ?? now,
       });
@@ -93,7 +93,10 @@ export class SubmitOnboardingUseCase {
     });
 
     if (recorded === "already-submitted") {
-      return this.restamp({ clientId: client.clientId, at: now });
+      return this.refuseAlreadySubmitted({
+        clientId: client.clientId,
+        at: await this.concurrentSubmissionTime(client.clientId, now),
+      });
     }
 
     const { submittedAt } = outcome.submission;
@@ -113,7 +116,16 @@ export class SubmitOnboardingUseCase {
     return { status: "submitted", submittedAt };
   }
 
-  private async restamp(stamp: {
+  private async concurrentSubmissionTime(
+    clientId: string,
+    now: Date,
+  ): Promise<Date> {
+    const stored = await this.options.onboardings.findByClientId(clientId);
+
+    return stored.submission?.submittedAt ?? now;
+  }
+
+  private async refuseAlreadySubmitted(stamp: {
     clientId: string;
     at: Date;
   }): Promise<SubmitOnboardingResult> {
