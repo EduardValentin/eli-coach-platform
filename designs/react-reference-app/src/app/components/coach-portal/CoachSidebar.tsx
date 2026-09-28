@@ -15,6 +15,7 @@ import {
 import { useState, type ReactNode, type RefObject } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import { NotificationBell } from '../NotificationBell';
+import { navigationLinkSlug } from '../navigation-link-slug';
 import { useCheckins } from '../../context/CheckinContext';
 import { useCoachProfile } from '../../context/CoachProfileContext';
 import { NavigationDialog } from '../ui/navigation-dialog';
@@ -109,6 +110,7 @@ const SidebarNavigation = ({
           aria-current={isActive ? 'page' : undefined}
           onClick={onNavigate}
           ref={linkIndex === 0 ? firstLinkRef : undefined}
+          data-parity={`link-${navigationLinkSlug(link.name)}`}
           className={`flex items-center gap-4 px-4 py-3.5 rounded-card transition-all ${
             isActive
               ? 'bg-primary-soft text-primary'
