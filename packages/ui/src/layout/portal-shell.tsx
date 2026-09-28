@@ -144,7 +144,10 @@ export function PortalShell(props: PortalShellProps) {
         className="fixed inset-y-0 left-0 z-50 hidden w-64 bg-surface-base lg:block"
       >
         <PortalSidebarSurface>
-          <div className="mb-4 flex items-center justify-between rounded-field border-b border-stroke-quiet px-3 py-6">
+          <div
+            className="mb-4 flex items-center justify-between rounded-field border-b border-stroke-quiet px-3 py-6"
+            data-parity="sidebar-header"
+          >
             {brand}
             {sidebarActions}
           </div>
@@ -432,6 +435,7 @@ function PortalSheetNavigation(props: PortalSheetNavigationProps) {
   return (
     <nav
       aria-label={navigationLabel}
+      data-parity="more-navigation"
       className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4"
     >
       {links.map((link) => {
