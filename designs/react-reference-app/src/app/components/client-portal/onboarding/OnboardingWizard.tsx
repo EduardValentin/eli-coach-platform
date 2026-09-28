@@ -32,7 +32,7 @@ import {
 import { Alert } from '../../ui/alert';
 import { Stepper } from '../../ui/stepper';
 import { MeasurementSystemField } from './MeasurementSystemField';
-import { OnboardingConsent } from './OnboardingConsent';
+import { OnboardingConsent, type ConsentAgreement } from './OnboardingConsent';
 import { OnboardingFormCard } from './OnboardingFormCard';
 import {
   EMPTY_PROGRESS_PHOTOS,
@@ -53,8 +53,6 @@ const MANUAL_SCREENING_MESSAGE =
 
 const SCREENING_CLEARED_MESSAGE =
   "Thank you. Nothing here needs a doctor's sign-off — let's keep going.";
-
-type ConsentKey = 'specialCategory' | 'disclaimer';
 
 const SAVE_LABELS: Record<SaveState, string> = {
   idle: '',
@@ -79,7 +77,7 @@ function firstSpecialCategoryIndex(
 
 function withConsent(
   consents: OnboardingConsents,
-  key: ConsentKey,
+  key: ConsentAgreement,
   agreed: boolean,
 ): OnboardingConsents {
   return key === 'disclaimer'
@@ -154,7 +152,7 @@ export function OnboardingWizard() {
     [persist, steps],
   );
 
-  const agree = (key: ConsentKey) => (agreed: boolean) => {
+  const agree = (key: ConsentAgreement) => (agreed: boolean) => {
     const current = draftRef.current;
     setConsentProblem(null);
     persist({
@@ -279,7 +277,7 @@ export function OnboardingWizard() {
             consent={
               asksSpecialCategory ? (
                 <OnboardingConsent
-                  agreement="special-category"
+                  agreement="specialCategory"
                   checked={draft.consents.specialCategory}
                   onChange={agree('specialCategory')}
                   problem={consentProblem}

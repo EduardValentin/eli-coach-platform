@@ -16,7 +16,7 @@ export function useDraftAutosave(journeyId: string) {
   const [saveState, setSaveState] = useState<SaveState>('idle');
 
   const saveTimer = useRef<number | null>(null);
-  const saving = useRef<Promise<unknown> | null>(null);
+  const inFlightSave = useRef<Promise<unknown> | null>(null);
   const latestDraftToSave = useRef<OnboardingDraft | null>(null);
   const connection = useRef(appState.journeyConnection);
   connection.current = appState.journeyConnection;
@@ -26,7 +26,7 @@ export function useDraftAutosave(journeyId: string) {
       latestDraftToSave.current = draft;
       const isLatest = () => latestDraftToSave.current === draft;
 
-      saving.current = saveDraft(journeyId, draft, connection.current)
+      inFlightSave.current = saveDraft(journeyId, draft, connection.current)
         .then(() => {
           if (!isLatest()) return;
           latestDraftToSave.current = null;
@@ -56,7 +56,7 @@ export function useDraftAutosave(journeyId: string) {
     [cancelQueuedSave, journeyId, saveOnboardingDraft, sendDraft],
   );
 
-  const pendingSave = useCallback(() => saving.current, []);
+  const pendingSave = useCallback(() => inFlightSave.current, []);
 
   useEffect(() => {
     if (saveState !== 'unsaved') return;

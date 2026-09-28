@@ -1,13 +1,17 @@
 import { useId } from 'react';
 import { Link } from 'react-router';
+import type { OnboardingConsents } from '../../../domain/journey';
 import { Checkbox } from '../../ui/checkbox';
 
 const PRIVACY_LINK_LABEL = 'How I handle your data →';
 
-type ConsentAgreement = 'special-category' | 'disclaimer';
+export type ConsentAgreement = Extract<
+  keyof OnboardingConsents,
+  'specialCategory' | 'disclaimer'
+>;
 
 const PARITY_HOOKS: Record<ConsentAgreement, string> = {
-  'special-category': 'consent',
+  specialCategory: 'consent',
   disclaimer: 'disclaimer',
 };
 
@@ -48,7 +52,7 @@ export function OnboardingConsent({
         </label>
       </div>
 
-      {agreement === 'special-category' && (
+      {agreement === 'specialCategory' && (
         <Link
           className="mt-1 inline-flex text-sm font-medium text-primary underline-offset-4 hover:underline"
           data-parity="consent-link"
