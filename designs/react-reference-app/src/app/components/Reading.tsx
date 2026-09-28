@@ -20,6 +20,7 @@ interface ReadingProps {
   unit?: string;
   className?: string;
   as?: 'dl-item' | 'block';
+  valueParity?: string;
 }
 
 export function Reading({
@@ -29,6 +30,7 @@ export function Reading({
   unit,
   className,
   as = 'block',
+  valueParity,
 }: ReadingProps) {
   const LabelTag = as === 'dl-item' ? 'dt' : 'p';
   const ValueTag = as === 'dl-item' ? 'dd' : 'p';
@@ -36,7 +38,10 @@ export function Reading({
   return (
     <div className={className}>
       <LabelTag className={LABEL_CLASS}>{label}</LabelTag>
-      <ValueTag className={cn('mt-1', VALUE_CLASS[size])}>
+      <ValueTag
+        className={cn('mt-1', VALUE_CLASS[size])}
+        data-parity={valueParity}
+      >
         {value}
         {size === 'lg' && unit && (
           <span className="ml-1 text-sm font-medium text-text-secondary tracking-normal">

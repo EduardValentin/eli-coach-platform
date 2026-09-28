@@ -8,6 +8,7 @@ import {
 } from './journey';
 import { displayLengthValue, displayWeightValue } from '../utils/units';
 import { formsForGender, type OnboardingField } from './onboardingSchema';
+import { PARQ_QUESTION_IDS } from './safetyScreening';
 
 export const ONBOARDING_FORM_LABELS: Record<OnboardingFormId, string> = {
   'goal-availability': 'Goal and availability',
@@ -179,7 +180,9 @@ function isFlagged(
   answer: OnboardingAnswer,
   given: OnboardingFormAnswers,
 ): boolean {
-  if (formId === 'safety-screening') return isAffirmative(answer);
+  if (formId === 'safety-screening') {
+    return PARQ_QUESTION_IDS.includes(questionId) && isAffirmative(answer);
+  }
   if (formId === 'cycle-context') {
     return (
       isPregnancyFlag(questionId, answer) ||

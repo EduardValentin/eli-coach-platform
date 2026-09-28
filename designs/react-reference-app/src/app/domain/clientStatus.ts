@@ -66,6 +66,17 @@ export const ONBOARDING_STATUS_LABELS: readonly ClientStatusLabel[] = [
   'Approved',
 ];
 
+export type ClientStatusGroup = {
+  label: string;
+  options: readonly ClientStatusLabel[];
+};
+
+export const CLIENT_STATUS_GROUPS: readonly ClientStatusGroup[] = [
+  { label: 'Onboarding', options: ONBOARDING_STATUS_LABELS },
+  { label: 'Active', options: ['Active'] },
+  { label: 'Inactive', options: ['Cancelled', 'Inactive'] },
+];
+
 export function clientStatusNamed(label: ClientStatusLabel): ClientStatus {
   return { label, tone: STATUS_TONES[label] };
 }

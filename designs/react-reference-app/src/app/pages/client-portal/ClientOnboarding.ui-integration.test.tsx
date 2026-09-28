@@ -888,7 +888,13 @@ describe('the onboarding', () => {
     expect(
       screen.getByRole('main', { name: 'A few more details' }),
     ).toBeVisible();
-    expect(screen.queryByRole('heading', { level: 1 })).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'A few more details' }),
+    ).toBeVisible();
+    expect(screen.getByText('Your onboarding')).toBeVisible();
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'What your coach asked' }),
+    ).toBeVisible();
     expect(screen.getByRole('button', { name: 'Not now' })).toBeVisible();
     expect(
       screen.getByText(

@@ -77,6 +77,7 @@ export function SubscriptionSummary({
         />
       }
       headingId={headingId}
+      parityRoot="SubscriptionSummary"
       className={className}
     >
       <dl className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-5">
@@ -84,23 +85,32 @@ export function SubscriptionSummary({
           as="dl-item"
           label="Bundle"
           value={bundleLengthLabel(subscription.bundle)}
+          valueParity="subscription-bundle"
         />
         <Reading
           as="dl-item"
           label="Payment date"
           value={formatJourneyDate(subscription.purchasedAt)}
+          valueParity="subscription-paid"
         />
         <Reading
           as="dl-item"
           label="Start"
           value={startPathLabel(subscription) ?? IMMEDIATE_START_LABEL}
+          valueParity="subscription-start"
         />
         <Reading
           as="dl-item"
           label="Start program"
           value={startProgramValue(subscription)}
+          valueParity="subscription-program-start"
         />
-        <Reading as="dl-item" label={period.term} value={period.value} />
+        <Reading
+          as="dl-item"
+          label={period.term}
+          value={period.value}
+          valueParity="subscription-renews"
+        />
       </dl>
 
       {children}

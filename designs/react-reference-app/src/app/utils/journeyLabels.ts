@@ -1,7 +1,11 @@
 import { format } from 'date-fns';
 import { bundleLengthLabel } from '../domain/bundles';
 import { DEMO_JOURNEY_CALL_ID } from '../context/ClientJourneyContext';
-import type { ClientJourney, JourneyPricing } from '../domain/journey';
+import type {
+  ClientJourney,
+  JourneyGender,
+  JourneyPricing,
+} from '../domain/journey';
 import {
   workStartDate,
   type CoachingSubscription,
@@ -15,6 +19,17 @@ export const IMMEDIATE_START_LABEL = 'Immediate start';
 export const PRICING_LABELS: Record<JourneyPricing, string> = {
   reduced: 'Reduced (waitlist)',
   regular: 'Regular',
+};
+
+export const PRICING_TIER_LABELS: Record<JourneyPricing, string> = {
+  reduced: 'Reduced',
+  regular: 'Regular',
+};
+
+export const GENDER_LABELS: Record<JourneyGender, string> = {
+  female: 'Female',
+  male: 'Male',
+  'prefer-not-to-say': 'Prefer not to say',
 };
 
 export const SUBSCRIPTION_STATUS_LABELS: Record<SubscriptionStatus, string> = {

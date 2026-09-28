@@ -17,6 +17,7 @@ import {
   type DetailRequest,
   type JourneyEvent,
   type JourneyIdentity,
+  type JourneyPhone,
   type JourneyPricing,
   type JourneyGender,
   type JourneyStage,
@@ -35,7 +36,12 @@ import {
 import { heldJourney, seedJourney } from '../services/clientJourneySamples';
 import { PARQ_MAX_AGE, PARQ_MIN_AGE } from '../domain/safetyScreening';
 import type { SentPaymentLink } from '../services/paymentLinkService';
-import { createInvitation } from '../services/invitationService';
+import {
+  createInvitation,
+  type PrototypeCoachInvitation,
+  type SentInvitation,
+} from '../services/invitationService';
+import type { VisitorPrimaryGoal } from '../services/visitorProfile';
 
 export const DEMO_JOURNEY_CALL_ID = 'ac-demo-client-1';
 export const AWAITING_REVIEW_CALL_ID = 'ac-seed-awaiting-review';
@@ -45,13 +51,20 @@ const AWAITING_REVIEW_PERSON: DemoPerson = {
   lastName: 'Popescu',
   email: 'andreea@example.com',
   age: 31,
+  primaryGoal: 'build_muscle',
 };
+
+const DEMO_PHONE: JourneyPhone = { diallingCode: '+40', number: '712345678' };
+const DEMO_PRIMARY_GOAL: VisitorPrimaryGoal = 'lose_weight';
+const DEMO_BOOKING_NOTES =
+  'Wants a structured plan with someone to keep her accountable.';
 
 export type DemoJourneyOptions = {
   startPath: SubscriptionStartPath;
   subscriptionStatus: SubscriptionStatus;
   gender: JourneyGender;
   reducedPricing: boolean;
+  coachInvitation: PrototypeCoachInvitation;
 };
 
 export type JourneyPayment = {
@@ -71,6 +84,8 @@ type ClientJourneyContextType = {
   recordPaymentLinkSent: (callId: string, link: SentPaymentLink) => void;
   recordPaid: (callId: string, payment: JourneyPayment) => void;
   recordAccountCreated: (callId: string) => void;
+  recordInvitationResent: (callId: string, invitation: SentInvitation) => void;
+  recordInvitationEmailFailed: (callId: string) => void;
   markWelcomeSeen: (callId: string) => void;
   saveOnboardingDraft: (callId: string, draft: OnboardingDraft) => void;
   submitOnboarding: (callId: string, submittedAt: Date) => void;
@@ -141,6 +156,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
     journeyGender,
     journeyAgeBand,
     journeyReducedPricing,
+    journeyInvitation,
   } = appState;
 
   const visitorPricing: JourneyPricing = journeyReducedPricing
@@ -152,6 +168,8 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
     lastName: clientProfile?.lastName ?? 'Doe',
     email: clientProfile?.email ?? 'jane@example.com',
     age: ageForBand(journeyAgeBand, clientProfile?.age ?? 28),
+    phone: DEMO_PHONE,
+    primaryGoal: DEMO_PRIMARY_GOAL,
   };
 
   const demoPersonRef = useRef(demoPerson);
@@ -166,6 +184,8 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
         startPath: journeyStartPath,
         subscriptionStatus: journeySubscriptionStatus,
         pricing: visitorPricing,
+        bookingNotes: DEMO_BOOKING_NOTES,
+        coachInvitation: journeyInvitation,
         now: new Date(),
       }),
       [AWAITING_REVIEW_CALL_ID]: seedJourney({
@@ -175,6 +195,8 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
         startPath: 'immediate',
         subscriptionStatus: 'active',
         pricing: 'regular',
+        bookingNotes: null,
+        coachInvitation: 'sent',
         now: new Date(),
       }),
     }),
@@ -194,6 +216,8 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
           startPath: options.startPath,
           subscriptionStatus: options.subscriptionStatus,
           pricing: options.reducedPricing ? 'reduced' : 'regular',
+          bookingNotes: DEMO_BOOKING_NOTES,
+          coachInvitation: options.coachInvitation,
           now: new Date(),
         }),
       }));
@@ -207,6 +231,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
       subscriptionStatus: journeySubscriptionStatus,
       gender: journeyGender,
       reducedPricing: journeyReducedPricing,
+      coachInvitation: journeyInvitation,
     });
   }, [
     seedDemoJourney,
@@ -216,6 +241,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
     journeyGender,
     journeyAgeBand,
     journeyReducedPricing,
+    journeyInvitation,
   ]);
 
   useEffect(() => {
@@ -293,6 +319,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
               sentAt: invitation.sentAt,
               expiresAt: invitation.expiresAt,
               state: 'valid',
+              emailDelivery: 'sent',
             },
           },
           'record-payment',
@@ -316,6 +343,34 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
           'create-account',
         ),
       );
+    },
+    [updateJourney],
+  );
+
+  const recordInvitationResent = useCallback(
+    (callId: string, invitation: SentInvitation) => {
+      updateJourney(callId, (journey) => ({
+        ...journey,
+        invitation: {
+          token: invitation.token,
+          sentAt: invitation.sentAt,
+          expiresAt: invitation.expiresAt,
+          state: 'valid',
+          emailDelivery: 'sent',
+        },
+      }));
+    },
+    [updateJourney],
+  );
+
+  const recordInvitationEmailFailed = useCallback(
+    (callId: string) => {
+      updateJourney(callId, (journey) => ({
+        ...journey,
+        invitation: journey.invitation
+          ? { ...journey.invitation, emailDelivery: 'failed' }
+          : null,
+      }));
     },
     [updateJourney],
   );
@@ -491,6 +546,8 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
         recordPaymentLinkSent,
         recordPaid,
         recordAccountCreated,
+        recordInvitationResent,
+        recordInvitationEmailFailed,
         markWelcomeSeen,
         saveOnboardingDraft,
         submitOnboarding,
@@ -523,6 +580,8 @@ type DemoPerson = {
   lastName: string;
   email: string;
   age: number;
+  phone?: JourneyPhone;
+  primaryGoal: VisitorPrimaryGoal;
 };
 
 function dateOfBirthForAge(age: number): string {
@@ -549,8 +608,10 @@ function demoIdentity(
     lastName: person.lastName,
     dateOfBirth: dateOfBirthForAge(person.age),
     email: person.email,
+    phone: person.phone,
     gender,
     country: 'Romania',
+    primaryGoal: person.primaryGoal,
   };
 }
 

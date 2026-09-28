@@ -10,7 +10,13 @@ import type {
   PrototypeAccountRole,
   PrototypeSignInOutcome,
 } from '../services/authService';
-import type { PrototypeInvitationLinkState } from '../services/invitationService';
+import {
+  PROTOTYPE_COACH_INVITATIONS,
+  PROTOTYPE_INVITATION_RESEND_OUTCOMES,
+  type PrototypeCoachInvitation,
+  type PrototypeInvitationLinkState,
+  type PrototypeInvitationResendOutcome,
+} from '../services/invitationService';
 import type {
   PrototypePaymentLinkOutcome,
   PrototypePaymentLinkState,
@@ -77,6 +83,8 @@ type AppState = {
   journeyAgeBand: JourneyAgeBand;
   journeyConnection: OnboardingConnection;
   journeyReducedPricing: boolean;
+  journeyInvitation: PrototypeCoachInvitation;
+  invitationResendOutcome: PrototypeInvitationResendOutcome;
   paymentLinkOutcome: PrototypePaymentLinkOutcome;
   paymentLinkState: PrototypePaymentLinkState;
   invitationLinkState: PrototypeInvitationLinkState;
@@ -110,6 +118,8 @@ const defaultState: AppState = {
   journeyAgeBand: 'adult',
   journeyConnection: 'working',
   journeyReducedPricing: false,
+  journeyInvitation: 'sent',
+  invitationResendOutcome: 'sent',
   paymentLinkOutcome: 'sent',
   paymentLinkState: 'valid',
   invitationLinkState: 'valid',
@@ -289,6 +299,23 @@ function parseDevParamsFromURL(): AppState {
   if (params.has('jreduced')) {
     state.journeyReducedPricing = params.get('jreduced') === '1';
   }
+  const journeyInvitation = params.get('jinv');
+  if (
+    journeyInvitation &&
+    (PROTOTYPE_COACH_INVITATIONS as readonly string[]).includes(journeyInvitation)
+  ) {
+    state.journeyInvitation = journeyInvitation as PrototypeCoachInvitation;
+  }
+  const invitationResendOutcome = params.get('jresend');
+  if (
+    invitationResendOutcome &&
+    (PROTOTYPE_INVITATION_RESEND_OUTCOMES as readonly string[]).includes(
+      invitationResendOutcome,
+    )
+  ) {
+    state.invitationResendOutcome =
+      invitationResendOutcome as PrototypeInvitationResendOutcome;
+  }
   const paymentLink = params.get('paylink');
   if (
     paymentLink &&
@@ -350,6 +377,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     url.searchParams.delete('jage');
     url.searchParams.delete('jconn');
     url.searchParams.delete('jreduced');
+    url.searchParams.delete('jinv');
+    url.searchParams.delete('jresend');
     url.searchParams.delete('paylink');
     url.searchParams.delete('paylinkstate');
     url.searchParams.delete('invitationstate');
@@ -417,6 +446,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
       url.searchParams.set('jconn', appState.journeyConnection);
     }
     if (appState.journeyReducedPricing) url.searchParams.set('jreduced', '1');
+    if (appState.journeyInvitation !== defaultState.journeyInvitation) {
+      url.searchParams.set('jinv', appState.journeyInvitation);
+    }
+    if (
+      appState.invitationResendOutcome !== defaultState.invitationResendOutcome
+    ) {
+      url.searchParams.set('jresend', appState.invitationResendOutcome);
+    }
     if (appState.paymentLinkOutcome !== defaultState.paymentLinkOutcome) {
       url.searchParams.set('paylink', appState.paymentLinkOutcome);
     }

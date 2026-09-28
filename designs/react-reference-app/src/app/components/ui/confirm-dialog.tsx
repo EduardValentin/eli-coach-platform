@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -39,11 +39,29 @@ export function ConfirmDialog({
   confirmDisabled = false,
   tone = 'default',
 }: ConfirmDialogProps) {
+  const opener = useRef<HTMLElement | null>(null);
+
+  const rememberOpener = () => {
+    opener.current =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+  };
+
+  const returnFocusToOpener = (event: Event) => {
+    if (!opener.current?.isConnected) return;
+
+    event.preventDefault();
+    opener.current.focus();
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className="max-h-[80vh] gap-6 overflow-y-auto p-6 sm:max-w-md"
         data-parity-root="ConfirmDialog"
+        onOpenAutoFocus={rememberOpener}
+        onCloseAutoFocus={returnFocusToOpener}
       >
         <DialogHeader className="gap-2">
           <DialogTitle>{title}</DialogTitle>

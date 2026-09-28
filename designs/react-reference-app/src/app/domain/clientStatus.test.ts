@@ -1,6 +1,10 @@
 import { addDays, subDays } from 'date-fns';
 import { describe, expect, it } from 'vitest';
-import { clientStatus, type ClientStatus } from './clientStatus';
+import {
+  CLIENT_STATUS_GROUPS,
+  clientStatus,
+  type ClientStatus,
+} from './clientStatus';
 import type { CoachingSubscription } from './coachingSubscription';
 import { emptyOnboarding, type ClientJourney, type JourneyStage } from './journey';
 
@@ -28,6 +32,7 @@ function journeyAt(
     welcomeSeen: false,
     onboarding: emptyOnboarding(),
     review: { requests: [] },
+    bookingNotes: null,
     programReadyAt: null,
     measurements: [],
     subscription,
@@ -159,5 +164,32 @@ describe('the status the coach reads on a client row', () => {
 
     // assert
     expect(status).toEqual({ label: 'Inactive', tone: 'muted' });
+  });
+});
+
+describe('the status groups the coach filters by', () => {
+  it('groups every client status under onboarding, active or inactive in display order', () => {
+    // act
+    const groups = CLIENT_STATUS_GROUPS.map((group) => [
+      group.label,
+      group.options,
+    ]);
+
+    // assert
+    expect(groups).toEqual([
+      [
+        'Onboarding',
+        [
+          'Invited',
+          'Onboarding',
+          'Awaiting review',
+          'In review',
+          'Needs details',
+          'Approved',
+        ],
+      ],
+      ['Active', ['Active']],
+      ['Inactive', ['Cancelled', 'Inactive']],
+    ]);
   });
 });

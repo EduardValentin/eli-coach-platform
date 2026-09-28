@@ -55,7 +55,10 @@ export function ClientOnboarding() {
 
   if (searchParams.get(ANSWER_REQUEST_PARAM) === '1' && request) {
     return (
-      <OnboardingShell label={ANSWER_TITLE}>
+      <OnboardingShell
+        label={ANSWER_TITLE}
+        header={{ eyebrow: 'Your onboarding', title: ANSWER_TITLE }}
+      >
         <AnswerRequestCard request={request} />
       </OnboardingShell>
     );

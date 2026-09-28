@@ -20,6 +20,7 @@ interface PortalWidgetProps {
   action?: ReactNode;
   footer?: ReactNode;
   className?: string;
+  parityRoot?: string;
   children?: ReactNode;
 }
 
@@ -64,6 +65,7 @@ export function PortalWidget({
   action,
   footer,
   className,
+  parityRoot,
   children,
 }: PortalWidgetProps) {
   const prefersReducedMotion = useReducedMotion() ?? false;
@@ -73,6 +75,7 @@ export function PortalWidget({
       animate={{ opacity: 1, y: 0 }}
       aria-labelledby={headingId}
       className={cn(PANEL_CLASS[density], className)}
+      data-parity-root={parityRoot}
       initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
     >
       <div

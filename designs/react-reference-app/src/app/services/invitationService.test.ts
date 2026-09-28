@@ -1,7 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   createInvitation,
+  INVITATION_RESEND_FAILURE_MESSAGE,
   INVITATION_VALIDITY_DAYS,
+  InvitationResendError,
+  resendInvitation,
   resolveInvitation,
   SIMULATED_LATENCY_MS,
 } from './invitationService';
@@ -59,4 +62,37 @@ describe('resolving an invitation', () => {
       await expect(resolving).resolves.toEqual({ status: state });
     },
   );
+});
+
+describe('re-sending an invitation', () => {
+  it('sends a fresh link that works for another thirty days from now', async () => {
+    // arrange
+    const resending = resendInvitation('jane@example.com', 'sent');
+
+    // act
+    await vi.advanceTimersByTimeAsync(SIMULATED_LATENCY_MS);
+
+    // assert
+    const invitation = await resending;
+    expect(invitation.token).toMatch(/^inv-/);
+    expect(invitation.email).toBe('jane@example.com');
+    expect(invitation.sentAt.getTime()).toBe(Date.now());
+    expect(
+      invitation.expiresAt.getTime() - invitation.sentAt.getTime(),
+    ).toBe(INVITATION_VALIDITY_DAYS * DAY_MS);
+  });
+
+  it('fails when the invitation email cannot be sent', async () => {
+    // arrange
+    const resending = resendInvitation('jane@example.com', 'fails');
+    const outcome = expect(resending).rejects.toThrow(
+      new InvitationResendError(INVITATION_RESEND_FAILURE_MESSAGE),
+    );
+
+    // act
+    await vi.advanceTimersByTimeAsync(SIMULATED_LATENCY_MS);
+
+    // assert
+    await outcome;
+  });
 });

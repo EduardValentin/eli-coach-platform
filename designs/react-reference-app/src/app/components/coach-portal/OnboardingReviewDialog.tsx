@@ -38,7 +38,10 @@ export function OnboardingReviewDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[90vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-3xl">
+      <DialogContent
+        className="flex max-h-[90vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-3xl"
+        data-parity-root="OnboardingReviewDialog"
+      >
         <DialogHeader className="px-6 pt-6 pb-4">
           <DialogTitle>
             Review {journey.identity.firstName}&rsquo;s answers

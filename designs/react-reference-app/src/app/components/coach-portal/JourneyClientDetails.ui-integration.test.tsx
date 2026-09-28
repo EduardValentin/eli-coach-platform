@@ -1,12 +1,14 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
+import { Toaster } from 'sonner';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { JourneyClientDetails } from './JourneyClientDetails';
 import { AppProvider } from '../../context/AppContext';
 import { AssessmentCallProvider } from '../../context/AssessmentCallContext';
 import { UnitPreferencesProvider } from '../../context/UnitPreferencesContext';
 import {
+  AWAITING_REVIEW_CALL_ID,
   ClientJourneyProvider,
   useClientJourneys,
 } from '../../context/ClientJourneyContext';
@@ -33,12 +35,13 @@ afterEach(() => {
   window.history.replaceState({}, '', '/');
 });
 
-function DemoJourneyDetails() {
-  const { demoJourney, answerRequest } = useClientJourneys();
+function DemoJourneyDetails({ callId }: { callId?: string }) {
+  const { demoJourney, journeyForCall, answerRequest } = useClientJourneys();
+  const journey = (callId && journeyForCall(callId)) || demoJourney;
 
   return (
     <>
-      <JourneyClientDetails journey={demoJourney} />
+      <JourneyClientDetails journey={journey} />
       <button
         onClick={() => answerRequest(demoJourney.callId, new Date())}
         type="button"
@@ -49,8 +52,11 @@ function DemoJourneyDetails() {
   );
 }
 
-function renderDetails(urlQuery: string, options: { postMvp?: boolean } = {}) {
-  const { postMvp = true } = options;
+function renderDetails(
+  urlQuery: string,
+  options: { postMvp?: boolean; callId?: string } = {},
+) {
+  const { postMvp = true, callId } = options;
   const scopePrefix = postMvp ? 'scope=post-mvp&' : '';
   const url = `/coach/clients/c1?${scopePrefix}${urlQuery.slice(1)}`;
   window.history.replaceState({}, '', url);
@@ -62,7 +68,8 @@ function renderDetails(urlQuery: string, options: { postMvp?: boolean } = {}) {
           <AssessmentCallProvider>
             <ClientJourneyProvider>
               <UnitPreferencesProvider>
-                <DemoJourneyDetails />
+                <DemoJourneyDetails callId={callId} />
+                <Toaster />
               </UnitPreferencesProvider>
             </ClientJourneyProvider>
           </AssessmentCallProvider>
@@ -93,6 +100,24 @@ function reviewDialog(): HTMLElement {
   return screen.getByRole('dialog');
 }
 
+function profileBlock(): HTMLElement {
+  return screen.getByRole('region', { name: 'Profile' });
+}
+
+function invitationBlock(): HTMLElement {
+  return screen.getByRole('region', { name: 'Invitation' });
+}
+
+function profileReading(label: string): HTMLElement {
+  const term = within(profileBlock()).getByText(label);
+  const value = term.nextElementSibling;
+  if (!(value instanceof HTMLElement)) throw new Error(`No ${label} value`);
+
+  return value;
+}
+
+const LATENCY_TIMEOUT = { timeout: 3000 };
+
 describe('the coach view of a client in onboarding', () => {
   it('keeps the start path and the stage out of the header, showing it in the subscription panel', () => {
     // arrange
@@ -106,7 +131,9 @@ describe('the coach view of a client in onboarding', () => {
     expect(
       within(header).queryByText('Immediate start'),
     ).not.toBeInTheDocument();
-    expect(within(header).queryByText('Sent to coach')).not.toBeInTheDocument();
+    expect(
+      within(header).queryByText('Awaiting review'),
+    ).not.toBeInTheDocument();
     expect(
       within(subscriptionPanel()).getByText('Immediate start'),
     ).toBeInTheDocument();
@@ -140,7 +167,7 @@ describe('the coach view of a client in onboarding', () => {
     expect(startProgram.nextElementSibling).toHaveTextContent(/^—$/);
   });
 
-  it('shows the journey status only inside the onboarding widget', () => {
+  it('shows her client status only inside the onboarding widget', () => {
     // arrange
     const urlQuery = '?jstage=submitted';
 
@@ -149,8 +176,33 @@ describe('the coach view of a client in onboarding', () => {
 
     // assert
     expect(
-      within(onboardingWidget()).getByText('Sent to coach'),
+      within(onboardingWidget()).getByText('Awaiting review'),
     ).toBeInTheDocument();
+    expect(screen.queryByText('Sent to coach')).not.toBeInTheDocument();
+  });
+
+  it('shows only her status and that her answers are not in yet before she sends them', () => {
+    // arrange
+    const urlQuery = '?jstage=onboarding';
+
+    // act
+    renderDetails(urlQuery, { postMvp: false });
+
+    // assert
+    const widget = onboardingWidget();
+    expect(
+      within(widget).getByText('Onboarding', { selector: '[data-slot=badge]' }),
+    ).toBeInTheDocument();
+    expect(
+      within(widget).getByText('Her answers are not in yet.'),
+    ).toBeInTheDocument();
+    expect(
+      within(widget).queryByText('Waist-to-height ratio'),
+    ).not.toBeInTheDocument();
+    expect(
+      within(widget).queryByRole('heading', { name: 'Answers' }),
+    ).not.toBeInTheDocument();
+    expect(within(widget).queryByRole('button')).not.toBeInTheDocument();
   });
 
   it('counts the answers of every form she was asked to fill in', () => {
@@ -271,7 +323,9 @@ describe('the coach view of a client in onboarding', () => {
       within(dialog).getByRole('checkbox', { name: 'Flag Sleep hours' }),
     ).not.toBeChecked();
     expect(within(dialog).getByText('0 questions flagged')).toBeVisible();
-    expect(screen.getByText('Reviewing')).toBeInTheDocument();
+    expect(
+      within(onboardingWidget()).getByText('In review'),
+    ).toBeInTheDocument();
   });
 
   it('closes the review dialog and reopens it with the flags cleared', async () => {
@@ -354,8 +408,9 @@ describe('the coach view of a client in onboarding', () => {
     // assert
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     const reviewed = onboardingWidget();
+    expect(within(reviewed).getByText('Needs details')).toBeInTheDocument();
     expect(
-      within(reviewed).getByText('Needs more details'),
+      await screen.findByText('Email sent to jane@example.com.'),
     ).toBeInTheDocument();
     expect(
       within(reviewed).getByText('Tell me more about your sleep.'),
@@ -368,7 +423,7 @@ describe('the coach view of a client in onboarding', () => {
     ).toBeInTheDocument();
   });
 
-  it('approves the answers from the dialog and turns the widget to building her program', async () => {
+  it('approves the answers from the dialog through the same confirmation and turns the widget to building her program', async () => {
     // arrange
     const user = renderDetails('?jstage=reviewing');
     await user.click(screen.getByRole('button', { name: 'Continue review' }));
@@ -377,6 +432,19 @@ describe('the coach view of a client in onboarding', () => {
     await user.click(
       within(reviewDialog()).getByRole('button', { name: 'Approve answers' }),
     );
+
+    // assert
+    const confirm = screen.getByRole('dialog', {
+      name: "Approve Jane's answers?",
+    });
+    expect(
+      within(confirm).getByText(
+        "You won't be able to ask for more details once you approve.",
+      ),
+    ).toBeInTheDocument();
+
+    // act
+    await user.click(within(confirm).getByRole('button', { name: 'Approve' }));
 
     // assert
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -461,5 +529,229 @@ describe('the coach view of a client in onboarding', () => {
     expect(
       within(widget).queryByRole('button', { name: /review/i }),
     ).not.toBeInTheDocument();
+  });
+
+  it('keeps the review open with her flags when the coach steps back from approving', async () => {
+    // arrange
+    const user = renderDetails('?jstage=reviewing');
+    await user.click(screen.getByRole('button', { name: 'Continue review' }));
+    await user.click(
+      within(reviewDialog()).getByRole('checkbox', {
+        name: 'Flag Sleep hours',
+      }),
+    );
+    await user.click(
+      within(reviewDialog()).getByRole('button', { name: 'Approve answers' }),
+    );
+
+    // act
+    await user.click(
+      within(
+        screen.getByRole('dialog', { name: "Approve Jane's answers?" }),
+      ).getByRole('button', { name: 'Cancel' }),
+    );
+
+    // assert
+    const review = screen.getByRole('dialog', {
+      name: 'Review Jane’s answers',
+    });
+    expect(
+      within(review).getByRole('checkbox', { name: 'Flag Sleep hours' }),
+    ).toBeChecked();
+    expect(
+      within(onboardingWidget()).getByText('In review'),
+    ).toBeInTheDocument();
+  });
+});
+
+describe('the coach reading who a client is', () => {
+  it('lays the page out as profile, invitation, onboarding, subscription and measurements', () => {
+    // arrange
+    const urlQuery = '?jstage=invited';
+
+    // act
+    renderDetails(urlQuery);
+
+    // assert
+    const regions = screen
+      .getAllByRole('region')
+      .flatMap((region) => region.getAttribute('aria-labelledby') ?? [])
+      .map((id) => document.getElementById(id)?.textContent);
+    expect(regions).toEqual([
+      'Profile',
+      'Invitation',
+      'Onboarding',
+      'Subscription',
+      'Measurements',
+    ]);
+  });
+
+  it('reads her age, gender, country, phone, goal, pricing and booking notes', () => {
+    // arrange
+    const urlQuery = '?jstage=submitted';
+
+    // act
+    renderDetails(urlQuery);
+
+    // assert
+    expect(profileReading('Age')).toHaveTextContent(/^\d+$/);
+    expect(profileReading('Gender')).toHaveTextContent('Female');
+    expect(profileReading('Country')).toHaveTextContent('Romania');
+    expect(
+      within(profileReading('Phone')).getByRole('link', {
+        name: '+40712345678',
+      }),
+    ).toHaveAttribute('href', 'tel:+40712345678');
+    expect(profileReading('Primary goal')).toHaveTextContent('Lose weight');
+    expect(profileReading('Pricing tier')).toHaveTextContent(/^Regular$/);
+    expect(profileReading('Booking notes')).toHaveTextContent(
+      'Wants a structured plan with someone to keep her accountable.',
+    );
+  });
+
+  it('names the reduced tier when she was offered reduced pricing', () => {
+    // arrange
+    const urlQuery = '?jstage=submitted&jreduced=1';
+
+    // act
+    renderDetails(urlQuery);
+
+    // assert
+    expect(profileReading('Pricing tier')).toHaveTextContent(/^Reduced$/);
+  });
+
+  it('shows a dash for what she did not give when booking', () => {
+    // arrange
+    const urlQuery = '?jstage=submitted';
+
+    // act
+    renderDetails(urlQuery, { callId: AWAITING_REVIEW_CALL_ID });
+
+    // assert
+    expect(profileReading('Phone')).toHaveTextContent(/^—$/);
+    expect(profileReading('Booking notes')).toHaveTextContent(/^—$/);
+  });
+});
+
+describe('the coach following a client invitation', () => {
+  it('shows when the invitation went out and when it expires', () => {
+    // arrange
+    const urlQuery = '?jstage=invited';
+
+    // act
+    renderDetails(urlQuery);
+
+    // assert
+    expect(
+      within(invitationBlock()).getByText(
+        /^Invited \d{1,2} \w+ · expires \d{1,2} \w+$/,
+      ),
+    ).toBeInTheDocument();
+    expect(
+      within(invitationBlock()).getByRole('button', {
+        name: 'Re-send invitation',
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it('says when the invitation expired', () => {
+    // arrange
+    const urlQuery = '?jstage=invited&jinv=expired';
+
+    // act
+    renderDetails(urlQuery);
+
+    // assert
+    expect(
+      within(invitationBlock()).getByText(/^Invitation expired \d{1,2} \w+$/),
+    ).toBeInTheDocument();
+  });
+
+  it('says when the invitation email could not be sent', () => {
+    // arrange
+    const urlQuery = '?jstage=invited&jinv=email-failed';
+
+    // act
+    renderDetails(urlQuery);
+
+    // assert
+    expect(
+      within(invitationBlock()).getByText('Invitation email could not be sent'),
+    ).toBeInTheDocument();
+  });
+
+  it('drops the invitation once her account exists', () => {
+    // arrange
+    const urlQuery = '?jstage=account-created';
+
+    // act
+    renderDetails(urlQuery);
+
+    // assert
+    expect(
+      screen.queryByRole('region', { name: 'Invitation' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('re-sends a fresh invitation after the coach confirms', async () => {
+    // arrange
+    const user = renderDetails('?jstage=invited&jinv=expired');
+    await user.click(
+      within(invitationBlock()).getByRole('button', {
+        name: 'Re-send invitation',
+      }),
+    );
+    const confirm = screen.getByRole('dialog', { name: 'Re-send invitation?' });
+    expect(
+      within(confirm).getByText(
+        'A fresh invitation goes to jane@example.com. Her earlier link stops working.',
+      ),
+    ).toBeInTheDocument();
+
+    // act
+    await user.click(within(confirm).getByRole('button', { name: 'Re-send' }));
+
+    // assert
+    expect(
+      await screen.findByText(
+        'Invitation sent to jane@example.com.',
+        {},
+        LATENCY_TIMEOUT,
+      ),
+    ).toBeInTheDocument();
+    expect(
+      within(invitationBlock()).getByText(
+        /^Invited \d{1,2} \w+ · expires \d{1,2} \w+$/,
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('marks the invitation failed and asks to try again when the email cannot be sent', async () => {
+    // arrange
+    const user = renderDetails('?jstage=invited&jresend=fails');
+    await user.click(
+      within(invitationBlock()).getByRole('button', {
+        name: 'Re-send invitation',
+      }),
+    );
+
+    // act
+    await user.click(
+      within(
+        screen.getByRole('dialog', { name: 'Re-send invitation?' }),
+      ).getByRole('button', { name: 'Re-send' }),
+    );
+
+    // assert
+    expect(
+      await screen.findByText(
+        'The invitation email could not be sent. Try again.',
+        {},
+        LATENCY_TIMEOUT,
+      ),
+    ).toBeInTheDocument();
+    expect(
+      within(invitationBlock()).getByText('Invitation email could not be sent'),
+    ).toBeInTheDocument();
   });
 });

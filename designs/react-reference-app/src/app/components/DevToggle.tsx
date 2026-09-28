@@ -12,13 +12,18 @@ import {
 } from '../context/AppContext';
 import type { PrototypeStoreCheckoutOutcome } from '../services/storeAcquisitionService';
 import type { PrototypeSignInOutcome } from '../services/authService';
-import type { PrototypeInvitationLinkState } from '../services/invitationService';
+import {
+  PROTOTYPE_COACH_INVITATIONS,
+  PROTOTYPE_INVITATION_RESEND_OUTCOMES,
+  type PrototypeCoachInvitation,
+  type PrototypeInvitationLinkState,
+  type PrototypeInvitationResendOutcome,
+} from '../services/invitationService';
 import type {
   PrototypePaymentLinkOutcome,
   PrototypePaymentLinkState,
 } from '../services/paymentLinkService';
 import {
-  COACH_STAGE_LABELS,
   JOURNEY_GENDERS,
   JOURNEY_STAGES,
   type JourneyGender,
@@ -171,6 +176,24 @@ function parseInvitationLinkStateControl(
   }
 
   return 'valid';
+}
+
+function parseCoachInvitationControl(value: string): PrototypeCoachInvitation {
+  const invitation = PROTOTYPE_COACH_INVITATIONS.find(
+    (candidate) => candidate === value,
+  );
+
+  return invitation ?? 'sent';
+}
+
+function parseInvitationResendOutcomeControl(
+  value: string,
+): PrototypeInvitationResendOutcome {
+  const outcome = PROTOTYPE_INVITATION_RESEND_OUTCOMES.find(
+    (candidate) => candidate === value,
+  );
+
+  return outcome ?? 'sent';
 }
 
 function parseBookingOutcomeControl(value: string): PrototypeBookingOutcome {
@@ -827,7 +850,7 @@ export function DevToggle() {
                     <SelectContent className={SELECT_CONTENT_CLASS}>
                       {journeyStages.map((stage) => (
                         <SelectItem key={stage} value={stage}>
-                          {COACH_STAGE_LABELS[stage]}
+                          {stage}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -1078,6 +1101,61 @@ export function DevToggle() {
                       <SelectItem value="expired">Expired</SelectItem>
                       <SelectItem value="used">Already used</SelectItem>
                       <SelectItem value="unknown">Unknown link</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="dev-coach-invitation"
+                    className={DEV_LABEL_CLASS}
+                  >
+                    Coach-side invitation
+                  </Label>
+                  <Select
+                    value={appState.journeyInvitation}
+                    onValueChange={(value) =>
+                      setAppState({
+                        journeyInvitation: parseCoachInvitationControl(value),
+                      })
+                    }
+                  >
+                    <SelectTrigger id="dev-coach-invitation" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="sent">Sent</SelectItem>
+                      <SelectItem value="expired">Expired</SelectItem>
+                      <SelectItem value="email-failed">Email failed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="dev-invitation-resend"
+                    className={DEV_LABEL_CLASS}
+                  >
+                    Invitation re-send outcome
+                  </Label>
+                  <Select
+                    value={appState.invitationResendOutcome}
+                    onValueChange={(value) =>
+                      setAppState({
+                        invitationResendOutcome:
+                          parseInvitationResendOutcomeControl(value),
+                      })
+                    }
+                  >
+                    <SelectTrigger
+                      id="dev-invitation-resend"
+                      className="w-full"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="sent">Sent</SelectItem>
+                      <SelectItem value="fails">Fails</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

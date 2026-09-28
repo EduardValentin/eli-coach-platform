@@ -170,6 +170,7 @@ export function ProgramStatusCard() {
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           {demoJourney.stage === 'needs-details' && (
             <Button
+              data-parity="answer-now"
               onClick={() => navigate('/portal/onboarding?answer=1')}
               type="button"
               variant="primary"

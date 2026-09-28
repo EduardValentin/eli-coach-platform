@@ -1,4 +1,5 @@
 import type { CoachingSubscription } from './coachingSubscription';
+import type { VisitorPrimaryGoal } from '../services/visitorProfile';
 
 export type JourneyStage =
   | 'held'
@@ -62,6 +63,7 @@ export type JourneyIdentity = {
   phone?: JourneyPhone;
   gender: JourneyGender;
   country: string;
+  primaryGoal?: VisitorPrimaryGoal;
 };
 
 export type JourneyPaymentLink = {
@@ -71,11 +73,14 @@ export type JourneyPaymentLink = {
   state: JourneyLinkState;
 };
 
+export type InvitationEmailDelivery = 'sent' | 'failed';
+
 export type JourneyInvitation = {
   token: string;
   sentAt: Date;
   expiresAt: Date;
   state: JourneyLinkState;
+  emailDelivery: InvitationEmailDelivery;
 };
 
 export type OnboardingFormId =
@@ -146,6 +151,7 @@ export type ClientJourney = {
   stage: JourneyStage;
   identity: JourneyIdentity;
   pricing: JourneyPricing;
+  bookingNotes: string | null;
   paymentLink: JourneyPaymentLink | null;
   paidAt: Date | null;
   invitation: JourneyInvitation | null;
@@ -203,20 +209,6 @@ export function advance(
 
   return { status: 'advanced', journey: { ...journey, stage: nextStage } };
 }
-
-export const COACH_STAGE_LABELS: Record<JourneyStage, string> = {
-  held: 'Call held',
-  'payment-link-sent': 'Payment link sent',
-  invited: 'Invited',
-  'account-created': 'Invitation accepted',
-  onboarding: 'Onboarding',
-  submitted: 'Sent to coach',
-  reviewing: 'Reviewing',
-  'needs-details': 'Needs more details',
-  approved: 'Approved',
-  'program-ready': 'Program ready',
-  'review-call-scheduled': 'Review call booked',
-};
 
 const CLIENT_STATUS_LABELS: Partial<Record<JourneyStage, string>> = {
   submitted: 'Sent to your coach',

@@ -1,4 +1,5 @@
 import {
+  CLIENT_STATUS_GROUPS,
   type ClientStatus,
   type ClientStatusLabel,
 } from '../domain/clientStatus';
@@ -7,17 +8,8 @@ export type RosterStatus = Extract<ClientStatusLabel, 'Active' | 'Inactive'>;
 
 export type RosterStatusOption = ClientStatusLabel | 'all';
 
-const ROSTER_STATUS_VOCABULARY: readonly ClientStatusLabel[] = [
-  'Invited',
-  'Onboarding',
-  'Awaiting review',
-  'In review',
-  'Needs details',
-  'Approved',
-  'Active',
-  'Cancelled',
-  'Inactive',
-];
+const ROSTER_STATUS_VOCABULARY: readonly ClientStatusLabel[] =
+  CLIENT_STATUS_GROUPS.flatMap((group) => group.options);
 
 export const ROSTER_STATUS_OPTIONS: readonly RosterStatusOption[] = [
   'all',

@@ -5,6 +5,8 @@ import {
   ONBOARDING_FORM_IDS,
   type ClientJourney,
   type JourneyIdentity,
+  type JourneyInvitation,
+  type JourneyLinkState,
   type JourneyOnboarding,
   type JourneyPhone,
   type JourneyPricing,
@@ -20,7 +22,10 @@ import {
   type SubscriptionStartPath,
   type SubscriptionStatus,
 } from '../domain/coachingSubscription';
-import { INVITATION_VALIDITY_DAYS } from './invitationService';
+import {
+  INVITATION_VALIDITY_DAYS,
+  type PrototypeCoachInvitation,
+} from './invitationService';
 import { paymentLinkExpiresAt } from './paymentLinkService';
 import type { PrototypeBooking } from './assessmentCallService';
 import { findCountry } from './countries';
@@ -35,6 +40,8 @@ export type JourneySeed = {
   startPath: SubscriptionStartPath;
   subscriptionStatus: SubscriptionStatus;
   pricing: JourneyPricing;
+  bookingNotes: string | null;
+  coachInvitation: PrototypeCoachInvitation;
   now: Date;
 };
 
@@ -149,6 +156,7 @@ export function identityFromBooking(
     phone: journeyPhone(booking.phone, country?.callingCode ?? ''),
     gender: journeyGenderOf(booking.gender),
     country: country?.name ?? booking.country,
+    primaryGoal: booking.primaryGoal,
   };
 }
 
@@ -207,6 +215,31 @@ function seedOnboarding(
   };
 }
 
+function seedInvitation(
+  seed: JourneySeed,
+  invitedAt: Date,
+): JourneyInvitation {
+  const expiresAt = addDays(invitedAt, INVITATION_VALIDITY_DAYS);
+
+  return {
+    token: `inv-seed-${seed.callId}`,
+    sentAt: invitedAt,
+    expiresAt,
+    state: seededInvitationState(seed.stage, expiresAt, seed.now),
+    emailDelivery: seed.coachInvitation === 'email-failed' ? 'failed' : 'sent',
+  };
+}
+
+function seededInvitationState(
+  stage: JourneyStage,
+  expiresAt: Date,
+  now: Date,
+): JourneyLinkState {
+  if (!isBeforeStage(stage, 'account-created')) return 'used';
+
+  return expiresAt <= now ? 'expired' : 'valid';
+}
+
 function seedSubscription(seed: SubscriptionSeed): CoachingSubscription {
   const base: CoachingSubscription = {
     bundle: SEEDED_BUNDLE,
@@ -236,11 +269,15 @@ function seedSubscription(seed: SubscriptionSeed): CoachingSubscription {
   return { ...base, day1, periodEndsAt };
 }
 
-function seededPaidAt(
-  startPath: SubscriptionStartPath,
-  stage: JourneyStage,
-  now: Date,
-): Date {
+const EXPIRED_INVITATION_AGE_DAYS = INVITATION_VALIDITY_DAYS + 5;
+
+function seededPaidAt(seed: JourneySeed): Date {
+  const { startPath, stage, coachInvitation, now } = seed;
+
+  const invitationPending = isBeforeStage(stage, 'account-created');
+  if (coachInvitation === 'expired' && invitationPending) {
+    return subDays(now, EXPIRED_INVITATION_AGE_DAYS);
+  }
   if (startPath === 'waiting' && !isBeforeStage(stage, 'program-ready')) {
     return subDays(now, WITHDRAWAL_WINDOW_DAYS + 2);
   }
@@ -256,11 +293,12 @@ export function seedJourney(seed: JourneySeed): ClientJourney {
     startPath,
     subscriptionStatus,
     pricing,
+    bookingNotes,
     now,
   } = seed;
   const reached = (target: JourneyStage) => !isBeforeStage(stage, target);
 
-  const paidAt = seededPaidAt(startPath, stage, now);
+  const paidAt = seededPaidAt(seed);
   const paymentLinkSentAt = subDays(paidAt, 1);
   const invitedAt = paidAt;
   const submittedAt = subDays(now, 3);
@@ -271,6 +309,7 @@ export function seedJourney(seed: JourneySeed): ClientJourney {
     stage,
     identity,
     pricing,
+    bookingNotes,
     paymentLink: reached('payment-link-sent')
       ? {
           token: `pl-seed-${callId}`,
@@ -280,14 +319,7 @@ export function seedJourney(seed: JourneySeed): ClientJourney {
         }
       : null,
     paidAt: reached('invited') ? paidAt : null,
-    invitation: reached('invited')
-      ? {
-          token: `inv-seed-${callId}`,
-          sentAt: invitedAt,
-          expiresAt: addDays(invitedAt, INVITATION_VALIDITY_DAYS),
-          state: reached('account-created') ? 'used' : 'valid',
-        }
-      : null,
+    invitation: reached('invited') ? seedInvitation(seed, invitedAt) : null,
     welcomeSeen: reached('onboarding'),
     onboarding: seedOnboarding(stage, identity, submittedAt),
     review:
@@ -324,6 +356,7 @@ export function heldJourney(
     stage: 'held',
     identity: identityFromBooking(booking),
     pricing,
+    bookingNotes: booking.notes.trim() || null,
     paymentLink: null,
     paidAt: null,
     invitation: null,

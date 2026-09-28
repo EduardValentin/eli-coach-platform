@@ -65,13 +65,19 @@ export function MeasurementsTable({
         <Ruler aria-hidden="true" className="text-brand-secondary" size={18} />
       }
       headingId={headingId}
+      parityRoot="MeasurementsTable"
       className={className}
     >
       {intro}
 
       {history.length === 0 ? (
         <>
-          <p className="text-sm text-text-secondary">{emptyMessage}</p>
+          <p
+            className="text-sm text-text-secondary"
+            data-parity="measurements-empty"
+          >
+            {emptyMessage}
+          </p>
           {emptyAction && <div className="mt-4">{emptyAction}</div>}
         </>
       ) : (

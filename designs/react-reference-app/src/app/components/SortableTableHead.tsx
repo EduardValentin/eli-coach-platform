@@ -7,12 +7,14 @@ export function SortableTableHead({
   direction,
   onSort,
   className,
+  parity,
 }: {
   label: string;
   active: boolean;
   direction: 'asc' | 'desc';
   onSort: () => void;
   className?: string;
+  parity?: string;
 }) {
   const Icon = active
     ? direction === 'asc'
@@ -26,6 +28,7 @@ export function SortableTableHead({
         active ? (direction === 'asc' ? 'ascending' : 'descending') : 'none'
       }
       className={className}
+      data-parity={parity}
     >
       <button
         type="button"

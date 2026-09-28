@@ -41,9 +41,9 @@ import {
   type ClientJourney,
 } from '../../domain/journey';
 import {
+  CLIENT_STATUS_GROUPS,
   clientStatus,
   clientStatusNamed,
-  ONBOARDING_STATUS_LABELS,
 } from '../../domain/clientStatus';
 import { format, parseISO } from 'date-fns';
 import { bundleLengthLabel } from '../../domain/bundles';
@@ -115,15 +115,6 @@ const MOCK_CLIENTS: RosterClient[] = [
     status: 'Inactive',
     joinDate: '2025-03-22',
   },
-];
-
-const STATUS_GROUPS: {
-  label: string;
-  options: readonly RosterStatusOption[];
-}[] = [
-  { label: 'Onboarding', options: ONBOARDING_STATUS_LABELS },
-  { label: 'Active', options: ['Active'] },
-  { label: 'Inactive', options: ['Cancelled', 'Inactive'] },
 ];
 
 const STATUS_PARAM = 'status';
@@ -201,17 +192,25 @@ function StatusFilter({
       value={status}
       onValueChange={(value) => onChoose(parseRosterStatus(value))}
     >
-      <SelectTrigger aria-label="Status" size="sm" className="w-full sm:w-56">
+      <SelectTrigger
+        aria-label="Status"
+        data-parity="status-filter"
+        size="sm"
+        className="w-full sm:w-56"
+      >
         <SelectValue>{status === 'all' ? 'All statuses' : status}</SelectValue>
       </SelectTrigger>
       <SelectContent>
         <SelectItem value="all">
           <span className="flex items-center gap-2">
-            All statuses <Badge tone="count">{counts.all}</Badge>
+            All statuses{' '}
+            <Badge data-parity="status-count-all" tone="count">
+              {counts.all}
+            </Badge>
           </span>
         </SelectItem>
         <SelectSeparator />
-        {STATUS_GROUPS.map((group) => (
+        {CLIENT_STATUS_GROUPS.map((group) => (
           <SelectGroup key={group.label}>
             <SelectLabel>{group.label}</SelectLabel>
             {group.options.map((option) => (
@@ -285,6 +284,7 @@ function RosterActions({
 
       <Link
         to={row.detailPath}
+        data-parity="row-link"
         aria-label={row.actionLabel}
         title={row.actionLabel}
         onClick={(event) => event.stopPropagation()}
@@ -301,12 +301,15 @@ function RosterActions({
 
 function RosterTableRow({
   row,
+  position,
   onTerminate,
 }: {
   row: RosterRow;
+  position: number;
   onTerminate: (row: RosterRow) => void;
 }) {
   const navigate = useNavigate();
+  const hook = (cell: string) => `row-${position}-${cell}`;
   return (
     <TableRow
       className="group cursor-pointer"
@@ -316,20 +319,29 @@ function RosterTableRow({
         <div className="flex items-center gap-3">
           <RosterAvatar row={row} />
           <div>
-            <p className="font-semibold text-sm text-text-primary">
+            <p
+              className="font-semibold text-sm text-text-primary"
+              data-parity={hook('name')}
+            >
               {row.name}
             </p>
             <p className="text-xs text-text-secondary mt-0.5">{row.email}</p>
           </div>
         </div>
       </TableCell>
-      <TableCell>
+      <TableCell data-parity={hook('status')}>
         <ClientStatusBadge status={row.status} />
       </TableCell>
-      <TableCell className="text-sm text-text-secondary font-medium">
+      <TableCell
+        className="text-sm text-text-secondary font-medium"
+        data-parity={hook('bundle')}
+      >
         {row.bundleLabel}
       </TableCell>
-      <TableCell className="text-sm text-text-secondary">
+      <TableCell
+        className="text-sm text-text-secondary"
+        data-parity={hook('joined')}
+      >
         {row.joinedAt ? format(row.joinedAt, 'MMM dd, yyyy') : '—'}
       </TableCell>
       <TableCell>
@@ -504,7 +516,7 @@ export function ClientsList() {
   const removal = pendingRemoval ? removalCopy(pendingRemoval) : null;
 
   return (
-    <div className="w-full">
+    <div className="w-full" data-parity-root="ClientsSection">
       <PortalPageHeader
         title="Clients"
         subtitle="Manage your active roster and past client records."
@@ -523,6 +535,7 @@ export function ClientsList() {
           <SearchField
             id={SEARCH_FIELD_ID}
             aria-label="Search clients"
+            data-parity="clients-search"
             placeholder="Search by name or email"
             size="sm"
             className="w-full sm:w-72"
@@ -542,24 +555,28 @@ export function ClientsList() {
             <TableRow>
               <SortableTableHead
                 label="Client"
+                parity="sort-name"
                 active={sort.key === 'name'}
                 direction={directionFor('name')}
                 onSort={() => chooseSort('name')}
               />
               <SortableTableHead
                 label="Status"
+                parity="sort-status"
                 active={sort.key === 'status'}
                 direction={directionFor('status')}
                 onSort={() => chooseSort('status')}
               />
               <SortableTableHead
                 label="Bundle / Plan"
+                parity="sort-bundle"
                 active={sort.key === 'bundle'}
                 direction={directionFor('bundle')}
                 onSort={() => chooseSort('bundle')}
               />
               <SortableTableHead
                 label="Join date"
+                parity="sort-joined"
                 active={sort.key === 'joined'}
                 direction={directionFor('joined')}
                 onSort={() => chooseSort('joined')}
@@ -586,10 +603,11 @@ export function ClientsList() {
                 </TableCell>
               </TableRow>
             ) : (
-              matchingRows.map((row) => (
+              matchingRows.map((row, index) => (
                 <RosterTableRow
                   key={row.id}
                   row={row}
+                  position={index + 1}
                   onTerminate={handleTerminate}
                 />
               ))
