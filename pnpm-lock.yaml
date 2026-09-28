@@ -269,6 +269,9 @@ importers:
 
   apps/platform:
     dependencies:
+      '@clerk/backend':
+        specifier: 'catalog:'
+        version: 3.16.12(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@clerk/react-router':
         specifier: 'catalog:'
         version: 3.6.17(react-dom@19.2.8(react@19.2.8))(react-router@7.18.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)
@@ -335,6 +338,9 @@ importers:
       react-router:
         specifier: 'catalog:'
         version: 7.18.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      stripe:
+        specifier: 'catalog:'
+        version: 22.6.2(@types/node@24.13.3)
       zod:
         specifier: 'catalog:'
         version: 4.3.6
@@ -342,9 +348,6 @@ importers:
         specifier: 'catalog:'
         version: 5.0.15(@types/react@19.2.18)(react@19.2.8)(use-sync-external-store@1.6.0(react@19.2.8))
     devDependencies:
-      '@clerk/backend':
-        specifier: 'catalog:'
-        version: 3.16.12(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@clerk/testing':
         specifier: 'catalog:'
         version: 2.2.30(@playwright/test@1.62.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -381,9 +384,6 @@ importers:
       pdfjs-dist:
         specifier: 'catalog:'
         version: 6.1.200
-      stripe:
-        specifier: 'catalog:'
-        version: 22.6.2(@types/node@24.13.3)
       tailwindcss:
         specifier: 'catalog:'
         version: 4.2.4
