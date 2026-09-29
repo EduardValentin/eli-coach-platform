@@ -6,6 +6,7 @@ import {
   forgetDraft,
   loadDraft,
   saveDraft,
+  saveUnitPreference,
   SIMULATED_LATENCY_MS,
   submit,
 } from './onboardingService';
@@ -137,6 +138,44 @@ describe('saving an onboarding draft', () => {
 
     // assert
     expect(loadDraft('ac-1')).toBeNull();
+  });
+});
+
+describe('saving her units to her account', () => {
+  it('gives back the units it saved', async () => {
+    // arrange
+    const saving = saveUnitPreference(
+      'ac-1',
+      { weightUnit: 'lb', heightUnit: 'ft-in' },
+      'working',
+    );
+
+    // act
+    await vi.advanceTimersByTimeAsync(SIMULATED_LATENCY_MS);
+
+    // assert
+    await expect(saving).resolves.toEqual({
+      journeyId: 'ac-1',
+      preference: { weightUnit: 'lb', heightUnit: 'ft-in' },
+    });
+  });
+
+  it('refuses the units while the connection is lost', async () => {
+    // arrange
+    const saving = saveUnitPreference(
+      'ac-1',
+      { weightUnit: 'lb', heightUnit: 'ft-in' },
+      'lost',
+    );
+    const refusal = expect(saving).rejects.toMatchObject({
+      code: 'connection-lost',
+    });
+
+    // act
+    await vi.advanceTimersByTimeAsync(SIMULATED_LATENCY_MS);
+
+    // assert
+    await refusal;
   });
 });
 

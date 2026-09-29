@@ -3,6 +3,7 @@ import type {
   OnboardingDraft,
   OnboardingFormAnswers,
 } from '../domain/journey';
+import type { HeightUnit, WeightUnit } from '../utils/units';
 
 export type OnboardingConnection = 'working' | 'lost';
 
@@ -26,6 +27,16 @@ export class OnboardingError extends Error {
 export type SubmittedOnboarding = {
   journeyId: string;
   submittedAt: Date;
+};
+
+export type UnitPreference = {
+  weightUnit: WeightUnit;
+  heightUnit: HeightUnit;
+};
+
+export type SavedUnitPreference = {
+  journeyId: string;
+  preference: UnitPreference;
 };
 
 export type AnsweredDetailRequest = {
@@ -73,6 +84,16 @@ export async function saveDraft(
   writeStoredDrafts({ ...readStoredDrafts(), [journeyId]: draft });
 
   return draft;
+}
+
+export async function saveUnitPreference(
+  journeyId: string,
+  preference: UnitPreference,
+  connection: OnboardingConnection,
+): Promise<SavedUnitPreference> {
+  await reachServer(connection);
+
+  return { journeyId, preference };
 }
 
 export function loadDraft(journeyId: string): OnboardingDraft | null {

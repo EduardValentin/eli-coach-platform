@@ -789,6 +789,42 @@ describe('the onboarding', () => {
     );
   });
 
+  it('saves her units to her account the way it saves her answers', async () => {
+    // arrange
+    renderOnboarding('?session=client&jstage=account-created');
+
+    // act
+    await userEvent.click(screen.getByRole('radio', { name: 'lb · in' }));
+
+    // assert
+    expect(screen.getByText('Saving…')).toBeVisible();
+    expect(
+      await screen.findByText('Saved', undefined, { timeout: SERVICE_TIMEOUT }),
+    ).toBeVisible();
+  });
+
+  it('tells her the units are not saved yet while the connection is lost, and saves them once it is back', async () => {
+    // arrange
+    renderOnboarding('?session=client&jstage=account-created&jconn=lost');
+    await userEvent.click(screen.getByRole('radio', { name: 'lb · in' }));
+    const unsavedLine = await screen.findByText(UNSAVED_LINE, undefined, {
+      timeout: SERVICE_TIMEOUT,
+    });
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Restore the connection' }),
+    );
+
+    // act
+    fireEvent(window, new Event('online'));
+
+    // assert
+    expect(unsavedLine).toBeInTheDocument();
+    expect(
+      await screen.findByText('Saved', undefined, { timeout: SERVICE_TIMEOUT }),
+    ).toBeVisible();
+    expect(screen.getByRole('radio', { name: 'lb · in' })).toBeChecked();
+  });
+
   it('turns down a weight outside the sensible range in pounds', async () => {
     // arrange
     renderOnboarding('?session=client&jstage=account-created');

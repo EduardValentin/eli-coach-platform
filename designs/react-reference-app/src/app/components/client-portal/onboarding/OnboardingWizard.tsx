@@ -97,8 +97,13 @@ export function OnboardingWizard() {
   const prefersReducedMotion = useReducedMotion() ?? false;
   const stepCountId = useId();
   const journeyId = demoJourney.callId;
-  const { saveState, queueDraftSave, cancelQueuedSave, pendingSave } =
-    useDraftAutosave(journeyId);
+  const {
+    saveState,
+    queueDraftSave,
+    queueUnitPreferenceSave,
+    cancelQueuedSave,
+    pendingSave,
+  } = useDraftAutosave(journeyId);
 
   const { gender } = demoJourney.identity;
   const steps = useMemo(() => formsForGender(gender), [gender]);
@@ -317,7 +322,11 @@ export function OnboardingWizard() {
             onContinue={continueFrom}
             gender={gender}
             stepCountId={stepCountId}
-            unitsChoice={stepIndex === 0 ? <MeasurementSystemField /> : null}
+            unitsChoice={
+              stepIndex === 0 ? (
+                <MeasurementSystemField onChoose={queueUnitPreferenceSave} />
+              ) : null
+            }
           >
             {manualScreening && (
               <p className="text-sm text-text-secondary">

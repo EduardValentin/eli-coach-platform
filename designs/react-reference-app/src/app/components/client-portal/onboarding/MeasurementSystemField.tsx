@@ -1,7 +1,9 @@
 import { useId } from 'react';
 import { useUnitPreferences } from '../../../context/UnitPreferencesContext';
+import type { UnitPreference } from '../../../services/onboardingService';
 import {
   MEASUREMENT_SYSTEM_LABELS,
+  MEASUREMENT_SYSTEM_UNITS,
   measurementSystemOf,
   type MeasurementSystem,
 } from '../../../utils/units';
@@ -12,9 +14,20 @@ const LEGEND = 'How do you measure?';
 
 const SYSTEMS: readonly MeasurementSystem[] = ['metric', 'imperial'];
 
-export function MeasurementSystemField() {
+type MeasurementSystemFieldProps = {
+  onChoose: (preference: UnitPreference) => void;
+};
+
+export function MeasurementSystemField({
+  onChoose,
+}: MeasurementSystemFieldProps) {
   const { weightUnit, setMeasurementSystem } = useUnitPreferences();
   const legendId = useId();
+
+  const chooseSystem = (system: MeasurementSystem) => {
+    setMeasurementSystem(system);
+    onChoose(MEASUREMENT_SYSTEM_UNITS[system]);
+  };
 
   return (
     <fieldset>
@@ -24,9 +37,7 @@ export function MeasurementSystemField() {
       <ChoiceGroup
         aria-labelledby={legendId}
         className="mt-2"
-        onValueChange={(next) =>
-          setMeasurementSystem(next as MeasurementSystem)
-        }
+        onValueChange={(next) => chooseSystem(next as MeasurementSystem)}
         value={measurementSystemOf(weightUnit)}
       >
         {SYSTEMS.map((system) => (
