@@ -296,7 +296,7 @@ test("approving straight from Awaiting review passes through In review and refus
   // arrange
   await provisionCoach();
   const client = await provisionSubmittedClient("waiting");
-  const waiting = await provisionClientInState("needs-details");
+  const needsDetails = await provisionClientInState("needs-details");
   await page.goto("/store");
   await signInAsCoach();
 
@@ -338,7 +338,7 @@ test("approving straight from Awaiting review passes through In review and refus
   expect(await onboardingRecords.reviewStamps()).toEqual(approvedStamps);
 
   // act
-  await coachClient.open(waiting.clientId);
+  await coachClient.open(needsDetails.clientId);
 
   // assert
   await coachClient.expectStatus("Needs details");
@@ -347,17 +347,17 @@ test("approving straight from Awaiting review passes through In review and refus
   // act
   const whileWaiting = [
     await portalRequests.requestDetails(
-      waiting.clientId,
+      needsDetails.clientId,
       PROTOTYPE_DETAIL_REQUEST,
     ),
-    await portalRequests.approveAnswers(waiting.clientId),
+    await portalRequests.approveAnswers(needsDetails.clientId),
   ];
 
   // assert
   expect(whileWaiting).toEqual([409, 409]);
 
   // act
-  await coachClient.open(waiting.clientId);
+  await coachClient.open(needsDetails.clientId);
 
   // assert
   await coachClient.expectStatus("Needs details");

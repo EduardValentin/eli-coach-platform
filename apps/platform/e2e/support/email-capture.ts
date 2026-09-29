@@ -36,7 +36,7 @@ export async function startEmailCapture(): Promise<void> {
   const sentEmails: SentEmail[] = [];
   const refusedRecipients = new Set<string>();
   const captureServer = createServer((request, response) => {
-    void answerResendRequest({
+    void answerCaptureRequest({
       request,
       response,
       sentEmails,
@@ -100,7 +100,7 @@ type CaptureExchange = {
   refusedRecipients: Set<string>;
 };
 
-async function answerResendRequest(exchange: CaptureExchange): Promise<void> {
+async function answerCaptureRequest(exchange: CaptureExchange): Promise<void> {
   const url = new URL(exchange.request.url ?? "/", EMAIL_CAPTURE_URL);
 
   if (url.pathname === REFUSALS_PATH && exchange.request.method === "POST") {

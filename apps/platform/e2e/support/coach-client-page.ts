@@ -1,6 +1,12 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 
 import {
+  expectAccessRefused,
+  expectAvailability,
+  type Availability,
+} from "./control-states";
+import { isFocused, tabTo } from "./keyboard";
+import {
   countOf,
   escapedPattern,
   HYDRATION_RETRY_TIMEOUT_MS,
@@ -16,10 +22,7 @@ export type AnsweredQuestion = {
   answer: string;
 };
 
-const MAX_TAB_STOPS = 80;
 const FOCUS_TRAP_TAB_STOPS = 60;
-
-export type Availability = "enabled" | "disabled";
 
 export class CoachClientPage {
   constructor(private readonly page: Page) {}
@@ -36,17 +39,20 @@ export class CoachClientPage {
     return this.page.getByRole("dialog", { name: /^Review .+’s answers$/ });
   }
 
-  private async isFocused(locator: Locator): Promise<boolean> {
-    return locator.evaluate((element) => element === document.activeElement);
+  private approvalConfirmation(firstName: string): Locator {
+    return this.page.getByRole("dialog", {
+      name: `Approve ${firstName}'s answers?`,
+    });
   }
 
-  private async tabTo(locator: Locator): Promise<void> {
-    for (let stop = 0; stop < MAX_TAB_STOPS; stop += 1) {
-      if (await this.isFocused(locator)) return;
-      await this.page.keyboard.press("Tab");
-    }
+  private async confirmApproval(firstName: string): Promise<void> {
+    const confirmation = this.approvalConfirmation(firstName);
 
-    throw new Error("The keyboard never reached the expected control.");
+    await expect(confirmation).toContainText(
+      "You won't be able to ask for more details once you approve.",
+    );
+    await confirmation.getByRole("button", { name: "Approve" }).click();
+    await expect(confirmation).toBeHidden();
   }
 
   private definitionOf(scope: Locator, term: string): Locator {
@@ -166,11 +172,7 @@ export class CoachClientPage {
   }
 
   async expectRefused(): Promise<void> {
-    await expect(
-      this.page.getByRole("heading", {
-        name: "You don't have access to this page",
-      }),
-    ).toBeVisible();
+    await expectAccessRefused(this.page);
   }
 
   async expectAnswersNotIn(): Promise<void> {
@@ -265,19 +267,11 @@ export class CoachClientPage {
   }
 
   async approveAnswers(firstName: string): Promise<void> {
-    const confirmation = this.page.getByRole("dialog", {
-      name: `Approve ${firstName}'s answers?`,
-    });
-
     await this.openDialogWith(
       this.onboarding.getByRole("button", { name: "Approve answers" }),
-      confirmation,
+      this.approvalConfirmation(firstName),
     );
-    await expect(confirmation).toContainText(
-      "You won't be able to ask for more details once you approve.",
-    );
-    await confirmation.getByRole("button", { name: "Approve" }).click();
-    await expect(confirmation).toBeHidden();
+    await this.confirmApproval(firstName);
   }
 
   async expectWaitingOn(
@@ -373,7 +367,7 @@ export class CoachClientPage {
       await this.onboarding
         .getByRole("heading", { name: "Onboarding", exact: true })
         .click();
-      await this.tabTo(trigger);
+      await tabTo(this.page, trigger);
       await this.page.keyboard.press("Enter");
       await expect(this.reviewDialog).toBeVisible({
         timeout: HYDRATION_RETRY_TIMEOUT_MS,
@@ -407,29 +401,24 @@ export class CoachClientPage {
       exact: true,
     });
 
-    await this.tabTo(checkbox);
+    await tabTo(this.page, checkbox);
     await this.page.keyboard.press("Space");
     await expect(checkbox).toBeChecked();
   }
 
   async writeNoteWithKeyboard(note: string): Promise<void> {
-    await this.tabTo(
+    await tabTo(
+      this.page,
       this.reviewDialog.getByRole("textbox", { name: "What is missing?" }),
     );
     await this.page.keyboard.type(note);
   }
 
   async expectAskForDetails(availability: Availability): Promise<void> {
-    const button = this.reviewDialog.getByRole("button", {
-      name: "Ask for more details",
-    });
-
-    if (availability === "disabled") {
-      await expect(button).toBeDisabled();
-      return;
-    }
-
-    await expect(button).toBeEnabled();
+    await expectAvailability(
+      this.reviewDialog.getByRole("button", { name: "Ask for more details" }),
+      availability,
+    );
   }
 
   async closeReviewWithEscape(): Promise<void> {
@@ -444,18 +433,10 @@ export class CoachClientPage {
   }
 
   async approveFromReview(firstName: string): Promise<void> {
-    const confirmation = this.page.getByRole("dialog", {
-      name: `Approve ${firstName}'s answers?`,
-    });
-
     await this.reviewDialog
       .getByRole("button", { name: "Approve answers" })
       .click();
-    await expect(confirmation).toContainText(
-      "You won't be able to ask for more details once you approve.",
-    );
-    await confirmation.getByRole("button", { name: "Approve" }).click();
-    await expect(confirmation).toBeHidden();
+    await this.confirmApproval(firstName);
     await expect(this.reviewDialog).toBeHidden();
   }
 }

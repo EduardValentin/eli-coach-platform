@@ -1,5 +1,8 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 
+import { expectAvailability, type Availability } from "./control-states";
+import { tabTo } from "./keyboard";
+
 type UnitsChoice = "kg · cm" | "lb · in";
 
 type WelcomePartCount = "five" | "four";
@@ -39,10 +42,6 @@ const DETAIL_ANSWERS_API = "**/api/client-onboarding/detail-answers";
 
 const ANSWER_SEND_PROBLEM =
   "Your answers could not be sent just now. Try again in a moment.";
-
-const MAX_TAB_STOPS = 80;
-
-type SendAvailability = "enabled" | "disabled";
 
 const RESUME_NOTE = "Picking up where you left off.";
 
@@ -118,23 +117,6 @@ export class ClientOnboarding {
   private async check(locator: Locator): Promise<void> {
     await locator.scrollIntoViewIfNeeded();
     await locator.check();
-  }
-
-  private async isFocused(locator: Locator): Promise<boolean> {
-    return locator.evaluate(
-      (element) =>
-        element === document.activeElement ||
-        element.contains(document.activeElement),
-    );
-  }
-
-  private async tabTo(locator: Locator): Promise<void> {
-    for (let stop = 0; stop < MAX_TAB_STOPS; stop += 1) {
-      if (await this.isFocused(locator)) return;
-      await this.page.keyboard.press("Tab");
-    }
-
-    throw new Error("The keyboard never reached the expected control.");
   }
 
   private entry(label: string): Locator {
@@ -368,15 +350,11 @@ export class ClientOnboarding {
     await expect(this.page.getByText(SUBMIT_PROBLEM)).toBeVisible();
   }
 
-  async expectSendToCoach(availability: SendAvailability): Promise<void> {
-    const button = this.page.getByRole("button", { name: SEND_TO_COACH });
-
-    if (availability === "disabled") {
-      await expect(button).toBeDisabled();
-      return;
-    }
-
-    await expect(button).toBeEnabled();
+  async expectSendToCoach(availability: Availability): Promise<void> {
+    await expectAvailability(
+      this.page.getByRole("button", { name: SEND_TO_COACH }),
+      availability,
+    );
   }
 
   async blockDraftSaves(): Promise<void> {
@@ -423,7 +401,7 @@ export class ClientOnboarding {
       name: label,
       exact: true,
     });
-    await this.tabTo(checkbox);
+    await tabTo(this.page, checkbox);
     await this.page.keyboard.press("Space");
     await expect(checkbox).toBeChecked();
   }
@@ -432,7 +410,7 @@ export class ClientOnboarding {
     const radiogroup = this.page.getByRole("radiogroup", { name: label });
     const radios = radiogroup.getByRole("radio");
     const target = radiogroup.getByRole("radio", { name: option, exact: true });
-    await this.tabTo(radiogroup);
+    await tabTo(this.page, radiogroup);
     const names = await radios.allInnerTexts();
     const targetIndex = names.indexOf(option);
 
@@ -447,7 +425,7 @@ export class ClientOnboarding {
   }
 
   async keyboardContinue(): Promise<void> {
-    await this.tabTo(this.page.getByRole("button", { name: "Continue" }));
+    await tabTo(this.page, this.page.getByRole("button", { name: "Continue" }));
     await this.page.keyboard.press("Enter");
   }
 

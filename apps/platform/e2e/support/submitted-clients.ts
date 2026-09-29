@@ -41,11 +41,28 @@ export type ReviewState =
 
 export type SubmissionProfile = "flagged" | "manual-screening";
 
+type FirstMeasurements = {
+  weightKg: number;
+  waistCm: number;
+  hipsCm: number;
+  thighCm: number;
+  armCm: number;
+};
+
+type BookingContact = { phone: string; notes: string };
+
 type SubmissionSeed = {
   clientId: string;
   answers: OnboardingAnswersByForm;
   submittedAt: Date;
-  withMeasurements: boolean;
+  measurements: FirstMeasurements | null;
+};
+
+type ProfileSeed = {
+  identity: Pick<PaidClientIdentity, "gender" | "dateOfBirth">;
+  answersFrom: (answers: OnboardingAnswersByForm) => OnboardingAnswersByForm;
+  measurements: FirstMeasurements | null;
+  bookingContact: BookingContact | null;
 };
 
 export type ClientStateSeed = {
@@ -54,13 +71,13 @@ export type ClientStateSeed = {
   invitation?: Omit<InvitationSeed, "standing">;
 };
 
-export const FIRST_MEASUREMENTS = {
+export const FIRST_MEASUREMENTS: FirstMeasurements = {
   weightKg: 66.1,
   waistCm: 74,
   hipsCm: 98,
   thighCm: 57,
   armCm: 28,
-} as const;
+};
 
 export const BONE_OR_JOINT_PROBLEM_LIST =
   "Right shoulder aches on overhead pressing.";
@@ -77,18 +94,31 @@ export const PROTOTYPE_DETAIL_REQUEST: DetailRequestSeed = {
 
 export const CHRONIC_CONDITION_LIST = "Hypothyroidism, treated since 2019.";
 
-export const BOOKING_CONTACT = {
+export const BOOKING_CONTACT: BookingContact = {
   phone: "+40712345678",
   notes: "Knee surgery in 2021, cleared for training since.",
-} as const;
-
-const PROFILE_IDENTITY: Record<
-  SubmissionProfile,
-  Pick<PaidClientIdentity, "gender" | "dateOfBirth">
-> = {
-  flagged: { gender: "female", dateOfBirth: "1994-03-14" },
-  "manual-screening": { gender: "male", dateOfBirth: "1950-01-01" },
 };
+
+const SUBMISSION_PROFILES: Record<SubmissionProfile, ProfileSeed> = {
+  flagged: {
+    identity: { gender: "female", dateOfBirth: "1994-03-14" },
+    answersFrom: flaggedAnswersFrom,
+    measurements: FIRST_MEASUREMENTS,
+    bookingContact: BOOKING_CONTACT,
+  },
+  "manual-screening": {
+    identity: { gender: "male", dateOfBirth: "1950-01-01" },
+    answersFrom: manualScreeningAnswersFrom,
+    measurements: null,
+    bookingContact: null,
+  },
+};
+
+const INVITED_STATES: ReadonlySet<ClientState> = new Set([
+  "invited-pending",
+  "invited-expired",
+  "invited-email-failed",
+]);
 
 const LAST_PERIOD_DAYS_AGO = 10;
 
@@ -172,7 +202,7 @@ export async function insertSubmittedClientRecords(
     clientId: client.clientId,
     answers: submittedAnswersFor(identity, submittedAt),
     submittedAt,
-    withMeasurements: true,
+    measurements: FIRST_MEASUREMENTS,
   });
 
   return { ...client, submittedAt };
@@ -183,26 +213,23 @@ export async function insertProfiledClientRecords(
   identity: Omit<PaidClientIdentity, "gender" | "dateOfBirth">,
   profile: SubmissionProfile,
 ): Promise<SubmittedClient> {
-  const profiled = { ...identity, ...PROFILE_IDENTITY[profile] };
+  const seed = SUBMISSION_PROFILES[profile];
+  const profiled = { ...identity, ...seed.identity };
   const client = await insertPaidClientRecords(pool, profiled, "immediate");
   const submittedAt = new Date();
-  const answers = submittedAnswersFor(profiled, submittedAt);
 
   await recordSubmission(pool, {
     clientId: client.clientId,
-    answers:
-      profile === "flagged"
-        ? flaggedAnswersFrom(answers)
-        : manualScreeningAnswersFrom(answers),
+    answers: seed.answersFrom(submittedAnswersFor(profiled, submittedAt)),
     submittedAt,
-    withMeasurements: profile === "flagged",
+    measurements: seed.measurements,
   });
 
-  if (profile === "flagged") {
+  if (seed.bookingContact) {
     await pool.query(RECORD_BOOKING_CONTACT, [
       client.clientId,
-      BOOKING_CONTACT.phone,
-      BOOKING_CONTACT.notes,
+      seed.bookingContact.phone,
+      seed.bookingContact.notes,
     ]);
   }
 
@@ -213,7 +240,7 @@ async function recordSubmission(
   pool: pg.Pool,
   submission: SubmissionSeed,
 ): Promise<void> {
-  const { clientId, submittedAt } = submission;
+  const { clientId, measurements, submittedAt } = submission;
 
   await inTransaction(pool, async (connection) => {
     await connection.query(INSERT_SUBMISSION, [
@@ -222,15 +249,15 @@ async function recordSubmission(
       submittedAt,
     ]);
 
-    if (submission.withMeasurements) {
+    if (measurements) {
       await connection.query(INSERT_FIRST_MEASUREMENTS, [
         clientId,
         submittedAt,
-        FIRST_MEASUREMENTS.weightKg,
-        FIRST_MEASUREMENTS.waistCm,
-        FIRST_MEASUREMENTS.hipsCm,
-        FIRST_MEASUREMENTS.thighCm,
-        FIRST_MEASUREMENTS.armCm,
+        measurements.weightKg,
+        measurements.waistCm,
+        measurements.hipsCm,
+        measurements.thighCm,
+        measurements.armCm,
       ]);
     }
 
@@ -451,4 +478,8 @@ function requireKnownQuestions(questions: readonly QuestionId[]): void {
       throw new Error(`${formId}/${fieldId} is not an onboarding question.`);
     }
   }
+}
+
+export function isInvitedState(state: ClientState): boolean {
+  return INVITED_STATES.has(state);
 }

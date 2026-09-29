@@ -24,10 +24,12 @@ import {
   type InvitedClient,
   type PaidClient,
   type StartChoice,
+  type InvitationSeed,
 } from "./paid-clients";
 import {
   insertClientInState,
   insertProfiledClientRecords,
+  isInvitedState,
   insertReviewedClientRecords,
   type ClientState,
   type SubmissionProfile,
@@ -159,6 +161,24 @@ function requireProviderUrl(invitation: { id: string; url?: string }): string {
   }
 
   return invitation.url;
+}
+
+async function createProviderInvitation(
+  clerkBackendClient: ClerkClient,
+  email: string,
+): Promise<Omit<InvitationSeed, "standing">> {
+  const id = randomUUID();
+  const provider = await clerkBackendClient.invitations.createInvitation({
+    emailAddress: email,
+    ignoreExisting: true,
+    notify: false,
+    publicMetadata: { invitationId: id },
+  });
+
+  return {
+    id,
+    provider: { id: provider.id, url: requireProviderUrl(provider) },
+  };
 }
 
 export const test = base.extend<PlatformFixtures, WorkerFixtures>({
@@ -359,15 +379,9 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
   ) => {
     await use(async (state: ClientState) => {
       const email = mintRecordedTestEmail(testInfo.workerIndex);
-      const invitationId = randomUUID();
-      const invitation = state.startsWith("invited-")
-        ? await clerkBackendClient.invitations.createInvitation({
-            emailAddress: email,
-            ignoreExisting: true,
-            notify: false,
-            publicMetadata: { invitationId },
-          })
-        : null;
+      const invitation = isInvitedState(state)
+        ? await createProviderInvitation(clerkBackendClient, email)
+        : undefined;
 
       return insertClientInState(
         databasePool,
@@ -381,15 +395,7 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
             dateOfBirth: ADULT_DATE_OF_BIRTH,
           },
           start: "waiting",
-          invitation: invitation
-            ? {
-                id: invitationId,
-                provider: {
-                  id: invitation.id,
-                  url: requireProviderUrl(invitation),
-                },
-              }
-            : undefined,
+          invitation,
         },
         state,
       );
@@ -426,13 +432,10 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
   ) => {
     await use(async (standing: InvitationStanding) => {
       const email = mintRecordedTestEmail(testInfo.workerIndex);
-      const invitationId = randomUUID();
-      const provider = await clerkBackendClient.invitations.createInvitation({
-        emailAddress: email,
-        ignoreExisting: true,
-        notify: false,
-        publicMetadata: { invitationId },
-      });
+      const invitation = await createProviderInvitation(
+        clerkBackendClient,
+        email,
+      );
 
       return insertInvitedClientRecords(
         databasePool,
@@ -443,11 +446,7 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
           gender: "female",
           dateOfBirth: ADULT_DATE_OF_BIRTH,
         },
-        {
-          id: invitationId,
-          standing,
-          provider: { id: provider.id, url: requireProviderUrl(provider) },
-        },
+        { ...invitation, standing },
       );
     });
   },
