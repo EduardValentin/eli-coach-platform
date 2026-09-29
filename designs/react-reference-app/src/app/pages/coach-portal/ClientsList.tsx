@@ -49,6 +49,7 @@ import { format, parseISO } from 'date-fns';
 import { bundleLengthLabel } from '../../domain/bundles';
 import { getInitials, trainingClientIdFor } from '../../utils/clientHelpers';
 import { ClientStatusBadge } from '../../components/coach-portal/ClientStatusBadge';
+import { ClientsUnavailable } from '../../components/coach-portal/ClientsUnavailable';
 import {
   clientDetailPathForJourney,
   journeyCallIdForClient,
@@ -203,9 +204,12 @@ function StatusFilter({
             </Badge>
           </span>
         </SelectItem>
-        <SelectSeparator />
+        <SelectSeparator data-parity="status-separator" />
         {CLIENT_STATUS_GROUPS.map((group) => (
-          <SelectGroup key={group.label}>
+          <SelectGroup
+            key={group.label}
+            data-parity={`status-group-${group.label.toLowerCase()}`}
+          >
             <SelectLabel>{group.label}</SelectLabel>
             {group.options.map((option) => (
               <SelectItem key={option} value={option}>
@@ -233,7 +237,10 @@ function RosterAvatar({ row }: { row: RosterRow }) {
   }
 
   return (
-    <div className="w-10 h-10 rounded-full bg-surface-quiet flex items-center justify-center font-serif text-text-primary font-semibold shrink-0">
+    <div
+      aria-hidden="true"
+      className="w-10 h-10 rounded-full bg-surface-quiet flex items-center justify-center font-serif text-text-primary font-semibold shrink-0"
+    >
       {getInitials(row.name)}
     </div>
   );
@@ -319,7 +326,12 @@ function RosterTableRow({
             >
               {row.name}
             </p>
-            <p className="text-xs text-text-secondary mt-0.5">{row.email}</p>
+            <p
+              className="text-xs text-text-secondary mt-0.5"
+              data-parity={rowParity('email')}
+            >
+              {row.email}
+            </p>
           </div>
         </div>
       </TableCell>
@@ -340,7 +352,7 @@ function RosterTableRow({
       >
         {row.joinedAt ? format(row.joinedAt, 'MMM dd, yyyy') : '—'}
       </TableCell>
-      <TableCell>
+      <TableCell data-parity={rowParity('actions')}>
         <RosterActions row={row} onTerminate={onTerminate} />
       </TableCell>
     </TableRow>
@@ -414,11 +426,12 @@ export function ClientsList() {
     return activeSubscription?.months ?? null;
   };
 
-  const journeyRows = appState.isClientsRosterEmpty
-    ? []
-    : startedJourneys.map((journey) => journeyRosterRow(journey, now));
+  const isRosterSeeded = appState.clientsRoster === 'seeded';
+  const journeyRows = isRosterSeeded
+    ? startedJourneys.map((journey) => journeyRosterRow(journey, now))
+    : [];
 
-  const showsMockRows = isPostMvp && !appState.isClientsRosterEmpty;
+  const showsMockRows = isPostMvp && isRosterSeeded;
 
   const mockRows = (showsMockRows ? clients : [])
     .filter((client) => {
@@ -515,6 +528,10 @@ export function ClientsList() {
 
   const removal = pendingRemoval ? removalCopy(pendingRemoval) : null;
 
+  if (appState.clientsRoster === 'unavailable') {
+    return <ClientsUnavailable />;
+  }
+
   return (
     <div className="w-full" data-parity-root="ClientsSection">
       <PortalPageHeader
@@ -549,6 +566,7 @@ export function ClientsList() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         className="bg-white rounded-panel shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-border/50 overflow-hidden"
+        data-parity="roster-table"
       >
         <Table>
           <TableHeader>

@@ -85,7 +85,7 @@ type AppState = {
   journeyReducedPricing: boolean;
   journeyInvitation: PrototypeInvitationStanding;
   invitationResendOutcome: PrototypeInvitationResendOutcome;
-  isClientsRosterEmpty: boolean;
+  clientsRoster: PrototypeClientsRoster;
   paymentLinkOutcome: PrototypePaymentLinkOutcome;
   paymentLinkState: PrototypePaymentLinkState;
   invitationLinkState: PrototypeInvitationLinkState;
@@ -121,7 +121,7 @@ const defaultState: AppState = {
   journeyReducedPricing: false,
   journeyInvitation: 'sent',
   invitationResendOutcome: 'sent',
-  isClientsRosterEmpty: false,
+  clientsRoster: 'seeded',
   paymentLinkOutcome: 'sent',
   paymentLinkState: 'valid',
   invitationLinkState: 'valid',
@@ -147,6 +147,12 @@ const validBookingOutcomes = [
   'server_error',
 ] as const;
 const validCoachListingOutcomes = ['ok', 'unavailable'] as const;
+export const PROTOTYPE_CLIENTS_ROSTERS = [
+  'seeded',
+  'empty',
+  'unavailable',
+] as const;
+export type PrototypeClientsRoster = (typeof PROTOTYPE_CLIENTS_ROSTERS)[number];
 const validCallSettingsSaveOutcomes = ['saved', 'server_error'] as const;
 const validJourneyStages = [
   'held',
@@ -318,8 +324,12 @@ function parseDevParamsFromURL(): AppState {
     state.invitationResendOutcome =
       invitationResendOutcome as PrototypeInvitationResendOutcome;
   }
-  if (params.has('jroster')) {
-    state.isClientsRosterEmpty = params.get('jroster') === 'empty';
+  const clientsRoster = params.get('jroster');
+  if (
+    clientsRoster &&
+    (PROTOTYPE_CLIENTS_ROSTERS as readonly string[]).includes(clientsRoster)
+  ) {
+    state.clientsRoster = clientsRoster as PrototypeClientsRoster;
   }
   const paymentLink = params.get('paylink');
   if (
@@ -460,8 +470,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     ) {
       url.searchParams.set('jresend', appState.invitationResendOutcome);
     }
-    if (appState.isClientsRosterEmpty) {
-      url.searchParams.set('jroster', 'empty');
+    if (appState.clientsRoster !== defaultState.clientsRoster) {
+      url.searchParams.set('jroster', appState.clientsRoster);
     }
     if (appState.paymentLinkOutcome !== defaultState.paymentLinkOutcome) {
       url.searchParams.set('paylink', appState.paymentLinkOutcome);

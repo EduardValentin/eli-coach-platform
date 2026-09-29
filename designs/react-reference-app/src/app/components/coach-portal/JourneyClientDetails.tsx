@@ -28,7 +28,7 @@ export function JourneyClientDetails({ journey }: { journey: ClientJourney }) {
   const invitation = invitationAwaitingAccount(journey);
 
   return (
-    <div className="w-full pb-12">
+    <div className="w-full pb-12" data-parity-root="JourneyClientDetails">
       <Link
         to="/coach/clients"
         className="mb-8 inline-flex items-center gap-2 text-sm font-medium text-text-secondary transition-colors hover:text-text-primary"
@@ -38,7 +38,7 @@ export function JourneyClientDetails({ journey }: { journey: ClientJourney }) {
 
       <header className="mb-10 flex items-center gap-5">
         <Avatar size="lg">
-          <AvatarFallback>{getInitials(name)}</AvatarFallback>
+          <AvatarFallback aria-hidden="true">{getInitials(name)}</AvatarFallback>
         </Avatar>
         <div className="min-w-0">
           <div className="mb-2 flex flex-wrap items-center gap-3">

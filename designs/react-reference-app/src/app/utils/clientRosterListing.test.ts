@@ -238,6 +238,29 @@ describe('sorting bundles by months rather than by label', () => {
   });
 });
 
+describe('breaking sort ties', () => {
+  const rows = [
+    row({ id: 'older', bundleMonths: 3, joinedAt: new Date('2025-06-01') }),
+    row({ id: 'newer', bundleMonths: 3, joinedAt: new Date('2025-09-01') }),
+  ];
+
+  it('keeps equal bundles newest-joined first ascending', () => {
+    // act
+    const ascending = sortRows(rows, { key: 'bundle', direction: 'asc' });
+
+    // assert
+    expect(ascending.map((r) => r.id)).toEqual(['newer', 'older']);
+  });
+
+  it('reverses that order descending', () => {
+    // act
+    const descending = sortRows(rows, { key: 'bundle', direction: 'desc' });
+
+    // assert
+    expect(descending.map((r) => r.id)).toEqual(['older', 'newer']);
+  });
+});
+
 describe('sorting by join date', () => {
   const rows = [
     row({ id: 'a', joinedAt: new Date('2025-06-01') }),

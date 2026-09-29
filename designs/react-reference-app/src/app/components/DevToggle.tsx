@@ -5,7 +5,9 @@ import { ArrowRight, Settings, X } from 'lucide-react';
 import {
   useAppState,
   JOURNEY_AGE_BANDS,
+  PROTOTYPE_CLIENTS_ROSTERS,
   type JourneyAgeBand,
+  type PrototypeClientsRoster,
   type PrototypeMode,
   type PrototypeSession,
   type PrototypeWaitlistAvailability,
@@ -196,8 +198,12 @@ function parseInvitationResendOutcomeControl(
   return outcome ?? 'sent';
 }
 
-function parseClientsRosterControl(value: string): boolean {
-  return value === 'empty';
+function parseClientsRosterControl(value: string): PrototypeClientsRoster {
+  const roster = PROTOTYPE_CLIENTS_ROSTERS.find(
+    (candidate) => candidate === value,
+  );
+
+  return roster ?? 'seeded';
 }
 
 function parseBookingOutcomeControl(value: string): PrototypeBookingOutcome {
@@ -838,10 +844,10 @@ export function DevToggle() {
                     Clients roster
                   </Label>
                   <Select
-                    value={appState.isClientsRosterEmpty ? 'empty' : 'seeded'}
+                    value={appState.clientsRoster}
                     onValueChange={(value) =>
                       setAppState({
-                        isClientsRosterEmpty: parseClientsRosterControl(value),
+                        clientsRoster: parseClientsRosterControl(value),
                       })
                     }
                   >
@@ -851,6 +857,9 @@ export function DevToggle() {
                     <SelectContent className={SELECT_CONTENT_CLASS}>
                       <SelectItem value="seeded">Seeded</SelectItem>
                       <SelectItem value="empty">Empty</SelectItem>
+                      <SelectItem value="unavailable">
+                        Clients unavailable
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

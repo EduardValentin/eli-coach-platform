@@ -412,6 +412,39 @@ describe('the coach clients list', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('shows the clients-unavailable dead end when the URL fails the roster', () => {
+    // arrange
+    renderMvpList('?jroster=unavailable');
+
+    // assert
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'Clients unavailable' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Your clients could not be loaded. Try again in a moment.',
+    );
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+  });
+
+  it('fails the roster from the Dev Toggle', async () => {
+    // arrange
+    const user = renderMvpList('?jstage=submitted');
+    await user.click(screen.getByRole('button', { name: 'Open Dev Toggle' }));
+    await user.click(screen.getByRole('tab', { name: 'Coach' }));
+
+    // act
+    await user.click(screen.getByRole('combobox', { name: 'Clients roster' }));
+    await user.click(
+      await screen.findByRole('option', { name: 'Clients unavailable' }),
+    );
+
+    // assert
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'Clients unavailable' }),
+    ).toBeInTheDocument();
+    expect(window.location.search).toContain('jroster=unavailable');
+  });
+
   it('empties the roster from the Dev Toggle and restores it', async () => {
     // arrange
     const user = renderMvpList('?jstage=submitted');

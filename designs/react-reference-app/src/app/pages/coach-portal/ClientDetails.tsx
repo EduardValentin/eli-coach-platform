@@ -38,6 +38,7 @@ import { Avatar, AvatarFallback } from '../../components/ui/avatar';
 import { Badge } from '../../components/ui/badge';
 import { SubscriptionBadge } from '../../components/coach-portal/SubscriptionBadge';
 import { JourneyClientDetails } from '../../components/coach-portal/JourneyClientDetails';
+import { ClientNotFound } from '../../components/coach-portal/ClientNotFound';
 import { OnboardingPanel } from '../../components/coach-portal/OnboardingPanel';
 import { SubscriptionSummary } from '../../components/SubscriptionSummary';
 import { MeasurementsTable } from '../../components/MeasurementsTable';
@@ -84,13 +85,14 @@ import { cn } from '../../components/ui/utils';
 export function ClientDetails() {
   const { id = 'client-1' } = useParams();
   const { journeyForCall } = useClientJourneys();
+  const { getProfile } = useClientProfile();
   const journey = journeyForCall(id);
 
-  return journey ? (
-    <JourneyClientDetails journey={journey} />
-  ) : (
-    <RosterClientDetails />
-  );
+  if (journey) {
+    return <JourneyClientDetails journey={journey} />;
+  }
+
+  return getProfile(id) ? <RosterClientDetails /> : <ClientNotFound />;
 }
 
 function RosterClientDetails() {

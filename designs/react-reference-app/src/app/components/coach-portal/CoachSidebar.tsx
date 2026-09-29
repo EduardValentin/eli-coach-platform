@@ -56,11 +56,14 @@ function CoachIdentityLink({ coachAvatarUrl }: { coachAvatarUrl?: string }) {
           className="w-10 h-10 rounded-compact object-cover shrink-0 shadow-md border border-border-subtle"
         />
       ) : (
-        <div className="w-10 h-10 rounded-compact bg-text-primary text-white flex items-center justify-center shrink-0 shadow-md">
+        <div
+          className="w-10 h-10 rounded-compact bg-text-primary text-white flex items-center justify-center shrink-0 shadow-md"
+          data-parity="sidebar-brand-mark"
+        >
           <Dumbbell size={20} className="transform -rotate-45" />
         </div>
       )}
-      <div className="min-w-0">
+      <div className="min-w-0" data-parity="sidebar-brand-name">
         <p className="font-serif font-semibold text-lg text-text-primary">
           Evoa
         </p>
@@ -232,7 +235,10 @@ export function CoachSidebar() {
                   className="w-8 h-8 rounded-compact object-cover shrink-0 border border-border-subtle"
                 />
               ) : (
-                <div className="w-8 h-8 rounded-compact bg-text-primary text-white flex items-center justify-center shrink-0">
+                <div
+                  className="w-8 h-8 rounded-compact bg-text-primary text-white flex items-center justify-center shrink-0"
+                  data-parity="top-bar-brand-mark"
+                >
                   <Dumbbell size={16} className="transform -rotate-45" />
                 </div>
               )}
