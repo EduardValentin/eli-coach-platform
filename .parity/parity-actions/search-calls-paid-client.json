@@ -1,0 +1,7 @@
+[
+  { "waitFor": "[aria-label=\"Search calls\"]" },
+  { "wait": 1000 },
+  { "fill": ["[aria-label=\"Search calls\"]", "jane"] },
+  { "waitFor": "role=link[name=/View client/]" },
+  { "wait": 600 }
+]

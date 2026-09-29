@@ -357,8 +357,8 @@ async function insertInvited(
   }
 
   return insertInvitedClientRecords(pool, seed.identity, {
-    ...seed.invitation,
-    standing,
+    invitation: { ...seed.invitation, standing },
+    start: seed.start,
   });
 }
 

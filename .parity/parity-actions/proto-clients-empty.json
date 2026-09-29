@@ -1,10 +1,4 @@
 [
-  { "waitFor": "[data-parity-root=\"ClientsSection\"]" },
-  { "click": "[aria-label=\"Open Dev Toggle\"]" },
-  { "click": "role=tab[name=\"Coach\"]" },
-  { "click": "#dev-clients-roster" },
-  { "click": "role=option[name=\"Empty\"]" },
-  { "click": "[aria-label=\"Close Dev Settings\"]" },
   { "waitFor": "text=No clients yet" },
-  { "wait": 400 }
+  { "wait": 1000 }
 ]

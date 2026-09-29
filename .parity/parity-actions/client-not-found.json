@@ -1,0 +1,4 @@
+[
+  { "waitFor": "[data-parity-root=\"ClientNotFound\"]" },
+  { "wait": 400 }
+]

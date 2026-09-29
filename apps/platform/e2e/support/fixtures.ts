@@ -446,7 +446,7 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
           gender: "female",
           dateOfBirth: ADULT_DATE_OF_BIRTH,
         },
-        { ...invitation, standing },
+        { invitation: { ...invitation, standing } },
       );
     });
   },

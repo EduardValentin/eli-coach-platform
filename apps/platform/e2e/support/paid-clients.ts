@@ -33,6 +33,11 @@ export type InvitationSeed = {
   provider: ProviderInvitation;
 };
 
+export type InvitedClientSeed = {
+  invitation: InvitationSeed;
+  start?: StartChoice;
+};
+
 export type InvitedClient = PaidClient & {
   invitationToken: string;
   invitationSentAt: Date;
@@ -113,13 +118,13 @@ export async function insertPaidClientRecords(
 export async function insertInvitedClientRecords(
   pool: pg.Pool,
   identity: ClientIdentity,
-  invitation: InvitationSeed,
+  { invitation, start = "waiting" }: InvitedClientSeed,
 ): Promise<InvitedClient> {
   return inTransaction(pool, async (connection) => {
     const client = await insertPaidClient(connection, {
       identity,
       authSubjectId: null,
-      start: "waiting",
+      start,
     });
     const invitationToken = randomBytes(32).toString("base64url");
     const times = invitationTimesFor(invitation.standing, client.paidAt);
