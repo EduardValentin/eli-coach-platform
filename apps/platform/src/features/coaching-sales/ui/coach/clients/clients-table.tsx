@@ -127,7 +127,12 @@ function ClientRow({ client, position, timeZone }: ClientRowProps) {
             >
               {name}
             </p>
-            <p className="mt-0.5 text-xs text-text-secondary">{client.email}</p>
+            <p
+              className="mt-0.5 text-xs text-text-secondary"
+              data-parity={cellParity("email")}
+            >
+              {client.email}
+            </p>
           </div>
         </div>
       </TableCell>
@@ -150,7 +155,7 @@ function ClientRow({ client, position, timeZone }: ClientRowProps) {
           ? ABSENT_VALUE
           : formatJoinDate(client.paidAt, timeZone)}
       </TableCell>
-      <TableCell>
+      <TableCell data-parity={cellParity("actions")}>
         <div className="flex items-center justify-between gap-2">
           <div />
           <Link

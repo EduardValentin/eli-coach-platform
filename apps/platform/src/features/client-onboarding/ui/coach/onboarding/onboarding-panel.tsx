@@ -169,6 +169,7 @@ function StageActions({ onApprove, onReview, stage }: StageActionsProps) {
         <Button
           data-parity="review-action"
           onClick={onReview}
+          size="sm"
           variant="outline"
         >
           {REVIEW_ACTIONS[stage]}
@@ -176,6 +177,7 @@ function StageActions({ onApprove, onReview, stage }: StageActionsProps) {
         <Button
           data-parity="approve-action"
           onClick={onApprove}
+          size="sm"
           variant="primary"
         >
           {APPROVE_ACTION}
@@ -280,32 +282,32 @@ export function OnboardingPanel({
   const submitted = review.submitted;
 
   return (
-    <div className="mb-8" data-parity-root="OnboardingPanel">
-      <PortalWidget
-        action={statusBadge}
-        headingId="onboarding-panel-heading"
-        icon={
-          <ClipboardList
-            aria-hidden="true"
-            className="text-brand-secondary"
-            size={18}
-          />
-        }
-        title={PANEL_TITLE}
-        titleAdornment={
-          submitted ? <ScreeningWarning submitted={submitted} /> : null
-        }
-      >
-        {submitted ? (
-          <SubmittedOnboarding
-            client={client}
-            review={review}
-            submitted={submitted}
-          />
-        ) : (
-          <p className="text-sm text-text-secondary">{ANSWERS_NOT_IN}</p>
-        )}
-      </PortalWidget>
-    </div>
+    <PortalWidget
+      action={statusBadge}
+      className="mb-8"
+      data-parity-root="OnboardingPanel"
+      headingId="onboarding-panel-heading"
+      icon={
+        <ClipboardList
+          aria-hidden="true"
+          className="text-brand-secondary"
+          size={18}
+        />
+      }
+      title={PANEL_TITLE}
+      titleAdornment={
+        submitted ? <ScreeningWarning submitted={submitted} /> : null
+      }
+    >
+      {submitted ? (
+        <SubmittedOnboarding
+          client={client}
+          review={review}
+          submitted={submitted}
+        />
+      ) : (
+        <p className="text-sm text-text-secondary">{ANSWERS_NOT_IN}</p>
+      )}
+    </PortalWidget>
   );
 }

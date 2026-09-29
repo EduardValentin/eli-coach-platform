@@ -53,9 +53,12 @@ export function ClientStatusFilter({
         >
           {ALL_STATUSES_LABEL}
         </SelectItem>
-        <SelectSeparator />
+        <SelectSeparator data-parity="status-separator" />
         {CLIENT_STATUS_GROUPS.map((group) => (
-          <SelectGroup key={group.label}>
+          <SelectGroup
+            data-parity={`status-group-${group.label.toLowerCase()}`}
+            key={group.label}
+          >
             <SelectLabel>{group.label}</SelectLabel>
             {group.statuses.map((option) => (
               <SelectItem count={counts[option]} key={option} value={option}>

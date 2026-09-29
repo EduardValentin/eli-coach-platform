@@ -31,7 +31,7 @@ const SIZE_CLASSES = {
     header: undefined,
   },
   wide: {
-    content: "flex max-h-[90vh] flex-col overflow-hidden sm:max-w-3xl",
+    content: "flex max-h-[90vh] flex-col gap-0 overflow-hidden sm:max-w-3xl",
     description: undefined,
     footer: "border-t border-border-default/50 px-6 py-4",
     header: "px-6 pt-6 pb-4",

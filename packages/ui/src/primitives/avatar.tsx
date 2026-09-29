@@ -43,7 +43,7 @@ export function Avatar({ name, size, tone }: AvatarProps) {
     <span className={cn(avatarClasses({ size, tone }))}>
       <span
         aria-hidden="true"
-        className="flex size-full items-center justify-center rounded-full bg-surface-neutral font-medium text-text-primary"
+        className="flex size-full shrink-0 items-center justify-center rounded-full bg-surface-neutral font-medium text-text-primary"
         data-slot="avatar-fallback"
       >
         {initialsOf(name)}

@@ -46,13 +46,14 @@ export function OnboardingReviewBar({
           {flaggedCount(flagCount)}
         </p>
         <div className="flex flex-col gap-3 sm:flex-row">
-          <Button onClick={onCancel} variant="ghost">
+          <Button onClick={onCancel} size="sm" variant="ghost">
             {REVIEW_DIALOG.cancel}
           </Button>
           <Button
             data-parity="ask-details"
             disabled={!ready}
             onClick={() => onSend(note.trim())}
+            size="sm"
             variant="outline"
           >
             {REVIEW_DIALOG.askForDetails}
@@ -61,6 +62,7 @@ export function OnboardingReviewBar({
             <Button
               data-parity="dialog-approve"
               onClick={onApprove}
+              size="sm"
               variant="primary"
             >
               {REVIEW_DIALOG.approve}

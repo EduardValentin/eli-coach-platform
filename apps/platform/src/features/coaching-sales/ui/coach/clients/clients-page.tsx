@@ -118,6 +118,7 @@ function ClientsSection({ clients }: { clients: readonly RosterClient[] }) {
           cardVariants({ variant: "portal-panel" }),
           "overflow-hidden",
         )}
+        data-parity="roster-table"
       >
         <ClientsTable
           clients={shown}
@@ -125,7 +126,7 @@ function ClientsSection({ clients }: { clients: readonly RosterClient[] }) {
             <EmptyState
               action={
                 hasActiveRosterFilters(selection) && (
-                  <Button onClick={clearFilters} variant="outline">
+                  <Button onClick={clearFilters} size="sm" variant="outline">
                     Clear filters
                   </Button>
                 )
