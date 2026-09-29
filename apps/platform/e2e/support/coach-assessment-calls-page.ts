@@ -1,6 +1,6 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 
-const HYDRATION_RETRY_TIMEOUT_MS = 1_000;
+import { HYDRATION_RETRY_TIMEOUT_MS } from "./locator-text";
 
 export class CoachAssessmentCallsPage {
   constructor(private readonly page: Page) {}
@@ -30,13 +30,13 @@ export class CoachAssessmentCallsPage {
       .filter({ hasText: visitor });
   }
 
-  async sendPaymentLink(visitorName: string): Promise<void> {
+  async sendPaymentLink(visitor: string): Promise<void> {
     const confirmation = this.page.getByRole("dialog", {
       name: "Send payment link?",
     });
 
     await expect(async () => {
-      await this.call(visitorName)
+      await this.call(visitor)
         .getByRole("button", { name: "Send payment link" })
         .click();
       await expect(confirmation).toBeVisible({

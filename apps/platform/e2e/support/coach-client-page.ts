@@ -1,5 +1,11 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 
+import {
+  countOf,
+  escapedPattern,
+  HYDRATION_RETRY_TIMEOUT_MS,
+} from "./locator-text";
+
 export type Readings = Readonly<Record<string, string>>;
 
 export type ReviewAction = "Review answers" | "Continue review";
@@ -10,15 +16,10 @@ export type AnsweredQuestion = {
   answer: string;
 };
 
-const HYDRATION_RETRY_TIMEOUT_MS = 1_000;
 const MAX_TAB_STOPS = 80;
 const FOCUS_TRAP_TAB_STOPS = 60;
 
 export type Availability = "enabled" | "disabled";
-
-function answerCountPattern(answers: number): string {
-  return `${answers} ${answers === 1 ? "answer" : "answers"}`;
-}
 
 export class CoachClientPage {
   constructor(private readonly page: Page) {}
@@ -51,7 +52,7 @@ export class CoachClientPage {
   private definitionOf(scope: Locator, term: string): Locator {
     return scope
       .getByRole("term")
-      .filter({ hasText: new RegExp(`^${term}$`) })
+      .filter({ hasText: new RegExp(`^${escapedPattern(term)}$`) })
       .locator("xpath=following-sibling::dd[1]");
   }
 
@@ -66,7 +67,7 @@ export class CoachClientPage {
 
   private async expandForm(form: string): Promise<void> {
     const trigger = this.onboarding.getByRole("button", {
-      name: new RegExp(`^${form}`),
+      name: new RegExp(`^${escapedPattern(form)}`),
     });
 
     await expect(async () => {
@@ -252,7 +253,7 @@ export class CoachClientPage {
 
   async expectFlagCount(count: number): Promise<void> {
     await expect(this.reviewDialog.getByRole("status")).toHaveText(
-      `${count} ${count === 1 ? "question" : "questions"} flagged`,
+      `${countOf(count, "question")} flagged`,
     );
   }
 
@@ -285,7 +286,7 @@ export class CoachClientPage {
   ): Promise<void> {
     await expect(
       this.onboarding.getByText(
-        `Waiting on ${answerCountPattern(answers)} · asked ${request.askedOn}`,
+        `Waiting on ${countOf(answers, "answer")} · asked ${request.askedOn}`,
         { exact: true },
       ),
     ).toBeVisible();
@@ -302,7 +303,7 @@ export class CoachClientPage {
     await this.expandForm(form);
     await expect(
       this.onboarding.getByRole("button", {
-        name: new RegExp(`^${form}.*\\d+ asked again`),
+        name: new RegExp(`^${escapedPattern(form)}.*\\d+ asked again`),
       }),
     ).toBeVisible();
     await expect(
@@ -318,7 +319,7 @@ export class CoachClientPage {
     });
 
     await expect(history.getByRole("row").nth(1)).toHaveText(
-      new RegExp(cells.join(".*")),
+      new RegExp(cells.map(escapedPattern).join(".*")),
     );
   }
 
@@ -331,14 +332,16 @@ export class CoachClientPage {
   async expectFormFullyAnswered(form: string): Promise<void> {
     await expect(
       this.onboarding.getByRole("button", {
-        name: new RegExp(`^${form}.*\\b(\\d+) of \\1 answered`),
+        name: new RegExp(`^${escapedPattern(form)}.*\\b(\\d+) of \\1 answered`),
       }),
     ).toBeVisible();
   }
 
   async expectNoForm(form: string): Promise<void> {
     await expect(
-      this.onboarding.getByRole("button", { name: new RegExp(`^${form}`) }),
+      this.onboarding.getByRole("button", {
+        name: new RegExp(`^${escapedPattern(form)}`),
+      }),
     ).toHaveCount(0);
   }
 

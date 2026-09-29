@@ -1,11 +1,12 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 
+import { escapedPattern, HYDRATION_RETRY_TIMEOUT_MS } from "./locator-text";
+
 export type RosterColumn = "Client" | "Status" | "Bundle / Plan" | "Join date";
 
 export type SortDirection = "ascending" | "descending";
 
 const CLIENTS_PATH = "/coach/clients";
-const HYDRATION_RETRY_TIMEOUT_MS = 1_000;
 const MAX_KEY_PRESSES = 20;
 const MAX_TAB_STOPS = 40;
 const TYPING_DELAY_MS = 50;
@@ -17,10 +18,6 @@ export type RosterFilters = {
   query: string;
   sort: string | null;
 };
-
-function escapedPattern(text: string): string {
-  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
 
 export class CoachClientsPage {
   constructor(private readonly page: Page) {}

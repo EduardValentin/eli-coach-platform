@@ -12,7 +12,9 @@ test("a coach can use the mobile portal navigation", async ({
   await signIn();
   await publicNav.openPortal("COACH");
   await page.setViewportSize({ height: 844, width: 390 });
-  const menuTrigger = page.getByRole("button", { name: "Open menu" });
+  const menuTrigger = page
+    .getByRole("banner", { name: "Coach portal top bar" })
+    .getByRole("button", { name: "Open menu" });
 
   // act
   await menuTrigger.click();

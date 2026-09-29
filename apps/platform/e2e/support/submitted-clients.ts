@@ -325,13 +325,11 @@ async function insertInvited(
   seed: ClientStateSeed,
   standing: InvitationSeed["standing"],
 ): Promise<PaidClient> {
-  const identity: ClientIdentity = seed.identity;
-
   if (!seed.invitation) {
     throw new Error("An invited client needs an invitation seed.");
   }
 
-  return insertInvitedClientRecords(pool, identity, {
+  return insertInvitedClientRecords(pool, seed.identity, {
     ...seed.invitation,
     standing,
   });
@@ -348,23 +346,23 @@ export async function insertReviewedClientRecords(
     seed.start,
   );
 
-  if (state === "in-review") {
-    await recordReviewOpened(pool, client.clientId);
+  switch (state) {
+    case "awaiting-review":
+      return client;
+    case "in-review":
+      await recordReviewOpened(pool, client.clientId);
+      return client;
+    case "needs-details":
+      await recordOpenDetailRequest(
+        pool,
+        client.clientId,
+        PROTOTYPE_DETAIL_REQUEST,
+      );
+      return client;
+    case "approved":
+      await recordAnswersApproved(pool, client.clientId);
+      return client;
   }
-
-  if (state === "needs-details") {
-    await recordOpenDetailRequest(
-      pool,
-      client.clientId,
-      PROTOTYPE_DETAIL_REQUEST,
-    );
-  }
-
-  if (state === "approved") {
-    await recordAnswersApproved(pool, client.clientId);
-  }
-
-  return client;
 }
 
 function submittedAnswersFor(
