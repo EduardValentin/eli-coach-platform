@@ -36,10 +36,22 @@ export type ClientState =
   | "needs-details"
   | "approved";
 
+export type ReviewState =
+  "awaiting-review" | "in-review" | "needs-details" | "approved";
+
+export type SubmissionProfile = "flagged" | "manual-screening";
+
+type SubmissionSeed = {
+  clientId: string;
+  answers: OnboardingAnswersByForm;
+  submittedAt: Date;
+  withMeasurements: boolean;
+};
+
 export type ClientStateSeed = {
   identity: PaidClientIdentity;
   start: StartChoice;
-  invitation: Omit<InvitationSeed, "standing">;
+  invitation?: Omit<InvitationSeed, "standing">;
 };
 
 export const FIRST_MEASUREMENTS = {
@@ -63,6 +75,21 @@ export const PROTOTYPE_DETAIL_REQUEST: DetailRequestSeed = {
   note: "Two quick things before I build your plan — tell me a little more about your sleep and about that shoulder.",
 };
 
+export const CHRONIC_CONDITION_LIST = "Hypothyroidism, treated since 2019.";
+
+export const BOOKING_CONTACT = {
+  phone: "+40712345678",
+  notes: "Knee surgery in 2021, cleared for training since.",
+} as const;
+
+const PROFILE_IDENTITY: Record<
+  SubmissionProfile,
+  Pick<PaidClientIdentity, "gender" | "dateOfBirth">
+> = {
+  flagged: { gender: "female", dateOfBirth: "1994-03-14" },
+  "manual-screening": { gender: "male", dateOfBirth: "1950-01-01" },
+};
+
 const LAST_PERIOD_DAYS_AGO = 10;
 
 const INSERT_SUBMISSION = `
@@ -82,6 +109,15 @@ const STAMP_SUBMISSION = `
   update app.clients
   set welcome_seen_at = $2, onboarding_submitted_at = $2
   where id = $1
+`;
+const RECORD_BOOKING_CONTACT = `
+  with client as (
+    update app.clients set phone = $2 where id = $1
+    returning assessment_call_id
+  )
+  update app.assessment_calls
+  set phone = $2, visitor_notes = $3
+  where id = (select assessment_call_id from client)
 `;
 const RECORD_REVIEW_OPENED = `
   insert into app.client_onboarding_reviews (client_id, opened_at)
@@ -131,27 +167,100 @@ export async function insertSubmittedClientRecords(
 ): Promise<SubmittedClient> {
   const client = await insertPaidClientRecords(pool, identity, start);
   const submittedAt = new Date();
-  const answers = submittedAnswersFor(identity, submittedAt);
 
-  await inTransaction(pool, async (connection) => {
-    await connection.query(INSERT_SUBMISSION, [
-      client.clientId,
-      JSON.stringify(answers),
-      submittedAt,
-    ]);
-    await connection.query(INSERT_FIRST_MEASUREMENTS, [
-      client.clientId,
-      submittedAt,
-      FIRST_MEASUREMENTS.weightKg,
-      FIRST_MEASUREMENTS.waistCm,
-      FIRST_MEASUREMENTS.hipsCm,
-      FIRST_MEASUREMENTS.thighCm,
-      FIRST_MEASUREMENTS.armCm,
-    ]);
-    await connection.query(STAMP_SUBMISSION, [client.clientId, submittedAt]);
+  await recordSubmission(pool, {
+    clientId: client.clientId,
+    answers: submittedAnswersFor(identity, submittedAt),
+    submittedAt,
+    withMeasurements: true,
   });
 
   return { ...client, submittedAt };
+}
+
+export async function insertProfiledClientRecords(
+  pool: pg.Pool,
+  identity: Omit<PaidClientIdentity, "gender" | "dateOfBirth">,
+  profile: SubmissionProfile,
+): Promise<SubmittedClient> {
+  const profiled = { ...identity, ...PROFILE_IDENTITY[profile] };
+  const client = await insertPaidClientRecords(pool, profiled, "immediate");
+  const submittedAt = new Date();
+  const answers = submittedAnswersFor(profiled, submittedAt);
+
+  await recordSubmission(pool, {
+    clientId: client.clientId,
+    answers:
+      profile === "flagged"
+        ? flaggedAnswersFrom(answers)
+        : manualScreeningAnswersFrom(answers),
+    submittedAt,
+    withMeasurements: profile === "flagged",
+  });
+
+  if (profile === "flagged") {
+    await pool.query(RECORD_BOOKING_CONTACT, [
+      client.clientId,
+      BOOKING_CONTACT.phone,
+      BOOKING_CONTACT.notes,
+    ]);
+  }
+
+  return { ...client, submittedAt };
+}
+
+async function recordSubmission(
+  pool: pg.Pool,
+  submission: SubmissionSeed,
+): Promise<void> {
+  const { clientId, submittedAt } = submission;
+
+  await inTransaction(pool, async (connection) => {
+    await connection.query(INSERT_SUBMISSION, [
+      clientId,
+      JSON.stringify(submission.answers),
+      submittedAt,
+    ]);
+
+    if (submission.withMeasurements) {
+      await connection.query(INSERT_FIRST_MEASUREMENTS, [
+        clientId,
+        submittedAt,
+        FIRST_MEASUREMENTS.weightKg,
+        FIRST_MEASUREMENTS.waistCm,
+        FIRST_MEASUREMENTS.hipsCm,
+        FIRST_MEASUREMENTS.thighCm,
+        FIRST_MEASUREMENTS.armCm,
+      ]);
+    }
+
+    await connection.query(STAMP_SUBMISSION, [clientId, submittedAt]);
+  });
+}
+
+function flaggedAnswersFrom(
+  answers: OnboardingAnswersByForm,
+): OnboardingAnswersByForm {
+  return {
+    ...answers,
+    "safety-screening": {
+      ...answers["safety-screening"],
+      chronicConditionDiagnosed: "Yes",
+      chronicConditionDiagnosedList: CHRONIC_CONDITION_LIST,
+    },
+    "cycle-context": {
+      ...answers["cycle-context"],
+      hormonalContraception: "Combined pill",
+      lifeStage: ["Pregnant"],
+      recurringSymptoms: ["Migraines", "Fatigue"],
+    },
+  };
+}
+
+function manualScreeningAnswersFrom(
+  answers: OnboardingAnswersByForm,
+): OnboardingAnswersByForm {
+  return { ...answers, "safety-screening": {}, measurements: {} };
 }
 
 export async function recordReviewOpened(
@@ -207,7 +316,7 @@ export async function insertClientInState(
     case "onboarding":
       return insertPaidClientRecords(pool, seed.identity, seed.start);
     default:
-      return insertReviewedClient(pool, seed, state);
+      return insertReviewedClientRecords(pool, seed, state);
   }
 }
 
@@ -218,16 +327,20 @@ async function insertInvited(
 ): Promise<PaidClient> {
   const identity: ClientIdentity = seed.identity;
 
+  if (!seed.invitation) {
+    throw new Error("An invited client needs an invitation seed.");
+  }
+
   return insertInvitedClientRecords(pool, identity, {
     ...seed.invitation,
     standing,
   });
 }
 
-async function insertReviewedClient(
+export async function insertReviewedClientRecords(
   pool: pg.Pool,
   seed: ClientStateSeed,
-  state: "awaiting-review" | "in-review" | "needs-details" | "approved",
+  state: ReviewState,
 ): Promise<SubmittedClient> {
   const client = await insertSubmittedClientRecords(
     pool,

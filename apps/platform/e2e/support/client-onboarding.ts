@@ -35,6 +35,11 @@ const SUBMISSION_API = "**/api/client-onboarding/submission";
 
 const UNIT_PREFERENCE_API = "**/api/client-onboarding/unit-preference";
 
+const DETAIL_ANSWERS_API = "**/api/client-onboarding/detail-answers";
+
+const ANSWER_SEND_PROBLEM =
+  "Your answers could not be sent just now. Try again in a moment.";
+
 const MAX_TAB_STOPS = 80;
 
 type SendAvailability = "enabled" | "disabled";
@@ -386,6 +391,20 @@ export class ClientOnboarding {
     await this.page.route(UNIT_PREFERENCE_API, (route) => route.abort(), {
       times: 1,
     });
+  }
+
+  async blockDetailAnswers(): Promise<void> {
+    await this.page.route(DETAIL_ANSWERS_API, (route) => route.abort());
+  }
+
+  async restoreDetailAnswers(): Promise<void> {
+    await this.page.unroute(DETAIL_ANSWERS_API);
+  }
+
+  async expectAnswerSendProblem(): Promise<void> {
+    await expect(
+      this.page.getByText(ANSWER_SEND_PROBLEM, { exact: true }),
+    ).toBeVisible();
   }
 
   async keepUnitPreferenceOffline(): Promise<void> {

@@ -1,4 +1,8 @@
-import { latestEmailTo, type CapturedEmail } from "../support/email-capture";
+import {
+  latestEmailTo,
+  refuseEmailsTo,
+  type CapturedEmail,
+} from "../support/email-capture";
 import { expect, test } from "../support/fixtures";
 import { daysAfter } from "../support/paid-clients";
 
@@ -141,4 +145,41 @@ test("an expired invitation and one whose email failed still offer a re-send", a
     pendingLine(resentAt, daysAfter(resentAt, INVITATION_VALIDITY_DAYS)),
   );
   expect((await latestEmailTo(unsent.email)).subject).toBe(INVITATION_SUBJECT);
+});
+
+test("a re-send whose email fails keeps the invitation marked unsent and asks the coach to try again", async ({
+  coachClient,
+  page,
+  provisionCoach,
+  provisionInvitedClient,
+  signInAsCoach,
+}) => {
+  test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+  // arrange
+  await provisionCoach();
+  const invited = await provisionInvitedClient("pending");
+  await refuseEmailsTo(invited.email);
+  await page.goto("/store");
+  await signInAsCoach();
+  await coachClient.open(invited.clientId);
+
+  // act
+  await coachClient.resendInvitation(invited.email);
+
+  // assert
+  await coachClient.expectToast(
+    "The invitation email could not be sent. Try again.",
+  );
+  await coachClient.expectInvitationLine("Invitation email could not be sent");
+  await coachClient.expectStatus("Invited");
+
+  // act
+  await coachClient.open(invited.clientId);
+
+  // assert
+  await coachClient.expectInvitationLine("Invitation email could not be sent");
+  await expect(latestEmailTo(invited.email)).rejects.toThrow(
+    `No email has been sent to ${invited.email}.`,
+  );
 });

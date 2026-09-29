@@ -16,6 +16,7 @@ import { CoachAssessmentCallsPage } from "./coach-assessment-calls-page";
 import { CoachClientPage } from "./coach-client-page";
 import { CoachClientsPage } from "./coach-clients-page";
 import { OnboardingRecords } from "./onboarding-records";
+import { PortalRequests } from "./portal-requests";
 import {
   insertInvitedClientRecords,
   insertPaidClientRecords,
@@ -25,7 +26,12 @@ import {
   type StartChoice,
 } from "./paid-clients";
 import {
-  insertSubmittedClientRecords,
+  insertClientInState,
+  insertProfiledClientRecords,
+  insertReviewedClientRecords,
+  type ClientState,
+  type SubmissionProfile,
+  type ReviewState,
   type SubmittedClient,
 } from "./submitted-clients";
 import { recordCreatedEmail } from "./clerk-users";
@@ -69,7 +75,15 @@ type PlatformFixtures = {
   provisionInvitedClient: (
     standing: InvitationStanding,
   ) => Promise<InvitedClient>;
-  provisionSubmittedClient: (start: StartChoice) => Promise<SubmittedClient>;
+  provisionSubmittedClient: (
+    start: StartChoice,
+    state?: ReviewState,
+  ) => Promise<SubmittedClient>;
+  provisionClientInState: (state: ClientState) => Promise<PaidClient>;
+  provisionProfiledClient: (
+    profile: SubmissionProfile,
+  ) => Promise<SubmittedClient>;
+  portalRequests: PortalRequests;
   provisionCoach: () => Promise<void>;
   onboardingRecords: OnboardingRecords;
   signIn: () => Promise<void>;
@@ -100,6 +114,20 @@ const INVITED_CLIENT_SURNAME: Record<InvitationStanding, string> = {
   pending: "Pending",
   expired: "Expired",
   "email-failed": "Unsent",
+};
+const CLIENT_FIRST_NAME_BY_STATE: Record<ClientState, string> = {
+  "invited-pending": "Bianca",
+  "invited-expired": "Bianca",
+  "invited-email-failed": "Bianca",
+  onboarding: "Carla",
+  "awaiting-review": "Dana",
+  "in-review": "Elena",
+  "needs-details": "Flavia",
+  approved: "Gina",
+};
+const PROFILED_CLIENT_FIRST_NAME: Record<SubmissionProfile, string> = {
+  flagged: "Irina",
+  "manual-screening": "Mihai",
 };
 
 type PaidClientOptions = { dateOfBirth: string };
@@ -299,24 +327,96 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
     { createClerkUser, databasePool, scenarioTag, testEmail },
     use,
   ) => {
-    await use(async (start: StartChoice) => {
-      const authSubjectId = await createClerkUser();
+    await use(
+      async (start: StartChoice, state: ReviewState = "awaiting-review") => {
+        const authSubjectId = await createClerkUser();
 
-      await databasePool.query(INSERT_ACCOUNT, [authSubjectId, "CLIENT"]);
+        await databasePool.query(INSERT_ACCOUNT, [authSubjectId, "CLIENT"]);
 
-      return insertSubmittedClientRecords(
+        return insertReviewedClientRecords(
+          databasePool,
+          {
+            identity: {
+              authSubjectId,
+              email: testEmail,
+              firstName: PAID_CLIENT_FIRST_NAME,
+              lastName: `Onboarding ${scenarioTag}`,
+              gender: "female",
+              dateOfBirth: ADULT_DATE_OF_BIRTH,
+            },
+            start,
+          },
+          state,
+        );
+      },
+    );
+  },
+
+  provisionClientInState: async (
+    { clerkBackendClient, databasePool, scenarioTag },
+    use,
+    testInfo,
+  ) => {
+    await use(async (state: ClientState) => {
+      const email = mintRecordedTestEmail(testInfo.workerIndex);
+      const invitationId = randomUUID();
+      const invitation = state.startsWith("invited-")
+        ? await clerkBackendClient.invitations.createInvitation({
+            emailAddress: email,
+            ignoreExisting: true,
+            notify: false,
+            publicMetadata: { invitationId },
+          })
+        : null;
+
+      return insertClientInState(
         databasePool,
         {
-          authSubjectId,
-          email: testEmail,
-          firstName: PAID_CLIENT_FIRST_NAME,
-          lastName: `Onboarding ${scenarioTag}`,
-          gender: "female",
-          dateOfBirth: ADULT_DATE_OF_BIRTH,
+          identity: {
+            authSubjectId: `user_e2e_${randomUUID()}`,
+            email,
+            firstName: CLIENT_FIRST_NAME_BY_STATE[state],
+            lastName: `Roster ${scenarioTag}`,
+            gender: "female",
+            dateOfBirth: ADULT_DATE_OF_BIRTH,
+          },
+          start: "waiting",
+          invitation: invitation
+            ? {
+                id: invitationId,
+                provider: {
+                  id: invitation.id,
+                  url: requireProviderUrl(invitation),
+                },
+              }
+            : undefined,
         },
-        start,
+        state,
       );
     });
+  },
+
+  provisionProfiledClient: async (
+    { databasePool, scenarioTag },
+    use,
+    testInfo,
+  ) => {
+    await use(async (profile: SubmissionProfile) =>
+      insertProfiledClientRecords(
+        databasePool,
+        {
+          authSubjectId: `user_e2e_${randomUUID()}`,
+          email: mintRecordedTestEmail(testInfo.workerIndex),
+          firstName: PROFILED_CLIENT_FIRST_NAME[profile],
+          lastName: `Profile ${scenarioTag}`,
+        },
+        profile,
+      ),
+    );
+  },
+
+  portalRequests: async ({ page }, use) => {
+    await use(new PortalRequests(page));
   },
 
   provisionInvitedClient: async (

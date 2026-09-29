@@ -11,6 +11,10 @@ export type AnsweredQuestion = {
 };
 
 const HYDRATION_RETRY_TIMEOUT_MS = 1_000;
+const MAX_TAB_STOPS = 80;
+const FOCUS_TRAP_TAB_STOPS = 60;
+
+export type Availability = "enabled" | "disabled";
 
 function answerCountPattern(answers: number): string {
   return `${answers} ${answers === 1 ? "answer" : "answers"}`;
@@ -29,6 +33,19 @@ export class CoachClientPage {
 
   private get reviewDialog() {
     return this.page.getByRole("dialog", { name: /^Review .+’s answers$/ });
+  }
+
+  private async isFocused(locator: Locator): Promise<boolean> {
+    return locator.evaluate((element) => element === document.activeElement);
+  }
+
+  private async tabTo(locator: Locator): Promise<void> {
+    for (let stop = 0; stop < MAX_TAB_STOPS; stop += 1) {
+      if (await this.isFocused(locator)) return;
+      await this.page.keyboard.press("Tab");
+    }
+
+    throw new Error("The keyboard never reached the expected control.");
   }
 
   private definitionOf(scope: Locator, term: string): Locator {
@@ -141,7 +158,17 @@ export class CoachClientPage {
 
   async expectStatus(label: string): Promise<void> {
     await expect(
-      this.onboarding.getByText(label, { exact: true }),
+      this.onboarding
+        .getByText(label, { exact: true })
+        .and(this.page.locator(":not(h1, h2, h3, h4)")),
+    ).toBeVisible();
+  }
+
+  async expectRefused(): Promise<void> {
+    await expect(
+      this.page.getByRole("heading", {
+        name: "You don't have access to this page",
+      }),
     ).toBeVisible();
   }
 
@@ -293,5 +320,139 @@ export class CoachClientPage {
     await expect(history.getByRole("row").nth(1)).toHaveText(
       new RegExp(cells.join(".*")),
     );
+  }
+
+  async expectPhoneLink(phone: string): Promise<void> {
+    await expect(
+      this.block("Profile").getByRole("link", { name: phone }),
+    ).toHaveAttribute("href", `tel:${phone}`);
+  }
+
+  async expectFormFullyAnswered(form: string): Promise<void> {
+    await expect(
+      this.onboarding.getByRole("button", {
+        name: new RegExp(`^${form}.*\\b(\\d+) of \\1 answered`),
+      }),
+    ).toBeVisible();
+  }
+
+  async expectNoForm(form: string): Promise<void> {
+    await expect(
+      this.onboarding.getByRole("button", { name: new RegExp(`^${form}`) }),
+    ).toHaveCount(0);
+  }
+
+  async expectQuestionUnreached(form: string, question: string): Promise<void> {
+    await this.expandForm(form);
+    await expect(this.definitionOf(this.onboarding, question)).toHaveCount(0);
+  }
+
+  async expectNoMeasurements(): Promise<void> {
+    await expect(
+      this.page.getByText("She has not sent any measurements yet.", {
+        exact: true,
+      }),
+    ).toBeVisible();
+  }
+
+  async expectNoBuildProgram(): Promise<void> {
+    await expect(
+      this.page
+        .getByRole("button", { name: "Build her program" })
+        .or(this.page.getByRole("link", { name: "Build her program" })),
+    ).toHaveCount(0);
+  }
+
+  async openReviewWithKeyboard(action: ReviewAction): Promise<void> {
+    const trigger = this.onboarding.getByRole("button", { name: action });
+
+    await expect(async () => {
+      await this.onboarding
+        .getByRole("heading", { name: "Onboarding", exact: true })
+        .click();
+      await this.tabTo(trigger);
+      await this.page.keyboard.press("Enter");
+      await expect(this.reviewDialog).toBeVisible({
+        timeout: HYDRATION_RETRY_TIMEOUT_MS,
+      });
+    }).toPass();
+  }
+
+  async expectEveryFormExpanded(): Promise<void> {
+    await expect(
+      this.reviewDialog.getByRole("button", { expanded: true }).first(),
+    ).toBeVisible();
+    await expect(
+      this.reviewDialog.getByRole("button", { expanded: false }),
+    ).toHaveCount(0);
+  }
+
+  async expectFocusKeptInReview(): Promise<void> {
+    for (let stop = 0; stop < FOCUS_TRAP_TAB_STOPS; stop += 1) {
+      await this.page.keyboard.press("Tab");
+      expect(
+        await this.reviewDialog.evaluate((dialog) =>
+          dialog.contains(document.activeElement),
+        ),
+      ).toBe(true);
+    }
+  }
+
+  async flagWithKeyboard(question: string): Promise<void> {
+    const checkbox = this.reviewDialog.getByRole("checkbox", {
+      name: `Flag ${question}`,
+      exact: true,
+    });
+
+    await this.tabTo(checkbox);
+    await this.page.keyboard.press("Space");
+    await expect(checkbox).toBeChecked();
+  }
+
+  async writeNoteWithKeyboard(note: string): Promise<void> {
+    await this.tabTo(
+      this.reviewDialog.getByRole("textbox", { name: "What is missing?" }),
+    );
+    await this.page.keyboard.type(note);
+  }
+
+  async expectAskForDetails(availability: Availability): Promise<void> {
+    const button = this.reviewDialog.getByRole("button", {
+      name: "Ask for more details",
+    });
+
+    if (availability === "disabled") {
+      await expect(button).toBeDisabled();
+      return;
+    }
+
+    await expect(button).toBeEnabled();
+  }
+
+  async closeReviewWithEscape(): Promise<void> {
+    await this.page.keyboard.press("Escape");
+    await expect(this.reviewDialog).toBeHidden();
+  }
+
+  async expectReviewTriggerFocused(action: ReviewAction): Promise<void> {
+    await expect(
+      this.onboarding.getByRole("button", { name: action }),
+    ).toBeFocused();
+  }
+
+  async approveFromReview(firstName: string): Promise<void> {
+    const confirmation = this.page.getByRole("dialog", {
+      name: `Approve ${firstName}'s answers?`,
+    });
+
+    await this.reviewDialog
+      .getByRole("button", { name: "Approve answers" })
+      .click();
+    await expect(confirmation).toContainText(
+      "You won't be able to ask for more details once you approve.",
+    );
+    await confirmation.getByRole("button", { name: "Approve" }).click();
+    await expect(confirmation).toBeHidden();
+    await expect(this.reviewDialog).toBeHidden();
   }
 }
