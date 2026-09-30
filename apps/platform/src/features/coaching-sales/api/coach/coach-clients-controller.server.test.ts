@@ -27,6 +27,12 @@ const COACH: AccountSnapshot = {
   role: "COACH",
 };
 
+const BOOKED_CALL = {
+  startsAt: new Date("2026-09-24T15:00:00.000Z"),
+  primaryGoal: "lose_weight",
+  notes: null,
+} as const;
+
 function rosterEntry(
   overrides: Partial<ClientRosterEntry> & { clientId?: string } = {},
 ): ClientRosterEntry {
@@ -50,7 +56,6 @@ function rosterEntry(
       gender: "female",
       country: "RO",
       phone: "+40700000000",
-      primaryGoal: "build_strength",
       assessmentCallId: "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11",
     },
     subscription:
@@ -157,14 +162,14 @@ describe("CoachClientsController#loadRoster", () => {
 });
 
 describe("CoachClientsController#loadClient", () => {
-  it("reads her record with her profile, subscription and pending invitation", async () => {
+  it("reads her record with her profile, the call she booked, subscription and pending invitation", async () => {
     // arrange
     const { controller, readClientInvitation, readClientRecord } =
       createController({
         record: {
           ...rosterEntry(),
           status: "invited",
-          bookingNotes: "I train at home.",
+          assessmentCall: { ...BOOKED_CALL, notes: "I train at home." },
         },
         invitation: {
           state: "pending",
@@ -188,8 +193,11 @@ describe("CoachClientsController#loadClient", () => {
         gender: "female",
         country: "RO",
         phone: "+40700000000",
-        primaryGoal: "build_strength",
-        bookingNotes: "I train at home.",
+      },
+      assessmentCall: {
+        startsAt: "2026-09-24T15:00:00.000Z",
+        primaryGoal: "lose_weight",
+        notes: "I train at home.",
       },
       subscription: {
         bundleId: "3-months",
@@ -219,7 +227,7 @@ describe("CoachClientsController#loadClient", () => {
           startChoice: "waiting",
         },
         status: "invited",
-        bookingNotes: null,
+        assessmentCall: BOOKED_CALL,
       },
     });
 
@@ -236,7 +244,7 @@ describe("CoachClientsController#loadClient", () => {
       record: {
         ...rosterEntry({ subscription: null }),
         status: "onboarding",
-        bookingNotes: null,
+        assessmentCall: BOOKED_CALL,
       },
     });
 
@@ -253,7 +261,7 @@ describe("CoachClientsController#loadClient", () => {
       record: {
         ...rosterEntry({ accountBound: true }),
         status: "onboarding",
-        bookingNotes: null,
+        assessmentCall: BOOKED_CALL,
       },
       invitation: { state: "pending", sentAt: SENT_AT, expiresAt: EXPIRES_AT },
     });

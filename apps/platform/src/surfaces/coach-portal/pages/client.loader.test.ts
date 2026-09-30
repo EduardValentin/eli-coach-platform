@@ -21,13 +21,16 @@ const CLIENT: CoachClient = {
   firstName: "Ana",
   invitation: null,
   lastName: "Popescu",
+  assessmentCall: {
+    notes: null,
+    primaryGoal: "build_strength",
+    startsAt: "2026-09-18T12:00:00.000Z",
+  },
   profile: {
-    bookingNotes: null,
     country: "RO",
     dateOfBirth: "1994-03-14",
     gender: "female",
     phone: null,
-    primaryGoal: "build_strength",
   },
   status: "onboarding",
   subscription: null,

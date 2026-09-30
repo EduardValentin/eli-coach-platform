@@ -37,7 +37,6 @@ function entry(
       gender: "female",
       country: "RO",
       phone: "+40700000000",
-      primaryGoal: "build_strength",
       assessmentCallId: "call-1",
     },
     subscription: {
@@ -121,7 +120,7 @@ describe("ReadClientRecordUseCase", () => {
           visitorNotes,
           dateOfBirth: "1994-03-14",
           gender: "female",
-          primaryGoal: "build_strength",
+          primaryGoal: "lose_weight",
           country: "RO",
           phone: null,
           startsAt: new Date("2026-09-25T15:00:00.000Z"),
@@ -133,7 +132,7 @@ describe("ReadClientRecordUseCase", () => {
     } satisfies AssessmentCallReader;
   }
 
-  it("reads her record with her status and the notes she left when booking", async () => {
+  it("reads her record with her status and the call she booked: when, her goal and her notes", async () => {
     // arrange
     const found = entry({ onboardingSubmittedAt: SUBMITTED_AT });
     const calls = callReader("I train at home.");
@@ -147,17 +146,34 @@ describe("ReadClientRecordUseCase", () => {
     expect(result).toEqual({
       ...found,
       status: "awaiting-review",
-      bookingNotes: "I train at home.",
+      assessmentCall: {
+        startsAt: new Date("2026-09-25T15:00:00.000Z"),
+        primaryGoal: "lose_weight",
+        notes: "I train at home.",
+      },
     });
     expect(roster.findById).toHaveBeenCalledWith("client-1");
     expect(calls.findById).toHaveBeenCalledWith("call-1");
   });
 
-  it("reads no booking notes when her call is gone", async () => {
+  it("reads no notes when she left none when booking", async () => {
     // arrange
-    const found = entry();
     const useCase = new ReadClientRecordUseCase({
-      roster: createRoster({ findById: vi.fn().mockResolvedValue(found) }),
+      roster: createRoster({ findById: vi.fn().mockResolvedValue(entry()) }),
+      calls: callReader(null),
+    });
+
+    // act
+    const result = await useCase.execute("client-1");
+
+    // assert
+    expect(result?.assessmentCall.notes).toBeNull();
+  });
+
+  it("reads nothing when her call is gone", async () => {
+    // arrange
+    const useCase = new ReadClientRecordUseCase({
+      roster: createRoster({ findById: vi.fn().mockResolvedValue(entry()) }),
       calls: { findById: vi.fn().mockResolvedValue(null) },
     });
 
@@ -165,7 +181,7 @@ describe("ReadClientRecordUseCase", () => {
     const result = await useCase.execute("client-1");
 
     // assert
-    expect(result).toMatchObject({ status: "onboarding", bookingNotes: null });
+    expect(result).toBeNull();
   });
 
   it("reads nothing for an unknown client", async () => {

@@ -44,8 +44,12 @@ const clientProfileSchema = z.object({
   gender: z.enum(VISITOR_GENDERS),
   country: z.string().min(1),
   phone: z.string().nullable(),
+});
+
+const bookedAssessmentCallSchema = z.object({
+  startsAt: z.iso.datetime(),
   primaryGoal: z.enum(VISITOR_PRIMARY_GOALS),
-  bookingNotes: z.string().nullable(),
+  notes: z.string().nullable(),
 });
 
 const clientSubscriptionSchema = z.object({
@@ -65,6 +69,7 @@ export const coachClientSchema = z.object({
   email: z.string().min(1),
   status: clientStatusSchema,
   profile: clientProfileSchema,
+  assessmentCall: bookedAssessmentCallSchema,
   subscription: clientSubscriptionSchema.nullable(),
   invitation: clientInvitationSchema.nullable(),
 });

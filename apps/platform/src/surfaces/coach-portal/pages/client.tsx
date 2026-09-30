@@ -16,6 +16,7 @@ import { MeasurementsTable } from "~/features/client-onboarding/ui/coach/onboard
 import { OnboardingPanel } from "~/features/client-onboarding/ui/coach/onboarding/onboarding-panel";
 import { COACH_CLIENTS_PATH } from "~/features/coaching-sales/contracts/paths";
 import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
+import { AssessmentCallBlock } from "~/features/coaching-sales/ui/coach/clients/assessment-call-block";
 import { ClientProfileBlock } from "~/features/coaching-sales/ui/coach/clients/client-profile-block";
 import { ClientStatusBadge } from "~/features/coaching-sales/ui/coach/clients/client-status-badge";
 import { InvitationBlock } from "~/features/coaching-sales/ui/coach/clients/invitation-block";
@@ -81,6 +82,7 @@ export default function CoachClientRoute() {
       </header>
 
       <ClientProfileBlock client={client} />
+      <AssessmentCallBlock client={client} />
       {client.invitation && (
         <InvitationBlock
           clientId={client.clientId}

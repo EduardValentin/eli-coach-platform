@@ -6,16 +6,14 @@ import { findCountry } from "~/features/assessment-calls/contracts/countries";
 import {
   ageOn,
   labelForGender,
-  labelForPrimaryGoal,
 } from "~/features/assessment-calls/contracts/visitor-profile";
 import type { CoachClient } from "~/features/coaching-sales/contracts/coach-clients";
-import { shortPricingTierLabel } from "~/features/coaching-sales/ui/coach/call-sales/pricing-tier-label";
 import { useCalendarDayTimeZone } from "~/features/coaching-sales/ui/shared/calendar-day-format";
 
 import { ABSENT_VALUE } from "./absent-value";
 
 type ClientProfileBlockProps = {
-  client: Pick<CoachClient, "profile" | "subscription">;
+  client: Pick<CoachClient, "profile">;
 };
 
 function PhoneLink({ phone }: { phone: string | null }) {
@@ -31,7 +29,7 @@ function PhoneLink({ phone }: { phone: string | null }) {
 }
 
 export function ClientProfileBlock({ client }: ClientProfileBlockProps) {
-  const { profile, subscription } = client;
+  const { profile } = client;
   const timeZone = useCalendarDayTimeZone();
   const [now] = useState(() => new Date());
 
@@ -49,7 +47,7 @@ export function ClientProfileBlock({ client }: ClientProfileBlockProps) {
       }
       title="Profile"
     >
-      <dl className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-6">
+      <dl className="grid grid-cols-2 gap-5 sm:grid-cols-4">
         <Reading
           as="dl-item"
           label="Age"
@@ -77,29 +75,6 @@ export function ClientProfileBlock({ client }: ClientProfileBlockProps) {
           label="Phone"
           value={<PhoneLink phone={profile.phone} />}
           valueParity="profile-phone"
-        />
-        <Reading
-          as="dl-item"
-          label="Primary goal"
-          value={labelForPrimaryGoal(profile.primaryGoal)}
-          valueParity="profile-goal"
-        />
-        <Reading
-          as="dl-item"
-          label="Pricing tier"
-          value={
-            subscription
-              ? shortPricingTierLabel(subscription.tier)
-              : ABSENT_VALUE
-          }
-          valueParity="profile-tier"
-        />
-        <Reading
-          as="dl-item"
-          className="col-span-full"
-          label="Booking notes"
-          value={profile.bookingNotes ?? ABSENT_VALUE}
-          valueParity="profile-notes"
         />
       </dl>
     </PortalWidget>

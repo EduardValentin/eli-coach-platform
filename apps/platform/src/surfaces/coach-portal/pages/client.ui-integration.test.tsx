@@ -45,13 +45,16 @@ const INVITED: CoachClient = {
     state: "pending",
   },
   lastName: "Popescu",
+  assessmentCall: {
+    notes: "Wants to work on her glutes",
+    primaryGoal: "build_strength",
+    startsAt: "2026-09-18T12:00:00.000Z",
+  },
   profile: {
-    bookingNotes: "Wants to work on her glutes",
     country: "RO",
     dateOfBirth: "1994-03-14",
     gender: "female",
     phone: "+40712345678",
-    primaryGoal: "build_strength",
   },
   status: "invited",
   subscription: {
@@ -154,7 +157,7 @@ describe("the coach's client page", () => {
     ).toHaveAttribute("href", COACH_CLIENTS_PATH);
   });
 
-  it("lays out her profile, invitation, onboarding, subscription and measurements in that order", async () => {
+  it("lays out her profile, assessment call, invitation, onboarding, subscription and measurements in that order", async () => {
     // arrange, act
     await renderClientPage();
 
@@ -165,6 +168,7 @@ describe("the coach's client page", () => {
         .map((heading) => heading.textContent),
     ).toEqual([
       "Profile",
+      "Assessment call",
       "Invitation",
       "Onboarding",
       "Subscription",

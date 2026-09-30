@@ -145,7 +145,7 @@ describe.sequential("coach clients pages integration", () => {
   });
 
   describe("a client's page", () => {
-    it("reads an invited client's profile, invitation, subscription and the panel line before she has answered", async () => {
+    it("reads an invited client's profile, assessment call, invitation, subscription and the panel line before she has answered", async () => {
       // arrange
       const { callId } = await sales.payForCall();
       const clientId = await sales.clientIdPaidFor(callId);
@@ -165,8 +165,12 @@ describe.sequential("coach clients pages integration", () => {
       expect(texts).toContain("Ana Popescu");
       expect(texts).toContain("Back to Clients");
       expect(texts).toContain("Romania");
-      expect(texts).toContain("Regular");
       expect(page).toContain('href="tel:+40712345678"');
+      expect(texts).toContain("Assessment call");
+      expect(texts).toContain("Mon, Oct 19 · 2:00 PM");
+      expect(texts).toContain("Build strength");
+      expect(texts).toContain("Reduced price");
+      expect(texts).toContain("No");
       expect(texts).toContain("Invited 21 October · expires 20 November");
       expect(texts).toContain("Re-send invitation");
       expect(texts).toContain("Invited");

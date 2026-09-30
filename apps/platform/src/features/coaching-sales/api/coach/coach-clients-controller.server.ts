@@ -95,6 +95,7 @@ export class CoachClientsController {
     return coachClientSchema.parse({
       ...identityOf(record),
       profile: profileOf(record),
+      assessmentCall: assessmentCallOf(record),
       subscription: subscriptionOf(record),
       invitation: invitationOf(record, invitation),
     });
@@ -140,9 +141,13 @@ function profileOf(record: ClientRecord) {
     gender: record.profile.gender,
     country: record.profile.country,
     phone: record.profile.phone,
-    primaryGoal: record.profile.primaryGoal,
-    bookingNotes: record.bookingNotes,
   };
+}
+
+function assessmentCallOf(record: ClientRecord) {
+  const { startsAt, primaryGoal, notes } = record.assessmentCall;
+
+  return { startsAt: startsAt.toISOString(), primaryGoal, notes };
 }
 
 function invitationOf(

@@ -1,3 +1,4 @@
+import type { VisitorPrimaryGoal } from "../assessment-call";
 import type { AssessmentCallReader } from "../payment-link";
 
 import {
@@ -9,7 +10,11 @@ import {
 
 type ClientRecord = ClientRosterEntry & {
   status: ClientStatus;
-  bookingNotes: string | null;
+  assessmentCall: {
+    startsAt: Date;
+    primaryGoal: VisitorPrimaryGoal;
+    notes: string | null;
+  };
 };
 
 type ReadClientRecordUseCaseOptions = {
@@ -31,10 +36,18 @@ export class ReadClientRecordUseCase {
       entry.profile.assessmentCallId,
     );
 
+    if (!call) {
+      return null;
+    }
+
     return {
       ...entry,
       status: rosterEntryStatus(entry),
-      bookingNotes: call?.visitorNotes ?? null,
+      assessmentCall: {
+        startsAt: call.startsAt,
+        primaryGoal: call.primaryGoal,
+        notes: call.visitorNotes,
+      },
     };
   }
 }

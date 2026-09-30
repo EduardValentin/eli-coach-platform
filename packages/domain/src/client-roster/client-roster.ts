@@ -1,4 +1,4 @@
-import type { VisitorGender, VisitorPrimaryGoal } from "../assessment-call";
+import type { VisitorGender } from "../assessment-call";
 import {
   ClientJourney,
   type ClientJourneySnapshot,
@@ -33,7 +33,6 @@ export type ClientRosterEntry = {
     gender: VisitorGender;
     country: string;
     phone: string | null;
-    primaryGoal: VisitorPrimaryGoal;
     assessmentCallId: string;
   };
   subscription: {
