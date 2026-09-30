@@ -8,6 +8,7 @@ import {
 const JOURNEY_TIMEOUT_MS = 180_000;
 const WITHDRAWAL_DAYS = 14;
 const DATE_OF_BIRTH = new Date("1994-03-14T00:00:00Z");
+const BIRTH_DATE_READING = "14 Mar 1994";
 
 const dayMonthFormatter = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",
@@ -36,18 +37,19 @@ function shortCallMoment(startsAt: Date): string {
   return `${callDayFormatter.format(startsAt)} · ${callClockFormatter.format(startsAt)}`;
 }
 
-function ageToday(): string {
+function ageReading(): string {
   const today = new Date();
   const hadBirthday =
     today.getMonth() > DATE_OF_BIRTH.getUTCMonth() ||
     (today.getMonth() === DATE_OF_BIRTH.getUTCMonth() &&
       today.getDate() >= DATE_OF_BIRTH.getUTCDate());
 
-  return String(
+  const age =
     today.getFullYear() -
-      DATE_OF_BIRTH.getUTCFullYear() -
-      (hadBirthday ? 0 : 1),
-  );
+    DATE_OF_BIRTH.getUTCFullYear() -
+    (hadBirthday ? 0 : 1);
+
+  return `${age} (${BIRTH_DATE_READING})`;
 }
 
 test("the coach finds her clients by status, name and join date and opens one", async ({
@@ -127,7 +129,7 @@ test("the coach finds her clients by status, name and join date and opens one", 
   await coachClient.expectOpen(submitted.clientId);
   await coachClient.expectClient(submitted.fullName, submitted.email);
   await coachClient.expectProfile({
-    Age: ageToday(),
+    Age: ageReading(),
     Gender: "Female",
     Country: "Romania",
     Phone: "—",
@@ -362,7 +364,7 @@ test("a client with an account whose answers are not in yet reads Onboarding wit
   await coachClient.expectOpen(onboarding.clientId);
   await coachClient.expectClient(onboarding.fullName, onboarding.email);
   await coachClient.expectProfileAwaitingOnboarding(onboarding.gender, {
-    Age: ageToday(),
+    Age: ageReading(),
     Gender: "Female",
     Country: "Romania",
     Phone: "—",

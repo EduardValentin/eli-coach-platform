@@ -171,7 +171,7 @@ describe.sequential("coach clients pages integration", () => {
         ["profile-age", "profile-gender", "profile-country"].map((parity) =>
           readingOf(page, parity),
         ),
-      ).toEqual(["32", "Female", "Romania"]);
+      ).toEqual(["32 (14 Mar 1994)", "Female", "Romania"]);
       expect(page).toMatch(
         /data-parity="profile-phone"[^>]*><a[^>]*href="tel:\+40712345678"/,
       );

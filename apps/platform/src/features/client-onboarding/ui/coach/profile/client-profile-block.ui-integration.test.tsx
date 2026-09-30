@@ -61,14 +61,14 @@ afterEach(() => {
 });
 
 describe("the client's profile block", () => {
-  it("reads her profile: age on the coach's calendar, identity, height, first and latest weights, goal, restrictions and notes", () => {
+  it("reads her profile: age on the coach's calendar with her date of birth, identity, height, first and latest weights, goal, restrictions and notes", () => {
     // arrange, act
     render(<ClientProfileBlock profile={PROFILE} />);
 
     // assert
     const profile = screen.getByRole("region", { name: "Profile" });
     expect(readings(profile)).toEqual([
-      ["Age", "32"],
+      ["Age", "32 (14 Mar 1994)"],
       ["Gender", "Female"],
       ["Country", "Romania"],
       ["Phone", "+40712345678"],
@@ -143,7 +143,7 @@ describe("the client's profile block", () => {
       const profile = screen.getByRole("region", { name: "Profile" });
       expect(within(profile).getByText(pendingLine)).toBeInTheDocument();
       expect(readings(profile)).toEqual([
-        ["Age", "32"],
+        ["Age", "32 (14 Mar 1994)"],
         ["Gender", genderLabel],
         ["Country", "Romania"],
         ["Phone", "+40712345678"],

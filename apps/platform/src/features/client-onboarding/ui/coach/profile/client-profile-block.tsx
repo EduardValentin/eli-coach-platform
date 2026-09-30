@@ -6,7 +6,7 @@ import { useState, type ReactNode } from "react";
 
 import { findCountry } from "~/features/assessment-calls/contracts/countries";
 import {
-  ageOn,
+  formatAgeForCard,
   labelForGender,
   possessivePronoun,
   subjectPronoun,
@@ -101,9 +101,9 @@ function heightReading(cm: number | null): string {
   return cm === null ? ABSENT_VALUE : formatCanonicalMeasure("height", cm);
 }
 
-function identityValues(identity: ProfileIdentity, age: number) {
+function identityValues(identity: ProfileIdentity, ageReading: string) {
   return {
-    age,
+    age: ageReading,
     gender: labelForGender(identity.gender),
     country: findCountry(identity.country)?.name ?? identity.country,
     phone: <PhoneLink phone={identity.phone} />,
@@ -133,9 +133,13 @@ export function ClientProfileBlock({ profile }: ClientProfileBlockProps) {
   const timeZone = useReviewDayTimeZone();
   const [now] = useState(() => new Date());
   const { identity, facts } = profile;
-  const age = ageOn({ dateOfBirth: identity.dateOfBirth, on: now, timeZone });
+  const ageReading = formatAgeForCard({
+    dateOfBirth: identity.dateOfBirth,
+    on: now,
+    timeZone,
+  });
   const values: ProfileValues = {
-    ...identityValues(identity, age),
+    ...identityValues(identity, ageReading),
     ...(facts ? factValues(facts, profile) : AWAITING_FACT_VALUES),
   };
 
