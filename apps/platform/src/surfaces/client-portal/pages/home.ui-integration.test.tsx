@@ -17,9 +17,26 @@ afterEach(() => {
 
 type ClientDashboardLoad = Awaited<ReturnType<typeof loader>>;
 
+const NOTHING_DUE: ClientDashboardLoad = {
+  detailsRequest: null,
+  dueLine: null,
+  programStatus: null,
+};
+
+const ANA: ClientShellPresentation = {
+  displayName: "Ana Popescu",
+  greeting: "Welcome back, Ana.",
+};
+
+const SUBMITTED: ProgramStatus = {
+  kind: "submitted",
+  submittedAt: "2026-10-01T09:00:00.000Z",
+  workStartsOn: null,
+};
+
 function renderDashboard(
   presentation: ClientShellPresentation,
-  loaded: ClientDashboardLoad = { detailsRequest: null, programStatus: null },
+  loaded: ClientDashboardLoad = NOTHING_DUE,
 ) {
   const RoutesStub = createRoutesStub([
     {
@@ -98,7 +115,7 @@ describe("client dashboard", () => {
     };
 
     // act
-    renderDashboard(presentation, { detailsRequest: null, programStatus });
+    renderDashboard(presentation, { ...NOTHING_DUE, programStatus });
     await screen.findByRole("heading", { level: 1 });
 
     // assert
@@ -122,6 +139,7 @@ describe("client dashboard", () => {
 
     // act
     renderDashboard(presentation, {
+      ...NOTHING_DUE,
       detailsRequest: { note: "Which day suits you best now?" },
       programStatus,
     });
@@ -139,5 +157,51 @@ describe("client dashboard", () => {
     expect(
       within(card).getByRole("link", { name: "Answer now" }),
     ).toHaveAttribute("href", "/client/onboarding?answer=1");
+  });
+
+  it("tells her when her weekly weigh-in is due and leads to her profile", async () => {
+    // arrange, act
+    renderDashboard(ANA, {
+      ...NOTHING_DUE,
+      dueLine: "weigh-in",
+      programStatus: SUBMITTED,
+    });
+    await screen.findByRole("heading", { level: 1 });
+
+    // assert
+    expect(
+      screen.getByRole("link", { name: "Your weekly weigh-in is due" }),
+    ).toHaveAttribute("href", "/client/profile");
+  });
+
+  it("tells her when her measurements and photos are due", async () => {
+    // arrange, act
+    renderDashboard(ANA, {
+      ...NOTHING_DUE,
+      dueLine: "measurements",
+      programStatus: SUBMITTED,
+    });
+    await screen.findByRole("heading", { level: 1 });
+
+    // assert
+    expect(
+      screen.getByRole("link", {
+        name: "Time for your measurements and photos",
+      }),
+    ).toHaveAttribute("href", "/client/profile");
+    expect(
+      screen.queryByRole("link", { name: "Your weekly weigh-in is due" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows no measurements line while nothing is due", async () => {
+    // arrange, act
+    renderDashboard(ANA, { ...NOTHING_DUE, programStatus: SUBMITTED });
+    await screen.findByRole("heading", { level: 1 });
+
+    // assert
+    expect(
+      screen.queryByRole("link", { name: /weigh-in|measurements/ }),
+    ).not.toBeInTheDocument();
   });
 });

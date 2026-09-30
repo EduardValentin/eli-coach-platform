@@ -7,20 +7,23 @@ import {
 } from "react-router";
 
 import { clientOnboardingContext } from "~/features/client-onboarding/server/guards/client-onboarding-context.server";
+import { clientProfileContext } from "~/features/client-profile/server/guards/client-profile-context.server";
+import { MeasurementsNudge } from "~/features/client-profile/ui/client/nudge/measurements-nudge";
 import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
 import { ProgramStatusCard } from "~/features/coaching-sales/ui/client/status/program-status-card";
 import type { ClientShellPresentation } from "~/surfaces/client-portal/shell/client-identity-presentation";
 import { clientPortalPageMeta } from "~/surfaces/client-portal/shell/client-portal-meta";
 
 export async function loader(args: LoaderFunctionArgs) {
-  const [programStatus, detailsRequest] = await Promise.all([
+  const [programStatus, detailsRequest, { dueLine }] = await Promise.all([
     args.context
       .get(coachingSalesContext)
       .clientJourney.loadProgramStatus(args),
     args.context.get(clientOnboardingContext).controller.loadOpenRequest(args),
+    args.context.get(clientProfileContext).clientMeasurements.loadNudge(args),
   ]);
 
-  return { detailsRequest, programStatus };
+  return { detailsRequest, dueLine, programStatus };
 }
 
 export const meta: MetaFunction = () =>
@@ -28,7 +31,8 @@ export const meta: MetaFunction = () =>
 
 export default function ClientHomeRoute() {
   const { greeting } = useOutletContext<ClientShellPresentation>();
-  const { detailsRequest, programStatus } = useLoaderData<typeof loader>();
+  const { detailsRequest, dueLine, programStatus } =
+    useLoaderData<typeof loader>();
 
   return (
     <div className="w-full" data-parity="dashboard-page">
@@ -48,6 +52,7 @@ export default function ClientHomeRoute() {
           status={programStatus}
         />
       )}
+      <MeasurementsNudge dueLine={dueLine} />
     </div>
   );
 }
