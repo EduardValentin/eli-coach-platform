@@ -10,10 +10,7 @@ import {
   type SubmitOnboardingUseCase,
 } from "@eli-coach-platform/domain/client-onboarding";
 import type { Clock } from "@eli-coach-platform/domain/shared";
-import type {
-  SaveUnitPreferenceUseCase,
-  UnitPreference,
-} from "@eli-coach-platform/domain/unit-preference";
+import type { UnitPreference } from "@eli-coach-platform/domain/unit-preference";
 import { createBadRequestResponse } from "@eli-coach-platform/infrastructure/http/server";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 
@@ -31,7 +28,6 @@ import {
   submissionAcceptedSchema,
   submissionProblemsSchema,
   submitRequestSchema,
-  unitPreferenceSchema,
   type AskedAnswers,
   type OnboardingConsentInstants,
   type OnboardingPage,
@@ -45,7 +41,6 @@ type ClientOnboardingControllerOptions = {
   readClientOnboarding: ReadClientOnboardingUseCase;
   readOpenDetailRequest: ReadOpenDetailRequestUseCase;
   saveOnboardingDraft: SaveOnboardingDraftUseCase;
-  saveUnitPreference: SaveUnitPreferenceUseCase;
   submitOnboarding: SubmitOnboardingUseCase;
 };
 
@@ -62,7 +57,6 @@ type OnboardingReading = {
 };
 
 const ONBOARDING_REQUEST_MAX_BYTES = 64 * 1024;
-const UNIT_PREFERENCE_REQUEST_MAX_BYTES = 1024;
 
 const REFUSAL_STATUS = {
   "not-on-journey": 404,
@@ -167,30 +161,6 @@ export class ClientOnboardingController {
     }
   }
 
-  async saveUnitPreference(args: ActionFunctionArgs): Promise<Response> {
-    const client = requireApiAccount(args, { role: "CLIENT" });
-    const request = unitPreferenceSchema.safeParse(
-      await readJsonRequestBody(
-        args.request,
-        UNIT_PREFERENCE_REQUEST_MAX_BYTES,
-      ),
-    );
-
-    if (!request.success) {
-      return createBadRequestResponse("The units could not be read.");
-    }
-
-    const result = await this.options.saveUnitPreference.execute({
-      authSubjectId: client.authSubjectId,
-      preference: request.data,
-    });
-
-    if (result.status === "saved") {
-      return noContentResponse();
-    }
-
-    return refusalResponse(result.status);
-  }
   async answerDetails(args: ActionFunctionArgs): Promise<Response> {
     const client = requireApiAccount(args, { role: "CLIENT" });
     const request = answerDetailsRequestSchema.safeParse(

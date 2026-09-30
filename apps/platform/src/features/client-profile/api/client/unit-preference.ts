@@ -4,7 +4,7 @@ import {
   handleHttpErrorResponse,
   throwMethodNotAllowedResponse,
 } from "@eli-coach-platform/infrastructure/http/server";
-import { clientOnboardingContext } from "~/features/client-onboarding/server/guards/client-onboarding-context.server";
+import { clientProfileContext } from "~/features/client-profile/server/guards/client-profile-context.server";
 
 export async function action(args: ActionFunctionArgs) {
   return handleHttpErrorResponse(() => {
@@ -12,9 +12,7 @@ export async function action(args: ActionFunctionArgs) {
       throwMethodNotAllowedResponse({ allowedMethods: ["PUT"] });
     }
 
-    return args.context
-      .get(clientOnboardingContext)
-      .controller.saveUnitPreference(args);
+    return args.context.get(clientProfileContext).unitPreference.save(args);
   });
 }
 

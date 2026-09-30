@@ -45,8 +45,19 @@ const CLIENT: OnboardingClient = {
   reviewStamps: NO_STAMPS,
 };
 
+const SUBMITTED_MEASUREMENT: MeasurementEntry = {
+  recordedAt: SUBMITTED_AT,
+  weightKg: 70,
+  waistCm: 74,
+};
+
 const MEASUREMENTS: MeasurementEntry[] = [
-  { recordedAt: SUBMITTED_AT, weightKg: 70, waistCm: 74 },
+  {
+    recordedAt: new Date("2026-10-04T10:00:00.000Z"),
+    weightKg: 68.5,
+    waistCm: 71,
+  },
+  SUBMITTED_MEASUREMENT,
 ];
 
 function answers(): OnboardingAnswersByForm {
@@ -178,11 +189,25 @@ describe("ReadOnboardingReviewUseCase", () => {
     ]);
     expect(result.openRequest).toBeNull();
     expect(result.requests).toEqual([]);
-    expect(result.measurements).toBe(MEASUREMENTS);
+    expect(result.submittedMeasurement).toEqual(SUBMITTED_MEASUREMENT);
     expect(result.statedHeightCm).toBe(168);
     expect(ports.measurements.listByClientId).toHaveBeenCalledWith(
       CLIENT.clientId,
     );
+  });
+
+  it("reads no submitted measurement while none is recorded for her", async () => {
+    // arrange
+    const ports = readPorts();
+    ports.measurements.listByClientId.mockResolvedValue([]);
+    const useCase = new ReadOnboardingReviewUseCase(ports);
+
+    // act
+    const result = await useCase.execute(CLIENT.clientId);
+
+    // assert
+    if (result.status !== "submitted") throw new Error(result.status);
+    expect(result.submittedMeasurement).toBeNull();
   });
 
   it("lists only the forms and questions her answers made reachable, with answered and total counts", async () => {

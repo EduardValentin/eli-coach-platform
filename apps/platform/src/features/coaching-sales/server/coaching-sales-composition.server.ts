@@ -93,11 +93,12 @@ type CoachingSalesComposition = {
   handles: {
     clientIdentities: ClientIdentities;
     invitationAcceptance: InvitationAcceptance;
-    onboardingClients: OnboardingClients & UnitPreferenceClients;
+    onboardingClients: OnboardingClients;
     onboardingReviewStamps: OnboardingReviewStamps;
     onboardingSubmissionStamps: OnboardingSubmissionStamps;
     paymentCompletionHandler: PaymentCompletionHandler;
     reviewStampWriter: ReviewStampWriter;
+    unitPreferenceClients: UnitPreferenceClients;
   };
 };
 
@@ -126,6 +127,7 @@ export function composeCoachingSalesFeature(
   const purchases = new PostgresCoachingPurchases({ clock, database });
   const invitations = new PostgresClientInvitations(database);
   const journeys = new PostgresClientJourneys(database);
+  const onboardingClients = new PostgresOnboardingClients(database);
   const tokenGenerator = new RandomLinkTokenGenerator();
   const tokenHasher = new LinkTokenSha256();
   const emailOptions = {
@@ -282,7 +284,7 @@ export function composeCoachingSalesFeature(
       invitationAcceptance: {
         accept: (input) => invitationUseCases.acceptInvitation.execute(input),
       },
-      onboardingClients: new PostgresOnboardingClients(database),
+      onboardingClients,
       onboardingReviewStamps: journeys,
       onboardingSubmissionStamps: journeys,
       paymentCompletionHandler: new CoachingPurchaseCompletionHandler({
@@ -290,6 +292,7 @@ export function composeCoachingSalesFeature(
         recordCheckoutCompleted: useCases.recordCheckoutCompleted,
       }),
       reviewStampWriter: writeReviewStamps,
+      unitPreferenceClients: onboardingClients,
     },
   };
 }

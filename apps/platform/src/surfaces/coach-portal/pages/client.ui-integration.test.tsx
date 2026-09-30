@@ -19,11 +19,12 @@ import {
   vi,
 } from "vitest";
 
-import type { ClientProfileView } from "~/features/client-onboarding/contracts/client-profile";
 import type {
   OnboardingReviewView,
   SubmittedReview,
 } from "~/features/client-onboarding/contracts/onboarding-review";
+import type { ClientProfileView } from "~/features/client-profile/contracts/client-profile";
+import type { MeasurementRow } from "~/features/client-profile/contracts/measurements";
 import type { CoachClient } from "~/features/coaching-sales/contracts/coach-clients";
 import {
   COACH_CLIENTS_PATH,
@@ -129,26 +130,28 @@ const SUBMITTED: SubmittedReview = {
 
 const NOT_SUBMITTED: OnboardingReviewView = {
   clientId: CLIENT_ID,
-  measurements: [],
+  submittedWaistCm: null,
   statedHeightCm: null,
   submitted: null,
 };
 
 const SUBMITTED_WITH_MEASUREMENTS: OnboardingReviewView = {
   clientId: CLIENT_ID,
-  measurements: [
-    {
-      armCm: 30,
-      hipsCm: 100,
-      recordedAt: "2026-09-21T10:00:00.000Z",
-      thighCm: 58,
-      waistCm: 80,
-      weightKg: 70,
-    },
-  ],
+  submittedWaistCm: 80,
   statedHeightCm: 170,
   submitted: SUBMITTED,
 };
+
+const SUBMITTED_MEASUREMENTS: MeasurementRow[] = [
+  {
+    armCm: 30,
+    hipsCm: 100,
+    recordedAt: "2026-09-21T10:00:00.000Z",
+    thighCm: 58,
+    waistCm: 80,
+    weightKg: 70,
+  },
+];
 
 const server = setupServer();
 
@@ -247,6 +250,7 @@ describe("the coach's client page", () => {
       client: AWAITING_REVIEW,
       review: SUBMITTED_WITH_MEASUREMENTS,
       profile: PROFILE,
+      measurements: SUBMITTED_MEASUREMENTS,
     });
 
     // assert
@@ -273,6 +277,8 @@ describe("the coach's client page", () => {
     await renderClientPage({
       client: AWAITING_REVIEW,
       review: SUBMITTED_WITH_MEASUREMENTS,
+      profile: PROFILE,
+      measurements: SUBMITTED_MEASUREMENTS,
     });
 
     // assert
@@ -380,6 +386,7 @@ type ClientPageData = {
   client: CoachClient;
   review: OnboardingReviewView;
   profile: ClientProfileView;
+  measurements: MeasurementRow[];
 };
 
 function clientNotFound(): never {
@@ -391,6 +398,7 @@ async function renderClientRouter(
     client: INVITED,
     review: NOT_SUBMITTED,
     profile: AWAITING_ONBOARDING_PROFILE,
+    measurements: [],
   }),
 ) {
   const user = userEvent.setup();
@@ -436,6 +444,7 @@ async function renderClientPage(options: Partial<ClientPageData> = {}) {
     client: options.client ?? INVITED,
     review: options.review ?? NOT_SUBMITTED,
     profile: options.profile ?? AWAITING_ONBOARDING_PROFILE,
+    measurements: options.measurements ?? [],
   }));
 
   return user;

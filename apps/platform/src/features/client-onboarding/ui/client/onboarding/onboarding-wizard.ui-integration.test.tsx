@@ -37,6 +37,7 @@ import type {
   SubmitRequest,
 } from "~/features/client-onboarding/contracts/onboarding";
 import { CLIENT_ONBOARDING_API_PATHS } from "~/features/client-onboarding/contracts/paths";
+import { CLIENT_PROFILE_API_PATHS } from "~/features/client-profile/contracts/paths";
 
 import OnboardingRoute from "./onboarding-page";
 
@@ -170,7 +171,7 @@ function answerDrafts(status: number) {
 function answerUnitPreferences(status: number) {
   server.use(
     http.put(
-      `*${CLIENT_ONBOARDING_API_PATHS.unitPreference}`,
+      `*${CLIENT_PROFILE_API_PATHS.unitPreference}`,
       async ({ request }) => {
         unitPreferenceRequests.push(await request.json());
 

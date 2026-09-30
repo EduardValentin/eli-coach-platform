@@ -11,10 +11,7 @@ import {
   type SaveOnboardingDraftUseCase,
   type SubmitOnboardingUseCase,
 } from "@eli-coach-platform/domain/client-onboarding";
-import {
-  UnitPreference,
-  type SaveUnitPreferenceUseCase,
-} from "@eli-coach-platform/domain/unit-preference";
+import { UnitPreference } from "@eli-coach-platform/domain/unit-preference";
 import { describe, expect, it, vi } from "vitest";
 
 import type { AccountsFeature } from "~/features/accounts/server/accounts-composition.server";
@@ -50,9 +47,6 @@ type SaveDraftResult = Awaited<
   ReturnType<SaveOnboardingDraftUseCase["execute"]>
 >;
 type SubmitResult = Awaited<ReturnType<SubmitOnboardingUseCase["execute"]>>;
-type SaveUnitPreferenceResult = Awaited<
-  ReturnType<SaveUnitPreferenceUseCase["execute"]>
->;
 type OpenRequestResult = Awaited<
   ReturnType<ReadOpenDetailRequestUseCase["execute"]>
 >;
@@ -676,90 +670,6 @@ describe("ClientOnboardingController answer details", () => {
   });
 });
 
-describe("ClientOnboardingController save unit preference", () => {
-  it("saves the units she chose and answers no content", async () => {
-    // arrange
-    const { controller, saveUnitPreference } = createController({
-      unitPreferenceResult: { status: "saved" },
-    });
-
-    // act
-    const response = await controller.saveUnitPreference(
-      clientArgs({
-        method: "PUT",
-        body: JSON.stringify({ weightUnit: "lb", heightUnit: "ft-in" }),
-      }),
-    );
-
-    // assert
-    expect(response.status).toBe(204);
-    expect(saveUnitPreference).toHaveBeenCalledWith({
-      authSubjectId: "user_ana",
-      preference: { weightUnit: "lb", heightUnit: "ft-in" },
-    });
-  });
-
-  it("answers not found to a client account with no client record", async () => {
-    // arrange
-    const { controller } = createController({
-      unitPreferenceResult: { status: "not-on-journey" },
-    });
-
-    // act
-    const response = await controller.saveUnitPreference(
-      clientArgs({
-        method: "PUT",
-        body: JSON.stringify({ weightUnit: "kg", heightUnit: "cm" }),
-      }),
-    );
-
-    // assert
-    expect(response.status).toBe(404);
-    expect(await response.json()).toEqual({ error: "not-on-journey" });
-  });
-
-  it("refuses a unit the platform does not offer without saving anything", async () => {
-    // arrange
-    const { controller, saveUnitPreference } = createController({
-      unitPreferenceResult: { status: "saved" },
-    });
-
-    // act
-    const response = await controller.saveUnitPreference(
-      clientArgs({
-        method: "PUT",
-        body: JSON.stringify({ weightUnit: "stone", heightUnit: "cm" }),
-      }),
-    );
-
-    // assert
-    expect(response.status).toBe(400);
-    expect(saveUnitPreference).not.toHaveBeenCalled();
-  });
-
-  it("refuses the coach without saving anything", async () => {
-    // arrange
-    const { controller, saveUnitPreference } = createController({
-      unitPreferenceResult: { status: "saved" },
-    });
-
-    // act
-    const thrown = await captureThrown(() =>
-      controller.saveUnitPreference(
-        clientArgs({
-          method: "PUT",
-          body: JSON.stringify({ weightUnit: "kg", heightUnit: "cm" }),
-          session: COACH_SESSION,
-        }),
-      ),
-    );
-
-    // assert
-    expect((thrown as Response).status).toBe(403);
-    expect(saveUnitPreference).not.toHaveBeenCalled();
-  });
-});
-
 function readingOf(options: {
   gender: VisitorGender;
   dateOfBirth?: string;
@@ -831,7 +741,6 @@ function createController(options: {
   reading?: ReadResult;
   saveDraftResult?: SaveDraftResult;
   submitResult?: SubmitResult;
-  unitPreferenceResult?: SaveUnitPreferenceResult;
 }) {
   const readClientOnboarding = vi
     .fn()
@@ -840,9 +749,6 @@ function createController(options: {
     .fn()
     .mockResolvedValue(options.saveDraftResult);
   const submitOnboarding = vi.fn().mockResolvedValue(options.submitResult);
-  const saveUnitPreference = vi
-    .fn()
-    .mockResolvedValue(options.unitPreferenceResult);
   const readOpenDetailRequest = vi
     .fn()
     .mockResolvedValue(options.openRequest ?? null);
@@ -863,9 +769,6 @@ function createController(options: {
     saveOnboardingDraft: {
       execute: saveOnboardingDraft,
     } as unknown as SaveOnboardingDraftUseCase,
-    saveUnitPreference: {
-      execute: saveUnitPreference,
-    } as unknown as SaveUnitPreferenceUseCase,
     submitOnboarding: {
       execute: submitOnboarding,
     } as unknown as SubmitOnboardingUseCase,
@@ -877,7 +780,6 @@ function createController(options: {
     readClientOnboarding,
     readOpenDetailRequest,
     saveOnboardingDraft,
-    saveUnitPreference,
     submitOnboarding,
   };
 }

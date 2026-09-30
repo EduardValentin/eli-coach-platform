@@ -6,18 +6,16 @@ import {
   type OnboardingFormId,
   type ReadOnboardingReviewUseCase,
 } from "@eli-coach-platform/domain/client-onboarding";
-import type { MeasurementEntry } from "@eli-coach-platform/domain/measurement";
 
-import {
-  formatCanonicalMeasure,
-  isMeasureKind,
-} from "~/features/client-onboarding/contracts/canonical-measure";
 import type {
-  MeasurementRow,
   ReviewAnswer,
   ReviewForm,
   SubmittedReview,
 } from "~/features/client-onboarding/contracts/onboarding-review";
+import {
+  formatCanonicalMeasure,
+  isMeasureKind,
+} from "~/features/client-profile/contracts/canonical-measure";
 
 type OnboardingReviewReading = Awaited<
   ReturnType<ReadOnboardingReviewUseCase["execute"]>
@@ -64,19 +62,6 @@ export function presentSubmittedReview(
         }
       : null,
   };
-}
-
-export function presentMeasurements(
-  measurements: readonly MeasurementEntry[],
-): MeasurementRow[] {
-  return measurements.map((entry) => ({
-    recordedAt: entry.recordedAt.toISOString(),
-    weightKg: entry.weightKg,
-    waistCm: entry.waistCm,
-    hipsCm: entry.hipsCm ?? null,
-    thighCm: entry.thighCm ?? null,
-    armCm: entry.armCm ?? null,
-  }));
 }
 
 function humaniseFieldId(fieldId: string): string {

@@ -36,7 +36,7 @@ const DRAFT_API = "**/api/client-onboarding/draft";
 
 const SUBMISSION_API = "**/api/client-onboarding/submission";
 
-const UNIT_PREFERENCE_API = "**/api/client-onboarding/unit-preference";
+const UNIT_PREFERENCE_API = "**/api/client-profile/unit-preference";
 
 const DETAIL_ANSWERS_API = "**/api/client-onboarding/detail-answers";
 

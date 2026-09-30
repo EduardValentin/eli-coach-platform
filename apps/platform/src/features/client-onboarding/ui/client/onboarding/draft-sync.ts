@@ -3,9 +3,9 @@ import { z } from "zod";
 
 import {
   saveDraftRequestSchema,
-  unitPreferenceSchema,
   type SaveDraftRequest,
 } from "~/features/client-onboarding/contracts/onboarding";
+import { unitPreferenceSchema } from "~/features/client-profile/contracts/unit-preference";
 
 import type { SaveOutcome } from "./onboarding-api-client";
 

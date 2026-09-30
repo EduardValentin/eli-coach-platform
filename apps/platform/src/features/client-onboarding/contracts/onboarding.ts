@@ -3,12 +3,9 @@ import {
   ONBOARDING_FORM_IDS,
   type OnboardingConsent,
 } from "@eli-coach-platform/domain/client-onboarding";
-import {
-  HEIGHT_UNITS,
-  WEIGHT_UNITS,
-  type UnitPreferenceSnapshot,
-} from "@eli-coach-platform/domain/unit-preference";
 import { z } from "zod";
+
+import { unitPreferenceSchema } from "~/features/client-profile/contracts/unit-preference";
 
 const ANSWER_MAX_LENGTH = 2000;
 const CHOICE_MAX_LENGTH = 200;
@@ -71,11 +68,6 @@ export const submitRequestSchema = z.object({
 });
 
 export type SubmitRequest = z.infer<typeof submitRequestSchema>;
-
-export const unitPreferenceSchema = z.object({
-  weightUnit: z.enum(WEIGHT_UNITS),
-  heightUnit: z.enum(HEIGHT_UNITS),
-}) satisfies z.ZodType<UnitPreferenceSnapshot>;
 
 const onboardingWizardPageSchema = z.object({
   mode: z.literal("wizard"),

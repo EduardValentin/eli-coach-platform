@@ -3,7 +3,6 @@ import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
 import {
   objectPronoun,
   possessivePronoun,
-  subjectPronoun,
 } from "~/features/assessment-calls/contracts/visitor-profile";
 
 export const PANEL_TITLE = "Onboarding";
@@ -126,18 +125,6 @@ export function emailSentToast(email: string): string {
 
 export const REVIEW_ACTION_FAILED =
   "That did not go through just now. Try again in a moment.";
-
-export const MEASUREMENTS_COPY = {
-  title: "Measurements",
-  empty: (gender: VisitorGender) => {
-    const subject = subjectPronoun(gender);
-
-    return `${subject.capitalised} ${subject.hasVerb} not sent any measurements yet.`;
-  },
-  caption: "Measurements history, newest first",
-  columns: ["Date", "Weight", "Waist", "Hips", "Thigh", "Arm", "Ratio"],
-  missing: "—",
-} as const;
 
 export const ANSWER_REQUEST_COPY = {
   eyebrow: "Your onboarding",

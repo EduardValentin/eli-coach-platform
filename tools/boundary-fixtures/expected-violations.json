@@ -2,8 +2,14 @@
   "apps/platform/src/features/assessment-calls/contracts/reaches-coaching-sales.ts": [
     "assessment-calls-never-reach-coaching-sales"
   ],
+  "apps/platform/src/features/client-profile/contracts/reaches-client-onboarding.ts": [
+    "client-profile-never-reaches-client-onboarding"
+  ],
   "apps/platform/src/features/coaching-sales/contracts/reaches-client-onboarding.ts": [
     "coaching-sales-never-reaches-client-onboarding"
+  ],
+  "apps/platform/src/features/coaching-sales/contracts/reaches-client-profile.ts": [
+    "coaching-sales-never-reaches-client-profile"
   ],
   "apps/platform/src/features/coaching-sales/ui/public/clerk-confined.tsx": [
     "clerk-confined",

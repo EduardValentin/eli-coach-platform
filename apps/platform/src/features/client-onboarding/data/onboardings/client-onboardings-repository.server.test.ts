@@ -10,11 +10,13 @@ import type { SQL } from "drizzle-orm";
 import { PgDialect } from "drizzle-orm/pg-core";
 import { describe, expect, it } from "vitest";
 
+import type {
+  ClientProfileWriter,
+  MeasurementEntryWriter,
+} from "~/features/client-onboarding/data/client-profile-writers.server";
 import {
-  clientMeasurementsTable,
   clientOnboardingDraftsTable,
   clientOnboardingSubmissionsTable,
-  clientProfilesTable,
 } from "~/features/client-onboarding/data/schema.server";
 
 import { PostgresClientOnboardings } from "./client-onboardings-repository.server";
@@ -27,7 +29,7 @@ const SUBMITTED_AT = new Date("2026-10-23T09:00:00.000Z");
 describe("PostgresClientOnboardings#findByClientId", () => {
   it("reads her draft with its consents and no submission", async () => {
     // arrange
-    const onboardings = new PostgresClientOnboardings(
+    const onboardings = onboardingsOver(
       createDatabaseAnswering({
         drafts: [
           {
@@ -64,7 +66,7 @@ describe("PostgresClientOnboardings#findByClientId", () => {
 
   it("reads her submission with its consents and no draft", async () => {
     // arrange
-    const onboardings = new PostgresClientOnboardings(
+    const onboardings = onboardingsOver(
       createDatabaseAnswering({
         drafts: [],
         submissions: [
@@ -99,7 +101,7 @@ describe("PostgresClientOnboardings#findByClientId", () => {
 
   it("answers neither a draft nor a submission before she starts", async () => {
     // arrange
-    const onboardings = new PostgresClientOnboardings(
+    const onboardings = onboardingsOver(
       createDatabaseAnswering({ drafts: [], submissions: [] }),
     );
 
@@ -117,7 +119,7 @@ describe("PostgresClientOnboardings#saveDraft", () => {
     const database = createDatabaseRecordingDraftWrites([
       { clientId: CLIENT_ID },
     ]);
-    const onboardings = new PostgresClientOnboardings(database.client);
+    const onboardings = onboardingsOver(database.client);
 
     // act
     const outcome = await onboardings.saveDraft({
@@ -139,7 +141,7 @@ describe("PostgresClientOnboardings#saveDraft", () => {
   it("answers already submitted when the guard lets no row through", async () => {
     // arrange
     const database = createDatabaseRecordingDraftWrites([]);
-    const onboardings = new PostgresClientOnboardings(database.client);
+    const onboardings = onboardingsOver(database.client);
 
     // act
     const outcome = await onboardings.saveDraft({
@@ -156,7 +158,7 @@ describe("PostgresClientOnboardings#saveDraft", () => {
     const database = createDatabaseRecordingDraftWrites([
       { clientId: CLIENT_ID },
     ]);
-    const onboardings = new PostgresClientOnboardings(database.client);
+    const onboardings = onboardingsOver(database.client);
 
     // act
     await onboardings.saveDraft({
@@ -195,7 +197,8 @@ describe("PostgresClientOnboardings#recordSubmission", () => {
   it("records her submission, first measurement and profile and clears her draft in one transaction", async () => {
     // arrange
     const database = createDatabaseRecordingTransaction();
-    const onboardings = new PostgresClientOnboardings(database.client);
+    const writers = createRecordingWriters();
+    const onboardings = onboardingsOver(database.client, writers);
 
     // act
     const outcome = await onboardings.recordSubmission({
@@ -220,31 +223,22 @@ describe("PostgresClientOnboardings#recordSubmission", () => {
           submittedAt: SUBMITTED_AT,
         },
       },
+    ]);
+    expect(writers.measurementEntries).toEqual([
       {
-        table: clientMeasurementsTable,
-        row: {
-          clientId: CLIENT_ID,
-          recordedAt: SUBMITTED_AT,
-          weightKg: 64.5,
-          waistCm: 72,
-          hipsCm: 96.5,
-          thighCm: null,
-          armCm: null,
-        },
+        transaction: database.transactions[0],
+        input: { clientId: CLIENT_ID, entry: measurementEntry() },
       },
     ]);
-    expect(database.upserted).toEqual([
-      {
-        table: clientProfilesTable,
-        row: { ...profile().toSnapshot(), createdAt: SUBMITTED_AT },
-      },
+    expect(writers.profiles).toEqual([
+      { transaction: database.transactions[0], profile: profile() },
     ]);
     expect(database.deletedFrom).toEqual([clientOnboardingDraftsTable]);
   });
 
   it("answers already submitted when a submission already exists for her", async () => {
     // arrange
-    const onboardings = new PostgresClientOnboardings(
+    const onboardings = onboardingsOver(
       createDatabaseFailingTransactionWith(
         uniqueViolation("client_onboarding_submissions_client_id_unique"),
       ),
@@ -265,7 +259,7 @@ describe("PostgresClientOnboardings#recordSubmission", () => {
   it("rethrows any other unique violation", async () => {
     // arrange
     const failure = uniqueViolation("client_measurements_pkey");
-    const onboardings = new PostgresClientOnboardings(
+    const onboardings = onboardingsOver(
       createDatabaseFailingTransactionWith(failure),
     );
 
@@ -287,7 +281,7 @@ describe("PostgresClientOnboardings#recordSubmission", () => {
       code: "08006",
       constraint: "client_onboarding_submissions_client_id_unique",
     });
-    const onboardings = new PostgresClientOnboardings(
+    const onboardings = onboardingsOver(
       createDatabaseFailingTransactionWith(failure),
     );
 
@@ -396,22 +390,53 @@ function createDatabaseRecordingDraftWrites(writtenRows: readonly unknown[]) {
   return { client, conflictUpdates, selectedRows };
 }
 
+function onboardingsOver(
+  database: DatabaseClient,
+  writers: ReturnType<typeof createRecordingWriters> = createRecordingWriters(),
+): PostgresClientOnboardings {
+  return new PostgresClientOnboardings({
+    database,
+    clientProfileWriter: writers.clientProfileWriter,
+    measurementEntryWriter: writers.measurementEntryWriter,
+  });
+}
+
+function createRecordingWriters() {
+  const profiles: { transaction: unknown; profile: ClientProfile }[] = [];
+  const measurementEntries: {
+    transaction: unknown;
+    input: Parameters<MeasurementEntryWriter>[1];
+  }[] = [];
+  const clientProfileWriter: ClientProfileWriter = async (
+    transaction,
+    written,
+  ) => {
+    profiles.push({ transaction, profile: written });
+  };
+  const measurementEntryWriter: MeasurementEntryWriter = async (
+    transaction,
+    input,
+  ) => {
+    measurementEntries.push({ transaction, input });
+  };
+
+  return {
+    clientProfileWriter,
+    measurementEntries,
+    measurementEntryWriter,
+    profiles,
+  };
+}
+
 function createDatabaseRecordingTransaction() {
   const deletedFrom: unknown[] = [];
   const inserted: { table: unknown; row: unknown }[] = [];
-  const upserted: { table: unknown; row: unknown }[] = [];
   const transactions: unknown[] = [];
   const transaction = {
     insert: (table: unknown) => ({
-      values: (row: unknown) => ({
-        then: (resolve: () => void) => {
-          inserted.push({ table, row });
-          resolve();
-        },
-        onConflictDoUpdate: async () => {
-          upserted.push({ table, row });
-        },
-      }),
+      values: async (row: unknown) => {
+        inserted.push({ table, row });
+      },
     }),
     delete: (table: unknown) => {
       deletedFrom.push(table);
@@ -427,7 +452,7 @@ function createDatabaseRecordingTransaction() {
     },
   } as unknown as DatabaseClient;
 
-  return { client, deletedFrom, inserted, transactions, upserted };
+  return { client, deletedFrom, inserted, transactions };
 }
 
 function createDatabaseFailingTransactionWith(failure: Error): DatabaseClient {

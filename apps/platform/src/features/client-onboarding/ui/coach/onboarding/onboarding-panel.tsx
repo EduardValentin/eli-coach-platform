@@ -27,9 +27,9 @@ import {
   REVIEW_ACTIONS,
   waitingLine,
 } from "~/features/client-onboarding/contracts/onboarding-review-copy";
+import { waistToHeightRatio } from "~/features/client-profile/ui/shared/body-metrics";
 
 import { AnswerGroups } from "./answer-groups";
-import { waistToHeightRatio } from "./body-metrics";
 import { CycleModeInfo } from "./cycle-mode-info";
 import { OnboardingReviewDialog } from "./onboarding-review-dialog";
 import { toggleQuestion } from "./question-ids";
@@ -78,10 +78,10 @@ function ratioValue(
     return RATIO_HIDDEN_NOTE;
   }
 
-  const latest = review.measurements.at(-1);
-  const ratio = latest
-    ? waistToHeightRatio(latest.waistCm, review.statedHeightCm)
-    : null;
+  const ratio =
+    review.submittedWaistCm === null
+      ? null
+      : waistToHeightRatio(review.submittedWaistCm, review.statedHeightCm);
 
   return ratio ?? ratioWaitingLine(gender);
 }

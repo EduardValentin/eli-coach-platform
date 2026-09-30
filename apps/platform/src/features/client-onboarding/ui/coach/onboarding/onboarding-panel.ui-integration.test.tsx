@@ -103,25 +103,6 @@ const OPEN_REQUEST = {
   ],
 } satisfies SubmittedReview["openRequest"];
 
-const MEASUREMENTS = [
-  {
-    armCm: 30,
-    hipsCm: 100,
-    recordedAt: "2026-09-01T10:00:00.000Z",
-    thighCm: 58,
-    waistCm: 80,
-    weightKg: 70,
-  },
-  {
-    armCm: 29.5,
-    hipsCm: 98,
-    recordedAt: "2026-09-20T10:00:00.000Z",
-    thighCm: 57,
-    waistCm: 76.5,
-    weightKg: 68.4,
-  },
-];
-
 const server = setupServer();
 
 beforeAll(() => {
@@ -291,7 +272,7 @@ describe("the screening signal beside the panel title", () => {
 });
 
 describe("the onboarding facts", () => {
-  it("reads the ratio from her latest measurement and her chosen check-in", async () => {
+  it("reads the ratio from the measurement she sent with her onboarding and her chosen check-in", async () => {
     // arrange, act
     await renderPanel({ review: reviewView(SUBMITTED) });
 
@@ -317,7 +298,7 @@ describe("the onboarding facts", () => {
   it("waits on her first measurements", async () => {
     // arrange, act
     await renderPanel({
-      review: { ...reviewView(SUBMITTED), measurements: [] },
+      review: { ...reviewView(SUBMITTED), submittedWaistCm: null },
     });
 
     // assert
@@ -439,7 +420,7 @@ describe("the panel for a client who is not a woman", () => {
   it("waits on his first measurements", async () => {
     // arrange, act
     await renderPanel(
-      { review: { ...reviewView(SUBMITTED), measurements: [] } },
+      { review: { ...reviewView(SUBMITTED), submittedWaistCm: null } },
       withGender("male"),
     );
 
@@ -452,7 +433,7 @@ describe("the panel for a client who is not a woman", () => {
   it("waits on their first measurements", async () => {
     // arrange, act
     await renderPanel(
-      { review: { ...reviewView(SUBMITTED), measurements: [] } },
+      { review: { ...reviewView(SUBMITTED), submittedWaistCm: null } },
       withGender("prefer_not_to_say"),
     );
 
@@ -821,7 +802,7 @@ function withGender(gender: ReviewedClient["gender"]) {
 function reviewView(submitted: SubmittedReview | null): OnboardingReviewView {
   return {
     clientId: CLIENT_ID,
-    measurements: MEASUREMENTS,
+    submittedWaistCm: 76.5,
     statedHeightCm: 170,
     submitted,
   };

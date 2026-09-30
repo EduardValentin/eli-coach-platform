@@ -1,7 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { ClientProfile } from "../client-profile";
-import { UnitPreference, type ClientUnitPreferences } from "../unit-preference";
+import {
+  UnitPreference,
+  type ClientUnitPreferencesSource,
+} from "../unit-preference";
 import type { ClientOnboardingChanges } from "./client-onboarding-changes";
 import type { ClientOnboardingIncidents } from "./client-onboarding-incidents";
 import type { ClientOnboardingSource } from "./client-onboarding-source";
@@ -118,8 +121,7 @@ function createOnboardings(submission: OnboardingSubmission | null = null) {
 function createUnitPreferences(preference: UnitPreference | null = null) {
   return {
     findByClientId: vi.fn().mockResolvedValue(preference),
-    save: vi.fn().mockResolvedValue(undefined),
-  } satisfies ClientUnitPreferences;
+  } satisfies ClientUnitPreferencesSource;
 }
 
 function createChanges(
@@ -159,7 +161,7 @@ function createUseCase(
   ports: {
     clients?: OnboardingClients;
     onboardings?: ClientOnboardingSource;
-    unitPreferences?: ClientUnitPreferences;
+    unitPreferences?: ClientUnitPreferencesSource;
     changes?: ClientOnboardingChanges;
     stamps?: OnboardingSubmissionStamps;
     incidents?: ClientOnboardingIncidents;

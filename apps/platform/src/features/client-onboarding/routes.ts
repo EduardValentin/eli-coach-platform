@@ -21,10 +21,6 @@ export const clientOnboardingApiRoutes = [
     "./api/client/submission.ts",
   ),
   route(
-    CLIENT_ONBOARDING_API_PATHS.unitPreference.slice(1),
-    "./api/client/unit-preference.ts",
-  ),
-  route(
     CLIENT_ONBOARDING_API_PATHS.detailAnswers.slice(1),
     "./api/client/detail-answers.ts",
   ),

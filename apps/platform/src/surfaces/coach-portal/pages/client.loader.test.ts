@@ -1,9 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ClientProfileView } from "~/features/client-onboarding/contracts/client-profile";
 import type { OnboardingReviewView } from "~/features/client-onboarding/contracts/onboarding-review";
 import type { ClientOnboardingFeature } from "~/features/client-onboarding/server/client-onboarding-composition.server";
 import { clientOnboardingContext } from "~/features/client-onboarding/server/guards/client-onboarding-context.server";
+import type { ClientProfileView } from "~/features/client-profile/contracts/client-profile";
+import type { MeasurementRow } from "~/features/client-profile/contracts/measurements";
+import type { ClientProfileFeature } from "~/features/client-profile/server/client-profile-composition.server";
+import { clientProfileContext } from "~/features/client-profile/server/guards/client-profile-context.server";
 import type { CoachClient } from "~/features/coaching-sales/contracts/coach-clients";
 import type { CoachingSalesFeature } from "~/features/coaching-sales/server/coaching-sales-composition.server";
 import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
@@ -41,10 +44,21 @@ const CLIENT: CoachClient = {
 
 const REVIEW: OnboardingReviewView = {
   clientId: CLIENT_ID,
-  measurements: [],
+  submittedWaistCm: null,
   statedHeightCm: null,
   submitted: null,
 };
+
+const MEASUREMENTS: MeasurementRow[] = [
+  {
+    recordedAt: "2026-09-29T09:00:00.000Z",
+    weightKg: 64.5,
+    waistCm: 72,
+    hipsCm: null,
+    thighCm: null,
+    armCm: null,
+  },
+];
 
 const PROFILE: ClientProfileView = {
   identity: {
@@ -65,9 +79,10 @@ const PROFILE: ClientProfileView = {
 };
 
 describe("coach client page loader", () => {
-  it("reads her record, her onboarding review and her profile for this request, side by side", async () => {
+  it("reads her record, her onboarding review, her profile and her measurements for this request, side by side", async () => {
     // arrange
-    const { args, loadClient, loadProfile, loadReview } = routeArguments();
+    const { args, loadClient, loadMeasurements, loadProfile, loadReview } =
+      routeArguments();
 
     // act
     const loaded = await loader(args);
@@ -77,10 +92,12 @@ describe("coach client page loader", () => {
       client: CLIENT,
       review: REVIEW,
       profile: PROFILE,
+      measurements: MEASUREMENTS,
     });
     expect(loadClient).toHaveBeenCalledWith(args, CLIENT_ID);
     expect(loadReview).toHaveBeenCalledWith(args, CLIENT_ID);
     expect(loadProfile).toHaveBeenCalledWith(args, CLIENT_ID);
+    expect(loadMeasurements).toHaveBeenCalledWith(args, CLIENT_ID);
   });
 
   it("reads her identity alone as her profile before she has sent her onboarding", async () => {
@@ -129,7 +146,12 @@ describe("coach client page loader", () => {
 describe("coach client page meta", () => {
   it("titles the page with her full name", () => {
     // arrange
-    const data = { client: CLIENT, review: REVIEW, profile: PROFILE };
+    const data = {
+      client: CLIENT,
+      review: REVIEW,
+      profile: PROFILE,
+      measurements: MEASUREMENTS,
+    };
 
     // act
     const descriptors = meta({ data } as Parameters<typeof meta>[0]);
@@ -143,19 +165,22 @@ function routeArguments() {
   const loadClient = vi.fn().mockResolvedValue(CLIENT);
   const loadReview = vi.fn().mockResolvedValue(REVIEW);
   const loadProfile = vi.fn().mockResolvedValue(PROFILE);
+  const loadMeasurements = vi.fn().mockResolvedValue(MEASUREMENTS);
   const args = createRequestArgs({
     contexts: [
       contextEntry(coachingSalesContext, {
         coachClients: { loadClient },
       } as unknown as CoachingSalesFeature),
       contextEntry(clientOnboardingContext, {
-        coachProfile: { load: loadProfile },
         coachReview: { loadReview },
       } as unknown as ClientOnboardingFeature),
+      contextEntry(clientProfileContext, {
+        coachProfile: { load: loadProfile, loadMeasurements },
+      } as unknown as ClientProfileFeature),
     ],
     params: { clientId: CLIENT_ID },
     request: new Request(`http://localhost/coach/clients/${CLIENT_ID}`),
   });
 
-  return { args, loadClient, loadProfile, loadReview };
+  return { args, loadClient, loadMeasurements, loadProfile, loadReview };
 }

@@ -1,6 +1,7 @@
-import type {
-  ClientMeasurementsSource,
-  MeasurementEntry,
+import {
+  earliestMeasurementOf,
+  type ClientMeasurementsSource,
+  type MeasurementEntry,
 } from "../measurement";
 
 import type { ClientOnboardingIncidents } from "./client-onboarding-incidents";
@@ -50,7 +51,7 @@ type SubmittedOnboardingReview = {
   forms: ReviewedForm[];
   openRequest: DetailRequestSnapshot | null;
   requests: DetailRequestSnapshot[];
-  measurements: MeasurementEntry[];
+  submittedMeasurement: MeasurementEntry | null;
   statedHeightCm: number | null;
 };
 
@@ -150,7 +151,9 @@ export class ReadOnboardingReviewUseCase {
       forms: reviewedForms(review),
       openRequest: review.openRequest()?.toSnapshot() ?? null,
       requests: review.requests.map((request) => request.toSnapshot()),
-      measurements: await this.options.measurements.listByClientId(clientId),
+      submittedMeasurement: earliestMeasurementOf(
+        await this.options.measurements.listByClientId(clientId),
+      ),
       statedHeightCm: statedHeightCm(answers),
     };
   }

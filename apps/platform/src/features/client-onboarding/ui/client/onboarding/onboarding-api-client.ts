@@ -12,6 +12,7 @@ import {
   type SubmitRequest,
 } from "~/features/client-onboarding/contracts/onboarding";
 import { CLIENT_ONBOARDING_API_PATHS } from "~/features/client-onboarding/contracts/paths";
+import { CLIENT_PROFILE_API_PATHS } from "~/features/client-profile/contracts/paths";
 
 const DRAFT_API_URL = joinBasePath(
   import.meta.env.BASE_URL,
@@ -25,7 +26,7 @@ const SUBMISSION_API_URL = joinBasePath(
 
 const UNIT_PREFERENCE_API_URL = joinBasePath(
   import.meta.env.BASE_URL,
-  CLIENT_ONBOARDING_API_PATHS.unitPreference,
+  CLIENT_PROFILE_API_PATHS.unitPreference,
 );
 
 const DETAIL_ANSWERS_API_URL = joinBasePath(

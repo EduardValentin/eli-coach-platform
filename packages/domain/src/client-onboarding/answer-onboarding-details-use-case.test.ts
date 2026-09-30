@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { ClientProfile } from "../client-profile";
-import type { ClientUnitPreferences } from "../unit-preference";
+import type { ClientUnitPreferencesSource } from "../unit-preference";
 import { AnswerOnboardingDetailsUseCase } from "./answer-onboarding-details-use-case";
 import type { ClientOnboardingIncidents } from "./client-onboarding-incidents";
 import type { ClientOnboardingSource } from "./client-onboarding-source";
@@ -119,8 +119,7 @@ function answerPorts(
     reviews: createReviews(overrides.requests ?? [askedRequest()]),
     unitPreferences: {
       findByClientId: vi.fn().mockResolvedValue(null),
-      save: vi.fn().mockResolvedValue(undefined),
-    } satisfies ClientUnitPreferences,
+    } satisfies ClientUnitPreferencesSource,
     stamps: {
       record: vi.fn().mockResolvedValue(undefined),
     } satisfies OnboardingReviewStamps,

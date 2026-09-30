@@ -13,9 +13,11 @@ import type { ClientProfile } from "@eli-coach-platform/domain/client-profile";
 import type { MeasurementEntry } from "@eli-coach-platform/domain/measurement";
 import { eq, sql, type SQL } from "drizzle-orm";
 
-import { saveClientProfile } from "~/features/client-onboarding/data/profiles/client-profiles-repository.server";
+import type {
+  ClientProfileWriter,
+  MeasurementEntryWriter,
+} from "~/features/client-onboarding/data/client-profile-writers.server";
 import {
-  clientMeasurementsTable,
   clientOnboardingConstraints,
   clientOnboardingDraftsTable,
   clientOnboardingSubmissionsTable,
@@ -29,10 +31,24 @@ type ConsentColumns = {
   progressPhotosConsentedAt: Date | null;
 };
 
+type ClientOnboardingsOptions = {
+  database: DatabaseClient;
+  clientProfileWriter: ClientProfileWriter;
+  measurementEntryWriter: MeasurementEntryWriter;
+};
+
 export class PostgresClientOnboardings
   implements ClientOnboardingSource, ClientOnboardingChanges
 {
-  constructor(private readonly database: DatabaseClient) {}
+  private readonly database: DatabaseClient;
+  private readonly clientProfileWriter: ClientProfileWriter;
+  private readonly measurementEntryWriter: MeasurementEntryWriter;
+
+  constructor(options: ClientOnboardingsOptions) {
+    this.database = options.database;
+    this.clientProfileWriter = options.clientProfileWriter;
+    this.measurementEntryWriter = options.measurementEntryWriter;
+  }
 
   async findByClientId(clientId: string): Promise<{
     draft: OnboardingDraft | null;
@@ -127,16 +143,11 @@ export class PostgresClientOnboardings
           ...consentColumnsOf(submission.consents),
           submittedAt: submission.submittedAt,
         });
-        await transaction.insert(clientMeasurementsTable).values({
+        await this.measurementEntryWriter(transaction, {
           clientId,
-          recordedAt: measurementEntry.recordedAt,
-          weightKg: measurementEntry.weightKg,
-          waistCm: measurementEntry.waistCm,
-          hipsCm: measurementEntry.hipsCm ?? null,
-          thighCm: measurementEntry.thighCm ?? null,
-          armCm: measurementEntry.armCm ?? null,
+          entry: measurementEntry,
         });
-        await saveClientProfile(transaction, input.profile);
+        await this.clientProfileWriter(transaction, input.profile);
         await transaction
           .delete(clientOnboardingDraftsTable)
           .where(eq(clientOnboardingDraftsTable.clientId, clientId));

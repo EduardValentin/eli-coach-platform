@@ -85,26 +85,6 @@ describe("composeClientOnboardingFeature", () => {
     ).not.toHaveBeenCalled();
   });
 
-  it("refuses units from an account with no client record through the same client reader", async () => {
-    // arrange
-    const handles = createHandles();
-    const { controller } = composeClientOnboardingFeature(handles);
-
-    // act
-    const response = await controller.saveUnitPreference(
-      clientArgs({
-        method: "PUT",
-        body: { weightUnit: "lb", heightUnit: "ft-in" },
-      }),
-    );
-
-    // assert
-    expect(response.status).toBe(404);
-    expect(handles.onboardingClients.findByAuthSubjectId).toHaveBeenCalledWith(
-      "user_uninvited",
-    );
-  });
-
   it("refuses answers to a request from an account with no client record without stamping anything", async () => {
     // arrange
     const handles = createHandles();
@@ -141,24 +121,6 @@ describe("composeClientOnboardingFeature", () => {
     );
   });
 
-  it("answers not found to the coach's profile read of a client no one knows", async () => {
-    // arrange
-    const handles = createHandles();
-    const { coachProfile } = composeClientOnboardingFeature(handles);
-
-    // act
-    const loading = coachProfile.load(
-      accountArgs({ account: COACH }),
-      UNKNOWN_CLIENT_ID,
-    );
-
-    // assert
-    await expect(loading).rejects.toMatchObject({ status: 404 });
-    expect(handles.clientIdentities.findByClientId).toHaveBeenCalledWith(
-      UNKNOWN_CLIENT_ID,
-    );
-  });
-
   it("refuses a detail request for a client no one knows without sending an email", async () => {
     // arrange
     const handles = createHandles();
@@ -188,7 +150,6 @@ describe("composeClientOnboardingFeature", () => {
 function createHandles() {
   return {
     appBasePath: "/",
-    clientIdentities: { findByClientId: vi.fn().mockResolvedValue(null) },
     clock: { now: () => new Date("2026-09-28T10:00:00.000Z") },
     contactEmail: "contact@evoa.fit",
     database: createUnreachableDatabase(),
@@ -205,6 +166,7 @@ function createHandles() {
       onboardingSubmissionAccepted: vi.fn(),
       onboardingSubmissionRefused: vi.fn(),
     },
+    measurements: { listByClientId: vi.fn().mockResolvedValue([]) },
     onboardingClients: {
       findByAuthSubjectId: vi.fn().mockResolvedValue(null),
       findByClientId: vi.fn().mockResolvedValue(null),
@@ -215,7 +177,10 @@ function createHandles() {
     },
     productEmail: { provider: "memory", send: vi.fn() },
     publicAppUrl: "https://evoa.fit",
+    recordMeasurementEntry: vi.fn().mockResolvedValue(undefined),
     reviewStampWriter: vi.fn().mockResolvedValue(undefined),
+    saveClientProfile: vi.fn().mockResolvedValue(undefined),
+    unitPreferences: { findByClientId: vi.fn().mockResolvedValue(null) },
   };
 }
 

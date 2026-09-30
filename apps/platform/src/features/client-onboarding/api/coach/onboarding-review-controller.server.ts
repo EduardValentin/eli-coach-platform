@@ -21,10 +21,7 @@ import {
 } from "~/features/client-onboarding/contracts/onboarding-review";
 
 import { readJsonRequestBody } from "~/features/client-onboarding/api/read-json-request-body.server";
-import {
-  presentMeasurements,
-  presentSubmittedReview,
-} from "./onboarding-review-presenter.server";
+import { presentSubmittedReview } from "./onboarding-review-presenter.server";
 
 type OnboardingReviewControllerOptions = {
   approveOnboardingAnswers: ApproveOnboardingAnswersUseCase;
@@ -74,7 +71,7 @@ export class OnboardingReviewController {
       return onboardingReviewSchema.parse({
         clientId: target.data,
         submitted: null,
-        measurements: [],
+        submittedWaistCm: null,
         statedHeightCm: null,
       });
     }
@@ -82,7 +79,7 @@ export class OnboardingReviewController {
     return onboardingReviewSchema.parse({
       clientId: target.data,
       submitted: presentSubmittedReview(reading),
-      measurements: presentMeasurements(reading.measurements),
+      submittedWaistCm: reading.submittedMeasurement?.waistCm ?? null,
       statedHeightCm: reading.statedHeightCm,
     });
   }

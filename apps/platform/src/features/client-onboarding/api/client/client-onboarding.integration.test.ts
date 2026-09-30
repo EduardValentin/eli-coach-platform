@@ -61,7 +61,7 @@ const ONBOARDING = "/client/onboarding";
 const PUBLIC_HOME = "/";
 const DRAFT_API = "/api/client-onboarding/draft";
 const SUBMISSION_API = "/api/client-onboarding/submission";
-const UNIT_PREFERENCE_API = "/api/client-onboarding/unit-preference";
+const UNIT_PREFERENCE_API = "/api/client-profile/unit-preference";
 
 const RESUME_NOTE = "Picking up where you left off.";
 const IMMEDIATE_START_LINE =

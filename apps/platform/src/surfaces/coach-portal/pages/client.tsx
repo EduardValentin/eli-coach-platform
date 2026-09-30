@@ -12,9 +12,10 @@ import {
 } from "react-router";
 
 import { clientOnboardingContext } from "~/features/client-onboarding/server/guards/client-onboarding-context.server";
-import { MeasurementsTable } from "~/features/client-onboarding/ui/coach/onboarding/measurements-table";
 import { OnboardingPanel } from "~/features/client-onboarding/ui/coach/onboarding/onboarding-panel";
-import { ClientProfileBlock } from "~/features/client-onboarding/ui/coach/profile/client-profile-block";
+import { clientProfileContext } from "~/features/client-profile/server/guards/client-profile-context.server";
+import { MeasurementsTable } from "~/features/client-profile/ui/coach/measurements/measurements-table";
+import { ClientProfileBlock } from "~/features/client-profile/ui/coach/profile/client-profile-block";
 import { COACH_CLIENTS_PATH } from "~/features/coaching-sales/contracts/paths";
 import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
 import { AssessmentCallBlock } from "~/features/coaching-sales/ui/coach/clients/assessment-call-block";
@@ -32,16 +33,19 @@ export async function loader(args: LoaderFunctionArgs) {
     throw new Response("Not Found", { status: CLIENT_NOT_FOUND_STATUS });
   }
 
-  const onboarding = args.context.get(clientOnboardingContext);
-  const [client, review, profile] = await Promise.all([
+  const { coachProfile } = args.context.get(clientProfileContext);
+  const [client, review, profile, measurements] = await Promise.all([
     args.context
       .get(coachingSalesContext)
       .coachClients.loadClient(args, clientId),
-    onboarding.coachReview.loadReview(args, clientId),
-    onboarding.coachProfile.load(args, clientId),
+    args.context
+      .get(clientOnboardingContext)
+      .coachReview.loadReview(args, clientId),
+    coachProfile.load(args, clientId),
+    coachProfile.loadMeasurements(args, clientId),
   ]);
 
-  return { client, review, profile };
+  return { client, review, profile, measurements };
 }
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => [
@@ -59,7 +63,8 @@ export function ErrorBoundary() {
 }
 
 export default function CoachClientRoute() {
-  const { client, review, profile } = useLoaderData<typeof loader>();
+  const { client, review, profile, measurements } =
+    useLoaderData<typeof loader>();
   const name = clientFullName(client);
 
   return (
@@ -104,8 +109,8 @@ export default function CoachClientRoute() {
       )}
       <MeasurementsTable
         gender={client.gender}
-        heightCm={review.statedHeightCm}
-        measurements={review.measurements}
+        heightCm={profile.facts?.heightCm ?? null}
+        measurements={measurements}
       />
       <AssessmentCallBlock client={client} />
     </div>

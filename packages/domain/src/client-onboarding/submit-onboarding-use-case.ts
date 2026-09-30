@@ -3,7 +3,7 @@ import type { Clock } from "../shared";
 import {
   measureUnitsOf,
   UnitPreference,
-  type ClientUnitPreferences,
+  type ClientUnitPreferencesSource,
 } from "../unit-preference";
 
 import {
@@ -37,7 +37,7 @@ type SubmitOnboardingResult =
 type SubmitOnboardingUseCaseOptions = {
   clients: OnboardingClients;
   onboardings: ClientOnboardingSource;
-  unitPreferences: ClientUnitPreferences;
+  unitPreferences: ClientUnitPreferencesSource;
   changes: ClientOnboardingChanges;
   stamps: OnboardingSubmissionStamps;
   clock: Clock;

@@ -12,7 +12,7 @@ import {
 } from "@eli-coach-platform/domain/client-onboarding";
 import { and, asc, eq, isNull, sql, type SQL } from "drizzle-orm";
 
-import { saveClientProfile } from "~/features/client-onboarding/data/profiles/client-profiles-repository.server";
+import type { ClientProfileWriter } from "~/features/client-onboarding/data/client-profile-writers.server";
 import {
   clientOnboardingConstraints,
   clientOnboardingDetailRequestsTable,
@@ -45,15 +45,18 @@ export type ReviewStampWriter = (
 type OnboardingReviewsOptions = {
   database: DatabaseClient;
   reviewStampWriter: ReviewStampWriter;
+  clientProfileWriter: ClientProfileWriter;
 };
 
 export class PostgresOnboardingReviews implements OnboardingReviews {
   private readonly database: DatabaseClient;
   private readonly reviewStampWriter: ReviewStampWriter;
+  private readonly clientProfileWriter: ClientProfileWriter;
 
   constructor(options: OnboardingReviewsOptions) {
     this.database = options.database;
     this.reviewStampWriter = options.reviewStampWriter;
+    this.clientProfileWriter = options.clientProfileWriter;
   }
 
   async findByClientId(clientId: string): Promise<StoredOnboardingReview> {
@@ -155,7 +158,7 @@ export class PostgresOnboardingReviews implements OnboardingReviews {
         .update(clientOnboardingSubmissionsTable)
         .set({ answers: mergedAnswersExpression(input.mergedAnswers) })
         .where(eq(clientOnboardingSubmissionsTable.clientId, input.clientId));
-      await saveClientProfile(transaction, input.profile);
+      await this.clientProfileWriter(transaction, input.profile);
     });
   }
 

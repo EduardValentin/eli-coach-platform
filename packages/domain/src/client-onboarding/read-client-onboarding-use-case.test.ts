@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { UnitPreference, type ClientUnitPreferences } from "../unit-preference";
+import {
+  UnitPreference,
+  type ClientUnitPreferencesSource,
+} from "../unit-preference";
 import type { ClientOnboardingSource } from "./client-onboarding-source";
 import { emptyDraft } from "./onboarding-draft";
 import type { OnboardingClient, OnboardingClients } from "./onboarding-clients";
@@ -41,12 +44,11 @@ function createOnboardings() {
 }
 
 function createUnitPreferences(
-  found: Awaited<ReturnType<ClientUnitPreferences["findByClientId"]>>,
+  found: Awaited<ReturnType<ClientUnitPreferencesSource["findByClientId"]>>,
 ) {
   return {
     findByClientId: vi.fn().mockResolvedValue(found),
-    save: vi.fn().mockResolvedValue(undefined),
-  } satisfies ClientUnitPreferences;
+  } satisfies ClientUnitPreferencesSource;
 }
 
 describe("ReadClientOnboardingUseCase", () => {

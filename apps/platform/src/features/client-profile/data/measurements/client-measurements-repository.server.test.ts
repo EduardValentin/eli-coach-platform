@@ -1,7 +1,15 @@
-import type { DatabaseClient } from "@eli-coach-platform/db";
+import type {
+  DatabaseClient,
+  DatabaseTransaction,
+} from "@eli-coach-platform/db";
 import { describe, expect, it } from "vitest";
 
-import { PostgresClientMeasurements } from "./client-measurements-reader.server";
+import { clientMeasurementsTable } from "~/features/client-profile/data/schema.server";
+
+import {
+  PostgresClientMeasurements,
+  recordMeasurementEntry,
+} from "./client-measurements-repository.server";
 
 const CLIENT_ID = "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22";
 const FIRST_RECORDED_AT = new Date("2026-09-29T09:00:00.000Z");
@@ -66,6 +74,53 @@ describe("PostgresClientMeasurements#listByClientId", () => {
     expect(entries).toEqual([]);
   });
 });
+
+describe("recordMeasurementEntry", () => {
+  it("inserts her entry through the transaction it is handed, with the circumferences she skipped left empty", async () => {
+    // arrange
+    const transaction = createTransactionRecordingInserts();
+
+    // act
+    await recordMeasurementEntry(transaction.handle, {
+      clientId: CLIENT_ID,
+      entry: {
+        recordedAt: FIRST_RECORDED_AT,
+        weightKg: 64.5,
+        waistCm: 72,
+        hipsCm: 96.5,
+      },
+    });
+
+    // assert
+    expect(transaction.inserted).toEqual([
+      {
+        table: clientMeasurementsTable,
+        row: {
+          clientId: CLIENT_ID,
+          recordedAt: FIRST_RECORDED_AT,
+          weightKg: 64.5,
+          waistCm: 72,
+          hipsCm: 96.5,
+          thighCm: null,
+          armCm: null,
+        },
+      },
+    ]);
+  });
+});
+
+function createTransactionRecordingInserts() {
+  const inserted: { table: unknown; row: unknown }[] = [];
+  const handle = {
+    insert: (table: unknown) => ({
+      values: async (row: unknown) => {
+        inserted.push({ table, row });
+      },
+    }),
+  } as unknown as DatabaseTransaction;
+
+  return { handle, inserted };
+}
 
 function createDatabaseAnswering(rows: readonly unknown[]): DatabaseClient {
   return {

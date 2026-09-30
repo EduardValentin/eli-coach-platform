@@ -44,17 +44,6 @@ const openDetailRequestSchema = z.object({
 
 export type OpenDetailRequest = z.infer<typeof openDetailRequestSchema>;
 
-const measurementRowSchema = z.object({
-  recordedAt: z.iso.datetime(),
-  weightKg: z.number(),
-  waistCm: z.number(),
-  hipsCm: z.number().nullable(),
-  thighCm: z.number().nullable(),
-  armCm: z.number().nullable(),
-});
-
-export type MeasurementRow = z.infer<typeof measurementRowSchema>;
-
 const submittedReviewSchema = z.object({
   stage: z.enum(REVIEW_STAGES),
   screening: z.object({
@@ -75,7 +64,7 @@ export type SubmittedReview = z.infer<typeof submittedReviewSchema>;
 export const onboardingReviewSchema = z.object({
   clientId: z.string().min(1),
   submitted: submittedReviewSchema.nullable(),
-  measurements: z.array(measurementRowSchema),
+  submittedWaistCm: z.number().nullable(),
   statedHeightCm: z.number().nullable(),
 });
 

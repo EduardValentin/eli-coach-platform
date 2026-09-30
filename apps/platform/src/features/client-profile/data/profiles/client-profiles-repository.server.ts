@@ -8,7 +8,7 @@ import {
 } from "@eli-coach-platform/domain/client-profile";
 import { eq } from "drizzle-orm";
 
-import { clientProfilesTable } from "~/features/client-onboarding/data/schema.server";
+import { clientProfilesTable } from "~/features/client-profile/data/schema.server";
 
 export class PostgresClientProfiles implements ClientProfiles {
   constructor(private readonly database: DatabaseClient) {}

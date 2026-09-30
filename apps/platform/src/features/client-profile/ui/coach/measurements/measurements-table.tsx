@@ -10,11 +10,18 @@ import {
 } from "@eli-coach-platform/ui/primitives";
 import { Ruler } from "lucide-react";
 
-import type { MeasurementRow } from "~/features/client-onboarding/contracts/onboarding-review";
-import { MEASUREMENTS_COPY } from "~/features/client-onboarding/contracts/onboarding-review-copy";
-
-import { roundToTenth, waistToHeightRatio } from "./body-metrics";
-import { formatDayMonth, useReviewDayTimeZone } from "./review-day-format";
+import {
+  MEASUREMENTS_COPY,
+  type MeasurementRow,
+} from "~/features/client-profile/contracts/measurements";
+import {
+  roundToTenth,
+  waistToHeightRatio,
+} from "~/features/client-profile/ui/shared/body-metrics";
+import {
+  formatDayMonth,
+  useCalendarDayTimeZone,
+} from "~/features/coaching-sales/ui/shared/calendar-day-format";
 
 type MeasurementsTableProps = {
   gender: VisitorGender;
@@ -42,7 +49,7 @@ export function MeasurementsTable({
   heightCm,
   measurements,
 }: MeasurementsTableProps) {
-  const timeZone = useReviewDayTimeZone();
+  const timeZone = useCalendarDayTimeZone();
   const history = newestFirst(measurements);
 
   return (

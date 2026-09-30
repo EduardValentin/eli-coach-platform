@@ -5,7 +5,7 @@ import {
 } from "@eli-coach-platform/domain/unit-preference";
 import { eq } from "drizzle-orm";
 
-import { clientUnitPreferencesTable } from "~/features/client-onboarding/data/schema.server";
+import { clientUnitPreferencesTable } from "~/features/client-profile/data/schema.server";
 
 export class PostgresClientUnitPreferences implements ClientUnitPreferences {
   constructor(private readonly database: DatabaseClient) {}

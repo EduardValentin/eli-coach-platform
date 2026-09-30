@@ -16,5 +16,6 @@ export {
   type MeasureUnits,
 } from "./measure-units";
 export { type ClientUnitPreferences } from "./client-unit-preferences";
+export { type ClientUnitPreferencesSource } from "./client-unit-preferences-source";
 export { type UnitPreferenceClients } from "./unit-preference-clients";
 export { SaveUnitPreferenceUseCase } from "./save-unit-preference-use-case";

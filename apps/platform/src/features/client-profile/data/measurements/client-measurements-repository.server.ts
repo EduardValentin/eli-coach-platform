@@ -1,4 +1,7 @@
-import type { DatabaseClient } from "@eli-coach-platform/db";
+import type {
+  DatabaseClient,
+  DatabaseTransaction,
+} from "@eli-coach-platform/db";
 import {
   measurementEntryOf,
   type ClientMeasurementsSource,
@@ -6,7 +9,7 @@ import {
 } from "@eli-coach-platform/domain/measurement";
 import { asc, eq } from "drizzle-orm";
 
-import { clientMeasurementsTable } from "~/features/client-onboarding/data/schema.server";
+import { clientMeasurementsTable } from "~/features/client-profile/data/schema.server";
 
 export class PostgresClientMeasurements implements ClientMeasurementsSource {
   constructor(private readonly database: DatabaseClient) {}
@@ -40,4 +43,21 @@ export class PostgresClientMeasurements implements ClientMeasurementsSource {
       return entry ? [entry] : [];
     });
   }
+}
+
+export async function recordMeasurementEntry(
+  transaction: DatabaseTransaction,
+  input: { clientId: string; entry: MeasurementEntry },
+): Promise<void> {
+  const { entry } = input;
+
+  await transaction.insert(clientMeasurementsTable).values({
+    clientId: input.clientId,
+    recordedAt: entry.recordedAt,
+    weightKg: entry.weightKg,
+    waistCm: entry.waistCm,
+    hipsCm: entry.hipsCm ?? null,
+    thighCm: entry.thighCm ?? null,
+    armCm: entry.armCm ?? null,
+  });
 }

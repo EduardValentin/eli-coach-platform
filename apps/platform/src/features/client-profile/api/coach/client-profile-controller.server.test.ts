@@ -3,6 +3,7 @@ import type {
   ClientProfileReading,
   ReadClientProfileUseCase,
 } from "@eli-coach-platform/domain/client-profile";
+import type { MeasurementEntry } from "@eli-coach-platform/domain/measurement";
 import { describe, expect, it, vi } from "vitest";
 
 import type { AccountsFeature } from "~/features/accounts/server/accounts-composition.server";
@@ -162,17 +163,87 @@ describe("ClientProfileController load", () => {
   });
 });
 
+describe("ClientProfileController load measurements", () => {
+  it("hands the coach her dated entries as rows, with the circumferences she skipped left empty", async () => {
+    // arrange
+    const { controller, listMeasurements } = createController({
+      measurements: [
+        {
+          recordedAt: new Date("2026-09-29T09:00:00.000Z"),
+          weightKg: 64.5,
+          waistCm: 72,
+          hipsCm: 96.5,
+        },
+      ],
+    });
+
+    // act
+    const rows = await controller.loadMeasurements(coachArgs(), CLIENT_ID);
+
+    // assert
+    expect(rows).toEqual([
+      {
+        recordedAt: "2026-09-29T09:00:00.000Z",
+        weightKg: 64.5,
+        waistCm: 72,
+        hipsCm: 96.5,
+        thighCm: null,
+        armCm: null,
+      },
+    ]);
+    expect(listMeasurements).toHaveBeenCalledWith(CLIENT_ID);
+  });
+
+  it("answers not found to an id that is not a uuid without reading any measurement", async () => {
+    // arrange
+    const { controller, listMeasurements } = createController();
+
+    // act
+    const thrown = await captureThrown(() =>
+      controller.loadMeasurements(coachArgs(), "not-a-uuid"),
+    );
+
+    // assert
+    expect((thrown as Response).status).toBe(404);
+    expect(listMeasurements).not.toHaveBeenCalled();
+  });
+
+  it("refuses a client account without reading any measurement", async () => {
+    // arrange
+    const { controller, listMeasurements } = createController();
+
+    // act
+    const thrown = await captureThrown(() =>
+      controller.loadMeasurements(
+        coachArgs({ session: CLIENT_SESSION }),
+        CLIENT_ID,
+      ),
+    );
+
+    // assert
+    expect((thrown as Response).status).toBe(403);
+    expect(listMeasurements).not.toHaveBeenCalled();
+  });
+});
+
 function createController(
-  options: { reading?: ClientProfileReading | null } = {},
+  options: {
+    reading?: ClientProfileReading | null;
+    measurements?: MeasurementEntry[];
+  } = {},
 ) {
   const readClientProfile = vi.fn().mockResolvedValue(options.reading ?? null);
+  const listMeasurements = vi
+    .fn()
+    .mockResolvedValue(options.measurements ?? []);
   const controller = new ClientProfileController({
+    measurements: { listByClientId: listMeasurements },
     readClientProfile: {
       execute: readClientProfile,
     } as unknown as ReadClientProfileUseCase,
   });
 
-  return { controller, readClientProfile };
+  return { controller, listMeasurements, readClientProfile };
 }
 
 function coachArgs(options: { session?: ResolvedSession } = {}) {

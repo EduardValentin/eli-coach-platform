@@ -8,7 +8,7 @@ import {
 } from "@eli-coach-platform/domain/client-profile";
 import { describe, expect, it } from "vitest";
 
-import { clientProfilesTable } from "~/features/client-onboarding/data/schema.server";
+import { clientProfilesTable } from "~/features/client-profile/data/schema.server";
 
 import {
   PostgresClientProfiles,

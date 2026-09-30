@@ -11,9 +11,9 @@ import {
   possessivePronoun,
   subjectPronoun,
 } from "~/features/assessment-calls/contracts/visitor-profile";
-import { formatCanonicalMeasure } from "~/features/client-onboarding/contracts/canonical-measure";
-import type { ClientProfileView } from "~/features/client-onboarding/contracts/client-profile";
-import { useReviewDayTimeZone } from "~/features/client-onboarding/ui/coach/onboarding/review-day-format";
+import { formatCanonicalMeasure } from "~/features/client-profile/contracts/canonical-measure";
+import type { ClientProfileView } from "~/features/client-profile/contracts/client-profile";
+import { useCalendarDayTimeZone } from "~/features/coaching-sales/ui/shared/calendar-day-format";
 import { PhoneLink } from "~/features/coaching-sales/ui/shared/phone-link";
 
 type ClientProfileBlockProps = {
@@ -130,7 +130,7 @@ function profilePendingLine(gender: VisitorGender): string {
 }
 
 export function ClientProfileBlock({ profile }: ClientProfileBlockProps) {
-  const timeZone = useReviewDayTimeZone();
+  const timeZone = useCalendarDayTimeZone();
   const [now] = useState(() => new Date());
   const { identity, facts } = profile;
   const ageReading = formatAgeForCard({

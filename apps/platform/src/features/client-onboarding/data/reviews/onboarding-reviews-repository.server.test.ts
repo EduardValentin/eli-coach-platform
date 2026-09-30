@@ -9,12 +9,13 @@ import type { SQL } from "drizzle-orm";
 import { PgDialect } from "drizzle-orm/pg-core";
 import { describe, expect, it } from "vitest";
 
+import type { ClientProfileWriter } from "~/features/client-onboarding/data/client-profile-writers.server";
+
 import {
   clientOnboardingConstraints,
   clientOnboardingDetailRequestsTable,
   clientOnboardingReviewsTable,
   clientOnboardingSubmissionsTable,
-  clientProfilesTable,
 } from "~/features/client-onboarding/data/schema.server";
 
 import {
@@ -332,7 +333,8 @@ describe("PostgresOnboardingReviews#recordAnswer", () => {
     // arrange
     const database = createTransactionalDatabase();
     const writer = createStampWriter();
-    const reviews = reviewsOver(database.client, writer);
+    const profileWriter = createProfileWriter();
+    const reviews = reviewsOver(database.client, writer, profileWriter);
 
     // act
     await reviews.recordAnswer(
@@ -344,15 +346,13 @@ describe("PostgresOnboardingReviews#recordAnswer", () => {
     expect(database.committed.map((write) => write.table)).toEqual([
       clientOnboardingDetailRequestsTable,
       clientOnboardingSubmissionsTable,
-      clientProfilesTable,
     ]);
     expect(database.committed[0]?.values).toEqual({
       answeredAt: FIRST_ANSWERED_AT,
     });
-    expect(database.committed[2]?.values).toEqual({
-      ...profile().toSnapshot(),
-      createdAt: FIRST_ANSWERED_AT,
-    });
+    expect(profileWriter.calls).toEqual([
+      { transaction: database.transactionHandles[0], profile: profile() },
+    ]);
     expect(writer.calls).toEqual([
       {
         transaction: database.transactionHandles[0],
@@ -385,7 +385,8 @@ describe("PostgresOnboardingReviews#recordAnswer", () => {
     // arrange
     const database = createTransactionalDatabase({ answeredRows: [] });
     const writer = createStampWriter();
-    const reviews = reviewsOver(database.client, writer);
+    const profileWriter = createProfileWriter();
+    const reviews = reviewsOver(database.client, writer, profileWriter);
 
     // act
     const recording = reviews.recordAnswer(
@@ -397,6 +398,7 @@ describe("PostgresOnboardingReviews#recordAnswer", () => {
       "The detail request is no longer open.",
     );
     expect(database.committed).toEqual([]);
+    expect(profileWriter.calls).toEqual([]);
     expect(writer.calls).toEqual([]);
   });
 
@@ -498,10 +500,12 @@ describe("PostgresOnboardingReviews when the stamp write fails", () => {
 function reviewsOver(
   database: DatabaseClient,
   writer: StampWriterDouble = createStampWriter(),
+  profileWriter: ProfileWriterDouble = createProfileWriter(),
 ): PostgresOnboardingReviews {
   return new PostgresOnboardingReviews({
     database,
     reviewStampWriter: writer.write,
+    clientProfileWriter: profileWriter.write,
   });
 }
 
@@ -693,6 +697,22 @@ function createFailingStampWriter(failure: Error): StampWriterDouble {
     write: async (transaction, projection) => {
       calls.push({ transaction, projection });
       throw failure;
+    },
+  };
+}
+
+type ProfileWriterDouble = {
+  write: ClientProfileWriter;
+  calls: { transaction: unknown; profile: ClientProfile }[];
+};
+
+function createProfileWriter(): ProfileWriterDouble {
+  const calls: ProfileWriterDouble["calls"] = [];
+
+  return {
+    calls,
+    write: async (transaction, profile) => {
+      calls.push({ transaction, profile });
     },
   };
 }

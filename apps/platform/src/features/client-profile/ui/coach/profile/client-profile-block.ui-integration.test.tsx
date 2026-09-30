@@ -5,7 +5,7 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { ClientProfileView } from "~/features/client-onboarding/contracts/client-profile";
+import type { ClientProfileView } from "~/features/client-profile/contracts/client-profile";
 
 import { ClientProfileBlock } from "./client-profile-block";
 
