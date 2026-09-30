@@ -50,6 +50,8 @@ const MIGRAINE_CONTRACEPTION_SIGNAL = {
 
 const QUESTION_LABEL_OVERRIDES: Record<string, string> = {
   goalWeight: 'Target weight',
+  previousPt: 'Previous PT',
+  previousPtExperience: 'Previous PT experience',
 };
 
 export function humaniseQuestionId(questionId: string): string {

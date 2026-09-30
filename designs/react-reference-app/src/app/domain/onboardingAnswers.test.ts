@@ -5,7 +5,7 @@ import {
   type OnboardingFormAnswers,
   type OnboardingFormId,
 } from './journey';
-import { reviewForms } from './onboardingAnswers';
+import { humaniseQuestionId, reviewForms } from './onboardingAnswers';
 
 function draftAnswering(
   formId: OnboardingFormId,
@@ -96,5 +96,20 @@ describe('the answers the coach should look at', () => {
     // assert
     expect(flaggedWithPill).toEqual(['recurringSymptoms']);
     expect(flaggedWithoutPill).toEqual([]);
+  });
+});
+
+describe('the wording of a question the coach reads', () => {
+  it.each([
+    ['goalWeight', 'Target weight'],
+    ['previousPt', 'Previous PT'],
+    ['previousPtExperience', 'Previous PT experience'],
+    ['chestPainOnExertion', 'Chest pain on exertion'],
+  ])('words %s as "%s"', (questionId, label) => {
+    // arrange, act
+    const worded = humaniseQuestionId(questionId);
+
+    // assert
+    expect(worded).toBe(label);
   });
 });
