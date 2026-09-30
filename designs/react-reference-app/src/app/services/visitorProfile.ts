@@ -55,7 +55,7 @@ export type SubjectPronoun = {
   capitalised: string;
   hasVerb: string;
   isVerb: string;
-  verbEnding: string;
+  regularVerbSuffix: string;
 };
 
 const SUBJECT_PRONOUNS: Record<VisitorGender, SubjectPronoun> = {
@@ -64,21 +64,21 @@ const SUBJECT_PRONOUNS: Record<VisitorGender, SubjectPronoun> = {
     capitalised: 'She',
     hasVerb: 'has',
     isVerb: 'is',
-    verbEnding: 's',
+    regularVerbSuffix: 's',
   },
   male: {
     lower: 'he',
     capitalised: 'He',
     hasVerb: 'has',
     isVerb: 'is',
-    verbEnding: 's',
+    regularVerbSuffix: 's',
   },
   prefer_not_to_say: {
     lower: 'they',
     capitalised: 'They',
     hasVerb: 'have',
     isVerb: 'are',
-    verbEnding: '',
+    regularVerbSuffix: '',
   },
 };
 

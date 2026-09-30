@@ -171,7 +171,7 @@ describe('subjectPronoun', () => {
       capitalised: 'She',
       hasVerb: 'has',
       isVerb: 'is',
-      verbEnding: 's',
+      regularVerbSuffix: 's',
     });
   });
 
@@ -186,7 +186,7 @@ describe('subjectPronoun', () => {
       capitalised: 'He',
       hasVerb: 'has',
       isVerb: 'is',
-      verbEnding: 's',
+      regularVerbSuffix: 's',
     });
   });
 
@@ -201,7 +201,7 @@ describe('subjectPronoun', () => {
       capitalised: 'They',
       hasVerb: 'have',
       isVerb: 'are',
-      verbEnding: '',
+      regularVerbSuffix: '',
     });
   });
 });
