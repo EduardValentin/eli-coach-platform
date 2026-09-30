@@ -31,6 +31,7 @@ function invitationLinkIn(email: CapturedEmail): string {
 }
 
 test("the coach re-sends an invitation and only the fresh link lets the client in", async ({
+  accountPortal,
   coachClient,
   page,
   provisionCoach,
@@ -44,12 +45,13 @@ test("the coach re-sends an invitation and only the fresh link lets the client i
   await provisionCoach();
   const invited = await provisionInvitedClient("pending");
   const earlierLink = `/invitation#${invited.invitationToken}`;
+  const earlierHandOff = await accountPortal.stopAtSignUpHandOff();
+
+  // act
   await page.goto(earlierLink);
 
   // assert
-  await expect(
-    page.getByRole("heading", { name: "Create your account" }),
-  ).toBeVisible();
+  await earlierHandOff.expectReached();
 
   // arrange
   await page.goto("/store");
@@ -80,18 +82,16 @@ test("the coach re-sends an invitation and only the fresh link lets the client i
   const freshLink = invitationLinkIn(invitationEmail);
   expect(freshLink).not.toContain(invited.invitationToken);
 
-  // act
+  // arrange
   await page.goto("/");
   await publicNav.signOut();
+  const freshHandOff = await accountPortal.stopAtSignUpHandOff();
+
+  // act
   await page.goto(freshLink);
 
   // assert
-  await expect(
-    page.getByRole("heading", { name: "Create your account" }),
-  ).toBeVisible();
-  await expect(page.getByRole("textbox", { name: "Email" })).toHaveValue(
-    invited.email,
-  );
+  await freshHandOff.expectReached();
 
   // act
   await page.goto("/");

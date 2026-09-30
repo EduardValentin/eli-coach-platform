@@ -144,8 +144,7 @@ describe.sequential("coach clients integration", () => {
       expect(sha256(freshToken)).toBe(reissued?.tokenHash);
       expect(await resolveInvitation(freshToken)).toEqual({
         state: "valid",
-        email: ANA.email,
-        continueUrl: CLERK_INVITATION_URL,
+        signUpUrl: CLERK_INVITATION_URL,
       });
       expect(await resolveInvitation(earlierToken)).toEqual({
         state: "unavailable",

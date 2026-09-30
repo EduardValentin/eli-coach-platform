@@ -4,8 +4,7 @@ import type { ClientInvitations } from "./client-invitations";
 import type { InvitationTokenHasher } from "./invitation-token";
 
 type InvitationLandingResolution =
-  | { state: "valid"; email: string; continueUrl: string }
-  | { state: "unavailable" };
+  { state: "valid"; signUpUrl: string } | { state: "unavailable" };
 
 type ResolveInvitationUseCaseOptions = {
   clock: Clock;
@@ -30,10 +29,6 @@ export class ResolveInvitationUseCase {
       return { state: "unavailable" };
     }
 
-    return {
-      state: "valid",
-      email: invitation.email,
-      continueUrl: invitation.provider.url,
-    };
+    return { state: "valid", signUpUrl: invitation.provider.url };
   }
 }

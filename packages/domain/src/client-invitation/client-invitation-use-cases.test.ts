@@ -373,7 +373,7 @@ describe("ResolveInvitationUseCase", () => {
     };
   }
 
-  it("answers valid with the email and the identity invitation URL for a live token", async () => {
+  it("answers valid with only the identity invitation URL for a live token", async () => {
     // arrange
     const dependencies = resolveDependencies(
       invitation({ provider: PROVIDER, emailSentAt: EARLIER }),
@@ -386,8 +386,7 @@ describe("ResolveInvitationUseCase", () => {
     // assert
     expect(resolution).toEqual({
       state: "valid",
-      email: invitedClient.email,
-      continueUrl: PROVIDER.url,
+      signUpUrl: PROVIDER.url,
     });
     expect(dependencies.tokenHasher.sha256).toHaveBeenCalledWith(RAW_TOKEN);
     expect(dependencies.invitations.findByTokenHash).toHaveBeenCalledWith(

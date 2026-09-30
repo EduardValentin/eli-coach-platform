@@ -7,11 +7,7 @@ export const invitationResolutionRequestSchema = z.object({
 });
 
 export const invitationResolutionSchema = z.discriminatedUnion("state", [
-  z.object({
-    state: z.literal("valid"),
-    email: z.string().min(1),
-    continueUrl: z.httpUrl(),
-  }),
+  z.object({ state: z.literal("valid"), signUpUrl: z.httpUrl() }),
   z.object({ state: z.literal("unavailable") }),
 ]);
 

@@ -1,4 +1,0 @@
-[
-  { "waitFor": "[data-parity=\"continue\"]" },
-  { "wait": 800 }
-]
