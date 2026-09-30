@@ -12,6 +12,7 @@ const VALUE_CLASS_BY_SIZE: Record<ReadingSize, string> = {
 
 type ReadingContent = {
   label: ReactNode;
+  labelAdornment?: ReactNode;
   value: ReactNode;
   className?: string;
   as?: "dl-item" | "block";
@@ -26,6 +27,7 @@ type ReadingProps = DefaultReading | LargeReading;
 
 export function Reading({
   label,
+  labelAdornment,
   value,
   size = "default",
   unit,
@@ -38,7 +40,12 @@ export function Reading({
 
   return (
     <div className={className}>
-      <LabelTag className={LABEL_CLASS}>{label}</LabelTag>
+      <LabelTag
+        className={cn(LABEL_CLASS, labelAdornment && "flex items-center gap-1")}
+      >
+        {label}
+        {labelAdornment}
+      </LabelTag>
       <ValueTag
         className={cn("mt-1", VALUE_CLASS_BY_SIZE[size])}
         data-parity={valueParity}

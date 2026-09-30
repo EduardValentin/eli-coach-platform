@@ -37,6 +37,45 @@ export const CYCLE_MODE_LABELS = {
 
 export const CYCLE_MODE_NOT_ANSWERED = "Not answered yet";
 
+export const CYCLE_MODE_INFO_LABEL = "What cycle mode means";
+
+type CycleModeDefinition = {
+  readonly meaning: string;
+  readonly term: string;
+};
+
+export function cycleModeDefinitions(
+  gender: VisitorGender,
+): readonly CycleModeDefinition[] {
+  const her = possessivePronoun(gender).lower;
+  const subject = subjectPronoun(gender);
+  const she = subject.lower;
+  const is = subject.isVerb;
+
+  return [
+    {
+      term: CYCLE_MODE_LABELS["phase-based"],
+      meaning: `${her} program follows ${her} cycle phases: ${she} get${subject.verbEnding} a period, ${is} not on the combined pill, ${is} not pregnant, postpartum or breastfeeding, and ${is} not in perimenopause or menopause.`,
+    },
+    {
+      term: CYCLE_MODE_LABELS["symptom-based"],
+      meaning: `one of those does not hold, so ${her} program follows the symptoms ${she} report${subject.verbEnding}.`,
+    },
+    {
+      term: CYCLE_MODE_LABELS.manual,
+      meaning: `${her} contraception is one the product does not classify; you decide how ${her} program adapts.`,
+    },
+    {
+      term: CYCLE_MODE_LABELS["not-applicable"],
+      meaning: `${her} gender skips the cycle form.`,
+    },
+    {
+      term: CYCLE_MODE_NOT_ANSWERED,
+      meaning: "the cycle form is empty.",
+    },
+  ];
+}
+
 export const RATIO_HIDDEN_NOTE =
   "Not shown during pregnancy or right after birth.";
 

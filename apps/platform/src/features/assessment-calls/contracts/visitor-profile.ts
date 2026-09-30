@@ -145,12 +145,33 @@ export function possessivePronoun(gender: VisitorGender): PossessivePronoun {
 type SubjectPronoun = {
   readonly capitalised: string;
   readonly hasVerb: string;
+  readonly isVerb: string;
+  readonly lower: string;
+  readonly verbEnding: string;
 };
 
 const SUBJECT_PRONOUNS: Readonly<Record<VisitorGender, SubjectPronoun>> = {
-  female: { capitalised: "She", hasVerb: "has" },
-  male: { capitalised: "He", hasVerb: "has" },
-  prefer_not_to_say: { capitalised: "They", hasVerb: "have" },
+  female: {
+    capitalised: "She",
+    hasVerb: "has",
+    isVerb: "is",
+    lower: "she",
+    verbEnding: "s",
+  },
+  male: {
+    capitalised: "He",
+    hasVerb: "has",
+    isVerb: "is",
+    lower: "he",
+    verbEnding: "s",
+  },
+  prefer_not_to_say: {
+    capitalised: "They",
+    hasVerb: "have",
+    isVerb: "are",
+    lower: "they",
+    verbEnding: "",
+  },
 };
 
 export function subjectPronoun(gender: VisitorGender): SubjectPronoun {

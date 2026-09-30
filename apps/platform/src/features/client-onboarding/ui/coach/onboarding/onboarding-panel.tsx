@@ -1,5 +1,5 @@
 import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
-import { PortalWidget } from "@eli-coach-platform/ui/portal";
+import { PortalWidget, Reading } from "@eli-coach-platform/ui/portal";
 import { Button } from "@eli-coach-platform/ui/primitives";
 import { ConfirmDialog } from "@eli-coach-platform/ui/overlays";
 import { ClipboardList, MessageSquareText } from "lucide-react";
@@ -30,6 +30,7 @@ import {
 
 import { AnswerGroups } from "./answer-groups";
 import { waistToHeightRatio } from "./body-metrics";
+import { CycleModeInfo } from "./cycle-mode-info";
 import { OnboardingReviewDialog } from "./onboarding-review-dialog";
 import { toggleQuestion } from "./question-ids";
 import { formatDayMonth, useReviewDayTimeZone } from "./review-day-format";
@@ -58,12 +59,6 @@ type OnboardingFactsProps = {
   gender: VisitorGender;
   review: OnboardingReviewView;
   submitted: SubmittedReview;
-};
-
-type FactProps = {
-  label: string;
-  parity: string;
-  value: ReactNode;
 };
 
 type StageActionsProps = {
@@ -97,46 +92,37 @@ function cycleModeValue(submitted: SubmittedReview): string {
     : CYCLE_MODE_NOT_ANSWERED;
 }
 
-function Fact({ label, parity, value }: FactProps) {
-  return (
-    <div>
-      <dt className="text-label text-text-secondary uppercase">{label}</dt>
-      <dd
-        className="mt-1 text-sm font-medium text-text-primary"
-        data-parity={parity}
-      >
-        {value}
-      </dd>
-    </div>
-  );
-}
-
 function OnboardingFacts({ gender, review, submitted }: OnboardingFactsProps) {
   return (
     <dl className="grid grid-cols-2 gap-5 lg:grid-cols-4">
-      <Fact
+      <Reading
+        as="dl-item"
         label={FACT_LABELS.ratio}
-        parity="fact-ratio"
         value={
           <span className="tabular-nums">
             {ratioValue(review, submitted, gender)}
           </span>
         }
+        valueParity="fact-ratio"
       />
-      <Fact
+      <Reading
+        as="dl-item"
         label={FACT_LABELS.checkInDay}
-        parity="fact-checkin-day"
         value={submitted.checkInDay ?? NOT_CHOSEN_YET}
+        valueParity="fact-checkin-day"
       />
-      <Fact
+      <Reading
+        as="dl-item"
         label={FACT_LABELS.channel}
-        parity="fact-channel"
         value={submitted.checkInChannel ?? NOT_CHOSEN_YET}
+        valueParity="fact-channel"
       />
-      <Fact
+      <Reading
+        as="dl-item"
         label={FACT_LABELS.cycleMode}
-        parity="fact-cycle-mode"
+        labelAdornment={<CycleModeInfo gender={gender} />}
         value={cycleModeValue(submitted)}
+        valueParity="fact-cycle-mode"
       />
     </dl>
   );

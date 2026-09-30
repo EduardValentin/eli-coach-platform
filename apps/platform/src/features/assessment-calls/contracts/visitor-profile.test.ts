@@ -373,7 +373,7 @@ describe("possessivePronoun", () => {
 });
 
 describe("subjectPronoun", () => {
-  it("uses she has for a woman", () => {
+  it("uses she has, she is and she gets for a woman", () => {
     // arrange
     const gender = "female";
 
@@ -381,10 +381,16 @@ describe("subjectPronoun", () => {
     const pronoun = subjectPronoun(gender);
 
     // assert
-    expect(pronoun).toEqual({ capitalised: "She", hasVerb: "has" });
+    expect(pronoun).toEqual({
+      capitalised: "She",
+      hasVerb: "has",
+      isVerb: "is",
+      lower: "she",
+      verbEnding: "s",
+    });
   });
 
-  it("uses he has for a man", () => {
+  it("uses he has, he is and he gets for a man", () => {
     // arrange
     const gender = "male";
 
@@ -392,10 +398,16 @@ describe("subjectPronoun", () => {
     const pronoun = subjectPronoun(gender);
 
     // assert
-    expect(pronoun).toEqual({ capitalised: "He", hasVerb: "has" });
+    expect(pronoun).toEqual({
+      capitalised: "He",
+      hasVerb: "has",
+      isVerb: "is",
+      lower: "he",
+      verbEnding: "s",
+    });
   });
 
-  it("uses they have when the visitor preferred not to say", () => {
+  it("uses they have, they are and they get when the visitor preferred not to say", () => {
     // arrange
     const gender = "prefer_not_to_say";
 
@@ -403,7 +415,13 @@ describe("subjectPronoun", () => {
     const pronoun = subjectPronoun(gender);
 
     // assert
-    expect(pronoun).toEqual({ capitalised: "They", hasVerb: "have" });
+    expect(pronoun).toEqual({
+      capitalised: "They",
+      hasVerb: "have",
+      isVerb: "are",
+      lower: "they",
+      verbEnding: "",
+    });
   });
 });
 

@@ -53,3 +53,4 @@ export {
   type TableSort,
 } from "./table";
 export { Textarea } from "./textarea";
+export { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";

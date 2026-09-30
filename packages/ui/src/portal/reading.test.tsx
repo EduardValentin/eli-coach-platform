@@ -74,6 +74,41 @@ describe("Reading", () => {
     );
   });
 
+  it("sets an adornment after the label, centred on its line", () => {
+    // arrange
+    // act
+    render(
+      <dl>
+        <Reading
+          as="dl-item"
+          label="Cycle mode"
+          labelAdornment={<button type="button">What cycle mode means</button>}
+          value="Phase-based"
+        />
+      </dl>,
+    );
+
+    // assert
+    const term = screen.getByRole("term");
+    expect(term).toHaveClass("flex", "items-center", "gap-1");
+    expect(term.lastElementChild).toBe(
+      screen.getByRole("button", { name: "What cycle mode means" }),
+    );
+  });
+
+  it("keeps a plain label outside a flex row", () => {
+    // arrange
+    // act
+    render(
+      <dl>
+        <Reading as="dl-item" label="Channel" value="Email" />
+      </dl>,
+    );
+
+    // assert
+    expect(screen.getByRole("term")).not.toHaveClass("flex");
+  });
+
   it("lays itself out with the class it is given", () => {
     // arrange
     // act
