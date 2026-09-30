@@ -2,7 +2,7 @@
 set -euo pipefail
 
 if [[ $# -ne 1 || ! "$1" =~ ^[A-Z][A-Z0-9_]*$ ]]; then
-  echo "usage: prepare_local_env_directory.sh <ENV_VARIABLE>"
+  echo "usage: prepare_local_directory_from_env.sh <ENV_VARIABLE>"
   exit 1
 fi
 
@@ -11,17 +11,18 @@ ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
 PLATFORM_DIR="$ROOT_DIR/apps/platform"
 
 value_in_env_file() {
-  local env_file="$1"
+  local variable_name="$1"
+  local env_file="$2"
 
   if [[ -f "$env_file" ]]; then
-    sed -n "s/^${VARIABLE_NAME}=//p" "$env_file" | tail -n 1
+    sed -n "s/^${variable_name}=//p" "$env_file" | tail -n 1
   fi
 }
 
-directory=$(value_in_env_file "$ROOT_DIR/.env")
+directory=$(value_in_env_file "$VARIABLE_NAME" "$ROOT_DIR/.env")
 
 if [[ -z "$directory" ]]; then
-  directory=$(value_in_env_file "$ROOT_DIR/.env.example")
+  directory=$(value_in_env_file "$VARIABLE_NAME" "$ROOT_DIR/.env.example")
 fi
 
 if [[ -z "$directory" ]]; then

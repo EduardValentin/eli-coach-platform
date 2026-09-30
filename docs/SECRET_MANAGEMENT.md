@@ -70,7 +70,9 @@ Every photo is encrypted before it is written, so the runtime file must also exp
 `memory`. TEST runs as a production runtime with `filesystem`, so both secrets
 must be in the TEST env file before the deploy that ships progress photos, or
 the container fails config validation and exits at startup. The key in
-`.env.example` is a development-only value that protects nothing.
+`.env.example` is a development-only value that protects nothing. A `.env`
+created before progress photos needs the four `CLIENT_MEDIA_*` lines copied
+from `.env.example`.
 
 Each environment has one key today. Rotation, a new `CLIENT_MEDIA_KEY_ID`
 while the old key stays readable for the photos it encrypted, is future work:
