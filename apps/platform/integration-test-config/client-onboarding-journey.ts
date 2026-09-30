@@ -1,4 +1,10 @@
-import type { CoachingSalesJourney, Visitor } from "./coaching-sales-journey";
+import {
+  ANA,
+  FIRST_PURCHASE,
+  type CoachingSalesJourney,
+  type Purchase,
+  type Visitor,
+} from "./coaching-sales-journey";
 import type { AccountSession, PlatformRig } from "./platform-rig";
 import { clerkServesUser } from "./wire-mock/expectations/clerk-backend-api";
 
@@ -38,6 +44,11 @@ export type OnboardingConsentInstants = {
   progressPhotosAt: string | null;
 };
 
+export type OnboardingSubmission = {
+  answers: OnboardingAnswers;
+  consents: OnboardingConsentInstants;
+};
+
 export const CLIENT_PORTAL = "/client";
 export const SUBMISSION_API = "/api/client-onboarding/submission";
 export const REGULAR_LAST_PERIOD_START = "2026-09-08";
@@ -50,17 +61,24 @@ export class ClientOnboardingJourney {
     private readonly sales: CoachingSalesJourney,
   ) {}
 
-  async admit(visitor: Visitor, session: AccountSession): Promise<void> {
-    await this.sales.payForCall(visitor);
-    await this.bindInvitedClient(session);
+  async admit(
+    visitor: Visitor,
+    session: AccountSession,
+    purchase: Purchase = FIRST_PURCHASE,
+  ): Promise<void> {
+    await this.sales.payForCall(visitor, purchase);
+    await this.bindInvitedClient(session, visitor);
   }
 
-  async bindInvitedClient(session: AccountSession): Promise<void> {
+  async bindInvitedClient(
+    session: AccountSession,
+    visitor: Visitor = ANA,
+  ): Promise<void> {
     const [invitation] = await this.rig.suite.postgres.queryRows<{
       id: string;
     }>({
-      sql: "select id from app.client_invitations",
-      values: [],
+      sql: "select id from app.client_invitations where email = $1",
+      values: [visitor.email],
     });
 
     if (!invitation) {
@@ -80,11 +98,15 @@ export class ClientOnboardingJourney {
   }
 
   async submit(session: AccountSession): Promise<void> {
+    await this.submitWith(session, regularSubmission());
+  }
+
+  async submitWith(
+    session: AccountSession,
+    submission: OnboardingSubmission,
+  ): Promise<void> {
     const response = await this.rig.requestAs(session, SUBMISSION_API, {
-      body: JSON.stringify({
-        answers: completeAnswers(REGULAR_LAST_PERIOD_START),
-        consents: givenConsents(),
-      }),
+      body: JSON.stringify(submission),
       headers: { "content-type": "application/json" },
       method: "POST",
     });
@@ -152,6 +174,13 @@ export class ClientOnboardingJourney {
 
     return client.id;
   }
+}
+
+export function regularSubmission(): OnboardingSubmission {
+  return {
+    answers: completeAnswers(REGULAR_LAST_PERIOD_START),
+    consents: givenConsents(),
+  };
 }
 
 export function givenConsents(): OnboardingConsentInstants {

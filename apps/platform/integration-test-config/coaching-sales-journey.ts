@@ -13,7 +13,9 @@ import { stripeWebhook } from "./stripe-webhook-request";
 import {
   STRIPE_CHECKOUT_SESSION_ID,
   STRIPE_CHECKOUT_SESSIONS_PATH,
+  STRIPE_SUBSCRIPTION_ID,
   completedCheckoutSession,
+  stripeCreatesCheckoutSessionForBundle,
   type StripeCheckoutSession,
 } from "./wire-mock/expectations/stripe-api";
 import { turnstileTokenForAction } from "./wire-mock/expectations/turnstile-siteverify";
@@ -35,6 +37,13 @@ export type SentPaymentLink = { callId: string; token: string };
 
 export type RequestedCheckout = { requestIndex: number; sessionId: string };
 
+export type Purchase = {
+  bundleId: string;
+  checkout: RequestedCheckout;
+  eventId: string;
+  subscriptionId: string;
+};
+
 export const ANA: Visitor = {
   email: "ana@example.com",
   firstName: "Ana",
@@ -53,6 +62,26 @@ export const PAYMENT_LINK_EMAIL_SUBJECTS = {
   reduced: "Your reduced prices are ready.",
   regular: "Your coaching bundles — pick the one that fits.",
 } as const;
+
+export const FIRST_PURCHASE: Purchase = {
+  bundleId: "3-months",
+  checkout: {
+    requestIndex: FIRST_CHECKOUT_REQUEST,
+    sessionId: STRIPE_CHECKOUT_SESSION_ID,
+  },
+  eventId: "evt_integration_paid",
+  subscriptionId: STRIPE_SUBSCRIPTION_ID,
+};
+
+export const SECOND_PURCHASE: Purchase = {
+  bundleId: "6-months",
+  checkout: {
+    requestIndex: SECOND_CHECKOUT_REQUEST,
+    sessionId: "cs_test_integration_second",
+  },
+  eventId: "evt_integration_second_paid",
+  subscriptionId: "sub_integration_second",
+};
 
 const SELECT_BUNDLE_LINK = /https?:\/\/[^\s"<]+\/select-bundle#([\w-]+)/;
 const INVITATION_LINK = /https?:\/\/[^\s"<]+\/invitation#([\w-]+)/;
@@ -247,19 +276,28 @@ export class CoachingSalesJourney {
     );
   }
 
-  async payForCall(visitor: Visitor = ANA): Promise<SentPaymentLink> {
+  async payForCall(
+    visitor: Visitor = ANA,
+    purchase: Purchase = FIRST_PURCHASE,
+  ): Promise<SentPaymentLink> {
+    await this.rig.suite.wireMock.stub(
+      stripeCreatesCheckoutSessionForBundle(
+        purchase.bundleId,
+        purchase.checkout.sessionId,
+      ),
+    );
     const sentLink = await this.sendPaymentLinkAfterEndedCall(visitor);
     await this.startCheckout({
-      bundleId: "3-months",
+      bundleId: purchase.bundleId,
       startChoice: "immediate",
       token: sentLink.token,
     });
+    const completion = await this.completionOfCheckoutRequest(
+      purchase.checkout,
+    );
     const response = await this.deliverCheckoutCompleted(
-      await this.completionOfCheckoutRequest({
-        requestIndex: FIRST_CHECKOUT_REQUEST,
-        sessionId: STRIPE_CHECKOUT_SESSION_ID,
-      }),
-      "evt_integration_paid",
+      { ...completion, subscription: purchase.subscriptionId },
+      purchase.eventId,
     );
 
     if (response.status !== 200) {
