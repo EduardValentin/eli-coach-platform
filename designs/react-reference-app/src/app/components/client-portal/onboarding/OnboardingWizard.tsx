@@ -334,17 +334,18 @@ export function OnboardingWizard() {
             {isLastStep && (
               <>
                 <ProgressPhotoBlock
-                  consented={draft.consents.progressPhotos}
-                  consentedAt={null}
-                  onConsentChange={(consented) =>
-                    persist({
-                      ...draftRef.current,
-                      consents: {
-                        ...draftRef.current.consents,
-                        progressPhotos: consented,
-                      },
-                    })
-                  }
+                  consent={{
+                    status: 'asking',
+                    ticked: draft.consents.progressPhotos,
+                    onTickedChange: (ticked) =>
+                      persist({
+                        ...draftRef.current,
+                        consents: {
+                          ...draftRef.current.consents,
+                          progressPhotos: ticked,
+                        },
+                      }),
+                  }}
                   onPhotosChange={setPhotos}
                   photos={photos}
                 />

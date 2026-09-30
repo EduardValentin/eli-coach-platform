@@ -20,9 +20,11 @@ const VALUE_COLUMNS = ['Date', 'Weight', 'Waist', 'Hips', 'Thigh', 'Arm'];
 
 const VALUE_CELL_CLASS = 'text-sm text-text-primary';
 
+type CoachRatioBasis = { heightCm: number; ratioHidden?: boolean };
+
 type MeasurementsPerspectiveProps =
   | { perspective: 'client' }
-  | { perspective: 'coach'; heightCm: number; ratioHidden?: boolean };
+  | ({ perspective: 'coach' } & CoachRatioBasis);
 
 type MeasurementsTableProps = MeasurementsPerspectiveProps & {
   measurements: MeasurementEntry[];
@@ -47,14 +49,10 @@ function circumference(value: number | undefined, units: MeasureUnits): string {
   return value === undefined ? '—' : formatCircumference(value, units.length);
 }
 
-function ratioCell(
-  entry: MeasurementEntry,
-  view: MeasurementsPerspectiveProps,
-): string | null {
-  if (view.perspective === 'client') return null;
-  if (view.ratioHidden) return '—';
+function coachRatio(entry: MeasurementEntry, basis: CoachRatioBasis): string {
+  if (basis.ratioHidden) return '—';
 
-  const ratio = waistToHeightRatio(entry.waistCm, view.heightCm);
+  const ratio = waistToHeightRatio(entry.waistCm, basis.heightCm);
 
   return ratio === null ? '—' : formatRatio(ratio);
 }
@@ -73,8 +71,8 @@ export function MeasurementsTable(props: MeasurementsTableProps) {
     onViewPhotos,
   } = props;
   const history = newestFirst(measurements);
-  const columns =
-    props.perspective === 'coach' ? [...VALUE_COLUMNS, 'Ratio'] : VALUE_COLUMNS;
+  const ratioBasis = props.perspective === 'coach' ? props : null;
+  const columns = ratioBasis ? [...VALUE_COLUMNS, 'Ratio'] : VALUE_COLUMNS;
   const viewPhotos = history.some(hasProgressPhotos) ? onViewPhotos : undefined;
 
   return (
@@ -121,7 +119,6 @@ export function MeasurementsTable(props: MeasurementsTableProps) {
             </TableHeader>
             <TableBody>
               {history.map((entry) => {
-                const ratio = ratioCell(entry, props);
                 const recordedOn = formatJourneyDate(entry.recordedAt);
 
                 return (
@@ -144,8 +141,10 @@ export function MeasurementsTable(props: MeasurementsTableProps) {
                     <TableCell className={VALUE_CELL_CLASS}>
                       {circumference(entry.armCm, units)}
                     </TableCell>
-                    {ratio !== null && (
-                      <TableCell className={VALUE_CELL_CLASS}>{ratio}</TableCell>
+                    {ratioBasis && (
+                      <TableCell className={VALUE_CELL_CLASS}>
+                        {coachRatio(entry, ratioBasis)}
+                      </TableCell>
                     )}
                     {viewPhotos && (
                       <TableCell

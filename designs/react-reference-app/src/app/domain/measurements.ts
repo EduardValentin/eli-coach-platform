@@ -1,14 +1,12 @@
 import {
   NO_PROGRESS_PHOTOS,
+  withoutPhotoAt,
   type MeasurementEntry,
   type OnboardingFormAnswers,
   type OnboardingFormId,
   type ProgressPhotoSet,
   type ProgressPhotoView,
 } from './journey';
-import { isMeasurementDue, measurementDueDates } from './measurementSchedule';
-
-export type MeasurementDueLine = 'weigh-in' | 'measurements';
 
 export const PROGRESS_PHOTO_TYPES: readonly string[] = [
   'image/jpeg',
@@ -96,20 +94,5 @@ export function withoutProgressPhoto(
   entry: MeasurementEntry,
   view: ProgressPhotoView,
 ): MeasurementEntry {
-  const remaining = { ...entry.photos };
-  delete remaining[view];
-
-  return { ...entry, photos: remaining };
-}
-
-export function measurementDueLine(
-  entries: readonly MeasurementEntry[],
-  now: Date,
-): MeasurementDueLine | null {
-  const due = measurementDueDates(entries);
-  if (!due) return null;
-  if (isMeasurementDue(due.measurements, now)) return 'measurements';
-  if (isMeasurementDue(due.weighIn, now)) return 'weigh-in';
-
-  return null;
+  return { ...entry, photos: withoutPhotoAt(entry.photos, view) };
 }

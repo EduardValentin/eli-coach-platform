@@ -2,8 +2,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MeasurementEntry } from '../domain/journey';
 import { recordMeasurements, SIMULATED_LATENCY_MS } from './measurementService';
 
-const SENT_AT = new Date('2026-10-01T09:30:00.000Z');
-const SAVED_AT = new Date(SENT_AT.getTime() + SIMULATED_LATENCY_MS);
 
 const ENTRY: MeasurementEntry = {
   id: 'entry-1',
@@ -14,8 +12,7 @@ const ENTRY: MeasurementEntry = {
 };
 
 beforeEach(() => {
-  vi.useFakeTimers({ toFake: ['Date', 'setTimeout'] });
-  vi.setSystemTime(SENT_AT);
+  vi.useFakeTimers({ toFake: ['setTimeout'] });
 });
 
 afterEach(() => {
@@ -30,7 +27,7 @@ async function recorded(processing: 'works' | 'refuses') {
 }
 
 describe('recording measurements', () => {
-  it('stores the entry with its photos, dated when it is saved', async () => {
+  it('stores the entry with its photos', async () => {
     // arrange
     const processing = 'works';
 
@@ -39,7 +36,7 @@ describe('recording measurements', () => {
 
     // assert
     expect(result).toEqual({
-      entry: { ...ENTRY, recordedAt: SAVED_AT },
+      entry: ENTRY,
       refusedViews: [],
     });
   });
@@ -53,7 +50,7 @@ describe('recording measurements', () => {
 
     // assert
     expect(result).toEqual({
-      entry: { ...ENTRY, recordedAt: SAVED_AT, photos: {} },
+      entry: { ...ENTRY, photos: {} },
       refusedViews: ['front', 'back'],
     });
   });

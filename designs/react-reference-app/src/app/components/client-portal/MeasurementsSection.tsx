@@ -28,7 +28,7 @@ import {
   type OnboardingValues,
 } from './onboarding/onboardingValues';
 import { useMeasureUnits } from './measureUnits';
-import { PhotoViewDialog } from './PhotoViewDialog';
+import { PhotoViewDialog } from '../PhotoViewDialog';
 
 const SHEET_TITLE = 'Add measurements';
 
@@ -107,9 +107,15 @@ function AddMeasurementsForm({
             ))}
 
             <ProgressPhotoBlock
-              consented={photoConsent}
-              consentedAt={consentedAt}
-              onConsentChange={setPhotoConsent}
+              consent={
+                consentedAt
+                  ? { status: 'recorded', at: consentedAt }
+                  : {
+                      status: 'asking',
+                      ticked: photoConsent,
+                      onTickedChange: setPhotoConsent,
+                    }
+              }
               onPhotosChange={setPhotos}
               photos={photos}
             />

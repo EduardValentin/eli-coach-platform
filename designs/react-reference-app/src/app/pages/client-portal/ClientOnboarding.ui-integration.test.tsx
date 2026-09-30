@@ -18,6 +18,7 @@ import {
   vi,
 } from 'vitest';
 import { ClientOnboarding } from './ClientOnboarding';
+import { MeasurementsSection } from '../../components/client-portal/MeasurementsSection';
 import { AppProvider, useAppState } from '../../context/AppContext';
 import { AssessmentCallProvider } from '../../context/AssessmentCallContext';
 import {
@@ -65,17 +66,6 @@ function StageProbe() {
   return <span data-testid="stage">{demoJourney.stage}</span>;
 }
 
-function PhotoConsentProbe() {
-  const { demoJourney } = useClientJourneys();
-  const consentedAt = demoJourney.progressPhotosConsentedAt;
-
-  return (
-    <span data-testid="photo-consent">
-      {consentedAt ? 'agreed to photos' : 'no photo consent'}
-    </span>
-  );
-}
-
 function ConnectionRestorer() {
   const { setAppState } = useAppState();
 
@@ -101,14 +91,21 @@ function renderOnboarding(devParams: string) {
             <AssessmentCallProvider>
               <ClientJourneyProvider>
                 <StageProbe />
-                <PhotoConsentProbe />
                 <ConnectionRestorer />
                 <Routes>
                   <Route
                     element={<ClientOnboarding />}
                     path="/portal/onboarding"
                   />
-                  <Route element={<p>portal home</p>} path="/portal" />
+                  <Route
+                    element={
+                      <>
+                        <p>portal home</p>
+                        <MeasurementsSection />
+                      </>
+                    }
+                    path="/portal"
+                  />
                 </Routes>
               </ClientJourneyProvider>
             </AssessmentCallProvider>
@@ -786,11 +783,10 @@ describe('the onboarding', () => {
     await screen.findByText('portal home', undefined, {
       timeout: SERVICE_TIMEOUT,
     });
-    await waitFor(() =>
-      expect(screen.getByTestId('photo-consent')).toHaveTextContent(
-        'agreed to photos',
-      ),
-    );
+    await userEvent.click(await screen.findByRole('button', { name: 'Add' }));
+    expect(
+      screen.getByText(/^You agreed to share progress photos on /),
+    ).toBeVisible();
   });
 
   it('lets her pick the measurement system before the first measurement', async () => {

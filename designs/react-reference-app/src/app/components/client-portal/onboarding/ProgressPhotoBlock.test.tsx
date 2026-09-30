@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { NO_PROGRESS_PHOTOS, type ProgressPhotoSet } from '../../../domain/journey';
+import { PROGRESS_PHOTO_MAX_BYTES } from '../../../domain/measurements';
 import { PROGRESS_PHOTO_CONSENT_COPY } from '../../../domain/onboardingCopy';
 import { ProgressPhotoBlock } from './ProgressPhotoBlock';
 
@@ -21,9 +22,11 @@ function PhotoBlock({ consentedAt }: { consentedAt: Date | null }) {
 
   return (
     <ProgressPhotoBlock
-      consented={consented}
-      consentedAt={consentedAt}
-      onConsentChange={setConsented}
+      consent={
+        consentedAt
+          ? { status: 'recorded', at: consentedAt }
+          : { status: 'asking', ticked: consented, onTickedChange: setConsented }
+      }
       onPhotosChange={setPhotos}
       photos={photos}
     />
@@ -123,7 +126,7 @@ describe('the progress photo block', () => {
     render(<PhotoBlock consentedAt={new Date(2026, 8, 18)} />);
     await userEvent.upload(
       screen.getByLabelText('Add front photo'),
-      photoFile('image/jpeg', 10 * 1024 * 1024 + 1),
+      photoFile('image/jpeg', PROGRESS_PHOTO_MAX_BYTES + 1),
     );
     const refusal = screen.getByRole('alert');
 

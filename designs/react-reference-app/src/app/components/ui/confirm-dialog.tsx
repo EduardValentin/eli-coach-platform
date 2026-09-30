@@ -8,7 +8,6 @@ import {
   DialogFooter,
 } from './dialog';
 import { Button } from './button';
-import { useReturnFocusToOpener } from './use-return-focus-to-opener';
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -40,14 +39,12 @@ export function ConfirmDialog({
   confirmDisabled = false,
   tone = 'default',
 }: ConfirmDialogProps) {
-  const focusReturn = useReturnFocusToOpener();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className="max-h-[80vh] gap-6 overflow-y-auto p-6 sm:max-w-md"
         data-parity-root="ConfirmDialog"
-        {...focusReturn}
       >
         <DialogHeader className="gap-2">
           <DialogTitle>{title}</DialogTitle>

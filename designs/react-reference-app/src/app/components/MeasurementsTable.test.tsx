@@ -122,7 +122,30 @@ describe('the measurements table', () => {
     expect(ratioCells.map((cell) => cell.textContent)).toEqual(['—', '—']);
   });
 
-  it('offers one "View photos" action only on an entry with photos', async () => {
+  it('offers one "View photos" action only on an entry with photos', () => {
+    // arrange
+    const measurements = [WITHOUT_PHOTOS, WITH_PHOTOS];
+
+    // act
+    render(
+      <MeasurementsTable
+        emptyMessage="Nothing recorded yet."
+        headingId="measurements-heading"
+        measurements={measurements}
+        onViewPhotos={vi.fn()}
+        perspective="client"
+        units={METRIC}
+      />,
+    );
+
+    // assert
+    const actions = screen.getAllByRole('button', { name: /^View photos/ });
+    expect(actions).toHaveLength(1);
+    expect(actions[0]).toHaveAccessibleName('View photos from 29 September');
+    expect(screen.queryByRole('img')).not.toBeInTheDocument();
+  });
+
+  it('opens the photos of the entry whose action she picks', async () => {
     // arrange
     const onViewPhotos = vi.fn();
     render(
@@ -135,16 +158,15 @@ describe('the measurements table', () => {
         units={METRIC}
       />,
     );
+    const action = screen.getByRole('button', {
+      name: 'View photos from 29 September',
+    });
 
     // act
-    const actions = screen.getAllByRole('button', { name: /^View photos/ });
-    await userEvent.click(actions[0]);
+    await userEvent.click(action);
 
     // assert
-    expect(actions).toHaveLength(1);
-    expect(actions[0]).toHaveAccessibleName('View photos from 29 September');
     expect(onViewPhotos).toHaveBeenCalledWith(WITH_PHOTOS);
-    expect(screen.queryByRole('img')).not.toBeInTheDocument();
   });
 
   it('leaves the actions column out when no entry has photos', () => {

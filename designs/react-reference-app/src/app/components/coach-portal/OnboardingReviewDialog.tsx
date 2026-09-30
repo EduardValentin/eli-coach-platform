@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '../ui/dialog';
@@ -44,7 +46,7 @@ export function OnboardingReviewDialog({
         data-parity-root="OnboardingReviewDialog"
         size="wide"
       >
-        <DialogHeader className="px-6 pt-6 pb-4">
+        <DialogHeader>
           <DialogTitle>
             Review {journey.identity.firstName}&rsquo;s answers
           </DialogTitle>
@@ -54,7 +56,7 @@ export function OnboardingReviewDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4">
+        <DialogBody>
           <AnswerGroups
             forms={forms}
             view={{
@@ -63,16 +65,16 @@ export function OnboardingReviewDialog({
               review: { flagged, toggleFlag },
             }}
           />
-        </div>
+        </DialogBody>
 
-        <div className="border-t border-border/50 px-6 py-4">
+        <DialogFooter>
           <OnboardingReviewBar
             flagged={flagged}
             onSend={onSend}
             onCancel={onCancel}
             onApprove={onApprove}
           />
-        </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   isAcceptedProgressPhoto,
   measurementAnswersFrom,
-  measurementDueLine,
+  PROGRESS_PHOTO_MAX_BYTES,
   measurementEntryFrom,
   submittedMeasurementEntry,
   withoutProgressPhoto,
@@ -127,93 +127,11 @@ describe('a measurement entry', () => {
   });
 });
 
-describe('the measurements due line', () => {
-  it('stays quiet before her first entry', () => {
-    // arrange
-    const entries: MeasurementEntry[] = [];
-
-    // act
-    const line = measurementDueLine(entries, RECORDED_AT);
-
-    // assert
-    expect(line).toBeNull();
-  });
-
-  it('stays quiet within a week of her latest entry', () => {
-    // arrange
-    const entries = [entryDaysAgo(6, { hipsCm: 98 })];
-
-    // act
-    const line = measurementDueLine(entries, RECORDED_AT);
-
-    // assert
-    expect(line).toBeNull();
-  });
-
-  it('asks for the weekly weigh-in seven days after her latest entry', () => {
-    // arrange
-    const entries = [entryDaysAgo(20, { hipsCm: 98 }), entryDaysAgo(7)];
-
-    // act
-    const line = measurementDueLine(entries, RECORDED_AT);
-
-    // assert
-    expect(line).toBe('weigh-in');
-  });
-
-  it('asks for measurements and photos 28 days after her latest entry with an optional value', () => {
-    // arrange
-    const entries = [entryDaysAgo(28, { armCm: 28 }), entryDaysAgo(3)];
-
-    // act
-    const line = measurementDueLine(entries, RECORDED_AT);
-
-    // assert
-    expect(line).toBe('measurements');
-  });
-
-  it('asks for measurements and photos 28 days after her first entry when none has an optional value or a photo', () => {
-    // arrange
-    const entries = [entryDaysAgo(28), entryDaysAgo(3)];
-
-    // act
-    const line = measurementDueLine(entries, RECORDED_AT);
-
-    // assert
-    expect(line).toBe('measurements');
-  });
-
-  it('prefers the measurements line when both are due', () => {
-    // arrange
-    const entries = [entryDaysAgo(29, { thighCm: 57 })];
-
-    // act
-    const line = measurementDueLine(entries, RECORDED_AT);
-
-    // assert
-    expect(line).toBe('measurements');
-  });
-
-  it('counts a photo-only entry as her latest full set', () => {
-    // arrange
-    const entries = [
-      entryDaysAgo(40, { hipsCm: 98 }),
-      entryDaysAgo(8, { photos: { back: { url: 'blob:back' } } }),
-    ];
-
-    // act
-    const line = measurementDueLine(entries, RECORDED_AT);
-
-    // assert
-    expect(line).toBe('weigh-in');
-  });
-});
-
 describe('an accepted progress photo', () => {
   it('is a JPEG, PNG or WebP of up to 10 MB', () => {
     // arrange
     const files = [
-      { type: 'image/jpeg', size: 10 * 1024 * 1024 },
+      { type: 'image/jpeg', size: PROGRESS_PHOTO_MAX_BYTES },
       { type: 'image/png', size: 1 },
       { type: 'image/webp', size: 2048 },
     ];
@@ -228,7 +146,7 @@ describe('an accepted progress photo', () => {
   it('is refused over 10 MB or in any other format', () => {
     // arrange
     const files = [
-      { type: 'image/jpeg', size: 10 * 1024 * 1024 + 1 },
+      { type: 'image/jpeg', size: PROGRESS_PHOTO_MAX_BYTES + 1 },
       { type: 'image/heic', size: 2048 },
       { type: 'image/gif', size: 2048 },
     ];

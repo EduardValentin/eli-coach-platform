@@ -1,34 +1,32 @@
 import { useState } from 'react';
 import {
+  PROGRESS_PHOTO_VIEW_LABELS,
   PROGRESS_PHOTO_VIEWS,
   type MeasurementEntry,
   type ProgressPhotoView,
-} from '../../domain/journey';
-import { formatJourneyDate } from '../../utils/journeyLabels';
-import { Button } from '../ui/button';
-import { ConfirmDialog } from '../ui/confirm-dialog';
+} from '../domain/journey';
+import { formatJourneyDate } from '../utils/journeyLabels';
+import {
+  progressPhotoImageClass,
+  progressPhotoPlaceholderClass,
+} from './progressPhotoFrame';
+import { Button } from './ui/button';
+import { ConfirmDialog } from './ui/confirm-dialog';
 import {
   Dialog,
+  DialogBody,
   DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '../ui/dialog';
-import { useReturnFocusToOpener } from '../ui/use-return-focus-to-opener';
+} from './ui/dialog';
+import { cn } from './ui/utils';
 
 export type PhotoViewer =
   | { role: 'client'; onRemovePhoto: (view: ProgressPhotoView) => void }
   | { role: 'coach'; clientFirstName: string };
-
-const VIEW_LABELS: Record<ProgressPhotoView, string> = {
-  front: 'Front',
-  side: 'Side',
-  back: 'Back',
-};
-
-const PHOTO_FRAME_CLASS = 'aspect-3/4 w-full rounded-card';
 
 function privacyLine(viewer: PhotoViewer): string {
   return viewer.role === 'client'
@@ -46,7 +44,7 @@ function PhotoSlot({
   onRemove?: () => void;
 }) {
   const photo = entry.photos[view];
-  const label = VIEW_LABELS[view];
+  const label = PROGRESS_PHOTO_VIEW_LABELS[view];
 
   return (
     <li data-parity={`photo-${view}`}>
@@ -54,12 +52,15 @@ function PhotoSlot({
         {photo ? (
           <img
             alt={`${label} photo`}
-            className={`${PHOTO_FRAME_CLASS} object-cover`}
+            className={progressPhotoImageClass('portrait')}
             src={photo.url}
           />
         ) : (
           <div
-            className={`${PHOTO_FRAME_CLASS} flex items-center justify-center border border-dashed border-control-border-soft p-2 text-center text-sm text-text-secondary`}
+            className={cn(
+              progressPhotoPlaceholderClass('portrait'),
+              'text-sm text-text-secondary',
+            )}
           >
             No {view} photo
           </div>
@@ -95,7 +96,6 @@ export function PhotoViewDialog({
 }) {
   const [pendingRemoval, setPendingRemoval] =
     useState<ProgressPhotoView | null>(null);
-  const focusReturn = useReturnFocusToOpener();
 
   const removeFor = (view: ProgressPhotoView) =>
     viewer.role === 'client' ? () => setPendingRemoval(view) : undefined;
@@ -115,19 +115,15 @@ export function PhotoViewDialog({
       open={entry !== undefined}
     >
       {entry && (
-        <DialogContent
-          data-parity-root="PhotoViewDialog"
-          size="wide"
-          {...focusReturn}
-        >
-          <DialogHeader className="px-6 pt-6 pb-4">
+        <DialogContent data-parity-root="PhotoViewDialog" size="wide">
+          <DialogHeader>
             <DialogTitle>
               Photos from {formatJourneyDate(entry.recordedAt)}
             </DialogTitle>
             <DialogDescription>{privacyLine(viewer)}</DialogDescription>
           </DialogHeader>
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4">
+          <DialogBody>
             <ul className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               {PROGRESS_PHOTO_VIEWS.map((view) => (
                 <PhotoSlot
@@ -138,9 +134,9 @@ export function PhotoViewDialog({
                 />
               ))}
             </ul>
-          </div>
+          </DialogBody>
 
-          <DialogFooter className="border-t border-border/50 px-6 py-4">
+          <DialogFooter className="flex justify-end">
             <DialogClose asChild>
               <Button size="sm" type="button" variant="outline">
                 Close

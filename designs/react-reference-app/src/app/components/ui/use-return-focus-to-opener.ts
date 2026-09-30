@@ -26,8 +26,5 @@ export function useReturnFocusToOpener() {
     target.focus();
   };
 
-  return {
-    onOpenAutoFocus: rememberOpener,
-    onCloseAutoFocus: returnFocusToOpener,
-  };
+  return { rememberOpener, returnFocusToOpener };
 }

@@ -141,6 +141,12 @@ export const PROGRESS_PHOTO_VIEWS: readonly ProgressPhotoView[] = [
   'back',
 ];
 
+export const PROGRESS_PHOTO_VIEW_LABELS: Record<ProgressPhotoView, string> = {
+  front: 'Front',
+  side: 'Side',
+  back: 'Back',
+};
+
 export type ProgressPhoto = { url: string };
 
 export type ProgressPhotoSet = Partial<Record<ProgressPhotoView, ProgressPhoto>>;
@@ -160,6 +166,24 @@ export type MeasurementEntry = {
 
 export function hasProgressPhotos(entry: MeasurementEntry): boolean {
   return Object.keys(entry.photos).length > 0;
+}
+
+export function withPhotoAt(
+  photos: ProgressPhotoSet,
+  view: ProgressPhotoView,
+  photo: ProgressPhoto,
+): ProgressPhotoSet {
+  return { ...photos, [view]: photo };
+}
+
+export function withoutPhotoAt(
+  photos: ProgressPhotoSet,
+  view: ProgressPhotoView,
+): ProgressPhotoSet {
+  const remaining = { ...photos };
+  delete remaining[view];
+
+  return remaining;
 }
 
 export type ReviewCall = {

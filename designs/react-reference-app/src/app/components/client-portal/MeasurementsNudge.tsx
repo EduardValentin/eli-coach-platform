@@ -2,7 +2,7 @@ import { useClientJourneys } from '../../context/ClientJourneyContext';
 import {
   measurementDueLine,
   type MeasurementDueLine,
-} from '../../domain/measurements';
+} from '../../domain/measurementSchedule';
 import { WidgetLink } from '../WidgetLink';
 
 const NUDGE_LINES: Record<MeasurementDueLine, string> = {

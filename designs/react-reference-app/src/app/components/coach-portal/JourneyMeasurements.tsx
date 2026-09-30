@@ -4,7 +4,7 @@ import { hasPregnancyContext } from '../../domain/onboardingAnswers';
 import { noMeasurementsYetLine } from '../../utils/journeyLabels';
 import { MeasurementsTable } from '../MeasurementsTable';
 import type { MeasureUnits } from '../client-portal/measureUnits';
-import { PhotoViewDialog } from '../client-portal/PhotoViewDialog';
+import { PhotoViewDialog } from '../PhotoViewDialog';
 
 export function JourneyMeasurements({
   journey,

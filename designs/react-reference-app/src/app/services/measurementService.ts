@@ -24,14 +24,11 @@ export async function recordMeasurements(
   processing: PhotoProcessing,
 ): Promise<RecordedMeasurements> {
   await new Promise((resolve) => setTimeout(resolve, SIMULATED_LATENCY_MS));
-  const recordedAt = new Date();
 
-  if (processing === 'works') {
-    return { entry: { ...entry, recordedAt }, refusedViews: [] };
-  }
+  if (processing === 'works') return { entry, refusedViews: [] };
 
   return {
-    entry: { ...entry, recordedAt, photos: NO_PROGRESS_PHOTOS },
+    entry: { ...entry, photos: NO_PROGRESS_PHOTOS },
     refusedViews: PROGRESS_PHOTO_VIEWS.filter((view) => entry.photos[view]),
   };
 }

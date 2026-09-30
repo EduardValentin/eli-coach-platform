@@ -35,6 +35,7 @@ import {
   type PrototypeLifeStage,
   type PrototypeMeasurementsDue,
 } from '../services/clientJourneySamples';
+import { optionOrDefault } from '../utils/optionOrDefault';
 import {
   JOURNEY_GENDERS,
   type JourneyGender,
@@ -330,30 +331,21 @@ function parseDevParamsFromURL(): AppState {
   ) {
     state.journeyInvitation = journeyInvitation as PrototypeInvitationStanding;
   }
-  const journeyMeasurementsDue = params.get('jdue');
-  if (
-    journeyMeasurementsDue &&
-    (PROTOTYPE_MEASUREMENTS_DUE as readonly string[]).includes(
-      journeyMeasurementsDue,
-    )
-  ) {
-    state.journeyMeasurementsDue =
-      journeyMeasurementsDue as PrototypeMeasurementsDue;
-  }
-  const journeyLifeStage = params.get('jlife');
-  if (
-    journeyLifeStage &&
-    (PROTOTYPE_LIFE_STAGES as readonly string[]).includes(journeyLifeStage)
-  ) {
-    state.journeyLifeStage = journeyLifeStage as PrototypeLifeStage;
-  }
-  const photoProcessing = params.get('jphoto');
-  if (
-    photoProcessing &&
-    (PHOTO_PROCESSING_OUTCOMES as readonly string[]).includes(photoProcessing)
-  ) {
-    state.photoProcessing = photoProcessing as PhotoProcessing;
-  }
+  state.journeyMeasurementsDue = optionOrDefault(
+    PROTOTYPE_MEASUREMENTS_DUE,
+    params.get('jdue'),
+    defaultState.journeyMeasurementsDue,
+  );
+  state.journeyLifeStage = optionOrDefault(
+    PROTOTYPE_LIFE_STAGES,
+    params.get('jlife'),
+    defaultState.journeyLifeStage,
+  );
+  state.photoProcessing = optionOrDefault(
+    PHOTO_PROCESSING_OUTCOMES,
+    params.get('jphoto'),
+    defaultState.photoProcessing,
+  );
   const invitationResendOutcome = params.get('jresend');
   if (
     invitationResendOutcome &&

@@ -35,16 +35,12 @@ import {
   ONBOARDING_CONNECTIONS,
   type OnboardingConnection,
 } from '../services/onboardingService';
-import {
-  PHOTO_PROCESSING_OUTCOMES,
-  type PhotoProcessing,
-} from '../services/measurementService';
+import { PHOTO_PROCESSING_OUTCOMES } from '../services/measurementService';
 import {
   PROTOTYPE_LIFE_STAGES,
   PROTOTYPE_MEASUREMENTS_DUE,
-  type PrototypeLifeStage,
-  type PrototypeMeasurementsDue,
 } from '../services/clientJourneySamples';
+import { optionOrDefault } from '../utils/optionOrDefault';
 import type {
   SubscriptionStartPath,
   SubscriptionStatus,
@@ -152,26 +148,6 @@ function parseJourneyAgeBandControl(value: string): JourneyAgeBand {
   const band = JOURNEY_AGE_BANDS.find((candidate) => candidate === value);
 
   return band ?? 'adult';
-}
-
-function parseMeasurementsDueControl(value: string): PrototypeMeasurementsDue {
-  const due = PROTOTYPE_MEASUREMENTS_DUE.find((candidate) => candidate === value);
-
-  return due ?? 'none';
-}
-
-function parseLifeStageControl(value: string): PrototypeLifeStage {
-  const lifeStage = PROTOTYPE_LIFE_STAGES.find((candidate) => candidate === value);
-
-  return lifeStage ?? 'none';
-}
-
-function parsePhotoProcessingControl(value: string): PhotoProcessing {
-  const processing = PHOTO_PROCESSING_OUTCOMES.find(
-    (candidate) => candidate === value,
-  );
-
-  return processing ?? 'works';
 }
 
 function parseOnboardingConnectionControl(value: string): OnboardingConnection {
@@ -1082,8 +1058,11 @@ export function DevToggle() {
                     value={appState.journeyMeasurementsDue}
                     onValueChange={(value) =>
                       setAppState({
-                        journeyMeasurementsDue:
-                          parseMeasurementsDueControl(value),
+                        journeyMeasurementsDue: optionOrDefault(
+                          PROTOTYPE_MEASUREMENTS_DUE,
+                          value,
+                          'none',
+                        ),
                       })
                     }
                   >
@@ -1114,7 +1093,11 @@ export function DevToggle() {
                     value={appState.journeyLifeStage}
                     onValueChange={(value) =>
                       setAppState({
-                        journeyLifeStage: parseLifeStageControl(value),
+                        journeyLifeStage: optionOrDefault(
+                          PROTOTYPE_LIFE_STAGES,
+                          value,
+                          'none',
+                        ),
                       })
                     }
                   >
@@ -1142,7 +1125,11 @@ export function DevToggle() {
                     value={appState.photoProcessing}
                     onValueChange={(value) =>
                       setAppState({
-                        photoProcessing: parsePhotoProcessingControl(value),
+                        photoProcessing: optionOrDefault(
+                          PHOTO_PROCESSING_OUTCOMES,
+                          value,
+                          'works',
+                        ),
                       })
                     }
                   >

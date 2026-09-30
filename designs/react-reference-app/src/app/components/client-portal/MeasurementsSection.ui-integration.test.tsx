@@ -115,7 +115,7 @@ describe('her measurements on the profile page', () => {
     expect(rows[1]).toHaveTextContent('66.1 kg');
   });
 
-  it('records her consent in the sheet and keeps her photos with the entry', async () => {
+  it('keeps the photos she adds with the new entry', async () => {
     // arrange
     renderSection();
     await openSheet();
@@ -126,6 +126,26 @@ describe('her measurements on the profile page', () => {
 
     // act
     await save();
+
+    // assert
+    expect(
+      within(historyRows()[0]).getByRole('button', { name: /^View photos/ }),
+    ).toBeVisible();
+    expect(
+      within(historyRows()[1]).queryByRole('button', { name: /^View photos/ }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('remembers the consent she gave in the sheet the next time she adds measurements', async () => {
+    // arrange
+    renderSection();
+    await openSheet();
+    await userEvent.click(
+      screen.getByRole('checkbox', { name: PROGRESS_PHOTO_CONSENT_COPY }),
+    );
+    await save();
+
+    // act
     await openSheet();
 
     // assert
@@ -135,10 +155,6 @@ describe('her measurements on the profile page', () => {
       ),
     ).toBeVisible();
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
-    expect(
-      within(historyRows()[0]).getByRole('button', { name: /^View photos/ }),
-    ).toBeVisible();
   });
 
   it('saves the entry and names each photo that could not be processed', async () => {

@@ -5,7 +5,7 @@ import {
   JOURNEY_STAGES,
   type JourneyStage,
 } from '../domain/journey';
-import { measurementDueLine } from '../domain/measurements';
+import { measurementDueLine } from '../domain/measurementSchedule';
 import {
   seedJourney,
   type PrototypeMeasurementsDue,
