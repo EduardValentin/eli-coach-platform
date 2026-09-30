@@ -27,15 +27,29 @@ function AccordionItem({
 
 type AccordionHeadingTag = "h2" | "h3";
 
+type AccordionTriggerLayout = "section" | "title";
+
+const TRIGGER_LAYOUT_CLASS: Record<AccordionTriggerLayout, string> = {
+  section: "items-start py-4",
+  title: "items-center py-0",
+};
+
+const CHEVRON_LAYOUT_CLASS: Record<AccordionTriggerLayout, string> = {
+  section: "translate-y-0.5",
+  title: "",
+};
+
 function AccordionTrigger({
   className,
   children,
   headingTag: HeadingTag = "h3",
   headingId,
+  layout = "section",
   ...props
 }: React.ComponentProps<typeof AccordionPrimitive.Trigger> & {
   headingTag?: AccordionHeadingTag;
   headingId?: string;
+  layout?: AccordionTriggerLayout;
 }) {
   return (
     <AccordionPrimitive.Header asChild>
@@ -43,13 +57,19 @@ function AccordionTrigger({
         <AccordionPrimitive.Trigger
           data-slot="accordion-trigger"
           className={cn(
-            "focus-visible:border-ring focus-visible:ring-ring/50 flex flex-1 items-start justify-between gap-4 rounded-field py-4 text-left text-sm font-medium transition-colors outline-none hover:text-primary focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50 [&[data-state=open]>svg]:rotate-180",
+            "focus-visible:border-ring focus-visible:ring-ring/50 flex flex-1 justify-between gap-4 rounded-field text-left text-sm font-medium transition-colors outline-none hover:text-primary focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50 [&[data-state=open]>svg]:rotate-180",
+            TRIGGER_LAYOUT_CLASS[layout],
             className,
           )}
           {...props}
         >
           {children}
-          <ChevronDownIcon className="text-text-secondary pointer-events-none size-4 shrink-0 translate-y-0.5 transition-transform duration-200" />
+          <ChevronDownIcon
+            className={cn(
+              "text-text-secondary pointer-events-none size-4 shrink-0 transition-transform duration-200",
+              CHEVRON_LAYOUT_CLASS[layout],
+            )}
+          />
         </AccordionPrimitive.Trigger>
       </HeadingTag>
     </AccordionPrimitive.Header>

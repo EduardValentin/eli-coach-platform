@@ -10,7 +10,7 @@ import { ageOn } from '../../services/visitorProfile';
 import { clientPronouns, journeyGenderLabel } from '../../utils/journeyLabels';
 import { PortalWidget } from '../PortalWidget';
 import { Reading } from '../Reading';
-import { ABSENT_VALUE } from './absentValue';
+import { ABSENT_VALUE } from '../constants';
 import { PhoneLink } from './PhoneLink';
 
 type ProfileReadingId =
@@ -81,11 +81,11 @@ const PENDING_VALUES: ProfileValues = {
   clientNotes: ABSENT_VALUE,
 };
 
-function weighed(kg: number | null): string {
+function weightReading(kg: number | null): string {
   return kg === null ? ABSENT_VALUE : canonicalWeightReading(kg);
 }
 
-function measured(cm: number | null): string {
+function heightReading(cm: number | null): string {
   return cm === null ? ABSENT_VALUE : canonicalLengthReading(cm);
 }
 
@@ -95,9 +95,9 @@ function profileValues(profile: JourneyProfile): ProfileValues {
     gender: journeyGenderLabel(profile.gender),
     country: profile.country || ABSENT_VALUE,
     phone: <PhoneLink phone={profile.phone} />,
-    height: measured(profile.heightCm),
-    startingWeight: weighed(profile.startingWeightKg),
-    currentWeight: weighed(profile.currentWeightKg),
+    height: heightReading(profile.heightCm),
+    startingWeight: weightReading(profile.startingWeightKg),
+    currentWeight: weightReading(profile.currentWeightKg),
     activityLevel: profile.activityLevel ?? ABSENT_VALUE,
     primaryGoal: profile.primaryGoal ?? ABSENT_VALUE,
     dietaryRestrictions: profile.dietaryRestrictions,

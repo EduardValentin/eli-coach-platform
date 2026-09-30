@@ -12,7 +12,7 @@ import {
 import { journeyGenderLabel } from '../../utils/journeyLabels';
 import { CollapsiblePortalWidget } from '../CollapsiblePortalWidget';
 import { Reading } from '../Reading';
-import { ABSENT_VALUE } from './absentValue';
+import { ABSENT_VALUE } from '../constants';
 import { PhoneLink } from './PhoneLink';
 
 function shortCallMoment(startsAt: Date): string {

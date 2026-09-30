@@ -37,7 +37,7 @@ export function CollapsiblePortalWidget({
           <AccordionTrigger
             headingTag="h2"
             headingId={headingId}
-            className="items-center py-0 [&>svg]:translate-y-0"
+            layout="title"
           >
             <span className={cn('flex items-center gap-2', WIDGET_TITLE_CLASS)}>
               {icon}
