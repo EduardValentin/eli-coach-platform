@@ -13,9 +13,10 @@ import {
 
 import { clientOnboardingContext } from "~/features/client-onboarding/server/guards/client-onboarding-context.server";
 import { OnboardingPanel } from "~/features/client-onboarding/ui/coach/onboarding/onboarding-panel";
+import { MEASUREMENTS_COPY } from "~/features/client-profile/contracts/measurements";
 import { clientProfileContext } from "~/features/client-profile/server/guards/client-profile-context.server";
-import { MeasurementsTable } from "~/features/client-profile/ui/coach/measurements/measurements-table";
 import { ClientProfileBlock } from "~/features/client-profile/ui/coach/profile/client-profile-block";
+import { MeasurementsTable } from "~/features/client-profile/ui/shared/measurements/measurements-table";
 import { COACH_CLIENTS_PATH } from "~/features/coaching-sales/contracts/paths";
 import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
 import { AssessmentCallBlock } from "~/features/coaching-sales/ui/coach/clients/assessment-call-block";
@@ -108,9 +109,13 @@ export default function CoachClientRoute() {
         />
       )}
       <MeasurementsTable
-        gender={client.gender}
+        className="mb-8"
+        emptyMessage={MEASUREMENTS_COPY.empty(client.gender)}
+        headingId="measurements-panel-heading"
         heightCm={profile.facts?.heightCm ?? null}
         measurements={measurements}
+        perspective="coach"
+        ratioHidden={review.submitted?.pregnancyContext ?? false}
       />
       <AssessmentCallBlock client={client} />
     </div>

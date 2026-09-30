@@ -8,7 +8,3 @@ export function waistToHeightRatio(
 
   return (waistCm / heightCm).toFixed(2);
 }
-
-export function roundToTenth(value: number): number {
-  return Math.round(value * 10) / 10;
-}
