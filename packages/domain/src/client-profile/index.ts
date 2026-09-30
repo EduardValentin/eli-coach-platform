@@ -15,7 +15,6 @@ export { type MeasurementIncidents } from "./measurement-incidents";
 export { OpenProgressPhotoUseCase } from "./open-progress-photo-use-case";
 export {
   ACCEPTED_PROGRESS_PHOTO_TYPES,
-  MAX_PROGRESS_PHOTO_BYTES,
   PROGRESS_PHOTO_VIEWS,
   ProgressPhoto,
   type ProgressPhotoSnapshot,
