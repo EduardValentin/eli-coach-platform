@@ -132,7 +132,9 @@ export class PostgresOnboardingReviews implements OnboardingReviews {
   }
 
   async recordAnswer(input: RecordDetailsAnswer): Promise<void> {
-    await this.writeWithStamps(input, async (transaction) => {
+    const projection = { clientId: input.clientId, stamps: input.stamps };
+
+    await this.writeWithStamps(projection, async (transaction) => {
       const answered = await transaction
         .update(clientOnboardingDetailRequestsTable)
         .set({ answeredAt: input.answeredAt })
@@ -177,10 +179,7 @@ export class PostgresOnboardingReviews implements OnboardingReviews {
   ): Promise<void> {
     await this.database.transaction(async (transaction) => {
       await writeRows(transaction);
-      await this.reviewStampWriter(transaction, {
-        clientId: projection.clientId,
-        stamps: projection.stamps,
-      });
+      await this.reviewStampWriter(transaction, projection);
     });
   }
 }

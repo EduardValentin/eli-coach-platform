@@ -179,7 +179,7 @@ describe("PostgresOnboardingReviews#recordOpened", () => {
     );
     expect(writer.calls).toEqual([
       {
-        transaction: database.handles[0],
+        transaction: database.transactionHandles[0],
         projection: { clientId: CLIENT_ID, stamps: OPENED_STAMPS },
       },
     ]);
@@ -219,7 +219,7 @@ describe("PostgresOnboardingReviews#recordApproval", () => {
     );
     expect(writer.calls).toEqual([
       {
-        transaction: database.handles[0],
+        transaction: database.transactionHandles[0],
         projection: { clientId: CLIENT_ID, stamps: APPROVED_STAMPS },
       },
     ]);
@@ -270,7 +270,7 @@ describe("PostgresOnboardingReviews#recordRequest", () => {
     ]);
     expect(writer.calls).toEqual([
       {
-        transaction: database.handles[0],
+        transaction: database.transactionHandles[0],
         projection: { clientId: CLIENT_ID, stamps: REQUESTED_STAMPS },
       },
     ]);
@@ -355,7 +355,7 @@ describe("PostgresOnboardingReviews#recordAnswer", () => {
     });
     expect(writer.calls).toEqual([
       {
-        transaction: database.handles[0],
+        transaction: database.transactionHandles[0],
         projection: { clientId: CLIENT_ID, stamps: ANSWERED_STAMPS },
       },
     ]);
@@ -602,14 +602,14 @@ function createTransactionalDatabase(
   options: TransactionalDatabaseOptions = {},
 ) {
   const committed: RecordedWrite[] = [];
-  const handles: unknown[] = [];
+  const transactionHandles: unknown[] = [];
   let transactions = 0;
   const client = {
     transaction: async (work: (transaction: unknown) => Promise<unknown>) => {
       transactions += 1;
       const pending: RecordedWrite[] = [];
       const transaction = createRecordingTransaction(pending, options);
-      handles.push(transaction);
+      transactionHandles.push(transaction);
 
       const result = await work(transaction);
       committed.push(...pending);
@@ -621,7 +621,7 @@ function createTransactionalDatabase(
   return {
     client,
     committed,
-    handles,
+    transactionHandles,
     get transactions() {
       return transactions;
     },

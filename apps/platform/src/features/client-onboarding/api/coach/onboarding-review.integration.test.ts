@@ -26,13 +26,6 @@ import {
   type AccountSession,
 } from "~integration-test-config/platform-rig";
 
-type ReviewStampRow = {
-  reviewOpenedAt: Date | null;
-  detailsRequestedAt: Date | null;
-  detailsAnsweredAt: Date | null;
-  answersApprovedAt: Date | null;
-};
-
 type DetailRequestRow = {
   id: string;
   questionIds: { formId: string; fieldId: string }[];
@@ -124,7 +117,7 @@ describe.sequential("onboarding review integration", () => {
       openedAt: OPENED_INSTANT,
       approvedAt: null,
     });
-    expect(await stampsOf(clientId)).toEqual({
+    expect(await onboarding.reviewStampsOf(clientId)).toEqual({
       reviewOpenedAt: OPENED_INSTANT,
       detailsRequestedAt: null,
       detailsAnsweredAt: null,
@@ -155,7 +148,7 @@ describe.sequential("onboarding review integration", () => {
       askedAt: ASKED_INSTANT,
       answeredAt: null,
     });
-    expect(await stampsOf(clientId)).toMatchObject({
+    expect(await onboarding.reviewStampsOf(clientId)).toMatchObject({
       detailsRequestedAt: ASKED_INSTANT,
       detailsAnsweredAt: null,
     });
@@ -318,7 +311,7 @@ describe.sequential("onboarding review integration", () => {
     expect(await requestRowsOf(clientId)).toEqual([
       expect.objectContaining({ answeredAt: ANSWERED_INSTANT }),
     ]);
-    expect(await stampsOf(clientId)).toEqual({
+    expect(await onboarding.reviewStampsOf(clientId)).toEqual({
       reviewOpenedAt: OPENED_INSTANT,
       detailsRequestedAt: ASKED_INSTANT,
       detailsAnsweredAt: ANSWERED_INSTANT,
@@ -365,7 +358,7 @@ describe.sequential("onboarding review integration", () => {
         answeredAt: ANSWERED_AGAIN_INSTANT,
       }),
     ]);
-    expect(await stampsOf(clientId)).toEqual({
+    expect(await onboarding.reviewStampsOf(clientId)).toEqual({
       reviewOpenedAt: OPENED_INSTANT,
       detailsRequestedAt: ASKED_AGAIN_INSTANT,
       detailsAnsweredAt: ANSWERED_AGAIN_INSTANT,
@@ -406,7 +399,7 @@ describe.sequential("onboarding review integration", () => {
     expect(await laterApproval.json()).toEqual({ error: "not-reviewable" });
     expect(laterOpening.status).toBe(409);
     expect(await laterOpening.json()).toEqual({ error: "approved" });
-    expect(await stampsOf(clientId)).toEqual({
+    expect(await onboarding.reviewStampsOf(clientId)).toEqual({
       reviewOpenedAt: OPENED_INSTANT,
       detailsRequestedAt: null,
       detailsAnsweredAt: null,
@@ -474,7 +467,7 @@ describe.sequential("onboarding review integration", () => {
       401, 401, 401,
     ]);
     expect(await requestRowsOf(clientId)).toEqual([]);
-    expect(await stampsOf(clientId)).toMatchObject({
+    expect(await onboarding.reviewStampsOf(clientId)).toMatchObject({
       answersApprovedAt: null,
     });
     await expectStampsToProjectReviewRows(clientId);
@@ -513,7 +506,7 @@ describe.sequential("onboarding review integration", () => {
 
     // assert
     expect(page.status).toBe(200);
-    expect(await stampsOf(clientId)).toEqual({
+    expect(await onboarding.reviewStampsOf(clientId)).toEqual({
       reviewOpenedAt: OPENED_INSTANT,
       detailsRequestedAt: ASKED_INSTANT,
       detailsAnsweredAt: null,
@@ -621,18 +614,9 @@ async function requestRowsOf(clientId: string): Promise<DetailRequestRow[]> {
   });
 }
 
-async function stampsOf(clientId: string): Promise<ReviewStampRow | undefined> {
-  const [row] = await suite.postgres.queryRows<ReviewStampRow>({
-    sql: 'select review_opened_at as "reviewOpenedAt", details_requested_at as "detailsRequestedAt", details_answered_at as "detailsAnsweredAt", answers_approved_at as "answersApprovedAt" from app.clients where id = $1',
-    values: [clientId],
-  });
-
-  return row;
-}
-
 async function expectStampsToProjectReviewRows(clientId: string) {
   const { recorded, derivedFromReviewRows } =
-    await onboarding.reviewStampProjectionOf(clientId);
+    await onboarding.reviewStampComparisonOf(clientId);
 
   expect(recorded).toEqual(derivedFromReviewRows);
 }

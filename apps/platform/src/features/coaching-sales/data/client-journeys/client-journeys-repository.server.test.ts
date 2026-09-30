@@ -186,7 +186,7 @@ function createDatabaseRecordingUpdates() {
   const updates: unknown[] = [];
   const filters: unknown[] = [];
   let transactions = 0;
-  const writer = {
+  const transaction = {
     update: () => ({
       set: (values: unknown) => {
         updates.push(values);
@@ -200,11 +200,11 @@ function createDatabaseRecordingUpdates() {
     }),
   };
   const client = {
-    ...writer,
+    ...transaction,
     transaction: async (work: (transaction: unknown) => Promise<unknown>) => {
       transactions += 1;
 
-      return work(writer);
+      return work(transaction);
     },
   } as unknown as DatabaseClient;
 

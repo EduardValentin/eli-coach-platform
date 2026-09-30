@@ -23,7 +23,7 @@ export type ReviewStampColumns = {
   answersApprovedAt: Date | null;
 };
 
-export type ReviewStampProjection = {
+export type ReviewStampComparison = {
   recorded: ReviewStampColumns | undefined;
   derivedFromReviewRows: ReviewStampColumns;
 };
@@ -103,14 +103,22 @@ export class ClientOnboardingJourney {
     return row;
   }
 
-  async reviewStampProjectionOf(
+  async reviewStampsOf(
     clientId: string,
-  ): Promise<ReviewStampProjection> {
-    const [[recorded], [review], [latestRequest]] = await Promise.all([
-      this.rig.suite.postgres.queryRows<ReviewStampColumns>({
-        sql: 'select review_opened_at as "reviewOpenedAt", details_requested_at as "detailsRequestedAt", details_answered_at as "detailsAnsweredAt", answers_approved_at as "answersApprovedAt" from app.clients where id = $1',
-        values: [clientId],
-      }),
+  ): Promise<ReviewStampColumns | undefined> {
+    const [row] = await this.rig.suite.postgres.queryRows<ReviewStampColumns>({
+      sql: 'select review_opened_at as "reviewOpenedAt", details_requested_at as "detailsRequestedAt", details_answered_at as "detailsAnsweredAt", answers_approved_at as "answersApprovedAt" from app.clients where id = $1',
+      values: [clientId],
+    });
+
+    return row;
+  }
+
+  async reviewStampComparisonOf(
+    clientId: string,
+  ): Promise<ReviewStampComparison> {
+    const [recorded, [review], [latestRequest]] = await Promise.all([
+      this.reviewStampsOf(clientId),
       this.rig.suite.postgres.queryRows<ReviewRow>({
         sql: 'select opened_at as "openedAt", approved_at as "approvedAt" from app.client_onboarding_reviews where client_id = $1',
         values: [clientId],

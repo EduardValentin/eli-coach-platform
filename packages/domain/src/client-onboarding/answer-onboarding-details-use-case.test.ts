@@ -186,38 +186,44 @@ describe("AnswerOnboardingDetailsUseCase", () => {
 
   it("the answer and its stamps are one port write; a lagging stamp is repaired on read", async () => {
     // arrange
-    const failingPorts = answerPorts();
-    failingPorts.reviews.recordAnswer.mockRejectedValue(
-      new Error("transaction rolled back"),
-    );
-    const answering = new AnswerOnboardingDetailsUseCase(failingPorts);
-    const laggingPorts = answerPorts({
-      requests: [askedRequest().answer(NOW)],
-    });
-    const reading = new ReadOpenDetailRequestUseCase(laggingPorts);
+    const ports = answerPorts();
+    ports.reviews.findByClientId
+      .mockResolvedValueOnce({
+        openedAt: OPENED_AT,
+        approvedAt: null,
+        requests: [askedRequest()],
+      })
+      .mockResolvedValue({
+        openedAt: OPENED_AT,
+        approvedAt: null,
+        requests: [askedRequest().answer(NOW)],
+      });
+    const answering = new AnswerOnboardingDetailsUseCase(ports);
+    const reading = new ReadOpenDetailRequestUseCase(ports);
 
     // act
-    const answer = answering.execute({
+    await answering.execute({
       authSubjectId: "user_ana",
       answers: { "goal-availability": { weight: 72 } },
     });
-    await expect(answer).rejects.toThrow("transaction rolled back");
+    const stampsAfterAnswer = ports.stamps.record.mock.calls.length;
     const openRequest = await reading.execute("user_ana");
 
     // assert
-    expect(failingPorts.reviews.recordAnswer).toHaveBeenCalledWith(
+    expect(ports.reviews.recordAnswer).toHaveBeenCalledWith(
       expect.objectContaining({
         stamps: { ...REQUESTED_STAMPS, detailsAnsweredAt: NOW },
       }),
     );
+    expect(stampsAfterAnswer).toBe(0);
     expect(openRequest).toBeNull();
-    expect(laggingPorts.stamps.record).toHaveBeenCalledWith({
+    expect(ports.stamps.record).toHaveBeenCalledWith({
       clientId: CLIENT.clientId,
       stamps: { ...REQUESTED_STAMPS, detailsAnsweredAt: NOW },
     });
-    expect(
-      laggingPorts.incidents.onboardingReviewStampsRepaired,
-    ).toHaveBeenCalledWith({ clientId: CLIENT.clientId });
+    expect(ports.incidents.onboardingReviewStampsRepaired).toHaveBeenCalledWith(
+      { clientId: CLIENT.clientId },
+    );
   });
 
   it("refuses an answer to a question she was not asked and writes nothing", async () => {
