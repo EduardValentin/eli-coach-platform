@@ -12,13 +12,15 @@ export const Dialog = RadixDialog.Root;
 
 type DialogSize = "compact" | "wide";
 
+type DialogFooterAlignment = "content" | "end";
+
 type DialogContentProps = Omit<
   React.ComponentPropsWithoutRef<typeof RadixDialog.Content>,
   "onCloseAutoFocus" | "onOpenAutoFocus" | "title"
 > & {
   description: React.ReactNode;
   footer: React.ReactNode;
-  footerAlignment?: "end";
+  footerAlignment?: DialogFooterAlignment;
   size?: DialogSize;
   title: React.ReactNode;
 };
@@ -48,7 +50,7 @@ export function DialogContent({
   className,
   description,
   footer,
-  footerAlignment,
+  footerAlignment = "content",
   size = "compact",
   title,
   ...props

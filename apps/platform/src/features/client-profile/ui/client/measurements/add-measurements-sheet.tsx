@@ -26,13 +26,13 @@ import {
 } from "~/features/client-profile/ui/client/measurements/progress-photo-block";
 import { MeasureField } from "~/features/client-profile/ui/shared/measure-field/measure-field";
 
-type MeasurementsForm = {
+type AddMeasurementsStartingPoint = {
   latest: MeasurementRow | undefined;
   units: MeasureUnits;
   consentedAt: string | null;
 };
 
-type AddMeasurementsSheetProps = MeasurementsForm & {
+type AddMeasurementsSheetProps = AddMeasurementsStartingPoint & {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
@@ -46,12 +46,12 @@ function AddMeasurementsForm({
   units,
   consentedAt,
   onClose,
-}: MeasurementsForm & { onClose: () => void }) {
+}: AddMeasurementsStartingPoint & { onClose: () => void }) {
   const revalidator = useRevalidator();
   const [photos, setPhotos] = useState<ProgressPhotoPicks>(NO_PHOTOS);
-  const [photoConsent, setPhotoConsent] = useState(false);
+  const [consentTicked, setConsentTicked] = useState(false);
   const [saving, setSaving] = useState(false);
-  const mayKeepPhotos = consentedAt !== null || photoConsent;
+  const mayKeepPhotos = consentedAt !== null || consentTicked;
   const form = useForm<MeasurementFormValues>({
     defaultValues: measurementFormValuesOf(latest, units),
   });
@@ -60,15 +60,15 @@ function AddMeasurementsForm({
     ? { status: "recorded", at: consentedAt }
     : {
         status: "asking",
-        ticked: photoConsent,
-        onTickedChange: setPhotoConsent,
+        ticked: consentTicked,
+        onTickedChange: setConsentTicked,
       };
 
   const save = form.handleSubmit(async (values) => {
     setSaving(true);
     const outcome = await recordMeasurements({
       entry: measurementEntryOf(values, units),
-      givesPhotoConsent: photoConsent,
+      givesPhotoConsent: consentTicked,
       photos: mayKeepPhotos ? photos : NO_PHOTOS,
     });
 
@@ -144,7 +144,7 @@ function AddMeasurementsForm({
 export function AddMeasurementsSheet({
   open,
   onOpenChange,
-  ...form
+  ...startingPoint
 }: AddMeasurementsSheetProps) {
   return (
     <ResponsiveSheetDialog
@@ -153,7 +153,10 @@ export function AddMeasurementsSheet({
       open={open}
       title={SHEET_COPY.title}
     >
-      <AddMeasurementsForm {...form} onClose={() => onOpenChange(false)} />
+      <AddMeasurementsForm
+        {...startingPoint}
+        onClose={() => onOpenChange(false)}
+      />
     </ResponsiveSheetDialog>
   );
 }

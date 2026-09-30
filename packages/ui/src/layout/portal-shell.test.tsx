@@ -123,7 +123,7 @@ function renderClientShell(options: ClientShellOptions = {}) {
             kind: "tabs",
             sheet: {
               footer: <button type="button">Sign out</button>,
-              header: (closeSheet) => (
+              renderHeader: (closeSheet) => (
                 <Link onClick={closeSheet} to="/client/profile">
                   Sheet name block
                 </Link>

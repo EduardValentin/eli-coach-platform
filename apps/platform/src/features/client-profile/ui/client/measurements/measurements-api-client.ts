@@ -33,7 +33,10 @@ const RECORDED_STATUS = 201;
 
 const RECORD_FAILED: RecordMeasurementsOutcome = { kind: "failed" };
 
-async function send(url: string, init: RequestInit): Promise<Response | null> {
+async function fetchUnlessUnreachable(
+  url: string,
+  init: RequestInit,
+): Promise<Response | null> {
   try {
     return await fetch(url, init);
   } catch {
@@ -47,6 +50,16 @@ async function readJson(response: Response): Promise<unknown> {
   } catch {
     return null;
   }
+}
+
+function pickedPhotosOf(
+  photos: ProgressPhotoPicks,
+): [ProgressPhotoView, File][] {
+  return PROGRESS_PHOTO_VIEWS.flatMap((view) => {
+    const photo = photos[view];
+
+    return photo ? [[view, photo]] : [];
+  });
 }
 
 function measurementsFormData(submission: MeasurementsSubmission): FormData {
@@ -63,10 +76,8 @@ function measurementsFormData(submission: MeasurementsSubmission): FormData {
     );
   }
 
-  for (const view of PROGRESS_PHOTO_VIEWS) {
-    const photo = submission.photos[view];
-
-    if (photo) formData.append(view, photo);
+  for (const [view, photo] of pickedPhotosOf(submission.photos)) {
+    formData.append(view, photo);
   }
 
   return formData;
@@ -75,7 +86,7 @@ function measurementsFormData(submission: MeasurementsSubmission): FormData {
 export async function recordMeasurements(
   submission: MeasurementsSubmission,
 ): Promise<RecordMeasurementsOutcome> {
-  const response = await send(MEASUREMENTS_API_URL, {
+  const response = await fetchUnlessUnreachable(MEASUREMENTS_API_URL, {
     body: measurementsFormData(submission),
     method: "POST",
   });
@@ -97,5 +108,5 @@ export async function recordMeasurements(
 }
 
 export async function removeProgressPhoto(photoId: string): Promise<void> {
-  await send(progressPhotoUrl(photoId), { method: "DELETE" });
+  await fetchUnlessUnreachable(progressPhotoUrl(photoId), { method: "DELETE" });
 }

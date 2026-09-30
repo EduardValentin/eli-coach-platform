@@ -14,7 +14,7 @@ afterEach(() => {
 });
 
 type ReviewOptions = {
-  footerAlignment?: "end";
+  footerAlignment?: "content" | "end";
   size?: "compact" | "wide";
 };
 
@@ -219,6 +219,16 @@ describe("DialogContent", () => {
     }).parentElement;
     expect(footer).toHaveClass("border-t", "px-6", "py-4");
     expect(footer).not.toHaveClass("flex");
+  });
+
+  it("keeps a wide dialog's footer actions with its content when asked", async () => {
+    // arrange, act
+    await openReview({ footerAlignment: "content", size: "wide" });
+
+    // assert
+    expect(
+      screen.getByRole("button", { name: "Approve answers" }).parentElement,
+    ).not.toHaveClass("flex", "justify-end");
   });
 
   it("sets a wide dialog's footer actions at its end when asked", async () => {

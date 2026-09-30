@@ -35,7 +35,7 @@ type PhotoViewer =
   | { role: "coach"; clientFirstName: string };
 
 type PhotoViewDialogProps = {
-  row: MeasurementRow | undefined;
+  entry: MeasurementRow | undefined;
   viewer: PhotoViewer;
   onClose: () => void;
 };
@@ -99,7 +99,7 @@ function PhotoSlot({
 }
 
 export function PhotoViewDialog({
-  row,
+  entry,
   viewer,
   onClose,
 }: PhotoViewDialogProps) {
@@ -125,9 +125,9 @@ export function PhotoViewDialog({
       onOpenChange={(open) => {
         if (!open) onClose();
       }}
-      open={row !== undefined}
+      open={entry !== undefined}
     >
-      {row && (
+      {entry && (
         <DialogContent
           data-parity-root="PhotoViewDialog"
           description={privacyLine(viewer)}
@@ -139,12 +139,12 @@ export function PhotoViewDialog({
           footerAlignment="end"
           size="wide"
           title={PHOTO_VIEW_COPY.title(
-            formatDayMonth(row.recordedAt, timeZone),
+            formatDayMonth(entry.recordedAt, timeZone),
           )}
         >
           <ul className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             {PROGRESS_PHOTO_VIEWS.map((view) => {
-              const photo = row.photos.find(
+              const photo = entry.photos.find(
                 (candidate) => candidate.view === view,
               );
 

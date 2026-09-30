@@ -7,7 +7,7 @@ import {
 import { Link } from "react-router";
 
 import { OPTIONAL_SUFFIX } from "~/features/client-onboarding/contracts/onboarding-copy";
-import { PROGRESS_PHOTO_CONSENT_COPY } from "~/features/client-profile/contracts/measurements";
+import { PROGRESS_PHOTO_CONSENT_COPY } from "~/features/client-profile/contracts/progress-photo-consent";
 
 type ConsentAgreement = "specialCategory" | "disclaimer";
 

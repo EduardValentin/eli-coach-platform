@@ -1,7 +1,6 @@
 import { Dialog as RadixDialog } from "radix-ui";
 import type { ReactNode } from "react";
 
-import { cn } from "../lib/cn";
 import {
   DialogFrame,
   DialogFrameDescription,
@@ -12,7 +11,6 @@ import { useIsMobileViewport } from "./use-is-mobile-viewport";
 
 type ResponsiveSheetDialogProps = {
   children: ReactNode;
-  contentClassName?: string;
   description?: string;
   onOpenChange: (open: boolean) => void;
   open: boolean;
@@ -21,7 +19,6 @@ type ResponsiveSheetDialogProps = {
 
 export function ResponsiveSheetDialog({
   children,
-  contentClassName,
   description,
   onOpenChange,
   open,
@@ -49,10 +46,7 @@ export function ResponsiveSheetDialog({
   return (
     <RadixDialog.Root onOpenChange={onOpenChange} open={open}>
       <DialogFrame
-        className={cn(
-          "flex max-h-[85vh] flex-col gap-0 overflow-hidden sm:max-w-2xl",
-          contentClassName,
-        )}
+        className="flex max-h-[85vh] flex-col overflow-hidden sm:max-w-2xl"
         {...descriptionAttributes}
       >
         <DialogFrameTitle className="sr-only">{title}</DialogFrameTitle>

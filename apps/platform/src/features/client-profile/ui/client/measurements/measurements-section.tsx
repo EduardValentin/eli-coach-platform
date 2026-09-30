@@ -19,9 +19,9 @@ export function MeasurementsSection({ page }: { page: MeasurementsPage }) {
   const revalidator = useRevalidator();
   const units = measureUnitsOf(page.units);
   const [adding, setAdding] = useState(false);
-  const [viewingRowId, setViewingRowId] = useState<string | null>(null);
+  const [viewingEntryId, setViewingEntryId] = useState<string | null>(null);
   const [latest] = page.history;
-  const viewing = page.history.find((row) => row.id === viewingRowId);
+  const viewedEntry = page.history.find((entry) => entry.id === viewingEntryId);
 
   return (
     <MeasurementsTable
@@ -40,7 +40,7 @@ export function MeasurementsSection({ page }: { page: MeasurementsPage }) {
       emptyMessage={CLIENT_COPY.empty}
       headingId="measurements-heading"
       measurements={page.history}
-      onViewPhotos={(row) => setViewingRowId(row.id)}
+      onViewPhotos={(entry) => setViewingEntryId(entry.id)}
       perspective="client"
       units={units}
     >
@@ -53,8 +53,8 @@ export function MeasurementsSection({ page }: { page: MeasurementsPage }) {
       />
 
       <PhotoViewDialog
-        onClose={() => setViewingRowId(null)}
-        row={viewing}
+        onClose={() => setViewingEntryId(null)}
+        entry={viewedEntry}
         viewer={{
           role: "client",
           onRemovePhoto: async (photo) => {

@@ -54,19 +54,12 @@ export function measurementEntryOf(
   values: MeasurementFormValues,
   units: MeasureUnits,
 ): MeasurementEntryRequest {
-  const entry: Partial<MeasurementEntryRequest> = {};
+  const readings = MEASUREMENT_FIELDS.filter(
+    (field) => values[field.id].trim() !== "",
+  ).map((field) => [
+    ENTRY_READINGS[field.id],
+    toCanonicalMeasure(field.kind, Number(values[field.id]), units),
+  ]);
 
-  for (const field of MEASUREMENT_FIELDS) {
-    const entered = values[field.id].trim();
-
-    if (entered !== "") {
-      entry[ENTRY_READINGS[field.id]] = toCanonicalMeasure(
-        field.kind,
-        Number(entered),
-        units,
-      );
-    }
-  }
-
-  return measurementEntryRequestSchema.parse(entry);
+  return measurementEntryRequestSchema.parse(Object.fromEntries(readings));
 }

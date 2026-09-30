@@ -16,10 +16,8 @@ import {
 import { Image as ImageIcon, X } from "lucide-react";
 import { useEffect, useId, useState, type ChangeEvent } from "react";
 
-import {
-  MEASUREMENTS_COPY,
-  PROGRESS_PHOTO_CONSENT_COPY,
-} from "~/features/client-profile/contracts/measurements";
+import { MEASUREMENTS_COPY } from "~/features/client-profile/contracts/measurements";
+import { PROGRESS_PHOTO_CONSENT_COPY } from "~/features/client-profile/contracts/progress-photo-consent";
 import type { ProgressPhotoPicks } from "~/features/client-profile/ui/client/measurements/measurements-api-client";
 import {
   progressPhotoImageClass,
@@ -98,9 +96,9 @@ function PhotoPreview({
       />
       <Button
         aria-label={PHOTOS_COPY.removeView(view)}
-        className="absolute top-1 right-1 size-8 bg-surface-base shadow-card hover:bg-surface-muted"
+        className="absolute top-1 right-1 shadow-card hover:bg-surface-muted"
         onClick={onRemove}
-        size="icon-sm"
+        size="icon-xs"
         type="button"
         variant="outline"
       >

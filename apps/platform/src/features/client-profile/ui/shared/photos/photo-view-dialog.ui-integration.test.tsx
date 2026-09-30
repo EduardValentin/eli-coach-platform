@@ -46,19 +46,19 @@ afterEach(() => {
 });
 
 function withoutPhoto(
-  row: MeasurementRow,
+  entry: MeasurementRow,
   removed: MeasurementPhoto,
 ): MeasurementRow {
   return {
-    ...row,
-    photos: row.photos.filter((photo) => photo.id !== removed.id),
+    ...entry,
+    photos: entry.photos.filter((photo) => photo.id !== removed.id),
   };
 }
 
 function ClientPhotoView(props: {
   onRemovePhoto: (photo: MeasurementPhoto) => void;
 }) {
-  const [row, setRow] = useState(ENTRY);
+  const [entry, setEntry] = useState(ENTRY);
   const [open, setOpen] = useState(false);
 
   return (
@@ -68,12 +68,12 @@ function ClientPhotoView(props: {
       </button>
       <PhotoViewDialog
         onClose={() => setOpen(false)}
-        row={open ? row : undefined}
+        entry={open ? entry : undefined}
         viewer={{
           role: "client",
           onRemovePhoto: async (photo) => {
             props.onRemovePhoto(photo);
-            setRow((current) => withoutPhoto(current, photo));
+            setEntry((current) => withoutPhoto(current, photo));
           },
         }}
       />

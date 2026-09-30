@@ -69,7 +69,7 @@ export default function ClientLayoutRoute() {
                 </Button>
               </SignOutControl>
             ),
-            header: (closeSheet) => (
+            renderHeader: (closeSheet) => (
               <ClientNameBlock
                 displayName={displayName}
                 onNavigate={closeSheet}

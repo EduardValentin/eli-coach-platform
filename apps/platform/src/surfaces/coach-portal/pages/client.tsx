@@ -70,7 +70,7 @@ export default function CoachClientRoute() {
     useLoaderData<typeof loader>();
   const name = clientFullName(client);
   const [viewingEntryId, setViewingEntryId] = useState<string | null>(null);
-  const viewing = measurements.find((entry) => entry.id === viewingEntryId);
+  const viewedEntry = measurements.find((entry) => entry.id === viewingEntryId);
 
   return (
     <div className="w-full pb-12" data-parity-root="JourneyClientDetails">
@@ -124,7 +124,7 @@ export default function CoachClientRoute() {
       >
         <PhotoViewDialog
           onClose={() => setViewingEntryId(null)}
-          row={viewing}
+          entry={viewedEntry}
           viewer={{ role: "coach", clientFirstName: client.firstName }}
         />
       </MeasurementsTable>
