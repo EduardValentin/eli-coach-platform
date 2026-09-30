@@ -239,6 +239,13 @@
       "when": 1790774337411,
       "tag": "0033_client_profiles",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1790807868255,
+      "tag": "0034_client_progress_photos",
+      "breakpoints": true
     }
   ]
 }

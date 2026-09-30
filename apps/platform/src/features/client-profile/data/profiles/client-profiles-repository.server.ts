@@ -22,6 +22,8 @@ export class PostgresClientProfiles implements ClientProfiles {
         primaryGoal: clientProfilesTable.primaryGoal,
         dietaryRestrictions: clientProfilesTable.dietaryRestrictions,
         clientNotes: clientProfilesTable.clientNotes,
+        progressPhotosConsentedAt:
+          clientProfilesTable.progressPhotosConsentedAt,
         updatedAt: clientProfilesTable.updatedAt,
       })
       .from(clientProfilesTable)
@@ -30,16 +32,27 @@ export class PostgresClientProfiles implements ClientProfiles {
 
     return row ? ClientProfile.reconstitute(row) : null;
   }
+
+  async recordPhotoConsent(clientId: string, at: Date): Promise<void> {
+    await this.database
+      .update(clientProfilesTable)
+      .set({ progressPhotosConsentedAt: at })
+      .where(eq(clientProfilesTable.clientId, clientId));
+  }
 }
 
 export async function saveClientProfile(
   transaction: DatabaseTransaction,
   profile: ClientProfile,
 ): Promise<void> {
-  const { clientId, ...columns } = profile.toSnapshot();
+  const snapshot = profile.toSnapshot();
+  const factsUpdate = { ...profile.facts(), updatedAt: snapshot.updatedAt };
 
   await transaction
     .insert(clientProfilesTable)
-    .values({ clientId, ...columns, createdAt: columns.updatedAt })
-    .onConflictDoUpdate({ target: clientProfilesTable.clientId, set: columns });
+    .values({ ...snapshot, createdAt: snapshot.updatedAt })
+    .onConflictDoUpdate({
+      target: clientProfilesTable.clientId,
+      set: factsUpdate,
+    });
 }

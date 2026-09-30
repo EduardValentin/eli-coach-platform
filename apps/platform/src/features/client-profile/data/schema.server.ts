@@ -1,4 +1,5 @@
 import { appSchema } from "@eli-coach-platform/db";
+import { PROGRESS_PHOTO_VIEWS } from "@eli-coach-platform/domain/client-profile";
 import {
   HEIGHT_UNITS,
   WEIGHT_UNITS,
@@ -7,9 +8,11 @@ import { sql, type SQL } from "drizzle-orm";
 import {
   check,
   index,
+  integer,
   numeric,
   text,
   timestamp,
+  unique,
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
@@ -55,9 +58,42 @@ export const clientProfilesTable = appSchema.table("client_profiles", {
   primaryGoal: text("primary_goal"),
   dietaryRestrictions: text("dietary_restrictions").notNull(),
   clientNotes: text("client_notes"),
+  progressPhotosConsentedAt: timestamp("progress_photos_consented_at", {
+    withTimezone: true,
+  }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
 });
+
+export const clientProgressPhotosTable = appSchema.table(
+  "client_progress_photos",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    entryId: uuid("entry_id")
+      .notNull()
+      .references(() => clientMeasurementsTable.id),
+    clientId: uuid("client_id")
+      .notNull()
+      .references(() => clientsTable.id),
+    view: varchar("view", { enum: PROGRESS_PHOTO_VIEWS, length: 8 }).notNull(),
+    storageKey: text("storage_key").notNull().unique(),
+    keyId: text("key_id").notNull(),
+    mimeType: text("mime_type").notNull(),
+    sizeBytes: integer("size_bytes").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    unique("client_progress_photos_entry_id_view_unique").on(
+      table.entryId,
+      table.view,
+    ),
+    index("client_progress_photos_client_id_idx").on(table.clientId),
+    check(
+      "client_progress_photos_view_check",
+      sql`${table.view} in (${quotedList(PROGRESS_PHOTO_VIEWS)})`,
+    ),
+  ],
+);
 
 export const clientUnitPreferencesTable = appSchema.table(
   "client_unit_preferences",

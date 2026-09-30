@@ -336,6 +336,7 @@ function profile(): ClientProfile {
     primaryGoal: "Lose fat",
     dietaryRestrictions: "None",
     clientNotes: null,
+    progressPhotosConsentedAt: null,
     updatedAt: SUBMITTED_AT,
   });
 }

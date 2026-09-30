@@ -11,34 +11,36 @@ import { asc, eq } from "drizzle-orm";
 
 import { clientMeasurementsTable } from "~/features/client-profile/data/schema.server";
 
+export type MeasurementColumns = {
+  recordedAt: Date;
+  weightKg: number;
+  waistCm: number;
+  hipsCm: number | null;
+  thighCm: number | null;
+  armCm: number | null;
+};
+
+export const MEASUREMENT_COLUMNS = {
+  recordedAt: clientMeasurementsTable.recordedAt,
+  weightKg: clientMeasurementsTable.weightKg,
+  waistCm: clientMeasurementsTable.waistCm,
+  hipsCm: clientMeasurementsTable.hipsCm,
+  thighCm: clientMeasurementsTable.thighCm,
+  armCm: clientMeasurementsTable.armCm,
+};
+
 export class PostgresClientMeasurements implements ClientMeasurementsSource {
   constructor(private readonly database: DatabaseClient) {}
 
   async listByClientId(clientId: string): Promise<MeasurementEntry[]> {
     const rows = await this.database
-      .select({
-        recordedAt: clientMeasurementsTable.recordedAt,
-        weightKg: clientMeasurementsTable.weightKg,
-        waistCm: clientMeasurementsTable.waistCm,
-        hipsCm: clientMeasurementsTable.hipsCm,
-        thighCm: clientMeasurementsTable.thighCm,
-        armCm: clientMeasurementsTable.armCm,
-      })
+      .select(MEASUREMENT_COLUMNS)
       .from(clientMeasurementsTable)
       .where(eq(clientMeasurementsTable.clientId, clientId))
       .orderBy(asc(clientMeasurementsTable.recordedAt));
 
     return rows.flatMap((row) => {
-      const entry = measurementEntryOf(
-        {
-          weightKg: row.weightKg,
-          waistCm: row.waistCm,
-          hipsCm: row.hipsCm ?? undefined,
-          thighCm: row.thighCm ?? undefined,
-          armCm: row.armCm ?? undefined,
-        },
-        row.recordedAt,
-      );
+      const entry = measurementEntryFromColumns(row);
 
       return entry ? [entry] : [];
     });
@@ -49,15 +51,34 @@ export async function recordMeasurementEntry(
   transaction: DatabaseTransaction,
   input: { clientId: string; entry: MeasurementEntry },
 ): Promise<void> {
-  const { entry } = input;
+  await transaction
+    .insert(clientMeasurementsTable)
+    .values(measurementRowOf(input.clientId, input.entry));
+}
 
-  await transaction.insert(clientMeasurementsTable).values({
-    clientId: input.clientId,
+export function measurementEntryFromColumns(
+  columns: MeasurementColumns,
+): MeasurementEntry | null {
+  return measurementEntryOf(
+    {
+      weightKg: columns.weightKg,
+      waistCm: columns.waistCm,
+      hipsCm: columns.hipsCm ?? undefined,
+      thighCm: columns.thighCm ?? undefined,
+      armCm: columns.armCm ?? undefined,
+    },
+    columns.recordedAt,
+  );
+}
+
+export function measurementRowOf(clientId: string, entry: MeasurementEntry) {
+  return {
+    clientId,
     recordedAt: entry.recordedAt,
     weightKg: entry.weightKg,
     waistCm: entry.waistCm,
     hipsCm: entry.hipsCm ?? null,
     thighCm: entry.thighCm ?? null,
     armCm: entry.armCm ?? null,
-  });
+  };
 }
