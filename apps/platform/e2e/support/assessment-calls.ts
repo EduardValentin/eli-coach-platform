@@ -32,6 +32,7 @@ const DELETE_CALLS_AND_THEIR_SALES: readonly RowRemoval[] = [
   clientOwnedRows("unit preferences", "client_unit_preferences"),
   clientOwnedRows("detail requests", "client_onboarding_detail_requests"),
   clientOwnedRows("onboarding reviews", "client_onboarding_reviews"),
+  clientOwnedRows("client profiles", "client_profiles"),
   {
     rows: "clients",
     statement: `
