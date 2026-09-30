@@ -1,0 +1,7 @@
+[
+  { "waitFor": "[data-parity=\"fact-cycle-mode-info\"]" },
+  { "wait": 1500 },
+  { "hover": "[data-parity=\"fact-cycle-mode-info\"]" },
+  { "waitFor": "[data-parity-root=\"CycleModeTooltip\"]" },
+  { "wait": 400 }
+]
