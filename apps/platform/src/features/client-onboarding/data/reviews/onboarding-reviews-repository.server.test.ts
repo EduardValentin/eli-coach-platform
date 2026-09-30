@@ -4,6 +4,7 @@ import {
   emptyDraft,
   type OnboardingAnswersByForm,
 } from "@eli-coach-platform/domain/client-onboarding";
+import { ClientProfile } from "@eli-coach-platform/domain/client-profile";
 import type { SQL } from "drizzle-orm";
 import { PgDialect } from "drizzle-orm/pg-core";
 import { describe, expect, it } from "vitest";
@@ -13,6 +14,7 @@ import {
   clientOnboardingDetailRequestsTable,
   clientOnboardingReviewsTable,
   clientOnboardingSubmissionsTable,
+  clientProfilesTable,
 } from "~/features/client-onboarding/data/schema.server";
 
 import { PostgresOnboardingReviews } from "./onboarding-reviews-repository.server";
@@ -263,7 +265,7 @@ describe("PostgresOnboardingReviews#recordRequest while another request is open"
 });
 
 describe("PostgresOnboardingReviews#recordAnswer", () => {
-  it("stamps the open request and merges her answers into her submission in one transaction", async () => {
+  it("stamps the open request, merges her answers into her submission and rewrites her profile in one transaction", async () => {
     // arrange
     const database = createDatabaseRecordingAnswer([{ id: FIRST_REQUEST_ID }]);
     const reviews = new PostgresOnboardingReviews(database.client);
@@ -274,6 +276,7 @@ describe("PostgresOnboardingReviews#recordAnswer", () => {
       requestId: FIRST_REQUEST_ID,
       mergedAnswers: answersWith({ "goal-availability": { weight: 64.5 } }),
       answeredAt: FIRST_ANSWERED_AT,
+      profile: profile(),
     });
 
     // assert
@@ -285,6 +288,12 @@ describe("PostgresOnboardingReviews#recordAnswer", () => {
     expect(database.updates[0]?.values).toEqual({
       answeredAt: FIRST_ANSWERED_AT,
     });
+    expect(database.upserted).toEqual([
+      {
+        table: clientProfilesTable,
+        row: { ...profile().toSnapshot(), createdAt: FIRST_ANSWERED_AT },
+      },
+    ]);
   });
 
   it("stamps the request only while it is still open and hers", async () => {
@@ -298,6 +307,7 @@ describe("PostgresOnboardingReviews#recordAnswer", () => {
       requestId: FIRST_REQUEST_ID,
       mergedAnswers: answersWith({ "goal-availability": { weight: 64.5 } }),
       answeredAt: FIRST_ANSWERED_AT,
+      profile: profile(),
     });
 
     // assert
@@ -321,6 +331,7 @@ describe("PostgresOnboardingReviews#recordAnswer", () => {
       requestId: FIRST_REQUEST_ID,
       mergedAnswers: answersWith({ "goal-availability": { weight: 64.5 } }),
       answeredAt: FIRST_ANSWERED_AT,
+      profile: profile(),
     });
 
     // assert
@@ -330,6 +341,7 @@ describe("PostgresOnboardingReviews#recordAnswer", () => {
     expect(database.updates.map((update) => update.table)).toEqual([
       clientOnboardingDetailRequestsTable,
     ]);
+    expect(database.upserted).toEqual([]);
   });
 
   it("merges only the fields she was asked, leaving every other answer alone", async () => {
@@ -346,6 +358,7 @@ describe("PostgresOnboardingReviews#recordAnswer", () => {
         "nutrition-lifestyle": { checkInDay: "Friday" },
       }),
       answeredAt: FIRST_ANSWERED_AT,
+      profile: profile(),
     });
 
     // assert
@@ -376,6 +389,7 @@ describe("PostgresOnboardingReviews#recordAnswer", () => {
       requestId: FIRST_REQUEST_ID,
       mergedAnswers: answersWith({}),
       answeredAt: FIRST_ANSWERED_AT,
+      profile: profile(),
     });
 
     // assert
@@ -479,8 +493,16 @@ function createDatabaseRecordingAnswer(stampedRows: readonly unknown[]) {
     values: Record<string, unknown>;
     condition?: unknown;
   }[] = [];
+  const upserted: { table: unknown; row: unknown }[] = [];
   let transactions = 0;
   const transaction = {
+    insert: (table: unknown) => ({
+      values: (row: unknown) => ({
+        onConflictDoUpdate: async () => {
+          upserted.push({ table, row });
+        },
+      }),
+    }),
     update: (table: unknown) => {
       const update: (typeof updates)[number] = { table, values: {} };
       updates.push(update);
@@ -514,10 +536,32 @@ function createDatabaseRecordingAnswer(stampedRows: readonly unknown[]) {
   return {
     client,
     updates,
+    upserted,
     get transactions() {
       return transactions;
     },
   };
+}
+
+function profile(): ClientProfile {
+  return ClientProfile.reconstitute({
+    clientId: CLIENT_ID,
+    firstName: "Ana",
+    lastName: "Popescu",
+    email: "ana@example.com",
+    dateOfBirth: "1994-03-14",
+    gender: "female",
+    country: "RO",
+    phone: null,
+    heightCm: 168,
+    startingWeightKg: 64.5,
+    currentWeightKg: 64.5,
+    activityLevel: "Lightly active",
+    primaryGoal: "Lose fat",
+    dietaryRestrictions: "None",
+    clientNotes: null,
+    updatedAt: FIRST_ANSWERED_AT,
+  });
 }
 
 function raisedRequest(): DetailRequest {

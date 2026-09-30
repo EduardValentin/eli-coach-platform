@@ -145,7 +145,7 @@ describe.sequential("coach clients pages integration", () => {
   });
 
   describe("a client's page", () => {
-    it("reads an invited client's profile, assessment call, invitation, subscription and the panel line before she has answered", async () => {
+    it("reads an invited client's empty profile, assessment call as booked, invitation, subscription and the panel line before she has answered", async () => {
       // arrange
       const { callId } = await sales.payForCall();
       const clientId = await sales.clientIdPaidFor(callId);
@@ -164,13 +164,35 @@ describe.sequential("coach clients pages integration", () => {
       expect(page).toContain("<title>Ana Popescu | Evoa</title>");
       expect(texts).toContain("Ana Popescu");
       expect(texts).toContain("Back to Clients");
-      expect(texts).toContain("Romania");
-      expect(page).toContain('href="tel:+40712345678"');
+      expect(texts).toContain(
+        "Her profile fills in once she sends her onboarding.",
+      );
+      expect(
+        [
+          "profile-age",
+          "profile-gender",
+          "profile-country",
+          "profile-phone",
+          "profile-height",
+          "profile-starting-weight",
+          "profile-current-weight",
+          "profile-activity",
+          "profile-goal",
+          "profile-restrictions",
+          "profile-notes",
+        ].map((parity) => readingOf(page, parity)),
+      ).toEqual(Array.from({ length: 11 }, () => "—"));
       expect(texts).toContain("Assessment call");
-      expect(texts).toContain("Mon, Oct 19 · 2:00 PM");
-      expect(texts).toContain("Build strength");
-      expect(texts).toContain("Reduced price");
-      expect(texts).toContain("No");
+      expect(readingOf(page, "call-date")).toBe("Mon, Oct 19 · 2:00 PM");
+      expect(readingOf(page, "call-name")).toBe("Ana Popescu");
+      expect(readingOf(page, "call-email")).toBe(ANA.email);
+      expect(readingOf(page, "call-dob")).toBe("14 March 1994");
+      expect(readingOf(page, "call-gender")).toBe("Female");
+      expect(readingOf(page, "call-country")).toBe("Romania");
+      expect(page).toContain('href="tel:+40712345678"');
+      expect(readingOf(page, "call-goal")).toBe("Build strength");
+      expect(readingOf(page, "call-notes")).toBe("—");
+      expect(readingOf(page, "subscription-reduced-price")).toBe("No");
       expect(texts).toContain("Invited 21 October · expires 20 November");
       expect(texts).toContain("Re-send invitation");
       expect(texts).toContain("Invited");
@@ -182,7 +204,7 @@ describe.sequential("coach clients pages integration", () => {
       expect(texts).toContain("She has not sent any measurements yet.");
     });
 
-    it("reads a submitted client's answers for review, without an invitation once her account exists", async () => {
+    it("reads a submitted client's profile and her answers for review, without an invitation once her account exists", async () => {
       // arrange
       await onboarding.admit(ANA, ADMITTED_CLIENT);
       await onboarding.submit(ADMITTED_CLIENT);
@@ -195,9 +217,22 @@ describe.sequential("coach clients pages integration", () => {
       );
 
       // assert
-      const texts = textNodesOf(await visibleDocument(response));
+      const page = await visibleDocument(response);
+      const texts = textNodesOf(page);
 
       expect(response.status).toBe(200);
+      expect(texts).not.toContain(
+        "Her profile fills in once she sends her onboarding.",
+      );
+      expect(readingOf(page, "profile-gender")).toBe("Female");
+      expect(readingOf(page, "profile-country")).toBe("Romania");
+      expect(readingOf(page, "profile-height")).toBe("165 cm");
+      expect(readingOf(page, "profile-starting-weight")).toBe("66.1 kg");
+      expect(readingOf(page, "profile-current-weight")).toBe("66.1 kg");
+      expect(readingOf(page, "profile-activity")).toBe("Mostly sitting");
+      expect(readingOf(page, "profile-goal")).toBe("Lose fat");
+      expect(readingOf(page, "profile-restrictions")).toBe("Lactose, mild");
+      expect(readingOf(page, "profile-notes")).toBe("—");
       expect(texts).toContain("Awaiting review");
       expect(texts).toContain("Review answers");
       expect(texts).toContain("Approve answers");
@@ -259,3 +294,7 @@ describe.sequential("coach clients pages integration", () => {
     });
   });
 });
+
+function readingOf(page: string, parity: string): string | undefined {
+  return new RegExp(`data-parity="${parity}"[^>]*>([^<]*)<`).exec(page)?.[1];
+}

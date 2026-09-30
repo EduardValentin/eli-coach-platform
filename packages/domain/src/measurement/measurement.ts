@@ -34,3 +34,13 @@ export function measurementEntryOf(
 
   return entry;
 }
+
+export function latestMeasurementOf(
+  entries: readonly MeasurementEntry[],
+): MeasurementEntry | null {
+  return entries.reduce<MeasurementEntry | null>(
+    (latest, entry) =>
+      !latest || entry.recordedAt > latest.recordedAt ? entry : latest,
+    null,
+  );
+}

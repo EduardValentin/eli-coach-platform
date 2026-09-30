@@ -14,6 +14,7 @@ import {
   type OnboardingReviewStamps,
   type OnboardingSubmissionStamps,
 } from "@eli-coach-platform/domain/client-onboarding";
+import { ReadClientProfileUseCase } from "@eli-coach-platform/domain/client-profile";
 import type { Clock } from "@eli-coach-platform/domain/shared";
 import {
   SaveUnitPreferenceUseCase,
@@ -25,6 +26,7 @@ import { ClientOnboardingController } from "~/features/client-onboarding/api/cli
 import { OnboardingReviewController } from "~/features/client-onboarding/api/coach/onboarding-review-controller.server";
 import { PostgresClientMeasurements } from "~/features/client-onboarding/data/measurements/client-measurements-reader.server";
 import { PostgresClientOnboardings } from "~/features/client-onboarding/data/onboardings/client-onboardings-repository.server";
+import { PostgresClientProfiles } from "~/features/client-onboarding/data/profiles/client-profiles-repository.server";
 import { RandomDetailRequestIds } from "~/features/client-onboarding/data/reviews/detail-request-ids.server";
 import { PostgresOnboardingReviews } from "~/features/client-onboarding/data/reviews/onboarding-reviews-repository.server";
 import { PostgresClientUnitPreferences } from "~/features/client-onboarding/data/unit-preferences/client-unit-preferences-repository.server";
@@ -55,6 +57,7 @@ export function composeClientOnboardingFeature(
   const onboardings = new PostgresClientOnboardings(handles.database);
   const unitPreferences = new PostgresClientUnitPreferences(handles.database);
   const reviews = new PostgresOnboardingReviews(handles.database);
+  const measurements = new PostgresClientMeasurements(handles.database);
   const stamps = handles.onboardingReviewStamps;
   const reviewPorts = { clients, onboardings, reviews, stamps, incidents };
 
@@ -63,6 +66,7 @@ export function composeClientOnboardingFeature(
       answerOnboardingDetails: new AnswerOnboardingDetailsUseCase({
         ...reviewPorts,
         clock,
+        measurements,
         unitPreferences,
       }),
       clock,
@@ -103,9 +107,12 @@ export function composeClientOnboardingFeature(
         ...reviewPorts,
         clock,
       }),
+      readClientProfile: new ReadClientProfileUseCase({
+        profiles: new PostgresClientProfiles(handles.database),
+      }),
       readOnboardingReview: new ReadOnboardingReviewUseCase({
         ...reviewPorts,
-        measurements: new PostgresClientMeasurements(handles.database),
+        measurements,
       }),
       requestOnboardingDetails: new RequestOnboardingDetailsUseCase({
         ...reviewPorts,

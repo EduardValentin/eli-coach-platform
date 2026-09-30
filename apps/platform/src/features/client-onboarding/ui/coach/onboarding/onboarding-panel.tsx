@@ -40,7 +40,7 @@ import { useOnboardingReviewActions } from "./use-onboarding-review-actions";
 type ReviewedClient = {
   email: string;
   firstName: string;
-  profile: { gender: VisitorGender };
+  gender: VisitorGender;
 };
 
 type OnboardingPanelProps = {
@@ -217,7 +217,7 @@ function SubmittedOnboarding({
   return (
     <div className="space-y-6">
       <OnboardingFacts
-        gender={client.profile.gender}
+        gender={client.gender}
         review={review}
         submitted={submitted}
       />
@@ -247,7 +247,7 @@ function SubmittedOnboarding({
       <OnboardingReviewDialog
         firstName={client.firstName}
         flagged={flagged}
-        gender={client.profile.gender}
+        gender={client.gender}
         forms={submitted.forms}
         onApprove={
           submitted.stage === "in-review"
@@ -304,7 +304,7 @@ export function OnboardingPanel({
         />
       ) : (
         <p className="text-sm text-text-secondary">
-          {answersNotInLine(client.profile.gender)}
+          {answersNotInLine(client.gender)}
         </p>
       )}
     </PortalWidget>

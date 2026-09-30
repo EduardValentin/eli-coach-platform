@@ -10,9 +10,12 @@ const REVIEW_OPENED_AT = new Date("2026-10-24T09:00:00.000Z");
 const CLIENT_ROW = {
   clientId: CLIENT_ID,
   firstName: "Ana",
+  lastName: "Popescu",
   email: "ana@example.com",
   gender: "female",
   dateOfBirth: "1994-03-14",
+  country: "RO",
+  phone: "+40712345678",
   submittedAt: SUBMITTED_AT,
   reviewOpenedAt: REVIEW_OPENED_AT,
   detailsRequestedAt: null,
@@ -23,9 +26,12 @@ const CLIENT_ROW = {
 const ONBOARDING_CLIENT = {
   clientId: CLIENT_ID,
   firstName: "Ana",
+  lastName: "Popescu",
   email: "ana@example.com",
   gender: "female",
   dateOfBirth: "1994-03-14",
+  country: "RO",
+  phone: "+40712345678",
   submittedAt: SUBMITTED_AT,
   reviewStamps: {
     reviewOpenedAt: REVIEW_OPENED_AT,
@@ -36,7 +42,7 @@ const ONBOARDING_CLIENT = {
 };
 
 describe("PostgresOnboardingClients#findByAuthSubjectId", () => {
-  it("reads the client bound to the subject with her submission and review stamps", async () => {
+  it("reads the client bound to the subject with her identity, submission and review stamps", async () => {
     // arrange
     const clients = new PostgresOnboardingClients(
       createDatabaseAnswering([CLIENT_ROW]),

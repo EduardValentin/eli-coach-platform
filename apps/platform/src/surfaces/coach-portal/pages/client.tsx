@@ -14,10 +14,10 @@ import {
 import { clientOnboardingContext } from "~/features/client-onboarding/server/guards/client-onboarding-context.server";
 import { MeasurementsTable } from "~/features/client-onboarding/ui/coach/onboarding/measurements-table";
 import { OnboardingPanel } from "~/features/client-onboarding/ui/coach/onboarding/onboarding-panel";
+import { ClientProfileBlock } from "~/features/client-onboarding/ui/coach/profile/client-profile-block";
 import { COACH_CLIENTS_PATH } from "~/features/coaching-sales/contracts/paths";
 import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
 import { AssessmentCallBlock } from "~/features/coaching-sales/ui/coach/clients/assessment-call-block";
-import { ClientProfileBlock } from "~/features/coaching-sales/ui/coach/clients/client-profile-block";
 import { ClientStatusBadge } from "~/features/coaching-sales/ui/coach/clients/client-status-badge";
 import { InvitationBlock } from "~/features/coaching-sales/ui/coach/clients/invitation-block";
 import { clientFullName } from "~/features/coaching-sales/ui/coach/clients/roster-listing";
@@ -32,16 +32,16 @@ export async function loader(args: LoaderFunctionArgs) {
     throw new Response("Not Found", { status: CLIENT_NOT_FOUND_STATUS });
   }
 
-  const [client, review] = await Promise.all([
+  const coachReview = args.context.get(clientOnboardingContext).coachReview;
+  const [client, review, profile] = await Promise.all([
     args.context
       .get(coachingSalesContext)
       .coachClients.loadClient(args, clientId),
-    args.context
-      .get(clientOnboardingContext)
-      .coachReview.loadReview(args, clientId),
+    coachReview.loadReview(args, clientId),
+    coachReview.loadProfile(args, clientId),
   ]);
 
-  return { client, review };
+  return { client, review, profile };
 }
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => [
@@ -59,7 +59,7 @@ export function ErrorBoundary() {
 }
 
 export default function CoachClientRoute() {
-  const { client, review } = useLoaderData<typeof loader>();
+  const { client, review, profile } = useLoaderData<typeof loader>();
   const name = clientFullName(client);
 
   return (
@@ -81,13 +81,12 @@ export default function CoachClientRoute() {
         </div>
       </header>
 
-      <ClientProfileBlock client={client} />
-      <AssessmentCallBlock client={client} />
+      <ClientProfileBlock gender={client.gender} profile={profile} />
       {client.invitation && (
         <InvitationBlock
           clientId={client.clientId}
           email={client.email}
-          gender={client.profile.gender}
+          gender={client.gender}
           invitation={client.invitation}
         />
       )}
@@ -99,15 +98,16 @@ export default function CoachClientRoute() {
       {client.subscription && (
         <SubscriptionSummary
           className="mb-8"
-          gender={client.profile.gender}
+          gender={client.gender}
           subscription={client.subscription}
         />
       )}
       <MeasurementsTable
-        gender={client.profile.gender}
+        gender={client.gender}
         heightCm={review.statedHeightCm}
         measurements={review.measurements}
       />
+      <AssessmentCallBlock client={client} />
     </div>
   );
 }

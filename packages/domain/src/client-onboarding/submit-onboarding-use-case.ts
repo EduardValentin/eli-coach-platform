@@ -1,3 +1,4 @@
+import { ClientProfile } from "../client-profile";
 import type { Clock } from "../shared";
 import {
   measureUnitsOf,
@@ -16,6 +17,7 @@ import type { ClientOnboardingSource } from "./client-onboarding-source";
 import type { OnboardingAnswersByForm } from "./onboarding-answers";
 import type { OnboardingClients } from "./onboarding-clients";
 import type { OnboardingConsents } from "./onboarding-consents";
+import { profileFactsOf } from "./onboarding-profile-facts";
 import type { OnboardingSubmissionStamps } from "./onboarding-submission-stamps";
 import { screeningOutcome } from "./onboarding-submission";
 
@@ -92,6 +94,12 @@ export class SubmitOnboardingUseCase {
       clientId: client.clientId,
       submission: outcome.submission,
       measurementEntry: outcome.measurementEntry,
+      profile: ClientProfile.fromOnboarding({
+        identity: client,
+        facts: profileFactsOf(outcome.submission.answers),
+        latestMeasurement: outcome.measurementEntry,
+        now,
+      }),
     });
 
     if (recorded === "already-submitted") {

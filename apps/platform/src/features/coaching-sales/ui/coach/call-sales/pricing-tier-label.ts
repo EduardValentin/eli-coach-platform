@@ -7,15 +7,6 @@ const PRICING_TIER_LABELS: Readonly<Record<PriceTier, string>> = {
   regular: "Regular",
 };
 
-const REDUCED_PRICE_LABELS: Readonly<Record<PriceTier, string>> = {
-  reduced: "Yes",
-  regular: "No",
-};
-
 export function pricingTierLabel(tier: PriceTier): string {
   return PRICING_TIER_LABELS[tier];
-}
-
-export function reducedPriceLabel(tier: PriceTier): string {
-  return REDUCED_PRICE_LABELS[tier];
 }

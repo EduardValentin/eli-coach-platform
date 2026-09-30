@@ -9,9 +9,11 @@ import type {
   OnboardingDraft,
   OnboardingSubmission,
 } from "@eli-coach-platform/domain/client-onboarding";
+import type { ClientProfile } from "@eli-coach-platform/domain/client-profile";
 import type { MeasurementEntry } from "@eli-coach-platform/domain/measurement";
 import { eq, sql, type SQL } from "drizzle-orm";
 
+import { saveClientProfile } from "~/features/client-onboarding/data/profiles/client-profiles-repository.server";
 import {
   clientMeasurementsTable,
   clientOnboardingConstraints,
@@ -113,6 +115,7 @@ export class PostgresClientOnboardings
     clientId: string;
     submission: OnboardingSubmission;
     measurementEntry: MeasurementEntry;
+    profile: ClientProfile;
   }): Promise<"recorded" | "already-submitted"> {
     const { clientId, measurementEntry, submission } = input;
 
@@ -133,6 +136,7 @@ export class PostgresClientOnboardings
           thighCm: measurementEntry.thighCm ?? null,
           armCm: measurementEntry.armCm ?? null,
         });
+        await saveClientProfile(transaction, input.profile);
         await transaction
           .delete(clientOnboardingDraftsTable)
           .where(eq(clientOnboardingDraftsTable.clientId, clientId));

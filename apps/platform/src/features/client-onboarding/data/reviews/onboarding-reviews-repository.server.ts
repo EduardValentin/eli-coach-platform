@@ -10,6 +10,7 @@ import {
 } from "@eli-coach-platform/domain/client-onboarding";
 import { and, asc, eq, isNull, sql, type SQL } from "drizzle-orm";
 
+import { saveClientProfile } from "~/features/client-onboarding/data/profiles/client-profiles-repository.server";
 import {
   clientOnboardingConstraints,
   clientOnboardingDetailRequestsTable,
@@ -120,6 +121,7 @@ export class PostgresOnboardingReviews implements OnboardingReviews {
         .update(clientOnboardingSubmissionsTable)
         .set({ answers: mergedAnswersExpression(input.mergedAnswers) })
         .where(eq(clientOnboardingSubmissionsTable.clientId, input.clientId));
+      await saveClientProfile(transaction, input.profile);
     });
   }
 

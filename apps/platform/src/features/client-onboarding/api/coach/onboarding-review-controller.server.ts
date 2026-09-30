@@ -4,11 +4,16 @@ import type {
   ReadOnboardingReviewUseCase,
   RequestOnboardingDetailsUseCase,
 } from "@eli-coach-platform/domain/client-onboarding";
+import type { ReadClientProfileUseCase } from "@eli-coach-platform/domain/client-profile";
 import { createBadRequestResponse } from "@eli-coach-platform/infrastructure/http/server";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 
 import { requireApiAccount } from "~/features/accounts/server/guards/require-account.server";
 import { requirePortalAccess } from "~/features/accounts/server/guards/require-portal-access.server";
+import {
+  clientProfileSchema,
+  type ClientProfileView,
+} from "~/features/client-onboarding/contracts/client-profile";
 import {
   clientIdSchema,
   detailRequestSchema,
@@ -29,6 +34,7 @@ import {
 type OnboardingReviewControllerOptions = {
   approveOnboardingAnswers: ApproveOnboardingAnswersUseCase;
   openOnboardingReview: OpenOnboardingReviewUseCase;
+  readClientProfile: ReadClientProfileUseCase;
   readOnboardingReview: ReadOnboardingReviewUseCase;
   requestOnboardingDetails: RequestOnboardingDetailsUseCase;
 };
@@ -85,6 +91,22 @@ export class OnboardingReviewController {
       measurements: presentMeasurements(reading.measurements),
       statedHeightCm: reading.statedHeightCm,
     });
+  }
+
+  async loadProfile(
+    args: LoaderFunctionArgs,
+    clientId: string,
+  ): Promise<ClientProfileView | null> {
+    requirePortalAccess(args, { role: "COACH" });
+    const target = clientIdSchema.safeParse(clientId);
+
+    if (!target.success) {
+      throw notFoundResponse();
+    }
+
+    const profile = await this.options.readClientProfile.execute(target.data);
+
+    return profile ? clientProfileSchema.parse(profile) : null;
   }
 
   async openReview(args: ActionFunctionArgs): Promise<Response> {

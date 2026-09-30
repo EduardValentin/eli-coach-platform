@@ -23,9 +23,6 @@ const CLIENT_ROW = {
   answersApprovedAt: null,
   authSubjectId: "user_ana",
   email: "ana@example.com",
-  dateOfBirth: "1994-03-14",
-  country: "RO",
-  phone: "+40700000000",
   assessmentCallId: CALL_ID,
   bundleId: "3-months",
   months: 3,
@@ -51,10 +48,7 @@ const ROSTER_ENTRY = {
   accountBound: true,
   profile: {
     email: "ana@example.com",
-    dateOfBirth: "1994-03-14",
     gender: "female",
-    country: "RO",
-    phone: "+40700000000",
     assessmentCallId: CALL_ID,
   },
   subscription: {

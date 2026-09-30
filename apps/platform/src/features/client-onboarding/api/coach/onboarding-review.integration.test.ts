@@ -287,7 +287,7 @@ describe.sequential("onboarding review integration", () => {
     );
   });
 
-  it("merges only her asked answer into her submission and returns her to review", async () => {
+  it("merges only her asked answer into her submission, rebuilds her profile from it and returns her to review", async () => {
     // arrange
     const clientId = await clientAskedAboutWeight();
     await rig.holdClock(ANSWERED_INSTANT);
@@ -315,6 +315,17 @@ describe.sequential("onboarding review integration", () => {
       detailsAnsweredAt: ANSWERED_INSTANT,
       answersApprovedAt: null,
     });
+    expect(await onboarding.profileRowOf(clientId)).toEqual(
+      expect.objectContaining({
+        heightCm: "165.0",
+        startingWeightKg: "64.50",
+        currentWeightKg: "66.10",
+        primaryGoal: "Lose fat",
+        dietaryRestrictions: "Lactose, mild",
+        createdAt: CALL_ENDED_INSTANT,
+        updatedAt: ANSWERED_INSTANT,
+      }),
+    );
   });
 
   it("lands her back in review after a second request and answer", async () => {

@@ -33,6 +33,9 @@ const NO_STAMPS: ReviewStamps = {
 const CLIENT: OnboardingClient = {
   clientId: "client-1",
   firstName: "Ana",
+  lastName: "Popescu",
+  country: "RO",
+  phone: "+40712345678",
   email: "ana@example.com",
   gender: "female",
   dateOfBirth: "1994-03-14",

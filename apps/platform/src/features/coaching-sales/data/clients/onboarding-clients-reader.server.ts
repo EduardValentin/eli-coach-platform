@@ -26,9 +26,12 @@ export class PostgresOnboardingClients
       .select({
         clientId: clientsTable.id,
         firstName: clientsTable.firstName,
+        lastName: clientsTable.lastName,
         email: clientsTable.email,
         gender: clientsTable.gender,
         dateOfBirth: clientsTable.dateOfBirth,
+        country: clientsTable.country,
+        phone: clientsTable.phone,
         submittedAt: clientsTable.onboardingSubmittedAt,
         reviewOpenedAt: clientsTable.reviewOpenedAt,
         detailsRequestedAt: clientsTable.detailsRequestedAt,
@@ -46,9 +49,12 @@ export class PostgresOnboardingClients
     return {
       clientId: row.clientId,
       firstName: row.firstName,
+      lastName: row.lastName,
       email: row.email,
       gender: row.gender,
       dateOfBirth: row.dateOfBirth,
+      country: row.country,
+      phone: row.phone,
       submittedAt: row.submittedAt,
       reviewStamps: {
         reviewOpenedAt: row.reviewOpenedAt,

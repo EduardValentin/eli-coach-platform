@@ -1,3 +1,4 @@
+import { ABSENT_VALUE } from "@eli-coach-platform/ui/lib";
 import {
   Avatar,
   buttonVariants,
@@ -18,7 +19,6 @@ import type { RosterClient } from "~/features/coaching-sales/contracts/coach-cli
 import { coachClientPath } from "~/features/coaching-sales/contracts/paths";
 import { useCalendarDayTimeZone } from "~/features/coaching-sales/ui/shared/calendar-day-format";
 
-import { ABSENT_VALUE } from "./absent-value";
 import { ClientStatusBadge } from "./client-status-badge";
 import {
   formatJoinDate,

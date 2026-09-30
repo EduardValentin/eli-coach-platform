@@ -1,3 +1,5 @@
+import type { ClientProfile } from "../client-profile";
+
 import type { DetailRequest } from "./detail-request";
 import type { OnboardingAnswersByForm } from "./onboarding-answers";
 
@@ -17,6 +19,7 @@ type RecordDetailsAnswer = {
   requestId: string;
   mergedAnswers: OnboardingAnswersByForm;
   answeredAt: Date;
+  profile: ClientProfile;
 };
 
 export interface OnboardingReviews {

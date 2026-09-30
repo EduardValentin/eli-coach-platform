@@ -94,7 +94,7 @@ export class CoachClientsController {
 
     return coachClientSchema.parse({
       ...identityOf(record),
-      profile: profileOf(record),
+      gender: record.profile.gender,
       assessmentCall: assessmentCallOf(record),
       subscription: subscriptionOf(record),
       invitation: invitationOf(record, invitation),
@@ -135,19 +135,10 @@ function identityOf(client: ListedClient) {
   };
 }
 
-function profileOf(record: ClientRecord) {
-  return {
-    dateOfBirth: record.profile.dateOfBirth,
-    gender: record.profile.gender,
-    country: record.profile.country,
-    phone: record.profile.phone,
-  };
-}
-
 function assessmentCallOf(record: ClientRecord) {
-  const { startsAt, primaryGoal, notes } = record.assessmentCall;
+  const { startsAt, ...booking } = record.assessmentCall;
 
-  return { startsAt: startsAt.toISOString(), primaryGoal, notes };
+  return { ...booking, startsAt: startsAt.toISOString() };
 }
 
 function invitationOf(
@@ -183,7 +174,7 @@ function subscriptionOf(client: ListedClient) {
   return {
     bundleId,
     months,
-    tier,
+    reducedPrice: tier === "reduced",
     paidAt: paidAt.toISOString(),
     workStartsOn:
       programWorkStart({ startChoice, purchasedAt: paidAt })?.toISOString() ??

@@ -51,6 +51,7 @@ type AnswerDetailsOutcome =
       status: "answered";
       request: DetailRequest;
       mergedAnswers: OnboardingAnswersByForm;
+      answers: OnboardingAnswersByForm;
       review: OnboardingReview;
     }
   | { status: "no-open-request" }
@@ -249,6 +250,7 @@ export class OnboardingReview {
       status: "answered",
       request: answered,
       mergedAnswers: askedAnswers,
+      answers: overlaidAnswers,
       review: this.with({
         submission: { ...this.submission, answers: overlaidAnswers },
         requests: this.requests.map((existing) =>

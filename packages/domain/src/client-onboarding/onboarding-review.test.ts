@@ -33,6 +33,9 @@ const NO_STAMPS: ReviewStamps = {
 const CLIENT: OnboardingClient = {
   clientId: "client-1",
   firstName: "Ana",
+  lastName: "Popescu",
+  country: "RO",
+  phone: "+40712345678",
   email: "ana@example.com",
   gender: "female",
   dateOfBirth: "1994-03-14",
@@ -367,6 +370,7 @@ describe("OnboardingReview#answer", () => {
       height: 168,
       goalWeight: 66,
     });
+    expect(outcome.answers).toEqual(outcome.review.submission?.answers);
   });
 
   it("clears an asked answer that her other asked answer made unreachable", () => {

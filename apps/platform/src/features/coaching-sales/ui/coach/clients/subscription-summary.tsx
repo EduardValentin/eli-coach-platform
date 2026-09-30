@@ -1,4 +1,5 @@
 import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
+import { ABSENT_VALUE } from "@eli-coach-platform/ui/lib";
 import { PortalWidget, Reading } from "@eli-coach-platform/ui/portal";
 import { CreditCard } from "lucide-react";
 
@@ -10,9 +11,11 @@ import {
   useCalendarDayTimeZone,
 } from "~/features/coaching-sales/ui/shared/calendar-day-format";
 
-import { ABSENT_VALUE } from "./absent-value";
-
 const IMMEDIATE_START_LABEL = "Immediate start";
+
+const REDUCED_PRICE_ANSWER = "Yes";
+
+const REGULAR_PRICE_ANSWER = "No";
 
 type SubscriptionSummaryProps = {
   gender: VisitorGender;
@@ -84,6 +87,16 @@ export function SubscriptionSummary({
           label="Renews on"
           value={renewsBeforeProgramLabel(gender)}
           valueParity="subscription-renews"
+        />
+        <Reading
+          as="dl-item"
+          label="Reduced price"
+          value={
+            subscription.reducedPrice
+              ? REDUCED_PRICE_ANSWER
+              : REGULAR_PRICE_ANSWER
+          }
+          valueParity="subscription-reduced-price"
         />
       </dl>
     </PortalWidget>

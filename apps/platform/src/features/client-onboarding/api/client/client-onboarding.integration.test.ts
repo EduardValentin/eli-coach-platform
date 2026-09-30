@@ -192,7 +192,7 @@ describe.sequential("client onboarding integration", () => {
     expect(page).not.toContain("(cm)");
   });
 
-  it("records her complete submission and closes the door behind her", async () => {
+  it("records her complete submission with her profile and closes the door behind her", async () => {
     // arrange
     await admitInvitedClient(ANA);
     await putDraft(INVITED_CLIENT, {
@@ -226,6 +226,24 @@ describe.sequential("client onboarding integration", () => {
       expect.objectContaining({ weightKg: "66.10", waistCm: "74.0" }),
     ]);
     expect(await draftRowCountOf(client.id)).toBe(0);
+    expect(await onboarding.profileRowOf(client.id)).toEqual({
+      firstName: "Ana",
+      lastName: "Popescu",
+      email: ANA.email,
+      dateOfBirth: "1994-03-14",
+      gender: "female",
+      country: "RO",
+      phone: "+40712345678",
+      heightCm: "165.0",
+      startingWeightKg: "66.10",
+      currentWeightKg: "66.10",
+      activityLevel: "Mostly sitting",
+      primaryGoal: "Lose fat",
+      dietaryRestrictions: "Lactose, mild",
+      clientNotes: null,
+      createdAt: CALL_ENDED_INSTANT,
+      updatedAt: CALL_ENDED_INSTANT,
+    });
     expect(client.onboardingSubmittedAt).toEqual(CALL_ENDED_INSTANT);
     expect(welcomeAfterSubmission.status).toBe(302);
     expect(welcomeAfterSubmission.headers.get("location")).toBe(
@@ -306,6 +324,7 @@ describe.sequential("client onboarding integration", () => {
     });
     const client = await clientRowOf(INVITED_CLIENT);
     expect(await submissionRowCountOf(client.id)).toBe(0);
+    expect(await onboarding.profileRowOf(client.id)).toBeUndefined();
   });
 
   it("shows the client portal on the public home once she has submitted", async () => {

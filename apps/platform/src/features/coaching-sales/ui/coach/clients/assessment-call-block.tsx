@@ -1,3 +1,4 @@
+import { ABSENT_VALUE } from "@eli-coach-platform/ui/lib";
 import { PortalWidget, Reading } from "@eli-coach-platform/ui/portal";
 import { Video } from "lucide-react";
 
@@ -5,15 +6,22 @@ import {
   formatClockTime,
   formatShortDay,
 } from "~/features/assessment-calls/contracts/call-moment";
-import { labelForPrimaryGoal } from "~/features/assessment-calls/contracts/visitor-profile";
+import { findCountry } from "~/features/assessment-calls/contracts/countries";
+import {
+  labelForGender,
+  labelForPrimaryGoal,
+} from "~/features/assessment-calls/contracts/visitor-profile";
 import type { CoachClient } from "~/features/coaching-sales/contracts/coach-clients";
-import { reducedPriceLabel } from "~/features/coaching-sales/ui/coach/call-sales/pricing-tier-label";
-import { useCalendarDayTimeZone } from "~/features/coaching-sales/ui/shared/calendar-day-format";
+import {
+  formatDayMonthYear,
+  useCalendarDayTimeZone,
+} from "~/features/coaching-sales/ui/shared/calendar-day-format";
+import { PhoneLink } from "~/features/coaching-sales/ui/shared/phone-link";
 
-import { ABSENT_VALUE } from "./absent-value";
+const CALENDAR_DATE_TIME_ZONE = "UTC";
 
 type AssessmentCallBlockProps = {
-  client: Pick<CoachClient, "assessmentCall" | "subscription">;
+  client: Pick<CoachClient, "assessmentCall">;
 };
 
 function shortCallMoment(startsAt: string, timeZone: string): string {
@@ -23,7 +31,7 @@ function shortCallMoment(startsAt: string, timeZone: string): string {
 }
 
 export function AssessmentCallBlock({ client }: AssessmentCallBlockProps) {
-  const { assessmentCall, subscription } = client;
+  const { assessmentCall } = client;
   const timeZone = useCalendarDayTimeZone();
 
   return (
@@ -46,17 +54,50 @@ export function AssessmentCallBlock({ client }: AssessmentCallBlockProps) {
         />
         <Reading
           as="dl-item"
-          label="Primary goal"
-          value={labelForPrimaryGoal(assessmentCall.primaryGoal)}
-          valueParity="call-goal"
+          label="Name"
+          value={`${assessmentCall.firstName} ${assessmentCall.lastName}`.trim()}
+          valueParity="call-name"
         />
         <Reading
           as="dl-item"
-          label="Reduced price"
+          label="Email"
+          value={assessmentCall.email}
+          valueParity="call-email"
+        />
+        <Reading
+          as="dl-item"
+          label="Date of birth"
+          value={formatDayMonthYear(
+            assessmentCall.dateOfBirth,
+            CALENDAR_DATE_TIME_ZONE,
+          )}
+          valueParity="call-dob"
+        />
+        <Reading
+          as="dl-item"
+          label="Gender"
+          value={labelForGender(assessmentCall.gender)}
+          valueParity="call-gender"
+        />
+        <Reading
+          as="dl-item"
+          label="Country"
           value={
-            subscription ? reducedPriceLabel(subscription.tier) : ABSENT_VALUE
+            findCountry(assessmentCall.country)?.name ?? assessmentCall.country
           }
-          valueParity="call-reduced-price"
+          valueParity="call-country"
+        />
+        <Reading
+          as="dl-item"
+          label="Phone"
+          value={<PhoneLink phone={assessmentCall.phone} />}
+          valueParity="call-phone"
+        />
+        <Reading
+          as="dl-item"
+          label="Primary goal"
+          value={labelForPrimaryGoal(assessmentCall.primaryGoal)}
+          valueParity="call-goal"
         />
         <Reading
           as="dl-item"

@@ -33,10 +33,7 @@ function entry(
     accountBound: overrides.accountBound ?? true,
     profile: {
       email: "ana@example.com",
-      dateOfBirth: "1994-03-14",
       gender: "female",
-      country: "RO",
-      phone: "+40700000000",
       assessmentCallId: "call-1",
     },
     subscription: {
@@ -114,15 +111,15 @@ describe("ReadClientRecordUseCase", () => {
       findById: vi.fn().mockResolvedValue(
         AssessmentCall.reconstitute({
           id: "call-1",
-          firstName: "Ana",
+          firstName: "Ana-Maria",
           lastName: "Popescu",
-          visitorEmail: "ana@example.com",
+          visitorEmail: "ana.booked@example.com",
           visitorNotes,
           dateOfBirth: "1994-03-14",
           gender: "female",
           primaryGoal: "lose_weight",
-          country: "RO",
-          phone: null,
+          country: "MD",
+          phone: "+37360000000",
           startsAt: new Date("2026-09-25T15:00:00.000Z"),
           visitorTimeZone: "Europe/Bucharest",
           coachTimeZone: "Europe/Bucharest",
@@ -132,7 +129,7 @@ describe("ReadClientRecordUseCase", () => {
     } satisfies AssessmentCallReader;
   }
 
-  it("reads her record with her status and the call she booked: when, her goal and her notes", async () => {
+  it("reads her record with her status and the call she booked: when, who booked it, her goal and her notes", async () => {
     // arrange
     const found = entry({ onboardingSubmittedAt: SUBMITTED_AT });
     const calls = callReader("I train at home.");
@@ -148,6 +145,13 @@ describe("ReadClientRecordUseCase", () => {
       status: "awaiting-review",
       assessmentCall: {
         startsAt: new Date("2026-09-25T15:00:00.000Z"),
+        firstName: "Ana-Maria",
+        lastName: "Popescu",
+        email: "ana.booked@example.com",
+        dateOfBirth: "1994-03-14",
+        gender: "female",
+        country: "MD",
+        phone: "+37360000000",
         primaryGoal: "lose_weight",
         notes: "I train at home.",
       },

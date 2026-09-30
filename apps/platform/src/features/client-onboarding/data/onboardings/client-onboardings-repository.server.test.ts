@@ -4,6 +4,7 @@ import {
   type OnboardingAnswersByForm,
   type OnboardingSubmission,
 } from "@eli-coach-platform/domain/client-onboarding";
+import { ClientProfile } from "@eli-coach-platform/domain/client-profile";
 import type { MeasurementEntry } from "@eli-coach-platform/domain/measurement";
 import type { SQL } from "drizzle-orm";
 import { PgDialect } from "drizzle-orm/pg-core";
@@ -13,6 +14,7 @@ import {
   clientMeasurementsTable,
   clientOnboardingDraftsTable,
   clientOnboardingSubmissionsTable,
+  clientProfilesTable,
 } from "~/features/client-onboarding/data/schema.server";
 
 import { PostgresClientOnboardings } from "./client-onboardings-repository.server";
@@ -190,7 +192,7 @@ describe("PostgresClientOnboardings#saveDraft", () => {
 });
 
 describe("PostgresClientOnboardings#recordSubmission", () => {
-  it("records her submission and first measurement and clears her draft in one transaction", async () => {
+  it("records her submission, first measurement and profile and clears her draft in one transaction", async () => {
     // arrange
     const database = createDatabaseRecordingTransaction();
     const onboardings = new PostgresClientOnboardings(database.client);
@@ -200,6 +202,7 @@ describe("PostgresClientOnboardings#recordSubmission", () => {
       clientId: CLIENT_ID,
       submission: submission(),
       measurementEntry: measurementEntry(),
+      profile: profile(),
     });
 
     // assert
@@ -230,6 +233,12 @@ describe("PostgresClientOnboardings#recordSubmission", () => {
         },
       },
     ]);
+    expect(database.upserted).toEqual([
+      {
+        table: clientProfilesTable,
+        row: { ...profile().toSnapshot(), createdAt: SUBMITTED_AT },
+      },
+    ]);
     expect(database.deletedFrom).toEqual([clientOnboardingDraftsTable]);
   });
 
@@ -246,6 +255,7 @@ describe("PostgresClientOnboardings#recordSubmission", () => {
       clientId: CLIENT_ID,
       submission: submission(),
       measurementEntry: measurementEntry(),
+      profile: profile(),
     });
 
     // assert
@@ -264,6 +274,7 @@ describe("PostgresClientOnboardings#recordSubmission", () => {
       clientId: CLIENT_ID,
       submission: submission(),
       measurementEntry: measurementEntry(),
+      profile: profile(),
     });
 
     // assert
@@ -285,6 +296,7 @@ describe("PostgresClientOnboardings#recordSubmission", () => {
       clientId: CLIENT_ID,
       submission: submission(),
       measurementEntry: measurementEntry(),
+      profile: profile(),
     });
 
     // assert
@@ -320,6 +332,27 @@ function measurementEntry(): MeasurementEntry {
     waistCm: 72,
     hipsCm: 96.5,
   };
+}
+
+function profile(): ClientProfile {
+  return ClientProfile.reconstitute({
+    clientId: CLIENT_ID,
+    firstName: "Ana",
+    lastName: "Popescu",
+    email: "ana@example.com",
+    dateOfBirth: "1994-03-14",
+    gender: "female",
+    country: "RO",
+    phone: null,
+    heightCm: 168,
+    startingWeightKg: 64.5,
+    currentWeightKg: 64.5,
+    activityLevel: "Lightly active",
+    primaryGoal: "Lose fat",
+    dietaryRestrictions: "None",
+    clientNotes: null,
+    updatedAt: SUBMITTED_AT,
+  });
 }
 
 function uniqueViolation(constraint: string): Error {
@@ -375,12 +408,19 @@ function createDatabaseRecordingDraftWrites(writtenRows: readonly unknown[]) {
 function createDatabaseRecordingTransaction() {
   const deletedFrom: unknown[] = [];
   const inserted: { table: unknown; row: unknown }[] = [];
+  const upserted: { table: unknown; row: unknown }[] = [];
   const transactions: unknown[] = [];
   const transaction = {
     insert: (table: unknown) => ({
-      values: async (row: unknown) => {
-        inserted.push({ table, row });
-      },
+      values: (row: unknown) => ({
+        then: (resolve: () => void) => {
+          inserted.push({ table, row });
+          resolve();
+        },
+        onConflictDoUpdate: async () => {
+          upserted.push({ table, row });
+        },
+      }),
     }),
     delete: (table: unknown) => {
       deletedFrom.push(table);
@@ -396,7 +436,7 @@ function createDatabaseRecordingTransaction() {
     },
   } as unknown as DatabaseClient;
 
-  return { client, deletedFrom, inserted, transactions };
+  return { client, deletedFrom, inserted, transactions, upserted };
 }
 
 function createDatabaseFailingTransactionWith(failure: Error): DatabaseClient {

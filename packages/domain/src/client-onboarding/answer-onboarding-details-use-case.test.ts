@@ -1,7 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { ClientProfile } from "../client-profile";
+import type { MeasurementEntry } from "../measurement";
 import type { ClientUnitPreferences } from "../unit-preference";
 import { AnswerOnboardingDetailsUseCase } from "./answer-onboarding-details-use-case";
+import type { ClientMeasurementsSource } from "./client-measurements-source";
 import type { ClientOnboardingIncidents } from "./client-onboarding-incidents";
 import type { ClientOnboardingSource } from "./client-onboarding-source";
 import { DetailRequest } from "./detail-request";
@@ -30,6 +33,9 @@ const REQUESTED_STAMPS: ReviewStamps = {
 const CLIENT: OnboardingClient = {
   clientId: "client-1",
   firstName: "Ana",
+  lastName: "Popescu",
+  country: "RO",
+  phone: "+40712345678",
   email: "ana@example.com",
   gender: "female",
   dateOfBirth: "1994-03-14",
@@ -93,6 +99,7 @@ function answerPorts(
     client?: OnboardingClient | null;
     requests?: DetailRequest[];
     stamps?: OnboardingReviewStamps;
+    measurements?: MeasurementEntry[];
   } = {},
 ) {
   return {
@@ -110,6 +117,9 @@ function answerPorts(
         .mockResolvedValue({ draft: null, submission: SUBMISSION }),
     } satisfies ClientOnboardingSource,
     reviews: createReviews(overrides.requests ?? [askedRequest()]),
+    measurements: {
+      listByClientId: vi.fn().mockResolvedValue(overrides.measurements ?? []),
+    } satisfies ClientMeasurementsSource,
     unitPreferences: {
       findByClientId: vi.fn().mockResolvedValue(null),
       save: vi.fn().mockResolvedValue(undefined),
@@ -146,6 +156,7 @@ describe("AnswerOnboardingDetailsUseCase", () => {
         "goal-availability": { weight: 72 },
       },
       answeredAt: NOW,
+      profile: expect.any(ClientProfile),
     });
     expect(ports.stamps.record).toHaveBeenCalledWith({
       clientId: CLIENT.clientId,
@@ -155,6 +166,48 @@ describe("AnswerOnboardingDetailsUseCase", () => {
       clientId: CLIENT.clientId,
       questionCount: 1,
     });
+  });
+
+  it("rebuilds her profile from her answers with the new ones merged in and her latest measurement", async () => {
+    // arrange
+    const ports = answerPorts({
+      measurements: [
+        { recordedAt: SUBMITTED_AT, weightKg: 70, waistCm: 74 },
+        { recordedAt: ASKED_AT, weightKg: 69.2, waistCm: 73 },
+        { recordedAt: OPENED_AT, weightKg: 69.8, waistCm: 73.5 },
+      ],
+    });
+    const useCase = new AnswerOnboardingDetailsUseCase(ports);
+
+    // act
+    await useCase.execute({
+      authSubjectId: "user_ana",
+      answers: { "goal-availability": { weight: 72 } },
+    });
+
+    // assert
+    const [recorded] = ports.reviews.recordAnswer.mock.calls[0];
+    expect(recorded.profile.toSnapshot()).toEqual({
+      clientId: CLIENT.clientId,
+      firstName: "Ana",
+      lastName: "Popescu",
+      email: "ana@example.com",
+      dateOfBirth: "1994-03-14",
+      gender: "female",
+      country: "RO",
+      phone: "+40712345678",
+      heightCm: 168,
+      startingWeightKg: 72,
+      currentWeightKg: 69.2,
+      activityLevel: null,
+      primaryGoal: null,
+      dietaryRestrictions: "None",
+      clientNotes: null,
+      updatedAt: NOW,
+    });
+    expect(ports.measurements.listByClientId).toHaveBeenCalledWith(
+      CLIENT.clientId,
+    );
   });
 
   it("records the answer before the stamp and re-applies the stamp when the first write failed", async () => {

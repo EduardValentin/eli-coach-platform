@@ -6,6 +6,25 @@ export type OnboardingFormAnswers = Record<string, unknown>;
 
 export type OnboardingAnswers = Record<string, OnboardingFormAnswers>;
 
+export type ClientProfileRow = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  dateOfBirth: string;
+  gender: string;
+  country: string;
+  phone: string | null;
+  heightCm: string | null;
+  startingWeightKg: string | null;
+  currentWeightKg: string | null;
+  activityLevel: string | null;
+  primaryGoal: string | null;
+  dietaryRestrictions: string;
+  clientNotes: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
 export type OnboardingConsentInstants = {
   specialCategoryAt: string | null;
   disclaimerAt: string | null;
@@ -66,6 +85,15 @@ export class ClientOnboardingJourney {
     if (response.status !== 200) {
       throw new Error(`Her submission answered ${response.status}.`);
     }
+  }
+
+  async profileRowOf(clientId: string): Promise<ClientProfileRow | undefined> {
+    const [row] = await this.rig.suite.postgres.queryRows<ClientProfileRow>({
+      sql: 'select first_name as "firstName", last_name as "lastName", email, date_of_birth::text as "dateOfBirth", gender, country, phone, height_cm as "heightCm", starting_weight_kg as "startingWeightKg", current_weight_kg as "currentWeightKg", activity_level as "activityLevel", primary_goal as "primaryGoal", dietary_restrictions as "dietaryRestrictions", client_notes as "clientNotes", created_at as "createdAt", updated_at as "updatedAt" from app.client_profiles where client_id = $1',
+      values: [clientId],
+    });
+
+    return row;
   }
 
   async clientIdOf(session: AccountSession): Promise<string> {

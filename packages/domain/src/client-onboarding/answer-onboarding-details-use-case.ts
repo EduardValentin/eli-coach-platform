@@ -1,3 +1,5 @@
+import { ClientProfile } from "../client-profile";
+import { latestMeasurementOf } from "../measurement";
 import type { Clock } from "../shared";
 import {
   measureUnitsOf,
@@ -5,11 +7,13 @@ import {
   type ClientUnitPreferences,
 } from "../unit-preference";
 
+import type { ClientMeasurementsSource } from "./client-measurements-source";
 import type { OnboardingSubmissionProblem } from "./client-onboarding";
 import type { ClientOnboardingIncidents } from "./client-onboarding-incidents";
 import type { ClientOnboardingSource } from "./client-onboarding-source";
 import type { OnboardingAnswersByForm } from "./onboarding-answers";
 import type { OnboardingClient, OnboardingClients } from "./onboarding-clients";
+import { profileFactsOf } from "./onboarding-profile-facts";
 import { OnboardingReview } from "./onboarding-review";
 import type { OnboardingReviewStamps } from "./onboarding-review-stamps";
 import type { OnboardingReviews } from "./onboarding-reviews";
@@ -29,6 +33,7 @@ type AnswerOnboardingDetailsUseCaseOptions = {
   clients: OnboardingClients;
   onboardings: ClientOnboardingSource;
   reviews: OnboardingReviews;
+  measurements: ClientMeasurementsSource;
   unitPreferences: ClientUnitPreferences;
   stamps: OnboardingReviewStamps;
   clock: Clock;
@@ -81,11 +86,19 @@ export class AnswerOnboardingDetailsUseCase {
       return outcome;
     }
 
+    const measurements =
+      await this.options.measurements.listByClientId(clientId);
     await this.options.reviews.recordAnswer({
       clientId,
       requestId: outcome.request.id,
       mergedAnswers: outcome.mergedAnswers,
       answeredAt: now,
+      profile: ClientProfile.fromOnboarding({
+        identity: client,
+        facts: profileFactsOf(outcome.answers),
+        latestMeasurement: latestMeasurementOf(measurements),
+        now,
+      }),
     });
     await this.options.stamps.record({
       clientId,

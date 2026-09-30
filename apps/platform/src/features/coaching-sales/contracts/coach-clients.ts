@@ -5,7 +5,7 @@ import {
 import { CLIENT_STATUSES } from "@eli-coach-platform/domain/client-roster";
 import { z } from "zod";
 
-import { coachingBundleIdSchema, priceTierSchema } from "./bundle-cards";
+import { coachingBundleIdSchema } from "./bundle-cards";
 
 const clientStatusSchema = z.enum(CLIENT_STATUSES);
 
@@ -39,15 +39,17 @@ const clientInvitationSchema = z.object({
 
 export type ClientInvitationReading = z.infer<typeof clientInvitationSchema>;
 
-const clientProfileSchema = z.object({
-  dateOfBirth: z.iso.date(),
-  gender: z.enum(VISITOR_GENDERS),
-  country: z.string().min(1),
-  phone: z.string().nullable(),
-});
+const visitorGenderSchema = z.enum(VISITOR_GENDERS);
 
 const bookedAssessmentCallSchema = z.object({
   startsAt: z.iso.datetime(),
+  firstName: z.string().min(1),
+  lastName: z.string(),
+  email: z.string().min(1),
+  dateOfBirth: z.iso.date(),
+  gender: visitorGenderSchema,
+  country: z.string().min(1),
+  phone: z.string().nullable(),
   primaryGoal: z.enum(VISITOR_PRIMARY_GOALS),
   notes: z.string().nullable(),
 });
@@ -55,7 +57,7 @@ const bookedAssessmentCallSchema = z.object({
 const clientSubscriptionSchema = z.object({
   bundleId: coachingBundleIdSchema,
   months: z.number().int().positive(),
-  tier: priceTierSchema,
+  reducedPrice: z.boolean(),
   paidAt: z.iso.datetime(),
   workStartsOn: z.iso.datetime().nullable(),
 });
@@ -68,7 +70,7 @@ export const coachClientSchema = z.object({
   lastName: z.string(),
   email: z.string().min(1),
   status: clientStatusSchema,
-  profile: clientProfileSchema,
+  gender: visitorGenderSchema,
   assessmentCall: bookedAssessmentCallSchema,
   subscription: clientSubscriptionSchema.nullable(),
   invitation: clientInvitationSchema.nullable(),

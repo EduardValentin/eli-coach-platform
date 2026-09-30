@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { ClientProfile } from "../client-profile";
 import { UnitPreference, type ClientUnitPreferences } from "../unit-preference";
 import type { ClientOnboardingChanges } from "./client-onboarding-changes";
 import type { ClientOnboardingIncidents } from "./client-onboarding-incidents";
@@ -22,6 +23,9 @@ const CLIENT: OnboardingClient = {
   gender: "male",
   dateOfBirth: "1990-03-02",
   firstName: "Ana",
+  lastName: "Popescu",
+  country: "RO",
+  phone: "+40712345678",
   email: "ana@example.com",
   submittedAt: null,
   reviewStamps: {
@@ -194,6 +198,7 @@ describe("SubmitOnboardingUseCase", () => {
       clientId: "client-1",
       submission: { answers: completeAnswers(), consents, submittedAt: NOW },
       measurementEntry: { recordedAt: NOW, weightKg: 82.5, waistCm: 88 },
+      profile: expect.any(ClientProfile),
     });
     expect(stamps.recordOnboardingSubmitted).toHaveBeenCalledWith({
       clientId: "client-1",
@@ -205,6 +210,51 @@ describe("SubmitOnboardingUseCase", () => {
     expect(incidents.onboardingSubmissionAccepted).toHaveBeenCalledWith({
       clientId: "client-1",
       screeningOutcome: "cleared",
+    });
+  });
+
+  it("records her profile with her submission: her booking identity, her answers and her first weight", async () => {
+    // arrange
+    const changes = createChanges();
+    const useCase = createUseCase({ changes });
+    const answers = completeAnswers();
+    answers["goal-availability"] = {
+      ...answers["goal-availability"],
+      additionalInfo: " Early mornings suit me. ",
+    };
+    answers["nutrition-lifestyle"] = {
+      ...answers["nutrition-lifestyle"],
+      eatingStyle: "Vegetarian",
+      allergiesOrIntolerances: "Yes",
+      allergiesOrIntolerancesList: "Lactose",
+    };
+
+    // act
+    await useCase.execute({
+      authSubjectId: "user_radu",
+      answers,
+      consents: givenConsents(),
+    });
+
+    // assert
+    const [recorded] = changes.recordSubmission.mock.calls[0];
+    expect(recorded.profile.toSnapshot()).toEqual({
+      clientId: "client-1",
+      firstName: "Ana",
+      lastName: "Popescu",
+      email: "ana@example.com",
+      dateOfBirth: "1990-03-02",
+      gender: "male",
+      country: "RO",
+      phone: "+40712345678",
+      heightCm: 180,
+      startingWeightKg: 82.5,
+      currentWeightKg: 82.5,
+      activityLevel: "Mostly sitting",
+      primaryGoal: "Build muscle",
+      dietaryRestrictions: "Vegetarian, Lactose",
+      clientNotes: "Early mornings suit me.",
+      updatedAt: NOW,
     });
   });
 

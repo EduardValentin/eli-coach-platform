@@ -7,13 +7,11 @@ import {
   type ReadOnboardingReviewUseCase,
 } from "@eli-coach-platform/domain/client-onboarding";
 import type { MeasurementEntry } from "@eli-coach-platform/domain/measurement";
-import {
-  measureUnitsOf,
-  toDisplayMeasure,
-  UnitPreference,
-  type MeasureKind,
-} from "@eli-coach-platform/domain/unit-preference";
 
+import {
+  formatCanonicalMeasure,
+  isMeasureKind,
+} from "~/features/client-onboarding/contracts/canonical-measure";
 import type {
   MeasurementRow,
   ReviewAnswer,
@@ -33,14 +31,6 @@ type SubmittedReading = Extract<
 type ReviewedForm = SubmittedReading["forms"][number];
 
 type QuestionId = SubmittedReading["flaggedQuestions"][number];
-
-const CANONICAL_UNITS = measureUnitsOf(UnitPreference.metric().toSnapshot());
-
-const CANONICAL_UNIT_LABELS: Record<MeasureKind, string> = {
-  weight: "kg",
-  height: "cm",
-  circumference: "cm",
-};
 
 const QUESTION_LABEL_OVERRIDES: Record<string, string> = {
   goalWeight: "Target weight",
@@ -190,22 +180,14 @@ function answerText(answer: OnboardingAnswer | undefined): string | null {
   return isAnswered(answer) ? describeAnswer(answer) : null;
 }
 
-function measureKindOf(field: OnboardingField): MeasureKind | null {
-  return field.kind in CANONICAL_UNIT_LABELS
-    ? (field.kind as MeasureKind)
-    : null;
-}
-
 function answerWithUnit(
   field: OnboardingField,
   answer: Exclude<OnboardingAnswer, null>,
 ): string {
   if (typeof answer !== "number") return describeAnswer(answer);
 
-  const measureKind = measureKindOf(field);
-
-  if (measureKind) {
-    return `${toDisplayMeasure(measureKind, answer, CANONICAL_UNITS)} ${CANONICAL_UNIT_LABELS[measureKind]}`;
+  if (isMeasureKind(field.kind)) {
+    return formatCanonicalMeasure(field.kind, answer);
   }
 
   return field.unitSuffix ? `${answer} ${field.unitSuffix}` : String(answer);

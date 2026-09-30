@@ -36,7 +36,7 @@ const CLIENT_ID = "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11";
 const CLIENT = {
   email: "ana@example.com",
   firstName: "Ana",
-  profile: { gender: "female" },
+  gender: "female",
 } satisfies ReviewedClient;
 const PAGE_PATH = "/coach/clients/ana";
 const STATUS_BADGE = "Awaiting review";
@@ -846,8 +846,8 @@ function submittedReviewIn(stage: ReviewStage): SubmittedReview {
   return { ...SUBMITTED, stage };
 }
 
-function withGender(gender: ReviewedClient["profile"]["gender"]) {
-  return { ...CLIENT, profile: { gender } };
+function withGender(gender: ReviewedClient["gender"]) {
+  return { ...CLIENT, gender };
 }
 
 function reviewView(submitted: SubmittedReview | null): OnboardingReviewView {

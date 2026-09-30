@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { measurementEntryOf } from "./measurement";
+import { latestMeasurementOf, measurementEntryOf } from "./measurement";
 
 const RECORDED_AT = new Date("2026-09-21T08:00:00.000Z");
 
@@ -67,5 +67,36 @@ describe("measurementEntryOf", () => {
 
     // assert
     expect(entry).toBeNull();
+  });
+});
+
+describe("latestMeasurementOf", () => {
+  it("picks the entry recorded last, whatever the order it is given in", () => {
+    // arrange
+    const first = { recordedAt: RECORDED_AT, weightKg: 70, waistCm: 74 };
+    const latest = {
+      recordedAt: new Date("2026-09-28T08:00:00.000Z"),
+      weightKg: 68.5,
+      waistCm: 72,
+    };
+    const between = {
+      recordedAt: new Date("2026-09-24T08:00:00.000Z"),
+      weightKg: 69,
+      waistCm: 73,
+    };
+
+    // act
+    const picked = latestMeasurementOf([first, latest, between]);
+
+    // assert
+    expect(picked).toBe(latest);
+  });
+
+  it("answers nothing when she has no measurement", () => {
+    // arrange, act
+    const picked = latestMeasurementOf([]);
+
+    // assert
+    expect(picked).toBeNull();
   });
 });

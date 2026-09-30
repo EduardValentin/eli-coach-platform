@@ -19,6 +19,7 @@ import {
   vi,
 } from "vitest";
 
+import type { ClientProfileView } from "~/features/client-onboarding/contracts/client-profile";
 import type {
   OnboardingReviewView,
   SubmittedReview,
@@ -46,24 +47,40 @@ const INVITED: CoachClient = {
   },
   lastName: "Popescu",
   assessmentCall: {
-    notes: "Wants to work on her glutes",
-    primaryGoal: "build_strength",
     startsAt: "2026-09-18T12:00:00.000Z",
-  },
-  profile: {
-    country: "RO",
+    firstName: "Ana",
+    lastName: "Popescu",
+    email: "ana@example.com",
     dateOfBirth: "1994-03-14",
     gender: "female",
+    country: "RO",
     phone: "+40712345678",
+    primaryGoal: "build_strength",
+    notes: "Wants to work on her glutes",
   },
+  gender: "female",
   status: "invited",
   subscription: {
     bundleId: "3-months",
     months: 3,
     paidAt: "2026-09-20T09:00:00.000Z",
-    tier: "regular",
+    reducedPrice: false,
     workStartsOn: null,
   },
+};
+
+const PROFILE: ClientProfileView = {
+  dateOfBirth: "1994-03-14",
+  gender: "female",
+  country: "RO",
+  phone: "+40712345678",
+  heightCm: 168,
+  startingWeightKg: 64.5,
+  currentWeightKg: 64.5,
+  activityLevel: "Lightly active",
+  primaryGoal: "Lose fat",
+  dietaryRestrictions: "Vegetarian",
+  clientNotes: null,
 };
 
 const AWAITING_REVIEW: CoachClient = {
@@ -148,16 +165,22 @@ describe("the coach's client page", () => {
     await renderClientPage();
 
     // assert
+    const title = screen.getByRole("heading", {
+      level: 1,
+      name: "Ana Popescu",
+    });
+    expect(title).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { level: 1, name: "Ana Popescu" }),
+      within(title.closest("header") as HTMLElement).getByText(
+        "ana@example.com",
+      ),
     ).toBeInTheDocument();
-    expect(screen.getByText("ana@example.com")).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "Back to Clients" }),
     ).toHaveAttribute("href", COACH_CLIENTS_PATH);
   });
 
-  it("lays out her profile, assessment call, invitation, onboarding, subscription and measurements in that order", async () => {
+  it("lays out her profile, invitation, onboarding, subscription, measurements and assessment call in that order", async () => {
     // arrange, act
     await renderClientPage();
 
@@ -168,12 +191,39 @@ describe("the coach's client page", () => {
         .map((heading) => heading.textContent),
     ).toEqual([
       "Profile",
-      "Assessment call",
       "Invitation",
       "Onboarding",
       "Subscription",
       "Measurements",
+      "Assessment call",
     ]);
+  });
+
+  it("says her profile fills in once she sends her onboarding while it does not exist", async () => {
+    // arrange, act
+    await renderClientPage();
+
+    // assert
+    const profile = screen.getByRole("region", { name: "Profile" });
+    expect(
+      within(profile).getByText(
+        "Her profile fills in once she sends her onboarding.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("reads her profile once she has sent her onboarding", async () => {
+    // arrange, act
+    await renderClientPage({
+      client: AWAITING_REVIEW,
+      review: SUBMITTED_WITH_MEASUREMENTS,
+      profile: PROFILE,
+    });
+
+    // assert
+    const profile = screen.getByRole("region", { name: "Profile" });
+    expect(within(profile).getByText("Vegetarian")).toBeInTheDocument();
+    expect(within(profile).queryByText(/profile fills in/)).toBeNull();
   });
 
   it("badges the onboarding panel with her client status", async () => {
@@ -300,6 +350,7 @@ function coachIsIn(timeZone: string) {
 type ClientPageData = {
   client: CoachClient;
   review: OnboardingReviewView;
+  profile: ClientProfileView | null;
 };
 
 function clientNotFound(): never {
@@ -310,6 +361,7 @@ async function renderClientRouter(
   load: () => ClientPageData = () => ({
     client: INVITED,
     review: NOT_SUBMITTED,
+    profile: null,
   }),
 ) {
   const user = userEvent.setup();
@@ -354,6 +406,7 @@ async function renderClientPage(options: Partial<ClientPageData> = {}) {
   const { user } = await renderClientRouter(() => ({
     client: options.client ?? INVITED,
     review: options.review ?? NOT_SUBMITTED,
+    profile: options.profile ?? null,
   }));
 
   return user;

@@ -11,6 +11,9 @@ const CLIENT: OnboardingClient = {
   gender: "female",
   dateOfBirth: "1994-05-12",
   firstName: "Ana",
+  lastName: "Popescu",
+  country: "RO",
+  phone: "+40712345678",
   email: "ana@example.com",
   submittedAt: null,
   reviewStamps: {

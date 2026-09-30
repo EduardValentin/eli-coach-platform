@@ -9,23 +9,23 @@ import type { CoachClient } from "~/features/coaching-sales/contracts/coach-clie
 
 import { AssessmentCallBlock } from "./assessment-call-block";
 
-const CLIENT: Pick<CoachClient, "assessmentCall" | "subscription"> = {
+const CLIENT: Pick<CoachClient, "assessmentCall"> = {
   assessmentCall: {
-    notes: "Knee surgery two years ago.",
-    primaryGoal: "build_strength",
     startsAt: "2026-03-01T21:30:00.000Z",
-  },
-  subscription: {
-    bundleId: "3-months",
-    months: 3,
-    paidAt: "2026-03-03T09:00:00.000Z",
-    tier: "regular",
-    workStartsOn: null,
+    firstName: "Ana",
+    lastName: "Popescu",
+    email: "ana@example.com",
+    dateOfBirth: "1994-03-14",
+    gender: "female",
+    country: "RO",
+    phone: "+40712345678",
+    primaryGoal: "build_strength",
+    notes: "Knee surgery two years ago.",
   },
 };
 
 beforeEach(() => {
-  coachIsIn("Europe/Bucharest");
+  coachIsIn("Pacific/Honolulu");
 });
 
 afterEach(() => {
@@ -34,56 +34,42 @@ afterEach(() => {
 });
 
 describe("the client's assessment call block", () => {
-  it("reads when her call was on the coach's clock, the goal she booked with, that she paid the regular price and her notes", () => {
+  it("reads the call on the coach's clock and everything she gave when booking it", () => {
     // arrange, act
     render(<AssessmentCallBlock client={CLIENT} />);
 
     // assert
     const call = screen.getByRole("region", { name: "Assessment call" });
     expect(readings(call)).toEqual([
-      ["Call", "Sun, Mar 1 · 11:30 PM"],
+      ["Call", "Sun, Mar 1 · 11:30 AM"],
+      ["Name", "Ana Popescu"],
+      ["Email", "ana@example.com"],
+      ["Date of birth", "14 March 1994"],
+      ["Gender", "Female"],
+      ["Country", "Romania"],
+      ["Phone", "+40712345678"],
       ["Primary goal", "Build strength"],
-      ["Reduced price", "No"],
       ["Booking notes", "Knee surgery two years ago."],
     ]);
+    expect(
+      within(call).getByRole("link", { name: "+40712345678" }),
+    ).toHaveAttribute("href", "tel:+40712345678");
   });
 
-  it("says yes when she paid the reduced price", () => {
-    // arrange
-    const reduced = {
-      ...CLIENT,
-      subscription: CLIENT.subscription && {
-        ...CLIENT.subscription,
-        tier: "reduced" as const,
-      },
-    };
-
-    // act
-    render(<AssessmentCallBlock client={reduced} />);
-
-    // assert
-    const call = screen.getByRole("region", { name: "Assessment call" });
-    expect(Object.fromEntries(readings(call))["Reduced price"]).toBe("Yes");
-  });
-
-  it("shows a dash for notes she did not leave and a price without a subscription", () => {
+  it("shows a dash for a phone and notes she did not leave", () => {
     // arrange
     const sparse = {
-      assessmentCall: { ...CLIENT.assessmentCall, notes: null },
-      subscription: null,
+      assessmentCall: { ...CLIENT.assessmentCall, phone: null, notes: null },
     };
 
     // act
     render(<AssessmentCallBlock client={sparse} />);
 
     // assert
-    const shown = Object.fromEntries(
-      readings(screen.getByRole("region", { name: "Assessment call" })),
-    );
-    expect([shown["Reduced price"], shown["Booking notes"]]).toEqual([
-      "—",
-      "—",
-    ]);
+    const call = screen.getByRole("region", { name: "Assessment call" });
+    const shown = Object.fromEntries(readings(call));
+    expect([shown.Phone, shown["Booking notes"]]).toEqual(["—", "—"]);
+    expect(within(call).queryByRole("link")).toBeNull();
   });
 });
 

@@ -13,7 +13,7 @@ const SUBSCRIPTION: ClientSubscription = {
   bundleId: "6-months",
   months: 6,
   paidAt: "2026-09-30T22:30:00.000Z",
-  tier: "regular",
+  reducedPrice: false,
   workStartsOn: null,
 };
 
@@ -40,7 +40,26 @@ describe("the subscription summary the coach reads", () => {
       "Renews on": "Once her program starts",
       Start: "Immediate start",
       "Start program": "—",
+      "Reduced price": "No",
     });
+  });
+
+  it("says yes when she paid the reduced price, as the last reading after renewal", () => {
+    // arrange
+    const reduced = { ...SUBSCRIPTION, reducedPrice: true };
+
+    // act
+    render(<SubscriptionSummary gender="female" subscription={reduced} />);
+
+    // assert
+    const shown = readings(
+      screen.getByRole("region", { name: "Subscription" }),
+    );
+    expect(shown["Reduced price"]).toBe("Yes");
+    expect(Object.keys(shown).slice(-2)).toEqual([
+      "Renews on",
+      "Reduced price",
+    ]);
   });
 
   it("names the day work starts when she keeps her 14 days", () => {

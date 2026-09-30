@@ -1,4 +1,5 @@
 import { appSchema } from "@eli-coach-platform/db";
+import { VISITOR_GENDERS } from "@eli-coach-platform/domain/assessment-call";
 import type {
   OnboardingAnswersByForm,
   OnboardingFormId,
@@ -9,7 +10,9 @@ import {
 } from "@eli-coach-platform/domain/unit-preference";
 import { sql, type SQL } from "drizzle-orm";
 import {
+  char,
   check,
+  date,
   index,
   integer,
   jsonb,
@@ -138,6 +141,45 @@ export const clientMeasurementsTable = appSchema.table(
     index("client_measurements_client_id_recorded_at_idx").on(
       table.clientId,
       table.recordedAt,
+    ),
+  ],
+);
+
+export const clientProfilesTable = appSchema.table(
+  "client_profiles",
+  {
+    clientId: uuid("client_id")
+      .primaryKey()
+      .references(() => clientsTable.id),
+    firstName: varchar("first_name", { length: 60 }).notNull(),
+    lastName: varchar("last_name", { length: 60 }).notNull(),
+    email: varchar("email", { length: 320 }).notNull(),
+    dateOfBirth: date("date_of_birth", { mode: "string" }).notNull(),
+    gender: varchar("gender", { enum: VISITOR_GENDERS, length: 32 }).notNull(),
+    country: char("country", { length: 2 }).notNull(),
+    phone: varchar("phone", { length: 16 }),
+    heightCm: numeric("height_cm", { precision: 4, scale: 1, mode: "number" }),
+    startingWeightKg: numeric("starting_weight_kg", {
+      precision: 5,
+      scale: 2,
+      mode: "number",
+    }),
+    currentWeightKg: numeric("current_weight_kg", {
+      precision: 5,
+      scale: 2,
+      mode: "number",
+    }),
+    activityLevel: text("activity_level"),
+    primaryGoal: text("primary_goal"),
+    dietaryRestrictions: text("dietary_restrictions").notNull(),
+    clientNotes: text("client_notes"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    check(
+      "client_profiles_gender_check",
+      sql`${table.gender} in (${quotedList(VISITOR_GENDERS)})`,
     ),
   ],
 );

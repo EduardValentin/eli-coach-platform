@@ -29,6 +29,13 @@ const COACH: AccountSnapshot = {
 
 const BOOKED_CALL = {
   startsAt: new Date("2026-09-24T15:00:00.000Z"),
+  firstName: "Ana-Maria",
+  lastName: "Popescu",
+  email: "ana.booked@example.com",
+  dateOfBirth: "1994-03-14",
+  gender: "female",
+  country: "RO",
+  phone: "+40700000000",
   primaryGoal: "lose_weight",
   notes: null,
 } as const;
@@ -52,10 +59,7 @@ function rosterEntry(
     accountBound: overrides.accountBound ?? false,
     profile: {
       email: "ana@example.com",
-      dateOfBirth: "1994-03-14",
       gender: "female",
-      country: "RO",
-      phone: "+40700000000",
       assessmentCallId: "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11",
     },
     subscription:
@@ -162,7 +166,7 @@ describe("CoachClientsController#loadRoster", () => {
 });
 
 describe("CoachClientsController#loadClient", () => {
-  it("reads her record with her profile, the call she booked, subscription and pending invitation", async () => {
+  it("reads her record with her gender, the call as she booked it, subscription and pending invitation", async () => {
     // arrange
     const { controller, readClientInvitation, readClientRecord } =
       createController({
@@ -188,21 +192,23 @@ describe("CoachClientsController#loadClient", () => {
       lastName: "Popescu",
       email: "ana@example.com",
       status: "invited",
-      profile: {
+      gender: "female",
+      assessmentCall: {
+        startsAt: "2026-09-24T15:00:00.000Z",
+        firstName: "Ana-Maria",
+        lastName: "Popescu",
+        email: "ana.booked@example.com",
         dateOfBirth: "1994-03-14",
         gender: "female",
         country: "RO",
         phone: "+40700000000",
-      },
-      assessmentCall: {
-        startsAt: "2026-09-24T15:00:00.000Z",
         primaryGoal: "lose_weight",
         notes: "I train at home.",
       },
       subscription: {
         bundleId: "3-months",
         months: 3,
-        tier: "regular",
+        reducedPrice: false,
         paidAt: "2026-09-26T10:00:00.000Z",
         workStartsOn: null,
       },
@@ -214,6 +220,28 @@ describe("CoachClientsController#loadClient", () => {
     });
     expect(readClientRecord).toHaveBeenCalledWith(CLIENT_ID);
     expect(readClientInvitation).toHaveBeenCalledWith(CLIENT_ID);
+  });
+
+  it("reads a reduced price for a subscription bought at the reduced tier", async () => {
+    // arrange
+    const entry = rosterEntry();
+    const { controller } = createController({
+      record: {
+        ...entry,
+        subscription: entry.subscription && {
+          ...entry.subscription,
+          tier: "reduced",
+        },
+        status: "invited",
+        assessmentCall: BOOKED_CALL,
+      },
+    });
+
+    // act
+    const client = await controller.loadClient(coachArgs(), CLIENT_ID);
+
+    // assert
+    expect(client.subscription?.reducedPrice).toBe(true);
   });
 
   it("names the day her work starts when she chose to wait", async () => {

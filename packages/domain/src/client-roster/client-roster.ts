@@ -29,10 +29,7 @@ export type ClientRosterEntry = {
   accountBound: boolean;
   profile: {
     email: string;
-    dateOfBirth: string;
     gender: VisitorGender;
-    country: string;
-    phone: string | null;
     assessmentCallId: string;
   };
   subscription: {

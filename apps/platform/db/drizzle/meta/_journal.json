@@ -232,6 +232,13 @@
       "when": 1790633709713,
       "tag": "0032_client_onboarding_open_request_per_client",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1790765315783,
+      "tag": "0033_client_profiles",
+      "breakpoints": true
     }
   ]
 }
