@@ -63,13 +63,13 @@ test("the coach re-sends an invitation and only the fresh link lets the client i
   // assert
   await coachClient.expectClient(invited.fullName, invited.email);
   await coachClient.expectStatus("Invited");
-  await coachClient.expectAnswersNotIn();
+  await coachClient.expectAnswersNotIn(invited.gender);
   await coachClient.expectInvitationLine(
     pendingLine(invited.invitationSentAt, invited.invitationExpiresAt),
   );
 
   // act
-  await coachClient.resendInvitation(invited.email);
+  await coachClient.resendInvitation(invited);
 
   // assert
   await coachClient.expectToast(`Invitation sent to ${invited.email}.`);
@@ -136,7 +136,7 @@ test("an expired invitation and one whose email failed still offer a re-send", a
   await coachClient.expectInvitationLine("Invitation email could not be sent");
 
   // act
-  await coachClient.resendInvitation(unsent.email);
+  await coachClient.resendInvitation(unsent);
 
   // assert
   await coachClient.expectToast(`Invitation sent to ${unsent.email}.`);
@@ -165,7 +165,7 @@ test("a re-send whose email fails keeps the invitation marked unsent and asks th
   await coachClient.open(invited.clientId);
 
   // act
-  await coachClient.resendInvitation(invited.email);
+  await coachClient.resendInvitation(invited);
 
   // assert
   await coachClient.expectToast(

@@ -1,5 +1,7 @@
+import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
 import { expect, type Locator, type Page } from "@playwright/test";
 
+import { clientPronouns } from "./client-pronouns";
 import {
   expectAccessRefused,
   expectAvailability,
@@ -11,6 +13,7 @@ import {
   escapedPattern,
   HYDRATION_RETRY_TIMEOUT_MS,
 } from "./locator-text";
+import type { PaidClient } from "./paid-clients";
 
 export type Readings = Readonly<Record<string, string>>;
 
@@ -121,6 +124,10 @@ export class CoachClientPage {
     await this.expectReadings(this.block("Profile"), readings);
   }
 
+  async expectAssessmentCall(readings: Readings): Promise<void> {
+    await this.expectReadings(this.block("Assessment call"), readings);
+  }
+
   async expectSubscription(readings: Readings): Promise<void> {
     await this.expectReadings(this.block("Subscription"), readings);
   }
@@ -142,7 +149,9 @@ export class CoachClientPage {
     await expect(this.block("Invitation")).toHaveCount(0);
   }
 
-  async resendInvitation(email: string): Promise<void> {
+  async resendInvitation(
+    client: Pick<PaidClient, "email" | "gender">,
+  ): Promise<void> {
     const confirmation = this.page.getByRole("dialog", {
       name: "Re-send invitation?",
     });
@@ -154,7 +163,7 @@ export class CoachClientPage {
       confirmation,
     );
     await expect(confirmation).toContainText(
-      `A fresh invitation goes to ${email}. Her earlier link stops working.`,
+      `A fresh invitation goes to ${client.email}. ${clientPronouns(client.gender).possessiveCapitalised} earlier link stops working.`,
     );
     await confirmation.getByRole("button", { name: "Re-send" }).click();
   }
@@ -175,11 +184,14 @@ export class CoachClientPage {
     await expectAccessRefused(this.page);
   }
 
-  async expectAnswersNotIn(): Promise<void> {
+  async expectAnswersNotIn(gender: VisitorGender): Promise<void> {
+    const { possessiveCapitalised } = clientPronouns(gender);
+
     await expect(
-      this.onboarding.getByText("Her answers are not in yet.", {
-        exact: true,
-      }),
+      this.onboarding.getByText(
+        `${possessiveCapitalised} answers are not in yet.`,
+        { exact: true },
+      ),
     ).toBeVisible();
   }
 
@@ -344,19 +356,23 @@ export class CoachClientPage {
     await expect(this.definitionOf(this.onboarding, question)).toHaveCount(0);
   }
 
-  async expectNoMeasurements(): Promise<void> {
+  async expectNoMeasurements(gender: VisitorGender): Promise<void> {
+    const { subjectHas } = clientPronouns(gender);
+
     await expect(
-      this.page.getByText("She has not sent any measurements yet.", {
+      this.page.getByText(`${subjectHas} not sent any measurements yet.`, {
         exact: true,
       }),
     ).toBeVisible();
   }
 
-  async expectNoBuildProgram(): Promise<void> {
+  async expectNoBuildProgram(gender: VisitorGender): Promise<void> {
+    const buildProgram = `Build ${clientPronouns(gender).possessive} program`;
+
     await expect(
       this.page
-        .getByRole("button", { name: "Build her program" })
-        .or(this.page.getByRole("link", { name: "Build her program" })),
+        .getByRole("button", { name: buildProgram })
+        .or(this.page.getByRole("link", { name: buildProgram })),
     ).toHaveCount(0);
   }
 

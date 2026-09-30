@@ -1,3 +1,4 @@
+import { clientPronouns } from "../support/client-pronouns";
 import { expect, test } from "../support/fixtures";
 import { daysAfter } from "../support/paid-clients";
 import { PROTOTYPE_DETAIL_REQUEST } from "../support/submitted-clients";
@@ -15,6 +16,22 @@ const joinDateFormatter = new Intl.DateTimeFormat("en-US", {
   month: "short",
   year: "numeric",
 });
+
+const callDayFormatter = new Intl.DateTimeFormat("en-US", {
+  day: "numeric",
+  month: "short",
+  weekday: "short",
+});
+
+const callClockFormatter = new Intl.DateTimeFormat("en-US", {
+  hour: "numeric",
+  hour12: true,
+  minute: "2-digit",
+});
+
+function callMoment(startsAt: Date): string {
+  return `${callDayFormatter.format(startsAt)} · ${callClockFormatter.format(startsAt)}`;
+}
 
 function ageToday(): string {
   const today = new Date();
@@ -111,8 +128,11 @@ test("the coach finds her clients by status, name and join date and opens one", 
     Gender: "Female",
     Country: "Romania",
     Phone: "—",
+  });
+  await coachClient.expectAssessmentCall({
+    Call: callMoment(submitted.callStartsAt),
     "Primary goal": "Build strength",
-    "Pricing tier": "Regular",
+    "Reduced price": "No",
     "Booking notes": "—",
   });
   await coachClient.expectNoInvitation();
@@ -122,7 +142,7 @@ test("the coach finds her clients by status, name and join date and opens one", 
     "Payment date": dayMonthFormatter.format(submitted.paidAt),
     Start: `After the 14 days (${dayMonthFormatter.format(daysAfter(submitted.paidAt, WITHDRAWAL_DAYS))})`,
     "Start program": "—",
-    "Renews on": "Once her program starts",
+    "Renews on": `Once ${clientPronouns(submitted.gender).possessive} program starts`,
   });
 });
 
@@ -327,15 +347,15 @@ test("a client with an account whose answers are not in yet reads Onboarding wit
   await coachClient.expectClient(onboarding.fullName, onboarding.email);
   await coachClient.expectNoInvitation();
   await coachClient.expectStatus("Onboarding");
-  await coachClient.expectAnswersNotIn();
+  await coachClient.expectAnswersNotIn(onboarding.gender);
   await coachClient.expectNoReviewActions();
-  await coachClient.expectNoMeasurements();
+  await coachClient.expectNoMeasurements(onboarding.gender);
   await coachClient.expectSubscription({
     Bundle: "3 months",
     "Payment date": dayMonthFormatter.format(onboarding.paidAt),
     Start: `After the 14 days (${dayMonthFormatter.format(daysAfter(onboarding.paidAt, WITHDRAWAL_DAYS))})`,
     "Start program": "—",
-    "Renews on": "Once her program starts",
+    "Renews on": `Once ${clientPronouns(onboarding.gender).possessive} program starts`,
   });
 });
 

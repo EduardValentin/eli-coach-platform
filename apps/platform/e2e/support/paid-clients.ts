@@ -20,7 +20,9 @@ export type PaidClient = {
   firstName: string;
   fullName: string;
   email: string;
+  gender: VisitorGender;
   paidAt: Date;
+  callStartsAt: Date;
 };
 
 export type InvitationStanding = "pending" | "expired" | "email-failed";
@@ -185,6 +187,7 @@ async function insertPaidClient(
 ): Promise<PaidClient> {
   const { identity } = binding;
   const paidAt = new Date();
+  const callStartsAt = daysBefore(paidAt, CALL_ENDED_DAYS_AGO);
   const callId = await insertedId(connection, INSERT_ENDED_CALL, [
     identity.firstName,
     identity.lastName,
@@ -193,7 +196,7 @@ async function insertPaidClient(
     identity.gender,
     PRIMARY_GOAL,
     COUNTRY,
-    daysBefore(paidAt, CALL_ENDED_DAYS_AGO),
+    callStartsAt,
     TIME_ZONE,
   ]);
   const clientId = await insertedId(connection, INSERT_CLIENT, [
@@ -224,7 +227,9 @@ async function insertPaidClient(
     firstName: identity.firstName,
     fullName: `${identity.firstName} ${identity.lastName}`,
     email: identity.email,
+    gender: identity.gender,
     paidAt,
+    callStartsAt,
   };
 }
 

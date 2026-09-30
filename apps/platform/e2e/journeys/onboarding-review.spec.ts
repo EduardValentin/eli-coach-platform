@@ -1,3 +1,4 @@
+import { clientPronouns } from "../support/client-pronouns";
 import { latestEmailTo } from "../support/email-capture";
 import { expect, test } from "../support/fixtures";
 import { daysAfter } from "../support/paid-clients";
@@ -273,7 +274,7 @@ test("the coach reviews from the keyboard, the dialog keeps and returns focus, a
   // assert
   await coachClient.expectStatus("Approved");
   await coachClient.expectNoReviewActions();
-  await coachClient.expectNoBuildProgram();
+  await coachClient.expectNoBuildProgram(client.gender);
   expect(await onboardingRecords.reviewStamps()).toMatchObject({
     reviewOpenedAt: expect.any(Date),
     answersApprovedAt: expect.any(Date),
@@ -317,7 +318,7 @@ test("approving straight from Awaiting review passes through In review and refus
   // assert
   await coachClient.expectStatus("Approved");
   await coachClient.expectNoReviewActions();
-  await coachClient.expectNoBuildProgram();
+  await coachClient.expectNoBuildProgram(client.gender);
   const approvedStamps = await onboardingRecords.reviewStamps();
   expect(approvedStamps?.reviewOpenedAt).toBeInstanceOf(Date);
   expect(approvedStamps?.answersApprovedAt).toBeInstanceOf(Date);
@@ -455,8 +456,8 @@ test("the onboarding panel raises every safety signal and shows only the questio
   await coachClient.open(flagged.clientId);
 
   // assert
-  await coachClient.expectProfile({
-    Phone: BOOKING_CONTACT.phone,
+  await coachClient.expectProfile({ Phone: BOOKING_CONTACT.phone });
+  await coachClient.expectAssessmentCall({
     "Booking notes": BOOKING_CONTACT.notes,
   });
   await coachClient.expectPhoneLink(BOOKING_CONTACT.phone);
@@ -506,10 +507,10 @@ test("the onboarding panel raises every safety signal and shows only the questio
     "Safety screening: manual screening (age)",
   );
   await coachClient.expectFacts({
-    "Waist-to-height ratio": "Waiting on her first measurements",
+    "Waist-to-height ratio": `Waiting on ${clientPronouns(screenedManually.gender).possessive} first measurements`,
     "Cycle mode": "Not applicable",
   });
   await coachClient.expectNoForm(SAFETY_FORM);
   await coachClient.expectNoForm(CYCLE_FORM);
-  await coachClient.expectNoMeasurements();
+  await coachClient.expectNoMeasurements(screenedManually.gender);
 });
