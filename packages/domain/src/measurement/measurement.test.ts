@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { latestMeasurementOf, measurementEntryOf } from "./measurement";
+import {
+  earliestMeasurementOf,
+  latestMeasurementOf,
+  measurementEntryOf,
+} from "./measurement";
 
 const RECORDED_AT = new Date("2026-09-21T08:00:00.000Z");
 
@@ -95,6 +99,32 @@ describe("latestMeasurementOf", () => {
   it("answers nothing when she has no measurement", () => {
     // arrange, act
     const picked = latestMeasurementOf([]);
+
+    // assert
+    expect(picked).toBeNull();
+  });
+});
+
+describe("earliestMeasurementOf", () => {
+  it("picks the entry recorded first, whatever the order it is given in", () => {
+    // arrange
+    const earliest = { recordedAt: RECORDED_AT, weightKg: 70, waistCm: 74 };
+    const later = {
+      recordedAt: new Date("2026-09-28T08:00:00.000Z"),
+      weightKg: 68.5,
+      waistCm: 72,
+    };
+
+    // act
+    const picked = earliestMeasurementOf([later, earliest]);
+
+    // assert
+    expect(picked).toBe(earliest);
+  });
+
+  it("answers nothing when she has no measurement", () => {
+    // arrange, act
+    const picked = earliestMeasurementOf([]);
 
     // assert
     expect(picked).toBeNull();

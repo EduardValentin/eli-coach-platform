@@ -47,17 +47,21 @@ const REVIEW: OnboardingReviewView = {
 };
 
 const PROFILE: ClientProfileView = {
-  dateOfBirth: "1994-03-14",
-  gender: "female",
-  country: "RO",
-  phone: null,
-  heightCm: 168,
+  identity: {
+    dateOfBirth: "1994-03-14",
+    gender: "female",
+    country: "RO",
+    phone: null,
+  },
+  facts: {
+    heightCm: 168,
+    activityLevel: "Lightly active",
+    primaryGoal: "Lose fat",
+    dietaryRestrictions: "None",
+    clientNotes: null,
+  },
   startingWeightKg: 64.5,
   currentWeightKg: 64.5,
-  activityLevel: "Lightly active",
-  primaryGoal: "Lose fat",
-  dietaryRestrictions: "None",
-  clientNotes: null,
 };
 
 describe("coach client page loader", () => {
@@ -79,16 +83,22 @@ describe("coach client page loader", () => {
     expect(loadProfile).toHaveBeenCalledWith(args, CLIENT_ID);
   });
 
-  it("reads no profile before she has sent her onboarding", async () => {
+  it("reads her identity alone as her profile before she has sent her onboarding", async () => {
     // arrange
     const { args, loadProfile } = routeArguments();
-    loadProfile.mockResolvedValue(null);
+    const awaiting: ClientProfileView = {
+      identity: PROFILE.identity,
+      facts: null,
+      startingWeightKg: null,
+      currentWeightKg: null,
+    };
+    loadProfile.mockResolvedValue(awaiting);
 
     // act
     const loaded = await loader(args);
 
     // assert
-    expect(loaded.profile).toBeNull();
+    expect(loaded.profile).toEqual(awaiting);
   });
 
   it("leaves the 404 an unknown client raises alone", async () => {

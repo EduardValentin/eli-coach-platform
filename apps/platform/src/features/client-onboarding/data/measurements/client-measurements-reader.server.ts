@@ -1,7 +1,7 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
-import type { ClientMeasurementsSource } from "@eli-coach-platform/domain/client-onboarding";
 import {
   measurementEntryOf,
+  type ClientMeasurementsSource,
   type MeasurementEntry,
 } from "@eli-coach-platform/domain/measurement";
 import { asc, eq } from "drizzle-orm";

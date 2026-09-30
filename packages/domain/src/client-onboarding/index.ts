@@ -1,6 +1,5 @@
 export { AnswerOnboardingDetailsUseCase } from "./answer-onboarding-details-use-case";
 export { ApproveOnboardingAnswersUseCase } from "./approve-onboarding-answers-use-case";
-export { type ClientMeasurementsSource } from "./client-measurements-source";
 export { ClientOnboarding, type OnboardingConsent } from "./client-onboarding";
 export { type ClientOnboardingChanges } from "./client-onboarding-changes";
 export { type ClientOnboardingIncidents } from "./client-onboarding-incidents";

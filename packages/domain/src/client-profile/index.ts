@@ -4,4 +4,7 @@ export {
   type OnboardingProfileFacts,
 } from "./client-profile";
 export { type ClientProfiles } from "./client-profiles";
-export { ReadClientProfileUseCase } from "./read-client-profile-use-case";
+export {
+  ReadClientProfileUseCase,
+  type ClientProfileReading,
+} from "./read-client-profile-use-case";

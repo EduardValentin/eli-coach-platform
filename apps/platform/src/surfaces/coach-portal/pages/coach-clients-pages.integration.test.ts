@@ -145,7 +145,7 @@ describe.sequential("coach clients pages integration", () => {
   });
 
   describe("a client's page", () => {
-    it("reads an invited client's empty profile, the collapsed assessment call, invitation, subscription and the panel line before she has answered", async () => {
+    it("reads an invited client's identity with an otherwise empty profile, the collapsed assessment call, invitation, subscription and the panel line before she has answered", async () => {
       // arrange
       const { callId } = await sales.payForCall();
       const clientId = await sales.clientIdPaidFor(callId);
@@ -168,11 +168,15 @@ describe.sequential("coach clients pages integration", () => {
         "Her profile fills in once she sends her onboarding.",
       );
       expect(
+        ["profile-age", "profile-gender", "profile-country"].map((parity) =>
+          readingOf(page, parity),
+        ),
+      ).toEqual(["32", "Female", "Romania"]);
+      expect(page).toMatch(
+        /data-parity="profile-phone"[^>]*><a[^>]*href="tel:\+40712345678"/,
+      );
+      expect(
         [
-          "profile-age",
-          "profile-gender",
-          "profile-country",
-          "profile-phone",
           "profile-height",
           "profile-starting-weight",
           "profile-current-weight",
@@ -181,7 +185,7 @@ describe.sequential("coach clients pages integration", () => {
           "profile-restrictions",
           "profile-notes",
         ].map((parity) => readingOf(page, parity)),
-      ).toEqual(Array.from({ length: 11 }, () => "—"));
+      ).toEqual(Array.from({ length: 7 }, () => "—"));
       expect(texts).toContain("Assessment call");
       expect(page).toMatch(
         /<button[^>]*aria-expanded="false"[^>]*>(?:(?!<\/button>)[\s\S])*Assessment call/,

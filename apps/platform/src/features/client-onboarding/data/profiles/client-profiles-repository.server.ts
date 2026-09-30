@@ -17,16 +17,7 @@ export class PostgresClientProfiles implements ClientProfiles {
     const [row] = await this.database
       .select({
         clientId: clientProfilesTable.clientId,
-        firstName: clientProfilesTable.firstName,
-        lastName: clientProfilesTable.lastName,
-        email: clientProfilesTable.email,
-        dateOfBirth: clientProfilesTable.dateOfBirth,
-        gender: clientProfilesTable.gender,
-        country: clientProfilesTable.country,
-        phone: clientProfilesTable.phone,
         heightCm: clientProfilesTable.heightCm,
-        startingWeightKg: clientProfilesTable.startingWeightKg,
-        currentWeightKg: clientProfilesTable.currentWeightKg,
         activityLevel: clientProfilesTable.activityLevel,
         primaryGoal: clientProfilesTable.primaryGoal,
         dietaryRestrictions: clientProfilesTable.dietaryRestrictions,

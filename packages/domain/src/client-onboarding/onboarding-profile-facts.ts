@@ -8,7 +8,6 @@ import type {
 
 const GOAL_FIELD_IDS = {
   height: "height",
-  weight: "weight",
   activityLevel: "lifestyleActivityLevel",
   primaryGoal: "primaryGoal",
   additionalInfo: "additionalInfo",
@@ -82,7 +81,6 @@ export function profileFactsOf(
 
   return {
     heightCm: numberOf(goals[GOAL_FIELD_IDS.height]),
-    startingWeightKg: numberOf(goals[GOAL_FIELD_IDS.weight]),
     activityLevel: trimmedTextOf(goals[GOAL_FIELD_IDS.activityLevel]),
     primaryGoal: trimmedTextOf(goals[GOAL_FIELD_IDS.primaryGoal]),
     dietaryRestrictions: dietaryRestrictionsOf(

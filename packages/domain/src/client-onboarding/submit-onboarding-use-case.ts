@@ -95,9 +95,8 @@ export class SubmitOnboardingUseCase {
       submission: outcome.submission,
       measurementEntry: outcome.measurementEntry,
       profile: ClientProfile.fromOnboarding({
-        identity: client,
+        clientId: client.clientId,
         facts: profileFactsOf(outcome.submission.answers),
-        latestMeasurement: outcome.measurementEntry,
         now,
       }),
     });

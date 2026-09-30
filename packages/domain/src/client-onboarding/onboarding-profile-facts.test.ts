@@ -19,7 +19,7 @@ function answersWith(forms: {
 }
 
 describe("profileFactsOf", () => {
-  it("takes her height, weight, activity level, goal and notes from her goals form", () => {
+  it("takes her height, activity level, goal and notes from her goals form, never her weight", () => {
     // arrange
     const answers = answersWith({
       goalAvailability: {
@@ -38,7 +38,6 @@ describe("profileFactsOf", () => {
     // assert
     expect(facts).toEqual({
       heightCm: 168,
-      startingWeightKg: 64.5,
       activityLevel: "Lightly active",
       primaryGoal: "Lose fat",
       dietaryRestrictions: "None",
@@ -63,7 +62,6 @@ describe("profileFactsOf", () => {
     // assert
     expect(facts).toEqual({
       heightCm: null,
-      startingWeightKg: null,
       activityLevel: null,
       primaryGoal: null,
       dietaryRestrictions: "None",

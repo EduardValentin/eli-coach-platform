@@ -192,7 +192,7 @@ describe.sequential("client onboarding integration", () => {
     expect(page).not.toContain("(cm)");
   });
 
-  it("records her complete submission with her profile and closes the door behind her", async () => {
+  it("records her complete submission with her profile facts and closes the door behind her", async () => {
     // arrange
     await admitInvitedClient(ANA);
     await putDraft(INVITED_CLIENT, {
@@ -227,16 +227,7 @@ describe.sequential("client onboarding integration", () => {
     ]);
     expect(await draftRowCountOf(client.id)).toBe(0);
     expect(await onboarding.profileRowOf(client.id)).toEqual({
-      firstName: "Ana",
-      lastName: "Popescu",
-      email: ANA.email,
-      dateOfBirth: "1994-03-14",
-      gender: "female",
-      country: "RO",
-      phone: "+40712345678",
       heightCm: "165.0",
-      startingWeightKg: "66.10",
-      currentWeightKg: "66.10",
       activityLevel: "Mostly sitting",
       primaryGoal: "Lose fat",
       dietaryRestrictions: "Lactose, mild",

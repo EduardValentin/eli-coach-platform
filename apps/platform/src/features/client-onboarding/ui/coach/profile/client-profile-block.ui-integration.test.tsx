@@ -11,25 +11,34 @@ import { ClientProfileBlock } from "./client-profile-block";
 
 const NOW = new Date("2026-03-13T23:30:00.000Z");
 
-const PROFILE: ClientProfileView = {
+const IDENTITY: ClientProfileView["identity"] = {
   dateOfBirth: "1994-03-14",
   gender: "female",
   country: "RO",
   phone: "+40712345678",
-  heightCm: 168,
-  startingWeightKg: 64.5,
-  currentWeightKg: 63.8,
-  activityLevel: "Lightly active",
-  primaryGoal: "Lose fat",
-  dietaryRestrictions: "Vegetarian, Lactose",
-  clientNotes: "I travel a lot.",
 };
 
-const LABELS = [
-  "Age",
-  "Gender",
-  "Country",
-  "Phone",
+const PROFILE: ClientProfileView = {
+  identity: IDENTITY,
+  facts: {
+    heightCm: 168,
+    activityLevel: "Lightly active",
+    primaryGoal: "Lose fat",
+    dietaryRestrictions: "Vegetarian, Lactose",
+    clientNotes: "I travel a lot.",
+  },
+  startingWeightKg: 64.5,
+  currentWeightKg: 63.8,
+};
+
+const AWAITING_ONBOARDING: ClientProfileView = {
+  identity: IDENTITY,
+  facts: null,
+  startingWeightKg: null,
+  currentWeightKg: null,
+};
+
+const ONBOARDING_LABELS = [
   "Height",
   "Starting weight",
   "Current weight",
@@ -52,9 +61,9 @@ afterEach(() => {
 });
 
 describe("the client's profile block", () => {
-  it("reads her profile: age on the coach's calendar, identity, body facts, goal, restrictions and notes", () => {
+  it("reads her profile: age on the coach's calendar, identity, height, first and latest weights, goal, restrictions and notes", () => {
     // arrange, act
-    render(<ClientProfileBlock gender="female" profile={PROFILE} />);
+    render(<ClientProfileBlock profile={PROFILE} />);
 
     // assert
     const profile = screen.getByRole("region", { name: "Profile" });
@@ -80,18 +89,20 @@ describe("the client's profile block", () => {
   it("shows a dash for every fact she has not given", () => {
     // arrange
     const sparse: ClientProfileView = {
-      ...PROFILE,
-      phone: null,
-      heightCm: null,
+      identity: { ...IDENTITY, phone: null },
+      facts: {
+        heightCm: null,
+        activityLevel: null,
+        primaryGoal: null,
+        dietaryRestrictions: "Vegetarian, Lactose",
+        clientNotes: null,
+      },
       startingWeightKg: null,
       currentWeightKg: null,
-      activityLevel: null,
-      primaryGoal: null,
-      clientNotes: null,
     };
 
     // act
-    render(<ClientProfileBlock gender="female" profile={sparse} />);
+    render(<ClientProfileBlock profile={sparse} />);
 
     // assert
     const profile = screen.getByRole("region", { name: "Profile" });
@@ -109,24 +120,56 @@ describe("the client's profile block", () => {
   });
 
   it.each([
-    ["female", "Her profile fills in once she sends her onboarding."],
-    ["male", "His profile fills in once he sends his onboarding."],
+    ["female", "Female", "Her profile fills in once she sends her onboarding."],
+    ["male", "Male", "His profile fills in once he sends his onboarding."],
     [
       "prefer_not_to_say",
+      "Prefer not to say",
       "Their profile fills in once they send their onboarding.",
     ],
   ] as const)(
-    "shows only dashes and says when a %s client's profile fills in before she sends her onboarding",
-    (gender, pendingLine) => {
-      // arrange, act
-      render(<ClientProfileBlock gender={gender} profile={null} />);
+    "reads a %s client's identity, dashes the rest and says when her profile fills in before she sends her onboarding",
+    (gender, genderLabel, pendingLine) => {
+      // arrange
+      const awaiting: ClientProfileView = {
+        ...AWAITING_ONBOARDING,
+        identity: { ...IDENTITY, gender },
+      };
+
+      // act
+      render(<ClientProfileBlock profile={awaiting} />);
 
       // assert
       const profile = screen.getByRole("region", { name: "Profile" });
       expect(within(profile).getByText(pendingLine)).toBeInTheDocument();
-      expect(readings(profile)).toEqual(LABELS.map((label) => [label, "—"]));
+      expect(readings(profile)).toEqual([
+        ["Age", "32"],
+        ["Gender", genderLabel],
+        ["Country", "Romania"],
+        ["Phone", "+40712345678"],
+        ...ONBOARDING_LABELS.map((label) => [label, "—"]),
+      ]);
     },
   );
+
+  it("dashes her weights until she sends her onboarding, whatever measurements exist", () => {
+    // arrange
+    const measuredEarly: ClientProfileView = {
+      ...AWAITING_ONBOARDING,
+      startingWeightKg: 64.5,
+      currentWeightKg: 63.8,
+    };
+
+    // act
+    render(<ClientProfileBlock profile={measuredEarly} />);
+
+    // assert
+    const profile = screen.getByRole("region", { name: "Profile" });
+    expect(readings(profile).slice(5, 7)).toEqual([
+      ["Starting weight", "—"],
+      ["Current weight", "—"],
+    ]);
+  });
 });
 
 function coachIsIn(timeZone: string) {

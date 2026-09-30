@@ -1,6 +1,8 @@
-import type { MeasurementEntry } from "../measurement";
+import type {
+  ClientMeasurementsSource,
+  MeasurementEntry,
+} from "../measurement";
 
-import type { ClientMeasurementsSource } from "./client-measurements-source";
 import type { ClientOnboardingIncidents } from "./client-onboarding-incidents";
 import type { ClientOnboardingSource } from "./client-onboarding-source";
 import type { DetailRequestSnapshot } from "./detail-request";

@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { MeasurementEntry } from "../measurement";
-import type { ClientMeasurementsSource } from "./client-measurements-source";
+import type {
+  ClientMeasurementsSource,
+  MeasurementEntry,
+} from "../measurement";
 import type { ClientOnboardingIncidents } from "./client-onboarding-incidents";
 import type { ClientOnboardingSource } from "./client-onboarding-source";
 import { DetailRequest } from "./detail-request";

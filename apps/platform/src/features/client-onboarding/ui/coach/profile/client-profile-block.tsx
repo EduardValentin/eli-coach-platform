@@ -17,9 +17,12 @@ import { useReviewDayTimeZone } from "~/features/client-onboarding/ui/coach/onbo
 import { PhoneLink } from "~/features/coaching-sales/ui/shared/phone-link";
 
 type ClientProfileBlockProps = {
-  profile: ClientProfileView | null;
-  gender: VisitorGender;
+  profile: ClientProfileView;
 };
+
+type ProfileIdentity = ClientProfileView["identity"];
+
+type ProfileFacts = NonNullable<ClientProfileView["facts"]>;
 
 type ProfileReadingId =
   | "age"
@@ -75,11 +78,7 @@ const PROFILE_READINGS: readonly ProfileReading[] = [
   },
 ];
 
-const PENDING_VALUES: ProfileValues = {
-  age: ABSENT_VALUE,
-  gender: ABSENT_VALUE,
-  country: ABSENT_VALUE,
-  phone: ABSENT_VALUE,
+const AWAITING_ONBOARDING_VALUES = {
   height: ABSENT_VALUE,
   startingWeight: ABSENT_VALUE,
   currentWeight: ABSENT_VALUE,
@@ -97,19 +96,24 @@ function heightReading(cm: number | null): string {
   return cm === null ? ABSENT_VALUE : formatCanonicalMeasure("height", cm);
 }
 
-function profileValues(profile: ClientProfileView, age: number): ProfileValues {
+function identityValues(identity: ProfileIdentity, age: number) {
   return {
     age,
-    gender: labelForGender(profile.gender),
-    country: findCountry(profile.country)?.name ?? profile.country,
-    phone: <PhoneLink phone={profile.phone} />,
-    height: heightReading(profile.heightCm),
+    gender: labelForGender(identity.gender),
+    country: findCountry(identity.country)?.name ?? identity.country,
+    phone: <PhoneLink phone={identity.phone} />,
+  };
+}
+
+function onboardingValues(profile: ClientProfileView, facts: ProfileFacts) {
+  return {
+    height: heightReading(facts.heightCm),
     startingWeight: weightReading(profile.startingWeightKg),
     currentWeight: weightReading(profile.currentWeightKg),
-    activityLevel: profile.activityLevel ?? ABSENT_VALUE,
-    primaryGoal: profile.primaryGoal ?? ABSENT_VALUE,
-    dietaryRestrictions: profile.dietaryRestrictions,
-    clientNotes: profile.clientNotes ?? ABSENT_VALUE,
+    activityLevel: facts.activityLevel ?? ABSENT_VALUE,
+    primaryGoal: facts.primaryGoal ?? ABSENT_VALUE,
+    dietaryRestrictions: facts.dietaryRestrictions,
+    clientNotes: facts.clientNotes ?? ABSENT_VALUE,
   };
 }
 
@@ -120,18 +124,15 @@ function profilePendingLine(gender: VisitorGender): string {
   return `${possessive.capitalised} profile fills in once ${subject.lower} send${subject.regularVerbSuffix} ${possessive.lower} onboarding.`;
 }
 
-export function ClientProfileBlock({
-  gender,
-  profile,
-}: ClientProfileBlockProps) {
+export function ClientProfileBlock({ profile }: ClientProfileBlockProps) {
   const timeZone = useReviewDayTimeZone();
   const [now] = useState(() => new Date());
-  const values = profile
-    ? profileValues(
-        profile,
-        ageOn({ dateOfBirth: profile.dateOfBirth, on: now, timeZone }),
-      )
-    : PENDING_VALUES;
+  const { identity, facts } = profile;
+  const age = ageOn({ dateOfBirth: identity.dateOfBirth, on: now, timeZone });
+  const values: ProfileValues = {
+    ...identityValues(identity, age),
+    ...(facts ? onboardingValues(profile, facts) : AWAITING_ONBOARDING_VALUES),
+  };
 
   return (
     <PortalWidget
@@ -148,12 +149,12 @@ export function ClientProfileBlock({
       title="Profile"
     >
       <div className="space-y-5">
-        {profile ? null : (
+        {facts ? null : (
           <p
             className="text-sm text-text-secondary"
             data-parity="profile-pending"
           >
-            {profilePendingLine(gender)}
+            {profilePendingLine(identity.gender)}
           </p>
         )}
         <dl className="grid grid-cols-2 gap-5 sm:grid-cols-4">

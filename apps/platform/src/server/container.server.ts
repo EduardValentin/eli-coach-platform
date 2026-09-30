@@ -138,6 +138,7 @@ export function createPlatformContainer(options: {
   });
   const clientOnboarding = composeClientOnboardingFeature({
     appBasePath: environment.APP_BASE_PATH,
+    clientIdentities: coachingSales.handles.clientIdentities,
     clock,
     contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
     database: database.client,

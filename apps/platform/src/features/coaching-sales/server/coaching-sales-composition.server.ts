@@ -1,5 +1,6 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
 import type { InvitationAcceptance } from "@eli-coach-platform/domain/account";
+import type { ClientIdentities } from "@eli-coach-platform/domain/client";
 import {
   AcceptInvitationUseCase,
   AdmitPaidClientUseCase,
@@ -58,6 +59,7 @@ import { CoachingPurchaseCompletionHandler } from "~/features/coaching-sales/api
 import { CheckoutsController } from "~/features/coaching-sales/api/public/checkouts-controller.server";
 import { InvitationsController } from "~/features/coaching-sales/api/public/invitations-controller.server";
 import { PostgresClientJourneys } from "~/features/coaching-sales/data/client-journeys/client-journeys-repository.server";
+import { PostgresClientIdentities } from "~/features/coaching-sales/data/clients/client-identities-reader.server";
 import { PostgresClientRoster } from "~/features/coaching-sales/data/clients/client-roster-reader.server";
 import { PostgresOnboardingClients } from "~/features/coaching-sales/data/clients/onboarding-clients-reader.server";
 import { RandomClientInvitationIdGenerator } from "~/features/coaching-sales/data/invitations/client-invitation-ids.server";
@@ -85,6 +87,7 @@ export type CoachingSalesFeature = {
 type CoachingSalesComposition = {
   feature: CoachingSalesFeature;
   handles: {
+    clientIdentities: ClientIdentities;
     invitationAcceptance: InvitationAcceptance;
     onboardingClients: OnboardingClients & UnitPreferenceClients;
     onboardingReviewStamps: OnboardingReviewStamps;
@@ -270,6 +273,7 @@ export function composeCoachingSalesFeature(
       readClientJourney: clientJourneyUseCases.readClientJourney,
     },
     handles: {
+      clientIdentities: new PostgresClientIdentities(database),
       invitationAcceptance: {
         accept: (input) => invitationUseCases.acceptInvitation.execute(input),
       },

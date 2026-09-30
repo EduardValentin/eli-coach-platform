@@ -44,3 +44,13 @@ export function latestMeasurementOf(
     null,
   );
 }
+
+export function earliestMeasurementOf(
+  entries: readonly MeasurementEntry[],
+): MeasurementEntry | null {
+  return entries.reduce<MeasurementEntry | null>(
+    (earliest, entry) =>
+      !earliest || entry.recordedAt < earliest.recordedAt ? entry : earliest,
+    null,
+  );
+}

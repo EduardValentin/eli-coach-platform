@@ -1,6 +1,6 @@
 import type { AccountSnapshot } from "@eli-coach-platform/domain/account";
 import type {
-  ClientProfileSnapshot,
+  ClientProfileReading,
   ReadClientProfileUseCase,
 } from "@eli-coach-platform/domain/client-profile";
 import { describe, expect, it, vi } from "vitest";
@@ -19,7 +19,6 @@ import {
 import { ClientProfileController } from "./client-profile-controller.server";
 
 const CLIENT_ID = "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22";
-const SUBMITTED_AT = new Date("2026-09-28T09:00:00.000Z");
 
 const COACH: AccountSnapshot = {
   authSubjectId: "user_eli",
@@ -34,27 +33,40 @@ const CLIENT_SESSION: ResolvedSession = {
 
 const ANONYMOUS_SESSION: ResolvedSession = { kind: "anonymous" };
 
+const IDENTITY: ClientProfileReading["identity"] = {
+  clientId: CLIENT_ID,
+  firstName: "Ana",
+  lastName: "Popescu",
+  email: "ana@example.com",
+  dateOfBirth: "1994-03-14",
+  gender: "female",
+  country: "RO",
+  phone: "+40712345678",
+};
+
+const IDENTITY_VIEW = {
+  dateOfBirth: "1994-03-14",
+  gender: "female",
+  country: "RO",
+  phone: "+40712345678",
+};
+
 describe("ClientProfileController load", () => {
-  it("hands the coach her profile as the widget reads it", async () => {
+  it("hands the coach her identity, her onboarding facts and her weights as the widget reads them", async () => {
     // arrange
+    const facts = {
+      heightCm: 168,
+      activityLevel: "Lightly active",
+      primaryGoal: "Lose fat",
+      dietaryRestrictions: "Vegetarian, Lactose",
+      clientNotes: "I travel a lot.",
+    };
     const { controller, readClientProfile } = createController({
-      profile: {
-        clientId: CLIENT_ID,
-        firstName: "Ana",
-        lastName: "Popescu",
-        email: "ana@example.com",
-        dateOfBirth: "1994-03-14",
-        gender: "female",
-        country: "RO",
-        phone: "+40712345678",
-        heightCm: 168,
+      reading: {
+        identity: IDENTITY,
+        facts,
         startingWeightKg: 64.5,
         currentWeightKg: 63.8,
-        activityLevel: "Lightly active",
-        primaryGoal: "Lose fat",
-        dietaryRestrictions: "Vegetarian, Lactose",
-        clientNotes: "I travel a lot.",
-        updatedAt: SUBMITTED_AT,
       },
     });
 
@@ -63,37 +75,53 @@ describe("ClientProfileController load", () => {
 
     // assert
     expect(profile).toEqual({
-      dateOfBirth: "1994-03-14",
-      gender: "female",
-      country: "RO",
-      phone: "+40712345678",
-      heightCm: 168,
+      identity: IDENTITY_VIEW,
+      facts,
       startingWeightKg: 64.5,
       currentWeightKg: 63.8,
-      activityLevel: "Lightly active",
-      primaryGoal: "Lose fat",
-      dietaryRestrictions: "Vegetarian, Lactose",
-      clientNotes: "I travel a lot.",
     });
     expect(readClientProfile).toHaveBeenCalledWith(CLIENT_ID);
   });
 
-  it("answers no profile before the client has sent her onboarding", async () => {
+  it("hands the coach her identity alone before she has sent her onboarding", async () => {
     // arrange
-    const { controller } = createController({ profile: null });
+    const { controller } = createController({
+      reading: {
+        identity: IDENTITY,
+        facts: null,
+        startingWeightKg: null,
+        currentWeightKg: null,
+      },
+    });
 
     // act
     const profile = await controller.load(coachArgs(), CLIENT_ID);
 
     // assert
-    expect(profile).toBeNull();
+    expect(profile).toEqual({
+      identity: IDENTITY_VIEW,
+      facts: null,
+      startingWeightKg: null,
+      currentWeightKg: null,
+    });
+  });
+
+  it("answers not found to a uuid that is no client", async () => {
+    // arrange
+    const { controller } = createController({ reading: null });
+
+    // act
+    const thrown = await captureThrown(() =>
+      controller.load(coachArgs(), CLIENT_ID),
+    );
+
+    // assert
+    expect((thrown as Response).status).toBe(404);
   });
 
   it("answers not found to an id that is not a uuid without reading any profile", async () => {
     // arrange
-    const { controller, readClientProfile } = createController({
-      profile: null,
-    });
+    const { controller, readClientProfile } = createController();
 
     // act
     const thrown = await captureThrown(() =>
@@ -107,9 +135,7 @@ describe("ClientProfileController load", () => {
 
   it("refuses a client account without reading any profile", async () => {
     // arrange
-    const { controller, readClientProfile } = createController({
-      profile: null,
-    });
+    const { controller, readClientProfile } = createController();
 
     // act
     const thrown = await captureThrown(() =>
@@ -123,9 +149,7 @@ describe("ClientProfileController load", () => {
 
   it("sends an anonymous visitor to sign in without reading any profile", async () => {
     // arrange
-    const { controller, readClientProfile } = createController({
-      profile: null,
-    });
+    const { controller, readClientProfile } = createController();
 
     // act
     const thrown = await captureThrown(() =>
@@ -139,9 +163,9 @@ describe("ClientProfileController load", () => {
 });
 
 function createController(
-  options: { profile?: ClientProfileSnapshot | null } = {},
+  options: { reading?: ClientProfileReading | null } = {},
 ) {
-  const readClientProfile = vi.fn().mockResolvedValue(options.profile ?? null);
+  const readClientProfile = vi.fn().mockResolvedValue(options.reading ?? null);
   const controller = new ClientProfileController({
     readClientProfile: {
       execute: readClientProfile,

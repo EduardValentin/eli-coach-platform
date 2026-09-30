@@ -69,18 +69,29 @@ const INVITED: CoachClient = {
   },
 };
 
+const AWAITING_ONBOARDING_PROFILE: ClientProfileView = {
+  identity: {
+    dateOfBirth: "1994-03-14",
+    gender: "female",
+    country: "RO",
+    phone: "+40712345678",
+  },
+  facts: null,
+  startingWeightKg: null,
+  currentWeightKg: null,
+};
+
 const PROFILE: ClientProfileView = {
-  dateOfBirth: "1994-03-14",
-  gender: "female",
-  country: "RO",
-  phone: "+40712345678",
-  heightCm: 168,
+  ...AWAITING_ONBOARDING_PROFILE,
+  facts: {
+    heightCm: 168,
+    activityLevel: "Lightly active",
+    primaryGoal: "Lose fat",
+    dietaryRestrictions: "Vegetarian",
+    clientNotes: null,
+  },
   startingWeightKg: 64.5,
   currentWeightKg: 64.5,
-  activityLevel: "Lightly active",
-  primaryGoal: "Lose fat",
-  dietaryRestrictions: "Vegetarian",
-  clientNotes: null,
 };
 
 const AWAITING_REVIEW: CoachClient = {
@@ -216,7 +227,7 @@ describe("the coach's client page", () => {
     expect(within(call).getByText("Build strength")).toBeVisible();
   });
 
-  it("says her profile fills in once she sends her onboarding while it does not exist", async () => {
+  it("reads her identity and says her profile fills in once she sends her onboarding", async () => {
     // arrange, act
     await renderClientPage();
 
@@ -227,6 +238,7 @@ describe("the coach's client page", () => {
         "Her profile fills in once she sends her onboarding.",
       ),
     ).toBeInTheDocument();
+    expect(within(profile).getByText("Romania")).toBeInTheDocument();
   });
 
   it("reads her profile once she has sent her onboarding", async () => {
@@ -367,7 +379,7 @@ function coachIsIn(timeZone: string) {
 type ClientPageData = {
   client: CoachClient;
   review: OnboardingReviewView;
-  profile: ClientProfileView | null;
+  profile: ClientProfileView;
 };
 
 function clientNotFound(): never {
@@ -378,7 +390,7 @@ async function renderClientRouter(
   load: () => ClientPageData = () => ({
     client: INVITED,
     review: NOT_SUBMITTED,
-    profile: null,
+    profile: AWAITING_ONBOARDING_PROFILE,
   }),
 ) {
   const user = userEvent.setup();
@@ -423,7 +435,7 @@ async function renderClientPage(options: Partial<ClientPageData> = {}) {
   const { user } = await renderClientRouter(() => ({
     client: options.client ?? INVITED,
     review: options.review ?? NOT_SUBMITTED,
-    profile: options.profile ?? null,
+    profile: options.profile ?? AWAITING_ONBOARDING_PROFILE,
   }));
 
   return user;

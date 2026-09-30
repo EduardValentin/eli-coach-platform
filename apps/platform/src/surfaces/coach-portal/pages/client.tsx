@@ -81,7 +81,7 @@ export default function CoachClientRoute() {
         </div>
       </header>
 
-      <ClientProfileBlock gender={client.gender} profile={profile} />
+      <ClientProfileBlock profile={profile} />
       {client.invitation && (
         <InvitationBlock
           clientId={client.clientId}

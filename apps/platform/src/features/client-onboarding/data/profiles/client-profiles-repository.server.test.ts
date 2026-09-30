@@ -20,16 +20,7 @@ const UPDATED_AT = new Date("2026-09-30T10:00:00.000Z");
 
 const SNAPSHOT: ClientProfileSnapshot = {
   clientId: CLIENT_ID,
-  firstName: "Ana",
-  lastName: "Popescu",
-  email: "ana@example.com",
-  dateOfBirth: "1994-03-14",
-  gender: "female",
-  country: "RO",
-  phone: null,
   heightCm: 168,
-  startingWeightKg: 64.5,
-  currentWeightKg: 63.8,
   activityLevel: "Lightly active",
   primaryGoal: "Lose fat",
   dietaryRestrictions: "Vegetarian",
@@ -42,7 +33,7 @@ const PROFILE_COLUMNS = Object.fromEntries(
 );
 
 describe("PostgresClientProfiles#findByClientId", () => {
-  it("rebuilds her profile from its row", async () => {
+  it("rebuilds her profile facts from its row", async () => {
     // arrange
     const profiles = new PostgresClientProfiles(
       createDatabaseAnswering([SNAPSHOT]),
@@ -68,7 +59,7 @@ describe("PostgresClientProfiles#findByClientId", () => {
 });
 
 describe("saveClientProfile", () => {
-  it("inserts her profile created now, or rewrites every column but its creation moment", async () => {
+  it("inserts her profile facts created now, or rewrites every column but its creation moment", async () => {
     // arrange
     const transaction = createTransactionRecordingUpserts();
 

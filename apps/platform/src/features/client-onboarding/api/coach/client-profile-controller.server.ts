@@ -18,7 +18,7 @@ export class ClientProfileController {
   async load(
     args: LoaderFunctionArgs,
     clientId: string,
-  ): Promise<ClientProfileView | null> {
+  ): Promise<ClientProfileView> {
     requirePortalAccess(args, { role: "COACH" });
     const target = clientIdSchema.safeParse(clientId);
 
@@ -26,8 +26,12 @@ export class ClientProfileController {
       throw new Response("Not Found", { status: 404 });
     }
 
-    const profile = await this.options.readClientProfile.execute(target.data);
+    const reading = await this.options.readClientProfile.execute(target.data);
 
-    return profile ? clientProfileSchema.parse(profile) : null;
+    if (!reading) {
+      throw new Response("Not Found", { status: 404 });
+    }
+
+    return clientProfileSchema.parse(reading);
   }
 }

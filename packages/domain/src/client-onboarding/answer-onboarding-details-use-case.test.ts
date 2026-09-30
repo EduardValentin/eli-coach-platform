@@ -1,14 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { ClientProfile } from "../client-profile";
-import type { MeasurementEntry } from "../measurement";
 import type { ClientUnitPreferences } from "../unit-preference";
 import { AnswerOnboardingDetailsUseCase } from "./answer-onboarding-details-use-case";
-import type { ClientMeasurementsSource } from "./client-measurements-source";
 import type { ClientOnboardingIncidents } from "./client-onboarding-incidents";
 import type { ClientOnboardingSource } from "./client-onboarding-source";
 import { DetailRequest } from "./detail-request";
-import { emptyAnswers } from "./onboarding-answers";
+import { emptyAnswers, type OnboardingQuestionId } from "./onboarding-answers";
 import type { OnboardingClient, OnboardingClients } from "./onboarding-clients";
 import type {
   OnboardingReviewStamps,
@@ -22,6 +20,7 @@ const OPENED_AT = new Date("2026-09-28T09:00:00.000Z");
 const ASKED_AT = new Date("2026-09-28T10:00:00.000Z");
 const NOW = new Date("2026-09-30T10:00:00.000Z");
 const WEIGHT = { formId: "goal-availability", fieldId: "weight" } as const;
+const HEIGHT = { formId: "goal-availability", fieldId: "height" } as const;
 
 const REQUESTED_STAMPS: ReviewStamps = {
   reviewOpenedAt: OPENED_AT,
@@ -56,11 +55,13 @@ const SUBMISSION: OnboardingSubmission = {
   submittedAt: SUBMITTED_AT,
 };
 
-function askedRequest(): DetailRequest {
+function askedRequest(
+  questionIds: readonly OnboardingQuestionId[] = [WEIGHT],
+): DetailRequest {
   return DetailRequest.raise({
     id: "request-1",
     clientId: CLIENT.clientId,
-    questionIds: [WEIGHT],
+    questionIds,
     note: "Please weigh yourself in the morning.",
     askedAt: ASKED_AT,
   });
@@ -99,7 +100,6 @@ function answerPorts(
     client?: OnboardingClient | null;
     requests?: DetailRequest[];
     stamps?: OnboardingReviewStamps;
-    measurements?: MeasurementEntry[];
   } = {},
 ) {
   return {
@@ -117,9 +117,6 @@ function answerPorts(
         .mockResolvedValue({ draft: null, submission: SUBMISSION }),
     } satisfies ClientOnboardingSource,
     reviews: createReviews(overrides.requests ?? [askedRequest()]),
-    measurements: {
-      listByClientId: vi.fn().mockResolvedValue(overrides.measurements ?? []),
-    } satisfies ClientMeasurementsSource,
     unitPreferences: {
       findByClientId: vi.fn().mockResolvedValue(null),
       save: vi.fn().mockResolvedValue(undefined),
@@ -168,46 +165,28 @@ describe("AnswerOnboardingDetailsUseCase", () => {
     });
   });
 
-  it("rebuilds her profile from her answers with the new ones merged in and her latest measurement", async () => {
+  it("rebuilds her profile facts from her answers with the new ones merged in", async () => {
     // arrange
-    const ports = answerPorts({
-      measurements: [
-        { recordedAt: SUBMITTED_AT, weightKg: 70, waistCm: 74 },
-        { recordedAt: ASKED_AT, weightKg: 69.2, waistCm: 73 },
-        { recordedAt: OPENED_AT, weightKg: 69.8, waistCm: 73.5 },
-      ],
-    });
+    const ports = answerPorts({ requests: [askedRequest([HEIGHT])] });
     const useCase = new AnswerOnboardingDetailsUseCase(ports);
 
     // act
     await useCase.execute({
       authSubjectId: "user_ana",
-      answers: { "goal-availability": { weight: 72 } },
+      answers: { "goal-availability": { height: 170 } },
     });
 
     // assert
     const [recorded] = ports.reviews.recordAnswer.mock.calls[0];
     expect(recorded.profile.toSnapshot()).toEqual({
       clientId: CLIENT.clientId,
-      firstName: "Ana",
-      lastName: "Popescu",
-      email: "ana@example.com",
-      dateOfBirth: "1994-03-14",
-      gender: "female",
-      country: "RO",
-      phone: "+40712345678",
-      heightCm: 168,
-      startingWeightKg: 72,
-      currentWeightKg: 69.2,
+      heightCm: 170,
       activityLevel: null,
       primaryGoal: null,
       dietaryRestrictions: "None",
       clientNotes: null,
       updatedAt: NOW,
     });
-    expect(ports.measurements.listByClientId).toHaveBeenCalledWith(
-      CLIENT.clientId,
-    );
   });
 
   it("records the answer before the stamp and re-applies the stamp when the first write failed", async () => {

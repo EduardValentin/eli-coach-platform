@@ -141,6 +141,24 @@ describe("composeClientOnboardingFeature", () => {
     );
   });
 
+  it("answers not found to the coach's profile read of a client no one knows", async () => {
+    // arrange
+    const handles = createHandles();
+    const { coachProfile } = composeClientOnboardingFeature(handles);
+
+    // act
+    const loading = coachProfile.load(
+      accountArgs({ account: COACH }),
+      UNKNOWN_CLIENT_ID,
+    );
+
+    // assert
+    await expect(loading).rejects.toMatchObject({ status: 404 });
+    expect(handles.clientIdentities.findByClientId).toHaveBeenCalledWith(
+      UNKNOWN_CLIENT_ID,
+    );
+  });
+
   it("refuses a detail request for a client no one knows without sending an email", async () => {
     // arrange
     const handles = createHandles();
@@ -170,6 +188,7 @@ describe("composeClientOnboardingFeature", () => {
 function createHandles() {
   return {
     appBasePath: "/",
+    clientIdentities: { findByClientId: vi.fn().mockResolvedValue(null) },
     clock: { now: () => new Date("2026-09-28T10:00:00.000Z") },
     contactEmail: "contact@evoa.fit",
     database: createUnreachableDatabase(),

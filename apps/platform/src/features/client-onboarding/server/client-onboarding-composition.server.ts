@@ -1,4 +1,5 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
+import type { ClientIdentities } from "@eli-coach-platform/domain/client";
 import {
   AnswerOnboardingDetailsUseCase,
   ApproveOnboardingAnswersUseCase,
@@ -41,6 +42,7 @@ export type ClientOnboardingFeature = {
 
 type ClientOnboardingFeatureHandles = {
   appBasePath: string;
+  clientIdentities: ClientIdentities;
   clock: Clock;
   contactEmail: string;
   database: DatabaseClient;
@@ -68,7 +70,6 @@ export function composeClientOnboardingFeature(
       answerOnboardingDetails: new AnswerOnboardingDetailsUseCase({
         ...reviewPorts,
         clock,
-        measurements,
         unitPreferences,
       }),
       clock,
@@ -130,6 +131,8 @@ export function composeClientOnboardingFeature(
     }),
     coachProfile: new ClientProfileController({
       readClientProfile: new ReadClientProfileUseCase({
+        identities: handles.clientIdentities,
+        measurements,
         profiles: new PostgresClientProfiles(handles.database),
       }),
     }),

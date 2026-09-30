@@ -546,16 +546,7 @@ function createDatabaseRecordingAnswer(stampedRows: readonly unknown[]) {
 function profile(): ClientProfile {
   return ClientProfile.reconstitute({
     clientId: CLIENT_ID,
-    firstName: "Ana",
-    lastName: "Popescu",
-    email: "ana@example.com",
-    dateOfBirth: "1994-03-14",
-    gender: "female",
-    country: "RO",
-    phone: null,
     heightCm: 168,
-    startingWeightKg: 64.5,
-    currentWeightKg: 64.5,
     activityLevel: "Lightly active",
     primaryGoal: "Lose fat",
     dietaryRestrictions: "None",

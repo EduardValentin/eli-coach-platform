@@ -213,7 +213,7 @@ describe("SubmitOnboardingUseCase", () => {
     });
   });
 
-  it("records her profile with her submission: her booking identity, her answers and her first weight", async () => {
+  it("records her profile facts from her answers with her submission, never her identity or weight", async () => {
     // arrange
     const changes = createChanges();
     const useCase = createUseCase({ changes });
@@ -240,16 +240,7 @@ describe("SubmitOnboardingUseCase", () => {
     const [recorded] = changes.recordSubmission.mock.calls[0];
     expect(recorded.profile.toSnapshot()).toEqual({
       clientId: "client-1",
-      firstName: "Ana",
-      lastName: "Popescu",
-      email: "ana@example.com",
-      dateOfBirth: "1990-03-02",
-      gender: "male",
-      country: "RO",
-      phone: "+40712345678",
       heightCm: 180,
-      startingWeightKg: 82.5,
-      currentWeightKg: 82.5,
       activityLevel: "Mostly sitting",
       primaryGoal: "Build muscle",
       dietaryRestrictions: "Vegetarian, Lactose",
