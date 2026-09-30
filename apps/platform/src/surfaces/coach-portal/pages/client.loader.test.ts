@@ -139,7 +139,8 @@ function routeArguments() {
         coachClients: { loadClient },
       } as unknown as CoachingSalesFeature),
       contextEntry(clientOnboardingContext, {
-        coachReview: { loadProfile, loadReview },
+        coachProfile: { load: loadProfile },
+        coachReview: { loadReview },
       } as unknown as ClientOnboardingFeature),
     ],
     params: { clientId: CLIENT_ID },

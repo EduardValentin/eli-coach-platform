@@ -27,7 +27,7 @@ export type ClientStatus = (typeof CLIENT_STATUSES)[number];
 export type ClientRosterEntry = {
   journey: ClientJourneySnapshot;
   accountBound: boolean;
-  profile: {
+  booking: {
     email: string;
     gender: VisitorGender;
     assessmentCallId: string;

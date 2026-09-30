@@ -57,7 +57,7 @@ function rosterEntry(
       answersApprovedAt: null,
     },
     accountBound: overrides.accountBound ?? false,
-    profile: {
+    booking: {
       email: "ana@example.com",
       gender: "female",
       assessmentCallId: "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11",

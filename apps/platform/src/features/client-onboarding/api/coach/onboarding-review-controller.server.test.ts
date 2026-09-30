@@ -8,10 +8,6 @@ import {
   type ReadOnboardingReviewUseCase,
   type RequestOnboardingDetailsUseCase,
 } from "@eli-coach-platform/domain/client-onboarding";
-import type {
-  ClientProfileSnapshot,
-  ReadClientProfileUseCase,
-} from "@eli-coach-platform/domain/client-profile";
 import { describe, expect, it, vi } from "vitest";
 
 import type { AccountsFeature } from "~/features/accounts/server/accounts-composition.server";
@@ -400,94 +396,6 @@ describe("OnboardingReviewController loadReview", () => {
   });
 });
 
-describe("OnboardingReviewController loadProfile", () => {
-  it("hands the coach her profile as the widget reads it", async () => {
-    // arrange
-    const { controller, readClientProfile } = createController({
-      profile: {
-        clientId: CLIENT_ID,
-        firstName: "Ana",
-        lastName: "Popescu",
-        email: "ana@example.com",
-        dateOfBirth: "1994-03-14",
-        gender: "female",
-        country: "RO",
-        phone: "+40712345678",
-        heightCm: 168,
-        startingWeightKg: 64.5,
-        currentWeightKg: 63.8,
-        activityLevel: "Lightly active",
-        primaryGoal: "Lose fat",
-        dietaryRestrictions: "Vegetarian, Lactose",
-        clientNotes: "I travel a lot.",
-        updatedAt: SUBMITTED_AT,
-      },
-    });
-
-    // act
-    const profile = await controller.loadProfile(coachArgs(), CLIENT_ID);
-
-    // assert
-    expect(profile).toEqual({
-      dateOfBirth: "1994-03-14",
-      gender: "female",
-      country: "RO",
-      phone: "+40712345678",
-      heightCm: 168,
-      startingWeightKg: 64.5,
-      currentWeightKg: 63.8,
-      activityLevel: "Lightly active",
-      primaryGoal: "Lose fat",
-      dietaryRestrictions: "Vegetarian, Lactose",
-      clientNotes: "I travel a lot.",
-    });
-    expect(readClientProfile).toHaveBeenCalledWith(CLIENT_ID);
-  });
-
-  it("answers no profile before the client has sent her onboarding", async () => {
-    // arrange
-    const { controller } = createController({ profile: null });
-
-    // act
-    const profile = await controller.loadProfile(coachArgs(), CLIENT_ID);
-
-    // assert
-    expect(profile).toBeNull();
-  });
-
-  it("answers not found to an id that is not a uuid without reading any profile", async () => {
-    // arrange
-    const { controller, readClientProfile } = createController({
-      profile: null,
-    });
-
-    // act
-    const thrown = await captureThrown(() =>
-      controller.loadProfile(coachArgs(), "not-a-uuid"),
-    );
-
-    // assert
-    expect((thrown as Response).status).toBe(404);
-    expect(readClientProfile).not.toHaveBeenCalled();
-  });
-
-  it("refuses a client account without reading any profile", async () => {
-    // arrange
-    const { controller, readClientProfile } = createController({
-      profile: null,
-    });
-
-    // act
-    const thrown = await captureThrown(() =>
-      controller.loadProfile(coachArgs({ session: CLIENT_SESSION }), CLIENT_ID),
-    );
-
-    // assert
-    expect((thrown as Response).status).toBe(403);
-    expect(readClientProfile).not.toHaveBeenCalled();
-  });
-});
-
 describe("OnboardingReviewController openReview", () => {
   it.each<[OpenResult, string]>([
     [{ status: "opened" }, "opened"],
@@ -793,7 +701,6 @@ function createController(
   options: {
     approveResult?: ApproveResult;
     openResult?: OpenResult;
-    profile?: ClientProfileSnapshot | null;
     reading?: ReadResult;
     requestResult?: RequestResult;
   } = {},
@@ -803,7 +710,6 @@ function createController(
     .mockResolvedValue(options.approveResult);
   const openOnboardingReview = vi.fn().mockResolvedValue(options.openResult);
   const readOnboardingReview = vi.fn().mockResolvedValue(options.reading);
-  const readClientProfile = vi.fn().mockResolvedValue(options.profile ?? null);
   const requestOnboardingDetails = vi
     .fn()
     .mockResolvedValue(options.requestResult);
@@ -814,9 +720,6 @@ function createController(
     openOnboardingReview: {
       execute: openOnboardingReview,
     } as unknown as OpenOnboardingReviewUseCase,
-    readClientProfile: {
-      execute: readClientProfile,
-    } as unknown as ReadClientProfileUseCase,
     readOnboardingReview: {
       execute: readOnboardingReview,
     } as unknown as ReadOnboardingReviewUseCase,
@@ -829,7 +732,6 @@ function createController(
     approveOnboardingAnswers,
     controller,
     openOnboardingReview,
-    readClientProfile,
     readOnboardingReview,
     requestOnboardingDetails,
   };

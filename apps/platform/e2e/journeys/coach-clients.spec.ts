@@ -143,6 +143,12 @@ test("the coach finds her clients by status, name and join date and opens one", 
     "Renews on": `Once ${clientPronouns(submitted.gender).possessive} program starts`,
   });
   await coachClient.expectReducedPrice("No");
+  await coachClient.expectAssessmentCallCollapsed();
+
+  // act
+  await coachClient.expandAssessmentCall();
+
+  // assert
   await coachClient.expectAssessmentCall({
     Call: shortCallMoment(submitted.callStartsAt),
     Name: submitted.fullName,

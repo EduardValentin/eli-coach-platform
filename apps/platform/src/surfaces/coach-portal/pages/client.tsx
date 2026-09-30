@@ -32,13 +32,13 @@ export async function loader(args: LoaderFunctionArgs) {
     throw new Response("Not Found", { status: CLIENT_NOT_FOUND_STATUS });
   }
 
-  const coachReview = args.context.get(clientOnboardingContext).coachReview;
+  const onboarding = args.context.get(clientOnboardingContext);
   const [client, review, profile] = await Promise.all([
     args.context
       .get(coachingSalesContext)
       .coachClients.loadClient(args, clientId),
-    coachReview.loadReview(args, clientId),
-    coachReview.loadProfile(args, clientId),
+    onboarding.coachReview.loadReview(args, clientId),
+    onboarding.coachProfile.load(args, clientId),
   ]);
 
   return { client, review, profile };

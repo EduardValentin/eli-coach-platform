@@ -81,7 +81,7 @@ function toRosterEntry(row: RosterRow): ClientRosterEntry {
       answersApprovedAt: row.answersApprovedAt,
     },
     accountBound: row.authSubjectId !== null,
-    profile: {
+    booking: {
       email: row.email,
       gender: row.gender,
       assessmentCallId: row.assessmentCallId,

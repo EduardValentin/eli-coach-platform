@@ -23,6 +23,7 @@ import {
 import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 
 import { ClientOnboardingController } from "~/features/client-onboarding/api/client/client-onboarding-controller.server";
+import { ClientProfileController } from "~/features/client-onboarding/api/coach/client-profile-controller.server";
 import { OnboardingReviewController } from "~/features/client-onboarding/api/coach/onboarding-review-controller.server";
 import { PostgresClientMeasurements } from "~/features/client-onboarding/data/measurements/client-measurements-reader.server";
 import { PostgresClientOnboardings } from "~/features/client-onboarding/data/onboardings/client-onboardings-repository.server";
@@ -35,6 +36,7 @@ import { EmailOnboardingDetailsNotifications } from "~/features/client-onboardin
 export type ClientOnboardingFeature = {
   controller: ClientOnboardingController;
   coachReview: OnboardingReviewController;
+  coachProfile: ClientProfileController;
 };
 
 type ClientOnboardingFeatureHandles = {
@@ -107,9 +109,6 @@ export function composeClientOnboardingFeature(
         ...reviewPorts,
         clock,
       }),
-      readClientProfile: new ReadClientProfileUseCase({
-        profiles: new PostgresClientProfiles(handles.database),
-      }),
       readOnboardingReview: new ReadOnboardingReviewUseCase({
         ...reviewPorts,
         measurements,
@@ -127,6 +126,11 @@ export function composeClientOnboardingFeature(
           },
         ),
         requestIds: new RandomDetailRequestIds(),
+      }),
+    }),
+    coachProfile: new ClientProfileController({
+      readClientProfile: new ReadClientProfileUseCase({
+        profiles: new PostgresClientProfiles(handles.database),
       }),
     }),
   };

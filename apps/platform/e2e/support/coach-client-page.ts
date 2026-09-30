@@ -194,8 +194,6 @@ export class CoachClientPage {
   }
 
   async expectAssessmentCall(readings: Readings): Promise<void> {
-    await this.expectAssessmentCallCollapsed();
-    await this.expandAssessmentCall();
     await this.expectReadings(this.assessmentCall, readings);
   }
 

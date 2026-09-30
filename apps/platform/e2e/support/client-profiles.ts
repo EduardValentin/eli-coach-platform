@@ -1,14 +1,8 @@
-import type { OnboardingAnswersByForm } from "@eli-coach-platform/domain/client-onboarding";
+import {
+  profileFactsOf,
+  type OnboardingAnswersByForm,
+} from "@eli-coach-platform/domain/client-onboarding";
 import type pg from "pg";
-
-export type ProfileFacts = {
-  heightCm: number | null;
-  startingWeightKg: number | null;
-  activityLevel: string | null;
-  primaryGoal: string | null;
-  dietaryRestrictions: string;
-  clientNotes: string | null;
-};
 
 type ProfileIdentity = {
   firstName: string;
@@ -24,12 +18,6 @@ type SubmissionRow = {
   answers: OnboardingAnswersByForm;
   submittedAt: Date;
 };
-
-const NO_RESTRICTIONS = "No restrictions";
-const SOMETHING_ELSE = "Something else";
-const HAS_ALLERGIES = "Yes";
-const NO_DIETARY_RESTRICTIONS = "None";
-const RESTRICTION_SEPARATOR = ", ";
 
 const SELECT_IDENTITY = `
   select
@@ -65,60 +53,6 @@ const INSERT_PROFILE = `
     $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $16
   )
 `;
-
-function numberOf(answer: unknown): number | null {
-  return typeof answer === "number" ? answer : null;
-}
-
-function textOf(answer: unknown): string | null {
-  return typeof answer === "string" ? answer : null;
-}
-
-function trimmedTextOf(answer: unknown): string | null {
-  return textOf(answer)?.trim() || null;
-}
-
-function eatingStyleRestriction(
-  nutrition: Record<string, unknown>,
-): string | null {
-  const eatingStyle = textOf(nutrition["eatingStyle"]);
-
-  if (eatingStyle === SOMETHING_ELSE) {
-    return trimmedTextOf(nutrition["eatingStyleOther"]) ?? SOMETHING_ELSE;
-  }
-
-  return eatingStyle === NO_RESTRICTIONS ? null : eatingStyle;
-}
-
-function allergiesRestriction(
-  nutrition: Record<string, unknown>,
-): string | null {
-  return textOf(nutrition["allergiesOrIntolerances"]) === HAS_ALLERGIES
-    ? trimmedTextOf(nutrition["allergiesOrIntolerancesList"])
-    : null;
-}
-
-export function profileFactsOf(answers: OnboardingAnswersByForm): ProfileFacts {
-  const goals: Record<string, unknown> = answers["goal-availability"] ?? {};
-  const nutrition: Record<string, unknown> =
-    answers["nutrition-lifestyle"] ?? {};
-  const restrictions = [
-    eatingStyleRestriction(nutrition),
-    allergiesRestriction(nutrition),
-  ].filter((restriction) => restriction !== null);
-
-  return {
-    heightCm: numberOf(goals["height"]),
-    startingWeightKg: numberOf(goals["weight"]),
-    activityLevel: textOf(goals["lifestyleActivityLevel"]),
-    primaryGoal: textOf(goals["primaryGoal"]),
-    dietaryRestrictions:
-      restrictions.length > 0
-        ? restrictions.join(RESTRICTION_SEPARATOR)
-        : NO_DIETARY_RESTRICTIONS,
-    clientNotes: trimmedTextOf(goals["additionalInfo"]),
-  };
-}
 
 async function onlyRow<Row extends pg.QueryResultRow>(
   pool: pg.Pool,

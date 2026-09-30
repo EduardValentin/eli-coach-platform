@@ -483,6 +483,12 @@ test("the onboarding panel raises every safety signal and shows only the questio
   await coachClient.expectPhoneLink(BOOKING_CONTACT.phone);
   await coachClient.expectSubscription({ Start: "Immediate start" });
   await coachClient.expectReducedPrice("No");
+  await coachClient.expectAssessmentCallCollapsed();
+
+  // act
+  await coachClient.expandAssessmentCall();
+
+  // assert
   await coachClient.expectAssessmentCall({
     Name: flagged.fullName,
     Email: flagged.email,

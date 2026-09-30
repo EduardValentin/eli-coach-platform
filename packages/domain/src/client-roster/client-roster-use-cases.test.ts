@@ -31,7 +31,7 @@ function entry(
       answersApprovedAt: null,
     },
     accountBound: overrides.accountBound ?? true,
-    profile: {
+    booking: {
       email: "ana@example.com",
       gender: "female",
       assessmentCallId: "call-1",

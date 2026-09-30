@@ -71,6 +71,25 @@ describe("profileFactsOf", () => {
     });
   });
 
+  it("trims her activity level and goal, and leaves a blank one empty", () => {
+    // arrange
+    const answers = answersWith({
+      goalAvailability: {
+        lifestyleActivityLevel: "  Lightly active ",
+        primaryGoal: "   ",
+      },
+    });
+
+    // act
+    const facts = profileFactsOf(answers);
+
+    // assert
+    expect([facts.activityLevel, facts.primaryGoal]).toEqual([
+      "Lightly active",
+      null,
+    ]);
+  });
+
   it.each([
     [
       "no restrictions and no allergies",

@@ -370,7 +370,9 @@ describe("OnboardingReview#answer", () => {
       height: 168,
       goalWeight: 66,
     });
-    expect(outcome.answers).toEqual(outcome.review.submission?.answers);
+    expect(outcome.submissionAnswers).toEqual(
+      outcome.review.submission?.answers,
+    );
   });
 
   it("clears an asked answer that her other asked answer made unreachable", () => {

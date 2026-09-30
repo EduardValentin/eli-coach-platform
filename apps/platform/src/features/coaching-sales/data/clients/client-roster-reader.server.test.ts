@@ -46,7 +46,7 @@ const ROSTER_ENTRY = {
     answersApprovedAt: null,
   },
   accountBound: true,
-  profile: {
+  booking: {
     email: "ana@example.com",
     gender: "female",
     assessmentCallId: CALL_ID,
@@ -64,7 +64,7 @@ const ROSTER_ENTRY = {
 const dialect = new PgDialect();
 
 describe("PostgresClientRoster#list", () => {
-  it("reads every client with her journey, profile and subscription", async () => {
+  it("reads every client with her journey, booking and subscription", async () => {
     // arrange
     const database = createDatabaseAnswering([CLIENT_ROW]);
     const roster = new PostgresClientRoster(database.client);

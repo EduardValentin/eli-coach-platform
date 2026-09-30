@@ -40,7 +40,7 @@ export class ReadClientRecordUseCase {
     }
 
     const call = await this.options.calls.findById(
-      entry.profile.assessmentCallId,
+      entry.booking.assessmentCallId,
     );
 
     if (!call) {

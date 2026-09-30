@@ -94,7 +94,7 @@ export class CoachClientsController {
 
     return coachClientSchema.parse({
       ...identityOf(record),
-      gender: record.profile.gender,
+      gender: record.booking.gender,
       assessmentCall: assessmentCallOf(record),
       subscription: subscriptionOf(record),
       invitation: invitationOf(record, invitation),
@@ -130,7 +130,7 @@ function identityOf(client: ListedClient) {
     clientId: client.journey.clientId,
     firstName: client.journey.firstName,
     lastName: client.journey.lastName,
-    email: client.profile.email,
+    email: client.booking.email,
     status: client.status,
   };
 }

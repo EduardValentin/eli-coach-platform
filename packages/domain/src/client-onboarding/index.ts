@@ -20,6 +20,7 @@ export {
   type OnboardingClients,
 } from "./onboarding-clients";
 export { type OnboardingConsents } from "./onboarding-consents";
+export { profileFactsOf } from "./onboarding-profile-facts";
 export { type OnboardingDetailsNotifications } from "./onboarding-details-notifications";
 export { emptyDraft, type OnboardingDraft } from "./onboarding-draft";
 export { reviewStageOf } from "./onboarding-review";

@@ -83,8 +83,8 @@ export function profileFactsOf(
   return {
     heightCm: numberOf(goals[GOAL_FIELD_IDS.height]),
     startingWeightKg: numberOf(goals[GOAL_FIELD_IDS.weight]),
-    activityLevel: textOf(goals[GOAL_FIELD_IDS.activityLevel]),
-    primaryGoal: textOf(goals[GOAL_FIELD_IDS.primaryGoal]),
+    activityLevel: trimmedTextOf(goals[GOAL_FIELD_IDS.activityLevel]),
+    primaryGoal: trimmedTextOf(goals[GOAL_FIELD_IDS.primaryGoal]),
     dietaryRestrictions: dietaryRestrictionsOf(
       answers["nutrition-lifestyle"] ?? {},
     ),

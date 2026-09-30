@@ -95,7 +95,7 @@ export class AnswerOnboardingDetailsUseCase {
       answeredAt: now,
       profile: ClientProfile.fromOnboarding({
         identity: client,
-        facts: profileFactsOf(outcome.answers),
+        facts: profileFactsOf(outcome.submissionAnswers),
         latestMeasurement: latestMeasurementOf(measurements),
         now,
       }),
