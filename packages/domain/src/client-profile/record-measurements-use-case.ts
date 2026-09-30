@@ -12,7 +12,11 @@ import type {
   MeasurementIncidents,
   ProgressPhotoRefusal,
 } from "./measurement-incidents";
-import { ProgressPhoto, type ProgressPhotoView } from "./progress-photo";
+import {
+  ProgressPhoto,
+  type ProgressPhotoFileFacts,
+  type ProgressPhotoView,
+} from "./progress-photo";
 import type {
   ProgressPhotoRendition,
   ProgressPhotoRenditions,
@@ -23,10 +27,8 @@ import type {
   ProgressPhotos,
 } from "./progress-photos";
 
-type ReceivedProgressPhoto = {
+type ReceivedProgressPhoto = ProgressPhotoFileFacts & {
   view: ProgressPhotoView;
-  mimeType: string;
-  sizeBytes: number;
   bytes: Uint8Array;
 };
 
@@ -39,11 +41,15 @@ type RecordMeasurementsCommand = {
 
 type ProgressPhotoOutcome = "stored" | "refused";
 
+type ProgressPhotoOutcomes = Partial<
+  Record<ProgressPhotoView, ProgressPhotoOutcome>
+>;
+
 type RecordMeasurementsResult =
   | {
       status: "recorded";
       entryId: string;
-      photos: Partial<Record<ProgressPhotoView, ProgressPhotoOutcome>>;
+      photos: ProgressPhotoOutcomes;
     }
   | { status: "not-on-journey" }
   | { status: "invalid" };
@@ -95,11 +101,14 @@ export class RecordMeasurementsUseCase {
       return { status: "invalid" };
     }
 
-    const photosConsented = await this.photoConsentOf({
-      clientId: client.clientId,
-      consentGiven: command.consentGiven,
-      now,
-    });
+    const profile = await this.options.profiles.findByClientId(client.clientId);
+    const consentsNow =
+      command.consentGiven && profile !== null && !profile.hasPhotoConsent();
+
+    if (consentsNow) {
+      await this.options.profiles.recordPhotoConsent(client.clientId, now);
+    }
+
     const entryId = await this.options.records.record(client.clientId, entry);
     this.options.incidents.measurementEntrySaved({
       clientId: client.clientId,
@@ -110,9 +119,9 @@ export class RecordMeasurementsUseCase {
       clientId: client.clientId,
       entryId,
       recordedAt: now,
-      photosConsented,
+      photosConsented: consentsNow || (profile?.hasPhotoConsent() ?? false),
     };
-    const photos: Partial<Record<ProgressPhotoView, ProgressPhotoOutcome>> = {};
+    const photos: ProgressPhotoOutcomes = {};
     for (const photo of command.photos) {
       photos[photo.view] = await this.keepPhoto(recorded, photo);
     }
@@ -120,47 +129,31 @@ export class RecordMeasurementsUseCase {
     return { status: "recorded", entryId, photos };
   }
 
-  private async photoConsentOf(input: {
-    clientId: string;
-    consentGiven: boolean;
-    now: Date;
-  }): Promise<boolean> {
-    const profile = await this.options.profiles.findByClientId(input.clientId);
-
-    if (!profile) return false;
-    if (profile.hasPhotoConsent()) return true;
-    if (!input.consentGiven) return false;
-
-    await this.options.profiles.recordPhotoConsent(input.clientId, input.now);
-
-    return true;
-  }
-
   private async keepPhoto(
-    entry: RecordedEntry,
+    recorded: RecordedEntry,
     photo: ReceivedProgressPhoto,
   ): Promise<ProgressPhotoOutcome> {
     if (!ProgressPhoto.accepts(photo))
-      return this.refuse(entry, photo, "not-accepted");
-    if (!entry.photosConsented)
-      return this.refuse(entry, photo, "consent-missing");
+      return this.refuse(recorded, photo, "not-accepted");
+    if (!recorded.photosConsented)
+      return this.refuse(recorded, photo, "consent-missing");
 
     const rendition = await this.options.renditions
       .render(photo.bytes)
       .catch(() => REFUSED_RENDITION);
 
     if (rendition.status === "refused")
-      return this.refuse(entry, photo, "rendition-refused");
+      return this.refuse(recorded, photo, "rendition-refused");
 
     try {
-      await this.store(entry, photo.view, rendition);
+      await this.keepRendition(recorded, photo.view, rendition);
     } catch {
-      return this.refuse(entry, photo, "storage-failed");
+      return this.refuse(recorded, photo, "storage-failed");
     }
 
     this.options.incidents.progressPhotoStored({
-      clientId: entry.clientId,
-      entryId: entry.entryId,
+      clientId: recorded.clientId,
+      entryId: recorded.entryId,
       view: photo.view,
       receivedBytes: photo.sizeBytes,
       storedBytes: rendition.bytes.byteLength,
@@ -169,38 +162,38 @@ export class RecordMeasurementsUseCase {
     return "stored";
   }
 
-  private async store(
-    entry: RecordedEntry,
+  private async keepRendition(
+    recorded: RecordedEntry,
     view: ProgressPhotoView,
     rendition: RenderedProgressPhoto,
   ): Promise<void> {
     const photoId = this.options.photoIds.generate();
     const reference = await this.options.store.store(
-      { clientId: entry.clientId, entryId: entry.entryId, photoId },
+      { clientId: recorded.clientId, entryId: recorded.entryId, photoId },
       rendition.bytes,
     );
 
     await this.options.photos.add(
       ProgressPhoto.stored({
         id: photoId,
-        entryId: entry.entryId,
-        clientId: entry.clientId,
+        entryId: recorded.entryId,
+        clientId: recorded.clientId,
         view,
         reference,
         rendition,
-        at: entry.recordedAt,
+        at: recorded.recordedAt,
       }),
     );
   }
 
   private refuse(
-    entry: RecordedEntry,
+    recorded: RecordedEntry,
     photo: ReceivedProgressPhoto,
     reason: ProgressPhotoRefusal,
   ): ProgressPhotoOutcome {
     this.options.incidents.progressPhotoRefused({
-      clientId: entry.clientId,
-      entryId: entry.entryId,
+      clientId: recorded.clientId,
+      entryId: recorded.entryId,
       view: photo.view,
       receivedBytes: photo.sizeBytes,
       reason,

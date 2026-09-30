@@ -51,13 +51,13 @@ export class MeasurementHistory {
   }
 
   dueLine(now: Date): MeasurementDueLine | null {
-    const latest = this.latest();
-    if (!latest) return null;
+    const latest = this.records.at(0);
+    const earliest = this.records.at(-1);
+    if (!latest || !earliest) return null;
 
-    const earliest = this.records[this.records.length - 1] ?? latest;
-    const latestFullSet = this.records.find(isFullSet) ?? earliest;
+    const measurementsCountFrom = this.records.find(isFullSet) ?? earliest;
 
-    if (isDue(latestFullSet.recordedAt, MEASUREMENTS_CADENCE_DAYS, now))
+    if (isDue(measurementsCountFrom.recordedAt, MEASUREMENTS_CADENCE_DAYS, now))
       return "measurements";
     if (isDue(latest.recordedAt, WEIGH_IN_CADENCE_DAYS, now)) return "weigh-in";
 

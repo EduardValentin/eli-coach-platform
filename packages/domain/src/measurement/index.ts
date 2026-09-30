@@ -11,9 +11,6 @@ export {
   MEASUREMENT_FIELDS,
   WEIGHT_MEASUREMENT_FIELD,
   type MeasurementField,
-  type MeasurementFieldId,
-  type MeasurementFieldKind,
-  type MeasurementRange,
 } from "./measurement-fields";
 export {
   hasMeasurementProblem,

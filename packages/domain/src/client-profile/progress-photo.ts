@@ -23,7 +23,7 @@ export type ProgressPhotoSnapshot = {
   createdAt: Date;
 };
 
-type ReceivedProgressPhoto = { mimeType: string; sizeBytes: number };
+export type ProgressPhotoFileFacts = { mimeType: string; sizeBytes: number };
 
 type StoredProgressPhotoInput = {
   id: string;
@@ -38,7 +38,7 @@ type StoredProgressPhotoInput = {
 export class ProgressPhoto {
   private constructor(private readonly snapshot: ProgressPhotoSnapshot) {}
 
-  static accepts(photo: ReceivedProgressPhoto): boolean {
+  static accepts(photo: ProgressPhotoFileFacts): boolean {
     return (
       ACCEPTED_PROGRESS_PHOTO_TYPES.includes(photo.mimeType) &&
       photo.sizeBytes <= MAX_PROGRESS_PHOTO_BYTES

@@ -256,7 +256,6 @@ export function fieldProblem(
   answers: OnboardingFormAnswers,
   options: OnboardingValidationOptions,
 ): string | null {
-  const answer = answers[field.id];
   const rule = measurementRuleOf(field);
 
   if (rule) {
@@ -266,6 +265,8 @@ export function fieldProblem(
       units: options.units,
     });
   }
+
+  const answer = answers[field.id];
   if (isEmptyAnswer(field, answer)) {
     return field.requirement === "required" ? requiredMessage(field) : null;
   }

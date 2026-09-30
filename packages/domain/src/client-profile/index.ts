@@ -8,8 +8,6 @@ export { type ClientMeasurementRecords } from "./client-measurement-records";
 export { type MeasurementClients } from "./measurement-clients";
 export {
   MeasurementHistory,
-  MEASUREMENTS_CADENCE_DAYS,
-  WEIGH_IN_CADENCE_DAYS,
   type MeasurementDueLine,
   type MeasurementHistorySnapshot,
   type MeasurementRecord,

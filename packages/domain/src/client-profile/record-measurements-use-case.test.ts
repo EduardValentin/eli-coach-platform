@@ -312,6 +312,9 @@ describe("RecordMeasurementsUseCase", () => {
       "client-1",
       NOW,
     );
+    expect(
+      ports.profiles.recordPhotoConsent.mock.invocationCallOrder[0],
+    ).toBeLessThan(ports.renditions.render.mock.invocationCallOrder[0]);
     expect(result).toEqual({
       status: "recorded",
       entryId: "entry-1",
