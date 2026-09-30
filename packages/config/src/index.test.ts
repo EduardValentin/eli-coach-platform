@@ -8,6 +8,9 @@ import {
   loadRuntimeEnvironment,
   resolveRuntimeDatabaseConnection,
 } from "./runtime";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
 import { CLERK_TEST_ENVIRONMENT } from "@eli-coach-platform/test-support";
 import { describe, expect, it } from "vitest";
 
@@ -16,6 +19,12 @@ const STRIPE_TEST_ENVIRONMENT = {
   PAYMENTS_PROVIDER: "stripe",
   STRIPE_SECRET_KEY: "sk_test_payments",
   STRIPE_WEBHOOK_SIGNING_SECRET: "whsec_payments",
+} as const;
+const FILESYSTEM_CLIENT_MEDIA_ENVIRONMENT = {
+  CLIENT_MEDIA_PROVIDER: "filesystem",
+  CLIENT_MEDIA_ROOT: "/srv/client-media",
+  CLIENT_MEDIA_KEY: "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJA=",
+  CLIENT_MEDIA_KEY_ID: "test-1",
 } as const;
 
 function buildEnvironment(
@@ -124,6 +133,7 @@ describe("@eli-coach-platform/config runtime environment", () => {
       BOT_DETECTION_PROVIDER: "turnstile",
       NODE_ENV: "production",
       ...STRIPE_TEST_ENVIRONMENT,
+      ...FILESYSTEM_CLIENT_MEDIA_ENVIRONMENT,
       PRODUCT_EMAIL_FROM_ADDRESS: "contact@evoa.fit",
       PRODUCT_EMAIL_FROM_NAME: "Eli",
       PRODUCT_EMAIL_PROVIDER: "resend",
@@ -324,6 +334,7 @@ describe("@eli-coach-platform/config runtime environment", () => {
       BOT_DETECTION_PROVIDER: "turnstile",
       NODE_ENV: "production",
       ...STRIPE_TEST_ENVIRONMENT,
+      ...FILESYSTEM_CLIENT_MEDIA_ENVIRONMENT,
       PRODUCT_EMAIL_FROM_ADDRESS: "hello@test.evoa.fit",
       PRODUCT_EMAIL_FROM_NAME: "Evoa",
       PRODUCT_EMAIL_PROVIDER: "resend",
@@ -348,6 +359,7 @@ describe("@eli-coach-platform/config runtime environment", () => {
     expect(environment.TURNSTILE_SITE_KEY).toBe("real-site-key");
     expect(environment.TURNSTILE_SECRET_KEY).toBe("real-secret");
     expect(environment.PAYMENTS_PROVIDER).toBe("stripe");
+    expect(environment.CLIENT_MEDIA_PROVIDER).toBe("filesystem");
   });
 });
 
@@ -363,12 +375,14 @@ describe("provider settings", () => {
     expect(environment.BOT_DETECTION_PROVIDER).toBe("static");
     expect(environment.PRODUCT_EMAIL_PROVIDER).toBe("memory");
     expect(environment.PAYMENTS_PROVIDER).toBe("memory");
+    expect(environment.CLIENT_MEDIA_PROVIDER).toBe("memory");
   });
 
   it.each([
     ["BOT_DETECTION_PROVIDER", "static"],
     ["PRODUCT_EMAIL_PROVIDER", "memory"],
     ["PAYMENTS_PROVIDER", "memory"],
+    ["CLIENT_MEDIA_PROVIDER", "memory"],
     ["IDENTITY_PROVIDER", "memory"],
     ["FEATURE_FLAG_OVERRIDES", "browser"],
   ])("refuses %s=%s in a production runtime", (name, value) => {
@@ -495,6 +509,121 @@ describe("payments settings", () => {
     expect(environment.STRIPE_SECRET_KEY).toBeUndefined();
   });
 });
+
+describe("client media settings", () => {
+  const committedDevelopmentKey = readCommittedExampleValue("CLIENT_MEDIA_KEY");
+
+  it("loads the filesystem provider with its root, key and key id", () => {
+    // arrange
+    const source = buildEnvironment(FILESYSTEM_CLIENT_MEDIA_ENVIRONMENT);
+
+    // act
+    const environment = loadRuntimeEnvironment(source);
+
+    // assert
+    expect(environment.CLIENT_MEDIA_PROVIDER).toBe("filesystem");
+    expect(environment.CLIENT_MEDIA_ROOT).toBe("/srv/client-media");
+    expect(environment.CLIENT_MEDIA_KEY).toBe(
+      FILESYSTEM_CLIENT_MEDIA_ENVIRONMENT.CLIENT_MEDIA_KEY,
+    );
+    expect(environment.CLIENT_MEDIA_KEY_ID).toBe("test-1");
+  });
+
+  it.each(["CLIENT_MEDIA_ROOT", "CLIENT_MEDIA_KEY", "CLIENT_MEDIA_KEY_ID"])(
+    "refuses the filesystem provider without %s",
+    (name) => {
+      // arrange
+      const source = buildEnvironment({
+        ...FILESYSTEM_CLIENT_MEDIA_ENVIRONMENT,
+        [name]: undefined,
+      });
+
+      // act
+      const load = () => loadRuntimeEnvironment(source);
+
+      // assert
+      expect(load).toThrow(`Filesystem client media requires ${name}.`);
+    },
+  );
+
+  it.each([
+    ["a placeholder", "replace-me"],
+    ["a 16-byte key", "q83vEjRWeJCrze8SNFZ4kA=="],
+    ["a 33-byte key", "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJCr"],
+    [
+      "a key with characters outside base64",
+      "q83vEjRWeJCrze8SNFZ4kKvN7xI0VniQq83vEjRWeJ!=",
+    ],
+  ])("refuses %s as CLIENT_MEDIA_KEY", (_description, key) => {
+    // arrange
+    const source = buildEnvironment({
+      ...FILESYSTEM_CLIENT_MEDIA_ENVIRONMENT,
+      CLIENT_MEDIA_KEY: key,
+    });
+
+    // act
+    const load = () => loadRuntimeEnvironment(source);
+
+    // assert
+    expect(load).toThrow(
+      "CLIENT_MEDIA_KEY must be the base64 encoding of 32 bytes.",
+    );
+  });
+
+  it("accepts the committed development key outside production", () => {
+    // arrange
+    const source = buildEnvironment({
+      ...FILESYSTEM_CLIENT_MEDIA_ENVIRONMENT,
+      CLIENT_MEDIA_KEY: committedDevelopmentKey,
+      ENVIRONMENT: "local",
+    });
+
+    // act
+    const environment = loadRuntimeEnvironment(source);
+
+    // assert
+    expect(environment.CLIENT_MEDIA_KEY).toBe(committedDevelopmentKey);
+  });
+
+  it.each([
+    ["the placeholder", "replace-me"],
+    ["the committed development key", committedDevelopmentKey],
+  ])(
+    "refuses %s as CLIENT_MEDIA_KEY in a production runtime",
+    (_description, key) => {
+      // arrange
+      const source = buildEnvironment({
+        ...FILESYSTEM_CLIENT_MEDIA_ENVIRONMENT,
+        CLIENT_MEDIA_KEY: key,
+        NODE_ENV: "production",
+      });
+
+      // act
+      const load = () => loadRuntimeEnvironment(source);
+
+      // assert
+      expect(load).toThrow(
+        "Production client media requires a CLIENT_MEDIA_KEY other than the placeholder or the committed development key.",
+      );
+    },
+  );
+});
+
+function readCommittedExampleValue(name: string): string {
+  const example = readFileSync(
+    resolve(import.meta.dirname, "../../../.env.example"),
+    "utf8",
+  );
+  const line = example
+    .split("\n")
+    .find((candidate) => candidate.startsWith(`${name}=`));
+
+  if (!line) {
+    throw new Error(`.env.example does not define ${name}.`);
+  }
+
+  return line.slice(name.length + 1);
+}
 
 describe("feature flag overrides mode", () => {
   it.each(["local", "test"])(
