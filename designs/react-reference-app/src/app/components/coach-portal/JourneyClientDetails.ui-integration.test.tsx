@@ -607,7 +607,7 @@ describe('the coach reading who a client is', () => {
     ]);
   });
 
-  it('reads her profile from the onboarding she sent, weights in kilograms and lengths in centimetres', () => {
+  it('reads who she is from her booking, her facts from the onboarding she sent and her weights from her first and latest measurements, in kilograms and centimetres', () => {
     // arrange
     window.localStorage.setItem(
       'eli.unitPreferences',
@@ -645,7 +645,7 @@ describe('the coach reading who a client is', () => {
       }),
     ).toHaveAttribute('href', 'tel:+40712345678');
     expect(profileReading('Height')).toHaveTextContent(/^165 cm$/);
-    expect(profileReading('Starting weight')).toHaveTextContent(/^66.1 kg$/);
+    expect(profileReading('Starting weight')).toHaveTextContent(/^67.4 kg$/);
     expect(profileReading('Current weight')).toHaveTextContent(/^66.1 kg$/);
     expect(profileReading('Activity level')).toHaveTextContent(
       /^Mostly sitting$/,
@@ -662,7 +662,7 @@ describe('the coach reading who a client is', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('leaves every profile reading blank until she sends her onboarding', () => {
+  it('reads who she is from her booking and leaves her facts and weights blank until she sends her onboarding', () => {
     // arrange
     const urlQuery = '?jstage=onboarding';
 
@@ -670,11 +670,25 @@ describe('the coach reading who a client is', () => {
     renderDetails(urlQuery);
 
     // assert
+    expect(profileReading('Age')).toHaveTextContent(/^\d+$/);
+    expect(profileReading('Gender')).toHaveTextContent(/^Female$/);
+    expect(profileReading('Country')).toHaveTextContent(/^Romania$/);
     expect(
-      within(profileBlock())
-        .getAllByRole('definition')
-        .map((value) => value.textContent),
-    ).toEqual(Array(11).fill('—'));
+      within(profileReading('Phone')).getByRole('link', {
+        name: '+40712345678',
+      }),
+    ).toHaveAttribute('href', 'tel:+40712345678');
+    expect(
+      [
+        'Height',
+        'Starting weight',
+        'Current weight',
+        'Activity level',
+        'Primary goal',
+        'Dietary restrictions',
+        'Client notes',
+      ].map((label) => profileReading(label).textContent),
+    ).toEqual(Array(7).fill('—'));
     expect(
       within(profileBlock()).getByText(
         'Her profile fills in once she sends her onboarding.',

@@ -335,11 +335,7 @@ export function seedJourney(seed: JourneySeed): ClientJourney {
     stage,
     identity,
     profile: reached('submitted')
-      ? profileFromOnboarding({
-          identity,
-          answers: onboarding.answers,
-          latestMeasurement: measurements.at(-1) ?? null,
-        })
+      ? profileFromOnboarding(onboarding.answers)
       : null,
     pricing,
     bookingNotes,

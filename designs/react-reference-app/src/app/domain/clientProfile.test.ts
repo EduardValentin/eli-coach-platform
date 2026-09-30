@@ -1,28 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { profileFromOnboarding } from './clientProfile';
+import { measuredWeights, profileFromOnboarding } from './clientProfile';
 import {
   emptyOnboardingDraft,
-  type JourneyIdentity,
   type MeasurementEntry,
   type OnboardingFormAnswers,
 } from './journey';
 
-const IDENTITY: JourneyIdentity = {
-  firstName: 'Ana',
-  lastName: 'Popescu',
-  dateOfBirth: '1994-03-14',
-  email: 'ana@example.com',
-  phone: { diallingCode: '+40', number: '712345678' },
-  gender: 'female',
-  country: 'Romania',
-  primaryGoal: 'lose_weight',
-};
-
-const LATEST_MEASUREMENT: MeasurementEntry = {
-  recordedAt: new Date(2026, 8, 27),
-  weightKg: 66.1,
-  waistCm: 74,
-};
+function measurement(weightKg: number, day: number): MeasurementEntry {
+  return { recordedAt: new Date(2026, 8, day), weightKg, waistCm: 74 };
+}
 
 function answersWith(forms: {
   goal?: OnboardingFormAnswers;
@@ -38,38 +24,11 @@ function answersWith(forms: {
 }
 
 function restrictionsFor(food: OnboardingFormAnswers) {
-  return profileFromOnboarding({
-    identity: IDENTITY,
-    answers: answersWith({ food }),
-    latestMeasurement: null,
-  }).dietaryRestrictions;
+  return profileFromOnboarding(answersWith({ food })).dietaryRestrictions;
 }
 
 describe('building her profile from the onboarding she sent', () => {
-  it('copies who she is from her booking', () => {
-    // arrange
-    const answers = answersWith({});
-
-    // act
-    const profile = profileFromOnboarding({
-      identity: IDENTITY,
-      answers,
-      latestMeasurement: null,
-    });
-
-    // assert
-    expect(profile).toMatchObject({
-      firstName: 'Ana',
-      lastName: 'Popescu',
-      email: 'ana@example.com',
-      dateOfBirth: '1994-03-14',
-      gender: 'female',
-      country: 'Romania',
-      phone: { diallingCode: '+40', number: '712345678' },
-    });
-  });
-
-  it('reads her height, starting weight, activity level, goal and notes from her first form', () => {
+  it('holds only the facts she stated in her first form', () => {
     // arrange
     const answers = answersWith({
       goal: {
@@ -82,35 +41,16 @@ describe('building her profile from the onboarding she sent', () => {
     });
 
     // act
-    const profile = profileFromOnboarding({
-      identity: IDENTITY,
-      answers,
-      latestMeasurement: null,
-    });
+    const profile = profileFromOnboarding(answers);
 
     // assert
-    expect(profile).toMatchObject({
+    expect(profile).toEqual({
       heightCm: 165,
-      startingWeightKg: 66.1,
       activityLevel: 'Mostly sitting',
       primaryGoal: 'Build muscle',
+      dietaryRestrictions: 'None',
       clientNotes: 'Night shifts twice a week.',
     });
-  });
-
-  it('takes her current weight from her latest measurement', () => {
-    // arrange
-    const answers = answersWith({ goal: { weight: 67.4 } });
-
-    // act
-    const profile = profileFromOnboarding({
-      identity: IDENTITY,
-      answers,
-      latestMeasurement: LATEST_MEASUREMENT,
-    });
-
-    // assert
-    expect(profile.currentWeightKg).toBe(66.1);
   });
 
   it('leaves what she did not answer empty', () => {
@@ -120,22 +60,41 @@ describe('building her profile from the onboarding she sent', () => {
     });
 
     // act
-    const profile = profileFromOnboarding({
-      identity: { ...IDENTITY, phone: undefined },
-      answers,
-      latestMeasurement: null,
-    });
+    const profile = profileFromOnboarding(answers);
 
     // assert
-    expect(profile).toMatchObject({
-      phone: undefined,
+    expect(profile).toEqual({
       heightCm: null,
-      startingWeightKg: null,
-      currentWeightKg: null,
       activityLevel: null,
       primaryGoal: null,
+      dietaryRestrictions: 'None',
       clientNotes: null,
     });
+  });
+});
+
+describe('reading her weights from her measurements', () => {
+  it('starts from her earliest measurement and is currently at her latest', () => {
+    // arrange
+    const measurements = [
+      measurement(67.4, 13),
+      measurement(66.8, 20),
+      measurement(66.1, 27),
+    ];
+
+    // act
+    const weights = measuredWeights(measurements);
+
+    // assert
+    expect(weights).toEqual({ startingWeightKg: 67.4, currentWeightKg: 66.1 });
+  });
+
+  it('has no weights before her first measurement', () => {
+    // act
+    const weights = measuredWeights([]);
+
+    // assert
+    expect(weights).toEqual({ startingWeightKg: null, currentWeightKg: null });
   });
 });
 

@@ -1,7 +1,15 @@
 import { UserRound } from 'lucide-react';
 import type { ReactNode } from 'react';
-import type { JourneyProfile } from '../../domain/clientProfile';
-import type { ClientJourney, JourneyGender } from '../../domain/journey';
+import {
+  measuredWeights,
+  type JourneyProfile,
+  type MeasuredWeights,
+} from '../../domain/clientProfile';
+import type {
+  ClientJourney,
+  JourneyGender,
+  JourneyIdentity,
+} from '../../domain/journey';
 import {
   canonicalLengthReading,
   canonicalWeightReading,
@@ -13,11 +21,9 @@ import { Reading } from '../Reading';
 import { ABSENT_VALUE } from '../constants';
 import { PhoneLink } from './PhoneLink';
 
-type ProfileReadingId =
-  | 'age'
-  | 'gender'
-  | 'country'
-  | 'phone'
+type IdentityReadingId = 'age' | 'gender' | 'country' | 'phone';
+
+type FactReadingId =
   | 'height'
   | 'startingWeight'
   | 'currentWeight'
@@ -26,7 +32,13 @@ type ProfileReadingId =
   | 'dietaryRestrictions'
   | 'clientNotes';
 
-type ProfileValues = Record<ProfileReadingId, ReactNode>;
+type ProfileReadingId = IdentityReadingId | FactReadingId;
+
+type IdentityValues = Record<IdentityReadingId, ReactNode>;
+
+type FactValues = Record<FactReadingId, ReactNode>;
+
+type ProfileValues = IdentityValues & FactValues;
 
 type ProfileReading = {
   id: ProfileReadingId;
@@ -67,11 +79,7 @@ const PROFILE_READINGS: readonly ProfileReading[] = [
   },
 ];
 
-const PENDING_VALUES: ProfileValues = {
-  age: ABSENT_VALUE,
-  gender: ABSENT_VALUE,
-  country: ABSENT_VALUE,
-  phone: ABSENT_VALUE,
+const AWAITING_FACT_VALUES: FactValues = {
   height: ABSENT_VALUE,
   startingWeight: ABSENT_VALUE,
   currentWeight: ABSENT_VALUE,
@@ -89,19 +97,37 @@ function heightReading(cm: number | null): string {
   return cm === null ? ABSENT_VALUE : canonicalLengthReading(cm);
 }
 
-function profileValues(profile: JourneyProfile): ProfileValues {
+function identityValues(identity: JourneyIdentity): IdentityValues {
   return {
-    age: ageOn(profile.dateOfBirth, new Date()),
-    gender: journeyGenderLabel(profile.gender),
-    country: profile.country || ABSENT_VALUE,
-    phone: <PhoneLink phone={profile.phone} />,
+    age: ageOn(identity.dateOfBirth, new Date()),
+    gender: journeyGenderLabel(identity.gender),
+    country: identity.country || ABSENT_VALUE,
+    phone: <PhoneLink phone={identity.phone} />,
+  };
+}
+
+function factValues(
+  profile: JourneyProfile,
+  weights: MeasuredWeights,
+): FactValues {
+  return {
     height: heightReading(profile.heightCm),
-    startingWeight: weightReading(profile.startingWeightKg),
-    currentWeight: weightReading(profile.currentWeightKg),
+    startingWeight: weightReading(weights.startingWeightKg),
+    currentWeight: weightReading(weights.currentWeightKg),
     activityLevel: profile.activityLevel ?? ABSENT_VALUE,
     primaryGoal: profile.primaryGoal ?? ABSENT_VALUE,
     dietaryRestrictions: profile.dietaryRestrictions,
     clientNotes: profile.clientNotes ?? ABSENT_VALUE,
+  };
+}
+
+function profileValues(journey: ClientJourney): ProfileValues {
+  const identity = identityValues(journey.identity);
+  if (!journey.profile) return { ...identity, ...AWAITING_FACT_VALUES };
+
+  return {
+    ...identity,
+    ...factValues(journey.profile, measuredWeights(journey.measurements)),
   };
 }
 
@@ -113,7 +139,7 @@ function profilePendingLine(gender: JourneyGender): string {
 
 export function ClientProfileBlock({ journey }: { journey: ClientJourney }) {
   const { profile } = journey;
-  const values = profile ? profileValues(profile) : PENDING_VALUES;
+  const values = profileValues(journey);
 
   return (
     <PortalWidget

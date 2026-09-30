@@ -1,8 +1,5 @@
 import type {
   ClientJourney,
-  JourneyGender,
-  JourneyIdentity,
-  JourneyPhone,
   MeasurementEntry,
   OnboardingAnswer,
   OnboardingDraft,
@@ -10,26 +7,16 @@ import type {
 } from './journey';
 
 export type JourneyProfile = {
-  firstName: string;
-  lastName: string;
-  email: string;
-  dateOfBirth: string;
-  gender: JourneyGender;
-  country: string;
-  phone?: JourneyPhone;
   heightCm: number | null;
-  startingWeightKg: number | null;
-  currentWeightKg: number | null;
   activityLevel: string | null;
   primaryGoal: string | null;
   dietaryRestrictions: string;
   clientNotes: string | null;
 };
 
-export type ProfileSources = {
-  identity: JourneyIdentity;
-  answers: OnboardingDraft['answers'];
-  latestMeasurement: MeasurementEntry | null;
+export type MeasuredWeights = {
+  startingWeightKg: number | null;
+  currentWeightKg: number | null;
 };
 
 const NO_RESTRICTIONS = 'No restrictions';
@@ -77,24 +64,13 @@ function dietaryRestrictions(food: OnboardingFormAnswers): string {
     : NO_DIETARY_RESTRICTIONS;
 }
 
-export function profileFromOnboarding({
-  identity,
-  answers,
-  latestMeasurement,
-}: ProfileSources): JourneyProfile {
+export function profileFromOnboarding(
+  answers: OnboardingDraft['answers'],
+): JourneyProfile {
   const goal = answers['goal-availability'];
 
   return {
-    firstName: identity.firstName,
-    lastName: identity.lastName,
-    email: identity.email,
-    dateOfBirth: identity.dateOfBirth,
-    gender: identity.gender,
-    country: identity.country,
-    phone: identity.phone,
     heightCm: numberAnswer(goal.height),
-    startingWeightKg: numberAnswer(goal.weight),
-    currentWeightKg: latestMeasurement?.weightKg ?? null,
     activityLevel: textAnswer(goal.lifestyleActivityLevel),
     primaryGoal: textAnswer(goal.primaryGoal),
     dietaryRestrictions: dietaryRestrictions(answers['nutrition-lifestyle']),
@@ -103,9 +79,14 @@ export function profileFromOnboarding({
 }
 
 export function profileOfJourney(journey: ClientJourney): JourneyProfile {
-  return profileFromOnboarding({
-    identity: journey.identity,
-    answers: journey.onboarding.answers,
-    latestMeasurement: journey.measurements.at(-1) ?? null,
-  });
+  return profileFromOnboarding(journey.onboarding.answers);
+}
+
+export function measuredWeights(
+  measurements: readonly MeasurementEntry[],
+): MeasuredWeights {
+  return {
+    startingWeightKg: measurements.at(0)?.weightKg ?? null,
+    currentWeightKg: measurements.at(-1)?.weightKg ?? null,
+  };
 }

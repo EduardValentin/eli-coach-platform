@@ -71,32 +71,20 @@ function JourneyProbe() {
 }
 
 function ProfileProbe() {
-  const {
-    demoJourney,
-    addMeasurements,
-    submitOnboarding,
-    saveOnboardingDraft,
-    answerRequest,
-  } = useClientJourneys();
+  const { demoJourney, submitOnboarding, saveOnboardingDraft, answerRequest } =
+    useClientJourneys();
   const { profile } = demoJourney;
 
   return (
     <>
       <output aria-label="profile">
         {profile
-          ? `${profile.currentWeightKg} kg · ${profile.heightCm} cm · ${profile.dietaryRestrictions}`
+          ? `${profile.heightCm} cm · ${profile.dietaryRestrictions}`
           : 'none'}
       </output>
       <button
         type="button"
-        onClick={() => {
-          addMeasurements(DEMO_JOURNEY_CALL_ID, {
-            recordedAt: new Date(),
-            weightKg: 64.2,
-            waistCm: 72,
-          });
-          submitOnboarding(DEMO_JOURNEY_CALL_ID, new Date());
-        }}
+        onClick={() => submitOnboarding(DEMO_JOURNEY_CALL_ID, new Date())}
       >
         send onboarding
       </button>
@@ -246,7 +234,7 @@ describe('keeping her profile', () => {
     expect(screen.getByLabelText('profile')).toHaveTextContent('none');
   });
 
-  it('builds her profile from her answers and her first measurement when she sends her onboarding', async () => {
+  it('builds her profile from her answers when she sends her onboarding', async () => {
     // arrange
     const user = renderProbe('onboarding', <ProfileProbe />);
 
@@ -254,9 +242,7 @@ describe('keeping her profile', () => {
     await user.click(screen.getByRole('button', { name: 'send onboarding' }));
 
     // assert
-    expect(screen.getByLabelText('profile')).toHaveTextContent(
-      '64.2 kg · 165 cm · None',
-    );
+    expect(screen.getByLabelText('profile')).toHaveTextContent('165 cm · None');
   });
 
   it('rebuilds her profile from the merged answers when she answers a detail request', async () => {
@@ -270,7 +256,7 @@ describe('keeping her profile', () => {
 
     // assert
     expect(screen.getByLabelText('profile')).toHaveTextContent(
-      '66.1 kg · 165 cm · Vegan, Lactose, mild',
+      '165 cm · Vegan, Lactose, mild',
     );
   });
 });

@@ -82,7 +82,7 @@ describe('seeding a client profile', () => {
     expect(profiles).toEqual(stagesBefore.map(() => null));
   });
 
-  it('builds her profile from her booking, her answers and her latest measurement once she sends her onboarding', () => {
+  it('builds her profile from the facts she stated once she sends her onboarding', () => {
     // arrange
     const stagesFrom = JOURNEY_STAGES.filter(
       (stage) => !isBeforeStage(stage, 'submitted'),
@@ -96,16 +96,7 @@ describe('seeding a client profile', () => {
     // assert
     for (const profile of profiles) {
       expect(profile).toEqual({
-        firstName: 'Ana',
-        lastName: 'Popescu',
-        email: 'ana@example.com',
-        dateOfBirth: '1994-03-14',
-        gender: 'female',
-        country: 'RO',
-        phone: undefined,
         heightCm: 165,
-        startingWeightKg: 66.1,
-        currentWeightKg: 66.1,
         activityLevel: 'Mostly sitting',
         primaryGoal: 'Lose fat',
         dietaryRestrictions: 'Lactose, mild',
