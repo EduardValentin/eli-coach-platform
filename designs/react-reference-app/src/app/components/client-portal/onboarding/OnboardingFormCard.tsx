@@ -1,7 +1,7 @@
 import { useEffect, useMemo, type FormEvent, type ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 import type {
-  JourneySex,
+  JourneyGender,
   OnboardingFormAnswers,
 } from '../../../domain/journey';
 import {
@@ -30,6 +30,7 @@ type OnboardingAnswerFormProps = {
   definition: OnboardingFormDefinition;
   answers: OnboardingFormAnswers;
   continueLabel: string;
+  continueDisabled: boolean;
   onAttempt: () => void;
   onBack: (() => void) | null;
   onChange: (answers: OnboardingFormAnswers) => void;
@@ -45,10 +46,23 @@ type OnboardingFormCardProps = OnboardingAnswerFormProps & {
   consent: ReactNode;
   headingRef: (node: HTMLHeadingElement | null) => void;
   unitsChoice: ReactNode;
-  sex: JourneySex;
+  gender: JourneyGender;
+  stepCountId: string;
 };
 
 type FieldGroup = { section: string | null; fields: OnboardingField[] };
+
+const MAIN_SECTION = 'main';
+
+function sectionHookOf(section: string | null): string {
+  const slug = (section ?? MAIN_SECTION)
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '')
+    .trim()
+    .replace(/\s+/g, '-');
+
+  return `section-${slug}`;
+}
 
 function groupFields(fields: OnboardingField[]): FieldGroup[] {
   const groups: FieldGroup[] = [];
@@ -88,6 +102,7 @@ function OnboardingAnswerForm({
   definition,
   answers,
   continueLabel,
+  continueDisabled,
   onAttempt,
   onBack,
   onChange,
@@ -136,7 +151,11 @@ function OnboardingAnswerForm({
     <Form {...form}>
       <form className="mt-7 grid gap-6" noValidate onSubmit={submit}>
         {groupFields(shown).map((group) => (
-          <div className="grid gap-6" key={group.section ?? 'main'}>
+          <div
+            className="grid gap-6"
+            data-parity={sectionHookOf(group.section)}
+            key={group.section ?? MAIN_SECTION}
+          >
             {group.section && (
               <h3 className="font-serif text-lg text-text-primary">
                 {group.section}
@@ -178,6 +197,7 @@ function OnboardingAnswerForm({
         <div className="mt-2 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
           {onBack ? (
             <Button
+              data-parity="back"
               onClick={onBack}
               type="button"
               variant="outline"
@@ -190,6 +210,8 @@ function OnboardingAnswerForm({
             <span />
           )}
           <Button
+            data-parity="continue"
+            disabled={continueDisabled}
             type="submit"
             variant="primary"
             size="md"
@@ -207,7 +229,8 @@ export function OnboardingFormCard({
   consent,
   headingRef,
   unitsChoice,
-  sex,
+  gender,
+  stepCountId,
   ...answerForm
 }: OnboardingFormCardProps) {
   const units = useMeasureUnits();
@@ -219,20 +242,26 @@ export function OnboardingFormCard({
       className={ONBOARDING_CARD_CLASS}
     >
       <h2
+        aria-describedby={stepCountId}
         className={ONBOARDING_HEADING_CLASS}
+        data-parity="form-heading"
         id="onboarding-form-heading"
         ref={headingRef}
         tabIndex={-1}
       >
         {definition.title}
       </h2>
-      <p className={ONBOARDING_INTRO_CLASS}>
-        {resolveIntro(definition.intro, sex)}
+      <p className={ONBOARDING_INTRO_CLASS} data-parity="form-intro">
+        {resolveIntro(definition.intro, gender)}
       </p>
 
       {consent && <div className="mt-5">{consent}</div>}
 
-      {unitsChoice && <div className="mt-7">{unitsChoice}</div>}
+      {unitsChoice && (
+        <div className="mt-7" data-parity="units-choice">
+          {unitsChoice}
+        </div>
+      )}
 
       <OnboardingAnswerForm
         {...answerForm}

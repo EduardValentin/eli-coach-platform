@@ -4,9 +4,13 @@ export { Button, buttonVariants } from "./button";
 export { Card, cardVariants } from "./card";
 export { Checkbox } from "./checkbox";
 export { CheckboxChip } from "./checkbox-chip";
+export { CheckboxField } from "./checkbox-field";
+export { ChoiceGroup, ChoiceOption } from "./choice-group";
+export { FieldError } from "./field-error";
+export { FieldHint } from "./field-hint";
 export { IconButton } from "./icon-button";
 export { Input } from "./input";
-export { Label } from "./label";
+export { FieldCaption, Label, LabelSuffix, Legend } from "./label";
 export { Link, linkVariants } from "./link";
 export {
   Pagination,
@@ -28,4 +32,5 @@ export {
   SelectTrigger,
   SelectValue,
 } from "./select";
+export { Stepper } from "./stepper";
 export { Textarea } from "./textarea";

@@ -125,6 +125,9 @@ export const clientsTable = appSchema.table(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
     authSubjectId: varchar("auth_subject_id", { length: 255 }),
     welcomeSeenAt: timestamp("welcome_seen_at", { withTimezone: true }),
+    onboardingSubmittedAt: timestamp("onboarding_submitted_at", {
+      withTimezone: true,
+    }),
   },
   (table) => [
     uniqueIndex(coachingSalesConstraints.clientPerCall).on(

@@ -1,13 +1,22 @@
-import { type ComponentProps } from 'react';
+import {
+  forwardRef,
+  type ComponentProps,
+  type ComponentPropsWithoutRef,
+  type ElementRef,
+} from 'react';
 import * as RadioGroupPrimitive from '@radix-ui/react-radio-group';
 import { RadioGroup } from './ui/radio-group';
 import { cn } from './ui/utils';
 
-type ChoiceGroupProps = ComponentProps<typeof RadioGroup>;
+type ChoiceGroupProps = ComponentPropsWithoutRef<typeof RadioGroup>;
 
-export function ChoiceGroup({ className, ...props }: ChoiceGroupProps) {
+export const ChoiceGroup = forwardRef<
+  ElementRef<typeof RadioGroup>,
+  ChoiceGroupProps
+>(function ChoiceGroup({ className, ...props }, ref) {
   return (
     <RadioGroup
+      ref={ref}
       className={cn(
         'inline-flex w-full max-w-full flex-wrap rounded-field border border-control-border-soft bg-surface-quiet/50 p-[3px] gap-1',
         className,
@@ -17,7 +26,7 @@ export function ChoiceGroup({ className, ...props }: ChoiceGroupProps) {
       {...props}
     />
   );
-}
+});
 
 type ChoiceOptionProps = ComponentProps<typeof RadioGroupPrimitive.Item>;
 

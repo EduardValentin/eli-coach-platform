@@ -20,6 +20,7 @@ export class PostgresClientJourneys implements ClientJourneys {
         lastName: clientsTable.lastName,
         gender: clientsTable.gender,
         welcomeSeenAt: clientsTable.welcomeSeenAt,
+        onboardingSubmittedAt: clientsTable.onboardingSubmittedAt,
       })
       .from(clientsTable)
       .where(eq(clientsTable.authSubjectId, authSubjectId))
@@ -39,6 +40,21 @@ export class PostgresClientJourneys implements ClientJourneys {
         and(
           eq(clientsTable.id, input.clientId),
           isNull(clientsTable.welcomeSeenAt),
+        ),
+      );
+  }
+
+  async recordOnboardingSubmitted(input: {
+    clientId: string;
+    at: Date;
+  }): Promise<void> {
+    await this.database
+      .update(clientsTable)
+      .set({ onboardingSubmittedAt: input.at })
+      .where(
+        and(
+          eq(clientsTable.id, input.clientId),
+          isNull(clientsTable.onboardingSubmittedAt),
         ),
       );
   }

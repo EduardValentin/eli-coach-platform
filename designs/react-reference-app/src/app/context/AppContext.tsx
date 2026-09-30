@@ -15,7 +15,15 @@ import type {
   PrototypePaymentLinkOutcome,
   PrototypePaymentLinkState,
 } from '../services/paymentLinkService';
-import type { JourneySex, JourneyStage } from '../domain/journey';
+import {
+  ONBOARDING_CONNECTIONS,
+  type OnboardingConnection,
+} from '../services/onboardingService';
+import {
+  JOURNEY_GENDERS,
+  type JourneyGender,
+  type JourneyStage,
+} from '../domain/journey';
 import type {
   SubscriptionStartPath,
   SubscriptionStatus,
@@ -33,6 +41,14 @@ export type PrototypeWaitlistAvailability =
 export type PrototypeSession = 'anonymous' | PrototypeAccountRole;
 
 export type PrototypeMode = 'mvp' | 'post-mvp';
+
+export type JourneyAgeBand = 'adult' | 'under-15' | 'over-69';
+
+export const JOURNEY_AGE_BANDS: readonly JourneyAgeBand[] = [
+  'adult',
+  'under-15',
+  'over-69',
+];
 
 export function isSignedIn(session: PrototypeSession): boolean {
   return session !== 'anonymous';
@@ -57,7 +73,9 @@ type AppState = {
   journeyStage: JourneyStage;
   journeyStartPath: SubscriptionStartPath;
   journeySubscriptionStatus: SubscriptionStatus;
-  journeySex: JourneySex;
+  journeyGender: JourneyGender;
+  journeyAgeBand: JourneyAgeBand;
+  journeyConnection: OnboardingConnection;
   journeyReducedPricing: boolean;
   paymentLinkOutcome: PrototypePaymentLinkOutcome;
   paymentLinkState: PrototypePaymentLinkState;
@@ -88,7 +106,9 @@ const defaultState: AppState = {
   journeyStage: 'approved',
   journeyStartPath: 'immediate',
   journeySubscriptionStatus: 'active',
-  journeySex: 'female',
+  journeyGender: 'female',
+  journeyAgeBand: 'adult',
+  journeyConnection: 'working',
   journeyReducedPricing: false,
   paymentLinkOutcome: 'sent',
   paymentLinkState: 'valid',
@@ -136,7 +156,6 @@ const validSubscriptionStatuses = [
   'cancelled',
   'ended',
 ] as const;
-const validJourneySexes = ['female', 'male'] as const;
 const validPaymentLinkOutcomes = [
   'sent',
   'delivery-failure',
@@ -246,9 +265,26 @@ function parseDevParamsFromURL(): AppState {
   ) {
     state.journeySubscriptionStatus = subscriptionStatus as SubscriptionStatus;
   }
-  const journeySex = params.get('jsex');
-  if (journeySex && (validJourneySexes as readonly string[]).includes(journeySex)) {
-    state.journeySex = journeySex as JourneySex;
+  const journeyGender = params.get('jgender');
+  if (
+    journeyGender &&
+    (JOURNEY_GENDERS as readonly string[]).includes(journeyGender)
+  ) {
+    state.journeyGender = journeyGender as JourneyGender;
+  }
+  const journeyAgeBand = params.get('jage');
+  if (
+    journeyAgeBand &&
+    (JOURNEY_AGE_BANDS as readonly string[]).includes(journeyAgeBand)
+  ) {
+    state.journeyAgeBand = journeyAgeBand as JourneyAgeBand;
+  }
+  const journeyConnection = params.get('jconn');
+  if (
+    journeyConnection &&
+    (ONBOARDING_CONNECTIONS as readonly string[]).includes(journeyConnection)
+  ) {
+    state.journeyConnection = journeyConnection as OnboardingConnection;
   }
   if (params.has('jreduced')) {
     state.journeyReducedPricing = params.get('jreduced') === '1';
@@ -310,7 +346,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     url.searchParams.delete('jstage');
     url.searchParams.delete('jstart');
     url.searchParams.delete('jsub');
-    url.searchParams.delete('jsex');
+    url.searchParams.delete('jgender');
+    url.searchParams.delete('jage');
+    url.searchParams.delete('jconn');
     url.searchParams.delete('jreduced');
     url.searchParams.delete('paylink');
     url.searchParams.delete('paylinkstate');
@@ -369,8 +407,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     ) {
       url.searchParams.set('jsub', appState.journeySubscriptionStatus);
     }
-    if (appState.journeySex !== defaultState.journeySex) {
-      url.searchParams.set('jsex', appState.journeySex);
+    if (appState.journeyGender !== defaultState.journeyGender) {
+      url.searchParams.set('jgender', appState.journeyGender);
+    }
+    if (appState.journeyAgeBand !== defaultState.journeyAgeBand) {
+      url.searchParams.set('jage', appState.journeyAgeBand);
+    }
+    if (appState.journeyConnection !== defaultState.journeyConnection) {
+      url.searchParams.set('jconn', appState.journeyConnection);
     }
     if (appState.journeyReducedPricing) url.searchParams.set('jreduced', '1');
     if (appState.paymentLinkOutcome !== defaultState.paymentLinkOutcome) {

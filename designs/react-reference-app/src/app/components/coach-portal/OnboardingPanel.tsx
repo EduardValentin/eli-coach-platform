@@ -134,7 +134,7 @@ function ScreeningWarning({ journey }: { journey: ClientJourney }) {
 }
 
 function cycleModeValue(journey: ClientJourney): string {
-  if (journey.identity.sex === 'male') return 'Not applicable';
+  if (journey.identity.gender !== 'female') return 'Not applicable';
 
   const mode = cycleModeOf(journey.onboarding);
   return mode ? CYCLE_MODE_LABELS[mode] : 'Not answered yet';
@@ -386,7 +386,7 @@ export function OnboardingPanel({
   const [flagged, setFlagged] = useState<string[] | null>(null);
   const [confirmApproveOpen, setConfirmApproveOpen] = useState(false);
 
-  const forms = reviewForms(journey.onboarding, journey.identity.sex);
+  const forms = reviewForms(journey.onboarding, journey.identity.gender);
 
   const enterReview = () => {
     if (journey.stage === 'submitted') startReview(journey.callId);

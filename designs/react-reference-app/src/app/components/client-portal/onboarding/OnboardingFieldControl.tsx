@@ -117,9 +117,11 @@ function fieldEntry(
   if (field.kind === 'date') {
     return (
       <DateField
+        data-parity={`field-${field.id}-trigger`}
         disabledDays={{ after: new Date() }}
         onBlur={controller.onBlur}
         onChange={controller.onChange}
+        ref={controller.ref}
         value={asText(controller.value)}
       />
     );
@@ -157,6 +159,27 @@ function nextChipsValue(
   return [...withoutExclusive, option];
 }
 
+type SuffixRole = 'unit' | 'optional';
+
+type LabelSuffixEntry = { role: SuffixRole; text: string };
+
+function labelSuffixesOf(
+  field: OnboardingField,
+  unit: string | null,
+): LabelSuffixEntry[] {
+  const suffixes: (LabelSuffixEntry | null)[] = [
+    unit ? { role: 'unit', text: `(${unit})` } : null,
+    field.unitSuffix ? { role: 'unit', text: `(${field.unitSuffix})` } : null,
+    field.requirement === 'optional'
+      ? { role: 'optional', text: OPTIONAL_SUFFIX }
+      : null,
+  ];
+
+  return suffixes.filter(
+    (suffix): suffix is LabelSuffixEntry => suffix !== null,
+  );
+}
+
 function LabelText({
   field,
   unit,
@@ -164,12 +187,6 @@ function LabelText({
   field: OnboardingField;
   unit: string | null;
 }) {
-  const suffixes = [
-    unit ? `(${unit})` : null,
-    field.unitSuffix ? `(${field.unitSuffix})` : null,
-    field.requirement === 'optional' ? OPTIONAL_SUFFIX : null,
-  ].filter((part): part is string => part !== null);
-
   const lines = field.label.split('\n');
 
   return (
@@ -179,9 +196,13 @@ function LabelText({
           {line}
         </span>
       ))}
-      {suffixes.map((suffix) => (
-        <span key={suffix} className="font-normal text-text-secondary">
-          {suffix}
+      {labelSuffixesOf(field, unit).map((suffix) => (
+        <span
+          className="font-normal text-text-secondary"
+          data-parity={`field-${field.id}-suffix-${suffix.role}`}
+          key={suffix.text}
+        >
+          {suffix.text}
         </span>
       ))}
     </>
@@ -191,6 +212,7 @@ function LabelText({
 export function OnboardingFieldControl({ control, field }: FieldControlProps) {
   const units = useMeasureUnits();
   const legendId = useId();
+  const parityHook = `field-${field.id}`;
   const unit = isMeasureField(field)
     ? measureUnitLabel(field.kind as MeasureKind, units)
     : null;
@@ -206,7 +228,10 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
           const isDeclaration = field.requirement === 'required';
 
           return (
-            <FormItem className={isDeclaration ? undefined : '-mt-2'}>
+            <FormItem
+              className={isDeclaration ? undefined : '-mt-2'}
+              data-parity={parityHook}
+            >
               <FormControl>
                 <div
                   className={
@@ -218,10 +243,12 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
                   <Checkbox
                     checked={checked}
                     className={isDeclaration ? 'mt-0.5' : undefined}
+                    data-parity={`${parityHook}-checkbox`}
                     id={legendId}
                     onCheckedChange={(next) =>
                       controller.onChange(next === true ? 'true' : 'false')
                     }
+                    ref={controller.ref}
                   />
                   <label
                     className={
@@ -235,14 +262,14 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
                   </label>
                 </div>
               </FormControl>
-              <FormMessage />
+              <FormMessage data-parity={`${parityHook}-error`} />
             </FormItem>
           );
         }
 
         if (field.kind === 'radio' || field.kind === 'chips') {
           return (
-            <FormItem>
+            <FormItem data-parity={parityHook}>
               <FormControl>
                 <fieldset>
                   <legend className={ONBOARDING_LEGEND_CLASS} id={legendId}>
@@ -257,6 +284,7 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
                         aria-labelledby={legendId}
                         className="mt-2"
                         onValueChange={controller.onChange}
+                        ref={controller.ref}
                         value={asText(controller.value)}
                       >
                         {(field.options ?? []).map((option) => (
@@ -300,7 +328,7 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
                   )}
                 </fieldset>
               </FormControl>
-              <FormMessage />
+              <FormMessage data-parity={`${parityHook}-error`} />
             </FormItem>
           );
         }
@@ -308,7 +336,7 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
         const equivalent = feetAndInchesHint(field, controller.value, units);
 
         return (
-          <FormItem>
+          <FormItem data-parity={parityHook}>
             <FormLabel className="flex flex-wrap items-baseline gap-1.5">
               <LabelText field={field} unit={unit} />
             </FormLabel>
@@ -321,7 +349,10 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
                 value={asText(controller.value)}
               >
                 <FormControl>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger
+                    className="w-full"
+                    data-parity={`${parityHook}-trigger`}
+                  >
                     <SelectValue
                       placeholder={field.placeholder ?? 'Choose one'}
                     />
@@ -339,7 +370,7 @@ export function OnboardingFieldControl({ control, field }: FieldControlProps) {
               <FormControl>{fieldEntry(field, controller, units)}</FormControl>
             )}
             {equivalent && <FormDescription>{equivalent}</FormDescription>}
-            <FormMessage />
+            <FormMessage data-parity={`${parityHook}-error`} />
           </FormItem>
         );
       }}

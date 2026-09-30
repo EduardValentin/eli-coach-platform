@@ -1,0 +1,140 @@
+[
+  {
+    "waitFor": "[data-parity-root=\"OnboardingWizard\"]"
+  },
+  {
+    "fill": [
+      "[data-parity=\"field-weight\"] input",
+      "70"
+    ]
+  },
+  {
+    "fill": [
+      "[data-parity=\"field-height\"] input",
+      "165"
+    ]
+  },
+  {
+    "fill": [
+      "[data-parity=\"field-goalWeight\"] input",
+      "65"
+    ]
+  },
+  {
+    "click": "[data-parity=\"field-primaryGoal\"] [role=\"combobox\"]"
+  },
+  {
+    "click": "role=option[name=\"Lose fat\"]"
+  },
+  {
+    "click": "[data-parity=\"field-blockers\"] input[aria-label=\"Busy schedule\"]"
+  },
+  {
+    "click": "[data-parity=\"field-experienceLevel\"] [role=\"combobox\"]"
+  },
+  {
+    "click": "role=option[name=\"New to training\"]"
+  },
+  {
+    "click": "[data-parity=\"field-trainingDaysPerWeek\"] >> role=radio[name=\"3 days\"]"
+  },
+  {
+    "click": "[data-parity=\"field-minutesPerSession\"] >> role=radio[name=\"30–45 minutes\"]"
+  },
+  {
+    "click": "[data-parity=\"field-previousPt\"] >> role=radio[name=\"No\"]"
+  },
+  {
+    "fill": [
+      "[data-parity=\"field-coachExpectations\"] input",
+      "Keep me accountable."
+    ]
+  },
+  {
+    "click": "[data-parity=\"field-lifestyleActivityLevel\"] [role=\"combobox\"]"
+  },
+  {
+    "click": "role=option[name=\"Lightly active\"]"
+  },
+  {
+    "click": "[data-parity=\"field-availableEquipment\"] input[aria-label=\"Dumbbells\"]"
+  },
+  {
+    "click": "[data-parity=\"field-trainingPlace\"] [role=\"combobox\"]"
+  },
+  {
+    "click": "role=option[name=\"Home\"]"
+  },
+  {
+    "click": "[data-parity=\"continue\"]"
+  },
+  {
+    "wait": 500
+  },
+  {
+    "click": "[data-parity=\"field-heartCondition\"] >> role=radio[name=\"No\"]"
+  },
+  {
+    "click": "[data-parity=\"field-chestPainOnExertion\"] >> role=radio[name=\"No\"]"
+  },
+  {
+    "click": "[data-parity=\"field-dizzinessOrFainting\"] >> role=radio[name=\"No\"]"
+  },
+  {
+    "click": "[data-parity=\"field-chronicConditionDiagnosed\"] >> role=radio[name=\"No\"]"
+  },
+  {
+    "click": "[data-parity=\"field-chronicConditionMedication\"] >> role=radio[name=\"No\"]"
+  },
+  {
+    "click": "[data-parity=\"field-boneOrJointProblem\"] >> role=radio[name=\"No\"]"
+  },
+  {
+    "click": "[data-parity=\"field-doctorProhibitedActivity\"] >> role=radio[name=\"No\"]"
+  },
+  {
+    "click": "[data-parity=\"field-parqDeclaration\"] button[role=\"checkbox\"]"
+  },
+  {
+    "click": "[data-parity=\"consent\"] button[role=\"checkbox\"]"
+  },
+  {
+    "click": "[data-parity=\"continue\"]"
+  },
+  {
+    "wait": 500
+  },
+  {
+    "click": "[data-parity=\"field-cycleRegularity\"] >> role=radio[name=\"No, or very rarely\"]"
+  },
+  {
+    "click": "[data-parity=\"field-hormonalContraception\"] [role=\"combobox\"]"
+  },
+  {
+    "click": "role=option[name=\"None\"]"
+  },
+  {
+    "click": "[data-parity=\"field-lifeStage\"] input[aria-label=\"None of these\"]"
+  },
+  {
+    "click": "[data-parity=\"field-perimenopauseOrMenopause\"] [role=\"combobox\"]"
+  },
+  {
+    "click": "role=option[name=\"No\"]"
+  },
+  {
+    "click": "[data-parity=\"field-gynaecologicalCondition\"] >> role=radio[name=\"No\"]"
+  },
+  {
+    "click": "[data-parity=\"field-recurringSymptoms\"] input[aria-label=\"None\"]"
+  },
+  {
+    "click": "[data-parity=\"continue\"]"
+  },
+  {
+    "wait": 500
+  },
+  {
+    "wait": 300
+  }
+]

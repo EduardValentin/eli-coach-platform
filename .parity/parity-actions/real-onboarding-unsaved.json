@@ -1,0 +1,6 @@
+[
+  { "waitFor": "[data-parity-root=\"OnboardingWizard\"]" },
+  { "fill": ["[data-parity=\"field-weight\"] input", "72"] },
+  { "waitFor": "[data-parity=\"save-status\"] >> text=Not saved yet" },
+  { "wait": 400 }
+]

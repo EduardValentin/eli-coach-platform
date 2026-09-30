@@ -1,4 +1,5 @@
 import {
+  FieldError,
   Input,
   Select,
   SelectContent,
@@ -9,8 +10,6 @@ import {
 import type { ChangeEvent } from "react";
 
 import { COUNTRIES } from "~/features/assessment-calls/contracts/countries";
-
-import { FieldError } from "./field-error";
 
 const PHONE_FIELD_LABEL = "Phone (optional)";
 const CALLING_CODE_LABEL = "Country calling code";

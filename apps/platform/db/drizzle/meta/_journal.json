@@ -204,6 +204,13 @@
       "when": 1790527680548,
       "tag": "0028_client_invitations",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1790613013109,
+      "tag": "0029_client_onboarding",
+      "breakpoints": true
     }
   ]
 }

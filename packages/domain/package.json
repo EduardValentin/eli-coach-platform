@@ -15,6 +15,7 @@
     "./client": "./src/client/index.ts",
     "./client-invitation": "./src/client-invitation/index.ts",
     "./client-journey": "./src/client-journey/index.ts",
+    "./client-onboarding": "./src/client-onboarding/index.ts",
     "./coach-availability": "./src/coach-availability/index.ts",
     "./coach-meeting-room": "./src/coach-meeting-room/index.ts",
     "./coaching-bundle": "./src/coaching-bundle/index.ts",
@@ -22,9 +23,11 @@
     "./download-grant": "./src/download-grant/index.ts",
     "./email-address": "./src/email-address/index.ts",
     "./feature-flag": "./src/feature-flag/index.ts",
+    "./measurement": "./src/measurement/index.ts",
     "./payment-link": "./src/payment-link/index.ts",
     "./product": "./src/product/index.ts",
     "./shared": "./src/shared/index.ts",
+    "./unit-preference": "./src/unit-preference/index.ts",
     "./waitlist": "./src/waitlist/index.ts"
   },
   "scripts": {

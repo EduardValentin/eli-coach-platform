@@ -101,7 +101,25 @@ describe('the welcome page', () => {
 
   it('counts four parts and drops the cycle for a male account', () => {
     // arrange
-    renderWelcome('?session=client&jstage=account-created&jsex=male');
+    renderWelcome('?session=client&jstage=account-created&jgender=male');
+
+    // act
+    const buttons = screen.getAllByRole('button');
+
+    // assert
+    expect(buttons).toHaveLength(1);
+    expect(
+      screen.getByText(
+        'But first, I need to get to know you. Your next step is a short form in four parts — it takes about 15 minutes — covering your goals, your training experience, your health, your nutrition and your measurements.',
+      ),
+    ).toBeVisible();
+  });
+
+  it('counts four parts and drops the cycle for a client who prefers not to say', () => {
+    // arrange
+    renderWelcome(
+      '?session=client&jstage=account-created&jgender=prefer-not-to-say',
+    );
 
     // act
     const buttons = screen.getAllByRole('button');

@@ -1,10 +1,10 @@
-import type { ReactNode } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 import { cn } from './utils';
 
-type StepperProps = {
+type StepperProps = Omit<ComponentProps<'div'>, 'children'> & {
+  countId?: string;
   current: number;
   total: number;
-  className?: string;
   status?: ReactNode;
 };
 
@@ -15,14 +15,24 @@ function barClass(index: number, current: number): string {
   return 'bg-surface-muted';
 }
 
-export function Stepper({ current, total, className, status }: StepperProps) {
+export function Stepper({
+  countId,
+  current,
+  total,
+  className,
+  status,
+  ...props
+}: StepperProps) {
   return (
-    <div className={cn('flex flex-col gap-2', className)}>
+    <div className={cn('flex flex-col gap-2', className)} {...props}>
       <div className="flex items-end justify-between gap-4">
-        <p className="text-caption font-semibold uppercase tracking-widest text-text-secondary">
+        <p
+          className="shrink-0 text-caption font-semibold uppercase tracking-widest text-text-secondary"
+          id={countId}
+        >
           Step {current} of {total}
         </p>
-        {status}
+        <div className="min-w-0 text-right">{status}</div>
       </div>
       <div aria-hidden="true" className="flex items-center gap-1.5">
         {Array.from({ length: total }, (_, index) => (
@@ -32,6 +42,7 @@ export function Stepper({ current, total, className, status }: StepperProps) {
               'h-1.5 flex-1 rounded-full transition-colors',
               barClass(index + 1, current),
             )}
+            data-parity={`step-bar-${index + 1}`}
           />
         ))}
       </div>

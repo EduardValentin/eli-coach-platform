@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 
 export type BookingVisitor = {
   email: string;
@@ -24,12 +24,24 @@ const CLOCK_TIME = /^\d{1,2}:\d{2}/;
 export class BookingPage {
   constructor(private readonly page: Page) {}
 
-  async bookSoonestCall(visitor: BookingVisitor): Promise<void> {
+  async openDetails(): Promise<void> {
     await this.page.goto("/book");
     await this.pickSoonestOpenSlot();
     await this.page
       .getByRole("button", { name: "Continue to your details" })
       .click();
+  }
+
+  async expectGenderOptions(options: readonly string[]): Promise<void> {
+    await this.page
+      .getByRole("combobox", { name: "Gender", exact: true })
+      .click();
+    await expect(this.page.getByRole("option")).toHaveText([...options]);
+    await this.page.keyboard.press("Escape");
+  }
+
+  async bookSoonestCall(visitor: BookingVisitor): Promise<void> {
+    await this.openDetails();
     await this.fillDetails(visitor);
     await this.page.getByRole("button", { name: "Schedule Call" }).click();
   }

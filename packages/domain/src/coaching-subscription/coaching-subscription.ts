@@ -49,6 +49,15 @@ export function withdrawalDeadline(purchasedAt: Date): Date {
   );
 }
 
+export function programWorkStart(start: {
+  startChoice: StartChoice;
+  purchasedAt: Date;
+}): Date | null {
+  return start.startChoice === "waiting"
+    ? withdrawalDeadline(start.purchasedAt)
+    : null;
+}
+
 export class CoachingSubscription {
   readonly bundleId: CoachingBundleId;
   readonly months: number;

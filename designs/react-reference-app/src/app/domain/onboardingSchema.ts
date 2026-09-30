@@ -1,4 +1,4 @@
-import type { JourneySex, OnboardingFormId } from './journey';
+import type { JourneyGender, OnboardingFormId } from './journey';
 
 export type OnboardingFieldKind =
   | 'text'
@@ -59,7 +59,9 @@ export type FormAudience = 'everyone' | 'female';
 
 export type FormSensitivity = 'ordinary' | 'special-category';
 
-export type OnboardingFormIntro = string | { female: string; male: string };
+export type GenderedCopy = { female: string; other: string };
+
+export type OnboardingFormIntro = string | GenderedCopy;
 
 export type OnboardingFormDefinition = {
   id: OnboardingFormId;
@@ -71,11 +73,18 @@ export type OnboardingFormDefinition = {
   fields: OnboardingField[];
 };
 
+export function copyForGender(
+  copy: GenderedCopy,
+  gender: JourneyGender,
+): string {
+  return gender === 'female' ? copy.female : copy.other;
+}
+
 export function resolveIntro(
   intro: OnboardingFormIntro,
-  sex: JourneySex,
+  gender: JourneyGender,
 ): string {
-  return typeof intro === 'string' ? intro : intro[sex];
+  return typeof intro === 'string' ? intro : copyForGender(intro, gender);
 }
 
 export const YES_NO_OPTIONS: readonly OnboardingOption[] = [
@@ -289,7 +298,8 @@ const SAFETY_FORM: OnboardingFormDefinition = {
   intro: {
     female:
       "The next few questions are about your health and your cycle. Your honest answers help me build a plan that's safe for you as well as effective.",
-    male: "The next few questions are about your health. Your honest answers help me build a plan that's safe for you as well as effective.",
+    other:
+      "The next few questions are about your health. Your honest answers help me build a plan that's safe for you as well as effective.",
   },
   audience: 'everyone',
   sensitivity: 'special-category',
@@ -833,11 +843,11 @@ export const MEASUREMENT_FIELDS: readonly OnboardingField[] = [
   ...MEASUREMENTS_FORM.fields,
 ];
 
-export function formsForSex(
-  sex: 'female' | 'male',
+export function formsForGender(
+  gender: JourneyGender,
 ): OnboardingFormDefinition[] {
   return ONBOARDING_FORMS.filter(
-    (form) => form.audience === 'everyone' || sex === 'female',
+    (form) => form.audience === 'everyone' || form.audience === gender,
   );
 }
 

@@ -42,6 +42,17 @@ describe("resolvePortalDestination", () => {
     });
   });
 
+  it("points a client who has sent her onboarding at the client portal", () => {
+    // arrange
+    const session = { journeyStep: "submitted", role: "CLIENT" } as const;
+
+    // act
+    const destination = resolvePortalDestination(session);
+
+    // assert
+    expect(destination).toEqual({ href: "/client", label: "Client Portal" });
+  });
+
   it("points a client account with no journey at the client portal", () => {
     // arrange
     const session = { journeyStep: null, role: "CLIENT" } as const;

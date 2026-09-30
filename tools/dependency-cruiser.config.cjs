@@ -85,6 +85,14 @@ module.exports = {
       from: { path: `${FEATURES}assessment-calls/` },
       to: { path: `${FEATURES}coaching-sales/` },
     },
+    {
+      name: "coaching-sales-never-reaches-client-onboarding",
+      comment:
+        "client-onboarding builds on coaching-sales, so coaching-sales never imports client-onboarding, not even its public folders.",
+      severity: "error",
+      from: { path: `${FEATURES}coaching-sales/` },
+      to: { path: `${FEATURES}client-onboarding/` },
+    },
     surfaceToFeatureRule("public-site", "public"),
     surfaceToFeatureRule("client-portal", "client"),
     surfaceToFeatureRule("coach-portal", "coach"),

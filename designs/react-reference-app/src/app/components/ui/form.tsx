@@ -13,6 +13,7 @@ import {
   type FieldValues,
 } from "react-hook-form";
 
+import { FIELD_ERROR_CLASS } from "../../utils/formFieldStyles";
 import { cn } from "./utils";
 import { Label } from "./label";
 
@@ -148,7 +149,7 @@ function FormMessage({ className, ...props }: React.ComponentProps<"p">) {
     <p
       data-slot="form-message"
       id={formMessageId}
-      className={cn("text-destructive text-sm", className)}
+      className={cn(FIELD_ERROR_CLASS, className)}
       {...props}
     >
       {body}

@@ -78,6 +78,7 @@ describe("public layout loader", () => {
         gender: "female",
         lastName: "Popescu",
         welcomeSeenAt: null,
+        onboardingSubmittedAt: null,
       }),
       session: {
         account: buildAccount({ role: "CLIENT" }),

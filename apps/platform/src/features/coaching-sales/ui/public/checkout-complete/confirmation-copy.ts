@@ -1,4 +1,4 @@
-import { formatDayMonthYear } from "~/features/coaching-sales/ui/public/calendar-day-format";
+import { formatDayMonthYear } from "~/features/coaching-sales/ui/shared/calendar-day-format";
 
 export const PAYMENT_CONFIRMED_HEADING = "Payment confirmed";
 

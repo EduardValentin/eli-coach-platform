@@ -101,6 +101,65 @@ describe("requireClientJourneyStep", () => {
     expect(thrown).toBeUndefined();
   });
 
+  it.each(["/app/client/welcome", "/app/client/onboarding"])(
+    "sends a client who has sent her onboarding from %s to the client portal",
+    async (pathname) => {
+      // arrange
+      const args = journeyArgs({
+        journey: journeyOf({
+          welcomeSeenAt: new Date("2026-10-21T09:00Z"),
+          onboardingSubmittedAt: new Date("2026-10-22T09:00Z"),
+        }),
+        pathname,
+      });
+
+      // act
+      const thrown = await captureThrown(() => requireClientJourneyStep(args));
+
+      // assert
+      expect((thrown as Response).status).toBe(302);
+      expect((thrown as Response).headers.get("Location")).toBe("/app/client");
+    },
+  );
+
+  it.each(["/app/client", "/app/client/plan"])(
+    "lets a client who has sent her onboarding open %s",
+    async (pathname) => {
+      // arrange
+      const args = journeyArgs({
+        journey: journeyOf({
+          welcomeSeenAt: new Date("2026-10-21T09:00Z"),
+          onboardingSubmittedAt: new Date("2026-10-22T09:00Z"),
+        }),
+        pathname,
+      });
+
+      // act
+      const thrown = await captureThrown(() => requireClientJourneyStep(args));
+
+      // assert
+      expect(thrown).toBeUndefined();
+    },
+  );
+
+  it("gates the paths of an app served at the root", async () => {
+    // arrange
+    const args = journeyArgs({
+      appBasePath: "/",
+      journey: journeyOf({ welcomeSeenAt: new Date("2026-10-21T09:00Z") }),
+      pathname: "/client/welcome",
+    });
+
+    // act
+    const thrown = await captureThrown(() => requireClientJourneyStep(args));
+
+    // assert
+    expect((thrown as Response).status).toBe(302);
+    expect((thrown as Response).headers.get("Location")).toBe(
+      "/client/onboarding",
+    );
+  });
+
   it("leaves a client account with no client record ungated", async () => {
     // arrange
     const args = journeyArgs({ journey: null, pathname: "/app/client" });
@@ -131,6 +190,7 @@ describe("requireClientJourneyStep", () => {
         gender: "female",
         lastName: "Popescu",
         welcomeSeenAt: null,
+        onboardingSubmittedAt: null,
       });
     },
   );
@@ -231,17 +291,22 @@ describe("readClientJourneyStep", () => {
   );
 });
 
-function journeyOf(options: { welcomeSeenAt: Date | null }): ClientJourney {
+function journeyOf(options: {
+  welcomeSeenAt: Date | null;
+  onboardingSubmittedAt?: Date;
+}): ClientJourney {
   return ClientJourney.from({
     clientId: "client_ana",
     firstName: "Ana",
     gender: "female",
     lastName: "Popescu",
     welcomeSeenAt: options.welcomeSeenAt,
+    onboardingSubmittedAt: options.onboardingSubmittedAt ?? null,
   });
 }
 
 function journeyArgs(options: {
+  appBasePath?: string;
   journey: ClientJourney | null;
   pathname: string;
   session?: ResolvedSession;
@@ -252,7 +317,7 @@ function journeyArgs(options: {
     },
   } as unknown as CoachingSalesFeature;
   const accounts = {
-    portal: { appBasePath: BASE_PATH },
+    portal: { appBasePath: options.appBasePath ?? BASE_PATH },
   } as unknown as AccountsFeature;
 
   return createRequestArgs({

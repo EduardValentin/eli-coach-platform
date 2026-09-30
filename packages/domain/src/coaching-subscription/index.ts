@@ -10,9 +10,11 @@ export {
 export {
   COACHING_SUBSCRIPTION_PURPOSE,
   CoachingSubscription,
+  programWorkStart,
   START_CHOICES,
   withdrawalDeadline,
   type CheckoutCompletion,
+  type StartChoice,
 } from "./coaching-subscription";
 export { type PaidClientAdmission } from "./paid-client-admission";
 export {

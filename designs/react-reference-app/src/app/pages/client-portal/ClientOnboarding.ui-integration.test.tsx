@@ -1,4 +1,11 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import {
@@ -11,7 +18,7 @@ import {
   vi,
 } from 'vitest';
 import { ClientOnboarding } from './ClientOnboarding';
-import { AppProvider } from '../../context/AppContext';
+import { AppProvider, useAppState } from '../../context/AppContext';
 import { AssessmentCallProvider } from '../../context/AssessmentCallContext';
 import {
   ClientJourneyProvider,
@@ -28,6 +35,13 @@ import {
 import { loadDraft, saveDraft } from '../../services/onboardingService';
 
 const SERVICE_TIMEOUT = 4000;
+
+const RETRY_INTERVAL_MS = 15_000;
+
+const UNSAVED_LINE = "Not saved yet. We'll try again when you're back online.";
+
+const SUBMIT_PROBLEM =
+  "Your answers could not be sent just now. They're saved — try again in a moment.";
 
 beforeAll(() => {
   vi.stubGlobal(
@@ -51,6 +65,19 @@ function StageProbe() {
   return <span data-testid="stage">{demoJourney.stage}</span>;
 }
 
+function ConnectionRestorer() {
+  const { setAppState } = useAppState();
+
+  return (
+    <button
+      onClick={() => setAppState({ journeyConnection: 'working' })}
+      type="button"
+    >
+      Restore the connection
+    </button>
+  );
+}
+
 function renderOnboarding(devParams: string) {
   const url = `/portal/onboarding${devParams}`;
   window.history.replaceState({}, '', url);
@@ -63,6 +90,7 @@ function renderOnboarding(devParams: string) {
             <AssessmentCallProvider>
               <ClientJourneyProvider>
                 <StageProbe />
+                <ConnectionRestorer />
                 <Routes>
                   <Route
                     element={<ClientOnboarding />}
@@ -79,11 +107,59 @@ function renderOnboarding(devParams: string) {
   );
 }
 
+async function leaveAnAnswerUnsavedThenReconnect(
+  user: Pick<typeof userEvent, 'type' | 'click'>,
+) {
+  renderOnboarding('?session=client&jstage=account-created&jconn=lost');
+  await user.type(screen.getByLabelText(/Your weight/), '66');
+  await screen.findByText(UNSAVED_LINE, undefined, {
+    timeout: SERVICE_TIMEOUT,
+  });
+  await user.click(
+    screen.getByRole('button', { name: 'Restore the connection' }),
+  );
+}
+
+async function answerRegularCycleDetails() {
+  await userEvent.click(
+    screen.getByRole('radio', { name: "Yes, and it's regular" }),
+  );
+  await userEvent.click(
+    screen.getByRole('combobox', { name: /Are you using any contraception/ }),
+  );
+  await userEvent.click(await screen.findByRole('option', { name: 'None' }));
+  await userEvent.click(
+    screen.getByRole('checkbox', { name: 'None of these' }),
+  );
+  await userEvent.click(
+    screen.getByRole('combobox', {
+      name: /Are you in perimenopause or menopause/,
+    }),
+  );
+  await userEvent.click(await screen.findByRole('option', { name: 'No' }));
+}
+
+function firstOfThisMonth(): RegExp {
+  const today = new Date();
+  const month = today.toLocaleString('en-US', { month: 'long' });
+
+  return new RegExp(`${month} 1st, ${today.getFullYear()}`);
+}
+
 const GIVEN_CONSENTS: OnboardingConsents = {
   disclaimer: true,
   specialCategory: true,
   progressPhotos: false,
 };
+
+const DISCLAIMER_WITHHELD: OnboardingConsents = {
+  disclaimer: false,
+  specialCategory: true,
+  progressPhotos: false,
+};
+
+const DISCLAIMER =
+  'The information I give is correct and complete, and I understand this program does not replace medical advice or a consultation with a doctor.';
 
 const WITHHELD_CONSENTS: OnboardingConsents = {
   disclaimer: false,
@@ -114,6 +190,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  vi.useRealTimers();
   window.localStorage.clear();
   window.history.replaceState({}, '', '/');
 });
@@ -133,7 +210,11 @@ describe('the onboarding', () => {
 
   it('asks for the health-data consent on the safety form and holds her there without it', async () => {
     // arrange
-    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(1, WITHHELD_CONSENTS));
+    await saveDraft(
+      DEMO_JOURNEY_CALL_ID,
+      draftAt(1, WITHHELD_CONSENTS),
+      'working',
+    );
     renderOnboarding('?session=client&jstage=onboarding');
 
     // act
@@ -144,24 +225,50 @@ describe('the onboarding', () => {
     expect(screen.getByText('Step 2 of 5')).toBeVisible();
   });
 
-  it('asks for the disclaimer on the last form and refuses to send without it', async () => {
+  it('replaces the safety questions with the manual-screening message for a client under 15', async () => {
     // arrange
-    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(4, WITHHELD_CONSENTS));
-    renderOnboarding('?session=client&jstage=onboarding');
+    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(1, GIVEN_CONSENTS), 'working');
 
     // act
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Send to my coach' }),
-    );
+    renderOnboarding('?session=client&jstage=onboarding&jage=under-15');
 
     // assert
-    expect(screen.getByText('Tick the box to carry on.')).toBeVisible();
+    expect(
+      screen.getByText(
+        "These safety questions are designed for ages 15 to 69. I'll go through your health questions with you directly before building your program.",
+      ),
+    ).toBeVisible();
+    expect(
+      screen.queryByText(
+        'Has your doctor ever said that you have a heart condition OR high blood pressure?',
+      ),
+    ).not.toBeInTheDocument();
+  });
+
+  it('keeps the send button disabled until she ticks the disclaimer', async () => {
+    // arrange
+    await saveDraft(
+      DEMO_JOURNEY_CALL_ID,
+      draftAt(4, DISCLAIMER_WITHHELD),
+      'working',
+    );
+    renderOnboarding('?session=client&jstage=onboarding');
+    const send = screen.getByRole('button', { name: 'Send to my coach' });
+    const disabledBeforeTicking = send.hasAttribute('disabled');
+
+    // act
+    await userEvent.click(screen.getByRole('checkbox', { name: DISCLAIMER }));
+
+    // assert
+    expect(disabledBeforeTicking).toBe(true);
+    expect(send).toBeEnabled();
+    expect(screen.queryByText('Tick the box to carry on.')).not.toBeInTheDocument();
     expect(screen.getByTestId('stage')).toHaveTextContent('onboarding');
   });
 
   it('offers a two-option choice as radio buttons, not a dropdown', async () => {
     // arrange
-    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(3));
+    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(3), 'working');
     renderOnboarding('?session=client&jstage=onboarding');
 
     // act
@@ -179,7 +286,7 @@ describe('the onboarding', () => {
 
   it('asks how much she drinks and eats as a choice of amounts', async () => {
     // arrange
-    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(3));
+    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(3), 'working');
     renderOnboarding('?session=client&jstage=onboarding');
 
     // assert
@@ -249,7 +356,7 @@ describe('the onboarding', () => {
 
   it('asks for the measurements without repeating the weight from the first form', async () => {
     // arrange
-    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(4));
+    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(4), 'working');
 
     // act
     renderOnboarding('?session=client&jstage=onboarding');
@@ -261,7 +368,7 @@ describe('the onboarding', () => {
 
   it('holds the progress photos shut until she agrees to share them', async () => {
     // arrange
-    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(4));
+    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(4), 'working');
 
     // act
     renderOnboarding('?session=client&jstage=onboarding');
@@ -291,6 +398,22 @@ describe('the onboarding', () => {
     ).toBeGreaterThan(0);
   });
 
+  it('takes her to the first answer still missing when she tries to continue', async () => {
+    // arrange
+    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(1), 'working');
+    renderOnboarding('?session=client&jstage=onboarding');
+
+    // act
+    await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
+
+    // assert
+    expect(
+      screen.getByRole('radiogroup', {
+        name: /Has your doctor ever said that you have a heart condition/,
+      }),
+    ).toContainElement(document.activeElement as HTMLElement);
+  });
+
   it('marks the answers she can skip as optional', () => {
     // arrange
     renderOnboarding('?session=client&jstage=onboarding');
@@ -304,7 +427,7 @@ describe('the onboarding', () => {
 
   it('reassures her plainly when she has no regular cycle', async () => {
     // arrange
-    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(2));
+    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(2), 'working');
     renderOnboarding('?session=client&jstage=onboarding');
 
     // act
@@ -322,7 +445,7 @@ describe('the onboarding', () => {
 
   it('hides the cycle length once she says she does not know it', async () => {
     // arrange
-    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(2));
+    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(2), 'working');
     renderOnboarding('?session=client&jstage=onboarding');
 
     // act
@@ -359,7 +482,7 @@ describe('the onboarding', () => {
 
   it('lets her continue past the cycle step without a cycle length once she ticks that she is not sure', async () => {
     // arrange
-    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(2));
+    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(2), 'working');
     renderOnboarding('?session=client&jstage=onboarding');
 
     // act
@@ -398,9 +521,51 @@ describe('the onboarding', () => {
     ).toBeVisible();
   });
 
+  it('keeps the day her last period started quiet while she picks it, so her next answer lands', async () => {
+    // arrange
+    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(2), 'working');
+    renderOnboarding('?session=client&jstage=onboarding');
+    await answerRegularCycleDetails();
+    const trigger = screen.getByRole('button', {
+      name: /The day your last period started/,
+    });
+    await userEvent.click(trigger);
+    const openedQuietly = screen.queryByText('Pick a date.') === null;
+
+    // act
+    await userEvent.click(
+      within(screen.getByRole('dialog')).getByRole('button', {
+        name: firstOfThisMonth(),
+      }),
+    );
+    await userEvent.click(screen.getByRole('radio', { name: 'No' }));
+
+    // assert
+    expect(openedQuietly).toBe(true);
+    expect(screen.queryByText('Pick a date.')).not.toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'No' })).toBeChecked();
+  });
+
+  it("reads the step count with the next form's title when focus lands on it", async () => {
+    // arrange
+    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(1, GIVEN_CONSENTS), 'working');
+    renderOnboarding('?session=client&jstage=onboarding&jage=under-15');
+
+    // act
+    await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
+
+    // assert
+    const heading = await screen.findByRole('heading', {
+      level: 2,
+      name: 'Your cycle and hormonal health',
+    });
+    await waitFor(() => expect(heading).toHaveFocus());
+    expect(heading).toHaveAccessibleDescription('Step 3 of 5');
+  });
+
   it('counts four forms and leaves out the cycle for a male account', () => {
     // arrange
-    renderOnboarding('?session=client&jstage=onboarding&jsex=male');
+    renderOnboarding('?session=client&jstage=onboarding&jgender=male');
 
     // act
     const heading = screen.getByRole('heading', { level: 2 });
@@ -408,6 +573,42 @@ describe('the onboarding', () => {
     // assert
     expect(screen.getByText('Step 3 of 4')).toBeVisible();
     expect(heading).toHaveTextContent('Food and daily life');
+  });
+
+  it('counts four forms and leaves out the cycle for a client who prefers not to say', () => {
+    // arrange
+    renderOnboarding(
+      '?session=client&jstage=onboarding&jgender=prefer-not-to-say',
+    );
+
+    // act
+    const heading = screen.getByRole('heading', { level: 2 });
+
+    // assert
+    expect(screen.getByText('Step 3 of 4')).toBeVisible();
+    expect(heading).toHaveTextContent('Food and daily life');
+  });
+
+  it('asks a client who prefers not to say to agree to her health answers only', async () => {
+    // arrange
+    await saveDraft(
+      DEMO_JOURNEY_CALL_ID,
+      draftAt(1, WITHHELD_CONSENTS),
+      'working',
+    );
+
+    // act
+    renderOnboarding(
+      '?session=client&jstage=onboarding&jgender=prefer-not-to-say',
+    );
+
+    // assert
+    expect(screen.getByText('Step 2 of 4')).toBeVisible();
+    expect(
+      screen.getByRole('checkbox', {
+        name: 'I agree that Evoa stores and uses my health answers to build and adjust my training program. I can withdraw this at any time.',
+      }),
+    ).not.toBeChecked();
   });
 
   it('saves her answers quietly as she types', async () => {
@@ -424,9 +625,98 @@ describe('the onboarding', () => {
     ).toBeVisible();
   });
 
+  it('tells her an answer is not saved yet while the connection is lost', async () => {
+    // arrange
+    renderOnboarding('?session=client&jstage=account-created&jconn=lost');
+
+    // act
+    await userEvent.type(screen.getByLabelText(/Your weight/), '66');
+
+    // assert
+    expect(
+      await screen.findByText(UNSAVED_LINE, undefined, {
+        timeout: SERVICE_TIMEOUT,
+      }),
+    ).toBeVisible();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(loadDraft(DEMO_JOURNEY_CALL_ID)).toBeNull();
+  });
+
+  it('saves the unsent answers once the browser is back online', async () => {
+    // arrange
+    await leaveAnAnswerUnsavedThenReconnect(userEvent);
+
+    // act
+    fireEvent(window, new Event('online'));
+
+    // assert
+    expect(
+      await screen.findByText('Saved', undefined, { timeout: SERVICE_TIMEOUT }),
+    ).toBeVisible();
+    expect(
+      loadDraft(DEMO_JOURNEY_CALL_ID)?.answers['goal-availability'].weight,
+    ).toBe(66);
+  });
+
+  it('saves the unsent answers with her next change', async () => {
+    // arrange
+    await leaveAnAnswerUnsavedThenReconnect(userEvent);
+
+    // act
+    await userEvent.type(screen.getByLabelText(/Your height/), '165');
+
+    // assert
+    await waitFor(
+      () =>
+        expect(
+          loadDraft(DEMO_JOURNEY_CALL_ID)?.answers['goal-availability'],
+        ).toMatchObject({ weight: 66, height: 165 }),
+      { timeout: SERVICE_TIMEOUT },
+    );
+    expect(screen.getByText('Saved')).toBeVisible();
+  });
+
+  it('tries the unsent answers again on a timer while the connection is lost', async () => {
+    // arrange
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    await leaveAnAnswerUnsavedThenReconnect(user);
+
+    // act
+    await act(() => vi.advanceTimersByTimeAsync(RETRY_INTERVAL_MS));
+
+    // assert
+    expect(
+      await screen.findByText('Saved', undefined, { timeout: SERVICE_TIMEOUT }),
+    ).toBeVisible();
+    expect(
+      loadDraft(DEMO_JOURNEY_CALL_ID)?.answers['goal-availability'].weight,
+    ).toBe(66);
+  });
+
+  it('keeps her on the last form when her answers cannot be sent', async () => {
+    // arrange
+    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(4), 'working');
+    renderOnboarding('?session=client&jstage=onboarding&jconn=lost');
+
+    // act
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Send to my coach' }),
+    );
+
+    // assert
+    expect(
+      await screen.findByText(SUBMIT_PROBLEM, undefined, {
+        timeout: SERVICE_TIMEOUT,
+      }),
+    ).toBeVisible();
+    expect(screen.getByTestId('stage')).toHaveTextContent('onboarding');
+    expect(screen.getByText('Step 5 of 5')).toBeVisible();
+  });
+
   it('resumes at the form she left', async () => {
     // arrange
-    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(3));
+    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(3), 'working');
 
     // act
     renderOnboarding('?session=client&jstage=onboarding');
@@ -441,8 +731,13 @@ describe('the onboarding', () => {
 
   it('sends the last form to her coach and closes the onboarding', async () => {
     // arrange
-    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(4));
+    await saveDraft(
+      DEMO_JOURNEY_CALL_ID,
+      draftAt(4, DISCLAIMER_WITHHELD),
+      'working',
+    );
     renderOnboarding('?session=client&jstage=onboarding');
+    await userEvent.click(screen.getByRole('checkbox', { name: DISCLAIMER }));
 
     // act
     await userEvent.click(
@@ -494,6 +789,42 @@ describe('the onboarding', () => {
     );
   });
 
+  it('saves her units to her account the way it saves her answers', async () => {
+    // arrange
+    renderOnboarding('?session=client&jstage=account-created');
+
+    // act
+    await userEvent.click(screen.getByRole('radio', { name: 'lb · in' }));
+
+    // assert
+    expect(screen.getByText('Saving…')).toBeVisible();
+    expect(
+      await screen.findByText('Saved', undefined, { timeout: SERVICE_TIMEOUT }),
+    ).toBeVisible();
+  });
+
+  it('tells her the units are not saved yet while the connection is lost, and saves them once it is back', async () => {
+    // arrange
+    renderOnboarding('?session=client&jstage=account-created&jconn=lost');
+    await userEvent.click(screen.getByRole('radio', { name: 'lb · in' }));
+    const unsavedLine = await screen.findByText(UNSAVED_LINE, undefined, {
+      timeout: SERVICE_TIMEOUT,
+    });
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Restore the connection' }),
+    );
+
+    // act
+    fireEvent(window, new Event('online'));
+
+    // assert
+    expect(unsavedLine).toBeInTheDocument();
+    expect(
+      await screen.findByText('Saved', undefined, { timeout: SERVICE_TIMEOUT }),
+    ).toBeVisible();
+    expect(screen.getByRole('radio', { name: 'lb · in' })).toBeChecked();
+  });
+
   it('turns down a weight outside the sensible range in pounds', async () => {
     // arrange
     renderOnboarding('?session=client&jstage=account-created');
@@ -535,7 +866,7 @@ describe('the onboarding', () => {
 
   it('shows the same answers in pounds when she comes back to the form', async () => {
     // arrange
-    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(0));
+    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(0), 'working');
     window.localStorage.setItem(
       'eli.unitPreferences',
       JSON.stringify({ weightUnit: 'lb', heightUnit: 'ft-in' }),

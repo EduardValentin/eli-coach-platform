@@ -130,9 +130,17 @@ export function ProgramStatusCard() {
   };
 
   return (
-    <div className="mb-8" data-parity="program-status">
+    <div
+      className="mb-8"
+      data-parity="program-status"
+      data-parity-root="ProgramStatusCard"
+    >
       <ClientWidget
-        eyebrow={eyebrowFor(demoJourney.stage)}
+        eyebrow={
+          <span data-parity="status-eyebrow">
+            {eyebrowFor(demoJourney.stage)}
+          </span>
+        }
         icon={
           <ClipboardList
             aria-hidden="true"
@@ -141,14 +149,20 @@ export function ProgramStatusCard() {
           />
         }
         headingId="program-status-heading"
-        voice={label}
+        voice={<span data-parity="status-label">{label}</span>}
       >
-        <p className="mt-1 max-w-2xl text-sm text-text-secondary">
+        <p
+          className="mt-1 max-w-2xl text-sm text-text-secondary"
+          data-parity="status-line"
+        >
           {supportingLine(demoJourney, workStart)}
         </p>
 
         {waiting && (
-          <p className="mt-3 max-w-2xl text-sm text-text-secondary">
+          <p
+            className="mt-3 max-w-2xl text-sm text-text-secondary"
+            data-parity="start-sooner-note"
+          >
             {START_SOONER_NOTE}
           </p>
         )}
@@ -181,6 +195,7 @@ export function ProgramStatusCard() {
 
           {waiting && (
             <Button
+              data-parity="start-now"
               disabled={starting}
               onClick={() => setConfirming(true)}
               type="button"

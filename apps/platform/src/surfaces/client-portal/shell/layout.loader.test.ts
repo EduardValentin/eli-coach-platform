@@ -2,6 +2,7 @@ import type {
   ClientJourneySnapshot,
   MarkWelcomeSeenUseCase,
   ReadClientJourneyUseCase,
+  ReadProgramStatusUseCase,
 } from "@eli-coach-platform/domain/client-journey";
 import { describe, expect, it } from "vitest";
 
@@ -23,6 +24,7 @@ const ANA: ClientJourneySnapshot = {
   gender: "female",
   lastName: "Popescu",
   welcomeSeenAt: null,
+  onboardingSubmittedAt: null,
 };
 
 describe("client shell loader", () => {
@@ -70,6 +72,7 @@ function shellArguments(journeyEntries: readonly ContextEntry[]) {
   const clientJourney = new ClientJourneyController({
     markWelcomeSeen: {} as MarkWelcomeSeenUseCase,
     readClientJourney: {} as ReadClientJourneyUseCase,
+    readProgramStatus: {} as ReadProgramStatusUseCase,
   });
 
   return createRequestArgs({

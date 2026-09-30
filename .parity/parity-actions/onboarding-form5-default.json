@@ -1,0 +1,227 @@
+[
+  {
+    "waitFor": "[data-parity-root=\"OnboardingWizard\"]"
+  },
+  {
+    "fill": [
+      "[data-parity=\"field-weight\"] input",
+      "70"
+    ]
+  },
+  {
+    "fill": [
+      "[data-parity=\"field-height\"] input",
+      "165"
+    ]
+  },
+  {
+    "fill": [
+      "[data-parity=\"field-goalWeight\"] input",
+      "65"
+    ]
+  },
+  {
+    "click": "[data-parity=\"field-primaryGoal\"] [role=\"combobox\"]"
+  },
+  {
+    "click": "role=option[name=\"Lose fat\"]"
+  },
+  {
+    "click": "[data-parity=\"field-blockers\"] input[aria-label=\"Busy schedule\"]"
+  },
+  {
+    "click": "[data-parity=\"field-experienceLevel\"] [role=\"combobox\"]"
+  },
+  {
+    "click": "role=option[name=\"New to training\"]"
+  },
+  {
+    "click": "[data-parity=\"field-trainingDaysPerWeek\"] >> role=radio[name=\"3 days\"]"
+  },
+  {
+    "click": "[data-parity=\"field-minutesPerSession\"] >> role=radio[name=\"30–45 minutes\"]"
+  },
+  {
+    "click": "[data-parity=\"field-previousPt\"] >> role=radio[name=\"No\"]"
+  },
+  {
+    "fill": [
+      "[data-parity=\"field-coachExpectations\"] input",
+      "Keep me accountable."
+    ]
+  },
+  {
+    "click": "[data-parity=\"field-lifestyleActivityLevel\"] [role=\"combobox\"]"
+  },
+  {
+    "click": "role=option[name=\"Lightly active\"]"
+  },
+  {
+    "click": "[data-parity=\"field-availableEquipment\"] input[aria-label=\"Dumbbells\"]"
+  },
+  {
+    "click": "[data-parity=\"field-trainingPlace\"] [role=\"combobox\"]"
+  },
+  {
+    "click": "role=option[name=\"Home\"]"
+  },
+  {
+    "click": "[data-parity=\"continue\"]"
+  },
+  {
+    "wait": 500
+  },
+  {
+    "click": "[data-parity=\"field-heartCondition\"] >> role=radio[name=\"No\"]"
+  },
+  {
+    "click": "[data-parity=\"field-chestPainOnExertion\"] >> role=radio[name=\"No\"]"
+  },
+  {
+    "click": "[data-parity=\"field-dizzinessOrFainting\"] >> role=radio[name=\"No\"]"
+  },
+  {
+    "click": "[data-parity=\"field-chronicConditionDiagnosed\"] >> role=radio[name=\"No\"]"
+  },
+  {
+    "click": "[data-parity=\"field-chronicConditionMedication\"] >> role=radio[name=\"No\"]"
+  },
+  {
+    "click": "[data-parity=\"field-boneOrJointProblem\"] >> role=radio[name=\"No\"]"
+  },
+  {
+    "click": "[data-parity=\"field-doctorProhibitedActivity\"] >> role=radio[name=\"No\"]"
+  },
+  {
+    "click": "[data-parity=\"field-parqDeclaration\"] button[role=\"checkbox\"]"
+  },
+  {
+    "click": "[data-parity=\"consent\"] button[role=\"checkbox\"]"
+  },
+  {
+    "click": "[data-parity=\"continue\"]"
+  },
+  {
+    "wait": 500
+  },
+  {
+    "click": "[data-parity=\"field-cycleRegularity\"] >> role=radio[name=\"No, or very rarely\"]"
+  },
+  {
+    "click": "[data-parity=\"field-hormonalContraception\"] [role=\"combobox\"]"
+  },
+  {
+    "click": "role=option[name=\"None\"]"
+  },
+  {
+    "click": "[data-parity=\"field-lifeStage\"] input[aria-label=\"None of these\"]"
+  },
+  {
+    "click": "[data-parity=\"field-perimenopauseOrMenopause\"] [role=\"combobox\"]"
+  },
+  {
+    "click": "role=option[name=\"No\"]"
+  },
+  {
+    "click": "[data-parity=\"field-gynaecologicalCondition\"] >> role=radio[name=\"No\"]"
+  },
+  {
+    "click": "[data-parity=\"field-recurringSymptoms\"] input[aria-label=\"None\"]"
+  },
+  {
+    "click": "[data-parity=\"continue\"]"
+  },
+  {
+    "wait": 500
+  },
+  {
+    "click": "[data-parity=\"field-eatingStyle\"] [role=\"combobox\"]"
+  },
+  {
+    "click": "role=option[name=\"No restrictions\"]"
+  },
+  {
+    "click": "[data-parity=\"field-allergiesOrIntolerances\"] >> role=radio[name=\"No\"]"
+  },
+  {
+    "click": "[data-parity=\"field-mealsPerDay\"] [role=\"combobox\"]"
+  },
+  {
+    "click": "role=option[name=\"Three\"]"
+  },
+  {
+    "click": "[data-parity=\"field-snacksPerDay\"] [role=\"combobox\"]"
+  },
+  {
+    "click": "role=option[name=\"One\"]"
+  },
+  {
+    "click": "[data-parity=\"field-firstMeal\"] [role=\"combobox\"]"
+  },
+  {
+    "click": "role=option[name=\"7–9am\"]"
+  },
+  {
+    "click": "[data-parity=\"field-lastMeal\"] [role=\"combobox\"]"
+  },
+  {
+    "click": "role=option[name=\"6–8pm\"]"
+  },
+  {
+    "click": "[data-parity=\"field-energyDips\"] >> role=radio[name=\"No\"]"
+  },
+  {
+    "click": "[data-parity=\"field-jobType\"] [role=\"combobox\"]"
+  },
+  {
+    "click": "role=option[name=\"Mostly sitting\"]"
+  },
+  {
+    "click": "[data-parity=\"field-sleepHours\"] [role=\"combobox\"]"
+  },
+  {
+    "click": "role=option[name=\"7–8 hours\"]"
+  },
+  {
+    "click": "[data-parity=\"field-eatingOutFrequency\"] >> role=radio[name=\"Bring food from home\"]"
+  },
+  {
+    "click": "[data-parity=\"field-cookingSetup\"] >> role=radio[name=\"I do\"]"
+  },
+  {
+    "click": "[data-parity=\"field-cookingTime\"] [role=\"combobox\"]"
+  },
+  {
+    "click": "role=option[name=\"15–30 minutes\"]"
+  },
+  {
+    "click": "[data-parity=\"field-waterPerDay\"] [role=\"combobox\"]"
+  },
+  {
+    "click": "role=option[name=\"2–5 glasses\"]"
+  },
+  {
+    "fill": [
+      "[data-parity=\"field-nutritionGoal\"] input",
+      "Eat more consistently."
+    ]
+  },
+  {
+    "click": "[data-parity=\"field-checkInDay\"] [role=\"combobox\"]"
+  },
+  {
+    "click": "role=option[name=\"Monday\"]"
+  },
+  {
+    "click": "[data-parity=\"field-checkInChannel\"] >> role=radio[name=\"Email\"]"
+  },
+  {
+    "click": "[data-parity=\"continue\"]"
+  },
+  {
+    "wait": 500
+  },
+  {
+    "wait": 300
+  }
+]

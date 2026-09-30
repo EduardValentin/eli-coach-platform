@@ -8,7 +8,7 @@ import {
   type JourneyOnboarding,
   type JourneyPhone,
   type JourneyPricing,
-  type JourneySex,
+  type JourneyGender,
   type JourneyStage,
   type MeasurementEntry,
 } from '../domain/journey';
@@ -132,11 +132,8 @@ function journeyPhone(
   return { diallingCode, number };
 }
 
-// The journey model knows two sexes because it drives the cycle-context
-// onboarding form; a visitor who did not disclose her gender is seeded as
-// female and the coach corrects it at onboarding.
-function journeySexFromGender(gender: VisitorGender): JourneySex {
-  return gender === 'male' ? 'male' : 'female';
+function journeyGenderOf(gender: VisitorGender): JourneyGender {
+  return gender === 'prefer_not_to_say' ? 'prefer-not-to-say' : gender;
 }
 
 export function identityFromBooking(
@@ -150,7 +147,7 @@ export function identityFromBooking(
     dateOfBirth: booking.dateOfBirth,
     email: booking.visitorEmail,
     phone: journeyPhone(booking.phone, country?.callingCode ?? ''),
-    sex: journeySexFromGender(booking.gender),
+    gender: journeyGenderOf(booking.gender),
     country: country?.name ?? booking.country,
   };
 }
@@ -202,7 +199,7 @@ function seedOnboarding(
     answers: {
       'goal-availability': SEEDED_GOAL_ANSWERS,
       'safety-screening': SEEDED_SAFETY_ANSWERS,
-      'cycle-context': identity.sex === 'female' ? SEEDED_CYCLE_ANSWERS : {},
+      'cycle-context': identity.gender === 'female' ? SEEDED_CYCLE_ANSWERS : {},
       'nutrition-lifestyle': SEEDED_LIFESTYLE_ANSWERS,
       measurements: SEEDED_MEASUREMENT_ANSWERS,
     },

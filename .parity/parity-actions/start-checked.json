@@ -1,6 +1,17 @@
 [
-  { "waitFor": "[data-parity=\"continue\"]" },
-  { "wait": 1500 },
-  { "click": "[data-parity=\"option-immediate\"]" },
-  { "wait": 400 }
+  {
+    "waitFor": "[data-parity=\"continue\"]"
+  },
+  {
+    "wait": 1500
+  },
+  {
+    "click": "[data-parity=\"option-immediate\"]"
+  },
+  {
+    "wait": 400
+  },
+  {
+    "wait": 700
+  }
 ]

@@ -28,6 +28,10 @@ import {
   type AccountsFeature,
 } from "~/features/accounts/server/accounts-composition.server";
 import { composeAssessmentCallsFeature } from "~/features/assessment-calls/server/assessment-calls-composition.server";
+import {
+  composeClientOnboardingFeature,
+  type ClientOnboardingFeature,
+} from "~/features/client-onboarding/server/client-onboarding-composition.server";
 import { composeCoachingSalesFeature } from "~/features/coaching-sales/server/coaching-sales-composition.server";
 import {
   composeStoreFeature,
@@ -51,6 +55,7 @@ import { getRuntimeEnvironment } from "~/server/runtime-environment.server";
 export type PlatformContainer = {
   accounts: AccountsFeature;
   assessmentCalls: ReturnType<typeof composeAssessmentCallsFeature>;
+  clientOnboarding: ClientOnboardingFeature;
   closeDatabase: () => Promise<void>;
   coachingSales: ReturnType<typeof composeCoachingSalesFeature>;
   featureFlagOverrides: FeatureFlagOverrides;
@@ -131,6 +136,14 @@ export function createPlatformContainer(options: {
     productEmail,
     publicAppUrl: environment.PUBLIC_APP_URL,
   });
+  const clientOnboarding = composeClientOnboardingFeature({
+    clock,
+    database: database.client,
+    incidents,
+    onboardingClients: coachingSales.handles.onboardingClients,
+    onboardingSubmissionStamps:
+      coachingSales.handles.onboardingSubmissionStamps,
+  });
   const platform = composePlatformFeature({
     app: environment,
     botDetection,
@@ -155,6 +168,7 @@ export function createPlatformContainer(options: {
       },
     }),
     assessmentCalls,
+    clientOnboarding,
     closeDatabase: () => database.close(),
     coachingSales,
     featureFlagOverrides,

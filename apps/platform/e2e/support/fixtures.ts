@@ -2,12 +2,17 @@ import { createClerkClient, type ClerkClient } from "@clerk/backend";
 import { setupClerkTestingToken } from "@clerk/testing/playwright";
 import { test as base, expect } from "@playwright/test";
 import type { AccountRole } from "@eli-coach-platform/domain/account";
+import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
 import type pg from "pg";
 
 import { AccountPortal } from "./account-portal";
 import { BookingPage } from "./booking-page";
+import { ClientDashboard } from "./client-dashboard";
+import { ClientOnboarding } from "./client-onboarding";
 import { ClientPortalShell } from "./client-portal-shell";
 import { CoachAssessmentCallsPage } from "./coach-assessment-calls-page";
+import { OnboardingRecords } from "./onboarding-records";
+import { insertPaidClientRecords, type PaidClient } from "./paid-clients";
 import { recordCreatedEmail } from "./clerk-users";
 import { createE2eDatabasePool } from "./database";
 import { requireEnv } from "./env";
@@ -23,6 +28,8 @@ type PlatformFixtures = {
   siteOutOfWaitlistMode: void;
   publicNav: PublicNav;
   clientPortalShell: ClientPortalShell;
+  clientOnboarding: ClientOnboarding;
+  clientDashboard: ClientDashboard;
   accountPortal: AccountPortal;
   testEmail: string;
   visitorEmail: string;
@@ -36,6 +43,11 @@ type PlatformFixtures = {
   // in as the bootstrap coach, invite testEmail, accept the invitation. That
   // removes databasePool and this INSERT from the suite.
   provisionAccount: (role: AccountRole) => Promise<void>;
+  provisionPaidClient: (
+    gender: VisitorGender,
+    options?: PaidClientOptions,
+  ) => Promise<PaidClient>;
+  onboardingRecords: OnboardingRecords;
   signIn: () => Promise<void>;
 };
 
@@ -53,6 +65,13 @@ type WorkerFixtures = {
 // worker process started, so every email this worker mints and every email
 // global-teardown.ts later reads back agree on the same run.
 const RUN_ID = resolveRunId();
+const INSERT_ACCOUNT =
+  "INSERT INTO app.accounts (auth_subject_id, role) VALUES ($1, $2)";
+const PAID_CLIENT_FIRST_NAME = "Ana";
+const PAID_CLIENT_LAST_NAME = `Onboarding ${RUN_ID}`;
+const ADULT_DATE_OF_BIRTH = "1994-03-14";
+
+type PaidClientOptions = { dateOfBirth: string };
 let sequence = 0;
 
 function mintRecordedTestEmail(workerIndex: number): string {
@@ -131,6 +150,14 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
     await use(new ClientPortalShell(page));
   },
 
+  clientOnboarding: async ({ page }, use) => {
+    await use(new ClientOnboarding(page));
+  },
+
+  clientDashboard: async ({ page }, use) => {
+    await use(new ClientDashboard(page));
+  },
+
   accountPortal: async ({ page }, use) => {
     await use(new AccountPortal(page));
   },
@@ -182,11 +209,37 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
     await use(async (role: AccountRole) => {
       const authSubjectId = await createClerkUser();
 
-      await databasePool.query(
-        "INSERT INTO app.accounts (auth_subject_id, role) VALUES ($1, $2)",
-        [authSubjectId, role],
-      );
+      await databasePool.query(INSERT_ACCOUNT, [authSubjectId, role]);
     });
+  },
+
+  provisionPaidClient: async (
+    { createClerkUser, databasePool, testEmail },
+    use,
+  ) => {
+    await use(
+      async (
+        gender: VisitorGender,
+        options: PaidClientOptions = { dateOfBirth: ADULT_DATE_OF_BIRTH },
+      ) => {
+        const authSubjectId = await createClerkUser();
+
+        await databasePool.query(INSERT_ACCOUNT, [authSubjectId, "CLIENT"]);
+
+        return insertPaidClientRecords(databasePool, {
+          authSubjectId,
+          email: testEmail,
+          firstName: PAID_CLIENT_FIRST_NAME,
+          lastName: PAID_CLIENT_LAST_NAME,
+          gender,
+          dateOfBirth: options.dateOfBirth,
+        });
+      },
+    );
+  },
+
+  onboardingRecords: async ({ databasePool, testEmail }, use) => {
+    await use(new OnboardingRecords(databasePool, testEmail));
   },
 
   signIn: async ({ publicNav, accountPortal, testEmail }, use) => {

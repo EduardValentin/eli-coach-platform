@@ -110,15 +110,28 @@ export function ProgressPhotoBlock({
   const noteId = useId();
 
   return (
-    <div className="grid gap-4 rounded-card border border-border-subtle bg-surface-quiet/60 p-4">
-      <p className="text-sm font-medium text-text-label">
-        Progress photos <span className="font-normal text-text-secondary">(optional)</span>
+    <div
+      className="grid gap-4 rounded-card border border-border-subtle bg-surface-quiet/60 p-4"
+      data-parity="progress-photos"
+    >
+      <p
+        className="text-sm font-medium text-text-label"
+        data-parity="progress-photos-caption"
+      >
+        Progress photos{' '}
+        <span
+          className="font-normal text-text-secondary"
+          data-parity="progress-photos-suffix"
+        >
+          (optional)
+        </span>
       </p>
 
       <div className="flex items-start gap-3">
         <Checkbox
           checked={consented}
           className="mt-0.5"
+          data-parity="progress-photos-checkbox"
           id={checkboxId}
           onCheckedChange={(checked) => onConsentChange(checked === true)}
         />
@@ -131,6 +144,7 @@ export function ProgressPhotoBlock({
         aria-describedby={consented ? undefined : noteId}
         aria-labelledby={groupId}
         className="grid grid-cols-3 gap-2 sm:gap-4"
+        data-parity="progress-photos-tiles"
         role="group"
       >
         <p className="sr-only" id={groupId}>
@@ -148,7 +162,11 @@ export function ProgressPhotoBlock({
       </div>
 
       {!consented && (
-        <p className="text-xs text-text-secondary" id={noteId}>
+        <p
+          className="text-xs text-text-secondary"
+          data-parity="progress-photos-note"
+          id={noteId}
+        >
           {LOCKED_NOTE}
         </p>
       )}

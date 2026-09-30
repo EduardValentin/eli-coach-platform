@@ -4,12 +4,16 @@ import { Button } from '../../components/ui/button';
 import { cardVariants } from '../../components/ui/card';
 import { cn } from '../../components/ui/utils';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
-import type { JourneySex } from '../../domain/journey';
+import type { JourneyGender } from '../../domain/journey';
+import { formsForGender } from '../../domain/onboardingSchema';
 
-const FORM_INTRO: Record<JourneySex, string> = {
-  female:
+type WelcomeWording = 'five-part' | 'four-part';
+
+const FORM_INTRO: Record<WelcomeWording, string> = {
+  'five-part':
     'But first, I need to get to know you. Your next step is a short form in five parts — it takes about 15 minutes — covering your goals, your training experience, your health, your cycle, your nutrition and your measurements.',
-  male: 'But first, I need to get to know you. Your next step is a short form in four parts — it takes about 15 minutes — covering your goals, your training experience, your health, your nutrition and your measurements.',
+  'four-part':
+    'But first, I need to get to know you. Your next step is a short form in four parts — it takes about 15 minutes — covering your goals, your training experience, your health, your nutrition and your measurements.',
 };
 
 const OPENING = "I'm really glad you're here.";
@@ -22,6 +26,14 @@ const PACE =
 
 const CLOSING =
   "Once you've completed it, I'll go through everything and build your program. You'll find it right here in your account.";
+
+function welcomeWording(gender: JourneyGender): WelcomeWording {
+  const asksAboutCycle = formsForGender(gender).some(
+    (form) => form.id === 'cycle-context',
+  );
+
+  return asksAboutCycle ? 'five-part' : 'four-part';
+}
 
 export function ClientWelcome() {
   const navigate = useNavigate();
@@ -44,7 +56,10 @@ export function ClientWelcome() {
         )}
         data-parity-root="ClientWelcome"
       >
-        <h1 className="font-serif text-display-sm tracking-tight text-text-primary lg:text-display-md">
+        <h1
+          className="font-serif text-display-sm tracking-tight text-text-primary lg:text-display-md"
+          data-parity="welcome-heading"
+        >
           Welcome to Evoa Fitness, {demoJourney.identity.firstName}
         </h1>
 
@@ -60,7 +75,7 @@ export function ClientWelcome() {
 
         <div className="mt-4 grid gap-4 text-base leading-relaxed text-text-secondary">
           <p>{TOGETHER}</p>
-          <p>{FORM_INTRO[demoJourney.identity.sex]}</p>
+          <p>{FORM_INTRO[welcomeWording(demoJourney.identity.gender)]}</p>
           <p>{PACE}</p>
           <p>{CLOSING}</p>
         </div>

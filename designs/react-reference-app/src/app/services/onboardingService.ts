@@ -3,27 +3,40 @@ import type {
   OnboardingDraft,
   OnboardingFormAnswers,
 } from '../domain/journey';
+import type { HeightUnit, WeightUnit } from '../utils/units';
 
-export type OnboardingErrorCode = 'draft-unavailable';
+export type OnboardingConnection = 'working' | 'lost';
+
+export const ONBOARDING_CONNECTIONS: readonly OnboardingConnection[] = [
+  'working',
+  'lost',
+];
+
+export type OnboardingErrorCode = 'connection-lost';
 
 export class OnboardingError extends Error {
   code: OnboardingErrorCode;
 
-  constructor(code: OnboardingErrorCode, message: string) {
-    super(message);
+  constructor(code: OnboardingErrorCode) {
+    super(code);
     this.code = code;
     this.name = 'OnboardingError';
   }
 }
 
-export const ONBOARDING_ERROR_MESSAGES: Record<OnboardingErrorCode, string> = {
-  'draft-unavailable':
-    "Your answers could not be saved on this device. They'll be sent when you submit.",
-};
-
 export type SubmittedOnboarding = {
   journeyId: string;
   submittedAt: Date;
+};
+
+export type UnitPreference = {
+  weightUnit: WeightUnit;
+  heightUnit: HeightUnit;
+};
+
+export type SavedUnitPreference = {
+  journeyId: string;
+  preference: UnitPreference;
 };
 
 export type AnsweredDetailRequest = {
@@ -51,22 +64,36 @@ function writeStoredDrafts(drafts: StoredDrafts): void {
   try {
     window.localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(drafts));
   } catch {
-    throw new OnboardingError(
-      'draft-unavailable',
-      ONBOARDING_ERROR_MESSAGES['draft-unavailable'],
-    );
+    return;
   }
+}
+
+async function reachServer(connection: OnboardingConnection): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, SIMULATED_LATENCY_MS));
+
+  if (connection === 'lost') throw new OnboardingError('connection-lost');
 }
 
 export async function saveDraft(
   journeyId: string,
   draft: OnboardingDraft,
+  connection: OnboardingConnection,
 ): Promise<OnboardingDraft> {
-  await new Promise((resolve) => setTimeout(resolve, SIMULATED_LATENCY_MS));
+  await reachServer(connection);
 
   writeStoredDrafts({ ...readStoredDrafts(), [journeyId]: draft });
 
   return draft;
+}
+
+export async function saveUnitPreference(
+  journeyId: string,
+  preference: UnitPreference,
+  connection: OnboardingConnection,
+): Promise<SavedUnitPreference> {
+  await reachServer(connection);
+
+  return { journeyId, preference };
 }
 
 export function loadDraft(journeyId: string): OnboardingDraft | null {
@@ -79,8 +106,11 @@ export function forgetDraft(journeyId: string): void {
   writeStoredDrafts(drafts);
 }
 
-export async function submit(journeyId: string): Promise<SubmittedOnboarding> {
-  await new Promise((resolve) => setTimeout(resolve, SIMULATED_LATENCY_MS));
+export async function submit(
+  journeyId: string,
+  connection: OnboardingConnection,
+): Promise<SubmittedOnboarding> {
+  await reachServer(connection);
 
   return { journeyId, submittedAt: new Date() };
 }

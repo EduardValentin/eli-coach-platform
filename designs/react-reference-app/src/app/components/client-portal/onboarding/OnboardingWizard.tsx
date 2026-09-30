@@ -1,7 +1,8 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useId, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
+import { useAppState } from '../../../context/AppContext';
 import { useClientJourneys } from '../../../context/ClientJourneyContext';
 import {
   DISCLAIMER_ACKNOWLEDGEMENT,
@@ -9,7 +10,8 @@ import {
 } from '../../../domain/onboardingCopy';
 import { submittedMeasurementEntry } from '../../../domain/measurements';
 import {
-  formsForSex,
+  copyForGender,
+  formsForGender,
   type OnboardingFormDefinition,
 } from '../../../domain/onboardingSchema';
 import {
@@ -25,21 +27,19 @@ import type {
 import {
   forgetDraft,
   loadDraft,
-  saveDraft,
   submit,
 } from '../../../services/onboardingService';
 import { Alert } from '../../ui/alert';
 import { Stepper } from '../../ui/stepper';
 import { MeasurementSystemField } from './MeasurementSystemField';
-import { OnboardingConsent } from './OnboardingConsent';
+import { OnboardingConsent, type ConsentAgreement } from './OnboardingConsent';
 import { OnboardingFormCard } from './OnboardingFormCard';
 import {
   EMPTY_PROGRESS_PHOTOS,
   ProgressPhotoBlock,
   type ProgressPhotos,
 } from './ProgressPhotoBlock';
-
-const SAVE_DEBOUNCE_MS = 400;
+import { useDraftAutosave, type SaveState } from './useDraftAutosave';
 
 const SUBMIT_PROBLEM =
   "Your answers could not be sent just now. They're saved — try again in a moment.";
@@ -54,14 +54,11 @@ const MANUAL_SCREENING_MESSAGE =
 const SCREENING_CLEARED_MESSAGE =
   "Thank you. Nothing here needs a doctor's sign-off — let's keep going.";
 
-type ConsentKey = 'specialCategory' | 'disclaimer';
-
-type SaveState = 'idle' | 'saving' | 'saved';
-
 const SAVE_LABELS: Record<SaveState, string> = {
   idle: '',
   saving: 'Saving…',
   saved: 'Saved',
+  unsaved: "Not saved yet. We'll try again when you're back online.",
 };
 
 function draftOf(onboarding: JourneyOnboarding): OnboardingDraft {
@@ -80,7 +77,7 @@ function firstSpecialCategoryIndex(
 
 function withConsent(
   consents: OnboardingConsents,
-  key: ConsentKey,
+  key: ConsentAgreement,
   agreed: boolean,
 ): OnboardingConsents {
   return key === 'disclaimer'
@@ -88,12 +85,9 @@ function withConsent(
     : { ...consents, specialCategory: agreed };
 }
 
-function problemMessage(problem: unknown): string {
-  return problem instanceof Error ? problem.message : SUBMIT_PROBLEM;
-}
-
 export function OnboardingWizard() {
   const navigate = useNavigate();
+  const { appState } = useAppState();
   const {
     addMeasurements,
     demoJourney,
@@ -101,27 +95,30 @@ export function OnboardingWizard() {
     submitOnboarding,
   } = useClientJourneys();
   const prefersReducedMotion = useReducedMotion() ?? false;
+  const stepCountId = useId();
   const journeyId = demoJourney.callId;
+  const {
+    saveState,
+    queueDraftSave,
+    queueUnitPreferenceSave,
+    cancelQueuedSave,
+    pendingSave,
+  } = useDraftAutosave(journeyId);
 
-  const steps = useMemo(
-    () => formsForSex(demoJourney.identity.sex),
-    [demoJourney.identity.sex],
-  );
+  const { gender } = demoJourney.identity;
+  const steps = useMemo(() => formsForGender(gender), [gender]);
 
   const [savedDraft] = useState(() => loadDraft(journeyId));
   const [draft, setDraft] = useState<OnboardingDraft>(
     () => savedDraft ?? draftOf(demoJourney.onboarding),
   );
   const [photos, setPhotos] = useState<ProgressPhotos>(EMPTY_PROGRESS_PHOTOS);
-  const [saveState, setSaveState] = useState<SaveState>('idle');
   const [problem, setProblem] = useState<string | null>(null);
   const [consentProblem, setConsentProblem] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
 
   const draftRef = useRef(draft);
   draftRef.current = draft;
-  const saveTimer = useRef<number | null>(null);
-  const saving = useRef<Promise<unknown> | null>(null);
   const focusPending = useRef(false);
 
   const stepIndex = Math.min(draft.currentFormIndex, steps.length - 1);
@@ -136,21 +133,10 @@ export function OnboardingWizard() {
   const persist = useCallback(
     (next: OnboardingDraft) => {
       setDraft(next);
-      setSaveState('saving');
       setProblem(null);
-
-      if (saveTimer.current !== null) window.clearTimeout(saveTimer.current);
-      saveTimer.current = window.setTimeout(() => {
-        saveOnboardingDraft(journeyId, next);
-        saving.current = saveDraft(journeyId, next)
-          .then(() => setSaveState('saved'))
-          .catch((failure) => {
-            setSaveState('idle');
-            setProblem(problemMessage(failure));
-          });
-      }, SAVE_DEBOUNCE_MS);
+      queueDraftSave(next);
     },
-    [journeyId, saveOnboardingDraft],
+    [queueDraftSave],
   );
 
   const headingRef = useCallback((heading: HTMLHeadingElement | null) => {
@@ -172,7 +158,7 @@ export function OnboardingWizard() {
     [persist, steps],
   );
 
-  const agree = (key: ConsentKey) => (agreed: boolean) => {
+  const agree = (key: ConsentAgreement) => (agreed: boolean) => {
     const current = draftRef.current;
     setConsentProblem(null);
     persist({
@@ -190,12 +176,12 @@ export function OnboardingWizard() {
   const sendToCoach = async (next: OnboardingDraft) => {
     setSending(true);
     setProblem(null);
-    if (saveTimer.current !== null) window.clearTimeout(saveTimer.current);
+    cancelQueuedSave();
     saveOnboardingDraft(journeyId, next);
 
     try {
-      const submitted = await submit(journeyId);
-      await saving.current;
+      const submitted = await submit(journeyId, appState.journeyConnection);
+      await pendingSave();
       const entry = submittedMeasurementEntry(
         next.answers,
         submitted.submittedAt,
@@ -204,28 +190,35 @@ export function OnboardingWizard() {
       submitOnboarding(journeyId, submitted.submittedAt);
       forgetDraft(journeyId);
       navigate('/portal');
-    } catch (failure) {
+    } catch {
       setSending(false);
-      setProblem(problemMessage(failure));
+      setProblem(SUBMIT_PROBLEM);
     }
   };
 
-  const consentMissing = (consents: OnboardingConsents) => {
-    if (asksSpecialCategory && !consents.specialCategory) return true;
+  const specialCategoryMissing = (consents: OnboardingConsents) =>
+    asksSpecialCategory && !consents.specialCategory;
 
-    return isLastStep && !consents.disclaimer;
-  };
+  const disclaimerMissing = (consents: OnboardingConsents) =>
+    isLastStep && !consents.disclaimer;
 
   const reviewConsent = () => {
     setConsentProblem(
-      consentMissing(draftRef.current.consents) ? MISSING_CONSENT : null,
+      specialCategoryMissing(draftRef.current.consents)
+        ? MISSING_CONSENT
+        : null,
     );
   };
 
   const continueFrom = (answers: OnboardingFormAnswers) => {
     const current = draftRef.current;
 
-    if (consentMissing(current.consents)) return;
+    if (
+      specialCategoryMissing(current.consents) ||
+      disclaimerMissing(current.consents)
+    ) {
+      return;
+    }
 
     const next: OnboardingDraft = {
       ...current,
@@ -253,16 +246,22 @@ export function OnboardingWizard() {
   const offset = prefersReducedMotion ? 0 : 16;
 
   return (
-    <>
-      <div className="mb-6 grid gap-2 px-6 sm:px-8 lg:px-10">
+    <div data-parity-root="OnboardingWizard">
+      <div
+        className="mb-6 grid gap-2 px-6 sm:px-8 lg:px-10"
+        data-parity="wizard-progress"
+      >
         <Stepper
           className="w-full"
+          countId={stepCountId}
+          data-parity="stepper"
           current={stepIndex + 1}
           total={steps.length}
           status={
             <p
               aria-live="polite"
-              className="shrink-0 text-caption font-medium text-text-secondary"
+              className="text-caption font-medium text-text-secondary"
+              data-parity="save-status"
               role="status"
             >
               {SAVE_LABELS[saveState]}
@@ -270,7 +269,11 @@ export function OnboardingWizard() {
           }
         />
         {savedDraft && (
-          <p className="text-sm text-text-secondary" role="status">
+          <p
+            className="text-sm text-text-secondary"
+            data-parity="resume-note"
+            role="status"
+          >
             {RESUME_NOTE}
           </p>
         )}
@@ -291,16 +294,18 @@ export function OnboardingWizard() {
             consent={
               asksSpecialCategory ? (
                 <OnboardingConsent
+                  agreement="specialCategory"
                   checked={draft.consents.specialCategory}
                   onChange={agree('specialCategory')}
                   problem={consentProblem}
-                  showPrivacyLink
-                  statement={
-                    SPECIAL_CATEGORY_CONSENT_COPY[demoJourney.identity.sex]
-                  }
+                  statement={copyForGender(
+                    SPECIAL_CATEGORY_CONSENT_COPY,
+                    gender,
+                  )}
                 />
               ) : null
             }
+            continueDisabled={disclaimerMissing(draft.consents)}
             continueLabel={
               isLastStep
                 ? sending
@@ -315,8 +320,13 @@ export function OnboardingWizard() {
             onBack={back}
             onChange={handleAnswers}
             onContinue={continueFrom}
-            sex={demoJourney.identity.sex}
-            unitsChoice={stepIndex === 0 ? <MeasurementSystemField /> : null}
+            gender={gender}
+            stepCountId={stepCountId}
+            unitsChoice={
+              stepIndex === 0 ? (
+                <MeasurementSystemField onChoose={queueUnitPreferenceSave} />
+              ) : null
+            }
           >
             {manualScreening && (
               <p className="text-sm text-text-secondary">
@@ -340,6 +350,7 @@ export function OnboardingWizard() {
                   photos={photos}
                 />
                 <OnboardingConsent
+                  agreement="disclaimer"
                   checked={draft.consents.disclaimer}
                   onChange={agree('disclaimer')}
                   problem={consentProblem}
@@ -350,6 +361,6 @@ export function OnboardingWizard() {
           </OnboardingFormCard>
         </motion.div>
       </AnimatePresence>
-    </>
+    </div>
   );
 }

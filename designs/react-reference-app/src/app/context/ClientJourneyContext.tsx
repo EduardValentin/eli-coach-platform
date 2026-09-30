@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { useAppState } from './AppContext';
+import { useAppState, type JourneyAgeBand } from './AppContext';
 import { useAssessmentCalls } from './AssessmentCallContext';
 import { useClientProfile } from './ClientProfileContext';
 import {
@@ -18,7 +18,7 @@ import {
   type JourneyEvent,
   type JourneyIdentity,
   type JourneyPricing,
-  type JourneySex,
+  type JourneyGender,
   type JourneyStage,
   type MeasurementEntry,
   type OnboardingDraft,
@@ -33,6 +33,7 @@ import {
   type SubscriptionStatus,
 } from '../domain/coachingSubscription';
 import { heldJourney, seedJourney } from '../services/clientJourneySamples';
+import { PARQ_MAX_AGE, PARQ_MIN_AGE } from '../domain/safetyScreening';
 import type { SentPaymentLink } from '../services/paymentLinkService';
 import { createInvitation } from '../services/invitationService';
 
@@ -49,7 +50,7 @@ const AWAITING_REVIEW_PERSON: DemoPerson = {
 export type DemoJourneyOptions = {
   startPath: SubscriptionStartPath;
   subscriptionStatus: SubscriptionStatus;
-  sex: JourneySex;
+  gender: JourneyGender;
   reducedPricing: boolean;
 };
 
@@ -137,7 +138,8 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
     journeyStage,
     journeyStartPath,
     journeySubscriptionStatus,
-    journeySex,
+    journeyGender,
+    journeyAgeBand,
     journeyReducedPricing,
   } = appState;
 
@@ -149,7 +151,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
     firstName: clientProfile?.firstName ?? 'Jane',
     lastName: clientProfile?.lastName ?? 'Doe',
     email: clientProfile?.email ?? 'jane@example.com',
-    age: clientProfile?.age ?? 28,
+    age: ageForBand(journeyAgeBand, clientProfile?.age ?? 28),
   };
 
   const demoPersonRef = useRef(demoPerson);
@@ -159,7 +161,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
     () => ({
       [DEMO_JOURNEY_CALL_ID]: seedJourney({
         callId: DEMO_JOURNEY_CALL_ID,
-        identity: demoIdentity(demoPerson, journeySex),
+        identity: demoIdentity(demoPerson, journeyGender),
         stage: journeyStage,
         startPath: journeyStartPath,
         subscriptionStatus: journeySubscriptionStatus,
@@ -187,7 +189,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
         ...previous,
         [DEMO_JOURNEY_CALL_ID]: seedJourney({
           callId: DEMO_JOURNEY_CALL_ID,
-          identity: demoIdentity(demoPersonRef.current, options.sex),
+          identity: demoIdentity(demoPersonRef.current, options.gender),
           stage,
           startPath: options.startPath,
           subscriptionStatus: options.subscriptionStatus,
@@ -203,7 +205,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
     seedDemoJourney(journeyStage, {
       startPath: journeyStartPath,
       subscriptionStatus: journeySubscriptionStatus,
-      sex: journeySex,
+      gender: journeyGender,
       reducedPricing: journeyReducedPricing,
     });
   }, [
@@ -211,7 +213,8 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
     journeyStage,
     journeyStartPath,
     journeySubscriptionStatus,
-    journeySex,
+    journeyGender,
+    journeyAgeBand,
     journeyReducedPricing,
   ]);
 
@@ -527,13 +530,26 @@ function dateOfBirthForAge(age: number): string {
   return `${birthYear}-06-15`;
 }
 
-function demoIdentity(person: DemoPerson, sex: JourneySex): JourneyIdentity {
+const AGE_BAND_AGES: Record<JourneyAgeBand, number | null> = {
+  adult: null,
+  'under-15': PARQ_MIN_AGE - 1,
+  'over-69': PARQ_MAX_AGE + 1,
+};
+
+function ageForBand(band: JourneyAgeBand, fallback: number): number {
+  return AGE_BAND_AGES[band] ?? fallback;
+}
+
+function demoIdentity(
+  person: DemoPerson,
+  gender: JourneyGender,
+): JourneyIdentity {
   return {
     firstName: person.firstName,
     lastName: person.lastName,
     dateOfBirth: dateOfBirthForAge(person.age),
     email: person.email,
-    sex,
+    gender,
     country: 'Romania',
   };
 }

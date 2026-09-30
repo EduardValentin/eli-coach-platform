@@ -32,7 +32,10 @@ function OnboardingShell({
     >
       <div className="mx-auto w-full max-w-2xl">
         {header && (
-          <div className="mb-8 text-center">
+          <div
+            className="mb-8 text-center"
+            data-parity-root="OnboardingHeader"
+          >
             <SectionEyebrow className="mb-2">{header.eyebrow}</SectionEyebrow>
             <h1 className="font-serif text-3xl tracking-tight text-text-primary lg:text-display-md">
               {header.title}

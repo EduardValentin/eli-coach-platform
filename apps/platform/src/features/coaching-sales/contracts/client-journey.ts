@@ -1,29 +1,67 @@
 import type { ClientJourneyStep } from "@eli-coach-platform/domain/client-journey";
 import { z } from "zod";
 
+import { CLIENT_PORTAL_PATH } from "~/features/accounts/contracts/paths";
+
 import { CLIENT_ONBOARDING_PATH, CLIENT_WELCOME_PATH } from "./paths";
 
-export const FINISH_ONBOARDING_LABEL = "Finish your onboarding";
+const FINISH_ONBOARDING_LABEL = "Finish your onboarding";
 
-const CLIENT_JOURNEY_PATH_BY_STEP = {
-  onboarding: CLIENT_ONBOARDING_PATH,
-  welcome: CLIENT_WELCOME_PATH,
-} satisfies Record<ClientJourneyStep, string>;
+const ONBOARDING_JOURNEY_PATHS: readonly string[] = [
+  CLIENT_WELCOME_PATH,
+  CLIENT_ONBOARDING_PATH,
+];
 
-const CLIENT_JOURNEY_OPEN_PATHS_BY_STEP = {
-  onboarding: [CLIENT_ONBOARDING_PATH],
-  welcome: [CLIENT_WELCOME_PATH, CLIENT_ONBOARDING_PATH],
-} satisfies Record<ClientJourneyStep, readonly string[]>;
+type ClientJourneyGate = {
+  destination: string;
+  admits: (requestedPath: string) => boolean;
+};
 
-export function clientJourneyDestination(step: ClientJourneyStep): string {
-  return CLIENT_JOURNEY_PATH_BY_STEP[step];
-}
+const CLIENT_JOURNEY_GATE_BY_STEP = {
+  welcome: {
+    destination: CLIENT_WELCOME_PATH,
+    admits: (requestedPath) => ONBOARDING_JOURNEY_PATHS.includes(requestedPath),
+  },
+  onboarding: {
+    destination: CLIENT_ONBOARDING_PATH,
+    admits: (requestedPath) => requestedPath === CLIENT_ONBOARDING_PATH,
+  },
+  submitted: {
+    destination: CLIENT_PORTAL_PATH,
+    admits: (requestedPath) =>
+      !ONBOARDING_JOURNEY_PATHS.includes(requestedPath),
+  },
+} satisfies Record<ClientJourneyStep, ClientJourneyGate>;
 
-export function clientJourneyOpenPaths(
+export function clientJourneyRedirect(
   step: ClientJourneyStep,
-): readonly string[] {
-  return CLIENT_JOURNEY_OPEN_PATHS_BY_STEP[step];
+  requestedPath: string,
+): string | null {
+  const gate = CLIENT_JOURNEY_GATE_BY_STEP[step];
+
+  return gate.admits(requestedPath) ? null : gate.destination;
 }
+
+export function clientJourneyPortalLink(
+  step: ClientJourneyStep,
+): { href: string; label: string } | null {
+  if (step === "submitted") {
+    return null;
+  }
+
+  return {
+    href: CLIENT_JOURNEY_GATE_BY_STEP[step].destination,
+    label: FINISH_ONBOARDING_LABEL,
+  };
+}
+
+export const programStatusSchema = z.object({
+  kind: z.literal("submitted"),
+  submittedAt: z.iso.datetime(),
+  workStartsOn: z.iso.datetime().nullable(),
+});
+
+export type ProgramStatus = z.infer<typeof programStatusSchema>;
 
 export const welcomePageSchema = z.object({
   firstName: z.string().min(1),

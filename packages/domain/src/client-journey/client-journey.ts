@@ -1,6 +1,7 @@
 import type { VisitorGender } from "../assessment-call";
+import { formsForGender } from "../client-onboarding";
 
-export type ClientJourneyStep = "welcome" | "onboarding";
+export type ClientJourneyStep = "welcome" | "onboarding" | "submitted";
 
 export type WelcomeWording = "five-part" | "four-part";
 
@@ -10,6 +11,7 @@ export type ClientJourneySnapshot = {
   lastName: string;
   gender: VisitorGender;
   welcomeSeenAt: Date | null;
+  onboardingSubmittedAt: Date | null;
 };
 
 export class ClientJourney {
@@ -18,6 +20,7 @@ export class ClientJourney {
   readonly lastName: string;
   readonly gender: VisitorGender;
   readonly welcomeSeenAt: Date | null;
+  readonly onboardingSubmittedAt: Date | null;
 
   private constructor(snapshot: ClientJourneySnapshot) {
     this.clientId = snapshot.clientId;
@@ -25,6 +28,7 @@ export class ClientJourney {
     this.lastName = snapshot.lastName;
     this.gender = snapshot.gender;
     this.welcomeSeenAt = snapshot.welcomeSeenAt;
+    this.onboardingSubmittedAt = snapshot.onboardingSubmittedAt;
   }
 
   static from(snapshot: ClientJourneySnapshot): ClientJourney {
@@ -32,11 +36,19 @@ export class ClientJourney {
   }
 
   step(): ClientJourneyStep {
+    if (this.onboardingSubmittedAt) {
+      return "submitted";
+    }
+
     return this.welcomeSeenAt ? "onboarding" : "welcome";
   }
 
   welcomeWording(): WelcomeWording {
-    return this.gender === "male" ? "four-part" : "five-part";
+    const includesCycleForm = formsForGender(this.gender).some(
+      (form) => form.id === "cycle-context",
+    );
+
+    return includesCycleForm ? "five-part" : "four-part";
   }
 
   toSnapshot(): ClientJourneySnapshot {
@@ -46,6 +58,7 @@ export class ClientJourney {
       lastName: this.lastName,
       gender: this.gender,
       welcomeSeenAt: this.welcomeSeenAt,
+      onboardingSubmittedAt: this.onboardingSubmittedAt,
     };
   }
 }

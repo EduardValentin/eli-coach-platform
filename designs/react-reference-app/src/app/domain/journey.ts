@@ -40,7 +40,13 @@ export type JourneyEvent =
   | 'mark-program-ready'
   | 'schedule-review-call';
 
-export type JourneySex = 'female' | 'male';
+export type JourneyGender = 'female' | 'male' | 'prefer-not-to-say';
+
+export const JOURNEY_GENDERS: readonly JourneyGender[] = [
+  'female',
+  'male',
+  'prefer-not-to-say',
+];
 
 export type JourneyPricing = 'regular' | 'reduced';
 
@@ -54,7 +60,7 @@ export type JourneyIdentity = {
   dateOfBirth: string;
   email: string;
   phone?: JourneyPhone;
-  sex: JourneySex;
+  gender: JourneyGender;
   country: string;
 };
 
