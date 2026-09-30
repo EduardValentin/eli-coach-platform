@@ -1,0 +1,20 @@
+[
+  {
+    "waitFor": "[data-parity-root=\"AssessmentCallBlock\"] [data-slot=\"accordion-trigger\"]"
+  },
+  {
+    "wait": 1500
+  },
+  {
+    "click": "[data-parity-root=\"AssessmentCallBlock\"] [data-slot=\"accordion-trigger\"]"
+  },
+  {
+    "wait": 600
+  },
+  {
+    "hover": "[data-parity-root=\"ClientProfileBlock\"] h2"
+  },
+  {
+    "wait": 800
+  }
+]
