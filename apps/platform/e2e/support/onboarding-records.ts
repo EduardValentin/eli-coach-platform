@@ -41,16 +41,7 @@ export type DetailRequestRecord = {
 };
 
 export type ClientProfileRecord = {
-  firstName: string;
-  lastName: string;
-  email: string;
-  dateOfBirth: string;
-  gender: string;
-  country: string;
-  phone: string | null;
   heightCm: string | null;
-  startingWeightKg: string | null;
-  currentWeightKg: string | null;
   activityLevel: string | null;
   primaryGoal: string | null;
   dietaryRestrictions: string;
@@ -126,16 +117,7 @@ const DETAIL_REQUESTS = `
 
 const CLIENT_PROFILE = `
   select
-    first_name as "firstName",
-    last_name as "lastName",
-    email,
-    to_char(date_of_birth, 'YYYY-MM-DD') as "dateOfBirth",
-    gender,
-    country,
-    phone,
     height_cm as "heightCm",
-    starting_weight_kg as "startingWeightKg",
-    current_weight_kg as "currentWeightKg",
     activity_level as "activityLevel",
     primary_goal as "primaryGoal",
     dietary_restrictions as "dietaryRestrictions",

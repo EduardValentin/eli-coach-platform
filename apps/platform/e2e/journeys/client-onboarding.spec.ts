@@ -324,10 +324,6 @@ test("a female client completes her onboarding in five parts", async ({
     workStartsOnLine(client.paidAt),
   );
   expect(await onboardingRecords.clientProfile()).toMatchObject({
-    firstName: client.firstName,
-    email: client.email,
-    gender: "female",
-    country: "RO",
     activityLevel: "Active",
     primaryGoal: "Lose fat",
     dietaryRestrictions: "None",
@@ -656,15 +652,7 @@ test("a client who measures in pounds and inches sends her answers once, even af
     submission.submittedAt,
   );
   expect(await onboardingRecords.clientProfile()).toMatchObject({
-    firstName: client.firstName,
-    email: client.email,
-    dateOfBirth: "1994-03-14",
-    gender: "male",
-    country: "RO",
-    phone: null,
     heightCm: "178.0",
-    startingWeightKg: "68.04",
-    currentWeightKg: "68.04",
     activityLevel: "Active",
     primaryGoal: "Lose fat",
     dietaryRestrictions: "None",

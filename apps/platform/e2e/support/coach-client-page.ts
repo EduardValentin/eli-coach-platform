@@ -31,11 +31,7 @@ const FOCUS_TRAP_TAB_STOPS = 60;
 
 const ABSENT_READING = "—";
 
-const PROFILE_TERMS = [
-  "Age",
-  "Gender",
-  "Country",
-  "Phone",
+const ONBOARDING_PROFILE_TERMS = [
   "Height",
   "Starting weight",
   "Current weight",
@@ -164,7 +160,10 @@ export class CoachClientPage {
     await this.expectReadings(this.block("Profile"), readings);
   }
 
-  async expectProfilePending(gender: VisitorGender): Promise<void> {
+  async expectProfilePending(
+    gender: VisitorGender,
+    identity: Readings,
+  ): Promise<void> {
     const profile = this.block("Profile");
     const { possessiveCapitalised, possessive, subjectSends } =
       clientPronouns(gender);
@@ -175,10 +174,12 @@ export class CoachClientPage {
         { exact: true },
       ),
     ).toBeVisible();
-    await this.expectReadings(
-      profile,
-      Object.fromEntries(PROFILE_TERMS.map((term) => [term, ABSENT_READING])),
-    );
+    await this.expectReadings(profile, {
+      ...identity,
+      ...Object.fromEntries(
+        ONBOARDING_PROFILE_TERMS.map((term) => [term, ABSENT_READING]),
+      ),
+    });
   }
 
   async expectAssessmentCallCollapsed(): Promise<void> {

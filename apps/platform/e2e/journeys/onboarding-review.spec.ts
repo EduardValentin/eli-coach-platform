@@ -26,8 +26,6 @@ const CYCLE_FORM = "Your cycle and hormonal health";
 const NOTE = PROTOTYPE_DETAIL_REQUEST.note;
 const SEEDED_PROFILE_FACTS = {
   heightCm: "165.0",
-  startingWeightKg: "66.10",
-  currentWeightKg: "66.10",
   activityLevel: "Mostly sitting",
   primaryGoal: "Lose fat",
   dietaryRestrictions: "Lactose, mild",
@@ -543,6 +541,7 @@ test("the onboarding panel raises every safety signal and shows only the questio
     Country: "Romania",
     Phone: "—",
     ...SEEDED_FACT_READINGS,
+    "Starting weight": "—",
     "Current weight": "—",
   });
   await coachClient.expectStatus("Awaiting review");
