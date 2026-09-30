@@ -30,6 +30,7 @@
     "@eli-coach-platform/domain": "workspace:*",
     "drizzle-orm": "catalog:",
     "resend": "catalog:",
+    "sharp": "catalog:",
     "stripe": "catalog:",
     "zod": "catalog:"
   },
