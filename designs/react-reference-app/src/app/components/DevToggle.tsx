@@ -42,6 +42,7 @@ import {
 import {
   PROTOTYPE_LIFE_STAGES,
   PROTOTYPE_MEASUREMENTS_DUE,
+  PROTOTYPE_SEEDED_PHOTOS,
 } from '../services/clientJourneySamples';
 import { optionOrDefault } from '../utils/optionOrDefault';
 import type {
@@ -1177,6 +1178,35 @@ export function DevToggle() {
                     <SelectContent className={SELECT_CONTENT_CLASS}>
                       <SelectItem value="works">Works</SelectItem>
                       <SelectItem value="fails">Fails</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="dev-seeded-photos"
+                    className={DEV_LABEL_CLASS}
+                  >
+                    Seeded photos
+                  </Label>
+                  <Select
+                    value={appState.journeySeededPhotos}
+                    onValueChange={(value) =>
+                      setAppState({
+                        journeySeededPhotos: optionOrDefault(
+                          PROTOTYPE_SEEDED_PHOTOS,
+                          value,
+                          'none',
+                        ),
+                      })
+                    }
+                  >
+                    <SelectTrigger id="dev-seeded-photos" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="none">None</SelectItem>
+                      <SelectItem value="latest">On the latest entry</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

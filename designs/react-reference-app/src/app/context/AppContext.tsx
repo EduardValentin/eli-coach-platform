@@ -34,8 +34,10 @@ import {
 import {
   PROTOTYPE_LIFE_STAGES,
   PROTOTYPE_MEASUREMENTS_DUE,
+  PROTOTYPE_SEEDED_PHOTOS,
   type PrototypeLifeStage,
   type PrototypeMeasurementsDue,
+  type PrototypeSeededPhotos,
 } from '../services/clientJourneySamples';
 import { optionOrDefault } from '../utils/optionOrDefault';
 import {
@@ -101,6 +103,7 @@ type AppState = {
   journeyLifeStage: PrototypeLifeStage;
   photoProcessing: PhotoProcessing;
   measurementSave: MeasurementSave;
+  journeySeededPhotos: PrototypeSeededPhotos;
   invitationResendOutcome: PrototypeInvitationResendOutcome;
   clientsRoster: PrototypeClientsRoster;
   paymentLinkOutcome: PrototypePaymentLinkOutcome;
@@ -141,6 +144,7 @@ const defaultState: AppState = {
   journeyLifeStage: 'none',
   photoProcessing: 'works',
   measurementSave: 'works',
+  journeySeededPhotos: 'none',
   invitationResendOutcome: 'sent',
   clientsRoster: 'seeded',
   paymentLinkOutcome: 'sent',
@@ -355,6 +359,11 @@ function parseDevParamsFromURL(): AppState {
     params.get('jsave'),
     defaultState.measurementSave,
   );
+  state.journeySeededPhotos = optionOrDefault(
+    PROTOTYPE_SEEDED_PHOTOS,
+    params.get('jphotos'),
+    defaultState.journeySeededPhotos,
+  );
   const invitationResendOutcome = params.get('jresend');
   if (
     invitationResendOutcome &&
@@ -438,6 +447,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     url.searchParams.delete('jlife');
     url.searchParams.delete('jphoto');
     url.searchParams.delete('jsave');
+    url.searchParams.delete('jphotos');
     url.searchParams.delete('jresend');
     url.searchParams.delete('jroster');
     url.searchParams.delete('paylink');
@@ -523,6 +533,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     if (appState.measurementSave !== defaultState.measurementSave) {
       url.searchParams.set('jsave', appState.measurementSave);
+    }
+    if (appState.journeySeededPhotos !== defaultState.journeySeededPhotos) {
+      url.searchParams.set('jphotos', appState.journeySeededPhotos);
     }
     if (
       appState.invitationResendOutcome !== defaultState.invitationResendOutcome

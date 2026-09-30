@@ -45,6 +45,7 @@ import {
   seedJourney,
   type PrototypeLifeStage,
   type PrototypeMeasurementsDue,
+  type PrototypeSeededPhotos,
 } from '../services/clientJourneySamples';
 import { profileOfJourney } from '../domain/clientProfile';
 import { PARQ_MAX_AGE, PARQ_MIN_AGE } from '../domain/safetyScreening';
@@ -81,6 +82,7 @@ export type DemoJourneyOptions = {
   prototypeMode: PrototypeMode;
   measurementsDue: PrototypeMeasurementsDue;
   lifeStage: PrototypeLifeStage;
+  seededPhotos: PrototypeSeededPhotos;
 };
 
 export type JourneyPayment = {
@@ -196,6 +198,7 @@ function seedAwaitingReviewJourney(prototypeMode: PrototypeMode) {
     prototypeMode,
     measurementsDue: 'none',
     lifeStage: 'none',
+    seededPhotos: 'none',
     now: new Date(),
   });
 }
@@ -214,6 +217,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
     journeyInvitation,
     journeyMeasurementsDue,
     journeyLifeStage,
+    journeySeededPhotos,
     prototypeMode,
   } = appState;
 
@@ -247,6 +251,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
         prototypeMode,
         measurementsDue: journeyMeasurementsDue,
         lifeStage: journeyLifeStage,
+        seededPhotos: journeySeededPhotos,
         now: new Date(),
       }),
       [AWAITING_REVIEW_CALL_ID]: seedAwaitingReviewJourney(prototypeMode),
@@ -272,6 +277,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
           prototypeMode: options.prototypeMode,
           measurementsDue: options.measurementsDue,
           lifeStage: options.lifeStage,
+          seededPhotos: options.seededPhotos,
           now: new Date(),
         }),
       }));
@@ -289,6 +295,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
       prototypeMode,
       measurementsDue: journeyMeasurementsDue,
       lifeStage: journeyLifeStage,
+      seededPhotos: journeySeededPhotos,
     });
   }, [
     seedDemoJourney,
@@ -301,6 +308,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
     journeyInvitation,
     journeyMeasurementsDue,
     journeyLifeStage,
+    journeySeededPhotos,
     prototypeMode,
   ]);
 

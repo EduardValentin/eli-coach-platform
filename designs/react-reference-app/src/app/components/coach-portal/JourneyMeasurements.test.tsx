@@ -46,6 +46,7 @@ function submittedJourney(lifeStage: PrototypeLifeStage): ClientJourney {
     prototypeMode: 'mvp',
     measurementsDue: 'none',
     lifeStage,
+    seededPhotos: 'none',
     now: new Date(2026, 8, 21, 12),
   });
   const [first] = journey.measurements;

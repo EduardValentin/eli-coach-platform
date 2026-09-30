@@ -9,6 +9,7 @@ import { measurementDueLine } from '../domain/measurementSchedule';
 import {
   seedJourney,
   type PrototypeMeasurementsDue,
+  type PrototypeSeededPhotos,
 } from './clientJourneySamples';
 
 const NOW = new Date(2026, 8, 21, 12, 0, 0);
@@ -21,6 +22,7 @@ function journeyAt(
   stage: JourneyStage,
   prototypeMode: PrototypeMode,
   measurementsDue: PrototypeMeasurementsDue = 'none',
+  seededPhotos: PrototypeSeededPhotos = 'none',
 ) {
   return seedJourney({
     callId: 'ac-seed-measurements',
@@ -41,6 +43,7 @@ function journeyAt(
     prototypeMode,
     measurementsDue,
     lifeStage: 'none',
+    seededPhotos,
     now: NOW,
   });
 }
@@ -112,6 +115,28 @@ describe('seeding when her measurements are due', () => {
 
     // assert
     expect(measurementDueLine(journey.measurements, NOW)).toBe('measurements');
+  });
+});
+
+describe('seeding progress photos', () => {
+  it('gives the latest entry all three views and leaves the earlier ones bare', () => {
+    // act
+    const journey = journeyAt('submitted', 'post-mvp', 'none', 'latest');
+
+    // assert
+    const [first, second, latest] = journey.measurements;
+    expect(first.photos).toEqual({});
+    expect(second.photos).toEqual({});
+    expect(Object.keys(latest.photos)).toEqual(['front', 'side', 'back']);
+    expect(latest.photos.front?.url).toMatch(/^\/media\/.+\.svg$/);
+  });
+
+  it('seeds no photos unless asked', () => {
+    // act
+    const journey = journeyAt('submitted', 'mvp', 'none', 'none');
+
+    // assert
+    expect(journey.measurements.map((entry) => entry.photos)).toEqual([{}]);
   });
 });
 

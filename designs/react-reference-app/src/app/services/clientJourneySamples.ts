@@ -14,6 +14,8 @@ import {
   type JourneyStage,
   type MeasurementEntry,
   NO_PROGRESS_PHOTOS,
+  type ProgressPhoto,
+  type ProgressPhotoSet,
 } from '../domain/journey';
 import {
   MEASUREMENTS_CADENCE_DAYS,
@@ -47,6 +49,23 @@ export const PROTOTYPE_MEASUREMENTS_DUE: readonly PrototypeMeasurementsDue[] = [
   'weigh-in',
   'measurements',
 ];
+
+export type PrototypeSeededPhotos = 'none' | 'latest';
+
+export const PROTOTYPE_SEEDED_PHOTOS: readonly PrototypeSeededPhotos[] = [
+  'none',
+  'latest',
+];
+
+const SEEDED_PROGRESS_PHOTO: ProgressPhoto = {
+  url: `${import.meta.env.BASE_URL}media/progress-photo-placeholder.svg`,
+};
+
+const SEEDED_PROGRESS_PHOTOS: ProgressPhotoSet = {
+  front: SEEDED_PROGRESS_PHOTO,
+  side: SEEDED_PROGRESS_PHOTO,
+  back: SEEDED_PROGRESS_PHOTO,
+};
 
 export type PrototypeLifeStage = 'none' | 'pregnant';
 
@@ -82,6 +101,7 @@ export type JourneySeed = {
   prototypeMode: PrototypeMode;
   measurementsDue: PrototypeMeasurementsDue;
   lifeStage: PrototypeLifeStage;
+  seededPhotos: PrototypeSeededPhotos;
   now: Date;
 };
 
@@ -211,6 +231,7 @@ const MEASUREMENT_HISTORY: readonly MeasurementReadings[] = [
 function seedMeasurements(
   latestRecordedAt: Date,
   prototypeMode: PrototypeMode,
+  seededPhotos: PrototypeSeededPhotos,
 ): MeasurementEntry[] {
   const history =
     prototypeMode === 'post-mvp'
@@ -224,7 +245,10 @@ function seedMeasurements(
       latestRecordedAt,
       (history.length - 1 - index) * WEIGH_IN_CADENCE_DAYS,
     ),
-    photos: NO_PROGRESS_PHOTOS,
+    photos:
+      seededPhotos === 'latest' && index === history.length - 1
+        ? SEEDED_PROGRESS_PHOTOS
+        : NO_PROGRESS_PHOTOS,
   }));
 }
 
@@ -360,6 +384,7 @@ export function seedJourney(seed: JourneySeed): ClientJourney {
     bookingNotes,
     prototypeMode,
     measurementsDue,
+    seededPhotos,
     now,
   } = seed;
   const reached = (target: JourneyStage) => !isBeforeStage(stage, target);
@@ -374,6 +399,7 @@ export function seedJourney(seed: JourneySeed): ClientJourney {
     ? seedMeasurements(
         subDays(now, LATEST_ENTRY_AGE_DAYS[measurementsDue]),
         prototypeMode,
+        seededPhotos,
       )
     : [];
 

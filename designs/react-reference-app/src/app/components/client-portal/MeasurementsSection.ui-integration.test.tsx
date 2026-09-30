@@ -250,4 +250,18 @@ describe('her measurements on the profile page', () => {
     );
     expect(historyRows()).toHaveLength(1);
   });
+
+  it('offers to view the photos seeded on her latest entry', () => {
+    // arrange
+    renderSection('&jphotos=latest');
+
+    // act
+    const rows = historyRows();
+
+    // assert
+    expect(rows).toHaveLength(1);
+    expect(
+      within(rows[0]).getByRole('button', { name: /^View photos/ }),
+    ).toBeVisible();
+  });
 });
