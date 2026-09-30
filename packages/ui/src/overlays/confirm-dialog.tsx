@@ -1,6 +1,8 @@
 import { Button } from "../primitives/button";
 import { Dialog, DialogContent } from "./dialog";
 
+type ConfirmTone = "default" | "destructive";
+
 type ConfirmDialogProps = {
   cancelLabel?: string;
   confirmLabel: string;
@@ -9,7 +11,13 @@ type ConfirmDialogProps = {
   onOpenChange: (open: boolean) => void;
   open: boolean;
   title: string;
+  tone?: ConfirmTone;
 };
+
+const CONFIRM_VARIANT = {
+  default: "primary",
+  destructive: "destructive",
+} as const satisfies Record<ConfirmTone, string>;
 
 export function ConfirmDialog({
   cancelLabel = "Cancel",
@@ -19,6 +27,7 @@ export function ConfirmDialog({
   onOpenChange,
   open,
   title,
+  tone = "default",
 }: ConfirmDialogProps) {
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
@@ -39,7 +48,7 @@ export function ConfirmDialog({
               data-parity="confirm"
               onClick={onConfirm}
               size="sm"
-              variant="primary"
+              variant={CONFIRM_VARIANT[tone]}
             >
               {confirmLabel}
             </Button>

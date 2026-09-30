@@ -13,7 +13,12 @@ afterEach(() => {
   cleanup();
 });
 
-function ReviewAnswers(props: { size?: "compact" | "wide" }) {
+type ReviewOptions = {
+  footerAlignment?: "end";
+  size?: "compact" | "wide";
+};
+
+function ReviewAnswers(props: ReviewOptions) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -29,6 +34,7 @@ function ReviewAnswers(props: { size?: "compact" | "wide" }) {
               Approve answers
             </button>
           }
+          footerAlignment={props.footerAlignment}
           size={props.size}
           title="Review Ana's answers"
         >
@@ -81,9 +87,9 @@ function PhotosFromSeptember() {
   );
 }
 
-async function openReview(options?: { size?: "compact" | "wide" }) {
+async function openReview(options: ReviewOptions = {}) {
   const user = userEvent.setup();
-  render(<ReviewAnswers size={options?.size} />);
+  render(<ReviewAnswers {...options} />);
 
   await user.click(screen.getByRole("button", { name: "Review answers" }));
 
@@ -201,6 +207,28 @@ describe("DialogContent", () => {
       screen.getByRole("checkbox", { name: "Sleep" }).closest("label")
         ?.parentElement,
     ).toHaveClass("min-h-0", "flex-1", "overflow-y-auto");
+  });
+
+  it("leaves a wide dialog's footer to lay out its own content", async () => {
+    // arrange, act
+    await openReview({ size: "wide" });
+
+    // assert
+    const footer = screen.getByRole("button", {
+      name: "Approve answers",
+    }).parentElement;
+    expect(footer).toHaveClass("border-t", "px-6", "py-4");
+    expect(footer).not.toHaveClass("flex");
+  });
+
+  it("sets a wide dialog's footer actions at its end when asked", async () => {
+    // arrange, act
+    await openReview({ footerAlignment: "end", size: "wide" });
+
+    // assert
+    expect(
+      screen.getByRole("button", { name: "Approve answers" }).parentElement,
+    ).toHaveClass("border-t", "flex", "justify-end");
   });
 
   it("scrolls a compact dialog as a whole", async () => {
