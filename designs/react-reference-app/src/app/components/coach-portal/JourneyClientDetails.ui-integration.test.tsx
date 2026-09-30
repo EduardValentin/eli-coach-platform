@@ -613,6 +613,8 @@ describe('the coach reading who a client is', () => {
       'eli.unitPreferences',
       JSON.stringify({ weightUnit: 'lb', heightUnit: 'ft-in' }),
     );
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 8, 30, 12));
     const urlQuery = '?jstage=submitted';
 
     // act
@@ -636,7 +638,7 @@ describe('the coach reading who a client is', () => {
       'Dietary restrictions',
       'Client notes',
     ]);
-    expect(profileReading('Age')).toHaveTextContent(/^\d+$/);
+    expect(profileReading('Age')).toHaveTextContent(/^28 \(15 Jun 1998\)$/);
     expect(profileReading('Gender')).toHaveTextContent('Female');
     expect(profileReading('Country')).toHaveTextContent('Romania');
     expect(
@@ -664,13 +666,15 @@ describe('the coach reading who a client is', () => {
 
   it('reads who she is from her booking and leaves her facts and weights blank until she sends her onboarding', () => {
     // arrange
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 8, 30, 12));
     const urlQuery = '?jstage=onboarding';
 
     // act
     renderDetails(urlQuery);
 
     // assert
-    expect(profileReading('Age')).toHaveTextContent(/^\d+$/);
+    expect(profileReading('Age')).toHaveTextContent(/^28 \(15 Jun 1998\)$/);
     expect(profileReading('Gender')).toHaveTextContent(/^Female$/);
     expect(profileReading('Country')).toHaveTextContent(/^Romania$/);
     expect(

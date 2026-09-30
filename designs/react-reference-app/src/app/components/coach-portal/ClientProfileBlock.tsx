@@ -14,7 +14,7 @@ import {
   canonicalLengthReading,
   canonicalWeightReading,
 } from '../../domain/onboardingAnswers';
-import { ageOn } from '../../services/visitorProfile';
+import { formatAgeForCard } from '../../services/visitorProfile';
 import { clientPronouns, journeyGenderLabel } from '../../utils/journeyLabels';
 import { PortalWidget } from '../PortalWidget';
 import { Reading } from '../Reading';
@@ -99,7 +99,7 @@ function heightReading(cm: number | null): string {
 
 function identityValues(identity: JourneyIdentity): IdentityValues {
   return {
-    age: ageOn(identity.dateOfBirth, new Date()),
+    age: formatAgeForCard(identity.dateOfBirth, new Date()),
     gender: journeyGenderLabel(identity.gender),
     country: identity.country || ABSENT_VALUE,
     phone: <PhoneLink phone={identity.phone} />,
