@@ -29,7 +29,8 @@ export type PortalNavigationLink = {
 
 type PortalMoreSheetContent = {
   footer: ReactNode;
-  header: ReactNode;
+  /** Receives the sheet's close, for a header link to call as it navigates. */
+  header: (closeSheet: () => void) => ReactNode;
   navigationLabel: string;
   title: string;
 };
@@ -45,7 +46,7 @@ type PortalMobileNavigation =
 
 type PortalShellProps = PropsWithChildren<{
   asideLabel: string;
-  /** Sidebar brand block; non-navigating until a profile page exists. */
+  /** Sidebar brand block, which may link to the person's profile. */
   brand: ReactNode;
   links: readonly PortalNavigationLink[];
   mobileNavigation: PortalMobileNavigation;
@@ -390,6 +391,7 @@ type PortalMoreSheetProps = {
 
 function PortalMoreSheet(props: PortalMoreSheetProps) {
   const { activeHref, content, links, onOpenChange, open } = props;
+  const closeSheet = () => onOpenChange(false);
 
   return (
     <BottomSheet
@@ -404,14 +406,14 @@ function PortalMoreSheet(props: PortalMoreSheetProps) {
           className="rounded-field border-b border-border-subtle px-5 pt-6 pb-4"
           data-parity="sheet-name-block"
         >
-          {content.header}
+          {content.header(closeSheet)}
         </div>
         {links.length > 0 && (
           <PortalSheetNavigation
             activeHref={activeHref}
             links={links}
             navigationLabel={content.navigationLabel}
-            onNavigate={() => onOpenChange(false)}
+            onNavigate={closeSheet}
           />
         )}
         <div className="mt-auto border-t border-border-subtle px-4 py-3">

@@ -24,7 +24,7 @@ import {
 import { MotionConfig } from "motion/react";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it } from "vitest";
-import { MemoryRouter } from "react-router";
+import { Link, MemoryRouter } from "react-router";
 import { configureAxe } from "vitest-axe";
 
 import { MAIN_CONTENT_ID } from "../lib/constants";
@@ -123,7 +123,11 @@ function renderClientShell(options: ClientShellOptions = {}) {
             kind: "tabs",
             sheet: {
               footer: <button type="button">Sign out</button>,
-              header: <p>Sheet name block</p>,
+              header: (closeSheet) => (
+                <Link onClick={closeSheet} to="/client/profile">
+                  Sheet name block
+                </Link>
+              ),
               navigationLabel: "Client portal more",
               title: "More",
             },
@@ -633,6 +637,23 @@ describe("PortalShell tab navigation", () => {
 
     // act
     await user.click(within(sheet).getByRole("link", { name: "Cycle" }));
+
+    // assert
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+  });
+
+  it("closes the sheet when a link in its header is followed", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderClientShell();
+    const sheet = await openMoreSheet(user);
+
+    // act
+    await user.click(
+      within(sheet).getByRole("link", { name: "Sheet name block" }),
+    );
 
     // assert
     await waitFor(() => {
