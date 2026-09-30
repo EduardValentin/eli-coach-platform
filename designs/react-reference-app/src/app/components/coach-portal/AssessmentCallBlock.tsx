@@ -11,7 +11,7 @@ import { PortalWidget } from '../PortalWidget';
 import { Reading } from '../Reading';
 import { ABSENT_VALUE } from './absentValue';
 
-function callMoment(startsAt: Date): string {
+function shortCallMoment(startsAt: Date): string {
   const timeZone = browserTimeZone();
 
   return `${formatShortDay(startsAt, timeZone)} · ${formatSlotTime(startsAt, timeZone)}`;
@@ -35,8 +35,9 @@ export function AssessmentCallBlock({ journey }: { journey: ClientJourney }) {
         <Reading
           as="dl-item"
           label="Call"
-          value={callMoment(journey.callStartsAt)}
+          value={shortCallMoment(journey.callStartsAt)}
           valueParity="call-date"
+          className="col-span-full sm:col-span-1"
         />
         <Reading
           as="dl-item"
