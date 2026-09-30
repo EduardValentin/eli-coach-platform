@@ -1,3 +1,4 @@
+export { CollapsiblePortalWidget } from "./collapsible-portal-widget";
 export { EmptyState } from "./empty-state";
 export { PortalPageHeader } from "./portal-page-header";
 export { PortalWidget } from "./portal-widget";

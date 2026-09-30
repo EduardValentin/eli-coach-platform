@@ -4,7 +4,11 @@ import { Accordion as RadixAccordion } from "radix-ui";
 
 import { cn } from "../lib/cn";
 
-export const Accordion = RadixAccordion.Root;
+export function Accordion(
+  props: React.ComponentPropsWithoutRef<typeof RadixAccordion.Root>,
+) {
+  return <RadixAccordion.Root data-slot="accordion" {...props} />;
+}
 
 export function AccordionItem({
   className,
@@ -19,27 +23,40 @@ export function AccordionItem({
   );
 }
 
+type AccordionHeadingTag = "h2" | "h3";
+
+type AccordionTriggerProps = React.ComponentPropsWithoutRef<
+  typeof RadixAccordion.Trigger
+> & {
+  headingTag?: AccordionHeadingTag;
+  headingId?: string;
+};
+
 export function AccordionTrigger({
   children,
   className,
+  headingTag: HeadingTag = "h3",
+  headingId,
   ...props
-}: React.ComponentPropsWithoutRef<typeof RadixAccordion.Trigger>) {
+}: AccordionTriggerProps) {
   return (
-    <RadixAccordion.Header className="flex">
-      <RadixAccordion.Trigger
-        className={cn(
-          "flex flex-1 items-start justify-between gap-4 rounded-field py-4 text-left text-sm font-medium transition-colors hover:text-primary disabled:pointer-events-none disabled:opacity-50 [&[data-state=open]>svg]:rotate-180",
-          className,
-        )}
-        data-slot="accordion-trigger"
-        {...props}
-      >
-        {children}
-        <ChevronDown
-          aria-hidden="true"
-          className="pointer-events-none size-4 shrink-0 translate-y-0.5 text-text-secondary motion-safe:transition-transform motion-safe:duration-200"
-        />
-      </RadixAccordion.Trigger>
+    <RadixAccordion.Header asChild>
+      <HeadingTag className="flex" id={headingId}>
+        <RadixAccordion.Trigger
+          className={cn(
+            "flex flex-1 items-start justify-between gap-4 rounded-field py-4 text-left text-sm font-medium transition-colors hover:text-primary disabled:pointer-events-none disabled:opacity-50 [&[data-state=open]>svg]:rotate-180",
+            className,
+          )}
+          data-slot="accordion-trigger"
+          {...props}
+        >
+          {children}
+          <ChevronDown
+            aria-hidden="true"
+            className="pointer-events-none size-4 shrink-0 translate-y-0.5 text-text-secondary motion-safe:transition-transform motion-safe:duration-200"
+          />
+        </RadixAccordion.Trigger>
+      </HeadingTag>
     </RadixAccordion.Header>
   );
 }

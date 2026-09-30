@@ -57,7 +57,7 @@ export function SubscriptionSummary({
       }
       title="Subscription"
     >
-      <dl className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-5">
+      <dl className="grid grid-cols-2 gap-5 sm:grid-cols-3">
         <Reading
           as="dl-item"
           label="Bundle"

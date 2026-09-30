@@ -1,5 +1,8 @@
 import { ABSENT_VALUE } from "@eli-coach-platform/ui/lib";
-import { PortalWidget, Reading } from "@eli-coach-platform/ui/portal";
+import {
+  CollapsiblePortalWidget,
+  Reading,
+} from "@eli-coach-platform/ui/portal";
 import { Video } from "lucide-react";
 
 import {
@@ -35,7 +38,7 @@ export function AssessmentCallBlock({ client }: AssessmentCallBlockProps) {
   const timeZone = useCalendarDayTimeZone();
 
   return (
-    <PortalWidget
+    <CollapsiblePortalWidget
       data-parity-root="AssessmentCallBlock"
       className="mb-8"
       headingId="assessment-call-panel-heading"
@@ -107,6 +110,6 @@ export function AssessmentCallBlock({ client }: AssessmentCallBlockProps) {
           valueParity="call-notes"
         />
       </dl>
-    </PortalWidget>
+    </CollapsiblePortalWidget>
   );
 }

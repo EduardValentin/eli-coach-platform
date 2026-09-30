@@ -51,6 +51,31 @@ const FOOTER_CLASS: Record<WidgetDensity, string> = {
 
 const VOICE_CLASS = "font-heading text-2xl tracking-tight text-text-primary";
 
+type PortalWidgetPanelProps = DataAttributes & {
+  headingId: string;
+  density?: WidgetDensity;
+  className?: string;
+  children: ReactNode;
+};
+
+export function PortalWidgetPanel({
+  headingId,
+  density = "default",
+  className,
+  children,
+  ...dataAttributes
+}: PortalWidgetPanelProps) {
+  return (
+    <section
+      {...dataAttributes}
+      aria-labelledby={headingId}
+      className={cn(PANEL_CLASS[density], className)}
+    >
+      {children}
+    </section>
+  );
+}
+
 export function PortalWidget({
   title,
   icon,
@@ -68,10 +93,11 @@ export function PortalWidget({
   ...dataAttributes
 }: PortalWidgetProps) {
   return (
-    <section
+    <PortalWidgetPanel
       {...dataAttributes}
-      aria-labelledby={headingId}
-      className={cn(PANEL_CLASS[density], className)}
+      className={className}
+      density={density}
+      headingId={headingId}
     >
       <div
         className={cn(
@@ -112,6 +138,6 @@ export function PortalWidget({
       {children}
 
       {footer && <div className={FOOTER_CLASS[density]}>{footer}</div>}
-    </section>
+    </PortalWidgetPanel>
   );
 }

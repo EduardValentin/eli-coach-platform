@@ -199,6 +199,23 @@ describe("the coach's client page", () => {
     ]);
   });
 
+  it("keeps the assessment call collapsed until the coach opens it", async () => {
+    // arrange
+    const { user } = await renderClientRouter();
+    const call = screen.getByRole("region", { name: "Assessment call" });
+
+    // act
+    await user.click(
+      within(call).getByRole("button", { name: "Assessment call" }),
+    );
+
+    // assert
+    expect(
+      within(call).getByRole("button", { name: "Assessment call" }),
+    ).toHaveAttribute("aria-expanded", "true");
+    expect(within(call).getByText("Build strength")).toBeVisible();
+  });
+
   it("says her profile fills in once she sends her onboarding while it does not exist", async () => {
     // arrange, act
     await renderClientPage();

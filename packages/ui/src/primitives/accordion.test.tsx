@@ -126,4 +126,41 @@ describe("Accordion", () => {
       screen.getByRole("button", { name: "Lifestyle" }).querySelector("svg"),
     ).toHaveAttribute("aria-hidden", "true");
   });
+
+  it("heads a section at the level and id the trigger names", () => {
+    // arrange, act
+    render(
+      <Accordion collapsible type="single">
+        <AccordionItem value="call">
+          <AccordionTrigger headingId="call-heading" headingTag="h2">
+            Assessment call
+          </AccordionTrigger>
+          <AccordionContent>Booked for Monday.</AccordionContent>
+        </AccordionItem>
+      </Accordion>,
+    );
+
+    // assert
+    const heading = screen.getByRole("heading", {
+      level: 2,
+      name: "Assessment call",
+    });
+    expect(heading).toHaveAttribute("id", "call-heading");
+    expect(heading).toHaveClass("flex");
+    expect(screen.queryByRole("heading", { level: 3 })).not.toBeInTheDocument();
+  });
+
+  it("heads a section with an unnamed third-level heading by default", () => {
+    // arrange, act
+    render(<OnboardingForms />);
+
+    // assert
+    const heading = screen.getByRole("heading", {
+      level: 3,
+      name: "Health screening",
+    });
+    expect(heading).not.toHaveAttribute("id");
+    expect(heading).toHaveClass("flex");
+    expect(heading).toHaveAttribute("data-state", "closed");
+  });
 });
