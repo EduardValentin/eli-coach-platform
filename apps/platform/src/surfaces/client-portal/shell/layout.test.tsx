@@ -3,6 +3,7 @@
 import "@testing-library/jest-dom/vitest";
 
 import { SignOutButton } from "@clerk/react-router";
+import { toast } from "@eli-coach-platform/ui/toast";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MotionConfig } from "motion/react";
@@ -22,15 +23,29 @@ const ANA: ClientShellPresentation = {
   greeting: "Welcome back, Ana.",
 };
 
+function ProfilePage() {
+  return (
+    <button onClick={() => toast.success("Measurements saved.")} type="button">
+      Save measurements
+    </button>
+  );
+}
+
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
 });
 
-function renderClientLayout(presentation: ClientShellPresentation = ANA) {
+function renderClientLayout(
+  presentation: ClientShellPresentation = ANA,
+  entry = "/client",
+) {
   const RoutesStub = createRoutesStub([
     {
-      children: [{ Component: () => <p>Dashboard page</p>, index: true }],
+      children: [
+        { Component: () => <p>Dashboard page</p>, index: true },
+        { Component: ProfilePage, path: "profile" },
+      ],
       Component: ClientLayoutRoute,
       loader: () => presentation,
       path: "/client",
@@ -39,7 +54,7 @@ function renderClientLayout(presentation: ClientShellPresentation = ANA) {
 
   return render(
     <MotionConfig reducedMotion="always">
-      <RoutesStub initialEntries={["/client"]} />
+      <RoutesStub initialEntries={[entry]} />
     </MotionConfig>,
   );
 }
@@ -67,7 +82,7 @@ describe("ClientLayoutRoute", () => {
     expect(screen.getByRole("main")).toHaveTextContent("Dashboard page");
   });
 
-  it("lists only the dashboard, marked as the page being read", async () => {
+  it("lists the dashboard and her profile, marking the dashboard as the page being read", async () => {
     // arrange, act
     renderClientLayout();
 
@@ -77,15 +92,49 @@ describe("ClientLayoutRoute", () => {
     });
     const links = within(navigation).getAllByRole("link");
 
-    expect(links).toHaveLength(1);
-    expect(links[0]).toHaveAccessibleName("Dashboard");
+    expect(links.map((link) => link.textContent)).toEqual([
+      "Dashboard",
+      "Profile",
+    ]);
     expect(links[0]).toHaveAttribute("href", "/client");
     expect(links[0]).toHaveAttribute("aria-current", "page");
+    expect(links[1]).toHaveAttribute("href", "/client/profile");
+    expect(links[1]).not.toHaveAttribute("aria-current");
+  });
+
+  it("puts the dashboard and her profile in the tab bar", async () => {
+    // arrange, act
+    renderClientLayout();
+
+    // assert
+    const tabs = await screen.findByRole("navigation", {
+      name: "Client portal tabs",
+    });
+
     expect(
-      within(
-        screen.getByRole("navigation", { name: "Client portal tabs" }),
-      ).getByRole("link", { name: "Dashboard" }),
+      within(tabs).getByRole("link", { name: "Dashboard" }),
     ).toHaveAttribute("aria-current", "page");
+    expect(within(tabs).getByRole("link", { name: "Profile" })).toHaveAttribute(
+      "href",
+      "/client/profile",
+    );
+  });
+
+  it("marks her profile as the page being read on the profile page", async () => {
+    // arrange, act
+    renderClientLayout(ANA, "/client/profile");
+
+    // assert
+    const navigation = await screen.findByRole("navigation", {
+      name: "Client portal navigation",
+    });
+
+    expect(
+      within(navigation).getByRole("link", { name: "Profile" }),
+    ).toHaveAttribute("aria-current", "page");
+    expect(
+      within(navigation).getByRole("link", { name: "Dashboard" }),
+    ).not.toHaveAttribute("aria-current");
   });
 
   it("names the client in the sidebar and the top bar", async () => {
@@ -167,6 +216,20 @@ describe("ClientLayoutRoute", () => {
       expect.objectContaining({ redirectUrl: "/" }),
       undefined,
     );
+  });
+
+  it("shows the outcome a page reports as a toast", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderClientLayout(ANA, "/client/profile");
+
+    // act
+    await user.click(
+      await screen.findByRole("button", { name: "Save measurements" }),
+    );
+
+    // assert
+    expect(await screen.findByText("Measurements saved.")).toBeInTheDocument();
   });
 
   it("titles the installed client portal Evoa", () => {
