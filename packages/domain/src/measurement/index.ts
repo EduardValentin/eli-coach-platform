@@ -4,6 +4,7 @@ export {
   latestMeasurementOf,
   measurementEntryOf,
   type MeasurementEntry,
+  type MeasurementValues,
 } from "./measurement";
 export {
   CIRCUMFERENCE_MEASUREMENT_FIELDS,
@@ -15,6 +16,7 @@ export {
   type MeasurementRange,
 } from "./measurement-fields";
 export {
+  hasMeasurementProblem,
   measurementProblem,
   type MeasurementRule,
 } from "./measurement-validation";

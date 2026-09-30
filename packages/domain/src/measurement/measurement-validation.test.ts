@@ -5,7 +5,10 @@ import {
   MEASUREMENT_FIELDS,
   type MeasurementField,
 } from "./measurement-fields";
-import { measurementProblem } from "./measurement-validation";
+import {
+  hasMeasurementProblem,
+  measurementProblem,
+} from "./measurement-validation";
 
 const METRIC: MeasureUnits = { weight: "kg", length: "cm" };
 const IMPERIAL: MeasureUnits = { weight: "lb", length: "in" };
@@ -106,5 +109,63 @@ describe("measurementProblem, ranges in her units", () => {
 
     // assert
     expect(problem).toBeNull();
+  });
+});
+
+describe("measurementProblem, readings that are not numbers", () => {
+  it.each([Number.NaN, Number.POSITIVE_INFINITY])(
+    "asks for a weight when the reading is %s",
+    (reading) => {
+      // arrange
+      const field = fieldWithId("weight");
+
+      // act
+      const problem = measurementProblem(field, reading, METRIC);
+
+      // assert
+      expect(problem).toBe("Enter a weight.");
+    },
+  );
+});
+
+describe("hasMeasurementProblem", () => {
+  it("passes kilograms and centimetres inside every range", () => {
+    // arrange
+    const values = {
+      weightKg: 68,
+      waistCm: 72,
+      hipsCm: 98,
+      thighCm: 55,
+      armCm: 28,
+    };
+
+    // act
+    const problem = hasMeasurementProblem(values);
+
+    // assert
+    expect(problem).toBe(false);
+  });
+
+  it("passes when she skips the optional readings", () => {
+    // arrange
+    const values = { weightKg: 68, waistCm: 72 };
+
+    // act
+    const problem = hasMeasurementProblem(values);
+
+    // assert
+    expect(problem).toBe(false);
+  });
+
+  it.each([
+    ["a missing waist", { weightKg: 68 }],
+    ["a weight under 30 kg", { weightKg: 20, waistCm: 72 }],
+    ["an arm over 60 cm", { weightKg: 68, waistCm: 72, armCm: 61 }],
+  ])("finds a problem with %s", (_problem, values) => {
+    // arrange, act
+    const problem = hasMeasurementProblem(values);
+
+    // assert
+    expect(problem).toBe(true);
   });
 });
