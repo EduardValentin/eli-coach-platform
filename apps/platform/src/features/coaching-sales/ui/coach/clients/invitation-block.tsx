@@ -1,3 +1,4 @@
+import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
 import { cn } from "@eli-coach-platform/ui/lib";
 import { ConfirmDialog } from "@eli-coach-platform/ui/overlays";
 import { PortalWidget } from "@eli-coach-platform/ui/portal";
@@ -5,6 +6,7 @@ import { Button } from "@eli-coach-platform/ui/primitives";
 import { Loader2, Mail, Send } from "lucide-react";
 import { useRevalidator } from "react-router";
 
+import { possessivePronoun } from "~/features/assessment-calls/contracts/visitor-profile";
 import {
   resendInvitationSuccessSchema,
   type ClientInvitationReading,
@@ -21,12 +23,14 @@ const RESEND_FAILURE_MESSAGE =
 type InvitationBlockProps = {
   clientId: string;
   email: string;
+  gender: VisitorGender;
   invitation: ClientInvitationReading;
 };
 
 export function InvitationBlock({
   clientId,
   email,
+  gender,
   invitation,
 }: InvitationBlockProps) {
   const { revalidate } = useRevalidator();
@@ -80,7 +84,7 @@ export function InvitationBlock({
       <ConfirmDialog
         {...confirmDialog}
         confirmLabel="Re-send"
-        description={`A fresh invitation goes to ${email}. Her earlier link stops working.`}
+        description={`A fresh invitation goes to ${email}. ${possessivePronoun(gender).capitalised} earlier link stops working.`}
         title="Re-send invitation?"
       />
     </PortalWidget>

@@ -9,7 +9,9 @@ import {
   MAX_BOOKING_AGE,
   MIN_BOOKING_AGE,
   normalizePhone,
+  objectPronoun,
   possessivePronoun,
+  subjectPronoun,
   VISITOR_GENDER_OPTIONS,
   VISITOR_PRIMARY_GOAL_OPTIONS,
 } from "./visitor-profile";
@@ -367,5 +369,75 @@ describe("possessivePronoun", () => {
 
     // assert
     expect(pronoun).toEqual({ capitalised: "Their", lower: "their" });
+  });
+});
+
+describe("subjectPronoun", () => {
+  it("uses she has for a woman", () => {
+    // arrange
+    const gender = "female";
+
+    // act
+    const pronoun = subjectPronoun(gender);
+
+    // assert
+    expect(pronoun).toEqual({ capitalised: "She", has: "has" });
+  });
+
+  it("uses he has for a man", () => {
+    // arrange
+    const gender = "male";
+
+    // act
+    const pronoun = subjectPronoun(gender);
+
+    // assert
+    expect(pronoun).toEqual({ capitalised: "He", has: "has" });
+  });
+
+  it("uses they have when the visitor preferred not to say", () => {
+    // arrange
+    const gender = "prefer_not_to_say";
+
+    // act
+    const pronoun = subjectPronoun(gender);
+
+    // assert
+    expect(pronoun).toEqual({ capitalised: "They", has: "have" });
+  });
+});
+
+describe("objectPronoun", () => {
+  it("uses her for a woman", () => {
+    // arrange
+    const gender = "female";
+
+    // act
+    const pronoun = objectPronoun(gender);
+
+    // assert
+    expect(pronoun).toBe("her");
+  });
+
+  it("uses him for a man", () => {
+    // arrange
+    const gender = "male";
+
+    // act
+    const pronoun = objectPronoun(gender);
+
+    // assert
+    expect(pronoun).toBe("him");
+  });
+
+  it("uses them when the visitor preferred not to say", () => {
+    // arrange
+    const gender = "prefer_not_to_say";
+
+    // act
+    const pronoun = objectPronoun(gender);
+
+    // assert
+    expect(pronoun).toBe("them");
   });
 });

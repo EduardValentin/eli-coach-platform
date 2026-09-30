@@ -1,3 +1,4 @@
+import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
 import { PortalWidget } from "@eli-coach-platform/ui/portal";
 import { Button } from "@eli-coach-platform/ui/primitives";
 import { ConfirmDialog } from "@eli-coach-platform/ui/overlays";
@@ -12,8 +13,8 @@ import type {
   SubmittedReview,
 } from "~/features/client-onboarding/contracts/onboarding-review";
 import {
+  answersNotInLine,
   ANSWERS_HEADING,
-  ANSWERS_NOT_IN,
   APPROVE_ACTION,
   APPROVE_CONFIRM,
   CYCLE_MODE_LABELS,
@@ -22,7 +23,7 @@ import {
   NOT_CHOSEN_YET,
   PANEL_TITLE,
   RATIO_HIDDEN_NOTE,
-  RATIO_WAITING,
+  ratioWaitingLine,
   REVIEW_ACTIONS,
   waitingLine,
 } from "~/features/client-onboarding/contracts/onboarding-review-copy";
@@ -38,6 +39,7 @@ import { useOnboardingReviewActions } from "./use-onboarding-review-actions";
 type ReviewedClient = {
   email: string;
   firstName: string;
+  profile: { gender: VisitorGender };
 };
 
 type OnboardingPanelProps = {
@@ -53,6 +55,7 @@ type SubmittedOnboardingProps = {
 };
 
 type OnboardingFactsProps = {
+  gender: VisitorGender;
   review: OnboardingReviewView;
   submitted: SubmittedReview;
 };
@@ -74,6 +77,7 @@ const NO_QUESTIONS: readonly QuestionId[] = [];
 function ratioValue(
   review: OnboardingReviewView,
   submitted: SubmittedReview,
+  gender: VisitorGender,
 ): string {
   if (submitted.pregnancyContext) {
     return RATIO_HIDDEN_NOTE;
@@ -84,7 +88,7 @@ function ratioValue(
     ? waistToHeightRatio(latest.waistCm, review.statedHeightCm)
     : null;
 
-  return ratio ?? RATIO_WAITING;
+  return ratio ?? ratioWaitingLine(gender);
 }
 
 function cycleModeValue(submitted: SubmittedReview): string {
@@ -107,14 +111,16 @@ function Fact({ label, parity, value }: FactProps) {
   );
 }
 
-function OnboardingFacts({ review, submitted }: OnboardingFactsProps) {
+function OnboardingFacts({ gender, review, submitted }: OnboardingFactsProps) {
   return (
     <dl className="grid grid-cols-2 gap-5 lg:grid-cols-4">
       <Fact
         label={FACT_LABELS.ratio}
         parity="fact-ratio"
         value={
-          <span className="tabular-nums">{ratioValue(review, submitted)}</span>
+          <span className="tabular-nums">
+            {ratioValue(review, submitted, gender)}
+          </span>
         }
       />
       <Fact
@@ -224,7 +230,11 @@ function SubmittedOnboarding({
 
   return (
     <div className="space-y-6">
-      <OnboardingFacts review={review} submitted={submitted} />
+      <OnboardingFacts
+        gender={client.profile.gender}
+        review={review}
+        submitted={submitted}
+      />
 
       <div className="space-y-3 border-t border-border-subtle pt-6">
         <h3 className="text-sm font-medium text-text-primary">
@@ -251,6 +261,7 @@ function SubmittedOnboarding({
       <OnboardingReviewDialog
         firstName={client.firstName}
         flagged={flagged}
+        gender={client.profile.gender}
         forms={submitted.forms}
         onApprove={
           submitted.stage === "in-review"
@@ -306,7 +317,9 @@ export function OnboardingPanel({
           submitted={submitted}
         />
       ) : (
-        <p className="text-sm text-text-secondary">{ANSWERS_NOT_IN}</p>
+        <p className="text-sm text-text-secondary">
+          {answersNotInLine(client.profile.gender)}
+        </p>
       )}
     </PortalWidget>
   );

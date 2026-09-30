@@ -1,3 +1,4 @@
+import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
 import { Dialog, DialogContent } from "@eli-coach-platform/ui/overlays";
 import { useState } from "react";
 
@@ -14,6 +15,7 @@ type OnboardingReviewDialogProps = {
   firstName: string;
   flagged: readonly QuestionId[] | null;
   forms: ReviewForm[];
+  gender: VisitorGender;
   onApprove: (() => void) | null;
   onClose: () => void;
   onSend: (note: string) => void;
@@ -24,6 +26,7 @@ export function OnboardingReviewDialog({
   firstName,
   flagged,
   forms,
+  gender,
   onApprove,
   onClose,
   onSend,
@@ -45,7 +48,7 @@ export function OnboardingReviewDialog({
     >
       <DialogContent
         data-parity-root="OnboardingReviewDialog"
-        description={REVIEW_DIALOG.description}
+        description={REVIEW_DIALOG.description(gender)}
         footer={
           <OnboardingReviewBar
             flagCount={flags.length}

@@ -142,6 +142,31 @@ export function possessivePronoun(gender: VisitorGender): PossessivePronoun {
   return POSSESSIVE_PRONOUNS[gender];
 }
 
+type SubjectPronoun = {
+  readonly capitalised: string;
+  readonly has: string;
+};
+
+const SUBJECT_PRONOUNS: Readonly<Record<VisitorGender, SubjectPronoun>> = {
+  female: { capitalised: "She", has: "has" },
+  male: { capitalised: "He", has: "has" },
+  prefer_not_to_say: { capitalised: "They", has: "have" },
+};
+
+export function subjectPronoun(gender: VisitorGender): SubjectPronoun {
+  return SUBJECT_PRONOUNS[gender];
+}
+
+const OBJECT_PRONOUNS: Readonly<Record<VisitorGender, string>> = {
+  female: "her",
+  male: "him",
+  prefer_not_to_say: "them",
+};
+
+export function objectPronoun(gender: VisitorGender): string {
+  return OBJECT_PRONOUNS[gender];
+}
+
 export function normalizePhone(parts: PhoneParts): PhoneNormalization {
   const compact = parts.nationalNumber.replace(PHONE_SEPARATORS, "");
 

@@ -33,7 +33,9 @@ afterEach(() => {
 describe("the measurements table on a client page", () => {
   it("says she has not sent any measurements yet", () => {
     // arrange, act
-    render(<MeasurementsTable heightCm={170} measurements={[]} />);
+    render(
+      <MeasurementsTable gender="female" heightCm={170} measurements={[]} />,
+    );
 
     // assert
     expect(
@@ -45,9 +47,43 @@ describe("the measurements table on a client page", () => {
     expect(screen.queryByRole("table")).not.toBeInTheDocument();
   });
 
+  it("says he has not sent any measurements yet", () => {
+    // arrange, act
+    render(
+      <MeasurementsTable gender="male" heightCm={170} measurements={[]} />,
+    );
+
+    // assert
+    expect(
+      screen.getByText("He has not sent any measurements yet."),
+    ).toBeInTheDocument();
+  });
+
+  it("says they have not sent any measurements yet", () => {
+    // arrange, act
+    render(
+      <MeasurementsTable
+        gender="prefer_not_to_say"
+        heightCm={170}
+        measurements={[]}
+      />,
+    );
+
+    // assert
+    expect(
+      screen.getByText("They have not sent any measurements yet."),
+    ).toBeInTheDocument();
+  });
+
   it("lists her measurements newest first in kg and cm with the ratio", () => {
     // arrange, act
-    render(<MeasurementsTable heightCm={170} measurements={MEASUREMENTS} />);
+    render(
+      <MeasurementsTable
+        gender="female"
+        heightCm={170}
+        measurements={MEASUREMENTS}
+      />,
+    );
 
     // assert
     const table = screen.getByRole("table", {
@@ -89,7 +125,13 @@ describe("the measurements table on a client page", () => {
 
   it("leaves the ratio out without a height", () => {
     // arrange, act
-    render(<MeasurementsTable heightCm={null} measurements={MEASUREMENTS} />);
+    render(
+      <MeasurementsTable
+        gender="female"
+        heightCm={null}
+        measurements={MEASUREMENTS}
+      />,
+    );
 
     // assert
     const rows = screen.getAllByRole("row");

@@ -13,6 +13,7 @@ import {
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
+import type { ComponentProps } from "react";
 import {
   createMemoryRouter,
   RouterProvider,
@@ -29,8 +30,14 @@ import { CLIENT_ONBOARDING_API_PATHS } from "~/features/client-onboarding/contra
 
 import { OnboardingPanel } from "./onboarding-panel";
 
+type ReviewedClient = ComponentProps<typeof OnboardingPanel>["client"];
+
 const CLIENT_ID = "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11";
-const CLIENT = { email: "ana@example.com", firstName: "Ana" };
+const CLIENT = {
+  email: "ana@example.com",
+  firstName: "Ana",
+  profile: { gender: "female" },
+} satisfies ReviewedClient;
 const PAGE_PATH = "/coach/clients/ana";
 const STATUS_BADGE = "Awaiting review";
 
@@ -346,6 +353,95 @@ describe("the onboarding facts", () => {
   });
 });
 
+describe("the panel for a client who is not a woman", () => {
+  it("says his answers are not in while he has not submitted", async () => {
+    // arrange, act
+    await renderPanel({ review: reviewView(null) }, withGender("male"));
+
+    // assert
+    expect(screen.getByText("His answers are not in yet.")).toBeInTheDocument();
+  });
+
+  it("says their answers are not in while they have not submitted", async () => {
+    // arrange, act
+    await renderPanel(
+      { review: reviewView(null) },
+      withGender("prefer_not_to_say"),
+    );
+
+    // assert
+    expect(
+      screen.getByText("Their answers are not in yet."),
+    ).toBeInTheDocument();
+  });
+
+  it("waits on his first measurements", async () => {
+    // arrange, act
+    await renderPanel(
+      { review: { ...reviewView(SUBMITTED), measurements: [] } },
+      withGender("male"),
+    );
+
+    // assert
+    expect(
+      screen.getByText("Waiting on his first measurements"),
+    ).toBeInTheDocument();
+  });
+
+  it("waits on their first measurements", async () => {
+    // arrange, act
+    await renderPanel(
+      { review: { ...reviewView(SUBMITTED), measurements: [] } },
+      withGender("prefer_not_to_say"),
+    );
+
+    // assert
+    expect(
+      screen.getByText("Waiting on their first measurements"),
+    ).toBeInTheDocument();
+  });
+
+  it("asks which answers the coach wants him to revisit", async () => {
+    // arrange
+    const user = await renderPanel(
+      { review: reviewView(submittedReviewIn("in-review")) },
+      withGender("male"),
+    );
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Continue review" }));
+
+    // assert
+    expect(
+      screen.getByRole("dialog", {
+        description:
+          "Tick any answer you want him to revisit, then approve or ask for more details.",
+        name: "Review Ana’s answers",
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("asks which answers the coach wants them to revisit", async () => {
+    // arrange
+    const user = await renderPanel(
+      { review: reviewView(submittedReviewIn("in-review")) },
+      withGender("prefer_not_to_say"),
+    );
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Continue review" }));
+
+    // assert
+    expect(
+      screen.getByRole("dialog", {
+        description:
+          "Tick any answer you want them to revisit, then approve or ask for more details.",
+        name: "Review Ana’s answers",
+      }),
+    ).toBeInTheDocument();
+  });
+});
+
 describe("the answers in the panel", () => {
   it("marks an answer that needs a look and one left unanswered", async () => {
     // arrange
@@ -657,6 +753,10 @@ function submittedReviewIn(stage: ReviewStage): SubmittedReview {
   return { ...SUBMITTED, stage };
 }
 
+function withGender(gender: ReviewedClient["profile"]["gender"]) {
+  return { ...CLIENT, profile: { gender } };
+}
+
 function reviewView(submitted: SubmittedReview | null): OnboardingReviewView {
   return {
     clientId: CLIENT_ID,
@@ -689,7 +789,10 @@ async function openReview(
   return user;
 }
 
-async function renderPanel(loaded: { review: OnboardingReviewView }) {
+async function renderPanel(
+  loaded: { review: OnboardingReviewView },
+  client: ReviewedClient = CLIENT,
+) {
   const user = userEvent.setup();
   const PanelRoute = () => {
     const review = useLoaderData<OnboardingReviewView>();
@@ -697,7 +800,7 @@ async function renderPanel(loaded: { review: OnboardingReviewView }) {
     return (
       <>
         <OnboardingPanel
-          client={CLIENT}
+          client={client}
           review={review}
           statusBadge={<span>{STATUS_BADGE}</span>}
         />
@@ -730,9 +833,7 @@ async function renderPanel(loaded: { review: OnboardingReviewView }) {
   );
 
   render(<RouterProvider router={router} />);
-  await waitFor(() => {
-    expect(router.state.initialized).toBe(true);
-  });
+  await screen.findByRole("heading", { level: 2, name: "Onboarding" });
 
   return user;
 }

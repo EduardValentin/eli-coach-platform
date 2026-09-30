@@ -1,6 +1,8 @@
+import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
 import { PortalWidget, Reading } from "@eli-coach-platform/ui/portal";
 import { CreditCard } from "lucide-react";
 
+import { possessivePronoun } from "~/features/assessment-calls/contracts/visitor-profile";
 import { bundleLengthLabel } from "~/features/coaching-sales/contracts/bundle-cards";
 import type { ClientSubscription } from "~/features/coaching-sales/contracts/coach-clients";
 import {
@@ -11,12 +13,16 @@ import {
 import { ABSENT_VALUE } from "./absent-value";
 
 const IMMEDIATE_START_LABEL = "Immediate start";
-const RENEWS_BEFORE_PROGRAM_LABEL = "Once her program starts";
 
 type SubscriptionSummaryProps = {
+  gender: VisitorGender;
   subscription: ClientSubscription;
   className?: string;
 };
+
+function renewsBeforeProgramLabel(gender: VisitorGender): string {
+  return `Once ${possessivePronoun(gender).lower} program starts`;
+}
 
 function startLabel(workStartDay: string | null): string {
   return workStartDay
@@ -26,6 +32,7 @@ function startLabel(workStartDay: string | null): string {
 
 export function SubscriptionSummary({
   className,
+  gender,
   subscription,
 }: SubscriptionSummaryProps) {
   const timeZone = useCalendarDayTimeZone();
@@ -75,7 +82,7 @@ export function SubscriptionSummary({
         <Reading
           as="dl-item"
           label="Renews on"
-          value={RENEWS_BEFORE_PROGRAM_LABEL}
+          value={renewsBeforeProgramLabel(gender)}
           valueParity="subscription-renews"
         />
       </dl>

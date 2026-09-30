@@ -85,6 +85,7 @@ export default function CoachClientRoute() {
         <InvitationBlock
           clientId={client.clientId}
           email={client.email}
+          gender={client.profile.gender}
           invitation={client.invitation}
         />
       )}
@@ -96,10 +97,12 @@ export default function CoachClientRoute() {
       {client.subscription && (
         <SubscriptionSummary
           className="mb-8"
+          gender={client.profile.gender}
           subscription={client.subscription}
         />
       )}
       <MeasurementsTable
+        gender={client.profile.gender}
         heightCm={review.statedHeightCm}
         measurements={review.measurements}
       />

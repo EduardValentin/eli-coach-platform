@@ -1,6 +1,16 @@
+import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
+
+import {
+  objectPronoun,
+  possessivePronoun,
+  subjectPronoun,
+} from "~/features/assessment-calls/contracts/visitor-profile";
+
 export const PANEL_TITLE = "Onboarding";
 
-export const ANSWERS_NOT_IN = "Her answers are not in yet.";
+export function answersNotInLine(gender: VisitorGender): string {
+  return `${possessivePronoun(gender).capitalised} answers are not in yet.`;
+}
 
 export const ANSWERS_HEADING = "Answers";
 
@@ -30,7 +40,9 @@ export const CYCLE_MODE_NOT_ANSWERED = "Not answered yet";
 export const RATIO_HIDDEN_NOTE =
   "Not shown during pregnancy or right after birth.";
 
-export const RATIO_WAITING = "Waiting on her first measurements";
+export function ratioWaitingLine(gender: VisitorGender): string {
+  return `Waiting on ${possessivePronoun(gender).lower} first measurements`;
+}
 
 export const NOT_CHOSEN_YET = "Not chosen yet";
 
@@ -61,8 +73,8 @@ export const APPROVE_ACTION = "Approve answers";
 
 export const REVIEW_DIALOG = {
   title: (firstName: string) => `Review ${firstName}’s answers`,
-  description:
-    "Tick any answer you want her to revisit, then approve or ask for more details.",
+  description: (gender: VisitorGender) =>
+    `Tick any answer you want ${objectPronoun(gender)} to revisit, then approve or ask for more details.`,
   flagLabel: "Flag",
   noteLabel: "What is missing?",
   cancel: "Cancel",
@@ -89,7 +101,11 @@ export const REVIEW_ACTION_FAILED =
 
 export const MEASUREMENTS_COPY = {
   title: "Measurements",
-  empty: "She has not sent any measurements yet.",
+  empty: (gender: VisitorGender) => {
+    const subject = subjectPronoun(gender);
+
+    return `${subject.capitalised} ${subject.has} not sent any measurements yet.`;
+  },
   caption: "Measurements history, newest first",
   columns: ["Date", "Weight", "Waist", "Hips", "Thigh", "Arm", "Ratio"],
   missing: "—",

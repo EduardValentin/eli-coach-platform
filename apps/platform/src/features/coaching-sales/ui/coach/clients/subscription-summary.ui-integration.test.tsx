@@ -29,7 +29,7 @@ afterEach(() => {
 describe("the subscription summary the coach reads", () => {
   it("reads the bundle, the payment day on her calendar and an immediate start before the program", () => {
     // arrange, act
-    render(<SubscriptionSummary subscription={SUBSCRIPTION} />);
+    render(<SubscriptionSummary gender="female" subscription={SUBSCRIPTION} />);
 
     // assert
     expect(
@@ -51,12 +51,41 @@ describe("the subscription summary the coach reads", () => {
     };
 
     // act
-    render(<SubscriptionSummary subscription={waiting} />);
+    render(<SubscriptionSummary gender="female" subscription={waiting} />);
 
     // assert
     expect(
       readings(screen.getByRole("region", { name: "Subscription" })).Start,
     ).toBe("After the 14 days (15 October)");
+  });
+
+  it("says renewal waits on his program for a man", () => {
+    // arrange, act
+    render(<SubscriptionSummary gender="male" subscription={SUBSCRIPTION} />);
+
+    // assert
+    expect(
+      readings(screen.getByRole("region", { name: "Subscription" }))[
+        "Renews on"
+      ],
+    ).toBe("Once his program starts");
+  });
+
+  it("says renewal waits on their program for a client who preferred not to say", () => {
+    // arrange, act
+    render(
+      <SubscriptionSummary
+        gender="prefer_not_to_say"
+        subscription={SUBSCRIPTION}
+      />,
+    );
+
+    // assert
+    expect(
+      readings(screen.getByRole("region", { name: "Subscription" }))[
+        "Renews on"
+      ],
+    ).toBe("Once their program starts");
   });
 });
 

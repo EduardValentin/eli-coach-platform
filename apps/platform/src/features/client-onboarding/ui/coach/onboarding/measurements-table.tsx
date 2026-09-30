@@ -1,3 +1,4 @@
+import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
 import { PortalWidget } from "@eli-coach-platform/ui/portal";
 import {
   Table,
@@ -16,6 +17,7 @@ import { roundToTenth, waistToHeightRatio } from "./body-metrics";
 import { formatDayMonth, useReviewDayTimeZone } from "./review-day-format";
 
 type MeasurementsTableProps = {
+  gender: VisitorGender;
   heightCm: number | null;
   measurements: MeasurementRow[];
 };
@@ -36,6 +38,7 @@ function circumferenceCell(valueCm: number | null): string {
 }
 
 export function MeasurementsTable({
+  gender,
   heightCm,
   measurements,
 }: MeasurementsTableProps) {
@@ -57,7 +60,7 @@ export function MeasurementsTable({
           className="text-sm text-text-secondary"
           data-parity="measurements-empty"
         >
-          {MEASUREMENTS_COPY.empty}
+          {MEASUREMENTS_COPY.empty(gender)}
         </p>
       ) : (
         <div className="-mx-6 overflow-x-auto">

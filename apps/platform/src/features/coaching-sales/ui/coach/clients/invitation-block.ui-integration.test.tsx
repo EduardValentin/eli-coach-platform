@@ -2,6 +2,7 @@
 
 import "@testing-library/jest-dom/vitest";
 
+import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
 import { Toaster } from "@eli-coach-platform/ui/toast";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -119,6 +120,47 @@ describe("the invitation block", () => {
       }),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Re-send" })).toBeInTheDocument();
+  });
+
+  it("warns that his earlier link stops working", async () => {
+    // arrange
+    const user = await renderBlock({ gender: "male", invitation: PENDING });
+
+    // act
+    await user.click(
+      screen.getByRole("button", { name: "Re-send invitation" }),
+    );
+
+    // assert
+    expect(
+      screen.getByRole("dialog", {
+        description:
+          "A fresh invitation goes to ana@example.com. His earlier link stops working.",
+        name: "Re-send invitation?",
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("warns that their earlier link stops working", async () => {
+    // arrange
+    const user = await renderBlock({
+      gender: "prefer_not_to_say",
+      invitation: PENDING,
+    });
+
+    // act
+    await user.click(
+      screen.getByRole("button", { name: "Re-send invitation" }),
+    );
+
+    // assert
+    expect(
+      screen.getByRole("dialog", {
+        description:
+          "A fresh invitation goes to ana@example.com. Their earlier link stops working.",
+        name: "Re-send invitation?",
+      }),
+    ).toBeInTheDocument();
   });
 
   it("sends nothing when the coach cancels", async () => {
@@ -261,7 +303,10 @@ function recordResendRequests(response: Response): unknown[] {
   return requests;
 }
 
-async function renderBlock(loaded: { invitation: ClientInvitationReading }) {
+async function renderBlock(loaded: {
+  gender?: VisitorGender;
+  invitation: ClientInvitationReading;
+}) {
   const user = userEvent.setup();
   const ClientRoute = () => {
     const { invitation } = useLoaderData<{
@@ -273,6 +318,7 @@ async function renderBlock(loaded: { invitation: ClientInvitationReading }) {
         <InvitationBlock
           clientId={CLIENT_ID}
           email={EMAIL}
+          gender={loaded.gender ?? "female"}
           invitation={invitation}
         />
         <Toaster />
