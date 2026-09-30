@@ -3,6 +3,13 @@ import { useId, useRef, useState, type ReactNode } from "react";
 import { cn } from "../lib/cn";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 
+type IconHintTone = "neutral" | "danger";
+
+const TONE_CLASS: Record<IconHintTone, string> = {
+  neutral: "",
+  danger: "text-feedback-danger",
+};
+
 type IconHintProps = {
   children: ReactNode;
   className?: string;
@@ -10,6 +17,7 @@ type IconHintProps = {
   icon: ReactNode;
   label: string;
   parity?: string;
+  tone?: IconHintTone;
 };
 
 export function IconHint({
@@ -19,9 +27,10 @@ export function IconHint({
   icon,
   label,
   parity,
+  tone = "neutral",
 }: IconHintProps) {
   const [open, setOpen] = useState(false);
-  const openWhenTapped = useRef<boolean | null>(null);
+  const tapClosesHint = useRef(false);
   const hintId = useId();
 
   return (
@@ -32,15 +41,15 @@ export function IconHint({
           aria-label={label}
           className={cn(
             "inline-flex size-6 items-center justify-center rounded-full",
+            TONE_CLASS[tone],
             className,
           )}
           data-parity={parity}
           onBlur={() => setOpen(false)}
           onClick={(event) => {
             event.preventDefault();
-            const tappedWhileOpen = openWhenTapped.current;
-            openWhenTapped.current = null;
-            setOpen(tappedWhileOpen === null ? true : !tappedWhileOpen);
+            setOpen(!tapClosesHint.current);
+            tapClosesHint.current = false;
           }}
           onFocus={(event) => {
             if (event.currentTarget.matches(":focus-visible")) {
@@ -48,8 +57,7 @@ export function IconHint({
             }
           }}
           onPointerDown={(event) => {
-            openWhenTapped.current =
-              event.pointerType === "mouse" ? null : open;
+            tapClosesHint.current = event.pointerType !== "mouse" && open;
           }}
           onPointerEnter={(event) => {
             if (event.pointerType === "mouse") {

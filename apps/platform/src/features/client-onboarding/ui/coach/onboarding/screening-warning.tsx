@@ -35,10 +35,10 @@ export function ScreeningWarning({ submitted }: ScreeningWarningProps) {
 
   return (
     <IconHint
-      className="text-feedback-danger"
       icon={<TriangleAlert aria-hidden="true" size={16} />}
       label={warnings.join(". ")}
       parity="screening-warning"
+      tone="danger"
     >
       {warnings.map((warning) => (
         <p key={warning}>{warning}</p>

@@ -42,7 +42,7 @@ describe("IconHint", () => {
     expect(screen.queryByText(HINT)).not.toBeInTheDocument();
   });
 
-  it("opens on hover and closes when the pointer leaves", async () => {
+  it("opens on hover", async () => {
     // arrange
     const { trigger, user } = renderHint();
 
@@ -51,7 +51,18 @@ describe("IconHint", () => {
 
     // assert
     expect(await screen.findByText(HINT)).toBeInTheDocument();
+  });
+
+  it("closes when the pointer leaves", async () => {
+    // arrange
+    const { trigger, user } = renderHint();
+    await user.hover(trigger);
+    await screen.findByText(HINT);
+
+    // act
     await user.unhover(trigger);
+
+    // assert
     expect(screen.queryByText(HINT)).not.toBeInTheDocument();
   });
 
@@ -67,7 +78,7 @@ describe("IconHint", () => {
     expect(screen.getByText(HINT)).toBeInTheDocument();
   });
 
-  it("opens on a tap and closes on a second tap", async () => {
+  it("opens on a tap", async () => {
     // arrange
     const { trigger, user } = renderHint();
 
@@ -76,7 +87,18 @@ describe("IconHint", () => {
 
     // assert
     expect(await screen.findByText(HINT)).toBeInTheDocument();
+  });
+
+  it("closes on a second tap", async () => {
+    // arrange
+    const { trigger, user } = renderHint();
     await user.pointer({ keys: "[TouchA]", target: trigger });
+    await screen.findByText(HINT);
+
+    // act
+    await user.pointer({ keys: "[TouchA]", target: trigger });
+
+    // assert
     expect(screen.queryByText(HINT)).not.toBeInTheDocument();
   });
 
