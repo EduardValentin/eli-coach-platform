@@ -897,3 +897,107 @@ describe('the coach reading about a client by his or their pronouns', () => {
     ).toBeInTheDocument();
   });
 });
+
+const PHASE_BASED_FOR_HER =
+  'Phase-based — her program follows her cycle phases: she gets a period, is not on the combined pill, is not pregnant, postpartum or breastfeeding, and is not in perimenopause or menopause.';
+
+function cycleModeInfoButton(): HTMLElement {
+  return within(onboardingWidget()).getByRole('button', {
+    name: 'What cycle mode means',
+  });
+}
+
+async function tabTo(
+  user: ReturnType<typeof userEvent.setup>,
+  target: HTMLElement,
+) {
+  for (let step = 0; step < 50 && document.activeElement !== target; step++) {
+    await user.tab();
+  }
+}
+
+describe('the coach reading what cycle mode means', () => {
+  it('offers an info button beside the cycle mode fact', () => {
+    // arrange
+    const urlQuery = '?jstage=submitted';
+
+    // act
+    renderDetails(urlQuery, { postMvp: false });
+
+    // assert
+    const term = within(onboardingWidget()).getByText('Cycle mode');
+    expect(term.closest('dt')).toContainElement(cycleModeInfoButton());
+  });
+
+  it('explains every cycle mode when the coach hovers the info button', async () => {
+    // arrange
+    const user = renderDetails('?jstage=submitted', { postMvp: false });
+
+    // act
+    await user.hover(cycleModeInfoButton());
+
+    // assert
+    const tooltip = await screen.findByRole('tooltip');
+    expect(tooltip).toHaveTextContent(PHASE_BASED_FOR_HER);
+    expect(tooltip).toHaveTextContent(
+      'Symptom-based — one of those does not hold, so her program follows the symptoms she reports.',
+    );
+    expect(tooltip).toHaveTextContent(
+      'Set by Eli — her contraception is one the product does not classify; you decide how her program adapts.',
+    );
+    expect(tooltip).toHaveTextContent(
+      'Not applicable — her gender skips the cycle form.',
+    );
+    expect(tooltip).toHaveTextContent(
+      'Not answered yet — the cycle form is empty.',
+    );
+  });
+
+  it('explains the cycle modes when the info button takes keyboard focus', async () => {
+    // arrange
+    const user = renderDetails('?jstage=submitted', { postMvp: false });
+
+    // act
+    await tabTo(user, cycleModeInfoButton());
+
+    // assert
+    expect(cycleModeInfoButton()).toHaveFocus();
+    expect(await screen.findByRole('tooltip')).toHaveTextContent(
+      PHASE_BASED_FOR_HER,
+    );
+  });
+
+  it('words the explanation for a man', async () => {
+    // arrange
+    const user = renderDetails('?jstage=submitted&jgender=male', {
+      postMvp: false,
+    });
+
+    // act
+    await user.hover(cycleModeInfoButton());
+
+    // assert
+    expect(await screen.findByRole('tooltip')).toHaveTextContent(
+      'Phase-based — his program follows his cycle phases: he gets a period, is not on the combined pill, is not pregnant, postpartum or breastfeeding, and is not in perimenopause or menopause.',
+    );
+  });
+
+  it('words the explanation for a client who preferred not to say', async () => {
+    // arrange
+    const user = renderDetails('?jstage=submitted&jgender=prefer-not-to-say', {
+      postMvp: false,
+    });
+
+    // act
+    await user.hover(cycleModeInfoButton());
+
+    // assert
+    const tooltip = await screen.findByRole('tooltip');
+    expect(tooltip).toHaveTextContent(
+      'Phase-based — their program follows their cycle phases: they get a period, are not on the combined pill, are not pregnant, postpartum or breastfeeding, and are not in perimenopause or menopause.',
+    );
+    expect(tooltip).toHaveTextContent(
+      'Symptom-based — one of those does not hold, so their program follows the symptoms they report.',
+    );
+  });
+});

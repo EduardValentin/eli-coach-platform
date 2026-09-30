@@ -15,6 +15,7 @@ const VALUE_CLASS: Record<ReadingSize, string> = {
 
 interface ReadingProps {
   label: ReactNode;
+  labelAdornment?: ReactNode;
   value: ReactNode;
   size?: ReadingSize;
   unit?: string;
@@ -25,6 +26,7 @@ interface ReadingProps {
 
 export function Reading({
   label,
+  labelAdornment,
   value,
   size = 'default',
   unit,
@@ -37,7 +39,12 @@ export function Reading({
 
   return (
     <div className={className}>
-      <LabelTag className={LABEL_CLASS}>{label}</LabelTag>
+      <LabelTag
+        className={cn(LABEL_CLASS, labelAdornment && 'flex items-center gap-1')}
+      >
+        {label}
+        {labelAdornment}
+      </LabelTag>
       <ValueTag
         className={cn('mt-1', VALUE_CLASS[size])}
         data-parity={valueParity}

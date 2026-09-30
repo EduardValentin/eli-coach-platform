@@ -1,5 +1,10 @@
 import { useState } from 'react';
-import { ClipboardList, MessageSquareText, TriangleAlert } from 'lucide-react';
+import {
+  ClipboardList,
+  Info,
+  MessageSquareText,
+  TriangleAlert,
+} from 'lucide-react';
 import { Link } from 'react-router';
 import { toast } from 'sonner';
 import {
@@ -12,6 +17,7 @@ import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Checkbox } from '../ui/checkbox';
 import { ConfirmDialog } from '../ui/confirm-dialog';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { cn } from '../ui/utils';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
 import { clientStatus } from '../../domain/clientStatus';
@@ -27,6 +33,7 @@ import {
   isBeforeStage,
   type ClientJourney,
   type DetailRequest,
+  type JourneyGender,
   type JourneyStage,
 } from '../../domain/journey';
 import {
@@ -43,7 +50,14 @@ import {
   screeningOutcome,
   withholdsNutritionAdvice,
 } from '../../domain/safetyScreening';
-import { clientPronouns, formatJourneyDate } from '../../utils/journeyLabels';
+import {
+  clientPronouns,
+  CYCLE_MODE_INFO_LABEL,
+  CYCLE_MODE_NOT_ANSWERED,
+  CYCLE_MODE_NOT_APPLICABLE,
+  cycleModeDefinitions,
+  formatJourneyDate,
+} from '../../utils/journeyLabels';
 import { PortalWidget } from '../PortalWidget';
 import { Reading } from '../Reading';
 import { StatusHint } from '../StatusHint';
@@ -139,10 +153,43 @@ function ScreeningWarning({ journey }: { journey: ClientJourney }) {
 }
 
 function cycleModeValue(journey: ClientJourney): string {
-  if (journey.identity.gender !== 'female') return 'Not applicable';
+  if (journey.identity.gender !== 'female') return CYCLE_MODE_NOT_APPLICABLE;
 
   const mode = cycleModeOf(journey.onboarding);
-  return mode ? CYCLE_MODE_LABELS[mode] : 'Not answered yet';
+  return mode ? CYCLE_MODE_LABELS[mode] : CYCLE_MODE_NOT_ANSWERED;
+}
+
+function CycleModeInfo({ gender }: { gender: JourneyGender }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          aria-label={CYCLE_MODE_INFO_LABEL}
+          data-parity="fact-cycle-mode-info"
+          className="-my-1.5 inline-flex size-6 items-center justify-center rounded-full"
+        >
+          <Info aria-hidden="true" size={16} />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent
+        side="bottom"
+        align="start"
+        collisionPadding={16}
+        data-parity-root="CycleModeTooltip"
+        className="max-w-sm text-pretty"
+      >
+        <dl className="space-y-1">
+          {cycleModeDefinitions(gender).map(({ term, meaning }) => (
+            <div key={term}>
+              <dt className="inline font-semibold">{term}</dt>{' '}
+              <dd className="inline">— {meaning}</dd>
+            </div>
+          ))}
+        </dl>
+      </TooltipContent>
+    </Tooltip>
+  );
 }
 
 function OnboardingFacts({
@@ -183,6 +230,7 @@ function OnboardingFacts({
       <Reading
         as="dl-item"
         label="Cycle mode"
+        labelAdornment={<CycleModeInfo gender={journey.identity.gender} />}
         value={cycleModeValue(journey)}
         valueParity="fact-cycle-mode"
       />

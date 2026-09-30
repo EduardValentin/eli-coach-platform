@@ -15,6 +15,7 @@ import type {
   JourneyGender,
   JourneyPricing,
 } from '../domain/journey';
+import { CYCLE_MODE_LABELS } from '../domain/cycleMode';
 import {
   workStartDate,
   type CoachingSubscription,
@@ -59,6 +60,46 @@ export function clientPronouns(gender: JourneyGender): ClientPronouns {
     object: objectPronoun(visitorGender),
     possessive: possessivePronoun(visitorGender),
   };
+}
+
+export const CYCLE_MODE_NOT_APPLICABLE = 'Not applicable';
+
+export const CYCLE_MODE_NOT_ANSWERED = 'Not answered yet';
+
+export const CYCLE_MODE_INFO_LABEL = 'What cycle mode means';
+
+export type CycleModeDefinition = { term: string; meaning: string };
+
+export function cycleModeDefinitions(
+  gender: JourneyGender,
+): CycleModeDefinition[] {
+  const { subject, possessive } = clientPronouns(gender);
+  const her = possessive.lower;
+  const she = subject.lower;
+  const is = subject.isVerb;
+
+  return [
+    {
+      term: CYCLE_MODE_LABELS['phase-based'],
+      meaning: `${her} program follows ${her} cycle phases: ${she} get${subject.verbEnding} a period, ${is} not on the combined pill, ${is} not pregnant, postpartum or breastfeeding, and ${is} not in perimenopause or menopause.`,
+    },
+    {
+      term: CYCLE_MODE_LABELS['symptom-based'],
+      meaning: `one of those does not hold, so ${her} program follows the symptoms ${she} report${subject.verbEnding}.`,
+    },
+    {
+      term: CYCLE_MODE_LABELS.manual,
+      meaning: `${her} contraception is one the product does not classify; you decide how ${her} program adapts.`,
+    },
+    {
+      term: CYCLE_MODE_NOT_APPLICABLE,
+      meaning: `${her} gender skips the cycle form.`,
+    },
+    {
+      term: CYCLE_MODE_NOT_ANSWERED,
+      meaning: 'the cycle form is empty.',
+    },
+  ];
 }
 
 export function noMeasurementsYetLine(gender: JourneyGender): string {
