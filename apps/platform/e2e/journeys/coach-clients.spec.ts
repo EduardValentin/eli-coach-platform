@@ -361,7 +361,7 @@ test("a client with an account whose answers are not in yet reads Onboarding wit
   // assert
   await coachClient.expectOpen(onboarding.clientId);
   await coachClient.expectClient(onboarding.fullName, onboarding.email);
-  await coachClient.expectProfilePending(onboarding.gender, {
+  await coachClient.expectProfileAwaitingOnboarding(onboarding.gender, {
     Age: ageToday(),
     Gender: "Female",
     Country: "Romania",

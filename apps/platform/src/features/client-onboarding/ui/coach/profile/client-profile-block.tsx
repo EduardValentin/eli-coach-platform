@@ -24,6 +24,11 @@ type ProfileIdentity = ClientProfileView["identity"];
 
 type ProfileFacts = NonNullable<ClientProfileView["facts"]>;
 
+type MeasuredWeights = Pick<
+  ClientProfileView,
+  "startingWeightKg" | "currentWeightKg"
+>;
+
 type ProfileReadingId =
   | "age"
   | "gender"
@@ -78,7 +83,7 @@ const PROFILE_READINGS: readonly ProfileReading[] = [
   },
 ];
 
-const AWAITING_ONBOARDING_VALUES = {
+const AWAITING_FACT_VALUES = {
   height: ABSENT_VALUE,
   startingWeight: ABSENT_VALUE,
   currentWeight: ABSENT_VALUE,
@@ -105,11 +110,11 @@ function identityValues(identity: ProfileIdentity, age: number) {
   };
 }
 
-function onboardingValues(profile: ClientProfileView, facts: ProfileFacts) {
+function factValues(facts: ProfileFacts, weights: MeasuredWeights) {
   return {
     height: heightReading(facts.heightCm),
-    startingWeight: weightReading(profile.startingWeightKg),
-    currentWeight: weightReading(profile.currentWeightKg),
+    startingWeight: weightReading(weights.startingWeightKg),
+    currentWeight: weightReading(weights.currentWeightKg),
     activityLevel: facts.activityLevel ?? ABSENT_VALUE,
     primaryGoal: facts.primaryGoal ?? ABSENT_VALUE,
     dietaryRestrictions: facts.dietaryRestrictions,
@@ -131,7 +136,7 @@ export function ClientProfileBlock({ profile }: ClientProfileBlockProps) {
   const age = ageOn({ dateOfBirth: identity.dateOfBirth, on: now, timeZone });
   const values: ProfileValues = {
     ...identityValues(identity, age),
-    ...(facts ? onboardingValues(profile, facts) : AWAITING_ONBOARDING_VALUES),
+    ...(facts ? factValues(facts, profile) : AWAITING_FACT_VALUES),
   };
 
   return (

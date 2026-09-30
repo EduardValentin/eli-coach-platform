@@ -160,9 +160,9 @@ export class CoachClientPage {
     await this.expectReadings(this.block("Profile"), readings);
   }
 
-  async expectProfilePending(
+  async expectProfileAwaitingOnboarding(
     gender: VisitorGender,
-    identity: Readings,
+    identityReadings: Readings,
   ): Promise<void> {
     const profile = this.block("Profile");
     const { possessiveCapitalised, possessive, subjectSends } =
@@ -175,7 +175,7 @@ export class CoachClientPage {
       ),
     ).toBeVisible();
     await this.expectReadings(profile, {
-      ...identity,
+      ...identityReadings,
       ...Object.fromEntries(
         ONBOARDING_PROFILE_TERMS.map((term) => [term, ABSENT_READING]),
       ),
