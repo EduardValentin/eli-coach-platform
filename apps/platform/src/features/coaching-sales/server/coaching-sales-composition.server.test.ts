@@ -10,6 +10,8 @@ import {
   createRequestArgs,
 } from "~/server/test-support/request-args";
 
+import { writeReviewStamps } from "~/features/coaching-sales/data/client-journeys/review-stamps.server";
+
 import {
   composeCoachingSalesFeature,
   type CoachingSalesFeatureHandles,
@@ -187,6 +189,17 @@ describe("composeCoachingSalesFeature client onboarding handles", () => {
 
     // assert
     await expect(stamping).rejects.toThrow("database down");
+  });
+
+  it("hands out the review stamp writer other features call inside their own transaction", () => {
+    // arrange
+    const { handles } = composeCoachingSalesFeature(createHandles({}));
+
+    // act
+    const writer = handles.reviewStampWriter;
+
+    // assert
+    expect(writer).toBe(writeReviewStamps);
   });
 });
 

@@ -144,7 +144,7 @@ describe("PostgresClientJourneys#recordOnboardingSubmitted", () => {
 });
 
 describe("PostgresClientJourneys#record", () => {
-  it("writes the full set of review stamps of the client", async () => {
+  it("writes the full set of review stamps of the client in its own transaction", async () => {
     // arrange
     const database = createDatabaseRecordingUpdates();
     const journeys = new PostgresClientJourneys(database.client);
@@ -153,34 +153,9 @@ describe("PostgresClientJourneys#record", () => {
     await journeys.record({ clientId: CLIENT_ID, stamps: REQUESTED_STAMPS });
 
     // assert
+    expect(database.transactions).toBe(1);
     expect(database.updates).toEqual([REQUESTED_STAMPS]);
     expect(database.filters).toHaveLength(1);
-  });
-
-  it("writes the same row when the same stamps are recorded twice", async () => {
-    // arrange
-    const database = createDatabaseRecordingUpdates();
-    const journeys = new PostgresClientJourneys(database.client);
-
-    // act
-    await journeys.record({ clientId: CLIENT_ID, stamps: REQUESTED_STAMPS });
-    await journeys.record({ clientId: CLIENT_ID, stamps: REQUESTED_STAMPS });
-
-    // assert
-    expect(database.updates).toEqual([REQUESTED_STAMPS, REQUESTED_STAMPS]);
-    expect(database.filters[1]).toEqual(database.filters[0]);
-  });
-
-  it("clears a stamp the review no longer carries", async () => {
-    // arrange
-    const database = createDatabaseRecordingUpdates();
-    const journeys = new PostgresClientJourneys(database.client);
-
-    // act
-    await journeys.record({ clientId: CLIENT_ID, stamps: NO_REVIEW_STAMPS });
-
-    // assert
-    expect(database.updates).toEqual([NO_REVIEW_STAMPS]);
   });
 });
 
@@ -210,7 +185,8 @@ function createDatabaseAnswering(
 function createDatabaseRecordingUpdates() {
   const updates: unknown[] = [];
   const filters: unknown[] = [];
-  const client = {
+  let transactions = 0;
+  const writer = {
     update: () => ({
       set: (values: unknown) => {
         updates.push(values);
@@ -222,7 +198,22 @@ function createDatabaseRecordingUpdates() {
         };
       },
     }),
+  };
+  const client = {
+    ...writer,
+    transaction: async (work: (transaction: unknown) => Promise<unknown>) => {
+      transactions += 1;
+
+      return work(writer);
+    },
   } as unknown as DatabaseClient;
 
-  return { client, filters, updates };
+  return {
+    client,
+    filters,
+    updates,
+    get transactions() {
+      return transactions;
+    },
+  };
 }

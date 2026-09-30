@@ -59,6 +59,10 @@ import { CoachingPurchaseCompletionHandler } from "~/features/coaching-sales/api
 import { CheckoutsController } from "~/features/coaching-sales/api/public/checkouts-controller.server";
 import { InvitationsController } from "~/features/coaching-sales/api/public/invitations-controller.server";
 import { PostgresClientJourneys } from "~/features/coaching-sales/data/client-journeys/client-journeys-repository.server";
+import {
+  writeReviewStamps,
+  type ReviewStampWriter,
+} from "~/features/coaching-sales/data/client-journeys/review-stamps.server";
 import { PostgresClientIdentities } from "~/features/coaching-sales/data/clients/client-identities-reader.server";
 import { PostgresClientRoster } from "~/features/coaching-sales/data/clients/client-roster-reader.server";
 import { PostgresOnboardingClients } from "~/features/coaching-sales/data/clients/onboarding-clients-reader.server";
@@ -93,6 +97,7 @@ type CoachingSalesComposition = {
     onboardingReviewStamps: OnboardingReviewStamps;
     onboardingSubmissionStamps: OnboardingSubmissionStamps;
     paymentCompletionHandler: PaymentCompletionHandler;
+    reviewStampWriter: ReviewStampWriter;
   };
 };
 
@@ -284,6 +289,7 @@ export function composeCoachingSalesFeature(
         incidents: handles.incidents,
         recordCheckoutCompleted: useCases.recordCheckoutCompleted,
       }),
+      reviewStampWriter: writeReviewStamps,
     },
   };
 }

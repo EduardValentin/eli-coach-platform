@@ -9,6 +9,7 @@ import type {
 } from "@eli-coach-platform/domain/client-onboarding";
 import { and, eq, isNull } from "drizzle-orm";
 
+import { writeReviewStamps } from "~/features/coaching-sales/data/client-journeys/review-stamps.server";
 import { clientsTable } from "~/features/coaching-sales/data/schema.server";
 
 export class PostgresClientJourneys
@@ -73,14 +74,8 @@ export class PostgresClientJourneys
     clientId: string;
     stamps: ReviewStamps;
   }): Promise<void> {
-    await this.database
-      .update(clientsTable)
-      .set({
-        reviewOpenedAt: input.stamps.reviewOpenedAt,
-        detailsRequestedAt: input.stamps.detailsRequestedAt,
-        detailsAnsweredAt: input.stamps.detailsAnsweredAt,
-        answersApprovedAt: input.stamps.answersApprovedAt,
-      })
-      .where(eq(clientsTable.id, input.clientId));
+    await this.database.transaction((transaction) =>
+      writeReviewStamps(transaction, input),
+    );
   }
 }
