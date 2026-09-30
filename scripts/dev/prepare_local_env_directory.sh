@@ -8,6 +8,7 @@ fi
 
 VARIABLE_NAME="$1"
 ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
+PLATFORM_DIR="$ROOT_DIR/apps/platform"
 
 value_in_env_file() {
   local env_file="$1"
@@ -17,7 +18,6 @@ value_in_env_file() {
   fi
 }
 
-# Honour whatever .env names; the template's value lets this run before .env exists.
 directory=$(value_in_env_file "$ROOT_DIR/.env")
 
 if [[ -z "$directory" ]]; then
@@ -29,9 +29,8 @@ if [[ -z "$directory" ]]; then
   exit 1
 fi
 
-# The app resolves a relative directory against apps/platform.
 if [[ "$directory" != /* ]]; then
-  directory="$ROOT_DIR/apps/platform/$directory"
+  directory="$PLATFORM_DIR/$directory"
 fi
 
 mkdir -p "$directory"
