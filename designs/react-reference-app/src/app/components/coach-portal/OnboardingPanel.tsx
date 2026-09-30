@@ -32,7 +32,6 @@ import {
   isBeforeStage,
   type ClientJourney,
   type DetailRequest,
-  type JourneyGender,
   type JourneyStage,
 } from '../../domain/journey';
 import {
@@ -53,8 +52,7 @@ import {
   clientPronouns,
   CYCLE_MODE_INFO_LABEL,
   CYCLE_MODE_NOT_ANSWERED,
-  CYCLE_MODE_NOT_APPLICABLE,
-  cycleModeDefinitions,
+  CYCLE_MODE_DEFINITIONS,
   formatJourneyDate,
 } from '../../utils/journeyLabels';
 import { PortalWidget } from '../PortalWidget';
@@ -152,13 +150,11 @@ function ScreeningWarning({ journey }: { journey: ClientJourney }) {
 }
 
 function cycleModeValue(journey: ClientJourney): string {
-  if (journey.identity.gender !== 'female') return CYCLE_MODE_NOT_APPLICABLE;
-
   const mode = cycleModeOf(journey.onboarding);
   return mode ? CYCLE_MODE_LABELS[mode] : CYCLE_MODE_NOT_ANSWERED;
 }
 
-function CycleModeInfo({ gender }: { gender: JourneyGender }) {
+function CycleModeInfo() {
   return (
     <IconHint
       label={CYCLE_MODE_INFO_LABEL}
@@ -168,7 +164,7 @@ function CycleModeInfo({ gender }: { gender: JourneyGender }) {
       contentParityRoot="CycleModeTooltip"
     >
       <dl className="space-y-1">
-        {cycleModeDefinitions(gender).map(({ term, meaning }) => (
+        {CYCLE_MODE_DEFINITIONS.map(({ term, meaning }) => (
           <div key={term}>
             <dt className="inline font-semibold">{term}</dt>{' '}
             <dd className="inline">— {meaning}</dd>
@@ -214,13 +210,15 @@ function OnboardingFacts({
         value={channel ?? 'Not chosen yet'}
         valueParity="fact-channel"
       />
-      <Reading
-        as="dl-item"
-        label="Cycle mode"
-        labelAdornment={<CycleModeInfo gender={journey.identity.gender} />}
-        value={cycleModeValue(journey)}
-        valueParity="fact-cycle-mode"
-      />
+      {journey.identity.gender === 'female' && (
+        <Reading
+          as="dl-item"
+          label="Cycle mode"
+          labelAdornment={<CycleModeInfo />}
+          value={cycleModeValue(journey)}
+          valueParity="fact-cycle-mode"
+        />
+      )}
     </dl>
   );
 }

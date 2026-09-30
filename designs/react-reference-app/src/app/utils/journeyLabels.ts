@@ -62,48 +62,33 @@ export function clientPronouns(gender: JourneyGender): ClientPronouns {
   };
 }
 
-export const CYCLE_MODE_NOT_APPLICABLE = 'Not applicable';
-
 export const CYCLE_MODE_NOT_ANSWERED = 'Not answered yet';
 
 export const CYCLE_MODE_INFO_LABEL = 'What cycle mode means';
 
 export type CycleModeDefinition = { term: string; meaning: string };
 
-export function cycleModeDefinitions(
-  gender: JourneyGender,
-): CycleModeDefinition[] {
-  const pronouns = clientPronouns(gender);
-  const possessive = pronouns.possessive.lower;
-  const {
-    lower: pronoun,
-    isVerb: beVerb,
-    regularVerbSuffix: verbSuffix,
-  } = pronouns.subject;
-
-  return [
-    {
-      term: CYCLE_MODE_LABELS['phase-based'],
-      meaning: `${possessive} program follows ${possessive} cycle phases: ${pronoun} get${verbSuffix} a period, ${beVerb} not on the combined pill, ${beVerb} not pregnant, postpartum or breastfeeding, and ${beVerb} not in perimenopause or menopause.`,
-    },
-    {
-      term: CYCLE_MODE_LABELS['symptom-based'],
-      meaning: `one of those does not hold, so ${possessive} program follows the symptoms ${pronoun} report${verbSuffix}.`,
-    },
-    {
-      term: CYCLE_MODE_LABELS.manual,
-      meaning: `${possessive} contraception is one the product does not classify; you decide how ${possessive} program adapts.`,
-    },
-    {
-      term: CYCLE_MODE_NOT_APPLICABLE,
-      meaning: `${possessive} gender skips the cycle form.`,
-    },
-    {
-      term: CYCLE_MODE_NOT_ANSWERED,
-      meaning: 'the cycle form is empty.',
-    },
-  ];
-}
+export const CYCLE_MODE_DEFINITIONS: readonly CycleModeDefinition[] = [
+  {
+    term: CYCLE_MODE_LABELS['phase-based'],
+    meaning:
+      'her program follows her cycle phases: she gets a period, is not on the combined pill, is not pregnant, postpartum or breastfeeding, and is not in perimenopause or menopause.',
+  },
+  {
+    term: CYCLE_MODE_LABELS['symptom-based'],
+    meaning:
+      'one of those does not hold, so her program follows the symptoms she reports.',
+  },
+  {
+    term: CYCLE_MODE_LABELS.manual,
+    meaning:
+      'her contraception is one the product does not classify; you decide how her program adapts.',
+  },
+  {
+    term: CYCLE_MODE_NOT_ANSWERED,
+    meaning: 'the cycle form is empty.',
+  },
+];
 
 export function noMeasurementsYetLine(gender: JourneyGender): string {
   const { subject } = clientPronouns(gender);

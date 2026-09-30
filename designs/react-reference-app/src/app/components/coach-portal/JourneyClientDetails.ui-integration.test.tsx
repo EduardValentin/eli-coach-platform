@@ -1159,9 +1159,6 @@ describe('the coach reading what cycle mode means', () => {
       'Set by Eli — her contraception is one the product does not classify; you decide how her program adapts.',
     );
     expect(hint).toHaveTextContent(
-      'Not applicable — her gender skips the cycle form.',
-    );
-    expect(hint).toHaveTextContent(
       'Not answered yet — the cycle form is empty.',
     );
   });
@@ -1180,37 +1177,24 @@ describe('the coach reading what cycle mode means', () => {
     );
   });
 
-  it('words the explanation for a man', async () => {
+  it.each([
+    ['a man', 'male'],
+    ['a client who preferred not to say', 'prefer-not-to-say'],
+  ])('leaves cycle mode out of the facts for %s', (_who, gender) => {
     // arrange
-    const user = renderDetails('?jstage=submitted&jgender=male', {
-      postMvp: false,
-    });
+    const urlQuery = `?jstage=submitted&jgender=${gender}`;
 
     // act
-    await user.hover(cycleModeInfoButton());
+    renderDetails(urlQuery, { postMvp: false });
 
     // assert
-    expect(await screen.findByRole('dialog')).toHaveTextContent(
-      'Phase-based — his program follows his cycle phases: he gets a period, is not on the combined pill, is not pregnant, postpartum or breastfeeding, and is not in perimenopause or menopause.',
-    );
-  });
-
-  it('words the explanation for a client who preferred not to say', async () => {
-    // arrange
-    const user = renderDetails('?jstage=submitted&jgender=prefer-not-to-say', {
-      postMvp: false,
-    });
-
-    // act
-    await user.hover(cycleModeInfoButton());
-
-    // assert
-    const hint = await screen.findByRole('dialog');
-    expect(hint).toHaveTextContent(
-      'Phase-based — their program follows their cycle phases: they get a period, are not on the combined pill, are not pregnant, postpartum or breastfeeding, and are not in perimenopause or menopause.',
-    );
-    expect(hint).toHaveTextContent(
-      'Symptom-based — one of those does not hold, so their program follows the symptoms they report.',
-    );
+    expect(
+      within(onboardingWidget()).queryByText('Cycle mode'),
+    ).not.toBeInTheDocument();
+    expect(
+      within(onboardingWidget()).queryByRole('button', {
+        name: 'What cycle mode means',
+      }),
+    ).not.toBeInTheDocument();
   });
 });
