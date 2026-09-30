@@ -246,9 +246,9 @@ Prerequisites:
   asserts the mode from the public environment endpoint and fails until the
   flip lands. No journey needs a Clerk webhook delivery, so the suite does not
   start the relay.
-- Every other variable the runtime schema requires, `MANAGEMENT_API_SECRET`
-  and `STORE_ASSET_ROOT` included — `pnpm secrets:local:prepare` and
-  `pnpm store:assets:local:prepare` provide them. A `.env` predating one of
+- Every other variable the runtime schema requires, `MANAGEMENT_API_SECRET`,
+  `STORE_ASSET_ROOT` and `CLIENT_MEDIA_ROOT` included — `pnpm secrets:local:prepare`,
+  `pnpm store:assets:local:prepare` and `pnpm client:media:local:prepare` provide them. A `.env` predating one of
   them fails as `Timed out waiting 120000ms from config.webServer`, which
   names neither the variable nor the schema; the `ZodError` that explains it
   is further up, in the `[WebServer]` output.

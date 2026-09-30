@@ -145,7 +145,8 @@ fi
 
 pnpm secrets:local:prepare >/dev/null
 pnpm store:assets:local:prepare >/dev/null
-log "local env files and store asset root ready"
+pnpm client:media:local:prepare >/dev/null
+log "local env files, store asset root and client media root ready"
 
 # --- Session environment ----------------------------------------------------
 

@@ -35,6 +35,7 @@ Prepare the local env files and store asset root once:
 ```bash
 pnpm secrets:local:prepare
 pnpm store:assets:local:prepare
+pnpm client:media:local:prepare
 ```
 
 Start the full local stack:
