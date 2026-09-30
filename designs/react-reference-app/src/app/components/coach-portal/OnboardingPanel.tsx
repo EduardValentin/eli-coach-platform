@@ -324,10 +324,10 @@ function RequestStatus({ request }: { request: DetailRequest }) {
 
 function WorkStartNote({
   subscription,
-  possessive,
+  clientPossessive,
 }: {
   subscription: CoachingSubscription | undefined;
-  possessive: string;
+  clientPossessive: string;
 }) {
   const startsOn =
     subscription && !canStartWork(subscription, new Date())
@@ -338,7 +338,7 @@ function WorkStartNote({
 
   return (
     <p className="text-xs text-text-secondary">
-      You can start building {possessive} program on{' '}
+      You can start building {clientPossessive} program on{' '}
       {formatJourneyDate(startsOn)}.
     </p>
   );
@@ -401,7 +401,7 @@ function StageActions({
       {isPostMvp && (
         <WorkStartNote
           subscription={journey.subscription}
-          possessive={possessive.lower}
+          clientPossessive={possessive.lower}
         />
       )}
     </div>

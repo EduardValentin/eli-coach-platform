@@ -35,7 +35,7 @@ function startProgramValue(subscription: CoachingSubscription): string {
 function periodLine(
   subscription: CoachingSubscription,
   now: Date,
-  possessive: string,
+  ownerPossessive: string,
 ): Line {
   const status = deriveStatus(subscription, now);
   const endsAt = subscription.periodEndsAt;
@@ -43,7 +43,7 @@ function periodLine(
   if (!endsAt) {
     return {
       term: 'Renews on',
-      value: `Once ${possessive} program starts`,
+      value: `Once ${ownerPossessive} program starts`,
     };
   }
   if (status === 'cancelled') {

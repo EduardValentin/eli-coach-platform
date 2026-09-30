@@ -64,7 +64,7 @@ export function clientPronouns(gender: JourneyGender): ClientPronouns {
 export function noMeasurementsYetLine(gender: JourneyGender): string {
   const { subject } = clientPronouns(gender);
 
-  return `${subject.capitalised} ${subject.has} not sent any measurements yet.`;
+  return `${subject.capitalised} ${subject.hasVerb} not sent any measurements yet.`;
 }
 
 export const SUBSCRIPTION_STATUS_LABELS: Record<SubscriptionStatus, string> = {

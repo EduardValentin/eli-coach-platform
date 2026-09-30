@@ -166,7 +166,7 @@ describe('subjectPronoun', () => {
     const pronoun = subjectPronoun('female');
 
     // assert
-    expect(pronoun).toEqual({ capitalised: 'She', has: 'has' });
+    expect(pronoun).toEqual({ capitalised: 'She', hasVerb: 'has' });
   });
 
   it('uses he has for a man', () => {
@@ -175,7 +175,7 @@ describe('subjectPronoun', () => {
     const pronoun = subjectPronoun('male');
 
     // assert
-    expect(pronoun).toEqual({ capitalised: 'He', has: 'has' });
+    expect(pronoun).toEqual({ capitalised: 'He', hasVerb: 'has' });
   });
 
   it('uses they have when the visitor preferred not to say', () => {
@@ -184,7 +184,7 @@ describe('subjectPronoun', () => {
     const pronoun = subjectPronoun('prefer_not_to_say');
 
     // assert
-    expect(pronoun).toEqual({ capitalised: 'They', has: 'have' });
+    expect(pronoun).toEqual({ capitalised: 'They', hasVerb: 'have' });
   });
 });
 

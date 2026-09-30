@@ -50,12 +50,12 @@ export function possessivePronoun(gender: VisitorGender): PossessivePronoun {
   return POSSESSIVE_PRONOUNS[gender];
 }
 
-export type SubjectPronoun = { capitalised: string; has: string };
+export type SubjectPronoun = { capitalised: string; hasVerb: string };
 
 const SUBJECT_PRONOUNS: Record<VisitorGender, SubjectPronoun> = {
-  female: { capitalised: 'She', has: 'has' },
-  male: { capitalised: 'He', has: 'has' },
-  prefer_not_to_say: { capitalised: 'They', has: 'have' },
+  female: { capitalised: 'She', hasVerb: 'has' },
+  male: { capitalised: 'He', hasVerb: 'has' },
+  prefer_not_to_say: { capitalised: 'They', hasVerb: 'have' },
 };
 
 export function subjectPronoun(gender: VisitorGender): SubjectPronoun {
