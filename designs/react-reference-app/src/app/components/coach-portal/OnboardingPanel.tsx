@@ -17,7 +17,6 @@ import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Checkbox } from '../ui/checkbox';
 import { ConfirmDialog } from '../ui/confirm-dialog';
-import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { cn } from '../ui/utils';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
 import { clientStatus } from '../../domain/clientStatus';
@@ -60,7 +59,7 @@ import {
 } from '../../utils/journeyLabels';
 import { PortalWidget } from '../PortalWidget';
 import { Reading } from '../Reading';
-import { StatusHint } from '../StatusHint';
+import { IconHint } from '../IconHint';
 import { WIDGET_SUBHEADING_CLASS } from '../typography';
 import { ClientStatusBadge } from './ClientStatusBadge';
 import { OnboardingReviewDialog } from './OnboardingReviewDialog';
@@ -139,7 +138,7 @@ function ScreeningWarning({ journey }: { journey: ClientJourney }) {
   if (warnings.length === 0) return null;
 
   return (
-    <StatusHint
+    <IconHint
       label={warnings.join('. ')}
       icon={<TriangleAlert aria-hidden="true" size={16} />}
       className="text-destructive"
@@ -148,7 +147,7 @@ function ScreeningWarning({ journey }: { journey: ClientJourney }) {
       {warnings.map((warning) => (
         <p key={warning}>{warning}</p>
       ))}
-    </StatusHint>
+    </IconHint>
   );
 }
 
@@ -161,34 +160,22 @@ function cycleModeValue(journey: ClientJourney): string {
 
 function CycleModeInfo({ gender }: { gender: JourneyGender }) {
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <button
-          type="button"
-          aria-label={CYCLE_MODE_INFO_LABEL}
-          data-parity="fact-cycle-mode-info"
-          className="-my-1.5 inline-flex size-6 items-center justify-center rounded-full"
-        >
-          <Info aria-hidden="true" size={16} />
-        </button>
-      </TooltipTrigger>
-      <TooltipContent
-        side="bottom"
-        align="start"
-        collisionPadding={16}
-        data-parity-root="CycleModeTooltip"
-        className="max-w-sm text-pretty"
-      >
-        <dl className="space-y-1">
-          {cycleModeDefinitions(gender).map(({ term, meaning }) => (
-            <div key={term}>
-              <dt className="inline font-semibold">{term}</dt>{' '}
-              <dd className="inline">— {meaning}</dd>
-            </div>
-          ))}
-        </dl>
-      </TooltipContent>
-    </Tooltip>
+    <IconHint
+      label={CYCLE_MODE_INFO_LABEL}
+      icon={<Info aria-hidden="true" size={16} />}
+      className="-my-1.5"
+      parity="fact-cycle-mode-info"
+      contentParityRoot="CycleModeTooltip"
+    >
+      <dl className="space-y-1">
+        {cycleModeDefinitions(gender).map(({ term, meaning }) => (
+          <div key={term}>
+            <dt className="inline font-semibold">{term}</dt>{' '}
+            <dd className="inline">— {meaning}</dd>
+          </div>
+        ))}
+      </dl>
+    </IconHint>
   );
 }
 
