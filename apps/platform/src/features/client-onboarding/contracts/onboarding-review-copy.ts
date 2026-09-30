@@ -104,7 +104,7 @@ export const MEASUREMENTS_COPY = {
   empty: (gender: VisitorGender) => {
     const subject = subjectPronoun(gender);
 
-    return `${subject.capitalised} ${subject.has} not sent any measurements yet.`;
+    return `${subject.capitalised} ${subject.hasVerb} not sent any measurements yet.`;
   },
   caption: "Measurements history, newest first",
   columns: ["Date", "Weight", "Waist", "Hips", "Thigh", "Arm", "Ratio"],
