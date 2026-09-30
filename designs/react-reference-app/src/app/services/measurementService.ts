@@ -12,6 +12,18 @@ export const PHOTO_PROCESSING_OUTCOMES: readonly PhotoProcessing[] = [
   'refuses',
 ];
 
+export type MeasurementSave = 'works' | 'fails';
+
+export const MEASUREMENT_SAVE_OUTCOMES: readonly MeasurementSave[] = [
+  'works',
+  'fails',
+];
+
+export type MeasurementOutcomes = {
+  processing: PhotoProcessing;
+  save: MeasurementSave;
+};
+
 export const SIMULATED_LATENCY_MS = 900;
 
 export type RecordedMeasurements = {
@@ -21,11 +33,15 @@ export type RecordedMeasurements = {
 
 export async function recordMeasurements(
   entry: MeasurementEntry,
-  processing: PhotoProcessing,
+  outcomes: MeasurementOutcomes,
 ): Promise<RecordedMeasurements> {
   await new Promise((resolve) => setTimeout(resolve, SIMULATED_LATENCY_MS));
 
-  if (processing === 'works') return { entry, refusedViews: [] };
+  if (outcomes.save === 'fails') {
+    throw new Error('The measurements could not be saved.');
+  }
+
+  if (outcomes.processing === 'works') return { entry, refusedViews: [] };
 
   return {
     entry: { ...entry, photos: NO_PROGRESS_PHOTOS },

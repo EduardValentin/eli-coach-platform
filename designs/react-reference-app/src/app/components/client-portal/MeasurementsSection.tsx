@@ -37,6 +37,8 @@ const SHEET_DESCRIPTION =
 
 const SAVED_TOAST = 'Measurements saved.';
 
+const SAVE_FAILED_TOAST = 'Your measurements could not be saved. Try again.';
+
 function refusedPhotoToast(view: ProgressPhotoView): string {
   return `The ${view} photo could not be processed, so it was not saved.`;
 }
@@ -74,7 +76,15 @@ function AddMeasurementsForm({
     if (!entry) return;
 
     setSaving(true);
-    const recorded = await recordMeasurements(entry, appState.photoProcessing);
+    const recorded = await recordMeasurements(entry, {
+      processing: appState.photoProcessing,
+      save: appState.measurementSave,
+    }).catch(() => null);
+    if (!recorded) {
+      setSaving(false);
+      toast.error(SAVE_FAILED_TOAST);
+      return;
+    }
     if (photoConsent) {
       recordProgressPhotoConsent(demoJourney.callId, recorded.entry.recordedAt);
     }

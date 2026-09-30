@@ -26,7 +26,9 @@ import {
   type OnboardingConnection,
 } from '../services/onboardingService';
 import {
+  MEASUREMENT_SAVE_OUTCOMES,
   PHOTO_PROCESSING_OUTCOMES,
+  type MeasurementSave,
   type PhotoProcessing,
 } from '../services/measurementService';
 import {
@@ -98,6 +100,7 @@ type AppState = {
   journeyMeasurementsDue: PrototypeMeasurementsDue;
   journeyLifeStage: PrototypeLifeStage;
   photoProcessing: PhotoProcessing;
+  measurementSave: MeasurementSave;
   invitationResendOutcome: PrototypeInvitationResendOutcome;
   clientsRoster: PrototypeClientsRoster;
   paymentLinkOutcome: PrototypePaymentLinkOutcome;
@@ -137,6 +140,7 @@ const defaultState: AppState = {
   journeyMeasurementsDue: 'none',
   journeyLifeStage: 'none',
   photoProcessing: 'works',
+  measurementSave: 'works',
   invitationResendOutcome: 'sent',
   clientsRoster: 'seeded',
   paymentLinkOutcome: 'sent',
@@ -346,6 +350,11 @@ function parseDevParamsFromURL(): AppState {
     params.get('jphoto'),
     defaultState.photoProcessing,
   );
+  state.measurementSave = optionOrDefault(
+    MEASUREMENT_SAVE_OUTCOMES,
+    params.get('jsave'),
+    defaultState.measurementSave,
+  );
   const invitationResendOutcome = params.get('jresend');
   if (
     invitationResendOutcome &&
@@ -428,6 +437,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     url.searchParams.delete('jdue');
     url.searchParams.delete('jlife');
     url.searchParams.delete('jphoto');
+    url.searchParams.delete('jsave');
     url.searchParams.delete('jresend');
     url.searchParams.delete('jroster');
     url.searchParams.delete('paylink');
@@ -510,6 +520,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     if (appState.photoProcessing !== defaultState.photoProcessing) {
       url.searchParams.set('jphoto', appState.photoProcessing);
+    }
+    if (appState.measurementSave !== defaultState.measurementSave) {
+      url.searchParams.set('jsave', appState.measurementSave);
     }
     if (
       appState.invitationResendOutcome !== defaultState.invitationResendOutcome

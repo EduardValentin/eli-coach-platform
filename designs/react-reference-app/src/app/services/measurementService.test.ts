@@ -20,7 +20,7 @@ afterEach(() => {
 });
 
 async function recorded(processing: 'works' | 'refuses') {
-  const pending = recordMeasurements(ENTRY, processing);
+  const pending = recordMeasurements(ENTRY, { processing, save: 'works' });
   await vi.advanceTimersByTimeAsync(SIMULATED_LATENCY_MS);
 
   return pending;
@@ -53,5 +53,22 @@ describe('recording measurements', () => {
       entry: { ...ENTRY, photos: {} },
       refusedViews: ['front', 'back'],
     });
+  });
+
+  it('fails to store anything once the save fails, even when the photos would be refused', async () => {
+    // arrange
+    const pending = recordMeasurements(ENTRY, {
+      processing: 'refuses',
+      save: 'fails',
+    });
+    const failure = expect(pending).rejects.toThrow(
+      'The measurements could not be saved.',
+    );
+
+    // act
+    await vi.advanceTimersByTimeAsync(SIMULATED_LATENCY_MS);
+
+    // assert
+    await failure;
   });
 });

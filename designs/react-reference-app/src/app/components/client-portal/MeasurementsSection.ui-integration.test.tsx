@@ -208,4 +208,46 @@ describe('her measurements on the profile page', () => {
       screen.queryByRole('button', { name: /^View photos/ }),
     ).not.toBeInTheDocument();
   });
+
+  it('keeps the sheet open with what she entered and tells her when the save fails', async () => {
+    // arrange
+    renderSection('&jsave=fails');
+    const sheet = await openSheet();
+    const weight = within(sheet).getByRole('spinbutton', { name: /Weight/ });
+    await userEvent.clear(weight);
+    await userEvent.type(weight, '65.4');
+    await userEvent.click(
+      screen.getByRole('checkbox', { name: PROGRESS_PHOTO_CONSENT_COPY }),
+    );
+    await userEvent.upload(screen.getByLabelText('Add front photo'), photo());
+
+    // act
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Save measurements' }),
+    );
+
+    // assert
+    expect(
+      await screen.findByText(
+        'Your measurements could not be saved. Try again.',
+        {},
+        { timeout: SERVICE_TIMEOUT },
+      ),
+    ).toBeVisible();
+    expect(
+      screen.getByRole('dialog', { name: 'Add measurements' }),
+    ).toBeVisible();
+    expect(weight).toHaveValue(65.4);
+    expect(screen.getByLabelText('Remove front photo')).toBeVisible();
+    expect(screen.getByRole('checkbox', { name: PROGRESS_PHOTO_CONSENT_COPY })).toBeChecked();
+    expect(
+      screen.getByRole('button', { name: 'Save measurements' }),
+    ).toBeEnabled();
+    expect(screen.queryByText('Measurements saved.')).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
+    );
+    expect(historyRows()).toHaveLength(1);
+  });
 });

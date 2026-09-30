@@ -35,7 +35,10 @@ import {
   ONBOARDING_CONNECTIONS,
   type OnboardingConnection,
 } from '../services/onboardingService';
-import { PHOTO_PROCESSING_OUTCOMES } from '../services/measurementService';
+import {
+  MEASUREMENT_SAVE_OUTCOMES,
+  PHOTO_PROCESSING_OUTCOMES,
+} from '../services/measurementService';
 import {
   PROTOTYPE_LIFE_STAGES,
   PROTOTYPE_MEASUREMENTS_DUE,
@@ -1142,6 +1145,38 @@ export function DevToggle() {
                     <SelectContent className={SELECT_CONTENT_CLASS}>
                       <SelectItem value="works">Works</SelectItem>
                       <SelectItem value="refuses">Refuses every photo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="dev-measurement-save"
+                    className={DEV_LABEL_CLASS}
+                  >
+                    Measurement save
+                  </Label>
+                  <Select
+                    value={appState.measurementSave}
+                    onValueChange={(value) =>
+                      setAppState({
+                        measurementSave: optionOrDefault(
+                          MEASUREMENT_SAVE_OUTCOMES,
+                          value,
+                          'works',
+                        ),
+                      })
+                    }
+                  >
+                    <SelectTrigger
+                      id="dev-measurement-save"
+                      className="w-full"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="works">Works</SelectItem>
+                      <SelectItem value="fails">Fails</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
