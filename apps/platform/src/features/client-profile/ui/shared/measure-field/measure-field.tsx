@@ -62,7 +62,7 @@ function canonicalReading(
   return toCanonicalMeasure(field.kind, entered, units);
 }
 
-function readingProblem(field: MeasureFieldDefinition, units: MeasureUnits) {
+function validateReading(field: MeasureFieldDefinition, units: MeasureUnits) {
   return (value: unknown) =>
     measurementProblem(
       field,
@@ -101,7 +101,7 @@ export function MeasureField<
   const { field: controller, fieldState } = useController({
     control,
     name,
-    rules: { validate: validate ?? readingProblem(field, units) },
+    rules: { validate: validate ?? validateReading(field, units) },
   });
   const error = fieldState.error?.message;
   const invalid = error !== undefined;
