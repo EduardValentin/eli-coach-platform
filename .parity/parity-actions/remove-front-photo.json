@@ -1,0 +1,13 @@
+[
+  {"waitFor": "[data-parity-root=\"MeasurementsTable\"] [data-parity=\"row-actions\"] button"},
+  {"wait": 600},
+  {"click": "[data-parity-root=\"MeasurementsTable\"] [data-parity=\"row-actions\"] button"},
+  {"waitFor": "[data-parity-root=\"PhotoViewDialog\"] [data-parity=\"photo-front\"]"},
+  {"wait": 600},
+  {"click": "[data-parity-root=\"PhotoViewDialog\"] [data-parity=\"remove-front\"]"},
+  {"waitFor": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"},
+  {"wait": 600},
+  {"click": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"},
+  {"waitFor": "[data-parity-root=\"PhotoViewDialog\"] [data-parity=\"photo-front\"] >> text=No front photo"},
+  {"wait": 600}
+]

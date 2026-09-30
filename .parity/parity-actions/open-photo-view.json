@@ -1,0 +1,7 @@
+[
+  {"waitFor": "[data-parity-root=\"MeasurementsTable\"] [data-parity=\"row-actions\"] button"},
+  {"wait": 600},
+  {"click": "[data-parity-root=\"MeasurementsTable\"] [data-parity=\"row-actions\"] button"},
+  {"waitFor": "[data-parity-root=\"PhotoViewDialog\"] [data-parity=\"photo-front\"]"},
+  {"wait": 600}
+]
