@@ -39,7 +39,8 @@
         "e2e/**/*.ts",
         "integration-test-config/**/*.ts",
         "tooling/**/*.ts"
-      ]
+      ],
+      "ignoreDependencies": ["sharp"]
     },
     "packages/*": {
       "entry": [

@@ -9,13 +9,9 @@ export { type MeasurementClients } from "./measurement-clients";
 export {
   MeasurementHistory,
   type MeasurementDueLine,
-  type MeasurementHistorySnapshot,
   type MeasurementRecord,
 } from "./measurement-history";
-export {
-  type MeasurementIncidents,
-  type ProgressPhotoRefusal,
-} from "./measurement-incidents";
+export { type MeasurementIncidents } from "./measurement-incidents";
 export { OpenProgressPhotoUseCase } from "./open-progress-photo-use-case";
 export {
   ACCEPTED_PROGRESS_PHOTO_TYPES,
@@ -43,9 +39,6 @@ export {
   ReadClientProfileUseCase,
   type ClientProfileReading,
 } from "./read-client-profile-use-case";
-export {
-  ReadOwnMeasurementHistoryUseCase,
-  type OwnMeasurementHistoryReading,
-} from "./read-own-measurement-history-use-case";
+export { ReadOwnMeasurementHistoryUseCase } from "./read-own-measurement-history-use-case";
 export { RecordMeasurementsUseCase } from "./record-measurements-use-case";
 export { RemoveProgressPhotoUseCase } from "./remove-progress-photo-use-case";
