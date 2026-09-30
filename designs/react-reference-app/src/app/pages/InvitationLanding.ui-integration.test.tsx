@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -142,19 +142,23 @@ describe('accepting an invitation', () => {
     expect(screen.getByTestId('stage')).toHaveTextContent('account-created');
   }, TEST_TIMEOUT_MS);
 
-  it('shows no account card while the hand-off runs', async () => {
+  it('never shows an account card on the way to the welcome page', async () => {
     // arrange
     renderInvitation(invitationAddress('?jstage=invited'));
+    let cardShown = false;
 
     // act
-    await screen.findByText(WELCOME_PAGE, undefined, WAIT);
+    await waitFor(() => {
+      cardShown ||=
+        screen.queryByRole('heading', { name: 'Create your account' }) !==
+          null ||
+        screen.queryByLabelText('Email') !== null ||
+        screen.queryByRole('link') !== null;
+      expect(screen.getByText(WELCOME_PAGE)).toBeVisible();
+    }, WAIT);
 
     // assert
-    expect(
-      screen.queryByRole('heading', { name: 'Create your account' }),
-    ).not.toBeInTheDocument();
-    expect(screen.queryByLabelText('Email')).not.toBeInTheDocument();
-    expect(screen.queryByRole('link')).not.toBeInTheDocument();
+    expect(cardShown).toBe(false);
   }, TEST_TIMEOUT_MS);
 
   it.each(['expired', 'used', 'unknown'])(

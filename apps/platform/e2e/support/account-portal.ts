@@ -84,7 +84,7 @@ export class AccountPortal {
   }
 
   async signUpFromInvitation(
-    openInvitation: () => Promise<unknown>,
+    startSignUpHandOff: () => Promise<unknown>,
   ): Promise<void> {
     const portalPaths: string[] = [];
     const recordPortalPath = (frame: Frame) => {
@@ -96,7 +96,7 @@ export class AccountPortal {
     };
 
     this.page.on("framenavigated", recordPortalPath);
-    await openInvitation();
+    await startSignUpHandOff();
     await expect
       .poll(() => portalPaths.length, { timeout: SIGN_UP_HAND_OFF_TIMEOUT_MS })
       .toBeGreaterThan(0);

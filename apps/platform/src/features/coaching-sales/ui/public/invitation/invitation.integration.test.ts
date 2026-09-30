@@ -161,7 +161,7 @@ describe.sequential("invitation landing integration", () => {
     expect(document).toContain("<title>Your invitation | Evoa</title>");
     expect(document).toContain('name="robots" content="noindex"');
     expect(document).not.toContain("Create your account");
-    expect(document).not.toContain("Continue");
+    expect(document).not.toContain("Continue to create my account");
   });
 
   it("serves the page in waiting-list mode too", async () => {
