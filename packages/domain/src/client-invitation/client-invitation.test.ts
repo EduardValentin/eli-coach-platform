@@ -138,3 +138,52 @@ describe("ClientInvitation#awaitsEmail", () => {
     expect(awaitsEmail).toBe(false);
   });
 });
+
+describe("ClientInvitation#standing", () => {
+  const BEFORE_EXPIRY = new Date("2026-10-01T10:00:00.000Z");
+
+  it.each([
+    [
+      "pending while it is valid and its email went out",
+      { emailSentAt: SENT_AT },
+      BEFORE_EXPIRY,
+      "pending",
+    ],
+    [
+      "expired once its thirty days are over",
+      { emailSentAt: SENT_AT },
+      EXPIRES_AT,
+      "expired",
+    ],
+    [
+      "email-failed when its email could not be sent",
+      { emailDeliveryFailedAt: SENT_AT },
+      BEFORE_EXPIRY,
+      "email-failed",
+    ],
+    [
+      "email-failed while its email never went out",
+      {},
+      BEFORE_EXPIRY,
+      "email-failed",
+    ],
+    [
+      "email-failed over expired",
+      { emailDeliveryFailedAt: SENT_AT },
+      EXPIRES_AT,
+      "email-failed",
+    ],
+  ] as const)("is %s", (_label, overrides, now, expected) => {
+    // arrange
+    const invitation = ClientInvitation.reconstitute({
+      ...pendingInvitation(),
+      ...overrides,
+    });
+
+    // act
+    const standing = invitation.standing(now);
+
+    // assert
+    expect(standing).toBe(expected);
+  });
+});

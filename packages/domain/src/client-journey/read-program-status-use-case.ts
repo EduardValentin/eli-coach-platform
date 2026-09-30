@@ -1,10 +1,11 @@
 import { programWorkStart } from "../coaching-subscription";
 
+import type { ClientJourneyStep } from "./client-journey";
 import type { ClientJourneys } from "./client-journeys";
 import type { ClientSubscriptionStarts } from "./client-subscription-starts";
 
 type ProgramStatus = {
-  kind: "submitted";
+  kind: Exclude<ClientJourneyStep, "welcome" | "onboarding">;
   submittedAt: Date;
   workStartsOn: Date | null;
 };
@@ -25,12 +26,18 @@ export class ReadProgramStatusUseCase {
       return null;
     }
 
+    const step = journey.step();
+
+    if (step === "welcome" || step === "onboarding") {
+      return null;
+    }
+
     const start = await this.options.subscriptionStarts.findOpenForClient(
       journey.clientId,
     );
 
     return {
-      kind: "submitted",
+      kind: step,
       submittedAt: journey.onboardingSubmittedAt,
       workStartsOn: start ? programWorkStart(start) : null,
     };

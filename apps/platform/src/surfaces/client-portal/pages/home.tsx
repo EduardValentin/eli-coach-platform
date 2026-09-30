@@ -6,18 +6,21 @@ import {
   type MetaFunction,
 } from "react-router";
 
-import type { ProgramStatus } from "~/features/coaching-sales/contracts/client-journey";
+import { clientOnboardingContext } from "~/features/client-onboarding/server/guards/client-onboarding-context.server";
 import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
 import { ProgramStatusCard } from "~/features/coaching-sales/ui/client/status/program-status-card";
 import type { ClientShellPresentation } from "~/surfaces/client-portal/shell/client-identity-presentation";
 import { clientPortalPageMeta } from "~/surfaces/client-portal/shell/client-portal-meta";
 
-export function loader(
-  args: LoaderFunctionArgs,
-): Promise<ProgramStatus | null> {
-  return args.context
-    .get(coachingSalesContext)
-    .clientJourney.loadProgramStatus(args);
+export async function loader(args: LoaderFunctionArgs) {
+  const [programStatus, detailsRequest] = await Promise.all([
+    args.context
+      .get(coachingSalesContext)
+      .clientJourney.loadProgramStatus(args),
+    args.context.get(clientOnboardingContext).controller.loadOpenRequest(args),
+  ]);
+
+  return { detailsRequest, programStatus };
 }
 
 export const meta: MetaFunction = () =>
@@ -25,7 +28,7 @@ export const meta: MetaFunction = () =>
 
 export default function ClientHomeRoute() {
   const { greeting } = useOutletContext<ClientShellPresentation>();
-  const programStatus = useLoaderData<typeof loader>();
+  const { detailsRequest, programStatus } = useLoaderData<typeof loader>();
 
   return (
     <div className="w-full" data-parity="dashboard-page">
@@ -39,7 +42,12 @@ export default function ClientHomeRoute() {
           title={<span data-parity="greeting">{greeting}</span>}
         />
       </div>
-      {programStatus && <ProgramStatusCard status={programStatus} />}
+      {programStatus && (
+        <ProgramStatusCard
+          detailsRequest={detailsRequest}
+          status={programStatus}
+        />
+      )}
     </div>
   );
 }

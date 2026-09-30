@@ -1,9 +1,10 @@
 import type { ReactNode } from "react";
 
 import { cn } from "../lib/cn";
-import { SectionEyebrow } from "../primitives";
+import type { DataAttributes } from "../lib/data-attributes";
+import { cardVariants, SectionEyebrow } from "../primitives";
 
-export const DEAD_END_BODY_CLASS_NAME =
+const DEAD_END_BODY_CLASS_NAME =
   "flex flex-col items-center px-6 py-16 text-center";
 
 type DeadEndContentProps = {
@@ -23,7 +24,7 @@ type DeadEndPageProps = {
   title: string;
 };
 
-export function DeadEndContent(props: DeadEndContentProps) {
+function DeadEndContent(props: DeadEndContentProps) {
   const { children, description, eyebrow, icon, title } = props;
 
   return (
@@ -70,5 +71,31 @@ export function DeadEndPage(props: DeadEndPageProps) {
         {children}
       </DeadEndContent>
     </main>
+  );
+}
+
+type DeadEndPanelProps = DataAttributes & {
+  description: ReactNode;
+  icon: ReactNode;
+  title: string;
+};
+
+export function DeadEndPanel({
+  description,
+  icon,
+  title,
+  ...dataAttributes
+}: DeadEndPanelProps) {
+  return (
+    <div
+      {...dataAttributes}
+      className={cn(
+        cardVariants({ variant: "portal-panel" }),
+        DEAD_END_BODY_CLASS_NAME,
+      )}
+      role="alert"
+    >
+      <DeadEndContent description={description} icon={icon} title={title} />
+    </div>
   );
 }

@@ -10,6 +10,7 @@ export const EMAIL_CAPTURE_PORT = 3199;
 export const EMAIL_CAPTURE_URL = `http://127.0.0.1:${EMAIL_CAPTURE_PORT}`;
 
 const EMAILS_PATH = "/emails";
+const REFUSALS_PATH = "/refusals";
 
 type SentEmail = {
   html: string;
@@ -33,8 +34,14 @@ let server: Server | null = null;
 
 export async function startEmailCapture(): Promise<void> {
   const sentEmails: SentEmail[] = [];
+  const refusedRecipients = new Set<string>();
   const captureServer = createServer((request, response) => {
-    void answerResendRequest({ request, response, sentEmails });
+    void answerCaptureRequest({
+      request,
+      response,
+      sentEmails,
+      refusedRecipients,
+    });
   });
 
   await new Promise<void>((resolve, reject) => {
@@ -74,14 +81,32 @@ export async function latestEmailTo(address: string): Promise<CapturedEmail> {
   };
 }
 
+export async function refuseEmailsTo(address: string): Promise<void> {
+  const response = await fetch(`${EMAIL_CAPTURE_URL}${REFUSALS_PATH}`, {
+    body: JSON.stringify({ to: address }),
+    headers: { "Content-Type": "application/json" },
+    method: "POST",
+  });
+
+  if (!response.ok) {
+    throw new Error(`The email capture did not refuse ${address}.`);
+  }
+}
+
 type CaptureExchange = {
   request: IncomingMessage;
   response: ServerResponse;
   sentEmails: SentEmail[];
+  refusedRecipients: Set<string>;
 };
 
-async function answerResendRequest(exchange: CaptureExchange): Promise<void> {
+async function answerCaptureRequest(exchange: CaptureExchange): Promise<void> {
   const url = new URL(exchange.request.url ?? "/", EMAIL_CAPTURE_URL);
+
+  if (url.pathname === REFUSALS_PATH && exchange.request.method === "POST") {
+    await recordRefusal(exchange);
+    return;
+  }
 
   if (url.pathname !== EMAILS_PATH) {
     respondWithJson(exchange.response, {
@@ -104,6 +129,17 @@ async function captureSentEmail(exchange: CaptureExchange): Promise<void> {
 
   try {
     const email = toSentEmail(JSON.parse(body));
+
+    if (
+      email.to.some((recipient) => exchange.refusedRecipients.has(recipient))
+    ) {
+      respondWithJson(exchange.response, {
+        status: 422,
+        body: { name: "validation_error" },
+      });
+      return;
+    }
+
     exchange.sentEmails.push(email);
     respondWithJson(exchange.response, { status: 200, body: { id: email.id } });
   } catch {
@@ -112,6 +148,12 @@ async function captureSentEmail(exchange: CaptureExchange): Promise<void> {
       body: { name: "validation_error" },
     });
   }
+}
+
+async function recordRefusal(exchange: CaptureExchange): Promise<void> {
+  const { to } = JSON.parse(await readBody(exchange.request)) as { to: string };
+  exchange.refusedRecipients.add(to);
+  respondWithJson(exchange.response, { status: 200, body: { to } });
 }
 
 function listEmailsSentTo(

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  answeredOfTotal,
   applyExclusiveOptions,
   emptyAnswers,
   hasStartedAnswering,
@@ -228,5 +229,28 @@ describe("hasStartedAnswering", () => {
 
     // assert
     expect(started).toBe(true);
+  });
+});
+
+describe("answeredOfTotal", () => {
+  it("counts only the questions her answers made reachable", () => {
+    // arrange
+    const answers: OnboardingFormAnswers = {
+      weight: 70,
+      blockers: ["Something else"],
+      blockersOther: "",
+    };
+
+    // act
+    const counts = answeredOfTotal(goalFields, answers);
+
+    // assert
+    expect(counts).toEqual({
+      answered: 2,
+      total: reachableFields(goalFields, answers).length,
+    });
+    expect(reachableFields(goalFields, answers)).toContainEqual(
+      blockersOtherField,
+    );
   });
 });

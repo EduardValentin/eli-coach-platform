@@ -1,0 +1,10 @@
+[
+  { "waitFor": "[data-parity=\"resend-invitation\"]" },
+  { "wait": 1500 },
+  { "click": "[data-parity=\"resend-invitation\"]" },
+  { "waitFor": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]" },
+  { "wait": 400 },
+  { "click": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]" },
+  { "waitFor": "[data-sonner-toast]" },
+  { "wait": 800 }
+]

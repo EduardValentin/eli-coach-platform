@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -19,9 +19,7 @@ const DEMO_TOKEN = 'inv-seed-ac-demo-client-1';
 const INVITATION_STORAGE_KEY = 'invitation';
 const WAIT = { timeout: 4000 };
 const TEST_TIMEOUT_MS = 20000;
-const CONTINUE = 'Continue to create my account';
-const HAND_OFF_NOTE =
-  "Click the button below to create your account.";
+const WELCOME_PAGE = 'welcome page';
 const SIGNED_IN_TITLE = "You're already signed in";
 const SIGNED_IN_BODY =
   'This invitation creates a new account. Sign out first, then open the link again.';
@@ -54,7 +52,7 @@ function renderInvitation(address: string) {
               <SessionProbe />
               <Routes>
                 <Route element={<InvitationLanding />} path="/invitation" />
-                <Route element={<p>welcome page</p>} path="/portal/welcome" />
+                <Route element={<p>{WELCOME_PAGE}</p>} path="/portal/welcome" />
               </Routes>
             </ClientJourneyProvider>
           </AssessmentCallProvider>
@@ -99,7 +97,7 @@ afterEach(() => {
 });
 
 describe('opening an invitation link', () => {
-  it('checks the invitation before showing the account card', async () => {
+  it('checks the invitation before handing her to the hosted sign-up', async () => {
     // arrange
     renderInvitation(invitationAddress('?jstage=invited'));
 
@@ -110,7 +108,7 @@ describe('opening an invitation link', () => {
     expect(checking).toHaveTextContent('Checking your invitation…');
     expect(checking).toHaveAttribute('aria-busy', 'true');
     expect(
-      await screen.findByRole('heading', { name: 'Create your account' }, WAIT),
+      await screen.findByText(WELCOME_PAGE, undefined, WAIT),
     ).toBeVisible();
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
   }, TEST_TIMEOUT_MS);
@@ -120,7 +118,7 @@ describe('opening an invitation link', () => {
     renderInvitation(invitationAddress('?jstage=invited'));
 
     // act
-    await screen.findByRole('link', { name: CONTINUE }, WAIT);
+    await screen.findByText(WELCOME_PAGE, undefined, WAIT);
 
     // assert
     expect(window.location.hash).toBe('');
@@ -131,53 +129,36 @@ describe('opening an invitation link', () => {
 });
 
 describe('accepting an invitation', () => {
-  it('tells her to create her account from the button before the hosted sign-up', async () => {
+  it('hands a valid link straight to the hosted sign-up and lands her on the welcome page', async () => {
     // arrange
     renderInvitation(invitationAddress('?jstage=invited'));
 
     // act
-    const heading = await screen.findByRole(
-      'heading',
-      { level: 1, name: 'Create your account' },
-      WAIT,
-    );
+    const welcome = await screen.findByText(WELCOME_PAGE, undefined, WAIT);
 
     // assert
-    expect(heading).toBeVisible();
-    expect(screen.getByText('Your invitation')).toBeVisible();
-    expect(screen.getByText(HAND_OFF_NOTE)).toBeVisible();
-    expect(screen.queryByText(/one-time code/i)).not.toBeInTheDocument();
-  }, TEST_TIMEOUT_MS);
-
-  it('hands her to the hosted sign-in and lands her on the welcome page', async () => {
-    // arrange
-    renderInvitation(invitationAddress('?jstage=invited'));
-    const create = await screen.findByRole('link', { name: CONTINUE }, WAIT);
-
-    // act
-    await userEvent.click(create);
-
-    // assert
-    expect(create).toHaveAttribute(
-      'href',
-      'https://accounts.evoa.fit/sign-up?__clerk_ticket=mock',
-    );
-    expect(await screen.findByText('welcome page', undefined, WAIT)).toBeVisible();
+    expect(welcome).toBeVisible();
     expect(screen.getByTestId('session')).toHaveTextContent('client');
     expect(screen.getByTestId('stage')).toHaveTextContent('account-created');
   }, TEST_TIMEOUT_MS);
 
-  it('shows the invited email as a read-only field', async () => {
+  it('never shows an account card on the way to the welcome page', async () => {
     // arrange
     renderInvitation(invitationAddress('?jstage=invited'));
+    let cardShown = false;
 
     // act
-    const email = await screen.findByLabelText('Email', undefined, WAIT);
+    await waitFor(() => {
+      cardShown ||=
+        screen.queryByRole('heading', { name: 'Create your account' }) !==
+          null ||
+        screen.queryByLabelText('Email') !== null ||
+        screen.queryByRole('link') !== null;
+      expect(screen.getByText(WELCOME_PAGE)).toBeVisible();
+    }, WAIT);
 
     // assert
-    expect(email).toHaveValue('jane@example.com');
-    expect(email).toHaveAttribute('readonly');
-    expect(screen.getByText('Your account uses this email')).toBeVisible();
+    expect(cardShown).toBe(false);
   }, TEST_TIMEOUT_MS);
 
   it.each(['expired', 'used', 'unknown'])(
@@ -206,9 +187,7 @@ describe('accepting an invitation', () => {
         'href',
         '/',
       );
-      expect(
-        screen.queryByRole('link', { name: CONTINUE }),
-      ).not.toBeInTheDocument();
+      expect(screen.getByTestId('session')).toHaveTextContent('anonymous');
     },
     TEST_TIMEOUT_MS,
   );
@@ -233,13 +212,10 @@ describe('opening an invitation while signed in', () => {
       expect(screen.getByText(SIGNED_IN_BODY)).toBeVisible();
       expect(screen.getByRole('button', { name: 'Sign out' })).toBeVisible();
       expect(screen.queryByRole('status')).not.toBeInTheDocument();
-      expect(
-        screen.queryByRole('link', { name: CONTINUE }),
-      ).not.toBeInTheDocument();
     },
   );
 
-  it('returns to the account card for the same link after signing out', async () => {
+  it('hands the same link to the hosted sign-up after signing out', async () => {
     // arrange
     renderInvitation(invitationAddress('?jstage=invited&session=coach'));
 
@@ -247,11 +223,13 @@ describe('opening an invitation while signed in', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Sign out' }));
 
     // assert
-    expect(screen.getByTestId('session')).toHaveTextContent('anonymous');
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Checking your invitation…',
+    );
     expect(
-      await screen.findByRole('link', { name: CONTINUE }, WAIT),
+      await screen.findByText(WELCOME_PAGE, undefined, WAIT),
     ).toBeVisible();
-    expect(screen.getByLabelText('Email')).toHaveValue('jane@example.com');
+    expect(screen.getByTestId('session')).toHaveTextContent('client');
     expect(
       screen.queryByRole('heading', { name: SIGNED_IN_TITLE }),
     ).not.toBeInTheDocument();
@@ -259,13 +237,11 @@ describe('opening an invitation while signed in', () => {
 });
 
 describe('the invitation lands her in the onboarding wizard', () => {
-  it('reaches step 1 of the wizard after signing up and continuing past the welcome page', async () => {
+  it('reaches step 1 of the wizard after the hand-off and continuing past the welcome page', async () => {
     // arrange
     renderInvitationThroughPortal(invitationAddress('?jstage=invited'));
-    const create = await screen.findByRole('link', { name: CONTINUE }, WAIT);
 
     // act
-    await userEvent.click(create);
     const start = await screen.findByRole(
       'button',
       { name: "Let's get started" },

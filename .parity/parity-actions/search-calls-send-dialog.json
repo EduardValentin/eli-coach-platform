@@ -1,0 +1,10 @@
+[
+  { "waitFor": "[aria-label=\"Search calls\"]" },
+  { "wait": 1000 },
+  { "fill": ["[aria-label=\"Search calls\"]", "cristina"] },
+  { "waitFor": "[data-parity=\"payment-link-action\"]" },
+  { "wait": 600 },
+  { "click": "[data-parity=\"payment-link-action\"]" },
+  { "waitFor": "[data-parity-root=\"ConfirmDialog\"]" },
+  { "wait": 400 }
+]

@@ -48,7 +48,7 @@ type OnboardingSubmitOutcome =
   | { status: "invalid"; problems: OnboardingSubmissionProblem[] };
 
 type ClientOnboardingProps = {
-  client: OnboardingClient;
+  client: Pick<OnboardingClient, "clientId" | "gender" | "dateOfBirth">;
   draft: OnboardingDraft | null;
   submission: OnboardingSubmission | null;
 };

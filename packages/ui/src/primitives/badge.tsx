@@ -11,6 +11,7 @@ const badgeClasses = cva(
         "brand-secondary":
           "border-brand-secondary/20 bg-brand-secondary-surface text-brand-secondary",
         muted: "border-border-default text-text-muted",
+        secondary: "border-transparent bg-secondary text-secondary-foreground",
         pending:
           "border-status-pending/20 bg-status-pending-soft text-status-pending",
         success:

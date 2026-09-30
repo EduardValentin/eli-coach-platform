@@ -1,11 +1,11 @@
-import type { CallSalesState, CallSalesStates } from "./call-sales-states";
+import type { CallSale, CallSalesStates } from "./call-sales-states";
 
 export class ReadCallSalesStatesUseCase {
   constructor(private readonly options: { callSalesStates: CallSalesStates }) {}
 
   async execute(
     callIds: readonly string[],
-  ): Promise<ReadonlyMap<string, CallSalesState>> {
+  ): Promise<ReadonlyMap<string, CallSale>> {
     return this.options.callSalesStates.forCalls(callIds);
   }
 }

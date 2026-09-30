@@ -9,7 +9,10 @@ import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
+  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from "./select";
@@ -206,6 +209,91 @@ describe("Select", () => {
     // assert
     expect(screen.getByRole("option", { name: "10:00" })).toHaveTextContent(
       /^10:00$/,
+    );
+  });
+
+  it("groups options under a label that names the group, set apart by a separator", async () => {
+    // arrange
+    const user = userEvent.setup();
+    render(
+      <Select defaultValue="all">
+        <SelectTrigger aria-label="Status">
+          <SelectValue>All statuses</SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All statuses</SelectItem>
+          <SelectSeparator />
+          <SelectGroup>
+            <SelectLabel>Onboarding</SelectLabel>
+            <SelectItem value="invited">Invited</SelectItem>
+            <SelectItem value="approved">Approved</SelectItem>
+          </SelectGroup>
+          <SelectGroup>
+            <SelectLabel>Inactive</SelectLabel>
+            <SelectItem value="cancelled">Cancelled</SelectItem>
+          </SelectGroup>
+        </SelectContent>
+      </Select>,
+    );
+
+    // act
+    screen.getByRole("combobox", { name: "Status" }).focus();
+    await user.keyboard("{Enter}");
+
+    // assert
+    const onboarding = screen.getByRole("group", { name: "Onboarding" });
+    expect(
+      within(onboarding)
+        .getAllByRole("option")
+        .map((option) => option.textContent),
+    ).toEqual(["Invited", "Approved"]);
+    expect(
+      within(screen.getByRole("group", { name: "Inactive" })).getByRole(
+        "option",
+        { name: "Cancelled" },
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("listbox")).toContainElement(
+      document.querySelector("[data-slot=select-separator]"),
+    );
+  });
+
+  it("sets the group label in the muted caption and the separator as a hairline", async () => {
+    // arrange
+    const user = userEvent.setup();
+    render(
+      <Select defaultValue="all">
+        <SelectTrigger aria-label="Status">
+          <SelectValue>All statuses</SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All statuses</SelectItem>
+          <SelectSeparator />
+          <SelectGroup>
+            <SelectLabel>Active</SelectLabel>
+            <SelectItem value="active">Active</SelectItem>
+          </SelectGroup>
+        </SelectContent>
+      </Select>,
+    );
+
+    // act
+    screen.getByRole("combobox", { name: "Status" }).focus();
+    await user.keyboard("{Enter}");
+
+    // assert
+    expect(document.querySelector("[data-slot=select-label]")).toHaveClass(
+      "px-2",
+      "py-1.5",
+      "text-xs",
+      "text-text-muted",
+    );
+    expect(document.querySelector("[data-slot=select-separator]")).toHaveClass(
+      "pointer-events-none",
+      "-mx-1",
+      "my-1",
+      "h-px",
+      "bg-border-default",
     );
   });
 });

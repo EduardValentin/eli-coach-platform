@@ -14,6 +14,18 @@ const MALE_CLIENT: OnboardingClient = {
   clientId: "client-1",
   gender: "male",
   dateOfBirth: "1990-03-02",
+  firstName: "Ana",
+  lastName: "Popescu",
+  country: "RO",
+  phone: "+40712345678",
+  email: "ana@example.com",
+  submittedAt: null,
+  reviewStamps: {
+    reviewOpenedAt: null,
+    detailsRequestedAt: null,
+    detailsAnsweredAt: null,
+    answersApprovedAt: null,
+  },
 };
 const SUBMISSION: OnboardingSubmission = {
   answers: emptyAnswers(),
@@ -24,6 +36,7 @@ const SUBMISSION: OnboardingSubmission = {
 function createClients(found: OnboardingClient | null) {
   return {
     findByAuthSubjectId: vi.fn().mockResolvedValue(found),
+    findByClientId: vi.fn().mockResolvedValue(found),
   } satisfies OnboardingClients;
 }
 
@@ -48,6 +61,13 @@ function createIncidents() {
     onboardingDraftSaveFailed: vi.fn(),
     onboardingSubmissionAccepted: vi.fn(),
     onboardingSubmissionRefused: vi.fn(),
+    onboardingReviewOpened: vi.fn(),
+    onboardingDetailsRequested: vi.fn(),
+    onboardingDetailsRequestEmailFailed: vi.fn(),
+    onboardingDetailsAnswered: vi.fn(),
+    onboardingDetailsRefused: vi.fn(),
+    onboardingAnswersApproved: vi.fn(),
+    onboardingReviewStampsRepaired: vi.fn(),
   } satisfies ClientOnboardingIncidents;
 }
 

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { ClientJourney } from "./client-journey";
+import { ClientJourney, type ClientJourneySnapshot } from "./client-journey";
 import type { ClientJourneys } from "./client-journeys";
 import type { ClientSubscriptionStarts } from "./client-subscription-starts";
 import { MarkWelcomeSeenUseCase } from "./mark-welcome-seen-use-case";
@@ -12,9 +12,20 @@ const WELCOME_SEEN_AT = new Date("2026-09-27T09:00:00.000Z");
 const SUBMITTED_AT = new Date("2026-09-28T10:00:00.000Z");
 const PURCHASED_AT = new Date("2026-09-26T10:00:00.000Z");
 
+const OPENED_AT = new Date("2026-09-28T11:00:00.000Z");
+const ASKED_AT = new Date("2026-09-28T12:00:00.000Z");
+
+const NO_REVIEW_STAMPS = {
+  reviewOpenedAt: null,
+  detailsRequestedAt: null,
+  detailsAnsweredAt: null,
+  answersApprovedAt: null,
+};
+
 function journey(
   welcomeSeenAt: Date | null,
   onboardingSubmittedAt: Date | null = null,
+  reviewStamps: Partial<ClientJourneySnapshot> = {},
 ): ClientJourney {
   return ClientJourney.from({
     clientId: "client-1",
@@ -23,6 +34,8 @@ function journey(
     lastName: "Popescu",
     welcomeSeenAt,
     onboardingSubmittedAt,
+    ...NO_REVIEW_STAMPS,
+    ...reviewStamps,
   });
 }
 
@@ -179,6 +192,36 @@ describe("ReadProgramStatusUseCase", () => {
       workStartsOn: null,
     });
   });
+
+  it.each([
+    ["in-review", { reviewOpenedAt: OPENED_AT }],
+    [
+      "needs-details",
+      { reviewOpenedAt: OPENED_AT, detailsRequestedAt: ASKED_AT },
+    ],
+    ["approved", { reviewOpenedAt: OPENED_AT, answersApprovedAt: NOW }],
+  ] as const)(
+    "answers %s once the coach's review reaches it",
+    async (expected, reviewStamps) => {
+      // arrange
+      const useCase = new ReadProgramStatusUseCase({
+        journeys: createJourneys(
+          journey(WELCOME_SEEN_AT, SUBMITTED_AT, reviewStamps),
+        ),
+        subscriptionStarts: createSubscriptionStarts(null),
+      });
+
+      // act
+      const status = await useCase.execute("user_ana");
+
+      // assert
+      expect(status).toEqual({
+        kind: expected,
+        submittedAt: SUBMITTED_AT,
+        workStartsOn: null,
+      });
+    },
+  );
 
   it.each([
     ["a client who has not sent her onboarding", journey(WELCOME_SEEN_AT)],

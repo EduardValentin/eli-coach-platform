@@ -18,7 +18,10 @@ import {
   COACH_SESSION,
   PlatformRig,
 } from "~integration-test-config/platform-rig";
-import { visibleDocument } from "~integration-test-config/rendered-page";
+import {
+  textNodesOf,
+  visibleDocument,
+} from "~integration-test-config/rendered-page";
 
 const suite = new ApiIntegrationTestSuite();
 const rig = new PlatformRig(suite);
@@ -62,7 +65,7 @@ describe.sequential("coach assessment calls page sales integration", () => {
     const response = await rig.requestAs(COACH_SESSION, PAST_CALLS);
 
     // assert
-    const texts = textNodes(await visibleDocument(response));
+    const texts = textNodesOf(await visibleDocument(response));
 
     expect(response.status).toBe(200);
     expect(texts).toContain("Call held");
@@ -79,7 +82,7 @@ describe.sequential("coach assessment calls page sales integration", () => {
     const response = await rig.requestAs(COACH_SESSION, PAST_CALLS);
 
     // assert
-    const texts = textNodes(await visibleDocument(response));
+    const texts = textNodesOf(await visibleDocument(response));
 
     expect(response.status).toBe(200);
     expect(texts).toContain("Payment link sent");
@@ -105,18 +108,24 @@ describe.sequential("coach assessment calls page sales integration", () => {
     expect(pricingOnCardOf(page, "Bea Ionescu")).toBe("Regular");
   });
 
-  it("reads Paid once the payment has been recorded", async () => {
+  it("reads Paid once the payment has been recorded and offers her client page", async () => {
     // arrange
-    await journey.payForCall();
+    const { callId } = await journey.payForCall();
+    const clientId = await journey.clientIdPaidFor(callId);
 
     // act
     const response = await rig.requestAs(COACH_SESSION, PAST_CALLS);
 
     // assert
-    const texts = textNodes(await visibleDocument(response));
+    const page = await visibleDocument(response);
+    const texts = textNodesOf(page);
 
     expect(response.status).toBe(200);
     expect(texts).toContain("Paid");
+    expect(texts).toContain("View client");
+    expect(page).toContain(
+      `href="${suite.path(`/coach/clients/${clientId}`)}"`,
+    );
     expect(texts).not.toContain("Payment link sent");
     expect(texts).not.toContain("Send payment link");
     expect(texts).not.toContain("Re-send payment link");
@@ -127,11 +136,7 @@ function pricingOnCardOf(page: string, fullName: string): string | undefined {
   const card = page
     .split('data-parity-root="AppointmentCard"')
     .find((chunk) => chunk.includes(`>${fullName}<`));
-  const texts = textNodes(card ?? "");
+  const texts = textNodesOf(card ?? "");
 
   return texts[texts.indexOf("Pricing") + 1];
-}
-
-function textNodes(page: string): string[] {
-  return [...page.matchAll(/>([^<>]+)</g)].map(([, text = ""]) => text.trim());
 }

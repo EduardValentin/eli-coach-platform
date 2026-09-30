@@ -10,6 +10,18 @@ export type OnboardingAnswersByForm = Record<
   OnboardingFormAnswers
 >;
 
+export type OnboardingQuestionId = {
+  formId: OnboardingFormId;
+  fieldId: string;
+};
+
+export function isSameQuestion(
+  left: OnboardingQuestionId,
+  right: OnboardingQuestionId,
+): boolean {
+  return left.formId === right.formId && left.fieldId === right.fieldId;
+}
+
 export function emptyAnswers(): OnboardingAnswersByForm {
   return Object.fromEntries(
     ONBOARDING_FORM_IDS.map((formId) => [formId, {}]),
@@ -84,6 +96,18 @@ export function reachableFields(
   answers: OnboardingFormAnswers,
 ): OnboardingField[] {
   return fields.filter((field) => isFieldReachable(field, answers));
+}
+
+export function answeredOfTotal(
+  fields: readonly OnboardingField[],
+  answers: OnboardingFormAnswers,
+): { answered: number; total: number } {
+  const reachable = reachableFields(fields, answers);
+
+  return {
+    answered: reachable.filter((field) => isAnswered(answers[field.id])).length,
+    total: reachable.length,
+  };
 }
 
 export function withoutUnreachable(

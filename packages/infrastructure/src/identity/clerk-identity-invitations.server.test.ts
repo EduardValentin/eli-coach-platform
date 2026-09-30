@@ -12,6 +12,9 @@ function createClerkClient() {
         id: "inv_clerk_1",
         url: "https://accounts.evoa.example/sign-up?__clerk_ticket=ticket",
       }),
+      revokeInvitation: vi
+        .fn()
+        .mockResolvedValue({ id: "inv_clerk_0", status: "revoked" }),
     },
     users: {
       getUser: vi.fn().mockResolvedValue({ publicMetadata: {} }),
@@ -114,6 +117,132 @@ describe("ClerkIdentityInvitations#create", () => {
     // assert
     await expect(creation).rejects.toThrow(
       "Clerk did not create the identity invitation for invitation-1 (status unknown).",
+    );
+  });
+});
+
+const PREVIOUS = {
+  id: "inv_clerk_0",
+  url: "https://accounts.evoa.example/sign-up?__clerk_ticket=earlier",
+};
+
+function clerkRefusal(status: number, code: string) {
+  return Object.assign(new Error("ana@example.com cannot be revoked"), {
+    status,
+    errors: [{ code, message: "refused" }],
+  });
+}
+
+describe("ClerkIdentityInvitations#replace", () => {
+  it("revokes the earlier invitation before it creates the fresh one", async () => {
+    // arrange
+    const { client, identity } = createAdapter();
+
+    // act
+    const invitation = await identity.replace({
+      email: "ana@example.com",
+      invitationId: "invitation-1",
+      previous: PREVIOUS,
+    });
+
+    // assert
+    expect(invitation).toEqual({
+      id: "inv_clerk_1",
+      url: "https://accounts.evoa.example/sign-up?__clerk_ticket=ticket",
+    });
+    expect(client.invitations.revokeInvitation).toHaveBeenCalledWith(
+      "inv_clerk_0",
+    );
+    expect(client.invitations.createInvitation).toHaveBeenCalledWith(
+      expect.objectContaining({
+        emailAddress: "ana@example.com",
+        publicMetadata: { invitationId: "invitation-1" },
+      }),
+    );
+    expect(
+      client.invitations.revokeInvitation.mock.invocationCallOrder[0],
+    ).toBeLessThan(
+      client.invitations.createInvitation.mock.invocationCallOrder[0] ?? 0,
+    );
+  });
+
+  it.each([
+    ["Clerk no longer knows it", clerkRefusal(404, "resource_not_found")],
+    ["it is already revoked", clerkRefusal(400, "invitation_revoked")],
+    [
+      "it is no longer pending",
+      clerkRefusal(400, "invitation_cannot_be_revoked_code"),
+    ],
+  ])(
+    "creates the fresh invitation when the earlier one cannot be revoked because %s",
+    async (_label, refusal) => {
+      // arrange
+      const client = createClerkClient();
+      client.invitations.revokeInvitation.mockRejectedValue(refusal);
+      const { identity } = createAdapter(client);
+
+      // act
+      const invitation = await identity.replace({
+        email: "ana@example.com",
+        invitationId: "invitation-1",
+        previous: PREVIOUS,
+      });
+
+      // assert
+      expect(invitation.id).toBe("inv_clerk_1");
+    },
+  );
+
+  it.each([
+    ["an unavailable Clerk", clerkRefusal(500, "internal_clerk_error"), "500"],
+    [
+      "an unexplained bad request",
+      clerkRefusal(400, "form_param_missing"),
+      "400",
+    ],
+    ["a network failure", new Error("socket hang up"), "unknown"],
+  ])(
+    "creates nothing and reports %s by the earlier invitation and Clerk's status",
+    async (_label, refusal, status) => {
+      // arrange
+      const client = createClerkClient();
+      client.invitations.revokeInvitation.mockRejectedValue(refusal);
+      const { identity } = createAdapter(client);
+
+      // act
+      const replacement = identity.replace({
+        email: "ana@example.com",
+        invitationId: "invitation-1",
+        previous: PREVIOUS,
+      });
+
+      // assert
+      await expect(replacement).rejects.toThrow(
+        `Clerk did not revoke the identity invitation inv_clerk_0 for invitation-1 (status ${status}).`,
+      );
+      await expect(replacement).rejects.not.toHaveProperty("cause");
+      expect(client.invitations.createInvitation).not.toHaveBeenCalled();
+    },
+  );
+
+  it("reports a failed creation after the revoke the way a creation does", async () => {
+    // arrange
+    const client = createClerkClient();
+    client.invitations.createInvitation.mockRejectedValue(
+      Object.assign(new Error("boom"), { status: 503 }),
+    );
+    const { identity } = createAdapter(client);
+
+    // act
+    const replacement = identity.replace({
+      email: "ana@example.com",
+      invitationId: "invitation-1",
+      previous: PREVIOUS,
+    });
+
+    // assert
+    await expect(replacement).rejects.toThrow(
+      "Clerk did not create the identity invitation for invitation-1 (status 503).",
     );
   });
 });

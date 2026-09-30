@@ -1,9 +1,4 @@
-import { cn } from "@eli-coach-platform/ui/lib";
-import {
-  DeadEndContent,
-  DEAD_END_BODY_CLASS_NAME,
-} from "@eli-coach-platform/ui/layout";
-import { cardVariants } from "@eli-coach-platform/ui/primitives";
+import { DeadEndPanel } from "@eli-coach-platform/ui/layout";
 import { VideoOff } from "lucide-react";
 import { isRouteErrorResponse, useRouteError } from "react-router";
 
@@ -15,19 +10,11 @@ import {
 function AssessmentCallsUnavailable() {
   return (
     <div className="w-full" data-parity-root="AssessmentCallsUnavailable">
-      <div
-        className={cn(
-          cardVariants({ variant: "portal-panel" }),
-          DEAD_END_BODY_CLASS_NAME,
-        )}
-        role="alert"
-      >
-        <DeadEndContent
-          description={COACH_ASSESSMENT_CALLS_UNAVAILABLE_MESSAGE}
-          icon={<VideoOff aria-hidden="true" size={36} />}
-          title="Assessment calls unavailable"
-        />
-      </div>
+      <DeadEndPanel
+        description={COACH_ASSESSMENT_CALLS_UNAVAILABLE_MESSAGE}
+        icon={<VideoOff aria-hidden="true" size={36} />}
+        title="Assessment calls unavailable"
+      />
     </div>
   );
 }

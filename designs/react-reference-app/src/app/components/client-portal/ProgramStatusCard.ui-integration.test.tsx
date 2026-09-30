@@ -101,9 +101,11 @@ describe('the program status card', () => {
     renderCard('?session=client&jstage=needs-details');
 
     // act
-    await userEvent.click(screen.getByRole('button', { name: 'Answer now' }));
+    const answerNow = screen.getByRole('link', { name: 'Answer now' });
+    await userEvent.click(answerNow);
 
     // assert
+    expect(answerNow).toHaveAttribute('href', '/portal/onboarding?answer=1');
     expect(screen.getByText('onboarding page')).toBeVisible();
   });
 

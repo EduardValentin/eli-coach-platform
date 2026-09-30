@@ -80,7 +80,7 @@ export class StartCheckoutUseCase {
 
     const salesStates = await this.options.callSalesStates.forCalls([call.id]);
 
-    if (salesStates.get(call.id) === "paid") {
+    if (salesStates.get(call.id)?.state === "paid") {
       return { status: "invalid_link" };
     }
 

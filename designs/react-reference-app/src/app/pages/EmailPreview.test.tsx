@@ -20,7 +20,7 @@ async function previewedEmail(title: string, distinguishingCopy: string) {
 }
 
 describe('EmailPreview', () => {
-  it('previews the first client invitation through the preview surface', async () => {
+  it('previews the client invitation through the preview surface', async () => {
     // arrange
     const user = userEvent.setup();
     render(<EmailPreview />);
@@ -30,33 +30,28 @@ describe('EmailPreview', () => {
 
     // assert
     expect(
-      screen.getByRole('button', { name: 'First invitation' }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: 'Replaced invitation' }),
-    ).toBeInTheDocument();
+      screen.queryByRole('button', { name: 'Replaced invitation' }),
+    ).not.toBeInTheDocument();
     const markup = await previewedEmail(
-      'Client invitation — first',
+      'Client invitation — invitation',
       'place in my coaching is booked',
     );
     expect(markup).toContain('Create your account');
   });
 
-  it('previews the replaced invitation when that variant is chosen', async () => {
+  it('previews the request for more details', async () => {
     // arrange
     const user = userEvent.setup();
     render(<EmailPreview />);
-    await user.click(screen.getByRole('button', { name: 'Client invitation' }));
-    await previewedEmail('Client invitation — first', 'place in my coaching is booked');
 
     // act
-    await user.click(screen.getByRole('button', { name: 'Replaced invitation' }));
+    await user.click(screen.getByRole('button', { name: 'Details request' }));
 
     // assert
     const markup = await previewedEmail(
-      'Client invitation — replaced',
-      'stopped working',
+      'Details request — request',
+      'need a few more details before I build your program',
     );
-    expect(markup).toContain('Create your account');
+    expect(markup).toContain('Answer now');
   });
 });

@@ -1,4 +1,7 @@
-import { UnitPreference, type ClientUnitPreferences } from "../unit-preference";
+import {
+  UnitPreference,
+  type ClientUnitPreferencesSource,
+} from "../unit-preference";
 
 import { ClientOnboarding } from "./client-onboarding";
 import type { ClientOnboardingSource } from "./client-onboarding-source";
@@ -12,7 +15,7 @@ type ClientOnboardingReading = {
 type ReadClientOnboardingUseCaseOptions = {
   clients: OnboardingClients;
   onboardings: ClientOnboardingSource;
-  unitPreferences: ClientUnitPreferences;
+  unitPreferences: ClientUnitPreferencesSource;
 };
 
 export class ReadClientOnboardingUseCase {

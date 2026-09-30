@@ -18,6 +18,14 @@ const CLIENT: AccountSnapshot = {
   role: "CLIENT",
 };
 
+const COACH: AccountSnapshot = {
+  authSubjectId: "user_coach",
+  id: "acct_coach",
+  role: "COACH",
+};
+
+const UNKNOWN_CLIENT_ID = "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22";
+
 describe("composeClientOnboardingFeature", () => {
   it("answers not found to an account with no client record without reading any onboarding", async () => {
     // arrange
@@ -77,41 +85,102 @@ describe("composeClientOnboardingFeature", () => {
     ).not.toHaveBeenCalled();
   });
 
-  it("refuses units from an account with no client record through the same client reader", async () => {
+  it("refuses answers to a request from an account with no client record without stamping anything", async () => {
     // arrange
     const handles = createHandles();
     const { controller } = composeClientOnboardingFeature(handles);
 
     // act
-    const response = await controller.saveUnitPreference(
+    const response = await controller.answerDetails(
       clientArgs({
-        method: "PUT",
-        body: { weightUnit: "lb", heightUnit: "ft-in" },
+        method: "POST",
+        body: { answers: { "goal-availability": { weight: 64 } } },
       }),
     );
 
     // assert
     expect(response.status).toBe(404);
-    expect(handles.onboardingClients.findByAuthSubjectId).toHaveBeenCalledWith(
-      "user_uninvited",
+    expect(handles.reviewStampWriter).not.toHaveBeenCalled();
+  });
+
+  it("answers not found to the coach's review of a client no one knows", async () => {
+    // arrange
+    const handles = createHandles();
+    const { coachReview } = composeClientOnboardingFeature(handles);
+
+    // act
+    const loading = coachReview.loadReview(
+      accountArgs({ account: COACH }),
+      UNKNOWN_CLIENT_ID,
     );
+
+    // assert
+    await expect(loading).rejects.toMatchObject({ status: 404 });
+    expect(handles.onboardingClients.findByClientId).toHaveBeenCalledWith(
+      UNKNOWN_CLIENT_ID,
+    );
+  });
+
+  it("refuses a detail request for a client no one knows without sending an email", async () => {
+    // arrange
+    const handles = createHandles();
+    const { coachReview } = composeClientOnboardingFeature(handles);
+
+    // act
+    const response = await coachReview.requestDetails(
+      accountArgs({
+        account: COACH,
+        request: {
+          method: "POST",
+          body: {
+            clientId: UNKNOWN_CLIENT_ID,
+            questions: [{ formId: "goal-availability", fieldId: "weight" }],
+            note: "Your weight looks off.",
+          },
+        },
+      }),
+    );
+
+    // assert
+    expect(response.status).toBe(404);
+    expect(handles.productEmail.send).not.toHaveBeenCalled();
   });
 });
 
 function createHandles() {
   return {
+    appBasePath: "/",
     clock: { now: () => new Date("2026-09-28T10:00:00.000Z") },
+    contactEmail: "contact@evoa.fit",
     database: createUnreachableDatabase(),
     incidents: {
+      onboardingAnswersApproved: vi.fn(),
+      onboardingDetailsAnswered: vi.fn(),
+      onboardingDetailsRefused: vi.fn(),
+      onboardingDetailsRequestEmailFailed: vi.fn(),
+      onboardingDetailsRequested: vi.fn(),
       onboardingDraftSaveFailed: vi.fn(),
       onboardingDraftSaved: vi.fn(),
+      onboardingReviewOpened: vi.fn(),
+      onboardingReviewStampsRepaired: vi.fn(),
       onboardingSubmissionAccepted: vi.fn(),
       onboardingSubmissionRefused: vi.fn(),
     },
-    onboardingClients: { findByAuthSubjectId: vi.fn().mockResolvedValue(null) },
+    measurements: { listByClientId: vi.fn().mockResolvedValue([]) },
+    onboardingClients: {
+      findByAuthSubjectId: vi.fn().mockResolvedValue(null),
+      findByClientId: vi.fn().mockResolvedValue(null),
+    },
+    onboardingReviewStamps: { record: vi.fn().mockResolvedValue(undefined) },
     onboardingSubmissionStamps: {
       recordOnboardingSubmitted: vi.fn().mockResolvedValue(undefined),
     },
+    productEmail: { provider: "memory", send: vi.fn() },
+    publicAppUrl: "https://evoa.fit",
+    recordMeasurementEntry: vi.fn().mockResolvedValue(undefined),
+    reviewStampWriter: vi.fn().mockResolvedValue(undefined),
+    saveClientProfile: vi.fn().mockResolvedValue(undefined),
+    unitPreferences: { findByClientId: vi.fn().mockResolvedValue(null) },
   };
 }
 
@@ -133,9 +202,19 @@ function noConsents() {
   };
 }
 
-function clientArgs(
-  request: { method?: "GET" | "POST" | "PUT"; body?: unknown } = {},
-) {
+type RequestShape = { method?: "GET" | "POST" | "PUT"; body?: unknown };
+
+function clientArgs(request: RequestShape = {}) {
+  return accountArgs({ account: CLIENT, request });
+}
+
+function accountArgs({
+  account,
+  request = {},
+}: {
+  account: AccountSnapshot;
+  request?: RequestShape;
+}) {
   const accounts = {
     portal: {
       appBasePath: "/",
@@ -147,7 +226,7 @@ function clientArgs(
   return createRequestArgs({
     contexts: [
       contextEntry(accountsContext, accounts),
-      contextEntry(sessionContext, { account: CLIENT, kind: "authenticated" }),
+      contextEntry(sessionContext, { account, kind: "authenticated" }),
     ],
     request: new Request("https://evoa.fit/client/onboarding", {
       body:

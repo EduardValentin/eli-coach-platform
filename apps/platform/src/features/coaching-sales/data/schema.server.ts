@@ -128,6 +128,16 @@ export const clientsTable = appSchema.table(
     onboardingSubmittedAt: timestamp("onboarding_submitted_at", {
       withTimezone: true,
     }),
+    reviewOpenedAt: timestamp("review_opened_at", { withTimezone: true }),
+    detailsRequestedAt: timestamp("details_requested_at", {
+      withTimezone: true,
+    }),
+    detailsAnsweredAt: timestamp("details_answered_at", {
+      withTimezone: true,
+    }),
+    answersApprovedAt: timestamp("answers_approved_at", {
+      withTimezone: true,
+    }),
   },
   (table) => [
     uniqueIndex(coachingSalesConstraints.clientPerCall).on(

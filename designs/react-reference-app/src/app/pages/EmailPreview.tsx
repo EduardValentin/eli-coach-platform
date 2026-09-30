@@ -8,10 +8,8 @@ import {
   StoreDelivery,
   type StoreDeliveryVariant,
 } from '../../email-templates/StoreDelivery';
-import {
-  ClientInvitation,
-  type ClientInvitationVariant,
-} from '../../email-templates/ClientInvitation';
+import { ClientInvitation } from '../../email-templates/ClientInvitation';
+import { DetailsRequest } from '../../email-templates/DetailsRequest';
 import {
   AssessmentCallVisitorConfirmation,
   type AssessmentCallEmailVariant,
@@ -26,6 +24,7 @@ type TemplateKey =
   | 'waitlist-confirmation'
   | 'store-delivery'
   | 'client-invitation'
+  | 'details-request'
   | 'payment-link'
   | 'assessment-call-visitor'
   | 'assessment-call-coach';
@@ -58,10 +57,12 @@ const TEMPLATES: TemplateOption[] = [
   {
     key: 'client-invitation',
     label: 'Client invitation',
-    variants: [
-      { value: 'first', label: 'First invitation' },
-      { value: 'replaced', label: 'Replaced invitation' },
-    ],
+    variants: [{ value: 'invitation', label: 'Invitation' }],
+  },
+  {
+    key: 'details-request',
+    label: 'Details request',
+    variants: [{ value: 'request', label: 'Request for more details' }],
   },
   {
     key: 'payment-link',
@@ -117,10 +118,18 @@ export function EmailPreview() {
     if (template === 'client-invitation') {
       return (
         <ClientInvitation
-          variant={variant as ClientInvitationVariant}
           clientName="Jane"
           coachName="Eli"
           acceptUrl={`${window.location.origin}/invitation#inv-demo`}
+        />
+      );
+    }
+    if (template === 'details-request') {
+      return (
+        <DetailsRequest
+          clientName="Jane"
+          coachName="Eli"
+          portalUrl={`${window.location.origin}/portal`}
         />
       );
     }

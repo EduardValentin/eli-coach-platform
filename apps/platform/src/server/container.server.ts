@@ -32,6 +32,7 @@ import {
   composeClientOnboardingFeature,
   type ClientOnboardingFeature,
 } from "~/features/client-onboarding/server/client-onboarding-composition.server";
+import { composeClientProfileFeature } from "~/features/client-profile/server/client-profile-composition.server";
 import { composeCoachingSalesFeature } from "~/features/coaching-sales/server/coaching-sales-composition.server";
 import {
   composeStoreFeature,
@@ -56,6 +57,7 @@ export type PlatformContainer = {
   accounts: AccountsFeature;
   assessmentCalls: ReturnType<typeof composeAssessmentCallsFeature>;
   clientOnboarding: ClientOnboardingFeature;
+  clientProfile: ReturnType<typeof composeClientProfileFeature>;
   closeDatabase: () => Promise<void>;
   coachingSales: ReturnType<typeof composeCoachingSalesFeature>;
   featureFlagOverrides: FeatureFlagOverrides;
@@ -136,13 +138,29 @@ export function createPlatformContainer(options: {
     productEmail,
     publicAppUrl: environment.PUBLIC_APP_URL,
   });
-  const clientOnboarding = composeClientOnboardingFeature({
+  const clientProfile = composeClientProfileFeature({
+    clientIdentities: coachingSales.handles.clientIdentities,
     clock,
     database: database.client,
+    unitPreferenceClients: coachingSales.handles.unitPreferenceClients,
+  });
+  const clientOnboarding = composeClientOnboardingFeature({
+    appBasePath: environment.APP_BASE_PATH,
+    clock,
+    contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
+    database: database.client,
     incidents,
+    measurements: clientProfile.handles.measurements,
     onboardingClients: coachingSales.handles.onboardingClients,
+    onboardingReviewStamps: coachingSales.handles.onboardingReviewStamps,
     onboardingSubmissionStamps:
       coachingSales.handles.onboardingSubmissionStamps,
+    productEmail,
+    publicAppUrl: environment.PUBLIC_APP_URL,
+    recordMeasurementEntry: clientProfile.handles.recordMeasurementEntry,
+    reviewStampWriter: coachingSales.handles.reviewStampWriter,
+    saveClientProfile: clientProfile.handles.saveClientProfile,
+    unitPreferences: clientProfile.handles.unitPreferences,
   });
   const platform = composePlatformFeature({
     app: environment,
@@ -169,6 +187,7 @@ export function createPlatformContainer(options: {
     }),
     assessmentCalls,
     clientOnboarding,
+    clientProfile,
     closeDatabase: () => database.close(),
     coachingSales,
     featureFlagOverrides,

@@ -1,4 +1,5 @@
 import {
+  CLIENT_STATUS_GROUPS,
   type ClientStatus,
   type ClientStatusLabel,
 } from '../domain/clientStatus';
@@ -7,17 +8,8 @@ export type RosterStatus = Extract<ClientStatusLabel, 'Active' | 'Inactive'>;
 
 export type RosterStatusOption = ClientStatusLabel | 'all';
 
-const ROSTER_STATUS_VOCABULARY: readonly ClientStatusLabel[] = [
-  'Invited',
-  'Onboarding',
-  'Awaiting review',
-  'In review',
-  'Needs details',
-  'Approved',
-  'Active',
-  'Cancelled',
-  'Inactive',
-];
+const ROSTER_STATUS_VOCABULARY: readonly ClientStatusLabel[] =
+  CLIENT_STATUS_GROUPS.flatMap((group) => group.options);
 
 export const ROSTER_STATUS_OPTIONS: readonly RosterStatusOption[] = [
   'all',
@@ -42,7 +34,7 @@ export type RosterRow = {
   name: string;
   email: string;
   status: ClientStatus;
-  bundleLabel: string;
+  bundleMonths: number | null;
   joinedAt: Date | null;
   detailPath: string;
   actionLabel: string;
@@ -159,7 +151,24 @@ function placeholderLastBy(
   return [...valued, ...placeholders];
 }
 
+function compareJoinedAscending(one: RosterRow, other: RosterRow): number {
+  return (one.joinedAt as Date).getTime() - (other.joinedAt as Date).getTime();
+}
+
+function newestJoinedFirst(rows: RosterRow[]): RosterRow[] {
+  const joined = rows
+    .filter((row) => row.joinedAt !== null)
+    .sort((one, other) => compareJoinedAscending(other, one));
+  const notJoined = rows.filter((row) => row.joinedAt === null);
+
+  return [...joined, ...notJoined];
+}
+
 export function sortRows(rows: RosterRow[], sort: RosterSort): RosterRow[] {
+  return sortedByKey(newestJoinedFirst(rows), sort);
+}
+
+function sortedByKey(rows: RosterRow[], sort: RosterSort): RosterRow[] {
   switch (sort.key) {
     case 'name':
       return sortedRowsBy(
@@ -180,16 +189,16 @@ export function sortRows(rows: RosterRow[], sort: RosterSort): RosterRow[] {
     case 'bundle':
       return placeholderLastBy(
         rows,
-        (row) => row.bundleLabel !== '—',
-        (one, other) => compareText(one.bundleLabel, other.bundleLabel),
+        (row) => row.bundleMonths !== null,
+        (one, other) =>
+          (one.bundleMonths as number) - (other.bundleMonths as number),
         sort.direction,
       );
     case 'joined':
       return placeholderLastBy(
         rows,
         (row) => row.joinedAt !== null,
-        (one, other) =>
-          (one.joinedAt as Date).getTime() - (other.joinedAt as Date).getTime(),
+        compareJoinedAscending,
         sort.direction,
       );
   }

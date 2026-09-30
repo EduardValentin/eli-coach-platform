@@ -44,6 +44,25 @@ export function DeadEndContent({
   );
 }
 
+export function DeadEndPanel({
+  icon,
+  title,
+  description,
+}: {
+  icon: LucideIcon;
+  title: string;
+  description: ReactNode;
+}) {
+  return (
+    <div
+      role="alert"
+      className="bg-surface-base rounded-panel shadow-soft border border-border-default/50 flex flex-col items-center px-6 py-16 text-center"
+    >
+      <DeadEndContent icon={icon} title={title} description={description} />
+    </div>
+  );
+}
+
 export function ErrorPage({
   icon,
   eyebrow,

@@ -17,24 +17,21 @@ import {
   type Visitor,
 } from "~integration-test-config/coaching-sales-journey";
 import {
+  ClientOnboardingJourney,
+  completeAnswers,
+  givenConsents,
+  REGULAR_LAST_PERIOD_START,
+  type OnboardingAnswers,
+  type OnboardingConsentInstants,
+} from "~integration-test-config/client-onboarding-journey";
+import {
   COACH_SESSION,
   PlatformRig,
   type AccountSession,
 } from "~integration-test-config/platform-rig";
 import { visibleDocument } from "~integration-test-config/rendered-page";
-import { clerkServesUser } from "~integration-test-config/wire-mock/expectations/clerk-backend-api";
 import { STRIPE_CHECKOUT_SESSION_ID } from "~integration-test-config/wire-mock/expectations/stripe-api";
 import { MANUAL_SCREENING_MESSAGE } from "~/features/client-onboarding/contracts/onboarding-copy";
-
-type OnboardingFormAnswers = Record<string, unknown>;
-
-type OnboardingAnswers = Record<string, OnboardingFormAnswers>;
-
-type OnboardingConsentInstants = {
-  specialCategoryAt: string | null;
-  disclaimerAt: string | null;
-  progressPhotosAt: string | null;
-};
 
 type DraftRequestBody = {
   formId: string;
@@ -56,6 +53,7 @@ type UnitPreferenceRequestBody = {
 const suite = new ApiIntegrationTestSuite();
 const rig = new PlatformRig(suite);
 const journey = new CoachingSalesJourney(rig);
+const onboarding = new ClientOnboardingJourney(rig, journey);
 
 const CLIENT_PORTAL = "/client";
 const WELCOME = "/client/welcome";
@@ -63,7 +61,7 @@ const ONBOARDING = "/client/onboarding";
 const PUBLIC_HOME = "/";
 const DRAFT_API = "/api/client-onboarding/draft";
 const SUBMISSION_API = "/api/client-onboarding/submission";
-const UNIT_PREFERENCE_API = "/api/client-onboarding/unit-preference";
+const UNIT_PREFERENCE_API = "/api/client-profile/unit-preference";
 
 const RESUME_NOTE = "Picking up where you left off.";
 const IMMEDIATE_START_LINE =
@@ -81,9 +79,7 @@ const FORM_IDS = [
 
 const SAFETY_SCREENING_FORM_INDEX = 1;
 
-const CONSENT_GIVEN_AT = new Date("2020-01-01T00:00:00.000Z");
 const OUTSIDE_SCREENING_RANGE_INSTANT = new Date("2064-06-01T09:00:00.000Z");
-const REGULAR_LAST_PERIOD_START = "2026-09-08";
 const FUTURE_CLIENT_LAST_PERIOD_START = "2064-05-15";
 
 const INVITED_CLIENT: AccountSession = {
@@ -196,7 +192,7 @@ describe.sequential("client onboarding integration", () => {
     expect(page).not.toContain("(cm)");
   });
 
-  it("records her complete submission and closes the door behind her", async () => {
+  it("records her complete submission with her profile facts and closes the door behind her", async () => {
     // arrange
     await admitInvitedClient(ANA);
     await putDraft(INVITED_CLIENT, {
@@ -230,6 +226,15 @@ describe.sequential("client onboarding integration", () => {
       expect.objectContaining({ weightKg: "66.10", waistCm: "74.0" }),
     ]);
     expect(await draftRowCountOf(client.id)).toBe(0);
+    expect(await onboarding.profileRowOf(client.id)).toEqual({
+      heightCm: "165.0",
+      activityLevel: "Mostly sitting",
+      primaryGoal: "Lose fat",
+      dietaryRestrictions: "Lactose, mild",
+      clientNotes: null,
+      createdAt: CALL_ENDED_INSTANT,
+      updatedAt: CALL_ENDED_INSTANT,
+    });
     expect(client.onboardingSubmittedAt).toEqual(CALL_ENDED_INSTANT);
     expect(welcomeAfterSubmission.status).toBe(302);
     expect(welcomeAfterSubmission.headers.get("location")).toBe(
@@ -310,6 +315,7 @@ describe.sequential("client onboarding integration", () => {
     });
     const client = await clientRowOf(INVITED_CLIENT);
     expect(await submissionRowCountOf(client.id)).toBe(0);
+    expect(await onboarding.profileRowOf(client.id)).toBeUndefined();
   });
 
   it("shows the client portal on the public home once she has submitted", async () => {
@@ -401,8 +407,7 @@ describe.sequential("client onboarding integration", () => {
 });
 
 async function admitInvitedClient(visitor: Visitor): Promise<void> {
-  await journey.payForCall(visitor);
-  await bindInvitedClient();
+  await onboarding.admit(visitor, INVITED_CLIENT);
 }
 
 async function admitInvitedClientAfterWaitingPurchase(
@@ -426,29 +431,7 @@ async function admitInvitedClientAfterWaitingPurchase(
     throw new Error(`The completed checkout answered ${response.status}.`);
   }
 
-  await bindInvitedClient();
-}
-
-async function bindInvitedClient(): Promise<void> {
-  const [invitation] = await suite.postgres.queryRows<{ id: string }>({
-    sql: "select id from app.client_invitations",
-    values: [],
-  });
-
-  if (!invitation) {
-    throw new Error("The payment invited no one.");
-  }
-
-  await suite.wireMock.stub(
-    clerkServesUser(INVITED_CLIENT.subjectId, { invitationId: invitation.id }),
-  );
-  const firstRequest = await rig.requestAs(INVITED_CLIENT, CLIENT_PORTAL);
-
-  if (firstRequest.status !== 302) {
-    throw new Error(
-      `Her first signed-in request answered ${firstRequest.status}.`,
-    );
-  }
+  await onboarding.bindInvitedClient(INVITED_CLIENT);
 }
 
 async function putDraft(
@@ -559,76 +542,6 @@ function noConsents(): OnboardingConsentInstants {
     specialCategoryAt: null,
     disclaimerAt: null,
     progressPhotosAt: null,
-  };
-}
-
-function givenConsents(): OnboardingConsentInstants {
-  return {
-    specialCategoryAt: CONSENT_GIVEN_AT.toISOString(),
-    disclaimerAt: CONSENT_GIVEN_AT.toISOString(),
-    progressPhotosAt: null,
-  };
-}
-
-function completeAnswers(lastPeriodStart: string): OnboardingAnswers {
-  return {
-    "goal-availability": {
-      weight: 66.1,
-      height: 165,
-      goalWeight: 62,
-      primaryGoal: "Lose fat",
-      blockers: ["Busy schedule"],
-      experienceLevel: "I train regularly, but without a structured plan",
-      trainingDaysPerWeek: "3 days",
-      minutesPerSession: "45–60 minutes",
-      previousPt: "No",
-      coachExpectations: "Someone to keep me consistent and honest.",
-      lifestyleActivityLevel: "Mostly sitting",
-      availableEquipment: ["Full gym", "Dumbbells"],
-      trainingPlace: "Gym",
-    },
-    "safety-screening": {
-      heartCondition: "No",
-      chestPainOnExertion: "No",
-      dizzinessOrFainting: "No",
-      chronicConditionDiagnosed: "No",
-      chronicConditionMedication: "No",
-      boneOrJointProblem: "Yes",
-      boneOrJointProblemList: "Right shoulder aches on overhead pressing.",
-      doctorProhibitedActivity: "No",
-      parqDeclaration: true,
-    },
-    "cycle-context": {
-      cycleRegularity: "Yes, and it's regular",
-      cycleLength: 29,
-      lastPeriodStart,
-      hormonalContraception: "None",
-      lifeStage: ["None of these"],
-      perimenopauseOrMenopause: "No",
-      gynaecologicalCondition: "No",
-      recurringSymptoms: ["Fatigue", "Appetite changes"],
-    },
-    "nutrition-lifestyle": {
-      eatingStyle: "No restrictions",
-      allergiesOrIntolerances: "Yes",
-      allergiesOrIntolerancesList: "Lactose, mild",
-      mealsPerDay: "Three",
-      snacksPerDay: "One",
-      firstMeal: "7–9am",
-      lastMeal: "6–8pm",
-      energyDips: "Sometimes",
-      energyDipsWhen: ["Afternoon"],
-      jobType: "Mostly sitting",
-      sleepHours: "6–7 hours",
-      eatingOutFrequency: "Bring food from home",
-      cookingSetup: "I do",
-      cookingTime: "15–30 minutes",
-      waterPerDay: "2–5 glasses",
-      nutritionGoal: "Stop skipping meals when work gets busy.",
-      checkInDay: "Monday",
-      checkInChannel: "Email",
-    },
-    measurements: { waist: 74, hips: 98 },
   };
 }
 

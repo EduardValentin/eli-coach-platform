@@ -6,18 +6,17 @@ import { createRequestArgs } from "~/server/test-support/request-args";
 import { InvitationsController } from "./invitations-controller.server";
 
 const TOKEN = "tok_live_invitation_token";
-const CONTINUE_URL =
+const SIGN_UP_URL =
   "https://accounts.evoa.example/sign-up?__clerk_ticket=ticket";
 
 type Resolution = Awaited<ReturnType<ResolveInvitationUseCase["execute"]>>;
 
 describe("InvitationsController resolution", () => {
-  it("answers a live invitation with her email and the hosted sign-up link only, uncached", async () => {
+  it("answers a live invitation with the hosted sign-up link only, uncached", async () => {
     // arrange
     const { controller, resolveInvitation } = createController({
       state: "valid",
-      email: "ana@example.com",
-      continueUrl: CONTINUE_URL,
+      signUpUrl: SIGN_UP_URL,
     });
 
     // act
@@ -29,8 +28,7 @@ describe("InvitationsController resolution", () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
       state: "valid",
-      email: "ana@example.com",
-      continueUrl: CONTINUE_URL,
+      signUpUrl: SIGN_UP_URL,
     });
     expect(response.headers.get("Cache-Control")).toBe("no-store");
     expect(resolveInvitation).toHaveBeenCalledWith({ rawToken: TOKEN });
@@ -51,12 +49,11 @@ describe("InvitationsController resolution", () => {
     expect(response.headers.get("Cache-Control")).toBe("no-store");
   });
 
-  it("never hands out a continue link that is not a web address", async () => {
+  it("never hands out a sign-up link that is not a web address", async () => {
     // arrange
     const { controller } = createController({
       state: "valid",
-      email: "ana@example.com",
-      continueUrl: "javascript:alert(1)",
+      signUpUrl: "javascript:alert(1)",
     });
 
     // act

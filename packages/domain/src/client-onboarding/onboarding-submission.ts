@@ -1,6 +1,7 @@
 import type {
   OnboardingAnswer,
   OnboardingAnswersByForm,
+  OnboardingQuestionId,
 } from "./onboarding-answers";
 import type { OnboardingConsents } from "./onboarding-consents";
 
@@ -151,4 +152,20 @@ export function isPregnancyFlagged(answers: OnboardingAnswersByForm): boolean {
     Array.isArray(lifeStage) &&
     lifeStage.some((value) => PREGNANCY_ANSWERS.has(value))
   );
+}
+
+export function flaggedAnswerIds(
+  answers: OnboardingAnswersByForm,
+): OnboardingQuestionId[] {
+  const safety = answers["safety-screening"];
+  const flagged: OnboardingQuestionId[] = PARQ_QUESTION_IDS.filter(
+    (fieldId) => safety[fieldId] === "Yes",
+  ).map((fieldId) => ({ formId: "safety-screening", fieldId }));
+
+  if (isPregnancyFlagged(answers))
+    flagged.push({ formId: "cycle-context", fieldId: "lifeStage" });
+  if (hasMigraineContraceptionSignal(answers))
+    flagged.push({ formId: "cycle-context", fieldId: "recurringSymptoms" });
+
+  return flagged;
 }

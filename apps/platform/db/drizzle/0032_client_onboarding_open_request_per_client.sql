@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "client_onboarding_detail_requests_open_per_client_unique" ON "app"."client_onboarding_detail_requests" USING btree ("client_id") WHERE "app"."client_onboarding_detail_requests"."answered_at" is null;

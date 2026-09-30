@@ -24,7 +24,7 @@ export type CheckoutCompletion = {
   startChoice: StartChoice;
 };
 
-type CoachingSubscriptionStatus = "not-started";
+export type CoachingSubscriptionStatus = "not-started";
 
 type CoachingSubscriptionProps = {
   bundleId: CoachingBundleId;

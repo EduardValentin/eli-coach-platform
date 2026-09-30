@@ -111,19 +111,8 @@ test("a paid client receives her invitation, creates her account and lands on th
   ).toBeVisible();
 
   // act
-  await page.getByRole("button", { name: "Sign out" }).click();
-
-  // assert
-  await expect(
-    page.getByRole("heading", { name: "Create your account" }),
-  ).toBeVisible();
-  await expect(page.getByRole("textbox", { name: "Email" })).toHaveValue(
-    visitorEmail,
-  );
-
-  // act
-  await accountPortal.signUpFromInvitation(
-    page.getByRole("link", { name: "Continue to create my account" }),
+  await accountPortal.signUpFromInvitation(() =>
+    page.getByRole("button", { name: "Sign out" }).click(),
   );
 
   // assert

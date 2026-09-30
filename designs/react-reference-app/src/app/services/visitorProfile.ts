@@ -50,6 +50,52 @@ export function possessivePronoun(gender: VisitorGender): PossessivePronoun {
   return POSSESSIVE_PRONOUNS[gender];
 }
 
+export type SubjectPronoun = {
+  lower: string;
+  capitalised: string;
+  hasVerb: string;
+  isVerb: string;
+  regularVerbSuffix: string;
+};
+
+const SUBJECT_PRONOUNS: Record<VisitorGender, SubjectPronoun> = {
+  female: {
+    lower: 'she',
+    capitalised: 'She',
+    hasVerb: 'has',
+    isVerb: 'is',
+    regularVerbSuffix: 's',
+  },
+  male: {
+    lower: 'he',
+    capitalised: 'He',
+    hasVerb: 'has',
+    isVerb: 'is',
+    regularVerbSuffix: 's',
+  },
+  prefer_not_to_say: {
+    lower: 'they',
+    capitalised: 'They',
+    hasVerb: 'have',
+    isVerb: 'are',
+    regularVerbSuffix: '',
+  },
+};
+
+export function subjectPronoun(gender: VisitorGender): SubjectPronoun {
+  return SUBJECT_PRONOUNS[gender];
+}
+
+const OBJECT_PRONOUNS: Record<VisitorGender, string> = {
+  female: 'her',
+  male: 'him',
+  prefer_not_to_say: 'them',
+};
+
+export function objectPronoun(gender: VisitorGender): string {
+  return OBJECT_PRONOUNS[gender];
+}
+
 export function labelForPrimaryGoal(goal: VisitorPrimaryGoal): string {
   return VISITOR_PRIMARY_GOALS.find((option) => option.value === goal)?.label ?? goal;
 }
@@ -101,6 +147,10 @@ export function formatAgeForCard(dateOfBirth: string, on: Date): string {
   return `${ageOn(dateOfBirth, on)} (${format(parseISO(dateOfBirth), 'd MMM yyyy')})`;
 }
 
+export function formatBirthDate(dateOfBirth: string): string {
+  return format(parseISO(dateOfBirth), 'd MMMM yyyy');
+}
+
 export function formatAgeForEmail(dateOfBirth: string, on: Date): string {
-  return `${ageOn(dateOfBirth, on)} (born ${format(parseISO(dateOfBirth), 'd MMMM yyyy')})`;
+  return `${ageOn(dateOfBirth, on)} (born ${formatBirthDate(dateOfBirth)})`;
 }

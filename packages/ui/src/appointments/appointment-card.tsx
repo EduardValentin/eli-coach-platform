@@ -75,10 +75,15 @@ function AppointmentDetails({
 
   return (
     <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-      {details.map((detail) => (
+      {details.map((detail, index) => (
         <div key={detail.label}>
           <dt className={LABEL_CLASS}>{detail.label}</dt>
-          <dd className="mt-0.5 text-sm text-text-secondary">{detail.value}</dd>
+          <dd
+            className="mt-0.5 text-sm text-text-secondary"
+            data-parity={`detail-${index + 1}`}
+          >
+            {detail.value}
+          </dd>
         </div>
       ))}
     </dl>

@@ -10,7 +10,13 @@ import type {
   PrototypeAccountRole,
   PrototypeSignInOutcome,
 } from '../services/authService';
-import type { PrototypeInvitationLinkState } from '../services/invitationService';
+import {
+  PROTOTYPE_INVITATION_STANDINGS,
+  PROTOTYPE_INVITATION_RESEND_OUTCOMES,
+  type PrototypeInvitationStanding,
+  type PrototypeInvitationLinkState,
+  type PrototypeInvitationResendOutcome,
+} from '../services/invitationService';
 import type {
   PrototypePaymentLinkOutcome,
   PrototypePaymentLinkState,
@@ -77,6 +83,9 @@ type AppState = {
   journeyAgeBand: JourneyAgeBand;
   journeyConnection: OnboardingConnection;
   journeyReducedPricing: boolean;
+  journeyInvitation: PrototypeInvitationStanding;
+  invitationResendOutcome: PrototypeInvitationResendOutcome;
+  clientsRoster: PrototypeClientsRoster;
   paymentLinkOutcome: PrototypePaymentLinkOutcome;
   paymentLinkState: PrototypePaymentLinkState;
   invitationLinkState: PrototypeInvitationLinkState;
@@ -110,6 +119,9 @@ const defaultState: AppState = {
   journeyAgeBand: 'adult',
   journeyConnection: 'working',
   journeyReducedPricing: false,
+  journeyInvitation: 'sent',
+  invitationResendOutcome: 'sent',
+  clientsRoster: 'seeded',
   paymentLinkOutcome: 'sent',
   paymentLinkState: 'valid',
   invitationLinkState: 'valid',
@@ -135,6 +147,12 @@ const validBookingOutcomes = [
   'server_error',
 ] as const;
 const validCoachListingOutcomes = ['ok', 'unavailable'] as const;
+export const PROTOTYPE_CLIENTS_ROSTERS = [
+  'seeded',
+  'empty',
+  'unavailable',
+] as const;
+export type PrototypeClientsRoster = (typeof PROTOTYPE_CLIENTS_ROSTERS)[number];
 const validCallSettingsSaveOutcomes = ['saved', 'server_error'] as const;
 const validJourneyStages = [
   'held',
@@ -289,6 +307,30 @@ function parseDevParamsFromURL(): AppState {
   if (params.has('jreduced')) {
     state.journeyReducedPricing = params.get('jreduced') === '1';
   }
+  const journeyInvitation = params.get('jinv');
+  if (
+    journeyInvitation &&
+    (PROTOTYPE_INVITATION_STANDINGS as readonly string[]).includes(journeyInvitation)
+  ) {
+    state.journeyInvitation = journeyInvitation as PrototypeInvitationStanding;
+  }
+  const invitationResendOutcome = params.get('jresend');
+  if (
+    invitationResendOutcome &&
+    (PROTOTYPE_INVITATION_RESEND_OUTCOMES as readonly string[]).includes(
+      invitationResendOutcome,
+    )
+  ) {
+    state.invitationResendOutcome =
+      invitationResendOutcome as PrototypeInvitationResendOutcome;
+  }
+  const clientsRoster = params.get('jroster');
+  if (
+    clientsRoster &&
+    (PROTOTYPE_CLIENTS_ROSTERS as readonly string[]).includes(clientsRoster)
+  ) {
+    state.clientsRoster = clientsRoster as PrototypeClientsRoster;
+  }
   const paymentLink = params.get('paylink');
   if (
     paymentLink &&
@@ -350,6 +392,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     url.searchParams.delete('jage');
     url.searchParams.delete('jconn');
     url.searchParams.delete('jreduced');
+    url.searchParams.delete('jinv');
+    url.searchParams.delete('jresend');
+    url.searchParams.delete('jroster');
     url.searchParams.delete('paylink');
     url.searchParams.delete('paylinkstate');
     url.searchParams.delete('invitationstate');
@@ -417,6 +462,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
       url.searchParams.set('jconn', appState.journeyConnection);
     }
     if (appState.journeyReducedPricing) url.searchParams.set('jreduced', '1');
+    if (appState.journeyInvitation !== defaultState.journeyInvitation) {
+      url.searchParams.set('jinv', appState.journeyInvitation);
+    }
+    if (
+      appState.invitationResendOutcome !== defaultState.invitationResendOutcome
+    ) {
+      url.searchParams.set('jresend', appState.invitationResendOutcome);
+    }
+    if (appState.clientsRoster !== defaultState.clientsRoster) {
+      url.searchParams.set('jroster', appState.clientsRoster);
+    }
     if (appState.paymentLinkOutcome !== defaultState.paymentLinkOutcome) {
       url.searchParams.set('paylink', appState.paymentLinkOutcome);
     }

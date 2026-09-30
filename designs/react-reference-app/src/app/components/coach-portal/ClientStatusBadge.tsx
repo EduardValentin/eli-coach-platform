@@ -13,5 +13,12 @@ const BADGE_TONES: Record<ClientStatusTone, BadgeTone> = {
 };
 
 export function ClientStatusBadge({ status }: { status: ClientStatus }) {
-  return <Badge tone={BADGE_TONES[status.tone]}>{status.label}</Badge>;
+  return (
+    <Badge
+      tone={BADGE_TONES[status.tone]}
+      data-parity-root="ClientStatusBadge"
+    >
+      {status.label}
+    </Badge>
+  );
 }

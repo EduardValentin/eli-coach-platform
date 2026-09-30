@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   advance,
   clientStatusLabel,
-  COACH_STAGE_LABELS,
   emptyOnboarding,
   isBeforeStage,
   type ClientJourney,
@@ -13,6 +12,7 @@ import {
 function journeyAt(stage: JourneyStage): ClientJourney {
   return {
     callId: 'ac-1',
+    callStartsAt: new Date('2026-03-10T15:00:00.000Z'),
     stage,
     identity: {
       firstName: 'Jane',
@@ -22,6 +22,7 @@ function journeyAt(stage: JourneyStage): ClientJourney {
       gender: 'female',
       country: 'Romania',
     },
+    profile: null,
     pricing: 'regular',
     paymentLink: null,
     paidAt: null,
@@ -29,6 +30,7 @@ function journeyAt(stage: JourneyStage): ClientJourney {
     welcomeSeen: false,
     onboarding: emptyOnboarding(),
     review: { requests: [] },
+    bookingNotes: null,
     programReadyAt: null,
     measurements: [],
   };
@@ -165,39 +167,6 @@ describe('advancing a journey', () => {
 });
 
 describe('journey labels', () => {
-  it('names the stages the coach sees', () => {
-    // arrange
-    const stages: JourneyStage[] = [
-      'payment-link-sent',
-      'invited',
-      'account-created',
-      'onboarding',
-      'submitted',
-      'reviewing',
-      'needs-details',
-      'approved',
-      'program-ready',
-      'review-call-scheduled',
-    ];
-
-    // act
-    const labels = stages.map((stage) => COACH_STAGE_LABELS[stage]);
-
-    // assert
-    expect(labels).toEqual([
-      'Payment link sent',
-      'Invited',
-      'Invitation accepted',
-      'Onboarding',
-      'Sent to coach',
-      'Reviewing',
-      'Needs more details',
-      'Approved',
-      'Program ready',
-      'Review call booked',
-    ]);
-  });
-
   it('speaks to the client only from the moment she has sent her answers', () => {
     // arrange
     const stages: JourneyStage[] = [

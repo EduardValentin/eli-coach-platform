@@ -32,11 +32,12 @@ import { CLIENT_PORTAL_PATH } from "~/features/accounts/contracts/paths";
 import { CLIENT_ONBOARDING_PATH } from "~/features/coaching-sales/contracts/paths";
 import type {
   OnboardingConsentInstants,
-  OnboardingPage,
+  OnboardingWizardPage,
   SaveDraftRequest,
   SubmitRequest,
 } from "~/features/client-onboarding/contracts/onboarding";
 import { CLIENT_ONBOARDING_API_PATHS } from "~/features/client-onboarding/contracts/paths";
+import { CLIENT_PROFILE_API_PATHS } from "~/features/client-profile/contracts/paths";
 
 import OnboardingRoute from "./onboarding-page";
 
@@ -57,14 +58,14 @@ const PARQ_DECLARATION =
 const PROGRESS_PHOTO_CONSENT =
   "I agree to share progress photos with my coach. They are only used to follow my progress, and I can ask for them to be deleted at any time. [Placeholder — Eli to replace with her own wording.]";
 
-const FEMALE_FORMS: OnboardingPage["formIds"] = [
+const FEMALE_FORMS: OnboardingWizardPage["formIds"] = [
   "goal-availability",
   "safety-screening",
   "cycle-context",
   "nutrition-lifestyle",
   "measurements",
 ];
-const FOUR_PART_FORMS: OnboardingPage["formIds"] = [
+const FOUR_PART_FORMS: OnboardingWizardPage["formIds"] = [
   "goal-availability",
   "safety-screening",
   "nutrition-lifestyle",
@@ -91,15 +92,15 @@ const WITHHELD_CONSENTS: OnboardingConsentInstants = {
 
 type PageOptions = {
   consents?: OnboardingConsentInstants;
-  formIds?: OnboardingPage["formIds"];
-  gender?: OnboardingPage["gender"];
+  formIds?: OnboardingWizardPage["formIds"];
+  gender?: OnboardingWizardPage["gender"];
   manualScreening?: boolean;
   resumed?: boolean;
-  unitPreference?: OnboardingPage["unitPreference"];
-  answers?: OnboardingPage["draft"]["answers"];
+  unitPreference?: OnboardingWizardPage["unitPreference"];
+  answers?: OnboardingWizardPage["draft"]["answers"];
 };
 
-function emptyAnswers(): OnboardingPage["draft"]["answers"] {
+function emptyAnswers(): OnboardingWizardPage["draft"]["answers"] {
   return {
     "goal-availability": {},
     "safety-screening": {},
@@ -109,7 +110,7 @@ function emptyAnswers(): OnboardingPage["draft"]["answers"] {
   };
 }
 
-function answeredDraft(): OnboardingPage["draft"]["answers"] {
+function answeredDraft(): OnboardingWizardPage["draft"]["answers"] {
   return {
     ...emptyAnswers(),
     "goal-availability": { weight: 66.1, height: 165 },
@@ -120,10 +121,11 @@ function answeredDraft(): OnboardingPage["draft"]["answers"] {
 function pageAt(
   currentFormIndex: number,
   options: PageOptions = {},
-): OnboardingPage {
+): OnboardingWizardPage {
   const gender = options.gender ?? "female";
 
   return {
+    mode: "wizard",
     clientId: CLIENT_ID,
     formIds:
       options.formIds ?? (gender === "female" ? FEMALE_FORMS : FOUR_PART_FORMS),
@@ -143,7 +145,7 @@ function pageAt(
   };
 }
 
-function firstVisit(): OnboardingPage {
+function firstVisit(): OnboardingWizardPage {
   return pageAt(0, { answers: emptyAnswers(), consents: WITHHELD_CONSENTS });
 }
 
@@ -169,7 +171,7 @@ function answerDrafts(status: number) {
 function answerUnitPreferences(status: number) {
   server.use(
     http.put(
-      `*${CLIENT_ONBOARDING_API_PATHS.unitPreference}`,
+      `*${CLIENT_PROFILE_API_PATHS.unitPreference}`,
       async ({ request }) => {
         unitPreferenceRequests.push(await request.json());
 
@@ -201,7 +203,7 @@ function lastDraft(): SaveDraftRequest | undefined {
   return draftRequests.at(-1);
 }
 
-function renderOnboarding(page: OnboardingPage) {
+function renderOnboarding(page: OnboardingWizardPage) {
   const router = createMemoryRouter(
     [
       {
@@ -221,7 +223,7 @@ function renderOnboarding(page: OnboardingPage) {
   );
 }
 
-async function openOnboarding(page: OnboardingPage) {
+async function openOnboarding(page: OnboardingWizardPage) {
   const view = renderOnboarding(page);
   await screen.findByRole("heading", { level: 2 });
 

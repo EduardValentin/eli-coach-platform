@@ -1,26 +1,25 @@
 import { appSchema } from "@eli-coach-platform/db";
-import type { OnboardingAnswersByForm } from "@eli-coach-platform/domain/client-onboarding";
+import type {
+  OnboardingAnswersByForm,
+  OnboardingFormId,
+} from "@eli-coach-platform/domain/client-onboarding";
+import { sql } from "drizzle-orm";
 import {
-  HEIGHT_UNITS,
-  WEIGHT_UNITS,
-} from "@eli-coach-platform/domain/unit-preference";
-import { sql, type SQL } from "drizzle-orm";
-import {
-  check,
   index,
   integer,
   jsonb,
-  numeric,
+  text,
   timestamp,
   uniqueIndex,
   uuid,
-  varchar,
 } from "drizzle-orm/pg-core";
 
 import { clientsTable } from "~/features/coaching-sales/data/schema.server";
 
 export const clientOnboardingConstraints = {
   submissionPerClient: "client_onboarding_submissions_client_id_unique",
+  openDetailRequestPerClient:
+    "client_onboarding_detail_requests_open_per_client_unique",
 } as const;
 
 export const clientOnboardingDraftsTable = appSchema.table(
@@ -70,64 +69,38 @@ export const clientOnboardingSubmissionsTable = appSchema.table(
   ],
 );
 
-export const clientMeasurementsTable = appSchema.table(
-  "client_measurements",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    clientId: uuid("client_id")
-      .notNull()
-      .references(() => clientsTable.id),
-    recordedAt: timestamp("recorded_at", { withTimezone: true }).notNull(),
-    weightKg: numeric("weight_kg", {
-      precision: 5,
-      scale: 2,
-      mode: "number",
-    }).notNull(),
-    waistCm: numeric("waist_cm", {
-      precision: 4,
-      scale: 1,
-      mode: "number",
-    }).notNull(),
-    hipsCm: numeric("hips_cm", { precision: 4, scale: 1, mode: "number" }),
-    thighCm: numeric("thigh_cm", { precision: 4, scale: 1, mode: "number" }),
-    armCm: numeric("arm_cm", { precision: 4, scale: 1, mode: "number" }),
-  },
-  (table) => [
-    index("client_measurements_client_id_recorded_at_idx").on(
-      table.clientId,
-      table.recordedAt,
-    ),
-  ],
-);
-
-export const clientUnitPreferencesTable = appSchema.table(
-  "client_unit_preferences",
+export const clientOnboardingReviewsTable = appSchema.table(
+  "client_onboarding_reviews",
   {
     clientId: uuid("client_id")
       .primaryKey()
       .references(() => clientsTable.id),
-    weightUnit: varchar("weight_unit", {
-      enum: WEIGHT_UNITS,
-      length: 8,
-    }).notNull(),
-    heightUnit: varchar("height_unit", {
-      enum: HEIGHT_UNITS,
-      length: 8,
-    }).notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
+    openedAt: timestamp("opened_at", { withTimezone: true }),
+    approvedAt: timestamp("approved_at", { withTimezone: true }),
   },
-  (table) => [
-    check(
-      "client_unit_preferences_weight_unit_check",
-      sql`${table.weightUnit} in (${quotedList(WEIGHT_UNITS)})`,
-    ),
-    check(
-      "client_unit_preferences_height_unit_check",
-      sql`${table.heightUnit} in (${quotedList(HEIGHT_UNITS)})`,
-    ),
-  ],
 );
 
-function quotedList(values: readonly string[]): SQL {
-  return sql.raw(values.map((value) => `'${value}'`).join(", "));
-}
+export const clientOnboardingDetailRequestsTable = appSchema.table(
+  "client_onboarding_detail_requests",
+  {
+    id: uuid("id").primaryKey(),
+    clientId: uuid("client_id")
+      .notNull()
+      .references(() => clientsTable.id),
+    questionIds: jsonb("question_ids")
+      .$type<{ formId: OnboardingFormId; fieldId: string }[]>()
+      .notNull(),
+    note: text("note").notNull(),
+    askedAt: timestamp("asked_at", { withTimezone: true }).notNull(),
+    answeredAt: timestamp("answered_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("client_onboarding_detail_requests_client_id_asked_at_idx").on(
+      table.clientId,
+      table.askedAt,
+    ),
+    uniqueIndex(clientOnboardingConstraints.openDetailRequestPerClient)
+      .on(table.clientId)
+      .where(sql`${table.answeredAt} is null`),
+  ],
+);

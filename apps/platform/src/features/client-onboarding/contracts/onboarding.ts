@@ -3,12 +3,9 @@ import {
   ONBOARDING_FORM_IDS,
   type OnboardingConsent,
 } from "@eli-coach-platform/domain/client-onboarding";
-import {
-  HEIGHT_UNITS,
-  WEIGHT_UNITS,
-  type UnitPreferenceSnapshot,
-} from "@eli-coach-platform/domain/unit-preference";
 import { z } from "zod";
+
+import { unitPreferenceSchema } from "~/features/client-profile/contracts/unit-preference";
 
 const ANSWER_MAX_LENGTH = 2000;
 const CHOICE_MAX_LENGTH = 200;
@@ -30,10 +27,23 @@ const onboardingAnswerSchema = z.union([
   z.null(),
 ]);
 
-export const answersByFormSchema = z.record(
-  formIdSchema,
-  z.record(z.string().min(1).max(FIELD_ID_MAX_LENGTH), onboardingAnswerSchema),
+const formAnswersSchema = z.record(
+  z.string().min(1).max(FIELD_ID_MAX_LENGTH),
+  onboardingAnswerSchema,
 );
+
+export const answersByFormSchema = z.record(formIdSchema, formAnswersSchema);
+
+const askedAnswersSchema = z.partialRecord(formIdSchema, formAnswersSchema);
+
+export type AskedAnswers = z.infer<typeof askedAnswersSchema>;
+
+export const questionIdSchema = z.object({
+  formId: formIdSchema,
+  fieldId: z.string().min(1).max(FIELD_ID_MAX_LENGTH),
+});
+
+export type QuestionId = z.infer<typeof questionIdSchema>;
 
 export const consentsSchema = z.object({
   specialCategoryAt: z.iso.datetime().nullable(),
@@ -59,12 +69,8 @@ export const submitRequestSchema = z.object({
 
 export type SubmitRequest = z.infer<typeof submitRequestSchema>;
 
-export const unitPreferenceSchema = z.object({
-  weightUnit: z.enum(WEIGHT_UNITS),
-  heightUnit: z.enum(HEIGHT_UNITS),
-}) satisfies z.ZodType<UnitPreferenceSnapshot>;
-
-export const onboardingPageSchema = z.object({
+const onboardingWizardPageSchema = z.object({
+  mode: z.literal("wizard"),
   clientId: z.string().min(1),
   formIds: z.array(formIdSchema).min(1),
   gender: z.enum(VISITOR_GENDERS),
@@ -79,7 +85,38 @@ export const onboardingPageSchema = z.object({
   resumed: z.boolean(),
 });
 
+export type OnboardingWizardPage = z.infer<typeof onboardingWizardPageSchema>;
+
+const onboardingAnswerPageSchema = z.object({
+  mode: z.literal("answer"),
+  request: z.object({
+    note: z.string().min(1),
+    fields: z.array(questionIdSchema).min(1),
+  }),
+  answers: askedAnswersSchema,
+  unitPreference: unitPreferenceSchema,
+});
+
+export type OnboardingAnswerPage = z.infer<typeof onboardingAnswerPageSchema>;
+
+export const onboardingPageSchema = z.discriminatedUnion("mode", [
+  onboardingWizardPageSchema,
+  onboardingAnswerPageSchema,
+]);
+
 export type OnboardingPage = z.infer<typeof onboardingPageSchema>;
+
+export const answerDetailsRequestSchema = z.object({
+  answers: askedAnswersSchema,
+});
+
+export type AnswerDetailsRequest = z.infer<typeof answerDetailsRequestSchema>;
+
+export const openRequestSummarySchema = z
+  .object({ note: z.string().min(1) })
+  .nullable();
+
+export type OpenRequestSummary = z.infer<typeof openRequestSummarySchema>;
 
 export const submissionProblemsSchema = z.object({
   problems: z
@@ -106,5 +143,5 @@ export const submissionAcceptedSchema = z.object({
 });
 
 export const onboardingRefusalSchema = z.object({
-  error: z.enum(["not-on-journey", "already-submitted"]),
+  error: z.enum(["not-on-journey", "already-submitted", "no-open-request"]),
 });

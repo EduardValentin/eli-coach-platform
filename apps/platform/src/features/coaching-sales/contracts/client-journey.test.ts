@@ -15,6 +15,13 @@ describe("clientJourneyRedirect", () => {
     ["onboarding", "/client/onboarding"],
     ["submitted", "/client"],
     ["submitted", "/client/plan"],
+    ["in-review", "/client"],
+    ["in-review", "/client/plan"],
+    ["needs-details", "/client"],
+    ["needs-details", "/client/plan"],
+    ["needs-details", "/client/onboarding"],
+    ["approved", "/client"],
+    ["approved", "/client/plan"],
   ] as const)("lets a client at the %s step open %s", (step, requestedPath) => {
     // arrange
     const journeyStep = step;
@@ -34,6 +41,11 @@ describe("clientJourneyRedirect", () => {
     ["onboarding", "/client/plan", "/client/onboarding"],
     ["submitted", "/client/welcome", "/client"],
     ["submitted", "/client/onboarding", "/client"],
+    ["in-review", "/client/welcome", "/client"],
+    ["in-review", "/client/onboarding", "/client"],
+    ["needs-details", "/client/welcome", "/client"],
+    ["approved", "/client/welcome", "/client"],
+    ["approved", "/client/onboarding", "/client"],
   ] as const)(
     "sends a client at the %s step who opens %s to %s",
     (step, requestedPath, expectedPath) => {
@@ -70,16 +82,19 @@ describe("clientJourneyPortalLink", () => {
     },
   );
 
-  it("offers no onboarding link once she has sent her onboarding", () => {
-    // arrange
-    const journeyStep = "submitted";
+  it.each(["submitted", "in-review", "needs-details", "approved"] as const)(
+    "offers no onboarding link once she has sent her onboarding, at the %s step",
+    (step) => {
+      // arrange
+      const journeyStep = step;
 
-    // act
-    const link = clientJourneyPortalLink(journeyStep);
+      // act
+      const link = clientJourneyPortalLink(journeyStep);
 
-    // assert
-    expect(link).toBeNull();
-  });
+      // assert
+      expect(link).toBeNull();
+    },
+  );
 });
 
 describe("programStatusSchema", () => {
@@ -99,6 +114,39 @@ describe("programStatusSchema", () => {
 
     // assert
     expect(parsed.success).toBe(true);
+  });
+
+  it.each(["in-review", "needs-details", "approved"])(
+    "accepts a program status at the %s step",
+    (kind) => {
+      // arrange
+      const status = {
+        kind,
+        submittedAt: "2026-09-28T10:00:00.000Z",
+        workStartsOn: null,
+      };
+
+      // act
+      const parsed = programStatusSchema.safeParse(status);
+
+      // assert
+      expect(parsed.success).toBe(true);
+    },
+  );
+
+  it("refuses a program status at a step before she sent her onboarding", () => {
+    // arrange
+    const status = {
+      kind: "onboarding",
+      submittedAt: "2026-09-28T10:00:00.000Z",
+      workStartsOn: null,
+    };
+
+    // act
+    const parsed = programStatusSchema.safeParse(status);
+
+    // assert
+    expect(parsed.success).toBe(false);
   });
 
   it("refuses a submission moment that is not an instant", () => {

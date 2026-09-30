@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { useClientJourneys } from '../../../context/ClientJourneyContext';
 import type {
   ClientJourney,
@@ -119,11 +119,15 @@ export function AnswerRequestCard({ request }: { request: DetailRequest }) {
     <section
       aria-labelledby="answer-request-heading"
       className={ONBOARDING_CARD_CLASS}
+      data-parity-root="AnswerRequestCard"
     >
       <h2 className={ONBOARDING_HEADING_CLASS} id="answer-request-heading">
         What your coach asked
       </h2>
-      <p className="mt-3 rounded-card border border-primary/10 bg-primary/5 px-4 py-3 text-sm leading-relaxed text-text-primary">
+      <p
+        className="mt-3 rounded-card border border-primary/10 bg-primary/5 px-4 py-3 text-sm leading-relaxed text-text-primary"
+        data-parity="request-note"
+      >
         {request.message}
       </p>
 
@@ -141,13 +145,13 @@ export function AnswerRequestCard({ request }: { request: DetailRequest }) {
 
           <div className="mt-2 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
             <Button
-              type="button"
+              asChild
               variant="ghost"
               size="md"
               className="w-full sm:w-auto"
-              onClick={() => navigate('/portal')}
+              data-parity="not-now"
             >
-              Not now
+              <Link to="/portal">Not now</Link>
             </Button>
             <Button
               disabled={form.formState.isSubmitting}
@@ -155,6 +159,7 @@ export function AnswerRequestCard({ request }: { request: DetailRequest }) {
               variant="primary"
               size="md"
               className="w-full sm:w-auto"
+              data-parity="send-answers"
             >
               {form.formState.isSubmitting ? 'Sending…' : 'Send my answers'}
             </Button>

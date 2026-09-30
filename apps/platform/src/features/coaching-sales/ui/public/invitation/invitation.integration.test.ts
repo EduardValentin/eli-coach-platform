@@ -10,7 +10,6 @@ import {
 
 import { ApiIntegrationTestSuite } from "~integration-test-config/api-integration-test-suite";
 import {
-  ANA,
   CALL_ENDED_INSTANT,
   CoachingSalesJourney,
 } from "~integration-test-config/coaching-sales-journey";
@@ -64,7 +63,7 @@ describe.sequential("invitation landing integration", () => {
     delete process.env.BOOTSTRAP_COACH_AUTH_SUBJECT_ID;
   });
 
-  it("answers the emailed invitation with her email and the hosted sign-up link, uncached", async () => {
+  it("answers the emailed invitation with the hosted sign-up link only, uncached", async () => {
     // arrange
     await journey.payForCall();
     const token = await journey.latestInvitationToken();
@@ -77,8 +76,7 @@ describe.sequential("invitation landing integration", () => {
     expect(response.headers.get("cache-control")).toBe("no-store");
     expect(await response.json()).toEqual({
       state: "valid",
-      email: ANA.email,
-      continueUrl: CLERK_INVITATION_URL,
+      signUpUrl: CLERK_INVITATION_URL,
     });
   });
 
@@ -163,6 +161,7 @@ describe.sequential("invitation landing integration", () => {
     expect(document).toContain("<title>Your invitation | Evoa</title>");
     expect(document).toContain('name="robots" content="noindex"');
     expect(document).not.toContain("Create your account");
+    expect(document).not.toContain("Continue to create my account");
   });
 
   it("serves the page in waiting-list mode too", async () => {

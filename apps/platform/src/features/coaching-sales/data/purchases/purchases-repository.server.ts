@@ -12,6 +12,7 @@ import type {
   CoachingPurchases,
 } from "@eli-coach-platform/domain/coaching-subscription";
 import type {
+  CallSale,
   CallSalesState,
   CallSalesStates,
 } from "@eli-coach-platform/domain/payment-link";
@@ -66,15 +67,16 @@ export class PostgresCoachingPurchases
 
   async forCalls(
     callIds: readonly string[],
-  ): Promise<ReadonlyMap<string, CallSalesState>> {
+  ): Promise<ReadonlyMap<string, CallSale>> {
     if (callIds.length === 0) {
       return new Map();
     }
 
-    const advancedStates = await this.options.database
+    const advancedSales = await this.options.database
       .select({
         assessmentCallId: clientsTable.assessmentCallId,
         state: sql<CallSalesState>`'paid'`,
+        clientId: sql<string | null>`${clientsTable.id}`,
       })
       .from(clientsTable)
       .where(inArray(clientsTable.assessmentCallId, [...callIds]))
@@ -83,6 +85,7 @@ export class PostgresCoachingPurchases
           .select({
             assessmentCallId: paymentLinksTable.assessmentCallId,
             state: sql<CallSalesState>`'payment-link-sent'`,
+            clientId: sql<string | null>`null::uuid`,
           })
           .from(paymentLinksTable)
           .where(
@@ -94,7 +97,7 @@ export class PostgresCoachingPurchases
           ),
       );
 
-    return salesStatesOf(callIds, advancedStates);
+    return callSalesOf(callIds, advancedSales);
   }
 
   async findOpenForClient(
@@ -196,26 +199,23 @@ async function findClientIdForCall(
   return clientRow.id;
 }
 
-function salesStatesOf(
+function callSalesOf(
   callIds: readonly string[],
-  advancedStates: readonly {
-    assessmentCallId: string;
-    state: CallSalesState;
-  }[],
-): ReadonlyMap<string, CallSalesState> {
-  const states = new Map<string, CallSalesState>(
-    callIds.map((callId) => [callId, "held"]),
+  advancedSales: readonly ({ assessmentCallId: string } & CallSale)[],
+): ReadonlyMap<string, CallSale> {
+  const sales = new Map<string, CallSale>(
+    callIds.map((callId) => [callId, { state: "held", clientId: null }]),
   );
 
-  for (const { assessmentCallId, state } of advancedStates) {
-    const current = states.get(assessmentCallId) ?? "held";
+  for (const { assessmentCallId, state, clientId } of advancedSales) {
+    const current = sales.get(assessmentCallId)?.state ?? "held";
 
     if (outranks(state, current)) {
-      states.set(assessmentCallId, state);
+      sales.set(assessmentCallId, { state, clientId });
     }
   }
 
-  return states;
+  return sales;
 }
 
 function outranks(candidate: CallSalesState, current: CallSalesState): boolean {

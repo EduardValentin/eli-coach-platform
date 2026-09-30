@@ -1,5 +1,9 @@
 export { type AssessmentCallReader } from "./assessment-call-reader";
-export { type CallSalesState, type CallSalesStates } from "./call-sales-states";
+export {
+  type CallSale,
+  type CallSalesState,
+  type CallSalesStates,
+} from "./call-sales-states";
 export { type CoachingSalesIncidents } from "./coaching-sales-incidents";
 export {
   type CoachingSalesNotifications,

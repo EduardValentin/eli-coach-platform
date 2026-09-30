@@ -81,6 +81,79 @@ export const clerkRefusesInvitations: WireMockStub = {
   },
 };
 
+const CLERK_INVITATION_REVOCATION_PATTERN = "/v1/invitations/[^/]+/revoke";
+
+const clerkRevokesInvitations: WireMockStub = {
+  priority: 10,
+  request: {
+    method: "POST",
+    urlPathPattern: CLERK_INVITATION_REVOCATION_PATTERN,
+  },
+  response: {
+    headers: jsonHeaders,
+    status: 200,
+    jsonBody: {
+      created_at: 1_700_000_000_000,
+      email_address: "invited@example.com",
+      expires_at: 1_802_592_000_000,
+      id: "inv_integration",
+      object: "invitation",
+      public_metadata: {},
+      revoked: true,
+      status: "revoked",
+      updated_at: 1_700_000_100_000,
+    },
+  },
+};
+
+export const clerkRefusesInvitationRevocations: WireMockStub = {
+  priority: 1,
+  request: {
+    method: "POST",
+    urlPathPattern: CLERK_INVITATION_REVOCATION_PATTERN,
+  },
+  response: {
+    headers: jsonHeaders,
+    status: 500,
+    jsonBody: {
+      errors: [
+        {
+          code: "internal_clerk_error",
+          long_message: "Something went wrong on Clerk's side.",
+          message: "Something went wrong",
+        },
+      ],
+    },
+  },
+};
+
+export function clerkCreatesInvitation(invitationId: string): WireMockStub {
+  return {
+    priority: 5,
+    request: { method: "POST", urlPath: CLERK_INVITATIONS_PATH },
+    response: {
+      headers: jsonHeaders,
+      status: 200,
+      jsonBody: {
+        created_at: 1_700_000_000_000,
+        email_address: "invited@example.com",
+        expires_at: 1_802_592_000_000,
+        id: invitationId,
+        object: "invitation",
+        public_metadata: {},
+        revoked: false,
+        status: "pending",
+        updated_at: 1_700_000_000_000,
+        url: CLERK_INVITATION_URL,
+      },
+    },
+  };
+}
+
+export function clerkInvitationRevocationPath(invitationId: string): string {
+  return `${CLERK_INVITATIONS_PATH}/${invitationId}/revoke`;
+}
+
 export function clerkServesUser(
   userId: string,
   publicMetadata: Record<string, unknown>,
@@ -112,4 +185,5 @@ export const clerkBackendApiStubs: readonly WireMockStub[] = [
   clerkServesTheSuiteSigningKey,
   clerkRevokesAnySession,
   clerkCreatesInvitations,
+  clerkRevokesInvitations,
 ];

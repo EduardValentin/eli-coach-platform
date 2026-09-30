@@ -20,7 +20,7 @@ function row(details: Partial<RosterRow> = {}): RosterRow {
     name: 'Jane Doe',
     email: 'jane@example.com',
     status: clientStatusNamed('Active'),
-    bundleLabel: '3 months',
+    bundleMonths: 3,
     joinedAt: new Date('2025-10-01'),
     detailPath: '/coach/clients/r1',
     actionLabel: 'View details for Jane Doe',
@@ -185,21 +185,79 @@ describe('sorting by status vocabulary position', () => {
 
 describe('sorting by bundle', () => {
   const rows = [
-    row({ id: 'a', bundleLabel: '6 months' }),
-    row({ id: 'b', bundleLabel: '—' }),
-    row({ id: 'c', bundleLabel: '1 month' }),
+    row({ id: 'a', bundleMonths: 6 }),
+    row({ id: 'b', bundleMonths: null }),
+    row({ id: 'c', bundleMonths: 1 }),
   ];
 
-  it('sorts alphabetically ascending with the placeholder last', () => {
+  it('sorts shortest first ascending with the missing bundle last', () => {
     expect(
       sortRows(rows, { key: 'bundle', direction: 'asc' }).map((r) => r.id),
     ).toEqual(['c', 'a', 'b']);
   });
 
-  it('sorts alphabetically descending with the placeholder still last', () => {
+  it('sorts longest first descending with the missing bundle still last', () => {
     expect(
       sortRows(rows, { key: 'bundle', direction: 'desc' }).map((r) => r.id),
     ).toEqual(['a', 'c', 'b']);
+  });
+});
+
+describe('sorting bundles by months rather than by label', () => {
+  const rows = [
+    row({ id: 'twelve', bundleMonths: 12 }),
+    row({ id: 'none', bundleMonths: null }),
+    row({ id: 'three', bundleMonths: 3 }),
+    row({ id: 'six', bundleMonths: 6 }),
+  ];
+
+  it('orders 3, 6, 12 ascending with the missing bundle last', () => {
+    // act
+    const ascending = sortRows(rows, { key: 'bundle', direction: 'asc' });
+
+    // assert
+    expect(ascending.map((r) => r.id)).toEqual([
+      'three',
+      'six',
+      'twelve',
+      'none',
+    ]);
+  });
+
+  it('orders 12, 6, 3 descending with the missing bundle last', () => {
+    // act
+    const descending = sortRows(rows, { key: 'bundle', direction: 'desc' });
+
+    // assert
+    expect(descending.map((r) => r.id)).toEqual([
+      'twelve',
+      'six',
+      'three',
+      'none',
+    ]);
+  });
+});
+
+describe('breaking sort ties', () => {
+  const rows = [
+    row({ id: 'older', bundleMonths: 3, joinedAt: new Date('2025-06-01') }),
+    row({ id: 'newer', bundleMonths: 3, joinedAt: new Date('2025-09-01') }),
+  ];
+
+  it('keeps equal bundles newest-joined first ascending', () => {
+    // act
+    const ascending = sortRows(rows, { key: 'bundle', direction: 'asc' });
+
+    // assert
+    expect(ascending.map((r) => r.id)).toEqual(['newer', 'older']);
+  });
+
+  it('reverses that order descending', () => {
+    // act
+    const descending = sortRows(rows, { key: 'bundle', direction: 'desc' });
+
+    // assert
+    expect(descending.map((r) => r.id)).toEqual(['older', 'newer']);
   });
 });
 

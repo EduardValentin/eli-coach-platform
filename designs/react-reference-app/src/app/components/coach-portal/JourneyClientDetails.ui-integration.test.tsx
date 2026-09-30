@@ -1,12 +1,14 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
+import { Toaster } from 'sonner';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { JourneyClientDetails } from './JourneyClientDetails';
 import { AppProvider } from '../../context/AppContext';
 import { AssessmentCallProvider } from '../../context/AssessmentCallContext';
 import { UnitPreferencesProvider } from '../../context/UnitPreferencesContext';
 import {
+  AWAITING_REVIEW_CALL_ID,
   ClientJourneyProvider,
   useClientJourneys,
 } from '../../context/ClientJourneyContext';
@@ -29,16 +31,18 @@ beforeAll(() => {
 });
 
 afterEach(() => {
+  vi.useRealTimers();
   window.localStorage.clear();
   window.history.replaceState({}, '', '/');
 });
 
-function DemoJourneyDetails() {
-  const { demoJourney, answerRequest } = useClientJourneys();
+function DemoJourneyDetails({ callId }: { callId?: string }) {
+  const { demoJourney, journeyForCall, answerRequest } = useClientJourneys();
+  const journey = (callId && journeyForCall(callId)) || demoJourney;
 
   return (
     <>
-      <JourneyClientDetails journey={demoJourney} />
+      <JourneyClientDetails journey={journey} />
       <button
         onClick={() => answerRequest(demoJourney.callId, new Date())}
         type="button"
@@ -49,8 +53,11 @@ function DemoJourneyDetails() {
   );
 }
 
-function renderDetails(urlQuery: string, options: { postMvp?: boolean } = {}) {
-  const { postMvp = true } = options;
+function renderDetails(
+  urlQuery: string,
+  options: { postMvp?: boolean; callId?: string } = {},
+) {
+  const { postMvp = true, callId } = options;
   const scopePrefix = postMvp ? 'scope=post-mvp&' : '';
   const url = `/coach/clients/c1?${scopePrefix}${urlQuery.slice(1)}`;
   window.history.replaceState({}, '', url);
@@ -62,7 +69,8 @@ function renderDetails(urlQuery: string, options: { postMvp?: boolean } = {}) {
           <AssessmentCallProvider>
             <ClientJourneyProvider>
               <UnitPreferencesProvider>
-                <DemoJourneyDetails />
+                <DemoJourneyDetails callId={callId} />
+                <Toaster />
               </UnitPreferencesProvider>
             </ClientJourneyProvider>
           </AssessmentCallProvider>
@@ -93,6 +101,43 @@ function reviewDialog(): HTMLElement {
   return screen.getByRole('dialog');
 }
 
+function profileBlock(): HTMLElement {
+  return screen.getByRole('region', { name: 'Profile' });
+}
+
+function assessmentCallTrigger(): HTMLElement {
+  return screen.getByRole('button', { name: 'Assessment call' });
+}
+
+function assessmentCallBlock(): HTMLElement {
+  const section = assessmentCallTrigger().closest('section');
+  if (!section) throw new Error('No assessment call section');
+
+  return section;
+}
+
+function invitationBlock(): HTMLElement {
+  return screen.getByRole('region', { name: 'Invitation' });
+}
+
+function readingIn(block: HTMLElement, label: string): HTMLElement {
+  const term = within(block).getByText(label);
+  const value = term.nextElementSibling;
+  if (!(value instanceof HTMLElement)) throw new Error(`No ${label} value`);
+
+  return value;
+}
+
+function profileReading(label: string): HTMLElement {
+  return readingIn(profileBlock(), label);
+}
+
+function assessmentCallReading(label: string): HTMLElement {
+  return readingIn(assessmentCallBlock(), label);
+}
+
+const LATENCY_TIMEOUT = { timeout: 3000 };
+
 describe('the coach view of a client in onboarding', () => {
   it('keeps the start path and the stage out of the header, showing it in the subscription panel', () => {
     // arrange
@@ -106,7 +151,9 @@ describe('the coach view of a client in onboarding', () => {
     expect(
       within(header).queryByText('Immediate start'),
     ).not.toBeInTheDocument();
-    expect(within(header).queryByText('Sent to coach')).not.toBeInTheDocument();
+    expect(
+      within(header).queryByText('Awaiting review'),
+    ).not.toBeInTheDocument();
     expect(
       within(subscriptionPanel()).getByText('Immediate start'),
     ).toBeInTheDocument();
@@ -140,7 +187,7 @@ describe('the coach view of a client in onboarding', () => {
     expect(startProgram.nextElementSibling).toHaveTextContent(/^—$/);
   });
 
-  it('shows the journey status only inside the onboarding widget', () => {
+  it('shows her client status only inside the onboarding widget', () => {
     // arrange
     const urlQuery = '?jstage=submitted';
 
@@ -149,8 +196,33 @@ describe('the coach view of a client in onboarding', () => {
 
     // assert
     expect(
-      within(onboardingWidget()).getByText('Sent to coach'),
+      within(onboardingWidget()).getByText('Awaiting review'),
     ).toBeInTheDocument();
+    expect(screen.queryByText('Sent to coach')).not.toBeInTheDocument();
+  });
+
+  it('shows only her status and that her answers are not in yet before she sends them', () => {
+    // arrange
+    const urlQuery = '?jstage=onboarding';
+
+    // act
+    renderDetails(urlQuery, { postMvp: false });
+
+    // assert
+    const widget = onboardingWidget();
+    expect(
+      within(widget).getByText('Onboarding', { selector: '[data-slot=badge]' }),
+    ).toBeInTheDocument();
+    expect(
+      within(widget).getByText('Her answers are not in yet.'),
+    ).toBeInTheDocument();
+    expect(
+      within(widget).queryByText('Waist-to-height ratio'),
+    ).not.toBeInTheDocument();
+    expect(
+      within(widget).queryByRole('heading', { name: 'Answers' }),
+    ).not.toBeInTheDocument();
+    expect(within(widget).queryByRole('button')).not.toBeInTheDocument();
   });
 
   it('counts the answers of every form she was asked to fill in', () => {
@@ -271,7 +343,9 @@ describe('the coach view of a client in onboarding', () => {
       within(dialog).getByRole('checkbox', { name: 'Flag Sleep hours' }),
     ).not.toBeChecked();
     expect(within(dialog).getByText('0 questions flagged')).toBeVisible();
-    expect(screen.getByText('Reviewing')).toBeInTheDocument();
+    expect(
+      within(onboardingWidget()).getByText('In review'),
+    ).toBeInTheDocument();
   });
 
   it('closes the review dialog and reopens it with the flags cleared', async () => {
@@ -354,8 +428,9 @@ describe('the coach view of a client in onboarding', () => {
     // assert
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     const reviewed = onboardingWidget();
+    expect(within(reviewed).getByText('Needs details')).toBeInTheDocument();
     expect(
-      within(reviewed).getByText('Needs more details'),
+      await screen.findByText('Email sent to jane@example.com.'),
     ).toBeInTheDocument();
     expect(
       within(reviewed).getByText('Tell me more about your sleep.'),
@@ -368,7 +443,7 @@ describe('the coach view of a client in onboarding', () => {
     ).toBeInTheDocument();
   });
 
-  it('approves the answers from the dialog and turns the widget to building her program', async () => {
+  it('approves the answers from the dialog through the same confirmation and turns the widget to building her program', async () => {
     // arrange
     const user = renderDetails('?jstage=reviewing');
     await user.click(screen.getByRole('button', { name: 'Continue review' }));
@@ -377,6 +452,19 @@ describe('the coach view of a client in onboarding', () => {
     await user.click(
       within(reviewDialog()).getByRole('button', { name: 'Approve answers' }),
     );
+
+    // assert
+    const confirm = screen.getByRole('dialog', {
+      name: "Approve Jane's answers?",
+    });
+    expect(
+      within(confirm).getByText(
+        "You won't be able to ask for more details once you approve.",
+      ),
+    ).toBeInTheDocument();
+
+    // act
+    await user.click(within(confirm).getByRole('button', { name: 'Approve' }));
 
     // assert
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -460,6 +548,653 @@ describe('the coach view of a client in onboarding', () => {
     ).not.toBeInTheDocument();
     expect(
       within(widget).queryByRole('button', { name: /review/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('keeps the review open with her flags when the coach steps back from approving', async () => {
+    // arrange
+    const user = renderDetails('?jstage=reviewing');
+    await user.click(screen.getByRole('button', { name: 'Continue review' }));
+    await user.click(
+      within(reviewDialog()).getByRole('checkbox', {
+        name: 'Flag Sleep hours',
+      }),
+    );
+    await user.click(
+      within(reviewDialog()).getByRole('button', { name: 'Approve answers' }),
+    );
+
+    // act
+    await user.click(
+      within(
+        screen.getByRole('dialog', { name: "Approve Jane's answers?" }),
+      ).getByRole('button', { name: 'Cancel' }),
+    );
+
+    // assert
+    const review = screen.getByRole('dialog', {
+      name: 'Review Jane’s answers',
+    });
+    expect(
+      within(review).getByRole('checkbox', { name: 'Flag Sleep hours' }),
+    ).toBeChecked();
+    expect(
+      within(onboardingWidget()).getByText('In review'),
+    ).toBeInTheDocument();
+  });
+});
+
+describe('the coach reading who a client is', () => {
+  it('lays the page out as profile, invitation, onboarding, subscription, measurements and the assessment call last', () => {
+    // arrange
+    const urlQuery = '?jstage=invited';
+
+    // act
+    renderDetails(urlQuery);
+
+    // assert
+    const regions = screen
+      .getAllByRole('region')
+      .flatMap((region) => region.getAttribute('aria-labelledby') ?? [])
+      .map((id) => document.getElementById(id)?.textContent);
+    expect(regions).toEqual([
+      'Profile',
+      'Invitation',
+      'Onboarding',
+      'Subscription',
+      'Measurements',
+      'Assessment call',
+    ]);
+  });
+
+  it('reads who she is from her booking, her facts from the onboarding she sent and her weights from her first and latest measurements, in kilograms and centimetres', () => {
+    // arrange
+    window.localStorage.setItem(
+      'eli.unitPreferences',
+      JSON.stringify({ weightUnit: 'lb', heightUnit: 'ft-in' }),
+    );
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 8, 30, 12));
+    const urlQuery = '?jstage=submitted';
+
+    // act
+    renderDetails(urlQuery);
+
+    // assert
+    expect(
+      within(profileBlock())
+        .getAllByRole('term')
+        .map((term) => term.textContent),
+    ).toEqual([
+      'Age',
+      'Gender',
+      'Country',
+      'Phone',
+      'Height',
+      'Starting weight',
+      'Current weight',
+      'Activity level',
+      'Primary goal',
+      'Dietary restrictions',
+      'Client notes',
+    ]);
+    expect(profileReading('Age')).toHaveTextContent(/^28 \(15 Jun 1998\)$/);
+    expect(profileReading('Gender')).toHaveTextContent('Female');
+    expect(profileReading('Country')).toHaveTextContent('Romania');
+    expect(
+      within(profileReading('Phone')).getByRole('link', {
+        name: '+40712345678',
+      }),
+    ).toHaveAttribute('href', 'tel:+40712345678');
+    expect(profileReading('Height')).toHaveTextContent(/^165 cm$/);
+    expect(profileReading('Starting weight')).toHaveTextContent(/^67.4 kg$/);
+    expect(profileReading('Current weight')).toHaveTextContent(/^66.1 kg$/);
+    expect(profileReading('Activity level')).toHaveTextContent(
+      /^Mostly sitting$/,
+    );
+    expect(profileReading('Primary goal')).toHaveTextContent(/^Lose fat$/);
+    expect(profileReading('Dietary restrictions')).toHaveTextContent(
+      /^Lactose, mild$/,
+    );
+    expect(profileReading('Client notes')).toHaveTextContent(
+      /^Night shifts twice a week, so those days start late\.$/,
+    );
+    expect(
+      within(profileBlock()).queryByText(/profile fills in/),
+    ).not.toBeInTheDocument();
+  });
+
+  it('reads who she is from her booking and leaves her facts and weights blank until she sends her onboarding', () => {
+    // arrange
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 8, 30, 12));
+    const urlQuery = '?jstage=onboarding';
+
+    // act
+    renderDetails(urlQuery);
+
+    // assert
+    expect(profileReading('Age')).toHaveTextContent(/^28 \(15 Jun 1998\)$/);
+    expect(profileReading('Gender')).toHaveTextContent(/^Female$/);
+    expect(profileReading('Country')).toHaveTextContent(/^Romania$/);
+    expect(
+      within(profileReading('Phone')).getByRole('link', {
+        name: '+40712345678',
+      }),
+    ).toHaveAttribute('href', 'tel:+40712345678');
+    expect(
+      [
+        'Height',
+        'Starting weight',
+        'Current weight',
+        'Activity level',
+        'Primary goal',
+        'Dietary restrictions',
+        'Client notes',
+      ].map((label) => profileReading(label).textContent),
+    ).toEqual(Array(7).fill('—'));
+    expect(
+      within(profileBlock()).getByText(
+        'Her profile fills in once she sends her onboarding.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('keeps the assessment call collapsed until the coach opens it', async () => {
+    // arrange
+    const user = renderDetails('?jstage=submitted');
+    const trigger = assessmentCallTrigger();
+
+    // act
+    const collapsed = trigger.getAttribute('aria-expanded');
+    await user.click(trigger);
+
+    // assert
+    expect(collapsed).toBe('false');
+    expect(trigger).toHaveAttribute('aria-expanded', 'true');
+    expect(
+      within(assessmentCallBlock()).getByText('Booking notes'),
+    ).toBeVisible();
+  });
+
+  it('opens and closes the assessment call from the keyboard', async () => {
+    // arrange
+    const user = renderDetails('?jstage=submitted');
+    assessmentCallTrigger().focus();
+
+    // act
+    await user.keyboard('{Enter}');
+    const afterEnter = assessmentCallTrigger().getAttribute('aria-expanded');
+    await user.keyboard(' ');
+
+    // assert
+    expect(afterEnter).toBe('true');
+    expect(assessmentCallTrigger()).toHaveAttribute('aria-expanded', 'false');
+    expect(
+      within(assessmentCallBlock()).queryByText('Booking notes'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('reads what she gave when booking in the assessment call', async () => {
+    // arrange
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 8, 30, 12));
+    const user = renderDetails('?jstage=submitted');
+
+    // act
+    await user.click(assessmentCallTrigger());
+
+    // assert
+    expect(
+      within(assessmentCallBlock())
+        .getAllByRole('term')
+        .map((term) => term.textContent),
+    ).toEqual([
+      'Call',
+      'Name',
+      'Email',
+      'Date of birth',
+      'Gender',
+      'Country',
+      'Phone',
+      'Primary goal',
+      'Booking notes',
+    ]);
+    expect(assessmentCallReading('Call')).toHaveTextContent(
+      /^Wed, Sep 23 · 3:00 PM$/,
+    );
+    expect(assessmentCallReading('Name')).toHaveTextContent(/^Jane Doe$/);
+    expect(assessmentCallReading('Email')).toHaveTextContent(
+      /^jane@example.com$/,
+    );
+    expect(assessmentCallReading('Date of birth')).toHaveTextContent(
+      /^15 June 1998$/,
+    );
+    expect(assessmentCallReading('Gender')).toHaveTextContent(/^Female$/);
+    expect(assessmentCallReading('Country')).toHaveTextContent(/^Romania$/);
+    expect(
+      within(assessmentCallReading('Phone')).getByRole('link', {
+        name: '+40712345678',
+      }),
+    ).toHaveAttribute('href', 'tel:+40712345678');
+    expect(assessmentCallReading('Primary goal')).toHaveTextContent(
+      /^Lose weight$/,
+    );
+    expect(assessmentCallReading('Booking notes')).toHaveTextContent(
+      'Wants a structured plan with someone to keep her accountable.',
+    );
+    expect(
+      within(assessmentCallBlock()).queryByText('Reduced price'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('says no to the reduced price last in her subscription when she paid the regular price', () => {
+    // arrange
+    const urlQuery = '?jstage=submitted';
+
+    // act
+    renderDetails(urlQuery);
+
+    // assert
+    expect(
+      within(subscriptionPanel())
+        .getAllByRole('term')
+        .map((term) => term.textContent)
+        .slice(-2),
+    ).toEqual(['Renews on', 'Reduced price']);
+    expect(readingIn(subscriptionPanel(), 'Reduced price')).toHaveTextContent(
+      /^No$/,
+    );
+  });
+
+  it('says yes to the reduced price in her subscription when she was offered it', () => {
+    // arrange
+    const urlQuery = '?jstage=submitted&jreduced=1';
+
+    // act
+    renderDetails(urlQuery);
+
+    // assert
+    expect(readingIn(subscriptionPanel(), 'Reduced price')).toHaveTextContent(
+      /^Yes$/,
+    );
+  });
+
+  it('shows a dash for what she did not give when booking', async () => {
+    // arrange
+    const user = renderDetails('?jstage=submitted', {
+      callId: AWAITING_REVIEW_CALL_ID,
+    });
+
+    // act
+    await user.click(assessmentCallTrigger());
+
+    // assert
+    expect(profileReading('Phone')).toHaveTextContent(/^—$/);
+    expect(assessmentCallReading('Phone')).toHaveTextContent(/^—$/);
+    expect(assessmentCallReading('Booking notes')).toHaveTextContent(/^—$/);
+  });
+});
+
+describe('the coach following a client invitation', () => {
+  it('shows when the invitation went out and when it expires', () => {
+    // arrange
+    const urlQuery = '?jstage=invited';
+
+    // act
+    renderDetails(urlQuery);
+
+    // assert
+    expect(
+      within(invitationBlock()).getByText(
+        /^Invited \d{1,2} \w+ · expires \d{1,2} \w+$/,
+      ),
+    ).toBeInTheDocument();
+    expect(
+      within(invitationBlock()).getByRole('button', {
+        name: 'Re-send invitation',
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it('says when the invitation expired', () => {
+    // arrange
+    const urlQuery = '?jstage=invited&jinv=expired';
+
+    // act
+    renderDetails(urlQuery);
+
+    // assert
+    expect(
+      within(invitationBlock()).getByText(/^Invitation expired \d{1,2} \w+$/),
+    ).toBeInTheDocument();
+  });
+
+  it('says when the invitation email could not be sent', () => {
+    // arrange
+    const urlQuery = '?jstage=invited&jinv=email-failed';
+
+    // act
+    renderDetails(urlQuery);
+
+    // assert
+    expect(
+      within(invitationBlock()).getByText('Invitation email could not be sent'),
+    ).toBeInTheDocument();
+  });
+
+  it('drops the invitation once her account exists', () => {
+    // arrange
+    const urlQuery = '?jstage=account-created';
+
+    // act
+    renderDetails(urlQuery);
+
+    // assert
+    expect(
+      screen.queryByRole('region', { name: 'Invitation' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('re-sends a fresh invitation after the coach confirms', async () => {
+    // arrange
+    const user = renderDetails('?jstage=invited&jinv=expired');
+    await user.click(
+      within(invitationBlock()).getByRole('button', {
+        name: 'Re-send invitation',
+      }),
+    );
+    const confirm = screen.getByRole('dialog', { name: 'Re-send invitation?' });
+    expect(
+      within(confirm).getByText(
+        'A fresh invitation goes to jane@example.com. Her earlier link stops working.',
+      ),
+    ).toBeInTheDocument();
+
+    // act
+    await user.click(within(confirm).getByRole('button', { name: 'Re-send' }));
+
+    // assert
+    expect(
+      await screen.findByText(
+        'Invitation sent to jane@example.com.',
+        {},
+        LATENCY_TIMEOUT,
+      ),
+    ).toBeInTheDocument();
+    expect(
+      within(invitationBlock()).getByText(
+        /^Invited \d{1,2} \w+ · expires \d{1,2} \w+$/,
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('marks the invitation failed and asks to try again when the email cannot be sent', async () => {
+    // arrange
+    const user = renderDetails('?jstage=invited&jresend=fails');
+    await user.click(
+      within(invitationBlock()).getByRole('button', {
+        name: 'Re-send invitation',
+      }),
+    );
+
+    // act
+    await user.click(
+      within(
+        screen.getByRole('dialog', { name: 'Re-send invitation?' }),
+      ).getByRole('button', { name: 'Re-send' }),
+    );
+
+    // assert
+    expect(
+      await screen.findByText(
+        'The invitation email could not be sent. Try again.',
+        {},
+        LATENCY_TIMEOUT,
+      ),
+    ).toBeInTheDocument();
+    expect(
+      within(invitationBlock()).getByText('Invitation email could not be sent'),
+    ).toBeInTheDocument();
+  });
+});
+
+describe('the coach reading about a client by his or their pronouns', () => {
+  it('words the page for a man before he sends his answers', () => {
+    // arrange
+    const urlQuery = '?jstage=invited&jgender=male';
+
+    // act
+    renderDetails(urlQuery, { postMvp: false });
+
+    // assert
+    expect(
+      within(onboardingWidget()).getByText('His answers are not in yet.'),
+    ).toBeInTheDocument();
+    expect(
+      within(profileBlock()).getByText(
+        'His profile fills in once he sends his onboarding.',
+      ),
+    ).toBeInTheDocument();
+    expect(
+      within(subscriptionPanel()).getByText('Once his program starts'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('He has not sent any measurements yet.'),
+    ).toBeInTheDocument();
+  });
+
+  it('words the page for a client who preferred not to say before they send their answers', () => {
+    // arrange
+    const urlQuery = '?jstage=invited&jgender=prefer-not-to-say';
+
+    // act
+    renderDetails(urlQuery, { postMvp: false });
+
+    // assert
+    expect(
+      within(onboardingWidget()).getByText('Their answers are not in yet.'),
+    ).toBeInTheDocument();
+    expect(
+      within(profileBlock()).getByText(
+        'Their profile fills in once they send their onboarding.',
+      ),
+    ).toBeInTheDocument();
+    expect(
+      within(subscriptionPanel()).getByText('Once their program starts'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('They have not sent any measurements yet.'),
+    ).toBeInTheDocument();
+  });
+
+  it('warns that his earlier invitation link stops working', async () => {
+    // arrange
+    const user = renderDetails('?jstage=invited&jinv=expired&jgender=male');
+
+    // act
+    await user.click(
+      within(invitationBlock()).getByRole('button', {
+        name: 'Re-send invitation',
+      }),
+    );
+
+    // assert
+    const confirm = screen.getByRole('dialog', { name: 'Re-send invitation?' });
+    expect(
+      within(confirm).getByText(
+        'A fresh invitation goes to jane@example.com. His earlier link stops working.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('warns that their earlier invitation link stops working', async () => {
+    // arrange
+    const user = renderDetails(
+      '?jstage=invited&jinv=expired&jgender=prefer-not-to-say',
+    );
+
+    // act
+    await user.click(
+      within(invitationBlock()).getByRole('button', {
+        name: 'Re-send invitation',
+      }),
+    );
+
+    // assert
+    const confirm = screen.getByRole('dialog', { name: 'Re-send invitation?' });
+    expect(
+      within(confirm).getByText(
+        'A fresh invitation goes to jane@example.com. Their earlier link stops working.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('offers to build his program', () => {
+    // arrange
+    const urlQuery = '?jstage=submitted&jgender=male';
+
+    // act
+    renderDetails(urlQuery);
+
+    // assert
+    expect(
+      within(onboardingWidget()).getByRole('link', {
+        name: 'Build his program',
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it('asks which answers the coach wants him to revisit', async () => {
+    // arrange
+    const user = renderDetails('?jstage=submitted&jgender=male');
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Review answers' }));
+
+    // assert
+    expect(
+      within(reviewDialog()).getByText(
+        'Tick any answer you want him to revisit, then approve or ask for more details.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('asks which answers the coach wants them to revisit', async () => {
+    // arrange
+    const user = renderDetails('?jstage=submitted&jgender=prefer-not-to-say');
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Review answers' }));
+
+    // assert
+    expect(
+      within(reviewDialog()).getByText(
+        'Tick any answer you want them to revisit, then approve or ask for more details.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('explains when the coach can start building their program', () => {
+    // arrange
+    const urlQuery = '?jstage=approved&jstart=waiting&jgender=prefer-not-to-say';
+
+    // act
+    renderDetails(urlQuery);
+
+    // assert
+    expect(
+      within(onboardingWidget()).getByText(
+        /You can start building their program on/,
+      ),
+    ).toBeInTheDocument();
+  });
+});
+
+const PHASE_BASED_FOR_HER =
+  'Phase-based — her program follows her cycle phases: she gets a period, is not on the combined pill, is not pregnant, postpartum or breastfeeding, and is not in perimenopause or menopause.';
+
+function cycleModeInfoButton(): HTMLElement {
+  return within(onboardingWidget()).getByRole('button', {
+    name: 'What cycle mode means',
+  });
+}
+
+async function tabTo(
+  user: ReturnType<typeof userEvent.setup>,
+  target: HTMLElement,
+) {
+  for (let step = 0; step < 50 && document.activeElement !== target; step++) {
+    await user.tab();
+  }
+}
+
+describe('the coach reading what cycle mode means', () => {
+  it('offers an info button beside the cycle mode fact', () => {
+    // arrange
+    const urlQuery = '?jstage=submitted';
+
+    // act
+    renderDetails(urlQuery, { postMvp: false });
+
+    // assert
+    const term = within(onboardingWidget()).getByText('Cycle mode');
+    expect(term.closest('dt')).toContainElement(cycleModeInfoButton());
+  });
+
+  it('explains every cycle mode when the coach hovers the info button', async () => {
+    // arrange
+    const user = renderDetails('?jstage=submitted', { postMvp: false });
+
+    // act
+    await user.hover(cycleModeInfoButton());
+
+    // assert
+    const hint = await screen.findByRole('dialog');
+    expect(hint).toHaveTextContent(PHASE_BASED_FOR_HER);
+    expect(hint).toHaveTextContent(
+      'Symptom-based — one of those does not hold, so her program follows the symptoms she reports.',
+    );
+    expect(hint).toHaveTextContent(
+      'Set by Eli — her contraception is one the product does not classify; you decide how her program adapts.',
+    );
+    expect(hint).toHaveTextContent(
+      'Not answered yet — the cycle form is empty.',
+    );
+  });
+
+  it('explains the cycle modes when the info button takes keyboard focus', async () => {
+    // arrange
+    const user = renderDetails('?jstage=submitted', { postMvp: false });
+
+    // act
+    await tabTo(user, cycleModeInfoButton());
+
+    // assert
+    expect(cycleModeInfoButton()).toHaveFocus();
+    expect(await screen.findByRole('dialog')).toHaveTextContent(
+      PHASE_BASED_FOR_HER,
+    );
+  });
+
+  it.each([
+    ['a man', 'male'],
+    ['a client who preferred not to say', 'prefer-not-to-say'],
+  ])('leaves cycle mode out of the facts for %s', (_who, gender) => {
+    // arrange
+    const urlQuery = `?jstage=submitted&jgender=${gender}`;
+
+    // act
+    renderDetails(urlQuery, { postMvp: false });
+
+    // assert
+    expect(
+      within(onboardingWidget()).queryByText('Cycle mode'),
+    ).not.toBeInTheDocument();
+    expect(
+      within(onboardingWidget()).queryByRole('button', {
+        name: 'What cycle mode means',
+      }),
     ).not.toBeInTheDocument();
   });
 });

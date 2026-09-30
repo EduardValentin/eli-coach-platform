@@ -4,9 +4,9 @@ import type { ReadCallSalesStatesUseCase } from "@eli-coach-platform/domain/paym
 
 import {
   pricingTiersSchema,
-  salesStatesSchema,
+  callSalesSchema,
   type PricingTiers,
-  type SalesStates,
+  type CallSales,
 } from "~/features/coaching-sales/contracts/coaching-sales";
 
 type CoachSalesControllerOptions = {
@@ -19,10 +19,10 @@ type CallVisitorEmail = { email: string; id: string };
 export class CoachSalesController {
   constructor(private readonly options: CoachSalesControllerOptions) {}
 
-  async loadSalesStates(callIds: readonly string[]): Promise<SalesStates> {
-    const states = await this.options.readCallSalesStates.execute(callIds);
+  async loadCallSales(callIds: readonly string[]): Promise<CallSales> {
+    const sales = await this.options.readCallSalesStates.execute(callIds);
 
-    return salesStatesSchema.parse(Object.fromEntries(states));
+    return callSalesSchema.parse(Object.fromEntries(sales));
   }
 
   async loadPricingTiers(

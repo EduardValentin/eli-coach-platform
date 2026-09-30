@@ -29,10 +29,13 @@ export const meta: MetaFunction = () => [
 function CoachBrand() {
   return (
     <div className="flex min-w-0 items-center gap-3">
-      <div className="flex size-10 shrink-0 items-center justify-center rounded-compact bg-text-primary text-text-inverted shadow-action">
+      <div
+        className="flex size-10 shrink-0 items-center justify-center rounded-compact bg-text-primary text-text-inverted shadow-action"
+        data-parity="sidebar-brand-mark"
+      >
         <Dumbbell aria-hidden="true" className="-rotate-45" size={20} />
       </div>
-      <div className="min-w-0">
+      <div className="min-w-0" data-parity="sidebar-brand-name">
         <p className="font-heading text-lg font-semibold text-text-primary">
           Evoa
         </p>
@@ -47,7 +50,10 @@ function CoachBrand() {
 function CoachTopBarBrand() {
   return (
     <div className="flex min-w-0 items-center gap-3">
-      <div className="flex size-8 shrink-0 items-center justify-center rounded-compact bg-text-primary text-text-inverted">
+      <div
+        className="flex size-8 shrink-0 items-center justify-center rounded-compact bg-text-primary text-text-inverted"
+        data-parity="top-bar-brand-mark"
+      >
         <Dumbbell aria-hidden="true" className="-rotate-45" size={16} />
       </div>
       <span className="text-sm font-medium text-text-primary">
@@ -59,20 +65,22 @@ function CoachTopBarBrand() {
 
 export default function CoachLayoutRoute() {
   return (
-    <PortalShell
-      asideLabel="Coach portal sidebar"
-      brand={<CoachBrand />}
-      links={coachSurfaceLinks}
-      mobileNavigation={{
-        kind: "drawer",
-        label: "Coach portal mobile navigation",
-      }}
-      navigationLabel="Coach portal navigation"
-      topBarBrand={<CoachTopBarBrand />}
-      topBarLabel="Coach portal top bar"
-    >
-      <Outlet />
+    <>
+      <PortalShell
+        asideLabel="Coach portal sidebar"
+        brand={<CoachBrand />}
+        links={coachSurfaceLinks}
+        mobileNavigation={{
+          kind: "drawer",
+          label: "Coach portal mobile navigation",
+        }}
+        navigationLabel="Coach portal navigation"
+        topBarBrand={<CoachTopBarBrand />}
+        topBarLabel="Coach portal top bar"
+      >
+        <Outlet />
+      </PortalShell>
       <Toaster />
-    </PortalShell>
+    </>
   );
 }

@@ -1,5 +1,8 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 
+import { expectAvailability, type Availability } from "./control-states";
+import { tabTo } from "./keyboard";
+
 type UnitsChoice = "kg · cm" | "lb · in";
 
 type WelcomePartCount = "five" | "four";
@@ -33,11 +36,12 @@ const DRAFT_API = "**/api/client-onboarding/draft";
 
 const SUBMISSION_API = "**/api/client-onboarding/submission";
 
-const UNIT_PREFERENCE_API = "**/api/client-onboarding/unit-preference";
+const UNIT_PREFERENCE_API = "**/api/client-profile/unit-preference";
 
-const MAX_TAB_STOPS = 80;
+const DETAIL_ANSWERS_API = "**/api/client-onboarding/detail-answers";
 
-type SendAvailability = "enabled" | "disabled";
+const ANSWER_SEND_PROBLEM =
+  "Your answers could not be sent just now. Try again in a moment.";
 
 const RESUME_NOTE = "Picking up where you left off.";
 
@@ -45,6 +49,10 @@ const SCREENING_CLEARED_MESSAGE =
   "Thank you. Nothing here needs a doctor's sign-off — let's keep going.";
 
 const MEASUREMENT_SYSTEM_LEGEND = "How do you measure?";
+
+const ANSWER_PAGE_HEADING = "A few more details";
+
+const ANSWER_REQUEST_HEADING = "What your coach asked";
 
 const MONTH_NAMES: readonly string[] = Array.from({ length: 12 }, (_, month) =>
   new Intl.DateTimeFormat("en-GB", { month: "long", timeZone: "UTC" }).format(
@@ -91,6 +99,10 @@ function monthsBetween(from: MonthYear, to: MonthYear): number {
 export class ClientOnboarding {
   constructor(private readonly page: Page) {}
 
+  private get answerRequest() {
+    return this.page.getByRole("region", { name: ANSWER_REQUEST_HEADING });
+  }
+
   private get measurementSystem() {
     return this.page.getByRole("radiogroup", {
       name: MEASUREMENT_SYSTEM_LEGEND,
@@ -105,23 +117,6 @@ export class ClientOnboarding {
   private async check(locator: Locator): Promise<void> {
     await locator.scrollIntoViewIfNeeded();
     await locator.check();
-  }
-
-  private async isFocused(locator: Locator): Promise<boolean> {
-    return locator.evaluate(
-      (element) =>
-        element === document.activeElement ||
-        element.contains(document.activeElement),
-    );
-  }
-
-  private async tabTo(locator: Locator): Promise<void> {
-    for (let stop = 0; stop < MAX_TAB_STOPS; stop += 1) {
-      if (await this.isFocused(locator)) return;
-      await this.page.keyboard.press("Tab");
-    }
-
-    throw new Error("The keyboard never reached the expected control.");
   }
 
   private entry(label: string): Locator {
@@ -355,15 +350,11 @@ export class ClientOnboarding {
     await expect(this.page.getByText(SUBMIT_PROBLEM)).toBeVisible();
   }
 
-  async expectSendToCoach(availability: SendAvailability): Promise<void> {
-    const button = this.page.getByRole("button", { name: SEND_TO_COACH });
-
-    if (availability === "disabled") {
-      await expect(button).toBeDisabled();
-      return;
-    }
-
-    await expect(button).toBeEnabled();
+  async expectSendToCoach(availability: Availability): Promise<void> {
+    await expectAvailability(
+      this.page.getByRole("button", { name: SEND_TO_COACH }),
+      availability,
+    );
   }
 
   async blockDraftSaves(): Promise<void> {
@@ -378,6 +369,20 @@ export class ClientOnboarding {
     await this.page.route(UNIT_PREFERENCE_API, (route) => route.abort(), {
       times: 1,
     });
+  }
+
+  async blockDetailAnswers(): Promise<void> {
+    await this.page.route(DETAIL_ANSWERS_API, (route) => route.abort());
+  }
+
+  async restoreDetailAnswers(): Promise<void> {
+    await this.page.unroute(DETAIL_ANSWERS_API);
+  }
+
+  async expectAnswerSendProblem(): Promise<void> {
+    await expect(
+      this.page.getByText(ANSWER_SEND_PROBLEM, { exact: true }),
+    ).toBeVisible();
   }
 
   async keepUnitPreferenceOffline(): Promise<void> {
@@ -396,7 +401,7 @@ export class ClientOnboarding {
       name: label,
       exact: true,
     });
-    await this.tabTo(checkbox);
+    await tabTo(this.page, checkbox);
     await this.page.keyboard.press("Space");
     await expect(checkbox).toBeChecked();
   }
@@ -405,7 +410,7 @@ export class ClientOnboarding {
     const radiogroup = this.page.getByRole("radiogroup", { name: label });
     const radios = radiogroup.getByRole("radio");
     const target = radiogroup.getByRole("radio", { name: option, exact: true });
-    await this.tabTo(radiogroup);
+    await tabTo(this.page, radiogroup);
     const names = await radios.allInnerTexts();
     const targetIndex = names.indexOf(option);
 
@@ -420,13 +425,54 @@ export class ClientOnboarding {
   }
 
   async keyboardContinue(): Promise<void> {
-    await this.tabTo(this.page.getByRole("button", { name: "Continue" }));
+    await tabTo(this.page, this.page.getByRole("button", { name: "Continue" }));
     await this.page.keyboard.press("Enter");
   }
 
   async sendToCoach(): Promise<void> {
     await this.click(
       this.page.getByRole("button", { name: "Send to my coach" }),
+    );
+  }
+
+  async expectAnswerPage(note: string): Promise<void> {
+    await expect(this.page.getByRole("heading", { level: 1 })).toHaveCount(1);
+    await expect(
+      this.page.getByRole("heading", { level: 1, name: ANSWER_PAGE_HEADING }),
+    ).toBeVisible();
+    await expect(
+      this.answerRequest.getByText(note, { exact: true }),
+    ).toBeVisible();
+  }
+
+  async expectOnlyQuestions(labels: readonly string[]): Promise<void> {
+    const controls = this.answerRequest
+      .getByRole("textbox")
+      .or(this.answerRequest.getByRole("combobox"))
+      .or(this.answerRequest.getByRole("radiogroup"))
+      .or(this.answerRequest.getByRole("checkbox"))
+      .or(this.answerRequest.getByRole("spinbutton"));
+
+    await expect(controls).toHaveCount(labels.length);
+
+    for (const label of labels) {
+      await expect(this.answerRequest.getByLabel(label)).toBeVisible();
+    }
+  }
+
+  async expectSelected(label: string, option: string): Promise<void> {
+    await expect(this.page.getByRole("combobox", { name: label })).toHaveText(
+      option,
+    );
+  }
+
+  async notNow(): Promise<void> {
+    await this.click(this.page.getByRole("link", { name: "Not now" }));
+  }
+
+  async sendMyAnswers(): Promise<void> {
+    await this.click(
+      this.page.getByRole("button", { name: "Send my answers" }),
     );
   }
 }

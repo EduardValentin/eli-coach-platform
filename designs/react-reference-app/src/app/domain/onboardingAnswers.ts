@@ -8,6 +8,7 @@ import {
 } from './journey';
 import { displayLengthValue, displayWeightValue } from '../utils/units';
 import { formsForGender, type OnboardingField } from './onboardingSchema';
+import { PARQ_QUESTION_IDS } from './safetyScreening';
 
 export const ONBOARDING_FORM_LABELS: Record<OnboardingFormId, string> = {
   'goal-availability': 'Goal and availability',
@@ -49,6 +50,8 @@ const MIGRAINE_CONTRACEPTION_SIGNAL = {
 
 const QUESTION_LABEL_OVERRIDES: Record<string, string> = {
   goalWeight: 'Target weight',
+  previousPt: 'Previous PT',
+  previousPtExperience: 'Previous PT experience',
 };
 
 export function humaniseQuestionId(questionId: string): string {
@@ -179,7 +182,9 @@ function isFlagged(
   answer: OnboardingAnswer,
   given: OnboardingFormAnswers,
 ): boolean {
-  if (formId === 'safety-screening') return isAffirmative(answer);
+  if (formId === 'safety-screening') {
+    return PARQ_QUESTION_IDS.includes(questionId) && isAffirmative(answer);
+  }
   if (formId === 'cycle-context') {
     return (
       isPregnancyFlag(questionId, answer) ||
@@ -231,24 +236,25 @@ function isReachable(
   return meetsRequires(field.requires, given);
 }
 
-const CANONICAL_UNITS: Record<string, string> = {
-  weight: 'kg',
-  height: 'cm',
-  circumference: 'cm',
-};
-
-function canonicalReading(kind: string, value: number): string {
-  const reading =
-    kind === 'weight'
-      ? displayWeightValue(value, 'kg', 1)
-      : displayLengthValue(value, 'cm');
-
-  return `${reading} ${CANONICAL_UNITS[kind]}`;
+export function canonicalWeightReading(kg: number): string {
+  return `${displayWeightValue(kg, 'kg', 1)} kg`;
 }
+
+export function canonicalLengthReading(cm: number): string {
+  return `${displayLengthValue(cm, 'cm')} cm`;
+}
+
+const CANONICAL_READINGS: Record<string, (value: number) => string> = {
+  weight: canonicalWeightReading,
+  height: canonicalLengthReading,
+  circumference: canonicalLengthReading,
+};
 
 function readAnswer(field: OnboardingField, answer: OnboardingAnswer): string {
   if (typeof answer !== 'number') return describeAnswer(answer);
-  if (CANONICAL_UNITS[field.kind]) return canonicalReading(field.kind, answer);
+
+  const canonicalReading = CANONICAL_READINGS[field.kind];
+  if (canonicalReading) return canonicalReading(answer);
 
   return field.unitSuffix ? `${answer} ${field.unitSuffix}` : String(answer);
 }

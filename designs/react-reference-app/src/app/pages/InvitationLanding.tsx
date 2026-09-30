@@ -1,28 +1,18 @@
-import { useEffect, useState, type MouseEvent } from 'react';
+import { useEffect, useState } from 'react';
 import { ArrowRight, MailQuestion, UserRound } from 'lucide-react';
 import { Link, useNavigate } from 'react-router';
 import { ERROR_PAGE_ACTION_CLASS, ErrorPage } from '../components/ErrorPage';
-import { Button, buttonVariants, cn } from '../components/ThemeButton';
-import { cardVariants } from '../components/ui/card';
-import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
-import { SectionEyebrow } from '../components/SectionEyebrow';
+import { Button } from '../components/ThemeButton';
 import { isSignedIn, useAppState } from '../context/AppContext';
 import { useClientJourneys } from '../context/ClientJourneyContext';
 import { useFragmentToken } from '../hooks/useFragmentToken';
 import { completeSignIn } from '../services/authService';
-import {
-  resolveInvitation,
-  type ResolvedInvitation,
-} from '../services/invitationService';
+import { resolveInvitation } from '../services/invitationService';
 
 const UNAVAILABLE_TITLE = "This invitation isn't available";
 
 const UNAVAILABLE_BODY =
   'It may have expired or already been used. Ask your coach for a new one.';
-
-const HAND_OFF_NOTE =
-  "Click the button below to create your account.";
 
 const SIGNED_IN_TITLE = "You're already signed in";
 
@@ -31,9 +21,7 @@ const SIGNED_IN_BODY =
 
 const INVITATION_STORAGE_KEY = 'invitation';
 
-const HOSTED_SIGN_UP_URL = 'https://accounts.evoa.fit/sign-up?__clerk_ticket=mock';
-
-type InvitationResolution = ResolvedInvitation | { status: 'loading' };
+type InvitationCheck = 'checking' | 'unavailable';
 
 export function InvitationLanding() {
   const token = useFragmentToken(INVITATION_STORAGE_KEY);
@@ -41,10 +29,7 @@ export function InvitationLanding() {
   const { appState, setAppState } = useAppState();
   const { demoJourney, journeyForInvitationToken, recordAccountCreated } =
     useClientJourneys();
-  const [invitation, setInvitation] = useState<InvitationResolution>({
-    status: 'loading',
-  });
-  const [creating, setCreating] = useState(false);
+  const [check, setCheck] = useState<InvitationCheck>('checking');
 
   const { invitationLinkState } = appState;
   const signedIn = isSignedIn(appState.session);
@@ -53,9 +38,26 @@ export function InvitationLanding() {
     if (signedIn || token === null) return;
 
     let current = true;
+    const journey = journeyForInvitationToken(token) ?? demoJourney;
+
+    const handOffToHostedSignUp = async () => {
+      const role = await completeSignIn('client');
+      if (!current) return;
+
+      setAppState({ session: role });
+      recordAccountCreated(journey.callId);
+      navigate('/portal/welcome');
+    };
 
     resolveInvitation(token, invitationLinkState).then((resolved) => {
-      if (current) setInvitation(resolved);
+      if (!current) return;
+
+      if (resolved.status === 'valid') {
+        void handOffToHostedSignUp();
+        return;
+      }
+
+      setCheck('unavailable');
     });
 
     return () => {
@@ -63,27 +65,9 @@ export function InvitationLanding() {
     };
   }, [signedIn, token, invitationLinkState]);
 
-  const journey = journeyForInvitationToken(token ?? '') ?? demoJourney;
-
   const signOut = () => {
-    setInvitation({ status: 'loading' });
+    setCheck('checking');
     setAppState({ session: 'anonymous' });
-  };
-
-  const createAccount = async (event: MouseEvent<HTMLAnchorElement>) => {
-    event.preventDefault();
-    if (creating) return;
-
-    setCreating(true);
-
-    try {
-      const role = await completeSignIn('client');
-      setAppState({ session: role });
-      recordAccountCreated(journey.callId);
-      navigate('/portal/welcome');
-    } catch {
-      setCreating(false);
-    }
   };
 
   if (signedIn) {
@@ -101,7 +85,7 @@ export function InvitationLanding() {
     );
   }
 
-  if (invitation.status === 'loading') {
+  if (check === 'checking') {
     return (
       <main
         aria-label="Invitation"
@@ -114,65 +98,16 @@ export function InvitationLanding() {
     );
   }
 
-  if (invitation.status !== 'valid') {
-    return (
-      <ErrorPage
-        eyebrow="Invitation"
-        icon={MailQuestion}
-        title={UNAVAILABLE_TITLE}
-        description={UNAVAILABLE_BODY}
-      >
-        <Link className={ERROR_PAGE_ACTION_CLASS} to="/">
-          Back to home <ArrowRight aria-hidden="true" size={18} />
-        </Link>
-      </ErrorPage>
-    );
-  }
-
   return (
-    <main
-      aria-label="Invitation"
-      className="flex min-h-screen items-center justify-center bg-surface-page px-4 py-16 sm:px-6"
-      data-parity-root="InvitationLanding"
+    <ErrorPage
+      eyebrow="Invitation"
+      icon={MailQuestion}
+      title={UNAVAILABLE_TITLE}
+      description={UNAVAILABLE_BODY}
     >
-      <div className={cn(cardVariants({ variant: 'panel' }), 'mx-auto w-full max-w-md px-6 py-10 sm:px-10')}>
-        <SectionEyebrow>Your invitation</SectionEyebrow>
-
-        <h1 className="font-serif text-display-sm text-text-primary">
-          Create your account
-        </h1>
-
-        <p className="mt-4 text-base leading-relaxed text-text-secondary">
-          {HAND_OFF_NOTE}
-        </p>
-
-        <div className="mt-8">
-          <Label className="text-text-label" htmlFor="invited-email">
-            Email
-          </Label>
-          <Input
-            className="mt-2"
-            data-parity="invited-email"
-            id="invited-email"
-            readOnly
-            type="email"
-            value={journey.identity.email}
-          />
-          <p className="mt-2 text-sm text-text-secondary">
-            Your account uses this email
-          </p>
-        </div>
-
-        <a
-          aria-busy={creating}
-          className={cn(buttonVariants({ width: 'full' }), 'mt-8')}
-          data-parity="continue"
-          href={HOSTED_SIGN_UP_URL}
-          onClick={createAccount}
-        >
-          {creating ? 'Opening secure sign-in…' : 'Continue to create my account'}
-        </a>
-      </div>
-    </main>
+      <Link className={ERROR_PAGE_ACTION_CLASS} to="/">
+        Back to home <ArrowRight aria-hidden="true" size={18} />
+      </Link>
+    </ErrorPage>
   );
 }

@@ -21,6 +21,29 @@ export type ResolvedInvitation =
   | { status: 'used' }
   | { status: 'unknown' };
 
+export type PrototypeInvitationStanding = 'sent' | 'expired' | 'email-failed';
+
+export const PROTOTYPE_INVITATION_STANDINGS: readonly PrototypeInvitationStanding[] = [
+  'sent',
+  'expired',
+  'email-failed',
+];
+
+export type PrototypeInvitationResendOutcome = 'sent' | 'fails';
+
+export const PROTOTYPE_INVITATION_RESEND_OUTCOMES: readonly PrototypeInvitationResendOutcome[] =
+  ['sent', 'fails'];
+
+export const INVITATION_RESEND_FAILURE_MESSAGE =
+  'The invitation email could not be sent. Try again.';
+
+export class InvitationResendError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'InvitationResendError';
+  }
+}
+
 export const SIMULATED_LATENCY_MS = 900;
 
 function invitationToken(): string {
@@ -45,4 +68,17 @@ export async function resolveInvitation(
   if (state === 'valid') return { status: 'valid', token };
 
   return { status: state };
+}
+
+export async function resendInvitation(
+  email: string,
+  outcome: PrototypeInvitationResendOutcome,
+): Promise<SentInvitation> {
+  await new Promise((resolve) => setTimeout(resolve, SIMULATED_LATENCY_MS));
+
+  if (outcome === 'fails') {
+    throw new InvitationResendError(INVITATION_RESEND_FAILURE_MESSAGE);
+  }
+
+  return createInvitation(email, new Date());
 }

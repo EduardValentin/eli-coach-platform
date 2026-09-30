@@ -1,3 +1,4 @@
+import type { ClientUnitPreferencesSource } from "./client-unit-preferences-source";
 import type { UnitPreference } from "./unit-preference";
 
 type SaveClientUnitPreference = {
@@ -6,7 +7,6 @@ type SaveClientUnitPreference = {
   at: Date;
 };
 
-export interface ClientUnitPreferences {
-  findByClientId(clientId: string): Promise<UnitPreference | null>;
+export interface ClientUnitPreferences extends ClientUnitPreferencesSource {
   save(input: SaveClientUnitPreference): Promise<void>;
 }

@@ -8,6 +8,7 @@ import {
 } from '../ui/dialog';
 import type { ClientJourney } from '../../domain/journey';
 import type { ReviewForm } from '../../domain/onboardingAnswers';
+import { clientPronouns } from '../../utils/journeyLabels';
 import { AnswerGroups } from './OnboardingPanel';
 import { OnboardingReviewBar } from './OnboardingReviewBar';
 
@@ -35,17 +36,21 @@ export function OnboardingReviewDialog({
   const [openForms, setOpenForms] = useState<string[]>(() =>
     forms.map((form) => form.formId),
   );
+  const { object } = clientPronouns(journey.identity.gender);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[90vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-3xl">
+      <DialogContent
+        className="flex max-h-[90vh] flex-col gap-0 overflow-hidden p-0 sm:max-w-3xl"
+        data-parity-root="OnboardingReviewDialog"
+      >
         <DialogHeader className="px-6 pt-6 pb-4">
           <DialogTitle>
             Review {journey.identity.firstName}&rsquo;s answers
           </DialogTitle>
           <DialogDescription>
-            Tick any answer you want her to revisit, then approve or ask for
-            more details.
+            Tick any answer you want {object} to revisit, then approve or ask
+            for more details.
           </DialogDescription>
         </DialogHeader>
 

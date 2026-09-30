@@ -1,4 +1,11 @@
+export {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "./accordion";
 export { Alert } from "./alert";
+export { Avatar } from "./avatar";
 export { Badge } from "./badge";
 export { Button, buttonVariants } from "./button";
 export { Card, cardVariants } from "./card";
@@ -8,6 +15,7 @@ export { CheckboxField } from "./checkbox-field";
 export { ChoiceGroup, ChoiceOption } from "./choice-group";
 export { FieldError } from "./field-error";
 export { FieldHint } from "./field-hint";
+export { IconHint } from "./icon-hint";
 export { IconButton } from "./icon-button";
 export { Input } from "./input";
 export { FieldCaption, Label, LabelSuffix, Legend } from "./label";
@@ -28,9 +36,21 @@ export { SectionEyebrow } from "./section-eyebrow";
 export {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
+  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from "./select";
 export { Stepper } from "./stepper";
+export {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+  type TableSort,
+} from "./table";
 export { Textarea } from "./textarea";

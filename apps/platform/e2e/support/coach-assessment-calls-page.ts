@@ -1,6 +1,6 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 
-const HYDRATION_RETRY_TIMEOUT_MS = 1_000;
+import { HYDRATION_RETRY_TIMEOUT_MS } from "./locator-text";
 
 export class CoachAssessmentCallsPage {
   constructor(private readonly page: Page) {}
@@ -23,20 +23,20 @@ export class CoachAssessmentCallsPage {
     }).toPass();
   }
 
-  call(visitorName: string): Locator {
+  call(visitor: string): Locator {
     return this.page
       .getByRole("list", { name: "Assessment calls" })
       .getByRole("listitem")
-      .filter({ hasText: visitorName });
+      .filter({ hasText: visitor });
   }
 
-  async sendPaymentLink(visitorName: string): Promise<void> {
+  async sendPaymentLink(visitor: string): Promise<void> {
     const confirmation = this.page.getByRole("dialog", {
       name: "Send payment link?",
     });
 
     await expect(async () => {
-      await this.call(visitorName)
+      await this.call(visitor)
         .getByRole("button", { name: "Send payment link" })
         .click();
       await expect(confirmation).toBeVisible({
@@ -44,5 +44,9 @@ export class CoachAssessmentCallsPage {
       });
     }).toPass();
     await confirmation.getByRole("button", { name: "Send link" }).click();
+  }
+
+  async viewClient(visitor: string): Promise<void> {
+    await this.call(visitor).getByRole("link", { name: "View client" }).click();
   }
 }

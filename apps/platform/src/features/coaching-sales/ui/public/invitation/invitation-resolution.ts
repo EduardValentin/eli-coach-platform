@@ -50,6 +50,16 @@ export function useInvitationResolution(token: string | null): InvitationView {
   return data === undefined ? CHECKING : invitationResolutionSchema.parse(data);
 }
 
+export function useHandOffToHostedSignUp(invitation: InvitationView) {
+  const signUpUrl = invitation.state === "valid" ? invitation.signUpUrl : null;
+
+  useEffect(() => {
+    if (signUpUrl !== null) {
+      window.location.replace(signUpUrl);
+    }
+  }, [signUpUrl]);
+}
+
 function isResolvable(token: string | null): boolean {
   return invitationResolutionRequestSchema.safeParse({ token }).success;
 }

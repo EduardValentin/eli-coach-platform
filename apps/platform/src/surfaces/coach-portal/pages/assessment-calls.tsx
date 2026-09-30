@@ -17,18 +17,19 @@ import { AssessmentCallsSection } from "~/features/assessment-calls/ui/coach/ass
 import { useCoachClock } from "~/features/assessment-calls/ui/coach/use-coach-clock";
 import type { CallSalesState } from "~/features/coaching-sales/contracts/coaching-sales";
 import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
-import { CallSalesStateBadge } from "~/features/coaching-sales/ui/coach/call-sales-state-badge";
-import { PaymentLinkAction } from "~/features/coaching-sales/ui/coach/payment-link-action";
+import { CallSalesStateBadge } from "~/features/coaching-sales/ui/coach/call-sales/call-sales-state-badge";
+import { PaymentLinkAction } from "~/features/coaching-sales/ui/coach/call-sales/payment-link-action";
 import {
   PRICING_DETAIL_LABEL,
   pricingTierLabel,
-} from "~/features/coaching-sales/ui/coach/pricing-tier-label";
+} from "~/features/coaching-sales/ui/coach/call-sales/pricing-tier-label";
 import {
   matchesSalesFilter,
   SalesStatusFilter,
   SALES_STATUS_PARAM,
   useSalesFilterParam,
-} from "~/features/coaching-sales/ui/coach/sales-status-filter";
+} from "~/features/coaching-sales/ui/coach/call-sales/sales-status-filter";
+import { ViewClientLink } from "~/features/coaching-sales/ui/coach/clients/view-client-link";
 
 export { AssessmentCallsErrorBoundary as ErrorBoundary } from "~/features/assessment-calls/ui/coach/assessment-calls-error-boundary";
 
@@ -37,14 +38,14 @@ export async function loader({ context }: LoaderFunctionArgs) {
     .get(assessmentCallsContext)
     .coachAssessmentCalls.loadCalls();
   const { coachSales } = context.get(coachingSalesContext);
-  const [salesStates, pricingTiers] = await Promise.all([
-    coachSales.loadSalesStates(listing.calls.map((call) => call.id)),
+  const [callSales, pricingTiers] = await Promise.all([
+    coachSales.loadCallSales(listing.calls.map((call) => call.id)),
     coachSales.loadPricingTiers(
       listing.calls.map((call) => ({ email: call.visitorEmail, id: call.id })),
     ),
   ]);
 
-  return { ...listing, pricingTiers, salesStates };
+  return { ...listing, pricingTiers, callSales };
 }
 
 export function shouldRevalidate({
@@ -64,7 +65,7 @@ export default function CoachAssessmentCallsRoute() {
   const { now, timeZone } = useCoachClock(listing.now, listing.coachTimeZone);
   const salesFilter = useSalesFilterParam();
   const salesStateOf = (call: ClassifiedCall): CallSalesState | null =>
-    isEndedCall(call) ? listing.salesStates[call.id] : null;
+    isEndedCall(call) ? listing.callSales[call.id].state : null;
   const pricingDetails = (call: ClassifiedCall): AppointmentDetail[] => {
     const tier = listing.pricingTiers[call.id];
 
@@ -87,10 +88,14 @@ export default function CoachAssessmentCallsRoute() {
         extraDetails={pricingDetails}
         now={now}
         renderEndedCallExtras={(call) => {
-          const state = listing.salesStates[call.id];
+          const { clientId, state } = listing.callSales[call.id];
 
           return {
-            action: <PaymentLinkAction call={call} state={state} />,
+            action: clientId ? (
+              <ViewClientLink clientId={clientId} />
+            ) : (
+              <PaymentLinkAction call={call} state={state} />
+            ),
             badge: <CallSalesStateBadge state={state} />,
           };
         }}

@@ -30,6 +30,7 @@ export function OnboardingReviewBar({
         <Label htmlFor={noteId}>{NOTE_LABEL}</Label>
         <Textarea
           id={noteId}
+          data-parity="review-note"
           required
           rows={2}
           value={note}
@@ -38,7 +39,11 @@ export function OnboardingReviewBar({
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p role="status" className="text-sm text-text-secondary">
+        <p
+          role="status"
+          className="text-sm text-text-secondary"
+          data-parity="flag-count"
+        >
           {flaggedCountLabel(flagged.length)}
         </p>
         <div className="flex flex-col gap-3 sm:flex-row">
@@ -49,11 +54,16 @@ export function OnboardingReviewBar({
             disabled={!ready}
             variant="outline"
             onClick={() => onSend(note.trim())}
+            data-parity="ask-details"
           >
             Ask for more details
           </Button>
           {onApprove && (
-            <Button variant="primary" onClick={onApprove}>
+            <Button
+              variant="primary"
+              onClick={onApprove}
+              data-parity="dialog-approve"
+            >
               Approve answers
             </Button>
           )}

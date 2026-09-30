@@ -31,6 +31,18 @@ describe("badge", () => {
     );
   });
 
+  it("fills a secondary badge with the secondary surface", () => {
+    // arrange, act
+    render(<Badge tone="secondary">Awaiting review</Badge>);
+
+    // assert
+    expect(screen.getByText("Awaiting review")).toHaveClass(
+      "border-transparent",
+      "bg-secondary",
+      "text-secondary-foreground",
+    );
+  });
+
   it("keeps a muted badge quiet against its surface", () => {
     // arrange, act
     render(<Badge tone="muted">Past</Badge>);

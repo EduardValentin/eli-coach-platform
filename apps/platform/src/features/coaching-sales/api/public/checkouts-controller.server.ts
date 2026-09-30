@@ -24,6 +24,7 @@ import {
   type LoaderFunctionArgs,
 } from "react-router";
 
+import { readJsonRequestBody } from "~/features/coaching-sales/api/read-json-request-body.server";
 import {
   coachingBundleIdSchema,
   presentBundleCards,
@@ -42,8 +43,6 @@ import {
   CHECKOUT_COMPLETE_PATH,
   selectBundlePath,
 } from "~/features/coaching-sales/contracts/paths";
-
-import { readJsonRequestBody } from "./read-json-request-body.server";
 
 type CheckoutsControllerOptions = {
   appBasePath: string;

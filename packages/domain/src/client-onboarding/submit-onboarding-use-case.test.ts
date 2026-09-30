@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { UnitPreference, type ClientUnitPreferences } from "../unit-preference";
+import { ClientProfile } from "../client-profile";
+import {
+  UnitPreference,
+  type ClientUnitPreferencesSource,
+} from "../unit-preference";
 import type { ClientOnboardingChanges } from "./client-onboarding-changes";
 import type { ClientOnboardingIncidents } from "./client-onboarding-incidents";
 import type { ClientOnboardingSource } from "./client-onboarding-source";
@@ -21,6 +25,18 @@ const CLIENT: OnboardingClient = {
   clientId: "client-1",
   gender: "male",
   dateOfBirth: "1990-03-02",
+  firstName: "Ana",
+  lastName: "Popescu",
+  country: "RO",
+  phone: "+40712345678",
+  email: "ana@example.com",
+  submittedAt: null,
+  reviewStamps: {
+    reviewOpenedAt: null,
+    detailsRequestedAt: null,
+    detailsAnsweredAt: null,
+    answersApprovedAt: null,
+  },
 };
 const IMPERIAL = UnitPreference.of("imperial");
 
@@ -92,6 +108,7 @@ function answersWithWeight(weight: number): OnboardingAnswersByForm {
 function createClients(found: OnboardingClient | null) {
   return {
     findByAuthSubjectId: vi.fn().mockResolvedValue(found),
+    findByClientId: vi.fn().mockResolvedValue(found),
   } satisfies OnboardingClients;
 }
 
@@ -104,8 +121,7 @@ function createOnboardings(submission: OnboardingSubmission | null = null) {
 function createUnitPreferences(preference: UnitPreference | null = null) {
   return {
     findByClientId: vi.fn().mockResolvedValue(preference),
-    save: vi.fn().mockResolvedValue(undefined),
-  } satisfies ClientUnitPreferences;
+  } satisfies ClientUnitPreferencesSource;
 }
 
 function createChanges(
@@ -131,6 +147,13 @@ function createIncidents() {
     onboardingDraftSaveFailed: vi.fn(),
     onboardingSubmissionAccepted: vi.fn(),
     onboardingSubmissionRefused: vi.fn(),
+    onboardingReviewOpened: vi.fn(),
+    onboardingDetailsRequested: vi.fn(),
+    onboardingDetailsRequestEmailFailed: vi.fn(),
+    onboardingDetailsAnswered: vi.fn(),
+    onboardingDetailsRefused: vi.fn(),
+    onboardingAnswersApproved: vi.fn(),
+    onboardingReviewStampsRepaired: vi.fn(),
   } satisfies ClientOnboardingIncidents;
 }
 
@@ -138,7 +161,7 @@ function createUseCase(
   ports: {
     clients?: OnboardingClients;
     onboardings?: ClientOnboardingSource;
-    unitPreferences?: ClientUnitPreferences;
+    unitPreferences?: ClientUnitPreferencesSource;
     changes?: ClientOnboardingChanges;
     stamps?: OnboardingSubmissionStamps;
     incidents?: ClientOnboardingIncidents;
@@ -177,6 +200,7 @@ describe("SubmitOnboardingUseCase", () => {
       clientId: "client-1",
       submission: { answers: completeAnswers(), consents, submittedAt: NOW },
       measurementEntry: { recordedAt: NOW, weightKg: 82.5, waistCm: 88 },
+      profile: expect.any(ClientProfile),
     });
     expect(stamps.recordOnboardingSubmitted).toHaveBeenCalledWith({
       clientId: "client-1",
@@ -188,6 +212,42 @@ describe("SubmitOnboardingUseCase", () => {
     expect(incidents.onboardingSubmissionAccepted).toHaveBeenCalledWith({
       clientId: "client-1",
       screeningOutcome: "cleared",
+    });
+  });
+
+  it("records her profile facts from her answers with her submission, never her identity or weight", async () => {
+    // arrange
+    const changes = createChanges();
+    const useCase = createUseCase({ changes });
+    const answers = completeAnswers();
+    answers["goal-availability"] = {
+      ...answers["goal-availability"],
+      additionalInfo: " Early mornings suit me. ",
+    };
+    answers["nutrition-lifestyle"] = {
+      ...answers["nutrition-lifestyle"],
+      eatingStyle: "Vegetarian",
+      allergiesOrIntolerances: "Yes",
+      allergiesOrIntolerancesList: "Lactose",
+    };
+
+    // act
+    await useCase.execute({
+      authSubjectId: "user_radu",
+      answers,
+      consents: givenConsents(),
+    });
+
+    // assert
+    const [recorded] = changes.recordSubmission.mock.calls[0];
+    expect(recorded.profile.toSnapshot()).toEqual({
+      clientId: "client-1",
+      heightCm: 180,
+      activityLevel: "Mostly sitting",
+      primaryGoal: "Build muscle",
+      dietaryRestrictions: "Vegetarian, Lactose",
+      clientNotes: "Early mornings suit me.",
+      updatedAt: NOW,
     });
   });
 

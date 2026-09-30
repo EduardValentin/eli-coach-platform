@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { useEffect } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { MemoryRouter } from 'react-router';
 import { afterEach, describe, expect, it } from 'vitest';
 import { AppProvider } from './AppContext';
@@ -70,7 +70,47 @@ function JourneyProbe() {
   );
 }
 
-function renderProbe(jstage: string) {
+function ProfileProbe() {
+  const { demoJourney, submitOnboarding, saveOnboardingDraft, answerRequest } =
+    useClientJourneys();
+  const { profile } = demoJourney;
+
+  return (
+    <>
+      <output aria-label="profile">
+        {profile
+          ? `${profile.heightCm} cm · ${profile.dietaryRestrictions}`
+          : 'none'}
+      </output>
+      <button
+        type="button"
+        onClick={() => submitOnboarding(DEMO_JOURNEY_CALL_ID, new Date())}
+      >
+        send onboarding
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          saveOnboardingDraft(DEMO_JOURNEY_CALL_ID, {
+            ...demoJourney.onboarding,
+            answers: {
+              ...demoJourney.onboarding.answers,
+              'nutrition-lifestyle': {
+                ...demoJourney.onboarding.answers['nutrition-lifestyle'],
+                eatingStyle: 'Vegan',
+              },
+            },
+          });
+          answerRequest(DEMO_JOURNEY_CALL_ID, new Date());
+        }}
+      >
+        answer the request
+      </button>
+    </>
+  );
+}
+
+function renderProbe(jstage: string, probe: ReactNode = <JourneyProbe />) {
   window.history.replaceState({}, '', `/?jstage=${jstage}`);
 
   render(
@@ -78,9 +118,7 @@ function renderProbe(jstage: string) {
       <AppProvider>
         <ClientProfileProvider>
           <AssessmentCallProvider>
-            <ClientJourneyProvider>
-              <JourneyProbe />
-            </ClientJourneyProvider>
+            <ClientJourneyProvider>{probe}</ClientJourneyProvider>
           </AssessmentCallProvider>
         </ClientProfileProvider>
       </AppProvider>
@@ -184,5 +222,41 @@ describe('completing checkout', () => {
     // assert
     expect(screen.getByLabelText('stage')).toHaveTextContent('invited');
     expect(screen.getByLabelText('invitation token')).not.toHaveTextContent('');
+  });
+});
+
+describe('keeping her profile', () => {
+  it('has no profile while she is still filling in her onboarding', () => {
+    // act
+    renderProbe('onboarding', <ProfileProbe />);
+
+    // assert
+    expect(screen.getByLabelText('profile')).toHaveTextContent('none');
+  });
+
+  it('builds her profile from her answers when she sends her onboarding', async () => {
+    // arrange
+    const user = renderProbe('onboarding', <ProfileProbe />);
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'send onboarding' }));
+
+    // assert
+    expect(screen.getByLabelText('profile')).toHaveTextContent('165 cm · None');
+  });
+
+  it('rebuilds her profile from the merged answers when she answers a detail request', async () => {
+    // arrange
+    const user = renderProbe('needs-details', <ProfileProbe />);
+
+    // act
+    await user.click(
+      screen.getByRole('button', { name: 'answer the request' }),
+    );
+
+    // assert
+    expect(screen.getByLabelText('profile')).toHaveTextContent(
+      '165 cm · Vegan, Lactose, mild',
+    );
   });
 });

@@ -204,6 +204,22 @@ describe("button call-to-action options", () => {
     );
   });
 
+  it("keeps a ghost-ink button quiet at rest and fills it with the ink pairing on hover", () => {
+    // arrange
+    // act
+    const classes = buttonVariants({ variant: "ghost-ink" }).split(" ");
+
+    // assert
+    expect(classes).toEqual(
+      expect.arrayContaining([
+        "text-text-label",
+        "hover:bg-text-primary",
+        "hover:text-surface-base",
+      ]),
+    );
+    expect(classes).not.toContain("hover:bg-surface-quiet");
+  });
+
   it("fills an on-brand button with the base surface and brand text", () => {
     // arrange
     // act

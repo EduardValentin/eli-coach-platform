@@ -2,6 +2,7 @@ import type { AcquisitionIncidents } from "@eli-coach-platform/domain/acquisitio
 import type { AssessmentCallIncidents } from "@eli-coach-platform/domain/assessment-call";
 import type { ClientInvitationIncidents } from "@eli-coach-platform/domain/client-invitation";
 import type { ClientOnboardingIncidents } from "@eli-coach-platform/domain/client-onboarding";
+import type { ClientRosterIncidents } from "@eli-coach-platform/domain/client-roster";
 import type { CoachingSalesIncidents } from "@eli-coach-platform/domain/payment-link";
 import type { WaitlistIncidents } from "@eli-coach-platform/domain/waitlist";
 import type { PaymentWebhookIncidents } from "@eli-coach-platform/infrastructure/payments/server";
@@ -10,6 +11,7 @@ type ConsoleLogger = AcquisitionIncidents &
   AssessmentCallIncidents &
   ClientInvitationIncidents &
   ClientOnboardingIncidents &
+  ClientRosterIncidents &
   CoachingSalesIncidents &
   PaymentWebhookIncidents &
   WaitlistIncidents;
@@ -53,10 +55,57 @@ export function createConsoleLogger(): ConsoleLogger {
         invitationId,
       });
     },
+    invitationResendFailed: ({ invitationId, step }) => {
+      console.error("Client invitation re-send failed.", {
+        errorCategory: "client_invitation_resend_failure",
+        invitationId,
+        step,
+      });
+    },
+    invitationResent: ({ invitationId }) => {
+      console.info("Client invitation re-sent.", {
+        eventCategory: "client_invitation_resent",
+        invitationId,
+      });
+    },
     notificationFailed: ({ recipient }) => {
       console.error("Assessment call notification failed.", {
         errorCategory: "assessment_call_notification_failure",
         recipient,
+      });
+    },
+    onboardingAnswersApproved: ({ clientId }) => {
+      console.info("Client onboarding answers approved.", {
+        clientId,
+        eventCategory: "client_onboarding_answers_approved",
+      });
+    },
+    onboardingDetailsAnswered: ({ clientId, questionCount }) => {
+      console.info("Client onboarding details answered.", {
+        clientId,
+        eventCategory: "client_onboarding_details_answered",
+        questionCount,
+      });
+    },
+    onboardingDetailsRefused: ({ clientId, reason }) => {
+      console.warn("Client onboarding details refused.", {
+        clientId,
+        eventCategory: "client_onboarding_details_refused",
+        reason,
+      });
+    },
+    onboardingDetailsRequestEmailFailed: ({ clientId, requestId }) => {
+      console.error("Client onboarding details request email failed.", {
+        clientId,
+        errorCategory: "client_onboarding_details_request_email_failure",
+        requestId,
+      });
+    },
+    onboardingDetailsRequested: ({ clientId, questionCount }) => {
+      console.info("Client onboarding details requested.", {
+        clientId,
+        eventCategory: "client_onboarding_details_requested",
+        questionCount,
       });
     },
     onboardingDraftSaved: ({ clientId, formId }) => {
@@ -71,6 +120,18 @@ export function createConsoleLogger(): ConsoleLogger {
         clientId,
         errorCategory: "client_onboarding_draft_save_failure",
         formId,
+      });
+    },
+    onboardingReviewOpened: ({ clientId }) => {
+      console.info("Client onboarding review opened.", {
+        clientId,
+        eventCategory: "client_onboarding_review_opened",
+      });
+    },
+    onboardingReviewStampsRepaired: ({ clientId }) => {
+      console.warn("Client onboarding review stamps repaired.", {
+        clientId,
+        eventCategory: "client_onboarding_review_stamps_repaired",
       });
     },
     onboardingSubmissionAccepted: ({ clientId, screeningOutcome }) => {
@@ -121,6 +182,12 @@ export function createConsoleLogger(): ConsoleLogger {
         requestId,
       });
     },
+    rosterReadFailed: (error) => {
+      console.error("Client roster could not be read.", {
+        errorCategory: "client_roster_read_failure",
+        errorClass: errorClassOf(error),
+      });
+    },
     salesModeReadFailed: (error) => {
       console.error("Coaching sales mode feature flag read failed.", {
         errorCategory: "coaching_sales_mode_read_failure",
@@ -145,5 +212,9 @@ function describeError(
 ): { errorClass: string; errorMessage: string } | { errorClass: string } {
   return error instanceof Error
     ? { errorClass: error.name, errorMessage: error.message }
-    : { errorClass: typeof error };
+    : { errorClass: errorClassOf(error) };
+}
+
+function errorClassOf(error: unknown): string {
+  return error instanceof Error ? error.name : typeof error;
 }

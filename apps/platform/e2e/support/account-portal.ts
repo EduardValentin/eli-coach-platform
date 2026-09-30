@@ -1,4 +1,4 @@
-import { expect, type Frame, type Locator, type Page } from "@playwright/test";
+import { expect, type Frame, type Page } from "@playwright/test";
 
 // Every test email is a Clerk `+clerk_test` address (see fixtures.ts), so the
 // hosted Account Portal always accepts this fixed code instead of sending a
@@ -17,12 +17,19 @@ const CLERK_TEST_OTP_CODE = "424242";
 // moved anywhere.
 const SUBMIT_ATTEMPTS = 4;
 const ADVANCE_TIMEOUT_MS = 8_000;
+const SIGN_UP_HAND_OFF_TIMEOUT_MS = 30_000;
 
 const VERIFICATION_STEP = /verify/;
 
 function isAccountPortalHost(hostname: string): boolean {
   return hostname.endsWith(".accounts.dev");
 }
+
+function isAccountPortalUrl(url: URL): boolean {
+  return isAccountPortalHost(url.hostname);
+}
+
+export type SignUpHandOff = { expectReached: () => Promise<void> };
 
 export class AccountPortal {
   constructor(private readonly page: Page) {}
@@ -76,7 +83,9 @@ export class AccountPortal {
     });
   }
 
-  async signUpFromInvitation(continueLink: Locator): Promise<void> {
+  async signUpFromInvitation(
+    startSignUpHandOff: () => Promise<unknown>,
+  ): Promise<void> {
     const portalPaths: string[] = [];
     const recordPortalPath = (frame: Frame) => {
       const url = new URL(frame.url());
@@ -87,14 +96,39 @@ export class AccountPortal {
     };
 
     this.page.on("framenavigated", recordPortalPath);
-    await continueLink.click();
-    await expect.poll(() => portalPaths.length).toBeGreaterThan(0);
+    await startSignUpHandOff();
+    await expect
+      .poll(() => portalPaths.length, { timeout: SIGN_UP_HAND_OFF_TIMEOUT_MS })
+      .toBeGreaterThan(0);
     await this.page.waitForURL((url) => !isAccountPortalHost(url.hostname));
     this.page.off("framenavigated", recordPortalPath);
 
     expect(portalPaths.filter((path) => VERIFICATION_STEP.test(path))).toEqual(
       [],
     );
+  }
+
+  async stopAtSignUpHandOff(): Promise<SignUpHandOff> {
+    let handedOffTo: string | null = null;
+
+    await this.page.route(isAccountPortalUrl, async (route) => {
+      if (!route.request().isNavigationRequest()) {
+        await route.fallback();
+        return;
+      }
+
+      handedOffTo = route.request().url();
+      await route.fulfill({ body: "", contentType: "text/html" });
+    });
+
+    return {
+      expectReached: async () => {
+        await expect
+          .poll(() => handedOffTo, { timeout: SIGN_UP_HAND_OFF_TIMEOUT_MS })
+          .not.toBeNull();
+        await this.page.unroute(isAccountPortalUrl);
+      },
+    };
   }
 
   private async submitUntilAdvanced(options: {

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  answerDetailsRequestSchema,
   answersByFormSchema,
   consentsSchema,
   missingConsentSchema,
@@ -9,7 +10,6 @@ import {
   submissionAcceptedSchema,
   submissionProblemsSchema,
   submitRequestSchema,
-  unitPreferenceSchema,
 } from "./onboarding";
 
 const CONSENTED_AT = "2026-09-28T10:00:00.000Z";
@@ -191,34 +191,11 @@ describe("submitRequestSchema", () => {
   });
 });
 
-describe("unitPreferenceSchema", () => {
-  it("accepts pounds with feet and inches", () => {
-    // arrange
-    const request = { weightUnit: "lb", heightUnit: "ft-in" };
-
-    // act
-    const parsed = unitPreferenceSchema.safeParse(request);
-
-    // assert
-    expect(parsed.success).toBe(true);
-  });
-
-  it("refuses a unit the platform does not offer", () => {
-    // arrange
-    const request = { weightUnit: "stone", heightUnit: "cm" };
-
-    // act
-    const parsed = unitPreferenceSchema.safeParse(request);
-
-    // assert
-    expect(parsed.success).toBe(false);
-  });
-});
-
 describe("onboardingPageSchema", () => {
   it("describes her onboarding page", () => {
     // arrange
     const page = {
+      mode: "wizard",
       clientId: "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22",
       formIds: [
         "goal-availability",
@@ -250,6 +227,7 @@ describe("onboardingPageSchema before her first save", () => {
   it("describes a page with no saved draft yet", () => {
     // arrange
     const page = {
+      mode: "wizard",
       clientId: "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22",
       formIds: ["goal-availability"],
       gender: "female",
@@ -309,6 +287,69 @@ describe("submission response schemas", () => {
 
     // act
     const parsed = submissionAcceptedSchema.safeParse(body);
+
+    // assert
+    expect(parsed.success).toBe(false);
+  });
+});
+
+describe("onboardingPageSchema while a request is open", () => {
+  it("describes the asked questions with her current answers", () => {
+    // arrange
+    const page = {
+      mode: "answer",
+      request: {
+        note: "Your weight looks off.",
+        fields: [{ formId: "goal-availability", fieldId: "weight" }],
+      },
+      answers: { "goal-availability": { weight: 66.1 } },
+      unitPreference: { weightUnit: "kg", heightUnit: "cm" },
+    };
+
+    // act
+    const parsed = onboardingPageSchema.safeParse(page);
+
+    // assert
+    expect(parsed.success).toBe(true);
+  });
+
+  it("refuses a request that asks nothing", () => {
+    // arrange
+    const page = {
+      mode: "answer",
+      request: { note: "Your weight looks off.", fields: [] },
+      answers: {},
+      unitPreference: { weightUnit: "kg", heightUnit: "cm" },
+    };
+
+    // act
+    const parsed = onboardingPageSchema.safeParse(page);
+
+    // assert
+    expect(parsed.success).toBe(false);
+  });
+});
+
+describe("answerDetailsRequestSchema", () => {
+  it("accepts answers for only some of the forms", () => {
+    // arrange
+    const request = {
+      answers: { "nutrition-lifestyle": { checkInDay: "Friday" } },
+    };
+
+    // act
+    const parsed = answerDetailsRequestSchema.safeParse(request);
+
+    // assert
+    expect(parsed.success).toBe(true);
+  });
+
+  it("refuses answers under a form the onboarding does not have", () => {
+    // arrange
+    const request = { answers: { "not-a-form": { checkInDay: "Friday" } } };
+
+    // act
+    const parsed = answerDetailsRequestSchema.safeParse(request);
 
     // assert
     expect(parsed.success).toBe(false);

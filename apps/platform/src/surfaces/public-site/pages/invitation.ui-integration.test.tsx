@@ -32,13 +32,12 @@ const TOKEN = "tok_live_invitation_token";
 const INVITATION_STORAGE_KEY = "coaching-sales:invitation";
 const INVITATION_API_URL = COACHING_SALES_API_PATHS.invitation;
 const INVITATION_RETURN_PATH = "/app/invitation";
-const CONTINUE_URL =
+const SIGN_UP_URL =
   "https://accounts.evoa.example/sign-up?__clerk_ticket=ticket";
 
 const validInvitation: InvitationResolution = {
   state: "valid",
-  email: "ana@example.com",
-  continueUrl: CONTINUE_URL,
+  signUpUrl: SIGN_UP_URL,
 };
 
 const anonymous: InvitationLoaderData = {
@@ -54,6 +53,7 @@ const signedIn: InvitationLoaderData = {
 const server = setupServer();
 
 let resolutionRequests: unknown[] = [];
+let handOffToHostedSignUp: ReturnType<typeof vi.spyOn>;
 
 beforeAll(() => {
   server.listen({ onUnhandledRequest: "error" });
@@ -61,11 +61,15 @@ beforeAll(() => {
 
 beforeEach(() => {
   resolutionRequests = [];
+  handOffToHostedSignUp = vi
+    .spyOn(window.location, "replace")
+    .mockImplementation(() => {});
 });
 
 afterEach(() => {
   cleanup();
   server.resetHandlers();
+  vi.restoreAllMocks();
   vi.clearAllMocks();
   window.sessionStorage.clear();
   window.history.replaceState(null, "", "/");
@@ -134,12 +138,9 @@ describe("InvitationRoute", () => {
     renderInvitationWith(`#${TOKEN}`, anonymous);
 
     // assert
-    expect(
-      await screen.findByRole("heading", {
-        level: 1,
-        name: "Create your account",
-      }),
-    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(handOffToHostedSignUp).toHaveBeenCalled();
+    });
     expect(resolutionRequests).toEqual([{ token: TOKEN }]);
     expect(window.location.hash).toBe("");
     expect(window.location.pathname).toBe("/invitation");
@@ -164,13 +165,14 @@ describe("InvitationRoute", () => {
     await waitFor(() => {
       expect(resolutionRequests).toEqual([{ token: TOKEN }]);
     });
+    expect(handOffToHostedSignUp).not.toHaveBeenCalled();
     held.answer();
-    expect(
-      await screen.findByRole("heading", { name: "Create your account" }),
-    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(handOffToHostedSignUp).toHaveBeenCalledWith(SIGN_UP_URL);
+    });
   });
 
-  it("shows her email fixed and hands her to the hosted sign-up for a live invitation", async () => {
+  it("hands a live invitation straight to the hosted sign-up the server resolved for it, still checking", async () => {
     // arrange
     answerInvitation(validInvitation);
 
@@ -178,27 +180,16 @@ describe("InvitationRoute", () => {
     renderInvitationWith(`#${TOKEN}`, anonymous);
 
     // assert
-    const heading = await screen.findByRole("heading", {
-      level: 1,
-      name: "Create your account",
+    await waitFor(() => {
+      expect(handOffToHostedSignUp).toHaveBeenCalledWith(SIGN_UP_URL);
     });
-    expect(screen.getByRole("main", { name: "Invitation" })).toContainElement(
-      heading,
+    expect(handOffToHostedSignUp).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Checking your invitation…",
     );
-    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
-    expect(screen.getByText("Your invitation")).toBeInTheDocument();
-    expect(
-      screen.getByText("Click the button below to create your account."),
-    ).toBeInTheDocument();
-    const email = screen.getByRole("textbox", { name: "Email" });
-    expect(email).toHaveValue("ana@example.com");
-    expect(email).toHaveAttribute("readonly");
-    expect(
-      screen.getByText("Your account uses this email"),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: "Continue to create my account" }),
-    ).toHaveAttribute("href", CONTINUE_URL);
+    expect(screen.queryByRole("heading")).not.toBeInTheDocument();
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(screen.queryByRole("link")).not.toBeInTheDocument();
   });
 
   it("recalls the invitation kept for this tab when she comes back without the fragment", async () => {
@@ -210,11 +201,9 @@ describe("InvitationRoute", () => {
     renderInvitationWith("", anonymous);
 
     // assert
-    expect(
-      await screen.findByRole("link", {
-        name: "Continue to create my account",
-      }),
-    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(handOffToHostedSignUp).toHaveBeenCalledWith(SIGN_UP_URL);
+    });
     expect(resolutionRequests).toEqual([{ token: TOKEN }]);
   });
 
@@ -243,9 +232,7 @@ describe("InvitationRoute", () => {
       "href",
       "/",
     );
-    expect(
-      screen.queryByRole("link", { name: "Continue to create my account" }),
-    ).not.toBeInTheDocument();
+    expect(handOffToHostedSignUp).not.toHaveBeenCalled();
   });
 
   it("shows the unavailable page without asking the server when she arrives with no invitation at all", async () => {
@@ -311,8 +298,6 @@ describe("InvitationRoute", () => {
     expect(window.location.hash).toBe("");
     expect(resolutionRequests).toEqual([]);
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("link", { name: "Continue to create my account" }),
-    ).not.toBeInTheDocument();
+    expect(handOffToHostedSignUp).not.toHaveBeenCalled();
   });
 });

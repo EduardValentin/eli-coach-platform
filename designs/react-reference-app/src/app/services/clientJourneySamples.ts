@@ -1,10 +1,12 @@
-import { addDays, subDays } from 'date-fns';
+import { addDays, set, subDays } from 'date-fns';
 import {
   emptyOnboarding,
   isBeforeStage,
   ONBOARDING_FORM_IDS,
   type ClientJourney,
   type JourneyIdentity,
+  type JourneyInvitation,
+  type JourneyLinkState,
   type JourneyOnboarding,
   type JourneyPhone,
   type JourneyPricing,
@@ -12,6 +14,7 @@ import {
   type JourneyStage,
   type MeasurementEntry,
 } from '../domain/journey';
+import { profileFromOnboarding } from '../domain/clientProfile';
 import {
   periodEnd,
   resolveDay1,
@@ -20,13 +23,19 @@ import {
   type SubscriptionStartPath,
   type SubscriptionStatus,
 } from '../domain/coachingSubscription';
-import { INVITATION_VALIDITY_DAYS } from './invitationService';
+import {
+  INVITATION_VALIDITY_DAYS,
+  type PrototypeInvitationStanding,
+} from './invitationService';
 import { paymentLinkExpiresAt } from './paymentLinkService';
 import type { PrototypeBooking } from './assessmentCallService';
 import { findCountry } from './countries';
 import type { VisitorGender } from './visitorProfile';
+import type { PrototypeMode } from '../context/AppContext';
 
 export const SEEDED_BUNDLE = 3;
+
+const SEEDED_CALL_HOUR = 15;
 
 export type JourneySeed = {
   callId: string;
@@ -35,6 +44,9 @@ export type JourneySeed = {
   startPath: SubscriptionStartPath;
   subscriptionStatus: SubscriptionStatus;
   pricing: JourneyPricing;
+  bookingNotes: string | null;
+  invitationStanding: PrototypeInvitationStanding;
+  prototypeMode: PrototypeMode;
   now: Date;
 };
 
@@ -57,6 +69,7 @@ const SEEDED_GOAL_ANSWERS = {
   minutesPerSession: '45–60 minutes',
   previousPt: 'No',
   coachExpectations: 'Someone to keep me consistent and honest.',
+  additionalInfo: 'Night shifts twice a week, so those days start late.',
   lifestyleActivityLevel: 'Mostly sitting',
   availableEquipment: ['Full gym', 'Dumbbells'],
   trainingPlace: 'Gym',
@@ -149,6 +162,7 @@ export function identityFromBooking(
     phone: journeyPhone(booking.phone, country?.callingCode ?? ''),
     gender: journeyGenderOf(booking.gender),
     country: country?.name ?? booking.country,
+    primaryGoal: booking.primaryGoal,
   };
 }
 
@@ -158,13 +172,18 @@ const MEASUREMENT_HISTORY: readonly Omit<MeasurementEntry, 'recordedAt'>[] = [
   { weightKg: 66.1, waistCm: 74, hipsCm: 98, thighCm: 57, armCm: 28 },
 ];
 
-function seedMeasurements(latestRecordedAt: Date): MeasurementEntry[] {
-  return MEASUREMENT_HISTORY.map((readings, index) => ({
+function seedMeasurements(
+  submittedAt: Date,
+  prototypeMode: PrototypeMode,
+): MeasurementEntry[] {
+  const history =
+    prototypeMode === 'post-mvp'
+      ? MEASUREMENT_HISTORY
+      : MEASUREMENT_HISTORY.slice(-1);
+
+  return history.map((readings, index) => ({
     ...readings,
-    recordedAt: subDays(
-      latestRecordedAt,
-      (MEASUREMENT_HISTORY.length - 1 - index) * 7,
-    ),
+    recordedAt: subDays(submittedAt, (history.length - 1 - index) * 7),
   }));
 }
 
@@ -207,6 +226,31 @@ function seedOnboarding(
   };
 }
 
+function seedInvitation(
+  seed: JourneySeed,
+  invitedAt: Date,
+): JourneyInvitation {
+  const expiresAt = addDays(invitedAt, INVITATION_VALIDITY_DAYS);
+
+  return {
+    token: `inv-seed-${seed.callId}`,
+    sentAt: invitedAt,
+    expiresAt,
+    state: seededInvitationState(seed.stage, expiresAt, seed.now),
+    emailDelivery: seed.invitationStanding === 'email-failed' ? 'failed' : 'sent',
+  };
+}
+
+function seededInvitationState(
+  stage: JourneyStage,
+  expiresAt: Date,
+  now: Date,
+): JourneyLinkState {
+  if (!isBeforeStage(stage, 'account-created')) return 'used';
+
+  return expiresAt <= now ? 'expired' : 'valid';
+}
+
 function seedSubscription(seed: SubscriptionSeed): CoachingSubscription {
   const base: CoachingSubscription = {
     bundle: SEEDED_BUNDLE,
@@ -236,16 +280,29 @@ function seedSubscription(seed: SubscriptionSeed): CoachingSubscription {
   return { ...base, day1, periodEndsAt };
 }
 
-function seededPaidAt(
-  startPath: SubscriptionStartPath,
-  stage: JourneyStage,
-  now: Date,
-): Date {
+const EXPIRED_INVITATION_AGE_DAYS = INVITATION_VALIDITY_DAYS + 5;
+
+function seededPaidAt(seed: JourneySeed): Date {
+  const { startPath, stage, invitationStanding, now } = seed;
+
+  const invitationPending = isBeforeStage(stage, 'account-created');
+  if (invitationStanding === 'expired' && invitationPending) {
+    return subDays(now, EXPIRED_INVITATION_AGE_DAYS);
+  }
   if (startPath === 'waiting' && !isBeforeStage(stage, 'program-ready')) {
     return subDays(now, WITHDRAWAL_WINDOW_DAYS + 2);
   }
 
   return subDays(now, 5);
+}
+
+function seededCallStart(paymentLinkSentAt: Date): Date {
+  return set(subDays(paymentLinkSentAt, 1), {
+    hours: SEEDED_CALL_HOUR,
+    minutes: 0,
+    seconds: 0,
+    milliseconds: 0,
+  });
 }
 
 export function seedJourney(seed: JourneySeed): ClientJourney {
@@ -256,21 +313,32 @@ export function seedJourney(seed: JourneySeed): ClientJourney {
     startPath,
     subscriptionStatus,
     pricing,
+    bookingNotes,
+    prototypeMode,
     now,
   } = seed;
   const reached = (target: JourneyStage) => !isBeforeStage(stage, target);
 
-  const paidAt = seededPaidAt(startPath, stage, now);
+  const paidAt = seededPaidAt(seed);
   const paymentLinkSentAt = subDays(paidAt, 1);
   const invitedAt = paidAt;
   const submittedAt = subDays(now, 3);
   const programReadyAt = subDays(now, 1);
+  const onboarding = seedOnboarding(stage, identity, submittedAt);
+  const measurements = reached('submitted')
+    ? seedMeasurements(submittedAt, prototypeMode)
+    : [];
 
   return {
     callId,
+    callStartsAt: seededCallStart(paymentLinkSentAt),
     stage,
     identity,
+    profile: reached('submitted')
+      ? profileFromOnboarding(onboarding.answers)
+      : null,
     pricing,
+    bookingNotes,
     paymentLink: reached('payment-link-sent')
       ? {
           token: `pl-seed-${callId}`,
@@ -280,16 +348,9 @@ export function seedJourney(seed: JourneySeed): ClientJourney {
         }
       : null,
     paidAt: reached('invited') ? paidAt : null,
-    invitation: reached('invited')
-      ? {
-          token: `inv-seed-${callId}`,
-          sentAt: invitedAt,
-          expiresAt: addDays(invitedAt, INVITATION_VALIDITY_DAYS),
-          state: reached('account-created') ? 'used' : 'valid',
-        }
-      : null,
+    invitation: reached('invited') ? seedInvitation(seed, invitedAt) : null,
     welcomeSeen: reached('onboarding'),
-    onboarding: seedOnboarding(stage, identity, submittedAt),
+    onboarding,
     review:
       stage === 'needs-details'
         ? {
@@ -302,7 +363,7 @@ export function seedJourney(seed: JourneySeed): ClientJourney {
     reviewCall: reached('review-call-scheduled')
       ? { startsAt: addDays(now, 1), scheduledAt: subDays(now, 1) }
       : undefined,
-    measurements: reached('submitted') ? seedMeasurements(submittedAt) : [],
+    measurements,
     subscription: reached('invited')
       ? seedSubscription({
           purchasedAt: paidAt,
@@ -321,9 +382,12 @@ export function heldJourney(
 ): ClientJourney {
   return {
     callId: booking.id,
+    callStartsAt: booking.startsAt,
     stage: 'held',
     identity: identityFromBooking(booking),
+    profile: null,
     pricing,
+    bookingNotes: booking.notes.trim() || null,
     paymentLink: null,
     paidAt: null,
     invitation: null,

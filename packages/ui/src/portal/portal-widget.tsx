@@ -1,12 +1,13 @@
 import type { ReactNode } from "react";
 
 import { cn } from "../lib/cn";
+import type { DataAttributes } from "../lib/data-attributes";
 import { cardVariants } from "../primitives/card";
 import { VALUE_LG_CLASS, WIDGET_TITLE_CLASS } from "../lib/typography";
 
 type WidgetDensity = "default" | "compact";
 
-type PortalWidgetProps = {
+type PortalWidgetProps = DataAttributes & {
   title: ReactNode;
   icon?: ReactNode;
   titleAdornment?: ReactNode;
@@ -50,6 +51,31 @@ const FOOTER_CLASS: Record<WidgetDensity, string> = {
 
 const VOICE_CLASS = "font-heading text-2xl tracking-tight text-text-primary";
 
+type PortalWidgetPanelProps = DataAttributes & {
+  headingId: string;
+  density?: WidgetDensity;
+  className?: string;
+  children: ReactNode;
+};
+
+export function PortalWidgetPanel({
+  headingId,
+  density = "default",
+  className,
+  children,
+  ...dataAttributes
+}: PortalWidgetPanelProps) {
+  return (
+    <section
+      {...dataAttributes}
+      aria-labelledby={headingId}
+      className={cn(PANEL_CLASS[density], className)}
+    >
+      {children}
+    </section>
+  );
+}
+
 export function PortalWidget({
   title,
   icon,
@@ -64,11 +90,14 @@ export function PortalWidget({
   footer,
   className,
   children,
+  ...dataAttributes
 }: PortalWidgetProps) {
   return (
-    <section
-      aria-labelledby={headingId}
-      className={cn(PANEL_CLASS[density], className)}
+    <PortalWidgetPanel
+      {...dataAttributes}
+      className={className}
+      density={density}
+      headingId={headingId}
     >
       <div
         className={cn(
@@ -109,6 +138,6 @@ export function PortalWidget({
       {children}
 
       {footer && <div className={FOOTER_CLASS[density]}>{footer}</div>}
-    </section>
+    </PortalWidgetPanel>
   );
 }

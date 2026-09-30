@@ -9,7 +9,9 @@ import {
   MAX_BOOKING_AGE,
   MIN_BOOKING_AGE,
   normalizePhone,
+  objectPronoun,
   possessivePronoun,
+  subjectPronoun,
   VISITOR_GENDER_OPTIONS,
   VISITOR_PRIMARY_GOAL_OPTIONS,
 } from "./visitor-profile";
@@ -367,5 +369,93 @@ describe("possessivePronoun", () => {
 
     // assert
     expect(pronoun).toEqual({ capitalised: "Their", lower: "their" });
+  });
+});
+
+describe("subjectPronoun", () => {
+  it("uses she has, she is and she gets for a woman", () => {
+    // arrange
+    const gender = "female";
+
+    // act
+    const pronoun = subjectPronoun(gender);
+
+    // assert
+    expect(pronoun).toEqual({
+      capitalised: "She",
+      hasVerb: "has",
+      isVerb: "is",
+      lower: "she",
+      regularVerbSuffix: "s",
+    });
+  });
+
+  it("uses he has, he is and he gets for a man", () => {
+    // arrange
+    const gender = "male";
+
+    // act
+    const pronoun = subjectPronoun(gender);
+
+    // assert
+    expect(pronoun).toEqual({
+      capitalised: "He",
+      hasVerb: "has",
+      isVerb: "is",
+      lower: "he",
+      regularVerbSuffix: "s",
+    });
+  });
+
+  it("uses they have, they are and they get when the visitor preferred not to say", () => {
+    // arrange
+    const gender = "prefer_not_to_say";
+
+    // act
+    const pronoun = subjectPronoun(gender);
+
+    // assert
+    expect(pronoun).toEqual({
+      capitalised: "They",
+      hasVerb: "have",
+      isVerb: "are",
+      lower: "they",
+      regularVerbSuffix: "",
+    });
+  });
+});
+
+describe("objectPronoun", () => {
+  it("uses her for a woman", () => {
+    // arrange
+    const gender = "female";
+
+    // act
+    const pronoun = objectPronoun(gender);
+
+    // assert
+    expect(pronoun).toBe("her");
+  });
+
+  it("uses him for a man", () => {
+    // arrange
+    const gender = "male";
+
+    // act
+    const pronoun = objectPronoun(gender);
+
+    // assert
+    expect(pronoun).toBe("him");
+  });
+
+  it("uses them when the visitor preferred not to say", () => {
+    // arrange
+    const gender = "prefer_not_to_say";
+
+    // act
+    const pronoun = objectPronoun(gender);
+
+    // assert
+    expect(pronoun).toBe("them");
   });
 });

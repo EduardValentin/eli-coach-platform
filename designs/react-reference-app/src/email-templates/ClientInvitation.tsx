@@ -14,10 +14,7 @@ import {
   EmailText,
 } from './_primitives';
 
-export type ClientInvitationVariant = 'first' | 'replaced';
-
 export type ClientInvitationProps = {
-  variant?: ClientInvitationVariant;
   clientName?: string;
   coachName?: string;
   contactEmail?: string;
@@ -35,35 +32,13 @@ const FONT_SANS = EMAIL_FONT_SANS;
 const EYEBROW = 'Invitation — 1-on-1 coaching';
 const BUTTON_LABEL = 'Create your account';
 
-// Both sends grant the same 30 days; only the lines explaining why this email
-// arrived differ between them.
-const SHARED_VALIDITY =
+const PREVIEW_TEXT = 'Your place is booked — create your account.';
+const HEADING = 'Your place is booked.';
+const SUBHEAD = "Let's get you set up.";
+const OPENING =
+  "Thank you — your place in my coaching is booked. Create your account from the button below; it takes a minute. Then you'll answer a short form about you, and I'll build your program from your answers.";
+const VALIDITY =
   "This link works for the next 30 days. You have to create your account from it — reading this email isn't enough. If it runs out, tell me and I'll send you a new one.";
-
-const copy: Record<
-  ClientInvitationVariant,
-  {
-    previewText: string;
-    heading: string;
-    subhead: string;
-    opening: string;
-  }
-> = {
-  first: {
-    previewText: 'Your place is booked — create your account.',
-    heading: 'Your place is booked.',
-    subhead: "Let's get you set up.",
-    opening:
-      "Thank you — your place in my coaching is booked. Create your account from the button below; it takes a minute. Then you'll answer a short form about you, and I'll build your program from your answers.",
-  },
-  replaced: {
-    previewText: 'A fresh link — create your account with this one.',
-    heading: "Here's your new link.",
-    subhead: 'I updated your details, so the earlier invitation stopped working.',
-    opening:
-      'I made some changes to your profile and sent this fresh link. Create your account from the button below — the link from my earlier email no longer works.',
-  },
-};
 
 const nextSteps = [
   'Create your account from the button above.',
@@ -72,29 +47,27 @@ const nextSteps = [
 ];
 
 export function ClientInvitation({
-  variant = 'first',
   clientName = DEFAULT_CLIENT_NAME,
   coachName = DEFAULT_COACH_NAME,
   contactEmail = DEFAULT_CONTACT_EMAIL,
   acceptUrl = '/invitation#inv-demo',
 }: ClientInvitationProps) {
-  const content = copy[variant];
   const bodyParagraphs = [
     `Hi ${clientName},`,
-    content.opening,
-    SHARED_VALIDITY,
+    OPENING,
+    VALIDITY,
     `— ${coachName}`,
   ];
 
   return (
     <EmailHtml lang="en">
       <EmailHead>
-        <title>{content.previewText}</title>
+        <title>{PREVIEW_TEXT}</title>
         <meta name="color-scheme" content="light only" />
         <meta name="supported-color-schemes" content="light only" />
       </EmailHead>
       <EmailBody style={bodyStyle}>
-        <EmailPreviewText>{content.previewText}</EmailPreviewText>
+        <EmailPreviewText>{PREVIEW_TEXT}</EmailPreviewText>
         <EmailContainer style={outerContainerStyle} maxWidth={600}>
           <EmailSection style={wordmarkSectionStyle}>
             <EmailText style={wordmarkStyle}>EVOA</EmailText>
@@ -107,10 +80,10 @@ export function ClientInvitation({
                 {EYEBROW.toUpperCase()}
               </EmailText>
               <EmailHeading level="h1" style={heroHeadingStyle}>
-                {content.heading}
+                {HEADING}
               </EmailHeading>
               <div style={heroAccentRuleStyle} />
-              <EmailText style={heroSubheadStyle}>{content.subhead}</EmailText>
+              <EmailText style={heroSubheadStyle}>{SUBHEAD}</EmailText>
             </EmailSection>
 
             <EmailSection style={letterSectionStyle}>
@@ -190,9 +163,7 @@ export function ClientInvitation({
   );
 }
 
-ClientInvitation.PreviewProps = {
-  variant: 'first',
-} satisfies ClientInvitationProps;
+ClientInvitation.PreviewProps = {} satisfies ClientInvitationProps;
 
 export default ClientInvitation;
 

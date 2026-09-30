@@ -82,4 +82,21 @@ describe("avatar", () => {
     expect(root).toHaveClass("opacity-70");
     expect(fallback).toHaveClass("text-text-primary");
   });
+
+  it("sets the initials in the heading face, semibold, on the quiet surface for a roster", () => {
+    // arrange, act
+    const { fallback, root } = renderAvatar(
+      <Avatar name="Ana Popescu" tone="heading" />,
+    );
+
+    // assert
+    expect(root).toHaveClass(
+      "size-10",
+      "[&_[data-slot=avatar-fallback]]:bg-surface-quiet",
+      "[&_[data-slot=avatar-fallback]]:font-heading",
+      "[&_[data-slot=avatar-fallback]]:font-semibold",
+    );
+    expect(fallback).toHaveClass("text-text-primary");
+    expect(fallback).toHaveAttribute("aria-hidden", "true");
+  });
 });

@@ -1,6 +1,12 @@
 import { useState } from 'react';
-import { ClipboardList, MessageSquareText, TriangleAlert } from 'lucide-react';
+import {
+  ClipboardList,
+  Info,
+  MessageSquareText,
+  TriangleAlert,
+} from 'lucide-react';
 import { Link } from 'react-router';
+import { toast } from 'sonner';
 import {
   Accordion,
   AccordionContent,
@@ -13,6 +19,7 @@ import { Checkbox } from '../ui/checkbox';
 import { ConfirmDialog } from '../ui/confirm-dialog';
 import { cn } from '../ui/utils';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
+import { clientStatus } from '../../domain/clientStatus';
 import {
   canStartWork,
   workStartDate,
@@ -22,6 +29,7 @@ import { formatRatio, waistToHeightRatio } from '../../domain/bodyMetrics';
 import { CYCLE_MODE_LABELS, cycleModeOf } from '../../domain/cycleMode';
 import {
   awaitsCoachReview,
+  isBeforeStage,
   type ClientJourney,
   type DetailRequest,
   type JourneyStage,
@@ -40,18 +48,23 @@ import {
   screeningOutcome,
   withholdsNutritionAdvice,
 } from '../../domain/safetyScreening';
-import { formatJourneyDate } from '../../utils/journeyLabels';
+import {
+  clientPronouns,
+  CYCLE_MODE_INFO_LABEL,
+  CYCLE_MODE_NOT_ANSWERED,
+  CYCLE_MODE_DEFINITIONS,
+  formatJourneyDate,
+} from '../../utils/journeyLabels';
 import { PortalWidget } from '../PortalWidget';
 import { Reading } from '../Reading';
-import { StatusHint } from '../StatusHint';
+import { IconHint } from '../IconHint';
 import { WIDGET_SUBHEADING_CLASS } from '../typography';
-import { JourneyStageBadge } from './JourneyStageBadge';
+import { ClientStatusBadge } from './ClientStatusBadge';
 import { OnboardingReviewDialog } from './OnboardingReviewDialog';
 import { ReviewAnswerValue } from './ReviewAnswerValue';
 import { useAppState } from '../../context/AppContext';
 
 const RATIO_HIDDEN_NOTE = 'Not shown during pregnancy or right after birth.';
-const BUILD_ACTION = 'Build her program';
 
 const REVIEW_ACTIONS: Partial<Record<JourneyStage, string>> = {
   submitted: 'Review answers',
@@ -86,8 +99,10 @@ function ratioValue(journey: ClientJourney, heightCm: number): string {
   const latest = journey.measurements.at(-1);
   const ratio = latest ? waistToHeightRatio(latest.waistCm, heightCm) : null;
 
+  const { possessive } = clientPronouns(journey.identity.gender);
+
   return ratio === null
-    ? 'Waiting on her first measurements'
+    ? `Waiting on ${possessive.lower} first measurements`
     : formatRatio(ratio);
 }
 
@@ -121,23 +136,43 @@ function ScreeningWarning({ journey }: { journey: ClientJourney }) {
   if (warnings.length === 0) return null;
 
   return (
-    <StatusHint
+    <IconHint
       label={warnings.join('. ')}
       icon={<TriangleAlert aria-hidden="true" size={16} />}
-      className="text-destructive"
+      tone="danger"
+      parity="screening-warning"
     >
       {warnings.map((warning) => (
         <p key={warning}>{warning}</p>
       ))}
-    </StatusHint>
+    </IconHint>
   );
 }
 
 function cycleModeValue(journey: ClientJourney): string {
-  if (journey.identity.gender !== 'female') return 'Not applicable';
-
   const mode = cycleModeOf(journey.onboarding);
-  return mode ? CYCLE_MODE_LABELS[mode] : 'Not answered yet';
+  return mode ? CYCLE_MODE_LABELS[mode] : CYCLE_MODE_NOT_ANSWERED;
+}
+
+function CycleModeInfo() {
+  return (
+    <IconHint
+      label={CYCLE_MODE_INFO_LABEL}
+      icon={<Info aria-hidden="true" size={16} />}
+      className="-my-1.5"
+      parity="fact-cycle-mode-info"
+      contentParityRoot="CycleModeTooltip"
+    >
+      <dl className="space-y-1">
+        {CYCLE_MODE_DEFINITIONS.map(({ term, meaning }) => (
+          <div key={term}>
+            <dt className="inline font-semibold">{term}</dt>{' '}
+            <dd className="inline">— {meaning}</dd>
+          </div>
+        ))}
+      </dl>
+    </IconHint>
+  );
 }
 
 function OnboardingFacts({
@@ -161,22 +196,29 @@ function OnboardingFacts({
         value={
           <span className="tabular-nums">{ratioValue(journey, heightCm)}</span>
         }
+        valueParity="fact-ratio"
       />
       <Reading
         as="dl-item"
         label="Check-in day"
         value={day ?? 'Not chosen yet'}
+        valueParity="fact-checkin-day"
       />
       <Reading
         as="dl-item"
         label="Channel"
         value={channel ?? 'Not chosen yet'}
+        valueParity="fact-channel"
       />
-      <Reading
-        as="dl-item"
-        label="Cycle mode"
-        value={cycleModeValue(journey)}
-      />
+      {journey.identity.gender === 'female' && (
+        <Reading
+          as="dl-item"
+          label="Cycle mode"
+          labelAdornment={<CycleModeInfo />}
+          value={cycleModeValue(journey)}
+          valueParity="fact-cycle-mode"
+        />
+      )}
     </dl>
   );
 }
@@ -194,6 +236,7 @@ function AnswerQuestion({
     <label className="flex cursor-pointer items-start gap-3">
       <Checkbox
         className="mt-0.5"
+        data-parity={`flag-${answer.questionId}`}
         checked={review.flagged.includes(answer.questionId)}
         onCheckedChange={() => review.toggleFlag(answer.questionId)}
       />
@@ -226,7 +269,11 @@ function AnswerRow({
         )}
       >
         <ReviewAnswerValue answer={answer} />
-        {asked && <Badge tone="pending">Asked again</Badge>}
+        {asked && (
+          <Badge tone="pending" data-parity="asked-again">
+            Asked again
+          </Badge>
+        )}
       </dd>
     </div>
   );
@@ -254,10 +301,13 @@ export function AnswerGroups({
     >
       {forms.map((form) => (
         <AccordionItem key={form.formId} value={form.formId}>
-          <AccordionTrigger>
+          <AccordionTrigger data-parity={`form-${form.formId}`}>
             <span className="flex flex-1 flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
               <span className="text-base font-medium">{form.title}</span>
-              <span className="flex items-center gap-2 text-xs font-normal text-text-secondary">
+              <span
+                className="flex items-center gap-2 text-xs font-normal text-text-secondary"
+                data-parity="answered-count"
+              >
                 {askedCount(form, asked) > 0 && (
                   <Badge tone="pending">
                     {askedCount(form, asked)} asked again
@@ -289,7 +339,10 @@ function RequestStatus({ request }: { request: DetailRequest }) {
   const count = request.questionIds.length;
 
   return (
-    <div className="space-y-1 text-sm text-text-secondary">
+    <div
+      className="space-y-1 text-sm text-text-secondary"
+      data-parity="request-status"
+    >
       <p className="flex items-center gap-2">
         <MessageSquareText aria-hidden="true" size={16} />
         Waiting on {count} {count === 1 ? 'answer' : 'answers'} · asked{' '}
@@ -304,8 +357,10 @@ function RequestStatus({ request }: { request: DetailRequest }) {
 
 function WorkStartNote({
   subscription,
+  clientPossessive,
 }: {
   subscription: CoachingSubscription | undefined;
+  clientPossessive: string;
 }) {
   const startsOn =
     subscription && !canStartWork(subscription, new Date())
@@ -316,7 +371,8 @@ function WorkStartNote({
 
   return (
     <p className="text-xs text-text-secondary">
-      You can start building her program on {formatJourneyDate(startsOn)}.
+      You can start building {clientPossessive} program on{' '}
+      {formatJourneyDate(startsOn)}.
     </p>
   );
 }
@@ -337,6 +393,7 @@ function StageActions({
   if (!awaitsCoachReview(journey.stage)) return null;
 
   const reviewAction = REVIEW_ACTIONS[journey.stage];
+  const { possessive } = clientPronouns(journey.identity.gender);
   const isPostMvp = appState.prototypeMode === 'post-mvp';
   const canApprove =
     journey.stage === 'submitted' || journey.stage === 'reviewing';
@@ -349,29 +406,42 @@ function StageActions({
     <div className="flex flex-col gap-2">
       <div className="flex flex-col gap-3 sm:flex-row">
         {reviewAction && (
-          <Button variant="outline" onClick={onReview}>
+          <Button
+            variant="outline"
+            onClick={onReview}
+            data-parity="review-action"
+          >
             {reviewAction}
           </Button>
         )}
         {isPostMvp && canBuild && (
           <Button variant="primary" asChild>
             <Link to={`/coach/training/builder/${clientId}`}>
-              {BUILD_ACTION}
+              Build {possessive.lower} program
             </Link>
           </Button>
         )}
         {!isPostMvp && canApprove && (
-          <Button variant="primary" onClick={onApprove}>
+          <Button
+            variant="primary"
+            onClick={onApprove}
+            data-parity="approve-action"
+          >
             Approve answers
           </Button>
         )}
       </div>
-      {isPostMvp && <WorkStartNote subscription={journey.subscription} />}
+      {isPostMvp && (
+        <WorkStartNote
+          subscription={journey.subscription}
+          clientPossessive={possessive.lower}
+        />
+      )}
     </div>
   );
 }
 
-export function OnboardingPanel({
+function SubmittedOnboarding({
   journey,
   clientId,
   heightCm,
@@ -403,11 +473,6 @@ export function OnboardingPanel({
     });
   };
 
-  const approve = () => {
-    approveAnswers(journey.callId);
-    setFlagged(null);
-  };
-
   const askForDetails = (note: string) => {
     requestDetails(journey.callId, {
       questionIds: flagged ?? [],
@@ -416,13 +481,82 @@ export function OnboardingPanel({
       raisedFrom: 'reviewing',
     });
     setFlagged(null);
+    toast.success(`Email sent to ${journey.identity.email}.`);
   };
 
   const confirmApprove = () => {
     if (journey.stage === 'submitted') startReview(journey.callId);
     approveAnswers(journey.callId);
     setConfirmApproveOpen(false);
+    setFlagged(null);
   };
+
+  return (
+    <div className="space-y-6">
+      <OnboardingFacts journey={journey} heightCm={heightCm} />
+
+      <div className="space-y-3 border-t border-border-subtle pt-6">
+        <h3 className={WIDGET_SUBHEADING_CLASS}>Answers</h3>
+        {request && <RequestStatus request={request} />}
+        <AnswerGroups
+          forms={forms}
+          view={{
+            openForms,
+            onOpenForms: setOpenForms,
+            review: null,
+            asked: request ? new Set(request.questionIds) : undefined,
+          }}
+        />
+      </div>
+
+      <StageActions
+        journey={journey}
+        clientId={clientId}
+        onReview={enterReview}
+        onApprove={() => setConfirmApproveOpen(true)}
+      />
+
+      <OnboardingReviewDialog
+        open={flagged !== null}
+        onOpenChange={(open) => {
+          if (!open) setFlagged(null);
+        }}
+        journey={journey}
+        forms={forms}
+        flagged={flagged ?? []}
+        toggleFlag={toggleFlag}
+        onApprove={
+          journey.stage === 'reviewing'
+            ? () => setConfirmApproveOpen(true)
+            : undefined
+        }
+        onSend={askForDetails}
+        onCancel={() => setFlagged(null)}
+      />
+
+      <ConfirmDialog
+        open={confirmApproveOpen}
+        onOpenChange={setConfirmApproveOpen}
+        title={`Approve ${journey.identity.firstName}'s answers?`}
+        description="You won't be able to ask for more details once you approve."
+        confirmLabel="Approve"
+        onConfirm={confirmApprove}
+      />
+    </div>
+  );
+}
+
+export function OnboardingPanel({
+  journey,
+  clientId,
+  heightCm,
+}: {
+  journey: ClientJourney;
+  clientId: string;
+  heightCm: number;
+}) {
+  const submitted = !isBeforeStage(journey.stage, 'submitted');
+  const { possessive } = clientPronouns(journey.identity.gender);
 
   return (
     <PortalWidget
@@ -436,57 +570,22 @@ export function OnboardingPanel({
         />
       }
       headingId="onboarding-panel-heading"
-      titleAdornment={<ScreeningWarning journey={journey} />}
-      action={<JourneyStageBadge stage={journey.stage} />}
+      titleAdornment={submitted && <ScreeningWarning journey={journey} />}
+      action={<ClientStatusBadge status={clientStatus(journey, new Date())} />}
+      parityRoot="OnboardingPanel"
       className="mb-8"
     >
-      <div className="space-y-6">
-        <OnboardingFacts journey={journey} heightCm={heightCm} />
-
-        <div className="space-y-3 border-t border-border-subtle pt-6">
-          <h3 className={WIDGET_SUBHEADING_CLASS}>Answers</h3>
-          {request && <RequestStatus request={request} />}
-          <AnswerGroups
-            forms={forms}
-            view={{
-              openForms,
-              onOpenForms: setOpenForms,
-              review: null,
-              asked: request ? new Set(request.questionIds) : undefined,
-            }}
-          />
-        </div>
-
-        <StageActions
+      {submitted ? (
+        <SubmittedOnboarding
           journey={journey}
           clientId={clientId}
-          onReview={enterReview}
-          onApprove={() => setConfirmApproveOpen(true)}
+          heightCm={heightCm}
         />
-      </div>
-
-      <OnboardingReviewDialog
-        open={flagged !== null}
-        onOpenChange={(open) => {
-          if (!open) setFlagged(null);
-        }}
-        journey={journey}
-        forms={forms}
-        flagged={flagged ?? []}
-        toggleFlag={toggleFlag}
-        onApprove={journey.stage === 'reviewing' ? approve : undefined}
-        onSend={askForDetails}
-        onCancel={() => setFlagged(null)}
-      />
-
-      <ConfirmDialog
-        open={confirmApproveOpen}
-        onOpenChange={setConfirmApproveOpen}
-        title={`Approve ${journey.identity.firstName}'s answers?`}
-        description="You won't be able to ask for more details once you approve."
-        confirmLabel="Approve"
-        onConfirm={confirmApprove}
-      />
+      ) : (
+        <p className="text-sm text-text-secondary">
+          {possessive.capitalised} answers are not in yet.
+        </p>
+      )}
     </PortalWidget>
   );
 }

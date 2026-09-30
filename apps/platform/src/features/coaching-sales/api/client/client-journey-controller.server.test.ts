@@ -226,6 +226,30 @@ describe("ClientJourneyController program status", () => {
     },
   );
 
+  it.each(["in-review", "needs-details", "approved"] as const)(
+    "answers the %s step of her reviewed onboarding",
+    async (kind) => {
+      // arrange
+      const { controller } = createController({
+        programStatus: {
+          kind,
+          submittedAt: new Date("2026-09-28T10:00:00.000Z"),
+          workStartsOn: null,
+        },
+      });
+
+      // act
+      const status = await controller.loadProgramStatus(clientArgs());
+
+      // assert
+      expect(status).toEqual({
+        kind,
+        submittedAt: "2026-09-28T10:00:00.000Z",
+        workStartsOn: null,
+      });
+    },
+  );
+
   it("answers no status before she has sent her onboarding", async () => {
     // arrange
     const { controller } = createController({ programStatus: null });
@@ -267,6 +291,10 @@ function journeyOf(options: { gender: VisitorGender }): ClientJourney {
     lastName: "Popescu",
     welcomeSeenAt: null,
     onboardingSubmittedAt: null,
+    reviewOpenedAt: null,
+    detailsRequestedAt: null,
+    detailsAnsweredAt: null,
+    answersApprovedAt: null,
   });
 }
 

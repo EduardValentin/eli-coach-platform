@@ -1,0 +1,7 @@
+[
+  { "waitFor": "[data-parity=\"clients-search\"]" },
+  { "wait": 1000 },
+  { "fill": ["[data-parity=\"clients-search\"]", "andreea"] },
+  { "waitFor": "[data-parity=\"row-1-name\"]" },
+  { "wait": 600 }
+]

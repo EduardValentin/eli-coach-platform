@@ -1,15 +1,33 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, useLocation } from 'react-router';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ClientsList } from './ClientsList';
 import { AppProvider } from '../../context/AppContext';
 import { AssessmentCallProvider } from '../../context/AssessmentCallContext';
+import { CheckinProvider } from '../../context/CheckinContext';
 import { ClientJourneyProvider } from '../../context/ClientJourneyContext';
 import { ClientProfileProvider } from '../../context/ClientProfileContext';
 import { TrainingProvider } from '../../context/TrainingContext';
+import { DevToggle } from '../../components/DevToggle';
 
 const NOW = new Date(2026, 8, 21, 12, 0, 0);
+
+beforeAll(() => {
+  vi.stubGlobal(
+    'matchMedia',
+    vi.fn((query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
+  );
+});
 
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date'] });
@@ -26,8 +44,7 @@ function LocationProbe() {
   return <p data-testid="location-probe">{search}</p>;
 }
 
-function renderList(urlQuery = '') {
-  const url = `/coach/clients?scope=post-mvp&${urlQuery.replace(/^\?/, '')}`;
+function renderAt(url: string) {
   window.history.replaceState({}, '', url);
 
   render(
@@ -37,8 +54,11 @@ function renderList(urlQuery = '') {
           <ClientProfileProvider>
             <AssessmentCallProvider>
               <ClientJourneyProvider>
-                <ClientsList />
-                <LocationProbe />
+                <CheckinProvider>
+                  <ClientsList />
+                  <DevToggle />
+                  <LocationProbe />
+                </CheckinProvider>
               </ClientJourneyProvider>
             </AssessmentCallProvider>
           </ClientProfileProvider>
@@ -48,6 +68,16 @@ function renderList(urlQuery = '') {
   );
 
   return userEvent.setup();
+}
+
+function renderList(urlQuery = '') {
+  return renderAt(
+    `/coach/clients?scope=post-mvp&${urlQuery.replace(/^\?/, '')}`,
+  );
+}
+
+function renderMvpList(urlQuery = '') {
+  return renderAt(`/coach/clients?${urlQuery.replace(/^\?/, '')}`);
 }
 
 function currentSearch(): string {
@@ -321,5 +351,121 @@ describe('the coach clients list', () => {
     expect(currentSearch()).toContain('sort=name');
     expect(currentSearch()).not.toMatch(/[?&]status=/);
     expect(currentSearch()).not.toMatch(/[?&]q=/);
+  });
+
+  it('lists only the journey clients in the MVP prototype', () => {
+    // arrange
+    renderMvpList('?jstage=submitted');
+
+    // act
+    const names = orderedNames();
+
+    // assert
+    expect(names).toEqual(['Andreea Popescu', 'Jane Doe']);
+    expect(
+      screen.queryByRole('button', { name: 'Terminate' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Remove' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('counts only the journey clients in the MVP prototype', async () => {
+    // arrange
+    const user = renderMvpList('?jstage=submitted');
+
+    // act
+    await user.click(statusSelect());
+
+    // assert
+    expect(
+      await screen.findByRole('option', { name: 'All statuses 2' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Inactive 0' })).toBeInTheDocument();
+  });
+
+  it('lists the static roster clients as well in the Post-MVP prototype', () => {
+    // arrange
+    renderList('?jstage=held');
+
+    // act
+    const names = orderedNames();
+
+    // assert
+    expect(names).toContain('Sarah Jenkins');
+    expect(
+      screen.getAllByRole('button', { name: 'Terminate' }).length,
+    ).toBeGreaterThan(0);
+  });
+
+  it('shows the no-clients empty state when the URL empties the roster', () => {
+    // arrange
+    renderList('?jstage=held&jroster=empty');
+
+    // assert
+    expect(screen.getByText('No clients yet')).toBeInTheDocument();
+    expect(
+      screen.getByText('Clients appear here once they pay for a bundle.'),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Clear filters' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows the clients-unavailable dead end when the URL fails the roster', () => {
+    // arrange
+    renderMvpList('?jroster=unavailable');
+
+    // assert
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'Clients unavailable' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Your clients could not be loaded. Try again in a moment.',
+    );
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+  });
+
+  it('fails the roster from the Dev Toggle', async () => {
+    // arrange
+    const user = renderMvpList('?jstage=submitted');
+    await user.click(screen.getByRole('button', { name: 'Open Dev Toggle' }));
+    await user.click(screen.getByRole('tab', { name: 'Coach' }));
+
+    // act
+    await user.click(screen.getByRole('combobox', { name: 'Clients roster' }));
+    await user.click(
+      await screen.findByRole('option', { name: 'Clients unavailable' }),
+    );
+
+    // assert
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'Clients unavailable' }),
+    ).toBeInTheDocument();
+    expect(window.location.search).toContain('jroster=unavailable');
+  });
+
+  it('empties the roster from the Dev Toggle and restores it', async () => {
+    // arrange
+    const user = renderMvpList('?jstage=submitted');
+    await user.click(screen.getByRole('button', { name: 'Open Dev Toggle' }));
+    await user.click(screen.getByRole('tab', { name: 'Coach' }));
+
+    // act
+    await user.click(screen.getByRole('combobox', { name: 'Clients roster' }));
+    await user.click(await screen.findByRole('option', { name: 'Empty' }));
+
+    // assert
+    expect(screen.getByText('No clients yet')).toBeInTheDocument();
+    expect(window.location.search).toContain('jroster=empty');
+
+    // act
+    await user.click(screen.getByRole('combobox', { name: 'Clients roster' }));
+    await user.click(await screen.findByRole('option', { name: 'Seeded' }));
+
+    // assert
+    expect(screen.queryByText('No clients yet')).not.toBeInTheDocument();
+    expect(orderedNames()).toEqual(['Andreea Popescu', 'Jane Doe']);
+    expect(window.location.search).not.toContain('jroster');
   });
 });

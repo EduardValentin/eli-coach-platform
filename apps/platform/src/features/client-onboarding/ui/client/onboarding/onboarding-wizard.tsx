@@ -11,7 +11,7 @@ import { useCallback, useId, useMemo, useRef, useState } from "react";
 
 import type {
   OnboardingConsentInstants,
-  OnboardingPage,
+  OnboardingWizardPage,
 } from "~/features/client-onboarding/contracts/onboarding";
 import {
   DISCLAIMER_ACKNOWLEDGEMENT,
@@ -45,7 +45,7 @@ import {
 import { useSendToCoach, type SubmissionRefusal } from "./use-send-to-coach";
 
 type OnboardingWizardProps = {
-  page: OnboardingPage;
+  page: OnboardingWizardPage;
 };
 
 type ContinueStage =

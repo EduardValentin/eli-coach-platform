@@ -14,7 +14,12 @@ import userEvent from "@testing-library/user-event";
 import type { UserEvent } from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
-import { createMemoryRouter, Outlet, RouterProvider } from "react-router";
+import {
+  createMemoryRouter,
+  Outlet,
+  RouterProvider,
+  useParams,
+} from "react-router";
 import {
   afterAll,
   afterEach,
@@ -30,9 +35,13 @@ import type { CoachAssessmentCall } from "~/features/assessment-calls/contracts/
 import { COACH_ASSESSMENT_CALLS_PATH } from "~/features/assessment-calls/contracts/paths";
 import type {
   PricingTiers,
-  SalesStates,
+  CallSales,
 } from "~/features/coaching-sales/contracts/coaching-sales";
-import { COACHING_SALES_API_PATHS } from "~/features/coaching-sales/contracts/paths";
+import {
+  COACH_CLIENTS_PATH,
+  COACHING_SALES_API_PATHS,
+  coachClientPath,
+} from "~/features/coaching-sales/contracts/paths";
 
 import CoachAssessmentCallsRoute, {
   ErrorBoundary as CoachAssessmentCallsErrorBoundary,
@@ -105,6 +114,8 @@ const NEXT_WEEK = call("2026-09-22T15:00:00.000Z", {
 });
 
 const FOUR_CALLS = [YESTERDAY, EARLIER_TODAY, LATER_TODAY, NEXT_WEEK];
+
+const PAID_CLIENT_ID = "2d3e4f50-6172-4839-9a0b-1c2d3e4f5061";
 
 const server = setupServer();
 
@@ -778,15 +789,15 @@ describe("paging through a long history of calls", () => {
 });
 
 describe("where each ended call stands in the sale", () => {
-  const SALE_UNDER_WAY: SalesStates = {
+  const SALE_UNDER_WAY: CallSales = {
     ...everyCallHeld(FOUR_CALLS),
-    "earlier-today": "payment-link-sent",
-    yesterday: "paid",
+    "earlier-today": { state: "payment-link-sent", clientId: null },
+    yesterday: { state: "paid", clientId: PAID_CLIENT_ID },
   };
 
   it("badges each ended call with its sales state and a call still to come with none", async () => {
     // arrange, act
-    await renderCallsPage({ salesStates: SALE_UNDER_WAY });
+    await renderCallsPage({ callSales: SALE_UNDER_WAY });
 
     // assert
     const [laterToday, nextWeek, earlierToday, yesterday] = shownCalls().map(
@@ -802,9 +813,9 @@ describe("where each ended call stands in the sale", () => {
     }
   });
 
-  it("offers a re-send once a link is out and nothing once the call is paid", async () => {
+  it("offers a re-send once a link is out and her client page once the call is paid", async () => {
     // arrange, act
-    await renderCallsPage({ salesStates: SALE_UNDER_WAY });
+    await renderCallsPage({ callSales: SALE_UNDER_WAY });
 
     // assert
     const [, , earlierToday, yesterday] = shownCalls().map((item) =>
@@ -815,12 +826,37 @@ describe("where each ended call stands in the sale", () => {
       earlierToday.getByRole("button", { name: "Re-send payment link" }),
     ).toBeInTheDocument();
     expect(yesterday.queryByRole("button")).not.toBeInTheDocument();
+    expect(
+      yesterday.getByRole("link", { name: "View client" }),
+    ).toHaveAttribute("href", coachClientPath(PAID_CLIENT_ID));
+  });
+
+  it("opens the paid client's page from View client", async () => {
+    // arrange
+    const { router, user } = await renderCallsRouter({
+      callSales: SALE_UNDER_WAY,
+    });
+    const [, , , yesterday] = shownCalls().map((item) => within(item));
+
+    // act
+    await user.click(yesterday.getByRole("link", { name: "View client" }));
+
+    // assert
+    expect(router.state.location.pathname).toBe(
+      coachClientPath(PAID_CLIENT_ID),
+    );
+    expect(
+      await screen.findByRole("heading", {
+        level: 1,
+        name: `Client ${PAID_CLIENT_ID}`,
+      }),
+    ).toBeInTheDocument();
   });
 
   it("counts every status under the window and search in view", async () => {
     // arrange
     const user = await renderCallsPage({
-      salesStates: SALE_UNDER_WAY,
+      callSales: SALE_UNDER_WAY,
       url: `${COACH_ASSESSMENT_CALLS_PATH}?when=today`,
     });
 
@@ -851,7 +887,7 @@ describe("where each ended call stands in the sale", () => {
   it("narrows the list to one status, back on the first page, and keeps it in the URL", async () => {
     // arrange
     const { router, user } = await renderCallsRouter({
-      salesStates: SALE_UNDER_WAY,
+      callSales: SALE_UNDER_WAY,
       url: `${COACH_ASSESSMENT_CALLS_PATH}?page=2`,
     });
 
@@ -890,7 +926,7 @@ describe("where each ended call stands in the sale", () => {
   it("restores the status a shared URL carries", async () => {
     // arrange, act
     await renderCallsPage({
-      salesStates: SALE_UNDER_WAY,
+      callSales: SALE_UNDER_WAY,
       url: `${COACH_ASSESSMENT_CALLS_PATH}?status=payment-link-sent`,
     });
 
@@ -949,9 +985,9 @@ describe("where each ended call stands in the sale", () => {
     });
     const bea = within(shownCalls()[1]);
     await user.click(bea.getByRole("button", { name: "Send payment link" }));
-    loaded.salesStates = {
+    loaded.callSales = {
       ...everyCallHeld(FOUR_CALLS),
-      yesterday: "payment-link-sent",
+      yesterday: { state: "payment-link-sent", clientId: null },
     };
 
     // act
@@ -1021,14 +1057,22 @@ function everyCallRegular(calls: readonly CoachAssessmentCall[]): PricingTiers {
   return Object.fromEntries(calls.map((call) => [call.id, "regular"]));
 }
 
-function everyCallHeld(calls: readonly CoachAssessmentCall[]): SalesStates {
-  return Object.fromEntries(calls.map((call) => [call.id, "held"]));
+function everyCallHeld(calls: readonly CoachAssessmentCall[]): CallSales {
+  return Object.fromEntries(
+    calls.map((call) => [call.id, { state: "held", clientId: null }]),
+  );
+}
+
+function ClientPageStandIn() {
+  const { clientId } = useParams();
+
+  return <h1>{`Client ${clientId}`}</h1>;
 }
 
 type CallsPageOptions = {
   calls?: CoachAssessmentCall[];
   pricingTiers?: PricingTiers;
-  salesStates?: SalesStates;
+  callSales?: CallSales;
   url?: string;
 };
 
@@ -1038,7 +1082,7 @@ async function renderCallsRouter(options?: CallsPageOptions) {
   const loaded = {
     calls,
     pricingTiers: options?.pricingTiers ?? everyCallRegular(calls),
-    salesStates: options?.salesStates ?? everyCallHeld(calls),
+    callSales: options?.callSales ?? everyCallHeld(calls),
   };
   const router = createMemoryRouter(
     [
@@ -1057,10 +1101,14 @@ async function renderCallsRouter(options?: CallsPageOptions) {
               coachTimeZone: COACH_TIME_ZONE,
               now: NOW.toISOString(),
               pricingTiers: loaded.pricingTiers,
-              salesStates: loaded.salesStates,
+              callSales: loaded.callSales,
             }),
             path: COACH_ASSESSMENT_CALLS_PATH,
             shouldRevalidate,
+          },
+          {
+            Component: ClientPageStandIn,
+            path: `${COACH_CLIENTS_PATH}/:clientId`,
           },
         ],
       },

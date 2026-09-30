@@ -74,6 +74,7 @@ function createInvitations(
 function createIdentity(invitationIdForSubject: string | null = null) {
   return {
     create: vi.fn().mockResolvedValue(PROVIDER),
+    replace: vi.fn().mockResolvedValue(PROVIDER),
     findInvitationIdForSubject: vi
       .fn()
       .mockResolvedValue(invitationIdForSubject),
@@ -87,7 +88,11 @@ function createNotifications(delivery: "sent" | "failed") {
 }
 
 function createIncidents() {
-  return { invitationEmailFailed: vi.fn() } satisfies ClientInvitationIncidents;
+  return {
+    invitationEmailFailed: vi.fn(),
+    invitationResent: vi.fn(),
+    invitationResendFailed: vi.fn(),
+  } satisfies ClientInvitationIncidents;
 }
 
 function createInvitedClients(found: InvitedClient | null) {
@@ -280,6 +285,25 @@ describe("AdmitPaidClientUseCase", () => {
     expect(dependencies.notifications.sendInvitation).toHaveBeenCalledTimes(1);
   });
 
+  it("admitting again after a reissue creates no second provider invitation", async () => {
+    // arrange
+    const reissuedByResend = invitation({ provider: PROVIDER }).reissue({
+      tokenHash: NEW_TOKEN_HASH,
+      sentAt: EARLIER,
+    });
+    const dependencies = admitDependencies({ existing: reissuedByResend });
+    const useCase = new AdmitPaidClientUseCase(dependencies);
+
+    // act
+    const result = await useCase.execute({ clientId: invitedClient.id });
+
+    // assert
+    expect(result).toEqual({ status: "invited" });
+    expect(dependencies.identity.create).not.toHaveBeenCalled();
+    expect(dependencies.identity.replace).not.toHaveBeenCalled();
+    expect(dependencies.invitations.recordProvider).not.toHaveBeenCalled();
+  });
+
   it("propagates an identity provider failure before any email is sent", async () => {
     // arrange
     const failure = new Error("Clerk unavailable");
@@ -349,7 +373,7 @@ describe("ResolveInvitationUseCase", () => {
     };
   }
 
-  it("answers valid with the email and the identity invitation URL for a live token", async () => {
+  it("answers valid with only the identity invitation URL for a live token", async () => {
     // arrange
     const dependencies = resolveDependencies(
       invitation({ provider: PROVIDER, emailSentAt: EARLIER }),
@@ -362,8 +386,7 @@ describe("ResolveInvitationUseCase", () => {
     // assert
     expect(resolution).toEqual({
       state: "valid",
-      email: invitedClient.email,
-      continueUrl: PROVIDER.url,
+      signUpUrl: PROVIDER.url,
     });
     expect(dependencies.tokenHasher.sha256).toHaveBeenCalledWith(RAW_TOKEN);
     expect(dependencies.invitations.findByTokenHash).toHaveBeenCalledWith(

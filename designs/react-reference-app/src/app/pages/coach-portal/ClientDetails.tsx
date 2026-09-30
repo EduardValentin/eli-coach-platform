@@ -38,6 +38,7 @@ import { Avatar, AvatarFallback } from '../../components/ui/avatar';
 import { Badge } from '../../components/ui/badge';
 import { SubscriptionBadge } from '../../components/coach-portal/SubscriptionBadge';
 import { JourneyClientDetails } from '../../components/coach-portal/JourneyClientDetails';
+import { ClientNotFound } from '../../components/coach-portal/ClientNotFound';
 import { OnboardingPanel } from '../../components/coach-portal/OnboardingPanel';
 import { SubscriptionSummary } from '../../components/SubscriptionSummary';
 import { MeasurementsTable } from '../../components/MeasurementsTable';
@@ -49,7 +50,10 @@ import { PortalWidget } from '../../components/PortalWidget';
 import { Reading } from '../../components/Reading';
 import { useMeasureUnits } from '../../components/client-portal/measureUnits';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
-import { journeyCallIdForClient } from '../../utils/journeyLabels';
+import {
+  journeyCallIdForClient,
+  noMeasurementsYetLine,
+} from '../../utils/journeyLabels';
 import { isBeforeStage } from '../../domain/journey';
 import { useNotifications } from '../../context/NotificationContext';
 import { useMessaging } from '../../context/MessagingContext';
@@ -84,13 +88,14 @@ import { cn } from '../../components/ui/utils';
 export function ClientDetails() {
   const { id = 'client-1' } = useParams();
   const { journeyForCall } = useClientJourneys();
+  const { getProfile } = useClientProfile();
   const journey = journeyForCall(id);
 
-  return journey ? (
-    <JourneyClientDetails journey={journey} />
-  ) : (
-    <RosterClientDetails />
-  );
+  if (journey) {
+    return <JourneyClientDetails journey={journey} />;
+  }
+
+  return getProfile(id) ? <RosterClientDetails /> : <ClientNotFound />;
 }
 
 function RosterClientDetails() {
@@ -307,6 +312,8 @@ function RosterClientDetails() {
             <SubscriptionSummary
               subscription={journey.subscription}
               perspective="coach"
+              clientGender={journey.identity.gender}
+              pricing={journey.pricing}
               headingId="subscription-panel-heading"
               className="mb-8"
             />
@@ -316,7 +323,7 @@ function RosterClientDetails() {
             heightCm={heightCm}
             units={measureUnits}
             headingId="measurements-panel-heading"
-            emptyMessage="She has not sent any measurements yet."
+            emptyMessage={noMeasurementsYetLine(journey.identity.gender)}
             className="mb-8"
           />
         </>

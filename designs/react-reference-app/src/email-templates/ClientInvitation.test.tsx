@@ -32,7 +32,7 @@ function linkTargets() {
 describe('ClientInvitation', () => {
   it('offers one primary action to create the account, naming the coach and the 30-day validity', async () => {
     // arrange
-    const props: ClientInvitationProps = { variant: 'first' };
+    const props: ClientInvitationProps = {};
 
     // act
     await mountInvitation(props);
@@ -57,7 +57,7 @@ describe('ClientInvitation', () => {
 
   it('tells a paying client her place is booked and what comes after the account', async () => {
     // arrange
-    const props: ClientInvitationProps = { variant: 'first' };
+    const props: ClientInvitationProps = {};
 
     // act
     await mountInvitation(props);
@@ -103,22 +103,6 @@ describe('ClientInvitation', () => {
     ).toHaveAttribute('href', '/invitation#inv-demo');
   });
 
-  it('tells a re-invited client that the earlier link stopped working', async () => {
-    // arrange
-    const props: ClientInvitationProps = { variant: 'replaced' };
-
-    // act
-    await mountInvitation(props);
-
-    // assert
-    expect(
-      screen.getByRole('heading', { level: 1, name: /here's your new link/i }),
-    ).toBeInTheDocument();
-    expect(linkTargets()).toEqual([ACCEPT_URL, CONTACT_HREF, CONTACT_HREF]);
-    expect(screen.getByText(/no longer works/i)).toBeInTheDocument();
-    expect(screen.getByText(/works for the next 30 days/i)).toBeInTheDocument();
-  });
-
   it('addresses the client and signs off as the coach it was given', async () => {
     // arrange
     const props: ClientInvitationProps = {
@@ -135,26 +119,18 @@ describe('ClientInvitation', () => {
     expect(screen.queryByText('Hi Jane,')).not.toBeInTheDocument();
   });
 
-  // The title carries the subject line, so asserting it per variant is what
-  // catches a send wired to the wrong copy.
-  it.each([
-    ['first', 'Your place is booked — create your account.'],
-    ['replaced', 'A fresh link — create your account with this one.'],
-  ] as const)(
-    'declares language, direction and the %s send’s subject line',
-    async (variant, subject) => {
-      // arrange
-      const props: ClientInvitationProps = { variant };
+  it('declares language, direction and the subject line', async () => {
+    // arrange
+    const props: ClientInvitationProps = {};
 
-      // act
-      const parsed = await mountInvitation(props);
+    // act
+    const parsed = await mountInvitation(props);
 
-      // assert
-      // Read through the DOM directly: jest-dom's element matchers reject
-      // nodes from a DOMParser document, which has no defaultView.
-      expect(parsed.documentElement.getAttribute('lang')).toBe('en');
-      expect(parsed.documentElement.getAttribute('dir')).toBe('ltr');
-      expect(parsed.title).toBe(subject);
-    },
-  );
+    // assert
+    // Read through the DOM directly: jest-dom's element matchers reject
+    // nodes from a DOMParser document, which has no defaultView.
+    expect(parsed.documentElement.getAttribute('lang')).toBe('en');
+    expect(parsed.documentElement.getAttribute('dir')).toBe('ltr');
+    expect(parsed.title).toBe('Your place is booked — create your account.');
+  });
 });
