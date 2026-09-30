@@ -17,6 +17,8 @@ import type { PaidClient } from "./paid-clients";
 
 export type Readings = Readonly<Record<string, string>>;
 
+export type ReducedPriceAnswer = "Yes" | "No";
+
 export type ReviewAction = "Review answers" | "Continue review";
 
 export type AnsweredQuestion = {
@@ -27,6 +29,22 @@ export type AnsweredQuestion = {
 
 const FOCUS_TRAP_TAB_STOPS = 60;
 
+const ABSENT_READING = "—";
+
+const PROFILE_TERMS = [
+  "Age",
+  "Gender",
+  "Country",
+  "Phone",
+  "Height",
+  "Starting weight",
+  "Current weight",
+  "Activity level",
+  "Primary goal",
+  "Dietary restrictions",
+  "Client notes",
+] as const;
+
 export class CoachClientPage {
   constructor(private readonly page: Page) {}
 
@@ -36,6 +54,17 @@ export class CoachClientPage {
 
   private get onboarding() {
     return this.block("Onboarding");
+  }
+
+  private get assessmentCall() {
+    return this.page.locator('[data-parity-root="AssessmentCallBlock"]');
+  }
+
+  private get assessmentCallTrigger() {
+    return this.assessmentCall.getByRole("button", {
+      name: "Assessment call",
+      exact: true,
+    });
   }
 
   private get reviewDialog() {
@@ -75,10 +104,14 @@ export class CoachClientPage {
   }
 
   private async expandForm(form: string): Promise<void> {
-    const trigger = this.onboarding.getByRole("button", {
-      name: new RegExp(`^${escapedPattern(form)}`),
-    });
+    await this.expand(
+      this.onboarding.getByRole("button", {
+        name: new RegExp(`^${escapedPattern(form)}`),
+      }),
+    );
+  }
 
+  private async expand(trigger: Locator): Promise<void> {
     await expect(async () => {
       if ((await trigger.getAttribute("aria-expanded")) !== "true") {
         await trigger.click();
@@ -111,10 +144,17 @@ export class CoachClientPage {
   }
 
   async expectClient(fullName: string, email: string): Promise<void> {
+    const heading = this.page.getByRole("heading", {
+      level: 1,
+      name: fullName,
+    });
+
+    await expect(heading).toBeVisible();
     await expect(
-      this.page.getByRole("heading", { level: 1, name: fullName }),
+      heading
+        .locator("xpath=ancestor::header[1]")
+        .getByText(email, { exact: true }),
     ).toBeVisible();
-    await expect(this.page.getByText(email, { exact: true })).toBeVisible();
     await expect(
       this.page.getByRole("link", { name: "Back to Clients" }),
     ).toHaveAttribute("href", "/coach/clients");
@@ -124,12 +164,49 @@ export class CoachClientPage {
     await this.expectReadings(this.block("Profile"), readings);
   }
 
+  async expectProfilePending(gender: VisitorGender): Promise<void> {
+    const profile = this.block("Profile");
+    const { possessiveCapitalised, possessive, subjectSends } =
+      clientPronouns(gender);
+
+    await expect(
+      profile.getByText(
+        `${possessiveCapitalised} profile fills in once ${subjectSends} ${possessive} onboarding.`,
+        { exact: true },
+      ),
+    ).toBeVisible();
+    await this.expectReadings(
+      profile,
+      Object.fromEntries(PROFILE_TERMS.map((term) => [term, ABSENT_READING])),
+    );
+  }
+
+  async expectAssessmentCallCollapsed(): Promise<void> {
+    await expect(this.assessmentCallTrigger).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+    await expect(this.assessmentCall.getByRole("term")).toHaveCount(0);
+  }
+
+  async expandAssessmentCall(): Promise<void> {
+    await this.expand(this.assessmentCallTrigger);
+  }
+
   async expectAssessmentCall(readings: Readings): Promise<void> {
-    await this.expectReadings(this.block("Assessment call"), readings);
+    await this.expectAssessmentCallCollapsed();
+    await this.expandAssessmentCall();
+    await this.expectReadings(this.assessmentCall, readings);
   }
 
   async expectSubscription(readings: Readings): Promise<void> {
     await this.expectReadings(this.block("Subscription"), readings);
+  }
+
+  async expectReducedPrice(answer: ReducedPriceAnswer): Promise<void> {
+    await expect(
+      this.definitionOf(this.block("Subscription"), "Reduced price"),
+    ).toHaveText(answer);
   }
 
   async expectFacts(readings: Readings): Promise<void> {

@@ -62,6 +62,7 @@ test("the coach re-sends an invitation and only the fresh link lets the client i
 
   // assert
   await coachClient.expectClient(invited.fullName, invited.email);
+  await coachClient.expectProfilePending(invited.gender);
   await coachClient.expectStatus("Invited");
   await coachClient.expectAnswersNotIn(invited.gender);
   await coachClient.expectInvitationLine(

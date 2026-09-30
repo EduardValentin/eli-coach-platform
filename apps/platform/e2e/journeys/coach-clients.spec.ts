@@ -1,7 +1,10 @@
 import { clientPronouns } from "../support/client-pronouns";
 import { expect, test } from "../support/fixtures";
 import { daysAfter } from "../support/paid-clients";
-import { PROTOTYPE_DETAIL_REQUEST } from "../support/submitted-clients";
+import {
+  PROTOTYPE_DETAIL_REQUEST,
+  SEEDED_FACT_READINGS,
+} from "../support/submitted-clients";
 const JOURNEY_TIMEOUT_MS = 180_000;
 const WITHDRAWAL_DAYS = 14;
 const DATE_OF_BIRTH = new Date("1994-03-14T00:00:00Z");
@@ -128,12 +131,7 @@ test("the coach finds her clients by status, name and join date and opens one", 
     Gender: "Female",
     Country: "Romania",
     Phone: "—",
-  });
-  await coachClient.expectAssessmentCall({
-    Call: shortCallMoment(submitted.callStartsAt),
-    "Primary goal": "Build strength",
-    "Reduced price": "No",
-    "Booking notes": "—",
+    ...SEEDED_FACT_READINGS,
   });
   await coachClient.expectNoInvitation();
   await coachClient.expectStatus("Awaiting review");
@@ -143,6 +141,18 @@ test("the coach finds her clients by status, name and join date and opens one", 
     Start: `After the 14 days (${dayMonthFormatter.format(daysAfter(submitted.paidAt, WITHDRAWAL_DAYS))})`,
     "Start program": "—",
     "Renews on": `Once ${clientPronouns(submitted.gender).possessive} program starts`,
+  });
+  await coachClient.expectReducedPrice("No");
+  await coachClient.expectAssessmentCall({
+    Call: shortCallMoment(submitted.callStartsAt),
+    Name: submitted.fullName,
+    Email: submitted.email,
+    "Date of birth": "14 March 1994",
+    Gender: "Female",
+    Country: "Romania",
+    Phone: "—",
+    "Primary goal": "Build strength",
+    "Booking notes": "—",
   });
 });
 
@@ -345,6 +355,7 @@ test("a client with an account whose answers are not in yet reads Onboarding wit
   // assert
   await coachClient.expectOpen(onboarding.clientId);
   await coachClient.expectClient(onboarding.fullName, onboarding.email);
+  await coachClient.expectProfilePending(onboarding.gender);
   await coachClient.expectNoInvitation();
   await coachClient.expectStatus("Onboarding");
   await coachClient.expectAnswersNotIn(onboarding.gender);
@@ -357,6 +368,7 @@ test("a client with an account whose answers are not in yet reads Onboarding wit
     "Start program": "—",
     "Renews on": `Once ${clientPronouns(onboarding.gender).possessive} program starts`,
   });
+  await coachClient.expectReducedPrice("No");
 });
 
 test("a client account is refused the coach's client pages and every coach action", async ({

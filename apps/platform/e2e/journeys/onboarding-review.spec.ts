@@ -6,6 +6,7 @@ import {
   BONE_OR_JOINT_PROBLEM_LIST,
   BOOKING_CONTACT,
   PROTOTYPE_DETAIL_REQUEST,
+  SEEDED_FACT_READINGS,
   SLEEP_HOURS,
 } from "../support/submitted-clients";
 
@@ -23,6 +24,15 @@ const SAFETY_FORM = "A few safety questions";
 const GOAL_FORM = "Your goal and your week";
 const CYCLE_FORM = "Your cycle and hormonal health";
 const NOTE = PROTOTYPE_DETAIL_REQUEST.note;
+const SEEDED_PROFILE_FACTS = {
+  heightCm: "165.0",
+  startingWeightKg: "66.10",
+  currentWeightKg: "66.10",
+  activityLevel: "Mostly sitting",
+  primaryGoal: "Lose fat",
+  dietaryRestrictions: "Lactose, mild",
+  clientNotes: null,
+};
 
 const dayMonthFormatter = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",
@@ -396,6 +406,8 @@ test("a client answers only what her coach asked, keeps her answers when the sen
     sleepHours: SLEEP_HOURS,
     mealsPerDay: "Three",
   });
+  const profileBeforeAnswering = await onboardingRecords.clientProfile();
+  expect(profileBeforeAnswering).toMatchObject(SEEDED_PROFILE_FACTS);
   const [openRequest] = await onboardingRecords.detailRequests();
   expect(openRequest.answeredAt).toBeNull();
 
@@ -434,6 +446,12 @@ test("a client answers only what her coach asked, keeps her answers when the sen
   expect(answered.answers["nutrition-lifestyle"]?.sleepHours).toBe(
     ANSWERED_SLEEP_HOURS,
   );
+  const rebuiltProfile = await onboardingRecords.clientProfile();
+  expect(rebuiltProfile).toMatchObject(SEEDED_PROFILE_FACTS);
+  expect(rebuiltProfile?.createdAt).toEqual(profileBeforeAnswering?.createdAt);
+  expect(rebuiltProfile?.updatedAt.getTime()).toBeGreaterThan(
+    profileBeforeAnswering?.updatedAt.getTime() ?? Number.POSITIVE_INFINITY,
+  );
 });
 
 test("the onboarding panel raises every safety signal and shows only the questions her answers reached", async ({
@@ -456,12 +474,25 @@ test("the onboarding panel raises every safety signal and shows only the questio
   await coachClient.open(flagged.clientId);
 
   // assert
-  await coachClient.expectProfile({ Phone: BOOKING_CONTACT.phone });
-  await coachClient.expectAssessmentCall({
-    "Booking notes": BOOKING_CONTACT.notes,
+  await coachClient.expectProfile({
+    Gender: "Female",
+    Country: "Romania",
+    Phone: BOOKING_CONTACT.phone,
+    ...SEEDED_FACT_READINGS,
   });
   await coachClient.expectPhoneLink(BOOKING_CONTACT.phone);
   await coachClient.expectSubscription({ Start: "Immediate start" });
+  await coachClient.expectReducedPrice("No");
+  await coachClient.expectAssessmentCall({
+    Name: flagged.fullName,
+    Email: flagged.email,
+    "Date of birth": "14 March 1994",
+    Gender: "Female",
+    Country: "Romania",
+    Phone: BOOKING_CONTACT.phone,
+    "Primary goal": "Build strength",
+    "Booking notes": BOOKING_CONTACT.notes,
+  });
   await coachClient.expectStatus("Awaiting review");
   await coachClient.expectScreeningWarning(
     "Safety screening needs a look: 2 yes answers",
@@ -501,7 +532,13 @@ test("the onboarding panel raises every safety signal and shows only the questio
   await coachClient.open(screenedManually.clientId);
 
   // assert
-  await coachClient.expectProfile({ Gender: "Male", Phone: "—" });
+  await coachClient.expectProfile({
+    Gender: "Male",
+    Country: "Romania",
+    Phone: "—",
+    ...SEEDED_FACT_READINGS,
+    "Current weight": "—",
+  });
   await coachClient.expectStatus("Awaiting review");
   await coachClient.expectScreeningWarning(
     "Safety screening: manual screening (age)",

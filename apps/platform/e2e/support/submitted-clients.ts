@@ -5,6 +5,7 @@ import {
 } from "@eli-coach-platform/domain/client-onboarding";
 import type pg from "pg";
 
+import { recordClientProfile } from "./client-profiles";
 import {
   daysBefore,
   inTransaction,
@@ -93,6 +94,16 @@ export const PROTOTYPE_DETAIL_REQUEST: DetailRequestSeed = {
 };
 
 export const CHRONIC_CONDITION_LIST = "Hypothyroidism, treated since 2019.";
+
+export const SEEDED_FACT_READINGS = {
+  Height: "165 cm",
+  "Starting weight": "66.1 kg",
+  "Current weight": "66.1 kg",
+  "Activity level": "Mostly sitting",
+  "Primary goal": "Lose fat",
+  "Dietary restrictions": "Lactose, mild",
+  "Client notes": "—",
+} as const;
 
 export const BOOKING_CONTACT: BookingContact = {
   phone: "+40712345678",
@@ -204,6 +215,7 @@ export async function insertSubmittedClientRecords(
     submittedAt,
     measurements: FIRST_MEASUREMENTS,
   });
+  await recordClientProfile(pool, client.clientId);
 
   return { ...client, submittedAt };
 }
@@ -232,6 +244,8 @@ export async function insertProfiledClientRecords(
       seed.bookingContact.notes,
     ]);
   }
+
+  await recordClientProfile(pool, client.clientId);
 
   return { ...client, submittedAt };
 }

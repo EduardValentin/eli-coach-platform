@@ -40,6 +40,25 @@ export type DetailRequestRecord = {
   answeredAt: Date | null;
 };
 
+export type ClientProfileRecord = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  dateOfBirth: string;
+  gender: string;
+  country: string;
+  phone: string | null;
+  heightCm: string | null;
+  startingWeightKg: string | null;
+  currentWeightKg: string | null;
+  activityLevel: string | null;
+  primaryGoal: string | null;
+  dietaryRestrictions: string;
+  clientNotes: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
 const CLIENT_ID_BY_EMAIL = "select id from app.clients where email = $1";
 
 const DRAFT = `
@@ -105,6 +124,28 @@ const DETAIL_REQUESTS = `
   order by asked_at
 `;
 
+const CLIENT_PROFILE = `
+  select
+    first_name as "firstName",
+    last_name as "lastName",
+    email,
+    to_char(date_of_birth, 'YYYY-MM-DD') as "dateOfBirth",
+    gender,
+    country,
+    phone,
+    height_cm as "heightCm",
+    starting_weight_kg as "startingWeightKg",
+    current_weight_kg as "currentWeightKg",
+    activity_level as "activityLevel",
+    primary_goal as "primaryGoal",
+    dietary_restrictions as "dietaryRestrictions",
+    client_notes as "clientNotes",
+    created_at as "createdAt",
+    updated_at as "updatedAt"
+  from app.client_profiles
+  where client_id = (${CLIENT_ID_BY_EMAIL})
+`;
+
 export class OnboardingRecords {
   constructor(
     private readonly pool: pg.Pool,
@@ -149,6 +190,12 @@ export class OnboardingRecords {
 
   async reviewStamps(): Promise<ReviewStampsRecord | null> {
     const [row] = await this.rows<ReviewStampsRecord>(REVIEW_STAMPS);
+
+    return row ?? null;
+  }
+
+  async clientProfile(): Promise<ClientProfileRecord | null> {
+    const [row] = await this.rows<ClientProfileRecord>(CLIENT_PROFILE);
 
     return row ?? null;
   }

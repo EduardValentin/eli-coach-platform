@@ -134,6 +134,7 @@ function workStartsOnLine(paidAt: Date): string {
 test("a female client completes her onboarding in five parts", async ({
   clientDashboard,
   clientOnboarding,
+  onboardingRecords,
   page,
   provisionPaidClient,
   publicNav,
@@ -322,6 +323,16 @@ test("a female client completes her onboarding in five parts", async ({
     "Sent to your coach",
     workStartsOnLine(client.paidAt),
   );
+  expect(await onboardingRecords.clientProfile()).toMatchObject({
+    firstName: client.firstName,
+    email: client.email,
+    gender: "female",
+    country: "RO",
+    activityLevel: "Active",
+    primaryGoal: "Lose fat",
+    dietaryRestrictions: "None",
+    clientNotes: null,
+  });
 
   // act
   await page.goto("/client/onboarding");
@@ -611,6 +622,7 @@ test("a client who measures in pounds and inches sends her answers once, even af
   await expect(page).toHaveURL(/\/client\/onboarding$/);
   expect(await onboardingRecords.submissions()).toHaveLength(0);
   expect(await onboardingRecords.onboardingSubmittedAt()).toBeNull();
+  expect(await onboardingRecords.clientProfile()).toBeNull();
   expect(await onboardingRecords.draft()).not.toBeNull();
 
   // act
@@ -643,6 +655,21 @@ test("a client who measures in pounds and inches sends her answers once, even af
   expect(await onboardingRecords.onboardingSubmittedAt()).toEqual(
     submission.submittedAt,
   );
+  expect(await onboardingRecords.clientProfile()).toMatchObject({
+    firstName: client.firstName,
+    email: client.email,
+    dateOfBirth: "1994-03-14",
+    gender: "male",
+    country: "RO",
+    phone: null,
+    heightCm: "178.0",
+    startingWeightKg: "68.04",
+    currentWeightKg: "68.04",
+    activityLevel: "Active",
+    primaryGoal: "Lose fat",
+    dietaryRestrictions: "None",
+    clientNotes: null,
+  });
   expect(await onboardingRecords.draft()).toBeNull();
 
   // act

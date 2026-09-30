@@ -4,6 +4,7 @@ export type ClientPronouns = {
   possessive: string;
   possessiveCapitalised: string;
   subjectHas: string;
+  subjectSends: string;
 };
 
 const CLIENT_PRONOUNS: Readonly<Record<VisitorGender, ClientPronouns>> = {
@@ -11,16 +12,19 @@ const CLIENT_PRONOUNS: Readonly<Record<VisitorGender, ClientPronouns>> = {
     possessive: "her",
     possessiveCapitalised: "Her",
     subjectHas: "She has",
+    subjectSends: "she sends",
   },
   male: {
     possessive: "his",
     possessiveCapitalised: "His",
     subjectHas: "He has",
+    subjectSends: "he sends",
   },
   prefer_not_to_say: {
     possessive: "their",
     possessiveCapitalised: "Their",
     subjectHas: "They have",
+    subjectSends: "they send",
   },
 };
 
