@@ -37,6 +37,7 @@ function journeyAt(
     bookingNotes: null,
     programReadyAt: null,
     measurements: [],
+    progressPhotosConsentedAt: null,
     subscription,
   };
 }

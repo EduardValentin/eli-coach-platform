@@ -35,6 +35,16 @@ import {
   ONBOARDING_CONNECTIONS,
   type OnboardingConnection,
 } from '../services/onboardingService';
+import {
+  PHOTO_PROCESSING_OUTCOMES,
+  type PhotoProcessing,
+} from '../services/measurementService';
+import {
+  PROTOTYPE_LIFE_STAGES,
+  PROTOTYPE_MEASUREMENTS_DUE,
+  type PrototypeLifeStage,
+  type PrototypeMeasurementsDue,
+} from '../services/clientJourneySamples';
 import type {
   SubscriptionStartPath,
   SubscriptionStatus,
@@ -142,6 +152,26 @@ function parseJourneyAgeBandControl(value: string): JourneyAgeBand {
   const band = JOURNEY_AGE_BANDS.find((candidate) => candidate === value);
 
   return band ?? 'adult';
+}
+
+function parseMeasurementsDueControl(value: string): PrototypeMeasurementsDue {
+  const due = PROTOTYPE_MEASUREMENTS_DUE.find((candidate) => candidate === value);
+
+  return due ?? 'none';
+}
+
+function parseLifeStageControl(value: string): PrototypeLifeStage {
+  const lifeStage = PROTOTYPE_LIFE_STAGES.find((candidate) => candidate === value);
+
+  return lifeStage ?? 'none';
+}
+
+function parsePhotoProcessingControl(value: string): PhotoProcessing {
+  const processing = PHOTO_PROCESSING_OUTCOMES.find(
+    (candidate) => candidate === value,
+  );
+
+  return processing ?? 'works';
 }
 
 function parseOnboardingConnectionControl(value: string): OnboardingConnection {
@@ -1037,6 +1067,94 @@ export function DevToggle() {
                     <SelectContent className={SELECT_CONTENT_CLASS}>
                       <SelectItem value="working">Working</SelectItem>
                       <SelectItem value="lost">Lost</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="dev-measurements-due"
+                    className={DEV_LABEL_CLASS}
+                  >
+                    Measurements due
+                  </Label>
+                  <Select
+                    value={appState.journeyMeasurementsDue}
+                    onValueChange={(value) =>
+                      setAppState({
+                        journeyMeasurementsDue:
+                          parseMeasurementsDueControl(value),
+                      })
+                    }
+                  >
+                    <SelectTrigger
+                      id="dev-measurements-due"
+                      className="w-full"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="none">Nothing due</SelectItem>
+                      <SelectItem value="weigh-in">Weekly weigh-in</SelectItem>
+                      <SelectItem value="measurements">
+                        Measurements and photos
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="dev-journey-life-stage"
+                    className={DEV_LABEL_CLASS}
+                  >
+                    Life stage
+                  </Label>
+                  <Select
+                    value={appState.journeyLifeStage}
+                    onValueChange={(value) =>
+                      setAppState({
+                        journeyLifeStage: parseLifeStageControl(value),
+                      })
+                    }
+                  >
+                    <SelectTrigger
+                      id="dev-journey-life-stage"
+                      className="w-full"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="none">None of these</SelectItem>
+                      <SelectItem value="pregnant">Pregnant</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="dev-photo-processing"
+                    className={DEV_LABEL_CLASS}
+                  >
+                    Photo processing
+                  </Label>
+                  <Select
+                    value={appState.photoProcessing}
+                    onValueChange={(value) =>
+                      setAppState({
+                        photoProcessing: parsePhotoProcessingControl(value),
+                      })
+                    }
+                  >
+                    <SelectTrigger
+                      id="dev-photo-processing"
+                      className="w-full"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="works">Works</SelectItem>
+                      <SelectItem value="refuses">Refuses every photo</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

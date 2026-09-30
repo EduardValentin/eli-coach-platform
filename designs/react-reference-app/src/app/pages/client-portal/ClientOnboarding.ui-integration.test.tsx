@@ -65,6 +65,17 @@ function StageProbe() {
   return <span data-testid="stage">{demoJourney.stage}</span>;
 }
 
+function PhotoConsentProbe() {
+  const { demoJourney } = useClientJourneys();
+  const consentedAt = demoJourney.progressPhotosConsentedAt;
+
+  return (
+    <span data-testid="photo-consent">
+      {consentedAt ? 'agreed to photos' : 'no photo consent'}
+    </span>
+  );
+}
+
 function ConnectionRestorer() {
   const { setAppState } = useAppState();
 
@@ -90,6 +101,7 @@ function renderOnboarding(devParams: string) {
             <AssessmentCallProvider>
               <ClientJourneyProvider>
                 <StageProbe />
+                <PhotoConsentProbe />
                 <ConnectionRestorer />
                 <Routes>
                   <Route
@@ -752,6 +764,32 @@ describe('the onboarding', () => {
     ).toBeVisible();
     await waitFor(() =>
       expect(screen.getByTestId('stage')).toHaveTextContent('submitted'),
+    );
+  });
+
+  it('carries the photo consent she gave in the onboarding onto her profile', async () => {
+    // arrange
+    await saveDraft(
+      DEMO_JOURNEY_CALL_ID,
+      draftAt(4, { ...DISCLAIMER_WITHHELD, progressPhotos: true }),
+      'working',
+    );
+    renderOnboarding('?session=client&jstage=onboarding');
+    await userEvent.click(screen.getByRole('checkbox', { name: DISCLAIMER }));
+
+    // act
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Send to my coach' }),
+    );
+
+    // assert
+    await screen.findByText('portal home', undefined, {
+      timeout: SERVICE_TIMEOUT,
+    });
+    await waitFor(() =>
+      expect(screen.getByTestId('photo-consent')).toHaveTextContent(
+        'agreed to photos',
+      ),
     );
   });
 

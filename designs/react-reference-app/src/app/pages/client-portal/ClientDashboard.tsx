@@ -9,6 +9,7 @@ import { isBeforeStage } from "../../domain/journey";
 import { useNavigate, useSearchParams } from "react-router";
 import { PortalPageHeader } from "../../components/PortalPageHeader";
 import { ProgramStatusCard } from "../../components/client-portal/ProgramStatusCard";
+import { MeasurementsNudge } from "../../components/client-portal/MeasurementsNudge";
 import { ReviewCallScheduler } from "../../components/client-portal/ReviewCallScheduler";
 import { ClientWidget } from "../../components/client-portal/ClientWidget";
 import { GoalWidget } from "../../components/GoalWidget";
@@ -133,6 +134,7 @@ export function ClientDashboard() {
       </div>
 
       <ProgramStatusCard />
+      <MeasurementsNudge />
 
       <div className="grid grid-cols-1 gap-6 mb-8 sm:grid-cols-2 lg:grid-cols-3">
         <ProgressWidget

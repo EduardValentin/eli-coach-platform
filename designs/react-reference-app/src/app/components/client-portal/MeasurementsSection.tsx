@@ -1,36 +1,45 @@
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { MeasurementsTable } from '../MeasurementsTable';
-import { statedHeightCm } from '../../domain/bodyMetrics';
+import { useAppState } from '../../context/AppContext';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
 import {
   measurementAnswersFrom,
   measurementEntryFrom,
 } from '../../domain/measurements';
-import type { MeasurementEntry } from '../../domain/journey';
+import {
+  NO_PROGRESS_PHOTOS,
+  type MeasurementEntry,
+  type ProgressPhotoSet,
+  type ProgressPhotoView,
+} from '../../domain/journey';
 import { MEASUREMENT_FIELDS } from '../../domain/onboardingSchema';
-import { formatBodyWeight, formatCircumference } from '../../utils/units';
+import { recordMeasurements } from '../../services/measurementService';
 import { Button } from '../ui/button';
 import { Form } from '../ui/form';
 import { ResponsiveSheetDialog } from '../workout/ResponsiveSheetDialog';
 import { OnboardingFieldControl } from './onboarding/OnboardingFieldControl';
-import {
-  EMPTY_PROGRESS_PHOTOS,
-  ProgressPhotoBlock,
-  type ProgressPhotos,
-} from './onboarding/ProgressPhotoBlock';
+import { ProgressPhotoBlock } from './onboarding/ProgressPhotoBlock';
 import {
   toAnswers,
   toFormValues,
   type OnboardingValues,
 } from './onboarding/onboardingValues';
-import { useMeasureUnits, type MeasureUnits } from './measureUnits';
+import { useMeasureUnits } from './measureUnits';
+import { PhotoViewDialog } from './PhotoViewDialog';
 
 const SHEET_TITLE = 'Add measurements';
 
 const SHEET_DESCRIPTION =
   'Same time of day, same tape, same spots — that is what keeps them comparable.';
+
+const SAVED_TOAST = 'Measurements saved.';
+
+function refusedPhotoToast(view: ProgressPhotoView): string {
+  return `The ${view} photo could not be processed, so it was not saved.`;
+}
 
 function AddMeasurementsForm({
   latest,
@@ -40,9 +49,14 @@ function AddMeasurementsForm({
   onClose: () => void;
 }) {
   const units = useMeasureUnits();
-  const { demoJourney, addMeasurements } = useClientJourneys();
-  const [photos, setPhotos] = useState<ProgressPhotos>(EMPTY_PROGRESS_PHOTOS);
+  const { appState } = useAppState();
+  const { demoJourney, addMeasurements, recordProgressPhotoConsent } =
+    useClientJourneys();
+  const [photos, setPhotos] = useState<ProgressPhotoSet>(NO_PROGRESS_PHOTOS);
   const [photoConsent, setPhotoConsent] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const consentedAt = demoJourney.progressPhotosConsentedAt;
+  const mayKeepPhotos = consentedAt !== null || photoConsent;
   const form = useForm<OnboardingValues>({
     defaultValues: toFormValues(
       MEASUREMENT_FIELDS,
@@ -51,15 +65,23 @@ function AddMeasurementsForm({
     ),
   });
 
-  const save = form.handleSubmit((values) => {
+  const save = form.handleSubmit(async (values) => {
     const entry = measurementEntryFrom(
       toAnswers(MEASUREMENT_FIELDS, values, units),
       new Date(),
+      mayKeepPhotos ? photos : NO_PROGRESS_PHOTOS,
     );
     if (!entry) return;
 
-    addMeasurements(demoJourney.callId, entry);
+    setSaving(true);
+    const recorded = await recordMeasurements(entry, appState.photoProcessing);
+    if (photoConsent) {
+      recordProgressPhotoConsent(demoJourney.callId, recorded.entry.recordedAt);
+    }
+    addMeasurements(demoJourney.callId, recorded.entry);
     onClose();
+    toast.success(SAVED_TOAST);
+    recorded.refusedViews.forEach((view) => toast.error(refusedPhotoToast(view)));
   });
 
   return (
@@ -86,6 +108,7 @@ function AddMeasurementsForm({
 
             <ProgressPhotoBlock
               consented={photoConsent}
+              consentedAt={consentedAt}
               onConsentChange={setPhotoConsent}
               onPhotosChange={setPhotos}
               photos={photos}
@@ -93,6 +116,7 @@ function AddMeasurementsForm({
 
             <div className="flex flex-col-reverse gap-3 sm:flex-row-reverse">
               <Button
+                disabled={saving}
                 type="submit"
                 variant="primary"
                 size="md"
@@ -117,24 +141,26 @@ function AddMeasurementsForm({
 }
 
 export function MeasurementsSection() {
-  const { demoJourney } = useClientJourneys();
+  const { demoJourney, removeMeasurementPhoto } = useClientJourneys();
   const units = useMeasureUnits();
   const [adding, setAdding] = useState(false);
+  const [viewingEntryId, setViewingEntryId] = useState<string | null>(null);
 
   const history = [...demoJourney.measurements].sort(
     (first, second) => second.recordedAt.getTime() - first.recordedAt.getTime(),
   );
   const latest = history[0];
+  const viewing = history.find((entry) => entry.id === viewingEntryId);
 
   return (
     <MeasurementsTable
       measurements={demoJourney.measurements}
-      heightCm={statedHeightCm(demoJourney.onboarding.answers)}
       units={units}
       headingId="measurements-heading"
       emptyMessage="Nothing recorded yet. Your first set goes in with your answers."
       className="mt-6 lg:mt-8"
       perspective="client"
+      onViewPhotos={(entry) => setViewingEntryId(entry.id)}
       action={
         <Button onClick={() => setAdding(true)} variant="outline" size="sm">
           <Plus aria-hidden="true" size={16} />
@@ -155,6 +181,19 @@ export function MeasurementsSection() {
       >
         <AddMeasurementsForm latest={latest} onClose={() => setAdding(false)} />
       </ResponsiveSheetDialog>
+
+      <PhotoViewDialog
+        entry={viewing}
+        onClose={() => setViewingEntryId(null)}
+        viewer={{
+          role: 'client',
+          onRemovePhoto: (view) => {
+            if (viewing) {
+              removeMeasurementPhoto(demoJourney.callId, viewing.id, view);
+            }
+          },
+        }}
+      />
     </MeasurementsTable>
   );
 }

@@ -76,10 +76,12 @@ export function ClientProfile() {
 
   return (
     <div className="w-full max-w-4xl mx-auto">
-      <PortalPageHeader
-        title="Your Profile"
-        subtitle="Your coach keeps this up to date. Mention any changes at your next check-in."
-      />
+      <div data-parity-root="ClientProfileHeader">
+        <PortalPageHeader
+          title="Your Profile"
+          subtitle="Your coach keeps this up to date. Mention any changes at your next check-in."
+        />
+      </div>
 
       <section
         aria-labelledby="profile-identity-heading"

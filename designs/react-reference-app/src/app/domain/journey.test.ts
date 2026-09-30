@@ -33,6 +33,7 @@ function journeyAt(stage: JourneyStage): ClientJourney {
     bookingNotes: null,
     programReadyAt: null,
     measurements: [],
+    progressPhotosConsentedAt: null,
   };
 }
 

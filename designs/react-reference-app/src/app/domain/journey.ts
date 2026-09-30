@@ -133,14 +133,34 @@ export type JourneyReview = {
   requests: DetailRequest[];
 };
 
+export type ProgressPhotoView = 'front' | 'side' | 'back';
+
+export const PROGRESS_PHOTO_VIEWS: readonly ProgressPhotoView[] = [
+  'front',
+  'side',
+  'back',
+];
+
+export type ProgressPhoto = { url: string };
+
+export type ProgressPhotoSet = Partial<Record<ProgressPhotoView, ProgressPhoto>>;
+
+export const NO_PROGRESS_PHOTOS: ProgressPhotoSet = {};
+
 export type MeasurementEntry = {
+  id: string;
   recordedAt: Date;
   weightKg: number;
   waistCm: number;
   hipsCm?: number;
   thighCm?: number;
   armCm?: number;
+  photos: ProgressPhotoSet;
 };
+
+export function hasProgressPhotos(entry: MeasurementEntry): boolean {
+  return Object.keys(entry.photos).length > 0;
+}
 
 export type ReviewCall = {
   startsAt: Date;
@@ -164,6 +184,7 @@ export type ClientJourney = {
   programReadyAt: Date | null;
   reviewCall?: ReviewCall;
   measurements: MeasurementEntry[];
+  progressPhotosConsentedAt: Date | null;
   subscription?: CoachingSubscription;
 };
 

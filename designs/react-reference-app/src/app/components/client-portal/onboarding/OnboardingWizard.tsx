@@ -18,11 +18,13 @@ import {
   needsManualScreening,
   screeningOutcome,
 } from '../../../domain/safetyScreening';
-import type {
-  JourneyOnboarding,
-  OnboardingConsents,
-  OnboardingDraft,
-  OnboardingFormAnswers,
+import {
+  NO_PROGRESS_PHOTOS,
+  type JourneyOnboarding,
+  type OnboardingConsents,
+  type OnboardingDraft,
+  type OnboardingFormAnswers,
+  type ProgressPhotoSet,
 } from '../../../domain/journey';
 import {
   forgetDraft,
@@ -34,11 +36,7 @@ import { Stepper } from '../../ui/stepper';
 import { MeasurementSystemField } from './MeasurementSystemField';
 import { OnboardingConsent, type ConsentAgreement } from './OnboardingConsent';
 import { OnboardingFormCard } from './OnboardingFormCard';
-import {
-  EMPTY_PROGRESS_PHOTOS,
-  ProgressPhotoBlock,
-  type ProgressPhotos,
-} from './ProgressPhotoBlock';
+import { ProgressPhotoBlock } from './ProgressPhotoBlock';
 import { useDraftAutosave, type SaveState } from './useDraftAutosave';
 
 const SUBMIT_PROBLEM =
@@ -112,7 +110,7 @@ export function OnboardingWizard() {
   const [draft, setDraft] = useState<OnboardingDraft>(
     () => savedDraft ?? draftOf(demoJourney.onboarding),
   );
-  const [photos, setPhotos] = useState<ProgressPhotos>(EMPTY_PROGRESS_PHOTOS);
+  const [photos, setPhotos] = useState<ProgressPhotoSet>(NO_PROGRESS_PHOTOS);
   const [problem, setProblem] = useState<string | null>(null);
   const [consentProblem, setConsentProblem] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
@@ -337,6 +335,7 @@ export function OnboardingWizard() {
               <>
                 <ProgressPhotoBlock
                   consented={draft.consents.progressPhotos}
+                  consentedAt={null}
                   onConsentChange={(consented) =>
                     persist({
                       ...draftRef.current,

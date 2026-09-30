@@ -41,7 +41,7 @@ import { JourneyClientDetails } from '../../components/coach-portal/JourneyClien
 import { ClientNotFound } from '../../components/coach-portal/ClientNotFound';
 import { OnboardingPanel } from '../../components/coach-portal/OnboardingPanel';
 import { SubscriptionSummary } from '../../components/SubscriptionSummary';
-import { MeasurementsTable } from '../../components/MeasurementsTable';
+import { JourneyMeasurements } from '../../components/coach-portal/JourneyMeasurements';
 import { GoalWidget } from '../../components/GoalWidget';
 import { CyclePhaseWidget } from '../../components/CyclePhaseWidget';
 import { ProfileDetailsWidget } from '../../components/ProfileDetailsWidget';
@@ -50,10 +50,7 @@ import { PortalWidget } from '../../components/PortalWidget';
 import { Reading } from '../../components/Reading';
 import { useMeasureUnits } from '../../components/client-portal/measureUnits';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
-import {
-  journeyCallIdForClient,
-  noMeasurementsYetLine,
-} from '../../utils/journeyLabels';
+import { journeyCallIdForClient } from '../../utils/journeyLabels';
 import { isBeforeStage } from '../../domain/journey';
 import { useNotifications } from '../../context/NotificationContext';
 import { useMessaging } from '../../context/MessagingContext';
@@ -318,13 +315,10 @@ function RosterClientDetails() {
               className="mb-8"
             />
           )}
-          <MeasurementsTable
-            measurements={journey.measurements}
+          <JourneyMeasurements
+            journey={journey}
             heightCm={heightCm}
             units={measureUnits}
-            headingId="measurements-panel-heading"
-            emptyMessage={noMeasurementsYetLine(journey.identity.gender)}
-            className="mb-8"
           />
         </>
       )}

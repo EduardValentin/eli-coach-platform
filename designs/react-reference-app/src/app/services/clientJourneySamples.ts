@@ -13,7 +13,12 @@ import {
   type JourneyGender,
   type JourneyStage,
   type MeasurementEntry,
+  NO_PROGRESS_PHOTOS,
 } from '../domain/journey';
+import {
+  MEASUREMENTS_CADENCE_DAYS,
+  WEIGH_IN_CADENCE_DAYS,
+} from '../domain/measurementSchedule';
 import { profileFromOnboarding } from '../domain/clientProfile';
 import {
   periodEnd,
@@ -35,6 +40,34 @@ import type { PrototypeMode } from '../context/AppContext';
 
 export const SEEDED_BUNDLE = 3;
 
+export type PrototypeMeasurementsDue = 'none' | 'weigh-in' | 'measurements';
+
+export const PROTOTYPE_MEASUREMENTS_DUE: readonly PrototypeMeasurementsDue[] = [
+  'none',
+  'weigh-in',
+  'measurements',
+];
+
+export type PrototypeLifeStage = 'none' | 'pregnant';
+
+export const PROTOTYPE_LIFE_STAGES: readonly PrototypeLifeStage[] = [
+  'none',
+  'pregnant',
+];
+
+const LIFE_STAGE_ANSWERS: Record<PrototypeLifeStage, string[]> = {
+  none: ['None of these'],
+  pregnant: ['Pregnant'],
+};
+
+const SUBMITTED_DAYS_AGO = 3;
+
+const LATEST_ENTRY_AGE_DAYS: Record<PrototypeMeasurementsDue, number> = {
+  none: SUBMITTED_DAYS_AGO,
+  'weigh-in': WEIGH_IN_CADENCE_DAYS + 1,
+  measurements: MEASUREMENTS_CADENCE_DAYS + 1,
+};
+
 const SEEDED_CALL_HOUR = 15;
 
 export type JourneySeed = {
@@ -47,6 +80,8 @@ export type JourneySeed = {
   bookingNotes: string | null;
   invitationStanding: PrototypeInvitationStanding;
   prototypeMode: PrototypeMode;
+  measurementsDue: PrototypeMeasurementsDue;
+  lifeStage: PrototypeLifeStage;
   now: Date;
 };
 
@@ -92,7 +127,6 @@ const SEEDED_CYCLE_ANSWERS = {
   cycleLength: 29,
   lastPeriodStart: '2026-09-08',
   hormonalContraception: 'None',
-  lifeStage: ['None of these'],
   perimenopauseOrMenopause: 'No',
   gynaecologicalCondition: 'No',
   recurringSymptoms: ['Fatigue', 'Appetite changes'],
@@ -166,14 +200,16 @@ export function identityFromBooking(
   };
 }
 
-const MEASUREMENT_HISTORY: readonly Omit<MeasurementEntry, 'recordedAt'>[] = [
+type MeasurementReadings = Omit<MeasurementEntry, 'id' | 'recordedAt' | 'photos'>;
+
+const MEASUREMENT_HISTORY: readonly MeasurementReadings[] = [
   { weightKg: 67.4, waistCm: 76.5, hipsCm: 99, thighCm: 58, armCm: 28 },
   { weightKg: 66.8, waistCm: 75.5, hipsCm: 98.5 },
   { weightKg: 66.1, waistCm: 74, hipsCm: 98, thighCm: 57, armCm: 28 },
 ];
 
 function seedMeasurements(
-  submittedAt: Date,
+  latestRecordedAt: Date,
   prototypeMode: PrototypeMode,
 ): MeasurementEntry[] {
   const history =
@@ -183,15 +219,20 @@ function seedMeasurements(
 
   return history.map((readings, index) => ({
     ...readings,
-    recordedAt: subDays(submittedAt, (history.length - 1 - index) * 7),
+    id: `seed-entry-${index}`,
+    recordedAt: subDays(
+      latestRecordedAt,
+      (history.length - 1 - index) * WEIGH_IN_CADENCE_DAYS,
+    ),
+    photos: NO_PROGRESS_PHOTOS,
   }));
 }
 
 function seedOnboarding(
-  stage: JourneyStage,
-  identity: JourneyIdentity,
+  seed: JourneySeed,
   submittedAt: Date,
 ): JourneyOnboarding {
+  const { stage, identity, lifeStage } = seed;
   const empty = emptyOnboarding();
 
   if (isBeforeStage(stage, 'onboarding')) return empty;
@@ -218,7 +259,10 @@ function seedOnboarding(
     answers: {
       'goal-availability': SEEDED_GOAL_ANSWERS,
       'safety-screening': SEEDED_SAFETY_ANSWERS,
-      'cycle-context': identity.gender === 'female' ? SEEDED_CYCLE_ANSWERS : {},
+      'cycle-context':
+        identity.gender === 'female'
+          ? { ...SEEDED_CYCLE_ANSWERS, lifeStage: LIFE_STAGE_ANSWERS[lifeStage] }
+          : {},
       'nutrition-lifestyle': SEEDED_LIFESTYLE_ANSWERS,
       measurements: SEEDED_MEASUREMENT_ANSWERS,
     },
@@ -315,6 +359,7 @@ export function seedJourney(seed: JourneySeed): ClientJourney {
     pricing,
     bookingNotes,
     prototypeMode,
+    measurementsDue,
     now,
   } = seed;
   const reached = (target: JourneyStage) => !isBeforeStage(stage, target);
@@ -322,11 +367,14 @@ export function seedJourney(seed: JourneySeed): ClientJourney {
   const paidAt = seededPaidAt(seed);
   const paymentLinkSentAt = subDays(paidAt, 1);
   const invitedAt = paidAt;
-  const submittedAt = subDays(now, 3);
+  const submittedAt = subDays(now, SUBMITTED_DAYS_AGO);
   const programReadyAt = subDays(now, 1);
-  const onboarding = seedOnboarding(stage, identity, submittedAt);
+  const onboarding = seedOnboarding(seed, submittedAt);
   const measurements = reached('submitted')
-    ? seedMeasurements(submittedAt, prototypeMode)
+    ? seedMeasurements(
+        subDays(now, LATEST_ENTRY_AGE_DAYS[measurementsDue]),
+        prototypeMode,
+      )
     : [];
 
   return {
@@ -364,6 +412,7 @@ export function seedJourney(seed: JourneySeed): ClientJourney {
       ? { startsAt: addDays(now, 1), scheduledAt: subDays(now, 1) }
       : undefined,
     measurements,
+    progressPhotosConsentedAt: null,
     subscription: reached('invited')
       ? seedSubscription({
           purchasedAt: paidAt,
@@ -396,5 +445,6 @@ export function heldJourney(
     review: { requests: [] },
     programReadyAt: null,
     measurements: [],
+    progressPhotosConsentedAt: null,
   };
 }

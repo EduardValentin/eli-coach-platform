@@ -1,8 +1,29 @@
-import type {
-  MeasurementEntry,
-  OnboardingFormAnswers,
-  OnboardingFormId,
+import {
+  NO_PROGRESS_PHOTOS,
+  type MeasurementEntry,
+  type OnboardingFormAnswers,
+  type OnboardingFormId,
+  type ProgressPhotoSet,
+  type ProgressPhotoView,
 } from './journey';
+import { isMeasurementDue, measurementDueDates } from './measurementSchedule';
+
+export type MeasurementDueLine = 'weigh-in' | 'measurements';
+
+export const PROGRESS_PHOTO_TYPES: readonly string[] = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+];
+
+export const PROGRESS_PHOTO_MAX_BYTES = 10 * 1024 * 1024;
+
+export function isAcceptedProgressPhoto(file: Pick<File, 'type' | 'size'>): boolean {
+  return (
+    PROGRESS_PHOTO_TYPES.includes(file.type) &&
+    file.size <= PROGRESS_PHOTO_MAX_BYTES
+  );
+}
 
 export const MEASUREMENT_FIELD_IDS = {
   weight: 'weight',
@@ -21,6 +42,7 @@ function reading(answers: OnboardingFormAnswers, key: string): number | undefine
 export function measurementEntryFrom(
   answers: OnboardingFormAnswers,
   recordedAt: Date,
+  photos: ProgressPhotoSet,
 ): MeasurementEntry | null {
   const weightKg = reading(answers, MEASUREMENT_FIELD_IDS.weight);
   const waistCm = reading(answers, MEASUREMENT_FIELD_IDS.waist);
@@ -28,12 +50,14 @@ export function measurementEntryFrom(
   if (weightKg === undefined || waistCm === undefined) return null;
 
   return {
+    id: crypto.randomUUID(),
     recordedAt,
     weightKg,
     waistCm,
     hipsCm: reading(answers, MEASUREMENT_FIELD_IDS.hips),
     thighCm: reading(answers, MEASUREMENT_FIELD_IDS.thigh),
     armCm: reading(answers, MEASUREMENT_FIELD_IDS.arm),
+    photos,
   };
 }
 
@@ -47,6 +71,7 @@ export function submittedMeasurementEntry(
       [MEASUREMENT_FIELD_IDS.weight]: answers['goal-availability'].weight,
     },
     recordedAt,
+    NO_PROGRESS_PHOTOS,
   );
 }
 
@@ -65,4 +90,26 @@ export function measurementAnswersFrom(
   if (entry.armCm !== undefined) answers[MEASUREMENT_FIELD_IDS.arm] = entry.armCm;
 
   return answers;
+}
+
+export function withoutProgressPhoto(
+  entry: MeasurementEntry,
+  view: ProgressPhotoView,
+): MeasurementEntry {
+  const remaining = { ...entry.photos };
+  delete remaining[view];
+
+  return { ...entry, photos: remaining };
+}
+
+export function measurementDueLine(
+  entries: readonly MeasurementEntry[],
+  now: Date,
+): MeasurementDueLine | null {
+  const due = measurementDueDates(entries);
+  if (!due) return null;
+  if (isMeasurementDue(due.measurements, now)) return 'measurements';
+  if (isMeasurementDue(due.weighIn, now)) return 'weigh-in';
+
+  return null;
 }

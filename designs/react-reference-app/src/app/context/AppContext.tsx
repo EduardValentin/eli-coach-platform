@@ -26,6 +26,16 @@ import {
   type OnboardingConnection,
 } from '../services/onboardingService';
 import {
+  PHOTO_PROCESSING_OUTCOMES,
+  type PhotoProcessing,
+} from '../services/measurementService';
+import {
+  PROTOTYPE_LIFE_STAGES,
+  PROTOTYPE_MEASUREMENTS_DUE,
+  type PrototypeLifeStage,
+  type PrototypeMeasurementsDue,
+} from '../services/clientJourneySamples';
+import {
   JOURNEY_GENDERS,
   type JourneyGender,
   type JourneyStage,
@@ -84,6 +94,9 @@ type AppState = {
   journeyConnection: OnboardingConnection;
   journeyReducedPricing: boolean;
   journeyInvitation: PrototypeInvitationStanding;
+  journeyMeasurementsDue: PrototypeMeasurementsDue;
+  journeyLifeStage: PrototypeLifeStage;
+  photoProcessing: PhotoProcessing;
   invitationResendOutcome: PrototypeInvitationResendOutcome;
   clientsRoster: PrototypeClientsRoster;
   paymentLinkOutcome: PrototypePaymentLinkOutcome;
@@ -120,6 +133,9 @@ const defaultState: AppState = {
   journeyConnection: 'working',
   journeyReducedPricing: false,
   journeyInvitation: 'sent',
+  journeyMeasurementsDue: 'none',
+  journeyLifeStage: 'none',
+  photoProcessing: 'works',
   invitationResendOutcome: 'sent',
   clientsRoster: 'seeded',
   paymentLinkOutcome: 'sent',
@@ -314,6 +330,30 @@ function parseDevParamsFromURL(): AppState {
   ) {
     state.journeyInvitation = journeyInvitation as PrototypeInvitationStanding;
   }
+  const journeyMeasurementsDue = params.get('jdue');
+  if (
+    journeyMeasurementsDue &&
+    (PROTOTYPE_MEASUREMENTS_DUE as readonly string[]).includes(
+      journeyMeasurementsDue,
+    )
+  ) {
+    state.journeyMeasurementsDue =
+      journeyMeasurementsDue as PrototypeMeasurementsDue;
+  }
+  const journeyLifeStage = params.get('jlife');
+  if (
+    journeyLifeStage &&
+    (PROTOTYPE_LIFE_STAGES as readonly string[]).includes(journeyLifeStage)
+  ) {
+    state.journeyLifeStage = journeyLifeStage as PrototypeLifeStage;
+  }
+  const photoProcessing = params.get('jphoto');
+  if (
+    photoProcessing &&
+    (PHOTO_PROCESSING_OUTCOMES as readonly string[]).includes(photoProcessing)
+  ) {
+    state.photoProcessing = photoProcessing as PhotoProcessing;
+  }
   const invitationResendOutcome = params.get('jresend');
   if (
     invitationResendOutcome &&
@@ -393,6 +433,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     url.searchParams.delete('jconn');
     url.searchParams.delete('jreduced');
     url.searchParams.delete('jinv');
+    url.searchParams.delete('jdue');
+    url.searchParams.delete('jlife');
+    url.searchParams.delete('jphoto');
     url.searchParams.delete('jresend');
     url.searchParams.delete('jroster');
     url.searchParams.delete('paylink');
@@ -464,6 +507,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (appState.journeyReducedPricing) url.searchParams.set('jreduced', '1');
     if (appState.journeyInvitation !== defaultState.journeyInvitation) {
       url.searchParams.set('jinv', appState.journeyInvitation);
+    }
+    if (
+      appState.journeyMeasurementsDue !== defaultState.journeyMeasurementsDue
+    ) {
+      url.searchParams.set('jdue', appState.journeyMeasurementsDue);
+    }
+    if (appState.journeyLifeStage !== defaultState.journeyLifeStage) {
+      url.searchParams.set('jlife', appState.journeyLifeStage);
+    }
+    if (appState.photoProcessing !== defaultState.photoProcessing) {
+      url.searchParams.set('jphoto', appState.photoProcessing);
     }
     if (
       appState.invitationResendOutcome !== defaultState.invitationResendOutcome

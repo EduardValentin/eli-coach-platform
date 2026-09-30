@@ -1,19 +1,21 @@
-import { useId, type ChangeEvent } from 'react';
+import { useId, useState, type ChangeEvent } from 'react';
+import { format } from 'date-fns';
 import { Image as ImageIcon, X } from 'lucide-react';
+import {
+  PROGRESS_PHOTO_VIEWS,
+  type ProgressPhoto,
+  type ProgressPhotoSet,
+  type ProgressPhotoView,
+} from '../../../domain/journey';
+import {
+  isAcceptedProgressPhoto,
+  PROGRESS_PHOTO_TYPES,
+} from '../../../domain/measurements';
 import { PROGRESS_PHOTO_CONSENT_COPY } from '../../../domain/onboardingCopy';
+import { FIELD_ERROR_CLASS } from '../../../utils/formFieldStyles';
 import { Button } from '../../ui/button';
 import { Checkbox } from '../../ui/checkbox';
 import { cn } from '../../ui/utils';
-
-export type ProgressPhotoView = 'front' | 'side' | 'back';
-
-export type ProgressPhotos = Record<ProgressPhotoView, string | null>;
-
-export const EMPTY_PROGRESS_PHOTOS: ProgressPhotos = {
-  front: null,
-  side: null,
-  back: null,
-};
 
 const VIEW_LABELS: Record<ProgressPhotoView, string> = {
   front: 'Front',
@@ -21,34 +23,60 @@ const VIEW_LABELS: Record<ProgressPhotoView, string> = {
   back: 'Back',
 };
 
-const VIEWS: readonly ProgressPhotoView[] = ['front', 'side', 'back'];
-
 const LOCKED_NOTE = 'Tick the box to add your photos.';
+
+const REFUSED_PHOTO_MESSAGE = 'Choose a JPEG, PNG or WebP under 10 MB.';
 
 const TILE_CLASS =
   'relative flex aspect-square flex-col items-center justify-center gap-1 rounded-card border border-dashed border-control-border-soft p-2 text-center transition-colors';
 
 type ProgressPhotoBlockProps = {
+  consentedAt: Date | null;
   consented: boolean;
-  photos: ProgressPhotos;
+  photos: ProgressPhotoSet;
   onConsentChange: (consented: boolean) => void;
-  onPhotosChange: (photos: ProgressPhotos) => void;
+  onPhotosChange: (photos: ProgressPhotoSet) => void;
 };
+
+function consentedLine(consentedAt: Date): string {
+  return `You agreed to share progress photos on ${format(consentedAt, 'd MMMM yyyy')}.`;
+}
+
+function withPhoto(
+  photos: ProgressPhotoSet,
+  view: ProgressPhotoView,
+  photo: ProgressPhoto | null,
+): ProgressPhotoSet {
+  const next = { ...photos };
+  if (photo) next[view] = photo;
+  else delete next[view];
+
+  return next;
+}
 
 function PhotoTile({
   view,
   photo,
   locked,
   onPick,
+  onRefuse,
 }: {
   view: ProgressPhotoView;
-  photo: string | null;
+  photo: ProgressPhoto | undefined;
   locked: boolean;
-  onPick: (photo: string | null) => void;
+  onPick: (photo: ProgressPhoto | null) => void;
+  onRefuse: () => void;
 }) {
   const choose = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) onPick(URL.createObjectURL(file));
+    event.target.value = '';
+    if (!file) return;
+    if (!isAcceptedProgressPhoto(file)) {
+      onRefuse();
+      return;
+    }
+
+    onPick({ url: URL.createObjectURL(file) });
   };
 
   if (photo) {
@@ -57,10 +85,10 @@ function PhotoTile({
         <img
           alt={`${VIEW_LABELS[view]} photo`}
           className="aspect-square w-full rounded-card object-cover"
-          src={photo}
+          src={photo.url}
         />
         <Button
-          aria-label={`Remove ${VIEW_LABELS[view].toLowerCase()} photo`}
+          aria-label={`Remove ${view} photo`}
           className="absolute top-1 right-1 size-8 bg-surface-base shadow-card hover:bg-surface-muted"
           onClick={() => onPick(null)}
           size="icon-sm"
@@ -84,7 +112,8 @@ function PhotoTile({
       )}
     >
       <input
-        accept="image/*"
+        accept={PROGRESS_PHOTO_TYPES.join(',')}
+        aria-label={`Add ${view} photo`}
         className="absolute size-px overflow-hidden opacity-0"
         disabled={locked}
         onChange={choose}
@@ -100,6 +129,7 @@ function PhotoTile({
 }
 
 export function ProgressPhotoBlock({
+  consentedAt,
   consented,
   photos,
   onConsentChange,
@@ -108,6 +138,13 @@ export function ProgressPhotoBlock({
   const checkboxId = useId();
   const groupId = useId();
   const noteId = useId();
+  const [refused, setRefused] = useState(false);
+  const locked = consentedAt === null && !consented;
+
+  const pick = (view: ProgressPhotoView, photo: ProgressPhoto | null) => {
+    setRefused(false);
+    onPhotosChange(withPhoto(photos, view, photo));
+  };
 
   return (
     <div
@@ -127,21 +164,33 @@ export function ProgressPhotoBlock({
         </span>
       </p>
 
-      <div className="flex items-start gap-3">
-        <Checkbox
-          checked={consented}
-          className="mt-0.5"
-          data-parity="progress-photos-checkbox"
-          id={checkboxId}
-          onCheckedChange={(checked) => onConsentChange(checked === true)}
-        />
-        <label className="text-sm leading-relaxed text-text-primary" htmlFor={checkboxId}>
-          {PROGRESS_PHOTO_CONSENT_COPY}
-        </label>
-      </div>
+      {consentedAt ? (
+        <p
+          className="text-sm leading-relaxed text-text-secondary"
+          data-parity="progress-photos-consented"
+        >
+          {consentedLine(consentedAt)}
+        </p>
+      ) : (
+        <div className="flex items-start gap-3">
+          <Checkbox
+            checked={consented}
+            className="mt-0.5"
+            data-parity="progress-photos-checkbox"
+            id={checkboxId}
+            onCheckedChange={(checked) => onConsentChange(checked === true)}
+          />
+          <label
+            className="text-sm leading-relaxed text-text-primary"
+            htmlFor={checkboxId}
+          >
+            {PROGRESS_PHOTO_CONSENT_COPY}
+          </label>
+        </div>
+      )}
 
       <div
-        aria-describedby={consented ? undefined : noteId}
+        aria-describedby={locked ? noteId : undefined}
         aria-labelledby={groupId}
         className="grid grid-cols-3 gap-2 sm:gap-4"
         data-parity="progress-photos-tiles"
@@ -150,18 +199,29 @@ export function ProgressPhotoBlock({
         <p className="sr-only" id={groupId}>
           Progress photos
         </p>
-        {VIEWS.map((view) => (
+        {PROGRESS_PHOTO_VIEWS.map((view) => (
           <PhotoTile
             key={view}
-            locked={!consented}
-            onPick={(photo) => onPhotosChange({ ...photos, [view]: photo })}
+            locked={locked}
+            onPick={(photo) => pick(view, photo)}
+            onRefuse={() => setRefused(true)}
             photo={photos[view]}
             view={view}
           />
         ))}
       </div>
 
-      {!consented && (
+      {refused && (
+        <p
+          className={FIELD_ERROR_CLASS}
+          data-parity="progress-photos-error"
+          role="alert"
+        >
+          {REFUSED_PHOTO_MESSAGE}
+        </p>
+      )}
+
+      {locked && (
         <p
           className="text-xs text-text-secondary"
           data-parity="progress-photos-note"

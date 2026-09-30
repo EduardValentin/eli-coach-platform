@@ -1,31 +1,88 @@
 import { describe, expect, it } from 'vitest';
-import {
-  isMeasurementDue,
-  measurementCadenceHint,
-  measurementDueDates,
-} from './measurementSchedule';
+import { isMeasurementDue, measurementDueDates } from './measurementSchedule';
+import type { MeasurementEntry } from './journey';
+
+function entry(
+  recordedAt: string,
+  optional: Partial<MeasurementEntry> = {},
+): MeasurementEntry {
+  return {
+    id: recordedAt,
+    recordedAt: new Date(recordedAt),
+    weightKg: 66,
+    waistCm: 74,
+    photos: {},
+    ...optional,
+  };
+}
 
 describe('the measurement schedule', () => {
-  it('puts the next weight a week after the last entry', () => {
+  it('has nothing to schedule before her first entry', () => {
     // arrange
-    const latest = new Date('2026-09-01T08:00:00Z');
+    const entries: MeasurementEntry[] = [];
 
     // act
-    const due = measurementDueDates(latest);
+    const due = measurementDueDates(entries);
 
     // assert
-    expect(due.weight).toEqual(new Date('2026-09-08T08:00:00Z'));
+    expect(due).toBeNull();
   });
 
-  it('puts the next circumferences four weeks after the last entry', () => {
+  it('puts the next weigh-in a week after her latest entry', () => {
     // arrange
-    const latest = new Date('2026-09-01T08:00:00Z');
+    const entries = [
+      entry('2026-08-25T08:00:00Z', { hipsCm: 98 }),
+      entry('2026-09-01T08:00:00Z'),
+    ];
 
     // act
-    const due = measurementDueDates(latest);
+    const due = measurementDueDates(entries);
 
     // assert
-    expect(due.circumferences).toEqual(new Date('2026-09-29T08:00:00Z'));
+    expect(due?.weighIn).toEqual(new Date('2026-09-08T08:00:00Z'));
+  });
+
+  it('puts the next full set four weeks after her latest entry with an optional measurement', () => {
+    // arrange
+    const entries = [
+      entry('2026-08-25T08:00:00Z', { thighCm: 57 }),
+      entry('2026-09-01T08:00:00Z'),
+    ];
+
+    // act
+    const due = measurementDueDates(entries);
+
+    // assert
+    expect(due?.measurements).toEqual(new Date('2026-09-22T08:00:00Z'));
+  });
+
+  it('counts an entry with a photo as a full set', () => {
+    // arrange
+    const entries = [
+      entry('2026-08-01T08:00:00Z', { armCm: 28 }),
+      entry('2026-08-25T08:00:00Z', { photos: { side: { url: 'blob:side' } } }),
+      entry('2026-09-01T08:00:00Z'),
+    ];
+
+    // act
+    const due = measurementDueDates(entries);
+
+    // assert
+    expect(due?.measurements).toEqual(new Date('2026-09-22T08:00:00Z'));
+  });
+
+  it('counts four weeks from her first entry when no entry has an optional measurement or a photo', () => {
+    // arrange
+    const entries = [
+      entry('2026-09-01T08:00:00Z'),
+      entry('2026-08-18T08:00:00Z'),
+    ];
+
+    // act
+    const due = measurementDueDates(entries);
+
+    // assert
+    expect(due?.measurements).toEqual(new Date('2026-09-15T08:00:00Z'));
   });
 
   it('counts a due date reached today as due', () => {
@@ -48,29 +105,5 @@ describe('the measurement schedule', () => {
 
     // assert
     expect(due).toBe(false);
-  });
-
-  it('adds the cycle window to the hint when her cycle is on file', () => {
-    // arrange
-    const tracksCycle = 'yes';
-
-    // act
-    const hint = measurementCadenceHint(tracksCycle);
-
-    // assert
-    expect(hint).toBe(
-      'Weight: weekly. Circumferences and photos: every 4 weeks, best taken on days 5–10 of your cycle.',
-    );
-  });
-
-  it('keeps the hint to the cadence without cycle data', () => {
-    // arrange
-    const tracksCycle = 'no';
-
-    // act
-    const hint = measurementCadenceHint(tracksCycle);
-
-    // assert
-    expect(hint).toBe('Weight: weekly. Circumferences and photos: every 4 weeks.');
   });
 });
