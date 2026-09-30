@@ -30,7 +30,10 @@ import { PostgresClientMeasurements } from "~/features/client-onboarding/data/me
 import { PostgresClientOnboardings } from "~/features/client-onboarding/data/onboardings/client-onboardings-repository.server";
 import { PostgresClientProfiles } from "~/features/client-onboarding/data/profiles/client-profiles-repository.server";
 import { RandomDetailRequestIds } from "~/features/client-onboarding/data/reviews/detail-request-ids.server";
-import { PostgresOnboardingReviews } from "~/features/client-onboarding/data/reviews/onboarding-reviews-repository.server";
+import {
+  PostgresOnboardingReviews,
+  type ReviewStampWriter,
+} from "~/features/client-onboarding/data/reviews/onboarding-reviews-repository.server";
 import { PostgresClientUnitPreferences } from "~/features/client-onboarding/data/unit-preferences/client-unit-preferences-repository.server";
 import { EmailOnboardingDetailsNotifications } from "~/features/client-onboarding/email/email-onboarding-details-notifications.server";
 
@@ -52,6 +55,7 @@ type ClientOnboardingFeatureHandles = {
   onboardingSubmissionStamps: OnboardingSubmissionStamps;
   productEmail: ProductEmail;
   publicAppUrl: string;
+  reviewStampWriter: ReviewStampWriter;
 };
 
 export function composeClientOnboardingFeature(
@@ -60,10 +64,16 @@ export function composeClientOnboardingFeature(
   const { clock, incidents, onboardingClients: clients } = handles;
   const onboardings = new PostgresClientOnboardings(handles.database);
   const unitPreferences = new PostgresClientUnitPreferences(handles.database);
-  const reviews = new PostgresOnboardingReviews(handles.database);
+  const reviews = new PostgresOnboardingReviews({
+    database: handles.database,
+    reviewStampWriter: handles.reviewStampWriter,
+  });
   const measurements = new PostgresClientMeasurements(handles.database);
-  const stamps = handles.onboardingReviewStamps;
-  const reviewPorts = { clients, onboardings, reviews, stamps, incidents };
+  const reviewPorts = { clients, onboardings, reviews, incidents };
+  const reviewReadPorts = {
+    ...reviewPorts,
+    stamps: handles.onboardingReviewStamps,
+  };
 
   return {
     controller: new ClientOnboardingController({
@@ -78,7 +88,7 @@ export function composeClientOnboardingFeature(
         onboardings,
         unitPreferences,
       }),
-      readOpenDetailRequest: new ReadOpenDetailRequestUseCase(reviewPorts),
+      readOpenDetailRequest: new ReadOpenDetailRequestUseCase(reviewReadPorts),
       saveOnboardingDraft: new SaveOnboardingDraftUseCase({
         changes: onboardings,
         clients,
@@ -111,7 +121,7 @@ export function composeClientOnboardingFeature(
         clock,
       }),
       readOnboardingReview: new ReadOnboardingReviewUseCase({
-        ...reviewPorts,
+        ...reviewReadPorts,
         measurements,
       }),
       requestOnboardingDetails: new RequestOnboardingDetailsUseCase({

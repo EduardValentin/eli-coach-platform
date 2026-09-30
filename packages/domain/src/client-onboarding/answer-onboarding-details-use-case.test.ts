@@ -14,6 +14,7 @@ import type {
 } from "./onboarding-review-stamps";
 import type { OnboardingReviews } from "./onboarding-reviews";
 import type { OnboardingSubmission } from "./onboarding-submission";
+import { ReadOpenDetailRequestUseCase } from "./read-open-detail-request-use-case";
 
 const SUBMITTED_AT = new Date("2026-09-27T10:00:00.000Z");
 const OPENED_AT = new Date("2026-09-28T09:00:00.000Z");
@@ -99,7 +100,6 @@ function answerPorts(
   overrides: {
     client?: OnboardingClient | null;
     requests?: DetailRequest[];
-    stamps?: OnboardingReviewStamps;
   } = {},
 ) {
   return {
@@ -121,18 +121,16 @@ function answerPorts(
       findByClientId: vi.fn().mockResolvedValue(null),
       save: vi.fn().mockResolvedValue(undefined),
     } satisfies ClientUnitPreferences,
-    stamps:
-      overrides.stamps ??
-      ({
-        record: vi.fn().mockResolvedValue(undefined),
-      } satisfies OnboardingReviewStamps),
+    stamps: {
+      record: vi.fn().mockResolvedValue(undefined),
+    } satisfies OnboardingReviewStamps,
     clock: { now: () => NOW },
     incidents: createIncidents(),
   };
 }
 
 describe("AnswerOnboardingDetailsUseCase", () => {
-  it("records her asked answers and the answered request, then stamps her back to in-review", async () => {
+  it("records her asked answers and the answered request with the stamps that return her to in-review", async () => {
     // arrange
     const ports = answerPorts();
     const useCase = new AnswerOnboardingDetailsUseCase(ports);
@@ -154,9 +152,6 @@ describe("AnswerOnboardingDetailsUseCase", () => {
       },
       answeredAt: NOW,
       profile: expect.any(ClientProfile),
-    });
-    expect(ports.stamps.record).toHaveBeenCalledWith({
-      clientId: CLIENT.clientId,
       stamps: { ...REQUESTED_STAMPS, detailsAnsweredAt: NOW },
     });
     expect(ports.incidents.onboardingDetailsAnswered).toHaveBeenCalledWith({
@@ -189,41 +184,39 @@ describe("AnswerOnboardingDetailsUseCase", () => {
     });
   });
 
-  it("records the answer before the stamp and re-applies the stamp when the first write failed", async () => {
+  it("the answer and its stamps are one port write; a lagging stamp is repaired on read", async () => {
     // arrange
-    const failingStamps = {
-      record: vi.fn().mockRejectedValue(new Error("clients update failed")),
-    } satisfies OnboardingReviewStamps;
-    const firstPorts = answerPorts({ stamps: failingStamps });
-    const firstAttempt = new AnswerOnboardingDetailsUseCase(firstPorts);
-    const retryPorts = answerPorts({
+    const failingPorts = answerPorts();
+    failingPorts.reviews.recordAnswer.mockRejectedValue(
+      new Error("transaction rolled back"),
+    );
+    const answering = new AnswerOnboardingDetailsUseCase(failingPorts);
+    const laggingPorts = answerPorts({
       requests: [askedRequest().answer(NOW)],
     });
-    const retry = new AnswerOnboardingDetailsUseCase(retryPorts);
+    const reading = new ReadOpenDetailRequestUseCase(laggingPorts);
 
     // act
-    const firstOutcome = firstAttempt.execute({
+    const answer = answering.execute({
       authSubjectId: "user_ana",
       answers: { "goal-availability": { weight: 72 } },
     });
-    await expect(firstOutcome).rejects.toThrow("clients update failed");
-    const retryResult = await retry.execute({
-      authSubjectId: "user_ana",
-      answers: { "goal-availability": { weight: 72 } },
-    });
+    await expect(answer).rejects.toThrow("transaction rolled back");
+    const openRequest = await reading.execute("user_ana");
 
     // assert
-    expect(
-      firstPorts.reviews.recordAnswer.mock.invocationCallOrder[0],
-    ).toBeLessThan(failingStamps.record.mock.invocationCallOrder[0]);
-    expect(retryResult).toEqual({ status: "no-open-request" });
-    expect(retryPorts.reviews.recordAnswer).not.toHaveBeenCalled();
-    expect(retryPorts.stamps.record).toHaveBeenCalledWith({
+    expect(failingPorts.reviews.recordAnswer).toHaveBeenCalledWith(
+      expect.objectContaining({
+        stamps: { ...REQUESTED_STAMPS, detailsAnsweredAt: NOW },
+      }),
+    );
+    expect(openRequest).toBeNull();
+    expect(laggingPorts.stamps.record).toHaveBeenCalledWith({
       clientId: CLIENT.clientId,
       stamps: { ...REQUESTED_STAMPS, detailsAnsweredAt: NOW },
     });
     expect(
-      retryPorts.incidents.onboardingReviewStampsRepaired,
+      laggingPorts.incidents.onboardingReviewStampsRepaired,
     ).toHaveBeenCalledWith({ clientId: CLIENT.clientId });
   });
 
@@ -250,7 +243,6 @@ describe("AnswerOnboardingDetailsUseCase", () => {
       ],
     });
     expect(ports.reviews.recordAnswer).not.toHaveBeenCalled();
-    expect(ports.stamps.record).not.toHaveBeenCalled();
     expect(ports.incidents.onboardingDetailsRefused).toHaveBeenCalledWith({
       clientId: CLIENT.clientId,
       reason: "invalid",

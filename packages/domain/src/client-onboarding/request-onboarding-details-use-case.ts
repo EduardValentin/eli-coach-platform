@@ -10,7 +10,6 @@ import {
   OnboardingReview,
   type DetailRequestRefusal,
 } from "./onboarding-review";
-import type { OnboardingReviewStamps } from "./onboarding-review-stamps";
 import type {
   DetailRequestIdGenerator,
   OnboardingReviews,
@@ -32,7 +31,6 @@ type RequestOnboardingDetailsUseCaseOptions = {
   clients: OnboardingClients;
   onboardings: ClientOnboardingSource;
   reviews: OnboardingReviews;
-  stamps: OnboardingReviewStamps;
   requestIds: DetailRequestIdGenerator;
   notifications: OnboardingDetailsNotifications;
   clock: Clock;
@@ -71,21 +69,18 @@ export class RequestOnboardingDetailsUseCase {
     });
 
     if (outcome.status !== "requested") {
-      await this.repairLaggingStamps(client, review);
-
       return outcome;
     }
 
-    const recorded = await this.options.reviews.recordRequest(outcome.request);
+    const recorded = await this.options.reviews.recordRequest({
+      request: outcome.request,
+      stamps: outcome.review.stamps(),
+    });
 
     if (recorded === "already-open") {
       return { status: "not-in-review" };
     }
 
-    await this.options.stamps.record({
-      clientId,
-      stamps: outcome.review.stamps(),
-    });
     this.options.incidents.onboardingDetailsRequested({
       clientId,
       questionCount: outcome.request.questionIds.length,
@@ -114,22 +109,5 @@ export class RequestOnboardingDetailsUseCase {
         requestId: request.id,
       });
     }
-  }
-
-  private async repairLaggingStamps(
-    client: OnboardingClient,
-    review: OnboardingReview,
-  ): Promise<void> {
-    if (review.matchesStamps(client.reviewStamps)) {
-      return;
-    }
-
-    await this.options.stamps.record({
-      clientId: client.clientId,
-      stamps: review.stamps(),
-    });
-    this.options.incidents.onboardingReviewStampsRepaired({
-      clientId: client.clientId,
-    });
   }
 }

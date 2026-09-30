@@ -10,10 +10,9 @@ import type { OnboardingSubmissionProblem } from "./client-onboarding";
 import type { ClientOnboardingIncidents } from "./client-onboarding-incidents";
 import type { ClientOnboardingSource } from "./client-onboarding-source";
 import type { OnboardingAnswersByForm } from "./onboarding-answers";
-import type { OnboardingClient, OnboardingClients } from "./onboarding-clients";
+import type { OnboardingClients } from "./onboarding-clients";
 import { profileFactsOf } from "./onboarding-profile-facts";
 import { OnboardingReview } from "./onboarding-review";
-import type { OnboardingReviewStamps } from "./onboarding-review-stamps";
 import type { OnboardingReviews } from "./onboarding-reviews";
 
 type AnswerOnboardingDetailsCommand = {
@@ -32,7 +31,6 @@ type AnswerOnboardingDetailsUseCaseOptions = {
   onboardings: ClientOnboardingSource;
   reviews: OnboardingReviews;
   unitPreferences: ClientUnitPreferences;
-  stamps: OnboardingReviewStamps;
   clock: Clock;
   incidents: ClientOnboardingIncidents;
 };
@@ -74,7 +72,6 @@ export class AnswerOnboardingDetailsUseCase {
     });
 
     if (outcome.status !== "answered") {
-      await this.repairLaggingStamps(client, review);
       this.options.incidents.onboardingDetailsRefused({
         clientId,
         reason: outcome.status,
@@ -93,9 +90,6 @@ export class AnswerOnboardingDetailsUseCase {
         facts: profileFactsOf(outcome.submissionAnswers),
         now,
       }),
-    });
-    await this.options.stamps.record({
-      clientId,
       stamps: outcome.review.stamps(),
     });
     this.options.incidents.onboardingDetailsAnswered({
@@ -104,22 +98,5 @@ export class AnswerOnboardingDetailsUseCase {
     });
 
     return { status: "answered" };
-  }
-
-  private async repairLaggingStamps(
-    client: OnboardingClient,
-    review: OnboardingReview,
-  ): Promise<void> {
-    if (review.matchesStamps(client.reviewStamps)) {
-      return;
-    }
-
-    await this.options.stamps.record({
-      clientId: client.clientId,
-      stamps: review.stamps(),
-    });
-    this.options.incidents.onboardingReviewStampsRepaired({
-      clientId: client.clientId,
-    });
   }
 }

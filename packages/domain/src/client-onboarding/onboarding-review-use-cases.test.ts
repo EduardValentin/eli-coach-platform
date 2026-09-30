@@ -151,14 +151,17 @@ function reviewPorts(
       overrides.submission === undefined ? SUBMISSION : overrides.submission,
     ),
     reviews: createReviews(overrides.stored),
-    stamps: createStamps(),
     clock: { now: () => NOW },
     incidents: createIncidents(),
   };
 }
 
+function readPorts(overrides: Parameters<typeof reviewPorts>[0] = {}) {
+  return { ...reviewPorts(overrides), stamps: createStamps() };
+}
+
 describe("OpenOnboardingReviewUseCase", () => {
-  it("records the opened review before its stamps and logs it", async () => {
+  it("records the opened review with its stamps in one write and logs it", async () => {
     // arrange
     const ports = reviewPorts();
     const useCase = new OpenOnboardingReviewUseCase(ports);
@@ -171,40 +174,14 @@ describe("OpenOnboardingReviewUseCase", () => {
     expect(ports.reviews.recordOpened).toHaveBeenCalledWith({
       clientId: CLIENT.clientId,
       at: NOW,
-    });
-    expect(ports.stamps.record).toHaveBeenCalledWith({
-      clientId: CLIENT.clientId,
       stamps: { ...NO_STAMPS, reviewOpenedAt: NOW },
     });
-    expect(ports.reviews.recordOpened.mock.invocationCallOrder[0]).toBeLessThan(
-      ports.stamps.record.mock.invocationCallOrder[0],
-    );
     expect(ports.incidents.onboardingReviewOpened).toHaveBeenCalledWith({
       clientId: CLIENT.clientId,
     });
   });
 
-  it("answers already-open without writing when the projection is current", async () => {
-    // arrange
-    const ports = reviewPorts({
-      client: {
-        ...CLIENT,
-        reviewStamps: { ...NO_STAMPS, reviewOpenedAt: OPENED_AT },
-      },
-      stored: { openedAt: OPENED_AT },
-    });
-    const useCase = new OpenOnboardingReviewUseCase(ports);
-
-    // act
-    const result = await useCase.execute(CLIENT.clientId);
-
-    // assert
-    expect(result).toEqual({ status: "already-open" });
-    expect(ports.reviews.recordOpened).not.toHaveBeenCalled();
-    expect(ports.stamps.record).not.toHaveBeenCalled();
-  });
-
-  it("re-applies a lagging projection when the review is already open", async () => {
+  it("answers already-open without writing", async () => {
     // arrange
     const ports = reviewPorts({ stored: { openedAt: OPENED_AT } });
     const useCase = new OpenOnboardingReviewUseCase(ports);
@@ -214,13 +191,7 @@ describe("OpenOnboardingReviewUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "already-open" });
-    expect(ports.stamps.record).toHaveBeenCalledWith({
-      clientId: CLIENT.clientId,
-      stamps: { ...NO_STAMPS, reviewOpenedAt: OPENED_AT },
-    });
-    expect(ports.incidents.onboardingReviewStampsRepaired).toHaveBeenCalledWith(
-      { clientId: CLIENT.clientId },
-    );
+    expect(ports.reviews.recordOpened).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -252,7 +223,7 @@ describe("RequestOnboardingDetailsUseCase", () => {
     });
   }
 
-  it("records the request, then its stamps, then emails her", async () => {
+  it("records the request with its stamps in one write, then emails her", async () => {
     // arrange
     const ports = reviewPorts({ stored: { openedAt: OPENED_AT } });
     const notifications = createNotifications();
@@ -267,17 +238,14 @@ describe("RequestOnboardingDetailsUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "requested" });
-    expect(ports.reviews.recordRequest).toHaveBeenCalledWith(
-      DetailRequest.raise({
+    expect(ports.reviews.recordRequest).toHaveBeenCalledWith({
+      request: DetailRequest.raise({
         id: "request-1",
         clientId: CLIENT.clientId,
         questionIds: [WEIGHT],
         note: NOTE,
         askedAt: NOW,
       }),
-    );
-    expect(ports.stamps.record).toHaveBeenCalledWith({
-      clientId: CLIENT.clientId,
       stamps: {
         ...NO_STAMPS,
         reviewOpenedAt: OPENED_AT,
@@ -292,8 +260,7 @@ describe("RequestOnboardingDetailsUseCase", () => {
     });
     expect(
       ports.reviews.recordRequest.mock.invocationCallOrder[0],
-    ).toBeLessThan(ports.stamps.record.mock.invocationCallOrder[0]);
-    expect(ports.stamps.record.mock.invocationCallOrder[0]).toBeLessThan(
+    ).toBeLessThan(
       notifications.sendDetailsRequest.mock.invocationCallOrder[0],
     );
     expect(ports.incidents.onboardingDetailsRequested).toHaveBeenCalledWith({
@@ -328,7 +295,7 @@ describe("RequestOnboardingDetailsUseCase", () => {
     });
   });
 
-  it("answers not-in-review without stamping or emailing when another request was recorded first", async () => {
+  it("answers not-in-review without emailing when another request was recorded first", async () => {
     // arrange
     const ports = reviewPorts({ stored: { openedAt: OPENED_AT } });
     ports.reviews.recordRequest.mockResolvedValue("already-open");
@@ -344,7 +311,6 @@ describe("RequestOnboardingDetailsUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "not-in-review" });
-    expect(ports.stamps.record).not.toHaveBeenCalled();
     expect(notifications.sendDetailsRequest).not.toHaveBeenCalled();
     expect(ports.incidents.onboardingDetailsRequested).not.toHaveBeenCalled();
   });
@@ -352,14 +318,6 @@ describe("RequestOnboardingDetailsUseCase", () => {
   it("refuses a second request while one is open and writes nothing", async () => {
     // arrange
     const ports = reviewPorts({
-      client: {
-        ...CLIENT,
-        reviewStamps: {
-          ...NO_STAMPS,
-          reviewOpenedAt: OPENED_AT,
-          detailsRequestedAt: ASKED_AT,
-        },
-      },
       stored: { openedAt: OPENED_AT, requests: [openRequest()] },
     });
     const notifications = createNotifications();
@@ -375,19 +333,12 @@ describe("RequestOnboardingDetailsUseCase", () => {
     // assert
     expect(result).toEqual({ status: "not-in-review" });
     expect(ports.reviews.recordRequest).not.toHaveBeenCalled();
-    expect(ports.stamps.record).not.toHaveBeenCalled();
     expect(notifications.sendDetailsRequest).not.toHaveBeenCalled();
   });
 
   it("refuses an empty note as invalid", async () => {
     // arrange
-    const ports = reviewPorts({
-      client: {
-        ...CLIENT,
-        reviewStamps: { ...NO_STAMPS, reviewOpenedAt: OPENED_AT },
-      },
-      stored: { openedAt: OPENED_AT },
-    });
+    const ports = reviewPorts({ stored: { openedAt: OPENED_AT } });
     const useCase = requestUseCase(ports);
 
     // act
@@ -420,7 +371,7 @@ describe("RequestOnboardingDetailsUseCase", () => {
 });
 
 describe("ApproveOnboardingAnswersUseCase", () => {
-  it("records the approval before its stamps and logs it", async () => {
+  it("records the approval with its stamps in one write and logs it", async () => {
     // arrange
     const ports = reviewPorts({ stored: { openedAt: OPENED_AT } });
     const useCase = new ApproveOnboardingAnswersUseCase(ports);
@@ -434,24 +385,18 @@ describe("ApproveOnboardingAnswersUseCase", () => {
     expect(ports.reviews.recordApproval).toHaveBeenCalledWith({
       clientId: CLIENT.clientId,
       at: NOW,
-    });
-    expect(ports.stamps.record).toHaveBeenCalledWith({
-      clientId: CLIENT.clientId,
       stamps: {
         ...NO_STAMPS,
         reviewOpenedAt: OPENED_AT,
         answersApprovedAt: NOW,
       },
     });
-    expect(
-      ports.reviews.recordApproval.mock.invocationCallOrder[0],
-    ).toBeLessThan(ports.stamps.record.mock.invocationCallOrder[0]);
     expect(ports.incidents.onboardingAnswersApproved).toHaveBeenCalledWith({
       clientId: CLIENT.clientId,
     });
   });
 
-  it("opens an unopened review on the way to approving it", async () => {
+  it("opens an unopened review within the approval write", async () => {
     // arrange
     const ports = reviewPorts();
     const useCase = new ApproveOnboardingAnswersUseCase(ports);
@@ -461,15 +406,10 @@ describe("ApproveOnboardingAnswersUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "approved" });
-    expect(ports.reviews.recordOpened).toHaveBeenCalledWith({
+    expect(ports.reviews.recordOpened).not.toHaveBeenCalled();
+    expect(ports.reviews.recordApproval).toHaveBeenCalledWith({
       clientId: CLIENT.clientId,
       at: NOW,
-    });
-    expect(ports.reviews.recordOpened.mock.invocationCallOrder[0]).toBeLessThan(
-      ports.reviews.recordApproval.mock.invocationCallOrder[0],
-    );
-    expect(ports.stamps.record).toHaveBeenCalledWith({
-      clientId: CLIENT.clientId,
       stamps: { ...NO_STAMPS, reviewOpenedAt: NOW, answersApprovedAt: NOW },
     });
   });
@@ -477,14 +417,6 @@ describe("ApproveOnboardingAnswersUseCase", () => {
   it("refuses while a request is open", async () => {
     // arrange
     const ports = reviewPorts({
-      client: {
-        ...CLIENT,
-        reviewStamps: {
-          ...NO_STAMPS,
-          reviewOpenedAt: OPENED_AT,
-          detailsRequestedAt: ASKED_AT,
-        },
-      },
       stored: { openedAt: OPENED_AT, requests: [openRequest()] },
     });
     const useCase = new ApproveOnboardingAnswersUseCase(ports);
@@ -495,7 +427,6 @@ describe("ApproveOnboardingAnswersUseCase", () => {
     // assert
     expect(result).toEqual({ status: "not-reviewable" });
     expect(ports.reviews.recordApproval).not.toHaveBeenCalled();
-    expect(ports.stamps.record).not.toHaveBeenCalled();
   });
 
   it("answers not-found for an unknown client", async () => {
@@ -514,7 +445,7 @@ describe("ApproveOnboardingAnswersUseCase", () => {
 describe("ReadOpenDetailRequestUseCase", () => {
   it("reads her open request with the note and the asked fields", async () => {
     // arrange
-    const ports = reviewPorts({
+    const ports = readPorts({
       client: {
         ...CLIENT,
         reviewStamps: {
@@ -542,7 +473,7 @@ describe("ReadOpenDetailRequestUseCase", () => {
 
   it("re-applies a lagging projection and reads nothing when no request is open", async () => {
     // arrange
-    const ports = reviewPorts({
+    const ports = readPorts({
       client: {
         ...CLIENT,
         reviewStamps: {
@@ -576,7 +507,7 @@ describe("ReadOpenDetailRequestUseCase", () => {
 
   it("reads nothing for a subject with no client", async () => {
     // arrange
-    const ports = reviewPorts({ client: null });
+    const ports = readPorts({ client: null });
     const useCase = new ReadOpenDetailRequestUseCase(ports);
 
     // act

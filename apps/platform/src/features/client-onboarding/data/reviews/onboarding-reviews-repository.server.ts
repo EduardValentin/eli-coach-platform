@@ -1,12 +1,14 @@
 import {
   isCausedByDatabaseError,
   type DatabaseClient,
+  type DatabaseTransaction,
 } from "@eli-coach-platform/db";
 import {
   DetailRequest,
   ONBOARDING_FORM_IDS,
   type OnboardingAnswersByForm,
   type OnboardingReviews,
+  type ReviewStamps,
 } from "@eli-coach-platform/domain/client-onboarding";
 import { and, asc, eq, isNull, sql, type SQL } from "drizzle-orm";
 
@@ -26,10 +28,33 @@ type StoredOnboardingReview = Awaited<
 
 type ReviewMoment = Parameters<OnboardingReviews["recordOpened"]>[0];
 
+type RecordDetailRequest = Parameters<OnboardingReviews["recordRequest"]>[0];
+
 type RecordDetailsAnswer = Parameters<OnboardingReviews["recordAnswer"]>[0];
 
+type ReviewStampProjection = {
+  clientId: string;
+  stamps: ReviewStamps;
+};
+
+export type ReviewStampWriter = (
+  transaction: DatabaseTransaction,
+  projection: ReviewStampProjection,
+) => Promise<void>;
+
+type OnboardingReviewsOptions = {
+  database: DatabaseClient;
+  reviewStampWriter: ReviewStampWriter;
+};
+
 export class PostgresOnboardingReviews implements OnboardingReviews {
-  constructor(private readonly database: DatabaseClient) {}
+  private readonly database: DatabaseClient;
+  private readonly reviewStampWriter: ReviewStampWriter;
+
+  constructor(options: OnboardingReviewsOptions) {
+    this.database = options.database;
+    this.reviewStampWriter = options.reviewStampWriter;
+  }
 
   async findByClientId(clientId: string): Promise<StoredOnboardingReview> {
     const [[review], requestRows] = await Promise.all([
@@ -62,32 +87,39 @@ export class PostgresOnboardingReviews implements OnboardingReviews {
     };
   }
 
-  async recordOpened({ clientId, at }: ReviewMoment): Promise<void> {
-    await this.database
-      .insert(clientOnboardingReviewsTable)
-      .values({ clientId, openedAt: at, approvedAt: null })
-      .onConflictDoUpdate({
-        target: clientOnboardingReviewsTable.clientId,
-        set: {
-          openedAt: sql`coalesce(${clientOnboardingReviewsTable.openedAt}, excluded.opened_at)`,
-        },
-      });
+  async recordOpened({ clientId, at, stamps }: ReviewMoment): Promise<void> {
+    await this.writeWithStamps({ clientId, stamps }, (transaction) =>
+      transaction
+        .insert(clientOnboardingReviewsTable)
+        .values({ clientId, openedAt: at, approvedAt: null })
+        .onConflictDoUpdate({
+          target: clientOnboardingReviewsTable.clientId,
+          set: {
+            openedAt: sql`coalesce(${clientOnboardingReviewsTable.openedAt}, excluded.opened_at)`,
+          },
+        }),
+    );
   }
 
-  async recordRequest(
-    request: DetailRequest,
-  ): Promise<"recorded" | "already-open"> {
+  async recordRequest({
+    request,
+    stamps,
+  }: RecordDetailRequest): Promise<"recorded" | "already-open"> {
     const snapshot = request.toSnapshot();
 
     try {
-      await this.database.insert(clientOnboardingDetailRequestsTable).values({
-        id: snapshot.id,
-        clientId: snapshot.clientId,
-        questionIds: [...snapshot.questionIds],
-        note: snapshot.note,
-        askedAt: snapshot.askedAt,
-        answeredAt: snapshot.answeredAt,
-      });
+      await this.writeWithStamps(
+        { clientId: snapshot.clientId, stamps },
+        (transaction) =>
+          transaction.insert(clientOnboardingDetailRequestsTable).values({
+            id: snapshot.id,
+            clientId: snapshot.clientId,
+            questionIds: [...snapshot.questionIds],
+            note: snapshot.note,
+            askedAt: snapshot.askedAt,
+            answeredAt: snapshot.answeredAt,
+          }),
+      );
 
       return "recorded";
     } catch (error) {
@@ -100,7 +132,7 @@ export class PostgresOnboardingReviews implements OnboardingReviews {
   }
 
   async recordAnswer(input: RecordDetailsAnswer): Promise<void> {
-    await this.database.transaction(async (transaction) => {
+    await this.writeWithStamps(input, async (transaction) => {
       const answered = await transaction
         .update(clientOnboardingDetailRequestsTable)
         .set({ answeredAt: input.answeredAt })
@@ -125,16 +157,31 @@ export class PostgresOnboardingReviews implements OnboardingReviews {
     });
   }
 
-  async recordApproval({ clientId, at }: ReviewMoment): Promise<void> {
-    await this.database
-      .insert(clientOnboardingReviewsTable)
-      .values({ clientId, openedAt: at, approvedAt: at })
-      .onConflictDoUpdate({
-        target: clientOnboardingReviewsTable.clientId,
-        set: {
-          approvedAt: sql`coalesce(${clientOnboardingReviewsTable.approvedAt}, excluded.approved_at)`,
-        },
+  async recordApproval({ clientId, at, stamps }: ReviewMoment): Promise<void> {
+    await this.writeWithStamps({ clientId, stamps }, (transaction) =>
+      transaction
+        .insert(clientOnboardingReviewsTable)
+        .values({ clientId, openedAt: at, approvedAt: at })
+        .onConflictDoUpdate({
+          target: clientOnboardingReviewsTable.clientId,
+          set: {
+            approvedAt: sql`coalesce(${clientOnboardingReviewsTable.approvedAt}, excluded.approved_at)`,
+          },
+        }),
+    );
+  }
+
+  private async writeWithStamps(
+    projection: ReviewStampProjection,
+    writeRows: (transaction: DatabaseTransaction) => Promise<unknown>,
+  ): Promise<void> {
+    await this.database.transaction(async (transaction) => {
+      await writeRows(transaction);
+      await this.reviewStampWriter(transaction, {
+        clientId: projection.clientId,
+        stamps: projection.stamps,
       });
+    });
   }
 }
 

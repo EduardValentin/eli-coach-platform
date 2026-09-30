@@ -120,7 +120,7 @@ describe("composeClientOnboardingFeature", () => {
 
     // assert
     expect(response.status).toBe(404);
-    expect(handles.onboardingReviewStamps.record).not.toHaveBeenCalled();
+    expect(handles.reviewStampWriter).not.toHaveBeenCalled();
   });
 
   it("answers not found to the coach's review of a client no one knows", async () => {
@@ -215,6 +215,7 @@ function createHandles() {
     },
     productEmail: { provider: "memory", send: vi.fn() },
     publicAppUrl: "https://evoa.fit",
+    reviewStampWriter: vi.fn().mockResolvedValue(undefined),
   };
 }
 

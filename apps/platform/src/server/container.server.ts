@@ -149,6 +149,7 @@ export function createPlatformContainer(options: {
       coachingSales.handles.onboardingSubmissionStamps,
     productEmail,
     publicAppUrl: environment.PUBLIC_APP_URL,
+    reviewStampWriter: coachingSales.handles.reviewStampWriter,
   });
   const platform = composePlatformFeature({
     app: environment,
