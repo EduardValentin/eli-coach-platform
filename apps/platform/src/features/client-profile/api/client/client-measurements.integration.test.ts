@@ -554,7 +554,7 @@ describe.sequential("client measurements integration", () => {
   });
 
   describe("the dashboard nudge", () => {
-    it.todo("says nothing a day after her latest entry", async () => {
+    it("says nothing a day after her latest entry", async () => {
       // arrange
       await admitSubmittedClient();
       await rig.holdClock(NEXT_DAY);
@@ -571,45 +571,39 @@ describe.sequential("client measurements integration", () => {
       expect(texts).not.toContain(MEASUREMENTS_DUE);
     });
 
-    it.todo(
-      "asks for her weekly weigh-in seven days after her latest entry",
-      async () => {
-        // arrange
-        await admitSubmittedClient();
-        await rig.holdClock(NEXT_DAY);
-        await measurements.recordAccepted(OWNER, { values: WEEKLY_WEIGH_IN });
-        await rig.holdClock(daysAfter(NEXT_DAY, 7));
+    it("asks for her weekly weigh-in seven days after her latest entry", async () => {
+      // arrange
+      await admitSubmittedClient();
+      await rig.holdClock(NEXT_DAY);
+      await measurements.recordAccepted(OWNER, { values: WEEKLY_WEIGH_IN });
+      await rig.holdClock(daysAfter(NEXT_DAY, 7));
 
-        // act
-        const response = await rig.requestAs(OWNER, CLIENT_PORTAL);
+      // act
+      const response = await rig.requestAs(OWNER, CLIENT_PORTAL);
 
-        // assert
-        expect(response.status).toBe(200);
-        const texts = textNodesOf(await visibleDocument(response));
-        expect(texts).toContain(WEIGH_IN_DUE);
-        expect(texts).not.toContain(MEASUREMENTS_DUE);
-      },
-    );
+      // assert
+      expect(response.status).toBe(200);
+      const texts = textNodesOf(await visibleDocument(response));
+      expect(texts).toContain(WEIGH_IN_DUE);
+      expect(texts).not.toContain(MEASUREMENTS_DUE);
+    });
 
-    it.todo(
-      "asks for her measurements and photos 28 days after her latest entry with hips",
-      async () => {
-        // arrange
-        await admitSubmittedClient();
-        await rig.holdClock(NEXT_DAY);
-        await measurements.recordAccepted(OWNER, { values: FULL_MEASUREMENTS });
-        await rig.holdClock(daysAfter(NEXT_DAY, 28));
+    it("asks for her measurements and photos 28 days after her latest entry with hips", async () => {
+      // arrange
+      await admitSubmittedClient();
+      await rig.holdClock(NEXT_DAY);
+      await measurements.recordAccepted(OWNER, { values: FULL_MEASUREMENTS });
+      await rig.holdClock(daysAfter(NEXT_DAY, 28));
 
-        // act
-        const response = await rig.requestAs(OWNER, CLIENT_PORTAL);
+      // act
+      const response = await rig.requestAs(OWNER, CLIENT_PORTAL);
 
-        // assert
-        expect(response.status).toBe(200);
-        const texts = textNodesOf(await visibleDocument(response));
-        expect(texts).toContain(MEASUREMENTS_DUE);
-        expect(texts).not.toContain(WEIGH_IN_DUE);
-      },
-    );
+      // assert
+      expect(response.status).toBe(200);
+      const texts = textNodesOf(await visibleDocument(response));
+      expect(texts).toContain(MEASUREMENTS_DUE);
+      expect(texts).not.toContain(WEIGH_IN_DUE);
+    });
   });
 });
 
