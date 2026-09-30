@@ -43,7 +43,7 @@ import {
   screeningOutcome,
   withholdsNutritionAdvice,
 } from '../../domain/safetyScreening';
-import { formatJourneyDate } from '../../utils/journeyLabels';
+import { clientPronouns, formatJourneyDate } from '../../utils/journeyLabels';
 import { PortalWidget } from '../PortalWidget';
 import { Reading } from '../Reading';
 import { StatusHint } from '../StatusHint';
@@ -54,8 +54,6 @@ import { ReviewAnswerValue } from './ReviewAnswerValue';
 import { useAppState } from '../../context/AppContext';
 
 const RATIO_HIDDEN_NOTE = 'Not shown during pregnancy or right after birth.';
-const ANSWERS_NOT_IN = 'Her answers are not in yet.';
-const BUILD_ACTION = 'Build her program';
 
 const REVIEW_ACTIONS: Partial<Record<JourneyStage, string>> = {
   submitted: 'Review answers',
@@ -90,8 +88,10 @@ function ratioValue(journey: ClientJourney, heightCm: number): string {
   const latest = journey.measurements.at(-1);
   const ratio = latest ? waistToHeightRatio(latest.waistCm, heightCm) : null;
 
+  const { possessive } = clientPronouns(journey.identity.gender);
+
   return ratio === null
-    ? 'Waiting on her first measurements'
+    ? `Waiting on ${possessive.lower} first measurements`
     : formatRatio(ratio);
 }
 
@@ -324,8 +324,10 @@ function RequestStatus({ request }: { request: DetailRequest }) {
 
 function WorkStartNote({
   subscription,
+  possessive,
 }: {
   subscription: CoachingSubscription | undefined;
+  possessive: string;
 }) {
   const startsOn =
     subscription && !canStartWork(subscription, new Date())
@@ -336,7 +338,8 @@ function WorkStartNote({
 
   return (
     <p className="text-xs text-text-secondary">
-      You can start building her program on {formatJourneyDate(startsOn)}.
+      You can start building {possessive} program on{' '}
+      {formatJourneyDate(startsOn)}.
     </p>
   );
 }
@@ -357,6 +360,7 @@ function StageActions({
   if (!awaitsCoachReview(journey.stage)) return null;
 
   const reviewAction = REVIEW_ACTIONS[journey.stage];
+  const { possessive } = clientPronouns(journey.identity.gender);
   const isPostMvp = appState.prototypeMode === 'post-mvp';
   const canApprove =
     journey.stage === 'submitted' || journey.stage === 'reviewing';
@@ -380,7 +384,7 @@ function StageActions({
         {isPostMvp && canBuild && (
           <Button variant="primary" asChild>
             <Link to={`/coach/training/builder/${clientId}`}>
-              {BUILD_ACTION}
+              Build {possessive.lower} program
             </Link>
           </Button>
         )}
@@ -394,7 +398,12 @@ function StageActions({
           </Button>
         )}
       </div>
-      {isPostMvp && <WorkStartNote subscription={journey.subscription} />}
+      {isPostMvp && (
+        <WorkStartNote
+          subscription={journey.subscription}
+          possessive={possessive.lower}
+        />
+      )}
     </div>
   );
 }
@@ -514,6 +523,7 @@ export function OnboardingPanel({
   heightCm: number;
 }) {
   const submitted = !isBeforeStage(journey.stage, 'submitted');
+  const { possessive } = clientPronouns(journey.identity.gender);
 
   return (
     <PortalWidget
@@ -539,7 +549,9 @@ export function OnboardingPanel({
           heightCm={heightCm}
         />
       ) : (
-        <p className="text-sm text-text-secondary">{ANSWERS_NOT_IN}</p>
+        <p className="text-sm text-text-secondary">
+          {possessive.capitalised} answers are not in yet.
+        </p>
       )}
     </PortalWidget>
   );

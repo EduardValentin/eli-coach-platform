@@ -12,7 +12,10 @@ import {
   INVITATION_RESEND_FAILURE_MESSAGE,
   resendInvitation,
 } from '../../services/invitationService';
-import { formatJourneyDate } from '../../utils/journeyLabels';
+import {
+  clientPronouns,
+  formatJourneyDate,
+} from '../../utils/journeyLabels';
 import { PortalWidget } from '../PortalWidget';
 import { Button } from '../ui/button';
 import { ConfirmDialog } from '../ui/confirm-dialog';
@@ -46,6 +49,7 @@ export function InvitationBlock({
   const [sending, setSending] = useState(false);
 
   const email = journey.identity.email;
+  const { possessive } = clientPronouns(journey.identity.gender);
   const standing = invitationStanding(invitation, new Date());
 
   const resend = async () => {
@@ -111,7 +115,7 @@ export function InvitationBlock({
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
         title="Re-send invitation?"
-        description={`A fresh invitation goes to ${email}. Her earlier link stops working.`}
+        description={`A fresh invitation goes to ${email}. ${possessive.capitalised} earlier link stops working.`}
         confirmLabel="Re-send"
         onConfirm={() => void resend()}
       />

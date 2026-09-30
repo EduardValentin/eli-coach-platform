@@ -50,6 +50,28 @@ export function possessivePronoun(gender: VisitorGender): PossessivePronoun {
   return POSSESSIVE_PRONOUNS[gender];
 }
 
+export type SubjectPronoun = { capitalised: string; has: string };
+
+const SUBJECT_PRONOUNS: Record<VisitorGender, SubjectPronoun> = {
+  female: { capitalised: 'She', has: 'has' },
+  male: { capitalised: 'He', has: 'has' },
+  prefer_not_to_say: { capitalised: 'They', has: 'have' },
+};
+
+export function subjectPronoun(gender: VisitorGender): SubjectPronoun {
+  return SUBJECT_PRONOUNS[gender];
+}
+
+const OBJECT_PRONOUNS: Record<VisitorGender, string> = {
+  female: 'her',
+  male: 'him',
+  prefer_not_to_say: 'them',
+};
+
+export function objectPronoun(gender: VisitorGender): string {
+  return OBJECT_PRONOUNS[gender];
+}
+
 export function labelForPrimaryGoal(goal: VisitorPrimaryGoal): string {
   return VISITOR_PRIMARY_GOALS.find((option) => option.value === goal)?.label ?? goal;
 }

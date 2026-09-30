@@ -50,7 +50,10 @@ import { PortalWidget } from '../../components/PortalWidget';
 import { Reading } from '../../components/Reading';
 import { useMeasureUnits } from '../../components/client-portal/measureUnits';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
-import { journeyCallIdForClient } from '../../utils/journeyLabels';
+import {
+  journeyCallIdForClient,
+  noMeasurementsYetLine,
+} from '../../utils/journeyLabels';
 import { isBeforeStage } from '../../domain/journey';
 import { useNotifications } from '../../context/NotificationContext';
 import { useMessaging } from '../../context/MessagingContext';
@@ -309,6 +312,7 @@ function RosterClientDetails() {
             <SubscriptionSummary
               subscription={journey.subscription}
               perspective="coach"
+              clientGender={journey.identity.gender}
               headingId="subscription-panel-heading"
               className="mb-8"
             />
@@ -318,7 +322,7 @@ function RosterClientDetails() {
             heightCm={heightCm}
             units={measureUnits}
             headingId="measurements-panel-heading"
-            emptyMessage="She has not sent any measurements yet."
+            emptyMessage={noMeasurementsYetLine(journey.identity.gender)}
             className="mb-8"
           />
         </>

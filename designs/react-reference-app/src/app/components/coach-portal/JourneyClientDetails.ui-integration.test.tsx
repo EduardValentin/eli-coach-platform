@@ -755,3 +755,145 @@ describe('the coach following a client invitation', () => {
     ).toBeInTheDocument();
   });
 });
+
+describe('the coach reading about a client by his or their pronouns', () => {
+  it('words the page for a man before he sends his answers', () => {
+    // arrange
+    const urlQuery = '?jstage=invited&jgender=male';
+
+    // act
+    renderDetails(urlQuery, { postMvp: false });
+
+    // assert
+    expect(
+      within(onboardingWidget()).getByText('His answers are not in yet.'),
+    ).toBeInTheDocument();
+    expect(
+      within(subscriptionPanel()).getByText('Once his program starts'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('He has not sent any measurements yet.'),
+    ).toBeInTheDocument();
+  });
+
+  it('words the page for a client who preferred not to say before they send their answers', () => {
+    // arrange
+    const urlQuery = '?jstage=invited&jgender=prefer-not-to-say';
+
+    // act
+    renderDetails(urlQuery, { postMvp: false });
+
+    // assert
+    expect(
+      within(onboardingWidget()).getByText('Their answers are not in yet.'),
+    ).toBeInTheDocument();
+    expect(
+      within(subscriptionPanel()).getByText('Once their program starts'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('They have not sent any measurements yet.'),
+    ).toBeInTheDocument();
+  });
+
+  it('warns that his earlier invitation link stops working', async () => {
+    // arrange
+    const user = renderDetails('?jstage=invited&jinv=expired&jgender=male');
+
+    // act
+    await user.click(
+      within(invitationBlock()).getByRole('button', {
+        name: 'Re-send invitation',
+      }),
+    );
+
+    // assert
+    const confirm = screen.getByRole('dialog', { name: 'Re-send invitation?' });
+    expect(
+      within(confirm).getByText(
+        'A fresh invitation goes to jane@example.com. His earlier link stops working.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('warns that their earlier invitation link stops working', async () => {
+    // arrange
+    const user = renderDetails(
+      '?jstage=invited&jinv=expired&jgender=prefer-not-to-say',
+    );
+
+    // act
+    await user.click(
+      within(invitationBlock()).getByRole('button', {
+        name: 'Re-send invitation',
+      }),
+    );
+
+    // assert
+    const confirm = screen.getByRole('dialog', { name: 'Re-send invitation?' });
+    expect(
+      within(confirm).getByText(
+        'A fresh invitation goes to jane@example.com. Their earlier link stops working.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('offers to build his program', () => {
+    // arrange
+    const urlQuery = '?jstage=submitted&jgender=male';
+
+    // act
+    renderDetails(urlQuery);
+
+    // assert
+    expect(
+      within(onboardingWidget()).getByRole('link', {
+        name: 'Build his program',
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it('asks which answers the coach wants him to revisit', async () => {
+    // arrange
+    const user = renderDetails('?jstage=submitted&jgender=male');
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Review answers' }));
+
+    // assert
+    expect(
+      within(reviewDialog()).getByText(
+        'Tick any answer you want him to revisit, then approve or ask for more details.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('asks which answers the coach wants them to revisit', async () => {
+    // arrange
+    const user = renderDetails('?jstage=submitted&jgender=prefer-not-to-say');
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Review answers' }));
+
+    // assert
+    expect(
+      within(reviewDialog()).getByText(
+        'Tick any answer you want them to revisit, then approve or ask for more details.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('explains when the coach can start building their program', () => {
+    // arrange
+    const urlQuery = '?jstage=approved&jstart=waiting&jgender=prefer-not-to-say';
+
+    // act
+    renderDetails(urlQuery);
+
+    // assert
+    expect(
+      within(onboardingWidget()).getByText(
+        /You can start building their program on/,
+      ),
+    ).toBeInTheDocument();
+  });
+});

@@ -10,6 +10,7 @@ import { InvitationBlock } from './InvitationBlock';
 import { OnboardingPanel } from './OnboardingPanel';
 import { SubscriptionSummary } from '../SubscriptionSummary';
 import { PORTAL_PAGE_TITLE_CLASS } from '../typography';
+import { noMeasurementsYetLine } from '../../utils/journeyLabels';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 
 function journeyName(journey: ClientJourney): string {
@@ -61,6 +62,7 @@ export function JourneyClientDetails({ journey }: { journey: ClientJourney }) {
         <SubscriptionSummary
           subscription={journey.subscription}
           perspective="coach"
+          clientGender={journey.identity.gender}
           headingId="subscription-panel-heading"
           className="mb-8"
         />
@@ -70,7 +72,7 @@ export function JourneyClientDetails({ journey }: { journey: ClientJourney }) {
         heightCm={statedHeightCm(journey.onboarding.answers)}
         units={units}
         headingId="measurements-panel-heading"
-        emptyMessage="She has not sent any measurements yet."
+        emptyMessage={noMeasurementsYetLine(journey.identity.gender)}
         className="mb-8"
       />
     </div>

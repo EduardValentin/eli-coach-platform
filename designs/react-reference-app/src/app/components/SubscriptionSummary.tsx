@@ -4,8 +4,10 @@ import {
   deriveStatus,
   type CoachingSubscription,
 } from '../domain/coachingSubscription';
+import type { JourneyGender } from '../domain/journey';
 import {
   bundleLengthLabel,
+  clientPronouns,
   formatJourneyDate,
   IMMEDIATE_START_LABEL,
   startPathLabel,
@@ -17,8 +19,13 @@ export type SubscriptionPerspective = WidgetPresentation;
 
 type Line = { term: string; value: string };
 
-function possessiveFor(perspective: SubscriptionPerspective): string {
-  return perspective === 'coach' ? 'her' : 'your';
+function possessiveFor(
+  perspective: SubscriptionPerspective,
+  clientGender: JourneyGender,
+): string {
+  return perspective === 'coach'
+    ? clientPronouns(clientGender).possessive.lower
+    : 'your';
 }
 
 function startProgramValue(subscription: CoachingSubscription): string {
@@ -28,7 +35,7 @@ function startProgramValue(subscription: CoachingSubscription): string {
 function periodLine(
   subscription: CoachingSubscription,
   now: Date,
-  perspective: SubscriptionPerspective,
+  possessive: string,
 ): Line {
   const status = deriveStatus(subscription, now);
   const endsAt = subscription.periodEndsAt;
@@ -36,7 +43,7 @@ function periodLine(
   if (!endsAt) {
     return {
       term: 'Renews on',
-      value: `Once ${possessiveFor(perspective)} program starts`,
+      value: `Once ${possessive} program starts`,
     };
   }
   if (status === 'cancelled') {
@@ -52,18 +59,24 @@ function periodLine(
 export function SubscriptionSummary({
   subscription,
   perspective,
+  clientGender,
   headingId,
   className,
   children,
 }: {
   subscription: CoachingSubscription;
   perspective: SubscriptionPerspective;
+  clientGender: JourneyGender;
   headingId: string;
   className?: string;
   children?: ReactNode;
 }) {
   const now = new Date();
-  const period = periodLine(subscription, now, perspective);
+  const period = periodLine(
+    subscription,
+    now,
+    possessiveFor(perspective, clientGender),
+  );
 
   return (
     <PortalWidget

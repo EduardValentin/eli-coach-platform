@@ -2,6 +2,11 @@ import { format } from 'date-fns';
 import { bundleLengthLabel } from '../domain/bundles';
 import {
   labelForGender,
+  objectPronoun,
+  possessivePronoun,
+  subjectPronoun,
+  type PossessivePronoun,
+  type SubjectPronoun,
   type VisitorGender,
 } from '../services/visitorProfile';
 import { DEMO_JOURNEY_CALL_ID } from '../context/ClientJourneyContext';
@@ -38,6 +43,28 @@ const VISITOR_GENDER_OF: Record<JourneyGender, VisitorGender> = {
 
 export function journeyGenderLabel(gender: JourneyGender): string {
   return labelForGender(VISITOR_GENDER_OF[gender]);
+}
+
+type ClientPronouns = {
+  subject: SubjectPronoun;
+  object: string;
+  possessive: PossessivePronoun;
+};
+
+export function clientPronouns(gender: JourneyGender): ClientPronouns {
+  const visitorGender = VISITOR_GENDER_OF[gender];
+
+  return {
+    subject: subjectPronoun(visitorGender),
+    object: objectPronoun(visitorGender),
+    possessive: possessivePronoun(visitorGender),
+  };
+}
+
+export function noMeasurementsYetLine(gender: JourneyGender): string {
+  const { subject } = clientPronouns(gender);
+
+  return `${subject.capitalised} ${subject.has} not sent any measurements yet.`;
 }
 
 export const SUBSCRIPTION_STATUS_LABELS: Record<SubscriptionStatus, string> = {
