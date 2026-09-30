@@ -88,6 +88,8 @@ export class AnswerOnboardingDetailsUseCase {
       profile: ClientProfile.fromOnboarding({
         clientId,
         facts: profileFactsOf(outcome.submissionAnswers),
+        progressPhotosConsentedAt:
+          review.submission?.consents.progressPhotosAt ?? null,
         now,
       }),
       stamps: outcome.review.stamps(),

@@ -179,6 +179,26 @@ function createUseCase(
 }
 
 describe("SubmitOnboardingUseCase", () => {
+  it("creates her profile with the date she agreed to share progress photos", async () => {
+    // arrange
+    const changes = createChanges();
+    const useCase = createUseCase({ changes });
+    const consents = { ...givenConsents(), progressPhotosAt: CONSENTED_AT };
+
+    // act
+    await useCase.execute({
+      authSubjectId: "user_radu",
+      answers: completeAnswers(),
+      consents,
+    });
+
+    // assert
+    const [{ profile }] = changes.recordSubmission.mock.calls[0];
+    expect(profile.toSnapshot().progressPhotosConsentedAt).toEqual(
+      CONSENTED_AT,
+    );
+  });
+
   it("records her submission with her first measurements, then stamps her journey", async () => {
     // arrange
     const changes = createChanges();
@@ -247,6 +267,7 @@ describe("SubmitOnboardingUseCase", () => {
       primaryGoal: "Build muscle",
       dietaryRestrictions: "Vegetarian, Lactose",
       clientNotes: "Early mornings suit me.",
+      progressPhotosConsentedAt: null,
       updatedAt: NOW,
     });
   });

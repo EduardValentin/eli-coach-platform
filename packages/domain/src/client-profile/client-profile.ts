@@ -8,12 +8,14 @@ export type OnboardingProfileFacts = {
 
 export type ClientProfileSnapshot = OnboardingProfileFacts & {
   clientId: string;
+  progressPhotosConsentedAt: Date | null;
   updatedAt: Date;
 };
 
 type ProfileFromOnboardingInput = {
   clientId: string;
   facts: OnboardingProfileFacts;
+  progressPhotosConsentedAt: Date | null;
   now: Date;
 };
 
@@ -24,6 +26,7 @@ export class ClientProfile {
     return new ClientProfile({
       clientId: input.clientId,
       ...onlyProfileFacts(input.facts),
+      progressPhotosConsentedAt: input.progressPhotosConsentedAt,
       updatedAt: input.now,
     });
   }
@@ -34,6 +37,10 @@ export class ClientProfile {
 
   facts(): OnboardingProfileFacts {
     return onlyProfileFacts(this.snapshot);
+  }
+
+  hasPhotoConsent(): boolean {
+    return this.snapshot.progressPhotosConsentedAt !== null;
   }
 
   toSnapshot(): ClientProfileSnapshot {

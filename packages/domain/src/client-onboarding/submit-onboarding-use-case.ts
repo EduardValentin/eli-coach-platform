@@ -97,6 +97,7 @@ export class SubmitOnboardingUseCase {
       profile: ClientProfile.fromOnboarding({
         clientId: client.clientId,
         facts: profileFactsOf(outcome.submission.answers),
+        progressPhotosConsentedAt: outcome.submission.consents.progressPhotosAt,
         now,
       }),
     });
