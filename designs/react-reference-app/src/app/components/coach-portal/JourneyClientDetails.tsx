@@ -5,6 +5,7 @@ import { getInitials } from '../../utils/clientHelpers';
 import { MeasurementsTable } from '../MeasurementsTable';
 import { useMeasureUnits } from '../client-portal/measureUnits';
 import { statedHeightCm } from '../../domain/bodyMetrics';
+import { AssessmentCallBlock } from './AssessmentCallBlock';
 import { ClientProfileBlock } from './ClientProfileBlock';
 import { InvitationBlock } from './InvitationBlock';
 import { OnboardingPanel } from './OnboardingPanel';
@@ -50,6 +51,7 @@ export function JourneyClientDetails({ journey }: { journey: ClientJourney }) {
       </header>
 
       <ClientProfileBlock journey={journey} />
+      <AssessmentCallBlock journey={journey} />
       {invitation && (
         <InvitationBlock journey={journey} invitation={invitation} />
       )}

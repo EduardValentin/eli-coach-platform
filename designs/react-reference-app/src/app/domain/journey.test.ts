@@ -12,6 +12,7 @@ import {
 function journeyAt(stage: JourneyStage): ClientJourney {
   return {
     callId: 'ac-1',
+    callStartsAt: new Date('2026-03-10T15:00:00.000Z'),
     stage,
     identity: {
       firstName: 'Jane',

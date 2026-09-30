@@ -1,17 +1,13 @@
 import { UserRound } from 'lucide-react';
 import type { ClientJourney, JourneyPhone } from '../../domain/journey';
-import { ageOn, labelForPrimaryGoal } from '../../services/visitorProfile';
-import {
-  journeyGenderLabel,
-  PRICING_TIER_LABELS,
-} from '../../utils/journeyLabels';
+import { ageOn } from '../../services/visitorProfile';
+import { journeyGenderLabel } from '../../utils/journeyLabels';
 import { PortalWidget } from '../PortalWidget';
 import { Reading } from '../Reading';
-
-const ABSENT = '—';
+import { ABSENT_VALUE } from './absentValue';
 
 function PhoneLink({ phone }: { phone: JourneyPhone | undefined }) {
-  if (!phone) return <>{ABSENT}</>;
+  if (!phone) return <>{ABSENT_VALUE}</>;
 
   const dialled = `${phone.diallingCode}${phone.number}`;
 
@@ -40,7 +36,7 @@ export function ClientProfileBlock({ journey }: { journey: ClientJourney }) {
       parityRoot="ClientProfileBlock"
       className="mb-8"
     >
-      <dl className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-6">
+      <dl className="grid grid-cols-2 gap-5 sm:grid-cols-4">
         <Reading
           as="dl-item"
           label="Age"
@@ -56,7 +52,7 @@ export function ClientProfileBlock({ journey }: { journey: ClientJourney }) {
         <Reading
           as="dl-item"
           label="Country"
-          value={identity.country || ABSENT}
+          value={identity.country || ABSENT_VALUE}
           valueParity="profile-country"
         />
         <Reading
@@ -64,29 +60,6 @@ export function ClientProfileBlock({ journey }: { journey: ClientJourney }) {
           label="Phone"
           value={<PhoneLink phone={identity.phone} />}
           valueParity="profile-phone"
-        />
-        <Reading
-          as="dl-item"
-          label="Primary goal"
-          value={
-            identity.primaryGoal
-              ? labelForPrimaryGoal(identity.primaryGoal)
-              : ABSENT
-          }
-          valueParity="profile-goal"
-        />
-        <Reading
-          as="dl-item"
-          label="Pricing tier"
-          value={PRICING_TIER_LABELS[journey.pricing]}
-          valueParity="profile-tier"
-        />
-        <Reading
-          as="dl-item"
-          label="Booking notes"
-          value={journey.bookingNotes ?? ABSENT}
-          valueParity="profile-notes"
-          className="col-span-full"
         />
       </dl>
     </PortalWidget>

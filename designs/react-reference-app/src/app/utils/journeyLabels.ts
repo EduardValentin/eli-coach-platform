@@ -31,9 +31,9 @@ export const PRICING_LABELS: Record<JourneyPricing, string> = {
   regular: 'Regular',
 };
 
-export const PRICING_TIER_LABELS: Record<JourneyPricing, string> = {
-  reduced: 'Reduced',
-  regular: 'Regular',
+export const REDUCED_PRICE_LABELS: Record<JourneyPricing, string> = {
+  reduced: 'Yes',
+  regular: 'No',
 };
 
 const VISITOR_GENDER_OF: Record<JourneyGender, VisitorGender> = {
@@ -73,27 +73,30 @@ export type CycleModeDefinition = { term: string; meaning: string };
 export function cycleModeDefinitions(
   gender: JourneyGender,
 ): CycleModeDefinition[] {
-  const { subject, possessive } = clientPronouns(gender);
-  const her = possessive.lower;
-  const she = subject.lower;
-  const is = subject.isVerb;
+  const pronouns = clientPronouns(gender);
+  const possessive = pronouns.possessive.lower;
+  const {
+    lower: pronoun,
+    isVerb: beVerb,
+    regularVerbSuffix: verbSuffix,
+  } = pronouns.subject;
 
   return [
     {
       term: CYCLE_MODE_LABELS['phase-based'],
-      meaning: `${her} program follows ${her} cycle phases: ${she} get${subject.verbEnding} a period, ${is} not on the combined pill, ${is} not pregnant, postpartum or breastfeeding, and ${is} not in perimenopause or menopause.`,
+      meaning: `${possessive} program follows ${possessive} cycle phases: ${pronoun} get${verbSuffix} a period, ${beVerb} not on the combined pill, ${beVerb} not pregnant, postpartum or breastfeeding, and ${beVerb} not in perimenopause or menopause.`,
     },
     {
       term: CYCLE_MODE_LABELS['symptom-based'],
-      meaning: `one of those does not hold, so ${her} program follows the symptoms ${she} report${subject.verbEnding}.`,
+      meaning: `one of those does not hold, so ${possessive} program follows the symptoms ${pronoun} report${verbSuffix}.`,
     },
     {
       term: CYCLE_MODE_LABELS.manual,
-      meaning: `${her} contraception is one the product does not classify; you decide how ${her} program adapts.`,
+      meaning: `${possessive} contraception is one the product does not classify; you decide how ${possessive} program adapts.`,
     },
     {
       term: CYCLE_MODE_NOT_APPLICABLE,
-      meaning: `${her} gender skips the cycle form.`,
+      meaning: `${possessive} gender skips the cycle form.`,
     },
     {
       term: CYCLE_MODE_NOT_ANSWERED,

@@ -31,6 +31,7 @@ beforeAll(() => {
 });
 
 afterEach(() => {
+  vi.useRealTimers();
   window.localStorage.clear();
   window.history.replaceState({}, '', '/');
 });
@@ -104,16 +105,28 @@ function profileBlock(): HTMLElement {
   return screen.getByRole('region', { name: 'Profile' });
 }
 
+function assessmentCallBlock(): HTMLElement {
+  return screen.getByRole('region', { name: 'Assessment call' });
+}
+
 function invitationBlock(): HTMLElement {
   return screen.getByRole('region', { name: 'Invitation' });
 }
 
-function profileReading(label: string): HTMLElement {
-  const term = within(profileBlock()).getByText(label);
+function readingIn(block: HTMLElement, label: string): HTMLElement {
+  const term = within(block).getByText(label);
   const value = term.nextElementSibling;
   if (!(value instanceof HTMLElement)) throw new Error(`No ${label} value`);
 
   return value;
+}
+
+function profileReading(label: string): HTMLElement {
+  return readingIn(profileBlock(), label);
+}
+
+function assessmentCallReading(label: string): HTMLElement {
+  return readingIn(assessmentCallBlock(), label);
 }
 
 const LATENCY_TIMEOUT = { timeout: 3000 };
@@ -565,7 +578,7 @@ describe('the coach view of a client in onboarding', () => {
 });
 
 describe('the coach reading who a client is', () => {
-  it('lays the page out as profile, invitation, onboarding, subscription and measurements', () => {
+  it('lays the page out as profile, assessment call, invitation, onboarding, subscription and measurements', () => {
     // arrange
     const urlQuery = '?jstage=invited';
 
@@ -579,6 +592,7 @@ describe('the coach reading who a client is', () => {
       .map((id) => document.getElementById(id)?.textContent);
     expect(regions).toEqual([
       'Profile',
+      'Assessment call',
       'Invitation',
       'Onboarding',
       'Subscription',
@@ -586,7 +600,7 @@ describe('the coach reading who a client is', () => {
     ]);
   });
 
-  it('reads her age, gender, country, phone, goal, pricing and booking notes', () => {
+  it('reads her age, gender, country and phone in her profile', () => {
     // arrange
     const urlQuery = '?jstage=submitted';
 
@@ -594,6 +608,11 @@ describe('the coach reading who a client is', () => {
     renderDetails(urlQuery);
 
     // assert
+    expect(
+      within(profileBlock())
+        .getAllByRole('term')
+        .map((term) => term.textContent),
+    ).toEqual(['Age', 'Gender', 'Country', 'Phone']);
     expect(profileReading('Age')).toHaveTextContent(/^\d+$/);
     expect(profileReading('Gender')).toHaveTextContent('Female');
     expect(profileReading('Country')).toHaveTextContent('Romania');
@@ -602,14 +621,36 @@ describe('the coach reading who a client is', () => {
         name: '+40712345678',
       }),
     ).toHaveAttribute('href', 'tel:+40712345678');
-    expect(profileReading('Primary goal')).toHaveTextContent('Lose weight');
-    expect(profileReading('Pricing tier')).toHaveTextContent(/^Regular$/);
-    expect(profileReading('Booking notes')).toHaveTextContent(
+  });
+
+  it('reads when her call was, the goal she booked with, that she paid the regular price and her booking notes', () => {
+    // arrange
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 8, 30, 12));
+    const urlQuery = '?jstage=submitted';
+
+    // act
+    renderDetails(urlQuery);
+
+    // assert
+    expect(
+      within(assessmentCallBlock())
+        .getAllByRole('term')
+        .map((term) => term.textContent),
+    ).toEqual(['Call', 'Primary goal', 'Reduced price', 'Booking notes']);
+    expect(assessmentCallReading('Call')).toHaveTextContent(
+      /^Wed, Sep 23 · 3:00 PM$/,
+    );
+    expect(assessmentCallReading('Primary goal')).toHaveTextContent(
+      'Lose weight',
+    );
+    expect(assessmentCallReading('Reduced price')).toHaveTextContent(/^No$/);
+    expect(assessmentCallReading('Booking notes')).toHaveTextContent(
       'Wants a structured plan with someone to keep her accountable.',
     );
   });
 
-  it('names the reduced tier when she was offered reduced pricing', () => {
+  it('says yes to the reduced price when she was offered it', () => {
     // arrange
     const urlQuery = '?jstage=submitted&jreduced=1';
 
@@ -617,7 +658,7 @@ describe('the coach reading who a client is', () => {
     renderDetails(urlQuery);
 
     // assert
-    expect(profileReading('Pricing tier')).toHaveTextContent(/^Reduced$/);
+    expect(assessmentCallReading('Reduced price')).toHaveTextContent(/^Yes$/);
   });
 
   it('shows a dash for what she did not give when booking', () => {
@@ -629,7 +670,7 @@ describe('the coach reading who a client is', () => {
 
     // assert
     expect(profileReading('Phone')).toHaveTextContent(/^—$/);
-    expect(profileReading('Booking notes')).toHaveTextContent(/^—$/);
+    expect(assessmentCallReading('Booking notes')).toHaveTextContent(/^—$/);
   });
 });
 

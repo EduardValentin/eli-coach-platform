@@ -1,4 +1,4 @@
-import { addDays, subDays } from 'date-fns';
+import { addDays, set, subDays } from 'date-fns';
 import {
   emptyOnboarding,
   isBeforeStage,
@@ -33,6 +33,8 @@ import type { VisitorGender } from './visitorProfile';
 import type { PrototypeMode } from '../context/AppContext';
 
 export const SEEDED_BUNDLE = 3;
+
+const SEEDED_CALL_HOUR = 15;
 
 export type JourneySeed = {
   callId: string;
@@ -292,6 +294,15 @@ function seededPaidAt(seed: JourneySeed): Date {
   return subDays(now, 5);
 }
 
+function seededCallStart(paymentLinkSentAt: Date): Date {
+  return set(subDays(paymentLinkSentAt, 1), {
+    hours: SEEDED_CALL_HOUR,
+    minutes: 0,
+    seconds: 0,
+    milliseconds: 0,
+  });
+}
+
 export function seedJourney(seed: JourneySeed): ClientJourney {
   const {
     callId,
@@ -314,6 +325,7 @@ export function seedJourney(seed: JourneySeed): ClientJourney {
 
   return {
     callId,
+    callStartsAt: seededCallStart(paymentLinkSentAt),
     stage,
     identity,
     pricing,
@@ -363,6 +375,7 @@ export function heldJourney(
 ): ClientJourney {
   return {
     callId: booking.id,
+    callStartsAt: booking.startsAt,
     stage: 'held',
     identity: identityFromBooking(booking),
     pricing,

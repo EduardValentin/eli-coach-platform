@@ -148,6 +148,7 @@ export type ReviewCall = {
 
 export type ClientJourney = {
   callId: string;
+  callStartsAt: Date;
   stage: JourneyStage;
   identity: JourneyIdentity;
   pricing: JourneyPricing;
