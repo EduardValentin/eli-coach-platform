@@ -73,7 +73,7 @@ export function composeClientProfileFeature(
   const photos = new PostgresProgressPhotos(handles.database);
   const profiles = new PostgresClientProfiles(handles.database);
   const unitPreferences = new PostgresClientUnitPreferences(handles.database);
-  const photoAccess = {
+  const progressPhotoPorts = {
     clients: handles.measurementClients,
     photos,
     store: handles.progressPhotoStore,
@@ -92,7 +92,7 @@ export function composeClientProfileFeature(
           records,
         }),
         recordMeasurements: new RecordMeasurementsUseCase({
-          ...photoAccess,
+          ...progressPhotoPorts,
           profiles,
           records,
           photoIds: new RandomProgressPhotoIds(),
@@ -111,8 +111,8 @@ export function composeClientProfileFeature(
         }),
       }),
       progressPhotos: new ProgressPhotoController({
-        openProgressPhoto: new OpenProgressPhotoUseCase(photoAccess),
-        removeProgressPhoto: new RemoveProgressPhotoUseCase(photoAccess),
+        openProgressPhoto: new OpenProgressPhotoUseCase(progressPhotoPorts),
+        removeProgressPhoto: new RemoveProgressPhotoUseCase(progressPhotoPorts),
       }),
       unitPreference: new UnitPreferenceController({
         saveUnitPreference: new SaveUnitPreferenceUseCase({

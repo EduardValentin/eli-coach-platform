@@ -9,7 +9,7 @@ import { eq } from "drizzle-orm";
 
 import { clientProgressPhotosTable } from "~/features/client-profile/data/schema.server";
 
-type ProgressPhotoColumns = {
+export type StoredProgressPhoto = {
   id: string;
   entryId: string;
   clientId: string;
@@ -21,7 +21,7 @@ type ProgressPhotoColumns = {
   createdAt: Date;
 };
 
-export const PROGRESS_PHOTO_COLUMNS = {
+export const PROGRESS_PHOTO_SELECTION = {
   id: clientProgressPhotosTable.id,
   entryId: clientProgressPhotosTable.entryId,
   clientId: clientProgressPhotosTable.clientId,
@@ -46,7 +46,7 @@ export class PostgresProgressPhotos implements ProgressPhotos {
 
   async findById(photoId: string): Promise<ProgressPhoto | null> {
     const [row] = await this.database
-      .select(PROGRESS_PHOTO_COLUMNS)
+      .select(PROGRESS_PHOTO_SELECTION)
       .from(clientProgressPhotosTable)
       .where(eq(clientProgressPhotosTable.id, photoId))
       .limit(1);
@@ -67,6 +67,6 @@ export function progressPhotoSnapshotOf({
   storageKey,
   keyId,
   ...columns
-}: ProgressPhotoColumns): ProgressPhotoSnapshot {
+}: StoredProgressPhoto): ProgressPhotoSnapshot {
   return { ...columns, reference: { storageKey, keyId } };
 }

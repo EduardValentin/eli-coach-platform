@@ -146,6 +146,8 @@ const SUBMITTED_MEASUREMENTS: MeasurementRow[] = [
   {
     armCm: 30,
     hipsCm: 100,
+    id: "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d",
+    photos: [],
     recordedAt: "2026-09-21T10:00:00.000Z",
     thighCm: 58,
     waistCm: 80,

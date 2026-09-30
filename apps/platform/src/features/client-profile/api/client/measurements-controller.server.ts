@@ -114,9 +114,7 @@ export class ClientMeasurementsController {
     const result = await this.options.recordMeasurements.execute({
       authSubjectId: client.authSubjectId,
       values,
-      consentGiven:
-        body.formData.get(RECORD_MEASUREMENTS_FIELDS.photoConsent) ===
-        PHOTO_CONSENT_GIVEN,
+      consentGiven: photoConsentGivenIn(body.formData),
       photos: await receivedPhotosOf(body.formData),
     });
 
@@ -180,6 +178,13 @@ function entryValuesOf(formData: FormData): MeasurementEntryRequest | null {
   } catch {
     return null;
   }
+}
+
+function photoConsentGivenIn(formData: FormData): boolean {
+  return (
+    formData.get(RECORD_MEASUREMENTS_FIELDS.photoConsent) ===
+    PHOTO_CONSENT_GIVEN
+  );
 }
 
 async function receivedPhotosOf(

@@ -11,7 +11,7 @@ import { asc, eq } from "drizzle-orm";
 
 import { clientMeasurementsTable } from "~/features/client-profile/data/schema.server";
 
-export type MeasurementColumns = {
+export type StoredMeasurement = {
   recordedAt: Date;
   weightKg: number;
   waistCm: number;
@@ -20,7 +20,7 @@ export type MeasurementColumns = {
   armCm: number | null;
 };
 
-export const MEASUREMENT_COLUMNS = {
+export const MEASUREMENT_SELECTION = {
   recordedAt: clientMeasurementsTable.recordedAt,
   weightKg: clientMeasurementsTable.weightKg,
   waistCm: clientMeasurementsTable.waistCm,
@@ -34,13 +34,13 @@ export class PostgresClientMeasurements implements ClientMeasurementsSource {
 
   async listByClientId(clientId: string): Promise<MeasurementEntry[]> {
     const rows = await this.database
-      .select(MEASUREMENT_COLUMNS)
+      .select(MEASUREMENT_SELECTION)
       .from(clientMeasurementsTable)
       .where(eq(clientMeasurementsTable.clientId, clientId))
       .orderBy(asc(clientMeasurementsTable.recordedAt));
 
     return rows.flatMap((row) => {
-      const entry = measurementEntryFromColumns(row);
+      const entry = measurementEntryOfStored(row);
 
       return entry ? [entry] : [];
     });
@@ -53,25 +53,28 @@ export async function recordMeasurementEntry(
 ): Promise<void> {
   await transaction
     .insert(clientMeasurementsTable)
-    .values(measurementRowOf(input.clientId, input.entry));
+    .values(measurementInsertOf(input.clientId, input.entry));
 }
 
-export function measurementEntryFromColumns(
-  columns: MeasurementColumns,
+export function measurementEntryOfStored(
+  stored: StoredMeasurement,
 ): MeasurementEntry | null {
   return measurementEntryOf(
     {
-      weightKg: columns.weightKg,
-      waistCm: columns.waistCm,
-      hipsCm: columns.hipsCm ?? undefined,
-      thighCm: columns.thighCm ?? undefined,
-      armCm: columns.armCm ?? undefined,
+      weightKg: stored.weightKg,
+      waistCm: stored.waistCm,
+      hipsCm: stored.hipsCm ?? undefined,
+      thighCm: stored.thighCm ?? undefined,
+      armCm: stored.armCm ?? undefined,
     },
-    columns.recordedAt,
+    stored.recordedAt,
   );
 }
 
-export function measurementRowOf(clientId: string, entry: MeasurementEntry) {
+export function measurementInsertOf(
+  clientId: string,
+  entry: MeasurementEntry,
+): typeof clientMeasurementsTable.$inferInsert {
   return {
     clientId,
     recordedAt: entry.recordedAt,
