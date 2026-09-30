@@ -3,13 +3,14 @@ import type {
   OnboardingClient,
   OnboardingClients,
 } from "@eli-coach-platform/domain/client-onboarding";
+import type { MeasurementClients } from "@eli-coach-platform/domain/client-profile";
 import type { UnitPreferenceClients } from "@eli-coach-platform/domain/unit-preference";
 import { eq, type SQL } from "drizzle-orm";
 
 import { clientsTable } from "~/features/coaching-sales/data/schema.server";
 
 export class PostgresOnboardingClients
-  implements OnboardingClients, UnitPreferenceClients
+  implements OnboardingClients, UnitPreferenceClients, MeasurementClients
 {
   constructor(private readonly database: DatabaseClient) {}
 

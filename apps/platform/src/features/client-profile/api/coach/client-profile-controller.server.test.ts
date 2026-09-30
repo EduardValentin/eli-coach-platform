@@ -1,9 +1,11 @@
 import type { AccountSnapshot } from "@eli-coach-platform/domain/account";
-import type {
-  ClientProfileReading,
-  ReadClientProfileUseCase,
+import {
+  MeasurementHistory,
+  type ClientProfileReading,
+  type MeasurementRecord,
+  type ReadClientMeasurementHistoryUseCase,
+  type ReadClientProfileUseCase,
 } from "@eli-coach-platform/domain/client-profile";
-import type { MeasurementEntry } from "@eli-coach-platform/domain/measurement";
 import { describe, expect, it, vi } from "vitest";
 
 import type { AccountsFeature } from "~/features/accounts/server/accounts-composition.server";
@@ -20,6 +22,9 @@ import {
 import { ClientProfileController } from "./client-profile-controller.server";
 
 const CLIENT_ID = "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22";
+const FIRST_ENTRY_ID = "0f5c7e1a-2b3d-4c5e-8f9a-1b2c3d4e5f60";
+const SECOND_ENTRY_ID = "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d";
+const FRONT_PHOTO_ID = "2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e";
 
 const COACH: AccountSnapshot = {
   authSubjectId: "user_eli",
@@ -164,15 +169,38 @@ describe("ClientProfileController load", () => {
 });
 
 describe("ClientProfileController load measurements", () => {
-  it("hands the coach her dated entries as rows, with the circumferences she skipped left empty", async () => {
+  it("hands the coach her entries newest first as rows with their photo ids and never where the photos are stored", async () => {
     // arrange
-    const { controller, listMeasurements } = createController({
-      measurements: [
+    const { controller, readClientMeasurementHistory } = createController({
+      records: [
         {
+          id: FIRST_ENTRY_ID,
+          recordedAt: new Date("2026-09-01T09:00:00.000Z"),
+          weightKg: 66.1,
+          waistCm: 74,
+          photos: [],
+        },
+        {
+          id: SECOND_ENTRY_ID,
           recordedAt: new Date("2026-09-29T09:00:00.000Z"),
           weightKg: 64.5,
           waistCm: 72,
           hipsCm: 96.5,
+          photos: [
+            {
+              id: FRONT_PHOTO_ID,
+              entryId: SECOND_ENTRY_ID,
+              clientId: CLIENT_ID,
+              view: "front",
+              reference: {
+                storageKey: `${CLIENT_ID}/${SECOND_ENTRY_ID}/${FRONT_PHOTO_ID}.bin`,
+                keyId: "local-1",
+              },
+              mimeType: "image/jpeg",
+              sizeBytes: 182_431,
+              createdAt: new Date("2026-09-29T09:00:00.000Z"),
+            },
+          ],
         },
       ],
     });
@@ -183,20 +211,34 @@ describe("ClientProfileController load measurements", () => {
     // assert
     expect(rows).toEqual([
       {
+        id: SECOND_ENTRY_ID,
         recordedAt: "2026-09-29T09:00:00.000Z",
         weightKg: 64.5,
         waistCm: 72,
         hipsCm: 96.5,
         thighCm: null,
         armCm: null,
+        photos: [{ id: FRONT_PHOTO_ID, view: "front" }],
+      },
+      {
+        id: FIRST_ENTRY_ID,
+        recordedAt: "2026-09-01T09:00:00.000Z",
+        weightKg: 66.1,
+        waistCm: 74,
+        hipsCm: null,
+        thighCm: null,
+        armCm: null,
+        photos: [],
       },
     ]);
-    expect(listMeasurements).toHaveBeenCalledWith(CLIENT_ID);
+    expect(readClientMeasurementHistory).toHaveBeenCalledWith({
+      clientId: CLIENT_ID,
+    });
   });
 
   it("answers not found to an id that is not a uuid without reading any measurement", async () => {
     // arrange
-    const { controller, listMeasurements } = createController();
+    const { controller, readClientMeasurementHistory } = createController();
 
     // act
     const thrown = await captureThrown(() =>
@@ -205,12 +247,12 @@ describe("ClientProfileController load measurements", () => {
 
     // assert
     expect((thrown as Response).status).toBe(404);
-    expect(listMeasurements).not.toHaveBeenCalled();
+    expect(readClientMeasurementHistory).not.toHaveBeenCalled();
   });
 
   it("refuses a client account without reading any measurement", async () => {
     // arrange
-    const { controller, listMeasurements } = createController();
+    const { controller, readClientMeasurementHistory } = createController();
 
     // act
     const thrown = await captureThrown(() =>
@@ -222,28 +264,30 @@ describe("ClientProfileController load measurements", () => {
 
     // assert
     expect((thrown as Response).status).toBe(403);
-    expect(listMeasurements).not.toHaveBeenCalled();
+    expect(readClientMeasurementHistory).not.toHaveBeenCalled();
   });
 });
 
 function createController(
   options: {
     reading?: ClientProfileReading | null;
-    measurements?: MeasurementEntry[];
+    records?: MeasurementRecord[];
   } = {},
 ) {
   const readClientProfile = vi.fn().mockResolvedValue(options.reading ?? null);
-  const listMeasurements = vi
+  const readClientMeasurementHistory = vi
     .fn()
-    .mockResolvedValue(options.measurements ?? []);
+    .mockResolvedValue(MeasurementHistory.of(options.records ?? []));
   const controller = new ClientProfileController({
-    measurements: { listByClientId: listMeasurements },
+    readClientMeasurementHistory: {
+      execute: readClientMeasurementHistory,
+    } as unknown as ReadClientMeasurementHistoryUseCase,
     readClientProfile: {
       execute: readClientProfile,
     } as unknown as ReadClientProfileUseCase,
   });
 
-  return { controller, listMeasurements, readClientProfile };
+  return { controller, readClientMeasurementHistory, readClientProfile };
 }
 
 function coachArgs(options: { session?: ResolvedSession } = {}) {

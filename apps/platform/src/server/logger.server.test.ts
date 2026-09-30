@@ -496,4 +496,122 @@ describe("createConsoleLogger", () => {
       },
     );
   });
+
+  it("logs a saved measurement entry by client and entry only, never its values", () => {
+    // arrange
+    const consoleInfo = vi
+      .spyOn(console, "info")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+
+    // act
+    logger.measurementEntrySaved({ clientId: "client-1", entryId: "entry-1" });
+
+    // assert
+    expect(consoleInfo).toHaveBeenCalledWith("Measurement entry saved.", {
+      clientId: "client-1",
+      entryId: "entry-1",
+      eventCategory: "measurement_entry_saved",
+    });
+  });
+
+  it("logs a stored progress photo by ids, view and byte counts only", () => {
+    // arrange
+    const consoleInfo = vi
+      .spyOn(console, "info")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+
+    // act
+    logger.progressPhotoStored({
+      clientId: "client-1",
+      entryId: "entry-1",
+      view: "front",
+      receivedBytes: 4_182_000,
+      storedBytes: 312_400,
+    });
+
+    // assert
+    expect(consoleInfo).toHaveBeenCalledWith("Progress photo stored.", {
+      clientId: "client-1",
+      entryId: "entry-1",
+      eventCategory: "progress_photo_stored",
+      receivedBytes: 4_182_000,
+      storedBytes: 312_400,
+      view: "front",
+    });
+  });
+
+  it("logs a refused progress photo by ids, view, byte count and reason only", () => {
+    // arrange
+    const consoleWarn = vi
+      .spyOn(console, "warn")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+
+    // act
+    logger.progressPhotoRefused({
+      clientId: "client-1",
+      entryId: "entry-1",
+      view: "side",
+      receivedBytes: 12,
+      reason: "rendition-refused",
+    });
+
+    // assert
+    expect(consoleWarn).toHaveBeenCalledWith("Progress photo refused.", {
+      clientId: "client-1",
+      entryId: "entry-1",
+      eventCategory: "progress_photo_refused",
+      reason: "rendition-refused",
+      receivedBytes: 12,
+      view: "side",
+    });
+  });
+
+  it("logs a deleted progress photo by ids and view only", () => {
+    // arrange
+    const consoleInfo = vi
+      .spyOn(console, "info")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+
+    // act
+    logger.progressPhotoDeleted({
+      clientId: "client-1",
+      entryId: "entry-1",
+      photoId: "photo-1",
+      view: "back",
+    });
+
+    // assert
+    expect(consoleInfo).toHaveBeenCalledWith("Progress photo deleted.", {
+      clientId: "client-1",
+      entryId: "entry-1",
+      eventCategory: "progress_photo_deleted",
+      photoId: "photo-1",
+      view: "back",
+    });
+  });
+
+  it("logs a refused progress photo request by requester role and photo only", () => {
+    // arrange
+    const consoleWarn = vi
+      .spyOn(console, "warn")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+
+    // act
+    logger.progressPhotoAccessRefused({
+      requesterRole: "CLIENT",
+      photoId: "photo-1",
+    });
+
+    // assert
+    expect(consoleWarn).toHaveBeenCalledWith("Progress photo access refused.", {
+      eventCategory: "progress_photo_access_refused",
+      photoId: "photo-1",
+      requesterRole: "CLIENT",
+    });
+  });
 });

@@ -1,21 +1,90 @@
 import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
-import type { MeasurementEntry } from "@eli-coach-platform/domain/measurement";
+import {
+  PROGRESS_PHOTO_VIEWS,
+  type MeasurementDueLine,
+  type MeasurementRecord,
+  type ProgressPhotoView,
+} from "@eli-coach-platform/domain/client-profile";
 import { z } from "zod";
 
 import { subjectPronoun } from "~/features/assessment-calls/contracts/visitor-profile";
+import { unitPreferenceSchema } from "~/features/client-profile/contracts/unit-preference";
+
+const progressPhotoViewSchema = z.enum(PROGRESS_PHOTO_VIEWS);
 
 const measurementRowSchema = z.object({
+  id: z.uuid(),
   recordedAt: z.iso.datetime(),
   weightKg: z.number(),
   waistCm: z.number(),
   hipsCm: z.number().nullable(),
   thighCm: z.number().nullable(),
   armCm: z.number().nullable(),
+  photos: z.array(z.object({ id: z.uuid(), view: progressPhotoViewSchema })),
 });
 
 export type MeasurementRow = z.infer<typeof measurementRowSchema>;
 
-export const measurementRowsSchema = z.array(measurementRowSchema);
+export const measurementHistorySchema = z.array(measurementRowSchema);
+
+const MEASUREMENT_DUE_LINES = [
+  "weigh-in",
+  "measurements",
+] as const satisfies readonly MeasurementDueLine[];
+
+const measurementDueLineSchema = z.enum(MEASUREMENT_DUE_LINES).nullable();
+
+export const measurementsPageSchema = z.object({
+  history: measurementHistorySchema,
+  consentedAt: z.iso.datetime().nullable(),
+  units: unitPreferenceSchema,
+  dueLine: measurementDueLineSchema,
+});
+
+export type MeasurementsPage = z.infer<typeof measurementsPageSchema>;
+
+export const measurementsNudgeSchema = z.object({
+  dueLine: measurementDueLineSchema,
+});
+
+export type MeasurementsNudge = z.infer<typeof measurementsNudgeSchema>;
+
+export const RECORD_MEASUREMENTS_FIELDS = {
+  entry: "entry",
+  photoConsent: "photoConsent",
+} as const;
+
+export const PHOTO_CONSENT_GIVEN = "given";
+
+export const measurementEntryRequestSchema = z.object({
+  weightKg: z.number(),
+  waistCm: z.number(),
+  hipsCm: z.number().optional(),
+  thighCm: z.number().optional(),
+  armCm: z.number().optional(),
+});
+
+export type MeasurementEntryRequest = z.infer<
+  typeof measurementEntryRequestSchema
+>;
+
+export const recordMeasurementsResponseSchema = z.object({
+  entryId: z.uuid(),
+  photos: z.record(
+    progressPhotoViewSchema,
+    z.enum(["stored", "refused", "absent"]),
+  ),
+});
+
+export const measurementsRefusalSchema = z.object({
+  error: z.literal("not-on-journey"),
+});
+
+const PROGRESS_PHOTO_VIEW_LABELS = {
+  front: "Front",
+  side: "Side",
+  back: "Back",
+} as const satisfies Record<ProgressPhotoView, string>;
 
 export const MEASUREMENTS_COPY = {
   title: "Measurements",
@@ -27,17 +96,73 @@ export const MEASUREMENTS_COPY = {
   caption: "Measurements history, newest first",
   columns: ["Date", "Weight", "Waist", "Hips", "Thigh", "Arm", "Ratio"],
   missing: "—",
+  client: {
+    empty: "Nothing recorded yet. Your first set goes in with your answers.",
+    addFirst: "Add your first measurements",
+    add: "Add",
+  },
+  sheet: {
+    title: "Add measurements",
+    description:
+      "Same time of day, same tape, same spots — that is what keeps them comparable.",
+    save: "Save measurements",
+    cancel: "Cancel",
+  },
+  photos: {
+    caption: "Progress photos",
+    optional: "(optional)",
+    locked: "Tick the box to add your photos.",
+    consented: (date: string) =>
+      `You agreed to share progress photos on ${date}.`,
+    viewLabels: PROGRESS_PHOTO_VIEW_LABELS,
+    addView: (view: ProgressPhotoView) => `Add ${view} photo`,
+    addPhoto: "Add photo",
+    removeView: (view: ProgressPhotoView) => `Remove ${view} photo`,
+    image: (view: ProgressPhotoView) =>
+      `${PROGRESS_PHOTO_VIEW_LABELS[view]} photo`,
+    refused: "Choose a JPEG, PNG or WebP under 10 MB.",
+  },
+  photoView: {
+    open: "View photos",
+    openFrom: (date: string) => `View photos from ${date}`,
+    title: (date: string) => `Photos from ${date}`,
+    clientDescription: "Only you and your coach can see these photos.",
+    coachDescription: (firstName: string) =>
+      `Only you and ${firstName} can see these photos.`,
+    missing: (view: ProgressPhotoView) => `No ${view} photo`,
+    remove: "Remove",
+    close: "Close",
+  },
+  removeConfirm: {
+    title: "Remove this photo?",
+    description:
+      "It is deleted for you and your coach. Your measurements stay.",
+    confirm: "Remove",
+    cancel: "Keep",
+  },
+  toasts: {
+    saved: "Measurements saved.",
+    photoRefused: (view: ProgressPhotoView) =>
+      `The ${view} photo could not be processed, so it was not saved.`,
+    failed: "Your measurements could not be saved. Try again.",
+  },
+  nudge: {
+    "weigh-in": "Your weekly weigh-in is due",
+    measurements: "Time for your measurements and photos",
+  } satisfies Record<MeasurementDueLine, string>,
 } as const;
 
 export function presentMeasurements(
-  measurements: readonly MeasurementEntry[],
+  records: readonly MeasurementRecord[],
 ): MeasurementRow[] {
-  return measurements.map((entry) => ({
-    recordedAt: entry.recordedAt.toISOString(),
-    weightKg: entry.weightKg,
-    waistCm: entry.waistCm,
-    hipsCm: entry.hipsCm ?? null,
-    thighCm: entry.thighCm ?? null,
-    armCm: entry.armCm ?? null,
+  return records.map((record) => ({
+    id: record.id,
+    recordedAt: record.recordedAt.toISOString(),
+    weightKg: record.weightKg,
+    waistCm: record.waistCm,
+    hipsCm: record.hipsCm ?? null,
+    thighCm: record.thighCm ?? null,
+    armCm: record.armCm ?? null,
+    photos: record.photos.map((photo) => ({ id: photo.id, view: photo.view })),
   }));
 }

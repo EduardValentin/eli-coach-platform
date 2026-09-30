@@ -50,6 +50,23 @@ describe("composeClientProfileFeature", () => {
     ).toHaveBeenCalledWith("user_uninvited");
   });
 
+  it("names no due line for an account with no client record through the measurement clients it is handed", async () => {
+    // arrange
+    const handles = createHandles();
+    const { feature } = composeClientProfileFeature(handles);
+
+    // act
+    const nudge = await feature.clientMeasurements.loadNudge(
+      accountArgs({ account: CLIENT }),
+    );
+
+    // assert
+    expect(nudge).toEqual({ dueLine: null });
+    expect(handles.measurementClients.findByAuthSubjectId).toHaveBeenCalledWith(
+      "user_uninvited",
+    );
+  });
+
   it("answers not found to the coach's profile read of a client no one knows", async () => {
     // arrange
     const handles = createHandles();
@@ -74,6 +91,18 @@ function createHandles() {
     clientIdentities: { findByClientId: vi.fn().mockResolvedValue(null) },
     clock: { now: () => new Date("2026-09-28T10:00:00.000Z") },
     database: createUnreachableDatabase(),
+    incidents: {
+      measurementEntrySaved: vi.fn(),
+      progressPhotoStored: vi.fn(),
+      progressPhotoRefused: vi.fn(),
+      progressPhotoDeleted: vi.fn(),
+      progressPhotoAccessRefused: vi.fn(),
+    },
+    measurementClients: {
+      findByAuthSubjectId: vi.fn().mockResolvedValue(null),
+    },
+    progressPhotoRenditions: { render: vi.fn() },
+    progressPhotoStore: { store: vi.fn(), open: vi.fn(), delete: vi.fn() },
     unitPreferenceClients: {
       findByAuthSubjectId: vi.fn().mockResolvedValue(null),
     },

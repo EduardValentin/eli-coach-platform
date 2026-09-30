@@ -2,6 +2,7 @@ import type { AcquisitionIncidents } from "@eli-coach-platform/domain/acquisitio
 import type { AssessmentCallIncidents } from "@eli-coach-platform/domain/assessment-call";
 import type { ClientInvitationIncidents } from "@eli-coach-platform/domain/client-invitation";
 import type { ClientOnboardingIncidents } from "@eli-coach-platform/domain/client-onboarding";
+import type { MeasurementIncidents } from "@eli-coach-platform/domain/client-profile";
 import type { ClientRosterIncidents } from "@eli-coach-platform/domain/client-roster";
 import type { CoachingSalesIncidents } from "@eli-coach-platform/domain/payment-link";
 import type { WaitlistIncidents } from "@eli-coach-platform/domain/waitlist";
@@ -13,6 +14,7 @@ type ConsoleLogger = AcquisitionIncidents &
   ClientOnboardingIncidents &
   ClientRosterIncidents &
   CoachingSalesIncidents &
+  MeasurementIncidents &
   PaymentWebhookIncidents &
   WaitlistIncidents;
 
@@ -66,6 +68,13 @@ export function createConsoleLogger(): ConsoleLogger {
       console.info("Client invitation re-sent.", {
         eventCategory: "client_invitation_resent",
         invitationId,
+      });
+    },
+    measurementEntrySaved: ({ clientId, entryId }) => {
+      console.info("Measurement entry saved.", {
+        clientId,
+        entryId,
+        eventCategory: "measurement_entry_saved",
       });
     },
     notificationFailed: ({ recipient }) => {
@@ -174,6 +183,54 @@ export function createConsoleLogger(): ConsoleLogger {
       console.error("Payment link email failed.", {
         assessmentCallId,
         errorCategory: "payment_link_email_failure",
+      });
+    },
+    progressPhotoAccessRefused: ({ photoId, requesterRole }) => {
+      console.warn("Progress photo access refused.", {
+        eventCategory: "progress_photo_access_refused",
+        photoId,
+        requesterRole,
+      });
+    },
+    progressPhotoDeleted: ({ clientId, entryId, photoId, view }) => {
+      console.info("Progress photo deleted.", {
+        clientId,
+        entryId,
+        eventCategory: "progress_photo_deleted",
+        photoId,
+        view,
+      });
+    },
+    progressPhotoRefused: ({
+      clientId,
+      entryId,
+      reason,
+      receivedBytes,
+      view,
+    }) => {
+      console.warn("Progress photo refused.", {
+        clientId,
+        entryId,
+        eventCategory: "progress_photo_refused",
+        reason,
+        receivedBytes,
+        view,
+      });
+    },
+    progressPhotoStored: ({
+      clientId,
+      entryId,
+      receivedBytes,
+      storedBytes,
+      view,
+    }) => {
+      console.info("Progress photo stored.", {
+        clientId,
+        entryId,
+        eventCategory: "progress_photo_stored",
+        receivedBytes,
+        storedBytes,
+        view,
       });
     },
     retryableDeliveryAuditPending: ({ requestId }) => {
