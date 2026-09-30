@@ -379,7 +379,7 @@ describe("the cycle mode explanation", () => {
     await user.hover(cycleModeInfoButton());
 
     // assert
-    const tooltip = await screen.findByRole("tooltip");
+    const tooltip = await screen.findByRole("dialog");
     expect(tooltip).toHaveTextContent(PHASE_BASED_FOR_HER);
     expect(tooltip).toHaveTextContent(
       "Symptom-based — one of those does not hold, so her program follows the symptoms she reports.",
@@ -404,7 +404,7 @@ describe("the cycle mode explanation", () => {
 
     // assert
     expect(cycleModeInfoButton()).toHaveFocus();
-    expect(await screen.findByRole("tooltip")).toHaveTextContent(
+    expect(await screen.findByRole("dialog")).toHaveTextContent(
       PHASE_BASED_FOR_HER,
     );
   });
@@ -420,7 +420,7 @@ describe("the cycle mode explanation", () => {
     await user.hover(cycleModeInfoButton());
 
     // assert
-    expect(await screen.findByRole("tooltip")).toHaveTextContent(
+    expect(await screen.findByRole("dialog")).toHaveTextContent(
       "Phase-based — his program follows his cycle phases: he gets a period, is not on the combined pill, is not pregnant, postpartum or breastfeeding, and is not in perimenopause or menopause.",
     );
   });
@@ -436,7 +436,7 @@ describe("the cycle mode explanation", () => {
     await user.hover(cycleModeInfoButton());
 
     // assert
-    const tooltip = await screen.findByRole("tooltip");
+    const tooltip = await screen.findByRole("dialog");
     expect(tooltip).toHaveTextContent(
       "Phase-based — their program follows their cycle phases: they get a period, are not on the combined pill, are not pregnant, postpartum or breastfeeding, and are not in perimenopause or menopause.",
     );

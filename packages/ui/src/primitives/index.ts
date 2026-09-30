@@ -15,6 +15,7 @@ export { CheckboxField } from "./checkbox-field";
 export { ChoiceGroup, ChoiceOption } from "./choice-group";
 export { FieldError } from "./field-error";
 export { FieldHint } from "./field-hint";
+export { IconHint } from "./icon-hint";
 export { IconButton } from "./icon-button";
 export { Input } from "./input";
 export { FieldCaption, Label, LabelSuffix, Legend } from "./label";
@@ -53,4 +54,3 @@ export {
   type TableSort,
 } from "./table";
 export { Textarea } from "./textarea";
-export { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
