@@ -3,6 +3,7 @@ import * as React from "react";
 import { Dialog as RadixDialog } from "radix-ui";
 
 import { cn } from "../lib/cn";
+import { useReturnFocusToOpener } from "./use-return-focus-to-opener";
 
 export const Dialog = RadixDialog.Root;
 
@@ -50,20 +51,8 @@ export function DialogContent({
   title,
   ...props
 }: DialogContentProps) {
-  const opener = React.useRef<HTMLElement | null>(null);
+  const { rememberOpener, returnFocusToOpener } = useReturnFocusToOpener();
   const sizeClasses = SIZE_CLASSES[size];
-
-  const rememberOpener = () => {
-    opener.current =
-      document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null;
-  };
-
-  const returnFocusToOpener = (event: Event) => {
-    event.preventDefault();
-    opener.current?.focus();
-  };
 
   return (
     <RadixDialog.Portal>

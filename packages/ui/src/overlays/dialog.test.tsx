@@ -42,6 +42,45 @@ function ReviewAnswers(props: { size?: "compact" | "wide" }) {
   );
 }
 
+function PhotosFromSeptember() {
+  const [photosOpen, setPhotosOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [frontKept, setFrontKept] = useState(true);
+
+  return (
+    <>
+      <button onClick={() => setPhotosOpen(true)} type="button">
+        View photos
+      </button>
+      <Dialog onOpenChange={setPhotosOpen} open={photosOpen}>
+        <DialogContent
+          description="Front, side and back."
+          footer={null}
+          size="wide"
+          title="Photos from 29 September"
+        >
+          {frontKept && (
+            <button onClick={() => setConfirmOpen(true)} type="button">
+              Remove front photo
+            </button>
+          )}
+        </DialogContent>
+      </Dialog>
+      <Dialog onOpenChange={setConfirmOpen} open={confirmOpen}>
+        <DialogContent
+          description="It is deleted for you and your coach."
+          footer={
+            <button onClick={() => setFrontKept(false)} type="button">
+              Remove
+            </button>
+          }
+          title="Remove this photo?"
+        />
+      </Dialog>
+    </>
+  );
+}
+
 async function openReview(options?: { size?: "compact" | "wide" }) {
   const user = userEvent.setup();
   render(<ReviewAnswers size={options?.size} />);
@@ -174,5 +213,27 @@ describe("DialogContent", () => {
       "overflow-y-auto",
       "sm:max-w-md",
     );
+  });
+
+  it("hands focus to the dialog it was opened from when its opener is gone", async () => {
+    // arrange
+    const user = userEvent.setup();
+    render(<PhotosFromSeptember />);
+    await user.click(screen.getByRole("button", { name: "View photos" }));
+    await user.click(
+      screen.getByRole("button", { name: "Remove front photo" }),
+    );
+    await user.click(screen.getByRole("button", { name: "Remove" }));
+
+    // act
+    await user.keyboard("{Escape}");
+
+    // assert
+    expect(
+      screen.queryByRole("dialog", { name: "Remove this photo?" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("dialog", { name: "Photos from 29 September" }),
+    ).toHaveFocus();
   });
 });
