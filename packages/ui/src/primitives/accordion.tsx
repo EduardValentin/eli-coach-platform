@@ -25,11 +25,24 @@ export function AccordionItem({
 
 type AccordionHeadingTag = "h2" | "h3";
 
+type AccordionTriggerLayout = "section" | "title";
+
+const TRIGGER_LAYOUT_CLASS: Record<AccordionTriggerLayout, string> = {
+  section: "items-start py-4",
+  title: "items-center py-0",
+};
+
+const CHEVRON_LAYOUT_CLASS: Record<AccordionTriggerLayout, string> = {
+  section: "translate-y-0.5",
+  title: "",
+};
+
 type AccordionTriggerProps = React.ComponentPropsWithoutRef<
   typeof RadixAccordion.Trigger
 > & {
   headingTag?: AccordionHeadingTag;
   headingId?: string;
+  layout?: AccordionTriggerLayout;
 };
 
 export function AccordionTrigger({
@@ -37,6 +50,7 @@ export function AccordionTrigger({
   className,
   headingTag: HeadingTag = "h3",
   headingId,
+  layout = "section",
   ...props
 }: AccordionTriggerProps) {
   return (
@@ -44,7 +58,8 @@ export function AccordionTrigger({
       <HeadingTag className="flex" id={headingId}>
         <RadixAccordion.Trigger
           className={cn(
-            "flex flex-1 items-start justify-between gap-4 rounded-field py-4 text-left text-sm font-medium transition-colors hover:text-primary disabled:pointer-events-none disabled:opacity-50 [&[data-state=open]>svg]:rotate-180",
+            "flex flex-1 justify-between gap-4 rounded-field text-left text-sm font-medium transition-colors hover:text-primary disabled:pointer-events-none disabled:opacity-50 [&[data-state=open]>svg]:rotate-180",
+            TRIGGER_LAYOUT_CLASS[layout],
             className,
           )}
           data-slot="accordion-trigger"
@@ -53,7 +68,10 @@ export function AccordionTrigger({
           {children}
           <ChevronDown
             aria-hidden="true"
-            className="pointer-events-none size-4 shrink-0 translate-y-0.5 text-text-secondary motion-safe:transition-transform motion-safe:duration-200"
+            className={cn(
+              "pointer-events-none size-4 shrink-0 text-text-secondary motion-safe:transition-transform motion-safe:duration-200",
+              CHEVRON_LAYOUT_CLASS[layout],
+            )}
           />
         </RadixAccordion.Trigger>
       </HeadingTag>

@@ -163,4 +163,34 @@ describe("Accordion", () => {
     expect(heading).toHaveClass("flex");
     expect(heading).toHaveAttribute("data-state", "closed");
   });
+
+  it("sets a section trigger at the top of its row with room above and below", () => {
+    // arrange, act
+    render(<OnboardingForms />);
+
+    // assert
+    const trigger = screen.getByRole("button", { name: "Lifestyle" });
+    expect(trigger).toHaveClass("items-start", "py-4");
+    expect(trigger.querySelector("svg")).toHaveClass("translate-y-0.5");
+  });
+
+  it("centres a title trigger without padding", () => {
+    // arrange, act
+    render(
+      <Accordion collapsible type="single">
+        <AccordionItem value="call">
+          <AccordionTrigger headingTag="h2" layout="title">
+            Assessment call
+          </AccordionTrigger>
+          <AccordionContent>Booked for Monday.</AccordionContent>
+        </AccordionItem>
+      </Accordion>,
+    );
+
+    // assert
+    const trigger = screen.getByRole("button", { name: "Assessment call" });
+    expect(trigger).toHaveClass("items-center", "py-0");
+    expect(trigger).not.toHaveClass("items-start", "py-4");
+    expect(trigger.querySelector("svg")).not.toHaveClass("translate-y-0.5");
+  });
 });

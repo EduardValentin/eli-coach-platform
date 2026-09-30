@@ -89,11 +89,11 @@ const PENDING_VALUES: ProfileValues = {
   clientNotes: ABSENT_VALUE,
 };
 
-function weighed(kg: number | null): string {
+function weightReading(kg: number | null): string {
   return kg === null ? ABSENT_VALUE : formatCanonicalMeasure("weight", kg);
 }
 
-function measured(cm: number | null): string {
+function heightReading(cm: number | null): string {
   return cm === null ? ABSENT_VALUE : formatCanonicalMeasure("height", cm);
 }
 
@@ -103,9 +103,9 @@ function profileValues(profile: ClientProfileView, age: number): ProfileValues {
     gender: labelForGender(profile.gender),
     country: findCountry(profile.country)?.name ?? profile.country,
     phone: <PhoneLink phone={profile.phone} />,
-    height: measured(profile.heightCm),
-    startingWeight: weighed(profile.startingWeightKg),
-    currentWeight: weighed(profile.currentWeightKg),
+    height: heightReading(profile.heightCm),
+    startingWeight: weightReading(profile.startingWeightKg),
+    currentWeight: weightReading(profile.currentWeightKg),
     activityLevel: profile.activityLevel ?? ABSENT_VALUE,
     primaryGoal: profile.primaryGoal ?? ABSENT_VALUE,
     dietaryRestrictions: profile.dietaryRestrictions,

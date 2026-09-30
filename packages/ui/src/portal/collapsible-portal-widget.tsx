@@ -36,9 +36,9 @@ export function CollapsiblePortalWidget({
       <Accordion collapsible type="single">
         <AccordionItem value={headingId}>
           <AccordionTrigger
-            className="items-center py-0 [&>svg]:translate-y-0"
             headingId={headingId}
             headingTag="h2"
+            layout="title"
           >
             <span className={cn("flex items-center gap-2", WIDGET_TITLE_CLASS)}>
               {icon}
