@@ -2,6 +2,7 @@ import { DeadEndPanel } from "@eli-coach-platform/ui/layout";
 import { PORTAL_PAGE_TITLE_CLASS } from "@eli-coach-platform/ui/lib";
 import { Avatar } from "@eli-coach-platform/ui/primitives";
 import { ArrowLeft, UserX } from "lucide-react";
+import { useState } from "react";
 import {
   isRouteErrorResponse,
   Link,
@@ -17,6 +18,7 @@ import { MEASUREMENTS_COPY } from "~/features/client-profile/contracts/measureme
 import { clientProfileContext } from "~/features/client-profile/server/guards/client-profile-context.server";
 import { ClientProfileBlock } from "~/features/client-profile/ui/coach/profile/client-profile-block";
 import { MeasurementsTable } from "~/features/client-profile/ui/shared/measurements/measurements-table";
+import { PhotoViewDialog } from "~/features/client-profile/ui/shared/photos/photo-view-dialog";
 import { COACH_CLIENTS_PATH } from "~/features/coaching-sales/contracts/paths";
 import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
 import { AssessmentCallBlock } from "~/features/coaching-sales/ui/coach/clients/assessment-call-block";
@@ -67,6 +69,8 @@ export default function CoachClientRoute() {
   const { client, review, profile, measurements } =
     useLoaderData<typeof loader>();
   const name = clientFullName(client);
+  const [viewingEntryId, setViewingEntryId] = useState<string | null>(null);
+  const viewing = measurements.find((entry) => entry.id === viewingEntryId);
 
   return (
     <div className="w-full pb-12" data-parity-root="JourneyClientDetails">
@@ -114,9 +118,16 @@ export default function CoachClientRoute() {
         headingId="measurements-panel-heading"
         heightCm={profile.facts?.heightCm ?? null}
         measurements={measurements}
+        onViewPhotos={(entry) => setViewingEntryId(entry.id)}
         perspective="coach"
         ratioHidden={review.submitted?.pregnancyContext ?? false}
-      />
+      >
+        <PhotoViewDialog
+          onClose={() => setViewingEntryId(null)}
+          row={viewing}
+          viewer={{ role: "coach", clientFirstName: client.firstName }}
+        />
+      </MeasurementsTable>
       <AssessmentCallBlock client={client} />
     </div>
   );
