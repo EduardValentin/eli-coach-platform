@@ -212,6 +212,10 @@ export class CoachClientPage {
     await this.expectReadings(this.onboarding, readings);
   }
 
+  async expectNoFact(fact: string): Promise<void> {
+    await expect(this.definitionOf(this.onboarding, fact)).toHaveCount(0);
+  }
+
   async expectInvitationLine(line: string): Promise<void> {
     const invitation = this.block("Invitation");
 

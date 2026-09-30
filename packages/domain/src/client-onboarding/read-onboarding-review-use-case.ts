@@ -45,7 +45,7 @@ type SubmittedOnboardingReview = {
   screening: { outcome: ScreeningOutcome; yesCount: number };
   withholdsNutritionAdvice: boolean;
   pregnancyContext: boolean;
-  cycleMode: CycleMode | "not-applicable" | null;
+  cycleMode: CycleMode | null;
   flaggedQuestions: OnboardingQuestionId[];
   forms: ReviewedForm[];
   openRequest: DetailRequestSnapshot | null;
@@ -90,12 +90,12 @@ function reviewedForms(review: OnboardingReview): ReviewedForm[] {
 function cycleModeFor(
   review: OnboardingReview,
   submission: OnboardingSubmission,
-): CycleMode | "not-applicable" | null {
+): CycleMode | null {
   const asksCycle = review
     .reviewableForms()
     .some((form) => form.id === "cycle-context");
 
-  return asksCycle ? cycleModeOf(submission.answers) : "not-applicable";
+  return asksCycle ? cycleModeOf(submission.answers) : null;
 }
 
 export class ReadOnboardingReviewUseCase {

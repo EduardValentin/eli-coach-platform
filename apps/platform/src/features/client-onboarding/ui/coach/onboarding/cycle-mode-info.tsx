@@ -1,17 +1,12 @@
-import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
 import { IconHint } from "@eli-coach-platform/ui/primitives";
 import { Info } from "lucide-react";
 
 import {
   CYCLE_MODE_INFO_LABEL,
-  cycleModeDefinitions,
+  CYCLE_MODE_DEFINITIONS,
 } from "~/features/client-onboarding/contracts/onboarding-review-copy";
 
-type CycleModeInfoProps = {
-  gender: VisitorGender;
-};
-
-export function CycleModeInfo({ gender }: CycleModeInfoProps) {
+export function CycleModeInfo() {
   return (
     <IconHint
       className="-my-1.5"
@@ -21,7 +16,7 @@ export function CycleModeInfo({ gender }: CycleModeInfoProps) {
       parity="fact-cycle-mode-info"
     >
       <dl className="space-y-1">
-        {cycleModeDefinitions(gender).map(({ meaning, term }) => (
+        {CYCLE_MODE_DEFINITIONS.map(({ meaning, term }) => (
           <div key={term}>
             <dt className="inline font-semibold">{term}</dt>{" "}
             <dd className="inline">— {meaning}</dd>

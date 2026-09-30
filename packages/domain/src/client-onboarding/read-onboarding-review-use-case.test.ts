@@ -213,7 +213,7 @@ describe("ReadOnboardingReviewUseCase", () => {
     });
   });
 
-  it("reads the cycle as not applicable for a male client", async () => {
+  it("reads no cycle mode for a male client, whose review has no cycle form", async () => {
     // arrange
     const ports = readPorts({ client: { ...CLIENT, gender: "male" } });
     const useCase = new ReadOnboardingReviewUseCase(ports);
@@ -223,7 +223,7 @@ describe("ReadOnboardingReviewUseCase", () => {
 
     // assert
     if (result.status !== "submitted") throw new Error(result.status);
-    expect(result.cycleMode).toBe("not-applicable");
+    expect(result.cycleMode).toBeNull();
     expect(result.forms.map((form) => form.formId)).not.toContain(
       "cycle-context",
     );

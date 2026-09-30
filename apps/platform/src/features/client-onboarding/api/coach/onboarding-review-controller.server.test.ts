@@ -666,7 +666,7 @@ function submittedReading(options: {
     screening: { outcome: "cleared", yesCount: 0 },
     withholdsNutritionAdvice: false,
     pregnancyContext: false,
-    cycleMode: "not-applicable",
+    cycleMode: null,
     flaggedQuestions: [],
     forms: [],
     openRequest: null,

@@ -342,15 +342,22 @@ describe("the onboarding facts", () => {
     expect(screen.getByText("Not answered yet")).toBeInTheDocument();
   });
 
-  it("names a cycle mode that does not apply", async () => {
-    // arrange, act
-    await renderPanel({
-      review: reviewView({ ...SUBMITTED, cycleMode: "not-applicable" }),
-    });
+  it.each([
+    ["a man", "male"],
+    ["a client who preferred not to say", "prefer_not_to_say"],
+  ] as const)(
+    "leaves cycle mode out of the facts for %s",
+    async (_who, gender) => {
+      // arrange, act
+      await renderPanel({ review: reviewView(SUBMITTED) }, withGender(gender));
 
-    // assert
-    expect(screen.getByText("Not applicable")).toBeInTheDocument();
-  });
+      // assert
+      expect(screen.queryByText("Cycle mode")).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: "What cycle mode means" }),
+      ).not.toBeInTheDocument();
+    },
+  );
 });
 
 const PHASE_BASED_FOR_HER =
@@ -388,9 +395,6 @@ describe("the cycle mode explanation", () => {
       "Set by Eli — her contraception is one the product does not classify; you decide how her program adapts.",
     );
     expect(hint).toHaveTextContent(
-      "Not applicable — her gender skips the cycle form.",
-    );
-    expect(hint).toHaveTextContent(
       "Not answered yet — the cycle form is empty.",
     );
   });
@@ -406,42 +410,6 @@ describe("the cycle mode explanation", () => {
     expect(cycleModeInfoButton()).toHaveFocus();
     expect(await screen.findByRole("dialog")).toHaveTextContent(
       PHASE_BASED_FOR_HER,
-    );
-  });
-
-  it("words the explanation for a man", async () => {
-    // arrange
-    const user = await renderPanel(
-      { review: reviewView(SUBMITTED) },
-      withGender("male"),
-    );
-
-    // act
-    await user.hover(cycleModeInfoButton());
-
-    // assert
-    expect(await screen.findByRole("dialog")).toHaveTextContent(
-      "Phase-based — his program follows his cycle phases: he gets a period, is not on the combined pill, is not pregnant, postpartum or breastfeeding, and is not in perimenopause or menopause.",
-    );
-  });
-
-  it("words the explanation for a client who preferred not to say", async () => {
-    // arrange
-    const user = await renderPanel(
-      { review: reviewView(SUBMITTED) },
-      withGender("prefer_not_to_say"),
-    );
-
-    // act
-    await user.hover(cycleModeInfoButton());
-
-    // assert
-    const hint = await screen.findByRole("dialog");
-    expect(hint).toHaveTextContent(
-      "Phase-based — their program follows their cycle phases: they get a period, are not on the combined pill, are not pregnant, postpartum or breastfeeding, and are not in perimenopause or menopause.",
-    );
-    expect(hint).toHaveTextContent(
-      "Symptom-based — one of those does not hold, so their program follows the symptoms they report.",
     );
   });
 });

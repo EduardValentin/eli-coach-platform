@@ -15,12 +15,7 @@ const REVIEW_STAGES = [
 
 export type ReviewStage = (typeof REVIEW_STAGES)[number];
 
-const CYCLE_MODES = [
-  "phase-based",
-  "symptom-based",
-  "manual",
-  "not-applicable",
-] as const;
+const CYCLE_MODES = ["phase-based", "symptom-based", "manual"] as const;
 
 const reviewAnswerSchema = z.object({
   fieldId: z.string().min(1),

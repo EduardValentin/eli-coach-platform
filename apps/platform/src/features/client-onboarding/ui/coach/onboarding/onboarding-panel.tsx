@@ -117,13 +117,15 @@ function OnboardingFacts({ gender, review, submitted }: OnboardingFactsProps) {
         value={submitted.checkInChannel ?? NOT_CHOSEN_YET}
         valueParity="fact-channel"
       />
-      <Reading
-        as="dl-item"
-        label={FACT_LABELS.cycleMode}
-        labelAdornment={<CycleModeInfo gender={gender} />}
-        value={cycleModeValue(submitted)}
-        valueParity="fact-cycle-mode"
-      />
+      {gender === "female" && (
+        <Reading
+          as="dl-item"
+          label={FACT_LABELS.cycleMode}
+          labelAdornment={<CycleModeInfo />}
+          value={cycleModeValue(submitted)}
+          valueParity="fact-cycle-mode"
+        />
+      )}
     </dl>
   );
 }

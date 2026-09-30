@@ -550,8 +550,8 @@ test("the onboarding panel raises every safety signal and shows only the questio
   );
   await coachClient.expectFacts({
     "Waist-to-height ratio": `Waiting on ${clientPronouns(screenedManually.gender).possessive} first measurements`,
-    "Cycle mode": "Not applicable",
   });
+  await coachClient.expectNoFact("Cycle mode");
   await coachClient.expectNoForm(SAFETY_FORM);
   await coachClient.expectNoForm(CYCLE_FORM);
   await coachClient.expectNoMeasurements(screenedManually.gender);
