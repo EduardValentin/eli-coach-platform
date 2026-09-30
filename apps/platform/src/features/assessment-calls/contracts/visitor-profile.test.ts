@@ -386,7 +386,7 @@ describe("subjectPronoun", () => {
       hasVerb: "has",
       isVerb: "is",
       lower: "she",
-      verbEnding: "s",
+      regularVerbSuffix: "s",
     });
   });
 
@@ -403,7 +403,7 @@ describe("subjectPronoun", () => {
       hasVerb: "has",
       isVerb: "is",
       lower: "he",
-      verbEnding: "s",
+      regularVerbSuffix: "s",
     });
   });
 
@@ -420,7 +420,7 @@ describe("subjectPronoun", () => {
       hasVerb: "have",
       isVerb: "are",
       lower: "they",
-      verbEnding: "",
+      regularVerbSuffix: "",
     });
   });
 });

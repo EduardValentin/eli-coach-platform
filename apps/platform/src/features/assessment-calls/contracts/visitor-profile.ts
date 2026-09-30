@@ -147,7 +147,7 @@ type SubjectPronoun = {
   readonly hasVerb: string;
   readonly isVerb: string;
   readonly lower: string;
-  readonly verbEnding: string;
+  readonly regularVerbSuffix: string;
 };
 
 const SUBJECT_PRONOUNS: Readonly<Record<VisitorGender, SubjectPronoun>> = {
@@ -156,21 +156,21 @@ const SUBJECT_PRONOUNS: Readonly<Record<VisitorGender, SubjectPronoun>> = {
     hasVerb: "has",
     isVerb: "is",
     lower: "she",
-    verbEnding: "s",
+    regularVerbSuffix: "s",
   },
   male: {
     capitalised: "He",
     hasVerb: "has",
     isVerb: "is",
     lower: "he",
-    verbEnding: "s",
+    regularVerbSuffix: "s",
   },
   prefer_not_to_say: {
     capitalised: "They",
     hasVerb: "have",
     isVerb: "are",
     lower: "they",
-    verbEnding: "",
+    regularVerbSuffix: "",
   },
 };
 

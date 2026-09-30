@@ -41,7 +41,9 @@ export function Reading({
   return (
     <div className={className}>
       <LabelTag
-        className={cn(LABEL_CLASS, labelAdornment && "flex items-center gap-1")}
+        className={cn(LABEL_CLASS, {
+          "flex items-center gap-1": labelAdornment != null,
+        })}
       >
         {label}
         {labelAdornment}
