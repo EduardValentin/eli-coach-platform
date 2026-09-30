@@ -22,6 +22,7 @@ function journeyAt(stage: JourneyStage): ClientJourney {
       gender: 'female',
       country: 'Romania',
     },
+    profile: null,
     pricing: 'regular',
     paymentLink: null,
     paidAt: null,

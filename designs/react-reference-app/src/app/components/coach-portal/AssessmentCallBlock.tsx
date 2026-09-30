@@ -1,15 +1,19 @@
 import { Video } from 'lucide-react';
 import type { ClientJourney } from '../../domain/journey';
-import { labelForPrimaryGoal } from '../../services/visitorProfile';
+import {
+  formatBirthDate,
+  labelForPrimaryGoal,
+} from '../../services/visitorProfile';
 import {
   browserTimeZone,
   formatShortDay,
   formatSlotTime,
 } from '../../utils/dateFormatters';
-import { REDUCED_PRICE_LABELS } from '../../utils/journeyLabels';
-import { PortalWidget } from '../PortalWidget';
+import { journeyGenderLabel } from '../../utils/journeyLabels';
+import { CollapsiblePortalWidget } from '../CollapsiblePortalWidget';
 import { Reading } from '../Reading';
 import { ABSENT_VALUE } from './absentValue';
+import { PhoneLink } from './PhoneLink';
 
 function shortCallMoment(startsAt: Date): string {
   const timeZone = browserTimeZone();
@@ -18,11 +22,10 @@ function shortCallMoment(startsAt: Date): string {
 }
 
 export function AssessmentCallBlock({ journey }: { journey: ClientJourney }) {
-  const { primaryGoal } = journey.identity;
+  const { identity } = journey;
 
   return (
-    <PortalWidget
-      presentation="coach"
+    <CollapsiblePortalWidget
       title="Assessment call"
       icon={
         <Video aria-hidden="true" className="text-brand-secondary" size={18} />
@@ -41,15 +44,49 @@ export function AssessmentCallBlock({ journey }: { journey: ClientJourney }) {
         />
         <Reading
           as="dl-item"
-          label="Primary goal"
-          value={primaryGoal ? labelForPrimaryGoal(primaryGoal) : ABSENT_VALUE}
-          valueParity="call-goal"
+          label="Name"
+          value={`${identity.firstName} ${identity.lastName}`.trim()}
+          valueParity="call-name"
         />
         <Reading
           as="dl-item"
-          label="Reduced price"
-          value={REDUCED_PRICE_LABELS[journey.pricing]}
-          valueParity="call-reduced-price"
+          label="Email"
+          value={identity.email}
+          valueParity="call-email"
+        />
+        <Reading
+          as="dl-item"
+          label="Date of birth"
+          value={formatBirthDate(identity.dateOfBirth)}
+          valueParity="call-dob"
+        />
+        <Reading
+          as="dl-item"
+          label="Gender"
+          value={journeyGenderLabel(identity.gender)}
+          valueParity="call-gender"
+        />
+        <Reading
+          as="dl-item"
+          label="Country"
+          value={identity.country || ABSENT_VALUE}
+          valueParity="call-country"
+        />
+        <Reading
+          as="dl-item"
+          label="Phone"
+          value={<PhoneLink phone={identity.phone} />}
+          valueParity="call-phone"
+        />
+        <Reading
+          as="dl-item"
+          label="Primary goal"
+          value={
+            identity.primaryGoal
+              ? labelForPrimaryGoal(identity.primaryGoal)
+              : ABSENT_VALUE
+          }
+          valueParity="call-goal"
         />
         <Reading
           as="dl-item"
@@ -59,6 +96,6 @@ export function AssessmentCallBlock({ journey }: { journey: ClientJourney }) {
           className="col-span-full"
         />
       </dl>
-    </PortalWidget>
+    </CollapsiblePortalWidget>
   );
 }

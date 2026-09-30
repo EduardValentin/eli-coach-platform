@@ -39,6 +39,7 @@ import {
   type SubscriptionStatus,
 } from '../domain/coachingSubscription';
 import { heldJourney, seedJourney } from '../services/clientJourneySamples';
+import { profileOfJourney } from '../domain/clientProfile';
 import { PARQ_MAX_AGE, PARQ_MIN_AGE } from '../domain/safetyScreening';
 import type { SentPaymentLink } from '../services/paymentLinkService';
 import {
@@ -114,6 +115,12 @@ function applied(journey: ClientJourney, event: JourneyEvent): ClientJourney {
   const transition = advance(journey, event);
 
   return transition.status === 'advanced' ? transition.journey : journey;
+}
+
+function withProfile(journey: ClientJourney): ClientJourney {
+  if (isBeforeStage(journey.stage, 'submitted')) return journey;
+
+  return { ...journey, profile: profileOfJourney(journey) };
 }
 
 function withProgramReady(
@@ -424,10 +431,10 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
         const started = applied(journey, 'start-onboarding');
         const submitted = applied(started, 'submit-onboarding');
 
-        return {
+        return withProfile({
           ...submitted,
           onboarding: { ...submitted.onboarding, submittedAt },
-        };
+        });
       });
     },
     [updateJourney],
@@ -465,17 +472,19 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
   const answerRequest = useCallback(
     (callId: string, answeredAt: Date) => {
       updateJourney(callId, (journey) =>
-        applied(
-          {
-            ...journey,
-            review: {
-              requests: answeredLastRequest(
-                journey.review.requests,
-                answeredAt,
-              ),
+        withProfile(
+          applied(
+            {
+              ...journey,
+              review: {
+                requests: answeredLastRequest(
+                  journey.review.requests,
+                  answeredAt,
+                ),
+              },
             },
-          },
-          'answer-request',
+            'answer-request',
+          ),
         ),
       );
     },

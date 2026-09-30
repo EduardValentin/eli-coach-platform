@@ -313,6 +313,7 @@ function RosterClientDetails() {
               subscription={journey.subscription}
               perspective="coach"
               clientGender={journey.identity.gender}
+              pricing={journey.pricing}
               headingId="subscription-panel-heading"
               className="mb-8"
             />

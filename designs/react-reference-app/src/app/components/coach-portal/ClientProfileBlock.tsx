@@ -1,25 +1,119 @@
 import { UserRound } from 'lucide-react';
-import type { ClientJourney, JourneyPhone } from '../../domain/journey';
+import type { ReactNode } from 'react';
+import type { JourneyProfile } from '../../domain/clientProfile';
+import type { ClientJourney, JourneyGender } from '../../domain/journey';
+import {
+  canonicalLengthReading,
+  canonicalWeightReading,
+} from '../../domain/onboardingAnswers';
 import { ageOn } from '../../services/visitorProfile';
-import { journeyGenderLabel } from '../../utils/journeyLabels';
+import { clientPronouns, journeyGenderLabel } from '../../utils/journeyLabels';
 import { PortalWidget } from '../PortalWidget';
 import { Reading } from '../Reading';
 import { ABSENT_VALUE } from './absentValue';
+import { PhoneLink } from './PhoneLink';
 
-function PhoneLink({ phone }: { phone: JourneyPhone | undefined }) {
-  if (!phone) return <>{ABSENT_VALUE}</>;
+type ProfileReadingId =
+  | 'age'
+  | 'gender'
+  | 'country'
+  | 'phone'
+  | 'height'
+  | 'startingWeight'
+  | 'currentWeight'
+  | 'activityLevel'
+  | 'primaryGoal'
+  | 'dietaryRestrictions'
+  | 'clientNotes';
 
-  const dialled = `${phone.diallingCode}${phone.number}`;
+type ProfileValues = Record<ProfileReadingId, ReactNode>;
 
-  return (
-    <a href={`tel:${dialled}`} className="hover:underline">
-      {dialled}
-    </a>
-  );
+type ProfileReading = {
+  id: ProfileReadingId;
+  label: string;
+  parity: string;
+  className?: string;
+};
+
+const PROFILE_READINGS: readonly ProfileReading[] = [
+  { id: 'age', label: 'Age', parity: 'profile-age' },
+  { id: 'gender', label: 'Gender', parity: 'profile-gender' },
+  { id: 'country', label: 'Country', parity: 'profile-country' },
+  { id: 'phone', label: 'Phone', parity: 'profile-phone' },
+  { id: 'height', label: 'Height', parity: 'profile-height' },
+  {
+    id: 'startingWeight',
+    label: 'Starting weight',
+    parity: 'profile-starting-weight',
+  },
+  {
+    id: 'currentWeight',
+    label: 'Current weight',
+    parity: 'profile-current-weight',
+  },
+  { id: 'activityLevel', label: 'Activity level', parity: 'profile-activity' },
+  { id: 'primaryGoal', label: 'Primary goal', parity: 'profile-goal' },
+  {
+    id: 'dietaryRestrictions',
+    label: 'Dietary restrictions',
+    parity: 'profile-restrictions',
+    className: 'col-span-full',
+  },
+  {
+    id: 'clientNotes',
+    label: 'Client notes',
+    parity: 'profile-notes',
+    className: 'col-span-full',
+  },
+];
+
+const PENDING_VALUES: ProfileValues = {
+  age: ABSENT_VALUE,
+  gender: ABSENT_VALUE,
+  country: ABSENT_VALUE,
+  phone: ABSENT_VALUE,
+  height: ABSENT_VALUE,
+  startingWeight: ABSENT_VALUE,
+  currentWeight: ABSENT_VALUE,
+  activityLevel: ABSENT_VALUE,
+  primaryGoal: ABSENT_VALUE,
+  dietaryRestrictions: ABSENT_VALUE,
+  clientNotes: ABSENT_VALUE,
+};
+
+function weighed(kg: number | null): string {
+  return kg === null ? ABSENT_VALUE : canonicalWeightReading(kg);
+}
+
+function measured(cm: number | null): string {
+  return cm === null ? ABSENT_VALUE : canonicalLengthReading(cm);
+}
+
+function profileValues(profile: JourneyProfile): ProfileValues {
+  return {
+    age: ageOn(profile.dateOfBirth, new Date()),
+    gender: journeyGenderLabel(profile.gender),
+    country: profile.country || ABSENT_VALUE,
+    phone: <PhoneLink phone={profile.phone} />,
+    height: measured(profile.heightCm),
+    startingWeight: weighed(profile.startingWeightKg),
+    currentWeight: weighed(profile.currentWeightKg),
+    activityLevel: profile.activityLevel ?? ABSENT_VALUE,
+    primaryGoal: profile.primaryGoal ?? ABSENT_VALUE,
+    dietaryRestrictions: profile.dietaryRestrictions,
+    clientNotes: profile.clientNotes ?? ABSENT_VALUE,
+  };
+}
+
+function profilePendingLine(gender: JourneyGender): string {
+  const { subject, possessive } = clientPronouns(gender);
+
+  return `${possessive.capitalised} profile fills in once ${subject.lower} send${subject.regularVerbSuffix} ${possessive.lower} onboarding.`;
 }
 
 export function ClientProfileBlock({ journey }: { journey: ClientJourney }) {
-  const { identity } = journey;
+  const { profile } = journey;
+  const values = profile ? profileValues(profile) : PENDING_VALUES;
 
   return (
     <PortalWidget
@@ -36,32 +130,28 @@ export function ClientProfileBlock({ journey }: { journey: ClientJourney }) {
       parityRoot="ClientProfileBlock"
       className="mb-8"
     >
-      <dl className="grid grid-cols-2 gap-5 sm:grid-cols-4">
-        <Reading
-          as="dl-item"
-          label="Age"
-          value={ageOn(identity.dateOfBirth, new Date())}
-          valueParity="profile-age"
-        />
-        <Reading
-          as="dl-item"
-          label="Gender"
-          value={journeyGenderLabel(identity.gender)}
-          valueParity="profile-gender"
-        />
-        <Reading
-          as="dl-item"
-          label="Country"
-          value={identity.country || ABSENT_VALUE}
-          valueParity="profile-country"
-        />
-        <Reading
-          as="dl-item"
-          label="Phone"
-          value={<PhoneLink phone={identity.phone} />}
-          valueParity="profile-phone"
-        />
-      </dl>
+      <div className="space-y-5">
+        {!profile && (
+          <p
+            className="text-sm text-text-secondary"
+            data-parity="profile-pending"
+          >
+            {profilePendingLine(journey.identity.gender)}
+          </p>
+        )}
+        <dl className="grid grid-cols-2 gap-5 sm:grid-cols-4">
+          {PROFILE_READINGS.map((reading) => (
+            <Reading
+              key={reading.id}
+              as="dl-item"
+              label={reading.label}
+              value={values[reading.id]}
+              valueParity={reading.parity}
+              className={reading.className}
+            />
+          ))}
+        </dl>
+      </div>
     </PortalWidget>
   );
 }

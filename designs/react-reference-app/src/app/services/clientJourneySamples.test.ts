@@ -1,10 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import type { PrototypeMode } from '../context/AppContext';
+import {
+  isBeforeStage,
+  JOURNEY_STAGES,
+  type JourneyStage,
+} from '../domain/journey';
 import { seedJourney } from './clientJourneySamples';
 
 const NOW = new Date(2026, 8, 21, 12, 0, 0);
 
 function submittedJourney(prototypeMode: PrototypeMode) {
+  return journeyAt('submitted', prototypeMode);
+}
+
+function journeyAt(stage: JourneyStage, prototypeMode: PrototypeMode) {
   return seedJourney({
     callId: 'ac-seed-measurements',
     identity: {
@@ -15,7 +24,7 @@ function submittedJourney(prototypeMode: PrototypeMode) {
       gender: 'female',
       country: 'RO',
     },
-    stage: 'submitted',
+    stage,
     startPath: 'immediate',
     subscriptionStatus: 'active',
     pricing: 'regular',
@@ -54,5 +63,54 @@ describe('seeding a submitted client measurements', () => {
     expect(journey.measurements.at(-1)?.recordedAt).toEqual(
       journey.onboarding.submittedAt,
     );
+  });
+});
+
+describe('seeding a client profile', () => {
+  it('leaves her profile empty at every stage before she sends her onboarding', () => {
+    // arrange
+    const stagesBefore = JOURNEY_STAGES.filter((stage) =>
+      isBeforeStage(stage, 'submitted'),
+    );
+
+    // act
+    const profiles = stagesBefore.map(
+      (stage) => journeyAt(stage, 'mvp').profile,
+    );
+
+    // assert
+    expect(profiles).toEqual(stagesBefore.map(() => null));
+  });
+
+  it('builds her profile from her booking, her answers and her latest measurement once she sends her onboarding', () => {
+    // arrange
+    const stagesFrom = JOURNEY_STAGES.filter(
+      (stage) => !isBeforeStage(stage, 'submitted'),
+    );
+
+    // act
+    const profiles = stagesFrom.map(
+      (stage) => journeyAt(stage, 'post-mvp').profile,
+    );
+
+    // assert
+    for (const profile of profiles) {
+      expect(profile).toEqual({
+        firstName: 'Ana',
+        lastName: 'Popescu',
+        email: 'ana@example.com',
+        dateOfBirth: '1994-03-14',
+        gender: 'female',
+        country: 'RO',
+        phone: undefined,
+        heightCm: 165,
+        startingWeightKg: 66.1,
+        currentWeightKg: 66.1,
+        activityLevel: 'Mostly sitting',
+        primaryGoal: 'Lose fat',
+        dietaryRestrictions: 'Lactose, mild',
+        clientNotes: 'Night shifts twice a week, so those days start late.',
+      });
+    }
   });
 });

@@ -147,6 +147,10 @@ export function formatAgeForCard(dateOfBirth: string, on: Date): string {
   return `${ageOn(dateOfBirth, on)} (${format(parseISO(dateOfBirth), 'd MMM yyyy')})`;
 }
 
+export function formatBirthDate(dateOfBirth: string): string {
+  return format(parseISO(dateOfBirth), 'd MMMM yyyy');
+}
+
 export function formatAgeForEmail(dateOfBirth: string, on: Date): string {
-  return `${ageOn(dateOfBirth, on)} (born ${format(parseISO(dateOfBirth), 'd MMMM yyyy')})`;
+  return `${ageOn(dateOfBirth, on)} (born ${formatBirthDate(dateOfBirth)})`;
 }

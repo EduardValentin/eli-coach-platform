@@ -14,6 +14,7 @@ import {
   type JourneyStage,
   type MeasurementEntry,
 } from '../domain/journey';
+import { profileFromOnboarding } from '../domain/clientProfile';
 import {
   periodEnd,
   resolveDay1,
@@ -68,6 +69,7 @@ const SEEDED_GOAL_ANSWERS = {
   minutesPerSession: '45–60 minutes',
   previousPt: 'No',
   coachExpectations: 'Someone to keep me consistent and honest.',
+  additionalInfo: 'Night shifts twice a week, so those days start late.',
   lifestyleActivityLevel: 'Mostly sitting',
   availableEquipment: ['Full gym', 'Dumbbells'],
   trainingPlace: 'Gym',
@@ -322,12 +324,23 @@ export function seedJourney(seed: JourneySeed): ClientJourney {
   const invitedAt = paidAt;
   const submittedAt = subDays(now, 3);
   const programReadyAt = subDays(now, 1);
+  const onboarding = seedOnboarding(stage, identity, submittedAt);
+  const measurements = reached('submitted')
+    ? seedMeasurements(submittedAt, prototypeMode)
+    : [];
 
   return {
     callId,
     callStartsAt: seededCallStart(paymentLinkSentAt),
     stage,
     identity,
+    profile: reached('submitted')
+      ? profileFromOnboarding({
+          identity,
+          answers: onboarding.answers,
+          latestMeasurement: measurements.at(-1) ?? null,
+        })
+      : null,
     pricing,
     bookingNotes,
     paymentLink: reached('payment-link-sent')
@@ -341,7 +354,7 @@ export function seedJourney(seed: JourneySeed): ClientJourney {
     paidAt: reached('invited') ? paidAt : null,
     invitation: reached('invited') ? seedInvitation(seed, invitedAt) : null,
     welcomeSeen: reached('onboarding'),
-    onboarding: seedOnboarding(stage, identity, submittedAt),
+    onboarding,
     review:
       stage === 'needs-details'
         ? {
@@ -354,9 +367,7 @@ export function seedJourney(seed: JourneySeed): ClientJourney {
     reviewCall: reached('review-call-scheduled')
       ? { startsAt: addDays(now, 1), scheduledAt: subDays(now, 1) }
       : undefined,
-    measurements: reached('submitted')
-      ? seedMeasurements(submittedAt, prototypeMode)
-      : [],
+    measurements,
     subscription: reached('invited')
       ? seedSubscription({
           purchasedAt: paidAt,
@@ -378,6 +389,7 @@ export function heldJourney(
     callStartsAt: booking.startsAt,
     stage: 'held',
     identity: identityFromBooking(booking),
+    profile: null,
     pricing,
     bookingNotes: booking.notes.trim() || null,
     paymentLink: null,

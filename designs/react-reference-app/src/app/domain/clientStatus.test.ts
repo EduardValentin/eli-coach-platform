@@ -26,6 +26,7 @@ function journeyAt(
       gender: 'female',
       country: 'Romania',
     },
+    profile: null,
     pricing: 'regular',
     paymentLink: null,
     paidAt: null,

@@ -105,8 +105,15 @@ function profileBlock(): HTMLElement {
   return screen.getByRole('region', { name: 'Profile' });
 }
 
+function assessmentCallTrigger(): HTMLElement {
+  return screen.getByRole('button', { name: 'Assessment call' });
+}
+
 function assessmentCallBlock(): HTMLElement {
-  return screen.getByRole('region', { name: 'Assessment call' });
+  const section = assessmentCallTrigger().closest('section');
+  if (!section) throw new Error('No assessment call section');
+
+  return section;
 }
 
 function invitationBlock(): HTMLElement {
@@ -578,7 +585,7 @@ describe('the coach view of a client in onboarding', () => {
 });
 
 describe('the coach reading who a client is', () => {
-  it('lays the page out as profile, assessment call, invitation, onboarding, subscription and measurements', () => {
+  it('lays the page out as profile, invitation, onboarding, subscription, measurements and the assessment call last', () => {
     // arrange
     const urlQuery = '?jstage=invited';
 
@@ -592,16 +599,20 @@ describe('the coach reading who a client is', () => {
       .map((id) => document.getElementById(id)?.textContent);
     expect(regions).toEqual([
       'Profile',
-      'Assessment call',
       'Invitation',
       'Onboarding',
       'Subscription',
       'Measurements',
+      'Assessment call',
     ]);
   });
 
-  it('reads her age, gender, country and phone in her profile', () => {
+  it('reads her profile from the onboarding she sent, weights in kilograms and lengths in centimetres', () => {
     // arrange
+    window.localStorage.setItem(
+      'eli.unitPreferences',
+      JSON.stringify({ weightUnit: 'lb', heightUnit: 'ft-in' }),
+    );
     const urlQuery = '?jstage=submitted';
 
     // act
@@ -612,7 +623,19 @@ describe('the coach reading who a client is', () => {
       within(profileBlock())
         .getAllByRole('term')
         .map((term) => term.textContent),
-    ).toEqual(['Age', 'Gender', 'Country', 'Phone']);
+    ).toEqual([
+      'Age',
+      'Gender',
+      'Country',
+      'Phone',
+      'Height',
+      'Starting weight',
+      'Current weight',
+      'Activity level',
+      'Primary goal',
+      'Dietary restrictions',
+      'Client notes',
+    ]);
     expect(profileReading('Age')).toHaveTextContent(/^\d+$/);
     expect(profileReading('Gender')).toHaveTextContent('Female');
     expect(profileReading('Country')).toHaveTextContent('Romania');
@@ -621,12 +644,134 @@ describe('the coach reading who a client is', () => {
         name: '+40712345678',
       }),
     ).toHaveAttribute('href', 'tel:+40712345678');
+    expect(profileReading('Height')).toHaveTextContent(/^165 cm$/);
+    expect(profileReading('Starting weight')).toHaveTextContent(/^66.1 kg$/);
+    expect(profileReading('Current weight')).toHaveTextContent(/^66.1 kg$/);
+    expect(profileReading('Activity level')).toHaveTextContent(
+      /^Mostly sitting$/,
+    );
+    expect(profileReading('Primary goal')).toHaveTextContent(/^Lose fat$/);
+    expect(profileReading('Dietary restrictions')).toHaveTextContent(
+      /^Lactose, mild$/,
+    );
+    expect(profileReading('Client notes')).toHaveTextContent(
+      /^Night shifts twice a week, so those days start late\.$/,
+    );
+    expect(
+      within(profileBlock()).queryByText(/profile fills in/),
+    ).not.toBeInTheDocument();
   });
 
-  it('reads when her call was, the goal she booked with, that she paid the regular price and her booking notes', () => {
+  it('leaves every profile reading blank until she sends her onboarding', () => {
+    // arrange
+    const urlQuery = '?jstage=onboarding';
+
+    // act
+    renderDetails(urlQuery);
+
+    // assert
+    expect(
+      within(profileBlock())
+        .getAllByRole('definition')
+        .map((value) => value.textContent),
+    ).toEqual(Array(11).fill('—'));
+    expect(
+      within(profileBlock()).getByText(
+        'Her profile fills in once she sends her onboarding.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('keeps the assessment call collapsed until the coach opens it', async () => {
+    // arrange
+    const user = renderDetails('?jstage=submitted');
+    const trigger = assessmentCallTrigger();
+
+    // act
+    const collapsed = trigger.getAttribute('aria-expanded');
+    await user.click(trigger);
+
+    // assert
+    expect(collapsed).toBe('false');
+    expect(trigger).toHaveAttribute('aria-expanded', 'true');
+    expect(
+      within(assessmentCallBlock()).getByText('Booking notes'),
+    ).toBeVisible();
+  });
+
+  it('opens and closes the assessment call from the keyboard', async () => {
+    // arrange
+    const user = renderDetails('?jstage=submitted');
+    assessmentCallTrigger().focus();
+
+    // act
+    await user.keyboard('{Enter}');
+    const afterEnter = assessmentCallTrigger().getAttribute('aria-expanded');
+    await user.keyboard(' ');
+
+    // assert
+    expect(afterEnter).toBe('true');
+    expect(assessmentCallTrigger()).toHaveAttribute('aria-expanded', 'false');
+    expect(
+      within(assessmentCallBlock()).queryByText('Booking notes'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('reads what she gave when booking in the assessment call', async () => {
     // arrange
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date(2026, 8, 30, 12));
+    const user = renderDetails('?jstage=submitted');
+
+    // act
+    await user.click(assessmentCallTrigger());
+
+    // assert
+    expect(
+      within(assessmentCallBlock())
+        .getAllByRole('term')
+        .map((term) => term.textContent),
+    ).toEqual([
+      'Call',
+      'Name',
+      'Email',
+      'Date of birth',
+      'Gender',
+      'Country',
+      'Phone',
+      'Primary goal',
+      'Booking notes',
+    ]);
+    expect(assessmentCallReading('Call')).toHaveTextContent(
+      /^Wed, Sep 23 · 3:00 PM$/,
+    );
+    expect(assessmentCallReading('Name')).toHaveTextContent(/^Jane Doe$/);
+    expect(assessmentCallReading('Email')).toHaveTextContent(
+      /^jane@example.com$/,
+    );
+    expect(assessmentCallReading('Date of birth')).toHaveTextContent(
+      /^15 June 1998$/,
+    );
+    expect(assessmentCallReading('Gender')).toHaveTextContent(/^Female$/);
+    expect(assessmentCallReading('Country')).toHaveTextContent(/^Romania$/);
+    expect(
+      within(assessmentCallReading('Phone')).getByRole('link', {
+        name: '+40712345678',
+      }),
+    ).toHaveAttribute('href', 'tel:+40712345678');
+    expect(assessmentCallReading('Primary goal')).toHaveTextContent(
+      /^Lose weight$/,
+    );
+    expect(assessmentCallReading('Booking notes')).toHaveTextContent(
+      'Wants a structured plan with someone to keep her accountable.',
+    );
+    expect(
+      within(assessmentCallBlock()).queryByText('Reduced price'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('says no to the reduced price last in her subscription when she paid the regular price', () => {
+    // arrange
     const urlQuery = '?jstage=submitted';
 
     // act
@@ -634,23 +779,17 @@ describe('the coach reading who a client is', () => {
 
     // assert
     expect(
-      within(assessmentCallBlock())
+      within(subscriptionPanel())
         .getAllByRole('term')
-        .map((term) => term.textContent),
-    ).toEqual(['Call', 'Primary goal', 'Reduced price', 'Booking notes']);
-    expect(assessmentCallReading('Call')).toHaveTextContent(
-      /^Wed, Sep 23 · 3:00 PM$/,
-    );
-    expect(assessmentCallReading('Primary goal')).toHaveTextContent(
-      'Lose weight',
-    );
-    expect(assessmentCallReading('Reduced price')).toHaveTextContent(/^No$/);
-    expect(assessmentCallReading('Booking notes')).toHaveTextContent(
-      'Wants a structured plan with someone to keep her accountable.',
+        .map((term) => term.textContent)
+        .slice(-2),
+    ).toEqual(['Renews on', 'Reduced price']);
+    expect(readingIn(subscriptionPanel(), 'Reduced price')).toHaveTextContent(
+      /^No$/,
     );
   });
 
-  it('says yes to the reduced price when she was offered it', () => {
+  it('says yes to the reduced price in her subscription when she was offered it', () => {
     // arrange
     const urlQuery = '?jstage=submitted&jreduced=1';
 
@@ -658,18 +797,23 @@ describe('the coach reading who a client is', () => {
     renderDetails(urlQuery);
 
     // assert
-    expect(assessmentCallReading('Reduced price')).toHaveTextContent(/^Yes$/);
+    expect(readingIn(subscriptionPanel(), 'Reduced price')).toHaveTextContent(
+      /^Yes$/,
+    );
   });
 
-  it('shows a dash for what she did not give when booking', () => {
+  it('shows a dash for what she did not give when booking', async () => {
     // arrange
-    const urlQuery = '?jstage=submitted';
+    const user = renderDetails('?jstage=submitted', {
+      callId: AWAITING_REVIEW_CALL_ID,
+    });
 
     // act
-    renderDetails(urlQuery, { callId: AWAITING_REVIEW_CALL_ID });
+    await user.click(assessmentCallTrigger());
 
     // assert
     expect(profileReading('Phone')).toHaveTextContent(/^—$/);
+    expect(assessmentCallReading('Phone')).toHaveTextContent(/^—$/);
     expect(assessmentCallReading('Booking notes')).toHaveTextContent(/^—$/);
   });
 });
@@ -810,6 +954,11 @@ describe('the coach reading about a client by his or their pronouns', () => {
       within(onboardingWidget()).getByText('His answers are not in yet.'),
     ).toBeInTheDocument();
     expect(
+      within(profileBlock()).getByText(
+        'His profile fills in once he sends his onboarding.',
+      ),
+    ).toBeInTheDocument();
+    expect(
       within(subscriptionPanel()).getByText('Once his program starts'),
     ).toBeInTheDocument();
     expect(
@@ -827,6 +976,11 @@ describe('the coach reading about a client by his or their pronouns', () => {
     // assert
     expect(
       within(onboardingWidget()).getByText('Their answers are not in yet.'),
+    ).toBeInTheDocument();
+    expect(
+      within(profileBlock()).getByText(
+        'Their profile fills in once they send their onboarding.',
+      ),
     ).toBeInTheDocument();
     expect(
       within(subscriptionPanel()).getByText('Once their program starts'),

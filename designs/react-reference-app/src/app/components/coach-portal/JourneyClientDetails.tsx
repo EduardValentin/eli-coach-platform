@@ -51,7 +51,6 @@ export function JourneyClientDetails({ journey }: { journey: ClientJourney }) {
       </header>
 
       <ClientProfileBlock journey={journey} />
-      <AssessmentCallBlock journey={journey} />
       {invitation && (
         <InvitationBlock journey={journey} invitation={invitation} />
       )}
@@ -65,6 +64,7 @@ export function JourneyClientDetails({ journey }: { journey: ClientJourney }) {
           subscription={journey.subscription}
           perspective="coach"
           clientGender={journey.identity.gender}
+          pricing={journey.pricing}
           headingId="subscription-panel-heading"
           className="mb-8"
         />
@@ -77,6 +77,7 @@ export function JourneyClientDetails({ journey }: { journey: ClientJourney }) {
         emptyMessage={noMeasurementsYetLine(journey.identity.gender)}
         className="mb-8"
       />
+      <AssessmentCallBlock journey={journey} />
     </div>
   );
 }

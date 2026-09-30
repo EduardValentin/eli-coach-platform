@@ -52,6 +52,34 @@ const FOOTER_CLASS: Record<WidgetDensity, string> = {
 
 const VOICE_CLASS = 'font-serif text-2xl tracking-tight text-text-primary';
 
+export function PortalWidgetPanel({
+  headingId,
+  density = 'default',
+  className,
+  parityRoot,
+  children,
+}: {
+  headingId: string;
+  density?: WidgetDensity;
+  className?: string;
+  parityRoot?: string;
+  children: ReactNode;
+}) {
+  const prefersReducedMotion = useReducedMotion() ?? false;
+
+  return (
+    <motion.section
+      animate={{ opacity: 1, y: 0 }}
+      aria-labelledby={headingId}
+      className={cn(PANEL_CLASS[density], className)}
+      data-parity-root={parityRoot}
+      initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
+    >
+      {children}
+    </motion.section>
+  );
+}
+
 export function PortalWidget({
   title,
   icon,
@@ -68,15 +96,12 @@ export function PortalWidget({
   parityRoot,
   children,
 }: PortalWidgetProps) {
-  const prefersReducedMotion = useReducedMotion() ?? false;
-
   return (
-    <motion.section
-      animate={{ opacity: 1, y: 0 }}
-      aria-labelledby={headingId}
-      className={cn(PANEL_CLASS[density], className)}
-      data-parity-root={parityRoot}
-      initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
+    <PortalWidgetPanel
+      headingId={headingId}
+      density={density}
+      className={className}
+      parityRoot={parityRoot}
     >
       <div
         className={cn(
@@ -117,6 +142,6 @@ export function PortalWidget({
       {children}
 
       {footer && <div className={FOOTER_CLASS[density]}>{footer}</div>}
-    </motion.section>
+    </PortalWidgetPanel>
   );
 }

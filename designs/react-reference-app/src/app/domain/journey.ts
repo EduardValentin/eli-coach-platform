@@ -1,4 +1,5 @@
 import type { CoachingSubscription } from './coachingSubscription';
+import type { JourneyProfile } from './clientProfile';
 import type { VisitorPrimaryGoal } from '../services/visitorProfile';
 
 export type JourneyStage =
@@ -151,6 +152,7 @@ export type ClientJourney = {
   callStartsAt: Date;
   stage: JourneyStage;
   identity: JourneyIdentity;
+  profile: JourneyProfile | null;
   pricing: JourneyPricing;
   bookingNotes: string | null;
   paymentLink: JourneyPaymentLink | null;

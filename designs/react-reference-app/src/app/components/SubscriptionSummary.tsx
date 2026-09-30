@@ -4,27 +4,45 @@ import {
   deriveStatus,
   type CoachingSubscription,
 } from '../domain/coachingSubscription';
-import type { JourneyGender } from '../domain/journey';
+import type { JourneyGender, JourneyPricing } from '../domain/journey';
 import {
   bundleLengthLabel,
   clientPronouns,
   formatJourneyDate,
   IMMEDIATE_START_LABEL,
+  REDUCED_PRICE_LABELS,
   startPathLabel,
 } from '../utils/journeyLabels';
-import { PortalWidget, type WidgetPresentation } from './PortalWidget';
+import { cn } from './ui/utils';
+import { PortalWidget } from './PortalWidget';
 import { Reading } from './Reading';
 
-export type SubscriptionPerspective = WidgetPresentation;
+type SubscriptionAudience =
+  | {
+      perspective: 'coach';
+      clientGender: JourneyGender;
+      pricing: JourneyPricing;
+    }
+  | { perspective: 'client' };
+
+type SubscriptionSummaryProps = SubscriptionAudience & {
+  subscription: CoachingSubscription;
+  headingId: string;
+  className?: string;
+  children?: ReactNode;
+};
 
 type Line = { term: string; value: string };
 
-function possessiveFor(
-  perspective: SubscriptionPerspective,
-  clientGender: JourneyGender,
-): string {
-  return perspective === 'coach'
-    ? clientPronouns(clientGender).possessive.lower
+const READINGS_GRID_CLASS: Record<SubscriptionAudience['perspective'], string> =
+  {
+    coach: 'grid-cols-2 sm:grid-cols-3',
+    client: 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5',
+  };
+
+function possessiveFor(audience: SubscriptionAudience): string {
+  return audience.perspective === 'coach'
+    ? clientPronouns(audience.clientGender).possessive.lower
     : 'your';
 }
 
@@ -56,31 +74,14 @@ function periodLine(
   return { term: 'Renews on', value: formatJourneyDate(endsAt) };
 }
 
-export function SubscriptionSummary({
-  subscription,
-  perspective,
-  clientGender,
-  headingId,
-  className,
-  children,
-}: {
-  subscription: CoachingSubscription;
-  perspective: SubscriptionPerspective;
-  clientGender: JourneyGender;
-  headingId: string;
-  className?: string;
-  children?: ReactNode;
-}) {
+export function SubscriptionSummary(props: SubscriptionSummaryProps) {
+  const { subscription, headingId, className, children } = props;
   const now = new Date();
-  const period = periodLine(
-    subscription,
-    now,
-    possessiveFor(perspective, clientGender),
-  );
+  const period = periodLine(subscription, now, possessiveFor(props));
 
   return (
     <PortalWidget
-      presentation={perspective}
+      presentation={props.perspective}
       title="Subscription"
       icon={
         <CreditCard
@@ -93,7 +94,7 @@ export function SubscriptionSummary({
       parityRoot="SubscriptionSummary"
       className={className}
     >
-      <dl className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-5">
+      <dl className={cn('grid gap-5', READINGS_GRID_CLASS[props.perspective])}>
         <Reading
           as="dl-item"
           label="Bundle"
@@ -124,6 +125,14 @@ export function SubscriptionSummary({
           value={period.value}
           valueParity="subscription-renews"
         />
+        {props.perspective === 'coach' && (
+          <Reading
+            as="dl-item"
+            label="Reduced price"
+            value={REDUCED_PRICE_LABELS[props.pricing]}
+            valueParity="subscription-reduced-price"
+          />
+        )}
       </dl>
 
       {children}
