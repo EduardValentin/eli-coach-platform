@@ -331,9 +331,7 @@ async function renderAction(
   );
 
   render(<RouterProvider router={router} />);
-  await waitFor(() => {
-    expect(router.state.initialized).toBe(true);
-  });
+  await screen.findByRole("region", { name: /^Notifications/ });
 
   return user;
 }
