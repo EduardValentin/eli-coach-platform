@@ -37,6 +37,10 @@ import {
 } from "react-hook-form";
 
 import { OPTIONAL_SUFFIX } from "~/features/client-onboarding/contracts/onboarding-copy";
+import {
+  MeasureField,
+  type MeasureFieldDefinition,
+} from "~/features/client-profile/ui/shared/measure-field/measure-field";
 
 import { validateField } from "./onboarding-validation";
 import {
@@ -55,6 +59,10 @@ type OnboardingFieldControlProps = {
   control: Control<OnboardingValues>;
   field: OnboardingField;
   formFields: readonly OnboardingField[];
+};
+
+type AnswerFieldControlProps = OnboardingFieldControlProps & {
+  units: MeasureUnits;
 };
 
 type FieldController = ControllerRenderProps<OnboardingValues>;
@@ -436,12 +444,26 @@ function EntryField({
   );
 }
 
-export function OnboardingFieldControl({
+function measureFieldOf(field: OnboardingField): MeasureFieldDefinition | null {
+  if (field.kind !== "weight" && field.kind !== "circumference") return null;
+  if (!field.range) return null;
+
+  return {
+    id: field.id,
+    label: field.label,
+    kind: field.kind,
+    requirement: field.requirement,
+    range: field.range,
+    hint: field.hint,
+  };
+}
+
+function AnswerFieldControl({
   control,
   field,
   formFields,
-}: OnboardingFieldControlProps) {
-  const units = useMeasureUnits();
+  units,
+}: AnswerFieldControlProps) {
   const controlId = useId();
   const { field: controller, fieldState } = useController({
     control,
@@ -480,4 +502,34 @@ export function OnboardingFieldControl({
   }
 
   return <EntryField {...layout} />;
+}
+
+export function OnboardingFieldControl({
+  control,
+  field,
+  formFields,
+}: OnboardingFieldControlProps) {
+  const units = useMeasureUnits();
+  const measureField = measureFieldOf(field);
+
+  if (measureField) {
+    return (
+      <MeasureField
+        control={control}
+        field={measureField}
+        name={field.id}
+        units={units}
+        validate={validateField(field, { fields: formFields, units })}
+      />
+    );
+  }
+
+  return (
+    <AnswerFieldControl
+      control={control}
+      field={field}
+      formFields={formFields}
+      units={units}
+    />
+  );
 }
