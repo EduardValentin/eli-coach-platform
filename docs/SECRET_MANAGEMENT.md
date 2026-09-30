@@ -51,6 +51,32 @@ and SHA-256. Rotating or removing a file does not alter already-issued grant
 records, but integrity verification will prevent a mismatched file from being
 delivered. See [STORE_PUBLISHING.md](STORE_PUBLISHING.md).
 
+Progress photos live in a second private root, configured by
+`CLIENT_MEDIA_ROOT` when `CLIENT_MEDIA_PROVIDER=filesystem`. Local development
+uses the gitignored `local/client-media/` directory, created by
+`pnpm client:media:local:prepare`. TEST sets both values in
+`deploy/test/docker-compose.application.yml` and bind-mounts the persistent
+host directory `/srv/client-media/eli-coach-platform`, which the deploy script
+creates, at `/srv/client-media` as read-write in both blue and green platform
+containers. Like the store root, it must never be served by the edge proxy:
+photos are decrypted and streamed only to their owning client and the coach.
+
+Every photo is encrypted before it is written, so the runtime file must also expose:
+
+- `CLIENT_MEDIA_KEY` (base64 of 32 random bytes, for example `openssl rand -base64 32`; a production runtime rejects the `replace-me` placeholder)
+- `CLIENT_MEDIA_KEY_ID` (a short label such as `test-1`, stored on every photo record to name the key that encrypted it)
+
+`CLIENT_MEDIA_PROVIDER` is `memory | filesystem`; a production runtime rejects
+`memory`. TEST runs as a production runtime with `filesystem`, so both secrets
+must be in the TEST env file before the deploy that ships progress photos, or
+the container fails config validation and exits at startup. The key in
+`.env.example` is a development-only value that protects nothing.
+
+Each environment has one key today. Rotation, a new `CLIENT_MEDIA_KEY_ID`
+while the old key stays readable for the photos it encrypted, is future work:
+until then, replacing `CLIENT_MEDIA_KEY` makes every stored photo unreadable,
+and losing it loses them.
+
 It should also expose who is notified of a booked free assessment call:
 
 - `ASSESSMENT_CALL_COACH_EMAIL` (the address every booking notification is sent to; the committed default, `4e1c7a93b5d2@example.invalid`, names no mailbox)
