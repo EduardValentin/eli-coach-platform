@@ -2,13 +2,8 @@ import { z } from "zod";
 
 import { isProductionRuntime, type AppConfig } from "./app";
 
-const PLACEHOLDER_SECRET = "replace-me";
 const COMMITTED_DEVELOPMENT_KEY =
   "Lhg6svmQ58XvcXGOkFUr8enaWRLPDNzkZYsAt+zWgdc=";
-const KEYS_REFUSED_IN_PRODUCTION = [
-  PLACEHOLDER_SECRET,
-  COMMITTED_DEVELOPMENT_KEY,
-];
 const BASE64_OF_32_BYTES = /^[A-Za-z0-9+/]{43}=$/;
 
 export const clientMediaShape = {
@@ -37,20 +32,34 @@ export function refineClientMedia(
     refineFilesystemSettingsPresent(environment, context);
   }
 
+  refineKeyFormat(environment, context);
+
+  if (isProductionRuntime(environment)) {
+    refineProductionClientMedia(environment, context);
+  }
+}
+
+function refineKeyFormat(
+  environment: ClientMediaConfig,
+  context: z.RefinementCtx,
+): void {
   const key = environment.CLIENT_MEDIA_KEY;
 
-  if (key !== undefined && !BASE64_OF_32_BYTES.test(key)) {
-    context.addIssue({
-      code: "custom",
-      message: "CLIENT_MEDIA_KEY must be the base64 encoding of 32 bytes.",
-      path: ["CLIENT_MEDIA_KEY"],
-    });
-  }
-
-  if (!isProductionRuntime(environment)) {
+  if (key === undefined || BASE64_OF_32_BYTES.test(key)) {
     return;
   }
 
+  context.addIssue({
+    code: "custom",
+    message: "CLIENT_MEDIA_KEY must be the base64 encoding of 32 bytes.",
+    path: ["CLIENT_MEDIA_KEY"],
+  });
+}
+
+function refineProductionClientMedia(
+  environment: ClientMediaConfig,
+  context: z.RefinementCtx,
+): void {
   if (environment.CLIENT_MEDIA_PROVIDER === "memory") {
     context.addIssue({
       code: "custom",
@@ -60,11 +69,11 @@ export function refineClientMedia(
     });
   }
 
-  if (key !== undefined && KEYS_REFUSED_IN_PRODUCTION.includes(key)) {
+  if (environment.CLIENT_MEDIA_KEY === COMMITTED_DEVELOPMENT_KEY) {
     context.addIssue({
       code: "custom",
       message:
-        "Production client media requires a CLIENT_MEDIA_KEY other than the placeholder or the committed development key.",
+        "Production client media requires a CLIENT_MEDIA_KEY other than the committed development key.",
       path: ["CLIENT_MEDIA_KEY"],
     });
   }

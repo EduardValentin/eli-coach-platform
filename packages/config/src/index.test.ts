@@ -585,28 +585,39 @@ describe("client media settings", () => {
     expect(environment.CLIENT_MEDIA_KEY).toBe(committedDevelopmentKey);
   });
 
-  it.each([
-    ["the placeholder", "replace-me"],
-    ["the committed development key", committedDevelopmentKey],
-  ])(
-    "refuses %s as CLIENT_MEDIA_KEY in a production runtime",
-    (_description, key) => {
-      // arrange
-      const source = buildEnvironment({
-        ...FILESYSTEM_CLIENT_MEDIA_ENVIRONMENT,
-        CLIENT_MEDIA_KEY: key,
-        NODE_ENV: "production",
-      });
+  it("refuses the committed development key in a production runtime", () => {
+    // arrange
+    const source = buildEnvironment({
+      ...FILESYSTEM_CLIENT_MEDIA_ENVIRONMENT,
+      CLIENT_MEDIA_KEY: committedDevelopmentKey,
+      NODE_ENV: "production",
+    });
 
-      // act
-      const load = () => loadRuntimeEnvironment(source);
+    // act
+    const load = () => loadRuntimeEnvironment(source);
 
-      // assert
-      expect(load).toThrow(
-        "Production client media requires a CLIENT_MEDIA_KEY other than the placeholder or the committed development key.",
-      );
-    },
-  );
+    // assert
+    expect(load).toThrow(
+      "Production client media requires a CLIENT_MEDIA_KEY other than the committed development key.",
+    );
+  });
+
+  it("refuses a placeholder key in a production runtime", () => {
+    // arrange
+    const source = buildEnvironment({
+      ...FILESYSTEM_CLIENT_MEDIA_ENVIRONMENT,
+      CLIENT_MEDIA_KEY: "replace-me",
+      NODE_ENV: "production",
+    });
+
+    // act
+    const load = () => loadRuntimeEnvironment(source);
+
+    // assert
+    expect(load).toThrow(
+      "CLIENT_MEDIA_KEY must be the base64 encoding of 32 bytes.",
+    );
+  });
 });
 
 function readCommittedExampleValue(name: string): string {
