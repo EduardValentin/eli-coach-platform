@@ -53,6 +53,8 @@ const DETAIL_REQUESTS_API = "/api/client-onboarding/detail-requests";
 const APPROVALS_API = "/api/client-onboarding/approvals";
 const DETAIL_ANSWERS_API = "/api/client-onboarding/detail-answers";
 
+const COACH_CLIENTS_PAGE = "/coach/clients";
+
 const DETAILS_EMAIL_SUBJECT = "Eli needs a few more details";
 
 const OPENED_INSTANT = new Date("2026-10-22T09:00:00.000Z");
@@ -128,6 +130,7 @@ describe.sequential("onboarding review integration", () => {
       detailsAnsweredAt: null,
       answersApprovedAt: null,
     });
+    await expectStampsToProjectReviewRows(clientId);
   });
 
   it("stores her detail request, stamps it and emails her once without the note or any id", async () => {
@@ -156,6 +159,7 @@ describe.sequential("onboarding review integration", () => {
       detailsRequestedAt: ASKED_INSTANT,
       detailsAnsweredAt: null,
     });
+    await expectStampsToProjectReviewRows(clientId);
     const emails = await detailsEmails();
     expect(emails).toHaveLength(1);
     expect(emails[0]).toMatchObject({
@@ -191,6 +195,7 @@ describe.sequential("onboarding review integration", () => {
     expect(await refused.json()).toEqual({ error: "not-in-review" });
     expect(await requestRowsOf(clientId)).toHaveLength(1);
     expect(await detailsEmails()).toHaveLength(1);
+    await expectStampsToProjectReviewRows(clientId);
   });
 
   it("two requests raised at once leave one open request", async () => {
@@ -220,6 +225,7 @@ describe.sequential("onboarding review integration", () => {
       expect.objectContaining({ answeredAt: null }),
     ]);
     expect(await detailsEmails()).toHaveLength(1);
+    await expectStampsToProjectReviewRows(clientId);
   });
 
   it("refuses a request before the review is opened and one with no note", async () => {
@@ -243,6 +249,7 @@ describe.sequential("onboarding review integration", () => {
     expect(await withoutNote.json()).toEqual({ error: "invalid" });
     expect(await requestRowsOf(clientId)).toEqual([]);
     expect(await detailsEmails()).toEqual([]);
+    await expectStampsToProjectReviewRows(clientId);
   });
 
   it("refuses her answer to a question the coach did not ask", async () => {
@@ -268,6 +275,7 @@ describe.sequential("onboarding review integration", () => {
     expect(await submittedAnswersOf(clientId)).toEqual(
       completeAnswers(REGULAR_LAST_PERIOD_START),
     );
+    await expectStampsToProjectReviewRows(clientId);
   });
 
   it("refuses her answers while no request is open", async () => {
@@ -285,6 +293,7 @@ describe.sequential("onboarding review integration", () => {
     expect(await submittedAnswersOf(clientId)).toEqual(
       completeAnswers(REGULAR_LAST_PERIOD_START),
     );
+    await expectStampsToProjectReviewRows(clientId);
   });
 
   it("merges only her asked answer into her submission, rebuilds her profile facts from it and returns her to review", async () => {
@@ -324,6 +333,7 @@ describe.sequential("onboarding review integration", () => {
         updatedAt: ANSWERED_INSTANT,
       }),
     );
+    await expectStampsToProjectReviewRows(clientId);
   });
 
   it("lands her back in review after a second request and answer", async () => {
@@ -367,6 +377,7 @@ describe.sequential("onboarding review integration", () => {
       checkInDay: "Friday",
       checkInChannel: "Email",
     });
+    await expectStampsToProjectReviewRows(clientId);
   });
 
   it("approves her answers for good and refuses every later review step", async () => {
@@ -402,6 +413,7 @@ describe.sequential("onboarding review integration", () => {
       answersApprovedAt: APPROVED_INSTANT,
     });
     expect(await detailsEmails()).toEqual([]);
+    await expectStampsToProjectReviewRows(clientId);
   });
 
   it("passes her through review when the coach approves before opening it", async () => {
@@ -418,6 +430,7 @@ describe.sequential("onboarding review integration", () => {
       openedAt: APPROVED_INSTANT,
       approvedAt: APPROVED_INSTANT,
     });
+    await expectStampsToProjectReviewRows(clientId);
   });
 
   it("answers not found to a review step for a client no one knows", async () => {
@@ -464,6 +477,7 @@ describe.sequential("onboarding review integration", () => {
     expect(await stampsOf(clientId)).toMatchObject({
       answersApprovedAt: null,
     });
+    await expectStampsToProjectReviewRows(clientId);
   });
 
   it("refuses the coach's answers on a client's behalf", async () => {
@@ -480,6 +494,32 @@ describe.sequential("onboarding review integration", () => {
     expect(await requestRowsOf(clientId)).toEqual([
       expect.objectContaining({ answeredAt: null }),
     ]);
+    await expectStampsToProjectReviewRows(clientId);
+  });
+
+  it("lagging stamps are repaired on the coach's read (a lost projection, simulated by clearing the columns)", async () => {
+    // arrange
+    const clientId = await clientAskedAboutWeight();
+    await suite.postgres.executeSql({
+      sql: "update app.clients set review_opened_at = null, details_requested_at = null, details_answered_at = null, answers_approved_at = null where id = $1",
+      values: [clientId],
+    });
+
+    // act
+    const page = await rig.requestAs(
+      COACH_SESSION,
+      `${COACH_CLIENTS_PAGE}/${clientId}`,
+    );
+
+    // assert
+    expect(page.status).toBe(200);
+    expect(await stampsOf(clientId)).toEqual({
+      reviewOpenedAt: OPENED_INSTANT,
+      detailsRequestedAt: ASKED_INSTANT,
+      detailsAnsweredAt: null,
+      answersApprovedAt: null,
+    });
+    await expectStampsToProjectReviewRows(clientId);
   });
 });
 
@@ -502,6 +542,8 @@ async function clientInReview(): Promise<string> {
     throw new Error(`Opening her review answered ${opened.status}.`);
   }
 
+  await expectStampsToProjectReviewRows(clientId);
+
   return clientId;
 }
 
@@ -516,6 +558,8 @@ async function clientAskedAboutWeight(): Promise<string> {
   if (asked.status !== 200) {
     throw new Error(`Asking for details answered ${asked.status}.`);
   }
+
+  await expectStampsToProjectReviewRows(clientId);
 
   return clientId;
 }
@@ -584,6 +628,13 @@ async function stampsOf(clientId: string): Promise<ReviewStampRow | undefined> {
   });
 
   return row;
+}
+
+async function expectStampsToProjectReviewRows(clientId: string) {
+  const { recorded, derivedFromReviewRows } =
+    await onboarding.reviewStampProjectionOf(clientId);
+
+  expect(recorded).toEqual(derivedFromReviewRows);
 }
 
 async function submittedAnswersOf(

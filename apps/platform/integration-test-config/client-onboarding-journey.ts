@@ -16,6 +16,22 @@ export type ClientProfileRow = {
   updatedAt: Date;
 };
 
+export type ReviewStampColumns = {
+  reviewOpenedAt: Date | null;
+  detailsRequestedAt: Date | null;
+  detailsAnsweredAt: Date | null;
+  answersApprovedAt: Date | null;
+};
+
+export type ReviewStampProjection = {
+  recorded: ReviewStampColumns | undefined;
+  derivedFromReviewRows: ReviewStampColumns;
+};
+
+type ReviewRow = { openedAt: Date; approvedAt: Date | null };
+
+type DetailRequestMoments = { askedAt: Date; answeredAt: Date | null };
+
 export type OnboardingConsentInstants = {
   specialCategoryAt: string | null;
   disclaimerAt: string | null;
@@ -85,6 +101,35 @@ export class ClientOnboardingJourney {
     });
 
     return row;
+  }
+
+  async reviewStampProjectionOf(
+    clientId: string,
+  ): Promise<ReviewStampProjection> {
+    const [[recorded], [review], [latestRequest]] = await Promise.all([
+      this.rig.suite.postgres.queryRows<ReviewStampColumns>({
+        sql: 'select review_opened_at as "reviewOpenedAt", details_requested_at as "detailsRequestedAt", details_answered_at as "detailsAnsweredAt", answers_approved_at as "answersApprovedAt" from app.clients where id = $1',
+        values: [clientId],
+      }),
+      this.rig.suite.postgres.queryRows<ReviewRow>({
+        sql: 'select opened_at as "openedAt", approved_at as "approvedAt" from app.client_onboarding_reviews where client_id = $1',
+        values: [clientId],
+      }),
+      this.rig.suite.postgres.queryRows<DetailRequestMoments>({
+        sql: 'select asked_at as "askedAt", answered_at as "answeredAt" from app.client_onboarding_detail_requests where client_id = $1 order by asked_at desc limit 1',
+        values: [clientId],
+      }),
+    ]);
+
+    return {
+      recorded,
+      derivedFromReviewRows: {
+        reviewOpenedAt: review?.openedAt ?? null,
+        detailsRequestedAt: latestRequest?.askedAt ?? null,
+        detailsAnsweredAt: latestRequest?.answeredAt ?? null,
+        answersApprovedAt: review?.approvedAt ?? null,
+      },
+    };
   }
 
   async clientIdOf(session: AccountSession): Promise<string> {
