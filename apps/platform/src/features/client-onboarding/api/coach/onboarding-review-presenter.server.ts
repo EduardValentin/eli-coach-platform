@@ -34,6 +34,8 @@ type QuestionId = SubmittedReading["flaggedQuestions"][number];
 
 const QUESTION_LABEL_OVERRIDES: Record<string, string> = {
   goalWeight: "Target weight",
+  previousPt: "Previous PT",
+  previousPtExperience: "Previous PT experience",
 };
 
 const CHECK_IN_DAY_FIELD_ID = "checkInDay";

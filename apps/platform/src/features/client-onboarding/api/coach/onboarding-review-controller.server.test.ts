@@ -311,6 +311,38 @@ describe("OnboardingReviewController loadReview", () => {
     ).toEqual([[null, null, null], ["Yes"]]);
   });
 
+  it("words the previous personal trainer questions with PT capitalised", async () => {
+    // arrange
+    const { controller } = createController({
+      reading: submittedReading({
+        answers: answersWith({
+          "goal-availability": {
+            previousPt: "Yes",
+            previousPtExperience: "Group classes",
+          },
+        }),
+        overrides: {
+          forms: [
+            {
+              formId: "goal-availability",
+              fieldIds: ["previousPt", "previousPtExperience"],
+              answered: 2,
+              total: 2,
+            },
+          ],
+        },
+      }),
+    });
+
+    // act
+    const review = await controller.loadReview(coachArgs(), CLIENT_ID);
+
+    // assert
+    expect(
+      review.submitted?.forms[0]?.answers.map((given) => given.label),
+    ).toEqual(["Previous PT", "Previous PT experience"]);
+  });
+
   it("answers no submission, no measurements and no height before the client has submitted", async () => {
     // arrange
     const { controller } = createController({
