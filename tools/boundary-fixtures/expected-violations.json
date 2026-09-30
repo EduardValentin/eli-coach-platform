@@ -143,6 +143,10 @@
   "packages/infrastructure/src/email/infrastructure-subpaths.server.ts": [
     "infrastructure-subpaths"
   ],
+  "packages/infrastructure/src/email/sharp-confined.server.ts": [
+    "not-to-unresolvable",
+    "sharp-confined"
+  ],
   "packages/ui/src/filters/imports-layout.tsx": ["ui-subpaths"],
   "packages/ui/src/lib/imports-primitives.ts": ["ui-lib-is-the-base"],
   "packages/ui/src/primitives/imports-layout.tsx": [

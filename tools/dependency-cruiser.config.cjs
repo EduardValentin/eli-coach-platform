@@ -254,6 +254,14 @@ module.exports = {
       to: { path: "(^|/)@clerk/" },
     },
     {
+      name: "sharp-confined",
+      comment:
+        "Image decoding stays behind the infrastructure images concern: nothing else names sharp.",
+      severity: "error",
+      from: { pathNot: ["^packages/infrastructure/src/images/"] },
+      to: { path: "(^|/)sharp(/|$)" },
+    },
+    {
       name: "feature-api-to-data",
       comment:
         "A controller or route never imports its feature's repositories or email adapters; the composition hands them in through ports.",
