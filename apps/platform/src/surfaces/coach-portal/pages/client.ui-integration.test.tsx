@@ -135,7 +135,7 @@ const NOT_SUBMITTED: OnboardingReviewView = {
   submitted: null,
 };
 
-const SUBMITTED_WITH_MEASUREMENTS: OnboardingReviewView = {
+const SUBMITTED_REVIEW: OnboardingReviewView = {
   clientId: CLIENT_ID,
   submittedWaistCm: 80,
   statedHeightCm: 170,
@@ -248,7 +248,7 @@ describe("the coach's client page", () => {
     // arrange, act
     await renderClientPage({
       client: AWAITING_REVIEW,
-      review: SUBMITTED_WITH_MEASUREMENTS,
+      review: SUBMITTED_REVIEW,
       profile: PROFILE,
       measurements: SUBMITTED_MEASUREMENTS,
     });
@@ -276,7 +276,7 @@ describe("the coach's client page", () => {
     // arrange, act
     await renderClientPage({
       client: AWAITING_REVIEW,
-      review: SUBMITTED_WITH_MEASUREMENTS,
+      review: SUBMITTED_REVIEW,
       profile: PROFILE,
       measurements: SUBMITTED_MEASUREMENTS,
     });

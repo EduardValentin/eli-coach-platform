@@ -28,7 +28,7 @@ export class ClientProfileController {
     args: LoaderFunctionArgs,
     clientId: string,
   ): Promise<ClientProfileView> {
-    const target = coachTarget(args, clientId);
+    const target = requireCoachClientId(args, clientId);
     const reading = await this.options.readClientProfile.execute(target);
 
     if (!reading) {
@@ -42,14 +42,17 @@ export class ClientProfileController {
     args: LoaderFunctionArgs,
     clientId: string,
   ): Promise<MeasurementRow[]> {
-    const target = coachTarget(args, clientId);
+    const target = requireCoachClientId(args, clientId);
     const entries = await this.options.measurements.listByClientId(target);
 
     return measurementRowsSchema.parse(presentMeasurements(entries));
   }
 }
 
-function coachTarget(args: LoaderFunctionArgs, clientId: string): string {
+function requireCoachClientId(
+  args: LoaderFunctionArgs,
+  clientId: string,
+): string {
   requirePortalAccess(args, { role: "COACH" });
   const target = clientIdSchema.safeParse(clientId);
 
