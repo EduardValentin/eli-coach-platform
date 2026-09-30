@@ -122,3 +122,83 @@ describe("findOnboardingField", () => {
     expect(field).toBeNull();
   });
 });
+
+describe("the measurement questions", () => {
+  it("ask her weight, height and target weight without an instruction line", () => {
+    // arrange
+    // act
+    const fields = ["weight", "height", "goalWeight"].map(findOnboardingField);
+
+    // assert
+    expect(fields).toStrictEqual([
+      {
+        id: "weight",
+        label: "Your weight",
+        kind: "weight",
+        requirement: "required",
+        range: { min: 30, max: 300 },
+      },
+      {
+        id: "height",
+        label: "Your height",
+        kind: "height",
+        requirement: "required",
+        range: { min: 120, max: 230 },
+      },
+      {
+        id: "goalWeight",
+        label: "Target weight",
+        kind: "weight",
+        requirement: "required",
+        range: { min: 30, max: 300 },
+        relativeTo: { id: "weight", spread: 60 },
+      },
+    ]);
+  });
+
+  it("ask the four circumferences with the instruction lines, waist required", () => {
+    // arrange
+    const measurementsForm = ONBOARDING_FORMS.find(
+      (form) => form.id === "measurements",
+    );
+
+    // act
+    const fields = measurementsForm?.fields;
+
+    // assert
+    expect(fields).toStrictEqual([
+      {
+        id: "waist",
+        label: "Waist",
+        kind: "circumference",
+        requirement: "required",
+        hint: "Narrowest point, usually just above the belly button. Relaxed, don't pull the tape tight.",
+        range: { min: 40, max: 200 },
+      },
+      {
+        id: "hips",
+        label: "Hips",
+        kind: "circumference",
+        requirement: "optional",
+        hint: "Widest point.",
+        range: { min: 50, max: 200 },
+      },
+      {
+        id: "thigh",
+        label: "Thigh",
+        kind: "circumference",
+        requirement: "optional",
+        hint: "Mid-thigh, same leg every time.",
+        range: { min: 30, max: 100 },
+      },
+      {
+        id: "arm",
+        label: "Arm",
+        kind: "circumference",
+        requirement: "optional",
+        hint: "Relaxed, mid-bicep.",
+        range: { min: 15, max: 60 },
+      },
+    ]);
+  });
+});

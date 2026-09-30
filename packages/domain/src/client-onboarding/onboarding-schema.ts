@@ -1,4 +1,9 @@
 import type { VisitorGender } from "../assessment-call";
+import {
+  CIRCUMFERENCE_MEASUREMENT_FIELDS,
+  WEIGHT_MEASUREMENT_FIELD,
+  type MeasurementField,
+} from "../measurement";
 
 export type OnboardingFormId =
   | "goal-availability"
@@ -62,7 +67,7 @@ export type OnboardingField = {
   reassurance?: FieldReassurance;
 };
 
-const WEIGHT_RANGE_KG: NumericRange = { min: 30, max: 300 };
+const WEIGHT_RANGE_KG: NumericRange = WEIGHT_MEASUREMENT_FIELD.range;
 
 const HEIGHT_RANGE_CM: NumericRange = { min: 120, max: 230 };
 
@@ -788,46 +793,24 @@ const LIFESTYLE_FORM: OnboardingFormDefinition = {
   ],
 };
 
+function onboardingFieldOf(field: MeasurementField): OnboardingField {
+  return {
+    id: field.id,
+    label: field.label,
+    kind: field.kind,
+    requirement: field.requirement,
+    hint: field.hint,
+    range: field.range,
+  };
+}
+
 const MEASUREMENTS_FORM: OnboardingFormDefinition = {
   id: "measurements",
   title: "Your measurements",
   intro: "Take them the same way every time and the numbers stay comparable.",
   audience: "everyone",
   sensitivity: "ordinary",
-  fields: [
-    {
-      id: "waist",
-      label: "Waist",
-      kind: "circumference",
-      requirement: "required",
-      hint: "Narrowest point, usually just above the belly button. Relaxed, don't pull the tape tight.",
-      range: { min: 40, max: 200 },
-    },
-    {
-      id: "hips",
-      label: "Hips",
-      kind: "circumference",
-      requirement: "optional",
-      hint: "Widest point.",
-      range: { min: 50, max: 200 },
-    },
-    {
-      id: "thigh",
-      label: "Thigh",
-      kind: "circumference",
-      requirement: "optional",
-      hint: "Mid-thigh, same leg every time.",
-      range: { min: 30, max: 100 },
-    },
-    {
-      id: "arm",
-      label: "Arm",
-      kind: "circumference",
-      requirement: "optional",
-      hint: "Relaxed, mid-bicep.",
-      range: { min: 15, max: 60 },
-    },
-  ],
+  fields: CIRCUMFERENCE_MEASUREMENT_FIELDS.map(onboardingFieldOf),
 };
 
 export const ONBOARDING_FORMS: readonly OnboardingFormDefinition[] = [
