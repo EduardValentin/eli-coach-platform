@@ -29,7 +29,7 @@ const callClockFormatter = new Intl.DateTimeFormat("en-US", {
   minute: "2-digit",
 });
 
-function callMoment(startsAt: Date): string {
+function shortCallMoment(startsAt: Date): string {
   return `${callDayFormatter.format(startsAt)} · ${callClockFormatter.format(startsAt)}`;
 }
 
@@ -130,7 +130,7 @@ test("the coach finds her clients by status, name and join date and opens one", 
     Phone: "—",
   });
   await coachClient.expectAssessmentCall({
-    Call: callMoment(submitted.callStartsAt),
+    Call: shortCallMoment(submitted.callStartsAt),
     "Primary goal": "Build strength",
     "Reduced price": "No",
     "Booking notes": "—",

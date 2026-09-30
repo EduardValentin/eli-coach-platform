@@ -16,7 +16,7 @@ type AssessmentCallBlockProps = {
   client: Pick<CoachClient, "assessmentCall" | "subscription">;
 };
 
-function callMoment(startsAt: string, timeZone: string): string {
+function shortCallMoment(startsAt: string, timeZone: string): string {
   const instant = new Date(startsAt);
 
   return `${formatShortDay(instant, timeZone)} · ${formatClockTime(instant, timeZone)}`;
@@ -39,8 +39,9 @@ export function AssessmentCallBlock({ client }: AssessmentCallBlockProps) {
       <dl className="grid grid-cols-2 gap-5 sm:grid-cols-4">
         <Reading
           as="dl-item"
+          className="col-span-full sm:col-span-1"
           label="Call"
-          value={callMoment(assessmentCall.startsAt, timeZone)}
+          value={shortCallMoment(assessmentCall.startsAt, timeZone)}
           valueParity="call-date"
         />
         <Reading
