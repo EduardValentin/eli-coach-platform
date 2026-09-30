@@ -80,6 +80,16 @@ export const measurementsRefusalSchema = z.object({
   error: z.literal("not-on-journey"),
 });
 
+export const PROGRESS_PHOTO_CONSENT_COPY =
+  "I agree to share progress photos with my coach. They are only used to follow my progress, and I can ask for them to be deleted at any time. [Placeholder — Eli to replace with her own wording.]";
+
+export const CLIENT_PROFILE_PAGE_COPY = {
+  metaTitle: "Profile | Evoa",
+  title: "Your Profile",
+  subtitle:
+    "Your coach keeps this up to date. Mention any changes at your next check-in.",
+} as const;
+
 const PROGRESS_PHOTO_VIEW_LABELS = {
   front: "Front",
   side: "Side",

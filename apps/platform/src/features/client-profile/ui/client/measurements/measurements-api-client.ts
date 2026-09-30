@@ -1,0 +1,101 @@
+import { joinBasePath } from "@eli-coach-platform/config";
+import {
+  PROGRESS_PHOTO_VIEWS,
+  type ProgressPhotoView,
+} from "@eli-coach-platform/domain/client-profile";
+
+import {
+  PHOTO_CONSENT_GIVEN,
+  RECORD_MEASUREMENTS_FIELDS,
+  recordMeasurementsResponseSchema,
+  type MeasurementEntryRequest,
+} from "~/features/client-profile/contracts/measurements";
+import { CLIENT_PROFILE_API_PATHS } from "~/features/client-profile/contracts/paths";
+import { progressPhotoUrl } from "~/features/client-profile/ui/shared/photos/progress-photo-url";
+
+export type ProgressPhotoPicks = Partial<Record<ProgressPhotoView, File>>;
+
+type MeasurementsSubmission = {
+  entry: MeasurementEntryRequest;
+  givesPhotoConsent: boolean;
+  photos: ProgressPhotoPicks;
+};
+
+type RecordMeasurementsOutcome =
+  { kind: "recorded"; refusedViews: ProgressPhotoView[] } | { kind: "failed" };
+
+const MEASUREMENTS_API_URL = joinBasePath(
+  import.meta.env.BASE_URL,
+  CLIENT_PROFILE_API_PATHS.measurements,
+);
+
+const RECORDED_STATUS = 201;
+
+const RECORD_FAILED: RecordMeasurementsOutcome = { kind: "failed" };
+
+async function send(url: string, init: RequestInit): Promise<Response | null> {
+  try {
+    return await fetch(url, init);
+  } catch {
+    return null;
+  }
+}
+
+async function readJson(response: Response): Promise<unknown> {
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
+
+function measurementsFormData(submission: MeasurementsSubmission): FormData {
+  const formData = new FormData();
+  formData.append(
+    RECORD_MEASUREMENTS_FIELDS.entry,
+    JSON.stringify(submission.entry),
+  );
+
+  if (submission.givesPhotoConsent) {
+    formData.append(
+      RECORD_MEASUREMENTS_FIELDS.photoConsent,
+      PHOTO_CONSENT_GIVEN,
+    );
+  }
+
+  for (const view of PROGRESS_PHOTO_VIEWS) {
+    const photo = submission.photos[view];
+
+    if (photo) formData.append(view, photo);
+  }
+
+  return formData;
+}
+
+export async function recordMeasurements(
+  submission: MeasurementsSubmission,
+): Promise<RecordMeasurementsOutcome> {
+  const response = await send(MEASUREMENTS_API_URL, {
+    body: measurementsFormData(submission),
+    method: "POST",
+  });
+
+  if (response?.status !== RECORDED_STATUS) return RECORD_FAILED;
+
+  const recorded = recordMeasurementsResponseSchema.safeParse(
+    await readJson(response),
+  );
+
+  if (!recorded.success) return RECORD_FAILED;
+
+  return {
+    kind: "recorded",
+    refusedViews: PROGRESS_PHOTO_VIEWS.filter(
+      (view) => recorded.data.photos[view] === "refused",
+    ),
+  };
+}
+
+export async function removeProgressPhoto(photoId: string): Promise<void> {
+  await send(progressPhotoUrl(photoId), { method: "DELETE" });
+}

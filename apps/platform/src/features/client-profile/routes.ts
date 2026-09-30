@@ -1,10 +1,15 @@
 import { relative, type RouteConfigEntry } from "@react-router/dev/routes";
 
-import { CLIENT_PROFILE_API_PATHS } from "./contracts/paths";
+import {
+  CLIENT_PROFILE_API_PATHS,
+  CLIENT_PROFILE_ROUTE_SEGMENT,
+} from "./contracts/paths";
 
 const { route } = relative(import.meta.dirname);
 
-export const clientProfileClientRoutes: RouteConfigEntry[] = [];
+export const clientProfileClientRoutes: RouteConfigEntry[] = [
+  route(CLIENT_PROFILE_ROUTE_SEGMENT, "./ui/client/profile/profile-page.tsx"),
+];
 
 export const clientProfileApiRoutes = [
   route(

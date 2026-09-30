@@ -6,10 +6,8 @@ import {
 } from "@eli-coach-platform/ui/primitives";
 import { Link } from "react-router";
 
-import {
-  OPTIONAL_SUFFIX,
-  PROGRESS_PHOTO_CONSENT_COPY,
-} from "~/features/client-onboarding/contracts/onboarding-copy";
+import { OPTIONAL_SUFFIX } from "~/features/client-onboarding/contracts/onboarding-copy";
+import { PROGRESS_PHOTO_CONSENT_COPY } from "~/features/client-profile/contracts/measurements";
 
 type ConsentAgreement = "specialCategory" | "disclaimer";
 
