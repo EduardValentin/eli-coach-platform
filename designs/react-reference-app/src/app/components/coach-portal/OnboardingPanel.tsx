@@ -141,7 +141,7 @@ function ScreeningWarning({ journey }: { journey: ClientJourney }) {
     <IconHint
       label={warnings.join('. ')}
       icon={<TriangleAlert aria-hidden="true" size={16} />}
-      className="text-destructive"
+      tone="danger"
       parity="screening-warning"
     >
       {warnings.map((warning) => (

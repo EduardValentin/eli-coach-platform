@@ -978,18 +978,18 @@ describe('the coach reading what cycle mode means', () => {
     await user.hover(cycleModeInfoButton());
 
     // assert
-    const tooltip = await screen.findByRole('dialog');
-    expect(tooltip).toHaveTextContent(PHASE_BASED_FOR_HER);
-    expect(tooltip).toHaveTextContent(
+    const hint = await screen.findByRole('dialog');
+    expect(hint).toHaveTextContent(PHASE_BASED_FOR_HER);
+    expect(hint).toHaveTextContent(
       'Symptom-based — one of those does not hold, so her program follows the symptoms she reports.',
     );
-    expect(tooltip).toHaveTextContent(
+    expect(hint).toHaveTextContent(
       'Set by Eli — her contraception is one the product does not classify; you decide how her program adapts.',
     );
-    expect(tooltip).toHaveTextContent(
+    expect(hint).toHaveTextContent(
       'Not applicable — her gender skips the cycle form.',
     );
-    expect(tooltip).toHaveTextContent(
+    expect(hint).toHaveTextContent(
       'Not answered yet — the cycle form is empty.',
     );
   });
@@ -1033,11 +1033,11 @@ describe('the coach reading what cycle mode means', () => {
     await user.hover(cycleModeInfoButton());
 
     // assert
-    const tooltip = await screen.findByRole('dialog');
-    expect(tooltip).toHaveTextContent(
+    const hint = await screen.findByRole('dialog');
+    expect(hint).toHaveTextContent(
       'Phase-based — their program follows their cycle phases: they get a period, are not on the combined pill, are not pregnant, postpartum or breastfeeding, and are not in perimenopause or menopause.',
     );
-    expect(tooltip).toHaveTextContent(
+    expect(hint).toHaveTextContent(
       'Symptom-based — one of those does not hold, so their program follows the symptoms they report.',
     );
   });

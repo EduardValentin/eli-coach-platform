@@ -27,6 +27,7 @@ The production source of truth is `packages/ui/src/styles.css` for tokens and, f
 | `Card` | Bordered content container, as a `div` or through `cardVariants` on any element | `variant`: `card` (16px corner, faint border, card shadow), `quiet` (the same corner on the quiet surface, flat), `panel` (24px corner, subtle border, soft shadow, for large frames) |
 | `Checkbox` | The one check box: 20px, base surface, soft shadow, brand fill and white check when checked | No variants |
 | `IconButton` | Labelled icon-only action; icon-only buttons are circular | `variant`: `ghost`, `plain`, `soft` |
+| `IconHint` | Round 24px icon button, named for its hint, that opens a short hint in a `Popover` on the `primary` fill on hover, a tap or keyboard focus and keeps it open through a click; the screening warning and the cycle mode info | `tone`: `neutral`, `danger` |
 | `Input` | Single-line form control: base surface fill, soft border | `size`: `sm` (40px), `md` (48px) |
 | `Link` | Router-aware text or navigation link | `inline`, `subtle`, `pill` |
 | `FormField` | Label, control, hint and error with the `aria-describedby`/`aria-invalid` wiring done once | No variants |

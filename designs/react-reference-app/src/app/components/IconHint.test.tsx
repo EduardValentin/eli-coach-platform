@@ -31,7 +31,7 @@ describe('IconHint', () => {
     expect(screen.queryByText('Waist divided by height.')).not.toBeInTheDocument();
   });
 
-  it('opens on hover and closes when the pointer leaves', async () => {
+  it('opens on hover', async () => {
     // arrange
     const { user, trigger } = renderHint();
 
@@ -40,7 +40,18 @@ describe('IconHint', () => {
 
     // assert
     expect(await screen.findByText('Waist divided by height.')).toBeVisible();
+  });
+
+  it('closes when the pointer leaves', async () => {
+    // arrange
+    const { user, trigger } = renderHint();
+    await user.hover(trigger);
+    await screen.findByText('Waist divided by height.');
+
+    // act
     await user.unhover(trigger);
+
+    // assert
     expect(screen.queryByText('Waist divided by height.')).not.toBeInTheDocument();
   });
 
@@ -56,7 +67,7 @@ describe('IconHint', () => {
     expect(screen.getByText('Waist divided by height.')).toBeInTheDocument();
   });
 
-  it('opens on a tap and closes on a second tap', async () => {
+  it('opens on a tap', async () => {
     // arrange
     const { user, trigger } = renderHint();
 
@@ -65,7 +76,18 @@ describe('IconHint', () => {
 
     // assert
     expect(await screen.findByText('Waist divided by height.')).toBeInTheDocument();
+  });
+
+  it('closes on a second tap', async () => {
+    // arrange
+    const { user, trigger } = renderHint();
     await user.pointer({ keys: '[TouchA]', target: trigger });
+    await screen.findByText('Waist divided by height.');
+
+    // act
+    await user.pointer({ keys: '[TouchA]', target: trigger });
+
+    // assert
     expect(screen.queryByText('Waist divided by height.')).not.toBeInTheDocument();
   });
 
