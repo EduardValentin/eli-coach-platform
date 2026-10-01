@@ -259,7 +259,7 @@ test("a client follows her weigh-in reminder and adds a fresh set in pounds and 
 
   // assert
   await measurementsSheet.expectSavedToast();
-  await measurementsSheet.expectRefusedToast("front");
+  await measurementsSheet.expectRefusedPhotoToast("front");
   await measurementsSheet.expectClosed();
   await clientProfile.expectHistory([
     [today, "144 lb", "29 in", "38.5 in", "—", "11 in"],
@@ -412,7 +412,7 @@ test("a client who agreed at onboarding adds front, side and back photos, views 
 
   // assert
   await measurementsSheet.expectSavedToast();
-  await measurementsSheet.expectNoRefusedToast();
+  await measurementsSheet.expectNoRefusedPhotoToast();
   await measurementsSheet.expectClosed();
   await clientProfile.expectViewPhotos(today);
   await clientProfile.expectNoViewPhotos(tenDaysAgo);
@@ -681,7 +681,7 @@ test("a client's camera photos are stored without their metadata, at a bounded s
 
   // assert
   await measurementsSheet.expectSavedToast();
-  await measurementsSheet.expectNoRefusedToast();
+  await measurementsSheet.expectNoRefusedPhotoToast();
   await measurementsSheet.expectClosed();
   await clientProfile.expectViewPhotos(today);
   await clientProfile.expectNoThumbnails();

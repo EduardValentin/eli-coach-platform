@@ -174,11 +174,11 @@ export class MeasurementsSheet {
     await this.expectToast("Measurements saved.");
   }
 
-  async expectRefusedToast(view: ProgressPhotoView): Promise<void> {
+  async expectRefusedPhotoToast(view: ProgressPhotoView): Promise<void> {
     await this.expectToast(refusedPhotoToastOf(view));
   }
 
-  async expectNoRefusedToast(): Promise<void> {
+  async expectNoRefusedPhotoToast(): Promise<void> {
     await expect(this.page.getByText(REFUSED_PHOTO_TOAST)).toHaveCount(0);
   }
 

@@ -124,7 +124,7 @@ async function answerFoodAndDailyLife(onboarding: ClientOnboarding) {
   await onboarding.choose("Where you want to hear from me", "Email");
 }
 
-async function reachMeasurementsInFourParts(onboarding: ClientOnboarding) {
+async function answerEverythingButPhotos(onboarding: ClientOnboarding) {
   await onboarding.startOnboarding();
   await answerGoalFormInKilograms(onboarding);
   await onboarding.continueStep();
@@ -723,7 +723,7 @@ test("a client who agrees to share progress photos sends front, side and back wi
   await page.goto("/store");
   await signIn();
   await page.goto("/client");
-  await reachMeasurementsInFourParts(clientOnboarding);
+  await answerEverythingButPhotos(clientOnboarding);
 
   // assert
   await clientOnboarding.expectPhotosLocked();
@@ -783,7 +783,7 @@ test("a client's onboarding photo that cannot be processed is named once on her 
   await page.goto("/store");
   await signIn();
   await page.goto("/client");
-  await reachMeasurementsInFourParts(clientOnboarding);
+  await answerEverythingButPhotos(clientOnboarding);
   await clientOnboarding.agreeToPhotos();
 
   // act

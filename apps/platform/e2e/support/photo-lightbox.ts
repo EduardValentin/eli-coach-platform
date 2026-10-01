@@ -1,17 +1,15 @@
 import type { ProgressPhotoView } from "@eli-coach-platform/domain/client-profile";
 import { expect, type Locator, type Page } from "@playwright/test";
 
-import { photoNameOf } from "./progress-photo-copy";
-
-const VIEW_TITLES: Record<ProgressPhotoView, string> = {
-  front: "Front",
-  side: "Side",
-  back: "Back",
-};
+import { PHOTO_TITLES, photoNameOf, photoTitleOf } from "./progress-photo-copy";
 
 const SWIPE_DISTANCE_PX = 120;
 
-export type LightboxPosition = {
+const LIGHTBOX_NAME = new RegExp(
+  `^(${PHOTO_TITLES.join("|")}) · \\d+ of \\d+$`,
+);
+
+export type ShownPhoto = {
   view: ProgressPhotoView;
   position: number;
   count: number;
@@ -23,9 +21,7 @@ export class PhotoLightbox {
   constructor(private readonly page: Page) {}
 
   private get dialog() {
-    return this.page.getByRole("dialog", {
-      name: /^(Front|Side|Back) · \d+ of \d+$/,
-    });
+    return this.page.getByRole("dialog", { name: LIGHTBOX_NAME });
   }
 
   private get image() {
@@ -53,13 +49,13 @@ export class PhotoLightbox {
   }
 
   async expectShowing(
-    { view, position, count }: LightboxPosition,
-    date: string,
+    { view, position, count }: ShownPhoto,
+    takenOn: string,
   ): Promise<void> {
     await expect(this.dialog).toHaveAccessibleName(
-      `${VIEW_TITLES[view]} · ${position} of ${count}`,
+      `${photoTitleOf(view)} · ${position} of ${count}`,
     );
-    await expect(this.dialog).toHaveAccessibleDescription(date);
+    await expect(this.dialog).toHaveAccessibleDescription(takenOn);
     await expect(this.image).toHaveAccessibleName(photoNameOf(view));
     await expect
       .poll(() =>
