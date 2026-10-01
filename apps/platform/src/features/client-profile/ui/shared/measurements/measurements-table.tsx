@@ -4,6 +4,10 @@ import {
   type MeasureKind,
   type MeasureUnits,
 } from "@eli-coach-platform/domain/unit-preference";
+import {
+  formatDayMonth,
+  useCalendarDayTimeZone,
+} from "@eli-coach-platform/ui/lib";
 import { PortalWidget } from "@eli-coach-platform/ui/portal";
 import {
   Button,
@@ -22,10 +26,6 @@ import {
   type MeasurementRow,
 } from "~/features/client-profile/contracts/measurements";
 import { waistToHeightRatio } from "~/features/client-profile/ui/shared/body-metrics";
-import {
-  formatDayMonth,
-  useCalendarDayTimeZone,
-} from "~/features/coaching-sales/ui/shared/calendar-day-format";
 
 type CoachRatioBasis = { heightCm: number | null; ratioHidden: boolean };
 

@@ -4,7 +4,11 @@ import {
   ProgressPhoto,
   type ProgressPhotoView,
 } from "@eli-coach-platform/domain/client-profile";
-import { cn } from "@eli-coach-platform/ui/lib";
+import {
+  cn,
+  formatDayMonthYear,
+  useCalendarDayTimeZone,
+} from "@eli-coach-platform/ui/lib";
 import {
   Button,
   Card,
@@ -23,10 +27,6 @@ import {
   progressPhotoImageClass,
   progressPhotoPlaceholderClass,
 } from "~/features/client-profile/ui/shared/photos/progress-photo-frame";
-import {
-  formatDayMonthYear,
-  useCalendarDayTimeZone,
-} from "~/features/coaching-sales/ui/shared/calendar-day-format";
 
 export type ProgressPhotoConsent =
   | { status: "recorded"; at: string }

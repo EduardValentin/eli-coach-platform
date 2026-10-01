@@ -1,5 +1,5 @@
+import { formatDayMonth } from "@eli-coach-platform/ui/lib";
 import type { ClientInvitationReading } from "~/features/coaching-sales/contracts/coach-clients";
-import { formatDayMonth } from "~/features/coaching-sales/ui/shared/calendar-day-format";
 
 export function invitationStateLine(
   invitation: ClientInvitationReading,

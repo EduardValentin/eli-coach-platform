@@ -1,4 +1,4 @@
-import { cn } from "@eli-coach-platform/ui/lib";
+import { cn, useCalendarDayTimeZone } from "@eli-coach-platform/ui/lib";
 import {
   buttonVariants,
   cardVariants,
@@ -18,7 +18,6 @@ import {
   CALL_FIRST_HEADING,
   CallFirstBanner,
 } from "~/features/coaching-sales/ui/public/call-first-banner";
-import { useCalendarDayTimeZone } from "~/features/coaching-sales/ui/shared/calendar-day-format";
 
 import {
   IMMEDIATE_START_SUMMARY,

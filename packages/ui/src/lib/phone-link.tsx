@@ -1,4 +1,4 @@
-import { ABSENT_VALUE } from "@eli-coach-platform/ui/lib";
+import { ABSENT_VALUE } from "./constants";
 
 type PhoneLinkProps = {
   phone: string | null;

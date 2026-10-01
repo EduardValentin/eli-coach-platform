@@ -1,4 +1,4 @@
-import { formatDayMonthYear } from "~/features/coaching-sales/ui/shared/calendar-day-format";
+import { formatDayMonthYear } from "@eli-coach-platform/ui/lib";
 
 export const PAYMENT_CONFIRMED_HEADING = "Payment confirmed";
 

@@ -1,4 +1,9 @@
-import { ABSENT_VALUE } from "@eli-coach-platform/ui/lib";
+import {
+  ABSENT_VALUE,
+  formatDayMonthYear,
+  PhoneLink,
+  useCalendarDayTimeZone,
+} from "@eli-coach-platform/ui/lib";
 import {
   CollapsiblePortalWidget,
   Reading,
@@ -15,11 +20,6 @@ import {
   labelForPrimaryGoal,
 } from "~/features/assessment-calls/contracts/visitor-profile";
 import type { CoachClient } from "~/features/coaching-sales/contracts/coach-clients";
-import {
-  formatDayMonthYear,
-  useCalendarDayTimeZone,
-} from "~/features/coaching-sales/ui/shared/calendar-day-format";
-import { PhoneLink } from "~/features/coaching-sales/ui/shared/phone-link";
 
 const CALENDAR_DATE_TIME_ZONE = "UTC";
 

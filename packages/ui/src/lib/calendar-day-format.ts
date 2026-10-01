@@ -1,4 +1,4 @@
-import { useDisplayTimeZone } from "@eli-coach-platform/ui/lib";
+import { useDisplayTimeZone } from "./use-display-time-zone";
 
 const CALENDAR_DAY_LOCALE = "en-GB";
 const SERVER_RENDER_TIME_ZONE = "UTC";

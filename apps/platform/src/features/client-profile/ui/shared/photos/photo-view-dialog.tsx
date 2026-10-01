@@ -2,7 +2,11 @@ import {
   PROGRESS_PHOTO_VIEWS,
   type ProgressPhotoView,
 } from "@eli-coach-platform/domain/client-profile";
-import { cn } from "@eli-coach-platform/ui/lib";
+import {
+  cn,
+  formatDayMonth,
+  useCalendarDayTimeZone,
+} from "@eli-coach-platform/ui/lib";
 import {
   ConfirmDialog,
   Dialog,
@@ -20,10 +24,6 @@ import {
   progressPhotoPlaceholderClass,
 } from "~/features/client-profile/ui/shared/photos/progress-photo-frame";
 import { progressPhotoUrl } from "~/features/client-profile/ui/shared/photos/progress-photo-url";
-import {
-  formatDayMonth,
-  useCalendarDayTimeZone,
-} from "~/features/coaching-sales/ui/shared/calendar-day-format";
 
 type MeasurementPhoto = MeasurementRow["photos"][number];
 
