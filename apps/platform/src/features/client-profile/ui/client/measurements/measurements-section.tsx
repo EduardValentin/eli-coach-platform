@@ -1,5 +1,6 @@
 import { measureUnitsOf } from "@eli-coach-platform/domain/unit-preference";
 import { Button } from "@eli-coach-platform/ui/primitives";
+import { toast } from "@eli-coach-platform/ui/toast";
 import { Plus } from "lucide-react";
 import { useState } from "react";
 import { useRevalidator } from "react-router";
@@ -58,7 +59,13 @@ export function MeasurementsSection({ page }: { page: MeasurementsPage }) {
         viewer={{
           role: "client",
           onRemovePhoto: async (photo) => {
-            await removeProgressPhoto(photo.id);
+            const removal = await removeProgressPhoto(photo.id);
+
+            if (removal.kind === "failed") {
+              toast.error(MEASUREMENTS_COPY.toasts.removeFailed);
+              return;
+            }
+
             await revalidator.revalidate();
           },
         }}

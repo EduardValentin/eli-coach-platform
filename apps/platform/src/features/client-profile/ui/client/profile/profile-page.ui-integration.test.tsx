@@ -612,39 +612,55 @@ describe("the photo view", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("keeps the photo when it could not be removed", async () => {
-    // arrange
-    server.use(
-      http.delete(PHOTO_URL, () => new HttpResponse(null, { status: 500 })),
-    );
-    const user = await renderProfile(pageWith());
-    await user.click(
-      screen.getByRole("button", { name: "View photos from 29 September" }),
-    );
-    const photos = screen.getByRole("dialog", {
-      name: "Photos from 29 September",
-    });
+  it.each([
+    {
+      failure: "the server answers with an error",
+      answer: () => new HttpResponse(null, { status: 500 }),
+    },
+    {
+      failure: "the request never reaches the server",
+      answer: () => HttpResponse.error(),
+    },
+  ])(
+    "keeps the photo and tells her it could not be removed when $failure",
+    async ({ answer }) => {
+      // arrange
+      server.use(http.delete(PHOTO_URL, answer));
+      const user = await renderProfile(pageWith());
+      await user.click(
+        screen.getByRole("button", { name: "View photos from 29 September" }),
+      );
+      const photos = screen.getByRole("dialog", {
+        name: "Photos from 29 September",
+      });
 
-    // act
-    await user.click(
-      within(photos).getByRole("button", { name: "Remove front photo" }),
-    );
-    await user.click(
-      within(
-        screen.getByRole("dialog", { name: "Remove this photo?" }),
-      ).getByRole("button", { name: "Remove" }),
-    );
+      // act
+      await user.click(
+        within(photos).getByRole("button", { name: "Remove front photo" }),
+      );
+      await user.click(
+        within(
+          screen.getByRole("dialog", { name: "Remove this photo?" }),
+        ).getByRole("button", { name: "Remove" }),
+      );
 
-    // assert
-    await waitFor(() => {
+      // assert
       expect(
-        screen.queryByRole("dialog", { name: "Remove this photo?" }),
-      ).not.toBeInTheDocument();
-    });
-    expect(
-      within(photos).getByRole("img", { name: "Front photo" }),
-    ).toBeInTheDocument();
-  });
+        await screen.findByText("The photo could not be removed. Try again."),
+      ).toBeVisible();
+      await waitFor(() => {
+        expect(
+          screen.queryByRole("dialog", { name: "Remove this photo?" }),
+        ).not.toBeInTheDocument();
+      });
+      expect(
+        within(photos).getByRole("img", { name: "Front photo" }),
+      ).toBeInTheDocument();
+      expect(
+        within(photos).getByRole("button", { name: "Remove front photo" }),
+      ).toBeVisible();
+    },
+  );
 });
 
 function pageWith(overrides: Partial<MeasurementsPage> = {}): MeasurementsPage {

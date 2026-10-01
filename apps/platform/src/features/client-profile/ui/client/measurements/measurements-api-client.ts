@@ -24,12 +24,16 @@ type MeasurementsSubmission = {
 type RecordMeasurementsOutcome =
   { kind: "recorded"; refusedViews: ProgressPhotoView[] } | { kind: "failed" };
 
+type RemoveProgressPhotoOutcome = { kind: "removed" } | { kind: "failed" };
+
 const MEASUREMENTS_API_URL = joinBasePath(
   import.meta.env.BASE_URL,
   CLIENT_PROFILE_API_PATHS.measurements,
 );
 
 const RECORDED_STATUS = 201;
+
+const REMOVED_STATUS = 204;
 
 const RECORD_FAILED: RecordMeasurementsOutcome = { kind: "failed" };
 
@@ -107,6 +111,14 @@ export async function recordMeasurements(
   };
 }
 
-export async function removeProgressPhoto(photoId: string): Promise<void> {
-  await fetchUnlessUnreachable(progressPhotoUrl(photoId), { method: "DELETE" });
+export async function removeProgressPhoto(
+  photoId: string,
+): Promise<RemoveProgressPhotoOutcome> {
+  const response = await fetchUnlessUnreachable(progressPhotoUrl(photoId), {
+    method: "DELETE",
+  });
+
+  return response?.status === REMOVED_STATUS
+    ? { kind: "removed" }
+    : { kind: "failed" };
 }

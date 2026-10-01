@@ -145,6 +145,7 @@ export const MEASUREMENTS_COPY = {
     photoRefused: (view: ProgressPhotoView) =>
       `The ${view} photo could not be processed, so it was not saved.`,
     failed: "Your measurements could not be saved. Try again.",
+    removeFailed: "The photo could not be removed. Try again.",
   },
   nudge: {
     "weigh-in": "Your weekly weigh-in is due",
