@@ -1,17 +1,17 @@
-import { useState } from 'react';
+import { useState } from "react";
 import {
   PROGRESS_PHOTO_VIEW_LABELS,
   PROGRESS_PHOTO_VIEWS,
   type MeasurementEntry,
   type ProgressPhotoView,
-} from '../domain/journey';
-import { formatJourneyDate } from '../utils/journeyLabels';
+} from "../domain/journey";
+import { formatJourneyDate } from "../utils/journeyLabels";
 import {
   progressPhotoImageClass,
   progressPhotoPlaceholderClass,
-} from './progressPhotoFrame';
-import { Button } from './ui/button';
-import { ConfirmDialog } from './ui/confirm-dialog';
+} from "./progressPhotoFrame";
+import { Button } from "./ui/button";
+import { ConfirmDialog } from "./ui/confirm-dialog";
 import {
   Dialog,
   DialogBody,
@@ -21,16 +21,16 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from './ui/dialog';
-import { cn } from './ui/utils';
+} from "./ui/dialog";
+import { cn } from "./ui/utils";
 
 export type PhotoViewer =
-  | { role: 'client'; onRemovePhoto: (view: ProgressPhotoView) => void }
-  | { role: 'coach'; clientFirstName: string };
+  | { role: "client"; onRemovePhoto: (view: ProgressPhotoView) => void }
+  | { role: "coach"; clientFirstName: string };
 
 function privacyLine(viewer: PhotoViewer): string {
-  return viewer.role === 'client'
-    ? 'Only you and your coach can see these photos.'
+  return viewer.role === "client"
+    ? "Only you and your coach can see these photos."
     : `Only you and ${viewer.clientFirstName} can see these photos.`;
 }
 
@@ -52,14 +52,14 @@ function PhotoSlot({
         {photo ? (
           <img
             alt={`${label} photo`}
-            className={progressPhotoImageClass('portrait')}
+            className={progressPhotoImageClass("portrait")}
             src={photo.url}
           />
         ) : (
           <div
             className={cn(
-              progressPhotoPlaceholderClass('portrait'),
-              'text-sm text-text-secondary',
+              progressPhotoPlaceholderClass("portrait"),
+              "text-sm text-text-secondary",
             )}
           >
             No {view} photo
@@ -98,10 +98,10 @@ export function PhotoViewDialog({
     useState<ProgressPhotoView | null>(null);
 
   const removeFor = (view: ProgressPhotoView) =>
-    viewer.role === 'client' ? () => setPendingRemoval(view) : undefined;
+    viewer.role === "client" ? () => setPendingRemoval(view) : undefined;
 
   const confirmRemoval = () => {
-    if (pendingRemoval && viewer.role === 'client') {
+    if (pendingRemoval && viewer.role === "client") {
       viewer.onRemovePhoto(pendingRemoval);
     }
     setPendingRemoval(null);
@@ -120,7 +120,9 @@ export function PhotoViewDialog({
             <DialogTitle>
               Photos from {formatJourneyDate(entry.recordedAt)}
             </DialogTitle>
-            <DialogDescription>{privacyLine(viewer)}</DialogDescription>
+            <DialogDescription data-parity="photo-view-description">
+              {privacyLine(viewer)}
+            </DialogDescription>
           </DialogHeader>
 
           <DialogBody>
@@ -136,9 +138,17 @@ export function PhotoViewDialog({
             </ul>
           </DialogBody>
 
-          <DialogFooter className="flex justify-end">
+          <DialogFooter
+            className="flex justify-end"
+            data-parity="photo-view-footer"
+          >
             <DialogClose asChild>
-              <Button size="sm" type="button" variant="outline">
+              <Button
+                data-parity="photo-view-close"
+                size="sm"
+                type="button"
+                variant="outline"
+              >
                 Close
               </Button>
             </DialogClose>
