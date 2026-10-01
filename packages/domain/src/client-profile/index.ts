@@ -1,3 +1,4 @@
+export { AttachProgressPhotosUseCase } from "./attach-progress-photos-use-case";
 export {
   ClientProfile,
   type ClientProfileSnapshot,
@@ -20,6 +21,10 @@ export {
   type ProgressPhotoSnapshot,
   type ProgressPhotoView,
 } from "./progress-photo";
+export {
+  type ProgressPhotoOutcomes,
+  type ReceivedProgressPhoto,
+} from "./progress-photo-intake";
 export { type ProgressPhotoReference } from "./progress-photo-reference";
 export {
   type ProgressPhotoRendition,
