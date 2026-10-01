@@ -1,5 +1,9 @@
 import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
 import { waistToHeightRatio } from "@eli-coach-platform/domain/measurement";
+import {
+  formatDayMonth,
+  useCalendarDayTimeZone,
+} from "@eli-coach-platform/ui/lib";
 import { PortalWidget, Reading } from "@eli-coach-platform/ui/portal";
 import { Button } from "@eli-coach-platform/ui/primitives";
 import { ConfirmDialog } from "@eli-coach-platform/ui/overlays";
@@ -33,7 +37,6 @@ import { AnswerGroups } from "./answer-groups";
 import { CycleModeInfo } from "./cycle-mode-info";
 import { OnboardingReviewDialog } from "./onboarding-review-dialog";
 import { toggleQuestion } from "./question-ids";
-import { formatDayMonth, useReviewDayTimeZone } from "./review-day-format";
 import { ScreeningWarning } from "./screening-warning";
 import { useOnboardingReviewActions } from "./use-onboarding-review-actions";
 
@@ -131,7 +134,7 @@ function OnboardingFacts({ gender, review, submitted }: OnboardingFactsProps) {
 }
 
 function RequestStatus({ request }: { request: OpenDetailRequest }) {
-  const timeZone = useReviewDayTimeZone();
+  const timeZone = useCalendarDayTimeZone();
 
   return (
     <div

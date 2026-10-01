@@ -111,9 +111,9 @@ export function MeasureField<
       label={<span>{field.label}</span>}
       suffixes={labelSuffixesOf(field, units)}
     >
-      {(entry) => (
+      {(controlAttributes) => (
         <Input
-          {...entry}
+          {...controlAttributes}
           inputMode="decimal"
           max={displayBound(field, field.range.max, units)}
           min={displayBound(field, field.range.min, units)}

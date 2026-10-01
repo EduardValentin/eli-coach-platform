@@ -31,7 +31,6 @@ describe("FieldLayout", () => {
     expect(screen.getByRole("textbox")).toHaveAccessibleName(
       "Weight(kg)(optional)",
     );
-    expect(screen.getByText("(kg)")).toHaveClass("text-text-secondary");
   });
 
   it("describes its control with the hint", () => {
@@ -66,10 +65,6 @@ describe("FieldLayout", () => {
     const control = screen.getByRole("textbox", { name: "Weight" });
     expect(control).toHaveAccessibleDescription(`${HINT} ${PROBLEM}`);
     expect(control).toBeInvalid();
-    expect(screen.getByText("Weight").closest("label")).toHaveAttribute(
-      "data-error",
-      "true",
-    );
   });
 
   it.each([

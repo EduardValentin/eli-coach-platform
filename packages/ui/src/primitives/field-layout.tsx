@@ -20,7 +20,7 @@ type FieldLayoutProps = Omit<
   React.ComponentPropsWithoutRef<"div">,
   "children"
 > & {
-  children: (control: FieldControlAttributes) => React.ReactNode;
+  children: (controlAttributes: FieldControlAttributes) => React.ReactNode;
   error?: string;
   errorParity?: string;
   hint?: string;

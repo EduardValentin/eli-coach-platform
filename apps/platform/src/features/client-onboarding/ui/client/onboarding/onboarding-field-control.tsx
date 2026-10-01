@@ -76,7 +76,7 @@ type FieldIds = {
 
 type FieldEntryProps = {
   controller: FieldController;
-  entry: FieldControlAttributes;
+  controlAttributes: FieldControlAttributes;
   field: OnboardingField;
   units: MeasureUnits;
 };
@@ -173,12 +173,17 @@ function LabelText({
   );
 }
 
-function NumberEntry({ controller, entry, field, units }: FieldEntryProps) {
+function NumberEntry({
+  controller,
+  controlAttributes,
+  field,
+  units,
+}: FieldEntryProps) {
   const bounds = entryBounds(field, units);
 
   return (
     <Input
-      {...entry}
+      {...controlAttributes}
       inputMode={measureKindOf(field) ? "decimal" : "numeric"}
       max={bounds?.max}
       min={bounds?.min}
@@ -193,14 +198,18 @@ function NumberEntry({ controller, entry, field, units }: FieldEntryProps) {
   );
 }
 
-function SelectEntry({ controller, entry, field }: FieldEntryProps) {
+function SelectEntry({
+  controller,
+  controlAttributes,
+  field,
+}: FieldEntryProps) {
   return (
     <Select
       onValueChange={controller.onChange}
       value={asText(controller.value)}
     >
       <SelectTrigger
-        {...entry}
+        {...controlAttributes}
         className="w-full"
         data-parity={`field-${field.id}-trigger`}
       >
@@ -218,7 +227,7 @@ function SelectEntry({ controller, entry, field }: FieldEntryProps) {
 }
 
 function FieldEntry(props: FieldEntryProps): ReactElement {
-  const { controller, entry, field } = props;
+  const { controller, controlAttributes, field } = props;
 
   if (field.kind === "select") return <SelectEntry {...props} />;
   if (isNumericField(field)) return <NumberEntry {...props} />;
@@ -226,7 +235,7 @@ function FieldEntry(props: FieldEntryProps): ReactElement {
   if (field.kind === "textarea") {
     return (
       <Textarea
-        {...entry}
+        {...controlAttributes}
         className="min-h-28"
         onBlur={controller.onBlur}
         onChange={controller.onChange}
@@ -240,7 +249,7 @@ function FieldEntry(props: FieldEntryProps): ReactElement {
   if (field.kind === "date") {
     return (
       <DateField
-        {...entry}
+        {...controlAttributes}
         calendarLabel={field.label}
         data-parity={`field-${field.id}-trigger`}
         disabledDays={{ after: new Date() }}
@@ -254,7 +263,7 @@ function FieldEntry(props: FieldEntryProps): ReactElement {
 
   return (
     <Input
-      {...entry}
+      {...controlAttributes}
       onBlur={controller.onBlur}
       onChange={controller.onChange}
       placeholder={field.placeholder}
@@ -395,10 +404,10 @@ function EntryField({ controller, error, field, units }: AnswerLayoutProps) {
       label={<LabelLines field={field} />}
       suffixes={labelSuffixesOf(field, unitOf(field, units))}
     >
-      {(entry) => (
+      {(controlAttributes) => (
         <FieldEntry
+          controlAttributes={controlAttributes}
           controller={controller}
-          entry={entry}
           field={field}
           units={units}
         />
