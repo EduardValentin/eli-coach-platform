@@ -2,6 +2,7 @@ import { useId, useState, type ChangeEvent } from 'react';
 import { format } from 'date-fns';
 import { Image as ImageIcon, X } from 'lucide-react';
 import {
+  NO_PROGRESS_PHOTOS,
   PROGRESS_PHOTO_VIEW_LABELS,
   PROGRESS_PHOTO_VIEWS,
   withoutPhotoAt,
@@ -179,6 +180,17 @@ export function ProgressPhotoBlock({
     onPhotosChange(withoutPhotoAt(photos, view));
   };
 
+  const changeConsent = (
+    ticked: boolean,
+    onTickedChange: (ticked: boolean) => void,
+  ) => {
+    if (!ticked) {
+      setRefused(false);
+      onPhotosChange(NO_PROGRESS_PHOTOS);
+    }
+    onTickedChange(ticked);
+  };
+
   return (
     <div
       className="grid gap-4 rounded-card border border-border-subtle bg-surface-quiet/60 p-4"
@@ -206,7 +218,9 @@ export function ProgressPhotoBlock({
         </p>
       ) : (
         <ConsentCheckbox
-          onTickedChange={consent.onTickedChange}
+          onTickedChange={(ticked) =>
+            changeConsent(ticked, consent.onTickedChange)
+          }
           ticked={consent.ticked}
         />
       )}

@@ -57,6 +57,49 @@ describe('the progress photo block', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('clears the photos she picked and locks every tile again when she takes back her consent', async () => {
+    // arrange
+    render(<PhotoBlock consentedAt={null} />);
+    const consent = screen.getByRole('checkbox', { name: PROGRESS_PHOTO_CONSENT_COPY });
+    await userEvent.click(consent);
+    await userEvent.upload(
+      screen.getByLabelText('Add front photo'),
+      photoFile('image/png'),
+    );
+
+    // act
+    await userEvent.click(consent);
+
+    // assert
+    expect(screen.queryByRole('img', { name: 'Front photo' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Remove front photo' }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Add front photo')).toBeDisabled();
+    expect(screen.getByLabelText('Add side photo')).toBeDisabled();
+    expect(screen.getByLabelText('Add back photo')).toBeDisabled();
+    expect(screen.getByText('Tick the box to add your photos.')).toBeVisible();
+  });
+
+  it('keeps the tiles empty when she ticks her consent again', async () => {
+    // arrange
+    render(<PhotoBlock consentedAt={null} />);
+    const consent = screen.getByRole('checkbox', { name: PROGRESS_PHOTO_CONSENT_COPY });
+    await userEvent.click(consent);
+    await userEvent.upload(
+      screen.getByLabelText('Add front photo'),
+      photoFile('image/png'),
+    );
+    await userEvent.click(consent);
+
+    // act
+    await userEvent.click(consent);
+
+    // assert
+    expect(screen.queryByRole('img', { name: 'Front photo' })).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Add front photo')).toBeEnabled();
+  });
+
   it('states when she agreed once she has consented and opens the tiles', () => {
     // arrange
     const consentedAt = new Date(2026, 8, 18, 10);
