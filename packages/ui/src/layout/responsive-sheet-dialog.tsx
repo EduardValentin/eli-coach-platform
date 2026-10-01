@@ -46,7 +46,7 @@ export function ResponsiveSheetDialog({
   return (
     <RadixDialog.Root onOpenChange={onOpenChange} open={open}>
       <DialogFrame
-        className="flex max-h-[85vh] flex-col overflow-hidden sm:max-w-2xl"
+        className="flex max-h-[85vh] flex-col gap-0 overflow-hidden sm:max-w-2xl"
         {...descriptionAttributes}
       >
         <DialogFrameTitle className="sr-only">{title}</DialogFrameTitle>

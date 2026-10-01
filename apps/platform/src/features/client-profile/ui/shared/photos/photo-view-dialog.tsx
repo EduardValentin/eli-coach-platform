@@ -131,12 +131,20 @@ export function PhotoViewDialog({
         <DialogContent
           data-parity-root="PhotoViewDialog"
           description={privacyLine(viewer)}
+          descriptionParity="photo-view-description"
           footer={
-            <Button onClick={onClose} size="sm" type="button" variant="outline">
+            <Button
+              data-parity="photo-view-close"
+              onClick={onClose}
+              size="sm"
+              type="button"
+              variant="outline"
+            >
               {PHOTO_VIEW_COPY.close}
             </Button>
           }
           footerAlignment="end"
+          footerParity="photo-view-footer"
           size="wide"
           title={PHOTO_VIEW_COPY.title(
             formatDayMonth(entry.recordedAt, timeZone),

@@ -19,8 +19,10 @@ type DialogContentProps = Omit<
   "onCloseAutoFocus" | "onOpenAutoFocus" | "title"
 > & {
   description: React.ReactNode;
+  descriptionParity?: string;
   footer: React.ReactNode;
   footerAlignment?: DialogFooterAlignment;
+  footerParity?: string;
   size?: DialogSize;
   title: React.ReactNode;
 };
@@ -49,8 +51,10 @@ export function DialogContent({
   children,
   className,
   description,
+  descriptionParity,
   footer,
   footerAlignment = "content",
+  footerParity,
   size = "compact",
   title,
   ...props
@@ -61,7 +65,10 @@ export function DialogContent({
     <DialogFrame className={cn(sizeClasses.content, className)} {...props}>
       <div className={cn(HEADER_CLASS, sizeClasses.header)}>
         <DialogFrameTitle>{title}</DialogFrameTitle>
-        <DialogFrameDescription className={sizeClasses.description}>
+        <DialogFrameDescription
+          className={sizeClasses.description}
+          data-parity={descriptionParity}
+        >
           {description}
         </DialogFrameDescription>
       </div>
@@ -70,6 +77,7 @@ export function DialogContent({
         className={cn(sizeClasses.footer, {
           "flex justify-end": footerAlignment === "end",
         })}
+        data-parity={footerParity}
       >
         {footer}
       </div>
