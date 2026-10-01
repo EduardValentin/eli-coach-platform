@@ -225,3 +225,136 @@ describe("the photo view she opens", () => {
     expect(screen.getByRole("button", { name: "View photos" })).toHaveFocus();
   });
 });
+
+function lightbox() {
+  return screen.getByRole("dialog", { name: /· \d of \d$/ });
+}
+
+async function openFullScreen(view: MeasurementPhoto["view"]) {
+  const opened = await openClientView();
+  await opened.user.click(
+    screen.getByRole("button", { name: `Open ${view} photo full screen` }),
+  );
+
+  return opened;
+}
+
+function renderCoachView() {
+  const user = userEvent.setup();
+  render(
+    <PhotoViewDialog
+      entry={ENTRY}
+      onClose={vi.fn()}
+      viewer={{ role: "coach", clientFirstName: "Ana" }}
+    />,
+  );
+
+  return user;
+}
+
+describe("the photo opened full screen", () => {
+  it("makes each stored photo a button that opens it full screen", async () => {
+    // arrange, act
+    const { dialog } = await openClientView();
+
+    // assert
+    expect(
+      within(dialog)
+        .getAllByRole("button", { name: /full screen$/ })
+        .map((button) => button.getAttribute("aria-label")),
+    ).toEqual(["Open front photo full screen", "Open back photo full screen"]);
+  });
+
+  it("opens the tapped photo with its place among the stored photos and the date", async () => {
+    // arrange, act
+    await openFullScreen("front");
+
+    // assert
+    expect(lightbox()).toHaveAccessibleName("Front · 1 of 2");
+    expect(lightbox()).toHaveAccessibleDescription("29 September");
+    expect(
+      within(lightbox()).getByRole("img", { name: "Front photo" }),
+    ).toHaveAttribute("src", progressPhotoPath(FRONT.id));
+  });
+
+  it("skips the missing view when she moves to the next photo", async () => {
+    // arrange
+    const { user } = await openFullScreen("front");
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Next photo" }));
+
+    // assert
+    expect(lightbox()).toHaveAccessibleName("Back · 2 of 2");
+    expect(within(lightbox()).getByRole("img")).toHaveAccessibleName(
+      "Back photo",
+    );
+  });
+
+  it("keeps Remove in the photo view, not in the full-screen photo", async () => {
+    // arrange, act
+    await openFullScreen("back");
+
+    // assert
+    expect(
+      within(lightbox()).queryByRole("button", { name: /^Remove/ }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("closes back to the photo view with focus on the tapped photo", async () => {
+    // arrange
+    const { user } = await openFullScreen("back");
+    await user.keyboard("{ArrowRight}");
+
+    // act
+    await user.click(within(lightbox()).getByRole("button", { name: "Close" }));
+
+    // assert
+    expect(
+      screen.queryByRole("dialog", { name: /· \d of \d$/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("dialog", { name: "Photos from 29 September" }),
+    ).toBeVisible();
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Open back photo full screen" }),
+      ).toHaveFocus(),
+    );
+  });
+
+  it("closes on Escape back to the photo view", async () => {
+    // arrange
+    const { user } = await openFullScreen("front");
+
+    // act
+    await user.keyboard("{Escape}");
+
+    // assert
+    expect(
+      screen.queryByRole("dialog", { name: /· \d of \d$/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("dialog", { name: "Photos from 29 September" }),
+    ).toBeVisible();
+  });
+
+  it("shows the coach the same full-screen photo without a remove control", async () => {
+    // arrange
+    const user = renderCoachView();
+
+    // act
+    await user.click(
+      screen.getByRole("button", { name: "Open back photo full screen" }),
+    );
+
+    // assert
+    expect(lightbox()).toHaveAccessibleName("Back · 2 of 2");
+    expect(
+      within(lightbox()).getByRole("button", { name: "Previous photo" }),
+    ).toBeVisible();
+    expect(
+      within(lightbox()).queryByRole("button", { name: /^Remove/ }),
+    ).not.toBeInTheDocument();
+  });
+});

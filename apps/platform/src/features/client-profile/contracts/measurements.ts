@@ -119,6 +119,7 @@ export const MEASUREMENTS_COPY = {
     image: (view: ProgressPhotoView) =>
       `${PROGRESS_PHOTO_VIEW_LABELS[view]} photo`,
     refused: "Choose a JPEG, PNG or WebP under 10 MB.",
+    sendNote: "Your photos are sent with your answers.",
   },
   photoView: {
     open: "View photos",
@@ -130,6 +131,13 @@ export const MEASUREMENTS_COPY = {
     missing: (view: ProgressPhotoView) => `No ${view} photo`,
     remove: "Remove",
     close: "Close",
+  },
+  lightbox: {
+    open: (view: ProgressPhotoView) => `Open ${view} photo full screen`,
+    previous: "Previous photo",
+    next: "Next photo",
+    close: "Close",
+    position: (position: number, count: number) => `${position} of ${count}`,
   },
   removeConfirm: {
     title: "Remove this photo?",

@@ -11,6 +11,8 @@ import {
   ConfirmDialog,
   Dialog,
   DialogContent,
+  Lightbox,
+  type LightboxPhoto,
 } from "@eli-coach-platform/ui/overlays";
 import { Button } from "@eli-coach-platform/ui/primitives";
 import { useState } from "react";
@@ -40,7 +42,11 @@ type PhotoViewDialogProps = {
   onClose: () => void;
 };
 
-const { photos: PHOTOS_COPY, photoView: PHOTO_VIEW_COPY } = MEASUREMENTS_COPY;
+const {
+  lightbox: LIGHTBOX_COPY,
+  photos: PHOTOS_COPY,
+  photoView: PHOTO_VIEW_COPY,
+} = MEASUREMENTS_COPY;
 
 function privacyLine(viewer: PhotoViewer): string {
   return viewer.role === "client"
@@ -48,11 +54,37 @@ function privacyLine(viewer: PhotoViewer): string {
     : PHOTO_VIEW_COPY.coachDescription(viewer.clientFirstName);
 }
 
+function photoOf(
+  entry: MeasurementRow,
+  view: ProgressPhotoView,
+): MeasurementPhoto | undefined {
+  return entry.photos.find((candidate) => candidate.view === view);
+}
+
+function lightboxPhotosOf(entry: MeasurementRow): LightboxPhoto[] {
+  return PROGRESS_PHOTO_VIEWS.flatMap((view) => {
+    const photo = photoOf(entry, view);
+
+    return photo
+      ? [
+          {
+            alt: PHOTOS_COPY.image(view),
+            key: view,
+            label: PHOTOS_COPY.viewLabels[view],
+            src: progressPhotoUrl(photo.id),
+          },
+        ]
+      : [];
+  });
+}
+
 function PhotoSlot({
+  onOpen,
   onRemove,
   photo,
   view,
 }: {
+  onOpen: () => void;
   onRemove?: () => void;
   photo: MeasurementPhoto | undefined;
   view: ProgressPhotoView;
@@ -61,11 +93,19 @@ function PhotoSlot({
     <li data-parity={`photo-${view}`}>
       <figure className="grid gap-2">
         {photo ? (
-          <img
-            alt={PHOTOS_COPY.image(view)}
-            className={progressPhotoImageClass("portrait")}
-            src={progressPhotoUrl(photo.id)}
-          />
+          <button
+            aria-label={LIGHTBOX_COPY.open(view)}
+            className="block w-full cursor-zoom-in rounded-card transition-opacity hover:opacity-90"
+            data-parity={`open-${view}`}
+            onClick={onOpen}
+            type="button"
+          >
+            <img
+              alt={PHOTOS_COPY.image(view)}
+              className={progressPhotoImageClass("portrait")}
+              src={progressPhotoUrl(photo.id)}
+            />
+          </button>
         ) : (
           <div
             className={cn(
@@ -107,6 +147,7 @@ export function PhotoViewDialog({
   const [pendingRemoval, setPendingRemoval] = useState<MeasurementPhoto | null>(
     null,
   );
+  const [fullScreenView, setFullScreenView] = useState<string | null>(null);
 
   const removeFor = (photo: MeasurementPhoto | undefined) =>
     viewer.role === "client" && photo
@@ -123,7 +164,9 @@ export function PhotoViewDialog({
   return (
     <Dialog
       onOpenChange={(open) => {
-        if (!open) onClose();
+        if (open) return;
+        setFullScreenView(null);
+        onClose();
       }}
       open={entry !== undefined}
     >
@@ -152,13 +195,12 @@ export function PhotoViewDialog({
         >
           <ul className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             {PROGRESS_PHOTO_VIEWS.map((view) => {
-              const photo = entry.photos.find(
-                (candidate) => candidate.view === view,
-              );
+              const photo = photoOf(entry, view);
 
               return (
                 <PhotoSlot
                   key={view}
+                  onOpen={() => setFullScreenView(view)}
                   onRemove={removeFor(photo)}
                   photo={photo}
                   view={view}
@@ -166,6 +208,14 @@ export function PhotoViewDialog({
               );
             })}
           </ul>
+
+          <Lightbox
+            currentKey={fullScreenView}
+            description={formatDayMonth(entry.recordedAt, timeZone)}
+            labels={LIGHTBOX_COPY}
+            onCurrentKeyChange={setFullScreenView}
+            photos={lightboxPhotosOf(entry)}
+          />
 
           <ConfirmDialog
             cancelLabel={MEASUREMENTS_COPY.removeConfirm.cancel}
