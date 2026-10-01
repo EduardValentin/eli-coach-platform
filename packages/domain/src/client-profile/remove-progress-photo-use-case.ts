@@ -5,11 +5,11 @@ import type { MeasurementIncidents } from "./measurement-incidents";
 import type { ProgressPhotoStore } from "./progress-photo-store";
 import type { ProgressPhotos } from "./progress-photos";
 
-type PhotoRequester = { role: AccountRole; authSubjectId: string };
+type ProgressPhotoRequester = { role: AccountRole; authSubjectId: string };
 
 type RemoveProgressPhotoCommand = {
   photoId: string;
-  requester: PhotoRequester;
+  requester: ProgressPhotoRequester;
 };
 
 type RemoveProgressPhotoResult =
