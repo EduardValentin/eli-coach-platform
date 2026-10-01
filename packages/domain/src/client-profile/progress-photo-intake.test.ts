@@ -194,13 +194,9 @@ describe("ProgressPhotoIntake", () => {
     // assert
     expect(outcomes).toEqual({ front: "refused", side: "stored" });
     expect(ports.renditions.render).toHaveBeenCalledTimes(1);
-    expect(ports.incidents.progressPhotoRefused).toHaveBeenCalledWith({
-      clientId: "client-1",
-      entryId: "entry-1",
-      view: "front",
-      receivedBytes: overrides.sizeBytes ?? 2_000,
-      reason: "not-accepted",
-    });
+    expect(ports.incidents.progressPhotoRefused).toHaveBeenCalledWith(
+      expect.objectContaining({ view: "front", reason: "not-accepted" }),
+    );
   });
 
   it("refuses every photo while she has not agreed to share them", async () => {

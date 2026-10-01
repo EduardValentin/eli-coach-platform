@@ -50,10 +50,17 @@ export class PostgresClientMeasurements implements ClientMeasurementsSource {
 export async function recordMeasurementEntry(
   transaction: DatabaseTransaction,
   input: { clientId: string; entry: MeasurementEntry },
-): Promise<void> {
-  await transaction
+): Promise<string> {
+  const [inserted] = await transaction
     .insert(clientMeasurementsTable)
-    .values(measurementInsertOf(input.clientId, input.entry));
+    .values(measurementInsertOf(input.clientId, input.entry))
+    .returning({ id: clientMeasurementsTable.id });
+
+  if (!inserted) {
+    throw new Error("The measurement entry was not recorded.");
+  }
+
+  return inserted.id;
 }
 
 export function measurementEntryOfStored(

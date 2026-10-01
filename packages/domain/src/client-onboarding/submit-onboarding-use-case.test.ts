@@ -125,9 +125,10 @@ function createUnitPreferences(preference: UnitPreference | null = null) {
 }
 
 function createChanges(
-  recorded: Awaited<
-    ReturnType<ClientOnboardingChanges["recordSubmission"]>
-  > = "recorded",
+  recorded: Awaited<ReturnType<ClientOnboardingChanges["recordSubmission"]>> = {
+    status: "recorded",
+    entryId: "entry-1",
+  },
 ) {
   return {
     saveDraft: vi.fn().mockResolvedValue("saved"),
@@ -215,7 +216,12 @@ describe("SubmitOnboardingUseCase", () => {
     });
 
     // assert
-    expect(result).toEqual({ status: "submitted", submittedAt: NOW });
+    expect(result).toEqual({
+      status: "submitted",
+      submittedAt: NOW,
+      clientId: "client-1",
+      entryId: "entry-1",
+    });
     expect(changes.recordSubmission).toHaveBeenCalledWith({
       clientId: "client-1",
       submission: { answers: completeAnswers(), consents, submittedAt: NOW },
@@ -402,7 +408,7 @@ describe("SubmitOnboardingUseCase", () => {
     const stamps = createStamps();
     const incidents = createIncidents();
     const useCase = createUseCase({
-      changes: createChanges("already-submitted"),
+      changes: createChanges({ status: "already-submitted" }),
       stamps,
       incidents,
     });
@@ -447,7 +453,7 @@ describe("SubmitOnboardingUseCase", () => {
     };
     const useCase = createUseCase({
       onboardings,
-      changes: createChanges("already-submitted"),
+      changes: createChanges({ status: "already-submitted" }),
       stamps,
       incidents,
     });

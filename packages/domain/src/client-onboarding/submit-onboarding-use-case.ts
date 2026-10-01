@@ -28,7 +28,12 @@ type SubmitOnboardingCommand = {
 };
 
 type SubmitOnboardingResult =
-  | { status: "submitted"; submittedAt: Date }
+  | {
+      status: "submitted";
+      submittedAt: Date;
+      clientId: string;
+      entryId: string;
+    }
   | { status: "not-on-journey" }
   | { status: "already-submitted" }
   | { status: "consent-missing"; consent: OnboardingConsent }
@@ -102,7 +107,7 @@ export class SubmitOnboardingUseCase {
       }),
     });
 
-    if (recorded === "already-submitted") {
+    if (recorded.status === "already-submitted") {
       return this.refuseAlreadySubmitted({
         clientId: client.clientId,
         at: await this.concurrentSubmissionTime(client.clientId, now),
@@ -123,7 +128,12 @@ export class SubmitOnboardingUseCase {
       }),
     });
 
-    return { status: "submitted", submittedAt };
+    return {
+      status: "submitted",
+      submittedAt,
+      clientId: client.clientId,
+      entryId: recorded.entryId,
+    };
   }
 
   private async concurrentSubmissionTime(

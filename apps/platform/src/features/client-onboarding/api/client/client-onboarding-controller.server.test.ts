@@ -54,6 +54,15 @@ type AnswerResult = Awaited<
   ReturnType<AnswerOnboardingDetailsUseCase["execute"]>
 >;
 
+const FIRST_ENTRY_ID = "3f2b8f61-0c4e-4f7a-9d2b-6a1e5c7d8e90";
+
+const SUBMITTED: SubmitResult = {
+  status: "submitted",
+  submittedAt: NOW,
+  clientId: CLIENT_ID,
+  entryId: FIRST_ENTRY_ID,
+};
+
 const OPEN_REQUEST: NonNullable<OpenRequestResult> = {
   requestId: "0b5f2f0e-3a1c-4c47-9a57-8f2d7f1e6a01",
   note: "Your weight and check-in day look off.",
@@ -402,7 +411,7 @@ describe("ClientOnboardingController submit", () => {
   it("sends her on to her portal once her onboarding is submitted", async () => {
     // arrange
     const { controller, submitOnboarding } = createController({
-      submitResult: { status: "submitted", submittedAt: NOW },
+      submitResult: SUBMITTED,
     });
 
     // act
@@ -485,7 +494,7 @@ describe("ClientOnboardingController submit", () => {
   it("refuses answers it cannot read without submitting anything", async () => {
     // arrange
     const { controller, submitOnboarding } = createController({
-      submitResult: { status: "submitted", submittedAt: NOW },
+      submitResult: SUBMITTED,
     });
 
     // act
@@ -504,7 +513,7 @@ describe("ClientOnboardingController submit", () => {
   it("refuses the coach without submitting anything", async () => {
     // arrange
     const { controller, submitOnboarding } = createController({
-      submitResult: { status: "submitted", submittedAt: NOW },
+      submitResult: SUBMITTED,
     });
 
     // act

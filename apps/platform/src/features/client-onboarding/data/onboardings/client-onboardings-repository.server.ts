@@ -31,6 +31,10 @@ type ConsentColumns = {
   progressPhotosConsentedAt: Date | null;
 };
 
+type RecordedSubmission = Awaited<
+  ReturnType<ClientOnboardingChanges["recordSubmission"]>
+>;
+
 type ClientOnboardingsOptions = {
   database: DatabaseClient;
   clientProfileWriter: ClientProfileWriter;
@@ -132,18 +136,18 @@ export class PostgresClientOnboardings
     submission: OnboardingSubmission;
     measurementEntry: MeasurementEntry;
     profile: ClientProfile;
-  }): Promise<"recorded" | "already-submitted"> {
+  }): Promise<RecordedSubmission> {
     const { clientId, measurementEntry, submission } = input;
 
     try {
-      await this.database.transaction(async (transaction) => {
+      const entryId = await this.database.transaction(async (transaction) => {
         await transaction.insert(clientOnboardingSubmissionsTable).values({
           clientId,
           answers: submission.answers,
           ...consentColumnsOf(submission.consents),
           submittedAt: submission.submittedAt,
         });
-        await this.measurementEntryWriter(transaction, {
+        const recordedEntryId = await this.measurementEntryWriter(transaction, {
           clientId,
           entry: measurementEntry,
         });
@@ -151,12 +155,14 @@ export class PostgresClientOnboardings
         await transaction
           .delete(clientOnboardingDraftsTable)
           .where(eq(clientOnboardingDraftsTable.clientId, clientId));
+
+        return recordedEntryId;
       });
 
-      return "recorded";
+      return { status: "recorded", entryId };
     } catch (error) {
       if (violatesSubmissionPerClient(error)) {
-        return "already-submitted";
+        return { status: "already-submitted" };
       }
 
       throw error;
