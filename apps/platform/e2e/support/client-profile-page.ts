@@ -1,0 +1,94 @@
+import { expect, type Locator, type Page } from "@playwright/test";
+
+import { HYDRATION_RETRY_TIMEOUT_MS } from "./locator-text";
+import { addMeasurementsSheetOn } from "./measurements-sheet";
+import {
+  MeasurementsHistory,
+  type MeasurementRowReadings,
+} from "./measurements-history";
+
+const PROFILE_PATH = "/client/profile";
+const CLIENT_COLUMNS = ["Date", "Weight", "Waist", "Hips", "Thigh", "Arm"];
+const EMPTY_HISTORY =
+  "Nothing recorded yet. Your first set goes in with your answers.";
+
+export class ClientProfilePage {
+  private readonly history: MeasurementsHistory;
+
+  constructor(private readonly page: Page) {
+    this.history = new MeasurementsHistory(page);
+  }
+
+  private get measurements() {
+    return this.page.getByRole("region", { name: "Measurements", exact: true });
+  }
+
+  private async openSheetWith(trigger: Locator): Promise<void> {
+    const sheet = addMeasurementsSheetOn(this.page);
+
+    await expect(async () => {
+      await trigger.click();
+      await expect(sheet).toBeVisible({ timeout: HYDRATION_RETRY_TIMEOUT_MS });
+    }).toPass();
+  }
+
+  async open(): Promise<void> {
+    await this.page.goto(PROFILE_PATH);
+  }
+
+  async expectOpen(): Promise<void> {
+    await expect(this.page).toHaveURL(new RegExp(`${PROFILE_PATH}$`));
+    await expect(
+      this.page.getByRole("heading", { level: 1, name: "Your Profile" }),
+    ).toBeVisible();
+    await expect(
+      this.page.getByText(
+        "Your coach keeps this up to date. Mention any changes at your next check-in.",
+        { exact: true },
+      ),
+    ).toBeVisible();
+    await expect(
+      this.page.getByRole("main").getByRole("heading", { level: 2 }),
+    ).toHaveText(["Measurements"]);
+  }
+
+  async expectEmpty(): Promise<void> {
+    await expect(
+      this.measurements.getByText(EMPTY_HISTORY, { exact: true }),
+    ).toBeVisible();
+    await expect(
+      this.measurements.getByRole("button", {
+        name: "Add your first measurements",
+      }),
+    ).toBeVisible();
+    await expect(this.measurements.getByRole("table")).toHaveCount(0);
+  }
+
+  async expectRows(rows: readonly MeasurementRowReadings[]): Promise<void> {
+    await this.history.expectColumns(CLIENT_COLUMNS);
+    await this.history.expectNoColumn("Ratio");
+    await this.history.expectRows(rows);
+  }
+
+  async expectViewPhotos(date: string): Promise<void> {
+    await this.history.expectViewPhotos(date);
+  }
+
+  async expectNoViewPhotos(date: string): Promise<void> {
+    await this.history.expectNoViewPhotos(date);
+  }
+
+  async openAdd(): Promise<void> {
+    await this.openSheetWith(
+      this.measurements.getByRole("button", { name: "Add", exact: true }),
+    );
+  }
+
+  async openAddFirst(): Promise<void> {
+    await this.openSheetWith(
+      this.measurements.getByRole("button", {
+        name: "Add your first measurements",
+      }),
+    );
+  }
+}

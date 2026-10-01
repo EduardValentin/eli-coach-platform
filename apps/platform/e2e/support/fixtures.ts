@@ -12,10 +12,19 @@ import { BookingPage } from "./booking-page";
 import { ClientDashboard } from "./client-dashboard";
 import { ClientOnboarding } from "./client-onboarding";
 import { ClientPortalShell } from "./client-portal-shell";
+import { ClientProfilePage } from "./client-profile-page";
 import { CoachAssessmentCallsPage } from "./coach-assessment-calls-page";
 import { CoachClientPage } from "./coach-client-page";
 import { CoachClientsPage } from "./coach-clients-page";
+import {
+  insertMeasuredClientRecords,
+  type MeasuredClientSeed,
+} from "./measured-clients";
+import { MeasurementRecords } from "./measurement-records";
+import { MeasurementsSheet } from "./measurements-sheet";
 import { OnboardingRecords } from "./onboarding-records";
+import { PhotoRequests } from "./photo-requests";
+import { PhotoView } from "./photo-view";
 import { PortalRequests } from "./portal-requests";
 import {
   insertInvitedClientRecords,
@@ -23,6 +32,7 @@ import {
   type InvitationStanding,
   type InvitedClient,
   type PaidClient,
+  type PaidClientIdentity,
   type StartChoice,
   type InvitationSeed,
 } from "./paid-clients";
@@ -53,6 +63,9 @@ type PlatformFixtures = {
   clientPortalShell: ClientPortalShell;
   clientOnboarding: ClientOnboarding;
   clientDashboard: ClientDashboard;
+  clientProfile: ClientProfilePage;
+  measurementsSheet: MeasurementsSheet;
+  photoView: PhotoView;
   accountPortal: AccountPortal;
   testEmail: string;
   visitorEmail: string;
@@ -85,11 +98,22 @@ type PlatformFixtures = {
   provisionProfiledClient: (
     profile: SubmissionProfile,
   ) => Promise<SubmittedClient>;
+  otherClientEmail: string;
+  provisionMeasuredClient: (
+    seed: MeasuredClientSeed,
+  ) => Promise<SubmittedClient>;
+  provisionOtherMeasuredClient: (
+    seed: MeasuredClientSeed,
+  ) => Promise<SubmittedClient>;
+  measurementRecords: MeasurementRecords;
+  photoRequests: PhotoRequests;
+  visitorPhotoRequests: PhotoRequests;
   portalRequests: PortalRequests;
   provisionCoach: () => Promise<void>;
   onboardingRecords: OnboardingRecords;
   signIn: () => Promise<void>;
   signInAsCoach: () => Promise<void>;
+  signInAsOtherClient: () => Promise<void>;
 };
 
 // Shared per worker process: both are cheap to reuse across a worker's tests.
@@ -127,12 +151,20 @@ const CLIENT_FIRST_NAME_BY_STATE: Record<ClientState, string> = {
   "needs-details": "Flavia",
   approved: "Gina",
 };
+const MEASURED_CLIENT_FIRST_NAME = "Ana";
+const OTHER_MEASURED_CLIENT_FIRST_NAME = "Bianca";
 const PROFILED_CLIENT_FIRST_NAME: Record<SubmissionProfile, string> = {
   flagged: "Irina",
   "manual-screening": "Mihai",
 };
 
 type PaidClientOptions = { dateOfBirth: string };
+
+type MeasuredClientAccount = {
+  authSubjectId: string;
+  email: string;
+  firstName: string;
+};
 let sequence = 0;
 
 function mintRecordedTestEmail(workerIndex: number): string {
@@ -161,6 +193,18 @@ function requireProviderUrl(invitation: { id: string; url?: string }): string {
   }
 
   return invitation.url;
+}
+
+function measuredClientIdentity(
+  account: MeasuredClientAccount,
+  scenarioTag: string,
+): PaidClientIdentity {
+  return {
+    ...account,
+    lastName: `Measurements ${scenarioTag}`,
+    gender: "female",
+    dateOfBirth: ADULT_DATE_OF_BIRTH,
+  };
 }
 
 async function createProviderInvitation(
@@ -243,6 +287,18 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
 
   clientDashboard: async ({ page }, use) => {
     await use(new ClientDashboard(page));
+  },
+
+  clientProfile: async ({ page }, use) => {
+    await use(new ClientProfilePage(page));
+  },
+
+  measurementsSheet: async ({ page }, use) => {
+    await use(new MeasurementsSheet(page));
+  },
+
+  photoView: async ({ page }, use) => {
+    await use(new PhotoView(page));
   },
 
   accountPortal: async ({ page }, use) => {
@@ -425,6 +481,76 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
     await use(new PortalRequests(page));
   },
 
+  // eslint-disable-next-line no-empty-pattern
+  otherClientEmail: async ({}, use, testInfo) => {
+    await use(mintRecordedTestEmail(testInfo.workerIndex));
+  },
+
+  provisionMeasuredClient: async (
+    { createClerkUser, databasePool, scenarioTag, testEmail },
+    use,
+  ) => {
+    await use(async (seed: MeasuredClientSeed) => {
+      const authSubjectId = await createClerkUser();
+
+      await databasePool.query(INSERT_ACCOUNT, [authSubjectId, "CLIENT"]);
+
+      return insertMeasuredClientRecords(
+        databasePool,
+        measuredClientIdentity(
+          {
+            authSubjectId,
+            email: testEmail,
+            firstName: MEASURED_CLIENT_FIRST_NAME,
+          },
+          scenarioTag,
+        ),
+        seed,
+      );
+    });
+  },
+
+  provisionOtherMeasuredClient: async (
+    { clerkBackendClient, databasePool, otherClientEmail, scenarioTag },
+    use,
+  ) => {
+    await use(async (seed: MeasuredClientSeed) => {
+      const user = await clerkBackendClient.users.createUser({
+        emailAddress: [otherClientEmail],
+      });
+
+      await databasePool.query(INSERT_ACCOUNT, [user.id, "CLIENT"]);
+
+      return insertMeasuredClientRecords(
+        databasePool,
+        measuredClientIdentity(
+          {
+            authSubjectId: user.id,
+            email: otherClientEmail,
+            firstName: OTHER_MEASURED_CLIENT_FIRST_NAME,
+          },
+          scenarioTag,
+        ),
+        seed,
+      );
+    });
+  },
+
+  measurementRecords: async ({ databasePool }, use) => {
+    await use(new MeasurementRecords(databasePool));
+  },
+
+  photoRequests: async ({ page }, use) => {
+    await use(new PhotoRequests(page.request));
+  },
+
+  visitorPhotoRequests: async ({ baseURL, playwright }, use) => {
+    const visitor = await playwright.request.newContext({ baseURL });
+
+    await use(new PhotoRequests(visitor));
+    await visitor.dispose();
+  },
+
   provisionInvitedClient: async (
     { clerkBackendClient, databasePool, scenarioTag },
     use,
@@ -480,6 +606,17 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
     await use(async () => {
       await publicNav.openSignIn();
       await accountPortal.signInWithEmail(coachEmail);
+      await accountPortal.completeEmailOtp();
+    });
+  },
+
+  signInAsOtherClient: async (
+    { publicNav, accountPortal, otherClientEmail },
+    use,
+  ) => {
+    await use(async () => {
+      await publicNav.openSignIn();
+      await accountPortal.signInWithEmail(otherClientEmail);
       await accountPortal.completeEmailOtp();
     });
   },
