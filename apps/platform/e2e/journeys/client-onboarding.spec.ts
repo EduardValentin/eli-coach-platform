@@ -18,7 +18,7 @@ const PARQ_DECLARATION =
 const DISCLAIMER =
   "The information I give is correct and complete, and I understand this program does not replace medical advice or a consultation with a doctor.";
 const PROGRESS_PHOTO_CONSENT =
-  "I agree to share progress photos with my coach. They are only used to follow my progress, and I can ask for them to be deleted at any time. [Placeholder — Eli to replace with her own wording.]";
+  "I agree to share progress photos with my coach. They are only used to follow my progress, and I can ask for them to be deleted at any time.";
 const PARQ_QUESTIONS = [
   "Has your doctor ever said that you have a heart condition",
   "Do you feel pain in your chest",

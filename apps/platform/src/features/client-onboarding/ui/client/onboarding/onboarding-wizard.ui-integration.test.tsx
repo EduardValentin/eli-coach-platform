@@ -56,7 +56,7 @@ const MISSING_CONSENT = "Tick the box to carry on.";
 const PARQ_DECLARATION =
   "I have read, understood and completed this questionnaire. My answers are true and complete to the best of my knowledge. If my health changes, I will let my coach know and complete this questionnaire again.";
 const PROGRESS_PHOTO_CONSENT =
-  "I agree to share progress photos with my coach. They are only used to follow my progress, and I can ask for them to be deleted at any time. [Placeholder — Eli to replace with her own wording.]";
+  "I agree to share progress photos with my coach. They are only used to follow my progress, and I can ask for them to be deleted at any time.";
 
 const FEMALE_FORMS: OnboardingWizardPage["formIds"] = [
   "goal-availability",

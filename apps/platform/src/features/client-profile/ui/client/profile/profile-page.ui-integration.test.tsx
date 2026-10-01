@@ -49,7 +49,7 @@ const METRIC = { weightUnit: "kg", heightUnit: "cm" } as const;
 const IMPERIAL = { weightUnit: "lb", heightUnit: "ft-in" } as const;
 
 const CONSENT_STATEMENT =
-  "I agree to share progress photos with my coach. They are only used to follow my progress, and I can ask for them to be deleted at any time. [Placeholder — Eli to replace with her own wording.]";
+  "I agree to share progress photos with my coach. They are only used to follow my progress, and I can ask for them to be deleted at any time.";
 
 const FRONT: MeasurementPhoto = {
   id: "0f1e2d3c-4b5a-4968-8776-655443322110",
