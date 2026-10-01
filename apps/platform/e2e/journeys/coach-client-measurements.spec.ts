@@ -121,6 +121,13 @@ test("the coach reads a client's ratio and browses her photos full screen withou
   await photoLightbox.expectNoRemove();
 
   // act
+  await photoLightbox.toggleZoom();
+
+  // assert
+  await photoLightbox.expectZoomed();
+  await photoLightbox.expectNoRemove();
+
+  // act
   await photoLightbox.next();
 
   // assert
@@ -128,6 +135,7 @@ test("the coach reads a client's ratio and browses her photos full screen withou
     { view: "side", position: 2, count: 2 },
     today,
   );
+  await photoLightbox.expectFitted();
 
   // act
   await photoLightbox.next();

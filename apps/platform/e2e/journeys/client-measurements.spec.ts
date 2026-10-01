@@ -491,6 +491,20 @@ test("a client who agreed at onboarding adds front, side and back photos, views 
     { view: "back", position: 3, count: 3 },
     today,
   );
+  await photoLightbox.expectPinchZoomKept();
+  await photoLightbox.expectFitted();
+
+  // act
+  await photoLightbox.toggleZoom();
+
+  // assert
+  await photoLightbox.expectZoomed();
+
+  // act
+  await photoLightbox.toggleZoom();
+
+  // assert
+  await photoLightbox.expectFitted();
 
   // act
   await photoLightbox.closeWithEscape();

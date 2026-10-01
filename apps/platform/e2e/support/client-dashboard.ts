@@ -43,6 +43,27 @@ export class ClientDashboard {
     await expect(this.page.getByRole("heading", { level: 1 })).toBeVisible();
   }
 
+  async reload(): Promise<void> {
+    await this.page.reload();
+    await expect(this.page.getByRole("heading", { level: 1 })).toBeVisible();
+  }
+
+  async expectNoRefusedPhotosCarried(): Promise<void> {
+    await expect
+      .poll(() =>
+        this.page.evaluate(() => {
+          const carried = (
+            window.history.state as {
+              usr?: { refusedPhotoViews?: unknown[] } | null;
+            } | null
+          )?.usr;
+
+          return carried?.refusedPhotoViews ?? [];
+        }),
+      )
+      .toEqual([]);
+  }
+
   async expectOnlyNudge(line: NudgeLine): Promise<void> {
     await expect(this.nudge(line)).toHaveAttribute("href", PROFILE_PATH);
 

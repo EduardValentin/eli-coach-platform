@@ -91,6 +91,25 @@ export class PhotoLightbox {
     await this.swipe("right");
   }
 
+  async toggleZoom(): Promise<void> {
+    await this.image.dblclick();
+  }
+
+  async expectZoomed(): Promise<void> {
+    await expect(this.image).toHaveCSS("transform", "matrix(2, 0, 0, 2, 0, 0)");
+  }
+
+  async expectFitted(): Promise<void> {
+    await expect(this.image).toHaveCSS("transform", "matrix(1, 0, 0, 1, 0, 0)");
+  }
+
+  async expectPinchZoomKept(): Promise<void> {
+    await expect(this.image.locator("..")).toHaveCSS(
+      "touch-action",
+      "pinch-zoom",
+    );
+  }
+
   async expectNoRemove(): Promise<void> {
     await expect(this.dialog).toBeVisible();
     await expect(

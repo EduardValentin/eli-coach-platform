@@ -38,6 +38,11 @@ const dayMonthFormatter = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",
   month: "long",
 });
+const dayMonthYearFormatter = new Intl.DateTimeFormat("en-GB", {
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+});
 
 function isoDaysAgo(days: number): string {
   return new Date(Date.now() - days * MILLISECONDS_PER_DAY)
@@ -710,6 +715,7 @@ test("a client who agrees to share progress photos sends front, side and back wi
   clientOnboarding,
   clientProfile,
   measurementRecords,
+  measurementsSheet,
   page,
   photoView,
   provisionPaidClient,
@@ -745,9 +751,14 @@ test("a client who agrees to share progress photos sends front, side and back wi
   await clientOnboarding.expectPhotoPreview("back");
 
   // act
-  await clientOnboarding.sendToCoach();
+  const sent = await clientOnboarding.sendToCoachReadingPhotos();
 
   // assert
+  expect(sent).toEqual({
+    status: 200,
+    sentViews: ["front", "side", "back"],
+    outcomes: { front: "stored", side: "stored", back: "stored" },
+  });
   await expect(page).toHaveURL(/\/client$/);
   await clientDashboard.expectStatusCard(
     "Sent to your coach",
@@ -766,6 +777,57 @@ test("a client who agrees to share progress photos sends front, side and back wi
 
   // assert
   await photoView.expectPhotos(["front", "side", "back"]);
+
+  // act
+  await photoView.close();
+  await clientProfile.openAdd();
+
+  // assert
+  await measurementsSheet.expectConsentAlreadyGiven(
+    dayMonthYearFormatter.format(new Date()),
+  );
+});
+
+test("a client who takes back her photo consent before sending sends no photos", async ({
+  clientDashboard,
+  clientOnboarding,
+  measurementRecords,
+  onboardingRecords,
+  page,
+  provisionPaidClient,
+  signIn,
+}) => {
+  test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+  // arrange
+  const client = await provisionPaidClient("male");
+  await page.goto("/store");
+  await signIn();
+  await page.goto("/client");
+  await answerEverythingButPhotos(clientOnboarding);
+  await clientOnboarding.agreeToPhotos();
+  await clientOnboarding.addPhoto("front", samplePhotoOf("front"));
+  await clientOnboarding.expectPhotoPreview("front");
+
+  await clientOnboarding.withdrawPhotoConsent();
+  await clientOnboarding.expectPhotosLocked();
+
+  // act
+  const sent = await clientOnboarding.sendToCoachReadingPhotos();
+
+  // assert
+  expect(sent.status).toBe(200);
+  expect(sent.sentViews).toEqual([]);
+  await expect(page).toHaveURL(/\/client$/);
+  await clientDashboard.expectStatusCard(
+    "Sent to your coach",
+    workStartsOnLine(client.paidAt),
+  );
+  await clientDashboard.expectNoRefusedPhotosCarried();
+  await clientDashboard.expectNoRefusedPhotoToast();
+  const [submission] = await onboardingRecords.submissions();
+  expect(submission.progressPhotosConsentedAt).toBeNull();
+  expect(await measurementRecords.photos(client.clientId)).toEqual([]);
 });
 
 test("a client's onboarding photo that cannot be processed is named once on her dashboard and her other photo is kept", async ({
@@ -789,18 +851,29 @@ test("a client's onboarding photo that cannot be processed is named once on her 
   // act
   await clientOnboarding.addPhoto("front", UNPROCESSABLE_PHOTO);
   await clientOnboarding.addPhoto("side", samplePhotoOf("side"));
-  await clientOnboarding.sendToCoach();
+  const sent = await clientOnboarding.sendToCoachReadingPhotos();
 
   // assert
+  expect(sent.status).toBe(200);
+  expect(sent.sentViews).toEqual(["front", "side"]);
+  expect(sent.outcomes).toMatchObject({ front: "refused", side: "stored" });
   await expect(page).toHaveURL(/\/client$/);
   await clientDashboard.expectStatusCard(
     "Sent to your coach",
     workStartsOnLine(client.paidAt),
   );
   await clientDashboard.expectRefusedPhotoToast("front");
+  await clientDashboard.expectNoRefusedPhotosCarried();
   expect(await measurementRecords.photos(client.clientId)).toEqual([
     { view: "side", mimeType: "image/jpeg" },
   ]);
+
+  // act
+  await clientDashboard.reload();
+
+  // assert
+  await clientDashboard.expectNoRefusedPhotosCarried();
+  await clientDashboard.expectNoRefusedPhotoToast();
 
   // act
   await clientDashboard.open();

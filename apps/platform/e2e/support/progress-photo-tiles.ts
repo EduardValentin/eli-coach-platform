@@ -57,6 +57,10 @@ export class ProgressPhotoTiles {
     }
   }
 
+  async withdraw(): Promise<void> {
+    await this.consent.uncheck();
+  }
+
   async expectConsentAlreadyGiven(agreedOn: string): Promise<void> {
     await expect(
       this.scope.getByText(

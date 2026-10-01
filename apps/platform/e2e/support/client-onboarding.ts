@@ -1,10 +1,21 @@
-import type { ProgressPhotoView } from "@eli-coach-platform/domain/client-profile";
+import {
+  PROGRESS_PHOTO_VIEWS,
+  type ProgressPhotoView,
+} from "@eli-coach-platform/domain/client-profile";
 import { expect, type Locator, type Page } from "@playwright/test";
 
 import { expectAvailability, type Availability } from "./control-states";
 import { tabTo } from "./keyboard";
 import { ProgressPhotoTiles } from "./progress-photo-tiles";
 import type { SamplePhoto } from "./sample-photos";
+
+const SUBMISSION_PATH = "/api/client-onboarding/submission";
+
+export type SentPhotos = {
+  status: number;
+  sentViews: ProgressPhotoView[];
+  outcomes: Partial<Record<ProgressPhotoView, string>>;
+};
 
 type UnitsChoice = "kg · cm" | "lb · in";
 
@@ -444,6 +455,10 @@ export class ClientOnboarding {
     await this.photoTiles.agree();
   }
 
+  async withdrawPhotoConsent(): Promise<void> {
+    await this.photoTiles.withdraw();
+  }
+
   async expectPhotosSendNote(): Promise<void> {
     await this.photoTiles.expectSendNote();
   }
@@ -460,6 +475,25 @@ export class ClientOnboarding {
     await this.click(
       this.page.getByRole("button", { name: "Send to my coach" }),
     );
+  }
+
+  async sendToCoachReadingPhotos(): Promise<SentPhotos> {
+    const submission = this.page.waitForResponse(
+      (response) =>
+        response.url().endsWith(SUBMISSION_PATH) &&
+        response.request().method() === "POST",
+    );
+    await this.sendToCoach();
+    const response = await submission;
+    const body = response.request().postDataBuffer()?.toString("latin1") ?? "";
+    const sentViews = PROGRESS_PHOTO_VIEWS.filter((view) =>
+      body.includes(`name="${view}"`),
+    );
+    const { photos } = (await response.json()) as {
+      photos: Partial<Record<ProgressPhotoView, string>>;
+    };
+
+    return { status: response.status(), sentViews, outcomes: photos };
   }
 
   async expectAnswerPage(note: string): Promise<void> {
