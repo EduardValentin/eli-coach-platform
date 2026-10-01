@@ -1,6 +1,10 @@
 import type { ClientOnboarding } from "../support/client-onboarding";
 import { expect, test } from "../support/fixtures";
-import { samplePhotoOf, UNPROCESSABLE_PHOTO } from "../support/sample-photos";
+import {
+  samplePhotoOf,
+  UNPROCESSABLE_PHOTO,
+  UNSUPPORTED_TYPE_PHOTO,
+} from "../support/sample-photos";
 
 const JOURNEY_TIMEOUT_MS = 240_000;
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -828,6 +832,58 @@ test("a client who takes back her photo consent before sending sends no photos",
   const [submission] = await onboardingRecords.submissions();
   expect(submission.progressPhotosConsentedAt).toBeNull();
   expect(await measurementRecords.photos(client.clientId)).toEqual([]);
+});
+
+test("a client who takes back her photo consent and agrees again starts from empty tiles and sends only what she picks afterwards", async ({
+  clientOnboarding,
+  measurementRecords,
+  page,
+  provisionPaidClient,
+  signIn,
+}) => {
+  test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+  // arrange
+  const client = await provisionPaidClient("male");
+  await page.goto("/store");
+  await signIn();
+  await page.goto("/client");
+  await answerEverythingButPhotos(clientOnboarding);
+  await clientOnboarding.agreeToPhotos();
+  await clientOnboarding.addPhoto("front", samplePhotoOf("front"));
+  await clientOnboarding.addPhoto("side", UNSUPPORTED_TYPE_PHOTO);
+  await clientOnboarding.expectPhotoPreview("front");
+  await clientOnboarding.expectPhotoRefusal();
+
+  // act
+  await clientOnboarding.withdrawFromPhotos();
+
+  // assert
+  await clientOnboarding.expectPhotosLocked();
+  await clientOnboarding.expectNoPhotoRefusal();
+
+  // act
+  await clientOnboarding.agreeToPhotos();
+
+  // assert
+  await clientOnboarding.expectPhotosSendNote();
+  await clientOnboarding.expectNoPhotoPreview("front");
+  await clientOnboarding.expectNoPhotoPreview("side");
+  await clientOnboarding.expectNoPhotoPreview("back");
+  await clientOnboarding.expectNoPhotoRefusal();
+
+  // act
+  await clientOnboarding.addPhoto("back", samplePhotoOf("back"));
+  const sent = await clientOnboarding.sendToCoachCapturingPhotoExchange();
+
+  // assert
+  expect(sent.status).toBe(200);
+  expect(sent.sentViews).toEqual(["back"]);
+  expect(sent.outcomes).toMatchObject({ back: "stored" });
+  await expect(page).toHaveURL(/\/client$/);
+  expect(await measurementRecords.photos(client.clientId)).toEqual([
+    { view: "back", mimeType: "image/jpeg" },
+  ]);
 });
 
 test("a client's onboarding photo that cannot be processed is named once on her dashboard and her other photo is kept", async ({

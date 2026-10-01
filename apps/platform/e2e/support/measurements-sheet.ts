@@ -118,6 +118,10 @@ export class MeasurementsSheet {
     await this.photoTiles.agree();
   }
 
+  async withdrawFromPhotos(): Promise<void> {
+    await this.photoTiles.withdraw();
+  }
+
   async expectConsentAlreadyGiven(agreedOn: string): Promise<void> {
     await this.photoTiles.expectConsentAlreadyGiven(agreedOn);
   }

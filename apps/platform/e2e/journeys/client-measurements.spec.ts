@@ -254,6 +254,30 @@ test("a client follows her weigh-in reminder and adds a fresh set in pounds and 
     Thigh: "",
   });
   await measurementsSheet.agreeToPhotos();
+  await measurementsSheet.addPhoto("side", samplePhotoOf("side"));
+  await measurementsSheet.addPhoto("back", UNSUPPORTED_TYPE_PHOTO);
+
+  // assert
+  await measurementsSheet.expectPreview("side");
+  await measurementsSheet.expectRefusal();
+
+  // act
+  await measurementsSheet.withdrawFromPhotos();
+
+  // assert
+  await measurementsSheet.expectPhotosLocked();
+  await measurementsSheet.expectNoRefusal();
+
+  // act
+  await measurementsSheet.agreeToPhotos();
+
+  // assert
+  await measurementsSheet.expectNoPreview("front");
+  await measurementsSheet.expectNoPreview("side");
+  await measurementsSheet.expectNoPreview("back");
+  await measurementsSheet.expectNoRefusal();
+
+  // act
   await measurementsSheet.addPhoto("front", UNPROCESSABLE_PHOTO);
   await measurementsSheet.save();
 

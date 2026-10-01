@@ -472,6 +472,18 @@ export class ClientOnboarding {
     await this.photoTiles.add(view, photo);
   }
 
+  async expectNoPhotoPreview(view: ProgressPhotoView): Promise<void> {
+    await this.photoTiles.expectNoPreview(view);
+  }
+
+  async expectPhotoRefusal(): Promise<void> {
+    await this.photoTiles.expectRefusal();
+  }
+
+  async expectNoPhotoRefusal(): Promise<void> {
+    await this.photoTiles.expectNoRefusal();
+  }
+
   async expectPhotoPreview(view: ProgressPhotoView): Promise<void> {
     await this.photoTiles.expectPreview(view);
   }
