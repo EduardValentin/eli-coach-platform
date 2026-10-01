@@ -58,8 +58,8 @@ export function usePhotoGestures({
 
     if (isSwipe(dx, dy)) {
       lastTapAt.current = null;
-      if (dx < 0) onSwipeLeft();
-      else onSwipeRight();
+      const onSwipe = dx < 0 ? onSwipeLeft : onSwipeRight;
+      onSwipe();
       return;
     }
 

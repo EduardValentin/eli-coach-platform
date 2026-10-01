@@ -55,7 +55,7 @@ export type SaveOutcome = "saved" | "refused" | "failed";
 
 type Accepted = { kind: "accepted"; redirectTo: string };
 
-type Sent = Accepted & { refusedPhotoViews: ProgressPhotoView[] };
+type AcceptedWithPhotos = Accepted & { refusedPhotoViews: ProgressPhotoView[] };
 
 type OnboardingSubmission = {
   request: SubmitRequest;
@@ -67,7 +67,7 @@ type Invalid = { kind: "invalid"; problems: SubmissionProblem[] };
 type Failed = { kind: "failed" };
 
 export type SubmissionOutcome =
-  | Sent
+  | AcceptedWithPhotos
   | Invalid
   | { kind: "consent-missing"; consent: OnboardingConsent }
   | { kind: "already-submitted" }
@@ -147,7 +147,7 @@ function acceptedOutcome(body: unknown): Accepted | Failed {
     : REQUEST_FAILED;
 }
 
-function sentOutcome(body: unknown): Sent | Failed {
+function acceptedWithPhotosOutcome(body: unknown): AcceptedWithPhotos | Failed {
   const sent = submissionSentSchema.safeParse(body);
 
   return sent.success
@@ -202,7 +202,7 @@ export async function submitOnboarding(
   if (response.status === ALREADY_SUBMITTED_STATUS) {
     return { kind: "already-submitted" };
   }
-  if (response.ok) return sentOutcome(await readJson(response));
+  if (response.ok) return acceptedWithPhotosOutcome(await readJson(response));
   if (response.status === UNPROCESSABLE_STATUS) {
     return unprocessableSubmissionOutcome(await readJson(response));
   }

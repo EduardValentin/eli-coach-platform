@@ -9,7 +9,10 @@ import {
   type SaveOnboardingDraftUseCase,
   type SubmitOnboardingUseCase,
 } from "@eli-coach-platform/domain/client-onboarding";
-import type { AttachProgressPhotosUseCase } from "@eli-coach-platform/domain/client-profile";
+import type {
+  AttachProgressPhotosUseCase,
+  ProgressPhotoOutcomes,
+} from "@eli-coach-platform/domain/client-profile";
 import type { Clock } from "@eli-coach-platform/domain/shared";
 import type { UnitPreference } from "@eli-coach-platform/domain/unit-preference";
 import {
@@ -173,7 +176,9 @@ export class ClientOnboardingController {
 
     switch (result.status) {
       case "submitted":
-        return this.sentResponse(result, body.formData);
+        return submissionSentResponse(
+          await this.attachedPhotoOutcomes(result, body.formData),
+        );
       case "invalid":
         return Response.json(
           submissionProblemsSchema.parse({ problems: result.problems }),
@@ -219,26 +224,21 @@ export class ClientOnboardingController {
     }
   }
 
-  private async sentResponse(
+  private async attachedPhotoOutcomes(
     submitted: SubmittedOnboarding,
     formData: FormData,
-  ): Promise<Response> {
+  ): Promise<ProgressPhotoOutcomes> {
     const photos = await receivedProgressPhotosOf(formData);
-    const outcomes =
-      photos.length === 0
-        ? {}
-        : await this.options.attachProgressPhotos.execute({
-            clientId: submitted.clientId,
-            entryId: submitted.entryId,
-            photos,
-          });
 
-    return Response.json(
-      submissionSentSchema.parse({
-        redirectTo: CLIENT_PORTAL_PATH,
-        photos: progressPhotoOutcomesOf(outcomes),
-      }),
-    );
+    if (photos.length === 0) {
+      return {};
+    }
+
+    return this.options.attachProgressPhotos.execute({
+      clientId: submitted.clientId,
+      entryId: submitted.entryId,
+      photos,
+    });
   }
 
   private wizardPageOf({ onboarding, unitPreference }: OnboardingReading) {
@@ -342,4 +342,13 @@ function refusalResponse(refusal: OnboardingRefusal): Response {
   return Response.json(onboardingRefusalSchema.parse({ error: refusal }), {
     status: REFUSAL_STATUS[refusal],
   });
+}
+
+function submissionSentResponse(outcomes: ProgressPhotoOutcomes): Response {
+  return Response.json(
+    submissionSentSchema.parse({
+      redirectTo: CLIENT_PORTAL_PATH,
+      photos: progressPhotoOutcomesOf(outcomes),
+    }),
+  );
 }

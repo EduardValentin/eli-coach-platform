@@ -53,7 +53,7 @@ function originUnder(event: PointerEvent<HTMLElement>, image: HTMLElement) {
   return `${percentAlong(event.clientX - frame.left, frame.width)}% ${percentAlong(event.clientY - frame.top, frame.height)}%`;
 }
 
-function photoAfter(
+function neighbourPhoto(
   photos: readonly LightboxPhoto[],
   { index, step }: { index: number; step: 1 | -1 },
 ): LightboxPhoto {
@@ -172,9 +172,9 @@ function LightboxContent({
   const index = photos.indexOf(photo);
   const browsable = photos.length > 1;
   const showNext = () =>
-    onCurrentKeyChange(photoAfter(photos, { index, step: 1 }).key);
+    onCurrentKeyChange(neighbourPhoto(photos, { index, step: 1 }).key);
   const showPrevious = () =>
-    onCurrentKeyChange(photoAfter(photos, { index, step: -1 }).key);
+    onCurrentKeyChange(neighbourPhoto(photos, { index, step: -1 }).key);
   const stepByKey: Partial<Record<string, () => void>> = {
     ArrowLeft: showPrevious,
     ArrowRight: showNext,

@@ -2,16 +2,12 @@ import {
   PROGRESS_PHOTO_VIEWS,
   type ProgressPhotoView,
 } from "@eli-coach-platform/domain/client-profile";
-import type { z } from "zod";
-
 import {
   PROGRESS_PHOTO_PARTS,
-  type progressPhotoOutcomesSchema,
+  type PresentedProgressPhotoOutcomes,
 } from "~/features/client-profile/contracts/progress-photo-parts";
 
 export type ProgressPhotoPicks = Partial<Record<ProgressPhotoView, File>>;
-
-type ProgressPhotoOutcomes = z.infer<typeof progressPhotoOutcomesSchema>;
 
 export function appendProgressPhotoParts(
   formData: FormData,
@@ -24,7 +20,7 @@ export function appendProgressPhotoParts(
 }
 
 export function refusedPhotoViewsOf(
-  outcomes: ProgressPhotoOutcomes,
+  outcomes: PresentedProgressPhotoOutcomes,
 ): ProgressPhotoView[] {
   return PROGRESS_PHOTO_VIEWS.filter((view) => outcomes[view] === "refused");
 }

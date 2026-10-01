@@ -19,7 +19,7 @@ export const progressPhotoOutcomesSchema = z.record(
   z.enum(["stored", "refused", "absent"]),
 );
 
-type PresentedProgressPhotoOutcomes = z.infer<
+export type PresentedProgressPhotoOutcomes = z.infer<
   typeof progressPhotoOutcomesSchema
 >;
 
