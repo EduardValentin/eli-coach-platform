@@ -9,6 +9,8 @@ import { useNavigate } from "react-router";
 import { CLIENT_PORTAL_PATH } from "~/features/accounts/contracts/paths";
 import type { SubmissionProblem } from "~/features/client-onboarding/contracts/onboarding";
 import { SUBMIT_PROBLEM } from "~/features/client-onboarding/contracts/onboarding-copy";
+import type { ProgressPhotoPicks } from "~/features/client-profile/ui/shared/photos/progress-photo-picks";
+import { refusedPhotosState } from "~/features/client-profile/ui/shared/photos/refused-photos-state";
 
 import {
   submitOnboarding,
@@ -64,22 +66,31 @@ export function useSendToCoach({
     [],
   );
 
-  const send = async (next: WizardDraft) => {
+  const send = async (next: WizardDraft, photos: ProgressPhotoPicks) => {
     setSendState("sending");
     setSubmitProblem(null);
     draftControls.stopSaving();
     draftControls.replaceDraft(next);
 
     const outcome = await submitOnboarding({
-      answers: reachableAnswers(next.answers),
-      consents: next.consents,
+      photos,
+      request: {
+        answers: reachableAnswers(next.answers),
+        consents: next.consents,
+      },
     });
 
-    if (outcome.kind === "accepted" || outcome.kind === "already-submitted") {
+    if (outcome.kind === "accepted") {
       draftControls.discardUnsentDraft();
-      void navigate(
-        outcome.kind === "accepted" ? outcome.redirectTo : CLIENT_PORTAL_PATH,
-      );
+      void navigate(outcome.redirectTo, {
+        state: refusedPhotosState(outcome.refusedPhotoViews),
+      });
+      return;
+    }
+
+    if (outcome.kind === "already-submitted") {
+      draftControls.discardUnsentDraft();
+      void navigate(CLIENT_PORTAL_PATH);
       return;
     }
 

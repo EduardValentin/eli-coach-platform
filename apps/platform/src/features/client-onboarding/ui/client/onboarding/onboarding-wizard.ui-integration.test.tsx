@@ -15,7 +15,7 @@ import userEvent from "@testing-library/user-event";
 import { MotionConfig } from "motion/react";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
-import { createMemoryRouter, RouterProvider } from "react-router";
+import { createMemoryRouter, RouterProvider, useLocation } from "react-router";
 import {
   afterAll,
   afterEach,
@@ -38,6 +38,7 @@ import type {
 } from "~/features/client-onboarding/contracts/onboarding";
 import { CLIENT_ONBOARDING_API_PATHS } from "~/features/client-onboarding/contracts/paths";
 import { CLIENT_PROFILE_API_PATHS } from "~/features/client-profile/contracts/paths";
+import { refusedPhotoViewsIn } from "~/features/client-profile/ui/shared/photos/refused-photos-state";
 
 import OnboardingRoute from "./onboarding-page";
 
@@ -57,6 +58,9 @@ const PARQ_DECLARATION =
   "I have read, understood and completed this questionnaire. My answers are true and complete to the best of my knowledge. If my health changes, I will let my coach know and complete this questionnaire again.";
 const PROGRESS_PHOTO_CONSENT =
   "I agree to share progress photos with my coach. They are only used to follow my progress, and I can ask for them to be deleted at any time.";
+const PHOTOS_SEND_NOTE = "Your photos are sent with your answers.";
+const PHOTOS_LOCKED_NOTE = "Tick the box to add your photos.";
+const NO_PHOTO_OUTCOMES = { front: "absent", side: "absent", back: "absent" };
 
 const FEMALE_FORMS: OnboardingWizardPage["formIds"] = [
   "goal-availability",
@@ -154,12 +158,16 @@ const axe = configureAxe({ rules: { "color-contrast": { enabled: false } } });
 
 let draftRequests: SaveDraftRequest[] = [];
 let submitRequests: SubmitRequest[] = [];
+let submittedPhotoParts: string[][] = [];
+let draftBodies: string[] = [];
 let unitPreferenceRequests: unknown[] = [];
 
 function answerDrafts(status: number) {
   server.use(
     http.put(`*${CLIENT_ONBOARDING_API_PATHS.draft}`, async ({ request }) => {
-      draftRequests.push((await request.json()) as SaveDraftRequest);
+      const body = await request.text();
+      draftBodies.push(body);
+      draftRequests.push(JSON.parse(body) as SaveDraftRequest);
 
       return status === 204
         ? new HttpResponse(null, { status })
@@ -183,6 +191,34 @@ function answerUnitPreferences(status: number) {
   );
 }
 
+function readSubmission(body: string) {
+  const submission = /name="submission"\r\n\r\n([^\r]*)\r\n--/.exec(body)?.[1];
+
+  return {
+    photoParts: [...body.matchAll(/name="(front|side|back)"; filename=/g)].map(
+      (match) => match[1] ?? "",
+    ),
+    submission: JSON.parse(submission ?? "null") as SubmitRequest,
+  };
+}
+
+function photo(name: string): File {
+  return new File([new Uint8Array(64)], name, { type: "image/png" });
+}
+
+function PortalHome() {
+  const refusedViews = refusedPhotoViewsIn(useLocation().state);
+
+  return (
+    <>
+      <p>portal home</p>
+      {refusedViews.length > 0 && (
+        <p>refused photos: {refusedViews.join(", ")}</p>
+      )}
+    </>
+  );
+}
+
 function answerSubmission(
   status: number,
   body: Record<string, unknown> | null = null,
@@ -191,7 +227,9 @@ function answerSubmission(
     http.post(
       `*${CLIENT_ONBOARDING_API_PATHS.submission}`,
       async ({ request }) => {
-        submitRequests.push((await request.json()) as SubmitRequest);
+        const sent = readSubmission(await request.text());
+        submitRequests.push(sent.submission);
+        submittedPhotoParts.push(sent.photoParts);
 
         return HttpResponse.json(body, { status });
       },
@@ -211,7 +249,7 @@ function renderOnboarding(page: OnboardingWizardPage) {
         loader: () => page,
         path: CLIENT_ONBOARDING_PATH,
       },
-      { Component: () => <p>portal home</p>, path: CLIENT_PORTAL_PATH },
+      { Component: PortalHome, path: CLIENT_PORTAL_PATH },
     ],
     { initialEntries: [CLIENT_ONBOARDING_PATH] },
   );
@@ -274,6 +312,8 @@ beforeAll(() => {
       unobserve() {}
     },
   );
+  URL.createObjectURL = () => "blob:preview";
+  URL.revokeObjectURL = () => {};
   vi.stubGlobal(
     "matchMedia",
     vi.fn((query: string) => ({
@@ -301,7 +341,9 @@ afterEach(() => {
   server.resetHandlers();
   window.localStorage.clear();
   draftRequests = [];
+  draftBodies = [];
   submitRequests = [];
+  submittedPhotoParts = [];
   unitPreferenceRequests = [];
 });
 
@@ -1118,7 +1160,10 @@ describe("the onboarding", { timeout: 15_000 }, () => {
   it("sends the last form to her coach and closes the onboarding", async () => {
     // arrange
     const user = userEvent.setup();
-    answerSubmission(200, { redirectTo: CLIENT_PORTAL_PATH });
+    answerSubmission(200, {
+      photos: NO_PHOTO_OUTCOMES,
+      redirectTo: CLIENT_PORTAL_PATH,
+    });
     await openOnboarding(pageAt(4, { consents: DISCLAIMER_WITHHELD }));
     await user.click(screen.getByRole("checkbox", { name: DISCLAIMER }));
 
@@ -1331,5 +1376,184 @@ describe("the onboarding", { timeout: 15_000 }, () => {
     expect(screen.getByLabelText(/Your weight/)).toHaveValue(145.7);
     expect(screen.getByLabelText(/Your height/)).toHaveValue(65);
     expect(screen.getByRole("radio", { name: "lb · in" })).toBeChecked();
+  });
+});
+
+describe("the progress photos on the last form", { timeout: 15_000 }, () => {
+  it("keeps the photo tiles locked until she agrees to share progress photos", async () => {
+    // arrange, act
+    await openOnboarding(pageAt(4));
+
+    // assert
+    expect(screen.getByLabelText("Add front photo")).toBeDisabled();
+    expect(screen.getByText(PHOTOS_LOCKED_NOTE)).toBeVisible();
+    expect(screen.queryByText(PHOTOS_SEND_NOTE)).not.toBeInTheDocument();
+  });
+
+  it("opens the front, side and back tiles once she agrees, saying the photos go with her answers", async () => {
+    // arrange
+    const user = userEvent.setup();
+    await openOnboarding(pageAt(4));
+
+    // act
+    await user.click(
+      screen.getByRole("checkbox", { name: PROGRESS_PHOTO_CONSENT }),
+    );
+
+    // assert
+    expect(screen.getByLabelText("Add front photo")).toBeEnabled();
+    expect(screen.getByLabelText("Add side photo")).toBeEnabled();
+    expect(screen.getByLabelText("Add back photo")).toBeEnabled();
+    expect(screen.getByText(PHOTOS_SEND_NOTE)).toBeVisible();
+    expect(screen.queryByText(PHOTOS_LOCKED_NOTE)).not.toBeInTheDocument();
+  });
+
+  it("previews a picked photo and lets her remove it", async () => {
+    // arrange
+    const user = userEvent.setup();
+    await openOnboarding(pageAt(4));
+    await user.click(
+      screen.getByRole("checkbox", { name: PROGRESS_PHOTO_CONSENT }),
+    );
+    await user.upload(
+      screen.getByLabelText("Add front photo"),
+      photo("front.png"),
+    );
+    const preview = screen.getByRole("img", { name: "Front photo" });
+
+    // act
+    await user.click(
+      screen.getByRole("button", { name: "Remove front photo" }),
+    );
+
+    // assert
+    expect(preview).toHaveAttribute("src", "blob:preview");
+    expect(
+      screen.queryByRole("img", { name: "Front photo" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Add front photo")).toBeEnabled();
+  });
+
+  it("never saves her picked photos with the draft", async () => {
+    // arrange
+    const user = userEvent.setup();
+    await openOnboarding(pageAt(4));
+    await user.click(
+      screen.getByRole("checkbox", { name: PROGRESS_PHOTO_CONSENT }),
+    );
+    await user.upload(
+      screen.getByLabelText("Add front photo"),
+      photo("front.png"),
+    );
+
+    // act
+    await user.clear(screen.getByLabelText(/Waist/));
+    await user.type(screen.getByLabelText(/Waist/), "75");
+
+    // assert
+    await waitFor(() =>
+      expect(lastDraft()?.answers.measurements).toMatchObject({ waist: 75 }),
+    );
+    expect(Object.keys(lastDraft() ?? {}).sort()).toEqual([
+      "answers",
+      "consents",
+      "currentFormIndex",
+      "formId",
+    ]);
+    expect(draftBodies.join("")).not.toMatch(/front\.png|filename=/);
+  });
+
+  it("sends the picked photos with her answers", async () => {
+    // arrange
+    const user = userEvent.setup();
+    answerSubmission(200, {
+      photos: { front: "stored", side: "absent", back: "stored" },
+      redirectTo: CLIENT_PORTAL_PATH,
+    });
+    await openOnboarding(pageAt(4));
+    await user.click(
+      screen.getByRole("checkbox", { name: PROGRESS_PHOTO_CONSENT }),
+    );
+    await user.upload(
+      screen.getByLabelText("Add front photo"),
+      photo("front.png"),
+    );
+    await user.upload(
+      screen.getByLabelText("Add back photo"),
+      photo("back.png"),
+    );
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Send to my coach" }));
+
+    // assert
+    expect(await screen.findByText("portal home")).toBeVisible();
+    expect(submitRequests).toEqual([
+      {
+        answers: answeredDraft(),
+        consents: { ...GIVEN_CONSENTS, progressPhotosAt: expect.any(String) },
+      },
+    ]);
+    expect(submittedPhotoParts).toEqual([["front", "back"]]);
+    expect(screen.queryByText(/^refused photos/)).not.toBeInTheDocument();
+  });
+
+  it("sends no photos when she takes back her agreement before sending", async () => {
+    // arrange
+    const user = userEvent.setup();
+    answerSubmission(200, {
+      photos: NO_PHOTO_OUTCOMES,
+      redirectTo: CLIENT_PORTAL_PATH,
+    });
+    await openOnboarding(pageAt(4));
+    const consent = screen.getByRole("checkbox", {
+      name: PROGRESS_PHOTO_CONSENT,
+    });
+    await user.click(consent);
+    await user.upload(
+      screen.getByLabelText("Add side photo"),
+      photo("side.png"),
+    );
+    await user.click(consent);
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Send to my coach" }));
+
+    // assert
+    expect(await screen.findByText("portal home")).toBeVisible();
+    expect(submittedPhotoParts).toEqual([[]]);
+  });
+
+  it("hands the views the coach's side could not process to the dashboard she lands on", async () => {
+    // arrange
+    const user = userEvent.setup();
+    answerSubmission(200, {
+      photos: { front: "refused", side: "stored", back: "refused" },
+      redirectTo: CLIENT_PORTAL_PATH,
+    });
+    await openOnboarding(pageAt(4));
+    await user.click(
+      screen.getByRole("checkbox", { name: PROGRESS_PHOTO_CONSENT }),
+    );
+    await user.upload(
+      screen.getByLabelText("Add front photo"),
+      photo("front.png"),
+    );
+    await user.upload(
+      screen.getByLabelText("Add side photo"),
+      photo("side.png"),
+    );
+    await user.upload(
+      screen.getByLabelText("Add back photo"),
+      photo("back.png"),
+    );
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Send to my coach" }));
+
+    // assert
+    expect(
+      await screen.findByText("refused photos: front, back"),
+    ).toBeVisible();
   });
 });
