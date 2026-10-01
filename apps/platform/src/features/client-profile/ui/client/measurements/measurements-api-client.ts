@@ -1,8 +1,5 @@
 import { joinBasePath } from "@eli-coach-platform/config";
-import {
-  PROGRESS_PHOTO_VIEWS,
-  type ProgressPhotoView,
-} from "@eli-coach-platform/domain/client-profile";
+import type { ProgressPhotoView } from "@eli-coach-platform/domain/client-profile";
 
 import {
   PHOTO_CONSENT_GIVEN,
@@ -11,10 +8,12 @@ import {
   type MeasurementEntryRequest,
 } from "~/features/client-profile/contracts/measurements";
 import { CLIENT_PROFILE_API_PATHS } from "~/features/client-profile/contracts/paths";
-import { PROGRESS_PHOTO_PARTS } from "~/features/client-profile/contracts/progress-photo-parts";
+import {
+  appendProgressPhotoParts,
+  refusedPhotoViewsOf,
+  type ProgressPhotoPicks,
+} from "~/features/client-profile/ui/shared/photos/progress-photo-picks";
 import { progressPhotoUrl } from "~/features/client-profile/ui/shared/photos/progress-photo-url";
-
-export type ProgressPhotoPicks = Partial<Record<ProgressPhotoView, File>>;
 
 type MeasurementsSubmission = {
   entry: MeasurementEntryRequest;
@@ -57,16 +56,6 @@ async function readJson(response: Response): Promise<unknown> {
   }
 }
 
-function pickedPhotosOf(
-  photos: ProgressPhotoPicks,
-): [ProgressPhotoView, File][] {
-  return PROGRESS_PHOTO_VIEWS.flatMap((view) => {
-    const photo = photos[view];
-
-    return photo ? [[view, photo]] : [];
-  });
-}
-
 function measurementsFormData(submission: MeasurementsSubmission): FormData {
   const formData = new FormData();
   formData.append(
@@ -81,9 +70,7 @@ function measurementsFormData(submission: MeasurementsSubmission): FormData {
     );
   }
 
-  for (const [view, photo] of pickedPhotosOf(submission.photos)) {
-    formData.append(PROGRESS_PHOTO_PARTS[view], photo);
-  }
+  appendProgressPhotoParts(formData, submission.photos);
 
   return formData;
 }
@@ -106,9 +93,7 @@ export async function recordMeasurements(
 
   return {
     kind: "recorded",
-    refusedViews: PROGRESS_PHOTO_VIEWS.filter(
-      (view) => recorded.data.photos[view] === "refused",
-    ),
+    refusedViews: refusedPhotoViewsOf(recorded.data.photos),
   };
 }
 

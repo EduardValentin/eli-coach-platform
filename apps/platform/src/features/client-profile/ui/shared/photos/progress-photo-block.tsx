@@ -22,11 +22,11 @@ import { useEffect, useId, useState, type ChangeEvent } from "react";
 
 import { MEASUREMENTS_COPY } from "~/features/client-profile/contracts/measurements";
 import { PROGRESS_PHOTO_CONSENT_COPY } from "~/features/client-profile/contracts/progress-photo-consent";
-import type { ProgressPhotoPicks } from "~/features/client-profile/ui/client/measurements/measurements-api-client";
 import {
   progressPhotoImageClass,
   progressPhotoPlaceholderClass,
 } from "~/features/client-profile/ui/shared/photos/progress-photo-frame";
+import type { ProgressPhotoPicks } from "~/features/client-profile/ui/shared/photos/progress-photo-picks";
 
 export type ProgressPhotoConsent =
   | { status: "recorded"; at: string }
@@ -40,6 +40,7 @@ type ProgressPhotoBlockProps = {
   consent: ProgressPhotoConsent;
   photos: ProgressPhotoPicks;
   onPhotosChange: (photos: ProgressPhotoPicks) => void;
+  sendNote?: string;
 };
 
 type PhotoTileProps = {
@@ -181,6 +182,7 @@ export function ProgressPhotoBlock({
   consent,
   photos,
   onPhotosChange,
+  sendNote,
 }: ProgressPhotoBlockProps) {
   const groupId = useId();
   const noteId = useId();
@@ -256,6 +258,15 @@ export function ProgressPhotoBlock({
           id={noteId}
         >
           {PHOTOS_COPY.locked}
+        </p>
+      )}
+
+      {!locked && sendNote && (
+        <p
+          className="text-xs text-text-secondary"
+          data-parity="progress-photos-send-note"
+        >
+          {sendNote}
         </p>
       )}
     </Card>

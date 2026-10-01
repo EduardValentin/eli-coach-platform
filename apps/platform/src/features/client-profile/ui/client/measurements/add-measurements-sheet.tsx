@@ -16,15 +16,13 @@ import {
   measurementFormValuesOf,
   type MeasurementFormValues,
 } from "~/features/client-profile/ui/client/measurements/measurement-form-values";
-import {
-  recordMeasurements,
-  type ProgressPhotoPicks,
-} from "~/features/client-profile/ui/client/measurements/measurements-api-client";
+import { recordMeasurements } from "~/features/client-profile/ui/client/measurements/measurements-api-client";
+import { MeasureField } from "~/features/client-profile/ui/shared/measure-field/measure-field";
 import {
   ProgressPhotoBlock,
   type ProgressPhotoConsent,
-} from "~/features/client-profile/ui/client/measurements/progress-photo-block";
-import { MeasureField } from "~/features/client-profile/ui/shared/measure-field/measure-field";
+} from "~/features/client-profile/ui/shared/photos/progress-photo-block";
+import type { ProgressPhotoPicks } from "~/features/client-profile/ui/shared/photos/progress-photo-picks";
 
 type AddMeasurementsStartingPoint = {
   latest: MeasurementRow | undefined;
