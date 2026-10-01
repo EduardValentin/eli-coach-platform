@@ -1,27 +1,27 @@
-import { useState, type KeyboardEvent, type PointerEvent } from 'react';
-import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { useState, type KeyboardEvent, type PointerEvent } from "react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import {
   PROGRESS_PHOTO_VIEW_LABELS,
   type MeasurementEntry,
   type ProgressPhoto,
   type ProgressPhotoView,
-} from '../domain/journey';
+} from "../domain/journey";
 import {
   nextStoredPhotoView,
   previousStoredPhotoView,
   storedPhotoViews,
-} from '../domain/measurements';
-import { formatJourneyDate } from '../utils/journeyLabels';
-import { Button } from './ui/button';
+} from "../domain/measurements";
+import { formatJourneyDate } from "../utils/journeyLabels";
+import { Button } from "./ui/button";
 import {
   Dialog,
   DialogClose,
   DialogContent,
   DialogDescription,
   DialogTitle,
-} from './ui/dialog';
-import { cn } from './ui/utils';
-import { usePhotoGestures } from './usePhotoGestures';
+} from "./ui/dialog";
+import { cn } from "./ui/utils";
+import { usePhotoGestures } from "./usePhotoGestures";
 
 type Zoom = { scale: 1 } | { scale: 2; origin: string };
 
@@ -29,7 +29,7 @@ const FITTED: Zoom = { scale: 1 };
 
 function originUnder(event: PointerEvent<HTMLElement>, image: HTMLElement) {
   const frame = image.getBoundingClientRect();
-  if (frame.width === 0 || frame.height === 0) return 'center';
+  if (frame.width === 0 || frame.height === 0) return "center";
 
   const percentAlong = (offset: number, length: number) =>
     Math.min(100, Math.max(0, (offset / length) * 100));
@@ -37,14 +37,14 @@ function originUnder(event: PointerEvent<HTMLElement>, image: HTMLElement) {
   return `${percentAlong(event.clientX - frame.left, frame.width)}% ${percentAlong(event.clientY - frame.top, frame.height)}%`;
 }
 
-type PhotoStep = 'previous' | 'next';
+type PhotoStep = "previous" | "next";
 
 const STEP_BUTTONS: Record<
   PhotoStep,
   { label: string; side: string; Icon: typeof ChevronLeft }
 > = {
-  previous: { label: 'Previous photo', side: 'left-3', Icon: ChevronLeft },
-  next: { label: 'Next photo', side: 'right-3', Icon: ChevronRight },
+  previous: { label: "Previous photo", side: "left-3", Icon: ChevronLeft },
+  next: { label: "Next photo", side: "right-3", Icon: ChevronRight },
 };
 
 function LightboxStepButton({
@@ -59,7 +59,7 @@ function LightboxStepButton({
   return (
     <Button
       aria-label={label}
-      className={cn('absolute top-1/2 -translate-y-1/2', side)}
+      className={cn("absolute top-1/2 -translate-y-1/2", side)}
       data-parity={`lightbox-${step}`}
       onClick={onStep}
       size="icon-md"
@@ -103,15 +103,16 @@ function LightboxStage({
     <div className="relative flex min-h-0 flex-1">
       <div
         className="flex min-w-0 flex-1 touch-pinch-zoom items-center justify-center overflow-hidden p-4 select-none sm:px-20"
+        data-parity="lightbox-stage"
         {...gestures}
       >
         <img
           alt={`${label} photo`}
           className={cn(
-            'max-h-full max-w-full object-contain transition-transform duration-200 motion-reduce:transition-none',
+            "max-h-full max-w-full object-contain transition-transform duration-200 motion-reduce:transition-none",
             {
-              'cursor-zoom-in': zoom.scale === 1,
-              'cursor-zoom-out': zoom.scale === 2,
+              "cursor-zoom-in": zoom.scale === 1,
+              "cursor-zoom-out": zoom.scale === 2,
             },
           )}
           data-parity="lightbox-image"
@@ -120,7 +121,7 @@ function LightboxStage({
           src={photo.url}
           style={{
             transform: `scale(${zoom.scale})`,
-            transformOrigin: zoom.scale === 2 ? zoom.origin : 'center',
+            transformOrigin: zoom.scale === 2 ? zoom.origin : "center",
           }}
         />
       </div>
@@ -171,7 +172,7 @@ function LightboxContent({
       <div className="flex items-center justify-between gap-4 px-4 py-3 sm:px-6">
         <div className="grid min-w-0 gap-1">
           <DialogTitle data-parity="lightbox-title">
-            {label} ·{' '}
+            {label} ·{" "}
             <span data-parity="lightbox-counter">
               {views.indexOf(view) + 1} of {views.length}
             </span>
