@@ -203,15 +203,9 @@ export function ProgressPhotoBlock({
     onPhotosChange({ ...photos, [view]: undefined });
   };
 
-  const changeConsent = (
-    ticked: boolean,
-    onTickedChange: (ticked: boolean) => void,
-  ) => {
-    if (!ticked) {
-      setRefused(false);
-      onPhotosChange(NO_PROGRESS_PHOTO_PICKS);
-    }
-    onTickedChange(ticked);
+  const clearPicks = () => {
+    setRefused(false);
+    onPhotosChange(NO_PROGRESS_PHOTO_PICKS);
   };
 
   return (
@@ -231,9 +225,10 @@ export function ProgressPhotoBlock({
           checked={consent.ticked}
           label={PROGRESS_PHOTO_CONSENT_COPY}
           layout="statement"
-          onCheckedChange={(ticked) =>
-            changeConsent(ticked, consent.onTickedChange)
-          }
+          onCheckedChange={(ticked) => {
+            if (!ticked) clearPicks();
+            consent.onTickedChange(ticked);
+          }}
         />
       )}
 

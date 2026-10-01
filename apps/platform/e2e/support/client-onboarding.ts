@@ -2,7 +2,12 @@ import {
   PROGRESS_PHOTO_VIEWS,
   type ProgressPhotoView,
 } from "@eli-coach-platform/domain/client-profile";
-import { expect, type Locator, type Page } from "@playwright/test";
+import {
+  expect,
+  type Locator,
+  type Page,
+  type Request,
+} from "@playwright/test";
 
 import { expectAvailability, type Availability } from "./control-states";
 import { tabTo } from "./keyboard";
@@ -455,7 +460,7 @@ export class ClientOnboarding {
     await this.photoTiles.agree();
   }
 
-  async withdrawPhotoConsent(): Promise<void> {
+  async withdrawFromPhotos(): Promise<void> {
     await this.photoTiles.withdraw();
   }
 
@@ -477,7 +482,7 @@ export class ClientOnboarding {
     );
   }
 
-  async sendToCoachReadingPhotos(): Promise<SentPhotos> {
+  async sendToCoachCapturingPhotoExchange(): Promise<SentPhotos> {
     const submission = this.page.waitForResponse(
       (response) =>
         response.url().endsWith(SUBMISSION_PATH) &&
@@ -485,15 +490,15 @@ export class ClientOnboarding {
     );
     await this.sendToCoach();
     const response = await submission;
-    const body = response.request().postDataBuffer()?.toString("latin1") ?? "";
-    const sentViews = PROGRESS_PHOTO_VIEWS.filter((view) =>
-      body.includes(`name="${view}"`),
-    );
     const { photos } = (await response.json()) as {
       photos: Partial<Record<ProgressPhotoView, string>>;
     };
 
-    return { status: response.status(), sentViews, outcomes: photos };
+    return {
+      status: response.status(),
+      sentViews: photoViewsSentIn(response.request()),
+      outcomes: photos,
+    };
   }
 
   async expectAnswerPage(note: string): Promise<void> {
@@ -536,4 +541,10 @@ export class ClientOnboarding {
       this.page.getByRole("button", { name: "Send my answers" }),
     );
   }
+}
+
+function photoViewsSentIn(submission: Request): ProgressPhotoView[] {
+  const body = submission.postDataBuffer()?.toString("latin1") ?? "";
+
+  return PROGRESS_PHOTO_VIEWS.filter((view) => body.includes(`name="${view}"`));
 }

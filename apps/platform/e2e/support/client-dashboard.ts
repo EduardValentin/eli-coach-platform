@@ -6,6 +6,10 @@ import {
   refusedPhotoToastOf,
 } from "./progress-photo-copy";
 
+type CarriedDashboardState = {
+  usr?: { refusedPhotoViews?: unknown[] } | null;
+} | null;
+
 const ONBOARDING_REGION_LABEL = "Your onboarding";
 const PROGRAM_REGION_LABEL = "Your program";
 const NEEDS_DETAILS_LABEL = "Your coach needs a few more details";
@@ -50,17 +54,7 @@ export class ClientDashboard {
 
   async expectNoRefusedPhotosCarried(): Promise<void> {
     await expect
-      .poll(() =>
-        this.page.evaluate(() => {
-          const carried = (
-            window.history.state as {
-              usr?: { refusedPhotoViews?: unknown[] } | null;
-            } | null
-          )?.usr;
-
-          return carried?.refusedPhotoViews ?? [];
-        }),
-      )
+      .poll(() => this.page.evaluate(refusedPhotoViewsCarried))
       .toEqual([]);
   }
 
@@ -119,4 +113,10 @@ export class ClientDashboard {
   async expectNoRefusedPhotoToast(): Promise<void> {
     await expect(this.page.getByText(REFUSED_PHOTO_TOAST)).toHaveCount(0);
   }
+}
+
+function refusedPhotoViewsCarried(): unknown[] {
+  const carried = (window.history.state as CarriedDashboardState)?.usr;
+
+  return carried?.refusedPhotoViews ?? [];
 }

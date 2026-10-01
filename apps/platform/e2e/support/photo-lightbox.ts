@@ -28,6 +28,10 @@ export class PhotoLightbox {
     return this.dialog.getByRole("img");
   }
 
+  private get zoomFrame() {
+    return this.image.locator("..");
+  }
+
   private button(name: string): Locator {
     return this.dialog.getByRole("button", { name, exact: true });
   }
@@ -104,10 +108,7 @@ export class PhotoLightbox {
   }
 
   async expectPinchZoomKept(): Promise<void> {
-    await expect(this.image.locator("..")).toHaveCSS(
-      "touch-action",
-      "pinch-zoom",
-    );
+    await expect(this.zoomFrame).toHaveCSS("touch-action", "pinch-zoom");
   }
 
   async expectNoRemove(): Promise<void> {

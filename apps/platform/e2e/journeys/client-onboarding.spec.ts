@@ -751,7 +751,7 @@ test("a client who agrees to share progress photos sends front, side and back wi
   await clientOnboarding.expectPhotoPreview("back");
 
   // act
-  const sent = await clientOnboarding.sendToCoachReadingPhotos();
+  const sent = await clientOnboarding.sendToCoachCapturingPhotoExchange();
 
   // assert
   expect(sent).toEqual({
@@ -809,11 +809,11 @@ test("a client who takes back her photo consent before sending sends no photos",
   await clientOnboarding.addPhoto("front", samplePhotoOf("front"));
   await clientOnboarding.expectPhotoPreview("front");
 
-  await clientOnboarding.withdrawPhotoConsent();
+  await clientOnboarding.withdrawFromPhotos();
   await clientOnboarding.expectPhotosLocked();
 
   // act
-  const sent = await clientOnboarding.sendToCoachReadingPhotos();
+  const sent = await clientOnboarding.sendToCoachCapturingPhotoExchange();
 
   // assert
   expect(sent.status).toBe(200);
@@ -851,7 +851,7 @@ test("a client's onboarding photo that cannot be processed is named once on her 
   // act
   await clientOnboarding.addPhoto("front", UNPROCESSABLE_PHOTO);
   await clientOnboarding.addPhoto("side", samplePhotoOf("side"));
-  const sent = await clientOnboarding.sendToCoachReadingPhotos();
+  const sent = await clientOnboarding.sendToCoachCapturingPhotoExchange();
 
   // assert
   expect(sent.status).toBe(200);
