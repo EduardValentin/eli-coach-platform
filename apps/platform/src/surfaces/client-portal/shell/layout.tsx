@@ -4,7 +4,6 @@ import {
 } from "@eli-coach-platform/infrastructure/pwa";
 import { PortalShell } from "@eli-coach-platform/ui/layout";
 import { Button } from "@eli-coach-platform/ui/primitives";
-import { Toaster } from "@eli-coach-platform/ui/toast";
 import { LogOut } from "lucide-react";
 import {
   Outlet,
@@ -88,7 +87,6 @@ export default function ClientLayoutRoute() {
       >
         <Outlet context={presentation} />
       </PortalShell>
-      <Toaster />
       <script
         dangerouslySetInnerHTML={{
           __html: pwaRegistration.registrationScript,

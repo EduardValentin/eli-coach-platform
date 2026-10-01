@@ -1,5 +1,6 @@
 import { ClerkProvider } from "@clerk/react-router";
 import { joinBasePath } from "@eli-coach-platform/config";
+import { Toaster } from "@eli-coach-platform/ui/toast";
 import { MotionConfig } from "motion/react";
 import "~/app.css";
 import type { PropsWithChildren } from "react";
@@ -110,6 +111,7 @@ export function Layout({ children }: PropsWithChildren) {
       </head>
       <body>
         <MotionConfig reducedMotion="user">{children}</MotionConfig>
+        <Toaster />
         <ScrollRestoration />
         <Scripts />
       </body>

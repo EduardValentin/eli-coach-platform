@@ -3,7 +3,6 @@
 import "@testing-library/jest-dom/vitest";
 
 import { SignOutButton } from "@clerk/react-router";
-import { toast } from "@eli-coach-platform/ui/toast";
 import {
   cleanup,
   render,
@@ -30,11 +29,7 @@ const ANA: ClientShellPresentation = {
 };
 
 function ProfilePage() {
-  return (
-    <button onClick={() => toast.success("Measurements saved.")} type="button">
-      Save measurements
-    </button>
-  );
+  return <h1>Her profile</h1>;
 }
 
 afterEach(() => {
@@ -208,7 +203,7 @@ describe("ClientLayoutRoute", () => {
       ).not.toBeInTheDocument();
     });
     expect(
-      await screen.findByRole("button", { name: "Save measurements" }),
+      await screen.findByRole("heading", { name: "Her profile" }),
     ).toBeInTheDocument();
   });
 
@@ -248,20 +243,6 @@ describe("ClientLayoutRoute", () => {
       expect.objectContaining({ redirectUrl: "/" }),
       undefined,
     );
-  });
-
-  it("shows the outcome a page reports as a toast", async () => {
-    // arrange
-    const user = userEvent.setup();
-    renderClientLayout(ANA, "/client/profile");
-
-    // act
-    await user.click(
-      await screen.findByRole("button", { name: "Save measurements" }),
-    );
-
-    // assert
-    expect(await screen.findByText("Measurements saved.")).toBeInTheDocument();
   });
 
   it("titles the installed client portal Evoa", () => {

@@ -2,6 +2,7 @@
 
 import "@testing-library/jest-dom/vitest";
 
+import { Toaster } from "@eli-coach-platform/ui/toast";
 import {
   act,
   cleanup,
@@ -257,6 +258,7 @@ function renderOnboarding(page: OnboardingWizardPage) {
   return render(
     <MotionConfig reducedMotion="user">
       <RouterProvider router={router} />
+      <Toaster />
     </MotionConfig>,
   );
 }

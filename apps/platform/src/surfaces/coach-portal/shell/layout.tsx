@@ -1,5 +1,4 @@
 import { PortalShell } from "@eli-coach-platform/ui/layout";
-import { Toaster } from "@eli-coach-platform/ui/toast";
 import { Dumbbell } from "lucide-react";
 import { Outlet, type MetaFunction } from "react-router";
 
@@ -65,22 +64,19 @@ function CoachTopBarBrand() {
 
 export default function CoachLayoutRoute() {
   return (
-    <>
-      <PortalShell
-        asideLabel="Coach portal sidebar"
-        brand={<CoachBrand />}
-        links={coachSurfaceLinks}
-        mobileNavigation={{
-          kind: "drawer",
-          label: "Coach portal mobile navigation",
-        }}
-        navigationLabel="Coach portal navigation"
-        topBarBrand={<CoachTopBarBrand />}
-        topBarLabel="Coach portal top bar"
-      >
-        <Outlet />
-      </PortalShell>
-      <Toaster />
-    </>
+    <PortalShell
+      asideLabel="Coach portal sidebar"
+      brand={<CoachBrand />}
+      links={coachSurfaceLinks}
+      mobileNavigation={{
+        kind: "drawer",
+        label: "Coach portal mobile navigation",
+      }}
+      navigationLabel="Coach portal navigation"
+      topBarBrand={<CoachTopBarBrand />}
+      topBarLabel="Coach portal top bar"
+    >
+      <Outlet />
+    </PortalShell>
   );
 }

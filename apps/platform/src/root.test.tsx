@@ -2,14 +2,18 @@
 
 import "@testing-library/jest-dom/vitest";
 
+import { toast } from "@eli-coach-platform/ui/toast";
 import { cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { afterEach, describe, expect, it } from "vitest";
 import {
   createMemoryRouter,
   createRoutesStub,
+  Outlet,
   RouterProvider,
+  useNavigate,
 } from "react-router";
 import { configureAxe } from "vitest-axe";
 
@@ -62,6 +66,40 @@ function renderLayoutAt(pathname: string) {
   ]);
 
   return render(<RoutesStub initialEntries={[pathname]} />);
+}
+
+function SendingPage() {
+  const navigate = useNavigate();
+
+  return (
+    <button
+      onClick={() => {
+        toast.error("The front photo could not be processed.");
+        void navigate("/client");
+      }}
+      type="button"
+    >
+      Send to coach
+    </button>
+  );
+}
+
+function renderLayoutAcrossNavigation() {
+  const RoutesStub = createRoutesStub([
+    {
+      children: [
+        { Component: SendingPage, path: "/client/onboarding" },
+        { Component: () => <p>Dashboard</p>, path: "/client" },
+      ],
+      Component: () => (
+        <Layout>
+          <Outlet />
+        </Layout>
+      ),
+    },
+  ]);
+
+  return render(<RoutesStub initialEntries={["/client/onboarding"]} />);
 }
 
 function viewportContent() {
@@ -132,6 +170,23 @@ describe("root Layout", () => {
       expect(viewportContent()).toBe("width=device-width, initial-scale=1");
     },
   );
+
+  it("keeps a toast raised as one page hands over to the next on screen after the navigation", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderLayoutAcrossNavigation();
+
+    // act
+    await user.click(
+      await screen.findByRole("button", { name: "Send to coach" }),
+    );
+
+    // assert
+    expect(await screen.findByText("Dashboard")).toBeInTheDocument();
+    expect(
+      await screen.findByText("The front photo could not be processed."),
+    ).toBeInTheDocument();
+  });
 
   it("finds the coach colour scope in the stylesheet under the same segment", () => {
     // arrange
