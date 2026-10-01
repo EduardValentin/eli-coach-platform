@@ -1,0 +1,13 @@
+[
+  {"waitFor": "[data-parity-root=\"MeasurementsTable\"] [data-parity=\"row-actions\"] button"},
+  {"wait": 600},
+  {"click": "[data-parity-root=\"MeasurementsTable\"] [data-parity=\"row-actions\"] button"},
+  {"waitFor": "[data-parity-root=\"PhotoViewDialog\"] [data-parity=\"open-front\"]"},
+  {"wait": 600},
+  {"click": "[data-parity-root=\"PhotoViewDialog\"] [data-parity=\"open-front\"]"},
+  {"waitFor": "[data-parity-root=\"PhotoLightbox\"] [data-parity=\"lightbox-image\"]"},
+  {"wait": 600},
+  {"click": "[data-parity-root=\"PhotoLightbox\"] [data-parity=\"lightbox-next\"]"},
+  {"waitFor": "[data-parity-root=\"PhotoLightbox\"] [data-parity=\"lightbox-counter\"] >> text=2 of 3"},
+  {"wait": 400}
+]
