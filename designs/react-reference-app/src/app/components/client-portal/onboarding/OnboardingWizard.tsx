@@ -8,7 +8,7 @@ import {
   DISCLAIMER_ACKNOWLEDGEMENT,
   SPECIAL_CATEGORY_CONSENT_COPY,
 } from '../../../domain/onboardingCopy';
-import { progressPhotoRefusal } from '../../../domain/measurements';
+import { progressPhotoRefusalMessage } from '../../../domain/measurements';
 import {
   copyForGender,
   formsForGender,
@@ -189,7 +189,7 @@ export function OnboardingWizard() {
       forgetDraft(journeyId);
       navigate('/portal');
       submitted.photos.refusedViews.forEach((view) =>
-        toast.error(progressPhotoRefusal(view)),
+        toast.error(progressPhotoRefusalMessage(view)),
       );
     } catch {
       setSending(false);

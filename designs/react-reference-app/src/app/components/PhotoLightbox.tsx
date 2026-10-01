@@ -37,6 +37,40 @@ function originUnder(event: PointerEvent<HTMLElement>, image: HTMLElement) {
   return `${percentAlong(event.clientX - frame.left, frame.width)}% ${percentAlong(event.clientY - frame.top, frame.height)}%`;
 }
 
+type PhotoStep = 'previous' | 'next';
+
+const STEP_BUTTONS: Record<
+  PhotoStep,
+  { label: string; side: string; Icon: typeof ChevronLeft }
+> = {
+  previous: { label: 'Previous photo', side: 'left-3', Icon: ChevronLeft },
+  next: { label: 'Next photo', side: 'right-3', Icon: ChevronRight },
+};
+
+function LightboxStepButton({
+  step,
+  onStep,
+}: {
+  step: PhotoStep;
+  onStep: () => void;
+}) {
+  const { label, side, Icon } = STEP_BUTTONS[step];
+
+  return (
+    <Button
+      aria-label={label}
+      className={cn('absolute top-1/2 -translate-y-1/2', side)}
+      data-parity={`lightbox-${step}`}
+      onClick={onStep}
+      size="icon-md"
+      type="button"
+      variant="outline"
+    >
+      <Icon aria-hidden="true" />
+    </Button>
+  );
+}
+
 function LightboxStage({
   label,
   photo,
@@ -91,32 +125,8 @@ function LightboxStage({
         />
       </div>
 
-      {onPrevious && (
-        <Button
-          aria-label="Previous photo"
-          className="absolute top-1/2 left-3 -translate-y-1/2 shadow-card"
-          data-parity="lightbox-previous"
-          onClick={onPrevious}
-          size="icon-md"
-          type="button"
-          variant="outline"
-        >
-          <ChevronLeft aria-hidden="true" />
-        </Button>
-      )}
-      {onNext && (
-        <Button
-          aria-label="Next photo"
-          className="absolute top-1/2 right-3 -translate-y-1/2 shadow-card"
-          data-parity="lightbox-next"
-          onClick={onNext}
-          size="icon-md"
-          type="button"
-          variant="outline"
-        >
-          <ChevronRight aria-hidden="true" />
-        </Button>
-      )}
+      {onPrevious && <LightboxStepButton onStep={onPrevious} step="previous" />}
+      {onNext && <LightboxStepButton onStep={onNext} step="next" />}
     </div>
   );
 }

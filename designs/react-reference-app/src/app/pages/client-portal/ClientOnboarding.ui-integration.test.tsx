@@ -822,11 +822,11 @@ describe('the onboarding', () => {
 
     // act
     await sendLastForm();
-
-    // assert
     await userEvent.click(
       screen.getByRole('button', { name: /^View photos/ }),
     );
+
+    // assert
     const view = screen.getByRole('dialog', { name: /^Photos from / });
     expect(
       within(view).getByRole('img', { name: 'Front photo' }),

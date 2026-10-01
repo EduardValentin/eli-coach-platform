@@ -8,7 +8,7 @@ import { useClientJourneys } from '../../context/ClientJourneyContext';
 import {
   measurementAnswersFrom,
   measurementEntryFrom,
-  progressPhotoRefusal,
+  progressPhotoRefusalMessage,
 } from '../../domain/measurements';
 import {
   NO_PROGRESS_PHOTOS,
@@ -90,7 +90,7 @@ function AddMeasurementsForm({
     onClose();
     toast.success(SAVED_TOAST);
     recorded.refusedViews.forEach((view) =>
-      toast.error(progressPhotoRefusal(view)),
+      toast.error(progressPhotoRefusalMessage(view)),
     );
   });
 

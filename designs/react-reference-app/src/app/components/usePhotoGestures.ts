@@ -20,6 +20,12 @@ function isTap(dx: number, dy: number): boolean {
   return Math.hypot(dx, dy) <= TAP_TOLERANCE_PX;
 }
 
+function isDoubleTap(previousTapAt: number | null, tappedAt: number): boolean {
+  return (
+    previousTapAt !== null && tappedAt - previousTapAt <= DOUBLE_TAP_WINDOW_MS
+  );
+}
+
 export function usePhotoGestures({
   onSwipeLeft,
   onSwipeRight,
@@ -29,9 +35,17 @@ export function usePhotoGestures({
   const lastTapAt = useRef<number | null>(null);
 
   const onPointerDown = (event: PointerEvent<HTMLElement>) => {
-    start.current = start.current
-      ? null
-      : { pointerId: event.pointerId, x: event.clientX, y: event.clientY };
+    const secondPointer = start.current !== null;
+    if (secondPointer) {
+      start.current = null;
+      return;
+    }
+
+    start.current = {
+      pointerId: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+    };
   };
 
   const onPointerUp = (event: PointerEvent<HTMLElement>) => {
@@ -51,11 +65,7 @@ export function usePhotoGestures({
 
     if (!isTap(dx, dy)) return;
 
-    const previousTapAt = lastTapAt.current;
-    if (
-      previousTapAt !== null &&
-      event.timeStamp - previousTapAt <= DOUBLE_TAP_WINDOW_MS
-    ) {
+    if (isDoubleTap(lastTapAt.current, event.timeStamp)) {
       lastTapAt.current = null;
       onDoubleTap(event);
       return;

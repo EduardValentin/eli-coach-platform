@@ -102,7 +102,9 @@ export function withoutProgressPhoto(
   return { ...entry, photos: withoutPhotoAt(entry.photos, view) };
 }
 
-export function progressPhotoRefusal(view: ProgressPhotoView): string {
+export function progressPhotoRefusalMessage(
+  view: ProgressPhotoView,
+): string {
   return `The ${view} photo could not be processed, so it was not saved.`;
 }
 
