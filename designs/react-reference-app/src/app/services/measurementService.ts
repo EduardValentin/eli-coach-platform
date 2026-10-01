@@ -2,6 +2,7 @@ import {
   NO_PROGRESS_PHOTOS,
   PROGRESS_PHOTO_VIEWS,
   type MeasurementEntry,
+  type ProgressPhotoSet,
   type ProgressPhotoView,
 } from '../domain/journey';
 
@@ -33,6 +34,23 @@ export type MeasurementOutcomes = {
 
 export const SIMULATED_LATENCY_MS = 900;
 
+export type ProcessedProgressPhotos = {
+  stored: ProgressPhotoSet;
+  refusedViews: ProgressPhotoView[];
+};
+
+export function processProgressPhotos(
+  photos: ProgressPhotoSet,
+  processing: PhotoProcessing,
+): ProcessedProgressPhotos {
+  if (processing === 'works') return { stored: photos, refusedViews: [] };
+
+  return {
+    stored: NO_PROGRESS_PHOTOS,
+    refusedViews: PROGRESS_PHOTO_VIEWS.filter((view) => photos[view]),
+  };
+}
+
 export type RecordedMeasurements = {
   entry: MeasurementEntry;
   refusedViews: ProgressPhotoView[];
@@ -48,12 +66,12 @@ export async function recordMeasurements(
     throw new Error('The measurements could not be saved.');
   }
 
-  if (outcomes.processing === 'works') return { entry, refusedViews: [] };
+  const { stored, refusedViews } = processProgressPhotos(
+    entry.photos,
+    outcomes.processing,
+  );
 
-  return {
-    entry: { ...entry, photos: NO_PROGRESS_PHOTOS },
-    refusedViews: PROGRESS_PHOTO_VIEWS.filter((view) => entry.photos[view]),
-  };
+  return { entry: { ...entry, photos: stored }, refusedViews };
 }
 
 export async function removeProgressPhoto(removal: PhotoRemoval): Promise<void> {

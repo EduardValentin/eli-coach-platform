@@ -1,4 +1,9 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import {
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -166,6 +171,250 @@ describe('the photo view', () => {
     expect(screen.getAllByRole('img')).toHaveLength(2);
     expect(
       screen.queryByRole('button', { name: /^Remove/ }),
+    ).not.toBeInTheDocument();
+  });
+});
+
+async function openFullScreen(view: ProgressPhotoView) {
+  await openClientView();
+  await userEvent.click(
+    screen.getByRole('button', { name: `Open ${view} photo full screen` }),
+  );
+}
+
+async function swipe(target: HTMLElement, fromX: number, toX: number) {
+  await userEvent.pointer([
+    { keys: '[TouchA>]', target, coords: { clientX: fromX, clientY: 300 } },
+    { pointerName: 'TouchA', target, coords: { clientX: toX, clientY: 305 } },
+    { keys: '[/TouchA]', target },
+  ]);
+}
+
+function lightbox() {
+  return screen.getByRole('dialog', { name: /· \d of \d$/ });
+}
+
+describe('the full-screen photo', () => {
+  it('opens the tapped photo full screen with its place in the set and the date', async () => {
+    // arrange
+    await openClientView();
+
+    // act
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Open front photo full screen' }),
+    );
+
+    // assert
+    expect(lightbox()).toHaveAccessibleName('Front · 1 of 2');
+    expect(lightbox()).toHaveAccessibleDescription('29 September');
+    expect(
+      within(lightbox()).getByRole('img', { name: 'Front photo' }),
+    ).toHaveAttribute('src', 'blob:front');
+  });
+
+  it('moves to the next stored photo with the arrow, skipping a missing view', async () => {
+    // arrange
+    await openFullScreen('front');
+
+    // act
+    await userEvent.click(screen.getByRole('button', { name: 'Next photo' }));
+
+    // assert
+    expect(lightbox()).toHaveAccessibleName('Back · 2 of 2');
+    expect(within(lightbox()).getByRole('img')).toHaveAccessibleName(
+      'Back photo',
+    );
+  });
+
+  it('cycles round from the last photo to the first and back', async () => {
+    // arrange
+    await openFullScreen('back');
+
+    // act
+    await userEvent.click(screen.getByRole('button', { name: 'Next photo' }));
+    const afterNext = lightbox().textContent;
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Previous photo' }),
+    );
+
+    // assert
+    expect(afterNext).toContain('Front · 1 of 2');
+    expect(lightbox()).toHaveAccessibleName('Back · 2 of 2');
+  });
+
+  it('moves between the photos with the arrow keys', async () => {
+    // arrange
+    await openFullScreen('front');
+
+    // act
+    await userEvent.keyboard('{ArrowRight}');
+    const afterRight = lightbox().textContent;
+    await userEvent.keyboard('{ArrowLeft}');
+
+    // assert
+    expect(afterRight).toContain('Back · 2 of 2');
+    expect(lightbox()).toHaveAccessibleName('Front · 1 of 2');
+  });
+
+  it('moves to the next photo on a swipe left and back on a swipe right', async () => {
+    // arrange
+    await openFullScreen('front');
+    const image = within(lightbox()).getByRole('img');
+
+    // act
+    await swipe(image, 240, 150);
+    const afterSwipeLeft = lightbox().textContent;
+    await swipe(within(lightbox()).getByRole('img'), 100, 200);
+
+    // assert
+    expect(afterSwipeLeft).toContain('Back · 2 of 2');
+    expect(lightbox()).toHaveAccessibleName('Front · 1 of 2');
+  });
+
+  it('stays on the photo when the finger barely moves', async () => {
+    // arrange
+    await openFullScreen('front');
+    const image = within(lightbox()).getByRole('img');
+
+    // act
+    await swipe(image, 240, 215);
+
+    // assert
+    expect(lightbox()).toHaveAccessibleName('Front · 1 of 2');
+  });
+
+  it('doubles the photo on a double click and fits it again on the next', async () => {
+    // arrange
+    await openFullScreen('front');
+    const image = within(lightbox()).getByRole('img');
+
+    // act
+    await userEvent.dblClick(image);
+    const zoomed = image.style.transform;
+    await userEvent.dblClick(image);
+
+    // assert
+    expect(zoomed).toBe('scale(2)');
+    expect(image.style.transform).toBe('scale(1)');
+  });
+
+  it('fits the photo again when she moves to another one', async () => {
+    // arrange
+    await openFullScreen('front');
+    await userEvent.dblClick(within(lightbox()).getByRole('img'));
+
+    // act
+    await userEvent.keyboard('{ArrowRight}');
+    await userEvent.keyboard('{ArrowLeft}');
+
+    // assert
+    expect(within(lightbox()).getByRole('img').style.transform).toBe(
+      'scale(1)',
+    );
+  });
+
+  it('closes on Escape back to the photo view with focus on the tapped photo', async () => {
+    // arrange
+    await openFullScreen('back');
+    await userEvent.keyboard('{ArrowRight}');
+
+    // act
+    await userEvent.keyboard('{Escape}');
+
+    // assert
+    expect(
+      screen.queryByRole('dialog', { name: /· \d of \d$/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('dialog', { name: 'Photos from 29 September' }),
+    ).toBeVisible();
+    await waitFor(() =>
+      expect(
+        screen.getByRole('button', { name: 'Open back photo full screen' }),
+      ).toHaveFocus(),
+    );
+  });
+
+  it('closes with its Close button and returns focus to the tapped photo', async () => {
+    // arrange
+    await openFullScreen('front');
+
+    // act
+    await userEvent.click(
+      within(lightbox()).getByRole('button', { name: 'Close' }),
+    );
+
+    // assert
+    expect(
+      screen.queryByRole('dialog', { name: /· \d of \d$/ }),
+    ).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        screen.getByRole('button', { name: 'Open front photo full screen' }),
+      ).toHaveFocus(),
+    );
+  });
+
+  it('offers no arrows when the entry has a single photo', async () => {
+    // arrange
+    const entry = { ...ENTRY, photos: { side: { url: 'blob:side' } } };
+    render(
+      <PhotoViewDialog
+        entry={entry}
+        onClose={vi.fn()}
+        viewer={{ role: 'coach', clientFirstName: 'Jane' }}
+      />,
+    );
+
+    // act
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Open side photo full screen' }),
+    );
+
+    // assert
+    expect(lightbox()).toHaveAccessibleName('Side · 1 of 1');
+    expect(
+      screen.queryByRole('button', { name: /^(Next|Previous) photo$/ }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows the coach the same full-screen photo without a remove control', async () => {
+    // arrange
+    render(
+      <PhotoViewDialog
+        entry={ENTRY}
+        onClose={vi.fn()}
+        viewer={{ role: 'coach', clientFirstName: 'Jane' }}
+      />,
+    );
+
+    // act
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Open back photo full screen' }),
+    );
+
+    // assert
+    expect(lightbox()).toHaveAccessibleName('Back · 2 of 2');
+    expect(
+      within(lightbox()).getByRole('button', { name: 'Previous photo' }),
+    ).toBeVisible();
+    expect(
+      within(lightbox()).queryByRole('button', { name: /^Remove/ }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('keeps Remove in the photo view, not in the full-screen photo', async () => {
+    // arrange
+    await openClientView();
+
+    // act
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Open front photo full screen' }),
+    );
+
+    // assert
+    expect(
+      within(lightbox()).queryByRole('button', { name: /^Remove/ }),
     ).not.toBeInTheDocument();
   });
 });

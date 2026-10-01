@@ -7,7 +7,9 @@ import {
   within,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { format } from 'date-fns';
 import { MemoryRouter, Route, Routes } from 'react-router';
+import { toast } from 'sonner';
 import {
   afterEach,
   beforeAll,
@@ -19,6 +21,7 @@ import {
 } from 'vitest';
 import { ClientOnboarding } from './ClientOnboarding';
 import { MeasurementsSection } from '../../components/client-portal/MeasurementsSection';
+import { Toaster } from '../../components/ui/sonner';
 import { AppProvider, useAppState } from '../../context/AppContext';
 import { AssessmentCallProvider } from '../../context/AssessmentCallContext';
 import {
@@ -33,6 +36,7 @@ import {
   type OnboardingConsents,
   type OnboardingDraft,
 } from '../../domain/journey';
+import { PROGRESS_PHOTO_CONSENT_COPY } from '../../domain/onboardingCopy';
 import { loadDraft, saveDraft } from '../../services/onboardingService';
 
 const SERVICE_TIMEOUT = 4000;
@@ -58,6 +62,10 @@ beforeAll(() => {
       dispatchEvent: vi.fn(),
     })),
   );
+  Object.defineProperty(URL, 'createObjectURL', {
+    configurable: true,
+    value: vi.fn(() => 'blob:picked'),
+  });
 });
 
 function StageProbe() {
@@ -107,6 +115,7 @@ function renderOnboarding(devParams: string) {
                     path="/portal"
                   />
                 </Routes>
+                <Toaster />
               </ClientJourneyProvider>
             </AssessmentCallProvider>
           </UnitPreferencesProvider>
@@ -176,6 +185,22 @@ const WITHHELD_CONSENTS: OnboardingConsents = {
   progressPhotos: false,
 };
 
+const SEND_NOTE = 'Your photos are sent with your answers.';
+
+function photo(): File {
+  return new File([new Uint8Array(512)], 'photo', { type: 'image/jpeg' });
+}
+
+async function sendLastForm() {
+  await userEvent.click(screen.getByRole('checkbox', { name: DISCLAIMER }));
+  await userEvent.click(
+    screen.getByRole('button', { name: 'Send to my coach' }),
+  );
+  await screen.findByText('portal home', undefined, {
+    timeout: SERVICE_TIMEOUT,
+  });
+}
+
 function draftAt(
   currentFormIndex: number,
   consents: OnboardingConsents = GIVEN_CONSENTS,
@@ -199,6 +224,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  toast.dismiss();
   vi.useRealTimers();
   window.localStorage.clear();
   window.history.replaceState({}, '', '/');
@@ -764,6 +790,129 @@ describe('the onboarding', () => {
     );
   });
 
+  it('opens the photo tiles once she agrees and says her photos go with her answers', async () => {
+    // arrange
+    await saveDraft(DEMO_JOURNEY_CALL_ID, draftAt(4), 'working');
+    renderOnboarding('?session=client&jstage=onboarding');
+
+    // act
+    await userEvent.click(
+      screen.getByRole('checkbox', { name: PROGRESS_PHOTO_CONSENT_COPY }),
+    );
+
+    // assert
+    expect(screen.getByLabelText('Add front photo')).toBeEnabled();
+    expect(screen.getByLabelText('Add side photo')).toBeEnabled();
+    expect(screen.getByLabelText('Add back photo')).toBeEnabled();
+    expect(screen.getByText(SEND_NOTE)).toBeVisible();
+    expect(
+      screen.queryByText('Tick the box to add your photos.'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('sends her photos with her answers and files them with her first measurements', async () => {
+    // arrange
+    await saveDraft(
+      DEMO_JOURNEY_CALL_ID,
+      draftAt(4, { ...DISCLAIMER_WITHHELD, progressPhotos: true }),
+      'working',
+    );
+    renderOnboarding('?session=client&jstage=onboarding');
+    await userEvent.upload(screen.getByLabelText('Add front photo'), photo());
+
+    // act
+    await sendLastForm();
+
+    // assert
+    await userEvent.click(
+      screen.getByRole('button', { name: /^View photos/ }),
+    );
+    const view = screen.getByRole('dialog', { name: /^Photos from / });
+    expect(
+      within(view).getByRole('img', { name: 'Front photo' }),
+    ).toHaveAttribute('src', 'blob:picked');
+    expect(within(view).getByText('No side photo')).toBeVisible();
+  });
+
+  it('keeps her answers and her first measurements when a photo cannot be processed, and says which one', async () => {
+    // arrange
+    await saveDraft(
+      DEMO_JOURNEY_CALL_ID,
+      draftAt(4, { ...DISCLAIMER_WITHHELD, progressPhotos: true }),
+      'working',
+    );
+    renderOnboarding('?session=client&jstage=onboarding&jphoto=refuses');
+    await userEvent.upload(screen.getByLabelText('Add front photo'), photo());
+
+    // act
+    await sendLastForm();
+
+    // assert
+    expect(
+      await screen.findByText(
+        'The front photo could not be processed, so it was not saved.',
+      ),
+    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByTestId('stage')).toHaveTextContent('submitted'),
+    );
+    expect(
+      screen.getByRole('table', { name: 'Measurements history, newest first' }),
+    ).toHaveTextContent('66.1 kg');
+    expect(
+      screen.queryByRole('button', { name: /^View photos/ }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('leaves her photos out when she unticks the agreement before sending', async () => {
+    // arrange
+    await saveDraft(
+      DEMO_JOURNEY_CALL_ID,
+      draftAt(4, { ...DISCLAIMER_WITHHELD, progressPhotos: true }),
+      'working',
+    );
+    renderOnboarding('?session=client&jstage=onboarding');
+    await userEvent.upload(screen.getByLabelText('Add front photo'), photo());
+    await userEvent.click(
+      screen.getByRole('checkbox', { name: PROGRESS_PHOTO_CONSENT_COPY }),
+    );
+
+    // act
+    await sendLastForm();
+
+    // assert
+    expect(
+      screen.getByRole('table', { name: 'Measurements history, newest first' }),
+    ).toHaveTextContent('66.1 kg');
+    expect(
+      screen.queryByRole('button', { name: /^View photos/ }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('keeps her photos out of the saved draft, so the tiles are empty when she comes back', async () => {
+    // arrange
+    await saveDraft(
+      DEMO_JOURNEY_CALL_ID,
+      draftAt(4, { ...GIVEN_CONSENTS, progressPhotos: true }),
+      'working',
+    );
+    const { unmount } = renderOnboarding('?session=client&jstage=onboarding');
+    await userEvent.upload(screen.getByLabelText('Add front photo'), photo());
+    unmount();
+
+    // act
+    renderOnboarding('?session=client&jstage=onboarding');
+
+    // assert
+    expect(screen.getByLabelText('Add front photo')).toBeEnabled();
+    expect(
+      screen.queryByRole('img', { name: 'Front photo' }),
+    ).not.toBeInTheDocument();
+    expect(JSON.stringify(loadDraft(DEMO_JOURNEY_CALL_ID))).not.toContain(
+      'blob:',
+    );
+  });
+
   it('carries the photo consent she gave in the onboarding onto her profile', async () => {
     // arrange
     await saveDraft(
@@ -785,7 +934,9 @@ describe('the onboarding', () => {
     });
     await userEvent.click(await screen.findByRole('button', { name: 'Add' }));
     expect(
-      screen.getByText(/^You agreed to share progress photos on /),
+      screen.getByText(
+        `You agreed to share progress photos on ${format(new Date(), 'd MMMM yyyy')}.`,
+      ),
     ).toBeVisible();
   });
 

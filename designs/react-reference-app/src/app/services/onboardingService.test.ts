@@ -9,7 +9,19 @@ import {
   saveUnitPreference,
   SIMULATED_LATENCY_MS,
   submit,
+  type OnboardingSubmission,
 } from './onboardingService';
+
+const WITHOUT_PHOTOS: OnboardingSubmission = {
+  connection: 'working',
+  photos: {},
+  photoProcessing: 'works',
+};
+
+const SENT_PHOTOS = {
+  front: { url: 'blob:front' },
+  back: { url: 'blob:back' },
+};
 
 function draftOnForm(index: number): OnboardingDraft {
   const draft = emptyOnboardingDraft();
@@ -182,7 +194,7 @@ describe('saving her units to her account', () => {
 describe('submitting onboarding', () => {
   it('dates the submission against the journey', async () => {
     // arrange
-    const submitting = submit('ac-1', 'working');
+    const submitting = submit('ac-1', { ...WITHOUT_PHOTOS, connection: 'working' });
 
     // act
     await vi.advanceTimersByTimeAsync(SIMULATED_LATENCY_MS);
@@ -193,9 +205,46 @@ describe('submitting onboarding', () => {
     expect(submitted.submittedAt).toBeInstanceOf(Date);
   });
 
+  it('stores the photos sent with the answers', async () => {
+    // arrange
+    const submitting = submit('ac-1', {
+      ...WITHOUT_PHOTOS,
+      photos: SENT_PHOTOS,
+    });
+
+    // act
+    await vi.advanceTimersByTimeAsync(SIMULATED_LATENCY_MS);
+
+    // assert
+    expect((await submitting).photos).toEqual({
+      stored: SENT_PHOTOS,
+      refusedViews: [],
+    });
+  });
+
+  it('takes the answers but refuses the photos it cannot process', async () => {
+    // arrange
+    const submitting = submit('ac-1', {
+      ...WITHOUT_PHOTOS,
+      photos: SENT_PHOTOS,
+      photoProcessing: 'refuses',
+    });
+
+    // act
+    await vi.advanceTimersByTimeAsync(SIMULATED_LATENCY_MS);
+
+    // assert
+    const submitted = await submitting;
+    expect(submitted.submittedAt).toBeInstanceOf(Date);
+    expect(submitted.photos).toEqual({
+      stored: {},
+      refusedViews: ['front', 'back'],
+    });
+  });
+
   it('refuses the submission while the connection is lost', async () => {
     // arrange
-    const submitting = submit('ac-1', 'lost');
+    const submitting = submit('ac-1', { ...WITHOUT_PHOTOS, connection: 'lost' });
     const refusal = expect(submitting).rejects.toMatchObject({
       code: 'connection-lost',
     });

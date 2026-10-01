@@ -4,6 +4,9 @@ import {
   measurementAnswersFrom,
   PROGRESS_PHOTO_MAX_BYTES,
   measurementEntryFrom,
+  nextStoredPhotoView,
+  previousStoredPhotoView,
+  storedPhotoViews,
   submittedMeasurementEntry,
   withoutProgressPhoto,
 } from './measurements';
@@ -79,19 +82,22 @@ describe('a measurement entry', () => {
     expect(entry?.photos).toEqual(photos);
   });
 
-  it('takes the weight from the first form and the rest from the measurements form, without photos', () => {
+  it('takes the weight from the first form and the rest from the measurements form, with the photos she sent', () => {
     // arrange
     const draft = emptyOnboardingDraft();
     draft.answers['goal-availability'] = { weight: 68.04 };
     draft.answers.measurements = { waist: 68.5 };
 
     // act
-    const entry = submittedMeasurementEntry(draft.answers, RECORDED_AT);
+    const entry = submittedMeasurementEntry(draft.answers, {
+      recordedAt: RECORDED_AT,
+      photos: { front: { url: 'blob:front' } },
+    });
 
     // assert
     expect(entry?.weightKg).toBe(68.04);
     expect(entry?.waistCm).toBe(68.5);
-    expect(entry?.photos).toEqual({});
+    expect(entry?.photos).toEqual({ front: { url: 'blob:front' } });
   });
 
   it('reads back into the same canonical answers', () => {
@@ -156,5 +162,58 @@ describe('an accepted progress photo', () => {
 
     // assert
     expect(accepted).toEqual([false, false, false]);
+  });
+});
+
+describe("an entry's stored photos", () => {
+  const entry = entryDaysAgo(0, {
+    photos: { front: { url: 'blob:front' }, back: { url: 'blob:back' } },
+  });
+
+  it('lists only the views that hold a photo, front to back', () => {
+    // arrange
+    const withSideMissing = entry;
+
+    // act
+    const views = storedPhotoViews(withSideMissing);
+
+    // assert
+    expect(views).toEqual(['front', 'back']);
+  });
+
+  it('steps forward past a missing view and round from the last to the first', () => {
+    // arrange
+    const from = ['front', 'back'] as const;
+
+    // act
+    const next = from.map((view) => nextStoredPhotoView(entry, view));
+
+    // assert
+    expect(next).toEqual(['back', 'front']);
+  });
+
+  it('steps back past a missing view and round from the first to the last', () => {
+    // arrange
+    const from = ['front', 'back'] as const;
+
+    // act
+    const previous = from.map((view) => previousStoredPhotoView(entry, view));
+
+    // assert
+    expect(previous).toEqual(['back', 'front']);
+  });
+
+  it('stays on a lone photo', () => {
+    // arrange
+    const lone = entryDaysAgo(0, { photos: { side: { url: 'blob:side' } } });
+
+    // act
+    const steps = [
+      nextStoredPhotoView(lone, 'side'),
+      previousStoredPhotoView(lone, 'side'),
+    ];
+
+    // assert
+    expect(steps).toEqual(['side', 'side']);
   });
 });

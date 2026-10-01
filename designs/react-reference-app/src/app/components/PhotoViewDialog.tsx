@@ -6,6 +6,7 @@ import {
   type ProgressPhotoView,
 } from "../domain/journey";
 import { formatJourneyDate } from "../utils/journeyLabels";
+import { PhotoLightbox } from "./PhotoLightbox";
 import {
   progressPhotoImageClass,
   progressPhotoPlaceholderClass,
@@ -37,10 +38,12 @@ function privacyLine(viewer: PhotoViewer): string {
 function PhotoSlot({
   entry,
   view,
+  onOpen,
   onRemove,
 }: {
   entry: MeasurementEntry;
   view: ProgressPhotoView;
+  onOpen: () => void;
   onRemove?: () => void;
 }) {
   const photo = entry.photos[view];
@@ -50,11 +53,19 @@ function PhotoSlot({
     <li data-parity={`photo-${view}`}>
       <figure className="grid gap-2">
         {photo ? (
-          <img
-            alt={`${label} photo`}
-            className={progressPhotoImageClass("portrait")}
-            src={photo.url}
-          />
+          <button
+            aria-label={`Open ${view} photo full screen`}
+            className="block w-full cursor-zoom-in rounded-card transition-opacity hover:opacity-90"
+            data-parity={`open-${view}`}
+            onClick={onOpen}
+            type="button"
+          >
+            <img
+              alt={`${label} photo`}
+              className={progressPhotoImageClass("portrait")}
+              src={photo.url}
+            />
+          </button>
         ) : (
           <div
             className={cn(
@@ -96,6 +107,8 @@ export function PhotoViewDialog({
 }) {
   const [pendingRemoval, setPendingRemoval] =
     useState<ProgressPhotoView | null>(null);
+  const [fullScreenView, setFullScreenView] =
+    useState<ProgressPhotoView | null>(null);
 
   const removeFor = (view: ProgressPhotoView) =>
     viewer.role === "client" ? () => setPendingRemoval(view) : undefined;
@@ -110,7 +123,9 @@ export function PhotoViewDialog({
   return (
     <Dialog
       onOpenChange={(open) => {
-        if (!open) onClose();
+        if (open) return;
+        setFullScreenView(null);
+        onClose();
       }}
       open={entry !== undefined}
     >
@@ -131,6 +146,7 @@ export function PhotoViewDialog({
                 <PhotoSlot
                   entry={entry}
                   key={view}
+                  onOpen={() => setFullScreenView(view)}
                   onRemove={removeFor(view)}
                   view={view}
                 />
@@ -153,6 +169,12 @@ export function PhotoViewDialog({
               </Button>
             </DialogClose>
           </DialogFooter>
+
+          <PhotoLightbox
+            entry={entry}
+            onViewChange={setFullScreenView}
+            view={fullScreenView}
+          />
 
           <ConfirmDialog
             cancelLabel="Keep"

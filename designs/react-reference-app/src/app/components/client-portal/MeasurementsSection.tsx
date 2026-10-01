@@ -8,12 +8,12 @@ import { useClientJourneys } from '../../context/ClientJourneyContext';
 import {
   measurementAnswersFrom,
   measurementEntryFrom,
+  progressPhotoRefusal,
 } from '../../domain/measurements';
 import {
   NO_PROGRESS_PHOTOS,
   type MeasurementEntry,
   type ProgressPhotoSet,
-  type ProgressPhotoView,
 } from '../../domain/journey';
 import { MEASUREMENT_FIELDS } from '../../domain/onboardingSchema';
 import { recordMeasurements } from '../../services/measurementService';
@@ -40,10 +40,6 @@ const SAVED_TOAST = 'Measurements saved.';
 const SAVE_FAILED_TOAST = 'Your measurements could not be saved. Try again.';
 
 const REMOVE_FAILED_TOAST = 'The photo could not be removed. Try again.';
-
-function refusedPhotoToast(view: ProgressPhotoView): string {
-  return `The ${view} photo could not be processed, so it was not saved.`;
-}
 
 function AddMeasurementsForm({
   latest,
@@ -93,7 +89,9 @@ function AddMeasurementsForm({
     addMeasurements(demoJourney.callId, recorded.entry);
     onClose();
     toast.success(SAVED_TOAST);
-    recorded.refusedViews.forEach((view) => toast.error(refusedPhotoToast(view)));
+    recorded.refusedViews.forEach((view) =>
+      toast.error(progressPhotoRefusal(view)),
+    );
   });
 
   return (

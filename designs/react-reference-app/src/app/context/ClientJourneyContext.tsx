@@ -28,10 +28,14 @@ import {
   type JourneyStage,
   type MeasurementEntry,
   type OnboardingDraft,
+  type ProgressPhotoSet,
   type ProgressPhotoView,
   type ReviewCall,
 } from '../domain/journey';
-import { withoutProgressPhoto } from '../domain/measurements';
+import {
+  submittedMeasurementEntry,
+  withoutProgressPhoto,
+} from '../domain/measurements';
 import { removeProgressPhoto } from '../services/measurementService';
 import {
   periodEnd,
@@ -86,6 +90,11 @@ export type DemoJourneyOptions = {
   seededPhotos: PrototypeSeededPhotos;
 };
 
+export type JourneySubmission = {
+  submittedAt: Date;
+  photos: ProgressPhotoSet;
+};
+
 export type JourneyPayment = {
   paidAt: Date;
   bundle: SubscriptionBundle;
@@ -107,7 +116,7 @@ type ClientJourneyContextType = {
   recordInvitationEmailFailed: (callId: string) => void;
   markWelcomeSeen: (callId: string) => void;
   saveOnboardingDraft: (callId: string, draft: OnboardingDraft) => void;
-  submitOnboarding: (callId: string, submittedAt: Date) => void;
+  submitOnboarding: (callId: string, submission: JourneySubmission) => void;
   startReview: (callId: string) => void;
   approveAnswers: (callId: string) => void;
   requestDetails: (callId: string, request: DetailRequest) => void;
@@ -462,13 +471,20 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
   );
 
   const submitOnboarding = useCallback(
-    (callId: string, submittedAt: Date) => {
+    (callId: string, { submittedAt, photos }: JourneySubmission) => {
       updateJourney(callId, (journey) => {
         const started = applied(journey, 'start-onboarding');
         const submitted = applied(started, 'submit-onboarding');
+        const firstEntry = submittedMeasurementEntry(
+          submitted.onboarding.answers,
+          { recordedAt: submittedAt, photos },
+        );
 
         return withProfile({
           ...submitted,
+          measurements: firstEntry
+            ? [...submitted.measurements, firstEntry]
+            : submitted.measurements,
           onboarding: { ...submitted.onboarding, submittedAt },
           progressPhotosConsentedAt: submitted.onboarding.consents
             .progressPhotos

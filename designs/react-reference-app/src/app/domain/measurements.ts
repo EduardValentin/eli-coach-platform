@@ -1,5 +1,5 @@
 import {
-  NO_PROGRESS_PHOTOS,
+  PROGRESS_PHOTO_VIEWS,
   withoutPhotoAt,
   type MeasurementEntry,
   type OnboardingFormAnswers,
@@ -59,17 +59,22 @@ export function measurementEntryFrom(
   };
 }
 
+export type SentMeasurementEntry = {
+  recordedAt: Date;
+  photos: ProgressPhotoSet;
+};
+
 export function submittedMeasurementEntry(
   answers: Record<OnboardingFormId, OnboardingFormAnswers>,
-  recordedAt: Date,
+  sent: SentMeasurementEntry,
 ): MeasurementEntry | null {
   return measurementEntryFrom(
     {
       ...answers.measurements,
       [MEASUREMENT_FIELD_IDS.weight]: answers['goal-availability'].weight,
     },
-    recordedAt,
-    NO_PROGRESS_PHOTOS,
+    sent.recordedAt,
+    sent.photos,
   );
 }
 
@@ -95,4 +100,37 @@ export function withoutProgressPhoto(
   view: ProgressPhotoView,
 ): MeasurementEntry {
   return { ...entry, photos: withoutPhotoAt(entry.photos, view) };
+}
+
+export function progressPhotoRefusal(view: ProgressPhotoView): string {
+  return `The ${view} photo could not be processed, so it was not saved.`;
+}
+
+export function storedPhotoViews(entry: MeasurementEntry): ProgressPhotoView[] {
+  return PROGRESS_PHOTO_VIEWS.filter((view) => entry.photos[view]);
+}
+
+function storedPhotoViewAfter(
+  entry: MeasurementEntry,
+  view: ProgressPhotoView,
+  step: 1 | -1,
+): ProgressPhotoView {
+  const views = storedPhotoViews(entry);
+  const position = views.indexOf(view);
+
+  return views[(position + step + views.length) % views.length] ?? view;
+}
+
+export function nextStoredPhotoView(
+  entry: MeasurementEntry,
+  view: ProgressPhotoView,
+): ProgressPhotoView {
+  return storedPhotoViewAfter(entry, view, 1);
+}
+
+export function previousStoredPhotoView(
+  entry: MeasurementEntry,
+  view: ProgressPhotoView,
+): ProgressPhotoView {
+  return storedPhotoViewAfter(entry, view, -1);
 }

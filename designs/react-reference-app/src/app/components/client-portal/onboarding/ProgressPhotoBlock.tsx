@@ -40,6 +40,7 @@ type ProgressPhotoBlockProps = {
   consent: ProgressPhotoConsent;
   photos: ProgressPhotoSet;
   onPhotosChange: (photos: ProgressPhotoSet) => void;
+  sendNote?: string;
 };
 
 function consentedLine(consentedAt: Date): string {
@@ -161,6 +162,7 @@ export function ProgressPhotoBlock({
   consent,
   photos,
   onPhotosChange,
+  sendNote,
 }: ProgressPhotoBlockProps) {
   const groupId = useId();
   const noteId = useId();
@@ -249,6 +251,15 @@ export function ProgressPhotoBlock({
           id={noteId}
         >
           {LOCKED_NOTE}
+        </p>
+      )}
+
+      {!locked && sendNote && (
+        <p
+          className="text-xs text-text-secondary"
+          data-parity="progress-photos-send-note"
+        >
+          {sendNote}
         </p>
       )}
     </div>

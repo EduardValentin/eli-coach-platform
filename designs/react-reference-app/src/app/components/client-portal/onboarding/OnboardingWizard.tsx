@@ -8,7 +8,7 @@ import {
   DISCLAIMER_ACKNOWLEDGEMENT,
   SPECIAL_CATEGORY_CONSENT_COPY,
 } from '../../../domain/onboardingCopy';
-import { submittedMeasurementEntry } from '../../../domain/measurements';
+import { progressPhotoRefusal } from '../../../domain/measurements';
 import {
   copyForGender,
   formsForGender,
@@ -45,6 +45,8 @@ const SUBMIT_PROBLEM =
 const MISSING_CONSENT = 'Tick the box to carry on.';
 
 const RESUME_NOTE = 'Picking up where you left off.';
+
+const PHOTOS_SEND_NOTE = 'Your photos are sent with your answers.';
 
 const MANUAL_SCREENING_MESSAGE =
   "These safety questions are designed for ages 15 to 69. I'll go through your health questions with you directly before building your program.";
@@ -86,12 +88,8 @@ function withConsent(
 export function OnboardingWizard() {
   const navigate = useNavigate();
   const { appState } = useAppState();
-  const {
-    addMeasurements,
-    demoJourney,
-    saveOnboardingDraft,
-    submitOnboarding,
-  } = useClientJourneys();
+  const { demoJourney, saveOnboardingDraft, submitOnboarding } =
+    useClientJourneys();
   const prefersReducedMotion = useReducedMotion() ?? false;
   const stepCountId = useId();
   const journeyId = demoJourney.callId;
@@ -178,16 +176,21 @@ export function OnboardingWizard() {
     saveOnboardingDraft(journeyId, next);
 
     try {
-      const submitted = await submit(journeyId, appState.journeyConnection);
+      const submitted = await submit(journeyId, {
+        connection: appState.journeyConnection,
+        photos: next.consents.progressPhotos ? photos : NO_PROGRESS_PHOTOS,
+        photoProcessing: appState.photoProcessing,
+      });
       await pendingSave();
-      const entry = submittedMeasurementEntry(
-        next.answers,
-        submitted.submittedAt,
-      );
-      if (entry) addMeasurements(journeyId, entry);
-      submitOnboarding(journeyId, submitted.submittedAt);
+      submitOnboarding(journeyId, {
+        submittedAt: submitted.submittedAt,
+        photos: submitted.photos.stored,
+      });
       forgetDraft(journeyId);
       navigate('/portal');
+      submitted.photos.refusedViews.forEach((view) =>
+        toast.error(progressPhotoRefusal(view)),
+      );
     } catch {
       setSending(false);
       setProblem(SUBMIT_PROBLEM);
@@ -348,6 +351,7 @@ export function OnboardingWizard() {
                   }}
                   onPhotosChange={setPhotos}
                   photos={photos}
+                  sendNote={PHOTOS_SEND_NOTE}
                 />
                 <OnboardingConsent
                   agreement="disclaimer"
