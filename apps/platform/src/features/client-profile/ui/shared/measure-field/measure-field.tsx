@@ -10,14 +10,7 @@ import {
   toDisplayMeasure,
   type MeasureUnits,
 } from "@eli-coach-platform/domain/unit-preference";
-import {
-  FieldError,
-  FieldHint,
-  Input,
-  Label,
-  LabelSuffix,
-} from "@eli-coach-platform/ui/primitives";
-import { useId } from "react";
+import { FieldLayout, Input } from "@eli-coach-platform/ui/primitives";
 import {
   useController,
   type Control,
@@ -79,10 +72,18 @@ function displayBound(
   return Math.round(toDisplayMeasure(field.kind, canonical, units));
 }
 
-function describedByOf(...ids: (string | undefined)[]): string | undefined {
-  const described = ids.filter((id): id is string => id !== undefined);
+function labelSuffixesOf(field: MeasureFieldDefinition, units: MeasureUnits) {
+  const unitSuffix = {
+    parity: `field-${field.id}-suffix-unit`,
+    text: `(${measureUnitLabel(field.kind, units)})`,
+  };
 
-  return described.length > 0 ? described.join(" ") : undefined;
+  if (field.requirement !== "optional") return [unitSuffix];
+
+  return [
+    unitSuffix,
+    { parity: `field-${field.id}-suffix-optional`, text: OPTIONAL_SUFFIX },
+  ];
 }
 
 export function MeasureField<
@@ -95,53 +96,35 @@ export function MeasureField<
   units,
   validate,
 }: MeasureFieldProps<TValues, TName>) {
-  const controlId = useId();
-  const hintId = `${controlId}-hint`;
-  const messageId = `${controlId}-message`;
   const { field: controller, fieldState } = useController({
     control,
     name,
     rules: { validate: validate ?? validateReading(field, units) },
   });
-  const error = fieldState.error?.message;
-  const invalid = error !== undefined;
 
   return (
-    <div className="grid gap-2" data-parity={`field-${field.id}`}>
-      <Label htmlFor={controlId} invalid={invalid} layout="wrap">
-        <span>{field.label}</span>
-        <LabelSuffix data-parity={`field-${field.id}-suffix-unit`}>
-          {`(${measureUnitLabel(field.kind, units)})`}
-        </LabelSuffix>
-        {field.requirement === "optional" && (
-          <LabelSuffix data-parity={`field-${field.id}-suffix-optional`}>
-            {OPTIONAL_SUFFIX}
-          </LabelSuffix>
-        )}
-      </Label>
-      {field.hint && <FieldHint id={hintId}>{field.hint}</FieldHint>}
-      <Input
-        aria-describedby={describedByOf(
-          field.hint ? hintId : undefined,
-          invalid ? messageId : undefined,
-        )}
-        aria-invalid={invalid}
-        id={controlId}
-        inputMode="decimal"
-        max={displayBound(field, field.range.max, units)}
-        min={displayBound(field, field.range.min, units)}
-        onBlur={controller.onBlur}
-        onChange={controller.onChange}
-        ref={controller.ref}
-        step={measureStep(field.kind, units)}
-        type="number"
-        value={enteredText(controller.value)}
-      />
-      <FieldError
-        data-parity={`field-${field.id}-error`}
-        id={messageId}
-        message={error}
-      />
-    </div>
+    <FieldLayout
+      data-parity={`field-${field.id}`}
+      error={fieldState.error?.message}
+      errorParity={`field-${field.id}-error`}
+      hint={field.hint}
+      label={<span>{field.label}</span>}
+      suffixes={labelSuffixesOf(field, units)}
+    >
+      {(entry) => (
+        <Input
+          {...entry}
+          inputMode="decimal"
+          max={displayBound(field, field.range.max, units)}
+          min={displayBound(field, field.range.min, units)}
+          onBlur={controller.onBlur}
+          onChange={controller.onChange}
+          ref={controller.ref}
+          step={measureStep(field.kind, units)}
+          type="number"
+          value={enteredText(controller.value)}
+        />
+      )}
+    </FieldLayout>
   );
 }
