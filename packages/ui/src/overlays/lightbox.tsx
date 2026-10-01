@@ -122,6 +122,7 @@ function LightboxStage({ labels, photo, onNext, onPrevious }: StageProps) {
     <div className="relative flex min-h-0 flex-1">
       <div
         className="flex min-w-0 flex-1 touch-pinch-zoom items-center justify-center overflow-hidden p-4 select-none sm:px-20"
+        data-parity="lightbox-stage"
         {...gestures}
       >
         <img

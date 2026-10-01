@@ -21,7 +21,7 @@ const PLACEMENT_CLASS = {
   centred:
     "top-1/2 left-1/2 w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 rounded-compact border shadow-action-hover",
   screen:
-    "inset-0 flex h-dvh flex-col overflow-hidden pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)]",
+    "inset-0 flex h-dvh flex-col gap-0 overflow-hidden shadow-none pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)]",
 } satisfies Record<DialogFramePlacement, string>;
 
 export function DialogFrame({
