@@ -1,3 +1,4 @@
+export { waistToHeightRatio } from "./body-metrics";
 export { type ClientMeasurementsSource } from "./client-measurements-source";
 export {
   earliestMeasurementOf,

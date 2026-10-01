@@ -1,3 +1,4 @@
+import { waistToHeightRatio } from "@eli-coach-platform/domain/measurement";
 import {
   measureUnitLabel,
   toDisplayMeasure,
@@ -25,7 +26,6 @@ import {
   MEASUREMENTS_COPY,
   type MeasurementRow,
 } from "~/features/client-profile/contracts/measurements";
-import { waistToHeightRatio } from "~/features/client-profile/ui/shared/body-metrics";
 
 type CoachRatioBasis = { heightCm: number | null; ratioHidden: boolean };
 
