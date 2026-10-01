@@ -5,6 +5,7 @@ import {
   type Purchase,
   type Visitor,
 } from "./coaching-sales-journey";
+import type { PhotoPart, ProgressPhotoView } from "./measurements-journey";
 import type { AccountSession, PlatformRig } from "./platform-rig";
 import { clerkServesUser } from "./wire-mock/expectations/clerk-backend-api";
 
@@ -48,6 +49,8 @@ export type OnboardingSubmission = {
   answers: OnboardingAnswers;
   consents: OnboardingConsentInstants;
 };
+
+export type SubmissionPhotos = Partial<Record<ProgressPhotoView, PhotoPart>>;
 
 export const CLIENT_PORTAL = "/client";
 export const SUBMISSION_API = "/api/client-onboarding/submission";
@@ -105,15 +108,22 @@ export class ClientOnboardingJourney {
     session: AccountSession,
     submission: OnboardingSubmission,
   ): Promise<void> {
-    const response = await this.rig.requestAs(session, SUBMISSION_API, {
-      body: JSON.stringify(submission),
-      headers: { "content-type": "application/json" },
-      method: "POST",
-    });
+    const response = await this.sendSubmission(session, submission);
 
     if (response.status !== 200) {
       throw new Error(`Her submission answered ${response.status}.`);
     }
+  }
+
+  async sendSubmission(
+    session: AccountSession,
+    submission: OnboardingSubmission,
+    photos: SubmissionPhotos = {},
+  ): Promise<Response> {
+    return this.rig.requestAs(session, SUBMISSION_API, {
+      body: submissionForm(submission, photos),
+      method: "POST",
+    });
   }
 
   async profileRowOf(clientId: string): Promise<ClientProfileRow | undefined> {
@@ -251,4 +261,23 @@ export function completeAnswers(lastPeriodStart: string): OnboardingAnswers {
     },
     measurements: { waist: 74, hips: 98 },
   };
+}
+
+function submissionForm(
+  submission: OnboardingSubmission,
+  photos: SubmissionPhotos,
+): FormData {
+  const form = new FormData();
+  form.set("submission", JSON.stringify(submission));
+
+  for (const [view, photo] of Object.entries(photos)) {
+    form.set(
+      view,
+      new File([new Uint8Array(photo.bytes)], photo.fileName, {
+        type: photo.mimeType,
+      }),
+    );
+  }
+
+  return form;
 }

@@ -662,13 +662,15 @@ test("a client who measures in pounds and inches sends her answers once, even af
 
   // act
   const secondSubmission = await page.request.post(SUBMISSION_API_PATH, {
-    data: {
-      answers: submission.answers,
-      consents: {
-        specialCategoryAt: new Date().toISOString(),
-        disclaimerAt: new Date().toISOString(),
-        progressPhotosAt: null,
-      },
+    multipart: {
+      submission: JSON.stringify({
+        answers: submission.answers,
+        consents: {
+          specialCategoryAt: new Date().toISOString(),
+          disclaimerAt: new Date().toISOString(),
+          progressPhotosAt: null,
+        },
+      }),
     },
   });
 
