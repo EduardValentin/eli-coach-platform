@@ -136,7 +136,7 @@ describe("ProgressPhotoController remove", () => {
     expect(response.status).toBe(204);
     expect(removeProgressPhoto).toHaveBeenCalledWith({
       photoId: PHOTO_ID,
-      authSubjectId: "user_ana",
+      requester: { role: "CLIENT", authSubjectId: "user_ana" },
     });
   });
 

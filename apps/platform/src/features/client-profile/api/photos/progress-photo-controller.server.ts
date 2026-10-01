@@ -68,7 +68,7 @@ export class ProgressPhotoController {
 
     const result = await this.options.removeProgressPhoto.execute({
       photoId: id.data,
-      authSubjectId: account.authSubjectId,
+      requester: { role: account.role, authSubjectId: account.authSubjectId },
     });
 
     if (result.status === "not-found") {

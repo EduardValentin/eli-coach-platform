@@ -1,11 +1,15 @@
+import type { AccountRole } from "../account";
+
 import type { MeasurementClients } from "./measurement-clients";
 import type { MeasurementIncidents } from "./measurement-incidents";
 import type { ProgressPhotoStore } from "./progress-photo-store";
 import type { ProgressPhotos } from "./progress-photos";
 
+type PhotoRequester = { role: AccountRole; authSubjectId: string };
+
 type RemoveProgressPhotoCommand = {
   photoId: string;
-  authSubjectId: string;
+  requester: PhotoRequester;
 };
 
 type RemoveProgressPhotoResult =
@@ -25,11 +29,20 @@ export class RemoveProgressPhotoUseCase {
     command: RemoveProgressPhotoCommand,
   ): Promise<RemoveProgressPhotoResult> {
     const [client, photo] = await Promise.all([
-      this.options.clients.findByAuthSubjectId(command.authSubjectId),
+      this.options.clients.findByAuthSubjectId(command.requester.authSubjectId),
       this.options.photos.findById(command.photoId),
     ]);
 
-    if (!client || !photo?.isOwnedBy(client.clientId)) {
+    if (!photo) {
+      return { status: "not-found" };
+    }
+
+    if (!client || !photo.isOwnedBy(client.clientId)) {
+      this.options.incidents.progressPhotoAccessRefused({
+        requesterRole: command.requester.role,
+        photoId: command.photoId,
+      });
+
       return { status: "not-found" };
     }
 

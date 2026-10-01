@@ -89,7 +89,7 @@ describe("RemoveProgressPhotoUseCase", () => {
     // act
     const result = await useCase.execute({
       photoId: "photo-1",
-      authSubjectId: "user_ana",
+      requester: { role: "CLIENT", authSubjectId: "user_ana" },
     });
 
     // assert
@@ -113,7 +113,10 @@ describe("RemoveProgressPhotoUseCase", () => {
     const useCase = new RemoveProgressPhotoUseCase(ports);
 
     // act
-    await useCase.execute({ photoId: "photo-1", authSubjectId: "user_ana" });
+    await useCase.execute({
+      photoId: "photo-1",
+      requester: { role: "CLIENT", authSubjectId: "user_ana" },
+    });
 
     // assert
     expect(deleteRecord).toHaveBeenCalledWith("photo-1");
@@ -134,7 +137,7 @@ describe("RemoveProgressPhotoUseCase", () => {
     // act
     const removal = useCase.execute({
       photoId: "photo-1",
-      authSubjectId: "user_ana",
+      requester: { role: "CLIENT", authSubjectId: "user_ana" },
     });
 
     // assert
@@ -154,7 +157,7 @@ describe("RemoveProgressPhotoUseCase", () => {
     // act
     const removal = useCase.execute({
       photoId: "photo-1",
-      authSubjectId: "user_ana",
+      requester: { role: "CLIENT", authSubjectId: "user_ana" },
     });
 
     // assert
@@ -164,24 +167,31 @@ describe("RemoveProgressPhotoUseCase", () => {
   });
 
   it.each([
-    ["another client", { clientId: "client-2" }],
-    ["an account bound to no client, such as the coach", null],
-  ])("deletes nothing for %s", async (_case, requesterClient) => {
-    // arrange
-    const ports = createPorts(requesterClient);
-    const useCase = new RemoveProgressPhotoUseCase(ports);
+    ["another client", { clientId: "client-2" }, "CLIENT" as const],
+    ["the coach, who is bound to no client", null, "COACH" as const],
+  ])(
+    "deletes nothing for %s and records the refused access",
+    async (_case, requesterClient, role) => {
+      // arrange
+      const ports = createPorts(requesterClient);
+      const useCase = new RemoveProgressPhotoUseCase(ports);
 
-    // act
-    const result = await useCase.execute({
-      photoId: "photo-1",
-      authSubjectId: "user_other",
-    });
+      // act
+      const result = await useCase.execute({
+        photoId: "photo-1",
+        requester: { role, authSubjectId: "user_other" },
+      });
 
-    // assert
-    expect(result).toEqual({ status: "not-found" });
-    expect(ports.photos.rows.size).toBe(1);
-    expect(ports.store.files.size).toBe(1);
-  });
+      // assert
+      expect(result).toEqual({ status: "not-found" });
+      expect(ports.photos.rows.size).toBe(1);
+      expect(ports.store.files.size).toBe(1);
+      expect(ports.incidents.progressPhotoAccessRefused).toHaveBeenCalledWith({
+        requesterRole: role,
+        photoId: "photo-1",
+      });
+    },
+  );
 
   it("finds nothing to delete for a photo that does not exist", async () => {
     // arrange
@@ -191,10 +201,11 @@ describe("RemoveProgressPhotoUseCase", () => {
     // act
     const result = await useCase.execute({
       photoId: "photo-missing",
-      authSubjectId: "user_ana",
+      requester: { role: "CLIENT", authSubjectId: "user_ana" },
     });
 
     // assert
     expect(result).toEqual({ status: "not-found" });
+    expect(ports.incidents.progressPhotoAccessRefused).not.toHaveBeenCalled();
   });
 });
