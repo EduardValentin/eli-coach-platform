@@ -54,7 +54,7 @@ test("the coach reads a client's ratio and opens her photos without a way to rem
   await measurementsSheet.save();
   await measurementsSheet.expectSavedToast();
   await photoView.openFor(today);
-  await photoView.remove("back");
+  await photoView.askToRemove("back");
   await photoView.confirmRemoval();
   await photoView.close();
   const frontPhotoId = await measurementRecords.photoIdOf(

@@ -142,8 +142,10 @@ export async function cleanUpRunAssessmentCalls(
       pool,
       visitorEmails,
     );
-    removeProgressPhotoFilesOf(clientIds);
     console.log(`${logPrefix} Database: ${summarize(removed)}`);
+    console.log(
+      `${logPrefix} Progress photo files: ${removeProgressPhotoFilesOf(clientIds)}`,
+    );
 
     return { allCleaned: true };
   } catch (error) {

@@ -50,7 +50,9 @@ export class MeasurementsSheet {
     });
   }
 
-  private entered(entries: MeasurementEntries): [MeasurementField, string][] {
+  private entriesInFieldOrder(
+    entries: MeasurementEntries,
+  ): [MeasurementField, string][] {
     return MEASUREMENT_FIELDS.flatMap((field) => {
       const value = entries[field];
 
@@ -109,13 +111,13 @@ export class MeasurementsSheet {
   }
 
   async expectPrefilled(entries: MeasurementEntries): Promise<void> {
-    for (const [field, value] of this.entered(entries)) {
+    for (const [field, value] of this.entriesInFieldOrder(entries)) {
       await expect(this.field(field)).toHaveValue(value);
     }
   }
 
   async fill(entries: MeasurementEntries): Promise<void> {
-    for (const [field, value] of this.entered(entries)) {
+    for (const [field, value] of this.entriesInFieldOrder(entries)) {
       await this.field(field).fill(value);
     }
   }
@@ -148,7 +150,7 @@ export class MeasurementsSheet {
     }
   }
 
-  async expectConsentedLine(agreedOn: string): Promise<void> {
+  async expectConsentAlreadyGiven(agreedOn: string): Promise<void> {
     await expect(
       this.sheet.getByText(
         `You agreed to share progress photos on ${agreedOn}.`,

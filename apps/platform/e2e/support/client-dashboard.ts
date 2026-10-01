@@ -37,7 +37,7 @@ export class ClientDashboard {
     await expect(this.page.getByRole("heading", { level: 1 })).toBeVisible();
   }
 
-  async expectNudge(line: NudgeLine): Promise<void> {
+  async expectOnlyNudge(line: NudgeLine): Promise<void> {
     await expect(this.nudge(line)).toHaveAttribute("href", PROFILE_PATH);
 
     for (const other of NUDGE_LINES.filter((candidate) => candidate !== line)) {

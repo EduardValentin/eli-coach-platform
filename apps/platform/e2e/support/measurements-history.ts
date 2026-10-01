@@ -48,11 +48,18 @@ export class MeasurementsHistory {
     await expect(this.bodyRows).toHaveCount(rows.length);
 
     for (const [index, readings] of rows.entries()) {
-      const cells = this.bodyRows.nth(index).getByRole("cell");
+      await this.expectRow(index, readings);
+    }
+  }
 
-      for (const [column, reading] of readings.entries()) {
-        await expect(cells.nth(column)).toHaveText(reading);
-      }
+  private async expectRow(
+    index: number,
+    readings: MeasurementRowReadings,
+  ): Promise<void> {
+    const cells = this.bodyRows.nth(index).getByRole("cell");
+
+    for (const [column, reading] of readings.entries()) {
+      await expect(cells.nth(column)).toHaveText(reading);
     }
   }
 

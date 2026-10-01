@@ -13,10 +13,10 @@ const EMPTY_HISTORY =
   "Nothing recorded yet. Your first set goes in with your answers.";
 
 export class ClientProfilePage {
-  private readonly history: MeasurementsHistory;
+  private readonly measurementsHistory: MeasurementsHistory;
 
   constructor(private readonly page: Page) {
-    this.history = new MeasurementsHistory(page);
+    this.measurementsHistory = new MeasurementsHistory(page);
   }
 
   private get measurements() {
@@ -64,18 +64,18 @@ export class ClientProfilePage {
     await expect(this.measurements.getByRole("table")).toHaveCount(0);
   }
 
-  async expectRows(rows: readonly MeasurementRowReadings[]): Promise<void> {
-    await this.history.expectColumns(CLIENT_COLUMNS);
-    await this.history.expectNoColumn("Ratio");
-    await this.history.expectRows(rows);
+  async expectHistory(rows: readonly MeasurementRowReadings[]): Promise<void> {
+    await this.measurementsHistory.expectColumns(CLIENT_COLUMNS);
+    await this.measurementsHistory.expectNoColumn("Ratio");
+    await this.measurementsHistory.expectRows(rows);
   }
 
   async expectViewPhotos(date: string): Promise<void> {
-    await this.history.expectViewPhotos(date);
+    await this.measurementsHistory.expectViewPhotos(date);
   }
 
   async expectNoViewPhotos(date: string): Promise<void> {
-    await this.history.expectNoViewPhotos(date);
+    await this.measurementsHistory.expectNoViewPhotos(date);
   }
 
   async openAdd(): Promise<void> {

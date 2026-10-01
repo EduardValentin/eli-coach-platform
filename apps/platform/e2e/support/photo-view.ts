@@ -12,10 +12,10 @@ import { photoNameOf } from "./progress-photo-copy";
 const FOCUS_TRAP_TAB_STOPS = 12;
 
 export class PhotoView {
-  private readonly history: MeasurementsHistory;
+  private readonly measurementsHistory: MeasurementsHistory;
 
   constructor(private readonly page: Page) {
-    this.history = new MeasurementsHistory(page);
+    this.measurementsHistory = new MeasurementsHistory(page);
   }
 
   private get dialog() {
@@ -54,7 +54,7 @@ export class PhotoView {
 
   async openFor(date: string): Promise<void> {
     await expect(async () => {
-      await this.history.viewPhotosAction(date).click();
+      await this.measurementsHistory.viewPhotosAction(date).click();
       await expect(this.dialog).toBeVisible({
         timeout: HYDRATION_RETRY_TIMEOUT_MS,
       });
@@ -64,7 +64,7 @@ export class PhotoView {
   async openWithKeyboardFor(date: string): Promise<void> {
     await expect(async () => {
       await this.page.getByRole("heading", { level: 1 }).click();
-      await tabTo(this.page, this.history.viewPhotosAction(date));
+      await tabTo(this.page, this.measurementsHistory.viewPhotosAction(date));
       await this.page.keyboard.press("Enter");
       await expect(this.dialog).toBeVisible({
         timeout: HYDRATION_RETRY_TIMEOUT_MS,
@@ -108,7 +108,7 @@ export class PhotoView {
     ).toHaveCount(0);
   }
 
-  async remove(view: ProgressPhotoView): Promise<void> {
+  async askToRemove(view: ProgressPhotoView): Promise<void> {
     await this.removeButton(view).click();
     await expect(this.confirmation).toBeVisible();
     await expect(this.confirmation).toHaveAccessibleDescription(
@@ -157,6 +157,6 @@ export class PhotoView {
   }
 
   async expectFocusReturnedTo(date: string): Promise<void> {
-    await expect(this.history.viewPhotosAction(date)).toBeFocused();
+    await expect(this.measurementsHistory.viewPhotosAction(date)).toBeFocused();
   }
 }

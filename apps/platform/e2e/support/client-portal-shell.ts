@@ -67,7 +67,7 @@ export class ClientPortalShell {
     ).toHaveAttribute("aria-current", "page");
   }
 
-  async openProfile(): Promise<void> {
+  async openProfileFromSidebar(): Promise<void> {
     await this.profileLinkIn(this.sidebarNavigation).click();
   }
 
@@ -75,7 +75,7 @@ export class ClientPortalShell {
     await this.profileLinkIn(this.tabBar).click();
   }
 
-  async openProfileFromName(displayName: string): Promise<void> {
+  async openProfileFromSidebarName(displayName: string): Promise<void> {
     await this.nameLinkIn(this.sidebar, displayName).click();
   }
 
@@ -83,7 +83,7 @@ export class ClientPortalShell {
     await this.nameLinkIn(this.topBar, displayName).click();
   }
 
-  async openProfileFromSheetName(displayName: string): Promise<void> {
+  async openProfileFromMoreSheetName(displayName: string): Promise<void> {
     await this.nameLinkIn(this.moreSheet, displayName).click();
   }
 

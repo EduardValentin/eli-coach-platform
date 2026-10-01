@@ -122,17 +122,17 @@ test("a client finds her profile from the sidebar, her name and the tab bar and 
   await clientDashboard.expectNoNudge();
 
   // act
-  await clientPortalShell.openProfile();
+  await clientPortalShell.openProfileFromSidebar();
 
   // assert
   await clientProfile.expectOpen();
   await clientPortalShell.expectProfileCurrent();
-  await clientProfile.expectRows(history);
+  await clientProfile.expectHistory(history);
   await clientProfile.expectNoViewPhotos(dayMonthFormatter.format(yesterday));
 
   // act
   await clientDashboard.open();
-  await clientPortalShell.openProfileFromName(client.fullName);
+  await clientPortalShell.openProfileFromSidebarName(client.fullName);
 
   // assert
   await clientProfile.expectOpen();
@@ -145,7 +145,7 @@ test("a client finds her profile from the sidebar, her name and the tab bar and 
   // assert
   await clientProfile.expectOpen();
   await clientPortalShell.expectProfileCurrent();
-  await clientProfile.expectRows(history);
+  await clientProfile.expectHistory(history);
 
   // act
   await clientDashboard.open();
@@ -157,7 +157,7 @@ test("a client finds her profile from the sidebar, her name and the tab bar and 
   // act
   await clientDashboard.open();
   await clientPortalShell.openMore();
-  await clientPortalShell.openProfileFromSheetName(client.fullName);
+  await clientPortalShell.openProfileFromMoreSheetName(client.fullName);
 
   // assert
   await clientPortalShell.expectSheetClosed();
@@ -199,14 +199,14 @@ test("a client follows her weigh-in reminder and adds a fresh set in pounds and 
   await clientDashboard.open();
 
   // assert
-  await clientDashboard.expectNudge(WEIGH_IN_DUE);
+  await clientDashboard.expectOnlyNudge(WEIGH_IN_DUE);
 
   // act
   await clientDashboard.followNudge(WEIGH_IN_DUE);
 
   // assert
   await clientProfile.expectOpen();
-  await clientProfile.expectRows([earlierRow]);
+  await clientProfile.expectHistory([earlierRow]);
 
   // act
   await clientProfile.openAdd();
@@ -254,7 +254,7 @@ test("a client follows her weigh-in reminder and adds a fresh set in pounds and 
   await measurementsSheet.expectSavedToast();
   await measurementsSheet.expectRefusedToast("front");
   await measurementsSheet.expectClosed();
-  await clientProfile.expectRows([
+  await clientProfile.expectHistory([
     [today, "144 lb", "29 in", "38.5 in", "—", "11 in"],
     earlierRow,
   ]);
@@ -286,7 +286,7 @@ test("a client follows her weigh-in reminder and adds a fresh set in pounds and 
   await clientProfile.openAdd();
 
   // assert
-  await measurementsSheet.expectConsentedLine(
+  await measurementsSheet.expectConsentAlreadyGiven(
     dayMonthYearFormatter.format(now),
   );
   await measurementsSheet.expectPrefilled({
@@ -343,14 +343,14 @@ test("a client who agreed at onboarding adds front, side and back photos, views 
   await clientDashboard.open();
 
   // assert
-  await clientDashboard.expectNudge(MEASUREMENTS_DUE);
+  await clientDashboard.expectOnlyNudge(MEASUREMENTS_DUE);
 
   // act
   await clientDashboard.followNudge(MEASUREMENTS_DUE);
   await clientProfile.openAdd();
 
   // assert
-  await measurementsSheet.expectConsentedLine(
+  await measurementsSheet.expectConsentAlreadyGiven(
     dayMonthYearFormatter.format(client.submittedAt),
   );
   await measurementsSheet.expectPrefilled({
@@ -421,7 +421,7 @@ test("a client who agreed at onboarding adds front, side and back photos, views 
   await clientDashboard.expectNoNudge();
 
   // act
-  await clientPortalShell.openProfile();
+  await clientPortalShell.openProfileFromSidebar();
   await photoView.openWithKeyboardFor(today);
 
   // assert
@@ -439,14 +439,14 @@ test("a client who agreed at onboarding adds front, side and back photos, views 
 
   // act
   await photoView.openFor(today);
-  await photoView.remove("front");
+  await photoView.askToRemove("front");
   await photoView.keep();
 
   // assert
   await photoView.expectPhotos(["front", "side", "back"]);
 
   // act
-  await photoView.remove("front");
+  await photoView.askToRemove("front");
   await photoView.confirmRemoval();
 
   // assert
@@ -457,9 +457,9 @@ test("a client who agreed at onboarding adds front, side and back photos, views 
   ]);
 
   // act
-  await photoView.remove("side");
+  await photoView.askToRemove("side");
   await photoView.confirmRemoval();
-  await photoView.remove("back");
+  await photoView.askToRemove("back");
   await photoView.confirmRemoval();
 
   // assert
@@ -473,7 +473,7 @@ test("a client who agreed at onboarding adds front, side and back photos, views 
   // assert
   await photoView.expectClosed();
   await clientProfile.expectNoViewPhotos(today);
-  await clientProfile.expectRows([
+  await clientProfile.expectHistory([
     latestRow,
     [tenDaysAgo, "65.4 kg", "73.5 cm", "—", "—", "—"],
     [
@@ -544,7 +544,9 @@ test("a client with nothing recorded yet adds her first set on her phone, and a 
   // assert
   await measurementsSheet.expectSavedToast();
   await measurementsSheet.expectClosed();
-  await clientProfile.expectRows([[today, "63.4 kg", "71 cm", "—", "—", "—"]]);
+  await clientProfile.expectHistory([
+    [today, "63.4 kg", "71 cm", "—", "—", "—"],
+  ]);
 
   // arrange
   await clientProfile.openAdd();
