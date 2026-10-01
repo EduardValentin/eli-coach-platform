@@ -8,29 +8,18 @@ import type { Clock } from "../shared";
 import type { ClientMeasurementRecords } from "./client-measurement-records";
 import type { ClientProfiles } from "./client-profiles";
 import type { MeasurementClients } from "./measurement-clients";
-import type {
-  MeasurementIncidents,
-  ProgressPhotoRefusal,
-} from "./measurement-incidents";
+import type { MeasurementIncidents } from "./measurement-incidents";
 import {
-  ProgressPhoto,
-  type ProgressPhotoFileFacts,
-  type ProgressPhotoView,
-} from "./progress-photo";
-import type {
-  ProgressPhotoRendition,
-  ProgressPhotoRenditions,
-} from "./progress-photo-renditions";
+  ProgressPhotoIntake,
+  type ProgressPhotoOutcomes,
+  type ReceivedProgressPhoto,
+} from "./progress-photo-intake";
+import type { ProgressPhotoRenditions } from "./progress-photo-renditions";
 import type { ProgressPhotoStore } from "./progress-photo-store";
 import type {
   ProgressPhotoIdGenerator,
   ProgressPhotos,
 } from "./progress-photos";
-
-type ReceivedProgressPhoto = ProgressPhotoFileFacts & {
-  view: ProgressPhotoView;
-  bytes: Uint8Array;
-};
 
 type RecordMeasurementsCommand = {
   authSubjectId: string;
@@ -38,12 +27,6 @@ type RecordMeasurementsCommand = {
   consentGiven: boolean;
   photos: ReceivedProgressPhoto[];
 };
-
-type ProgressPhotoOutcome = "stored" | "refused";
-
-type ProgressPhotoOutcomes = Partial<
-  Record<ProgressPhotoView, ProgressPhotoOutcome>
->;
 
 type RecordMeasurementsResult =
   | {
@@ -66,22 +49,12 @@ type RecordMeasurementsUseCaseOptions = {
   incidents: MeasurementIncidents;
 };
 
-type RecordedEntry = {
-  clientId: string;
-  entryId: string;
-  recordedAt: Date;
-  photosConsented: boolean;
-};
-
-type RenderedProgressPhoto = Extract<
-  ProgressPhotoRendition,
-  { status: "rendered" }
->;
-
-const REFUSED_RENDITION: ProgressPhotoRendition = { status: "refused" };
-
 export class RecordMeasurementsUseCase {
-  constructor(private readonly options: RecordMeasurementsUseCaseOptions) {}
+  private readonly intake: ProgressPhotoIntake;
+
+  constructor(private readonly options: RecordMeasurementsUseCaseOptions) {
+    this.intake = new ProgressPhotoIntake(options);
+  }
 
   async execute(
     command: RecordMeasurementsCommand,
@@ -115,90 +88,16 @@ export class RecordMeasurementsUseCase {
       entryId,
     });
 
-    const recorded: RecordedEntry = {
-      clientId: client.clientId,
-      entryId,
-      recordedAt: now,
-      photosConsented: consentsNow || (profile?.hasPhotoConsent() ?? false),
-    };
-    const photos: ProgressPhotoOutcomes = {};
-    for (const photo of command.photos) {
-      photos[photo.view] = await this.keepPhoto(recorded, photo);
-    }
+    const photos = await this.intake.attachTo(
+      {
+        clientId: client.clientId,
+        entryId,
+        receivedAt: now,
+        photosConsented: consentsNow || (profile?.hasPhotoConsent() ?? false),
+      },
+      command.photos,
+    );
 
     return { status: "recorded", entryId, photos };
-  }
-
-  private async keepPhoto(
-    recorded: RecordedEntry,
-    photo: ReceivedProgressPhoto,
-  ): Promise<ProgressPhotoOutcome> {
-    if (!ProgressPhoto.accepts(photo))
-      return this.refuse(recorded, photo, "not-accepted");
-    if (!recorded.photosConsented)
-      return this.refuse(recorded, photo, "consent-missing");
-
-    const rendition = await this.options.renditions
-      .render(photo.bytes)
-      .catch(() => REFUSED_RENDITION);
-
-    if (rendition.status === "refused")
-      return this.refuse(recorded, photo, "rendition-refused");
-
-    try {
-      await this.keepRendition(recorded, photo.view, rendition);
-    } catch {
-      return this.refuse(recorded, photo, "storage-failed");
-    }
-
-    this.options.incidents.progressPhotoStored({
-      clientId: recorded.clientId,
-      entryId: recorded.entryId,
-      view: photo.view,
-      receivedBytes: photo.sizeBytes,
-      storedBytes: rendition.bytes.byteLength,
-    });
-
-    return "stored";
-  }
-
-  private async keepRendition(
-    recorded: RecordedEntry,
-    view: ProgressPhotoView,
-    rendition: RenderedProgressPhoto,
-  ): Promise<void> {
-    const photoId = this.options.photoIds.generate();
-    const reference = await this.options.store.store(
-      { clientId: recorded.clientId, entryId: recorded.entryId, photoId },
-      rendition.bytes,
-    );
-
-    await this.options.photos.add(
-      ProgressPhoto.stored({
-        id: photoId,
-        entryId: recorded.entryId,
-        clientId: recorded.clientId,
-        view,
-        reference,
-        rendition,
-        at: recorded.recordedAt,
-      }),
-    );
-  }
-
-  private refuse(
-    recorded: RecordedEntry,
-    photo: ReceivedProgressPhoto,
-    reason: ProgressPhotoRefusal,
-  ): ProgressPhotoOutcome {
-    this.options.incidents.progressPhotoRefused({
-      clientId: recorded.clientId,
-      entryId: recorded.entryId,
-      view: photo.view,
-      receivedBytes: photo.sizeBytes,
-      reason,
-    });
-
-    return "refused";
   }
 }
