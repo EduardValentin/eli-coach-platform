@@ -1,4 +1,5 @@
 import type { ProgressPhotoView } from "@eli-coach-platform/domain/client-profile";
+import sharp from "sharp";
 
 export type SamplePhoto = {
   name: string;
@@ -34,3 +35,29 @@ export const OVERSIZED_PHOTO: SamplePhoto = {
   mimeType: "image/png",
   buffer: Buffer.alloc(PHOTO_SIZE_LIMIT_BYTES + 1),
 };
+
+export type CameraPhotoFormat = "jpeg" | "webp";
+
+export const CAMERA_PHOTO_EDGES = { width: 4000, height: 3000 };
+
+export async function cameraPhotoOf(
+  view: ProgressPhotoView,
+  format: CameraPhotoFormat,
+  metadataMarker: string,
+): Promise<SamplePhoto> {
+  const photo = sharp({
+    create: {
+      ...CAMERA_PHOTO_EDGES,
+      channels: 3,
+      background: { r: 200, g: 120, b: 90 },
+    },
+  }).withExif({
+    IFD0: { ImageDescription: metadataMarker, Copyright: metadataMarker },
+  });
+  const buffer =
+    format === "jpeg"
+      ? await photo.jpeg().toBuffer()
+      : await photo.webp().toBuffer();
+
+  return { name: `${view}.${format}`, mimeType: `image/${format}`, buffer };
+}

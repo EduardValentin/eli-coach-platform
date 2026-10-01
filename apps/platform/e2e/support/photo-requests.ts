@@ -5,6 +5,8 @@ export type PhotoResponse = {
   headers: Record<string, string>;
 };
 
+export type PhotoDownload = PhotoResponse & { body: Buffer };
+
 const PHOTOS_PATH = "/api/client-profile/photos";
 
 export class PhotoRequests {
@@ -14,6 +16,16 @@ export class PhotoRequests {
     const response = await this.request.get(`${PHOTOS_PATH}/${photoId}`);
 
     return { status: response.status(), headers: response.headers() };
+  }
+
+  async download(photoId: string): Promise<PhotoDownload> {
+    const response = await this.request.get(`${PHOTOS_PATH}/${photoId}`);
+
+    return {
+      status: response.status(),
+      headers: response.headers(),
+      body: await response.body(),
+    };
   }
 
   async remove(photoId: string): Promise<number> {

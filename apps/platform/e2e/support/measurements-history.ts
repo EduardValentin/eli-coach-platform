@@ -37,6 +37,20 @@ export class MeasurementsHistory {
     }
   }
 
+  async expectCaptionAndColumnHeaders(
+    columns: readonly string[],
+  ): Promise<void> {
+    await expect(this.table.locator("caption")).toHaveText(HISTORY_CAPTION);
+    await expect(this.table.locator("thead th")).toHaveText([...columns]);
+    await expect(this.table.getByRole("columnheader")).toHaveText([...columns]);
+  }
+
+  async expectNoThumbnails(): Promise<void> {
+    await expect(this.table).toBeVisible();
+    await expect(this.table.getByRole("img")).toHaveCount(0);
+    await expect(this.table.locator("img")).toHaveCount(0);
+  }
+
   async expectNoColumn(column: string): Promise<void> {
     await expect(this.table).toBeVisible();
     await expect(

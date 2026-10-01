@@ -12,6 +12,9 @@ const CLIENT_COLUMNS = ["Date", "Weight", "Waist", "Hips", "Thigh", "Arm"];
 const EMPTY_HISTORY =
   "Nothing recorded yet. Your first set goes in with your answers.";
 
+export const CADENCE_HINT =
+  /\b(weekly|monthly|fortnight\w*|once a (week|month)|every (week|month|\d+)|\d+\s*(days?|weeks?)|weeks?|months?)\b/i;
+
 export class ClientProfilePage {
   private readonly measurementsHistory: MeasurementsHistory;
 
@@ -68,6 +71,20 @@ export class ClientProfilePage {
     await this.measurementsHistory.expectColumns(CLIENT_COLUMNS);
     await this.measurementsHistory.expectNoColumn("Ratio");
     await this.measurementsHistory.expectRows(rows);
+  }
+
+  async expectAccessibleHistory(): Promise<void> {
+    await this.measurementsHistory.expectCaptionAndColumnHeaders(
+      CLIENT_COLUMNS,
+    );
+  }
+
+  async expectNoThumbnails(): Promise<void> {
+    await this.measurementsHistory.expectNoThumbnails();
+  }
+
+  async expectNoCadenceHint(): Promise<void> {
+    await expect(this.measurements).not.toContainText(CADENCE_HINT);
   }
 
   async expectViewPhotos(date: string): Promise<void> {

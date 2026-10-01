@@ -164,6 +164,24 @@ export class MeasurementsSheet {
     }
   }
 
+  async expectPhotoTilesAreLabelledFileInputs(): Promise<void> {
+    for (const view of PROGRESS_PHOTO_VIEWS) {
+      const input = this.photoInput(view);
+
+      await expect(input).toHaveAttribute("type", "file");
+      await expect(input).toHaveAccessibleName(`Add ${view} photo`);
+      await expect(input).toHaveAttribute(
+        "accept",
+        "image/jpeg,image/png,image/webp",
+      );
+      await expect(input).not.toHaveAttribute("capture");
+    }
+  }
+
+  async expectNoCadenceHint(hint: RegExp): Promise<void> {
+    await expect(this.sheet).not.toContainText(hint);
+  }
+
   async addPhoto(view: ProgressPhotoView, photo: SamplePhoto): Promise<void> {
     await this.photoInput(view).setInputFiles(photo);
   }

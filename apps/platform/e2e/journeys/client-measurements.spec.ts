@@ -3,15 +3,22 @@ import type {
   MeasurementField,
   MeasurementFieldPrompt,
 } from "../support/measurements-sheet";
+import { CADENCE_HINT } from "../support/client-profile-page";
 import { daysBefore } from "../support/paid-clients";
 import {
+  cameraPhotoOf,
   OVERSIZED_PHOTO,
   samplePhotoOf,
   UNPROCESSABLE_PHOTO,
   UNSUPPORTED_TYPE_PHOTO,
 } from "../support/sample-photos";
+import {
+  isReadableJpeg,
+  readServedPhoto,
+  storedPhotoFilesOf,
+} from "../support/served-photos";
 import { FIRST_MEASUREMENTS } from "../support/submitted-clients";
-import { setPhoneViewport } from "../support/viewport";
+import { setDesktopViewport, setPhoneViewport } from "../support/viewport";
 
 const JOURNEY_TIMEOUT_MS = 180_000;
 const WEIGH_IN_DUE = "Your weekly weigh-in is due";
@@ -559,4 +566,208 @@ test("a client with nothing recorded yet adds her first set on her phone, and a 
   await measurementsSheet.expectFailedToast();
   await measurementsSheet.expectOpen();
   expect(await measurementRecords.entries(client.clientId)).toHaveLength(1);
+});
+
+test("a client's camera photos are stored without their metadata, at a bounded size and unreadable on disk, open only uncached for her and the coach, and a removed one is gone for both", async ({
+  clientProfile,
+  coachClient,
+  measurementRecords,
+  measurementsSheet,
+  page,
+  photoRequests,
+  photoView,
+  provisionCoach,
+  provisionMeasuredClient,
+  publicNav,
+  signIn,
+  signInAsCoach,
+}) => {
+  test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+  // arrange
+  const now = new Date();
+  const today = dayMonthFormatter.format(now);
+  const metadataMarker = `gen207-qa-metadata-${now.getTime()}`;
+  const frontPhoto = await cameraPhotoOf("front", "jpeg", metadataMarker);
+  const sidePhoto = await cameraPhotoOf("side", "webp", metadataMarker);
+  await provisionCoach();
+  const client = await provisionMeasuredClient({
+    system: "metric",
+    photoConsent: "given",
+    entries: [{ recordedAt: daysBefore(now, 30), values: FIRST_MEASUREMENTS }],
+  });
+  await page.goto("/store");
+  await signIn();
+
+  // act
+  await clientProfile.open();
+
+  // assert
+  await clientProfile.expectAccessibleHistory();
+  await clientProfile.expectNoCadenceHint();
+
+  // act
+  await clientProfile.openAdd();
+
+  // assert
+  await measurementsSheet.expectPhotoTilesAreLabelledFileInputs();
+  await measurementsSheet.expectNoCadenceHint(CADENCE_HINT);
+
+  // act
+  await measurementsSheet.addPhoto("front", frontPhoto);
+  await measurementsSheet.addPhoto("side", sidePhoto);
+
+  // assert
+  await measurementsSheet.expectPreview("front");
+  await measurementsSheet.expectPreview("side");
+
+  // act
+  await measurementsSheet.save();
+
+  // assert
+  await measurementsSheet.expectSavedToast();
+  await measurementsSheet.expectNoRefusedToast();
+  await measurementsSheet.expectClosed();
+  await clientProfile.expectViewPhotos(today);
+  await clientProfile.expectNoThumbnails();
+  expect(await measurementRecords.photos(client.clientId)).toEqual([
+    { view: "front", mimeType: "image/jpeg" },
+    { view: "side", mimeType: "image/jpeg" },
+  ]);
+
+  // act
+  const frontPhotoId = await measurementRecords.photoIdOf(
+    client.clientId,
+    "front",
+  );
+  const sidePhotoId = await measurementRecords.photoIdOf(
+    client.clientId,
+    "side",
+  );
+  const servedFront = await photoRequests.download(frontPhotoId);
+  const servedSide = await photoRequests.download(sidePhotoId);
+  const storedFiles = storedPhotoFilesOf(client.clientId);
+
+  // assert
+  for (const served of [servedFront, servedSide]) {
+    expect(served.status).toBe(200);
+    expect(served.headers).toMatchObject({
+      "cache-control": "private, no-store",
+      "content-type": "image/jpeg",
+      "x-content-type-options": "nosniff",
+    });
+    expect(await readServedPhoto(served.body)).toEqual({
+      format: "jpeg",
+      width: 1600,
+      height: 1200,
+      carriesMetadata: false,
+    });
+    expect(served.body.includes(metadataMarker)).toBe(false);
+  }
+  expect(storedFiles).toHaveLength(2);
+  for (const stored of storedFiles) {
+    expect(isReadableJpeg(stored)).toBe(false);
+    expect(stored.includes(metadataMarker)).toBe(false);
+    expect(stored.equals(servedFront.body)).toBe(false);
+    expect(stored.equals(servedSide.body)).toBe(false);
+  }
+
+  // act
+  await setPhoneViewport(page);
+  await photoView.openFor(today);
+
+  // assert
+  await photoView.expectPhotos(["front", "side"]);
+
+  // act
+  await photoView.askToRemove("front");
+  await photoView.confirmRemoval();
+  await photoView.close();
+
+  // assert
+  await photoView.expectClosed();
+  expect((await photoRequests.open(frontPhotoId)).status).toBe(404);
+  expect(storedPhotoFilesOf(client.clientId)).toHaveLength(1);
+
+  // arrange
+  await setDesktopViewport(page);
+  await page.goto("/");
+  await publicNav.signOut();
+  await page.goto("/store");
+  await signInAsCoach();
+  await setPhoneViewport(page);
+
+  // act
+  await coachClient.open(client.clientId);
+  await photoView.openWithKeyboardFor(today);
+
+  // assert
+  await photoView.expectPhotos(["side"]);
+  await photoView.expectNoRemove();
+  await photoView.expectFocusKeptInside();
+
+  // act
+  await photoView.closeWithEscape();
+
+  // assert
+  await photoView.expectClosed();
+  await photoView.expectFocusReturnedTo(today);
+  expect((await photoRequests.open(frontPhotoId)).status).toBe(404);
+  expect((await photoRequests.open(sidePhotoId)).status).toBe(200);
+});
+
+test("a client who has only ever weighed in is asked for her measurements and photos 28 days after her first entry", async ({
+  clientDashboard,
+  page,
+  provisionMeasuredClient,
+  signIn,
+}) => {
+  test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+  // arrange
+  const now = new Date();
+  await provisionMeasuredClient({
+    system: "metric",
+    photoConsent: "not-given",
+    entries: [
+      { recordedAt: daysBefore(now, 29), values: WEIGH_IN },
+      { recordedAt: daysBefore(now, 3), values: WEIGH_IN },
+    ],
+  });
+  await page.goto("/store");
+  await signIn();
+
+  // act
+  await clientDashboard.open();
+
+  // assert
+  await clientDashboard.expectOnlyNudge(MEASUREMENTS_DUE);
+});
+
+test("a client who has only weighed in for under 28 days, last this week, sees no reminder", async ({
+  clientDashboard,
+  page,
+  provisionMeasuredClient,
+  signIn,
+}) => {
+  test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+  // arrange
+  const now = new Date();
+  await provisionMeasuredClient({
+    system: "metric",
+    photoConsent: "not-given",
+    entries: [
+      { recordedAt: daysBefore(now, 27), values: WEIGH_IN },
+      { recordedAt: daysBefore(now, 3), values: WEIGH_IN },
+    ],
+  });
+  await page.goto("/store");
+  await signIn();
+
+  // act
+  await clientDashboard.open();
+
+  // assert
+  await clientDashboard.expectNoNudge();
 });
