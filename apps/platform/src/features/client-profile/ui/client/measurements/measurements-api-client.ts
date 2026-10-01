@@ -11,6 +11,7 @@ import {
   type MeasurementEntryRequest,
 } from "~/features/client-profile/contracts/measurements";
 import { CLIENT_PROFILE_API_PATHS } from "~/features/client-profile/contracts/paths";
+import { PROGRESS_PHOTO_PARTS } from "~/features/client-profile/contracts/progress-photo-parts";
 import { progressPhotoUrl } from "~/features/client-profile/ui/shared/photos/progress-photo-url";
 
 export type ProgressPhotoPicks = Partial<Record<ProgressPhotoView, File>>;
@@ -81,7 +82,7 @@ function measurementsFormData(submission: MeasurementsSubmission): FormData {
   }
 
   for (const [view, photo] of pickedPhotosOf(submission.photos)) {
-    formData.append(view, photo);
+    formData.append(PROGRESS_PHOTO_PARTS[view], photo);
   }
 
   return formData;

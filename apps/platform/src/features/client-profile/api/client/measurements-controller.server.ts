@@ -1,7 +1,6 @@
-import {
-  PROGRESS_PHOTO_VIEWS,
-  type ReadOwnMeasurementHistoryUseCase,
-  type RecordMeasurementsUseCase,
+import type {
+  ReadOwnMeasurementHistoryUseCase,
+  RecordMeasurementsUseCase,
 } from "@eli-coach-platform/domain/client-profile";
 import {
   createBadRequestResponse,
@@ -24,17 +23,15 @@ import {
   type MeasurementsNudge,
   type MeasurementsPage,
 } from "~/features/client-profile/contracts/measurements";
+import {
+  progressPhotoOutcomesOf,
+  receivedProgressPhotosOf,
+} from "~/features/client-profile/contracts/progress-photo-parts";
 
 type ClientMeasurementsControllerOptions = {
   readOwnMeasurementHistory: ReadOwnMeasurementHistoryUseCase;
   recordMeasurements: RecordMeasurementsUseCase;
 };
-
-type RecordMeasurementsCommand = Parameters<
-  RecordMeasurementsUseCase["execute"]
->[0];
-
-type ReceivedProgressPhoto = RecordMeasurementsCommand["photos"][number];
 
 type RecordMeasurementsResult = Awaited<
   ReturnType<RecordMeasurementsUseCase["execute"]>
@@ -103,7 +100,7 @@ export class ClientMeasurementsController {
       authSubjectId: client.authSubjectId,
       values,
       consentGiven: photoConsentGivenIn(body.formData),
-      photos: await receivedPhotosOf(body.formData),
+      photos: await receivedProgressPhotosOf(body.formData),
     });
 
     return recordingResponse(result);
@@ -129,12 +126,7 @@ function recordingResponse(result: RecordMeasurementsResult): Response {
   return Response.json(
     recordMeasurementsResponseSchema.parse({
       entryId: result.entryId,
-      photos: Object.fromEntries(
-        PROGRESS_PHOTO_VIEWS.map((view) => [
-          view,
-          result.photos[view] ?? "absent",
-        ]),
-      ),
+      photos: progressPhotoOutcomesOf(result.photos),
     }),
     { status: 201 },
   );
@@ -161,25 +153,4 @@ function photoConsentGivenIn(formData: FormData): boolean {
     formData.get(RECORD_MEASUREMENTS_FIELDS.photoConsent) ===
     PHOTO_CONSENT_GIVEN
   );
-}
-
-async function receivedPhotosOf(
-  formData: FormData,
-): Promise<ReceivedProgressPhoto[]> {
-  const photos: ReceivedProgressPhoto[] = [];
-
-  for (const view of PROGRESS_PHOTO_VIEWS) {
-    const part = formData.get(view);
-
-    if (part instanceof File) {
-      photos.push({
-        view,
-        mimeType: part.type,
-        sizeBytes: part.size,
-        bytes: new Uint8Array(await part.arrayBuffer()),
-      });
-    }
-  }
-
-  return photos;
 }

@@ -1,16 +1,17 @@
 import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
-import {
-  PROGRESS_PHOTO_VIEWS,
-  type MeasurementDueLine,
-  type MeasurementRecord,
-  type ProgressPhotoView,
+import type {
+  MeasurementDueLine,
+  MeasurementRecord,
+  ProgressPhotoView,
 } from "@eli-coach-platform/domain/client-profile";
 import { z } from "zod";
 
 import { subjectPronoun } from "~/features/assessment-calls/contracts/visitor-profile";
+import {
+  progressPhotoOutcomesSchema,
+  progressPhotoViewSchema,
+} from "~/features/client-profile/contracts/progress-photo-parts";
 import { unitPreferenceSchema } from "~/features/client-profile/contracts/unit-preference";
-
-const progressPhotoViewSchema = z.enum(PROGRESS_PHOTO_VIEWS);
 
 const measurementRowSchema = z.object({
   id: z.uuid(),
@@ -70,10 +71,7 @@ export type MeasurementEntryRequest = z.infer<
 
 export const recordMeasurementsResponseSchema = z.object({
   entryId: z.uuid(),
-  photos: z.record(
-    progressPhotoViewSchema,
-    z.enum(["stored", "refused", "absent"]),
-  ),
+  photos: progressPhotoOutcomesSchema,
 });
 
 export const measurementsRefusalSchema = z.object({
