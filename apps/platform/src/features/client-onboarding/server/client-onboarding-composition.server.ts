@@ -14,6 +14,7 @@ import {
   type OnboardingReviewStamps,
   type OnboardingSubmissionStamps,
 } from "@eli-coach-platform/domain/client-onboarding";
+import type { AttachProgressPhotosUseCase } from "@eli-coach-platform/domain/client-profile";
 import type { ClientMeasurementsSource } from "@eli-coach-platform/domain/measurement";
 import type { Clock } from "@eli-coach-platform/domain/shared";
 import type { ClientUnitPreferencesSource } from "@eli-coach-platform/domain/unit-preference";
@@ -40,6 +41,7 @@ export type ClientOnboardingFeature = {
 
 type ClientOnboardingFeatureHandles = {
   appBasePath: string;
+  attachProgressPhotos: AttachProgressPhotosUseCase;
   clock: Clock;
   contactEmail: string;
   database: DatabaseClient;
@@ -88,6 +90,7 @@ export function composeClientOnboardingFeature(
         clock,
         unitPreferences,
       }),
+      attachProgressPhotos: handles.attachProgressPhotos,
       clock,
       readClientOnboarding: new ReadClientOnboardingUseCase({
         clients,

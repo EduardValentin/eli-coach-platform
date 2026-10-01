@@ -9,6 +9,7 @@ import {
   saveDraftRequestSchema,
   submissionAcceptedSchema,
   submissionProblemsSchema,
+  submissionSentSchema,
   submitRequestSchema,
 } from "./onboarding";
 
@@ -287,6 +288,36 @@ describe("submission response schemas", () => {
 
     // act
     const parsed = submissionAcceptedSchema.safeParse(body);
+
+    // assert
+    expect(parsed.success).toBe(false);
+  });
+});
+
+describe("submissionSentSchema", () => {
+  it("names each view's photo outcome beside where she goes next", () => {
+    // arrange
+    const body = {
+      redirectTo: "/client",
+      photos: { front: "stored", side: "absent", back: "refused" },
+    };
+
+    // act
+    const parsed = submissionSentSchema.safeParse(body);
+
+    // assert
+    expect(parsed.success).toBe(true);
+  });
+
+  it("refuses an answer that leaves a view out", () => {
+    // arrange
+    const body = {
+      redirectTo: "/client",
+      photos: { front: "stored", back: "refused" },
+    };
+
+    // act
+    const parsed = submissionSentSchema.safeParse(body);
 
     // assert
     expect(parsed.success).toBe(false);

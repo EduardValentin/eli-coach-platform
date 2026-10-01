@@ -25,6 +25,7 @@ const COACH: AccountSnapshot = {
 };
 
 const UNKNOWN_CLIENT_ID = "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22";
+const UNKNOWN_ENTRY_ID = "3f2b8f61-0c4e-4f7a-9d2b-6a1e5c7d8e90";
 
 describe("composeClientProfileFeature", () => {
   it("refuses units from an account with no client record through the client reader it is handed", async () => {
@@ -83,6 +84,37 @@ describe("composeClientProfileFeature", () => {
     expect(handles.clientIdentities.findByClientId).toHaveBeenCalledWith(
       UNKNOWN_CLIENT_ID,
     );
+  });
+
+  it("refuses photos whose consent it cannot read through the profiles it composes, reporting through the incidents it is handed", async () => {
+    // arrange
+    const handles = createHandles();
+    const { handles: published } = composeClientProfileFeature(handles);
+
+    // act
+    const outcomes = await published.attachProgressPhotos.execute({
+      clientId: UNKNOWN_CLIENT_ID,
+      entryId: UNKNOWN_ENTRY_ID,
+      photos: [
+        {
+          view: "front",
+          mimeType: "image/jpeg",
+          sizeBytes: 3,
+          bytes: new Uint8Array([255, 216, 255]),
+        },
+      ],
+    });
+
+    // assert
+    expect(outcomes).toEqual({ front: "refused" });
+    expect(handles.incidents.progressPhotoRefused).toHaveBeenCalledWith({
+      clientId: UNKNOWN_CLIENT_ID,
+      entryId: UNKNOWN_ENTRY_ID,
+      view: "front",
+      receivedBytes: 3,
+      reason: "storage-failed",
+    });
+    expect(handles.progressPhotoRenditions.render).not.toHaveBeenCalled();
   });
 });
 

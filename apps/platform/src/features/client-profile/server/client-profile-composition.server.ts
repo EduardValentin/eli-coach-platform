@@ -1,6 +1,7 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
 import type { ClientIdentities } from "@eli-coach-platform/domain/client";
 import {
+  AttachProgressPhotosUseCase,
   OpenProgressPhotoUseCase,
   ReadClientMeasurementHistoryUseCase,
   ReadClientProfileUseCase,
@@ -47,6 +48,7 @@ export type ClientProfileFeature = {
 type ClientProfileComposition = {
   feature: ClientProfileFeature;
   handles: {
+    attachProgressPhotos: AttachProgressPhotosUseCase;
     measurements: ClientMeasurementsSource;
     recordMeasurementEntry: typeof recordMeasurementEntry;
     saveClientProfile: typeof saveClientProfile;
@@ -79,6 +81,12 @@ export function composeClientProfileFeature(
     store: handles.progressPhotoStore,
     incidents: handles.incidents,
   };
+  const photoIntakePorts = {
+    ...progressPhotoPorts,
+    photoIds: new RandomProgressPhotoIds(),
+    renditions: handles.progressPhotoRenditions,
+    clock: handles.clock,
+  };
 
   return {
     feature: {
@@ -91,12 +99,9 @@ export function composeClientProfileFeature(
           unitPreferences,
         }),
         recordMeasurements: new RecordMeasurementsUseCase({
-          ...progressPhotoPorts,
+          ...photoIntakePorts,
           profiles,
           records,
-          photoIds: new RandomProgressPhotoIds(),
-          renditions: handles.progressPhotoRenditions,
-          clock: handles.clock,
         }),
       }),
       coachProfile: new ClientProfileController({
@@ -122,6 +127,10 @@ export function composeClientProfileFeature(
       }),
     },
     handles: {
+      attachProgressPhotos: new AttachProgressPhotosUseCase({
+        ...photoIntakePorts,
+        profiles,
+      }),
       measurements,
       recordMeasurementEntry,
       saveClientProfile,

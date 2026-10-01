@@ -11,6 +11,7 @@ import {
   type SaveOnboardingDraftUseCase,
   type SubmitOnboardingUseCase,
 } from "@eli-coach-platform/domain/client-onboarding";
+import type { AttachProgressPhotosUseCase } from "@eli-coach-platform/domain/client-profile";
 import { UnitPreference } from "@eli-coach-platform/domain/unit-preference";
 import { describe, expect, it, vi } from "vitest";
 
@@ -53,8 +54,11 @@ type OpenRequestResult = Awaited<
 type AnswerResult = Awaited<
   ReturnType<AnswerOnboardingDetailsUseCase["execute"]>
 >;
+type AttachResult = Awaited<ReturnType<AttachProgressPhotosUseCase["execute"]>>;
 
 const FIRST_ENTRY_ID = "3f2b8f61-0c4e-4f7a-9d2b-6a1e5c7d8e90";
+const MAX_SUBMISSION_BYTES = 32 * 1024 * 1024;
+const SUBMISSION_URL = "https://evoa.fit/api/client-onboarding/submission";
 
 const SUBMITTED: SubmitResult = {
   status: "submitted",
@@ -408,20 +412,22 @@ describe("ClientOnboardingController save draft", () => {
 });
 
 describe("ClientOnboardingController submit", () => {
-  it("sends her on to her portal once her onboarding is submitted", async () => {
+  it("sends her on to her portal once her onboarding is submitted, with no photo to attach", async () => {
     // arrange
-    const { controller, submitOnboarding } = createController({
-      submitResult: SUBMITTED,
-    });
+    const { attachProgressPhotos, controller, submitOnboarding } =
+      createController({ submitResult: SUBMITTED });
 
     // act
     const response = await controller.submit(
-      clientArgs({ method: "POST", body: JSON.stringify(submitRequest()) }),
+      submissionArgs({ body: submissionForm() }),
     );
 
     // assert
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ redirectTo: "/client" });
+    expect(await response.json()).toEqual({
+      redirectTo: "/client",
+      photos: { front: "absent", side: "absent", back: "absent" },
+    });
     expect(submitOnboarding).toHaveBeenCalledWith({
       authSubjectId: "user_ana",
       answers: submitRequest().answers,
@@ -431,6 +437,58 @@ describe("ClientOnboardingController submit", () => {
         progressPhotosAt: null,
       },
     });
+    expect(attachProgressPhotos).not.toHaveBeenCalled();
+  });
+
+  it("attaches the photos she sent to her first entry once her onboarding is submitted, and answers each view's outcome", async () => {
+    // arrange
+    const { attachProgressPhotos, controller, submitOnboarding } =
+      createController({
+        submitResult: SUBMITTED,
+        attached: { front: "stored", back: "refused" },
+      });
+    const form = submissionForm();
+    form.set(
+      "front",
+      new File([new Uint8Array([255, 216, 255])], "front.jpg", {
+        type: "image/jpeg",
+      }),
+    );
+    form.set(
+      "back",
+      new File(["not an image"], "back.jpg", { type: "text/plain" }),
+    );
+
+    // act
+    const response = await controller.submit(submissionArgs({ body: form }));
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      redirectTo: "/client",
+      photos: { front: "stored", side: "absent", back: "refused" },
+    });
+    expect(attachProgressPhotos).toHaveBeenCalledWith({
+      clientId: CLIENT_ID,
+      entryId: FIRST_ENTRY_ID,
+      photos: [
+        {
+          view: "front",
+          mimeType: "image/jpeg",
+          sizeBytes: 3,
+          bytes: new Uint8Array([255, 216, 255]),
+        },
+        {
+          view: "back",
+          mimeType: "text/plain",
+          sizeBytes: 12,
+          bytes: new TextEncoder().encode("not an image"),
+        },
+      ],
+    });
+    expect(submitOnboarding.mock.invocationCallOrder[0]).toBeLessThan(
+      attachProgressPhotos.mock.invocationCallOrder[0],
+    );
   });
 
   it("names every problem by its form and field", async () => {
@@ -448,7 +506,7 @@ describe("ClientOnboardingController submit", () => {
 
     // act
     const response = await controller.submit(
-      clientArgs({ method: "POST", body: JSON.stringify(submitRequest()) }),
+      submissionArgs({ body: submissionForm() }),
     );
 
     // assert
@@ -464,7 +522,7 @@ describe("ClientOnboardingController submit", () => {
 
     // act
     const response = await controller.submit(
-      clientArgs({ method: "POST", body: JSON.stringify(submitRequest()) }),
+      submissionArgs({ body: submissionForm() }),
     );
 
     // assert
@@ -483,7 +541,7 @@ describe("ClientOnboardingController submit", () => {
 
     // act
     const response = await controller.submit(
-      clientArgs({ method: "POST", body: JSON.stringify(submitRequest()) }),
+      submissionArgs({ body: submissionForm() }),
     );
 
     // assert
@@ -491,7 +549,71 @@ describe("ClientOnboardingController submit", () => {
     expect(await response.json()).toEqual({ error: expectedError });
   });
 
-  it("refuses answers it cannot read without submitting anything", async () => {
+  it.each<[string, SubmitResult]>([
+    [
+      "invalid",
+      {
+        status: "invalid",
+        problems: [
+          { formId: "measurements", fieldId: "waist", message: "Add it." },
+        ],
+      },
+    ],
+    ["missing a consent", { status: "consent-missing", consent: "disclaimer" }],
+    ["off her journey", { status: "not-on-journey" }],
+    ["already sent", { status: "already-submitted" }],
+  ])(
+    "attaches no photo to a submission refused as %s",
+    async (_case, submitResult) => {
+      // arrange
+      const { attachProgressPhotos, controller } = createController({
+        submitResult,
+      });
+      const form = submissionForm();
+      form.set(
+        "front",
+        new File([new Uint8Array([255, 216, 255])], "front.jpg", {
+          type: "image/jpeg",
+        }),
+      );
+
+      // act
+      await controller.submit(submissionArgs({ body: form }));
+
+      // assert
+      expect(attachProgressPhotos).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([
+    [
+      "answers without consents",
+      formWithSubmission(JSON.stringify({ answers: submitRequest().answers })),
+    ],
+    ["a submission field that is not JSON", formWithSubmission("{answers")],
+    ["a form with no submission field", new FormData()],
+    ["a JSON body instead of a form", JSON.stringify(submitRequest())],
+  ])(
+    "refuses %s without submitting anything",
+    async (_case, body: FormData | string) => {
+      // arrange
+      const { controller, submitOnboarding } = createController({
+        submitResult: SUBMITTED,
+      });
+
+      // act
+      const response = await controller.submit(submissionArgs({ body }));
+
+      // assert
+      expect(response.status).toBe(400);
+      expect(await response.json()).toEqual({
+        message: "The onboarding answers could not be read.",
+      });
+      expect(submitOnboarding).not.toHaveBeenCalled();
+    },
+  );
+
+  it("refuses answers and photos beyond 32 MiB without submitting anything", async () => {
     // arrange
     const { controller, submitOnboarding } = createController({
       submitResult: SUBMITTED,
@@ -499,14 +621,17 @@ describe("ClientOnboardingController submit", () => {
 
     // act
     const response = await controller.submit(
-      clientArgs({
-        method: "POST",
-        body: JSON.stringify({ answers: submitRequest().answers }),
+      submissionArgs({
+        body: submissionForm(),
+        headers: { "Content-Length": String(MAX_SUBMISSION_BYTES + 1) },
       }),
     );
 
     // assert
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(413);
+    expect(await response.json()).toEqual({
+      message: "The answers and photos are too large to send.",
+    });
     expect(submitOnboarding).not.toHaveBeenCalled();
   });
 
@@ -519,11 +644,7 @@ describe("ClientOnboardingController submit", () => {
     // act
     const thrown = await captureThrown(() =>
       controller.submit(
-        clientArgs({
-          method: "POST",
-          body: JSON.stringify(submitRequest()),
-          session: COACH_SESSION,
-        }),
+        submissionArgs({ body: submissionForm(), session: COACH_SESSION }),
       ),
     );
 
@@ -744,8 +865,20 @@ function submitRequest() {
   };
 }
 
+function submissionForm(): FormData {
+  return formWithSubmission(JSON.stringify(submitRequest()));
+}
+
+function formWithSubmission(submission: string): FormData {
+  const form = new FormData();
+  form.set("submission", submission);
+
+  return form;
+}
+
 function createController(options: {
   answerResult?: AnswerResult;
+  attached?: AttachResult;
   openRequest?: OpenRequestResult;
   reading?: ReadResult;
   saveDraftResult?: SaveDraftResult;
@@ -764,10 +897,16 @@ function createController(options: {
   const answerOnboardingDetails = vi
     .fn()
     .mockResolvedValue(options.answerResult);
+  const attachProgressPhotos = vi
+    .fn()
+    .mockResolvedValue(options.attached ?? {});
   const controller = new ClientOnboardingController({
     answerOnboardingDetails: {
       execute: answerOnboardingDetails,
     } as unknown as AnswerOnboardingDetailsUseCase,
+    attachProgressPhotos: {
+      execute: attachProgressPhotos,
+    } as unknown as AttachProgressPhotosUseCase,
     clock: { now: () => NOW },
     readClientOnboarding: {
       execute: readClientOnboarding,
@@ -785,12 +924,34 @@ function createController(options: {
 
   return {
     answerOnboardingDetails,
+    attachProgressPhotos,
     controller,
     readClientOnboarding,
     readOpenDetailRequest,
     saveOnboardingDraft,
     submitOnboarding,
   };
+}
+
+function submissionArgs(options: {
+  body: FormData | string;
+  headers?: Record<string, string>;
+  session?: ResolvedSession;
+}) {
+  const request = new Request(SUBMISSION_URL, {
+    body: options.body,
+    method: "POST",
+  });
+  const headers = new Headers(request.headers);
+
+  for (const [name, value] of Object.entries(options.headers ?? {})) {
+    headers.set(name, value);
+  }
+
+  return createRequestArgs({
+    contexts: sessionContexts(options.session),
+    request: new Request(request, { headers }),
+  });
 }
 
 function clientArgs(
@@ -800,6 +961,17 @@ function clientArgs(
     session?: ResolvedSession;
   } = {},
 ) {
+  return createRequestArgs({
+    contexts: sessionContexts(options.session),
+    request: new Request("https://evoa.fit/api/client-onboarding/draft", {
+      body: options.body,
+      headers: options.body ? { "Content-Type": "application/json" } : {},
+      method: options.method ?? "GET",
+    }),
+  });
+}
+
+function sessionContexts(session?: ResolvedSession) {
   const accounts = {
     portal: {
       appBasePath: "/",
@@ -808,20 +980,13 @@ function clientArgs(
     },
   } as unknown as AccountsFeature;
 
-  return createRequestArgs({
-    contexts: [
-      contextEntry(accountsContext, accounts),
-      contextEntry(
-        sessionContext,
-        options.session ?? { account: CLIENT, kind: "authenticated" },
-      ),
-    ],
-    request: new Request("https://evoa.fit/api/client-onboarding/draft", {
-      body: options.body,
-      headers: options.body ? { "Content-Type": "application/json" } : {},
-      method: options.method ?? "GET",
-    }),
-  });
+  return [
+    contextEntry(accountsContext, accounts),
+    contextEntry(
+      sessionContext,
+      session ?? { account: CLIENT, kind: "authenticated" },
+    ),
+  ];
 }
 
 async function captureThrown(thunk: () => unknown): Promise<unknown> {
