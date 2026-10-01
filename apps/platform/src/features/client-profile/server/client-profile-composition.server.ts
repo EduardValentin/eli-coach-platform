@@ -83,13 +83,12 @@ export function composeClientProfileFeature(
   return {
     feature: {
       clientMeasurements: new ClientMeasurementsController({
-        clock: handles.clock,
-        measurementClients: handles.measurementClients,
-        unitPreferences,
         readOwnMeasurementHistory: new ReadOwnMeasurementHistoryUseCase({
           clients: handles.measurementClients,
+          clock: handles.clock,
           profiles,
           records,
+          unitPreferences,
         }),
         recordMeasurements: new RecordMeasurementsUseCase({
           ...progressPhotoPorts,

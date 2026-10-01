@@ -1,14 +1,8 @@
 import {
   PROGRESS_PHOTO_VIEWS,
-  type MeasurementClients,
   type ReadOwnMeasurementHistoryUseCase,
   type RecordMeasurementsUseCase,
 } from "@eli-coach-platform/domain/client-profile";
-import type { Clock } from "@eli-coach-platform/domain/shared";
-import {
-  UnitPreference,
-  type ClientUnitPreferencesSource,
-} from "@eli-coach-platform/domain/unit-preference";
 import {
   createBadRequestResponse,
   readFormDataRequestBody,
@@ -32,9 +26,6 @@ import {
 } from "~/features/client-profile/contracts/measurements";
 
 type ClientMeasurementsControllerOptions = {
-  clock: Clock;
-  measurementClients: MeasurementClients;
-  unitPreferences: ClientUnitPreferencesSource;
   readOwnMeasurementHistory: ReadOwnMeasurementHistoryUseCase;
   recordMeasurements: RecordMeasurementsUseCase;
 };
@@ -58,12 +49,9 @@ export class ClientMeasurementsController {
 
   async loadPage(args: LoaderFunctionArgs): Promise<MeasurementsPage> {
     const client = requirePortalAccess(args, { role: "CLIENT" });
-    const [reading, units] = await Promise.all([
-      this.options.readOwnMeasurementHistory.execute({
-        authSubjectId: client.authSubjectId,
-      }),
-      this.unitPreferenceOf(client.authSubjectId),
-    ]);
+    const reading = await this.options.readOwnMeasurementHistory.execute({
+      authSubjectId: client.authSubjectId,
+    });
 
     if (!reading) {
       throw new Response("Not Found", { status: 404 });
@@ -72,8 +60,8 @@ export class ClientMeasurementsController {
     return measurementsPageSchema.parse({
       history: presentMeasurements(reading.history.newestFirst()),
       consentedAt: reading.consentedAt?.toISOString() ?? null,
-      units: units.toSnapshot(),
-      dueLine: reading.history.dueLine(this.options.clock.now()),
+      units: reading.units.toSnapshot(),
+      dueLine: reading.dueLine,
     });
   }
 
@@ -84,7 +72,7 @@ export class ClientMeasurementsController {
     });
 
     return measurementsNudgeSchema.parse({
-      dueLine: reading?.history.dueLine(this.options.clock.now()) ?? null,
+      dueLine: reading?.dueLine ?? null,
     });
   }
 
@@ -119,18 +107,6 @@ export class ClientMeasurementsController {
     });
 
     return recordingResponse(result);
-  }
-
-  private async unitPreferenceOf(
-    authSubjectId: string,
-  ): Promise<UnitPreference> {
-    const client =
-      await this.options.measurementClients.findByAuthSubjectId(authSubjectId);
-    const preference = client
-      ? await this.options.unitPreferences.findByClientId(client.clientId)
-      : null;
-
-    return preference ?? UnitPreference.metric();
   }
 }
 

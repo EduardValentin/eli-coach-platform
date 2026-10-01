@@ -34,12 +34,10 @@ const COACH_SESSION: ResolvedSession = {
 
 const ANONYMOUS_SESSION: ResolvedSession = { kind: "anonymous" };
 
-const CLIENT_ID = "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22";
 const FIRST_ENTRY_ID = "0f5c7e1a-2b3d-4c5e-8f9a-1b2c3d4e5f60";
 const SECOND_ENTRY_ID = "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d";
 const NEW_ENTRY_ID = "4d5e6f7a-8b9c-4d0e-8f1a-2b3c4d5e6f70";
 const CONSENTED_AT = new Date("2026-09-01T09:30:00.000Z");
-const NOW = new Date("2026-09-09T09:00:00.000Z");
 const MEASUREMENTS_URL = "https://evoa.fit/api/client-profile/measurements";
 const MAX_RECORD_BYTES = 32 * 1024 * 1024;
 
@@ -65,14 +63,22 @@ type RecordMeasurementsResult = Awaited<
   ReturnType<RecordMeasurementsUseCase["execute"]>
 >;
 
+type OwnMeasurementHistoryReading = Awaited<
+  ReturnType<ReadOwnMeasurementHistoryUseCase["execute"]>
+>;
+
+const READING: NonNullable<OwnMeasurementHistoryReading> = {
+  history: MeasurementHistory.of(RECORDS),
+  consentedAt: CONSENTED_AT,
+  dueLine: "weigh-in",
+  units: UnitPreference.metric(),
+};
+
 describe("ClientMeasurementsController loadPage", () => {
   it("hands her history newest first, when she agreed to photos, her units and what is due now", async () => {
     // arrange
     const { controller, readOwnMeasurementHistory } = createController({
-      unitPreference: UnitPreference.from({
-        weightUnit: "lb",
-        heightUnit: "ft-in",
-      }),
+      reading: { ...READING, units: UnitPreference.of("imperial") },
     });
 
     // act
@@ -111,20 +117,22 @@ describe("ClientMeasurementsController loadPage", () => {
     });
   });
 
-  it("shows her measures in metric when she never chose units", async () => {
+  it("hands no due line when nothing is due for her", async () => {
     // arrange
-    const { controller } = createController({ unitPreference: null });
+    const { controller } = createController({
+      reading: { ...READING, dueLine: null },
+    });
 
     // act
     const page = await controller.loadPage(pageArgs());
 
     // assert
-    expect(page.units).toEqual({ weightUnit: "kg", heightUnit: "cm" });
+    expect(page.dueLine).toBeNull();
   });
 
   it("answers not found to a client account with no client record", async () => {
     // arrange
-    const { controller } = createController({ reading: null, client: null });
+    const { controller } = createController({ reading: null });
 
     // act
     const thrown = await captureThrown(() => controller.loadPage(pageArgs()));
@@ -162,7 +170,7 @@ describe("ClientMeasurementsController loadNudge", () => {
 
   it("names no line for a client account with no client record", async () => {
     // arrange
-    const { controller } = createController({ reading: null, client: null });
+    const { controller } = createController({ reading: null });
 
     // act
     const nudge = await controller.loadNudge(pageArgs());
@@ -375,21 +383,14 @@ describe("ClientMeasurementsController record", () => {
 
 function createController(
   options: {
-    reading?: {
-      history: MeasurementHistory;
-      consentedAt: Date | null;
-    } | null;
-    client?: { clientId: string } | null;
-    unitPreference?: UnitPreference | null;
+    reading?: OwnMeasurementHistoryReading;
     recorded?: RecordMeasurementsResult;
   } = {},
 ) {
   const readOwnMeasurementHistory = vi
     .fn()
     .mockResolvedValue(
-      options.reading === undefined
-        ? { history: MeasurementHistory.of(RECORDS), consentedAt: CONSENTED_AT }
-        : options.reading,
+      options.reading === undefined ? READING : options.reading,
     );
   const recordMeasurements = vi.fn().mockResolvedValue(
     options.recorded ?? {
@@ -399,19 +400,6 @@ function createController(
     },
   );
   const controller = new ClientMeasurementsController({
-    clock: { now: () => NOW },
-    measurementClients: {
-      findByAuthSubjectId: vi
-        .fn()
-        .mockResolvedValue(
-          options.client === undefined
-            ? { clientId: CLIENT_ID }
-            : options.client,
-        ),
-    },
-    unitPreferences: {
-      findByClientId: vi.fn().mockResolvedValue(options.unitPreference ?? null),
-    },
     readOwnMeasurementHistory: {
       execute: readOwnMeasurementHistory,
     } as unknown as ReadOwnMeasurementHistoryUseCase,

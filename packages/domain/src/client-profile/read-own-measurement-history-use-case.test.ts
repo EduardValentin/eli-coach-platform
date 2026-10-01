@@ -1,8 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { UnitPreference } from "../unit-preference";
 import { ClientProfile } from "./client-profile";
 import type { ClientProfiles } from "./client-profiles";
 import type { ClientMeasurementRecords } from "./client-measurement-records";
+import type { ClientUnitPreferencesSource } from "../unit-preference";
 import type { MeasurementClients } from "./measurement-clients";
 import {
   MeasurementHistory,
@@ -11,6 +13,8 @@ import {
 import { ReadOwnMeasurementHistoryUseCase } from "./read-own-measurement-history-use-case";
 
 const CONSENTED_AT = new Date("2026-09-20T08:00:00.000Z");
+const WEIGH_IN_DUE_AT = new Date("2026-10-05T08:00:00.000Z");
+const IMPERIAL = UnitPreference.of("imperial");
 const FIRST: MeasurementRecord = {
   id: "entry-1",
   recordedAt: new Date("2026-09-20T08:00:00.000Z"),
@@ -29,8 +33,10 @@ const LATEST: MeasurementRecord = {
 function createPorts(stored: {
   client: { clientId: string } | null;
   consentedAt: Date | null;
+  unitPreference?: UnitPreference | null;
 }) {
   return {
+    clock: { now: () => WEIGH_IN_DUE_AT },
     clients: {
       findByAuthSubjectId: vi.fn().mockResolvedValue(stored.client),
     } satisfies MeasurementClients,
@@ -55,11 +61,20 @@ function createPorts(stored: {
       listByClientId: vi.fn().mockResolvedValue([FIRST, LATEST]),
       record: vi.fn(),
     } satisfies ClientMeasurementRecords,
+    unitPreferences: {
+      findByClientId: vi
+        .fn()
+        .mockResolvedValue(
+          stored.unitPreference === undefined
+            ? IMPERIAL
+            : stored.unitPreference,
+        ),
+    } satisfies ClientUnitPreferencesSource,
   };
 }
 
 describe("ReadOwnMeasurementHistoryUseCase", () => {
-  it("reads her history newest first with the date she agreed to share photos", async () => {
+  it("reads her history newest first with the date she agreed to share photos, what is due now and her units", async () => {
     // arrange
     const ports = createPorts({
       client: { clientId: "client-1" },
@@ -74,11 +89,32 @@ describe("ReadOwnMeasurementHistoryUseCase", () => {
     expect(reading).toEqual({
       history: MeasurementHistory.of([LATEST, FIRST]),
       consentedAt: CONSENTED_AT,
+      dueLine: "weigh-in",
+      units: IMPERIAL,
     });
     expect(reading?.history.newestFirst()).toEqual([LATEST, FIRST]);
     expect(ports.clients.findByAuthSubjectId).toHaveBeenCalledWith("user_ana");
     expect(ports.records.listByClientId).toHaveBeenCalledWith("client-1");
     expect(ports.profiles.findByClientId).toHaveBeenCalledWith("client-1");
+    expect(ports.unitPreferences.findByClientId).toHaveBeenCalledWith(
+      "client-1",
+    );
+  });
+
+  it("reads her units as metric while she has never chosen any", async () => {
+    // arrange
+    const ports = createPorts({
+      client: { clientId: "client-1" },
+      consentedAt: null,
+      unitPreference: null,
+    });
+    const useCase = new ReadOwnMeasurementHistoryUseCase(ports);
+
+    // act
+    const reading = await useCase.execute({ authSubjectId: "user_ana" });
+
+    // assert
+    expect(reading?.units).toEqual(UnitPreference.metric());
   });
 
   it("reads no consent date while she has not agreed", async () => {
@@ -107,5 +143,6 @@ describe("ReadOwnMeasurementHistoryUseCase", () => {
     // assert
     expect(reading).toBeNull();
     expect(ports.records.listByClientId).not.toHaveBeenCalled();
+    expect(ports.unitPreferences.findByClientId).not.toHaveBeenCalled();
   });
 });
