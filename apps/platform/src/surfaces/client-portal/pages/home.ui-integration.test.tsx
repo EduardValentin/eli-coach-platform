@@ -2,8 +2,15 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { cleanup, render, screen, within } from "@testing-library/react";
-import { createRoutesStub, Outlet } from "react-router";
+import { Toaster } from "@eli-coach-platform/ui/toast";
+import { act, cleanup, render, screen, within } from "@testing-library/react";
+import { StrictMode } from "react";
+import {
+  createMemoryRouter,
+  createRoutesStub,
+  Outlet,
+  RouterProvider,
+} from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 
 import type { ProgramStatus } from "~/features/coaching-sales/contracts/client-journey";
@@ -202,6 +209,94 @@ describe("client dashboard", () => {
     // assert
     expect(
       screen.queryByRole("link", { name: /weigh-in|measurements/ }),
+    ).not.toBeInTheDocument();
+  });
+});
+
+const FRONT_REFUSED =
+  "The front photo could not be processed, so it was not saved.";
+const BACK_REFUSED =
+  "The back photo could not be processed, so it was not saved.";
+
+const TOAST_RENDER_MS = 50;
+
+async function settleToasts() {
+  await act(
+    () => new Promise((resolve) => setTimeout(resolve, TOAST_RENDER_MS)),
+  );
+}
+
+function renderArrivalFromOnboarding(refusedPhotoViews: string[]) {
+  const router = createMemoryRouter(
+    [
+      {
+        children: [
+          {
+            Component: ClientHomeRoute,
+            index: true,
+            loader: () => ({ ...NOTHING_DUE, programStatus: SUBMITTED }),
+          },
+          { Component: () => <p>profile page</p>, path: "profile" },
+        ],
+        Component: () => <Outlet context={ANA} />,
+        path: "/client",
+      },
+    ],
+    {
+      initialEntries: [
+        "/client/onboarding",
+        { pathname: "/client", state: { refusedPhotoViews } },
+      ],
+      initialIndex: 1,
+    },
+  );
+
+  render(
+    <StrictMode>
+      <RouterProvider router={router} />
+      <Toaster />
+    </StrictMode>,
+  );
+
+  return router;
+}
+
+describe("client dashboard after she sends her onboarding", () => {
+  it("names each photo the coach's side could not process, once", async () => {
+    // arrange, act
+    renderArrivalFromOnboarding(["front", "back"]);
+    await screen.findByRole("heading", { level: 1 });
+
+    // assert
+    expect(await screen.findAllByText(FRONT_REFUSED)).toHaveLength(1);
+    expect(screen.getAllByText(BACK_REFUSED)).toHaveLength(1);
+  });
+
+  it("does not name the photos again when she comes back to the dashboard", async () => {
+    // arrange
+    const router = renderArrivalFromOnboarding(["front"]);
+    await screen.findAllByText(FRONT_REFUSED);
+
+    // act
+    await router.navigate("/client/profile");
+    await screen.findByText("profile page");
+    await router.navigate(-1);
+    await screen.findByRole("heading", { level: 1 });
+    await settleToasts();
+
+    // assert
+    expect(screen.getAllByText(FRONT_REFUSED)).toHaveLength(1);
+  });
+
+  it("shows no photo message when every photo was kept", async () => {
+    // arrange, act
+    renderArrivalFromOnboarding([]);
+    await screen.findByRole("heading", { level: 1 });
+    await settleToasts();
+
+    // assert
+    expect(
+      screen.queryByText(/could not be processed/),
     ).not.toBeInTheDocument();
   });
 });
