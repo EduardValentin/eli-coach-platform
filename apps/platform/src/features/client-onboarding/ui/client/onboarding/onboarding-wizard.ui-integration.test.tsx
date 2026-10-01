@@ -1436,6 +1436,62 @@ describe("the progress photos on the last form", { timeout: 15_000 }, () => {
     expect(screen.getByLabelText("Add front photo")).toBeEnabled();
   });
 
+  it("clears the photos she picked and locks every tile again when she takes back her agreement", async () => {
+    // arrange
+    const user = userEvent.setup();
+    await openOnboarding(pageAt(4));
+    const consent = screen.getByRole("checkbox", {
+      name: PROGRESS_PHOTO_CONSENT,
+    });
+    await user.click(consent);
+    await user.upload(
+      screen.getByLabelText("Add front photo"),
+      photo("front.png"),
+    );
+
+    // act
+    await user.click(consent);
+
+    // assert
+    expect(
+      screen.queryByRole("img", { name: "Front photo" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Remove front photo" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Add front photo")).toBeDisabled();
+    expect(screen.getByLabelText("Add side photo")).toBeDisabled();
+    expect(screen.getByLabelText("Add back photo")).toBeDisabled();
+    expect(screen.getByText(PHOTOS_LOCKED_NOTE)).toBeVisible();
+  });
+
+  it("sends no photo she picked before taking back her agreement once she agrees again", async () => {
+    // arrange
+    const user = userEvent.setup();
+    answerSubmission(200, {
+      photos: NO_PHOTO_OUTCOMES,
+      redirectTo: CLIENT_PORTAL_PATH,
+    });
+    await openOnboarding(pageAt(4));
+    const consent = screen.getByRole("checkbox", {
+      name: PROGRESS_PHOTO_CONSENT,
+    });
+    await user.click(consent);
+    await user.upload(
+      screen.getByLabelText("Add front photo"),
+      photo("front.png"),
+    );
+    await user.click(consent);
+    await user.click(consent);
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Send to my coach" }));
+
+    // assert
+    expect(await screen.findByText("portal home")).toBeVisible();
+    expect(submittedPhotoParts).toEqual([[]]);
+  });
+
   it("never saves her picked photos with the draft", async () => {
     // arrange
     const user = userEvent.setup();

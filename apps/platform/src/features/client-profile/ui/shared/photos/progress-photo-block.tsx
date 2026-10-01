@@ -26,7 +26,10 @@ import {
   progressPhotoImageClass,
   progressPhotoPlaceholderClass,
 } from "~/features/client-profile/ui/shared/photos/progress-photo-frame";
-import type { ProgressPhotoPicks } from "~/features/client-profile/ui/shared/photos/progress-photo-picks";
+import {
+  NO_PROGRESS_PHOTO_PICKS,
+  type ProgressPhotoPicks,
+} from "~/features/client-profile/ui/shared/photos/progress-photo-picks";
 
 export type ProgressPhotoConsent =
   | { status: "recorded"; at: string }
@@ -200,6 +203,17 @@ export function ProgressPhotoBlock({
     onPhotosChange({ ...photos, [view]: undefined });
   };
 
+  const changeConsent = (
+    ticked: boolean,
+    onTickedChange: (ticked: boolean) => void,
+  ) => {
+    if (!ticked) {
+      setRefused(false);
+      onPhotosChange(NO_PROGRESS_PHOTO_PICKS);
+    }
+    onTickedChange(ticked);
+  };
+
   return (
     <Card className="grid gap-4" data-parity="progress-photos" variant="inset">
       <FieldCaption data-parity="progress-photos-caption">
@@ -217,7 +231,9 @@ export function ProgressPhotoBlock({
           checked={consent.ticked}
           label={PROGRESS_PHOTO_CONSENT_COPY}
           layout="statement"
-          onCheckedChange={consent.onTickedChange}
+          onCheckedChange={(ticked) =>
+            changeConsent(ticked, consent.onTickedChange)
+          }
         />
       )}
 

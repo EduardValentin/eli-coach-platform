@@ -24,7 +24,10 @@ import {
 } from "~/features/client-onboarding/contracts/onboarding-copy";
 import { MEASUREMENTS_COPY } from "~/features/client-profile/contracts/measurements";
 import { ProgressPhotoBlock } from "~/features/client-profile/ui/shared/photos/progress-photo-block";
-import type { ProgressPhotoPicks } from "~/features/client-profile/ui/shared/photos/progress-photo-picks";
+import {
+  NO_PROGRESS_PHOTO_PICKS,
+  type ProgressPhotoPicks,
+} from "~/features/client-profile/ui/shared/photos/progress-photo-picks";
 
 import { MeasurementSystemField } from "./measurement-system-field";
 import { OnboardingConsent } from "./onboarding-consent";
@@ -68,8 +71,6 @@ const STEP_OFFSET_PX = 16;
 
 const STEP_DURATION_S = 0.2;
 
-const NO_PHOTOS: ProgressPhotoPicks = {};
-
 export function OnboardingWizard({ page }: OnboardingWizardProps) {
   const reduceMotion = useClientReducedMotionPreference();
   const stepCountId = useId();
@@ -99,7 +100,9 @@ export function OnboardingWizard({ page }: OnboardingWizardProps) {
   });
   const [navigated, setNavigated] = useState(false);
   const [consentProblem, setConsentProblem] = useState<string | null>(null);
-  const [photos, setPhotos] = useState<ProgressPhotoPicks>(NO_PHOTOS);
+  const [photos, setPhotos] = useState<ProgressPhotoPicks>(
+    NO_PROGRESS_PHOTO_PICKS,
+  );
   const focusPending = useRef(false);
 
   const stepIndex = stepIndexOf(steps, draft);
@@ -211,10 +214,7 @@ export function OnboardingWizard({ page }: OnboardingWizardProps) {
     clearAnswerProblems();
 
     if (isLastStep) {
-      void send(
-        next,
-        next.consents.progressPhotosAt === null ? NO_PHOTOS : photos,
-      );
+      void send(next, photos);
       return;
     }
 

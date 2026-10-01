@@ -22,7 +22,10 @@ import {
   ProgressPhotoBlock,
   type ProgressPhotoConsent,
 } from "~/features/client-profile/ui/shared/photos/progress-photo-block";
-import type { ProgressPhotoPicks } from "~/features/client-profile/ui/shared/photos/progress-photo-picks";
+import {
+  NO_PROGRESS_PHOTO_PICKS,
+  type ProgressPhotoPicks,
+} from "~/features/client-profile/ui/shared/photos/progress-photo-picks";
 
 type AddMeasurementsStartingPoint = {
   latest: MeasurementRow | undefined;
@@ -37,8 +40,6 @@ type AddMeasurementsSheetProps = AddMeasurementsStartingPoint & {
 
 const SHEET_COPY = MEASUREMENTS_COPY.sheet;
 
-const NO_PHOTOS: ProgressPhotoPicks = {};
-
 function AddMeasurementsForm({
   latest,
   units,
@@ -46,10 +47,11 @@ function AddMeasurementsForm({
   onClose,
 }: AddMeasurementsStartingPoint & { onClose: () => void }) {
   const revalidator = useRevalidator();
-  const [photos, setPhotos] = useState<ProgressPhotoPicks>(NO_PHOTOS);
+  const [photos, setPhotos] = useState<ProgressPhotoPicks>(
+    NO_PROGRESS_PHOTO_PICKS,
+  );
   const [consentTicked, setConsentTicked] = useState(false);
   const [saving, setSaving] = useState(false);
-  const mayKeepPhotos = consentedAt !== null || consentTicked;
   const form = useForm<MeasurementFormValues>({
     defaultValues: measurementFormValuesOf(latest, units),
   });
@@ -67,7 +69,7 @@ function AddMeasurementsForm({
     const outcome = await recordMeasurements({
       entry: measurementEntryOf(values, units),
       givesPhotoConsent: consentTicked,
-      photos: mayKeepPhotos ? photos : NO_PHOTOS,
+      photos,
     });
 
     if (outcome.kind === "failed") {

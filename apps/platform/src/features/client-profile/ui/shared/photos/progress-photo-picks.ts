@@ -9,6 +9,8 @@ import {
 
 export type ProgressPhotoPicks = Partial<Record<ProgressPhotoView, File>>;
 
+export const NO_PROGRESS_PHOTO_PICKS: ProgressPhotoPicks = {};
+
 export function appendProgressPhotoParts(
   formData: FormData,
   photos: ProgressPhotoPicks,
