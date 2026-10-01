@@ -1,4 +1,10 @@
+import type { ProgressPhotoView } from "@eli-coach-platform/domain/client-profile";
 import { expect, type Page } from "@playwright/test";
+
+import {
+  REFUSED_PHOTO_TOAST,
+  refusedPhotoToastOf,
+} from "./progress-photo-copy";
 
 const ONBOARDING_REGION_LABEL = "Your onboarding";
 const PROGRAM_REGION_LABEL = "Your program";
@@ -81,5 +87,15 @@ export class ClientDashboard {
   async expectNoOnboardingActions(): Promise<void> {
     await expect(this.onboardingStatus.getByRole("button")).toHaveCount(0);
     await expect(this.onboardingStatus.getByRole("link")).toHaveCount(0);
+  }
+
+  async expectRefusedPhotoToast(view: ProgressPhotoView): Promise<void> {
+    await expect(
+      this.page.getByText(refusedPhotoToastOf(view), { exact: true }),
+    ).toHaveCount(1);
+  }
+
+  async expectNoRefusedPhotoToast(): Promise<void> {
+    await expect(this.page.getByText(REFUSED_PHOTO_TOAST)).toHaveCount(0);
   }
 }

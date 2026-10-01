@@ -33,6 +33,13 @@ export class PhotoView {
     });
   }
 
+  private fullScreenButton(view: ProgressPhotoView): Locator {
+    return this.dialog.getByRole("button", {
+      name: `Open ${view} photo full screen`,
+      exact: true,
+    });
+  }
+
   private removeButton(view: ProgressPhotoView): Locator {
     return this.dialog.getByRole("button", {
       name: `Remove ${view} photo`,
@@ -92,6 +99,14 @@ export class PhotoView {
         this.dialog.getByText(`No ${view} photo`, { exact: true }),
       ).toBeVisible();
     }
+  }
+
+  async openFullScreen(view: ProgressPhotoView): Promise<void> {
+    await this.fullScreenButton(view).click();
+  }
+
+  async expectFocusOnPhoto(view: ProgressPhotoView): Promise<void> {
+    await expect(this.fullScreenButton(view)).toBeFocused();
   }
 
   async expectRemoveOffered(

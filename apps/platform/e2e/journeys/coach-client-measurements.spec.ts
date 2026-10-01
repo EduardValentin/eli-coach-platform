@@ -10,12 +10,13 @@ const dayMonthFormatter = new Intl.DateTimeFormat("en-GB", {
   month: "long",
 });
 
-test("the coach reads a client's ratio and opens her photos without a way to remove them, and nobody else can open or remove them", async ({
+test("the coach reads a client's ratio and browses her photos full screen without a way to remove them, and nobody else can open or remove them", async ({
   clientProfile,
   coachClient,
   measurementRecords,
   measurementsSheet,
   page,
+  photoLightbox,
   photoRequests,
   photoView,
   provisionCoach,
@@ -50,6 +51,7 @@ test("the coach reads a client's ratio and opens her photos without a way to rem
   await clientProfile.openAdd();
   await measurementsSheet.fill({ Waist: "72" });
   await measurementsSheet.addPhoto("front", samplePhotoOf("front"));
+  await measurementsSheet.addPhoto("side", samplePhotoOf("side"));
   await measurementsSheet.addPhoto("back", samplePhotoOf("back"));
   await measurementsSheet.save();
   await measurementsSheet.expectSavedToast();
@@ -105,8 +107,75 @@ test("the coach reads a client's ratio and opens her photos without a way to rem
     today,
     `Only you and ${client.firstName} can see these photos.`,
   );
-  await photoView.expectPhotos(["front"]);
+  await photoView.expectPhotos(["front", "side"]);
   await photoView.expectNoRemove();
+
+  // act
+  await photoView.openFullScreen("front");
+
+  // assert
+  await photoLightbox.expectShowing(
+    { view: "front", position: 1, count: 2 },
+    today,
+  );
+  await photoLightbox.expectNoRemove();
+
+  // act
+  await photoLightbox.next();
+
+  // assert
+  await photoLightbox.expectShowing(
+    { view: "side", position: 2, count: 2 },
+    today,
+  );
+
+  // act
+  await photoLightbox.next();
+
+  // assert
+  await photoLightbox.expectShowing(
+    { view: "front", position: 1, count: 2 },
+    today,
+  );
+
+  // act
+  await photoLightbox.previous();
+
+  // assert
+  await photoLightbox.expectShowing(
+    { view: "side", position: 2, count: 2 },
+    today,
+  );
+  await photoLightbox.expectNoRemove();
+
+  // act
+  await photoLightbox.previousWithKey();
+
+  // assert
+  await photoLightbox.expectShowing(
+    { view: "front", position: 1, count: 2 },
+    today,
+  );
+
+  // act
+  await photoLightbox.nextWithKey();
+
+  // assert
+  await photoLightbox.expectShowing(
+    { view: "side", position: 2, count: 2 },
+    today,
+  );
+
+  // act
+  await photoLightbox.close();
+
+  // assert
+  await photoLightbox.expectClosed();
+  await photoView.expectOpenFor(
+    today,
+    `Only you and ${client.firstName} can see these photos.`,
+  );
+  await photoView.expectFocusOnPhoto("front");
 
   // act
   await photoView.closeWithEscape();
@@ -129,6 +198,7 @@ test("the coach reads a client's ratio and opens her photos without a way to rem
   expect(coachRemoval).toBe(404);
   expect(await measurementRecords.photos(client.clientId)).toEqual([
     { view: "front", mimeType: "image/jpeg" },
+    { view: "side", mimeType: "image/jpeg" },
   ]);
 });
 

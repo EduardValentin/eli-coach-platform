@@ -1,7 +1,10 @@
+import type { ProgressPhotoView } from "@eli-coach-platform/domain/client-profile";
 import { expect, type Locator, type Page } from "@playwright/test";
 
 import { expectAvailability, type Availability } from "./control-states";
 import { tabTo } from "./keyboard";
+import { ProgressPhotoTiles } from "./progress-photo-tiles";
+import type { SamplePhoto } from "./sample-photos";
 
 type UnitsChoice = "kg · cm" | "lb · in";
 
@@ -101,6 +104,10 @@ export class ClientOnboarding {
 
   private get answerRequest() {
     return this.page.getByRole("region", { name: ANSWER_REQUEST_HEADING });
+  }
+
+  private get photoTiles() {
+    return new ProgressPhotoTiles(this.page.locator("body"));
   }
 
   private get measurementSystem() {
@@ -427,6 +434,26 @@ export class ClientOnboarding {
   async keyboardContinue(): Promise<void> {
     await tabTo(this.page, this.page.getByRole("button", { name: "Continue" }));
     await this.page.keyboard.press("Enter");
+  }
+
+  async expectPhotosLocked(): Promise<void> {
+    await this.photoTiles.expectLocked();
+  }
+
+  async agreeToPhotos(): Promise<void> {
+    await this.photoTiles.agree();
+  }
+
+  async expectPhotosSendNote(): Promise<void> {
+    await this.photoTiles.expectSendNote();
+  }
+
+  async addPhoto(view: ProgressPhotoView, photo: SamplePhoto): Promise<void> {
+    await this.photoTiles.add(view, photo);
+  }
+
+  async expectPhotoPreview(view: ProgressPhotoView): Promise<void> {
+    await this.photoTiles.expectPreview(view);
   }
 
   async sendToCoach(): Promise<void> {

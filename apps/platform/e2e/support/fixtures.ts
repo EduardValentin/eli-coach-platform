@@ -24,6 +24,7 @@ import { MeasurementRecords } from "./measurement-records";
 import { MeasurementsSheet } from "./measurements-sheet";
 import { OnboardingRecords } from "./onboarding-records";
 import { PhotoRequests } from "./photo-requests";
+import { PhotoLightbox } from "./photo-lightbox";
 import { PhotoView } from "./photo-view";
 import { PortalRequests } from "./portal-requests";
 import {
@@ -66,6 +67,7 @@ type PlatformFixtures = {
   clientProfile: ClientProfilePage;
   measurementsSheet: MeasurementsSheet;
   photoView: PhotoView;
+  photoLightbox: PhotoLightbox;
   accountPortal: AccountPortal;
   testEmail: string;
   visitorEmail: string;
@@ -299,6 +301,10 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
 
   photoView: async ({ page }, use) => {
     await use(new PhotoView(page));
+  },
+
+  photoLightbox: async ({ page }, use) => {
+    await use(new PhotoLightbox(page));
   },
 
   accountPortal: async ({ page }, use) => {

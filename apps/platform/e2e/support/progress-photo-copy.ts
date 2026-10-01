@@ -9,3 +9,9 @@ const VIEW_LABELS: Record<ProgressPhotoView, string> = {
 export function photoNameOf(view: ProgressPhotoView): string {
   return `${VIEW_LABELS[view]} photo`;
 }
+
+export function refusedPhotoToastOf(view: ProgressPhotoView): string {
+  return `The ${view} photo could not be processed, so it was not saved.`;
+}
+
+export const REFUSED_PHOTO_TOAST = /photo could not be processed/;

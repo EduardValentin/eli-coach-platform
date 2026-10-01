@@ -317,13 +317,14 @@ test("a client follows her weigh-in reminder and adds a fresh set in pounds and 
   await clientDashboard.expectNoNudge();
 });
 
-test("a client who agreed at onboarding adds front, side and back photos, views them together and removes them one by one", async ({
+test("a client who agreed at onboarding adds front, side and back photos, views them together, browses them full screen and removes them one by one", async ({
   clientDashboard,
   clientPortalShell,
   clientProfile,
   measurementRecords,
   measurementsSheet,
   page,
+  photoLightbox,
   photoView,
   provisionMeasuredClient,
   signIn,
@@ -446,6 +447,60 @@ test("a client who agreed at onboarding adds front, side and back photos, views 
 
   // act
   await photoView.openFor(today);
+  await photoView.openFullScreen("front");
+
+  // assert
+  await photoLightbox.expectShowing(
+    { view: "front", position: 1, count: 3 },
+    today,
+  );
+
+  // act
+  await photoLightbox.nextWithKey();
+
+  // assert
+  await photoLightbox.expectShowing(
+    { view: "side", position: 2, count: 3 },
+    today,
+  );
+
+  // act
+  await photoLightbox.previousWithKey();
+
+  // assert
+  await photoLightbox.expectShowing(
+    { view: "front", position: 1, count: 3 },
+    today,
+  );
+
+  // act
+  await photoLightbox.swipeToNext();
+
+  // assert
+  await photoLightbox.expectShowing(
+    { view: "side", position: 2, count: 3 },
+    today,
+  );
+
+  // act
+  await photoLightbox.swipeToPrevious();
+  await photoLightbox.swipeToPrevious();
+
+  // assert
+  await photoLightbox.expectShowing(
+    { view: "back", position: 3, count: 3 },
+    today,
+  );
+
+  // act
+  await photoLightbox.closeWithEscape();
+
+  // assert
+  await photoLightbox.expectClosed();
+  await photoView.expectOpenFor(today, CLIENT_PRIVACY_LINE);
+  await photoView.expectFocusOnPhoto("front");
+
+  // act
   await photoView.askToRemove("front");
   await photoView.keep();
 
