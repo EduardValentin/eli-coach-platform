@@ -38,6 +38,7 @@ import {
 import {
   MEASUREMENT_SAVE_OUTCOMES,
   PHOTO_PROCESSING_OUTCOMES,
+  PHOTO_REMOVAL_OUTCOMES,
 } from '../services/measurementService';
 import {
   PROTOTYPE_LIFE_STAGES,
@@ -1171,6 +1172,38 @@ export function DevToggle() {
                   >
                     <SelectTrigger
                       id="dev-measurement-save"
+                      className="w-full"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="works">Works</SelectItem>
+                      <SelectItem value="fails">Fails</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="dev-photo-removal"
+                    className={DEV_LABEL_CLASS}
+                  >
+                    Photo removal
+                  </Label>
+                  <Select
+                    value={appState.photoRemoval}
+                    onValueChange={(value) =>
+                      setAppState({
+                        photoRemoval: optionOrDefault(
+                          PHOTO_REMOVAL_OUTCOMES,
+                          value,
+                          'works',
+                        ),
+                      })
+                    }
+                  >
+                    <SelectTrigger
+                      id="dev-photo-removal"
                       className="w-full"
                     >
                       <SelectValue />

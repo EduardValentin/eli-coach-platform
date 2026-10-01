@@ -28,8 +28,10 @@ import {
 import {
   MEASUREMENT_SAVE_OUTCOMES,
   PHOTO_PROCESSING_OUTCOMES,
+  PHOTO_REMOVAL_OUTCOMES,
   type MeasurementSave,
   type PhotoProcessing,
+  type PhotoRemoval,
 } from '../services/measurementService';
 import {
   PROTOTYPE_LIFE_STAGES,
@@ -103,6 +105,7 @@ type AppState = {
   journeyLifeStage: PrototypeLifeStage;
   photoProcessing: PhotoProcessing;
   measurementSave: MeasurementSave;
+  photoRemoval: PhotoRemoval;
   journeySeededPhotos: PrototypeSeededPhotos;
   invitationResendOutcome: PrototypeInvitationResendOutcome;
   clientsRoster: PrototypeClientsRoster;
@@ -144,6 +147,7 @@ const defaultState: AppState = {
   journeyLifeStage: 'none',
   photoProcessing: 'works',
   measurementSave: 'works',
+  photoRemoval: 'works',
   journeySeededPhotos: 'none',
   invitationResendOutcome: 'sent',
   clientsRoster: 'seeded',
@@ -359,6 +363,11 @@ function parseDevParamsFromURL(): AppState {
     params.get('jsave'),
     defaultState.measurementSave,
   );
+  state.photoRemoval = optionOrDefault(
+    PHOTO_REMOVAL_OUTCOMES,
+    params.get('jremove'),
+    defaultState.photoRemoval,
+  );
   state.journeySeededPhotos = optionOrDefault(
     PROTOTYPE_SEEDED_PHOTOS,
     params.get('jphotos'),
@@ -447,6 +456,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     url.searchParams.delete('jlife');
     url.searchParams.delete('jphoto');
     url.searchParams.delete('jsave');
+    url.searchParams.delete('jremove');
     url.searchParams.delete('jphotos');
     url.searchParams.delete('jresend');
     url.searchParams.delete('jroster');
@@ -533,6 +543,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     if (appState.measurementSave !== defaultState.measurementSave) {
       url.searchParams.set('jsave', appState.measurementSave);
+    }
+    if (appState.photoRemoval !== defaultState.photoRemoval) {
+      url.searchParams.set('jremove', appState.photoRemoval);
     }
     if (appState.journeySeededPhotos !== defaultState.journeySeededPhotos) {
       url.searchParams.set('jphotos', appState.journeySeededPhotos);

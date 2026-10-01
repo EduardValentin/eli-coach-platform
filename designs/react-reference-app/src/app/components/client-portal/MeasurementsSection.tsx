@@ -39,6 +39,8 @@ const SAVED_TOAST = 'Measurements saved.';
 
 const SAVE_FAILED_TOAST = 'Your measurements could not be saved. Try again.';
 
+const REMOVE_FAILED_TOAST = 'The photo could not be removed. Try again.';
+
 function refusedPhotoToast(view: ProgressPhotoView): string {
   return `The ${view} photo could not be processed, so it was not saved.`;
 }
@@ -204,9 +206,10 @@ export function MeasurementsSection() {
         viewer={{
           role: 'client',
           onRemovePhoto: (view) => {
-            if (viewing) {
-              removeMeasurementPhoto(demoJourney.callId, viewing.id, view);
-            }
+            if (!viewing) return;
+            removeMeasurementPhoto(demoJourney.callId, viewing.id, view).catch(
+              () => toast.error(REMOVE_FAILED_TOAST),
+            );
           },
         }}
       />

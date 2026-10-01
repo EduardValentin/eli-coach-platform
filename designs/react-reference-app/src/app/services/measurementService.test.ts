@@ -1,7 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MeasurementEntry } from '../domain/journey';
-import { recordMeasurements, SIMULATED_LATENCY_MS } from './measurementService';
-
+import {
+  recordMeasurements,
+  removeProgressPhoto,
+  SIMULATED_LATENCY_MS,
+} from './measurementService';
 
 const ENTRY: MeasurementEntry = {
   id: 'entry-1',
@@ -63,6 +66,33 @@ describe('recording measurements', () => {
     });
     const failure = expect(pending).rejects.toThrow(
       'The measurements could not be saved.',
+    );
+
+    // act
+    await vi.advanceTimersByTimeAsync(SIMULATED_LATENCY_MS);
+
+    // assert
+    await failure;
+  });
+});
+
+describe('removing a progress photo', () => {
+  it('removes the photo when the removal works', async () => {
+    // arrange
+    const pending = removeProgressPhoto('works');
+
+    // act
+    await vi.advanceTimersByTimeAsync(SIMULATED_LATENCY_MS);
+
+    // assert
+    await expect(pending).resolves.toBeUndefined();
+  });
+
+  it('fails when the removal fails', async () => {
+    // arrange
+    const pending = removeProgressPhoto('fails');
+    const failure = expect(pending).rejects.toThrow(
+      'The photo could not be removed.',
     );
 
     // act

@@ -203,10 +203,45 @@ describe('her measurements on the profile page', () => {
     await waitFor(() =>
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
     );
+    await waitFor(
+      () =>
+        expect(
+          screen.queryByRole('button', { name: /^View photos/ }),
+        ).not.toBeInTheDocument(),
+      { timeout: SERVICE_TIMEOUT },
+    );
     expect(historyRows()).toHaveLength(2);
+  });
+
+  it('keeps the photo and tells her when the removal fails', async () => {
+    // arrange
+    renderSection('&jphotos=latest&jremove=fails');
+    await userEvent.click(screen.getByRole('button', { name: /^View photos/ }));
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Remove front photo' }),
+    );
+
+    // act
+    await userEvent.click(screen.getByRole('button', { name: 'Remove' }));
+
+    // assert
     expect(
-      screen.queryByRole('button', { name: /^View photos/ }),
+      await screen.findByText(
+        'The photo could not be removed. Try again.',
+        {},
+        { timeout: SERVICE_TIMEOUT },
+      ),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole('alertdialog', { name: 'Remove this photo?' }),
     ).not.toBeInTheDocument();
+    const photoView = screen.getByRole('dialog', { name: /^Photos from/ });
+    expect(
+      within(photoView).getByRole('img', { name: 'Front photo' }),
+    ).toBeVisible();
+    expect(
+      within(photoView).getByRole('button', { name: 'Remove front photo' }),
+    ).toBeVisible();
   });
 
   it('keeps the sheet open with what she entered and tells her when the save fails', async () => {

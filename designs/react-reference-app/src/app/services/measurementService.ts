@@ -19,6 +19,13 @@ export const MEASUREMENT_SAVE_OUTCOMES: readonly MeasurementSave[] = [
   'fails',
 ];
 
+export type PhotoRemoval = 'works' | 'fails';
+
+export const PHOTO_REMOVAL_OUTCOMES: readonly PhotoRemoval[] = [
+  'works',
+  'fails',
+];
+
 export type MeasurementOutcomes = {
   processing: PhotoProcessing;
   save: MeasurementSave;
@@ -47,4 +54,12 @@ export async function recordMeasurements(
     entry: { ...entry, photos: NO_PROGRESS_PHOTOS },
     refusedViews: PROGRESS_PHOTO_VIEWS.filter((view) => entry.photos[view]),
   };
+}
+
+export async function removeProgressPhoto(removal: PhotoRemoval): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, SIMULATED_LATENCY_MS));
+
+  if (removal === 'fails') {
+    throw new Error('The photo could not be removed.');
+  }
 }

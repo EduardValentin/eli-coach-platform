@@ -32,6 +32,7 @@ import {
   type ReviewCall,
 } from '../domain/journey';
 import { withoutProgressPhoto } from '../domain/measurements';
+import { removeProgressPhoto } from '../services/measurementService';
 import {
   periodEnd,
   resolveDay1,
@@ -119,7 +120,7 @@ type ClientJourneyContextType = {
     callId: string,
     entryId: string,
     view: ProgressPhotoView,
-  ) => void;
+  ) => Promise<void>;
   cancelSubscription: (callId: string, cancelled: CoachingSubscription) => void;
   startProgramNow: (callId: string, started: CoachingSubscription) => void;
 };
@@ -570,7 +571,8 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
   );
 
   const removeMeasurementPhoto = useCallback(
-    (callId: string, entryId: string, view: ProgressPhotoView) => {
+    async (callId: string, entryId: string, view: ProgressPhotoView) => {
+      await removeProgressPhoto(appState.photoRemoval);
       updateJourney(callId, (journey) => ({
         ...journey,
         measurements: journey.measurements.map((entry) =>
@@ -578,7 +580,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
         ),
       }));
     },
-    [updateJourney],
+    [appState.photoRemoval, updateJourney],
   );
 
   const cancelSubscription = useCallback(
