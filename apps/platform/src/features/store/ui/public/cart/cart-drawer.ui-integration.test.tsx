@@ -23,6 +23,9 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 
+import { clientAction as acquireResources } from "~/features/store/api/acquisitions/acquisitions";
+import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
+
 import { STORE_CART_STORAGE_KEY } from "./cart";
 import { StoreCartProvider, useStoreCart } from "./cart-provider";
 import { StoreCartButton, StoreCartDrawer } from "./cart-drawer";
@@ -574,6 +577,84 @@ describe("StoreCartDrawer", () => {
     expect(readStoredProductSlugs()).toEqual(["hormone-harmony"]);
   });
 
+  it.each([
+    {
+      failure: "the server refuses the request without an answer",
+      answer: () => new HttpResponse("Unauthorized", { status: 401 }),
+    },
+    {
+      failure: "the request never reaches the server",
+      answer: () => HttpResponse.error(),
+    },
+  ])(
+    "preserves the cart and form and resets bot verification when $failure",
+    async ({ answer }) => {
+      // arrange
+      const user = userEvent.setup();
+      let issueToken = (_token: string) => {};
+      let challengeResets = 0;
+      window.turnstile = {
+        execute: () => issueToken("store-token"),
+        remove: () => {},
+        render: (_container, options) => {
+          issueToken = options.callback;
+
+          return "store-turnstile-widget";
+        },
+        reset: () => {
+          challengeResets += 1;
+        },
+      };
+      seedCart(["hormone-harmony"]);
+      server.use(
+        http.get(STORE_CATALOG_API_URL, () =>
+          HttpResponse.json({
+            products: [createProduct()],
+            success: true,
+          }),
+        ),
+        http.post(STORE_ACQUISITIONS_API_URL, answer),
+      );
+      renderCart({
+        botDetection: {
+          provider: "turnstile",
+          siteKey: "store-test-site-key",
+        },
+      });
+      await user.click(
+        await screen.findByRole("button", { name: "Cart, 1 item" }),
+      );
+      const dialog = await screen.findByRole("dialog", { name: "Your cart" });
+      await continueToAcquisitionDetails(dialog, user);
+      await user.type(
+        within(dialog).getByRole("textbox", { name: "Email address" }),
+        "woman@example.com",
+      );
+      await user.click(
+        within(dialog).getByRole("checkbox", {
+          name: /agree to the terms/i,
+        }),
+      );
+
+      // act
+      await user.click(
+        within(dialog).getByRole("button", { name: "Send my resources" }),
+      );
+
+      // assert
+      expect(await within(dialog).findByRole("alert")).toHaveTextContent(
+        "We couldn't send your resources right now. Your cart is saved, so please try again.",
+      );
+      expect(
+        within(dialog).getByRole("textbox", { name: "Email address" }),
+      ).toHaveValue("woman@example.com");
+      expect(readStoredProductSlugs()).toEqual(["hormone-harmony"]);
+      await waitFor(() => {
+        expect(challengeResets).toBe(1);
+      });
+    },
+  );
+
   it("shows a retryable error when bot verification cannot complete", async () => {
     // arrange
     const user = userEvent.setup();
@@ -895,7 +976,7 @@ function renderCart(options?: { botDetection?: BotDetectionConfig }) {
       path: STORE_CATALOG_API_URL,
     },
     {
-      action: async ({ request }) => fetch(request),
+      action: frameworkModeAction(acquireResources),
       path: STORE_ACQUISITIONS_API_PATH,
     },
   ]);

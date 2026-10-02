@@ -31,7 +31,9 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 
+import { clientAction as joinWaitlist } from "~/features/waitlist/api/waitlist";
 import type { WaitlistPresentation } from "~/features/waitlist/ui/shared/waitlist-presentation";
+import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
 
 import { WaitlistEmailForm } from "./email-form";
 import { launchWaitlistConfetti } from "./confetti";
@@ -89,7 +91,7 @@ function renderForm(options?: {
         path: "/",
       },
       {
-        action: async ({ request }) => fetch(request),
+        action: frameworkModeAction(joinWaitlist),
         path: WAITLIST_API_PATH,
       },
     ],
@@ -531,4 +533,36 @@ describe("WaitlistEmailForm", () => {
       `mailto:${ELI_COACH_CONTACT_EMAIL}`,
     );
   });
+
+  it.each([
+    {
+      failure: "the server refuses the signup without an answer",
+      answer: () => new HttpResponse("Unauthorized", { status: 401 }),
+    },
+    {
+      failure: "the request never reaches the server",
+      answer: () => HttpResponse.error(),
+    },
+  ])(
+    "keeps her email, says the signup failed and resets bot detection when $failure",
+    async ({ answer }) => {
+      // arrange
+      server.use(http.post(WAITLIST_API_URL, answer));
+      renderForm();
+
+      // act
+      await typeEmailAndSubmit();
+
+      // assert
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        "Something went wrong on our end. Try again in a moment.",
+      );
+      expect(getEmailInput()).toHaveValue("eli@example.com");
+      await waitFor(() => {
+        expect(getBotDetectionResponseInput()).toHaveValue(
+          TURNSTILE_TEST_RESPONSE_TOKEN,
+        );
+      });
+    },
+  );
 });

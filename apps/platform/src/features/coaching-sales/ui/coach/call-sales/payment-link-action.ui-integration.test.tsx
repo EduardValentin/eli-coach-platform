@@ -15,8 +15,11 @@ import {
 } from "react-router";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
+import { clientAction as sendPaymentLink } from "~/features/coaching-sales/api/coach/payment-links";
 import type { CallSalesState } from "~/features/coaching-sales/contracts/coaching-sales";
 import { COACHING_SALES_API_PATHS } from "~/features/coaching-sales/contracts/paths";
+
+import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
 
 import { PaymentLinkAction } from "./payment-link-action";
 
@@ -246,6 +249,40 @@ describe("the payment link action on an ended call", () => {
     },
   );
 
+  it.each([
+    {
+      failure: "her session has ended",
+      answer: () => new HttpResponse("Unauthorized", { status: 401 }),
+    },
+    {
+      failure: "the request never reaches the server",
+      answer: () => HttpResponse.error(),
+    },
+  ])(
+    "keeps the row and asks for a reload when $failure",
+    async ({ answer }) => {
+      // arrange
+      server.use(http.post(PAYMENT_LINKS_URL, answer));
+      const user = await renderAction({ state: "held" });
+      await user.click(
+        screen.getByRole("button", { name: "Send payment link" }),
+      );
+
+      // act
+      await user.click(screen.getByRole("button", { name: "Send link" }));
+
+      // assert
+      expect(
+        await screen.findByText(
+          "This call can't take a payment link right now. Reload the page to see its latest state.",
+        ),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Send payment link" }),
+      ).toBeEnabled();
+    },
+  );
+
   it("holds the button busy while the link is on its way", async () => {
     // arrange
     let release: () => void = () => {};
@@ -323,7 +360,7 @@ async function renderAction(
         path: "/coach/assessment-calls",
       },
       {
-        action: ({ request }: { request: Request }) => fetch(request),
+        action: frameworkModeAction(sendPaymentLink),
         path: PAYMENT_LINKS_URL,
       },
     ],
