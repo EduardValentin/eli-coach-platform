@@ -39,7 +39,7 @@ services:
       - >-
         exec stripe listen
         --api-key "$${STRIPE_SECRET_KEY}"
-        --events checkout.session.completed
+        --events checkout.session.completed,customer.subscription.updated,customer.subscription.deleted,charge.refunded,invoice.paid,invoice.payment_failed
         --forward-to http://platform:3000/eli-coach-platform/api/stripe/webhooks
     labels:
       logging: promtail
