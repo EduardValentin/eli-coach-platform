@@ -246,7 +246,6 @@ const stripeApiFailure: WireMockStub["response"] = {
   },
 };
 
-/** Takes precedence over the suite's default answer until the next reset. */
 export function stripeRefusesSubscriptionUpdates(): WireMockStub {
   return {
     priority: 2,
@@ -255,7 +254,6 @@ export function stripeRefusesSubscriptionUpdates(): WireMockStub {
   };
 }
 
-/** Outranks a refusal stubbed earlier in the same case. */
 export function stripeAcceptsSubscriptionUpdatesAgain(): WireMockStub {
   return { ...stripeUpdatesSubscription, priority: 1 };
 }

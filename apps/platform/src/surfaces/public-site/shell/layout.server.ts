@@ -4,7 +4,7 @@ import type { LoaderFunctionArgs } from "react-router";
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 import type { PublicSessionState } from "~/features/accounts/contracts/account";
 import { sessionContext } from "~/features/accounts/server/guards/session-context.server";
-import { readClientJourneyStep } from "~/features/coaching-sales/server/guards/require-client-journey-step.server";
+import { readClientPortalStanding } from "~/features/coaching-sales/server/guards/require-client-journey-step.server";
 import { STORE_PATH } from "~/features/store/contracts/paths";
 import {
   presentWaitlist,
@@ -49,7 +49,7 @@ async function readPublicSessionState(
   return {
     kind: "authenticated",
     portalDestination: resolvePortalDestination({
-      journeyStep: await readClientJourneyStep(args),
+      standing: await readClientPortalStanding(args),
       role: session.account.role,
     }),
   };

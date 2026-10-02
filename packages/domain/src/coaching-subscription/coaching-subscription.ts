@@ -204,13 +204,14 @@ export class CoachingSubscription {
       };
     }
 
+    const owed = {
+      amountCents: this.refundOnCancellationAt(now),
+      cancelledAt: now,
+    };
     const refund =
       rule === "full-refund"
-        ? RefundDue.full({ amountCents: this.amountCents, cancelledAt: now })
-        : RefundDue.proportional({
-            amountCents: this.proportionalRefundCents(now),
-            cancelledAt: now,
-          });
+        ? RefundDue.full(owed)
+        : RefundDue.proportional(owed);
 
     return {
       outcome: "cancelled",
@@ -223,6 +224,17 @@ export class CoachingSubscription {
       }),
       instruction: { kind: "end-now" },
     };
+  }
+
+  refundOnCancellationAt(now: Date): number {
+    switch (this.cancellationRule(now)) {
+      case "full-refund":
+        return this.amountCents;
+      case "proportional-refund":
+        return this.proportionalRefundCents(now);
+      default:
+        return 0;
+    }
   }
 
   paidThrough(): Date {

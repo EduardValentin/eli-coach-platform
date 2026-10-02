@@ -65,6 +65,7 @@ import type {
 } from "@eli-coach-platform/infrastructure/payments/server";
 
 import { ClientJourneyController } from "~/features/coaching-sales/api/client/client-journey-controller.server";
+import { SubscriptionController } from "~/features/coaching-sales/api/client/subscription-controller.server";
 import { CoachClientsController } from "~/features/coaching-sales/api/coach/coach-clients-controller.server";
 import { CoachSalesController } from "~/features/coaching-sales/api/coach/coach-sales-controller.server";
 import { PaymentLinksController } from "~/features/coaching-sales/api/coach/payment-links-controller.server";
@@ -103,7 +104,8 @@ export type CoachingSalesFeature = {
   coachSales: CoachSalesController;
   invitations: InvitationsController;
   paymentLinks: PaymentLinksController;
-  readClientJourney: ReadClientJourneyUseCase;
+  readClientPortalStanding: ReadClientPortalStandingUseCase;
+  subscription: SubscriptionController;
 };
 
 type CoachingSalesComposition = {
@@ -350,7 +352,15 @@ export function composeCoachingSalesFeature(
       paymentLinks: new PaymentLinksController({
         sendPaymentLink: useCases.sendPaymentLink,
       }),
-      readClientJourney: clientJourneyUseCases.readClientJourney,
+      readClientPortalStanding: clientJourneyUseCases.readClientPortalStanding,
+      subscription: new SubscriptionController({
+        appBasePath: handles.appBasePath,
+        cancelSubscription: subscriptionUseCases.cancelSubscription,
+        openPaymentMethodSession: subscriptionUseCases.openPaymentMethodSession,
+        publicAppUrl: handles.publicAppUrl,
+        readClientSubscription: subscriptionUseCases.readClientSubscription,
+        startProgramNow: subscriptionUseCases.startProgramNow,
+      }),
     },
     handles: {
       clientIdentities,

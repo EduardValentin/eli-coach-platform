@@ -210,8 +210,12 @@ function createLoaderArgs(options: {
   session: ResolvedSession;
 }): LoaderFunctionArgs {
   const coachingSales = {
-    readClientJourney: {
-      execute: vi.fn().mockResolvedValue(options.journey ?? null),
+    readClientPortalStanding: {
+      execute: vi
+        .fn()
+        .mockResolvedValue(
+          options.journey ? { journey: options.journey, access: "open" } : null,
+        ),
     },
   } as unknown as CoachingSalesFeature;
 

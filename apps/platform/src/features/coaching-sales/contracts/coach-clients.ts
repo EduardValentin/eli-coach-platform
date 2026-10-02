@@ -3,6 +3,10 @@ import {
   VISITOR_PRIMARY_GOALS,
 } from "@eli-coach-platform/domain/assessment-call";
 import { CLIENT_STATUSES } from "@eli-coach-platform/domain/client-roster";
+import {
+  COACHING_SUBSCRIPTION_STATUSES,
+  REFUND_REASONS,
+} from "@eli-coach-platform/domain/coaching-subscription";
 import { z } from "zod";
 
 import { coachingBundleIdSchema } from "./bundle-cards";
@@ -17,6 +21,7 @@ const rosterClientSchema = z.object({
   lastName: z.string(),
   email: z.string().min(1),
   status: clientStatusSchema,
+  needsRefund: z.boolean(),
   bundleMonths: z.number().int().positive().nullable(),
   paidAt: z.iso.datetime().nullable(),
 });
@@ -54,12 +59,26 @@ const bookedAssessmentCallSchema = z.object({
   notes: z.string().nullable(),
 });
 
+const subscriptionRefundSchema = z.object({
+  reason: z.enum(REFUND_REASONS),
+  amountCents: z.number().int().nonnegative(),
+  outstandingCents: z.number().int().nonnegative(),
+  refundedCents: z.number().int().nonnegative(),
+  currency: z.string().length(3),
+  dueBy: z.iso.datetime().nullable(),
+  refundedOn: z.iso.datetime().nullable(),
+});
+
 const clientSubscriptionSchema = z.object({
   bundleId: coachingBundleIdSchema,
   months: z.number().int().positive(),
   reducedPrice: z.boolean(),
   paidAt: z.iso.datetime(),
   workStartsOn: z.iso.datetime().nullable(),
+  status: z.enum(COACHING_SUBSCRIPTION_STATUSES),
+  endsOn: z.iso.datetime().nullable(),
+  endedOn: z.iso.datetime().nullable(),
+  refund: subscriptionRefundSchema.nullable(),
 });
 
 export type ClientSubscription = z.infer<typeof clientSubscriptionSchema>;
@@ -70,6 +89,7 @@ export const coachClientSchema = z.object({
   lastName: z.string(),
   email: z.string().min(1),
   status: clientStatusSchema,
+  needsRefund: z.boolean(),
   gender: visitorGenderSchema,
   assessmentCall: bookedAssessmentCallSchema,
   subscription: clientSubscriptionSchema.nullable(),

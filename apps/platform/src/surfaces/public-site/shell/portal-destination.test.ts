@@ -5,7 +5,7 @@ import { resolvePortalDestination } from "./portal-destination";
 describe("resolvePortalDestination", () => {
   it("points the coach at the coach portal", () => {
     // arrange
-    const session = { journeyStep: null, role: "COACH" } as const;
+    const session = { standing: null, role: "COACH" } as const;
 
     // act
     const destination = resolvePortalDestination(session);
@@ -16,7 +16,10 @@ describe("resolvePortalDestination", () => {
 
   it("points a client who has not seen her welcome at the welcome screen", () => {
     // arrange
-    const session = { journeyStep: "welcome", role: "CLIENT" } as const;
+    const session = {
+      standing: { step: "welcome", access: "open" },
+      role: "CLIENT",
+    } as const;
 
     // act
     const destination = resolvePortalDestination(session);
@@ -30,7 +33,10 @@ describe("resolvePortalDestination", () => {
 
   it("points a client who has seen her welcome at onboarding", () => {
     // arrange
-    const session = { journeyStep: "onboarding", role: "CLIENT" } as const;
+    const session = {
+      standing: { step: "onboarding", access: "open" },
+      role: "CLIENT",
+    } as const;
 
     // act
     const destination = resolvePortalDestination(session);
@@ -44,7 +50,10 @@ describe("resolvePortalDestination", () => {
 
   it("points a client who has sent her onboarding at the client portal", () => {
     // arrange
-    const session = { journeyStep: "submitted", role: "CLIENT" } as const;
+    const session = {
+      standing: { step: "submitted", access: "open" },
+      role: "CLIENT",
+    } as const;
 
     // act
     const destination = resolvePortalDestination(session);
@@ -55,7 +64,21 @@ describe("resolvePortalDestination", () => {
 
   it("points a client account with no journey at the client portal", () => {
     // arrange
-    const session = { journeyStep: null, role: "CLIENT" } as const;
+    const session = { standing: null, role: "CLIENT" } as const;
+
+    // act
+    const destination = resolvePortalDestination(session);
+
+    // assert
+    expect(destination).toEqual({ href: "/client", label: "Client Portal" });
+  });
+
+  it("points a client whose coaching has ended at the client portal, which sends her to the ended page", () => {
+    // arrange
+    const session = {
+      standing: { step: "welcome", access: "ended" },
+      role: "CLIENT",
+    } as const;
 
     // act
     const destination = resolvePortalDestination(session);

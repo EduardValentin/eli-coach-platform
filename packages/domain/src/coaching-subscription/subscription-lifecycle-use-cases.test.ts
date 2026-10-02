@@ -642,6 +642,7 @@ describe("ReadClientSubscriptionUseCase", () => {
       cancellationRule: "full-refund",
       withdrawalDeadline: WITHDRAWAL_DEADLINE,
       paidThrough: ACCESS_END,
+      refundOnCancellationCents: 44700,
       startNowUntil: WITHDRAWAL_DEADLINE,
       refundOutstanding: false,
     });

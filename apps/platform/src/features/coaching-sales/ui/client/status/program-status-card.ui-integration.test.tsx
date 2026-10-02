@@ -39,7 +39,13 @@ function statusOf(
   kind: ProgramStatus["kind"],
   workStartsOn: string | null = null,
 ): ProgramStatus {
-  return { kind, submittedAt: SUBMITTED_AT, workStartsOn };
+  return {
+    kind,
+    submittedAt: SUBMITTED_AT,
+    workStartsOn,
+    startNowUntil: null,
+    paymentProblem: false,
+  };
 }
 
 type CardProps = Parameters<typeof ProgramStatusCard>[0];

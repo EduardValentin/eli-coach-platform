@@ -2,15 +2,15 @@ import {
   buildRedirectPath,
   normalizeBasePath,
 } from "@eli-coach-platform/config";
-import type {
-  ClientJourney,
-  ClientJourneyStep,
-} from "@eli-coach-platform/domain/client-journey";
+import type { ClientJourney } from "@eli-coach-platform/domain/client-journey";
 import { redirect, type RouterContextProvider } from "react-router";
 
 import { accountsContext } from "~/features/accounts/server/guards/accounts-context.server";
 import { sessionContext } from "~/features/accounts/server/guards/session-context.server";
-import { clientJourneyRedirect } from "~/features/coaching-sales/contracts/client-journey";
+import {
+  clientJourneyRedirect,
+  type ClientPortalStanding,
+} from "~/features/coaching-sales/contracts/client-journey";
 
 import { clientJourneyContext } from "./client-journey-context.server";
 import { coachingSalesContext } from "./coaching-sales-context.server";
@@ -20,27 +20,32 @@ type JourneyRequest = {
   request: Request;
 };
 
-export async function readClientJourneyStep(
-  args: JourneyRequest,
-): Promise<ClientJourneyStep | null> {
-  const journey = await readSignedInClientJourney(args);
+type SignedInStanding = {
+  journey: ClientJourney;
+  standing: ClientPortalStanding;
+};
 
-  return journey?.step() ?? null;
+export async function readClientPortalStanding(
+  args: JourneyRequest,
+): Promise<ClientPortalStanding | null> {
+  const signedIn = await readSignedInClientStanding(args);
+
+  return signedIn?.standing ?? null;
 }
 
 export async function requireClientJourneyStep(
   args: JourneyRequest,
 ): Promise<void> {
-  const journey = await readSignedInClientJourney(args);
-  handOverClientJourney(args, journey);
+  const signedIn = await readSignedInClientStanding(args);
+  handOverClientJourney(args, signedIn?.journey ?? null);
 
-  if (!journey) {
+  if (!signedIn) {
     return;
   }
 
   const { appBasePath } = args.context.get(accountsContext).portal;
   const redirectTo = clientJourneyRedirect(
-    journey.step(),
+    signedIn.standing,
     appPathOf(new URL(args.request.url).pathname, appBasePath),
   );
 
@@ -69,16 +74,25 @@ function handOverClientJourney(
   args.context.set(clientJourneyContext, journey?.toSnapshot() ?? null);
 }
 
-async function readSignedInClientJourney(
+async function readSignedInClientStanding(
   args: JourneyRequest,
-): Promise<ClientJourney | null> {
+): Promise<SignedInStanding | null> {
   const session = args.context.get(sessionContext);
 
   if (session.kind === "anonymous" || session.account.role !== "CLIENT") {
     return null;
   }
 
-  return args.context
+  const standing = await args.context
     .get(coachingSalesContext)
-    .readClientJourney.execute(session.account.authSubjectId);
+    .readClientPortalStanding.execute(session.account.authSubjectId);
+
+  if (!standing) {
+    return null;
+  }
+
+  return {
+    journey: standing.journey,
+    standing: { step: standing.journey.step(), access: standing.access },
+  };
 }

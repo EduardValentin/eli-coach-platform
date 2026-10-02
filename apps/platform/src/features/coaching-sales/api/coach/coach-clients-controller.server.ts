@@ -8,6 +8,10 @@ import type {
   ListClientsUseCase,
   ReadClientRecordUseCase,
 } from "@eli-coach-platform/domain/client-roster";
+import {
+  RefundDue,
+  type RefundDueSnapshot,
+} from "@eli-coach-platform/domain/coaching-subscription";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 
 import { requireApiAccount } from "~/features/accounts/server/guards/require-account.server";
@@ -43,7 +47,10 @@ const RESEND_REFUSALS = {
 
 const RESEND_REQUEST_MAX_BYTES = 1024;
 
-type ListedClient = ClientRosterEntry & { status: ClientStatus };
+type ListedClient = ClientRosterEntry & {
+  status: ClientStatus;
+  needsRefund: boolean;
+};
 
 type ClientRecord = NonNullable<
   Awaited<ReturnType<ReadClientRecordUseCase["execute"]>>
@@ -131,6 +138,7 @@ function identityOf(client: ListedClient) {
     lastName: client.journey.lastName,
     email: client.booking.email,
     status: client.status,
+    needsRefund: client.needsRefund,
   };
 }
 
@@ -168,14 +176,33 @@ function subscriptionOf(record: ClientRecord) {
     return null;
   }
 
-  const { bundleId, months, tier, paidAt } = record.subscription;
+  const { subscription, subscriptionStatus } = record;
+  const accessEndsOn = subscription.accessEndsAt?.toISOString() ?? null;
 
   return {
-    bundleId,
-    months,
-    reducedPrice: tier === "reduced",
-    paidAt: paidAt.toISOString(),
+    bundleId: subscription.bundleId,
+    months: subscription.months,
+    reducedPrice: subscription.tier === "reduced",
+    paidAt: subscription.paidAt.toISOString(),
     workStartsOn: record.workStartsOn?.toISOString() ?? null,
+    status: subscriptionStatus,
+    endsOn: subscriptionStatus === "cancelled" ? accessEndsOn : null,
+    endedOn: subscriptionStatus === "ended" ? accessEndsOn : null,
+    refund: subscription.refund
+      ? refundOf(subscription.refund, subscription.currency)
+      : null,
+  };
+}
+
+function refundOf(refund: RefundDueSnapshot, currency: string) {
+  return {
+    reason: refund.reason,
+    amountCents: refund.amountCents,
+    outstandingCents: RefundDue.reconstitute(refund).outstandingCents(),
+    refundedCents: refund.refundedCents,
+    currency,
+    dueBy: refund.dueBy?.toISOString() ?? null,
+    refundedOn: refund.refundedAt?.toISOString() ?? null,
   };
 }
 

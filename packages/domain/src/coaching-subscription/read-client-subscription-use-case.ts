@@ -14,6 +14,7 @@ type ClientSubscriptionReading = {
   cancellationRule: CancellationRule;
   withdrawalDeadline: Date;
   paidThrough: Date;
+  refundOnCancellationCents: number;
   startNowUntil: Date | null;
   refundOutstanding: boolean;
 };
@@ -44,6 +45,7 @@ export class ReadClientSubscriptionUseCase {
       cancellationRule: subscription.cancellationRule(now),
       withdrawalDeadline: withdrawalDeadline(subscription.paidAt),
       paidThrough: subscription.paidThrough(),
+      refundOnCancellationCents: subscription.refundOnCancellationAt(now),
       startNowUntil: subscription.startNowUntil(),
       refundOutstanding:
         subscription.refund !== null && !subscription.refund.isSettled(),

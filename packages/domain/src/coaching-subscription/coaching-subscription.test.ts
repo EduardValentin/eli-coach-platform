@@ -231,6 +231,39 @@ describe("CoachingSubscription.cancel", () => {
   });
 });
 
+describe("CoachingSubscription.refundOnCancellationAt", () => {
+  it.each([
+    ["waiting", DAY_13, 44700],
+    ["immediate", DAY_13, 44700],
+    ["waiting", DAY_14, 0],
+  ] as const)(
+    "owes back on the %s path at %s what a cancellation would refund",
+    (startChoice, now, expected) => {
+      // act
+      const refundCents = onPath(startChoice).refundOnCancellationAt(now);
+
+      // assert
+      expect(refundCents).toBe(expected);
+    },
+  );
+
+  it("owes back the unused share of the first period after day 1", () => {
+    // arrange
+    const subscription = subscriptionOf({
+      startChoice: "immediate",
+      programStartedOn: new Date("2026-10-05T10:00:00.000Z"),
+    });
+
+    // act
+    const refundCents = subscription.refundOnCancellationAt(
+      new Date("2026-10-10T09:00:00.000Z"),
+    );
+
+    // assert
+    expect(refundCents).toBe(42271);
+  });
+});
+
 describe("CoachingSubscription.statusAt", () => {
   it.each([
     ["not started", {}, DAY_14, "not-started"],

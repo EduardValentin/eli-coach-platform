@@ -23,6 +23,7 @@ const ROSTER: ClientRoster = {
       lastName: "Popescu",
       paidAt: "2026-09-20T09:00:00.000Z",
       status: "invited",
+      needsRefund: false,
     },
   ],
 };

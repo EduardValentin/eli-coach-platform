@@ -61,12 +61,17 @@ const INVITED: CoachClient = {
   },
   gender: "female",
   status: "invited",
+  needsRefund: false,
   subscription: {
     bundleId: "3-months",
     months: 3,
     paidAt: "2026-09-20T09:00:00.000Z",
     reducedPrice: false,
     workStartsOn: null,
+    status: "not-started",
+    endsOn: null,
+    endedOn: null,
+    refund: null,
   },
 };
 

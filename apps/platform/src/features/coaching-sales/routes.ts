@@ -50,4 +50,16 @@ export const coachingSalesApiRoutes = [
     COACHING_SALES_API_PATHS.invitationResends.slice(1),
     "./api/coach/invitation-resends.ts",
   ),
+  route(
+    COACHING_SALES_API_PATHS.subscriptionCancellation.slice(1),
+    "./api/client/subscription-cancellation.ts",
+  ),
+  route(
+    COACHING_SALES_API_PATHS.programStart.slice(1),
+    "./api/client/program-start.ts",
+  ),
+  route(
+    COACHING_SALES_API_PATHS.paymentMethodSession.slice(1),
+    "./api/client/payment-method-session.ts",
+  ),
 ];

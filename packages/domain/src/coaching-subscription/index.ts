@@ -14,7 +14,6 @@ export {
   CoachingSubscription,
   START_CHOICES,
   withdrawalDeadline,
-  type CancellationRule,
   type CheckoutCompletion,
   type CoachingSubscriptionSnapshot,
   type CoachingSubscriptionStatus,

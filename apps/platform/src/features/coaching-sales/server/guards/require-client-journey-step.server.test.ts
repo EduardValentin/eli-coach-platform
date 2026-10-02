@@ -18,7 +18,7 @@ import {
 import { clientJourneyContext } from "./client-journey-context.server";
 import { coachingSalesContext } from "./coaching-sales-context.server";
 import {
-  readClientJourneyStep,
+  readClientPortalStanding,
   requireClientJourneyStep,
 } from "./require-client-journey-step.server";
 
@@ -219,6 +219,56 @@ describe("requireClientJourneyStep", () => {
     );
   });
 
+  it.each(["/app/client", "/app/client/settings", "/app/client/welcome"])(
+    "sends a client whose coaching has ended from %s to the ended page",
+    async (pathname) => {
+      // arrange
+      const args = journeyArgs({
+        journey: journeyOf(REVIEW_JOURNEYS.approved),
+        access: "ended",
+        pathname,
+      });
+
+      // act
+      const thrown = await captureThrown(() => requireClientJourneyStep(args));
+
+      // assert
+      expect((thrown as Response).status).toBe(302);
+      expect((thrown as Response).headers.get("Location")).toBe(
+        "/app/client/ended",
+      );
+    },
+  );
+
+  it("lets a client whose coaching has ended open the ended page", async () => {
+    // arrange
+    const args = journeyArgs({
+      journey: journeyOf(REVIEW_JOURNEYS.approved),
+      access: "ended",
+      pathname: "/app/client/ended",
+    });
+
+    // act
+    const thrown = await captureThrown(() => requireClientJourneyStep(args));
+
+    // assert
+    expect(thrown).toBeUndefined();
+  });
+
+  it("sends a client whose coaching goes on away from the ended page", async () => {
+    // arrange
+    const args = journeyArgs({
+      journey: journeyOf(REVIEW_JOURNEYS.approved),
+      pathname: "/app/client/ended",
+    });
+
+    // act
+    const thrown = await captureThrown(() => requireClientJourneyStep(args));
+
+    // assert
+    expect((thrown as Response).headers.get("Location")).toBe("/app/client");
+  });
+
   it("leaves a client account with no client record ungated", async () => {
     // arrange
     const args = journeyArgs({ journey: null, pathname: "/app/client" });
@@ -281,8 +331,8 @@ describe("requireClientJourneyStep", () => {
   });
 });
 
-describe("readClientJourneyStep", () => {
-  it("names the step a signed-in client is at", async () => {
+describe("readClientPortalStanding", () => {
+  it("names the step a signed-in client is at and whether her portal is open", async () => {
     // arrange
     const args = journeyArgs({
       journey: journeyOf({ welcomeSeenAt: null }),
@@ -290,10 +340,10 @@ describe("readClientJourneyStep", () => {
     });
 
     // act
-    const step = await readClientJourneyStep(args);
+    const standing = await readClientPortalStanding(args);
 
     // assert
-    expect(step).toBe("welcome");
+    expect(standing).toEqual({ step: "welcome", access: "open" });
   });
 
   it("hands over no journey snapshot, which only the gate does", async () => {
@@ -304,7 +354,7 @@ describe("readClientJourneyStep", () => {
     });
 
     // act
-    await readClientJourneyStep(args);
+    await readClientPortalStanding(args);
 
     // assert
     expect(() => args.context.get(clientJourneyContext)).toThrow();
@@ -315,10 +365,10 @@ describe("readClientJourneyStep", () => {
     const args = journeyArgs({ journey: null, pathname: "/app/" });
 
     // act
-    const step = await readClientJourneyStep(args);
+    const standing = await readClientPortalStanding(args);
 
     // assert
-    expect(step).toBeNull();
+    expect(standing).toBeNull();
   });
 
   it.each<[string, ResolvedSession]>([
@@ -345,10 +395,10 @@ describe("readClientJourneyStep", () => {
       });
 
       // act
-      const step = await readClientJourneyStep(args);
+      const standing = await readClientPortalStanding(args);
 
       // assert
-      expect(step).toBeNull();
+      expect(standing).toBeNull();
       expect(readJourneyOf(args)).not.toHaveBeenCalled();
     },
   );
@@ -396,14 +446,21 @@ const REVIEW_JOURNEYS = {
 type ReviewJourney = keyof typeof REVIEW_JOURNEYS;
 
 function journeyArgs(options: {
+  access?: "open" | "ended";
   appBasePath?: string;
   journey: ClientJourney | null;
   pathname: string;
   session?: ResolvedSession;
 }) {
   const coachingSales = {
-    readClientJourney: {
-      execute: vi.fn().mockResolvedValue(options.journey),
+    readClientPortalStanding: {
+      execute: vi
+        .fn()
+        .mockResolvedValue(
+          options.journey
+            ? { journey: options.journey, access: options.access ?? "open" }
+            : null,
+        ),
     },
   } as unknown as CoachingSalesFeature;
   const accounts = {
@@ -424,7 +481,8 @@ function journeyArgs(options: {
 }
 
 function readJourneyOf(args: ReturnType<typeof journeyArgs>) {
-  return args.context.get(coachingSalesContext).readClientJourney.execute;
+  return args.context.get(coachingSalesContext).readClientPortalStanding
+    .execute;
 }
 
 async function captureThrown(thunk: () => unknown): Promise<unknown> {

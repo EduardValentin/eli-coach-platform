@@ -29,11 +29,6 @@ export type ProviderEvent = {
 
 const COACHING_PURPOSE = { purpose: "coaching-subscription" };
 
-/**
- * What Stripe sends and records for a coaching subscription after its
- * purchase, and what the platform keeps of it, read through the entry points
- * and the database.
- */
 export class SubscriptionLifecycleJourney {
   constructor(private readonly rig: PlatformRig) {}
 
@@ -56,7 +51,9 @@ export class SubscriptionLifecycleJourney {
     );
   }
 
-  async subscriptionRow(): Promise<SubscriptionLifecycleRow> {
+  async subscriptionRow(
+    paymentSubscriptionId: string = STRIPE_SUBSCRIPTION_ID,
+  ): Promise<SubscriptionLifecycleRow> {
     const [row, ...others] =
       await this.rig.suite.postgres.queryRows<SubscriptionLifecycleRow>({
         sql: `
@@ -72,12 +69,15 @@ export class SubscriptionLifecycleJourney {
             refunded_cents as "refundedCents",
             refunded_at as "refundedAt"
           from app.coaching_subscriptions
+          where stripe_subscription_id = $1
         `,
-        values: [],
+        values: [paymentSubscriptionId],
       });
 
     if (!row || others.length > 0) {
-      throw new Error("Expected exactly one coaching subscription.");
+      throw new Error(
+        `Expected exactly one coaching subscription ${paymentSubscriptionId}.`,
+      );
     }
 
     return row;
@@ -94,9 +94,10 @@ export class SubscriptionLifecycleJourney {
 
   async providerSubscriptionRequests(
     method: "POST" | "DELETE",
+    paymentSubscriptionId: string = STRIPE_SUBSCRIPTION_ID,
   ): Promise<URLSearchParams[]> {
     const requests = await this.rig.suite.wireMock.recordedRequests(
-      stripeSubscriptionPath(STRIPE_SUBSCRIPTION_ID),
+      stripeSubscriptionPath(paymentSubscriptionId),
     );
 
     return requests

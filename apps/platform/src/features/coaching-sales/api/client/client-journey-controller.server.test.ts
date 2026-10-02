@@ -223,10 +223,34 @@ describe("ClientJourneyController program status", () => {
         kind: "submitted",
         submittedAt: "2026-09-28T10:00:00.000Z",
         workStartsOn: expectedWorkStartsOn,
+        startNowUntil: null,
+        paymentProblem: false,
       });
       expect(readProgramStatus).toHaveBeenCalledWith("user_ana");
     },
   );
+
+  it("carries until when she can start now and a payment problem", async () => {
+    // arrange
+    const { controller } = createController({
+      programStatus: {
+        kind: "submitted",
+        submittedAt: new Date("2026-09-28T10:00:00.000Z"),
+        workStartsOn: new Date("2026-10-10T10:00:00.000Z"),
+        startNowUntil: new Date("2026-10-10T10:00:00.000Z"),
+        paymentProblem: true,
+      },
+    });
+
+    // act
+    const status = await controller.loadProgramStatus(clientArgs());
+
+    // assert
+    expect(status).toMatchObject({
+      startNowUntil: "2026-10-10T10:00:00.000Z",
+      paymentProblem: true,
+    });
+  });
 
   it.each(["in-review", "needs-details", "approved"] as const)(
     "answers the %s step of her reviewed onboarding",
@@ -250,6 +274,8 @@ describe("ClientJourneyController program status", () => {
         kind,
         submittedAt: "2026-09-28T10:00:00.000Z",
         workStartsOn: null,
+        startNowUntil: null,
+        paymentProblem: false,
       });
     },
   );

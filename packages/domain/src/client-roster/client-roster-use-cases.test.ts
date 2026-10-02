@@ -203,6 +203,7 @@ describe("ReadClientRecordUseCase", () => {
       ...found,
       status: "awaiting-review",
       needsRefund: false,
+      subscriptionStatus: "not-started",
       workStartsOn: null,
       assessmentCall: {
         startsAt: new Date("2026-09-25T15:00:00.000Z"),
@@ -240,6 +241,31 @@ describe("ReadClientRecordUseCase", () => {
 
     // assert
     expect(result?.workStartsOn).toEqual(new Date("2026-10-10T10:00:00.000Z"));
+  });
+
+  it("reads her subscription as ended once her cancelled access has run out", async () => {
+    // arrange
+    const useCase = new ReadClientRecordUseCase({
+      roster: createRoster({
+        findById: vi.fn().mockResolvedValue(
+          entry({
+            subscription: subscriptionSnapshot({
+              status: "cancelled",
+              cancelledAt: PAID_AT,
+              accessEndsAt: NOW,
+            }),
+          }),
+        ),
+      }),
+      calls: callReader(null),
+      clock,
+    });
+
+    // act
+    const result = await useCase.execute("client-1");
+
+    // assert
+    expect(result?.subscriptionStatus).toBe("ended");
   });
 
   it("reads no notes when she left none when booking", async () => {

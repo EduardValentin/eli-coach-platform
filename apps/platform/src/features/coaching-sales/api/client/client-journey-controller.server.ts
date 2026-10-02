@@ -75,6 +75,8 @@ export class ClientJourneyController {
       kind: status.kind,
       submittedAt: status.submittedAt.toISOString(),
       workStartsOn: status.workStartsOn?.toISOString() ?? null,
+      startNowUntil: status.startNowUntil?.toISOString() ?? null,
+      paymentProblem: status.paymentProblem,
     });
   }
 

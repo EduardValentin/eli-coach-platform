@@ -15,6 +15,10 @@ const SUBSCRIPTION: ClientSubscription = {
   paidAt: "2026-09-30T22:30:00.000Z",
   reducedPrice: false,
   workStartsOn: null,
+  status: "not-started",
+  endsOn: null,
+  endedOn: null,
+  refund: null,
 };
 
 beforeEach(() => {
