@@ -24,6 +24,8 @@ import type {
   OnboardingAnswerPage,
 } from "~/features/client-onboarding/contracts/onboarding";
 import { CLIENT_ONBOARDING_API_PATHS } from "~/features/client-onboarding/contracts/paths";
+import { clientAction } from "~/features/client-onboarding/api/client/detail-answers";
+import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
 
 import OnboardingRoute from "./onboarding-page";
 
@@ -75,10 +77,6 @@ function answerDetailAnswers(response: () => Promise<Response> | Response) {
   );
 }
 
-function forwardToServer({ request }: { request: Request }) {
-  return fetch(request);
-}
-
 function renderAnswerRequest(page: OnboardingAnswerPage) {
   const router = createMemoryRouter(
     [
@@ -88,7 +86,7 @@ function renderAnswerRequest(page: OnboardingAnswerPage) {
         path: CLIENT_ONBOARDING_PATH,
       },
       {
-        action: forwardToServer,
+        action: frameworkModeAction(clientAction),
         path: CLIENT_ONBOARDING_API_PATHS.detailAnswers,
       },
       { Component: () => <p>portal home</p>, path: CLIENT_PORTAL_PATH },
@@ -322,12 +320,24 @@ describe("answering the coach's request", { timeout: 15_000 }, () => {
     expect(await screen.findByText("portal home")).toBeVisible();
   });
 
-  it("keeps her answers on the page when they could not be sent", async () => {
+  it.each([
+    {
+      failure: "the server answers with an error",
+      answer: () =>
+        HttpResponse.json({ message: "Unavailable" }, { status: 500 }),
+    },
+    {
+      failure: "her session has ended",
+      answer: () => new HttpResponse("Unauthorized", { status: 401 }),
+    },
+    {
+      failure: "the request never reaches the server",
+      answer: () => HttpResponse.error(),
+    },
+  ])("keeps her answers on the page when $failure", async ({ answer }) => {
     // arrange
     const user = userEvent.setup();
-    answerDetailAnswers(() =>
-      HttpResponse.json({ message: "Unavailable" }, { status: 500 }),
-    );
+    answerDetailAnswers(answer);
     await openAnswerRequest(answerPage());
     await retypeWeight(user, "64.5");
     await chooseCheckInDay(user, "Friday");

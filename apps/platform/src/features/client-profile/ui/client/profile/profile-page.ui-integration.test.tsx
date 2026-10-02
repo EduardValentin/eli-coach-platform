@@ -34,6 +34,9 @@ import {
   CLIENT_PROFILE_API_PATHS,
   CLIENT_PROFILE_PATH,
 } from "~/features/client-profile/contracts/paths";
+import { clientAction as recordMeasurements } from "~/features/client-profile/api/client/measurements";
+import { clientAction as removePhoto } from "~/features/client-profile/api/photos/progress-photo";
+import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
 
 import ClientProfileRoute from "./profile-page";
 
@@ -509,44 +512,58 @@ describe("the add measurements sheet", () => {
     ]);
   });
 
-  it("keeps the sheet open with what she entered and tells her when the save fails", async () => {
-    // arrange
-    server.use(
-      http.post(
-        MEASUREMENTS_URL,
-        () => new HttpResponse(null, { status: 500 }),
-      ),
-    );
-    const user = await openSheet(
-      pageWith({ consentedAt: "2026-09-27T09:00:00.000Z" }),
-    );
-    const sheet = screen.getByRole("dialog", { name: "Add measurements" });
-    await user.clear(readingOf(sheet, /^Weight/));
-    await user.type(readingOf(sheet, /^Weight/), "65.8");
-    await user.upload(within(sheet).getByLabelText("Add front photo"), photo());
+  it.each([
+    {
+      failure: "the server answers with an error",
+      answer: () => new HttpResponse(null, { status: 500 }),
+    },
+    {
+      failure: "her session has ended",
+      answer: () => new HttpResponse("Unauthorized", { status: 401 }),
+    },
+    {
+      failure: "the request never reaches the server",
+      answer: () => HttpResponse.error(),
+    },
+  ])(
+    "keeps the sheet open with what she entered and tells her the save failed when $failure",
+    async ({ answer }) => {
+      // arrange
+      server.use(http.post(MEASUREMENTS_URL, answer));
+      const user = await openSheet(
+        pageWith({ consentedAt: "2026-09-27T09:00:00.000Z" }),
+      );
+      const sheet = screen.getByRole("dialog", { name: "Add measurements" });
+      await user.clear(readingOf(sheet, /^Weight/));
+      await user.type(readingOf(sheet, /^Weight/), "65.8");
+      await user.upload(
+        within(sheet).getByLabelText("Add front photo"),
+        photo(),
+      );
 
-    // act
-    await user.click(
-      within(sheet).getByRole("button", { name: "Save measurements" }),
-    );
+      // act
+      await user.click(
+        within(sheet).getByRole("button", { name: "Save measurements" }),
+      );
 
-    // assert
-    expect(
-      await screen.findByText(
-        "Your measurements could not be saved. Try again.",
-      ),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("dialog", { name: "Add measurements" }),
-    ).toBeInTheDocument();
-    expect(readingOf(sheet, /^Weight/)).toHaveValue(65.8);
-    expect(
-      within(sheet).getByRole("img", { name: "Front photo" }),
-    ).toBeInTheDocument();
-    expect(
-      within(sheet).getByRole("button", { name: "Save measurements" }),
-    ).toBeEnabled();
-  });
+      // assert
+      expect(
+        await screen.findByText(
+          "Your measurements could not be saved. Try again.",
+        ),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("dialog", { name: "Add measurements" }),
+      ).toBeInTheDocument();
+      expect(readingOf(sheet, /^Weight/)).toHaveValue(65.8);
+      expect(
+        within(sheet).getByRole("img", { name: "Front photo" }),
+      ).toBeInTheDocument();
+      expect(
+        within(sheet).getByRole("button", { name: "Save measurements" }),
+      ).toBeEnabled();
+    },
+  );
 });
 
 describe("the photo view", () => {
@@ -615,48 +632,59 @@ describe("the photo view", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("keeps the photo and tells her it could not be removed when the server refuses", async () => {
-    // arrange
-    server.use(
-      http.delete(
-        PHOTO_URL,
-        () => new HttpResponse("Not Found", { status: 404 }),
-      ),
-    );
-    const user = await renderProfile(pageWith());
-    await user.click(
-      screen.getByRole("button", { name: "View photos from 29 September" }),
-    );
-    const photos = screen.getByRole("dialog", {
-      name: "Photos from 29 September",
-    });
+  it.each([
+    {
+      failure: "the server answers with an error",
+      answer: () => new HttpResponse(null, { status: 500 }),
+    },
+    {
+      failure: "the server refuses it",
+      answer: () => new HttpResponse("Not Found", { status: 404 }),
+    },
+    {
+      failure: "the request never reaches the server",
+      answer: () => HttpResponse.error(),
+    },
+  ])(
+    "keeps the photo and tells her it could not be removed when $failure",
+    async ({ answer }) => {
+      // arrange
+      server.use(http.delete(PHOTO_URL, answer));
+      const user = await renderProfile(pageWith());
+      await user.click(
+        screen.getByRole("button", { name: "View photos from 29 September" }),
+      );
+      const photos = screen.getByRole("dialog", {
+        name: "Photos from 29 September",
+      });
 
-    // act
-    await user.click(
-      within(photos).getByRole("button", { name: "Remove front photo" }),
-    );
-    await user.click(
-      within(
-        screen.getByRole("dialog", { name: "Remove this photo?" }),
-      ).getByRole("button", { name: "Remove" }),
-    );
+      // act
+      await user.click(
+        within(photos).getByRole("button", { name: "Remove front photo" }),
+      );
+      await user.click(
+        within(
+          screen.getByRole("dialog", { name: "Remove this photo?" }),
+        ).getByRole("button", { name: "Remove" }),
+      );
 
-    // assert
-    expect(
-      await screen.findByText("The photo could not be removed. Try again."),
-    ).toBeVisible();
-    await waitFor(() => {
+      // assert
       expect(
-        screen.queryByRole("dialog", { name: "Remove this photo?" }),
-      ).not.toBeInTheDocument();
-    });
-    expect(
-      within(photos).getByRole("img", { name: "Front photo" }),
-    ).toBeInTheDocument();
-    expect(
-      within(photos).getByRole("button", { name: "Remove front photo" }),
-    ).toBeVisible();
-  });
+        await screen.findByText("The photo could not be removed. Try again."),
+      ).toBeVisible();
+      await waitFor(() => {
+        expect(
+          screen.queryByRole("dialog", { name: "Remove this photo?" }),
+        ).not.toBeInTheDocument();
+      });
+      expect(
+        within(photos).getByRole("img", { name: "Front photo" }),
+      ).toBeInTheDocument();
+      expect(
+        within(photos).getByRole("button", { name: "Remove front photo" }),
+      ).toBeVisible();
+    },
+  );
 });
 
 function pageWith(overrides: Partial<MeasurementsPage> = {}): MeasurementsPage {
@@ -682,8 +710,11 @@ async function renderProfile(
         loader: () => storedPage,
         path: CLIENT_PROFILE_PATH,
       },
-      { action: forwardToServer, path: MEASUREMENTS_URL },
-      { action: forwardToServer, path: PHOTO_URL },
+      {
+        action: frameworkModeAction(recordMeasurements),
+        path: MEASUREMENTS_URL,
+      },
+      { action: frameworkModeAction(removePhoto), path: PHOTO_URL },
     ],
     { initialEntries: [CLIENT_PROFILE_PATH] },
   );
@@ -712,12 +743,6 @@ async function openSheet(
   await user.click(opener);
 
   return user;
-}
-
-async function forwardToServer({ request }: { request: Request }) {
-  const response = await fetch(request);
-
-  return response.status === 204 ? undefined : response;
 }
 
 function readingOf(sheet: HTMLElement, name: RegExp): HTMLElement {

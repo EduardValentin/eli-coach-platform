@@ -14,14 +14,6 @@ import { tabTo } from "./keyboard";
 import { ProgressPhotoTiles } from "./progress-photo-tiles";
 import type { SamplePhoto } from "./sample-photos";
 
-const SUBMISSION_PATH = "/api/client-onboarding/submission";
-
-export type SentPhotos = {
-  status: number;
-  sentViews: ProgressPhotoView[];
-  outcomes: Partial<Record<ProgressPhotoView, string>>;
-};
-
 type UnitsChoice = "kg · cm" | "lb · in";
 
 type WelcomePartCount = "five" | "four";
@@ -53,11 +45,11 @@ const SEND_TO_COACH = "Send to my coach";
 
 const DRAFT_API = "**/api/client-onboarding/draft";
 
-const SUBMISSION_API = "**/api/client-onboarding/submission";
+const SUBMISSION_API = "**/api/client-onboarding/submission.data";
 
 const UNIT_PREFERENCE_API = "**/api/client-profile/unit-preference";
 
-const DETAIL_ANSWERS_API = "**/api/client-onboarding/detail-answers";
+const DETAIL_ANSWERS_API = "**/api/client-onboarding/detail-answers.data";
 
 const ANSWER_SEND_PROBLEM =
   "Your answers could not be sent just now. Try again in a moment.";
@@ -494,23 +486,11 @@ export class ClientOnboarding {
     );
   }
 
-  async sendToCoachCapturingPhotoExchange(): Promise<SentPhotos> {
-    const submission = this.page.waitForResponse(
-      (response) =>
-        response.url().endsWith(SUBMISSION_PATH) &&
-        response.request().method() === "POST",
-    );
+  async sendToCoachCapturingSentPhotoViews(): Promise<ProgressPhotoView[]> {
+    const submission = this.page.waitForRequest(SUBMISSION_API);
     await this.sendToCoach();
-    const response = await submission;
-    const { photos } = (await response.json()) as {
-      photos: Partial<Record<ProgressPhotoView, string>>;
-    };
 
-    return {
-      status: response.status(),
-      sentViews: photoViewsSentIn(response.request()),
-      outcomes: photos,
-    };
+    return photoViewsSentIn(await submission);
   }
 
   async expectAnswerPage(note: string): Promise<void> {

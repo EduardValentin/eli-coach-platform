@@ -2,33 +2,27 @@ import { MEASUREMENT_FIELDS } from "@eli-coach-platform/domain/measurement";
 import type { MeasureUnits } from "@eli-coach-platform/domain/unit-preference";
 import { ResponsiveSheetDialog } from "@eli-coach-platform/ui/layout";
 import { Button } from "@eli-coach-platform/ui/primitives";
-import { toast } from "@eli-coach-platform/ui/toast";
-import { useEffect, useEffectEvent, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { useFetcher } from "react-router";
 
 import {
   MEASUREMENTS_COPY,
   PHOTO_CONSENT_GIVEN,
-  RECORD_MEASUREMENTS_FIELDS,
-  recordMeasurementsResponseSchema,
   type MeasurementRow,
 } from "~/features/client-profile/contracts/measurements";
-import { CLIENT_PROFILE_API_PATHS } from "~/features/client-profile/contracts/paths";
 import {
   measurementEntryOf,
   measurementFormValuesOf,
   type MeasurementFormValues,
 } from "~/features/client-profile/ui/client/measurements/measurement-form-values";
+import { useMeasurementsRecording } from "~/features/client-profile/ui/client/measurements/use-measurements-recording";
 import { MeasureField } from "~/features/client-profile/ui/shared/measure-field/measure-field";
 import {
   ProgressPhotoBlock,
   type ProgressPhotoConsent,
 } from "~/features/client-profile/ui/shared/photos/progress-photo-block";
 import {
-  appendProgressPhotoParts,
   NO_PROGRESS_PHOTO_PICKS,
-  refusedPhotoViewsOf,
   type ProgressPhotoPicks,
 } from "~/features/client-profile/ui/shared/photos/progress-photo-picks";
 
@@ -51,7 +45,7 @@ function AddMeasurementsForm({
   consentedAt,
   onClose,
 }: AddMeasurementsStartingPoint & { onClose: () => void }) {
-  const { data, state, submit } = useFetcher<unknown>();
+  const { record, recording } = useMeasurementsRecording(onClose);
   const [photos, setPhotos] = useState<ProgressPhotoPicks>(
     NO_PROGRESS_PHOTO_PICKS,
   );
@@ -68,49 +62,13 @@ function AddMeasurementsForm({
         onTickedChange: setConsentTicked,
       };
 
-  const settle = useEffectEvent((response: unknown) => {
-    const recorded = recordMeasurementsResponseSchema.safeParse(response);
-
-    if (!recorded.success) {
-      toast.error(MEASUREMENTS_COPY.toasts.failed);
-      return;
-    }
-
-    onClose();
-    toast.success(MEASUREMENTS_COPY.toasts.saved);
-    refusedPhotoViewsOf(recorded.data.photos).forEach((view) =>
-      toast.error(MEASUREMENTS_COPY.toasts.photoRefused(view)),
-    );
-  });
-
-  useEffect(() => {
-    if (data !== undefined) {
-      settle(data);
-    }
-  }, [data]);
-
-  const save = form.handleSubmit((values) => {
-    const submission = new FormData();
-    submission.append(
-      RECORD_MEASUREMENTS_FIELDS.entry,
-      JSON.stringify(measurementEntryOf(values, units)),
-    );
-
-    if (consentTicked) {
-      submission.append(
-        RECORD_MEASUREMENTS_FIELDS.photoConsent,
-        PHOTO_CONSENT_GIVEN,
-      );
-    }
-
-    appendProgressPhotoParts(submission, photos);
-
-    void submit(submission, {
-      action: CLIENT_PROFILE_API_PATHS.measurements,
-      encType: "multipart/form-data",
-      method: "post",
-    });
-  });
+  const save = form.handleSubmit((values) =>
+    record({
+      entry: measurementEntryOf(values, units),
+      photos,
+      photoConsent: consentTicked ? PHOTO_CONSENT_GIVEN : null,
+    }),
+  );
 
   return (
     <>
@@ -144,7 +102,7 @@ function AddMeasurementsForm({
           <div className="flex flex-col-reverse gap-3 sm:flex-row-reverse">
             <Button
               className="w-full sm:w-auto"
-              disabled={state !== "idle"}
+              disabled={recording}
               size="md"
               type="submit"
               variant="primary"

@@ -39,6 +39,8 @@ import type {
 } from "~/features/client-onboarding/contracts/onboarding";
 import { CLIENT_ONBOARDING_API_PATHS } from "~/features/client-onboarding/contracts/paths";
 import { CLIENT_PROFILE_API_PATHS } from "~/features/client-profile/contracts/paths";
+import { clientAction } from "~/features/client-onboarding/api/client/submission";
+import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
 
 import OnboardingRoute from "./onboarding-page";
 
@@ -210,10 +212,7 @@ function photo(name: string): File {
   return new File([new Uint8Array(64)], name, { type: "image/png" });
 }
 
-function answerSubmission(
-  status: number,
-  body: Record<string, unknown> | null = null,
-) {
+function answerSubmissionWith(response: () => Response) {
   server.use(
     http.post(
       `*${CLIENT_ONBOARDING_API_PATHS.submission}`,
@@ -222,18 +221,21 @@ function answerSubmission(
         submitRequests.push(sent.submission);
         submittedPhotoParts.push(sent.photoParts);
 
-        return HttpResponse.json(body, { status });
+        return response();
       },
     ),
   );
 }
 
-function lastDraft(): SaveDraftRequest | undefined {
-  return draftRequests.at(-1);
+function answerSubmission(
+  status: number,
+  body: Record<string, unknown> | null = null,
+) {
+  answerSubmissionWith(() => HttpResponse.json(body, { status }));
 }
 
-function forwardToServer({ request }: { request: Request }) {
-  return fetch(request);
+function lastDraft(): SaveDraftRequest | undefined {
+  return draftRequests.at(-1);
 }
 
 function renderOnboarding(page: OnboardingWizardPage) {
@@ -245,7 +247,7 @@ function renderOnboarding(page: OnboardingWizardPage) {
         path: CLIENT_ONBOARDING_PATH,
       },
       {
-        action: forwardToServer,
+        action: frameworkModeAction(clientAction),
         path: CLIENT_ONBOARDING_API_PATHS.submission,
       },
       { Component: () => <p>portal home</p>, path: CLIENT_PORTAL_PATH },
@@ -1125,22 +1127,44 @@ describe("the onboarding", { timeout: 15_000 }, () => {
     expect(draftRequests).toEqual([]);
   });
 
-  it("keeps her on the last form when her answers cannot be sent", async () => {
-    // arrange
-    const user = userEvent.setup();
-    answerSubmission(503, { message: "Unavailable" });
-    await openOnboarding(pageAt(4));
+  it.each([
+    {
+      failure: "the server answers with an error",
+      answer: () =>
+        HttpResponse.json({ message: "Unavailable" }, { status: 503 }),
+    },
+    {
+      failure: "her session has ended",
+      answer: () => new HttpResponse("Unauthorized", { status: 401 }),
+    },
+    {
+      failure: "the request never reaches the server",
+      answer: () => HttpResponse.error(),
+    },
+  ])(
+    "keeps her on the last form with her answers when $failure",
+    async ({ answer }) => {
+      // arrange
+      const user = userEvent.setup();
+      answerSubmissionWith(answer);
+      await openOnboarding(pageAt(4));
+      await user.clear(screen.getByLabelText(/Waist/));
+      await user.type(screen.getByLabelText(/Waist/), "73");
 
-    // act
-    await user.click(screen.getByRole("button", { name: "Send to my coach" }));
+      // act
+      await user.click(
+        screen.getByRole("button", { name: "Send to my coach" }),
+      );
 
-    // assert
-    expect(await screen.findByText(SUBMIT_PROBLEM)).toBeVisible();
-    expect(screen.getByText("Step 5 of 5")).toBeVisible();
-    expect(
-      screen.getByRole("button", { name: "Send to my coach" }),
-    ).toBeEnabled();
-  });
+      // assert
+      expect(await screen.findByText(SUBMIT_PROBLEM)).toBeVisible();
+      expect(screen.getByText("Step 5 of 5")).toBeVisible();
+      expect(screen.getByLabelText(/Waist/)).toHaveValue(73);
+      expect(
+        screen.getByRole("button", { name: "Send to my coach" }),
+      ).toBeEnabled();
+    },
+  );
 
   it("resumes at the form she left", async () => {
     // arrange

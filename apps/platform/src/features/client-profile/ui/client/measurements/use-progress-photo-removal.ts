@@ -7,11 +7,13 @@ import { progressPhotoPath } from "~/features/client-profile/contracts/paths";
 
 export function useProgressPhotoRemoval() {
   const { data, state, submit } = useFetcher<unknown>();
+  const removalRefused = state === "idle" && data !== undefined;
+
   useEffect(() => {
-    if (state === "idle" && data !== undefined) {
+    if (removalRefused) {
       toast.error(MEASUREMENTS_COPY.toasts.removeFailed);
     }
-  }, [state, data]);
+  }, [removalRefused]);
 
   return (photoId: string) =>
     submit(null, { action: progressPhotoPath(photoId), method: "delete" });
