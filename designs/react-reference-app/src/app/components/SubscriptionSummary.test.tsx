@@ -149,7 +149,7 @@ describe('the subscription summary', () => {
 
     // assert
     expect(terms().at(-1)).toBe('Refund due');
-    expect(screen.getByText('€447.00 by 9 October')).toBeInTheDocument();
+    expect(screen.getByText('€447 by 9 October')).toBeInTheDocument();
     expect(
       screen.getByText(
         'Full refund: cancelled within the 14-day withdrawal period.',

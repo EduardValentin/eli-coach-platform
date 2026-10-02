@@ -241,7 +241,7 @@ describe('the cancel dialogs', () => {
     expect(
       screen.getByRole('dialog', { name: 'Cancel and get a refund' }),
     ).toHaveAccessibleDescription(
-      "You'll get €447.00 back and your access ends right away.",
+      "You'll get €447 back and your access ends right away.",
     );
   });
 

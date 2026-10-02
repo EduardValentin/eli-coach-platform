@@ -1211,7 +1211,7 @@ describe('the coach reading what cycle mode means', () => {
       /^\d{1,2} \w+$/,
     );
     expect(readingIn(subscriptionPanel(), 'Refund due')).toHaveTextContent(
-      /^€447\.00 by \d{1,2} \w+$/,
+      /^€447 by \d{1,2} \w+$/,
     );
     expect(
       within(subscriptionPanel()).getByText(
@@ -1230,11 +1230,11 @@ describe('the coach reading what cycle mode means', () => {
     // assert
     expect(within(pageHeader()).getByText('Needs refund')).toBeInTheDocument();
     expect(readingIn(subscriptionPanel(), 'Refund due')).toHaveTextContent(
-      /^€298\.00 by \d{1,2} \w+$/,
+      /^€298 by \d{1,2} \w+$/,
     );
     expect(
       within(subscriptionPanel()).getByText(
-        'Proportional refund: cancelled within 14 days of paying, for the unused part of the first term. €149.00 refunded so far.',
+        'Proportional refund: cancelled within 14 days of paying, for the unused part of the first term. €149 refunded so far.',
       ),
     ).toBeInTheDocument();
   });

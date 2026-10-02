@@ -38,7 +38,7 @@ describe('RefundDue', () => {
 
     // assert
     expect(parsed.title).toBe(
-      'Sofia Marin cancelled — refund due €447.00 by 16 October',
+      'Sofia Marin cancelled — refund due €447 by 16 October',
     );
   });
 
@@ -70,7 +70,7 @@ describe('RefundDue', () => {
         'Proportional refund: cancelled within 14 days of paying, for the unused part of the first term.',
       ),
     ).toBeInTheDocument();
-    expect(screen.getByText('€447.00 on 28 September')).toBeInTheDocument();
+    expect(screen.getByText('€447 on 28 September')).toBeInTheDocument();
     expect(screen.getByText('2 October')).toBeInTheDocument();
   });
 
