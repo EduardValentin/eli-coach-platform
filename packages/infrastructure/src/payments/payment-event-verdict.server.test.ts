@@ -124,6 +124,138 @@ describe("readPaymentEvent", () => {
     });
   });
 
+  it("reads a subscription update with its purpose and the attributes it changed", () => {
+    // arrange
+    const event = {
+      id: "evt_scheduled",
+      type: "customer.subscription.updated",
+      created: 1790960433,
+      data: {
+        object: {
+          id: "sub_test",
+          object: "subscription",
+          customer: "cus_test",
+          status: "active",
+          cancel_at: 1798909229,
+          ended_at: null,
+          metadata: { purpose: "coaching-subscription" },
+        },
+        previous_attributes: { cancel_at: null },
+      },
+    };
+
+    // act
+    const verdict = readPaymentEvent(event);
+
+    // assert
+    expect(verdict).toEqual({
+      kind: "subscription_changed",
+      eventId: "evt_scheduled",
+      purpose: "coaching-subscription",
+      change: {
+        kind: "subscription_state",
+        subscriptionId: "sub_test",
+        customerId: "cus_test",
+        providerStatus: "active",
+        previousProviderStatus: null,
+        scheduledEndAt: new Date(1798909229 * 1000),
+        scheduledEndChanged: true,
+        endedAt: null,
+        occurredAt: new Date(1790960433 * 1000),
+      },
+    });
+  });
+
+  it("reads a failed invoice as a subscription change", () => {
+    // arrange
+    const event = {
+      id: "evt_failed",
+      type: "invoice.payment_failed",
+      created: 1790960433,
+      data: {
+        object: {
+          id: "in_test",
+          object: "invoice",
+          customer: "cus_test",
+          billing_reason: "subscription_cycle",
+          parent: {
+            type: "subscription_details",
+            subscription_details: {
+              subscription: "sub_test",
+              metadata: { purpose: "coaching-subscription" },
+            },
+          },
+        },
+      },
+    };
+
+    // act
+    const verdict = readPaymentEvent(event);
+
+    // assert
+    expect(verdict).toMatchObject({
+      kind: "subscription_changed",
+      eventId: "evt_failed",
+      purpose: "coaching-subscription",
+      change: { kind: "invoice_outcome", outcome: "failed" },
+    });
+  });
+
+  it("reads a refunded charge with the customer it belongs to", () => {
+    // arrange
+    const event = {
+      id: "evt_refunded",
+      type: "charge.refunded",
+      created: 1790960437,
+      data: {
+        object: {
+          id: "ch_test",
+          object: "charge",
+          amount: 44700,
+          amount_refunded: 44700,
+          refunded: true,
+          customer: "cus_test",
+          currency: "eur",
+          metadata: {},
+        },
+        previous_attributes: { amount_refunded: 10000 },
+      },
+    };
+
+    // act
+    const verdict = readPaymentEvent(event);
+
+    // assert
+    expect(verdict).toEqual({
+      kind: "charge_refunded",
+      eventId: "evt_refunded",
+      refund: {
+        kind: "charge_refund",
+        customerId: "cus_test",
+        chargeCents: 44700,
+        refundedCents: 44700,
+        currency: "eur",
+        refundedAt: new Date(1790960437 * 1000),
+      },
+    });
+  });
+
+  it("ignores a refunded charge it cannot read", () => {
+    // arrange
+    const event = {
+      id: "evt_refunded",
+      type: "charge.refunded",
+      created: 1790960437,
+      data: { object: { id: "ch_test", object: "charge" } },
+    };
+
+    // act
+    const verdict = readPaymentEvent(event);
+
+    // assert
+    expect(verdict).toEqual({ kind: "ignored" });
+  });
+
   it("ignores every other event type", () => {
     // arrange
     const event = {

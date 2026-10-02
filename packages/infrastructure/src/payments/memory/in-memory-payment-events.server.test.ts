@@ -50,6 +50,37 @@ describe("InMemoryPaymentEvents", () => {
     });
   });
 
+  it("accepts a subscription deletion carrying the memory signature", async () => {
+    // arrange
+    const events = new InMemoryPaymentEvents();
+    const body = JSON.stringify({
+      id: "evt_memory_deleted",
+      type: "customer.subscription.deleted",
+      created: 1790003600,
+      data: {
+        object: {
+          id: "sub_memory",
+          customer: "cus_memory",
+          status: "canceled",
+          cancel_at: null,
+          ended_at: 1790003600,
+          metadata: { purpose: "coaching-subscription" },
+        },
+      },
+    });
+
+    // act
+    const verdict = await events.verify(body, "memory");
+
+    // assert
+    expect(verdict).toMatchObject({
+      kind: "subscription_changed",
+      eventId: "evt_memory_deleted",
+      purpose: "coaching-subscription",
+      change: { subscriptionId: "sub_memory", providerStatus: "canceled" },
+    });
+  });
+
   it("ignores another event type", async () => {
     // arrange
     const events = new InMemoryPaymentEvents();
