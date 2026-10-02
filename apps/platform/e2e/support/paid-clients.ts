@@ -1,6 +1,10 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 
 import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
+import {
+  getCoachingBundle,
+  type PriceTier,
+} from "@eli-coach-platform/domain/coaching-bundle";
 import type pg from "pg";
 
 export type ClientIdentity = {
@@ -23,6 +27,19 @@ export type PaidClient = {
   gender: VisitorGender;
   paidAt: Date;
   callStartsAt: Date;
+};
+
+export type PaymentReferences = {
+  customerId: string;
+  subscriptionId: string;
+  checkoutSessionId: string;
+};
+
+export type PaymentSeed = {
+  assessmentCallId: string;
+  start: StartChoice;
+  paidAt: Date;
+  references: PaymentReferences;
 };
 
 export type InvitationStanding = "pending" | "expired" | "email-failed";
@@ -49,7 +66,7 @@ export type InvitedClient = PaidClient & {
 type ClientBinding = {
   identity: ClientIdentity;
   authSubjectId: string | null;
-  start: StartChoice;
+  payment: PaymentSeed;
 };
 
 type InvitationTimes = {
@@ -58,6 +75,9 @@ type InvitationTimes = {
   emailSentAt: Date | null;
   emailDeliveryFailedAt: Date | null;
 };
+
+export const SEEDED_BUNDLE = getCoachingBundle("3-months");
+export const SEEDED_TIER: PriceTier = "regular";
 
 const PRIMARY_GOAL = "build_strength";
 const COUNTRY = "RO";
@@ -70,11 +90,11 @@ const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 
 const INSERT_ENDED_CALL = `
   insert into app.assessment_calls (
-    first_name, last_name, visitor_email, date_of_birth, gender, primary_goal,
-    country, starts_at, visitor_time_zone, coach_time_zone, booked_at
+    id, first_name, last_name, visitor_email, date_of_birth, gender,
+    primary_goal, country, starts_at, visitor_time_zone, coach_time_zone,
+    booked_at
   )
-  values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $9, $8)
-  returning id
+  values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $10, $9)
 `;
 const INSERT_CLIENT = `
   insert into app.clients (
@@ -90,9 +110,7 @@ const INSERT_SUBSCRIPTION = `
     currency, stripe_customer_id, stripe_subscription_id,
     stripe_checkout_session_id, paid_at, start_choice, created_at
   )
-  values (
-    $1, $2, '3-months', 3, 'regular', 30000, 'eur', $3, $4, $5, $6, $7, $6
-  )
+  values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $11)
 `;
 const INSERT_INVITATION = `
   insert into app.client_invitations (
@@ -108,11 +126,23 @@ export async function insertPaidClientRecords(
   identity: PaidClientIdentity,
   start: StartChoice = "waiting",
 ): Promise<PaidClient> {
+  return insertPaidClientRecordsWithPayment(
+    pool,
+    identity,
+    seededPayment(start),
+  );
+}
+
+export async function insertPaidClientRecordsWithPayment(
+  pool: pg.Pool,
+  identity: PaidClientIdentity,
+  payment: PaymentSeed,
+): Promise<PaidClient> {
   return inTransaction(pool, (connection) =>
     insertPaidClient(connection, {
       identity,
       authSubjectId: identity.authSubjectId,
-      start,
+      payment,
     }),
   );
 }
@@ -126,7 +156,7 @@ export async function insertInvitedClientRecords(
     const client = await insertPaidClient(connection, {
       identity,
       authSubjectId: null,
-      start,
+      payment: seededPayment(start),
     });
     const invitationToken = randomBytes(32).toString("base64url");
     const times = invitationTimesFor(invitation.standing, client.paidAt);
@@ -185,10 +215,11 @@ async function insertPaidClient(
   connection: pg.PoolClient,
   binding: ClientBinding,
 ): Promise<PaidClient> {
-  const { identity } = binding;
-  const paidAt = new Date();
+  const { identity, payment } = binding;
+  const { paidAt, references } = payment;
   const callStartsAt = daysBefore(paidAt, CALL_ENDED_DAYS_AGO);
-  const callId = await insertedId(connection, INSERT_ENDED_CALL, [
+  await connection.query(INSERT_ENDED_CALL, [
+    payment.assessmentCallId,
     identity.firstName,
     identity.lastName,
     identity.email,
@@ -200,7 +231,7 @@ async function insertPaidClient(
     TIME_ZONE,
   ]);
   const clientId = await insertedId(connection, INSERT_CLIENT, [
-    callId,
+    payment.assessmentCallId,
     identity.firstName,
     identity.lastName,
     identity.email,
@@ -211,15 +242,19 @@ async function insertPaidClient(
     paidAt,
     binding.authSubjectId,
   ]);
-  const stripeReference = randomUUID();
   await connection.query(INSERT_SUBSCRIPTION, [
     clientId,
-    callId,
-    `cus_e2e_${stripeReference}`,
-    `sub_e2e_${stripeReference}`,
-    `cs_e2e_${stripeReference}`,
+    payment.assessmentCallId,
+    SEEDED_BUNDLE.id,
+    SEEDED_BUNDLE.months,
+    SEEDED_TIER,
+    SEEDED_BUNDLE.totalCents(SEEDED_TIER),
+    SEEDED_BUNDLE.currency,
+    references.customerId,
+    references.subscriptionId,
+    references.checkoutSessionId,
     paidAt,
-    binding.start,
+    payment.start,
   ]);
 
   return {
@@ -230,6 +265,21 @@ async function insertPaidClient(
     gender: identity.gender,
     paidAt,
     callStartsAt,
+  };
+}
+
+function seededPayment(start: StartChoice): PaymentSeed {
+  const reference = randomUUID();
+
+  return {
+    assessmentCallId: randomUUID(),
+    start,
+    paidAt: new Date(),
+    references: {
+      customerId: `cus_e2e_${reference}`,
+      subscriptionId: `sub_e2e_${reference}`,
+      checkoutSessionId: `cs_e2e_${reference}`,
+    },
   };
 }
 

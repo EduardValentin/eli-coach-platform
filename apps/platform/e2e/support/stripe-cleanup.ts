@@ -3,16 +3,12 @@ import type Stripe from "stripe";
 import { runRegistry } from "./run-registry";
 import { createStripeTestClient } from "./stripe-environment";
 
-type CheckoutCleanup =
-  | {
-      outcome: "cleaned";
-      sessionId: string;
-      customerId: string | null;
-      subscriptionId: string | null;
-    }
-  | { outcome: "failed"; sessionId: string; reason: string };
+type StripeCleanup =
+  | { outcome: "cleaned"; summary: string }
+  | { outcome: "failed"; summary: string };
 
 const checkoutSessions = runRegistry("stripe-checkout-sessions-");
+const customers = runRegistry("stripe-customers-");
 const RESOURCE_MISSING = "resource_missing";
 
 export function registerCheckoutSessionForCleanup(
@@ -22,38 +18,55 @@ export function registerCheckoutSessionForCleanup(
   checkoutSessions.record(sessionId, runId);
 }
 
-export async function cleanUpRecordedCheckoutSessions(
+export function registerCustomerForCleanup(
+  customerId: string,
+  runId: string,
+): void {
+  customers.record(customerId, runId);
+}
+
+export async function cleanUpRecordedStripeObjects(
   runId: string,
   logPrefix: string,
 ): Promise<{ allCleaned: boolean }> {
   const sessionIds = [...new Set(checkoutSessions.read(runId))];
+  const customerIds = [...new Set(customers.read(runId))];
 
-  if (sessionIds.length === 0) {
+  if (sessionIds.length === 0 && customerIds.length === 0) {
     return { allCleaned: true };
   }
 
   const stripe = createStripeTestClient();
-  const results: CheckoutCleanup[] = [];
+  const sessionResults: StripeCleanup[] = [];
+  const customerResults: StripeCleanup[] = [];
 
   for (const sessionId of sessionIds) {
-    results.push(await cleanUpCheckoutSession(stripe, sessionId));
+    sessionResults.push(await cleanUpCheckoutSession(stripe, sessionId));
   }
 
-  console.log(`${logPrefix} Stripe: ${summarize(results)}`);
+  for (const customerId of customerIds) {
+    customerResults.push(await cleanUpCustomer(stripe, customerId));
+  }
 
-  const allCleaned = results.every((result) => result.outcome === "cleaned");
+  console.log(
+    `${logPrefix} Stripe: ${summarize([...sessionResults, ...customerResults])}`,
+  );
 
-  if (allCleaned) {
+  if (allCleaned(sessionResults)) {
     checkoutSessions.remove(runId);
   }
 
-  return { allCleaned };
+  if (allCleaned(customerResults)) {
+    customers.remove(runId);
+  }
+
+  return { allCleaned: allCleaned([...sessionResults, ...customerResults]) };
 }
 
 async function cleanUpCheckoutSession(
   stripe: Stripe,
   sessionId: string,
-): Promise<CheckoutCleanup> {
+): Promise<StripeCleanup> {
   try {
     const session = await stripe.checkout.sessions.retrieve(sessionId);
     const customerId = referencedId(session.customer);
@@ -67,12 +80,33 @@ async function cleanUpCheckoutSession(
       await ignoringMissing(() => stripe.customers.del(customerId));
     }
 
-    return { outcome: "cleaned", sessionId, customerId, subscriptionId };
+    return {
+      outcome: "cleaned",
+      summary: `session ${sessionId} cleaned (subscription ${subscriptionId ?? "none"} cancelled, customer ${customerId ?? "none"} deleted)`,
+    };
   } catch (error) {
     return {
       outcome: "failed",
-      sessionId,
-      reason: error instanceof Error ? error.message : String(error),
+      summary: `session ${sessionId} failed: ${reasonOf(error)}`,
+    };
+  }
+}
+
+async function cleanUpCustomer(
+  stripe: Stripe,
+  customerId: string,
+): Promise<StripeCleanup> {
+  try {
+    await ignoringMissing(() => stripe.customers.del(customerId));
+
+    return {
+      outcome: "cleaned",
+      summary: `customer ${customerId} deleted with its subscriptions`,
+    };
+  } catch (error) {
+    return {
+      outcome: "failed",
+      summary: `customer ${customerId} failed: ${reasonOf(error)}`,
     };
   }
 }
@@ -97,12 +131,14 @@ async function ignoringMissing(request: () => Promise<unknown>): Promise<void> {
   }
 }
 
-function summarize(results: CheckoutCleanup[]): string {
-  return results
-    .map((result) =>
-      result.outcome === "cleaned"
-        ? `session ${result.sessionId} cleaned (subscription ${result.subscriptionId ?? "none"} cancelled, customer ${result.customerId ?? "none"} deleted)`
-        : `session ${result.sessionId} failed: ${result.reason}`,
-    )
-    .join("; ");
+function allCleaned(results: StripeCleanup[]): boolean {
+  return results.every((result) => result.outcome === "cleaned");
+}
+
+function reasonOf(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function summarize(results: StripeCleanup[]): string {
+  return results.map((result) => result.summary).join("; ");
 }

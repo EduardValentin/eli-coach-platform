@@ -12,7 +12,7 @@ import {
   readCreatedEmails,
   summarizeDeletionResults,
 } from "./clerk-users";
-import { cleanUpRecordedCheckoutSessions } from "./stripe-cleanup";
+import { cleanUpRecordedStripeObjects } from "./stripe-cleanup";
 
 export async function cleanUpRun(
   clerkClient: ClerkClient,
@@ -37,7 +37,7 @@ export async function cleanUpRun(
   console.log(
     `${logPrefix} Clerk invitations: ${summarizeRevocations(revocations)}`,
   );
-  const stripe = await cleanUpRecordedCheckoutSessions(runId, logPrefix);
+  const stripe = await cleanUpRecordedStripeObjects(runId, logPrefix);
   const database = await cleanUpRunAssessmentCalls(runId, logPrefix);
 
   if (

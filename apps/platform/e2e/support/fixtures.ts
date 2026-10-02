@@ -54,9 +54,14 @@ import { PublicNav } from "./public-nav";
 import { resolveRunId, runEmailPrefix } from "./run-id";
 import { StripeCheckoutPage } from "./stripe-checkout";
 import {
-  cleanUpRecordedCheckoutSessions,
+  cleanUpRecordedStripeObjects,
   registerCheckoutSessionForCleanup,
 } from "./stripe-cleanup";
+import {
+  insertSubscribedClientRecords,
+  type SubscribedClient,
+  type SubscribedClientSeed,
+} from "./subscribed-clients";
 
 type PlatformFixtures = {
   siteOutOfWaitlistMode: void;
@@ -96,6 +101,9 @@ type PlatformFixtures = {
     start: StartChoice,
     state?: ReviewState,
   ) => Promise<SubmittedClient>;
+  provisionSubscribedClient: (
+    seed: SubscribedClientSeed,
+  ) => Promise<SubscribedClient>;
   provisionClientInState: (state: ClientState) => Promise<PaidClient>;
   provisionProfiledClient: (
     profile: SubmissionProfile,
@@ -333,7 +341,7 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
     await use((sessionId) =>
       registerCheckoutSessionForCleanup(sessionId, RUN_ID),
     );
-    await cleanUpRecordedCheckoutSessions(RUN_ID, "[e2e cleanup]");
+    await cleanUpRecordedStripeObjects(RUN_ID, "[e2e cleanup]");
   },
 
   bookingPage: async ({ page }, use) => {
@@ -432,6 +440,31 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
         );
       },
     );
+  },
+
+  provisionSubscribedClient: async (
+    { createClerkUser, databasePool, scenarioTag, testEmail },
+    use,
+  ) => {
+    await use(async (seed: SubscribedClientSeed) => {
+      const authSubjectId = await createClerkUser();
+
+      await databasePool.query(INSERT_ACCOUNT, [authSubjectId, "CLIENT"]);
+
+      return insertSubscribedClientRecords(
+        databasePool,
+        {
+          authSubjectId,
+          email: testEmail,
+          firstName: PAID_CLIENT_FIRST_NAME,
+          lastName: `Subscription ${scenarioTag}`,
+          gender: "female",
+          dateOfBirth: ADULT_DATE_OF_BIRTH,
+        },
+        { ...seed, runId: RUN_ID },
+      );
+    });
+    await cleanUpRecordedStripeObjects(RUN_ID, "[e2e cleanup]");
   },
 
   provisionClientInState: async (
