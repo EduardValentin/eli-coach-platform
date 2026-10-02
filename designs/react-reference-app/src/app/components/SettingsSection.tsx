@@ -1,4 +1,4 @@
-import type { ElementType, ReactNode } from "react";
+import type { ElementType, ReactNode, Ref } from "react";
 import { cardVariants } from "./ui/card";
 import { Label } from "./ui/label";
 import { cn } from "./ui/utils";
@@ -6,24 +6,29 @@ import { WIDGET_TITLE_CLASS } from "./typography";
 
 export function SettingsSection({
   headingId,
+  headingRef,
   title,
   icon,
   description,
   footer,
   className,
+  parityRoot,
   children,
 }: {
   headingId: string;
+  headingRef?: Ref<HTMLHeadingElement>;
   title: ReactNode;
   icon?: ReactNode;
   description?: ReactNode;
   footer?: ReactNode;
   className?: string;
+  parityRoot?: string;
   children: ReactNode;
 }) {
   return (
     <section
       aria-labelledby={headingId}
+      data-parity-root={parityRoot}
       className={cn(
         cardVariants({ variant: "panel" }),
         "overflow-hidden",
@@ -33,7 +38,12 @@ export function SettingsSection({
       <div className="border-b border-border-subtle px-5 py-4 sm:px-6">
         <h2
           id={headingId}
-          className={cn("flex items-center gap-2", WIDGET_TITLE_CLASS)}
+          ref={headingRef}
+          tabIndex={headingRef ? -1 : undefined}
+          className={cn(
+            "flex items-center gap-2 focus:outline-none",
+            WIDGET_TITLE_CLASS,
+          )}
         >
           {icon}
           {title}
@@ -68,6 +78,7 @@ export function SettingsRow({
   title,
   description,
   hint,
+  notice,
   layout = "inline",
   children,
   ...rest
@@ -79,6 +90,7 @@ export function SettingsRow({
   title: ReactNode;
   description?: ReactNode;
   hint?: ReactNode;
+  notice?: ReactNode;
   layout?: SettingsRowLayout;
   children?: ReactNode;
   [key: string]: unknown;
@@ -113,6 +125,7 @@ export function SettingsRow({
             {hint}
           </p>
         )}
+        {notice && <div className="mt-3">{notice}</div>}
       </div>
     </div>
   );

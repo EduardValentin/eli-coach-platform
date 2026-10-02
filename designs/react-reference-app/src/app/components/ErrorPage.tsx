@@ -16,12 +16,14 @@ export function DeadEndContent({
   eyebrow,
   title,
   description,
+  detail,
   children,
 }: {
   icon: LucideIcon;
   eyebrow?: string;
   title: string;
   description: ReactNode;
+  detail?: ReactNode;
   children?: ReactNode;
 }) {
   return (
@@ -39,6 +41,14 @@ export function DeadEndContent({
       <p className="mt-4 max-w-md text-lg text-text-secondary leading-relaxed">
         {description}
       </p>
+      {detail ? (
+        <p
+          className="mt-3 max-w-md text-base text-text-secondary leading-relaxed"
+          data-parity="dead-end-detail"
+        >
+          {detail}
+        </p>
+      ) : null}
       {children ? <div className="mt-8 flex justify-center">{children}</div> : null}
     </>
   );
@@ -68,23 +78,32 @@ export function ErrorPage({
   eyebrow,
   title,
   description,
+  detail,
   children,
   landmarkLabel = 'Error',
+  parityRoot,
 }: {
   icon: LucideIcon;
   eyebrow: string;
   title: string;
   description: ReactNode;
-  children: ReactNode;
+  detail?: ReactNode;
+  children?: ReactNode;
   landmarkLabel?: string;
+  parityRoot?: string;
 }) {
   return (
-    <main aria-label={landmarkLabel} className={FULL_PAGE_MESSAGE_SHELL_CLASS}>
+    <main
+      aria-label={landmarkLabel}
+      className={FULL_PAGE_MESSAGE_SHELL_CLASS}
+      data-parity-root={parityRoot}
+    >
       <DeadEndContent
         icon={icon}
         eyebrow={eyebrow}
         title={title}
         description={description}
+        detail={detail}
       >
         {children}
       </DeadEndContent>

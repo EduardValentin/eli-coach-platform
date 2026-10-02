@@ -48,6 +48,7 @@ import { ClientCycleTracker } from "./pages/client-portal/ClientCycleTracker";
 import { ClientOnboarding } from "./pages/client-portal/ClientOnboarding";
 import { ClientWelcome } from "./pages/client-portal/ClientWelcome";
 import { PortalEnded } from "./pages/client-portal/PortalEnded";
+import { PaymentMethodStandIn } from "./pages/PaymentMethodStandIn";
 import { ClientJourneyGate } from "./components/client-portal/ClientJourneyGate";
 import { CoachClientCycle } from "./pages/coach-portal/CoachClientCycle";
 import { EditClientProfile } from "./pages/coach-portal/EditClientProfile";
@@ -156,6 +157,7 @@ export const router = createBrowserRouter(
         { path: "portal/welcome", Component: ClientWelcome },
         { path: "portal/onboarding", Component: ClientOnboarding },
         { path: "portal/ended", Component: PortalEnded },
+        { path: "billing/payment-method", Component: PaymentMethodStandIn },
               ]
             },
           ]

@@ -54,4 +54,23 @@ describe('EmailPreview', () => {
     );
     expect(markup).toContain('Answer now');
   });
+
+  it('previews the coach refund email', async () => {
+    // arrange
+    const user = userEvent.setup();
+    render(<EmailPreview />);
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Refund due — coach' }));
+    await user.click(
+      screen.getByRole('button', { name: 'Proportional refund' }),
+    );
+
+    // assert
+    const markup = await previewedEmail(
+      'Refund due — coach — proportional-refund',
+      'Proportional refund: cancelled within 14 days of paying',
+    );
+    expect(markup).toContain('A refund is due.');
+  });
 });

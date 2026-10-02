@@ -159,6 +159,7 @@ function AdvanceJourneys({ stages }: { stages: Record<string, JourneyStage> }) {
           paidAt: NOW,
           bundle: 3,
           startPath: 'immediate',
+          amountPaidCents: 44700,
         });
       }
     }

@@ -1,0 +1,14 @@
+[
+  {"waitFor": "[data-parity-root=\"SubscriptionSection\"]"},
+  {"click": "[aria-label=\"Open Dev Toggle\"]"},
+  {"click": "role=tab[name=\"Journey\"]"},
+  {"click": "#dev-cancel-outcome"},
+  {"click": "role=option[name=\"Fails\" s]"},
+  {"click": "[aria-label=\"Close Dev Settings\"]"},
+  {"wait": 400},
+  {"click": "[data-parity=\"cancel-action\"]"},
+  {"waitFor": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"},
+  {"click": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"},
+  {"waitFor": "[data-parity=\"cancel-problem\"]"},
+  {"wait": 600}
+]

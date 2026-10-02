@@ -19,6 +19,7 @@ import {
   PaymentLink,
   type PaymentLinkVariant,
 } from '../../email-templates/PaymentLink';
+import { RefundDue } from '../../email-templates/RefundDue';
 
 type TemplateKey =
   | 'waitlist-confirmation'
@@ -27,7 +28,8 @@ type TemplateKey =
   | 'details-request'
   | 'payment-link'
   | 'assessment-call-visitor'
-  | 'assessment-call-coach';
+  | 'assessment-call-coach'
+  | 'refund-due';
 
 type TemplateOption = {
   key: TemplateKey;
@@ -88,7 +90,17 @@ const TEMPLATES: TemplateOption[] = [
       { value: 'without-notes', label: 'Without a shared note or a phone' },
     ],
   },
+  {
+    key: 'refund-due',
+    label: 'Refund due — coach',
+    variants: [
+      { value: 'full-refund', label: 'Full refund' },
+      { value: 'proportional-refund', label: 'Proportional refund' },
+    ],
+  },
 ];
+
+const PROPORTIONAL_SAMPLE_REFUND_CENTS = 34767;
 
 export function EmailPreview() {
   const [template, setTemplate] = useState<TemplateKey>(
@@ -158,6 +170,20 @@ export function EmailPreview() {
           variant={variant as AssessmentCallEmailVariant}
           visitorPhone={variant === 'with-notes' ? SAMPLE_VISITOR_PHONE : null}
           joinUrl={`${window.location.origin}/book/ac-demo/join`}
+        />
+      );
+    }
+    if (template === 'refund-due') {
+      return variant === 'proportional-refund' ? (
+        <RefundDue
+          reason="proportional-refund"
+          refundCents={PROPORTIONAL_SAMPLE_REFUND_CENTS}
+          clientPageUrl={`${window.location.origin}/coach/clients/ac-demo-client-1`}
+        />
+      ) : (
+        <RefundDue
+          reason="full-refund"
+          clientPageUrl={`${window.location.origin}/coach/clients/ac-demo-client-1`}
         />
       );
     }

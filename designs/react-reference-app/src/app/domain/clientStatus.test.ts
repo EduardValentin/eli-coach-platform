@@ -46,7 +46,9 @@ const RUNNING: CoachingSubscription = {
   bundle: 3,
   startPath: 'immediate',
   purchasedAt: subDays(NOW, 20),
+  amountPaidCents: 44700,
   status: 'active',
+  paymentProblem: false,
   day1: subDays(NOW, 6),
   periodEndsAt: addDays(NOW, 84),
 };
@@ -55,7 +57,9 @@ const WAITING: CoachingSubscription = {
   bundle: 3,
   startPath: 'waiting',
   purchasedAt: subDays(NOW, 5),
+  amountPaidCents: 44700,
   status: 'active',
+  paymentProblem: false,
   day1: addDays(NOW, 9),
   periodEndsAt: addDays(NOW, 99),
 };

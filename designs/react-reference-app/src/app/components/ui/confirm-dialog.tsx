@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ReactNode, RefObject } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -21,6 +21,7 @@ interface ConfirmDialogProps {
   onConfirm: () => void;
   confirmDisabled?: boolean;
   tone?: 'default' | 'destructive';
+  returnFocusTo?: RefObject<HTMLElement | null>;
 }
 
 /**
@@ -38,13 +39,22 @@ export function ConfirmDialog({
   onConfirm,
   confirmDisabled = false,
   tone = 'default',
+  returnFocusTo,
 }: ConfirmDialogProps) {
+  const focusReturnTarget = (event: Event) => {
+    const target = returnFocusTo?.current;
+    if (!target) return;
+
+    event.preventDefault();
+    target.focus();
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className="max-h-[80vh] gap-6 overflow-y-auto p-6 sm:max-w-md"
         data-parity-root="ConfirmDialog"
+        onCloseAutoFocus={focusReturnTarget}
       >
         <DialogHeader className="gap-2">
           <DialogTitle>{title}</DialogTitle>

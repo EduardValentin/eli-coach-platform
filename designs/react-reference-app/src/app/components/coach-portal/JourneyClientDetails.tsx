@@ -10,6 +10,8 @@ import { InvitationBlock } from './InvitationBlock';
 import { JourneyMeasurements } from './JourneyMeasurements';
 import { OnboardingPanel } from './OnboardingPanel';
 import { SubscriptionSummary } from '../SubscriptionSummary';
+import { needsRefund } from '../../domain/coachingSubscription';
+import { NeedsRefundBadge } from './NeedsRefundBadge';
 import { PORTAL_PAGE_TITLE_CLASS } from '../typography';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 
@@ -27,6 +29,9 @@ export function JourneyClientDetails({ journey }: { journey: ClientJourney }) {
   const name = journeyName(journey);
   const units = useMeasureUnits();
   const invitation = invitationAwaitingAccount(journey);
+  const refundDue = journey.subscription
+    ? needsRefund(journey.subscription)
+    : false;
 
   return (
     <div className="w-full pb-12" data-parity-root="JourneyClientDetails">
@@ -44,6 +49,7 @@ export function JourneyClientDetails({ journey }: { journey: ClientJourney }) {
         <div className="min-w-0">
           <div className="mb-2 flex flex-wrap items-center gap-3">
             <h1 className={PORTAL_PAGE_TITLE_CLASS}>{name}</h1>
+            {refundDue && <NeedsRefundBadge parity="needs-refund" />}
           </div>
           <p className="text-text-secondary">{journey.identity.email}</p>
         </div>

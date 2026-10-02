@@ -1197,4 +1197,80 @@ describe('the coach reading what cycle mode means', () => {
       }),
     ).not.toBeInTheDocument();
   });
+
+  it('flags a client who still needs her refund next to her name', () => {
+    // arrange
+    const urlQuery = '?jstage=submitted&jstart=waiting&jrefund=due';
+
+    // act
+    renderDetails(urlQuery, { postMvp: false });
+
+    // assert
+    expect(within(pageHeader()).getByText('Needs refund')).toBeInTheDocument();
+    expect(readingIn(subscriptionPanel(), 'Ended on')).toHaveTextContent(
+      /^\d{1,2} \w+$/,
+    );
+    expect(readingIn(subscriptionPanel(), 'Refund due')).toHaveTextContent(
+      /^€447\.00 by \d{1,2} \w+$/,
+    );
+    expect(
+      within(subscriptionPanel()).getByText(
+        'Full refund: cancelled within the 14-day withdrawal period.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('reads what is still due after a partial refund', () => {
+    // arrange
+    const urlQuery = '?jstage=submitted&jrefund=part-refunded';
+
+    // act
+    renderDetails(urlQuery, { postMvp: false });
+
+    // assert
+    expect(within(pageHeader()).getByText('Needs refund')).toBeInTheDocument();
+    expect(readingIn(subscriptionPanel(), 'Refund due')).toHaveTextContent(
+      /^€298\.00 by \d{1,2} \w+$/,
+    );
+    expect(
+      within(subscriptionPanel()).getByText(
+        'Proportional refund: cancelled within 14 days of paying, for the unused part of the first term. €149.00 refunded so far.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('reads the refund date and drops the flag once she is refunded', () => {
+    // arrange
+    const urlQuery = '?jstage=submitted&jrefund=refunded';
+
+    // act
+    renderDetails(urlQuery, { postMvp: false });
+
+    // assert
+    expect(
+      within(pageHeader()).queryByText('Needs refund'),
+    ).not.toBeInTheDocument();
+    expect(readingIn(subscriptionPanel(), 'Refunded')).toHaveTextContent(
+      /^\d{1,2} \w+$/,
+    );
+    expect(
+      within(subscriptionPanel()).queryByText('Refund due'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('reads when a cancelled client loses access', () => {
+    // arrange
+    const urlQuery = '?jstage=submitted&jsub=cancelled&jpaid=14';
+
+    // act
+    renderDetails(urlQuery, { postMvp: false });
+
+    // assert
+    expect(readingIn(subscriptionPanel(), 'Ends on')).toHaveTextContent(
+      /^\d{1,2} \w+$/,
+    );
+    expect(
+      within(pageHeader()).queryByText('Needs refund'),
+    ).not.toBeInTheDocument();
+  });
 });

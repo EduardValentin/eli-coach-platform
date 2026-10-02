@@ -29,7 +29,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '../ui/alert-dialog';
+import { Alert } from '../ui/alert';
 import { ClientWidget } from './ClientWidget';
+import { ManagePaymentMethodButton } from './ManagePaymentMethodButton';
+import { PaymentProblemNotice } from './PaymentProblemNotice';
+import { usePaymentMethodPortal } from './usePaymentMethodPortal';
 
 function eyebrowFor(stage: JourneyStage): string {
   return isBeforeStage(stage, 'approved') ? 'Your onboarding' : 'Your program';
@@ -109,6 +113,7 @@ export function ProgramStatusCard() {
   const { demoJourney, startProgramNow } = useClientJourneys();
   const [confirming, setConfirming] = useState(false);
   const [starting, setStarting] = useState(false);
+  const paymentMethod = usePaymentMethodPortal();
 
   const label = clientStatusLabel(demoJourney.stage);
   if (!label) return null;
@@ -118,6 +123,7 @@ export function ProgramStatusCard() {
   const waiting = subscription ? !canStartWork(subscription, now) : false;
   const workStart =
     waiting && subscription ? workStartDate(subscription) : null;
+  const paymentProblem = subscription?.paymentProblem ?? false;
 
   const startNow = async () => {
     if (!subscription) return;
@@ -166,6 +172,18 @@ export function ProgramStatusCard() {
           </p>
         )}
 
+        {paymentProblem && (
+          <div className="mt-4 max-w-2xl">
+            <PaymentProblemNotice />
+          </div>
+        )}
+
+        {paymentMethod.problem && (
+          <Alert className="mt-4 max-w-2xl" data-parity="payment-method-problem">
+            {paymentMethod.problem}
+          </Alert>
+        )}
+
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           {demoJourney.stage === 'needs-details' && (
             <Button
@@ -204,6 +222,13 @@ export function ProgramStatusCard() {
             >
               Let Eli start now
             </Button>
+          )}
+
+          {paymentProblem && (
+            <ManagePaymentMethodButton
+              onOpen={() => void paymentMethod.open()}
+              opening={paymentMethod.opening}
+            />
           )}
         </div>
       </ClientWidget>

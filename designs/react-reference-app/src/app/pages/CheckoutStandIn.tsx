@@ -1,4 +1,9 @@
 import { useState, type ReactNode } from 'react';
+import {
+  ProviderStandInShell,
+  STAND_IN_BACK_LINK_CLASS,
+  StandInCardFields,
+} from '../components/ProviderStandIn';
 import { Link, useNavigate, useParams } from 'react-router';
 import { Button } from '../components/ThemeButton';
 import { useClientJourneys } from '../context/ClientJourneyContext';
@@ -22,15 +27,6 @@ const START_PATH_SUMMARY: Record<SubscriptionStartPath, string> = {
   immediate: 'Starts as soon as your payment clears',
   waiting: 'Eli starts working on your program 14 days after payment, unless you let her start sooner',
 };
-
-const CARD_FIELDS = [
-  { id: 'card-number', label: 'Card number', placeholder: '4242 4242 4242 4242' },
-  { id: 'card-expiry', label: 'Expiry', placeholder: 'MM / YY' },
-  { id: 'card-cvc', label: 'CVC', placeholder: '123' },
-];
-
-const FIELD_CLASS =
-  'mt-1 h-11 w-full rounded-field border border-border-subtle bg-surface-quiet px-3 text-sm text-text-secondary';
 
 export function CheckoutStandIn() {
   const { sessionId = '' } = useParams();
@@ -74,6 +70,7 @@ export function CheckoutStandIn() {
       paidAt: completed.paidAt,
       bundle: session.bundle,
       startPath: session.startPath,
+      amountPaidCents: total * 100,
     });
     navigate(`/checkout/complete?order=${sessionId}`);
   };
@@ -91,24 +88,7 @@ export function CheckoutStandIn() {
         <Reading term="Start" value={START_PATH_SUMMARY[session.startPath]} />
       </dl>
 
-      <fieldset className="mt-8 grid gap-4 border-0 p-0" disabled>
-        <legend className="text-xs uppercase tracking-widest text-muted-foreground">
-          Card details
-        </legend>
-        {CARD_FIELDS.map((field) => (
-          <div key={field.id}>
-            <label className="text-xs text-muted-foreground" htmlFor={field.id}>
-              {field.label}
-            </label>
-            <input
-              className={FIELD_CLASS}
-              id={field.id}
-              placeholder={field.placeholder}
-              type="text"
-            />
-          </div>
-        ))}
-      </fieldset>
+      <StandInCardFields />
 
       <Button
         aria-busy={paying}
@@ -122,7 +102,7 @@ export function CheckoutStandIn() {
       </Button>
 
       <Link
-        className="mt-5 block text-center text-sm text-muted-foreground underline underline-offset-4 hover:text-text-primary"
+        className={STAND_IN_BACK_LINK_CLASS}
         to={`/select-bundle?${cancelledReturn.toString()}`}
       >
         Back
@@ -133,18 +113,13 @@ export function CheckoutStandIn() {
 
 function StandInShell({ children }: { children: ReactNode }) {
   return (
-    <main
-      aria-label="Checkout"
-      className="min-h-screen bg-surface-base px-4 py-12 sm:px-6"
+    <ProviderStandInShell
+      eyebrow={EYEBROW}
+      landmarkLabel="Checkout"
+      note={HOSTED_PAGE_NOTE}
     >
-      <div className="mx-auto w-full max-w-md">
-        <p className="text-xs uppercase tracking-widest text-muted-foreground">
-          {EYEBROW}
-        </p>
-        <p className="mt-2 text-sm text-muted-foreground">{HOSTED_PAGE_NOTE}</p>
-        <div className="mt-8">{children}</div>
-      </div>
-    </main>
+      {children}
+    </ProviderStandInShell>
   );
 }
 

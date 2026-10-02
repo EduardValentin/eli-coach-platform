@@ -23,7 +23,9 @@ const SUBSCRIPTION: CoachingSubscription = {
   bundle: 3,
   startPath: 'immediate',
   purchasedAt: new Date(2026, 8, 20),
+  amountPaidCents: 44700,
   status: 'active',
+  paymentProblem: false,
   day1: new Date(2026, 8, 21),
   periodEndsAt: new Date(2026, 11, 21),
 };
@@ -85,5 +87,73 @@ describe('the subscription summary', () => {
       'Start program',
       'Renews on',
     ]);
+  });
+
+  it('keeps the refund readings out of the client view', () => {
+    // arrange
+    const subscription: CoachingSubscription = {
+      ...SUBSCRIPTION,
+      status: 'ended',
+      periodEndsAt: new Date(2026, 8, 25),
+      refund: {
+        amountCents: 44700,
+        reason: 'full-refund',
+        dueBy: new Date(2026, 9, 9),
+        refundedCents: 0,
+      },
+    };
+
+    // act
+    render(
+      <SubscriptionSummary
+        subscription={subscription}
+        perspective="client"
+        headingId="subscription-heading"
+      />,
+    );
+
+    // assert
+    expect(terms()).toEqual([
+      'Bundle',
+      'Payment date',
+      'Start',
+      'Start program',
+      'Ended on',
+    ]);
+  });
+
+  it('ends the coach view with the refund still due and why', () => {
+    // arrange
+    const subscription: CoachingSubscription = {
+      ...SUBSCRIPTION,
+      status: 'ended',
+      periodEndsAt: new Date(2026, 8, 25),
+      refund: {
+        amountCents: 44700,
+        reason: 'full-refund',
+        dueBy: new Date(2026, 9, 9),
+        refundedCents: 0,
+      },
+    };
+
+    // act
+    render(
+      <SubscriptionSummary
+        subscription={subscription}
+        perspective="coach"
+        clientGender="female"
+        pricing="regular"
+        headingId="subscription-heading"
+      />,
+    );
+
+    // assert
+    expect(terms().at(-1)).toBe('Refund due');
+    expect(screen.getByText('€447.00 by 9 October')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Full refund: cancelled within the 14-day withdrawal period.',
+      ),
+    ).toBeInTheDocument();
   });
 });

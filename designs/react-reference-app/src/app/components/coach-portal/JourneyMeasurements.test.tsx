@@ -47,6 +47,9 @@ function submittedJourney(lifeStage: PrototypeLifeStage): ClientJourney {
     measurementsDue: 'none',
     lifeStage,
     seededPhotos: 'none',
+    refund: 'none',
+    paymentProblem: false,
+    daysSincePayment: 'stage',
     now: new Date(2026, 8, 21, 12),
   });
   const [first] = journey.measurements;

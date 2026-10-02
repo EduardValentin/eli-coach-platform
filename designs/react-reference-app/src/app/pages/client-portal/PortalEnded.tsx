@@ -1,24 +1,27 @@
 import { CalendarX } from 'lucide-react';
-import { Link } from 'react-router';
-import { ERROR_PAGE_ACTION_CLASS, ErrorPage } from '../../components/ErrorPage';
-
-const TITLE = 'Your coaching has ended';
-
-const DESCRIPTION =
-  "It was good to train together. Whenever you want to pick it back up, your plan and your history are waiting for you.";
+import { ErrorPage } from '../../components/ErrorPage';
+import { useClientJourneys } from '../../context/ClientJourneyContext';
+import { needsRefund } from '../../domain/coachingSubscription';
+import {
+  COACHING_ENDED_LINE,
+  COACHING_ENDED_TITLE,
+  REFUND_ON_ITS_WAY_LINE,
+} from '../../utils/subscriptionCopy';
 
 export function PortalEnded() {
+  const { demoJourney } = useClientJourneys();
+  const { subscription } = demoJourney;
+  const refundDue = subscription ? needsRefund(subscription) : false;
+
   return (
     <ErrorPage
-      description={DESCRIPTION}
+      description={COACHING_ENDED_LINE}
+      detail={refundDue ? REFUND_ON_ITS_WAY_LINE : undefined}
       eyebrow="Your coaching"
       icon={CalendarX}
-      landmarkLabel={TITLE}
-      title={TITLE}
-    >
-      <Link className={ERROR_PAGE_ACTION_CLASS} to="/pricing">
-        Subscribe again
-      </Link>
-    </ErrorPage>
+      landmarkLabel={COACHING_ENDED_TITLE}
+      parityRoot="PortalEnded"
+      title={COACHING_ENDED_TITLE}
+    />
   );
 }

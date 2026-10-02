@@ -48,8 +48,10 @@ import {
 import {
   heldJourney,
   seedJourney,
+  type PrototypeDaysSincePayment,
   type PrototypeLifeStage,
   type PrototypeMeasurementsDue,
+  type PrototypeRefund,
   type PrototypeSeededPhotos,
 } from '../services/clientJourneySamples';
 import { profileOfJourney } from '../domain/clientProfile';
@@ -88,6 +90,9 @@ export type DemoJourneyOptions = {
   measurementsDue: PrototypeMeasurementsDue;
   lifeStage: PrototypeLifeStage;
   seededPhotos: PrototypeSeededPhotos;
+  refund: PrototypeRefund;
+  paymentProblem: boolean;
+  daysSincePayment: PrototypeDaysSincePayment;
 };
 
 export type JourneySubmission = {
@@ -99,6 +104,7 @@ export type JourneyPayment = {
   paidAt: Date;
   bundle: SubscriptionBundle;
   startPath: SubscriptionStartPath;
+  amountPaidCents: number;
 };
 
 type ClientJourneyContextType = {
@@ -132,6 +138,7 @@ type ClientJourneyContextType = {
   ) => Promise<void>;
   cancelSubscription: (callId: string, cancelled: CoachingSubscription) => void;
   startProgramNow: (callId: string, started: CoachingSubscription) => void;
+  recoverPayment: (callId: string) => void;
 };
 
 const ClientJourneyContext = createContext<ClientJourneyContextType | null>(
@@ -209,6 +216,9 @@ function seedAwaitingReviewJourney(prototypeMode: PrototypeMode) {
     measurementsDue: 'none',
     lifeStage: 'none',
     seededPhotos: 'none',
+    refund: 'none',
+    paymentProblem: false,
+    daysSincePayment: 'stage',
     now: new Date(),
   });
 }
@@ -228,6 +238,9 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
     journeyMeasurementsDue,
     journeyLifeStage,
     journeySeededPhotos,
+    journeyRefund,
+    journeyPaymentProblem,
+    journeyDaysSincePayment,
     prototypeMode,
   } = appState;
 
@@ -262,6 +275,9 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
         measurementsDue: journeyMeasurementsDue,
         lifeStage: journeyLifeStage,
         seededPhotos: journeySeededPhotos,
+        refund: journeyRefund,
+        paymentProblem: journeyPaymentProblem,
+        daysSincePayment: journeyDaysSincePayment,
         now: new Date(),
       }),
       [AWAITING_REVIEW_CALL_ID]: seedAwaitingReviewJourney(prototypeMode),
@@ -288,6 +304,9 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
           measurementsDue: options.measurementsDue,
           lifeStage: options.lifeStage,
           seededPhotos: options.seededPhotos,
+          refund: options.refund,
+          paymentProblem: options.paymentProblem,
+          daysSincePayment: options.daysSincePayment,
           now: new Date(),
         }),
       }));
@@ -306,6 +325,9 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
       measurementsDue: journeyMeasurementsDue,
       lifeStage: journeyLifeStage,
       seededPhotos: journeySeededPhotos,
+      refund: journeyRefund,
+      paymentProblem: journeyPaymentProblem,
+      daysSincePayment: journeyDaysSincePayment,
     });
   }, [
     seedDemoJourney,
@@ -319,6 +341,9 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
     journeyMeasurementsDue,
     journeyLifeStage,
     journeySeededPhotos,
+    journeyRefund,
+    journeyPaymentProblem,
+    journeyDaysSincePayment,
     prototypeMode,
   ]);
 
@@ -392,7 +417,9 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
               bundle: payment.bundle,
               startPath: payment.startPath,
               purchasedAt: payment.paidAt,
+              amountPaidCents: payment.amountPaidCents,
               status: 'not-started',
+              paymentProblem: false,
             },
             invitation: journeyInvitationFrom(
               createInvitation(journey.identity.email, payment.paidAt),
@@ -619,6 +646,20 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
     [updateJourney],
   );
 
+  const recoverPayment = useCallback(
+    (callId: string) => {
+      updateJourney(callId, (journey) =>
+        journey.subscription
+          ? {
+              ...journey,
+              subscription: { ...journey.subscription, paymentProblem: false },
+            }
+          : journey,
+      );
+    },
+    [updateJourney],
+  );
+
   const journeyForCall = useCallback(
     (callId: string) => journeys[callId] ?? null,
     [journeys],
@@ -669,6 +710,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
         removeMeasurementPhoto,
         cancelSubscription,
         startProgramNow,
+        recoverPayment,
       }}
     >
       {children}

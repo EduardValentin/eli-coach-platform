@@ -44,6 +44,10 @@ function renderCard(devParams: string) {
                     element={<p>onboarding page</p>}
                     path="/portal/onboarding"
                   />
+                  <Route
+                    element={<p>payment method page</p>}
+                    path="/billing/payment-method"
+                  />
                 </Routes>
               </ClientJourneyProvider>
             </AssessmentCallProvider>
@@ -228,5 +232,52 @@ describe('the program status card', () => {
 
     // assert
     expect(reassurance).not.toBeInTheDocument();
+  });
+
+  it('announces a payment problem and offers to manage the payment method', () => {
+    // arrange
+    renderCard('?session=client&jstage=reviewing&jpayproblem=1');
+
+    // act
+    const status = screen.getByRole('status');
+
+    // assert
+    expect(status).toHaveTextContent(
+      "Payment problemYour last payment didn't go through. Update your card to keep your coaching going.",
+    );
+    expect(
+      screen.getByRole('button', { name: 'Manage payment method' }),
+    ).toBeVisible();
+  });
+
+  it('keeps the payment method off the card without a payment problem', () => {
+    // arrange
+    renderCard('?session=client&jstage=reviewing');
+
+    // act
+    const manage = screen.queryByRole('button', {
+      name: 'Manage payment method',
+    });
+
+    // assert
+    expect(manage).not.toBeInTheDocument();
+    expect(screen.queryByText('Payment problem')).not.toBeInTheDocument();
+  });
+
+  it('hands her over to update her card from the dashboard', async () => {
+    // arrange
+    renderCard('?session=client&jstage=reviewing&jpayproblem=1');
+
+    // act
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Manage payment method' }),
+    );
+
+    // assert
+    expect(
+      await screen.findByText('payment method page', undefined, {
+        timeout: SERVICE_TIMEOUT,
+      }),
+    ).toBeVisible();
   });
 });

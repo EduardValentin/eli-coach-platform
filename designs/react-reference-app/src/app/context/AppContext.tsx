@@ -34,13 +34,23 @@ import {
   type PhotoRemoval,
 } from '../services/measurementService';
 import {
+  PROTOTYPE_DAYS_SINCE_PAYMENT,
   PROTOTYPE_LIFE_STAGES,
   PROTOTYPE_MEASUREMENTS_DUE,
+  PROTOTYPE_REFUNDS,
   PROTOTYPE_SEEDED_PHOTOS,
+  type PrototypeDaysSincePayment,
   type PrototypeLifeStage,
   type PrototypeMeasurementsDue,
+  type PrototypeRefund,
   type PrototypeSeededPhotos,
 } from '../services/clientJourneySamples';
+import {
+  PROTOTYPE_CANCEL_OUTCOMES,
+  PROTOTYPE_PAYMENT_PORTAL_OUTCOMES,
+  type PrototypeCancelOutcome,
+  type PrototypePaymentPortalOutcome,
+} from '../services/subscriptionService';
 import { optionOrDefault } from '../utils/optionOrDefault';
 import {
   JOURNEY_GENDERS,
@@ -107,6 +117,11 @@ type AppState = {
   measurementSave: MeasurementSave;
   photoRemoval: PhotoRemoval;
   journeySeededPhotos: PrototypeSeededPhotos;
+  journeyRefund: PrototypeRefund;
+  journeyPaymentProblem: boolean;
+  journeyDaysSincePayment: PrototypeDaysSincePayment;
+  cancelOutcome: PrototypeCancelOutcome;
+  paymentPortalOutcome: PrototypePaymentPortalOutcome;
   invitationResendOutcome: PrototypeInvitationResendOutcome;
   clientsRoster: PrototypeClientsRoster;
   paymentLinkOutcome: PrototypePaymentLinkOutcome;
@@ -149,6 +164,11 @@ const defaultState: AppState = {
   measurementSave: 'works',
   photoRemoval: 'works',
   journeySeededPhotos: 'none',
+  journeyRefund: 'none',
+  journeyPaymentProblem: false,
+  journeyDaysSincePayment: 'stage',
+  cancelOutcome: 'works',
+  paymentPortalOutcome: 'works',
   invitationResendOutcome: 'sent',
   clientsRoster: 'seeded',
   paymentLinkOutcome: 'sent',
@@ -373,6 +393,32 @@ function parseDevParamsFromURL(): AppState {
     params.get('jphotos'),
     defaultState.journeySeededPhotos,
   );
+  state.journeyRefund = optionOrDefault(
+    PROTOTYPE_REFUNDS,
+    params.get('jrefund'),
+    defaultState.journeyRefund,
+  );
+  if (state.journeyRefund !== 'none') {
+    state.journeySubscriptionStatus = 'ended';
+  }
+  if (params.has('jpayproblem')) {
+    state.journeyPaymentProblem = params.get('jpayproblem') === '1';
+  }
+  state.journeyDaysSincePayment = optionOrDefault(
+    PROTOTYPE_DAYS_SINCE_PAYMENT,
+    params.get('jpaid'),
+    defaultState.journeyDaysSincePayment,
+  );
+  state.cancelOutcome = optionOrDefault(
+    PROTOTYPE_CANCEL_OUTCOMES,
+    params.get('jcancel'),
+    defaultState.cancelOutcome,
+  );
+  state.paymentPortalOutcome = optionOrDefault(
+    PROTOTYPE_PAYMENT_PORTAL_OUTCOMES,
+    params.get('jpayportal'),
+    defaultState.paymentPortalOutcome,
+  );
   const invitationResendOutcome = params.get('jresend');
   if (
     invitationResendOutcome &&
@@ -458,6 +504,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     url.searchParams.delete('jsave');
     url.searchParams.delete('jremove');
     url.searchParams.delete('jphotos');
+    url.searchParams.delete('jrefund');
+    url.searchParams.delete('jpayproblem');
+    url.searchParams.delete('jpaid');
+    url.searchParams.delete('jcancel');
+    url.searchParams.delete('jpayportal');
     url.searchParams.delete('jresend');
     url.searchParams.delete('jroster');
     url.searchParams.delete('paylink');
@@ -549,6 +600,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     if (appState.journeySeededPhotos !== defaultState.journeySeededPhotos) {
       url.searchParams.set('jphotos', appState.journeySeededPhotos);
+    }
+    if (appState.journeyRefund !== defaultState.journeyRefund) {
+      url.searchParams.set('jrefund', appState.journeyRefund);
+    }
+    if (appState.journeyPaymentProblem) url.searchParams.set('jpayproblem', '1');
+    if (
+      appState.journeyDaysSincePayment !== defaultState.journeyDaysSincePayment
+    ) {
+      url.searchParams.set('jpaid', appState.journeyDaysSincePayment);
+    }
+    if (appState.cancelOutcome !== defaultState.cancelOutcome) {
+      url.searchParams.set('jcancel', appState.cancelOutcome);
+    }
+    if (appState.paymentPortalOutcome !== defaultState.paymentPortalOutcome) {
+      url.searchParams.set('jpayportal', appState.paymentPortalOutcome);
     }
     if (
       appState.invitationResendOutcome !== defaultState.invitationResendOutcome
