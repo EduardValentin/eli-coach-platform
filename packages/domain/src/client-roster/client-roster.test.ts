@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import { CLIENT_STATUSES, clientStatusOf } from "./client-roster";
 
+const NOW = new Date("2026-10-20T10:00:00.000Z");
+const LATER = new Date("2027-01-02T10:00:00.000Z");
+
 describe("clientStatusOf", () => {
   it.each([
     ["invited before her account is bound", false, "welcome", "invited"],
@@ -16,7 +19,8 @@ describe("clientStatusOf", () => {
     const input = {
       accountBound,
       step,
-      subscriptionStatus: "not-started" as const,
+      subscription: { status: "not-started" as const, accessEndsAt: null },
+      now: NOW,
     };
 
     // act
@@ -31,7 +35,8 @@ describe("clientStatusOf", () => {
     const input = {
       accountBound: true,
       step: "submitted" as const,
-      subscriptionStatus: null,
+      subscription: null,
+      now: NOW,
     };
 
     // act
@@ -40,6 +45,34 @@ describe("clientStatusOf", () => {
     // assert
     expect(status).toBe("awaiting-review");
   });
+
+  it.each([
+    ["active", { status: "active", accessEndsAt: null }, "active"],
+    ["cancelled", { status: "cancelled", accessEndsAt: LATER }, "cancelled"],
+    [
+      "inactive once her cancelled access has run out",
+      { status: "cancelled", accessEndsAt: NOW },
+      "inactive",
+    ],
+    ["inactive once ended", { status: "ended", accessEndsAt: NOW }, "inactive"],
+  ] as const)(
+    "reads her subscription as %s over her journey",
+    (_label, subscription, expected) => {
+      // arrange
+      const input = {
+        accountBound: true,
+        step: "approved" as const,
+        subscription,
+        now: NOW,
+      };
+
+      // act
+      const status = clientStatusOf(input);
+
+      // assert
+      expect(status).toBe(expected);
+    },
+  );
 });
 
 describe("CLIENT_STATUSES", () => {

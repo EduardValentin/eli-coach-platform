@@ -1,16 +1,13 @@
 import { Client } from "../client";
-import type {
-  AssessmentCallReader,
-  CoachingSalesIncidents,
-} from "../payment-link";
+import type { AssessmentCallReader } from "../payment-link";
 import type { Clock } from "../shared";
 
 import type { CoachingPurchases } from "./coaching-purchases";
-import {
-  CoachingSubscription,
-  type CheckoutCompletion,
-} from "./coaching-subscription";
+import type { CheckoutCompletion } from "./coaching-subscription";
+import type { CoachingSubscriptionIncidents } from "./coaching-subscription-incidents";
 import type { PaidClientAdmission } from "./paid-client-admission";
+import type { PaymentSubscriptions } from "./payment-subscriptions";
+import { PurchasedSubscription } from "./purchased-subscription";
 
 type RecordCheckoutCompletedResult =
   | { status: "recorded" }
@@ -22,7 +19,8 @@ type RecordCheckoutCompletedUseCaseOptions = {
   admission: PaidClientAdmission;
   calls: AssessmentCallReader;
   clock: Clock;
-  incidents: CoachingSalesIncidents;
+  incidents: CoachingSubscriptionIncidents;
+  paymentSubscriptions: PaymentSubscriptions;
   purchases: CoachingPurchases;
 };
 
@@ -53,7 +51,7 @@ export class RecordCheckoutCompletedUseCase {
     const purchase = await this.options.purchases.recordCompletion({
       eventId: completion.eventId,
       client: Client.fromAssessmentCall(call, this.options.clock.now()),
-      subscription: CoachingSubscription.fromCompletedCheckout(completion),
+      subscription: PurchasedSubscription.fromCompletedCheckout(completion),
     });
 
     if (purchase.outcome === "call_already_paid") {
@@ -66,7 +64,25 @@ export class RecordCheckoutCompletedUseCase {
     }
 
     await this.options.admission.admit({ clientId: purchase.clientId });
+    await this.holdRenewal(completion.paymentSubscriptionId);
 
     return { status: STATUS_BY_PURCHASE_OUTCOME[purchase.outcome] };
+  }
+
+  private async holdRenewal(paymentSubscriptionId: string): Promise<void> {
+    try {
+      await this.options.paymentSubscriptions.holdRenewal(
+        paymentSubscriptionId,
+      );
+    } catch (error) {
+      this.options.incidents.renewalHoldFailed({
+        paymentSubscriptionId,
+        error,
+      });
+
+      throw error;
+    }
+
+    this.options.incidents.renewalHoldApplied({ paymentSubscriptionId });
   }
 }

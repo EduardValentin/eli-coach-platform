@@ -4,10 +4,11 @@ import {
   type ClientJourneySnapshot,
   type ClientJourneyStep,
 } from "../client-journey";
-import type { CoachingBundleId, PriceTier } from "../coaching-bundle";
-import type {
-  CoachingSubscriptionStatus,
-  StartChoice,
+import {
+  CoachingSubscription,
+  RefundDue,
+  type CoachingSubscriptionSnapshot,
+  type CoachingSubscriptionStatus,
 } from "../coaching-subscription";
 
 export const CLIENT_STATUSES = [
@@ -32,14 +33,7 @@ export type ClientRosterEntry = {
     gender: VisitorGender;
     assessmentCallId: string;
   };
-  subscription: {
-    bundleId: CoachingBundleId;
-    months: number;
-    tier: PriceTier;
-    paidAt: Date;
-    startChoice: StartChoice;
-    status: CoachingSubscriptionStatus;
-  } | null;
+  subscription: CoachingSubscriptionSnapshot | null;
 };
 
 export interface ClientRoster {
@@ -61,28 +55,47 @@ const SUBSCRIPTION_STATUSES: Record<
   ClientStatus | null
 > = {
   "not-started": null,
+  active: "active",
+  cancelled: "cancelled",
+  ended: "inactive",
 };
 
 export function clientStatusOf(input: {
   accountBound: boolean;
   step: ClientJourneyStep;
-  subscriptionStatus: CoachingSubscriptionStatus | null;
+  subscription: Pick<
+    CoachingSubscriptionSnapshot,
+    "status" | "accessEndsAt"
+  > | null;
+  now: Date;
 }): ClientStatus {
   if (!input.accountBound) {
     return "invited";
   }
 
-  const fromSubscription = input.subscriptionStatus
-    ? SUBSCRIPTION_STATUSES[input.subscriptionStatus]
+  const fromSubscription = input.subscription
+    ? SUBSCRIPTION_STATUSES[
+        CoachingSubscription.statusOf(input.subscription, input.now)
+      ]
     : null;
 
   return fromSubscription ?? JOURNEY_STATUSES[input.step];
 }
 
-export function rosterEntryStatus(entry: ClientRosterEntry): ClientStatus {
+export function rosterEntryStatus(
+  entry: ClientRosterEntry,
+  now: Date,
+): ClientStatus {
   return clientStatusOf({
     accountBound: entry.accountBound,
     step: ClientJourney.from(entry.journey).step(),
-    subscriptionStatus: entry.subscription?.status ?? null,
+    subscription: entry.subscription,
+    now,
   });
+}
+
+export function rosterEntryNeedsRefund(entry: ClientRosterEntry): boolean {
+  const refund = entry.subscription?.refund;
+
+  return refund ? RefundDue.isOutstanding(refund) : false;
 }

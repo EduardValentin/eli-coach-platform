@@ -1,18 +1,19 @@
-import { programWorkStart } from "../coaching-subscription";
+import type { CoachingSubscriptions } from "../coaching-subscription";
 
 import type { ClientJourneyStep } from "./client-journey";
 import type { ClientJourneys } from "./client-journeys";
-import type { ClientSubscriptionStarts } from "./client-subscription-starts";
 
 type ProgramStatus = {
   kind: Exclude<ClientJourneyStep, "welcome" | "onboarding">;
   submittedAt: Date;
   workStartsOn: Date | null;
+  startNowUntil: Date | null;
+  paymentProblem: boolean;
 };
 
 type ReadProgramStatusUseCaseOptions = {
   journeys: ClientJourneys;
-  subscriptionStarts: ClientSubscriptionStarts;
+  subscriptions: CoachingSubscriptions;
 };
 
 export class ReadProgramStatusUseCase {
@@ -32,14 +33,16 @@ export class ReadProgramStatusUseCase {
       return null;
     }
 
-    const start = await this.options.subscriptionStarts.findOpenForClient(
+    const subscription = await this.options.subscriptions.findCurrentForClient(
       journey.clientId,
     );
 
     return {
       kind: step,
       submittedAt: journey.onboardingSubmittedAt,
-      workStartsOn: start ? programWorkStart(start) : null,
+      workStartsOn: subscription?.programWorkStart() ?? null,
+      startNowUntil: subscription?.startNowUntil() ?? null,
+      paymentProblem: subscription?.paymentProblemSince != null,
     };
   }
 }

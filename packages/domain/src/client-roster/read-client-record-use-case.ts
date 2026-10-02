@@ -1,7 +1,10 @@
 import type { VisitorGender, VisitorPrimaryGoal } from "../assessment-call";
+import { CoachingSubscription } from "../coaching-subscription";
 import type { AssessmentCallReader } from "../payment-link";
+import type { Clock } from "../shared";
 
 import {
+  rosterEntryNeedsRefund,
   rosterEntryStatus,
   type ClientRoster,
   type ClientRosterEntry,
@@ -10,6 +13,8 @@ import {
 
 type ClientRecord = ClientRosterEntry & {
   status: ClientStatus;
+  needsRefund: boolean;
+  workStartsOn: Date | null;
   assessmentCall: {
     startsAt: Date;
     firstName: string;
@@ -25,8 +30,9 @@ type ClientRecord = ClientRosterEntry & {
 };
 
 type ReadClientRecordUseCaseOptions = {
-  roster: ClientRoster;
   calls: AssessmentCallReader;
+  clock: Clock;
+  roster: ClientRoster;
 };
 
 export class ReadClientRecordUseCase {
@@ -49,7 +55,13 @@ export class ReadClientRecordUseCase {
 
     return {
       ...entry,
-      status: rosterEntryStatus(entry),
+      status: rosterEntryStatus(entry, this.options.clock.now()),
+      needsRefund: rosterEntryNeedsRefund(entry),
+      workStartsOn: entry.subscription
+        ? CoachingSubscription.reconstitute(
+            entry.subscription,
+          ).programWorkStart()
+        : null,
       assessmentCall: {
         startsAt: call.startsAt,
         firstName: call.firstName,
