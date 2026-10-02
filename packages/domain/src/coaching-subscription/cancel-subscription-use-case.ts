@@ -131,14 +131,22 @@ export class CancelSubscriptionUseCase {
     const fresh = await this.options.subscriptions.findCurrentForAuthSubject(
       recording.authSubjectId,
     );
-    const retried = fresh?.cancel(recording.now);
 
-    if (!fresh || !retried || retried.outcome === "nothing-to-cancel") {
+    if (!fresh) {
+      return null;
+    }
+
+    const redecided = redecide(decision, {
+      fresh,
+      cancelledAt: recording.now,
+    });
+
+    if (!redecided) {
       return null;
     }
 
     const savedAgain = await this.options.subscriptions.save({
-      subscription: retried.subscription,
+      subscription: redecided.subscription,
       previous: fresh,
     });
 
@@ -148,7 +156,7 @@ export class CancelSubscriptionUseCase {
       );
     }
 
-    return retried;
+    return redecided;
   }
 
   private async notifyCoach(subscription: CoachingSubscription): Promise<void> {
@@ -195,4 +203,30 @@ export class CancelSubscriptionUseCase {
       subscriptionId: subscription.id,
     });
   }
+}
+
+function redecide(
+  decision: RecordedCancellation,
+  reread: { fresh: CoachingSubscription; cancelledAt: Date },
+): RecordedCancellation | null {
+  const retried = reread.fresh.cancel(reread.cancelledAt);
+
+  if (retried.outcome === "cancelled") {
+    return retried;
+  }
+
+  const refund = decision.subscription.refund;
+
+  if (!refund) {
+    return null;
+  }
+
+  const recording = reread.fresh.recordWithdrawalRefund({
+    refund,
+    cancelledAt: reread.cancelledAt,
+  });
+
+  return recording.outcome === "recorded"
+    ? { ...decision, subscription: recording.subscription }
+    : null;
 }

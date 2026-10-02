@@ -399,6 +399,66 @@ describe("CoachingSubscription start now", () => {
   });
 });
 
+describe("CoachingSubscription.recordWithdrawalRefund", () => {
+  const PROVIDER_ENDED_AT = new Date(DAY_13.getTime() + ONE_MINUTE);
+  const decidedRefund = RefundDue.full({
+    amountCents: 44700,
+    cancelledAt: DAY_13,
+  });
+
+  it("records the refund her cancellation decided on a subscription the provider has just ended", () => {
+    // arrange
+    const providerEnded = onPath("waiting").end(PROVIDER_ENDED_AT);
+
+    // act
+    const recording = providerEnded.recordWithdrawalRefund({
+      refund: decidedRefund,
+      cancelledAt: DAY_13,
+    });
+
+    // assert
+    expect(
+      recording.outcome === "recorded" && recording.subscription.toSnapshot(),
+    ).toEqual(
+      snapshotOf({
+        status: "ended",
+        cancelledAt: DAY_13,
+        accessEndsAt: PROVIDER_ENDED_AT,
+        refund: decidedRefund.toSnapshot(),
+      }),
+    );
+  });
+
+  it("refuses a subscription that has not ended", () => {
+    // act
+    const recording = onPath("waiting").recordWithdrawalRefund({
+      refund: decidedRefund,
+      cancelledAt: DAY_13,
+    });
+
+    // assert
+    expect(recording).toEqual({ outcome: "refused" });
+  });
+
+  it("refuses a subscription that already records a refund", () => {
+    // arrange
+    const cancellation = onPath("waiting").cancel(DAY_13);
+    const alreadyRefunded =
+      cancellation.outcome === "cancelled"
+        ? cancellation.subscription
+        : onPath("waiting");
+
+    // act
+    const recording = alreadyRefunded.recordWithdrawalRefund({
+      refund: decidedRefund,
+      cancelledAt: DAY_13,
+    });
+
+    // assert
+    expect(recording).toEqual({ outcome: "refused" });
+  });
+});
+
 describe("CoachingSubscription mirror rules", () => {
   const SCHEDULED_AT = new Date("2026-10-20T10:00:00.000Z");
 

@@ -350,6 +350,121 @@ describe("CancelSubscriptionUseCase", () => {
     expect(paymentSubscriptions.endAt).toHaveBeenCalledTimes(1);
   });
 
+  it("records the refund it decided when Stripe's end of that same cancellation was reconciled first, telling the coach once", async () => {
+    // arrange
+    const current = subscriptionOf();
+    const providerEndedAt = new Date(DAY_13.getTime() + 1000);
+    const providerEnded = current.end(providerEndedAt);
+    const subscriptions = createSubscriptions(current);
+    subscriptions.findCurrentForAuthSubject
+      .mockResolvedValueOnce(current)
+      .mockResolvedValueOnce(providerEnded);
+    subscriptions.save
+      .mockResolvedValueOnce("stale")
+      .mockResolvedValueOnce("saved");
+    const paymentSubscriptions = createPaymentSubscriptions();
+    const notifications = createNotifications();
+    const incidents = createIncidents();
+    const useCase = cancelUseCase({
+      now: DAY_13,
+      subscriptions,
+      paymentSubscriptions,
+      notifications,
+      incidents,
+    });
+    const refund = RefundDue.full({
+      amountCents: 44700,
+      cancelledAt: DAY_13,
+    }).toSnapshot();
+    const recorded = snapshotOf({
+      status: "ended",
+      cancelledAt: DAY_13,
+      accessEndsAt: providerEndedAt,
+      refund,
+    });
+
+    // act
+    const result = await useCase.execute(AUTH_SUBJECT_ID);
+
+    // assert
+    expect(result).toEqual({
+      status: "cancelled",
+      rule: "full-refund",
+      subscription: recorded,
+    });
+    expect(subscriptions.save).toHaveBeenLastCalledWith({
+      subscription: CoachingSubscription.reconstitute(recorded),
+      previous: providerEnded,
+    });
+    expect(paymentSubscriptions.endNow).toHaveBeenCalledTimes(1);
+    expect(notifications.notifyRefundDue).toHaveBeenCalledTimes(1);
+    expect(notifications.notifyRefundDue).toHaveBeenCalledWith(
+      expect.objectContaining({ cancelledAt: DAY_13, refund }),
+    );
+    expect(incidents.subscriptionCancelled).toHaveBeenCalledTimes(1);
+    expect(incidents.subscriptionCancelled).toHaveBeenCalledWith({
+      subscriptionId: "subscription-1",
+      startChoice: "waiting",
+      rule: "full-refund",
+      refundDueCents: 44700,
+    });
+  });
+
+  it("has nothing to cancel and records no refund when the provider ended the subscription before her attempt", async () => {
+    // arrange
+    const subscriptions = createSubscriptions(subscriptionOf().end(DAY_13));
+    const paymentSubscriptions = createPaymentSubscriptions();
+    const notifications = createNotifications();
+    const incidents = createIncidents();
+    const useCase = cancelUseCase({
+      now: DAY_13,
+      subscriptions,
+      paymentSubscriptions,
+      notifications,
+      incidents,
+    });
+
+    // act
+    const result = await useCase.execute(AUTH_SUBJECT_ID);
+
+    // assert
+    expect(result).toEqual({ status: "nothing_to_cancel" });
+    expect(paymentSubscriptions.endNow).not.toHaveBeenCalled();
+    expect(subscriptions.save).not.toHaveBeenCalled();
+    expect(notifications.notifyRefundDue).not.toHaveBeenCalled();
+    expect(incidents.subscriptionCancelled).not.toHaveBeenCalled();
+  });
+
+  it("sends no second email when the re-read finds her refund already recorded", async () => {
+    // arrange
+    const current = subscriptionOf();
+    const decided = current.cancel(DAY_13);
+    const alreadyRecorded =
+      decided.outcome === "cancelled" ? decided.subscription : current;
+    const subscriptions = createSubscriptions(current);
+    subscriptions.findCurrentForAuthSubject
+      .mockResolvedValueOnce(current)
+      .mockResolvedValueOnce(alreadyRecorded);
+    subscriptions.save.mockResolvedValueOnce("stale");
+    const notifications = createNotifications();
+    const incidents = createIncidents();
+    const useCase = cancelUseCase({
+      now: DAY_13,
+      subscriptions,
+      notifications,
+      incidents,
+    });
+
+    // act
+    const result = await useCase.execute(AUTH_SUBJECT_ID);
+
+    // assert
+    expect(result).toEqual({ status: "nothing_to_cancel" });
+    expect(subscriptions.save).toHaveBeenCalledTimes(1);
+    expect(notifications.notifyRefundDue).not.toHaveBeenCalled();
+    expect(incidents.subscriptionCancelled).not.toHaveBeenCalled();
+  });
+
   it("fails the request when the subscription is still changing on the second save", async () => {
     // arrange
     const subscriptions = createSubscriptions(subscriptionOf());

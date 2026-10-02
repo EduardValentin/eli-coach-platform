@@ -47,6 +47,10 @@ export type SubscriptionCancellation =
     }
   | { outcome: "nothing-to-cancel" };
 
+type WithdrawalRefundRecording =
+  | { outcome: "recorded"; subscription: CoachingSubscription }
+  | { outcome: "refused" };
+
 export type StartNowDecision =
   | { outcome: "started"; subscription: CoachingSubscription }
   | { outcome: "refused"; reason: "ended" | "outside-window" };
@@ -278,6 +282,23 @@ export class CoachingSubscription {
       cancelledAt: this.cancelledAt ?? schedule.at,
       accessEndsAt: schedule.endsAt,
     });
+  }
+
+  recordWithdrawalRefund(cancellation: {
+    refund: RefundDue;
+    cancelledAt: Date;
+  }): WithdrawalRefundRecording {
+    if (this.status !== "ended" || this.refund !== null) {
+      return { outcome: "refused" };
+    }
+
+    return {
+      outcome: "recorded",
+      subscription: this.with({
+        cancelledAt: cancellation.cancelledAt,
+        refund: cancellation.refund,
+      }),
+    };
   }
 
   liftScheduledEnd(): CoachingSubscription {
