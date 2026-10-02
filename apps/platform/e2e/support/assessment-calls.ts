@@ -2,12 +2,17 @@ import type pg from "pg";
 
 import { isClerkTestEmail, readCreatedEmails } from "./clerk-users";
 import { createE2eDatabasePool } from "./database";
+import { removeProgressPhotoFilesOf } from "./progress-photo-files";
 import { runEmailPrefix } from "./run-id";
 
 const ASSESSMENT_CALL_APPOINTMENT_KIND = "assessment_call";
 const FIND_CALLS_BOOKED_BY = `
   select id from app.assessment_calls
   where visitor_email = any($1::text[])
+`;
+const FIND_CLIENTS_OF_CALLS = `
+  select id from app.clients
+  where assessment_call_id = any($1::uuid[])
 `;
 const DELETE_CALLS_AND_THEIR_SALES: readonly RowRemoval[] = [
   {
@@ -28,6 +33,7 @@ const DELETE_CALLS_AND_THEIR_SALES: readonly RowRemoval[] = [
   },
   clientOwnedRows("onboarding drafts", "client_onboarding_drafts"),
   clientOwnedRows("onboarding submissions", "client_onboarding_submissions"),
+  clientOwnedRows("progress photos", "client_progress_photos"),
   clientOwnedRows("measurements", "client_measurements"),
   clientOwnedRows("unit preferences", "client_unit_preferences"),
   clientOwnedRows("detail requests", "client_onboarding_detail_requests"),
@@ -107,6 +113,8 @@ function clientOwnedRows(rows: string, table: string): RowRemoval {
 
 type RemovedRows = { rows: string; count: number };
 
+type CallRemoval = { removed: RemovedRows[]; clientIds: string[] };
+
 export function emailsOwnedByRun(
   recordedEmails: readonly string[],
   runId: string,
@@ -130,8 +138,14 @@ export async function cleanUpRunAssessmentCalls(
   const pool = createE2eDatabasePool();
 
   try {
-    const removed = await deleteCallsBookedBy(pool, visitorEmails);
+    const { removed, clientIds } = await deleteCallsBookedBy(
+      pool,
+      visitorEmails,
+    );
     console.log(`${logPrefix} Database: ${summarize(removed)}`);
+    console.log(
+      `${logPrefix} Progress photo files: ${removeProgressPhotoFilesOf(clientIds)}`,
+    );
 
     return { allCleaned: true };
   } catch (error) {
@@ -147,7 +161,7 @@ export async function cleanUpRunAssessmentCalls(
 async function deleteCallsBookedBy(
   pool: pg.Pool,
   visitorEmails: readonly string[],
-): Promise<RemovedRows[]> {
+): Promise<CallRemoval> {
   const client = await pool.connect();
 
   try {
@@ -157,6 +171,10 @@ async function deleteCallsBookedBy(
       [visitorEmails],
     );
     const callIds = calls.map((call) => call.id);
+    const { rows: clients } = await client.query<{ id: string }>(
+      FIND_CLIENTS_OF_CALLS,
+      [callIds],
+    );
     const removed: RemovedRows[] = [];
 
     for (const removal of DELETE_CALLS_AND_THEIR_SALES) {
@@ -166,7 +184,7 @@ async function deleteCallsBookedBy(
 
     await client.query("commit");
 
-    return removed;
+    return { removed, clientIds: clients.map((row) => row.id) };
   } catch (error) {
     await client.query("rollback");
     throw error;

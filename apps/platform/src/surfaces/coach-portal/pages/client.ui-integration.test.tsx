@@ -146,10 +146,29 @@ const SUBMITTED_MEASUREMENTS: MeasurementRow[] = [
   {
     armCm: 30,
     hipsCm: 100,
+    id: "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d",
+    photos: [],
     recordedAt: "2026-09-21T10:00:00.000Z",
     thighCm: 58,
     waistCm: 80,
     weightKg: 70,
+  },
+];
+
+const MEASUREMENTS_WITH_PHOTOS: MeasurementRow[] = [
+  ...SUBMITTED_MEASUREMENTS,
+  {
+    armCm: null,
+    hipsCm: null,
+    id: "9c8b7a6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d",
+    photos: [
+      { id: "0f1e2d3c-4b5a-4968-8776-655443322110", view: "front" },
+      { id: "2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e", view: "side" },
+    ],
+    recordedAt: "2026-09-28T10:00:00.000Z",
+    thighCm: null,
+    waistCm: 79,
+    weightKg: 69.4,
   },
 ];
 
@@ -295,6 +314,102 @@ describe("the coach's client page", () => {
         "She has not sent any measurements yet.",
       ),
     ).not.toBeInTheDocument();
+  });
+
+  it("offers her photos only on the entry that has them", async () => {
+    // arrange, act
+    await renderClientPage({
+      client: AWAITING_REVIEW,
+      review: SUBMITTED_REVIEW,
+      profile: PROFILE,
+      measurements: MEASUREMENTS_WITH_PHOTOS,
+    });
+
+    // assert
+    const measurements = screen.getByRole("region", { name: "Measurements" });
+    expect(
+      within(measurements)
+        .getAllByRole("button", { name: /^View photos/ })
+        .map((action) => action.getAttribute("aria-label")),
+    ).toEqual(["View photos from 28 September"]);
+  });
+
+  it("opens an entry's photos for the coach without a way to remove them", async () => {
+    // arrange
+    const user = await renderClientPage({
+      client: AWAITING_REVIEW,
+      review: SUBMITTED_REVIEW,
+      profile: PROFILE,
+      measurements: MEASUREMENTS_WITH_PHOTOS,
+    });
+
+    // act
+    await user.click(
+      screen.getByRole("button", { name: "View photos from 28 September" }),
+    );
+
+    // assert
+    const photos = screen.getByRole("dialog", {
+      name: "Photos from 28 September",
+    });
+    expect(photos).toHaveAccessibleDescription(
+      "Only you and Ana can see these photos.",
+    );
+    expect(
+      within(photos)
+        .getAllByRole("img")
+        .map((photo) => photo.getAttribute("alt")),
+    ).toEqual(["Front photo", "Side photo"]);
+    expect(within(photos).getByText("No back photo")).toBeInTheDocument();
+    expect(
+      within(photos).queryByRole("button", { name: /^Remove/ }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("closes her photos from Close and hands focus back to the entry's action", async () => {
+    // arrange
+    const user = await renderClientPage({
+      client: AWAITING_REVIEW,
+      review: SUBMITTED_REVIEW,
+      profile: PROFILE,
+      measurements: MEASUREMENTS_WITH_PHOTOS,
+    });
+    const action = screen.getByRole("button", {
+      name: "View photos from 28 September",
+    });
+    await user.click(action);
+
+    // act
+    await user.click(
+      within(screen.getByRole("dialog")).getAllByRole("button", {
+        name: "Close",
+      })[0],
+    );
+
+    // assert
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(action).toHaveFocus();
+  });
+
+  it("closes her photos on Escape and hands focus back to the entry's action", async () => {
+    // arrange
+    const user = await renderClientPage({
+      client: AWAITING_REVIEW,
+      review: SUBMITTED_REVIEW,
+      profile: PROFILE,
+      measurements: MEASUREMENTS_WITH_PHOTOS,
+    });
+    const action = screen.getByRole("button", {
+      name: "View photos from 28 September",
+    });
+    await user.click(action);
+
+    // act
+    await user.keyboard("{Escape}");
+
+    // assert
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(action).toHaveFocus();
   });
 
   it("drops the invitation once her account exists and the subscription when there is none", async () => {

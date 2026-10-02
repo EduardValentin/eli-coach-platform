@@ -9,9 +9,16 @@ import {
   type SaveOnboardingDraftUseCase,
   type SubmitOnboardingUseCase,
 } from "@eli-coach-platform/domain/client-onboarding";
+import type {
+  AttachProgressPhotosUseCase,
+  ProgressPhotoOutcomes,
+} from "@eli-coach-platform/domain/client-profile";
 import type { Clock } from "@eli-coach-platform/domain/shared";
 import type { UnitPreference } from "@eli-coach-platform/domain/unit-preference";
-import { createBadRequestResponse } from "@eli-coach-platform/infrastructure/http/server";
+import {
+  createBadRequestResponse,
+  readFormDataRequestBody,
+} from "@eli-coach-platform/infrastructure/http/server";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 
 import { CLIENT_PORTAL_PATH } from "~/features/accounts/contracts/paths";
@@ -25,18 +32,26 @@ import {
   openRequestSummarySchema,
   onboardingRefusalSchema,
   saveDraftRequestSchema,
+  SUBMIT_ONBOARDING_FIELDS,
   submissionAcceptedSchema,
   submissionProblemsSchema,
+  submissionSentSchema,
   submitRequestSchema,
   type AskedAnswers,
   type OnboardingConsentInstants,
   type OnboardingPage,
   type OpenRequestSummary,
   type QuestionId,
+  type SubmitRequest,
 } from "~/features/client-onboarding/contracts/onboarding";
+import {
+  progressPhotoOutcomesOf,
+  receivedProgressPhotosOf,
+} from "~/features/client-profile/contracts/progress-photo-parts";
 
 type ClientOnboardingControllerOptions = {
   answerOnboardingDetails: AnswerOnboardingDetailsUseCase;
+  attachProgressPhotos: AttachProgressPhotosUseCase;
   clock: Clock;
   readClientOnboarding: ReadClientOnboardingUseCase;
   readOpenDetailRequest: ReadOpenDetailRequestUseCase;
@@ -46,6 +61,11 @@ type ClientOnboardingControllerOptions = {
 
 type OnboardingRefusal =
   "not-on-journey" | "already-submitted" | "no-open-request";
+
+type SubmittedOnboarding = Extract<
+  Awaited<ReturnType<SubmitOnboardingUseCase["execute"]>>,
+  { status: "submitted" }
+>;
 
 type OpenDetailRequest = NonNullable<
   Awaited<ReturnType<ReadOpenDetailRequestUseCase["execute"]>>
@@ -57,6 +77,8 @@ type OnboardingReading = {
 };
 
 const ONBOARDING_REQUEST_MAX_BYTES = 64 * 1024;
+
+const SUBMISSION_REQUEST_MAX_BYTES = 32 * 1024 * 1024;
 
 const REFUSAL_STATUS = {
   "not-on-journey": 404,
@@ -125,26 +147,37 @@ export class ClientOnboardingController {
 
   async submit(args: ActionFunctionArgs): Promise<Response> {
     const client = requireApiAccount(args, { role: "CLIENT" });
-    const request = submitRequestSchema.safeParse(
-      await readJsonRequestBody(args.request, ONBOARDING_REQUEST_MAX_BYTES),
-    );
+    const body = await readFormDataRequestBody(args.request, {
+      maxBytes: SUBMISSION_REQUEST_MAX_BYTES,
+    });
 
-    if (!request.success) {
-      return createBadRequestResponse(
-        "The onboarding answers could not be read.",
+    if (body.status === "too_large") {
+      return Response.json(
+        { message: "The answers and photos are too large to send." },
+        { status: 413 },
       );
+    }
+
+    if (body.status === "invalid") {
+      return unreadableSubmissionResponse();
+    }
+
+    const request = submissionOf(body.formData);
+
+    if (!request) {
+      return unreadableSubmissionResponse();
     }
 
     const result = await this.options.submitOnboarding.execute({
       authSubjectId: client.authSubjectId,
-      answers: request.data.answers,
-      consents: consentsOf(request.data.consents),
+      answers: request.answers,
+      consents: consentsOf(request.consents),
     });
 
     switch (result.status) {
       case "submitted":
-        return Response.json(
-          submissionAcceptedSchema.parse({ redirectTo: CLIENT_PORTAL_PATH }),
+        return submissionSentResponse(
+          await this.attachedPhotoOutcomes(result, body.formData),
         );
       case "invalid":
         return Response.json(
@@ -189,6 +222,23 @@ export class ClientOnboardingController {
       default:
         return refusalResponse(result.status);
     }
+  }
+
+  private async attachedPhotoOutcomes(
+    submitted: SubmittedOnboarding,
+    formData: FormData,
+  ): Promise<ProgressPhotoOutcomes> {
+    const photos = await receivedProgressPhotosOf(formData);
+
+    if (photos.length === 0) {
+      return {};
+    }
+
+    return this.options.attachProgressPhotos.execute({
+      clientId: submitted.clientId,
+      entryId: submitted.entryId,
+      photos,
+    });
   }
 
   private wizardPageOf({ onboarding, unitPreference }: OnboardingReading) {
@@ -242,6 +292,26 @@ function askedAnswersOf(
   return asked;
 }
 
+function unreadableSubmissionResponse(): Response {
+  return createBadRequestResponse("The onboarding answers could not be read.");
+}
+
+function submissionOf(formData: FormData): SubmitRequest | null {
+  const submission = formData.get(SUBMIT_ONBOARDING_FIELDS.submission);
+
+  if (typeof submission !== "string") {
+    return null;
+  }
+
+  try {
+    const parsed = submitRequestSchema.safeParse(JSON.parse(submission));
+
+    return parsed.success ? parsed.data : null;
+  } catch {
+    return null;
+  }
+}
+
 function consentInstantsOf(
   consents: OnboardingConsents,
 ): OnboardingConsentInstants {
@@ -272,4 +342,13 @@ function refusalResponse(refusal: OnboardingRefusal): Response {
   return Response.json(onboardingRefusalSchema.parse({ error: refusal }), {
     status: REFUSAL_STATUS[refusal],
   });
+}
+
+function submissionSentResponse(outcomes: ProgressPhotoOutcomes): Response {
+  return Response.json(
+    submissionSentSchema.parse({
+      redirectTo: CLIENT_PORTAL_PATH,
+      photos: progressPhotoOutcomesOf(outcomes),
+    }),
+  );
 }

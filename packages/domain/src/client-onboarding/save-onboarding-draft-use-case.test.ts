@@ -51,7 +51,9 @@ function createChanges(
 ) {
   return {
     saveDraft: vi.fn().mockResolvedValue(saved),
-    recordSubmission: vi.fn().mockResolvedValue("recorded"),
+    recordSubmission: vi
+      .fn()
+      .mockResolvedValue({ status: "recorded", entryId: "entry-1" }),
   } satisfies ClientOnboardingChanges;
 }
 

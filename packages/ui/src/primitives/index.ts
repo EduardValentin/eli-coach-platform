@@ -15,6 +15,7 @@ export { CheckboxField } from "./checkbox-field";
 export { ChoiceGroup, ChoiceOption } from "./choice-group";
 export { FieldError } from "./field-error";
 export { FieldHint } from "./field-hint";
+export { FieldLayout, type FieldControlAttributes } from "./field-layout";
 export { IconHint } from "./icon-hint";
 export { IconButton } from "./icon-button";
 export { Input } from "./input";

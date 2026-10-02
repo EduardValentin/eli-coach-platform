@@ -5,7 +5,12 @@ import {
   JOURNEY_STAGES,
   type JourneyStage,
 } from '../domain/journey';
-import { seedJourney } from './clientJourneySamples';
+import { measurementDueLine } from '../domain/measurementSchedule';
+import {
+  seedJourney,
+  type PrototypeMeasurementsDue,
+  type PrototypeSeededPhotos,
+} from './clientJourneySamples';
 
 const NOW = new Date(2026, 8, 21, 12, 0, 0);
 
@@ -13,7 +18,12 @@ function submittedJourney(prototypeMode: PrototypeMode) {
   return journeyAt('submitted', prototypeMode);
 }
 
-function journeyAt(stage: JourneyStage, prototypeMode: PrototypeMode) {
+function journeyAt(
+  stage: JourneyStage,
+  prototypeMode: PrototypeMode,
+  measurementsDue: PrototypeMeasurementsDue = 'none',
+  seededPhotos: PrototypeSeededPhotos = 'none',
+) {
   return seedJourney({
     callId: 'ac-seed-measurements',
     identity: {
@@ -31,6 +41,9 @@ function journeyAt(stage: JourneyStage, prototypeMode: PrototypeMode) {
     bookingNotes: null,
     invitationStanding: 'sent',
     prototypeMode,
+    measurementsDue,
+    lifeStage: 'none',
+    seededPhotos,
     now: NOW,
   });
 }
@@ -63,6 +76,67 @@ describe('seeding a submitted client measurements', () => {
     expect(journey.measurements.at(-1)?.recordedAt).toEqual(
       journey.onboarding.submittedAt,
     );
+  });
+});
+
+describe('seeding when her measurements are due', () => {
+  it('seeds entries without photos and no photo consent', () => {
+    // act
+    const journey = submittedJourney('post-mvp');
+
+    // assert
+    expect(journey.measurements.map((entry) => entry.photos)).toEqual([
+      {},
+      {},
+      {},
+    ]);
+    expect(journey.progressPhotosConsentedAt).toBeNull();
+  });
+
+  it('keeps her dashboard quiet by default', () => {
+    // act
+    const journey = journeyAt('program-ready', 'mvp', 'none');
+
+    // assert
+    expect(measurementDueLine(journey.measurements, NOW)).toBeNull();
+  });
+
+  it('ages her history so the weekly weigh-in is due', () => {
+    // act
+    const journey = journeyAt('program-ready', 'post-mvp', 'weigh-in');
+
+    // assert
+    expect(measurementDueLine(journey.measurements, NOW)).toBe('weigh-in');
+  });
+
+  it('ages her history so measurements and photos are due', () => {
+    // act
+    const journey = journeyAt('program-ready', 'mvp', 'measurements');
+
+    // assert
+    expect(measurementDueLine(journey.measurements, NOW)).toBe('measurements');
+  });
+});
+
+describe('seeding progress photos', () => {
+  it('gives the latest entry all three views and leaves the earlier ones bare', () => {
+    // act
+    const journey = journeyAt('submitted', 'post-mvp', 'none', 'latest');
+
+    // assert
+    const [first, second, latest] = journey.measurements;
+    expect(first.photos).toEqual({});
+    expect(second.photos).toEqual({});
+    expect(Object.keys(latest.photos)).toEqual(['front', 'side', 'back']);
+    expect(latest.photos.front?.url).toMatch(/^\/media\/.+\.svg$/);
+  });
+
+  it('seeds no photos unless asked', () => {
+    // act
+    const journey = journeyAt('submitted', 'mvp', 'none', 'none');
+
+    // assert
+    expect(journey.measurements.map((entry) => entry.photos)).toEqual([{}]);
   });
 });
 

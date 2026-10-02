@@ -51,6 +51,7 @@ function createUseCase(stored: {
     } satisfies ClientIdentities,
     profiles: {
       findByClientId: vi.fn().mockResolvedValue(stored.profile),
+      recordPhotoConsent: vi.fn().mockResolvedValue(undefined),
     } satisfies ClientProfiles,
     measurements: {
       listByClientId: vi.fn().mockResolvedValue(stored.measurements),
@@ -64,6 +65,7 @@ function profileWith(facts: OnboardingProfileFacts): ClientProfile {
   return ClientProfile.fromOnboarding({
     clientId: IDENTITY.clientId,
     facts,
+    progressPhotosConsentedAt: null,
     now: new Date("2026-09-27T10:00:00.000Z"),
   });
 }

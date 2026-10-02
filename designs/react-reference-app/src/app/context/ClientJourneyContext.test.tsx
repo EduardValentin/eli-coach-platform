@@ -84,7 +84,12 @@ function ProfileProbe() {
       </output>
       <button
         type="button"
-        onClick={() => submitOnboarding(DEMO_JOURNEY_CALL_ID, new Date())}
+        onClick={() =>
+          submitOnboarding(DEMO_JOURNEY_CALL_ID, {
+            submittedAt: new Date(),
+            photos: {},
+          })
+        }
       >
         send onboarding
       </button>

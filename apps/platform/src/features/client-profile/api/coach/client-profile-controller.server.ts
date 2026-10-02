@@ -1,5 +1,7 @@
-import type { ReadClientProfileUseCase } from "@eli-coach-platform/domain/client-profile";
-import type { ClientMeasurementsSource } from "@eli-coach-platform/domain/measurement";
+import type {
+  ReadClientMeasurementHistoryUseCase,
+  ReadClientProfileUseCase,
+} from "@eli-coach-platform/domain/client-profile";
 import type { LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
 
@@ -9,13 +11,13 @@ import {
   type ClientProfileView,
 } from "~/features/client-profile/contracts/client-profile";
 import {
-  measurementRowsSchema,
+  measurementHistorySchema,
   presentMeasurements,
   type MeasurementRow,
 } from "~/features/client-profile/contracts/measurements";
 
 type ClientProfileControllerOptions = {
-  measurements: ClientMeasurementsSource;
+  readClientMeasurementHistory: ReadClientMeasurementHistoryUseCase;
   readClientProfile: ReadClientProfileUseCase;
 };
 
@@ -43,9 +45,13 @@ export class ClientProfileController {
     clientId: string,
   ): Promise<MeasurementRow[]> {
     const target = requireCoachClientId(args, clientId);
-    const entries = await this.options.measurements.listByClientId(target);
+    const history = await this.options.readClientMeasurementHistory.execute({
+      clientId: target,
+    });
 
-    return measurementRowsSchema.parse(presentMeasurements(entries));
+    return measurementHistorySchema.parse(
+      presentMeasurements(history.newestFirst()),
+    );
   }
 }
 

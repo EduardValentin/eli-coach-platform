@@ -47,6 +47,7 @@ import {
   type CoachingSalesIncidents,
 } from "@eli-coach-platform/domain/payment-link";
 import type { Clock } from "@eli-coach-platform/domain/shared";
+import type { MeasurementClients } from "@eli-coach-platform/domain/client-profile";
 import type { UnitPreferenceClients } from "@eli-coach-platform/domain/unit-preference";
 import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 import type { PaymentCompletionHandler } from "@eli-coach-platform/infrastructure/payments/server";
@@ -93,6 +94,7 @@ type CoachingSalesComposition = {
   handles: {
     clientIdentities: ClientIdentities;
     invitationAcceptance: InvitationAcceptance;
+    measurementClients: MeasurementClients;
     onboardingClients: OnboardingClients;
     onboardingReviewStamps: OnboardingReviewStamps;
     onboardingSubmissionStamps: OnboardingSubmissionStamps;
@@ -284,6 +286,7 @@ export function composeCoachingSalesFeature(
       invitationAcceptance: {
         accept: (input) => invitationUseCases.acceptInvitation.execute(input),
       },
+      measurementClients: onboardingClients,
       onboardingClients,
       onboardingReviewStamps: journeys,
       onboardingSubmissionStamps: journeys,

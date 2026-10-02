@@ -26,6 +26,7 @@ type ClerkInvitationClient = {
 };
 
 const SETTLED_REVOCATION_CODES: ReadonlySet<string> = new Set([
+  "invitation_already_revoked",
   "invitation_revoked",
   "invitation_cannot_be_revoked_code",
 ]);

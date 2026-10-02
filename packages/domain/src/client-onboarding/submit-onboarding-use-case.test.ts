@@ -125,9 +125,10 @@ function createUnitPreferences(preference: UnitPreference | null = null) {
 }
 
 function createChanges(
-  recorded: Awaited<
-    ReturnType<ClientOnboardingChanges["recordSubmission"]>
-  > = "recorded",
+  recorded: Awaited<ReturnType<ClientOnboardingChanges["recordSubmission"]>> = {
+    status: "recorded",
+    entryId: "entry-1",
+  },
 ) {
   return {
     saveDraft: vi.fn().mockResolvedValue("saved"),
@@ -179,6 +180,26 @@ function createUseCase(
 }
 
 describe("SubmitOnboardingUseCase", () => {
+  it("creates her profile with the date she agreed to share progress photos", async () => {
+    // arrange
+    const changes = createChanges();
+    const useCase = createUseCase({ changes });
+    const consents = { ...givenConsents(), progressPhotosAt: CONSENTED_AT };
+
+    // act
+    await useCase.execute({
+      authSubjectId: "user_radu",
+      answers: completeAnswers(),
+      consents,
+    });
+
+    // assert
+    const [{ profile }] = changes.recordSubmission.mock.calls[0];
+    expect(profile.toSnapshot().progressPhotosConsentedAt).toEqual(
+      CONSENTED_AT,
+    );
+  });
+
   it("records her submission with her first measurements, then stamps her journey", async () => {
     // arrange
     const changes = createChanges();
@@ -195,7 +216,12 @@ describe("SubmitOnboardingUseCase", () => {
     });
 
     // assert
-    expect(result).toEqual({ status: "submitted", submittedAt: NOW });
+    expect(result).toEqual({
+      status: "submitted",
+      submittedAt: NOW,
+      clientId: "client-1",
+      entryId: "entry-1",
+    });
     expect(changes.recordSubmission).toHaveBeenCalledWith({
       clientId: "client-1",
       submission: { answers: completeAnswers(), consents, submittedAt: NOW },
@@ -247,6 +273,7 @@ describe("SubmitOnboardingUseCase", () => {
       primaryGoal: "Build muscle",
       dietaryRestrictions: "Vegetarian, Lactose",
       clientNotes: "Early mornings suit me.",
+      progressPhotosConsentedAt: null,
       updatedAt: NOW,
     });
   });
@@ -381,7 +408,7 @@ describe("SubmitOnboardingUseCase", () => {
     const stamps = createStamps();
     const incidents = createIncidents();
     const useCase = createUseCase({
-      changes: createChanges("already-submitted"),
+      changes: createChanges({ status: "already-submitted" }),
       stamps,
       incidents,
     });
@@ -426,7 +453,7 @@ describe("SubmitOnboardingUseCase", () => {
     };
     const useCase = createUseCase({
       onboardings,
-      changes: createChanges("already-submitted"),
+      changes: createChanges({ status: "already-submitted" }),
       stamps,
       incidents,
     });

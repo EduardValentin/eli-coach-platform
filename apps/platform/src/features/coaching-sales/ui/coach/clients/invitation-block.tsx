@@ -1,5 +1,5 @@
 import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
-import { cn } from "@eli-coach-platform/ui/lib";
+import { cn, useCalendarDayTimeZone } from "@eli-coach-platform/ui/lib";
 import { ConfirmDialog } from "@eli-coach-platform/ui/overlays";
 import { PortalWidget } from "@eli-coach-platform/ui/portal";
 import { Button } from "@eli-coach-platform/ui/primitives";
@@ -13,7 +13,6 @@ import {
 } from "~/features/coaching-sales/contracts/coach-clients";
 import { COACHING_SALES_API_PATHS } from "~/features/coaching-sales/contracts/paths";
 import { useConfirmedJsonAction } from "~/features/coaching-sales/ui/coach/use-confirmed-json-action";
-import { useCalendarDayTimeZone } from "~/features/coaching-sales/ui/shared/calendar-day-format";
 
 import { invitationStateLine } from "./invitation-state-line";
 

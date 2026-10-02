@@ -11,8 +11,10 @@ import {
   createBotDetectionConfig,
   createBotVerifier,
 } from "@eli-coach-platform/infrastructure/bot-detection/server";
+import { createProgressPhotoStore } from "@eli-coach-platform/infrastructure/client-media/server";
 import { createProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 import { createIdentityInvitations } from "@eli-coach-platform/infrastructure/identity/server";
+import { createProgressPhotoRenditions } from "@eli-coach-platform/infrastructure/images/server";
 import {
   createPaymentCheckout,
   createPaymentEvents,
@@ -142,10 +144,15 @@ export function createPlatformContainer(options: {
     clientIdentities: coachingSales.handles.clientIdentities,
     clock,
     database: database.client,
+    incidents,
+    measurementClients: coachingSales.handles.measurementClients,
+    progressPhotoRenditions: createProgressPhotoRenditions(),
+    progressPhotoStore: createProgressPhotoStore(environment),
     unitPreferenceClients: coachingSales.handles.unitPreferenceClients,
   });
   const clientOnboarding = composeClientOnboardingFeature({
     appBasePath: environment.APP_BASE_PATH,
+    attachProgressPhotos: clientProfile.handles.attachProgressPhotos,
     clock,
     contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
     database: database.client,

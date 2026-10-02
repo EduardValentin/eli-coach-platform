@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -38,6 +39,8 @@ type ResendWireAttachment = {
   filename: string;
 };
 
+export const CLIENT_MEDIA_KEY_ID = "integration-1";
+
 export type ApiIntegrationTestSuiteOptions = {
   environment?: Record<string, string>;
 };
@@ -62,6 +65,8 @@ export class ApiIntegrationTestSuite extends IntegrationTestSuite {
     loadIntegrationTestEnvironment();
   private server: PlatformServer | null = null;
   private storeAssetRoot: string | null = null;
+  private clientMediaRoot: string | null = null;
+  private readonly clientMediaKey = randomBytes(32).toString("base64");
 
   constructor(private readonly options: ApiIntegrationTestSuiteOptions = {}) {
     super();
@@ -70,6 +75,9 @@ export class ApiIntegrationTestSuite extends IntegrationTestSuite {
   override async start(): Promise<void> {
     this.storeAssetRoot = await mkdtemp(
       join(tmpdir(), "eli-coach-store-assets-integration-"),
+    );
+    this.clientMediaRoot = await mkdtemp(
+      join(tmpdir(), "eli-coach-client-media-integration-"),
     );
     await super.start();
 
@@ -103,6 +111,11 @@ export class ApiIntegrationTestSuite extends IntegrationTestSuite {
     if (this.storeAssetRoot) {
       await rm(this.storeAssetRoot, { force: true, recursive: true });
       this.storeAssetRoot = null;
+    }
+
+    if (this.clientMediaRoot) {
+      await rm(this.clientMediaRoot, { force: true, recursive: true });
+      this.clientMediaRoot = null;
     }
 
     await super.stop();
@@ -139,6 +152,14 @@ export class ApiIntegrationTestSuite extends IntegrationTestSuite {
     return this.storeAssetRoot;
   }
 
+  mediaRoot(): string {
+    if (!this.clientMediaRoot) {
+      throw new Error("Integration suite has not been started.");
+    }
+
+    return this.clientMediaRoot;
+  }
+
   async sentEmails(): Promise<SentEmail[]> {
     const sends = await this.wireMock.recordedRequests(RESEND_EMAILS_PATH);
 
@@ -168,6 +189,10 @@ export class ApiIntegrationTestSuite extends IntegrationTestSuite {
     return {
       ...super.settings(),
       STORE_ASSET_ROOT: this.assetRoot(),
+      CLIENT_MEDIA_PROVIDER: "filesystem",
+      CLIENT_MEDIA_ROOT: this.mediaRoot(),
+      CLIENT_MEDIA_KEY: this.clientMediaKey,
+      CLIENT_MEDIA_KEY_ID,
       ...this.options.environment,
     };
   }

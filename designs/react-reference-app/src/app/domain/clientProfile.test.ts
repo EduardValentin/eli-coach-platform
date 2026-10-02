@@ -7,7 +7,13 @@ import {
 } from './journey';
 
 function measurement(weightKg: number, day: number): MeasurementEntry {
-  return { recordedAt: new Date(2026, 8, day), weightKg, waistCm: 74 };
+  return {
+    id: `entry-${day}`,
+    recordedAt: new Date(2026, 8, day),
+    weightKg,
+    waistCm: 74,
+    photos: {},
+  };
 }
 
 function answersWith(forms: {

@@ -8,7 +8,7 @@ import {
   DISCLAIMER_ACKNOWLEDGEMENT,
   SPECIAL_CATEGORY_CONSENT_COPY,
 } from '../../../domain/onboardingCopy';
-import { submittedMeasurementEntry } from '../../../domain/measurements';
+import { progressPhotoRefusalMessage } from '../../../domain/measurements';
 import {
   copyForGender,
   formsForGender,
@@ -18,11 +18,13 @@ import {
   needsManualScreening,
   screeningOutcome,
 } from '../../../domain/safetyScreening';
-import type {
-  JourneyOnboarding,
-  OnboardingConsents,
-  OnboardingDraft,
-  OnboardingFormAnswers,
+import {
+  NO_PROGRESS_PHOTOS,
+  type JourneyOnboarding,
+  type OnboardingConsents,
+  type OnboardingDraft,
+  type OnboardingFormAnswers,
+  type ProgressPhotoSet,
 } from '../../../domain/journey';
 import {
   forgetDraft,
@@ -34,11 +36,7 @@ import { Stepper } from '../../ui/stepper';
 import { MeasurementSystemField } from './MeasurementSystemField';
 import { OnboardingConsent, type ConsentAgreement } from './OnboardingConsent';
 import { OnboardingFormCard } from './OnboardingFormCard';
-import {
-  EMPTY_PROGRESS_PHOTOS,
-  ProgressPhotoBlock,
-  type ProgressPhotos,
-} from './ProgressPhotoBlock';
+import { ProgressPhotoBlock } from './ProgressPhotoBlock';
 import { useDraftAutosave, type SaveState } from './useDraftAutosave';
 
 const SUBMIT_PROBLEM =
@@ -47,6 +45,8 @@ const SUBMIT_PROBLEM =
 const MISSING_CONSENT = 'Tick the box to carry on.';
 
 const RESUME_NOTE = 'Picking up where you left off.';
+
+const PHOTOS_SEND_NOTE = 'Your photos are sent with your answers.';
 
 const MANUAL_SCREENING_MESSAGE =
   "These safety questions are designed for ages 15 to 69. I'll go through your health questions with you directly before building your program.";
@@ -88,12 +88,8 @@ function withConsent(
 export function OnboardingWizard() {
   const navigate = useNavigate();
   const { appState } = useAppState();
-  const {
-    addMeasurements,
-    demoJourney,
-    saveOnboardingDraft,
-    submitOnboarding,
-  } = useClientJourneys();
+  const { demoJourney, saveOnboardingDraft, submitOnboarding } =
+    useClientJourneys();
   const prefersReducedMotion = useReducedMotion() ?? false;
   const stepCountId = useId();
   const journeyId = demoJourney.callId;
@@ -112,7 +108,7 @@ export function OnboardingWizard() {
   const [draft, setDraft] = useState<OnboardingDraft>(
     () => savedDraft ?? draftOf(demoJourney.onboarding),
   );
-  const [photos, setPhotos] = useState<ProgressPhotos>(EMPTY_PROGRESS_PHOTOS);
+  const [photos, setPhotos] = useState<ProgressPhotoSet>(NO_PROGRESS_PHOTOS);
   const [problem, setProblem] = useState<string | null>(null);
   const [consentProblem, setConsentProblem] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
@@ -180,16 +176,21 @@ export function OnboardingWizard() {
     saveOnboardingDraft(journeyId, next);
 
     try {
-      const submitted = await submit(journeyId, appState.journeyConnection);
+      const submitted = await submit(journeyId, {
+        connection: appState.journeyConnection,
+        photos: next.consents.progressPhotos ? photos : NO_PROGRESS_PHOTOS,
+        photoProcessing: appState.photoProcessing,
+      });
       await pendingSave();
-      const entry = submittedMeasurementEntry(
-        next.answers,
-        submitted.submittedAt,
-      );
-      if (entry) addMeasurements(journeyId, entry);
-      submitOnboarding(journeyId, submitted.submittedAt);
+      submitOnboarding(journeyId, {
+        submittedAt: submitted.submittedAt,
+        photos: submitted.photos.stored,
+      });
       forgetDraft(journeyId);
       navigate('/portal');
+      submitted.photos.refusedViews.forEach((view) =>
+        toast.error(progressPhotoRefusalMessage(view)),
+      );
     } catch {
       setSending(false);
       setProblem(SUBMIT_PROBLEM);
@@ -336,18 +337,21 @@ export function OnboardingWizard() {
             {isLastStep && (
               <>
                 <ProgressPhotoBlock
-                  consented={draft.consents.progressPhotos}
-                  onConsentChange={(consented) =>
-                    persist({
-                      ...draftRef.current,
-                      consents: {
-                        ...draftRef.current.consents,
-                        progressPhotos: consented,
-                      },
-                    })
-                  }
+                  consent={{
+                    status: 'asking',
+                    ticked: draft.consents.progressPhotos,
+                    onTickedChange: (ticked) =>
+                      persist({
+                        ...draftRef.current,
+                        consents: {
+                          ...draftRef.current.consents,
+                          progressPhotos: ticked,
+                        },
+                      }),
+                  }}
                   onPhotosChange={setPhotos}
                   photos={photos}
+                  sendNote={PHOTOS_SEND_NOTE}
                 />
                 <OnboardingConsent
                   agreement="disclaimer"

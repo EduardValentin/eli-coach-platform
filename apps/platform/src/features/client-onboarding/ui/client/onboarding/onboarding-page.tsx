@@ -1,5 +1,4 @@
 import { SectionEyebrow } from "@eli-coach-platform/ui/primitives";
-import { Toaster } from "@eli-coach-platform/ui/toast";
 import type { ReactNode } from "react";
 import {
   useLoaderData,
@@ -71,17 +70,14 @@ export default function OnboardingRoute() {
   const page = useLoaderData<typeof loader>();
 
   return (
-    <>
-      <OnboardingShell header={headerOf(page)}>
-        <UnitPreferenceProvider preference={page.unitPreference}>
-          {page.mode === "answer" ? (
-            <AnswerRequestCard page={page} />
-          ) : (
-            <OnboardingWizard page={page} />
-          )}
-        </UnitPreferenceProvider>
-      </OnboardingShell>
-      <Toaster />
-    </>
+    <OnboardingShell header={headerOf(page)}>
+      <UnitPreferenceProvider preference={page.unitPreference}>
+        {page.mode === "answer" ? (
+          <AnswerRequestCard page={page} />
+        ) : (
+          <OnboardingWizard page={page} />
+        )}
+      </UnitPreferenceProvider>
+    </OnboardingShell>
   );
 }

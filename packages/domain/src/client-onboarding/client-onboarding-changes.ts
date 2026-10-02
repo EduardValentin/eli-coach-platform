@@ -16,9 +16,12 @@ type RecordOnboardingSubmission = {
   profile: ClientProfile;
 };
 
+type RecordedOnboardingSubmission =
+  { status: "recorded"; entryId: string } | { status: "already-submitted" };
+
 export interface ClientOnboardingChanges {
   saveDraft(input: SaveOnboardingDraft): Promise<"saved" | "already-submitted">;
   recordSubmission(
     input: RecordOnboardingSubmission,
-  ): Promise<"recorded" | "already-submitted">;
+  ): Promise<RecordedOnboardingSubmission>;
 }

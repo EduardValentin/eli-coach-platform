@@ -1,5 +1,6 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
 import type { AccountSnapshot } from "@eli-coach-platform/domain/account";
+import type { AttachProgressPhotosUseCase } from "@eli-coach-platform/domain/client-profile";
 import { describe, expect, it, vi } from "vitest";
 
 import type { AccountsFeature } from "~/features/accounts/server/accounts-composition.server";
@@ -65,16 +66,30 @@ describe("composeClientOnboardingFeature", () => {
     expect(handles.incidents.onboardingDraftSaved).not.toHaveBeenCalled();
   });
 
-  it("refuses a submission from an account with no client record without stamping anything", async () => {
+  it("refuses a submission from an account with no client record without stamping anything or attaching its photos", async () => {
     // arrange
     const handles = createHandles();
     const { controller } = composeClientOnboardingFeature(handles);
+    const form = new FormData();
+    form.set(
+      "submission",
+      JSON.stringify({ answers: emptyAnswers(), consents: noConsents() }),
+    );
+    form.set(
+      "front",
+      new File([new Uint8Array([255, 216, 255])], "front.jpg", {
+        type: "image/jpeg",
+      }),
+    );
 
     // act
     const response = await controller.submit(
-      clientArgs({
-        method: "POST",
-        body: { answers: emptyAnswers(), consents: noConsents() },
+      createRequestArgs({
+        contexts: clientContexts(),
+        request: new Request(
+          "https://evoa.fit/api/client-onboarding/submission",
+          { body: form, method: "POST" },
+        ),
       }),
     );
 
@@ -83,6 +98,7 @@ describe("composeClientOnboardingFeature", () => {
     expect(
       handles.onboardingSubmissionStamps.recordOnboardingSubmitted,
     ).not.toHaveBeenCalled();
+    expect(handles.attachProgressPhotos.execute).not.toHaveBeenCalled();
   });
 
   it("refuses answers to a request from an account with no client record without stamping anything", async () => {
@@ -150,6 +166,11 @@ describe("composeClientOnboardingFeature", () => {
 function createHandles() {
   return {
     appBasePath: "/",
+    attachProgressPhotos: {
+      execute: vi.fn().mockResolvedValue({}),
+    } as unknown as AttachProgressPhotosUseCase & {
+      execute: ReturnType<typeof vi.fn>;
+    },
     clock: { now: () => new Date("2026-09-28T10:00:00.000Z") },
     contactEmail: "contact@evoa.fit",
     database: createUnreachableDatabase(),
@@ -177,7 +198,7 @@ function createHandles() {
     },
     productEmail: { provider: "memory", send: vi.fn() },
     publicAppUrl: "https://evoa.fit",
-    recordMeasurementEntry: vi.fn().mockResolvedValue(undefined),
+    recordMeasurementEntry: vi.fn().mockResolvedValue(UNKNOWN_CLIENT_ID),
     reviewStampWriter: vi.fn().mockResolvedValue(undefined),
     saveClientProfile: vi.fn().mockResolvedValue(undefined),
     unitPreferences: { findByClientId: vi.fn().mockResolvedValue(null) },
@@ -215,6 +236,22 @@ function accountArgs({
   account: AccountSnapshot;
   request?: RequestShape;
 }) {
+  return createRequestArgs({
+    contexts: accountContexts(account),
+    request: new Request("https://evoa.fit/client/onboarding", {
+      body:
+        request.body === undefined ? undefined : JSON.stringify(request.body),
+      headers: { "Content-Type": "application/json" },
+      method: request.method ?? "GET",
+    }),
+  });
+}
+
+function clientContexts() {
+  return accountContexts(CLIENT);
+}
+
+function accountContexts(account: AccountSnapshot) {
   const accounts = {
     portal: {
       appBasePath: "/",
@@ -223,18 +260,10 @@ function accountArgs({
     },
   } as unknown as AccountsFeature;
 
-  return createRequestArgs({
-    contexts: [
-      contextEntry(accountsContext, accounts),
-      contextEntry(sessionContext, { account, kind: "authenticated" }),
-    ],
-    request: new Request("https://evoa.fit/client/onboarding", {
-      body:
-        request.body === undefined ? undefined : JSON.stringify(request.body),
-      headers: { "Content-Type": "application/json" },
-      method: request.method ?? "GET",
-    }),
-  });
+  return [
+    contextEntry(accountsContext, accounts),
+    contextEntry(sessionContext, { account, kind: "authenticated" }),
+  ];
 }
 
 function createUnreachableDatabase(): DatabaseClient {

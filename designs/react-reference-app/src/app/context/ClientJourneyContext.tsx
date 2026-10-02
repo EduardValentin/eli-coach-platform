@@ -28,8 +28,15 @@ import {
   type JourneyStage,
   type MeasurementEntry,
   type OnboardingDraft,
+  type ProgressPhotoSet,
+  type ProgressPhotoView,
   type ReviewCall,
 } from '../domain/journey';
+import {
+  submittedMeasurementEntry,
+  withoutProgressPhoto,
+} from '../domain/measurements';
+import { removeProgressPhoto } from '../services/measurementService';
 import {
   periodEnd,
   resolveDay1,
@@ -38,7 +45,13 @@ import {
   type SubscriptionStartPath,
   type SubscriptionStatus,
 } from '../domain/coachingSubscription';
-import { heldJourney, seedJourney } from '../services/clientJourneySamples';
+import {
+  heldJourney,
+  seedJourney,
+  type PrototypeLifeStage,
+  type PrototypeMeasurementsDue,
+  type PrototypeSeededPhotos,
+} from '../services/clientJourneySamples';
 import { profileOfJourney } from '../domain/clientProfile';
 import { PARQ_MAX_AGE, PARQ_MIN_AGE } from '../domain/safetyScreening';
 import type { SentPaymentLink } from '../services/paymentLinkService';
@@ -72,6 +85,14 @@ export type DemoJourneyOptions = {
   reducedPricing: boolean;
   invitationStanding: PrototypeInvitationStanding;
   prototypeMode: PrototypeMode;
+  measurementsDue: PrototypeMeasurementsDue;
+  lifeStage: PrototypeLifeStage;
+  seededPhotos: PrototypeSeededPhotos;
+};
+
+export type JourneySubmission = {
+  submittedAt: Date;
+  photos: ProgressPhotoSet;
 };
 
 export type JourneyPayment = {
@@ -95,7 +116,7 @@ type ClientJourneyContextType = {
   recordInvitationEmailFailed: (callId: string) => void;
   markWelcomeSeen: (callId: string) => void;
   saveOnboardingDraft: (callId: string, draft: OnboardingDraft) => void;
-  submitOnboarding: (callId: string, submittedAt: Date) => void;
+  submitOnboarding: (callId: string, submission: JourneySubmission) => void;
   startReview: (callId: string) => void;
   approveAnswers: (callId: string) => void;
   requestDetails: (callId: string, request: DetailRequest) => void;
@@ -103,6 +124,12 @@ type ClientJourneyContextType = {
   markProgramReady: (callId: string, readyAt: Date) => void;
   scheduleReviewCall: (callId: string, reviewCall: ReviewCall) => void;
   addMeasurements: (callId: string, entry: MeasurementEntry) => void;
+  recordProgressPhotoConsent: (callId: string, consentedAt: Date) => void;
+  removeMeasurementPhoto: (
+    callId: string,
+    entryId: string,
+    view: ProgressPhotoView,
+  ) => Promise<void>;
   cancelSubscription: (callId: string, cancelled: CoachingSubscription) => void;
   startProgramNow: (callId: string, started: CoachingSubscription) => void;
 };
@@ -179,6 +206,9 @@ function seedAwaitingReviewJourney(prototypeMode: PrototypeMode) {
     bookingNotes: null,
     invitationStanding: 'sent',
     prototypeMode,
+    measurementsDue: 'none',
+    lifeStage: 'none',
+    seededPhotos: 'none',
     now: new Date(),
   });
 }
@@ -195,6 +225,9 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
     journeyAgeBand,
     journeyReducedPricing,
     journeyInvitation,
+    journeyMeasurementsDue,
+    journeyLifeStage,
+    journeySeededPhotos,
     prototypeMode,
   } = appState;
 
@@ -226,6 +259,9 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
         bookingNotes: DEMO_BOOKING_NOTES,
         invitationStanding: journeyInvitation,
         prototypeMode,
+        measurementsDue: journeyMeasurementsDue,
+        lifeStage: journeyLifeStage,
+        seededPhotos: journeySeededPhotos,
         now: new Date(),
       }),
       [AWAITING_REVIEW_CALL_ID]: seedAwaitingReviewJourney(prototypeMode),
@@ -249,6 +285,9 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
           bookingNotes: DEMO_BOOKING_NOTES,
           invitationStanding: options.invitationStanding,
           prototypeMode: options.prototypeMode,
+          measurementsDue: options.measurementsDue,
+          lifeStage: options.lifeStage,
+          seededPhotos: options.seededPhotos,
           now: new Date(),
         }),
       }));
@@ -264,6 +303,9 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
       reducedPricing: journeyReducedPricing,
       invitationStanding: journeyInvitation,
       prototypeMode,
+      measurementsDue: journeyMeasurementsDue,
+      lifeStage: journeyLifeStage,
+      seededPhotos: journeySeededPhotos,
     });
   }, [
     seedDemoJourney,
@@ -274,6 +316,9 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
     journeyAgeBand,
     journeyReducedPricing,
     journeyInvitation,
+    journeyMeasurementsDue,
+    journeyLifeStage,
+    journeySeededPhotos,
     prototypeMode,
   ]);
 
@@ -426,14 +471,25 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
   );
 
   const submitOnboarding = useCallback(
-    (callId: string, submittedAt: Date) => {
+    (callId: string, { submittedAt, photos }: JourneySubmission) => {
       updateJourney(callId, (journey) => {
         const started = applied(journey, 'start-onboarding');
         const submitted = applied(started, 'submit-onboarding');
+        const firstEntry = submittedMeasurementEntry(
+          submitted.onboarding.answers,
+          { recordedAt: submittedAt, photos },
+        );
 
         return withProfile({
           ...submitted,
+          measurements: firstEntry
+            ? [...submitted.measurements, firstEntry]
+            : submitted.measurements,
           onboarding: { ...submitted.onboarding, submittedAt },
+          progressPhotosConsentedAt: submitted.onboarding.consents
+            .progressPhotos
+            ? submittedAt
+            : submitted.progressPhotosConsentedAt,
         });
       });
     },
@@ -519,6 +575,30 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
     [updateJourney],
   );
 
+  const recordProgressPhotoConsent = useCallback(
+    (callId: string, consentedAt: Date) => {
+      updateJourney(callId, (journey) => ({
+        ...journey,
+        progressPhotosConsentedAt:
+          journey.progressPhotosConsentedAt ?? consentedAt,
+      }));
+    },
+    [updateJourney],
+  );
+
+  const removeMeasurementPhoto = useCallback(
+    async (callId: string, entryId: string, view: ProgressPhotoView) => {
+      await removeProgressPhoto(appState.photoRemoval);
+      updateJourney(callId, (journey) => ({
+        ...journey,
+        measurements: journey.measurements.map((entry) =>
+          entry.id === entryId ? withoutProgressPhoto(entry, view) : entry,
+        ),
+      }));
+    },
+    [appState.photoRemoval, updateJourney],
+  );
+
   const cancelSubscription = useCallback(
     (callId: string, cancelled: CoachingSubscription) => {
       updateJourney(callId, (journey) => ({
@@ -585,6 +665,8 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
         markProgramReady,
         scheduleReviewCall,
         addMeasurements,
+        recordProgressPhotoConsent,
+        removeMeasurementPhoto,
         cancelSubscription,
         startProgramNow,
       }}

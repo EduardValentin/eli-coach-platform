@@ -168,7 +168,11 @@ describe("ClerkIdentityInvitations#replace", () => {
 
   it.each([
     ["Clerk no longer knows it", clerkRefusal(404, "resource_not_found")],
-    ["it is already revoked", clerkRefusal(400, "invitation_revoked")],
+    ["it is already revoked", clerkRefusal(400, "invitation_already_revoked")],
+    [
+      "Clerk words the revoked state the older way",
+      clerkRefusal(400, "invitation_revoked"),
+    ],
     [
       "it is no longer pending",
       clerkRefusal(400, "invitation_cannot_be_revoked_code"),

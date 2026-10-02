@@ -11,6 +11,7 @@
     "./pwa": "./src/pwa/index.ts",
     "./bot-detection": "./src/bot-detection/index.ts",
     "./bot-detection/server": "./src/bot-detection/index.server.ts",
+    "./client-media/server": "./src/client-media/index.server.ts",
     "./coach-calendar/server": "./src/coach-calendar/index.server.ts",
     "./coach-meeting-room/server": "./src/coach-meeting-room/index.server.ts",
     "./email/server": "./src/email/index.server.ts",
@@ -18,6 +19,7 @@
     "./management-auth/server": "./src/management-auth/index.server.ts",
     "./http/server": "./src/http/index.server.ts",
     "./identity/server": "./src/identity/index.server.ts",
+    "./images/server": "./src/images/index.server.ts",
     "./payments/server": "./src/payments/index.server.ts"
   },
   "peerDependencies": {
@@ -30,6 +32,7 @@
     "@eli-coach-platform/domain": "workspace:*",
     "drizzle-orm": "catalog:",
     "resend": "catalog:",
+    "sharp": "catalog:",
     "stripe": "catalog:",
     "zod": "catalog:"
   },

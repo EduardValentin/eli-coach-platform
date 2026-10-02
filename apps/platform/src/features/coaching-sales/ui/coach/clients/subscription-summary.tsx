@@ -1,15 +1,15 @@
 import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
-import { ABSENT_VALUE } from "@eli-coach-platform/ui/lib";
+import {
+  ABSENT_VALUE,
+  formatDayMonth,
+  useCalendarDayTimeZone,
+} from "@eli-coach-platform/ui/lib";
 import { PortalWidget, Reading } from "@eli-coach-platform/ui/portal";
 import { CreditCard } from "lucide-react";
 
 import { possessivePronoun } from "~/features/assessment-calls/contracts/visitor-profile";
 import { bundleLengthLabel } from "~/features/coaching-sales/contracts/bundle-cards";
 import type { ClientSubscription } from "~/features/coaching-sales/contracts/coach-clients";
-import {
-  formatDayMonth,
-  useCalendarDayTimeZone,
-} from "~/features/coaching-sales/ui/shared/calendar-day-format";
 
 const IMMEDIATE_START_LABEL = "Immediate start";
 

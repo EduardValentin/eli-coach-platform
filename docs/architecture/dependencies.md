@@ -1,14 +1,14 @@
 # Dependencies
 
-Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; last update 2026-09-28 at commit 6f4dc94b, change review.
+Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; last update 2026-10-01 at commit 2b1ffb8a, change review (record-only, GEN-207 draft 2).
 
 ## Component graph
 
 | From | To | Modules | Notes |
 |---|---|---|---|
-| C6 infrastructure | C1 domain | 10 | the feature-flags repository implements `FeatureFlags`; `PostgresCoachCalendar`, `PostgresCoachAvailability` and `PostgresCoachMeetingRoom` implement the `/coach-availability` and `/coach-meeting-room` ports and take `/shared`'s `Clock`; the payments concern implements `/coaching-subscription`'s `PaymentCheckout` (Stripe and memory) and reads `/coaching-bundle`'s catalog; the identity concern implements `/client-invitation`'s `IdentityInvitations` (Clerk and memory); the adapter-facing contracts are C6's own |
+| C6 infrastructure | C1 domain | 14 | the feature-flags repository implements `FeatureFlags`; `PostgresCoachCalendar`, `PostgresCoachAvailability` and `PostgresCoachMeetingRoom` implement the `/coach-availability` and `/coach-meeting-room` ports and take `/shared`'s `Clock`; the payments concern implements `/coaching-subscription`'s `PaymentCheckout` (Stripe and memory) and reads `/coaching-bundle`'s catalog; the identity concern implements `/client-invitation`'s `IdentityInvitations` (Clerk and memory); the client-media concern implements `/client-profile`'s `ProgressPhotoStore` (encrypted filesystem and memory) and the images concern its `ProgressPhotoRenditions`; the adapter-facing contracts are C6's own |
 | C6 infrastructure | C2 db | 10 | the feature-flags, coach-calendar, coach-meeting-room and payment-event tables and their adapters |
-| C6 infrastructure | C3 config | 11 | concern types the factories read, including `PaymentsConfig` and `IdentityConfig` |
+| C6 infrastructure | C3 config | 12 | concern types the factories read, including `PaymentsConfig`, `IdentityConfig` and `ClientMediaConfig` |
 | C7 store | C1 domain | 18 | entities, ports, use cases, publication types across `/product`, `/acquisition`, `/download-grant`, `/cart`, `/email-address` (the composition's `EmailSubaddressPolicy`), `/shared` |
 | C7 store | C2 db | 6 | DatabaseClient, appSchema |
 | C7 store | C3 config | 5 | joinBasePath and concern types |
@@ -16,17 +16,18 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 | C7 store | C5 ui | 6 | primitives in ui/public |
 | C7 store | C6 infrastructure | 17 | bot-detection (browser and server), email/server, management-auth/server, http/server; adapter-facing contracts now live in C6 |
 | C8 waitlist | C1 domain | 8 | `/feature-flag`, `/waitlist`, `/email-address` (the composition's `EmailSubaddressPolicy`), `/shared`, and `/coaching-bundle`'s `PricingEligibility`, which the repository implements; `data/schema.server.ts`'s range check reads `WAITLIST_REDUCED_PRICING_CAP` |
-| C8 waitlist | C2 db | 3 | |
-| C8 waitlist | C3 config | 2 | |
+| C8 waitlist | C2 db | 3 |  |
+| C8 waitlist | C3 config | 2 |  |
 | C8 waitlist | C4 content | 3 | consent versions and copy; the subaddress refusal copy in `ui/public/errors.ts` |
-| C8 waitlist | C5 ui | 2 | |
+| C8 waitlist | C5 ui | 2 |  |
 | C8 waitlist | C6 infrastructure | 8 | bot-detection, email/server, http/server; adapter-facing contracts now live in C6 |
 | C9 accounts | C1 domain | 9 | `/account` (including the `InvitationAcceptance` the composition takes) |
-| C9 accounts | C2 db | 3 | |
-| C9 accounts | C3 config | 2 | |
-| C9 accounts | C5 ui | 3 | |
+| C9 accounts | C2 db | 3 |  |
+| C9 accounts | C3 config | 2 |  |
+| C9 accounts | C5 ui | 3 |  |
 | C9 accounts | C6 infrastructure | 3 | http/server |
 | C9 accounts | C7 store | 2 | the store path literal from `contracts/paths.ts` |
+| C11 public-site | C1 domain | 1 | `shell/portal-destination.ts` names `AccountRole` and `ClientJourneyStep` (types) |
 | C11 public-site | C3 config | 4 | `buildRedirectPath` in the invitation page |
 | C11 public-site | C4 content | 4 | legal documents; Eli's portrait paths (`about-content.ts`) |
 | C11 public-site | C5 ui | 16 |  |
@@ -37,51 +38,75 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 | C11 public-site | C14 server | 1 | `shell/layout.server.ts` reads `runtimeConfigContext` |
 | C11 public-site | C17 assessment-calls | 4 | `routes.ts` takes the public route fragment (`assessmentCallsBookingRoutes`, renamed from `assessmentCallsPublicRoutes` by the rebase-resolution round) and, since GEN-192, the join route fragment (`assessmentCallsJoinRoutes`), registered outside the layout beside `accountsDeadEndRoutes`; `pages/pricing.tsx`, `sections/hero/hero.tsx` and `sections/about/about.tsx` take `BOOK_PATH` from `contracts/paths.ts` and nothing else |
 | C11 public-site | C18 coaching-sales | 5 | `routes.ts` spreads `coachingSalesPublicRoutes` inside the shell and registers the invitation page at `INVITATION_ROUTE_SEGMENT` outside it; `pages/pricing.tsx` reads `coachingSalesContext` and renders `ui/public/bundle-selector/bundle-selector.tsx`; `pages/invitation.tsx` renders `ui/public/invitation/invitation-states.tsx`; `shell/layout.server.ts` reads the `readClientJourneyStep` guard and `shell/portal-destination.ts` the journey label and path from `contracts/client-journey.ts` |
-| C11 public-site | C1 domain | 1 | `shell/portal-destination.ts` names `AccountRole` and `ClientJourneyStep` (types) |
-| C12 client-portal | C3 config | 1 | |
-| C12 client-portal | C5 ui | 2 | |
-| C12 client-portal | C6 infrastructure | 2 | pwa |
-| C12 client-portal | C9 accounts | 4 | portal guard (from the access layout) and paths |
-| C12 client-portal | C18 coaching-sales | 2 | `routes.ts` spreads `coachingSalesClientRoutes` inside the access layout; `shell/access-layout.server.ts` runs `requireClientJourneyStep` |
-| C13 coach-portal | C5 ui | 4 | the shell and its navigation links; the dashboard and the assessment-calls page compose portal and appointment primitives |
+| C12 client-portal | C3 config | 1 | `buildRedirectPath` (`api/manifest.ts`) |
+| C12 client-portal | C5 ui | 4 | `./layout` (`PortalShell`, `PortalNavigationLink`), `./primitives`, `./portal` (`PortalPageHeader`), `./lib` |
+| C12 client-portal | C6 infrastructure | 3 | pwa |
+| C12 client-portal | C9 accounts | 5 | portal guard (from the access layout), paths and `SignOutControl` |
+| C12 client-portal | C18 coaching-sales | 5 | `routes.ts` spreads `coachingSalesClientRoutes` inside the access layout; `shell/access-layout.server.ts` runs `requireClientJourneyStep`; the shell loader reads the client's identity and `pages/home.tsx` the program status through `coachingSalesContext` and renders `ui/client/status/program-status-card.tsx` |
+| C12 client-portal | C19 client-onboarding | 2 | `routes.ts` spreads `clientOnboardingClientRoutes` inside the access layout, outside the sidebar shell; `pages/home.tsx` reads `clientOnboardingContext` for the open detail request |
+| C12 client-portal | C20 client-profile | 4 | `routes.ts` spreads `clientProfileClientRoutes` inside the shell; the shell links the client's name to `CLIENT_PROFILE_PATH`; `pages/home.tsx` reads `clientProfileContext`, renders `ui/client/nudge/measurements-nudge.tsx` and runs `ui/client/measurements/use-refused-photo-toasts.ts` |
+| C13 coach-portal | C5 ui | 5 | the shell and its navigation links; the dashboard, the assessment-calls page and the client page compose portal, appointment, layout and primitive modules |
 | C13 coach-portal | C9 accounts | 3 | portal guard and paths |
 | C13 coach-portal | C17 assessment-calls | 4 | `routes.ts` takes the settings fragment and the calls segment; `pages/home.tsx` composes the dashboard blocks; `pages/assessment-calls.tsx` composes the listing, section, clock and error boundary |
-| C13 coach-portal | C18 coaching-sales | 1 | `pages/assessment-calls.tsx` reads `coachingSalesContext` and fills the section's slots from `ui/coach/` (sales filter, badge, payment-link action, pricing label) |
-| C14 server | C1 domain | 9 | the container and platform composition name ports and use cases; `email-subaddress-policy.server.ts` returns `/email-address`'s `EmailSubaddressPolicy`; the console logger implements the incident ports of `/acquisition`, `/waitlist`, `/assessment-call`, `/payment-link` and `/client-invitation` |
-| C14 server | C2 db | 1 | `platform-composition.server.ts` no longer imports `DatabaseClient` |
+| C13 coach-portal | C18 coaching-sales | 4 | `routes.ts` spreads `coachingSalesCoachRoutes` (the clients page) and takes the clients path; `pages/assessment-calls.tsx` reads `coachingSalesContext` and fills the section's slots from `ui/coach/call-sales/`; `pages/client.tsx` reads the client record and composes `ui/coach/clients/` blocks |
+| C13 coach-portal | C19 client-onboarding | 1 | `pages/client.tsx` reads `clientOnboardingContext` and renders `ui/coach/onboarding/onboarding-panel.tsx` |
+| C13 coach-portal | C20 client-profile | 1 | `pages/client.tsx` reads `clientProfileContext` and renders `ui/coach/profile/client-profile-block.tsx`, `ui/shared/measurements/measurements-table.tsx` and `ui/shared/photos/photo-view-dialog.tsx` |
+| C14 server | C1 domain | 9 | the container and platform composition name ports and use cases; `email-subaddress-policy.server.ts` returns `/email-address`'s `EmailSubaddressPolicy`; the console logger implements the incident ports of `/acquisition`, `/waitlist`, `/assessment-call`, `/payment-link`, `/client-invitation`, `/client-onboarding`, `/client-profile` and `/client-roster` |
+| C14 server | C2 db | 1 | `database.server.ts` (`DatabaseClient` types) |
 | C14 server | C3 config | 7 | the container reads `resolveFeatureFlagOverridesMode` and the payments secrets; the subaddress policy reads `AppConfig`'s `ENVIRONMENT`; the runtime environment loader |
 | C14 server | C4 content | 1 | privacy email |
-| C14 server | C6 infrastructure | 8 | bot verifier, product email, management auth, feature-flag repository, the payments factories and contracts, the identity-invitations factory, http helpers for the webhook route |
+| C14 server | C6 infrastructure | 8 | bot verifier, product email, management auth, feature-flag repository, the payments factories and contracts, the identity-invitations factory, the progress-photo store and renditions factories, http helpers for the webhook route |
 | C14 server | C7 store | 2 | the container calls `composeStoreFeature` |
 | C14 server | C8 waitlist | 2 | the container calls `composeWaitlistFeature` |
 | C14 server | C9 accounts | 2 | the container calls `composeAccountsFeature`, handing it coaching sales' `invitationAcceptance`, and reads `CLIENT_PORTAL_PATH` for the identity provider's return URL |
 | C14 server | C17 assessment-calls | 2 | the container calls `composeAssessmentCallsFeature`; `feature-contexts.server.ts` sets `assessmentCallsContext` |
-| C14 server | C18 coaching-sales | 2 | the container calls `composeCoachingSalesFeature` with the identity invitations, hands its `invitationAcceptance` to accounts and its `paymentCompletionHandler` to the platform composition; the feature-context middleware sets `coachingSalesContext` |
+| C14 server | C18 coaching-sales | 2 | the container calls `composeCoachingSalesFeature` with the identity invitations and hands its handles on: `invitationAcceptance` to accounts, `paymentCompletionHandler` to the platform composition, `clientIdentities`, `unitPreferenceClients` and `measurementClients` to client profile, `onboardingClients`, `onboardingSubmissionStamps`, `onboardingReviewStamps` and `reviewStampWriter` to client onboarding; the feature-context middleware sets `coachingSalesContext` |
+| C14 server | C19 client-onboarding | 2 | the container calls `composeClientOnboardingFeature`; the feature-context middleware sets `clientOnboardingContext` |
+| C14 server | C20 client-profile | 2 | the container calls `composeClientProfileFeature` with the progress-photo store and renditions and hands its handles to client onboarding; the feature-context middleware sets `clientProfileContext` |
 | C17 assessment-calls | C1 domain | 15 | `/assessment-call`, `/coach-availability`, `/coach-meeting-room`, `/email-address` (the composition's `EmailSubaddressPolicy`), `/feature-flag`, `/shared`, and `/payment-link`'s `AssessmentCallReader`, which the composition satisfies |
 | C17 assessment-calls | C2 db | 3 | DatabaseClient, appSchema |
 | C17 assessment-calls | C3 config | 4 | `joinBasePath` (the emails and the booking overview's portrait) and `AssessmentCallsConfig` |
 | C17 assessment-calls | C4 content | 3 | the support address on the error state; Eli's portrait path on the booking overview; the subaddress refusal copy in the booking controller's messages |
-| C17 assessment-calls | C5 ui | 21 | `./primitives`, `./appointments`, `./calendar`, `./tabs`, `./filters`, `./lib`, `./layout`, `./portal`, `./toast` |
+| C17 assessment-calls | C5 ui | 21 | `./primitives` (incl. `FieldError`), `./appointments`, `./calendar`, `./tabs`, `./filters`, `./lib`, `./layout` (`DeadEndPanel`), `./portal`, `./toast` |
 | C17 assessment-calls | C6 infrastructure | 14 | bot-detection (browser and server), email/server (the notification contract, the Email* primitives and the email theme), http/server, coach-calendar/server and coach-meeting-room/server (the composition's adapters and the repository's reservation writers) |
 | C17 assessment-calls | C9 accounts | 2 | `api/settings/assessment-call-settings-controller.server.ts` takes `requireApiAccount` from `server/guards/`; `contracts/paths.ts` takes `COACH_PORTAL_PATH` from `contracts/paths.ts` |
-| C18 coaching-sales | C1 domain | 27 | `/payment-link`, `/coaching-subscription`, `/coaching-bundle`, `/assessment-call` (visitor vocabularies for the clients table), `/feature-flag`, `/email-address`, `/client-invitation`, `/client-journey`, `/account` (`InvitationAcceptance`, type), `/shared` |
-| C18 coaching-sales | C2 db | 8 | `DatabaseClient`, `DatabaseTransaction`, `appSchema`, `isCausedByDatabaseError` (through `data/unique-violation.server.ts`) |
-| C18 coaching-sales | C3 config | 5 | `joinBasePath`, `buildRedirectPath` |
-| C18 coaching-sales | C5 ui | 13 | `./primitives`, `./overlays` (`ConfirmDialog`), `./lib`, `./motion`, `./toast`, `./layout` (`DeadEndPage`) |
-| C18 coaching-sales | C6 infrastructure | 16 | `./payments/server` (the completion-handler contract, `recordPaymentEvent`, `toCheckoutCompletion`), `./email/server` (the Email* primitives and the email theme), `./http/server` |
-| C18 coaching-sales | C9 accounts | 4 | `contracts/paths.ts` (`CLIENT_PORTAL_PATH`); `server/guards/` (`requireApiAccount`, `requirePortalAccess`, `sessionContext`, `accountsContext`) from the payment-link and client-journey controllers and the journey guard |
-| C18 coaching-sales | C17 assessment-calls | 4 | `contracts/paths.ts` (`BOOK_PATH`, `COACH_CALLS_PAGE_PARAM`), `contracts/visitor-profile.ts` (`possessivePronoun`), and `data/schema.server.ts` for foreign keys |
-| C15 app root | C3 config | 1 | |
-| C15 app root | C5 ui | 1 | `root-error-page.tsx` renders the shared `DeadEndPage` from `./layout`; `app.css`'s `@import` of `styles.css` is not followed by the cruise |
+| C18 coaching-sales | C1 domain | 36 | `/payment-link`, `/coaching-subscription` (incl. `programWorkStart`), `/coaching-bundle`, `/assessment-call` (visitor vocabularies for the clients table), `/feature-flag`, `/email-address`, `/client`, `/client-invitation`, `/client-journey`, `/client-roster`, `/account` (`InvitationAcceptance`, type), the port types its adapters implement from `/client-onboarding`, `/client-profile` and `/unit-preference`, `/shared` |
+| C18 coaching-sales | C2 db | 12 | `DatabaseClient`, `DatabaseTransaction`, `appSchema`, `isCausedByDatabaseError` (through `data/unique-violation.server.ts`) |
+| C18 coaching-sales | C3 config | 5 | `joinBasePath`, `buildRedirectPath`, `normalizeBasePath` |
+| C18 coaching-sales | C5 ui | 25 | `./primitives`, `./overlays` (`ConfirmDialog`), `./lib` (incl. the calendar-day format and `PhoneLink`), `./motion`, `./toast`, `./portal`, `./appointments` (`RowActionButton`, `RowActionLink`), `./layout` (`DeadEndPage`, `DeadEndPanel`) |
+| C18 coaching-sales | C6 infrastructure | 17 | `./payments/server` (the completion-handler contract, `recordPaymentEvent`, `toCheckoutCompletion`), `./email/server` (the Email* primitives and the email theme), `./http/server` |
+| C18 coaching-sales | C9 accounts | 6 | `contracts/paths.ts` (`CLIENT_PORTAL_PATH`, `COACH_PORTAL_PATH`); `server/guards/` (`requireApiAccount`, `requirePortalAccess`, `sessionContext`, `accountsContext`) from the payment-link, client-journey and coach-clients controllers and the journey guard |
+| C18 coaching-sales | C17 assessment-calls | 7 | `contracts/paths.ts` (`BOOK_PATH`, `COACH_CALLS_PAGE_PARAM`), `contracts/visitor-profile.ts` (`possessivePronoun`), `contracts/countries.ts` (`findCountry`), `contracts/call-moment.ts`, and `data/schema.server.ts` for foreign keys |
+| C19 client-onboarding | C1 domain | 29 | `/client-onboarding` (use cases, ports, `ClientOnboarding`, `DetailRequest`, the form definitions and field rules, read by both halves), `/client-profile` (`ClientProfile` and `AttachProgressPhotosUseCase`, types), `/measurement` (`MeasurementEntry`, `ClientMeasurementsSource`, `waistToHeightRatio`), `/unit-preference` (`UnitPreference`, `ClientUnitPreferencesSource`, the measure-unit conversions), `/assessment-call` (`VISITOR_GENDERS`, `VisitorGender`), `/shared` (`Clock`, type) |
+| C19 client-onboarding | C2 db | 5 | `DatabaseClient`, `DatabaseTransaction`, `appSchema`, `isCausedByDatabaseError` |
+| C19 client-onboarding | C3 config | 2 | `joinBasePath`, from the details-request email adapter and the browser API client |
+| C19 client-onboarding | C5 ui | 14 | `./primitives` (incl. `FieldLayout`), `./lib` (incl. `describedByOf` and the calendar-day format), `./calendar` (`DateField`), `./motion`, `./portal`, `./overlays`, `./toast` |
+| C19 client-onboarding | C6 infrastructure | 13 | `./http/server`; `./email/server` (`ProductEmail`, the Email* primitives and the email theme) |
+| C19 client-onboarding | C9 accounts | 5 | `contracts/paths.ts` (`CLIENT_PORTAL_PATH`); `server/guards/` (`requireApiAccount`, `requirePortalAccess`) from both controllers |
+| C19 client-onboarding | C17 assessment-calls | 1 | `contracts/visitor-profile.ts` (`possessivePronoun`, `objectPronoun`) |
+| C19 client-onboarding | C18 coaching-sales | 2 | `contracts/paths.ts` (`CLIENT_ONBOARDING_ROUTE_SEGMENT`); `data/schema.server.ts` (`clientsTable`) for foreign keys |
+| C19 client-onboarding | C20 client-profile | 8 | `contracts/{unit-preference,canonical-measure,paths,progress-photo-consent,progress-photo-parts}.ts`; `ui/shared/measure-field/measure-field.tsx` (`MeasureField`) and `ui/shared/photos/` (`ProgressPhotoBlock`, the picks and the refused-photos navigation state) |
+| C20 client-profile | C1 domain | 28 | `/client-profile` (use cases, ports, `ClientProfile`, `ProgressPhoto`, the photo views and the accept rule), `/measurement` (`ClientMeasurementsSource`, `MeasurementEntry`, `MEASUREMENT_FIELDS`, `measurementProblem`, `waistToHeightRatio`), `/unit-preference` (`SaveUnitPreferenceUseCase`, its ports and the measure-unit conversions), `/client` (`ClientIdentities`, type), `/assessment-call` (`VisitorGender`, `VISITOR_GENDERS`), `/shared` (`Clock`) |
+| C20 client-profile | C2 db | 7 | `DatabaseClient`, `DatabaseTransaction` (the two transaction-scoped writers), `appSchema` |
+| C20 client-profile | C3 config | 2 | `joinBasePath` (the measurements API client and the photo URL) |
+| C20 client-profile | C5 ui | 11 | `./primitives` (incl. `FieldLayout`), `./portal`, `./layout` (`ResponsiveSheetDialog`), `./overlays` (`Dialog`, `ConfirmDialog`, `Lightbox`), `./lib` (incl. the calendar-day format and `PhoneLink`), `./toast` |
+| C20 client-profile | C6 infrastructure | 6 | `./http/server`; `./pwa` (the profile page's meta) |
+| C20 client-profile | C9 accounts | 5 | `contracts/paths.ts` (`CLIENT_PORTAL_PATH`), `server/guards/` (`requireApiAccount`, `requirePortalAccess`) |
+| C20 client-profile | C17 assessment-calls | 2 | `contracts/visitor-profile.ts` (pronouns, gender labels, the age on the card), `contracts/countries.ts` (`findCountry`) |
+| C20 client-profile | C18 coaching-sales | 1 | `data/schema.server.ts` (`clientsTable`) for foreign keys only |
+| C15 app root | C3 config | 1 |  |
+| C15 app root | C5 ui | 2 | `root-error-page.tsx` renders the shared `DeadEndPage` from `./layout`; `root.tsx`'s `Layout` mounts the one `Toaster` from `./toast`; `app.css`'s `@import` of `styles.css` is not followed by the cruise |
 | C15 app root | C7 store | 1 | the registry imports `storePublicRoutes`/`storeApiRoutes` |
 | C15 app root | C8 waitlist | 1 | the registry imports `waitlistApiRoutes` |
-| C15 app root | C17 assessment-calls | 1 | the registry imports `assessmentCallsApiRoutes` |
-| C15 app root | C18 coaching-sales | 1 | the registry imports `coachingSalesApiRoutes` |
-| C15 app root | C9 accounts | 3 | the registry, `root.tsx` (access-denied page) and `root.server.ts` (account resolution) |
+| C15 app root | C9 accounts | 3 | the registry, `root.tsx` (access-denied page, and the client portal segment for its viewport) and `root.server.ts` (account resolution) |
 | C15 app root | C11 public-site | 1 | the registry imports `publicSiteRoutes` |
 | C15 app root | C12 client-portal | 1 | the registry imports `clientPortalRoutes` |
 | C15 app root | C13 coach-portal | 1 | the registry imports `coachPortalRoutes` |
 | C15 app root | C14 server | 2 | `root.server.ts` (container, feature contexts) and the registry (`server/api/routes.ts`) |
+| C15 app root | C17 assessment-calls | 1 | the registry imports `assessmentCallsApiRoutes` |
+| C15 app root | C18 coaching-sales | 1 | the registry imports `coachingSalesApiRoutes` |
+| C15 app root | C19 client-onboarding | 1 | the registry imports `clientOnboardingApiRoutes` |
+| C15 app root | C20 client-profile | 1 | the registry imports `clientProfileApiRoutes` |
 
 ## Forbidden edges
 
@@ -90,7 +115,11 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 | any module | a dependency cycle, including between domain slices | R30 | `no-circular` |
 | features/A | features/B outside contracts/, ui/shared/, server/guards/ | R3 | `feature-internals` |
 | any module outside C9 features/accounts, the C15 root modules, C6 `identity/` and C16 | `@clerk/*` | R23 (Clerk stays behind the accounts feature, the root and the identity adapter) | `clerk-confined` (fixture-covered) |
+| any module outside C6 `packages/infrastructure/src/images/` | `sharp` | R23 (the image-processing library stays behind C1's `ProgressPhotoRenditions` and the C6 images concern) | `sharp-confined` (fixture-covered: `tools/boundary-fixtures/packages/infrastructure/src/email/sharp-confined.server.ts`, which the record also expects to trip `not-to-unresolvable`) |
 | features/assessment-calls | features/coaching-sales (any folder) | R30 (coaching sales is downstream of assessment calls; the reverse edge would close a component cycle `no-circular` cannot see at module level) | `assessment-calls-never-reach-coaching-sales` (fixture-covered) |
+| features/coaching-sales | features/client-onboarding (any folder) | R30 (client onboarding is downstream of coaching sales; the reverse edge would close a component cycle `no-circular` cannot see at module level) | `coaching-sales-never-reaches-client-onboarding` (fixture-covered) |
+| features/coaching-sales | features/client-profile (any folder) | R30 (client profile is downstream of coaching sales; the reverse edge would close a component cycle `no-circular` cannot see at module level) | `coaching-sales-never-reaches-client-profile` (fixture-covered) |
+| features/client-profile | features/client-onboarding (any folder) | R30 (client onboarding is downstream of client profile; the reverse edge would close a component cycle `no-circular` cannot see at module level) | `client-profile-never-reaches-client-onboarding` (fixture-covered) |
 | features/A/data/schema.server.ts | anything private in features/B except its `data/schema.server.ts` (foreign keys) | R3 carve-out | `feature-schema-foreign-key` (still unexercised at HEAD) |
 | surfaces/public-site | a feature outside ui/public/, ui/shared/, contracts/, server/guards/, routes.ts | R2 | `surface-public-site-to-feature` |
 | surfaces/client-portal | a feature outside ui/client/, ui/shared/, contracts/, server/guards/, routes.ts | R2 | `surface-client-portal-to-feature` |
@@ -134,89 +163,12 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 
 | Need | Satisfied at | Mechanism | Enforced by | Exercised at HEAD |
 |---|---|---|---|---|
-| Use another entity's types, ports and rules in policy code | domain folder to domain folder | import through the folder entry (`@eli-coach-platform/domain/<entity>`, or `../<entity>` inside the package) | `domain-slices`, `no-circular` | yes: `acquisition`→`product`, `email-address`, `shared`; `assessment-call`→`coach-availability`, `coach-meeting-room`, `email-address`, `feature-flag`, `shared`; `client`→`assessment-call`; `coaching-bundle`→`email-address`; `coaching-subscription`→`assessment-call`, `client`, `coaching-bundle`, `email-address`, `payment-link`, `shared`; `download-grant`→`product`, `shared`; `payment-link`→`assessment-call`, `coaching-bundle`, `email-address`, `feature-flag`, `shared`; `waitlist`→`email-address`, `feature-flag`, `shared` |
+| Use another entity's types, ports and rules in policy code | domain folder to domain folder | import through the folder entry (`@eli-coach-platform/domain/<entity>`, or `../<entity>` inside the package) | `domain-slices`, `no-circular` | yes: `acquisition`→`email-address`, `product`, `shared`; `assessment-call`→`coach-availability`, `coach-meeting-room`, `email-address`, `feature-flag`, `shared`; `client`→`assessment-call`; `client-invitation`→`shared`; `client-journey`→`assessment-call`, `client-onboarding`, `coaching-subscription`, `shared`; `client-onboarding`→`assessment-call`, `client-profile`, `measurement`, `shared`, `unit-preference`; `client-profile`→`account`, `client`, `measurement`, `shared`; `client-roster`→`assessment-call`, `client-journey`, `coaching-bundle`, `coaching-subscription`, `payment-link`; `coaching-bundle`→`email-address`; `coaching-subscription`→`assessment-call`, `client`, `coaching-bundle`, `email-address`, `payment-link`, `shared`; `download-grant`→`product`, `shared`; `measurement`→`unit-preference`; `payment-link`→`assessment-call`, `coaching-bundle`, `email-address`, `feature-flag`, `shared`; `unit-preference`→`shared`; `waitlist`→`email-address`, `feature-flag`, `shared` |
 | Know the current account | request context | read the accounts feature's `server/guards/` key | `guards-construct-nothing`, `server-guards-consumers` | yes |
-| Look another feature's data up | a port the consumer declares | the consuming slice declares the narrow interface; the producing feature's composition returns an implementation under `handles`, and the container hands it to the consumer's composition | `feature-internals`, `feature-api-to-data`, `composition-root` | yes: `AssessmentCallReader` (C1 `/payment-link`, satisfied by C17's composition), `PricingEligibility` (C1 `/coaching-bundle`, satisfied by C8's repository), both consumed by C18 |
-| Reference another feature's table | persistence | `data/schema.server.ts` may import the other feature's `data/schema.server.ts` for a foreign key | `feature-schema-foreign-key` | yes: C18's `payment_links`, `clients` and `coaching_subscriptions` reference C17's `assessment_calls` |
-| Compose another feature's UI | `ui/shared/` | the owning feature publishes the component or presenter | `feature-internals`, the three `surface-<s>-to-feature` rules | yes |
+| Look another feature's data up | a port the consumer declares | the consuming slice declares the narrow interface; the producing feature's composition returns an implementation under `handles`, and the container hands it to the consumer's composition; a write that must join the consumer's transaction is handed as a transaction-scoped writer function instead | `feature-internals`, `feature-api-to-data`, `composition-root`, `coaching-sales-never-reaches-client-onboarding`, `coaching-sales-never-reaches-client-profile`, `client-profile-never-reaches-client-onboarding` | yes: C8 waitlist → C18 `PricingEligibility` (C1 `/coaching-bundle`); C17 assessment calls → C18 `AssessmentCallReader` (`/payment-link`); C18 coaching sales → C9 accounts `InvitationAcceptance` (`/account`); C18 → C14 platform `PaymentCompletionHandler` (C6 `./payments/server`); C18 → C20 client profile `ClientIdentities` (`/client`), `MeasurementClients` (`/client-profile`), `UnitPreferenceClients` (`/unit-preference`); C18 → C19 client onboarding `OnboardingClients`, `OnboardingReviewStamps`, `OnboardingSubmissionStamps` (`/client-onboarding`) and the transaction-scoped `reviewStampWriter` (C19's structural `ReviewStampWriter`); C20 → C19 `ClientMeasurementsSource` (`/measurement`), `ClientUnitPreferencesSource` (`/unit-preference`), the use case `attachProgressPhotos` (`/client-profile`'s `AttachProgressPhotosUseCase`) and the transaction-scoped `recordMeasurementEntry` and `saveClientProfile` |
+| Reference another feature's table | persistence | `data/schema.server.ts` may import the other feature's `data/schema.server.ts` for a foreign key | `feature-schema-foreign-key` | yes: C18's `payment_links`, `clients` and `coaching_subscriptions` reference C17's `assessment_calls`; C19's `client_onboarding_drafts`, `client_onboarding_submissions`, `client_onboarding_reviews` and `client_onboarding_detail_requests` and C20's `client_measurements`, `client_profiles`, `client_progress_photos` and `client_unit_preferences` reference C18's `clients` |
+| Compose another feature's UI | `ui/shared/` | the owning feature publishes the component or presenter | `feature-internals`, the three `surface-<s>-to-feature` rules | yes: C19 renders C20's `MeasureField`; the surfaces compose C20's measurements table and photo view dialog |
 | Exchange wire data | `contracts/` | zod schemas and path literals | `feature-internals`, the three `surface-<s>-to-feature` rules | yes |
-| E1490 | apps/platform/src/features/assessment-calls/api/coach/coach-assessment-calls-controller.server.ts | apps/platform/src/features/assessment-calls/contracts/assessment-calls.ts | import | no | no | lateral | present |
-| E1491 | apps/platform/src/features/assessment-calls/api/coach/coach-assessment-calls-controller.server.ts | apps/platform/src/features/assessment-calls/contracts/paths.ts | import | no | no | lateral | present |
-| E1492 | apps/platform/src/features/assessment-calls/api/coach/coach-assessment-calls-controller.server.ts | packages/domain/src/assessment-call/index.ts | import | yes | no | lateral | present |
-| E1493 | apps/platform/src/features/assessment-calls/api/coach/coach-assessment-calls-controller.server.ts | packages/domain/src/shared/index.ts | import | yes | no | lateral | present |
-| E1494 | apps/platform/src/features/assessment-calls/contracts/paths.ts | apps/platform/src/features/accounts/contracts/paths.ts | import | yes | no | lateral | present |
-| E1495 | apps/platform/src/features/assessment-calls/server/assessment-calls-composition.server.ts | apps/platform/src/features/assessment-calls/api/coach/coach-assessment-calls-controller.server.ts | import | no | no | lateral | present |
-| E1496 | apps/platform/src/features/assessment-calls/ui/coach/assessment-call-listing.ts | apps/platform/src/features/assessment-calls/contracts/assessment-calls.ts | import | no | no | lateral | present |
-| E1567 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls-error-boundary.tsx | apps/platform/src/features/assessment-calls/contracts/assessment-calls.ts | import | no | no | lateral | added (coach follow-ups) |
-| E1568 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls-error-boundary.tsx | apps/platform/src/features/assessment-calls/ui/coach/coach-calls-page-frame.ts | import | no | no | lateral | added (coach follow-ups) |
-| E1569 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls-error-boundary.tsx | external:lucide-react | import | n/a | no | lateral | added (coach follow-ups) |
-| E1570 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls-error-boundary.tsx | external:react-router | import | n/a | no | lateral | added (coach follow-ups) |
-| E1571 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls-error-boundary.tsx | packages/ui/src/layout/index.ts | import | yes | no | lateral | added (coach follow-ups) |
-| E1572 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls-error-boundary.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | added (coach follow-ups) |
-| E1573 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls-error-boundary.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | added (coach follow-ups) |
-| E1503 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | apps/platform/src/features/assessment-calls/contracts/assessment-calls.ts | import | no | no | lateral | present |
-| E1504 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | apps/platform/src/features/assessment-calls/contracts/call-moment.ts | import | no | no | lateral | present |
-| E1505 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | apps/platform/src/features/assessment-calls/ui/coach/assessment-call-listing.ts | import | no | no | lateral | present |
-| E1506 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/call-list-pager.tsx | import | no | no | lateral | present |
-| E1508 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | packages/ui/src/appointments/index.ts | import | yes | no | lateral | present |
-| E1509 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
-| E1510 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
-| E1511 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | packages/ui/src/tabs/index.ts | import | yes | no | lateral | present |
-| E1512 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/call-list-pager.tsx | apps/platform/src/features/assessment-calls/ui/coach/assessment-call-listing.ts | import | no | no | lateral | present |
-| E1513 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/call-list-pager.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
-| E1579 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/use-call-listing-params.ts | apps/platform/src/features/assessment-calls/ui/coach/assessment-call-listing.ts | import | no | no | lateral | added (coach follow-ups; backfills a GEN-193 module the record never carried) |
-| E1580 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/use-call-listing-params.ts | external:react-router | import | n/a | no | lateral | added (coach follow-ups; backfills a GEN-193 module the record never carried) |
-| E1581 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/use-call-listing-params.ts | packages/ui/src/lib/index.ts | import | yes | no | lateral | added (coach follow-ups; backfills a GEN-193 module the record never carried) |
-| E1514 | apps/platform/src/features/assessment-calls/ui/coach/dashboard/upcoming-calls-widget.tsx | apps/platform/src/features/assessment-calls/contracts/call-moment.ts | import | no | no | lateral | present |
-| E1515 | apps/platform/src/features/assessment-calls/ui/coach/dashboard/upcoming-calls-widget.tsx | apps/platform/src/features/assessment-calls/contracts/paths.ts | import | no | no | lateral | present |
-| E1516 | apps/platform/src/features/assessment-calls/ui/coach/dashboard/upcoming-calls-widget.tsx | apps/platform/src/features/assessment-calls/ui/coach/assessment-call-listing.ts | import | no | no | lateral | present |
-| E1517 | apps/platform/src/features/assessment-calls/ui/coach/dashboard/upcoming-calls-widget.tsx | apps/platform/src/features/assessment-calls/ui/coach/join-call-link.tsx | import | no | no | lateral | present |
-| E1518 | apps/platform/src/features/assessment-calls/ui/coach/dashboard/upcoming-calls-widget.tsx | external:lucide-react | import | n/a | no | lateral | present |
-| E1519 | apps/platform/src/features/assessment-calls/ui/coach/dashboard/upcoming-calls-widget.tsx | packages/ui/src/appointments/index.ts | import | yes | no | lateral | present |
-| E1520 | apps/platform/src/features/assessment-calls/ui/coach/dashboard/upcoming-calls-widget.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
-| E1521 | apps/platform/src/features/assessment-calls/ui/coach/dashboard/upcoming-calls-widget.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
-| E1523 | apps/platform/src/features/assessment-calls/ui/coach/use-coach-clock.ts | external:react | import | n/a | no | lateral | present |
-| E1524 | apps/platform/src/features/assessment-calls/ui/coach/use-coach-clock.ts | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
-| E1525 | apps/platform/src/features/assessment-calls/ui/public/book/book-page.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
-| E1526 | apps/platform/src/features/assessment-calls/ui/public/book/slot-calendar.tsx | apps/platform/src/features/assessment-calls/ui/shared/day-key.ts | import | no | no | lateral | present |
-| E1527 | apps/platform/src/features/assessment-calls/ui/public/book/slot-grouping.ts | apps/platform/src/features/assessment-calls/ui/shared/day-key.ts | import | no | no | lateral | present |
-| E1528 | apps/platform/src/features/assessment-calls/ui/shared/day-key.ts | external:@date-fns/tz | import | n/a | no | lateral | present |
-| E1529 | apps/platform/src/surfaces/coach-portal/pages/home.tsx | apps/platform/src/features/assessment-calls/server/guards/assessment-calls-context.server.ts | import | yes | no | lateral | present |
-| E1530 | apps/platform/src/surfaces/coach-portal/pages/home.tsx | apps/platform/src/features/assessment-calls/ui/coach/assessment-call-listing.ts | import | yes | no | lateral | present |
-| E1576 | apps/platform/src/surfaces/coach-portal/pages/home.tsx | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls-error-boundary.tsx | re-export | yes | no | lateral | added (coach follow-ups; the route's `ErrorBoundary` export) |
-| E1531 | apps/platform/src/surfaces/coach-portal/pages/home.tsx | apps/platform/src/features/assessment-calls/ui/coach/dashboard/coach-greeting.tsx | import | yes | no | lateral | present |
-| E1532 | apps/platform/src/surfaces/coach-portal/pages/home.tsx | apps/platform/src/features/assessment-calls/ui/coach/dashboard/upcoming-calls-widget.tsx | import | yes | no | lateral | present |
-| E1533 | apps/platform/src/surfaces/coach-portal/pages/home.tsx | apps/platform/src/features/assessment-calls/ui/coach/use-coach-clock.ts | import | yes | no | lateral | present |
-| E1534 | apps/platform/src/surfaces/coach-portal/routes.ts | apps/platform/src/features/assessment-calls/routes.ts | import | yes | no | lateral | present |
-| E1535 | apps/platform/src/surfaces/coach-portal/shell/navigation-links.tsx | apps/platform/src/features/assessment-calls/contracts/paths.ts | import | yes | no | lateral | present |
-| E1536 | packages/domain/src/assessment-call/index.ts | packages/domain/src/assessment-call/list-assessment-calls-use-case.ts | import | no | no | lateral | present |
-| E1577 | packages/domain/src/assessment-call/list-assessment-calls-use-case.ts | packages/domain/src/assessment-call/assessment-call-incidents.ts | import | no | no | lateral | added (coach follow-ups) |
-| E1537 | packages/domain/src/assessment-call/list-assessment-calls-use-case.ts | packages/domain/src/assessment-call/assessment-call-reservations.ts | import | no | no | lateral | present |
-| E1538 | packages/domain/src/assessment-call/list-assessment-calls-use-case.ts | packages/domain/src/assessment-call/assessment-call.ts | import | no | no | lateral | present |
-| E1539 | packages/domain/src/assessment-call/list-assessment-calls-use-case.ts | packages/domain/src/coach-availability/index.ts | import | no | no | lateral | present |
-| E1540 | packages/ui/src/appointments/appointment-card.tsx | external:react | import | n/a | no | lateral | present |
-| E1542 | packages/ui/src/appointments/appointment-card.tsx | packages/ui/src/appointments/appointment.ts | import | no | no | lateral | present |
-| E1543 | packages/ui/src/appointments/appointment-card.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
-| E1544 | packages/ui/src/appointments/appointment-card.tsx | packages/ui/src/primitives/avatar.tsx | import | no | no | lateral | present |
-| E1546 | packages/ui/src/appointments/dashboard-appointment-row.tsx | external:react | import | n/a | no | lateral | present |
-| E1547 | packages/ui/src/appointments/dashboard-appointment-row.tsx | packages/ui/src/appointments/appointment.ts | import | no | no | lateral | present |
-| E1550 | packages/ui/src/lib/index.ts | packages/ui/src/lib/use-display-time-zone.ts | import | no | no | lateral | present |
-| E1551 | packages/ui/src/lib/use-display-time-zone.ts | external:react | import | n/a | no | lateral | present |
-| E1552 | packages/ui/src/primitives/avatar.tsx | external:class-variance-authority | import | n/a | no | lateral | present |
-| E1553 | packages/ui/src/primitives/avatar.tsx | external:react | import | n/a | no | lateral | present |
-| E1554 | packages/ui/src/primitives/avatar.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
-| E1555 | packages/ui/src/primitives/badge.tsx | external:class-variance-authority | import | n/a | no | lateral | present |
-| E1556 | packages/ui/src/primitives/badge.tsx | external:react | import | n/a | no | lateral | present |
-| E1557 | packages/ui/src/primitives/badge.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
-| E1558 | packages/ui/src/primitives/index.ts | packages/ui/src/primitives/badge.tsx | import | no | no | lateral | present |
-| E1559 | packages/ui/src/primitives/index.ts | packages/ui/src/primitives/pagination.tsx | import | no | no | lateral | present |
-| E1560 | packages/ui/src/primitives/pagination.tsx | external:class-variance-authority | import | n/a | no | lateral | present |
-| E1561 | packages/ui/src/primitives/pagination.tsx | external:react | import | n/a | no | lateral | present |
-| E1562 | packages/ui/src/primitives/pagination.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
-| E1563 | packages/ui/src/tabs/index.ts | packages/ui/src/tabs/tabs.tsx | import | no | no | lateral | present |
-| E1564 | packages/ui/src/tabs/tabs.tsx | external:radix-ui | import | n/a | no | lateral | present |
-| E1565 | packages/ui/src/tabs/tabs.tsx | external:react | import | n/a | no | lateral | present |
-| E1566 | packages/ui/src/tabs/tabs.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
 
 ## Boundaries (ports)
 
@@ -260,14 +212,14 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 | B123 | React Router loader contract | framework | U231, U247, U604, U415, U521 | routes.ts, page modules | loader data types; no domain instance crosses it (`conventions.md`) | page view | React Router strips `.server` modules from the client build; `browser-half` and `route-thinness-domain` |
 | B140 | sessionContext RouterContext<ResolvedSession> (U408) | C9 server/guards (frameworks) | U410 sets it | U411, U412, U604 | `ResolvedSession` with `account: AccountSnapshot`; default `{ kind: "anonymous" }` | React Router context | `guards-construct-nothing`, `server-guards-consumers` |
 | B143 | requirePortalAccess (U411) | C9 server/guards | portal layout middleware in C12, C13 | U705, U711 | `(args, { role })`, reading `accountsContext.portal`; returns `AccountSnapshot` | caller | `server-guards-consumers` |
-| B144 | the eight request-context keys | C7, C8, C9, C17, C18 `server/guards/` and C14 `server/guards/` | `createFeatureContextMiddleware` (U517) sets all eight from the container, publishing each composition's `feature` and never its `handles` | `accountsContext` and `sessionContext` (accounts routes, the resolution middleware, the portal guards), `storeContext` (store routes and loaders), `waitlistContext` (the waitlist route, the public-site layout loader and the pricing loader), `assessmentCallsContext` (the assessment-call routes and pages, and the coach portal's dashboard and calls page), `coachingSalesContext` (the coaching-sales routes and pages, the pricing loader and the coach calls page), `platformContext` (`server/api/*` only, including the Stripe webhook), `runtimeConfigContext` (the public-site layout loader only) | the feature's controllers or `{ appBasePath, botDetection }` | the context key | each is created with `createContext<…>()` and constructs nothing (`guards-construct-nothing`); `server-guards-consumers` fences `platformContext` |
+| B144 | the eleven request-context keys | C7, C8, C9, C17, C18, C19, C20 `server/guards/` and C14 `server/guards/` | `createFeatureContextMiddleware` (U517) sets nine from the container, publishing each composition's `feature` and never its `handles`; the accounts account-resolution middleware sets `sessionContext` and C18's journey guard sets `clientJourneyContext` per request | `accountsContext` and `sessionContext` (accounts routes, the resolution middleware, the portal guards), `storeContext` (store routes and loaders), `waitlistContext` (the waitlist route, the public-site layout loader and the pricing loader), `assessmentCallsContext` (the assessment-call routes and pages, and the coach portal's dashboard and calls page), `coachingSalesContext` (the coaching-sales routes and pages, the pricing loader, the coach calls page, the coach clients page, the client page and the client portal's shell and home loaders), `clientJourneyContext` (C18's client-journey controller only), `clientOnboardingContext` (the client-onboarding routes and page, the client portal's home page and the coach portal's client page), `clientProfileContext` (the client-profile routes and page, the client portal's home page and the coach portal's client page), `platformContext` (`server/api/*` only, including the Stripe webhook), `runtimeConfigContext` (the public-site layout loader only) | the feature's controllers, the signed-in client's journey snapshot, or `{ appBasePath, botDetection }` | the context key | each is created with `createContext<…>()` and constructs nothing (`guards-construct-nothing`); `server-guards-consumers` fences `platformContext` |
 | B151 | PlatformDatabase.client deferred DatabaseClient proxy | C14 (frameworks) | private createDeferredDatabaseClient in U503 | every repository built by a feature composition | DatabaseClient (Drizzle type) | proxy | none |
 | B152 | PlatformContainer (U502) composition output | C14 composition | U500 | `root.server.ts` only | a record of feature slices `{ accounts, assessmentCalls, closeDatabase, coachingSales, featureFlagOverrides, platform, store, waitlist }`, with waitlist, assessment calls and coaching sales as `{ feature, handles }` | root.server.ts | `composition-root` |
 | B180 | Radix wrapper boundary in C5 | C5 frameworks | checkbox, filter-chip-group, sheet, navigation-dialog, select, popover, tabs | apps through the concern subpaths | React props | C5 component | none |
 | B181 | SearchParamsWriter (U805) | C5 lib (adapters) | C5 | U237 catalog-view | { searchParams, writeSearchParams } | consumer | none |
 | B182 | packages/ui export map | C5 | seven concern `index.ts` entries plus `styles.css`; no root barrel | apps/platform/src, app.css | components, CSS | consumers | exports, `ui-subpaths`, `ui-primitives-import-only-lib`, `ui-lib-is-the-base` |
 | B260 | DatabaseClient (U1151, Drizzle NodePgDatabase) | C2 adapters | drizzle() | U503; every repository in C7, C8, C9, C17, C6 | Drizzle ORM instance (detail type). `DatabaseTransaction`, the handle a `transaction` callback receives, is published beside it and named by U1294, U1221 and U125 | C2 | exports |
-| B261 | appSchema (U1154, the `app` Postgres namespace) | C2 frameworks | tables attached by U126, U304, U407, U1028, U1295 (since GEN-192 also `coachAvailabilityTable`, in the same module), U1334 | same five, plus U1334 since GEN-192 | drizzle PgSchema builder | consumers | convention; drizzle.config.ts globs discover the tables |
+| B261 | appSchema (U1154, the `app` Postgres namespace) | C2 frameworks | tables attached by U126, U304, U407, U1028, U1295 (with `coachAvailabilityTable` in the same module), U1334, U1431, U2818, U2917 | same modules | drizzle PgSchema builder | consumers | convention; drizzle.config.ts globs discover the tables |
 | B262 | RuntimeEnvironment (U1170) | C3 frameworks | the intersection of ten concern shapes with six refinements, composed in `runtime-environment.ts` and loaded from the `./runtime` entry by U1171; the `assessment-calls` shape is one of the four with no refinement | U510 (memoised) only; every other consumer imports the concern type it reads (`AppConfig`, `DatabaseConfig`, `WaitlistConfig`, `BotDetectionSettings`, `ProductEmailConfig`, `ManagementApiConfig`, `AssessmentCallsConfig`) from `.` | typed env object | C3 | exports, `config-runtime-readers` |
 | B263 | DatabaseBootstrapEnvironment / DatabaseConnection / DatabaseUserCredentials | C3 | U1174 | U503 | plain credential structures | C3 | exports |
 | B265 | packages/test-support (U1191) | C16 | fixture only | test files only | Clerk-shaped fixture | tests | exports plus `no-production-import-of-tests` and `not-to-dev-dep`; the Docker builder also asserts the package is absent after `pnpm --prod deploy` |
@@ -282,7 +234,7 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 | B284 | PaymentLinkTokenGenerator (U1389) | C1 payment-link (use-cases) | U1432 RandomLinkTokenGenerator (adapters, C18) | U1395 | `{ rawToken, sha256 }` | implementer | dependency-absence |
 | B285 | PaymentLinkTokenHasher (U1389) | C1 payment-link (use-cases) | U1432 LinkTokenSha256 (adapters, C18) | U1384, U1396 | strings | implementer | dependency-absence |
 | B286 | AssessmentCallReader (U1390) | C1 payment-link (use-cases) | an object over `PostgresAssessmentCallRepository.findById(...).toSnapshot()` in U1235 (composition, C17), handed out as `handles.assessmentCallReader` | U1384, U1385, U1395, U1396 | a call id in; an `AssessmentCallSnapshot` or `null` out | implementer | dependency-absence; composition injection |
-| B287 | CallSalesStates (U1391) | C1 payment-link (use-cases) | U1434 PostgresCoachingPurchases (adapters, C18) | U1397, U1384, U1395, U1396 | call ids in; a map of recorded `CallSalesState`s out | implementer | dependency-absence |
+| B287 | CallSalesStates (U1391) | C1 payment-link (use-cases) | U1434 PostgresCoachingPurchases (adapters, C18) | U1397, U1384, U1395, U1396 | call ids in; a map of plain `CallSale`s (`{ state, clientId }`, the client id only on a paid call) out | implementer | dependency-absence |
 | B288 | CoachingSalesIncidents (U1392) | C1 payment-link (use-cases) | U519 createConsoleLogger (C14) | U1394, U1395, U1385, U1428 | the failed read, a call id, or a rejection reason | implementer | dependency-absence, composition injection |
 | B289 | CoachingSalesNotifications (U1393) | C1 payment-link (use-cases) | U1437 EmailCoachingSalesNotifications (adapters, C18), built by `createCoachingSalesNotifications` | U1395 | a `PaymentLinkMessage` (call snapshot, link id, raw token, tier) in; `sent \| failed` out | implementer | dependency-absence |
 | B290 | PaymentCompletionHandler (U1404) | C6 payments (adapters; adapter-facing contract) | U1428 CoachingPurchaseCompletionHandler (adapters, C18), handed out as `handles.paymentCompletionHandler` | U518 (purpose-keyed map), U1458 | an event id and a `PaidCheckoutSession` in; `recorded \| duplicate \| ignored` out | implementer | composition injection; the platform composition throws at startup on a duplicate purpose |
@@ -290,26 +242,57 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 | B292 | PaymentWebhookIncidents (U1406) | C6 payments (adapters; adapter-facing contract) | U519 createConsoleLogger (C14) | U1458 | `{ eventId, purpose }`; a handler failure adds the error class | implementer | composition injection |
 | B293 | InvitationAcceptance (U1474) | C1 use-cases (`/account`) | an inline object in U1423 over U1483 (composition, C18) | U902 | `{ authSubjectId }` in; `accepted \| refused` out | implementer | dependency-absence; the `/account` slice imports no other slice; the container hands the handle from the coaching-sales to the accounts composition |
 | B294 | PaidClientAdmission (U1491) | C1 use-cases (`/coaching-subscription`) | an inline object in U1423 over U1482 (composition, C18) | U1385 | `{ clientId }` in | implementer | dependency-absence; composition injection |
-| B295 | ClientInvitations (U1476) | C1 use-cases (`/client-invitation`) | U1509 PostgresClientInvitations (adapters, C18) | U1482, U1483, U1484 | `ClientInvitation` instances out of the finders and into `insert` and `reissue`; plain bookkeeping writes; `accept` answers `accepted \| raced` | implementer | dependency-absence; `feature-api-to-data`; the composition hands it in |
+| B295 | ClientInvitations (U1476) | C1 use-cases (`/client-invitation`) | U1509 PostgresClientInvitations (adapters, C18) | U1482, U1483, U1484, U2601, U2602 | `ClientInvitation` instances out of the finders and into `insert` and `reissue`; plain bookkeeping writes (provider, email sent, email failed); `accept` answers `accepted \| raced` | implementer | dependency-absence; `feature-api-to-data`; the composition hands it in |
 | B296 | ClientInvitationIdGenerator (U1476) | C1 use-cases | U1508 (adapters, C18) | U1482 | string | implementer | dependency-absence |
-| B297 | IdentityInvitations (U1477) | C1 use-cases | U1492 ClerkIdentityInvitations, U1493 InMemoryIdentityInvitations (adapters, C6), selected by U1494 | U1482, U1483 | plain: `{ email, invitationId }` in, `IdentityInvitation { id, url }` out; subject → invitation id | implementer | dependency-absence; C6 publishes only the factory; `clerk-confined` |
-| B298 | InvitationTokenGenerator (U1478) | C1 use-cases | U1432 (adapters, C18) | U1482 | `{ rawToken, sha256 }` | implementer | dependency-absence |
+| B297 | IdentityInvitations (U1477) | C1 use-cases | U1492 ClerkIdentityInvitations, U1493 InMemoryIdentityInvitations (adapters, C6), selected by U1494 | U1482, U1483, U2602 | plain: `{ email, invitationId }` in for `create`, plus the `previous` `IdentityInvitation` for `replace`; `IdentityInvitation { id, url }` out; subject → invitation id | implementer | dependency-absence; C6 publishes only the factory; `clerk-confined` |
+| B298 | InvitationTokenGenerator (U1478) | C1 use-cases | U1432 (adapters, C18) | U1482, U2602 | `{ rawToken, sha256 }` | implementer | dependency-absence |
 | B299 | InvitationTokenHasher (U1478) | C1 use-cases | U1432 (adapters, C18) | U1484 | string | implementer | dependency-absence |
-| B300 | InvitedClients (U1479) | C1 use-cases | U1510 (adapters, C18) | U1482 | plain `InvitedClient` | implementer | dependency-absence |
-| B301 | ClientInvitationNotifications (U1480) | C1 use-cases | U1514 EmailClientInvitationNotifications (adapters, C18) over C6 `ProductEmail` | U1482 | plain `ClientInvitationMessage` in, `sent \| failed` out | implementer | dependency-absence |
-| B302 | ClientInvitationIncidents (U1481) | C1 use-cases | U519 createConsoleLogger (adapters, C14) | U1482 | `{ invitationId }` | implementer | dependency-absence |
-| B303 | ClientJourneys (U1487) | C1 use-cases (`/client-journey`) | U1507 PostgresClientJourneys (adapters, C18) | U1488, U1489 | `ClientJourney` instance out; `{ clientId, at }` in | implementer | dependency-absence |
+| B300 | InvitedClients (U1479) | C1 use-cases | U1510 (adapters, C18) | U1482, U2602 | plain `InvitedClient` | implementer | dependency-absence |
+| B301 | ClientInvitationNotifications (U1480) | C1 use-cases | U1514 EmailClientInvitationNotifications (adapters, C18) over C6 `ProductEmail` | U1482, U2602 | plain `ClientInvitationMessage` in, `sent \| failed` out | implementer | dependency-absence |
+| B302 | ClientInvitationIncidents (U1481) | C1 use-cases | U519 createConsoleLogger (adapters, C14) | U1482, U2602 | `{ invitationId }`; `{ invitationId, step: provider \| email }` | implementer | dependency-absence |
+| B303 | ClientJourneys (U1487) | C1 use-cases (`/client-journey`) | U1507 PostgresClientJourneys (adapters, C18) | U1488, U1489, U2604 | `ClientJourney` instance out (the journey stamps and the four review stamps); `{ clientId, at }` in for `recordWelcomeSeen` and `recordOnboardingSubmitted` | implementer | dependency-absence |
+| B2600 | ClientIdentities (U2600) | C1 use-cases (`/client`) | U3005 PostgresClientIdentities (adapters, C18), handed out as `handles.clientIdentities` | U2631 | client id in; plain `ClientIdentity` out | implementer | dependency-absence; composition injection; `feature-internals` keeps C20 from importing C18's reader |
+| B2601 | ClientSubscriptionStarts (U2603) | C1 use-cases (`/client-journey`) | U1434 PostgresCoachingPurchases (adapters, C18) | U2604 | client id in; plain `{ startChoice, purchasedAt }` or `null` out | implementer | dependency-absence |
+| B2602 | OnboardingClients (U2646) | C1 use-cases (`/client-onboarding`) | U3007 PostgresOnboardingClients (adapters, C18), handed out as `handles.onboardingClients` | U2659, U2660, U2661, U2662, U2663, U2664, U2665, U2666, U2667 | auth subject id or client id in; plain `OnboardingClient` out | implementer | dependency-absence; composition injection; `feature-internals` |
+| B2603 | ClientOnboardingSource (U2642) | C1 use-cases (`/client-onboarding`) | U2820 PostgresClientOnboardings (adapters, C19) | U2659, U2660, U2661, U2662, U2663, U2664, U2665, U2666, U2667 | client id in; plain `{ draft, submission }` out | implementer | dependency-absence |
+| B2604 | ClientOnboardingChanges (U2641) | C1 use-cases (`/client-onboarding`) | U2820 PostgresClientOnboardings (adapters, C19) | U2666, U2667 | plain `OnboardingDraft`, `OnboardingSubmission`, `MeasurementEntry` and a `ClientProfile` instance in; `saved \| already-submitted`, or `recorded` with the first entry's id, out | implementer | dependency-absence; the write-port instance allowance in decisions.md |
+| B2605 | OnboardingReviews (U2654) | C1 use-cases (`/client-onboarding`) | U2821 PostgresOnboardingReviews (adapters, C19) | U2659, U2660, U2661, U2663, U2664, U2665 | `DetailRequest` instances out and in; `ReviewStamps`, merged answers and a `ClientProfile` instance in; `recorded \| already-open` out | implementer | dependency-absence; the write-port instance allowance |
+| B2606 | DetailRequestIdGenerator (U2654) | C1 use-cases (`/client-onboarding`) | U2822 RandomDetailRequestIds (adapters, C19) | U2665 | string | implementer | dependency-absence |
+| B2607 | OnboardingReviewStamps (U2653) | C1 use-cases (`/client-onboarding`) | U1507 PostgresClientJourneys (adapters, C18), handed out as `handles.onboardingReviewStamps` | U2663, U2664 | plain `{ clientId, stamps: ReviewStamps }` | implementer | dependency-absence; composition injection |
+| B2608 | OnboardingSubmissionStamps (U2657) | C1 use-cases (`/client-onboarding`) | U1507 PostgresClientJourneys (adapters, C18; satisfies it structurally through `recordOnboardingSubmitted`), handed out as `handles.onboardingSubmissionStamps` | U2667 | plain `{ clientId, at }` | implementer | dependency-absence; composition injection |
+| B2609 | OnboardingDetailsNotifications (U2648) | C1 use-cases (`/client-onboarding`) | U2826 EmailOnboardingDetailsNotifications (adapters, C19) over C6 `ProductEmail` | U2665 | plain `{ requestId, clientId, email, firstName }` in; `sent \| failed` out | implementer | dependency-absence |
+| B2610 | ClientOnboardingIncidents (U2643) | C1 use-cases (`/client-onboarding`) | U519 createConsoleLogger (adapters, C14) | U2659, U2660, U2661, U2663, U2664, U2665, U2666, U2667 | ids, the form id, the refusal reason, the question count, the screening outcome | implementer | dependency-absence |
+| B2611 | ClientMeasurementsSource (U2615) | C1 use-cases (`/measurement`: the shared entry read, imported from there by both consuming slices, `/client-profile` and `/client-onboarding`) | U2918 PostgresClientMeasurements (adapters, C20), handed to C19 as the client-profile composition's `handles.measurements` | U2631, U2663 | client id in; plain `MeasurementEntry[]` out | implementer | dependency-absence; composition injection; `feature-internals` keeps C19 from importing C20's repository |
+| B2612 | ClientMeasurementRecords (U2619) | C1 use-cases (`/client-profile`) | U2919 PostgresClientMeasurementRecords (adapters, C20) | U2628, U2629, U2630, U3136 | client id and a plain `MeasurementEntry` in, entry id out; plain `MeasurementRecord[]` (entries with ids and `ProgressPhotoSnapshot`s) out | implementer | dependency-absence |
+| B2613 | ClientProfiles (U2618) | C1 use-cases (`/client-profile`) | U2922 PostgresClientProfiles (adapters, C20) | U2628, U2629, U2631, U3136 | `ClientProfile` instance out; `(clientId, at)` in | implementer | dependency-absence |
+| B2614 | MeasurementClients (U2620) | C1 use-cases (`/client-profile`) | U3007 (adapters, C18), handed out as `handles.measurementClients` | U2628, U2629, U2632, U2633 | auth subject id in; `{ clientId }` out | implementer | dependency-absence; composition injection |
+| B2615 | ProgressPhotos (U2627) | C1 use-cases (`/client-profile`) | U2920 PostgresProgressPhotos (adapters, C20) | U3135 (for U2628 and U3136), U2632, U2633 | `ProgressPhoto` instances in and out, read by the adapter through `toSnapshot()`; photo id in | implementer | dependency-absence; the write-port instance allowance |
+| B2616 | ProgressPhotoIdGenerator (U2627) | C1 use-cases (`/client-profile`) | U2921 RandomProgressPhotoIds (adapters, C20) | U3135 (for U2628 and U3136) | string | implementer | dependency-absence |
+| B2617 | ProgressPhotoStore (U2626) | C1 use-cases (`/client-profile`) | U3103 EncryptedFilesystemProgressPhotoStore and U3106 InMemoryProgressPhotoStore (adapters, C6), selected by U3102 on `CLIENT_MEDIA_PROVIDER` | U3135 (for U2628 and U3136), U2632, U2633 | plain `ProgressPhotoOwner` and bytes (`Uint8Array`) in, plain `ProgressPhotoReference` out; reference in, bytes or `null` out | implementer | dependency-absence; C6 publishes only the factory |
+| B2618 | ProgressPhotoRenditions (U2625) | C1 use-cases (`/client-profile`) | U3109 SharpProgressPhotoRenditions (adapters, C6, module-private), built by `createProgressPhotoRenditions` | U3135 (for U2628 and U3136) | bytes in; rendered JPEG bytes or `refused` out | implementer | dependency-absence; C6 publishes only the factory |
+| B2619 | MeasurementIncidents (U2622) | C1 use-cases (`/client-profile`) | U519 createConsoleLogger (adapters, C14) | U2628, U3135, U3136, U2632, U2633 | ids, the photo view, received and stored byte counts, the refusal reason, the requester's role | implementer | dependency-absence |
+| B2620 | ClientRoster (U2635) | C1 use-cases (`/client-roster`) | U3006 PostgresClientRoster (adapters, C18) | U2637, U2638 | plain `ClientRosterEntry` (with a `ClientJourneySnapshot`) out | implementer | dependency-absence |
+| B2621 | ClientRosterIncidents (U2636) | C1 use-cases (`/client-roster`) | U519 createConsoleLogger (adapters, C14) | U2637 | the caught error | implementer | dependency-absence |
+| B2622 | ClientUnitPreferencesSource (U2607) | C1 use-cases (`/unit-preference`) | U2923 PostgresClientUnitPreferences (adapters, C20, through `ClientUnitPreferences`), handed out as the client-profile composition's `handles.unitPreferences` (read-only) | U2629, U2659, U2662, U2667 | client id in; `UnitPreference` instance or `null` out | implementer | dependency-absence; composition injection |
+| B2623 | ClientUnitPreferences (U2608) | C1 use-cases (`/unit-preference`) | U2923 PostgresClientUnitPreferences (adapters, C20) | U2610 | `{ clientId, preference: UnitPreference, at }` in, read by the adapter through `toSnapshot()` | implementer | dependency-absence; the write-port instance allowance |
+| B2624 | UnitPreferenceClients (U2609) | C1 use-cases (`/unit-preference`) | U3007 (adapters, C18), handed out as `handles.unitPreferenceClients` | U2610 | auth subject id in; `{ clientId }` out | implementer | dependency-absence; composition injection |
+| B2665 | ClientProfileWriter (U2819) | C19 adapters (`data/`; a consumer-declared transaction-scoped writer) | U2922 `saveClientProfile` (adapters, C20), handed as `handles.saveClientProfile` | U2820 (`recordSubmission`), U2821 (`recordAnswer`) | a C2 `DatabaseTransaction` and a `ClientProfile` instance | implementer | composition injection; the container matches the function shape structurally; `client-profile-never-reaches-client-onboarding` keeps C20 from naming the type |
+| B2666 | MeasurementEntryWriter (U2819) | C19 adapters (`data/`; a consumer-declared transaction-scoped writer) | U2918 `recordMeasurementEntry` (adapters, C20), handed as `handles.recordMeasurementEntry` | U2820 (`recordSubmission`) | a C2 `DatabaseTransaction` and `{ clientId, entry: MeasurementEntry }` in, the entry id out | implementer | composition injection; `client-profile-never-reaches-client-onboarding` |
+| B2667 | ReviewStampWriter (a transaction-scoped writer function type, declared structurally twice: C19 `data/reviews/onboarding-reviews-repository.server.ts:ReviewStampWriter` and C18 U3004) | C19 data (adapters) | U3004 writeReviewStamps (adapters, C18), handed out as `handles.reviewStampWriter` | C19's `PostgresOnboardingReviews`, inside its review transaction | C2's `DatabaseTransaction` and `{ clientId, stamps: ReviewStamps }` in | implementer | composition injection; `coaching-sales-never-reaches-client-onboarding` holds in both directions only by the structural type (C19 names no C18 module) |
+| B2668 | attachProgressPhotos (C20 composition handle: U3136 `AttachProgressPhotosUseCase`, typed by the C1 class) | C1 use-cases (`/client-profile`) | U3136, constructed by U2908 over C20's photo adapters and the container's store and renditions | U2808 `ClientOnboardingController.submit`, after the submission is recorded | `{ clientId, entryId, photos: ReceivedProgressPhoto[] }` in; a `stored \| refused` outcome per view out | use case | composition injection; `client-profile-never-reaches-client-onboarding` keeps the direction onboarding → profile |
 
 ## Entry points and composition roots
 
 | Kind | Path | Constructs |
 |---|---|---|
-| composition-root | apps/platform/src/server/container.server.ts (createPlatformContainer, memoised by getPlatformContainer) | the shared handles once — the `EmailSubaddressPolicy` from `resolveEmailSubaddressPolicy(environment)`, handed to the waitlist, assessment-calls and store compositions, `createPlatformDatabase`, the `Clock` implementation, `createConsoleLogger()`, `createBotVerifier()`, `createManagementAuthConfig()` and `createManagementAuthenticator()`, `createProductEmail()`, `createPaymentCheckout()` and `createPaymentEvents()`, one `PostgresFeatureFlagRepository` and one `GetFeatureFlagsUseCase`, and the override selection by `resolveFeatureFlagOverridesMode(environment)` — then, in order, `composeWaitlistFeature`, `composeAssessmentCallsFeature`, `composeCoachingSalesFeature` (given `assessmentCalls.handles.assessmentCallReader` and `waitlist.handles.pricingEligibility`), `composePlatformFeature` (given `[coachingSales.handles.paymentCompletionHandler]`, the payment events verifier and the webhook signing secret), `composeAccountsFeature`, `composeStoreFeature`; the selected feature-flag reader goes to the platform, waitlist, assessment-calls and coaching-sales compositions; `featureFlagOverrides` is a field of the container. One console logger implements B266, B267, B273, B288 and B292 |
+| composition-root | apps/platform/src/server/container.server.ts (createPlatformContainer, memoised by getPlatformContainer) | the shared handles once — the `EmailSubaddressPolicy` from `resolveEmailSubaddressPolicy(environment)`, handed to the waitlist, assessment-calls and store compositions, `createPlatformDatabase`, the `Clock` implementation, `createConsoleLogger()`, `createBotDetectionConfig()`, `createBotVerifier()`, `createManagementAuthConfig()` and `createManagementAuthenticator()`, `createProductEmail()`, `createPaymentCheckout()`, `createPaymentEvents()`, `createIdentityInvitations()` (with the hosted sign-up URL and the client-portal URL), `createProgressPhotoStore()` and `createProgressPhotoRenditions()`, one `PostgresFeatureFlagRepository` and one `GetFeatureFlagsUseCase`, and the override selection by `resolveFeatureFlagOverridesMode(environment)` — then, in order, `composeWaitlistFeature`, `composeAssessmentCallsFeature`, `composeCoachingSalesFeature` (given `assessmentCalls.handles.assessmentCallReader` and `waitlist.handles.pricingEligibility`), `composeClientProfileFeature` (given coaching sales' `clientIdentities`, `measurementClients` and `unitPreferenceClients`, the progress-photo store and renditions), `composeClientOnboardingFeature` (given coaching sales' `onboardingClients`, `onboardingReviewStamps`, `onboardingSubmissionStamps` and `reviewStampWriter`, and client profile's `attachProgressPhotos`, `measurements`, `recordMeasurementEntry`, `saveClientProfile` and `unitPreferences`), `composePlatformFeature` (given `[coachingSales.handles.paymentCompletionHandler]`, the payment events verifier and the webhook signing secret), `composeAccountsFeature` (given `coachingSales.handles.invitationAcceptance`), `composeStoreFeature`; the selected feature-flag reader goes to the platform, waitlist, assessment-calls and coaching-sales compositions; `featureFlagOverrides` is a field of the container. One console logger implements B266, B267, B273, B288, B292, B302, B2610, B2619 and B2621 |
 | composition-root (second) | apps/platform/src/root.server.ts | `clerkMiddleware()`, the container's `featureFlagOverrides.middleware`, `createFeatureContextMiddleware(getPlatformContainer)`, `createAccountResolutionMiddleware()`, in that order; the container's only importer |
 | composition-site | apps/platform/src/features/accounts/server/accounts-composition.server.ts | the account repository, `ProvisionAccountUseCase` (with the `InvitationAcceptance` it is handed), `DeleteAccountUseCase`, and the account and webhook controllers; `AccountsFeatureHandles` names only what the feature reads |
 | composition-site | apps/platform/src/features/store/server/store-composition.server.ts | the store repositories, asset store and digests, token generators, zip stream, `EmailProductDelivery`, the eight `/product`, `/acquisition` and `/download-grant` use cases, and the five store controllers; `StoreFeatureHandles` names only what the feature reads |
 | composition-site | apps/platform/src/features/assessment-calls/server/assessment-calls-composition.server.ts | `PostgresAssessmentCallRepository`, `PostgresCoachCalendar` (C6, for `ListOpenSlotsUseCase`), `createAssessmentCallNotifications(...)`, the five `/assessment-call` use cases and both controllers, `AssessmentCallsController` and `AssessmentCallSettingsController`. Synchronous, and no use case receives a value read off an adapter at composition: `BookAssessmentCallUseCase` reads the coach's zone from `availability.current()` inside `execute()`. The one remaining assessment-call variable arrives as the handle `assessmentCallsConfig` (the container passes the runtime environment, typed as `AssessmentCallsConfig`). The container's shared `FeatureFlagReader` and incidents handle arrive as `featureFlags` and `incidents`; the composition builds one `AssessmentCallBookingWindow` from them, held by the two booking use cases, not by the controller (CH-F). Changed (GEN-192): builds one `PostgresCoachAvailability` (C6) in place of the deleted `StaticCoachAvailability`, and one `PostgresCoachMeetingRoom` (C6) in place of the deleted `ConfiguredMeetingRoomLink`; both instances are shared across every use case that takes them (`BookAssessmentCallUseCase`, `ListOpenSlotsUseCase`, `ResolveJoinLinkUseCase`, `GetAssessmentCallSettingsUseCase`, `UpdateAssessmentCallSettingsUseCase`); returns `{ feature, handles: { assessmentCallReader } }` |
-| composition-site | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | `PostgresPaymentLinks`, `PostgresCoachingPurchases`, `PostgresClientInvitations`, `PostgresInvitedClients`, `PostgresClientJourneys`, the invitation id generator, the token generator and hasher, `EmailClientInvitationNotifications`, the three `/client-invitation` and two `/client-journey` use cases, the inline `PaidClientAdmission` and `InvitationAcceptance`, the invitations and client-journey controllers, `CoachingSalesWindow`, the eight `/payment-link`, `/coaching-subscription` and `/coaching-bundle` use cases, `createCoachingSalesNotifications(...)`, the three controllers (`CheckoutsController`, `CoachSalesController`, `PaymentLinksController`) and `CoachingPurchaseCompletionHandler`; returns `{ feature, handles: { paymentCompletionHandler } }` |
+| composition-site | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | `PostgresPaymentLinks`, `PostgresCoachingPurchases`, `PostgresClientInvitations`, `PostgresInvitedClients`, `PostgresClientJourneys`, `PostgresOnboardingClients`, `PostgresClientRoster`, `PostgresClientIdentities`, the invitation id generator, the token generator and hasher, `EmailClientInvitationNotifications`, the five `/client-invitation` use cases (admit, accept, read, resend, resolve), the three `/client-journey` use cases (mark welcome seen, read journey, read program status — the last over `PostgresCoachingPurchases` as `ClientSubscriptionStarts`), the two `/client-roster` use cases (list clients, read client record), the inline `PaidClientAdmission` and `InvitationAcceptance`, `CoachingSalesWindow`, the eight `/payment-link`, `/coaching-subscription` and `/coaching-bundle` use cases, `createCoachingSalesNotifications(...)`, the six controllers (`CheckoutsController`, `ClientJourneyController`, `CoachClientsController`, `CoachSalesController`, `InvitationsController`, `PaymentLinksController`) and `CoachingPurchaseCompletionHandler`; returns `{ feature, handles: { clientIdentities, invitationAcceptance, measurementClients, onboardingClients, onboardingReviewStamps, onboardingSubmissionStamps, paymentCompletionHandler, reviewStampWriter, unitPreferenceClients } }` |
+| composition-site | apps/platform/src/features/client-profile/server/client-profile-composition.server.ts | `PostgresClientMeasurements`, `PostgresClientMeasurementRecords`, `PostgresProgressPhotos`, `PostgresClientProfiles`, `PostgresClientUnitPreferences`, `RandomProgressPhotoIds`, the eight use cases (`ReadOwnMeasurementHistoryUseCase`, `RecordMeasurementsUseCase`, `AttachProgressPhotosUseCase` (handed out as `attachProgressPhotos`), `ReadClientMeasurementHistoryUseCase`, `ReadClientProfileUseCase`, `OpenProgressPhotoUseCase`, `RemoveProgressPhotoUseCase` from `/client-profile`; `SaveUnitPreferenceUseCase` from `/unit-preference`) and the four controllers (`ClientMeasurementsController`, `ClientProfileController`, `ProgressPhotoController`, `UnitPreferenceController`). It takes from C18's handles `clientIdentities`, `measurementClients` and `unitPreferenceClients`, and from the container the database client, the `Clock`, the incidents handle (as `MeasurementIncidents`), and the `ProgressPhotoStore` and `ProgressPhotoRenditions` the container builds with C6's `createProgressPhotoStore(environment)` and `createProgressPhotoRenditions()`; it constructs no store or renditions of its own. Synchronous; one instance of each repository is shared by every use case that takes it, and the photo use cases share one port bundle. Returns `{ feature, handles: { measurements, recordMeasurementEntry, saveClientProfile, unitPreferences } }`, which the container hands to C19's composition; its input handles type is module-private |
+| composition-site | apps/platform/src/features/client-onboarding/server/client-onboarding-composition.server.ts | `PostgresClientOnboardings` (over the database and C20's `saveClientProfile` and `recordMeasurementEntry`), `PostgresOnboardingReviews` (over the database, C18's `reviewStampWriter` and C20's `saveClientProfile`), `RandomDetailRequestIds`, `EmailOnboardingDetailsNotifications` (over the container's `ProductEmail`, with the app base path, public app URL, contact address and `Clock`), the nine `/client-onboarding` use cases (`ReadClientOnboardingUseCase`, `SaveOnboardingDraftUseCase`, `SubmitOnboardingUseCase`, `ReadOpenDetailRequestUseCase`, `AnswerOnboardingDetailsUseCase`, `ReadOnboardingReviewUseCase`, `OpenOnboardingReviewUseCase`, `RequestOnboardingDetailsUseCase`, `ApproveOnboardingAnswersUseCase`) and the two controllers (`ClientOnboardingController`, handed C20's `attachProgressPhotos`, `OnboardingReviewController`). Takes the container's `clock`, `incidents`, `database`, `productEmail`, `appBasePath`, `publicAppUrl` and `contactEmail`; C18's `onboardingClients`, `onboardingSubmissionStamps`, `onboardingReviewStamps` and `reviewStampWriter`; C20's `measurements`, `unitPreferences`, `saveClientProfile` and `recordMeasurementEntry`. Synchronous; its input type is module-private; returns its feature (`{ controller, coachReview }`) directly, with no handles |
 | composition-site | apps/platform/src/features/waitlist/server/waitlist-composition.server.ts | `Waitlist.configure(...)` from the offer config, the waitlist repository, `EmailWaitlistConfirmation`, `GetWaitlistUseCase` with the supplied `FeatureFlagReader`, `JoinWaitlistUseCase` and the waitlist controller; returns `{ feature, handles: { pricingEligibility } }`; its input handles type is module-private |
 | composition-site | apps/platform/src/server/platform-composition.server.ts | readyz, metadata, feature-flag and Stripe webhook controllers plus the runtime config the public site reads; it receives `FeatureFlagReader`, `PaymentEvents`, the signing secret and the completion handlers, builds a purpose-keyed map that throws at startup on a duplicate purpose, constructs no persistence, and keeps `PlatformFeatureHandles` module-private |
 | composition-site | apps/platform/src/server/feature-flag-overrides/feature-flag-overrides-composition.server.ts | `createFeatureFlagOverrideReader(reader)` over the container's raw reader and `createFeatureFlagOverrideMiddleware({ appBasePath })` in `browser` mode; the raw reader and `(_args, next) => next()` in `none` mode; both branches return `{ featureFlags, middleware }`; reachable only from the container |
@@ -322,24 +305,35 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 | construction-site | apps/platform/src/features/coaching-sales/email/create-coaching-sales-notifications.server.ts | EmailCoachingSalesNotifications over the `ProductEmail` it is handed; no provider branch |
 | construction-site | packages/infrastructure/src/payments/create-payment-checkout.server.ts, create-payment-events.server.ts | InMemoryPaymentCheckout / InMemoryPaymentEvents, or the Stripe client with StripePaymentCheckout / StripePaymentEvents, selected on `PAYMENTS_PROVIDER` (`memory \| stripe`); the Stripe SDK is constructed nowhere else |
 | construction-site | packages/infrastructure/src/identity/create-identity-invitations.server.ts | InMemoryIdentityInvitations, or `createClerkClient` + ClerkIdentityInvitations, selected on `IDENTITY_PROVIDER` (`memory \| clerk`) |
+| construction-site | packages/infrastructure/src/client-media/create-progress-photo-store.server.ts | InMemoryProgressPhotoStore, or EncryptedFilesystemProgressPhotoStore over `CLIENT_MEDIA_ROOT`, the base64-decoded `CLIENT_MEDIA_KEY` and `CLIENT_MEDIA_KEY_ID`, selected on `CLIENT_MEDIA_PROVIDER` (`memory \| filesystem`); throws at construction when the root is not a readable, writable directory |
+| construction-site | packages/infrastructure/src/images/create-progress-photo-renditions.server.ts | SharpProgressPhotoRenditions, no selection; `sharp` is called nowhere else |
 | construction-site | apps/platform/src/features/store/api/downloads/zip-stream.server.ts (ZipDeliveryStream.create) | archiver ZipArchive at request time |
 | construction-site | apps/platform/src/features/store/ui/public/cart/cart.ts, cart-provider.tsx | Zustand store with persist over localStorage (`cart-storage.ts`); one store per provider |
-| route registry | apps/platform/src/routes.ts | a concatenation of nine fragments (`publicSiteRoutes`, `platformApiRoutes`, `accountsApiRoutes`, `waitlistApiRoutes`, `storeApiRoutes`, `assessmentCallsApiRoutes`, `coachingSalesApiRoutes`, `clientPortalRoutes`, `coachPortalRoutes`), each built with `relative(import.meta.dirname)` in its own feature or surface, with no path literals of its own |
+| construction-site | apps/platform/src/features/client-onboarding/ui/client/onboarding/unit-preference-store.tsx, draft-sync.ts | a Zustand vanilla store per `UnitPreferenceProvider`; `createDraftSync` over `localStorage` and a debounce timer, one per `useDraftSync` |
+| route registry | apps/platform/src/routes.ts | a concatenation of eleven fragments (`publicSiteRoutes`, `platformApiRoutes`, `accountsApiRoutes`, `assessmentCallsApiRoutes`, `coachingSalesApiRoutes`, `clientOnboardingApiRoutes`, `clientProfileApiRoutes`, `waitlistApiRoutes`, `storeApiRoutes`, `clientPortalRoutes`, `coachPortalRoutes`), each built in its own feature or surface, with no path literals of its own |
 | route (page) | surfaces/public-site/shell/layout.tsx (+ layout.server.ts loader), pages/{home,pricing,blog,privacy,terms}.tsx | the layout loader reads `waitlistContext`, `sessionContext` and `runtimeConfigContext` off `args.context` and returns `presentWaitlist(...)`. `pages/pricing.tsx`'s loader reads `waitlistContext` and `coachingSalesContext` (`checkouts.loadPricingCards`); it exports `handle.publicContentFrame = "full-bleed"`, as the booking page does |
 | route (page) | features/store/ui/public/{catalog/catalog-page,product/product-page,download/download-page}.tsx (+ .server.ts loaders) | the loaders read `storeContext` |
 | route (page) | surfaces/public-site/pages/invitation.tsx | the loader reads `accountsContext` and `sessionContext` and returns `{ signedIn, invitationPath }`; the browser resolves the fragment's token through C18's `api/public/invitation.ts`. Registered by `surfaces/public-site/routes.ts` after the layout route, outside the shell |
 | route (page) | features/accounts/ui/public/sign-in-failed-page.tsx (+ .server.ts) | reads `accountsContext`. Registered through `accountsDeadEndRoutes`, which `surfaces/public-site/routes.ts` spreads after the layout route rather than inside it, so the page renders as a dead end with no public shell |
 | route (page) | features/assessment-calls/ui/public/book/book-page.tsx, ui/public/join/join-page.tsx | both loaders read `assessmentCallsContext` and nothing else. The booking loader returns an `unavailable` presentation rather than throwing when slots cannot be read (D21), and 404s while booking is closed because `ListOpenSlotsUseCase` answers `closed`. The join loader redirects 302 to the meeting room for a known id, throws a 404 `Response` for any id that does not resolve (a malformed one included) that the root `ErrorBoundary` in `root.tsx` renders as the app's standard "Page not found" page, which echoes no id, and since GEN-192 returns `{ status: "link_not_set" }` instead of throwing when the coach has not yet saved a meeting room, which the page renders as its own "call link not ready" view built from C5's `DeadEndPage`. The module keeps a default export so it stays a page route: before GEN-192 that export always returned `null`, since the loader always threw; now it renders conditionally. The loader does not read the mode, so a join link keeps working if the site returns to waiting-list mode. The booking page module also exports `handle.publicContentFrame` as `"full-bleed"`, which the public-site layout reads through `useMatches` to drop its padded content frame |
 | route (page) | features/assessment-calls/ui/coach/settings/settings-page.tsx | the loader reads `assessmentCallsContext` alone; a 401/403 `ErrorBoundary` recovers into the same page with a `toast.error` side effect. Registered through `assessmentCallsCoachRoutes`, which `surfaces/coach-portal/routes.ts` composes inside the coach layout |
-| route (page) | surfaces/coach-portal/pages/assessment-calls.tsx | the loader reads `assessmentCallsContext` for the listing and `coachingSalesContext` for the ended calls' sales states and the callers' pricing tiers; re-exports C17's `AssessmentCallsErrorBoundary` |
+| route (page) | surfaces/coach-portal/pages/assessment-calls.tsx | the loader reads `assessmentCallsContext` for the listing and `coachingSalesContext` for the calls' sales (`loadCallSales`: state and the client id of a paid call) and the callers' pricing tiers; re-exports C17's `AssessmentCallsErrorBoundary` |
 | route (page) | features/coaching-sales/ui/public/select-bundle/select-bundle-page.tsx, ui/public/checkout-complete/checkout-complete-page.tsx | both loaders read `coachingSalesContext` alone and 404 while sales are closed: the select-bundle loader serves the page shell (`checkouts.loadBundlePageShell`) and the browser posts the fragment's payment-link token to `POST /api/coaching-sales/bundle-page` for the bundle page itself; the confirmation loader calls `checkouts.loadConfirmation`. Registered through `coachingSalesPublicRoutes` inside the public-site shell |
-| route (page) | surfaces/client-portal/shell/access-layout.tsx (+ middleware), shell/layout.tsx, pages/home.tsx; surfaces/coach-portal/shell/layout.tsx (+ middleware), pages/home.tsx | middleware calls `requirePortalAccess(args, { role })`; the client portal's access layout then runs C18's `requireClientJourneyStep`, which redirects a client whose journey step does not open the requested path |
+| route (page) | surfaces/client-portal/shell/access-layout.tsx (+ middleware), shell/layout.tsx; surfaces/coach-portal/shell/layout.tsx (+ middleware) | middleware calls `requirePortalAccess(args, { role })`; the client portal's access layout then runs C18's `requireClientJourneyStep`, which sets `clientJourneyContext` and redirects a client whose journey step does not open the requested path; the client sidebar layout's loader reads `coachingSalesContext` (`clientJourney.loadIdentity`) |
+| route (page) | surfaces/client-portal/pages/home.tsx | the loader reads `coachingSalesContext` (`clientJourney.loadProgramStatus`), `clientOnboardingContext` (`controller.loadOpenRequest`) and `clientProfileContext` (`clientMeasurements.loadNudge`) |
+| route (page) | surfaces/coach-portal/pages/home.tsx | the loader reads `assessmentCallsContext` (`coachAssessmentCalls.loadCalls`); re-exports C17's `AssessmentCallsErrorBoundary` |
+| route (page) | surfaces/coach-portal/pages/client.tsx | the loader reads `coachingSalesContext` (`coachClients.loadClient`), `clientOnboardingContext` (`coachReview.loadReview`) and `clientProfileContext` (`coachProfile.load`, `coachProfile.loadMeasurements`); a 404 renders the page's own "client not found" boundary. Registered by `surfaces/coach-portal/routes.ts` inside the coach layout at `clients/:clientId` |
+| route (page) | features/coaching-sales/ui/coach/clients/clients-page.tsx | the loader reads `coachingSalesContext` alone (`coachClients.loadRoster`); registered through `coachingSalesCoachRoutes`, which `surfaces/coach-portal/routes.ts` spreads inside the coach layout |
 | route (page) | features/coaching-sales/ui/client/welcome/welcome-page.tsx | loader and action each make one call on `coachingSalesContext`'s `clientJourney` controller; registered through `coachingSalesClientRoutes` inside the client portal's access layout |
+| route (page) | features/client-onboarding/ui/client/onboarding/onboarding-page.tsx | the loader makes one call on `clientOnboardingContext`'s `controller.loadOnboarding`, which runs C9's `requirePortalAccess` for CLIENT and answers the wizard page, or the answer page while a detail request is open, and 404 for a client not on the journey. Registered through `clientOnboardingClientRoutes`, which `surfaces/client-portal/routes.ts` spreads inside the access layout and outside the sidebar shell |
+| route (page) | features/client-profile/ui/client/profile/profile-page.tsx | the loader makes one call on `clientProfileContext`'s `clientMeasurements.loadPage`, which runs C9's `requirePortalAccess` for `CLIENT` and 404s a client with no journey record. Registered through `clientProfileClientRoutes`, which C12's `routes.ts` spreads inside the client portal's access layout and shell |
 | route (resource) | features/store/api/{acquisitions/acquisitions,catalog/catalog,covers/covers,downloads/downloads,management/management-product-validations,management/management-products,management/management-product,management/management-product-versions}.ts | read `storeContext` |
-| route (resource) | features/waitlist/api/waitlist.ts; features/accounts/api/{account,clerk-webhooks}.ts; features/assessment-calls/api/booking/{slots,bookings}.ts; features/assessment-calls/api/settings/settings.ts; features/coaching-sales/api/{coach/payment-links,public/checkouts,public/bundle-page}.ts | read `waitlistContext` / `accountsContext` / `assessmentCallsContext` / `coachingSalesContext` |
+| route (resource) | features/waitlist/api/waitlist.ts; features/accounts/api/{account,clerk-webhooks}.ts; features/assessment-calls/api/booking/{slots,bookings}.ts; features/assessment-calls/api/settings/settings.ts; features/coaching-sales/api/{coach/payment-links,coach/invitation-resends,public/checkouts,public/bundle-page,public/invitation}.ts | read `waitlistContext` / `accountsContext` / `assessmentCallsContext` / `coachingSalesContext` |
+| route (resource) | features/client-onboarding/api/client/{draft,submission,detail-answers}.ts; features/client-onboarding/api/coach/{review-openings,detail-requests,approvals}.ts | read `clientOnboardingContext`; `draft` accepts PUT only, the other five POST only; `submission` takes a multipart body up to 32 MiB (the answers part and C20's photo parts) and answers each photo view's outcome under `photos`; the controllers run C9's `requireApiAccount` for CLIENT or COACH; registered through `clientOnboardingApiRoutes` in the root registry |
+| route (resource) | features/client-profile/api/{client/measurements,client/unit-preference,photos/progress-photo}.ts | read `clientProfileContext`; `api/client-profile/measurements` accepts POST only, `api/client-profile/unit-preference` PUT only, `api/client-profile/photos/:photoId` GET and DELETE; each wraps the call in C6's `handleHttpErrorResponse`. Registered through `clientProfileApiRoutes` in the root registry |
 | route (resource) | server/api/{readyz/readyz,meta/meta,feature-flags/feature-flags,stripe-webhooks/stripe-webhooks}.ts | read `platformContext`; `api/stripe/webhooks` accepts POST only |
 | route (resource) | surfaces/client-portal/api/{manifest,sw,readyz}.ts; surfaces/coach-portal/api/readyz.ts | pwa definitions; static Response |
-| middleware | root.server.ts (Clerk, feature-flag overrides, feature contexts, account resolution); portal layout.server.ts and the client portal's access-layout.server.ts (role and journey guards) | see above; the override middleware runs `next()` inside the override store, so every loader, action and controller under it sees the request's overrides through the reader |
+| middleware | root.server.ts (Clerk, feature-flag overrides, feature contexts, account resolution); portal layout.server.ts and the client portal's access-layout.server.ts (role and journey guards; the journey guard sets `clientJourneyContext`) | see above; the override middleware runs `next()` inside the override store, so every loader, action and controller under it sees the request's overrides through the reader |
 | CLI/build | apps/platform/db/drizzle.config.ts (schema globs), vite.config.ts, react-router.config.ts | tooling entry points, not imported by app code |
 | package deployment | package manifests and docker/Dockerfile.react-router | `apps/platform` emits only `build`; runtime config, content, domain, infrastructure, and UI packages retain production source/artifacts while excluding `src/**/*.test.*` and `src/**/*.spec.*`; the Docker builder requires `build/server/index.js`, rejects top-level `src` and `e2e`, recursively rejects test/spec files under `node_modules/@eli-coach-platform`, and rejects `@eli-coach-platform/test-support` |
 
@@ -347,7 +341,7 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 
 | Shape | Components reading or writing it | Owning component |
 |---|---|---|
-| Postgres namespace `app` (appSchema) and the migration journal apps/platform/db/drizzle | C2 declares the namespace; C7 (store tables), C8 (waitlist_entries), C9 (accounts, account_role enum), C17 (assessment_calls), C18 (payment_links, checkout_sessions, clients, coaching_subscriptions), C6 (feature_flags, coach_time_reservations, coach_availability, coach_meeting_room, payment_events) attach tables; C15 drizzle.config.ts discovers them by glob | C2 owns the namespace; each table is owned by the component that declares it |
+| Postgres namespace `app` (appSchema) and the migration journal apps/platform/db/drizzle | C2 declares the namespace; C7 (store tables), C8 (waitlist_entries), C9 (accounts, account_role enum), C17 (assessment_calls), C18 (payment_links, checkout_sessions, clients, client_invitations, coaching_subscriptions), C19 (client_onboarding_drafts, client_onboarding_submissions, client_onboarding_reviews, client_onboarding_detail_requests), C20 (client_measurements, client_profiles, client_progress_photos, client_unit_preferences), C6 (feature_flags, coach_time_reservations, coach_availability, coach_meeting_room, payment_events) attach tables; C15 drizzle.config.ts discovers them by glob | C2 owns the namespace; each table is owned by the component that declares it |
 | `app.coach_availability` and `app.coach_meeting_room` (the two one-row singleton tables migration `0024_create_coach_availability_and_meeting_room.sql` creates) | C6 declares both (`coach-calendar/schema.server.ts`'s `availability/`-adjacent table and the new `coach-meeting-room/schema.server.ts`) and reads/writes them through `PostgresCoachAvailability`/`PostgresCoachMeetingRoom`; C1's `CoachAvailabilitySource`/`CoachAvailabilityChanges` and `CoachMeetingRoomSource`/`CoachMeetingRoomChanges` ports are the only way any other component reaches them; C17's composition constructs both adapters and its two settings use cases are the sole consumers | C6 owns the tables; C1 owns the ports and the validation |
 | `app.waitlist_entries.reduced_slot` and its constraints | C8 declares them in U304 and migration 0019 (U1212); U303 allocates slots; U1211 reads the constraint names | C8 owns the table; N is U911's `WAITLIST_REDUCED_PRICING_CAP`, and changing it is a migration in the same PR (b3eb2653) |
 | `app.feature_flags`, including `WAITLIST_MODE` | C6 declares and reads it; C15 migration 0018 seeds `WAITLIST_MODE=true`; C14 constructs the generic reader and, in `browser` mode, overlays the request's overrides on the read without writing the table; integration tests write it only for test arrangement; the Playwright suite reaches the flag only through the public `ff.WAITLIST_MODE` override | C6 owns the table; U963 owns the waitlist-mode interpretation and U1300 the booking one, both through `WAITLIST_MODE_FEATURE_FLAG` |
@@ -361,21 +355,24 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 | BotDetectionConfig (zod schema in C6) | C6; C7 ui; C8 ui; C11 loader data and props | C6 |
 | FeatureFlagSnapshot (featureFlagSnapshotSchema) | C14 controller and route; integration tests | C14 (`server/api/feature-flags/feature-flags-contract.ts`) |
 | The request's feature-flag override set (`Readonly<FeatureFlagSet>` in an `AsyncLocalStorage`) and the `__eli_feature_flags` cookie | C14 only: the override middleware writes the store around `next()` and serialises the cookie (`Path=normalizeBasePath(APP_BASE_PATH)`, `HttpOnly`, `SameSite=Lax`); the decorator reader reads the store; the browser holds the cookie | C14 (`server/feature-flag-overrides/`) |
-| RuntimeEnvironment | eleven concern shapes, each owned by its `concerns/*.ts` module; consumers read the concern type, and only `apps/platform/src/server/runtime-environment.server.ts` loads the process environment | C3 |
+| RuntimeEnvironment | twelve concern shapes, each owned by its `concerns/*.ts` module; consumers read the concern type, and only `apps/platform/src/server/runtime-environment.server.ts` loads the process environment | C3 |
 | Route path literals | one owner each: `features/<feature>/contracts/paths.ts`, `surfaces/public-site/paths.ts` and, for the endpoints no surface owns, `server/api/routes.ts` (`api/stripe/webhooks`). The `client` and `coach` portal segments are owned by the accounts feature because `surface-import` forbids a feature importing a surface; `BOOK_PATH` is owned by the assessment-calls feature and read by the public site and by coaching sales; the coach calls and settings paths and `COACH_CALLS_PAGE_PARAM` are owned by the assessment-calls feature (built from the accounts feature's `COACH_PORTAL_PATH`) and read by the coach portal and by coaching sales; the select-bundle, checkout-complete and coaching-sales API paths are owned by the coaching-sales feature | C7, C8, C9, C11, C13, C14, C17, C18 |
 | The offer-plan literal `"all-bundles"` | C1 `/waitlist` owns it (`waitlist.ts:WaitlistOfferPlan`); read by C8 `ui/shared` (`bundleOfferPlan` on `WaitlistPresentation`), and re-declared as a bare string in C8 `contracts/waitlist.ts`, C8 `email/waitlist-confirmation-email.server.ts` and C3 `concerns/waitlist.ts` | C1 |
 | WaitlistPresentation (mode, isClosed, isUnavailable, showsAuthControls, availabilityStatus, bundleOfferPlan) | C11 shell, hero, about, footer CTA, pricing and the email form. The closed/unavailable/open **copy** branch is re-derived in `hero.tsx`, `footer-cta.tsx` and `pricing.tsx` rather than carried on the presentation (owner ruling: copy tables stay in views) | C8 `ui/shared` |
-| C18's tables (`app.payment_links`, `app.checkout_sessions`, `app.clients`, `app.client_invitations`, `app.coaching_subscriptions`) with foreign keys to C17's `app.assessment_calls`; migrations 0026, 0027 and 0028 | C18 declares and writes them; `clients_assessment_call_id_unique` and `clients_auth_subject_id_unique` are shared by the schema (`coachingSalesConstraints`) and the repositories' classified rejections; `client_invitations` keeps one invitation per client and one per token hash; `coaching_subscriptions_one_open_per_client` is a partial unique index | C18 (the referenced table stays C17's) |
+| C18's tables (`app.payment_links`, `app.checkout_sessions`, `app.clients`, `app.client_invitations`, `app.coaching_subscriptions`) with foreign keys to C17's `app.assessment_calls`; migrations 0026, 0027, 0028, 0029 (`onboarding_submitted_at`) and 0030 (the four review stamps) | C18 declares and writes them; one writer per `clients` column: `PostgresCoachingPurchases` inserts the row with its intake columns (`assessment_call_id`, `first_name`, `last_name`, `email`, `date_of_birth`, `gender`, `primary_goal`, `country`, `phone`, `created_at`) at purchase and nothing rewrites them; `PostgresClientInvitations.accept` binds `auth_subject_id`; `PostgresClientJourneys` writes `welcome_seen_at` and `onboarding_submitted_at` (the latter handed to C19 as `OnboardingSubmissionStamps`), each only while null; `writeReviewStamps` writes `review_opened_at`, `details_requested_at`, `details_answered_at` and `answers_approved_at`, called by `PostgresClientJourneys.record` (C19's `OnboardingReviewStamps`) in its own transaction and by C19's review repository inside its transaction as the handed `reviewStampWriter`. Readers: `PostgresClientJourneys`, `PostgresClientRoster`, `PostgresClientIdentities`, `PostgresOnboardingClients` (for C19 and C20 through the handles), `PostgresInvitedClients` and `PostgresCoachingPurchases`; C19's and C20's tables reference `clients.id` by foreign key. `clients_assessment_call_id_unique` and `clients_auth_subject_id_unique` are shared by the schema (`coachingSalesConstraints`) and the repositories' classified rejections; `client_invitations` keeps one invitation per client and one per token hash; `coaching_subscriptions_one_open_per_client` is a partial unique index | C18 (the referenced table stays C17's; the four review stamps are a projection of C19's review rows) |
+| C19's tables (`app.client_onboarding_drafts`, `app.client_onboarding_submissions`, `app.client_onboarding_reviews`, `app.client_onboarding_detail_requests`) with foreign keys to C18's `app.clients`; migrations 0029, 0031 and 0032 | C19 declares and writes them; `client_onboarding_submissions_client_id_unique` and `client_onboarding_detail_requests_open_per_client_unique` (partial, where `answered_at is null`) are shared by the schema (`clientOnboardingConstraints`) and the repositories' classified rejections; drafts and reviews are keyed by `client_id` | C19 (the referenced table stays C18's) |
+| C20's tables (`app.client_profiles`, `app.client_measurements`, `app.client_unit_preferences`, `app.client_progress_photos`) with foreign keys to C18's `app.clients` (and the photos to `client_measurements`); migrations 0029, 0033 and 0034 | C20 declares and writes them; C19 writes the profile and the first measurement entry through C20's handed transaction-scoped writers; `client_profiles.progress_photos_consented_at` holds the photo consent; the photo bytes live in the C6 client-media store under the reference the photo row keeps | C20 (the referenced table stays C18's) |
 | `app.payment_events` (the payment-event ledger: event id, received at) | C6 declares it and writes it through `recordPaymentEvent`, which a feature adapter calls inside its own transaction (C18's `PostgresCoachingPurchases.recordCompletion`); a repeated event id answers `duplicate` and the feature writes nothing else | C6 |
 | Checkout metadata key `purpose` (`PAYMENT_PURPOSE_METADATA_KEY`) and its values | C1 owns each value (`COACHING_SUBSCRIPTION_PURPOSE`) and carries it on `CreateCheckoutSessionCommand.metadata`; C6 writes it into the provider's session metadata; C14's webhook controller routes a paid session to the handler registered for it; each handler (C18) declares the purpose it serves | key C6; values C1 |
 | Coaching bundle value lists (`COACHING_BUNDLE_IDS`, `COACHING_BUNDLE_MONTHS`, `PRICE_TIERS`, and each bundle's `currency`) | C1 publishes them from `/coaching-bundle` (each tuple checked against the catalog by a test); C6's coaching checkout mapper, C18's contracts (zod enums) and C18's schema (column enums and checks) import them; the checkout use case reads the currency off the bundle | C1 |
-| coaching-sales zod contracts (contracts/coaching-sales.ts, bundle-cards.ts, paths.ts) and loader data (`BundlePage`, `CheckoutConfirmation`, sales states, pricing tiers, bundle cards) | C18 server and ui halves; C13 (`CallSalesState`, loader data); C11 (bundle cards) | C18 |
+| coaching-sales zod contracts (contracts/coaching-sales.ts, bundle-cards.ts, client-journey.ts, coach-clients.ts, client-status.ts, paths.ts) and loader data (`BundlePage`, `CheckoutConfirmation`, `CallSales`, pricing tiers, bundle cards, `ProgramStatus`, `ClientIdentity`, `ClientRoster`, `CoachClient`) | C18 server and ui halves; C13 (`CallSalesState`, the calls and client pages' loader data, the coach-clients paths); C12 (`ClientIdentity`, `ProgramStatus` through the dashboard's loader data); C11 (bundle cards, the journey's portal link); C19 (`CLIENT_ONBOARDING_ROUTE_SEGMENT`, re-exported from its own `contracts/paths.ts`) | C18 |
 | PaymentsConfig (`PAYMENTS_PROVIDER`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SIGNING_SECRET`, `STRIPE_API_BASE_URL`) | C3 declares and refines; C6 factories read it; C14 passes the environment and the signing secret; the integration rig points the API base URL at WireMock | C3 |
 | localStorage cart (STORE_CART_STORAGE_KEY) | C7 ui only | C7 |
 | Email HTML rendered from React primitives (Email*) and the email theme (`EMAIL_COLORS`, `EMAIL_FONTS`) | C6 owns the primitives and the theme; the content builders and their style constants live in each feature's `email/` folder (C7, C8, C17, C18; accepted exception) and read the one theme | C6 |
 | CLERK_TEST_ENVIRONMENT and the Stripe webhook signature scheme (`./stripe-webhook-signature`) | read only by tests (the integration rig and the e2e suite) | C16 |
 | The auth subject id: `app.accounts.auth_subject_id` (C9) and `app.clients.auth_subject_id` (C18, unique, no foreign key) | C9 writes the account on provisioning; C18's `PostgresClientInvitations.accept` binds the client in the acceptance transaction; C1's `InvitationAcceptance` carries it between the two; account deletion leaves the client bound | C9 (the identity provider's user id) |
-| The client journey step (`ClientJourneyStep`: `welcome \| onboarding`) and its paths | C1 `/client-journey` owns the steps; C18 `contracts/client-journey.ts` maps each to its destination and open paths; C11's portal destination and C12's access layout read them through C18 | C1 (steps) / C18 (paths) |
+| The client journey step (`ClientJourneyStep`: `welcome \| onboarding \| submitted \| in-review \| needs-details \| approved`) and its paths | C1 `/client-journey` owns the steps (`ClientJourney.step` over the welcome, submission and four review stamps); C1 `/client-roster` maps each step to a `ClientStatus`; C18 `contracts/client-journey.ts` maps each step to a gate (destination and admitted paths, `clientJourneyRedirect`), to the nav's portal link (`clientJourneyPortalLink`, none from `submitted` on) and the post-submission steps to the program-status kinds; C18 `contracts/client-status.ts` labels, groups and tones the statuses; C11's portal destination, C12's access layout and C12's dashboard read them through C18 | C1 (steps) / C18 (paths and wording) |
+| The client status (`CLIENT_STATUSES`: `invited \| onboarding \| awaiting-review \| in-review \| needs-details \| approved \| active \| cancelled \| inactive`) | C1 `/client-roster` owns the vocabulary and `clientStatusOf` (unbound account → `invited`, else the subscription's status, else the journey step's); `ListClientsUseCase` and `ReadClientRecordUseCase` attach it to each entry; C18 `contracts/coach-clients.ts` builds its wire schema from `CLIENT_STATUSES` and `ui/coach/clients/` labels, tones and filters it | C1 (vocabulary and rule) / C18 (labels and filters) |
 | Clerk invitation public metadata `invitationId` | C6's Clerk adapter writes it on the provider invitation and reads it back from the signed-up user | C6 |
 
 ## Edges
@@ -900,7 +897,6 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E366 | apps/platform/src/surfaces/client-portal/api/manifest.ts | packages/config/src/index.ts | import | yes | no | lateral | present |
 | E367 | apps/platform/src/surfaces/client-portal/api/manifest.ts | packages/infrastructure/src/pwa/index.ts | import | yes | yes | inward | present |
 | E368 | apps/platform/src/surfaces/client-portal/api/sw.ts | apps/platform/src/surfaces/client-portal/api/service-worker.js | import | no | no | lateral | present |
-| E369 | apps/platform/src/surfaces/client-portal/pages/home.tsx | packages/ui/src/layout/index.ts | import | yes | no | lateral | present |
 | E370 | apps/platform/src/surfaces/client-portal/routes.ts | apps/platform/src/features/accounts/contracts/paths.ts | import | yes | no | lateral | present |
 | E371 | apps/platform/src/surfaces/client-portal/shell/access-layout.server.ts | apps/platform/src/features/accounts/server/guards/require-portal-access.server.ts | import | yes | no | lateral | present |
 | E373 | apps/platform/src/surfaces/client-portal/shell/layout.tsx | apps/platform/src/surfaces/client-portal/shell/navigation-links.ts | import | no | no | lateral | present |
@@ -1239,11 +1235,7 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E961 | packages/domain/src/product/store-catalog.ts | packages/domain/src/product/product.ts | import | no | yes | inward | present |
 | E962 | packages/domain/src/product/store-product-publications.ts | packages/domain/src/product/product-publication.ts | import | no | no | lateral | present |
 | E963 | packages/domain/src/product/store-product-publications.ts | packages/domain/src/product/product.ts | import | no | yes | inward | present |
-| E573 | packages/domain/src/shared/index.ts | packages/domain/src/shared/bot-verifier.ts | import | no | no | lateral | removed in a79f507d |
 | E574 | packages/domain/src/shared/index.ts | packages/domain/src/shared/clock.ts | import | no | no | lateral | present |
-| E575 | packages/domain/src/shared/index.ts | packages/domain/src/shared/logger.ts | import | no | no | lateral | removed in a79f507d |
-| E576 | packages/domain/src/shared/index.ts | packages/domain/src/shared/management-authenticator.ts | import | no | no | lateral | removed in a79f507d |
-| E577 | packages/domain/src/shared/index.ts | packages/domain/src/shared/product-email.ts | import | no | no | lateral | removed in a79f507d |
 | E1039 | packages/domain/src/waitlist/get-waitlist-use-case.ts | packages/domain/src/feature-flag/index.ts | import | no | no | lateral | added (63a570a7) |
 | E964 | packages/domain/src/waitlist/get-waitlist-use-case.ts | packages/domain/src/shared/index.ts | import | no | no | lateral | present |
 | E965 | packages/domain/src/waitlist/get-waitlist-use-case.ts | packages/domain/src/waitlist/waitlist-entries.ts | import | no | no | lateral | present |
@@ -1363,14 +1355,10 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E1201 | packages/ui/src/layout/index.ts | packages/ui/src/layout/navigation-dialog.tsx | import | no | no | lateral | present |
 | E687 | packages/ui/src/layout/index.ts | packages/ui/src/layout/phone-frame.tsx | import | no | no | lateral | present |
 | E688 | packages/ui/src/layout/index.ts | packages/ui/src/layout/portal-shell.tsx | import | no | no | lateral | present |
-| E689 | packages/ui/src/layout/index.ts | packages/ui/src/layout/sidebar-surface-layout.tsx | import | no | no | lateral | present |
-| E1202 | packages/ui/src/layout/index.ts | packages/ui/src/layout/use-close-mobile-navigation-on-desktop.ts | import | no | no | lateral | removed |
 | E1203 | packages/ui/src/layout/navigation-dialog.tsx | external:radix-ui | import | n/a | no | lateral | present |
 | E1212 | packages/ui/src/layout/navigation-dialog.tsx | external:react | import | n/a | no | lateral | present |
 | E1211 | packages/ui/src/layout/navigation-dialog.tsx | packages/ui/src/layout/use-close-mobile-navigation-on-desktop.ts | import | no | no | lateral | present |
 | E1208 | packages/ui/src/layout/navigation-dialog.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
-| E1209 | packages/ui/src/layout/navigation-dialog.tsx | packages/ui/src/lib/constants.ts | import | no | no | lateral | present |
-| E1210 | packages/ui/src/layout/navigation-dialog.tsx | packages/ui/src/primitives/icon-button.tsx | import | no | no | lateral | present |
 | E992 | packages/ui/src/layout/phone-frame.tsx | external:react | import | n/a | no | lateral | present |
 | E691 | packages/ui/src/layout/phone-frame.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
 | E993 | packages/ui/src/layout/portal-shell.tsx | external:react | import | n/a | no | lateral | present |
@@ -1378,11 +1366,6 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E1206 | packages/ui/src/layout/portal-shell.tsx | packages/ui/src/layout/use-close-mobile-navigation-on-desktop.ts | import | no | no | lateral | removed |
 | E693 | packages/ui/src/layout/portal-shell.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
 | E694 | packages/ui/src/layout/portal-shell.tsx | packages/ui/src/lib/constants.ts | import | no | no | lateral | present |
-| E695 | packages/ui/src/layout/portal-shell.tsx | packages/ui/src/lib/focus-trap.ts | import | no | no | lateral | removed |
-| E696 | packages/ui/src/layout/portal-shell.tsx | packages/ui/src/primitives/icon-button.tsx | import | no | no | lateral | removed |
-| E994 | packages/ui/src/layout/sidebar-surface-layout.tsx | external:react | import | n/a | no | lateral | present |
-| E698 | packages/ui/src/layout/sidebar-surface-layout.tsx | packages/ui/src/lib/constants.ts | import | no | no | lateral | present |
-| E699 | packages/ui/src/layout/sidebar-surface-layout.tsx | packages/ui/src/primitives/link.tsx | import | no | no | lateral | present |
 | E1204 | packages/ui/src/layout/use-close-mobile-navigation-on-desktop.ts | external:react | import | n/a | no | lateral | present |
 | E995 | packages/ui/src/lib/cn.ts | external:clsx | import | n/a | no | lateral | present |
 | E701 | packages/ui/src/lib/index.ts | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
@@ -1444,7 +1427,6 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E1381 | packages/ui/src/primitives/textarea.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
 | E1582 | packages/ui/src/appointments/appointment-card.tsx | external:lucide-react | import | n/a | no | lateral | new (GEN-197) |
 | E1583 | packages/ui/src/calendar/calendar.tsx | external:lucide-react | import | n/a | no | lateral | new (GEN-197) |
-| E1584 | packages/ui/src/calendar/date-field-trigger.tsx | external:lucide-react | import | n/a | no | lateral | new (GEN-197) |
 | E1585 | packages/ui/src/layout/portal-shell.tsx | external:lucide-react | import | n/a | no | lateral | new (GEN-197) |
 | E1586 | packages/ui/src/primitives/checkbox.tsx | external:lucide-react | import | n/a | no | lateral | new (GEN-197) |
 | E1587 | packages/ui/src/primitives/pagination.tsx | external:lucide-react | import | n/a | no | lateral | new (GEN-197) |
@@ -1637,21 +1619,11 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E1865 | apps/platform/src/features/coaching-sales/email/email-coaching-sales-notifications.server.ts | apps/platform/src/features/coaching-sales/contracts/paths.ts | import | no | no | lateral | present |
 | E1874 | apps/platform/src/features/coaching-sales/api/public/checkouts.ts | packages/infrastructure/src/http/index.server.ts | import | yes | yes | inward | present |
 | E1875 | apps/platform/src/features/coaching-sales/api/public/checkouts.ts | apps/platform/src/features/coaching-sales/server/guards/coaching-sales-context.server.ts | import | no | no | lateral | present |
-| E1877 | apps/platform/src/features/coaching-sales/ui/coach/call-sales-state-badge.tsx | apps/platform/src/features/coaching-sales/ui/coach/call-sales-state-labels.ts | import | no | no | lateral | present |
-| E1878 | apps/platform/src/features/coaching-sales/ui/coach/call-sales-state-badge.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
-| E1879 | apps/platform/src/features/coaching-sales/ui/coach/call-sales-state-badge.tsx | apps/platform/src/features/coaching-sales/contracts/coaching-sales.ts | type-only import | no | yes | inward | present |
-| E1880 | apps/platform/src/features/coaching-sales/ui/coach/call-sales-state-labels.ts | apps/platform/src/features/coaching-sales/contracts/coaching-sales.ts | type-only import | no | yes | inward | present |
 | E1890 | packages/ui/src/overlays/index.ts | packages/ui/src/overlays/confirm-dialog.tsx | re-export | no | no | lateral | present |
 | E1891 | packages/ui/src/overlays/confirm-dialog.tsx | packages/ui/src/primitives/button.tsx | import | no | no | lateral | present |
 | E1892 | packages/ui/src/overlays/confirm-dialog.tsx | external:lucide-react | import | n/a | no | lateral | present |
 | E1893 | packages/ui/src/overlays/confirm-dialog.tsx | external:radix-ui | import | n/a | no | lateral | present |
 | E1894 | packages/ui/src/overlays/confirm-dialog.tsx | external:react | import | n/a | no | lateral | present |
-| E1895 | apps/platform/src/features/coaching-sales/ui/coach/pricing-tier-label.ts | apps/platform/src/features/coaching-sales/contracts/coaching-sales.ts | type-only import | no | yes | inward | present |
-| E1896 | apps/platform/src/features/coaching-sales/ui/coach/sales-status-filter.tsx | apps/platform/src/features/coaching-sales/ui/coach/call-sales-state-labels.ts | import | no | no | lateral | present |
-| E1897 | apps/platform/src/features/coaching-sales/ui/coach/sales-status-filter.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
-| E1898 | apps/platform/src/features/coaching-sales/ui/coach/sales-status-filter.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
-| E1899 | apps/platform/src/features/coaching-sales/ui/coach/sales-status-filter.tsx | apps/platform/src/features/assessment-calls/contracts/paths.ts | import | yes | yes | inward | present |
-| E1900 | apps/platform/src/features/coaching-sales/ui/coach/sales-status-filter.tsx | apps/platform/src/features/coaching-sales/contracts/coaching-sales.ts | import | no | yes | inward | present |
 | E1901 | apps/platform/src/features/coaching-sales/ui/public/bundle-selector/bundle-benefits.tsx | apps/platform/src/features/coaching-sales/ui/public/bundle-selector/benefits.ts | import | no | no | lateral | present |
 | E1902 | apps/platform/src/features/coaching-sales/ui/public/bundle-selector/bundle-benefits.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
 | E1903 | apps/platform/src/features/coaching-sales/ui/public/bundle-selector/bundle-benefits.tsx | packages/ui/src/motion/index.ts | import | yes | no | lateral | present |
@@ -1670,7 +1642,6 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E1916 | apps/platform/src/features/coaching-sales/ui/public/bundle-selector/bundle-selector.tsx | apps/platform/src/features/coaching-sales/contracts/bundle-cards.ts | type-only import | no | yes | inward | present |
 | E1917 | apps/platform/src/features/coaching-sales/ui/public/bundle-selector/bundle-selector.tsx | external:lucide-react | import | n/a | no | lateral | present |
 | E1918 | apps/platform/src/features/coaching-sales/ui/public/bundle-selector/bundle-selector.tsx | external:react | import | n/a | no | lateral | present |
-| E1919 | apps/platform/src/features/coaching-sales/ui/public/calendar-day-format.ts | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
 | E1920 | apps/platform/src/features/coaching-sales/ui/public/call-first-banner.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
 | E1921 | apps/platform/src/features/coaching-sales/ui/public/call-first-banner.tsx | apps/platform/src/features/assessment-calls/contracts/paths.ts | import | yes | yes | inward | present |
 | E1922 | apps/platform/src/features/coaching-sales/ui/public/call-first-banner.tsx | external:lucide-react | import | n/a | no | lateral | present |
@@ -1679,14 +1650,11 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E1925 | apps/platform/src/features/coaching-sales/ui/public/checkout-complete/checkout-complete-page.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
 | E1926 | apps/platform/src/features/coaching-sales/ui/public/checkout-complete/checkout-complete-page.tsx | apps/platform/src/features/coaching-sales/contracts/coaching-sales.ts | type-only import | no | yes | inward | present |
 | E1927 | apps/platform/src/features/coaching-sales/ui/public/checkout-complete/checkout-complete-page.tsx | apps/platform/src/features/coaching-sales/server/guards/coaching-sales-context.server.ts | import | no | no | lateral | present |
-| E1928 | apps/platform/src/features/coaching-sales/ui/public/checkout-complete/checkout-complete-page.tsx | apps/platform/src/features/coaching-sales/ui/public/calendar-day-format.ts | import | no | no | lateral | present |
 | E1929 | apps/platform/src/features/coaching-sales/ui/public/checkout-complete/checkout-complete-page.tsx | apps/platform/src/features/coaching-sales/ui/public/call-first-banner.tsx | import | no | no | lateral | present |
 | E1930 | apps/platform/src/features/coaching-sales/ui/public/checkout-complete/checkout-complete-page.tsx | external:lucide-react | import | n/a | no | lateral | present |
-| E1931 | apps/platform/src/features/coaching-sales/ui/public/checkout-complete/confirmation-copy.ts | apps/platform/src/features/coaching-sales/ui/public/calendar-day-format.ts | import | no | no | lateral | present |
 | E1945 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/start-choice.tsx | apps/platform/src/features/coaching-sales/ui/public/select-bundle/start-choice-copy.ts | import | no | no | lateral | present |
 | E1946 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/start-choice.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
 | E1947 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/start-choice.tsx | apps/platform/src/features/coaching-sales/contracts/coaching-sales.ts | import | no | yes | inward | present |
-| E1948 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/start-choice.tsx | apps/platform/src/features/coaching-sales/ui/public/calendar-day-format.ts | import | no | no | lateral | present |
 | E1949 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/start-choice.tsx | external:lucide-react | import | n/a | no | lateral | present |
 | E1950 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/start-choice.tsx | external:react | import | n/a | no | lateral | present |
 | E1951 | apps/platform/src/features/waitlist/server/waitlist-composition.server.ts | packages/domain/src/coaching-bundle/index.ts | type-only import | yes | yes | inward | present |
@@ -1736,11 +1704,9 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E2024 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/start-choice.tsx | external:react | import | n/a | no | lateral | present |
 | E2025 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/start-choice.tsx | external:react-router | import | n/a | no | lateral | present |
 | E2026 | apps/platform/src/features/waitlist/data/repository.server.ts | external:drizzle-orm | import | n/a | no | lateral | present |
-| E2027 | apps/platform/src/routes.ts | external:@react-router/dev | type-only import | n/a | no | lateral | present |
 | E2028 | apps/platform/src/server/api/routes.ts | external:@react-router/dev | import | n/a | no | lateral | present |
 | E2029 | apps/platform/src/server/api/stripe-webhooks/stripe-webhooks.ts | external:react-router | type-only import | n/a | no | lateral | present |
 | E2030 | apps/platform/src/server/feature-contexts.server.ts | external:react-router | type-only import | n/a | no | lateral | present |
-| E2032 | apps/platform/src/surfaces/coach-portal/routes.ts | external:@react-router/dev | import | n/a | no | lateral | present |
 | E2033 | apps/platform/src/surfaces/public-site/pages/pricing.tsx | external:react-router | import | n/a | no | lateral | present |
 | E2034 | apps/platform/src/surfaces/public-site/routes.ts | external:@react-router/dev | import | n/a | no | lateral | present |
 | E2035 | packages/config/src/concerns/payments.ts | external:zod | import | n/a | no | lateral | present |
@@ -1752,9 +1718,6 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E2042 | packages/infrastructure/src/payments/stripe/stripe-payment-checkout.server.ts | external:stripe | import | n/a | no | lateral | present |
 | E2043 | packages/infrastructure/src/payments/stripe/stripe-payment-checkout.server.ts | external:zod | import | n/a | no | lateral | present |
 | E2044 | packages/infrastructure/src/payments/stripe/stripe-payment-events.server.ts | external:stripe | import | n/a | no | lateral | present |
-| E2045 | packages/ui/src/overlays/confirm-dialog.tsx | external:lucide-react | import | n/a | no | lateral | present |
-| E2046 | packages/ui/src/overlays/confirm-dialog.tsx | external:radix-ui | import | n/a | no | lateral | present |
-| E2047 | packages/ui/src/overlays/confirm-dialog.tsx | external:react | import | n/a | no | lateral | present |
 | E2048 | packages/ui/src/primitives/radio-group.tsx | external:lucide-react | import | n/a | no | lateral | present |
 | E2049 | packages/ui/src/primitives/radio-group.tsx | external:react | import | n/a | no | lateral | present |
 | E2050 | packages/ui/src/primitives/radio-group.tsx | external:radix-ui | import | n/a | no | lateral | present |
@@ -1826,12 +1789,6 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E1871 | apps/platform/src/features/coaching-sales/email/payment-link-email-template.server.tsx | apps/platform/src/features/coaching-sales/email/coaching-sales-email-styles.server.ts | import | no | no | lateral | present |
 | E1872 | apps/platform/src/features/coaching-sales/email/payment-link-email-template.server.tsx | packages/infrastructure/src/email/index.server.ts | import | yes | no | lateral | present |
 | E1876 | apps/platform/src/features/coaching-sales/routes.ts | apps/platform/src/features/coaching-sales/contracts/paths.ts | import | no | yes | inward | present |
-| E1881 | apps/platform/src/features/coaching-sales/ui/coach/payment-link-action.tsx | packages/domain/src/assessment-call/index.ts | type-only import | yes | yes | inward | present |
-| E1882 | apps/platform/src/features/coaching-sales/ui/coach/payment-link-action.tsx | packages/ui/src/overlays/index.ts | import | yes | no | lateral | present |
-| E1884 | apps/platform/src/features/coaching-sales/ui/coach/payment-link-action.tsx | packages/ui/src/toast/index.ts | import | yes | no | lateral | present |
-| E1885 | apps/platform/src/features/coaching-sales/ui/coach/payment-link-action.tsx | apps/platform/src/features/assessment-calls/contracts/visitor-profile.ts | import | yes | yes | inward | present |
-| E1886 | apps/platform/src/features/coaching-sales/ui/coach/payment-link-action.tsx | apps/platform/src/features/coaching-sales/contracts/coaching-sales.ts | import | no | yes | inward | present |
-| E1887 | apps/platform/src/features/coaching-sales/ui/coach/payment-link-action.tsx | apps/platform/src/features/coaching-sales/contracts/paths.ts | import | no | yes | inward | present |
 | E1932 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/select-bundle-page.tsx | apps/platform/src/features/coaching-sales/ui/public/select-bundle/start-choice.tsx | import | no | no | lateral | present |
 | E1933 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/select-bundle-page.tsx | apps/platform/src/features/coaching-sales/ui/public/select-bundle/start-choice-copy.ts | import | no | no | lateral | present |
 | E1934 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/select-bundle-page.tsx | packages/config/src/index.ts | import | yes | no | lateral | present |
@@ -1852,10 +1809,6 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E1974 | apps/platform/src/surfaces/coach-portal/pages/assessment-calls.tsx | apps/platform/src/features/assessment-calls/ui/coach/use-coach-clock.ts | import | yes | no | lateral | present |
 | E1975 | apps/platform/src/surfaces/coach-portal/pages/assessment-calls.tsx | apps/platform/src/features/coaching-sales/contracts/coaching-sales.ts | type-only import | yes | yes | inward | present |
 | E1976 | apps/platform/src/surfaces/coach-portal/pages/assessment-calls.tsx | apps/platform/src/features/coaching-sales/server/guards/coaching-sales-context.server.ts | import | yes | no | lateral | present |
-| E1977 | apps/platform/src/surfaces/coach-portal/pages/assessment-calls.tsx | apps/platform/src/features/coaching-sales/ui/coach/call-sales-state-badge.tsx | import | yes | no | lateral | present |
-| E1978 | apps/platform/src/surfaces/coach-portal/pages/assessment-calls.tsx | apps/platform/src/features/coaching-sales/ui/coach/payment-link-action.tsx | import | yes | no | lateral | present |
-| E1979 | apps/platform/src/surfaces/coach-portal/pages/assessment-calls.tsx | apps/platform/src/features/coaching-sales/ui/coach/pricing-tier-label.ts | import | yes | no | lateral | present |
-| E1980 | apps/platform/src/surfaces/coach-portal/pages/assessment-calls.tsx | apps/platform/src/features/coaching-sales/ui/coach/sales-status-filter.tsx | import | yes | no | lateral | present |
 | E1991 | apps/platform/src/features/coaching-sales/api/public/checkouts-controller.server.ts | external:react-router | import | n/a | no | lateral | present |
 | E1993 | apps/platform/src/features/coaching-sales/contracts/bundle-cards.ts | external:zod | import | n/a | yes | outward | present |
 | E1994 | apps/platform/src/features/coaching-sales/contracts/coaching-sales.ts | external:zod | import | n/a | yes | outward | present |
@@ -1864,10 +1817,6 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E2000 | apps/platform/src/features/coaching-sales/email/coaching-sales-email-styles.server.ts | external:react | type-only import | n/a | yes | outward | present |
 | E2001 | apps/platform/src/features/coaching-sales/email/payment-link-email.server.ts | external:react | import | n/a | yes | outward | present |
 | E2002 | apps/platform/src/features/coaching-sales/email/payment-link-email.server.ts | external:react-dom/server | import | n/a | no | lateral | present |
-| E2003 | apps/platform/src/features/coaching-sales/routes.ts | external:@react-router/dev | import | n/a | no | lateral | present |
-| E2005 | apps/platform/src/features/coaching-sales/ui/coach/payment-link-action.tsx | external:lucide-react | import | n/a | no | lateral | present |
-| E2006 | apps/platform/src/features/coaching-sales/ui/coach/payment-link-action.tsx | external:react | import | n/a | no | lateral | present |
-| E2007 | apps/platform/src/features/coaching-sales/ui/coach/payment-link-action.tsx | external:react-router | import | n/a | no | lateral | present |
 | E2020 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/select-bundle-page.tsx | external:lucide-react | import | n/a | no | lateral | present |
 | E2021 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/select-bundle-page.tsx | external:react | import | n/a | no | lateral | present |
 | E2022 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/select-bundle-page.tsx | external:react-router | import | n/a | no | lateral | present |
@@ -1894,7 +1843,6 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E2069 | apps/platform/src/features/coaching-sales/email/coaching-sales-email-styles.server.ts | packages/infrastructure/src/email/index.server.ts | import | yes | no | lateral | present |
 | E2070 | apps/platform/src/features/coaching-sales/api/public/bundle-page.ts | packages/infrastructure/src/http/index.server.ts | import | yes | yes | inward | present |
 | E2071 | apps/platform/src/features/coaching-sales/api/public/bundle-page.ts | apps/platform/src/features/coaching-sales/server/guards/coaching-sales-context.server.ts | import | no | no | lateral | present |
-| E2072 | apps/platform/src/features/coaching-sales/ui/coach/payment-link-action.tsx | packages/ui/src/appointments/index.ts | import | yes | no | lateral | present |
 | E2073 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/bundle-page-resolution.ts | apps/platform/src/features/coaching-sales/ui/public/select-bundle/payment-link-token.ts | import | no | no | lateral | present |
 | E2074 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/bundle-page-resolution.ts | apps/platform/src/features/coaching-sales/contracts/coaching-sales.ts | import | no | yes | inward | present |
 | E2075 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/bundle-page-resolution.ts | apps/platform/src/features/coaching-sales/contracts/paths.ts | import | no | yes | inward | present |
@@ -1913,15 +1861,12 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E2092 | apps/platform/src/features/coaching-sales/api/client/client-journey-controller.server.ts | apps/platform/src/features/coaching-sales/contracts/paths.ts | import | no | no | lateral | present |
 | E2093 | apps/platform/src/features/coaching-sales/api/client/client-journey-controller.server.ts | external:react-router | import | n/a | no | lateral | present |
 | E2094 | apps/platform/src/features/coaching-sales/api/client/client-journey-controller.server.ts | packages/domain/src/client-journey/index.ts | type-only import | yes | yes | inward | present |
-| E2095 | apps/platform/src/features/coaching-sales/api/public/checkouts-controller.server.ts | apps/platform/src/features/coaching-sales/api/public/read-json-request-body.server.ts | import | no | no | lateral | present |
 | E2096 | apps/platform/src/features/coaching-sales/api/public/invitation.ts | apps/platform/src/features/coaching-sales/server/guards/coaching-sales-context.server.ts | import | no | no | lateral | present |
 | E2097 | apps/platform/src/features/coaching-sales/api/public/invitation.ts | external:react-router | type-only import | n/a | no | lateral | present |
 | E2098 | apps/platform/src/features/coaching-sales/api/public/invitation.ts | packages/infrastructure/src/http/index.server.ts | import | yes | no | lateral | present |
-| E2099 | apps/platform/src/features/coaching-sales/api/public/invitations-controller.server.ts | apps/platform/src/features/coaching-sales/api/public/read-json-request-body.server.ts | import | no | no | lateral | present |
 | E2101 | apps/platform/src/features/coaching-sales/api/public/invitations-controller.server.ts | external:react-router | type-only import | n/a | no | lateral | present |
 | E2102 | apps/platform/src/features/coaching-sales/api/public/invitations-controller.server.ts | packages/domain/src/client-invitation/index.ts | type-only import | yes | yes | inward | present |
 | E2103 | apps/platform/src/features/coaching-sales/api/public/invitations-controller.server.ts | packages/infrastructure/src/http/index.server.ts | import | yes | no | lateral | present |
-| E2104 | apps/platform/src/features/coaching-sales/api/public/read-json-request-body.server.ts | packages/infrastructure/src/http/index.server.ts | import | yes | no | lateral | present |
 | E2105 | apps/platform/src/features/coaching-sales/contracts/client-journey.ts | apps/platform/src/features/coaching-sales/contracts/paths.ts | import | no | no | lateral | present |
 | E2106 | apps/platform/src/features/coaching-sales/contracts/client-journey.ts | external:zod | import | n/a | no | lateral | present |
 | E2107 | apps/platform/src/features/coaching-sales/contracts/client-journey.ts | packages/domain/src/client-journey/index.ts | type-only import | yes | yes | inward | present |
@@ -1992,7 +1937,6 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E2184 | apps/platform/src/server/container.server.ts | packages/infrastructure/src/identity/index.server.ts | import | yes | no | lateral | present |
 | E2185 | apps/platform/src/server/logger.server.ts | packages/domain/src/client-invitation/index.ts | type-only import | yes | yes | inward | present |
 | E2186 | apps/platform/src/surfaces/client-portal/routes.ts | apps/platform/src/features/coaching-sales/routes.ts | import | yes | no | lateral | present |
-| E2187 | apps/platform/src/surfaces/client-portal/routes.ts | external:@react-router/dev | import | n/a | no | lateral | present |
 | E2188 | apps/platform/src/surfaces/client-portal/shell/access-layout.server.ts | apps/platform/src/features/coaching-sales/server/guards/require-client-journey-step.server.ts | import | yes | no | lateral | present |
 | E2189 | apps/platform/src/surfaces/client-portal/shell/access-layout.server.ts | external:react-router | type-only import | n/a | no | lateral | present |
 | E2190 | apps/platform/src/surfaces/client-portal/shell/access-layout.tsx | apps/platform/src/surfaces/client-portal/shell/access-layout.server.ts | import | no | no | lateral | present |
@@ -2066,7 +2010,6 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E2171 | apps/platform/src/features/coaching-sales/ui/public/invitation/invitation-states.tsx | external:react | type-only import | n/a | no | lateral | present |
 | E2172 | apps/platform/src/features/coaching-sales/ui/public/invitation/invitation-states.tsx | external:react-router | import | n/a | no | lateral | present |
 | E2173 | apps/platform/src/features/coaching-sales/ui/public/invitation/invitation-states.tsx | packages/ui/src/layout/index.ts | import | yes | no | lateral | present |
-| E2174 | apps/platform/src/features/coaching-sales/ui/public/invitation/invitation-states.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
 | E2175 | apps/platform/src/features/coaching-sales/ui/public/invitation/invitation-states.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
 | E2176 | apps/platform/src/surfaces/public-site/pages/invitation.tsx | apps/platform/src/features/accounts/server/guards/accounts-context.server.ts | import | yes | no | lateral | present |
 | E2253 | apps/platform/src/surfaces/public-site/pages/invitation.tsx | apps/platform/src/features/accounts/server/guards/session-context.server.ts | import | yes | no | lateral | present |
@@ -2088,10 +2031,7 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E2269 | apps/platform/src/features/assessment-calls/ui/public/book/booking-details-form.tsx | apps/platform/src/features/assessment-calls/contracts/visitor-profile.ts | import | no | no | lateral | present |
 | E2270 | apps/platform/src/features/assessment-calls/ui/public/book/booking-details-form.tsx | apps/platform/src/features/assessment-calls/ui/public/book/choice-select-field.tsx | import | no | no | lateral | present |
 | E2271 | apps/platform/src/features/assessment-calls/ui/public/book/booking-details-form.tsx | apps/platform/src/features/assessment-calls/ui/public/book/date-of-birth-field.tsx | import | no | no | lateral | present |
-| E2272 | apps/platform/src/features/assessment-calls/ui/public/book/booking-details-form.tsx | apps/platform/src/features/assessment-calls/ui/public/book/field-error.tsx | import | no | no | lateral | present |
 | E2273 | apps/platform/src/features/assessment-calls/ui/public/book/booking-details-form.tsx | apps/platform/src/features/assessment-calls/ui/public/book/phone-field.tsx | import | no | no | lateral | present |
-| E2274 | apps/platform/src/features/assessment-calls/ui/public/book/booking-details-form.tsx | external:@hookform/resolvers | import | n/a | no | lateral | present |
-| E2275 | apps/platform/src/features/assessment-calls/ui/public/book/booking-details-form.tsx | external:motion | import | n/a | no | lateral | present |
 | E2276 | apps/platform/src/features/assessment-calls/ui/public/book/booking-details-form.tsx | external:react-hook-form | import | n/a | no | lateral | present |
 | E2277 | apps/platform/src/features/store/server/store-composition.server.ts | packages/domain/src/email-address/index.ts | type-only import | yes | yes | inward | present |
 | E2278 | apps/platform/src/features/store/ui/public/acquisition/acquisition-flow.ts | packages/content/src/index.ts | import | yes | no | lateral | present |
@@ -2107,3 +2047,1221 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E2288 | packages/domain/src/assessment-call/book-assessment-call-use-case.ts | packages/domain/src/assessment-call/visitor-profile.ts | type-only import | no | no | lateral | present |
 | E2289 | packages/domain/src/email-address/email-address.ts | packages/domain/src/email-address/email-subaddress-policy.ts | type-only import | no | no | lateral | present |
 | E2290 | packages/domain/src/email-address/index.ts | packages/domain/src/email-address/email-subaddress-policy.ts | type-only import | no | no | lateral | present |
+| E2600 | apps/platform/src/features/assessment-calls/ui/public/book/booking-details-form.tsx | external:@hookform/resolvers/zod | import | n/a | no | lateral | present |
+| E2601 | apps/platform/src/features/assessment-calls/ui/public/book/booking-details-form.tsx | external:motion/react | import | n/a | no | lateral | present |
+| E2602 | apps/platform/src/features/assessment-calls/ui/public/book/choice-select-field.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E2603 | apps/platform/src/features/assessment-calls/ui/public/book/date-of-birth-field.tsx | apps/platform/src/features/assessment-calls/contracts/visitor-profile.ts | import | no | yes | inward | present |
+| E2604 | apps/platform/src/features/assessment-calls/ui/public/book/date-of-birth-field.tsx | apps/platform/src/features/assessment-calls/ui/shared/day-key.ts | import | no | yes | inward | present |
+| E2605 | apps/platform/src/features/assessment-calls/ui/public/book/date-of-birth-field.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E2606 | apps/platform/src/features/assessment-calls/ui/public/book/date-of-birth-field.tsx | external:react | import | n/a | no | lateral | present |
+| E2607 | apps/platform/src/features/assessment-calls/ui/public/book/date-of-birth-field.tsx | packages/ui/src/calendar/index.ts | import | yes | no | lateral | present |
+| E2608 | apps/platform/src/features/assessment-calls/ui/public/book/date-of-birth-field.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
+| E2609 | apps/platform/src/features/assessment-calls/ui/public/book/date-of-birth-field.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E2610 | apps/platform/src/features/assessment-calls/ui/public/book/phone-field.tsx | apps/platform/src/features/assessment-calls/contracts/countries.ts | import | no | yes | inward | present |
+| E2611 | apps/platform/src/features/assessment-calls/ui/public/book/phone-field.tsx | external:react | type-only import | n/a | no | lateral | present |
+| E2612 | apps/platform/src/features/assessment-calls/ui/public/book/phone-field.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E2613 | apps/platform/src/features/client-onboarding/api/client/client-onboarding-controller.server.ts | apps/platform/src/features/accounts/contracts/paths.ts | import | yes | no | lateral | present |
+| E2614 | apps/platform/src/features/client-onboarding/api/client/client-onboarding-controller.server.ts | apps/platform/src/features/accounts/server/guards/require-account.server.ts | import | yes | no | lateral | present |
+| E2615 | apps/platform/src/features/client-onboarding/api/client/client-onboarding-controller.server.ts | apps/platform/src/features/accounts/server/guards/require-portal-access.server.ts | import | yes | no | lateral | present |
+| E2616 | apps/platform/src/features/client-onboarding/api/client/client-onboarding-controller.server.ts | apps/platform/src/features/client-onboarding/api/read-json-request-body.server.ts | import | no | no | lateral | present |
+| E2617 | apps/platform/src/features/client-onboarding/api/client/client-onboarding-controller.server.ts | apps/platform/src/features/client-onboarding/contracts/onboarding.ts | import | no | no | lateral | present |
+| E2618 | apps/platform/src/features/client-onboarding/api/client/client-onboarding-controller.server.ts | external:react-router | type-only import | n/a | yes | outward | present |
+| E2619 | apps/platform/src/features/client-onboarding/api/client/client-onboarding-controller.server.ts | packages/domain/src/client-onboarding/index.ts | import | yes | no | lateral | present |
+| E2620 | apps/platform/src/features/client-onboarding/api/client/client-onboarding-controller.server.ts | packages/domain/src/shared/index.ts | type-only import | yes | no | lateral | present |
+| E2621 | apps/platform/src/features/client-onboarding/api/client/client-onboarding-controller.server.ts | packages/domain/src/unit-preference/index.ts | type-only import | yes | no | lateral | present |
+| E2622 | apps/platform/src/features/client-onboarding/api/client/client-onboarding-controller.server.ts | packages/infrastructure/src/http/index.server.ts | import | yes | no | lateral | present |
+| E2623 | apps/platform/src/features/client-onboarding/api/client/detail-answers.ts | apps/platform/src/features/client-onboarding/server/guards/client-onboarding-context.server.ts | import | no | no | lateral | present |
+| E2624 | apps/platform/src/features/client-onboarding/api/client/detail-answers.ts | external:react-router | type-only import | n/a | no | lateral | present |
+| E2625 | apps/platform/src/features/client-onboarding/api/client/detail-answers.ts | packages/infrastructure/src/http/index.server.ts | import | yes | yes | inward | present |
+| E2626 | apps/platform/src/features/client-onboarding/api/client/draft.ts | apps/platform/src/features/client-onboarding/server/guards/client-onboarding-context.server.ts | import | no | no | lateral | present |
+| E2627 | apps/platform/src/features/client-onboarding/api/client/draft.ts | external:react-router | type-only import | n/a | no | lateral | present |
+| E2628 | apps/platform/src/features/client-onboarding/api/client/draft.ts | packages/infrastructure/src/http/index.server.ts | import | yes | yes | inward | present |
+| E2629 | apps/platform/src/features/client-onboarding/api/client/submission.ts | apps/platform/src/features/client-onboarding/server/guards/client-onboarding-context.server.ts | import | no | no | lateral | present |
+| E2630 | apps/platform/src/features/client-onboarding/api/client/submission.ts | external:react-router | type-only import | n/a | no | lateral | present |
+| E2631 | apps/platform/src/features/client-onboarding/api/client/submission.ts | packages/infrastructure/src/http/index.server.ts | import | yes | yes | inward | present |
+| E2632 | apps/platform/src/features/client-onboarding/api/coach/approvals.ts | apps/platform/src/features/client-onboarding/server/guards/client-onboarding-context.server.ts | import | no | no | lateral | present |
+| E2633 | apps/platform/src/features/client-onboarding/api/coach/approvals.ts | external:react-router | type-only import | n/a | no | lateral | present |
+| E2634 | apps/platform/src/features/client-onboarding/api/coach/approvals.ts | packages/infrastructure/src/http/index.server.ts | import | yes | yes | inward | present |
+| E2635 | apps/platform/src/features/client-onboarding/api/coach/detail-requests.ts | apps/platform/src/features/client-onboarding/server/guards/client-onboarding-context.server.ts | import | no | no | lateral | present |
+| E2636 | apps/platform/src/features/client-onboarding/api/coach/detail-requests.ts | external:react-router | type-only import | n/a | no | lateral | present |
+| E2637 | apps/platform/src/features/client-onboarding/api/coach/detail-requests.ts | packages/infrastructure/src/http/index.server.ts | import | yes | yes | inward | present |
+| E2638 | apps/platform/src/features/client-onboarding/api/coach/onboarding-review-controller.server.ts | apps/platform/src/features/accounts/server/guards/require-account.server.ts | import | yes | no | lateral | present |
+| E2639 | apps/platform/src/features/client-onboarding/api/coach/onboarding-review-controller.server.ts | apps/platform/src/features/accounts/server/guards/require-portal-access.server.ts | import | yes | no | lateral | present |
+| E2640 | apps/platform/src/features/client-onboarding/api/coach/onboarding-review-controller.server.ts | apps/platform/src/features/client-onboarding/api/coach/onboarding-review-presenter.server.ts | import | no | no | lateral | present |
+| E2641 | apps/platform/src/features/client-onboarding/api/coach/onboarding-review-controller.server.ts | apps/platform/src/features/client-onboarding/api/read-json-request-body.server.ts | import | no | no | lateral | present |
+| E2642 | apps/platform/src/features/client-onboarding/api/coach/onboarding-review-controller.server.ts | apps/platform/src/features/client-onboarding/contracts/onboarding-review.ts | import | no | no | lateral | present |
+| E2643 | apps/platform/src/features/client-onboarding/api/coach/onboarding-review-controller.server.ts | external:react-router | type-only import | n/a | yes | outward | present |
+| E2644 | apps/platform/src/features/client-onboarding/api/coach/onboarding-review-controller.server.ts | packages/domain/src/client-onboarding/index.ts | type-only import | yes | no | lateral | present |
+| E2645 | apps/platform/src/features/client-onboarding/api/coach/onboarding-review-controller.server.ts | packages/infrastructure/src/http/index.server.ts | import | yes | no | lateral | present |
+| E2646 | apps/platform/src/features/client-onboarding/api/coach/onboarding-review-presenter.server.ts | apps/platform/src/features/client-onboarding/contracts/onboarding-review.ts | type-only import | no | no | lateral | present |
+| E2647 | apps/platform/src/features/client-onboarding/api/coach/onboarding-review-presenter.server.ts | apps/platform/src/features/client-profile/contracts/canonical-measure.ts | import | yes | no | lateral | present |
+| E2648 | apps/platform/src/features/client-onboarding/api/coach/onboarding-review-presenter.server.ts | packages/domain/src/client-onboarding/index.ts | import | yes | no | lateral | present |
+| E2649 | apps/platform/src/features/client-onboarding/api/coach/review-openings.ts | apps/platform/src/features/client-onboarding/server/guards/client-onboarding-context.server.ts | import | no | no | lateral | present |
+| E2650 | apps/platform/src/features/client-onboarding/api/coach/review-openings.ts | external:react-router | type-only import | n/a | no | lateral | present |
+| E2651 | apps/platform/src/features/client-onboarding/api/coach/review-openings.ts | packages/infrastructure/src/http/index.server.ts | import | yes | yes | inward | present |
+| E2652 | apps/platform/src/features/client-onboarding/api/read-json-request-body.server.ts | packages/infrastructure/src/http/index.server.ts | import | yes | no | lateral | present |
+| E2653 | apps/platform/src/features/client-onboarding/contracts/onboarding-review-copy.ts | apps/platform/src/features/assessment-calls/contracts/visitor-profile.ts | import | yes | no | lateral | present |
+| E2654 | apps/platform/src/features/client-onboarding/contracts/onboarding-review-copy.ts | packages/domain/src/assessment-call/index.ts | type-only import | yes | no | lateral | present |
+| E2655 | apps/platform/src/features/client-onboarding/contracts/onboarding-review.ts | apps/platform/src/features/client-onboarding/contracts/onboarding.ts | import | no | no | lateral | present |
+| E2656 | apps/platform/src/features/client-onboarding/contracts/onboarding-review.ts | external:zod | import | n/a | yes | outward | present |
+| E2657 | apps/platform/src/features/client-onboarding/contracts/onboarding-review.ts | packages/domain/src/client-onboarding/index.ts | import | yes | no | lateral | present |
+| E2658 | apps/platform/src/features/client-onboarding/contracts/onboarding.ts | apps/platform/src/features/client-profile/contracts/unit-preference.ts | import | yes | no | lateral | present |
+| E2659 | apps/platform/src/features/client-onboarding/contracts/onboarding.ts | external:zod | import | n/a | yes | outward | present |
+| E2660 | apps/platform/src/features/client-onboarding/contracts/onboarding.ts | packages/domain/src/assessment-call/index.ts | import | yes | no | lateral | present |
+| E2661 | apps/platform/src/features/client-onboarding/contracts/onboarding.ts | packages/domain/src/client-onboarding/index.ts | import | yes | no | lateral | present |
+| E2662 | apps/platform/src/features/client-onboarding/contracts/paths.ts | apps/platform/src/features/coaching-sales/contracts/paths.ts | re-export | yes | no | lateral | present |
+| E2663 | apps/platform/src/features/client-onboarding/data/client-profile-writers.server.ts | packages/db/src/index.ts | type-only import | yes | yes | outward | present |
+| E2664 | apps/platform/src/features/client-onboarding/data/client-profile-writers.server.ts | packages/domain/src/client-profile/index.ts | type-only import | yes | no | lateral | present |
+| E2665 | apps/platform/src/features/client-onboarding/data/client-profile-writers.server.ts | packages/domain/src/measurement/index.ts | type-only import | yes | no | lateral | present |
+| E2666 | apps/platform/src/features/client-onboarding/data/onboardings/client-onboardings-repository.server.ts | apps/platform/src/features/client-onboarding/data/client-profile-writers.server.ts | type-only import | no | no | lateral | present |
+| E2667 | apps/platform/src/features/client-onboarding/data/onboardings/client-onboardings-repository.server.ts | apps/platform/src/features/client-onboarding/data/schema.server.ts | import | no | yes | outward | present |
+| E2668 | apps/platform/src/features/client-onboarding/data/onboardings/client-onboardings-repository.server.ts | external:drizzle-orm | import | n/a | yes | outward | present |
+| E2669 | apps/platform/src/features/client-onboarding/data/onboardings/client-onboardings-repository.server.ts | packages/db/src/index.ts | import | yes | yes | outward | present |
+| E2670 | apps/platform/src/features/client-onboarding/data/onboardings/client-onboardings-repository.server.ts | packages/domain/src/client-onboarding/index.ts | type-only import | yes | no | lateral | present |
+| E2671 | apps/platform/src/features/client-onboarding/data/onboardings/client-onboardings-repository.server.ts | packages/domain/src/client-profile/index.ts | type-only import | yes | no | lateral | present |
+| E2672 | apps/platform/src/features/client-onboarding/data/onboardings/client-onboardings-repository.server.ts | packages/domain/src/measurement/index.ts | type-only import | yes | no | lateral | present |
+| E2673 | apps/platform/src/features/client-onboarding/data/reviews/detail-request-ids.server.ts | external:crypto | import | n/a | yes | outward | present |
+| E2674 | apps/platform/src/features/client-onboarding/data/reviews/detail-request-ids.server.ts | packages/domain/src/client-onboarding/index.ts | type-only import | yes | no | lateral | present |
+| E2675 | apps/platform/src/features/client-onboarding/data/reviews/onboarding-reviews-repository.server.ts | apps/platform/src/features/client-onboarding/data/client-profile-writers.server.ts | type-only import | no | no | lateral | present |
+| E2676 | apps/platform/src/features/client-onboarding/data/reviews/onboarding-reviews-repository.server.ts | apps/platform/src/features/client-onboarding/data/schema.server.ts | import | no | yes | outward | present |
+| E2677 | apps/platform/src/features/client-onboarding/data/reviews/onboarding-reviews-repository.server.ts | external:drizzle-orm | import | n/a | yes | outward | present |
+| E2678 | apps/platform/src/features/client-onboarding/data/reviews/onboarding-reviews-repository.server.ts | packages/db/src/index.ts | import | yes | yes | outward | present |
+| E2679 | apps/platform/src/features/client-onboarding/data/reviews/onboarding-reviews-repository.server.ts | packages/domain/src/client-onboarding/index.ts | import | yes | no | lateral | present |
+| E2680 | apps/platform/src/features/client-onboarding/data/schema.server.ts | apps/platform/src/features/coaching-sales/data/schema.server.ts | import | yes | no | lateral | present |
+| E2681 | apps/platform/src/features/client-onboarding/data/schema.server.ts | external:drizzle-orm | import | n/a | no | lateral | present |
+| E2682 | apps/platform/src/features/client-onboarding/data/schema.server.ts | external:drizzle-orm/pg-core | import | n/a | no | lateral | present |
+| E2683 | apps/platform/src/features/client-onboarding/data/schema.server.ts | packages/db/src/index.ts | import | yes | no | lateral | present |
+| E2684 | apps/platform/src/features/client-onboarding/data/schema.server.ts | packages/domain/src/client-onboarding/index.ts | type-only import | yes | yes | inward | present |
+| E2685 | apps/platform/src/features/client-onboarding/email/details-request-email-styles.server.ts | external:react | type-only import | n/a | no | lateral | present |
+| E2686 | apps/platform/src/features/client-onboarding/email/details-request-email-styles.server.ts | packages/infrastructure/src/email/index.server.ts | import | yes | no | lateral | present |
+| E2687 | apps/platform/src/features/client-onboarding/email/details-request-email-template.server.tsx | apps/platform/src/features/client-onboarding/email/details-request-email-styles.server.ts | import | no | no | lateral | present |
+| E2688 | apps/platform/src/features/client-onboarding/email/details-request-email-template.server.tsx | packages/infrastructure/src/email/index.server.ts | import | yes | no | lateral | present |
+| E2689 | apps/platform/src/features/client-onboarding/email/details-request-email.server.ts | apps/platform/src/features/client-onboarding/email/details-request-email-template.server.tsx | import | no | yes | outward | present |
+| E2690 | apps/platform/src/features/client-onboarding/email/details-request-email.server.ts | external:react | import | n/a | yes | outward | present |
+| E2691 | apps/platform/src/features/client-onboarding/email/details-request-email.server.ts | external:react-dom/server | import | n/a | yes | outward | present |
+| E2692 | apps/platform/src/features/client-onboarding/email/email-onboarding-details-notifications.server.ts | apps/platform/src/features/accounts/contracts/paths.ts | import | yes | no | lateral | present |
+| E2693 | apps/platform/src/features/client-onboarding/email/email-onboarding-details-notifications.server.ts | apps/platform/src/features/client-onboarding/email/details-request-email.server.ts | import | no | no | lateral | present |
+| E2694 | apps/platform/src/features/client-onboarding/email/email-onboarding-details-notifications.server.ts | packages/config/src/index.ts | import | yes | yes | outward | present |
+| E2695 | apps/platform/src/features/client-onboarding/email/email-onboarding-details-notifications.server.ts | packages/domain/src/client-onboarding/index.ts | type-only import | yes | no | lateral | present |
+| E2696 | apps/platform/src/features/client-onboarding/email/email-onboarding-details-notifications.server.ts | packages/domain/src/shared/index.ts | type-only import | yes | no | lateral | present |
+| E2697 | apps/platform/src/features/client-onboarding/email/email-onboarding-details-notifications.server.ts | packages/infrastructure/src/email/index.server.ts | type-only import | yes | yes | outward | present |
+| E2698 | apps/platform/src/features/client-onboarding/routes.ts | apps/platform/src/features/client-onboarding/contracts/paths.ts | import | no | yes | inward | present |
+| E2699 | apps/platform/src/features/client-onboarding/routes.ts | external:@react-router/dev/routes | import | n/a | no | lateral | present |
+| E2700 | apps/platform/src/features/client-onboarding/server/client-onboarding-composition.server.ts | apps/platform/src/features/client-onboarding/api/client/client-onboarding-controller.server.ts | import | no | yes | inward | present |
+| E2701 | apps/platform/src/features/client-onboarding/server/client-onboarding-composition.server.ts | apps/platform/src/features/client-onboarding/api/coach/onboarding-review-controller.server.ts | import | no | yes | inward | present |
+| E2702 | apps/platform/src/features/client-onboarding/server/client-onboarding-composition.server.ts | apps/platform/src/features/client-onboarding/data/client-profile-writers.server.ts | type-only import | no | yes | inward | present |
+| E2703 | apps/platform/src/features/client-onboarding/server/client-onboarding-composition.server.ts | apps/platform/src/features/client-onboarding/data/onboardings/client-onboardings-repository.server.ts | import | no | yes | inward | present |
+| E2704 | apps/platform/src/features/client-onboarding/server/client-onboarding-composition.server.ts | apps/platform/src/features/client-onboarding/data/reviews/detail-request-ids.server.ts | import | no | yes | inward | present |
+| E2705 | apps/platform/src/features/client-onboarding/server/client-onboarding-composition.server.ts | apps/platform/src/features/client-onboarding/data/reviews/onboarding-reviews-repository.server.ts | import | no | yes | inward | present |
+| E2706 | apps/platform/src/features/client-onboarding/server/client-onboarding-composition.server.ts | apps/platform/src/features/client-onboarding/email/email-onboarding-details-notifications.server.ts | import | no | yes | inward | present |
+| E2707 | apps/platform/src/features/client-onboarding/server/client-onboarding-composition.server.ts | packages/db/src/index.ts | type-only import | yes | yes | inward | present |
+| E2708 | apps/platform/src/features/client-onboarding/server/client-onboarding-composition.server.ts | packages/domain/src/client-onboarding/index.ts | import | yes | yes | inward | present |
+| E2709 | apps/platform/src/features/client-onboarding/server/client-onboarding-composition.server.ts | packages/domain/src/measurement/index.ts | type-only import | yes | yes | inward | present |
+| E2710 | apps/platform/src/features/client-onboarding/server/client-onboarding-composition.server.ts | packages/domain/src/shared/index.ts | type-only import | yes | yes | inward | present |
+| E2711 | apps/platform/src/features/client-onboarding/server/client-onboarding-composition.server.ts | packages/domain/src/unit-preference/index.ts | type-only import | yes | yes | inward | present |
+| E2712 | apps/platform/src/features/client-onboarding/server/client-onboarding-composition.server.ts | packages/infrastructure/src/email/index.server.ts | type-only import | yes | yes | inward | present |
+| E2713 | apps/platform/src/features/client-onboarding/server/guards/client-onboarding-context.server.ts | apps/platform/src/features/client-onboarding/server/client-onboarding-composition.server.ts | type-only import | no | yes | outward | present |
+| E2714 | apps/platform/src/features/client-onboarding/server/guards/client-onboarding-context.server.ts | external:react-router | import | n/a | no | lateral | present |
+| E2715 | apps/platform/src/features/client-onboarding/ui/client/onboarding/answer-request-card.tsx | apps/platform/src/features/accounts/contracts/paths.ts | import | yes | yes | inward | present |
+| E2716 | apps/platform/src/features/client-onboarding/ui/client/onboarding/answer-request-card.tsx | apps/platform/src/features/client-onboarding/contracts/onboarding-review-copy.ts | import | no | yes | inward | present |
+| E2717 | apps/platform/src/features/client-onboarding/ui/client/onboarding/answer-request-card.tsx | apps/platform/src/features/client-onboarding/contracts/onboarding.ts | type-only import | no | yes | inward | present |
+| E2718 | apps/platform/src/features/client-onboarding/ui/client/onboarding/answer-request-card.tsx | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-api-client.ts | import | no | no | lateral | present |
+| E2719 | apps/platform/src/features/client-onboarding/ui/client/onboarding/answer-request-card.tsx | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-field-control.tsx | import | no | no | lateral | present |
+| E2720 | apps/platform/src/features/client-onboarding/ui/client/onboarding/answer-request-card.tsx | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-values.ts | import | no | no | lateral | present |
+| E2721 | apps/platform/src/features/client-onboarding/ui/client/onboarding/answer-request-card.tsx | apps/platform/src/features/client-onboarding/ui/client/onboarding/unit-preference-store.tsx | import | no | no | lateral | present |
+| E2722 | apps/platform/src/features/client-onboarding/ui/client/onboarding/answer-request-card.tsx | external:react | import | n/a | no | lateral | present |
+| E2723 | apps/platform/src/features/client-onboarding/ui/client/onboarding/answer-request-card.tsx | external:react-hook-form | import | n/a | no | lateral | present |
+| E2724 | apps/platform/src/features/client-onboarding/ui/client/onboarding/answer-request-card.tsx | external:react-router | import | n/a | no | lateral | present |
+| E2725 | apps/platform/src/features/client-onboarding/ui/client/onboarding/answer-request-card.tsx | packages/domain/src/client-onboarding/index.ts | import | yes | yes | inward | present |
+| E2726 | apps/platform/src/features/client-onboarding/ui/client/onboarding/answer-request-card.tsx | packages/domain/src/unit-preference/index.ts | type-only import | yes | yes | inward | present |
+| E2727 | apps/platform/src/features/client-onboarding/ui/client/onboarding/answer-request-card.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
+| E2728 | apps/platform/src/features/client-onboarding/ui/client/onboarding/answer-request-card.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E2729 | apps/platform/src/features/client-onboarding/ui/client/onboarding/draft-sync.ts | apps/platform/src/features/client-onboarding/contracts/onboarding.ts | import | no | yes | inward | present |
+| E2730 | apps/platform/src/features/client-onboarding/ui/client/onboarding/draft-sync.ts | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-api-client.ts | type-only import | no | no | lateral | present |
+| E2731 | apps/platform/src/features/client-onboarding/ui/client/onboarding/draft-sync.ts | apps/platform/src/features/client-profile/contracts/unit-preference.ts | import | yes | yes | inward | present |
+| E2732 | apps/platform/src/features/client-onboarding/ui/client/onboarding/draft-sync.ts | external:zod | import | n/a | no | lateral | present |
+| E2733 | apps/platform/src/features/client-onboarding/ui/client/onboarding/draft-sync.ts | packages/domain/src/unit-preference/index.ts | type-only import | yes | yes | inward | present |
+| E2734 | apps/platform/src/features/client-onboarding/ui/client/onboarding/measurement-system-field.tsx | apps/platform/src/features/client-onboarding/ui/client/onboarding/unit-preference-store.tsx | import | no | no | lateral | present |
+| E2735 | apps/platform/src/features/client-onboarding/ui/client/onboarding/measurement-system-field.tsx | external:react | import | n/a | no | lateral | present |
+| E2736 | apps/platform/src/features/client-onboarding/ui/client/onboarding/measurement-system-field.tsx | packages/domain/src/unit-preference/index.ts | import | yes | yes | inward | present |
+| E2737 | apps/platform/src/features/client-onboarding/ui/client/onboarding/measurement-system-field.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E2738 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-api-client.ts | apps/platform/src/features/client-onboarding/contracts/onboarding.ts | import | no | yes | inward | present |
+| E2739 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-api-client.ts | apps/platform/src/features/client-onboarding/contracts/paths.ts | import | no | yes | inward | present |
+| E2740 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-api-client.ts | apps/platform/src/features/client-profile/contracts/paths.ts | import | yes | yes | inward | present |
+| E2741 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-api-client.ts | packages/config/src/index.ts | import | yes | no | lateral | present |
+| E2742 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-api-client.ts | packages/domain/src/client-onboarding/index.ts | type-only import | yes | yes | inward | present |
+| E2743 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-api-client.ts | packages/domain/src/unit-preference/index.ts | type-only import | yes | yes | inward | present |
+| E2746 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-consent.tsx | external:react-router | import | n/a | no | lateral | present |
+| E2747 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-consent.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E2748 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-field-control.tsx | apps/platform/src/features/client-onboarding/contracts/onboarding-copy.ts | import | no | yes | inward | present |
+| E2749 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-field-control.tsx | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-validation.ts | import | no | no | lateral | present |
+| E2750 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-field-control.tsx | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-values.ts | import | no | no | lateral | present |
+| E2751 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-field-control.tsx | apps/platform/src/features/client-onboarding/ui/client/onboarding/unit-preference-store.tsx | import | no | no | lateral | present |
+| E2752 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-field-control.tsx | apps/platform/src/features/client-profile/ui/shared/measure-field/measure-field.tsx | import | yes | no | lateral | present |
+| E2753 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-field-control.tsx | external:react | import | n/a | no | lateral | present |
+| E2754 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-field-control.tsx | external:react-hook-form | import | n/a | no | lateral | present |
+| E2755 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-field-control.tsx | packages/domain/src/client-onboarding/index.ts | import | yes | yes | inward | present |
+| E2756 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-field-control.tsx | packages/domain/src/unit-preference/index.ts | import | yes | yes | inward | present |
+| E2757 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-field-control.tsx | packages/ui/src/calendar/index.ts | import | yes | no | lateral | present |
+| E2758 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-field-control.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
+| E2759 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-field-control.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E2760 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-form-card.tsx | apps/platform/src/features/client-onboarding/contracts/onboarding.ts | type-only import | no | yes | inward | present |
+| E2761 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-form-card.tsx | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-field-control.tsx | import | no | no | lateral | present |
+| E2762 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-form-card.tsx | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-values.ts | import | no | no | lateral | present |
+| E2763 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-form-card.tsx | apps/platform/src/features/client-onboarding/ui/client/onboarding/unit-preference-store.tsx | import | no | no | lateral | present |
+| E2764 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-form-card.tsx | external:react | import | n/a | no | lateral | present |
+| E2765 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-form-card.tsx | external:react-hook-form | import | n/a | no | lateral | present |
+| E2766 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-form-card.tsx | packages/domain/src/client-onboarding/index.ts | type-only import | yes | yes | inward | present |
+| E2767 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-form-card.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
+| E2768 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-form-card.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E2769 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-page.tsx | apps/platform/src/features/client-onboarding/contracts/onboarding-review-copy.ts | import | no | yes | inward | present |
+| E2770 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-page.tsx | apps/platform/src/features/client-onboarding/contracts/onboarding.ts | type-only import | no | yes | inward | present |
+| E2771 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-page.tsx | apps/platform/src/features/client-onboarding/server/guards/client-onboarding-context.server.ts | import | no | no | lateral | present |
+| E2772 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-page.tsx | apps/platform/src/features/client-onboarding/ui/client/onboarding/answer-request-card.tsx | import | no | no | lateral | present |
+| E2773 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-page.tsx | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-wizard.tsx | import | no | no | lateral | present |
+| E2774 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-page.tsx | apps/platform/src/features/client-onboarding/ui/client/onboarding/unit-preference-store.tsx | import | no | no | lateral | present |
+| E2775 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-page.tsx | external:react | type-only import | n/a | no | lateral | present |
+| E2776 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-page.tsx | external:react-router | import | n/a | no | lateral | present |
+| E2777 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-page.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E2779 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-steps.ts | packages/domain/src/client-onboarding/index.ts | import | yes | yes | inward | present |
+| E2780 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-validation.ts | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-values.ts | import | no | no | lateral | present |
+| E2781 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-validation.ts | external:react-hook-form | type-only import | n/a | no | lateral | present |
+| E2782 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-validation.ts | packages/domain/src/client-onboarding/index.ts | import | yes | yes | inward | present |
+| E2783 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-validation.ts | packages/domain/src/unit-preference/index.ts | type-only import | yes | yes | inward | present |
+| E2784 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-values.ts | packages/domain/src/client-onboarding/index.ts | import | yes | yes | inward | present |
+| E2785 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-values.ts | packages/domain/src/unit-preference/index.ts | import | yes | yes | inward | present |
+| E2786 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-wizard.tsx | apps/platform/src/features/client-onboarding/contracts/onboarding-copy.ts | import | no | yes | inward | present |
+| E2787 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-wizard.tsx | apps/platform/src/features/client-onboarding/contracts/onboarding.ts | type-only import | no | yes | inward | present |
+| E2788 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-wizard.tsx | apps/platform/src/features/client-onboarding/ui/client/onboarding/measurement-system-field.tsx | import | no | no | lateral | present |
+| E2789 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-wizard.tsx | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-consent.tsx | import | no | no | lateral | present |
+| E2790 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-wizard.tsx | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-form-card.tsx | import | no | no | lateral | present |
+| E2791 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-wizard.tsx | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-steps.ts | import | no | no | lateral | present |
+| E2792 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-wizard.tsx | apps/platform/src/features/client-onboarding/ui/client/onboarding/use-onboarding-draft.ts | import | no | no | lateral | present |
+| E2793 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-wizard.tsx | apps/platform/src/features/client-onboarding/ui/client/onboarding/use-send-to-coach.ts | import | no | no | lateral | present |
+| E2794 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-wizard.tsx | external:motion/react | import | n/a | no | lateral | present |
+| E2795 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-wizard.tsx | external:react | import | n/a | no | lateral | present |
+| E2796 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-wizard.tsx | packages/domain/src/client-onboarding/index.ts | import | yes | yes | inward | present |
+| E2797 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-wizard.tsx | packages/ui/src/motion/index.ts | import | yes | no | lateral | present |
+| E2798 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-wizard.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E2799 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-wizard.tsx | packages/ui/src/toast/index.ts | import | yes | no | lateral | present |
+| E2800 | apps/platform/src/features/client-onboarding/ui/client/onboarding/unit-preference-store.tsx | external:react | import | n/a | no | lateral | present |
+| E2801 | apps/platform/src/features/client-onboarding/ui/client/onboarding/unit-preference-store.tsx | external:zustand | import | n/a | no | lateral | present |
+| E2802 | apps/platform/src/features/client-onboarding/ui/client/onboarding/unit-preference-store.tsx | external:zustand/vanilla | import | n/a | no | lateral | present |
+| E2803 | apps/platform/src/features/client-onboarding/ui/client/onboarding/unit-preference-store.tsx | packages/domain/src/unit-preference/index.ts | import | yes | yes | inward | present |
+| E2804 | apps/platform/src/features/client-onboarding/ui/client/onboarding/use-draft-sync.ts | apps/platform/src/features/client-onboarding/contracts/onboarding.ts | type-only import | no | yes | inward | present |
+| E2805 | apps/platform/src/features/client-onboarding/ui/client/onboarding/use-draft-sync.ts | apps/platform/src/features/client-onboarding/ui/client/onboarding/draft-sync.ts | import | no | no | lateral | present |
+| E2806 | apps/platform/src/features/client-onboarding/ui/client/onboarding/use-draft-sync.ts | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-api-client.ts | import | no | no | lateral | present |
+| E2807 | apps/platform/src/features/client-onboarding/ui/client/onboarding/use-draft-sync.ts | external:react | import | n/a | no | lateral | present |
+| E2808 | apps/platform/src/features/client-onboarding/ui/client/onboarding/use-draft-sync.ts | packages/domain/src/unit-preference/index.ts | type-only import | yes | yes | inward | present |
+| E2809 | apps/platform/src/features/client-onboarding/ui/client/onboarding/use-onboarding-draft.ts | apps/platform/src/features/client-onboarding/contracts/onboarding.ts | type-only import | no | yes | inward | present |
+| E2810 | apps/platform/src/features/client-onboarding/ui/client/onboarding/use-onboarding-draft.ts | apps/platform/src/features/client-onboarding/ui/client/onboarding/draft-sync.ts | import | no | no | lateral | present |
+| E2811 | apps/platform/src/features/client-onboarding/ui/client/onboarding/use-onboarding-draft.ts | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-steps.ts | import | no | no | lateral | present |
+| E2812 | apps/platform/src/features/client-onboarding/ui/client/onboarding/use-onboarding-draft.ts | apps/platform/src/features/client-onboarding/ui/client/onboarding/unit-preference-store.tsx | import | no | no | lateral | present |
+| E2813 | apps/platform/src/features/client-onboarding/ui/client/onboarding/use-onboarding-draft.ts | apps/platform/src/features/client-onboarding/ui/client/onboarding/use-draft-sync.ts | import | no | no | lateral | present |
+| E2814 | apps/platform/src/features/client-onboarding/ui/client/onboarding/use-onboarding-draft.ts | external:react | import | n/a | no | lateral | present |
+| E2815 | apps/platform/src/features/client-onboarding/ui/client/onboarding/use-onboarding-draft.ts | packages/domain/src/client-onboarding/index.ts | import | yes | yes | inward | present |
+| E2816 | apps/platform/src/features/client-onboarding/ui/client/onboarding/use-onboarding-draft.ts | packages/domain/src/unit-preference/index.ts | type-only import | yes | yes | inward | present |
+| E2817 | apps/platform/src/features/client-onboarding/ui/client/onboarding/use-send-to-coach.ts | apps/platform/src/features/accounts/contracts/paths.ts | import | yes | yes | inward | present |
+| E2818 | apps/platform/src/features/client-onboarding/ui/client/onboarding/use-send-to-coach.ts | apps/platform/src/features/client-onboarding/contracts/onboarding-copy.ts | import | no | yes | inward | present |
+| E2819 | apps/platform/src/features/client-onboarding/ui/client/onboarding/use-send-to-coach.ts | apps/platform/src/features/client-onboarding/contracts/onboarding.ts | type-only import | no | yes | inward | present |
+| E2820 | apps/platform/src/features/client-onboarding/ui/client/onboarding/use-send-to-coach.ts | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-api-client.ts | import | no | no | lateral | present |
+| E2821 | apps/platform/src/features/client-onboarding/ui/client/onboarding/use-send-to-coach.ts | apps/platform/src/features/client-onboarding/ui/client/onboarding/use-onboarding-draft.ts | type-only import | no | no | lateral | present |
+| E2822 | apps/platform/src/features/client-onboarding/ui/client/onboarding/use-send-to-coach.ts | external:react | import | n/a | no | lateral | present |
+| E2823 | apps/platform/src/features/client-onboarding/ui/client/onboarding/use-send-to-coach.ts | external:react-router | import | n/a | no | lateral | present |
+| E2824 | apps/platform/src/features/client-onboarding/ui/client/onboarding/use-send-to-coach.ts | packages/domain/src/client-onboarding/index.ts | import | yes | yes | inward | present |
+| E2825 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/answer-groups.tsx | apps/platform/src/features/client-onboarding/contracts/onboarding-review-copy.ts | import | no | yes | inward | present |
+| E2826 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/answer-groups.tsx | apps/platform/src/features/client-onboarding/contracts/onboarding-review.ts | type-only import | no | yes | inward | present |
+| E2827 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/answer-groups.tsx | apps/platform/src/features/client-onboarding/contracts/onboarding.ts | type-only import | no | yes | inward | present |
+| E2828 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/answer-groups.tsx | apps/platform/src/features/client-onboarding/ui/coach/onboarding/question-ids.ts | import | no | no | lateral | present |
+| E2829 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/answer-groups.tsx | apps/platform/src/features/client-onboarding/ui/coach/onboarding/review-answer-value.tsx | import | no | no | lateral | present |
+| E2830 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/answer-groups.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
+| E2831 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/answer-groups.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E2832 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/cycle-mode-info.tsx | apps/platform/src/features/client-onboarding/contracts/onboarding-review-copy.ts | import | no | yes | inward | present |
+| E2833 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/cycle-mode-info.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E2834 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/cycle-mode-info.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E2835 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/onboarding-panel.tsx | apps/platform/src/features/client-onboarding/contracts/onboarding-review-copy.ts | import | no | yes | inward | present |
+| E2836 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/onboarding-panel.tsx | apps/platform/src/features/client-onboarding/contracts/onboarding-review.ts | type-only import | no | yes | inward | present |
+| E2837 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/onboarding-panel.tsx | apps/platform/src/features/client-onboarding/contracts/onboarding.ts | type-only import | no | yes | inward | present |
+| E2838 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/onboarding-panel.tsx | apps/platform/src/features/client-onboarding/ui/coach/onboarding/answer-groups.tsx | import | no | no | lateral | present |
+| E2839 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/onboarding-panel.tsx | apps/platform/src/features/client-onboarding/ui/coach/onboarding/cycle-mode-info.tsx | import | no | no | lateral | present |
+| E2840 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/onboarding-panel.tsx | apps/platform/src/features/client-onboarding/ui/coach/onboarding/onboarding-review-dialog.tsx | import | no | no | lateral | present |
+| E2841 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/onboarding-panel.tsx | apps/platform/src/features/client-onboarding/ui/coach/onboarding/question-ids.ts | import | no | no | lateral | present |
+| E2843 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/onboarding-panel.tsx | apps/platform/src/features/client-onboarding/ui/coach/onboarding/screening-warning.tsx | import | no | no | lateral | present |
+| E2844 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/onboarding-panel.tsx | apps/platform/src/features/client-onboarding/ui/coach/onboarding/use-onboarding-review-actions.ts | import | no | no | lateral | present |
+| E2846 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/onboarding-panel.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E2847 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/onboarding-panel.tsx | external:react | import | n/a | no | lateral | present |
+| E2848 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/onboarding-panel.tsx | packages/domain/src/assessment-call/index.ts | type-only import | yes | yes | inward | present |
+| E2849 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/onboarding-panel.tsx | packages/ui/src/overlays/index.ts | import | yes | no | lateral | present |
+| E2850 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/onboarding-panel.tsx | packages/ui/src/portal/index.ts | import | yes | no | lateral | present |
+| E2851 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/onboarding-panel.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E2852 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/onboarding-review-bar.tsx | apps/platform/src/features/client-onboarding/contracts/onboarding-review-copy.ts | import | no | yes | inward | present |
+| E2853 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/onboarding-review-bar.tsx | external:react | import | n/a | no | lateral | present |
+| E2854 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/onboarding-review-bar.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E2855 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/onboarding-review-dialog.tsx | apps/platform/src/features/client-onboarding/contracts/onboarding-review-copy.ts | import | no | yes | inward | present |
+| E2856 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/onboarding-review-dialog.tsx | apps/platform/src/features/client-onboarding/contracts/onboarding-review.ts | type-only import | no | yes | inward | present |
+| E2857 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/onboarding-review-dialog.tsx | apps/platform/src/features/client-onboarding/contracts/onboarding.ts | type-only import | no | yes | inward | present |
+| E2858 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/onboarding-review-dialog.tsx | apps/platform/src/features/client-onboarding/ui/coach/onboarding/answer-groups.tsx | import | no | no | lateral | present |
+| E2859 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/onboarding-review-dialog.tsx | apps/platform/src/features/client-onboarding/ui/coach/onboarding/onboarding-review-bar.tsx | import | no | no | lateral | present |
+| E2860 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/onboarding-review-dialog.tsx | external:react | import | n/a | no | lateral | present |
+| E2861 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/onboarding-review-dialog.tsx | packages/domain/src/assessment-call/index.ts | type-only import | yes | yes | inward | present |
+| E2862 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/onboarding-review-dialog.tsx | packages/ui/src/overlays/index.ts | import | yes | no | lateral | present |
+| E2863 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/question-ids.ts | apps/platform/src/features/client-onboarding/contracts/onboarding.ts | type-only import | no | yes | inward | present |
+| E2864 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/review-answer-value.tsx | apps/platform/src/features/client-onboarding/contracts/onboarding-review-copy.ts | import | no | yes | inward | present |
+| E2865 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/review-answer-value.tsx | apps/platform/src/features/client-onboarding/contracts/onboarding-review.ts | type-only import | no | yes | inward | present |
+| E2866 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/review-answer-value.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E2868 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/screening-warning.tsx | apps/platform/src/features/client-onboarding/contracts/onboarding-review-copy.ts | import | no | yes | inward | present |
+| E2869 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/screening-warning.tsx | apps/platform/src/features/client-onboarding/contracts/onboarding-review.ts | type-only import | no | yes | inward | present |
+| E2870 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/screening-warning.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E2871 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/screening-warning.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E2872 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/use-onboarding-review-actions.ts | apps/platform/src/features/client-onboarding/contracts/onboarding-review-copy.ts | import | no | yes | inward | present |
+| E2873 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/use-onboarding-review-actions.ts | apps/platform/src/features/client-onboarding/contracts/onboarding-review.ts | import | no | yes | inward | present |
+| E2874 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/use-onboarding-review-actions.ts | apps/platform/src/features/client-onboarding/contracts/onboarding.ts | type-only import | no | yes | inward | present |
+| E2875 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/use-onboarding-review-actions.ts | apps/platform/src/features/client-onboarding/contracts/paths.ts | import | no | yes | inward | present |
+| E2876 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/use-onboarding-review-actions.ts | external:react | import | n/a | no | lateral | present |
+| E2877 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/use-onboarding-review-actions.ts | external:react-router | import | n/a | no | lateral | present |
+| E2878 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/use-onboarding-review-actions.ts | packages/ui/src/toast/index.ts | import | yes | no | lateral | present |
+| E2879 | apps/platform/src/features/client-profile/api/client/measurements-controller.server.ts | apps/platform/src/features/accounts/server/guards/require-account.server.ts | import | yes | no | lateral | present |
+| E2880 | apps/platform/src/features/client-profile/api/client/measurements-controller.server.ts | apps/platform/src/features/accounts/server/guards/require-portal-access.server.ts | import | yes | no | lateral | present |
+| E2881 | apps/platform/src/features/client-profile/api/client/measurements-controller.server.ts | apps/platform/src/features/client-profile/contracts/measurements.ts | import | no | no | lateral | present |
+| E2882 | apps/platform/src/features/client-profile/api/client/measurements-controller.server.ts | external:react-router | type-only import | n/a | yes | outward | present |
+| E2883 | apps/platform/src/features/client-profile/api/client/measurements-controller.server.ts | packages/domain/src/client-profile/index.ts | import | yes | no | lateral | present |
+| E2886 | apps/platform/src/features/client-profile/api/client/measurements-controller.server.ts | packages/infrastructure/src/http/index.server.ts | import | yes | no | lateral | present |
+| E2887 | apps/platform/src/features/client-profile/api/client/measurements.ts | apps/platform/src/features/client-profile/server/guards/client-profile-context.server.ts | import | no | no | lateral | present |
+| E2888 | apps/platform/src/features/client-profile/api/client/measurements.ts | external:react-router | type-only import | n/a | no | lateral | present |
+| E2889 | apps/platform/src/features/client-profile/api/client/measurements.ts | packages/infrastructure/src/http/index.server.ts | import | yes | yes | inward | present |
+| E2890 | apps/platform/src/features/client-profile/api/client/unit-preference-controller.server.ts | apps/platform/src/features/accounts/server/guards/require-account.server.ts | import | yes | no | lateral | present |
+| E2891 | apps/platform/src/features/client-profile/api/client/unit-preference-controller.server.ts | apps/platform/src/features/client-profile/contracts/unit-preference.ts | import | no | no | lateral | present |
+| E2892 | apps/platform/src/features/client-profile/api/client/unit-preference-controller.server.ts | external:react-router | type-only import | n/a | yes | outward | present |
+| E2893 | apps/platform/src/features/client-profile/api/client/unit-preference-controller.server.ts | packages/domain/src/unit-preference/index.ts | type-only import | yes | no | lateral | present |
+| E2894 | apps/platform/src/features/client-profile/api/client/unit-preference-controller.server.ts | packages/infrastructure/src/http/index.server.ts | import | yes | no | lateral | present |
+| E2895 | apps/platform/src/features/client-profile/api/client/unit-preference.ts | apps/platform/src/features/client-profile/server/guards/client-profile-context.server.ts | import | no | no | lateral | present |
+| E2896 | apps/platform/src/features/client-profile/api/client/unit-preference.ts | external:react-router | type-only import | n/a | no | lateral | present |
+| E2897 | apps/platform/src/features/client-profile/api/client/unit-preference.ts | packages/infrastructure/src/http/index.server.ts | import | yes | yes | inward | present |
+| E2898 | apps/platform/src/features/client-profile/api/coach/client-profile-controller.server.ts | apps/platform/src/features/accounts/server/guards/require-portal-access.server.ts | import | yes | no | lateral | present |
+| E2899 | apps/platform/src/features/client-profile/api/coach/client-profile-controller.server.ts | apps/platform/src/features/client-profile/contracts/client-profile.ts | import | no | no | lateral | present |
+| E2900 | apps/platform/src/features/client-profile/api/coach/client-profile-controller.server.ts | apps/platform/src/features/client-profile/contracts/measurements.ts | import | no | no | lateral | present |
+| E2901 | apps/platform/src/features/client-profile/api/coach/client-profile-controller.server.ts | external:react-router | type-only import | n/a | yes | outward | present |
+| E2902 | apps/platform/src/features/client-profile/api/coach/client-profile-controller.server.ts | external:zod | import | n/a | yes | outward | present |
+| E2903 | apps/platform/src/features/client-profile/api/coach/client-profile-controller.server.ts | packages/domain/src/client-profile/index.ts | type-only import | yes | no | lateral | present |
+| E2904 | apps/platform/src/features/client-profile/api/photos/progress-photo-controller.server.ts | apps/platform/src/features/accounts/server/guards/require-account.server.ts | import | yes | no | lateral | present |
+| E2905 | apps/platform/src/features/client-profile/api/photos/progress-photo-controller.server.ts | external:react-router | type-only import | n/a | yes | outward | present |
+| E2906 | apps/platform/src/features/client-profile/api/photos/progress-photo-controller.server.ts | external:stream | import | n/a | yes | outward | present |
+| E2907 | apps/platform/src/features/client-profile/api/photos/progress-photo-controller.server.ts | external:zod | import | n/a | yes | outward | present |
+| E2908 | apps/platform/src/features/client-profile/api/photos/progress-photo-controller.server.ts | packages/domain/src/client-profile/index.ts | type-only import | yes | no | lateral | present |
+| E2909 | apps/platform/src/features/client-profile/api/photos/progress-photo.ts | apps/platform/src/features/client-profile/server/guards/client-profile-context.server.ts | import | no | no | lateral | present |
+| E2910 | apps/platform/src/features/client-profile/api/photos/progress-photo.ts | external:react-router | type-only import | n/a | no | lateral | present |
+| E2911 | apps/platform/src/features/client-profile/api/photos/progress-photo.ts | packages/infrastructure/src/http/index.server.ts | import | yes | yes | inward | present |
+| E2912 | apps/platform/src/features/client-profile/contracts/canonical-measure.ts | packages/domain/src/unit-preference/index.ts | import | yes | no | lateral | present |
+| E2913 | apps/platform/src/features/client-profile/contracts/client-profile.ts | external:zod | import | n/a | yes | outward | present |
+| E2914 | apps/platform/src/features/client-profile/contracts/client-profile.ts | packages/domain/src/assessment-call/index.ts | import | yes | no | lateral | present |
+| E2915 | apps/platform/src/features/client-profile/contracts/measurements.ts | apps/platform/src/features/assessment-calls/contracts/visitor-profile.ts | import | yes | no | lateral | present |
+| E2916 | apps/platform/src/features/client-profile/contracts/measurements.ts | apps/platform/src/features/client-profile/contracts/unit-preference.ts | import | no | no | lateral | present |
+| E2917 | apps/platform/src/features/client-profile/contracts/measurements.ts | external:zod | import | n/a | yes | outward | present |
+| E2918 | apps/platform/src/features/client-profile/contracts/measurements.ts | packages/domain/src/assessment-call/index.ts | type-only import | yes | no | lateral | present |
+| E2919 | apps/platform/src/features/client-profile/contracts/measurements.ts | packages/domain/src/client-profile/index.ts | import | yes | no | lateral | present |
+| E2920 | apps/platform/src/features/client-profile/contracts/paths.ts | apps/platform/src/features/accounts/contracts/paths.ts | import | yes | no | lateral | present |
+| E2921 | apps/platform/src/features/client-profile/contracts/unit-preference.ts | external:zod | import | n/a | yes | outward | present |
+| E2922 | apps/platform/src/features/client-profile/contracts/unit-preference.ts | packages/domain/src/unit-preference/index.ts | import | yes | no | lateral | present |
+| E2923 | apps/platform/src/features/client-profile/data/measurements/client-measurement-records-repository.server.ts | apps/platform/src/features/client-profile/data/measurements/client-measurements-repository.server.ts | import | no | no | lateral | present |
+| E2924 | apps/platform/src/features/client-profile/data/measurements/client-measurement-records-repository.server.ts | apps/platform/src/features/client-profile/data/photos/client-progress-photos-repository.server.ts | import | no | no | lateral | present |
+| E2925 | apps/platform/src/features/client-profile/data/measurements/client-measurement-records-repository.server.ts | apps/platform/src/features/client-profile/data/schema.server.ts | import | no | yes | outward | present |
+| E2926 | apps/platform/src/features/client-profile/data/measurements/client-measurement-records-repository.server.ts | external:drizzle-orm | import | n/a | yes | outward | present |
+| E2927 | apps/platform/src/features/client-profile/data/measurements/client-measurement-records-repository.server.ts | packages/db/src/index.ts | type-only import | yes | yes | outward | present |
+| E2928 | apps/platform/src/features/client-profile/data/measurements/client-measurement-records-repository.server.ts | packages/domain/src/client-profile/index.ts | type-only import | yes | no | lateral | present |
+| E2929 | apps/platform/src/features/client-profile/data/measurements/client-measurement-records-repository.server.ts | packages/domain/src/measurement/index.ts | type-only import | yes | no | lateral | present |
+| E2930 | apps/platform/src/features/client-profile/data/measurements/client-measurements-repository.server.ts | apps/platform/src/features/client-profile/data/schema.server.ts | import | no | yes | outward | present |
+| E2931 | apps/platform/src/features/client-profile/data/measurements/client-measurements-repository.server.ts | external:drizzle-orm | import | n/a | yes | outward | present |
+| E2932 | apps/platform/src/features/client-profile/data/measurements/client-measurements-repository.server.ts | packages/db/src/index.ts | type-only import | yes | yes | outward | present |
+| E2933 | apps/platform/src/features/client-profile/data/measurements/client-measurements-repository.server.ts | packages/domain/src/measurement/index.ts | import | yes | no | lateral | present |
+| E2934 | apps/platform/src/features/client-profile/data/photos/client-progress-photos-repository.server.ts | apps/platform/src/features/client-profile/data/schema.server.ts | import | no | yes | outward | present |
+| E2935 | apps/platform/src/features/client-profile/data/photos/client-progress-photos-repository.server.ts | external:drizzle-orm | import | n/a | yes | outward | present |
+| E2936 | apps/platform/src/features/client-profile/data/photos/client-progress-photos-repository.server.ts | packages/db/src/index.ts | type-only import | yes | yes | outward | present |
+| E2937 | apps/platform/src/features/client-profile/data/photos/client-progress-photos-repository.server.ts | packages/domain/src/client-profile/index.ts | import | yes | no | lateral | present |
+| E2938 | apps/platform/src/features/client-profile/data/photos/random-progress-photo-ids.server.ts | external:crypto | import | n/a | yes | outward | present |
+| E2939 | apps/platform/src/features/client-profile/data/photos/random-progress-photo-ids.server.ts | packages/domain/src/client-profile/index.ts | type-only import | yes | no | lateral | present |
+| E2940 | apps/platform/src/features/client-profile/data/profiles/client-profiles-repository.server.ts | apps/platform/src/features/client-profile/data/schema.server.ts | import | no | yes | outward | present |
+| E2941 | apps/platform/src/features/client-profile/data/profiles/client-profiles-repository.server.ts | external:drizzle-orm | import | n/a | yes | outward | present |
+| E2942 | apps/platform/src/features/client-profile/data/profiles/client-profiles-repository.server.ts | packages/db/src/index.ts | type-only import | yes | yes | outward | present |
+| E2943 | apps/platform/src/features/client-profile/data/profiles/client-profiles-repository.server.ts | packages/domain/src/client-profile/index.ts | import | yes | no | lateral | present |
+| E2944 | apps/platform/src/features/client-profile/data/schema.server.ts | apps/platform/src/features/coaching-sales/data/schema.server.ts | import | yes | no | lateral | present |
+| E2945 | apps/platform/src/features/client-profile/data/schema.server.ts | external:drizzle-orm | import | n/a | no | lateral | present |
+| E2946 | apps/platform/src/features/client-profile/data/schema.server.ts | external:drizzle-orm/pg-core | import | n/a | no | lateral | present |
+| E2947 | apps/platform/src/features/client-profile/data/schema.server.ts | packages/db/src/index.ts | import | yes | no | lateral | present |
+| E2948 | apps/platform/src/features/client-profile/data/schema.server.ts | packages/domain/src/client-profile/index.ts | import | yes | yes | inward | present |
+| E2949 | apps/platform/src/features/client-profile/data/schema.server.ts | packages/domain/src/unit-preference/index.ts | import | yes | yes | inward | present |
+| E2950 | apps/platform/src/features/client-profile/data/unit-preferences/client-unit-preferences-repository.server.ts | apps/platform/src/features/client-profile/data/schema.server.ts | import | no | yes | outward | present |
+| E2951 | apps/platform/src/features/client-profile/data/unit-preferences/client-unit-preferences-repository.server.ts | external:drizzle-orm | import | n/a | yes | outward | present |
+| E2952 | apps/platform/src/features/client-profile/data/unit-preferences/client-unit-preferences-repository.server.ts | packages/db/src/index.ts | type-only import | yes | yes | outward | present |
+| E2953 | apps/platform/src/features/client-profile/data/unit-preferences/client-unit-preferences-repository.server.ts | packages/domain/src/unit-preference/index.ts | import | yes | no | lateral | present |
+| E2954 | apps/platform/src/features/client-profile/routes.ts | apps/platform/src/features/client-profile/contracts/paths.ts | import | no | yes | inward | present |
+| E2955 | apps/platform/src/features/client-profile/routes.ts | external:@react-router/dev/routes | import | n/a | no | lateral | present |
+| E2956 | apps/platform/src/features/client-profile/server/client-profile-composition.server.ts | apps/platform/src/features/client-profile/api/client/measurements-controller.server.ts | import | no | yes | inward | present |
+| E2957 | apps/platform/src/features/client-profile/server/client-profile-composition.server.ts | apps/platform/src/features/client-profile/api/client/unit-preference-controller.server.ts | import | no | yes | inward | present |
+| E2958 | apps/platform/src/features/client-profile/server/client-profile-composition.server.ts | apps/platform/src/features/client-profile/api/coach/client-profile-controller.server.ts | import | no | yes | inward | present |
+| E2959 | apps/platform/src/features/client-profile/server/client-profile-composition.server.ts | apps/platform/src/features/client-profile/api/photos/progress-photo-controller.server.ts | import | no | yes | inward | present |
+| E2960 | apps/platform/src/features/client-profile/server/client-profile-composition.server.ts | apps/platform/src/features/client-profile/data/measurements/client-measurement-records-repository.server.ts | import | no | yes | inward | present |
+| E2961 | apps/platform/src/features/client-profile/server/client-profile-composition.server.ts | apps/platform/src/features/client-profile/data/measurements/client-measurements-repository.server.ts | import | no | yes | inward | present |
+| E2962 | apps/platform/src/features/client-profile/server/client-profile-composition.server.ts | apps/platform/src/features/client-profile/data/photos/client-progress-photos-repository.server.ts | import | no | yes | inward | present |
+| E2963 | apps/platform/src/features/client-profile/server/client-profile-composition.server.ts | apps/platform/src/features/client-profile/data/photos/random-progress-photo-ids.server.ts | import | no | yes | inward | present |
+| E2964 | apps/platform/src/features/client-profile/server/client-profile-composition.server.ts | apps/platform/src/features/client-profile/data/profiles/client-profiles-repository.server.ts | import | no | yes | inward | present |
+| E2965 | apps/platform/src/features/client-profile/server/client-profile-composition.server.ts | apps/platform/src/features/client-profile/data/unit-preferences/client-unit-preferences-repository.server.ts | import | no | yes | inward | present |
+| E2966 | apps/platform/src/features/client-profile/server/client-profile-composition.server.ts | packages/db/src/index.ts | type-only import | yes | yes | inward | present |
+| E2967 | apps/platform/src/features/client-profile/server/client-profile-composition.server.ts | packages/domain/src/client-profile/index.ts | import | yes | yes | inward | present |
+| E2968 | apps/platform/src/features/client-profile/server/client-profile-composition.server.ts | packages/domain/src/client/index.ts | type-only import | yes | yes | inward | present |
+| E2969 | apps/platform/src/features/client-profile/server/client-profile-composition.server.ts | packages/domain/src/measurement/index.ts | type-only import | yes | yes | inward | present |
+| E2970 | apps/platform/src/features/client-profile/server/client-profile-composition.server.ts | packages/domain/src/shared/index.ts | type-only import | yes | yes | inward | present |
+| E2971 | apps/platform/src/features/client-profile/server/client-profile-composition.server.ts | packages/domain/src/unit-preference/index.ts | import | yes | yes | inward | present |
+| E2972 | apps/platform/src/features/client-profile/server/guards/client-profile-context.server.ts | apps/platform/src/features/client-profile/server/client-profile-composition.server.ts | type-only import | no | yes | outward | present |
+| E2973 | apps/platform/src/features/client-profile/server/guards/client-profile-context.server.ts | external:react-router | import | n/a | no | lateral | present |
+| E2974 | apps/platform/src/features/client-profile/ui/client/measurements/add-measurements-sheet.tsx | apps/platform/src/features/client-profile/contracts/measurements.ts | import | no | yes | inward | present |
+| E2975 | apps/platform/src/features/client-profile/ui/client/measurements/add-measurements-sheet.tsx | apps/platform/src/features/client-profile/ui/client/measurements/measurement-form-values.ts | import | no | no | lateral | present |
+| E2976 | apps/platform/src/features/client-profile/ui/client/measurements/add-measurements-sheet.tsx | apps/platform/src/features/client-profile/ui/client/measurements/measurements-api-client.ts | import | no | no | lateral | present |
+| E2978 | apps/platform/src/features/client-profile/ui/client/measurements/add-measurements-sheet.tsx | apps/platform/src/features/client-profile/ui/shared/measure-field/measure-field.tsx | import | no | no | lateral | present |
+| E2979 | apps/platform/src/features/client-profile/ui/client/measurements/add-measurements-sheet.tsx | external:react | import | n/a | no | lateral | present |
+| E2980 | apps/platform/src/features/client-profile/ui/client/measurements/add-measurements-sheet.tsx | external:react-hook-form | import | n/a | no | lateral | present |
+| E2981 | apps/platform/src/features/client-profile/ui/client/measurements/add-measurements-sheet.tsx | external:react-router | import | n/a | no | lateral | present |
+| E2982 | apps/platform/src/features/client-profile/ui/client/measurements/add-measurements-sheet.tsx | packages/domain/src/measurement/index.ts | import | yes | yes | inward | present |
+| E2983 | apps/platform/src/features/client-profile/ui/client/measurements/add-measurements-sheet.tsx | packages/domain/src/unit-preference/index.ts | type-only import | yes | yes | inward | present |
+| E2984 | apps/platform/src/features/client-profile/ui/client/measurements/add-measurements-sheet.tsx | packages/ui/src/layout/index.ts | import | yes | no | lateral | present |
+| E2985 | apps/platform/src/features/client-profile/ui/client/measurements/add-measurements-sheet.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E2986 | apps/platform/src/features/client-profile/ui/client/measurements/add-measurements-sheet.tsx | packages/ui/src/toast/index.ts | import | yes | no | lateral | present |
+| E2987 | apps/platform/src/features/client-profile/ui/client/measurements/measurement-form-values.ts | apps/platform/src/features/client-profile/contracts/measurements.ts | import | no | yes | inward | present |
+| E2988 | apps/platform/src/features/client-profile/ui/client/measurements/measurement-form-values.ts | packages/domain/src/measurement/index.ts | import | yes | yes | inward | present |
+| E2989 | apps/platform/src/features/client-profile/ui/client/measurements/measurement-form-values.ts | packages/domain/src/unit-preference/index.ts | import | yes | yes | inward | present |
+| E2990 | apps/platform/src/features/client-profile/ui/client/measurements/measurements-api-client.ts | apps/platform/src/features/client-profile/contracts/measurements.ts | import | no | yes | inward | present |
+| E2991 | apps/platform/src/features/client-profile/ui/client/measurements/measurements-api-client.ts | apps/platform/src/features/client-profile/contracts/paths.ts | import | no | yes | inward | present |
+| E2992 | apps/platform/src/features/client-profile/ui/client/measurements/measurements-api-client.ts | apps/platform/src/features/client-profile/ui/shared/photos/progress-photo-url.ts | import | no | no | lateral | present |
+| E2993 | apps/platform/src/features/client-profile/ui/client/measurements/measurements-api-client.ts | packages/config/src/index.ts | import | yes | no | lateral | present |
+| E2994 | apps/platform/src/features/client-profile/ui/client/measurements/measurements-api-client.ts | packages/domain/src/client-profile/index.ts | import | yes | yes | inward | present |
+| E2995 | apps/platform/src/features/client-profile/ui/client/measurements/measurements-section.tsx | apps/platform/src/features/client-profile/contracts/measurements.ts | import | no | yes | inward | present |
+| E2996 | apps/platform/src/features/client-profile/ui/client/measurements/measurements-section.tsx | apps/platform/src/features/client-profile/ui/client/measurements/add-measurements-sheet.tsx | import | no | no | lateral | present |
+| E2997 | apps/platform/src/features/client-profile/ui/client/measurements/measurements-section.tsx | apps/platform/src/features/client-profile/ui/client/measurements/measurements-api-client.ts | import | no | no | lateral | present |
+| E2998 | apps/platform/src/features/client-profile/ui/client/measurements/measurements-section.tsx | apps/platform/src/features/client-profile/ui/shared/measurements/measurements-table.tsx | import | no | no | lateral | present |
+| E2999 | apps/platform/src/features/client-profile/ui/client/measurements/measurements-section.tsx | apps/platform/src/features/client-profile/ui/shared/photos/photo-view-dialog.tsx | import | no | no | lateral | present |
+| E3000 | apps/platform/src/features/client-profile/ui/client/measurements/measurements-section.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E3001 | apps/platform/src/features/client-profile/ui/client/measurements/measurements-section.tsx | external:react | import | n/a | no | lateral | present |
+| E3002 | apps/platform/src/features/client-profile/ui/client/measurements/measurements-section.tsx | external:react-router | import | n/a | no | lateral | present |
+| E3003 | apps/platform/src/features/client-profile/ui/client/measurements/measurements-section.tsx | packages/domain/src/unit-preference/index.ts | import | yes | yes | inward | present |
+| E3004 | apps/platform/src/features/client-profile/ui/client/measurements/measurements-section.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E3015 | apps/platform/src/features/client-profile/ui/client/nudge/measurements-nudge.tsx | apps/platform/src/features/client-profile/contracts/measurements.ts | import | no | yes | inward | present |
+| E3016 | apps/platform/src/features/client-profile/ui/client/nudge/measurements-nudge.tsx | apps/platform/src/features/client-profile/contracts/paths.ts | import | no | yes | inward | present |
+| E3017 | apps/platform/src/features/client-profile/ui/client/nudge/measurements-nudge.tsx | packages/ui/src/portal/index.ts | import | yes | no | lateral | present |
+| E3018 | apps/platform/src/features/client-profile/ui/client/profile/profile-page.tsx | apps/platform/src/features/client-profile/contracts/measurements.ts | type-only import | no | yes | inward | present |
+| E3019 | apps/platform/src/features/client-profile/ui/client/profile/profile-page.tsx | apps/platform/src/features/client-profile/contracts/profile-page-copy.ts | import | no | yes | inward | present |
+| E3020 | apps/platform/src/features/client-profile/ui/client/profile/profile-page.tsx | apps/platform/src/features/client-profile/server/guards/client-profile-context.server.ts | import | no | no | lateral | present |
+| E3021 | apps/platform/src/features/client-profile/ui/client/profile/profile-page.tsx | apps/platform/src/features/client-profile/ui/client/measurements/measurements-section.tsx | import | no | no | lateral | present |
+| E3022 | apps/platform/src/features/client-profile/ui/client/profile/profile-page.tsx | external:react-router | import | n/a | no | lateral | present |
+| E3023 | apps/platform/src/features/client-profile/ui/client/profile/profile-page.tsx | packages/infrastructure/src/pwa/index.ts | import | yes | no | lateral | present |
+| E3024 | apps/platform/src/features/client-profile/ui/client/profile/profile-page.tsx | packages/ui/src/portal/index.ts | import | yes | no | lateral | present |
+| E3025 | apps/platform/src/features/client-profile/ui/coach/profile/client-profile-block.tsx | apps/platform/src/features/assessment-calls/contracts/countries.ts | import | yes | yes | inward | present |
+| E3026 | apps/platform/src/features/client-profile/ui/coach/profile/client-profile-block.tsx | apps/platform/src/features/assessment-calls/contracts/visitor-profile.ts | import | yes | yes | inward | present |
+| E3027 | apps/platform/src/features/client-profile/ui/coach/profile/client-profile-block.tsx | apps/platform/src/features/client-profile/contracts/canonical-measure.ts | import | no | yes | inward | present |
+| E3028 | apps/platform/src/features/client-profile/ui/coach/profile/client-profile-block.tsx | apps/platform/src/features/client-profile/contracts/client-profile.ts | type-only import | no | yes | inward | present |
+| E3031 | apps/platform/src/features/client-profile/ui/coach/profile/client-profile-block.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E3032 | apps/platform/src/features/client-profile/ui/coach/profile/client-profile-block.tsx | external:react | import | n/a | no | lateral | present |
+| E3033 | apps/platform/src/features/client-profile/ui/coach/profile/client-profile-block.tsx | packages/domain/src/assessment-call/index.ts | type-only import | yes | yes | inward | present |
+| E3034 | apps/platform/src/features/client-profile/ui/coach/profile/client-profile-block.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
+| E3035 | apps/platform/src/features/client-profile/ui/coach/profile/client-profile-block.tsx | packages/ui/src/portal/index.ts | import | yes | no | lateral | present |
+| E3037 | apps/platform/src/features/client-profile/ui/shared/measure-field/measure-field.tsx | external:react-hook-form | import | n/a | no | lateral | present |
+| E3038 | apps/platform/src/features/client-profile/ui/shared/measure-field/measure-field.tsx | packages/domain/src/measurement/index.ts | import | yes | yes | inward | present |
+| E3039 | apps/platform/src/features/client-profile/ui/shared/measure-field/measure-field.tsx | packages/domain/src/unit-preference/index.ts | import | yes | yes | inward | present |
+| E3040 | apps/platform/src/features/client-profile/ui/shared/measure-field/measure-field.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E3041 | apps/platform/src/features/client-profile/ui/shared/measurements/measurements-table.tsx | apps/platform/src/features/client-profile/contracts/measurements.ts | import | no | yes | inward | present |
+| E3044 | apps/platform/src/features/client-profile/ui/shared/measurements/measurements-table.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E3045 | apps/platform/src/features/client-profile/ui/shared/measurements/measurements-table.tsx | external:react | type-only import | n/a | no | lateral | present |
+| E3046 | apps/platform/src/features/client-profile/ui/shared/measurements/measurements-table.tsx | packages/domain/src/unit-preference/index.ts | import | yes | yes | inward | present |
+| E3047 | apps/platform/src/features/client-profile/ui/shared/measurements/measurements-table.tsx | packages/ui/src/portal/index.ts | import | yes | no | lateral | present |
+| E3048 | apps/platform/src/features/client-profile/ui/shared/measurements/measurements-table.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E3049 | apps/platform/src/features/client-profile/ui/shared/photos/photo-view-dialog.tsx | apps/platform/src/features/client-profile/contracts/measurements.ts | import | no | yes | inward | present |
+| E3050 | apps/platform/src/features/client-profile/ui/shared/photos/photo-view-dialog.tsx | apps/platform/src/features/client-profile/ui/shared/photos/progress-photo-frame.ts | import | no | no | lateral | present |
+| E3051 | apps/platform/src/features/client-profile/ui/shared/photos/photo-view-dialog.tsx | apps/platform/src/features/client-profile/ui/shared/photos/progress-photo-url.ts | import | no | no | lateral | present |
+| E3053 | apps/platform/src/features/client-profile/ui/shared/photos/photo-view-dialog.tsx | external:react | import | n/a | no | lateral | present |
+| E3054 | apps/platform/src/features/client-profile/ui/shared/photos/photo-view-dialog.tsx | packages/domain/src/client-profile/index.ts | import | yes | yes | inward | present |
+| E3055 | apps/platform/src/features/client-profile/ui/shared/photos/photo-view-dialog.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
+| E3056 | apps/platform/src/features/client-profile/ui/shared/photos/photo-view-dialog.tsx | packages/ui/src/overlays/index.ts | import | yes | no | lateral | present |
+| E3057 | apps/platform/src/features/client-profile/ui/shared/photos/photo-view-dialog.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E3058 | apps/platform/src/features/client-profile/ui/shared/photos/progress-photo-frame.ts | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
+| E3059 | apps/platform/src/features/client-profile/ui/shared/photos/progress-photo-url.ts | apps/platform/src/features/client-profile/contracts/paths.ts | import | no | yes | inward | present |
+| E3060 | apps/platform/src/features/client-profile/ui/shared/photos/progress-photo-url.ts | packages/config/src/index.ts | import | yes | no | lateral | present |
+| E3061 | apps/platform/src/features/coaching-sales/api/client/client-journey-controller.server.ts | apps/platform/src/features/coaching-sales/server/guards/client-journey-context.server.ts | import | no | no | lateral | present |
+| E3062 | apps/platform/src/features/coaching-sales/api/coach/coach-clients-controller.server.ts | apps/platform/src/features/accounts/server/guards/require-account.server.ts | import | yes | no | lateral | present |
+| E3063 | apps/platform/src/features/coaching-sales/api/coach/coach-clients-controller.server.ts | apps/platform/src/features/accounts/server/guards/require-portal-access.server.ts | import | yes | no | lateral | present |
+| E3064 | apps/platform/src/features/coaching-sales/api/coach/coach-clients-controller.server.ts | apps/platform/src/features/coaching-sales/api/read-json-request-body.server.ts | import | no | no | lateral | present |
+| E3065 | apps/platform/src/features/coaching-sales/api/coach/coach-clients-controller.server.ts | apps/platform/src/features/coaching-sales/contracts/coach-clients.ts | import | no | no | lateral | present |
+| E3066 | apps/platform/src/features/coaching-sales/api/coach/coach-clients-controller.server.ts | external:react-router | type-only import | n/a | yes | outward | present |
+| E3067 | apps/platform/src/features/coaching-sales/api/coach/coach-clients-controller.server.ts | packages/domain/src/client-invitation/index.ts | type-only import | yes | no | lateral | present |
+| E3068 | apps/platform/src/features/coaching-sales/api/coach/coach-clients-controller.server.ts | packages/domain/src/client-roster/index.ts | type-only import | yes | no | lateral | present |
+| E3069 | apps/platform/src/features/coaching-sales/api/coach/coach-clients-controller.server.ts | packages/domain/src/coaching-subscription/index.ts | import | yes | no | lateral | present |
+| E3070 | apps/platform/src/features/coaching-sales/api/coach/invitation-resends.ts | apps/platform/src/features/coaching-sales/server/guards/coaching-sales-context.server.ts | import | no | no | lateral | present |
+| E3071 | apps/platform/src/features/coaching-sales/api/coach/invitation-resends.ts | external:react-router | type-only import | n/a | no | lateral | present |
+| E3072 | apps/platform/src/features/coaching-sales/api/coach/invitation-resends.ts | packages/infrastructure/src/http/index.server.ts | import | yes | yes | inward | present |
+| E3073 | apps/platform/src/features/coaching-sales/api/public/checkouts-controller.server.ts | apps/platform/src/features/coaching-sales/api/read-json-request-body.server.ts | import | no | no | lateral | present |
+| E3074 | apps/platform/src/features/coaching-sales/api/public/invitations-controller.server.ts | apps/platform/src/features/coaching-sales/api/read-json-request-body.server.ts | import | no | no | lateral | present |
+| E3075 | apps/platform/src/features/coaching-sales/api/read-json-request-body.server.ts | packages/infrastructure/src/http/index.server.ts | import | yes | no | lateral | present |
+| E3076 | apps/platform/src/features/coaching-sales/contracts/client-journey.ts | apps/platform/src/features/accounts/contracts/paths.ts | import | yes | no | lateral | present |
+| E3077 | apps/platform/src/features/coaching-sales/contracts/client-status.ts | apps/platform/src/features/coaching-sales/contracts/coach-clients.ts | type-only import | no | no | lateral | present |
+| E3078 | apps/platform/src/features/coaching-sales/contracts/coach-clients.ts | apps/platform/src/features/coaching-sales/contracts/bundle-cards.ts | import | no | no | lateral | present |
+| E3079 | apps/platform/src/features/coaching-sales/contracts/coach-clients.ts | external:zod | import | n/a | yes | outward | present |
+| E3080 | apps/platform/src/features/coaching-sales/contracts/coach-clients.ts | packages/domain/src/assessment-call/index.ts | import | yes | no | lateral | present |
+| E3081 | apps/platform/src/features/coaching-sales/contracts/coach-clients.ts | packages/domain/src/client-roster/index.ts | import | yes | no | lateral | present |
+| E3082 | apps/platform/src/features/coaching-sales/data/client-journeys/client-journeys-repository.server.ts | apps/platform/src/features/coaching-sales/data/client-journeys/review-stamps.server.ts | import | no | no | lateral | present |
+| E3083 | apps/platform/src/features/coaching-sales/data/client-journeys/client-journeys-repository.server.ts | packages/domain/src/client-onboarding/index.ts | type-only import | yes | no | lateral | present |
+| E3084 | apps/platform/src/features/coaching-sales/data/client-journeys/review-stamps.server.ts | apps/platform/src/features/coaching-sales/data/schema.server.ts | import | no | yes | outward | present |
+| E3085 | apps/platform/src/features/coaching-sales/data/client-journeys/review-stamps.server.ts | external:drizzle-orm | import | n/a | yes | outward | present |
+| E3086 | apps/platform/src/features/coaching-sales/data/client-journeys/review-stamps.server.ts | packages/db/src/index.ts | type-only import | yes | yes | outward | present |
+| E3087 | apps/platform/src/features/coaching-sales/data/client-journeys/review-stamps.server.ts | packages/domain/src/client-onboarding/index.ts | type-only import | yes | no | lateral | present |
+| E3088 | apps/platform/src/features/coaching-sales/data/clients/client-identities-reader.server.ts | apps/platform/src/features/coaching-sales/data/schema.server.ts | import | no | yes | outward | present |
+| E3089 | apps/platform/src/features/coaching-sales/data/clients/client-identities-reader.server.ts | external:drizzle-orm | import | n/a | yes | outward | present |
+| E3090 | apps/platform/src/features/coaching-sales/data/clients/client-identities-reader.server.ts | packages/db/src/index.ts | type-only import | yes | yes | outward | present |
+| E3091 | apps/platform/src/features/coaching-sales/data/clients/client-identities-reader.server.ts | packages/domain/src/client/index.ts | type-only import | yes | no | lateral | present |
+| E3092 | apps/platform/src/features/coaching-sales/data/clients/client-roster-reader.server.ts | apps/platform/src/features/coaching-sales/data/schema.server.ts | import | no | yes | outward | present |
+| E3093 | apps/platform/src/features/coaching-sales/data/clients/client-roster-reader.server.ts | external:drizzle-orm | import | n/a | yes | outward | present |
+| E3094 | apps/platform/src/features/coaching-sales/data/clients/client-roster-reader.server.ts | packages/db/src/index.ts | type-only import | yes | yes | outward | present |
+| E3095 | apps/platform/src/features/coaching-sales/data/clients/client-roster-reader.server.ts | packages/domain/src/client-roster/index.ts | type-only import | yes | no | lateral | present |
+| E3096 | apps/platform/src/features/coaching-sales/data/clients/onboarding-clients-reader.server.ts | apps/platform/src/features/coaching-sales/data/schema.server.ts | import | no | yes | outward | present |
+| E3097 | apps/platform/src/features/coaching-sales/data/clients/onboarding-clients-reader.server.ts | external:drizzle-orm | import | n/a | yes | outward | present |
+| E3098 | apps/platform/src/features/coaching-sales/data/clients/onboarding-clients-reader.server.ts | packages/db/src/index.ts | type-only import | yes | yes | outward | present |
+| E3099 | apps/platform/src/features/coaching-sales/data/clients/onboarding-clients-reader.server.ts | packages/domain/src/client-onboarding/index.ts | type-only import | yes | no | lateral | present |
+| E3100 | apps/platform/src/features/coaching-sales/data/clients/onboarding-clients-reader.server.ts | packages/domain/src/client-profile/index.ts | type-only import | yes | no | lateral | present |
+| E3101 | apps/platform/src/features/coaching-sales/data/clients/onboarding-clients-reader.server.ts | packages/domain/src/unit-preference/index.ts | type-only import | yes | no | lateral | present |
+| E3102 | apps/platform/src/features/coaching-sales/data/purchases/purchases-repository.server.ts | packages/domain/src/client-journey/index.ts | type-only import | yes | no | lateral | present |
+| E3103 | apps/platform/src/features/coaching-sales/routes.ts | external:@react-router/dev/routes | import | n/a | no | lateral | present |
+| E3104 | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | apps/platform/src/features/coaching-sales/api/coach/coach-clients-controller.server.ts | import | no | yes | inward | present |
+| E3105 | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | apps/platform/src/features/coaching-sales/data/client-journeys/review-stamps.server.ts | import | no | yes | inward | present |
+| E3106 | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | apps/platform/src/features/coaching-sales/data/clients/client-identities-reader.server.ts | import | no | yes | inward | present |
+| E3107 | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | apps/platform/src/features/coaching-sales/data/clients/client-roster-reader.server.ts | import | no | yes | inward | present |
+| E3108 | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | apps/platform/src/features/coaching-sales/data/clients/onboarding-clients-reader.server.ts | import | no | yes | inward | present |
+| E3109 | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | packages/domain/src/client-onboarding/index.ts | type-only import | yes | yes | inward | present |
+| E3110 | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | packages/domain/src/client-profile/index.ts | type-only import | yes | yes | inward | present |
+| E3111 | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | packages/domain/src/client-roster/index.ts | import | yes | yes | inward | present |
+| E3112 | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | packages/domain/src/client/index.ts | type-only import | yes | yes | inward | present |
+| E3113 | apps/platform/src/features/coaching-sales/server/coaching-sales-composition.server.ts | packages/domain/src/unit-preference/index.ts | type-only import | yes | yes | inward | present |
+| E3114 | apps/platform/src/features/coaching-sales/server/guards/client-journey-context.server.ts | external:react-router | import | n/a | yes | outward | present |
+| E3115 | apps/platform/src/features/coaching-sales/server/guards/client-journey-context.server.ts | packages/domain/src/client-journey/index.ts | type-only import | yes | no | lateral | present |
+| E3116 | apps/platform/src/features/coaching-sales/server/guards/require-client-journey-step.server.ts | apps/platform/src/features/coaching-sales/server/guards/client-journey-context.server.ts | import | no | no | lateral | present |
+| E3117 | apps/platform/src/features/coaching-sales/ui/client/status/program-status-card.tsx | apps/platform/src/features/coaching-sales/contracts/client-journey.ts | type-only import | no | yes | inward | present |
+| E3118 | apps/platform/src/features/coaching-sales/ui/client/status/program-status-card.tsx | apps/platform/src/features/coaching-sales/contracts/paths.ts | import | no | yes | inward | present |
+| E3119 | apps/platform/src/features/coaching-sales/ui/client/status/program-status-card.tsx | apps/platform/src/features/coaching-sales/ui/client/status/program-status-copy.ts | import | no | yes | inward | present |
+| E3121 | apps/platform/src/features/coaching-sales/ui/client/status/program-status-card.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E3122 | apps/platform/src/features/coaching-sales/ui/client/status/program-status-card.tsx | external:react-router | import | n/a | no | lateral | present |
+| E3123 | apps/platform/src/features/coaching-sales/ui/client/status/program-status-card.tsx | packages/ui/src/portal/index.ts | import | yes | no | lateral | present |
+| E3124 | apps/platform/src/features/coaching-sales/ui/client/status/program-status-card.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E3125 | apps/platform/src/features/coaching-sales/ui/client/status/program-status-copy.ts | apps/platform/src/features/coaching-sales/contracts/client-journey.ts | type-only import | no | no | lateral | present |
+| E3126 | apps/platform/src/features/coaching-sales/ui/coach/call-sales/call-sales-state-badge.tsx | apps/platform/src/features/coaching-sales/contracts/coaching-sales.ts | type-only import | no | yes | inward | present |
+| E3127 | apps/platform/src/features/coaching-sales/ui/coach/call-sales/call-sales-state-badge.tsx | apps/platform/src/features/coaching-sales/ui/coach/call-sales/call-sales-state-labels.ts | import | no | yes | inward | present |
+| E3128 | apps/platform/src/features/coaching-sales/ui/coach/call-sales/call-sales-state-badge.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E3129 | apps/platform/src/features/coaching-sales/ui/coach/call-sales/call-sales-state-labels.ts | apps/platform/src/features/coaching-sales/contracts/coaching-sales.ts | type-only import | no | no | lateral | present |
+| E3130 | apps/platform/src/features/coaching-sales/ui/coach/call-sales/payment-link-action.tsx | apps/platform/src/features/assessment-calls/contracts/visitor-profile.ts | import | yes | yes | inward | present |
+| E3131 | apps/platform/src/features/coaching-sales/ui/coach/call-sales/payment-link-action.tsx | apps/platform/src/features/coaching-sales/contracts/coaching-sales.ts | import | no | yes | inward | present |
+| E3132 | apps/platform/src/features/coaching-sales/ui/coach/call-sales/payment-link-action.tsx | apps/platform/src/features/coaching-sales/contracts/paths.ts | import | no | yes | inward | present |
+| E3133 | apps/platform/src/features/coaching-sales/ui/coach/call-sales/payment-link-action.tsx | apps/platform/src/features/coaching-sales/ui/coach/use-confirmed-json-action.ts | import | no | no | lateral | present |
+| E3134 | apps/platform/src/features/coaching-sales/ui/coach/call-sales/payment-link-action.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E3135 | apps/platform/src/features/coaching-sales/ui/coach/call-sales/payment-link-action.tsx | packages/domain/src/assessment-call/index.ts | type-only import | yes | yes | inward | present |
+| E3136 | apps/platform/src/features/coaching-sales/ui/coach/call-sales/payment-link-action.tsx | packages/ui/src/appointments/index.ts | import | yes | no | lateral | present |
+| E3137 | apps/platform/src/features/coaching-sales/ui/coach/call-sales/payment-link-action.tsx | packages/ui/src/overlays/index.ts | import | yes | no | lateral | present |
+| E3138 | apps/platform/src/features/coaching-sales/ui/coach/call-sales/pricing-tier-label.ts | apps/platform/src/features/coaching-sales/contracts/coaching-sales.ts | type-only import | no | no | lateral | present |
+| E3139 | apps/platform/src/features/coaching-sales/ui/coach/call-sales/sales-status-filter.tsx | apps/platform/src/features/assessment-calls/contracts/paths.ts | import | yes | yes | inward | present |
+| E3140 | apps/platform/src/features/coaching-sales/ui/coach/call-sales/sales-status-filter.tsx | apps/platform/src/features/coaching-sales/contracts/coaching-sales.ts | import | no | yes | inward | present |
+| E3141 | apps/platform/src/features/coaching-sales/ui/coach/call-sales/sales-status-filter.tsx | apps/platform/src/features/coaching-sales/ui/coach/call-sales/call-sales-state-labels.ts | import | no | yes | inward | present |
+| E3142 | apps/platform/src/features/coaching-sales/ui/coach/call-sales/sales-status-filter.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
+| E3143 | apps/platform/src/features/coaching-sales/ui/coach/call-sales/sales-status-filter.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E3144 | apps/platform/src/features/coaching-sales/ui/coach/clients/assessment-call-block.tsx | apps/platform/src/features/assessment-calls/contracts/call-moment.ts | import | yes | yes | inward | present |
+| E3145 | apps/platform/src/features/coaching-sales/ui/coach/clients/assessment-call-block.tsx | apps/platform/src/features/assessment-calls/contracts/countries.ts | import | yes | yes | inward | present |
+| E3146 | apps/platform/src/features/coaching-sales/ui/coach/clients/assessment-call-block.tsx | apps/platform/src/features/assessment-calls/contracts/visitor-profile.ts | import | yes | yes | inward | present |
+| E3147 | apps/platform/src/features/coaching-sales/ui/coach/clients/assessment-call-block.tsx | apps/platform/src/features/coaching-sales/contracts/coach-clients.ts | type-only import | no | yes | inward | present |
+| E3150 | apps/platform/src/features/coaching-sales/ui/coach/clients/assessment-call-block.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E3151 | apps/platform/src/features/coaching-sales/ui/coach/clients/assessment-call-block.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
+| E3152 | apps/platform/src/features/coaching-sales/ui/coach/clients/assessment-call-block.tsx | packages/ui/src/portal/index.ts | import | yes | no | lateral | present |
+| E3153 | apps/platform/src/features/coaching-sales/ui/coach/clients/client-status-badge.tsx | apps/platform/src/features/coaching-sales/contracts/client-status.ts | import | no | yes | inward | present |
+| E3154 | apps/platform/src/features/coaching-sales/ui/coach/clients/client-status-badge.tsx | apps/platform/src/features/coaching-sales/contracts/coach-clients.ts | type-only import | no | yes | inward | present |
+| E3155 | apps/platform/src/features/coaching-sales/ui/coach/clients/client-status-badge.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E3156 | apps/platform/src/features/coaching-sales/ui/coach/clients/client-status-filter.tsx | apps/platform/src/features/coaching-sales/contracts/client-status.ts | import | no | yes | inward | present |
+| E3157 | apps/platform/src/features/coaching-sales/ui/coach/clients/client-status-filter.tsx | apps/platform/src/features/coaching-sales/ui/coach/clients/roster-listing.ts | import | no | yes | inward | present |
+| E3158 | apps/platform/src/features/coaching-sales/ui/coach/clients/client-status-filter.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E3159 | apps/platform/src/features/coaching-sales/ui/coach/clients/clients-page.tsx | apps/platform/src/features/coaching-sales/contracts/coach-clients.ts | type-only import | no | yes | inward | present |
+| E3160 | apps/platform/src/features/coaching-sales/ui/coach/clients/clients-page.tsx | apps/platform/src/features/coaching-sales/server/guards/coaching-sales-context.server.ts | import | no | no | lateral | present |
+| E3161 | apps/platform/src/features/coaching-sales/ui/coach/clients/clients-page.tsx | apps/platform/src/features/coaching-sales/ui/coach/clients/client-status-filter.tsx | import | no | no | lateral | present |
+| E3162 | apps/platform/src/features/coaching-sales/ui/coach/clients/clients-page.tsx | apps/platform/src/features/coaching-sales/ui/coach/clients/clients-table.tsx | import | no | no | lateral | present |
+| E3163 | apps/platform/src/features/coaching-sales/ui/coach/clients/clients-page.tsx | apps/platform/src/features/coaching-sales/ui/coach/clients/roster-listing.ts | import | no | yes | inward | present |
+| E3164 | apps/platform/src/features/coaching-sales/ui/coach/clients/clients-page.tsx | apps/platform/src/features/coaching-sales/ui/coach/clients/use-roster-params.ts | import | no | no | lateral | present |
+| E3165 | apps/platform/src/features/coaching-sales/ui/coach/clients/clients-page.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E3166 | apps/platform/src/features/coaching-sales/ui/coach/clients/clients-page.tsx | external:react-router | import | n/a | no | lateral | present |
+| E3167 | apps/platform/src/features/coaching-sales/ui/coach/clients/clients-page.tsx | packages/ui/src/layout/index.ts | import | yes | no | lateral | present |
+| E3168 | apps/platform/src/features/coaching-sales/ui/coach/clients/clients-page.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
+| E3169 | apps/platform/src/features/coaching-sales/ui/coach/clients/clients-page.tsx | packages/ui/src/portal/index.ts | import | yes | no | lateral | present |
+| E3170 | apps/platform/src/features/coaching-sales/ui/coach/clients/clients-page.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E3171 | apps/platform/src/features/coaching-sales/ui/coach/clients/clients-table.tsx | apps/platform/src/features/coaching-sales/contracts/bundle-cards.ts | import | no | yes | inward | present |
+| E3172 | apps/platform/src/features/coaching-sales/ui/coach/clients/clients-table.tsx | apps/platform/src/features/coaching-sales/contracts/coach-clients.ts | type-only import | no | yes | inward | present |
+| E3173 | apps/platform/src/features/coaching-sales/ui/coach/clients/clients-table.tsx | apps/platform/src/features/coaching-sales/contracts/paths.ts | import | no | yes | inward | present |
+| E3174 | apps/platform/src/features/coaching-sales/ui/coach/clients/clients-table.tsx | apps/platform/src/features/coaching-sales/ui/coach/clients/client-status-badge.tsx | import | no | no | lateral | present |
+| E3175 | apps/platform/src/features/coaching-sales/ui/coach/clients/clients-table.tsx | apps/platform/src/features/coaching-sales/ui/coach/clients/roster-listing.ts | import | no | yes | inward | present |
+| E3177 | apps/platform/src/features/coaching-sales/ui/coach/clients/clients-table.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E3178 | apps/platform/src/features/coaching-sales/ui/coach/clients/clients-table.tsx | external:react | type-only import | n/a | no | lateral | present |
+| E3179 | apps/platform/src/features/coaching-sales/ui/coach/clients/clients-table.tsx | external:react-router | import | n/a | no | lateral | present |
+| E3180 | apps/platform/src/features/coaching-sales/ui/coach/clients/clients-table.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
+| E3181 | apps/platform/src/features/coaching-sales/ui/coach/clients/clients-table.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E3182 | apps/platform/src/features/coaching-sales/ui/coach/clients/invitation-block.tsx | apps/platform/src/features/assessment-calls/contracts/visitor-profile.ts | import | yes | yes | inward | present |
+| E3183 | apps/platform/src/features/coaching-sales/ui/coach/clients/invitation-block.tsx | apps/platform/src/features/coaching-sales/contracts/coach-clients.ts | import | no | yes | inward | present |
+| E3184 | apps/platform/src/features/coaching-sales/ui/coach/clients/invitation-block.tsx | apps/platform/src/features/coaching-sales/contracts/paths.ts | import | no | yes | inward | present |
+| E3185 | apps/platform/src/features/coaching-sales/ui/coach/clients/invitation-block.tsx | apps/platform/src/features/coaching-sales/ui/coach/clients/invitation-state-line.ts | import | no | yes | inward | present |
+| E3186 | apps/platform/src/features/coaching-sales/ui/coach/clients/invitation-block.tsx | apps/platform/src/features/coaching-sales/ui/coach/use-confirmed-json-action.ts | import | no | no | lateral | present |
+| E3188 | apps/platform/src/features/coaching-sales/ui/coach/clients/invitation-block.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E3189 | apps/platform/src/features/coaching-sales/ui/coach/clients/invitation-block.tsx | external:react-router | import | n/a | no | lateral | present |
+| E3190 | apps/platform/src/features/coaching-sales/ui/coach/clients/invitation-block.tsx | packages/domain/src/assessment-call/index.ts | type-only import | yes | yes | inward | present |
+| E3191 | apps/platform/src/features/coaching-sales/ui/coach/clients/invitation-block.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
+| E3192 | apps/platform/src/features/coaching-sales/ui/coach/clients/invitation-block.tsx | packages/ui/src/overlays/index.ts | import | yes | no | lateral | present |
+| E3193 | apps/platform/src/features/coaching-sales/ui/coach/clients/invitation-block.tsx | packages/ui/src/portal/index.ts | import | yes | no | lateral | present |
+| E3194 | apps/platform/src/features/coaching-sales/ui/coach/clients/invitation-block.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E3195 | apps/platform/src/features/coaching-sales/ui/coach/clients/invitation-state-line.ts | apps/platform/src/features/coaching-sales/contracts/coach-clients.ts | type-only import | no | no | lateral | present |
+| E3197 | apps/platform/src/features/coaching-sales/ui/coach/clients/roster-listing.ts | apps/platform/src/features/coaching-sales/contracts/client-status.ts | import | no | no | lateral | present |
+| E3198 | apps/platform/src/features/coaching-sales/ui/coach/clients/roster-listing.ts | apps/platform/src/features/coaching-sales/contracts/coach-clients.ts | type-only import | no | no | lateral | present |
+| E3199 | apps/platform/src/features/coaching-sales/ui/coach/clients/subscription-summary.tsx | apps/platform/src/features/assessment-calls/contracts/visitor-profile.ts | import | yes | yes | inward | present |
+| E3200 | apps/platform/src/features/coaching-sales/ui/coach/clients/subscription-summary.tsx | apps/platform/src/features/coaching-sales/contracts/bundle-cards.ts | import | no | yes | inward | present |
+| E3201 | apps/platform/src/features/coaching-sales/ui/coach/clients/subscription-summary.tsx | apps/platform/src/features/coaching-sales/contracts/coach-clients.ts | type-only import | no | yes | inward | present |
+| E3203 | apps/platform/src/features/coaching-sales/ui/coach/clients/subscription-summary.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E3204 | apps/platform/src/features/coaching-sales/ui/coach/clients/subscription-summary.tsx | packages/domain/src/assessment-call/index.ts | type-only import | yes | yes | inward | present |
+| E3205 | apps/platform/src/features/coaching-sales/ui/coach/clients/subscription-summary.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
+| E3206 | apps/platform/src/features/coaching-sales/ui/coach/clients/subscription-summary.tsx | packages/ui/src/portal/index.ts | import | yes | no | lateral | present |
+| E3207 | apps/platform/src/features/coaching-sales/ui/coach/clients/use-roster-params.ts | apps/platform/src/features/coaching-sales/ui/coach/clients/roster-listing.ts | import | no | yes | inward | present |
+| E3208 | apps/platform/src/features/coaching-sales/ui/coach/clients/use-roster-params.ts | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
+| E3209 | apps/platform/src/features/coaching-sales/ui/coach/clients/view-client-link.tsx | apps/platform/src/features/coaching-sales/contracts/paths.ts | import | no | yes | inward | present |
+| E3210 | apps/platform/src/features/coaching-sales/ui/coach/clients/view-client-link.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E3211 | apps/platform/src/features/coaching-sales/ui/coach/clients/view-client-link.tsx | packages/ui/src/appointments/index.ts | import | yes | no | lateral | present |
+| E3212 | apps/platform/src/features/coaching-sales/ui/coach/use-confirmed-json-action.ts | external:react | import | n/a | no | lateral | present |
+| E3213 | apps/platform/src/features/coaching-sales/ui/coach/use-confirmed-json-action.ts | external:react-router | import | n/a | no | lateral | present |
+| E3214 | apps/platform/src/features/coaching-sales/ui/coach/use-confirmed-json-action.ts | external:zod | type-only import | n/a | no | lateral | present |
+| E3215 | apps/platform/src/features/coaching-sales/ui/coach/use-confirmed-json-action.ts | packages/ui/src/toast/index.ts | import | yes | no | lateral | present |
+| E3221 | apps/platform/src/root.tsx | apps/platform/src/features/accounts/contracts/paths.ts | import | yes | yes | inward | present |
+| E3222 | apps/platform/src/root.tsx | external:@clerk/react-router | import | n/a | no | lateral | present |
+| E3223 | apps/platform/src/root.tsx | external:motion/react | import | n/a | no | lateral | present |
+| E3224 | apps/platform/src/root.tsx | external:react-router | import | n/a | no | lateral | present |
+| E3225 | apps/platform/src/routes.ts | apps/platform/src/features/client-onboarding/routes.ts | import | yes | no | lateral | present |
+| E3226 | apps/platform/src/routes.ts | apps/platform/src/features/client-profile/routes.ts | import | yes | no | lateral | present |
+| E3227 | apps/platform/src/routes.ts | external:@react-router/dev/routes | type-only import | n/a | no | lateral | present |
+| E3228 | apps/platform/src/server/container.server.ts | apps/platform/src/features/client-onboarding/server/client-onboarding-composition.server.ts | import | yes | no | lateral | present |
+| E3229 | apps/platform/src/server/container.server.ts | apps/platform/src/features/client-profile/server/client-profile-composition.server.ts | import | yes | no | lateral | present |
+| E3230 | apps/platform/src/server/container.server.ts | packages/infrastructure/src/client-media/index.server.ts | import | yes | yes | inward | present |
+| E3231 | apps/platform/src/server/container.server.ts | packages/infrastructure/src/images/index.server.ts | import | yes | yes | inward | present |
+| E3232 | apps/platform/src/server/feature-contexts.server.ts | apps/platform/src/features/client-onboarding/server/guards/client-onboarding-context.server.ts | import | yes | yes | inward | present |
+| E3233 | apps/platform/src/server/feature-contexts.server.ts | apps/platform/src/features/client-profile/server/guards/client-profile-context.server.ts | import | yes | yes | inward | present |
+| E3234 | apps/platform/src/server/logger.server.ts | packages/domain/src/client-onboarding/index.ts | type-only import | yes | no | lateral | present |
+| E3235 | apps/platform/src/server/logger.server.ts | packages/domain/src/client-profile/index.ts | type-only import | yes | no | lateral | present |
+| E3236 | apps/platform/src/server/logger.server.ts | packages/domain/src/client-roster/index.ts | type-only import | yes | no | lateral | present |
+| E3237 | apps/platform/src/surfaces/client-portal/pages/home.tsx | apps/platform/src/features/client-onboarding/server/guards/client-onboarding-context.server.ts | import | yes | no | lateral | present |
+| E3238 | apps/platform/src/surfaces/client-portal/pages/home.tsx | apps/platform/src/features/client-profile/server/guards/client-profile-context.server.ts | import | yes | no | lateral | present |
+| E3239 | apps/platform/src/surfaces/client-portal/pages/home.tsx | apps/platform/src/features/client-profile/ui/client/nudge/measurements-nudge.tsx | import | yes | no | lateral | present |
+| E3240 | apps/platform/src/surfaces/client-portal/pages/home.tsx | apps/platform/src/features/coaching-sales/server/guards/coaching-sales-context.server.ts | import | yes | no | lateral | present |
+| E3241 | apps/platform/src/surfaces/client-portal/pages/home.tsx | apps/platform/src/features/coaching-sales/ui/client/status/program-status-card.tsx | import | yes | no | lateral | present |
+| E3242 | apps/platform/src/surfaces/client-portal/pages/home.tsx | apps/platform/src/surfaces/client-portal/shell/client-identity-presentation.ts | type-only import | no | yes | inward | present |
+| E3243 | apps/platform/src/surfaces/client-portal/pages/home.tsx | apps/platform/src/surfaces/client-portal/shell/client-portal-meta.ts | import | no | yes | inward | present |
+| E3244 | apps/platform/src/surfaces/client-portal/pages/home.tsx | external:react-router | import | n/a | no | lateral | present |
+| E3245 | apps/platform/src/surfaces/client-portal/pages/home.tsx | packages/ui/src/portal/index.ts | import | yes | no | lateral | present |
+| E3246 | apps/platform/src/surfaces/client-portal/routes.ts | apps/platform/src/features/client-onboarding/routes.ts | import | yes | no | lateral | present |
+| E3247 | apps/platform/src/surfaces/client-portal/routes.ts | apps/platform/src/features/client-profile/routes.ts | import | yes | no | lateral | present |
+| E3248 | apps/platform/src/surfaces/client-portal/routes.ts | external:@react-router/dev/routes | import | n/a | no | lateral | present |
+| E3249 | apps/platform/src/surfaces/client-portal/shell/client-identity-presentation.ts | apps/platform/src/features/coaching-sales/contracts/client-journey.ts | type-only import | yes | no | lateral | present |
+| E3250 | apps/platform/src/surfaces/client-portal/shell/client-name-block.tsx | apps/platform/src/features/client-profile/contracts/paths.ts | import | yes | yes | inward | present |
+| E3251 | apps/platform/src/surfaces/client-portal/shell/client-name-block.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E3252 | apps/platform/src/surfaces/client-portal/shell/client-name-block.tsx | external:react-router | import | n/a | no | lateral | present |
+| E3253 | apps/platform/src/surfaces/client-portal/shell/client-name-block.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
+| E3254 | apps/platform/src/surfaces/client-portal/shell/client-portal-meta.ts | external:react-router | type-only import | n/a | yes | outward | present |
+| E3255 | apps/platform/src/surfaces/client-portal/shell/client-portal-meta.ts | packages/infrastructure/src/pwa/index.ts | import | yes | yes | outward | present |
+| E3256 | apps/platform/src/surfaces/client-portal/shell/layout.tsx | apps/platform/src/features/accounts/ui/shared/sign-out-control.tsx | import | yes | no | lateral | present |
+| E3257 | apps/platform/src/surfaces/client-portal/shell/layout.tsx | apps/platform/src/features/coaching-sales/server/guards/coaching-sales-context.server.ts | import | yes | no | lateral | present |
+| E3258 | apps/platform/src/surfaces/client-portal/shell/layout.tsx | apps/platform/src/surfaces/client-portal/shell/client-identity-presentation.ts | import | no | yes | inward | present |
+| E3259 | apps/platform/src/surfaces/client-portal/shell/layout.tsx | apps/platform/src/surfaces/client-portal/shell/client-name-block.tsx | import | no | no | lateral | present |
+| E3260 | apps/platform/src/surfaces/client-portal/shell/layout.tsx | apps/platform/src/surfaces/client-portal/shell/client-portal-meta.ts | import | no | yes | inward | present |
+| E3261 | apps/platform/src/surfaces/client-portal/shell/layout.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E3262 | apps/platform/src/surfaces/client-portal/shell/layout.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E3264 | apps/platform/src/surfaces/client-portal/shell/navigation-links.ts | apps/platform/src/features/client-profile/contracts/paths.ts | import | yes | no | lateral | present |
+| E3265 | apps/platform/src/surfaces/client-portal/shell/navigation-links.ts | external:lucide-react | import | n/a | yes | outward | present |
+| E3266 | apps/platform/src/surfaces/client-portal/shell/navigation-links.ts | packages/ui/src/layout/index.ts | type-only import | yes | yes | outward | present |
+| E3267 | apps/platform/src/surfaces/coach-portal/pages/assessment-calls.tsx | apps/platform/src/features/coaching-sales/ui/coach/call-sales/call-sales-state-badge.tsx | import | yes | yes | outward | present |
+| E3268 | apps/platform/src/surfaces/coach-portal/pages/assessment-calls.tsx | apps/platform/src/features/coaching-sales/ui/coach/call-sales/payment-link-action.tsx | import | yes | yes | outward | present |
+| E3269 | apps/platform/src/surfaces/coach-portal/pages/assessment-calls.tsx | apps/platform/src/features/coaching-sales/ui/coach/call-sales/pricing-tier-label.ts | import | yes | no | lateral | present |
+| E3270 | apps/platform/src/surfaces/coach-portal/pages/assessment-calls.tsx | apps/platform/src/features/coaching-sales/ui/coach/call-sales/sales-status-filter.tsx | import | yes | yes | outward | present |
+| E3271 | apps/platform/src/surfaces/coach-portal/pages/assessment-calls.tsx | apps/platform/src/features/coaching-sales/ui/coach/clients/view-client-link.tsx | import | yes | yes | outward | present |
+| E3272 | apps/platform/src/surfaces/coach-portal/pages/client.tsx | apps/platform/src/features/client-onboarding/server/guards/client-onboarding-context.server.ts | import | yes | yes | outward | present |
+| E3273 | apps/platform/src/surfaces/coach-portal/pages/client.tsx | apps/platform/src/features/client-onboarding/ui/coach/onboarding/onboarding-panel.tsx | import | yes | yes | outward | present |
+| E3274 | apps/platform/src/surfaces/coach-portal/pages/client.tsx | apps/platform/src/features/client-profile/contracts/measurements.ts | import | yes | no | lateral | present |
+| E3275 | apps/platform/src/surfaces/coach-portal/pages/client.tsx | apps/platform/src/features/client-profile/server/guards/client-profile-context.server.ts | import | yes | yes | outward | present |
+| E3276 | apps/platform/src/surfaces/coach-portal/pages/client.tsx | apps/platform/src/features/client-profile/ui/coach/profile/client-profile-block.tsx | import | yes | yes | outward | present |
+| E3277 | apps/platform/src/surfaces/coach-portal/pages/client.tsx | apps/platform/src/features/client-profile/ui/shared/measurements/measurements-table.tsx | import | yes | yes | outward | present |
+| E3278 | apps/platform/src/surfaces/coach-portal/pages/client.tsx | apps/platform/src/features/client-profile/ui/shared/photos/photo-view-dialog.tsx | import | yes | yes | outward | present |
+| E3279 | apps/platform/src/surfaces/coach-portal/pages/client.tsx | apps/platform/src/features/coaching-sales/contracts/paths.ts | import | yes | no | lateral | present |
+| E3280 | apps/platform/src/surfaces/coach-portal/pages/client.tsx | apps/platform/src/features/coaching-sales/server/guards/coaching-sales-context.server.ts | import | yes | yes | outward | present |
+| E3281 | apps/platform/src/surfaces/coach-portal/pages/client.tsx | apps/platform/src/features/coaching-sales/ui/coach/clients/assessment-call-block.tsx | import | yes | yes | outward | present |
+| E3282 | apps/platform/src/surfaces/coach-portal/pages/client.tsx | apps/platform/src/features/coaching-sales/ui/coach/clients/client-status-badge.tsx | import | yes | yes | outward | present |
+| E3283 | apps/platform/src/surfaces/coach-portal/pages/client.tsx | apps/platform/src/features/coaching-sales/ui/coach/clients/invitation-block.tsx | import | yes | yes | outward | present |
+| E3284 | apps/platform/src/surfaces/coach-portal/pages/client.tsx | apps/platform/src/features/coaching-sales/ui/coach/clients/roster-listing.ts | import | yes | no | lateral | present |
+| E3285 | apps/platform/src/surfaces/coach-portal/pages/client.tsx | apps/platform/src/features/coaching-sales/ui/coach/clients/subscription-summary.tsx | import | yes | yes | outward | present |
+| E3286 | apps/platform/src/surfaces/coach-portal/pages/client.tsx | external:lucide-react | import | n/a | yes | outward | present |
+| E3287 | apps/platform/src/surfaces/coach-portal/pages/client.tsx | external:react | import | n/a | yes | outward | present |
+| E3288 | apps/platform/src/surfaces/coach-portal/pages/client.tsx | external:react-router | import | n/a | yes | outward | present |
+| E3289 | apps/platform/src/surfaces/coach-portal/pages/client.tsx | packages/ui/src/layout/index.ts | import | yes | yes | outward | present |
+| E3290 | apps/platform/src/surfaces/coach-portal/pages/client.tsx | packages/ui/src/lib/index.ts | import | yes | yes | outward | present |
+| E3291 | apps/platform/src/surfaces/coach-portal/pages/client.tsx | packages/ui/src/primitives/index.ts | import | yes | yes | outward | present |
+| E3292 | apps/platform/src/surfaces/coach-portal/routes.ts | apps/platform/src/features/coaching-sales/contracts/paths.ts | import | yes | yes | inward | present |
+| E3293 | apps/platform/src/surfaces/coach-portal/routes.ts | apps/platform/src/features/coaching-sales/routes.ts | import | yes | no | lateral | present |
+| E3294 | apps/platform/src/surfaces/coach-portal/routes.ts | external:@react-router/dev/routes | import | n/a | no | lateral | present |
+| E3295 | apps/platform/src/surfaces/coach-portal/shell/layout.tsx | external:react-router | import | n/a | no | lateral | present |
+| E3297 | apps/platform/src/surfaces/coach-portal/shell/navigation-links.tsx | apps/platform/src/features/coaching-sales/contracts/paths.ts | import | yes | no | lateral | present |
+| E3298 | packages/config/src/concerns/client-media.ts | external:zod | import | n/a | no | lateral | present |
+| E3299 | packages/config/src/concerns/client-media.ts | packages/config/src/concerns/app.ts | import | no | no | lateral | present |
+| E3300 | packages/config/src/index.ts | packages/config/src/concerns/client-media.ts | type-only import | no | no | lateral | present |
+| E3301 | packages/config/src/runtime-environment.ts | packages/config/src/concerns/client-media.ts | import | no | no | lateral | present |
+| E3302 | packages/domain/src/client-invitation/index.ts | packages/domain/src/client-invitation/read-client-invitation-use-case.ts | re-export | no | no | lateral | present |
+| E3303 | packages/domain/src/client-invitation/index.ts | packages/domain/src/client-invitation/resend-invitation-use-case.ts | re-export | no | no | lateral | present |
+| E3304 | packages/domain/src/client-invitation/read-client-invitation-use-case.ts | packages/domain/src/client-invitation/client-invitation.ts | type-only import | no | yes | inward | present |
+| E3305 | packages/domain/src/client-invitation/read-client-invitation-use-case.ts | packages/domain/src/client-invitation/client-invitations.ts | type-only import | no | no | lateral | present |
+| E3306 | packages/domain/src/client-invitation/read-client-invitation-use-case.ts | packages/domain/src/shared/index.ts | type-only import | no | no | lateral | present |
+| E3307 | packages/domain/src/client-invitation/resend-invitation-use-case.ts | packages/domain/src/client-invitation/client-invitation-incidents.ts | type-only import | no | no | lateral | present |
+| E3308 | packages/domain/src/client-invitation/resend-invitation-use-case.ts | packages/domain/src/client-invitation/client-invitation-notifications.ts | type-only import | no | no | lateral | present |
+| E3309 | packages/domain/src/client-invitation/resend-invitation-use-case.ts | packages/domain/src/client-invitation/client-invitation.ts | type-only import | no | yes | inward | present |
+| E3310 | packages/domain/src/client-invitation/resend-invitation-use-case.ts | packages/domain/src/client-invitation/client-invitations.ts | type-only import | no | no | lateral | present |
+| E3311 | packages/domain/src/client-invitation/resend-invitation-use-case.ts | packages/domain/src/client-invitation/identity-invitations.ts | type-only import | no | no | lateral | present |
+| E3312 | packages/domain/src/client-invitation/resend-invitation-use-case.ts | packages/domain/src/client-invitation/invitation-token.ts | type-only import | no | no | lateral | present |
+| E3313 | packages/domain/src/client-invitation/resend-invitation-use-case.ts | packages/domain/src/client-invitation/invited-client.ts | type-only import | no | no | lateral | present |
+| E3314 | packages/domain/src/client-invitation/resend-invitation-use-case.ts | packages/domain/src/shared/index.ts | type-only import | no | no | lateral | present |
+| E3315 | packages/domain/src/client-journey/client-journey.ts | packages/domain/src/client-onboarding/index.ts | import | no | no | lateral | present |
+| E3316 | packages/domain/src/client-journey/client-subscription-starts.ts | packages/domain/src/coaching-subscription/index.ts | type-only import | no | no | lateral | present |
+| E3317 | packages/domain/src/client-journey/index.ts | packages/domain/src/client-journey/client-subscription-starts.ts | type-only import | no | no | lateral | present |
+| E3318 | packages/domain/src/client-journey/index.ts | packages/domain/src/client-journey/read-program-status-use-case.ts | re-export | no | no | lateral | present |
+| E3319 | packages/domain/src/client-journey/read-program-status-use-case.ts | packages/domain/src/client-journey/client-journey.ts | type-only import | no | yes | inward | present |
+| E3320 | packages/domain/src/client-journey/read-program-status-use-case.ts | packages/domain/src/client-journey/client-journeys.ts | type-only import | no | no | lateral | present |
+| E3321 | packages/domain/src/client-journey/read-program-status-use-case.ts | packages/domain/src/client-journey/client-subscription-starts.ts | type-only import | no | no | lateral | present |
+| E3322 | packages/domain/src/client-journey/read-program-status-use-case.ts | packages/domain/src/coaching-subscription/index.ts | import | no | no | lateral | present |
+| E3323 | packages/domain/src/client-onboarding/answer-onboarding-details-use-case.ts | packages/domain/src/client-onboarding/client-onboarding-incidents.ts | type-only import | no | no | lateral | present |
+| E3324 | packages/domain/src/client-onboarding/answer-onboarding-details-use-case.ts | packages/domain/src/client-onboarding/client-onboarding-source.ts | type-only import | no | no | lateral | present |
+| E3325 | packages/domain/src/client-onboarding/answer-onboarding-details-use-case.ts | packages/domain/src/client-onboarding/client-onboarding.ts | type-only import | no | yes | inward | present |
+| E3326 | packages/domain/src/client-onboarding/answer-onboarding-details-use-case.ts | packages/domain/src/client-onboarding/onboarding-answers.ts | type-only import | no | yes | inward | present |
+| E3327 | packages/domain/src/client-onboarding/answer-onboarding-details-use-case.ts | packages/domain/src/client-onboarding/onboarding-clients.ts | type-only import | no | no | lateral | present |
+| E3328 | packages/domain/src/client-onboarding/answer-onboarding-details-use-case.ts | packages/domain/src/client-onboarding/onboarding-profile-facts.ts | import | no | yes | inward | present |
+| E3329 | packages/domain/src/client-onboarding/answer-onboarding-details-use-case.ts | packages/domain/src/client-onboarding/onboarding-review.ts | import | no | yes | inward | present |
+| E3330 | packages/domain/src/client-onboarding/answer-onboarding-details-use-case.ts | packages/domain/src/client-onboarding/onboarding-reviews.ts | type-only import | no | yes | inward | present |
+| E3331 | packages/domain/src/client-onboarding/answer-onboarding-details-use-case.ts | packages/domain/src/client-profile/index.ts | import | no | no | lateral | present |
+| E3332 | packages/domain/src/client-onboarding/answer-onboarding-details-use-case.ts | packages/domain/src/shared/index.ts | type-only import | no | no | lateral | present |
+| E3333 | packages/domain/src/client-onboarding/answer-onboarding-details-use-case.ts | packages/domain/src/unit-preference/index.ts | import | no | no | lateral | present |
+| E3334 | packages/domain/src/client-onboarding/approve-onboarding-answers-use-case.ts | packages/domain/src/client-onboarding/client-onboarding-incidents.ts | type-only import | no | no | lateral | present |
+| E3335 | packages/domain/src/client-onboarding/approve-onboarding-answers-use-case.ts | packages/domain/src/client-onboarding/client-onboarding-source.ts | type-only import | no | no | lateral | present |
+| E3336 | packages/domain/src/client-onboarding/approve-onboarding-answers-use-case.ts | packages/domain/src/client-onboarding/onboarding-clients.ts | type-only import | no | no | lateral | present |
+| E3337 | packages/domain/src/client-onboarding/approve-onboarding-answers-use-case.ts | packages/domain/src/client-onboarding/onboarding-review.ts | import | no | yes | inward | present |
+| E3338 | packages/domain/src/client-onboarding/approve-onboarding-answers-use-case.ts | packages/domain/src/client-onboarding/onboarding-reviews.ts | type-only import | no | yes | inward | present |
+| E3339 | packages/domain/src/client-onboarding/approve-onboarding-answers-use-case.ts | packages/domain/src/shared/index.ts | type-only import | no | no | lateral | present |
+| E3340 | packages/domain/src/client-onboarding/client-onboarding-changes.ts | packages/domain/src/client-onboarding/onboarding-draft.ts | type-only import | no | yes | outward | present |
+| E3341 | packages/domain/src/client-onboarding/client-onboarding-changes.ts | packages/domain/src/client-onboarding/onboarding-submission.ts | type-only import | no | no | lateral | present |
+| E3342 | packages/domain/src/client-onboarding/client-onboarding-changes.ts | packages/domain/src/client-profile/index.ts | type-only import | no | no | lateral | present |
+| E3343 | packages/domain/src/client-onboarding/client-onboarding-changes.ts | packages/domain/src/measurement/index.ts | type-only import | no | no | lateral | present |
+| E3344 | packages/domain/src/client-onboarding/client-onboarding-incidents.ts | packages/domain/src/client-onboarding/onboarding-schema.ts | type-only import | no | yes | inward | present |
+| E3345 | packages/domain/src/client-onboarding/client-onboarding-incidents.ts | packages/domain/src/client-onboarding/onboarding-submission.ts | type-only import | no | yes | inward | present |
+| E3346 | packages/domain/src/client-onboarding/client-onboarding-source.ts | packages/domain/src/client-onboarding/onboarding-draft.ts | type-only import | no | no | lateral | present |
+| E3347 | packages/domain/src/client-onboarding/client-onboarding-source.ts | packages/domain/src/client-onboarding/onboarding-submission.ts | type-only import | no | yes | inward | present |
+| E3348 | packages/domain/src/client-onboarding/client-onboarding.ts | packages/domain/src/assessment-call/index.ts | type-only import | no | no | lateral | present |
+| E3349 | packages/domain/src/client-onboarding/client-onboarding.ts | packages/domain/src/client-onboarding/onboarding-answers.ts | import | no | no | lateral | present |
+| E3350 | packages/domain/src/client-onboarding/client-onboarding.ts | packages/domain/src/client-onboarding/onboarding-clients.ts | type-only import | no | yes | outward | present |
+| E3351 | packages/domain/src/client-onboarding/client-onboarding.ts | packages/domain/src/client-onboarding/onboarding-consents.ts | type-only import | no | yes | outward | present |
+| E3352 | packages/domain/src/client-onboarding/client-onboarding.ts | packages/domain/src/client-onboarding/onboarding-draft.ts | type-only import | no | yes | outward | present |
+| E3353 | packages/domain/src/client-onboarding/client-onboarding.ts | packages/domain/src/client-onboarding/onboarding-measurements.ts | import | no | no | lateral | present |
+| E3354 | packages/domain/src/client-onboarding/client-onboarding.ts | packages/domain/src/client-onboarding/onboarding-schema.ts | import | no | no | lateral | present |
+| E3355 | packages/domain/src/client-onboarding/client-onboarding.ts | packages/domain/src/client-onboarding/onboarding-submission.ts | import | no | no | lateral | present |
+| E3356 | packages/domain/src/client-onboarding/client-onboarding.ts | packages/domain/src/client-onboarding/onboarding-validation.ts | import | no | no | lateral | present |
+| E3357 | packages/domain/src/client-onboarding/client-onboarding.ts | packages/domain/src/measurement/index.ts | type-only import | no | no | lateral | present |
+| E3358 | packages/domain/src/client-onboarding/client-onboarding.ts | packages/domain/src/unit-preference/index.ts | type-only import | no | no | lateral | present |
+| E3359 | packages/domain/src/client-onboarding/detail-request.ts | packages/domain/src/client-onboarding/client-onboarding.ts | type-only import | no | no | lateral | present |
+| E3360 | packages/domain/src/client-onboarding/detail-request.ts | packages/domain/src/client-onboarding/onboarding-answers.ts | import | no | no | lateral | present |
+| E3361 | packages/domain/src/client-onboarding/detail-request.ts | packages/domain/src/client-onboarding/onboarding-schema.ts | type-only import | no | no | lateral | present |
+| E3362 | packages/domain/src/client-onboarding/index.ts | packages/domain/src/client-onboarding/answer-onboarding-details-use-case.ts | re-export | no | no | lateral | present |
+| E3363 | packages/domain/src/client-onboarding/index.ts | packages/domain/src/client-onboarding/approve-onboarding-answers-use-case.ts | re-export | no | no | lateral | present |
+| E3364 | packages/domain/src/client-onboarding/index.ts | packages/domain/src/client-onboarding/client-onboarding-changes.ts | type-only import | no | no | lateral | present |
+| E3365 | packages/domain/src/client-onboarding/index.ts | packages/domain/src/client-onboarding/client-onboarding-incidents.ts | type-only import | no | no | lateral | present |
+| E3366 | packages/domain/src/client-onboarding/index.ts | packages/domain/src/client-onboarding/client-onboarding-source.ts | type-only import | no | no | lateral | present |
+| E3367 | packages/domain/src/client-onboarding/index.ts | packages/domain/src/client-onboarding/client-onboarding.ts | re-export | no | no | lateral | present |
+| E3368 | packages/domain/src/client-onboarding/index.ts | packages/domain/src/client-onboarding/detail-request.ts | re-export | no | no | lateral | present |
+| E3369 | packages/domain/src/client-onboarding/index.ts | packages/domain/src/client-onboarding/onboarding-answers.ts | re-export | no | no | lateral | present |
+| E3370 | packages/domain/src/client-onboarding/index.ts | packages/domain/src/client-onboarding/onboarding-clients.ts | type-only import | no | no | lateral | present |
+| E3371 | packages/domain/src/client-onboarding/index.ts | packages/domain/src/client-onboarding/onboarding-consents.ts | type-only import | no | no | lateral | present |
+| E3372 | packages/domain/src/client-onboarding/index.ts | packages/domain/src/client-onboarding/onboarding-details-notifications.ts | type-only import | no | no | lateral | present |
+| E3373 | packages/domain/src/client-onboarding/index.ts | packages/domain/src/client-onboarding/onboarding-draft.ts | re-export | no | no | lateral | present |
+| E3374 | packages/domain/src/client-onboarding/index.ts | packages/domain/src/client-onboarding/onboarding-profile-facts.ts | re-export | no | no | lateral | present |
+| E3375 | packages/domain/src/client-onboarding/index.ts | packages/domain/src/client-onboarding/onboarding-review-stamps.ts | type-only import | no | no | lateral | present |
+| E3376 | packages/domain/src/client-onboarding/index.ts | packages/domain/src/client-onboarding/onboarding-review.ts | re-export | no | no | lateral | present |
+| E3377 | packages/domain/src/client-onboarding/index.ts | packages/domain/src/client-onboarding/onboarding-reviews.ts | type-only import | no | no | lateral | present |
+| E3378 | packages/domain/src/client-onboarding/index.ts | packages/domain/src/client-onboarding/onboarding-schema.ts | re-export | no | no | lateral | present |
+| E3379 | packages/domain/src/client-onboarding/index.ts | packages/domain/src/client-onboarding/onboarding-submission-stamps.ts | type-only import | no | no | lateral | present |
+| E3380 | packages/domain/src/client-onboarding/index.ts | packages/domain/src/client-onboarding/onboarding-submission.ts | re-export | no | no | lateral | present |
+| E3381 | packages/domain/src/client-onboarding/index.ts | packages/domain/src/client-onboarding/onboarding-validation.ts | re-export | no | no | lateral | present |
+| E3382 | packages/domain/src/client-onboarding/index.ts | packages/domain/src/client-onboarding/open-onboarding-review-use-case.ts | re-export | no | no | lateral | present |
+| E3383 | packages/domain/src/client-onboarding/index.ts | packages/domain/src/client-onboarding/read-client-onboarding-use-case.ts | re-export | no | no | lateral | present |
+| E3384 | packages/domain/src/client-onboarding/index.ts | packages/domain/src/client-onboarding/read-onboarding-review-use-case.ts | re-export | no | no | lateral | present |
+| E3385 | packages/domain/src/client-onboarding/index.ts | packages/domain/src/client-onboarding/read-open-detail-request-use-case.ts | re-export | no | no | lateral | present |
+| E3386 | packages/domain/src/client-onboarding/index.ts | packages/domain/src/client-onboarding/request-onboarding-details-use-case.ts | re-export | no | no | lateral | present |
+| E3387 | packages/domain/src/client-onboarding/index.ts | packages/domain/src/client-onboarding/save-onboarding-draft-use-case.ts | re-export | no | no | lateral | present |
+| E3388 | packages/domain/src/client-onboarding/index.ts | packages/domain/src/client-onboarding/submit-onboarding-use-case.ts | re-export | no | no | lateral | present |
+| E3389 | packages/domain/src/client-onboarding/onboarding-answers.ts | packages/domain/src/client-onboarding/onboarding-schema.ts | type-only import | no | no | lateral | present |
+| E3390 | packages/domain/src/client-onboarding/onboarding-clients.ts | packages/domain/src/assessment-call/index.ts | type-only import | no | no | lateral | present |
+| E3391 | packages/domain/src/client-onboarding/onboarding-clients.ts | packages/domain/src/client-onboarding/onboarding-review-stamps.ts | type-only import | no | no | lateral | present |
+| E3392 | packages/domain/src/client-onboarding/onboarding-draft.ts | packages/domain/src/client-onboarding/onboarding-answers.ts | import | no | yes | inward | present |
+| E3393 | packages/domain/src/client-onboarding/onboarding-draft.ts | packages/domain/src/client-onboarding/onboarding-consents.ts | import | no | no | lateral | present |
+| E3394 | packages/domain/src/client-onboarding/onboarding-measurements.ts | packages/domain/src/client-onboarding/onboarding-answers.ts | type-only import | no | no | lateral | present |
+| E3395 | packages/domain/src/client-onboarding/onboarding-measurements.ts | packages/domain/src/measurement/index.ts | import | no | no | lateral | present |
+| E3396 | packages/domain/src/client-onboarding/onboarding-profile-facts.ts | packages/domain/src/client-onboarding/onboarding-answers.ts | type-only import | no | no | lateral | present |
+| E3397 | packages/domain/src/client-onboarding/onboarding-profile-facts.ts | packages/domain/src/client-profile/index.ts | type-only import | no | no | lateral | present |
+| E3398 | packages/domain/src/client-onboarding/onboarding-review.ts | packages/domain/src/assessment-call/index.ts | type-only import | no | no | lateral | present |
+| E3399 | packages/domain/src/client-onboarding/onboarding-review.ts | packages/domain/src/client-onboarding/client-onboarding.ts | type-only import | no | no | lateral | present |
+| E3400 | packages/domain/src/client-onboarding/onboarding-review.ts | packages/domain/src/client-onboarding/detail-request.ts | import | no | no | lateral | present |
+| E3401 | packages/domain/src/client-onboarding/onboarding-review.ts | packages/domain/src/client-onboarding/onboarding-answers.ts | import | no | no | lateral | present |
+| E3402 | packages/domain/src/client-onboarding/onboarding-review.ts | packages/domain/src/client-onboarding/onboarding-clients.ts | type-only import | no | yes | outward | present |
+| E3403 | packages/domain/src/client-onboarding/onboarding-review.ts | packages/domain/src/client-onboarding/onboarding-review-stamps.ts | type-only import | no | yes | outward | present |
+| E3404 | packages/domain/src/client-onboarding/onboarding-review.ts | packages/domain/src/client-onboarding/onboarding-schema.ts | import | no | no | lateral | present |
+| E3405 | packages/domain/src/client-onboarding/onboarding-review.ts | packages/domain/src/client-onboarding/onboarding-submission.ts | import | no | no | lateral | present |
+| E3406 | packages/domain/src/client-onboarding/onboarding-review.ts | packages/domain/src/client-onboarding/onboarding-validation.ts | import | no | no | lateral | present |
+| E3407 | packages/domain/src/client-onboarding/onboarding-review.ts | packages/domain/src/unit-preference/index.ts | type-only import | no | no | lateral | present |
+| E3408 | packages/domain/src/client-onboarding/onboarding-reviews.ts | packages/domain/src/client-onboarding/detail-request.ts | type-only import | no | no | lateral | present |
+| E3409 | packages/domain/src/client-onboarding/onboarding-reviews.ts | packages/domain/src/client-onboarding/onboarding-answers.ts | type-only import | no | no | lateral | present |
+| E3410 | packages/domain/src/client-onboarding/onboarding-reviews.ts | packages/domain/src/client-onboarding/onboarding-review-stamps.ts | type-only import | no | yes | outward | present |
+| E3411 | packages/domain/src/client-onboarding/onboarding-reviews.ts | packages/domain/src/client-profile/index.ts | type-only import | no | no | lateral | present |
+| E3412 | packages/domain/src/client-onboarding/onboarding-schema.ts | packages/domain/src/assessment-call/index.ts | type-only import | no | no | lateral | present |
+| E3413 | packages/domain/src/client-onboarding/onboarding-schema.ts | packages/domain/src/measurement/index.ts | import | no | no | lateral | present |
+| E3414 | packages/domain/src/client-onboarding/onboarding-submission.ts | packages/domain/src/client-onboarding/onboarding-answers.ts | type-only import | no | no | lateral | present |
+| E3415 | packages/domain/src/client-onboarding/onboarding-submission.ts | packages/domain/src/client-onboarding/onboarding-consents.ts | type-only import | no | yes | outward | present |
+| E3416 | packages/domain/src/client-onboarding/onboarding-validation.ts | packages/domain/src/client-onboarding/onboarding-answers.ts | type-only import | no | no | lateral | present |
+| E3417 | packages/domain/src/client-onboarding/onboarding-validation.ts | packages/domain/src/client-onboarding/onboarding-schema.ts | type-only import | no | no | lateral | present |
+| E3418 | packages/domain/src/client-onboarding/onboarding-validation.ts | packages/domain/src/measurement/index.ts | import | no | no | lateral | present |
+| E3419 | packages/domain/src/client-onboarding/onboarding-validation.ts | packages/domain/src/unit-preference/index.ts | import | no | no | lateral | present |
+| E3420 | packages/domain/src/client-onboarding/open-onboarding-review-use-case.ts | packages/domain/src/client-onboarding/client-onboarding-incidents.ts | type-only import | no | no | lateral | present |
+| E3421 | packages/domain/src/client-onboarding/open-onboarding-review-use-case.ts | packages/domain/src/client-onboarding/client-onboarding-source.ts | type-only import | no | no | lateral | present |
+| E3422 | packages/domain/src/client-onboarding/open-onboarding-review-use-case.ts | packages/domain/src/client-onboarding/onboarding-clients.ts | type-only import | no | no | lateral | present |
+| E3423 | packages/domain/src/client-onboarding/open-onboarding-review-use-case.ts | packages/domain/src/client-onboarding/onboarding-review.ts | import | no | yes | inward | present |
+| E3424 | packages/domain/src/client-onboarding/open-onboarding-review-use-case.ts | packages/domain/src/client-onboarding/onboarding-reviews.ts | type-only import | no | yes | inward | present |
+| E3425 | packages/domain/src/client-onboarding/open-onboarding-review-use-case.ts | packages/domain/src/shared/index.ts | type-only import | no | no | lateral | present |
+| E3426 | packages/domain/src/client-onboarding/read-client-onboarding-use-case.ts | packages/domain/src/client-onboarding/client-onboarding-source.ts | type-only import | no | no | lateral | present |
+| E3427 | packages/domain/src/client-onboarding/read-client-onboarding-use-case.ts | packages/domain/src/client-onboarding/client-onboarding.ts | import | no | yes | inward | present |
+| E3428 | packages/domain/src/client-onboarding/read-client-onboarding-use-case.ts | packages/domain/src/client-onboarding/onboarding-clients.ts | type-only import | no | no | lateral | present |
+| E3429 | packages/domain/src/client-onboarding/read-client-onboarding-use-case.ts | packages/domain/src/unit-preference/index.ts | import | no | no | lateral | present |
+| E3430 | packages/domain/src/client-onboarding/read-onboarding-review-use-case.ts | packages/domain/src/client-onboarding/client-onboarding-incidents.ts | type-only import | no | no | lateral | present |
+| E3431 | packages/domain/src/client-onboarding/read-onboarding-review-use-case.ts | packages/domain/src/client-onboarding/client-onboarding-source.ts | type-only import | no | no | lateral | present |
+| E3432 | packages/domain/src/client-onboarding/read-onboarding-review-use-case.ts | packages/domain/src/client-onboarding/detail-request.ts | type-only import | no | yes | inward | present |
+| E3433 | packages/domain/src/client-onboarding/read-onboarding-review-use-case.ts | packages/domain/src/client-onboarding/onboarding-answers.ts | import | no | yes | inward | present |
+| E3434 | packages/domain/src/client-onboarding/read-onboarding-review-use-case.ts | packages/domain/src/client-onboarding/onboarding-clients.ts | type-only import | no | no | lateral | present |
+| E3435 | packages/domain/src/client-onboarding/read-onboarding-review-use-case.ts | packages/domain/src/client-onboarding/onboarding-review-stamps.ts | type-only import | no | no | lateral | present |
+| E3436 | packages/domain/src/client-onboarding/read-onboarding-review-use-case.ts | packages/domain/src/client-onboarding/onboarding-review.ts | import | no | yes | inward | present |
+| E3437 | packages/domain/src/client-onboarding/read-onboarding-review-use-case.ts | packages/domain/src/client-onboarding/onboarding-reviews.ts | type-only import | no | yes | inward | present |
+| E3438 | packages/domain/src/client-onboarding/read-onboarding-review-use-case.ts | packages/domain/src/client-onboarding/onboarding-schema.ts | type-only import | no | yes | inward | present |
+| E3439 | packages/domain/src/client-onboarding/read-onboarding-review-use-case.ts | packages/domain/src/client-onboarding/onboarding-submission.ts | import | no | yes | inward | present |
+| E3440 | packages/domain/src/client-onboarding/read-onboarding-review-use-case.ts | packages/domain/src/measurement/index.ts | import | no | no | lateral | present |
+| E3441 | packages/domain/src/client-onboarding/read-open-detail-request-use-case.ts | packages/domain/src/client-onboarding/client-onboarding-incidents.ts | type-only import | no | no | lateral | present |
+| E3442 | packages/domain/src/client-onboarding/read-open-detail-request-use-case.ts | packages/domain/src/client-onboarding/client-onboarding-source.ts | type-only import | no | no | lateral | present |
+| E3443 | packages/domain/src/client-onboarding/read-open-detail-request-use-case.ts | packages/domain/src/client-onboarding/onboarding-answers.ts | type-only import | no | yes | inward | present |
+| E3444 | packages/domain/src/client-onboarding/read-open-detail-request-use-case.ts | packages/domain/src/client-onboarding/onboarding-clients.ts | type-only import | no | no | lateral | present |
+| E3445 | packages/domain/src/client-onboarding/read-open-detail-request-use-case.ts | packages/domain/src/client-onboarding/onboarding-review-stamps.ts | type-only import | no | no | lateral | present |
+| E3446 | packages/domain/src/client-onboarding/read-open-detail-request-use-case.ts | packages/domain/src/client-onboarding/onboarding-review.ts | import | no | yes | inward | present |
+| E3447 | packages/domain/src/client-onboarding/read-open-detail-request-use-case.ts | packages/domain/src/client-onboarding/onboarding-reviews.ts | type-only import | no | yes | inward | present |
+| E3448 | packages/domain/src/client-onboarding/request-onboarding-details-use-case.ts | packages/domain/src/client-onboarding/client-onboarding-incidents.ts | type-only import | no | no | lateral | present |
+| E3449 | packages/domain/src/client-onboarding/request-onboarding-details-use-case.ts | packages/domain/src/client-onboarding/client-onboarding-source.ts | type-only import | no | no | lateral | present |
+| E3450 | packages/domain/src/client-onboarding/request-onboarding-details-use-case.ts | packages/domain/src/client-onboarding/detail-request.ts | type-only import | no | yes | inward | present |
+| E3451 | packages/domain/src/client-onboarding/request-onboarding-details-use-case.ts | packages/domain/src/client-onboarding/onboarding-answers.ts | type-only import | no | yes | inward | present |
+| E3452 | packages/domain/src/client-onboarding/request-onboarding-details-use-case.ts | packages/domain/src/client-onboarding/onboarding-clients.ts | type-only import | no | no | lateral | present |
+| E3453 | packages/domain/src/client-onboarding/request-onboarding-details-use-case.ts | packages/domain/src/client-onboarding/onboarding-details-notifications.ts | type-only import | no | no | lateral | present |
+| E3454 | packages/domain/src/client-onboarding/request-onboarding-details-use-case.ts | packages/domain/src/client-onboarding/onboarding-review.ts | import | no | yes | inward | present |
+| E3455 | packages/domain/src/client-onboarding/request-onboarding-details-use-case.ts | packages/domain/src/client-onboarding/onboarding-reviews.ts | type-only import | no | yes | inward | present |
+| E3456 | packages/domain/src/client-onboarding/request-onboarding-details-use-case.ts | packages/domain/src/shared/index.ts | type-only import | no | no | lateral | present |
+| E3457 | packages/domain/src/client-onboarding/save-onboarding-draft-use-case.ts | packages/domain/src/client-onboarding/client-onboarding-changes.ts | type-only import | no | yes | inward | present |
+| E3458 | packages/domain/src/client-onboarding/save-onboarding-draft-use-case.ts | packages/domain/src/client-onboarding/client-onboarding-incidents.ts | type-only import | no | no | lateral | present |
+| E3459 | packages/domain/src/client-onboarding/save-onboarding-draft-use-case.ts | packages/domain/src/client-onboarding/client-onboarding-source.ts | type-only import | no | no | lateral | present |
+| E3460 | packages/domain/src/client-onboarding/save-onboarding-draft-use-case.ts | packages/domain/src/client-onboarding/client-onboarding.ts | import | no | yes | inward | present |
+| E3461 | packages/domain/src/client-onboarding/save-onboarding-draft-use-case.ts | packages/domain/src/client-onboarding/onboarding-answers.ts | type-only import | no | yes | inward | present |
+| E3462 | packages/domain/src/client-onboarding/save-onboarding-draft-use-case.ts | packages/domain/src/client-onboarding/onboarding-clients.ts | type-only import | no | no | lateral | present |
+| E3463 | packages/domain/src/client-onboarding/save-onboarding-draft-use-case.ts | packages/domain/src/client-onboarding/onboarding-consents.ts | type-only import | no | no | lateral | present |
+| E3464 | packages/domain/src/client-onboarding/save-onboarding-draft-use-case.ts | packages/domain/src/client-onboarding/onboarding-schema.ts | type-only import | no | yes | inward | present |
+| E3465 | packages/domain/src/client-onboarding/save-onboarding-draft-use-case.ts | packages/domain/src/shared/index.ts | type-only import | no | no | lateral | present |
+| E3466 | packages/domain/src/client-onboarding/submit-onboarding-use-case.ts | packages/domain/src/client-onboarding/client-onboarding-changes.ts | type-only import | no | yes | inward | present |
+| E3467 | packages/domain/src/client-onboarding/submit-onboarding-use-case.ts | packages/domain/src/client-onboarding/client-onboarding-incidents.ts | type-only import | no | no | lateral | present |
+| E3468 | packages/domain/src/client-onboarding/submit-onboarding-use-case.ts | packages/domain/src/client-onboarding/client-onboarding-source.ts | type-only import | no | no | lateral | present |
+| E3469 | packages/domain/src/client-onboarding/submit-onboarding-use-case.ts | packages/domain/src/client-onboarding/client-onboarding.ts | import | no | yes | inward | present |
+| E3470 | packages/domain/src/client-onboarding/submit-onboarding-use-case.ts | packages/domain/src/client-onboarding/onboarding-answers.ts | type-only import | no | yes | inward | present |
+| E3471 | packages/domain/src/client-onboarding/submit-onboarding-use-case.ts | packages/domain/src/client-onboarding/onboarding-clients.ts | type-only import | no | no | lateral | present |
+| E3472 | packages/domain/src/client-onboarding/submit-onboarding-use-case.ts | packages/domain/src/client-onboarding/onboarding-consents.ts | type-only import | no | no | lateral | present |
+| E3473 | packages/domain/src/client-onboarding/submit-onboarding-use-case.ts | packages/domain/src/client-onboarding/onboarding-profile-facts.ts | import | no | yes | inward | present |
+| E3474 | packages/domain/src/client-onboarding/submit-onboarding-use-case.ts | packages/domain/src/client-onboarding/onboarding-submission-stamps.ts | type-only import | no | no | lateral | present |
+| E3475 | packages/domain/src/client-onboarding/submit-onboarding-use-case.ts | packages/domain/src/client-onboarding/onboarding-submission.ts | import | no | yes | inward | present |
+| E3476 | packages/domain/src/client-onboarding/submit-onboarding-use-case.ts | packages/domain/src/client-profile/index.ts | import | no | no | lateral | present |
+| E3477 | packages/domain/src/client-onboarding/submit-onboarding-use-case.ts | packages/domain/src/shared/index.ts | type-only import | no | no | lateral | present |
+| E3478 | packages/domain/src/client-onboarding/submit-onboarding-use-case.ts | packages/domain/src/unit-preference/index.ts | import | no | no | lateral | present |
+| E3479 | packages/domain/src/client-profile/client-measurement-records.ts | packages/domain/src/client-profile/measurement-history.ts | type-only import | no | yes | inward | present |
+| E3480 | packages/domain/src/client-profile/client-measurement-records.ts | packages/domain/src/measurement/index.ts | type-only import | no | no | lateral | present |
+| E3481 | packages/domain/src/client-profile/client-profiles.ts | packages/domain/src/client-profile/client-profile.ts | type-only import | no | no | lateral | present |
+| E3482 | packages/domain/src/client-profile/index.ts | packages/domain/src/client-profile/client-measurement-records.ts | type-only import | no | no | lateral | present |
+| E3483 | packages/domain/src/client-profile/index.ts | packages/domain/src/client-profile/client-profile.ts | re-export | no | no | lateral | present |
+| E3484 | packages/domain/src/client-profile/index.ts | packages/domain/src/client-profile/client-profiles.ts | type-only import | no | no | lateral | present |
+| E3485 | packages/domain/src/client-profile/index.ts | packages/domain/src/client-profile/measurement-clients.ts | type-only import | no | no | lateral | present |
+| E3486 | packages/domain/src/client-profile/index.ts | packages/domain/src/client-profile/measurement-history.ts | re-export | no | no | lateral | present |
+| E3487 | packages/domain/src/client-profile/index.ts | packages/domain/src/client-profile/measurement-incidents.ts | type-only import | no | no | lateral | present |
+| E3488 | packages/domain/src/client-profile/index.ts | packages/domain/src/client-profile/open-progress-photo-use-case.ts | re-export | no | no | lateral | present |
+| E3489 | packages/domain/src/client-profile/index.ts | packages/domain/src/client-profile/progress-photo-reference.ts | type-only import | no | no | lateral | present |
+| E3490 | packages/domain/src/client-profile/index.ts | packages/domain/src/client-profile/progress-photo-renditions.ts | type-only import | no | no | lateral | present |
+| E3491 | packages/domain/src/client-profile/index.ts | packages/domain/src/client-profile/progress-photo-store.ts | type-only import | no | no | lateral | present |
+| E3492 | packages/domain/src/client-profile/index.ts | packages/domain/src/client-profile/progress-photo.ts | re-export | no | no | lateral | present |
+| E3493 | packages/domain/src/client-profile/index.ts | packages/domain/src/client-profile/progress-photos.ts | type-only import | no | no | lateral | present |
+| E3494 | packages/domain/src/client-profile/index.ts | packages/domain/src/client-profile/read-client-measurement-history-use-case.ts | re-export | no | no | lateral | present |
+| E3495 | packages/domain/src/client-profile/index.ts | packages/domain/src/client-profile/read-client-profile-use-case.ts | re-export | no | no | lateral | present |
+| E3496 | packages/domain/src/client-profile/index.ts | packages/domain/src/client-profile/read-own-measurement-history-use-case.ts | re-export | no | no | lateral | present |
+| E3497 | packages/domain/src/client-profile/index.ts | packages/domain/src/client-profile/record-measurements-use-case.ts | re-export | no | no | lateral | present |
+| E3498 | packages/domain/src/client-profile/index.ts | packages/domain/src/client-profile/remove-progress-photo-use-case.ts | re-export | no | no | lateral | present |
+| E3499 | packages/domain/src/client-profile/measurement-history.ts | packages/domain/src/client-profile/progress-photo.ts | type-only import | no | no | lateral | present |
+| E3500 | packages/domain/src/client-profile/measurement-history.ts | packages/domain/src/measurement/index.ts | type-only import | no | no | lateral | present |
+| E3501 | packages/domain/src/client-profile/measurement-incidents.ts | packages/domain/src/account/index.ts | type-only import | no | no | lateral | present |
+| E3502 | packages/domain/src/client-profile/measurement-incidents.ts | packages/domain/src/client-profile/progress-photo.ts | type-only import | no | yes | inward | present |
+| E3503 | packages/domain/src/client-profile/open-progress-photo-use-case.ts | packages/domain/src/account/index.ts | type-only import | no | no | lateral | present |
+| E3504 | packages/domain/src/client-profile/open-progress-photo-use-case.ts | packages/domain/src/client-profile/measurement-clients.ts | type-only import | no | no | lateral | present |
+| E3505 | packages/domain/src/client-profile/open-progress-photo-use-case.ts | packages/domain/src/client-profile/measurement-incidents.ts | type-only import | no | no | lateral | present |
+| E3506 | packages/domain/src/client-profile/open-progress-photo-use-case.ts | packages/domain/src/client-profile/progress-photo-store.ts | type-only import | no | no | lateral | present |
+| E3507 | packages/domain/src/client-profile/open-progress-photo-use-case.ts | packages/domain/src/client-profile/progress-photo.ts | type-only import | no | yes | inward | present |
+| E3508 | packages/domain/src/client-profile/open-progress-photo-use-case.ts | packages/domain/src/client-profile/progress-photos.ts | type-only import | no | no | lateral | present |
+| E3509 | packages/domain/src/client-profile/progress-photo-store.ts | packages/domain/src/client-profile/progress-photo-reference.ts | type-only import | no | no | lateral | present |
+| E3510 | packages/domain/src/client-profile/progress-photo.ts | packages/domain/src/client-profile/progress-photo-reference.ts | type-only import | no | yes | outward | present |
+| E3511 | packages/domain/src/client-profile/progress-photos.ts | packages/domain/src/client-profile/progress-photo.ts | type-only import | no | yes | inward | present |
+| E3512 | packages/domain/src/client-profile/read-client-measurement-history-use-case.ts | packages/domain/src/client-profile/client-measurement-records.ts | type-only import | no | no | lateral | present |
+| E3513 | packages/domain/src/client-profile/read-client-measurement-history-use-case.ts | packages/domain/src/client-profile/measurement-history.ts | import | no | yes | inward | present |
+| E3514 | packages/domain/src/client-profile/read-client-profile-use-case.ts | packages/domain/src/client-profile/client-profile.ts | type-only import | no | yes | inward | present |
+| E3515 | packages/domain/src/client-profile/read-client-profile-use-case.ts | packages/domain/src/client-profile/client-profiles.ts | type-only import | no | yes | inward | present |
+| E3516 | packages/domain/src/client-profile/read-client-profile-use-case.ts | packages/domain/src/client/index.ts | type-only import | no | no | lateral | present |
+| E3517 | packages/domain/src/client-profile/read-client-profile-use-case.ts | packages/domain/src/measurement/index.ts | import | no | no | lateral | present |
+| E3518 | packages/domain/src/client-profile/read-own-measurement-history-use-case.ts | packages/domain/src/client-profile/client-measurement-records.ts | type-only import | no | no | lateral | present |
+| E3519 | packages/domain/src/client-profile/read-own-measurement-history-use-case.ts | packages/domain/src/client-profile/client-profiles.ts | type-only import | no | yes | inward | present |
+| E3520 | packages/domain/src/client-profile/read-own-measurement-history-use-case.ts | packages/domain/src/client-profile/measurement-clients.ts | type-only import | no | no | lateral | present |
+| E3521 | packages/domain/src/client-profile/read-own-measurement-history-use-case.ts | packages/domain/src/client-profile/measurement-history.ts | import | no | yes | inward | present |
+| E3522 | packages/domain/src/client-profile/record-measurements-use-case.ts | packages/domain/src/client-profile/client-measurement-records.ts | type-only import | no | no | lateral | present |
+| E3523 | packages/domain/src/client-profile/record-measurements-use-case.ts | packages/domain/src/client-profile/client-profiles.ts | type-only import | no | yes | inward | present |
+| E3524 | packages/domain/src/client-profile/record-measurements-use-case.ts | packages/domain/src/client-profile/measurement-clients.ts | type-only import | no | no | lateral | present |
+| E3525 | packages/domain/src/client-profile/record-measurements-use-case.ts | packages/domain/src/client-profile/measurement-incidents.ts | type-only import | no | no | lateral | present |
+| E3526 | packages/domain/src/client-profile/record-measurements-use-case.ts | packages/domain/src/client-profile/progress-photo-renditions.ts | type-only import | no | yes | inward | present |
+| E3527 | packages/domain/src/client-profile/record-measurements-use-case.ts | packages/domain/src/client-profile/progress-photo-store.ts | type-only import | no | no | lateral | present |
+| E3529 | packages/domain/src/client-profile/record-measurements-use-case.ts | packages/domain/src/client-profile/progress-photos.ts | type-only import | no | no | lateral | present |
+| E3530 | packages/domain/src/client-profile/record-measurements-use-case.ts | packages/domain/src/measurement/index.ts | import | no | no | lateral | present |
+| E3531 | packages/domain/src/client-profile/record-measurements-use-case.ts | packages/domain/src/shared/index.ts | type-only import | no | no | lateral | present |
+| E3532 | packages/domain/src/client-profile/remove-progress-photo-use-case.ts | packages/domain/src/client-profile/measurement-clients.ts | type-only import | no | no | lateral | present |
+| E3533 | packages/domain/src/client-profile/remove-progress-photo-use-case.ts | packages/domain/src/client-profile/measurement-incidents.ts | type-only import | no | no | lateral | present |
+| E3534 | packages/domain/src/client-profile/remove-progress-photo-use-case.ts | packages/domain/src/client-profile/progress-photo-store.ts | type-only import | no | no | lateral | present |
+| E3535 | packages/domain/src/client-profile/remove-progress-photo-use-case.ts | packages/domain/src/client-profile/progress-photos.ts | type-only import | no | no | lateral | present |
+| E3536 | packages/domain/src/client-roster/client-roster.ts | packages/domain/src/assessment-call/index.ts | type-only import | no | no | lateral | present |
+| E3537 | packages/domain/src/client-roster/client-roster.ts | packages/domain/src/client-journey/index.ts | import | no | no | lateral | present |
+| E3538 | packages/domain/src/client-roster/client-roster.ts | packages/domain/src/coaching-bundle/index.ts | type-only import | no | no | lateral | present |
+| E3539 | packages/domain/src/client-roster/client-roster.ts | packages/domain/src/coaching-subscription/index.ts | type-only import | no | no | lateral | present |
+| E3540 | packages/domain/src/client-roster/index.ts | packages/domain/src/client-roster/client-roster-incidents.ts | type-only import | no | no | lateral | present |
+| E3541 | packages/domain/src/client-roster/index.ts | packages/domain/src/client-roster/client-roster.ts | re-export | no | no | lateral | present |
+| E3542 | packages/domain/src/client-roster/index.ts | packages/domain/src/client-roster/list-clients-use-case.ts | re-export | no | no | lateral | present |
+| E3543 | packages/domain/src/client-roster/index.ts | packages/domain/src/client-roster/read-client-record-use-case.ts | re-export | no | no | lateral | present |
+| E3544 | packages/domain/src/client-roster/list-clients-use-case.ts | packages/domain/src/client-roster/client-roster-incidents.ts | type-only import | no | no | lateral | present |
+| E3545 | packages/domain/src/client-roster/list-clients-use-case.ts | packages/domain/src/client-roster/client-roster.ts | import | no | no | lateral | present |
+| E3546 | packages/domain/src/client-roster/read-client-record-use-case.ts | packages/domain/src/assessment-call/index.ts | type-only import | no | no | lateral | present |
+| E3547 | packages/domain/src/client-roster/read-client-record-use-case.ts | packages/domain/src/client-roster/client-roster.ts | import | no | no | lateral | present |
+| E3548 | packages/domain/src/client-roster/read-client-record-use-case.ts | packages/domain/src/payment-link/index.ts | type-only import | no | no | lateral | present |
+| E3549 | packages/domain/src/client/client-identities.ts | packages/domain/src/assessment-call/index.ts | type-only import | no | no | lateral | present |
+| E3550 | packages/domain/src/client/index.ts | packages/domain/src/client/client-identities.ts | type-only import | no | no | lateral | present |
+| E3551 | packages/domain/src/measurement/client-measurements-source.ts | packages/domain/src/measurement/measurement.ts | type-only import | no | yes | inward | present |
+| E3552 | packages/domain/src/measurement/index.ts | packages/domain/src/measurement/client-measurements-source.ts | type-only import | no | no | lateral | present |
+| E3553 | packages/domain/src/measurement/index.ts | packages/domain/src/measurement/measurement-fields.ts | re-export | no | no | lateral | present |
+| E3554 | packages/domain/src/measurement/index.ts | packages/domain/src/measurement/measurement-validation.ts | re-export | no | no | lateral | present |
+| E3555 | packages/domain/src/measurement/index.ts | packages/domain/src/measurement/measurement.ts | re-export | no | no | lateral | present |
+| E3556 | packages/domain/src/measurement/measurement-validation.ts | packages/domain/src/measurement/measurement-fields.ts | import | no | no | lateral | present |
+| E3557 | packages/domain/src/measurement/measurement-validation.ts | packages/domain/src/measurement/measurement.ts | type-only import | no | no | lateral | present |
+| E3558 | packages/domain/src/measurement/measurement-validation.ts | packages/domain/src/unit-preference/index.ts | import | no | no | lateral | present |
+| E3559 | packages/domain/src/unit-preference/client-unit-preferences-source.ts | packages/domain/src/unit-preference/unit-preference.ts | type-only import | no | no | lateral | present |
+| E3560 | packages/domain/src/unit-preference/client-unit-preferences.ts | packages/domain/src/unit-preference/client-unit-preferences-source.ts | type-only import | no | yes | inward | present |
+| E3561 | packages/domain/src/unit-preference/client-unit-preferences.ts | packages/domain/src/unit-preference/unit-preference.ts | type-only import | no | yes | inward | present |
+| E3562 | packages/domain/src/unit-preference/index.ts | packages/domain/src/unit-preference/client-unit-preferences-source.ts | type-only import | no | no | lateral | present |
+| E3563 | packages/domain/src/unit-preference/index.ts | packages/domain/src/unit-preference/client-unit-preferences.ts | type-only import | no | no | lateral | present |
+| E3564 | packages/domain/src/unit-preference/index.ts | packages/domain/src/unit-preference/measure-units.ts | re-export | no | no | lateral | present |
+| E3565 | packages/domain/src/unit-preference/index.ts | packages/domain/src/unit-preference/save-unit-preference-use-case.ts | re-export | no | no | lateral | present |
+| E3566 | packages/domain/src/unit-preference/index.ts | packages/domain/src/unit-preference/unit-preference-clients.ts | type-only import | no | no | lateral | present |
+| E3567 | packages/domain/src/unit-preference/index.ts | packages/domain/src/unit-preference/unit-preference.ts | re-export | no | no | lateral | present |
+| E3568 | packages/domain/src/unit-preference/measure-units.ts | packages/domain/src/unit-preference/unit-preference.ts | type-only import | no | no | lateral | present |
+| E3569 | packages/domain/src/unit-preference/save-unit-preference-use-case.ts | packages/domain/src/shared/index.ts | type-only import | no | no | lateral | present |
+| E3570 | packages/domain/src/unit-preference/save-unit-preference-use-case.ts | packages/domain/src/unit-preference/client-unit-preferences.ts | type-only import | no | no | lateral | present |
+| E3571 | packages/domain/src/unit-preference/save-unit-preference-use-case.ts | packages/domain/src/unit-preference/unit-preference-clients.ts | type-only import | no | no | lateral | present |
+| E3572 | packages/domain/src/unit-preference/save-unit-preference-use-case.ts | packages/domain/src/unit-preference/unit-preference.ts | import | no | yes | inward | present |
+| E3573 | packages/infrastructure/src/client-media/create-progress-photo-store.server.ts | external:fs | import | n/a | yes | outward | present |
+| E3574 | packages/infrastructure/src/client-media/create-progress-photo-store.server.ts | packages/config/src/index.ts | type-only import | yes | yes | outward | present |
+| E3575 | packages/infrastructure/src/client-media/create-progress-photo-store.server.ts | packages/domain/src/client-profile/index.ts | type-only import | yes | no | lateral | present |
+| E3576 | packages/infrastructure/src/client-media/create-progress-photo-store.server.ts | packages/infrastructure/src/client-media/filesystem/encrypted-filesystem-progress-photo-store.server.ts | import | no | no | lateral | present |
+| E3577 | packages/infrastructure/src/client-media/create-progress-photo-store.server.ts | packages/infrastructure/src/client-media/memory/in-memory-progress-photo-store.server.ts | import | no | no | lateral | present |
+| E3578 | packages/infrastructure/src/client-media/filesystem/encrypted-filesystem-progress-photo-store.server.ts | external:fs/promises | import | n/a | yes | outward | present |
+| E3579 | packages/infrastructure/src/client-media/filesystem/encrypted-filesystem-progress-photo-store.server.ts | external:path | import | n/a | yes | outward | present |
+| E3580 | packages/infrastructure/src/client-media/filesystem/encrypted-filesystem-progress-photo-store.server.ts | packages/domain/src/client-profile/index.ts | type-only import | yes | no | lateral | present |
+| E3581 | packages/infrastructure/src/client-media/filesystem/encrypted-filesystem-progress-photo-store.server.ts | packages/infrastructure/src/client-media/filesystem/media-root-confinement.server.ts | import | no | no | lateral | present |
+| E3582 | packages/infrastructure/src/client-media/filesystem/encrypted-filesystem-progress-photo-store.server.ts | packages/infrastructure/src/client-media/filesystem/progress-photo-cipher.server.ts | import | no | no | lateral | present |
+| E3583 | packages/infrastructure/src/client-media/filesystem/encrypted-filesystem-progress-photo-store.server.ts | packages/infrastructure/src/client-media/progress-photo-layout.server.ts | import | no | no | lateral | present |
+| E3584 | packages/infrastructure/src/client-media/filesystem/media-root-confinement.server.ts | external:fs/promises | import | n/a | yes | outward | present |
+| E3585 | packages/infrastructure/src/client-media/filesystem/media-root-confinement.server.ts | external:path | import | n/a | yes | outward | present |
+| E3586 | packages/infrastructure/src/client-media/filesystem/progress-photo-cipher.server.ts | external:crypto | import | n/a | yes | outward | present |
+| E3587 | packages/infrastructure/src/client-media/index.server.ts | packages/infrastructure/src/client-media/create-progress-photo-store.server.ts | re-export | no | yes | inward | present |
+| E3588 | packages/infrastructure/src/client-media/memory/in-memory-progress-photo-store.server.ts | packages/domain/src/client-profile/index.ts | type-only import | yes | no | lateral | present |
+| E3589 | packages/infrastructure/src/client-media/memory/in-memory-progress-photo-store.server.ts | packages/infrastructure/src/client-media/progress-photo-layout.server.ts | import | no | no | lateral | present |
+| E3590 | packages/infrastructure/src/images/create-progress-photo-renditions.server.ts | external:sharp | import | n/a | yes | outward | present |
+| E3591 | packages/infrastructure/src/images/create-progress-photo-renditions.server.ts | packages/domain/src/client-profile/index.ts | type-only import | yes | no | lateral | present |
+| E3592 | packages/infrastructure/src/images/index.server.ts | packages/infrastructure/src/images/create-progress-photo-renditions.server.ts | re-export | no | yes | inward | present |
+| E3593 | packages/ui/src/appointments/appointment-card.tsx | packages/ui/src/lib/typography.ts | import | no | no | lateral | present |
+| E3594 | packages/ui/src/appointments/appointment-card.tsx | packages/ui/src/primitives/date-time-label.tsx | import | no | no | lateral | present |
+| E3595 | packages/ui/src/calendar/date-field.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E3596 | packages/ui/src/calendar/date-field.tsx | external:react | import | n/a | no | lateral | present |
+| E3597 | packages/ui/src/calendar/date-field.tsx | external:react-day-picker | type-only import | n/a | no | lateral | present |
+| E3598 | packages/ui/src/calendar/date-field.tsx | packages/ui/src/calendar/calendar.tsx | import | no | no | lateral | present |
+| E3599 | packages/ui/src/calendar/date-field.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
+| E3600 | packages/ui/src/calendar/date-field.tsx | packages/ui/src/lib/use-display-time-zone.ts | import | no | yes | inward | present |
+| E3601 | packages/ui/src/calendar/date-field.tsx | packages/ui/src/primitives/field-frame.ts | import | no | no | lateral | present |
+| E3602 | packages/ui/src/calendar/date-field.tsx | packages/ui/src/primitives/field-size.ts | import | no | no | lateral | present |
+| E3603 | packages/ui/src/calendar/date-field.tsx | packages/ui/src/primitives/index.ts | import | no | no | lateral | present |
+| E3604 | packages/ui/src/calendar/index.ts | packages/ui/src/calendar/date-field.tsx | re-export | no | no | lateral | present |
+| E3605 | packages/ui/src/layout/bottom-sheet.tsx | external:motion/react | import | n/a | no | lateral | present |
+| E3606 | packages/ui/src/layout/bottom-sheet.tsx | external:radix-ui | import | n/a | no | lateral | present |
+| E3607 | packages/ui/src/layout/bottom-sheet.tsx | external:react | import | n/a | no | lateral | present |
+| E3608 | packages/ui/src/layout/bottom-sheet.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
+| E3609 | packages/ui/src/layout/dead-end-page.tsx | packages/ui/src/lib/data-attributes.ts | type-only import | no | no | lateral | present |
+| E3610 | packages/ui/src/layout/index.ts | packages/ui/src/layout/responsive-sheet-dialog.tsx | re-export | no | no | lateral | present |
+| E3611 | packages/ui/src/layout/navigation-dialog.tsx | external:motion/react | import | n/a | no | lateral | present |
+| E3612 | packages/ui/src/layout/navigation-dialog.tsx | packages/ui/src/lib/focus-main-content.ts | import | no | no | lateral | present |
+| E3613 | packages/ui/src/layout/portal-shell.tsx | external:motion/react | import | n/a | no | lateral | present |
+| E3614 | packages/ui/src/layout/portal-shell.tsx | external:react-router | import | n/a | no | lateral | present |
+| E3615 | packages/ui/src/layout/portal-shell.tsx | packages/ui/src/layout/bottom-sheet.tsx | import | no | no | lateral | present |
+| E3616 | packages/ui/src/layout/portal-shell.tsx | packages/ui/src/lib/focus-main-content.ts | import | no | no | lateral | present |
+| E3617 | packages/ui/src/layout/portal-shell.tsx | packages/ui/src/primitives/button.tsx | import | no | no | lateral | present |
+| E3618 | packages/ui/src/layout/responsive-sheet-dialog.tsx | external:radix-ui | import | n/a | no | lateral | present |
+| E3619 | packages/ui/src/layout/responsive-sheet-dialog.tsx | external:react | type-only import | n/a | no | lateral | present |
+| E3620 | packages/ui/src/layout/responsive-sheet-dialog.tsx | packages/ui/src/layout/bottom-sheet.tsx | import | no | no | lateral | present |
+| E3621 | packages/ui/src/layout/responsive-sheet-dialog.tsx | packages/ui/src/layout/use-is-mobile-viewport.ts | import | no | yes | inward | present |
+| E3622 | packages/ui/src/layout/responsive-sheet-dialog.tsx | packages/ui/src/lib/dialog-frame.tsx | import | no | no | lateral | present |
+| E3623 | packages/ui/src/layout/use-is-mobile-viewport.ts | external:react | import | n/a | yes | outward | present |
+| E3624 | packages/ui/src/lib/cn.ts | external:tailwind-merge | import | n/a | no | lateral | present |
+| E3625 | packages/ui/src/lib/dialog-frame.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E3626 | packages/ui/src/lib/dialog-frame.tsx | external:radix-ui | import | n/a | no | lateral | present |
+| E3627 | packages/ui/src/lib/dialog-frame.tsx | external:react | type-only import | n/a | no | lateral | present |
+| E3628 | packages/ui/src/lib/dialog-frame.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
+| E3629 | packages/ui/src/lib/dialog-frame.tsx | packages/ui/src/lib/use-return-focus-to-opener.ts | import | no | yes | inward | present |
+| E3630 | packages/ui/src/lib/focus-main-content.ts | packages/ui/src/lib/constants.ts | import | no | no | lateral | present |
+| E3631 | packages/ui/src/lib/index.ts | packages/ui/src/lib/typography.ts | re-export | no | no | lateral | present |
+| E3632 | packages/ui/src/lib/use-return-focus-to-opener.ts | external:react | import | n/a | yes | outward | present |
+| E3633 | packages/ui/src/overlays/confirm-dialog.tsx | packages/ui/src/overlays/dialog.tsx | import | no | no | lateral | present |
+| E3634 | packages/ui/src/overlays/dialog.tsx | external:radix-ui | import | n/a | no | lateral | present |
+| E3635 | packages/ui/src/overlays/dialog.tsx | external:react | import | n/a | no | lateral | present |
+| E3636 | packages/ui/src/overlays/dialog.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
+| E3637 | packages/ui/src/overlays/dialog.tsx | packages/ui/src/lib/dialog-frame.tsx | import | no | no | lateral | present |
+| E3638 | packages/ui/src/overlays/index.ts | packages/ui/src/overlays/dialog.tsx | re-export | no | no | lateral | present |
+| E3639 | packages/ui/src/portal/collapsible-portal-widget.tsx | external:react | type-only import | n/a | no | lateral | present |
+| E3640 | packages/ui/src/portal/collapsible-portal-widget.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
+| E3641 | packages/ui/src/portal/collapsible-portal-widget.tsx | packages/ui/src/lib/data-attributes.ts | type-only import | no | no | lateral | present |
+| E3642 | packages/ui/src/portal/collapsible-portal-widget.tsx | packages/ui/src/lib/typography.ts | import | no | no | lateral | present |
+| E3643 | packages/ui/src/portal/collapsible-portal-widget.tsx | packages/ui/src/portal/portal-widget.tsx | import | no | no | lateral | present |
+| E3644 | packages/ui/src/portal/collapsible-portal-widget.tsx | packages/ui/src/primitives/accordion.tsx | import | no | no | lateral | present |
+| E3645 | packages/ui/src/portal/empty-state.tsx | external:lucide-react | type-only import | n/a | no | lateral | present |
+| E3646 | packages/ui/src/portal/empty-state.tsx | external:react | type-only import | n/a | no | lateral | present |
+| E3647 | packages/ui/src/portal/index.ts | packages/ui/src/portal/collapsible-portal-widget.tsx | re-export | no | no | lateral | present |
+| E3648 | packages/ui/src/portal/index.ts | packages/ui/src/portal/empty-state.tsx | re-export | no | no | lateral | present |
+| E3649 | packages/ui/src/portal/index.ts | packages/ui/src/portal/portal-page-header.tsx | re-export | no | no | lateral | present |
+| E3650 | packages/ui/src/portal/index.ts | packages/ui/src/portal/portal-widget.tsx | re-export | no | no | lateral | present |
+| E3651 | packages/ui/src/portal/index.ts | packages/ui/src/portal/reading.tsx | re-export | no | no | lateral | present |
+| E3652 | packages/ui/src/portal/index.ts | packages/ui/src/portal/settings-section.tsx | re-export | no | no | lateral | present |
+| E3653 | packages/ui/src/portal/index.ts | packages/ui/src/portal/widget-link.tsx | re-export | no | no | lateral | present |
+| E3654 | packages/ui/src/portal/portal-widget.tsx | external:react | type-only import | n/a | no | lateral | present |
+| E3655 | packages/ui/src/portal/portal-widget.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
+| E3656 | packages/ui/src/portal/portal-widget.tsx | packages/ui/src/lib/data-attributes.ts | type-only import | no | no | lateral | present |
+| E3657 | packages/ui/src/portal/portal-widget.tsx | packages/ui/src/lib/typography.ts | import | no | no | lateral | present |
+| E3658 | packages/ui/src/portal/portal-widget.tsx | packages/ui/src/primitives/card.tsx | import | no | no | lateral | present |
+| E3659 | packages/ui/src/portal/reading.tsx | external:react | type-only import | n/a | no | lateral | present |
+| E3660 | packages/ui/src/portal/reading.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
+| E3661 | packages/ui/src/portal/reading.tsx | packages/ui/src/lib/typography.ts | import | no | no | lateral | present |
+| E3662 | packages/ui/src/primitives/accordion.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E3663 | packages/ui/src/primitives/accordion.tsx | external:radix-ui | import | n/a | no | lateral | present |
+| E3664 | packages/ui/src/primitives/accordion.tsx | external:react | import | n/a | no | lateral | present |
+| E3665 | packages/ui/src/primitives/accordion.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
+| E3666 | packages/ui/src/primitives/checkbox-field.tsx | external:react | import | n/a | no | lateral | present |
+| E3667 | packages/ui/src/primitives/checkbox-field.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
+| E3668 | packages/ui/src/primitives/checkbox-field.tsx | packages/ui/src/primitives/card.tsx | import | no | no | lateral | present |
+| E3669 | packages/ui/src/primitives/checkbox-field.tsx | packages/ui/src/primitives/checkbox.tsx | import | no | no | lateral | present |
+| E3670 | packages/ui/src/primitives/checkbox-field.tsx | packages/ui/src/primitives/field-error.tsx | import | no | no | lateral | present |
+| E3671 | packages/ui/src/primitives/choice-group.tsx | external:radix-ui | import | n/a | no | lateral | present |
+| E3672 | packages/ui/src/primitives/choice-group.tsx | external:react | import | n/a | no | lateral | present |
+| E3673 | packages/ui/src/primitives/choice-group.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
+| E3674 | packages/ui/src/primitives/choice-group.tsx | packages/ui/src/primitives/radio-group.tsx | import | no | no | lateral | present |
+| E3675 | packages/ui/src/primitives/field-error.tsx | external:react | type-only import | n/a | no | lateral | present |
+| E3676 | packages/ui/src/primitives/field-hint.tsx | external:react | type-only import | n/a | no | lateral | present |
+| E3677 | packages/ui/src/primitives/icon-hint.tsx | external:react | import | n/a | no | lateral | present |
+| E3678 | packages/ui/src/primitives/icon-hint.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
+| E3679 | packages/ui/src/primitives/icon-hint.tsx | packages/ui/src/primitives/popover.tsx | import | no | no | lateral | present |
+| E3680 | packages/ui/src/primitives/index.ts | packages/ui/src/primitives/accordion.tsx | re-export | no | no | lateral | present |
+| E3681 | packages/ui/src/primitives/index.ts | packages/ui/src/primitives/avatar.tsx | re-export | no | no | lateral | present |
+| E3682 | packages/ui/src/primitives/index.ts | packages/ui/src/primitives/checkbox-field.tsx | re-export | no | no | lateral | present |
+| E3683 | packages/ui/src/primitives/index.ts | packages/ui/src/primitives/choice-group.tsx | re-export | no | no | lateral | present |
+| E3684 | packages/ui/src/primitives/index.ts | packages/ui/src/primitives/field-error.tsx | re-export | no | no | lateral | present |
+| E3685 | packages/ui/src/primitives/index.ts | packages/ui/src/primitives/field-hint.tsx | re-export | no | no | lateral | present |
+| E3686 | packages/ui/src/primitives/index.ts | packages/ui/src/primitives/icon-hint.tsx | re-export | no | no | lateral | present |
+| E3687 | packages/ui/src/primitives/index.ts | packages/ui/src/primitives/stepper.tsx | re-export | no | no | lateral | present |
+| E3688 | packages/ui/src/primitives/index.ts | packages/ui/src/primitives/table.tsx | re-export | no | no | lateral | present |
+| E3689 | packages/ui/src/primitives/input.tsx | packages/ui/src/primitives/field-frame.ts | import | no | no | lateral | present |
+| E3690 | packages/ui/src/primitives/input.tsx | packages/ui/src/primitives/field-size.ts | import | no | no | lateral | present |
+| E3691 | packages/ui/src/primitives/section-eyebrow.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
+| E3692 | packages/ui/src/primitives/select.tsx | packages/ui/src/primitives/field-frame.ts | import | no | no | lateral | present |
+| E3693 | packages/ui/src/primitives/stepper.tsx | external:react | type-only import | n/a | no | lateral | present |
+| E3694 | packages/ui/src/primitives/stepper.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
+| E3695 | packages/ui/src/primitives/table.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E3696 | packages/ui/src/primitives/table.tsx | external:react | import | n/a | no | lateral | present |
+| E3697 | packages/ui/src/primitives/table.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
+| E1490 | apps/platform/src/features/assessment-calls/api/coach/coach-assessment-calls-controller.server.ts | apps/platform/src/features/assessment-calls/contracts/assessment-calls.ts | import | no | no | lateral | present |
+| E1491 | apps/platform/src/features/assessment-calls/api/coach/coach-assessment-calls-controller.server.ts | apps/platform/src/features/assessment-calls/contracts/paths.ts | import | no | no | lateral | present |
+| E1492 | apps/platform/src/features/assessment-calls/api/coach/coach-assessment-calls-controller.server.ts | packages/domain/src/assessment-call/index.ts | import | yes | no | lateral | present |
+| E1493 | apps/platform/src/features/assessment-calls/api/coach/coach-assessment-calls-controller.server.ts | packages/domain/src/shared/index.ts | import | yes | no | lateral | present |
+| E1494 | apps/platform/src/features/assessment-calls/contracts/paths.ts | apps/platform/src/features/accounts/contracts/paths.ts | import | yes | no | lateral | present |
+| E1495 | apps/platform/src/features/assessment-calls/server/assessment-calls-composition.server.ts | apps/platform/src/features/assessment-calls/api/coach/coach-assessment-calls-controller.server.ts | import | no | no | lateral | present |
+| E1496 | apps/platform/src/features/assessment-calls/ui/coach/assessment-call-listing.ts | apps/platform/src/features/assessment-calls/contracts/assessment-calls.ts | import | no | no | lateral | present |
+| E1567 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls-error-boundary.tsx | apps/platform/src/features/assessment-calls/contracts/assessment-calls.ts | import | no | no | lateral | added (coach follow-ups) |
+| E1569 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls-error-boundary.tsx | external:lucide-react | import | n/a | no | lateral | added (coach follow-ups) |
+| E1570 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls-error-boundary.tsx | external:react-router | import | n/a | no | lateral | added (coach follow-ups) |
+| E1571 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls-error-boundary.tsx | packages/ui/src/layout/index.ts | import | yes | no | lateral | added (coach follow-ups) |
+| E1503 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | apps/platform/src/features/assessment-calls/contracts/assessment-calls.ts | import | no | no | lateral | present |
+| E1504 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | apps/platform/src/features/assessment-calls/contracts/call-moment.ts | import | no | no | lateral | present |
+| E1505 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | apps/platform/src/features/assessment-calls/ui/coach/assessment-call-listing.ts | import | no | no | lateral | present |
+| E1506 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/call-list-pager.tsx | import | no | no | lateral | present |
+| E1508 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | packages/ui/src/appointments/index.ts | import | yes | no | lateral | present |
+| E1509 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
+| E1510 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E1511 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/assessment-calls-section.tsx | packages/ui/src/tabs/index.ts | import | yes | no | lateral | present |
+| E1512 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/call-list-pager.tsx | apps/platform/src/features/assessment-calls/ui/coach/assessment-call-listing.ts | import | no | no | lateral | present |
+| E1513 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/call-list-pager.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E1579 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/use-call-listing-params.ts | apps/platform/src/features/assessment-calls/ui/coach/assessment-call-listing.ts | import | no | no | lateral | added (coach follow-ups; backfills a GEN-193 module the record never carried) |
+| E1580 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/use-call-listing-params.ts | external:react-router | import | n/a | no | lateral | added (coach follow-ups; backfills a GEN-193 module the record never carried) |
+| E1581 | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls/use-call-listing-params.ts | packages/ui/src/lib/index.ts | import | yes | no | lateral | added (coach follow-ups; backfills a GEN-193 module the record never carried) |
+| E1514 | apps/platform/src/features/assessment-calls/ui/coach/dashboard/upcoming-calls-widget.tsx | apps/platform/src/features/assessment-calls/contracts/call-moment.ts | import | no | no | lateral | present |
+| E1515 | apps/platform/src/features/assessment-calls/ui/coach/dashboard/upcoming-calls-widget.tsx | apps/platform/src/features/assessment-calls/contracts/paths.ts | import | no | no | lateral | present |
+| E1516 | apps/platform/src/features/assessment-calls/ui/coach/dashboard/upcoming-calls-widget.tsx | apps/platform/src/features/assessment-calls/ui/coach/assessment-call-listing.ts | import | no | no | lateral | present |
+| E1517 | apps/platform/src/features/assessment-calls/ui/coach/dashboard/upcoming-calls-widget.tsx | apps/platform/src/features/assessment-calls/ui/coach/join-call-link.tsx | import | no | no | lateral | present |
+| E1518 | apps/platform/src/features/assessment-calls/ui/coach/dashboard/upcoming-calls-widget.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E1519 | apps/platform/src/features/assessment-calls/ui/coach/dashboard/upcoming-calls-widget.tsx | packages/ui/src/appointments/index.ts | import | yes | no | lateral | present |
+| E1520 | apps/platform/src/features/assessment-calls/ui/coach/dashboard/upcoming-calls-widget.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
+| E1521 | apps/platform/src/features/assessment-calls/ui/coach/dashboard/upcoming-calls-widget.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E1523 | apps/platform/src/features/assessment-calls/ui/coach/use-coach-clock.ts | external:react | import | n/a | no | lateral | present |
+| E1524 | apps/platform/src/features/assessment-calls/ui/coach/use-coach-clock.ts | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
+| E1525 | apps/platform/src/features/assessment-calls/ui/public/book/book-page.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
+| E1526 | apps/platform/src/features/assessment-calls/ui/public/book/slot-calendar.tsx | apps/platform/src/features/assessment-calls/ui/shared/day-key.ts | import | no | no | lateral | present |
+| E1527 | apps/platform/src/features/assessment-calls/ui/public/book/slot-grouping.ts | apps/platform/src/features/assessment-calls/ui/shared/day-key.ts | import | no | no | lateral | present |
+| E1528 | apps/platform/src/features/assessment-calls/ui/shared/day-key.ts | external:@date-fns/tz | import | n/a | no | lateral | present |
+| E1529 | apps/platform/src/surfaces/coach-portal/pages/home.tsx | apps/platform/src/features/assessment-calls/server/guards/assessment-calls-context.server.ts | import | yes | no | lateral | present |
+| E1530 | apps/platform/src/surfaces/coach-portal/pages/home.tsx | apps/platform/src/features/assessment-calls/ui/coach/assessment-call-listing.ts | import | yes | no | lateral | present |
+| E1576 | apps/platform/src/surfaces/coach-portal/pages/home.tsx | apps/platform/src/features/assessment-calls/ui/coach/assessment-calls-error-boundary.tsx | re-export | yes | no | lateral | added (coach follow-ups; the route's `ErrorBoundary` export) |
+| E1532 | apps/platform/src/surfaces/coach-portal/pages/home.tsx | apps/platform/src/features/assessment-calls/ui/coach/dashboard/upcoming-calls-widget.tsx | import | yes | no | lateral | present |
+| E1533 | apps/platform/src/surfaces/coach-portal/pages/home.tsx | apps/platform/src/features/assessment-calls/ui/coach/use-coach-clock.ts | import | yes | no | lateral | present |
+| E1534 | apps/platform/src/surfaces/coach-portal/routes.ts | apps/platform/src/features/assessment-calls/routes.ts | import | yes | no | lateral | present |
+| E1535 | apps/platform/src/surfaces/coach-portal/shell/navigation-links.tsx | apps/platform/src/features/assessment-calls/contracts/paths.ts | import | yes | no | lateral | present |
+| E1536 | packages/domain/src/assessment-call/index.ts | packages/domain/src/assessment-call/list-assessment-calls-use-case.ts | import | no | no | lateral | present |
+| E1577 | packages/domain/src/assessment-call/list-assessment-calls-use-case.ts | packages/domain/src/assessment-call/assessment-call-incidents.ts | import | no | no | lateral | added (coach follow-ups) |
+| E1537 | packages/domain/src/assessment-call/list-assessment-calls-use-case.ts | packages/domain/src/assessment-call/assessment-call-reservations.ts | import | no | no | lateral | present |
+| E1538 | packages/domain/src/assessment-call/list-assessment-calls-use-case.ts | packages/domain/src/assessment-call/assessment-call.ts | import | no | no | lateral | present |
+| E1539 | packages/domain/src/assessment-call/list-assessment-calls-use-case.ts | packages/domain/src/coach-availability/index.ts | import | no | no | lateral | present |
+| E1540 | packages/ui/src/appointments/appointment-card.tsx | external:react | import | n/a | no | lateral | present |
+| E1542 | packages/ui/src/appointments/appointment-card.tsx | packages/ui/src/appointments/appointment.ts | import | no | no | lateral | present |
+| E1543 | packages/ui/src/appointments/appointment-card.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
+| E1544 | packages/ui/src/appointments/appointment-card.tsx | packages/ui/src/primitives/avatar.tsx | import | no | no | lateral | present |
+| E1546 | packages/ui/src/appointments/dashboard-appointment-row.tsx | external:react | import | n/a | no | lateral | present |
+| E1547 | packages/ui/src/appointments/dashboard-appointment-row.tsx | packages/ui/src/appointments/appointment.ts | import | no | no | lateral | present |
+| E1550 | packages/ui/src/lib/index.ts | packages/ui/src/lib/use-display-time-zone.ts | import | no | no | lateral | present |
+| E1551 | packages/ui/src/lib/use-display-time-zone.ts | external:react | import | n/a | no | lateral | present |
+| E1552 | packages/ui/src/primitives/avatar.tsx | external:class-variance-authority | import | n/a | no | lateral | present |
+| E1554 | packages/ui/src/primitives/avatar.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
+| E1555 | packages/ui/src/primitives/badge.tsx | external:class-variance-authority | import | n/a | no | lateral | present |
+| E1556 | packages/ui/src/primitives/badge.tsx | external:react | import | n/a | no | lateral | present |
+| E1557 | packages/ui/src/primitives/badge.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
+| E1558 | packages/ui/src/primitives/index.ts | packages/ui/src/primitives/badge.tsx | import | no | no | lateral | present |
+| E1559 | packages/ui/src/primitives/index.ts | packages/ui/src/primitives/pagination.tsx | import | no | no | lateral | present |
+| E1560 | packages/ui/src/primitives/pagination.tsx | external:class-variance-authority | import | n/a | no | lateral | present |
+| E1561 | packages/ui/src/primitives/pagination.tsx | external:react | import | n/a | no | lateral | present |
+| E1562 | packages/ui/src/primitives/pagination.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
+| E1563 | packages/ui/src/tabs/index.ts | packages/ui/src/tabs/tabs.tsx | import | no | no | lateral | present |
+| E1564 | packages/ui/src/tabs/tabs.tsx | external:radix-ui | import | n/a | no | lateral | present |
+| E1565 | packages/ui/src/tabs/tabs.tsx | external:react | import | n/a | no | lateral | present |
+| E1566 | packages/ui/src/tabs/tabs.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
+| E3698 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/onboarding-panel.tsx | packages/domain/src/measurement/index.ts | import | yes | yes | inward | present |
+| E3699 | apps/platform/src/features/client-onboarding/ui/coach/onboarding/onboarding-panel.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
+| E3700 | apps/platform/src/features/client-profile/ui/client/measurements/measurements-section.tsx | packages/ui/src/toast/index.ts | import | yes | no | lateral | present |
+| E3701 | apps/platform/src/features/client-profile/ui/shared/measurements/measurements-table.tsx | packages/domain/src/measurement/index.ts | import | yes | yes | inward | present |
+| E3702 | apps/platform/src/features/client-profile/ui/shared/measurements/measurements-table.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
+| E3703 | apps/platform/src/features/coaching-sales/ui/client/status/program-status-card.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
+| E3704 | apps/platform/src/features/coaching-sales/ui/coach/clients/invitation-state-line.ts | packages/ui/src/lib/index.ts | import | yes | yes | outward | present |
+| E3705 | apps/platform/src/features/coaching-sales/ui/public/checkout-complete/confirmation-copy.ts | packages/ui/src/lib/index.ts | import | yes | yes | outward | present |
+| E3706 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/start-choice.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
+| E3707 | packages/domain/src/client-profile/read-own-measurement-history-use-case.ts | packages/domain/src/shared/index.ts | type-only import | no | no | lateral | present |
+| E3708 | packages/domain/src/client-profile/read-own-measurement-history-use-case.ts | packages/domain/src/unit-preference/index.ts | import | no | no | lateral | present |
+| E3709 | packages/domain/src/measurement/index.ts | packages/domain/src/measurement/body-metrics.ts | re-export | no | no | lateral | present |
+| E3710 | packages/ui/src/lib/calendar-day-format.ts | packages/ui/src/lib/use-display-time-zone.ts | import | no | no | lateral | present |
+| E3711 | packages/ui/src/lib/index.ts | packages/ui/src/lib/calendar-day-format.ts | re-export | no | no | lateral | present |
+| E3712 | packages/ui/src/lib/index.ts | packages/ui/src/lib/described-by.ts | re-export | no | no | lateral | present |
+| E3713 | packages/ui/src/lib/index.ts | packages/ui/src/lib/phone-link.tsx | re-export | no | no | lateral | present |
+| E3714 | packages/ui/src/lib/phone-link.tsx | packages/ui/src/lib/constants.ts | import | no | no | lateral | present |
+| E3715 | packages/ui/src/primitives/field-layout.tsx | external:react | import | n/a | no | lateral | present |
+| E3716 | packages/ui/src/primitives/field-layout.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
+| E3717 | packages/ui/src/primitives/field-layout.tsx | packages/ui/src/lib/described-by.ts | import | no | no | lateral | present |
+| E3718 | packages/ui/src/primitives/field-layout.tsx | packages/ui/src/primitives/field-error.tsx | import | no | no | lateral | present |
+| E3719 | packages/ui/src/primitives/field-layout.tsx | packages/ui/src/primitives/field-hint.tsx | import | no | no | lateral | present |
+| E3720 | packages/ui/src/primitives/field-layout.tsx | packages/ui/src/primitives/label.tsx | import | no | no | lateral | present |
+| E3721 | packages/ui/src/primitives/index.ts | packages/ui/src/primitives/field-layout.tsx | re-export | no | no | lateral | present |
+| E3722 | apps/platform/src/features/client-onboarding/api/client/client-onboarding-controller.server.ts | apps/platform/src/features/client-profile/contracts/progress-photo-parts.ts | import | yes | no | lateral | present |
+| E3723 | apps/platform/src/features/client-onboarding/api/client/client-onboarding-controller.server.ts | packages/domain/src/client-profile/index.ts | type-only import | yes | no | lateral | present |
+| E3724 | apps/platform/src/features/client-onboarding/contracts/onboarding.ts | apps/platform/src/features/client-profile/contracts/progress-photo-parts.ts | import | yes | no | lateral | present |
+| E3725 | apps/platform/src/features/client-onboarding/server/client-onboarding-composition.server.ts | packages/domain/src/client-profile/index.ts | type-only import | yes | yes | inward | present |
+| E3726 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-api-client.ts | apps/platform/src/features/client-profile/ui/shared/photos/progress-photo-picks.ts | import | yes | no | lateral | present |
+| E3727 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-api-client.ts | packages/domain/src/client-profile/index.ts | type-only import | yes | yes | inward | present |
+| E3728 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-wizard.tsx | apps/platform/src/features/client-profile/contracts/measurements.ts | import | yes | yes | inward | present |
+| E3729 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-wizard.tsx | apps/platform/src/features/client-profile/ui/shared/photos/progress-photo-block.tsx | import | yes | no | lateral | present |
+| E3730 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-wizard.tsx | apps/platform/src/features/client-profile/ui/shared/photos/progress-photo-picks.ts | import | yes | no | lateral | present |
+| E3731 | apps/platform/src/features/client-onboarding/ui/client/onboarding/use-send-to-coach.ts | apps/platform/src/features/client-profile/ui/shared/photos/progress-photo-picks.ts | type-only import | yes | no | lateral | present |
+| E3732 | apps/platform/src/features/client-onboarding/ui/client/onboarding/use-send-to-coach.ts | apps/platform/src/features/client-profile/ui/shared/photos/refused-photos-state.ts | import | yes | no | lateral | present |
+| E3733 | apps/platform/src/features/client-profile/api/client/measurements-controller.server.ts | apps/platform/src/features/client-profile/contracts/progress-photo-parts.ts | import | no | no | lateral | present |
+| E3734 | apps/platform/src/features/client-profile/contracts/measurements.ts | apps/platform/src/features/client-profile/contracts/progress-photo-parts.ts | import | no | no | lateral | present |
+| E3735 | apps/platform/src/features/client-profile/contracts/progress-photo-parts.ts | external:zod | import | n/a | yes | outward | present |
+| E3736 | apps/platform/src/features/client-profile/contracts/progress-photo-parts.ts | packages/domain/src/client-profile/index.ts | import | yes | no | lateral | present |
+| E3737 | apps/platform/src/features/client-profile/ui/client/measurements/add-measurements-sheet.tsx | apps/platform/src/features/client-profile/ui/shared/photos/progress-photo-block.tsx | import | no | no | lateral | present |
+| E3738 | apps/platform/src/features/client-profile/ui/client/measurements/add-measurements-sheet.tsx | apps/platform/src/features/client-profile/ui/shared/photos/progress-photo-picks.ts | import | no | no | lateral | present |
+| E3739 | apps/platform/src/features/client-profile/ui/client/measurements/measurements-api-client.ts | apps/platform/src/features/client-profile/ui/shared/photos/progress-photo-picks.ts | import | no | no | lateral | present |
+| E3740 | apps/platform/src/features/client-profile/ui/client/measurements/use-refused-photo-toasts.ts | apps/platform/src/features/client-profile/contracts/measurements.ts | import | no | yes | inward | present |
+| E3741 | apps/platform/src/features/client-profile/ui/client/measurements/use-refused-photo-toasts.ts | apps/platform/src/features/client-profile/ui/shared/photos/refused-photos-state.ts | import | no | no | lateral | present |
+| E3742 | apps/platform/src/features/client-profile/ui/client/measurements/use-refused-photo-toasts.ts | external:react | import | n/a | no | lateral | present |
+| E3743 | apps/platform/src/features/client-profile/ui/client/measurements/use-refused-photo-toasts.ts | external:react-router | import | n/a | no | lateral | present |
+| E3744 | apps/platform/src/features/client-profile/ui/client/measurements/use-refused-photo-toasts.ts | packages/ui/src/toast/index.ts | import | yes | no | lateral | present |
+| E3745 | apps/platform/src/features/client-profile/ui/shared/photos/progress-photo-block.tsx | apps/platform/src/features/client-profile/contracts/measurements.ts | import | no | yes | inward | present |
+| E3746 | apps/platform/src/features/client-profile/ui/shared/photos/progress-photo-block.tsx | apps/platform/src/features/client-profile/contracts/progress-photo-consent.ts | import | no | yes | inward | present |
+| E3747 | apps/platform/src/features/client-profile/ui/shared/photos/progress-photo-block.tsx | apps/platform/src/features/client-profile/ui/shared/photos/progress-photo-frame.ts | import | no | no | lateral | present |
+| E3748 | apps/platform/src/features/client-profile/ui/shared/photos/progress-photo-block.tsx | apps/platform/src/features/client-profile/ui/shared/photos/progress-photo-picks.ts | import | no | no | lateral | present |
+| E3749 | apps/platform/src/features/client-profile/ui/shared/photos/progress-photo-block.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E3750 | apps/platform/src/features/client-profile/ui/shared/photos/progress-photo-block.tsx | external:react | import | n/a | no | lateral | present |
+| E3751 | apps/platform/src/features/client-profile/ui/shared/photos/progress-photo-block.tsx | packages/domain/src/client-profile/index.ts | import | yes | yes | inward | present |
+| E3752 | apps/platform/src/features/client-profile/ui/shared/photos/progress-photo-block.tsx | packages/ui/src/lib/index.ts | import | yes | no | lateral | present |
+| E3753 | apps/platform/src/features/client-profile/ui/shared/photos/progress-photo-block.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
+| E3754 | apps/platform/src/features/client-profile/ui/shared/photos/progress-photo-picks.ts | apps/platform/src/features/client-profile/contracts/progress-photo-parts.ts | import | no | yes | inward | present |
+| E3755 | apps/platform/src/features/client-profile/ui/shared/photos/progress-photo-picks.ts | packages/domain/src/client-profile/index.ts | import | yes | yes | inward | present |
+| E3756 | apps/platform/src/features/client-profile/ui/shared/photos/refused-photos-state.ts | apps/platform/src/features/client-profile/contracts/progress-photo-parts.ts | import | no | yes | inward | present |
+| E3757 | apps/platform/src/features/client-profile/ui/shared/photos/refused-photos-state.ts | external:zod | import | n/a | no | lateral | present |
+| E3758 | apps/platform/src/features/client-profile/ui/shared/photos/refused-photos-state.ts | packages/domain/src/client-profile/index.ts | type-only import | yes | yes | inward | present |
+| E3759 | apps/platform/src/root.tsx | packages/ui/src/toast/index.ts | import | yes | no | lateral | present |
+| E3760 | apps/platform/src/surfaces/client-portal/pages/home.tsx | apps/platform/src/features/client-profile/ui/client/measurements/use-refused-photo-toasts.ts | import | yes | no | lateral | present |
+| E3761 | packages/domain/src/client-profile/attach-progress-photos-use-case.ts | packages/domain/src/client-profile/client-profiles.ts | type-only import | no | no | lateral | present |
+| E3762 | packages/domain/src/client-profile/attach-progress-photos-use-case.ts | packages/domain/src/client-profile/measurement-incidents.ts | type-only import | no | no | lateral | present |
+| E3763 | packages/domain/src/client-profile/attach-progress-photos-use-case.ts | packages/domain/src/client-profile/progress-photo-intake.ts | import | no | no | lateral | present |
+| E3764 | packages/domain/src/client-profile/attach-progress-photos-use-case.ts | packages/domain/src/client-profile/progress-photo-renditions.ts | type-only import | no | no | lateral | present |
+| E3765 | packages/domain/src/client-profile/attach-progress-photos-use-case.ts | packages/domain/src/client-profile/progress-photo-store.ts | type-only import | no | no | lateral | present |
+| E3766 | packages/domain/src/client-profile/attach-progress-photos-use-case.ts | packages/domain/src/client-profile/progress-photos.ts | type-only import | no | no | lateral | present |
+| E3767 | packages/domain/src/client-profile/attach-progress-photos-use-case.ts | packages/domain/src/shared/index.ts | type-only import | no | no | lateral | present |
+| E3768 | packages/domain/src/client-profile/index.ts | packages/domain/src/client-profile/attach-progress-photos-use-case.ts | re-export | no | no | lateral | present |
+| E3769 | packages/domain/src/client-profile/index.ts | packages/domain/src/client-profile/progress-photo-intake.ts | type-only import | no | no | lateral | present |
+| E3770 | packages/domain/src/client-profile/progress-photo-intake.ts | packages/domain/src/client-profile/measurement-incidents.ts | type-only import | no | no | lateral | present |
+| E3771 | packages/domain/src/client-profile/progress-photo-intake.ts | packages/domain/src/client-profile/progress-photo-renditions.ts | type-only import | no | no | lateral | present |
+| E3772 | packages/domain/src/client-profile/progress-photo-intake.ts | packages/domain/src/client-profile/progress-photo-store.ts | type-only import | no | no | lateral | present |
+| E3773 | packages/domain/src/client-profile/progress-photo-intake.ts | packages/domain/src/client-profile/progress-photo.ts | import | no | no | lateral | present |
+| E3774 | packages/domain/src/client-profile/progress-photo-intake.ts | packages/domain/src/client-profile/progress-photos.ts | type-only import | no | no | lateral | present |
+| E3775 | packages/domain/src/client-profile/record-measurements-use-case.ts | packages/domain/src/client-profile/progress-photo-intake.ts | import | no | no | lateral | present |
+| E3776 | packages/domain/src/client-profile/remove-progress-photo-use-case.ts | packages/domain/src/account/index.ts | type-only import | no | no | lateral | present |
+| E3777 | packages/ui/src/overlays/index.ts | packages/ui/src/overlays/lightbox.tsx | re-export | no | no | lateral | present |
+| E3778 | packages/ui/src/overlays/lightbox.tsx | external:lucide-react | import | n/a | no | lateral | present |
+| E3779 | packages/ui/src/overlays/lightbox.tsx | external:radix-ui | import | n/a | no | lateral | present |
+| E3780 | packages/ui/src/overlays/lightbox.tsx | external:react | import | n/a | no | lateral | present |
+| E3781 | packages/ui/src/overlays/lightbox.tsx | packages/ui/src/lib/cn.ts | import | no | no | lateral | present |
+| E3782 | packages/ui/src/overlays/lightbox.tsx | packages/ui/src/lib/dialog-frame.tsx | import | no | no | lateral | present |
+| E3783 | packages/ui/src/overlays/lightbox.tsx | packages/ui/src/overlays/use-photo-gestures.ts | import | no | no | lateral | present |
+| E3784 | packages/ui/src/overlays/lightbox.tsx | packages/ui/src/primitives/button.tsx | import | no | no | lateral | present |
+| E3785 | packages/ui/src/overlays/use-photo-gestures.ts | external:react | import | n/a | no | lateral | present |

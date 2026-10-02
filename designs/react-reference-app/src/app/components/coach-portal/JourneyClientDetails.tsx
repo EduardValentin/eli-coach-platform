@@ -2,16 +2,15 @@ import { ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router';
 import { isBeforeStage, type ClientJourney } from '../../domain/journey';
 import { getInitials } from '../../utils/clientHelpers';
-import { MeasurementsTable } from '../MeasurementsTable';
 import { useMeasureUnits } from '../client-portal/measureUnits';
 import { statedHeightCm } from '../../domain/bodyMetrics';
 import { AssessmentCallBlock } from './AssessmentCallBlock';
 import { ClientProfileBlock } from './ClientProfileBlock';
 import { InvitationBlock } from './InvitationBlock';
+import { JourneyMeasurements } from './JourneyMeasurements';
 import { OnboardingPanel } from './OnboardingPanel';
 import { SubscriptionSummary } from '../SubscriptionSummary';
 import { PORTAL_PAGE_TITLE_CLASS } from '../typography';
-import { noMeasurementsYetLine } from '../../utils/journeyLabels';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 
 function journeyName(journey: ClientJourney): string {
@@ -69,13 +68,10 @@ export function JourneyClientDetails({ journey }: { journey: ClientJourney }) {
           className="mb-8"
         />
       )}
-      <MeasurementsTable
-        measurements={journey.measurements}
+      <JourneyMeasurements
+        journey={journey}
         heightCm={statedHeightCm(journey.onboarding.answers)}
         units={units}
-        headingId="measurements-panel-heading"
-        emptyMessage={noMeasurementsYetLine(journey.identity.gender)}
-        className="mb-8"
       />
       <AssessmentCallBlock journey={journey} />
     </div>

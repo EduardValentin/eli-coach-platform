@@ -22,9 +22,15 @@ import {
   SCREENING_CLEARED_MESSAGE,
   SPECIAL_CATEGORY_CONSENT_COPY,
 } from "~/features/client-onboarding/contracts/onboarding-copy";
+import { MEASUREMENTS_COPY } from "~/features/client-profile/contracts/measurements";
+import { ProgressPhotoBlock } from "~/features/client-profile/ui/shared/photos/progress-photo-block";
+import {
+  NO_PROGRESS_PHOTO_PICKS,
+  type ProgressPhotoPicks,
+} from "~/features/client-profile/ui/shared/photos/progress-photo-picks";
 
 import { MeasurementSystemField } from "./measurement-system-field";
-import { OnboardingConsent, ProgressPhotoConsent } from "./onboarding-consent";
+import { OnboardingConsent } from "./onboarding-consent";
 import {
   OnboardingFormCard,
   type ContinueAction,
@@ -94,6 +100,9 @@ export function OnboardingWizard({ page }: OnboardingWizardProps) {
   });
   const [navigated, setNavigated] = useState(false);
   const [consentProblem, setConsentProblem] = useState<string | null>(null);
+  const [photos, setPhotos] = useState<ProgressPhotoPicks>(
+    NO_PROGRESS_PHOTO_PICKS,
+  );
   const focusPending = useRef(false);
 
   const stepIndex = stepIndexOf(steps, draft);
@@ -205,7 +214,7 @@ export function OnboardingWizard({ page }: OnboardingWizardProps) {
     clearAnswerProblems();
 
     if (isLastStep) {
-      void send(next);
+      void send(next, photos);
       return;
     }
 
@@ -312,9 +321,15 @@ export function OnboardingWizard({ page }: OnboardingWizardProps) {
             )}
             {isLastStep && (
               <>
-                <ProgressPhotoConsent
-                  consented={draft.consents.progressPhotosAt !== null}
-                  onConsentChange={recordConsent("progressPhotos")}
+                <ProgressPhotoBlock
+                  consent={{
+                    status: "asking",
+                    ticked: draft.consents.progressPhotosAt !== null,
+                    onTickedChange: recordConsent("progressPhotos"),
+                  }}
+                  onPhotosChange={setPhotos}
+                  photos={photos}
+                  sendNote={MEASUREMENTS_COPY.photos.sendNote}
                 />
                 <OnboardingConsent
                   agreement="disclaimer"

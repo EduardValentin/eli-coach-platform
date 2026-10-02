@@ -1,11 +1,15 @@
 import { cn } from "@eli-coach-platform/ui/lib";
 import { User } from "lucide-react";
+import { Link } from "react-router";
+
+import { CLIENT_PROFILE_PATH } from "~/features/client-profile/contracts/paths";
 
 type ClientNameBlockSize = "md" | "sm";
 
 type ClientNameBlockProps = {
   displayName: string;
   size: ClientNameBlockSize;
+  onNavigate?: () => void;
 };
 
 const AVATAR_BY_SIZE: Record<
@@ -17,11 +21,16 @@ const AVATAR_BY_SIZE: Record<
 };
 
 export function ClientNameBlock(props: ClientNameBlockProps) {
-  const { displayName, size } = props;
+  const { displayName, onNavigate, size } = props;
   const avatar = AVATAR_BY_SIZE[size];
 
   return (
-    <div className="flex min-w-0 items-center gap-3" data-parity="name-block">
+    <Link
+      className="flex min-w-0 items-center gap-3 rounded-control transition-opacity hover:opacity-80"
+      data-parity="name-block"
+      onClick={onNavigate}
+      to={CLIENT_PROFILE_PATH}
+    >
       <div
         className={cn(
           avatar.className,
@@ -39,6 +48,6 @@ export function ClientNameBlock(props: ClientNameBlockProps) {
           {displayName}
         </p>
       </div>
-    </div>
+    </Link>
   );
 }

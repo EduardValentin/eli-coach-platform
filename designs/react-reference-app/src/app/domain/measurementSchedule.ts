@@ -1,22 +1,48 @@
 import { addDays } from 'date-fns';
+import { hasProgressPhotos, type MeasurementEntry } from './journey';
 
-export const WEIGHT_CADENCE_DAYS = 7;
-export const CIRCUMFERENCE_CADENCE_DAYS = 28;
+export const WEIGH_IN_CADENCE_DAYS = 7;
+export const MEASUREMENTS_CADENCE_DAYS = 28;
 
-export const MEASUREMENT_CADENCE_HINT =
-  'Weight: weekly. Circumferences and photos: every 4 weeks';
-
-export const CYCLE_WINDOW_HINT = 'best taken on days 5–10 of your cycle';
+export type MeasurementDueLine = 'weigh-in' | 'measurements';
 
 export type MeasurementDueDates = {
-  weight: Date;
-  circumferences: Date;
+  weighIn: Date;
+  measurements: Date;
 };
 
-export function measurementDueDates(latestRecordedAt: Date): MeasurementDueDates {
+function oldestFirst(entries: readonly MeasurementEntry[]): MeasurementEntry[] {
+  return [...entries].sort(
+    (first, second) => first.recordedAt.getTime() - second.recordedAt.getTime(),
+  );
+}
+
+function includesMeasurements(entry: MeasurementEntry): boolean {
+  return (
+    entry.hipsCm !== undefined ||
+    entry.thighCm !== undefined ||
+    entry.armCm !== undefined ||
+    hasProgressPhotos(entry)
+  );
+}
+
+export function measurementDueDates(
+  entries: readonly MeasurementEntry[],
+): MeasurementDueDates | null {
+  const history = oldestFirst(entries);
+  const first = history.at(0);
+  const latest = history.at(-1);
+  if (!first || !latest) return null;
+
+  const latestMeasurementsEntry =
+    history.filter(includesMeasurements).at(-1) ?? first;
+
   return {
-    weight: addDays(latestRecordedAt, WEIGHT_CADENCE_DAYS),
-    circumferences: addDays(latestRecordedAt, CIRCUMFERENCE_CADENCE_DAYS),
+    weighIn: addDays(latest.recordedAt, WEIGH_IN_CADENCE_DAYS),
+    measurements: addDays(
+      latestMeasurementsEntry.recordedAt,
+      MEASUREMENTS_CADENCE_DAYS,
+    ),
   };
 }
 
@@ -24,8 +50,14 @@ export function isMeasurementDue(dueOn: Date, now: Date): boolean {
   return now.getTime() >= dueOn.getTime();
 }
 
-export function measurementCadenceHint(tracksCycle: 'yes' | 'no'): string {
-  return tracksCycle === 'yes'
-    ? `${MEASUREMENT_CADENCE_HINT}, ${CYCLE_WINDOW_HINT}.`
-    : `${MEASUREMENT_CADENCE_HINT}.`;
+export function measurementDueLine(
+  entries: readonly MeasurementEntry[],
+  now: Date,
+): MeasurementDueLine | null {
+  const due = measurementDueDates(entries);
+  if (!due) return null;
+  if (isMeasurementDue(due.measurements, now)) return 'measurements';
+  if (isMeasurementDue(due.weighIn, now)) return 'weigh-in';
+
+  return null;
 }

@@ -8,7 +8,10 @@ import {
   it,
 } from "vitest";
 
-import { ApiIntegrationTestSuite } from "~integration-test-config/api-integration-test-suite";
+import {
+  ApiIntegrationTestSuite,
+  CLIENT_MEDIA_KEY_ID,
+} from "~integration-test-config/api-integration-test-suite";
 import {
   ANA,
   CALL_ENDED_INSTANT,
@@ -23,13 +26,25 @@ import {
   REGULAR_LAST_PERIOD_START,
   type OnboardingAnswers,
   type OnboardingConsentInstants,
+  type OnboardingSubmission,
+  type SubmissionPhotos,
 } from "~integration-test-config/client-onboarding-journey";
+import {
+  MeasurementsJourney,
+  type PhotoPart,
+  type ProgressPhotoRow,
+} from "~integration-test-config/measurements-journey";
 import {
   COACH_SESSION,
   PlatformRig,
   type AccountSession,
 } from "~integration-test-config/platform-rig";
 import { visibleDocument } from "~integration-test-config/rendered-page";
+import {
+  cameraJpegWithOrientationAndLocation,
+  landscapePng,
+  smallWebp,
+} from "~integration-test-config/sample-images";
 import { STRIPE_CHECKOUT_SESSION_ID } from "~integration-test-config/wire-mock/expectations/stripe-api";
 import { MANUAL_SCREENING_MESSAGE } from "~/features/client-onboarding/contracts/onboarding-copy";
 
@@ -37,11 +52,6 @@ type DraftRequestBody = {
   formId: string;
   answers: OnboardingAnswers;
   currentFormIndex: number;
-  consents: OnboardingConsentInstants;
-};
-
-type SubmissionRequestBody = {
-  answers: OnboardingAnswers;
   consents: OnboardingConsentInstants;
 };
 
@@ -54,13 +64,13 @@ const suite = new ApiIntegrationTestSuite();
 const rig = new PlatformRig(suite);
 const journey = new CoachingSalesJourney(rig);
 const onboarding = new ClientOnboardingJourney(rig, journey);
+const measurements = new MeasurementsJourney(rig);
 
 const CLIENT_PORTAL = "/client";
 const WELCOME = "/client/welcome";
 const ONBOARDING = "/client/onboarding";
 const PUBLIC_HOME = "/";
 const DRAFT_API = "/api/client-onboarding/draft";
-const SUBMISSION_API = "/api/client-onboarding/submission";
 const UNIT_PREFERENCE_API = "/api/client-profile/unit-preference";
 
 const RESUME_NOTE = "Picking up where you left off.";
@@ -78,6 +88,8 @@ const FORM_IDS = [
 ] as const;
 
 const SAFETY_SCREENING_FORM_INDEX = 1;
+
+const PHOTOS_CONSENTED_AT = "2026-10-20T18:00:00.000Z";
 
 const OUTSIDE_SCREENING_RANGE_INSTANT = new Date("2064-06-01T09:00:00.000Z");
 const FUTURE_CLIENT_LAST_PERIOD_START = "2064-05-15";
@@ -215,7 +227,10 @@ describe.sequential("client onboarding integration", () => {
 
     // assert
     expect(submitted.status).toBe(200);
-    expect(await submitted.json()).toEqual({ redirectTo: CLIENT_PORTAL });
+    expect(await submitted.json()).toEqual({
+      redirectTo: CLIENT_PORTAL,
+      photos: { front: "absent", side: "absent", back: "absent" },
+    });
     const client = await clientRowOf(INVITED_CLIENT);
     const [submission] = await submissionRowsOf(client.id);
     expect(submission?.answers).toEqual(
@@ -244,6 +259,106 @@ describe.sequential("client onboarding integration", () => {
     expect(onboardingAfterSubmission.headers.get("location")).toBe(
       suite.path(CLIENT_PORTAL),
     );
+  });
+
+  it("stores the three photos she sends with her submission against her first entry, sealed under the media root", async () => {
+    // arrange
+    await admitInvitedClient(ANA);
+
+    // act
+    const submitted = await postSubmission(
+      INVITED_CLIENT,
+      photoConsentingSubmission(),
+      await threeAcceptedPhotos(),
+    );
+
+    // assert
+    expect(submitted.status).toBe(200);
+    expect(await submitted.json()).toEqual({
+      redirectTo: CLIENT_PORTAL,
+      photos: { front: "stored", side: "stored", back: "stored" },
+    });
+    const client = await clientRowOf(INVITED_CLIENT);
+    const [firstEntry] = await measurements.entryRowsOf(client.id);
+    const photos = await measurements.photoRowsOf(client.id);
+    expect(photos.map((photo) => photo.view)).toEqual([
+      "back",
+      "front",
+      "side",
+    ]);
+    expect(photos).toEqual(
+      Array(3).fill(
+        expect.objectContaining({
+          entryId: firstEntry?.id,
+          keyId: CLIENT_MEDIA_KEY_ID,
+          mimeType: "image/jpeg",
+        }),
+      ),
+    );
+    for (const photo of photos) {
+      const rendition = await openedRendition(photo);
+      const storedFile = await measurements.storedFileOf(photo);
+
+      expect(photo.sizeBytes).toBe(rendition.byteLength);
+      expect(storedFile).not.toBeNull();
+      expect(storedFile?.includes(rendition.subarray(0, 64))).toBe(false);
+    }
+  });
+
+  it("refuses the one photo it cannot accept, stores the others and still records her submission", async () => {
+    // arrange
+    await admitInvitedClient(ANA);
+    const photos = await threeAcceptedPhotos();
+
+    // act
+    const submitted = await postSubmission(
+      INVITED_CLIENT,
+      photoConsentingSubmission(),
+      {
+        ...photos,
+        front: photoPart(Buffer.from("not a photo"), "front.jpg", "text/plain"),
+      },
+    );
+
+    // assert
+    expect(submitted.status).toBe(200);
+    expect(await submitted.json()).toEqual({
+      redirectTo: CLIENT_PORTAL,
+      photos: { front: "refused", side: "stored", back: "stored" },
+    });
+    const client = await clientRowOf(INVITED_CLIENT);
+    expect(await submissionRowCountOf(client.id)).toBe(1);
+    expect(
+      (await measurements.photoRowsOf(client.id)).map((photo) => photo.view),
+    ).toEqual(["back", "side"]);
+    expect(await measurements.storedFileCountOf(client.id)).toBe(2);
+  });
+
+  it("refuses every photo she sends without agreeing to share them, and still records her submission", async () => {
+    // arrange
+    await admitInvitedClient(ANA);
+
+    // act
+    const submitted = await postSubmission(
+      INVITED_CLIENT,
+      {
+        answers: completeAnswers(REGULAR_LAST_PERIOD_START),
+        consents: givenConsents(),
+      },
+      await threeAcceptedPhotos(),
+    );
+
+    // assert
+    expect(submitted.status).toBe(200);
+    expect(await submitted.json()).toEqual({
+      redirectTo: CLIENT_PORTAL,
+      photos: { front: "refused", side: "refused", back: "refused" },
+    });
+    const client = await clientRowOf(INVITED_CLIENT);
+    expect(await submissionRowCountOf(client.id)).toBe(1);
+    expect(await measurements.entryRowsOf(client.id)).toHaveLength(1);
+    expect(await measurements.photoRowsOf(client.id)).toEqual([]);
+    expect(await measurements.storedFileCountOf(client.id)).toBe(0);
   });
 
   it("refuses a second submission", async () => {
@@ -447,13 +562,49 @@ async function putDraft(
 
 async function postSubmission(
   session: AccountSession,
-  body: SubmissionRequestBody,
+  submission: OnboardingSubmission,
+  photos: SubmissionPhotos = {},
 ): Promise<Response> {
-  return rig.requestAs(session, SUBMISSION_API, {
-    body: JSON.stringify(body),
-    headers: { "content-type": "application/json" },
-    method: "POST",
-  });
+  return onboarding.sendSubmission(session, submission, photos);
+}
+
+function photoConsentingSubmission(): OnboardingSubmission {
+  return {
+    answers: completeAnswers(REGULAR_LAST_PERIOD_START),
+    consents: { ...givenConsents(), progressPhotosAt: PHOTOS_CONSENTED_AT },
+  };
+}
+
+async function threeAcceptedPhotos(): Promise<Required<SubmissionPhotos>> {
+  return {
+    front: photoPart(
+      await cameraJpegWithOrientationAndLocation(),
+      "front.jpg",
+      "image/jpeg",
+    ),
+    side: photoPart(await landscapePng(), "side.png", "image/png"),
+    back: photoPart(await smallWebp(), "back.webp", "image/webp"),
+  };
+}
+
+function photoPart(
+  bytes: Buffer,
+  fileName: string,
+  mimeType: string,
+): PhotoPart {
+  return { bytes, fileName, mimeType };
+}
+
+async function openedRendition(photo: ProgressPhotoRow): Promise<Buffer> {
+  const response = await measurements.openPhoto(INVITED_CLIENT, photo.id);
+
+  if (response.status !== 200) {
+    throw new Error(
+      `Opening her ${photo.view} photo answered ${response.status}.`,
+    );
+  }
+
+  return Buffer.from(await response.arrayBuffer());
 }
 
 async function putUnitPreference(

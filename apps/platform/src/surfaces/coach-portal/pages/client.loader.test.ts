@@ -51,12 +51,14 @@ const REVIEW: OnboardingReviewView = {
 
 const MEASUREMENTS: MeasurementRow[] = [
   {
+    id: "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d",
     recordedAt: "2026-09-29T09:00:00.000Z",
     weightKg: 64.5,
     waistCm: 72,
     hipsCm: null,
     thighCm: null,
     armCm: null,
+    photos: [],
   },
 ];
 

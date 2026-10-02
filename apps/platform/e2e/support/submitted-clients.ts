@@ -42,6 +42,8 @@ export type ReviewState =
 
 export type SubmissionProfile = "flagged" | "manual-screening";
 
+export type PhotoConsentAtOnboarding = "given" | "not-given";
+
 type FirstMeasurements = {
   weightKg: number;
   waistCm: number;
@@ -57,6 +59,7 @@ type SubmissionSeed = {
   answers: OnboardingAnswersByForm;
   submittedAt: Date;
   measurements: FirstMeasurements | null;
+  progressPhotosConsentedAt: Date | null;
 };
 
 type ProfileSeed = {
@@ -138,7 +141,7 @@ const INSERT_SUBMISSION = `
     client_id, answers, special_category_consented_at, disclaimer_consented_at,
     progress_photos_consented_at, submitted_at
   )
-  values ($1, $2, $3, $3, null, $3)
+  values ($1, $2, $3, $3, $4, $3)
 `;
 const INSERT_FIRST_MEASUREMENTS = `
   insert into app.client_measurements (
@@ -214,6 +217,27 @@ export async function insertSubmittedClientRecords(
     answers: submittedAnswersFor(identity, submittedAt),
     submittedAt,
     measurements: FIRST_MEASUREMENTS,
+    progressPhotosConsentedAt: null,
+  });
+  await recordClientProfile(pool, client.clientId);
+
+  return { ...client, submittedAt };
+}
+
+export async function insertUnmeasuredSubmittedClientRecords(
+  pool: pg.Pool,
+  identity: PaidClientIdentity,
+  photoConsent: PhotoConsentAtOnboarding,
+): Promise<SubmittedClient> {
+  const client = await insertPaidClientRecords(pool, identity);
+  const submittedAt = new Date();
+
+  await recordSubmission(pool, {
+    clientId: client.clientId,
+    answers: submittedAnswersFor(identity, submittedAt),
+    submittedAt,
+    measurements: null,
+    progressPhotosConsentedAt: photoConsent === "given" ? submittedAt : null,
   });
   await recordClientProfile(pool, client.clientId);
 
@@ -235,6 +259,7 @@ export async function insertProfiledClientRecords(
     answers: seed.answersFrom(submittedAnswersFor(profiled, submittedAt)),
     submittedAt,
     measurements: seed.measurements,
+    progressPhotosConsentedAt: null,
   });
 
   if (seed.bookingContact) {
@@ -261,6 +286,7 @@ async function recordSubmission(
       clientId,
       JSON.stringify(submission.answers),
       submittedAt,
+      submission.progressPhotosConsentedAt,
     ]);
 
     if (measurements) {

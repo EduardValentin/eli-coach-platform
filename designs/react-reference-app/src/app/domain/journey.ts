@@ -133,14 +133,58 @@ export type JourneyReview = {
   requests: DetailRequest[];
 };
 
+export type ProgressPhotoView = 'front' | 'side' | 'back';
+
+export const PROGRESS_PHOTO_VIEWS: readonly ProgressPhotoView[] = [
+  'front',
+  'side',
+  'back',
+];
+
+export const PROGRESS_PHOTO_VIEW_LABELS: Record<ProgressPhotoView, string> = {
+  front: 'Front',
+  side: 'Side',
+  back: 'Back',
+};
+
+export type ProgressPhoto = { url: string };
+
+export type ProgressPhotoSet = Partial<Record<ProgressPhotoView, ProgressPhoto>>;
+
+export const NO_PROGRESS_PHOTOS: ProgressPhotoSet = {};
+
 export type MeasurementEntry = {
+  id: string;
   recordedAt: Date;
   weightKg: number;
   waistCm: number;
   hipsCm?: number;
   thighCm?: number;
   armCm?: number;
+  photos: ProgressPhotoSet;
 };
+
+export function hasProgressPhotos(entry: MeasurementEntry): boolean {
+  return Object.keys(entry.photos).length > 0;
+}
+
+export function withPhotoAt(
+  photos: ProgressPhotoSet,
+  view: ProgressPhotoView,
+  photo: ProgressPhoto,
+): ProgressPhotoSet {
+  return { ...photos, [view]: photo };
+}
+
+export function withoutPhotoAt(
+  photos: ProgressPhotoSet,
+  view: ProgressPhotoView,
+): ProgressPhotoSet {
+  const remaining = { ...photos };
+  delete remaining[view];
+
+  return remaining;
+}
 
 export type ReviewCall = {
   startsAt: Date;
@@ -164,6 +208,7 @@ export type ClientJourney = {
   programReadyAt: Date | null;
   reviewCall?: ReviewCall;
   measurements: MeasurementEntry[];
+  progressPhotosConsentedAt: Date | null;
   subscription?: CoachingSubscription;
 };
 

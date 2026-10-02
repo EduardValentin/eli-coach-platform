@@ -1,3 +1,4 @@
+import { measurementProblem, type MeasurementRule } from "../measurement";
 import {
   measureUnitLabel,
   toDisplayMeasure,
@@ -26,9 +27,7 @@ export type OnboardingFieldProblem = {
 };
 
 const AMOUNT_NOUNS: Record<string, string> = {
-  weight: "a weight",
   height: "a height",
-  circumference: "a measurement",
 };
 
 const REQUIRED_MESSAGES: Record<string, string> = {
@@ -49,6 +48,17 @@ function isMeasureField(field: OnboardingField): boolean {
     field.kind === "height" ||
     field.kind === "circumference"
   );
+}
+
+function measurementRuleOf(field: OnboardingField): MeasurementRule | null {
+  if (field.kind !== "weight" && field.kind !== "circumference") return null;
+  if (!field.range) return null;
+
+  return {
+    kind: field.kind,
+    requirement: field.requirement,
+    range: field.range,
+  };
 }
 
 function isNumericField(field: OnboardingField): boolean {
@@ -229,13 +239,34 @@ function isEmptyAnswer(
   );
 }
 
+function measurementFieldProblem(
+  rule: MeasurementRule,
+  input: NumericFieldProblemInput,
+): string | null {
+  const answer = input.answers[input.field.id];
+  const reading = isEmptyAnswer(input.field, answer) ? undefined : answer;
+
+  return (
+    measurementProblem(rule, reading, input.units) ?? goalSpreadProblem(input)
+  );
+}
+
 export function fieldProblem(
   field: OnboardingField,
   answers: OnboardingFormAnswers,
   options: OnboardingValidationOptions,
 ): string | null {
-  const answer = answers[field.id];
+  const rule = measurementRuleOf(field);
 
+  if (rule) {
+    return measurementFieldProblem(rule, {
+      field,
+      answers,
+      units: options.units,
+    });
+  }
+
+  const answer = answers[field.id];
   if (isEmptyAnswer(field, answer)) {
     return field.requirement === "required" ? requiredMessage(field) : null;
   }

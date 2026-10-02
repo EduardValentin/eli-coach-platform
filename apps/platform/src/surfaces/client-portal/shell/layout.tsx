@@ -68,7 +68,13 @@ export default function ClientLayoutRoute() {
                 </Button>
               </SignOutControl>
             ),
-            header: <ClientNameBlock displayName={displayName} size="md" />,
+            renderHeader: (closeSheet) => (
+              <ClientNameBlock
+                displayName={displayName}
+                onNavigate={closeSheet}
+                size="md"
+              />
+            ),
             navigationLabel: "Client portal more",
             title: "More",
           },

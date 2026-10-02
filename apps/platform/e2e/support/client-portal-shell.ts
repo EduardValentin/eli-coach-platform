@@ -1,4 +1,4 @@
-import { expect, type Page } from "@playwright/test";
+import { expect, type Locator, type Page } from "@playwright/test";
 
 export class ClientPortalShell {
   constructor(private readonly page: Page) {}
@@ -25,6 +25,20 @@ export class ClientPortalShell {
     return this.page.getByRole("dialog", { name: "More" });
   }
 
+  private get sidebarNavigation() {
+    return this.sidebar.getByRole("navigation", {
+      name: "Client portal navigation",
+    });
+  }
+
+  private profileLinkIn(scope: Locator): Locator {
+    return scope.getByRole("link", { name: "Profile", exact: true });
+  }
+
+  private nameLinkIn(scope: Locator, displayName: string): Locator {
+    return scope.getByRole("link", { name: displayName, exact: true });
+  }
+
   private get skipLink() {
     return this.page.getByRole("link", { name: "Skip to main content" });
   }
@@ -45,6 +59,36 @@ export class ClientPortalShell {
     await expect(
       this.page.getByRole("link", { name: "Dashboard" }),
     ).toHaveAttribute("aria-current", "page");
+  }
+
+  async expectProfileCurrent(): Promise<void> {
+    await expect(
+      this.page.getByRole("link", { name: "Profile", exact: true }),
+    ).toHaveAttribute("aria-current", "page");
+  }
+
+  async openProfileFromSidebar(): Promise<void> {
+    await this.profileLinkIn(this.sidebarNavigation).click();
+  }
+
+  async openProfileFromTabs(): Promise<void> {
+    await this.profileLinkIn(this.tabBar).click();
+  }
+
+  async openProfileFromSidebarName(displayName: string): Promise<void> {
+    await this.nameLinkIn(this.sidebar, displayName).click();
+  }
+
+  async openProfileFromTopBarName(displayName: string): Promise<void> {
+    await this.nameLinkIn(this.topBar, displayName).click();
+  }
+
+  async openProfileFromMoreSheetName(displayName: string): Promise<void> {
+    await this.nameLinkIn(this.moreSheet, displayName).click();
+  }
+
+  async expectSheetClosed(): Promise<void> {
+    await expect(this.moreSheet).toBeHidden();
   }
 
   async expectGreeting(greeting: string): Promise<void> {

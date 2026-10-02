@@ -1,15 +1,5 @@
-import {
-  Card,
-  CheckboxField,
-  FieldCaption,
-  LabelSuffix,
-} from "@eli-coach-platform/ui/primitives";
+import { CheckboxField } from "@eli-coach-platform/ui/primitives";
 import { Link } from "react-router";
-
-import {
-  OPTIONAL_SUFFIX,
-  PROGRESS_PHOTO_CONSENT_COPY,
-} from "~/features/client-onboarding/contracts/onboarding-copy";
 
 type ConsentAgreement = "specialCategory" | "disclaimer";
 
@@ -22,19 +12,12 @@ const PARITY_HOOKS: Record<ConsentAgreement, string> = {
   disclaimer: "disclaimer",
 };
 
-const PROGRESS_PHOTOS_HEADING = "Progress photos";
-
 type OnboardingConsentProps = {
   agreement: ConsentAgreement;
   checked: boolean;
   onChange: (checked: boolean) => void;
   problem: string | null;
   statement: string;
-};
-
-type ProgressPhotoConsentProps = {
-  consented: boolean;
-  onConsentChange: (consented: boolean) => void;
 };
 
 export function OnboardingConsent({
@@ -67,28 +50,5 @@ export function OnboardingConsent({
         </Link>
       )}
     </CheckboxField>
-  );
-}
-
-export function ProgressPhotoConsent({
-  consented,
-  onConsentChange,
-}: ProgressPhotoConsentProps) {
-  return (
-    <Card className="grid gap-4" data-parity="progress-photos" variant="inset">
-      <FieldCaption data-parity="progress-photos-caption">
-        {PROGRESS_PHOTOS_HEADING}{" "}
-        <LabelSuffix data-parity="progress-photos-suffix">
-          {OPTIONAL_SUFFIX}
-        </LabelSuffix>
-      </FieldCaption>
-      <CheckboxField
-        checkboxParity="progress-photos-checkbox"
-        checked={consented}
-        label={PROGRESS_PHOTO_CONSENT_COPY}
-        layout="statement"
-        onCheckedChange={onConsentChange}
-      />
-    </Card>
   );
 }

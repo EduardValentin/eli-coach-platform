@@ -1,11 +1,14 @@
 import { joinBasePath } from "@eli-coach-platform/config";
 import type { OnboardingConsent } from "@eli-coach-platform/domain/client-onboarding";
+import type { ProgressPhotoView } from "@eli-coach-platform/domain/client-profile";
 import type { UnitPreferenceSnapshot } from "@eli-coach-platform/domain/unit-preference";
 
 import {
   missingConsentSchema,
+  SUBMIT_ONBOARDING_FIELDS,
   submissionAcceptedSchema,
   submissionProblemsSchema,
+  submissionSentSchema,
   type AnswerDetailsRequest,
   type SaveDraftRequest,
   type SubmissionProblem,
@@ -13,6 +16,11 @@ import {
 } from "~/features/client-onboarding/contracts/onboarding";
 import { CLIENT_ONBOARDING_API_PATHS } from "~/features/client-onboarding/contracts/paths";
 import { CLIENT_PROFILE_API_PATHS } from "~/features/client-profile/contracts/paths";
+import {
+  appendProgressPhotoParts,
+  refusedPhotoViewsOf,
+  type ProgressPhotoPicks,
+} from "~/features/client-profile/ui/shared/photos/progress-photo-picks";
 
 const DRAFT_API_URL = joinBasePath(
   import.meta.env.BASE_URL,
@@ -47,12 +55,19 @@ export type SaveOutcome = "saved" | "refused" | "failed";
 
 type Accepted = { kind: "accepted"; redirectTo: string };
 
+type AcceptedWithPhotos = Accepted & { refusedPhotoViews: ProgressPhotoView[] };
+
+type OnboardingSubmission = {
+  request: SubmitRequest;
+  photos: ProgressPhotoPicks;
+};
+
 type Invalid = { kind: "invalid"; problems: SubmissionProblem[] };
 
 type Failed = { kind: "failed" };
 
 export type SubmissionOutcome =
-  | Accepted
+  | AcceptedWithPhotos
   | Invalid
   | { kind: "consent-missing"; consent: OnboardingConsent }
   | { kind: "already-submitted" }
@@ -74,6 +89,17 @@ async function sendJson(
       headers: { "Content-Type": "application/json" },
       method: request.method,
     });
+  } catch {
+    return null;
+  }
+}
+
+async function sendFormData(
+  url: string,
+  formData: FormData,
+): Promise<Response | null> {
+  try {
+    return await fetch(url, { body: formData, method: "POST" });
   } catch {
     return null;
   }
@@ -121,6 +147,29 @@ function acceptedOutcome(body: unknown): Accepted | Failed {
     : REQUEST_FAILED;
 }
 
+function acceptedWithPhotosOutcome(body: unknown): AcceptedWithPhotos | Failed {
+  const sent = submissionSentSchema.safeParse(body);
+
+  return sent.success
+    ? {
+        kind: "accepted",
+        redirectTo: sent.data.redirectTo,
+        refusedPhotoViews: refusedPhotoViewsOf(sent.data.photos),
+      }
+    : REQUEST_FAILED;
+}
+
+function submissionFormData({
+  request,
+  photos,
+}: OnboardingSubmission): FormData {
+  const formData = new FormData();
+  formData.append(SUBMIT_ONBOARDING_FIELDS.submission, JSON.stringify(request));
+  appendProgressPhotoParts(formData, photos);
+
+  return formData;
+}
+
 function problemsOutcome(body: unknown): Invalid | Failed {
   const problems = submissionProblemsSchema.safeParse(body);
 
@@ -142,18 +191,18 @@ function unprocessableSubmissionOutcome(body: unknown): SubmissionOutcome {
 }
 
 export async function submitOnboarding(
-  request: SubmitRequest,
+  submission: OnboardingSubmission,
 ): Promise<SubmissionOutcome> {
-  const response = await sendJson(SUBMISSION_API_URL, {
-    body: request,
-    method: "POST",
-  });
+  const response = await sendFormData(
+    SUBMISSION_API_URL,
+    submissionFormData(submission),
+  );
 
   if (!response) return REQUEST_FAILED;
   if (response.status === ALREADY_SUBMITTED_STATUS) {
     return { kind: "already-submitted" };
   }
-  if (response.ok) return acceptedOutcome(await readJson(response));
+  if (response.ok) return acceptedWithPhotosOutcome(await readJson(response));
   if (response.status === UNPROCESSABLE_STATUS) {
     return unprocessableSubmissionOutcome(await readJson(response));
   }

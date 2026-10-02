@@ -1,0 +1,10 @@
+[
+  {"waitFor": "[data-parity-root=\"MeasurementsTable\"]"},
+  {"wait": 600},
+  {"click": "[data-parity-root=\"MeasurementsTable\"] >> role=button[name=\"Add\"]"},
+  {"waitFor": "[role=\"dialog\"] [data-parity=\"progress-photos\"]"},
+  {"wait": 1200},
+  {"click": "[role=\"dialog\"] >> role=button[name=\"Save measurements\"]"},
+  {"waitFor": "[data-sonner-toast]"},
+  {"wait": 800}
+]

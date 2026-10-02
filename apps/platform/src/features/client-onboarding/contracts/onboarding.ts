@@ -5,6 +5,7 @@ import {
 } from "@eli-coach-platform/domain/client-onboarding";
 import { z } from "zod";
 
+import { progressPhotoOutcomesSchema } from "~/features/client-profile/contracts/progress-photo-parts";
 import { unitPreferenceSchema } from "~/features/client-profile/contracts/unit-preference";
 
 const ANSWER_MAX_LENGTH = 2000;
@@ -68,6 +69,8 @@ export const submitRequestSchema = z.object({
 });
 
 export type SubmitRequest = z.infer<typeof submitRequestSchema>;
+
+export const SUBMIT_ONBOARDING_FIELDS = { submission: "submission" } as const;
 
 const onboardingWizardPageSchema = z.object({
   mode: z.literal("wizard"),
@@ -140,6 +143,10 @@ export const missingConsentSchema = z.object({
 
 export const submissionAcceptedSchema = z.object({
   redirectTo: z.string().regex(/^\/(?!\/)/),
+});
+
+export const submissionSentSchema = submissionAcceptedSchema.extend({
+  photos: progressPhotoOutcomesSchema,
 });
 
 export const onboardingRefusalSchema = z.object({

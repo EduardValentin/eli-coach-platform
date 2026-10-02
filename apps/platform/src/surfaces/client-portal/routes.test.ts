@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { clientPortalRoutes } from "./routes";
 
 const ACCESS_LAYOUT_FILE = /shell\/access-layout\.tsx$/;
+const SHELL_LAYOUT_FILE = /shell\/layout\.tsx$/;
 const ANONYMOUS_ROUTE_PATHS = [
   "client/manifest.webmanifest",
   "client/sw.js",
@@ -34,6 +35,34 @@ describe("client portal routes", () => {
       expect.arrayContaining([
         expect.stringMatching(/shell\/layout\.tsx$/),
         expect.stringMatching(/pages\/home\.tsx$/),
+      ]),
+    );
+  });
+
+  it("serves her profile inside the portal shell beside the dashboard", () => {
+    // arrange
+    const accessLayout = clientPortalRoutes.find((entry) =>
+      ACCESS_LAYOUT_FILE.test(entry.file),
+    );
+
+    // act
+    const shell = accessLayout?.children?.find((entry) =>
+      SHELL_LAYOUT_FILE.test(entry.file),
+    );
+
+    // assert
+    expect(shell?.children).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          file: expect.stringMatching(/pages\/home\.tsx$/),
+          index: true,
+        }),
+        expect.objectContaining({
+          file: expect.stringMatching(
+            /features\/client-profile\/ui\/client\/profile\/profile-page\.tsx$/,
+          ),
+          path: "client/profile",
+        }),
       ]),
     );
   });

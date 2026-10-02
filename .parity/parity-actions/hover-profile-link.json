@@ -1,0 +1,6 @@
+[
+  {"waitFor": "[data-parity=\"link-profile\"]"},
+  {"wait": 600},
+  {"hover": "[data-parity=\"link-profile\"]"},
+  {"wait": 400}
+]

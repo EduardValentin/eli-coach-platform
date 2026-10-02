@@ -2,7 +2,13 @@ import type {
   DetailRequest,
   OnboardingDraft,
   OnboardingFormAnswers,
+  ProgressPhotoSet,
 } from '../domain/journey';
+import {
+  processProgressPhotos,
+  type PhotoProcessing,
+  type ProcessedProgressPhotos,
+} from './measurementService';
 import type { HeightUnit, WeightUnit } from '../utils/units';
 
 export type OnboardingConnection = 'working' | 'lost';
@@ -24,9 +30,16 @@ export class OnboardingError extends Error {
   }
 }
 
+export type OnboardingSubmission = {
+  connection: OnboardingConnection;
+  photos: ProgressPhotoSet;
+  photoProcessing: PhotoProcessing;
+};
+
 export type SubmittedOnboarding = {
   journeyId: string;
   submittedAt: Date;
+  photos: ProcessedProgressPhotos;
 };
 
 export type UnitPreference = {
@@ -108,11 +121,18 @@ export function forgetDraft(journeyId: string): void {
 
 export async function submit(
   journeyId: string,
-  connection: OnboardingConnection,
+  submission: OnboardingSubmission,
 ): Promise<SubmittedOnboarding> {
-  await reachServer(connection);
+  await reachServer(submission.connection);
 
-  return { journeyId, submittedAt: new Date() };
+  return {
+    journeyId,
+    submittedAt: new Date(),
+    photos: processProgressPhotos(
+      submission.photos,
+      submission.photoProcessing,
+    ),
+  };
 }
 
 export async function answerRequest(

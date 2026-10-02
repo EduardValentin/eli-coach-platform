@@ -1,7 +1,26 @@
-import { expect, type Locator, type Page } from "@playwright/test";
+import {
+  PROGRESS_PHOTO_VIEWS,
+  type ProgressPhotoView,
+} from "@eli-coach-platform/domain/client-profile";
+import {
+  expect,
+  type Locator,
+  type Page,
+  type Request,
+} from "@playwright/test";
 
 import { expectAvailability, type Availability } from "./control-states";
 import { tabTo } from "./keyboard";
+import { ProgressPhotoTiles } from "./progress-photo-tiles";
+import type { SamplePhoto } from "./sample-photos";
+
+const SUBMISSION_PATH = "/api/client-onboarding/submission";
+
+export type SentPhotos = {
+  status: number;
+  sentViews: ProgressPhotoView[];
+  outcomes: Partial<Record<ProgressPhotoView, string>>;
+};
 
 type UnitsChoice = "kg · cm" | "lb · in";
 
@@ -101,6 +120,10 @@ export class ClientOnboarding {
 
   private get answerRequest() {
     return this.page.getByRole("region", { name: ANSWER_REQUEST_HEADING });
+  }
+
+  private get photoTiles() {
+    return new ProgressPhotoTiles(this.page.locator("body"));
   }
 
   private get measurementSystem() {
@@ -429,10 +452,65 @@ export class ClientOnboarding {
     await this.page.keyboard.press("Enter");
   }
 
+  async expectPhotosLocked(): Promise<void> {
+    await this.photoTiles.expectLocked();
+  }
+
+  async agreeToPhotos(): Promise<void> {
+    await this.photoTiles.agree();
+  }
+
+  async withdrawFromPhotos(): Promise<void> {
+    await this.photoTiles.withdraw();
+  }
+
+  async expectPhotosSendNote(): Promise<void> {
+    await this.photoTiles.expectSendNote();
+  }
+
+  async addPhoto(view: ProgressPhotoView, photo: SamplePhoto): Promise<void> {
+    await this.photoTiles.add(view, photo);
+  }
+
+  async expectNoPhotoPreview(view: ProgressPhotoView): Promise<void> {
+    await this.photoTiles.expectNoPreview(view);
+  }
+
+  async expectPhotoRefusal(): Promise<void> {
+    await this.photoTiles.expectRefusal();
+  }
+
+  async expectNoPhotoRefusal(): Promise<void> {
+    await this.photoTiles.expectNoRefusal();
+  }
+
+  async expectPhotoPreview(view: ProgressPhotoView): Promise<void> {
+    await this.photoTiles.expectPreview(view);
+  }
+
   async sendToCoach(): Promise<void> {
     await this.click(
       this.page.getByRole("button", { name: "Send to my coach" }),
     );
+  }
+
+  async sendToCoachCapturingPhotoExchange(): Promise<SentPhotos> {
+    const submission = this.page.waitForResponse(
+      (response) =>
+        response.url().endsWith(SUBMISSION_PATH) &&
+        response.request().method() === "POST",
+    );
+    await this.sendToCoach();
+    const response = await submission;
+    const { photos } = (await response.json()) as {
+      photos: Partial<Record<ProgressPhotoView, string>>;
+    };
+
+    return {
+      status: response.status(),
+      sentViews: photoViewsSentIn(response.request()),
+      outcomes: photos,
+    };
   }
 
   async expectAnswerPage(note: string): Promise<void> {
@@ -475,4 +553,10 @@ export class ClientOnboarding {
       this.page.getByRole("button", { name: "Send my answers" }),
     );
   }
+}
+
+function photoViewsSentIn(submission: Request): ProgressPhotoView[] {
+  const body = submission.postDataBuffer()?.toString("latin1") ?? "";
+
+  return PROGRESS_PHOTO_VIEWS.filter((view) => body.includes(`name="${view}"`));
 }

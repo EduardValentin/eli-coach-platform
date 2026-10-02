@@ -13,6 +13,7 @@ import {
   escapedPattern,
   HYDRATION_RETRY_TIMEOUT_MS,
 } from "./locator-text";
+import { MeasurementsHistory } from "./measurements-history";
 import type { PaidClient } from "./paid-clients";
 
 export type Readings = Readonly<Record<string, string>>;
@@ -42,7 +43,11 @@ const ONBOARDING_PROFILE_TERMS = [
 ] as const;
 
 export class CoachClientPage {
-  constructor(private readonly page: Page) {}
+  private readonly measurementsHistory: MeasurementsHistory;
+
+  constructor(private readonly page: Page) {
+    this.measurementsHistory = new MeasurementsHistory(page);
+  }
 
   private block(heading: string): Locator {
     return this.page.getByRole("region", { name: heading, exact: true });
@@ -407,6 +412,18 @@ export class CoachClientPage {
     await expect(history.getByRole("row").nth(1)).toHaveText(
       new RegExp(cells.map(escapedPattern).join(".*")),
     );
+  }
+
+  async expectRatio(date: string, ratio: string): Promise<void> {
+    await this.measurementsHistory.expectRatio(date, ratio);
+  }
+
+  async expectViewPhotos(date: string): Promise<void> {
+    await this.measurementsHistory.expectViewPhotos(date);
+  }
+
+  async expectNoViewPhotos(date: string): Promise<void> {
+    await this.measurementsHistory.expectNoViewPhotos(date);
   }
 
   async expectPhoneLink(phone: string): Promise<void> {

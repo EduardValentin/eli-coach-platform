@@ -115,6 +115,30 @@ describe("fieldProblem, numeric range in kg and lb", () => {
   });
 });
 
+describe("fieldProblem, circumferences", () => {
+  it("converts the bounds to inches in the message", () => {
+    // arrange
+    const answers: OnboardingFormAnswers = { hips: 30 };
+
+    // act
+    const problem = fieldProblem(hipsField, answers, options(IMPERIAL));
+
+    // assert
+    expect(problem).toBe("Enter a measurement between 20 and 79 in.");
+  });
+
+  it("asks for a number when an optional reading is not one", () => {
+    // arrange
+    const answers: OnboardingFormAnswers = { hips: "wide" };
+
+    // act
+    const problem = fieldProblem(hipsField, answers, options());
+
+    // assert
+    expect(problem).toBe("Enter a measurement.");
+  });
+});
+
 describe("fieldProblem, goal-weight spread in kg and lb", () => {
   it("refuses a goal too far from her current weight, in kilograms", () => {
     // arrange

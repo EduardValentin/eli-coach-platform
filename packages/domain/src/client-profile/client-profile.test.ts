@@ -7,6 +7,7 @@ import {
 } from "./client-profile";
 
 const NOW = new Date("2026-09-30T10:00:00.000Z");
+const CONSENTED_AT = new Date("2026-09-30T09:45:00.000Z");
 
 const FACTS: OnboardingProfileFacts = {
   heightCm: 168,
@@ -22,6 +23,7 @@ describe("ClientProfile.fromOnboarding", () => {
     const profile = ClientProfile.fromOnboarding({
       clientId: "client-1",
       facts: FACTS,
+      progressPhotosConsentedAt: CONSENTED_AT,
       now: NOW,
     });
 
@@ -29,6 +31,7 @@ describe("ClientProfile.fromOnboarding", () => {
     expect(profile.toSnapshot()).toEqual({
       clientId: "client-1",
       ...FACTS,
+      progressPhotosConsentedAt: CONSENTED_AT,
       updatedAt: NOW,
     });
   });
@@ -41,6 +44,7 @@ describe("ClientProfile.fromOnboarding", () => {
     const profile = ClientProfile.fromOnboarding({
       clientId: "client-1",
       facts,
+      progressPhotosConsentedAt: null,
       now: NOW,
     });
 
@@ -56,6 +60,7 @@ describe("ClientProfile.reconstitute", () => {
       clientId: "client-1",
       ...FACTS,
       clientNotes: null,
+      progressPhotosConsentedAt: null,
       updatedAt: NOW,
     };
 
@@ -64,5 +69,39 @@ describe("ClientProfile.reconstitute", () => {
 
     // assert
     expect(profile.toSnapshot()).toEqual(snapshot);
+  });
+});
+
+describe("ClientProfile#hasPhotoConsent", () => {
+  it("holds once she agreed to share progress photos", () => {
+    // arrange
+    const profile = ClientProfile.fromOnboarding({
+      clientId: "client-1",
+      facts: FACTS,
+      progressPhotosConsentedAt: CONSENTED_AT,
+      now: NOW,
+    });
+
+    // act
+    const consented = profile.hasPhotoConsent();
+
+    // assert
+    expect(consented).toBe(true);
+  });
+
+  it("does not hold while she has not agreed", () => {
+    // arrange
+    const profile = ClientProfile.fromOnboarding({
+      clientId: "client-1",
+      facts: FACTS,
+      progressPhotosConsentedAt: null,
+      now: NOW,
+    });
+
+    // act
+    const consented = profile.hasPhotoConsent();
+
+    // assert
+    expect(consented).toBe(false);
   });
 });

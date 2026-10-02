@@ -16,6 +16,7 @@ afterEach(() => {
 function SendLinkConfirmation(props: {
   cancelLabel?: string;
   onConfirm: () => void;
+  tone?: "default" | "destructive";
 }) {
   const [open, setOpen] = useState(false);
 
@@ -32,18 +33,23 @@ function SendLinkConfirmation(props: {
         onOpenChange={setOpen}
         open={open}
         title="Send payment link?"
+        tone={props.tone}
       />
     </>
   );
 }
 
-async function openConfirmation(options?: { cancelLabel?: string }) {
+async function openConfirmation(options?: {
+  cancelLabel?: string;
+  tone?: "default" | "destructive";
+}) {
   const user = userEvent.setup();
   const onConfirm = vi.fn();
   render(
     <SendLinkConfirmation
       cancelLabel={options?.cancelLabel}
       onConfirm={onConfirm}
+      tone={options?.tone}
     />,
   );
 
@@ -124,5 +130,25 @@ describe("ConfirmDialog", () => {
     expect(
       screen.getByRole("button", { name: "Keep editing" }),
     ).toBeInTheDocument();
+  });
+
+  it("confirms in the primary look by default", async () => {
+    // arrange, act
+    await openConfirmation();
+
+    // assert
+    expect(screen.getByRole("button", { name: "Send link" })).toHaveClass(
+      "bg-primary",
+    );
+  });
+
+  it("confirms in the danger look when its action destroys something", async () => {
+    // arrange, act
+    await openConfirmation({ tone: "destructive" });
+
+    // assert
+    const confirm = screen.getByRole("button", { name: "Send link" });
+    expect(confirm).toHaveClass("bg-feedback-danger");
+    expect(confirm).not.toHaveClass("bg-primary");
   });
 });

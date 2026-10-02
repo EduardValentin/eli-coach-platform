@@ -6,20 +6,24 @@ import type pg from "pg";
 
 type SubmissionRow = {
   answers: OnboardingAnswersByForm;
+  progressPhotosConsentedAt: Date | null;
   submittedAt: Date;
 };
 
 const SELECT_SUBMISSION = `
-  select answers, submitted_at as "submittedAt"
+  select
+    answers,
+    progress_photos_consented_at as "progressPhotosConsentedAt",
+    submitted_at as "submittedAt"
   from app.client_onboarding_submissions
   where client_id = $1
 `;
 const INSERT_PROFILE = `
   insert into app.client_profiles (
     client_id, height_cm, activity_level, primary_goal, dietary_restrictions,
-    client_notes, created_at, updated_at
+    client_notes, progress_photos_consented_at, created_at, updated_at
   )
-  values ($1, $2, $3, $4, $5, $6, $7, $7)
+  values ($1, $2, $3, $4, $5, $6, $7, $8, $8)
 `;
 
 export async function recordClientProfile(
@@ -44,6 +48,7 @@ export async function recordClientProfile(
     facts.primaryGoal,
     facts.dietaryRestrictions,
     facts.clientNotes,
+    submission.progressPhotosConsentedAt,
     submission.submittedAt,
   ]);
 }

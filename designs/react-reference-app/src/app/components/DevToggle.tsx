@@ -35,6 +35,17 @@ import {
   ONBOARDING_CONNECTIONS,
   type OnboardingConnection,
 } from '../services/onboardingService';
+import {
+  MEASUREMENT_SAVE_OUTCOMES,
+  PHOTO_PROCESSING_OUTCOMES,
+  PHOTO_REMOVAL_OUTCOMES,
+} from '../services/measurementService';
+import {
+  PROTOTYPE_LIFE_STAGES,
+  PROTOTYPE_MEASUREMENTS_DUE,
+  PROTOTYPE_SEEDED_PHOTOS,
+} from '../services/clientJourneySamples';
+import { optionOrDefault } from '../utils/optionOrDefault';
 import type {
   SubscriptionStartPath,
   SubscriptionStatus,
@@ -1037,6 +1048,198 @@ export function DevToggle() {
                     <SelectContent className={SELECT_CONTENT_CLASS}>
                       <SelectItem value="working">Working</SelectItem>
                       <SelectItem value="lost">Lost</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="dev-measurements-due"
+                    className={DEV_LABEL_CLASS}
+                  >
+                    Measurements due
+                  </Label>
+                  <Select
+                    value={appState.journeyMeasurementsDue}
+                    onValueChange={(value) =>
+                      setAppState({
+                        journeyMeasurementsDue: optionOrDefault(
+                          PROTOTYPE_MEASUREMENTS_DUE,
+                          value,
+                          'none',
+                        ),
+                      })
+                    }
+                  >
+                    <SelectTrigger
+                      id="dev-measurements-due"
+                      className="w-full"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="none">Nothing due</SelectItem>
+                      <SelectItem value="weigh-in">Weekly weigh-in</SelectItem>
+                      <SelectItem value="measurements">
+                        Measurements and photos
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="dev-journey-life-stage"
+                    className={DEV_LABEL_CLASS}
+                  >
+                    Life stage
+                  </Label>
+                  <Select
+                    value={appState.journeyLifeStage}
+                    onValueChange={(value) =>
+                      setAppState({
+                        journeyLifeStage: optionOrDefault(
+                          PROTOTYPE_LIFE_STAGES,
+                          value,
+                          'none',
+                        ),
+                      })
+                    }
+                  >
+                    <SelectTrigger
+                      id="dev-journey-life-stage"
+                      className="w-full"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="none">None of these</SelectItem>
+                      <SelectItem value="pregnant">Pregnant</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="dev-photo-processing"
+                    className={DEV_LABEL_CLASS}
+                  >
+                    Photo processing
+                  </Label>
+                  <Select
+                    value={appState.photoProcessing}
+                    onValueChange={(value) =>
+                      setAppState({
+                        photoProcessing: optionOrDefault(
+                          PHOTO_PROCESSING_OUTCOMES,
+                          value,
+                          'works',
+                        ),
+                      })
+                    }
+                  >
+                    <SelectTrigger
+                      id="dev-photo-processing"
+                      className="w-full"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="works">Works</SelectItem>
+                      <SelectItem value="refuses">Refuses every photo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="dev-measurement-save"
+                    className={DEV_LABEL_CLASS}
+                  >
+                    Measurement save
+                  </Label>
+                  <Select
+                    value={appState.measurementSave}
+                    onValueChange={(value) =>
+                      setAppState({
+                        measurementSave: optionOrDefault(
+                          MEASUREMENT_SAVE_OUTCOMES,
+                          value,
+                          'works',
+                        ),
+                      })
+                    }
+                  >
+                    <SelectTrigger
+                      id="dev-measurement-save"
+                      className="w-full"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="works">Works</SelectItem>
+                      <SelectItem value="fails">Fails</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="dev-photo-removal"
+                    className={DEV_LABEL_CLASS}
+                  >
+                    Photo removal
+                  </Label>
+                  <Select
+                    value={appState.photoRemoval}
+                    onValueChange={(value) =>
+                      setAppState({
+                        photoRemoval: optionOrDefault(
+                          PHOTO_REMOVAL_OUTCOMES,
+                          value,
+                          'works',
+                        ),
+                      })
+                    }
+                  >
+                    <SelectTrigger
+                      id="dev-photo-removal"
+                      className="w-full"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="works">Works</SelectItem>
+                      <SelectItem value="fails">Fails</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="dev-seeded-photos"
+                    className={DEV_LABEL_CLASS}
+                  >
+                    Seeded photos
+                  </Label>
+                  <Select
+                    value={appState.journeySeededPhotos}
+                    onValueChange={(value) =>
+                      setAppState({
+                        journeySeededPhotos: optionOrDefault(
+                          PROTOTYPE_SEEDED_PHOTOS,
+                          value,
+                          'none',
+                        ),
+                      })
+                    }
+                  >
+                    <SelectTrigger id="dev-seeded-photos" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="none">None</SelectItem>
+                      <SelectItem value="latest">On the latest entry</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

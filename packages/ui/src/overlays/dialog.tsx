@@ -1,27 +1,33 @@
-import { X } from "lucide-react";
 import * as React from "react";
 import { Dialog as RadixDialog } from "radix-ui";
 
 import { cn } from "../lib/cn";
+import {
+  DialogFrame,
+  DialogFrameDescription,
+  DialogFrameTitle,
+} from "../lib/dialog-frame";
 
 export const Dialog = RadixDialog.Root;
 
 type DialogSize = "compact" | "wide";
+
+type DialogFooterAlignment = "content" | "end";
 
 type DialogContentProps = Omit<
   React.ComponentPropsWithoutRef<typeof RadixDialog.Content>,
   "onCloseAutoFocus" | "onOpenAutoFocus" | "title"
 > & {
   description: React.ReactNode;
+  descriptionParity?: string;
   footer: React.ReactNode;
+  footerAlignment?: DialogFooterAlignment;
+  footerParity?: string;
   size?: DialogSize;
   title: React.ReactNode;
 };
 
-const CONTENT_CLASS =
-  "fixed top-1/2 left-1/2 z-50 w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 rounded-compact border bg-surface-base shadow-action-hover motion-safe:data-[state=closed]:animate-[ui-popover-out_200ms_ease] motion-safe:data-[state=open]:animate-[ui-popover-in_200ms_ease]";
 const HEADER_CLASS = "flex flex-col gap-2 text-center sm:text-left";
-const DESCRIPTION_CLASS = "text-sm text-text-muted";
 
 const SIZE_CLASSES = {
   compact: {
@@ -45,53 +51,37 @@ export function DialogContent({
   children,
   className,
   description,
+  descriptionParity,
   footer,
+  footerAlignment = "content",
+  footerParity,
   size = "compact",
   title,
   ...props
 }: DialogContentProps) {
-  const opener = React.useRef<HTMLElement | null>(null);
   const sizeClasses = SIZE_CLASSES[size];
 
-  const rememberOpener = () => {
-    opener.current =
-      document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null;
-  };
-
-  const returnFocusToOpener = (event: Event) => {
-    event.preventDefault();
-    opener.current?.focus();
-  };
-
   return (
-    <RadixDialog.Portal>
-      <RadixDialog.Overlay className="fixed inset-0 z-50 bg-overlay-modal motion-safe:data-[state=closed]:animate-[ui-overlay-out_150ms_ease] motion-safe:data-[state=open]:animate-[ui-overlay-in_150ms_ease]" />
-      <RadixDialog.Content
-        className={cn(CONTENT_CLASS, sizeClasses.content, className)}
-        onCloseAutoFocus={returnFocusToOpener}
-        onOpenAutoFocus={rememberOpener}
-        {...props}
+    <DialogFrame className={cn(sizeClasses.content, className)} {...props}>
+      <div className={cn(HEADER_CLASS, sizeClasses.header)}>
+        <DialogFrameTitle>{title}</DialogFrameTitle>
+        <DialogFrameDescription
+          className={sizeClasses.description}
+          data-parity={descriptionParity}
+        >
+          {description}
+        </DialogFrameDescription>
+      </div>
+      <DialogBody size={size}>{children}</DialogBody>
+      <div
+        className={cn(sizeClasses.footer, {
+          "flex justify-end": footerAlignment === "end",
+        })}
+        data-parity={footerParity}
       >
-        <div className={cn(HEADER_CLASS, sizeClasses.header)}>
-          <RadixDialog.Title className="text-lg leading-none font-semibold">
-            {title}
-          </RadixDialog.Title>
-          <RadixDialog.Description
-            className={cn(DESCRIPTION_CLASS, sizeClasses.description)}
-          >
-            {description}
-          </RadixDialog.Description>
-        </div>
-        <DialogBody size={size}>{children}</DialogBody>
-        <div className={sizeClasses.footer}>{footer}</div>
-        <RadixDialog.Close className="absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100">
-          <X aria-hidden="true" className="size-4" />
-          <span className="sr-only">Close</span>
-        </RadixDialog.Close>
-      </RadixDialog.Content>
-    </RadixDialog.Portal>
+        {footer}
+      </div>
+    </DialogFrame>
   );
 }
 

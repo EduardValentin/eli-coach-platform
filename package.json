@@ -16,6 +16,7 @@
     "build": "pnpm --filter @eli-coach-platform/platform build",
     "check:boundaries": "depcruise --config tools/dependency-cruiser.config.cjs apps/platform/src packages/config/src packages/content/src packages/db/src packages/domain/src packages/infrastructure/src packages/test-support/src packages/ui/src && pnpm check:surfaces && node tools/domain-layout.mjs",
     "check:surfaces": "knip --no-config-hints",
+    "client:media:local:prepare": "./scripts/dev/prepare_local_client_media.sh",
     "db:bootstrap:local": "./packages/db/scripts/bootstrap-local.sh",
     "db:generate": "pnpm --filter @eli-coach-platform/platform run db:generate",
     "db:migrate": "pnpm --filter @eli-coach-platform/platform run db:migrate",

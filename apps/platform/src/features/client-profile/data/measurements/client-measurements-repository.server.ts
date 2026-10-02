@@ -11,34 +11,36 @@ import { asc, eq } from "drizzle-orm";
 
 import { clientMeasurementsTable } from "~/features/client-profile/data/schema.server";
 
+export type StoredMeasurement = {
+  recordedAt: Date;
+  weightKg: number;
+  waistCm: number;
+  hipsCm: number | null;
+  thighCm: number | null;
+  armCm: number | null;
+};
+
+export const MEASUREMENT_SELECTION = {
+  recordedAt: clientMeasurementsTable.recordedAt,
+  weightKg: clientMeasurementsTable.weightKg,
+  waistCm: clientMeasurementsTable.waistCm,
+  hipsCm: clientMeasurementsTable.hipsCm,
+  thighCm: clientMeasurementsTable.thighCm,
+  armCm: clientMeasurementsTable.armCm,
+};
+
 export class PostgresClientMeasurements implements ClientMeasurementsSource {
   constructor(private readonly database: DatabaseClient) {}
 
   async listByClientId(clientId: string): Promise<MeasurementEntry[]> {
     const rows = await this.database
-      .select({
-        recordedAt: clientMeasurementsTable.recordedAt,
-        weightKg: clientMeasurementsTable.weightKg,
-        waistCm: clientMeasurementsTable.waistCm,
-        hipsCm: clientMeasurementsTable.hipsCm,
-        thighCm: clientMeasurementsTable.thighCm,
-        armCm: clientMeasurementsTable.armCm,
-      })
+      .select(MEASUREMENT_SELECTION)
       .from(clientMeasurementsTable)
       .where(eq(clientMeasurementsTable.clientId, clientId))
       .orderBy(asc(clientMeasurementsTable.recordedAt));
 
     return rows.flatMap((row) => {
-      const entry = measurementEntryOf(
-        {
-          weightKg: row.weightKg,
-          waistCm: row.waistCm,
-          hipsCm: row.hipsCm ?? undefined,
-          thighCm: row.thighCm ?? undefined,
-          armCm: row.armCm ?? undefined,
-        },
-        row.recordedAt,
-      );
+      const entry = measurementEntryOfStored(row);
 
       return entry ? [entry] : [];
     });
@@ -48,16 +50,45 @@ export class PostgresClientMeasurements implements ClientMeasurementsSource {
 export async function recordMeasurementEntry(
   transaction: DatabaseTransaction,
   input: { clientId: string; entry: MeasurementEntry },
-): Promise<void> {
-  const { entry } = input;
+): Promise<string> {
+  const [inserted] = await transaction
+    .insert(clientMeasurementsTable)
+    .values(measurementInsertOf(input.clientId, input.entry))
+    .returning({ id: clientMeasurementsTable.id });
 
-  await transaction.insert(clientMeasurementsTable).values({
-    clientId: input.clientId,
+  if (!inserted) {
+    throw new Error("The measurement entry was not recorded.");
+  }
+
+  return inserted.id;
+}
+
+export function measurementEntryOfStored(
+  stored: StoredMeasurement,
+): MeasurementEntry | null {
+  return measurementEntryOf(
+    {
+      weightKg: stored.weightKg,
+      waistCm: stored.waistCm,
+      hipsCm: stored.hipsCm ?? undefined,
+      thighCm: stored.thighCm ?? undefined,
+      armCm: stored.armCm ?? undefined,
+    },
+    stored.recordedAt,
+  );
+}
+
+export function measurementInsertOf(
+  clientId: string,
+  entry: MeasurementEntry,
+): typeof clientMeasurementsTable.$inferInsert {
+  return {
+    clientId,
     recordedAt: entry.recordedAt,
     weightKg: entry.weightKg,
     waistCm: entry.waistCm,
     hipsCm: entry.hipsCm ?? null,
     thighCm: entry.thighCm ?? null,
     armCm: entry.armCm ?? null,
-  });
+  };
 }

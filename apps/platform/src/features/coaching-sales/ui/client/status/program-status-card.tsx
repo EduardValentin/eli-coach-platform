@@ -1,3 +1,7 @@
+import {
+  formatDayMonth,
+  useCalendarDayTimeZone,
+} from "@eli-coach-platform/ui/lib";
 import { PortalWidget } from "@eli-coach-platform/ui/portal";
 import { buttonVariants } from "@eli-coach-platform/ui/primitives";
 import { ClipboardList } from "lucide-react";
@@ -8,10 +12,6 @@ import {
   CLIENT_ANSWER_QUERY,
   CLIENT_ONBOARDING_PATH,
 } from "~/features/coaching-sales/contracts/paths";
-import {
-  formatDayMonth,
-  useCalendarDayTimeZone,
-} from "~/features/coaching-sales/ui/shared/calendar-day-format";
 
 import {
   ANSWER_NOW_LABEL,

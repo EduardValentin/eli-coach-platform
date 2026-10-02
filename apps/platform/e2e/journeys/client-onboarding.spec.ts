@@ -1,5 +1,10 @@
 import type { ClientOnboarding } from "../support/client-onboarding";
 import { expect, test } from "../support/fixtures";
+import {
+  samplePhotoOf,
+  UNPROCESSABLE_PHOTO,
+  UNSUPPORTED_TYPE_PHOTO,
+} from "../support/sample-photos";
 
 const JOURNEY_TIMEOUT_MS = 240_000;
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -18,7 +23,7 @@ const PARQ_DECLARATION =
 const DISCLAIMER =
   "The information I give is correct and complete, and I understand this program does not replace medical advice or a consultation with a doctor.";
 const PROGRESS_PHOTO_CONSENT =
-  "I agree to share progress photos with my coach. They are only used to follow my progress, and I can ask for them to be deleted at any time. [Placeholder — Eli to replace with her own wording.]";
+  "I agree to share progress photos with my coach. They are only used to follow my progress, and I can ask for them to be deleted at any time.";
 const PARQ_QUESTIONS = [
   "Has your doctor ever said that you have a heart condition",
   "Do you feel pain in your chest",
@@ -36,6 +41,11 @@ const GYNAECOLOGICAL_QUESTION =
 const dayMonthFormatter = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",
   month: "long",
+});
+const dayMonthYearFormatter = new Intl.DateTimeFormat("en-GB", {
+  day: "numeric",
+  month: "long",
+  year: "numeric",
 });
 
 function isoDaysAgo(days: number): string {
@@ -121,6 +131,19 @@ async function answerFoodAndDailyLife(onboarding: ClientOnboarding) {
   );
   await onboarding.choose("The day that suits you for check-ins", "Monday");
   await onboarding.choose("Where you want to hear from me", "Email");
+}
+
+async function answerEverythingButPhotos(onboarding: ClientOnboarding) {
+  await onboarding.startOnboarding();
+  await answerGoalFormInKilograms(onboarding);
+  await onboarding.continueStep();
+  await clearSafetyScreening(onboarding, HEALTH_CONSENT);
+  await onboarding.continueStep();
+  await answerFoodAndDailyLife(onboarding);
+  await onboarding.continueStep();
+  await onboarding.expectStep(4, 4);
+  await onboarding.answerText("Waist", "76");
+  await onboarding.tick(DISCLAIMER);
 }
 
 function workStartsOnLine(paidAt: Date): string {
@@ -662,13 +685,15 @@ test("a client who measures in pounds and inches sends her answers once, even af
 
   // act
   const secondSubmission = await page.request.post(SUBMISSION_API_PATH, {
-    data: {
-      answers: submission.answers,
-      consents: {
-        specialCategoryAt: new Date().toISOString(),
-        disclaimerAt: new Date().toISOString(),
-        progressPhotosAt: null,
-      },
+    multipart: {
+      submission: JSON.stringify({
+        answers: submission.answers,
+        consents: {
+          specialCategoryAt: new Date().toISOString(),
+          disclaimerAt: new Date().toISOString(),
+          progressPhotosAt: null,
+        },
+      }),
     },
   });
 
@@ -687,6 +712,230 @@ test("a client who measures in pounds and inches sends her answers once, even af
 
   // assert
   await publicNav.expectPortalPillVisible("CLIENT");
+});
+
+test("a client who agrees to share progress photos sends front, side and back with her answers and finds them on her first entry", async ({
+  clientDashboard,
+  clientOnboarding,
+  clientProfile,
+  measurementRecords,
+  measurementsSheet,
+  page,
+  photoView,
+  provisionPaidClient,
+  signIn,
+}) => {
+  test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+  // arrange
+  const client = await provisionPaidClient("male");
+  const today = dayMonthFormatter.format(new Date());
+  await page.goto("/store");
+  await signIn();
+  await page.goto("/client");
+  await answerEverythingButPhotos(clientOnboarding);
+
+  // assert
+  await clientOnboarding.expectPhotosLocked();
+
+  // act
+  await clientOnboarding.agreeToPhotos();
+
+  // assert
+  await clientOnboarding.expectPhotosSendNote();
+
+  // act
+  await clientOnboarding.addPhoto("front", samplePhotoOf("front"));
+  await clientOnboarding.addPhoto("side", samplePhotoOf("side"));
+  await clientOnboarding.addPhoto("back", samplePhotoOf("back"));
+
+  // assert
+  await clientOnboarding.expectPhotoPreview("front");
+  await clientOnboarding.expectPhotoPreview("side");
+  await clientOnboarding.expectPhotoPreview("back");
+
+  // act
+  const sent = await clientOnboarding.sendToCoachCapturingPhotoExchange();
+
+  // assert
+  expect(sent).toEqual({
+    status: 200,
+    sentViews: ["front", "side", "back"],
+    outcomes: { front: "stored", side: "stored", back: "stored" },
+  });
+  await expect(page).toHaveURL(/\/client$/);
+  await clientDashboard.expectStatusCard(
+    "Sent to your coach",
+    workStartsOnLine(client.paidAt),
+  );
+  await clientDashboard.expectNoRefusedPhotoToast();
+  expect(await measurementRecords.photos(client.clientId)).toEqual([
+    { view: "back", mimeType: "image/jpeg" },
+    { view: "front", mimeType: "image/jpeg" },
+    { view: "side", mimeType: "image/jpeg" },
+  ]);
+
+  // act
+  await clientProfile.open();
+  await photoView.openFor(today);
+
+  // assert
+  await photoView.expectPhotos(["front", "side", "back"]);
+
+  // act
+  await photoView.close();
+  await clientProfile.openAdd();
+
+  // assert
+  await measurementsSheet.expectConsentAlreadyGiven(
+    dayMonthYearFormatter.format(new Date()),
+  );
+});
+
+test("a client who takes back her photo consent before sending sends no photos", async ({
+  clientDashboard,
+  clientOnboarding,
+  measurementRecords,
+  onboardingRecords,
+  page,
+  provisionPaidClient,
+  signIn,
+}) => {
+  test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+  // arrange
+  const client = await provisionPaidClient("male");
+  await page.goto("/store");
+  await signIn();
+  await page.goto("/client");
+  await answerEverythingButPhotos(clientOnboarding);
+  await clientOnboarding.agreeToPhotos();
+  await clientOnboarding.addPhoto("front", samplePhotoOf("front"));
+  await clientOnboarding.expectPhotoPreview("front");
+
+  await clientOnboarding.withdrawFromPhotos();
+  await clientOnboarding.expectPhotosLocked();
+
+  // act
+  const sent = await clientOnboarding.sendToCoachCapturingPhotoExchange();
+
+  // assert
+  expect(sent.status).toBe(200);
+  expect(sent.sentViews).toEqual([]);
+  await expect(page).toHaveURL(/\/client$/);
+  await clientDashboard.expectStatusCard(
+    "Sent to your coach",
+    workStartsOnLine(client.paidAt),
+  );
+  await clientDashboard.expectNoRefusedPhotosCarried();
+  await clientDashboard.expectNoRefusedPhotoToast();
+  const [submission] = await onboardingRecords.submissions();
+  expect(submission.progressPhotosConsentedAt).toBeNull();
+  expect(await measurementRecords.photos(client.clientId)).toEqual([]);
+});
+
+test("a client who takes back her photo consent and agrees again starts from empty tiles and sends only what she picks afterwards", async ({
+  clientOnboarding,
+  measurementRecords,
+  page,
+  provisionPaidClient,
+  signIn,
+}) => {
+  test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+  // arrange
+  const client = await provisionPaidClient("male");
+  await page.goto("/store");
+  await signIn();
+  await page.goto("/client");
+  await answerEverythingButPhotos(clientOnboarding);
+  await clientOnboarding.agreeToPhotos();
+  await clientOnboarding.addPhoto("front", samplePhotoOf("front"));
+  await clientOnboarding.addPhoto("side", UNSUPPORTED_TYPE_PHOTO);
+  await clientOnboarding.expectPhotoPreview("front");
+  await clientOnboarding.expectPhotoRefusal();
+
+  // act
+  await clientOnboarding.withdrawFromPhotos();
+
+  // assert
+  await clientOnboarding.expectPhotosLocked();
+  await clientOnboarding.expectNoPhotoRefusal();
+
+  // act
+  await clientOnboarding.agreeToPhotos();
+
+  // assert
+  await clientOnboarding.expectPhotosSendNote();
+  await clientOnboarding.expectNoPhotoPreview("front");
+  await clientOnboarding.expectNoPhotoPreview("side");
+  await clientOnboarding.expectNoPhotoPreview("back");
+  await clientOnboarding.expectNoPhotoRefusal();
+
+  // act
+  await clientOnboarding.addPhoto("back", samplePhotoOf("back"));
+  const sent = await clientOnboarding.sendToCoachCapturingPhotoExchange();
+
+  // assert
+  expect(sent.status).toBe(200);
+  expect(sent.sentViews).toEqual(["back"]);
+  expect(sent.outcomes).toMatchObject({ back: "stored" });
+  await expect(page).toHaveURL(/\/client$/);
+  expect(await measurementRecords.photos(client.clientId)).toEqual([
+    { view: "back", mimeType: "image/jpeg" },
+  ]);
+});
+
+test("a client's onboarding photo that cannot be processed is named once on her dashboard and her other photo is kept", async ({
+  clientDashboard,
+  clientOnboarding,
+  measurementRecords,
+  page,
+  provisionPaidClient,
+  signIn,
+}) => {
+  test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+  // arrange
+  const client = await provisionPaidClient("male");
+  await page.goto("/store");
+  await signIn();
+  await page.goto("/client");
+  await answerEverythingButPhotos(clientOnboarding);
+  await clientOnboarding.agreeToPhotos();
+
+  // act
+  await clientOnboarding.addPhoto("front", UNPROCESSABLE_PHOTO);
+  await clientOnboarding.addPhoto("side", samplePhotoOf("side"));
+  const sent = await clientOnboarding.sendToCoachCapturingPhotoExchange();
+
+  // assert
+  expect(sent.status).toBe(200);
+  expect(sent.sentViews).toEqual(["front", "side"]);
+  expect(sent.outcomes).toMatchObject({ front: "refused", side: "stored" });
+  await expect(page).toHaveURL(/\/client$/);
+  await clientDashboard.expectStatusCard(
+    "Sent to your coach",
+    workStartsOnLine(client.paidAt),
+  );
+  await clientDashboard.expectRefusedPhotoToast("front");
+  await clientDashboard.expectNoRefusedPhotosCarried();
+  expect(await measurementRecords.photos(client.clientId)).toEqual([
+    { view: "side", mimeType: "image/jpeg" },
+  ]);
+
+  // act
+  await clientDashboard.reload();
+
+  // assert
+  await clientDashboard.expectNoRefusedPhotosCarried();
+  await clientDashboard.expectNoRefusedPhotoToast();
+
+  // act
+  await clientDashboard.open();
+
+  // assert
+  await clientDashboard.expectNoRefusedPhotoToast();
 });
 
 test("a client's unsent answers wait on her device and she picks up on another one", async ({

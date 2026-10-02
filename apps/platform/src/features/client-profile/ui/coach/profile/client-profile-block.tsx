@@ -1,5 +1,9 @@
 import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
-import { ABSENT_VALUE } from "@eli-coach-platform/ui/lib";
+import {
+  ABSENT_VALUE,
+  PhoneLink,
+  useCalendarDayTimeZone,
+} from "@eli-coach-platform/ui/lib";
 import { PortalWidget, Reading } from "@eli-coach-platform/ui/portal";
 import { UserRound } from "lucide-react";
 import { useState, type ReactNode } from "react";
@@ -13,8 +17,6 @@ import {
 } from "~/features/assessment-calls/contracts/visitor-profile";
 import { formatCanonicalMeasure } from "~/features/client-profile/contracts/canonical-measure";
 import type { ClientProfileView } from "~/features/client-profile/contracts/client-profile";
-import { useCalendarDayTimeZone } from "~/features/coaching-sales/ui/shared/calendar-day-format";
-import { PhoneLink } from "~/features/coaching-sales/ui/shared/phone-link";
 
 type ClientProfileBlockProps = {
   profile: ClientProfileView;

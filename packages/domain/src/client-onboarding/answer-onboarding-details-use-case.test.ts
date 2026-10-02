@@ -129,6 +129,31 @@ function answerPorts(
 }
 
 describe("AnswerOnboardingDetailsUseCase", () => {
+  it("keeps the photo consent she gave at onboarding on the profile it re-saves", async () => {
+    // arrange
+    const ports = answerPorts();
+    ports.onboardings.findByClientId.mockResolvedValue({
+      draft: null,
+      submission: {
+        ...SUBMISSION,
+        consents: { ...SUBMISSION.consents, progressPhotosAt: SUBMITTED_AT },
+      },
+    });
+    const useCase = new AnswerOnboardingDetailsUseCase(ports);
+
+    // act
+    await useCase.execute({
+      authSubjectId: "user_ana",
+      answers: { "goal-availability": { weight: 72 } },
+    });
+
+    // assert
+    const [{ profile }] = ports.reviews.recordAnswer.mock.calls[0];
+    expect(profile.toSnapshot().progressPhotosConsentedAt).toEqual(
+      SUBMITTED_AT,
+    );
+  });
+
   it("records her asked answers and the answered request with the stamps that return her to in-review", async () => {
     // arrange
     const ports = answerPorts();
@@ -179,6 +204,7 @@ describe("AnswerOnboardingDetailsUseCase", () => {
       primaryGoal: null,
       dietaryRestrictions: "None",
       clientNotes: null,
+      progressPhotosConsentedAt: null,
       updatedAt: NOW,
     });
   });

@@ -1,4 +1,7 @@
-import { ABSENT_VALUE } from "@eli-coach-platform/ui/lib";
+import {
+  ABSENT_VALUE,
+  useCalendarDayTimeZone,
+} from "@eli-coach-platform/ui/lib";
 import {
   Avatar,
   buttonVariants,
@@ -17,7 +20,6 @@ import { Link, useNavigate } from "react-router";
 import { bundleLengthLabel } from "~/features/coaching-sales/contracts/bundle-cards";
 import type { RosterClient } from "~/features/coaching-sales/contracts/coach-clients";
 import { coachClientPath } from "~/features/coaching-sales/contracts/paths";
-import { useCalendarDayTimeZone } from "~/features/coaching-sales/ui/shared/calendar-day-format";
 
 import { ClientStatusBadge } from "./client-status-badge";
 import {

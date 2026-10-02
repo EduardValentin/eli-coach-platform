@@ -10,7 +10,7 @@ import {
   type MeasureUnits,
 } from "@eli-coach-platform/domain/unit-preference";
 import { DateField } from "@eli-coach-platform/ui/calendar";
-import { cn } from "@eli-coach-platform/ui/lib";
+import { cn, describedByOf } from "@eli-coach-platform/ui/lib";
 import {
   CheckboxChip,
   CheckboxField,
@@ -18,8 +18,8 @@ import {
   ChoiceOption,
   FieldError,
   FieldHint,
+  FieldLayout,
   Input,
-  Label,
   LabelSuffix,
   Legend,
   Select,
@@ -28,6 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
   Textarea,
+  type FieldControlAttributes,
 } from "@eli-coach-platform/ui/primitives";
 import { useId, type ReactElement, type ReactNode } from "react";
 import {
@@ -37,6 +38,10 @@ import {
 } from "react-hook-form";
 
 import { OPTIONAL_SUFFIX } from "~/features/client-onboarding/contracts/onboarding-copy";
+import {
+  MeasureField,
+  type MeasureFieldDefinition,
+} from "~/features/client-profile/ui/shared/measure-field/measure-field";
 
 import { validateField } from "./onboarding-validation";
 import {
@@ -57,10 +62,13 @@ type OnboardingFieldControlProps = {
   formFields: readonly OnboardingField[];
 };
 
+type AnswerFieldControlProps = OnboardingFieldControlProps & {
+  units: MeasureUnits;
+};
+
 type FieldController = ControllerRenderProps<OnboardingValues>;
 
 type FieldIds = {
-  control: string;
   hint: string;
   legend: string;
   message: string;
@@ -68,26 +76,22 @@ type FieldIds = {
 
 type FieldEntryProps = {
   controller: FieldController;
-  describedBy: string | undefined;
+  controlAttributes: FieldControlAttributes;
   field: OnboardingField;
-  ids: FieldIds;
-  invalid: boolean;
   units: MeasureUnits;
 };
 
-type FieldLayoutProps = Omit<FieldEntryProps, "describedBy" | "invalid"> & {
+type AnswerLayoutProps = {
+  controller: FieldController;
   error: string | undefined;
+  field: OnboardingField;
+  ids: FieldIds;
+  units: MeasureUnits;
 };
 
 const WHOLE_STEP = "1";
 
 const SELECT_PLACEHOLDER = "Choose one";
-
-function describedByOf(...ids: (string | undefined)[]): string | undefined {
-  const described = ids.filter((id): id is string => id !== undefined);
-
-  return described.length > 0 ? described.join(" ") : undefined;
-}
 
 function unitOf(field: OnboardingField, units: MeasureUnits): string | null {
   const measureKind = measureKindOf(field);
@@ -119,23 +123,35 @@ function feetAndInchesHint(
 
 type SuffixRole = "unit" | "optional";
 
-type LabelSuffixEntry = { role: SuffixRole; text: string };
+type LabelSuffixEntry = { parity: string; text: string };
 
 function labelSuffixesOf(
   field: OnboardingField,
   unit: string | null,
 ): LabelSuffixEntry[] {
+  const suffixOf = (role: SuffixRole, text: string): LabelSuffixEntry => ({
+    parity: `field-${field.id}-suffix-${role}`,
+    text,
+  });
   const suffixes: (LabelSuffixEntry | null)[] = [
-    unit ? { role: "unit", text: `(${unit})` } : null,
-    field.unitSuffix ? { role: "unit", text: `(${field.unitSuffix})` } : null,
+    unit ? suffixOf("unit", `(${unit})`) : null,
+    field.unitSuffix ? suffixOf("unit", `(${field.unitSuffix})`) : null,
     field.requirement === "optional"
-      ? { role: "optional", text: OPTIONAL_SUFFIX }
+      ? suffixOf("optional", OPTIONAL_SUFFIX)
       : null,
   ];
 
   return suffixes.filter(
     (suffix): suffix is LabelSuffixEntry => suffix !== null,
   );
+}
+
+function LabelLines({ field }: { field: OnboardingField }) {
+  return field.label.split("\n").map((line, index) => (
+    <span className={cn({ block: index > 0 })} key={line}>
+      {line}
+    </span>
+  ));
 }
 
 function LabelText({
@@ -147,16 +163,9 @@ function LabelText({
 }) {
   return (
     <>
-      {field.label.split("\n").map((line, index) => (
-        <span className={cn({ block: index > 0 })} key={line}>
-          {line}
-        </span>
-      ))}
+      <LabelLines field={field} />
       {labelSuffixesOf(field, unit).map((suffix) => (
-        <LabelSuffix
-          data-parity={`field-${field.id}-suffix-${suffix.role}`}
-          key={suffix.text}
-        >
+        <LabelSuffix data-parity={suffix.parity} key={suffix.text}>
           {suffix.text}
         </LabelSuffix>
       ))}
@@ -166,19 +175,15 @@ function LabelText({
 
 function NumberEntry({
   controller,
-  describedBy,
+  controlAttributes,
   field,
-  ids,
-  invalid,
   units,
 }: FieldEntryProps) {
   const bounds = entryBounds(field, units);
 
   return (
     <Input
-      aria-describedby={describedBy}
-      aria-invalid={invalid}
-      id={ids.control}
+      {...controlAttributes}
       inputMode={measureKindOf(field) ? "decimal" : "numeric"}
       max={bounds?.max}
       min={bounds?.min}
@@ -195,10 +200,8 @@ function NumberEntry({
 
 function SelectEntry({
   controller,
-  describedBy,
+  controlAttributes,
   field,
-  ids,
-  invalid,
 }: FieldEntryProps) {
   return (
     <Select
@@ -206,11 +209,9 @@ function SelectEntry({
       value={asText(controller.value)}
     >
       <SelectTrigger
-        aria-describedby={describedBy}
-        aria-invalid={invalid}
+        {...controlAttributes}
         className="w-full"
         data-parity={`field-${field.id}-trigger`}
-        id={ids.control}
       >
         <SelectValue placeholder={field.placeholder ?? SELECT_PLACEHOLDER} />
       </SelectTrigger>
@@ -226,7 +227,7 @@ function SelectEntry({
 }
 
 function FieldEntry(props: FieldEntryProps): ReactElement {
-  const { controller, describedBy, field, ids, invalid } = props;
+  const { controller, controlAttributes, field } = props;
 
   if (field.kind === "select") return <SelectEntry {...props} />;
   if (isNumericField(field)) return <NumberEntry {...props} />;
@@ -234,10 +235,8 @@ function FieldEntry(props: FieldEntryProps): ReactElement {
   if (field.kind === "textarea") {
     return (
       <Textarea
-        aria-describedby={describedBy}
-        aria-invalid={invalid}
+        {...controlAttributes}
         className="min-h-28"
-        id={ids.control}
         onBlur={controller.onBlur}
         onChange={controller.onChange}
         placeholder={field.placeholder}
@@ -250,12 +249,10 @@ function FieldEntry(props: FieldEntryProps): ReactElement {
   if (field.kind === "date") {
     return (
       <DateField
-        aria-describedby={describedBy}
-        aria-invalid={invalid}
+        {...controlAttributes}
         calendarLabel={field.label}
         data-parity={`field-${field.id}-trigger`}
         disabledDays={{ after: new Date() }}
-        id={ids.control}
         onBlur={controller.onBlur}
         onChange={controller.onChange}
         ref={controller.ref}
@@ -266,9 +263,7 @@ function FieldEntry(props: FieldEntryProps): ReactElement {
 
   return (
     <Input
-      aria-describedby={describedBy}
-      aria-invalid={invalid}
-      id={ids.control}
+      {...controlAttributes}
       onBlur={controller.onBlur}
       onChange={controller.onChange}
       placeholder={field.placeholder}
@@ -279,7 +274,7 @@ function FieldEntry(props: FieldEntryProps): ReactElement {
   );
 }
 
-function CheckboxAnswer({ controller, error, field }: FieldLayoutProps) {
+function CheckboxAnswer({ controller, error, field }: AnswerLayoutProps) {
   const isDeclaration = field.requirement === "required";
 
   return (
@@ -319,7 +314,7 @@ function ChoiceFieldset({
   field,
   ids,
   units,
-}: FieldLayoutProps & { children: ReactNode }) {
+}: AnswerLayoutProps & { children: ReactNode }) {
   const describedBy = describedByOf(
     field.hint ? ids.hint : undefined,
     error ? ids.message : undefined,
@@ -343,7 +338,7 @@ function ChoiceFieldset({
   );
 }
 
-function RadioChoices({ controller, error, field, ids }: FieldLayoutProps) {
+function RadioChoices({ controller, error, field, ids }: AnswerLayoutProps) {
   const chosen = asText(controller.value);
 
   return (
@@ -371,7 +366,7 @@ function RadioChoices({ controller, error, field, ids }: FieldLayoutProps) {
   );
 }
 
-function ChipChoices({ controller, field }: FieldLayoutProps) {
+function ChipChoices({ controller, field }: AnswerLayoutProps) {
   const chosen = asList(controller.value);
 
   return (
@@ -396,67 +391,65 @@ function ChipChoices({ controller, field }: FieldLayoutProps) {
   );
 }
 
-function EntryField({
-  controller,
-  error,
-  field,
-  ids,
-  units,
-}: FieldLayoutProps) {
-  const invalid = error !== undefined;
+function EntryField({ controller, error, field, units }: AnswerLayoutProps) {
   const equivalent = feetAndInchesHint(field, controller, units);
-  const hint = equivalent ?? field.hint;
-  const describedBy = describedByOf(
-    hint ? ids.hint : undefined,
-    invalid ? ids.message : undefined,
-  );
-  const hintLine = hint && <FieldHint id={ids.hint}>{hint}</FieldHint>;
 
   return (
-    <div className="grid gap-2" data-parity={`field-${field.id}`}>
-      <Label htmlFor={ids.control} invalid={invalid} layout="wrap">
-        <LabelText field={field} unit={unitOf(field, units)} />
-      </Label>
-      {!equivalent && hintLine}
-      <FieldEntry
-        controller={controller}
-        describedBy={describedBy}
-        field={field}
-        ids={ids}
-        invalid={invalid}
-        units={units}
-      />
-      {equivalent && hintLine}
-      <FieldError
-        data-parity={`field-${field.id}-error`}
-        id={ids.message}
-        message={error}
-      />
-    </div>
+    <FieldLayout
+      data-parity={`field-${field.id}`}
+      error={error}
+      errorParity={`field-${field.id}-error`}
+      hint={equivalent ?? field.hint}
+      hintPlacement={equivalent ? "after-control" : "before-control"}
+      label={<LabelLines field={field} />}
+      suffixes={labelSuffixesOf(field, unitOf(field, units))}
+    >
+      {(controlAttributes) => (
+        <FieldEntry
+          controlAttributes={controlAttributes}
+          controller={controller}
+          field={field}
+          units={units}
+        />
+      )}
+    </FieldLayout>
   );
 }
 
-export function OnboardingFieldControl({
+function measureFieldOf(field: OnboardingField): MeasureFieldDefinition | null {
+  if (field.kind !== "weight" && field.kind !== "circumference") return null;
+  if (!field.range) return null;
+
+  return {
+    id: field.id,
+    label: field.label,
+    kind: field.kind,
+    requirement: field.requirement,
+    range: field.range,
+    hint: field.hint,
+  };
+}
+
+function AnswerFieldControl({
   control,
   field,
   formFields,
-}: OnboardingFieldControlProps) {
-  const units = useMeasureUnits();
-  const controlId = useId();
+  units,
+}: AnswerFieldControlProps) {
+  const fieldId = useId();
   const { field: controller, fieldState } = useController({
     control,
     name: field.id,
     rules: { validate: validateField(field, { fields: formFields, units }) },
   });
-  const layout: FieldLayoutProps = {
+  const layout: AnswerLayoutProps = {
     controller,
     error: fieldState.error?.message,
     field,
     ids: {
-      control: controlId,
-      hint: `${controlId}-hint`,
-      legend: `${controlId}-legend`,
-      message: `${controlId}-message`,
+      hint: `${fieldId}-hint`,
+      legend: `${fieldId}-legend`,
+      message: `${fieldId}-message`,
     },
     units,
   };
@@ -480,4 +473,34 @@ export function OnboardingFieldControl({
   }
 
   return <EntryField {...layout} />;
+}
+
+export function OnboardingFieldControl({
+  control,
+  field,
+  formFields,
+}: OnboardingFieldControlProps) {
+  const units = useMeasureUnits();
+  const measureField = measureFieldOf(field);
+
+  if (measureField) {
+    return (
+      <MeasureField
+        control={control}
+        field={measureField}
+        name={field.id}
+        units={units}
+        validate={validateField(field, { fields: formFields, units })}
+      />
+    );
+  }
+
+  return (
+    <AnswerFieldControl
+      control={control}
+      field={field}
+      formFields={formFields}
+      units={units}
+    />
+  );
 }

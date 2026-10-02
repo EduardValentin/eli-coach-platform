@@ -1,3 +1,7 @@
+import {
+  formatDayMonth,
+  useCalendarDayTimeZone,
+} from "@eli-coach-platform/ui/lib";
 import { RadioGroup, RadioGroupItem } from "@eli-coach-platform/ui/primitives";
 import { AlertCircle } from "lucide-react";
 import { useId, type ReactNode, type Ref } from "react";
@@ -7,10 +11,6 @@ import {
   startChoiceSchema,
   type CheckoutChoice,
 } from "~/features/coaching-sales/contracts/coaching-sales";
-import {
-  formatDayMonth,
-  useCalendarDayTimeZone,
-} from "~/features/coaching-sales/ui/shared/calendar-day-format";
 
 import {
   IMMEDIATE_START_BODY,
