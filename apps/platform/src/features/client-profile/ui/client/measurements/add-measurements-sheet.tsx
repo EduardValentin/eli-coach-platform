@@ -3,27 +3,32 @@ import type { MeasureUnits } from "@eli-coach-platform/domain/unit-preference";
 import { ResponsiveSheetDialog } from "@eli-coach-platform/ui/layout";
 import { Button } from "@eli-coach-platform/ui/primitives";
 import { toast } from "@eli-coach-platform/ui/toast";
-import { useState } from "react";
+import { useEffect, useEffectEvent, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useRevalidator } from "react-router";
+import { useFetcher } from "react-router";
 
 import {
   MEASUREMENTS_COPY,
+  PHOTO_CONSENT_GIVEN,
+  RECORD_MEASUREMENTS_FIELDS,
+  recordMeasurementsResponseSchema,
   type MeasurementRow,
 } from "~/features/client-profile/contracts/measurements";
+import { CLIENT_PROFILE_API_PATHS } from "~/features/client-profile/contracts/paths";
 import {
   measurementEntryOf,
   measurementFormValuesOf,
   type MeasurementFormValues,
 } from "~/features/client-profile/ui/client/measurements/measurement-form-values";
-import { recordMeasurements } from "~/features/client-profile/ui/client/measurements/measurements-api-client";
 import { MeasureField } from "~/features/client-profile/ui/shared/measure-field/measure-field";
 import {
   ProgressPhotoBlock,
   type ProgressPhotoConsent,
 } from "~/features/client-profile/ui/shared/photos/progress-photo-block";
 import {
+  appendProgressPhotoParts,
   NO_PROGRESS_PHOTO_PICKS,
+  refusedPhotoViewsOf,
   type ProgressPhotoPicks,
 } from "~/features/client-profile/ui/shared/photos/progress-photo-picks";
 
@@ -46,12 +51,11 @@ function AddMeasurementsForm({
   consentedAt,
   onClose,
 }: AddMeasurementsStartingPoint & { onClose: () => void }) {
-  const revalidator = useRevalidator();
+  const { data, state, submit } = useFetcher<unknown>();
   const [photos, setPhotos] = useState<ProgressPhotoPicks>(
     NO_PROGRESS_PHOTO_PICKS,
   );
   const [consentTicked, setConsentTicked] = useState(false);
-  const [saving, setSaving] = useState(false);
   const form = useForm<MeasurementFormValues>({
     defaultValues: measurementFormValuesOf(latest, units),
   });
@@ -64,26 +68,48 @@ function AddMeasurementsForm({
         onTickedChange: setConsentTicked,
       };
 
-  const save = form.handleSubmit(async (values) => {
-    setSaving(true);
-    const outcome = await recordMeasurements({
-      entry: measurementEntryOf(values, units),
-      givesPhotoConsent: consentTicked,
-      photos,
-    });
+  const settle = useEffectEvent((response: unknown) => {
+    const recorded = recordMeasurementsResponseSchema.safeParse(response);
 
-    if (outcome.kind === "failed") {
-      setSaving(false);
+    if (!recorded.success) {
       toast.error(MEASUREMENTS_COPY.toasts.failed);
       return;
     }
 
-    void revalidator.revalidate();
     onClose();
     toast.success(MEASUREMENTS_COPY.toasts.saved);
-    outcome.refusedViews.forEach((view) =>
+    refusedPhotoViewsOf(recorded.data.photos).forEach((view) =>
       toast.error(MEASUREMENTS_COPY.toasts.photoRefused(view)),
     );
+  });
+
+  useEffect(() => {
+    if (data !== undefined) {
+      settle(data);
+    }
+  }, [data]);
+
+  const save = form.handleSubmit((values) => {
+    const submission = new FormData();
+    submission.append(
+      RECORD_MEASUREMENTS_FIELDS.entry,
+      JSON.stringify(measurementEntryOf(values, units)),
+    );
+
+    if (consentTicked) {
+      submission.append(
+        RECORD_MEASUREMENTS_FIELDS.photoConsent,
+        PHOTO_CONSENT_GIVEN,
+      );
+    }
+
+    appendProgressPhotoParts(submission, photos);
+
+    void submit(submission, {
+      action: CLIENT_PROFILE_API_PATHS.measurements,
+      encType: "multipart/form-data",
+      method: "post",
+    });
   });
 
   return (
@@ -118,7 +144,7 @@ function AddMeasurementsForm({
           <div className="flex flex-col-reverse gap-3 sm:flex-row-reverse">
             <Button
               className="w-full sm:w-auto"
-              disabled={saving}
+              disabled={state !== "idle"}
               size="md"
               type="submit"
               variant="primary"

@@ -75,6 +75,10 @@ function answerDetailAnswers(response: () => Promise<Response> | Response) {
   );
 }
 
+function forwardToServer({ request }: { request: Request }) {
+  return fetch(request);
+}
+
 function renderAnswerRequest(page: OnboardingAnswerPage) {
   const router = createMemoryRouter(
     [
@@ -82,6 +86,10 @@ function renderAnswerRequest(page: OnboardingAnswerPage) {
         Component: OnboardingRoute,
         loader: () => page,
         path: CLIENT_ONBOARDING_PATH,
+      },
+      {
+        action: forwardToServer,
+        path: CLIENT_ONBOARDING_API_PATHS.detailAnswers,
       },
       { Component: () => <p>portal home</p>, path: CLIENT_PORTAL_PATH },
     ],
