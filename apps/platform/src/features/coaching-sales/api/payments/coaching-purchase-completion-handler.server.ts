@@ -1,8 +1,8 @@
 import {
   COACHING_SUBSCRIPTION_PURPOSE,
+  type CoachingSubscriptionIncidents,
   type RecordCheckoutCompletedUseCase,
 } from "@eli-coach-platform/domain/coaching-subscription";
-import type { CoachingSalesIncidents } from "@eli-coach-platform/domain/payment-link";
 import {
   toCheckoutCompletion,
   type PaidCheckoutSession,
@@ -16,7 +16,7 @@ type RecordStatus = Awaited<
 >["status"];
 
 type CoachingPurchaseCompletionHandlerOptions = {
-  incidents: CoachingSalesIncidents;
+  incidents: CoachingSubscriptionIncidents;
   recordCheckoutCompleted: RecordCheckoutCompletedUseCase;
 };
 

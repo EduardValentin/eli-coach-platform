@@ -5,6 +5,11 @@ export const STRIPE_CHECKOUT_SESSIONS_PATH = "/v1/checkout/sessions";
 export const STRIPE_CUSTOMER_ID = "cus_integration";
 export const STRIPE_CHECKOUT_SESSION_ID = "cs_test_integration";
 export const STRIPE_SUBSCRIPTION_ID = "sub_integration";
+export const STRIPE_SUBSCRIPTIONS_PATH = "/v1/subscriptions";
+export const STRIPE_BILLING_PORTAL_SESSIONS_PATH =
+  "/v1/billing_portal/sessions";
+export const STRIPE_BILLING_PORTAL_URL =
+  "https://billing.stripe.com/p/session/test_integration";
 
 const HOSTED_CHECKOUT_BASE_URL = "https://checkout.stripe.com/c/pay/";
 const jsonHeaders = { "Content-Type": "application/json" };
@@ -200,6 +205,91 @@ function expandedSubscription(session: StripeCheckoutSession) {
   };
 }
 
+export function stripeSubscriptionPath(subscriptionId: string): string {
+  return `${STRIPE_SUBSCRIPTIONS_PATH}/${subscriptionId}`;
+}
+
+const SUBSCRIPTION_BY_ID_PATTERN = `${STRIPE_SUBSCRIPTIONS_PATH}/[^/]+`;
+
+const stripeUpdatesSubscription: WireMockStub = {
+  request: { method: "POST", urlPathPattern: SUBSCRIPTION_BY_ID_PATTERN },
+  response: subscriptionResponse("active"),
+};
+
+const stripeCancelsSubscription: WireMockStub = {
+  request: { method: "DELETE", urlPathPattern: SUBSCRIPTION_BY_ID_PATTERN },
+  response: subscriptionResponse("canceled"),
+};
+
+const stripeCreatesBillingPortalSession: WireMockStub = {
+  request: { method: "POST", urlPath: STRIPE_BILLING_PORTAL_SESSIONS_PATH },
+  response: {
+    headers: jsonHeaders,
+    status: 200,
+    jsonBody: {
+      customer: STRIPE_CUSTOMER_ID,
+      id: "bps_integration",
+      object: "billing_portal.session",
+      url: STRIPE_BILLING_PORTAL_URL,
+    },
+  },
+};
+
+const stripeApiFailure: WireMockStub["response"] = {
+  headers: jsonHeaders,
+  status: 400,
+  jsonBody: {
+    error: {
+      message: "The payment provider refused the request.",
+      type: "invalid_request_error",
+    },
+  },
+};
+
+/** Takes precedence over the suite's default answer until the next reset. */
+export function stripeRefusesSubscriptionUpdates(): WireMockStub {
+  return {
+    priority: 2,
+    request: { method: "POST", urlPathPattern: SUBSCRIPTION_BY_ID_PATTERN },
+    response: stripeApiFailure,
+  };
+}
+
+/** Outranks a refusal stubbed earlier in the same case. */
+export function stripeAcceptsSubscriptionUpdatesAgain(): WireMockStub {
+  return { ...stripeUpdatesSubscription, priority: 1 };
+}
+
+export function stripeRefusesSubscriptionCancellation(): WireMockStub {
+  return {
+    priority: 2,
+    request: { method: "DELETE", urlPathPattern: SUBSCRIPTION_BY_ID_PATTERN },
+    response: stripeApiFailure,
+  };
+}
+
+export function stripeRefusesBillingPortalSessions(): WireMockStub {
+  return {
+    priority: 2,
+    request: { method: "POST", urlPath: STRIPE_BILLING_PORTAL_SESSIONS_PATH },
+    response: stripeApiFailure,
+  };
+}
+
+function subscriptionResponse(status: string): WireMockStub["response"] {
+  return {
+    headers: jsonHeaders,
+    status: 200,
+    jsonBody: {
+      customer: STRIPE_CUSTOMER_ID,
+      id: STRIPE_SUBSCRIPTION_ID,
+      metadata: coachingSubscriptionMetadata,
+      object: "subscription",
+      status,
+    },
+  };
+}
+
 function openSessionResponse(sessionId: string): WireMockStub["response"] {
   return {
     headers: jsonHeaders,
@@ -221,4 +311,7 @@ export const stripeApiStubs: readonly WireMockStub[] = [
   stripeCreatesCustomer,
   stripeCreatesCheckoutSession,
   stripeExpiresSession,
+  stripeUpdatesSubscription,
+  stripeCancelsSubscription,
+  stripeCreatesBillingPortalSession,
 ];

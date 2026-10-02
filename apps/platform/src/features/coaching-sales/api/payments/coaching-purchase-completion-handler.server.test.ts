@@ -119,8 +119,15 @@ function createHandler(outcome: RecordOutcome = { status: "recorded" }) {
   const recordCompletion = vi.fn().mockResolvedValue(outcome);
   const incidents = {
     paymentEventRejected: vi.fn(),
-    paymentLinkEmailFailed: vi.fn(),
-    salesModeReadFailed: vi.fn(),
+    paymentMethodSessionOpened: vi.fn(),
+    programStartedNow: vi.fn(),
+    refundNotificationFailed: vi.fn(),
+    refundSettled: vi.fn(),
+    renewalHoldApplied: vi.fn(),
+    renewalHoldFailed: vi.fn(),
+    subscriptionCancellationFailed: vi.fn(),
+    subscriptionCancelled: vi.fn(),
+    subscriptionEventReconciled: vi.fn(),
   };
   const handler = new CoachingPurchaseCompletionHandler({
     incidents,

@@ -186,8 +186,14 @@ describe("CancelSubscriptionUseCase", () => {
     });
     expect(notifications.notifyRefundDue).toHaveBeenCalledWith({
       subscriptionId: "subscription-1",
-      client: { firstName: "Ana", lastName: "Popescu" },
-      currency: "eur",
+      client: {
+        clientId: "client-1",
+        firstName: "Ana",
+        lastName: "Popescu",
+        email: "ana@example.com",
+      },
+      paid: { amountCents: 44700, currency: "eur", at: PAID_AT },
+      cancelledAt: DAY_13,
       refund,
     });
     expect(incidents.subscriptionCancelled).toHaveBeenCalledWith({

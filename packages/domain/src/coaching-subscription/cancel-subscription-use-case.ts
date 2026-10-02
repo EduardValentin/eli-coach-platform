@@ -162,14 +162,25 @@ export class CancelSubscriptionUseCase {
       const client = await this.options.clients.findByClientId(
         subscription.clientId,
       );
-      const delivery = client
-        ? await this.options.notifications.notifyRefundDue({
-            subscriptionId: subscription.id,
-            client: { firstName: client.firstName, lastName: client.lastName },
-            currency: subscription.currency,
-            refund: refund.toSnapshot(),
-          })
-        : "failed";
+      const delivery =
+        client && subscription.cancelledAt
+          ? await this.options.notifications.notifyRefundDue({
+              subscriptionId: subscription.id,
+              client: {
+                clientId: client.clientId,
+                firstName: client.firstName,
+                lastName: client.lastName,
+                email: client.email,
+              },
+              paid: {
+                amountCents: subscription.amountCents,
+                currency: subscription.currency,
+                at: subscription.paidAt,
+              },
+              cancelledAt: subscription.cancelledAt,
+              refund: refund.toSnapshot(),
+            })
+          : "failed";
 
       if (delivery === "failed") {
         this.reportNotificationFailure(subscription);

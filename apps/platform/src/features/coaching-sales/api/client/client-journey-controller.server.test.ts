@@ -210,6 +210,8 @@ describe("ClientJourneyController program status", () => {
           kind: "submitted",
           submittedAt: new Date("2026-09-28T10:00:00.000Z"),
           workStartsOn,
+          startNowUntil: null,
+          paymentProblem: false,
         },
       });
 
@@ -235,6 +237,8 @@ describe("ClientJourneyController program status", () => {
           kind,
           submittedAt: new Date("2026-09-28T10:00:00.000Z"),
           workStartsOn: null,
+          startNowUntil: null,
+          paymentProblem: false,
         },
       });
 

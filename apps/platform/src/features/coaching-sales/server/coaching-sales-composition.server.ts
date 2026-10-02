@@ -13,6 +13,7 @@ import {
 import {
   MarkWelcomeSeenUseCase,
   ReadClientJourneyUseCase,
+  ReadClientPortalStandingUseCase,
   ReadProgramStatusUseCase,
 } from "@eli-coach-platform/domain/client-journey";
 import type {
@@ -30,11 +31,18 @@ import {
   type PricingEligibility,
 } from "@eli-coach-platform/domain/coaching-bundle";
 import {
+  CancelSubscriptionUseCase,
+  OpenPaymentMethodSessionUseCase,
   ReadCheckoutConfirmationUseCase,
+  ReadClientSubscriptionUseCase,
+  ReconcileSubscriptionEventUseCase,
   RecordCheckoutCompletedUseCase,
   StartCheckoutUseCase,
+  StartProgramNowUseCase,
+  type CoachingSubscriptionIncidents,
   type PaidClientAdmission,
   type PaymentCheckout,
+  type PaymentSubscriptions,
 } from "@eli-coach-platform/domain/coaching-subscription";
 import type { FeatureFlagReader } from "@eli-coach-platform/domain/feature-flag";
 import {
@@ -50,13 +58,18 @@ import type { Clock } from "@eli-coach-platform/domain/shared";
 import type { MeasurementClients } from "@eli-coach-platform/domain/client-profile";
 import type { UnitPreferenceClients } from "@eli-coach-platform/domain/unit-preference";
 import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
-import type { PaymentCompletionHandler } from "@eli-coach-platform/infrastructure/payments/server";
+import type {
+  PaymentCompletionHandler,
+  PaymentRefundHandler,
+  PaymentSubscriptionChangeHandler,
+} from "@eli-coach-platform/infrastructure/payments/server";
 
 import { ClientJourneyController } from "~/features/coaching-sales/api/client/client-journey-controller.server";
 import { CoachClientsController } from "~/features/coaching-sales/api/coach/coach-clients-controller.server";
 import { CoachSalesController } from "~/features/coaching-sales/api/coach/coach-sales-controller.server";
 import { PaymentLinksController } from "~/features/coaching-sales/api/coach/payment-links-controller.server";
 import { CoachingPurchaseCompletionHandler } from "~/features/coaching-sales/api/payments/coaching-purchase-completion-handler.server";
+import { CoachingSubscriptionChangeHandler } from "~/features/coaching-sales/api/payments/coaching-subscription-change-handler.server";
 import { CheckoutsController } from "~/features/coaching-sales/api/public/checkouts-controller.server";
 import { InvitationsController } from "~/features/coaching-sales/api/public/invitations-controller.server";
 import { PostgresClientJourneys } from "~/features/coaching-sales/data/client-journeys/client-journeys-repository.server";
@@ -76,7 +89,11 @@ import {
 } from "~/features/coaching-sales/data/link-tokens/link-token.server";
 import { PostgresPaymentLinks } from "~/features/coaching-sales/data/payment-links/payment-links-repository.server";
 import { PostgresCoachingPurchases } from "~/features/coaching-sales/data/purchases/purchases-repository.server";
-import { createCoachingSalesNotifications } from "~/features/coaching-sales/email/create-coaching-sales-notifications.server";
+import { PostgresCoachingSubscriptions } from "~/features/coaching-sales/data/subscriptions/subscriptions-repository.server";
+import {
+  createCoachingSalesNotifications,
+  createRefundNotifications,
+} from "~/features/coaching-sales/email/create-coaching-sales-notifications.server";
 import { EmailClientInvitationNotifications } from "~/features/coaching-sales/email/email-client-invitation-notifications.server";
 
 export type CoachingSalesFeature = {
@@ -99,7 +116,9 @@ type CoachingSalesComposition = {
     onboardingReviewStamps: OnboardingReviewStamps;
     onboardingSubmissionStamps: OnboardingSubmissionStamps;
     paymentCompletionHandler: PaymentCompletionHandler;
+    refundHandler: PaymentRefundHandler;
     reviewStampWriter: ReviewStampWriter;
+    subscriptionChangeHandler: PaymentSubscriptionChangeHandler;
     unitPreferenceClients: UnitPreferenceClients;
   };
 };
@@ -108,14 +127,17 @@ export type CoachingSalesFeatureHandles = {
   appBasePath: string;
   assessmentCallReader: AssessmentCallReader;
   clock: Clock;
+  coachEmail: string;
   contactEmail: string;
   database: DatabaseClient;
   featureFlags: FeatureFlagReader;
   identityInvitations: IdentityInvitations;
   incidents: CoachingSalesIncidents &
+    CoachingSubscriptionIncidents &
     ClientInvitationIncidents &
     ClientRosterIncidents;
   paymentCheckout: PaymentCheckout;
+  paymentSubscriptions: PaymentSubscriptions;
   pricingEligibility: PricingEligibility;
   productEmail: ProductEmail;
   publicAppUrl: string;
@@ -127,6 +149,8 @@ export function composeCoachingSalesFeature(
   const { clock, database } = handles;
   const paymentLinks = new PostgresPaymentLinks({ clock, database });
   const purchases = new PostgresCoachingPurchases({ clock, database });
+  const subscriptions = new PostgresCoachingSubscriptions({ clock, database });
+  const clientIdentities = new PostgresClientIdentities(database);
   const invitations = new PostgresClientInvitations(database);
   const journeys = new PostgresClientJourneys(database);
   const onboardingClients = new PostgresOnboardingClients(database);
@@ -189,20 +213,62 @@ export function composeCoachingSalesFeature(
   const clientJourneyUseCases = {
     markWelcomeSeen: new MarkWelcomeSeenUseCase({ clock, journeys }),
     readClientJourney: new ReadClientJourneyUseCase({ journeys }),
+    readClientPortalStanding: new ReadClientPortalStandingUseCase({
+      clock,
+      journeys,
+      subscriptions,
+    }),
     readProgramStatus: new ReadProgramStatusUseCase({
       journeys,
-      subscriptionStarts: purchases,
+      subscriptions,
+    }),
+  };
+
+  const subscriptionPorts = {
+    clock,
+    incidents: handles.incidents,
+    paymentSubscriptions: handles.paymentSubscriptions,
+    subscriptions,
+  };
+  const subscriptionUseCases = {
+    cancelSubscription: new CancelSubscriptionUseCase({
+      ...subscriptionPorts,
+      clients: clientIdentities,
+      notifications: createRefundNotifications(handles.productEmail, {
+        appBasePath: handles.appBasePath,
+        clock,
+        coachEmail: handles.coachEmail,
+        publicAppUrl: handles.publicAppUrl,
+      }),
+    }),
+    openPaymentMethodSession: new OpenPaymentMethodSessionUseCase(
+      subscriptionPorts,
+    ),
+    readClientSubscription: new ReadClientSubscriptionUseCase({
+      clock,
+      subscriptions,
+    }),
+    reconcileSubscriptionEvent: new ReconcileSubscriptionEventUseCase({
+      incidents: handles.incidents,
+      subscriptions,
+    }),
+    startProgramNow: new StartProgramNowUseCase({
+      clock,
+      incidents: handles.incidents,
+      subscriptions,
     }),
   };
 
   const roster = new PostgresClientRoster(database);
   const rosterUseCases = {
     listClients: new ListClientsUseCase({
+      clock,
       incidents: handles.incidents,
       roster,
     }),
     readClientRecord: new ReadClientRecordUseCase({
       calls: handles.assessmentCallReader,
+      clock,
       roster,
     }),
   };
@@ -229,6 +295,7 @@ export function composeCoachingSalesFeature(
       calls: handles.assessmentCallReader,
       clock,
       incidents: handles.incidents,
+      paymentSubscriptions: handles.paymentSubscriptions,
       purchases,
     }),
     resolvePaymentLink: new ResolvePaymentLinkUseCase({
@@ -251,6 +318,10 @@ export function composeCoachingSalesFeature(
       tokenHasher,
     }),
   };
+
+  const subscriptionChangeHandler = new CoachingSubscriptionChangeHandler({
+    reconcileSubscriptionEvent: subscriptionUseCases.reconcileSubscriptionEvent,
+  });
 
   return {
     feature: {
@@ -282,7 +353,7 @@ export function composeCoachingSalesFeature(
       readClientJourney: clientJourneyUseCases.readClientJourney,
     },
     handles: {
-      clientIdentities: new PostgresClientIdentities(database),
+      clientIdentities,
       invitationAcceptance: {
         accept: (input) => invitationUseCases.acceptInvitation.execute(input),
       },
@@ -294,7 +365,9 @@ export function composeCoachingSalesFeature(
         incidents: handles.incidents,
         recordCheckoutCompleted: useCases.recordCheckoutCompleted,
       }),
+      refundHandler: subscriptionChangeHandler,
       reviewStampWriter: writeReviewStamps,
+      subscriptionChangeHandler,
       unitPreferenceClients: onboardingClients,
     },
   };

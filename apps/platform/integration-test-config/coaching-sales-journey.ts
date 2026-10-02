@@ -41,6 +41,7 @@ export type Purchase = {
   bundleId: string;
   checkout: RequestedCheckout;
   eventId: string;
+  startChoice: "immediate" | "waiting";
   subscriptionId: string;
 };
 
@@ -70,6 +71,7 @@ export const FIRST_PURCHASE: Purchase = {
     sessionId: STRIPE_CHECKOUT_SESSION_ID,
   },
   eventId: "evt_integration_paid",
+  startChoice: "immediate",
   subscriptionId: STRIPE_SUBSCRIPTION_ID,
 };
 
@@ -80,6 +82,7 @@ export const SECOND_PURCHASE: Purchase = {
     sessionId: "cs_test_integration_second",
   },
   eventId: "evt_integration_second_paid",
+  startChoice: "immediate",
   subscriptionId: "sub_integration_second",
 };
 
@@ -289,7 +292,7 @@ export class CoachingSalesJourney {
     const sentLink = await this.sendPaymentLinkAfterEndedCall(visitor);
     await this.startCheckout({
       bundleId: purchase.bundleId,
-      startChoice: "immediate",
+      startChoice: purchase.startChoice,
       token: sentLink.token,
     });
     const completion = await this.completionOfCheckoutRequest(

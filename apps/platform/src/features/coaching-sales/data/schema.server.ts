@@ -8,7 +8,11 @@ import {
   COACHING_BUNDLE_MONTHS,
   PRICE_TIERS,
 } from "@eli-coach-platform/domain/coaching-bundle";
-import { START_CHOICES } from "@eli-coach-platform/domain/coaching-subscription";
+import {
+  COACHING_SUBSCRIPTION_STATUSES,
+  REFUND_REASONS,
+  START_CHOICES,
+} from "@eli-coach-platform/domain/coaching-subscription";
 import type { PaymentLinkState } from "@eli-coach-platform/domain/payment-link";
 import { sql, type SQL } from "drizzle-orm";
 import {
@@ -32,8 +36,6 @@ const PAYMENT_LINK_STATES = [
   "voided",
   "spent",
 ] as const satisfies readonly PaymentLinkState[];
-
-const COACHING_SUBSCRIPTION_STATUSES = ["not-started"] as const;
 
 export const coachingSalesConstraints = {
   clientPerCall: "clients_assessment_call_id_unique",
@@ -241,6 +243,19 @@ export const coachingSubscriptionsTable = appSchema.table(
       .notNull()
       .default("not-started"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+    cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
+    accessEndsAt: timestamp("access_ends_at", { withTimezone: true }),
+    paymentProblemSince: timestamp("payment_problem_since", {
+      withTimezone: true,
+    }),
+    refundReason: varchar("refund_reason", {
+      enum: REFUND_REASONS,
+      length: 32,
+    }),
+    refundDueCents: integer("refund_due_cents"),
+    refundDueBy: timestamp("refund_due_by", { withTimezone: true }),
+    refundedCents: integer("refunded_cents"),
+    refundedAt: timestamp("refunded_at", { withTimezone: true }),
   },
   (table) => [
     uniqueIndex("coaching_subscriptions_one_open_per_client")
@@ -266,6 +281,22 @@ export const coachingSubscriptionsTable = appSchema.table(
     check(
       "coaching_subscriptions_status_check",
       sql`${table.status} in (${quotedList(COACHING_SUBSCRIPTION_STATUSES)})`,
+    ),
+    check(
+      "coaching_subscriptions_refund_reason_check",
+      sql`${table.refundReason} in (${quotedList(REFUND_REASONS)})`,
+    ),
+    check(
+      "coaching_subscriptions_refund_complete",
+      sql`(${table.refundReason} is null) = (${table.refundDueCents} is null) and (${table.refundReason} is null) = (${table.refundedCents} is null)`,
+    ),
+    check(
+      "coaching_subscriptions_refund_amounts_not_negative",
+      sql`${table.refundDueCents} >= 0 and ${table.refundedCents} >= 0`,
+    ),
+    check(
+      "coaching_subscriptions_ending_has_access_end",
+      sql`${table.status} not in ('cancelled', 'ended') or ${table.accessEndsAt} is not null`,
     ),
   ],
 );

@@ -1,10 +1,10 @@
 import type { CancellationRule, StartChoice } from "./coaching-subscription";
 import type { SubscriptionEventKind } from "./subscription-event";
 
-export type PaymentEventRejection =
+type PaymentEventRejection =
   "call_not_found" | "call_already_paid" | "unreadable_checkout";
 
-export type SubscriptionEventOutcome =
+type SubscriptionEventOutcome =
   "recorded" | "duplicate" | "unknown-subscription";
 
 export interface CoachingSubscriptionIncidents {

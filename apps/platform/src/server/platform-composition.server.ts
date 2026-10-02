@@ -4,6 +4,8 @@ import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-
 import type {
   PaymentCompletionHandler,
   PaymentEvents,
+  PaymentRefundHandler,
+  PaymentSubscriptionChangeHandler,
   PaymentWebhookIncidents,
 } from "@eli-coach-platform/infrastructure/payments/server";
 
@@ -38,6 +40,8 @@ type PlatformFeatureHandles = {
   incidents: PaymentWebhookIncidents;
   paymentCompletionHandlers: readonly PaymentCompletionHandler[];
   paymentEvents: PaymentEvents;
+  paymentRefundHandler: PaymentRefundHandler;
+  paymentSubscriptionChangeHandlers: readonly PaymentSubscriptionChangeHandler[];
   version: string;
   webhookSigningSecret: string | undefined;
 };
@@ -56,23 +60,32 @@ export function composePlatformFeature(
     }),
     readyz: new ReadyzController(handles.app),
     stripeWebhooks: new StripeWebhookController({
-      handlersByPurpose: handlersByPurpose(handles.paymentCompletionHandlers),
+      completionHandlersByPurpose: handlersByPurpose(
+        handles.paymentCompletionHandlers,
+        "payment completion",
+      ),
       incidents: handles.incidents,
       paymentEvents: handles.paymentEvents,
+      refundHandler: handles.paymentRefundHandler,
       signingSecret: handles.webhookSigningSecret,
+      subscriptionChangeHandlersByPurpose: handlersByPurpose(
+        handles.paymentSubscriptionChangeHandlers,
+        "subscription change",
+      ),
     }),
   };
 }
 
-function handlersByPurpose(
-  handlers: readonly PaymentCompletionHandler[],
-): ReadonlyMap<string, PaymentCompletionHandler> {
-  const byPurpose = new Map<string, PaymentCompletionHandler>();
+function handlersByPurpose<Handler extends { readonly purpose: string }>(
+  handlers: readonly Handler[],
+  handlerKind: string,
+): ReadonlyMap<string, Handler> {
+  const byPurpose = new Map<string, Handler>();
 
   for (const handler of handlers) {
     if (byPurpose.has(handler.purpose)) {
       throw new Error(
-        `Two payment completion handlers serve the purpose "${handler.purpose}".`,
+        `Two ${handlerKind} handlers serve the purpose "${handler.purpose}".`,
       );
     }
 

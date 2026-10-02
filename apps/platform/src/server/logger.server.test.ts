@@ -614,4 +614,152 @@ describe("createConsoleLogger", () => {
       requesterRole: "CLIENT",
     });
   });
+
+  describe("coaching subscription incidents", () => {
+    it.each([
+      [
+        "a cancellation with its rule and the refund due",
+        "info",
+        (logger: ReturnType<typeof createConsoleLogger>) =>
+          logger.subscriptionCancelled({
+            subscriptionId: "subscription-1",
+            startChoice: "waiting",
+            rule: "full-refund",
+            refundDueCents: 44700,
+          }),
+        "Coaching subscription cancelled.",
+        {
+          eventCategory: "coaching_subscription_cancelled",
+          refundDueCents: 44700,
+          rule: "full-refund",
+          startChoice: "waiting",
+          subscriptionId: "subscription-1",
+        },
+      ],
+      [
+        "a cancellation the provider refused, by the failure's kind only",
+        "error",
+        (logger: ReturnType<typeof createConsoleLogger>) =>
+          logger.subscriptionCancellationFailed({
+            subscriptionId: "subscription-1",
+            rule: "no-refund",
+            error: new TypeError("ana@example.com sub_1 refused"),
+          }),
+        "Coaching subscription cancellation failed at the payment provider.",
+        {
+          errorCategory: "coaching_subscription_cancellation_failure",
+          errorClass: "TypeError",
+          rule: "no-refund",
+          subscriptionId: "subscription-1",
+        },
+      ],
+      [
+        "a program started now",
+        "info",
+        (logger: ReturnType<typeof createConsoleLogger>) =>
+          logger.programStartedNow({ subscriptionId: "subscription-1" }),
+        "Coaching program started now.",
+        {
+          eventCategory: "coaching_program_started_now",
+          subscriptionId: "subscription-1",
+        },
+      ],
+      [
+        "a reconciled provider event",
+        "info",
+        (logger: ReturnType<typeof createConsoleLogger>) =>
+          logger.subscriptionEventReconciled({
+            eventId: "evt_1",
+            eventKind: "ended",
+            paymentReference: "sub_1",
+            outcome: "recorded",
+          }),
+        "Coaching subscription event reconciled.",
+        {
+          eventCategory: "coaching_subscription_event_reconciled",
+          eventId: "evt_1",
+          eventKind: "ended",
+          outcome: "recorded",
+          paymentReference: "sub_1",
+        },
+      ],
+      [
+        "a settled refund",
+        "info",
+        (logger: ReturnType<typeof createConsoleLogger>) =>
+          logger.refundSettled({
+            subscriptionId: "subscription-1",
+            refundedCents: 44700,
+          }),
+        "Coaching subscription refund settled.",
+        {
+          eventCategory: "coaching_subscription_refund_settled",
+          refundedCents: 44700,
+          subscriptionId: "subscription-1",
+        },
+      ],
+      [
+        "an opened payment-method session",
+        "info",
+        (logger: ReturnType<typeof createConsoleLogger>) =>
+          logger.paymentMethodSessionOpened({
+            subscriptionId: "subscription-1",
+          }),
+        "Payment method session opened.",
+        {
+          eventCategory: "payment_method_session_opened",
+          subscriptionId: "subscription-1",
+        },
+      ],
+      [
+        "an applied renewal hold",
+        "info",
+        (logger: ReturnType<typeof createConsoleLogger>) =>
+          logger.renewalHoldApplied({ paymentSubscriptionId: "sub_1" }),
+        "Coaching subscription renewal hold applied.",
+        {
+          eventCategory: "coaching_subscription_renewal_hold_applied",
+          paymentSubscriptionId: "sub_1",
+        },
+      ],
+      [
+        "a failed renewal hold, by the failure's kind only",
+        "error",
+        (logger: ReturnType<typeof createConsoleLogger>) =>
+          logger.renewalHoldFailed({
+            paymentSubscriptionId: "sub_1",
+            error: new RangeError("ana@example.com"),
+          }),
+        "Coaching subscription renewal hold failed; Stripe will redeliver.",
+        {
+          errorCategory: "coaching_subscription_renewal_hold_failure",
+          errorClass: "RangeError",
+          paymentSubscriptionId: "sub_1",
+        },
+      ],
+      [
+        "a refund notice the coach did not get",
+        "error",
+        (logger: ReturnType<typeof createConsoleLogger>) =>
+          logger.refundNotificationFailed({ subscriptionId: "subscription-1" }),
+        "Refund due email to the coach failed.",
+        {
+          errorCategory: "coaching_subscription_refund_notification_failure",
+          subscriptionId: "subscription-1",
+        },
+      ],
+    ] as const)("logs %s", (_label, level, report, message, fields) => {
+      // arrange
+      const output = vi
+        .spyOn(console, level)
+        .mockImplementation(() => undefined);
+      const logger = createConsoleLogger();
+
+      // act
+      report(logger);
+
+      // assert
+      expect(output).toHaveBeenCalledWith(message, fields);
+    });
+  });
 });

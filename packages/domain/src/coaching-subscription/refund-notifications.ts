@@ -2,8 +2,14 @@ import type { RefundDueSnapshot } from "./refund-due";
 
 export type RefundDueNotice = {
   subscriptionId: string;
-  client: { firstName: string; lastName: string };
-  currency: string;
+  client: {
+    clientId: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+  paid: { amountCents: number; currency: string; at: Date };
+  cancelledAt: Date;
   refund: RefundDueSnapshot;
 };
 

@@ -1,7 +1,10 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
 import type { FeatureFlagSet } from "@eli-coach-platform/domain/feature-flag";
 import { InMemoryProductEmail } from "@eli-coach-platform/infrastructure/email/server";
-import { createPaymentCheckout } from "@eli-coach-platform/infrastructure/payments/server";
+import {
+  createPaymentCheckout,
+  createPaymentSubscriptions,
+} from "@eli-coach-platform/infrastructure/payments/server";
 import { describe, expect, it, vi } from "vitest";
 
 import { sessionContext } from "~/features/accounts/server/guards/session-context.server";
@@ -317,6 +320,7 @@ function createHandles(
     appBasePath: "/eli-coach-platform",
     assessmentCallReader: { findById: async () => null },
     clock: { now: () => new Date("2026-10-20T10:00:00.000Z") },
+    coachEmail: "eli@evoa.fit",
     contactEmail: "contact@evoa.fit",
     database: createUnreachableDatabase(),
     featureFlags: { execute: async () => featureFlags },
@@ -331,6 +335,9 @@ function createHandles(
     },
     incidents: createIncidents(),
     paymentCheckout: createPaymentCheckout({ PAYMENTS_PROVIDER: "memory" }),
+    paymentSubscriptions: createPaymentSubscriptions({
+      PAYMENTS_PROVIDER: "memory",
+    }),
     pricingEligibility: {
       tierForEmail: async () => "regular",
       tiersForEmails: async () => new Map(),
@@ -346,6 +353,15 @@ function createIncidents() {
     invitationResendFailed: vi.fn(),
     invitationResent: vi.fn(),
     paymentEventRejected: vi.fn(),
+    paymentMethodSessionOpened: vi.fn(),
+    programStartedNow: vi.fn(),
+    refundNotificationFailed: vi.fn(),
+    refundSettled: vi.fn(),
+    renewalHoldApplied: vi.fn(),
+    renewalHoldFailed: vi.fn(),
+    subscriptionCancellationFailed: vi.fn(),
+    subscriptionCancelled: vi.fn(),
+    subscriptionEventReconciled: vi.fn(),
     paymentLinkEmailFailed: vi.fn(),
     rosterReadFailed: vi.fn(),
     salesModeReadFailed: vi.fn(),

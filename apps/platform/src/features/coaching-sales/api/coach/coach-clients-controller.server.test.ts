@@ -1,5 +1,6 @@
 import type { AccountSnapshot } from "@eli-coach-platform/domain/account";
 import type { ClientRosterEntry } from "@eli-coach-platform/domain/client-roster";
+import type { CoachingSubscriptionSnapshot } from "@eli-coach-platform/domain/coaching-subscription";
 import { describe, expect, it, vi } from "vitest";
 
 import type { AccountsFeature } from "~/features/accounts/server/accounts-composition.server";
@@ -20,6 +21,27 @@ const OTHER_CLIENT_ID = "0b8d2f7e-2f55-4d3e-9d7c-7d7a3f1c2b10";
 const PAID_AT = new Date("2026-09-26T10:00:00.000Z");
 const SENT_AT = new Date("2026-09-26T10:05:00.000Z");
 const EXPIRES_AT = new Date("2026-10-26T10:05:00.000Z");
+
+const SUBSCRIPTION: CoachingSubscriptionSnapshot = {
+  id: "9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d",
+  clientId: CLIENT_ID,
+  bundleId: "3-months",
+  months: 3,
+  tier: "regular",
+  amountCents: 44700,
+  currency: "eur",
+  paymentCustomerId: "cus_1",
+  paymentSubscriptionId: "sub_1",
+  checkoutSessionId: "cs_1",
+  paidAt: PAID_AT,
+  startChoice: "immediate",
+  status: "not-started",
+  cancelledAt: null,
+  accessEndsAt: null,
+  programStartedOn: null,
+  paymentProblemSince: null,
+  refund: null,
+};
 
 const COACH: AccountSnapshot = {
   authSubjectId: "user_coach",
@@ -64,14 +86,7 @@ function rosterEntry(
     },
     subscription:
       overrides.subscription === undefined
-        ? {
-            bundleId: "3-months",
-            months: 3,
-            tier: "regular",
-            paidAt: PAID_AT,
-            startChoice: "immediate",
-            status: "not-started",
-          }
+        ? SUBSCRIPTION
         : overrides.subscription,
   };
 }
@@ -246,15 +261,11 @@ describe("CoachClientsController#loadClient", () => {
 
   it("names the day her work starts when she chose to wait", async () => {
     // arrange
-    const entry = rosterEntry();
     const { controller } = createController({
       record: {
-        ...entry,
-        subscription: entry.subscription && {
-          ...entry.subscription,
-          startChoice: "waiting",
-        },
+        ...rosterEntry(),
         status: "invited",
+        workStartsOn: new Date("2026-10-10T10:00:00.000Z"),
         assessmentCall: BOOKED_CALL,
       },
     });
@@ -263,7 +274,7 @@ describe("CoachClientsController#loadClient", () => {
     const client = await controller.loadClient(coachArgs(), CLIENT_ID);
 
     // assert
-    expect(client.subscription?.workStartsOn).toEqual(expect.any(String));
+    expect(client.subscription?.workStartsOn).toBe("2026-10-10T10:00:00.000Z");
   });
 
   it("reads no subscription for a client without one", async () => {

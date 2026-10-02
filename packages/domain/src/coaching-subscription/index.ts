@@ -20,11 +20,7 @@ export {
   type CoachingSubscriptionStatus,
   type StartChoice,
 } from "./coaching-subscription";
-export {
-  type CoachingSubscriptionIncidents,
-  type PaymentEventRejection,
-  type SubscriptionEventOutcome,
-} from "./coaching-subscription-incidents";
+export { type CoachingSubscriptionIncidents } from "./coaching-subscription-incidents";
 export {
   type CoachingSubscriptions,
   type SubscriptionChange,
@@ -37,10 +33,7 @@ export {
   type PaymentCheckout,
 } from "./payment-checkout";
 export { type PaymentSubscriptions } from "./payment-subscriptions";
-export {
-  PurchasedSubscription,
-  type PurchasedSubscriptionSnapshot,
-} from "./purchased-subscription";
+export { PurchasedSubscription } from "./purchased-subscription";
 export { ReadCheckoutConfirmationUseCase } from "./read-checkout-confirmation-use-case";
 export { ReadClientSubscriptionUseCase } from "./read-client-subscription-use-case";
 export { ReconcileSubscriptionEventUseCase } from "./reconcile-subscription-event-use-case";
@@ -57,7 +50,4 @@ export {
 } from "./refund-notifications";
 export { StartCheckoutUseCase } from "./start-checkout-use-case";
 export { StartProgramNowUseCase } from "./start-program-now-use-case";
-export {
-  type SubscriptionEvent,
-  type SubscriptionEventKind,
-} from "./subscription-event";
+export { type SubscriptionEvent } from "./subscription-event";

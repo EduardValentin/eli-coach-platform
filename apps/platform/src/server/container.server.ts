@@ -18,6 +18,7 @@ import { createProgressPhotoRenditions } from "@eli-coach-platform/infrastructur
 import {
   createPaymentCheckout,
   createPaymentEvents,
+  createPaymentSubscriptions,
 } from "@eli-coach-platform/infrastructure/payments/server";
 import {
   createManagementAuthConfig,
@@ -127,6 +128,7 @@ export function createPlatformContainer(options: {
     appBasePath: environment.APP_BASE_PATH,
     assessmentCallReader: assessmentCalls.handles.assessmentCallReader,
     clock,
+    coachEmail: environment.ASSESSMENT_CALL_COACH_EMAIL,
     contactEmail: environment.PRODUCT_EMAIL_REPLY_TO,
     database: database.client,
     featureFlags,
@@ -136,6 +138,7 @@ export function createPlatformContainer(options: {
     }),
     incidents,
     paymentCheckout: createPaymentCheckout(environment),
+    paymentSubscriptions: createPaymentSubscriptions(environment),
     pricingEligibility: waitlist.handles.pricingEligibility,
     productEmail,
     publicAppUrl: environment.PUBLIC_APP_URL,
@@ -176,6 +179,10 @@ export function createPlatformContainer(options: {
     incidents,
     paymentCompletionHandlers: [coachingSales.handles.paymentCompletionHandler],
     paymentEvents: createPaymentEvents(environment),
+    paymentRefundHandler: coachingSales.handles.refundHandler,
+    paymentSubscriptionChangeHandlers: [
+      coachingSales.handles.subscriptionChangeHandler,
+    ],
     version: process.env.GIT_SHA ?? "dev",
     webhookSigningSecret: environment.STRIPE_WEBHOOK_SIGNING_SECRET,
   });

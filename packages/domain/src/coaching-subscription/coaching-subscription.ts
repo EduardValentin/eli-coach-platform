@@ -1,6 +1,5 @@
 import type { CoachingBundleId, PriceTier } from "../coaching-bundle";
 
-import type { PurchasedSubscriptionSnapshot } from "./purchased-subscription";
 import { RefundDue, type RefundDueSnapshot } from "./refund-due";
 
 export const COACHING_SUBSCRIPTION_PURPOSE = "coaching-subscription";
@@ -52,9 +51,20 @@ export type StartNowDecision =
   | { outcome: "started"; subscription: CoachingSubscription }
   | { outcome: "refused"; reason: "ended" | "outside-window" };
 
-export type CoachingSubscriptionSnapshot = PurchasedSubscriptionSnapshot & {
+export type CoachingSubscriptionSnapshot = {
   id: string;
   clientId: string;
+  bundleId: CoachingBundleId;
+  months: number;
+  tier: PriceTier;
+  amountCents: number;
+  currency: string;
+  paymentCustomerId: string;
+  paymentSubscriptionId: string;
+  checkoutSessionId: string;
+  paidAt: Date;
+  startChoice: StartChoice;
+  status: CoachingSubscriptionStatus;
   cancelledAt: Date | null;
   accessEndsAt: Date | null;
   programStartedOn: Date | null;

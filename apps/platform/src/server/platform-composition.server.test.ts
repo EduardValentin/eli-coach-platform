@@ -2,6 +2,7 @@ import { loadRuntimeEnvironment } from "@eli-coach-platform/config/runtime";
 import type {
   PaymentCompletionHandler,
   PaymentEvents,
+  PaymentSubscriptionChangeHandler,
 } from "@eli-coach-platform/infrastructure/payments/server";
 import { CLERK_TEST_ENVIRONMENT } from "@eli-coach-platform/test-support";
 import { mkdtempSync } from "node:fs";
@@ -44,9 +45,16 @@ function createHandler(purpose: string): PaymentCompletionHandler {
   return { purpose, handle: vi.fn().mockResolvedValue("recorded") };
 }
 
+function createChangeHandler(
+  purpose: string,
+): PaymentSubscriptionChangeHandler {
+  return { purpose, handle: vi.fn().mockResolvedValue("recorded") };
+}
+
 function composeWith(options: {
   paymentCompletionHandlers: readonly PaymentCompletionHandler[];
   paymentEvents?: PaymentEvents;
+  paymentSubscriptionChangeHandlers?: readonly PaymentSubscriptionChangeHandler[];
 }) {
   return composePlatformFeature({
     app: createRuntimeEnvironment(),
@@ -60,6 +68,9 @@ function composeWith(options: {
     paymentEvents: options.paymentEvents ?? {
       verify: async () => ({ kind: "invalid" }),
     },
+    paymentRefundHandler: { handle: vi.fn().mockResolvedValue("recorded") },
+    paymentSubscriptionChangeHandlers:
+      options.paymentSubscriptionChangeHandlers ?? [],
     version: "dev",
     webhookSigningSecret: "whsec_unit",
   });
@@ -112,6 +123,59 @@ describe("composePlatformFeature", () => {
     expect(response.status).toBe(200);
     expect(coaching.handle).toHaveBeenCalledWith("evt_1", PAID_SESSION);
     expect(store.handle).not.toHaveBeenCalled();
+  });
+
+  it("routes a subscription change from the Stripe webhook to the handler of its purpose", async () => {
+    // arrange
+    const coaching = createChangeHandler("coaching-subscription");
+    const store = createChangeHandler("store-order");
+    const change = {
+      kind: "invoice_outcome" as const,
+      subscriptionId: "sub_1",
+      customerId: "cus_1",
+      outcome: "failed" as const,
+      billingReason: "subscription_cycle",
+      occurredAt: new Date("2026-10-20T10:00:00.000Z"),
+    };
+    const feature = composeWith({
+      paymentCompletionHandlers: [],
+      paymentSubscriptionChangeHandlers: [store, coaching],
+      paymentEvents: {
+        verify: async () => ({
+          kind: "subscription_changed",
+          eventId: "evt_2",
+          purpose: "coaching-subscription",
+          change,
+        }),
+      },
+    });
+
+    // act
+    const response =
+      await feature.stripeWebhooks.handleEvent(stripeEventRequest());
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(coaching.handle).toHaveBeenCalledWith("evt_2", change);
+    expect(store.handle).not.toHaveBeenCalled();
+  });
+
+  it("refuses two subscription change handlers serving the same purpose", () => {
+    // arrange
+    const handlers = [
+      createChangeHandler("coaching-subscription"),
+      createChangeHandler("coaching-subscription"),
+    ];
+
+    // act
+    const compose = () =>
+      composeWith({
+        paymentCompletionHandlers: [],
+        paymentSubscriptionChangeHandlers: handlers,
+      });
+
+    // assert
+    expect(compose).toThrow("coaching-subscription");
   });
 
   it("refuses two payment handlers serving the same purpose", () => {

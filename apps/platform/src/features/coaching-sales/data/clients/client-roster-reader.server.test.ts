@@ -9,6 +9,9 @@ const CLIENT_ID = "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22";
 const CALL_ID = "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11";
 const PAID_AT = new Date("2026-09-26T10:00:00.000Z");
 const SUBMITTED_AT = new Date("2026-09-28T10:00:00.000Z");
+const CANCELLED_AT = new Date("2026-10-01T10:00:00.000Z");
+const REFUND_DUE_BY = new Date("2026-10-15T10:00:00.000Z");
+const SUBSCRIPTION_ID = "9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d";
 
 const CLIENT_ROW = {
   clientId: CLIENT_ID,
@@ -24,12 +27,29 @@ const CLIENT_ROW = {
   authSubjectId: "user_ana",
   email: "ana@example.com",
   assessmentCallId: CALL_ID,
-  bundleId: "3-months",
-  months: 3,
-  tier: "regular",
-  paidAt: PAID_AT,
-  startChoice: "immediate",
-  subscriptionStatus: "not-started",
+  subscription: {
+    id: SUBSCRIPTION_ID,
+    clientId: CLIENT_ID,
+    bundleId: "3-months",
+    months: 3,
+    tier: "regular",
+    amountCents: 44700,
+    currency: "eur",
+    paymentCustomerId: "cus_1",
+    paymentSubscriptionId: "sub_1",
+    checkoutSessionId: "cs_1",
+    paidAt: PAID_AT,
+    startChoice: "immediate",
+    status: "ended",
+    cancelledAt: CANCELLED_AT,
+    accessEndsAt: CANCELLED_AT,
+    paymentProblemSince: null,
+    refundReason: "proportional-refund",
+    refundDueCents: 44700,
+    refundDueBy: REFUND_DUE_BY,
+    refundedCents: 0,
+    refundedAt: null,
+  },
 };
 
 const ROSTER_ENTRY = {
@@ -52,19 +72,37 @@ const ROSTER_ENTRY = {
     assessmentCallId: CALL_ID,
   },
   subscription: {
+    id: SUBSCRIPTION_ID,
+    clientId: CLIENT_ID,
     bundleId: "3-months",
     months: 3,
     tier: "regular",
+    amountCents: 44700,
+    currency: "eur",
+    paymentCustomerId: "cus_1",
+    paymentSubscriptionId: "sub_1",
+    checkoutSessionId: "cs_1",
     paidAt: PAID_AT,
     startChoice: "immediate",
-    status: "not-started",
+    status: "ended",
+    cancelledAt: CANCELLED_AT,
+    accessEndsAt: CANCELLED_AT,
+    programStartedOn: null,
+    paymentProblemSince: null,
+    refund: {
+      reason: "proportional-refund",
+      amountCents: 44700,
+      dueBy: REFUND_DUE_BY,
+      refundedCents: 0,
+      refundedAt: null,
+    },
   },
 };
 
 const dialect = new PgDialect();
 
 describe("PostgresClientRoster#list", () => {
-  it("reads every client with her journey, booking and subscription", async () => {
+  it("reads every client with her journey, booking and latest subscription, ended ones included", async () => {
     // arrange
     const database = createDatabaseAnswering([CLIENT_ROW]);
     const roster = new PostgresClientRoster(database.client);
@@ -76,7 +114,7 @@ describe("PostgresClientRoster#list", () => {
     expect(entries).toEqual([ROSTER_ENTRY]);
   });
 
-  it("joins each client to her open subscription", async () => {
+  it("joins each client to her most recently paid subscription, whatever its status", async () => {
     // arrange
     const database = createDatabaseAnswering([]);
     const roster = new PostgresClientRoster(database.client);
@@ -87,7 +125,7 @@ describe("PostgresClientRoster#list", () => {
     // assert
     const [join] = database.joins;
     expect(dialect.sqlToQuery(join as SQL).sql).toBe(
-      `("app"."coaching_subscriptions"."client_id" = "app"."clients"."id" and "app"."coaching_subscriptions"."status" <> 'ended')`,
+      `("app"."coaching_subscriptions"."client_id" = "app"."clients"."id" and not exists (select 1 from "app"."coaching_subscriptions" "later_coaching_subscriptions" where ("later_coaching_subscriptions"."client_id" = "app"."clients"."id" and "later_coaching_subscriptions"."paid_at" > "app"."coaching_subscriptions"."paid_at")))`,
     );
   });
 
@@ -121,20 +159,10 @@ describe("PostgresClientRoster#list", () => {
     expect(entry?.accountBound).toBe(false);
   });
 
-  it("reads no subscription for a client without an open one", async () => {
+  it("reads no subscription for a client who holds none", async () => {
     // arrange
     const roster = new PostgresClientRoster(
-      createDatabaseAnswering([
-        {
-          ...CLIENT_ROW,
-          bundleId: null,
-          months: null,
-          tier: null,
-          paidAt: null,
-          startChoice: null,
-          subscriptionStatus: null,
-        },
-      ]).client,
+      createDatabaseAnswering([{ ...CLIENT_ROW, subscription: null }]).client,
     );
 
     // act

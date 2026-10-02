@@ -3,12 +3,24 @@ import type {
   ClientRoster,
   ClientRosterEntry,
 } from "@eli-coach-platform/domain/client-roster";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, gt, sql } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 
 import {
   clientsTable,
   coachingSubscriptionsTable,
 } from "~/features/coaching-sales/data/schema.server";
+import {
+  subscriptionColumns,
+  toSubscriptionSnapshot,
+} from "~/features/coaching-sales/data/subscriptions/subscription-row.server";
+
+const LATER_SUBSCRIPTIONS = "later_coaching_subscriptions";
+
+const laterSubscriptions = alias(
+  coachingSubscriptionsTable,
+  LATER_SUBSCRIPTIONS,
+);
 
 export class PostgresClientRoster implements ClientRoster {
   constructor(private readonly database: DatabaseClient) {}
@@ -47,19 +59,17 @@ function selectRoster(database: DatabaseClient) {
       authSubjectId: clientsTable.authSubjectId,
       email: clientsTable.email,
       assessmentCallId: clientsTable.assessmentCallId,
-      bundleId: coachingSubscriptionsTable.bundleId,
-      months: coachingSubscriptionsTable.months,
-      tier: coachingSubscriptionsTable.tier,
-      paidAt: coachingSubscriptionsTable.paidAt,
-      startChoice: coachingSubscriptionsTable.startChoice,
-      subscriptionStatus: coachingSubscriptionsTable.status,
+      subscription: subscriptionColumns,
     })
     .from(clientsTable)
     .leftJoin(
       coachingSubscriptionsTable,
       and(
         eq(coachingSubscriptionsTable.clientId, clientsTable.id),
-        sql`${coachingSubscriptionsTable.status} <> 'ended'`,
+        sql`not exists (select 1 from ${coachingSubscriptionsTable} ${sql.identifier(LATER_SUBSCRIPTIONS)} where ${and(
+          eq(laterSubscriptions.clientId, clientsTable.id),
+          gt(laterSubscriptions.paidAt, coachingSubscriptionsTable.paidAt),
+        )})`,
       ),
     );
 }
@@ -86,28 +96,8 @@ function toRosterEntry(row: RosterRow): ClientRosterEntry {
       gender: row.gender,
       assessmentCallId: row.assessmentCallId,
     },
-    subscription: subscriptionOf(row),
-  };
-}
-
-function subscriptionOf(row: RosterRow): ClientRosterEntry["subscription"] {
-  if (
-    row.bundleId === null ||
-    row.months === null ||
-    row.tier === null ||
-    row.paidAt === null ||
-    row.startChoice === null ||
-    row.subscriptionStatus === null
-  ) {
-    return null;
-  }
-
-  return {
-    bundleId: row.bundleId,
-    months: row.months,
-    tier: row.tier,
-    paidAt: row.paidAt,
-    startChoice: row.startChoice,
-    status: row.subscriptionStatus,
+    subscription: row.subscription
+      ? toSubscriptionSnapshot(row.subscription)
+      : null,
   };
 }

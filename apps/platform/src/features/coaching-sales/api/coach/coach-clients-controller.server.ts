@@ -8,7 +8,6 @@ import type {
   ListClientsUseCase,
   ReadClientRecordUseCase,
 } from "@eli-coach-platform/domain/client-roster";
-import { programWorkStart } from "@eli-coach-platform/domain/coaching-subscription";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 
 import { requireApiAccount } from "~/features/accounts/server/guards/require-account.server";
@@ -164,21 +163,19 @@ function toRosterClient(client: ListedClient) {
   };
 }
 
-function subscriptionOf(client: ListedClient) {
-  if (!client.subscription) {
+function subscriptionOf(record: ClientRecord) {
+  if (!record.subscription) {
     return null;
   }
 
-  const { bundleId, months, tier, paidAt, startChoice } = client.subscription;
+  const { bundleId, months, tier, paidAt } = record.subscription;
 
   return {
     bundleId,
     months,
     reducedPrice: tier === "reduced",
     paidAt: paidAt.toISOString(),
-    workStartsOn:
-      programWorkStart({ startChoice, purchasedAt: paidAt })?.toISOString() ??
-      null,
+    workStartsOn: record.workStartsOn?.toISOString() ?? null,
   };
 }
 
