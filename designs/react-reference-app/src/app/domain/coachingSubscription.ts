@@ -1,4 +1,4 @@
-import { addDays, addMonths, differenceInCalendarDays } from 'date-fns';
+import { addDays, addMonths } from 'date-fns';
 
 export type SubscriptionBundle = 1 | 3 | 6;
 
@@ -26,6 +26,8 @@ export function parseStartPath(
 export const WITHDRAWAL_WINDOW_DAYS = 14;
 
 export const REFUND_DUE_WITHIN_DAYS = 14;
+
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 export type RefundReason = 'full-refund' | 'proportional-refund';
 
@@ -148,26 +150,20 @@ export function cancellationRule(
     : 'proportional-refund';
 }
 
-function hasStarted(subscription: CoachingSubscription, now: Date): boolean {
-  const { day1 } = subscription;
-
-  return day1 !== undefined && now.getTime() >= day1.getTime();
-}
-
 export function proportionalRefundCents(
   subscription: CoachingSubscription,
   now: Date,
 ): number {
   const { day1, bundle, amountPaidCents } = subscription;
-  if (!day1 || !hasStarted(subscription, now)) return amountPaidCents;
+  if (!day1 || now.getTime() <= day1.getTime()) return amountPaidCents;
 
-  const periodDays = differenceInCalendarDays(periodEnd(day1, bundle, 0), day1);
-  const usedDays = Math.min(
-    periodDays,
-    differenceInCalendarDays(now, day1) + 1,
-  );
+  const elapsedMs = now.getTime() - day1.getTime();
+  const periodMs = periodEnd(day1, bundle, 0).getTime() - day1.getTime();
+  const periodDays = Math.round(periodMs / DAY_MS);
+  const usedDays = Math.ceil(elapsedMs / DAY_MS);
+  const unusedDays = Math.max(0, periodDays - usedDays);
 
-  return Math.round((amountPaidCents * (periodDays - usedDays)) / periodDays);
+  return Math.round((amountPaidCents * unusedDays) / periodDays);
 }
 
 function refundAmountCents(

@@ -347,6 +347,18 @@ describe('the proportional refund', () => {
     expect(refund).toBe(AMOUNT_PAID_CENTS);
   });
 
+  it('refunds everything at the very start of day 1', () => {
+    // arrange
+    const day1 = new Date(2026, 0, 15, 12);
+    const immediate = subscription({ day1, status: 'active' });
+
+    // act
+    const refund = proportionalRefundCents(immediate, day1);
+
+    // assert
+    expect(refund).toBe(AMOUNT_PAID_CENTS);
+  });
+
   it('refunds everything while day 1 is still ahead', () => {
     // arrange
     const immediate = subscription({ day1: new Date(2026, 0, 15, 12) });
@@ -361,7 +373,7 @@ describe('the proportional refund', () => {
     expect(refund).toBe(AMOUNT_PAID_CENTS);
   });
 
-  it('refunds the unused whole days of the first period, day 1 counted as used', () => {
+  it('refunds the unused whole days of the first period, a started day counted as used', () => {
     // arrange
     const running = subscription({
       bundle: 1,
@@ -374,7 +386,7 @@ describe('the proportional refund', () => {
     const refund = proportionalRefundCents(running, new Date(2026, 0, 20, 9));
 
     // assert
-    expect(refund).toBe(Math.round((15900 * 25) / 31));
+    expect(refund).toBe(Math.round((15900 * 26) / 31));
   });
 
   it('rounds the unused share to the nearest cent', () => {
@@ -435,7 +447,7 @@ describe('cancelling', () => {
     expect(cancelled.status).toBe('ended');
     expect(cancelled.periodEndsAt).toEqual(now);
     expect(cancelled.refund).toEqual({
-      amountCents: Math.round((15900 * 25) / 31),
+      amountCents: Math.round((15900 * 26) / 31),
       reason: 'proportional-refund',
       dueBy: new Date(2026, 1, 3, 12),
       refundedCents: 0,
