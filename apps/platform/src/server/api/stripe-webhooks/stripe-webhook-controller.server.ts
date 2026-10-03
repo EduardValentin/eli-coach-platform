@@ -28,15 +28,21 @@ type StripeWebhookControllerOptions = {
 
 type Delivery = {
   eventId: string;
-  purpose: string;
+  handler: string;
   handle: () => Promise<unknown>;
+};
+
+type PurposeRouting<Handler> = {
+  eventId: string;
+  purpose: string | null;
+  handlersByPurpose: ReadonlyMap<string, Handler>;
 };
 
 const SIGNATURE_HEADER = "stripe-signature";
 const EVENT_MAX_BYTES = 512 * 1024;
 const PAYLOAD_TOO_LARGE = 413;
 const HANDLER_FAILED = 500;
-const REFUND_OWNER = "refund";
+const REFUNDS_HANDLER = "charge-refunds";
 
 export class StripeWebhookController {
   constructor(private readonly options: StripeWebhookControllerOptions) {}
@@ -79,20 +85,14 @@ export class StripeWebhookController {
     eventId: string,
     session: PaidCheckoutSession,
   ): Promise<Response> {
-    const purpose = session.metadata[PAYMENT_PURPOSE_METADATA_KEY] ?? null;
-    const handler = purpose
-      ? this.options.completionHandlersByPurpose.get(purpose)
-      : undefined;
-
-    if (!purpose || !handler) {
-      return this.unrouted(eventId, purpose);
-    }
-
-    return this.deliver({
-      eventId,
-      purpose,
-      handle: () => handler.handle(eventId, session),
-    });
+    return this.routeByPurpose(
+      {
+        eventId,
+        purpose: session.metadata[PAYMENT_PURPOSE_METADATA_KEY] ?? null,
+        handlersByPurpose: this.options.completionHandlersByPurpose,
+      },
+      (handler) => handler.handle(eventId, session),
+    );
   }
 
   private routeSubscriptionChange(verdict: {
@@ -100,9 +100,23 @@ export class StripeWebhookController {
     purpose: string | null;
     change: PaymentSubscriptionChange;
   }): Promise<Response> {
-    const { eventId, purpose, change } = verdict;
+    return this.routeByPurpose(
+      {
+        eventId: verdict.eventId,
+        purpose: verdict.purpose,
+        handlersByPurpose: this.options.subscriptionChangeHandlersByPurpose,
+      },
+      (handler) => handler.handle(verdict.eventId, verdict.change),
+    );
+  }
+
+  private routeByPurpose<Handler>(
+    routing: PurposeRouting<Handler>,
+    handle: (handler: Handler) => Promise<unknown>,
+  ): Promise<Response> {
+    const { eventId, purpose } = routing;
     const handler = purpose
-      ? this.options.subscriptionChangeHandlersByPurpose.get(purpose)
+      ? routing.handlersByPurpose.get(purpose)
       : undefined;
 
     if (!purpose || !handler) {
@@ -111,8 +125,8 @@ export class StripeWebhookController {
 
     return this.deliver({
       eventId,
-      purpose,
-      handle: () => handler.handle(eventId, change),
+      handler: purpose,
+      handle: () => handle(handler),
     });
   }
 
@@ -122,7 +136,7 @@ export class StripeWebhookController {
   ): Promise<Response> {
     return this.deliver({
       eventId,
-      purpose: REFUND_OWNER,
+      handler: REFUNDS_HANDLER,
       handle: () => this.options.refundHandler.handle(eventId, refund),
     });
   }
@@ -141,7 +155,7 @@ export class StripeWebhookController {
       this.options.incidents.paymentEventHandlingFailed({
         errorClass: errorClassOf(error),
         eventId: delivery.eventId,
-        purpose: delivery.purpose,
+        handler: delivery.handler,
       });
 
       return new Response(null, { status: HANDLER_FAILED });

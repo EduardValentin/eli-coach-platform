@@ -70,7 +70,7 @@ import { CoachClientsController } from "~/features/coaching-sales/api/coach/coac
 import { CoachSalesController } from "~/features/coaching-sales/api/coach/coach-sales-controller.server";
 import { PaymentLinksController } from "~/features/coaching-sales/api/coach/payment-links-controller.server";
 import { CoachingPurchaseCompletionHandler } from "~/features/coaching-sales/api/payments/coaching-purchase-completion-handler.server";
-import { CoachingSubscriptionChangeHandler } from "~/features/coaching-sales/api/payments/coaching-subscription-change-handler.server";
+import { CoachingSubscriptionEventHandler } from "~/features/coaching-sales/api/payments/coaching-subscription-event-handler.server";
 import { CheckoutsController } from "~/features/coaching-sales/api/public/checkouts-controller.server";
 import { InvitationsController } from "~/features/coaching-sales/api/public/invitations-controller.server";
 import { PostgresClientJourneys } from "~/features/coaching-sales/data/client-journeys/client-journeys-repository.server";
@@ -321,7 +321,7 @@ export function composeCoachingSalesFeature(
     }),
   };
 
-  const subscriptionChangeHandler = new CoachingSubscriptionChangeHandler({
+  const subscriptionChangeHandler = new CoachingSubscriptionEventHandler({
     reconcileSubscriptionEvent: subscriptionUseCases.reconcileSubscriptionEvent,
   });
 

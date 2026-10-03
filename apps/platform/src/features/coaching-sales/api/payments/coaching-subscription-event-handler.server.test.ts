@@ -5,7 +5,7 @@ import type {
 } from "@eli-coach-platform/infrastructure/payments/server";
 import { describe, expect, it, vi } from "vitest";
 
-import { CoachingSubscriptionChangeHandler } from "./coaching-subscription-change-handler.server";
+import { CoachingSubscriptionEventHandler } from "./coaching-subscription-event-handler.server";
 
 const OCCURRED_AT = new Date("2026-10-20T10:00:00.000Z");
 
@@ -17,8 +17,8 @@ const deletion: PaymentSubscriptionChange = {
   kind: "subscription_state",
   subscriptionId: "sub_1",
   customerId: "cus_1",
-  providerStatus: "canceled",
-  previousProviderStatus: null,
+  standing: "ended",
+  previousStanding: null,
   scheduledEndAt: null,
   scheduledEndChanged: false,
   endedAt: OCCURRED_AT,
@@ -36,7 +36,7 @@ const refund: PaymentRefund = {
 
 function createHandler(status: ReconcileStatus = "recorded") {
   const reconcile = vi.fn().mockResolvedValue({ status });
-  const handler = new CoachingSubscriptionChangeHandler({
+  const handler = new CoachingSubscriptionEventHandler({
     reconcileSubscriptionEvent: {
       execute: reconcile,
     } as unknown as ReconcileSubscriptionEventUseCase,
@@ -45,7 +45,7 @@ function createHandler(status: ReconcileStatus = "recorded") {
   return { handler, reconcile };
 }
 
-describe("CoachingSubscriptionChangeHandler", () => {
+describe("CoachingSubscriptionEventHandler", () => {
   it("serves the coaching subscription purpose", () => {
     // arrange
     const { handler } = createHandler();
@@ -105,7 +105,7 @@ describe("CoachingSubscriptionChangeHandler", () => {
     // act
     const outcome = await handler.handle("evt_3", {
       ...deletion,
-      providerStatus: "active",
+      standing: "healthy",
       endedAt: null,
     });
 

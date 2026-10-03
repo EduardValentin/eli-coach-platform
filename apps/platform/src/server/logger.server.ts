@@ -159,12 +159,12 @@ export function createConsoleLogger(): ConsoleLogger {
         reason,
       });
     },
-    paymentEventHandlingFailed: ({ errorClass, eventId, purpose }) => {
+    paymentEventHandlingFailed: ({ errorClass, eventId, handler }) => {
       console.error("Payment event handler failed; Stripe will redeliver.", {
         errorCategory: "payment_event_handling_failure",
         errorClass,
         eventId,
-        purpose,
+        handler,
       });
     },
     paymentEventRejected: ({ eventId, reason }) => {

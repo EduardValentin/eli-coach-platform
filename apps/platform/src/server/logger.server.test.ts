@@ -295,7 +295,7 @@ describe("createConsoleLogger", () => {
     );
   });
 
-  it("logs a failed payment event handler by event, purpose and error class only", () => {
+  it("logs a failed payment event handler by event, handler and error class only", () => {
     // arrange
     const consoleError = vi
       .spyOn(console, "error")
@@ -306,7 +306,7 @@ describe("createConsoleLogger", () => {
     logger.paymentEventHandlingFailed({
       errorClass: "DrizzleQueryError",
       eventId: "evt_1",
-      purpose: "coaching-subscription",
+      handler: "coaching-subscription",
     });
 
     // assert
@@ -316,7 +316,7 @@ describe("createConsoleLogger", () => {
         errorCategory: "payment_event_handling_failure",
         errorClass: "DrizzleQueryError",
         eventId: "evt_1",
-        purpose: "coaching-subscription",
+        handler: "coaching-subscription",
       },
     );
   });

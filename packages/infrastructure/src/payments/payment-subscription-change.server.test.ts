@@ -55,8 +55,8 @@ describe("readSubscriptionChange", () => {
         kind: "subscription_state",
         subscriptionId: "sub_1",
         customerId: "cus_1",
-        providerStatus: "active",
-        previousProviderStatus: null,
+        standing: "healthy",
+        previousStanding: null,
         scheduledEndAt: new Date(1798909229 * 1000),
         scheduledEndChanged: true,
         endedAt: null,
@@ -93,7 +93,7 @@ describe("readSubscriptionChange", () => {
     // assert
     expect(read?.change).toMatchObject({
       scheduledEndChanged: false,
-      previousProviderStatus: null,
+      previousStanding: null,
     });
   });
 
@@ -108,8 +108,8 @@ describe("readSubscriptionChange", () => {
 
     // assert
     expect(read?.change).toMatchObject({
-      providerStatus: "past_due",
-      previousProviderStatus: "active",
+      standing: "payment-problem",
+      previousStanding: "healthy",
     });
   });
 
@@ -125,7 +125,7 @@ describe("readSubscriptionChange", () => {
     // assert
     expect(read?.change).toMatchObject({
       kind: "subscription_state",
-      providerStatus: "canceled",
+      standing: "ended",
       endedAt: new Date(1790960471 * 1000),
     });
   });

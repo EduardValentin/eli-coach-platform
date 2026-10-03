@@ -2,13 +2,17 @@ import { z } from "zod";
 
 import { fromUnixSeconds } from "./checkout-session-completion.server";
 import { PAYMENT_PURPOSE_METADATA_KEY } from "./payment-completion-handler.server";
+import {
+  subscriptionStandingOf,
+  type PaymentSubscriptionStanding,
+} from "./stripe/stripe-subscription-standing.server";
 
 export type PaymentSubscriptionState = {
   kind: "subscription_state";
   subscriptionId: string;
   customerId: string;
-  providerStatus: string;
-  previousProviderStatus: string | null;
+  standing: PaymentSubscriptionStanding;
+  previousStanding: PaymentSubscriptionStanding | null;
   scheduledEndAt: Date | null;
   scheduledEndChanged: boolean;
   endedAt: Date | null;
@@ -151,9 +155,11 @@ function readSubscriptionState(
       kind: "subscription_state",
       subscriptionId: subscription.id,
       customerId: subscription.customer,
-      providerStatus: subscription.status,
-      previousProviderStatus:
-        typeof previousStatus === "string" ? previousStatus : null,
+      standing: subscriptionStandingOf(subscription.status),
+      previousStanding:
+        typeof previousStatus === "string"
+          ? subscriptionStandingOf(previousStatus)
+          : null,
       scheduledEndAt: subscription.cancel_at
         ? fromUnixSeconds(subscription.cancel_at)
         : null,

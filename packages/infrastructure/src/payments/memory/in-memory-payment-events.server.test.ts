@@ -77,7 +77,7 @@ describe("InMemoryPaymentEvents", () => {
       kind: "subscription_changed",
       eventId: "evt_memory_deleted",
       purpose: "coaching-subscription",
-      change: { subscriptionId: "sub_memory", providerStatus: "canceled" },
+      change: { subscriptionId: "sub_memory", standing: "ended" },
     });
   });
 

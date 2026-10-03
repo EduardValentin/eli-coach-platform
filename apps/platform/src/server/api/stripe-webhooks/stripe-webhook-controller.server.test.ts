@@ -36,8 +36,8 @@ const subscriptionDeletion: PaymentSubscriptionChange = {
   kind: "subscription_state",
   subscriptionId: "sub_1",
   customerId: "cus_1",
-  providerStatus: "canceled",
-  previousProviderStatus: null,
+  standing: "ended",
+  previousStanding: null,
   scheduledEndAt: null,
   scheduledEndChanged: false,
   endedAt: new Date("2026-10-20T10:00:00.000Z"),
@@ -260,7 +260,7 @@ describe("StripeWebhookController with a subscription change", () => {
     expect(incidents.paymentEventHandlingFailed).toHaveBeenCalledWith({
       errorClass: "RangeError",
       eventId: "evt_deleted",
-      purpose: "coaching-subscription",
+      handler: "coaching-subscription",
     });
   });
 });
@@ -287,7 +287,7 @@ describe("StripeWebhookController with a refunded charge", () => {
     );
   });
 
-  it("answers 500 and reports the refund owner when the refund handler fails", async () => {
+  it("answers 500 and reports the refunds handler when it fails", async () => {
     // arrange
     const { controller, refundHandler, incidents } = createController({
       verdict: {
@@ -306,7 +306,7 @@ describe("StripeWebhookController with a refunded charge", () => {
     expect(incidents.paymentEventHandlingFailed).toHaveBeenCalledWith({
       errorClass: "Error",
       eventId: "evt_refunded",
-      purpose: "refund",
+      handler: "charge-refunds",
     });
   });
 });
@@ -363,7 +363,7 @@ describe("StripeWebhookController when the handler fails", () => {
     expect(incidents.paymentEventHandlingFailed).toHaveBeenCalledWith({
       errorClass: "TypeError",
       eventId: "evt_failing",
-      purpose: "coaching-subscription",
+      handler: "coaching-subscription",
     });
   });
 });

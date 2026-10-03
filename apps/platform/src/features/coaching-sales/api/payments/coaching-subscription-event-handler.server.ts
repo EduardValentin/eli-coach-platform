@@ -11,17 +11,17 @@ import {
   type PaymentSubscriptionChangeHandler,
 } from "@eli-coach-platform/infrastructure/payments/server";
 
-type CoachingSubscriptionChangeHandlerOptions = {
+type CoachingSubscriptionEventHandlerOptions = {
   reconcileSubscriptionEvent: ReconcileSubscriptionEventUseCase;
 };
 
-export class CoachingSubscriptionChangeHandler
+export class CoachingSubscriptionEventHandler
   implements PaymentSubscriptionChangeHandler, PaymentRefundHandler
 {
   readonly purpose = COACHING_SUBSCRIPTION_PURPOSE;
 
   constructor(
-    private readonly options: CoachingSubscriptionChangeHandlerOptions,
+    private readonly options: CoachingSubscriptionEventHandlerOptions,
   ) {}
 
   async handle(

@@ -7,9 +7,6 @@ import type {
   PaymentSubscriptionState,
 } from "./payment-subscription-change.server";
 
-const ENDED_STATUSES: readonly string[] = ["canceled", "incomplete_expired"];
-const PAYMENT_PROBLEM_STATUSES: readonly string[] = ["past_due", "unpaid"];
-const HEALTHY_STATUS = "active";
 const PURCHASE_BILLING_REASON = "subscription_create";
 
 export function toSubscriptionEvent(
@@ -36,7 +33,7 @@ function fromSubscriptionState(
   const paymentSubscriptionId = state.subscriptionId;
   const occurredAt = state.occurredAt;
 
-  if (state.endedAt && ENDED_STATUSES.includes(state.providerStatus)) {
+  if (state.endedAt && state.standing === "ended") {
     return { kind: "ended", paymentSubscriptionId, endedAt: state.endedAt };
   }
 
@@ -51,15 +48,15 @@ function fromSubscriptionState(
       : { kind: "end-lifted", paymentSubscriptionId, occurredAt };
   }
 
-  if (state.previousProviderStatus === null) {
+  if (state.previousStanding === null) {
     return null;
   }
 
-  if (PAYMENT_PROBLEM_STATUSES.includes(state.providerStatus)) {
+  if (state.standing === "payment-problem") {
     return { kind: "payment-problem", paymentSubscriptionId, occurredAt };
   }
 
-  return state.providerStatus === HEALTHY_STATUS
+  return state.standing === "healthy"
     ? { kind: "payment-recovered", paymentSubscriptionId, occurredAt }
     : null;
 }

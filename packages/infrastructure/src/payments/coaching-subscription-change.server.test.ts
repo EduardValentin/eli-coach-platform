@@ -16,8 +16,8 @@ function state(
     kind: "subscription_state",
     subscriptionId: "sub_1",
     customerId: "cus_1",
-    providerStatus: "active",
-    previousProviderStatus: null,
+    standing: "healthy",
+    previousStanding: null,
     scheduledEndAt: null,
     scheduledEndChanged: false,
     endedAt: null,
@@ -44,7 +44,7 @@ describe("toSubscriptionEvent", () => {
   it("reads a deleted subscription as ended at its end instant", () => {
     // act
     const event = toSubscriptionEvent(
-      state({ providerStatus: "canceled", endedAt: SCHEDULED_END }),
+      state({ standing: "ended", endedAt: SCHEDULED_END }),
     );
 
     // assert
@@ -82,12 +82,12 @@ describe("toSubscriptionEvent", () => {
     });
   });
 
-  it.each(["past_due", "unpaid"])(
-    "reads a move to %s as a payment problem",
-    (providerStatus) => {
+  it.each(["healthy", "other"] as const)(
+    "reads a move from %s to a payment problem as a payment problem",
+    (previousStanding) => {
       // act
       const event = toSubscriptionEvent(
-        state({ providerStatus, previousProviderStatus: "active" }),
+        state({ standing: "payment-problem", previousStanding }),
       );
 
       // assert
@@ -102,7 +102,7 @@ describe("toSubscriptionEvent", () => {
   it("reads a move back to active as a recovered payment", () => {
     // act
     const event = toSubscriptionEvent(
-      state({ previousProviderStatus: "past_due" }),
+      state({ previousStanding: "payment-problem" }),
     );
 
     // assert
