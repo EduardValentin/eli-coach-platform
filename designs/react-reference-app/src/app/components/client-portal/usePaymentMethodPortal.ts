@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router';
 import { useAppState } from '../../context/AppContext';
 import {
   openPaymentMethodPortal,
-  SUBSCRIPTION_ERROR_MESSAGES,
-  SubscriptionError,
+  subscriptionErrorMessage,
 } from '../../services/subscriptionService';
 
 export function usePaymentMethodPortal() {
@@ -23,11 +22,7 @@ export function usePaymentMethodPortal() {
       );
       navigate(session.url);
     } catch (error) {
-      setProblem(
-        error instanceof SubscriptionError
-          ? error.message
-          : SUBSCRIPTION_ERROR_MESSAGES['payment-portal-unavailable'],
-      );
+      setProblem(subscriptionErrorMessage(error, 'payment-portal-unavailable'));
       setOpening(false);
     }
   };

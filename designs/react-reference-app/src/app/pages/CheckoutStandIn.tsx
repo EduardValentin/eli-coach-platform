@@ -17,6 +17,7 @@ import {
   completeCheckout,
   findCheckoutSession,
 } from '../services/checkoutService';
+import { toCents } from '../utils/money';
 
 const EYEBROW = 'Stripe Checkout · prototype stand-in';
 
@@ -70,7 +71,7 @@ export function CheckoutStandIn() {
       paidAt: completed.paidAt,
       bundle: session.bundle,
       startPath: session.startPath,
-      amountPaidCents: total * 100,
+      amountPaidCents: toCents(total),
     });
     navigate(`/checkout/complete?order=${sessionId}`);
   };

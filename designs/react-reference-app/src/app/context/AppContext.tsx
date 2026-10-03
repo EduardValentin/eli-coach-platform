@@ -48,8 +48,10 @@ import {
 import {
   PROTOTYPE_CANCEL_OUTCOMES,
   PROTOTYPE_PAYMENT_PORTAL_OUTCOMES,
+  PROTOTYPE_START_NOW_OUTCOMES,
   type PrototypeCancelOutcome,
   type PrototypePaymentPortalOutcome,
+  type PrototypeStartNowOutcome,
 } from '../services/subscriptionService';
 import { optionOrDefault } from '../utils/optionOrDefault';
 import {
@@ -121,6 +123,7 @@ type AppState = {
   journeyPaymentProblem: boolean;
   journeyDaysSincePayment: PrototypeDaysSincePayment;
   cancelOutcome: PrototypeCancelOutcome;
+  startNowOutcome: PrototypeStartNowOutcome;
   paymentPortalOutcome: PrototypePaymentPortalOutcome;
   invitationResendOutcome: PrototypeInvitationResendOutcome;
   clientsRoster: PrototypeClientsRoster;
@@ -168,6 +171,7 @@ const defaultState: AppState = {
   journeyPaymentProblem: false,
   journeyDaysSincePayment: 'stage',
   cancelOutcome: 'works',
+  startNowOutcome: 'works',
   paymentPortalOutcome: 'works',
   invitationResendOutcome: 'sent',
   clientsRoster: 'seeded',
@@ -415,6 +419,11 @@ function parseDevParamsFromURL(): AppState {
     params.get('jcancel'),
     defaultState.cancelOutcome,
   );
+  state.startNowOutcome = optionOrDefault(
+    PROTOTYPE_START_NOW_OUTCOMES,
+    params.get('jstartnow'),
+    defaultState.startNowOutcome,
+  );
   state.paymentPortalOutcome = optionOrDefault(
     PROTOTYPE_PAYMENT_PORTAL_OUTCOMES,
     params.get('jpayportal'),
@@ -509,6 +518,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     url.searchParams.delete('jpayproblem');
     url.searchParams.delete('jpaid');
     url.searchParams.delete('jcancel');
+    url.searchParams.delete('jstartnow');
     url.searchParams.delete('jpayportal');
     url.searchParams.delete('jresend');
     url.searchParams.delete('jroster');
@@ -613,6 +623,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     if (appState.cancelOutcome !== defaultState.cancelOutcome) {
       url.searchParams.set('jcancel', appState.cancelOutcome);
+    }
+    if (appState.startNowOutcome !== defaultState.startNowOutcome) {
+      url.searchParams.set('jstartnow', appState.startNowOutcome);
     }
     if (appState.paymentPortalOutcome !== defaultState.paymentPortalOutcome) {
       url.searchParams.set('jpayportal', appState.paymentPortalOutcome);

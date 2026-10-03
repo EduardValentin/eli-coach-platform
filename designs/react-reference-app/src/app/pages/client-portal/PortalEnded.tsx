@@ -11,7 +11,7 @@ import {
 export function PortalEnded() {
   const { demoJourney } = useClientJourneys();
   const { subscription } = demoJourney;
-  const refundDue = subscription ? needsRefund(subscription) : false;
+  const refundDue = needsRefund(subscription);
 
   return (
     <ErrorPage

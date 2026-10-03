@@ -17,7 +17,7 @@ import {
   formatJourneyDate,
 } from '../../utils/journeyLabels';
 import { PortalWidget } from '../PortalWidget';
-import { hasClosedCoaching } from '../../domain/clientStatus';
+import { isCancelledOrEnded } from '../../domain/clientStatus';
 import { Button } from '../ui/button';
 import { ConfirmDialog } from '../ui/confirm-dialog';
 import { cn } from '../ui/utils';
@@ -50,7 +50,7 @@ export function InvitationBlock({
   const [sending, setSending] = useState(false);
 
   const email = journey.identity.email;
-  const closed = hasClosedCoaching(journey, new Date());
+  const cancelledOrEnded = isCancelledOrEnded(journey, new Date());
   const { possessive } = clientPronouns(journey.identity.gender);
   const standing = invitationStanding(invitation, new Date());
 
@@ -73,7 +73,7 @@ export function InvitationBlock({
     }
   };
 
-  const resendAction = closed ? null : (
+  const resendAction = cancelledOrEnded ? null : (
     <Button
       variant="outline"
       size="sm"

@@ -38,6 +38,7 @@ import {
   type PrototypeInvitationStanding,
 } from './invitationService';
 import { paymentLinkExpiresAt } from './paymentLinkService';
+import { toCents } from '../utils/money';
 import type { PrototypeBooking } from './assessmentCallService';
 import { findCountry } from './countries';
 import type { VisitorGender } from './visitorProfile';
@@ -524,8 +525,9 @@ export function seedJourney(seed: JourneySeed): ClientJourney {
     subscription: reached('invited')
       ? seedSubscription({
           purchasedAt: paidAt,
-          amountPaidCents:
-            bundleTotal(bundleForMonths(SEEDED_BUNDLE), pricing) * 100,
+          amountPaidCents: toCents(
+            bundleTotal(bundleForMonths(SEEDED_BUNDLE), pricing),
+          ),
           programReadyAt: reached('program-ready') ? programReadyAt : null,
           startPath,
           status: subscriptionStatus,

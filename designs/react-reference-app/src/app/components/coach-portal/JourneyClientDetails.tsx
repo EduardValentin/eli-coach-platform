@@ -29,9 +29,7 @@ export function JourneyClientDetails({ journey }: { journey: ClientJourney }) {
   const name = journeyName(journey);
   const units = useMeasureUnits();
   const invitation = invitationAwaitingAccount(journey);
-  const refundDue = journey.subscription
-    ? needsRefund(journey.subscription)
-    : false;
+  const refundDue = needsRefund(journey.subscription);
 
   return (
     <div className="w-full pb-12" data-parity-root="JourneyClientDetails">

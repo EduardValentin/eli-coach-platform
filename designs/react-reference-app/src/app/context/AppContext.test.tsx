@@ -86,6 +86,7 @@ function SubscriptionParamsProbe() {
       <p>payment problem {String(appState.journeyPaymentProblem)}</p>
       <p>paid {appState.journeyDaysSincePayment}</p>
       <p>cancel {appState.cancelOutcome}</p>
+      <p>start now {appState.startNowOutcome}</p>
       <p>portal {appState.paymentPortalOutcome}</p>
       <button
         type="button"
@@ -94,6 +95,7 @@ function SubscriptionParamsProbe() {
             journeyPaymentProblem: true,
             journeyDaysSincePayment: '13',
             cancelOutcome: 'fails',
+            startNowOutcome: 'fails',
             paymentPortalOutcome: 'fails',
           })
         }
@@ -120,7 +122,7 @@ describe('subscription dev params', () => {
   it('reads every subscription param from the URL', () => {
     // arrange
     const search =
-      '?jrefund=part-refunded&jpayproblem=1&jpaid=14&jcancel=fails&jpayportal=fails';
+      '?jrefund=part-refunded&jpayproblem=1&jpaid=14&jcancel=fails&jstartnow=fails&jpayportal=fails';
 
     // act
     renderSubscriptionParams(search);
@@ -130,6 +132,7 @@ describe('subscription dev params', () => {
     expect(screen.getByText('payment problem true')).toBeInTheDocument();
     expect(screen.getByText('paid 14')).toBeInTheDocument();
     expect(screen.getByText('cancel fails')).toBeInTheDocument();
+    expect(screen.getByText('start now fails')).toBeInTheDocument();
     expect(screen.getByText('portal fails')).toBeInTheDocument();
   });
 
@@ -148,7 +151,7 @@ describe('subscription dev params', () => {
   it('falls back to the defaults for unknown values', () => {
     // arrange
     const search =
-      '?jrefund=maybe&jpaid=7&jcancel=already-ended&jpayportal=later';
+      '?jrefund=maybe&jpaid=7&jcancel=already-ended&jstartnow=later&jpayportal=later';
 
     // act
     renderSubscriptionParams(search);
@@ -157,6 +160,7 @@ describe('subscription dev params', () => {
     expect(screen.getByText('refund none')).toBeInTheDocument();
     expect(screen.getByText('paid stage')).toBeInTheDocument();
     expect(screen.getByText('cancel works')).toBeInTheDocument();
+    expect(screen.getByText('start now works')).toBeInTheDocument();
     expect(screen.getByText('portal works')).toBeInTheDocument();
   });
 
@@ -173,7 +177,7 @@ describe('subscription dev params', () => {
     // assert
     await waitFor(() => {
       expect(window.location.search).toBe(
-        '?jpayproblem=1&jpaid=13&jcancel=fails&jpayportal=fails',
+        '?jpayproblem=1&jpaid=13&jcancel=fails&jstartnow=fails&jpayportal=fails',
       );
     });
   });

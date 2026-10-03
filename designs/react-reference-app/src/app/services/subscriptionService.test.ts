@@ -112,7 +112,7 @@ describe('cancelling coaching', () => {
 describe('starting coaching now', () => {
   it('moves a waiting subscription onto the immediate path', async () => {
     // arrange
-    const starting = startSubscriptionNow(waiting);
+    const starting = startSubscriptionNow(waiting, 'works');
 
     // act
     await vi.advanceTimersByTimeAsync(SIMULATED_LATENCY_MS);
@@ -121,6 +121,21 @@ describe('starting coaching now', () => {
     await expect(starting).resolves.toMatchObject({
       startPath: 'immediate',
       day1: undefined,
+    });
+  });
+
+  it('asks her to try again when the program cannot be started', async () => {
+    // arrange
+    const starting = startSubscriptionNow(waiting, 'fails');
+
+    // act
+    const error = await rejectionOf(starting);
+
+    // assert
+    expect(error).toMatchObject({
+      code: 'start-now-unavailable',
+      message:
+        "Your program couldn't be started just now. Nothing has changed, so please try again.",
     });
   });
 });

@@ -52,8 +52,10 @@ import {
 import {
   PROTOTYPE_CANCEL_OUTCOMES,
   PROTOTYPE_PAYMENT_PORTAL_OUTCOMES,
+  PROTOTYPE_START_NOW_OUTCOMES,
   type PrototypeCancelOutcome,
   type PrototypePaymentPortalOutcome,
+  type PrototypeStartNowOutcome,
 } from '../services/subscriptionService';
 import { optionOrDefault } from '../utils/optionOrDefault';
 import type {
@@ -294,6 +296,11 @@ const REFUND_LABELS: Record<PrototypeRefund, string> = {
 };
 
 const CANCEL_OUTCOME_LABELS: Record<PrototypeCancelOutcome, string> = {
+  works: 'Works',
+  fails: 'Fails',
+};
+
+const START_NOW_OUTCOME_LABELS: Record<PrototypeStartNowOutcome, string> = {
   works: 'Works',
   fails: 'Fails',
 };
@@ -1122,6 +1129,41 @@ export function DevToggle() {
                       {PROTOTYPE_CANCEL_OUTCOMES.map((outcome) => (
                         <SelectItem key={outcome} value={outcome}>
                           {CANCEL_OUTCOME_LABELS[outcome]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="dev-start-now-outcome"
+                    className={DEV_LABEL_CLASS}
+                  >
+                    Start now outcome
+                  </Label>
+                  <Select
+                    value={appState.startNowOutcome}
+                    onValueChange={(value) =>
+                      setAppState({
+                        startNowOutcome: optionOrDefault(
+                          PROTOTYPE_START_NOW_OUTCOMES,
+                          value,
+                          'works',
+                        ),
+                      })
+                    }
+                  >
+                    <SelectTrigger
+                      id="dev-start-now-outcome"
+                      className="w-full"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      {PROTOTYPE_START_NOW_OUTCOMES.map((outcome) => (
+                        <SelectItem key={outcome} value={outcome}>
+                          {START_NOW_OUTCOME_LABELS[outcome]}
                         </SelectItem>
                       ))}
                     </SelectContent>

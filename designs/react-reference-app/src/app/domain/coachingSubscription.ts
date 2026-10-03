@@ -195,8 +195,10 @@ export function outstandingRefundCents(
   return Math.max(0, refund.amountCents - refund.refundedCents);
 }
 
-export function needsRefund(subscription: CoachingSubscription): boolean {
-  return outstandingRefundCents(subscription) > 0;
+export function needsRefund(
+  subscription: CoachingSubscription | undefined,
+): boolean {
+  return subscription ? outstandingRefundCents(subscription) > 0 : false;
 }
 
 function withCoachIssuedRefund(

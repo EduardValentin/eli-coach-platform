@@ -11,8 +11,7 @@ import {
 } from '../../domain/coachingSubscription';
 import {
   cancelSubscription as sendCancellation,
-  SUBSCRIPTION_ERROR_MESSAGES,
-  SubscriptionError,
+  subscriptionErrorMessage,
 } from '../../services/subscriptionService';
 import {
   bundleLengthLabel,
@@ -28,13 +27,13 @@ import {
   KEEP_COACHING_LABEL,
   MANAGE_ROW_ACTION_LABEL,
   OPENING_PAYMENT_METHOD_LABEL,
-  PAYMENT_PROBLEM_LINE,
   type OfferedCancellation,
 } from '../../utils/subscriptionCopy';
 import { Button } from '../ui/button';
 import { ConfirmDialog } from '../ui/confirm-dialog';
 import { InlineProblem } from '../InlineProblem';
 import { SettingsRow, SettingsRows, SettingsSection } from '../SettingsSection';
+import { PaymentMethodProblems } from './PaymentMethodProblems';
 import { usePaymentMethodPortal } from './usePaymentMethodPortal';
 
 const ROW_ACTION_CLASS = 'w-full sm:w-28';
@@ -66,12 +65,6 @@ function planDescription(
     return `Active until ${formatJourneyDate(periodEndsAt)} · renews then unless you cancel first.`;
   }
   return `${paid} · starts when your program is delivered.`;
-}
-
-function cancellationProblem(error: unknown): string {
-  return error instanceof SubscriptionError
-    ? error.message
-    : SUBSCRIPTION_ERROR_MESSAGES['cancel-unavailable'];
 }
 
 type CancellationRowProps = {
@@ -112,7 +105,7 @@ function CancellationRow({
       setConfirming(false);
       onCancelled(cancelled);
     } catch (error) {
-      setProblem(cancellationProblem(error));
+      setProblem(subscriptionErrorMessage(error, 'cancel-unavailable'));
     } finally {
       setCancelling(false);
     }
@@ -160,21 +153,18 @@ function CancellationRow({
   );
 }
 
-function paymentMethodDescribedBy(
-  paymentProblem: boolean,
-  handOffProblem: string | null,
-): string {
-  return [
-    PAYMENT_METHOD_IDS.title,
-    paymentProblem ? PAYMENT_METHOD_IDS.paymentProblem : null,
-    handOffProblem ? PAYMENT_METHOD_IDS.handOffProblem : null,
-  ]
-    .filter((id) => id !== null)
-    .join(' ');
-}
-
-function PaymentMethodRow({ paymentProblem }: { paymentProblem: boolean }) {
+function PaymentMethodRow({
+  subscription,
+}: {
+  subscription: CoachingSubscription;
+}) {
   const { open, opening, problem } = usePaymentMethodPortal();
+  const { paymentProblem } = subscription;
+  const describedBy = [
+    PAYMENT_METHOD_IDS.title,
+    ...(paymentProblem ? [PAYMENT_METHOD_IDS.paymentProblem] : []),
+    ...(problem ? [PAYMENT_METHOD_IDS.handOffProblem] : []),
+  ].join(' ');
 
   return (
     <SettingsRow
@@ -183,24 +173,14 @@ function PaymentMethodRow({ paymentProblem }: { paymentProblem: boolean }) {
       problem={
         (paymentProblem || problem) && (
           <div className="grid gap-1">
-            {paymentProblem && (
-              <InlineProblem
-                data-parity="payment-problem"
-                id={PAYMENT_METHOD_IDS.paymentProblem}
-                role="status"
-              >
-                {PAYMENT_PROBLEM_LINE}
-              </InlineProblem>
-            )}
-            {problem && (
-              <InlineProblem
-                data-parity="payment-method-problem"
-                id={PAYMENT_METHOD_IDS.handOffProblem}
-                role="alert"
-              >
-                {problem}
-              </InlineProblem>
-            )}
+            <PaymentMethodProblems
+              handOffProblem={problem}
+              lineAttributes={{
+                paymentProblem: { id: PAYMENT_METHOD_IDS.paymentProblem },
+                handOffProblem: { id: PAYMENT_METHOD_IDS.handOffProblem },
+              }}
+              subscription={subscription}
+            />
           </div>
         )
       }
@@ -208,7 +188,7 @@ function PaymentMethodRow({ paymentProblem }: { paymentProblem: boolean }) {
     >
       <Button
         aria-busy={opening}
-        aria-describedby={paymentMethodDescribedBy(paymentProblem, problem)}
+        aria-describedby={describedBy}
         className={ROW_ACTION_CLASS}
         data-parity="manage-payment-method"
         disabled={opening}
@@ -277,7 +257,7 @@ export function SubscriptionSection() {
         )}
 
         {status !== 'cancelled' && (
-          <PaymentMethodRow paymentProblem={subscription.paymentProblem} />
+          <PaymentMethodRow subscription={subscription} />
         )}
       </SettingsRows>
     </SettingsSection>

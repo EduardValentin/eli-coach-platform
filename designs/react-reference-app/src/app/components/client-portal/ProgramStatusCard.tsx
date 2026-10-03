@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ClipboardList } from 'lucide-react';
 import { Link } from 'react-router';
+import { useAppState } from '../../context/AppContext';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
 import { canStartWork, workStartDate } from '../../domain/coachingSubscription';
 import {
@@ -11,7 +12,10 @@ import {
   type JourneyStage,
 } from '../../domain/journey';
 import { IMMEDIATE_START_BODY } from '../../domain/startChoiceCopy';
-import { startSubscriptionNow } from '../../services/subscriptionService';
+import {
+  startSubscriptionNow,
+  subscriptionErrorMessage,
+} from '../../services/subscriptionService';
 import {
   browserTimeZone,
   formatCallSchedule,
@@ -21,9 +25,9 @@ import { Button, buttonVariants } from '../ui/button';
 import { cn } from '../ui/utils';
 import { ConfirmDialog } from '../ui/confirm-dialog';
 import { InlineProblem } from '../InlineProblem';
-import { PAYMENT_PROBLEM_LINE } from '../../utils/subscriptionCopy';
 import { ClientWidget } from './ClientWidget';
 import { ManagePaymentMethodButton } from './ManagePaymentMethodButton';
+import { PaymentMethodProblems } from './PaymentMethodProblems';
 import { usePaymentMethodPortal } from './usePaymentMethodPortal';
 
 function eyebrowFor(stage: JourneyStage): string {
@@ -72,9 +76,11 @@ function supportingLine(
 }
 
 export function ProgramStatusCard() {
+  const { appState } = useAppState();
   const { demoJourney, startProgramNow } = useClientJourneys();
   const [confirming, setConfirming] = useState(false);
   const [starting, setStarting] = useState(false);
+  const [startProblem, setStartProblem] = useState<string | null>(null);
   const paymentMethod = usePaymentMethodPortal();
 
   const label = clientStatusLabel(demoJourney.stage);
@@ -87,13 +93,28 @@ export function ProgramStatusCard() {
     waiting && subscription ? workStartDate(subscription) : null;
   const paymentProblem = subscription?.paymentProblem ?? false;
 
+  const changeConfirming = (open: boolean) => {
+    setConfirming(open);
+    if (!open) setStartProblem(null);
+  };
+
   const startNow = async () => {
     if (!subscription) return;
     setStarting(true);
-    const started = await startSubscriptionNow(subscription);
-    startProgramNow(demoJourney.callId, started);
-    setStarting(false);
-    setConfirming(false);
+    setStartProblem(null);
+
+    try {
+      const started = await startSubscriptionNow(
+        subscription,
+        appState.startNowOutcome,
+      );
+      startProgramNow(demoJourney.callId, started);
+      setConfirming(false);
+    } catch (error) {
+      setStartProblem(subscriptionErrorMessage(error, 'start-now-unavailable'));
+    } finally {
+      setStarting(false);
+    }
   };
 
   return (
@@ -134,25 +155,14 @@ export function ProgramStatusCard() {
           </p>
         )}
 
-        {paymentProblem && (
-          <InlineProblem
-            className="mt-4 max-w-2xl"
-            data-parity="payment-problem"
-            role="status"
-          >
-            {PAYMENT_PROBLEM_LINE}
-          </InlineProblem>
-        )}
-
-        {paymentMethod.problem && (
-          <InlineProblem
-            className="mt-2 max-w-2xl"
-            data-parity="payment-method-problem"
-            role="alert"
-          >
-            {paymentMethod.problem}
-          </InlineProblem>
-        )}
+        <PaymentMethodProblems
+          handOffProblem={paymentMethod.problem}
+          lineAttributes={{
+            paymentProblem: { className: 'mt-4 max-w-2xl' },
+            handOffProblem: { className: 'mt-2 max-w-2xl' },
+          }}
+          subscription={subscription}
+        />
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           {demoJourney.stage === 'needs-details' && (
@@ -209,10 +219,16 @@ export function ProgramStatusCard() {
         confirmLabel="Yes, start now"
         description={IMMEDIATE_START_BODY}
         onConfirm={() => void startNow()}
-        onOpenChange={setConfirming}
+        onOpenChange={changeConfirming}
         open={confirming}
         title="Let Eli start now?"
-      />
+      >
+        {startProblem && (
+          <InlineProblem data-parity="start-now-problem" role="alert">
+            {startProblem}
+          </InlineProblem>
+        )}
+      </ConfirmDialog>
     </div>
   );
 }
