@@ -1,0 +1,7 @@
+[
+  {"waitFor": "[data-parity=\"start-now\"]"},
+  {"wait": 400},
+  {"click": "[data-parity=\"start-now\"]"},
+  {"waitFor": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"},
+  {"wait": 600}
+]

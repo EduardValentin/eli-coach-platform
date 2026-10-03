@@ -187,7 +187,7 @@ describe('the program status card', () => {
     );
 
     // assert
-    const dialog = screen.getByRole('alertdialog', {
+    const dialog = screen.getByRole('dialog', {
       name: 'Let Eli start now?',
     });
     expect(dialog).toHaveAccessibleDescription(
@@ -196,6 +196,49 @@ describe('the program status card', () => {
     expect(
       screen.getByRole('button', { name: 'Keep my 14 days' }),
     ).toBeVisible();
+  });
+
+  it('returns focus to the opener when she keeps her 14 days', async () => {
+    // arrange
+    renderCard('?session=client&jstage=reviewing&jstart=waiting');
+    const opener = screen.getByRole('button', { name: 'Let Eli start now' });
+    await userEvent.click(opener);
+
+    // act
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Keep my 14 days' }),
+    );
+
+    // assert
+    await waitFor(() => expect(opener).toHaveFocus());
+    expect(
+      screen.queryByRole('dialog', { name: 'Let Eli start now?' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('holds the confirmation disabled while Eli is being started', async () => {
+    // arrange
+    renderCard('?session=client&jstage=reviewing&jstart=waiting');
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Let Eli start now' }),
+    );
+
+    // act
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Yes, start now' }),
+    );
+
+    // assert
+    expect(
+      screen.getByRole('button', { name: 'Yes, start now' }),
+    ).toBeDisabled();
+    await waitFor(
+      () =>
+        expect(
+          screen.queryByRole('button', { name: 'Let Eli start now' }),
+        ).not.toBeInTheDocument(),
+      { timeout: SERVICE_TIMEOUT },
+    );
   });
 
   it('drops the waiting line once she lets Eli start now', async () => {

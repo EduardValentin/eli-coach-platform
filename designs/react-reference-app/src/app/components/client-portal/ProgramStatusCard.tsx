@@ -19,16 +19,7 @@ import {
 import { formatJourneyDate } from '../../utils/journeyLabels';
 import { Button, buttonVariants } from '../ui/button';
 import { cn } from '../ui/utils';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '../ui/alert-dialog';
+import { ConfirmDialog } from '../ui/confirm-dialog';
 import { InlineProblem } from '../InlineProblem';
 import { PAYMENT_PROBLEM_LINE } from '../../utils/subscriptionCopy';
 import { ClientWidget } from './ClientWidget';
@@ -78,35 +69,6 @@ function supportingLine(
   }
 
   return SUPPORTING_LINES[journey.stage] ?? '';
-}
-
-function StartNowDialog({
-  open,
-  onOpenChange,
-  onConfirm,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onConfirm: () => void;
-}) {
-  return (
-    <AlertDialog onOpenChange={onOpenChange} open={open}>
-      <AlertDialogContent className="rounded-card sm:max-w-md">
-        <AlertDialogHeader>
-          <AlertDialogTitle>Let Eli start now?</AlertDialogTitle>
-          <AlertDialogDescription>
-            {IMMEDIATE_START_BODY}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Keep my 14 days</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm}>
-            Yes, start now
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  );
 }
 
 export function ProgramStatusCard() {
@@ -241,10 +203,15 @@ export function ProgramStatusCard() {
         </div>
       </ClientWidget>
 
-      <StartNowDialog
+      <ConfirmDialog
+        cancelLabel="Keep my 14 days"
+        confirmDisabled={starting}
+        confirmLabel="Yes, start now"
+        description={IMMEDIATE_START_BODY}
         onConfirm={() => void startNow()}
         onOpenChange={setConfirming}
         open={confirming}
+        title="Let Eli start now?"
       />
     </div>
   );
