@@ -21,6 +21,10 @@ const IMMEDIATE_START_BODY =
   "I give up my 14-day right of withdrawal so Eli can start on my program now. If I cancel after that, there is no refund.";
 const REFUND_DUE = "€447";
 const PORTAL_PATHS = ["/client", "/client/settings", "/client/profile"];
+const START_NOW_PROBLEM =
+  "Your program couldn't be started just now. Nothing has changed, so please try again.";
+const SUBMITTED_LABEL = "Sent to your coach";
+const SUBMITTED_LINE = "Eli has your answers and will start on them soon.";
 const NOTHING_TO_CANCEL = {
   error: "nothing-to-cancel",
   message: "This coaching has already ended, so there is nothing to cancel.",
@@ -245,6 +249,8 @@ test("a client on the waiting path past her 14 days cancels without a refund", a
 
   // assert
   await clientDashboard.expectNoStartNowOffer();
+  await clientDashboard.expectNoWorkStartLine();
+  await clientDashboard.expectStatusCard(SUBMITTED_LABEL, SUBMITTED_LINE);
 
   // act
   await clientSettings.open();
@@ -551,12 +557,14 @@ test("a client's subscription routes refuse a signed-out visitor, a coach and an
   const anonymous = {
     cancel: await portalRequests.cancelSubscription(),
     startNow: await portalRequests.startProgramNow(),
+    paymentMethod: await portalRequests.openPaymentMethod(),
     reads: await portalRequests.readSubscriptionRoutes(),
   };
 
   // assert
   expect(anonymous.cancel.status).toBe(401);
   expect(anonymous.startNow.status).toBe(401);
+  expect(anonymous.paymentMethod).toEqual({ status: 401, location: null });
   expect(anonymous.reads).toEqual([405, 405, 405]);
 
   // act
@@ -603,4 +611,84 @@ test("a client account without a subscription has nothing to cancel, start or ma
   expect(answers.cancel).toEqual({ status: 404, body: { error: "not-found" } });
   expect(answers.startNow.status).toBe(404);
   expect(answers.paymentMethod.status).toBe(404);
+});
+
+test("a cancellation refused while her dialog is open is worded in the dialog and clears when she keeps her coaching or presses Escape", async ({
+  clientSettings,
+  page,
+  portalRequests,
+  provisionSubscribedClient,
+  signIn,
+}) => {
+  test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+  // arrange
+  await provisionSubscribedClient({ start: "immediate", daysSincePayment: 3 });
+  await page.goto("/store");
+  await signIn();
+  await clientSettings.open();
+  const kept = await clientSettings.cancel("Cancel subscription");
+  expect((await portalRequests.cancelSubscription()).status).toBe(200);
+
+  // act
+  await kept.confirm();
+
+  // assert
+  await kept.expectProblem(NOTHING_TO_CANCEL.message);
+
+  // act
+  await kept.dismiss();
+  const reopened = await clientSettings.cancel("Cancel subscription");
+
+  // assert
+  await reopened.expectNoProblem();
+
+  // act
+  await reopened.confirm();
+  await reopened.expectProblem(NOTHING_TO_CANCEL.message);
+  await reopened.closeWithEscape();
+  const escaped = await clientSettings.cancel("Cancel subscription");
+
+  // assert
+  await escaped.expectNoProblem();
+});
+
+test("a start-now refused while her dialog is open is worded in the dialog and clears when she keeps her 14 days or presses Escape", async ({
+  clientDashboard,
+  page,
+  portalRequests,
+  provisionSubscribedClient,
+  signIn,
+}) => {
+  test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+  // arrange
+  await provisionSubscribedClient({ start: "waiting", daysSincePayment: 3 });
+  await page.goto("/store");
+  await signIn();
+  await clientDashboard.open();
+  const kept = await clientDashboard.openStartNow();
+  expect((await portalRequests.startProgramNow()).status).toBe(200);
+
+  // act
+  await kept.confirm();
+
+  // assert
+  await kept.expectProblem(START_NOW_PROBLEM);
+
+  // act
+  await kept.dismiss();
+  const reopened = await clientDashboard.openStartNow();
+
+  // assert
+  await reopened.expectNoProblem();
+
+  // act
+  await reopened.confirm();
+  await reopened.expectProblem(START_NOW_PROBLEM);
+  await reopened.closeWithEscape();
+  const escaped = await clientDashboard.openStartNow();
+
+  // assert
+  await escaped.expectNoProblem();
 });

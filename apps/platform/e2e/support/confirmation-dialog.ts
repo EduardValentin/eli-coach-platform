@@ -76,6 +76,17 @@ export class ConfirmationDialog {
     }
   }
 
+  async expectProblem(problem: string): Promise<void> {
+    await expect(
+      this.dialog.getByRole("alert").filter({ hasText: problem }),
+    ).toBeVisible();
+  }
+
+  async expectNoProblem(): Promise<void> {
+    await expect(this.dialog).toBeVisible();
+    await expect(this.dialog.getByRole("alert")).toHaveCount(0);
+  }
+
   async expectClosed(): Promise<void> {
     await expect(this.dialog).toBeHidden();
   }

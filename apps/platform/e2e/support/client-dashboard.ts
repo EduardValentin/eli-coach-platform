@@ -27,6 +27,7 @@ const START_SOONER_NOTE =
   "Want Eli to start sooner? You can give up your 14-day right of withdrawal and let her begin now.";
 const PAYMENT_PROBLEM_LINE =
   "Your last payment didn't go through. Update your card to keep your coaching going.";
+const WORK_START_LINE_PATTERN = /starts working on your program on/;
 const START_NOW_LABELS = {
   title: "Let Eli start now?",
   confirm: "Yes, start now",
@@ -119,6 +120,13 @@ export class ClientDashboard {
       this.onboardingStatus.getByText(label, { exact: true }),
     ).toBeVisible();
     await expect(this.onboardingStatus.getByText(line)).toBeVisible();
+  }
+
+  async expectNoWorkStartLine(): Promise<void> {
+    await expect(this.onboardingStatus).toBeVisible();
+    await expect(
+      this.onboardingStatus.getByText(WORK_START_LINE_PATTERN),
+    ).toHaveCount(0);
   }
 
   async expectProgramCard(label: string, line: string): Promise<void> {
