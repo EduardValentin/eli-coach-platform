@@ -1,21 +1,37 @@
 import { useEffect, useEffectEvent, useState } from "react";
 import { useFetcher } from "react-router";
 
+export type DialogAfterAnswer =
+  | { dialog: "close" }
+  | { dialog: "unchanged" }
+  | { dialog: "problem"; message: string };
+
 type ConfirmedFetcherDialogOptions = {
   action: string;
   body?: Record<string, string>;
-  onSettled: (answer: unknown) => void;
+  readAnswer: (answer: unknown) => DialogAfterAnswer;
 };
 
 export function useConfirmedFetcherDialog({
   action,
   body = {},
-  onSettled,
+  readAnswer,
 }: ConfirmedFetcherDialogOptions) {
   const [open, setOpen] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
   const { data, state, submit } = useFetcher<unknown>();
 
-  const settle = useEffectEvent(onSettled);
+  const settle = useEffectEvent((answer: unknown) => {
+    const after = readAnswer(answer);
+
+    if (after.dialog === "problem") {
+      setProblem(after.message);
+    }
+
+    if (after.dialog === "close") {
+      setOpen(false);
+    }
+  });
 
   useEffect(() => {
     if (data !== undefined) {
@@ -23,7 +39,16 @@ export function useConfirmedFetcherDialog({
     }
   }, [data]);
 
-  const send = () => {
+  const onOpenChange = (next: boolean) => {
+    setOpen(next);
+
+    if (!next) {
+      setProblem(null);
+    }
+  };
+
+  const confirm = () => {
+    setProblem(null);
     void submit(body, {
       action,
       encType: "application/json",
@@ -32,11 +57,11 @@ export function useConfirmedFetcherDialog({
   };
 
   return {
-    close: () => setOpen(false),
+    confirm,
+    onOpenChange,
     open,
     openDialog: () => setOpen(true),
     pending: state !== "idle",
-    send,
-    setOpen,
+    problem,
   };
 }

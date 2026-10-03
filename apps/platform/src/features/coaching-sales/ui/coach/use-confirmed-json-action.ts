@@ -1,7 +1,10 @@
 import { toast } from "@eli-coach-platform/ui/toast";
 import type { z } from "zod";
 
-import { useConfirmedFetcherDialog } from "~/features/coaching-sales/ui/shared/use-confirmed-fetcher-dialog";
+import {
+  useConfirmedFetcherDialog,
+  type DialogAfterAnswer,
+} from "~/features/coaching-sales/ui/shared/use-confirmed-fetcher-dialog";
 
 type ConfirmedJsonAction<Sent> = {
   action: string;
@@ -24,27 +27,28 @@ export function useConfirmedJsonAction<Sent>(
   const confirmed = useConfirmedFetcherDialog({
     action: options.action,
     body: options.body,
-    onSettled: (response) => {
-      const sent = options.sentSchema.safeParse(response);
+    readAnswer: (answer): DialogAfterAnswer => {
+      const sent = options.sentSchema.safeParse(answer);
 
       if (sent.success) {
         toast.success(options.sentMessage(sent.data));
-        return;
+        return { dialog: "unchanged" };
       }
 
-      toast.error(options.failureMessage(response));
+      toast.error(options.failureMessage(answer));
       options.onFailure?.();
+      return { dialog: "unchanged" };
     },
   });
 
   const confirm = () => {
-    confirmed.close();
-    confirmed.send();
+    confirmed.onOpenChange(false);
+    confirmed.confirm();
   };
 
   const confirmDialog: ConfirmDialogWiring = {
     onConfirm: confirm,
-    onOpenChange: confirmed.setOpen,
+    onOpenChange: confirmed.onOpenChange,
     open: confirmed.open,
   };
 

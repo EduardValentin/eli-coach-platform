@@ -3,14 +3,17 @@ import {
   useCalendarDayTimeZone,
 } from "@eli-coach-platform/ui/lib";
 import { toast } from "@eli-coach-platform/ui/toast";
-import { useRef, useState, type RefObject } from "react";
+import { useRef, type RefObject } from "react";
 
 import {
   subscriptionCancelledSchema,
   subscriptionRefusalSchema,
 } from "~/features/coaching-sales/contracts/client-subscription";
 import { COACHING_SALES_API_PATHS } from "~/features/coaching-sales/contracts/paths";
-import { useConfirmedFetcherDialog } from "~/features/coaching-sales/ui/shared/use-confirmed-fetcher-dialog";
+import {
+  useConfirmedFetcherDialog,
+  type DialogAfterAnswer,
+} from "~/features/coaching-sales/ui/shared/use-confirmed-fetcher-dialog";
 
 import {
   CANCEL_UNAVAILABLE_MESSAGE,
@@ -26,8 +29,8 @@ export type CancelSubscriptionDialogWiring = {
   returnFocusTo: RefObject<HTMLElement | null>;
 };
 
-function refusalMessage(response: unknown): string {
-  const refusal = subscriptionRefusalSchema.safeParse(response);
+function refusalMessage(answer: unknown): string {
+  const refusal = subscriptionRefusalSchema.safeParse(answer);
 
   return refusal.data?.message ?? CANCEL_UNAVAILABLE_MESSAGE;
 }
@@ -36,48 +39,39 @@ export function useCancelSubscription(
   subscriptionHeading: RefObject<HTMLElement | null>,
 ) {
   const timeZone = useCalendarDayTimeZone();
-  const [problem, setProblem] = useState<string | null>(null);
   const returnFocusTo = useRef<HTMLElement | null>(null);
   const confirmed = useConfirmedFetcherDialog({
     action: COACHING_SALES_API_PATHS.subscriptionCancellation,
-    onSettled: (response) => {
-      const cancelled = subscriptionCancelledSchema.safeParse(response);
+    readAnswer: (answer): DialogAfterAnswer => {
+      const cancelled = subscriptionCancelledSchema.safeParse(answer);
 
       if (!cancelled.success) {
         returnFocusTo.current = null;
-        setProblem(refusalMessage(response));
-        return;
+        return { dialog: "problem", message: refusalMessage(answer) };
       }
 
-      if (cancelled.data.rule === "no-refund") {
-        toast.success(
-          cancelledToast(formatDayMonth(cancelled.data.accessEndsAt, timeZone)),
-        );
-        confirmed.close();
+      if (cancelled.data.rule === "full-refund") {
+        return { dialog: "unchanged" };
       }
+
+      toast.success(
+        cancelledToast(formatDayMonth(cancelled.data.accessEndsAt, timeZone)),
+      );
+      return { dialog: "close" };
     },
   });
 
-  const changeOpen = (next: boolean) => {
-    confirmed.setOpen(next);
-
-    if (!next) {
-      setProblem(null);
-    }
-  };
-
   const confirm = () => {
-    setProblem(null);
     returnFocusTo.current = subscriptionHeading.current;
-    confirmed.send();
+    confirmed.confirm();
   };
 
   const dialog: CancelSubscriptionDialogWiring = {
     cancelling: confirmed.pending,
     onConfirm: confirm,
-    onOpenChange: changeOpen,
+    onOpenChange: confirmed.onOpenChange,
     open: confirmed.open,
-    problem,
+    problem: confirmed.problem,
     returnFocusTo,
   };
 
