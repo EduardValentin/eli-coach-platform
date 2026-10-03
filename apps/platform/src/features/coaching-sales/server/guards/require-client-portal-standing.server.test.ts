@@ -19,8 +19,9 @@ import { clientJourneyContext } from "./client-journey-context.server";
 import { coachingSalesContext } from "./coaching-sales-context.server";
 import {
   readClientPortalStanding,
-  requireClientJourneyStep,
-} from "./require-client-journey-step.server";
+  requireClientPortalStanding,
+  requireOpenClientPortal,
+} from "./require-client-portal-standing.server";
 
 const BASE_PATH = "/app";
 const CLIENT: AccountSnapshot = {
@@ -29,7 +30,7 @@ const CLIENT: AccountSnapshot = {
   role: "CLIENT",
 };
 
-describe("requireClientJourneyStep", () => {
+describe("requireClientPortalStanding", () => {
   it.each(["/app/client", "/app/client/plan"])(
     "holds a client who has not seen her welcome on the welcome screen when she opens %s",
     async (pathname) => {
@@ -40,7 +41,9 @@ describe("requireClientJourneyStep", () => {
       });
 
       // act
-      const thrown = await captureThrown(() => requireClientJourneyStep(args));
+      const thrown = await captureThrown(() =>
+        requireClientPortalStanding(args),
+      );
 
       // assert
       expect(thrown).toBeInstanceOf(Response);
@@ -61,7 +64,9 @@ describe("requireClientJourneyStep", () => {
       });
 
       // act
-      const thrown = await captureThrown(() => requireClientJourneyStep(args));
+      const thrown = await captureThrown(() =>
+        requireClientPortalStanding(args),
+      );
 
       // assert
       expect(thrown).toBeUndefined();
@@ -78,7 +83,9 @@ describe("requireClientJourneyStep", () => {
       });
 
       // act
-      const thrown = await captureThrown(() => requireClientJourneyStep(args));
+      const thrown = await captureThrown(() =>
+        requireClientPortalStanding(args),
+      );
 
       // assert
       expect((thrown as Response).status).toBe(302);
@@ -96,7 +103,7 @@ describe("requireClientJourneyStep", () => {
     });
 
     // act
-    const thrown = await captureThrown(() => requireClientJourneyStep(args));
+    const thrown = await captureThrown(() => requireClientPortalStanding(args));
 
     // assert
     expect(thrown).toBeUndefined();
@@ -115,7 +122,9 @@ describe("requireClientJourneyStep", () => {
       });
 
       // act
-      const thrown = await captureThrown(() => requireClientJourneyStep(args));
+      const thrown = await captureThrown(() =>
+        requireClientPortalStanding(args),
+      );
 
       // assert
       expect((thrown as Response).status).toBe(302);
@@ -136,7 +145,9 @@ describe("requireClientJourneyStep", () => {
       });
 
       // act
-      const thrown = await captureThrown(() => requireClientJourneyStep(args));
+      const thrown = await captureThrown(() =>
+        requireClientPortalStanding(args),
+      );
 
       // assert
       expect(thrown).toBeUndefined();
@@ -157,7 +168,7 @@ describe("requireClientJourneyStep", () => {
     });
 
     // act
-    const thrown = await captureThrown(() => requireClientJourneyStep(args));
+    const thrown = await captureThrown(() => requireClientPortalStanding(args));
 
     // assert
     expect(thrown).toBeUndefined();
@@ -179,7 +190,9 @@ describe("requireClientJourneyStep", () => {
       });
 
       // act
-      const thrown = await captureThrown(() => requireClientJourneyStep(args));
+      const thrown = await captureThrown(() =>
+        requireClientPortalStanding(args),
+      );
 
       // assert
       expect((thrown as Response).status).toBe(302);
@@ -195,7 +208,7 @@ describe("requireClientJourneyStep", () => {
     });
 
     // act
-    const thrown = await captureThrown(() => requireClientJourneyStep(args));
+    const thrown = await captureThrown(() => requireClientPortalStanding(args));
 
     // assert
     expect(thrown).toBeUndefined();
@@ -210,7 +223,7 @@ describe("requireClientJourneyStep", () => {
     });
 
     // act
-    const thrown = await captureThrown(() => requireClientJourneyStep(args));
+    const thrown = await captureThrown(() => requireClientPortalStanding(args));
 
     // assert
     expect((thrown as Response).status).toBe(302);
@@ -230,7 +243,9 @@ describe("requireClientJourneyStep", () => {
       });
 
       // act
-      const thrown = await captureThrown(() => requireClientJourneyStep(args));
+      const thrown = await captureThrown(() =>
+        requireClientPortalStanding(args),
+      );
 
       // assert
       expect((thrown as Response).status).toBe(302);
@@ -249,7 +264,7 @@ describe("requireClientJourneyStep", () => {
     });
 
     // act
-    const thrown = await captureThrown(() => requireClientJourneyStep(args));
+    const thrown = await captureThrown(() => requireClientPortalStanding(args));
 
     // assert
     expect(thrown).toBeUndefined();
@@ -263,7 +278,7 @@ describe("requireClientJourneyStep", () => {
     });
 
     // act
-    const thrown = await captureThrown(() => requireClientJourneyStep(args));
+    const thrown = await captureThrown(() => requireClientPortalStanding(args));
 
     // assert
     expect((thrown as Response).headers.get("Location")).toBe("/app/client");
@@ -274,7 +289,7 @@ describe("requireClientJourneyStep", () => {
     const args = journeyArgs({ journey: null, pathname: "/app/client" });
 
     // act
-    const thrown = await captureThrown(() => requireClientJourneyStep(args));
+    const thrown = await captureThrown(() => requireClientPortalStanding(args));
 
     // assert
     expect(thrown).toBeUndefined();
@@ -290,7 +305,7 @@ describe("requireClientJourneyStep", () => {
       });
 
       // act
-      await captureThrown(() => requireClientJourneyStep(args));
+      await captureThrown(() => requireClientPortalStanding(args));
 
       // assert
       expect(args.context.get(clientJourneyContext)).toEqual({
@@ -313,7 +328,7 @@ describe("requireClientJourneyStep", () => {
     const args = journeyArgs({ journey: null, pathname: "/app/client" });
 
     // act
-    await requireClientJourneyStep(args);
+    await requireClientPortalStanding(args);
 
     // assert
     expect(args.context.get(clientJourneyContext)).toBeNull();
@@ -324,7 +339,7 @@ describe("requireClientJourneyStep", () => {
     const args = journeyArgs({ journey: null, pathname: "/app/client" });
 
     // act
-    await requireClientJourneyStep(args);
+    await requireClientPortalStanding(args);
 
     // assert
     expect(readJourneyOf(args)).toHaveBeenCalledWith("user_ana");
@@ -402,6 +417,67 @@ describe("readClientPortalStanding", () => {
       expect(readJourneyOf(args)).not.toHaveBeenCalled();
     },
   );
+});
+
+describe("requireOpenClientPortal", () => {
+  it("refuses a write from a client whose coaching has ended", async () => {
+    // arrange
+    const args = journeyArgs({
+      access: "ended",
+      journey: journeyOf(SUBMITTED),
+      pathname: "/app/api/client-profile/measurements",
+    });
+
+    // act
+    const thrown = await captureThrown(() => requireOpenClientPortal(args));
+
+    // assert
+    expect((thrown as Response).status).toBe(409);
+    expect(await (thrown as Response).json()).toEqual({ error: "ended" });
+  });
+
+  it("lets a write through from a client whose portal is open", async () => {
+    // arrange
+    const args = journeyArgs({
+      journey: journeyOf(SUBMITTED),
+      pathname: "/app/api/client-profile/measurements",
+    });
+
+    // act
+    const thrown = await captureThrown(() => requireOpenClientPortal(args));
+
+    // assert
+    expect(thrown).toBeUndefined();
+  });
+
+  it.each<[string, ResolvedSession]>([
+    ["an anonymous visitor", { kind: "anonymous" }],
+    [
+      "the coach",
+      {
+        account: {
+          authSubjectId: "user_coach",
+          id: "acct_coach",
+          role: "COACH",
+        },
+        kind: "authenticated",
+      },
+    ],
+  ])("leaves %s to the route's own account check", async (_label, session) => {
+    // arrange
+    const args = journeyArgs({
+      access: "ended",
+      journey: journeyOf(SUBMITTED),
+      pathname: "/app/api/client-profile/measurements",
+      session,
+    });
+
+    // act
+    const thrown = await captureThrown(() => requireOpenClientPortal(args));
+
+    // assert
+    expect(thrown).toBeUndefined();
+  });
 });
 
 function journeyOf(

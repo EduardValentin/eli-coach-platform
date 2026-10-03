@@ -24,11 +24,11 @@ import {
   heroHeadingStyle,
   heroSectionStyle,
   heroSubheadStyle,
-  invitationReassuranceSectionStyle,
-  nextStepsCardStyle,
-  nextStepsEyebrowStyle,
-  nextStepsOuterStyle,
-  nextStepTextStyle,
+  closingNoteSectionStyle,
+  detailsCardStyle,
+  detailsLabelStyle,
+  detailsSectionStyle,
+  detailsValueStyle,
   outerContainerStyle,
   primaryButtonStyle,
   reassuranceTextStyle,
@@ -96,14 +96,14 @@ export function RefundDueEmailTemplate({
               </EmailText>
             </EmailSection>
 
-            <EmailSection style={nextStepsOuterStyle}>
-              <div style={nextStepsCardStyle}>
+            <EmailSection style={detailsSectionStyle}>
+              <div style={detailsCardStyle}>
                 {details.map((detail) => (
                   <div key={detail.label}>
-                    <EmailText style={nextStepsEyebrowStyle}>
+                    <EmailText style={detailsLabelStyle}>
                       {detail.label.toUpperCase()}
                     </EmailText>
-                    <EmailText style={nextStepTextStyle}>
+                    <EmailText style={detailsValueStyle}>
                       {detail.href ? (
                         <EmailLink href={detail.href}>{detail.value}</EmailLink>
                       ) : (
@@ -123,7 +123,7 @@ export function RefundDueEmailTemplate({
 
             <EmailDivider style={dividerStyle} />
 
-            <EmailSection style={invitationReassuranceSectionStyle}>
+            <EmailSection style={closingNoteSectionStyle}>
               <EmailText style={reassuranceTextStyle}>
                 {REFUND_DUE_EMAIL_COPY.howTo}
               </EmailText>

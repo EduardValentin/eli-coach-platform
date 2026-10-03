@@ -14,6 +14,8 @@ import {
 
 const FINISH_ONBOARDING_LABEL = "Finish your onboarding";
 
+const TRAILING_SLASHES = /\/+$/;
+
 const ONBOARDING_JOURNEY_PATHS: readonly string[] = [
   CLIENT_WELCOME_PATH,
   CLIENT_ONBOARDING_PATH,
@@ -65,7 +67,11 @@ export function clientJourneyRedirect(
 ): string | null {
   const gate = gateOf(standing);
 
-  return gate.admits(requestedPath) ? null : gate.destination;
+  return gate.admits(normalizedPathOf(requestedPath)) ? null : gate.destination;
+}
+
+function normalizedPathOf(requestedPath: string): string {
+  return requestedPath.toLowerCase().replace(TRAILING_SLASHES, "") || "/";
 }
 
 export function clientJourneyPortalLink(

@@ -319,3 +319,15 @@ export const footerCreditStyle: CSSProperties = {
   letterSpacing: "0.08em",
   margin: "12px 0 0",
 };
+
+export const detailsSectionStyle: CSSProperties = { ...nextStepsOuterStyle };
+
+export const detailsCardStyle: CSSProperties = { ...nextStepsCardStyle };
+
+export const detailsLabelStyle: CSSProperties = { ...nextStepsEyebrowStyle };
+
+export const detailsValueStyle: CSSProperties = { ...nextStepTextStyle };
+
+export const closingNoteSectionStyle: CSSProperties = {
+  ...invitationReassuranceSectionStyle,
+};

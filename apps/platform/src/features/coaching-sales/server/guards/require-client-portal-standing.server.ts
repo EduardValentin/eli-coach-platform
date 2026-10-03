@@ -20,6 +20,9 @@ type JourneyRequest = {
   request: Request;
 };
 
+const ENDED_REFUSAL = { error: "ended" };
+const CONFLICT = 409;
+
 type SignedInStanding = {
   journey: ClientJourney;
   standing: ClientPortalStanding;
@@ -33,7 +36,7 @@ export async function readClientPortalStanding(
   return signedIn?.standing ?? null;
 }
 
-export async function requireClientJourneyStep(
+export async function requireClientPortalStanding(
   args: JourneyRequest,
 ): Promise<void> {
   const signedIn = await readSignedInClientStanding(args);
@@ -95,4 +98,14 @@ async function readSignedInClientStanding(
     journey: standing.journey,
     standing: { step: standing.journey.step(), access: standing.access },
   };
+}
+
+export async function requireOpenClientPortal(
+  args: JourneyRequest,
+): Promise<void> {
+  const standing = await readClientPortalStanding(args);
+
+  if (standing?.access === "ended") {
+    throw Response.json(ENDED_REFUSAL, { status: CONFLICT });
+  }
 }

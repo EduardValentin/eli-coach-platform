@@ -58,6 +58,9 @@ describe("clientJourneyRedirect", () => {
     ["submitted", "/client/ended", "/client"],
     ["needs-details", "/client/ended", "/client"],
     ["approved", "/client/ended", "/client"],
+    ["approved", "/client/ended/", "/client"],
+    ["approved", "/Client/Ended", "/client"],
+    ["welcome", "/CLIENT/ENDED/", "/client/welcome"],
   ] as const)(
     "sends a client at the %s step who opens %s to %s",
     (step, requestedPath, expectedPath) => {
@@ -72,6 +75,37 @@ describe("clientJourneyRedirect", () => {
 
       // assert
       expect(redirectTo).toBe(expectedPath);
+    },
+  );
+});
+
+describe("clientJourneyRedirect over a path written differently", () => {
+  it.each([
+    ["approved", "/client/"],
+    ["onboarding", "/client/onboarding/"],
+    ["needs-details", "/Client/Onboarding"],
+  ] as const)("lets a client at the %s step open %s", (step, requestedPath) => {
+    // act
+    const redirectTo = clientJourneyRedirect(
+      { step, access: "open" },
+      requestedPath,
+    );
+
+    // assert
+    expect(redirectTo).toBeNull();
+  });
+
+  it.each(["/client/ended/", "/Client/Ended"])(
+    "lets a client whose coaching has ended open %s",
+    (requestedPath) => {
+      // act
+      const redirectTo = clientJourneyRedirect(
+        { step: "approved", access: "ended" },
+        requestedPath,
+      );
+
+      // assert
+      expect(redirectTo).toBeNull();
     },
   );
 });

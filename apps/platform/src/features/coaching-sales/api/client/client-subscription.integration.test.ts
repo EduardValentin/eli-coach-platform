@@ -386,6 +386,58 @@ describe.sequential("client subscription integration", () => {
     });
   });
 
+  describe("writing once her coaching has ended", () => {
+    it.each([
+      ["save her onboarding draft", "/api/client-onboarding/draft", jsonPut()],
+      [
+        "submit her onboarding",
+        "/api/client-onboarding/submission",
+        formWrite(),
+      ],
+      [
+        "answer her coach's questions",
+        "/api/client-onboarding/detail-answers",
+        formWrite(),
+      ],
+      [
+        "record her measurements and photos",
+        "/api/client-profile/measurements",
+        formWrite(),
+      ],
+      [
+        "save her unit preference",
+        "/api/client-profile/unit-preference",
+        jsonPut(),
+      ],
+    ])("refuses to %s", async (_write, target, init) => {
+      // arrange
+      await onboarding.admit(ANA, ANA_SESSION, WAITING_PURCHASE);
+      await rig.holdClock(DAY_13);
+      await cancel(ANA_SESSION);
+
+      // act
+      const response = await rig.requestAs(ANA_SESSION, target, init());
+
+      // assert
+      expect(response.status).toBe(409);
+      expect(await response.json()).toEqual({ error: "ended" });
+    });
+
+    it("sends her to the ended page when she asks to manage her payment method", async () => {
+      // arrange
+      await onboarding.admit(ANA, ANA_SESSION, WAITING_PURCHASE);
+      await rig.holdClock(DAY_13);
+      await cancel(ANA_SESSION);
+
+      // act
+      const response = await openPaymentMethod(ANA_SESSION);
+
+      // assert
+      expect(response.status).toBe(303);
+      expect(response.headers.get("location")).toBe(suite.path(ENDED_PAGE));
+    });
+  });
+
   describe("starting now", () => {
     it("turns her waiting path into an immediate start, after which a cancellation refunds nothing", async () => {
       // arrange
@@ -584,6 +636,18 @@ function openPaymentMethod(session: AccountSession): Promise<Response> {
     method: "POST",
     redirect: "manual",
   });
+}
+
+function jsonPut(): () => RequestInit {
+  return () => ({
+    method: "PUT",
+    headers: { "content-type": "application/json" },
+    body: "{}",
+  });
+}
+
+function formWrite(): () => RequestInit {
+  return () => ({ method: "POST", body: new FormData() });
 }
 
 async function refundDueEmails() {

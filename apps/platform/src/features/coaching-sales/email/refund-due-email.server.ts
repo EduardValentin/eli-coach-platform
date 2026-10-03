@@ -2,10 +2,8 @@ import type { RefundDueNotice } from "@eli-coach-platform/domain/coaching-subscr
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import {
-  formatMoneyCents,
-  REFUND_REASON_LABELS,
-} from "~/features/coaching-sales/contracts/subscription-refunds";
+import { formatMoney } from "~/features/coaching-sales/contracts/money";
+import { REFUND_REASON_LABELS } from "~/features/coaching-sales/contracts/subscription-refunds";
 
 import {
   REFUND_DUE_EMAIL_COPY,
@@ -25,6 +23,8 @@ type RefundDueEmailOptions = {
   clientPageUrl: string;
   currentYear: number;
 };
+
+const SUBJECT_UNSAFE_RUNS = /[\p{Cc}\s]+/gu;
 
 const DAY_MONTH = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",
@@ -53,15 +53,17 @@ function createViewModel({
 }: RefundDueEmailOptions): RefundDueEmailViewModel {
   const clientName = `${notice.client.firstName} ${notice.client.lastName}`;
   const currency = notice.paid.currency;
-  const refundDue = formatMoneyCents(notice.refund.amountCents, currency);
+  const refundDue = formatMoney(notice.refund.amountCents, currency);
   const refundBy = notice.refund.dueBy
     ? DAY_MONTH.format(notice.refund.dueBy)
     : null;
 
+  const subjectName = clientName.replace(SUBJECT_UNSAFE_RUNS, " ").trim();
+
   return {
     subject: refundBy
-      ? `${clientName} cancelled — refund due ${refundDue} by ${refundBy}`
-      : `${clientName} cancelled — refund due ${refundDue}`,
+      ? `${subjectName} cancelled — refund due ${refundDue} by ${refundBy}`
+      : `${subjectName} cancelled — refund due ${refundDue}`,
     details: detailsOf({ notice, clientName, refundDue, refundBy }),
     clientPageUrl,
     currentYear,
@@ -75,7 +77,7 @@ function detailsOf(reading: {
   refundBy: string | null;
 }): RefundDueEmailDetail[] {
   const { notice } = reading;
-  const paid = formatMoneyCents(notice.paid.amountCents, notice.paid.currency);
+  const paid = formatMoney(notice.paid.amountCents, notice.paid.currency);
 
   return [
     { label: "Who", value: reading.clientName },
