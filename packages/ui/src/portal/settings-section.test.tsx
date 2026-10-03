@@ -3,6 +3,7 @@
 import "@testing-library/jest-dom/vitest";
 
 import { cleanup, render, screen } from "@testing-library/react";
+import { createRef } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { SettingsRow, SettingsRows, SettingsSection } from "./settings-section";
@@ -72,7 +73,81 @@ describe("SettingsSection", () => {
   });
 });
 
+describe("SettingsSection heading focus", () => {
+  it("lets a script move focus to the heading it is handed a ref for", () => {
+    // arrange
+    const heading = createRef<HTMLHeadingElement>();
+    render(
+      <SettingsSection
+        data-parity-root="SubscriptionSection"
+        headingId="subscription-heading"
+        headingRef={heading}
+        title="Subscription"
+      >
+        <p>Rows</p>
+      </SettingsSection>,
+    );
+
+    // act
+    heading.current?.focus();
+
+    // assert
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Subscription" }),
+    ).toHaveFocus();
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Subscription" }),
+    ).toHaveAttribute("tabindex", "-1");
+    expect(
+      screen.getByRole("region", { name: "Subscription" }),
+    ).toHaveAttribute("data-parity-root", "SubscriptionSection");
+  });
+
+  it("keeps the heading out of the tab order without a ref", () => {
+    // arrange
+    // act
+    render(
+      <SettingsSection headingId="calls-heading" title="Assessment calls">
+        <p>Rows</p>
+      </SettingsSection>,
+    );
+
+    // assert
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Assessment calls" }),
+    ).not.toHaveAttribute("tabindex");
+  });
+});
+
 describe("SettingsRow", () => {
+  it("states a problem under the title in the description's place", () => {
+    // arrange
+    // act
+    render(
+      <SettingsRow
+        labelId="payment-label"
+        problem={<p id="payment-problem">Your last payment failed.</p>}
+        title="Payment method"
+      >
+        <button aria-describedby="payment-label payment-problem" type="button">
+          Manage
+        </button>
+      </SettingsRow>,
+    );
+
+    // assert
+    expect(
+      screen.getByRole("button", { name: "Manage" }),
+    ).toHaveAccessibleDescription("Payment method Your last payment failed.");
+    expect(
+      screen.getByText("Your last payment failed.").parentElement,
+    ).toHaveClass("mt-1");
+    expect(
+      screen.getByText("Your last payment failed.").parentElement
+        ?.previousElementSibling,
+    ).toHaveTextContent("Payment method");
+  });
+
   it("names a fieldset row by its title", () => {
     // arrange
     // act

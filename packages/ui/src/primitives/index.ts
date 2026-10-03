@@ -18,6 +18,7 @@ export { FieldHint } from "./field-hint";
 export { FieldLayout, type FieldControlAttributes } from "./field-layout";
 export { IconHint } from "./icon-hint";
 export { IconButton } from "./icon-button";
+export { InlineProblem } from "./inline-problem";
 export { Input } from "./input";
 export { FieldCaption, Label, LabelSuffix, Legend } from "./label";
 export { Link, linkVariants } from "./link";

@@ -23,6 +23,7 @@ type DialogContentProps = Omit<
   footer: React.ReactNode;
   footerAlignment?: DialogFooterAlignment;
   footerParity?: string;
+  returnFocusTo?: React.RefObject<HTMLElement | null>;
   size?: DialogSize;
   title: React.ReactNode;
 };
