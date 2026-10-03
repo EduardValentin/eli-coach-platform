@@ -215,16 +215,11 @@ function redecide(
     return retried;
   }
 
-  const refund = decision.subscription.refund;
-
-  if (!refund) {
+  if (decision.rule !== "full-refund") {
     return null;
   }
 
-  const recording = reread.fresh.recordWithdrawalRefund({
-    refund,
-    cancelledAt: reread.cancelledAt,
-  });
+  const recording = reread.fresh.recordWithdrawalRefund(reread.cancelledAt);
 
   return recording.outcome === "recorded"
     ? { ...decision, subscription: recording.subscription }

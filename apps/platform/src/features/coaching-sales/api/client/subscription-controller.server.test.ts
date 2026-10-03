@@ -55,7 +55,6 @@ const SUBSCRIPTION: CoachingSubscriptionSnapshot = {
   status: "not-started",
   cancelledAt: null,
   accessEndsAt: null,
-  programStartedOn: null,
   paymentProblemSince: null,
   refund: null,
 };
@@ -96,7 +95,6 @@ describe("SubscriptionController#loadSettings", () => {
         status: "not-started",
         cancelledAt: null,
         accessEndsAt: null,
-        programStartedOn: null,
         paymentProblem: false,
       },
       cancellation: {
@@ -108,6 +106,29 @@ describe("SubscriptionController#loadSettings", () => {
       startNowUntil: "2026-10-16T10:00:00.000Z",
     });
     expect(readClientSubscription).toHaveBeenCalledWith("user_ana");
+  });
+
+  it("offers the cancellation without a refund with its dates and no refund amount", async () => {
+    // arrange
+    const { controller } = createController({
+      reading: {
+        ...READING,
+        subscription: { ...SUBSCRIPTION, startChoice: "immediate" },
+        cancellationRule: "no-refund",
+        refundOnCancellationCents: 0,
+        startNowUntil: null,
+      },
+    });
+
+    // act
+    const settings = await controller.loadSettings(clientArgs());
+
+    // assert
+    expect(settings.cancellation).toEqual({
+      rule: "no-refund",
+      withdrawalDeadline: "2026-10-16T10:00:00.000Z",
+      paidThrough: "2027-01-02T10:00:00.000Z",
+    });
   });
 
   it("offers no cancellation once she has cancelled, with her access end and a payment problem", async () => {

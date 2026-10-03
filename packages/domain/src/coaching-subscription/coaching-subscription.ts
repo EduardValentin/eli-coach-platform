@@ -32,8 +32,7 @@ export type CheckoutCompletion = {
   startChoice: StartChoice;
 };
 
-export type CancellationRule =
-  "full-refund" | "proportional-refund" | "no-refund" | "none";
+export type CancellationRule = "full-refund" | "no-refund" | "none";
 
 export type ProviderInstruction =
   { kind: "end-now" } | { kind: "end-at"; at: Date };
@@ -71,7 +70,6 @@ export type CoachingSubscriptionSnapshot = {
   status: CoachingSubscriptionStatus;
   cancelledAt: Date | null;
   accessEndsAt: Date | null;
-  programStartedOn: Date | null;
   paymentProblemSince: Date | null;
   refund: RefundDueSnapshot | null;
 };
@@ -113,7 +111,6 @@ export class CoachingSubscription {
   readonly status: CoachingSubscriptionStatus;
   readonly cancelledAt: Date | null;
   readonly accessEndsAt: Date | null;
-  readonly programStartedOn: Date | null;
   readonly paymentProblemSince: Date | null;
   readonly refund: RefundDue | null;
 
@@ -133,7 +130,6 @@ export class CoachingSubscription {
     this.status = props.status;
     this.cancelledAt = props.cancelledAt;
     this.accessEndsAt = props.accessEndsAt;
-    this.programStartedOn = props.programStartedOn;
     this.paymentProblemSince = props.paymentProblemSince;
     this.refund = props.refund;
   }
@@ -177,13 +173,12 @@ export class CoachingSubscription {
       return "none";
     }
 
-    if (now.getTime() >= withdrawalDeadline(this.paidAt).getTime()) {
-      return "no-refund";
-    }
+    const withinWithdrawalPeriod =
+      now.getTime() < withdrawalDeadline(this.paidAt).getTime();
 
-    return this.startChoice === "waiting"
+    return this.startChoice === "waiting" && withinWithdrawalPeriod
       ? "full-refund"
-      : "proportional-refund";
+      : "no-refund";
   }
 
   cancel(now: Date): SubscriptionCancellation {
@@ -208,15 +203,6 @@ export class CoachingSubscription {
       };
     }
 
-    const owed = {
-      amountCents: this.refundOnCancellationAt(now),
-      cancelledAt: now,
-    };
-    const refund =
-      rule === "full-refund"
-        ? RefundDue.full(owed)
-        : RefundDue.proportional(owed);
-
     return {
       outcome: "cancelled",
       rule,
@@ -224,21 +210,14 @@ export class CoachingSubscription {
         status: "ended",
         cancelledAt: now,
         accessEndsAt: now,
-        refund,
+        refund: this.withdrawalRefund(now),
       }),
       instruction: { kind: "end-now" },
     };
   }
 
   refundOnCancellationAt(now: Date): number {
-    switch (this.cancellationRule(now)) {
-      case "full-refund":
-        return this.amountCents;
-      case "proportional-refund":
-        return this.proportionalRefundCents(now);
-      default:
-        return 0;
-    }
+    return this.cancellationRule(now) === "full-refund" ? this.amountCents : 0;
   }
 
   paidThrough(): Date {
@@ -284,10 +263,7 @@ export class CoachingSubscription {
     });
   }
 
-  recordWithdrawalRefund(cancellation: {
-    refund: RefundDue;
-    cancelledAt: Date;
-  }): WithdrawalRefundRecording {
+  recordWithdrawalRefund(cancelledAt: Date): WithdrawalRefundRecording {
     if (this.status !== "ended" || this.refund !== null) {
       return { outcome: "refused" };
     }
@@ -295,8 +271,8 @@ export class CoachingSubscription {
     return {
       outcome: "recorded",
       subscription: this.with({
-        cancelledAt: cancellation.cancelledAt,
-        refund: cancellation.refund,
+        cancelledAt,
+        refund: this.withdrawalRefund(cancelledAt),
       }),
     };
   }
@@ -351,24 +327,8 @@ export class CoachingSubscription {
     };
   }
 
-  private proportionalRefundCents(now: Date): number {
-    const startedOn = this.programStartedOn;
-
-    if (!startedOn || now.getTime() <= startedOn.getTime()) {
-      return this.amountCents;
-    }
-
-    const periodDays = Math.round(
-      (addCalendarMonths(startedOn, this.months).getTime() -
-        startedOn.getTime()) /
-        MILLISECONDS_PER_DAY,
-    );
-    const usedDays = Math.ceil(
-      (now.getTime() - startedOn.getTime()) / MILLISECONDS_PER_DAY,
-    );
-    const unusedDays = Math.max(0, periodDays - usedDays);
-
-    return Math.round((this.amountCents * unusedDays) / periodDays);
+  private withdrawalRefund(cancelledAt: Date): RefundDue {
+    return RefundDue.full({ amountCents: this.amountCents, cancelledAt });
   }
 
   private with(
@@ -394,7 +354,6 @@ export class CoachingSubscription {
       status: this.status,
       cancelledAt: this.cancelledAt,
       accessEndsAt: this.accessEndsAt,
-      programStartedOn: this.programStartedOn,
       paymentProblemSince: this.paymentProblemSince,
       refund: this.refund,
     };

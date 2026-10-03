@@ -3,13 +3,14 @@ import { z } from "zod";
 
 import { coachingBundleIdSchema } from "./bundle-cards";
 
-const OFFERED_CANCELLATIONS = [
-  "full-refund",
-  "proportional-refund",
-  "no-refund",
-] as const;
+const OFFERED_CANCELLATIONS = ["full-refund", "no-refund"] as const;
 
 const offeredCancellationSchema = z.enum(OFFERED_CANCELLATIONS);
+
+const cancellationDatesSchema = z.object({
+  withdrawalDeadline: z.iso.datetime(),
+  paidThrough: z.iso.datetime(),
+});
 
 export const NOTHING_TO_CANCEL_MESSAGE =
   "This coaching has already ended, so there is nothing to cancel.";
@@ -29,16 +30,16 @@ export const clientSettingsSchema = z.object({
     status: z.enum(COACHING_SUBSCRIPTION_STATUSES),
     cancelledAt: z.iso.datetime().nullable(),
     accessEndsAt: z.iso.datetime().nullable(),
-    programStartedOn: z.iso.datetime().nullable(),
     paymentProblem: z.boolean(),
   }),
   cancellation: z
-    .object({
-      rule: offeredCancellationSchema,
-      withdrawalDeadline: z.iso.datetime(),
-      paidThrough: z.iso.datetime(),
-      refundCents: z.number().int().nonnegative(),
-    })
+    .discriminatedUnion("rule", [
+      cancellationDatesSchema.extend({
+        rule: z.literal("full-refund"),
+        refundCents: z.number().int().positive(),
+      }),
+      cancellationDatesSchema.extend({ rule: z.literal("no-refund") }),
+    ])
     .nullable(),
   startNowUntil: z.iso.datetime().nullable(),
 });

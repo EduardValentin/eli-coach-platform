@@ -151,7 +151,7 @@ describe.sequential("client subscription integration", () => {
       expect(portal.headers.get("location")).toBe(suite.path(ENDED_PAGE));
     });
 
-    it("refunds the immediate path in full before day 1", async () => {
+    it("schedules the end in Stripe at purchase plus the bundle months on the immediate path within the 14 days, owing nothing and keeping her portal open", async () => {
       // arrange
       await onboarding.admit(ANA, ANA_SESSION, FIRST_PURCHASE);
       await rig.holdClock(DAY_13);
@@ -160,15 +160,31 @@ describe.sequential("client subscription integration", () => {
       const response = await cancel(ANA_SESSION);
 
       // assert
-      expect(await response.json()).toMatchObject({
-        rule: "proportional-refund",
-        refundDue: true,
+      expect(await response.json()).toEqual({
+        status: "cancelled",
+        rule: "no-refund",
+        accessEndsAt: PAID_THROUGH.toISOString(),
+        refundDue: false,
       });
+      const scheduling = (
+        await lifecycle.providerSubscriptionRequests("POST")
+      ).at(-1);
+      expect(scheduling?.get("cancel_at")).toBe(
+        String(toUnixSeconds(PAID_THROUGH)),
+      );
+      expect(scheduling?.get("proration_behavior")).toBe("none");
+      expect(await lifecycle.providerSubscriptionRequests("DELETE")).toEqual(
+        [],
+      );
       expect(await lifecycle.subscriptionRow()).toMatchObject({
-        status: "ended",
-        refundReason: "proportional-refund",
-        refundDueCents: 44700,
+        status: "cancelled",
+        cancelledAt: DAY_13,
+        accessEndsAt: PAID_THROUGH,
+        refundReason: null,
       });
+      expect(await refundDueEmails()).toEqual([]);
+      const portal = await rig.requestAs(ANA_SESSION, CLIENT_PORTAL);
+      expect(portal.headers.get("location")).not.toBe(suite.path(ENDED_PAGE));
     });
 
     it("schedules the end in Stripe at purchase plus the bundle months once the withdrawal right is gone, owing nothing and keeping her portal open", async () => {
@@ -265,7 +281,10 @@ describe.sequential("client subscription integration", () => {
     it("cancels only the subscription of the client who is signed in", async () => {
       // arrange
       await onboarding.admit(ANA, ANA_SESSION, WAITING_PURCHASE);
-      await onboarding.admit(MARIA, MARIA_SESSION, SECOND_PURCHASE);
+      await onboarding.admit(MARIA, MARIA_SESSION, {
+        ...SECOND_PURCHASE,
+        startChoice: "waiting",
+      });
       await rig.holdClock(DAY_13);
 
       // act
@@ -368,7 +387,7 @@ describe.sequential("client subscription integration", () => {
   });
 
   describe("starting now", () => {
-    it("turns her waiting path into an immediate start, after which a cancellation refunds proportionally", async () => {
+    it("turns her waiting path into an immediate start, after which a cancellation refunds nothing", async () => {
       // arrange
       await onboarding.admit(ANA, ANA_SESSION, WAITING_PURCHASE);
       await rig.holdClock(DAY_13);
@@ -381,7 +400,9 @@ describe.sequential("client subscription integration", () => {
       expect(started.status).toBe(200);
       expect(await started.json()).toEqual({ status: "started" });
       expect(await cancelled.json()).toMatchObject({
-        rule: "proportional-refund",
+        rule: "no-refund",
+        accessEndsAt: PAID_THROUGH.toISOString(),
+        refundDue: false,
       });
       expect(await lifecycle.subscriptionRow()).toMatchObject({
         startChoice: "immediate",

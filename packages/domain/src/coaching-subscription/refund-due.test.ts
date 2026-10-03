@@ -23,23 +23,6 @@ describe("RefundDue", () => {
     });
   });
 
-  it("owes the proportional share within 14 days of the cancellation", () => {
-    // act
-    const refund = RefundDue.proportional({
-      amountCents: 42271,
-      cancelledAt: CANCELLED_AT,
-    });
-
-    // assert
-    expect(refund.toSnapshot()).toEqual({
-      reason: "proportional-refund",
-      amountCents: 42271,
-      dueBy: new Date("2026-10-19T10:00:00.000Z"),
-      refundedCents: 0,
-      refundedAt: null,
-    });
-  });
-
   it("still owes the rest after a partial refund", () => {
     // arrange
     const refund = RefundDue.full({

@@ -176,20 +176,31 @@ function settingsOf(reading: SubscriptionReading) {
       status: reading.status,
       cancelledAt: subscription.cancelledAt?.toISOString() ?? null,
       accessEndsAt: subscription.accessEndsAt?.toISOString() ?? null,
-      programStartedOn: subscription.programStartedOn?.toISOString() ?? null,
       paymentProblem: subscription.paymentProblemSince !== null,
     },
-    cancellation:
-      reading.cancellationRule === "none"
-        ? null
-        : {
-            rule: reading.cancellationRule,
-            withdrawalDeadline: reading.withdrawalDeadline.toISOString(),
-            paidThrough: reading.paidThrough.toISOString(),
-            refundCents: reading.refundOnCancellationCents,
-          },
+    cancellation: cancellationOf(reading),
     startNowUntil: reading.startNowUntil?.toISOString() ?? null,
   };
+}
+
+function cancellationOf(reading: SubscriptionReading) {
+  const dates = {
+    withdrawalDeadline: reading.withdrawalDeadline.toISOString(),
+    paidThrough: reading.paidThrough.toISOString(),
+  };
+
+  switch (reading.cancellationRule) {
+    case "full-refund":
+      return {
+        rule: reading.cancellationRule,
+        ...dates,
+        refundCents: reading.refundOnCancellationCents,
+      };
+    case "no-refund":
+      return { rule: reading.cancellationRule, ...dates };
+    case "none":
+      return null;
+  }
 }
 
 function paymentMethodUnavailablePath(): string {

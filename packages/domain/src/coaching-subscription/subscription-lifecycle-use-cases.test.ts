@@ -45,7 +45,6 @@ function snapshotOf(
     status: "not-started",
     cancelledAt: null,
     accessEndsAt: null,
-    programStartedOn: null,
     paymentProblemSince: null,
     refund: null,
     ...overrides,
@@ -243,6 +242,42 @@ describe("CancelSubscriptionUseCase", () => {
       rule: "no-refund",
       refundDueCents: 0,
     });
+  });
+
+  it("schedules the end in the provider at purchase plus the bundle months and owes nothing on the immediate path within the 14 days", async () => {
+    // arrange
+    const subscriptions = createSubscriptions(
+      subscriptionOf({ startChoice: "immediate" }),
+    );
+    const paymentSubscriptions = createPaymentSubscriptions();
+    const notifications = createNotifications();
+    const useCase = cancelUseCase({
+      now: DAY_13,
+      subscriptions,
+      paymentSubscriptions,
+      notifications,
+    });
+
+    // act
+    const result = await useCase.execute(AUTH_SUBJECT_ID);
+
+    // assert
+    expect(result).toEqual({
+      status: "cancelled",
+      rule: "no-refund",
+      subscription: snapshotOf({
+        startChoice: "immediate",
+        status: "cancelled",
+        cancelledAt: DAY_13,
+        accessEndsAt: ACCESS_END,
+      }),
+    });
+    expect(paymentSubscriptions.endAt).toHaveBeenCalledWith({
+      paymentSubscriptionId: "sub_1",
+      at: ACCESS_END,
+    });
+    expect(paymentSubscriptions.endNow).not.toHaveBeenCalled();
+    expect(notifications.notifyRefundDue).not.toHaveBeenCalled();
   });
 
   it("leaves the subscription unchanged and asks her to try again when the provider fails", async () => {
@@ -764,6 +799,26 @@ describe("ReadClientSubscriptionUseCase", () => {
     expect(subscriptions.findCurrentForAuthSubject).toHaveBeenCalledWith(
       AUTH_SUBJECT_ID,
     );
+  });
+
+  it("reads the immediate path within the 14 days as a cancellation without a refund", async () => {
+    // arrange
+    const useCase = new ReadClientSubscriptionUseCase({
+      clock: clockAt(DAY_13),
+      subscriptions: createSubscriptions(
+        subscriptionOf({ startChoice: "immediate" }),
+      ),
+    });
+
+    // act
+    const reading = await useCase.execute(AUTH_SUBJECT_ID);
+
+    // assert
+    expect(reading).toMatchObject({
+      cancellationRule: "no-refund",
+      refundOnCancellationCents: 0,
+      startNowUntil: null,
+    });
   });
 
   it("reads an ended subscription with a refund still owed", async () => {

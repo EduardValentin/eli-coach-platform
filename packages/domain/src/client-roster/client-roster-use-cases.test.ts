@@ -35,7 +35,6 @@ function subscriptionSnapshot(
     status: "not-started",
     cancelledAt: null,
     accessEndsAt: null,
-    programStartedOn: null,
     paymentProblemSince: null,
     refund: null,
     ...overrides,

@@ -1844,7 +1844,7 @@
         },
         "coaching_subscriptions_refund_reason_check": {
           "name": "coaching_subscriptions_refund_reason_check",
-          "value": "\"app\".\"coaching_subscriptions\".\"refund_reason\" in ('full-refund', 'proportional-refund', 'coach-issued')"
+          "value": "\"app\".\"coaching_subscriptions\".\"refund_reason\" in ('full-refund', 'coach-issued')"
         },
         "coaching_subscriptions_refund_complete": {
           "name": "coaching_subscriptions_refund_complete",

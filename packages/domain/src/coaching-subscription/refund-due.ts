@@ -1,8 +1,4 @@
-export const REFUND_REASONS = [
-  "full-refund",
-  "proportional-refund",
-  "coach-issued",
-] as const;
+export const REFUND_REASONS = ["full-refund", "coach-issued"] as const;
 
 export type RefundReason = (typeof REFUND_REASONS)[number];
 
@@ -43,11 +39,16 @@ export class RefundDue {
   }
 
   static full(owed: OwedRefund): RefundDue {
-    return RefundDue.owed("full-refund", owed);
-  }
-
-  static proportional(owed: OwedRefund): RefundDue {
-    return RefundDue.owed("proportional-refund", owed);
+    return new RefundDue({
+      reason: "full-refund",
+      amountCents: owed.amountCents,
+      dueBy: new Date(
+        owed.cancelledAt.getTime() +
+          REFUND_DEADLINE_DAYS * MILLISECONDS_PER_DAY,
+      ),
+      refundedCents: 0,
+      refundedAt: null,
+    });
   }
 
   static coachIssued(settlement: RefundSettlement): RefundDue {
@@ -66,19 +67,6 @@ export class RefundDue {
 
   static isOutstanding(snapshot: RefundDueSnapshot): boolean {
     return RefundDue.reconstitute(snapshot).outstandingCents() > 0;
-  }
-
-  private static owed(reason: RefundReason, owed: OwedRefund): RefundDue {
-    return new RefundDue({
-      reason,
-      amountCents: owed.amountCents,
-      dueBy: new Date(
-        owed.cancelledAt.getTime() +
-          REFUND_DEADLINE_DAYS * MILLISECONDS_PER_DAY,
-      ),
-      refundedCents: 0,
-      refundedAt: null,
-    });
   }
 
   outstandingCents(): number {

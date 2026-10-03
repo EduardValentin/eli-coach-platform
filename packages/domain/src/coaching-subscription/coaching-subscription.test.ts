@@ -36,7 +36,6 @@ function snapshotOf(
     status: "not-started",
     cancelledAt: null,
     accessEndsAt: null,
-    programStartedOn: null,
     paymentProblemSince: null,
     refund: null,
     ...overrides,
@@ -57,7 +56,8 @@ describe("CoachingSubscription.cancellationRule", () => {
   it.each([
     ["waiting", DAY_13, "full-refund"],
     ["waiting", DAY_14, "no-refund"],
-    ["immediate", DAY_13, "proportional-refund"],
+    ["immediate", PAID_AT, "no-refund"],
+    ["immediate", DAY_13, "no-refund"],
     ["immediate", DAY_14, "no-refund"],
   ] as const)(
     "on the %s path at %s offers %s",
@@ -115,61 +115,27 @@ describe("CoachingSubscription.cancel", () => {
     );
   });
 
-  it("refunds the immediate path in full before day 1", () => {
+  it("cancels the immediate path without a refund within the 14 days, keeping access until purchase plus the bundle months", () => {
     // act
     const cancellation = onPath("immediate").cancel(DAY_13);
 
     // assert
     expect(cancellation).toMatchObject({
       outcome: "cancelled",
-      rule: "proportional-refund",
-      instruction: { kind: "end-now" },
+      rule: "no-refund",
+      instruction: { kind: "end-at", at: ACCESS_END },
     });
     expect(
       cancellation.outcome === "cancelled" &&
-        cancellation.subscription.refund?.toSnapshot(),
+        cancellation.subscription.toSnapshot(),
     ).toEqual(
-      RefundDue.proportional({
-        amountCents: 44700,
+      snapshotOf({
+        startChoice: "immediate",
+        status: "cancelled",
         cancelledAt: DAY_13,
-      }).toSnapshot(),
+        accessEndsAt: ACCESS_END,
+      }),
     );
-  });
-
-  it("refunds the unused whole days of the first period after day 1, to the cent", () => {
-    // arrange
-    const subscription = subscriptionOf({
-      startChoice: "immediate",
-      programStartedOn: new Date("2026-10-05T10:00:00.000Z"),
-    });
-    const now = new Date("2026-10-10T09:00:00.000Z");
-
-    // act
-    const cancellation = subscription.cancel(now);
-
-    // assert
-    expect(
-      cancellation.outcome === "cancelled" &&
-        cancellation.subscription.refund?.amountCents,
-    ).toBe(42271);
-  });
-
-  it("refunds the immediate path in full on the day 1 itself", () => {
-    // arrange
-    const programStartedOn = new Date("2026-10-05T10:00:00.000Z");
-    const subscription = subscriptionOf({
-      startChoice: "immediate",
-      programStartedOn,
-    });
-
-    // act
-    const cancellation = subscription.cancel(programStartedOn);
-
-    // assert
-    expect(
-      cancellation.outcome === "cancelled" &&
-        cancellation.subscription.refund?.amountCents,
-    ).toBe(44700);
   });
 
   it("cancels without a refund once the withdrawal right is gone, keeping access until purchase plus the bundle months", () => {
@@ -234,7 +200,7 @@ describe("CoachingSubscription.cancel", () => {
 describe("CoachingSubscription.refundOnCancellationAt", () => {
   it.each([
     ["waiting", DAY_13, 44700],
-    ["immediate", DAY_13, 44700],
+    ["immediate", DAY_13, 0],
     ["waiting", DAY_14, 0],
   ] as const)(
     "owes back on the %s path at %s what a cancellation would refund",
@@ -246,22 +212,6 @@ describe("CoachingSubscription.refundOnCancellationAt", () => {
       expect(refundCents).toBe(expected);
     },
   );
-
-  it("owes back the unused share of the first period after day 1", () => {
-    // arrange
-    const subscription = subscriptionOf({
-      startChoice: "immediate",
-      programStartedOn: new Date("2026-10-05T10:00:00.000Z"),
-    });
-
-    // act
-    const refundCents = subscription.refundOnCancellationAt(
-      new Date("2026-10-10T09:00:00.000Z"),
-    );
-
-    // assert
-    expect(refundCents).toBe(42271);
-  });
 });
 
 describe("CoachingSubscription.statusAt", () => {
@@ -352,7 +302,7 @@ describe("CoachingSubscription start now", () => {
     ).toEqual(snapshotOf({ startChoice: "immediate" }));
   });
 
-  it("makes the proportional rule apply after starting now", () => {
+  it("leaves only the no-refund cancellation after starting now", () => {
     // arrange
     const decision = onPath("waiting").startNow(DAY_13);
 
@@ -362,7 +312,7 @@ describe("CoachingSubscription start now", () => {
       decision.subscription.cancellationRule(DAY_13);
 
     // assert
-    expect(rule).toBe("proportional-refund");
+    expect(rule).toBe("no-refund");
   });
 
   it.each([
@@ -406,15 +356,12 @@ describe("CoachingSubscription.recordWithdrawalRefund", () => {
     cancelledAt: DAY_13,
   });
 
-  it("records the refund her cancellation decided on a subscription the provider has just ended", () => {
+  it("records the full refund her withdrawal decided on a subscription the provider has just ended", () => {
     // arrange
     const providerEnded = onPath("waiting").end(PROVIDER_ENDED_AT);
 
     // act
-    const recording = providerEnded.recordWithdrawalRefund({
-      refund: decidedRefund,
-      cancelledAt: DAY_13,
-    });
+    const recording = providerEnded.recordWithdrawalRefund(DAY_13);
 
     // assert
     expect(
@@ -431,10 +378,7 @@ describe("CoachingSubscription.recordWithdrawalRefund", () => {
 
   it("refuses a subscription that has not ended", () => {
     // act
-    const recording = onPath("waiting").recordWithdrawalRefund({
-      refund: decidedRefund,
-      cancelledAt: DAY_13,
-    });
+    const recording = onPath("waiting").recordWithdrawalRefund(DAY_13);
 
     // assert
     expect(recording).toEqual({ outcome: "refused" });
@@ -449,10 +393,7 @@ describe("CoachingSubscription.recordWithdrawalRefund", () => {
         : onPath("waiting");
 
     // act
-    const recording = alreadyRefunded.recordWithdrawalRefund({
-      refund: decidedRefund,
-      cancelledAt: DAY_13,
-    });
+    const recording = alreadyRefunded.recordWithdrawalRefund(DAY_13);
 
     // assert
     expect(recording).toEqual({ outcome: "refused" });

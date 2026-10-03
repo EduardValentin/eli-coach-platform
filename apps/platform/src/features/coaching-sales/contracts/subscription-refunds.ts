@@ -2,8 +2,6 @@ import type { RefundReason } from "@eli-coach-platform/domain/coaching-subscript
 
 export const REFUND_REASON_LABELS: Readonly<Record<RefundReason, string>> = {
   "full-refund": "Full refund: cancelled within the 14-day withdrawal period.",
-  "proportional-refund":
-    "Proportional refund: cancelled within 14 days of paying, for the unused part of the first term.",
   "coach-issued": "Refunded from the payment provider.",
 };
 

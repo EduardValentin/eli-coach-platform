@@ -72,16 +72,14 @@ describe("EmailRefundNotifications", () => {
     const notifications = createNotifications(productEmail);
 
     // act
-    await notifications.notifyRefundDue(
-      refundNotice({ reason: "proportional-refund", amountCents: 42271 }),
-    );
+    await notifications.notifyRefundDue(refundNotice());
 
     // assert
     const text = productEmail.sent[0]?.text ?? "";
-    expect(text).toContain("Refund due: €422.71");
+    expect(text).toContain("Refund due: €447.00");
     expect(text).toContain("Refund by: 16 October");
     expect(text).toContain(
-      "Why: Proportional refund: cancelled within 14 days of paying, for the unused part of the first term.",
+      "Why: Full refund: cancelled within the 14-day withdrawal period.",
     );
     expect(text).toContain("Paid: €447.00 on 28 September");
     expect(text).toContain("Cancelled: 2 October");

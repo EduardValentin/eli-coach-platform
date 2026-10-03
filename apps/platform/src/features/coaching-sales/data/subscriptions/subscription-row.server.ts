@@ -66,7 +66,6 @@ export function toSubscriptionSnapshot(
 
   return {
     ...subscription,
-    programStartedOn: null,
     refund:
       refundReason === null || refundDueCents === null || refundedCents === null
         ? null
