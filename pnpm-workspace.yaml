@@ -10,7 +10,7 @@ catalog:
   "@clerk/react-router": 3.6.17
   "@clerk/testing": 2.2.30
   "@date-fns/tz": 1.5.0
-  "@eslint/js": 9.39.1
+  "@eslint/js": 9.39.5
   "@hookform/resolvers": 5.9.1
   "@lhci/cli": 0.15.1
   "@napi-rs/canvas": 1.0.6
