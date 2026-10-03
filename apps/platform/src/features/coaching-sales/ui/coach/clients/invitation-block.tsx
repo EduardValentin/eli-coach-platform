@@ -1,4 +1,3 @@
-import type { VisitorGender } from "@eli-coach-platform/domain/assessment-call";
 import { cn, useCalendarDayTimeZone } from "@eli-coach-platform/ui/lib";
 import { ConfirmDialog } from "@eli-coach-platform/ui/overlays";
 import { PortalWidget } from "@eli-coach-platform/ui/portal";
@@ -10,6 +9,7 @@ import { possessivePronoun } from "~/features/assessment-calls/contracts/visitor
 import {
   resendInvitationSuccessSchema,
   type ClientInvitationReading,
+  type CoachClient,
 } from "~/features/coaching-sales/contracts/coach-clients";
 import { COACHING_SALES_API_PATHS } from "~/features/coaching-sales/contracts/paths";
 import { useConfirmedJsonAction } from "~/features/coaching-sales/ui/coach/use-confirmed-json-action";
@@ -19,19 +19,18 @@ import { invitationStateLine } from "./invitation-state-line";
 const RESEND_FAILURE_MESSAGE =
   "The invitation email could not be sent. Try again.";
 
+type InvitedClient = Pick<
+  CoachClient,
+  "clientId" | "email" | "gender" | "coachingClosed"
+>;
+
 type InvitationBlockProps = {
-  clientId: string;
-  email: string;
-  gender: VisitorGender;
+  client: InvitedClient;
   invitation: ClientInvitationReading;
 };
 
-export function InvitationBlock({
-  clientId,
-  email,
-  gender,
-  invitation,
-}: InvitationBlockProps) {
+export function InvitationBlock({ client, invitation }: InvitationBlockProps) {
+  const { clientId, email, gender } = client;
   const { revalidate } = useRevalidator();
   const { askToConfirm, confirmDialog, isSending } = useConfirmedJsonAction({
     action: COACHING_SALES_API_PATHS.invitationResends,
@@ -47,21 +46,23 @@ export function InvitationBlock({
     <PortalWidget
       data-parity-root="InvitationBlock"
       action={
-        <Button
-          aria-busy={isSending || undefined}
-          data-parity="resend-invitation"
-          disabled={isSending}
-          onClick={askToConfirm}
-          size="sm"
-          variant="outline"
-        >
-          {isSending ? (
-            <Loader2 aria-hidden="true" className="animate-spin" size={16} />
-          ) : (
-            <Send aria-hidden="true" size={16} />
-          )}
-          Re-send invitation
-        </Button>
+        client.coachingClosed ? null : (
+          <Button
+            aria-busy={isSending || undefined}
+            data-parity="resend-invitation"
+            disabled={isSending}
+            onClick={askToConfirm}
+            size="sm"
+            variant="outline"
+          >
+            {isSending ? (
+              <Loader2 aria-hidden="true" className="animate-spin" size={16} />
+            ) : (
+              <Send aria-hidden="true" size={16} />
+            )}
+            Re-send invitation
+          </Button>
+        )
       }
       className="mb-8"
       headingId="invitation-panel-heading"

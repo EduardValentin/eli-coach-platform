@@ -73,6 +73,44 @@ describe("clientStatusOf", () => {
       expect(status).toBe(expected);
     },
   );
+
+  it.each([
+    ["cancelled", { status: "cancelled", accessEndsAt: LATER }, "cancelled"],
+    ["inactive", { status: "ended", accessEndsAt: NOW }, "inactive"],
+  ] as const)(
+    "reads her closed coaching as %s before her account is bound",
+    (_label, subscription, expected) => {
+      // arrange
+      const input = {
+        accountBound: false,
+        step: "welcome" as const,
+        subscription,
+        now: NOW,
+      };
+
+      // act
+      const status = clientStatusOf(input);
+
+      // assert
+      expect(status).toBe(expected);
+    },
+  );
+
+  it("keeps her invited before her account is bound while her coaching is open", () => {
+    // arrange
+    const input = {
+      accountBound: false,
+      step: "welcome" as const,
+      subscription: { status: "active" as const, accessEndsAt: null },
+      now: NOW,
+    };
+
+    // act
+    const status = clientStatusOf(input);
+
+    // assert
+    expect(status).toBe("invited");
+  });
 });
 
 describe("CLIENT_STATUSES", () => {

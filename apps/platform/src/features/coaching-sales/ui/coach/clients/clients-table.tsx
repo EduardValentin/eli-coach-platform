@@ -22,6 +22,7 @@ import type { RosterClient } from "~/features/coaching-sales/contracts/coach-cli
 import { coachClientPath } from "~/features/coaching-sales/contracts/paths";
 
 import { ClientStatusBadge } from "./client-status-badge";
+import { NeedsRefundBadge } from "./needs-refund-badge";
 import {
   formatJoinDate,
   clientFullName,
@@ -139,7 +140,12 @@ function ClientRow({ client, position, timeZone }: ClientRowProps) {
         </div>
       </TableCell>
       <TableCell data-parity={cellParity("status")}>
-        <ClientStatusBadge status={client.status} />
+        <div className="flex flex-wrap items-center gap-2">
+          <ClientStatusBadge status={client.status} />
+          {client.needsRefund && (
+            <NeedsRefundBadge parity={cellParity("needs-refund")} />
+          )}
+        </div>
       </TableCell>
       <TableCell
         className="text-sm font-medium text-text-secondary"
@@ -158,8 +164,7 @@ function ClientRow({ client, position, timeZone }: ClientRowProps) {
           : formatJoinDate(client.paidAt, timeZone)}
       </TableCell>
       <TableCell data-parity={cellParity("actions")}>
-        <div className="flex items-center justify-between gap-2">
-          <div />
+        <div className="flex items-center justify-end">
           <Link
             aria-label={linkLabel}
             className={buttonVariants({

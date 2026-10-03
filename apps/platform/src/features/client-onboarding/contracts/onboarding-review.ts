@@ -91,6 +91,7 @@ export const reviewActionAcceptedSchema = z.object({
 export const reviewActionRefusalSchema = z.object({
   error: z.enum([
     "not-found",
+    "coaching-closed",
     "not-submitted",
     "approved",
     "not-in-review",

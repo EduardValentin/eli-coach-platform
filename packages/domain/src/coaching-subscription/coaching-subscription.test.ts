@@ -269,6 +269,24 @@ describe("CoachingSubscription.statusAt", () => {
   );
 });
 
+describe("CoachingSubscription.hasClosedCoaching", () => {
+  it.each([
+    ["not-started", false],
+    ["active", false],
+    ["cancelled", true],
+    ["ended", true],
+  ] as const)("reads a %s subscription as closed: %s", (status, expected) => {
+    // arrange
+    const snapshot = snapshotOf({ status });
+
+    // act
+    const closed = CoachingSubscription.hasClosedCoaching(snapshot);
+
+    // assert
+    expect(closed).toBe(expected);
+  });
+});
+
 describe("CoachingSubscription start now", () => {
   it("offers to start now on the waiting path until the withdrawal deadline", () => {
     // act

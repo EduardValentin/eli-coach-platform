@@ -43,6 +43,7 @@ const CLIENT: OnboardingClient = {
   dateOfBirth: "1994-03-14",
   submittedAt: SUBMITTED_AT,
   reviewStamps: NO_STAMPS,
+  coachingClosed: false,
 };
 
 const SUBMITTED_MEASUREMENT: MeasurementEntry = {

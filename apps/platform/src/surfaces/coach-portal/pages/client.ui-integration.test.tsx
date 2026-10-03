@@ -62,6 +62,7 @@ const INVITED: CoachClient = {
   gender: "female",
   status: "invited",
   needsRefund: false,
+  coachingClosed: false,
   subscription: {
     bundleId: "3-months",
     months: 3,
@@ -104,6 +105,33 @@ const AWAITING_REVIEW: CoachClient = {
   ...INVITED,
   invitation: null,
   status: "awaiting-review",
+};
+
+const ENDED_WITH_REFUND_DUE: CoachClient = {
+  ...AWAITING_REVIEW,
+  status: "inactive",
+  needsRefund: true,
+  coachingClosed: true,
+  subscription: {
+    ...AWAITING_REVIEW.subscription,
+    bundleId: "3-months",
+    months: 3,
+    paidAt: "2026-09-20T09:00:00.000Z",
+    reducedPrice: false,
+    workStartsOn: "2026-10-04T09:00:00.000Z",
+    status: "ended",
+    endsOn: null,
+    endedOn: "2026-09-25T09:00:00.000Z",
+    refund: {
+      reason: "full-refund",
+      amountCents: 44700,
+      outstandingCents: 44700,
+      refundedCents: 0,
+      currency: "eur",
+      dueBy: "2026-10-09T09:00:00.000Z",
+      refundedOn: null,
+    },
+  },
 };
 
 const SUBMITTED: SubmittedReview = {
@@ -472,6 +500,99 @@ describe("the coach's client page", () => {
     expect(
       await screen.findByText("Invitation sent to ana@example.com."),
     ).toBeInTheDocument();
+  });
+
+  it("badges her name while a refund is still due and reads what is due on her subscription", async () => {
+    // arrange, act
+    await renderClientPage({
+      client: ENDED_WITH_REFUND_DUE,
+      review: SUBMITTED_REVIEW,
+    });
+
+    // assert
+    const title = screen.getByRole("heading", {
+      level: 1,
+      name: "Ana Popescu",
+    });
+    const header = title.closest("header") as HTMLElement;
+    const subscription = screen.getByRole("region", { name: "Subscription" });
+    expect(within(header).getByText("Needs refund")).toBeInTheDocument();
+    expect(within(subscription).getByText("Ended on")).toBeInTheDocument();
+    expect(
+      within(subscription).getByText("€447 by 9 October"),
+    ).toBeInTheDocument();
+    expect(
+      within(subscription).getByText(
+        "Full refund: cancelled within the 14-day withdrawal period.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("does not badge her name when no refund is due", async () => {
+    // arrange, act
+    await renderClientPage({
+      client: AWAITING_REVIEW,
+      review: SUBMITTED_REVIEW,
+    });
+
+    // assert
+    expect(screen.queryByText("Needs refund")).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ["awaiting review", "awaiting-review"],
+    ["in review", "in-review"],
+  ] as const)(
+    "keeps her answers readable %s but offers no review step once her coaching is cancelled",
+    async (_label, stage) => {
+      // arrange, act
+      await renderClientPage({
+        client: {
+          ...AWAITING_REVIEW,
+          status: "cancelled",
+          coachingClosed: true,
+        },
+        review: {
+          ...SUBMITTED_REVIEW,
+          submitted: { ...SUBMITTED, stage },
+        },
+      });
+
+      // assert
+      const onboarding = screen.getByRole("region", { name: "Onboarding" });
+      expect(within(onboarding).getByText("Cancelled")).toBeInTheDocument();
+      expect(within(onboarding).getByText("Answers")).toBeInTheDocument();
+      expect(
+        within(onboarding).getByRole("button", {
+          name: /Goals and availability/,
+        }),
+      ).toBeInTheDocument();
+      for (const action of [
+        "Review answers",
+        "Continue review",
+        "Approve answers",
+      ]) {
+        expect(
+          within(onboarding).queryByRole("button", { name: action }),
+        ).not.toBeInTheDocument();
+      }
+    },
+  );
+
+  it("keeps her invitation's state but offers no re-send once her coaching has ended", async () => {
+    // arrange, act
+    await renderClientPage({
+      client: { ...INVITED, status: "inactive", coachingClosed: true },
+    });
+
+    // assert
+    const invitation = screen.getByRole("region", { name: "Invitation" });
+    expect(
+      within(invitation).getByText("Invited 20 September · expires 20 October"),
+    ).toBeInTheDocument();
+    expect(
+      within(invitation).queryByRole("button", { name: "Re-send invitation" }),
+    ).not.toBeInTheDocument();
   });
 
   it("says the client cannot be found when no one on the roster has that id", async () => {

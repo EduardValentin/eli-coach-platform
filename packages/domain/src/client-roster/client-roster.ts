@@ -69,7 +69,11 @@ export function clientStatusOf(input: {
   > | null;
   now: Date;
 }): ClientStatus {
-  if (!input.accountBound) {
+  const coachingClosed = input.subscription
+    ? CoachingSubscription.hasClosedCoaching(input.subscription)
+    : false;
+
+  if (!input.accountBound && !coachingClosed) {
     return "invited";
   }
 

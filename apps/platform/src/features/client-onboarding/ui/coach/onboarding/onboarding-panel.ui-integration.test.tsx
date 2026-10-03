@@ -37,6 +37,7 @@ const CLIENT = {
   email: "ana@example.com",
   firstName: "Ana",
   gender: "female",
+  coachingClosed: false,
 } satisfies ReviewedClient;
 const PAGE_PATH = "/coach/clients/ana";
 const STATUS_BADGE = "Awaiting review";
@@ -193,6 +194,31 @@ describe("the onboarding panel on a client page", () => {
       screen.queryByRole("button", { name: "Approve answers" }),
     ).not.toBeInTheDocument();
   });
+
+  it.each(["awaiting-review", "in-review"] as const)(
+    "keeps her %s answers readable but offers no review step once her coaching is cancelled or ended",
+    async (stage) => {
+      // arrange
+      const user = await renderPanel(
+        { review: reviewView(submittedReviewIn(stage)) },
+        { ...CLIENT, coachingClosed: true },
+      );
+
+      // act
+      await user.click(
+        screen.getByRole("button", { name: /^Goals and availability/ }),
+      );
+
+      // assert
+      expect(screen.getByText("Waist-to-height ratio")).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /^Goals and availability/ }),
+      ).toHaveAttribute("aria-expanded", "true");
+      expect(
+        screen.queryByRole("button", { name: /review|approve/i }),
+      ).not.toBeInTheDocument();
+    },
+  );
 
   it("offers nothing once her answers are approved", async () => {
     // arrange, act

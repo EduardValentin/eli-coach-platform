@@ -26,6 +26,7 @@ const MALE_CLIENT: OnboardingClient = {
     detailsAnsweredAt: null,
     answersApprovedAt: null,
   },
+  coachingClosed: false,
 };
 const SUBMISSION: OnboardingSubmission = {
   answers: emptyAnswers(),

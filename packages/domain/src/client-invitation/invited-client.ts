@@ -3,6 +3,7 @@ export type InvitedClient = {
   email: string;
   firstName: string;
   authSubjectId: string | null;
+  coachingClosed: boolean;
 };
 
 export interface InvitedClients {

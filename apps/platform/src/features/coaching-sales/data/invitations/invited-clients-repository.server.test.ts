@@ -15,6 +15,7 @@ describe("PostgresInvitedClients#findById", () => {
           email: "ana@example.com",
           firstName: "Ana",
           authSubjectId: null,
+          currentSubscriptionStatus: "not-started",
         },
       ]),
     );
@@ -28,8 +29,38 @@ describe("PostgresInvitedClients#findById", () => {
       email: "ana@example.com",
       firstName: "Ana",
       authSubjectId: null,
+      coachingClosed: false,
     });
   });
+
+  it.each([
+    ["cancelled", true],
+    ["ended", true],
+    ["active", false],
+    [null, false],
+  ] as const)(
+    "reads her coaching as closed for a current %s subscription: %s",
+    async (currentSubscriptionStatus, expected) => {
+      // arrange
+      const invitedClients = new PostgresInvitedClients(
+        createDatabaseAnswering([
+          {
+            id: CLIENT_ID,
+            email: "ana@example.com",
+            firstName: "Ana",
+            authSubjectId: null,
+            currentSubscriptionStatus,
+          },
+        ]),
+      );
+
+      // act
+      const client = await invitedClients.findById(CLIENT_ID);
+
+      // assert
+      expect(client?.coachingClosed).toBe(expected);
+    },
+  );
 
   it("answers null for a client that does not exist", async () => {
     // arrange

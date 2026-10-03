@@ -24,6 +24,7 @@ import { coachingSalesContext } from "~/features/coaching-sales/server/guards/co
 import { AssessmentCallBlock } from "~/features/coaching-sales/ui/coach/clients/assessment-call-block";
 import { ClientStatusBadge } from "~/features/coaching-sales/ui/coach/clients/client-status-badge";
 import { InvitationBlock } from "~/features/coaching-sales/ui/coach/clients/invitation-block";
+import { NeedsRefundBadge } from "~/features/coaching-sales/ui/coach/clients/needs-refund-badge";
 import { clientFullName } from "~/features/coaching-sales/ui/coach/clients/roster-listing";
 import { SubscriptionSummary } from "~/features/coaching-sales/ui/coach/clients/subscription-summary";
 
@@ -86,6 +87,7 @@ export default function CoachClientRoute() {
         <div className="min-w-0">
           <div className="mb-2 flex flex-wrap items-center gap-3">
             <h1 className={PORTAL_PAGE_TITLE_CLASS}>{name}</h1>
+            {client.needsRefund && <NeedsRefundBadge parity="needs-refund" />}
           </div>
           <p className="text-text-secondary">{client.email}</p>
         </div>
@@ -93,12 +95,7 @@ export default function CoachClientRoute() {
 
       <ClientProfileBlock profile={profile} />
       {client.invitation && (
-        <InvitationBlock
-          clientId={client.clientId}
-          email={client.email}
-          gender={client.gender}
-          invitation={client.invitation}
-        />
+        <InvitationBlock client={client} invitation={client.invitation} />
       )}
       <OnboardingPanel
         client={client}

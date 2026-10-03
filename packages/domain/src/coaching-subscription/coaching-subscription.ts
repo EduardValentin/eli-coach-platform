@@ -158,6 +158,12 @@ export class CoachingSubscription {
     return standing.status;
   }
 
+  static hasClosedCoaching(
+    standing: Pick<CoachingSubscriptionSnapshot, "status">,
+  ): boolean {
+    return standing.status === "cancelled" || standing.status === "ended";
+  }
+
   statusAt(now: Date): CoachingSubscriptionStatus {
     return CoachingSubscription.statusOf(this, now);
   }

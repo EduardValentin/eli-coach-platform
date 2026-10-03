@@ -8,6 +8,10 @@ import type { UnitPreferenceClients } from "@eli-coach-platform/domain/unit-pref
 import { eq, type SQL } from "drizzle-orm";
 
 import { clientsTable } from "~/features/coaching-sales/data/schema.server";
+import {
+  currentSubscriptionStatus,
+  hasClosedCoaching,
+} from "~/features/coaching-sales/data/subscriptions/current-subscription-status.server";
 
 export class PostgresOnboardingClients
   implements OnboardingClients, UnitPreferenceClients, MeasurementClients
@@ -38,6 +42,7 @@ export class PostgresOnboardingClients
         detailsRequestedAt: clientsTable.detailsRequestedAt,
         detailsAnsweredAt: clientsTable.detailsAnsweredAt,
         answersApprovedAt: clientsTable.answersApprovedAt,
+        currentSubscriptionStatus,
       })
       .from(clientsTable)
       .where(filter)
@@ -63,6 +68,7 @@ export class PostgresOnboardingClients
         detailsAnsweredAt: row.detailsAnsweredAt,
         answersApprovedAt: row.answersApprovedAt,
       },
+      coachingClosed: hasClosedCoaching(row.currentSubscriptionStatus),
     };
   }
 }

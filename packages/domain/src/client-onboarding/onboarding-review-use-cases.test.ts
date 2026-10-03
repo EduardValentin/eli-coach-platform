@@ -45,6 +45,12 @@ const CLIENT: OnboardingClient = {
   dateOfBirth: "1994-03-14",
   submittedAt: SUBMITTED_AT,
   reviewStamps: NO_STAMPS,
+  coachingClosed: false,
+};
+
+const CLOSED_COACHING_CLIENT: OnboardingClient = {
+  ...CLIENT,
+  coachingClosed: true,
 };
 
 const SUBMISSION: OnboardingSubmission = {
@@ -209,6 +215,20 @@ describe("OpenOnboardingReviewUseCase", () => {
     expect(result).toEqual({ status: expected });
     expect(ports.reviews.recordOpened).not.toHaveBeenCalled();
   });
+
+  it("refuses to open the review once her coaching is cancelled or ended", async () => {
+    // arrange
+    const ports = reviewPorts({ client: CLOSED_COACHING_CLIENT });
+    const useCase = new OpenOnboardingReviewUseCase(ports);
+
+    // act
+    const result = await useCase.execute(CLIENT.clientId);
+
+    // assert
+    expect(result).toEqual({ status: "coaching-closed" });
+    expect(ports.reviews.recordOpened).not.toHaveBeenCalled();
+    expect(ports.incidents.onboardingReviewOpened).not.toHaveBeenCalled();
+  });
 });
 
 describe("RequestOnboardingDetailsUseCase", () => {
@@ -368,6 +388,28 @@ describe("RequestOnboardingDetailsUseCase", () => {
     // assert
     expect(result).toEqual({ status: "not-found" });
   });
+
+  it("refuses a request once her coaching is cancelled or ended, emailing nothing", async () => {
+    // arrange
+    const ports = reviewPorts({
+      client: CLOSED_COACHING_CLIENT,
+      stored: { openedAt: OPENED_AT },
+    });
+    const notifications = createNotifications();
+    const useCase = requestUseCase(ports, notifications);
+
+    // act
+    const result = await useCase.execute({
+      clientId: CLIENT.clientId,
+      questionIds: [WEIGHT],
+      note: NOTE,
+    });
+
+    // assert
+    expect(result).toEqual({ status: "coaching-closed" });
+    expect(ports.reviews.recordRequest).not.toHaveBeenCalled();
+    expect(notifications.sendDetailsRequest).not.toHaveBeenCalled();
+  });
 });
 
 describe("ApproveOnboardingAnswersUseCase", () => {
@@ -439,6 +481,23 @@ describe("ApproveOnboardingAnswersUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "not-found" });
+  });
+
+  it("refuses the approval once her coaching is cancelled or ended", async () => {
+    // arrange
+    const ports = reviewPorts({
+      client: CLOSED_COACHING_CLIENT,
+      stored: { openedAt: OPENED_AT },
+    });
+    const useCase = new ApproveOnboardingAnswersUseCase(ports);
+
+    // act
+    const result = await useCase.execute(CLIENT.clientId);
+
+    // assert
+    expect(result).toEqual({ status: "coaching-closed" });
+    expect(ports.reviews.recordApproval).not.toHaveBeenCalled();
+    expect(ports.incidents.onboardingAnswersApproved).not.toHaveBeenCalled();
   });
 });
 

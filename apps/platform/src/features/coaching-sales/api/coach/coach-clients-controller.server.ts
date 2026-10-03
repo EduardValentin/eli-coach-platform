@@ -9,6 +9,7 @@ import type {
   ReadClientRecordUseCase,
 } from "@eli-coach-platform/domain/client-roster";
 import {
+  CoachingSubscription,
   RefundDue,
   type RefundDueSnapshot,
 } from "@eli-coach-platform/domain/coaching-subscription";
@@ -42,6 +43,7 @@ type ResendRefusal = Exclude<
 const RESEND_REFUSALS = {
   "not-found": { error: "not-found", status: 404 },
   "already-admitted": { error: "already-admitted", status: 409 },
+  "coaching-closed": { error: "coaching-closed", status: 409 },
   failed: { error: "send-failed", status: 503 },
 } as const satisfies Record<ResendRefusal, { error: string; status: number }>;
 
@@ -100,6 +102,7 @@ export class CoachClientsController {
 
     return coachClientSchema.parse({
       ...identityOf(record),
+      coachingClosed: hasClosedCoaching(record),
       gender: record.booking.gender,
       assessmentCall: assessmentCallOf(record),
       subscription: subscriptionOf(record),
@@ -140,6 +143,12 @@ function identityOf(client: ListedClient) {
     status: client.status,
     needsRefund: client.needsRefund,
   };
+}
+
+function hasClosedCoaching(record: ClientRecord): boolean {
+  const status = record.subscriptionStatus;
+
+  return status ? CoachingSubscription.hasClosedCoaching({ status }) : false;
 }
 
 function assessmentCallOf(record: ClientRecord) {

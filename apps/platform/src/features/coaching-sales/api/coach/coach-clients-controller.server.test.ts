@@ -217,6 +217,7 @@ describe("CoachClientsController#loadClient", () => {
       email: "ana@example.com",
       status: "invited",
       needsRefund: false,
+      coachingClosed: false,
       gender: "female",
       assessmentCall: {
         startsAt: "2026-09-24T15:00:00.000Z",
@@ -274,6 +275,7 @@ describe("CoachClientsController#loadClient", () => {
     const client = await controller.loadClient(coachArgs(), CLIENT_ID);
 
     // assert
+    expect(client.coachingClosed).toBe(true);
     expect(client.subscription).toMatchObject({
       status: "cancelled",
       endsOn: "2026-12-26T10:00:00.000Z",
@@ -314,6 +316,7 @@ describe("CoachClientsController#loadClient", () => {
 
     // assert
     expect(client.needsRefund).toBe(true);
+    expect(client.coachingClosed).toBe(true);
     expect(client.subscription).toMatchObject({
       status: "ended",
       endsOn: null,
@@ -424,6 +427,7 @@ describe("CoachClientsController#loadClient", () => {
 
     // assert
     expect(client.subscription).toBeNull();
+    expect(client.coachingClosed).toBe(false);
   });
 
   it("reads no invitation once her account is bound", async () => {
@@ -529,6 +533,7 @@ describe("CoachClientsController#resendInvitation", () => {
   it.each([
     ["not-found", 404, "not-found"],
     ["already-admitted", 409, "already-admitted"],
+    ["coaching-closed", 409, "coaching-closed"],
     ["failed", 503, "send-failed"],
   ] as const)(
     "answers the %s outcome with %i and names it %s",

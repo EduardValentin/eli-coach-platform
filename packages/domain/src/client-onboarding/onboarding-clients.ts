@@ -13,6 +13,7 @@ export type OnboardingClient = {
   phone: string | null;
   submittedAt: Date | null;
   reviewStamps: ReviewStamps;
+  coachingClosed: boolean;
 };
 
 export interface OnboardingClients {

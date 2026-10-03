@@ -102,6 +102,19 @@ describe("the invitation block", () => {
     ).toBeInTheDocument();
   });
 
+  it("keeps the invitation's state but offers no re-send once her coaching is cancelled or ended", async () => {
+    // arrange, act
+    await renderBlock({ invitation: PENDING, coachingClosed: true });
+
+    // assert
+    expect(
+      screen.getByText("Invited 1 October · expires 1 November"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Re-send invitation" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("asks before re-sending and warns that her earlier link stops working", async () => {
     // arrange
     const user = await renderBlock({ invitation: PENDING });
@@ -305,6 +318,7 @@ function recordResendRequests(response: Response): unknown[] {
 
 async function renderBlock(loaded: {
   gender?: VisitorGender;
+  coachingClosed?: boolean;
   invitation: ClientInvitationReading;
 }) {
   const user = userEvent.setup();
@@ -316,9 +330,12 @@ async function renderBlock(loaded: {
     return (
       <>
         <InvitationBlock
-          clientId={CLIENT_ID}
-          email={EMAIL}
-          gender={loaded.gender ?? "female"}
+          client={{
+            clientId: CLIENT_ID,
+            coachingClosed: loaded.coachingClosed ?? false,
+            email: EMAIL,
+            gender: loaded.gender ?? "female",
+          }}
           invitation={invitation}
         />
         <Toaster />
