@@ -1,4 +1,5 @@
 import { ConfirmDialog } from "@eli-coach-platform/ui/overlays";
+import { InlineProblem } from "@eli-coach-platform/ui/primitives";
 
 import { IMMEDIATE_START_BODY } from "~/features/coaching-sales/ui/shared/immediate-start-copy";
 
@@ -20,6 +21,12 @@ export function StartNowDialog({ dialog }: { dialog: StartNowDialogWiring }) {
       onOpenChange={dialog.onOpenChange}
       open={dialog.open}
       title={START_NOW_TITLE}
-    />
+    >
+      {dialog.problem && (
+        <InlineProblem data-parity="start-now-problem" role="alert">
+          {dialog.problem}
+        </InlineProblem>
+      )}
+    </ConfirmDialog>
   );
 }

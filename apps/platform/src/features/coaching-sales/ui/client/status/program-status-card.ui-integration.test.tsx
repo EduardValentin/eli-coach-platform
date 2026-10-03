@@ -28,12 +28,14 @@ import {
 } from "vitest";
 
 import { CLIENT_PORTAL_PATH } from "~/features/accounts/contracts/paths";
+import { clientAction as startProgram } from "~/features/coaching-sales/api/client/program-start";
 import type { ProgramStatus } from "~/features/coaching-sales/contracts/client-journey";
 import {
   CLIENT_ANSWER_QUERY,
   CLIENT_ONBOARDING_PATH,
   COACHING_SALES_API_PATHS,
 } from "~/features/coaching-sales/contracts/paths";
+import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
 
 import { ProgramStatusCard } from "./program-status-card";
 
@@ -50,6 +52,8 @@ const IMMEDIATE_START_BODY =
   "I give up my 14-day right of withdrawal so Eli can start on my program now. If I cancel after that, there is no refund.";
 const PAYMENT_PROBLEM_LINE =
   "Your last payment didn't go through. Update your card to keep your coaching going.";
+const START_NOW_PROBLEM =
+  "Your program couldn't be started just now. Nothing has changed, so please try again.";
 
 const server = setupServer();
 
@@ -372,6 +376,106 @@ describe("the program status card while she waits out her 14 days", () => {
   });
 });
 
+describe("a start the platform cannot make", () => {
+  it.each([
+    {
+      failure: "the platform refuses it",
+      answer: () =>
+        HttpResponse.json({ error: "outside-window" }, { status: 409 }),
+    },
+    {
+      failure: "the platform throws a refusal",
+      answer: () => new HttpResponse("Conflict", { status: 409 }),
+    },
+    {
+      failure: "the request never reaches the server",
+      answer: () => HttpResponse.error(),
+    },
+  ])(
+    "keeps the dialog open and asks her to try again when $failure",
+    async ({ answer }) => {
+      // arrange
+      server.use(http.post(`*${PROGRAM_START_URL}`, answer));
+      const user = renderLoadedCard({ status: waitingStatus() });
+      await user.click(
+        await screen.findByRole("button", { name: "Let Eli start now" }),
+      );
+
+      // act
+      await user.click(screen.getByRole("button", { name: "Yes, start now" }));
+
+      // assert
+      const dialog = screen.getByRole("dialog", { name: "Let Eli start now?" });
+      expect(await within(dialog).findByRole("alert")).toHaveTextContent(
+        START_NOW_PROBLEM,
+      );
+      expect(
+        within(dialog).getByRole("button", { name: "Yes, start now" }),
+      ).toBeEnabled();
+    },
+  );
+
+  it("clears the problem once she closes the dialog", async () => {
+    // arrange
+    server.use(http.post(`*${PROGRAM_START_URL}`, () => HttpResponse.error()));
+    const user = renderLoadedCard({ status: waitingStatus() });
+    await user.click(
+      await screen.findByRole("button", { name: "Let Eli start now" }),
+    );
+    await user.click(screen.getByRole("button", { name: "Yes, start now" }));
+    await screen.findByRole("alert");
+    await user.click(screen.getByRole("button", { name: "Keep my 14 days" }));
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Let Eli start now" }));
+
+    // assert
+    expect(
+      within(screen.getByRole("dialog")).queryByRole("alert"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("clears the problem while she tries again", async () => {
+    // arrange
+    let releaseRetry = () => {};
+    const retried = new Promise<void>((resolve) => {
+      releaseRetry = resolve;
+    });
+    let attempts = 0;
+    server.use(
+      http.post(`*${PROGRAM_START_URL}`, async () => {
+        attempts += 1;
+
+        if (attempts === 1) {
+          return HttpResponse.error();
+        }
+
+        await retried;
+
+        return HttpResponse.json({ status: "started" });
+      }),
+    );
+    const user = renderLoadedCard({ status: waitingStatus() });
+    await user.click(
+      await screen.findByRole("button", { name: "Let Eli start now" }),
+    );
+    await user.click(screen.getByRole("button", { name: "Yes, start now" }));
+    await screen.findByRole("alert");
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Yes, start now" }));
+
+    // assert
+    expect(
+      within(screen.getByRole("dialog")).queryByRole("alert"),
+    ).not.toBeInTheDocument();
+    releaseRetry();
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+  });
+});
+
 describe("the program status card when her last payment failed", () => {
   it("announces the failed payment and hands her to the payment provider through a native form post", () => {
     // arrange, act
@@ -439,7 +543,7 @@ function renderLoadedCard(loaded: { status: ProgramStatus }) {
         path: CLIENT_PORTAL_PATH,
       },
       {
-        action: ({ request }: { request: Request }) => fetch(request),
+        action: frameworkModeAction(startProgram),
         path: PROGRAM_START_URL,
       },
     ],

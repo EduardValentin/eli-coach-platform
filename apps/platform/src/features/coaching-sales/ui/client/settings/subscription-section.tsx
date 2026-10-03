@@ -8,7 +8,7 @@ import {
   SettingsRows,
   SettingsSection,
 } from "@eli-coach-platform/ui/portal";
-import { Button, InlineProblem } from "@eli-coach-platform/ui/primitives";
+import { Button } from "@eli-coach-platform/ui/primitives";
 import { CreditCard } from "lucide-react";
 import { useRef } from "react";
 import { useSearchParams } from "react-router";
@@ -17,9 +17,13 @@ import {
   PAYMENT_METHOD_UNAVAILABLE_PARAM,
   type ClientSettings,
 } from "~/features/coaching-sales/contracts/client-subscription";
+import { ManagePaymentMethodButton } from "~/features/coaching-sales/ui/client/payment-method/manage-payment-method-button";
+import {
+  PaymentMethodProblems,
+  type PaymentMethodProblem,
+} from "~/features/coaching-sales/ui/client/payment-method/payment-method-problems";
 
 import { CancelSubscriptionDialog } from "./cancel-subscription-dialog";
-import { PaymentMethodForm } from "./payment-method-form";
 import {
   activePlanLine,
   CANCEL_ROW_ACTION_LABEL,
@@ -29,10 +33,7 @@ import {
   fullRefundFacts,
   MANAGE_ROW_ACTION_LABEL,
   noRefundFacts,
-  OPENING_PAYMENT_METHOD_LABEL,
   PAYMENT_METHOD_ROW_TITLE,
-  PAYMENT_METHOD_UNAVAILABLE_MESSAGE,
-  PAYMENT_PROBLEM_LINE,
   planTitle,
   SUBSCRIPTION_TITLE,
   waitingPlanLine,
@@ -55,9 +56,11 @@ const CANCELLATION_IDS = {
 
 const PAYMENT_METHOD_IDS = {
   title: "subscription-payment-label",
-  paymentProblem: "subscription-payment-problem",
-  handOffProblem: "subscription-payment-method-problem",
-};
+  problems: {
+    "payment-problem": "subscription-payment-problem",
+    "hand-off-failed": "subscription-payment-method-problem",
+  },
+} as const;
 
 function planLine(subscription: Subscription, dayOf: DayOf): string {
   const { accessEndsAt, cancelledAt, paidAt, status } = subscription;
@@ -141,59 +144,36 @@ function usePaymentMethodUnavailable(): boolean {
 }
 
 function PaymentMethodRow({ subscription }: { subscription: Subscription }) {
-  const { paymentProblem } = subscription;
   const handOffFailed = usePaymentMethodUnavailable();
+  const shown: PaymentMethodProblem[] = [
+    ...(subscription.paymentProblem ? (["payment-problem"] as const) : []),
+    ...(handOffFailed ? (["hand-off-failed"] as const) : []),
+  ];
 
   return (
     <SettingsRow
       data-parity="subscription-payment-method"
       labelId={PAYMENT_METHOD_IDS.title}
       problem={
-        (paymentProblem || handOffFailed) && (
+        shown.length > 0 && (
           <div className="grid gap-1">
-            {paymentProblem && (
-              <InlineProblem
-                data-parity="payment-problem"
-                id={PAYMENT_METHOD_IDS.paymentProblem}
-                role="status"
-              >
-                {PAYMENT_PROBLEM_LINE}
-              </InlineProblem>
-            )}
-            {handOffFailed && (
-              <InlineProblem
-                data-parity="payment-method-problem"
-                id={PAYMENT_METHOD_IDS.handOffProblem}
-                role="alert"
-              >
-                {PAYMENT_METHOD_UNAVAILABLE_MESSAGE}
-              </InlineProblem>
-            )}
+            <PaymentMethodProblems
+              ids={PAYMENT_METHOD_IDS.problems}
+              shown={shown}
+            />
           </div>
         )
       }
       title={PAYMENT_METHOD_ROW_TITLE}
     >
-      <PaymentMethodForm>
-        {({ opening }) => (
-          <Button
-            aria-busy={opening}
-            aria-describedby={describedByOf(
-              PAYMENT_METHOD_IDS.title,
-              paymentProblem ? PAYMENT_METHOD_IDS.paymentProblem : undefined,
-              handOffFailed ? PAYMENT_METHOD_IDS.handOffProblem : undefined,
-            )}
-            className={ROW_ACTION_CLASS}
-            data-parity="manage-payment-method"
-            disabled={opening}
-            size="sm"
-            type="submit"
-            variant="outline"
-          >
-            {opening ? OPENING_PAYMENT_METHOD_LABEL : MANAGE_ROW_ACTION_LABEL}
-          </Button>
+      <ManagePaymentMethodButton
+        aria-describedby={describedByOf(
+          PAYMENT_METHOD_IDS.title,
+          ...shown.map((problem) => PAYMENT_METHOD_IDS.problems[problem]),
         )}
-      </PaymentMethodForm>
+        className={ROW_ACTION_CLASS}
+        label={MANAGE_ROW_ACTION_LABEL}
+      />
     </SettingsRow>
   );
 }
@@ -203,9 +183,9 @@ export function SubscriptionSection({
 }: {
   settings: ClientSettings;
 }) {
-  const heading = useRef<HTMLHeadingElement>(null);
+  const subscriptionHeading = useRef<HTMLHeadingElement>(null);
   const timeZone = useCalendarDayTimeZone();
-  const cancelSubscription = useCancelSubscription(heading);
+  const cancelSubscription = useCancelSubscription(subscriptionHeading);
   const { subscription, cancellation } = settings;
 
   if (subscription.status === "ended") {
@@ -218,7 +198,7 @@ export function SubscriptionSection({
     <SettingsSection
       data-parity-root="SubscriptionSection"
       headingId="subscription-heading"
-      headingRef={heading}
+      headingRef={subscriptionHeading}
       icon={
         <CreditCard
           aria-hidden="true"

@@ -1,46 +1,55 @@
-import { useEffect, useEffectEvent, useState } from "react";
-import { useFetcher } from "react-router";
+import { useState } from "react";
 
+import { programStartedSchema } from "~/features/coaching-sales/contracts/client-subscription";
 import { COACHING_SALES_API_PATHS } from "~/features/coaching-sales/contracts/paths";
+import { useConfirmedFetcherDialog } from "~/features/coaching-sales/ui/shared/use-confirmed-fetcher-dialog";
+
+import { START_NOW_PROBLEM } from "./program-status-copy";
 
 export type StartNowDialogWiring = {
   onConfirm: () => void;
   onOpenChange: (open: boolean) => void;
   open: boolean;
+  problem: string | null;
   starting: boolean;
 };
 
 export function useStartNow() {
-  const [open, setOpen] = useState(false);
-  const { data, state, submit } = useFetcher<unknown>();
+  const [problem, setProblem] = useState<string | null>(null);
+  const confirmed = useConfirmedFetcherDialog({
+    action: COACHING_SALES_API_PATHS.programStart,
+    onSettled: (answer) => {
+      if (programStartedSchema.safeParse(answer).success) {
+        confirmed.close();
+        return;
+      }
 
-  const settle = useEffectEvent(() => {
-    setOpen(false);
+      setProblem(START_NOW_PROBLEM);
+    },
   });
 
-  useEffect(() => {
-    if (data !== undefined) {
-      settle();
+  const changeOpen = (next: boolean) => {
+    confirmed.setOpen(next);
+
+    if (!next) {
+      setProblem(null);
     }
-  }, [data]);
+  };
 
   const confirm = () => {
-    void submit(
-      {},
-      {
-        action: COACHING_SALES_API_PATHS.programStart,
-        encType: "application/json",
-        method: "post",
-      },
-    );
+    setProblem(null);
+    confirmed.send();
   };
 
   const dialog: StartNowDialogWiring = {
     onConfirm: confirm,
-    onOpenChange: setOpen,
-    open,
-    starting: state !== "idle",
+    onOpenChange: changeOpen,
+    open: confirmed.open,
+    problem,
+    starting: confirmed.pending,
   };
 
-  return { askToConfirm: () => setOpen(true), dialog };
+  return { askToConfirm: confirmed.openDialog, dialog };
 }
+
+export type StartNow = ReturnType<typeof useStartNow>;

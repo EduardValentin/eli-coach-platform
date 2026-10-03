@@ -64,3 +64,6 @@ export const START_NOW_TITLE = "Let Eli start now?";
 export const KEEP_MY_14_DAYS_LABEL = "Keep my 14 days";
 
 export const YES_START_NOW_LABEL = "Yes, start now";
+
+export const START_NOW_PROBLEM =
+  "Your program couldn't be started just now. Nothing has changed, so please try again.";

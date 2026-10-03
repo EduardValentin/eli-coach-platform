@@ -25,12 +25,14 @@ import {
   vi,
 } from "vitest";
 
+import { clientAction as cancelSubscription } from "~/features/coaching-sales/api/client/subscription-cancellation";
 import type { ClientSettings } from "~/features/coaching-sales/contracts/client-subscription";
 import {
   CLIENT_ENDED_PATH,
   CLIENT_SETTINGS_PATH,
   COACHING_SALES_API_PATHS,
 } from "~/features/coaching-sales/contracts/paths";
+import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
 
 import SettingsRoute from "./settings-page";
 
@@ -493,6 +495,29 @@ describe("a cancellation the platform refuses", () => {
     },
   );
 
+  it("keeps the dialog open and asks her to try again when the request never reaches the server", async () => {
+    // arrange
+    server.use(http.post(`*${CANCELLATION_URL}`, () => HttpResponse.error()));
+    const user = await renderSettings({ settings: WAITING_REFUNDABLE });
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+
+    // act
+    await user.click(
+      screen.getByRole("button", { name: "Cancel and get a full refund" }),
+    );
+
+    // assert
+    const dialog = screen.getByRole("dialog");
+    expect(await within(dialog).findByRole("alert")).toHaveTextContent(
+      CANCEL_UNAVAILABLE,
+    );
+    expect(
+      within(dialog).getByRole("button", {
+        name: "Cancel and get a full refund",
+      }),
+    ).toBeEnabled();
+  });
+
   it("clears the reason once she closes the dialog", async () => {
     // arrange
     recordCancellations(
@@ -582,7 +607,7 @@ async function renderSettings(options: {
         path: CLIENT_ENDED_PATH,
       },
       {
-        action: ({ request }: { request: Request }) => fetch(request),
+        action: frameworkModeAction(cancelSubscription),
         path: CANCELLATION_URL,
       },
     ],

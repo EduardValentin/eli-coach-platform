@@ -30,18 +30,8 @@ export const KEEP_COACHING_LABEL = "Keep my coaching";
 
 export const CANCELLING_LABEL = "Cancelling…";
 
-export const MANAGE_PAYMENT_METHOD_LABEL = "Manage payment method";
-
-export const OPENING_PAYMENT_METHOD_LABEL = "Opening…";
-
-export const PAYMENT_PROBLEM_LINE =
-  "Your last payment didn't go through. Update your card to keep your coaching going.";
-
 export const CANCEL_UNAVAILABLE_MESSAGE =
   "Your coaching couldn't be cancelled just now. Nothing has changed, so please try again.";
-
-export const PAYMENT_METHOD_UNAVAILABLE_MESSAGE =
-  "Your payment details couldn't be opened just now. Please try again.";
 
 export const FULL_REFUND_CONFIRMATION =
   "You'll get a full refund and your access ends right away.";
