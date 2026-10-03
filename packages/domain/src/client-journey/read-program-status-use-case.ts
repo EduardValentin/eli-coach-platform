@@ -1,4 +1,5 @@
 import type { CoachingSubscriptions } from "../coaching-subscription";
+import type { Clock } from "../shared";
 
 import type { ClientJourneyStep } from "./client-journey";
 import type { ClientJourneys } from "./client-journeys";
@@ -12,6 +13,7 @@ type ProgramStatus = {
 };
 
 type ReadProgramStatusUseCaseOptions = {
+  clock: Clock;
   journeys: ClientJourneys;
   subscriptions: CoachingSubscriptions;
 };
@@ -37,11 +39,14 @@ export class ReadProgramStatusUseCase {
       journey.clientId,
     );
 
+    const startNowUntil =
+      subscription?.startNowUntil(this.options.clock.now()) ?? null;
+
     return {
       kind: step,
       submittedAt: journey.onboardingSubmittedAt,
-      workStartsOn: subscription?.programWorkStart() ?? null,
-      startNowUntil: subscription?.startNowUntil() ?? null,
+      workStartsOn: startNowUntil,
+      startNowUntil,
       paymentProblem: subscription?.hasPaymentProblem() ?? false,
     };
   }

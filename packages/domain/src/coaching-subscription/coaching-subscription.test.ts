@@ -356,23 +356,32 @@ describe("CoachingSubscription.hasPaymentProblem", () => {
 });
 
 describe("CoachingSubscription start now", () => {
-  it("offers to start now on the waiting path until the withdrawal deadline", () => {
+  it("offers to start now on the waiting path on day 13, until the withdrawal deadline", () => {
     // act
-    const until = onPath("waiting").startNowUntil();
+    const until = onPath("waiting").startNowUntil(DAY_13);
 
     // assert
     expect(until).toEqual(WITHDRAWAL_DEADLINE);
   });
 
   it.each([
+    ["the waiting path at the deadline", onPath("waiting")],
     ["the immediate path", subscriptionOf({ startChoice: "immediate" })],
     [
+      "a cancelled subscription",
+      subscriptionOf({
+        status: "cancelled",
+        cancelledAt: PAID_AT,
+        accessEndsAt: ACCESS_END,
+      }),
+    ],
+    [
       "an ended subscription",
-      subscriptionOf({ status: "ended", accessEndsAt: DAY_13 }),
+      subscriptionOf({ status: "ended", accessEndsAt: PAID_AT }),
     ],
   ])("offers no start now on %s", (_label, subscription) => {
     // act
-    const until = subscription.startNowUntil();
+    const until = subscription.startNowUntil(DAY_14);
 
     // assert
     expect(until).toBeNull();
@@ -404,6 +413,16 @@ describe("CoachingSubscription start now", () => {
   it.each([
     ["at the deadline", onPath("waiting"), DAY_14, "outside-window"],
     ["on the immediate path", onPath("immediate"), DAY_13, "outside-window"],
+    [
+      "once cancelled",
+      subscriptionOf({
+        status: "cancelled",
+        cancelledAt: PAID_AT,
+        accessEndsAt: ACCESS_END,
+      }),
+      DAY_13,
+      "outside-window",
+    ],
     [
       "once ended",
       subscriptionOf({ status: "ended", accessEndsAt: PAID_AT }),

@@ -47,7 +47,7 @@ export class ReadClientSubscriptionUseCase {
       withdrawalDeadline: withdrawalDeadline(subscription.paidAt),
       paidThrough: subscription.paidThrough(),
       refundOnCancellationCents: subscription.refundOnCancellationAt(now),
-      startNowUntil: subscription.startNowUntil(),
+      startNowUntil: subscription.startNowUntil(now),
       paymentProblem: subscription.hasPaymentProblem(),
       refundDue: subscription.hasRefundOutstanding(),
     };

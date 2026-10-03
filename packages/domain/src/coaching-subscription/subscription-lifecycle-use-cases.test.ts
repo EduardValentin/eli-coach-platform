@@ -826,6 +826,23 @@ describe("ReadClientSubscriptionUseCase", () => {
     });
   });
 
+  it("reads the waiting path at its withdrawal deadline with no start now", async () => {
+    // arrange
+    const useCase = new ReadClientSubscriptionUseCase({
+      clock: clockAt(DAY_14),
+      subscriptions: createSubscriptions(subscriptionOf()),
+    });
+
+    // act
+    const reading = await useCase.execute(AUTH_SUBJECT_ID);
+
+    // assert
+    expect(reading).toMatchObject({
+      cancellationRule: "no-refund",
+      startNowUntil: null,
+    });
+  });
+
   it("reads an ended subscription with a refund still owed", async () => {
     // arrange
     const refund = RefundDue.full({ amountCents: 44700, cancelledAt: DAY_13 });

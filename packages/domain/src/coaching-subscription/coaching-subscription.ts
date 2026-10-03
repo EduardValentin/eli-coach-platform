@@ -40,7 +40,7 @@ export type CancellationRule = OfferedCancellationRule | "none";
 
 export const START_NOW_REFUSALS = ["ended", "outside-window"] as const;
 
-type StartNowRefusal = (typeof START_NOW_REFUSALS)[number];
+export type StartNowRefusal = (typeof START_NOW_REFUSALS)[number];
 
 export type ProviderInstruction =
   { kind: "end-now" } | { kind: "end-at"; at: Date };
@@ -252,8 +252,14 @@ export class CoachingSubscription {
       : null;
   }
 
-  startNowUntil(): Date | null {
-    return this.status === "not-started" ? this.programWorkStart() : null;
+  startNowUntil(now: Date): Date | null {
+    const workStart = this.programWorkStart();
+
+    if (this.statusAt(now) !== "not-started" || workStart === null) {
+      return null;
+    }
+
+    return now.getTime() < workStart.getTime() ? workStart : null;
   }
 
   startNow(now: Date): StartNowDecision {
@@ -261,9 +267,7 @@ export class CoachingSubscription {
       return { outcome: "refused", reason: "ended" };
     }
 
-    const until = this.startNowUntil();
-
-    if (!until || now.getTime() >= until.getTime()) {
+    if (this.startNowUntil(now) === null) {
       return { outcome: "refused", reason: "outside-window" };
     }
 

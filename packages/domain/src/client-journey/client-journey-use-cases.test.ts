@@ -171,6 +171,7 @@ describe("ReadProgramStatusUseCase", () => {
       subscriptionOf({ startChoice: "immediate" }),
     );
     const useCase = new ReadProgramStatusUseCase({
+      clock: { now: () => NOW },
       journeys: createJourneys(journey(WELCOME_SEEN_AT, SUBMITTED_AT)),
       subscriptions,
     });
@@ -192,6 +193,7 @@ describe("ReadProgramStatusUseCase", () => {
   it("answers her submission with the day the work starts and until when she can start now when she waits out the withdrawal window", async () => {
     // arrange
     const useCase = new ReadProgramStatusUseCase({
+      clock: { now: () => NOW },
       journeys: createJourneys(journey(WELCOME_SEEN_AT, SUBMITTED_AT)),
       subscriptions: createSubscriptions(
         subscriptionOf({ startChoice: "waiting" }),
@@ -211,9 +213,30 @@ describe("ReadProgramStatusUseCase", () => {
     });
   });
 
+  it("answers neither a coming work start nor start now once her withdrawal deadline has passed on the waiting path", async () => {
+    // arrange
+    const useCase = new ReadProgramStatusUseCase({
+      clock: { now: () => new Date("2026-10-10T10:00:00.000Z") },
+      journeys: createJourneys(journey(WELCOME_SEEN_AT, SUBMITTED_AT)),
+      subscriptions: createSubscriptions(
+        subscriptionOf({ startChoice: "waiting" }),
+      ),
+    });
+
+    // act
+    const status = await useCase.execute("user_ana");
+
+    // assert
+    expect(status).toMatchObject({
+      workStartsOn: null,
+      startNowUntil: null,
+    });
+  });
+
   it("answers a payment problem on her subscription", async () => {
     // arrange
     const useCase = new ReadProgramStatusUseCase({
+      clock: { now: () => NOW },
       journeys: createJourneys(journey(WELCOME_SEEN_AT, SUBMITTED_AT)),
       subscriptions: createSubscriptions(
         subscriptionOf({ startChoice: "immediate", paymentProblemSince: NOW }),
@@ -230,6 +253,7 @@ describe("ReadProgramStatusUseCase", () => {
   it("answers her submission with no start day when she holds no subscription", async () => {
     // arrange
     const useCase = new ReadProgramStatusUseCase({
+      clock: { now: () => NOW },
       journeys: createJourneys(journey(WELCOME_SEEN_AT, SUBMITTED_AT)),
       subscriptions: createSubscriptions(null),
     });
@@ -259,6 +283,7 @@ describe("ReadProgramStatusUseCase", () => {
     async (expected, reviewStamps) => {
       // arrange
       const useCase = new ReadProgramStatusUseCase({
+        clock: { now: () => NOW },
         journeys: createJourneys(
           journey(WELCOME_SEEN_AT, SUBMITTED_AT, reviewStamps),
         ),
@@ -285,6 +310,7 @@ describe("ReadProgramStatusUseCase", () => {
       subscriptionOf({ startChoice: "waiting" }),
     );
     const useCase = new ReadProgramStatusUseCase({
+      clock: { now: () => NOW },
       journeys: createJourneys(found),
       subscriptions,
     });

@@ -221,6 +221,7 @@ export function composeCoachingSalesFeature(
       subscriptions,
     }),
     readProgramStatus: new ReadProgramStatusUseCase({
+      clock,
       journeys,
       subscriptions,
     }),
