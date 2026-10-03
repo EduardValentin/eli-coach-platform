@@ -17,6 +17,14 @@ export class ClientEndedPage {
     return this.landmark.getByText(REFUND_LINE, { exact: true });
   }
 
+  async visit(): Promise<void> {
+    await this.page.goto(ENDED_PATH);
+  }
+
+  async visitWithTrailingSlash(): Promise<void> {
+    await this.page.goto(`${ENDED_PATH}/`);
+  }
+
   async expectOpen(): Promise<void> {
     await expect(this.page).toHaveURL(new RegExp(`${ENDED_PATH}$`));
     await expect(

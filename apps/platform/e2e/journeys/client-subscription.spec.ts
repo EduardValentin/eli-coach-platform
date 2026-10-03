@@ -6,7 +6,10 @@ import { expect, test } from "../support/fixtures";
 import { daysAfter } from "../support/paid-clients";
 import { readStripeSubscription } from "../support/stripe-subscriptions";
 import { paidThrough } from "../support/subscribed-clients";
-import { setPhoneViewport } from "../support/viewport";
+import {
+  expectNoHorizontalScroll,
+  setPhoneViewport,
+} from "../support/viewport";
 
 const JOURNEY_TIMEOUT_MS = 180_000;
 const WITHDRAWAL_DAYS = 14;
@@ -18,6 +21,10 @@ const IMMEDIATE_START_BODY =
   "I give up my 14-day right of withdrawal so Eli can start on my program now. If I cancel after that, there is no refund.";
 const REFUND_DUE = "€447";
 const PORTAL_PATHS = ["/client", "/client/settings", "/client/profile"];
+const NOTHING_TO_CANCEL = {
+  error: "nothing-to-cancel",
+  message: "This coaching has already ended, so there is nothing to cancel.",
+};
 
 const dayMonthFormatter = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",
@@ -124,9 +131,11 @@ test("a client on the waiting path cancels within her 14 days for a full refund 
 
 test("a client who chose an immediate start cancels without a refund and keeps her access until her billing date", async ({
   clientDashboard,
+  clientEnded,
   clientPortalShell,
   clientSettings,
   page,
+  portalRequests,
   provisionSubscribedClient,
   signIn,
 }) => {
@@ -142,12 +151,17 @@ test("a client who chose an immediate start cancels without a refund and keeps h
   await clientDashboard.open();
   await setPhoneViewport(page);
 
+  // assert
+  await clientDashboard.expectNoStartNowOffer();
+
   // act
   await clientPortalShell.openSettingsFromMoreSheet();
 
   // assert
   await clientSettings.expectOpen();
+  await clientSettings.expectPlan(PLAN_TITLE, waitingPlanLine(client.paidAt));
   await clientSettings.expectCancellationFacts(noRefundFacts(client.paidAt));
+  await expectNoHorizontalScroll(page);
 
   // act
   const cancellation = await clientSettings.cancel("Cancel subscription");
@@ -176,14 +190,41 @@ test("a client who chose an immediate start cancels without a refund and keeps h
     ),
   ).toBeLessThan(CANCEL_AT_TOLERANCE_MS);
 
+  await expectNoHorizontalScroll(page);
+
+  // act
+  const secondCancellation = await portalRequests.cancelSubscription();
+
+  // assert
+  expect(secondCancellation).toEqual({ status: 409, body: NOTHING_TO_CANCEL });
+  const unchanged = await readStripeSubscription(
+    client.subscription.subscriptionId,
+  );
+  expect(unchanged.status).toBe("active");
+  expect(unchanged.cancel_at).toBe(subscription.cancel_at);
+
   // act
   await clientDashboard.open();
 
   // assert
-  await expect(page).toHaveURL(/\/client$/);
+  await clientDashboard.expectOpen();
+  await clientDashboard.expectNoStartNowOffer();
+
+  // act
+  await clientEnded.visit();
+
+  // assert
+  await clientDashboard.expectOpen();
+
+  // act
+  await clientEnded.visitWithTrailingSlash();
+
+  // assert
+  await clientDashboard.expectOpen();
 });
 
 test("a client on the waiting path past her 14 days cancels without a refund", async ({
+  clientDashboard,
   clientSettings,
   page,
   provisionSubscribedClient,
@@ -198,6 +239,12 @@ test("a client on the waiting path past her 14 days cancels without a refund", a
   });
   await page.goto("/store");
   await signIn();
+
+  // act
+  await clientDashboard.open();
+
+  // assert
+  await clientDashboard.expectNoStartNowOffer();
 
   // act
   await clientSettings.open();
@@ -379,4 +426,181 @@ test("a client opens Stripe's page to manage her payment method and comes back t
   // assert
   await clientSettings.expectPlan(PLAN_TITLE, waitingPlanLine(client.paidAt));
   await clientSettings.expectCancellationFacts(noRefundFacts(client.paidAt));
+  await clientSettings.expectNoHandOffProblem();
+  await clientSettings.expectNoPaymentProblem();
+
+  // act
+  await clientSettings.openAfterFailedHandOff();
+
+  // assert
+  await clientSettings.expectHandOffFailed();
+  await clientSettings.expectNoPaymentProblem();
+});
+
+test("a client reaches Let Eli start now by keyboard, focus stays in its dialog and returns when she keeps her 14 days", async ({
+  clientDashboard,
+  clientSettings,
+  page,
+  provisionSubscribedClient,
+  signIn,
+}) => {
+  test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+  // arrange
+  const client = await provisionSubscribedClient({
+    start: "waiting",
+    daysSincePayment: 3,
+  });
+  await page.goto("/store");
+  await signIn();
+  await clientDashboard.open();
+
+  // act
+  const dialog = await clientDashboard.openStartNowWithKeyboard();
+
+  // assert
+  await dialog.expectOpen(IMMEDIATE_START_BODY);
+  await dialog.expectFocusTrapped();
+
+  // act
+  await dialog.closeWithEscape();
+
+  // assert
+  await clientDashboard.expectStartNowFocused();
+  await clientDashboard.expectStartNowOffer();
+
+  // act
+  await clientSettings.open();
+
+  // assert
+  await clientSettings.expectCancellationFacts(fullRefundFacts(client.paidAt));
+});
+
+test("once her coaching has ended a client has nothing left to cancel, start, manage or save", async ({
+  clientEnded,
+  page,
+  portalRequests,
+  provisionSubscribedClient,
+  signIn,
+}) => {
+  test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+  // arrange
+  const client = await provisionSubscribedClient({
+    start: "waiting",
+    daysSincePayment: 3,
+  });
+  await page.goto("/store");
+  await signIn();
+
+  // act
+  const cancellation = await portalRequests.cancelSubscription();
+
+  // assert
+  expect(cancellation).toMatchObject({
+    status: 200,
+    body: { status: "cancelled", rule: "full-refund", refundDue: true },
+  });
+
+  // act
+  const refusals = {
+    cancel: await portalRequests.cancelSubscription(),
+    startNow: await portalRequests.startProgramNow(),
+    paymentMethod: await portalRequests.openPaymentMethod(),
+    draft: await portalRequests.saveOnboardingDraft(),
+  };
+
+  // assert
+  expect(refusals.cancel).toEqual({ status: 409, body: NOTHING_TO_CANCEL });
+  expect(refusals.startNow.status).toBe(409);
+  expect(refusals.paymentMethod).toEqual({
+    status: 303,
+    location: "/client/ended",
+  });
+  expect(refusals.draft).toEqual({ status: 409, body: { error: "ended" } });
+  const subscription = await readStripeSubscription(
+    client.subscription.subscriptionId,
+  );
+  expect(subscription.status).toBe("canceled");
+
+  // act
+  await page.goto("/client/settings");
+
+  // assert
+  await clientEnded.expectOpen();
+  await clientEnded.expectRefundLine();
+});
+
+test("a client's subscription routes refuse a signed-out visitor, a coach and any method but POST", async ({
+  page,
+  portalRequests,
+  provisionCoach,
+  provisionSubscribedClient,
+  signInAsCoach,
+}) => {
+  test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+  // arrange
+  await provisionCoach();
+  const client = await provisionSubscribedClient({
+    start: "waiting",
+    daysSincePayment: 3,
+  });
+
+  // act
+  const anonymous = {
+    cancel: await portalRequests.cancelSubscription(),
+    startNow: await portalRequests.startProgramNow(),
+    reads: await portalRequests.readSubscriptionRoutes(),
+  };
+
+  // assert
+  expect(anonymous.cancel.status).toBe(401);
+  expect(anonymous.startNow.status).toBe(401);
+  expect(anonymous.reads).toEqual([405, 405, 405]);
+
+  // act
+  await page.goto("/");
+  await signInAsCoach();
+  const coach = {
+    cancel: await portalRequests.cancelSubscription(),
+    startNow: await portalRequests.startProgramNow(),
+    paymentMethod: await portalRequests.openPaymentMethod(),
+  };
+
+  // assert
+  expect(coach.cancel.status).toBe(403);
+  expect(coach.startNow.status).toBe(403);
+  expect(coach.paymentMethod).toEqual({ status: 403, location: null });
+  const subscription = await readStripeSubscription(
+    client.subscription.subscriptionId,
+  );
+  expect(subscription.status).toBe("active");
+  expect(subscription.cancel_at).toBeNull();
+});
+
+test("a client account without a subscription has nothing to cancel, start or manage", async ({
+  page,
+  portalRequests,
+  provisionAccount,
+  signIn,
+}) => {
+  test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+  // arrange
+  await provisionAccount("CLIENT");
+  await page.goto("/store");
+  await signIn();
+
+  // act
+  const answers = {
+    cancel: await portalRequests.cancelSubscription(),
+    startNow: await portalRequests.startProgramNow(),
+    paymentMethod: await portalRequests.openPaymentMethod(),
+  };
+
+  // assert
+  expect(answers.cancel).toEqual({ status: 404, body: { error: "not-found" } });
+  expect(answers.startNow.status).toBe(404);
+  expect(answers.paymentMethod.status).toBe(404);
 });

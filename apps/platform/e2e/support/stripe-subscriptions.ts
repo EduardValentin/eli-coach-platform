@@ -26,6 +26,7 @@ export type StripeRefund = StripeChange & { chargeId: string };
 const TEST_CARD_PAYMENT_METHOD = "pm_card_visa";
 const COACHING_PRODUCT_ID = "e2e_coaching_subscription";
 const RESOURCE_MISSING = "resource_missing";
+const MILLISECONDS_PER_SECOND = 1_000;
 
 export async function createHeldStripeSubscription(
   seed: HeldSubscriptionSeed,
@@ -121,6 +122,29 @@ export async function cancelInStripe(
   );
 
   return { requestId: cancelled.lastResponse.requestId };
+}
+
+export async function scheduleEndInStripe(
+  subscription: StripeTestSubscription,
+  endsAt: Date,
+): Promise<StripeChange> {
+  const scheduled = await createStripeTestClient().subscriptions.update(
+    subscription.subscriptionId,
+    { cancel_at: Math.floor(endsAt.getTime() / MILLISECONDS_PER_SECOND) },
+  );
+
+  return { requestId: scheduled.lastResponse.requestId };
+}
+
+export async function liftScheduledEndInStripe(
+  subscription: StripeTestSubscription,
+): Promise<StripeChange> {
+  const lifted = await createStripeTestClient().subscriptions.update(
+    subscription.subscriptionId,
+    { cancel_at: "" },
+  );
+
+  return { requestId: lifted.lastResponse.requestId };
 }
 
 async function payByDefaultWithTestCard(

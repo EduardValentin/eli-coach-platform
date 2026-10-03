@@ -2,6 +2,7 @@ import type { ProgressPhotoView } from "@eli-coach-platform/domain/client-profil
 import { expect, type Page } from "@playwright/test";
 
 import { ConfirmationDialog } from "./confirmation-dialog";
+import { tabTo } from "./keyboard";
 import { HYDRATION_RETRY_TIMEOUT_MS } from "./locator-text";
 import {
   REFUSED_PHOTO_TOAST,
@@ -76,6 +77,11 @@ export class ClientDashboard {
 
   async open(): Promise<void> {
     await this.page.goto(DASHBOARD_PATH);
+    await expect(this.page.getByRole("heading", { level: 1 })).toBeVisible();
+  }
+
+  async expectOpen(): Promise<void> {
+    await expect(this.page).toHaveURL(new RegExp(`${DASHBOARD_PATH}$`));
     await expect(this.page.getByRole("heading", { level: 1 })).toBeVisible();
   }
 
@@ -157,6 +163,23 @@ export class ClientDashboard {
     }).toPass();
 
     return dialog;
+  }
+
+  async openStartNowWithKeyboard(): Promise<ConfirmationDialog> {
+    const dialog = new ConfirmationDialog(this.page, START_NOW_LABELS);
+
+    await expect(async () => {
+      await this.page.getByRole("heading", { level: 1 }).click();
+      await tabTo(this.page, this.startNowButton);
+      await this.page.keyboard.press("Enter");
+      await dialog.expectShownWithin(HYDRATION_RETRY_TIMEOUT_MS);
+    }).toPass();
+
+    return dialog;
+  }
+
+  async expectStartNowFocused(): Promise<void> {
+    await expect(this.startNowButton).toBeFocused();
   }
 
   async expectPaymentProblem(): Promise<void> {

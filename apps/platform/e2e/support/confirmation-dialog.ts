@@ -2,6 +2,17 @@ import { expect, type Locator, type Page } from "@playwright/test";
 
 import { isFocused } from "./keyboard";
 
+const TRAP_PROBE_KEYS = [
+  "Tab",
+  "Tab",
+  "Tab",
+  "Tab",
+  "Shift+Tab",
+  "Shift+Tab",
+  "Shift+Tab",
+  "Shift+Tab",
+] as const;
+
 export type ConfirmationLabels = {
   title: string;
   confirm: string;
@@ -54,6 +65,15 @@ export class ConfirmationDialog {
   async tabWithin(): Promise<void> {
     await this.page.keyboard.press("Tab");
     expect(await isFocused(this.dialog)).toBe(true);
+  }
+
+  async expectFocusTrapped(): Promise<void> {
+    expect(await isFocused(this.dialog)).toBe(true);
+
+    for (const key of TRAP_PROBE_KEYS) {
+      await this.page.keyboard.press(key);
+      expect(await isFocused(this.dialog)).toBe(true);
+    }
   }
 
   async expectClosed(): Promise<void> {

@@ -8,9 +8,12 @@ export type CancellationAction =
   "Cancel and get a full refund" | "Cancel subscription";
 
 const SETTINGS_PATH = "/client/settings";
+const FAILED_HAND_OFF_PATH = `${SETTINGS_PATH}?paymentMethod=unavailable`;
 const KEEP_COACHING_LABEL = "Keep my coaching";
 const PAYMENT_PROBLEM_LINE =
   "Your last payment didn't go through. Update your card to keep your coaching going.";
+const HAND_OFF_FAILED_LINE =
+  "Your payment details couldn't be opened just now. Please try again.";
 
 export class ClientSettingsPage {
   constructor(private readonly page: Page) {}
@@ -50,6 +53,12 @@ export class ClientSettingsPage {
       .filter({ hasText: PAYMENT_PROBLEM_LINE });
   }
 
+  private get handOffFailed() {
+    return this.subscription
+      .getByRole("alert")
+      .filter({ hasText: HAND_OFF_FAILED_LINE });
+  }
+
   private cancellationDialog(action: CancellationAction): ConfirmationDialog {
     return new ConfirmationDialog(this.page, {
       title: action,
@@ -61,6 +70,11 @@ export class ClientSettingsPage {
   async open(): Promise<void> {
     await this.page.goto(SETTINGS_PATH);
     await this.expectOpen();
+  }
+
+  async openAfterFailedHandOff(): Promise<void> {
+    await this.page.goto(FAILED_HAND_OFF_PATH);
+    await expect(this.heading).toBeVisible();
   }
 
   async expectOpen(): Promise<void> {
@@ -138,6 +152,15 @@ export class ClientSettingsPage {
 
   async expectNoPaymentProblem(): Promise<void> {
     await expect(this.paymentProblem).toHaveCount(0);
+  }
+
+  async expectHandOffFailed(): Promise<void> {
+    await expect(this.handOffFailed).toBeVisible();
+    await expect(this.manageButton).toBeEnabled();
+  }
+
+  async expectNoHandOffProblem(): Promise<void> {
+    await expect(this.handOffFailed).toHaveCount(0);
   }
 
   async expectNoPaymentMethod(): Promise<void> {
