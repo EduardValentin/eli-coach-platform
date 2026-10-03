@@ -25,13 +25,13 @@ import {
   heroSectionStyle,
   heroSubheadStyle,
   closingNoteSectionStyle,
+  closingNoteTextStyle,
   detailsCardStyle,
   detailsLabelStyle,
   detailsSectionStyle,
   detailsValueStyle,
   outerContainerStyle,
   primaryButtonStyle,
-  reassuranceTextStyle,
   wordmarkSectionStyle,
   wordmarkStyle,
   wordmarkSubStyle,
@@ -124,7 +124,7 @@ export function RefundDueEmailTemplate({
             <EmailDivider style={dividerStyle} />
 
             <EmailSection style={closingNoteSectionStyle}>
-              <EmailText style={reassuranceTextStyle}>
+              <EmailText style={closingNoteTextStyle}>
                 {REFUND_DUE_EMAIL_COPY.howTo}
               </EmailText>
             </EmailSection>

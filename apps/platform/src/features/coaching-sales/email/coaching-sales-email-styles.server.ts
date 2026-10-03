@@ -331,3 +331,5 @@ export const detailsValueStyle: CSSProperties = { ...nextStepTextStyle };
 export const closingNoteSectionStyle: CSSProperties = {
   ...invitationReassuranceSectionStyle,
 };
+
+export const closingNoteTextStyle: CSSProperties = { ...reassuranceTextStyle };
