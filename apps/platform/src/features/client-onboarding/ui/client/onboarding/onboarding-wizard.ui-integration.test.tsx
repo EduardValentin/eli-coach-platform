@@ -16,7 +16,7 @@ import userEvent from "@testing-library/user-event";
 import { MotionConfig } from "motion/react";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
-import { createMemoryRouter, RouterProvider, useLocation } from "react-router";
+import { createMemoryRouter, RouterProvider } from "react-router";
 import {
   afterAll,
   afterEach,
@@ -39,7 +39,8 @@ import type {
 } from "~/features/client-onboarding/contracts/onboarding";
 import { CLIENT_ONBOARDING_API_PATHS } from "~/features/client-onboarding/contracts/paths";
 import { CLIENT_PROFILE_API_PATHS } from "~/features/client-profile/contracts/paths";
-import { refusedPhotoViewsIn } from "~/features/client-profile/ui/shared/photos/refused-photos-state";
+import { clientAction } from "~/features/client-onboarding/api/client/submission";
+import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
 
 import OnboardingRoute from "./onboarding-page";
 
@@ -62,6 +63,10 @@ const PROGRESS_PHOTO_CONSENT =
 const PHOTOS_SEND_NOTE = "Your photos are sent with your answers.";
 const PHOTOS_LOCKED_NOTE = "Tick the box to add your photos.";
 const NO_PHOTO_OUTCOMES = { front: "absent", side: "absent", back: "absent" };
+const FRONT_REFUSED =
+  "The front photo could not be processed, so it was not saved.";
+const BACK_REFUSED =
+  "The back photo could not be processed, so it was not saved.";
 
 const FEMALE_FORMS: OnboardingWizardPage["formIds"] = [
   "goal-availability",
@@ -207,23 +212,7 @@ function photo(name: string): File {
   return new File([new Uint8Array(64)], name, { type: "image/png" });
 }
 
-function PortalHome() {
-  const refusedViews = refusedPhotoViewsIn(useLocation().state);
-
-  return (
-    <>
-      <p>portal home</p>
-      {refusedViews.length > 0 && (
-        <p>refused photos: {refusedViews.join(", ")}</p>
-      )}
-    </>
-  );
-}
-
-function answerSubmission(
-  status: number,
-  body: Record<string, unknown> | null = null,
-) {
+function answerSubmissionWith(response: () => Response) {
   server.use(
     http.post(
       `*${CLIENT_ONBOARDING_API_PATHS.submission}`,
@@ -232,10 +221,17 @@ function answerSubmission(
         submitRequests.push(sent.submission);
         submittedPhotoParts.push(sent.photoParts);
 
-        return HttpResponse.json(body, { status });
+        return response();
       },
     ),
   );
+}
+
+function answerSubmission(
+  status: number,
+  body: Record<string, unknown> | null = null,
+) {
+  answerSubmissionWith(() => HttpResponse.json(body, { status }));
 }
 
 function lastDraft(): SaveDraftRequest | undefined {
@@ -250,7 +246,11 @@ function renderOnboarding(page: OnboardingWizardPage) {
         loader: () => page,
         path: CLIENT_ONBOARDING_PATH,
       },
-      { Component: PortalHome, path: CLIENT_PORTAL_PATH },
+      {
+        action: frameworkModeAction(clientAction),
+        path: CLIENT_ONBOARDING_API_PATHS.submission,
+      },
+      { Component: () => <p>portal home</p>, path: CLIENT_PORTAL_PATH },
     ],
     { initialEntries: [CLIENT_ONBOARDING_PATH] },
   );
@@ -1127,22 +1127,44 @@ describe("the onboarding", { timeout: 15_000 }, () => {
     expect(draftRequests).toEqual([]);
   });
 
-  it("keeps her on the last form when her answers cannot be sent", async () => {
-    // arrange
-    const user = userEvent.setup();
-    answerSubmission(503, { message: "Unavailable" });
-    await openOnboarding(pageAt(4));
+  it.each([
+    {
+      failure: "the server answers with an error",
+      answer: () =>
+        HttpResponse.json({ message: "Unavailable" }, { status: 503 }),
+    },
+    {
+      failure: "her session has ended",
+      answer: () => new HttpResponse("Unauthorized", { status: 401 }),
+    },
+    {
+      failure: "the request never reaches the server",
+      answer: () => HttpResponse.error(),
+    },
+  ])(
+    "keeps her on the last form with her answers when $failure",
+    async ({ answer }) => {
+      // arrange
+      const user = userEvent.setup();
+      answerSubmissionWith(answer);
+      await openOnboarding(pageAt(4));
+      await user.clear(screen.getByLabelText(/Waist/));
+      await user.type(screen.getByLabelText(/Waist/), "73");
 
-    // act
-    await user.click(screen.getByRole("button", { name: "Send to my coach" }));
+      // act
+      await user.click(
+        screen.getByRole("button", { name: "Send to my coach" }),
+      );
 
-    // assert
-    expect(await screen.findByText(SUBMIT_PROBLEM)).toBeVisible();
-    expect(screen.getByText("Step 5 of 5")).toBeVisible();
-    expect(
-      screen.getByRole("button", { name: "Send to my coach" }),
-    ).toBeEnabled();
-  });
+      // assert
+      expect(await screen.findByText(SUBMIT_PROBLEM)).toBeVisible();
+      expect(screen.getByText("Step 5 of 5")).toBeVisible();
+      expect(screen.getByLabelText(/Waist/)).toHaveValue(73);
+      expect(
+        screen.getByRole("button", { name: "Send to my coach" }),
+      ).toBeEnabled();
+    },
+  );
 
   it("resumes at the form she left", async () => {
     // arrange
@@ -1553,7 +1575,9 @@ describe("the progress photos on the last form", { timeout: 15_000 }, () => {
       },
     ]);
     expect(submittedPhotoParts).toEqual([["front", "back"]]);
-    expect(screen.queryByText(/^refused photos/)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/could not be processed/),
+    ).not.toBeInTheDocument();
   });
 
   it("sends no photos when she takes back her agreement before sending", async () => {
@@ -1582,7 +1606,7 @@ describe("the progress photos on the last form", { timeout: 15_000 }, () => {
     expect(submittedPhotoParts).toEqual([[]]);
   });
 
-  it("hands the views the coach's side could not process to the dashboard she lands on", async () => {
+  it("names each photo the coach's side could not process once she lands on the dashboard", async () => {
     // arrange
     const user = userEvent.setup();
     answerSubmission(200, {
@@ -1610,8 +1634,11 @@ describe("the progress photos on the last form", { timeout: 15_000 }, () => {
     await user.click(screen.getByRole("button", { name: "Send to my coach" }));
 
     // assert
+    expect(await screen.findByText("portal home")).toBeVisible();
+    expect(await screen.findAllByText(FRONT_REFUSED)).toHaveLength(1);
+    expect(screen.getAllByText(BACK_REFUSED)).toHaveLength(1);
     expect(
-      await screen.findByText("refused photos: front, back"),
-    ).toBeVisible();
+      screen.queryByText(/side photo could not be processed/),
+    ).not.toBeInTheDocument();
   });
 });

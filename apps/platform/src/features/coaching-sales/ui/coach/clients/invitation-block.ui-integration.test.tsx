@@ -24,11 +24,14 @@ import {
   vi,
 } from "vitest";
 
+import { clientAction as resendInvitation } from "~/features/coaching-sales/api/coach/invitation-resends";
 import type { ClientInvitationReading } from "~/features/coaching-sales/contracts/coach-clients";
 import {
   COACHING_SALES_API_PATHS,
   coachClientPath,
 } from "~/features/coaching-sales/contracts/paths";
+
+import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
 
 import { InvitationBlock } from "./invitation-block";
 
@@ -240,6 +243,47 @@ describe("the invitation block", () => {
     },
   );
 
+  it.each([
+    {
+      failure: "her session has ended",
+      answer: () => new HttpResponse("Unauthorized", { status: 401 }),
+    },
+    {
+      failure: "the request never reaches the server",
+      answer: () => HttpResponse.error(),
+    },
+  ])(
+    "keeps the block and asks her to try again when $failure",
+    async ({ answer }) => {
+      // arrange
+      server.use(http.post(RESENDS_URL, answer));
+      const loaded: { invitation: ClientInvitationReading } = {
+        invitation: PENDING,
+      };
+      const user = await renderBlock(loaded);
+      await user.click(
+        screen.getByRole("button", { name: "Re-send invitation" }),
+      );
+      loaded.invitation = { ...PENDING, state: "email-failed" };
+
+      // act
+      await user.click(screen.getByRole("button", { name: "Re-send" }));
+
+      // assert
+      expect(
+        await screen.findByText(
+          "The invitation email could not be sent. Try again.",
+        ),
+      ).toBeInTheDocument();
+      expect(
+        await screen.findByText("Invitation email could not be sent"),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Re-send invitation" }),
+      ).toBeEnabled();
+    },
+  );
+
   it("holds the button busy while the invitation is on its way", async () => {
     // arrange
     let release: () => void = () => {};
@@ -333,7 +377,7 @@ async function renderBlock(loaded: {
         path: coachClientPath(CLIENT_ID),
       },
       {
-        action: ({ request }: { request: Request }) => fetch(request),
+        action: frameworkModeAction(resendInvitation),
         path: RESENDS_URL,
       },
     ],

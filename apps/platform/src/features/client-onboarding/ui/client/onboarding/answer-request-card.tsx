@@ -11,9 +11,9 @@ import {
   buttonVariants,
   cardVariants,
 } from "@eli-coach-platform/ui/primitives";
-import { useId, useMemo, useState } from "react";
+import { useId, useMemo } from "react";
 import { useForm } from "react-hook-form";
-import { Link, useNavigate } from "react-router";
+import { Link } from "react-router";
 
 import { CLIENT_PORTAL_PATH } from "~/features/accounts/contracts/paths";
 import type {
@@ -24,7 +24,6 @@ import type {
 } from "~/features/client-onboarding/contracts/onboarding";
 import { ANSWER_REQUEST_COPY } from "~/features/client-onboarding/contracts/onboarding-review-copy";
 
-import { answerDetails } from "./onboarding-api-client";
 import { OnboardingFieldControl } from "./onboarding-field-control";
 import {
   toAnswers,
@@ -32,6 +31,7 @@ import {
   type OnboardingValues,
 } from "./onboarding-values";
 import { useMeasureUnits } from "./unit-preference-store";
+import { useSendDetailAnswers } from "./use-send-detail-answers";
 
 type AskedForm = { formId: OnboardingFormId; fields: OnboardingField[] };
 
@@ -86,10 +86,8 @@ function sentAnswersOf(
 }
 
 export function AnswerRequestCard({ page }: AnswerRequestCardProps) {
-  const navigate = useNavigate();
   const units = useMeasureUnits();
   const headingId = useId();
-  const [sendProblem, setSendProblem] = useState<string | null>(null);
   const forms = useMemo(
     () => askedFormsOf(page.request.fields),
     [page.request.fields],
@@ -97,7 +95,6 @@ export function AnswerRequestCard({ page }: AnswerRequestCardProps) {
   const form = useForm<OnboardingValues>({
     defaultValues: prefilledValues(forms, page.answers, units),
   });
-  const sending = form.formState.isSubmitting;
 
   const showServerProblems = (problems: readonly SubmissionProblem[]) => {
     for (const problem of problems) {
@@ -108,25 +105,13 @@ export function AnswerRequestCard({ page }: AnswerRequestCardProps) {
     }
   };
 
-  const send = form.handleSubmit(async (values) => {
-    setSendProblem(null);
-
-    const outcome = await answerDetails({
-      answers: sentAnswersOf(forms, values, units),
-    });
-
-    if (outcome.kind === "accepted") {
-      await navigate(outcome.redirectTo);
-      return;
-    }
-
-    if (outcome.kind === "invalid") {
-      showServerProblems(outcome.problems);
-      return;
-    }
-
-    setSendProblem(ANSWER_REQUEST_COPY.sendProblem);
+  const { send, sendProblem, sending } = useSendDetailAnswers({
+    onRefused: showServerProblems,
   });
+
+  const sendAnswers = form.handleSubmit((values) =>
+    send({ answers: sentAnswersOf(forms, values, units) }),
+  );
 
   return (
     <section
@@ -153,7 +138,7 @@ export function AnswerRequestCard({ page }: AnswerRequestCardProps) {
         className="mt-7 grid gap-6"
         noValidate
         onSubmit={(event) => {
-          void send(event);
+          void sendAnswers(event);
         }}
       >
         {forms.map(({ fields }) =>

@@ -10,11 +10,12 @@ import { setupServer } from "msw/node";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createMemoryRouter, Outlet, RouterProvider } from "react-router";
 
+import { clientAction as saveSettings } from "~/features/assessment-calls/api/settings/settings";
 import type { AssessmentCallSettings } from "~/features/assessment-calls/contracts/assessment-call-settings";
 import { ASSESSMENT_CALL_API_PATHS } from "~/features/assessment-calls/contracts/paths";
+import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
 
 import { AssessmentCallSettingsSection } from "./assessment-call-settings-section";
-import { ErrorBoundary as CoachSettingsErrorBoundary } from "./settings-page";
 
 const SETTINGS_URL = ASSESSMENT_CALL_API_PATHS.settings;
 
@@ -330,6 +331,38 @@ describe("assessment call settings section", () => {
     expect(link).toHaveValue("https://meet.example/eli-room");
   });
 
+  it.each([
+    {
+      failure: "the server refuses the save without an answer",
+      answer: () => new HttpResponse("Unauthorized", { status: 401 }),
+    },
+    {
+      failure: "the request never reaches the server",
+      answer: () => HttpResponse.error(),
+    },
+  ])(
+    "shows an error toast and keeps entered values when $failure",
+    async ({ answer }) => {
+      // arrange
+      server.use(http.put(SETTINGS_URL, answer));
+      const user = userEvent.setup();
+      await renderSection();
+      const link = screen.getByLabelText("Meeting link");
+
+      // act
+      await user.type(link, "https://meet.example/eli-room");
+      await user.click(screen.getByRole("button", { name: "Save changes" }));
+
+      // assert
+      expect(
+        await screen.findByText(
+          "We couldn't save your settings. Try again in a moment.",
+        ),
+      ).toBeInTheDocument();
+      expect(link).toHaveValue("https://meet.example/eli-room");
+    },
+  );
+
   it("surfaces a forbidden save as an error toast", async () => {
     // arrange
     server.use(
@@ -396,7 +429,6 @@ async function renderSection(
             Component: () => (
               <AssessmentCallSettingsSection settings={settings} />
             ),
-            ErrorBoundary: CoachSettingsErrorBoundary,
             index: true,
             loader: () => settings,
           },
@@ -404,15 +436,7 @@ async function renderSection(
         path: "/coach/settings",
       },
       {
-        action: async ({ request }: { request: Request }) => {
-          const response = await fetch(request);
-
-          if (response.status === 401 || response.status === 403) {
-            throw response;
-          }
-
-          return response;
-        },
+        action: frameworkModeAction(saveSettings),
         path: SETTINGS_URL,
       },
     ],

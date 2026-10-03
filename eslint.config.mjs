@@ -73,4 +73,27 @@ export default [
       "no-restricted-syntax": "off",
     },
   },
+  // A write that ends a user action goes through a React Router fetcher or
+  // route action; raw fetch in browser code is reserved for named background
+  // sync (today: the onboarding draft autosave), which is excluded below.
+  {
+    files: [
+      "apps/platform/src/features/*/ui/**/*.{ts,tsx}",
+      "apps/platform/src/surfaces/**/*.{ts,tsx}",
+    ],
+    ignores: [
+      "**/*.test.{ts,tsx}",
+      "apps/platform/src/features/client-onboarding/ui/client/onboarding/draft-autosave-requests.ts",
+    ],
+    rules: {
+      "no-restricted-globals": [
+        "error",
+        {
+          message:
+            "Browser writes go through useFetcher or a route action against the feature's resource route; raw fetch is only for named background sync (see conventions.md, Client state).",
+          name: "fetch",
+        },
+      ],
+    },
+  },
 ];

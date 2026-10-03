@@ -17,6 +17,7 @@
     "./email/server": "./src/email/index.server.ts",
     "./feature-flags/server": "./src/feature-flags/index.server.ts",
     "./management-auth/server": "./src/management-auth/index.server.ts",
+    "./http": "./src/http/index.ts",
     "./http/server": "./src/http/index.server.ts",
     "./identity/server": "./src/identity/index.server.ts",
     "./images/server": "./src/images/index.server.ts",

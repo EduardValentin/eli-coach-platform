@@ -9,7 +9,7 @@ import {
   type SaveState,
   type UnsentEdits,
 } from "./draft-sync";
-import { saveDraft, saveUnitPreference } from "./onboarding-api-client";
+import { saveDraft, saveUnitPreference } from "./draft-autosave-requests";
 
 export function useDraftSync(clientId: string) {
   const [saveState, setSaveState] = useState<SaveState>("idle");

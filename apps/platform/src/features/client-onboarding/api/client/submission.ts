@@ -1,5 +1,10 @@
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
+import type {
+  ActionFunctionArgs,
+  ClientActionFunctionArgs,
+  LoaderFunctionArgs,
+} from "react-router";
 
+import { fetcherOutcomeOf } from "@eli-coach-platform/infrastructure/http";
 import {
   handleHttpErrorResponse,
   throwMethodNotAllowedResponse,
@@ -20,4 +25,8 @@ export async function loader(_args: LoaderFunctionArgs) {
   return handleHttpErrorResponse(() => {
     throwMethodNotAllowedResponse({ allowedMethods: ["POST"] });
   });
+}
+
+export function clientAction({ serverAction }: ClientActionFunctionArgs) {
+  return fetcherOutcomeOf(serverAction);
 }
