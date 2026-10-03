@@ -1,5 +1,5 @@
 import { E2E_APP_URL } from "./e2e-app";
-import { EMAIL_CAPTURE_URL } from "./email-capture";
+import { COACH_NOTIFICATION_EMAIL, EMAIL_CAPTURE_URL } from "./email-capture";
 import {
   MISSING_E2E_ENVIRONMENT_FILE,
   hasE2eEnvironmentFile,
@@ -40,6 +40,7 @@ export function webServerLaunchFor(
   return {
     command: "pnpm dev:e2e",
     env: {
+      ASSESSMENT_CALL_COACH_EMAIL: COACH_NOTIFICATION_EMAIL,
       IDENTITY_PROVIDER: "clerk",
       PAYMENTS_PROVIDER: "stripe",
       PRODUCT_EMAIL_PROVIDER: "resend",

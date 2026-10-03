@@ -5,6 +5,7 @@ import type pg from "pg";
 import {
   daysBefore,
   insertPaidClientRecordsWithPayment,
+  SEEDED_BUNDLE,
   type PaidClientIdentity,
   type StartChoice,
 } from "./paid-clients";
@@ -51,4 +52,17 @@ export async function insertSubscribedClientRecords(
   const submitted = await recordOnboardingSubmitted(pool, identity, client);
 
   return { ...submitted, subscription };
+}
+
+export function paidThrough(paidAt: Date): Date {
+  const accessEnd = new Date(paidAt.getTime());
+  const dayOfMonth = accessEnd.getUTCDate();
+  accessEnd.setUTCDate(1);
+  accessEnd.setUTCMonth(accessEnd.getUTCMonth() + SEEDED_BUNDLE.months);
+  const lastDayOfMonth = new Date(
+    Date.UTC(accessEnd.getUTCFullYear(), accessEnd.getUTCMonth() + 1, 0),
+  ).getUTCDate();
+  accessEnd.setUTCDate(Math.min(dayOfMonth, lastDayOfMonth));
+
+  return accessEnd;
 }

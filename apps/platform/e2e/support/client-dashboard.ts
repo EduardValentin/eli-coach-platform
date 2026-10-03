@@ -1,6 +1,8 @@
 import type { ProgressPhotoView } from "@eli-coach-platform/domain/client-profile";
 import { expect, type Page } from "@playwright/test";
 
+import { ConfirmationDialog } from "./confirmation-dialog";
+import { HYDRATION_RETRY_TIMEOUT_MS } from "./locator-text";
 import {
   REFUSED_PHOTO_TOAST,
   refusedPhotoToastOf,
@@ -20,6 +22,15 @@ const NUDGE_LINES = [
   "Your weekly weigh-in is due",
   "Time for your measurements and photos",
 ] as const;
+const START_SOONER_NOTE =
+  "Want Eli to start sooner? You can give up your 14-day right of withdrawal and let her begin now.";
+const PAYMENT_PROBLEM_LINE =
+  "Your last payment didn't go through. Update your card to keep your coaching going.";
+const START_NOW_LABELS = {
+  title: "Let Eli start now?",
+  confirm: "Yes, start now",
+  dismiss: "Keep my 14 days",
+};
 
 export type NudgeLine = (typeof NUDGE_LINES)[number];
 
@@ -36,6 +47,27 @@ export class ClientDashboard {
 
   private nudge(line: NudgeLine) {
     return this.page.getByRole("link", { name: line });
+  }
+
+  private get startNowButton() {
+    return this.page.getByRole("button", {
+      name: "Let Eli start now",
+      exact: true,
+    });
+  }
+
+  private get startSoonerNote() {
+    return this.page.getByText(START_SOONER_NOTE, { exact: true });
+  }
+
+  private get paymentProblem() {
+    return this.page
+      .getByRole("status")
+      .filter({ hasText: PAYMENT_PROBLEM_LINE });
+  }
+
+  private get managePaymentMethodButton() {
+    return this.page.getByRole("button", { name: "Manage payment method" });
   }
 
   private get answerNowLink() {
@@ -99,9 +131,46 @@ export class ClientDashboard {
     await this.answerNowLink.click();
   }
 
-  async expectNoOnboardingActions(): Promise<void> {
-    await expect(this.onboardingStatus.getByRole("button")).toHaveCount(0);
+  async expectOnlyStartNowAction(): Promise<void> {
+    await expect(this.onboardingStatus.getByRole("button")).toHaveText([
+      "Let Eli start now",
+    ]);
     await expect(this.onboardingStatus.getByRole("link")).toHaveCount(0);
+  }
+
+  async expectStartNowOffer(): Promise<void> {
+    await expect(this.startSoonerNote).toBeVisible();
+    await expect(this.startNowButton).toBeEnabled();
+  }
+
+  async expectNoStartNowOffer(): Promise<void> {
+    await expect(this.startSoonerNote).toHaveCount(0);
+    await expect(this.startNowButton).toHaveCount(0);
+  }
+
+  async openStartNow(): Promise<ConfirmationDialog> {
+    const dialog = new ConfirmationDialog(this.page, START_NOW_LABELS);
+
+    await expect(async () => {
+      await this.startNowButton.click();
+      await dialog.expectShownWithin(HYDRATION_RETRY_TIMEOUT_MS);
+    }).toPass();
+
+    return dialog;
+  }
+
+  async expectPaymentProblem(): Promise<void> {
+    await expect(this.paymentProblem).toBeVisible();
+    await expect(this.managePaymentMethodButton).toBeEnabled();
+  }
+
+  async expectNoPaymentProblem(): Promise<void> {
+    await expect(this.paymentProblem).toHaveCount(0);
+    await expect(this.managePaymentMethodButton).toHaveCount(0);
+  }
+
+  async managePaymentMethod(): Promise<void> {
+    await this.managePaymentMethodButton.click();
   }
 
   async expectRefusedPhotoToast(view: ProgressPhotoView): Promise<void> {

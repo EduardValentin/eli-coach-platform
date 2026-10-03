@@ -142,7 +142,7 @@ test("the coach finds her clients by status, name and join date and opens one", 
     "Payment date": dayMonthFormatter.format(submitted.paidAt),
     Start: `After the 14 days (${dayMonthFormatter.format(daysAfter(submitted.paidAt, WITHDRAWAL_DAYS))})`,
     "Start program": "—",
-    "Renews on": `Once ${clientPronouns(submitted.gender).possessive} program starts`,
+    "Renews on": `Starts when ${clientPronouns(submitted.gender).possessive} program is delivered`,
   });
   await coachClient.expectReducedPrice("No");
   await coachClient.expectAssessmentCallCollapsed();
@@ -379,7 +379,7 @@ test("a client with an account whose answers are not in yet reads Onboarding wit
     "Payment date": dayMonthFormatter.format(onboarding.paidAt),
     Start: `After the 14 days (${dayMonthFormatter.format(daysAfter(onboarding.paidAt, WITHDRAWAL_DAYS))})`,
     "Start program": "—",
-    "Renews on": `Once ${clientPronouns(onboarding.gender).possessive} program starts`,
+    "Renews on": `Starts when ${clientPronouns(onboarding.gender).possessive} program is delivered`,
   });
   await coachClient.expectReducedPrice("No");
 });

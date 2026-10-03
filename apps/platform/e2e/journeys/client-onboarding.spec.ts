@@ -654,7 +654,7 @@ test("a client who measures in pounds and inches sends her answers once, even af
     "Sent to your coach",
     workStartsOnLine(client.paidAt),
   );
-  await clientDashboard.expectNoOnboardingActions();
+  await clientDashboard.expectOnlyStartNowAction();
   const [submission] = await onboardingRecords.submissions();
   expect(await onboardingRecords.submissions()).toHaveLength(1);
   expect(submission.progressPhotosConsentedAt).toBeInstanceOf(Date);

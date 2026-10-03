@@ -10,9 +10,11 @@ import type pg from "pg";
 import { AccountPortal } from "./account-portal";
 import { BookingPage } from "./booking-page";
 import { ClientDashboard } from "./client-dashboard";
+import { ClientEndedPage } from "./client-ended-page";
 import { ClientOnboarding } from "./client-onboarding";
 import { ClientPortalShell } from "./client-portal-shell";
 import { ClientProfilePage } from "./client-profile-page";
+import { ClientSettingsPage } from "./client-settings-page";
 import { CoachAssessmentCallsPage } from "./coach-assessment-calls-page";
 import { CoachClientPage } from "./coach-client-page";
 import { CoachClientsPage } from "./coach-clients-page";
@@ -52,6 +54,7 @@ import { createE2eDatabasePool } from "./database";
 import { requireEnv } from "./env";
 import { PublicNav } from "./public-nav";
 import { resolveRunId, runEmailPrefix } from "./run-id";
+import { StripeBillingPortalPage } from "./stripe-billing-portal-page";
 import { StripeCheckoutPage } from "./stripe-checkout";
 import {
   cleanUpRecordedStripeObjects,
@@ -70,6 +73,8 @@ type PlatformFixtures = {
   clientOnboarding: ClientOnboarding;
   clientDashboard: ClientDashboard;
   clientProfile: ClientProfilePage;
+  clientSettings: ClientSettingsPage;
+  clientEnded: ClientEndedPage;
   measurementsSheet: MeasurementsSheet;
   photoView: PhotoView;
   photoLightbox: PhotoLightbox;
@@ -77,6 +82,7 @@ type PlatformFixtures = {
   testEmail: string;
   visitorEmail: string;
   stripeCheckout: StripeCheckoutPage;
+  stripeBillingPortal: StripeBillingPortalPage;
   registerCheckoutSessionForCleanup: (sessionId: string) => void;
   bookingPage: BookingPage;
   coachAssessmentCalls: CoachAssessmentCallsPage;
@@ -303,6 +309,14 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
     await use(new ClientProfilePage(page));
   },
 
+  clientSettings: async ({ page }, use) => {
+    await use(new ClientSettingsPage(page));
+  },
+
+  clientEnded: async ({ page }, use) => {
+    await use(new ClientEndedPage(page));
+  },
+
   measurementsSheet: async ({ page }, use) => {
     await use(new MeasurementsSheet(page));
   },
@@ -334,6 +348,10 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
 
   stripeCheckout: async ({ page }, use) => {
     await use(new StripeCheckoutPage(page));
+  },
+
+  stripeBillingPortal: async ({ page }, use) => {
+    await use(new StripeBillingPortalPage(page));
   },
 
   // eslint-disable-next-line no-empty-pattern
