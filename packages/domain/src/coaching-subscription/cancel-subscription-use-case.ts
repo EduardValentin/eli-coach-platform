@@ -11,13 +11,17 @@ import type {
 import type { CoachingSubscriptionIncidents } from "./coaching-subscription-incidents";
 import type { CoachingSubscriptions } from "./coaching-subscriptions";
 import type { PaymentSubscriptions } from "./payment-subscriptions";
-import type { RefundNotifications } from "./refund-notifications";
+import type {
+  RefundDueNotice,
+  RefundNotifications,
+} from "./refund-notifications";
 
 type CancelSubscriptionResult =
   | {
       status: "cancelled";
       rule: Exclude<CancellationRule, "none">;
       subscription: CoachingSubscriptionSnapshot;
+      refundDue: boolean;
     }
   | { status: "nothing_to_cancel" }
   | { status: "not_found" }
@@ -95,6 +99,7 @@ export class CancelSubscriptionUseCase {
       status: "cancelled",
       rule: recorded.rule,
       subscription: recorded.subscription.toSnapshot(),
+      refundDue: recorded.subscription.hasRefundOutstanding(),
     };
   }
 
@@ -160,35 +165,19 @@ export class CancelSubscriptionUseCase {
   }
 
   private async notifyCoach(subscription: CoachingSubscription): Promise<void> {
-    const refund = subscription.refund;
-
-    if (!refund || refund.amountCents === 0) {
+    if (!subscription.refund || subscription.refund.amountCents === 0) {
       return;
     }
 
     try {
-      const client = await this.options.clients.findByClientId(
-        subscription.clientId,
-      );
-      const delivery =
-        client && subscription.cancelledAt
-          ? await this.options.notifications.notifyRefundDue({
-              subscriptionId: subscription.id,
-              client: {
-                clientId: client.clientId,
-                firstName: client.firstName,
-                lastName: client.lastName,
-                email: client.email,
-              },
-              paid: {
-                amountCents: subscription.amountCents,
-                currency: subscription.currency,
-                at: subscription.paidAt,
-              },
-              cancelledAt: subscription.cancelledAt,
-              refund: refund.toSnapshot(),
-            })
-          : "failed";
+      const notice = await this.refundDueNoticeOf(subscription);
+
+      if (!notice) {
+        this.reportNotificationFailure(subscription);
+        return;
+      }
+
+      const delivery = await this.options.notifications.notifyRefundDue(notice);
 
       if (delivery === "failed") {
         this.reportNotificationFailure(subscription);
@@ -196,6 +185,41 @@ export class CancelSubscriptionUseCase {
     } catch {
       this.reportNotificationFailure(subscription);
     }
+  }
+
+  private async refundDueNoticeOf(
+    subscription: CoachingSubscription,
+  ): Promise<RefundDueNotice | null> {
+    const { refund, cancelledAt } = subscription;
+
+    if (!refund || !cancelledAt) {
+      return null;
+    }
+
+    const client = await this.options.clients.findByClientId(
+      subscription.clientId,
+    );
+
+    if (!client) {
+      return null;
+    }
+
+    return {
+      subscriptionId: subscription.id,
+      client: {
+        clientId: client.clientId,
+        firstName: client.firstName,
+        lastName: client.lastName,
+        email: client.email,
+      },
+      paid: {
+        amountCents: subscription.amountCents,
+        currency: subscription.currency,
+        at: subscription.paidAt,
+      },
+      cancelledAt,
+      refund: refund.toSnapshot(),
+    };
   }
 
   private reportNotificationFailure(subscription: CoachingSubscription): void {

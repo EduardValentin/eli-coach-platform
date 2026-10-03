@@ -107,7 +107,10 @@ describe("the invitation block", () => {
 
   it("keeps the invitation's state but offers no re-send once her coaching is cancelled or ended", async () => {
     // arrange, act
-    await renderBlock({ invitation: PENDING, coachingClosed: true });
+    await renderBlock({
+      invitation: PENDING,
+      subscriptionCancelledOrEnded: true,
+    });
 
     // assert
     expect(
@@ -362,7 +365,7 @@ function recordResendRequests(response: Response): unknown[] {
 
 async function renderBlock(loaded: {
   gender?: VisitorGender;
-  coachingClosed?: boolean;
+  subscriptionCancelledOrEnded?: boolean;
   invitation: ClientInvitationReading;
 }) {
   const user = userEvent.setup();
@@ -376,7 +379,8 @@ async function renderBlock(loaded: {
         <InvitationBlock
           client={{
             clientId: CLIENT_ID,
-            coachingClosed: loaded.coachingClosed ?? false,
+            subscriptionCancelledOrEnded:
+              loaded.subscriptionCancelledOrEnded ?? false,
             email: EMAIL,
             gender: loaded.gender ?? "female",
           }}

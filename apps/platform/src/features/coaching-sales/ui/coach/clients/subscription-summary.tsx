@@ -10,10 +10,8 @@ import { CreditCard } from "lucide-react";
 import { possessivePronoun } from "~/features/assessment-calls/contracts/visitor-profile";
 import { bundleLengthLabel } from "~/features/coaching-sales/contracts/bundle-cards";
 import type { ClientSubscription } from "~/features/coaching-sales/contracts/coach-clients";
-import {
-  formatMoneyCents,
-  REFUND_REASON_LABELS,
-} from "~/features/coaching-sales/contracts/subscription-refunds";
+import { formatMoney } from "~/features/coaching-sales/contracts/money";
+import { REFUND_REASON_LABELS } from "~/features/coaching-sales/contracts/subscription-refunds";
 
 const IMMEDIATE_START_LABEL = "Immediate start";
 
@@ -63,10 +61,7 @@ function periodReading(
 }
 
 function refundDueValue(refund: SubscriptionRefund, timeZone: string): string {
-  const outstanding = formatMoneyCents(
-    refund.outstandingCents,
-    refund.currency,
-  );
+  const outstanding = formatMoney(refund.outstandingCents, refund.currency);
 
   return refund.dueBy
     ? `${outstanding} by ${formatDayMonth(refund.dueBy, timeZone)}`
@@ -80,7 +75,7 @@ function refundDetail(refund: SubscriptionRefund): string {
     return reason;
   }
 
-  return `${reason} ${formatMoneyCents(refund.refundedCents, refund.currency)} refunded so far.`;
+  return `${reason} ${formatMoney(refund.refundedCents, refund.currency)} refunded so far.`;
 }
 
 function RefundReading({

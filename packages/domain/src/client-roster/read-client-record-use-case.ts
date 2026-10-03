@@ -18,6 +18,8 @@ type ClientRecord = ClientRosterEntry & {
   status: ClientStatus;
   needsRefund: boolean;
   subscriptionStatus: CoachingSubscriptionStatus | null;
+  subscriptionCancelledOrEnded: boolean;
+  refundOutstandingCents: number | null;
   workStartsOn: Date | null;
   assessmentCall: {
     startsAt: Date;
@@ -67,6 +69,10 @@ export class ReadClientRecordUseCase {
       status: rosterEntryStatus(entry, now),
       needsRefund: rosterEntryNeedsRefund(entry),
       subscriptionStatus: subscription?.statusAt(now) ?? null,
+      subscriptionCancelledOrEnded: CoachingSubscription.isCancelledOrEnded(
+        subscription?.status ?? null,
+      ),
+      refundOutstandingCents: subscription?.refund?.outstandingCents() ?? null,
       workStartsOn: subscription?.programWorkStart() ?? null,
       assessmentCall: {
         startsAt: call.startsAt,

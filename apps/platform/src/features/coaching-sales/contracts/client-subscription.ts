@@ -1,11 +1,13 @@
-import { COACHING_SUBSCRIPTION_STATUSES } from "@eli-coach-platform/domain/coaching-subscription";
+import {
+  COACHING_SUBSCRIPTION_STATUSES,
+  OFFERED_CANCELLATION_RULES,
+  START_NOW_REFUSALS,
+} from "@eli-coach-platform/domain/coaching-subscription";
 import { z } from "zod";
 
 import { coachingBundleIdSchema } from "./bundle-cards";
 
-const OFFERED_CANCELLATIONS = ["full-refund", "no-refund"] as const;
-
-const offeredCancellationSchema = z.enum(OFFERED_CANCELLATIONS);
+const offeredCancellationSchema = z.enum(OFFERED_CANCELLATION_RULES);
 
 const cancellationDatesSchema = z.object({
   withdrawalDeadline: z.iso.datetime(),
@@ -67,8 +69,7 @@ const SUBSCRIPTION_REFUSALS = [
   "not-found",
   "nothing-to-cancel",
   "provider-unavailable",
-  "outside-window",
-  "ended",
+  ...START_NOW_REFUSALS,
 ] as const;
 
 export const subscriptionRefusalSchema = z.object({

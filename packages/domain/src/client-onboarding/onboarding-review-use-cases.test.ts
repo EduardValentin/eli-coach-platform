@@ -45,12 +45,12 @@ const CLIENT: OnboardingClient = {
   dateOfBirth: "1994-03-14",
   submittedAt: SUBMITTED_AT,
   reviewStamps: NO_STAMPS,
-  coachingClosed: false,
+  subscriptionCancelledOrEnded: false,
 };
 
-const CLOSED_COACHING_CLIENT: OnboardingClient = {
+const CANCELLED_OR_ENDED_CLIENT: OnboardingClient = {
   ...CLIENT,
-  coachingClosed: true,
+  subscriptionCancelledOrEnded: true,
 };
 
 const SUBMISSION: OnboardingSubmission = {
@@ -218,14 +218,14 @@ describe("OpenOnboardingReviewUseCase", () => {
 
   it("refuses to open the review once her coaching is cancelled or ended", async () => {
     // arrange
-    const ports = reviewPorts({ client: CLOSED_COACHING_CLIENT });
+    const ports = reviewPorts({ client: CANCELLED_OR_ENDED_CLIENT });
     const useCase = new OpenOnboardingReviewUseCase(ports);
 
     // act
     const result = await useCase.execute(CLIENT.clientId);
 
     // assert
-    expect(result).toEqual({ status: "coaching-closed" });
+    expect(result).toEqual({ status: "subscription-cancelled-or-ended" });
     expect(ports.reviews.recordOpened).not.toHaveBeenCalled();
     expect(ports.incidents.onboardingReviewOpened).not.toHaveBeenCalled();
   });
@@ -392,7 +392,7 @@ describe("RequestOnboardingDetailsUseCase", () => {
   it("refuses a request once her coaching is cancelled or ended, emailing nothing", async () => {
     // arrange
     const ports = reviewPorts({
-      client: CLOSED_COACHING_CLIENT,
+      client: CANCELLED_OR_ENDED_CLIENT,
       stored: { openedAt: OPENED_AT },
     });
     const notifications = createNotifications();
@@ -406,7 +406,7 @@ describe("RequestOnboardingDetailsUseCase", () => {
     });
 
     // assert
-    expect(result).toEqual({ status: "coaching-closed" });
+    expect(result).toEqual({ status: "subscription-cancelled-or-ended" });
     expect(ports.reviews.recordRequest).not.toHaveBeenCalled();
     expect(notifications.sendDetailsRequest).not.toHaveBeenCalled();
   });
@@ -486,7 +486,7 @@ describe("ApproveOnboardingAnswersUseCase", () => {
   it("refuses the approval once her coaching is cancelled or ended", async () => {
     // arrange
     const ports = reviewPorts({
-      client: CLOSED_COACHING_CLIENT,
+      client: CANCELLED_OR_ENDED_CLIENT,
       stored: { openedAt: OPENED_AT },
     });
     const useCase = new ApproveOnboardingAnswersUseCase(ports);
@@ -495,7 +495,7 @@ describe("ApproveOnboardingAnswersUseCase", () => {
     const result = await useCase.execute(CLIENT.clientId);
 
     // assert
-    expect(result).toEqual({ status: "coaching-closed" });
+    expect(result).toEqual({ status: "subscription-cancelled-or-ended" });
     expect(ports.reviews.recordApproval).not.toHaveBeenCalled();
     expect(ports.incidents.onboardingAnswersApproved).not.toHaveBeenCalled();
   });

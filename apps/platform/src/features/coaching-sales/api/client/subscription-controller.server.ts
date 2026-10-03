@@ -1,10 +1,9 @@
 import { joinBasePath } from "@eli-coach-platform/config";
-import {
-  RefundDue,
-  type CancelSubscriptionUseCase,
-  type OpenPaymentMethodSessionUseCase,
-  type ReadClientSubscriptionUseCase,
-  type StartProgramNowUseCase,
+import type {
+  CancelSubscriptionUseCase,
+  OpenPaymentMethodSessionUseCase,
+  ReadClientSubscriptionUseCase,
+  StartProgramNowUseCase,
 } from "@eli-coach-platform/domain/coaching-subscription";
 import {
   redirect,
@@ -90,7 +89,7 @@ export class SubscriptionController {
     );
 
     return clientEndedSchema.parse({
-      refundDue: reading?.refundOutstanding ?? false,
+      refundDue: reading?.refundDue ?? false,
     });
   }
 
@@ -104,14 +103,12 @@ export class SubscriptionController {
       return refusalResponse(CANCEL_REFUSALS[result.status]);
     }
 
-    const { refund, accessEndsAt } = result.subscription;
-
     return Response.json(
       subscriptionCancelledSchema.parse({
         status: "cancelled",
         rule: result.rule,
-        accessEndsAt: accessEndsAt?.toISOString(),
-        refundDue: refund ? RefundDue.isOutstanding(refund) : false,
+        accessEndsAt: result.subscription.accessEndsAt?.toISOString(),
+        refundDue: result.refundDue,
       }),
     );
   }
@@ -176,7 +173,7 @@ function settingsOf(reading: SubscriptionReading) {
       status: reading.status,
       cancelledAt: subscription.cancelledAt?.toISOString() ?? null,
       accessEndsAt: subscription.accessEndsAt?.toISOString() ?? null,
-      paymentProblem: subscription.paymentProblemSince !== null,
+      paymentProblem: reading.paymentProblem,
     },
     cancellation: cancellationOf(reading),
     startNowUntil: reading.startNowUntil?.toISOString() ?? null,

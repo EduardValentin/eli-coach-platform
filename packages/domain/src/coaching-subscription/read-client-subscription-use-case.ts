@@ -16,7 +16,8 @@ type ClientSubscriptionReading = {
   paidThrough: Date;
   refundOnCancellationCents: number;
   startNowUntil: Date | null;
-  refundOutstanding: boolean;
+  paymentProblem: boolean;
+  refundDue: boolean;
 };
 
 type ReadClientSubscriptionUseCaseOptions = {
@@ -47,8 +48,8 @@ export class ReadClientSubscriptionUseCase {
       paidThrough: subscription.paidThrough(),
       refundOnCancellationCents: subscription.refundOnCancellationAt(now),
       startNowUntil: subscription.startNowUntil(),
-      refundOutstanding:
-        subscription.refund !== null && !subscription.refund.isSettled(),
+      paymentProblem: subscription.hasPaymentProblem(),
+      refundDue: subscription.hasRefundOutstanding(),
     };
   }
 }

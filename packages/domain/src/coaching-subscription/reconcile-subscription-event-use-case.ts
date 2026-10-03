@@ -84,7 +84,7 @@ export class ReconcileSubscriptionEventUseCase {
     event: SubscriptionEvent,
   ): Promise<CoachingSubscription | null> {
     if (event.kind === "charge-refunded") {
-      return this.options.subscriptions.findLatestByPaymentCustomerId(
+      return this.options.subscriptions.findCurrentByPaymentCustomerId(
         event.paymentCustomerId,
       );
     }

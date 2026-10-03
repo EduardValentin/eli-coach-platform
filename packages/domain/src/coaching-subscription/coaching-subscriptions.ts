@@ -15,7 +15,7 @@ export interface CoachingSubscriptions {
   findByPaymentSubscriptionId(
     paymentSubscriptionId: string,
   ): Promise<CoachingSubscription | null>;
-  findLatestByPaymentCustomerId(
+  findCurrentByPaymentCustomerId(
     paymentCustomerId: string,
   ): Promise<CoachingSubscription | null>;
   save(change: SubscriptionChange): Promise<"saved" | "stale">;

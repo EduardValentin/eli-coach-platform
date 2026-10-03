@@ -78,7 +78,7 @@ describe("clientStatusOf", () => {
     ["cancelled", { status: "cancelled", accessEndsAt: LATER }, "cancelled"],
     ["inactive", { status: "ended", accessEndsAt: NOW }, "inactive"],
   ] as const)(
-    "reads her closed coaching as %s before her account is bound",
+    "reads her cancelled or ended subscription as %s before her account is bound",
     (_label, subscription, expected) => {
       // arrange
       const input = {

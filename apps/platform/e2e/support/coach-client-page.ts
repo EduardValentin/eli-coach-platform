@@ -34,7 +34,7 @@ const ABSENT_READING = "—";
 
 const NEEDS_REFUND_LABEL = "Needs refund";
 
-const CLOSED_COACHING_ACTIONS = [
+const CANCELLED_OR_ENDED_ACTIONS = [
   "Review answers",
   "Continue review",
   "Approve answers",
@@ -258,7 +258,7 @@ export class CoachClientPage {
   async expectNoCoachingActions(): Promise<void> {
     await expect(this.onboarding).toBeVisible();
 
-    for (const action of CLOSED_COACHING_ACTIONS) {
+    for (const action of CANCELLED_OR_ENDED_ACTIONS) {
       await expect(this.page.getByRole("button", { name: action })).toHaveCount(
         0,
       );

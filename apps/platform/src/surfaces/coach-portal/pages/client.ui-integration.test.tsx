@@ -62,7 +62,7 @@ const INVITED: CoachClient = {
   gender: "female",
   status: "invited",
   needsRefund: false,
-  coachingClosed: false,
+  subscriptionCancelledOrEnded: false,
   subscription: {
     bundleId: "3-months",
     months: 3,
@@ -111,7 +111,7 @@ const ENDED_WITH_REFUND_DUE: CoachClient = {
   ...AWAITING_REVIEW,
   status: "inactive",
   needsRefund: true,
-  coachingClosed: true,
+  subscriptionCancelledOrEnded: true,
   subscription: {
     ...AWAITING_REVIEW.subscription,
     bundleId: "3-months",
@@ -550,7 +550,7 @@ describe("the coach's client page", () => {
         client: {
           ...AWAITING_REVIEW,
           status: "cancelled",
-          coachingClosed: true,
+          subscriptionCancelledOrEnded: true,
         },
         review: {
           ...SUBMITTED_REVIEW,
@@ -582,7 +582,11 @@ describe("the coach's client page", () => {
   it("keeps her invitation's state but offers no re-send once her coaching has ended", async () => {
     // arrange, act
     await renderClientPage({
-      client: { ...INVITED, status: "inactive", coachingClosed: true },
+      client: {
+        ...INVITED,
+        status: "inactive",
+        subscriptionCancelledOrEnded: true,
+      },
     });
 
     // assert

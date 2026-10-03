@@ -6,7 +6,6 @@ import {
 } from "../client-journey";
 import {
   CoachingSubscription,
-  RefundDue,
   type CoachingSubscriptionSnapshot,
   type CoachingSubscriptionStatus,
 } from "../coaching-subscription";
@@ -69,11 +68,11 @@ export function clientStatusOf(input: {
   > | null;
   now: Date;
 }): ClientStatus {
-  const coachingClosed = input.subscription
-    ? CoachingSubscription.hasClosedCoaching(input.subscription)
-    : false;
+  const subscriptionCancelledOrEnded = CoachingSubscription.isCancelledOrEnded(
+    input.subscription?.status ?? null,
+  );
 
-  if (!input.accountBound && !coachingClosed) {
+  if (!input.accountBound && !subscriptionCancelledOrEnded) {
     return "invited";
   }
 
@@ -99,7 +98,9 @@ export function rosterEntryStatus(
 }
 
 export function rosterEntryNeedsRefund(entry: ClientRosterEntry): boolean {
-  const refund = entry.subscription?.refund;
-
-  return refund ? RefundDue.isOutstanding(refund) : false;
+  return entry.subscription
+    ? CoachingSubscription.reconstitute(
+        entry.subscription,
+      ).hasRefundOutstanding()
+    : false;
 }

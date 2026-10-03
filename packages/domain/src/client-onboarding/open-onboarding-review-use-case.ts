@@ -10,7 +10,7 @@ type OpenOnboardingReviewResult =
   | { status: "opened" }
   | { status: "already-open" }
   | { status: "not-found" }
-  | { status: "coaching-closed" }
+  | { status: "subscription-cancelled-or-ended" }
   | { status: "not-submitted" }
   | { status: "approved" };
 
@@ -32,8 +32,8 @@ export class OpenOnboardingReviewUseCase {
       return { status: "not-found" };
     }
 
-    if (client.coachingClosed) {
-      return { status: "coaching-closed" };
+    if (client.subscriptionCancelledOrEnded) {
+      return { status: "subscription-cancelled-or-ended" };
     }
 
     const [stored, reviewed] = await Promise.all([

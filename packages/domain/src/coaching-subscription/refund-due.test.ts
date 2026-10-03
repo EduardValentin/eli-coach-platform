@@ -125,25 +125,25 @@ describe("RefundDue", () => {
   });
 
   it.each([
-    ["nothing refunded yet", 0, true],
-    ["part refunded", 10000, true],
-    ["fully refunded", 44700, false],
+    ["nothing refunded yet", 0, false],
+    ["part refunded", 10000, false],
+    ["fully refunded", 44700, true],
   ])(
-    "reads a stored refund with %s as outstanding: %s",
-    (_label, refundedCents, outstanding) => {
+    "reads a refund with %s as settled: %s",
+    (_label, refundedCents, expected) => {
       // arrange
-      const snapshot = RefundDue.full({
+      const refund = RefundDue.full({
         amountCents: 44700,
         cancelledAt: CANCELLED_AT,
-      })
-        .settle({ refundedCents, at: REFUNDED_AT })
-        .toSnapshot();
+      });
 
       // act
-      const result = RefundDue.isOutstanding(snapshot);
+      const settled = refund
+        .settle({ refundedCents, at: REFUNDED_AT })
+        .isSettled();
 
       // assert
-      expect(result).toBe(outstanding);
+      expect(settled).toBe(expected);
     },
   );
 });

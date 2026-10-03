@@ -203,6 +203,8 @@ describe("ReadClientRecordUseCase", () => {
       status: "awaiting-review",
       needsRefund: false,
       subscriptionStatus: "not-started",
+      subscriptionCancelledOrEnded: false,
+      refundOutstandingCents: null,
       workStartsOn: null,
       assessmentCall: {
         startsAt: new Date("2026-09-25T15:00:00.000Z"),
@@ -265,6 +267,39 @@ describe("ReadClientRecordUseCase", () => {
 
     // assert
     expect(result?.subscriptionStatus).toBe("ended");
+  });
+
+  it("reads a cancelled subscription whose refund is part settled as cancelled or ended with what is still owed", async () => {
+    // arrange
+    const cancelledAt = new Date("2026-10-05T10:00:00.000Z");
+    const useCase = new ReadClientRecordUseCase({
+      roster: createRoster({
+        findById: vi.fn().mockResolvedValue(
+          entry({
+            subscription: subscriptionSnapshot({
+              status: "ended",
+              cancelledAt,
+              accessEndsAt: cancelledAt,
+              refund: RefundDue.full({ amountCents: 44700, cancelledAt })
+                .settle({ refundedCents: 10000, at: NOW })
+                .toSnapshot(),
+            }),
+          }),
+        ),
+      }),
+      calls: callReader(null),
+      clock,
+    });
+
+    // act
+    const result = await useCase.execute("client-1");
+
+    // assert
+    expect(result).toMatchObject({
+      subscriptionCancelledOrEnded: true,
+      refundOutstandingCents: 34700,
+      needsRefund: true,
+    });
   });
 
   it("reads no notes when she left none when booking", async () => {

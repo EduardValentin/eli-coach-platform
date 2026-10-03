@@ -66,7 +66,7 @@ function createSubscriptions(found: CoachingSubscription | null) {
     findCurrentForClient: vi.fn().mockResolvedValue(found),
     findCurrentForAuthSubject: vi.fn().mockResolvedValue(found),
     findByPaymentSubscriptionId: vi.fn().mockResolvedValue(found),
-    findLatestByPaymentCustomerId: vi.fn().mockResolvedValue(found),
+    findCurrentByPaymentCustomerId: vi.fn().mockResolvedValue(found),
     save: vi.fn().mockResolvedValue("saved"),
     saveForEvent: vi.fn().mockResolvedValue("recorded"),
   } satisfies CoachingSubscriptions;
@@ -174,6 +174,7 @@ describe("CancelSubscriptionUseCase", () => {
       status: "cancelled",
       rule: "full-refund",
       subscription: cancelled,
+      refundDue: true,
     });
     expect(subscriptions.findCurrentForAuthSubject).toHaveBeenCalledWith(
       AUTH_SUBJECT_ID,
@@ -229,6 +230,7 @@ describe("CancelSubscriptionUseCase", () => {
         cancelledAt: DAY_14,
         accessEndsAt: ACCESS_END,
       }),
+      refundDue: false,
     });
     expect(paymentSubscriptions.endAt).toHaveBeenCalledWith({
       paymentSubscriptionId: "sub_1",
@@ -271,6 +273,7 @@ describe("CancelSubscriptionUseCase", () => {
         cancelledAt: DAY_13,
         accessEndsAt: ACCESS_END,
       }),
+      refundDue: false,
     });
     expect(paymentSubscriptions.endAt).toHaveBeenCalledWith({
       paymentSubscriptionId: "sub_1",
@@ -426,6 +429,7 @@ describe("CancelSubscriptionUseCase", () => {
       status: "cancelled",
       rule: "full-refund",
       subscription: recorded,
+      refundDue: true,
     });
     expect(subscriptions.save).toHaveBeenLastCalledWith({
       subscription: CoachingSubscription.reconstitute(recorded),
@@ -794,7 +798,8 @@ describe("ReadClientSubscriptionUseCase", () => {
       paidThrough: ACCESS_END,
       refundOnCancellationCents: 44700,
       startNowUntil: WITHDRAWAL_DEADLINE,
-      refundOutstanding: false,
+      paymentProblem: false,
+      refundDue: false,
     });
     expect(subscriptions.findCurrentForAuthSubject).toHaveBeenCalledWith(
       AUTH_SUBJECT_ID,
@@ -844,8 +849,24 @@ describe("ReadClientSubscriptionUseCase", () => {
       status: "ended",
       cancellationRule: "none",
       startNowUntil: null,
-      refundOutstanding: true,
+      refundDue: true,
     });
+  });
+
+  it("reads a payment problem the provider flagged", async () => {
+    // arrange
+    const useCase = new ReadClientSubscriptionUseCase({
+      clock: clockAt(DAY_13),
+      subscriptions: createSubscriptions(
+        subscriptionOf({ paymentProblemSince: DAY_13 }),
+      ),
+    });
+
+    // act
+    const reading = await useCase.execute(AUTH_SUBJECT_ID);
+
+    // assert
+    expect(reading).toMatchObject({ paymentProblem: true });
   });
 
   it("reads nothing for a subject with no subscription", async () => {
@@ -1004,7 +1025,7 @@ describe("ReconcileSubscriptionEventUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "recorded" });
-    expect(subscriptions.findLatestByPaymentCustomerId).toHaveBeenCalledWith(
+    expect(subscriptions.findCurrentByPaymentCustomerId).toHaveBeenCalledWith(
       "cus_1",
     );
     expect(subscriptions.saveForEvent).toHaveBeenCalledWith({

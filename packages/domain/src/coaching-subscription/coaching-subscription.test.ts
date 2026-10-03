@@ -269,22 +269,90 @@ describe("CoachingSubscription.statusAt", () => {
   );
 });
 
-describe("CoachingSubscription.hasClosedCoaching", () => {
+describe("CoachingSubscription.isCancelledOrEnded", () => {
   it.each([
+    [null, false],
     ["not-started", false],
     ["active", false],
     ["cancelled", true],
     ["ended", true],
-  ] as const)("reads a %s subscription as closed: %s", (status, expected) => {
+  ] as const)(
+    "reads a %s subscription as cancelled or ended: %s",
+    (status, expected) => {
+      // act
+      const cancelledOrEnded = CoachingSubscription.isCancelledOrEnded(status);
+
+      // assert
+      expect(cancelledOrEnded).toBe(expected);
+    },
+  );
+});
+
+describe("CoachingSubscription.hasRefundOutstanding", () => {
+  it.each([
+    ["no refund", null, false],
+    [
+      "a refund still owed",
+      {
+        ...RefundDue.full({
+          amountCents: 44700,
+          cancelledAt: DAY_13,
+        }).toSnapshot(),
+      },
+      true,
+    ],
+    [
+      "a part-settled refund",
+      {
+        ...RefundDue.full({
+          amountCents: 44700,
+          cancelledAt: DAY_13,
+        }).toSnapshot(),
+        refundedCents: 10000,
+      },
+      true,
+    ],
+    [
+      "a settled refund",
+      {
+        ...RefundDue.full({
+          amountCents: 44700,
+          cancelledAt: DAY_13,
+        }).toSnapshot(),
+        refundedCents: 44700,
+        refundedAt: DAY_14,
+      },
+      false,
+    ],
+  ] as const)("reads %s as outstanding: %s", (_case, refund, expected) => {
     // arrange
-    const snapshot = snapshotOf({ status });
+    const subscription = subscriptionOf({ refund });
 
     // act
-    const closed = CoachingSubscription.hasClosedCoaching(snapshot);
+    const outstanding = subscription.hasRefundOutstanding();
 
     // assert
-    expect(closed).toBe(expected);
+    expect(outstanding).toBe(expected);
   });
+});
+
+describe("CoachingSubscription.hasPaymentProblem", () => {
+  it.each([
+    [null, false],
+    [DAY_13, true],
+  ] as const)(
+    "reads a problem flagged at %s as %s",
+    (paymentProblemSince, expected) => {
+      // arrange
+      const subscription = subscriptionOf({ paymentProblemSince });
+
+      // act
+      const problem = subscription.hasPaymentProblem();
+
+      // assert
+      expect(problem).toBe(expected);
+    },
+  );
 });
 
 describe("CoachingSubscription start now", () => {

@@ -65,10 +65,6 @@ export class RefundDue {
     return new RefundDue(snapshot);
   }
 
-  static isOutstanding(snapshot: RefundDueSnapshot): boolean {
-    return RefundDue.reconstitute(snapshot).outstandingCents() > 0;
-  }
-
   outstandingCents(): number {
     return Math.max(0, this.amountCents - this.refundedCents);
   }
@@ -82,13 +78,12 @@ export class RefundDue {
       this.refundedCents,
       settlement.refundedCents,
     );
-    const settling = new RefundDue({ ...this.toSnapshot(), refundedCents });
+    const settled = refundedCents >= this.amountCents;
 
     return new RefundDue({
-      ...settling.toSnapshot(),
-      refundedAt: settling.isSettled()
-        ? (this.refundedAt ?? settlement.at)
-        : null,
+      ...this.toSnapshot(),
+      refundedCents,
+      refundedAt: settled ? (this.refundedAt ?? settlement.at) : null,
     });
   }
 

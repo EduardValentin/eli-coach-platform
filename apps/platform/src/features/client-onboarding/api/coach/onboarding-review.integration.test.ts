@@ -445,7 +445,9 @@ describe.sequential("onboarding review integration", () => {
 
     // assert
     expect(refused.status).toBe(409);
-    expect(await refused.json()).toEqual({ error: "coaching-closed" });
+    expect(await refused.json()).toEqual({
+      error: "subscription-cancelled-or-ended",
+    });
     expect(await reviewRowOf(clientId)).toBeUndefined();
     expect(await onboarding.reviewStampsOf(clientId)).toEqual({
       reviewOpenedAt: null,
@@ -469,7 +471,9 @@ describe.sequential("onboarding review integration", () => {
 
     // assert
     expect(refused.status).toBe(409);
-    expect(await refused.json()).toEqual({ error: "coaching-closed" });
+    expect(await refused.json()).toEqual({
+      error: "subscription-cancelled-or-ended",
+    });
     expect(await requestRowsOf(clientId)).toEqual([]);
     expect(await detailsEmails()).toEqual([]);
     await expectStampsToProjectReviewRows(clientId);
@@ -486,7 +490,9 @@ describe.sequential("onboarding review integration", () => {
 
     // assert
     expect(refused.status).toBe(409);
-    expect(await refused.json()).toEqual({ error: "coaching-closed" });
+    expect(await refused.json()).toEqual({
+      error: "subscription-cancelled-or-ended",
+    });
     expect(await reviewRowOf(clientId)).toEqual({
       openedAt: OPENED_INSTANT,
       approvedAt: null,

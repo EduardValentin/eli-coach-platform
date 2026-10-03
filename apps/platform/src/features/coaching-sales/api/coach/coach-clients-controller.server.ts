@@ -8,11 +8,7 @@ import type {
   ListClientsUseCase,
   ReadClientRecordUseCase,
 } from "@eli-coach-platform/domain/client-roster";
-import {
-  CoachingSubscription,
-  RefundDue,
-  type RefundDueSnapshot,
-} from "@eli-coach-platform/domain/coaching-subscription";
+import type { RefundDueSnapshot } from "@eli-coach-platform/domain/coaching-subscription";
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 
 import { requireApiAccount } from "~/features/accounts/server/guards/require-account.server";
@@ -43,7 +39,10 @@ type ResendRefusal = Exclude<
 const RESEND_REFUSALS = {
   "not-found": { error: "not-found", status: 404 },
   "already-admitted": { error: "already-admitted", status: 409 },
-  "coaching-closed": { error: "coaching-closed", status: 409 },
+  "subscription-cancelled-or-ended": {
+    error: "subscription-cancelled-or-ended",
+    status: 409,
+  },
   failed: { error: "send-failed", status: 503 },
 } as const satisfies Record<ResendRefusal, { error: string; status: number }>;
 
@@ -102,7 +101,7 @@ export class CoachClientsController {
 
     return coachClientSchema.parse({
       ...identityOf(record),
-      coachingClosed: hasClosedCoaching(record),
+      subscriptionCancelledOrEnded: record.subscriptionCancelledOrEnded,
       gender: record.booking.gender,
       assessmentCall: assessmentCallOf(record),
       subscription: subscriptionOf(record),
@@ -143,12 +142,6 @@ function identityOf(client: ListedClient) {
     status: client.status,
     needsRefund: client.needsRefund,
   };
-}
-
-function hasClosedCoaching(record: ClientRecord): boolean {
-  const status = record.subscriptionStatus;
-
-  return status ? CoachingSubscription.hasClosedCoaching({ status }) : false;
 }
 
 function assessmentCallOf(record: ClientRecord) {
@@ -198,18 +191,24 @@ function subscriptionOf(record: ClientRecord) {
     endsOn: subscriptionStatus === "cancelled" ? accessEndsOn : null,
     endedOn: subscriptionStatus === "ended" ? accessEndsOn : null,
     refund: subscription.refund
-      ? refundOf(subscription.refund, subscription.currency)
+      ? refundOf(subscription.refund, {
+          currency: subscription.currency,
+          outstandingCents: record.refundOutstandingCents ?? 0,
+        })
       : null,
   };
 }
 
-function refundOf(refund: RefundDueSnapshot, currency: string) {
+function refundOf(
+  refund: RefundDueSnapshot,
+  reading: { currency: string; outstandingCents: number },
+) {
   return {
     reason: refund.reason,
     amountCents: refund.amountCents,
-    outstandingCents: RefundDue.reconstitute(refund).outstandingCents(),
+    outstandingCents: reading.outstandingCents,
     refundedCents: refund.refundedCents,
-    currency,
+    currency: reading.currency,
     dueBy: refund.dueBy?.toISOString() ?? null,
     refundedOn: refund.refundedAt?.toISOString() ?? null,
   };

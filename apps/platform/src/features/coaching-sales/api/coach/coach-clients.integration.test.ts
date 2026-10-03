@@ -250,7 +250,9 @@ describe.sequential("coach clients integration", () => {
       // assert
       expect(ended.status).toBe(200);
       expect(response.status).toBe(409);
-      expect(await response.json()).toEqual({ error: "coaching-closed" });
+      expect(await response.json()).toEqual({
+        error: "subscription-cancelled-or-ended",
+      });
       expect(await readInvitation()).toEqual(earlier);
       expect(await revocationsOf(EARLIER_PROVIDER_ID)).toEqual([]);
       expect(await invitationEmails()).toHaveLength(1);

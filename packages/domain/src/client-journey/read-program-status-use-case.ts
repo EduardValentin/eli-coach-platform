@@ -42,7 +42,7 @@ export class ReadProgramStatusUseCase {
       submittedAt: journey.onboardingSubmittedAt,
       workStartsOn: subscription?.programWorkStart() ?? null,
       startNowUntil: subscription?.startNowUntil() ?? null,
-      paymentProblem: subscription?.paymentProblemSince != null,
+      paymentProblem: subscription?.hasPaymentProblem() ?? false,
     };
   }
 }

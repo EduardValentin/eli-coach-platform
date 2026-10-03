@@ -6,7 +6,7 @@ import type { ClientJourneys } from "./client-journeys";
 
 export type ClientPortalAccess = "open" | "ended";
 
-type ClientPortalStanding = {
+type ClientPortalStandingReading = {
   journey: ClientJourney;
   access: ClientPortalAccess;
 };
@@ -22,7 +22,9 @@ export class ReadClientPortalStandingUseCase {
     private readonly options: ReadClientPortalStandingUseCaseOptions,
   ) {}
 
-  async execute(authSubjectId: string): Promise<ClientPortalStanding | null> {
+  async execute(
+    authSubjectId: string,
+  ): Promise<ClientPortalStandingReading | null> {
     const journey =
       await this.options.journeys.findByAuthSubjectId(authSubjectId);
 

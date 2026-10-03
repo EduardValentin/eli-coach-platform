@@ -426,7 +426,7 @@ describe("OnboardingReviewController openReview", () => {
     [{ status: "not-found" }, 404],
     [{ status: "not-submitted" }, 409],
     [{ status: "approved" }, 409],
-    [{ status: "coaching-closed" }, 409],
+    [{ status: "subscription-cancelled-or-ended" }, 409],
   ])("refuses an opening the use case answers %j", async (result, status) => {
     // arrange
     const { controller } = createController({ openResult: result });
@@ -506,7 +506,11 @@ describe("OnboardingReviewController requestDetails", () => {
   it.each<[RequestResult, number, string]>([
     [{ status: "not-found" }, 404, "not-found"],
     [{ status: "not-in-review" }, 409, "not-in-review"],
-    [{ status: "coaching-closed" }, 409, "coaching-closed"],
+    [
+      { status: "subscription-cancelled-or-ended" },
+      409,
+      "subscription-cancelled-or-ended",
+    ],
     [{ status: "invalid", reason: "empty-note" }, 422, "invalid"],
   ])(
     "refuses a request the use case answers %j",
@@ -590,7 +594,7 @@ describe("OnboardingReviewController approveAnswers", () => {
   it.each<[ApproveResult, number]>([
     [{ status: "not-found" }, 404],
     [{ status: "not-reviewable" }, 409],
-    [{ status: "coaching-closed" }, 409],
+    [{ status: "subscription-cancelled-or-ended" }, 409],
   ])("refuses an approval the use case answers %j", async (result, status) => {
     // arrange
     const { controller } = createController({ approveResult: result });

@@ -52,6 +52,8 @@ const RECORD_READINGS = {
   status: "invited",
   needsRefund: false,
   subscriptionStatus: "not-started",
+  subscriptionCancelledOrEnded: false,
+  refundOutstandingCents: null,
   workStartsOn: null,
 } as const;
 
@@ -217,7 +219,7 @@ describe("CoachClientsController#loadClient", () => {
       email: "ana@example.com",
       status: "invited",
       needsRefund: false,
-      coachingClosed: false,
+      subscriptionCancelledOrEnded: false,
       gender: "female",
       assessmentCall: {
         startsAt: "2026-09-24T15:00:00.000Z",
@@ -267,6 +269,7 @@ describe("CoachClientsController#loadClient", () => {
         ...RECORD_READINGS,
         status: "cancelled",
         subscriptionStatus: "cancelled",
+        subscriptionCancelledOrEnded: true,
         assessmentCall: BOOKED_CALL,
       },
     });
@@ -275,7 +278,7 @@ describe("CoachClientsController#loadClient", () => {
     const client = await controller.loadClient(coachArgs(), CLIENT_ID);
 
     // assert
-    expect(client.coachingClosed).toBe(true);
+    expect(client.subscriptionCancelledOrEnded).toBe(true);
     expect(client.subscription).toMatchObject({
       status: "cancelled",
       endsOn: "2026-12-26T10:00:00.000Z",
@@ -307,6 +310,8 @@ describe("CoachClientsController#loadClient", () => {
         status: "inactive",
         needsRefund: true,
         subscriptionStatus: "ended",
+        subscriptionCancelledOrEnded: true,
+        refundOutstandingCents: 34700,
         assessmentCall: BOOKED_CALL,
       },
     });
@@ -316,7 +321,7 @@ describe("CoachClientsController#loadClient", () => {
 
     // assert
     expect(client.needsRefund).toBe(true);
-    expect(client.coachingClosed).toBe(true);
+    expect(client.subscriptionCancelledOrEnded).toBe(true);
     expect(client.subscription).toMatchObject({
       status: "ended",
       endsOn: null,
@@ -356,6 +361,8 @@ describe("CoachClientsController#loadClient", () => {
         ...RECORD_READINGS,
         status: "inactive",
         subscriptionStatus: "ended",
+        subscriptionCancelledOrEnded: true,
+        refundOutstandingCents: 0,
         assessmentCall: BOOKED_CALL,
       },
     });
@@ -427,7 +434,7 @@ describe("CoachClientsController#loadClient", () => {
 
     // assert
     expect(client.subscription).toBeNull();
-    expect(client.coachingClosed).toBe(false);
+    expect(client.subscriptionCancelledOrEnded).toBe(false);
   });
 
   it("reads no invitation once her account is bound", async () => {
@@ -533,7 +540,7 @@ describe("CoachClientsController#resendInvitation", () => {
   it.each([
     ["not-found", 404, "not-found"],
     ["already-admitted", 409, "already-admitted"],
-    ["coaching-closed", 409, "coaching-closed"],
+    ["subscription-cancelled-or-ended", 409, "subscription-cancelled-or-ended"],
     ["failed", 503, "send-failed"],
   ] as const)(
     "answers the %s outcome with %i and names it %s",

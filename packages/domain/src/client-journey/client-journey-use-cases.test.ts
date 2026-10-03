@@ -85,7 +85,7 @@ function createSubscriptions(found: CoachingSubscription | null) {
     findCurrentForClient: vi.fn().mockResolvedValue(found),
     findCurrentForAuthSubject: vi.fn(),
     findByPaymentSubscriptionId: vi.fn(),
-    findLatestByPaymentCustomerId: vi.fn(),
+    findCurrentByPaymentCustomerId: vi.fn(),
     save: vi.fn(),
     saveForEvent: vi.fn(),
   } satisfies CoachingSubscriptions;

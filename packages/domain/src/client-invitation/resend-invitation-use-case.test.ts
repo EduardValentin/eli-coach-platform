@@ -27,7 +27,7 @@ const invitedClient: InvitedClient = {
   email: "ana@example.com",
   firstName: "Ana",
   authSubjectId: null,
-  coachingClosed: false,
+  subscriptionCancelledOrEnded: false,
 };
 
 function sentInvitation(
@@ -256,7 +256,7 @@ describe("ResendInvitationUseCase", () => {
   it("refuses a resend once her coaching is cancelled or ended, touching nothing", async () => {
     // arrange
     const dependencies = resendDependencies({
-      client: { ...invitedClient, coachingClosed: true },
+      client: { ...invitedClient, subscriptionCancelledOrEnded: true },
     });
     const useCase = new ResendInvitationUseCase(dependencies);
 
@@ -264,7 +264,7 @@ describe("ResendInvitationUseCase", () => {
     const result = await useCase.execute(invitedClient.id);
 
     // assert
-    expect(result).toEqual({ status: "coaching-closed" });
+    expect(result).toEqual({ status: "subscription-cancelled-or-ended" });
     expect(dependencies.invitations.reissue).not.toHaveBeenCalled();
     expect(dependencies.identity.replace).not.toHaveBeenCalled();
     expect(dependencies.identity.create).not.toHaveBeenCalled();

@@ -37,7 +37,7 @@ const CLIENT: OnboardingClient = {
     detailsAnsweredAt: null,
     answersApprovedAt: null,
   },
-  coachingClosed: false,
+  subscriptionCancelledOrEnded: false,
 };
 const IMPERIAL = UnitPreference.of("imperial");
 

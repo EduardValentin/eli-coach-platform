@@ -41,7 +41,7 @@ const CLIENT = {
   email: "ana@example.com",
   firstName: "Ana",
   gender: "female",
-  coachingClosed: false,
+  subscriptionCancelledOrEnded: false,
 } satisfies ReviewedClient;
 const PAGE_PATH = "/coach/clients/ana";
 const STATUS_BADGE = "Awaiting review";
@@ -205,7 +205,7 @@ describe("the onboarding panel on a client page", () => {
       // arrange
       const user = await renderPanel(
         { review: reviewView(submittedReviewIn(stage)) },
-        { ...CLIENT, coachingClosed: true },
+        { ...CLIENT, subscriptionCancelledOrEnded: true },
       );
 
       // act

@@ -32,7 +32,15 @@ export type CheckoutCompletion = {
   startChoice: StartChoice;
 };
 
-export type CancellationRule = "full-refund" | "no-refund" | "none";
+export const OFFERED_CANCELLATION_RULES = ["full-refund", "no-refund"] as const;
+
+type OfferedCancellationRule = (typeof OFFERED_CANCELLATION_RULES)[number];
+
+export type CancellationRule = OfferedCancellationRule | "none";
+
+export const START_NOW_REFUSALS = ["ended", "outside-window"] as const;
+
+type StartNowRefusal = (typeof START_NOW_REFUSALS)[number];
 
 export type ProviderInstruction =
   { kind: "end-now" } | { kind: "end-at"; at: Date };
@@ -52,7 +60,7 @@ type WithdrawalRefundRecording =
 
 export type StartNowDecision =
   | { outcome: "started"; subscription: CoachingSubscription }
-  | { outcome: "refused"; reason: "ended" | "outside-window" };
+  | { outcome: "refused"; reason: StartNowRefusal };
 
 export type CoachingSubscriptionSnapshot = {
   id: string;
@@ -86,7 +94,7 @@ type SubscriptionStanding = Pick<
   "status" | "accessEndsAt"
 >;
 
-const WITHDRAWAL_WINDOW_DAYS = 14;
+export const WITHDRAWAL_WINDOW_DAYS = 14;
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 
 export function withdrawalDeadline(purchasedAt: Date): Date {
@@ -158,14 +166,22 @@ export class CoachingSubscription {
     return standing.status;
   }
 
-  static hasClosedCoaching(
-    standing: Pick<CoachingSubscriptionSnapshot, "status">,
+  static isCancelledOrEnded(
+    status: CoachingSubscriptionStatus | null,
   ): boolean {
-    return standing.status === "cancelled" || standing.status === "ended";
+    return status === "cancelled" || status === "ended";
   }
 
   statusAt(now: Date): CoachingSubscriptionStatus {
     return CoachingSubscription.statusOf(this, now);
+  }
+
+  hasRefundOutstanding(): boolean {
+    return this.refund !== null && !this.refund.isSettled();
+  }
+
+  hasPaymentProblem(): boolean {
+    return this.paymentProblemSince !== null;
   }
 
   hasPortalAccessAt(now: Date): boolean {

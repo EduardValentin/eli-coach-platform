@@ -71,7 +71,8 @@ const READING: Reading = {
   paidThrough: PAID_THROUGH,
   refundOnCancellationCents: 44700,
   startNowUntil: DEADLINE,
-  refundOutstanding: false,
+  paymentProblem: false,
+  refundDue: false,
 };
 
 describe("SubscriptionController#loadSettings", () => {
@@ -147,6 +148,7 @@ describe("SubscriptionController#loadSettings", () => {
         cancellationRule: "none",
         refundOnCancellationCents: 0,
         startNowUntil: null,
+        paymentProblem: true,
       },
     });
 
@@ -200,17 +202,17 @@ describe("SubscriptionController#loadEnded", () => {
   it.each([
     ["a refund is still owed", true],
     ["nothing is owed", false],
-  ])("tells the ended page whether %s", async (_label, refundOutstanding) => {
+  ])("tells the ended page whether %s", async (_label, refundDue) => {
     // arrange
     const { controller } = createController({
-      reading: { ...READING, status: "ended", refundOutstanding },
+      reading: { ...READING, status: "ended", refundDue },
     });
 
     // act
     const ended = await controller.loadEnded(clientArgs());
 
     // assert
-    expect(ended).toEqual({ refundDue: refundOutstanding });
+    expect(ended).toEqual({ refundDue });
   });
 });
 
@@ -232,6 +234,7 @@ describe("SubscriptionController#cancel", () => {
             cancelledAt,
           }).toSnapshot(),
         },
+        refundDue: true,
       },
     });
 
