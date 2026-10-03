@@ -1,6 +1,6 @@
 # Conventions
 
-Header: date 2026-09-18, commit 8ac6a613 (PR #229 head, squash-merged to main as 7d92dc22; base 79fa1e95), scope 46-file C1/C6/C7/C8/C14 ownership refactor plus direct neighbors, mode partial change review (run 8 baseline e8690f45); last update 2026-10-03 at commit 5bc395f3, change review (subscription lifecycle, round two).
+Header: date 2026-09-18, commit 8ac6a613 (PR #229 head, squash-merged to main as 7d92dc22; base 79fa1e95), scope 46-file C1/C6/C7/C8/C14 ownership refactor plus direct neighbors, mode partial change review (run 8 baseline e8690f45); last update 2026-10-04 at commit 89ebf721, change review (subscription lifecycle, round three).
 
 Where a file goes and what it may import. The dependency rules that enforce the import side live in `tools/dependency-cruiser.config.cjs`; this file explains the folder layout those rules assume. Published surfaces are enforced by `knip.json` through `pnpm check:surfaces` (`knip --no-config-hints`), and the 42 dependency rules are proven by `tools/boundaries.test.mjs` over `tools/boundary-fixtures/`, one fixture per rule except `stability`. The domain package's per-entity folder layout is checked by `tools/domain-layout.mjs` and exercised by `tools/domain-layout.test.mjs` over `tools/domain-layout-fixtures/`; all six checks have fixtures, including a missing `index.ts` and a `*-use-case.ts` without an `execute` method. `pnpm check:boundaries` runs from the repository root, since the tool's tsconfig alias paths are resolved relative to the current working directory.
 

@@ -1,6 +1,6 @@
 # Dependencies
 
-Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; last update 2026-10-03 at commit 5bc395f3, change review (subscription lifecycle, round two).
+Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; last update 2026-10-04 at commit 89ebf721, change review (subscription lifecycle, round three).
 
 ## Component graph
 
@@ -238,7 +238,7 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 | B288 | CoachingSalesIncidents (U1392) | C1 payment-link (use-cases) | U519 createConsoleLogger (C14) | U1394, U1395 | the failed read, a call id | implementer | dependency-absence, composition injection |
 | B289 | CoachingSalesNotifications (U1393) | C1 payment-link (use-cases) | U1437 EmailCoachingSalesNotifications (adapters, C18), built by `createCoachingSalesNotifications` | U1395 | a `PaymentLinkMessage` (call snapshot, link id, raw token, tier) in; `sent \| failed` out | implementer | dependency-absence |
 | B290 | PaymentCompletionHandler (U1404) | C6 payments (adapters; adapter-facing contract) | U1428 CoachingPurchaseCompletionHandler (adapters, C18), handed out as `handles.paymentCompletionHandler` | U518 (purpose-keyed map), U1458 | an event id and a `PaidCheckoutSession` in; `recorded \| duplicate \| ignored` out | implementer | composition injection; the platform composition throws at startup on a duplicate purpose |
-| B291 | PaymentEvents (U1405) | C6 payments (adapters; adapter-facing contract) | U1415 StripePaymentEvents and U1413 InMemoryPaymentEvents (adapters, C6), both reading events through `readPaymentEvent`, selected by U1403 on `PAYMENTS_PROVIDER` | U1458 | the raw body and signature header in; `PaymentEventVerdict` out: a paid session, a subscription change with its purpose, a refund, `ignored` or `invalid` | implementer | `./payments/server` publishes the contract and the factory only |
+| B291 | PaymentEvents (U1405) | C6 payments (adapters; adapter-facing contract) | U1415 StripePaymentEvents and U1413 InMemoryPaymentEvents (adapters, C6), both reading events through `readPaymentEvent` with the Stripe vocabulary (`STRIPE_VOCABULARY`, U3409), selected by U1403 on `PAYMENTS_PROVIDER` | U1458 | the raw body and signature header in; `PaymentEventVerdict` out: a paid session, a subscription change with its purpose, a refund, `ignored` or `invalid` | implementer | `./payments/server` publishes the contract and the factory only |
 | B292 | PaymentWebhookIncidents (U1406) | C6 payments (adapters; adapter-facing contract) | U519 createConsoleLogger (C14) | U1458 | `{ eventId, purpose }` for an unrouted delivery; a handler failure reports `{ eventId, handler, errorClass }`, the handler a purpose or `charge-refunds` | implementer | composition injection |
 | B293 | InvitationAcceptance (U1474) | C1 use-cases (`/account`) | an inline object in U1423 over U1483 (composition, C18) | U902 | `{ authSubjectId }` in; `accepted \| refused` out | implementer | dependency-absence; the `/account` slice imports no other slice; the container hands the handle from the coaching-sales to the accounts composition |
 | B294 | PaidClientAdmission (U1491) | C1 use-cases (`/coaching-subscription`) | an inline object in U1423 over U1482 (composition, C18) | U1385 | `{ clientId }` in | implementer | dependency-absence; composition injection |
@@ -3368,7 +3368,6 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E3940 | apps/platform/src/features/coaching-sales/ui/client/status/start-now-dialog.tsx | apps/platform/src/features/coaching-sales/ui/shared/immediate-start-copy.ts | import | no | yes | inward | present |
 | E3941 | apps/platform/src/features/coaching-sales/ui/client/status/start-now-dialog.tsx | packages/ui/src/overlays/index.ts | import | yes | no | lateral | present |
 | E3942 | apps/platform/src/features/coaching-sales/ui/client/status/use-start-now.ts | apps/platform/src/features/coaching-sales/contracts/paths.ts | import | no | yes | inward | present |
-| E3943 | apps/platform/src/features/coaching-sales/ui/client/status/use-start-now.ts | external:react | import | n/a | no | lateral | present |
 | E3945 | apps/platform/src/features/coaching-sales/ui/coach/clients/clients-table.tsx | apps/platform/src/features/coaching-sales/ui/coach/clients/needs-refund-badge.tsx | import | no | no | lateral | present |
 | E3946 | apps/platform/src/features/coaching-sales/ui/coach/clients/needs-refund-badge.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
 | E3947 | apps/platform/src/features/coaching-sales/ui/coach/clients/subscription-summary.tsx | apps/platform/src/features/coaching-sales/contracts/subscription-refunds.ts | import | no | yes | inward | present |
@@ -3504,4 +3503,8 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E4077 | apps/platform/src/features/coaching-sales/ui/shared/use-confirmed-fetcher-dialog.ts | external:react | import | n/a | no | lateral | present |
 | E4078 | apps/platform/src/features/coaching-sales/ui/shared/use-confirmed-fetcher-dialog.ts | external:react-router | import | n/a | no | lateral | present |
 | E4079 | packages/domain/src/coaching-subscription/start-program-now-use-case.ts | packages/domain/src/coaching-subscription/coaching-subscription.ts | type-only import | no | yes | inward | present |
-| E4080 | packages/infrastructure/src/payments/payment-subscription-change.server.ts | packages/infrastructure/src/payments/stripe/stripe-subscription-standing.server.ts | import | no | no | lateral | present |
+| E4081 | packages/domain/src/client-journey/read-program-status-use-case.ts | packages/domain/src/shared/index.ts | type-only import | no | no | lateral | present |
+| E4082 | packages/infrastructure/src/payments/create-payment-events.server.ts | packages/infrastructure/src/payments/stripe/stripe-vocabulary.server.ts | import | no | no | lateral | present |
+| E4083 | packages/infrastructure/src/payments/memory/in-memory-payment-events.server.ts | packages/infrastructure/src/payments/payment-subscription-change.server.ts | type-only import | no | no | lateral | present |
+| E4084 | packages/infrastructure/src/payments/stripe/stripe-payment-events.server.ts | packages/infrastructure/src/payments/stripe/stripe-vocabulary.server.ts | import | no | no | lateral | present |
+| E4085 | packages/infrastructure/src/payments/stripe/stripe-vocabulary.server.ts | packages/infrastructure/src/payments/payment-subscription-change.server.ts | type-only import | no | no | lateral | present |
