@@ -146,9 +146,9 @@ describe('the subscription section', () => {
         /^Until \d{1,2} \w+ you can cancel for a full refund\. Your access ends right away\.$/,
       ),
     ).toBeVisible();
-    expect(
-      within(row).getByRole('button', { name: 'Cancel and get a full refund' }),
-    ).toBeVisible();
+    expect(within(row).getByRole('button', { name: 'Cancel' })).toHaveAccessibleDescription(
+      /^Cancellation Until \d{1,2} \w+ you can cancel for a full refund\. Your access ends right away\.$/,
+    );
   });
 
   it('offers to cancel without a refund on the immediate path within the 14 days', () => {
@@ -164,12 +164,9 @@ describe('the subscription section', () => {
         /^You won't be charged again, there is no refund for the coaching already paid, and your access stays until \d{1,2} \w+\.$/,
       ),
     ).toBeVisible();
-    expect(
-      within(row).getByRole('button', { name: 'Cancel subscription' }),
-    ).toBeVisible();
-    expect(
-      within(row).queryByRole('button', { name: /refund/ }),
-    ).not.toBeInTheDocument();
+    expect(within(row).getByRole('button', { name: 'Cancel' })).toHaveAccessibleDescription(
+      /^Cancellation You won't be charged again, there is no refund for the coaching already paid, and your access stays until \d{1,2} \w+\.$/,
+    );
   });
 
   it('offers to cancel without a refund once the withdrawal right is gone', () => {
@@ -185,9 +182,7 @@ describe('the subscription section', () => {
         /^You won't be charged again, there is no refund for the coaching already paid, and your access stays until \d{1,2} \w+\.$/,
       ),
     ).toBeVisible();
-    expect(
-      within(row).getByRole('button', { name: 'Cancel subscription' }),
-    ).toBeVisible();
+    expect(within(row).getByRole('button', { name: 'Cancel' })).toBeVisible();
   });
 
   it('shows a cancelled subscription with its access date and no further actions', () => {
@@ -205,7 +200,7 @@ describe('the subscription section', () => {
     ).toBeVisible();
     expect(within(section).queryByText('Cancellation')).not.toBeInTheDocument();
     expect(
-      within(section).queryByRole('button', { name: 'Manage payment method' }),
+      within(section).queryByRole('button', { name: 'Manage' }),
     ).not.toBeInTheDocument();
   });
 
@@ -227,9 +222,7 @@ describe('the cancel dialogs', () => {
     const user = renderSettings('jstart=waiting');
 
     // act
-    await user.click(
-      screen.getByRole('button', { name: 'Cancel and get a full refund' }),
-    );
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
 
     // assert
     const dialog = screen.getByRole('dialog', {
@@ -251,7 +244,7 @@ describe('the cancel dialogs', () => {
     const user = renderSettings('jpaid=14');
 
     // act
-    await user.click(screen.getByRole('button', { name: 'Cancel subscription' }));
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
 
     // assert
     expect(
@@ -264,9 +257,7 @@ describe('the cancel dialogs', () => {
   it('keeps her coaching and returns focus to the action', async () => {
     // arrange
     const user = renderSettings('jstart=waiting');
-    const action = screen.getByRole('button', {
-      name: 'Cancel and get a full refund',
-    });
+    const action = screen.getByRole('button', { name: 'Cancel' });
     await user.click(action);
 
     // act
@@ -281,9 +272,7 @@ describe('the cancel dialogs', () => {
   it('closes on Escape', async () => {
     // arrange
     const user = renderSettings('jstart=waiting');
-    await user.click(
-      screen.getByRole('button', { name: 'Cancel and get a full refund' }),
-    );
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
 
     // act
     await user.keyboard('{Escape}');
@@ -291,16 +280,14 @@ describe('the cancel dialogs', () => {
     // assert
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(
-      screen.getByRole('button', { name: 'Cancel and get a full refund' }),
+      screen.getByRole('button', { name: 'Cancel' }),
     ).toHaveFocus();
   });
 
   it('keeps focus inside the dialog', async () => {
     // arrange
     const user = renderSettings('jstart=waiting');
-    await user.click(
-      screen.getByRole('button', { name: 'Cancel and get a full refund' }),
-    );
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
     const dialog = screen.getByRole('dialog');
 
     // act
@@ -318,9 +305,7 @@ describe('cancelling', () => {
   it('ends a refundable subscription and shows the refund on its way', async () => {
     // arrange
     const user = renderSettings('jstart=waiting');
-    await user.click(
-      screen.getByRole('button', { name: 'Cancel and get a full refund' }),
-    );
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
 
     // act
     await user.click(
@@ -345,7 +330,7 @@ describe('cancelling', () => {
   it('keeps access after a cancellation without a refund', async () => {
     // arrange
     const user = renderSettings('jpaid=14');
-    await user.click(screen.getByRole('button', { name: 'Cancel subscription' }));
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
 
     // act
     await user.click(
@@ -377,9 +362,7 @@ describe('cancelling', () => {
   it('asks her to try again when the cancellation fails', async () => {
     // arrange
     const user = renderSettings('jstart=waiting&jcancel=fails');
-    await user.click(
-      screen.getByRole('button', { name: 'Cancel and get a full refund' }),
-    );
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
 
     // act
     await user.click(
@@ -417,10 +400,27 @@ describe('cancelling', () => {
 
     // assert
     expect(
-      within(cancellationRow()).getByRole('button', {
-        name: 'Cancel subscription',
-      }),
+      within(cancellationRow()).getByText(
+        /^You won't be charged again, there is no refund for the coaching already paid/,
+      ),
     ).toBeVisible();
+  });
+});
+
+describe('the row actions', () => {
+  it('describes Manage with the payment problem when there is one', () => {
+    // arrange
+    renderSettings('jpayproblem=1');
+
+    // act
+    const manage = within(subscriptionSection()).getByRole('button', {
+      name: 'Manage',
+    });
+
+    // assert
+    expect(manage).toHaveAccessibleDescription(
+      "Payment method Your last payment didn't go through. Update your card to keep your coaching going.",
+    );
   });
 });
 
@@ -435,8 +435,8 @@ describe('the payment method', () => {
     // assert
     expect(within(section).getByText('Payment method')).toBeVisible();
     expect(
-      within(section).getByRole('button', { name: 'Manage payment method' }),
-    ).toBeVisible();
+      within(section).getByRole('button', { name: 'Manage' }),
+    ).toHaveAccessibleDescription('Payment method');
     expect(
       within(section).queryByText('The card your coaching renews on.'),
     ).not.toBeInTheDocument();
@@ -463,7 +463,7 @@ describe('the payment method', () => {
     // arrange
     const user = renderSettings('jpayproblem=1&jpaid=30');
     await user.click(
-      screen.getByRole('button', { name: 'Manage payment method' }),
+      screen.getByRole('button', { name: 'Manage' }),
     );
     await screen.findByRole(
       'heading',
@@ -491,7 +491,7 @@ describe('the payment method', () => {
 
     // act
     await user.click(
-      screen.getByRole('button', { name: 'Manage payment method' }),
+      screen.getByRole('button', { name: 'Manage' }),
     );
 
     // assert

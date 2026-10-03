@@ -65,7 +65,7 @@ function periodLine(
   if (!endsAt) {
     return {
       term: 'Renews on',
-      value: `Once ${ownerPossessive} program starts`,
+      value: `Starts when ${ownerPossessive} program is delivered`,
     };
   }
   if (status === 'cancelled') {

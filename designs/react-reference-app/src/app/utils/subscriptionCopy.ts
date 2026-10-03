@@ -14,6 +14,10 @@ export const CANCEL_ACTION_LABELS: Record<OfferedCancellation, string> = {
   'no-refund': 'Cancel subscription',
 };
 
+export const CANCEL_ROW_ACTION_LABEL = 'Cancel';
+
+export const MANAGE_ROW_ACTION_LABEL = 'Manage';
+
 export const KEEP_COACHING_LABEL = 'Keep my coaching';
 
 export const CANCELLING_LABEL = 'Cancelling…';

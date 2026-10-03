@@ -5,6 +5,6 @@
   {"click": "#dev-journey-days-since-payment"},
   {"click": "role=option[name=\"14 days (withdrawal right gone)\" s]"},
   {"click": "[aria-label=\"Close Dev Settings\"]"},
-  {"waitFor": "role=button[name=\"Cancel subscription\" s]"},
+  {"waitFor": "[data-parity=\"subscription-cancellation\"] >> text=/no refund/"},
   {"wait": 400}
 ]

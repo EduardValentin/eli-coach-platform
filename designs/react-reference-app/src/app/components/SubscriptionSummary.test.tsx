@@ -156,4 +156,30 @@ describe('the subscription summary', () => {
       ),
     ).toBeInTheDocument();
   });
+
+  it('tells the coach the renewal waits until her program is delivered', () => {
+    // arrange
+    const subscription: CoachingSubscription = {
+      ...SUBSCRIPTION,
+      status: 'not-started',
+      day1: undefined,
+      periodEndsAt: undefined,
+    };
+
+    // act
+    render(
+      <SubscriptionSummary
+        subscription={subscription}
+        perspective="coach"
+        clientGender="female"
+        pricing="regular"
+        headingId="subscription-heading"
+      />,
+    );
+
+    // assert
+    expect(screen.getByText('Renews on').nextElementSibling).toHaveTextContent(
+      /^Starts when her program is delivered$/,
+    );
+  });
 });

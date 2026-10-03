@@ -20,11 +20,14 @@ import {
 } from '../../utils/journeyLabels';
 import {
   CANCEL_ACTION_LABELS,
+  CANCEL_ROW_ACTION_LABEL,
   CANCELLING_LABEL,
   cancelConfirmation,
   cancellationFacts,
   cancelledToast,
   KEEP_COACHING_LABEL,
+  MANAGE_ROW_ACTION_LABEL,
+  OPENING_PAYMENT_METHOD_LABEL,
   PAYMENT_PROBLEM_LINE,
   type OfferedCancellation,
 } from '../../utils/subscriptionCopy';
@@ -32,8 +35,20 @@ import { Button } from '../ui/button';
 import { ConfirmDialog } from '../ui/confirm-dialog';
 import { InlineProblem } from '../InlineProblem';
 import { SettingsRow, SettingsRows, SettingsSection } from '../SettingsSection';
-import { ManagePaymentMethodButton } from './ManagePaymentMethodButton';
 import { usePaymentMethodPortal } from './usePaymentMethodPortal';
+
+const ROW_ACTION_CLASS = 'w-full sm:w-28';
+
+const CANCELLATION_IDS = {
+  title: 'subscription-cancel-label',
+  description: 'subscription-cancel-description',
+};
+
+const PAYMENT_METHOD_IDS = {
+  title: 'subscription-payment-label',
+  paymentProblem: 'subscription-payment-problem',
+  handOffProblem: 'subscription-payment-method-problem',
+};
 
 type OpenStatus = Exclude<SubscriptionStatus, 'ended'>;
 
@@ -107,18 +122,20 @@ function CancellationRow({
     <SettingsRow
       data-parity="subscription-cancellation"
       description={cancellationFacts(rule, subscription, now)}
-      labelId="subscription-cancel-label"
+      descriptionId={CANCELLATION_IDS.description}
+      labelId={CANCELLATION_IDS.title}
       title="Cancellation"
     >
       <Button
-        className="w-full sm:w-auto"
+        aria-describedby={`${CANCELLATION_IDS.title} ${CANCELLATION_IDS.description}`}
+        className={ROW_ACTION_CLASS}
         data-parity="cancel-action"
         onClick={() => setConfirming(true)}
         size="sm"
         type="button"
         variant="destructive-outline"
       >
-        {action}
+        {CANCEL_ROW_ACTION_LABEL}
       </Button>
 
       <ConfirmDialog
@@ -143,23 +160,44 @@ function CancellationRow({
   );
 }
 
+function paymentMethodDescribedBy(
+  paymentProblem: boolean,
+  handOffProblem: string | null,
+): string {
+  return [
+    PAYMENT_METHOD_IDS.title,
+    paymentProblem ? PAYMENT_METHOD_IDS.paymentProblem : null,
+    handOffProblem ? PAYMENT_METHOD_IDS.handOffProblem : null,
+  ]
+    .filter((id) => id !== null)
+    .join(' ');
+}
+
 function PaymentMethodRow({ paymentProblem }: { paymentProblem: boolean }) {
   const { open, opening, problem } = usePaymentMethodPortal();
 
   return (
     <SettingsRow
       data-parity="subscription-payment-method"
-      labelId="subscription-payment-label"
+      labelId={PAYMENT_METHOD_IDS.title}
       problem={
         (paymentProblem || problem) && (
           <div className="grid gap-1">
             {paymentProblem && (
-              <InlineProblem data-parity="payment-problem" role="status">
+              <InlineProblem
+                data-parity="payment-problem"
+                id={PAYMENT_METHOD_IDS.paymentProblem}
+                role="status"
+              >
                 {PAYMENT_PROBLEM_LINE}
               </InlineProblem>
             )}
             {problem && (
-              <InlineProblem data-parity="payment-method-problem" role="alert">
+              <InlineProblem
+                data-parity="payment-method-problem"
+                id={PAYMENT_METHOD_IDS.handOffProblem}
+                role="alert"
+              >
                 {problem}
               </InlineProblem>
             )}
@@ -168,7 +206,19 @@ function PaymentMethodRow({ paymentProblem }: { paymentProblem: boolean }) {
       }
       title="Payment method"
     >
-      <ManagePaymentMethodButton onOpen={() => void open()} opening={opening} />
+      <Button
+        aria-busy={opening}
+        aria-describedby={paymentMethodDescribedBy(paymentProblem, problem)}
+        className={ROW_ACTION_CLASS}
+        data-parity="manage-payment-method"
+        disabled={opening}
+        onClick={() => void open()}
+        size="sm"
+        type="button"
+        variant="outline"
+      >
+        {opening ? OPENING_PAYMENT_METHOD_LABEL : MANAGE_ROW_ACTION_LABEL}
+      </Button>
     </SettingsRow>
   );
 }

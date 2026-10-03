@@ -977,7 +977,7 @@ describe('the coach reading about a client by his or their pronouns', () => {
       ),
     ).toBeInTheDocument();
     expect(
-      within(subscriptionPanel()).getByText('Once his program starts'),
+      within(subscriptionPanel()).getByText('Starts when his program is delivered'),
     ).toBeInTheDocument();
     expect(
       screen.getByText('He has not sent any measurements yet.'),
@@ -1001,7 +1001,7 @@ describe('the coach reading about a client by his or their pronouns', () => {
       ),
     ).toBeInTheDocument();
     expect(
-      within(subscriptionPanel()).getByText('Once their program starts'),
+      within(subscriptionPanel()).getByText('Starts when their program is delivered'),
     ).toBeInTheDocument();
     expect(
       screen.getByText('They have not sent any measurements yet.'),
