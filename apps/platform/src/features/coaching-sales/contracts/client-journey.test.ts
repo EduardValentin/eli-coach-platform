@@ -61,6 +61,7 @@ describe("clientJourneyRedirect", () => {
     ["approved", "/client/ended/", "/client"],
     ["approved", "/Client/Ended", "/client"],
     ["welcome", "/CLIENT/ENDED/", "/client/welcome"],
+    ["approved", "/client/%65nded", "/client"],
   ] as const)(
     "sends a client at the %s step who opens %s to %s",
     (step, requestedPath, expectedPath) => {
@@ -95,7 +96,7 @@ describe("clientJourneyRedirect over a path written differently", () => {
     expect(redirectTo).toBeNull();
   });
 
-  it.each(["/client/ended/", "/Client/Ended"])(
+  it.each(["/client/ended/", "/Client/Ended", "/client/%65nded"])(
     "lets a client whose coaching has ended open %s",
     (requestedPath) => {
       // act
@@ -131,6 +132,7 @@ describe("clientJourneyRedirect once her coaching has ended", () => {
     ["approved", "/client/profile"],
     ["needs-details", "/client/onboarding"],
     ["welcome", "/client/welcome"],
+    ["approved", "/client/%E0%A4%A"],
   ] as const)(
     "sends a client at the %s step who opens %s to the ended page",
     (step, requestedPath) => {

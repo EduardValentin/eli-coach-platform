@@ -71,7 +71,18 @@ export function clientJourneyRedirect(
 }
 
 function normalizedPathOf(requestedPath: string): string {
-  return requestedPath.toLowerCase().replace(TRAILING_SLASHES, "") || "/";
+  return (
+    decodedPathOf(requestedPath).toLowerCase().replace(TRAILING_SLASHES, "") ||
+    "/"
+  );
+}
+
+function decodedPathOf(requestedPath: string): string {
+  try {
+    return decodeURIComponent(requestedPath);
+  } catch {
+    return requestedPath;
+  }
 }
 
 export function clientJourneyPortalLink(
