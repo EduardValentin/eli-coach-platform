@@ -281,6 +281,7 @@ function RosterTableRow({
   return (
     <TableRow
       className="group cursor-pointer"
+      data-parity={`row-${position}`}
       onClick={() => navigate(row.detailPath)}
     >
       <TableCell>

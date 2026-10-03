@@ -118,6 +118,7 @@ function ClientRow({ client, position, timeZone }: ClientRowProps) {
   return (
     <TableRow
       className="group cursor-pointer"
+      data-parity={`row-${position}`}
       onClick={() => void navigate(detailPath)}
     >
       <TableCell>

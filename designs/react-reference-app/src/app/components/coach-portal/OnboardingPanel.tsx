@@ -298,9 +298,14 @@ export function AnswerGroups({
       value={view.openForms}
       onValueChange={view.onOpenForms}
       className="rounded-card border border-border-subtle bg-surface-quiet/60 px-4 sm:px-5"
+      data-parity="answers"
     >
       {forms.map((form) => (
-        <AccordionItem key={form.formId} value={form.formId}>
+        <AccordionItem
+          key={form.formId}
+          value={form.formId}
+          data-parity={`answer-group-${form.formId}`}
+        >
           <AccordionTrigger data-parity={`form-${form.formId}`}>
             <span className="flex flex-1 flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
               <span className="text-base font-medium">{form.title}</span>
