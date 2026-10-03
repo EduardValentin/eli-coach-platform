@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { readPaymentEvent } from "./payment-event-verdict.server";
+import { STRIPE_VOCABULARY } from "./stripe/stripe-vocabulary.server";
 
 function paidCheckoutSession(overrides: Record<string, unknown> = {}) {
   return {
@@ -37,7 +38,7 @@ describe("readPaymentEvent", () => {
     };
 
     // act
-    const verdict = readPaymentEvent(event);
+    const verdict = readPaymentEvent(event, STRIPE_VOCABULARY);
 
     // assert
     expect(verdict).toEqual({
@@ -67,7 +68,7 @@ describe("readPaymentEvent", () => {
     };
 
     // act
-    const verdict = readPaymentEvent(event);
+    const verdict = readPaymentEvent(event, STRIPE_VOCABULARY);
 
     // assert
     expect(verdict).toEqual({ kind: "ignored" });
@@ -83,7 +84,7 @@ describe("readPaymentEvent", () => {
     };
 
     // act
-    const verdict = readPaymentEvent(event);
+    const verdict = readPaymentEvent(event, STRIPE_VOCABULARY);
 
     // assert
     expect(verdict).toMatchObject({
@@ -110,7 +111,7 @@ describe("readPaymentEvent", () => {
     };
 
     // act
-    const verdict = readPaymentEvent(event);
+    const verdict = readPaymentEvent(event, STRIPE_VOCABULARY);
 
     // assert
     expect(verdict).toMatchObject({
@@ -145,7 +146,7 @@ describe("readPaymentEvent", () => {
     };
 
     // act
-    const verdict = readPaymentEvent(event);
+    const verdict = readPaymentEvent(event, STRIPE_VOCABULARY);
 
     // assert
     expect(verdict).toEqual({
@@ -190,7 +191,7 @@ describe("readPaymentEvent", () => {
     };
 
     // act
-    const verdict = readPaymentEvent(event);
+    const verdict = readPaymentEvent(event, STRIPE_VOCABULARY);
 
     // assert
     expect(verdict).toMatchObject({
@@ -223,7 +224,7 @@ describe("readPaymentEvent", () => {
     };
 
     // act
-    const verdict = readPaymentEvent(event);
+    const verdict = readPaymentEvent(event, STRIPE_VOCABULARY);
 
     // assert
     expect(verdict).toEqual({
@@ -250,7 +251,7 @@ describe("readPaymentEvent", () => {
     };
 
     // act
-    const verdict = readPaymentEvent(event);
+    const verdict = readPaymentEvent(event, STRIPE_VOCABULARY);
 
     // assert
     expect(verdict).toEqual({ kind: "ignored" });
@@ -266,7 +267,7 @@ describe("readPaymentEvent", () => {
     };
 
     // act
-    const verdict = readPaymentEvent(event);
+    const verdict = readPaymentEvent(event, STRIPE_VOCABULARY);
 
     // assert
     expect(verdict).toEqual({ kind: "ignored" });
@@ -293,7 +294,7 @@ describe("readPaymentEvent", () => {
   ])("answers invalid for %s", (_description, event) => {
     // arrange
     // act
-    const verdict = readPaymentEvent(event);
+    const verdict = readPaymentEvent(event, STRIPE_VOCABULARY);
 
     // assert
     expect(verdict).toEqual({ kind: "invalid" });

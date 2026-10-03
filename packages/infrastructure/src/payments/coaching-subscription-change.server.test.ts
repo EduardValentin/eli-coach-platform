@@ -34,7 +34,7 @@ function invoice(
     subscriptionId: "sub_1",
     customerId: "cus_1",
     outcome: "paid",
-    billingReason: "subscription_cycle",
+    invoiceReason: "renewal",
     occurredAt: OCCURRED_AT,
     ...overrides,
   };
@@ -147,9 +147,7 @@ describe("toSubscriptionEvent", () => {
 
   it("reads the paid purchase invoice as nothing, since the checkout records the purchase", () => {
     // act
-    const event = toSubscriptionEvent(
-      invoice({ billingReason: "subscription_create" }),
-    );
+    const event = toSubscriptionEvent(invoice({ invoiceReason: "purchase" }));
 
     // assert
     expect(event).toBeNull();

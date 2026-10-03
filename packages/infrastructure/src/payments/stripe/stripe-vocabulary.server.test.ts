@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { subscriptionStandingOf } from "./stripe-subscription-standing.server";
+import { STRIPE_VOCABULARY } from "./stripe-vocabulary.server";
 
-describe("subscriptionStandingOf", () => {
+describe("STRIPE_VOCABULARY.standingOf", () => {
   it.each([
     ["canceled", "ended"],
     ["incomplete_expired", "ended"],
@@ -13,9 +13,27 @@ describe("subscriptionStandingOf", () => {
     ["incomplete", "other"],
   ] as const)("reads Stripe's %s status as %s", (status, expected) => {
     // act
-    const standing = subscriptionStandingOf(status);
+    const standing = STRIPE_VOCABULARY.standingOf(status);
 
     // assert
     expect(standing).toBe(expected);
   });
+});
+
+describe("STRIPE_VOCABULARY.invoiceReasonOf", () => {
+  it.each([
+    ["subscription_create", "purchase"],
+    ["subscription_cycle", "renewal"],
+    ["subscription_update", "renewal"],
+    [null, "renewal"],
+  ] as const)(
+    "reads Stripe's %s billing reason as a %s",
+    (reason, expected) => {
+      // act
+      const invoiceReason = STRIPE_VOCABULARY.invoiceReasonOf(reason);
+
+      // assert
+      expect(invoiceReason).toBe(expected);
+    },
+  );
 });

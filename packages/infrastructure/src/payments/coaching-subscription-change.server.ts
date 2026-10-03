@@ -7,8 +7,6 @@ import type {
   PaymentSubscriptionState,
 } from "./payment-subscription-change.server";
 
-const PURCHASE_BILLING_REASON = "subscription_create";
-
 export function toSubscriptionEvent(
   change: PaymentSubscriptionChange | PaymentRefund,
 ): SubscriptionEvent | null {
@@ -71,7 +69,7 @@ function fromInvoiceOutcome(
     return { kind: "payment-problem", paymentSubscriptionId, occurredAt };
   }
 
-  return invoice.billingReason === PURCHASE_BILLING_REASON
+  return invoice.invoiceReason === "purchase"
     ? null
     : { kind: "renewal-paid", paymentSubscriptionId, occurredAt };
 }

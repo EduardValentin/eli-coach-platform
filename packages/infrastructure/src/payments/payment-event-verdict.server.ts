@@ -8,6 +8,7 @@ import {
 import {
   readPaymentRefund,
   readSubscriptionChange,
+  type PaymentProviderVocabulary,
   type PaymentRefund,
   type PaymentSubscriptionChange,
 } from "./payment-subscription-change.server";
@@ -45,7 +46,10 @@ const paymentEventSchema = z.object({
   }),
 });
 
-export function readPaymentEvent(event: unknown): PaymentEventVerdict {
+export function readPaymentEvent(
+  event: unknown,
+  vocabulary: PaymentProviderVocabulary,
+): PaymentEventVerdict {
   const parsed = paymentEventSchema.safeParse(event);
 
   if (!parsed.success) {
@@ -58,7 +62,7 @@ export function readPaymentEvent(event: unknown): PaymentEventVerdict {
     case CHARGE_REFUNDED_EVENT:
       return readChargeRefunded(parsed.data);
     default:
-      return readSubscriptionChanged(parsed.data);
+      return readSubscriptionChanged(parsed.data, vocabulary);
   }
 }
 
@@ -81,13 +85,19 @@ function readChargeRefunded(event: PaymentEvent): PaymentEventVerdict {
     : IGNORED;
 }
 
-function readSubscriptionChanged(event: PaymentEvent): PaymentEventVerdict {
-  const routed = readSubscriptionChange({
-    type: event.type,
-    created: event.created,
-    object: event.data.object,
-    previousAttributes: event.data.previous_attributes ?? null,
-  });
+function readSubscriptionChanged(
+  event: PaymentEvent,
+  vocabulary: PaymentProviderVocabulary,
+): PaymentEventVerdict {
+  const routed = readSubscriptionChange(
+    {
+      type: event.type,
+      created: event.created,
+      object: event.data.object,
+      previousAttributes: event.data.previous_attributes ?? null,
+    },
+    vocabulary,
+  );
 
   return routed
     ? { kind: "subscription_changed", eventId: event.id, ...routed }

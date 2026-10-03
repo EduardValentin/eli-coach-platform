@@ -2,10 +2,16 @@ import { z } from "zod";
 
 import { fromUnixSeconds } from "./checkout-session-completion.server";
 import { PAYMENT_PURPOSE_METADATA_KEY } from "./payment-completion-handler.server";
-import {
-  subscriptionStandingOf,
-  type PaymentSubscriptionStanding,
-} from "./stripe/stripe-subscription-standing.server";
+
+export type PaymentSubscriptionStanding =
+  "ended" | "payment-problem" | "healthy" | "other";
+
+export type PaymentInvoiceReason = "purchase" | "renewal";
+
+export type PaymentProviderVocabulary = {
+  standingOf: (status: string) => PaymentSubscriptionStanding;
+  invoiceReasonOf: (billingReason: string | null) => PaymentInvoiceReason;
+};
 
 export type PaymentSubscriptionState = {
   kind: "subscription_state";
@@ -24,7 +30,7 @@ export type PaymentInvoiceOutcome = {
   subscriptionId: string;
   customerId: string;
   outcome: "paid" | "failed";
-  billingReason: string | null;
+  invoiceReason: PaymentInvoiceReason;
   occurredAt: Date;
 };
 
@@ -106,14 +112,15 @@ const chargeSchema = z.object({
 
 export function readSubscriptionChange(
   event: ProviderEvent,
+  vocabulary: PaymentProviderVocabulary,
 ): RoutedSubscriptionChange | null {
   if (SUBSCRIPTION_STATE_EVENTS.includes(event.type)) {
-    return readSubscriptionState(event);
+    return readSubscriptionState(event, vocabulary);
   }
 
   const outcome = INVOICE_OUTCOMES[event.type];
 
-  return outcome ? readInvoiceOutcome(event, outcome) : null;
+  return outcome ? readInvoiceOutcome({ event, outcome, vocabulary }) : null;
 }
 
 export function readPaymentRefund(
@@ -138,6 +145,7 @@ export function readPaymentRefund(
 
 function readSubscriptionState(
   event: ProviderEvent,
+  vocabulary: PaymentProviderVocabulary,
 ): RoutedSubscriptionChange | null {
   const parsed = subscriptionSchema.safeParse(event.object);
 
@@ -155,10 +163,10 @@ function readSubscriptionState(
       kind: "subscription_state",
       subscriptionId: subscription.id,
       customerId: subscription.customer,
-      standing: subscriptionStandingOf(subscription.status),
+      standing: vocabulary.standingOf(subscription.status),
       previousStanding:
         typeof previousStatus === "string"
-          ? subscriptionStandingOf(previousStatus)
+          ? vocabulary.standingOf(previousStatus)
           : null,
       scheduledEndAt: subscription.cancel_at
         ? fromUnixSeconds(subscription.cancel_at)
@@ -172,10 +180,15 @@ function readSubscriptionState(
   };
 }
 
-function readInvoiceOutcome(
-  event: ProviderEvent,
-  outcome: "paid" | "failed",
-): RoutedSubscriptionChange | null {
+function readInvoiceOutcome({
+  event,
+  outcome,
+  vocabulary,
+}: {
+  event: ProviderEvent;
+  outcome: "paid" | "failed";
+  vocabulary: PaymentProviderVocabulary;
+}): RoutedSubscriptionChange | null {
   const parsed = invoiceSchema.safeParse(event.object);
 
   if (!parsed.success) {
@@ -192,7 +205,7 @@ function readInvoiceOutcome(
       subscriptionId: details.subscription,
       customerId: invoice.customer,
       outcome,
-      billingReason: invoice.billing_reason ?? null,
+      invoiceReason: vocabulary.invoiceReasonOf(invoice.billing_reason ?? null),
       occurredAt: fromUnixSeconds(event.created),
     },
   };

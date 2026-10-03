@@ -7,6 +7,8 @@ import type {
   PaymentEventVerdict,
 } from "../payment-events.server";
 
+import { STRIPE_VOCABULARY } from "./stripe-vocabulary.server";
+
 type StripeWebhooks = {
   constructEvent(payload: string, header: string, secret: string): unknown;
 };
@@ -34,6 +36,7 @@ export class StripePaymentEvents implements PaymentEvents {
           signature,
           this.options.signingSecret,
         ),
+        STRIPE_VOCABULARY,
       );
     } catch (error) {
       if (isUnverifiableEvent(error)) {

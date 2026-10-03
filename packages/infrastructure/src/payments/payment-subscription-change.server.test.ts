@@ -4,6 +4,7 @@ import {
   readPaymentRefund,
   readSubscriptionChange,
 } from "./payment-subscription-change.server";
+import { STRIPE_VOCABULARY } from "./stripe/stripe-vocabulary.server";
 
 const CREATED = 1790960433;
 const OCCURRED_AT = new Date(CREATED * 1000);
@@ -41,12 +42,15 @@ function invoiceObject(overrides: Record<string, unknown> = {}) {
 describe("readSubscriptionChange", () => {
   it("reads a scheduled end with its purpose", () => {
     // act
-    const read = readSubscriptionChange({
-      type: "customer.subscription.updated",
-      created: CREATED,
-      object: subscriptionObject({ cancel_at: 1798909229 }),
-      previousAttributes: { cancel_at: null, canceled_at: null },
-    });
+    const read = readSubscriptionChange(
+      {
+        type: "customer.subscription.updated",
+        created: CREATED,
+        object: subscriptionObject({ cancel_at: 1798909229 }),
+        previousAttributes: { cancel_at: null, canceled_at: null },
+      },
+      STRIPE_VOCABULARY,
+    );
 
     // assert
     expect(read).toEqual({
@@ -67,12 +71,15 @@ describe("readSubscriptionChange", () => {
 
   it("reads a lifted end as a change of the scheduled end to nothing", () => {
     // act
-    const read = readSubscriptionChange({
-      type: "customer.subscription.updated",
-      created: CREATED,
-      object: subscriptionObject(),
-      previousAttributes: { cancel_at: 1798909229 },
-    });
+    const read = readSubscriptionChange(
+      {
+        type: "customer.subscription.updated",
+        created: CREATED,
+        object: subscriptionObject(),
+        previousAttributes: { cancel_at: 1798909229 },
+      },
+      STRIPE_VOCABULARY,
+    );
 
     // assert
     expect(read?.change).toMatchObject({
@@ -83,12 +90,15 @@ describe("readSubscriptionChange", () => {
 
   it("reads an update that leaves the scheduled end alone as unchanged", () => {
     // act
-    const read = readSubscriptionChange({
-      type: "customer.subscription.updated",
-      created: CREATED,
-      object: subscriptionObject(),
-      previousAttributes: { pause_collection: null },
-    });
+    const read = readSubscriptionChange(
+      {
+        type: "customer.subscription.updated",
+        created: CREATED,
+        object: subscriptionObject(),
+        previousAttributes: { pause_collection: null },
+      },
+      STRIPE_VOCABULARY,
+    );
 
     // assert
     expect(read?.change).toMatchObject({
@@ -99,12 +109,15 @@ describe("readSubscriptionChange", () => {
 
   it("reads the status the update moved away from", () => {
     // act
-    const read = readSubscriptionChange({
-      type: "customer.subscription.updated",
-      created: CREATED,
-      object: subscriptionObject({ status: "past_due" }),
-      previousAttributes: { status: "active" },
-    });
+    const read = readSubscriptionChange(
+      {
+        type: "customer.subscription.updated",
+        created: CREATED,
+        object: subscriptionObject({ status: "past_due" }),
+        previousAttributes: { status: "active" },
+      },
+      STRIPE_VOCABULARY,
+    );
 
     // assert
     expect(read?.change).toMatchObject({
@@ -115,12 +128,18 @@ describe("readSubscriptionChange", () => {
 
   it("reads a deleted subscription with its end instant", () => {
     // act
-    const read = readSubscriptionChange({
-      type: "customer.subscription.deleted",
-      created: CREATED,
-      object: subscriptionObject({ status: "canceled", ended_at: 1790960471 }),
-      previousAttributes: null,
-    });
+    const read = readSubscriptionChange(
+      {
+        type: "customer.subscription.deleted",
+        created: CREATED,
+        object: subscriptionObject({
+          status: "canceled",
+          ended_at: 1790960471,
+        }),
+        previousAttributes: null,
+      },
+      STRIPE_VOCABULARY,
+    );
 
     // assert
     expect(read?.change).toMatchObject({
@@ -132,12 +151,15 @@ describe("readSubscriptionChange", () => {
 
   it("reads a subscription without a purpose as unrouted", () => {
     // act
-    const read = readSubscriptionChange({
-      type: "customer.subscription.deleted",
-      created: CREATED,
-      object: subscriptionObject({ metadata: {} }),
-      previousAttributes: null,
-    });
+    const read = readSubscriptionChange(
+      {
+        type: "customer.subscription.deleted",
+        created: CREATED,
+        object: subscriptionObject({ metadata: {} }),
+        previousAttributes: null,
+      },
+      STRIPE_VOCABULARY,
+    );
 
     // assert
     expect(read?.purpose).toBeNull();
@@ -150,12 +172,15 @@ describe("readSubscriptionChange", () => {
     "reads %s through the subscription its parent names",
     (type, outcome) => {
       // act
-      const read = readSubscriptionChange({
-        type,
-        created: CREATED,
-        object: invoiceObject(),
-        previousAttributes: null,
-      });
+      const read = readSubscriptionChange(
+        {
+          type,
+          created: CREATED,
+          object: invoiceObject(),
+          previousAttributes: null,
+        },
+        STRIPE_VOCABULARY,
+      );
 
       // assert
       expect(read).toEqual({
@@ -165,21 +190,40 @@ describe("readSubscriptionChange", () => {
           subscriptionId: "sub_1",
           customerId: "cus_1",
           outcome,
-          billingReason: "subscription_cycle",
+          invoiceReason: "renewal",
           occurredAt: OCCURRED_AT,
         },
       });
     },
   );
 
+  it("reads the purchase invoice as the purchase, in the provider's vocabulary", () => {
+    // act
+    const read = readSubscriptionChange(
+      {
+        type: "invoice.paid",
+        created: CREATED,
+        object: invoiceObject({ billing_reason: "subscription_create" }),
+        previousAttributes: null,
+      },
+      STRIPE_VOCABULARY,
+    );
+
+    // assert
+    expect(read?.change).toMatchObject({ invoiceReason: "purchase" });
+  });
+
   it("reads nothing from an invoice that belongs to no subscription", () => {
     // act
-    const read = readSubscriptionChange({
-      type: "invoice.paid",
-      created: CREATED,
-      object: invoiceObject({ parent: null }),
-      previousAttributes: null,
-    });
+    const read = readSubscriptionChange(
+      {
+        type: "invoice.paid",
+        created: CREATED,
+        object: invoiceObject({ parent: null }),
+        previousAttributes: null,
+      },
+      STRIPE_VOCABULARY,
+    );
 
     // assert
     expect(read).toBeNull();
@@ -187,12 +231,15 @@ describe("readSubscriptionChange", () => {
 
   it("reads nothing from an unlisted event type", () => {
     // act
-    const read = readSubscriptionChange({
-      type: "customer.subscription.paused",
-      created: CREATED,
-      object: subscriptionObject(),
-      previousAttributes: null,
-    });
+    const read = readSubscriptionChange(
+      {
+        type: "customer.subscription.paused",
+        created: CREATED,
+        object: subscriptionObject(),
+        previousAttributes: null,
+      },
+      STRIPE_VOCABULARY,
+    );
 
     // assert
     expect(read).toBeNull();
