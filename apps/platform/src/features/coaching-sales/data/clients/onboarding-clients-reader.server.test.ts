@@ -40,7 +40,7 @@ const ONBOARDING_CLIENT = {
     detailsAnsweredAt: null,
     answersApprovedAt: null,
   },
-  coachingClosed: false,
+  subscriptionCancelledOrEnded: false,
 };
 
 describe("PostgresOnboardingClients#findByAuthSubjectId", () => {
@@ -116,7 +116,7 @@ describe("PostgresOnboardingClients#findByClientId", () => {
       const client = await clients.findByClientId(CLIENT_ID);
 
       // assert
-      expect(client?.coachingClosed).toBe(expected);
+      expect(client?.subscriptionCancelledOrEnded).toBe(expected);
     },
   );
 

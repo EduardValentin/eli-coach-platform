@@ -29,7 +29,7 @@ describe("PostgresInvitedClients#findById", () => {
       email: "ana@example.com",
       firstName: "Ana",
       authSubjectId: null,
-      coachingClosed: false,
+      subscriptionCancelledOrEnded: false,
     });
   });
 
@@ -58,7 +58,7 @@ describe("PostgresInvitedClients#findById", () => {
       const client = await invitedClients.findById(CLIENT_ID);
 
       // assert
-      expect(client?.coachingClosed).toBe(expected);
+      expect(client?.subscriptionCancelledOrEnded).toBe(expected);
     },
   );
 

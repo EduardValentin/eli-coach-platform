@@ -5,13 +5,11 @@ import type {
 } from "@eli-coach-platform/domain/client-onboarding";
 import type { MeasurementClients } from "@eli-coach-platform/domain/client-profile";
 import type { UnitPreferenceClients } from "@eli-coach-platform/domain/unit-preference";
+import { CoachingSubscription } from "@eli-coach-platform/domain/coaching-subscription";
 import { eq, type SQL } from "drizzle-orm";
 
 import { clientsTable } from "~/features/coaching-sales/data/schema.server";
-import {
-  currentSubscriptionStatus,
-  hasClosedCoaching,
-} from "~/features/coaching-sales/data/subscriptions/current-subscription-status.server";
+import { currentSubscriptionStatus } from "~/features/coaching-sales/data/subscriptions/current-subscription.server";
 
 export class PostgresOnboardingClients
   implements OnboardingClients, UnitPreferenceClients, MeasurementClients
@@ -68,7 +66,9 @@ export class PostgresOnboardingClients
         detailsAnsweredAt: row.detailsAnsweredAt,
         answersApprovedAt: row.answersApprovedAt,
       },
-      coachingClosed: hasClosedCoaching(row.currentSubscriptionStatus),
+      subscriptionCancelledOrEnded: CoachingSubscription.isCancelledOrEnded(
+        row.currentSubscriptionStatus,
+      ),
     };
   }
 }

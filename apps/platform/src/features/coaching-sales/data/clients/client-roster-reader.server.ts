@@ -3,24 +3,17 @@ import type {
   ClientRoster,
   ClientRosterEntry,
 } from "@eli-coach-platform/domain/client-roster";
-import { and, desc, eq, gt, sql } from "drizzle-orm";
-import { alias } from "drizzle-orm/pg-core";
+import { desc, eq, sql } from "drizzle-orm";
 
 import {
   clientsTable,
   coachingSubscriptionsTable,
 } from "~/features/coaching-sales/data/schema.server";
+import { currentSubscriptionIdOfClient } from "~/features/coaching-sales/data/subscriptions/current-subscription.server";
 import {
   subscriptionColumns,
   toSubscriptionSnapshot,
 } from "~/features/coaching-sales/data/subscriptions/subscription-row.server";
-
-const LATER_SUBSCRIPTIONS = "later_coaching_subscriptions";
-
-const laterSubscriptions = alias(
-  coachingSubscriptionsTable,
-  LATER_SUBSCRIPTIONS,
-);
 
 export class PostgresClientRoster implements ClientRoster {
   constructor(private readonly database: DatabaseClient) {}
@@ -64,13 +57,7 @@ function selectRoster(database: DatabaseClient) {
     .from(clientsTable)
     .leftJoin(
       coachingSubscriptionsTable,
-      and(
-        eq(coachingSubscriptionsTable.clientId, clientsTable.id),
-        sql`not exists (select 1 from ${coachingSubscriptionsTable} ${sql.identifier(LATER_SUBSCRIPTIONS)} where ${and(
-          eq(laterSubscriptions.clientId, clientsTable.id),
-          gt(laterSubscriptions.paidAt, coachingSubscriptionsTable.paidAt),
-        )})`,
-      ),
+      eq(coachingSubscriptionsTable.id, currentSubscriptionIdOfClient),
     );
 }
 

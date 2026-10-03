@@ -10,12 +10,13 @@ import {
 } from "@eli-coach-platform/domain/coaching-subscription";
 import type { Clock } from "@eli-coach-platform/domain/shared";
 import { recordPaymentEvent } from "@eli-coach-platform/infrastructure/payments/server";
-import { and, desc, eq, inArray, isNull, type SQL } from "drizzle-orm";
+import { and, eq, inArray, isNull, type Column, type SQL } from "drizzle-orm";
 
 import {
   clientsTable,
   coachingSubscriptionsTable,
 } from "~/features/coaching-sales/data/schema.server";
+import { mostRecentlyPaidFirst } from "~/features/coaching-sales/data/subscriptions/current-subscription.server";
 import {
   changedColumns,
   selectSubscriptions,
@@ -33,13 +34,13 @@ export class PostgresCoachingSubscriptions implements CoachingSubscriptions {
   constructor(private readonly options: PostgresCoachingSubscriptionsOptions) {}
 
   findCurrentForClient(clientId: string): Promise<CoachingSubscription | null> {
-    return this.findLatest(eq(coachingSubscriptionsTable.clientId, clientId));
+    return this.findCurrent(eq(coachingSubscriptionsTable.clientId, clientId));
   }
 
   findCurrentForAuthSubject(
     authSubjectId: string,
   ): Promise<CoachingSubscription | null> {
-    return this.findLatest(
+    return this.findCurrent(
       inArray(
         coachingSubscriptionsTable.clientId,
         this.options.database
@@ -53,7 +54,7 @@ export class PostgresCoachingSubscriptions implements CoachingSubscriptions {
   findByPaymentSubscriptionId(
     paymentSubscriptionId: string,
   ): Promise<CoachingSubscription | null> {
-    return this.findLatest(
+    return this.findCurrent(
       eq(
         coachingSubscriptionsTable.stripeSubscriptionId,
         paymentSubscriptionId,
@@ -61,10 +62,10 @@ export class PostgresCoachingSubscriptions implements CoachingSubscriptions {
     );
   }
 
-  findLatestByPaymentCustomerId(
+  findCurrentByPaymentCustomerId(
     paymentCustomerId: string,
   ): Promise<CoachingSubscription | null> {
-    return this.findLatest(
+    return this.findCurrent(
       eq(coachingSubscriptionsTable.stripeCustomerId, paymentCustomerId),
     );
   }
@@ -106,12 +107,12 @@ export class PostgresCoachingSubscriptions implements CoachingSubscriptions {
     }
   }
 
-  private async findLatest(
+  private async findCurrent(
     condition: SQL,
   ): Promise<CoachingSubscription | null> {
     const [row] = await selectSubscriptions(this.options.database)
       .where(condition)
-      .orderBy(desc(coachingSubscriptionsTable.paidAt))
+      .orderBy(...mostRecentlyPaidFirst(coachingSubscriptionsTable))
       .limit(1);
 
     return row
@@ -134,7 +135,6 @@ async function writeChange(
     return true;
   }
 
-  const refundedCents = previous.refund?.refundedCents ?? null;
   const written = await database
     .update(coachingSubscriptionsTable)
     .set(columns)
@@ -143,12 +143,23 @@ async function writeChange(
         eq(coachingSubscriptionsTable.id, previous.id),
         eq(coachingSubscriptionsTable.status, previous.status),
         eq(coachingSubscriptionsTable.startChoice, previous.startChoice),
-        refundedCents === null
-          ? isNull(coachingSubscriptionsTable.refundedCents)
-          : eq(coachingSubscriptionsTable.refundedCents, refundedCents),
+        holds(coachingSubscriptionsTable.cancelledAt, previous.cancelledAt),
+        holds(coachingSubscriptionsTable.accessEndsAt, previous.accessEndsAt),
+        holds(
+          coachingSubscriptionsTable.paymentProblemSince,
+          previous.paymentProblemSince,
+        ),
+        holds(
+          coachingSubscriptionsTable.refundedCents,
+          previous.refund?.refundedCents ?? null,
+        ),
       ),
     )
     .returning({ id: coachingSubscriptionsTable.id });
 
   return written.length > 0;
+}
+
+function holds<Value>(column: Column, value: Value | null): SQL {
+  return value === null ? isNull(column) : eq(column, value);
 }

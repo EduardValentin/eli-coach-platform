@@ -113,7 +113,7 @@ describe("PostgresClientRoster#list", () => {
     expect(entries).toEqual([ROSTER_ENTRY]);
   });
 
-  it("joins each client to her most recently paid subscription, whatever its status", async () => {
+  it("joins each client to her most recently paid subscription, whatever its status, the later id winning a tie", async () => {
     // arrange
     const database = createDatabaseAnswering([]);
     const roster = new PostgresClientRoster(database.client);
@@ -124,7 +124,7 @@ describe("PostgresClientRoster#list", () => {
     // assert
     const [join] = database.joins;
     expect(dialect.sqlToQuery(join as SQL).sql).toBe(
-      `("app"."coaching_subscriptions"."client_id" = "app"."clients"."id" and not exists (select 1 from "app"."coaching_subscriptions" "later_coaching_subscriptions" where ("later_coaching_subscriptions"."client_id" = "app"."clients"."id" and "later_coaching_subscriptions"."paid_at" > "app"."coaching_subscriptions"."paid_at")))`,
+      `"app"."coaching_subscriptions"."id" = (select "current_coaching_subscriptions"."id" from "app"."coaching_subscriptions" "current_coaching_subscriptions" where "current_coaching_subscriptions"."client_id" = "app"."clients"."id" order by "current_coaching_subscriptions"."paid_at" desc, "current_coaching_subscriptions"."id" desc limit 1)`,
     );
   });
 
