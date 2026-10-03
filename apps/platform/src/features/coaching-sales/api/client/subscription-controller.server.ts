@@ -134,7 +134,7 @@ export class SubscriptionController {
   }
 
   async openPaymentMethod(args: ActionFunctionArgs): Promise<Response> {
-    const client = requirePortalAccess(args, { role: "CLIENT" });
+    const client = requireApiAccount(args, { role: "CLIENT" });
     const result = await this.options.openPaymentMethodSession.execute({
       authSubjectId: client.authSubjectId,
       returnUrl: this.publicUrl(CLIENT_SETTINGS_PATH),

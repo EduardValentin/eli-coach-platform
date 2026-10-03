@@ -524,6 +524,23 @@ describe.sequential("client subscription integration", () => {
       expect(response.status).toBe(403);
       expect(await portalSessionRequests()).toEqual([]);
     });
+
+    it("refuses an anonymous request with 401", async () => {
+      // arrange
+      await onboarding.admit(ANA, ANA_SESSION, WAITING_PURCHASE);
+
+      // act
+      const response = await suite.request(
+        new Request(suite.url(PAYMENT_METHOD_API), {
+          method: "POST",
+          redirect: "manual",
+        }),
+      );
+
+      // assert
+      expect(response.status).toBe(401);
+      expect(await portalSessionRequests()).toEqual([]);
+    });
   });
 
   describe("cancelling while Stripe reports changes", () => {

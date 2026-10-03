@@ -385,6 +385,26 @@ describe("SubscriptionController#openPaymentMethod", () => {
     },
   );
 
+  it.each([
+    ["the coach with 403", { account: COACH }, 403],
+    ["an anonymous visitor with 401", { anonymous: true }, 401],
+  ] as const)(
+    "refuses %s without opening a session",
+    async (_label, session, status) => {
+      // arrange
+      const { controller, openPaymentMethodSession } = createController({});
+
+      // act
+      const thrown = await captureThrown(() =>
+        controller.openPaymentMethod(apiArgs(session)),
+      );
+
+      // assert
+      expect((thrown as Response).status).toBe(status);
+      expect(openPaymentMethodSession).not.toHaveBeenCalled();
+    },
+  );
+
   it("answers 404 to a client with no subscription", async () => {
     // arrange
     const { controller } = createController({
