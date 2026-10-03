@@ -1,12 +1,12 @@
 import type { Clock } from "../shared";
 
-import type { START_NOW_REFUSALS } from "./coaching-subscription";
+import type { StartNowRefusal } from "./coaching-subscription";
 import type { CoachingSubscriptionIncidents } from "./coaching-subscription-incidents";
 import type { CoachingSubscriptions } from "./coaching-subscriptions";
 
 type StartProgramNowResult =
   | { status: "started" }
-  | { status: "refused"; reason: (typeof START_NOW_REFUSALS)[number] }
+  | { status: "refused"; reason: StartNowRefusal }
   | { status: "not_found" };
 
 type StartProgramNowUseCaseOptions = {
