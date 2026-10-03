@@ -7,8 +7,6 @@ export type OfferedCancellation = NonNullable<
 
 export const SETTINGS_TITLE = "Settings";
 
-export const SETTINGS_SUBTITLE = "Your coaching.";
-
 export const SETTINGS_META_TITLE = "Settings | Evoa";
 
 export const SUBSCRIPTION_TITLE = "Subscription";

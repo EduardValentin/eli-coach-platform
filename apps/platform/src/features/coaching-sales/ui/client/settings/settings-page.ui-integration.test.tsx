@@ -110,7 +110,7 @@ afterAll(() => {
 });
 
 describe("the settings page", () => {
-  it("heads the page and frames her subscription as its own section", async () => {
+  it("heads the page with no subtitle and frames her subscription as its own section", async () => {
     // arrange, act
     await renderSettings({ settings: WAITING_REFUNDABLE });
 
@@ -119,7 +119,10 @@ describe("the settings page", () => {
       screen.getByRole("heading", { level: 1, name: "Settings" }),
     ).toBeInTheDocument();
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
-    expect(screen.getByText("Your coaching.")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Settings" })
+        .nextElementSibling,
+    ).not.toBeInTheDocument();
     expect(
       screen.getByRole("heading", { level: 2, name: "Subscription" }),
     ).toBeInTheDocument();

@@ -9,11 +9,7 @@ import {
 import type { ClientSettings } from "~/features/coaching-sales/contracts/client-subscription";
 import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
 
-import {
-  SETTINGS_META_TITLE,
-  SETTINGS_SUBTITLE,
-  SETTINGS_TITLE,
-} from "./subscription-copy";
+import { SETTINGS_META_TITLE, SETTINGS_TITLE } from "./subscription-copy";
 import { SubscriptionSection } from "./subscription-section";
 
 export function loader(args: LoaderFunctionArgs): Promise<ClientSettings> {
@@ -34,7 +30,7 @@ export default function ClientSettingsRoute() {
       className="w-full max-w-3xl space-y-6 sm:space-y-8"
       data-parity-root="ClientSettings"
     >
-      <PortalPageHeader subtitle={SETTINGS_SUBTITLE} title={SETTINGS_TITLE} />
+      <PortalPageHeader title={SETTINGS_TITLE} />
       <SubscriptionSection settings={settings} />
     </div>
   );
