@@ -47,6 +47,7 @@ describe('the ended page', () => {
     expect(screen.queryByText(REFUND_LINE)).not.toBeInTheDocument();
     expect(screen.queryByRole('link')).not.toBeInTheDocument();
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    expect(screen.queryByText('Your coaching')).not.toBeInTheDocument();
   });
 
   it('tells her the refund is on its way while it is due', () => {

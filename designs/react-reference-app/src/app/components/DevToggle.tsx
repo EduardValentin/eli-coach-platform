@@ -295,7 +295,6 @@ const REFUND_LABELS: Record<PrototypeRefund, string> = {
 
 const CANCEL_OUTCOME_LABELS: Record<PrototypeCancelOutcome, string> = {
   works: 'Works',
-  'already-ended': 'Already ended',
   fails: 'Fails',
 };
 
@@ -955,11 +954,16 @@ export function DevToggle() {
                   </Label>
                   <Select
                     value={appState.journeyStartPath}
-                    onValueChange={(value) =>
+                    onValueChange={(value) => {
+                      const startPath = parseStartPathControl(value);
                       setAppState({
-                        journeyStartPath: parseStartPathControl(value),
-                      })
-                    }
+                        journeyStartPath: startPath,
+                        journeyRefund:
+                          startPath === 'waiting'
+                            ? appState.journeyRefund
+                            : 'none',
+                      });
+                    }}
                   >
                     <SelectTrigger
                       id="dev-journey-start-path"
@@ -1059,13 +1063,15 @@ export function DevToggle() {
                         value,
                         'none',
                       );
-                      setAppState({
-                        journeyRefund: refund,
-                        journeySubscriptionStatus:
-                          refund === 'none'
-                            ? appState.journeySubscriptionStatus
-                            : 'ended',
-                      });
+                      setAppState(
+                        refund === 'none'
+                          ? { journeyRefund: refund }
+                          : {
+                              journeyRefund: refund,
+                              journeySubscriptionStatus: 'ended',
+                              journeyStartPath: 'waiting',
+                            },
+                      );
                     }}
                   >
                     <SelectTrigger id="dev-journey-refund" className="w-full">

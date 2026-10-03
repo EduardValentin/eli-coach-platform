@@ -29,10 +29,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '../ui/alert-dialog';
-import { Alert } from '../ui/alert';
+import { InlineProblem } from '../InlineProblem';
+import { PAYMENT_PROBLEM_LINE } from '../../utils/subscriptionCopy';
 import { ClientWidget } from './ClientWidget';
 import { ManagePaymentMethodButton } from './ManagePaymentMethodButton';
-import { PaymentProblemNotice } from './PaymentProblemNotice';
 import { usePaymentMethodPortal } from './usePaymentMethodPortal';
 
 function eyebrowFor(stage: JourneyStage): string {
@@ -173,15 +173,23 @@ export function ProgramStatusCard() {
         )}
 
         {paymentProblem && (
-          <div className="mt-4 max-w-2xl">
-            <PaymentProblemNotice />
-          </div>
+          <InlineProblem
+            className="mt-4 max-w-2xl"
+            data-parity="payment-problem"
+            role="status"
+          >
+            {PAYMENT_PROBLEM_LINE}
+          </InlineProblem>
         )}
 
         {paymentMethod.problem && (
-          <Alert className="mt-4 max-w-2xl" data-parity="payment-method-problem">
+          <InlineProblem
+            className="mt-2 max-w-2xl"
+            data-parity="payment-method-problem"
+            role="alert"
+          >
             {paymentMethod.problem}
-          </Alert>
+          </InlineProblem>
         )}
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">

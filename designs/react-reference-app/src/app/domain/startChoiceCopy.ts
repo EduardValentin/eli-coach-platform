@@ -4,7 +4,7 @@ export const START_CHOICE_QUESTION =
 export const IMMEDIATE_START_LEAD = 'Start as soon as my payment is confirmed.';
 
 export const IMMEDIATE_START_BODY =
-  'I expressly request that my program begins before the end of the 14-day withdrawal period. I understand that I lose my right of withdrawal for the digital content (plans, materials, in-app access) as soon as access is granted, and that if I withdraw from the coaching before it has been fully performed, I will be charged proportionally for what has already been delivered.';
+  'I give up my 14-day right of withdrawal so Eli can start on my program now. If I cancel after that, there is no refund.';
 
 export const WAITING_START_LEAD =
   'Start after the 14-day withdrawal period ends.';

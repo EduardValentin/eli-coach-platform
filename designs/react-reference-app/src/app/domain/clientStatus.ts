@@ -93,6 +93,12 @@ function closedSubscriptionLabel(
   return null;
 }
 
+export function hasClosedCoaching(journey: ClientJourney, now: Date): boolean {
+  return journey.subscription
+    ? closedSubscriptionLabel(journey.subscription, now) !== null
+    : false;
+}
+
 export function clientStatus(journey: ClientJourney, now: Date): ClientStatus {
   const closed = journey.subscription
     ? closedSubscriptionLabel(journey.subscription, now)

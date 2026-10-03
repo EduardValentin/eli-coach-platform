@@ -89,21 +89,6 @@ describe('cancelling coaching', () => {
     });
   });
 
-  it('answers already ended when the provider has ended it first', async () => {
-    // arrange
-    const cancelling = cancelSubscription(
-      waiting,
-      new Date(2026, 0, 20, 12),
-      'already-ended',
-    );
-
-    // act
-    const error = await rejectionOf(cancelling);
-
-    // assert
-    expect(error).toMatchObject({ code: 'already-ended' });
-  });
-
   it('asks her to try again when the provider is unavailable', async () => {
     // arrange
     const cancelling = cancelSubscription(

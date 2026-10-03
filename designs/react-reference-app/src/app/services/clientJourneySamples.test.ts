@@ -284,12 +284,24 @@ describe('seeding the subscription', () => {
     expect(needsRefund(subscription)).toBe(true);
   });
 
+  it('seeds a refund on the waiting path, the only one that refunds', () => {
+    // act
+    const subscription = subscriptionSeededWith({
+      startPath: 'immediate',
+      refund: 'due',
+    });
+
+    // assert
+    expect(subscription.startPath).toBe('waiting');
+    expect(subscription.refund?.reason).toBe('full-refund');
+  });
+
   it('seeds a partly refunded subscription with the rest still due', () => {
     // act
     const subscription = subscriptionSeededWith({ refund: 'part-refunded' });
 
     // assert
-    expect(subscription.refund?.reason).toBe('proportional-refund');
+    expect(subscription.refund?.reason).toBe('full-refund');
     expect(outstandingRefundCents(subscription)).toBe(29800);
   });
 

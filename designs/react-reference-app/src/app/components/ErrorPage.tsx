@@ -84,7 +84,7 @@ export function ErrorPage({
   parityRoot,
 }: {
   icon: LucideIcon;
-  eyebrow: string;
+  eyebrow?: string;
   title: string;
   description: ReactNode;
   detail?: ReactNode;

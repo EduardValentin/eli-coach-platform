@@ -27,9 +27,7 @@ export const WITHDRAWAL_WINDOW_DAYS = 14;
 
 export const REFUND_DUE_WITHIN_DAYS = 14;
 
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-export type RefundReason = 'full-refund' | 'proportional-refund';
+export type RefundReason = 'full-refund' | 'coach-issued';
 
 export type RefundDue = {
   amountCents: number;
@@ -39,7 +37,7 @@ export type RefundDue = {
   refundedAt?: Date;
 };
 
-export type CancellationRule = RefundReason | 'no-refund' | 'none';
+export type CancellationRule = 'full-refund' | 'no-refund' | 'none';
 
 export type CoachingSubscription = {
   bundle: SubscriptionBundle;
@@ -143,37 +141,9 @@ export function cancellationRule(
 
   const withinWithdrawal =
     now.getTime() < withdrawalDeadline(subscription.purchasedAt).getTime();
-  if (!withinWithdrawal) return 'no-refund';
+  const keepsWithdrawalRight = subscription.startPath === 'waiting';
 
-  return subscription.startPath === 'waiting'
-    ? 'full-refund'
-    : 'proportional-refund';
-}
-
-export function proportionalRefundCents(
-  subscription: CoachingSubscription,
-  now: Date,
-): number {
-  const { day1, bundle, amountPaidCents } = subscription;
-  if (!day1 || now.getTime() <= day1.getTime()) return amountPaidCents;
-
-  const elapsedMs = now.getTime() - day1.getTime();
-  const periodMs = periodEnd(day1, bundle, 0).getTime() - day1.getTime();
-  const periodDays = Math.round(periodMs / DAY_MS);
-  const usedDays = Math.ceil(elapsedMs / DAY_MS);
-  const unusedDays = Math.max(0, periodDays - usedDays);
-
-  return Math.round((amountPaidCents * unusedDays) / periodDays);
-}
-
-function refundAmountCents(
-  subscription: CoachingSubscription,
-  reason: RefundReason,
-  now: Date,
-): number {
-  return reason === 'full-refund'
-    ? subscription.amountPaidCents
-    : proportionalRefundCents(subscription, now);
+  return withinWithdrawal && keepsWithdrawalRight ? 'full-refund' : 'no-refund';
 }
 
 export function accessEndWithoutRefund(
@@ -208,19 +178,12 @@ export function cancel(
     cancelledAt: now,
     periodEndsAt: now,
     refund: {
-      amountCents: refundAmountCents(subscription, rule, now),
-      reason: rule,
+      amountCents: subscription.amountPaidCents,
+      reason: 'full-refund',
       dueBy: addDays(now, REFUND_DUE_WITHIN_DAYS),
       refundedCents: 0,
     },
   };
-}
-
-export function endSubscription(
-  subscription: CoachingSubscription,
-  endedAt: Date,
-): CoachingSubscription {
-  return { ...subscription, status: 'ended', periodEndsAt: endedAt };
 }
 
 export function outstandingRefundCents(
@@ -236,12 +199,28 @@ export function needsRefund(subscription: CoachingSubscription): boolean {
   return outstandingRefundCents(subscription) > 0;
 }
 
+function withCoachIssuedRefund(
+  subscription: CoachingSubscription,
+  settlement: RefundSettlement,
+): CoachingSubscription {
+  return {
+    ...subscription,
+    refund: {
+      amountCents: settlement.refundedCents,
+      reason: 'coach-issued',
+      dueBy: settlement.at,
+      refundedCents: settlement.refundedCents,
+      refundedAt: settlement.at,
+    },
+  };
+}
+
 export function settleRefund(
   subscription: CoachingSubscription,
   settlement: RefundSettlement,
 ): CoachingSubscription {
   const { refund } = subscription;
-  if (!refund) return subscription;
+  if (!refund) return withCoachIssuedRefund(subscription, settlement);
 
   const settled = settlement.refundedCents >= refund.amountCents;
 

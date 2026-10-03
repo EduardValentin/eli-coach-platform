@@ -381,7 +381,7 @@ function refundedSubscription(
   now: Date,
 ): CoachingSubscription {
   const cancelled = cancel(
-    { ...running, status: 'not-started' },
+    { ...running, startPath: 'waiting', status: 'not-started' },
     refundableCancellationAt(running.purchasedAt, now),
   );
   const amountCents = cancelled.refund?.amountCents ?? 0;

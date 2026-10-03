@@ -93,14 +93,9 @@ const TEMPLATES: TemplateOption[] = [
   {
     key: 'refund-due',
     label: 'Refund due — coach',
-    variants: [
-      { value: 'full-refund', label: 'Full refund' },
-      { value: 'proportional-refund', label: 'Proportional refund' },
-    ],
+    variants: [{ value: 'full-refund', label: 'Full refund' }],
   },
 ];
-
-const PROPORTIONAL_SAMPLE_REFUND_CENTS = 34767;
 
 export function EmailPreview() {
   const [template, setTemplate] = useState<TemplateKey>(
@@ -174,15 +169,8 @@ export function EmailPreview() {
       );
     }
     if (template === 'refund-due') {
-      return variant === 'proportional-refund' ? (
+      return (
         <RefundDue
-          reason="proportional-refund"
-          refundCents={PROPORTIONAL_SAMPLE_REFUND_CENTS}
-          clientPageUrl={`${window.location.origin}/coach/clients/ac-demo-client-1`}
-        />
-      ) : (
-        <RefundDue
-          reason="full-refund"
           clientPageUrl={`${window.location.origin}/coach/clients/ac-demo-client-1`}
         />
       );

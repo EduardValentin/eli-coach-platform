@@ -47,9 +47,7 @@ describe('RefundDue', () => {
     const props: RefundDueProps = {
       clientName: 'Sofia Marin',
       clientEmail: 'sofia@example.com',
-      refundCents: 34767,
-      paidCents: 44700,
-      reason: 'proportional-refund',
+      refundCents: 44700,
     };
 
     // act
@@ -63,11 +61,11 @@ describe('RefundDue', () => {
     expect(
       screen.getByRole('link', { name: 'sofia@example.com' }),
     ).toHaveAttribute('href', 'mailto:sofia@example.com');
-    expect(screen.getByText('€347.67')).toBeInTheDocument();
+    expect(screen.getByText('€447')).toBeInTheDocument();
     expect(screen.getByText('16 October')).toBeInTheDocument();
     expect(
       screen.getByText(
-        'Proportional refund: cancelled within 14 days of paying, for the unused part of the first term.',
+        'Full refund: cancelled within the 14-day withdrawal period.',
       ),
     ).toBeInTheDocument();
     expect(screen.getByText('€447 on 28 September')).toBeInTheDocument();
@@ -76,7 +74,7 @@ describe('RefundDue', () => {
 
   it('links to her client page', async () => {
     // arrange
-    const props: RefundDueProps = { reason: 'full-refund' };
+    const props: RefundDueProps = {};
 
     // act
     await mountRefundDue(props);

@@ -1,4 +1,3 @@
-import type { RefundReason } from '../app/domain/coachingSubscription';
 import { formatJourneyDate } from '../app/utils/journeyLabels';
 import { formatEuroCents } from '../app/utils/money';
 import { REFUND_REASON_LABELS } from '../app/utils/subscriptionCopy';
@@ -19,7 +18,6 @@ import {
 } from './_primitives';
 
 export type RefundDueProps = {
-  reason?: RefundReason;
   clientName?: string;
   clientEmail?: string;
   refundCents?: number;
@@ -58,7 +56,6 @@ export function refundDueSubject({
 }
 
 export function RefundDue({
-  reason = 'full-refund',
   clientName = 'Jane Doe',
   clientEmail = 'jane@example.com',
   refundCents = 44700,
@@ -121,7 +118,7 @@ export function RefundDue({
 
                 <EmailText style={detailsEyebrowStyle}>WHY</EmailText>
                 <EmailText style={detailsValueStyle}>
-                  {REFUND_REASON_LABELS[reason]}
+                  {REFUND_REASON_LABELS['full-refund']}
                 </EmailText>
 
                 <EmailText style={detailsEyebrowStyle}>PAID</EmailText>
@@ -164,9 +161,7 @@ export function RefundDue({
   );
 }
 
-RefundDue.PreviewProps = {
-  reason: 'full-refund',
-} satisfies RefundDueProps;
+RefundDue.PreviewProps = {} satisfies RefundDueProps;
 
 export default RefundDue;
 

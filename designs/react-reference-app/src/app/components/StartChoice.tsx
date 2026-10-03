@@ -1,6 +1,6 @@
 import { useId, type ReactNode, type Ref } from 'react';
-import { AlertCircle } from 'lucide-react';
 import { Link } from 'react-router';
+import { InlineProblem } from './InlineProblem';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import {
   withdrawalDeadline,
@@ -107,19 +107,14 @@ export function StartChoice({
       </RadioGroup>
 
       {error && (
-        <p
-          className="mt-3 flex items-start gap-2 text-sm leading-snug text-destructive"
+        <InlineProblem
+          className="mt-3"
           data-parity="error"
           id={errorId}
           role="alert"
         >
-          <AlertCircle
-            aria-hidden="true"
-            className="mt-0.5 shrink-0"
-            size={16}
-          />
           {error}
-        </p>
+        </InlineProblem>
       )}
 
       <Link

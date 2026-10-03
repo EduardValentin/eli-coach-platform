@@ -62,14 +62,11 @@ describe('EmailPreview', () => {
 
     // act
     await user.click(screen.getByRole('button', { name: 'Refund due — coach' }));
-    await user.click(
-      screen.getByRole('button', { name: 'Proportional refund' }),
-    );
 
     // assert
     const markup = await previewedEmail(
-      'Refund due — coach — proportional-refund',
-      'Proportional refund: cancelled within 14 days of paying',
+      'Refund due — coach — full-refund',
+      'Full refund: cancelled within the 14-day withdrawal period.',
     );
     expect(markup).toContain('A refund is due.');
   });

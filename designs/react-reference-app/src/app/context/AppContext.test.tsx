@@ -81,6 +81,7 @@ function SubscriptionParamsProbe() {
   return (
     <>
       <p>refund {appState.journeyRefund}</p>
+      <p>start {appState.journeyStartPath}</p>
       <p>subscription {appState.journeySubscriptionStatus}</p>
       <p>payment problem {String(appState.journeyPaymentProblem)}</p>
       <p>paid {appState.journeyDaysSincePayment}</p>
@@ -119,7 +120,7 @@ describe('subscription dev params', () => {
   it('reads every subscription param from the URL', () => {
     // arrange
     const search =
-      '?jrefund=part-refunded&jpayproblem=1&jpaid=14&jcancel=already-ended&jpayportal=fails';
+      '?jrefund=part-refunded&jpayproblem=1&jpaid=14&jcancel=fails&jpayportal=fails';
 
     // act
     renderSubscriptionParams(search);
@@ -128,24 +129,26 @@ describe('subscription dev params', () => {
     expect(screen.getByText('refund part-refunded')).toBeInTheDocument();
     expect(screen.getByText('payment problem true')).toBeInTheDocument();
     expect(screen.getByText('paid 14')).toBeInTheDocument();
-    expect(screen.getByText('cancel already-ended')).toBeInTheDocument();
+    expect(screen.getByText('cancel fails')).toBeInTheDocument();
     expect(screen.getByText('portal fails')).toBeInTheDocument();
   });
 
-  it('ends the subscription whenever a refund is set', () => {
+  it('ends the subscription on the waiting path whenever a refund is set', () => {
     // arrange
-    const search = '?jrefund=due&jsub=active';
+    const search = '?jrefund=due&jsub=active&jstart=immediate';
 
     // act
     renderSubscriptionParams(search);
 
     // assert
     expect(screen.getByText('subscription ended')).toBeInTheDocument();
+    expect(screen.getByText('start waiting')).toBeInTheDocument();
   });
 
   it('falls back to the defaults for unknown values', () => {
     // arrange
-    const search = '?jrefund=maybe&jpaid=7&jcancel=never&jpayportal=later';
+    const search =
+      '?jrefund=maybe&jpaid=7&jcancel=already-ended&jpayportal=later';
 
     // act
     renderSubscriptionParams(search);

@@ -42,7 +42,7 @@ afterEach(() => {
 });
 
 function renderSettings(devParams: string) {
-  const url = `/portal/settings?session=client&jstage=submitted&${devParams}`;
+  const url = `/portal/settings?session=client&${devParams}&jstage=submitted`;
   window.history.replaceState({}, '', url);
 
   render(
@@ -96,7 +96,7 @@ function cancellationRow(): HTMLElement {
 }
 
 describe('the subscription section', () => {
-  it('shows her plan and that it renews once her program starts', () => {
+  it('shows her plan with the day she paid until her program is delivered', () => {
     // arrange
     renderSettings('jstart=waiting');
 
@@ -107,14 +107,29 @@ describe('the subscription section', () => {
     expect(within(section).getByText('3 months of coaching')).toBeVisible();
     expect(
       within(section).getByText(
-        /^Paid \d{1,2} \w+ · starts when your program is ready\.$/,
+        /^Paid \d{1,2} \w+ · starts when your program is delivered\.$/,
       ),
     ).toBeVisible();
+    expect(within(section).queryByText(/renews/i)).not.toBeInTheDocument();
     expect(
-      within(section).getByText('Renews once your program starts'),
-    ).toBeVisible();
+      within(section).queryByText(
+        'Your coaching plan, when it renews, and how to cancel.',
+      ),
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows when a running plan renews', () => {
+    // arrange
+    renderSettings('scope=post-mvp&jstage=program-ready&jpaid=30');
+
+    // act
+    const section = subscriptionSection();
+
+    // assert
     expect(
-      within(section).getByText('Your first term runs from your start date.'),
+      within(section).getByText(
+        /^Active until \d{1,2} \w+ · renews then unless you cancel first\.$/,
+      ),
     ).toBeVisible();
   });
 
@@ -136,7 +151,7 @@ describe('the subscription section', () => {
     ).toBeVisible();
   });
 
-  it('offers a refund on the immediate path within the 14 days', () => {
+  it('offers to cancel without a refund on the immediate path within the 14 days', () => {
     // arrange
     renderSettings('jstart=immediate');
 
@@ -146,12 +161,15 @@ describe('the subscription section', () => {
     // assert
     expect(
       within(row).getByText(
-        /^Until \d{1,2} \w+ you can cancel for a refund: all of it before your program starts, or the unused part of your first term once it has\. Your access ends right away\.$/,
+        /^You won't be charged again, there is no refund for the coaching already paid, and your access stays until \d{1,2} \w+\.$/,
       ),
     ).toBeVisible();
     expect(
-      within(row).getByRole('button', { name: 'Cancel and get a refund' }),
+      within(row).getByRole('button', { name: 'Cancel subscription' }),
     ).toBeVisible();
+    expect(
+      within(row).queryByRole('button', { name: /refund/ }),
+    ).not.toBeInTheDocument();
   });
 
   it('offers to cancel without a refund once the withdrawal right is gone', () => {
@@ -181,10 +199,10 @@ describe('the subscription section', () => {
 
     // assert
     expect(
-      within(section).getByText(/^Paid \d{1,2} \w+ · cancelled \d{1,2} \w+\.$/),
+      within(section).getByText(
+        /^Paid \d{1,2} \w+ · cancelled \d{1,2} \w+ · access until \d{1,2} \w+\.$/,
+      ),
     ).toBeVisible();
-    expect(within(section).getByText(/^Access until \d{1,2} \w+$/)).toBeVisible();
-    expect(within(section).getByText("You won't be charged again.")).toBeVisible();
     expect(within(section).queryByText('Cancellation')).not.toBeInTheDocument();
     expect(
       within(section).queryByRole('button', { name: 'Manage payment method' }),
@@ -226,23 +244,6 @@ describe('the cancel dialogs', () => {
     expect(
       within(dialog).getByRole('button', { name: 'Keep my coaching' }),
     ).toBeVisible();
-  });
-
-  it('names the refund amount for the proportional refund', async () => {
-    // arrange
-    const user = renderSettings('jstart=immediate');
-
-    // act
-    await user.click(
-      screen.getByRole('button', { name: 'Cancel and get a refund' }),
-    );
-
-    // assert
-    expect(
-      screen.getByRole('dialog', { name: 'Cancel and get a refund' }),
-    ).toHaveAccessibleDescription(
-      "You'll get €447 back and your access ends right away.",
-    );
   });
 
   it('repeats the facts for the cancellation without a refund', async () => {
@@ -355,9 +356,11 @@ describe('cancelling', () => {
 
     // assert
     expect(
-      await screen.findByText(/^Access until \d{1,2} \w+$/, undefined, {
-        timeout: SERVICE_TIMEOUT,
-      }),
+      await screen.findByText(
+        /^Paid \d{1,2} \w+ · cancelled \d{1,2} \w+ · access until \d{1,2} \w+\.$/,
+        undefined,
+        { timeout: SERVICE_TIMEOUT },
+      ),
     ).toBeVisible();
     expect(
       await screen.findByText(
@@ -373,15 +376,15 @@ describe('cancelling', () => {
 
   it('asks her to try again when the cancellation fails', async () => {
     // arrange
-    const user = renderSettings('jcancel=fails');
+    const user = renderSettings('jstart=waiting&jcancel=fails');
     await user.click(
-      screen.getByRole('button', { name: 'Cancel and get a refund' }),
+      screen.getByRole('button', { name: 'Cancel and get a full refund' }),
     );
 
     // act
     await user.click(
       within(screen.getByRole('dialog')).getByRole('button', {
-        name: 'Cancel and get a refund',
+        name: 'Cancel and get a full refund',
       }),
     );
 
@@ -402,41 +405,7 @@ describe('cancelling', () => {
     ).toBeVisible();
   });
 
-  it('tells her the coaching has already ended, then shows the ended page', async () => {
-    // arrange
-    const user = renderSettings('jcancel=already-ended');
-    await user.click(
-      screen.getByRole('button', { name: 'Cancel and get a refund' }),
-    );
-    await user.click(
-      within(screen.getByRole('dialog')).getByRole('button', {
-        name: 'Cancel and get a refund',
-      }),
-    );
-    expect(
-      await within(screen.getByRole('dialog')).findByRole(
-        'alert',
-        {},
-        { timeout: SERVICE_TIMEOUT },
-      ),
-    ).toHaveTextContent(
-      'This coaching has already ended, so there is nothing to cancel.',
-    );
-
-    // act
-    await user.click(screen.getByRole('button', { name: 'Done' }));
-
-    // assert
-    expect(
-      await screen.findByRole('heading', {
-        level: 1,
-        name: 'Your coaching has ended',
-      }),
-    ).toBeVisible();
-    expect(screen.queryByText(ENDED_REFUND_LINE)).not.toBeInTheDocument();
-  });
-
-  it('switches the refund rule after she lets Eli start now', async () => {
+  it('drops the refund once the start path is immediate', async () => {
     // arrange
     const user = renderSettings('jstart=waiting');
     await user.click(screen.getByRole('button', { name: 'Open Dev Toggle' }));
@@ -449,7 +418,7 @@ describe('cancelling', () => {
     // assert
     expect(
       within(cancellationRow()).getByRole('button', {
-        name: 'Cancel and get a refund',
+        name: 'Cancel subscription',
       }),
     ).toBeVisible();
   });
@@ -466,11 +435,12 @@ describe('the payment method', () => {
     // assert
     expect(within(section).getByText('Payment method')).toBeVisible();
     expect(
-      within(section).getByText('The card your coaching renews on.'),
+      within(section).getByRole('button', { name: 'Manage payment method' }),
     ).toBeVisible();
     expect(
-      within(section).queryByText('Payment problem'),
+      within(section).queryByText('The card your coaching renews on.'),
     ).not.toBeInTheDocument();
+    expect(within(section).queryByRole('status')).not.toBeInTheDocument();
   });
 
   it('announces a payment problem', () => {
@@ -482,8 +452,11 @@ describe('the payment method', () => {
 
     // assert
     expect(status).toHaveTextContent(
-      "Payment problemYour last payment didn't go through. Update your card to keep your coaching going.",
+      /^Your last payment didn't go through\. Update your card to keep your coaching going\.$/,
     );
+    expect(
+      within(subscriptionSection()).queryByText('Payment problem'),
+    ).not.toBeInTheDocument();
   });
 
   it('hands her over to update her card and brings her back to Settings', async () => {
@@ -509,7 +482,7 @@ describe('the payment method', () => {
         { timeout: SERVICE_TIMEOUT },
       ),
     ).toBeVisible();
-    expect(screen.queryByText('Payment problem')).not.toBeInTheDocument();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 
   it('asks her to try again when the hand-off fails', async () => {
@@ -545,7 +518,7 @@ describe('the payment method', () => {
     // assert
     expect(
       within(subscriptionSection()).getByRole('status'),
-    ).toHaveTextContent(/^Payment problem/);
+    ).toHaveTextContent(/^Your last payment didn't go through\./);
     expect(window.location.search).toContain('jpayproblem=1');
   });
 });

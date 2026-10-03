@@ -17,7 +17,6 @@ export function PortalEnded() {
     <ErrorPage
       description={COACHING_ENDED_LINE}
       detail={refundDue ? REFUND_ON_ITS_WAY_LINE : undefined}
-      eyebrow="Your coaching"
       icon={CalendarX}
       landmarkLabel={COACHING_ENDED_TITLE}
       parityRoot="PortalEnded"

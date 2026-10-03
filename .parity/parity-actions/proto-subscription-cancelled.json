@@ -5,6 +5,6 @@
   {"click": "#dev-journey-subscription"},
   {"click": "role=option[name=\"Cancelled\" s]"},
   {"click": "[aria-label=\"Close Dev Settings\"]"},
-  {"waitFor": "text=You won't be charged again."},
+  {"waitFor": "[data-parity=\"subscription-plan\"] >> text=/access until/"},
   {"wait": 400}
 ]

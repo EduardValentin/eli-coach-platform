@@ -436,6 +436,19 @@ describe('the coach clients list', () => {
     expect(within(row).queryByText('Needs refund')).not.toBeInTheDocument();
   });
 
+  it('offers to view, not review, a client whose coaching has ended', () => {
+    // arrange
+    renderMvpList('?jstage=submitted&jsub=ended');
+
+    // act
+    const row = rowFor('Jane Doe');
+
+    // assert
+    expect(
+      within(row).getByRole('link', { name: 'View details for Jane Doe' }),
+    ).toBeInTheDocument();
+  });
+
   it('shows a client who cancelled without a refund as Cancelled', () => {
     // arrange
     renderMvpList('?jstage=submitted&jsub=cancelled');

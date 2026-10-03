@@ -191,7 +191,7 @@ describe('the program status card', () => {
       name: 'Let Eli start now?',
     });
     expect(dialog).toHaveAccessibleDescription(
-      /^I expressly request that my program begins before the end of the 14-day withdrawal period\./,
+      'I give up my 14-day right of withdrawal so Eli can start on my program now. If I cancel after that, there is no refund.',
     );
     expect(
       screen.getByRole('button', { name: 'Keep my 14 days' }),
@@ -243,7 +243,7 @@ describe('the program status card', () => {
 
     // assert
     expect(status).toHaveTextContent(
-      "Payment problemYour last payment didn't go through. Update your card to keep your coaching going.",
+      /^Your last payment didn't go through\. Update your card to keep your coaching going\.$/,
     );
     expect(
       screen.getByRole('button', { name: 'Manage payment method' }),

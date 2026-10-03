@@ -19,7 +19,7 @@ import { Checkbox } from '../ui/checkbox';
 import { ConfirmDialog } from '../ui/confirm-dialog';
 import { cn } from '../ui/utils';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
-import { clientStatus } from '../../domain/clientStatus';
+import { clientStatus, hasClosedCoaching } from '../../domain/clientStatus';
 import {
   canStartWork,
   workStartDate,
@@ -391,6 +391,7 @@ function StageActions({
   const { appState } = useAppState();
 
   if (!awaitsCoachReview(journey.stage)) return null;
+  if (hasClosedCoaching(journey, new Date())) return null;
 
   const reviewAction = REVIEW_ACTIONS[journey.stage];
   const { possessive } = clientPronouns(journey.identity.gender);

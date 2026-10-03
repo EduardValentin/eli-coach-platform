@@ -5,11 +5,10 @@ import {
   type CoachingSubscription,
 } from '../domain/coachingSubscription';
 
-export type PrototypeCancelOutcome = 'works' | 'already-ended' | 'fails';
+export type PrototypeCancelOutcome = 'works' | 'fails';
 
 export const PROTOTYPE_CANCEL_OUTCOMES: readonly PrototypeCancelOutcome[] = [
   'works',
-  'already-ended',
   'fails',
 ];
 
@@ -67,9 +66,9 @@ export async function cancelSubscription(
 
   if (outcome === 'fails') throw subscriptionError('cancel-unavailable');
 
-  const alreadyEnded =
-    outcome === 'already-ended' || cancellationRule(subscription, now) === 'none';
-  if (alreadyEnded) throw subscriptionError('already-ended');
+  if (cancellationRule(subscription, now) === 'none') {
+    throw subscriptionError('already-ended');
+  }
 
   return cancel(subscription, now);
 }

@@ -78,7 +78,7 @@ export function SettingsRow({
   title,
   description,
   hint,
-  notice,
+  problem,
   layout = "inline",
   children,
   ...rest
@@ -90,7 +90,7 @@ export function SettingsRow({
   title: ReactNode;
   description?: ReactNode;
   hint?: ReactNode;
-  notice?: ReactNode;
+  problem?: ReactNode;
   layout?: SettingsRowLayout;
   children?: ReactNode;
   [key: string]: unknown;
@@ -125,7 +125,7 @@ export function SettingsRow({
             {hint}
           </p>
         )}
-        {notice && <div className="mt-3">{notice}</div>}
+        {problem && <div className="mt-1">{problem}</div>}
       </div>
     </div>
   );

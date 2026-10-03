@@ -400,6 +400,7 @@ function parseDevParamsFromURL(): AppState {
   );
   if (state.journeyRefund !== 'none') {
     state.journeySubscriptionStatus = 'ended';
+    state.journeyStartPath = 'waiting';
   }
   if (params.has('jpayproblem')) {
     state.journeyPaymentProblem = params.get('jpayproblem') === '1';

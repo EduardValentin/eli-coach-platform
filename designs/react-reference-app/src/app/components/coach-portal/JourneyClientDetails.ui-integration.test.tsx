@@ -1234,7 +1234,7 @@ describe('the coach reading what cycle mode means', () => {
     );
     expect(
       within(subscriptionPanel()).getByText(
-        'Proportional refund: cancelled within 14 days of paying, for the unused part of the first term. €149 refunded so far.',
+        'Full refund: cancelled within the 14-day withdrawal period. €149 refunded so far.',
       ),
     ).toBeInTheDocument();
   });
@@ -1271,6 +1271,54 @@ describe('the coach reading what cycle mode means', () => {
     );
     expect(
       within(pageHeader()).queryByText('Needs refund'),
+    ).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ['cancelled', '?jstage=submitted&jsub=cancelled'],
+    ['ended', '?jstage=submitted&jsub=ended'],
+  ])('keeps the answers readable but offers no review actions once %s', (_state, urlQuery) => {
+    // arrange
+    renderDetails(urlQuery, { postMvp: false });
+
+    // act
+    const onboarding = onboardingWidget();
+
+    // assert
+    expect(within(onboarding).getByText('Answers')).toBeInTheDocument();
+    expect(
+      within(onboarding).queryByRole('button', { name: 'Review answers' }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(onboarding).queryByRole('button', { name: 'Approve answers' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('offers no review action on a client in review once her coaching has ended', () => {
+    // arrange
+    const urlQuery = '?jstage=reviewing&jsub=ended';
+
+    // act
+    renderDetails(urlQuery, { postMvp: false });
+
+    // assert
+    expect(
+      within(onboardingWidget()).queryByRole('button', {
+        name: 'Continue review',
+      }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('offers no invitation re-send once her coaching has ended', () => {
+    // arrange
+    const urlQuery = '?jstage=invited&jsub=ended';
+
+    // act
+    renderDetails(urlQuery, { postMvp: false });
+
+    // assert
+    expect(
+      screen.queryByRole('button', { name: 'Re-send invitation' }),
     ).not.toBeInTheDocument();
   });
 });

@@ -6,7 +6,6 @@ import { useClientJourneys } from '../../context/ClientJourneyContext';
 import {
   cancellationRule,
   deriveStatus,
-  endSubscription,
   type CoachingSubscription,
   type SubscriptionStatus,
 } from '../../domain/coachingSubscription';
@@ -25,17 +24,15 @@ import {
   cancelConfirmation,
   cancellationFacts,
   cancelledToast,
-  DONE_LABEL,
   KEEP_COACHING_LABEL,
-  PAYMENT_METHOD_LINE,
+  PAYMENT_PROBLEM_LINE,
   type OfferedCancellation,
 } from '../../utils/subscriptionCopy';
 import { Button } from '../ui/button';
-import { Alert } from '../ui/alert';
 import { ConfirmDialog } from '../ui/confirm-dialog';
+import { InlineProblem } from '../InlineProblem';
 import { SettingsRow, SettingsRows, SettingsSection } from '../SettingsSection';
 import { ManagePaymentMethodButton } from './ManagePaymentMethodButton';
-import { PaymentProblemNotice } from './PaymentProblemNotice';
 import { usePaymentMethodPortal } from './usePaymentMethodPortal';
 
 type OpenStatus = Exclude<SubscriptionStatus, 'ended'>;
@@ -45,51 +42,21 @@ function planDescription(
   status: OpenStatus,
 ): string {
   const paid = `Paid ${formatJourneyDate(subscription.purchasedAt)}`;
-  if (status === 'cancelled' && subscription.cancelledAt) {
-    return `${paid} · cancelled ${formatJourneyDate(subscription.cancelledAt)}.`;
+  const { cancelledAt, periodEndsAt } = subscription;
+
+  if (status === 'cancelled' && cancelledAt && periodEndsAt) {
+    return `${paid} · cancelled ${formatJourneyDate(cancelledAt)} · access until ${formatJourneyDate(periodEndsAt)}.`;
   }
-  if (status === 'active' && subscription.day1) {
-    return `${paid} · started ${formatJourneyDate(subscription.day1)}.`;
+  if (status === 'active' && periodEndsAt) {
+    return `Active until ${formatJourneyDate(periodEndsAt)} · renews then unless you cancel first.`;
   }
-  return `${paid} · starts when your program is ready.`;
+  return `${paid} · starts when your program is delivered.`;
 }
 
-function renewalRow(
-  subscription: CoachingSubscription,
-  status: OpenStatus,
-): { title: string; description: string } | null {
-  const endsAt = subscription.periodEndsAt;
-  if (!endsAt) {
-    if (status === 'cancelled') return null;
-    return {
-      title: 'Renews once your program starts',
-      description: 'Your first term runs from your start date.',
-    };
-  }
-  if (status === 'cancelled') {
-    return {
-      title: `Access until ${formatJourneyDate(endsAt)}`,
-      description: "You won't be charged again.",
-    };
-  }
-  return {
-    title: `Renews on ${formatJourneyDate(endsAt)}`,
-    description:
-      'Your next term is charged on this date unless you cancel first.',
-  };
-}
-
-type CancellationProblem = { message: string; alreadyEnded: boolean };
-
-function cancellationProblem(error: unknown): CancellationProblem {
-  if (!(error instanceof SubscriptionError)) {
-    return {
-      message: SUBSCRIPTION_ERROR_MESSAGES['cancel-unavailable'],
-      alreadyEnded: false,
-    };
-  }
-
-  return { message: error.message, alreadyEnded: error.code === 'already-ended' };
+function cancellationProblem(error: unknown): string {
+  return error instanceof SubscriptionError
+    ? error.message
+    : SUBSCRIPTION_ERROR_MESSAGES['cancel-unavailable'];
 }
 
 type CancellationRowProps = {
@@ -108,17 +75,13 @@ function CancellationRow({
   const { appState } = useAppState();
   const [confirming, setConfirming] = useState(false);
   const [cancelling, setCancelling] = useState(false);
-  const [problem, setProblem] = useState<CancellationProblem | null>(null);
+  const [problem, setProblem] = useState<string | null>(null);
   const now = new Date();
   const action = CANCEL_ACTION_LABELS[rule];
-  const alreadyEnded = problem?.alreadyEnded ?? false;
 
   const changeConfirming = (open: boolean) => {
     setConfirming(open);
-    if (open) return;
-
-    setProblem(null);
-    if (alreadyEnded) onCancelled(endSubscription(subscription, new Date()));
+    if (!open) setProblem(null);
   };
 
   const confirm = async () => {
@@ -159,8 +122,8 @@ function CancellationRow({
       </Button>
 
       <ConfirmDialog
-        cancelLabel={alreadyEnded ? DONE_LABEL : KEEP_COACHING_LABEL}
-        confirmDisabled={cancelling || alreadyEnded}
+        cancelLabel={KEEP_COACHING_LABEL}
+        confirmDisabled={cancelling}
         confirmLabel={cancelling ? CANCELLING_LABEL : action}
         description={cancelConfirmation(rule, subscription, now)}
         onConfirm={() => void confirm()}
@@ -171,7 +134,9 @@ function CancellationRow({
         tone="destructive"
       >
         {problem && (
-          <Alert data-parity="cancel-problem">{problem.message}</Alert>
+          <InlineProblem data-parity="cancel-problem" role="alert">
+            {problem}
+          </InlineProblem>
         )}
       </ConfirmDialog>
     </SettingsRow>
@@ -184,14 +149,19 @@ function PaymentMethodRow({ paymentProblem }: { paymentProblem: boolean }) {
   return (
     <SettingsRow
       data-parity="subscription-payment-method"
-      description={PAYMENT_METHOD_LINE}
       labelId="subscription-payment-label"
-      notice={
+      problem={
         (paymentProblem || problem) && (
-          <div className="grid gap-2">
-            {paymentProblem && <PaymentProblemNotice />}
+          <div className="grid gap-1">
+            {paymentProblem && (
+              <InlineProblem data-parity="payment-problem" role="status">
+                {PAYMENT_PROBLEM_LINE}
+              </InlineProblem>
+            )}
             {problem && (
-              <Alert data-parity="payment-method-problem">{problem}</Alert>
+              <InlineProblem data-parity="payment-method-problem" role="alert">
+                {problem}
+              </InlineProblem>
             )}
           </div>
         )
@@ -216,7 +186,6 @@ export function SubscriptionSection() {
   if (status === 'ended') return null;
 
   const rule = cancellationRule(subscription, now);
-  const renewal = renewalRow(subscription, status);
 
   const recordCancellation = (cancelled: CoachingSubscription) => {
     cancelSubscription(demoJourney.callId, cancelled);
@@ -239,7 +208,6 @@ export function SubscriptionSection() {
           size={18}
         />
       }
-      description="Your coaching plan, when it renews, and how to cancel."
     >
       <SettingsRows>
         <SettingsRow
@@ -248,15 +216,6 @@ export function SubscriptionSection() {
           title={`${bundleLengthLabel(subscription.bundle)} of coaching`}
           description={planDescription(subscription, status)}
         />
-
-        {renewal && (
-          <SettingsRow
-            data-parity="subscription-renewal"
-            labelId="subscription-renewal-label"
-            title={renewal.title}
-            description={renewal.description}
-          />
-        )}
 
         {rule !== 'none' && (
           <CancellationRow

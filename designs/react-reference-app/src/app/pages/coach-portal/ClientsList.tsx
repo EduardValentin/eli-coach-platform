@@ -41,6 +41,7 @@ import {
   CLIENT_STATUS_GROUPS,
   clientStatus,
   clientStatusNamed,
+  hasClosedCoaching,
 } from '../../domain/clientStatus';
 import { format, parseISO } from 'date-fns';
 import { bundleLengthLabel } from '../../domain/bundles';
@@ -140,6 +141,8 @@ function rowActionLabel(name: string, awaitsReview: boolean): string {
 
 function journeyRosterRow(journey: ClientJourney, now: Date): RosterRow {
   const name = journeyName(journey);
+  const awaitsReview =
+    awaitsCoachReview(journey.stage) && !hasClosedCoaching(journey, now);
 
   return {
     id: journey.callId,
@@ -149,7 +152,7 @@ function journeyRosterRow(journey: ClientJourney, now: Date): RosterRow {
     bundleMonths: journey.subscription?.bundle ?? null,
     joinedAt: journey.subscription?.purchasedAt ?? null,
     detailPath: clientDetailPathForJourney(journey),
-    actionLabel: rowActionLabel(name, awaitsCoachReview(journey.stage)),
+    actionLabel: rowActionLabel(name, awaitsReview),
     needsRefund: journey.subscription ? needsRefund(journey.subscription) : false,
   };
 }
