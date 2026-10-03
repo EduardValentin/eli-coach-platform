@@ -1,5 +1,10 @@
-import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
+import type {
+  ActionFunctionArgs,
+  ClientActionFunctionArgs,
+  LoaderFunctionArgs,
+} from "react-router";
 
+import { fetcherOutcomeOf } from "@eli-coach-platform/infrastructure/http";
 import {
   handleHttpErrorResponse,
   throwMethodNotAllowedResponse,
@@ -24,4 +29,8 @@ export async function loader(args: LoaderFunctionArgs) {
       .get(clientProfileContext)
       .progressPhotos.open(args, args.params.photoId),
   );
+}
+
+export function clientAction({ serverAction }: ClientActionFunctionArgs) {
+  return fetcherOutcomeOf(serverAction);
 }

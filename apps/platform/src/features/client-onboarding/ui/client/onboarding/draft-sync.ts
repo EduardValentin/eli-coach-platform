@@ -7,7 +7,7 @@ import {
 } from "~/features/client-onboarding/contracts/onboarding";
 import { unitPreferenceSchema } from "~/features/client-profile/contracts/unit-preference";
 
-import type { SaveOutcome } from "./onboarding-api-client";
+import type { SaveOutcome } from "./draft-autosave-requests";
 
 export type SaveState = "idle" | "saving" | "saved" | "unsaved";
 

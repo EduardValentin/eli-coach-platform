@@ -1,18 +1,11 @@
 import { PortalPageHeader } from "@eli-coach-platform/ui/portal";
-import { toast } from "@eli-coach-platform/ui/toast";
-import { useEffect } from "react";
 import {
-  isRouteErrorResponse,
   useLoaderData,
-  useRouteError,
   type LoaderFunctionArgs,
   type MetaFunction,
 } from "react-router";
 
-import {
-  ASSESSMENT_CALL_SETTINGS_TOASTS,
-  type AssessmentCallSettings,
-} from "~/features/assessment-calls/contracts/assessment-call-settings";
+import type { AssessmentCallSettings } from "~/features/assessment-calls/contracts/assessment-call-settings";
 import { assessmentCallsContext } from "~/features/assessment-calls/server/guards/assessment-calls-context.server";
 
 import { AssessmentCallSettingsSection } from "./assessment-call-settings-section";
@@ -27,29 +20,6 @@ export const meta: MetaFunction = () => [{ title: "Settings | Evoa" }];
 
 export default function CoachSettingsRoute() {
   const settings = useLoaderData<typeof loader>();
-
-  return <CoachSettingsPage settings={settings} />;
-}
-
-export function ErrorBoundary() {
-  const error = useRouteError();
-
-  if (
-    !isRouteErrorResponse(error) ||
-    (error.status !== 401 && error.status !== 403)
-  ) {
-    throw error;
-  }
-
-  return <RecoveredCoachSettingsPage />;
-}
-
-function RecoveredCoachSettingsPage() {
-  const settings = useLoaderData<typeof loader>();
-
-  useEffect(() => {
-    toast.error(ASSESSMENT_CALL_SETTINGS_TOASTS.failed);
-  }, []);
 
   return <CoachSettingsPage settings={settings} />;
 }

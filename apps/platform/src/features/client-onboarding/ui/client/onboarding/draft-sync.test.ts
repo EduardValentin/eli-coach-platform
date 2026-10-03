@@ -6,7 +6,7 @@ import type { UnitPreferenceSnapshot } from "@eli-coach-platform/domain/unit-pre
 
 import type { SaveDraftRequest } from "~/features/client-onboarding/contracts/onboarding";
 
-import type { SaveOutcome } from "./onboarding-api-client";
+import type { SaveOutcome } from "./draft-autosave-requests";
 import {
   createDraftSync,
   type DraftSync,

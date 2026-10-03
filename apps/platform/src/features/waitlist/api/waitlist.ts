@@ -1,5 +1,9 @@
-import type { ActionFunctionArgs } from "react-router";
+import type {
+  ActionFunctionArgs,
+  ClientActionFunctionArgs,
+} from "react-router";
 
+import { fetcherOutcomeOf } from "@eli-coach-platform/infrastructure/http";
 import {
   handleHttpErrorResponse,
   throwMethodNotAllowedResponse,
@@ -16,4 +20,8 @@ export async function action({ context, request }: ActionFunctionArgs) {
 
     return context.get(waitlistContext).waitlist.join(request);
   });
+}
+
+export function clientAction({ serverAction }: ClientActionFunctionArgs) {
+  return fetcherOutcomeOf(serverAction);
 }

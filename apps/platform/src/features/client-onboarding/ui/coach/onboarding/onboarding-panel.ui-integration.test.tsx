@@ -27,6 +27,10 @@ import type {
   SubmittedReview,
 } from "~/features/client-onboarding/contracts/onboarding-review";
 import { CLIENT_ONBOARDING_API_PATHS } from "~/features/client-onboarding/contracts/paths";
+import { clientAction as approve } from "~/features/client-onboarding/api/coach/approvals";
+import { clientAction as requestDetails } from "~/features/client-onboarding/api/coach/detail-requests";
+import { clientAction as openReviewOnServer } from "~/features/client-onboarding/api/coach/review-openings";
+import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
 
 import { OnboardingPanel } from "./onboarding-panel";
 
@@ -800,6 +804,40 @@ describe("reviewing her answers", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
+  it.each([
+    {
+      failure: "her session has ended",
+      answer: () => new HttpResponse("Unauthorized", { status: 401 }),
+    },
+    {
+      failure: "the request never reaches the server",
+      answer: () => HttpResponse.error(),
+    },
+  ])(
+    "keeps the approval open and says it did not go through when $failure",
+    async ({ answer }) => {
+      // arrange
+      server.use(http.post(CLIENT_ONBOARDING_API_PATHS.approvals, answer));
+      const user = await renderPanel({
+        review: reviewView(submittedReviewIn("awaiting-review")),
+      });
+      await user.click(screen.getByRole("button", { name: "Approve answers" }));
+
+      // act
+      await user.click(screen.getByRole("button", { name: "Approve" }));
+
+      // assert
+      expect(
+        await screen.findByText(
+          "That did not go through just now. Try again in a moment.",
+        ),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("dialog", { name: "Approve Ana's answers?" }),
+      ).toBeInTheDocument();
+    },
+  );
+
   it("returns focus to the review action when the review closes", async () => {
     // arrange
     const user = await openReview();
@@ -876,7 +914,6 @@ async function renderPanel(
       </>
     );
   };
-  const forwardToServer = ({ request }: { request: Request }) => fetch(request);
   const router = createMemoryRouter(
     [
       {
@@ -885,15 +922,15 @@ async function renderPanel(
         path: PAGE_PATH,
       },
       {
-        action: forwardToServer,
+        action: frameworkModeAction(openReviewOnServer),
         path: CLIENT_ONBOARDING_API_PATHS.reviewOpenings,
       },
       {
-        action: forwardToServer,
+        action: frameworkModeAction(requestDetails),
         path: CLIENT_ONBOARDING_API_PATHS.detailRequests,
       },
       {
-        action: forwardToServer,
+        action: frameworkModeAction(approve),
         path: CLIENT_ONBOARDING_API_PATHS.approvals,
       },
     ],

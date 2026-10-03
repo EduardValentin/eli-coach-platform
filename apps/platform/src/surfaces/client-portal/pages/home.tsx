@@ -8,7 +8,6 @@ import {
 
 import { clientOnboardingContext } from "~/features/client-onboarding/server/guards/client-onboarding-context.server";
 import { clientProfileContext } from "~/features/client-profile/server/guards/client-profile-context.server";
-import { useRefusedPhotoToasts } from "~/features/client-profile/ui/client/measurements/use-refused-photo-toasts";
 import { MeasurementsNudge } from "~/features/client-profile/ui/client/nudge/measurements-nudge";
 import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
 import { ProgramStatusCard } from "~/features/coaching-sales/ui/client/status/program-status-card";
@@ -34,7 +33,6 @@ export default function ClientHomeRoute() {
   const { greeting } = useOutletContext<ClientShellPresentation>();
   const { detailsRequest, dueLine, programStatus } =
     useLoaderData<typeof loader>();
-  useRefusedPhotoToasts();
 
   return (
     <div className="w-full" data-parity="dashboard-page">

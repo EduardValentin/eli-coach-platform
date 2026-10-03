@@ -34,6 +34,9 @@ import {
   CLIENT_PROFILE_API_PATHS,
   CLIENT_PROFILE_PATH,
 } from "~/features/client-profile/contracts/paths";
+import { clientAction as recordMeasurements } from "~/features/client-profile/api/client/measurements";
+import { clientAction as removePhoto } from "~/features/client-profile/api/photos/progress-photo";
+import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
 
 import ClientProfileRoute from "./profile-page";
 
@@ -509,44 +512,58 @@ describe("the add measurements sheet", () => {
     ]);
   });
 
-  it("keeps the sheet open with what she entered and tells her when the save fails", async () => {
-    // arrange
-    server.use(
-      http.post(
-        MEASUREMENTS_URL,
-        () => new HttpResponse(null, { status: 500 }),
-      ),
-    );
-    const user = await openSheet(
-      pageWith({ consentedAt: "2026-09-27T09:00:00.000Z" }),
-    );
-    const sheet = screen.getByRole("dialog", { name: "Add measurements" });
-    await user.clear(readingOf(sheet, /^Weight/));
-    await user.type(readingOf(sheet, /^Weight/), "65.8");
-    await user.upload(within(sheet).getByLabelText("Add front photo"), photo());
+  it.each([
+    {
+      failure: "the server answers with an error",
+      answer: () => new HttpResponse(null, { status: 500 }),
+    },
+    {
+      failure: "her session has ended",
+      answer: () => new HttpResponse("Unauthorized", { status: 401 }),
+    },
+    {
+      failure: "the request never reaches the server",
+      answer: () => HttpResponse.error(),
+    },
+  ])(
+    "keeps the sheet open with what she entered and tells her the save failed when $failure",
+    async ({ answer }) => {
+      // arrange
+      server.use(http.post(MEASUREMENTS_URL, answer));
+      const user = await openSheet(
+        pageWith({ consentedAt: "2026-09-27T09:00:00.000Z" }),
+      );
+      const sheet = screen.getByRole("dialog", { name: "Add measurements" });
+      await user.clear(readingOf(sheet, /^Weight/));
+      await user.type(readingOf(sheet, /^Weight/), "65.8");
+      await user.upload(
+        within(sheet).getByLabelText("Add front photo"),
+        photo(),
+      );
 
-    // act
-    await user.click(
-      within(sheet).getByRole("button", { name: "Save measurements" }),
-    );
+      // act
+      await user.click(
+        within(sheet).getByRole("button", { name: "Save measurements" }),
+      );
 
-    // assert
-    expect(
-      await screen.findByText(
-        "Your measurements could not be saved. Try again.",
-      ),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("dialog", { name: "Add measurements" }),
-    ).toBeInTheDocument();
-    expect(readingOf(sheet, /^Weight/)).toHaveValue(65.8);
-    expect(
-      within(sheet).getByRole("img", { name: "Front photo" }),
-    ).toBeInTheDocument();
-    expect(
-      within(sheet).getByRole("button", { name: "Save measurements" }),
-    ).toBeEnabled();
-  });
+      // assert
+      expect(
+        await screen.findByText(
+          "Your measurements could not be saved. Try again.",
+        ),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("dialog", { name: "Add measurements" }),
+      ).toBeInTheDocument();
+      expect(readingOf(sheet, /^Weight/)).toHaveValue(65.8);
+      expect(
+        within(sheet).getByRole("img", { name: "Front photo" }),
+      ).toBeInTheDocument();
+      expect(
+        within(sheet).getByRole("button", { name: "Save measurements" }),
+      ).toBeEnabled();
+    },
+  );
 });
 
 describe("the photo view", () => {
@@ -577,6 +594,9 @@ describe("the photo view", () => {
     expect(
       within(photos).getByRole("img", { name: "Back photo" }),
     ).toBeInTheDocument();
+    expect(
+      screen.queryByText("The photo could not be removed. Try again."),
+    ).not.toBeInTheDocument();
   });
 
   it("drops the row action once she removes the entry's last photo while the view stays open", async () => {
@@ -616,6 +636,10 @@ describe("the photo view", () => {
     {
       failure: "the server answers with an error",
       answer: () => new HttpResponse(null, { status: 500 }),
+    },
+    {
+      failure: "the server refuses it",
+      answer: () => new HttpResponse("Not Found", { status: 404 }),
     },
     {
       failure: "the request never reaches the server",
@@ -686,6 +710,11 @@ async function renderProfile(
         loader: () => storedPage,
         path: CLIENT_PROFILE_PATH,
       },
+      {
+        action: frameworkModeAction(recordMeasurements),
+        path: MEASUREMENTS_URL,
+      },
+      { action: frameworkModeAction(removePhoto), path: PHOTO_URL },
     ],
     { initialEntries: [CLIENT_PROFILE_PATH] },
   );

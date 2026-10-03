@@ -2,13 +2,12 @@ import { MEASUREMENT_FIELDS } from "@eli-coach-platform/domain/measurement";
 import type { MeasureUnits } from "@eli-coach-platform/domain/unit-preference";
 import { ResponsiveSheetDialog } from "@eli-coach-platform/ui/layout";
 import { Button } from "@eli-coach-platform/ui/primitives";
-import { toast } from "@eli-coach-platform/ui/toast";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { useRevalidator } from "react-router";
 
 import {
   MEASUREMENTS_COPY,
+  PHOTO_CONSENT_GIVEN,
   type MeasurementRow,
 } from "~/features/client-profile/contracts/measurements";
 import {
@@ -16,7 +15,7 @@ import {
   measurementFormValuesOf,
   type MeasurementFormValues,
 } from "~/features/client-profile/ui/client/measurements/measurement-form-values";
-import { recordMeasurements } from "~/features/client-profile/ui/client/measurements/measurements-api-client";
+import { useMeasurementsRecording } from "~/features/client-profile/ui/client/measurements/use-measurements-recording";
 import { MeasureField } from "~/features/client-profile/ui/shared/measure-field/measure-field";
 import {
   ProgressPhotoBlock,
@@ -46,12 +45,11 @@ function AddMeasurementsForm({
   consentedAt,
   onClose,
 }: AddMeasurementsStartingPoint & { onClose: () => void }) {
-  const revalidator = useRevalidator();
+  const { record, recording } = useMeasurementsRecording(onClose);
   const [photos, setPhotos] = useState<ProgressPhotoPicks>(
     NO_PROGRESS_PHOTO_PICKS,
   );
   const [consentTicked, setConsentTicked] = useState(false);
-  const [saving, setSaving] = useState(false);
   const form = useForm<MeasurementFormValues>({
     defaultValues: measurementFormValuesOf(latest, units),
   });
@@ -64,27 +62,13 @@ function AddMeasurementsForm({
         onTickedChange: setConsentTicked,
       };
 
-  const save = form.handleSubmit(async (values) => {
-    setSaving(true);
-    const outcome = await recordMeasurements({
+  const save = form.handleSubmit((values) =>
+    record({
       entry: measurementEntryOf(values, units),
-      givesPhotoConsent: consentTicked,
       photos,
-    });
-
-    if (outcome.kind === "failed") {
-      setSaving(false);
-      toast.error(MEASUREMENTS_COPY.toasts.failed);
-      return;
-    }
-
-    void revalidator.revalidate();
-    onClose();
-    toast.success(MEASUREMENTS_COPY.toasts.saved);
-    outcome.refusedViews.forEach((view) =>
-      toast.error(MEASUREMENTS_COPY.toasts.photoRefused(view)),
-    );
-  });
+      photoConsent: consentTicked ? PHOTO_CONSENT_GIVEN : null,
+    }),
+  );
 
   return (
     <>
@@ -118,7 +102,7 @@ function AddMeasurementsForm({
           <div className="flex flex-col-reverse gap-3 sm:flex-row-reverse">
             <Button
               className="w-full sm:w-auto"
-              disabled={saving}
+              disabled={recording}
               size="md"
               type="submit"
               variant="primary"

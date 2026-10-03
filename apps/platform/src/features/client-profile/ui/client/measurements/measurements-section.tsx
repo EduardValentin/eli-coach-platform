@@ -1,23 +1,21 @@
 import { measureUnitsOf } from "@eli-coach-platform/domain/unit-preference";
 import { Button } from "@eli-coach-platform/ui/primitives";
-import { toast } from "@eli-coach-platform/ui/toast";
 import { Plus } from "lucide-react";
 import { useState } from "react";
-import { useRevalidator } from "react-router";
 
 import {
   MEASUREMENTS_COPY,
   type MeasurementsPage,
 } from "~/features/client-profile/contracts/measurements";
 import { AddMeasurementsSheet } from "~/features/client-profile/ui/client/measurements/add-measurements-sheet";
-import { removeProgressPhoto } from "~/features/client-profile/ui/client/measurements/measurements-api-client";
+import { useProgressPhotoRemoval } from "~/features/client-profile/ui/client/measurements/use-progress-photo-removal";
 import { MeasurementsTable } from "~/features/client-profile/ui/shared/measurements/measurements-table";
 import { PhotoViewDialog } from "~/features/client-profile/ui/shared/photos/photo-view-dialog";
 
 const CLIENT_COPY = MEASUREMENTS_COPY.client;
 
 export function MeasurementsSection({ page }: { page: MeasurementsPage }) {
-  const revalidator = useRevalidator();
+  const removeProgressPhoto = useProgressPhotoRemoval();
   const units = measureUnitsOf(page.units);
   const [adding, setAdding] = useState(false);
   const [viewingEntryId, setViewingEntryId] = useState<string | null>(null);
@@ -58,16 +56,7 @@ export function MeasurementsSection({ page }: { page: MeasurementsPage }) {
         entry={viewedEntry}
         viewer={{
           role: "client",
-          onRemovePhoto: async (photo) => {
-            const removal = await removeProgressPhoto(photo.id);
-
-            if (removal.kind === "failed") {
-              toast.error(MEASUREMENTS_COPY.toasts.removeFailed);
-              return;
-            }
-
-            await revalidator.revalidate();
-          },
+          onRemovePhoto: (photo) => removeProgressPhoto(photo.id),
         }}
       />
     </MeasurementsTable>

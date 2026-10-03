@@ -755,14 +755,10 @@ test("a client who agrees to share progress photos sends front, side and back wi
   await clientOnboarding.expectPhotoPreview("back");
 
   // act
-  const sent = await clientOnboarding.sendToCoachCapturingPhotoExchange();
+  const sentViews = await clientOnboarding.sendToCoachCapturingSentPhotoViews();
 
   // assert
-  expect(sent).toEqual({
-    status: 200,
-    sentViews: ["front", "side", "back"],
-    outcomes: { front: "stored", side: "stored", back: "stored" },
-  });
+  expect(sentViews).toEqual(["front", "side", "back"]);
   await expect(page).toHaveURL(/\/client$/);
   await clientDashboard.expectStatusCard(
     "Sent to your coach",
@@ -817,11 +813,10 @@ test("a client who takes back her photo consent before sending sends no photos",
   await clientOnboarding.expectPhotosLocked();
 
   // act
-  const sent = await clientOnboarding.sendToCoachCapturingPhotoExchange();
+  const sentViews = await clientOnboarding.sendToCoachCapturingSentPhotoViews();
 
   // assert
-  expect(sent.status).toBe(200);
-  expect(sent.sentViews).toEqual([]);
+  expect(sentViews).toEqual([]);
   await expect(page).toHaveURL(/\/client$/);
   await clientDashboard.expectStatusCard(
     "Sent to your coach",
@@ -874,12 +869,10 @@ test("a client who takes back her photo consent and agrees again starts from emp
 
   // act
   await clientOnboarding.addPhoto("back", samplePhotoOf("back"));
-  const sent = await clientOnboarding.sendToCoachCapturingPhotoExchange();
+  const sentViews = await clientOnboarding.sendToCoachCapturingSentPhotoViews();
 
   // assert
-  expect(sent.status).toBe(200);
-  expect(sent.sentViews).toEqual(["back"]);
-  expect(sent.outcomes).toMatchObject({ back: "stored" });
+  expect(sentViews).toEqual(["back"]);
   await expect(page).toHaveURL(/\/client$/);
   expect(await measurementRecords.photos(client.clientId)).toEqual([
     { view: "back", mimeType: "image/jpeg" },
@@ -907,12 +900,10 @@ test("a client's onboarding photo that cannot be processed is named once on her 
   // act
   await clientOnboarding.addPhoto("front", UNPROCESSABLE_PHOTO);
   await clientOnboarding.addPhoto("side", samplePhotoOf("side"));
-  const sent = await clientOnboarding.sendToCoachCapturingPhotoExchange();
+  const sentViews = await clientOnboarding.sendToCoachCapturingSentPhotoViews();
 
   // assert
-  expect(sent.status).toBe(200);
-  expect(sent.sentViews).toEqual(["front", "side"]);
-  expect(sent.outcomes).toMatchObject({ front: "refused", side: "stored" });
+  expect(sentViews).toEqual(["front", "side"]);
   await expect(page).toHaveURL(/\/client$/);
   await clientDashboard.expectStatusCard(
     "Sent to your coach",

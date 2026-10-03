@@ -32,10 +32,12 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 
+import { clientAction as bookAssessmentCall } from "~/features/assessment-calls/api/booking/bookings";
 import {
   ASSESSMENT_CALL_API_PATHS,
   BOOK_PATH,
 } from "~/features/assessment-calls/contracts/paths";
+import { frameworkModeAction } from "~/server/test-support/framework-mode-action";
 
 import BookRoute, { shouldRevalidate } from "./book-page";
 import { BOOKINGS_API_URL, SLOTS_API_URL } from "./api-client";
@@ -76,6 +78,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  delete window.turnstile;
   server.resetHandlers();
   vi.useRealTimers();
   vi.unstubAllEnvs();
@@ -647,6 +650,50 @@ describe("booking an assessment call: the outcome", BOOKING_FLOW, () => {
     );
   });
 
+  it.each([
+    {
+      failure: "the server refuses the booking without an answer",
+      answer: () => new HttpResponse("Unauthorized", { status: 401 }),
+    },
+    {
+      failure: "the request never reaches the server",
+      answer: () => HttpResponse.error(),
+    },
+  ])(
+    "keeps her details, offers a way to reach Eli and resets bot verification when $failure",
+    async ({ answer }) => {
+      // arrange
+      server.use(http.post(BOOKINGS_API_URL, answer));
+      const turnstile = installTurnstile();
+      const user = renderBookingPage({
+        page: {
+          botDetection: { provider: "turnstile", siteKey: "booking-site-key" },
+          coachTimeZone: COACH_TIME_ZONE,
+          slots: OPEN_SLOTS,
+          status: "open",
+        },
+      });
+      await reachDetails(user);
+      await fillDetails(user);
+
+      // act
+      await user.click(screen.getByRole("button", { name: "Schedule Call" }));
+
+      // assert
+      const alert = await screen.findByRole("alert");
+      expect(alert).toHaveTextContent(/went wrong on our end/i);
+      expect(
+        within(alert).getByRole("link", { name: ELI_COACH_CONTACT_EMAIL }),
+      ).toHaveAttribute("href", `mailto:${ELI_COACH_CONTACT_EMAIL}`);
+      expect(screen.getByLabelText("Email Address")).toHaveValue(
+        "jane@example.com",
+      );
+      await waitFor(() => {
+        expect(turnstile.resets).toBe(1);
+      });
+    },
+  );
+
   it("lets the visitor try again when bot verification is refused", async () => {
     // arrange
     let attempts = 0;
@@ -896,7 +943,7 @@ function renderBookingPage(options?: { page?: BookingPageValue }): UserEvent {
         path: ASSESSMENT_CALL_API_PATHS.slots,
       },
       {
-        action: async ({ request }: { request: Request }) => fetch(request),
+        action: frameworkModeAction(bookAssessmentCall),
         path: ASSESSMENT_CALL_API_PATHS.bookings,
       },
     ],
@@ -1043,6 +1090,25 @@ async function fillDetails(user: UserEvent) {
   await waitFor(() => {
     expect(screen.getByTestId("bot-detection-widget")).toBeInTheDocument();
   });
+}
+
+function installTurnstile(): { resets: number } {
+  const turnstile = { resets: 0 };
+  let issueToken = (_token: string) => {};
+  window.turnstile = {
+    execute: () => issueToken(TURNSTILE_TEST_RESPONSE_TOKEN),
+    remove: () => {},
+    render: (_container, options) => {
+      issueToken = options.callback;
+
+      return "booking-turnstile-widget";
+    },
+    reset: () => {
+      turnstile.resets += 1;
+    },
+  };
+
+  return turnstile;
 }
 
 function confirmedBooking() {
