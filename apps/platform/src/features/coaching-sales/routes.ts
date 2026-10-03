@@ -2,6 +2,8 @@ import { relative } from "@react-router/dev/routes";
 
 import {
   CHECKOUT_COMPLETE_ROUTE_SEGMENT,
+  CLIENT_ENDED_ROUTE_SEGMENT,
+  CLIENT_SETTINGS_ROUTE_SEGMENT,
   CLIENT_WELCOME_ROUTE_SEGMENT,
   COACH_CLIENTS_ROUTE_SEGMENT,
   COACHING_SALES_API_PATHS,
@@ -23,6 +25,14 @@ export const coachingSalesPublicRoutes = [
 
 export const coachingSalesClientRoutes = [
   route(CLIENT_WELCOME_ROUTE_SEGMENT, "./ui/client/welcome/welcome-page.tsx"),
+  route(CLIENT_ENDED_ROUTE_SEGMENT, "./ui/client/ended/ended-page.tsx"),
+];
+
+export const coachingSalesClientShellRoutes = [
+  route(
+    CLIENT_SETTINGS_ROUTE_SEGMENT,
+    "./ui/client/settings/settings-page.tsx",
+  ),
 ];
 
 export const coachingSalesCoachRoutes = [

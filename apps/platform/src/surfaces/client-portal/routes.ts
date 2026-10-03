@@ -3,7 +3,10 @@ import { index, prefix, relative } from "@react-router/dev/routes";
 import { CLIENT_PORTAL_ROUTE_SEGMENT } from "../../features/accounts/contracts/paths";
 import { clientOnboardingClientRoutes } from "../../features/client-onboarding/routes";
 import { clientProfileClientRoutes } from "../../features/client-profile/routes";
-import { coachingSalesClientRoutes } from "../../features/coaching-sales/routes";
+import {
+  coachingSalesClientRoutes,
+  coachingSalesClientShellRoutes,
+} from "../../features/coaching-sales/routes";
 
 const { layout, route } = relative(import.meta.dirname);
 
@@ -13,6 +16,7 @@ export const clientPortalRoutes = [
       layout("./shell/layout.tsx", [
         index("./surfaces/client-portal/pages/home.tsx"),
         ...clientProfileClientRoutes,
+        ...coachingSalesClientShellRoutes,
       ]),
       ...coachingSalesClientRoutes,
       ...clientOnboardingClientRoutes,

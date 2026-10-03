@@ -143,7 +143,7 @@ describe.sequential("client subscription integration", () => {
       const [refundDueEmail, ...otherRefundDueEmails] = await refundDueEmails();
       expect(otherRefundDueEmails).toEqual([]);
       expect(refundDueEmail?.subject).toBe(
-        "Ana Popescu cancelled — refund due €447.00 by 17 November",
+        "Ana Popescu cancelled — refund due €447 by 17 November",
       );
       expect(refundDueEmail?.replyTo).toBe(ANA.email);
       const portal = await rig.requestAs(ANA_SESSION, CLIENT_PORTAL);

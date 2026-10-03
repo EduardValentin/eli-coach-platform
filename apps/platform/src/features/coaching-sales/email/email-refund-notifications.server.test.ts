@@ -61,7 +61,7 @@ describe("EmailRefundNotifications", () => {
     expect(productEmail.sent[0]).toMatchObject({
       to: "eli@evoa.fit",
       replyTo: "ana@example.com",
-      subject: "Ana Popescu cancelled — refund due €447.00 by 16 October",
+      subject: "Ana Popescu cancelled — refund due €447 by 16 October",
       idempotencyKey: "refund-due:subscription-1",
     });
   });
@@ -76,12 +76,12 @@ describe("EmailRefundNotifications", () => {
 
     // assert
     const text = productEmail.sent[0]?.text ?? "";
-    expect(text).toContain("Refund due: €447.00");
+    expect(text).toContain("Refund due: €447");
     expect(text).toContain("Refund by: 16 October");
     expect(text).toContain(
       "Why: Full refund: cancelled within the 14-day withdrawal period.",
     );
-    expect(text).toContain("Paid: €447.00 on 28 September");
+    expect(text).toContain("Paid: €447 on 28 September");
     expect(text).toContain("Cancelled: 2 October");
     expect(text).toContain(
       `Open her client page: https://evoa.fit/eli-coach-platform/coach/clients/${CLIENT_ID}`,

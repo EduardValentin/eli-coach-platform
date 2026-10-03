@@ -46,6 +46,7 @@ function renderClientLayout(
       children: [
         { Component: () => <p>Dashboard page</p>, index: true },
         { Component: ProfilePage, path: "profile" },
+        { Component: () => <h1>Her settings</h1>, path: "settings" },
       ],
       Component: ClientLayoutRoute,
       loader: () => presentation,
@@ -83,7 +84,7 @@ describe("ClientLayoutRoute", () => {
     expect(screen.getByRole("main")).toHaveTextContent("Dashboard page");
   });
 
-  it("lists the dashboard and her profile, marking the dashboard as the page being read", async () => {
+  it("lists the dashboard, her profile and her settings, marking the dashboard as the page being read", async () => {
     // arrange, act
     renderClientLayout();
 
@@ -96,14 +97,17 @@ describe("ClientLayoutRoute", () => {
     expect(links.map((link) => link.textContent)).toEqual([
       "Dashboard",
       "Profile",
+      "Settings",
     ]);
     expect(links[0]).toHaveAttribute("href", "/client");
     expect(links[0]).toHaveAttribute("aria-current", "page");
     expect(links[1]).toHaveAttribute("href", "/client/profile");
     expect(links[1]).not.toHaveAttribute("aria-current");
+    expect(links[2]).toHaveAttribute("href", "/client/settings");
+    expect(links[2]).not.toHaveAttribute("aria-current");
   });
 
-  it("puts the dashboard and her profile in the tab bar", async () => {
+  it("puts the dashboard and her profile in the tab bar and leaves her settings to the More sheet", async () => {
     // arrange, act
     renderClientLayout();
 
@@ -119,6 +123,9 @@ describe("ClientLayoutRoute", () => {
       "href",
       "/client/profile",
     );
+    expect(
+      within(tabs).queryByRole("link", { name: "Settings" }),
+    ).not.toBeInTheDocument();
   });
 
   it("marks her profile as the page being read on the profile page", async () => {
@@ -221,6 +228,45 @@ describe("ClientLayoutRoute", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("marks her settings as the page being read on the settings page", async () => {
+    // arrange, act
+    renderClientLayout(ANA, "/client/settings");
+
+    // assert
+    const navigation = await screen.findByRole("navigation", {
+      name: "Client portal navigation",
+    });
+
+    expect(
+      within(navigation).getByRole("link", { name: "Settings" }),
+    ).toHaveAttribute("aria-current", "page");
+  });
+
+  it("closes the More sheet when she follows Settings from it", async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderClientLayout();
+    await user.click(await screen.findByRole("button", { name: "More" }));
+    const sheet = await screen.findByRole("dialog", { name: "More" });
+
+    // act
+    await user.click(
+      within(
+        within(sheet).getByRole("navigation", { name: "Client portal more" }),
+      ).getByRole("link", { name: "Settings" }),
+    );
+
+    // assert
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("dialog", { name: "More" }),
+      ).not.toBeInTheDocument();
+    });
+    expect(
+      await screen.findByRole("heading", { name: "Her settings" }),
+    ).toBeInTheDocument();
+  });
+
   it("opens the More sheet with her name and a way to sign out to the public home", async () => {
     // arrange
     const user = userEvent.setup();
@@ -236,9 +282,6 @@ describe("ClientLayoutRoute", () => {
     expect(
       within(sheet).getByRole("button", { name: "Sign out" }),
     ).toBeEnabled();
-    expect(
-      within(sheet).queryByRole("navigation", { name: "Client portal more" }),
-    ).not.toBeInTheDocument();
     expect(vi.mocked(SignOutButton)).toHaveBeenCalledWith(
       expect.objectContaining({ redirectUrl: "/" }),
       undefined,
