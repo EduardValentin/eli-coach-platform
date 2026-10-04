@@ -1,19 +1,19 @@
 import type { PaymentCard } from "./payment-card";
 
-export type CardOnFileChange = {
+export type PaymentCardWrite = {
   paymentCustomerId: string;
   card: PaymentCard | null;
   previous: PaymentCard | null;
 };
 
-export type CardOnFileEventChange = CardOnFileChange & { eventId: string };
+export type PaymentCardEventWrite = PaymentCardWrite & { eventId: string };
 
 export interface PaymentCards {
   findByPaymentCustomerId(
     paymentCustomerId: string,
   ): Promise<PaymentCard | null>;
-  save(change: CardOnFileChange): Promise<"saved" | "stale">;
+  save(change: PaymentCardWrite): Promise<"saved" | "stale">;
   saveForEvent(
-    change: CardOnFileEventChange,
+    change: PaymentCardEventWrite,
   ): Promise<"recorded" | "duplicate" | "stale">;
 }

@@ -32,7 +32,7 @@ export function createConsoleLogger(): ConsoleLogger {
         errorCategory: "assessment_call_listing_failure",
       });
     },
-    cardMirrorFailed: ({ error, paymentCustomerId }) => {
+    paymentCardRefreshFailed: ({ error, paymentCustomerId }) => {
       console.error(
         "Card on file could not be mirrored; Stripe will redeliver.",
         {

@@ -760,7 +760,7 @@ describe("createConsoleLogger", () => {
         "a card on file that could not be mirrored, by the failure's kind only",
         "error",
         (logger: ReturnType<typeof createConsoleLogger>) =>
-          logger.cardMirrorFailed({
+          logger.paymentCardRefreshFailed({
             paymentCustomerId: "cus_1",
             error: new TypeError("4242"),
           }),

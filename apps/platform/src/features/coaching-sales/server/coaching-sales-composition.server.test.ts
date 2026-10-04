@@ -353,7 +353,7 @@ function createHandles(
 
 function createIncidents() {
   return {
-    cardMirrorFailed: vi.fn(),
+    paymentCardRefreshFailed: vi.fn(),
     invitationEmailFailed: vi.fn(),
     invitationResendFailed: vi.fn(),
     invitationResent: vi.fn(),

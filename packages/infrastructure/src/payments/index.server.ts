@@ -10,7 +10,10 @@ export {
   type PaymentCompletionHandler,
 } from "./payment-completion-handler.server";
 export type { PaymentCardChange } from "./payment-card-change.server";
-export { recordPaymentEvent } from "./payment-event-ledger.server";
+export {
+  recordEventOnce,
+  recordPaymentEvent,
+} from "./payment-event-ledger.server";
 export type {
   PaymentEvents,
   PaymentEventVerdict,

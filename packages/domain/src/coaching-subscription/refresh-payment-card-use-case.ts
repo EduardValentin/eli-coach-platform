@@ -26,7 +26,10 @@ export class RefreshPaymentCardUseCase {
 
       await this.options.cards.save({ paymentCustomerId, card, previous });
     } catch (error) {
-      this.options.incidents.cardMirrorFailed({ paymentCustomerId, error });
+      this.options.incidents.paymentCardRefreshFailed({
+        paymentCustomerId,
+        error,
+      });
 
       throw error;
     }

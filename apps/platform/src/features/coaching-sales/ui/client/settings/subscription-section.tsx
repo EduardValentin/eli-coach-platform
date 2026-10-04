@@ -17,7 +17,7 @@ import {
   PAYMENT_METHOD_UNAVAILABLE_PARAM,
   type ClientSettings,
 } from "~/features/coaching-sales/contracts/client-subscription";
-import { CardOnFileReading } from "~/features/coaching-sales/ui/client/payment-method/card-on-file-reading";
+import { PaymentCardReading } from "~/features/coaching-sales/ui/client/payment-method/payment-card-reading";
 import { ChangePaymentMethodButton } from "~/features/coaching-sales/ui/client/payment-method/change-payment-method-button";
 import {
   PaymentMethodProblems,
@@ -160,7 +160,7 @@ function PaymentMethodRow({ subscription, card }: PaymentMethodRowProps) {
   return (
     <SettingsRow
       data-parity="subscription-payment-method"
-      description={<CardOnFileReading card={card} />}
+      description={<PaymentCardReading card={card} />}
       descriptionId={PAYMENT_METHOD_IDS.card}
       labelId={PAYMENT_METHOD_IDS.title}
       problem={

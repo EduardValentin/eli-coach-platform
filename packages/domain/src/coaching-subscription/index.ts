@@ -37,8 +37,8 @@ export {
 } from "./payment-checkout";
 export { PaymentCard, type PaymentCardEvent } from "./payment-card";
 export {
-  type CardOnFileChange,
-  type CardOnFileEventChange,
+  type PaymentCardWrite,
+  type PaymentCardEventWrite,
   type PaymentCards,
 } from "./payment-cards";
 export { type PaymentCustomerCards } from "./payment-customer-cards";

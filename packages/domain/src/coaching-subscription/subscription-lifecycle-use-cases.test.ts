@@ -106,7 +106,7 @@ function createIncidents() {
     refundNotificationFailed: vi.fn(),
     paymentEventRejected: vi.fn(),
     paymentCardEventMirrored: vi.fn(),
-    cardMirrorFailed: vi.fn(),
+    paymentCardRefreshFailed: vi.fn(),
   } satisfies CoachingSubscriptionIncidents;
 }
 

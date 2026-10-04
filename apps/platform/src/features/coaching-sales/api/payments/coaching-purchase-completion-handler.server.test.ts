@@ -163,7 +163,7 @@ function createHandler(outcome: RecordOutcome = { status: "recorded" }) {
   const recordCompletion = vi.fn().mockResolvedValue(outcome);
   const refreshCard = vi.fn().mockResolvedValue(undefined);
   const incidents = {
-    cardMirrorFailed: vi.fn(),
+    paymentCardRefreshFailed: vi.fn(),
     paymentCardEventMirrored: vi.fn(),
     paymentEventRejected: vi.fn(),
     paymentMethodSessionOpened: vi.fn(),

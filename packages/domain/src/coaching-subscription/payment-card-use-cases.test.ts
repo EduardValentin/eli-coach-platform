@@ -85,7 +85,7 @@ function createIncidents() {
     refundNotificationFailed: vi.fn(),
     paymentEventRejected: vi.fn(),
     paymentCardEventMirrored: vi.fn(),
-    cardMirrorFailed: vi.fn(),
+    paymentCardRefreshFailed: vi.fn(),
   } satisfies CoachingSubscriptionIncidents;
 }
 
@@ -371,7 +371,7 @@ describe("RefreshPaymentCardUseCase", () => {
     // assert
     await expect(refreshing).rejects.toBe(failure);
     expect(cards.save).not.toHaveBeenCalled();
-    expect(incidents.cardMirrorFailed).toHaveBeenCalledWith({
+    expect(incidents.paymentCardRefreshFailed).toHaveBeenCalledWith({
       paymentCustomerId: CUSTOMER_ID,
       error: failure,
     });

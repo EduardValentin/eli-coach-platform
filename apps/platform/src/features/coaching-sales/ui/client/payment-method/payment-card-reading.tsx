@@ -11,7 +11,7 @@ import {
   NO_PAYMENT_METHOD_LINE,
 } from "./payment-method-copy";
 
-export function CardOnFileReading({ card }: { card: ClientSettings["card"] }) {
+export function PaymentCardReading({ card }: { card: ClientSettings["card"] }) {
   if (!card) {
     return <span data-parity="payment-card">{NO_PAYMENT_METHOD_LINE}</span>;
   }

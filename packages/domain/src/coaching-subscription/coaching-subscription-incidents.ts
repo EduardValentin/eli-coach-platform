@@ -50,7 +50,7 @@ export interface CoachingSubscriptionIncidents {
     paymentCustomerId: string;
     outcome: PaymentCardEventOutcome;
   }): void;
-  cardMirrorFailed(incident: {
+  paymentCardRefreshFailed(incident: {
     paymentCustomerId: string;
     error: unknown;
   }): void;

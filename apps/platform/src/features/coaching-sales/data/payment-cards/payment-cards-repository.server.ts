@@ -4,12 +4,12 @@ import type {
 } from "@eli-coach-platform/db";
 import {
   PaymentCard,
-  type CardOnFileChange,
-  type CardOnFileEventChange,
+  type PaymentCardWrite,
+  type PaymentCardEventWrite,
   type PaymentCards,
 } from "@eli-coach-platform/domain/coaching-subscription";
 import type { Clock } from "@eli-coach-platform/domain/shared";
-import { recordPaymentEvent } from "@eli-coach-platform/infrastructure/payments/server";
+import { recordEventOnce } from "@eli-coach-platform/infrastructure/payments/server";
 import { and, eq, type SQL } from "drizzle-orm";
 
 import { paymentCardsTable } from "~/features/coaching-sales/data/schema.server";
@@ -21,12 +21,10 @@ type PostgresPaymentCardsOptions = {
 
 type Database = DatabaseClient | DatabaseTransaction;
 
-type CardWrite = {
-  change: CardOnFileChange;
+type StampedCardWrite = {
+  change: PaymentCardWrite;
   updatedAt: Date;
 };
-
-class StaleCardWrite extends Error {}
 
 const cardColumns = {
   paymentMethodId: paymentCardsTable.paymentMethodId,
@@ -51,7 +49,7 @@ export class PostgresPaymentCards implements PaymentCards {
     return row ? PaymentCard.of(row) : null;
   }
 
-  async save(change: CardOnFileChange): Promise<"saved" | "stale"> {
+  async save(change: PaymentCardWrite): Promise<"saved" | "stale"> {
     const written = await writeCard(this.options.database, {
       change,
       updatedAt: this.options.clock.now(),
@@ -60,41 +58,24 @@ export class PostgresPaymentCards implements PaymentCards {
     return written ? "saved" : "stale";
   }
 
-  async saveForEvent(
-    change: CardOnFileEventChange,
+  saveForEvent(
+    change: PaymentCardEventWrite,
   ): Promise<"recorded" | "duplicate" | "stale"> {
     const receivedAt = this.options.clock.now();
 
-    try {
-      return await this.options.database.transaction(async (transaction) => {
-        const ledgerOutcome = await recordPaymentEvent(transaction, {
-          eventId: change.eventId,
-          receivedAt,
-        });
-
-        if (ledgerOutcome === "duplicate") {
-          return "duplicate";
-        }
-
-        if (
-          !(await writeCard(transaction, { change, updatedAt: receivedAt }))
-        ) {
-          throw new StaleCardWrite();
-        }
-
-        return "recorded";
-      });
-    } catch (error) {
-      if (error instanceof StaleCardWrite) {
-        return "stale";
-      }
-
-      throw error;
-    }
+    return recordEventOnce(this.options.database, {
+      eventId: change.eventId,
+      receivedAt,
+      write: (transaction) =>
+        writeCard(transaction, { change, updatedAt: receivedAt }),
+    });
   }
 }
 
-function writeCard(database: Database, write: CardWrite): Promise<boolean> {
+function writeCard(
+  database: Database,
+  write: StampedCardWrite,
+): Promise<boolean> {
   const { card, previous } = write.change;
 
   if (!previous) {
@@ -110,7 +91,7 @@ function writeCard(database: Database, write: CardWrite): Promise<boolean> {
 
 async function insertCard(
   database: Database,
-  write: CardWrite & { card: PaymentCard },
+  write: StampedCardWrite & { card: PaymentCard },
 ): Promise<boolean> {
   const inserted = await database
     .insert(paymentCardsTable)
@@ -127,7 +108,7 @@ async function insertCard(
 
 async function replaceCard(
   database: Database,
-  write: CardWrite & { card: PaymentCard; previous: PaymentCard },
+  write: StampedCardWrite & { card: PaymentCard; previous: PaymentCard },
 ): Promise<boolean> {
   const replaced = await database
     .update(paymentCardsTable)
@@ -140,7 +121,7 @@ async function replaceCard(
 
 async function removeCard(
   database: Database,
-  write: CardWrite & { previous: PaymentCard },
+  write: StampedCardWrite & { previous: PaymentCard },
 ): Promise<boolean> {
   const removed = await database
     .delete(paymentCardsTable)

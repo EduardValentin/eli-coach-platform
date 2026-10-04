@@ -9,7 +9,7 @@ import {
   type SubscriptionEventChange,
 } from "@eli-coach-platform/domain/coaching-subscription";
 import type { Clock } from "@eli-coach-platform/domain/shared";
-import { recordPaymentEvent } from "@eli-coach-platform/infrastructure/payments/server";
+import { recordEventOnce } from "@eli-coach-platform/infrastructure/payments/server";
 import { and, eq, inArray, isNull, type Column, type SQL } from "drizzle-orm";
 
 import {
@@ -27,8 +27,6 @@ type PostgresCoachingSubscriptionsOptions = {
   clock: Clock;
   database: DatabaseClient;
 };
-
-class StaleSubscriptionWrite extends Error {}
 
 export class PostgresCoachingSubscriptions implements CoachingSubscriptions {
   constructor(private readonly options: PostgresCoachingSubscriptionsOptions) {}
@@ -76,35 +74,14 @@ export class PostgresCoachingSubscriptions implements CoachingSubscriptions {
     return written ? "saved" : "stale";
   }
 
-  async saveForEvent(
+  saveForEvent(
     change: SubscriptionEventChange,
   ): Promise<"recorded" | "duplicate" | "stale"> {
-    const receivedAt = this.options.clock.now();
-
-    try {
-      return await this.options.database.transaction(async (transaction) => {
-        const ledgerOutcome = await recordPaymentEvent(transaction, {
-          eventId: change.eventId,
-          receivedAt,
-        });
-
-        if (ledgerOutcome === "duplicate") {
-          return "duplicate";
-        }
-
-        if (!(await writeChange(transaction, change))) {
-          throw new StaleSubscriptionWrite();
-        }
-
-        return "recorded";
-      });
-    } catch (error) {
-      if (error instanceof StaleSubscriptionWrite) {
-        return "stale";
-      }
-
-      throw error;
-    }
+    return recordEventOnce(this.options.database, {
+      eventId: change.eventId,
+      receivedAt: this.options.clock.now(),
+      write: (transaction) => writeChange(transaction, change),
+    });
   }
 
   private async findCurrent(
