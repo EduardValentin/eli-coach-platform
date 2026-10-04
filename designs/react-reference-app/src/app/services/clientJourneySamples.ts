@@ -28,10 +28,12 @@ import {
   resolveDay1,
   settleRefund,
   WITHDRAWAL_WINDOW_DAYS,
+  type CardOnFile,
   type CoachingSubscription,
   type SubscriptionStartPath,
   type SubscriptionStatus,
 } from '../domain/coachingSubscription';
+import { TEST_MASTERCARD, TEST_VISA } from './prototypeCards';
 import { bundleForMonths, bundleTotal } from '../domain/bundles';
 import {
   INVITATION_VALIDITY_DAYS,
@@ -79,6 +81,20 @@ export const PROTOTYPE_REFUNDS: readonly PrototypeRefund[] = [
   'part-refunded',
   'refunded',
 ];
+
+export type PrototypeCardOnFile = 'visa' | 'mastercard' | 'none';
+
+export const PROTOTYPE_CARDS_ON_FILE: readonly PrototypeCardOnFile[] = [
+  'visa',
+  'mastercard',
+  'none',
+];
+
+const SEEDED_CARDS: Record<PrototypeCardOnFile, CardOnFile | undefined> = {
+  visa: TEST_VISA,
+  mastercard: TEST_MASTERCARD,
+  none: undefined,
+};
 
 export type PrototypeDaysSincePayment =
   | 'stage'
@@ -131,6 +147,7 @@ export type JourneySeed = {
   seededPhotos: PrototypeSeededPhotos;
   refund: PrototypeRefund;
   paymentProblem: boolean;
+  cardOnFile: PrototypeCardOnFile;
   daysSincePayment: PrototypeDaysSincePayment;
   now: Date;
 };
@@ -143,6 +160,7 @@ type SubscriptionSeed = {
   status: SubscriptionStatus;
   refund: PrototypeRefund;
   paymentProblem: boolean;
+  cardOnFile: PrototypeCardOnFile;
   now: Date;
 };
 
@@ -360,6 +378,7 @@ function runningSubscription(seed: SubscriptionSeed): CoachingSubscription {
     amountPaidCents: seed.amountPaidCents,
     status: seed.status,
     paymentProblem: seed.paymentProblem,
+    cardOnFile: SEEDED_CARDS[seed.cardOnFile],
   };
 
   const day1 = resolveDay1(seed);
@@ -533,6 +552,7 @@ export function seedJourney(seed: JourneySeed): ClientJourney {
           status: subscriptionStatus,
           refund: seed.refund,
           paymentProblem: seed.paymentProblem,
+          cardOnFile: seed.cardOnFile,
           now,
         })
       : undefined,

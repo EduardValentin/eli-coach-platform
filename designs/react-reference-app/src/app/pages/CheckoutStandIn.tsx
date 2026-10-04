@@ -72,6 +72,7 @@ export function CheckoutStandIn() {
       bundle: session.bundle,
       startPath: session.startPath,
       amountPaidCents: toCents(total),
+      cardOnFile: completed.cardOnFile,
     });
     navigate(`/checkout/complete?order=${sessionId}`);
   };

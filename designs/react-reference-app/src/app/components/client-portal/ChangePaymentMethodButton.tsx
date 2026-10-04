@@ -1,11 +1,11 @@
 import { CreditCard } from 'lucide-react';
 import { Button } from '../ui/button';
 import {
-  MANAGE_PAYMENT_METHOD_LABEL,
+  CHANGE_PAYMENT_METHOD_LABEL,
   OPENING_PAYMENT_METHOD_LABEL,
 } from '../../utils/subscriptionCopy';
 
-export function ManagePaymentMethodButton({
+export function ChangePaymentMethodButton({
   opening,
   onOpen,
 }: {
@@ -24,7 +24,7 @@ export function ManagePaymentMethodButton({
       variant="outline"
     >
       <CreditCard aria-hidden="true" />
-      {opening ? OPENING_PAYMENT_METHOD_LABEL : MANAGE_PAYMENT_METHOD_LABEL}
+      {opening ? OPENING_PAYMENT_METHOD_LABEL : CHANGE_PAYMENT_METHOD_LABEL}
     </Button>
   );
 }

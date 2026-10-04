@@ -49,6 +49,7 @@ function submittedJourney(lifeStage: PrototypeLifeStage): ClientJourney {
     seededPhotos: 'none',
     refund: 'none',
     paymentProblem: false,
+    cardOnFile: 'visa',
     daysSincePayment: 'stage',
     now: new Date(2026, 8, 21, 12),
   });

@@ -41,11 +41,13 @@ import {
   PHOTO_REMOVAL_OUTCOMES,
 } from '../services/measurementService';
 import {
+  PROTOTYPE_CARDS_ON_FILE,
   PROTOTYPE_DAYS_SINCE_PAYMENT,
   PROTOTYPE_LIFE_STAGES,
   PROTOTYPE_MEASUREMENTS_DUE,
   PROTOTYPE_REFUNDS,
   PROTOTYPE_SEEDED_PHOTOS,
+  type PrototypeCardOnFile,
   type PrototypeDaysSincePayment,
   type PrototypeRefund,
 } from '../services/clientJourneySamples';
@@ -293,6 +295,12 @@ const REFUND_LABELS: Record<PrototypeRefund, string> = {
   due: 'Due',
   'part-refunded': 'Part refunded',
   refunded: 'Refunded',
+};
+
+const CARD_ON_FILE_LABELS: Record<PrototypeCardOnFile, string> = {
+  visa: 'Visa •••• 4242, 12/34',
+  mastercard: 'Mastercard •••• 4444, 03/31',
+  none: 'No card',
 };
 
 const CANCEL_OUTCOME_LABELS: Record<PrototypeCancelOutcome, string> = {
@@ -1102,6 +1110,41 @@ export function DevToggle() {
                     setAppState({ journeyPaymentProblem: checked })
                   }
                 />
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="dev-journey-card-on-file"
+                    className={DEV_LABEL_CLASS}
+                  >
+                    Card on file
+                  </Label>
+                  <Select
+                    value={appState.journeyCardOnFile}
+                    onValueChange={(value) =>
+                      setAppState({
+                        journeyCardOnFile: optionOrDefault(
+                          PROTOTYPE_CARDS_ON_FILE,
+                          value,
+                          'visa',
+                        ),
+                      })
+                    }
+                  >
+                    <SelectTrigger
+                      id="dev-journey-card-on-file"
+                      className="w-full"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      {PROTOTYPE_CARDS_ON_FILE.map((card) => (
+                        <SelectItem key={card} value={card}>
+                          {CARD_ON_FILE_LABELS[card]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
                 <div className="space-y-2">
                   <Label

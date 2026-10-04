@@ -34,11 +34,13 @@ import {
   type PhotoRemoval,
 } from '../services/measurementService';
 import {
+  PROTOTYPE_CARDS_ON_FILE,
   PROTOTYPE_DAYS_SINCE_PAYMENT,
   PROTOTYPE_LIFE_STAGES,
   PROTOTYPE_MEASUREMENTS_DUE,
   PROTOTYPE_REFUNDS,
   PROTOTYPE_SEEDED_PHOTOS,
+  type PrototypeCardOnFile,
   type PrototypeDaysSincePayment,
   type PrototypeLifeStage,
   type PrototypeMeasurementsDue,
@@ -121,6 +123,7 @@ type AppState = {
   journeySeededPhotos: PrototypeSeededPhotos;
   journeyRefund: PrototypeRefund;
   journeyPaymentProblem: boolean;
+  journeyCardOnFile: PrototypeCardOnFile;
   journeyDaysSincePayment: PrototypeDaysSincePayment;
   cancelOutcome: PrototypeCancelOutcome;
   startNowOutcome: PrototypeStartNowOutcome;
@@ -169,6 +172,7 @@ const defaultState: AppState = {
   journeySeededPhotos: 'none',
   journeyRefund: 'none',
   journeyPaymentProblem: false,
+  journeyCardOnFile: 'visa',
   journeyDaysSincePayment: 'stage',
   cancelOutcome: 'works',
   startNowOutcome: 'works',
@@ -409,6 +413,11 @@ function parseDevParamsFromURL(): AppState {
   if (params.has('jpayproblem')) {
     state.journeyPaymentProblem = params.get('jpayproblem') === '1';
   }
+  state.journeyCardOnFile = optionOrDefault(
+    PROTOTYPE_CARDS_ON_FILE,
+    params.get('jcard'),
+    defaultState.journeyCardOnFile,
+  );
   state.journeyDaysSincePayment = optionOrDefault(
     PROTOTYPE_DAYS_SINCE_PAYMENT,
     params.get('jpaid'),
@@ -516,6 +525,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     url.searchParams.delete('jphotos');
     url.searchParams.delete('jrefund');
     url.searchParams.delete('jpayproblem');
+    url.searchParams.delete('jcard');
     url.searchParams.delete('jpaid');
     url.searchParams.delete('jcancel');
     url.searchParams.delete('jstartnow');
@@ -616,6 +626,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       url.searchParams.set('jrefund', appState.journeyRefund);
     }
     if (appState.journeyPaymentProblem) url.searchParams.set('jpayproblem', '1');
+    if (appState.journeyCardOnFile !== defaultState.journeyCardOnFile) {
+      url.searchParams.set('jcard', appState.journeyCardOnFile);
+    }
     if (
       appState.journeyDaysSincePayment !== defaultState.journeyDaysSincePayment
     ) {

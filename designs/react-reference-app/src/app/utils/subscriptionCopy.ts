@@ -2,9 +2,12 @@ import {
   accessEndWithoutRefund,
   withdrawalDeadline,
   type CancellationRule,
+  type CardBrand,
+  type CardOnFile,
   type CoachingSubscription,
   type RefundReason,
 } from '../domain/coachingSubscription';
+import { formatCardExpiry } from './cardOnFile';
 import { formatJourneyDate } from './journeyLabels';
 
 export type OfferedCancellation = Exclude<CancellationRule, 'none'>;
@@ -16,13 +19,36 @@ export const CANCEL_ACTION_LABELS: Record<OfferedCancellation, string> = {
 
 export const CANCEL_ROW_ACTION_LABEL = 'Cancel';
 
-export const MANAGE_ROW_ACTION_LABEL = 'Manage';
+export const CHANGE_ROW_ACTION_LABEL = 'Change';
 
 export const KEEP_COACHING_LABEL = 'Keep my coaching';
 
 export const CANCELLING_LABEL = 'Cancelling…';
 
-export const MANAGE_PAYMENT_METHOD_LABEL = 'Manage payment method';
+export const CHANGE_PAYMENT_METHOD_LABEL = 'Change payment method';
+
+export const NO_CARD_ON_FILE_LINE = 'No card on file';
+
+export const CARD_BRAND_LABELS: Record<CardBrand, string> = {
+  visa: 'Visa',
+  mastercard: 'Mastercard',
+  amex: 'American Express',
+  discover: 'Discover',
+  diners: 'Diners Club',
+  jcb: 'JCB',
+  unionpay: 'UnionPay',
+  unknown: 'Card',
+};
+
+export function cardNumberSpoken(lastFour: string): string {
+  return `ending in ${lastFour}`;
+}
+
+export function cardExpiryLine(
+  card: Pick<CardOnFile, 'expiryMonth' | 'expiryYear'>,
+): string {
+  return `Expires ${formatCardExpiry(card)}`;
+}
 
 export const OPENING_PAYMENT_METHOD_LABEL = 'Opening…';
 

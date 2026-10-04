@@ -18,13 +18,13 @@ const HOSTED_PAGE_NOTE =
 
 export function PaymentMethodStandIn() {
   const navigate = useNavigate();
-  const { demoJourney, recoverPayment } = useClientJourneys();
+  const { demoJourney, recordPaymentMethodChanged } = useClientJourneys();
   const [saving, setSaving] = useState(false);
 
   const save = async () => {
     setSaving(true);
-    await savePaymentMethod();
-    recoverPayment(demoJourney.callId);
+    const card = await savePaymentMethod();
+    recordPaymentMethodChanged(demoJourney.callId, card);
     navigate(SETTINGS_PATH);
   };
 

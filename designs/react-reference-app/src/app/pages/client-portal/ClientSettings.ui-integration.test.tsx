@@ -95,6 +95,14 @@ function cancellationRow(): HTMLElement {
   return row;
 }
 
+function paymentMethodRow(): HTMLElement {
+  const title = within(subscriptionSection()).getByText('Payment method');
+  const row = title.closest('[data-parity="subscription-payment-method"]');
+  if (!(row instanceof HTMLElement)) throw new Error('No payment method row');
+
+  return row;
+}
+
 describe('the subscription section', () => {
   it('shows her plan with the day she paid until her program is delivered', () => {
     // arrange
@@ -200,7 +208,7 @@ describe('the subscription section', () => {
     ).toBeVisible();
     expect(within(section).queryByText('Cancellation')).not.toBeInTheDocument();
     expect(
-      within(section).queryByRole('button', { name: 'Manage' }),
+      within(section).queryByRole('button', { name: 'Change' }),
     ).not.toBeInTheDocument();
   });
 
@@ -408,24 +416,24 @@ describe('cancelling', () => {
 });
 
 describe('the row actions', () => {
-  it('describes Manage with the payment problem when there is one', () => {
+  it('describes Change with the card and the payment problem when there is one', () => {
     // arrange
     renderSettings('jpayproblem=1');
 
     // act
-    const manage = within(subscriptionSection()).getByRole('button', {
-      name: 'Manage',
+    const change = within(subscriptionSection()).getByRole('button', {
+      name: 'Change',
     });
 
     // assert
-    expect(manage).toHaveAccessibleDescription(
-      "Payment method Your last payment didn't go through. Update your card to keep your coaching going.",
+    expect(change).toHaveAccessibleDescription(
+      "Payment method Visa ending in 4242 Expires 12/34 Your last payment didn't go through. Update your card to keep your coaching going.",
     );
   });
 });
 
 describe('the payment method', () => {
-  it('lets her manage her payment method', () => {
+  it('lets her change her payment method', () => {
     // arrange
     renderSettings('jstart=waiting');
 
@@ -435,12 +443,88 @@ describe('the payment method', () => {
     // assert
     expect(within(section).getByText('Payment method')).toBeVisible();
     expect(
-      within(section).getByRole('button', { name: 'Manage' }),
-    ).toHaveAccessibleDescription('Payment method');
+      within(section).getByRole('button', { name: 'Change' }),
+    ).toHaveAccessibleDescription('Payment method Visa ending in 4242 Expires 12/34');
     expect(
       within(section).queryByText('The card your coaching renews on.'),
     ).not.toBeInTheDocument();
     expect(within(section).queryByRole('status')).not.toBeInTheDocument();
+  });
+
+  it('shows the card on file as the row reading', () => {
+    // arrange
+    renderSettings('jstart=waiting');
+
+    // act
+    const row = paymentMethodRow();
+
+    // assert
+    expect(within(row).getByText('Visa')).toBeVisible();
+    expect(within(row).getByText('•••• 4242')).toBeVisible();
+    expect(within(row).getByText('Expires 12/34')).toBeVisible();
+  });
+
+  it('shows whichever card is on file', () => {
+    // arrange
+    renderSettings('jstart=waiting&jcard=mastercard');
+
+    // act
+    const change = within(paymentMethodRow()).getByRole('button', {
+      name: 'Change',
+    });
+
+    // assert
+    expect(change).toHaveAccessibleDescription(
+      'Payment method Mastercard ending in 4444 Expires 03/31',
+    );
+    expect(within(paymentMethodRow()).getByText('•••• 4444')).toBeVisible();
+  });
+
+  it('says when there is no card on file', () => {
+    // arrange
+    renderSettings('jstart=waiting&jcard=none');
+
+    // act
+    const row = paymentMethodRow();
+
+    // assert
+    expect(within(row).getByText('No card on file')).toBeVisible();
+    expect(within(row).queryByText(/••••/)).not.toBeInTheDocument();
+    expect(
+      within(row).getByRole('button', { name: 'Change' }),
+    ).toHaveAccessibleDescription('Payment method No card on file');
+  });
+
+  it('keeps the payment problem under the card', () => {
+    // arrange
+    renderSettings('jpayproblem=1&jpaid=30');
+
+    // act
+    const row = paymentMethodRow();
+
+    // assert
+    const card = within(row).getByText('Expires 12/34');
+    const problem = within(row).getByRole('status');
+    expect(
+      card.compareDocumentPosition(problem) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it('removes the card from the Dev Toggle', async () => {
+    // arrange
+    const user = renderSettings('jstart=waiting');
+    await user.click(screen.getByRole('button', { name: 'Open Dev Toggle' }));
+    await user.click(screen.getByRole('tab', { name: 'Journey' }));
+
+    // act
+    await user.click(screen.getByRole('combobox', { name: 'Card on file' }));
+    await user.click(screen.getByRole('option', { name: 'No card' }));
+
+    // assert
+    expect(
+      within(paymentMethodRow()).getByText('No card on file'),
+    ).toBeVisible();
+    expect(window.location.search).toContain('jcard=none');
   });
 
   it('announces a payment problem', () => {
@@ -463,7 +547,7 @@ describe('the payment method', () => {
     // arrange
     const user = renderSettings('jpayproblem=1&jpaid=30');
     await user.click(
-      screen.getByRole('button', { name: 'Manage' }),
+      screen.getByRole('button', { name: 'Change' }),
     );
     await screen.findByRole(
       'heading',
@@ -485,13 +569,39 @@ describe('the payment method', () => {
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 
+  it('shows the card she saved once she is back in Settings', async () => {
+    // arrange
+    const user = renderSettings('jstart=waiting');
+    await user.click(screen.getByRole('button', { name: 'Change' }));
+    await screen.findByRole(
+      'heading',
+      { level: 1, name: 'Update your card' },
+      { timeout: SERVICE_TIMEOUT },
+    );
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Save card' }));
+
+    // assert
+    await screen.findByRole(
+      'region',
+      { name: 'Subscription' },
+      { timeout: SERVICE_TIMEOUT },
+    );
+    const row = paymentMethodRow();
+    expect(within(row).getByText('Visa')).toBeVisible();
+    expect(within(row).getByText('•••• 5556')).toBeVisible();
+    expect(within(row).getByText('Expires 08/30')).toBeVisible();
+    expect(within(row).queryByText('•••• 4242')).not.toBeInTheDocument();
+  });
+
   it('asks her to try again when the hand-off fails', async () => {
     // arrange
     const user = renderSettings('jpayportal=fails');
 
     // act
     await user.click(
-      screen.getByRole('button', { name: 'Manage' }),
+      screen.getByRole('button', { name: 'Change' }),
     );
 
     // assert

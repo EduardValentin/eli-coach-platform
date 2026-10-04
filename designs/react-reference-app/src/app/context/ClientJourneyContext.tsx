@@ -40,6 +40,7 @@ import { removeProgressPhoto } from '../services/measurementService';
 import {
   periodEnd,
   resolveDay1,
+  type CardOnFile,
   type CoachingSubscription,
   type SubscriptionBundle,
   type SubscriptionStartPath,
@@ -48,6 +49,7 @@ import {
 import {
   heldJourney,
   seedJourney,
+  type PrototypeCardOnFile,
   type PrototypeDaysSincePayment,
   type PrototypeLifeStage,
   type PrototypeMeasurementsDue,
@@ -92,6 +94,7 @@ export type DemoJourneyOptions = {
   seededPhotos: PrototypeSeededPhotos;
   refund: PrototypeRefund;
   paymentProblem: boolean;
+  cardOnFile: PrototypeCardOnFile;
   daysSincePayment: PrototypeDaysSincePayment;
 };
 
@@ -105,6 +108,7 @@ export type JourneyPayment = {
   bundle: SubscriptionBundle;
   startPath: SubscriptionStartPath;
   amountPaidCents: number;
+  cardOnFile?: CardOnFile;
 };
 
 type ClientJourneyContextType = {
@@ -138,7 +142,7 @@ type ClientJourneyContextType = {
   ) => Promise<void>;
   cancelSubscription: (callId: string, cancelled: CoachingSubscription) => void;
   startProgramNow: (callId: string, started: CoachingSubscription) => void;
-  recoverPayment: (callId: string) => void;
+  recordPaymentMethodChanged: (callId: string, card: CardOnFile) => void;
 };
 
 const ClientJourneyContext = createContext<ClientJourneyContextType | null>(
@@ -218,6 +222,7 @@ function seedAwaitingReviewJourney(prototypeMode: PrototypeMode) {
     seededPhotos: 'none',
     refund: 'none',
     paymentProblem: false,
+    cardOnFile: 'visa',
     daysSincePayment: 'stage',
     now: new Date(),
   });
@@ -240,6 +245,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
     journeySeededPhotos,
     journeyRefund,
     journeyPaymentProblem,
+    journeyCardOnFile,
     journeyDaysSincePayment,
     prototypeMode,
   } = appState;
@@ -277,6 +283,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
         seededPhotos: journeySeededPhotos,
         refund: journeyRefund,
         paymentProblem: journeyPaymentProblem,
+        cardOnFile: journeyCardOnFile,
         daysSincePayment: journeyDaysSincePayment,
         now: new Date(),
       }),
@@ -306,6 +313,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
           seededPhotos: options.seededPhotos,
           refund: options.refund,
           paymentProblem: options.paymentProblem,
+          cardOnFile: options.cardOnFile,
           daysSincePayment: options.daysSincePayment,
           now: new Date(),
         }),
@@ -327,6 +335,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
       seededPhotos: journeySeededPhotos,
       refund: journeyRefund,
       paymentProblem: journeyPaymentProblem,
+      cardOnFile: journeyCardOnFile,
       daysSincePayment: journeyDaysSincePayment,
     });
   }, [
@@ -343,6 +352,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
     journeySeededPhotos,
     journeyRefund,
     journeyPaymentProblem,
+    journeyCardOnFile,
     journeyDaysSincePayment,
     prototypeMode,
   ]);
@@ -420,6 +430,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
               amountPaidCents: payment.amountPaidCents,
               status: 'not-started',
               paymentProblem: false,
+              cardOnFile: payment.cardOnFile,
             },
             invitation: journeyInvitationFrom(
               createInvitation(journey.identity.email, payment.paidAt),
@@ -646,13 +657,17 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
     [updateJourney],
   );
 
-  const recoverPayment = useCallback(
-    (callId: string) => {
+  const recordPaymentMethodChanged = useCallback(
+    (callId: string, card: CardOnFile) => {
       updateJourney(callId, (journey) =>
         journey.subscription
           ? {
               ...journey,
-              subscription: { ...journey.subscription, paymentProblem: false },
+              subscription: {
+                ...journey.subscription,
+                paymentProblem: false,
+                cardOnFile: card,
+              },
             }
           : journey,
       );
@@ -710,7 +725,7 @@ export function ClientJourneyProvider({ children }: { children: ReactNode }) {
         removeMeasurementPhoto,
         cancelSubscription,
         startProgramNow,
-        recoverPayment,
+        recordPaymentMethodChanged,
       }}
     >
       {children}

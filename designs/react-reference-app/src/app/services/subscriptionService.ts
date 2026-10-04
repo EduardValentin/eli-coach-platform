@@ -2,8 +2,10 @@ import {
   cancel,
   cancellationRule,
   startNow,
+  type CardOnFile,
   type CoachingSubscription,
 } from '../domain/coachingSubscription';
+import { TEST_VISA_DEBIT } from './prototypeCards';
 
 export type PrototypeCancelOutcome = 'works' | 'fails';
 
@@ -111,6 +113,8 @@ export async function openPaymentMethodPortal(
   return { url: PAYMENT_METHOD_PORTAL_PATH };
 }
 
-export async function savePaymentMethod(): Promise<void> {
+export async function savePaymentMethod(): Promise<CardOnFile> {
   await simulatedLatency();
+
+  return TEST_VISA_DEBIT;
 }

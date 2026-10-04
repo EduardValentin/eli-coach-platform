@@ -39,6 +39,23 @@ export type RefundDue = {
 
 export type CancellationRule = 'full-refund' | 'no-refund' | 'none';
 
+export type CardBrand =
+  | 'visa'
+  | 'mastercard'
+  | 'amex'
+  | 'discover'
+  | 'diners'
+  | 'jcb'
+  | 'unionpay'
+  | 'unknown';
+
+export type CardOnFile = {
+  brand: CardBrand;
+  lastFour: string;
+  expiryMonth: number;
+  expiryYear: number;
+};
+
 export type CoachingSubscription = {
   bundle: SubscriptionBundle;
   startPath: SubscriptionStartPath;
@@ -50,6 +67,7 @@ export type CoachingSubscription = {
   cancelledAt?: Date;
   refund?: RefundDue;
   paymentProblem: boolean;
+  cardOnFile?: CardOnFile;
 };
 
 export type RefundSettlement = {

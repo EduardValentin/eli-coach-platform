@@ -26,7 +26,7 @@ import { cn } from '../ui/utils';
 import { ConfirmDialog } from '../ui/confirm-dialog';
 import { InlineProblem } from '../InlineProblem';
 import { ClientWidget } from './ClientWidget';
-import { ManagePaymentMethodButton } from './ManagePaymentMethodButton';
+import { ChangePaymentMethodButton } from './ChangePaymentMethodButton';
 import { PaymentMethodProblems } from './PaymentMethodProblems';
 import { usePaymentMethodPortal } from './usePaymentMethodPortal';
 
@@ -205,7 +205,7 @@ export function ProgramStatusCard() {
           )}
 
           {paymentProblem && (
-            <ManagePaymentMethodButton
+            <ChangePaymentMethodButton
               onOpen={() => void paymentMethod.open()}
               opening={paymentMethod.opening}
             />

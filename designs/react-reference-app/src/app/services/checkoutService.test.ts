@@ -61,5 +61,11 @@ describe('completing a checkout', () => {
     const completed = await completing;
     expect(completed.sessionId).toBe('cs-abc123');
     expect(completed.paidAt).toBeInstanceOf(Date);
+    expect(completed.cardOnFile).toEqual({
+      brand: 'visa',
+      lastFour: '4242',
+      expiryMonth: 12,
+      expiryYear: 2034,
+    });
   });
 });

@@ -24,8 +24,8 @@ import {
   cancelConfirmation,
   cancellationFacts,
   cancelledToast,
+  CHANGE_ROW_ACTION_LABEL,
   KEEP_COACHING_LABEL,
-  MANAGE_ROW_ACTION_LABEL,
   OPENING_PAYMENT_METHOD_LABEL,
   type OfferedCancellation,
 } from '../../utils/subscriptionCopy';
@@ -33,6 +33,7 @@ import { Button } from '../ui/button';
 import { ConfirmDialog } from '../ui/confirm-dialog';
 import { InlineProblem } from '../InlineProblem';
 import { SettingsRow, SettingsRows, SettingsSection } from '../SettingsSection';
+import { CardOnFileReading } from './CardOnFileReading';
 import { PaymentMethodProblems } from './PaymentMethodProblems';
 import { usePaymentMethodPortal } from './usePaymentMethodPortal';
 
@@ -45,6 +46,7 @@ const CANCELLATION_IDS = {
 
 const PAYMENT_METHOD_IDS = {
   title: 'subscription-payment-label',
+  card: 'subscription-payment-card',
   paymentProblem: 'subscription-payment-problem',
   handOffProblem: 'subscription-payment-method-problem',
 };
@@ -162,6 +164,7 @@ function PaymentMethodRow({
   const { paymentProblem } = subscription;
   const describedBy = [
     PAYMENT_METHOD_IDS.title,
+    PAYMENT_METHOD_IDS.card,
     ...(paymentProblem ? [PAYMENT_METHOD_IDS.paymentProblem] : []),
     ...(problem ? [PAYMENT_METHOD_IDS.handOffProblem] : []),
   ].join(' ');
@@ -169,10 +172,12 @@ function PaymentMethodRow({
   return (
     <SettingsRow
       data-parity="subscription-payment-method"
+      description={<CardOnFileReading card={subscription.cardOnFile} />}
+      descriptionId={PAYMENT_METHOD_IDS.card}
       labelId={PAYMENT_METHOD_IDS.title}
       problem={
         (paymentProblem || problem) && (
-          <div className="grid gap-1">
+          <div className="grid gap-1 pt-1">
             <PaymentMethodProblems
               handOffProblem={problem}
               lineAttributes={{
@@ -197,7 +202,7 @@ function PaymentMethodRow({
         type="button"
         variant="outline"
       >
-        {opening ? OPENING_PAYMENT_METHOD_LABEL : MANAGE_ROW_ACTION_LABEL}
+        {opening ? OPENING_PAYMENT_METHOD_LABEL : CHANGE_ROW_ACTION_LABEL}
       </Button>
     </SettingsRow>
   );

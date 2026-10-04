@@ -370,7 +370,7 @@ describe('the program status card', () => {
     expect(reassurance).not.toBeInTheDocument();
   });
 
-  it('announces a payment problem and offers to manage the payment method', () => {
+  it('announces a payment problem and offers to change the payment method', () => {
     // arrange
     renderCard('?session=client&jstage=reviewing&jpayproblem=1');
 
@@ -382,7 +382,7 @@ describe('the program status card', () => {
       /^Your last payment didn't go through\. Update your card to keep your coaching going\.$/,
     );
     expect(
-      screen.getByRole('button', { name: 'Manage payment method' }),
+      screen.getByRole('button', { name: 'Change payment method' }),
     ).toBeVisible();
   });
 
@@ -391,12 +391,12 @@ describe('the program status card', () => {
     renderCard('?session=client&jstage=reviewing');
 
     // act
-    const manage = screen.queryByRole('button', {
-      name: 'Manage payment method',
+    const change = screen.queryByRole('button', {
+      name: 'Change payment method',
     });
 
     // assert
-    expect(manage).not.toBeInTheDocument();
+    expect(change).not.toBeInTheDocument();
     expect(screen.queryByText('Payment problem')).not.toBeInTheDocument();
   });
 
@@ -406,7 +406,7 @@ describe('the program status card', () => {
 
     // act
     await userEvent.click(
-      screen.getByRole('button', { name: 'Manage payment method' }),
+      screen.getByRole('button', { name: 'Change payment method' }),
     );
 
     // assert

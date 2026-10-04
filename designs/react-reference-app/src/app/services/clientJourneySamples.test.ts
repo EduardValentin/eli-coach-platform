@@ -54,6 +54,7 @@ function journeyAt(
     seededPhotos,
     refund: 'none',
     paymentProblem: false,
+    cardOnFile: 'visa',
     daysSincePayment: 'stage',
     now: NOW,
   });
@@ -214,6 +215,7 @@ function subscriptionSeededWith(overrides: Partial<JourneySeed>) {
     seededPhotos: 'none',
     refund: 'none',
     paymentProblem: false,
+    cardOnFile: 'visa',
     daysSincePayment: 'stage',
     now: NOW,
     ...overrides,
