@@ -2,12 +2,9 @@ import { z } from "zod";
 
 import {
   referencedIdSchema,
+  type PaymentCardChangeKind,
   type PaymentProviderVocabulary,
-} from "./payment-subscription-change.server";
-
-type PaymentCardChangeKind = NonNullable<
-  ReturnType<PaymentProviderVocabulary["cardChangeOf"]>
->;
+} from "./payment-provider-vocabulary.server";
 
 export type PaymentCardDetails = {
   paymentMethodId: string;

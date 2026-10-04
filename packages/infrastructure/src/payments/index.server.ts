@@ -20,7 +20,7 @@ export type {
   PaymentEventHandling,
   PaymentRefundHandler,
   PaymentSubscriptionChangeHandler,
-} from "./payment-subscription-change-handler.server";
+} from "./payment-event-handlers.server";
 export type {
   PaymentRefund,
   PaymentSubscriptionChange,

@@ -244,6 +244,25 @@ describe("readSubscriptionChange", () => {
     // assert
     expect(read).toBeNull();
   });
+
+  it.each(["constructor", "__proto__", "toString"])(
+    "reads nothing from an event typed %s, a name every object inherits",
+    (type) => {
+      // act
+      const read = readSubscriptionChange(
+        {
+          type,
+          created: CREATED,
+          object: invoiceObject(),
+          previousAttributes: null,
+        },
+        STRIPE_VOCABULARY,
+      );
+
+      // assert
+      expect(read).toBeNull();
+    },
+  );
 });
 
 describe("readPaymentRefund", () => {

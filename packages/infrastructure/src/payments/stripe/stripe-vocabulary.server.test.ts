@@ -45,6 +45,9 @@ describe("STRIPE_VOCABULARY.cardChangeOf", () => {
     ["payment_method.detached", "detached"],
     ["payment_method.updated", null],
     ["customer.updated", null],
+    ["constructor", null],
+    ["__proto__", null],
+    ["toString", null],
   ] as const)(
     "reads Stripe's %s event as a card change %s",
     (type, expected) => {

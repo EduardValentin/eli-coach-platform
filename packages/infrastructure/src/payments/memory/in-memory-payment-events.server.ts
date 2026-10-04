@@ -3,7 +3,7 @@ import type {
   PaymentEvents,
   PaymentEventVerdict,
 } from "../payment-events.server";
-import type { PaymentProviderVocabulary } from "../payment-subscription-change.server";
+import type { PaymentProviderVocabulary } from "../payment-provider-vocabulary.server";
 
 const MEMORY_SIGNATURE = "memory";
 

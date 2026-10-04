@@ -9,10 +9,10 @@ import {
   readPaymentCardChange,
   type PaymentCardChange,
 } from "./payment-card-change.server";
+import type { PaymentProviderVocabulary } from "./payment-provider-vocabulary.server";
 import {
   readPaymentRefund,
   readSubscriptionChange,
-  type PaymentProviderVocabulary,
   type PaymentRefund,
   type PaymentSubscriptionChange,
 } from "./payment-subscription-change.server";

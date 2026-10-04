@@ -2,20 +2,12 @@ import { z } from "zod";
 
 import { fromUnixSeconds } from "./checkout-session-completion.server";
 import { PAYMENT_PURPOSE_METADATA_KEY } from "./payment-completion-handler.server";
-
-export type PaymentSubscriptionStanding =
-  "ended" | "payment-problem" | "healthy" | "other";
-
-export type PaymentInvoiceReason = "purchase" | "renewal";
-
-export type PaymentProviderVocabulary = {
-  standingOf: (status: string) => PaymentSubscriptionStanding;
-  invoiceReasonOf: (billingReason: string | null) => PaymentInvoiceReason;
-  cardChangeOf: (
-    eventType: string,
-  ) => "attached" | "updated" | "detached" | null;
-  isCardPaymentMethod: (paymentMethodType: string) => boolean;
-};
+import {
+  referencedIdSchema,
+  type PaymentInvoiceReason,
+  type PaymentProviderVocabulary,
+  type PaymentSubscriptionStanding,
+} from "./payment-provider-vocabulary.server";
 
 export type PaymentSubscriptionState = {
   kind: "subscription_state";
@@ -62,23 +54,18 @@ type ProviderEvent = {
   previousAttributes: Record<string, unknown> | null;
 };
 
-const SUBSCRIPTION_STATE_EVENTS: readonly string[] = [
+const SUBSCRIPTION_STATE_EVENTS: ReadonlySet<string> = new Set([
   "customer.subscription.updated",
   "customer.subscription.deleted",
-];
+]);
 
-const INVOICE_OUTCOMES: Readonly<Record<string, "paid" | "failed">> = {
-  "invoice.paid": "paid",
-  "invoice.payment_failed": "failed",
-};
+const INVOICE_OUTCOMES: ReadonlyMap<string, "paid" | "failed"> = new Map([
+  ["invoice.paid", "paid"],
+  ["invoice.payment_failed", "failed"],
+]);
 
 const SCHEDULED_END_ATTRIBUTE = "cancel_at";
 const STATUS_ATTRIBUTE = "status";
-
-export const referencedIdSchema = z.union([
-  z.string().min(1),
-  z.object({ id: z.string().min(1) }).transform((resource) => resource.id),
-]);
 
 const purposeSchema = z
   .record(z.string(), z.string())
@@ -118,11 +105,11 @@ export function readSubscriptionChange(
   event: ProviderEvent,
   vocabulary: PaymentProviderVocabulary,
 ): RoutedSubscriptionChange | null {
-  if (SUBSCRIPTION_STATE_EVENTS.includes(event.type)) {
+  if (SUBSCRIPTION_STATE_EVENTS.has(event.type)) {
     return readSubscriptionState(event, vocabulary);
   }
 
-  const outcome = INVOICE_OUTCOMES[event.type];
+  const outcome = INVOICE_OUTCOMES.get(event.type);
 
   return outcome ? readInvoiceOutcome({ event, outcome, vocabulary }) : null;
 }

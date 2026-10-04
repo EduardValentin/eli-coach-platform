@@ -6,7 +6,7 @@ import type Stripe from "stripe";
 import { z } from "zod";
 
 import { readCardDetails } from "../payment-card-change.server";
-import { referencedIdSchema } from "../payment-subscription-change.server";
+import { referencedIdSchema } from "../payment-provider-vocabulary.server";
 
 import { STRIPE_VOCABULARY } from "./stripe-vocabulary.server";
 

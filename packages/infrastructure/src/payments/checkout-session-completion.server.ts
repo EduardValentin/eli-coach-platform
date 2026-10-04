@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { referencedIdSchema } from "./payment-provider-vocabulary.server";
+
 export type PaidCheckoutSession = {
   id: string;
   customerId: string | null;
@@ -13,11 +15,6 @@ export type PaidCheckoutSession = {
 };
 
 const MILLISECONDS_PER_SECOND = 1000;
-
-const referencedIdSchema = z.union([
-  z.string().min(1),
-  z.object({ id: z.string().min(1) }).transform((resource) => resource.id),
-]);
 
 const optionalReferencedIdSchema = referencedIdSchema
   .nullish()
