@@ -1,11 +1,11 @@
 import type { CardOnFile } from '../../domain/coachingSubscription';
-import { maskedCardNumber } from '../../utils/cardOnFile';
 import {
   CARD_BRAND_LABELS,
   cardExpiryLine,
   cardNumberSpoken,
+  maskedCardNumber,
   NO_PAYMENT_METHOD_LINE,
-} from '../../utils/subscriptionCopy';
+} from '../../utils/cardOnFile';
 import { CardBrandMark } from '../CardBrandMark';
 import { VALUE_CLASS } from '../typography';
 import { cn } from '../ui/utils';
