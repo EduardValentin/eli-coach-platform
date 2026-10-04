@@ -35,8 +35,7 @@ export {
   type CreateCheckoutSessionCommand,
   type PaymentCheckout,
 } from "./payment-checkout";
-export { PaymentCard, type PaymentCardSnapshot } from "./payment-card";
-export { type PaymentCardEvent } from "./payment-card-event";
+export { PaymentCard, type PaymentCardEvent } from "./payment-card";
 export {
   type CardOnFileChange,
   type CardOnFileEventChange,

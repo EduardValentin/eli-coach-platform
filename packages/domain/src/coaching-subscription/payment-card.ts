@@ -1,5 +1,3 @@
-import type { PaymentCardEvent } from "./payment-card-event";
-
 export type PaymentCardSnapshot = {
   brand: string;
   lastFour: string;
@@ -7,6 +5,17 @@ export type PaymentCardSnapshot = {
   expiryYear: number;
   paymentMethodId: string;
 };
+
+export type PaymentCardEvent =
+  | { kind: "card-attached"; paymentCustomerId: string; card: PaymentCard }
+  | { kind: "card-updated"; paymentCustomerId: string; card: PaymentCard }
+  | {
+      kind: "card-detached";
+      paymentCustomerId: string;
+      paymentMethodId: string;
+    };
+
+export type PaymentCardEventKind = PaymentCardEvent["kind"];
 
 export class PaymentCard {
   readonly brand: string;

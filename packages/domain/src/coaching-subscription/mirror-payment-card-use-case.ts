@@ -1,7 +1,6 @@
 import type { CoachingSubscriptionIncidents } from "./coaching-subscription-incidents";
 import type { CoachingSubscriptions } from "./coaching-subscriptions";
-import { PaymentCard } from "./payment-card";
-import type { PaymentCardEvent } from "./payment-card-event";
+import { PaymentCard, type PaymentCardEvent } from "./payment-card";
 import type { PaymentCards } from "./payment-cards";
 
 type MirrorPaymentCardCommand = {

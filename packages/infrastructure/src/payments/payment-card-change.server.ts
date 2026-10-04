@@ -5,7 +5,7 @@ import {
   type PaymentProviderVocabulary,
 } from "./payment-subscription-change.server";
 
-export type PaymentCardChangeKind = NonNullable<
+type PaymentCardChangeKind = NonNullable<
   ReturnType<PaymentProviderVocabulary["cardChangeOf"]>
 >;
 

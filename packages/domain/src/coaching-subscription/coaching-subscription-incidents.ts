@@ -1,5 +1,5 @@
 import type { CancellationRule, StartChoice } from "./coaching-subscription";
-import type { PaymentCardEventKind } from "./payment-card-event";
+import type { PaymentCardEventKind } from "./payment-card";
 import type { SubscriptionEventKind } from "./subscription-event";
 
 type PaymentEventRejection =
