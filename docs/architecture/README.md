@@ -1,6 +1,6 @@
 # Architecture
 
-Last audit: 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs. Last update: 2026-10-04 at commit ca8692f4, change review (card on file). Maintained by the architecture inspection workflow; changes ship with the PR that causes them.
+Last audit: 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs. Last update: 2026-10-04 at commit be2a7fb3, change review (card on file, round two). Maintained by the architecture inspection workflow; changes ship with the PR that causes them.
 
 ## Shape
 
