@@ -14,10 +14,6 @@ import {
 } from "~/features/coaching-sales/contracts/paths";
 
 import {
-  PaymentProblemNoticeAction,
-  PaymentProblemNoticeLine,
-} from "./payment-problem-notice";
-import {
   ANSWER_NOW_LABEL,
   programStatusEyebrow,
   programStatusLabel,
@@ -88,7 +84,6 @@ export function ProgramStatusCard({
           </p>
         )}
         {canStartNow && <StartNowOfferNote />}
-        {status.paymentProblem && <PaymentProblemNoticeLine />}
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           {needsDetails && (
             <Link
@@ -104,7 +99,6 @@ export function ProgramStatusCard({
             </Link>
           )}
           {canStartNow && <StartNowOfferAction startNow={startNow} />}
-          {status.paymentProblem && <PaymentProblemNoticeAction />}
         </div>
       </PortalWidget>
       <StartNowDialog dialog={startNow.dialog} />

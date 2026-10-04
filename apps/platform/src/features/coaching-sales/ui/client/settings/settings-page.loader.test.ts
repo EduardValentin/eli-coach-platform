@@ -24,6 +24,7 @@ const SETTINGS: ClientSettings = {
   },
   cancellation: null,
   startNowUntil: null,
+  card: { brand: "visa", lastFour: "4242", expiryMonth: 12, expiryYear: 2034 },
 };
 
 describe("settings page route", () => {

@@ -57,6 +57,7 @@ const WAITING_REFUNDABLE: ClientSettings = {
     refundCents: 44_700,
   },
   startNowUntil: "2026-10-12T09:00:00.000Z",
+  card: { brand: "visa", lastFour: "4242", expiryMonth: 12, expiryYear: 2034 },
 };
 
 const NO_REFUND: ClientSettings = {
@@ -78,6 +79,7 @@ const CANCELLED: ClientSettings = {
   },
   cancellation: null,
   startNowUntil: null,
+  card: WAITING_REFUNDABLE.card,
 };
 
 const FULL_REFUND_FACTS =
@@ -86,6 +88,7 @@ const NO_REFUND_FACTS =
   "You won't be charged again, there is no refund for the coaching already paid, and your access stays until 28 December.";
 const PAYMENT_PROBLEM_LINE =
   "Your last payment didn't go through. Update your card to keep your coaching going.";
+const CARD_DESCRIPTION = "Visa ending in 4242 Expires 12/34";
 const CANCEL_UNAVAILABLE =
   "Your coaching couldn't be cancelled just now. Nothing has changed, so please try again.";
 
@@ -166,7 +169,7 @@ describe("the settings page", () => {
     ).toHaveAccessibleDescription(`Cancellation ${NO_REFUND_FACTS}`);
   });
 
-  it("reads when she cancelled and until when her access stays, with nothing left to cancel or manage", async () => {
+  it("reads when she cancelled and until when her access stays, with nothing left to cancel or change", async () => {
     // arrange, act
     await renderSettings({ settings: CANCELLED });
 
@@ -180,7 +183,7 @@ describe("the settings page", () => {
       screen.queryByRole("button", { name: "Cancel" }),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: "Manage" }),
+      screen.queryByRole("button", { name: "Change" }),
     ).not.toBeInTheDocument();
   });
 
@@ -223,15 +226,81 @@ describe("the settings page", () => {
 });
 
 describe("her payment method", () => {
+  it("reads the card on file as the row's description and names Change with it", async () => {
+    // arrange, act
+    await renderSettings({ settings: WAITING_REFUNDABLE });
+
+    // assert
+    const row = paymentMethodRow();
+    expect(within(row).getByText("Visa")).toBeVisible();
+    expect(within(row).getByText("•••• 4242")).toBeVisible();
+    expect(within(row).getByText("Expires 12/34")).toBeVisible();
+    expect(
+      within(row).getByRole("button", { name: "Change" }),
+    ).toHaveAccessibleDescription(`Payment method ${CARD_DESCRIPTION}`);
+  });
+
+  it.each([
+    ["mastercard", "Mastercard"],
+    ["eftpos_au", "Card"],
+  ])("names a %s card on file as %s", async (brand, label) => {
+    // arrange
+    const card = { brand, lastFour: "4444", expiryMonth: 3, expiryYear: 2031 };
+
+    // act
+    await renderSettings({ settings: { ...WAITING_REFUNDABLE, card } });
+
+    // assert
+    expect(
+      within(paymentMethodRow()).getByRole("button", { name: "Change" }),
+    ).toHaveAccessibleDescription(
+      `Payment method ${label} ending in 4444 Expires 03/31`,
+    );
+  });
+
+  it("says when no payment method is configured", async () => {
+    // arrange, act
+    await renderSettings({ settings: { ...WAITING_REFUNDABLE, card: null } });
+
+    // assert
+    const row = paymentMethodRow();
+    expect(within(row).getByText("No payment method configured")).toBeVisible();
+    expect(
+      within(row).getByRole("button", { name: "Change" }),
+    ).toHaveAccessibleDescription(
+      "Payment method No payment method configured",
+    );
+  });
+
+  it("keeps the payment problem under the card", async () => {
+    // arrange, act
+    await renderSettings({
+      settings: {
+        ...WAITING_REFUNDABLE,
+        subscription: {
+          ...WAITING_REFUNDABLE.subscription,
+          paymentProblem: true,
+        },
+      },
+    });
+
+    // assert
+    const row = paymentMethodRow();
+    const card = within(row).getByText("Expires 12/34");
+    const problem = within(row).getByRole("status");
+    expect(
+      card.compareDocumentPosition(problem) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
   it("hands her to the payment provider through a native form post", async () => {
     // arrange, act
     await renderSettings({ settings: WAITING_REFUNDABLE });
 
     // assert
-    const manage = screen.getByRole("button", { name: "Manage" });
-    expect(manage).toHaveAttribute("type", "submit");
-    expect(manage).toHaveAccessibleDescription("Payment method");
-    const form = manage.closest("form");
+    const change = screen.getByRole("button", { name: "Change" });
+    expect(change).toHaveAttribute("type", "submit");
+    const form = change.closest("form");
     expect(form).toHaveAttribute("method", "post");
     expect(form).toHaveAttribute(
       "action",
@@ -254,8 +323,10 @@ describe("her payment method", () => {
     // assert
     expect(screen.getByRole("status")).toHaveTextContent(PAYMENT_PROBLEM_LINE);
     expect(
-      screen.getByRole("button", { name: "Manage" }),
-    ).toHaveAccessibleDescription(`Payment method ${PAYMENT_PROBLEM_LINE}`);
+      screen.getByRole("button", { name: "Change" }),
+    ).toHaveAccessibleDescription(
+      `Payment method ${CARD_DESCRIPTION} ${PAYMENT_PROBLEM_LINE}`,
+    );
   });
 
   it("tells her the payment details could not be opened when the provider sent her back", async () => {
@@ -270,8 +341,10 @@ describe("her payment method", () => {
       "Your payment details couldn't be opened just now. Please try again.";
     expect(screen.getByRole("alert")).toHaveTextContent(problem);
     expect(
-      screen.getByRole("button", { name: "Manage" }),
-    ).toHaveAccessibleDescription(`Payment method ${problem}`);
+      screen.getByRole("button", { name: "Change" }),
+    ).toHaveAccessibleDescription(
+      `Payment method ${CARD_DESCRIPTION} ${problem}`,
+    );
   });
 });
 
@@ -540,6 +613,18 @@ describe("a cancellation the platform refuses", () => {
     ).not.toBeInTheDocument();
   });
 });
+
+function paymentMethodRow(): HTMLElement {
+  const row = within(screen.getByRole("region", { name: "Subscription" }))
+    .getByText("Payment method")
+    .closest("[data-parity='subscription-payment-method']");
+
+  if (!(row instanceof HTMLElement)) {
+    throw new Error("No payment method row");
+  }
+
+  return row;
+}
 
 function readerIsIn(timeZone: string) {
   const actual = new Intl.DateTimeFormat().resolvedOptions();

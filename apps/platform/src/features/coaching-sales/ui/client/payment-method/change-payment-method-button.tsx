@@ -1,22 +1,20 @@
 import { Button } from "@eli-coach-platform/ui/primitives";
-import type { ComponentProps, ReactNode } from "react";
+import type { ComponentProps } from "react";
 
-import { OPENING_PAYMENT_METHOD_LABEL } from "./payment-method-copy";
+import {
+  CHANGE_PAYMENT_METHOD_LABEL,
+  OPENING_PAYMENT_METHOD_LABEL,
+} from "./payment-method-copy";
 import { PaymentMethodForm } from "./payment-method-form";
 
-type ManagePaymentMethodButtonProps = Pick<
+type ChangePaymentMethodButtonProps = Pick<
   ComponentProps<typeof Button>,
-  "aria-describedby" | "className" | "width"
-> & {
-  icon?: ReactNode;
-  label: string;
-};
+  "aria-describedby" | "className"
+>;
 
-export function ManagePaymentMethodButton({
-  icon,
-  label,
-  ...placement
-}: ManagePaymentMethodButtonProps) {
+export function ChangePaymentMethodButton(
+  placement: ChangePaymentMethodButtonProps,
+) {
   return (
     <PaymentMethodForm>
       {({ opening }) => (
@@ -29,8 +27,7 @@ export function ManagePaymentMethodButton({
           variant="outline"
           {...placement}
         >
-          {icon}
-          {opening ? OPENING_PAYMENT_METHOD_LABEL : label}
+          {opening ? OPENING_PAYMENT_METHOD_LABEL : CHANGE_PAYMENT_METHOD_LABEL}
         </Button>
       )}
     </PaymentMethodForm>

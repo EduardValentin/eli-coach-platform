@@ -51,7 +51,7 @@ export const clientSettingsSchema = z.object({
     ])
     .nullable(),
   startNowUntil: z.iso.datetime().nullable(),
-  card: paymentCardSchema.nullable().optional(),
+  card: paymentCardSchema.nullable(),
 });
 
 export type ClientSettings = z.infer<typeof clientSettingsSchema>;

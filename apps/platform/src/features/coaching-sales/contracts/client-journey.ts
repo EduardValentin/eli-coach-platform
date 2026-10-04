@@ -130,7 +130,6 @@ export const programStatusSchema = z.object({
   submittedAt: z.iso.datetime(),
   workStartsOn: z.iso.datetime().nullable(),
   startNowUntil: z.iso.datetime().nullable(),
-  paymentProblem: z.boolean(),
 });
 
 export type ProgramStatus = z.infer<typeof programStatusSchema>;

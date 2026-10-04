@@ -68,8 +68,8 @@ describe("privacy policy content", () => {
     // arrange
     const expectedIdentity = {
       id: "privacy-policy",
-      version: "2.0",
-      effectiveDate: "2026-07-27",
+      version: "2.1",
+      effectiveDate: "2026-10-04",
     };
 
     // act
@@ -82,11 +82,49 @@ describe("privacy policy content", () => {
 
     // assert
     expect(identity).toEqual(expectedIdentity);
-    expect(PRIVACY_POLICY_VERSION).toBe("2.0");
+    expect(PRIVACY_POLICY_VERSION).toBe("2.1");
     expect(PRIVACY_POLICY.effectiveDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(sectionIds).toEqual(EXPECTED_SECTION_IDS);
     expect(new Set(sectionIds).size).toBe(sectionIds.length);
     expect(sectionIds.every((id) => id.trim().length > 0)).toBe(true);
+  });
+
+  test("names the card details kept to show which card is on file, both among the data and where payments are described", () => {
+    // arrange
+    const sections: readonly LegalDocumentSection[] = PRIVACY_POLICY.sections;
+    const cardOnFile =
+      "To show you which card is on file, we keep the card brand, its last four digits and expiry date as Stripe reports them; the full card number never reaches us.";
+
+    // act
+    const storePurchases = sections
+      .flatMap((section) => section.blocks)
+      .flatMap((block) => (block.kind === "definition-list" ? block.items : []))
+      .find((item) => item.term === "Store purchases");
+    const paymentsText = sections
+      .filter((section) => section.id === "store-purchases-and-payments")
+      .flatMap((section) => section.blocks)
+      .flatMap((block) => (block.kind === "paragraph" ? block.content : []))
+      .filter((fragment) => typeof fragment === "string")
+      .join(" ");
+
+    // assert
+    expect(storePurchases?.description.join(" ")).toContain(cardOnFile);
+    expect(storePurchases?.description.join(" ")).not.toContain("never stored");
+    expect(paymentsText).toContain(cardOnFile);
+  });
+
+  test("states its own version and effective date in its opening paragraph", () => {
+    // arrange
+    const sections: readonly LegalDocumentSection[] = PRIVACY_POLICY.sections;
+
+    // act
+    const opening = sections[0]?.blocks[0];
+    const text = opening?.kind === "paragraph" ? opening.content.join("") : "";
+
+    // assert
+    expect(text).toContain(
+      "It is Privacy Policy version 2.1, effective 4 October 2026.",
+    );
   });
 
   test("keeps every section and structured content item non-empty", () => {

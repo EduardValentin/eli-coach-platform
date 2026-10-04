@@ -202,14 +202,13 @@ describe("clientJourneyPortalLink", () => {
 });
 
 describe("programStatusSchema", () => {
-  it("accepts a payment problem with until when she can still start now", () => {
+  it("accepts until when she can still start now", () => {
     // arrange
     const status = {
       kind: "submitted",
       submittedAt: "2026-09-28T10:00:00.000Z",
       workStartsOn: "2026-10-10T10:00:00.000Z",
       startNowUntil: "2026-10-10T10:00:00.000Z",
-      paymentProblem: true,
     };
 
     // act
@@ -229,7 +228,6 @@ describe("programStatusSchema", () => {
       submittedAt: "2026-09-28T10:00:00.000Z",
       workStartsOn,
       startNowUntil: workStartsOn,
-      paymentProblem: false,
     };
 
     // act
@@ -248,7 +246,6 @@ describe("programStatusSchema", () => {
         submittedAt: "2026-09-28T10:00:00.000Z",
         workStartsOn: null,
         startNowUntil: null,
-        paymentProblem: false,
       };
 
       // act
@@ -266,7 +263,6 @@ describe("programStatusSchema", () => {
       submittedAt: "2026-09-28T10:00:00.000Z",
       workStartsOn: null,
       startNowUntil: null,
-      paymentProblem: false,
     };
 
     // act
@@ -283,7 +279,6 @@ describe("programStatusSchema", () => {
       submittedAt: "yesterday",
       workStartsOn: null,
       startNowUntil: null,
-      paymentProblem: false,
     };
 
     // act

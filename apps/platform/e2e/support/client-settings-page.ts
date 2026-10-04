@@ -7,6 +7,8 @@ import { HYDRATION_RETRY_TIMEOUT_MS } from "./locator-text";
 export type CancellationAction =
   "Cancel and get a full refund" | "Cancel subscription";
 
+type CardOnFile = { brand: string; lastFour: string; expiry: string };
+
 const SETTINGS_PATH = "/client/settings";
 const FAILED_HAND_OFF_PATH = `${SETTINGS_PATH}?paymentMethod=unavailable`;
 const KEEP_COACHING_LABEL = "Keep my coaching";
@@ -14,6 +16,8 @@ const PAYMENT_PROBLEM_LINE =
   "Your last payment didn't go through. Update your card to keep your coaching going.";
 const HAND_OFF_FAILED_LINE =
   "Your payment details couldn't be opened just now. Please try again.";
+const PAYMENT_METHOD_ROW_TITLE = "Payment method";
+const NO_PAYMENT_METHOD_LINE = "No payment method configured";
 
 export class ClientSettingsPage {
   constructor(private readonly page: Page) {}
@@ -40,9 +44,9 @@ export class ClientSettingsPage {
     });
   }
 
-  private get manageButton() {
+  private get changeButton() {
     return this.subscription.getByRole("button", {
-      name: "Manage",
+      name: "Change",
       exact: true,
     });
   }
@@ -147,7 +151,7 @@ export class ClientSettingsPage {
 
   async expectPaymentProblem(): Promise<void> {
     await expect(this.paymentProblem).toBeVisible();
-    await expect(this.manageButton).toBeEnabled();
+    await expect(this.changeButton).toBeEnabled();
   }
 
   async expectNoPaymentProblem(): Promise<void> {
@@ -156,18 +160,45 @@ export class ClientSettingsPage {
 
   async expectHandOffFailed(): Promise<void> {
     await expect(this.handOffFailed).toBeVisible();
-    await expect(this.manageButton).toBeEnabled();
+    await expect(this.changeButton).toBeEnabled();
   }
 
   async expectNoHandOffProblem(): Promise<void> {
     await expect(this.handOffFailed).toHaveCount(0);
   }
 
-  async expectNoPaymentMethod(): Promise<void> {
-    await expect(this.manageButton).toHaveCount(0);
+  async expectCardOnFile(card: CardOnFile): Promise<void> {
+    const expiryLine = `Expires ${card.expiry}`;
+
+    await expect(
+      this.subscription.getByText(card.brand, { exact: true }),
+    ).toBeVisible();
+    await expect(
+      this.subscription.getByText(`•••• ${card.lastFour}`, { exact: true }),
+    ).toBeVisible();
+    await expect(
+      this.subscription.getByText(expiryLine, { exact: true }),
+    ).toBeVisible();
+    await expect(this.changeButton).toHaveAccessibleDescription(
+      `${PAYMENT_METHOD_ROW_TITLE} ${card.brand} ending in ${card.lastFour} ${expiryLine}`,
+    );
   }
 
-  async manage(): Promise<void> {
-    await this.manageButton.click();
+  async expectNoPaymentMethod(): Promise<void> {
+    await expect(
+      this.subscription.getByText(NO_PAYMENT_METHOD_LINE, { exact: true }),
+    ).toBeVisible();
+    await expect(this.changeButton).toBeEnabled();
+  }
+
+  async expectNoPaymentMethodRow(): Promise<void> {
+    await expect(
+      this.subscription.getByText(PAYMENT_METHOD_ROW_TITLE, { exact: true }),
+    ).toHaveCount(0);
+    await expect(this.changeButton).toHaveCount(0);
+  }
+
+  async change(): Promise<void> {
+    await this.changeButton.click();
   }
 }

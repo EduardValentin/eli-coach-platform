@@ -185,7 +185,6 @@ describe("ReadProgramStatusUseCase", () => {
       submittedAt: SUBMITTED_AT,
       workStartsOn: null,
       startNowUntil: null,
-      paymentProblem: false,
     });
     expect(subscriptions.findCurrentForClient).toHaveBeenCalledWith("client-1");
   });
@@ -209,7 +208,6 @@ describe("ReadProgramStatusUseCase", () => {
       submittedAt: SUBMITTED_AT,
       workStartsOn: new Date("2026-10-10T10:00:00.000Z"),
       startNowUntil: new Date("2026-10-10T10:00:00.000Z"),
-      paymentProblem: false,
     });
   });
 
@@ -233,23 +231,6 @@ describe("ReadProgramStatusUseCase", () => {
     });
   });
 
-  it("answers a payment problem on her subscription", async () => {
-    // arrange
-    const useCase = new ReadProgramStatusUseCase({
-      clock: { now: () => NOW },
-      journeys: createJourneys(journey(WELCOME_SEEN_AT, SUBMITTED_AT)),
-      subscriptions: createSubscriptions(
-        subscriptionOf({ startChoice: "immediate", paymentProblemSince: NOW }),
-      ),
-    });
-
-    // act
-    const status = await useCase.execute("user_ana");
-
-    // assert
-    expect(status?.paymentProblem).toBe(true);
-  });
-
   it("answers her submission with no start day when she holds no subscription", async () => {
     // arrange
     const useCase = new ReadProgramStatusUseCase({
@@ -267,7 +248,6 @@ describe("ReadProgramStatusUseCase", () => {
       submittedAt: SUBMITTED_AT,
       workStartsOn: null,
       startNowUntil: null,
-      paymentProblem: false,
     });
   });
 

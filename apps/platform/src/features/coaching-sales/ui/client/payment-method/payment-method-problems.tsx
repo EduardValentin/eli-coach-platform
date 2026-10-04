@@ -8,8 +8,7 @@ import {
 export type PaymentMethodProblem = "payment-problem" | "hand-off-failed";
 
 type PaymentMethodProblemsProps = {
-  className?: string;
-  ids?: Readonly<Record<PaymentMethodProblem, string>>;
+  ids: Readonly<Record<PaymentMethodProblem, string>>;
   shown: readonly PaymentMethodProblem[];
 };
 
@@ -30,7 +29,6 @@ const PROBLEM_LINES = {
 >;
 
 export function PaymentMethodProblems({
-  className,
   ids,
   shown,
 }: PaymentMethodProblemsProps) {
@@ -39,9 +37,8 @@ export function PaymentMethodProblems({
 
     return (
       <InlineProblem
-        className={className}
         data-parity={line.parity}
-        id={ids?.[problem]}
+        id={ids[problem]}
         key={problem}
         role={line.role}
       >

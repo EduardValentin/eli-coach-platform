@@ -17,7 +17,8 @@ import {
   PAYMENT_METHOD_UNAVAILABLE_PARAM,
   type ClientSettings,
 } from "~/features/coaching-sales/contracts/client-subscription";
-import { ManagePaymentMethodButton } from "~/features/coaching-sales/ui/client/payment-method/manage-payment-method-button";
+import { CardOnFileReading } from "~/features/coaching-sales/ui/client/payment-method/card-on-file-reading";
+import { ChangePaymentMethodButton } from "~/features/coaching-sales/ui/client/payment-method/change-payment-method-button";
 import {
   PaymentMethodProblems,
   type PaymentMethodProblem,
@@ -31,7 +32,6 @@ import {
   cancelledPlanLine,
   FULL_REFUND_CONFIRMATION,
   fullRefundFacts,
-  MANAGE_ROW_ACTION_LABEL,
   noRefundFacts,
   PAYMENT_METHOD_ROW_TITLE,
   planTitle,
@@ -44,6 +44,7 @@ import {
 } from "./use-cancel-subscription";
 
 type Subscription = ClientSettings["subscription"];
+type PaymentCard = ClientSettings["card"];
 type Cancellation = NonNullable<ClientSettings["cancellation"]>;
 type DayOf = (instant: string) => string;
 
@@ -56,6 +57,7 @@ const CANCELLATION_IDS = {
 
 const PAYMENT_METHOD_IDS = {
   title: "subscription-payment-label",
+  card: "subscription-payment-card",
   problems: {
     "payment-problem": "subscription-payment-problem",
     "hand-off-failed": "subscription-payment-method-problem",
@@ -143,7 +145,12 @@ function usePaymentMethodUnavailable(): boolean {
   );
 }
 
-function PaymentMethodRow({ subscription }: { subscription: Subscription }) {
+type PaymentMethodRowProps = {
+  subscription: Subscription;
+  card: PaymentCard;
+};
+
+function PaymentMethodRow({ subscription, card }: PaymentMethodRowProps) {
   const handOffFailed = usePaymentMethodUnavailable();
   const shown: PaymentMethodProblem[] = [
     ...(subscription.paymentProblem ? (["payment-problem"] as const) : []),
@@ -153,10 +160,12 @@ function PaymentMethodRow({ subscription }: { subscription: Subscription }) {
   return (
     <SettingsRow
       data-parity="subscription-payment-method"
+      description={<CardOnFileReading card={card} />}
+      descriptionId={PAYMENT_METHOD_IDS.card}
       labelId={PAYMENT_METHOD_IDS.title}
       problem={
         shown.length > 0 && (
-          <div className="grid gap-1">
+          <div className="grid gap-1 pt-1">
             <PaymentMethodProblems
               ids={PAYMENT_METHOD_IDS.problems}
               shown={shown}
@@ -166,13 +175,13 @@ function PaymentMethodRow({ subscription }: { subscription: Subscription }) {
       }
       title={PAYMENT_METHOD_ROW_TITLE}
     >
-      <ManagePaymentMethodButton
+      <ChangePaymentMethodButton
         aria-describedby={describedByOf(
           PAYMENT_METHOD_IDS.title,
+          PAYMENT_METHOD_IDS.card,
           ...shown.map((problem) => PAYMENT_METHOD_IDS.problems[problem]),
         )}
         className={ROW_ACTION_CLASS}
-        label={MANAGE_ROW_ACTION_LABEL}
       />
     </SettingsRow>
   );
@@ -186,7 +195,7 @@ export function SubscriptionSection({
   const subscriptionHeading = useRef<HTMLHeadingElement>(null);
   const timeZone = useCalendarDayTimeZone();
   const cancelSubscription = useCancelSubscription(subscriptionHeading);
-  const { subscription, cancellation } = settings;
+  const { subscription, cancellation, card } = settings;
 
   if (subscription.status === "ended") {
     return null;
@@ -223,7 +232,7 @@ export function SubscriptionSection({
           />
         )}
         {subscription.status !== "cancelled" && (
-          <PaymentMethodRow subscription={subscription} />
+          <PaymentMethodRow card={card} subscription={subscription} />
         )}
       </SettingsRows>
     </SettingsSection>

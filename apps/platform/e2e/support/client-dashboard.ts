@@ -25,8 +25,6 @@ const NUDGE_LINES = [
 ] as const;
 const START_SOONER_NOTE =
   "Want Eli to start sooner? You can give up your 14-day right of withdrawal and let her begin now.";
-const PAYMENT_PROBLEM_LINE =
-  "Your last payment didn't go through. Update your card to keep your coaching going.";
 const WORK_START_LINE_PATTERN = /starts working on your program on/;
 const START_NOW_LABELS = {
   title: "Let Eli start now?",
@@ -60,16 +58,6 @@ export class ClientDashboard {
 
   private get startSoonerNote() {
     return this.page.getByText(START_SOONER_NOTE, { exact: true });
-  }
-
-  private get paymentProblem() {
-    return this.page
-      .getByRole("status")
-      .filter({ hasText: PAYMENT_PROBLEM_LINE });
-  }
-
-  private get managePaymentMethodButton() {
-    return this.page.getByRole("button", { name: "Manage payment method" });
   }
 
   private get answerNowLink() {
@@ -188,20 +176,6 @@ export class ClientDashboard {
 
   async expectStartNowFocused(): Promise<void> {
     await expect(this.startNowButton).toBeFocused();
-  }
-
-  async expectPaymentProblem(): Promise<void> {
-    await expect(this.paymentProblem).toBeVisible();
-    await expect(this.managePaymentMethodButton).toBeEnabled();
-  }
-
-  async expectNoPaymentProblem(): Promise<void> {
-    await expect(this.paymentProblem).toHaveCount(0);
-    await expect(this.managePaymentMethodButton).toHaveCount(0);
-  }
-
-  async managePaymentMethod(): Promise<void> {
-    await this.managePaymentMethodButton.click();
   }
 
   async expectRefusedPhotoToast(view: ProgressPhotoView): Promise<void> {

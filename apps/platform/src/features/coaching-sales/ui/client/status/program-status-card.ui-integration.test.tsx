@@ -50,8 +50,6 @@ const START_SOONER_NOTE =
   "Want Eli to start sooner? You can give up your 14-day right of withdrawal and let her begin now.";
 const IMMEDIATE_START_BODY =
   "I give up my 14-day right of withdrawal so Eli can start on my program now. If I cancel after that, there is no refund.";
-const PAYMENT_PROBLEM_LINE =
-  "Your last payment didn't go through. Update your card to keep your coaching going.";
 const START_NOW_PROBLEM =
   "Your program couldn't be started just now. Nothing has changed, so please try again.";
 
@@ -89,7 +87,6 @@ function statusOf(
     submittedAt: SUBMITTED_AT,
     workStartsOn,
     startNowUntil: null,
-    paymentProblem: false,
   };
 }
 
@@ -476,33 +473,18 @@ describe("a start the platform cannot make", () => {
   });
 });
 
-describe("the program status card when her last payment failed", () => {
-  it("announces the failed payment and hands her to the payment provider through a native form post", () => {
-    // arrange, act
-    renderCard({ status: { ...statusOf("submitted"), paymentProblem: true } });
-
-    // assert
-    expect(screen.getByRole("status")).toHaveTextContent(PAYMENT_PROBLEM_LINE);
-    const manage = screen.getByRole("button", {
-      name: "Manage payment method",
-    });
-    expect(manage).toHaveAttribute("type", "submit");
-    const form = manage.closest("form");
-    expect(form).toHaveAttribute("method", "post");
-    expect(form).toHaveAttribute(
-      "action",
-      "/api/coaching-sales/payment-method-session",
-    );
-  });
-
-  it("shows no payment line or payment action while her payments go through", () => {
+describe("the program status card and her payments", () => {
+  it("carries no payment line or payment action, which live in her Settings", () => {
     // arrange, act
     renderCard({ status: statusOf("submitted") });
 
     // assert
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: "Manage payment method" }),
+      screen.queryByRole("button", { name: /payment method/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Change" }),
     ).not.toBeInTheDocument();
   });
 });

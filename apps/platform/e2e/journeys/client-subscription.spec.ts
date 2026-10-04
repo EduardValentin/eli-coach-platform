@@ -2,9 +2,15 @@ import {
   COACH_NOTIFICATION_EMAIL,
   latestEmailTo,
 } from "../support/email-capture";
+import { E2E_APP_URL } from "../support/e2e-app";
 import { expect, test } from "../support/fixtures";
 import { daysAfter } from "../support/paid-clients";
-import { readStripeSubscription } from "../support/stripe-subscriptions";
+import { deliverStripeEvent } from "../support/stripe-events";
+import {
+  findAttachedCard,
+  readStripeSubscription,
+  type StripeTestCard,
+} from "../support/stripe-subscriptions";
 import { paidThrough } from "../support/subscribed-clients";
 import {
   expectNoHorizontalScroll,
@@ -25,6 +31,13 @@ const START_NOW_PROBLEM =
   "Your program couldn't be started just now. Nothing has changed, so please try again.";
 const SUBMITTED_LABEL = "Sent to your coach";
 const SUBMITTED_LINE = "Eli has your answers and will start on them soon.";
+const CHANGED_CARD = {
+  number: "4000 0566 5566 5556",
+  expiry: "12 / 34",
+  cvc: "123",
+};
+const CHANGED_CARD_LAST_FOUR = "5556";
+const CHANGED_CARD_EXPIRY = "12/34";
 const NOTHING_TO_CANCEL = {
   error: "nothing-to-cancel",
   message: "This coaching has already ended, so there is nothing to cancel.",
@@ -43,6 +56,13 @@ const utcDayMonthFormatter = new Intl.DateTimeFormat("en-GB", {
 
 function dayOf(instant: Date): string {
   return dayMonthFormatter.format(instant);
+}
+
+function cardExpiry(card: StripeTestCard): string {
+  const month = String(card.expiryMonth).padStart(2, "0");
+  const year = String(card.expiryYear % 100).padStart(2, "0");
+
+  return `${month}/${year}`;
 }
 
 function waitingPlanLine(paidAt: Date): string {
@@ -182,7 +202,7 @@ test("a client who chose an immediate start cancels without a refund and keeps h
   await clientSettings.expectSubscriptionHeadingFocused();
   await clientSettings.expectPlan(PLAN_TITLE, cancelledPlanLine(client.paidAt));
   await clientSettings.expectNoCancellation();
-  await clientSettings.expectNoPaymentMethod();
+  await clientSettings.expectNoPaymentMethodRow();
   const subscription = await readStripeSubscription(
     client.subscription.subscriptionId,
   );
@@ -398,7 +418,7 @@ test("a client on the waiting path lets Eli start now and from then a cancellati
   await coachClient.expectSubscription({ Start: "Immediate start" });
 });
 
-test("a client opens Stripe's page to manage her payment method and comes back to her Settings", async ({
+test("a client opens Stripe's page to change her payment method and comes back to her Settings", async ({
   clientSettings,
   page,
   provisionSubscribedClient,
@@ -417,7 +437,7 @@ test("a client opens Stripe's page to manage her payment method and comes back t
   await clientSettings.open();
 
   // act
-  await clientSettings.manage();
+  await clientSettings.change();
 
   // assert
   await stripeBillingPortal.expectOpen();
@@ -441,6 +461,63 @@ test("a client opens Stripe's page to manage her payment method and comes back t
   // assert
   await clientSettings.expectHandOffFailed();
   await clientSettings.expectNoPaymentProblem();
+});
+
+test("a client sees her card on file and changes it through Stripe", async ({
+  clientSettings,
+  page,
+  provisionSubscribedClient,
+  signIn,
+  stripeBillingPortal,
+}) => {
+  test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+  // arrange
+  const client = await provisionSubscribedClient({
+    start: "immediate",
+    daysSincePayment: 3,
+  });
+  const seededCard = client.subscription.card;
+  await page.goto("/store");
+  await signIn();
+
+  // act
+  await clientSettings.open();
+
+  // assert
+  await clientSettings.expectCardOnFile({
+    brand: "Visa",
+    lastFour: seededCard.lastFour,
+    expiry: cardExpiry(seededCard),
+  });
+
+  // act
+  await clientSettings.change();
+  await stripeBillingPortal.expectOpen();
+  await stripeBillingPortal.addCard(CHANGED_CARD);
+
+  // assert
+  await clientSettings.expectOpen();
+
+  // act
+  const changedCardId = await findAttachedCard(
+    client.subscription.customerId,
+    CHANGED_CARD_LAST_FOUR,
+  );
+  const delivery = await deliverStripeEvent({
+    baseURL: E2E_APP_URL,
+    type: "payment_method.attached",
+    objectId: changedCardId,
+  });
+  await clientSettings.open();
+
+  // assert
+  expect(delivery.status).toBe(200);
+  await clientSettings.expectCardOnFile({
+    brand: "Visa",
+    lastFour: CHANGED_CARD_LAST_FOUR,
+    expiry: CHANGED_CARD_EXPIRY,
+  });
 });
 
 test("a client reaches Let Eli start now by keyboard, focus stays in its dialog and returns when she keeps her 14 days", async ({

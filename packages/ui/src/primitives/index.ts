@@ -9,6 +9,7 @@ export { Avatar } from "./avatar";
 export { Badge } from "./badge";
 export { Button, buttonVariants } from "./button";
 export { Card, cardVariants } from "./card";
+export { CardBrandMark } from "./card-brand-mark";
 export { Checkbox } from "./checkbox";
 export { CheckboxChip } from "./checkbox-chip";
 export { CheckboxField } from "./checkbox-field";

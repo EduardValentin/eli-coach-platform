@@ -5,7 +5,7 @@ import {
 } from "./legal-document";
 
 export const EVOA_FITNESS_PRIVACY_EMAIL = "privacy@evoa.fit";
-export const PRIVACY_POLICY_VERSION = "2.0";
+export const PRIVACY_POLICY_VERSION = "2.1";
 export const WAITLIST_MARKETING_CONSENT_VERSION = "1.1";
 
 export const WAITLIST_MARKETING_CONSENT = {
@@ -117,8 +117,8 @@ const privacyPageLink = {
 export const PRIVACY_POLICY = {
   id: "privacy-policy",
   version: PRIVACY_POLICY_VERSION,
-  effectiveDate: "2026-07-27",
-  effectiveDateLabel: formatEffectiveDate("2026-07-27"),
+  effectiveDate: "2026-10-04",
+  effectiveDateLabel: formatEffectiveDate("2026-10-04"),
   title: "Privacy Policy",
   description:
     "How Evoa Fitness handles personal data for its public website, coaching waitlist, digital Store, and 1-on-1 coaching platform.",
@@ -130,7 +130,7 @@ export const PRIVACY_POLICY = {
         {
           kind: "paragraph",
           content: [
-            "This Privacy Policy explains how Evoa Fitness handles personal data when you use our public website, join the coaching waitlist, book an assessment call, buy or request digital resources from the Store, or use the 1-on-1 coaching platform as a client. It is Privacy Policy version 2.0, effective 27 July 2026.",
+            "This Privacy Policy explains how Evoa Fitness handles personal data when you use our public website, join the coaching waitlist, book an assessment call, buy or request digital resources from the Store, or use the 1-on-1 coaching platform as a client. It is Privacy Policy version 2.1, effective 4 October 2026.",
           ],
         },
         {
@@ -213,7 +213,7 @@ export const PRIVACY_POLICY = {
             {
               term: "Store purchases",
               description: [
-                "Order records, purchased products, billing details, and payment status. Card details go directly to Stripe and are never stored by Evoa Fitness.",
+                "Order records, purchased products, billing details, and payment status. Card details go directly to Stripe. To show you which card is on file, we keep the card brand, its last four digits and expiry date as Stripe reports them; the full card number never reaches us.",
               ],
             },
             {
@@ -383,7 +383,7 @@ export const PRIVACY_POLICY = {
         {
           kind: "paragraph",
           content: [
-            "Paid Store products and coaching bundles are paid through Stripe. Your card details go directly to Stripe during checkout; Evoa Fitness receives the payment status and order records, never full card numbers.",
+            "Paid Store products and coaching bundles are paid through Stripe. Your card details go directly to Stripe during checkout; Evoa Fitness receives the payment status and order records, never full card numbers. To show you which card is on file, we keep the card brand, its last four digits and expiry date as Stripe reports them; the full card number never reaches us.",
           ],
         },
         {

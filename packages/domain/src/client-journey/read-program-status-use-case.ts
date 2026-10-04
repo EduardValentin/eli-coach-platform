@@ -9,7 +9,6 @@ type ProgramStatus = {
   submittedAt: Date;
   workStartsOn: Date | null;
   startNowUntil: Date | null;
-  paymentProblem: boolean;
 };
 
 type ReadProgramStatusUseCaseOptions = {
@@ -47,7 +46,6 @@ export class ReadProgramStatusUseCase {
       submittedAt: journey.onboardingSubmittedAt,
       workStartsOn: startNowUntil,
       startNowUntil,
-      paymentProblem: subscription?.hasPaymentProblem() ?? false,
     };
   }
 }

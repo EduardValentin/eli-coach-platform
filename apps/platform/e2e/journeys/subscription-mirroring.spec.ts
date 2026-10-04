@@ -101,8 +101,7 @@ test("Eli cancels a subscription in Stripe, the client's portal closes and the c
   expect(refusals).toEqual([409, 409, 409]);
 });
 
-test("a renewal that fails shows the client a payment problem and a way to update her card", async ({
-  clientDashboard,
+test("a renewal that fails shows the client a payment problem in her Settings and a way to change her card", async ({
   clientSettings,
   page,
   provisionSubscribedClient,
@@ -124,21 +123,14 @@ test("a renewal that fails shows the client a payment problem and a way to updat
   });
   await page.goto("/store");
   await signIn();
-  await clientDashboard.open();
-
-  // assert
-  expect(deliveries.map((delivery) => delivery.status)).toEqual([200, 200]);
-  await clientDashboard.expectPaymentProblem();
-
-  // act
   await clientSettings.open();
 
   // assert
+  expect(deliveries.map((delivery) => delivery.status)).toEqual([200, 200]);
   await clientSettings.expectPaymentProblem();
 
   // act
-  await clientDashboard.open();
-  await clientDashboard.managePaymentMethod();
+  await clientSettings.change();
 
   // assert
   await stripeBillingPortal.expectOpen();
