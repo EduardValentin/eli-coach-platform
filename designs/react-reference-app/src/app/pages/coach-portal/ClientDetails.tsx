@@ -15,6 +15,7 @@ import {
   ChevronDown,
   ChevronUp,
   Droplet,
+  FolderOpen,
   UserCog,
   Utensils,
   UtensilsCrossed,
@@ -277,6 +278,13 @@ function RosterClientDetails() {
           >
             <Droplet size={16} />
             Cycle Log
+          </Link>
+          <Link
+            to={`/coach/clients/${clientId}/resources`}
+            className={buttonVariants({ variant: 'outline', size: 'md' })}
+          >
+            <FolderOpen aria-hidden="true" size={16} />
+            Resources
           </Link>
           {isPostMvp && (
             <Link

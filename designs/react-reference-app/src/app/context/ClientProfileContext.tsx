@@ -202,6 +202,8 @@ interface ClientProfileContextType {
 
 const ClientProfileContext = createContext<ClientProfileContextType | null>(null);
 
+export const SIGNED_IN_CLIENT_ID = 'client-1';
+
 function resolveId(clientId: string): string {
   return clientId === 'c1' ? 'client-1' : clientId;
 }
@@ -223,7 +225,7 @@ export function ClientProfileProvider({ children }: { children: ReactNode }) {
 
   const listProfiles = (): ClientProfile[] => Object.values(profiles);
 
-  const clientProfile = getProfile('client-1');
+  const clientProfile = getProfile(SIGNED_IN_CLIENT_ID);
 
   return (
     <ClientProfileContext.Provider value={{ profiles, getProfile, updateProfile, clientProfile, listProfiles }}>

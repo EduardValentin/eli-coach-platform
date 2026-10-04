@@ -48,17 +48,21 @@ export function DeadEndPanel({
   icon,
   title,
   description,
+  action,
 }: {
   icon: LucideIcon;
   title: string;
   description: ReactNode;
+  action?: ReactNode;
 }) {
   return (
     <div
       role="alert"
       className="bg-surface-base rounded-panel shadow-soft border border-border-default/50 flex flex-col items-center px-6 py-16 text-center"
     >
-      <DeadEndContent icon={icon} title={title} description={description} />
+      <DeadEndContent icon={icon} title={title} description={description}>
+        {action}
+      </DeadEndContent>
     </div>
   );
 }

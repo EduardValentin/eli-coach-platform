@@ -12,6 +12,7 @@ import { CheckinProvider } from "./context/CheckinContext";
 import { AssessmentCallProvider } from "./context/AssessmentCallContext";
 import { ClientJourneyProvider } from "./context/ClientJourneyContext";
 import { MessagingProvider } from "./context/MessagingContext";
+import { ResourceProvider } from "./context/ResourceContext";
 import { Store } from "./pages/Store";
 import { ProductDetails } from "./pages/ProductDetails";
 import { CartDrawer } from "./components/CartDrawer";
@@ -58,6 +59,8 @@ import { UnitPreferencesProvider } from "./context/UnitPreferencesContext";
 import { ClientProfile } from "./pages/client-portal/ClientProfile";
 import { ClientSettings } from "./pages/client-portal/ClientSettings";
 import { ClientCheckins } from "./pages/client-portal/ClientCheckins";
+import { ClientResources as ClientResourcesPage } from "./pages/client-portal/ClientResources";
+import { ClientResources as CoachClientResources } from "./pages/coach-portal/ClientResources";
 import { ClientNutrition } from "./pages/client-portal/ClientNutrition";
 import { CoachProfileProvider } from "./context/CoachProfileContext";
 import { EditCoachProfile } from "./pages/coach-portal/EditCoachProfile";
@@ -84,6 +87,7 @@ function Root() {
             <AssessmentCallProvider>
             <ClientJourneyProvider>
             <MessagingProvider>
+            <ResourceProvider>
               <NotificationProvider>
                 <div className="relative min-h-screen bg-surface-subtle text-foreground font-sans selection:bg-brand selection:text-white">
                   <Toaster position="top-right" richColors />
@@ -92,6 +96,7 @@ function Root() {
                   <Outlet />
                 </div>
               </NotificationProvider>
+            </ResourceProvider>
             </MessagingProvider>
             </ClientJourneyProvider>
             </AssessmentCallProvider>
@@ -148,6 +153,7 @@ export const router = createBrowserRouter(
             { path: "cycle", Component: ClientCycleTracker },
             { path: "checkins", Component: ClientCheckins },
             { path: "nutrition", Component: ClientNutrition },
+            { path: "resources", Component: ClientResourcesPage },
             { path: "profile", Component: ClientProfile },
             { path: "settings", Component: ClientSettings }
           ]
@@ -185,6 +191,7 @@ export const router = createBrowserRouter(
             { path: "clients/:id/workout/:logId", Component: WorkoutReview },
             { path: "clients/:id/history", Component: WorkoutHistory },
             { path: "clients/:id/cycle", Component: CoachClientCycle },
+            { path: "clients/:id/resources", Component: CoachClientResources },
             { path: "clients/:id/edit", Component: EditClientProfile },
             { path: "profile", Component: EditCoachProfile },
             { path: "settings", Component: CoachSettings },

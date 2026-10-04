@@ -273,9 +273,12 @@
   --portal-accent-hover: var(--text-primary);
 }
 
-@theme inline {
+@theme {
   --font-sans: "DM Sans", sans-serif;
   --font-serif: "Playfair Display", serif;
+}
+
+@theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -614,7 +617,7 @@
 * receive skip-link focus, suppress their outline on purpose and show focus by
 * other means; drawing a second indicator over those is noise.
 */
-:focus-visible:not([role='option']):not([role='menuitem']):not([role='menuitemcheckbox']):not([role='menuitemradio']):not([tabindex='-1']) {
+:focus-visible:not([role='option']):not([role='menuitem']):not([role='menuitemcheckbox']):not([role='menuitemradio']):not([tabindex='-1']):not([data-field-entry]) {
   outline-style: solid;
   outline-width: 2px;
   outline-color: var(--focus-ring);
@@ -626,8 +629,10 @@
   --focus-ring: var(--brand-on-inverted);
 }
 
-/* [data-chip-control] covers a chip or a choice card whose real control is a visually hidden input, which cannot show its own outline. */
-[data-chip-control]:has(:focus-visible) {
+/* [data-chip-control] covers a chip, a choice card or a drop zone whose real control is a visually hidden input, which cannot show its own outline.
+   [data-field-frame] is a field that draws its own frame around a bare text entry marked [data-field-entry], such as the tag input's chips and typing area. */
+[data-chip-control]:has(:focus-visible),
+[data-field-frame]:has([data-field-entry]:focus-visible) {
   outline-style: solid;
   outline-width: 2px;
   outline-color: var(--focus-ring);
