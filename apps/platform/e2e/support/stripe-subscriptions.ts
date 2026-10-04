@@ -259,24 +259,3 @@ async function firstChargeId(
 
   return first.id;
 }
-
-export async function findAttachedCard(
-  customerId: string,
-  lastFour: string,
-): Promise<string> {
-  const paymentMethods = await createStripeTestClient().paymentMethods.list({
-    customer: customerId,
-    type: "card",
-  });
-  const attached = paymentMethods.data.find(
-    (paymentMethod) => paymentMethod.card?.last4 === lastFour,
-  );
-
-  if (!attached) {
-    throw new Error(
-      `Customer ${customerId} has no card ending in ${lastFour} attached.`,
-    );
-  }
-
-  return attached.id;
-}

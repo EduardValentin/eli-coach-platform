@@ -7,7 +7,7 @@ import { expect, test } from "../support/fixtures";
 import { daysAfter } from "../support/paid-clients";
 import { deliverStripeEvent } from "../support/stripe-events";
 import {
-  findAttachedCard,
+  attachCardInStripe,
   readStripeSubscription,
   type StripeTestCard,
 } from "../support/stripe-subscriptions";
@@ -31,13 +31,7 @@ const START_NOW_PROBLEM =
   "Your program couldn't be started just now. Nothing has changed, so please try again.";
 const SUBMITTED_LABEL = "Sent to your coach";
 const SUBMITTED_LINE = "Eli has your answers and will start on them soon.";
-const CHANGED_CARD = {
-  number: "4000 0566 5566 5556",
-  expiry: "12 / 34",
-  cvc: "123",
-};
-const CHANGED_CARD_LAST_FOUR = "5556";
-const CHANGED_CARD_EXPIRY = "12/34";
+const CHANGED_CARD_TEST_PAYMENT_METHOD = "pm_card_visa_debit";
 const NOTHING_TO_CANCEL = {
   error: "nothing-to-cancel",
   message: "This coaching has already ended, so there is nothing to cancel.",
@@ -493,30 +487,31 @@ test("a client sees her card on file and changes it through Stripe", async ({
 
   // act
   await clientSettings.change();
-  await stripeBillingPortal.expectOpen();
-  await stripeBillingPortal.addCard(CHANGED_CARD);
 
   // assert
-  await clientSettings.expectOpen();
+  await stripeBillingPortal.expectOpen();
+  await stripeBillingPortal.expectPaymentMethodUpdate();
 
   // act
-  const changedCardId = await findAttachedCard(
-    client.subscription.customerId,
-    CHANGED_CARD_LAST_FOUR,
+  const changed = await attachCardInStripe(
+    client.subscription,
+    CHANGED_CARD_TEST_PAYMENT_METHOD,
   );
   const delivery = await deliverStripeEvent({
     baseURL: E2E_APP_URL,
     type: "payment_method.attached",
-    objectId: changedCardId,
+    objectId: changed.card.paymentMethodId,
+    causedBy: changed.requestId,
   });
   await clientSettings.open();
 
   // assert
+  expect(changed.card.lastFour).not.toBe(seededCard.lastFour);
   expect(delivery.status).toBe(200);
   await clientSettings.expectCardOnFile({
     brand: "Visa",
-    lastFour: CHANGED_CARD_LAST_FOUR,
-    expiry: CHANGED_CARD_EXPIRY,
+    lastFour: changed.card.lastFour,
+    expiry: cardExpiry(changed.card),
   });
 });
 
