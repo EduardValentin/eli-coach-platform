@@ -12,11 +12,20 @@ export type HeldSubscriptionSeed = {
   start: StartChoice;
 };
 
+export type StripeTestCard = {
+  paymentMethodId: string;
+  brand: string;
+  lastFour: string;
+  expiryMonth: number;
+  expiryYear: number;
+};
+
 export type StripeTestSubscription = {
   customerId: string;
   subscriptionId: string;
   amountCents: number;
   currency: string;
+  card: StripeTestCard;
 };
 
 export type StripeChange = { requestId: string };
@@ -38,7 +47,7 @@ export async function createHeldStripeSubscription(
     metadata: { assessmentCallId: seed.assessmentCallId },
   });
   registerCustomerForCleanup(customer.id, runId);
-  await payByDefaultWithTestCard(stripe, customer.id);
+  const card = await payByDefaultWithTestCard(stripe, customer.id);
   const amountCents = SEEDED_BUNDLE.totalCents(SEEDED_TIER);
   const subscription = await stripe.subscriptions.create({
     customer: customer.id,
@@ -66,6 +75,7 @@ export async function createHeldStripeSubscription(
     subscriptionId: subscription.id,
     amountCents,
     currency: SEEDED_BUNDLE.currency,
+    card,
   };
 }
 
@@ -150,7 +160,7 @@ export async function liftScheduledEndInStripe(
 async function payByDefaultWithTestCard(
   stripe: Stripe,
   customerId: string,
-): Promise<void> {
+): Promise<StripeTestCard> {
   const paymentMethod = await stripe.paymentMethods.attach(
     TEST_CARD_PAYMENT_METHOD,
     { customer: customerId },
@@ -158,6 +168,18 @@ async function payByDefaultWithTestCard(
   await stripe.customers.update(customerId, {
     invoice_settings: { default_payment_method: paymentMethod.id },
   });
+
+  if (!paymentMethod.card) {
+    throw new Error(`Payment method ${paymentMethod.id} carries no card.`);
+  }
+
+  return {
+    paymentMethodId: paymentMethod.id,
+    brand: paymentMethod.card.brand,
+    lastFour: paymentMethod.card.last4,
+    expiryMonth: paymentMethod.card.exp_month,
+    expiryYear: paymentMethod.card.exp_year,
+  };
 }
 
 async function coachingProductId(stripe: Stripe): Promise<string> {

@@ -18,7 +18,10 @@ export type StripeEventType =
   | "customer.subscription.deleted"
   | "charge.refunded"
   | "invoice.paid"
-  | "invoice.payment_failed";
+  | "invoice.payment_failed"
+  | "payment_method.attached"
+  | "payment_method.automatically_updated"
+  | "payment_method.detached";
 
 export type StripeEventQuery = {
   type: StripeEventType;

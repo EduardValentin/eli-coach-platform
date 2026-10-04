@@ -29,6 +29,13 @@ export type SubscribedClient = SubmittedClient & {
   subscription: StripeTestSubscription;
 };
 
+const INSERT_PAYMENT_CARD = `
+  insert into app.payment_cards (
+    stripe_customer_id, payment_method_id, brand, last_four,
+    expiry_month, expiry_year, updated_at
+  ) values ($1, $2, $3, $4, $5, $6, $7)
+`;
+
 export async function insertSubscribedClientRecords(
   pool: pg.Pool,
   identity: PaidClientIdentity,
@@ -49,9 +56,27 @@ export async function insertSubscribedClientRecords(
       checkoutSessionId: `cs_e2e_${assessmentCallId}`,
     },
   });
+  await insertPaymentCard(pool, subscription);
   const submitted = await recordOnboardingSubmitted(pool, identity, client);
 
   return { ...submitted, subscription };
+}
+
+async function insertPaymentCard(
+  pool: pg.Pool,
+  subscription: StripeTestSubscription,
+): Promise<void> {
+  const { card } = subscription;
+
+  await pool.query(INSERT_PAYMENT_CARD, [
+    subscription.customerId,
+    card.paymentMethodId,
+    card.brand,
+    card.lastFour,
+    card.expiryMonth,
+    card.expiryYear,
+    new Date(),
+  ]);
 }
 
 export function paidThrough(paidAt: Date): Date {
