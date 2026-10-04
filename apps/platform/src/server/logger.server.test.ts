@@ -738,6 +738,40 @@ describe("createConsoleLogger", () => {
         },
       ],
       [
+        "a mirrored card event by ids only",
+        "info",
+        (logger: ReturnType<typeof createConsoleLogger>) =>
+          logger.paymentCardEventMirrored({
+            eventId: "evt_card",
+            eventKind: "card-attached",
+            paymentCustomerId: "cus_1",
+            outcome: "recorded",
+          }),
+        "Card on file mirrored.",
+        {
+          eventCategory: "payment_card_event_mirrored",
+          eventId: "evt_card",
+          eventKind: "card-attached",
+          outcome: "recorded",
+          paymentCustomerId: "cus_1",
+        },
+      ],
+      [
+        "a card on file that could not be mirrored, by the failure's kind only",
+        "error",
+        (logger: ReturnType<typeof createConsoleLogger>) =>
+          logger.cardMirrorFailed({
+            paymentCustomerId: "cus_1",
+            error: new TypeError("4242"),
+          }),
+        "Card on file could not be mirrored; Stripe will redeliver.",
+        {
+          errorCategory: "payment_card_mirror_failure",
+          errorClass: "TypeError",
+          paymentCustomerId: "cus_1",
+        },
+      ],
+      [
         "a refund notice the coach did not get",
         "error",
         (logger: ReturnType<typeof createConsoleLogger>) =>

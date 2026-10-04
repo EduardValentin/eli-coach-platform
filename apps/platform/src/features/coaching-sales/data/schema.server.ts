@@ -301,6 +301,31 @@ export const coachingSubscriptionsTable = appSchema.table(
   ],
 );
 
+export const paymentCardsTable = appSchema.table(
+  "payment_cards",
+  {
+    stripeCustomerId: varchar("stripe_customer_id", {
+      length: 255,
+    }).primaryKey(),
+    paymentMethodId: varchar("payment_method_id", { length: 255 }).notNull(),
+    brand: varchar("brand", { length: 32 }).notNull(),
+    lastFour: char("last_four", { length: 4 }).notNull(),
+    expiryMonth: integer("expiry_month").notNull(),
+    expiryYear: integer("expiry_year").notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    check(
+      "payment_cards_last_four_digits",
+      sql`${table.lastFour} ~ '^[0-9]{4}$'`,
+    ),
+    check(
+      "payment_cards_expiry_month_check",
+      sql`${table.expiryMonth} between 1 and 12`,
+    ),
+  ],
+);
+
 function bundleIdCheck(table: string, column: AnyPgColumn) {
   return check(
     `${table}_bundle_id_check`,

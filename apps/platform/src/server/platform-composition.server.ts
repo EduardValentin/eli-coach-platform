@@ -2,6 +2,7 @@ import type { AppConfig, DatabaseConfig } from "@eli-coach-platform/config";
 import type { FeatureFlagReader } from "@eli-coach-platform/domain/feature-flag";
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 import type {
+  PaymentCardHandler,
   PaymentCompletionHandler,
   PaymentEvents,
   PaymentRefundHandler,
@@ -38,6 +39,7 @@ type PlatformFeatureHandles = {
   botDetection: BotDetectionConfig;
   featureFlags: FeatureFlagReader;
   incidents: PaymentWebhookIncidents;
+  paymentCardHandler: PaymentCardHandler;
   paymentCompletionHandlers: readonly PaymentCompletionHandler[];
   paymentEvents: PaymentEvents;
   paymentRefundHandler: PaymentRefundHandler;
@@ -60,6 +62,7 @@ export function composePlatformFeature(
     }),
     readyz: new ReadyzController(handles.app),
     stripeWebhooks: new StripeWebhookController({
+      cardHandler: handles.paymentCardHandler,
       completionHandlersByPurpose: handlersByPurpose(
         handles.paymentCompletionHandlers,
         "payment completion",

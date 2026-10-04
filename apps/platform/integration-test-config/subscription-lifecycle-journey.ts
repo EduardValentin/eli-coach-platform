@@ -1,7 +1,9 @@
 import type { PlatformRig } from "./platform-rig";
 import { stripeWebhook } from "./stripe-webhook-request";
 import {
+  STRIPE_CARD,
   STRIPE_CUSTOMER_ID,
+  STRIPE_PAYMENT_METHOD_ID,
   STRIPE_SUBSCRIPTION_ID,
   stripeSubscriptionPath,
 } from "./wire-mock/expectations/stripe-api";
@@ -18,6 +20,14 @@ export type SubscriptionLifecycleRow = {
   refundedCents: number | null;
   startChoice: string;
   status: string;
+};
+
+export type PaymentCardRow = {
+  paymentMethodId: string;
+  brand: string;
+  lastFour: string;
+  expiryMonth: number;
+  expiryYear: number;
 };
 
 export type ProviderEvent = {
@@ -81,6 +91,24 @@ export class SubscriptionLifecycleJourney {
     }
 
     return row;
+  }
+
+  async paymentCardRows(
+    paymentCustomerId: string = STRIPE_CUSTOMER_ID,
+  ): Promise<PaymentCardRow[]> {
+    return this.rig.suite.postgres.queryRows<PaymentCardRow>({
+      sql: `
+        select
+          payment_method_id as "paymentMethodId",
+          brand,
+          last_four as "lastFour",
+          expiry_month as "expiryMonth",
+          expiry_year as "expiryYear"
+        from app.payment_cards
+        where stripe_customer_id = $1
+      `,
+      values: [paymentCustomerId],
+    });
   }
 
   async recordedEventIds(): Promise<string[]> {
@@ -156,5 +184,18 @@ export function stripeRefundedChargeObject(
     metadata: {},
     object: "charge",
     refunded: refundedCents >= 44700,
+  };
+}
+
+export function stripeCardPaymentMethodObject(
+  overrides: Record<string, unknown> = {},
+): Record<string, unknown> {
+  return {
+    card: STRIPE_CARD,
+    customer: STRIPE_CUSTOMER_ID,
+    id: STRIPE_PAYMENT_METHOD_ID,
+    object: "payment_method",
+    type: "card",
+    ...overrides,
   };
 }

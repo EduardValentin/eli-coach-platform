@@ -25,6 +25,7 @@ import {
   stripeWebhookFromAnotherAccount,
 } from "~integration-test-config/stripe-webhook-request";
 import {
+  stripeCardPaymentMethodObject,
   stripeInvoiceObject,
   stripeRefundedChargeObject,
   stripeSubscriptionObject,
@@ -33,8 +34,13 @@ import {
 import {
   STRIPE_CHECKOUT_SESSION_ID,
   STRIPE_CUSTOMER_ID,
+  STRIPE_PAYMENT_METHOD_ID,
   STRIPE_SUBSCRIPTION_ID,
+  stripeAcceptsCustomerReadsAgain,
   stripeAcceptsSubscriptionUpdatesAgain,
+  stripeCustomerPath,
+  stripePaymentMethodPath,
+  stripeRefusesCustomerReads,
   stripeCreatesCheckoutSessionForBundle,
   stripeRefusesSubscriptionUpdates,
   stripeRetrievesExpiredSession,
@@ -61,6 +67,24 @@ const NOT_STARTED_ROW = {
 };
 
 const COMPLETED_EVENT_ID = "evt_integration_completed";
+const CHECKOUT_CARD = {
+  paymentMethodId: STRIPE_PAYMENT_METHOD_ID,
+  brand: "visa",
+  lastFour: "4242",
+  expiryMonth: 12,
+  expiryYear: 2034,
+};
+const MASTERCARD = {
+  id: "pm_integration_mastercard",
+  card: { brand: "mastercard", last4: "4444", exp_month: 3, exp_year: 2031 },
+};
+const MASTERCARD_ROW = {
+  paymentMethodId: "pm_integration_mastercard",
+  brand: "mastercard",
+  lastFour: "4444",
+  expiryMonth: 3,
+  expiryYear: 2031,
+};
 const REPLACEMENT_SESSION_ID = "cs_test_integrationreplacement";
 
 type ClientRow = {
@@ -394,6 +418,232 @@ describe.sequential("stripe webhooks integration", () => {
     expect(await countInvitations()).toBe(1);
     expect(await lifecycle.providerSubscriptionRequests("POST")).toHaveLength(
       2,
+    );
+  });
+
+  it("mirrors the card on file of her customer when her checkout completes", async () => {
+    // arrange
+    await openCheckout();
+    const session = await journey.completionOfCheckoutRequest({
+      requestIndex: FIRST_CHECKOUT_REQUEST,
+      sessionId: STRIPE_CHECKOUT_SESSION_ID,
+    });
+
+    // act
+    const response = await journey.deliverCheckoutCompleted(
+      session,
+      COMPLETED_EVENT_ID,
+    );
+
+    // assert
+    const customerReads = await suite.wireMock.recordedRequests(
+      stripeCustomerPath(STRIPE_CUSTOMER_ID),
+    );
+    const paymentMethodReads = await suite.wireMock.recordedRequests(
+      stripePaymentMethodPath(STRIPE_PAYMENT_METHOD_ID),
+    );
+
+    expect(response.status).toBe(200);
+    expect(await lifecycle.paymentCardRows()).toEqual([CHECKOUT_CARD]);
+    expect(customerReads.map((request) => request.method)).toEqual(["GET"]);
+    expect(customerReads[0]?.url).toContain("expand");
+    expect(paymentMethodReads.map((request) => request.method)).toEqual([
+      "GET",
+    ]);
+  });
+
+  it("answers 500 when the card on file cannot be read, with the purchase intact, then mirrors it on redelivery", async () => {
+    // arrange
+    await openCheckout();
+    const session = await journey.completionOfCheckoutRequest({
+      requestIndex: FIRST_CHECKOUT_REQUEST,
+      sessionId: STRIPE_CHECKOUT_SESSION_ID,
+    });
+    await suite.wireMock.stub(stripeRefusesCustomerReads());
+
+    // act
+    const failed = await journey.deliverCheckoutCompleted(
+      session,
+      COMPLETED_EVENT_ID,
+    );
+    const purchasesAfterFailure = await countPurchases();
+    const cardsAfterFailure = await lifecycle.paymentCardRows();
+    await suite.wireMock.stub(stripeAcceptsCustomerReadsAgain());
+    const redelivered = await journey.deliverCheckoutCompleted(
+      session,
+      COMPLETED_EVENT_ID,
+    );
+
+    // assert
+    expect(failed.status).toBe(500);
+    expect(purchasesAfterFailure).toEqual({
+      clients: 1,
+      paymentEvents: 1,
+      subscriptions: 1,
+    });
+    expect(cardsAfterFailure).toEqual([]);
+    expect(redelivered.status).toBe(200);
+    expect(await countPurchases()).toEqual(purchasesAfterFailure);
+    expect(await lifecycle.paymentCardRows()).toEqual([CHECKOUT_CARD]);
+  });
+
+  it("makes a card attached to her customer the card on file", async () => {
+    // arrange
+    await journey.payForCall();
+
+    // act
+    const response = await lifecycle.deliverEvent({
+      id: "evt_integration_card_attached",
+      type: "payment_method.attached",
+      object: stripeCardPaymentMethodObject(MASTERCARD),
+    });
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(await lifecycle.paymentCardRows()).toEqual([MASTERCARD_ROW]);
+    expect(await lifecycle.recordedEventIds()).toContain(
+      "evt_integration_card_attached",
+    );
+  });
+
+  it("takes the new expiry of a card the provider updated", async () => {
+    // arrange
+    await journey.payForCall();
+
+    // act
+    const response = await lifecycle.deliverEvent({
+      id: "evt_integration_card_updated",
+      type: "payment_method.automatically_updated",
+      object: stripeCardPaymentMethodObject({
+        card: { brand: "visa", last4: "4242", exp_month: 9, exp_year: 2038 },
+      }),
+      previousAttributes: {
+        card: { exp_month: 12, exp_year: 2034 },
+      },
+    });
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(await lifecycle.paymentCardRows()).toEqual([
+      { ...CHECKOUT_CARD, expiryMonth: 9, expiryYear: 2038 },
+    ]);
+  });
+
+  it("clears the card on file when that card is detached", async () => {
+    // arrange
+    await journey.payForCall();
+
+    // act
+    const response = await lifecycle.deliverEvent({
+      id: "evt_integration_card_detached",
+      type: "payment_method.detached",
+      object: stripeCardPaymentMethodObject({ customer: null }),
+      previousAttributes: { customer: STRIPE_CUSTOMER_ID },
+    });
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(await lifecycle.paymentCardRows()).toEqual([]);
+  });
+
+  it("keeps the newer card when the earlier card's detach arrives after it", async () => {
+    // arrange
+    await journey.payForCall();
+    await lifecycle.deliverEvent({
+      id: "evt_integration_card_attached",
+      type: "payment_method.attached",
+      object: stripeCardPaymentMethodObject(MASTERCARD),
+    });
+
+    // act
+    const response = await lifecycle.deliverEvent({
+      id: "evt_integration_card_detached",
+      type: "payment_method.detached",
+      object: stripeCardPaymentMethodObject({ customer: null }),
+      previousAttributes: { customer: STRIPE_CUSTOMER_ID },
+    });
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(await lifecycle.paymentCardRows()).toEqual([MASTERCARD_ROW]);
+  });
+
+  it("changes nothing when a card event is delivered again", async () => {
+    // arrange
+    await journey.payForCall();
+    const attached = {
+      id: "evt_integration_card_attached",
+      type: "payment_method.attached",
+      object: stripeCardPaymentMethodObject(MASTERCARD),
+    };
+    await lifecycle.deliverEvent(attached);
+    await lifecycle.deliverEvent({
+      id: "evt_integration_card_updated",
+      type: "payment_method.automatically_updated",
+      object: stripeCardPaymentMethodObject({
+        ...MASTERCARD,
+        card: { ...MASTERCARD.card, exp_year: 2036 },
+      }),
+    });
+
+    // act
+    const response = await lifecycle.deliverEvent(attached);
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(await lifecycle.paymentCardRows()).toEqual([
+      { ...MASTERCARD_ROW, expiryYear: 2036 },
+    ]);
+    expect(
+      (await lifecycle.recordedEventIds()).filter((id) => id === attached.id),
+    ).toHaveLength(1);
+  });
+
+  it("acknowledges a card of a customer it does not know and records nothing", async () => {
+    // arrange
+    await journey.payForCall();
+
+    // act
+    const response = await lifecycle.deliverEvent({
+      id: "evt_integration_card_unknown",
+      type: "payment_method.attached",
+      object: stripeCardPaymentMethodObject({
+        ...MASTERCARD,
+        customer: "cus_integration_unknown",
+      }),
+    });
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(await lifecycle.paymentCardRows("cus_integration_unknown")).toEqual(
+      [],
+    );
+    expect(await lifecycle.paymentCardRows()).toEqual([CHECKOUT_CARD]);
+    expect(await lifecycle.recordedEventIds()).not.toContain(
+      "evt_integration_card_unknown",
+    );
+  });
+
+  it("acknowledges a payment method that is not a card and records nothing", async () => {
+    // arrange
+    await journey.payForCall();
+
+    // act
+    const response = await lifecycle.deliverEvent({
+      id: "evt_integration_debit_attached",
+      type: "payment_method.attached",
+      object: stripeCardPaymentMethodObject({
+        id: "pm_integration_debit",
+        type: "sepa_debit",
+        card: null,
+      }),
+    });
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(await lifecycle.paymentCardRows()).toEqual([CHECKOUT_CARD]);
+    expect(await lifecycle.recordedEventIds()).not.toContain(
+      "evt_integration_debit_attached",
     );
   });
 

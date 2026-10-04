@@ -5,6 +5,8 @@ import {
 import {
   PAYMENT_PURPOSE_METADATA_KEY,
   type PaidCheckoutSession,
+  type PaymentCardChange,
+  type PaymentCardHandler,
   type PaymentCompletionHandler,
   type PaymentEvents,
   type PaymentRefund,
@@ -15,6 +17,7 @@ import {
 } from "@eli-coach-platform/infrastructure/payments/server";
 
 type StripeWebhookControllerOptions = {
+  cardHandler: PaymentCardHandler;
   completionHandlersByPurpose: ReadonlyMap<string, PaymentCompletionHandler>;
   incidents: PaymentWebhookIncidents;
   paymentEvents: PaymentEvents;
@@ -43,6 +46,7 @@ const EVENT_MAX_BYTES = 512 * 1024;
 const PAYLOAD_TOO_LARGE = 413;
 const HANDLER_FAILED = 500;
 const REFUNDS_HANDLER = "charge-refunds";
+const CARDS_HANDLER = "payment-cards";
 
 export class StripeWebhookController {
   constructor(private readonly options: StripeWebhookControllerOptions) {}
@@ -76,6 +80,8 @@ export class StripeWebhookController {
         return this.routeSubscriptionChange(verdict);
       case "charge_refunded":
         return this.deliverRefund(verdict.eventId, verdict.refund);
+      case "payment_method_changed":
+        return this.deliverCardChange(verdict.eventId, verdict.change);
       case "ignored":
         return acknowledged();
     }
@@ -138,6 +144,17 @@ export class StripeWebhookController {
       eventId,
       handler: REFUNDS_HANDLER,
       handle: () => this.options.refundHandler.handle(eventId, refund),
+    });
+  }
+
+  private deliverCardChange(
+    eventId: string,
+    change: PaymentCardChange,
+  ): Promise<Response> {
+    return this.deliver({
+      eventId,
+      handler: CARDS_HANDLER,
+      handle: () => this.options.cardHandler.handle(eventId, change),
     });
   }
 

@@ -3,6 +3,7 @@ import type { FeatureFlagSet } from "@eli-coach-platform/domain/feature-flag";
 import { InMemoryProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 import {
   createPaymentCheckout,
+  createPaymentCustomerCards,
   createPaymentSubscriptions,
 } from "@eli-coach-platform/infrastructure/payments/server";
 import { describe, expect, it, vi } from "vitest";
@@ -335,6 +336,9 @@ function createHandles(
     },
     incidents: createIncidents(),
     paymentCheckout: createPaymentCheckout({ PAYMENTS_PROVIDER: "memory" }),
+    paymentCustomerCards: createPaymentCustomerCards({
+      PAYMENTS_PROVIDER: "memory",
+    }),
     paymentSubscriptions: createPaymentSubscriptions({
       PAYMENTS_PROVIDER: "memory",
     }),
@@ -349,9 +353,11 @@ function createHandles(
 
 function createIncidents() {
   return {
+    cardMirrorFailed: vi.fn(),
     invitationEmailFailed: vi.fn(),
     invitationResendFailed: vi.fn(),
     invitationResent: vi.fn(),
+    paymentCardEventMirrored: vi.fn(),
     paymentEventRejected: vi.fn(),
     paymentMethodSessionOpened: vi.fn(),
     programStartedNow: vi.fn(),

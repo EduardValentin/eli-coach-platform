@@ -22,6 +22,13 @@ export const PAYMENT_METHOD_UNAVAILABLE_PARAM = {
   value: "unavailable",
 } as const;
 
+const paymentCardSchema = z.object({
+  brand: z.string().min(1),
+  lastFour: z.string().regex(/^\d{4}$/),
+  expiryMonth: z.number().int().min(1).max(12),
+  expiryYear: z.number().int().positive(),
+});
+
 export const clientSettingsSchema = z.object({
   subscription: z.object({
     bundleId: coachingBundleIdSchema,
@@ -44,6 +51,7 @@ export const clientSettingsSchema = z.object({
     ])
     .nullable(),
   startNowUntil: z.iso.datetime().nullable(),
+  card: paymentCardSchema.nullable().optional(),
 });
 
 export type ClientSettings = z.infer<typeof clientSettingsSchema>;

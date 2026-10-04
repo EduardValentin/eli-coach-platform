@@ -1,4 +1,7 @@
-import type { RecordCheckoutCompletedUseCase } from "@eli-coach-platform/domain/coaching-subscription";
+import type {
+  RecordCheckoutCompletedUseCase,
+  RefreshPaymentCardUseCase,
+} from "@eli-coach-platform/domain/coaching-subscription";
 import type { PaidCheckoutSession } from "@eli-coach-platform/infrastructure/payments/server";
 import { describe, expect, it, vi } from "vitest";
 
@@ -85,6 +88,47 @@ describe("CoachingPurchaseCompletionHandler", () => {
     },
   );
 
+  it.each<RecordOutcome["status"]>(["recorded", "duplicate"])(
+    "mirrors the card on file of her payment customer once the purchase answers %s",
+    async (status) => {
+      // arrange
+      const { handler, refreshCard } = createHandler({ status });
+
+      // act
+      await handler.handle("evt_1", paidSession(coachingMetadata));
+
+      // assert
+      expect(refreshCard).toHaveBeenCalledWith({ paymentCustomerId: "cus_1" });
+    },
+  );
+
+  it.each<RecordOutcome["status"]>(["already_paid", "call_not_found"])(
+    "mirrors no card when the purchase answers %s",
+    async (status) => {
+      // arrange
+      const { handler, refreshCard } = createHandler({ status });
+
+      // act
+      await handler.handle("evt_1", paidSession(coachingMetadata));
+
+      // assert
+      expect(refreshCard).not.toHaveBeenCalled();
+    },
+  );
+
+  it("fails the delivery when the card on file cannot be mirrored, so the provider redelivers", async () => {
+    // arrange
+    const failure = new Error("provider down");
+    const { handler, refreshCard } = createHandler();
+    refreshCard.mockRejectedValue(failure);
+
+    // act
+    const handling = handler.handle("evt_1", paidSession(coachingMetadata));
+
+    // assert
+    await expect(handling).rejects.toBe(failure);
+  });
+
   it.each([
     [
       "an unknown bundle",
@@ -117,7 +161,10 @@ describe("CoachingPurchaseCompletionHandler", () => {
 
 function createHandler(outcome: RecordOutcome = { status: "recorded" }) {
   const recordCompletion = vi.fn().mockResolvedValue(outcome);
+  const refreshCard = vi.fn().mockResolvedValue(undefined);
   const incidents = {
+    cardMirrorFailed: vi.fn(),
+    paymentCardEventMirrored: vi.fn(),
     paymentEventRejected: vi.fn(),
     paymentMethodSessionOpened: vi.fn(),
     programStartedNow: vi.fn(),
@@ -134,7 +181,10 @@ function createHandler(outcome: RecordOutcome = { status: "recorded" }) {
     recordCheckoutCompleted: {
       execute: recordCompletion,
     } as unknown as RecordCheckoutCompletedUseCase,
+    refreshPaymentCard: {
+      execute: refreshCard,
+    } as unknown as RefreshPaymentCardUseCase,
   });
 
-  return { handler, incidents, recordCompletion };
+  return { handler, incidents, recordCompletion, refreshCard };
 }

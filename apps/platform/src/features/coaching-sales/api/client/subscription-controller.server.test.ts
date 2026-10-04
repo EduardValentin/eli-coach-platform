@@ -73,6 +73,7 @@ const READING: Reading = {
   startNowUntil: DEADLINE,
   paymentProblem: false,
   refundDue: false,
+  card: null,
 };
 
 describe("SubscriptionController#loadSettings", () => {
@@ -105,8 +106,36 @@ describe("SubscriptionController#loadSettings", () => {
         refundCents: 44700,
       },
       startNowUntil: "2026-10-16T10:00:00.000Z",
+      card: null,
     });
     expect(readClientSubscription).toHaveBeenCalledWith("user_ana");
+  });
+
+  it("reads the card on file by brand, last four digits and expiry, never its payment method", async () => {
+    // arrange
+    const { controller } = createController({
+      reading: {
+        ...READING,
+        card: {
+          brand: "visa",
+          lastFour: "4242",
+          expiryMonth: 12,
+          expiryYear: 2034,
+          paymentMethodId: "pm_visa",
+        },
+      },
+    });
+
+    // act
+    const settings = await controller.loadSettings(clientArgs());
+
+    // assert
+    expect(settings.card).toEqual({
+      brand: "visa",
+      lastFour: "4242",
+      expiryMonth: 12,
+      expiryYear: 2034,
+    });
   });
 
   it("offers the cancellation without a refund with its dates and no refund amount", async () => {

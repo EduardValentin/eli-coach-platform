@@ -10,6 +10,14 @@ export const STRIPE_BILLING_PORTAL_SESSIONS_PATH =
   "/v1/billing_portal/sessions";
 export const STRIPE_BILLING_PORTAL_URL =
   "https://billing.stripe.com/p/session/test_integration";
+export const STRIPE_PAYMENT_METHODS_PATH = "/v1/payment_methods";
+export const STRIPE_PAYMENT_METHOD_ID = "pm_integration";
+export const STRIPE_CARD = {
+  brand: "visa",
+  last4: "4242",
+  exp_month: 12,
+  exp_year: 2034,
+} as const;
 
 const HOSTED_CHECKOUT_BASE_URL = "https://checkout.stripe.com/c/pay/";
 const jsonHeaders = { "Content-Type": "application/json" };
@@ -274,6 +282,69 @@ export function stripeRefusesBillingPortalSessions(): WireMockStub {
   };
 }
 
+const CUSTOMER_BY_ID_PATTERN = `${STRIPE_CUSTOMERS_PATH}/[^/]+`;
+
+export function stripeCustomerPath(customerId: string): string {
+  return `${STRIPE_CUSTOMERS_PATH}/${customerId}`;
+}
+
+export function stripePaymentMethodPath(paymentMethodId: string): string {
+  return `${STRIPE_PAYMENT_METHODS_PATH}/${paymentMethodId}`;
+}
+
+const stripeRetrievesCustomer: WireMockStub = {
+  request: { method: "GET", urlPathPattern: CUSTOMER_BY_ID_PATTERN },
+  response: {
+    headers: jsonHeaders,
+    status: 200,
+    jsonBody: {
+      id: STRIPE_CUSTOMER_ID,
+      invoice_settings: { default_payment_method: null },
+      object: "customer",
+      subscriptions: {
+        data: [
+          {
+            default_payment_method: STRIPE_PAYMENT_METHOD_ID,
+            id: STRIPE_SUBSCRIPTION_ID,
+            object: "subscription",
+          },
+        ],
+        object: "list",
+      },
+    },
+  },
+};
+
+const stripeRetrievesPaymentMethod: WireMockStub = {
+  request: {
+    method: "GET",
+    urlPathPattern: `${STRIPE_PAYMENT_METHODS_PATH}/[^/]+`,
+  },
+  response: {
+    headers: jsonHeaders,
+    status: 200,
+    jsonBody: {
+      card: STRIPE_CARD,
+      customer: STRIPE_CUSTOMER_ID,
+      id: STRIPE_PAYMENT_METHOD_ID,
+      object: "payment_method",
+      type: "card",
+    },
+  },
+};
+
+export function stripeRefusesCustomerReads(): WireMockStub {
+  return {
+    priority: 2,
+    request: { method: "GET", urlPathPattern: CUSTOMER_BY_ID_PATTERN },
+    response: stripeApiFailure,
+  };
+}
+
+export function stripeAcceptsCustomerReadsAgain(): WireMockStub {
+  return { ...stripeRetrievesCustomer, priority: 1 };
+}
+
 function subscriptionResponse(status: string): WireMockStub["response"] {
   return {
     headers: jsonHeaders,
@@ -312,4 +383,6 @@ export const stripeApiStubs: readonly WireMockStub[] = [
   stripeUpdatesSubscription,
   stripeCancelsSubscription,
   stripeCreatesBillingPortalSession,
+  stripeRetrievesCustomer,
+  stripeRetrievesPaymentMethod,
 ];

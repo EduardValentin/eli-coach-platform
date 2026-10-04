@@ -177,7 +177,18 @@ function settingsOf(reading: SubscriptionReading) {
     },
     cancellation: cancellationOf(reading),
     startNowUntil: reading.startNowUntil?.toISOString() ?? null,
+    card: cardOf(reading),
   };
+}
+
+function cardOf(reading: SubscriptionReading) {
+  if (!reading.card) {
+    return null;
+  }
+
+  const { brand, expiryMonth, expiryYear, lastFour } = reading.card;
+
+  return { brand, lastFour, expiryMonth, expiryYear };
 }
 
 function cancellationOf(reading: SubscriptionReading) {

@@ -32,6 +32,16 @@ export function createConsoleLogger(): ConsoleLogger {
         errorCategory: "assessment_call_listing_failure",
       });
     },
+    cardMirrorFailed: ({ error, paymentCustomerId }) => {
+      console.error(
+        "Card on file could not be mirrored; Stripe will redeliver.",
+        {
+          errorCategory: "payment_card_mirror_failure",
+          errorClass: errorClassOf(error),
+          paymentCustomerId,
+        },
+      );
+    },
     confirmationDeliveryFailed: () => {
       console.error("Waitlist confirmation email failed.", {
         errorCategory: "waitlist_confirmation_failure",
@@ -157,6 +167,20 @@ export function createConsoleLogger(): ConsoleLogger {
         clientId,
         eventCategory: "client_onboarding_submission_refused",
         reason,
+      });
+    },
+    paymentCardEventMirrored: ({
+      eventId,
+      eventKind,
+      outcome,
+      paymentCustomerId,
+    }) => {
+      console.info("Card on file mirrored.", {
+        eventCategory: "payment_card_event_mirrored",
+        eventId,
+        eventKind,
+        outcome,
+        paymentCustomerId,
       });
     },
     paymentEventHandlingFailed: ({ errorClass, eventId, handler }) => {

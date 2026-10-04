@@ -32,16 +32,19 @@ import {
 } from "@eli-coach-platform/domain/coaching-bundle";
 import {
   CancelSubscriptionUseCase,
+  MirrorPaymentCardUseCase,
   OpenPaymentMethodSessionUseCase,
   ReadCheckoutConfirmationUseCase,
   ReadClientSubscriptionUseCase,
   ReconcileSubscriptionEventUseCase,
   RecordCheckoutCompletedUseCase,
+  RefreshPaymentCardUseCase,
   StartCheckoutUseCase,
   StartProgramNowUseCase,
   type CoachingSubscriptionIncidents,
   type PaidClientAdmission,
   type PaymentCheckout,
+  type PaymentCustomerCards,
   type PaymentSubscriptions,
 } from "@eli-coach-platform/domain/coaching-subscription";
 import type { FeatureFlagReader } from "@eli-coach-platform/domain/feature-flag";
@@ -59,6 +62,7 @@ import type { MeasurementClients } from "@eli-coach-platform/domain/client-profi
 import type { UnitPreferenceClients } from "@eli-coach-platform/domain/unit-preference";
 import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 import type {
+  PaymentCardHandler,
   PaymentCompletionHandler,
   PaymentRefundHandler,
   PaymentSubscriptionChangeHandler,
@@ -69,6 +73,7 @@ import { SubscriptionController } from "~/features/coaching-sales/api/client/sub
 import { CoachClientsController } from "~/features/coaching-sales/api/coach/coach-clients-controller.server";
 import { CoachSalesController } from "~/features/coaching-sales/api/coach/coach-sales-controller.server";
 import { PaymentLinksController } from "~/features/coaching-sales/api/coach/payment-links-controller.server";
+import { CoachingPaymentCardHandler } from "~/features/coaching-sales/api/payments/coaching-payment-card-handler.server";
 import { CoachingPurchaseCompletionHandler } from "~/features/coaching-sales/api/payments/coaching-purchase-completion-handler.server";
 import { CoachingSubscriptionEventHandler } from "~/features/coaching-sales/api/payments/coaching-subscription-event-handler.server";
 import { CheckoutsController } from "~/features/coaching-sales/api/public/checkouts-controller.server";
@@ -90,6 +95,7 @@ import {
 } from "~/features/coaching-sales/data/link-tokens/link-token.server";
 import { PostgresPaymentLinks } from "~/features/coaching-sales/data/payment-links/payment-links-repository.server";
 import { PostgresCoachingPurchases } from "~/features/coaching-sales/data/purchases/purchases-repository.server";
+import { PostgresPaymentCards } from "~/features/coaching-sales/data/payment-cards/payment-cards-repository.server";
 import { PostgresCoachingSubscriptions } from "~/features/coaching-sales/data/subscriptions/subscriptions-repository.server";
 import {
   createCoachingSalesNotifications,
@@ -117,6 +123,7 @@ type CoachingSalesComposition = {
     onboardingClients: OnboardingClients;
     onboardingReviewStamps: OnboardingReviewStamps;
     onboardingSubmissionStamps: OnboardingSubmissionStamps;
+    paymentCardHandler: PaymentCardHandler;
     paymentCompletionHandler: PaymentCompletionHandler;
     refundHandler: PaymentRefundHandler;
     reviewStampWriter: ReviewStampWriter;
@@ -139,6 +146,7 @@ export type CoachingSalesFeatureHandles = {
     ClientInvitationIncidents &
     ClientRosterIncidents;
   paymentCheckout: PaymentCheckout;
+  paymentCustomerCards: PaymentCustomerCards;
   paymentSubscriptions: PaymentSubscriptions;
   pricingEligibility: PricingEligibility;
   productEmail: ProductEmail;
@@ -152,6 +160,7 @@ export function composeCoachingSalesFeature(
   const paymentLinks = new PostgresPaymentLinks({ clock, database });
   const purchases = new PostgresCoachingPurchases({ clock, database });
   const subscriptions = new PostgresCoachingSubscriptions({ clock, database });
+  const paymentCards = new PostgresPaymentCards({ clock, database });
   const clientIdentities = new PostgresClientIdentities(database);
   const invitations = new PostgresClientInvitations(database);
   const journeys = new PostgresClientJourneys(database);
@@ -247,13 +256,24 @@ export function composeCoachingSalesFeature(
     openPaymentMethodSession: new OpenPaymentMethodSessionUseCase(
       subscriptionPorts,
     ),
+    mirrorPaymentCard: new MirrorPaymentCardUseCase({
+      cards: paymentCards,
+      incidents: handles.incidents,
+      subscriptions,
+    }),
     readClientSubscription: new ReadClientSubscriptionUseCase({
+      cards: paymentCards,
       clock,
       subscriptions,
     }),
     reconcileSubscriptionEvent: new ReconcileSubscriptionEventUseCase({
       incidents: handles.incidents,
       subscriptions,
+    }),
+    refreshPaymentCard: new RefreshPaymentCardUseCase({
+      cards: paymentCards,
+      customerCards: handles.paymentCustomerCards,
+      incidents: handles.incidents,
     }),
     startProgramNow: new StartProgramNowUseCase({
       clock,
@@ -372,9 +392,13 @@ export function composeCoachingSalesFeature(
       onboardingClients,
       onboardingReviewStamps: journeys,
       onboardingSubmissionStamps: journeys,
+      paymentCardHandler: new CoachingPaymentCardHandler({
+        mirrorPaymentCard: subscriptionUseCases.mirrorPaymentCard,
+      }),
       paymentCompletionHandler: new CoachingPurchaseCompletionHandler({
         incidents: handles.incidents,
         recordCheckoutCompleted: useCases.recordCheckoutCompleted,
+        refreshPaymentCard: subscriptionUseCases.refreshPaymentCard,
       }),
       refundHandler: subscriptionChangeHandler,
       reviewStampWriter: writeReviewStamps,

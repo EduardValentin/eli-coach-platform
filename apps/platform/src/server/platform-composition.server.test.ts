@@ -64,6 +64,7 @@ function composeWith(options: {
       paymentEventHandlingFailed: vi.fn(),
       paymentEventUnrouted: vi.fn(),
     },
+    paymentCardHandler: { handle: vi.fn().mockResolvedValue("recorded") },
     paymentCompletionHandlers: options.paymentCompletionHandlers,
     paymentEvents: options.paymentEvents ?? {
       verify: async () => ({ kind: "invalid" }),

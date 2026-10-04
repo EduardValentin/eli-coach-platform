@@ -2,6 +2,7 @@ import {
   COACHING_SUBSCRIPTION_PURPOSE,
   type CoachingSubscriptionIncidents,
   type RecordCheckoutCompletedUseCase,
+  type RefreshPaymentCardUseCase,
 } from "@eli-coach-platform/domain/coaching-subscription";
 import {
   toCheckoutCompletion,
@@ -18,6 +19,7 @@ type RecordStatus = Awaited<
 type CoachingPurchaseCompletionHandlerOptions = {
   incidents: CoachingSubscriptionIncidents;
   recordCheckoutCompleted: RecordCheckoutCompletedUseCase;
+  refreshPaymentCard: RefreshPaymentCardUseCase;
 };
 
 const OUTCOME_BY_RECORD_STATUS: Record<RecordStatus, HandlerOutcome> = {
@@ -54,6 +56,14 @@ export class CoachingPurchaseCompletionHandler implements PaymentCompletionHandl
       eventId,
     });
 
-    return OUTCOME_BY_RECORD_STATUS[recorded.status];
+    const outcome = OUTCOME_BY_RECORD_STATUS[recorded.status];
+
+    if (outcome !== "ignored") {
+      await this.options.refreshPaymentCard.execute({
+        paymentCustomerId: completion.paymentCustomerId,
+      });
+    }
+
+    return outcome;
   }
 }

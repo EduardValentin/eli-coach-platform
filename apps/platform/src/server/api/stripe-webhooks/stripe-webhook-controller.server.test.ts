@@ -1,5 +1,6 @@
 import type {
   PaidCheckoutSession,
+  PaymentCardChange,
   PaymentCompletionHandler,
   PaymentEvents,
   PaymentEventVerdict,
@@ -51,6 +52,16 @@ const chargeRefund: PaymentRefund = {
   refundedCents: 44700,
   currency: "eur",
   refundedAt: new Date("2026-10-20T10:00:00.000Z"),
+};
+
+const cardAttached: PaymentCardChange = {
+  kind: "attached",
+  customerId: "cus_1",
+  paymentMethodId: "pm_visa",
+  brand: "visa",
+  lastFour: "4242",
+  expiryMonth: 12,
+  expiryYear: 2034,
 };
 
 describe("StripeWebhookController", () => {
@@ -311,6 +322,49 @@ describe("StripeWebhookController with a refunded charge", () => {
   });
 });
 
+describe("StripeWebhookController with a card change", () => {
+  it("hands the change to the one card handler and acknowledges it", async () => {
+    // arrange
+    const { controller, cardHandler } = createController({
+      verdict: {
+        kind: "payment_method_changed",
+        eventId: "evt_card",
+        change: cardAttached,
+      },
+    });
+
+    // act
+    const response = await controller.handleEvent(createWebhookRequest());
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(cardHandler.handle).toHaveBeenCalledWith("evt_card", cardAttached);
+  });
+
+  it("answers 500 and reports the card handler when it fails", async () => {
+    // arrange
+    const { controller, cardHandler, incidents } = createController({
+      verdict: {
+        kind: "payment_method_changed",
+        eventId: "evt_card",
+        change: cardAttached,
+      },
+    });
+    cardHandler.handle.mockRejectedValue(new Error("database down"));
+
+    // act
+    const response = await controller.handleEvent(createWebhookRequest());
+
+    // assert
+    expect(response.status).toBe(500);
+    expect(incidents.paymentEventHandlingFailed).toHaveBeenCalledWith({
+      errorClass: "Error",
+      eventId: "evt_card",
+      handler: "payment-cards",
+    });
+  });
+});
+
 describe("StripeWebhookController with a paid session without a customer", () => {
   it("reports it unrouted when its purpose names no handler", async () => {
     // arrange
@@ -383,12 +437,14 @@ function createController(options: {
     handle: vi.fn().mockResolvedValue("recorded"),
   };
   const refundHandler = { handle: vi.fn().mockResolvedValue("recorded") };
+  const cardHandler = { handle: vi.fn().mockResolvedValue("recorded") };
   const incidents = {
     paymentEventHandlingFailed: vi.fn(),
     paymentEventUnrouted: vi.fn(),
   };
   const paymentEvents: PaymentEvents = { verify };
   const controller = new StripeWebhookController({
+    cardHandler,
     completionHandlersByPurpose: new Map([
       [coachingHandler.purpose, coachingHandler],
     ]),
@@ -403,6 +459,7 @@ function createController(options: {
   });
 
   return {
+    cardHandler,
     coachingHandler,
     controller,
     incidents,

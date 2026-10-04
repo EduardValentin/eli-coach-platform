@@ -17,6 +17,7 @@ import { createIdentityInvitations } from "@eli-coach-platform/infrastructure/id
 import { createProgressPhotoRenditions } from "@eli-coach-platform/infrastructure/images/server";
 import {
   createPaymentCheckout,
+  createPaymentCustomerCards,
   createPaymentEvents,
   createPaymentSubscriptions,
 } from "@eli-coach-platform/infrastructure/payments/server";
@@ -138,6 +139,7 @@ export function createPlatformContainer(options: {
     }),
     incidents,
     paymentCheckout: createPaymentCheckout(environment),
+    paymentCustomerCards: createPaymentCustomerCards(environment),
     paymentSubscriptions: createPaymentSubscriptions(environment),
     pricingEligibility: waitlist.handles.pricingEligibility,
     productEmail,
@@ -177,6 +179,7 @@ export function createPlatformContainer(options: {
     botDetection,
     featureFlags,
     incidents,
+    paymentCardHandler: coachingSales.handles.paymentCardHandler,
     paymentCompletionHandlers: [coachingSales.handles.paymentCompletionHandler],
     paymentEvents: createPaymentEvents(environment),
     paymentRefundHandler: coachingSales.handles.refundHandler,
