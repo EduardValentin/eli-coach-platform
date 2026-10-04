@@ -452,6 +452,34 @@ describe("CoachingSubscription start now", () => {
     // assert
     expect(workStart).toBeNull();
   });
+
+  it("names the upcoming work start on the waiting path before the window closes", () => {
+    // act
+    const upcoming = onPath("waiting").upcomingWorkStart(DAY_13);
+
+    // assert
+    expect(upcoming).toEqual(WITHDRAWAL_DEADLINE);
+  });
+
+  it.each([
+    ["once the window closes", onPath("waiting"), DAY_14],
+    ["on the immediate path", onPath("immediate"), DAY_13],
+    [
+      "once cancelled",
+      subscriptionOf({
+        status: "cancelled",
+        cancelledAt: PAID_AT,
+        accessEndsAt: ACCESS_END,
+      }),
+      DAY_13,
+    ],
+  ] as const)("names no upcoming work start %s", (_l, subscription, now) => {
+    // act
+    const upcoming = subscription.upcomingWorkStart(now);
+
+    // assert
+    expect(upcoming).toBeNull();
+  });
 });
 
 describe("CoachingSubscription.recordWithdrawalRefund", () => {

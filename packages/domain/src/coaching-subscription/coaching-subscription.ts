@@ -253,6 +253,10 @@ export class CoachingSubscription {
   }
 
   startNowUntil(now: Date): Date | null {
+    return this.upcomingWorkStart(now);
+  }
+
+  upcomingWorkStart(now: Date): Date | null {
     const workStart = this.programWorkStart();
 
     if (this.statusAt(now) !== "not-started" || workStart === null) {

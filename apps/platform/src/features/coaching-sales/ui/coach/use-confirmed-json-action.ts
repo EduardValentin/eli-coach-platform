@@ -42,7 +42,7 @@ export function useConfirmedJsonAction<Sent>(
   });
 
   const confirm = () => {
-    confirmed.onOpenChange(false);
+    confirmed.closeDialog();
     confirmed.confirm();
   };
 

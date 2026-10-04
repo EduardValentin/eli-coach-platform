@@ -57,6 +57,7 @@ export function useConfirmedFetcherDialog({
   };
 
   return {
+    closeDialog: () => onOpenChange(false),
     confirm,
     onOpenChange,
     open,

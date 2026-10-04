@@ -38,14 +38,14 @@ export class ReadProgramStatusUseCase {
       journey.clientId,
     );
 
-    const startNowUntil =
-      subscription?.startNowUntil(this.options.clock.now()) ?? null;
+    const upcomingWorkStart =
+      subscription?.upcomingWorkStart(this.options.clock.now()) ?? null;
 
     return {
       kind: step,
       submittedAt: journey.onboardingSubmittedAt,
-      workStartsOn: startNowUntil,
-      startNowUntil,
+      workStartsOn: upcomingWorkStart,
+      startNowUntil: upcomingWorkStart,
     };
   }
 }
