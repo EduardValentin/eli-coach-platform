@@ -37,3 +37,39 @@ describe("STRIPE_VOCABULARY.invoiceReasonOf", () => {
     },
   );
 });
+
+describe("STRIPE_VOCABULARY.cardChangeOf", () => {
+  it.each([
+    ["payment_method.attached", "attached"],
+    ["payment_method.automatically_updated", "updated"],
+    ["payment_method.detached", "detached"],
+    ["payment_method.updated", null],
+    ["customer.updated", null],
+  ] as const)(
+    "reads Stripe's %s event as a card change %s",
+    (type, expected) => {
+      // act
+      const change = STRIPE_VOCABULARY.cardChangeOf(type);
+
+      // assert
+      expect(change).toBe(expected);
+    },
+  );
+});
+
+describe("STRIPE_VOCABULARY.isCardPaymentMethod", () => {
+  it.each([
+    ["card", true],
+    ["sepa_debit", false],
+    ["link", false],
+  ] as const)(
+    "reads Stripe's %s payment method type as a card: %s",
+    (type, expected) => {
+      // act
+      const isCard = STRIPE_VOCABULARY.isCardPaymentMethod(type);
+
+      // assert
+      expect(isCard).toBe(expected);
+    },
+  );
+});

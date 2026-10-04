@@ -1,3 +1,4 @@
+import type { PaymentCardChange } from "./payment-card-change.server";
 import type {
   PaymentRefund,
   PaymentSubscriptionChange,
@@ -15,4 +16,11 @@ export interface PaymentSubscriptionChangeHandler {
 
 export interface PaymentRefundHandler {
   handle(eventId: string, refund: PaymentRefund): Promise<PaymentEventHandling>;
+}
+
+export interface PaymentCardHandler {
+  handle(
+    eventId: string,
+    change: PaymentCardChange,
+  ): Promise<PaymentEventHandling>;
 }

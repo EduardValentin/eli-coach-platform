@@ -6,6 +6,10 @@ import {
   type PaidCheckoutSession,
 } from "./checkout-session-completion.server";
 import {
+  readPaymentCardChange,
+  type PaymentCardChange,
+} from "./payment-card-change.server";
+import {
   readPaymentRefund,
   readSubscriptionChange,
   type PaymentProviderVocabulary,
@@ -26,6 +30,11 @@ export type PaymentEventVerdict =
       change: PaymentSubscriptionChange;
     }
   | { kind: "charge_refunded"; eventId: string; refund: PaymentRefund }
+  | {
+      kind: "payment_method_changed";
+      eventId: string;
+      change: PaymentCardChange;
+    }
   | { kind: "ignored" }
   | { kind: "invalid" };
 
@@ -62,7 +71,9 @@ export function readPaymentEvent(
     case CHARGE_REFUNDED_EVENT:
       return readChargeRefunded(parsed.data);
     default:
-      return readSubscriptionChanged(parsed.data, vocabulary);
+      return vocabulary.cardChangeOf(parsed.data.type)
+        ? readPaymentMethodChanged(parsed.data, vocabulary)
+        : readSubscriptionChanged(parsed.data, vocabulary);
   }
 }
 
@@ -82,6 +93,24 @@ function readChargeRefunded(event: PaymentEvent): PaymentEventVerdict {
 
   return refund
     ? { kind: "charge_refunded", eventId: event.id, refund }
+    : IGNORED;
+}
+
+function readPaymentMethodChanged(
+  event: PaymentEvent,
+  vocabulary: PaymentProviderVocabulary,
+): PaymentEventVerdict {
+  const change = readPaymentCardChange(
+    {
+      type: event.type,
+      object: event.data.object,
+      previousAttributes: event.data.previous_attributes ?? null,
+    },
+    vocabulary,
+  );
+
+  return change
+    ? { kind: "payment_method_changed", eventId: event.id, change }
     : IGNORED;
 }
 

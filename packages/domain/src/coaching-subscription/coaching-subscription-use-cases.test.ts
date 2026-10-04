@@ -527,6 +527,8 @@ function createSubscriptionIncidents() {
     renewalHoldFailed: vi.fn(),
     refundNotificationFailed: vi.fn(),
     paymentEventRejected: vi.fn(),
+    paymentCardEventMirrored: vi.fn(),
+    cardMirrorFailed: vi.fn(),
   } satisfies CoachingSubscriptionIncidents;
 }
 

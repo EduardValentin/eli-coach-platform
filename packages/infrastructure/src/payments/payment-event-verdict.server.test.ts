@@ -257,6 +257,65 @@ describe("readPaymentEvent", () => {
     expect(verdict).toEqual({ kind: "ignored" });
   });
 
+  it("reads a card attached to a customer as a payment method change", () => {
+    // arrange
+    const event = {
+      id: "evt_card",
+      type: "payment_method.attached",
+      created: 1790960437,
+      data: {
+        object: {
+          id: "pm_visa",
+          object: "payment_method",
+          type: "card",
+          customer: "cus_test",
+          card: { brand: "visa", last4: "4242", exp_month: 12, exp_year: 2034 },
+        },
+      },
+    };
+
+    // act
+    const verdict = readPaymentEvent(event, STRIPE_VOCABULARY);
+
+    // assert
+    expect(verdict).toEqual({
+      kind: "payment_method_changed",
+      eventId: "evt_card",
+      change: {
+        kind: "attached",
+        customerId: "cus_test",
+        paymentMethodId: "pm_visa",
+        brand: "visa",
+        lastFour: "4242",
+        expiryMonth: 12,
+        expiryYear: 2034,
+      },
+    });
+  });
+
+  it("ignores a payment method change that is not a card", () => {
+    // arrange
+    const event = {
+      id: "evt_debit",
+      type: "payment_method.attached",
+      created: 1790960437,
+      data: {
+        object: {
+          id: "pm_debit",
+          object: "payment_method",
+          type: "sepa_debit",
+          customer: "cus_test",
+        },
+      },
+    };
+
+    // act
+    const verdict = readPaymentEvent(event, STRIPE_VOCABULARY);
+
+    // assert
+    expect(verdict).toEqual({ kind: "ignored" });
+  });
+
   it("ignores every other event type", () => {
     // arrange
     const event = {

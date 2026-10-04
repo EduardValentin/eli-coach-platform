@@ -7,6 +7,8 @@ import {
   type CoachingSubscriptionStatus,
 } from "./coaching-subscription";
 import type { CoachingSubscriptions } from "./coaching-subscriptions";
+import type { PaymentCardSnapshot } from "./payment-card";
+import type { PaymentCards } from "./payment-cards";
 
 type ClientSubscriptionReading = {
   subscription: CoachingSubscriptionSnapshot;
@@ -18,9 +20,11 @@ type ClientSubscriptionReading = {
   startNowUntil: Date | null;
   paymentProblem: boolean;
   refundDue: boolean;
+  card: PaymentCardSnapshot | null;
 };
 
 type ReadClientSubscriptionUseCaseOptions = {
+  cards: PaymentCards;
   clock: Clock;
   subscriptions: CoachingSubscriptions;
 };
@@ -39,6 +43,9 @@ export class ReadClientSubscriptionUseCase {
     }
 
     const now = this.options.clock.now();
+    const card = await this.options.cards.findByPaymentCustomerId(
+      subscription.paymentCustomerId,
+    );
 
     return {
       subscription: subscription.toSnapshot(),
@@ -50,6 +57,7 @@ export class ReadClientSubscriptionUseCase {
       startNowUntil: subscription.startNowUntil(now),
       paymentProblem: subscription.hasPaymentProblem(),
       refundDue: subscription.hasRefundOutstanding(),
+      card: card?.toSnapshot() ?? null,
     };
   }
 }

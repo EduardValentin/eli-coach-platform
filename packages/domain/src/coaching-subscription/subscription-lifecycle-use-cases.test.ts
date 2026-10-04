@@ -10,6 +10,8 @@ import {
 import type { CoachingSubscriptionIncidents } from "./coaching-subscription-incidents";
 import type { CoachingSubscriptions } from "./coaching-subscriptions";
 import { OpenPaymentMethodSessionUseCase } from "./open-payment-method-session-use-case";
+import { PaymentCard } from "./payment-card";
+import type { PaymentCards } from "./payment-cards";
 import type { PaymentSubscriptions } from "./payment-subscriptions";
 import { ReadClientSubscriptionUseCase } from "./read-client-subscription-use-case";
 import { ReconcileSubscriptionEventUseCase } from "./reconcile-subscription-event-use-case";
@@ -72,6 +74,14 @@ function createSubscriptions(found: CoachingSubscription | null) {
   } satisfies CoachingSubscriptions;
 }
 
+function createCards(stored: PaymentCard | null) {
+  return {
+    findByPaymentCustomerId: vi.fn().mockResolvedValue(stored),
+    save: vi.fn().mockResolvedValue("saved"),
+    saveForEvent: vi.fn().mockResolvedValue("recorded"),
+  } satisfies PaymentCards;
+}
+
 function createPaymentSubscriptions() {
   return {
     holdRenewal: vi.fn().mockResolvedValue(undefined),
@@ -95,6 +105,8 @@ function createIncidents() {
     renewalHoldFailed: vi.fn(),
     refundNotificationFailed: vi.fn(),
     paymentEventRejected: vi.fn(),
+    paymentCardEventMirrored: vi.fn(),
+    cardMirrorFailed: vi.fn(),
   } satisfies CoachingSubscriptionIncidents;
 }
 
@@ -782,6 +794,7 @@ describe("ReadClientSubscriptionUseCase", () => {
     // arrange
     const subscriptions = createSubscriptions(subscriptionOf());
     const useCase = new ReadClientSubscriptionUseCase({
+      cards: createCards(null),
       clock: clockAt(DAY_13),
       subscriptions,
     });
@@ -800,6 +813,7 @@ describe("ReadClientSubscriptionUseCase", () => {
       startNowUntil: WITHDRAWAL_DEADLINE,
       paymentProblem: false,
       refundDue: false,
+      card: null,
     });
     expect(subscriptions.findCurrentForAuthSubject).toHaveBeenCalledWith(
       AUTH_SUBJECT_ID,
@@ -809,6 +823,7 @@ describe("ReadClientSubscriptionUseCase", () => {
   it("reads the immediate path within the 14 days as a cancellation without a refund", async () => {
     // arrange
     const useCase = new ReadClientSubscriptionUseCase({
+      cards: createCards(null),
       clock: clockAt(DAY_13),
       subscriptions: createSubscriptions(
         subscriptionOf({ startChoice: "immediate" }),
@@ -829,6 +844,7 @@ describe("ReadClientSubscriptionUseCase", () => {
   it("reads the waiting path at its withdrawal deadline with no start now", async () => {
     // arrange
     const useCase = new ReadClientSubscriptionUseCase({
+      cards: createCards(null),
       clock: clockAt(DAY_14),
       subscriptions: createSubscriptions(subscriptionOf()),
     });
@@ -847,6 +863,7 @@ describe("ReadClientSubscriptionUseCase", () => {
     // arrange
     const refund = RefundDue.full({ amountCents: 44700, cancelledAt: DAY_13 });
     const useCase = new ReadClientSubscriptionUseCase({
+      cards: createCards(null),
       clock: clockAt(DAY_14),
       subscriptions: createSubscriptions(
         subscriptionOf({
@@ -873,6 +890,7 @@ describe("ReadClientSubscriptionUseCase", () => {
   it("reads a payment problem the provider flagged", async () => {
     // arrange
     const useCase = new ReadClientSubscriptionUseCase({
+      cards: createCards(null),
       clock: clockAt(DAY_13),
       subscriptions: createSubscriptions(
         subscriptionOf({ paymentProblemSince: DAY_13 }),
@@ -886,9 +904,34 @@ describe("ReadClientSubscriptionUseCase", () => {
     expect(reading).toMatchObject({ paymentProblem: true });
   });
 
+  it("reads the card on file of her payment customer", async () => {
+    // arrange
+    const card = PaymentCard.of({
+      brand: "visa",
+      lastFour: "4242",
+      expiryMonth: 12,
+      expiryYear: 2034,
+      paymentMethodId: "pm_visa",
+    });
+    const cards = createCards(card);
+    const useCase = new ReadClientSubscriptionUseCase({
+      cards,
+      clock: clockAt(DAY_13),
+      subscriptions: createSubscriptions(subscriptionOf()),
+    });
+
+    // act
+    const reading = await useCase.execute(AUTH_SUBJECT_ID);
+
+    // assert
+    expect(reading).toMatchObject({ card: card.toSnapshot() });
+    expect(cards.findByPaymentCustomerId).toHaveBeenCalledWith("cus_1");
+  });
+
   it("reads nothing for a subject with no subscription", async () => {
     // arrange
     const useCase = new ReadClientSubscriptionUseCase({
+      cards: createCards(null),
       clock: clockAt(DAY_13),
       subscriptions: createSubscriptions(null),
     });

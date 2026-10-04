@@ -1,4 +1,5 @@
 import type { CancellationRule, StartChoice } from "./coaching-subscription";
+import type { PaymentCardEventKind } from "./payment-card-event";
 import type { SubscriptionEventKind } from "./subscription-event";
 
 type PaymentEventRejection =
@@ -6,6 +7,8 @@ type PaymentEventRejection =
 
 type SubscriptionEventOutcome =
   "recorded" | "duplicate" | "unknown-subscription";
+
+type PaymentCardEventOutcome = "recorded" | "duplicate" | "unknown-customer";
 
 export interface CoachingSubscriptionIncidents {
   subscriptionCancelled(incident: {
@@ -40,5 +43,15 @@ export interface CoachingSubscriptionIncidents {
   paymentEventRejected(incident: {
     eventId: string;
     reason: PaymentEventRejection;
+  }): void;
+  paymentCardEventMirrored(incident: {
+    eventId: string;
+    eventKind: PaymentCardEventKind;
+    paymentCustomerId: string;
+    outcome: PaymentCardEventOutcome;
+  }): void;
+  cardMirrorFailed(incident: {
+    paymentCustomerId: string;
+    error: unknown;
   }): void;
 }

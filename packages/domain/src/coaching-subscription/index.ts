@@ -28,18 +28,28 @@ export {
   type SubscriptionChange,
   type SubscriptionEventChange,
 } from "./coaching-subscriptions";
+export { MirrorPaymentCardUseCase } from "./mirror-payment-card-use-case";
 export { OpenPaymentMethodSessionUseCase } from "./open-payment-method-session-use-case";
 export { type PaidClientAdmission } from "./paid-client-admission";
 export {
   type CreateCheckoutSessionCommand,
   type PaymentCheckout,
 } from "./payment-checkout";
+export { PaymentCard, type PaymentCardSnapshot } from "./payment-card";
+export { type PaymentCardEvent } from "./payment-card-event";
+export {
+  type CardOnFileChange,
+  type CardOnFileEventChange,
+  type PaymentCards,
+} from "./payment-cards";
+export { type PaymentCustomerCards } from "./payment-customer-cards";
 export { type PaymentSubscriptions } from "./payment-subscriptions";
 export { PurchasedSubscription } from "./purchased-subscription";
 export { ReadCheckoutConfirmationUseCase } from "./read-checkout-confirmation-use-case";
 export { ReadClientSubscriptionUseCase } from "./read-client-subscription-use-case";
 export { ReconcileSubscriptionEventUseCase } from "./reconcile-subscription-event-use-case";
 export { RecordCheckoutCompletedUseCase } from "./record-checkout-completed-use-case";
+export { RefreshPaymentCardUseCase } from "./refresh-payment-card-use-case";
 export {
   REFUND_REASONS,
   RefundDue,
