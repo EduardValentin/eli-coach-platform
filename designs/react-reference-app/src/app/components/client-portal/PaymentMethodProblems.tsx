@@ -2,7 +2,7 @@ import type { CoachingSubscription } from '../../domain/coachingSubscription';
 import { PAYMENT_PROBLEM_LINE } from '../../utils/subscriptionCopy';
 import { InlineProblem } from '../InlineProblem';
 
-type ProblemLineAttributes = { id?: string; className?: string };
+type ProblemLineAttributes = { id?: string };
 
 type PaymentMethodProblemsProps = {
   subscription: CoachingSubscription | undefined;

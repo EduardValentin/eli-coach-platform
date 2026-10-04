@@ -25,9 +25,7 @@ export const KEEP_COACHING_LABEL = 'Keep my coaching';
 
 export const CANCELLING_LABEL = 'Cancelling…';
 
-export const CHANGE_PAYMENT_METHOD_LABEL = 'Change payment method';
-
-export const NO_CARD_ON_FILE_LINE = 'No card on file';
+export const NO_PAYMENT_METHOD_LINE = 'No payment method configured';
 
 export const CARD_BRAND_LABELS: Record<CardBrand, string> = {
   visa: 'Visa',

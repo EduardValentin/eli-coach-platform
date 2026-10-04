@@ -44,10 +44,6 @@ function renderCard(devParams: string) {
                     element={<p>onboarding page</p>}
                     path="/portal/onboarding"
                   />
-                  <Route
-                    element={<p>payment method page</p>}
-                    path="/billing/payment-method"
-                  />
                 </Routes>
               </ClientJourneyProvider>
             </AssessmentCallProvider>
@@ -370,50 +366,21 @@ describe('the program status card', () => {
     expect(reassurance).not.toBeInTheDocument();
   });
 
-  it('announces a payment problem and offers to change the payment method', () => {
+  it('keeps every payment concern off the card even with a payment problem', () => {
     // arrange
     renderCard('?session=client&jstage=reviewing&jpayproblem=1');
 
     // act
-    const status = screen.getByRole('status');
+    const label = screen.getByText('Your coach is reviewing your answers');
 
     // assert
-    expect(status).toHaveTextContent(
-      /^Your last payment didn't go through\. Update your card to keep your coaching going\.$/,
-    );
+    expect(label).toBeVisible();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: 'Change payment method' }),
-    ).toBeVisible();
-  });
-
-  it('keeps the payment method off the card without a payment problem', () => {
-    // arrange
-    renderCard('?session=client&jstage=reviewing');
-
-    // act
-    const change = screen.queryByRole('button', {
-      name: 'Change payment method',
-    });
-
-    // assert
-    expect(change).not.toBeInTheDocument();
-    expect(screen.queryByText('Payment problem')).not.toBeInTheDocument();
-  });
-
-  it('hands her over to update her card from the dashboard', async () => {
-    // arrange
-    renderCard('?session=client&jstage=reviewing&jpayproblem=1');
-
-    // act
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Change payment method' }),
-    );
-
-    // assert
+      screen.queryByText(/Your last payment didn't go through/),
+    ).not.toBeInTheDocument();
     expect(
-      await screen.findByText('payment method page', undefined, {
-        timeout: SERVICE_TIMEOUT,
-      }),
-    ).toBeVisible();
+      screen.queryByRole('button', { name: /payment method/i }),
+    ).not.toBeInTheDocument();
   });
 });

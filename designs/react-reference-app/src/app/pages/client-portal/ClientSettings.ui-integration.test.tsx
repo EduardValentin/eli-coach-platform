@@ -480,7 +480,7 @@ describe('the payment method', () => {
     expect(within(paymentMethodRow()).getByText('•••• 4444')).toBeVisible();
   });
 
-  it('says when there is no card on file', () => {
+  it('says when no payment method is configured', () => {
     // arrange
     renderSettings('jstart=waiting&jcard=none');
 
@@ -488,11 +488,11 @@ describe('the payment method', () => {
     const row = paymentMethodRow();
 
     // assert
-    expect(within(row).getByText('No card on file')).toBeVisible();
+    expect(within(row).getByText('No payment method configured')).toBeVisible();
     expect(within(row).queryByText(/••••/)).not.toBeInTheDocument();
     expect(
       within(row).getByRole('button', { name: 'Change' }),
-    ).toHaveAccessibleDescription('Payment method No card on file');
+    ).toHaveAccessibleDescription('Payment method No payment method configured');
   });
 
   it('keeps the payment problem under the card', () => {
@@ -522,7 +522,7 @@ describe('the payment method', () => {
 
     // assert
     expect(
-      within(paymentMethodRow()).getByText('No card on file'),
+      within(paymentMethodRow()).getByText('No payment method configured'),
     ).toBeVisible();
     expect(window.location.search).toContain('jcard=none');
   });
