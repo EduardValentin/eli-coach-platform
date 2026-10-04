@@ -764,7 +764,7 @@ describe("createConsoleLogger", () => {
             paymentCustomerId: "cus_1",
             error: new TypeError("4242"),
           }),
-        "Card on file could not be mirrored; Stripe will redeliver.",
+        "Payment card could not be refreshed; Stripe will redeliver.",
         {
           errorCategory: "payment_card_mirror_failure",
           errorClass: "TypeError",

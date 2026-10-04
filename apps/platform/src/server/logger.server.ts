@@ -34,7 +34,7 @@ export function createConsoleLogger(): ConsoleLogger {
     },
     paymentCardRefreshFailed: ({ error, paymentCustomerId }) => {
       console.error(
-        "Card on file could not be mirrored; Stripe will redeliver.",
+        "Payment card could not be refreshed; Stripe will redeliver.",
         {
           errorCategory: "payment_card_mirror_failure",
           errorClass: errorClassOf(error),
