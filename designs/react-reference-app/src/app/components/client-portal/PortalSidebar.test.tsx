@@ -41,10 +41,11 @@ afterEach(() => {
 type RenderSidebarOptions = {
   links?: readonly ClientPortalLink[];
   search?: string;
+  markedHrefs?: readonly string[];
 };
 
 function renderSidebar(options: RenderSidebarOptions = {}) {
-  const { links = CLIENT_PORTAL_LINKS, search = '' } = options;
+  const { links = CLIENT_PORTAL_LINKS, search = '', markedHrefs = [] } = options;
   window.history.replaceState(null, '', `/${search}`);
 
   render(
@@ -55,7 +56,7 @@ function renderSidebar(options: RenderSidebarOptions = {}) {
             <ClientJourneyProvider>
               <CheckinProvider>
                 <NotificationProvider>
-                  <PortalSidebar links={links} />
+                  <PortalSidebar links={links} markedHrefs={markedHrefs} />
                   <main id={PORTAL_MAIN_ID} tabIndex={-1}>
                     Dashboard content
                   </main>
@@ -100,6 +101,35 @@ describe('PortalSidebar prototype mode', () => {
 
     // assert
     expect(postMvpLinks).not.toHaveLength(0);
+  });
+});
+
+describe('PortalSidebar attention marker', () => {
+  it('marks Resources in the sidebar and on More while she has something new', () => {
+    // arrange
+    renderSidebar({ markedHrefs: ['/portal/resources'] });
+
+    // act
+    const sidebar = screen.getByRole('navigation', { name: 'Client portal navigation' });
+    const bar = screen.getByRole('navigation', { name: 'Client portal tabs' });
+
+    // assert
+    expect(within(sidebar).getByRole('link', { name: 'Resources (new)' })).toHaveAttribute(
+      'href',
+      '/portal/resources',
+    );
+    expect(within(bar).getByRole('button', { name: 'More (new)' })).toBeInTheDocument();
+  });
+
+  it('leaves the links unmarked when nothing is new', () => {
+    // arrange
+    renderSidebar();
+
+    // act
+    const sidebar = screen.getByRole('navigation', { name: 'Client portal navigation' });
+
+    // assert
+    expect(within(sidebar).getByRole('link', { name: 'Resources' })).toBeInTheDocument();
   });
 });
 

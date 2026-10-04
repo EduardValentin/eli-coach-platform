@@ -4,9 +4,14 @@ import { PORTAL_MAIN_ID, PortalSidebar } from './PortalSidebar';
 import { CLIENT_PORTAL_LINKS } from './navigation-links';
 import { ActiveWorkoutBanner } from './ActiveWorkoutBanner';
 import { useAppState } from '../../context/AppContext';
+import { SIGNED_IN_CLIENT_ID } from '../../context/ClientProfileContext';
+import { useUnopenedResources } from '../../hooks/useClientResources';
+
+const RESOURCES_HREF = '/portal/resources';
 
 export function PortalLayout() {
   const { appState } = useAppState();
+  const hasUnopenedResources = useUnopenedResources(SIGNED_IN_CLIENT_ID);
 
   useEffect(() => {
     document.documentElement.dataset.portal = 'client';
@@ -21,7 +26,10 @@ export function PortalLayout() {
         Skip to main content
       </a>
 
-      <PortalSidebar links={CLIENT_PORTAL_LINKS} />
+      <PortalSidebar
+        links={CLIENT_PORTAL_LINKS}
+        markedHrefs={hasUnopenedResources ? [RESOURCES_HREF] : []}
+      />
 
       <main
         id={PORTAL_MAIN_ID}

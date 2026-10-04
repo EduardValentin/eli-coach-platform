@@ -19,7 +19,12 @@ import { MEASUREMENT_FIELDS } from '../../domain/onboardingSchema';
 import { recordMeasurements } from '../../services/measurementService';
 import { Button } from '../ui/button';
 import { Form } from '../ui/form';
-import { ResponsiveSheetDialog } from '../workout/ResponsiveSheetDialog';
+import {
+  ResponsiveSheetDialog,
+  SheetDialogActions,
+  SheetDialogBody,
+  SheetDialogHeader,
+} from '../workout/ResponsiveSheetDialog';
 import { OnboardingFieldControl } from './onboarding/OnboardingFieldControl';
 import { ProgressPhotoBlock } from './onboarding/ProgressPhotoBlock';
 import {
@@ -96,16 +101,9 @@ function AddMeasurementsForm({
 
   return (
     <>
-      <div className="shrink-0 border-b border-border-subtle px-5 pt-6 pb-4 md:px-8 md:pt-8">
-        <h3 className="pr-10 text-lg font-semibold leading-snug text-text-primary md:text-xl">
-          {SHEET_TITLE}
-        </h3>
-        <p className="mt-1 text-xs text-text-secondary sm:text-sm">
-          {SHEET_DESCRIPTION}
-        </p>
-      </div>
+      <SheetDialogHeader description={SHEET_DESCRIPTION} title={SHEET_TITLE} />
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-5 pt-5 pb-6 md:px-8 md:pt-6 md:pb-8">
+      <SheetDialogBody>
         <Form {...form}>
           <form className="grid gap-6" noValidate onSubmit={save}>
             {MEASUREMENT_FIELDS.map((field) => (
@@ -130,7 +128,7 @@ function AddMeasurementsForm({
               photos={photos}
             />
 
-            <div className="flex flex-col-reverse gap-3 sm:flex-row-reverse">
+            <SheetDialogActions>
               <Button
                 disabled={saving}
                 type="submit"
@@ -148,10 +146,10 @@ function AddMeasurementsForm({
               >
                 Cancel
               </Button>
-            </div>
+            </SheetDialogActions>
           </form>
         </Form>
-      </div>
+      </SheetDialogBody>
     </>
   );
 }

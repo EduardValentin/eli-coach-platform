@@ -12,7 +12,11 @@ import {
 import { REVIEW_CALL_BOOKING_WINDOW_DAYS } from '../../utils/reviewCallListing';
 import { AssessmentSlotPicker } from '../AssessmentSlotPicker';
 import { Button } from '../ui/button';
-import { ResponsiveSheetDialog } from '../workout/ResponsiveSheetDialog';
+import {
+  ResponsiveSheetDialog,
+  SheetDialogBody,
+  SheetDialogHeader,
+} from '../workout/ResponsiveSheetDialog';
 
 const TITLE = 'Book your review call';
 
@@ -76,22 +80,20 @@ export function ReviewCallScheduler({
       open={open}
       title={TITLE}
     >
-      <div className="shrink-0 border-b border-border-subtle px-5 pt-6 pb-4 md:px-8 md:pt-8">
-        <div className="mb-1.5 flex items-center gap-1.5">
-          <CalendarPlus size={13} className="text-primary" aria-hidden="true" />
-          <span className="text-label uppercase text-primary">
-            Program review
-          </span>
-        </div>
-        <h3 className="pr-10 text-lg font-semibold leading-snug text-text-primary md:text-xl">
-          {TITLE}
-        </h3>
-        <p className="mt-1 text-xs text-text-secondary sm:text-sm">
-          {DESCRIPTION}
-        </p>
-      </div>
+      <SheetDialogHeader
+        description={DESCRIPTION}
+        eyebrow={
+          <div className="mb-1.5 flex items-center gap-1.5">
+            <CalendarPlus size={13} className="text-primary" aria-hidden="true" />
+            <span className="text-label uppercase text-primary">
+              Program review
+            </span>
+          </div>
+        }
+        title={TITLE}
+      />
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-5 pt-5 pb-6 md:px-8 md:pt-6 md:pb-8">
+      <SheetDialogBody>
         {slots.length === 0 ? (
           <p className="text-sm text-text-secondary">
             No times are open right now. Message Eli and she will find you one.
@@ -104,7 +106,7 @@ export function ReviewCallScheduler({
             timeZone={settings.timeZone}
           />
         )}
-      </div>
+      </SheetDialogBody>
 
       <div className="shrink-0 border-t border-border-subtle bg-surface-base px-5 py-3 md:px-8 md:py-4">
         <Button

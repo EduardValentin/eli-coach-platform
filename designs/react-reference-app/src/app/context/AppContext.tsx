@@ -34,6 +34,14 @@ import {
   type PhotoRemoval,
 } from '../services/measurementService';
 import {
+  RESOURCE_LOAD_OUTCOMES,
+  RESOURCE_SEEDS,
+  RESOURCE_UPLOAD_OUTCOMES,
+  type ResourceLoad,
+  type ResourceSeed,
+  type ResourceUpload,
+} from '../services/resourceService';
+import {
   PROTOTYPE_LIFE_STAGES,
   PROTOTYPE_MEASUREMENTS_DUE,
   PROTOTYPE_SEEDED_PHOTOS,
@@ -112,6 +120,9 @@ type AppState = {
   paymentLinkOutcome: PrototypePaymentLinkOutcome;
   paymentLinkState: PrototypePaymentLinkState;
   invitationLinkState: PrototypeInvitationLinkState;
+  resourceSeed: ResourceSeed;
+  resourceLoad: ResourceLoad;
+  resourceUpload: ResourceUpload;
 };
 
 type AppContextType = {
@@ -154,6 +165,9 @@ const defaultState: AppState = {
   paymentLinkOutcome: 'sent',
   paymentLinkState: 'valid',
   invitationLinkState: 'valid',
+  resourceSeed: 'seeded',
+  resourceLoad: 'works',
+  resourceUpload: 'works',
 };
 
 const validSessions = ['anonymous', 'client', 'coach'] as const;
@@ -412,6 +426,21 @@ function parseDevParamsFromURL(): AppState {
     state.invitationLinkState =
       invitationLinkState as PrototypeInvitationLinkState;
   }
+  state.resourceSeed = optionOrDefault(
+    RESOURCE_SEEDS,
+    params.get('rseed'),
+    defaultState.resourceSeed,
+  );
+  state.resourceLoad = optionOrDefault(
+    RESOURCE_LOAD_OUTCOMES,
+    params.get('rload'),
+    defaultState.resourceLoad,
+  );
+  state.resourceUpload = optionOrDefault(
+    RESOURCE_UPLOAD_OUTCOMES,
+    params.get('rupload'),
+    defaultState.resourceUpload,
+  );
 
   return state;
 }
@@ -463,6 +492,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     url.searchParams.delete('paylink');
     url.searchParams.delete('paylinkstate');
     url.searchParams.delete('invitationstate');
+    url.searchParams.delete('rseed');
+    url.searchParams.delete('rload');
+    url.searchParams.delete('rupload');
 
     if (appState.prototypeMode === 'post-mvp') {
       url.searchParams.set('scope', 'post-mvp');
@@ -566,6 +598,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
     if (appState.invitationLinkState !== defaultState.invitationLinkState) {
       url.searchParams.set('invitationstate', appState.invitationLinkState);
+    }
+    if (appState.resourceSeed !== defaultState.resourceSeed) {
+      url.searchParams.set('rseed', appState.resourceSeed);
+    }
+    if (appState.resourceLoad !== defaultState.resourceLoad) {
+      url.searchParams.set('rload', appState.resourceLoad);
+    }
+    if (appState.resourceUpload !== defaultState.resourceUpload) {
+      url.searchParams.set('rupload', appState.resourceUpload);
     }
 
     const target = url.pathname + url.search + url.hash;

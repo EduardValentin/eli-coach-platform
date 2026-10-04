@@ -45,6 +45,11 @@ import {
   PROTOTYPE_MEASUREMENTS_DUE,
   PROTOTYPE_SEEDED_PHOTOS,
 } from '../services/clientJourneySamples';
+import {
+  RESOURCE_LOAD_OUTCOMES,
+  RESOURCE_SEEDS,
+  RESOURCE_UPLOAD_OUTCOMES,
+} from '../services/resourceService';
 import { optionOrDefault } from '../utils/optionOrDefault';
 import type {
   SubscriptionStartPath,
@@ -462,6 +467,9 @@ export function DevToggle() {
                 </TabsTrigger>
                 <TabsTrigger value="journey" className={TAB_TRIGGER_CLASS}>
                   Journey
+                </TabsTrigger>
+                <TabsTrigger value="resources" className={TAB_TRIGGER_CLASS}>
+                  Resources
                 </TabsTrigger>
               </TabsList>
 
@@ -1415,6 +1423,74 @@ export function DevToggle() {
                     ))}
                   </div>
                 )}
+              </TabsContent>
+
+              <TabsContent value="resources" className={TAB_PANEL_CLASS}>
+                <div className="space-y-2">
+                  <Label htmlFor="dev-resource-seed" className={DEV_LABEL_CLASS}>
+                    Client resources
+                  </Label>
+                  <Select
+                    value={appState.resourceSeed}
+                    onValueChange={(value) =>
+                      setAppState({
+                        resourceSeed: optionOrDefault(RESOURCE_SEEDS, value, 'seeded'),
+                      })
+                    }
+                  >
+                    <SelectTrigger id="dev-resource-seed" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="seeded">Populated</SelectItem>
+                      <SelectItem value="empty">Empty</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="dev-resource-load" className={DEV_LABEL_CLASS}>
+                    Resources load
+                  </Label>
+                  <Select
+                    value={appState.resourceLoad}
+                    onValueChange={(value) =>
+                      setAppState({
+                        resourceLoad: optionOrDefault(RESOURCE_LOAD_OUTCOMES, value, 'works'),
+                      })
+                    }
+                  >
+                    <SelectTrigger id="dev-resource-load" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="works">Works</SelectItem>
+                      <SelectItem value="fails">Fails</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="dev-resource-upload" className={DEV_LABEL_CLASS}>
+                    Resource upload
+                  </Label>
+                  <Select
+                    value={appState.resourceUpload}
+                    onValueChange={(value) =>
+                      setAppState({
+                        resourceUpload: optionOrDefault(RESOURCE_UPLOAD_OUTCOMES, value, 'works'),
+                      })
+                    }
+                  >
+                    <SelectTrigger id="dev-resource-upload" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className={SELECT_CONTENT_CLASS}>
+                      <SelectItem value="works">Works</SelectItem>
+                      <SelectItem value="fails">Fails</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </TabsContent>
             </Tabs>
           </motion.div>

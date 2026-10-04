@@ -55,7 +55,7 @@ import { CallJourneyActions } from './CallJourneyActions';
 import { CallStageBadge } from './CallStageBadge';
 import { CallListPager } from './CallListPager';
 import { JoinCallLink } from './JoinCallLink';
-import { SortControl } from './SortControl';
+import { SortControl, type SortOption } from '../SortControl';
 
 const STATUS_PARAM = 'when';
 const QUERY_PARAM = 'q';
@@ -68,6 +68,37 @@ const DEFAULT_STATUS: AssessmentCallStatus = 'all';
 const DEFAULT_JOURNEY: JourneyStep = 'any';
 const DEFAULT_SORT_KEY: SortKey = 'scheduled';
 const SEARCH_FIELD_ID = 'assessment-call-search';
+
+const CALL_SORT_OPTIONS: readonly SortOption<SortKey>[] = [
+  {
+    key: 'scheduled',
+    label: 'Scheduled date',
+    order: 'chronological',
+    defaultDirection: defaultDirectionFor('scheduled'),
+    directionLabels: { desc: 'Soonest first', asc: 'Latest first' },
+  },
+  {
+    key: 'booked',
+    label: 'Booking date',
+    order: 'chronological',
+    defaultDirection: defaultDirectionFor('booked'),
+    directionLabels: { desc: 'Newest first', asc: 'Oldest first' },
+  },
+  {
+    key: 'name',
+    label: 'Name',
+    order: 'alphabetical',
+    defaultDirection: defaultDirectionFor('name'),
+    directionLabels: { asc: 'A to Z', desc: 'Z to A' },
+  },
+  {
+    key: 'email',
+    label: 'Email',
+    order: 'alphabetical',
+    defaultDirection: defaultDirectionFor('email'),
+    directionLabels: { asc: 'A to Z', desc: 'Z to A' },
+  },
+];
 
 const WHEN_TABS: { status: AssessmentCallStatus; label: string }[] = [
   { status: 'all', label: 'All' },
@@ -383,7 +414,11 @@ export function AssessmentCallsSection({
               value={query}
               onChange={(event) => changeQuery(event.target.value)}
             />
-            <SortControl sort={sort} onChange={chooseSort} />
+            <SortControl
+              options={CALL_SORT_OPTIONS}
+              sort={sort}
+              onChange={chooseSort}
+            />
           </div>
         </div>
 
