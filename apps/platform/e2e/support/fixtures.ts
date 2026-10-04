@@ -25,10 +25,12 @@ import {
 import { MeasurementRecords } from "./measurement-records";
 import { MeasurementsSheet } from "./measurements-sheet";
 import { OnboardingRecords } from "./onboarding-records";
+import { PaymentCardRecords } from "./payment-card-records";
 import { PhotoRequests } from "./photo-requests";
 import { PhotoLightbox } from "./photo-lightbox";
 import { PhotoView } from "./photo-view";
 import { PortalRequests } from "./portal-requests";
+import { PrivacyPolicyPage } from "./privacy-policy-page";
 import {
   insertInvitedClientRecords,
   insertPaidClientRecords,
@@ -75,6 +77,7 @@ type PlatformFixtures = {
   clientProfile: ClientProfilePage;
   clientSettings: ClientSettingsPage;
   clientEnded: ClientEndedPage;
+  privacyPolicy: PrivacyPolicyPage;
   measurementsSheet: MeasurementsSheet;
   photoView: PhotoView;
   photoLightbox: PhotoLightbox;
@@ -127,6 +130,7 @@ type PlatformFixtures = {
   portalRequests: PortalRequests;
   provisionCoach: () => Promise<void>;
   onboardingRecords: OnboardingRecords;
+  paymentCardRecords: PaymentCardRecords;
   signIn: () => Promise<void>;
   signInAsCoach: () => Promise<void>;
   signInAsOtherClient: () => Promise<void>;
@@ -307,6 +311,10 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
 
   clientProfile: async ({ page }, use) => {
     await use(new ClientProfilePage(page));
+  },
+
+  privacyPolicy: async ({ page }, use) => {
+    await use(new PrivacyPolicyPage(page));
   },
 
   clientSettings: async ({ page }, use) => {
@@ -649,6 +657,10 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
 
   onboardingRecords: async ({ databasePool, testEmail }, use) => {
     await use(new OnboardingRecords(databasePool, testEmail));
+  },
+
+  paymentCardRecords: async ({ databasePool }, use) => {
+    await use(new PaymentCardRecords(databasePool));
   },
 
   signIn: async ({ publicNav, accountPortal, testEmail }, use) => {

@@ -124,6 +124,40 @@ export async function refundRestInStripe(
   return { chargeId, requestId: refund.lastResponse.requestId };
 }
 
+export async function attachCardInStripe(
+  subscription: StripeTestSubscription,
+  testPaymentMethod: string,
+): Promise<StripeChange & { card: StripeTestCard }> {
+  const attached = await createStripeTestClient().paymentMethods.attach(
+    testPaymentMethod,
+    { customer: subscription.customerId },
+  );
+
+  if (!attached.card) {
+    throw new Error(`Payment method ${attached.id} carries no card.`);
+  }
+
+  return {
+    card: {
+      paymentMethodId: attached.id,
+      brand: attached.card.brand,
+      lastFour: attached.card.last4,
+      expiryMonth: attached.card.exp_month,
+      expiryYear: attached.card.exp_year,
+    },
+    requestId: attached.lastResponse.requestId,
+  };
+}
+
+export async function detachCardInStripe(
+  paymentMethodId: string,
+): Promise<StripeChange> {
+  const detached =
+    await createStripeTestClient().paymentMethods.detach(paymentMethodId);
+
+  return { requestId: detached.lastResponse.requestId };
+}
+
 export async function cancelInStripe(
   subscription: StripeTestSubscription,
 ): Promise<StripeChange> {

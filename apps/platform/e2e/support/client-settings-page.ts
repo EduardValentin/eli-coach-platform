@@ -198,6 +198,16 @@ export class ClientSettingsPage {
     await expect(this.changeButton).toHaveCount(0);
   }
 
+  async readLoaderPayload(): Promise<string> {
+    const html = await this.page.request.get(SETTINGS_PATH);
+    const data = await this.page.request.get(`${SETTINGS_PATH}.data`);
+
+    expect(html.status()).toBe(200);
+    expect(data.status()).toBe(200);
+
+    return `${await html.text()}\n${await data.text()}`;
+  }
+
   async change(): Promise<void> {
     await this.changeButton.click();
   }

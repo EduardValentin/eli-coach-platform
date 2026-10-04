@@ -6,9 +6,12 @@ import {
 } from "../support/stripe-events";
 import { daysAfter } from "../support/paid-clients";
 import {
+  attachCardInStripe,
   cancelInStripe,
+  detachCardInStripe,
   liftScheduledEndInStripe,
   scheduleEndInStripe,
+  type StripeTestCard,
 } from "../support/stripe-subscriptions";
 import { paidThrough } from "../support/subscribed-clients";
 import { PROTOTYPE_DETAIL_REQUEST } from "../support/submitted-clients";
@@ -16,6 +19,7 @@ import { PROTOTYPE_DETAIL_REQUEST } from "../support/submitted-clients";
 const JOURNEY_TIMEOUT_MS = 180_000;
 const PLAN_TITLE = "3 months of coaching";
 const SCHEDULED_END_DAYS = 40;
+const MASTERCARD_TEST_PAYMENT_METHOD = "pm_card_mastercard";
 
 const dayMonthFormatter = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",
@@ -24,6 +28,13 @@ const dayMonthFormatter = new Intl.DateTimeFormat("en-GB", {
 
 function dayOf(instant: Date): string {
   return dayMonthFormatter.format(instant);
+}
+
+function expiryOf(card: StripeTestCard): string {
+  const month = String(card.expiryMonth).padStart(2, "0");
+  const year = String(card.expiryYear % 100).padStart(2, "0");
+
+  return `${month}/${year}`;
 }
 
 test("Eli cancels a subscription in Stripe, the client's portal closes and the coach sees her coaching ended with nothing left to act on", async ({
@@ -102,6 +113,7 @@ test("Eli cancels a subscription in Stripe, the client's portal closes and the c
 });
 
 test("a renewal that fails shows the client a payment problem in her Settings and a way to change her card", async ({
+  clientDashboard,
   clientSettings,
   page,
   provisionSubscribedClient,
@@ -130,6 +142,13 @@ test("a renewal that fails shows the client a payment problem in her Settings an
   await clientSettings.expectPaymentProblem();
 
   // act
+  await clientDashboard.open();
+
+  // assert
+  await clientDashboard.expectNoPaymentConcern();
+
+  // act
+  await clientSettings.open();
   await clientSettings.change();
 
   // assert
@@ -200,4 +219,89 @@ test("Eli schedules the end of a subscription in Stripe and lifts it again, and 
   await clientSettings.expectCancellationFacts(
     `You won't be charged again, there is no refund for the coaching already paid, and your access stays until ${dayOf(paidThrough(client.paidAt))}.`,
   );
+});
+
+test("a card attached in Stripe becomes the client's card on file, a detached other card leaves it, and detaching it leaves no payment method configured", async ({
+  clientSettings,
+  page,
+  provisionSubscribedClient,
+  signIn,
+}) => {
+  test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+  // arrange
+  const client = await provisionSubscribedClient({
+    start: "immediate",
+    daysSincePayment: 3,
+  });
+  const attached = await attachCardInStripe(
+    client.subscription,
+    MASTERCARD_TEST_PAYMENT_METHOD,
+  );
+
+  // act
+  const attachedDelivery = await deliverStripeEvent({
+    baseURL: E2E_APP_URL,
+    type: "payment_method.attached",
+    objectId: attached.card.paymentMethodId,
+    causedBy: attached.requestId,
+  });
+  await page.goto("/store");
+  await signIn();
+  await clientSettings.open();
+
+  // assert
+  expect(attachedDelivery.status).toBe(200);
+  await clientSettings.expectCardOnFile({
+    brand: "Mastercard",
+    lastFour: attached.card.lastFour,
+    expiry: expiryOf(attached.card),
+  });
+
+  // arrange
+  const otherDetached = await detachCardInStripe(
+    client.subscription.card.paymentMethodId,
+  );
+
+  // act
+  const otherDelivery = await deliverStripeEvent({
+    baseURL: E2E_APP_URL,
+    type: "payment_method.detached",
+    objectId: client.subscription.card.paymentMethodId,
+    causedBy: otherDetached.requestId,
+  });
+  await clientSettings.open();
+
+  // assert
+  expect(otherDelivery.status).toBe(200);
+  await clientSettings.expectCardOnFile({
+    brand: "Mastercard",
+    lastFour: attached.card.lastFour,
+    expiry: expiryOf(attached.card),
+  });
+
+  // arrange
+  const mirroredDetached = await detachCardInStripe(
+    attached.card.paymentMethodId,
+  );
+
+  // act
+  const detachedDelivery = await deliverStripeEvent({
+    baseURL: E2E_APP_URL,
+    type: "payment_method.detached",
+    objectId: attached.card.paymentMethodId,
+    causedBy: mirroredDetached.requestId,
+  });
+  const redelivery = await deliverStripeEvent({
+    baseURL: E2E_APP_URL,
+    type: "payment_method.detached",
+    objectId: attached.card.paymentMethodId,
+    causedBy: mirroredDetached.requestId,
+  });
+  await clientSettings.open();
+
+  // assert
+  expect(detachedDelivery.status).toBe(200);
+  expect(redelivery.status).toBe(200);
+  await clientSettings.expectNoPaymentMethod();
 });

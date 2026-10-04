@@ -16,12 +16,19 @@ const ONBOARDING_PATH = "/client/onboarding";
 const PAYMENT_LINK = /\/select-bundle#[\w-]+$/;
 const INVITATION_LINK = /\/invitation#[\w-]+$/;
 const JOURNEY_TIMEOUT_MS = 300_000;
+const CHECKOUT_CARD = {
+  brand: "visa",
+  lastFour: "4242",
+  expiryMonth: 12,
+  expiryYear: 2034,
+};
 
 test("a paid client receives her invitation, creates her account and lands on the welcome screen", async ({
   accountPortal,
   bookingPage,
   coachAssessmentCalls,
   page,
+  paymentCardRecords,
   provisionAccount,
   publicNav,
   registerCheckoutSessionForCleanup,
@@ -99,6 +106,9 @@ test("a paid client receives her invitation, creates her account and lands on th
     behavior: "void",
     resumes_at: null,
   });
+  expect(await paymentCardRecords.mirroredCardOf(visitorEmail)).toEqual(
+    CHECKOUT_CARD,
+  );
   await expect(
     coachAssessmentCalls.call(CLIENT_NAME).getByText("Paid", { exact: true }),
   ).toBeVisible();

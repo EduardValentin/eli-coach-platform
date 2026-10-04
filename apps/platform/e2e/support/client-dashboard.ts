@@ -26,6 +26,8 @@ const NUDGE_LINES = [
 const START_SOONER_NOTE =
   "Want Eli to start sooner? You can give up your 14-day right of withdrawal and let her begin now.";
 const WORK_START_LINE_PATTERN = /starts working on your program on/;
+const PAYMENT_ACTION_PATTERN = /payment method|^Change$|^Manage$/i;
+const PAYMENT_PROBLEM_PATTERN = /payment didn't go through/;
 const START_NOW_LABELS = {
   title: "Let Eli start now?",
   confirm: "Yes, start now",
@@ -176,6 +178,14 @@ export class ClientDashboard {
 
   async expectStartNowFocused(): Promise<void> {
     await expect(this.startNowButton).toBeFocused();
+  }
+
+  async expectNoPaymentConcern(): Promise<void> {
+    await expect(this.onboardingStatus).toBeVisible();
+    await expect(this.page.getByText(PAYMENT_PROBLEM_PATTERN)).toHaveCount(0);
+    await expect(
+      this.page.getByRole("button", { name: PAYMENT_ACTION_PATTERN }),
+    ).toHaveCount(0);
   }
 
   async expectRefusedPhotoToast(view: ProgressPhotoView): Promise<void> {

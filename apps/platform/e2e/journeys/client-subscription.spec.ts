@@ -769,3 +769,35 @@ test("a start-now refused while her dialog is open is worded in the dialog and c
   // assert
   await escaped.expectNoProblem();
 });
+
+test("a client's Settings read her card on file without ever sending its payment method", async ({
+  clientSettings,
+  page,
+  provisionSubscribedClient,
+  signIn,
+}) => {
+  test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+  // arrange
+  const client = await provisionSubscribedClient({
+    start: "waiting",
+    daysSincePayment: 3,
+  });
+  await page.goto("/store");
+  await signIn();
+
+  // act
+  await clientSettings.open();
+  const payload = await clientSettings.readLoaderPayload();
+
+  // assert
+  await clientSettings.expectCardOnFile({
+    brand: "Visa",
+    lastFour: client.subscription.card.lastFour,
+    expiry: cardExpiry(client.subscription.card),
+  });
+  expect(payload).toContain(client.subscription.card.lastFour);
+  expect(payload).not.toContain(client.subscription.card.paymentMethodId);
+  expect(payload).not.toMatch(/\bpm_[A-Za-z0-9]+/);
+  expect(payload).not.toContain(client.subscription.customerId);
+});
