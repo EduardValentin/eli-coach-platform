@@ -8,6 +8,7 @@ import { CheckinProvider } from '../../context/CheckinContext';
 import { ClientJourneyProvider } from '../../context/ClientJourneyContext';
 import { ClientProfileProvider } from '../../context/ClientProfileContext';
 import { NotificationProvider } from '../../context/NotificationContext';
+import { ResourceProvider } from '../../context/ResourceContext';
 import { PortalLayout } from './PortalLayout';
 
 beforeAll(() => {
@@ -40,11 +41,13 @@ function renderLayout() {
             <ClientJourneyProvider>
               <CheckinProvider>
                 <NotificationProvider>
-                  <Routes>
-                    <Route path="/portal" element={<PortalLayout />}>
-                      <Route index element={<h1>Dashboard</h1>} />
-                    </Route>
-                  </Routes>
+                  <ResourceProvider>
+                    <Routes>
+                      <Route path="/portal" element={<PortalLayout />}>
+                        <Route index element={<h1>Dashboard</h1>} />
+                      </Route>
+                    </Routes>
+                  </ResourceProvider>
                 </NotificationProvider>
               </CheckinProvider>
             </ClientJourneyProvider>

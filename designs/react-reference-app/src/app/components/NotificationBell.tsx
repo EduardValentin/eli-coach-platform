@@ -3,6 +3,7 @@ import { Bell, Check } from 'lucide-react';
 import { useNotifications, type Notification } from '../context/NotificationContext';
 import { Link } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
+import { AttentionDot } from './AttentionDot';
 import { BottomSheet } from './ui/bottom-sheet';
 import { useIsMobile } from './ui/use-mobile';
 
@@ -69,7 +70,7 @@ function TriggerButton({
     >
       <Bell size={18} aria-hidden="true" />
       {unreadCount > 0 && (
-        <span className="absolute top-2 right-2 w-2 h-2 bg-status-pending rounded-full ring-2 ring-white" />
+        <AttentionDot className="absolute top-2 right-2 ring-2 ring-white" />
       )}
     </button>
   );
@@ -237,7 +238,7 @@ function NotificationList({
             <div className="flex gap-3">
               <div className="mt-1">
                 {!notif.read ? (
-                  <div className="w-2 h-2 rounded-full bg-status-pending" />
+                  <AttentionDot />
                 ) : (
                   <div className="w-2 h-2 rounded-full bg-transparent" />
                 )}

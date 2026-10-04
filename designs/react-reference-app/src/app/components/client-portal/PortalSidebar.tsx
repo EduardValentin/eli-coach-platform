@@ -1,8 +1,16 @@
 import { Link, useLocation, useNavigate } from 'react-router';
 import { User, MoreHorizontal, LogOut, ChevronRight } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+  type RefObject,
+} from 'react';
 import { useAppState } from '../../context/AppContext';
 import { useClientProfile, fullName } from '../../context/ClientProfileContext';
+import { AttentionDot } from '../AttentionDot';
 import { NotificationBell } from '../NotificationBell';
 import { navigationLinkSlug } from '../navigation-link-slug';
 import { LABEL_CLASS } from '../typography';
@@ -16,6 +24,10 @@ import type { ClientPortalLink } from './navigation-links';
 export const PORTAL_MAIN_ID = 'portal-main';
 
 const MAX_BAR_TABS = 4;
+
+function NewLinkLabel() {
+  return <span className="sr-only"> (new)</span>;
+}
 
 type MoreSheetState = 'open' | 'closed' | 'closed-for-desktop';
 
@@ -83,7 +95,13 @@ function ClientNameBlock({
   );
 }
 
-function DesktopSidebar({ links }: { links: ClientPortalLink[] }) {
+function DesktopSidebar({
+  links,
+  markedHrefs,
+}: {
+  links: ClientPortalLink[];
+  markedHrefs: readonly string[];
+}) {
   const location = useLocation();
 
   return (
@@ -130,6 +148,12 @@ function DesktopSidebar({ links }: { links: ClientPortalLink[] }) {
                   aria-hidden="true"
                 />
                 <span className="text-sm font-medium">{link.name}</span>
+                {markedHrefs.includes(link.href) && (
+                  <>
+                    <NewLinkLabel />
+                    <AttentionDot className="ml-auto" />
+                  </>
+                )}
               </Link>
             );
           })}
@@ -157,20 +181,40 @@ function MobileTopBar() {
   );
 }
 
+function IconWithMarker({
+  marked,
+  children,
+}: {
+  marked: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <span className="relative inline-flex">
+      {children}
+      {marked && (
+        <AttentionDot className="absolute -top-0.5 -right-0.5 ring-2 ring-surface-base" />
+      )}
+    </span>
+  );
+}
+
 function MobileTabBar({
   links,
   moreLinks,
+  markedHrefs,
   moreOpen,
   moreButtonRef,
   onOpenMore,
 }: {
   links: ClientPortalLink[];
   moreLinks: ClientPortalLink[];
+  markedHrefs: readonly string[];
   moreOpen: boolean;
   moreButtonRef: RefObject<HTMLButtonElement>;
   onOpenMore: () => void;
 }) {
   const location = useLocation();
+  const moreMarked = moreLinks.some((link) => markedHrefs.includes(link.href));
   const moreActive =
     moreOpen ||
     moreLinks.some((link) => isRouteActive(location.pathname, link.href));
@@ -199,12 +243,15 @@ function MobileTabBar({
                   },
                 )}
               >
-                <Icon
-                  size={22}
-                  strokeWidth={isActive ? 2.4 : 2}
-                  aria-hidden="true"
-                />
+                <IconWithMarker marked={markedHrefs.includes(link.href)}>
+                  <Icon
+                    size={22}
+                    strokeWidth={isActive ? 2.4 : 2}
+                    aria-hidden="true"
+                  />
+                </IconWithMarker>
                 <span className="text-caption font-semibold">{link.name}</span>
+                {markedHrefs.includes(link.href) && <NewLinkLabel />}
               </Link>
             </li>
           );
@@ -226,12 +273,15 @@ function MobileTabBar({
               },
             )}
           >
-            <MoreHorizontal
-              size={22}
-              strokeWidth={moreActive ? 2.4 : 2}
-              aria-hidden="true"
-            />
+            <IconWithMarker marked={moreMarked}>
+              <MoreHorizontal
+                size={22}
+                strokeWidth={moreActive ? 2.4 : 2}
+                aria-hidden="true"
+              />
+            </IconWithMarker>
             <span className="text-caption font-semibold">More</span>
+            {moreMarked && <NewLinkLabel />}
           </button>
         </li>
       </ul>
@@ -241,9 +291,11 @@ function MobileTabBar({
 
 function MoreSheetNavigation({
   links,
+  markedHrefs,
   onClose,
 }: {
   links: ClientPortalLink[];
+  markedHrefs: readonly string[];
   onClose: () => void;
 }) {
   const location = useLocation();
@@ -299,6 +351,12 @@ function MoreSheetNavigation({
               aria-hidden="true"
             />
             <span className="text-base font-medium flex-1">{link.name}</span>
+            {markedHrefs.includes(link.href) && (
+              <>
+                <NewLinkLabel />
+                <AttentionDot />
+              </>
+            )}
             <ChevronRight
               size={18}
               className="text-text-secondary"
@@ -317,9 +375,11 @@ function MoreSheetNavigation({
 
 function MoreSheetBody({
   links,
+  markedHrefs,
   onClose,
 }: {
   links: ClientPortalLink[];
+  markedHrefs: readonly string[];
   onClose: () => void;
 }) {
   const navigate = useNavigate();
@@ -341,7 +401,11 @@ function MoreSheetBody({
       </div>
 
       {links.length > 0 && (
-        <MoreSheetNavigation links={links} onClose={onClose} />
+        <MoreSheetNavigation
+          links={links}
+          markedHrefs={markedHrefs}
+          onClose={onClose}
+        />
       )}
 
       <div className="mt-auto border-t border-border-subtle px-4 py-3">
@@ -362,8 +426,10 @@ function MoreSheetBody({
 
 export function PortalSidebar({
   links: portalLinks,
+  markedHrefs = [],
 }: {
   links: readonly ClientPortalLink[];
+  markedHrefs?: readonly string[];
 }) {
   const [moreSheet, setMoreSheet] = useState<MoreSheetState>('closed');
   const moreButtonRef = useRef<HTMLButtonElement>(null);
@@ -394,11 +460,12 @@ export function PortalSidebar({
 
   return (
     <>
-      <DesktopSidebar links={links} />
+      <DesktopSidebar links={links} markedHrefs={markedHrefs} />
       <MobileTopBar />
       <MobileTabBar
         links={barLinks}
         moreLinks={moreLinks}
+        markedHrefs={markedHrefs}
         moreOpen={moreOpen}
         moreButtonRef={moreButtonRef}
         onOpenMore={() => setMoreSheet('open')}
@@ -411,7 +478,11 @@ export function PortalSidebar({
         title="More"
         className="h-[90vh] flex flex-col"
       >
-        <MoreSheetBody links={moreLinks} onClose={() => setMoreSheet('closed')} />
+        <MoreSheetBody
+          links={moreLinks}
+          markedHrefs={markedHrefs}
+          onClose={() => setMoreSheet('closed')}
+        />
       </BottomSheet>
     </>
   );
