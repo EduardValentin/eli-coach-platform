@@ -529,6 +529,28 @@ describe.sequential("stripe webhooks integration", () => {
     ]);
   });
 
+  it("leaves the card on file alone when the provider updated another payment method", async () => {
+    // arrange
+    await journey.payForCall();
+
+    // act
+    const response = await lifecycle.deliverEvent({
+      id: "evt_integration_other_card_updated",
+      type: "payment_method.automatically_updated",
+      object: stripeCardPaymentMethodObject({
+        ...MASTERCARD,
+        card: { ...MASTERCARD.card, exp_year: 2036 },
+      }),
+      previousAttributes: {
+        card: { exp_month: 3, exp_year: 2031 },
+      },
+    });
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(await lifecycle.paymentCardRows()).toEqual([CHECKOUT_CARD]);
+  });
+
   it("clears the card on file when that card is detached", async () => {
     // arrange
     await journey.payForCall();

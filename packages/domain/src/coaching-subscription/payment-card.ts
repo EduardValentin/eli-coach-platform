@@ -40,11 +40,22 @@ export class PaymentCard {
     stored: PaymentCard | null,
     event: PaymentCardEvent,
   ): PaymentCard | null {
-    if (event.kind !== "card-detached") {
+    if (event.kind === "card-attached") {
       return event.card;
     }
 
-    return stored?.paymentMethodId === event.paymentMethodId ? null : stored;
+    if (event.kind === "card-updated") {
+      const updatesAnotherCard =
+        stored !== null && !stored.isPaymentMethod(event.card.paymentMethodId);
+
+      return updatesAnotherCard ? stored : event.card;
+    }
+
+    return stored?.isPaymentMethod(event.paymentMethodId) ? null : stored;
+  }
+
+  private isPaymentMethod(paymentMethodId: string): boolean {
+    return this.paymentMethodId === paymentMethodId;
   }
 
   toSnapshot(): PaymentCardSnapshot {

@@ -75,6 +75,36 @@ describe("PaymentCard", () => {
     expect(mirrored).toEqual(updated);
   });
 
+  it("keeps the card on file when the provider updated another payment method", () => {
+    // arrange
+    const stored = PaymentCard.of(VISA);
+
+    // act
+    const mirrored = PaymentCard.mirror(stored, {
+      kind: "card-updated",
+      paymentCustomerId: "cus_1",
+      card: PaymentCard.of({ ...MASTERCARD, expiryYear: 2036 }),
+    });
+
+    // assert
+    expect(mirrored).toBe(stored);
+  });
+
+  it("makes an updated card the card on file when none is mirrored yet", () => {
+    // arrange
+    const updated = PaymentCard.of({ ...VISA, expiryYear: 2038 });
+
+    // act
+    const mirrored = PaymentCard.mirror(null, {
+      kind: "card-updated",
+      paymentCustomerId: "cus_1",
+      card: updated,
+    });
+
+    // assert
+    expect(mirrored).toEqual(updated);
+  });
+
   it("clears the card on file when that card is detached", () => {
     // arrange
     const stored = PaymentCard.of(VISA);
