@@ -64,7 +64,7 @@ export class ClientResourcesController {
 
     if (body.status === "too_large") {
       return Response.json(
-        { message: "The file is too large to send." },
+        refusedResourceAnswerSchema.parse({ refusal: "too-large" }),
         { status: 413 },
       );
     }

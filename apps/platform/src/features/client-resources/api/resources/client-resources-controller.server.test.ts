@@ -185,7 +185,7 @@ describe("ClientResourcesController add", () => {
     expect(addClientResource).not.toHaveBeenCalled();
   });
 
-  it("refuses a body over the upload cap without reading it or adding anything", async () => {
+  it("refuses a body over the upload cap as too large without reading it or adding anything", async () => {
     // arrange
     const { controller, addClientResource } = createController();
     const request = new Request(UPLOAD_URL, {
@@ -202,6 +202,7 @@ describe("ClientResourcesController add", () => {
 
     // assert
     expect(response.status).toBe(413);
+    expect(await response.json()).toEqual({ refusal: "too-large" });
     expect(addClientResource).not.toHaveBeenCalled();
   });
 
