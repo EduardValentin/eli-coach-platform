@@ -38,6 +38,7 @@ export default defineConfig(({ mode }) => {
   return {
     base,
     plugins: [tailwindcss(), reactRouter(), emitPdfPagesWorker()],
+    optimizeDeps: { exclude: ["@napi-rs/canvas", "pdfjs-dist"] },
     resolve: {
       alias: {
         "~": resolve(currentDirectory, "src"),
