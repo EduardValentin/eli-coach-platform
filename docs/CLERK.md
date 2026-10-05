@@ -242,7 +242,12 @@ Prerequisites:
   fixture creates her Clerk user and inserts her account, an ended assessment
   call, her bound client record and a coaching subscription that waits out
   the withdrawal window (`e2e/support/paid-clients.ts`), then she signs in
-  like any other journey. `sign-up-unavailable.spec.ts`
+  like any other journey. `coach-client-resources.spec.ts` gives the coach
+  clients through `provisionClientInState("approved")`, which creates no Clerk
+  user, and refuses a client who signs in through `provisionPaidClient`; the
+  files it adds land under `CLIENT_RESOURCE_ROOT`, and the run's cleanup
+  removes them with the client's rows (`e2e/support/client-resource-files.ts`).
+  `sign-up-unavailable.spec.ts`
   asserts the mode from the public environment endpoint and fails until the
   flip lands. No journey needs a Clerk webhook delivery, so the suite does not
   start the relay.
