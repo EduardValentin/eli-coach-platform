@@ -102,6 +102,14 @@ module.exports = {
       to: { path: `${FEATURES}client-profile/` },
     },
     {
+      name: "coaching-sales-never-reaches-client-resources",
+      comment:
+        "client-resources builds on coaching-sales, so coaching-sales never imports client-resources, not even its public folders.",
+      severity: "error",
+      from: { path: `${FEATURES}coaching-sales/` },
+      to: { path: `${FEATURES}client-resources/` },
+    },
+    {
       name: "client-profile-never-reaches-client-onboarding",
       comment:
         "client-onboarding builds on client-profile, so client-profile never imports client-onboarding, not even its public folders.",

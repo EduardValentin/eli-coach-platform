@@ -11,6 +11,9 @@
   "apps/platform/src/features/coaching-sales/contracts/reaches-client-profile.ts": [
     "coaching-sales-never-reaches-client-profile"
   ],
+  "apps/platform/src/features/coaching-sales/contracts/reaches-client-resources.ts": [
+    "coaching-sales-never-reaches-client-resources"
+  ],
   "apps/platform/src/features/coaching-sales/ui/public/clerk-confined.tsx": [
     "clerk-confined",
     "not-to-unresolvable"

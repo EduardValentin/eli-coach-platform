@@ -3,6 +3,7 @@ import type { AssessmentCallIncidents } from "@eli-coach-platform/domain/assessm
 import type { ClientInvitationIncidents } from "@eli-coach-platform/domain/client-invitation";
 import type { ClientOnboardingIncidents } from "@eli-coach-platform/domain/client-onboarding";
 import type { MeasurementIncidents } from "@eli-coach-platform/domain/client-profile";
+import type { ClientResourceIncidents } from "@eli-coach-platform/domain/client-resources";
 import type { ClientRosterIncidents } from "@eli-coach-platform/domain/client-roster";
 import type { CoachingSalesIncidents } from "@eli-coach-platform/domain/payment-link";
 import type { WaitlistIncidents } from "@eli-coach-platform/domain/waitlist";
@@ -12,6 +13,7 @@ type ConsoleLogger = AcquisitionIncidents &
   AssessmentCallIncidents &
   ClientInvitationIncidents &
   ClientOnboardingIncidents &
+  ClientResourceIncidents &
   ClientRosterIncidents &
   CoachingSalesIncidents &
   MeasurementIncidents &
@@ -231,6 +233,45 @@ export function createConsoleLogger(): ConsoleLogger {
         receivedBytes,
         storedBytes,
         view,
+      });
+    },
+    resourceAccessRefused: ({ clientId, requesterRole, resourceId }) => {
+      console.warn("Client resource access refused.", {
+        clientId,
+        eventCategory: "client_resource_access_refused",
+        requesterRole,
+        resourceId,
+      });
+    },
+    resourceRefused: ({ clientId, reason, receivedBytes }) => {
+      console.warn("Client resource refused.", {
+        clientId,
+        eventCategory: "client_resource_refused",
+        reason,
+        receivedBytes,
+      });
+    },
+    resourceStorageFailed: ({ clientId, resourceId }) => {
+      console.error("Client resource could not be stored.", {
+        clientId,
+        errorCategory: "client_resource_storage_failure",
+        resourceId,
+      });
+    },
+    resourceStored: ({
+      clientId,
+      format,
+      pageCount,
+      resourceId,
+      sizeBytes,
+    }) => {
+      console.info("Client resource stored.", {
+        clientId,
+        eventCategory: "client_resource_stored",
+        format,
+        pageCount,
+        resourceId,
+        sizeBytes,
       });
     },
     retryableDeliveryAuditPending: ({ requestId }) => {

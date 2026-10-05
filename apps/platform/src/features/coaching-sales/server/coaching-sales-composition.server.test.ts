@@ -157,6 +157,19 @@ describe("composeCoachingSalesFeature client onboarding handles", () => {
     await expect(reading).rejects.toThrow("database down");
   });
 
+  it("reads whether a client exists for her resources from the clients table", async () => {
+    // arrange
+    const { handles } = composeCoachingSalesFeature(createHandles({}));
+
+    // act
+    const reading = handles.resourceClients.exists(
+      "7c6c5a52-8f4f-4e5a-a2b7-5c3f6a9c1d22",
+    );
+
+    // assert
+    await expect(reading).rejects.toThrow("database down");
+  });
+
   it("stamps the submitted onboarding on the clients table", async () => {
     // arrange
     const { handles } = composeCoachingSalesFeature(createHandles({}));

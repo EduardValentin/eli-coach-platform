@@ -3,6 +3,7 @@ import {
   resolveFeatureFlagOverridesMode,
   type RuntimeEnvironment,
 } from "@eli-coach-platform/config";
+import { RESOURCE_RENDITIONS } from "@eli-coach-platform/domain/client-resources";
 import { GetFeatureFlagsUseCase } from "@eli-coach-platform/domain/feature-flag";
 import type { Clock } from "@eli-coach-platform/domain/shared";
 import { EVOA_FITNESS_PRIVACY_EMAIL } from "@eli-coach-platform/content";
@@ -11,10 +12,17 @@ import {
   createBotDetectionConfig,
   createBotVerifier,
 } from "@eli-coach-platform/infrastructure/bot-detection/server";
-import { createProgressPhotoStore } from "@eli-coach-platform/infrastructure/client-media/server";
+import {
+  createClientResourceStore,
+  createProgressPhotoStore,
+} from "@eli-coach-platform/infrastructure/client-media/server";
+import { createResourceDocumentPages } from "@eli-coach-platform/infrastructure/documents/server";
 import { createProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 import { createIdentityInvitations } from "@eli-coach-platform/infrastructure/identity/server";
-import { createProgressPhotoRenditions } from "@eli-coach-platform/infrastructure/images/server";
+import {
+  createProgressPhotoRenditions,
+  createResourceImagePages,
+} from "@eli-coach-platform/infrastructure/images/server";
 import {
   createPaymentCheckout,
   createPaymentEvents,
@@ -35,6 +43,10 @@ import {
   type ClientOnboardingFeature,
 } from "~/features/client-onboarding/server/client-onboarding-composition.server";
 import { composeClientProfileFeature } from "~/features/client-profile/server/client-profile-composition.server";
+import {
+  composeClientResourcesFeature,
+  type ClientResourcesFeature,
+} from "~/features/client-resources/server/client-resources-composition.server";
 import { composeCoachingSalesFeature } from "~/features/coaching-sales/server/coaching-sales-composition.server";
 import {
   composeStoreFeature,
@@ -60,6 +72,7 @@ export type PlatformContainer = {
   assessmentCalls: ReturnType<typeof composeAssessmentCallsFeature>;
   clientOnboarding: ClientOnboardingFeature;
   clientProfile: ReturnType<typeof composeClientProfileFeature>;
+  clientResources: ClientResourcesFeature;
   closeDatabase: () => Promise<void>;
   coachingSales: ReturnType<typeof composeCoachingSalesFeature>;
   featureFlagOverrides: FeatureFlagOverrides;
@@ -169,6 +182,18 @@ export function createPlatformContainer(options: {
     saveClientProfile: clientProfile.handles.saveClientProfile,
     unitPreferences: clientProfile.handles.unitPreferences,
   });
+  const clientResources = composeClientResourcesFeature({
+    clock,
+    database: database.client,
+    documentPages: createResourceDocumentPages({
+      workerUrl: pdfPagesWorkerUrl(),
+      renditions: RESOURCE_RENDITIONS,
+    }),
+    imagePages: createResourceImagePages(RESOURCE_RENDITIONS),
+    incidents,
+    resourceClients: coachingSales.handles.resourceClients,
+    store: createClientResourceStore(environment.CLIENT_RESOURCE_ROOT),
+  });
   const platform = composePlatformFeature({
     app: environment,
     botDetection,
@@ -195,6 +220,7 @@ export function createPlatformContainer(options: {
     assessmentCalls,
     clientOnboarding,
     clientProfile,
+    clientResources,
     closeDatabase: () => database.close(),
     coachingSales,
     featureFlagOverrides,
@@ -225,6 +251,15 @@ export function getPlatformContainer(): PlatformContainer {
   });
 
   return platformContainer;
+}
+
+function pdfPagesWorkerUrl(): URL {
+  return import.meta.env.DEV
+    ? new URL(
+        import.meta
+          .resolve("@eli-coach-platform/infrastructure/documents/pdf-pages-worker"),
+      )
+    : new URL("./pdf-pages-worker.js", import.meta.url);
 }
 
 function clientPortalUrl(environment: RuntimeEnvironment): string {

@@ -48,6 +48,7 @@ import {
 } from "@eli-coach-platform/domain/payment-link";
 import type { Clock } from "@eli-coach-platform/domain/shared";
 import type { MeasurementClients } from "@eli-coach-platform/domain/client-profile";
+import type { ResourceClients } from "@eli-coach-platform/domain/client-resources";
 import type { UnitPreferenceClients } from "@eli-coach-platform/domain/unit-preference";
 import type { ProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 import type { PaymentCompletionHandler } from "@eli-coach-platform/infrastructure/payments/server";
@@ -99,6 +100,7 @@ type CoachingSalesComposition = {
     onboardingReviewStamps: OnboardingReviewStamps;
     onboardingSubmissionStamps: OnboardingSubmissionStamps;
     paymentCompletionHandler: PaymentCompletionHandler;
+    resourceClients: ResourceClients;
     reviewStampWriter: ReviewStampWriter;
     unitPreferenceClients: UnitPreferenceClients;
   };
@@ -294,6 +296,7 @@ export function composeCoachingSalesFeature(
         incidents: handles.incidents,
         recordCheckoutCompleted: useCases.recordCheckoutCompleted,
       }),
+      resourceClients: onboardingClients,
       reviewStampWriter: writeReviewStamps,
       unitPreferenceClients: onboardingClients,
     },

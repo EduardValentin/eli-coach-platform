@@ -614,4 +614,104 @@ describe("createConsoleLogger", () => {
       requesterRole: "CLIENT",
     });
   });
+
+  it("logs a stored client resource by ids, format, size and page count only", () => {
+    // arrange
+    const consoleInfo = vi
+      .spyOn(console, "info")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+
+    // act
+    logger.resourceStored({
+      clientId: "client-1",
+      resourceId: "resource-1",
+      format: "pdf",
+      sizeBytes: 182_431,
+      pageCount: 3,
+    });
+
+    // assert
+    expect(consoleInfo).toHaveBeenCalledWith("Client resource stored.", {
+      clientId: "client-1",
+      eventCategory: "client_resource_stored",
+      format: "pdf",
+      pageCount: 3,
+      resourceId: "resource-1",
+      sizeBytes: 182_431,
+    });
+  });
+
+  it("logs a refused client resource by client, byte count and reason only", () => {
+    // arrange
+    const consoleWarn = vi
+      .spyOn(console, "warn")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+
+    // act
+    logger.resourceRefused({
+      clientId: "client-1",
+      receivedBytes: 12,
+      reason: "unsupported-type",
+    });
+
+    // assert
+    expect(consoleWarn).toHaveBeenCalledWith("Client resource refused.", {
+      clientId: "client-1",
+      eventCategory: "client_resource_refused",
+      reason: "unsupported-type",
+      receivedBytes: 12,
+    });
+  });
+
+  it("logs a refused client resource request by requester role and ids only", () => {
+    // arrange
+    const consoleWarn = vi
+      .spyOn(console, "warn")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+
+    // act
+    logger.resourceAccessRefused({
+      requesterRole: "CLIENT",
+      clientId: "client-1",
+      resourceId: null,
+    });
+
+    // assert
+    expect(consoleWarn).toHaveBeenCalledWith(
+      "Client resource access refused.",
+      {
+        clientId: "client-1",
+        eventCategory: "client_resource_access_refused",
+        requesterRole: "CLIENT",
+        resourceId: null,
+      },
+    );
+  });
+
+  it("logs a client resource that could not be stored by ids only", () => {
+    // arrange
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+
+    // act
+    logger.resourceStorageFailed({
+      clientId: "client-1",
+      resourceId: "resource-1",
+    });
+
+    // assert
+    expect(consoleError).toHaveBeenCalledWith(
+      "Client resource could not be stored.",
+      {
+        clientId: "client-1",
+        errorCategory: "client_resource_storage_failure",
+        resourceId: "resource-1",
+      },
+    );
+  });
 });
