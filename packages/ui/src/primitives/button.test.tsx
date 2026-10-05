@@ -50,6 +50,39 @@ describe("button corner", () => {
   });
 });
 
+describe("button icon glyph", () => {
+  it.each(["icon-xs", "icon-sm"] as const)(
+    "sizes an unsized glyph in the %s round button to 16px",
+    (size) => {
+      // arrange
+      // act
+      const classes = buttonVariants({ size }).split(" ");
+
+      // assert
+      expect(classes).toContain("[&_svg:not([class*='size-'])]:size-4");
+    },
+  );
+
+  it("sizes an unsized glyph in the medium round button to 20px", () => {
+    // arrange
+    // act
+    const classes = buttonVariants({ size: "icon-md" }).split(" ");
+
+    // assert
+    expect(classes).toContain("[&_svg:not([class*='size-'])]:size-5");
+    expect(classes).not.toContain("[&_svg:not([class*='size-'])]:size-4");
+  });
+
+  it("leaves the glyph of a text button to the caller", () => {
+    // arrange
+    // act
+    const classes = buttonVariants({ size: "md" }).split(" ");
+
+    // assert
+    expect(classes.some((name) => name.startsWith("[&_svg:not("))).toBe(false);
+  });
+});
+
 describe("button ladder", () => {
   it("fills a primary button with the portal interaction colour", () => {
     // arrange

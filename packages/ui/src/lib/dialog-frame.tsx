@@ -15,7 +15,7 @@ type DialogFrameProps = Omit<
 };
 
 const FRAME_CLASS =
-  "fixed z-50 bg-surface-base motion-safe:data-[state=closed]:animate-[ui-popover-out_200ms_ease] motion-safe:data-[state=open]:animate-[ui-popover-in_200ms_ease]";
+  "fixed z-50 bg-surface-base duration-200 motion-safe:data-[state=closed]:animate-[ui-popover-out_200ms_ease] motion-safe:data-[state=open]:animate-[ui-popover-in_200ms_ease]";
 
 const FULL_SCREEN_CLASS =
   "inset-0 flex h-dvh flex-col gap-0 overflow-hidden shadow-none pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)]";

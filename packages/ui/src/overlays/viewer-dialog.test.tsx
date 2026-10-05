@@ -88,6 +88,7 @@ describe("ViewerDialog", () => {
       "fixed",
       "z-50",
       "bg-surface-base",
+      "duration-200",
       "inset-0",
       "flex",
       "h-dvh",
