@@ -2,12 +2,7 @@ export {
   AddClientResourceUseCase,
   type AddClientResourceResult,
 } from "./add-client-resource-use-case";
-export {
-  ClientResource,
-  ResourceFile,
-  type ClientResourceSnapshot,
-  type ResourceFileSnapshot,
-} from "./client-resource";
+export { ClientResource, type ClientResourceSnapshot } from "./client-resource";
 export { type ResourceRequester } from "./client-resource-access";
 export { type ClientResourceIds } from "./client-resource-ids";
 export { type ClientResourceIncidents } from "./client-resource-incidents";
@@ -50,7 +45,6 @@ export {
 export {
   RESOURCE_FILE_FORMATS,
   RESOURCE_FILE_KINDS,
-  resourceFileMimeTypeOf,
   type ResourceFileFormat,
   type ResourceFileKind,
 } from "./resource-file-kind";

@@ -25,6 +25,7 @@ import type {
 } from "~/features/client-onboarding/contracts/onboarding-review";
 import type { ClientProfileView } from "~/features/client-profile/contracts/client-profile";
 import type { MeasurementRow } from "~/features/client-profile/contracts/measurements";
+import { coachClientResourcesPath } from "~/features/client-resources/contracts/paths";
 import type { CoachClient } from "~/features/coaching-sales/contracts/coach-clients";
 import {
   COACH_CLIENTS_PATH,
@@ -211,6 +212,22 @@ describe("the coach's client page", () => {
     expect(
       screen.getByRole("link", { name: "Back to Clients" }),
     ).toHaveAttribute("href", COACH_CLIENTS_PATH);
+  });
+
+  it("leads from her header to her resources", async () => {
+    // arrange, act
+    await renderClientPage();
+
+    // assert
+    const title = screen.getByRole("heading", {
+      level: 1,
+      name: "Ana Popescu",
+    });
+    expect(
+      within(title.closest("header") as HTMLElement).getByRole("link", {
+        name: "Resources",
+      }),
+    ).toHaveAttribute("href", coachClientResourcesPath(CLIENT_ID));
   });
 
   it("lays out her profile, invitation, onboarding, subscription, measurements and assessment call in that order", async () => {

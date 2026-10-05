@@ -76,7 +76,7 @@ function CoachResourceLibrary({
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full" data-parity-root="CoachResourceLibrary">
       <Link
         to={`/coach/clients/${routeId}`}
         className="mb-8 inline-flex items-center gap-2 text-sm font-medium text-text-secondary transition-colors hover:text-text-primary"

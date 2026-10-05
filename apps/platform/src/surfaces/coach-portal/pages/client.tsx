@@ -1,7 +1,6 @@
-import { DeadEndPanel } from "@eli-coach-platform/ui/layout";
 import { PORTAL_PAGE_TITLE_CLASS } from "@eli-coach-platform/ui/lib";
-import { Avatar } from "@eli-coach-platform/ui/primitives";
-import { ArrowLeft, UserX } from "lucide-react";
+import { Avatar, buttonVariants } from "@eli-coach-platform/ui/primitives";
+import { ArrowLeft, FolderOpen } from "lucide-react";
 import { useState } from "react";
 import {
   isRouteErrorResponse,
@@ -26,6 +25,8 @@ import { ClientStatusBadge } from "~/features/coaching-sales/ui/coach/clients/cl
 import { InvitationBlock } from "~/features/coaching-sales/ui/coach/clients/invitation-block";
 import { clientFullName } from "~/features/coaching-sales/ui/coach/clients/roster-listing";
 import { SubscriptionSummary } from "~/features/coaching-sales/ui/coach/clients/subscription-summary";
+import { coachClientResourcesPath } from "~/features/client-resources/contracts/paths";
+import { ClientNotFound } from "~/surfaces/coach-portal/sections/client-not-found";
 
 const CLIENT_NOT_FOUND_STATUS = 404;
 
@@ -81,13 +82,27 @@ export default function CoachClientRoute() {
         <ArrowLeft aria-hidden="true" size={16} /> Back to Clients
       </Link>
 
-      <header className="mb-10 flex items-center gap-5">
-        <Avatar name={name} size="lg" />
-        <div className="min-w-0">
-          <div className="mb-2 flex flex-wrap items-center gap-3">
-            <h1 className={PORTAL_PAGE_TITLE_CLASS}>{name}</h1>
+      <header className="mb-10 flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+        <div className="flex min-w-0 items-center gap-5">
+          <Avatar name={name} size="lg" />
+          <div className="min-w-0">
+            <div className="mb-2 flex flex-wrap items-center gap-3">
+              <h1 className={PORTAL_PAGE_TITLE_CLASS}>{name}</h1>
+            </div>
+            <p className="text-text-secondary">{client.email}</p>
           </div>
-          <p className="text-text-secondary">{client.email}</p>
+        </div>
+        <div
+          className="flex flex-wrap items-center gap-3 md:shrink-0"
+          data-parity="client-header-actions"
+        >
+          <Link
+            className={buttonVariants({ size: "md", variant: "outline" })}
+            to={coachClientResourcesPath(client.clientId)}
+          >
+            <FolderOpen aria-hidden="true" size={16} />
+            Resources
+          </Link>
         </div>
       </header>
 
@@ -129,18 +144,6 @@ export default function CoachClientRoute() {
         />
       </MeasurementsTable>
       <AssessmentCallBlock client={client} />
-    </div>
-  );
-}
-
-function ClientNotFound() {
-  return (
-    <div className="w-full" data-parity-root="ClientNotFound">
-      <DeadEndPanel
-        description="This client is not on your roster, or the link is incorrect."
-        icon={<UserX aria-hidden="true" size={36} />}
-        title="Client not found"
-      />
     </div>
   );
 }
