@@ -1,10 +1,12 @@
+import { accessSync, constants, statSync } from "node:fs";
 import {
+  mkdir,
   realpath,
   stat,
   open as openFile,
   type FileHandle,
 } from "node:fs/promises";
-import { isAbsolute, relative, sep } from "node:path";
+import { isAbsolute, join, relative, sep } from "node:path";
 
 type DirectoryPlacement = "within-root" | "outside-root" | "missing";
 
@@ -12,6 +14,16 @@ type ConfinedFileOpening =
   | { kind: "opened"; file: FileHandle }
   | { kind: "outside-root" }
   | { kind: "missing" };
+
+export function isReadyMediaRoot(root: string): boolean {
+  try {
+    accessSync(root, constants.R_OK | constants.W_OK);
+
+    return statSync(root).isDirectory();
+  } catch {
+    return false;
+  }
+}
 
 export function isPathWithinRoot(root: string, candidate: string): boolean {
   const relativePath = relative(root, candidate);
@@ -39,6 +51,24 @@ export async function directoryPlacement(
   return realDirectory === realRoot || isPathWithinRoot(realRoot, realDirectory)
     ? "within-root"
     : "outside-root";
+}
+
+export async function createConfinedFolders(
+  root: string,
+  relativeFolder: string,
+): Promise<Exclude<DirectoryPlacement, "missing">> {
+  let folder = root;
+
+  for (const segment of relativeFolder.split("/")) {
+    folder = join(folder, segment);
+    await createFolderIfMissing(folder);
+
+    if ((await directoryPlacement(root, folder)) !== "within-root") {
+      return "outside-root";
+    }
+  }
+
+  return "within-root";
 }
 
 export async function openConfinedFile(
@@ -97,6 +127,16 @@ async function isOpenedFileWithinRoot({
     opened.dev === resolved.dev &&
     opened.ino === resolved.ino
   );
+}
+
+async function createFolderIfMissing(folder: string): Promise<void> {
+  try {
+    await mkdir(folder);
+  } catch (error) {
+    if (!hasErrorCode(error, "EEXIST")) {
+      throw error;
+    }
+  }
 }
 
 async function nullWhenMissing<T>(pending: Promise<T>): Promise<T | null> {

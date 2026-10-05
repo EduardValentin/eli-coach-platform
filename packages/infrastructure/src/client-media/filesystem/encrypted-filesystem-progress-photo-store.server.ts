@@ -1,5 +1,5 @@
-import { mkdir, open as openFile, rm, type FileHandle } from "node:fs/promises";
-import { dirname, isAbsolute, join, resolve } from "node:path";
+import { rm } from "node:fs/promises";
+import { dirname, isAbsolute, resolve } from "node:path";
 
 import type {
   ProgressPhotoOwner,
@@ -11,9 +11,10 @@ import {
   PHOTO_ALREADY_STORED_MESSAGE,
   progressPhotoStorageKey,
 } from "../progress-photo-layout.server";
+import { readThenClose, writeNewFile } from "./media-files.server";
 import {
+  createConfinedFolders,
   directoryPlacement,
-  hasErrorCode,
   isPathWithinRoot,
   openConfinedFile,
 } from "./media-root-confinement.server";
@@ -49,11 +50,21 @@ export class EncryptedFilesystemProgressPhotoStore implements ProgressPhotoStore
   ): Promise<ProgressPhotoReference> {
     const storageKey = progressPhotoStorageKey(owner);
 
-    await this.createConfinedFolders(dirname(storageKey));
-    await writeNewFile(
+    if (
+      (await createConfinedFolders(this.root, dirname(storageKey))) !==
+      "within-root"
+    ) {
+      throw new Error(LOCATION_LEAVES_ROOT_MESSAGE);
+    }
+
+    const writing = await writeNewFile(
       resolve(this.root, storageKey),
       sealProgressPhoto({ key: this.key, storageKey, photo: bytes }),
     );
+
+    if (writing === "already-exists") {
+      throw new Error(PHOTO_ALREADY_STORED_MESSAGE);
+    }
 
     return { storageKey, keyId: this.keyId };
   }
@@ -100,19 +111,6 @@ export class EncryptedFilesystemProgressPhotoStore implements ProgressPhotoStore
     await rm(path, { force: true });
   }
 
-  private async createConfinedFolders(relativeFolder: string): Promise<void> {
-    let folder = this.root;
-
-    for (const segment of relativeFolder.split("/")) {
-      folder = join(folder, segment);
-      await createFolderIfMissing(folder);
-
-      if ((await directoryPlacement(this.root, folder)) !== "within-root") {
-        throw new Error(LOCATION_LEAVES_ROOT_MESSAGE);
-      }
-    }
-  }
-
   private referencedPath(storageKey: string): string {
     const path = resolve(this.root, storageKey);
 
@@ -125,44 +123,5 @@ export class EncryptedFilesystemProgressPhotoStore implements ProgressPhotoStore
     }
 
     return path;
-  }
-}
-
-async function createFolderIfMissing(folder: string): Promise<void> {
-  try {
-    await mkdir(folder);
-  } catch (error) {
-    if (!hasErrorCode(error, "EEXIST")) {
-      throw error;
-    }
-  }
-}
-
-async function writeNewFile(path: string, bytes: Buffer): Promise<void> {
-  let file: FileHandle;
-
-  try {
-    file = await openFile(path, "wx");
-  } catch (error) {
-    if (hasErrorCode(error, "EEXIST")) {
-      throw new Error(PHOTO_ALREADY_STORED_MESSAGE);
-    }
-
-    throw error;
-  }
-
-  try {
-    await file.writeFile(bytes);
-    await file.sync();
-  } finally {
-    await file.close();
-  }
-}
-
-async function readThenClose(file: FileHandle): Promise<Buffer> {
-  try {
-    return await file.readFile();
-  } finally {
-    await file.close();
   }
 }
