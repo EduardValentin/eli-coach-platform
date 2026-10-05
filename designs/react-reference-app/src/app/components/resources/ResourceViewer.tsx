@@ -1,7 +1,11 @@
 import { useState, type KeyboardEvent } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import { ArrowLeft, ChevronLeft, ChevronRight, Download, X } from 'lucide-react';
-import type { Resource } from '../../domain/resources';
+import {
+  hasPagePreview,
+  pageCountOf,
+  type Resource,
+} from '../../domain/resources';
 import { formatJourneyDate } from '../../utils/journeyLabels';
 import {
   formatFileSize,
@@ -13,12 +17,17 @@ import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Dialog, DialogClose, DialogContent, DialogTitle } from '../ui/dialog';
 import { useIsDesktop } from '../ui/use-desktop';
+import { cn } from '../ui/utils';
 import type { ResourceManagement } from './ResourceActionsMenu';
+import { ResourceFileCover } from './ResourceFileCover';
 
 type PageStep = -1 | 1;
 
+const STAGE_CLASS =
+  'flex shrink-0 flex-col bg-surface-subtle lg:col-start-1 lg:row-span-2 lg:row-start-2 lg:h-auto lg:min-h-0';
+
 function pageAlt(resource: Resource, page: number): string {
-  return resource.pageImageUrls.length > 1
+  return pageCountOf(resource) > 1
     ? `${resource.title}, page ${page + 1}`
     : resource.title;
 }
@@ -35,14 +44,11 @@ function PageStage({
   onTurn: (step: PageStep) => void;
 }) {
   const reduceMotion = useReducedMotion() === true;
-  const pageCount = resource.pageImageUrls.length;
+  const pageCount = pageCountOf(resource);
   const paged = pageCount > 1;
 
   return (
-    <div
-      className="flex h-[min(58dvh,34rem)] shrink-0 flex-col bg-surface-subtle lg:col-start-1 lg:row-span-2 lg:row-start-2 lg:h-auto lg:min-h-0"
-      data-parity="viewer-stage"
-    >
+    <div className={cn(STAGE_CLASS, 'h-[min(58dvh,34rem)]')} data-parity="viewer-stage">
       <motion.div
         animate={{ opacity: 1, x: 0 }}
         className="flex min-h-0 flex-1"
@@ -96,6 +102,18 @@ function PageStage({
   );
 }
 
+function CoverStage({ resource }: { resource: Resource }) {
+  return (
+    <div className={cn(STAGE_CLASS, 'h-56')} data-parity="viewer-stage">
+      <ResourceFileCover
+        fileName={resource.file.name}
+        kind={resource.file.kind}
+        placement="stage"
+      />
+    </div>
+  );
+}
+
 function ResourceDetailsPanel({
   resource,
   management,
@@ -126,8 +144,8 @@ function ResourceDetailsPanel({
       )}
       <dl className="grid grid-cols-2 gap-x-4 gap-y-4">
         <Reading as="dl-item" label="Type" value={RESOURCE_KIND_LABELS[file.kind].long} />
-        {file.kind !== 'image' && (
-          <Reading as="dl-item" label="Pages" value={file.pageCount} />
+        {file.kind === 'pdf' && (
+          <Reading as="dl-item" label="Pages" value={pageCountOf(resource)} />
         )}
         <Reading as="dl-item" label="Size" value={formatFileSize(file.sizeBytes)} />
         <Reading as="dl-item" label="Added" value={formatJourneyDate(resource.addedAt)} />
@@ -171,7 +189,7 @@ function ViewerContent({
   const [page, setPage] = useState(0);
   const [step, setStep] = useState<PageStep>(1);
   const [announcement, setAnnouncement] = useState('');
-  const pageCount = resource.pageImageUrls.length;
+  const pageCount = pageCountOf(resource);
 
   const turn = (direction: PageStep) => {
     const next = page + direction;
@@ -218,7 +236,11 @@ function ViewerContent({
         </div>
 
         <div className="min-h-0 overflow-y-auto lg:contents">
-          <PageStage onTurn={turn} page={page} resource={resource} step={step} />
+          {hasPagePreview(resource.file.kind) ? (
+            <PageStage onTurn={turn} page={page} resource={resource} step={step} />
+          ) : (
+            <CoverStage resource={resource} />
+          )}
           <ResourceDetailsPanel management={management} resource={resource} />
         </div>
 

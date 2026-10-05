@@ -1,5 +1,4 @@
 import { useId, useState, type FormEvent, type ReactNode } from 'react';
-import { FileImage, FileSpreadsheet, FileText, FileType } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import {
@@ -21,6 +20,7 @@ import {
 } from '../../utils/resourceLabels';
 import { FileDropzone, FilePickerButton } from '../FileDropzone';
 import { TagInput } from '../TagInput';
+import { RESOURCE_KIND_GLYPHS } from './ResourceFileCover';
 import { Alert } from '../ui/alert';
 import { Button } from '../ui/button';
 import {
@@ -48,13 +48,6 @@ export type ResourceFormMode =
 type ResourceFormValues = { title: string; description: string; tags: string[] };
 
 type Submission = { state: 'idle' } | { state: 'sending'; progress: number } | { state: 'failed' };
-
-const KIND_GLYPHS: Record<ResourceFileKind, typeof FileText> = {
-  pdf: FileText,
-  word: FileType,
-  excel: FileSpreadsheet,
-  image: FileImage,
-};
 
 const COPY = {
   add: {
@@ -88,7 +81,7 @@ function ResourceFileRow({
   progress: number | null;
   action?: ReactNode;
 }) {
-  const Glyph = KIND_GLYPHS[file.kind];
+  const Glyph = RESOURCE_KIND_GLYPHS[file.kind];
 
   return (
     <div className="flex items-center gap-3 rounded-field border border-control-border-soft bg-surface-base p-3">

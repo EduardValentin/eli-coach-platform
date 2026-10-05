@@ -219,6 +219,22 @@ describe('coach resources page', () => {
     );
   });
 
+  it('opens a spreadsheet as a download with the coach’s actions and no pages', async () => {
+    // arrange
+    renderPage();
+    await waitForResources();
+
+    // act
+    await userEvent.click(screen.getByRole('button', { name: 'Weekly macro tracker' }));
+
+    // assert
+    const viewer = screen.getByRole('dialog', { name: 'Weekly macro tracker' });
+    expect(within(viewer).getByText('weekly-macro-tracker.xlsx')).toBeInTheDocument();
+    expect(within(viewer).queryByRole('button', { name: 'Next page' })).not.toBeInTheDocument();
+    expect(within(viewer).getByRole('button', { name: 'Download' })).toBeInTheDocument();
+    expect(within(viewer).getByRole('button', { name: 'Edit details' })).toBeInTheDocument();
+  });
+
   it('deletes a resource after naming it in the confirmation', async () => {
     // arrange
     renderPage();

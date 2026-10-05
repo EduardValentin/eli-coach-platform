@@ -13,10 +13,7 @@ import {
 const NOW = new Date('2026-10-03T09:00:00.000Z');
 
 const renderer: ResourcePageRenderer = {
-  render: ({ kind }) => ({
-    pageCount: kind === 'pdf' ? 3 : 1,
-    pageImageUrls: kind === 'pdf' ? ['p1', 'p2', 'p3'] : ['p1'],
-  }),
+  render: ({ kind }) => (kind === 'pdf' ? ['p1', 'p2', 'p3'] : ['p1']),
 };
 
 function stored(overrides: Partial<Resource>): Resource {
@@ -26,7 +23,7 @@ function stored(overrides: Partial<Resource>): Resource {
     title: 'Glute activation warm-up',
     description: 'Before every session.',
     tags: ['Training'],
-    file: { name: 'warm-up.pdf', kind: 'pdf', sizeBytes: 2048, pageCount: 2 },
+    file: { name: 'warm-up.pdf', kind: 'pdf', sizeBytes: 2048 },
     pageImageUrls: ['a', 'b'],
     addedAt: new Date('2026-09-20T09:00:00.000Z'),
     openedAt: null,
@@ -142,11 +139,32 @@ describe('adding a resource', () => {
     expect(listed[0]).toEqual(added);
     expect(added).toMatchObject({
       title: 'Meal ideas',
-      file: { name: 'meal-ideas.pdf', kind: 'pdf', sizeBytes: 4096, pageCount: 3 },
+      file: { name: 'meal-ideas.pdf', kind: 'pdf', sizeBytes: 4096 },
       pageImageUrls: ['p1', 'p2', 'p3'],
       addedAt: NOW,
       openedAt: null,
     });
+  });
+
+  it('keeps a Word file download-only, with no pages', async () => {
+    // arrange
+    const server = serverWith([]);
+    const notes = new File([new Uint8Array(2048)], 'notes.docx');
+    const pending = server.add(
+      {
+        clientId: 'client-1',
+        file: notes,
+        details: { title: 'Notes', description: '', tags: [] },
+      },
+      { outcome: 'works', onProgress: () => undefined },
+    );
+
+    // act
+    const added = await settled(pending, UPLOAD_TIME);
+
+    // assert
+    expect(added.file).toEqual({ name: 'notes.docx', kind: 'word', sizeBytes: 2048 });
+    expect(added.pageImageUrls).toEqual([]);
   });
 
   it('resolves a tag typed in other casing to the existing tag', async () => {

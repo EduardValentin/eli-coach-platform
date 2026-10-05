@@ -24,11 +24,16 @@ export const RESOURCE_UPLOAD_ACCEPT = Object.keys(KIND_BY_EXTENSION)
 
 export const RESOURCE_MAX_BYTES = 25 * 1024 * 1024;
 
+const PAGE_PREVIEWED_KINDS: readonly ResourceFileKind[] = ['pdf', 'image'];
+
+export function hasPagePreview(kind: ResourceFileKind): boolean {
+  return PAGE_PREVIEWED_KINDS.includes(kind);
+}
+
 export type ResourceFile = {
   name: string;
   kind: ResourceFileKind;
   sizeBytes: number;
-  pageCount: number;
 };
 
 export type Resource = {
@@ -122,8 +127,12 @@ export function hasUnopenedResources(resources: readonly Resource[]): boolean {
   return resources.some(isUnopened);
 }
 
-export function thumbnailUrlOf(resource: Resource): string {
-  return resource.pageImageUrls[0] ?? '';
+export function pageCountOf(resource: Resource): number {
+  return resource.pageImageUrls.length;
+}
+
+export function thumbnailUrlOf(resource: Resource): string | null {
+  return resource.pageImageUrls[0] ?? null;
 }
 
 export function coachTagVocabulary(resources: readonly Resource[]): string[] {
