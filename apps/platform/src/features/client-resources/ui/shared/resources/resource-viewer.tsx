@@ -22,7 +22,7 @@ import {
   X,
 } from "lucide-react";
 import { motion } from "motion/react";
-import { useState, type KeyboardEvent } from "react";
+import { useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
 
 import type { ClientResourceView } from "~/features/client-resources/contracts/client-resources";
 
@@ -50,6 +50,22 @@ function pageAlt(resource: ClientResourceView, page: number): string {
     : resource.title;
 }
 
+function usePageControlsKeepingFocus(page: number, pageCount: number) {
+  const previous = useRef<HTMLButtonElement>(null);
+  const next = useRef<HTMLButtonElement>(null);
+
+  useLayoutEffect(() => {
+    if (page === 0 && document.activeElement === previous.current) {
+      next.current?.focus();
+    }
+    if (page === pageCount - 1 && document.activeElement === next.current) {
+      previous.current?.focus();
+    }
+  }, [page, pageCount]);
+
+  return { previous, next };
+}
+
 type PageStageProps = {
   resource: ClientResourceView;
   page: number;
@@ -60,6 +76,7 @@ type PageStageProps = {
 function PageStage({ resource, page, step, onTurn }: PageStageProps) {
   const reduceMotion = useClientReducedMotionPreference();
   const pageCount = pageCountOf(resource);
+  const controls = usePageControlsKeepingFocus(page, pageCount);
 
   return (
     <div
@@ -90,6 +107,7 @@ function PageStage({ resource, page, step, onTurn }: PageStageProps) {
             aria-label="Previous page"
             disabled={page === 0}
             onClick={() => onTurn(-1)}
+            ref={controls.previous}
             size="icon-sm"
             variant="ghost"
           >
@@ -106,6 +124,7 @@ function PageStage({ resource, page, step, onTurn }: PageStageProps) {
             aria-label="Next page"
             disabled={page === pageCount - 1}
             onClick={() => onTurn(1)}
+            ref={controls.next}
             size="icon-sm"
             variant="ghost"
           >

@@ -742,6 +742,31 @@ describe("the resource viewer", () => {
     expect(within(viewer).getByText("Page 1 of 3")).toBeInTheDocument();
   });
 
+  it("hands focus to the other page control when the one she pressed stops at an end", async () => {
+    // arrange
+    const { user } = await renderResourcesPage();
+    const viewer = await openResource(user, "Glute activation warm-up");
+    const previousPage = within(viewer).getByRole("button", {
+      name: "Previous page",
+    });
+    const nextPage = within(viewer).getByRole("button", { name: "Next page" });
+    await user.click(nextPage);
+
+    // act
+    await user.click(nextPage);
+
+    // assert
+    expect(within(viewer).getByText("3 / 3")).toBeVisible();
+    expect(previousPage).toHaveFocus();
+
+    // act
+    await user.keyboard("{Enter}{Enter}");
+
+    // assert
+    expect(within(viewer).getByText("1 / 3")).toBeVisible();
+    expect(nextPage).toHaveFocus();
+  });
+
   it("shows an image as its single page with no page controls", async () => {
     // arrange
     const { user } = await renderResourcesPage();
