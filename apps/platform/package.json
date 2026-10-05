@@ -56,10 +56,12 @@
     "@react-router/dev": "catalog:",
     "@tailwindcss/vite": "catalog:",
     "@types/archiver": "catalog:",
+    "@types/pdfkit": "catalog:",
     "@types/pg": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "drizzle-kit": "catalog:",
+    "pdfkit": "catalog:",
     "tailwindcss": "catalog:",
     "tsx": "catalog:",
     "vite": "catalog:"

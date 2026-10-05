@@ -378,6 +378,9 @@ importers:
       '@types/archiver':
         specifier: 'catalog:'
         version: 8.0.0
+      '@types/pdfkit':
+        specifier: 'catalog:'
+        version: 0.17.6
       '@types/pg':
         specifier: 'catalog:'
         version: 8.23.1
@@ -390,6 +393,9 @@ importers:
       drizzle-kit:
         specifier: 'catalog:'
         version: 0.31.10
+      pdfkit:
+        specifier: 'catalog:'
+        version: 0.19.1
       tailwindcss:
         specifier: 'catalog:'
         version: 4.2.4
