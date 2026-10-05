@@ -1,0 +1,225 @@
+import type { Clock } from "../shared";
+
+import { ClientResource, ResourceFile } from "./client-resource";
+import type { ResourceRequester } from "./client-resource-access";
+import type { ClientResourceIds } from "./client-resource-ids";
+import type { ClientResourceIncidents } from "./client-resource-incidents";
+import type {
+  ClientResourceOwner,
+  ClientResourceStore,
+} from "./client-resource-store";
+import type { ClientResources } from "./client-resources";
+import type { ResourceClients } from "./resource-clients";
+import {
+  ResourceDetails,
+  type ResourceDetailsProblems,
+  type ResourceDetailsSnapshot,
+} from "./resource-details";
+import type {
+  ReadableResourceDocument,
+  ResourceDocumentPages,
+} from "./resource-document-pages";
+import {
+  ResourceFileIntake,
+  type ResourceRefusal,
+} from "./resource-file-intake";
+import type { ResourceFileKind } from "./resource-file-kind";
+import type { ResourceImagePages } from "./resource-image-pages";
+
+type ReceivedResourceFile = { originalName: string; bytes: Uint8Array };
+
+type AddClientResourceCommand = {
+  requester: ResourceRequester;
+  clientId: string;
+  details: ResourceDetailsSnapshot;
+  file: ReceivedResourceFile;
+};
+
+export type AddClientResourceResult =
+  | { status: "added"; resource: ClientResource }
+  | { status: "refused"; refusal: ResourceRefusal }
+  | { status: "invalid-details"; problems: ResourceDetailsProblems }
+  | { status: "not-found" }
+  | { status: "failed" };
+
+type AddClientResourceUseCaseOptions = {
+  resources: ClientResources;
+  resourceIds: ClientResourceIds;
+  clients: ResourceClients;
+  store: ClientResourceStore;
+  documentPages: ResourceDocumentPages;
+  imagePages: ResourceImagePages;
+  clock: Clock;
+  incidents: ClientResourceIncidents;
+};
+
+type KeptFile =
+  | { status: "kept"; pageCount: number | null }
+  | { status: "refused"; refusal: ResourceRefusal };
+
+type AcceptedFile = { owner: ClientResourceOwner; bytes: Uint8Array };
+
+const SINGLE_PAGE = 1;
+
+export class AddClientResourceUseCase {
+  constructor(private readonly options: AddClientResourceUseCaseOptions) {}
+
+  async execute(
+    command: AddClientResourceCommand,
+  ): Promise<AddClientResourceResult> {
+    if (command.requester.role !== "COACH") {
+      this.options.incidents.resourceAccessRefused({
+        requesterRole: command.requester.role,
+        clientId: command.clientId,
+        resourceId: null,
+      });
+
+      return { status: "not-found" };
+    }
+
+    if (!(await this.options.clients.exists(command.clientId))) {
+      return { status: "not-found" };
+    }
+
+    const details = ResourceDetails.from(command.details);
+
+    if (details.status === "invalid") {
+      return { status: "invalid-details", problems: details.problems };
+    }
+
+    const judgement = ResourceFileIntake.judge(command.file.bytes);
+
+    if (judgement.status === "refused") {
+      return this.refuse(command, judgement.refusal);
+    }
+
+    const owner = {
+      clientId: command.clientId,
+      resourceId: this.options.resourceIds.generate(),
+    };
+
+    try {
+      const kept = await this.keepFile(judgement.kind, {
+        owner,
+        bytes: command.file.bytes,
+      });
+
+      if (kept.status === "refused") return this.refuse(command, kept.refusal);
+
+      const resource = ClientResource.added({
+        id: owner.resourceId,
+        clientId: owner.clientId,
+        details: details.details,
+        file: ResourceFile.of({
+          originalName: command.file.originalName,
+          format: judgement.format,
+          sizeBytes: command.file.bytes.byteLength,
+          pageCount: kept.pageCount,
+        }),
+        at: this.options.clock.now(),
+      });
+
+      await this.options.resources.add(resource);
+      this.options.incidents.resourceStored({
+        ...owner,
+        format: judgement.format,
+        sizeBytes: command.file.bytes.byteLength,
+        pageCount: kept.pageCount,
+      });
+
+      return { status: "added", resource };
+    } catch {
+      return this.fail(owner);
+    }
+  }
+
+  private keepFile(
+    kind: ResourceFileKind,
+    file: AcceptedFile,
+  ): Promise<KeptFile> {
+    if (kind === "pdf") return this.keepDocument(file);
+    if (kind === "image") return this.keepImage(file);
+
+    return this.keepOriginalOnly(file);
+  }
+
+  private async keepDocument(file: AcceptedFile): Promise<KeptFile> {
+    const reading = await this.options.documentPages.read(file.bytes.slice());
+
+    if (reading.status === "unreadable") {
+      return { status: "refused", refusal: "unreadable" };
+    }
+
+    try {
+      const pageCount = ResourceFileIntake.judgePageCount(reading.pageCount);
+
+      if (pageCount.status === "refused") return pageCount;
+
+      await this.keepDocumentPages(file, reading);
+
+      return { status: "kept", pageCount: reading.pageCount };
+    } finally {
+      await reading.close();
+    }
+  }
+
+  private async keepDocumentPages(
+    file: AcceptedFile,
+    document: ReadableResourceDocument,
+  ): Promise<void> {
+    const { store } = this.options;
+
+    await store.storeOriginal(file.owner, file.bytes);
+    for await (const page of document.pages()) {
+      await store.storePage(file.owner, page);
+    }
+    await store.storeThumbnail(file.owner, await document.thumbnail());
+  }
+
+  private async keepImage(file: AcceptedFile): Promise<KeptFile> {
+    const rendering = await this.options.imagePages.render(file.bytes);
+
+    if (rendering.status === "refused") {
+      return { status: "refused", refusal: "unsupported-type" };
+    }
+
+    const { store } = this.options;
+
+    await store.storeOriginal(file.owner, file.bytes);
+    await store.storePage(file.owner, {
+      pageNumber: SINGLE_PAGE,
+      bytes: rendering.page,
+    });
+    await store.storeThumbnail(file.owner, rendering.thumbnail);
+
+    return { status: "kept", pageCount: SINGLE_PAGE };
+  }
+
+  private async keepOriginalOnly(file: AcceptedFile): Promise<KeptFile> {
+    await this.options.store.storeOriginal(file.owner, file.bytes);
+
+    return { status: "kept", pageCount: null };
+  }
+
+  private refuse(
+    command: AddClientResourceCommand,
+    refusal: ResourceRefusal,
+  ): AddClientResourceResult {
+    this.options.incidents.resourceRefused({
+      clientId: command.clientId,
+      receivedBytes: command.file.bytes.byteLength,
+      reason: refusal,
+    });
+
+    return { status: "refused", refusal };
+  }
+
+  private async fail(
+    owner: ClientResourceOwner,
+  ): Promise<AddClientResourceResult> {
+    await this.options.store.remove(owner).catch(() => undefined);
+    this.options.incidents.resourceStorageFailed(owner);
+
+    return { status: "failed" };
+  }
+}

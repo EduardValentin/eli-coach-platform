@@ -17,6 +17,7 @@
     "./client-journey": "./src/client-journey/index.ts",
     "./client-onboarding": "./src/client-onboarding/index.ts",
     "./client-profile": "./src/client-profile/index.ts",
+    "./client-resources": "./src/client-resources/index.ts",
     "./client-roster": "./src/client-roster/index.ts",
     "./coach-availability": "./src/coach-availability/index.ts",
     "./coach-meeting-room": "./src/coach-meeting-room/index.ts",
