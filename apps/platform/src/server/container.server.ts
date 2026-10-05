@@ -15,12 +15,7 @@ import { createProgressPhotoStore } from "@eli-coach-platform/infrastructure/cli
 import { createProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 import { createIdentityInvitations } from "@eli-coach-platform/infrastructure/identity/server";
 import { createProgressPhotoRenditions } from "@eli-coach-platform/infrastructure/images/server";
-import {
-  createPaymentCheckout,
-  createPaymentCustomerCards,
-  createPaymentEvents,
-  createPaymentSubscriptions,
-} from "@eli-coach-platform/infrastructure/payments/server";
+import { createPayments } from "@eli-coach-platform/infrastructure/payments/server";
 import {
   createManagementAuthConfig,
   createManagementAuthenticator,
@@ -87,6 +82,7 @@ export function createPlatformContainer(options: {
   );
   const managementAuthenticator = createManagementAuthenticator(environment);
   const productEmail = createProductEmail(environment);
+  const payments = createPayments(environment);
   const databaseFeatureFlags = new GetFeatureFlagsUseCase({
     featureFlags: new PostgresFeatureFlagRepository(database.client),
   });
@@ -138,9 +134,9 @@ export function createPlatformContainer(options: {
       returnUrl: clientPortalUrl(environment),
     }),
     incidents,
-    paymentCheckout: createPaymentCheckout(environment),
-    paymentCustomerCards: createPaymentCustomerCards(environment),
-    paymentSubscriptions: createPaymentSubscriptions(environment),
+    paymentCheckout: payments.checkout,
+    paymentCustomerCards: payments.customerCards,
+    paymentSubscriptions: payments.subscriptions,
     pricingEligibility: waitlist.handles.pricingEligibility,
     productEmail,
     publicAppUrl: environment.PUBLIC_APP_URL,
@@ -181,7 +177,7 @@ export function createPlatformContainer(options: {
     incidents,
     paymentCardHandler: coachingSales.handles.paymentCardHandler,
     paymentCompletionHandlers: [coachingSales.handles.paymentCompletionHandler],
-    paymentEvents: createPaymentEvents(environment),
+    paymentEvents: payments.events,
     paymentRefundHandler: coachingSales.handles.refundHandler,
     paymentSubscriptionChangeHandlers: [
       coachingSales.handles.subscriptionChangeHandler,

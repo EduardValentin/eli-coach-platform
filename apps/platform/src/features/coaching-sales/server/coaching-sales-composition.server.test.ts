@@ -2,11 +2,7 @@ import type { DatabaseClient } from "@eli-coach-platform/db";
 import type { PaymentCheckout } from "@eli-coach-platform/domain/coaching-subscription";
 import type { FeatureFlagSet } from "@eli-coach-platform/domain/feature-flag";
 import { InMemoryProductEmail } from "@eli-coach-platform/infrastructure/email/server";
-import {
-  createPaymentCheckout,
-  createPaymentCustomerCards,
-  createPaymentSubscriptions,
-} from "@eli-coach-platform/infrastructure/payments/server";
+import { createPayments } from "@eli-coach-platform/infrastructure/payments/server";
 import { describe, expect, it, vi } from "vitest";
 
 import { sessionContext } from "~/features/accounts/server/guards/session-context.server";
@@ -340,6 +336,8 @@ async function openCheckoutSession(
 function createHandles(
   featureFlags: FeatureFlagSet,
 ): CoachingSalesFeatureHandles {
+  const payments = createPayments({ PAYMENTS_PROVIDER: "memory" });
+
   return {
     appBasePath: "/eli-coach-platform",
     assessmentCallReader: { findById: async () => null },
@@ -358,13 +356,9 @@ function createHandles(
       },
     },
     incidents: createIncidents(),
-    paymentCheckout: createPaymentCheckout({ PAYMENTS_PROVIDER: "memory" }),
-    paymentCustomerCards: createPaymentCustomerCards({
-      PAYMENTS_PROVIDER: "memory",
-    }),
-    paymentSubscriptions: createPaymentSubscriptions({
-      PAYMENTS_PROVIDER: "memory",
-    }),
+    paymentCheckout: payments.checkout,
+    paymentCustomerCards: payments.customerCards,
+    paymentSubscriptions: payments.subscriptions,
     pricingEligibility: {
       tierForEmail: async () => "regular",
       tiersForEmails: async () => new Map(),

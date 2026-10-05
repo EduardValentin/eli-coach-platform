@@ -4,7 +4,7 @@ import { toSubscriptionEvent } from "./coaching-subscription-change.server";
 import type {
   PaymentInvoiceOutcome,
   PaymentSubscriptionState,
-} from "./payment-subscription-change.server";
+} from "./payment-event-types.server";
 
 const OCCURRED_AT = new Date("2026-10-20T10:00:00.000Z");
 const SCHEDULED_END = new Date("2027-01-02T10:00:00.000Z");

@@ -5,7 +5,7 @@ import type {
   PaymentRefund,
   PaymentSubscriptionChange,
   PaymentSubscriptionState,
-} from "./payment-subscription-change.server";
+} from "./payment-event-types.server";
 
 export function toSubscriptionEvent(
   change: PaymentSubscriptionChange | PaymentRefund,

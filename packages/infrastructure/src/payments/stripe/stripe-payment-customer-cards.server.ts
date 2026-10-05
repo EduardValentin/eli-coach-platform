@@ -5,7 +5,7 @@ import {
 import type Stripe from "stripe";
 import { z } from "zod";
 
-import { readCardDetails } from "../payment-card-change.server";
+import { readCardDetails } from "../payment-event-reader.server";
 import { referencedIdSchema } from "../payment-provider-vocabulary.server";
 
 import { STRIPE_VOCABULARY } from "./stripe-vocabulary.server";
@@ -41,7 +41,7 @@ export class StripePaymentCustomerCards implements PaymentCustomerCards {
   async readDefaultCard(
     paymentCustomerId: string,
   ): Promise<PaymentCard | null> {
-    const paymentMethodId = defaultPaymentMethodOf(
+    const paymentMethodId = StripePaymentCustomerCards.defaultPaymentMethodOf(
       await this.client.customers.retrieve(
         paymentCustomerId,
         SUBSCRIPTIONS_EXPANSION,
@@ -59,21 +59,21 @@ export class StripePaymentCustomerCards implements PaymentCustomerCards {
 
     return details ? PaymentCard.of(details) : null;
   }
-}
 
-function defaultPaymentMethodOf(customer: unknown): string | null {
-  const parsed = customerSchema.safeParse(customer);
+  private static defaultPaymentMethodOf(customer: unknown): string | null {
+    const parsed = customerSchema.safeParse(customer);
 
-  if (!parsed.success) {
-    return null;
+    if (!parsed.success) {
+      return null;
+    }
+
+    const { invoice_settings, subscriptions } = parsed.data;
+    const subscriptionDefault = subscriptions?.data.find(
+      (subscription) => subscription.default_payment_method,
+    )?.default_payment_method;
+
+    return (
+      invoice_settings?.default_payment_method ?? subscriptionDefault ?? null
+    );
   }
-
-  const { invoice_settings, subscriptions } = parsed.data;
-  const subscriptionDefault = subscriptions?.data.find(
-    (subscription) => subscription.default_payment_method,
-  )?.default_payment_method;
-
-  return (
-    invoice_settings?.default_payment_method ?? subscriptionDefault ?? null
-  );
 }

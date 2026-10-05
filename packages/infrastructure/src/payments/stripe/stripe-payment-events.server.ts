@@ -1,11 +1,8 @@
-import type { PaymentsConfig } from "@eli-coach-platform/config";
 import Stripe from "stripe";
 
-import { readPaymentEvent } from "../payment-event-verdict.server";
-import type {
-  PaymentEvents,
-  PaymentEventVerdict,
-} from "../payment-events.server";
+import { PaymentEventReader } from "../payment-event-reader.server";
+import type { PaymentEventVerdict } from "../payment-event-types.server";
+import type { PaymentEvents } from "../payment-events.server";
 
 import { STRIPE_VOCABULARY } from "./stripe-vocabulary.server";
 
@@ -19,6 +16,8 @@ type StripePaymentEventsOptions = {
 };
 
 export class StripePaymentEvents implements PaymentEvents {
+  private readonly reader = new PaymentEventReader(STRIPE_VOCABULARY);
+
   constructor(private readonly options: StripePaymentEventsOptions) {}
 
   async verify(
@@ -30,40 +29,26 @@ export class StripePaymentEvents implements PaymentEvents {
     }
 
     try {
-      return readPaymentEvent(
+      return this.reader.read(
         this.options.webhooks.constructEvent(
           rawBody,
           signature,
           this.options.signingSecret,
         ),
-        STRIPE_VOCABULARY,
       );
     } catch (error) {
-      if (isUnverifiableEvent(error)) {
+      if (StripePaymentEvents.isUnverifiableEvent(error)) {
         return { kind: "invalid" };
       }
 
       throw error;
     }
   }
-}
 
-function isUnverifiableEvent(error: unknown): boolean {
-  return (
-    error instanceof Stripe.errors.StripeSignatureVerificationError ||
-    error instanceof SyntaxError
-  );
-}
-
-export function createStripePaymentEvents(
-  config: PaymentsConfig,
-): StripePaymentEvents {
-  if (!config.STRIPE_WEBHOOK_SIGNING_SECRET) {
-    throw new Error("Stripe payments require STRIPE_WEBHOOK_SIGNING_SECRET.");
+  private static isUnverifiableEvent(error: unknown): boolean {
+    return (
+      error instanceof Stripe.errors.StripeSignatureVerificationError ||
+      error instanceof SyntaxError
+    );
   }
-
-  return new StripePaymentEvents({
-    webhooks: Stripe.webhooks,
-    signingSecret: config.STRIPE_WEBHOOK_SIGNING_SECRET,
-  });
 }

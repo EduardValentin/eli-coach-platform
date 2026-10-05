@@ -1,19 +1,20 @@
-import type {
-  CheckoutCompletion,
-  CreateCheckoutSessionCommand,
-  PaymentCheckout,
+import {
+  findCoachingBundle,
+  PRICE_TIERS,
+} from "@eli-coach-platform/domain/coaching-bundle";
+import {
+  COACHING_SUBSCRIPTION_PURPOSE,
+  START_CHOICES,
+  type CheckoutCompletion,
+  type CreateCheckoutSessionCommand,
+  type PaymentCheckout,
 } from "@eli-coach-platform/domain/coaching-subscription";
 import Stripe from "stripe";
 import { z } from "zod";
 
-import {
-  fromUnixSeconds,
-  readPaidCheckoutSession,
-} from "../checkout-session-completion.server";
-import {
-  coachingCheckoutMetadata,
-  toCheckoutCompletion,
-} from "../coaching-checkout-completion.server";
+import { PAYMENT_PURPOSE_METADATA_KEY } from "../payment-completion-handler.server";
+import { readPaidCheckoutSession } from "../payment-event-reader.server";
+import type { PaidCheckoutSession } from "../payment-event-types.server";
 
 const CHECKOUT_SESSION_ID_SHAPE = /^cs_(test|live)_[A-Za-z0-9]+$/;
 
@@ -50,6 +51,31 @@ const closedSessionSchema = z.object({
   status: z.enum(["expired", "complete"]),
 });
 
+const coachingCheckoutMetadataSchema = z
+  .object({
+    [PAYMENT_PURPOSE_METADATA_KEY]: z.literal(COACHING_SUBSCRIPTION_PURPOSE),
+    assessmentCallId: z.uuid(),
+    bundleId: z.string(),
+    months: z.string(),
+    tier: z.enum(PRICE_TIERS),
+    startChoice: z.enum(START_CHOICES),
+  })
+  .transform((metadata, context) => {
+    const bundle = findCoachingBundle(metadata.bundleId);
+
+    if (!bundle || String(bundle.months) !== metadata.months) {
+      context.addIssue({ code: "custom", message: "Unknown coaching bundle." });
+      return z.NEVER;
+    }
+
+    return {
+      assessmentCallId: metadata.assessmentCallId,
+      bundleId: bundle.id,
+      tier: metadata.tier,
+      startChoice: metadata.startChoice,
+    };
+  });
+
 export class StripePaymentCheckout implements PaymentCheckout {
   constructor(private readonly client: StripeCheckoutClient) {}
 
@@ -74,7 +100,7 @@ export class StripePaymentCheckout implements PaymentCheckout {
     command: CreateCheckoutSessionCommand,
   ): Promise<{ id: string; url: string }> {
     const session = await this.client.checkout.sessions.create(
-      checkoutSessionRequest(command),
+      StripePaymentCheckout.checkoutSessionRequest(command),
     );
 
     if (!session.url) {
@@ -104,11 +130,11 @@ export class StripePaymentCheckout implements PaymentCheckout {
     }
 
     try {
-      return readCoachingCompletion(
+      return StripePaymentCheckout.readCoachingCompletion(
         await this.client.checkout.sessions.retrieve(id, COMPLETION_EXPANSION),
       );
     } catch (error) {
-      if (isMissingResource(error)) {
+      if (StripePaymentCheckout.isMissingResource(error)) {
         return null;
       }
 
@@ -125,56 +151,94 @@ export class StripePaymentCheckout implements PaymentCheckout {
 
     return closedSessionSchema.safeParse(session).success;
   }
-}
 
-function readCoachingCompletion(session: unknown): CheckoutCompletion | null {
-  const expanded = expandedSubscriptionSchema.safeParse(session);
+  private static readCoachingCompletion(
+    session: unknown,
+  ): CheckoutCompletion | null {
+    const expanded = expandedSubscriptionSchema.safeParse(session);
 
-  if (!expanded.success) {
-    return null;
+    if (!expanded.success) {
+      return null;
+    }
+
+    const paid = readPaidCheckoutSession(
+      session,
+      expanded.data.subscription.created,
+    );
+
+    return paid ? StripePaymentCheckout.toCheckoutCompletion(paid) : null;
   }
 
-  const paid = readPaidCheckoutSession(
-    session,
-    fromUnixSeconds(expanded.data.subscription.created),
-  );
+  private static toCheckoutCompletion(
+    session: PaidCheckoutSession,
+  ): CheckoutCompletion | null {
+    const { customerId, subscriptionId } = session;
+    const metadata = coachingCheckoutMetadataSchema.safeParse(session.metadata);
 
-  return paid ? toCheckoutCompletion(paid) : null;
-}
+    if (!metadata.success || !customerId || !subscriptionId) {
+      return null;
+    }
 
-function isMissingResource(error: unknown): boolean {
-  return (
-    error instanceof Stripe.errors.StripeInvalidRequestError &&
-    error.code === RESOURCE_MISSING_CODE
-  );
-}
+    return {
+      checkoutSessionId: session.id,
+      paymentCustomerId: customerId,
+      paymentSubscriptionId: subscriptionId,
+      paymentIntentId: session.paymentIntentId,
+      amountCents: session.amountCents,
+      currency: session.currency,
+      customerEmail: session.customerEmail,
+      paidAt: session.paidAt,
+      ...metadata.data,
+    };
+  }
 
-function checkoutSessionRequest(
-  command: CreateCheckoutSessionCommand,
-): Stripe.Checkout.SessionCreateParams {
-  const metadata = coachingCheckoutMetadata(command);
+  private static isMissingResource(error: unknown): boolean {
+    return (
+      error instanceof Stripe.errors.StripeInvalidRequestError &&
+      error.code === RESOURCE_MISSING_CODE
+    );
+  }
 
-  return {
-    mode: "subscription",
-    customer: command.customerId,
-    payment_method_types: ["card"],
-    line_items: [
-      {
-        quantity: 1,
-        price_data: {
-          currency: command.currency,
-          unit_amount: command.bundle.amountCents,
-          product_data: { name: command.bundle.title },
-          recurring: {
-            interval: "month",
-            interval_count: command.bundle.months,
+  private static checkoutSessionRequest(
+    command: CreateCheckoutSessionCommand,
+  ): Stripe.Checkout.SessionCreateParams {
+    const metadata = StripePaymentCheckout.coachingCheckoutMetadata(command);
+
+    return {
+      mode: "subscription",
+      customer: command.customerId,
+      payment_method_types: ["card"],
+      line_items: [
+        {
+          quantity: 1,
+          price_data: {
+            currency: command.currency,
+            unit_amount: command.bundle.amountCents,
+            product_data: { name: command.bundle.title },
+            recurring: {
+              interval: "month",
+              interval_count: command.bundle.months,
+            },
           },
         },
-      },
-    ],
-    metadata,
-    subscription_data: { metadata },
-    success_url: command.successUrl,
-    cancel_url: command.cancelUrl,
-  };
+      ],
+      metadata,
+      subscription_data: { metadata },
+      success_url: command.successUrl,
+      cancel_url: command.cancelUrl,
+    };
+  }
+
+  private static coachingCheckoutMetadata(
+    command: CreateCheckoutSessionCommand,
+  ): Record<string, string> {
+    return {
+      [PAYMENT_PURPOSE_METADATA_KEY]: command.metadata.purpose,
+      assessmentCallId: command.metadata.assessmentCallId,
+      bundleId: command.metadata.bundleId,
+      months: String(command.bundle.months),
+      tier: command.metadata.tier,
+      startChoice: command.metadata.startChoice,
+    };
+  }
 }

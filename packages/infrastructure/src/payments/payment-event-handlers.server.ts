@@ -1,8 +1,8 @@
-import type { PaymentCardChange } from "./payment-card-change.server";
 import type {
+  PaymentCardChange,
   PaymentRefund,
   PaymentSubscriptionChange,
-} from "./payment-subscription-change.server";
+} from "./payment-event-types.server";
 
 export type PaymentEventHandling = "recorded" | "duplicate" | "ignored";
 
