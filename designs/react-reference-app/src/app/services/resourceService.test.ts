@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Resource } from '../domain/resources';
+import type { Resource, ResourceAddition } from '../domain/resources';
 import {
+  PREPARING_MS,
   RESOURCE_LATENCY_MS,
   RESOURCES_UNAVAILABLE,
   ResourceServer,
@@ -8,6 +9,7 @@ import {
   UPLOAD_STEPS,
   UPLOAD_STEP_MS,
   type ResourcePageRenderer,
+  type ResourceUpload,
 } from './resourceService';
 
 const NOW = new Date('2026-10-03T09:00:00.000Z');
@@ -42,6 +44,31 @@ async function settled<T>(pending: Promise<T>, milliseconds = RESOURCE_LATENCY_M
 }
 
 const UPLOAD_TIME = UPLOAD_STEPS * UPLOAD_STEP_MS;
+
+const ANSWER_TIME = UPLOAD_TIME + PREPARING_MS;
+
+const AN_HOUR_MS = 60 * 60 * 1000;
+
+async function addedResource(pending: Promise<ResourceAddition>): Promise<Resource> {
+  const addition = await settled(pending, ANSWER_TIME);
+  if (addition.status !== 'added') throw new Error(`Refused: ${addition.refusal}`);
+
+  return addition.resource;
+}
+
+function tracked<T>(pending: Promise<T>): { settled: () => boolean } {
+  let done = false;
+  pending.then(
+    () => {
+      done = true;
+    },
+    () => {
+      done = true;
+    },
+  );
+
+  return { settled: () => done };
+}
 
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['setTimeout'] });
@@ -131,7 +158,7 @@ describe('adding a resource', () => {
     );
 
     // act
-    const added = await settled(pending, UPLOAD_TIME);
+    const added = await addedResource(pending);
     const listed = await settled(server.listForClient('client-1', 'works'));
 
     // assert
@@ -160,7 +187,7 @@ describe('adding a resource', () => {
     );
 
     // act
-    const added = await settled(pending, UPLOAD_TIME);
+    const added = await addedResource(pending);
 
     // assert
     expect(added.file).toEqual({ name: 'notes.docx', kind: 'word', sizeBytes: 2048 });
@@ -180,7 +207,7 @@ describe('adding a resource', () => {
     );
 
     // act
-    const added = await settled(pending, UPLOAD_TIME);
+    const added = await addedResource(pending);
 
     // assert
     expect(added.tags).toEqual(['Training']);
@@ -206,6 +233,85 @@ describe('adding a resource', () => {
 
     // assert
     expect(listed).toEqual([]);
+  });
+});
+
+describe('preparing the pages of an upload', () => {
+  const file = new File([new Uint8Array(4096)], 'meal-ideas.pdf', {
+    type: 'application/pdf',
+  });
+  const request = {
+    clientId: 'client-1',
+    file,
+    details: { title: 'Meal ideas', description: '', tags: [] },
+  };
+
+  it('answers a short while after the last byte is sent', async () => {
+    // arrange
+    const server = serverWith([]);
+    const progress: number[] = [];
+    const pending = tracked(
+      server.add(request, { outcome: 'works', onProgress: (fraction) => progress.push(fraction) }),
+    );
+    await vi.advanceTimersByTimeAsync(UPLOAD_TIME);
+    const answeredWhenSent = pending.settled();
+
+    // act
+    await vi.advanceTimersByTimeAsync(PREPARING_MS);
+
+    // assert
+    expect(progress.at(-1)).toBe(1);
+    expect(answeredWhenSent).toBe(false);
+    expect(pending.settled()).toBe(true);
+  });
+
+  it('holds at preparing without ever answering', async () => {
+    // arrange
+    const server = serverWith([]);
+    const progress: number[] = [];
+    const pending = tracked(
+      server.add(request, { outcome: 'holds', onProgress: (fraction) => progress.push(fraction) }),
+    );
+
+    // act
+    await vi.advanceTimersByTimeAsync(AN_HOUR_MS);
+
+    // assert
+    expect(progress.at(-1)).toBe(1);
+    expect(pending.settled()).toBe(false);
+  });
+
+  it.each<[ResourceUpload, string]>([
+    ['too-many-pages', 'too-many-pages'],
+    ['unreadable', 'unreadable'],
+  ])('refuses a PDF after preparing it when the server finds it %s', async (outcome, refusal) => {
+    // arrange
+    const server = serverWith([]);
+    const pending = server.add(request, { outcome, onProgress: () => undefined });
+
+    // act
+    const addition = await settled(pending, ANSWER_TIME);
+    const listed = await settled(server.listForClient('client-1', 'works'));
+
+    // assert
+    expect(addition).toEqual({ status: 'refused', refusal });
+    expect(listed).toEqual([]);
+  });
+
+  it('refuses only PDFs for their pages, adding a Word file as usual', async () => {
+    // arrange
+    const server = serverWith([]);
+    const notes = new File([new Uint8Array(2048)], 'notes.docx');
+    const pending = server.add(
+      { ...request, file: notes },
+      { outcome: 'too-many-pages', onProgress: () => undefined },
+    );
+
+    // act
+    const added = await addedResource(pending);
+
+    // assert
+    expect(added.file.name).toBe('notes.docx');
   });
 });
 
@@ -250,7 +356,7 @@ describe('downloading a resource', () => {
     // arrange
     const server = serverWith([]);
     const file = new File(['plate'], 'plate.png', { type: 'image/png' });
-    const added = await settled(
+    const added = await addedResource(
       server.add(
         {
           clientId: 'client-1',
@@ -259,7 +365,6 @@ describe('downloading a resource', () => {
         },
         { outcome: 'works', onProgress: () => undefined },
       ),
-      UPLOAD_TIME,
     );
 
     // act

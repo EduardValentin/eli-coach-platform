@@ -1488,6 +1488,9 @@ export function DevToggle() {
                     <SelectContent className={SELECT_CONTENT_CLASS}>
                       <SelectItem value="works">Works</SelectItem>
                       <SelectItem value="fails">Fails</SelectItem>
+                      <SelectItem value="holds">Holds at preparing</SelectItem>
+                      <SelectItem value="too-many-pages">Refused: over 50 pages</SelectItem>
+                      <SelectItem value="unreadable">Refused: cannot be read</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

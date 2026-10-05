@@ -5,6 +5,11 @@ import { toast } from 'sonner';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { Toaster } from '../../components/ui/sonner';
 import { AppProvider } from '../../context/AppContext';
+import { AssessmentCallProvider } from '../../context/AssessmentCallContext';
+import {
+  AWAITING_REVIEW_CALL_ID,
+  ClientJourneyProvider,
+} from '../../context/ClientJourneyContext';
 import { ClientProfileProvider } from '../../context/ClientProfileContext';
 import { ResourceProvider } from '../../context/ResourceContext';
 import { ClientResources } from './ClientResources';
@@ -32,24 +37,38 @@ afterEach(() => {
   window.history.replaceState({}, '', '/');
 });
 
-function renderPage(devParams = '') {
-  const url = `/coach/clients/c1/resources?session=coach${devParams}`;
+function renderPage(devParams = '', clientId = 'c1') {
+  const url = `/coach/clients/${clientId}/resources?session=coach${devParams}`;
   window.history.replaceState({}, '', url);
 
   render(
     <MemoryRouter initialEntries={[url]}>
       <AppProvider>
         <ClientProfileProvider>
-          <ResourceProvider>
-            <Routes>
-              <Route element={<ClientResources />} path="/coach/clients/:id/resources" />
-            </Routes>
-            <Toaster />
-          </ResourceProvider>
+          <AssessmentCallProvider>
+            <ClientJourneyProvider>
+              <ResourceProvider>
+                <Routes>
+                  <Route element={<ClientResources />} path="/coach/clients/:id/resources" />
+                </Routes>
+                <Toaster />
+              </ResourceProvider>
+            </ClientJourneyProvider>
+          </AssessmentCallProvider>
         </ClientProfileProvider>
       </AppProvider>
     </MemoryRouter>,
   );
+}
+
+async function chooseAndSend(options: { description: string }) {
+  await userEvent.click(screen.getByRole('button', { name: 'Add resource' }));
+  const dialog = await screen.findByRole('dialog', { name: 'Add resource' });
+  await userEvent.upload(within(dialog).getByLabelText('Drop a file here or choose one'), pdf());
+  await userEvent.type(within(dialog).getByLabelText(/Description/), options.description);
+  await userEvent.click(within(dialog).getByRole('button', { name: 'Add resource' }));
+
+  return dialog;
 }
 
 function shownTitles(): string[] {
@@ -95,6 +114,35 @@ describe('coach resources page', () => {
       'Hip thrust form checklist',
       'Sleep and recovery basics',
     ]);
+  });
+
+  it('resolves a client from her journey, under her name and with the way back to her record', async () => {
+    // arrange
+    renderPage('', AWAITING_REVIEW_CALL_ID);
+
+    // act
+    await waitForResources();
+
+    // assert
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'Andreea’s resources' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Back to Andreea Popescu' })).toHaveAttribute(
+      'href',
+      `/coach/clients/${AWAITING_REVIEW_CALL_ID}`,
+    );
+    expect(shownTitles().length).toBeGreaterThan(0);
+  });
+
+  it('answers that the client is not found for an id no client has', () => {
+    // arrange
+    const unknownId = 'no-such-client';
+
+    // act
+    renderPage('', unknownId);
+
+    // assert
+    expect(screen.getByRole('heading', { name: 'Client not found' })).toBeInTheDocument();
   });
 
   it('narrows the grid to one tag', async () => {
@@ -176,6 +224,51 @@ describe('coach resources page', () => {
     expect(within(dialog).getByLabelText(/Description/)).toHaveValue('Read before Monday.');
     expect(within(dialog).getByText('Cycle-syncing_starter-guide.pdf')).toBeInTheDocument();
   });
+
+  it('holds the dialog at preparing pages once the file is sent, with nothing to press', async () => {
+    // arrange
+    renderPage('&rupload=holds');
+    await waitForResources();
+
+    // act
+    const dialog = await chooseAndSend({ description: 'Read before Monday.' });
+
+    // assert
+    const submit = await within(dialog).findByRole(
+      'button',
+      { name: 'Preparing pages…' },
+      SERVICE_TIMEOUT,
+    );
+    expect(submit).toBeDisabled();
+    expect(within(dialog).getByRole('button', { name: 'Cancel' })).toBeDisabled();
+    const preparing = within(dialog).getByRole('progressbar', { name: 'Preparing pages' });
+    expect(preparing).not.toHaveAttribute('aria-valuenow');
+    expect(within(dialog).queryByRole('progressbar', { name: 'Upload progress' })).toBeNull();
+  });
+
+  it.each([
+    ['too-many-pages', 'That PDF has more than 50 pages.'],
+    ['unreadable', 'That PDF can’t be opened. It may be damaged or password protected.'],
+  ])(
+    'shows the server refusing a PDF (%s) at the file and keeps everything she gave',
+    async (outcome, message) => {
+      // arrange
+      renderPage(`&rupload=${outcome}`);
+      await waitForResources();
+
+      // act
+      const dialog = await chooseAndSend({ description: 'Read before Monday.' });
+
+      // assert
+      expect(await within(dialog).findByText(message, {}, SERVICE_TIMEOUT)).toBeInTheDocument();
+      expect(within(dialog).getByLabelText('Replace')).toHaveAccessibleDescription(message);
+      expect(within(dialog).queryByRole('alert')).not.toBeInTheDocument();
+      expect(within(dialog).getByText('Cycle-syncing_starter-guide.pdf')).toBeInTheDocument();
+      expect(within(dialog).getByLabelText('Title')).toHaveValue('Cycle syncing starter guide');
+      expect(within(dialog).getByLabelText(/Description/)).toHaveValue('Read before Monday.');
+      expect(within(dialog).getByRole('button', { name: 'Add resource' })).toBeEnabled();
+    },
+  );
 
   it('refuses a file type it cannot hold at the drop zone', async () => {
     // arrange

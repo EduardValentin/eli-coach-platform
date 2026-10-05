@@ -1,4 +1,4 @@
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, FolderOpen } from 'lucide-react';
 import { Link } from 'react-router';
 import { isBeforeStage, type ClientJourney } from '../../domain/journey';
 import { getInitials } from '../../utils/clientHelpers';
@@ -12,6 +12,7 @@ import { OnboardingPanel } from './OnboardingPanel';
 import { SubscriptionSummary } from '../SubscriptionSummary';
 import { PORTAL_PAGE_TITLE_CLASS } from '../typography';
 import { Avatar, AvatarFallback } from '../ui/avatar';
+import { buttonVariants } from '../ui/button';
 
 function journeyName(journey: ClientJourney): string {
   return `${journey.identity.firstName} ${journey.identity.lastName}`.trim();
@@ -37,15 +38,29 @@ export function JourneyClientDetails({ journey }: { journey: ClientJourney }) {
         <ArrowLeft size={16} /> Back to Clients
       </Link>
 
-      <header className="mb-10 flex items-center gap-5">
-        <Avatar size="lg">
-          <AvatarFallback aria-hidden="true">{getInitials(name)}</AvatarFallback>
-        </Avatar>
-        <div className="min-w-0">
-          <div className="mb-2 flex flex-wrap items-center gap-3">
-            <h1 className={PORTAL_PAGE_TITLE_CLASS}>{name}</h1>
+      <header className="mb-10 flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+        <div className="flex min-w-0 items-center gap-5">
+          <Avatar size="lg">
+            <AvatarFallback aria-hidden="true">{getInitials(name)}</AvatarFallback>
+          </Avatar>
+          <div className="min-w-0">
+            <div className="mb-2 flex flex-wrap items-center gap-3">
+              <h1 className={PORTAL_PAGE_TITLE_CLASS}>{name}</h1>
+            </div>
+            <p className="text-text-secondary">{journey.identity.email}</p>
           </div>
-          <p className="text-text-secondary">{journey.identity.email}</p>
+        </div>
+        <div
+          className="flex flex-wrap items-center gap-3 md:shrink-0"
+          data-parity="client-header-actions"
+        >
+          <Link
+            to={`/coach/clients/${journey.callId}/resources`}
+            className={buttonVariants({ variant: 'outline', size: 'md' })}
+          >
+            <FolderOpen aria-hidden="true" size={16} />
+            Resources
+          </Link>
         </div>
       </header>
 

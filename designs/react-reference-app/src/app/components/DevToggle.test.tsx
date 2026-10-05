@@ -103,3 +103,43 @@ describe('DevToggle links sent by the coach', () => {
     );
   });
 });
+
+describe('DevToggle resource upload', () => {
+  it('drives the upload through to an answer, a held preparing state or either server refusal', async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderDevToggle();
+    await openDevSettings();
+    await user.click(screen.getByRole('tab', { name: 'Resources' }));
+
+    // act
+    await user.click(screen.getByRole('combobox', { name: 'Resource upload' }));
+
+    // assert
+    expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual([
+      'Works',
+      'Fails',
+      'Holds at preparing',
+      'Refused: over 50 pages',
+      'Refused: cannot be read',
+    ]);
+  });
+
+  it('keeps the chosen outcome in the address so the state can be shared', async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderDevToggle();
+    await openDevSettings();
+    await user.click(screen.getByRole('tab', { name: 'Resources' }));
+    await user.click(screen.getByRole('combobox', { name: 'Resource upload' }));
+
+    // act
+    await user.click(screen.getByRole('option', { name: 'Holds at preparing' }));
+
+    // assert
+    expect(screen.getByRole('combobox', { name: 'Resource upload' })).toHaveTextContent(
+      'Holds at preparing',
+    );
+    expect(new URLSearchParams(window.location.search).get('rupload')).toBe('holds');
+  });
+});

@@ -4,6 +4,7 @@ import { useResourceServer } from '../context/ResourceContext';
 import {
   hasUnopenedResources,
   type Resource,
+  type ResourceAddition,
   type ResourceDetails,
 } from '../domain/resources';
 import type { ResourceDownload } from '../services/resourceService';
@@ -18,7 +19,10 @@ export type NewResourceUpload = { file: File; details: ResourceDetails };
 export type ClientResources = {
   listing: ResourceListing;
   retry: () => void;
-  add: (upload: NewResourceUpload, onProgress: (fraction: number) => void) => Promise<Resource>;
+  add: (
+    upload: NewResourceUpload,
+    onProgress: (fraction: number) => void,
+  ) => Promise<ResourceAddition>;
   updateDetails: (id: string, details: ResourceDetails) => Promise<Resource>;
   remove: (id: string) => Promise<void>;
   markOpened: (id: string) => Promise<void>;
@@ -68,13 +72,15 @@ export function useClientResources(clientId: string): ClientResources {
     listing,
     retry: () => setAttempt((count) => count + 1),
     add: async (upload, onProgress) => {
-      const added = await server.add(
+      const addition = await server.add(
         { clientId, ...upload },
         { outcome: appState.resourceUpload, onProgress },
       );
-      changeListed((resources) => [added, ...resources]);
-      announceChange();
-      return added;
+      if (addition.status === 'added') {
+        changeListed((resources) => [addition.resource, ...resources]);
+        announceChange();
+      }
+      return addition;
     },
     updateDetails: async (id, details) => {
       const updated = await server.updateDetails(id, details);

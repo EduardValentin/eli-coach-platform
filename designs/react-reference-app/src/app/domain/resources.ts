@@ -54,11 +54,19 @@ export type ResourceDetails = {
   tags: readonly string[];
 };
 
-export type UploadRefusal = 'unsupported-type' | 'too-large';
+export type BrowserCheckedRefusal = 'unsupported-type' | 'too-large';
+
+export type ServerDecidedRefusal = 'too-many-pages' | 'unreadable';
+
+export type UploadRefusal = BrowserCheckedRefusal | ServerDecidedRefusal;
 
 export type UploadCheck =
   | { accepted: true; kind: ResourceFileKind }
-  | { accepted: false; refusal: UploadRefusal };
+  | { accepted: false; refusal: BrowserCheckedRefusal };
+
+export type ResourceAddition =
+  | { status: 'added'; resource: Resource }
+  | { status: 'refused'; refusal: ServerDecidedRefusal };
 
 export type UploadCandidate = { name: string; size: number };
 

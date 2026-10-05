@@ -139,6 +139,21 @@ function assessmentCallReading(label: string): HTMLElement {
 const LATENCY_TIMEOUT = { timeout: 3000 };
 
 describe('the coach view of a client in onboarding', () => {
+  it('leads from the header to the resources of the client the page shows', () => {
+    // arrange
+    const urlQuery = '?jstage=submitted';
+
+    // act
+    renderDetails(urlQuery, { postMvp: false, callId: AWAITING_REVIEW_CALL_ID });
+
+    // assert
+    const resources = within(pageHeader()).getByRole('link', { name: 'Resources' });
+    expect(resources).toHaveAttribute(
+      'href',
+      `/coach/clients/${AWAITING_REVIEW_CALL_ID}/resources`,
+    );
+  });
+
   it('keeps the start path and the stage out of the header, showing it in the subscription panel', () => {
     // arrange
     const urlQuery = '?jstage=submitted';

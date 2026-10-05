@@ -443,6 +443,7 @@
   --container-stage: var(--container-stage);
   --shadow-raised: var(--shadow-raised);
   --animate-heartbeat: heartbeat 1.2s ease-in-out 1;
+  --animate-progress-indeterminate: progress-indeterminate 1.4s ease-in-out infinite;
   --color-overlay-strong: var(--overlay-strong);
   --color-overlay-medium: var(--overlay-medium);
   --color-overlay-soft: var(--overlay-soft);
@@ -510,6 +511,15 @@
   }
   80% {
     transform: scale(1);
+  }
+}
+
+@keyframes progress-indeterminate {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(300%);
   }
 }
 
