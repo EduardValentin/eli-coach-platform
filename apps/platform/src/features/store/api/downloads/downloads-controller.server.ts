@@ -1,6 +1,3 @@
-import { basename } from "node:path";
-import { Readable } from "node:stream";
-
 import { joinBasePath } from "@eli-coach-platform/config";
 import type {
   DownloadGrant,
@@ -12,7 +9,10 @@ import type {
   ProductAssetOpenResult,
   ProductAssets,
 } from "@eli-coach-platform/domain/product";
-import { readFormDataRequestBody } from "@eli-coach-platform/infrastructure/http/server";
+import {
+  createAttachmentResponse,
+  readFormDataRequestBody,
+} from "@eli-coach-platform/infrastructure/http/server";
 import {
   STORE_DOWNLOAD_PATH,
   STORE_PATH,
@@ -92,7 +92,7 @@ export class StoreDownloadController {
             return createUnavailableResponse();
           }
 
-          return createStreamResponse(archive.bytes, {
+          return createAttachmentResponse(archive.bytes, {
             filename: "eli-resources.zip",
             mimeType: "application/zip",
           });
@@ -110,38 +110,11 @@ export class StoreDownloadController {
       return createUnavailableResponse();
     }
 
-    return createStreamResponse(opened.bytes, {
-      filename: basename(asset.customerFilename),
+    return createAttachmentResponse(opened.bytes, {
+      filename: asset.customerFilename,
       mimeType: asset.mimeType,
     });
   }
-}
-
-function createStreamResponse(
-  bytes: AsyncIterable<Uint8Array>,
-  options: { filename: string; mimeType: string },
-): Response {
-  return new Response(
-    Readable.toWeb(Readable.from(bytes)) as ReadableStream<Uint8Array>,
-    {
-      headers: {
-        "Cache-Control": "private, no-store",
-        "Content-Disposition": createContentDisposition(options.filename),
-        "Content-Type": options.mimeType,
-        "X-Content-Type-Options": "nosniff",
-      },
-    },
-  );
-}
-
-function createContentDisposition(filename: string): string {
-  const safeFilename = filename
-    .replace(/[\r\n"]/g, "")
-    .replace(/[^\x20-\x7e]/g, "_");
-
-  return `attachment; filename="${safeFilename}"; filename*=UTF-8''${encodeURIComponent(
-    filename,
-  )}`;
 }
 
 function createUnavailableResponse(): Response {
