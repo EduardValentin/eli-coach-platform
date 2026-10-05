@@ -1,6 +1,5 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { format } from 'date-fns';
 import { MemoryRouter } from 'react-router';
 import { toast } from 'sonner';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
@@ -149,11 +148,6 @@ describe('her measurements on the profile page', () => {
     await openSheet();
 
     // assert
-    expect(
-      screen.getByText(
-        `You agreed to share progress photos on ${format(new Date(), 'd MMMM yyyy')}.`,
-      ),
-    ).toBeVisible();
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
   });
 

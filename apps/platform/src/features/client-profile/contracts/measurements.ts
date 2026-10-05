@@ -110,8 +110,6 @@ export const MEASUREMENTS_COPY = {
     caption: "Progress photos",
     optional: "(optional)",
     locked: "Tick the box to add your photos.",
-    consented: (date: string) =>
-      `You agreed to share progress photos on ${date}.`,
     viewLabels: PROGRESS_PHOTO_VIEW_LABELS,
     addView: (view: ProgressPhotoView) => `Add ${view} photo`,
     addPhoto: "Add photo",
@@ -119,7 +117,6 @@ export const MEASUREMENTS_COPY = {
     image: (view: ProgressPhotoView) =>
       `${PROGRESS_PHOTO_VIEW_LABELS[view]} photo`,
     refused: "Choose a JPEG, PNG or WebP under 10 MB.",
-    sendNote: "Your photos are sent with your answers.",
   },
   photoView: {
     open: "View photos",

@@ -11,6 +11,6 @@
   {"waitFor": "[data-sonner-toast]"},
   {"wait": 1200},
   {"click": "[data-parity-root=\"MeasurementsTable\"] >> role=button[name=\"Add\"]"},
-  {"waitFor": "[role=\"dialog\"] [data-parity=\"progress-photos-consented\"]"},
+  {"waitFor": "[role=\"dialog\"] [data-parity=\"progress-photos-tiles\"] input:not([disabled])"},
   {"wait": 1200}
 ]
