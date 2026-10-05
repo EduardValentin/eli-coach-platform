@@ -134,7 +134,7 @@ function ResourceDetailsPanel({
         </p>
       )}
       {resource.tags.length > 0 && (
-        <ul aria-label="Tags" className="flex flex-wrap gap-1.5">
+        <ul aria-label="Tags" className="flex flex-wrap gap-1.5" data-parity="viewer-tags">
           {resource.tags.map((tag) => (
             <li key={tag}>
               <Badge tone="brand-secondary">{tag}</Badge>
@@ -151,7 +151,7 @@ function ResourceDetailsPanel({
         <Reading as="dl-item" label="Added" value={formatJourneyDate(resource.addedAt)} />
       </dl>
       {management && (
-        <div className="flex gap-2">
+        <div className="flex gap-2" data-parity="viewer-management">
           <Button
             className="flex-1"
             onClick={management.onEdit}
@@ -247,6 +247,7 @@ function ViewerContent({
         <div className="border-t border-border-subtle bg-surface-base px-4 py-3 sm:px-6 lg:col-start-2 lg:row-start-3 lg:border-l lg:py-4">
           <Button
             className="w-full"
+            data-parity="viewer-download"
             onClick={onDownload}
             size={isDesktop ? 'sm' : 'md'}
             type="button"

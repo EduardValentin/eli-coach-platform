@@ -136,7 +136,10 @@ function ResourceFileRow({
   const Glyph = RESOURCE_KIND_GLYPHS[chosen.kind];
 
   return (
-    <div className="flex items-center gap-3 rounded-field border border-control-border-soft bg-surface-base p-3">
+    <div
+      className="flex items-center gap-3 rounded-field border border-control-border-soft bg-surface-base p-3"
+      data-parity="resource-file-row"
+    >
       <span
         aria-hidden="true"
         className="flex size-10 shrink-0 items-center justify-center rounded-field bg-surface-quiet text-text-secondary"

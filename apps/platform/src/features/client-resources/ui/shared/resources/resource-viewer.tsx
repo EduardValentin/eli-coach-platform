@@ -235,6 +235,7 @@ function ViewerContent({ resource }: { resource: ClientResourceView }) {
               size: isDesktop ? "sm" : "md",
               variant: "primary",
             })}
+            data-parity="viewer-download"
             download={resource.file.originalName}
             href={resourceDownloadUrl(resource.id)}
           >

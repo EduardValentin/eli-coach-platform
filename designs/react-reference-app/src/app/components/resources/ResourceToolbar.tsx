@@ -92,7 +92,7 @@ export function ResourceToolbar({
   const size = useIsMobile() ? 'md' : 'sm';
 
   return (
-    <div className="mb-6 grid grid-cols-2 gap-3 md:flex md:items-center">
+    <div className="mb-6 grid grid-cols-2 gap-3 md:flex md:items-center" data-parity="resource-toolbar">
       <div className="min-w-0 md:mr-auto">
         <TagFilter
           chosen={filter.tag}
