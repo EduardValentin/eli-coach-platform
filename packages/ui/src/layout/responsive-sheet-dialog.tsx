@@ -7,7 +7,7 @@ import {
   DialogFrameTitle,
 } from "../lib/dialog-frame";
 import { BottomSheet } from "./bottom-sheet";
-import { useIsMobileViewport } from "./use-is-mobile-viewport";
+import { useIsMobileViewport } from "../lib/viewport";
 
 type ResponsiveSheetDialogProps = {
   children: ReactNode;
