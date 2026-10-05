@@ -1,11 +1,6 @@
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Dialog as RadixDialog } from "radix-ui";
-import {
-  useState,
-  type KeyboardEvent,
-  type PointerEvent,
-  type ReactNode,
-} from "react";
+import type { KeyboardEvent, ReactNode } from "react";
 
 import { cn } from "../lib/cn";
 import {
@@ -15,7 +10,7 @@ import {
   DialogFrameTitle,
 } from "../lib/dialog-frame";
 import { Button } from "../primitives/button";
-import { usePhotoGestures } from "./use-photo-gestures";
+import { ZoomableImage } from "./zoomable-image";
 
 export type LightboxPhoto = {
   key: string;
@@ -38,20 +33,6 @@ type LightboxProps = {
   description: ReactNode;
   labels: LightboxLabels;
 };
-
-type Zoom = { scale: 1 } | { scale: 2; origin: string };
-
-const FITTED: Zoom = { scale: 1 };
-
-function originUnder(event: PointerEvent<HTMLElement>, image: HTMLElement) {
-  const frame = image.getBoundingClientRect();
-  if (frame.width === 0 || frame.height === 0) return "center";
-
-  const percentAlong = (offset: number, length: number) =>
-    Math.min(100, Math.max(0, (offset / length) * 100));
-
-  return `${percentAlong(event.clientX - frame.left, frame.width)}% ${percentAlong(event.clientY - frame.top, frame.height)}%`;
-}
 
 function neighbourPhoto(
   photos: readonly LightboxPhoto[],
@@ -101,49 +82,16 @@ type StageProps = {
 };
 
 function LightboxStage({ labels, photo, onNext, onPrevious }: StageProps) {
-  const [zoom, setZoom] = useState<Zoom>(FITTED);
-  const [image, setImage] = useState<HTMLImageElement | null>(null);
-
-  const toggleZoom = (event: PointerEvent<HTMLElement>) => {
-    setZoom((current) =>
-      current.scale === 1 && image
-        ? { scale: 2, origin: originUnder(event, image) }
-        : FITTED,
-    );
-  };
-
-  const gestures = usePhotoGestures({
-    onSwipeLeft: () => onNext?.(),
-    onSwipeRight: () => onPrevious?.(),
-    onDoubleTap: toggleZoom,
-  });
-
   return (
     <div className="relative flex min-h-0 flex-1">
-      <div
-        className="flex min-w-0 flex-1 touch-pinch-zoom items-center justify-center overflow-hidden p-4 select-none sm:px-20"
-        data-parity="lightbox-stage"
-        {...gestures}
-      >
-        <img
-          alt={photo.alt}
-          className={cn(
-            "max-h-full max-w-full object-contain transition-transform duration-200 motion-reduce:transition-none",
-            {
-              "cursor-zoom-in": zoom.scale === 1,
-              "cursor-zoom-out": zoom.scale === 2,
-            },
-          )}
-          data-parity="lightbox-image"
-          draggable={false}
-          ref={setImage}
-          src={photo.src}
-          style={{
-            transform: `scale(${zoom.scale})`,
-            transformOrigin: zoom.scale === 2 ? zoom.origin : "center",
-          }}
-        />
-      </div>
+      <ZoomableImage
+        alt={photo.alt}
+        className="flex-1 p-4 sm:px-20"
+        onSwipeLeft={() => onNext?.()}
+        onSwipeRight={() => onPrevious?.()}
+        parity={{ stage: "lightbox-stage", image: "lightbox-image" }}
+        src={photo.src}
+      />
 
       {onPrevious && (
         <LightboxStepButton
