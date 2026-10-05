@@ -1,6 +1,7 @@
 import {
   checkResourceUpload,
   coachTagVocabulary,
+  hasPagePreview,
   type Resource,
   type ResourceDetails,
   type ResourceFileKind,
@@ -23,10 +24,8 @@ export const UPLOAD_STEPS = 5;
 export const RESOURCES_UNAVAILABLE = 'Resources could not be loaded.';
 export const UPLOAD_FAILED = 'The upload did not go through.';
 
-export type RenderedPages = { pageCount: number; pageImageUrls: string[] };
-
 export type ResourcePageRenderer = {
-  render(upload: { title: string; kind: ResourceFileKind; file: File }): RenderedPages;
+  render(upload: { title: string; kind: ResourceFileKind; file: File }): string[];
 };
 
 export type ResourceUploadRequest = {
@@ -94,11 +93,9 @@ export class ResourceServer {
     if (options.outcome === 'fails') throw new Error(UPLOAD_FAILED);
 
     const details = this.withVocabularyCasing(request.details);
-    const pages = this.renderer.render({
-      title: details.title,
-      kind: check.kind,
-      file: request.file,
-    });
+    const pageImageUrls = hasPagePreview(check.kind)
+      ? this.renderer.render({ title: details.title, kind: check.kind, file: request.file })
+      : [];
     const resource: Resource = {
       id: crypto.randomUUID(),
       clientId: request.clientId,
@@ -107,9 +104,8 @@ export class ResourceServer {
         name: request.file.name,
         kind: check.kind,
         sizeBytes: request.file.size,
-        pageCount: pages.pageCount,
       },
-      pageImageUrls: pages.pageImageUrls,
+      pageImageUrls,
       addedAt: this.now(),
       openedAt: null,
     };

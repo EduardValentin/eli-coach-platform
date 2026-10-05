@@ -1,5 +1,3 @@
-import type { ResourceFileKind } from '../domain/resources';
-
 const PAGE_WIDTH = 600;
 const PAGE_HEIGHT = 800;
 const MARGIN = 64;
@@ -16,20 +14,6 @@ type Palette = {
   accentSoft: string;
 };
 
-const ACCENT_TOKEN: Record<ResourceFileKind, string> = {
-  pdf: '--brand',
-  word: '--brand-secondary',
-  excel: '--success',
-  image: '--brand',
-};
-
-const ACCENT_SOFT_TOKEN: Record<ResourceFileKind, string> = {
-  pdf: '--surface-brand-soft',
-  word: '--brand-secondary-surface',
-  excel: '--success-surface',
-  image: '--surface-brand-soft',
-};
-
 function tokenValue(token: string, fallback: string): string {
   const value = getComputedStyle(document.documentElement).getPropertyValue(token).trim();
 
@@ -44,7 +28,7 @@ function tokenFont(token: string, fallback: string): string {
   return escapeXml(tokenValue(token, fallback));
 }
 
-function paletteFor(kind: ResourceFileKind): Palette {
+function pagePalette(): Palette {
   return {
     sans: tokenFont('--font-sans', 'sans-serif'),
     serif: tokenFont('--font-serif', 'serif'),
@@ -52,8 +36,8 @@ function paletteFor(kind: ResourceFileKind): Palette {
     ink: tokenColor('--text-primary'),
     quiet: tokenColor('--control-border-soft'),
     rule: tokenColor('--border-subtle'),
-    accent: tokenColor(ACCENT_TOKEN[kind]),
-    accentSoft: tokenColor(ACCENT_SOFT_TOKEN[kind]),
+    accent: tokenColor('--brand'),
+    accentSoft: tokenColor('--surface-brand-soft'),
   };
 }
 
@@ -156,10 +140,9 @@ function documentPage(options: {
   title: string;
   page: number;
   pageCount: number;
-  kind: ResourceFileKind;
 }): string {
-  const { title, page, pageCount, kind } = options;
-  const palette = paletteFor(kind);
+  const { title, page, pageCount } = options;
+  const palette = pagePalette();
   const random = seededRandom(`${title}-${page}`);
   const parts = [`<rect width="${PAGE_WIDTH}" height="${PAGE_HEIGHT}" fill="${palette.paper}"/>`];
   let cursor = MARGIN + 8;
@@ -203,54 +186,6 @@ function documentPage(options: {
   return svgDataUrl(parts.join(''));
 }
 
-function spreadsheetPage(options: {
-  title: string;
-  page: number;
-  pageCount: number;
-}): string {
-  const { title, page, pageCount } = options;
-  const palette = paletteFor('excel');
-  const random = seededRandom(`${title}-${page}`);
-  const columns = 5;
-  const rows = 17;
-  const tableTop = 168;
-  const rowHeight = 32;
-  const columnWidth = TEXT_WIDTH / columns;
-  const tableBottom = tableTop + rows * rowHeight;
-  const heading = `<rect width="${PAGE_WIDTH}" height="12" fill="${palette.accent}"/><text x="${MARGIN}" y="104" font-family="${palette.sans}" font-size="26" font-weight="600" fill="${palette.ink}">${escapeXml(wrapWords(title, 30)[0] ?? '')}</text><text x="${MARGIN}" y="136" font-family="${palette.sans}" font-size="16" fill="${palette.ink}" fill-opacity="0.55">Sheet ${page}</text>`;
-  const headerRow = `<rect x="${MARGIN}" y="${tableTop}" width="${TEXT_WIDTH}" height="${rowHeight}" fill="${palette.accentSoft}"/>`;
-  const rowLines = Array.from({ length: rows + 1 }, (_, index) => {
-    const y = tableTop + index * rowHeight;
-    return `<line x1="${MARGIN}" y1="${y}" x2="${PAGE_WIDTH - MARGIN}" y2="${y}" stroke="${palette.rule}" stroke-width="1.5"/>`;
-  });
-  const columnLines = Array.from({ length: columns + 1 }, (_, index) => {
-    const x = MARGIN + index * columnWidth;
-    return `<line x1="${x}" y1="${tableTop}" x2="${x}" y2="${tableBottom}" stroke="${palette.rule}" stroke-width="1.5"/>`;
-  });
-  const cells = Array.from({ length: rows * columns }, (_, index) => {
-    const row = Math.floor(index / columns);
-    const column = index % columns;
-    const x = MARGIN + column * columnWidth + 10;
-    const y = tableTop + row * rowHeight + 12;
-    const width = (columnWidth - 20) * (row === 0 ? 0.7 : 0.3 + random() * 0.6);
-    const fill = row === 0 ? palette.accent : palette.quiet;
-
-    return `<rect x="${x.toFixed(0)}" y="${y}" width="${width.toFixed(0)}" height="8" rx="4" fill="${fill}"/>`;
-  });
-
-  return svgDataUrl(
-    [
-      `<rect width="${PAGE_WIDTH}" height="${PAGE_HEIGHT}" fill="${palette.paper}"/>`,
-      heading,
-      headerRow,
-      ...cells,
-      ...rowLines,
-      ...columnLines,
-      pageFooter(page, pageCount, palette),
-    ].join(''),
-  );
-}
-
 const PLATE_SEGMENTS: { token: string; label: string; share: number }[] = [
   { token: '--nutrition-legume', label: 'Vegetables', share: 0.5 },
   { token: '--nutrition-protein', label: 'Protein', share: 0.25 },
@@ -270,7 +205,7 @@ function plateSegmentPath(start: number, share: number): string {
 }
 
 export function plateGuideArt(): string {
-  const palette = paletteFor('image');
+  const palette = pagePalette();
   let start = 0;
   const segments = PLATE_SEGMENTS.map((segment) => {
     const path = `<path d="${plateSegmentPath(start, segment.share)}" fill="${tokenColor(segment.token)}" fill-opacity="0.85" stroke="${palette.paper}" stroke-width="6"/>`;
@@ -293,16 +228,10 @@ export function plateGuideArt(): string {
   );
 }
 
-export function documentPageArt(options: {
-  title: string;
-  kind: ResourceFileKind;
-  pageCount: number;
-}): string[] {
-  const { title, kind, pageCount } = options;
+export function documentPageArt(options: { title: string; pageCount: number }): string[] {
+  const { title, pageCount } = options;
 
   return Array.from({ length: pageCount }, (_, index) =>
-    kind === 'excel'
-      ? spreadsheetPage({ title, page: index + 1, pageCount })
-      : documentPage({ title, page: index + 1, pageCount, kind }),
+    documentPage({ title, page: index + 1, pageCount }),
   );
 }

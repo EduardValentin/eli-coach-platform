@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { coachTagVocabulary, hasUnopenedResources } from '../domain/resources';
+import {
+  coachTagVocabulary,
+  hasPagePreview,
+  hasUnopenedResources,
+} from '../domain/resources';
 import { sampleResources } from './resourceSamples';
 
 const NOW = new Date('2026-10-03T09:00:00.000Z');
@@ -18,19 +22,19 @@ describe('the seeded resources', () => {
     expect(unopened).toBe(true);
   });
 
-  it('cover every file kind with one page image per page', () => {
+  it('cover every file kind and give pages only to PDFs and images', () => {
     // arrange
     const resources = sampleResources(NOW);
 
     // act
     const kinds = new Set(resources.map((resource) => resource.file.kind));
-    const pagesMatch = resources.every(
-      (resource) => resource.pageImageUrls.length === resource.file.pageCount,
+    const pagesMatchTheirKind = resources.every(
+      (resource) => (resource.pageImageUrls.length > 0) === hasPagePreview(resource.file.kind),
     );
 
     // assert
     expect([...kinds].sort()).toEqual(['excel', 'image', 'pdf', 'word']);
-    expect(pagesMatch).toBe(true);
+    expect(pagesMatchTheirKind).toBe(true);
   });
 
   it('reuse tags across clients from one vocabulary', () => {

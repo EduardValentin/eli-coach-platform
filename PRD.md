@@ -143,6 +143,16 @@ A **Check-in** has a client, a coach, a date and time, a type (`ad-hoc` or `recu
 54. **Every public submission rejects bot-driven attempts before it affects system state.** This covers waitlist capture (hero, footer, pricing page), store acquisition for logged-out buyers, assessment call booking, and any future public submission point. The mechanism must offer accessible alternatives or require no visual or motor input, in keeping with the WCAG AA target.
 55. **On the production site, forms accept only a person's main email address; a subaddressed address (name+tag@domain) is refused.** Test environments accept subaddresses.
 
+## Client Resources
+
+56. **A resource belongs to one client.** The coach gives a client a file with a title, an optional description, and tags. Only the coach and that client can see or download it.
+57. **A resource is one file:** a PDF of at most 50 pages, an image, or a Word or Excel document, up to 25 MB. A file of another type or over a limit is refused with a clear message, and the coach keeps what she entered.
+58. **PDFs and images can be read in the portal, page by page. Word and Excel documents are download only.** Every resource can be downloaded as the original file.
+59. **Tags are one vocabulary across all of the coach's clients.** Tags that differ only in letter case are the same tag, a resource holds a tag once, and a tag exists only while a resource carries it.
+60. **The coach can change a resource's title, description, and tags, or delete it.** The file itself is not replaced. Deleting asks for confirmation and removes the resource for the client at once.
+61. **A resource is new for the client until she opens it.**
+62. **A client's resources follow her portal access.** Once her coaching ends she can no longer reach them (Business Rule 3); the coach keeps them on the client's record.
+
 ---
 
 # Functional Requirements
@@ -266,6 +276,12 @@ Per Business Rule 53.
 
 18. Clients choose units for body weight and training loads (kilograms or pounds) and height (centimetres or feet and inches). The choice applies everywhere a weight or height appears, including profile, dashboard, live logging, and the completion summary, and persists across sessions.
 
+### Resources (`/client/resources`)
+
+19. Reached from portal navigation, which marks the entry while she has resources she has not opened. Her resources show newest first, each with its first page or a file cover, its file type, title, and tags, and a "New" marker until she opens it (Business Rule 61).
+20. She narrows them by tag and by a search on the title; the tags offered are those on her own resources. The page has its own empty states for no resources yet and for no matches.
+21. Opening a resource shows its pages when it can be read in the portal (Business Rule 58), with its description, tags, file type, size, and the date it was added, and a download action.
+
 ## 5. Coach Portal (`/coach`)
 
 ### Dashboard
@@ -301,6 +317,12 @@ Per Business Rule 53.
 
 12. Reached from the sidebar "Settings" entry. An "Assessment calls" section holds the coach's availability (weekdays, start hour, end hour) and the meeting room link per Business Rules 10 and 14, showing the defaults until she has saved once. Saving with no weekday, a start at or after the end, or an invalid link is refused with an inline explanation that keeps the entered values; a valid save confirms with a toast and is live at once for the next visitor; a server failure shows an error toast and keeps the entered values. While the meeting room link is empty, the section warns that visitors cannot join calls until a link is set.
 13. The coach chooses units for weight and height. The choice applies across her views, including workout-history volumes and the session-volume filter.
+
+### Client resources (`/coach/clients/:id/resources`)
+
+14. Reached from the client detail page. Lists that client's resources as the client sees them, with the same tag filter and title search, and a sort by date added (newest first by default) or title.
+15. The coach adds a resource by choosing a file, with the title prefilled from the file name. While she types a tag, existing tags are suggested (Business Rule 59). A failed upload keeps her entries for retry.
+16. From a resource she opens the same view the client sees, edits its details, or deletes it (Business Rule 60).
 
 ## 6. Exercises and Plans (`/coach/training`) — Post-MVP
 

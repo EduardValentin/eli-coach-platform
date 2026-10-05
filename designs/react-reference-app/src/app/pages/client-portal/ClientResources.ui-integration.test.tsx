@@ -120,6 +120,24 @@ describe('client resources page', () => {
     expect(within(viewer).queryByRole('button', { name: 'Next page' })).not.toBeInTheDocument();
   });
 
+  it('offers a Word resource as a download with no pages to turn', async () => {
+    // arrange
+    renderPage();
+    const mealIdeas = await resourceCard('Luteal phase meal ideas');
+
+    // act
+    await userEvent.click(mealIdeas);
+
+    // assert
+    const viewer = screen.getByRole('dialog', { name: 'Luteal phase meal ideas' });
+    expect(mealIdeas).not.toHaveAccessibleDescription(/pages/);
+    expect(within(viewer).getByText('luteal-phase-meal-ideas.docx')).toBeInTheDocument();
+    expect(within(viewer).queryByRole('img')).not.toBeInTheDocument();
+    expect(within(viewer).queryByRole('button', { name: 'Next page' })).not.toBeInTheDocument();
+    expect(within(viewer).queryByText('Pages')).not.toBeInTheDocument();
+    expect(within(viewer).getByRole('button', { name: 'Download' })).toBeInTheDocument();
+  });
+
   it('returns focus to the card she opened', async () => {
     // arrange
     renderPage();
