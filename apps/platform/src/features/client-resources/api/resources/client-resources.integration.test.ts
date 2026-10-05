@@ -426,7 +426,7 @@ describe.sequential("client resources integration", () => {
       },
     );
 
-    it("refuses a body over the upload cap before reading it and keeps nothing", async () => {
+    it("refuses a body over the upload cap as too large before reading it and keeps nothing", async () => {
       // arrange
       const clientId = await admitAna();
 
@@ -438,6 +438,7 @@ describe.sequential("client resources integration", () => {
 
       // assert
       expect(response.status).toBe(413);
+      expect(await response.json()).toEqual({ refusal: "too-large" });
       expect(await resources.resourceRowsOf(clientId)).toEqual([]);
       expect(await resources.storedFileCountOf(clientId)).toBe(0);
     });
