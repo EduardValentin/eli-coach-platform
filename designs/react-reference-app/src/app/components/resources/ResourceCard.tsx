@@ -1,9 +1,15 @@
 import { useId, type ReactNode } from 'react';
-import { isUnopened, thumbnailUrlOf, type Resource } from '../../domain/resources';
+import {
+  isUnopened,
+  pageCountOf,
+  thumbnailUrlOf,
+  type Resource,
+} from '../../domain/resources';
 import { pageCountLabel, RESOURCE_KIND_LABELS } from '../../utils/resourceLabels';
 import { Badge } from '../ui/badge';
 import { cardVariants } from '../ui/card';
 import { cn } from '../ui/utils';
+import { ResourceFileCover } from './ResourceFileCover';
 
 export type ResourcePerspective = 'coach' | 'client';
 
@@ -45,6 +51,8 @@ export function ResourceCard({
   const { file, tags } = resource;
   const showsNew = perspective === 'client' && isUnopened(resource);
   const hasTags = tags.length > 0;
+  const thumbnail = thumbnailUrlOf(resource);
+  const pageCount = pageCountOf(resource);
 
   return (
     <li
@@ -65,24 +73,28 @@ export function ResourceCard({
           className="block aspect-3/4 w-full overflow-hidden rounded-field border border-border-subtle bg-surface-subtle"
           data-parity="resource-thumbnail"
         >
-          <img
-            alt=""
-            className="size-full object-cover object-top"
-            loading="lazy"
-            src={thumbnailUrlOf(resource)}
-          />
+          {thumbnail === null ? (
+            <ResourceFileCover kind={file.kind} placement="thumbnail" />
+          ) : (
+            <img
+              alt=""
+              className="size-full object-cover object-top"
+              loading="lazy"
+              src={thumbnail}
+            />
+          )}
         </span>
         <span
           className={cn('flex min-h-6 items-center gap-1.5 px-0.5', { 'pr-10': menu })}
           id={metaId}
         >
           <Badge tone="muted">{RESOURCE_KIND_LABELS[file.kind].short}</Badge>
-          {file.pageCount > 1 && (
+          {pageCount > 1 && (
             <span
               className="text-sm whitespace-nowrap text-text-secondary tabular-nums"
               data-parity="resource-pages"
             >
-              {pageCountLabel(file.pageCount)}
+              {pageCountLabel(pageCount)}
             </span>
           )}
           {showsNew && (

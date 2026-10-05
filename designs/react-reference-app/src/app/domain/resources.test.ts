@@ -5,9 +5,12 @@ import {
   checkResourceUpload,
   coachTagVocabulary,
   detailsDiffer,
+  hasPagePreview,
   hasUnopenedResources,
+  pageCountOf,
   resourceDetailsFrom,
   tagCounts,
+  thumbnailUrlOf,
   titleFromFileName,
   type Resource,
 } from './resources';
@@ -19,7 +22,7 @@ function resource(overrides: Partial<Resource>): Resource {
     title: 'Glute activation warm-up',
     description: '',
     tags: [],
-    file: { name: 'warm-up.pdf', kind: 'pdf', sizeBytes: 1024, pageCount: 1 },
+    file: { name: 'warm-up.pdf', kind: 'pdf', sizeBytes: 1024 },
     pageImageUrls: ['page-1'],
     addedAt: new Date('2026-09-20T09:00:00.000Z'),
     openedAt: null,
@@ -71,6 +74,38 @@ describe('checking an upload', () => {
       { accepted: true, kind: 'pdf' },
       { accepted: false, refusal: 'too-large' },
     ]);
+  });
+});
+
+describe('page previews', () => {
+  it.each([
+    ['pdf', true],
+    ['image', true],
+    ['word', false],
+    ['excel', false],
+  ] as const)('a %s file has a page preview: %s', (kind, previewed) => {
+    // arrange
+    const fileKind = kind;
+
+    // act
+    const result = hasPagePreview(fileKind);
+
+    // assert
+    expect(result).toBe(previewed);
+  });
+
+  it('gives a download-only resource no pages and no thumbnail', () => {
+    // arrange
+    const tracker = resource({
+      file: { name: 'tracker.xlsx', kind: 'excel', sizeBytes: 2048 },
+      pageImageUrls: [],
+    });
+
+    // act
+    const preview = { pages: pageCountOf(tracker), thumbnail: thumbnailUrlOf(tracker) };
+
+    // assert
+    expect(preview).toEqual({ pages: 0, thumbnail: null });
   });
 });
 

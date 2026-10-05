@@ -3,34 +3,24 @@ import type { Resource, ResourceFileKind } from '../domain/resources';
 import { documentPageArt, plateGuideArt } from '../utils/resourcePageArt';
 import {
   ResourceServer,
-  type RenderedPages,
   type ResourcePageRenderer,
   type ResourceSeed,
 } from './resourceService';
 
 const BYTES_PER_RENDERED_PAGE = 180_000;
 
-const MAX_RENDERED_PAGES: Record<Exclude<ResourceFileKind, 'image'>, number> = {
-  pdf: 12,
-  word: 10,
-  excel: 4,
-};
+const MAX_RENDERED_PAGES = 12;
 
 export const browserPageRenderer: ResourcePageRenderer = {
-  render({ title, kind, file }): RenderedPages {
-    if (kind === 'image') {
-      return { pageCount: 1, pageImageUrls: [URL.createObjectURL(file)] };
-    }
+  render({ title, kind, file }) {
+    if (kind === 'image') return [URL.createObjectURL(file)];
 
     const pageCount = Math.min(
-      MAX_RENDERED_PAGES[kind],
+      MAX_RENDERED_PAGES,
       Math.max(1, Math.ceil(file.size / BYTES_PER_RENDERED_PAGE)),
     );
 
-    return {
-      pageCount,
-      pageImageUrls: documentPageArt({ title, kind, pageCount }),
-    };
+    return documentPageArt({ title, pageCount });
   },
 };
 
@@ -42,7 +32,7 @@ type SampleSpec = {
   fileName: string;
   kind: ResourceFileKind;
   sizeBytes: number;
-  pageCount: number;
+  pdfPages?: number;
   daysAgo: number;
   opened: boolean;
 };
@@ -56,7 +46,6 @@ const SAMPLE_SPECS: SampleSpec[] = [
     fileName: 'plate-portions.png',
     kind: 'image',
     sizeBytes: 412_000,
-    pageCount: 1,
     daysAgo: 1,
     opened: false,
   },
@@ -68,7 +57,7 @@ const SAMPLE_SPECS: SampleSpec[] = [
     fileName: 'glute-activation-warm-up.pdf',
     kind: 'pdf',
     sizeBytes: 1_840_000,
-    pageCount: 6,
+    pdfPages: 6,
     daysAgo: 3,
     opened: false,
   },
@@ -80,7 +69,6 @@ const SAMPLE_SPECS: SampleSpec[] = [
     fileName: 'luteal-phase-meal-ideas.docx',
     kind: 'word',
     sizeBytes: 640_000,
-    pageCount: 3,
     daysAgo: 9,
     opened: true,
   },
@@ -92,7 +80,6 @@ const SAMPLE_SPECS: SampleSpec[] = [
     fileName: 'weekly-macro-tracker.xlsx',
     kind: 'excel',
     sizeBytes: 96_000,
-    pageCount: 2,
     daysAgo: 15,
     opened: true,
   },
@@ -104,7 +91,7 @@ const SAMPLE_SPECS: SampleSpec[] = [
     fileName: 'hip-thrust-form-checklist.pdf',
     kind: 'pdf',
     sizeBytes: 220_000,
-    pageCount: 1,
+    pdfPages: 1,
     daysAgo: 21,
     opened: true,
   },
@@ -116,7 +103,7 @@ const SAMPLE_SPECS: SampleSpec[] = [
     fileName: 'sleep-and-recovery-basics.pdf',
     kind: 'pdf',
     sizeBytes: 2_310_000,
-    pageCount: 8,
+    pdfPages: 8,
     daysAgo: 30,
     opened: true,
   },
@@ -128,7 +115,7 @@ const SAMPLE_SPECS: SampleSpec[] = [
     fileName: 'glute-activation-warm-up.pdf',
     kind: 'pdf',
     sizeBytes: 1_840_000,
-    pageCount: 6,
+    pdfPages: 6,
     daysAgo: 5,
     opened: true,
   },
@@ -140,7 +127,6 @@ const SAMPLE_SPECS: SampleSpec[] = [
     fileName: 'follicular-phase-training-notes.docx',
     kind: 'word',
     sizeBytes: 520_000,
-    pageCount: 4,
     daysAgo: 12,
     opened: false,
   },
@@ -152,7 +138,6 @@ const SAMPLE_SPECS: SampleSpec[] = [
     fileName: 'weekly-macro-tracker.xlsx',
     kind: 'excel',
     sizeBytes: 96_000,
-    pageCount: 2,
     daysAgo: 18,
     opened: true,
   },
@@ -164,7 +149,7 @@ const SAMPLE_SPECS: SampleSpec[] = [
     fileName: 'sleep-and-recovery-basics.pdf',
     kind: 'pdf',
     sizeBytes: 2_310_000,
-    pageCount: 8,
+    pdfPages: 8,
     daysAgo: 7,
     opened: true,
   },
@@ -176,7 +161,7 @@ const SAMPLE_SPECS: SampleSpec[] = [
     fileName: 'desk-mobility-routine.pdf',
     kind: 'pdf',
     sizeBytes: 480_000,
-    pageCount: 2,
+    pdfPages: 2,
     daysAgo: 20,
     opened: false,
   },
@@ -184,12 +169,9 @@ const SAMPLE_SPECS: SampleSpec[] = [
 
 function pageImagesFor(spec: SampleSpec): string[] {
   if (spec.kind === 'image') return [plateGuideArt()];
+  if (spec.pdfPages === undefined) return [];
 
-  return documentPageArt({
-    title: spec.title,
-    kind: spec.kind,
-    pageCount: spec.pageCount,
-  });
+  return documentPageArt({ title: spec.title, pageCount: spec.pdfPages });
 }
 
 export function sampleResources(now: Date): Resource[] {
@@ -206,7 +188,6 @@ export function sampleResources(now: Date): Resource[] {
         name: spec.fileName,
         kind: spec.kind,
         sizeBytes: spec.sizeBytes,
-        pageCount: spec.pageCount,
       },
       pageImageUrls: pageImagesFor(spec),
       addedAt,
