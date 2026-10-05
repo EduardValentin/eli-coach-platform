@@ -5,7 +5,7 @@ import type { ComponentPropsWithoutRef } from "react";
 import { cn } from "./cn";
 import { useReturnFocusToOpener } from "./use-return-focus-to-opener";
 
-type DialogFramePlacement = "centred" | "screen";
+type DialogFramePlacement = "centred" | "screen" | "viewer";
 
 type DialogFrameProps = Omit<
   ComponentPropsWithoutRef<typeof RadixDialog.Content>,
@@ -17,11 +17,17 @@ type DialogFrameProps = Omit<
 const FRAME_CLASS =
   "fixed z-50 bg-surface-base motion-safe:data-[state=closed]:animate-[ui-popover-out_200ms_ease] motion-safe:data-[state=open]:animate-[ui-popover-in_200ms_ease]";
 
+const FULL_SCREEN_CLASS =
+  "inset-0 flex h-dvh flex-col gap-0 overflow-hidden shadow-none pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)]";
+
 const PLACEMENT_CLASS = {
   centred:
     "top-1/2 left-1/2 w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 rounded-compact border shadow-action-hover",
-  screen:
-    "inset-0 flex h-dvh flex-col gap-0 overflow-hidden shadow-none pt-[env(safe-area-inset-top)] pr-[env(safe-area-inset-right)] pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)]",
+  screen: FULL_SCREEN_CLASS,
+  viewer: cn(
+    FULL_SCREEN_CLASS,
+    "lg:inset-auto lg:top-1/2 lg:left-1/2 lg:h-[min(90dvh,56rem)] lg:w-[calc(100%-4rem)] lg:max-w-6xl lg:-translate-x-1/2 lg:-translate-y-1/2 lg:rounded-card lg:border lg:shadow-action-hover",
+  ),
 } satisfies Record<DialogFramePlacement, string>;
 
 export function DialogFrame({
