@@ -23,6 +23,9 @@
     "route-thinness"
   ],
   "apps/platform/src/features/store/api/cycle-a.ts": ["no-circular"],
+  "apps/platform/src/features/store/api/feature-api-never-imports-ui.ts": [
+    "feature-api-never-imports-ui"
+  ],
   "apps/platform/src/features/store/api/feature-internals.ts": [
     "feature-api-to-data",
     "feature-internals",

@@ -1,6 +1,6 @@
-type ServerAction = () => Promise<unknown>;
+import { refusedSubmission, unreachableSubmission } from "./failed-submission";
 
-const UNREACHABLE_STATUS = 503;
+type ServerAction = () => Promise<unknown>;
 
 function refusalStatusOf(error: unknown): number | null {
   if (typeof error !== "object" || error === null || !("status" in error)) {
@@ -14,16 +14,10 @@ function failedSubmissionOf(error: unknown): Response {
   const httpStatus = refusalStatusOf(error);
 
   if (httpStatus === null) {
-    return Response.json(
-      { status: "unreachable" },
-      { status: UNREACHABLE_STATUS },
-    );
+    return unreachableSubmission();
   }
 
-  return Response.json(
-    { status: "refused", httpStatus },
-    { status: httpStatus },
-  );
+  return refusedSubmission(httpStatus);
 }
 
 export async function fetcherOutcomeOf(

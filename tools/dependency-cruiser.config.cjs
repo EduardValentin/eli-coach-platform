@@ -270,6 +270,14 @@ module.exports = {
       to: { path: `${FEATURES}[^/]+/(data|email)/` },
     },
     {
+      name: "feature-api-never-imports-ui",
+      comment:
+        "A feature's api/ never imports any feature's ui/: what a route module's clientAction shares with the browser half lives in contracts/ or a package's browser entry.",
+      severity: "error",
+      from: { path: `${FEATURES}[^/]+/api/` },
+      to: { path: `${FEATURES}[^/]+/ui/` },
+    },
+    {
       name: "root-registry-to-server",
       comment:
         "The registry imports only the platform route fragment from server/.",
