@@ -32,6 +32,7 @@ export type PaidClient = {
 export type PaymentReferences = {
   customerId: string;
   subscriptionId: string;
+  paymentIntentId: string;
   checkoutSessionId: string;
 };
 
@@ -108,9 +109,10 @@ const INSERT_SUBSCRIPTION = `
   insert into app.coaching_subscriptions (
     client_id, assessment_call_id, bundle_id, months, tier, amount_cents,
     currency, stripe_customer_id, stripe_subscription_id,
-    stripe_checkout_session_id, paid_at, start_choice, created_at
+    stripe_payment_intent_id, stripe_checkout_session_id, paid_at,
+    start_choice, created_at
   )
-  values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $11)
+  values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $12)
 `;
 const INSERT_INVITATION = `
   insert into app.client_invitations (
@@ -252,6 +254,7 @@ async function insertPaidClient(
     SEEDED_BUNDLE.currency,
     references.customerId,
     references.subscriptionId,
+    references.paymentIntentId,
     references.checkoutSessionId,
     paidAt,
     payment.start,
@@ -278,6 +281,7 @@ function seededPayment(start: StartChoice): PaymentSeed {
     references: {
       customerId: `cus_e2e_${reference}`,
       subscriptionId: `sub_e2e_${reference}`,
+      paymentIntentId: `pi_e2e_${reference}`,
       checkoutSessionId: `cs_e2e_${reference}`,
     },
   };

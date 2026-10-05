@@ -18,6 +18,7 @@ export type PurchasedSubscriptionSnapshot = {
   currency: string;
   paymentCustomerId: string;
   paymentSubscriptionId: string;
+  paymentIntentId: string;
   checkoutSessionId: string;
   paidAt: Date;
   startChoice: StartChoice;
@@ -32,6 +33,7 @@ export class PurchasedSubscription {
   readonly currency: string;
   readonly paymentCustomerId: string;
   readonly paymentSubscriptionId: string;
+  readonly paymentIntentId: string;
   readonly checkoutSessionId: string;
   readonly paidAt: Date;
   readonly startChoice: StartChoice;
@@ -45,6 +47,7 @@ export class PurchasedSubscription {
     this.currency = snapshot.currency;
     this.paymentCustomerId = snapshot.paymentCustomerId;
     this.paymentSubscriptionId = snapshot.paymentSubscriptionId;
+    this.paymentIntentId = snapshot.paymentIntentId;
     this.checkoutSessionId = snapshot.checkoutSessionId;
     this.paidAt = snapshot.paidAt;
     this.startChoice = snapshot.startChoice;
@@ -62,6 +65,7 @@ export class PurchasedSubscription {
       currency: completion.currency,
       paymentCustomerId: completion.paymentCustomerId,
       paymentSubscriptionId: completion.paymentSubscriptionId,
+      paymentIntentId: completion.paymentIntentId,
       checkoutSessionId: completion.checkoutSessionId,
       paidAt: completion.paidAt,
       startChoice: completion.startChoice,
@@ -78,6 +82,7 @@ export class PurchasedSubscription {
       currency: this.currency,
       paymentCustomerId: this.paymentCustomerId,
       paymentSubscriptionId: this.paymentSubscriptionId,
+      paymentIntentId: this.paymentIntentId,
       checkoutSessionId: this.checkoutSessionId,
       paidAt: this.paidAt,
       startChoice: this.startChoice,

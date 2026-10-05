@@ -84,8 +84,8 @@ export class ReconcileSubscriptionEventUseCase {
     event: SubscriptionEvent,
   ): Promise<CoachingSubscription | null> {
     if (event.kind === "charge-refunded") {
-      return this.options.subscriptions.findCurrentByPaymentCustomerId(
-        event.paymentCustomerId,
+      return this.options.subscriptions.findByPaymentIntentId(
+        event.paymentIntentId,
       );
     }
 
@@ -113,7 +113,7 @@ export class ReconcileSubscriptionEventUseCase {
 
 function paymentReferenceOf(event: SubscriptionEvent): string {
   return event.kind === "charge-refunded"
-    ? event.paymentCustomerId
+    ? event.paymentIntentId
     : event.paymentSubscriptionId;
 }
 

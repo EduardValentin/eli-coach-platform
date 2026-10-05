@@ -266,7 +266,7 @@ describe("readSubscriptionChange", () => {
 });
 
 describe("readPaymentRefund", () => {
-  it("reads the refunded total of a charge with its customer", () => {
+  it("reads the refunded total of a charge with the payment intent it settled", () => {
     // act
     const refund = readPaymentRefund(
       {
@@ -277,6 +277,7 @@ describe("readPaymentRefund", () => {
         refunded: false,
         customer: "cus_1",
         currency: "eur",
+        payment_intent: "pi_1",
       },
       CREATED,
     );
@@ -284,7 +285,7 @@ describe("readPaymentRefund", () => {
     // assert
     expect(refund).toEqual({
       kind: "charge_refund",
-      customerId: "cus_1",
+      paymentIntentId: "pi_1",
       chargeCents: 44700,
       refundedCents: 10000,
       currency: "eur",
@@ -292,7 +293,26 @@ describe("readPaymentRefund", () => {
     });
   });
 
-  it("reads nothing from a charge without a customer", () => {
+  it("reads the payment intent of a charge that carries it expanded", () => {
+    // act
+    const refund = readPaymentRefund(
+      {
+        id: "ch_1",
+        object: "charge",
+        amount: 44700,
+        amount_refunded: 44700,
+        customer: null,
+        currency: "eur",
+        payment_intent: { id: "pi_1", object: "payment_intent" },
+      },
+      CREATED,
+    );
+
+    // assert
+    expect(refund?.paymentIntentId).toBe("pi_1");
+  });
+
+  it("reads nothing from a charge without a payment intent", () => {
     // act
     const refund = readPaymentRefund(
       {
@@ -300,8 +320,9 @@ describe("readPaymentRefund", () => {
         object: "charge",
         amount: 44700,
         amount_refunded: 10000,
-        customer: null,
+        customer: "cus_1",
         currency: "eur",
+        payment_intent: null,
       },
       CREATED,
     );

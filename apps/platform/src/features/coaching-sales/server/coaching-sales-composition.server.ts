@@ -397,6 +397,7 @@ export function composeCoachingSalesFeature(
       }),
       paymentCompletionHandler: new CoachingPurchaseCompletionHandler({
         incidents: handles.incidents,
+        paymentCheckout: handles.paymentCheckout,
         recordCheckoutCompleted: useCases.recordCheckoutCompleted,
         refreshPaymentCard: subscriptionUseCases.refreshPaymentCard,
       }),

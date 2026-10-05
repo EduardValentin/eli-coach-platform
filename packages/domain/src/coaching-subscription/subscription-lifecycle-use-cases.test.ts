@@ -69,6 +69,7 @@ function createSubscriptions(found: CoachingSubscription | null) {
     findCurrentForAuthSubject: vi.fn().mockResolvedValue(found),
     findByPaymentSubscriptionId: vi.fn().mockResolvedValue(found),
     findCurrentByPaymentCustomerId: vi.fn().mockResolvedValue(found),
+    findByPaymentIntentId: vi.fn().mockResolvedValue(found),
     save: vi.fn().mockResolvedValue("saved"),
     saveForEvent: vi.fn().mockResolvedValue("recorded"),
   } satisfies CoachingSubscriptions;
@@ -1059,7 +1060,7 @@ describe("ReconcileSubscriptionEventUseCase", () => {
     },
   );
 
-  it("settles the refund owed on the customer's latest subscription and reports it settled", async () => {
+  it("settles the refund owed on the subscription whose payment was refunded and reports it settled", async () => {
     // arrange
     const refund = RefundDue.full({ amountCents: 44700, cancelledAt: DAY_13 });
     const current = subscriptionOf({
@@ -1077,7 +1078,7 @@ describe("ReconcileSubscriptionEventUseCase", () => {
       eventId: "evt_2",
       event: {
         kind: "charge-refunded",
-        paymentCustomerId: "cus_1",
+        paymentIntentId: "pi_1",
         refundedCents: 44700,
         occurredAt: OCCURRED_AT,
       },
@@ -1085,9 +1086,8 @@ describe("ReconcileSubscriptionEventUseCase", () => {
 
     // assert
     expect(result).toEqual({ status: "recorded" });
-    expect(subscriptions.findCurrentByPaymentCustomerId).toHaveBeenCalledWith(
-      "cus_1",
-    );
+    expect(subscriptions.findByPaymentIntentId).toHaveBeenCalledWith("pi_1");
+    expect(subscriptions.findCurrentByPaymentCustomerId).not.toHaveBeenCalled();
     expect(subscriptions.saveForEvent).toHaveBeenCalledWith({
       eventId: "evt_2",
       subscription: current.settleRefund({
@@ -1121,7 +1121,7 @@ describe("ReconcileSubscriptionEventUseCase", () => {
       eventId: "evt_2",
       event: {
         kind: "charge-refunded",
-        paymentCustomerId: "cus_1",
+        paymentIntentId: "pi_1",
         refundedCents: 10000,
         occurredAt: OCCURRED_AT,
       },
@@ -1154,6 +1154,34 @@ describe("ReconcileSubscriptionEventUseCase", () => {
       eventId: "evt_3",
       eventKind: "ended",
       paymentReference: "sub_unknown",
+      outcome: "unknown-subscription",
+    });
+  });
+
+  it("acknowledges a refund of a payment no subscription owns without saving and reports it", async () => {
+    // arrange
+    const subscriptions = createSubscriptions(null);
+    const incidents = createIncidents();
+    const useCase = reconcileUseCase({ subscriptions, incidents });
+
+    // act
+    const result = await useCase.execute({
+      eventId: "evt_4",
+      event: {
+        kind: "charge-refunded",
+        paymentIntentId: "pi_unknown",
+        refundedCents: 10000,
+        occurredAt: OCCURRED_AT,
+      },
+    });
+
+    // assert
+    expect(result).toEqual({ status: "ignored" });
+    expect(subscriptions.saveForEvent).not.toHaveBeenCalled();
+    expect(incidents.subscriptionEventReconciled).toHaveBeenCalledWith({
+      eventId: "evt_4",
+      eventKind: "charge-refunded",
+      paymentReference: "pi_unknown",
       outcome: "unknown-subscription",
     });
   });

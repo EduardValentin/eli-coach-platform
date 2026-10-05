@@ -218,6 +218,7 @@ function purchase(): CoachingPurchase {
       checkoutSessionId: "cs_1",
       paymentCustomerId: "cus_1",
       paymentSubscriptionId: "sub_1",
+      paymentIntentId: "pi_1",
       amountCents: 44700,
       currency: "eur",
       customerEmail: "ana@example.com",

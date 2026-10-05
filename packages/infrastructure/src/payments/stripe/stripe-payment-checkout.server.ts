@@ -40,7 +40,7 @@ type StripeCheckoutClient = {
 
 const RESOURCE_MISSING_CODE = "resource_missing";
 
-const SUBSCRIPTION_EXPANSION = { expand: ["subscription"] };
+const COMPLETION_EXPANSION = { expand: ["subscription", "invoice.payments"] };
 
 const expandedSubscriptionSchema = z.object({
   subscription: z.object({ created: z.number().int().positive() }),
@@ -105,10 +105,7 @@ export class StripePaymentCheckout implements PaymentCheckout {
 
     try {
       return readCoachingCompletion(
-        await this.client.checkout.sessions.retrieve(
-          id,
-          SUBSCRIPTION_EXPANSION,
-        ),
+        await this.client.checkout.sessions.retrieve(id, COMPLETION_EXPANSION),
       );
     } catch (error) {
       if (isMissingResource(error)) {

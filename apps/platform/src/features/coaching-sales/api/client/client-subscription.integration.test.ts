@@ -33,7 +33,9 @@ import {
 import {
   STRIPE_BILLING_PORTAL_SESSIONS_PATH,
   STRIPE_BILLING_PORTAL_URL,
+  STRIPE_PORTAL_CONFIGURATION_ID,
   STRIPE_CUSTOMER_ID,
+  paymentIntentOf,
   stripeRefusesBillingPortalSessions,
   stripeRefusesSubscriptionCancellation,
   toUnixSeconds,
@@ -479,7 +481,7 @@ describe.sequential("client subscription integration", () => {
   });
 
   describe("managing the payment method", () => {
-    it("sends her to Stripe's payment-method page for her own customer, returning to her settings", async () => {
+    it("sends her to Stripe's payment-method page of the pinned portal configuration for her own customer, returning to her settings", async () => {
       // arrange
       await onboarding.admit(ANA, ANA_SESSION, WAITING_PURCHASE);
 
@@ -490,6 +492,9 @@ describe.sequential("client subscription integration", () => {
       expect(response.status).toBe(303);
       expect(response.headers.get("location")).toBe(STRIPE_BILLING_PORTAL_URL);
       const [session] = await portalSessionRequests();
+      expect(session?.get("configuration")).toBe(
+        STRIPE_PORTAL_CONFIGURATION_ID,
+      );
       expect(session?.get("customer")).toBe(STRIPE_CUSTOMER_ID);
       expect(session?.get("return_url")).toBe(SETTINGS_RETURN_URL);
       expect(session?.get("flow_data[type]")).toBe("payment_method_update");
@@ -636,6 +641,61 @@ describe.sequential("client subscription integration", () => {
         refundedCents: 44700,
         refundedAt: fullyRefundedAt,
       });
+    });
+
+    it("settles a refund on the subscription that owns the refunded payment, not on the customer's latest", async () => {
+      // arrange
+      await onboarding.admit(ANA, ANA_SESSION, WAITING_PURCHASE);
+      await onboarding.admit(MARIA, MARIA_SESSION, {
+        ...SECOND_PURCHASE,
+        startChoice: "waiting",
+      });
+      await rig.holdClock(DAY_13);
+      await cancel(ANA_SESSION);
+      await cancel(MARIA_SESSION);
+
+      // act
+      const response = await lifecycle.deliverEvent({
+        id: "evt_subscription_first_refunded",
+        type: "charge.refunded",
+        object: stripeRefundedChargeObject(
+          44700,
+          paymentIntentOf(WAITING_PURCHASE.checkout.sessionId),
+        ),
+      });
+
+      // assert
+      expect(response.status).toBe(200);
+      expect(await lifecycle.subscriptionRow()).toMatchObject({
+        refundDueCents: 44700,
+        refundedCents: 44700,
+        refundedAt: DAY_13,
+      });
+      expect(
+        await lifecycle.subscriptionRow(SECOND_PURCHASE.subscriptionId),
+      ).toMatchObject({ refundedCents: 0, refundedAt: null });
+    });
+
+    it("acknowledges a refund of another payment of the same customer and leaves her subscription alone", async () => {
+      // arrange
+      await onboarding.admit(ANA, ANA_SESSION, WAITING_PURCHASE);
+      await rig.holdClock(DAY_13);
+      await cancel(ANA_SESSION);
+      const cancelled = await lifecycle.subscriptionRow();
+
+      // act
+      const response = await lifecycle.deliverEvent({
+        id: "evt_subscription_other_charge_refunded",
+        type: "charge.refunded",
+        object: stripeRefundedChargeObject(44700, "pi_of_another_charge"),
+      });
+
+      // assert
+      expect(response.status).toBe(200);
+      expect(await lifecycle.subscriptionRow()).toEqual(cancelled);
+      expect(await lifecycle.recordedEventIds()).not.toContain(
+        "evt_subscription_other_charge_refunded",
+      );
     });
   });
 });

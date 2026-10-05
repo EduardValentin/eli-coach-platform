@@ -153,11 +153,11 @@ describe("toSubscriptionEvent", () => {
     expect(event).toBeNull();
   });
 
-  it("reads a refunded charge as the customer's refunded total", () => {
+  it("reads a refunded charge as the refunded total of its payment intent", () => {
     // act
     const event = toSubscriptionEvent({
       kind: "charge_refund",
-      customerId: "cus_1",
+      paymentIntentId: "pi_1",
       chargeCents: 44700,
       refundedCents: 10000,
       currency: "eur",
@@ -167,7 +167,7 @@ describe("toSubscriptionEvent", () => {
     // assert
     expect(event).toEqual({
       kind: "charge-refunded",
-      paymentCustomerId: "cus_1",
+      paymentIntentId: "pi_1",
       refundedCents: 10000,
       occurredAt: OCCURRED_AT,
     });

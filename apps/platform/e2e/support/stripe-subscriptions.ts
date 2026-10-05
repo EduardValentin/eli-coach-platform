@@ -23,6 +23,7 @@ export type StripeTestCard = {
 export type StripeTestSubscription = {
   customerId: string;
   subscriptionId: string;
+  paymentIntentId: string;
   amountCents: number;
   currency: string;
   card: StripeTestCard;
@@ -73,6 +74,7 @@ export async function createHeldStripeSubscription(
   return {
     customerId: customer.id,
     subscriptionId: subscription.id,
+    paymentIntentId: await firstPaymentIntentId(stripe, subscription),
     amountCents,
     currency: SEEDED_BUNDLE.currency,
     card,
@@ -242,6 +244,34 @@ function coachingMetadata(seed: HeldSubscriptionSeed): Record<string, string> {
     tier: SEEDED_TIER,
     startChoice: seed.start,
   };
+}
+
+async function firstPaymentIntentId(
+  stripe: Stripe,
+  subscription: Stripe.Subscription,
+): Promise<string> {
+  const invoiceId =
+    typeof subscription.latest_invoice === "string"
+      ? subscription.latest_invoice
+      : subscription.latest_invoice?.id;
+
+  if (!invoiceId) {
+    throw new Error(`Subscription ${subscription.id} has no invoice.`);
+  }
+
+  const invoice = await stripe.invoices.retrieve(invoiceId, {
+    expand: ["payments"],
+  });
+  const paid = invoice.payments?.data.find(
+    (payment) => payment.status === "paid",
+  );
+  const paymentIntent = paid?.payment.payment_intent;
+
+  if (!paymentIntent) {
+    throw new Error(`Invoice ${invoiceId} carries no paid payment intent.`);
+  }
+
+  return typeof paymentIntent === "string" ? paymentIntent : paymentIntent.id;
 }
 
 async function firstChargeId(

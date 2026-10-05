@@ -22,6 +22,7 @@ export type CheckoutCompletion = {
   checkoutSessionId: string;
   paymentCustomerId: string;
   paymentSubscriptionId: string;
+  paymentIntentId: string;
   amountCents: number;
   currency: string;
   customerEmail: string;

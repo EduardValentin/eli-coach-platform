@@ -8,6 +8,7 @@ export const STRIPE_SUBSCRIPTION_ID = "sub_integration";
 export const STRIPE_SUBSCRIPTIONS_PATH = "/v1/subscriptions";
 export const STRIPE_BILLING_PORTAL_SESSIONS_PATH =
   "/v1/billing_portal/sessions";
+export const STRIPE_PORTAL_CONFIGURATION_ID = "bpc_integration";
 export const STRIPE_BILLING_PORTAL_URL =
   "https://billing.stripe.com/p/session/test_integration";
 export const STRIPE_PAYMENT_METHODS_PATH = "/v1/payment_methods";
@@ -30,6 +31,7 @@ export type StripeCheckoutSession = {
   customer: string;
   customer_details: { email: string };
   id: string;
+  invoice: string | null;
   metadata: Record<string, string>;
   mode: "subscription";
   object: "checkout.session";
@@ -46,6 +48,10 @@ export type CheckoutSessionContent = {
   id: string;
   metadata: Record<string, string>;
 };
+
+export function paymentIntentOf(sessionId: string): string {
+  return `pi_of_${sessionId}`;
+}
 
 export function hostedCheckoutUrl(sessionId: string): string {
   return `${HOSTED_CHECKOUT_BASE_URL}${sessionId}`;
@@ -128,7 +134,12 @@ export function stripeRetrievesSession(
     response: {
       headers: jsonHeaders,
       status: 200,
-      jsonBody: { ...session, subscription: expandedSubscription(session) },
+      jsonBody: {
+        ...session,
+        invoice: expandedInvoice(session),
+        payment_intent: null,
+        subscription: expandedSubscription(session),
+      },
     },
   };
 }
@@ -162,6 +173,7 @@ export function completedCheckoutSession(
 ): StripeCheckoutSession {
   return {
     ...checkoutSession(content),
+    invoice: `in_of_${content.id}`,
     payment_status: "paid",
     status: "complete",
     subscription: STRIPE_SUBSCRIPTION_ID,
@@ -174,6 +186,7 @@ export function openCheckoutSession(
 ): StripeCheckoutSession {
   return {
     ...checkoutSession(content),
+    invoice: null,
     payment_status: "unpaid",
     status: "open",
     subscription: null,
@@ -185,7 +198,7 @@ function checkoutSession(
   content: CheckoutSessionContent,
 ): Omit<
   StripeCheckoutSession,
-  "payment_status" | "status" | "subscription" | "url"
+  "invoice" | "payment_status" | "status" | "subscription" | "url"
 > {
   return {
     amount_total: content.amountTotal,
@@ -197,6 +210,30 @@ function checkoutSession(
     metadata: content.metadata,
     mode: "subscription",
     object: "checkout.session",
+  };
+}
+
+function expandedInvoice(session: StripeCheckoutSession) {
+  if (!session.invoice) {
+    return null;
+  }
+
+  return {
+    id: session.invoice,
+    object: "invoice",
+    payments: {
+      data: [
+        {
+          object: "invoice_payment",
+          payment: {
+            payment_intent: paymentIntentOf(session.id),
+            type: "payment_intent",
+          },
+          status: "paid",
+        },
+      ],
+      object: "list",
+    },
   };
 }
 

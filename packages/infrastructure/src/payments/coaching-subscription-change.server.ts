@@ -18,7 +18,7 @@ export function toSubscriptionEvent(
     case "charge_refund":
       return {
         kind: "charge-refunded",
-        paymentCustomerId: change.customerId,
+        paymentIntentId: change.paymentIntentId,
         refundedCents: change.refundedCents,
         occurredAt: change.refundedAt,
       };

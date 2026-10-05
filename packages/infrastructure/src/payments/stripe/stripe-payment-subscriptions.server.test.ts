@@ -94,6 +94,28 @@ describe("StripePaymentSubscriptions", () => {
     });
   });
 
+  it("opens the portal on the pinned customer-portal configuration when one is set", async () => {
+    // arrange
+    const client = createStubClient();
+    const subscriptions = new StripePaymentSubscriptions(client, {
+      portalConfigurationId: "bpc_pinned",
+    });
+
+    // act
+    await subscriptions.openPaymentMethodSession({
+      paymentCustomerId: "cus_1",
+      returnUrl: RETURN_URL,
+    });
+
+    // assert
+    expect(client.billingPortal.sessions.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        configuration: "bpc_pinned",
+        customer: "cus_1",
+      }),
+    );
+  });
+
   it("propagates a provider failure", async () => {
     // arrange
     const failure = new Error("provider down");

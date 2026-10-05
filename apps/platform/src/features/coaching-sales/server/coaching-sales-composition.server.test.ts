@@ -1,4 +1,5 @@
 import type { DatabaseClient } from "@eli-coach-platform/db";
+import type { PaymentCheckout } from "@eli-coach-platform/domain/coaching-subscription";
 import type { FeatureFlagSet } from "@eli-coach-platform/domain/feature-flag";
 import { InMemoryProductEmail } from "@eli-coach-platform/infrastructure/email/server";
 import {
@@ -87,14 +88,13 @@ describe("composeCoachingSalesFeature", () => {
   it("hands a completed checkout to purchase recording while the site is in waitlist mode", async () => {
     // arrange
     const incidents = createIncidents();
-    const { handles } = composeCoachingSalesFeature({
-      ...createHandles({ WAITLIST_MODE: true }),
-      incidents,
-    });
+    const sale = { ...createHandles({ WAITLIST_MODE: true }), incidents };
+    const paidSession = await openCheckoutSession(sale.paymentCheckout);
+    const { handles } = composeCoachingSalesFeature(sale);
 
     // act
     const outcome = await handles.paymentCompletionHandler.handle("evt_1", {
-      id: "cs_test_1",
+      id: paidSession.id,
       customerId: "cus_1",
       subscriptionId: "sub_1",
       paymentIntentId: null,
@@ -102,14 +102,7 @@ describe("composeCoachingSalesFeature", () => {
       currency: "eur",
       customerEmail: "ana@example.com",
       paidAt: new Date("2026-10-20T10:00:00.000Z"),
-      metadata: {
-        purpose: "coaching-subscription",
-        assessmentCallId: CALL_ID,
-        bundleId: "3-months",
-        months: "3",
-        tier: "regular",
-        startChoice: "waiting",
-      },
+      metadata: { purpose: "coaching-subscription" },
     });
 
     // assert
@@ -311,6 +304,36 @@ function coachArgs(request: Request) {
       }),
     ],
     request,
+  });
+}
+
+async function openCheckoutSession(
+  paymentCheckout: PaymentCheckout,
+): Promise<{ id: string }> {
+  const customer = await paymentCheckout.createCustomer({
+    email: "ana@example.com",
+    assessmentCallId: CALL_ID,
+  });
+
+  return paymentCheckout.createSession({
+    customerId: customer.id,
+    bundle: {
+      id: "3-months",
+      title: "3 Months",
+      months: 3,
+      amountCents: 44700,
+    },
+    currency: "eur",
+    metadata: {
+      purpose: "coaching-subscription",
+      assessmentCallId: CALL_ID,
+      bundleId: "3-months",
+      tier: "regular",
+      startChoice: "waiting",
+    },
+    successUrl:
+      "https://evoa.fit/checkout/complete?session={CHECKOUT_SESSION_ID}",
+    cancelUrl: "https://evoa.fit/select-bundle",
   });
 }
 

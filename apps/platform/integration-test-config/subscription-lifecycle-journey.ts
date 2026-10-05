@@ -2,9 +2,11 @@ import type { PlatformRig } from "./platform-rig";
 import { stripeWebhook } from "./stripe-webhook-request";
 import {
   STRIPE_CARD,
+  STRIPE_CHECKOUT_SESSION_ID,
   STRIPE_CUSTOMER_ID,
   STRIPE_PAYMENT_METHOD_ID,
   STRIPE_SUBSCRIPTION_ID,
+  paymentIntentOf,
   stripeSubscriptionPath,
 } from "./wire-mock/expectations/stripe-api";
 import { STRIPE_WEBHOOKS_API } from "./coaching-sales-journey";
@@ -174,15 +176,17 @@ export function stripeInvoiceObject(
 
 export function stripeRefundedChargeObject(
   refundedCents: number,
+  paymentIntentId: string = paymentIntentOf(STRIPE_CHECKOUT_SESSION_ID),
 ): Record<string, unknown> {
   return {
     amount: 44700,
     amount_refunded: refundedCents,
     currency: "eur",
     customer: STRIPE_CUSTOMER_ID,
-    id: "ch_integration",
+    id: `ch_of_${paymentIntentId}`,
     metadata: {},
     object: "charge",
+    payment_intent: paymentIntentId,
     refunded: refundedCents >= 44700,
   };
 }

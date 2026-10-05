@@ -12,5 +12,7 @@ export function createPaymentSubscriptions(
     return new InMemoryPaymentSubscriptions();
   }
 
-  return new StripePaymentSubscriptions(createStripeClient(config));
+  return new StripePaymentSubscriptions(createStripeClient(config), {
+    portalConfigurationId: config.STRIPE_PORTAL_CONFIGURATION_ID,
+  });
 }

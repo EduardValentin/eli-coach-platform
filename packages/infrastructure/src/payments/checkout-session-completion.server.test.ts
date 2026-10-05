@@ -63,6 +63,51 @@ describe("readPaidCheckoutSession", () => {
     });
   });
 
+  it("reads the payment intent of the paid payment on a subscription-mode session's expanded invoice", () => {
+    // arrange
+    const session = paidCheckoutSession({
+      invoice: {
+        id: "in_test",
+        object: "invoice",
+        payments: {
+          object: "list",
+          data: [
+            {
+              object: "invoice_payment",
+              status: "canceled",
+              payment: { type: "payment_intent", payment_intent: "pi_failed" },
+            },
+            {
+              object: "invoice_payment",
+              status: "paid",
+              payment: {
+                type: "payment_intent",
+                payment_intent: { id: "pi_paid", object: "payment_intent" },
+              },
+            },
+          ],
+        },
+      },
+    });
+
+    // act
+    const paid = readPaidCheckoutSession(session, paidAt);
+
+    // assert
+    expect(paid).toMatchObject({ paymentIntentId: "pi_paid" });
+  });
+
+  it("reads no payment intent from a subscription-mode session whose invoice is not expanded", () => {
+    // arrange
+    const session = paidCheckoutSession({ invoice: "in_test" });
+
+    // act
+    const paid = readPaidCheckoutSession(session, paidAt);
+
+    // assert
+    expect(paid).toMatchObject({ paymentIntentId: null });
+  });
+
   it("reads a one-off payment without a subscription", () => {
     // arrange
     const session = paidCheckoutSession({

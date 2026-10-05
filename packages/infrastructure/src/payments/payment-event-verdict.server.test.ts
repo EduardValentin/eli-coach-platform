@@ -202,7 +202,7 @@ describe("readPaymentEvent", () => {
     });
   });
 
-  it("reads a refunded charge with the customer it belongs to", () => {
+  it("reads a refunded charge with the payment intent it settled", () => {
     // arrange
     const event = {
       id: "evt_refunded",
@@ -218,6 +218,7 @@ describe("readPaymentEvent", () => {
           customer: "cus_test",
           currency: "eur",
           metadata: {},
+          payment_intent: "pi_test",
         },
         previous_attributes: { amount_refunded: 10000 },
       },
@@ -232,7 +233,7 @@ describe("readPaymentEvent", () => {
       eventId: "evt_refunded",
       refund: {
         kind: "charge_refund",
-        customerId: "cus_test",
+        paymentIntentId: "pi_test",
         chargeCents: 44700,
         refundedCents: 44700,
         currency: "eur",

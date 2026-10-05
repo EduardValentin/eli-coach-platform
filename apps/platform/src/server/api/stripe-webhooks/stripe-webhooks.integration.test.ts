@@ -36,6 +36,7 @@ import {
   STRIPE_CUSTOMER_ID,
   STRIPE_PAYMENT_METHOD_ID,
   STRIPE_SUBSCRIPTION_ID,
+  paymentIntentOf,
   stripeAcceptsCustomerReadsAgain,
   stripeAcceptsSubscriptionUpdatesAgain,
   stripeCustomerPath,
@@ -110,6 +111,7 @@ type CoachingSubscriptionRow = {
   status: string;
   stripeCheckoutSessionId: string;
   stripeCustomerId: string;
+  stripePaymentIntentId: string;
   stripeSubscriptionId: string;
   tier: string;
 };
@@ -188,6 +190,7 @@ describe.sequential("stripe webhooks integration", () => {
         status: "not-started",
         stripeCheckoutSessionId: STRIPE_CHECKOUT_SESSION_ID,
         stripeCustomerId: STRIPE_CUSTOMER_ID,
+        stripePaymentIntentId: paymentIntentOf(STRIPE_CHECKOUT_SESSION_ID),
         stripeSubscriptionId: STRIPE_SUBSCRIPTION_ID,
         tier: "regular",
       },
@@ -916,6 +919,7 @@ async function readSubscriptions(): Promise<CoachingSubscriptionRow[]> {
         currency,
         stripe_customer_id as "stripeCustomerId",
         stripe_subscription_id as "stripeSubscriptionId",
+        stripe_payment_intent_id as "stripePaymentIntentId",
         stripe_checkout_session_id as "stripeCheckoutSessionId",
         paid_at as "paidAt",
         start_choice as "startChoice",

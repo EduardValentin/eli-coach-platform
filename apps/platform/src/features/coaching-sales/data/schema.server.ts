@@ -228,6 +228,9 @@ export const coachingSubscriptionsTable = appSchema.table(
     stripeSubscriptionId: varchar("stripe_subscription_id", {
       length: 255,
     }).notNull(),
+    stripePaymentIntentId: varchar("stripe_payment_intent_id", {
+      length: 255,
+    }),
     stripeCheckoutSessionId: varchar("stripe_checkout_session_id", {
       length: 255,
     }).notNull(),
@@ -266,6 +269,9 @@ export const coachingSubscriptionsTable = appSchema.table(
     ),
     uniqueIndex("coaching_subscriptions_stripe_checkout_session_id_unique").on(
       table.stripeCheckoutSessionId,
+    ),
+    uniqueIndex("coaching_subscriptions_stripe_payment_intent_id_unique").on(
+      table.stripePaymentIntentId,
     ),
     index("coaching_subscriptions_assessment_call_id_idx").on(
       table.assessmentCallId,

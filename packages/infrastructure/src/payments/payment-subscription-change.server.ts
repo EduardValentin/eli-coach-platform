@@ -35,7 +35,7 @@ export type PaymentSubscriptionChange =
 
 export type PaymentRefund = {
   kind: "charge_refund";
-  customerId: string;
+  paymentIntentId: string;
   chargeCents: number;
   refundedCents: number;
   currency: string;
@@ -97,7 +97,7 @@ const invoiceSchema = z.object({
 const chargeSchema = z.object({
   amount: z.number().int().nonnegative(),
   amount_refunded: z.number().int().positive(),
-  customer: referencedIdSchema,
+  payment_intent: referencedIdSchema,
   currency: z.string().min(1),
 });
 
@@ -126,7 +126,7 @@ export function readPaymentRefund(
 
   return {
     kind: "charge_refund",
-    customerId: parsed.data.customer,
+    paymentIntentId: parsed.data.payment_intent,
     chargeCents: parsed.data.amount,
     refundedCents: parsed.data.amount_refunded,
     currency: parsed.data.currency,

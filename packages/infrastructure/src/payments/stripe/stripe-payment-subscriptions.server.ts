@@ -21,10 +21,17 @@ type StripeSubscriptionsClient = {
   };
 };
 
+type StripePaymentSubscriptionsOptions = {
+  portalConfigurationId?: string;
+};
+
 const MILLISECONDS_PER_SECOND = 1000;
 
 export class StripePaymentSubscriptions implements PaymentSubscriptions {
-  constructor(private readonly client: StripeSubscriptionsClient) {}
+  constructor(
+    private readonly client: StripeSubscriptionsClient,
+    private readonly options: StripePaymentSubscriptionsOptions = {},
+  ) {}
 
   async holdRenewal(paymentSubscriptionId: string): Promise<void> {
     await this.client.subscriptions.update(paymentSubscriptionId, {
@@ -53,7 +60,11 @@ export class StripePaymentSubscriptions implements PaymentSubscriptions {
     paymentCustomerId: string;
     returnUrl: string;
   }): Promise<{ url: string }> {
+    const { portalConfigurationId } = this.options;
     const session = await this.client.billingPortal.sessions.create({
+      ...(portalConfigurationId
+        ? { configuration: portalConfigurationId }
+        : {}),
       customer: command.paymentCustomerId,
       return_url: command.returnUrl,
       flow_data: {

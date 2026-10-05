@@ -135,6 +135,7 @@ async function recordPurchase(
     currency: purchased.currency,
     stripeCustomerId: purchased.paymentCustomerId,
     stripeSubscriptionId: purchased.paymentSubscriptionId,
+    stripePaymentIntentId: purchased.paymentIntentId,
     stripeCheckoutSessionId: purchased.checkoutSessionId,
     paidAt: purchased.paidAt,
     startChoice: purchased.startChoice,

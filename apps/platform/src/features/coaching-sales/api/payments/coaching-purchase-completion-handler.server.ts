@@ -1,13 +1,13 @@
 import {
   COACHING_SUBSCRIPTION_PURPOSE,
   type CoachingSubscriptionIncidents,
+  type PaymentCheckout,
   type RecordCheckoutCompletedUseCase,
   type RefreshPaymentCardUseCase,
 } from "@eli-coach-platform/domain/coaching-subscription";
-import {
-  toCheckoutCompletion,
-  type PaidCheckoutSession,
-  type PaymentCompletionHandler,
+import type {
+  PaidCheckoutSession,
+  PaymentCompletionHandler,
 } from "@eli-coach-platform/infrastructure/payments/server";
 
 type HandlerOutcome = Awaited<ReturnType<PaymentCompletionHandler["handle"]>>;
@@ -18,6 +18,7 @@ type RecordStatus = Awaited<
 
 type CoachingPurchaseCompletionHandlerOptions = {
   incidents: CoachingSubscriptionIncidents;
+  paymentCheckout: PaymentCheckout;
   recordCheckoutCompleted: RecordCheckoutCompletedUseCase;
   refreshPaymentCard: RefreshPaymentCardUseCase;
 };
@@ -40,7 +41,9 @@ export class CoachingPurchaseCompletionHandler implements PaymentCompletionHandl
     eventId: string,
     session: PaidCheckoutSession,
   ): Promise<HandlerOutcome> {
-    const completion = toCheckoutCompletion(session);
+    const completion = await this.options.paymentCheckout.findCompletedSession(
+      session.id,
+    );
 
     if (!completion) {
       this.options.incidents.paymentEventRejected({

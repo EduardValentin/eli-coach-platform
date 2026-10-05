@@ -50,7 +50,7 @@ describe("InMemoryPaymentCheckout", () => {
     );
   });
 
-  it("answers every remembered session as paid when it was created, with the command's amounts and choices", async () => {
+  it("answers every remembered session as paid when it was created, with the command's amounts and choices and a payment intent of its own", async () => {
     // arrange
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2026-09-26T10:00:00.000Z"));
@@ -69,6 +69,7 @@ describe("InMemoryPaymentCheckout", () => {
       checkoutSessionId: session.id,
       paymentCustomerId: customer.id,
       paymentSubscriptionId: expect.any(String),
+      paymentIntentId: `pi_memory_${session.id}`,
       amountCents: 71400,
       currency: "eur",
       customerEmail: "sofia@example.com",

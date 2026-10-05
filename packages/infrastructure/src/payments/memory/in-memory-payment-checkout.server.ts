@@ -66,7 +66,7 @@ export class InMemoryPaymentCheckout implements PaymentCheckout {
       id,
       customerId: command.customerId,
       subscriptionId: `sub_memory_${id}`,
-      paymentIntentId: null,
+      paymentIntentId: `pi_memory_${id}`,
       amountCents: command.bundle.amountCents,
       currency: command.currency,
       customerEmail,

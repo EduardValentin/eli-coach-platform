@@ -17,7 +17,7 @@ function paidSession(
     id: "cs_test_paid",
     customerId: "cus_test",
     subscriptionId: "sub_test",
-    paymentIntentId: null,
+    paymentIntentId: "pi_test",
     amountCents: 44700,
     currency: "eur",
     customerEmail: "sofia@example.com",
@@ -61,6 +61,7 @@ describe("toCheckoutCompletion", () => {
       checkoutSessionId: "cs_test_paid",
       paymentCustomerId: "cus_test",
       paymentSubscriptionId: "sub_test",
+      paymentIntentId: "pi_test",
       amountCents: 44700,
       currency: "eur",
       customerEmail: "sofia@example.com",
@@ -86,6 +87,17 @@ describe("toCheckoutCompletion", () => {
   it("reads nothing from a paid session without a subscription", () => {
     // arrange
     const session = paidSession({ subscriptionId: null });
+
+    // act
+    const completion = toCheckoutCompletion(session);
+
+    // assert
+    expect(completion).toBeNull();
+  });
+
+  it("reads nothing from a paid session without the payment intent of its first payment", () => {
+    // arrange
+    const session = paidSession({ paymentIntentId: null });
 
     // act
     const completion = toCheckoutCompletion(session);

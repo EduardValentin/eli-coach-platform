@@ -16,7 +16,7 @@ export type SubscriptionEvent =
   | { kind: "renewal-paid"; paymentSubscriptionId: string; occurredAt: Date }
   | {
       kind: "charge-refunded";
-      paymentCustomerId: string;
+      paymentIntentId: string;
       refundedCents: number;
       occurredAt: Date;
     };

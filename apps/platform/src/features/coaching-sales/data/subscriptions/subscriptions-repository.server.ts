@@ -68,6 +68,14 @@ export class PostgresCoachingSubscriptions implements CoachingSubscriptions {
     );
   }
 
+  findByPaymentIntentId(
+    paymentIntentId: string,
+  ): Promise<CoachingSubscription | null> {
+    return this.findCurrent(
+      eq(coachingSubscriptionsTable.stripePaymentIntentId, paymentIntentId),
+    );
+  }
+
   async save(change: SubscriptionChange): Promise<"saved" | "stale"> {
     const written = await writeChange(this.options.database, change);
 

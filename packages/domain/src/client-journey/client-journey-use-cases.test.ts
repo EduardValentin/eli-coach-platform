@@ -86,6 +86,7 @@ function createSubscriptions(found: CoachingSubscription | null) {
     findCurrentForAuthSubject: vi.fn(),
     findByPaymentSubscriptionId: vi.fn(),
     findCurrentByPaymentCustomerId: vi.fn(),
+    findByPaymentIntentId: vi.fn(),
     save: vi.fn(),
     saveForEvent: vi.fn(),
   } satisfies CoachingSubscriptions;

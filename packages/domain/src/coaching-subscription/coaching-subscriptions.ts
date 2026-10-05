@@ -18,6 +18,9 @@ export interface CoachingSubscriptions {
   findCurrentByPaymentCustomerId(
     paymentCustomerId: string,
   ): Promise<CoachingSubscription | null>;
+  findByPaymentIntentId(
+    paymentIntentId: string,
+  ): Promise<CoachingSubscription | null>;
   save(change: SubscriptionChange): Promise<"saved" | "stale">;
   saveForEvent(
     change: SubscriptionEventChange,

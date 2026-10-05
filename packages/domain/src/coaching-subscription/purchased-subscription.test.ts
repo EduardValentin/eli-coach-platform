@@ -7,6 +7,7 @@ const completion: CheckoutCompletion = {
   checkoutSessionId: "cs_1",
   paymentCustomerId: "cus_1",
   paymentSubscriptionId: "sub_1",
+  paymentIntentId: "pi_1",
   amountCents: 37500,
   currency: "eur",
   customerEmail: "ana@example.com",
@@ -18,7 +19,7 @@ const completion: CheckoutCompletion = {
 };
 
 describe("PurchasedSubscription.fromCompletedCheckout", () => {
-  it("records the paid bundle as a subscription that has not started", () => {
+  it("records the paid bundle as a subscription that has not started, with the payment intent of its first payment", () => {
     // act
     const purchased = PurchasedSubscription.fromCompletedCheckout(completion);
 
@@ -31,6 +32,7 @@ describe("PurchasedSubscription.fromCompletedCheckout", () => {
       currency: "eur",
       paymentCustomerId: "cus_1",
       paymentSubscriptionId: "sub_1",
+      paymentIntentId: "pi_1",
       checkoutSessionId: "cs_1",
       paidAt: completion.paidAt,
       startChoice: "waiting",

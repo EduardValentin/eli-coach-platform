@@ -1,5 +1,4 @@
 export type { PaidCheckoutSession } from "./checkout-session-completion.server";
-export { toCheckoutCompletion } from "./coaching-checkout-completion.server";
 export { toSubscriptionEvent } from "./coaching-subscription-change.server";
 export { createPaymentCheckout } from "./create-payment-checkout.server";
 export { createPaymentCustomerCards } from "./create-payment-customer-cards.server";

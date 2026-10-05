@@ -53,6 +53,7 @@ export async function insertSubscribedClientRecords(
     references: {
       customerId: subscription.customerId,
       subscriptionId: subscription.subscriptionId,
+      paymentIntentId: subscription.paymentIntentId,
       checkoutSessionId: `cs_e2e_${assessmentCallId}`,
     },
   });

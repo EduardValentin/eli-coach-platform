@@ -27,7 +27,7 @@ const deletion: PaymentSubscriptionChange = {
 
 const refund: PaymentRefund = {
   kind: "charge_refund",
-  customerId: "cus_1",
+  paymentIntentId: "pi_1",
   chargeCents: 44700,
   refundedCents: 44700,
   currency: "eur",
@@ -79,7 +79,7 @@ describe("CoachingSubscriptionEventHandler", () => {
     },
   );
 
-  it("reconciles a refunded charge against the customer's refunded total", async () => {
+  it("reconciles a refunded charge against the refunded total of its payment intent", async () => {
     // arrange
     const { handler, reconcile } = createHandler();
 
@@ -91,7 +91,7 @@ describe("CoachingSubscriptionEventHandler", () => {
       eventId: "evt_2",
       event: {
         kind: "charge-refunded",
-        paymentCustomerId: "cus_1",
+        paymentIntentId: "pi_1",
         refundedCents: 44700,
         occurredAt: OCCURRED_AT,
       },

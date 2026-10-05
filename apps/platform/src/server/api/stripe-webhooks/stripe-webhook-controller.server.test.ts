@@ -47,7 +47,7 @@ const subscriptionDeletion: PaymentSubscriptionChange = {
 
 const chargeRefund: PaymentRefund = {
   kind: "charge_refund",
-  customerId: "cus_1",
+  paymentIntentId: "pi_1",
   chargeCents: 44700,
   refundedCents: 44700,
   currency: "eur",

@@ -15,6 +15,7 @@ export type PaidCheckoutSession = {
 };
 
 const MILLISECONDS_PER_SECOND = 1000;
+const PAID_INVOICE_PAYMENT = "paid";
 
 const optionalReferencedIdSchema = referencedIdSchema
   .nullish()
@@ -27,10 +28,22 @@ const paidCheckoutSessionSchema = z.object({
   customer: optionalReferencedIdSchema,
   subscription: optionalReferencedIdSchema,
   payment_intent: optionalReferencedIdSchema,
+  invoice: z.unknown(),
   amount_total: z.number().int().nonnegative(),
   currency: z.string().min(1),
   customer_details: z.object({ email: z.string().min(1) }),
   metadata: z.record(z.string(), z.string()),
+});
+
+const expandedInvoicePaymentsSchema = z.object({
+  payments: z.object({
+    data: z.array(
+      z.object({
+        status: z.string(),
+        payment: z.object({ payment_intent: optionalReferencedIdSchema }),
+      }),
+    ),
+  }),
 });
 
 export function fromUnixSeconds(seconds: number): Date {
@@ -53,11 +66,26 @@ export function readPaidCheckoutSession(
     id: paid.id,
     customerId: paid.customer,
     subscriptionId: paid.subscription,
-    paymentIntentId: paid.payment_intent,
+    paymentIntentId:
+      paid.payment_intent ?? paidInvoicePaymentIntentOf(paid.invoice),
     amountCents: paid.amount_total,
     currency: paid.currency,
     customerEmail: paid.customer_details.email,
     paidAt,
     metadata: paid.metadata,
   };
+}
+
+function paidInvoicePaymentIntentOf(invoice: unknown): string | null {
+  const expanded = expandedInvoicePaymentsSchema.safeParse(invoice);
+
+  if (!expanded.success) {
+    return null;
+  }
+
+  const paid = expanded.data.payments.data.find(
+    (payment) => payment.status === PAID_INVOICE_PAYMENT,
+  );
+
+  return paid?.payment.payment_intent ?? null;
 }

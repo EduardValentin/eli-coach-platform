@@ -36,6 +36,21 @@ function paidSession() {
       object: "subscription",
       created: 1790003590,
     },
+    payment_intent: null,
+    invoice: {
+      id: "in_test",
+      object: "invoice",
+      payments: {
+        object: "list",
+        data: [
+          {
+            object: "invoice_payment",
+            status: "paid",
+            payment: { type: "payment_intent", payment_intent: "pi_test" },
+          },
+        ],
+      },
+    },
     amount_total: 37500,
     currency: "eur",
     created: 1790000000,
@@ -227,7 +242,7 @@ describe("StripePaymentCheckout", () => {
     expect(client.checkout.sessions.retrieve).not.toHaveBeenCalled();
   });
 
-  it("finds a complete and paid session as a checkout completion paid when its subscription was created", async () => {
+  it("finds a complete and paid session as a checkout completion paid when its subscription was created, with the payment intent of its invoice", async () => {
     // arrange
     const client = createStubClient();
     client.checkout.sessions.retrieve.mockResolvedValue(paidSession());
@@ -239,12 +254,13 @@ describe("StripePaymentCheckout", () => {
     // assert
     expect(client.checkout.sessions.retrieve).toHaveBeenCalledWith(
       "cs_test_paid",
-      { expand: ["subscription"] },
+      { expand: ["subscription", "invoice.payments"] },
     );
     expect(completion).toEqual({
       checkoutSessionId: "cs_test_paid",
       paymentCustomerId: "cus_test",
       paymentSubscriptionId: "sub_test",
+      paymentIntentId: "pi_test",
       amountCents: 37500,
       currency: "eur",
       customerEmail: "sofia@example.com",
@@ -268,6 +284,22 @@ describe("StripePaymentCheckout", () => {
 
     // act
     const completion = await checkout.findCompletedSession("cs_test_open");
+
+    // assert
+    expect(completion).toBeNull();
+  });
+
+  it("finds nothing for a paid session whose invoice names no paid payment intent", async () => {
+    // arrange
+    const client = createStubClient();
+    client.checkout.sessions.retrieve.mockResolvedValue({
+      ...paidSession(),
+      invoice: "in_test",
+    });
+    const checkout = new StripePaymentCheckout(client);
+
+    // act
+    const completion = await checkout.findCompletedSession("cs_test_paid");
 
     // assert
     expect(completion).toBeNull();
