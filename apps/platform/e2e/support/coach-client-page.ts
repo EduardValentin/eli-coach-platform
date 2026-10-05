@@ -138,6 +138,12 @@ export class CoachClientPage {
     await this.page.goto(`/coach/clients/${clientId}`);
   }
 
+  async openResources(): Promise<void> {
+    await this.page
+      .getByRole("link", { name: "Resources", exact: true })
+      .click();
+  }
+
   async expectOpen(clientId: string): Promise<void> {
     await expect(this.page).toHaveURL(
       new RegExp(`/coach/clients/${clientId}$`),
