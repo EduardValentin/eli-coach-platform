@@ -7,12 +7,23 @@ import { useReturnFocusToOpener } from "./use-return-focus-to-opener";
 
 type DialogFramePlacement = "centred" | "screen" | "viewer";
 
+export type DialogDismissal = "allowed" | "locked";
+
 type DialogFrameProps = Omit<
   ComponentPropsWithoutRef<typeof RadixDialog.Content>,
   "onCloseAutoFocus" | "onOpenAutoFocus"
 > & {
+  dismissal?: DialogDismissal;
   placement?: DialogFramePlacement;
 };
+
+export function preventDismissalWhenLocked(dismissal: DialogDismissal) {
+  return (event: Event) => {
+    if (dismissal === "locked") {
+      event.preventDefault();
+    }
+  };
+}
 
 const FRAME_CLASS =
   "fixed z-50 bg-surface-base duration-200 motion-safe:data-[state=closed]:animate-[ui-popover-out_200ms_ease] motion-safe:data-[state=open]:animate-[ui-popover-in_200ms_ease]";
@@ -33,10 +44,14 @@ const PLACEMENT_CLASS = {
 export function DialogFrame({
   children,
   className,
+  dismissal = "allowed",
+  onEscapeKeyDown,
+  onInteractOutside,
   placement = "centred",
   ...props
 }: DialogFrameProps) {
   const { rememberOpener, returnFocusToOpener } = useReturnFocusToOpener();
+  const preventWhenLocked = preventDismissalWhenLocked(dismissal);
 
   return (
     <RadixDialog.Portal>
@@ -44,11 +59,19 @@ export function DialogFrame({
       <RadixDialog.Content
         className={cn(FRAME_CLASS, PLACEMENT_CLASS[placement], className)}
         onCloseAutoFocus={returnFocusToOpener}
+        onEscapeKeyDown={(event) => {
+          onEscapeKeyDown?.(event);
+          preventWhenLocked(event);
+        }}
+        onInteractOutside={(event) => {
+          onInteractOutside?.(event);
+          preventWhenLocked(event);
+        }}
         onOpenAutoFocus={rememberOpener}
         {...props}
       >
         {children}
-        {placement === "centred" && (
+        {placement === "centred" && dismissal === "allowed" && (
           <RadixDialog.Close className="absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100">
             <X aria-hidden="true" className="size-4" />
             <span className="sr-only">Close</span>
