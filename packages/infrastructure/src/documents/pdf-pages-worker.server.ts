@@ -1,13 +1,8 @@
-import { fileURLToPath } from "node:url";
 import { parentPort } from "node:worker_threads";
 
-import { createCanvas } from "@napi-rs/canvas";
-import {
-  getDocument,
-  VerbosityLevel,
-  type PDFDocumentLoadingTask,
-} from "pdfjs-dist/legacy/build/pdf.mjs";
+import type { PDFDocumentProxy } from "pdfjs-dist/legacy/build/pdf.mjs";
 
+import { loadPdfDocument, renderPdfPage } from "./pdf-page-renderer.server.ts";
 import type {
   PageRendition,
   PdfPagesAnswer,
@@ -15,21 +10,13 @@ import type {
   PdfPagesRequest,
 } from "./pdf-pages-messages.server";
 
-// pdf.js reads standard fonts in Node through the filesystem, so a file: URL fails.
-const STANDARD_FONT_DIRECTORY = fileURLToPath(
-  new URL(
-    "../../standard_fonts/",
-    import.meta.resolve("pdfjs-dist/legacy/build/pdf.mjs"),
-  ),
-);
-
 const port = parentPort;
 
 if (!port) {
   throw new Error("The PDF pages worker runs only as a worker thread.");
 }
 
-let loadingTask: PDFDocumentLoadingTask | undefined;
+let openDocument: PDFDocumentProxy | undefined;
 
 port.on("message", (request: PdfPagesRequest) => {
   void answer(request).then((reply) =>
@@ -54,53 +41,22 @@ async function answer(question: PdfPagesQuestion): Promise<PdfPagesAnswer> {
 
 async function open(bytes: Uint8Array): Promise<PdfPagesAnswer> {
   try {
-    loadingTask = getDocument({
-      data: bytes,
-      standardFontDataUrl: STANDARD_FONT_DIRECTORY,
-      verbosity: VerbosityLevel.ERRORS,
-    });
-    const document = await loadingTask.promise;
-    return { kind: "opened", pageCount: document.numPages };
+    openDocument = await loadPdfDocument(bytes).promise;
+    return { kind: "opened", pageCount: openDocument.numPages };
   } catch {
     return { kind: "unreadable" };
   }
 }
 
-async function render(
+function render(
   pageNumber: number,
   rendition: PageRendition,
 ): Promise<Uint8Array> {
-  if (!loadingTask) {
+  if (!openDocument) {
     throw new Error("No PDF is open in this worker.");
   }
 
-  const document = await loadingTask.promise;
-  const page = await document.getPage(pageNumber);
-  const naturalSize = page.getViewport({ scale: 1 });
-  const viewport = page.getViewport({
-    scale: rendition.longEdge / Math.max(naturalSize.width, naturalSize.height),
-  });
-  const canvas = createCanvas(
-    Math.round(viewport.width),
-    Math.round(viewport.height),
-  );
-  const context = canvas.getContext("2d");
-
-  context.fillStyle = "#ffffff";
-  context.fillRect(0, 0, canvas.width, canvas.height);
-
-  try {
-    await page.render({
-      // pdf.js draws through canvasContext only when canvas is explicitly null.
-      canvas: null,
-      canvasContext: context as unknown as CanvasRenderingContext2D,
-      viewport,
-    }).promise;
-
-    return new Uint8Array(await canvas.encode("webp", rendition.webpQuality));
-  } finally {
-    page.cleanup();
-  }
+  return renderPdfPage(openDocument, pageNumber, rendition);
 }
 
 function messageOf(error: unknown): string {

@@ -146,6 +146,10 @@
   "packages/infrastructure/src/email/infrastructure-subpaths.server.ts": [
     "infrastructure-subpaths"
   ],
+  "packages/infrastructure/src/email/pdf-rendering-confined.server.ts": [
+    "not-to-unresolvable",
+    "pdf-rendering-confined"
+  ],
   "packages/infrastructure/src/email/sharp-confined.server.ts": [
     "not-to-unresolvable",
     "sharp-confined"

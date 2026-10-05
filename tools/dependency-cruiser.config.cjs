@@ -262,6 +262,14 @@ module.exports = {
       to: { path: "(^|/)sharp(/|$)" },
     },
     {
+      name: "pdf-rendering-confined",
+      comment:
+        "PDF rendering stays behind the infrastructure documents concern: nothing else names pdfjs-dist or @napi-rs/canvas.",
+      severity: "error",
+      from: { pathNot: ["^packages/infrastructure/src/documents/"] },
+      to: { path: "(^|/)(pdfjs-dist|@napi-rs/canvas)(/|$)" },
+    },
+    {
       name: "feature-api-to-data",
       comment:
         "A controller or route never imports its feature's repositories or email adapters; the composition hands them in through ports.",
