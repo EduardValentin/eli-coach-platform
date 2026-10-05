@@ -78,6 +78,7 @@ export function FileDropzone({ prompt, hint, ...picker }: FileDropzoneProps) {
   };
 
   return (
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- dropping is a pointer shortcut; the file input inside is the keyboard path
     <label
       className={cn(
         "flex cursor-pointer flex-col items-center gap-2 rounded-field border border-dashed bg-surface-quiet px-4 py-8 text-center transition-colors hover:bg-surface-muted",
