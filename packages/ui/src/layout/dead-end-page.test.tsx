@@ -64,4 +64,40 @@ describe("DeadEndPanel", () => {
       "unavailable-panel",
     );
   });
+
+  it("offers its one way on, such as a retry, centred below the description", () => {
+    // arrange
+    // act
+    render(
+      <DeadEndPanel
+        action={<button type="button">Try again</button>}
+        description="Something went wrong on our side."
+        icon={<svg aria-hidden="true" />}
+        title="Resources didn’t load"
+      />,
+    );
+
+    // assert
+    const action = screen.getByRole("button", { name: "Try again" });
+    expect(screen.getByRole("alert")).toContainElement(action);
+    expect(action.parentElement).toHaveClass("mt-8", "flex", "justify-center");
+    expect(
+      screen.getByText("Something went wrong on our side."),
+    ).not.toContainElement(action);
+  });
+
+  it("renders no action row when it has no action", () => {
+    // arrange
+    // act
+    render(
+      <DeadEndPanel
+        description="Try again in a moment."
+        icon={<svg aria-hidden="true" />}
+        title="Unavailable"
+      />,
+    );
+
+    // assert
+    expect(screen.getByRole("alert").lastElementChild?.tagName).toBe("P");
+  });
 });

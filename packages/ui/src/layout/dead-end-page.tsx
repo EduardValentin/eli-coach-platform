@@ -75,12 +75,14 @@ export function DeadEndPage(props: DeadEndPageProps) {
 }
 
 type DeadEndPanelProps = DataAttributes & {
+  action?: ReactNode;
   description: ReactNode;
   icon: ReactNode;
   title: string;
 };
 
 export function DeadEndPanel({
+  action,
   description,
   icon,
   title,
@@ -95,7 +97,9 @@ export function DeadEndPanel({
       )}
       role="alert"
     >
-      <DeadEndContent description={description} icon={icon} title={title} />
+      <DeadEndContent description={description} icon={icon} title={title}>
+        {action}
+      </DeadEndContent>
     </div>
   );
 }
