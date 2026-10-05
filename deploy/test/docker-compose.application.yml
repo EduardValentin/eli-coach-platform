@@ -24,9 +24,11 @@ services:
       STORE_ASSET_ROOT: /srv/store-assets
       CLIENT_MEDIA_PROVIDER: filesystem
       CLIENT_MEDIA_ROOT: /srv/client-media
+      CLIENT_RESOURCE_ROOT: /srv/client-resources
     volumes:
       - ${STORE_ASSET_ROOT_HOST}:/srv/store-assets
       - ${CLIENT_MEDIA_ROOT_HOST}:/srv/client-media
+      - ${CLIENT_RESOURCE_ROOT_HOST}:/srv/client-resources
     labels:
       logging: promtail
       env: test

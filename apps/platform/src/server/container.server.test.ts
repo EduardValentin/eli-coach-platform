@@ -22,6 +22,7 @@ function createRuntimeEnvironmentWithoutDatabase() {
     NODE_ENV: "development",
     PUBLIC_APP_URL: "https://eli.example",
     STORE_ASSET_ROOT: storeAssetRoot,
+    CLIENT_RESOURCE_ROOT: "/tmp/eli-coach-client-resources-test",
   });
 }
 
@@ -81,6 +82,7 @@ describe("platform container", () => {
     vi.stubEnv("NODE_ENV", "development");
     vi.stubEnv("PUBLIC_APP_URL", "https://eli.example");
     vi.stubEnv("STORE_ASSET_ROOT", storeAssetRoot);
+    vi.stubEnv("CLIENT_RESOURCE_ROOT", "/tmp/eli-coach-client-resources-test");
     vi.resetModules();
     const { getPlatformContainer } = await import("./container.server");
 

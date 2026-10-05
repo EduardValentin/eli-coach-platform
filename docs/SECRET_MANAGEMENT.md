@@ -61,6 +61,20 @@ creates, at `/srv/client-media` as read-write in both blue and green platform
 containers. Like the store root, it must never be served by the edge proxy:
 photos are decrypted and streamed only to their owning client and the coach.
 
+Client resource files, the documents and images a coach shares with one client,
+live in a third private root, configured by `CLIENT_RESOURCE_ROOT`. It is
+required in every runtime, with no provider switch: a runtime without it fails
+config validation, and a production runtime rejects the `replace-me`
+placeholder. The root holds plain private files. Unlike progress photos they are
+not encrypted, so it needs no key. Local development uses the gitignored
+`local/client-resources/` directory, created by
+`pnpm client:resources:local:prepare`. TEST sets the value in
+`deploy/test/docker-compose.application.yml` and bind-mounts the persistent
+host directory `/srv/client-resources/eli-coach-platform`, which the deploy
+script creates, at `/srv/client-resources` as read-write in both blue and green
+platform containers. It must never be served by the edge proxy: the application
+streams a resource only to the client it was shared with and to the coach.
+
 Every photo is encrypted before it is written, so the runtime file must also expose:
 
 - `CLIENT_MEDIA_KEY` (base64 of 32 random bytes, for example `openssl rand -base64 32`; a production runtime rejects the `replace-me` placeholder)

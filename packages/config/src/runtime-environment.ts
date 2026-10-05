@@ -8,6 +8,10 @@ import {
 } from "./concerns/bot-detection";
 import { clerkShape, refineClerk } from "./concerns/clerk";
 import { clientMediaShape, refineClientMedia } from "./concerns/client-media";
+import {
+  clientResourcesShape,
+  refineClientResources,
+} from "./concerns/client-resources";
 import { databaseShape } from "./concerns/database";
 import {
   featureFlagsShape,
@@ -36,6 +40,7 @@ export const runtimeEnvironmentSchema = z
     ...paymentsShape,
     ...storeAssetsShape,
     ...clientMediaShape,
+    ...clientResourcesShape,
     ...managementApiShape,
     ...assessmentCallsShape,
     ...featureFlagsShape,
@@ -47,6 +52,7 @@ export const runtimeEnvironmentSchema = z
   .superRefine(refineProductEmail)
   .superRefine(refinePayments)
   .superRefine(refineStoreAssets)
-  .superRefine(refineClientMedia);
+  .superRefine(refineClientMedia)
+  .superRefine(refineClientResources);
 
 export type RuntimeEnvironment = z.infer<typeof runtimeEnvironmentSchema>;

@@ -55,12 +55,16 @@ function requireRealClerkSecretKey() {
   return value;
 }
 
-// The audited pages never publish or read Store assets, but runtime env
-// validation requires a non-empty STORE_ASSET_ROOT. A fresh tmp dir keeps
-// this hermetic — no dependency on `local/store-assets/` existing or being
-// writable — and works identically in CI and on a developer machine.
+// The audited pages never publish or read Store assets or client resources, but
+// runtime env validation requires a non-empty STORE_ASSET_ROOT and
+// CLIENT_RESOURCE_ROOT. A fresh tmp dir for each keeps this hermetic — no
+// dependency on `local/store-assets/` or `local/client-resources/` existing or
+// being writable — and works identically in CI and on a developer machine.
 const lighthouseStoreAssetRoot = fs.mkdtempSync(
   path.join(os.tmpdir(), "eli-coach-platform-lighthouse-store-assets-"),
+);
+const lighthouseClientResourceRoot = fs.mkdtempSync(
+  path.join(os.tmpdir(), "eli-coach-platform-lighthouse-client-resources-"),
 );
 
 // Mutating process.env here, rather than threading an `env` option through
@@ -77,6 +81,7 @@ Object.assign(process.env, {
   PRODUCT_EMAIL_PROVIDER: "memory",
   PUBLIC_APP_URL: "http://localhost:3000",
   STORE_ASSET_ROOT: lighthouseStoreAssetRoot,
+  CLIENT_RESOURCE_ROOT: lighthouseClientResourceRoot,
   PORT: "3000",
 });
 

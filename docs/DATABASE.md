@@ -36,6 +36,7 @@ Prepare the local env files and store asset root once:
 pnpm secrets:local:prepare
 pnpm store:assets:local:prepare
 pnpm client:media:local:prepare
+pnpm client:resources:local:prepare
 ```
 
 Start the full local stack:
