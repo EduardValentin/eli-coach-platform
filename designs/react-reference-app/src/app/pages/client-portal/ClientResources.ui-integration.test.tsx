@@ -8,6 +8,7 @@ import { ResourceProvider } from '../../context/ResourceContext';
 import { ClientResources } from './ClientResources';
 
 const SERVICE_TIMEOUT = { timeout: 4000 };
+const WARM_UP_PAGES = 6;
 
 beforeAll(() => {
   vi.stubGlobal(
@@ -92,6 +93,33 @@ describe('client resources page', () => {
     expect(within(viewer).getByText('Page 2 of 6')).toBeInTheDocument();
     expect(within(viewer).getByRole('button', { name: 'Previous page' })).toBeEnabled();
     expect(within(viewer).getByRole('button', { name: 'Download' })).toBeInTheDocument();
+  });
+
+  it('hands focus to the other page control when the one she pressed stops at an end', async () => {
+    // arrange
+    renderPage();
+    await userEvent.click(await resourceCard('Glute activation warm-up'));
+    const viewer = screen.getByRole('dialog', { name: 'Glute activation warm-up' });
+    const previousPage = within(viewer).getByRole('button', { name: 'Previous page' });
+    const nextPage = within(viewer).getByRole('button', { name: 'Next page' });
+
+    // act
+    for (let turn = 1; turn < WARM_UP_PAGES; turn += 1) {
+      await userEvent.click(nextPage);
+    }
+
+    // assert
+    expect(nextPage).toBeDisabled();
+    expect(previousPage).toHaveFocus();
+
+    // act
+    for (let turn = 1; turn < WARM_UP_PAGES; turn += 1) {
+      await userEvent.keyboard('{Enter}');
+    }
+
+    // assert
+    expect(previousPage).toBeDisabled();
+    expect(nextPage).toHaveFocus();
   });
 
   it('turns pages with the arrow keys', async () => {

@@ -1,4 +1,4 @@
-import { useState, type KeyboardEvent } from 'react';
+import { useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import { ArrowLeft, ChevronLeft, ChevronRight, Download, X } from 'lucide-react';
 import {
@@ -32,6 +32,22 @@ function pageAlt(resource: Resource, page: number): string {
     : resource.title;
 }
 
+function usePageControlsKeepingFocus(page: number, pageCount: number) {
+  const previous = useRef<HTMLButtonElement>(null);
+  const next = useRef<HTMLButtonElement>(null);
+
+  useLayoutEffect(() => {
+    if (page === 0 && document.activeElement === previous.current) {
+      next.current?.focus();
+    }
+    if (page === pageCount - 1 && document.activeElement === next.current) {
+      previous.current?.focus();
+    }
+  }, [page, pageCount]);
+
+  return { previous, next };
+}
+
 function PageStage({
   resource,
   page,
@@ -46,6 +62,7 @@ function PageStage({
   const reduceMotion = useReducedMotion() === true;
   const pageCount = pageCountOf(resource);
   const paged = pageCount > 1;
+  const controls = usePageControlsKeepingFocus(page, pageCount);
 
   return (
     <div className={cn(STAGE_CLASS, 'h-[min(58dvh,34rem)]')} data-parity="viewer-stage">
@@ -73,6 +90,7 @@ function PageStage({
             aria-label="Previous page"
             disabled={page === 0}
             onClick={() => onTurn(-1)}
+            ref={controls.previous}
             size="icon-sm"
             type="button"
             variant="ghost"
@@ -90,6 +108,7 @@ function PageStage({
             aria-label="Next page"
             disabled={page === pageCount - 1}
             onClick={() => onTurn(1)}
+            ref={controls.next}
             size="icon-sm"
             type="button"
             variant="ghost"
