@@ -155,10 +155,12 @@ const REFUSALS = [
 
 class HeldUploadRequest extends EventTarget {
   static sent: HeldUploadRequest[] = [];
+  static whenSent: () => void = () => {};
 
   readonly upload = new EventTarget();
   status = 0;
   responseText = "";
+  aborted = false;
 
   open() {}
 
@@ -170,9 +172,12 @@ class HeldUploadRequest extends EventTarget {
 
   send() {
     HeldUploadRequest.sent.push(this);
+    HeldUploadRequest.whenSent();
   }
 
-  abort() {}
+  abort() {
+    this.aborted = true;
+  }
 
   reportBytesSent(fraction: number) {
     this.upload.dispatchEvent(
@@ -198,6 +203,7 @@ beforeAll(() => {
 beforeEach(() => {
   coachIsIn(COACH_TIME_ZONE);
   HeldUploadRequest.sent = [];
+  HeldUploadRequest.whenSent = () => {};
 });
 
 afterEach(() => {
@@ -497,7 +503,7 @@ describe("adding a resource", () => {
     },
   );
 
-  it("shows how much has been sent while the file uploads and takes no second submission", async () => {
+  it("shows how much has been sent while the file uploads", async () => {
     // arrange
     vi.stubGlobal("XMLHttpRequest", HeldUploadRequest);
     const { user } = await renderResourcesPage({ resources: [] });
@@ -509,11 +515,6 @@ describe("adding a resource", () => {
 
     // act
     upload.reportBytesSent(0.4);
-    fireEvent.submit(
-      within(dialog)
-        .getByRole("textbox", { name: "Title" })
-        .closest("form") as HTMLFormElement,
-    );
 
     // assert
     await waitFor(() => {
@@ -528,6 +529,35 @@ describe("adding a resource", () => {
       within(dialog).getByRole("button", { name: "Cancel" }),
     ).toBeDisabled();
     expect(within(dialog).queryByLabelText("Replace")).not.toBeInTheDocument();
+  });
+
+  it("keeps the upload going when she submits again before the dialog shows it is busy", async () => {
+    // arrange
+    vi.stubGlobal("XMLHttpRequest", HeldUploadRequest);
+    const { user } = await renderResourcesPage({ resources: [] });
+    const dialog = await openFilledAddDialog(user);
+    const form = within(dialog)
+      .getByRole("textbox", { name: "Title" })
+      .closest("form") as HTMLFormElement;
+    HeldUploadRequest.whenSent = () => {
+      HeldUploadRequest.whenSent = () => {};
+      fireEvent.submit(form);
+    };
+
+    // act
+    await user.click(
+      within(dialog).getByRole("button", { name: "Add resource" }),
+    );
+    const upload = await heldUpload();
+    upload.reportBytesSent(0.4);
+
+    // assert
+    await waitFor(() => {
+      expect(
+        within(dialog).getByRole("progressbar", { name: "Upload progress" }),
+      ).toHaveAttribute("aria-valuenow", "40");
+    });
+    expect(upload.aborted).toBe(false);
     expect(HeldUploadRequest.sent).toHaveLength(1);
   });
 

@@ -2,7 +2,7 @@ import type {
   ResourceDetailsProblems,
   ResourceRefusal,
 } from "@eli-coach-platform/domain/client-resources";
-import { useEffect, useEffectEvent, useSyncExternalStore } from "react";
+import { useEffect, useEffectEvent, useRef, useSyncExternalStore } from "react";
 import { useFetcher, type Fetcher } from "react-router";
 
 import {
@@ -96,6 +96,7 @@ export function useResourceUpload(
   onSettled: (outcome: ResourceUploadOutcome) => void,
 ) {
   const { data, state, submit } = useFetcher<unknown>();
+  const awaitingAnswer = useRef(false);
   const progress = useSyncExternalStore(
     resourceUploadProgress.subscribe,
     resourceUploadProgress.getSnapshot,
@@ -103,6 +104,7 @@ export function useResourceUpload(
   );
 
   const settle = useEffectEvent((answer: unknown) => {
+    awaitingAnswer.current = false;
     onSettled(outcomeOf(answer));
   });
 
@@ -113,8 +115,10 @@ export function useResourceUpload(
   }, [data]);
 
   const upload = (request: ResourceUploadRequest) => {
-    if (state === "submitting") return;
+    // The router commits the fetcher's busy state in a transition, after the upload has started.
+    if (awaitingAnswer.current) return;
 
+    awaitingAnswer.current = true;
     void submit(uploadFormData(request), {
       action: clientResourcesPath(clientId),
       encType: "multipart/form-data",
