@@ -2,12 +2,11 @@ import type {
   ProgressPhotoRendition,
   ProgressPhotoRenditions,
 } from "@eli-coach-platform/domain/client-profile";
-import sharp from "sharp";
+
+import { openAcceptedImage } from "./accepted-image.server";
 
 const LONGEST_EDGE_PIXELS = 1600;
 const JPEG_QUALITY = 82;
-const INPUT_PIXEL_LIMIT = 60_000_000;
-const ACCEPTED_FORMATS: ReadonlySet<string> = new Set(["jpeg", "png", "webp"]);
 const REFUSED: ProgressPhotoRendition = { status: "refused" };
 
 class SharpProgressPhotoRenditions implements ProgressPhotoRenditions {
@@ -23,13 +22,9 @@ class SharpProgressPhotoRenditions implements ProgressPhotoRenditions {
 async function renderAcceptedPhoto(
   bytes: Uint8Array,
 ): Promise<ProgressPhotoRendition> {
-  const photo = sharp(bytes, {
-    failOn: "error",
-    limitInputPixels: INPUT_PIXEL_LIMIT,
-  });
-  const { format } = await photo.metadata();
+  const photo = await openAcceptedImage(bytes);
 
-  if (!ACCEPTED_FORMATS.has(format)) {
+  if (photo === null) {
     return REFUSED;
   }
 
