@@ -132,7 +132,8 @@ pnpm format          # rewrite every file Prettier owns (see .prettierignore)
 pnpm typecheck       # TypeScript checks across every workspace package
 pnpm test            # typecheck, then run the unit and integration Vitest projects
 pnpm build           # build the platform app only
-pnpm validate        # lint, boundaries, test, and build: the workspace CI gate
+pnpm validate        # lint, boundaries, unit and integration tests, and build: the workspace CI gate
+pnpm validate:unit   # the same without the integration suites; CI runs them as a parallel job (pnpm test:integration)
 pnpm test:lighthouse # Lighthouse CI over the built SSR server's public pages
 pnpm test:e2e        # Playwright: local-only, real Clerk and Stripe test mode (see End-to-End Journeys)
 ```
