@@ -95,7 +95,7 @@ describe("toCheckoutCompletion", () => {
     expect(completion).toBeNull();
   });
 
-  it("reads nothing from a paid session without the payment intent of its first payment", () => {
+  it("reads a paid session whose payment intent is unknown as a completion without one", () => {
     // arrange
     const session = paidSession({ paymentIntentId: null });
 
@@ -103,7 +103,10 @@ describe("toCheckoutCompletion", () => {
     const completion = toCheckoutCompletion(session);
 
     // assert
-    expect(completion).toBeNull();
+    expect(completion).toMatchObject({
+      checkoutSessionId: "cs_test_paid",
+      paymentIntentId: null,
+    });
   });
 
   it.each([

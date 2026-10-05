@@ -548,6 +548,7 @@ function recordCheckoutDependencies(purchaseOutcome: CoachingPurchaseOutcome) {
     calls: createCalls(call),
     clock,
     incidents: createSubscriptionIncidents(),
+    paymentCheckout: createPaymentCheckout(completion),
     paymentSubscriptions: createPaymentSubscriptions(),
     purchases: createPurchases(purchaseOutcome),
   };
@@ -564,16 +565,22 @@ const DUPLICATE: CoachingPurchaseOutcome = {
 };
 
 describe("RecordCheckoutCompletedUseCase", () => {
-  it("records the client profile from the booking and the paid subscription, then admits the paid client, with no sales window consulted", async () => {
+  it("records the client profile from the booking and the subscription the provider reports paid for the session, then admits the paid client, with no sales window consulted", async () => {
     // arrange
     const dependencies = recordCheckoutDependencies(RECORDED);
     const useCase = new RecordCheckoutCompletedUseCase(dependencies);
 
     // act
-    const result = await useCase.execute({ ...completion, eventId: "evt_1" });
+    const result = await useCase.execute({
+      eventId: "evt_1",
+      checkoutSessionId: "cs_2",
+    });
 
     // assert
-    expect(result).toEqual({ status: "recorded" });
+    expect(result).toEqual({ status: "recorded", paymentCustomerId: "cus_1" });
+    expect(
+      dependencies.paymentCheckout.findCompletedSession,
+    ).toHaveBeenCalledWith("cs_2");
     expect(dependencies.purchases.recordCompletion).toHaveBeenCalledWith({
       eventId: "evt_1",
       client: Client.fromAssessmentCall(call, NOW),
@@ -595,7 +602,7 @@ describe("RecordCheckoutCompletedUseCase", () => {
       const useCase = new RecordCheckoutCompletedUseCase(dependencies);
 
       // act
-      await useCase.execute({ ...completion, eventId: "evt_1" });
+      await useCase.execute({ eventId: "evt_1", checkoutSessionId: "cs_2" });
 
       // assert
       expect(
@@ -621,7 +628,10 @@ describe("RecordCheckoutCompletedUseCase", () => {
     const useCase = new RecordCheckoutCompletedUseCase(dependencies);
 
     // act
-    const recording = useCase.execute({ ...completion, eventId: "evt_1" });
+    const recording = useCase.execute({
+      eventId: "evt_1",
+      checkoutSessionId: "cs_2",
+    });
 
     // assert
     await expect(recording).rejects.toBe(failure);
@@ -641,10 +651,13 @@ describe("RecordCheckoutCompletedUseCase", () => {
     const useCase = new RecordCheckoutCompletedUseCase(dependencies);
 
     // act
-    const result = await useCase.execute({ ...completion, eventId: "evt_1" });
+    const result = await useCase.execute({
+      eventId: "evt_1",
+      checkoutSessionId: "cs_2",
+    });
 
     // assert
-    expect(result).toEqual({ status: "duplicate" });
+    expect(result).toEqual({ status: "duplicate", paymentCustomerId: "cus_1" });
     expect(dependencies.incidents.paymentEventRejected).not.toHaveBeenCalled();
     expect(dependencies.admission.admit).toHaveBeenCalledWith({
       clientId: PAID_CLIENT_ID,
@@ -659,7 +672,10 @@ describe("RecordCheckoutCompletedUseCase", () => {
     const useCase = new RecordCheckoutCompletedUseCase(dependencies);
 
     // act
-    const result = await useCase.execute({ ...completion, eventId: "evt_2" });
+    const result = await useCase.execute({
+      eventId: "evt_2",
+      checkoutSessionId: "cs_2",
+    });
 
     // assert
     expect(result).toEqual({ status: "already_paid" });
@@ -681,7 +697,10 @@ describe("RecordCheckoutCompletedUseCase", () => {
     const useCase = new RecordCheckoutCompletedUseCase(dependencies);
 
     // act
-    const recording = useCase.execute({ ...completion, eventId: "evt_1" });
+    const recording = useCase.execute({
+      eventId: "evt_1",
+      checkoutSessionId: "cs_2",
+    });
 
     // assert
     await expect(recording).rejects.toBe(failure);
@@ -699,7 +718,10 @@ describe("RecordCheckoutCompletedUseCase", () => {
     const useCase = new RecordCheckoutCompletedUseCase(dependencies);
 
     // act
-    const result = await useCase.execute({ ...completion, eventId: "evt_1" });
+    const result = await useCase.execute({
+      eventId: "evt_1",
+      checkoutSessionId: "cs_2",
+    });
 
     // assert
     expect(result).toEqual({ status: "call_not_found" });
@@ -712,6 +734,51 @@ describe("RecordCheckoutCompletedUseCase", () => {
     });
     expect(dependencies.purchases.recordCompletion).not.toHaveBeenCalled();
     expect(dependencies.admission.admit).not.toHaveBeenCalled();
+  });
+
+  it("answers unreadable_checkout, reports it and records nothing when the provider reports no paid coaching checkout for the session", async () => {
+    // arrange
+    const dependencies = {
+      ...recordCheckoutDependencies(RECORDED),
+      paymentCheckout: createPaymentCheckout(null),
+    };
+    const useCase = new RecordCheckoutCompletedUseCase(dependencies);
+
+    // act
+    const result = await useCase.execute({
+      eventId: "evt_3",
+      checkoutSessionId: "cs_2",
+    });
+
+    // assert
+    expect(result).toEqual({ status: "unreadable_checkout" });
+    expect(dependencies.incidents.paymentEventRejected).toHaveBeenCalledWith({
+      eventId: "evt_3",
+      reason: "unreadable_checkout",
+    });
+    expect(dependencies.calls.findById).not.toHaveBeenCalled();
+    expect(dependencies.purchases.recordCompletion).not.toHaveBeenCalled();
+    expect(dependencies.admission.admit).not.toHaveBeenCalled();
+  });
+
+  it("propagates a failed read of the completion so the payment event is delivered again", async () => {
+    // arrange
+    const failure = new Error("provider unavailable");
+    const dependencies = recordCheckoutDependencies(RECORDED);
+    vi.mocked(
+      dependencies.paymentCheckout.findCompletedSession,
+    ).mockRejectedValue(failure);
+    const useCase = new RecordCheckoutCompletedUseCase(dependencies);
+
+    // act
+    const recording = useCase.execute({
+      eventId: "evt_1",
+      checkoutSessionId: "cs_2",
+    });
+
+    // assert
+    await expect(recording).rejects.toBe(failure);
+    expect(dependencies.purchases.recordCompletion).not.toHaveBeenCalled();
   });
 });
 

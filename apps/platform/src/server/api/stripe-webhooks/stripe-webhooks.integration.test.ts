@@ -111,7 +111,7 @@ type CoachingSubscriptionRow = {
   status: string;
   stripeCheckoutSessionId: string;
   stripeCustomerId: string;
-  stripePaymentIntentId: string;
+  stripePaymentIntentId: string | null;
   stripeSubscriptionId: string;
   tier: string;
 };
@@ -197,6 +197,32 @@ describe.sequential("stripe webhooks integration", () => {
     ]);
     expect(await readPaymentLinkStates(callId)).toEqual(["spent"]);
     expect(await readPaymentEventIds()).toEqual([COMPLETED_EVENT_ID]);
+  });
+
+  it("creates the client and her subscription from a paid checkout whose payment intent Stripe does not name, recording none", async () => {
+    // arrange
+    const { callId } = await openCheckout();
+    const session = await journey.completionOfCheckoutRequest({
+      requestIndex: FIRST_CHECKOUT_REQUEST,
+      sessionId: STRIPE_CHECKOUT_SESSION_ID,
+    });
+
+    // act
+    const response = await journey.deliverCheckoutCompleted(
+      { ...session, invoice: null },
+      COMPLETED_EVENT_ID,
+    );
+
+    // assert
+    expect(response.status).toBe(200);
+    expect(await readSubscriptions()).toEqual([
+      expect.objectContaining({
+        assessmentCallId: callId,
+        stripePaymentIntentId: null,
+        stripeSubscriptionId: STRIPE_SUBSCRIPTION_ID,
+      }),
+    ]);
+    expect(await readPaymentLinkStates(callId)).toEqual(["spent"]);
   });
 
   it("changes nothing when the same event is delivered again", async () => {

@@ -318,6 +318,7 @@ export function composeCoachingSalesFeature(
       calls: handles.assessmentCallReader,
       clock,
       incidents: handles.incidents,
+      paymentCheckout: handles.paymentCheckout,
       paymentSubscriptions: handles.paymentSubscriptions,
       purchases,
     }),
@@ -396,8 +397,6 @@ export function composeCoachingSalesFeature(
         mirrorPaymentCard: subscriptionUseCases.mirrorPaymentCard,
       }),
       paymentCompletionHandler: new CoachingPurchaseCompletionHandler({
-        incidents: handles.incidents,
-        paymentCheckout: handles.paymentCheckout,
         recordCheckoutCompleted: useCases.recordCheckoutCompleted,
         refreshPaymentCard: subscriptionUseCases.refreshPaymentCard,
       }),

@@ -18,7 +18,7 @@ export type PurchasedSubscriptionSnapshot = {
   currency: string;
   paymentCustomerId: string;
   paymentSubscriptionId: string;
-  paymentIntentId: string;
+  paymentIntentId: string | null;
   checkoutSessionId: string;
   paidAt: Date;
   startChoice: StartChoice;
@@ -33,7 +33,7 @@ export class PurchasedSubscription {
   readonly currency: string;
   readonly paymentCustomerId: string;
   readonly paymentSubscriptionId: string;
-  readonly paymentIntentId: string;
+  readonly paymentIntentId: string | null;
   readonly checkoutSessionId: string;
   readonly paidAt: Date;
   readonly startChoice: StartChoice;

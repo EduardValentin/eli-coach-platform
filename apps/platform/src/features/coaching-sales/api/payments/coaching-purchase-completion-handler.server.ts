@@ -1,7 +1,5 @@
 import {
   COACHING_SUBSCRIPTION_PURPOSE,
-  type CoachingSubscriptionIncidents,
-  type PaymentCheckout,
   type RecordCheckoutCompletedUseCase,
   type RefreshPaymentCardUseCase,
 } from "@eli-coach-platform/domain/coaching-subscription";
@@ -17,8 +15,6 @@ type RecordStatus = Awaited<
 >["status"];
 
 type CoachingPurchaseCompletionHandlerOptions = {
-  incidents: CoachingSubscriptionIncidents;
-  paymentCheckout: PaymentCheckout;
   recordCheckoutCompleted: RecordCheckoutCompletedUseCase;
   refreshPaymentCard: RefreshPaymentCardUseCase;
 };
@@ -28,6 +24,7 @@ const OUTCOME_BY_RECORD_STATUS: Record<RecordStatus, HandlerOutcome> = {
   duplicate: "duplicate",
   already_paid: "ignored",
   call_not_found: "ignored",
+  unreadable_checkout: "ignored",
 };
 
 export class CoachingPurchaseCompletionHandler implements PaymentCompletionHandler {
@@ -41,32 +38,17 @@ export class CoachingPurchaseCompletionHandler implements PaymentCompletionHandl
     eventId: string,
     session: PaidCheckoutSession,
   ): Promise<HandlerOutcome> {
-    const completion = await this.options.paymentCheckout.findCompletedSession(
-      session.id,
-    );
-
-    if (!completion) {
-      this.options.incidents.paymentEventRejected({
-        eventId,
-        reason: "unreadable_checkout",
-      });
-
-      return "ignored";
-    }
-
     const recorded = await this.options.recordCheckoutCompleted.execute({
-      ...completion,
       eventId,
+      checkoutSessionId: session.id,
     });
 
-    const outcome = OUTCOME_BY_RECORD_STATUS[recorded.status];
-
-    if (outcome !== "ignored") {
+    if ("paymentCustomerId" in recorded) {
       await this.options.refreshPaymentCard.execute({
-        paymentCustomerId: completion.paymentCustomerId,
+        paymentCustomerId: recorded.paymentCustomerId,
       });
     }
 
-    return outcome;
+    return OUTCOME_BY_RECORD_STATUS[recorded.status];
   }
 }

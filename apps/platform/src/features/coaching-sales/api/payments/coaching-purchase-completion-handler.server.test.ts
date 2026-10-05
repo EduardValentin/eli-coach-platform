@@ -1,6 +1,4 @@
 import type {
-  CheckoutCompletion,
-  PaymentCheckout,
   RecordCheckoutCompletedUseCase,
   RefreshPaymentCardUseCase,
 } from "@eli-coach-platform/domain/coaching-subscription";
@@ -9,17 +7,11 @@ import { describe, expect, it, vi } from "vitest";
 
 import { CoachingPurchaseCompletionHandler } from "./coaching-purchase-completion-handler.server";
 
-const CALL_ID = "4f1f3a3e-6b0a-4f45-9a3c-1c3b2f0a5d11";
 const PAID_AT = new Date("2026-09-27T10:00:00.000Z");
 
 type RecordOutcome = Awaited<
   ReturnType<RecordCheckoutCompletedUseCase["execute"]>
 >;
-
-type HandlerArrangement = {
-  outcome?: RecordOutcome;
-  completion?: CheckoutCompletion | null;
-};
 
 const notifiedSession: PaidCheckoutSession = {
   id: "cs_test_1",
@@ -33,19 +25,9 @@ const notifiedSession: PaidCheckoutSession = {
   metadata: { purpose: "coaching-subscription" },
 };
 
-const providerCompletion: CheckoutCompletion = {
-  checkoutSessionId: "cs_test_1",
+const RECORDED: RecordOutcome = {
+  status: "recorded",
   paymentCustomerId: "cus_1",
-  paymentSubscriptionId: "sub_1",
-  paymentIntentId: "pi_1",
-  amountCents: 44700,
-  currency: "eur",
-  customerEmail: "ana@example.com",
-  paidAt: PAID_AT,
-  assessmentCallId: CALL_ID,
-  bundleId: "3-months",
-  tier: "regular",
-  startChoice: "waiting",
 };
 
 describe("CoachingPurchaseCompletionHandler", () => {
@@ -60,39 +42,38 @@ describe("CoachingPurchaseCompletionHandler", () => {
     expect(purpose).toBe("coaching-subscription");
   });
 
-  it.each<[RecordOutcome["status"], string]>([
-    ["recorded", "recorded"],
-    ["duplicate", "duplicate"],
-    ["already_paid", "ignored"],
-    ["call_not_found", "ignored"],
+  it.each<[RecordOutcome, string]>([
+    [RECORDED, "recorded"],
+    [{ status: "duplicate", paymentCustomerId: "cus_1" }, "duplicate"],
+    [{ status: "already_paid" }, "ignored"],
+    [{ status: "call_not_found" }, "ignored"],
+    [{ status: "unreadable_checkout" }, "ignored"],
   ])(
-    "records the completion the provider answers for the notified session with its event id and answers %s as %s",
-    async (status, expected) => {
+    "hands the notified session id and event id to purchase recording and answers %o as %s",
+    async (recorded, expected) => {
       // arrange
-      const { handler, incidents, paymentCheckout, recordCompletion } =
-        createHandler({ outcome: { status } });
+      const { handler, recordCompletion } = createHandler(recorded);
 
       // act
       const outcome = await handler.handle("evt_1", notifiedSession);
 
       // assert
       expect(outcome).toBe(expected);
-      expect(paymentCheckout.findCompletedSession).toHaveBeenCalledWith(
-        "cs_test_1",
-      );
       expect(recordCompletion).toHaveBeenCalledWith({
-        ...providerCompletion,
         eventId: "evt_1",
+        checkoutSessionId: "cs_test_1",
       });
-      expect(incidents.paymentEventRejected).not.toHaveBeenCalled();
     },
   );
 
-  it.each<RecordOutcome["status"]>(["recorded", "duplicate"])(
-    "mirrors the card on file of her payment customer once the purchase answers %s",
-    async (status) => {
+  it.each<RecordOutcome>([
+    RECORDED,
+    { status: "duplicate", paymentCustomerId: "cus_1" },
+  ])(
+    "mirrors the card on file of her payment customer once the purchase answers %o",
+    async (recorded) => {
       // arrange
-      const { handler, refreshCard } = createHandler({ outcome: { status } });
+      const { handler, refreshCard } = createHandler(recorded);
 
       // act
       await handler.handle("evt_1", notifiedSession);
@@ -102,19 +83,20 @@ describe("CoachingPurchaseCompletionHandler", () => {
     },
   );
 
-  it.each<RecordOutcome["status"]>(["already_paid", "call_not_found"])(
-    "mirrors no card when the purchase answers %s",
-    async (status) => {
-      // arrange
-      const { handler, refreshCard } = createHandler({ outcome: { status } });
+  it.each<RecordOutcome>([
+    { status: "already_paid" },
+    { status: "call_not_found" },
+    { status: "unreadable_checkout" },
+  ])("mirrors no card when the purchase answers %o", async (recorded) => {
+    // arrange
+    const { handler, refreshCard } = createHandler(recorded);
 
-      // act
-      await handler.handle("evt_1", notifiedSession);
+    // act
+    await handler.handle("evt_1", notifiedSession);
 
-      // assert
-      expect(refreshCard).not.toHaveBeenCalled();
-    },
-  );
+    // assert
+    expect(refreshCard).not.toHaveBeenCalled();
+  });
 
   it("fails the delivery when the card on file cannot be mirrored, so the provider redelivers", async () => {
     // arrange
@@ -128,70 +110,13 @@ describe("CoachingPurchaseCompletionHandler", () => {
     // assert
     await expect(handling).rejects.toBe(failure);
   });
-
-  it("fails the delivery when the provider cannot be asked for the completion, so it redelivers", async () => {
-    // arrange
-    const failure = new Error("provider down");
-    const { handler, paymentCheckout, recordCompletion } = createHandler();
-    paymentCheckout.findCompletedSession.mockRejectedValue(failure);
-
-    // act
-    const handling = handler.handle("evt_1", notifiedSession);
-
-    // assert
-    await expect(handling).rejects.toBe(failure);
-    expect(recordCompletion).not.toHaveBeenCalled();
-  });
-
-  it("ignores a notified session the provider does not answer as a paid coaching checkout and reports it", async () => {
-    // arrange
-    const { handler, incidents, recordCompletion, refreshCard } = createHandler(
-      { completion: null },
-    );
-
-    // act
-    const outcome = await handler.handle("evt_1", notifiedSession);
-
-    // assert
-    expect(outcome).toBe("ignored");
-    expect(recordCompletion).not.toHaveBeenCalled();
-    expect(refreshCard).not.toHaveBeenCalled();
-    expect(incidents.paymentEventRejected).toHaveBeenCalledWith({
-      eventId: "evt_1",
-      reason: "unreadable_checkout",
-    });
-  });
 });
 
-function createHandler({
-  outcome = { status: "recorded" },
-  completion = providerCompletion,
-}: HandlerArrangement = {}) {
+function createHandler(outcome: RecordOutcome = RECORDED) {
   const recordCompletion = vi.fn().mockResolvedValue(outcome);
   const refreshCard = vi.fn().mockResolvedValue(undefined);
-  const paymentCheckout = {
-    createCustomer: vi.fn(),
-    createSession: vi.fn(),
-    expireSession: vi.fn(),
-    findCompletedSession: vi.fn().mockResolvedValue(completion),
-  } satisfies PaymentCheckout;
-  const incidents = {
-    paymentCardRefreshFailed: vi.fn(),
-    paymentCardEventMirrored: vi.fn(),
-    paymentEventRejected: vi.fn(),
-    paymentMethodSessionOpened: vi.fn(),
-    programStartedNow: vi.fn(),
-    refundNotificationFailed: vi.fn(),
-    refundSettled: vi.fn(),
-    renewalHoldApplied: vi.fn(),
-    renewalHoldFailed: vi.fn(),
-    subscriptionCancellationFailed: vi.fn(),
-    subscriptionCancelled: vi.fn(),
-    subscriptionEventReconciled: vi.fn(),
-  };
+
   const handler = new CoachingPurchaseCompletionHandler({
-    incidents,
-    paymentCheckout,
     recordCheckoutCompleted: {
       execute: recordCompletion,
     } as unknown as RecordCheckoutCompletedUseCase,
@@ -200,5 +125,5 @@ function createHandler({
     } as unknown as RefreshPaymentCardUseCase,
   });
 
-  return { handler, incidents, paymentCheckout, recordCompletion, refreshCard };
+  return { handler, recordCompletion, refreshCard };
 }

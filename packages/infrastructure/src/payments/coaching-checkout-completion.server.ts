@@ -54,10 +54,10 @@ export function coachingCheckoutMetadata(
 export function toCheckoutCompletion(
   session: PaidCheckoutSession,
 ): CheckoutCompletion | null {
-  const { customerId, subscriptionId, paymentIntentId } = session;
+  const { customerId, subscriptionId } = session;
   const metadata = coachingCheckoutMetadataSchema.safeParse(session.metadata);
 
-  if (!metadata.success || !customerId || !subscriptionId || !paymentIntentId) {
+  if (!metadata.success || !customerId || !subscriptionId) {
     return null;
   }
 
@@ -65,7 +65,7 @@ export function toCheckoutCompletion(
     checkoutSessionId: session.id,
     paymentCustomerId: customerId,
     paymentSubscriptionId: subscriptionId,
-    paymentIntentId,
+    paymentIntentId: session.paymentIntentId,
     amountCents: session.amountCents,
     currency: session.currency,
     customerEmail: session.customerEmail,

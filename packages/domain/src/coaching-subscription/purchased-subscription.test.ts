@@ -40,6 +40,17 @@ describe("PurchasedSubscription.fromCompletedCheckout", () => {
     });
   });
 
+  it("records a paid bundle whose payment intent is unknown without one", () => {
+    // act
+    const purchased = PurchasedSubscription.fromCompletedCheckout({
+      ...completion,
+      paymentIntentId: null,
+    });
+
+    // assert
+    expect(purchased.toSnapshot().paymentIntentId).toBeNull();
+  });
+
   it.each([
     ["1-month", 1],
     ["6-months", 6],

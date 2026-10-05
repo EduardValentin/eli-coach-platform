@@ -289,7 +289,7 @@ describe("StripePaymentCheckout", () => {
     expect(completion).toBeNull();
   });
 
-  it("finds nothing for a paid session whose invoice names no paid payment intent", async () => {
+  it("finds a paid session whose invoice names no paid payment intent as a completion without one", async () => {
     // arrange
     const client = createStubClient();
     client.checkout.sessions.retrieve.mockResolvedValue({
@@ -302,7 +302,10 @@ describe("StripePaymentCheckout", () => {
     const completion = await checkout.findCompletedSession("cs_test_paid");
 
     // assert
-    expect(completion).toBeNull();
+    expect(completion).toMatchObject({
+      checkoutSessionId: "cs_test_paid",
+      paymentIntentId: null,
+    });
   });
 
   it.each([
