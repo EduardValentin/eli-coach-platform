@@ -288,6 +288,8 @@
   );
 
   --animate-heartbeat: heartbeat 1.2s ease-in-out 1;
+  --animate-progress-indeterminate: progress-indeterminate 1.4s ease-in-out
+    infinite;
 
   --color-surface-page: var(--color-surface-page);
   --color-surface-base: var(--color-surface-base);
@@ -521,6 +523,15 @@
   }
   80% {
     transform: scale(1);
+  }
+}
+
+@keyframes progress-indeterminate {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(300%);
   }
 }
 
