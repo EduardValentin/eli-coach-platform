@@ -72,4 +72,22 @@ describe('BottomSheet', () => {
     });
     await waitFor(() => expect(opener).toHaveFocus());
   });
+
+  it('stays open on Escape while dismissal is locked', async () => {
+    // arrange
+    const user = userEvent.setup();
+    const onOpenChange = vi.fn();
+    render(
+      <BottomSheet dismissal="locked" onOpenChange={onOpenChange} open title="More">
+        <a href="/portal/cycle">Cycle</a>
+      </BottomSheet>,
+    );
+
+    // act
+    await user.keyboard('{Escape}');
+
+    // assert
+    expect(onOpenChange).not.toHaveBeenCalled();
+    expect(screen.getByRole('dialog', { name: 'More' })).toBeInTheDocument();
+  });
 });

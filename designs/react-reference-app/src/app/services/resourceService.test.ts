@@ -281,6 +281,35 @@ describe('preparing the pages of an upload', () => {
     expect(pending.settled()).toBe(false);
   });
 
+  it('answers a held upload the way the newly chosen outcome says', async () => {
+    // arrange
+    const server = serverWith([]);
+    const pending = server.add(request, { outcome: 'holds', onProgress: () => undefined });
+    await vi.advanceTimersByTimeAsync(UPLOAD_TIME);
+
+    // act
+    server.releaseHeldUploads('unreadable');
+
+    // assert
+    await expect(pending).resolves.toEqual({ status: 'refused', refusal: 'unreadable' });
+  });
+
+  it('keeps holding while the chosen outcome is still to hold', async () => {
+    // arrange
+    const server = serverWith([]);
+    const pending = tracked(
+      server.add(request, { outcome: 'holds', onProgress: () => undefined }),
+    );
+    await vi.advanceTimersByTimeAsync(UPLOAD_TIME);
+
+    // act
+    server.releaseHeldUploads('holds');
+    await vi.advanceTimersByTimeAsync(AN_HOUR_MS);
+
+    // assert
+    expect(pending.settled()).toBe(false);
+  });
+
   it.each<[ResourceUpload, string]>([
     ['too-many-pages', 'too-many-pages'],
     ['unreadable', 'unreadable'],

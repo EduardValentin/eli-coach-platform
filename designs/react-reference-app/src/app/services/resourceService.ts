@@ -25,6 +25,8 @@ export const RESOURCE_UPLOAD_OUTCOMES = [
 ] as const;
 export type ResourceUpload = (typeof RESOURCE_UPLOAD_OUTCOMES)[number];
 
+type ServerAnswer = Exclude<ResourceUpload, 'holds'>;
+
 export const RESOURCE_LATENCY_MS = 600;
 export const UPLOAD_STEP_MS = 250;
 export const UPLOAD_STEPS = 5;
@@ -65,13 +67,9 @@ function wait(milliseconds: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 
-function preparingThatNeverEnds(): Promise<never> {
-  return new Promise(() => undefined);
-}
-
 function serverRefusalOf(
   kind: ResourceFileKind,
-  outcome: ResourceUpload,
+  outcome: ServerAnswer,
 ): ServerDecidedRefusal | null {
   if (kind !== 'pdf') return null;
 
@@ -87,6 +85,7 @@ function placeholderFile(resource: Resource): Blob {
 export class ResourceServer {
   private records: Resource[];
   private readonly files = new Map<string, File>();
+  private readonly heldAnswers = new Set<(answer: ServerAnswer) => void>();
   private readonly renderer: ResourcePageRenderer;
   private readonly now: () => Date;
 
@@ -118,10 +117,10 @@ export class ResourceServer {
       options.onProgress(step / UPLOAD_STEPS);
     }
     if (options.outcome === 'fails') throw new Error(UPLOAD_FAILED);
-    if (options.outcome === 'holds') return preparingThatNeverEnds();
 
-    await wait(PREPARING_MS);
-    const refusal = serverRefusalOf(check.kind, options.outcome);
+    const answer = await this.answerAfterPreparing(options.outcome);
+    if (answer === 'fails') throw new Error(UPLOAD_FAILED);
+    const refusal = serverRefusalOf(check.kind, answer);
     if (refusal) return { status: 'refused', refusal };
 
     const details = this.withVocabularyCasing(request.details);
@@ -145,6 +144,23 @@ export class ResourceServer {
     this.files.set(resource.id, request.file);
 
     return { status: 'added', resource };
+  }
+
+  releaseHeldUploads(outcome: ResourceUpload): void {
+    if (outcome === 'holds') return;
+
+    const held = [...this.heldAnswers];
+    this.heldAnswers.clear();
+    held.forEach((answer) => answer(outcome));
+  }
+
+  private async answerAfterPreparing(outcome: ResourceUpload): Promise<ServerAnswer> {
+    if (outcome === 'holds') {
+      return new Promise((answer) => this.heldAnswers.add(answer));
+    }
+
+    await wait(PREPARING_MS);
+    return outcome;
   }
 
   async updateDetails(id: string, details: ResourceDetails): Promise<Resource> {

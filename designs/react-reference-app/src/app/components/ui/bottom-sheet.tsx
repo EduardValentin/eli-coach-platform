@@ -2,6 +2,7 @@ import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { AnimatePresence, motion, useReducedMotion, type PanInfo } from 'motion/react';
 import { useRef, type ReactNode } from 'react';
 
+import type { DialogDismissal } from './dialog';
 import { cn } from './utils';
 
 interface BottomSheetProps {
@@ -11,6 +12,7 @@ interface BottomSheetProps {
   title: string;
   description?: string;
   className?: string;
+  dismissal?: DialogDismissal;
   children: ReactNode;
 }
 
@@ -34,6 +36,7 @@ export function BottomSheet({
   title,
   description,
   className,
+  dismissal = 'allowed',
   children,
 }: BottomSheetProps) {
   const shouldReduceMotion = useReducedMotion() === true;
@@ -57,13 +60,13 @@ export function BottomSheet({
         exit: { opacity: 0 },
         transition: SCRIM_TRANSITION,
       };
-  const sheetMotionProps = shouldReduceMotion
+  const locked = dismissal === 'locked';
+  const preventWhenLocked = (event: Event) => {
+    if (locked) event.preventDefault();
+  };
+  const dragToDismissProps = locked
     ? {}
     : {
-        initial: { y: '100%' },
-        animate: { y: 0 },
-        exit: { y: '100%' },
-        transition: SHEET_TRANSITION,
         drag: 'y' as const,
         dragConstraints: { top: 0, bottom: 0 },
         dragElastic: { top: 0, bottom: 0.7 },
@@ -72,6 +75,15 @@ export function BottomSheet({
             onOpenChange(false);
           }
         },
+      };
+  const sheetMotionProps = shouldReduceMotion
+    ? {}
+    : {
+        initial: { y: '100%' },
+        animate: { y: 0 },
+        exit: { y: '100%' },
+        transition: SHEET_TRANSITION,
+        ...dragToDismissProps,
       };
 
   return (
@@ -87,6 +99,8 @@ export function BottomSheet({
               id={id}
               {...descriptionAttributes}
               onCloseAutoFocus={returnFocusToOpener}
+              onEscapeKeyDown={preventWhenLocked}
+              onInteractOutside={preventWhenLocked}
               onOpenAutoFocus={rememberOpener}
             >
               <motion.div

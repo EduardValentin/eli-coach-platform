@@ -61,6 +61,12 @@ type Submission =
   | { state: 'preparing' }
   | { state: 'failed' };
 
+const IDLE: Submission = { state: 'idle' };
+
+function isBusy(submission: Submission): boolean {
+  return submission.state === 'sending' || submission.state === 'preparing';
+}
+
 function submissionAt(progress: number): Submission {
   return progress < 1 ? { state: 'sending', progress } : { state: 'preparing' };
 }
@@ -112,14 +118,25 @@ type ChosenFile = { name: string; sizeBytes: number; kind: ResourceFileKind };
 
 type ChosenUpload = { file: File; kind: ResourceFileKind };
 
+const PREPARING_HINT = 'Large files can take a minute or two.';
+
 function FileRowStatus({ file, row }: { file: ChosenFile; row: FileRowState }) {
+  const hintId = useId();
+
   if (row.state === 'sending') {
     return (
       <Progress aria-label="Upload progress" className="h-1.5" value={row.progress * 100} />
     );
   }
   if (row.state === 'preparing') {
-    return <Progress aria-label="Preparing pages" className="h-1.5" />;
+    return (
+      <>
+        <Progress aria-describedby={hintId} aria-label="Preparing pages" className="h-1.5" />
+        <p className="text-sm text-text-secondary" id={hintId}>
+          {PREPARING_HINT}
+        </p>
+      </>
+    );
   }
 
   return (
@@ -168,10 +185,14 @@ function FileFieldError({ id, message }: { id: string; message: string | null })
 function ResourceForm({
   mode,
   vocabulary,
+  submission,
+  onSubmissionChange,
   onClose,
 }: {
   mode: ResourceFormMode;
   vocabulary: readonly string[];
+  submission: Submission;
+  onSubmissionChange: (submission: Submission) => void;
   onClose: () => void;
 }) {
   const fileInputId = useId();
@@ -180,7 +201,6 @@ function ResourceForm({
   const copy = COPY[mode.kind];
   const [upload, setUpload] = useState<ChosenUpload | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
-  const [submission, setSubmission] = useState<Submission>({ state: 'idle' });
   const form = useForm<ResourceFormValues>({
     defaultValues: {
       title: editing?.title ?? '',
@@ -189,7 +209,7 @@ function ResourceForm({
     },
   });
   const values = form.watch();
-  const busy = submission.state === 'sending' || submission.state === 'preparing';
+  const busy = isBusy(submission);
   const typedDetails = resourceDetailsFrom(values);
   const unchanged =
     editing !== null && (typedDetails === null || !detailsDiffer(editing, typedDetails));
@@ -222,7 +242,7 @@ function ResourceForm({
     if (!upload) throw new Error(NO_FILE_MESSAGE);
 
     const addition = await mode.onAdd({ file: upload.file, details }, (progress) =>
-      setSubmission(submissionAt(progress)),
+      onSubmissionChange(submissionAt(progress)),
     );
 
     return addition.status === 'refused' ? addition.refusal : null;
@@ -232,17 +252,17 @@ function ResourceForm({
     const details = resourceDetailsFrom(formValues);
     if (!details || (mode.kind === 'add' && !upload)) return;
 
-    setSubmission({ state: 'sending', progress: 0 });
+    onSubmissionChange({ state: 'sending', progress: 0 });
     let refusal: ServerDecidedRefusal | null;
     try {
       refusal = await refusalAfterSending(details);
     } catch {
-      setSubmission({ state: 'failed' });
+      onSubmissionChange({ state: 'failed' });
       return;
     }
     if (refusal) {
       setFileError(UPLOAD_REFUSAL_MESSAGES[refusal]);
-      setSubmission({ state: 'idle' });
+      onSubmissionChange(IDLE);
       return;
     }
     onClose();
@@ -390,12 +410,15 @@ export function ResourceFormDialog({
   onClose: () => void;
 }) {
   const [shown, setShown] = useState<{ mode: ResourceFormMode; session: number } | null>(null);
+  const [submission, setSubmission] = useState<Submission>(IDLE);
   if (mode !== null && mode !== shown?.mode) {
     setShown({ mode, session: (shown?.session ?? 0) + 1 });
+    setSubmission(IDLE);
   }
 
   return (
     <ResponsiveSheetDialog
+      dismissal={isBusy(submission) ? 'locked' : 'allowed'}
       onOpenChange={(open) => {
         if (!open) onClose();
       }}
@@ -407,6 +430,8 @@ export function ResourceFormDialog({
           key={shown.session}
           mode={shown.mode}
           onClose={onClose}
+          onSubmissionChange={setSubmission}
+          submission={submission}
           vocabulary={vocabulary}
         />
       )}

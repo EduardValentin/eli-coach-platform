@@ -1,5 +1,11 @@
 import { ReactNode } from 'react';
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from '../ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+  type DialogDismissal,
+} from '../ui/dialog';
 import { BottomSheet } from '../ui/bottom-sheet';
 import { useIsMobile } from '../ui/use-mobile';
 import { cn } from '../ui/utils';
@@ -10,6 +16,7 @@ interface ResponsiveSheetDialogProps {
   title: string;
   description?: string;
   contentClassName?: string;
+  dismissal?: DialogDismissal;
   children: ReactNode;
 }
 
@@ -19,13 +26,20 @@ export function ResponsiveSheetDialog({
   title,
   description,
   contentClassName,
+  dismissal = 'allowed',
   children,
 }: ResponsiveSheetDialogProps) {
   const isMobile = useIsMobile();
 
   if (isMobile) {
     return (
-      <BottomSheet open={open} onOpenChange={onOpenChange} title={title} description={description}>
+      <BottomSheet
+        description={description}
+        dismissal={dismissal}
+        onOpenChange={onOpenChange}
+        open={open}
+        title={title}
+      >
         {children}
       </BottomSheet>
     );
@@ -34,6 +48,7 @@ export function ResponsiveSheetDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
+        dismissal={dismissal}
         size="md"
         className={cn(
           'gap-0 p-0 overflow-hidden max-h-[85vh] flex flex-col',
