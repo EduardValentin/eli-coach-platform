@@ -43,7 +43,7 @@ export class CoachingPurchaseCompletionHandler implements PaymentCompletionHandl
       checkoutSessionId: session.id,
     });
 
-    if ("paymentCustomerId" in recorded) {
+    if (recorded.status === "recorded" || recorded.status === "duplicate") {
       await this.options.refreshPaymentCard.execute({
         paymentCustomerId: recorded.paymentCustomerId,
       });
