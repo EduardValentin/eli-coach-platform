@@ -40,7 +40,7 @@
         "integration-test-config/**/*.ts",
         "tooling/**/*.ts"
       ],
-      "ignoreDependencies": ["sharp"]
+      "ignoreDependencies": ["sharp", "@napi-rs/canvas", "pdfjs-dist"]
     },
     "packages/*": {
       "entry": [
@@ -48,7 +48,8 @@
         "src/*/index.ts",
         "src/*/index.server.ts",
         "src/runtime.ts",
-        "scripts/**/*.ts"
+        "scripts/**/*.ts",
+        "src/documents/pdf-pages-worker.server.ts"
       ],
       "project": ["src/**/*.{ts,tsx}", "scripts/**/*.ts", "tooling/**/*.ts"],
       "includeEntryExports": true

@@ -29,6 +29,7 @@
     "@eli-coach-platform/infrastructure": "workspace:*",
     "@eli-coach-platform/ui": "workspace:*",
     "@hookform/resolvers": "catalog:",
+    "@napi-rs/canvas": "catalog:",
     "@react-router/node": "catalog:",
     "@react-router/serve": "catalog:",
     "archiver": "catalog:",
@@ -37,6 +38,7 @@
     "isbot": "catalog:",
     "lucide-react": "catalog:",
     "motion": "catalog:",
+    "pdfjs-dist": "catalog:",
     "pg": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
@@ -50,7 +52,6 @@
   "devDependencies": {
     "@clerk/testing": "catalog:",
     "@eli-coach-platform/test-support": "workspace:*",
-    "@napi-rs/canvas": "catalog:",
     "@playwright/test": "catalog:",
     "@react-router/dev": "catalog:",
     "@tailwindcss/vite": "catalog:",
@@ -59,7 +60,6 @@
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "drizzle-kit": "catalog:",
-    "pdfjs-dist": "catalog:",
     "tailwindcss": "catalog:",
     "tsx": "catalog:",
     "vite": "catalog:"
