@@ -109,7 +109,11 @@ export function FileDropzone({
       >
         <Upload className="size-5" />
       </span>
-      <span className="text-sm font-medium text-text-primary" id={promptId}>
+      <span
+        className="text-sm font-medium text-text-primary"
+        data-parity="dropzone-prompt"
+        id={promptId}
+      >
         {prompt}
       </span>
       <span className="text-sm text-text-secondary" id={hintId}>

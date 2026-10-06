@@ -23,6 +23,7 @@ export function Progress({ className, value, ...props }: ProgressProps) {
       {...props}
     >
       <RadixProgress.Indicator
+        data-parity="progress-indicator"
         className={cn("h-full bg-primary", {
           "w-full flex-1 transition-all": !indeterminate,
           "w-1/3 animate-progress-indeterminate motion-reduce:w-full motion-reduce:animate-none motion-reduce:opacity-50":

@@ -162,6 +162,7 @@ function ResourceFileRow({
       <span
         aria-hidden="true"
         className="flex size-10 shrink-0 items-center justify-center rounded-field bg-surface-quiet text-text-secondary"
+        data-parity="resource-file-glyph"
       >
         <Glyph className="size-5" />
       </span>

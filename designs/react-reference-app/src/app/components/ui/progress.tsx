@@ -24,6 +24,7 @@ function Progress({
     >
       <ProgressPrimitive.Indicator
         data-slot="progress-indicator"
+        data-parity="progress-indicator"
         className={cn("bg-primary h-full", {
           "w-full flex-1 transition-all": !indeterminate,
           "w-1/3 animate-progress-indeterminate motion-reduce:w-full motion-reduce:animate-none motion-reduce:opacity-50":
