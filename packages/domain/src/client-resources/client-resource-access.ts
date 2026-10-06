@@ -51,7 +51,7 @@ export class ClientResourceAccess {
   }
 
   mayAddFor(requester: ResourceRequester, clientId: string): boolean {
-    if (requester.role === "COACH") return true;
+    if (reachOf(requester) === "every-client") return true;
 
     this.options.incidents.resourceAccessRefused({
       requesterRole: requester.role,

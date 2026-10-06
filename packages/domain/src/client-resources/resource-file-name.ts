@@ -5,14 +5,19 @@ type CodePointRange = readonly [first: number, last: number];
 const UNSAFE_CODE_POINTS: readonly CodePointRange[] = [
   [0x0000, 0x001f],
   [0x007f, 0x009f],
-  [0x200e, 0x200f],
+  [0x061c, 0x061c],
+  [0x200b, 0x200f],
+  [0x2028, 0x2029],
   [0x202a, 0x202e],
   [0x2066, 0x2069],
+  [0xfeff, 0xfeff],
 ];
+
+const UNNAMED_STEM = "resource";
 
 type FileNameParts = { stem: string; extension: string };
 
-function fileNameParts(fileName: string): FileNameParts {
+export function fileNameParts(fileName: string): FileNameParts {
   const dot = fileName.lastIndexOf(".");
 
   if (dot <= 0) return { stem: fileName, extension: "" };
@@ -47,6 +52,10 @@ function shortenedStem(stem: string, extension: string): string {
   return Array.from(stem).slice(0, room).join("");
 }
 
+function namedStem(stem: string): string {
+  return stem === "" ? UNNAMED_STEM : stem;
+}
+
 export function pinnedFileName(
   originalName: string,
   formatExtensions: readonly [string, ...string[]],
@@ -54,5 +63,5 @@ export function pinnedFileName(
   const parts = fileNameParts(withoutUnsafeCharacters(originalName));
   const extension = keptExtension(parts.extension, formatExtensions);
 
-  return `${shortenedStem(parts.stem, extension)}.${extension}`;
+  return `${shortenedStem(namedStem(parts.stem), extension)}.${extension}`;
 }

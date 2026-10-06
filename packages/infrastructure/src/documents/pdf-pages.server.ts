@@ -19,8 +19,6 @@ export type PdfPages = {
 export type PdfPagesOpening =
   { status: "opened"; pages: PdfPages } | { status: "unreadable" };
 
-type PdfToOpen = { bytes: Uint8Array; longestEdge: number };
-
 type PendingAnswer = {
   resolve: (answer: PdfPagesAnswer) => void;
   reject: (error: Error) => void;
@@ -28,12 +26,12 @@ type PendingAnswer = {
 
 export async function openPdfPages(
   workerUrl: URL,
-  pdf: PdfToOpen,
+  bytes: Uint8Array,
 ): Promise<PdfPagesOpening> {
   const worker = new PdfPagesWorker(workerUrl);
 
   try {
-    const answer = await worker.ask({ kind: "open", ...pdf });
+    const answer = await worker.ask({ kind: "open", bytes });
 
     if (answer.kind === "opened") {
       return { status: "opened", pages: pagesOf(worker, answer.pageCount) };

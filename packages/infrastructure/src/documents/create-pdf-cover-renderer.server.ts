@@ -12,7 +12,7 @@ type PdfCoverRenderer = {
 export function createPdfCoverRenderer(): PdfCoverRenderer {
   return {
     async render(pdf, rendition) {
-      const loadingTask = loadPdfDocument(pdf.slice(), rendition.width);
+      const loadingTask = loadPdfDocument(pdf.slice());
 
       try {
         const document = await loadingTask.promise;

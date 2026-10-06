@@ -1,7 +1,7 @@
 import type { PdfLongEdgeRendition } from "./pdf-page-renderer.server";
 
 export type PdfPagesQuestion =
-  | { kind: "open"; bytes: Uint8Array; longestEdge: number }
+  | { kind: "open"; bytes: Uint8Array }
   | { kind: "render"; pageNumber: number; rendition: PdfLongEdgeRendition };
 
 export type PdfPagesRequest = PdfPagesQuestion & { requestId: number };

@@ -29,7 +29,7 @@ port.on("message", (request: PdfPagesRequest) => {
 
 async function answer(question: PdfPagesQuestion): Promise<PdfPagesAnswer> {
   if (question.kind === "open") {
-    return open(question.bytes, question.longestEdge);
+    return open(question.bytes);
   }
 
   try {
@@ -42,12 +42,9 @@ async function answer(question: PdfPagesQuestion): Promise<PdfPagesAnswer> {
   }
 }
 
-async function open(
-  bytes: Uint8Array,
-  longestEdge: number,
-): Promise<PdfPagesAnswer> {
+async function open(bytes: Uint8Array): Promise<PdfPagesAnswer> {
   try {
-    openDocument = await loadPdfDocument(bytes, longestEdge).promise;
+    openDocument = await loadPdfDocument(bytes).promise;
     return { kind: "opened", pageCount: openDocument.numPages };
   } catch {
     return { kind: "unreadable" };

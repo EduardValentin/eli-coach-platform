@@ -189,6 +189,24 @@ describe("ResourceFile", () => {
         format: "xlsx",
         downloadName: "meal plan.xlsx",
       },
+      {
+        case: "strips invisible marks, separators and byte order marks",
+        originalName: "\uFEFFme\u061Cal\u200B \u200Cpl\u200Dan\u2028\u2029.pdf",
+        format: "pdf",
+        downloadName: "meal plan.pdf",
+      },
+      {
+        case: "names a file that came without a name",
+        originalName: "",
+        format: "pdf",
+        downloadName: "resource.pdf",
+      },
+      {
+        case: "names a file whose name was only characters it strips",
+        originalName: "\u202E\u200B\uFEFF",
+        format: "pdf",
+        downloadName: "resource.pdf",
+      },
     ] as const)("$case", ({ originalName, format, downloadName }) => {
       // arrange
       const file = ResourceFile.of({

@@ -53,6 +53,7 @@ export {
   type ResourceFileFormat,
   type ResourceFileKind,
 } from "./resource-file-kind";
+export { fileNameParts } from "./resource-file-name";
 export {
   type ResourceImagePages,
   type ResourceImageRendering,

@@ -41,10 +41,7 @@ class WorkerResourceDocumentPages implements ResourceDocumentPages {
   }
 
   async read(bytes: Uint8Array): Promise<ResourceDocumentReading> {
-    const opening = await openPdfPages(this.#workerUrl, {
-      bytes,
-      longestEdge: this.#pageRendition.longEdge,
-    });
+    const opening = await openPdfPages(this.#workerUrl, bytes);
 
     if (opening.status === "unreadable") {
       return { status: "unreadable" };

@@ -43,14 +43,13 @@ import {
   SheetDialogHeader,
 } from '../workout/ResponsiveSheetDialog';
 
+type AddResource = (
+  upload: NewResourceUpload,
+  onProgress: (fraction: number) => void,
+) => Promise<ResourceAddition>;
+
 export type ResourceFormMode =
-  | {
-      kind: 'add';
-      onAdd: (
-        upload: NewResourceUpload,
-        onProgress: (fraction: number) => void,
-      ) => Promise<ResourceAddition>;
-    }
+  | { kind: 'add'; onAdd: AddResource }
   | { kind: 'edit'; resource: Resource; onSave: (details: ResourceDetails) => Promise<Resource> };
 
 type ResourceFormValues = { title: string; description: string; tags: string[] };
@@ -235,10 +234,13 @@ function ResourceForm({
     setUpload({ file: candidate, kind: check.kind });
   };
 
-  const addChosenFile = async (details: ResourceDetails): Promise<ServerDecidedRefusal | null> => {
-    if (mode.kind !== 'add' || !upload) throw new Error(NO_FILE_MESSAGE);
+  const addChosenFile = async (
+    onAdd: AddResource,
+    details: ResourceDetails,
+  ): Promise<ServerDecidedRefusal | null> => {
+    if (!upload) throw new Error(NO_FILE_MESSAGE);
 
-    const addition = await mode.onAdd({ file: upload.file, details }, (progress) =>
+    const addition = await onAdd({ file: upload.file, details }, (progress) =>
       onSubmissionChange(submissionAt(progress)),
     );
 
@@ -255,7 +257,7 @@ function ResourceForm({
       if (mode.kind === 'edit') {
         await mode.onSave(details);
       } else {
-        refusal = await addChosenFile(details);
+        refusal = await addChosenFile(mode.onAdd, details);
       }
     } catch {
       onSubmissionChange({ state: 'failed' });

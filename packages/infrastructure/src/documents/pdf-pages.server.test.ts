@@ -63,10 +63,7 @@ function pdfOf(
 }
 
 async function openedPages(bytes: Uint8Array): Promise<PdfPages> {
-  const opening = await openPdfPages(WORKER_URL, {
-    bytes,
-    longestEdge: PAGE_RENDITION.longEdge,
-  });
+  const opening = await openPdfPages(WORKER_URL, bytes);
 
   if (opening.status !== "opened") {
     throw new Error("Expected the PDF to open.");
@@ -193,10 +190,7 @@ describe("openPdfPages", () => {
     const bytes = new TextEncoder().encode("plain text, not a document");
 
     // act
-    const opening = await openPdfPages(WORKER_URL, {
-      bytes,
-      longestEdge: PAGE_RENDITION.longEdge,
-    });
+    const opening = await openPdfPages(WORKER_URL, bytes);
 
     // assert
     expect(opening).toEqual({ status: "unreadable" });
@@ -207,10 +201,7 @@ describe("openPdfPages", () => {
     const bytes = await pdfOf(["portrait"], { userPassword: "secret" });
 
     // act
-    const opening = await openPdfPages(WORKER_URL, {
-      bytes,
-      longestEdge: PAGE_RENDITION.longEdge,
-    });
+    const opening = await openPdfPages(WORKER_URL, bytes);
 
     // assert
     expect(opening).toEqual({ status: "unreadable" });
@@ -222,10 +213,7 @@ describe("openPdfPages", () => {
     const truncated = bytes.subarray(0, Math.floor(bytes.byteLength / 2));
 
     // act
-    const opening = await openPdfPages(WORKER_URL, {
-      bytes: truncated,
-      longestEdge: PAGE_RENDITION.longEdge,
-    });
+    const opening = await openPdfPages(WORKER_URL, truncated);
 
     // assert
     expect(opening).toEqual({ status: "unreadable" });
@@ -237,10 +225,7 @@ describe("openPdfPages", () => {
     const bytes = await pdfOf(["portrait"]);
 
     // act
-    const opening = openPdfPages(missingWorker, {
-      bytes,
-      longestEdge: PAGE_RENDITION.longEdge,
-    });
+    const opening = openPdfPages(missingWorker, bytes);
 
     // assert
     await expect(opening).rejects.toThrow(Error);
