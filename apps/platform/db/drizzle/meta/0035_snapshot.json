@@ -1234,7 +1234,7 @@
       "checkConstraints": {
         "client_resources_format_check": {
           "name": "client_resources_format_check",
-          "value": "\"app\".\"client_resources\".\"format\" in ('pdf', 'jpeg', 'png', 'webp', 'docx', 'doc', 'odt', 'xlsx', 'xls', 'ods')"
+          "value": "\"app\".\"client_resources\".\"format\" in ('pdf', 'doc', 'docx', 'odt', 'xls', 'xlsx', 'ods', 'jpeg', 'png', 'webp')"
         },
         "client_resources_page_count_check": {
           "name": "client_resources_page_count_check",

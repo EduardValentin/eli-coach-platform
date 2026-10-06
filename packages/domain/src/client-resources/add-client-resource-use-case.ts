@@ -1,13 +1,14 @@
 import type { Clock } from "../shared";
 
-import { ClientResource, ResourceFile } from "./client-resource";
+import {
+  ClientResource,
+  ResourceFile,
+  type ClientResourceOwner,
+} from "./client-resource";
 import type { ResourceRequester } from "./client-resource-access";
 import type { ClientResourceIds } from "./client-resource-ids";
 import type { ClientResourceIncidents } from "./client-resource-incidents";
-import type {
-  ClientResourceOwner,
-  ClientResourceStore,
-} from "./client-resource-store";
+import type { ClientResourceStore } from "./client-resource-store";
 import type { ClientResources } from "./client-resources";
 import type { ResourceClients } from "./resource-clients";
 import {

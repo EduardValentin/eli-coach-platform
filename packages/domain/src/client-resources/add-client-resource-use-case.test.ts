@@ -3,10 +3,9 @@ import { describe, expect, it, vi } from "vitest";
 import type { Clock } from "../shared";
 
 import { AddClientResourceUseCase } from "./add-client-resource-use-case";
-import type { ClientResource } from "./client-resource";
+import type { ClientResource, ClientResourceOwner } from "./client-resource";
 import type { ClientResourceIncidents } from "./client-resource-incidents";
 import type {
-  ClientResourceOwner,
   ClientResourceStore,
   ResourcePageImage,
 } from "./client-resource-store";

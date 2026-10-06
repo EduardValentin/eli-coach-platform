@@ -1,4 +1,4 @@
-export type ClientResourceOwner = { clientId: string; resourceId: string };
+import type { ClientResourceOwner } from "./client-resource";
 
 export type ResourcePageImage = { pageNumber: number; bytes: Uint8Array };
 

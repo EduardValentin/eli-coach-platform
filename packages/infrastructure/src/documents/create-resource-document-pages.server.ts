@@ -9,8 +9,6 @@ import type {
 import type { PageRendition } from "./pdf-pages-messages.server";
 import { openPdfPages, type PdfPages } from "./pdf-pages.server";
 
-const WEBP_QUALITY = 80;
-
 type ResourceDocumentPagesOptions = {
   workerUrl: URL;
   renditions: ResourceRenditions;
@@ -31,11 +29,11 @@ class WorkerResourceDocumentPages implements ResourceDocumentPages {
     this.#workerUrl = workerUrl;
     this.#pageRendition = {
       longEdge: renditions.page.longEdge,
-      webpQuality: WEBP_QUALITY,
+      webpQuality: renditions.quality,
     };
     this.#thumbnailRendition = {
       longEdge: renditions.thumbnail.longEdge,
-      webpQuality: WEBP_QUALITY,
+      webpQuality: renditions.quality,
     };
   }
 

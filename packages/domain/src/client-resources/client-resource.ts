@@ -1,4 +1,3 @@
-import type { ClientResourceOwner } from "./client-resource-store";
 import type { ResourceDetails } from "./resource-details";
 import {
   hasPagePreview,
@@ -9,6 +8,8 @@ import {
   type ResourceFileKind,
 } from "./resource-file-kind";
 import { pinnedFileName } from "./resource-file-name";
+
+export type ClientResourceOwner = { clientId: string; resourceId: string };
 
 export type ResourceFileSnapshot = {
   originalName: string;

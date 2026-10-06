@@ -125,6 +125,7 @@ describe("createResourceImagePages", () => {
       page: { longEdge: 100 },
       thumbnail: { longEdge: 50 },
       format: "webp" as const,
+      quality: 80,
     };
 
     // act
@@ -140,6 +141,25 @@ describe("createResourceImagePages", () => {
       width: 50,
       height: 25,
     });
+  });
+
+  it("encodes at the quality of the renditions it is given", async () => {
+    // arrange
+    const image = await noisyImage(400, 300).png().toBuffer();
+    const renderAt = async (quality: number) =>
+      renderedPages(
+        await createResourceImagePages({
+          ...RESOURCE_RENDITIONS,
+          quality,
+        }).render(image),
+      );
+
+    // act
+    const [rough, fine] = await Promise.all([renderAt(10), renderAt(100)]);
+
+    // assert
+    expect(rough.page.byteLength).toBeLessThan(fine.page.byteLength);
+    expect(rough.thumbnail.byteLength).toBeLessThan(fine.thumbnail.byteLength);
   });
 
   it("never enlarges an image smaller than the bounds", async () => {

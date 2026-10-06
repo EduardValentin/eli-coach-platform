@@ -1,26 +1,14 @@
 import {
   MAX_RESOURCE_FILE_BYTES,
+  RESOURCE_FILE_EXTENSIONS,
+  resourceFileKindOfExtension,
   type ResourceFileKind,
   type ResourceRefusal,
 } from "@eli-coach-platform/domain/client-resources";
 
-const KIND_BY_EXTENSION: Readonly<Record<string, ResourceFileKind>> = {
-  pdf: "pdf",
-  doc: "word",
-  docx: "word",
-  odt: "word",
-  xls: "excel",
-  xlsx: "excel",
-  ods: "excel",
-  jpg: "image",
-  jpeg: "image",
-  png: "image",
-  webp: "image",
-};
-
-export const RESOURCE_UPLOAD_ACCEPT = Object.keys(KIND_BY_EXTENSION)
-  .map((extension) => `.${extension}`)
-  .join(",");
+export const RESOURCE_UPLOAD_ACCEPT = RESOURCE_FILE_EXTENSIONS.map(
+  (extension) => `.${extension}`,
+).join(",");
 
 type UploadCandidate = { name: string; size: number };
 
@@ -38,7 +26,7 @@ function extensionOf(fileName: string): string {
 }
 
 export function checkResourceUpload(candidate: UploadCandidate): UploadCheck {
-  const kind = KIND_BY_EXTENSION[extensionOf(candidate.name)];
+  const kind = resourceFileKindOfExtension(extensionOf(candidate.name));
   if (!kind) return { accepted: false, refusal: "unsupported-type" };
   if (candidate.size > MAX_RESOURCE_FILE_BYTES) {
     return { accepted: false, refusal: "too-large" };

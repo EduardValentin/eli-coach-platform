@@ -109,6 +109,34 @@ describe("createResourceDocumentPages", () => {
     expect(metadata.height).toBe(RESOURCE_RENDITIONS.thumbnail.longEdge);
   });
 
+  it("encodes at the quality of the renditions it is given", async () => {
+    // arrange
+    const bytes = await pdfOf(1);
+    const readAt = async (quality: number) => {
+      const reading = await createResourceDocumentPages({
+        workerUrl: new URL("./pdf-pages-worker.server.ts", import.meta.url),
+        renditions: { ...RESOURCE_RENDITIONS, quality },
+      }).read(bytes);
+
+      if (reading.status !== "readable") {
+        throw new Error("Expected the PDF to be readable.");
+      }
+
+      openDocuments.push(reading);
+      return reading;
+    };
+    const [rough, fine] = await Promise.all([readAt(10), readAt(100)]);
+
+    // act
+    const [roughThumbnail, fineThumbnail] = await Promise.all([
+      rough.thumbnail(),
+      fine.thumbnail(),
+    ]);
+
+    // assert
+    expect(roughThumbnail.byteLength).toBeLessThan(fineThumbnail.byteLength);
+  });
+
   it("answers unreadable for a password-protected PDF", async () => {
     // arrange
     const bytes = await pdfOf(1, { userPassword: "secret" });

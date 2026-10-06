@@ -8,7 +8,7 @@ CREATE TABLE "app"."client_resources" (
 	"size_bytes" integer NOT NULL,
 	"page_count" integer,
 	"added_at" timestamp with time zone NOT NULL,
-	CONSTRAINT "client_resources_format_check" CHECK ("app"."client_resources"."format" in ('pdf', 'jpeg', 'png', 'webp', 'docx', 'doc', 'odt', 'xlsx', 'xls', 'ods')),
+	CONSTRAINT "client_resources_format_check" CHECK ("app"."client_resources"."format" in ('pdf', 'doc', 'docx', 'odt', 'xls', 'xlsx', 'ods', 'jpeg', 'png', 'webp')),
 	CONSTRAINT "client_resources_page_count_check" CHECK ("app"."client_resources"."page_count" is null or "app"."client_resources"."page_count" >= 1)
 );
 --> statement-breakpoint

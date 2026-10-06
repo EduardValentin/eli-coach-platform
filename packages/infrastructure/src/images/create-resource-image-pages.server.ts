@@ -49,7 +49,7 @@ class SharpResourceImagePages implements ResourceImagePages {
         fit: "inside",
         withoutEnlargement: true,
       })
-      .toFormat(this.renditions.format)
+      .toFormat(this.renditions.format, { quality: this.renditions.quality })
       .toBuffer();
   }
 }

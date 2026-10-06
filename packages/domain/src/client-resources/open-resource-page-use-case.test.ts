@@ -1,11 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { ClientResource, type ResourceFileSnapshot } from "./client-resource";
+import {
+  ClientResource,
+  type ClientResourceOwner,
+  type ResourceFileSnapshot,
+} from "./client-resource";
 import type { ClientResourceIncidents } from "./client-resource-incidents";
-import type {
-  ClientResourceOwner,
-  ClientResourceStore,
-} from "./client-resource-store";
+import type { ClientResourceStore } from "./client-resource-store";
 import type { ClientResources } from "./client-resources";
 import { OpenResourcePageUseCase } from "./open-resource-page-use-case";
 import type { ResourceClients } from "./resource-clients";

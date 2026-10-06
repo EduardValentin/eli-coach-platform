@@ -37,7 +37,7 @@ export async function readThenClose(file: FileHandle): Promise<Buffer> {
 }
 
 // Not an async generator: an unstarted one ignores return() and would leak the file.
-export function streamThenClose(file: FileHandle): AsyncIterable<Uint8Array> {
+function streamThenClose(file: FileHandle): AsyncIterable<Uint8Array> {
   const stream = file.createReadStream();
   const closed = new Promise<void>((resolve) => stream.once("close", resolve));
 

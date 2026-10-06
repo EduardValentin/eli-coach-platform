@@ -1,9 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { ClientResource } from "./client-resource";
+import { ClientResource, type ClientResourceOwner } from "./client-resource";
 import type { ClientResourceIncidents } from "./client-resource-incidents";
 import type {
-  ClientResourceOwner,
   ClientResourceStore,
   StoredResourceOriginal,
 } from "./client-resource-store";
