@@ -19,10 +19,18 @@ type UploadCheck =
       refusal: Extract<ResourceRefusal, "unsupported-type" | "too-large">;
     };
 
-function extensionOf(fileName: string): string {
+type FileNameParts = { stem: string; extension: string };
+
+function fileNameParts(fileName: string): FileNameParts {
   const dot = fileName.lastIndexOf(".");
 
-  return dot < 0 ? "" : fileName.slice(dot + 1).toLocaleLowerCase();
+  if (dot <= 0) return { stem: fileName, extension: "" };
+
+  return { stem: fileName.slice(0, dot), extension: fileName.slice(dot + 1) };
+}
+
+function extensionOf(fileName: string): string {
+  return fileNameParts(fileName).extension.toLocaleLowerCase();
 }
 
 export function checkResourceUpload(candidate: UploadCandidate): UploadCheck {
@@ -36,10 +44,8 @@ export function checkResourceUpload(candidate: UploadCandidate): UploadCheck {
 }
 
 export function titleFromFileName(fileName: string): string {
-  const dot = fileName.lastIndexOf(".");
-  const stem = dot > 0 ? fileName.slice(0, dot) : fileName;
-  const words = stem
-    .replace(/[_\-.]+/g, " ")
+  const words = fileNameParts(fileName)
+    .stem.replace(/[_\-.]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 

@@ -2,9 +2,12 @@ import { parentPort } from "node:worker_threads";
 
 import type { PDFDocumentProxy } from "pdfjs-dist/legacy/build/pdf.mjs";
 
-import { loadPdfDocument, renderPdfPage } from "./pdf-page-renderer.server.ts";
+import {
+  loadPdfDocument,
+  renderPdfPage,
+  type PdfLongEdgeRendition,
+} from "./pdf-page-renderer.server.ts";
 import type {
-  PageRendition,
   PdfPagesAnswer,
   PdfPagesQuestion,
   PdfPagesRequest,
@@ -53,7 +56,7 @@ async function open(
 
 function render(
   pageNumber: number,
-  rendition: PageRendition,
+  rendition: PdfLongEdgeRendition,
 ): Promise<Uint8Array> {
   if (!openDocument) {
     throw new Error("No PDF is open in this worker.");

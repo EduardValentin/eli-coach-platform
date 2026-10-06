@@ -75,7 +75,7 @@ describe("createAttachmentResponse", () => {
 
     // act
     const response = createAttachmentResponse(bytes, {
-      byteLength: 9,
+      sizeBytes: 9,
       filename: "plan.pdf",
       mimeType: "application/pdf",
     });
@@ -194,7 +194,7 @@ describe("createSandboxedAttachmentResponse", () => {
 
     // act
     const response = createSandboxedAttachmentResponse(bytes, {
-      byteLength: 2,
+      sizeBytes: 2,
       filename: "Recipes.docx",
       mimeType:
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document",

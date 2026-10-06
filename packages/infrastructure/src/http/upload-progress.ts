@@ -12,7 +12,7 @@ export type UploadProgress = {
 
 type ProgressWriter = (snapshot: UploadProgressSnapshot) => void;
 
-const IDLE: UploadProgressSnapshot = Object.freeze({
+export const IDLE_UPLOAD_PROGRESS: UploadProgressSnapshot = Object.freeze({
   fraction: 0,
   phase: "idle",
 });
@@ -24,7 +24,7 @@ const ALL_BYTES_SENT: UploadProgressSnapshot = Object.freeze({
 const progressWriters = new WeakMap<UploadProgress, ProgressWriter>();
 
 export function createUploadProgress(): UploadProgress {
-  let current = IDLE;
+  let current = IDLE_UPLOAD_PROGRESS;
   const listeners = new Set<() => void>();
 
   const progress: UploadProgress = Object.freeze({
@@ -67,5 +67,5 @@ export function reportAllBytesSent(progress: UploadProgress) {
 }
 
 export function endUpload(progress: UploadProgress) {
-  write(progress, IDLE);
+  write(progress, IDLE_UPLOAD_PROGRESS);
 }

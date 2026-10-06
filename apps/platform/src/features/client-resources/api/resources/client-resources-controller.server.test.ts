@@ -5,8 +5,8 @@ import {
   type AddClientResourceUseCase,
   type DownloadClientResourceResult,
   type DownloadClientResourceUseCase,
-  type OpenResourcePageResult,
-  type OpenResourcePageUseCase,
+  type OpenResourcePreviewResult,
+  type OpenResourcePreviewUseCase,
 } from "@eli-coach-platform/domain/client-resources";
 import { describe, expect, it, vi } from "vitest";
 
@@ -263,7 +263,7 @@ describe("ClientResourcesController add", () => {
 describe("ClientResourcesController openPage", () => {
   it("answers the page image privately, never cached, sniffed or scripted", async () => {
     // arrange
-    const { controller, openResourcePage } = createController({
+    const { controller, openResourcePreview } = createController({
       opened: { status: "opened", bytes: PAGE_BYTES, mimeType: "image/webp" },
     });
 
@@ -280,7 +280,7 @@ describe("ClientResourcesController openPage", () => {
       "x-content-type-options": "nosniff",
     });
     expect(new Uint8Array(await response.arrayBuffer())).toEqual(PAGE_BYTES);
-    expect(openResourcePage).toHaveBeenCalledWith({
+    expect(openResourcePreview).toHaveBeenCalledWith({
       requester: { role: "COACH", authSubjectId: "user_eli" },
       resourceId: RESOURCE_ID,
       preview: { kind: "page", pageNumber: 2 },
@@ -304,7 +304,7 @@ describe("ClientResourcesController openPage", () => {
     "answers not found to a page number that is not a positive whole number (%s) without opening anything",
     async (pageNumber) => {
       // arrange
-      const { controller, openResourcePage } = createController();
+      const { controller, openResourcePreview } = createController();
 
       // act
       const response = await controller.openPage(
@@ -315,13 +315,13 @@ describe("ClientResourcesController openPage", () => {
 
       // assert
       expect(response.status).toBe(404);
-      expect(openResourcePage).not.toHaveBeenCalled();
+      expect(openResourcePreview).not.toHaveBeenCalled();
     },
   );
 
   it("answers not found to a resource id that is not a uuid without opening anything", async () => {
     // arrange
-    const { controller, openResourcePage } = createController();
+    const { controller, openResourcePreview } = createController();
 
     // act
     const response = await controller.openPage(
@@ -332,7 +332,7 @@ describe("ClientResourcesController openPage", () => {
 
     // assert
     expect(response.status).toBe(404);
-    expect(openResourcePage).not.toHaveBeenCalled();
+    expect(openResourcePreview).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -344,7 +344,7 @@ describe("ClientResourcesController openPage", () => {
     },
   ])("refuses $who without opening anything", async ({ session, status }) => {
     // arrange
-    const { controller, openResourcePage } = createController();
+    const { controller, openResourcePreview } = createController();
 
     // act
     const thrown = await captureThrown(() =>
@@ -353,14 +353,14 @@ describe("ClientResourcesController openPage", () => {
 
     // assert
     expect((thrown as Response).status).toBe(status);
-    expect(openResourcePage).not.toHaveBeenCalled();
+    expect(openResourcePreview).not.toHaveBeenCalled();
   });
 });
 
 describe("ClientResourcesController openThumbnail", () => {
   it("answers the thumbnail privately, never cached, sniffed or scripted", async () => {
     // arrange
-    const { controller, openResourcePage } = createController({
+    const { controller, openResourcePreview } = createController({
       opened: { status: "opened", bytes: PAGE_BYTES, mimeType: "image/webp" },
     });
 
@@ -372,7 +372,7 @@ describe("ClientResourcesController openThumbnail", () => {
     expect(response.headers.get("content-type")).toBe("image/webp");
     expect(response.headers.get("cache-control")).toBe("private, no-store");
     expect(new Uint8Array(await response.arrayBuffer())).toEqual(PAGE_BYTES);
-    expect(openResourcePage).toHaveBeenCalledWith({
+    expect(openResourcePreview).toHaveBeenCalledWith({
       requester: { role: "COACH", authSubjectId: "user_eli" },
       resourceId: RESOURCE_ID,
       preview: { kind: "thumbnail" },
@@ -394,14 +394,14 @@ describe("ClientResourcesController openThumbnail", () => {
 
   it("answers not found to a resource id that is not a uuid without opening anything", async () => {
     // arrange
-    const { controller, openResourcePage } = createController();
+    const { controller, openResourcePreview } = createController();
 
     // act
     const response = await controller.openThumbnail(servingArgs(), undefined);
 
     // assert
     expect(response.status).toBe(404);
-    expect(openResourcePage).not.toHaveBeenCalled();
+    expect(openResourcePreview).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -413,7 +413,7 @@ describe("ClientResourcesController openThumbnail", () => {
     },
   ])("refuses $who without opening anything", async ({ session, status }) => {
     // arrange
-    const { controller, openResourcePage } = createController();
+    const { controller, openResourcePreview } = createController();
 
     // act
     const thrown = await captureThrown(() =>
@@ -422,7 +422,7 @@ describe("ClientResourcesController openThumbnail", () => {
 
     // assert
     expect((thrown as Response).status).toBe(status);
-    expect(openResourcePage).not.toHaveBeenCalled();
+    expect(openResourcePreview).not.toHaveBeenCalled();
   });
 });
 
@@ -512,14 +512,14 @@ describe("ClientResourcesController download", () => {
 function createController(
   options: {
     added?: AddClientResourceResult;
-    opened?: OpenResourcePageResult;
+    opened?: OpenResourcePreviewResult;
     downloaded?: DownloadClientResourceResult;
   } = {},
 ) {
   const addClientResource = vi
     .fn()
     .mockResolvedValue(options.added ?? { status: "not-found" });
-  const openResourcePage = vi
+  const openResourcePreview = vi
     .fn()
     .mockResolvedValue(options.opened ?? { status: "not-found" });
   const downloadClientResource = vi
@@ -529,9 +529,9 @@ function createController(
     addClientResource: {
       execute: addClientResource,
     } as unknown as AddClientResourceUseCase,
-    openResourcePage: {
-      execute: openResourcePage,
-    } as unknown as OpenResourcePageUseCase,
+    openResourcePreview: {
+      execute: openResourcePreview,
+    } as unknown as OpenResourcePreviewUseCase,
     downloadClientResource: {
       execute: downloadClientResource,
     } as unknown as DownloadClientResourceUseCase,
@@ -540,7 +540,7 @@ function createController(
   return {
     controller,
     addClientResource,
-    openResourcePage,
+    openResourcePreview,
     downloadClientResource,
   };
 }

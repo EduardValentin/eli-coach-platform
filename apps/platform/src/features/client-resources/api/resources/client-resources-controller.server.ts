@@ -3,7 +3,7 @@ import {
   type AddClientResourceResult,
   type AddClientResourceUseCase,
   type DownloadClientResourceUseCase,
-  type OpenResourcePageUseCase,
+  type OpenResourcePreviewUseCase,
   type ResourcePreview,
   type ResourceRequester,
 } from "@eli-coach-platform/domain/client-resources";
@@ -27,7 +27,7 @@ import { receivedResourceUploadOf } from "~/features/client-resources/contracts/
 
 type ClientResourcesControllerOptions = {
   addClientResource: AddClientResourceUseCase;
-  openResourcePage: OpenResourcePageUseCase;
+  openResourcePreview: OpenResourcePreviewUseCase;
   downloadClientResource: DownloadClientResourceUseCase;
 };
 
@@ -133,7 +133,7 @@ export class ClientResourcesController {
     return createSandboxedAttachmentResponse(result.bytes, {
       filename: result.downloadName,
       mimeType: result.mimeType,
-      byteLength: result.sizeBytes,
+      sizeBytes: result.sizeBytes,
     });
   }
 
@@ -148,7 +148,7 @@ export class ClientResourcesController {
       return notFoundResponse();
     }
 
-    const result = await this.options.openResourcePage.execute({
+    const result = await this.options.openResourcePreview.execute({
       requester,
       resourceId: id.data,
       preview: wanted.preview,

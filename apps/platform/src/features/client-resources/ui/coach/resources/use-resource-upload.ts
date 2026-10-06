@@ -2,6 +2,10 @@ import type {
   ResourceDetailsProblems,
   ResourceRefusal,
 } from "@eli-coach-platform/domain/client-resources";
+import {
+  IDLE_UPLOAD_PROGRESS,
+  type UploadProgressSnapshot,
+} from "@eli-coach-platform/infrastructure/http";
 import { useEffect, useEffectEvent, useRef, useSyncExternalStore } from "react";
 import { useFetcher, type Fetcher } from "react-router";
 
@@ -13,10 +17,6 @@ import {
 import { clientResourcesPath } from "~/features/client-resources/contracts/paths";
 import { RESOURCE_UPLOAD_PARTS } from "~/features/client-resources/contracts/resource-upload-parts";
 import { resourceUploadProgress } from "~/features/client-resources/contracts/resource-upload-progress";
-
-type UploadProgressSnapshot = ReturnType<
-  typeof resourceUploadProgress.getSnapshot
->;
 
 export type ResourceUploadState =
   | { state: "idle" }
@@ -39,13 +39,8 @@ const IDLE_UPLOAD: ResourceUploadState = { state: "idle" };
 
 const PREPARING_UPLOAD: ResourceUploadState = { state: "preparing" };
 
-const NOTHING_SENT_ON_THE_SERVER: UploadProgressSnapshot = Object.freeze({
-  fraction: 0,
-  phase: "idle",
-});
-
-function nothingSentOnTheServer(): UploadProgressSnapshot {
-  return NOTHING_SENT_ON_THE_SERVER;
+function idleUploadProgress(): UploadProgressSnapshot {
+  return IDLE_UPLOAD_PROGRESS;
 }
 
 function uploadStateOf(
@@ -100,7 +95,7 @@ export function useResourceUpload(
   const progress = useSyncExternalStore(
     resourceUploadProgress.subscribe,
     resourceUploadProgress.getSnapshot,
-    nothingSentOnTheServer,
+    idleUploadProgress,
   );
 
   const settle = useEffectEvent((answer: unknown) => {

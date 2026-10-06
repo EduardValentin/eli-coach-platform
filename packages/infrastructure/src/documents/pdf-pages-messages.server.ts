@@ -1,11 +1,8 @@
-export type PageRendition = {
-  longEdge: number;
-  webpQuality: number;
-};
+import type { PdfLongEdgeRendition } from "./pdf-page-renderer.server";
 
 export type PdfPagesQuestion =
   | { kind: "open"; bytes: Uint8Array; longestEdge: number }
-  | { kind: "render"; pageNumber: number; rendition: PageRendition };
+  | { kind: "render"; pageNumber: number; rendition: PdfLongEdgeRendition };
 
 export type PdfPagesRequest = PdfPagesQuestion & { requestId: number };
 

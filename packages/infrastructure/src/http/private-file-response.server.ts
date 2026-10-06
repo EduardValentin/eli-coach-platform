@@ -4,7 +4,7 @@ import { ReadableStream as NodeReadableStream } from "node:stream/web";
 type FileBytes = AsyncIterable<Uint8Array> | Iterable<Uint8Array>;
 
 type AttachmentOptions = {
-  byteLength?: number;
+  sizeBytes?: number;
   filename: string;
   mimeType: string;
 };
@@ -27,10 +27,10 @@ function encodedFilenameOf(filename: string): string {
   );
 }
 
-function createContentDisposition(path: string): string {
-  const filename = basename(path);
+function createContentDisposition(filename: string): string {
+  const offered = basename(filename);
 
-  return `attachment; filename="${quotedFilenameOf(filename)}"; filename*=UTF-8''${encodedFilenameOf(filename)}`;
+  return `attachment; filename="${quotedFilenameOf(offered)}"; filename*=UTF-8''${encodedFilenameOf(offered)}`;
 }
 
 function attachmentHeaders(options: AttachmentOptions): Record<string, string> {
@@ -41,8 +41,8 @@ function attachmentHeaders(options: AttachmentOptions): Record<string, string> {
     "X-Content-Type-Options": "nosniff",
   };
 
-  if (options.byteLength !== undefined) {
-    headers["Content-Length"] = String(options.byteLength);
+  if (options.sizeBytes !== undefined) {
+    headers["Content-Length"] = String(options.sizeBytes);
   }
 
   return headers;

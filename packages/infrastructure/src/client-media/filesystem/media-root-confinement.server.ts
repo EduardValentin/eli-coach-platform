@@ -1,4 +1,3 @@
-import { accessSync, constants, statSync } from "node:fs";
 import {
   mkdir,
   realpath,
@@ -19,16 +18,6 @@ type ConfinedFileOpening =
   | { kind: "opened"; file: FileHandle }
   | { kind: "outside-root" }
   | { kind: "missing" };
-
-export function isReadyMediaRoot(root: string): boolean {
-  try {
-    accessSync(root, constants.R_OK | constants.W_OK);
-
-    return statSync(root).isDirectory();
-  } catch {
-    return false;
-  }
-}
 
 export function isPathWithinRoot(root: string, candidate: string): boolean {
   const relativePath = relative(root, candidate);

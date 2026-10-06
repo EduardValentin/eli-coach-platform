@@ -50,6 +50,18 @@ export class ClientResourceAccess {
     return null;
   }
 
+  mayAddFor(requester: ResourceRequester, clientId: string): boolean {
+    if (requester.role === "COACH") return true;
+
+    this.options.incidents.resourceAccessRefused({
+      requesterRole: requester.role,
+      clientId,
+      resourceId: null,
+    });
+
+    return false;
+  }
+
   async reachesClient(
     requester: ResourceRequester,
     clientId: string,

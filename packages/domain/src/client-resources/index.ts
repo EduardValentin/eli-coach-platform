@@ -25,10 +25,10 @@ export {
   type ListClientResourcesResult,
 } from "./list-client-resources-use-case";
 export {
-  OpenResourcePageUseCase,
-  type OpenResourcePageResult,
+  OpenResourcePreviewUseCase,
+  type OpenResourcePreviewResult,
   type ResourcePreview,
-} from "./open-resource-page-use-case";
+} from "./open-resource-preview-use-case";
 export { type ResourceClients } from "./resource-clients";
 export {
   MAX_RESOURCE_DESCRIPTION_LENGTH,

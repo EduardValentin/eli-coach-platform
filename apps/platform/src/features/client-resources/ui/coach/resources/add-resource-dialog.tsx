@@ -177,42 +177,9 @@ type AddResourceFormProps = {
   onDismissalChange: (dismissal: Dismissal) => void;
 };
 
-function AddResourceForm({
-  clientId,
-  onClose,
-  onDismissalChange,
-}: AddResourceFormProps) {
-  const fileErrorId = useId();
+function useChosenResourceFile(form: UseFormReturn<ResourceFormValues>) {
   const [chosen, setChosen] = useState<ChosenUpload | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
-  const [failed, setFailed] = useState(false);
-  const form = useForm<ResourceFormValues>({
-    defaultValues: { title: "", description: "" },
-  });
-
-  const settle = (outcome: ResourceUploadOutcome) => {
-    if (outcome.status === "added") {
-      onClose();
-      toast.success(COPY.done);
-      return;
-    }
-    if (outcome.status === "refused") {
-      setFileError(UPLOAD_REFUSAL_MESSAGES[outcome.refusal]);
-      return;
-    }
-    if (outcome.status === "details-refused") {
-      showDetailsProblems(form, outcome.problems);
-      return;
-    }
-    setFailed(true);
-  };
-
-  const { upload, uploadState } = useResourceUpload(clientId, settle);
-  const busy = uploadState.state !== "idle";
-
-  useEffect(() => {
-    onDismissalChange(busy ? "locked" : "allowed");
-  }, [busy, onDismissalChange]);
 
   const chooseFile = (candidate: File) => {
     const check = checkResourceUpload(candidate);
@@ -232,6 +199,46 @@ function AddResourceForm({
     setChosen({ file: candidate, kind: check.kind });
   };
 
+  return { chosen, fileError, chooseFile, showFileError: setFileError };
+}
+
+function AddResourceForm({
+  clientId,
+  onClose,
+  onDismissalChange,
+}: AddResourceFormProps) {
+  const fileErrorId = useId();
+  const [failed, setFailed] = useState(false);
+  const form = useForm<ResourceFormValues>({
+    defaultValues: { title: "", description: "" },
+  });
+  const { chosen, fileError, chooseFile, showFileError } =
+    useChosenResourceFile(form);
+
+  const settle = (outcome: ResourceUploadOutcome) => {
+    if (outcome.status === "added") {
+      onClose();
+      toast.success(COPY.done);
+      return;
+    }
+    if (outcome.status === "refused") {
+      showFileError(UPLOAD_REFUSAL_MESSAGES[outcome.refusal]);
+      return;
+    }
+    if (outcome.status === "details-refused") {
+      showDetailsProblems(form, outcome.problems);
+      return;
+    }
+    setFailed(true);
+  };
+
+  const { upload, uploadState } = useResourceUpload(clientId, settle);
+  const busy = uploadState.state !== "idle";
+
+  useEffect(() => {
+    onDismissalChange(busy ? "locked" : "allowed");
+  }, [busy, onDismissalChange]);
+
   const save = form.handleSubmit((values) => {
     if (!chosen) return;
 
@@ -244,7 +251,7 @@ function AddResourceForm({
   });
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
-    if (!chosen) setFileError(COPY.noFile);
+    if (!chosen) showFileError(COPY.noFile);
     return save(event);
   };
 
@@ -344,18 +351,19 @@ function AddResourceForm({
 
 type AddResourceDialogProps = {
   clientId: string;
-  session: number;
+  formGeneration: number;
   open: boolean;
   onClose: () => void;
 };
 
 export function AddResourceDialog({
   clientId,
-  session,
+  formGeneration,
   open,
   onClose,
 }: AddResourceDialogProps) {
   const [dismissal, setDismissal] = useState<Dismissal>("allowed");
+  const hasBeenOpened = formGeneration > 0;
 
   return (
     <ResponsiveSheetDialog
@@ -366,10 +374,10 @@ export function AddResourceDialog({
       open={open}
       title={COPY.title}
     >
-      {session > 0 && (
+      {hasBeenOpened && (
         <AddResourceForm
           clientId={clientId}
-          key={session}
+          key={formGeneration}
           onClose={onClose}
           onDismissalChange={setDismissal}
         />

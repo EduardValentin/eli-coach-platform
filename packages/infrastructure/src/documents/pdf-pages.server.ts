@@ -1,7 +1,7 @@
 import { Worker } from "node:worker_threads";
 
+import type { PdfLongEdgeRendition } from "./pdf-page-renderer.server";
 import type {
-  PageRendition,
   PdfPagesAnswer,
   PdfPagesQuestion,
   PdfPagesReply,
@@ -9,7 +9,10 @@ import type {
 
 export type PdfPages = {
   readonly pageCount: number;
-  renderPage(pageNumber: number, rendition: PageRendition): Promise<Uint8Array>;
+  renderPage(
+    pageNumber: number,
+    rendition: PdfLongEdgeRendition,
+  ): Promise<Uint8Array>;
   close(): Promise<void>;
 };
 

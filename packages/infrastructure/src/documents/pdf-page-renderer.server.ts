@@ -8,9 +8,13 @@ import {
   type PDFDocumentProxy,
 } from "pdfjs-dist/legacy/build/pdf.mjs";
 
-export type PdfPageRendition =
-  | { longEdge: number; webpQuality: number }
-  | { width: number; webpQuality: number };
+export type PdfLongEdgeRendition = { longEdge: number; webpQuality: number };
+
+export type PdfWidthRendition = { width: number; webpQuality: number };
+
+type PdfPageRendition = PdfLongEdgeRendition | PdfWidthRendition;
+
+export const FIRST_PAGE = 1;
 
 type PageSize = { width: number; height: number };
 

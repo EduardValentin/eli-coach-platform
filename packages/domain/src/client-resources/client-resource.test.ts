@@ -18,35 +18,67 @@ function details(): ResourceDetails {
 
 describe("ResourceFile", () => {
   it.each([
-    ["pdf", 12, "pdf", true, "application/pdf"],
-    ["png", 1, "image", true, "image/png"],
-    [
-      "docx",
-      null,
-      "word",
-      false,
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    ],
-    ["doc", null, "word", false, "application/msword"],
-    ["odt", null, "word", false, "application/vnd.oasis.opendocument.text"],
-    [
-      "xlsx",
-      null,
-      "excel",
-      false,
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    ],
-    ["xls", null, "excel", false, "application/vnd.ms-excel"],
-    [
-      "ods",
-      null,
-      "excel",
-      false,
-      "application/vnd.oasis.opendocument.spreadsheet",
-    ],
+    {
+      format: "pdf",
+      pageCount: 12,
+      kind: "pdf",
+      previewed: true,
+      mimeType: "application/pdf",
+    },
+    {
+      format: "png",
+      pageCount: 1,
+      kind: "image",
+      previewed: true,
+      mimeType: "image/png",
+    },
+    {
+      format: "docx",
+      pageCount: null,
+      kind: "word",
+      previewed: false,
+      mimeType:
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    },
+    {
+      format: "doc",
+      pageCount: null,
+      kind: "word",
+      previewed: false,
+      mimeType: "application/msword",
+    },
+    {
+      format: "odt",
+      pageCount: null,
+      kind: "word",
+      previewed: false,
+      mimeType: "application/vnd.oasis.opendocument.text",
+    },
+    {
+      format: "xlsx",
+      pageCount: null,
+      kind: "excel",
+      previewed: false,
+      mimeType:
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    },
+    {
+      format: "xls",
+      pageCount: null,
+      kind: "excel",
+      previewed: false,
+      mimeType: "application/vnd.ms-excel",
+    },
+    {
+      format: "ods",
+      pageCount: null,
+      kind: "excel",
+      previewed: false,
+      mimeType: "application/vnd.oasis.opendocument.spreadsheet",
+    },
   ] as const)(
-    "describes a %s file by its detected format",
-    (format, pageCount, kind, previewed, mimeType) => {
+    "describes a $format file by its detected format",
+    ({ format, pageCount, kind, previewed, mimeType }) => {
       // arrange
       const snapshot = {
         originalName: "file",
@@ -68,26 +100,29 @@ describe("ResourceFile", () => {
   );
 
   it.each([
-    [1, true],
-    [3, true],
-    [0, false],
-    [4, false],
-    [1.5, false],
-  ])("knows whether a three-page PDF has page %s", (pageNumber, expected) => {
-    // arrange
-    const file = ResourceFile.of({
-      originalName: "plan.pdf",
-      format: "pdf",
-      sizeBytes: 10,
-      pageCount: 3,
-    });
+    { pageNumber: 1, expected: true },
+    { pageNumber: 3, expected: true },
+    { pageNumber: 0, expected: false },
+    { pageNumber: 4, expected: false },
+    { pageNumber: 1.5, expected: false },
+  ])(
+    "knows whether a three-page PDF has page $pageNumber",
+    ({ pageNumber, expected }) => {
+      // arrange
+      const file = ResourceFile.of({
+        originalName: "plan.pdf",
+        format: "pdf",
+        sizeBytes: 10,
+        pageCount: 3,
+      });
 
-    // act
-    const result = file.hasPage(pageNumber);
+      // act
+      const result = file.hasPage(pageNumber);
 
-    // assert
-    expect(result).toBe(expected);
-  });
+      // assert
+      expect(result).toBe(expected);
+    },
+  );
 
   describe("download name", () => {
     const LONG_STEM = "a".repeat(300);

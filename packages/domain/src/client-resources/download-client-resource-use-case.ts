@@ -45,11 +45,14 @@ export class DownloadClientResourceUseCase {
       command.requester,
       command.resourceId,
     );
-    const original = resource
-      ? await this.options.store.openOriginal(resource.storageOwner())
-      : null;
 
-    if (!resource || !original) return { status: "not-found" };
+    if (!resource) return { status: "not-found" };
+
+    const original = await this.options.store.openOriginal(
+      resource.storageOwner(),
+    );
+
+    if (!original) return { status: "not-found" };
 
     const { file } = resource;
 

@@ -12,13 +12,13 @@ import { RESOURCE_RENDITION_MIME_TYPE } from "./resource-renditions";
 export type ResourcePreview =
   { kind: "page"; pageNumber: number } | { kind: "thumbnail" };
 
-type OpenResourcePageCommand = {
+type OpenResourcePreviewCommand = {
   requester: ResourceRequester;
   resourceId: string;
   preview: ResourcePreview;
 };
 
-export type OpenResourcePageResult =
+export type OpenResourcePreviewResult =
   | {
       status: "opened";
       bytes: Uint8Array;
@@ -26,30 +26,31 @@ export type OpenResourcePageResult =
     }
   | { status: "not-found" };
 
-type OpenResourcePageUseCaseOptions = {
+type OpenResourcePreviewUseCaseOptions = {
   resources: ClientResources;
   clients: ResourceClients;
   store: ClientResourceStore;
   incidents: ClientResourceIncidents;
 };
 
-export class OpenResourcePageUseCase {
+export class OpenResourcePreviewUseCase {
   private readonly access: ClientResourceAccess;
 
-  constructor(private readonly options: OpenResourcePageUseCaseOptions) {
+  constructor(private readonly options: OpenResourcePreviewUseCaseOptions) {
     this.access = new ClientResourceAccess(options);
   }
 
   async execute(
-    command: OpenResourcePageCommand,
-  ): Promise<OpenResourcePageResult> {
+    command: OpenResourcePreviewCommand,
+  ): Promise<OpenResourcePreviewResult> {
     const resource = await this.access.resourceFor(
       command.requester,
       command.resourceId,
     );
-    const bytes = resource
-      ? await this.previewBytes(resource, command.preview)
-      : null;
+
+    if (!resource) return { status: "not-found" };
+
+    const bytes = await this.previewBytes(resource, command.preview);
 
     if (!bytes) return { status: "not-found" };
 
@@ -63,13 +64,13 @@ export class OpenResourcePageUseCase {
     const owner = resource.storageOwner();
 
     if (preview.kind === "thumbnail") {
-      return resource.file.hasPagePreview()
-        ? this.options.store.openThumbnail(owner)
-        : null;
+      if (!resource.file.hasPagePreview()) return null;
+
+      return this.options.store.openThumbnail(owner);
     }
 
-    return resource.file.hasPage(preview.pageNumber)
-      ? this.options.store.openPage(owner, preview.pageNumber)
-      : null;
+    if (!resource.file.hasPage(preview.pageNumber)) return null;
+
+    return this.options.store.openPage(owner, preview.pageNumber);
   }
 }

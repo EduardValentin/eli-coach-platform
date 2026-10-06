@@ -5,7 +5,7 @@ import {
   EncryptedFilesystemProgressPhotoStore,
   type EncryptedFilesystemSettings,
 } from "./filesystem/encrypted-filesystem-progress-photo-store.server";
-import { isReadyMediaRoot } from "./filesystem/media-root-confinement.server";
+import { isReadyMediaRoot } from "./filesystem/media-root.server";
 import { InMemoryProgressPhotoStore } from "./memory/in-memory-progress-photo-store.server";
 
 type FilesystemSettingName =

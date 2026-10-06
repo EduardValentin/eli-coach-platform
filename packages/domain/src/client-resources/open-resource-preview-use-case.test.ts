@@ -8,7 +8,7 @@ import {
 import type { ClientResourceIncidents } from "./client-resource-incidents";
 import type { ClientResourceStore } from "./client-resource-store";
 import type { ClientResources } from "./client-resources";
-import { OpenResourcePageUseCase } from "./open-resource-page-use-case";
+import { OpenResourcePreviewUseCase } from "./open-resource-preview-use-case";
 import type { ResourceClients } from "./resource-clients";
 
 const COACH = { role: "COACH", authSubjectId: "user_eli" } as const;
@@ -94,7 +94,7 @@ function createUseCase() {
     resourceAccessRefused: vi.fn(),
     resourceStorageFailed: vi.fn(),
   } satisfies ClientResourceIncidents;
-  const useCase = new OpenResourcePageUseCase({
+  const useCase = new OpenResourcePreviewUseCase({
     resources: new InMemoryClientResources(),
     clients,
     store,
@@ -104,7 +104,7 @@ function createUseCase() {
   return { useCase, store, incidents };
 }
 
-describe("OpenResourcePageUseCase", () => {
+describe("OpenResourcePreviewUseCase", () => {
   it.each([
     ["the coach", COACH],
     ["the client it is for", { role: "CLIENT", authSubjectId: "user_ana" }],

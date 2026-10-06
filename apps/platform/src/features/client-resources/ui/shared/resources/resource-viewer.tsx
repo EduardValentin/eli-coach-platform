@@ -37,6 +37,8 @@ const PAGE_STEP_BY_KEY: Partial<Record<string, PageStep>> = {
   ArrowRight: 1,
 };
 
+const FIRST_PAGE = 1;
+
 const STAGE_CLASS =
   "flex shrink-0 flex-col bg-surface-subtle lg:col-start-1 lg:row-span-2 lg:row-start-2 lg:h-auto lg:min-h-0";
 
@@ -44,39 +46,42 @@ function pageCountOf(resource: ClientResourceView): number {
   return resource.file.pageCount ?? 0;
 }
 
-function pageAlt(resource: ClientResourceView, page: number): string {
+function pageAlt(resource: ClientResourceView, pageNumber: number): string {
   return pageCountOf(resource) > 1
-    ? `${resource.title}, page ${page + 1}`
+    ? `${resource.title}, page ${pageNumber}`
     : resource.title;
 }
 
-function usePageControlsKeepingFocus(page: number, pageCount: number) {
+function usePageControlsKeepingFocus(pageNumber: number, pageCount: number) {
   const previous = useRef<HTMLButtonElement>(null);
   const next = useRef<HTMLButtonElement>(null);
 
   useLayoutEffect(() => {
-    if (page === 0 && document.activeElement === previous.current) {
+    if (
+      pageNumber === FIRST_PAGE &&
+      document.activeElement === previous.current
+    ) {
       next.current?.focus();
     }
-    if (page === pageCount - 1 && document.activeElement === next.current) {
+    if (pageNumber === pageCount && document.activeElement === next.current) {
       previous.current?.focus();
     }
-  }, [page, pageCount]);
+  }, [pageNumber, pageCount]);
 
   return { previous, next };
 }
 
 type PageStageProps = {
   resource: ClientResourceView;
-  page: number;
+  pageNumber: number;
   step: PageStep;
   onTurn: (step: PageStep) => void;
 };
 
-function PageStage({ resource, page, step, onTurn }: PageStageProps) {
+function PageStage({ resource, pageNumber, step, onTurn }: PageStageProps) {
   const reduceMotion = useClientReducedMotionPreference();
   const pageCount = pageCountOf(resource);
-  const controls = usePageControlsKeepingFocus(page, pageCount);
+  const controls = usePageControlsKeepingFocus(pageNumber, pageCount);
 
   return (
     <div
@@ -87,17 +92,17 @@ function PageStage({ resource, page, step, onTurn }: PageStageProps) {
         animate={{ opacity: 1, x: 0 }}
         className="flex min-h-0 flex-1"
         initial={reduceMotion ? false : { opacity: 0, x: step * 32 }}
-        key={page}
+        key={pageNumber}
         transition={{ duration: 0.2, ease: "easeOut" }}
       >
         <ZoomableImage
-          alt={pageAlt(resource, page)}
+          alt={pageAlt(resource, pageNumber)}
           className="flex-1 p-4 sm:p-6 lg:p-8"
           imageClassName="rounded-tile border border-border-subtle bg-surface-base shadow-card"
           onSwipeLeft={() => onTurn(1)}
           onSwipeRight={() => onTurn(-1)}
           parity={{ stage: "viewer-page-stage", image: "viewer-page" }}
-          src={resourcePageUrl(resource.id, page + 1)}
+          src={resourcePageUrl(resource.id, pageNumber)}
         />
       </motion.div>
 
@@ -105,7 +110,7 @@ function PageStage({ resource, page, step, onTurn }: PageStageProps) {
         <div className="flex items-center justify-center gap-3 pb-3 lg:pb-4">
           <Button
             aria-label="Previous page"
-            disabled={page === 0}
+            disabled={pageNumber === FIRST_PAGE}
             onClick={() => onTurn(-1)}
             ref={controls.previous}
             size="icon-sm"
@@ -118,11 +123,11 @@ function PageStage({ resource, page, step, onTurn }: PageStageProps) {
             className="min-w-14 text-center text-sm font-medium text-text-primary tabular-nums"
             data-parity="viewer-counter"
           >
-            {page + 1} / {pageCount}
+            {pageNumber} / {pageCount}
           </span>
           <Button
             aria-label="Next page"
-            disabled={page === pageCount - 1}
+            disabled={pageNumber === pageCount}
             onClick={() => onTurn(1)}
             ref={controls.next}
             size="icon-sm"
@@ -188,18 +193,18 @@ function ResourceDetailsPanel({ resource }: { resource: ClientResourceView }) {
 
 function ViewerContent({ resource }: { resource: ClientResourceView }) {
   const isDesktop = useIsDesktopViewport();
-  const [page, setPage] = useState(0);
+  const [pageNumber, setPageNumber] = useState(FIRST_PAGE);
   const [step, setStep] = useState<PageStep>(1);
   const [announcement, setAnnouncement] = useState("");
   const pageCount = pageCountOf(resource);
 
   const turn = (direction: PageStep) => {
-    const next = page + direction;
-    if (next < 0 || next >= pageCount) return;
+    const next = pageNumber + direction;
+    if (next < FIRST_PAGE || next > pageCount) return;
 
     setStep(direction);
-    setPage(next);
-    setAnnouncement(`Page ${next + 1} of ${pageCount}`);
+    setPageNumber(next);
+    setAnnouncement(`Page ${next} of ${pageCount}`);
   };
 
   const turnWithArrowKeys = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -239,7 +244,7 @@ function ViewerContent({ resource }: { resource: ClientResourceView }) {
           ) : (
             <PageStage
               onTurn={turn}
-              page={page}
+              pageNumber={pageNumber}
               resource={resource}
               step={step}
             />

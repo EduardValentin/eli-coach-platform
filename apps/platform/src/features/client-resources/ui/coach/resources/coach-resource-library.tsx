@@ -23,13 +23,16 @@ export function CoachResourceLibrary({
   firstName,
   resources,
 }: CoachResourceLibraryProps) {
-  const [adding, setAdding] = useState({ session: 0, open: false });
+  const [adding, setAdding] = useState({ formGeneration: 0, open: false });
   const [viewingId, setViewingId] = useState<string | null>(null);
   const viewing = resources.find((resource) => resource.id === viewingId);
   const populated = resources.length > 0;
 
   const startAdding = () =>
-    setAdding((current) => ({ session: current.session + 1, open: true }));
+    setAdding((current) => ({
+      formGeneration: current.formGeneration + 1,
+      open: true,
+    }));
 
   return (
     <>
@@ -70,7 +73,7 @@ export function CoachResourceLibrary({
         clientId={clientId}
         onClose={() => setAdding((current) => ({ ...current, open: false }))}
         open={adding.open}
-        session={adding.session}
+        formGeneration={adding.formGeneration}
       />
     </>
   );

@@ -389,11 +389,21 @@ describe("AddClientResourceUseCase", () => {
   });
 
   it.each([
-    ["a Word file", "Plan.docx", DOCX_BYTES, "docx"],
-    ["an Excel file", "Shopping.xlsx", XLSX_BYTES, "xlsx"],
+    {
+      file: "a Word file",
+      originalName: "Plan.docx",
+      bytes: DOCX_BYTES,
+      format: "docx",
+    },
+    {
+      file: "an Excel file",
+      originalName: "Shopping.xlsx",
+      bytes: XLSX_BYTES,
+      format: "xlsx",
+    },
   ])(
-    "keeps only the original of %s",
-    async (_case, originalName, bytes, format) => {
+    "keeps only the original of $file",
+    async ({ originalName, bytes, format }) => {
       // arrange
       const { useCase, store, resources, documentPages } = createUseCase();
 
@@ -414,13 +424,33 @@ describe("AddClientResourceUseCase", () => {
   );
 
   it.each([
-    ["a PDF named as a Word file", "plan.docx", PDF_BYTES, "pdf"],
-    ["an image named as a PDF", "plate.pdf", PNG_BYTES, "png"],
-    ["a Word file named as an Excel file", "plan.xlsx", DOCX_BYTES, "docx"],
-    ["an Excel file named as an image", "sheet.png", XLSX_BYTES, "xlsx"],
+    {
+      file: "a PDF named as a Word file",
+      originalName: "plan.docx",
+      bytes: PDF_BYTES,
+      format: "pdf",
+    },
+    {
+      file: "an image named as a PDF",
+      originalName: "plate.pdf",
+      bytes: PNG_BYTES,
+      format: "png",
+    },
+    {
+      file: "a Word file named as an Excel file",
+      originalName: "plan.xlsx",
+      bytes: DOCX_BYTES,
+      format: "docx",
+    },
+    {
+      file: "an Excel file named as an image",
+      originalName: "sheet.png",
+      bytes: XLSX_BYTES,
+      format: "xlsx",
+    },
   ])(
-    "judges %s by its bytes and keeps the name it came with",
-    async (_case, originalName, bytes, format) => {
+    "judges $file by its bytes and keeps the name it came with",
+    async ({ originalName, bytes, format }) => {
       // arrange
       const { useCase, resources } = createUseCase();
 

@@ -14,7 +14,7 @@ type FilePickerProps = {
 };
 
 type HiddenFileInputProps = FilePickerProps & {
-  describedBy?: string;
+  hintId?: string;
   label?: string;
   labelledBy?: string;
 };
@@ -32,7 +32,7 @@ function HiddenFileInput(props: HiddenFileInputProps) {
   return (
     <input
       accept={props.accept}
-      aria-describedby={props.describedBy}
+      aria-describedby={describedByOf(props.hintId, props["aria-describedby"])}
       aria-invalid={props["aria-invalid"]}
       aria-label={props.label}
       aria-labelledby={props.labelledBy}
@@ -95,11 +95,7 @@ export function FileDropzone({ prompt, hint, ...picker }: FileDropzoneProps) {
       onDragOver={allowDrop}
       onDrop={drop}
     >
-      <HiddenFileInput
-        {...picker}
-        describedBy={describedByOf(hintId, picker["aria-describedby"])}
-        labelledBy={promptId}
-      />
+      <HiddenFileInput {...picker} hintId={hintId} labelledBy={promptId} />
       <span
         aria-hidden="true"
         className="flex size-10 items-center justify-center rounded-full bg-surface-base text-text-secondary shadow-card"
@@ -133,11 +129,7 @@ export function FilePickerButton({
       })}
       data-chip-control=""
     >
-      <HiddenFileInput
-        {...picker}
-        describedBy={picker["aria-describedby"]}
-        label={children}
-      />
+      <HiddenFileInput {...picker} label={children} />
       <span aria-hidden="true">{children}</span>
     </label>
   );

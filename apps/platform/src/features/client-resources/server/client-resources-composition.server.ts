@@ -3,7 +3,7 @@ import {
   AddClientResourceUseCase,
   DownloadClientResourceUseCase,
   ListClientResourcesUseCase,
-  OpenResourcePageUseCase,
+  OpenResourcePreviewUseCase,
   type ClientResourceIncidents,
   type ClientResourceStore,
   type ResourceClients,
@@ -51,7 +51,7 @@ export function composeClientResourcesFeature(
         imagePages: handles.imagePages,
         clock: handles.clock,
       }),
-      openResourcePage: new OpenResourcePageUseCase(servingPorts),
+      openResourcePreview: new OpenResourcePreviewUseCase(servingPorts),
       downloadClientResource: new DownloadClientResourceUseCase(servingPorts),
     }),
     coachResources: new CoachResourcesController({

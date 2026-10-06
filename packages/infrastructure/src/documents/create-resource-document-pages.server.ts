@@ -6,7 +6,10 @@ import type {
   ResourceRenditions,
 } from "@eli-coach-platform/domain/client-resources";
 
-import type { PageRendition } from "./pdf-pages-messages.server";
+import {
+  FIRST_PAGE,
+  type PdfLongEdgeRendition,
+} from "./pdf-page-renderer.server";
 import { openPdfPages, type PdfPages } from "./pdf-pages.server";
 
 type ResourceDocumentPagesOptions = {
@@ -22,8 +25,8 @@ export function createResourceDocumentPages(
 
 class WorkerResourceDocumentPages implements ResourceDocumentPages {
   readonly #workerUrl: URL;
-  readonly #pageRendition: PageRendition;
-  readonly #thumbnailRendition: PageRendition;
+  readonly #pageRendition: PdfLongEdgeRendition;
+  readonly #thumbnailRendition: PdfLongEdgeRendition;
 
   constructor({ workerUrl, renditions }: ResourceDocumentPagesOptions) {
     this.#workerUrl = workerUrl;
@@ -47,31 +50,31 @@ class WorkerResourceDocumentPages implements ResourceDocumentPages {
       return { status: "unreadable" };
     }
 
-    return this.#readable(opening.pages);
+    return this.#readableDocumentOf(opening.pages);
   }
 
-  #readable(document: PdfPages): ReadableResourceDocument {
+  #readableDocumentOf(pdfPages: PdfPages): ReadableResourceDocument {
     const pageRendition = this.#pageRendition;
     const thumbnailRendition = this.#thumbnailRendition;
     let closing: Promise<void> | undefined;
 
     return {
       status: "readable",
-      pageCount: document.pageCount,
+      pageCount: pdfPages.pageCount,
       async *pages(): AsyncIterable<ResourcePageImage> {
         for (
-          let pageNumber = 1;
-          pageNumber <= document.pageCount;
+          let pageNumber = FIRST_PAGE;
+          pageNumber <= pdfPages.pageCount;
           pageNumber++
         ) {
           yield {
             pageNumber,
-            bytes: await document.renderPage(pageNumber, pageRendition),
+            bytes: await pdfPages.renderPage(pageNumber, pageRendition),
           };
         }
       },
-      thumbnail: () => document.renderPage(1, thumbnailRendition),
-      close: () => (closing ??= document.close()),
+      thumbnail: () => pdfPages.renderPage(FIRST_PAGE, thumbnailRendition),
+      close: () => (closing ??= pdfPages.close()),
     };
   }
 }

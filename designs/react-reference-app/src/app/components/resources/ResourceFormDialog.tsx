@@ -235,14 +235,8 @@ function ResourceForm({
     setUpload({ file: candidate, kind: check.kind });
   };
 
-  const refusalAfterSending = async (
-    details: ResourceDetails,
-  ): Promise<ServerDecidedRefusal | null> => {
-    if (mode.kind === 'edit') {
-      await mode.onSave(details);
-      return null;
-    }
-    if (!upload) throw new Error(NO_FILE_MESSAGE);
+  const addChosenFile = async (details: ResourceDetails): Promise<ServerDecidedRefusal | null> => {
+    if (mode.kind !== 'add' || !upload) throw new Error(NO_FILE_MESSAGE);
 
     const addition = await mode.onAdd({ file: upload.file, details }, (progress) =>
       onSubmissionChange(submissionAt(progress)),
@@ -256,9 +250,13 @@ function ResourceForm({
     if (!details || (mode.kind === 'add' && !upload)) return;
 
     onSubmissionChange({ state: 'sending', progress: 0 });
-    let refusal: ServerDecidedRefusal | null;
+    let refusal: ServerDecidedRefusal | null = null;
     try {
-      refusal = await refusalAfterSending(details);
+      if (mode.kind === 'edit') {
+        await mode.onSave(details);
+      } else {
+        refusal = await addChosenFile(details);
+      }
     } catch {
       onSubmissionChange({ state: 'failed' });
       return;

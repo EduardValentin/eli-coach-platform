@@ -5,7 +5,10 @@ import {
   ResourceFile,
   type ClientResourceOwner,
 } from "./client-resource";
-import type { ResourceRequester } from "./client-resource-access";
+import {
+  ClientResourceAccess,
+  type ResourceRequester,
+} from "./client-resource-access";
 import type { ClientResourceIds } from "./client-resource-ids";
 import type { ClientResourceIncidents } from "./client-resource-incidents";
 import type { ClientResourceStore } from "./client-resource-store";
@@ -22,6 +25,7 @@ import type {
 } from "./resource-document-pages";
 import {
   ResourceFileIntake,
+  type ResourceFileJudgement,
   type ResourceRefusal,
 } from "./resource-file-intake";
 import type { ResourceFileKind } from "./resource-file-kind";
@@ -60,21 +64,25 @@ type KeptFile =
 
 type AcceptedFile = { owner: ClientResourceOwner; bytes: Uint8Array };
 
+type AcceptedResource = {
+  owner: ClientResourceOwner;
+  details: ResourceDetails;
+  judgement: Extract<ResourceFileJudgement, { status: "accepted" }>;
+};
+
 const SINGLE_PAGE = 1;
 
 export class AddClientResourceUseCase {
-  constructor(private readonly options: AddClientResourceUseCaseOptions) {}
+  private readonly access: ClientResourceAccess;
+
+  constructor(private readonly options: AddClientResourceUseCaseOptions) {
+    this.access = new ClientResourceAccess(options);
+  }
 
   async execute(
     command: AddClientResourceCommand,
   ): Promise<AddClientResourceResult> {
-    if (command.requester.role !== "COACH") {
-      this.options.incidents.resourceAccessRefused({
-        requesterRole: command.requester.role,
-        clientId: command.clientId,
-        resourceId: null,
-      });
-
+    if (!this.access.mayAddFor(command.requester, command.clientId)) {
       return { status: "not-found" };
     }
 
@@ -100,38 +108,47 @@ export class AddClientResourceUseCase {
     };
 
     try {
-      const kept = await this.keepFile(judgement.kind, {
+      return await this.keepAndRecord(command, {
         owner,
-        bytes: command.file.bytes,
-      });
-
-      if (kept.status === "refused") return this.refuse(command, kept.refusal);
-
-      const resource = ClientResource.added({
-        id: owner.resourceId,
-        clientId: owner.clientId,
         details: details.details,
-        file: ResourceFile.of({
-          originalName: command.file.originalName,
-          format: judgement.format,
-          sizeBytes: command.file.bytes.byteLength,
-          pageCount: kept.pageCount,
-        }),
-        at: this.options.clock.now(),
+        judgement,
       });
-
-      await this.options.resources.add(resource);
-      this.options.incidents.resourceStored({
-        ...owner,
-        format: judgement.format,
-        sizeBytes: command.file.bytes.byteLength,
-        pageCount: kept.pageCount,
-      });
-
-      return { status: "added", resource };
     } catch (error) {
       return this.fail(owner, error);
     }
+  }
+
+  private async keepAndRecord(
+    command: AddClientResourceCommand,
+    { owner, details, judgement }: AcceptedResource,
+  ): Promise<AddClientResourceResult> {
+    const { bytes, originalName } = command.file;
+    const kept = await this.keepFile(judgement.kind, { owner, bytes });
+
+    if (kept.status === "refused") return this.refuse(command, kept.refusal);
+
+    const resource = ClientResource.added({
+      id: owner.resourceId,
+      clientId: owner.clientId,
+      details,
+      file: ResourceFile.of({
+        originalName,
+        format: judgement.format,
+        sizeBytes: bytes.byteLength,
+        pageCount: kept.pageCount,
+      }),
+      at: this.options.clock.now(),
+    });
+
+    await this.options.resources.add(resource);
+    this.options.incidents.resourceStored({
+      ...owner,
+      format: judgement.format,
+      sizeBytes: bytes.byteLength,
+      pageCount: kept.pageCount,
+    });
+
+    return { status: "added", resource };
   }
 
   private keepFile(

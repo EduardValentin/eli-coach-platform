@@ -1,12 +1,13 @@
-import { loadPdfDocument, renderPdfPage } from "./pdf-page-renderer.server";
-
-type PdfCoverRendition = { width: number; webpQuality: number };
+import {
+  FIRST_PAGE,
+  loadPdfDocument,
+  renderPdfPage,
+  type PdfWidthRendition,
+} from "./pdf-page-renderer.server";
 
 type PdfCoverRenderer = {
-  render(pdf: Uint8Array, rendition: PdfCoverRendition): Promise<Uint8Array>;
+  render(pdf: Uint8Array, rendition: PdfWidthRendition): Promise<Uint8Array>;
 };
-
-const COVER_PAGE = 1;
 
 export function createPdfCoverRenderer(): PdfCoverRenderer {
   return {
@@ -15,7 +16,7 @@ export function createPdfCoverRenderer(): PdfCoverRenderer {
 
       try {
         const document = await loadingTask.promise;
-        return await renderPdfPage(document, COVER_PAGE, rendition);
+        return await renderPdfPage(document, FIRST_PAGE, rendition);
       } finally {
         await loadingTask.destroy();
       }
