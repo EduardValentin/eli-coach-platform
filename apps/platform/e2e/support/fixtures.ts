@@ -57,13 +57,9 @@ import {
   type ReviewState,
   type SubmittedClient,
 } from "./submitted-clients";
+import { releaseClerkAccounts } from "./clerk-accounts";
+import { summarizeRevocations } from "./clerk-invitations";
 import {
-  revokePendingInvitations,
-  summarizeRevocations,
-} from "./clerk-invitations";
-import {
-  deleteRecordedClerkUsers,
-  hasDeletionFailures,
   recordCreatedEmail,
   recordReleasedEmails,
   summarizeDeletionResults,
@@ -381,18 +377,11 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
       return email;
     });
 
-    const deletions = await deleteRecordedClerkUsers(
-      clerkBackendClient.users,
-      minted,
-    );
-    const revocations = await revokePendingInvitations(
-      clerkBackendClient.invitations,
-      minted,
-    );
+    const release = await releaseClerkAccounts(clerkBackendClient, minted);
 
-    if (hasDeletionFailures(deletions) || revocations.failed.length > 0) {
+    if (!release.released) {
       console.log(
-        `[e2e cleanup] Clerk after "${testInfo.title}": users ${summarizeDeletionResults(deletions)}; invitations ${summarizeRevocations(revocations)}`,
+        `[e2e cleanup] Clerk after "${testInfo.title}": users ${summarizeDeletionResults(release.deletions)}; invitations ${summarizeRevocations(release.revocations)}`,
       );
       return;
     }
