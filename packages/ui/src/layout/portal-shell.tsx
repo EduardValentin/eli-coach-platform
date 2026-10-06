@@ -23,8 +23,7 @@ export type PortalNavigationLink = {
   href: string;
   label: string;
   icon: LucideIcon;
-  /** Slot after the label for a count badge once a story ships one. */
-  trailing?: ReactNode;
+  marked?: boolean;
 };
 
 type PortalMoreSheetContent = {
@@ -68,6 +67,8 @@ type MoreSheetState = "open" | "closed" | "closed-for-desktop";
 type NavigationItemState = "current" | "idle";
 
 const MAX_BAR_TABS = 4;
+const TAB_ATTENTION_DOT_CLASS_NAME =
+  "absolute -top-0.5 -right-0.5 ring-2 ring-surface-base";
 const MORE_SHEET_ID = "portal-more-sheet";
 const TAB_CLASS_NAME =
   "flex h-full w-full flex-col items-center justify-center gap-1 transition-colors";
@@ -260,6 +261,7 @@ function PortalTabNavigation(props: PortalTabNavigationProps) {
     isMoreOpen || sheetLinks.some((link) => link.href === activeHref)
       ? "current"
       : "idle";
+  const isMoreMarked = sheetLinks.some((link) => link.marked);
 
   const closeMoreForDesktop = useCallback(() => {
     setMoreSheet("closed-for-desktop");
@@ -288,6 +290,7 @@ function PortalTabNavigation(props: PortalTabNavigationProps) {
         more={{
           buttonRef: moreButtonRef,
           expanded: isMoreOpen,
+          marked: isMoreMarked,
           onOpen: () => setMoreSheet("open"),
           state: moreState,
         }}
@@ -307,6 +310,7 @@ function PortalTabNavigation(props: PortalTabNavigationProps) {
 type PortalMoreControl = {
   buttonRef: RefObject<HTMLButtonElement | null>;
   expanded: boolean;
+  marked: boolean;
   onOpen: () => void;
   state: NavigationItemState;
 };
@@ -343,12 +347,18 @@ function PortalTabBar(props: PortalTabBarProps) {
                 data-parity={`tab-${parityHookSlug(tab.label)}`}
                 to={tab.href}
               >
-                <Icon
-                  aria-hidden="true"
-                  size={22}
-                  strokeWidth={MOBILE_ICON_STROKE_WIDTHS[state]}
-                />
+                <TabIcon>
+                  <Icon
+                    aria-hidden="true"
+                    size={22}
+                    strokeWidth={MOBILE_ICON_STROKE_WIDTHS[state]}
+                  />
+                  {tab.marked && (
+                    <AttentionDot className={TAB_ATTENTION_DOT_CLASS_NAME} />
+                  )}
+                </TabIcon>
                 <span className="text-caption font-semibold">{tab.label}</span>
+                {tab.marked && <NewMarkLabel />}
               </RouterLink>
             </li>
           );
@@ -366,12 +376,18 @@ function PortalTabBar(props: PortalTabBarProps) {
             ref={more.buttonRef}
             type="button"
           >
-            <Ellipsis
-              aria-hidden="true"
-              size={22}
-              strokeWidth={MOBILE_ICON_STROKE_WIDTHS[more.state]}
-            />
+            <TabIcon>
+              <Ellipsis
+                aria-hidden="true"
+                size={22}
+                strokeWidth={MOBILE_ICON_STROKE_WIDTHS[more.state]}
+              />
+              {more.marked && (
+                <AttentionDot className={TAB_ATTENTION_DOT_CLASS_NAME} />
+              )}
+            </TabIcon>
             <span className="text-caption font-semibold">More</span>
+            {more.marked && <NewMarkLabel />}
           </button>
         </li>
       </ul>
@@ -461,6 +477,12 @@ function PortalSheetNavigation(props: PortalSheetNavigationProps) {
               strokeWidth={MOBILE_ICON_STROKE_WIDTHS[state]}
             />
             <span className="flex-1 text-base font-medium">{link.label}</span>
+            {link.marked && (
+              <>
+                <NewMarkLabel />
+                <AttentionDot />
+              </>
+            )}
             <ChevronRight
               aria-hidden="true"
               className="text-text-secondary"
@@ -471,6 +493,35 @@ function PortalSheetNavigation(props: PortalSheetNavigationProps) {
       })}
     </nav>
   );
+}
+
+function TabIcon(props: PropsWithChildren) {
+  const { children } = props;
+
+  return <span className="relative inline-flex">{children}</span>;
+}
+
+type AttentionDotProps = {
+  className?: string;
+};
+
+function AttentionDot(props: AttentionDotProps) {
+  const { className } = props;
+
+  return (
+    <span
+      aria-hidden="true"
+      className={cn(
+        "block size-2 shrink-0 rounded-full bg-status-pending",
+        className,
+      )}
+      data-parity="attention-dot"
+    />
+  );
+}
+
+function NewMarkLabel() {
+  return <span className="sr-only"> (new)</span>;
 }
 
 function parityHookSlug(label: string) {
@@ -569,7 +620,12 @@ function PortalSidebarNavigation(props: PortalSidebarNavigationProps) {
               strokeWidth={SIDEBAR_ICON_STROKE_WIDTHS[state]}
             />
             <span className="text-sm font-medium">{link.label}</span>
-            {link.trailing}
+            {link.marked && (
+              <>
+                <NewMarkLabel />
+                <AttentionDot className="ml-auto" />
+              </>
+            )}
           </RouterLink>
         );
       })}
