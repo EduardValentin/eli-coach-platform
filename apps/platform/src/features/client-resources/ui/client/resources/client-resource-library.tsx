@@ -42,7 +42,7 @@ function ReadyClientResourceLibrary({
       {resources.length > 0 ? (
         <ResourceGallery
           onOpenUnopened={openings.record}
-          openedSinceLoad={openings.inFlight}
+          openingsBeingRecorded={openings.openingsBeingRecorded}
           perspective="client"
           resources={resources}
         />
@@ -59,10 +59,14 @@ function ReadyClientResourceLibrary({
 
 function useResourceOpenings(resources: readonly ClientResourceView[]) {
   const submit = useSubmit();
-  const writesInFlight = new Set(useFetchers().map((fetcher) => fetcher.key));
-  const inFlight = new Set(
+  const pendingFetcherKeys = new Set(
+    useFetchers().map((fetcher) => fetcher.key),
+  );
+  const openingsBeingRecorded = new Set(
     resources
-      .filter((resource) => writesInFlight.has(resourceOpenedPath(resource.id)))
+      .filter((resource) =>
+        pendingFetcherKeys.has(resourceOpenedPath(resource.id)),
+      )
       .map((resource) => resource.id),
   );
 
@@ -77,5 +81,5 @@ function useResourceOpenings(resources: readonly ClientResourceView[]) {
     });
   };
 
-  return { inFlight, record };
+  return { openingsBeingRecorded, record };
 }

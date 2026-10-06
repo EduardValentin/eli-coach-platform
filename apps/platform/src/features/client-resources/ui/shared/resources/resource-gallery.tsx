@@ -6,19 +6,19 @@ import type { ResourcePerspective } from "./resource-card";
 import { ResourceGrid } from "./resource-grid";
 import { ResourceViewer } from "./resource-viewer";
 
-const NONE_OPENED_SINCE_LOAD: ReadonlySet<string> = new Set();
+const NO_OPENINGS_BEING_RECORDED: ReadonlySet<string> = new Set();
 
 type ResourceGalleryProps = {
   resources: readonly ClientResourceView[];
   perspective: ResourcePerspective;
-  openedSinceLoad?: ReadonlySet<string>;
+  openingsBeingRecorded?: ReadonlySet<string>;
   onOpenUnopened?: (resource: ClientResourceView) => void;
 };
 
 export function ResourceGallery({
   resources,
   perspective,
-  openedSinceLoad = NONE_OPENED_SINCE_LOAD,
+  openingsBeingRecorded = NO_OPENINGS_BEING_RECORDED,
   onOpenUnopened,
 }: ResourceGalleryProps) {
   const [viewingId, setViewingId] = useState<string | null>(null);
@@ -27,7 +27,7 @@ export function ResourceGallery({
     resources
       .filter(
         (resource) =>
-          resource.openedAt === null && !openedSinceLoad.has(resource.id),
+          resource.openedAt === null && !openingsBeingRecorded.has(resource.id),
       )
       .map((resource) => resource.id),
   );
