@@ -14,10 +14,14 @@ RUN set -eux; \
     libk5crypto3 \
     libkrb5-3 \
     libkrb5support0 \
+    libperl5.36 \
     libpcre2-8-0 \
     libssl3 \
     libsystemd0 \
     libudev1 \
     locales \
-    openssl; \
+    openssl \
+    perl \
+    perl-base \
+    perl-modules-5.36; \
   rm -rf /var/lib/apt/lists/*
