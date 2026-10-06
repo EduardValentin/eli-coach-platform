@@ -26,7 +26,7 @@ export class ListOwnResourcesUseCase {
   }
 
   async execute(requester: ResourceRequester): Promise<ListOwnResourcesResult> {
-    const clientId = await this.access.ownClientOf(requester);
+    const clientId = await this.access.clientWithOpenPortalOf(requester);
 
     if (!clientId) {
       return { status: "not-found" };

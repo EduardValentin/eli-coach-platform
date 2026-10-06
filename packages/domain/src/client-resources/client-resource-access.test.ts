@@ -250,13 +250,13 @@ describe("ClientResourceAccess", () => {
     });
   });
 
-  describe("finding the client's own client", () => {
+  describe("finding the client with an open portal", () => {
     it("answers her own client to a client whose portal is open", async () => {
       // arrange
       const { access } = createAccess();
 
       // act
-      const clientId = await access.ownClientOf(ANA);
+      const clientId = await access.clientWithOpenPortalOf(ANA);
 
       // assert
       expect(clientId).toBe("client-ana");
@@ -268,7 +268,7 @@ describe("ClientResourceAccess", () => {
       const findClient = vi.spyOn(clients, "findByAuthSubjectId");
 
       // act
-      const clientId = await access.ownClientOf(COACH);
+      const clientId = await access.clientWithOpenPortalOf(COACH);
 
       // assert
       expect(clientId).toBeNull();
@@ -285,7 +285,7 @@ describe("ClientResourceAccess", () => {
         const { access, incidents } = createAccess();
 
         // act
-        const clientId = await access.ownClientOf(requester);
+        const clientId = await access.clientWithOpenPortalOf(requester);
 
         // assert
         expect(clientId).toBeNull();
@@ -373,7 +373,9 @@ describe("ClientResourceAccess", () => {
       const findClient = vi.spyOn(clients, "findByAuthSubjectId");
 
       // act
-      const clientId = await access.ownClientOf(ACCOUNT_WITHOUT_RESOURCE_ROLE);
+      const clientId = await access.clientWithOpenPortalOf(
+        ACCOUNT_WITHOUT_RESOURCE_ROLE,
+      );
       const resource = await access.ownResourceFor(
         ACCOUNT_WITHOUT_RESOURCE_ROLE,
         "resource-1",

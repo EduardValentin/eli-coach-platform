@@ -23,7 +23,7 @@ export class CountUnopenedResourcesUseCase {
     let clientId: string | null = null;
 
     try {
-      clientId = await this.access.ownClientOf(requester);
+      clientId = await this.access.clientWithOpenPortalOf(requester);
 
       return clientId
         ? await this.options.resources.countUnopenedForClient(clientId)

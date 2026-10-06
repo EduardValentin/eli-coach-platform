@@ -59,7 +59,9 @@ export class ClientResourceAccess {
     return this.resourceFor(requester, resourceId);
   }
 
-  async ownClientOf(requester: ResourceRequester): Promise<string | null> {
+  async clientWithOpenPortalOf(
+    requester: ResourceRequester,
+  ): Promise<string | null> {
     if (reachOf(requester) !== "own-client") return null;
 
     const client = await this.options.clients.findByAuthSubjectId(
@@ -106,7 +108,7 @@ export class ClientResourceAccess {
   ): Promise<boolean> {
     if (reachOf(requester) === "every-client") return true;
 
-    const ownClientId = await this.ownClientOf(requester);
+    const ownClientId = await this.clientWithOpenPortalOf(requester);
 
     return ownClientId !== null && isOwnedBy(ownClientId);
   }
