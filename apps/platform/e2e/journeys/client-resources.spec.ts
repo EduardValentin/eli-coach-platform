@@ -260,7 +260,7 @@ test("on her phone a client reaches her resources from the marked More tab, read
   await clientPortalShell.expectSheetResources("marked");
 
   // act
-  await clientPortalShell.followResourcesInSheet();
+  await clientPortalShell.openResourcesFromOpenMoreSheet();
 
   // assert
   await clientResources.expectOpen();
@@ -361,12 +361,8 @@ test("only she and her coach reach her resources: another client, a visitor and 
   await publicNav.signOut();
 
   // act
-  const visitorStatuses = [
-    (await visitorResourceRequests.openPage(resourceId, 1)).status,
-    (await visitorResourceRequests.openThumbnail(resourceId)).status,
-    (await visitorResourceRequests.download(resourceId)).status,
-    await visitorResourceRequests.markOpened(resourceId),
-  ];
+  const visitorStatuses =
+    await visitorResourceRequests.reachStatuses(resourceId);
 
   // assert
   expect(visitorStatuses).toEqual([401, 401, 401, 401]);
@@ -429,12 +425,7 @@ test("only she and her coach reach her resources: another client, a visitor and 
   await clientResources.expectEmpty();
 
   // act
-  const otherClientStatuses = [
-    (await resourceRequests.openPage(resourceId, 1)).status,
-    (await resourceRequests.openThumbnail(resourceId)).status,
-    (await resourceRequests.download(resourceId)).status,
-    await resourceRequests.markOpened(resourceId),
-  ];
+  const otherClientStatuses = await resourceRequests.reachStatuses(resourceId);
 
   // assert
   expect(otherClientStatuses).toEqual([404, 404, 404, 404]);
@@ -489,12 +480,7 @@ test("a paid client who has not sent her onboarding is sent to her welcome and r
   await clientOnboarding.expectWelcomeHeading(client.firstName);
 
   // act
-  const statuses = [
-    (await resourceRequests.openPage(resourceId, 1)).status,
-    (await resourceRequests.openThumbnail(resourceId)).status,
-    (await resourceRequests.download(resourceId)).status,
-    await resourceRequests.markOpened(resourceId),
-  ];
+  const statuses = await resourceRequests.reachStatuses(resourceId);
 
   // assert
   expect(statuses).toEqual([404, 404, 404, 404]);
@@ -540,12 +526,7 @@ test("a client whose coaching has ended is sent to her ended page and reaches no
   await clientEnded.expectOpen();
 
   // act
-  const statuses = [
-    (await resourceRequests.openPage(resourceId, 1)).status,
-    (await resourceRequests.openThumbnail(resourceId)).status,
-    (await resourceRequests.download(resourceId)).status,
-    await resourceRequests.markOpened(resourceId),
-  ];
+  const statuses = await resourceRequests.reachStatuses(resourceId);
 
   // assert
   expect(statuses).toEqual([404, 404, 404, 404]);

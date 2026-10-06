@@ -112,6 +112,15 @@ export class ResourceRequests {
     );
   }
 
+  async reachStatuses(resourceId: string): Promise<number[]> {
+    return [
+      (await this.openPage(resourceId, 1)).status,
+      (await this.openThumbnail(resourceId)).status,
+      (await this.download(resourceId)).status,
+      await this.markOpened(resourceId),
+    ];
+  }
+
   async markOpened(resourceId: string): Promise<number> {
     const response = await this.request.post(
       `${CLIENT_RESOURCES_PATH}/${resourceId}/opened`,

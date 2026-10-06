@@ -108,7 +108,7 @@ export class ClientPortalShell {
     await this.resourcesLinkIn(this.sidebarNavigation).click();
   }
 
-  async followResourcesInSheet(): Promise<void> {
+  async openResourcesFromOpenMoreSheet(): Promise<void> {
     await this.resourcesLinkIn(this.moreSheet).click();
     await expect(this.moreSheet).toBeHidden();
   }
