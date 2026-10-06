@@ -14,6 +14,7 @@ import {
 } from "react-router";
 
 import { SignOutControl } from "~/features/accounts/ui/shared/sign-out-control";
+import { clientResourcesContext } from "~/features/client-resources/server/guards/client-resources-context.server";
 import { coachingSalesContext } from "~/features/coaching-sales/server/guards/coaching-sales-context.server";
 
 import {
@@ -29,10 +30,22 @@ const pwaRegistration = createPwaRegistration({
   surface: "client",
 });
 
-export function loader(args: LoaderFunctionArgs): ClientShellPresentation {
-  return presentClientIdentity(
+type ClientShell = {
+  presentation: ClientShellPresentation;
+  unopenedResources: number;
+};
+
+export async function loader(args: LoaderFunctionArgs): Promise<ClientShell> {
+  const presentation = presentClientIdentity(
     args.context.get(coachingSalesContext).clientJourney.loadIdentity(args),
   );
+
+  return {
+    presentation,
+    unopenedResources: await args.context
+      .get(clientResourcesContext)
+      .ownResources.countUnopened(args),
+  };
 }
 
 export const meta: MetaFunction = () =>
@@ -43,7 +56,7 @@ export const links: LinksFunction = () => [
 ];
 
 export default function ClientLayoutRoute() {
-  const presentation = useLoaderData<typeof loader>();
+  const { presentation, unopenedResources } = useLoaderData<typeof loader>();
   const { displayName } = presentation;
 
   return (
@@ -51,7 +64,7 @@ export default function ClientLayoutRoute() {
       <PortalShell
         asideLabel="Client portal sidebar"
         brand={<ClientNameBlock displayName={displayName} size="md" />}
-        links={clientSurfaceLinks}
+        links={clientSurfaceLinks(unopenedResources)}
         mobileNavigation={{
           kind: "tabs",
           sheet: {
