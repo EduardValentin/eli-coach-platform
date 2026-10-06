@@ -56,6 +56,17 @@ describe("checkResourceUpload", () => {
     expect(check).toEqual({ accepted: false, refusal: "unsupported-type" });
   });
 
+  it.each(["x.constructor", "x.toString", "x.__proto__"])(
+    "refuses %s, whose extension names an object property",
+    (name) => {
+      // arrange, act
+      const check = checkResourceUpload({ name, size: MEGABYTE });
+
+      // assert
+      expect(check).toEqual({ accepted: false, refusal: "unsupported-type" });
+    },
+  );
+
   it("refuses a file over 25 MB and keeps one of exactly 25 MB", () => {
     // arrange, act
     const checks = [

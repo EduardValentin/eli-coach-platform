@@ -32,10 +32,10 @@ import { resourceDownloadUrl, resourcePageUrl } from "./resource-urls";
 
 type PageStep = -1 | 1;
 
-const PAGE_STEP_BY_KEY: Partial<Record<string, PageStep>> = {
-  ArrowLeft: -1,
-  ArrowRight: 1,
-};
+const PAGE_STEP_BY_KEY: ReadonlyMap<string, PageStep> = new Map([
+  ["ArrowLeft", -1],
+  ["ArrowRight", 1],
+]);
 
 const FIRST_PAGE = 1;
 
@@ -208,7 +208,7 @@ function ViewerContent({ resource }: { resource: ClientResourceView }) {
   };
 
   const turnWithArrowKeys = (event: KeyboardEvent<HTMLDivElement>) => {
-    const direction = PAGE_STEP_BY_KEY[event.key];
+    const direction = PAGE_STEP_BY_KEY.get(event.key);
     if (!direction || pageCount < 2) return;
 
     event.preventDefault();

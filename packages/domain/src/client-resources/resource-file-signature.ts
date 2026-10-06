@@ -22,10 +22,10 @@ const RIFF_HEADER = {
 } as const;
 const WEBP_FORM_TYPE = "WEBP";
 
-const OPEN_DOCUMENT_FORMATS: Readonly<Record<string, ResourceFileFormat>> = {
-  "application/vnd.oasis.opendocument.text": "odt",
-  "application/vnd.oasis.opendocument.spreadsheet": "ods",
-};
+const OPEN_DOCUMENT_FORMATS: ReadonlyMap<string, ResourceFileFormat> = new Map([
+  ["application/vnd.oasis.opendocument.text", "odt"],
+  ["application/vnd.oasis.opendocument.spreadsheet", "ods"],
+]);
 const OFFICE_OPEN_XML_CONTENT_TYPES = "[Content_Types].xml";
 const OFFICE_OPEN_XML_WORD_PART = "word/document.xml";
 const OFFICE_OPEN_XML_EXCEL_PART = "xl/workbook.xml";
@@ -79,7 +79,7 @@ function openDocumentFormat(
 ): ResourceFileFormat | null {
   if (mimetype === null) return null;
 
-  return OPEN_DOCUMENT_FORMATS[mimetype] ?? null;
+  return OPEN_DOCUMENT_FORMATS.get(mimetype) ?? null;
 }
 
 function officeOpenXmlFormat(

@@ -303,6 +303,20 @@ describe("detectResourceFileFormat on a zip archive", () => {
       ]),
     },
     {
+      description: "a zip whose mimetype entry names an object property",
+      bytes: zipArchive([
+        { name: "mimetype", content: "constructor" },
+        { name: "content.xml", deflated: true },
+      ]),
+    },
+    {
+      description: "a zip whose mimetype entry names an inherited method",
+      bytes: zipArchive([
+        { name: "mimetype", content: "toString" },
+        { name: "content.xml", deflated: true },
+      ]),
+    },
+    {
       description: "an OpenDocument text template",
       bytes: zipArchive([
         { name: "mimetype", content: `${OPEN_DOCUMENT_TEXT}-template` },

@@ -36,6 +36,9 @@ describe("resource file extensions", () => {
     { extension: "jpeg", kind: "image" },
     { extension: "pptx", kind: null },
     { extension: "", kind: null },
+    { extension: "constructor", kind: null },
+    { extension: "toString", kind: null },
+    { extension: "__proto__", kind: null },
   ])("names the kind of a .$extension file: $kind", ({ extension, kind }) => {
     // arrange
     // act
