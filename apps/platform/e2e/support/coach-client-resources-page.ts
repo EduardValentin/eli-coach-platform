@@ -166,6 +166,24 @@ export class CoachClientResourcesPage {
     await expect(this.addButton).toBeFocused();
   }
 
+  async expectUnavailable(fullName: string): Promise<void> {
+    await expect(
+      this.page.getByRole("heading", { name: "Resources didn’t load" }),
+    ).toBeVisible();
+    await expect(
+      this.page.getByText(
+        "Something went wrong on our side. Try again in a moment.",
+        { exact: true },
+      ),
+    ).toBeVisible();
+    await expect(this.backLinkTo(fullName)).toBeVisible();
+    await expect(this.addButton).toHaveCount(0);
+  }
+
+  async retry(): Promise<void> {
+    await this.page.getByRole("button", { name: "Try again" }).click();
+  }
+
   async expectClientNotFound(): Promise<void> {
     await expect(
       this.page.getByRole("heading", { name: "Client not found" }),

@@ -16,6 +16,7 @@ import { ClientPortalShell } from "./client-portal-shell";
 import { ClientProfilePage } from "./client-profile-page";
 import { CoachAssessmentCallsPage } from "./coach-assessment-calls-page";
 import { CoachClientPage } from "./coach-client-page";
+import { ClientResourcesOutage } from "./client-resources-outage";
 import { CoachClientResourcesPage } from "./coach-client-resources-page";
 import { CoachClientsPage } from "./coach-clients-page";
 import {
@@ -84,6 +85,7 @@ type PlatformFixtures = {
   coachClientResources: CoachClientResourcesPage;
   addResourceDialog: AddResourceDialog;
   resourceViewer: ResourceViewer;
+  clientResourcesOutage: ClientResourcesOutage;
   coachEmail: string;
   scenarioTag: string;
   createClerkUser: () => Promise<string>;
@@ -371,6 +373,14 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
 
   resourceViewer: async ({ page }, use) => {
     await use(new ResourceViewer(page));
+  },
+
+  // eslint-disable-next-line no-empty-pattern
+  clientResourcesOutage: async ({}, use) => {
+    const outage = new ClientResourcesOutage();
+
+    await use(outage);
+    await outage.dispose();
   },
 
   // eslint-disable-next-line no-empty-pattern

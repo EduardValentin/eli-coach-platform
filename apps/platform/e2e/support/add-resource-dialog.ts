@@ -178,6 +178,13 @@ export class AddResourceDialog {
     await expect(this.busySubmitButton).toBeDisabled();
   }
 
+  async expectOutsideClickIgnored(): Promise<void> {
+    await this.page.mouse.click(5, 5);
+
+    await expect(this.dialog).toBeVisible();
+    await expect(this.busySubmitButton).toBeDisabled();
+  }
+
   async holdNextUpload(): Promise<() => void> {
     let release = () => {};
     const released = new Promise<void>((resolve) => {

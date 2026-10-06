@@ -1,21 +1,36 @@
+import {
+  MAX_RESOURCE_DESCRIPTION_LENGTH,
+  MAX_RESOURCE_FILE_BYTES,
+  MAX_RESOURCE_TITLE_LENGTH,
+} from "@eli-coach-platform/domain/client-resources";
+
 import { storedResourceIdsOf } from "../support/client-resource-files";
 import { expect, test } from "../support/fixtures";
 import {
   groceryListDocxNamedDoc,
+  habitNotesOdt,
+  japaneseTextPdf,
   lockedPdf,
+  macroSheetOds,
   mealPlanPdf,
   mealPlanPdfNamedHtml,
   overlongPdf,
   oversizedPdf,
+  pdfOfExactLength,
   postureGuideImage,
   recipesDoc,
   renamedTextFile,
+  stretchingPhotoWebp,
   trainingBlockPdf,
+  weeklyTrackerXlsx,
   type SampleResource,
 } from "../support/sample-resources";
+import { darkestGreyOf } from "../support/served-page-images";
 import { setPhoneViewport } from "../support/viewport";
 
 const JOURNEY_TIMEOUT_MS = 240_000;
+
+const DARK_INK = 128;
 
 const UNKNOWN_CLIENT_ID = "00000000-0000-4000-8000-000000000000";
 
@@ -577,4 +592,298 @@ test("on a phone the coach adds a resource from a bottom sheet and pages through
   // assert
   await resourceViewer.expectClosed();
   await coachClientResources.expectFocusOn("Meal plan week 1");
+});
+
+test("the coach adds a spreadsheet, OpenDocument files, a dropped photo and a file of exactly 25 MB, and the console stays clean", async ({
+  addResourceDialog,
+  coachClientResources,
+  page,
+  provisionClientInState,
+  provisionCoach,
+  resourceRequests,
+  resourceViewer,
+  signInAsCoach,
+}) => {
+  test.setTimeout(JOURNEY_TIMEOUT_MS * 2);
+
+  // arrange
+  const consoleProblems: string[] = [];
+  page.on("console", (message) => {
+    if (message.text().includes("loaded with development keys")) return;
+    if (message.type() === "error" || message.type() === "warning") {
+      consoleProblems.push(
+        `${message.type()} at ${page.url()} from ${message.location().url}: ${message.text().slice(0, 160)}`,
+      );
+    }
+  });
+  page.on("requestfailed", (request) =>
+    consoleProblems.push(`request failed ${request.method()} ${request.url()}`),
+  );
+  page.on("response", (response) => {
+    if (response.status() >= 400) {
+      consoleProblems.push(
+        `response ${response.status()} ${response.request().method()} ${response.url().slice(0, 160)}`,
+      );
+    }
+  });
+  page.on("pageerror", (error) =>
+    consoleProblems.push(`page: ${error.message}`),
+  );
+  const today = dayMonthFormatter.format(new Date());
+  const tracker = await weeklyTrackerXlsx();
+  const habits = await habitNotesOdt();
+  const macros = await macroSheetOds();
+  const stretching = await stretchingPhotoWebp();
+  const atLimit = await pdfOfExactLength(
+    "at-the-limit.pdf",
+    MAX_RESOURCE_FILE_BYTES,
+  );
+  const overLimit = await pdfOfExactLength(
+    "over-the-limit.pdf",
+    MAX_RESOURCE_FILE_BYTES + 1,
+  );
+  await provisionCoach();
+  const client = await provisionClientInState("approved");
+  await page.goto("/store");
+  await signInAsCoach();
+  consoleProblems.length = 0;
+  await coachClientResources.open(client.clientId);
+
+  for (const [sample, title, short, long] of [
+    [tracker, "Weekly tracker", "XLS", "Spreadsheet"],
+    [habits, "Habit notes", "DOC", "Word document"],
+    [macros, "Macro sheet", "XLS", "Spreadsheet"],
+  ] as const) {
+    // act
+    await coachClientResources.openAdd();
+    await addResourceDialog.choose(sample);
+
+    // assert
+    await addResourceDialog.expectTitle(title);
+
+    // act
+    await addResourceDialog.submit();
+
+    // assert
+    await addResourceDialog.expectAdded();
+    await coachClientResources.expectCard({ title, type: short });
+    await coachClientResources.expectCover(title);
+
+    // act
+    await coachClientResources.openResource(title);
+
+    // assert
+    await resourceViewer.expectCover(title, sample.name);
+    await resourceViewer.expectDetails({
+      type: long,
+      size: readableSizeOf(sample),
+      added: today,
+    });
+
+    // act
+    const downloaded = await resourceViewer.download();
+
+    // assert
+    expect(downloaded.fileName).toBe(sample.name);
+    expect(downloaded.bytes.equals(sample.buffer)).toBe(true);
+
+    // act
+    await resourceViewer.close();
+
+    // assert
+    await coachClientResources.expectFocusOn(title);
+  }
+
+  // act
+  await coachClientResources.openAdd();
+  await addResourceDialog.drop(stretching);
+
+  // assert
+  await addResourceDialog.expectChosen("stretching-routine.webp");
+  await addResourceDialog.expectTitle("Stretching routine");
+
+  // act
+  await addResourceDialog.submit();
+
+  // assert
+  await addResourceDialog.expectAdded();
+  await coachClientResources.expectCard({
+    title: "Stretching routine",
+    type: "IMG",
+  });
+  await coachClientResources.expectThumbnail("Stretching routine");
+
+  // act
+  await coachClientResources.openResource("Stretching routine");
+
+  // assert
+  await resourceViewer.expectShowing({
+    title: "Stretching routine",
+    page: 1,
+    count: 1,
+  });
+  await resourceViewer.expectNoPageControls();
+
+  // act
+  await resourceViewer.closeWithEscape();
+  await coachClientResources.openAdd();
+  await addResourceDialog.choose(overLimit);
+
+  // assert
+  await addResourceDialog.expectRefusal("That file is over 25 MB.");
+
+  // act
+  await addResourceDialog.choose(atLimit);
+  const releaseUpload = await addResourceDialog.holdNextUpload();
+  await addResourceDialog.submit();
+
+  // assert
+  await addResourceDialog.expectLockedWhileBusy();
+  await addResourceDialog.expectOutsideClickIgnored();
+
+  // act
+  releaseUpload();
+
+  // assert
+  await addResourceDialog.expectAdded();
+  await coachClientResources.expectCards([
+    "At the limit",
+    "Stretching routine",
+    "Macro sheet",
+    "Habit notes",
+    "Weekly tracker",
+  ]);
+  await coachClientResources.expectCard({ title: "At the limit", type: "PDF" });
+
+  // act
+  await coachClientResources.openResource("At the limit");
+
+  // assert
+  await resourceViewer.expectShowing({
+    title: "At the limit",
+    page: 1,
+    count: 1,
+  });
+  await resourceViewer.expectDetails({
+    type: "PDF document",
+    pages: 1,
+    size: "25.0 MB",
+    added: today,
+  });
+
+  // act
+  const atLimitDownload = await resourceViewer.download();
+
+  // assert
+  expect(atLimitDownload.fileName).toBe("at-the-limit.pdf");
+  expect(atLimitDownload.bytes.equals(atLimit.buffer)).toBe(true);
+  expect(consoleProblems).toEqual([]);
+});
+
+test("the add route keeps a 120-character title and a 2,000-character description, refuses one more of either, and renders a PDF's Japanese text", async ({
+  page,
+  provisionClientInState,
+  provisionCoach,
+  resourceRequests,
+  signInAsCoach,
+}) => {
+  test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+  // arrange
+  const mealPlan = await mealPlanPdf();
+  await provisionCoach();
+  const client = await provisionClientInState("approved");
+  await page.goto("/store");
+  await signInAsCoach();
+
+  // act
+  const titleAtLimit = await resourceRequests.answer(
+    client.clientId,
+    mealPlan,
+    {
+      title: "t".repeat(MAX_RESOURCE_TITLE_LENGTH),
+      description: "",
+    },
+  );
+  const titleOverLimit = await resourceRequests.answer(
+    client.clientId,
+    mealPlan,
+    { title: "t".repeat(MAX_RESOURCE_TITLE_LENGTH + 1), description: "" },
+  );
+  const descriptionAtLimit = await resourceRequests.answer(
+    client.clientId,
+    mealPlan,
+    {
+      title: "Long description",
+      description: "d".repeat(MAX_RESOURCE_DESCRIPTION_LENGTH),
+    },
+  );
+  const descriptionOverLimit = await resourceRequests.answer(
+    client.clientId,
+    mealPlan,
+    {
+      title: "Longer description",
+      description: "d".repeat(MAX_RESOURCE_DESCRIPTION_LENGTH + 1),
+    },
+  );
+  const japaneseMenuId = await resourceRequests.add(
+    client.clientId,
+    japaneseTextPdf(),
+    { title: "Japanese menu", description: "" },
+  );
+  const japanesePage = await resourceRequests.pageImageBytes(japaneseMenuId, 1);
+
+  // assert
+  expect(titleAtLimit.status).toBe(201);
+  expect(titleOverLimit).toEqual({
+    status: 400,
+    body: { problems: { title: "too-long" } },
+  });
+  expect(descriptionAtLimit.status).toBe(201);
+  expect(descriptionOverLimit).toEqual({
+    status: 400,
+    body: { problems: { description: "too-long" } },
+  });
+  expect(await darkestGreyOf(japanesePage)).toBeLessThan(DARK_INK);
+});
+
+test("when a client's resources cannot be loaded the coach is told, keeps her way back, and a retry shows them", async ({
+  clientResourcesOutage,
+  coachClient,
+  coachClientResources,
+  page,
+  provisionClientInState,
+  provisionCoach,
+  resourceRequests,
+  signInAsCoach,
+}) => {
+  test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+  // arrange
+  await provisionCoach();
+  const client = await provisionClientInState("approved");
+  await page.goto("/store");
+  await signInAsCoach();
+  await resourceRequests.add(client.clientId, await mealPlanPdf(), MEAL_PLAN);
+  await coachClient.open(client.clientId);
+  await clientResourcesOutage.begin();
+
+  // act
+  await coachClient.openResources();
+
+  // assert
+  await coachClientResources.expectUnavailable(client.fullName);
+
+  // act
+  await coachClientResources.open(client.clientId);
+
+  // assert
+  await coachClientResources.expectUnavailable(client.fullName);
+
+  // act
+  await clientResourcesOutage.end();
+  await coachClientResources.retry();
+
+  // assert
+  await coachClientResources.expectCards([MEAL_PLAN.title]);
 });

@@ -43,6 +43,32 @@ export class ResourceRequests {
     return response.status();
   }
 
+  async answer(
+    clientId: string,
+    sample: SampleResource,
+    details: ResourceDetails,
+  ): Promise<{ status: number; body: unknown }> {
+    const response = await this.post(clientId, sample, details);
+    const text = await response.text();
+
+    try {
+      return { status: response.status(), body: JSON.parse(text) };
+    } catch {
+      return { status: response.status(), body: text };
+    }
+  }
+
+  async pageImageBytes(
+    resourceId: string,
+    pageNumber: number,
+  ): Promise<Buffer> {
+    const response = await this.request.get(
+      `${CLIENT_RESOURCES_PATH}/${resourceId}/pages/${pageNumber}`,
+    );
+
+    return response.body();
+  }
+
   async add(
     clientId: string,
     sample: SampleResource,
