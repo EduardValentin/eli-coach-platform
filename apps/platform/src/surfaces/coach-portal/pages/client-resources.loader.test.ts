@@ -86,16 +86,19 @@ describe("coach client resources page loader", () => {
     await expect(loading).rejects.toMatchObject({ status: 404 });
   });
 
-  it("hands on a failed listing of her resources beside her record", async () => {
+  it("hands on an unavailable listing of her resources beside her record", async () => {
     // arrange
     const { args, loadResources } = routeArguments();
-    loadResources.mockResolvedValue({ status: "failed" });
+    loadResources.mockResolvedValue({ status: "unavailable" });
 
     // act
     const loaded = await loader(args);
 
     // assert
-    expect(loaded).toEqual({ client: CLIENT, listing: { status: "failed" } });
+    expect(loaded).toEqual({
+      client: CLIENT,
+      listing: { status: "unavailable" },
+    });
   });
 
   it("leaves the denial the portal guard raises alone", async () => {

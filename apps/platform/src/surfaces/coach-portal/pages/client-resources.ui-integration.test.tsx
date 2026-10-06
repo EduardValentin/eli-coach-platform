@@ -306,7 +306,7 @@ describe("the coach's client resources page", () => {
     // arrange, act
     await renderResourcesRouter(() => ({
       client: CLIENT,
-      listing: { status: "failed" },
+      listing: { status: "unavailable" },
     }));
 
     // assert
@@ -334,7 +334,7 @@ describe("the coach's client resources page", () => {
         client: CLIENT,
         listing:
           reads === 1
-            ? { status: "failed" }
+            ? { status: "unavailable" }
             : { status: "ready", resources: LIBRARY },
       };
     });

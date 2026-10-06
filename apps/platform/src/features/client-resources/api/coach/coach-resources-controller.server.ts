@@ -13,7 +13,7 @@ type CoachResourcesControllerOptions = {
   listClientResources: ListClientResourcesUseCase;
 };
 
-const FAILED_LISTING: ClientResourceListing = { status: "failed" };
+const UNAVAILABLE_LISTING: ClientResourceListing = { status: "unavailable" };
 
 const clientIdSchema = z.uuid();
 
@@ -41,7 +41,7 @@ export class CoachResourcesController {
     }
 
     if (listing.status === "unavailable") {
-      return FAILED_LISTING;
+      return UNAVAILABLE_LISTING;
     }
 
     return {

@@ -6,10 +6,11 @@ import {
 
 import { storedResourceIdsOf } from "../support/client-resource-files";
 import { expect, test } from "../support/fixtures";
+import { collectPageProblems } from "../support/page-problems";
 import {
   groceryListDocxNamedDoc,
   habitNotesOdt,
-  japaneseTextPdf,
+  japaneseMenuPdf,
   lockedPdf,
   macroSheetOds,
   mealPlanPdf,
@@ -25,12 +26,10 @@ import {
   weeklyTrackerXlsx,
   type SampleResource,
 } from "../support/sample-resources";
-import { darkestGreyOf } from "../support/served-page-images";
+import { DARK_INK, darkestGreyOf } from "../support/served-page-images";
 import { setPhoneViewport } from "../support/viewport";
 
 const JOURNEY_TIMEOUT_MS = 240_000;
-
-const DARK_INK = 128;
 
 const UNKNOWN_CLIENT_ID = "00000000-0000-4000-8000-000000000000";
 
@@ -600,35 +599,12 @@ test("the coach adds a spreadsheet, OpenDocument files, a dropped photo and a fi
   page,
   provisionClientInState,
   provisionCoach,
-  resourceRequests,
   resourceViewer,
   signInAsCoach,
 }) => {
   test.setTimeout(JOURNEY_TIMEOUT_MS * 2);
 
   // arrange
-  const consoleProblems: string[] = [];
-  page.on("console", (message) => {
-    if (message.text().includes("loaded with development keys")) return;
-    if (message.type() === "error" || message.type() === "warning") {
-      consoleProblems.push(
-        `${message.type()} at ${page.url()} from ${message.location().url}: ${message.text().slice(0, 160)}`,
-      );
-    }
-  });
-  page.on("requestfailed", (request) =>
-    consoleProblems.push(`request failed ${request.method()} ${request.url()}`),
-  );
-  page.on("response", (response) => {
-    if (response.status() >= 400) {
-      consoleProblems.push(
-        `response ${response.status()} ${response.request().method()} ${response.url().slice(0, 160)}`,
-      );
-    }
-  });
-  page.on("pageerror", (error) =>
-    consoleProblems.push(`page: ${error.message}`),
-  );
   const today = dayMonthFormatter.format(new Date());
   const tracker = await weeklyTrackerXlsx();
   const habits = await habitNotesOdt();
@@ -646,10 +622,10 @@ test("the coach adds a spreadsheet, OpenDocument files, a dropped photo and a fi
   const client = await provisionClientInState("approved");
   await page.goto("/store");
   await signInAsCoach();
-  consoleProblems.length = 0;
+  const pageProblems = collectPageProblems(page);
   await coachClientResources.open(client.clientId);
 
-  for (const [sample, title, short, long] of [
+  for (const [sample, title, cardType, detailType] of [
     [tracker, "Weekly tracker", "XLS", "Spreadsheet"],
     [habits, "Habit notes", "DOC", "Word document"],
     [macros, "Macro sheet", "XLS", "Spreadsheet"],
@@ -666,7 +642,7 @@ test("the coach adds a spreadsheet, OpenDocument files, a dropped photo and a fi
 
     // assert
     await addResourceDialog.expectAdded();
-    await coachClientResources.expectCard({ title, type: short });
+    await coachClientResources.expectCard({ title, type: cardType });
     await coachClientResources.expectCover(title);
 
     // act
@@ -675,7 +651,7 @@ test("the coach adds a spreadsheet, OpenDocument files, a dropped photo and a fi
     // assert
     await resourceViewer.expectCover(title, sample.name);
     await resourceViewer.expectDetails({
-      type: long,
+      type: detailType,
       size: readableSizeOf(sample),
       added: today,
     });
@@ -777,10 +753,10 @@ test("the coach adds a spreadsheet, OpenDocument files, a dropped photo and a fi
   // assert
   expect(atLimitDownload.fileName).toBe("at-the-limit.pdf");
   expect(atLimitDownload.bytes.equals(atLimit.buffer)).toBe(true);
-  expect(consoleProblems).toEqual([]);
+  expect(pageProblems).toEqual([]);
 });
 
-test("the add route keeps a 120-character title and a 2,000-character description, refuses one more of either, and renders a PDF's Japanese text", async ({
+test("the add route keeps a 120-character title and a 2,000-character description and refuses one more of either", async ({
   page,
   provisionClientInState,
   provisionCoach,
@@ -797,7 +773,7 @@ test("the add route keeps a 120-character title and a 2,000-character descriptio
   await signInAsCoach();
 
   // act
-  const titleAtLimit = await resourceRequests.answer(
+  const titleAtLimit = await resourceRequests.uploadAnswer(
     client.clientId,
     mealPlan,
     {
@@ -805,12 +781,12 @@ test("the add route keeps a 120-character title and a 2,000-character descriptio
       description: "",
     },
   );
-  const titleOverLimit = await resourceRequests.answer(
+  const titleOverLimit = await resourceRequests.uploadAnswer(
     client.clientId,
     mealPlan,
     { title: "t".repeat(MAX_RESOURCE_TITLE_LENGTH + 1), description: "" },
   );
-  const descriptionAtLimit = await resourceRequests.answer(
+  const descriptionAtLimit = await resourceRequests.uploadAnswer(
     client.clientId,
     mealPlan,
     {
@@ -818,7 +794,7 @@ test("the add route keeps a 120-character title and a 2,000-character descriptio
       description: "d".repeat(MAX_RESOURCE_DESCRIPTION_LENGTH),
     },
   );
-  const descriptionOverLimit = await resourceRequests.answer(
+  const descriptionOverLimit = await resourceRequests.uploadAnswer(
     client.clientId,
     mealPlan,
     {
@@ -826,12 +802,6 @@ test("the add route keeps a 120-character title and a 2,000-character descriptio
       description: "d".repeat(MAX_RESOURCE_DESCRIPTION_LENGTH + 1),
     },
   );
-  const japaneseMenuId = await resourceRequests.add(
-    client.clientId,
-    japaneseTextPdf(),
-    { title: "Japanese menu", description: "" },
-  );
-  const japanesePage = await resourceRequests.pageImageBytes(japaneseMenuId, 1);
 
   // assert
   expect(titleAtLimit.status).toBe(201);
@@ -844,6 +814,32 @@ test("the add route keeps a 120-character title and a 2,000-character descriptio
     status: 400,
     body: { problems: { description: "too-long" } },
   });
+});
+
+test("a PDF's Japanese text renders on its page image", async ({
+  page,
+  provisionClientInState,
+  provisionCoach,
+  resourceRequests,
+  signInAsCoach,
+}) => {
+  test.setTimeout(JOURNEY_TIMEOUT_MS);
+
+  // arrange
+  await provisionCoach();
+  const client = await provisionClientInState("approved");
+  await page.goto("/store");
+  await signInAsCoach();
+  const japaneseMenuId = await resourceRequests.add(
+    client.clientId,
+    japaneseMenuPdf(),
+    { title: "Japanese menu", description: "" },
+  );
+
+  // act
+  const japanesePage = await resourceRequests.pageImageBytes(japaneseMenuId, 1);
+
+  // assert
   expect(await darkestGreyOf(japanesePage)).toBeLessThan(DARK_INK);
 });
 

@@ -5,6 +5,13 @@ type ZipEntry = { name: string; content: string; stored?: true };
 
 type PdfOptions = { userPassword?: string };
 
+type HandWrittenPdf = {
+  mediaBox: string;
+  resources: string;
+  content: string;
+  extraObjects: readonly Buffer[];
+};
+
 const OPEN_DOCUMENT_MIMETYPE = "mimetype";
 const CONTENT_TYPES = "[Content_Types].xml";
 const SECTOR_SIZE = 512;
@@ -43,6 +50,25 @@ export async function truncatedPdf(): Promise<Buffer> {
   const whole = await pdfWithPages(2);
 
   return whole.subarray(0, Math.floor(whole.byteLength / 2));
+}
+
+export function japaneseTextPdf(): Buffer {
+  return handWrittenPdf({
+    mediaBox: "[0 0 595 842]",
+    resources: "<< /Font << /F1 5 0 R >> >>",
+    content: "BT /F1 32 Tf 72 700 Td <65E5672C8A9E> Tj ET",
+    extraObjects: [
+      Buffer.from(
+        "<< /Type /Font /Subtype /Type0 /BaseFont /KozMinPr6N-Regular /Encoding /UniJIS-UCS2-H /DescendantFonts [6 0 R] >>",
+      ),
+      Buffer.from(
+        "<< /Type /Font /Subtype /CIDFontType0 /BaseFont /KozMinPr6N-Regular /CIDSystemInfo << /Registry (Adobe) /Ordering (Japan1) /Supplement 6 >> /FontDescriptor 7 0 R >>",
+      ),
+      Buffer.from(
+        "<< /Type /FontDescriptor /FontName /KozMinPr6N-Regular /Flags 4 /FontBBox [0 -120 1000 880] /ItalicAngle 0 /Ascent 880 /Descent -120 /CapHeight 700 /StemV 80 >>",
+      ),
+    ],
+  });
 }
 
 export function wordDocument(): Promise<Buffer> {
@@ -99,6 +125,50 @@ export function paddedPdfOfLength(byteLength: number): Buffer {
 
 function pdfHeader(): Buffer {
   return Buffer.from("%PDF-1.7\n");
+}
+
+function handWrittenPdf(pdf: HandWrittenPdf): Buffer {
+  const objects: Buffer[] = [
+    Buffer.from("<< /Type /Catalog /Pages 2 0 R >>"),
+    Buffer.from("<< /Type /Pages /Kids [3 0 R] /Count 1 >>"),
+    Buffer.from(
+      `<< /Type /Page /Parent 2 0 R /MediaBox ${pdf.mediaBox} /Resources ${pdf.resources} /Contents 4 0 R >>`,
+    ),
+    Buffer.from(
+      `<< /Length ${Buffer.byteLength(pdf.content)} >>\nstream\n${pdf.content}\nendstream`,
+    ),
+    ...pdf.extraObjects,
+  ];
+  const header = pdfHeader();
+  const chunks: Buffer[] = [header];
+  const offsets: number[] = [];
+  let length = header.byteLength;
+
+  for (const [index, object] of objects.entries()) {
+    offsets.push(length);
+    const chunk = Buffer.concat([
+      Buffer.from(`${index + 1} 0 obj\n`),
+      object,
+      Buffer.from("\nendobj\n"),
+    ]);
+    chunks.push(chunk);
+    length += chunk.byteLength;
+  }
+
+  const xref = [
+    "xref",
+    `0 ${objects.length + 1}`,
+    "0000000000 65535 f ",
+    ...offsets.map((offset) => `${String(offset).padStart(10, "0")} 00000 n `),
+    "trailer",
+    `<< /Size ${objects.length + 1} /Root 1 0 R >>`,
+    "startxref",
+    String(length),
+    "%%EOF",
+    "",
+  ].join("\n");
+
+  return Buffer.concat([...chunks, Buffer.from(xref)]);
 }
 
 function openDocument(mimetype: string): Promise<Buffer> {

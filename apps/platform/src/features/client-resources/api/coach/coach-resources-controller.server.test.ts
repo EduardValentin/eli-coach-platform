@@ -116,7 +116,7 @@ describe("CoachResourcesController load", () => {
     });
   });
 
-  it("answers a failed listing when the client's resources are unavailable", async () => {
+  it("answers an unavailable listing when the client's resources are unavailable", async () => {
     // arrange
     const { controller } = createController({ status: "unavailable" });
 
@@ -124,7 +124,7 @@ describe("CoachResourcesController load", () => {
     const listing = await controller.load(coachArgs(), CLIENT_ID);
 
     // assert
-    expect(listing).toEqual({ status: "failed" });
+    expect(listing).toEqual({ status: "unavailable" });
   });
 
   it("answers not found to a client who does not exist", async () => {

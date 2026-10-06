@@ -9,6 +9,8 @@ export type ResourceResponse = {
 
 export type ResourceDetails = { title: string; description: string };
 
+export type UploadAnswer = { status: number; body: unknown };
+
 type AddedResourceAnswer = { resource: { id: string } };
 
 const CLIENT_RESOURCES_PATH = "/api/client-resources";
@@ -43,11 +45,11 @@ export class ResourceRequests {
     return response.status();
   }
 
-  async answer(
+  async uploadAnswer(
     clientId: string,
     sample: SampleResource,
     details: ResourceDetails,
-  ): Promise<{ status: number; body: unknown }> {
+  ): Promise<UploadAnswer> {
     const response = await this.post(clientId, sample, details);
     const text = await response.text();
 

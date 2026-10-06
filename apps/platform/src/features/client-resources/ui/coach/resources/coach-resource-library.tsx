@@ -30,7 +30,7 @@ export function CoachResourceLibrary({
 }: CoachResourceLibraryProps) {
   const revalidator = useRevalidator();
 
-  if (listing.status === "failed") {
+  if (listing.status === "unavailable") {
     return (
       <ResourcesUnavailable onRetry={() => void revalidator.revalidate()} />
     );

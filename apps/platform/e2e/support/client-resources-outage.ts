@@ -7,8 +7,9 @@ import pg from "pg";
 import { requireEnv } from "./env";
 import { repoRootDirectory } from "./repo-paths";
 
-const RESOURCES_TABLE = "app.client_resources";
-const HIDDEN_RESOURCES_TABLE = "client_resources_outage";
+const SCHEMA = "app";
+const RESOURCES_TABLE_NAME = "client_resources";
+const HIDDEN_TABLE_NAME = "client_resources_outage";
 
 function tableOwnerPool(): pg.Pool {
   const postgres = parseEnv(
@@ -30,14 +31,14 @@ export class ClientResourcesOutage {
 
   async begin(): Promise<void> {
     await this.#pool.query(
-      `ALTER TABLE ${RESOURCES_TABLE} RENAME TO ${HIDDEN_RESOURCES_TABLE}`,
+      `ALTER TABLE ${SCHEMA}.${RESOURCES_TABLE_NAME} RENAME TO ${HIDDEN_TABLE_NAME}`,
     );
     this.#ongoing = true;
   }
 
   async end(): Promise<void> {
     await this.#pool.query(
-      `ALTER TABLE app.${HIDDEN_RESOURCES_TABLE} RENAME TO client_resources`,
+      `ALTER TABLE ${SCHEMA}.${HIDDEN_TABLE_NAME} RENAME TO ${RESOURCES_TABLE_NAME}`,
     );
     this.#ongoing = false;
   }
