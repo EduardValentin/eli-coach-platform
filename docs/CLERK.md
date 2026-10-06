@@ -247,6 +247,12 @@ Prerequisites:
   user, and refuses a client who signs in through `provisionPaidClient`; the
   files it adds land under `CLIENT_RESOURCE_ROOT`, and the run's cleanup
   removes them with the client's rows (`e2e/support/client-resource-files.ts`).
+  `client-resources.spec.ts` signs the coach in to add files for a client
+  from `provisionSubmittedClient`, then signs out and signs her in to read
+  them; another client from `provisionOtherMeasuredClient` signs in to find
+  none of them, a client from `provisionPaidClient` has not submitted her
+  onboarding, and an ended client is arranged as `client-subscription.spec.ts`
+  arranges one, by cancelling inside her withdrawal window.
   `sign-up-unavailable.spec.ts`
   asserts the mode from the public environment endpoint and fails until the
   flip lands. No journey needs a Clerk webhook delivery, so the suite does not

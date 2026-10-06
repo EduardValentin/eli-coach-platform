@@ -414,7 +414,7 @@ test("the coach reaches a client's resources from her record, keeps her entries 
   expect(storedResourceIdsOf(otherClient.clientId)).toEqual([]);
 });
 
-test("only the coach opens a client's resources: a signed-out visitor and the client herself are refused the page, its page images and the download", async ({
+test("only the coach adds to a client's resources: a signed-out visitor is refused the page, its page images, the download and adding, and the client herself is refused the page and adding", async ({
   accountPortal,
   coachClientResources,
   page,
@@ -492,15 +492,14 @@ test("only the coach opens a client's resources: a signed-out visitor and the cl
   await coachClientResources.expectRefused();
 
   // act
-  const clientStatuses = [
-    (await resourceRequests.openPage(resourceId, 1)).status,
-    (await resourceRequests.openThumbnail(resourceId)).status,
-    (await resourceRequests.download(resourceId)).status,
-    await resourceRequests.upload(client.clientId, mealPlan, MEAL_PLAN),
-  ];
+  const clientAdding = await resourceRequests.upload(
+    client.clientId,
+    mealPlan,
+    MEAL_PLAN,
+  );
 
   // assert
-  expect(clientStatuses).toEqual([403, 403, 403, 403]);
+  expect(clientAdding).toBe(403);
   expect(storedResourceIdsOf(client.clientId)).toEqual([resourceId]);
 });
 
