@@ -1,14 +1,17 @@
 import type { CoachingSubscriptions } from "../coaching-subscription";
 import type { Clock } from "../shared";
 
-import type { ClientJourney } from "./client-journey";
+import { ClientJourney } from "./client-journey";
 import type { ClientJourneys } from "./client-journeys";
 
 export type ClientPortalAccess = "open" | "ended";
 
+type ClientPortal = "open" | "closed";
+
 type ClientPortalStandingReading = {
   journey: ClientJourney;
   access: ClientPortalAccess;
+  portal: ClientPortal;
 };
 
 type ReadClientPortalStandingUseCaseOptions = {
@@ -39,6 +42,22 @@ export class ReadClientPortalStandingUseCase {
       subscription !== null &&
       !subscription.hasPortalAccessAt(this.options.clock.now());
 
-    return { journey, access: ended ? "ended" : "open" };
+    const access = ended ? "ended" : "open";
+
+    return {
+      journey,
+      access,
+      portal: ReadClientPortalStandingUseCase.portalOf(journey, access),
+    };
+  }
+
+  private static portalOf(
+    journey: ClientJourney,
+    access: ClientPortalAccess,
+  ): ClientPortal {
+    const open =
+      access === "open" && ClientJourney.isAfterSubmission(journey.step());
+
+    return open ? "open" : "closed";
   }
 }

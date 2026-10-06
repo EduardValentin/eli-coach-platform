@@ -23,6 +23,7 @@ const RESOURCE = ClientResource.reconstitute({
     pageCount: null,
   },
   addedAt: new Date("2026-10-05T09:00:00.000Z"),
+  openedAt: null,
 });
 
 async function* chunksOf(bytes: Uint8Array): AsyncIterable<Uint8Array> {
@@ -40,6 +41,12 @@ async function collect(chunks: AsyncIterable<Uint8Array>): Promise<number[]> {
 
 class InMemoryClientResources implements ClientResources {
   async add(): Promise<void> {}
+
+  async recordOpened(): Promise<void> {}
+
+  async countUnopenedForClient(): Promise<number> {
+    return 0;
+  }
 
   async listForClient(): Promise<ClientResource[]> {
     return [];
@@ -80,7 +87,9 @@ function createUseCase() {
   const clients = {
     exists: vi.fn(async () => true),
     findByAuthSubjectId: vi.fn(async (authSubjectId: string) =>
-      authSubjectId === "user_ana" ? { clientId: "client-ana" } : null,
+      authSubjectId === "user_ana"
+        ? { clientId: "client-ana", portal: "open" as const }
+        : null,
     ),
   } satisfies ResourceClients;
   const incidents = {
@@ -89,6 +98,8 @@ function createUseCase() {
     resourceAccessRefused: vi.fn(),
     resourceStorageFailed: vi.fn(),
     resourceListingFailed: vi.fn(),
+    resourceOpeningFailed: vi.fn(),
+    unopenedCountFailed: vi.fn(),
   } satisfies ClientResourceIncidents;
   const useCase = new DownloadClientResourceUseCase({
     resources: new InMemoryClientResources(),

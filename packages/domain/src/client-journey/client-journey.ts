@@ -13,6 +13,15 @@ export type ClientJourneyStep =
   | "needs-details"
   | "approved";
 
+export const STEPS_AFTER_SUBMISSION = [
+  "submitted",
+  "in-review",
+  "needs-details",
+  "approved",
+] as const satisfies readonly ClientJourneyStep[];
+
+export type StepAfterSubmission = (typeof STEPS_AFTER_SUBMISSION)[number];
+
 export type WelcomeWording = "five-part" | "four-part";
 
 export type ClientJourneySnapshot = ReviewStamps & {
@@ -51,6 +60,12 @@ export class ClientJourney {
 
   static from(snapshot: ClientJourneySnapshot): ClientJourney {
     return new ClientJourney(snapshot);
+  }
+
+  static isAfterSubmission(
+    step: ClientJourneyStep,
+  ): step is StepAfterSubmission {
+    return STEPS_AFTER_SUBMISSION.some((submitted) => submitted === step);
   }
 
   step(): ClientJourneyStep {

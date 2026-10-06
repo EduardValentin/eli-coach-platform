@@ -1,5 +1,6 @@
 export {
   ClientJourney,
+  STEPS_AFTER_SUBMISSION,
   type ClientJourneySnapshot,
   type ClientJourneyStep,
 } from "./client-journey";

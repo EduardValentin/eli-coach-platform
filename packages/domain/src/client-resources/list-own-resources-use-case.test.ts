@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { ClientResource } from "./client-resource";
 import type { ClientResourceIncidents } from "./client-resource-incidents";
 import type { ClientResources } from "./client-resources";
-import { ListClientResourcesUseCase } from "./list-client-resources-use-case";
+import { ListOwnResourcesUseCase } from "./list-own-resources-use-case";
 import type { ResourceClients } from "./resource-clients";
 
 function resource(id: string, clientId: string): ClientResource {
@@ -46,17 +46,21 @@ class InMemoryClientResources implements ClientResources {
   }
 }
 
+type ResourceClient = { clientId: string; portal: "open" | "closed" };
+
+const CLIENT_BY_SUBJECT = new Map<string, ResourceClient>([
+  ["user_ana", { clientId: "client-ana", portal: "open" }],
+  ["user_cleo", { clientId: "client-cleo", portal: "closed" }],
+]);
+
 function createUseCase(
   resources: ClientResources = new InMemoryClientResources(),
 ) {
   const clients = {
-    exists: vi.fn(async (clientId: string) =>
-      ["client-ana", "client-bea"].includes(clientId),
-    ),
-    findByAuthSubjectId: vi.fn(async (authSubjectId: string) =>
-      authSubjectId === "user_ana"
-        ? { clientId: "client-ana", portal: "open" as const }
-        : null,
+    exists: vi.fn(async () => true),
+    findByAuthSubjectId: vi.fn(
+      async (authSubjectId: string) =>
+        CLIENT_BY_SUBJECT.get(authSubjectId) ?? null,
     ),
   } satisfies ResourceClients;
   const incidents = {
@@ -68,68 +72,58 @@ function createUseCase(
     resourceOpeningFailed: vi.fn(),
     unopenedCountFailed: vi.fn(),
   } satisfies ClientResourceIncidents;
-  const useCase = new ListClientResourcesUseCase({
+  const useCase = new ListOwnResourcesUseCase({
     resources,
     clients,
     incidents,
   });
 
-  return { useCase, incidents };
+  return { useCase, clients, incidents };
 }
 
-describe("ListClientResourcesUseCase", () => {
-  it.each([
-    ["the coach", { role: "COACH", authSubjectId: "user_eli" }],
-    ["the client herself", { role: "CLIENT", authSubjectId: "user_ana" }],
-  ] as const)(
-    "lists a client's resources, newest first, for %s",
-    async (_case, requester) => {
-      // arrange
-      const { useCase } = createUseCase();
-
-      // act
-      const result = await useCase.execute({
-        requester,
-        clientId: "client-ana",
-      });
-
-      // assert
-      expect(result).toEqual({ status: "listed", resources: [NEWER, OLDER] });
-    },
-  );
-
-  it("finds nothing for another client and reports the refusal", async () => {
+describe("ListOwnResourcesUseCase", () => {
+  it("lists only her own resources, newest first, to a client whose portal is open", async () => {
     // arrange
-    const { useCase, incidents } = createUseCase();
+    const { useCase } = createUseCase();
 
     // act
     const result = await useCase.execute({
-      requester: { role: "CLIENT", authSubjectId: "user_ana" },
-      clientId: "client-bea",
+      role: "CLIENT",
+      authSubjectId: "user_ana",
     });
 
     // assert
-    expect(result).toEqual({ status: "not-found" });
-    expect(incidents.resourceAccessRefused).toHaveBeenCalledWith({
-      requesterRole: "CLIENT",
-      clientId: "client-bea",
-      resourceId: null,
-    });
+    expect(result).toEqual({ status: "listed", resources: [NEWER, OLDER] });
   });
 
-  it("finds nothing for a client who does not exist", async () => {
+  it.each([
+    ["a client whose portal is closed", "user_cleo"],
+    ["an account bound to no client", "user_nobody"],
+  ])("finds nothing for %s", async (_case, authSubjectId) => {
     // arrange
     const { useCase, incidents } = createUseCase();
 
     // act
-    const result = await useCase.execute({
-      requester: { role: "COACH", authSubjectId: "user_eli" },
-      clientId: "client-404",
-    });
+    const result = await useCase.execute({ role: "CLIENT", authSubjectId });
 
     // assert
     expect(result).toEqual({ status: "not-found" });
     expect(incidents.resourceAccessRefused).not.toHaveBeenCalled();
+  });
+
+  it("finds nothing for the coach, who has no resources of her own", async () => {
+    // arrange
+    const { useCase, clients } = createUseCase();
+
+    // act
+    const result = await useCase.execute({
+      role: "COACH",
+      authSubjectId: "user_eli",
+    });
+
+    // assert
+    expect(result).toEqual({ status: "not-found" });
+    expect(clients.findByAuthSubjectId).not.toHaveBeenCalled();
   });
 
   it("reports a failed read and answers that the listing is unavailable", async () => {
@@ -141,8 +135,8 @@ describe("ListClientResourcesUseCase", () => {
 
     // act
     const result = await useCase.execute({
-      requester: { role: "COACH", authSubjectId: "user_eli" },
-      clientId: "client-ana",
+      role: "CLIENT",
+      authSubjectId: "user_ana",
     });
 
     // assert
