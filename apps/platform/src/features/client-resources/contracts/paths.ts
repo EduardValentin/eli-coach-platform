@@ -1,3 +1,4 @@
+import { CLIENT_PORTAL_PATH } from "../../accounts/contracts/paths";
 import {
   COACH_CLIENTS_ROUTE_SEGMENT,
   coachClientPath,
@@ -12,7 +13,12 @@ export const CLIENT_RESOURCES_API_PATHS = {
   resourcePage: `${CLIENT_RESOURCES_API}/:resourceId/pages/:pageNumber`,
   resourceThumbnail: `${CLIENT_RESOURCES_API}/:resourceId/thumbnail`,
   resourceDownload: `${CLIENT_RESOURCES_API}/:resourceId/download`,
+  resourceOpened: `${CLIENT_RESOURCES_API}/:resourceId/opened`,
 } as const;
+
+export const CLIENT_RESOURCES_ROUTE_SEGMENT = RESOURCES_SEGMENT;
+
+export const CLIENT_RESOURCES_PATH = `${CLIENT_PORTAL_PATH}/${CLIENT_RESOURCES_ROUTE_SEGMENT}`;
 
 export const COACH_CLIENT_RESOURCES_ROUTE_SEGMENT = `${COACH_CLIENTS_ROUTE_SEGMENT}/:clientId/${RESOURCES_SEGMENT}`;
 
@@ -37,6 +43,10 @@ export function resourceThumbnailPath(resourceId: string): string {
 
 export function resourceDownloadPath(resourceId: string): string {
   return `${resourcePath(resourceId)}/download`;
+}
+
+export function resourceOpenedPath(resourceId: string): string {
+  return `${resourcePath(resourceId)}/opened`;
 }
 
 function resourcePath(resourceId: string): string {

@@ -28,6 +28,7 @@ export type AddedResource = {
     pageCount: number | null;
   };
   addedAt: string;
+  openedAt: string | null;
 };
 
 export type ClientResourceRow = {
@@ -39,6 +40,7 @@ export type ClientResourceRow = {
   sizeBytes: number;
   pageCount: number | null;
   addedAt: Date;
+  openedAt: Date | null;
 };
 
 const CLIENT_RESOURCES_API = "/api/client-resources";
@@ -102,9 +104,19 @@ export class ClientResourcesJourney {
     );
   }
 
+  markOpened(requester: Requester, resourceId: string): Promise<Response> {
+    return this.send(
+      requester,
+      `${CLIENT_RESOURCES_API}/${resourceId}/opened`,
+      {
+        method: "POST",
+      },
+    );
+  }
+
   resourceRowsOf(clientId: string): Promise<ClientResourceRow[]> {
     return this.rig.suite.postgres.queryRows<ClientResourceRow>({
-      sql: 'select id, title, description, original_name as "originalName", format, size_bytes as "sizeBytes", page_count as "pageCount", added_at as "addedAt" from app.client_resources where client_id = $1 order by added_at desc, id desc',
+      sql: 'select id, title, description, original_name as "originalName", format, size_bytes as "sizeBytes", page_count as "pageCount", added_at as "addedAt", opened_at as "openedAt" from app.client_resources where client_id = $1 order by added_at desc, id desc',
       values: [clientId],
     });
   }

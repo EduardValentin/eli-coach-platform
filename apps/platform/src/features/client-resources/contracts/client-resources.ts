@@ -25,6 +25,7 @@ const clientResourceSchema = z.object({
     pageCount: z.number().int().positive().nullable(),
   }),
   addedAt: z.iso.datetime(),
+  openedAt: z.iso.datetime().nullable(),
 });
 
 export type ClientResourceView = z.infer<typeof clientResourceSchema>;
@@ -55,7 +56,8 @@ export const resourceDetailsProblemsAnswerSchema = z.object({
 export function presentClientResource(
   resource: ClientResource,
 ): ClientResourceView {
-  const { id, title, description, file, addedAt } = resource.toSnapshot();
+  const { id, title, description, file, addedAt, openedAt } =
+    resource.toSnapshot();
 
   return {
     id,
@@ -69,5 +71,6 @@ export function presentClientResource(
       pageCount: file.pageCount,
     },
     addedAt: addedAt.toISOString(),
+    openedAt: openedAt?.toISOString() ?? null,
   };
 }

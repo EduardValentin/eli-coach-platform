@@ -3,10 +3,13 @@ import { describe, expect, it } from "vitest";
 
 import {
   CLIENT_RESOURCES_API_PATHS,
+  CLIENT_RESOURCES_PATH,
+  CLIENT_RESOURCES_ROUTE_SEGMENT,
   clientResourcesPath,
   COACH_CLIENT_RESOURCES_ROUTE_SEGMENT,
   coachClientResourcesPath,
   resourceDownloadPath,
+  resourceOpenedPath,
   resourcePagePath,
   resourceThumbnailPath,
 } from "./paths";
@@ -30,6 +33,18 @@ describe("client resources paths", () => {
     expect(match?.params).toEqual({ clientId: CLIENT_ID });
   });
 
+  it("links the client to the page the client portal registers for her resources", () => {
+    // arrange
+    const link = CLIENT_RESOURCES_PATH;
+
+    // act
+    const match = matchPath(`/client/${CLIENT_RESOURCES_ROUTE_SEGMENT}`, link);
+
+    // assert
+    expect(link).toBe("/client/resources");
+    expect(match).not.toBeNull();
+  });
+
   it("builds each API link so the route registered for it reads the same ids back", () => {
     // arrange
     const links = [
@@ -51,6 +66,11 @@ describe("client resources paths", () => {
       {
         pattern: CLIENT_RESOURCES_API_PATHS.resourceDownload,
         link: resourceDownloadPath(RESOURCE_ID),
+        params: { resourceId: RESOURCE_ID },
+      },
+      {
+        pattern: CLIENT_RESOURCES_API_PATHS.resourceOpened,
+        link: resourceOpenedPath(RESOURCE_ID),
         params: { resourceId: RESOURCE_ID },
       },
     ];

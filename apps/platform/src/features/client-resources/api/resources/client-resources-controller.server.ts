@@ -1,3 +1,4 @@
+import type { AccountSnapshot } from "@eli-coach-platform/domain/account";
 import {
   MAX_RESOURCE_FILE_BYTES,
   type AddClientResourceResult,
@@ -114,7 +115,7 @@ export class ClientResourcesController {
     args: LoaderFunctionArgs,
     resourceId: string | undefined,
   ): Promise<Response> {
-    const requester = requireCoach(args);
+    const requester = requireAccount(args);
     const id = idSchema.safeParse(resourceId);
 
     if (!id.success) {
@@ -141,7 +142,7 @@ export class ClientResourcesController {
     args: LoaderFunctionArgs,
     wanted: { resourceId: string | undefined; preview: ResourcePreview | null },
   ): Promise<Response> {
-    const requester = requireCoach(args);
+    const requester = requireAccount(args);
     const id = idSchema.safeParse(wanted.resourceId);
 
     if (!id.success || !wanted.preview) {
@@ -163,9 +164,15 @@ export class ClientResourcesController {
 }
 
 function requireCoach(args: LoaderFunctionArgs): ResourceRequester {
-  const coach = requireApiAccount(args, { role: "COACH" });
+  return requesterOf(requireApiAccount(args, { role: "COACH" }));
+}
 
-  return { role: coach.role, authSubjectId: coach.authSubjectId };
+function requireAccount(args: LoaderFunctionArgs): ResourceRequester {
+  return requesterOf(requireApiAccount(args));
+}
+
+function requesterOf(account: AccountSnapshot): ResourceRequester {
+  return { role: account.role, authSubjectId: account.authSubjectId };
 }
 
 function addingResponse(result: AddClientResourceResult): Response {

@@ -21,4 +21,8 @@ export const clientResourcesApiRoutes = [
     CLIENT_RESOURCES_API_PATHS.resourceDownload.slice(1),
     "./api/resources/resource-download.ts",
   ),
+  route(
+    CLIENT_RESOURCES_API_PATHS.resourceOpened.slice(1),
+    "./api/resources/resource-opened.ts",
+  ),
 ];
