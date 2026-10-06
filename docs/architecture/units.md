@@ -1,6 +1,6 @@
 # Units
 
-Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; last update 2026-10-06 at commit cc1cef26, change review.
+Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; last update 2026-10-06 at commit ae332440, change review.
 
 | ID | Path:symbol | Component | Kind | Ring | Visibility | Actors | Status |
 |---|---|---|---|---|---|---|---|
