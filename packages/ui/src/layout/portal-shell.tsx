@@ -334,7 +334,6 @@ function PortalTabBar(props: PortalTabBarProps) {
         {tabs.map((tab) => {
           const state: NavigationItemState =
             tab.href === activeHref ? "current" : "idle";
-          const Icon = tab.icon;
 
           return (
             <li className="flex-1" key={tab.href}>
@@ -347,16 +346,7 @@ function PortalTabBar(props: PortalTabBarProps) {
                 data-parity={`tab-${parityHookSlug(tab.label)}`}
                 to={tab.href}
               >
-                <TabIcon>
-                  <Icon
-                    aria-hidden="true"
-                    size={22}
-                    strokeWidth={MOBILE_ICON_STROKE_WIDTHS[state]}
-                  />
-                  {tab.marked && (
-                    <AttentionDot className={TAB_ATTENTION_DOT_CLASS_NAME} />
-                  )}
-                </TabIcon>
+                <TabGlyph icon={tab.icon} marked={tab.marked} state={state} />
                 <span className="text-caption font-semibold">{tab.label}</span>
                 {tab.marked && <NewMarkLabel />}
               </RouterLink>
@@ -376,16 +366,7 @@ function PortalTabBar(props: PortalTabBarProps) {
             ref={more.buttonRef}
             type="button"
           >
-            <TabIcon>
-              <Ellipsis
-                aria-hidden="true"
-                size={22}
-                strokeWidth={MOBILE_ICON_STROKE_WIDTHS[more.state]}
-              />
-              {more.marked && (
-                <AttentionDot className={TAB_ATTENTION_DOT_CLASS_NAME} />
-              )}
-            </TabIcon>
+            <TabGlyph icon={Ellipsis} marked={more.marked} state={more.state} />
             <span className="text-caption font-semibold">More</span>
             {more.marked && <NewMarkLabel />}
           </button>
@@ -495,10 +476,25 @@ function PortalSheetNavigation(props: PortalSheetNavigationProps) {
   );
 }
 
-function TabIcon(props: PropsWithChildren) {
-  const { children } = props;
+type TabGlyphProps = {
+  icon: LucideIcon;
+  marked?: boolean;
+  state: NavigationItemState;
+};
 
-  return <span className="relative inline-flex">{children}</span>;
+function TabGlyph(props: TabGlyphProps) {
+  const { icon: Icon, marked, state } = props;
+
+  return (
+    <span className="relative inline-flex">
+      <Icon
+        aria-hidden="true"
+        size={22}
+        strokeWidth={MOBILE_ICON_STROKE_WIDTHS[state]}
+      />
+      {marked && <AttentionDot className={TAB_ATTENTION_DOT_CLASS_NAME} />}
+    </span>
+  );
 }
 
 type AttentionDotProps = {
