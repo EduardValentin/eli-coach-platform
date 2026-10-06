@@ -1,4 +1,4 @@
-import type { PaidCheckoutSession } from "./checkout-session-completion.server";
+import type { PaidCheckoutSession } from "./payment-event-types.server";
 
 export const PAYMENT_PURPOSE_METADATA_KEY = "purpose";
 

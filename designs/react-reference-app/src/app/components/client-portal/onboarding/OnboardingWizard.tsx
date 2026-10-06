@@ -46,8 +46,6 @@ const MISSING_CONSENT = 'Tick the box to carry on.';
 
 const RESUME_NOTE = 'Picking up where you left off.';
 
-const PHOTOS_SEND_NOTE = 'Your photos are sent with your answers.';
-
 const MANUAL_SCREENING_MESSAGE =
   "These safety questions are designed for ages 15 to 69. I'll go through your health questions with you directly before building your program.";
 
@@ -351,7 +349,6 @@ export function OnboardingWizard() {
                   }}
                   onPhotosChange={setPhotos}
                   photos={photos}
-                  sendNote={PHOTOS_SEND_NOTE}
                 />
                 <OnboardingConsent
                   agreement="disclaimer"

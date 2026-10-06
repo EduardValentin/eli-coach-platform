@@ -44,6 +44,7 @@ type ReviewedClient = {
   email: string;
   firstName: string;
   gender: VisitorGender;
+  subscriptionCancelledOrEnded: boolean;
 };
 
 type OnboardingPanelProps = {
@@ -243,11 +244,13 @@ function SubmittedOnboarding({
         />
       </div>
 
-      <StageActions
-        onApprove={() => setConfirmingApproval(true)}
-        onReview={enterReview}
-        stage={submitted.stage}
-      />
+      {client.subscriptionCancelledOrEnded ? null : (
+        <StageActions
+          onApprove={() => setConfirmingApproval(true)}
+          onReview={enterReview}
+          stage={submitted.stage}
+        />
+      )}
 
       <OnboardingReviewDialog
         firstName={client.firstName}

@@ -346,10 +346,10 @@ async function renderAction(
     const { state } = useLoaderData<{ state: CallSalesState }>();
 
     return (
-      <>
+      <div data-testid="payment-link-action-route">
         <PaymentLinkAction call={call} state={state} />
         <Toaster />
-      </>
+      </div>
     );
   };
   const router = createMemoryRouter(
@@ -371,6 +371,7 @@ async function renderAction(
   await waitFor(() => {
     expect(router.state.initialized).toBe(true);
   });
+  await screen.findByTestId("payment-link-action-route");
 
   return user;
 }

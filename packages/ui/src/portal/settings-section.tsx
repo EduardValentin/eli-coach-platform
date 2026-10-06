@@ -1,12 +1,14 @@
-import type { HTMLAttributes, ReactNode } from "react";
+import type { HTMLAttributes, ReactNode, Ref } from "react";
 
 import { cn } from "../lib/cn";
+import type { DataAttributes } from "../lib/data-attributes";
 import { WIDGET_TITLE_CLASS } from "../lib/typography";
 import { cardVariants } from "../primitives/card";
 import { Label } from "../primitives/label";
 
-type SettingsSectionProps = {
+type SettingsSectionProps = DataAttributes & {
   headingId: string;
+  headingRef?: Ref<HTMLHeadingElement>;
   title: ReactNode;
   icon?: ReactNode;
   description?: ReactNode;
@@ -17,15 +19,18 @@ type SettingsSectionProps = {
 
 export function SettingsSection({
   headingId,
+  headingRef,
   title,
   icon,
   description,
   footer,
   className,
   children,
+  ...dataAttributes
 }: SettingsSectionProps) {
   return (
     <section
+      {...dataAttributes}
       aria-labelledby={headingId}
       className={cn(
         cardVariants({ variant: "panel" }),
@@ -36,7 +41,12 @@ export function SettingsSection({
       <div className="border-b border-border-subtle px-5 py-4 sm:px-6">
         <h2
           id={headingId}
-          className={cn("flex items-center gap-2", WIDGET_TITLE_CLASS)}
+          ref={headingRef}
+          tabIndex={headingRef ? -1 : undefined}
+          className={cn(
+            "flex items-center gap-2 focus:outline-none",
+            WIDGET_TITLE_CLASS,
+          )}
         >
           {icon}
           {title}
@@ -75,6 +85,7 @@ type SettingsRowProps = Omit<
   title: ReactNode;
   description?: ReactNode;
   hint?: ReactNode;
+  problem?: ReactNode;
   layout?: SettingsRowLayout;
   children?: ReactNode;
 };
@@ -110,6 +121,7 @@ export function SettingsRow({
   title,
   description,
   hint,
+  problem,
   layout = "inline",
   children,
   ...rest
@@ -145,6 +157,7 @@ export function SettingsRow({
               {hint}
             </p>
           )}
+          {problem && <div className="mt-1">{problem}</div>}
         </div>
       </div>
       {children && (

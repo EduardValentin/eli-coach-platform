@@ -2,9 +2,9 @@
 
 import "@testing-library/jest-dom/vitest";
 
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ConfirmDialog } from "./confirm-dialog";
@@ -34,6 +34,59 @@ function SendLinkConfirmation(props: {
         open={open}
         title="Send payment link?"
         tone={props.tone}
+      />
+    </>
+  );
+}
+
+function CancellationConfirmation(props: {
+  confirmDisabled?: boolean;
+  problem?: string;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <button onClick={() => setOpen(true)} type="button">
+        Cancel
+      </button>
+      <ConfirmDialog
+        cancelLabel="Keep my coaching"
+        confirmDisabled={props.confirmDisabled}
+        confirmLabel="Cancel subscription"
+        description="You won't be charged again."
+        onConfirm={() => setOpen(false)}
+        onOpenChange={setOpen}
+        open={open}
+        title="Cancel subscription"
+        tone="destructive"
+      >
+        {props.problem && <p role="alert">{props.problem}</p>}
+      </ConfirmDialog>
+    </>
+  );
+}
+
+function CancellationReturningToHeading() {
+  const [open, setOpen] = useState(false);
+  const heading = useRef<HTMLHeadingElement>(null);
+
+  return (
+    <>
+      <h2 ref={heading} tabIndex={-1}>
+        Subscription
+      </h2>
+      <button onClick={() => setOpen(true)} type="button">
+        Cancel
+      </button>
+      <ConfirmDialog
+        confirmLabel="Cancel subscription"
+        description="You won't be charged again."
+        onConfirm={() => setOpen(false)}
+        onOpenChange={setOpen}
+        open={open}
+        returnFocusTo={heading}
+        title="Cancel subscription"
       />
     </>
   );
@@ -140,6 +193,50 @@ describe("ConfirmDialog", () => {
     expect(screen.getByRole("button", { name: "Send link" })).toHaveClass(
       "bg-primary",
     );
+  });
+
+  it("carries a body between its description and its actions", async () => {
+    // arrange
+    const user = userEvent.setup();
+    render(<CancellationConfirmation problem="The link could not be sent." />);
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+
+    // assert
+    expect(
+      within(screen.getByRole("dialog")).getByRole("alert"),
+    ).toHaveTextContent("The link could not be sent.");
+  });
+
+  it("holds its confirm button while the confirmation is under way", async () => {
+    // arrange
+    const user = userEvent.setup();
+    render(<CancellationConfirmation confirmDisabled />);
+
+    // act
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+
+    // assert
+    expect(
+      screen.getByRole("button", { name: "Cancel subscription" }),
+    ).toBeDisabled();
+  });
+
+  it("hands focus to the element it is told to once it closes", async () => {
+    // arrange
+    const user = userEvent.setup();
+    render(<CancellationReturningToHeading />);
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+
+    // act
+    await user.click(
+      screen.getByRole("button", { name: "Cancel subscription" }),
+    );
+
+    // assert
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Subscription" })).toHaveFocus();
   });
 
   it("confirms in the danger look when its action destroys something", async () => {

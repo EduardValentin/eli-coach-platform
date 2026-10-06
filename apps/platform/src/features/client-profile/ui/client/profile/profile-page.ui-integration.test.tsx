@@ -318,17 +318,12 @@ describe("the add measurements sheet", () => {
     );
   });
 
-  it("states when she agreed and opens the tiles once she has consented", async () => {
+  it("opens the tiles without asking again once she has consented", async () => {
     // arrange, act
     await openSheet(pageWith({ consentedAt: "2026-09-27T09:00:00.000Z" }));
 
     // assert
     const sheet = screen.getByRole("dialog", { name: "Add measurements" });
-    expect(
-      within(sheet).getByText(
-        "You agreed to share progress photos on 27 September 2026.",
-      ),
-    ).toBeInTheDocument();
     expect(within(sheet).queryByRole("checkbox")).not.toBeInTheDocument();
     expect(within(sheet).getByLabelText("Add back photo")).toBeEnabled();
   });

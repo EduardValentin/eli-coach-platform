@@ -35,6 +35,10 @@ export class ClientPortalShell {
     return scope.getByRole("link", { name: "Profile", exact: true });
   }
 
+  private settingsLinkIn(scope: Locator): Locator {
+    return scope.getByRole("link", { name: "Settings", exact: true });
+  }
+
   private nameLinkIn(scope: Locator, displayName: string): Locator {
     return scope.getByRole("link", { name: displayName, exact: true });
   }
@@ -73,6 +77,23 @@ export class ClientPortalShell {
 
   async openProfileFromTabs(): Promise<void> {
     await this.profileLinkIn(this.tabBar).click();
+  }
+
+  async openSettingsFromSidebar(): Promise<void> {
+    await this.settingsLinkIn(this.sidebarNavigation).click();
+  }
+
+  async openSettingsFromMoreSheet(): Promise<void> {
+    await this.openMore();
+    await this.expectSheetOpen();
+    await this.settingsLinkIn(this.moreSheet).click();
+    await expect(this.moreSheet).toBeHidden();
+  }
+
+  async expectSettingsCurrent(): Promise<void> {
+    await expect(
+      this.page.getByRole("link", { name: "Settings", exact: true }),
+    ).toHaveAttribute("aria-current", "page");
   }
 
   async openProfileFromSidebarName(displayName: string): Promise<void> {

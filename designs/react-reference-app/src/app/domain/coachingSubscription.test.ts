@@ -1,11 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import {
   cancel,
+  cancellationRule,
   canStartWork,
   currentPeriod,
   deriveStatus,
+  needsRefund,
+  outstandingRefundCents,
   periodEnd,
   resolveDay1,
+  settleRefund,
   startNow,
   type CoachingSubscription,
   type SubscriptionBundle,
@@ -15,6 +19,7 @@ import {
 
 const PURCHASED_AT = new Date(2026, 0, 10, 12);
 const WITHDRAWAL_DEADLINE = new Date(2026, 0, 24, 12);
+const AMOUNT_PAID_CENTS = 44700;
 
 type SubscriptionOverrides = {
   bundle?: SubscriptionBundle;
@@ -22,6 +27,7 @@ type SubscriptionOverrides = {
   day1?: Date;
   periodEndsAt?: Date;
   status?: CoachingSubscription['status'];
+  amountPaidCents?: number;
 };
 
 function subscription(overrides: SubscriptionOverrides): CoachingSubscription {
@@ -29,9 +35,11 @@ function subscription(overrides: SubscriptionOverrides): CoachingSubscription {
     bundle: overrides.bundle ?? 3,
     startPath: overrides.startPath ?? 'immediate',
     purchasedAt: PURCHASED_AT,
+    amountPaidCents: overrides.amountPaidCents ?? AMOUNT_PAID_CENTS,
     status: overrides.status ?? 'not-started',
     day1: overrides.day1,
     periodEndsAt: overrides.periodEndsAt,
+    paymentProblem: false,
   };
 }
 
@@ -226,24 +234,157 @@ describe('renewal periods', () => {
   });
 });
 
+describe('which cancellation applies', () => {
+  it('offers a full refund on the waiting path before the withdrawal deadline', () => {
+    // arrange
+    const waiting = subscription({ startPath: 'waiting' });
+
+    // act
+    const rule = cancellationRule(waiting, new Date(2026, 0, 23, 12));
+
+    // assert
+    expect(rule).toBe('full-refund');
+  });
+
+  it('offers no refund on the immediate path within 14 days of purchase', () => {
+    // arrange
+    const immediate = subscription({ startPath: 'immediate' });
+
+    // act
+    const rule = cancellationRule(immediate, new Date(2026, 0, 11, 12));
+
+    // assert
+    expect(rule).toBe('no-refund');
+  });
+
+  it('offers no refund on the waiting path once the withdrawal deadline is reached', () => {
+    // arrange
+    const waiting = subscription({ startPath: 'waiting' });
+
+    // act
+    const rule = cancellationRule(waiting, WITHDRAWAL_DEADLINE);
+
+    // assert
+    expect(rule).toBe('no-refund');
+  });
+
+  it('offers no refund on the immediate path 14 days after the purchase', () => {
+    // arrange
+    const immediate = subscription({ startPath: 'immediate' });
+
+    // act
+    const rule = cancellationRule(immediate, WITHDRAWAL_DEADLINE);
+
+    // assert
+    expect(rule).toBe('no-refund');
+  });
+
+  it('offers no refund on a running subscription past the withdrawal deadline', () => {
+    // arrange
+    const running = subscription({
+      day1: new Date(2026, 0, 15, 12),
+      status: 'active',
+    });
+
+    // act
+    const rule = cancellationRule(running, new Date(2026, 1, 1, 12));
+
+    // assert
+    expect(rule).toBe('no-refund');
+  });
+
+  it('offers nothing once the subscription is cancelled', () => {
+    // arrange
+    const cancelled = subscription({
+      status: 'cancelled',
+      periodEndsAt: new Date(2026, 3, 10, 12),
+    });
+
+    // act
+    const rule = cancellationRule(cancelled, new Date(2026, 1, 1, 12));
+
+    // assert
+    expect(rule).toBe('none');
+  });
+
+  it('offers nothing once the subscription has ended', () => {
+    // arrange
+    const ended = subscription({ status: 'ended' });
+
+    // act
+    const rule = cancellationRule(ended, new Date(2026, 0, 12, 12));
+
+    // assert
+    expect(rule).toBe('none');
+  });
+
+  it('drops the full refund once she lets Eli start now', () => {
+    // arrange
+    const started = startNow(subscription({ startPath: 'waiting' }));
+
+    // act
+    const rule = cancellationRule(started, new Date(2026, 0, 20, 12));
+
+    // assert
+    expect(rule).toBe('no-refund');
+  });
+});
+
 describe('cancelling', () => {
-  it('refunds a waiting subscription cancelled before the withdrawal deadline', () => {
+  it('ends a waiting subscription at once with the amount paid due back', () => {
     // arrange
     const waiting = subscription({ startPath: 'waiting' });
     const now = new Date(2026, 0, 20, 12);
 
     // act
-    const cancellation = cancel(waiting, now);
+    const cancelled = cancel(waiting, now);
 
     // assert
-    expect(cancellation).toEqual({
-      subscription: {
-        ...waiting,
-        status: 'ended',
-        cancelledAt: now,
-        periodEndsAt: now,
+    expect(cancelled).toEqual({
+      ...waiting,
+      status: 'ended',
+      cancelledAt: now,
+      periodEndsAt: now,
+      refund: {
+        amountCents: AMOUNT_PAID_CENTS,
+        reason: 'full-refund',
+        dueBy: new Date(2026, 1, 3, 12),
+        refundedCents: 0,
       },
-      fullRefund: true,
+    });
+  });
+
+  it('keeps access until the bundle runs out when an immediate subscription is cancelled within 14 days', () => {
+    // arrange
+    const immediate = subscription({ startPath: 'immediate' });
+    const now = new Date(2026, 0, 12, 12);
+
+    // act
+    const cancelled = cancel(immediate, now);
+
+    // assert
+    expect(cancelled).toEqual({
+      ...immediate,
+      status: 'cancelled',
+      cancelledAt: now,
+      periodEndsAt: new Date(2026, 3, 10, 12),
+    });
+  });
+
+  it('keeps access until the bundle runs out when cancelled without a refund before day 1', () => {
+    // arrange
+    const waiting = subscription({ startPath: 'waiting' });
+    const now = new Date(2026, 0, 30, 12);
+
+    // act
+    const cancelled = cancel(waiting, now);
+
+    // assert
+    expect(cancelled).toEqual({
+      ...waiting,
+      status: 'cancelled',
+      cancelledAt: now,
+      periodEndsAt: new Date(2026, 3, 10, 12),
     });
   });
 
@@ -251,43 +392,91 @@ describe('cancelling', () => {
     // arrange
     const running = subscription({
       bundle: 1,
-      day1: new Date(2026, 0, 15, 12),
-      status: 'active',
-    });
-    const now = new Date(2026, 0, 20, 12);
-
-    // act
-    const cancellation = cancel(running, now);
-
-    // assert
-    expect(cancellation).toEqual({
-      subscription: {
-        ...running,
-        status: 'cancelled',
-        cancelledAt: now,
-        periodEndsAt: new Date(2026, 1, 15, 12),
-      },
-      fullRefund: false,
-    });
-  });
-
-  it('refuses a refund once a waiting subscription has started', () => {
-    // arrange
-    const running = subscription({
-      bundle: 1,
       startPath: 'waiting',
       day1: WITHDRAWAL_DEADLINE,
       status: 'active',
     });
+    const now = new Date(2026, 1, 1, 12);
 
     // act
-    const cancellation = cancel(running, new Date(2026, 1, 1, 12));
+    const cancelled = cancel(running, now);
 
     // assert
-    expect(cancellation.fullRefund).toBe(false);
-    expect(cancellation.subscription.periodEndsAt).toEqual(
-      new Date(2026, 1, 24, 12),
-    );
+    expect(cancelled).toEqual({
+      ...running,
+      status: 'cancelled',
+      cancelledAt: now,
+      periodEndsAt: new Date(2026, 1, 24, 12),
+    });
+  });
+
+  it('leaves a cancelled subscription as it is', () => {
+    // arrange
+    const cancelled = subscription({
+      status: 'cancelled',
+      periodEndsAt: new Date(2026, 3, 10, 12),
+    });
+
+    // act
+    const again = cancel(cancelled, new Date(2026, 1, 1, 12));
+
+    // assert
+    expect(again).toBe(cancelled);
+  });
+});
+
+describe('settling a refund', () => {
+  const ended = cancel(
+    subscription({ startPath: 'waiting' }),
+    new Date(2026, 0, 20, 12),
+  );
+
+  it('reduces what is still due after a partial refund', () => {
+    // arrange
+    const settlement = { refundedCents: 20000, at: new Date(2026, 0, 22, 9) };
+
+    // act
+    const settled = settleRefund(ended, settlement);
+
+    // assert
+    expect(outstandingRefundCents(settled)).toBe(AMOUNT_PAID_CENTS - 20000);
+    expect(needsRefund(settled)).toBe(true);
+    expect(settled.refund?.refundedAt).toBeUndefined();
+  });
+
+  it('records the refund date once the whole amount is refunded', () => {
+    // arrange
+    const at = new Date(2026, 0, 22, 9);
+
+    // act
+    const settled = settleRefund(ended, {
+      refundedCents: AMOUNT_PAID_CENTS,
+      at,
+    });
+
+    // assert
+    expect(outstandingRefundCents(settled)).toBe(0);
+    expect(needsRefund(settled)).toBe(false);
+    expect(settled.refund?.refundedAt).toEqual(at);
+  });
+
+  it('records a refund Eli issues without a refund due as settled', () => {
+    // arrange
+    const cancelled = cancel(subscription({}), new Date(2026, 0, 30, 12));
+    const at = new Date(2026, 1, 2, 9);
+
+    // act
+    const settled = settleRefund(cancelled, { refundedCents: 10000, at });
+
+    // assert
+    expect(settled.refund).toEqual({
+      amountCents: 10000,
+      reason: 'coach-issued',
+      dueBy: at,
+      refundedCents: 10000,
+      refundedAt: at,
+    });
+    expect(needsRefund(settled)).toBe(false);
   });
 });
 

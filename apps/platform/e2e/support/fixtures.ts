@@ -10,9 +10,11 @@ import type pg from "pg";
 import { AccountPortal } from "./account-portal";
 import { BookingPage } from "./booking-page";
 import { ClientDashboard } from "./client-dashboard";
+import { ClientEndedPage } from "./client-ended-page";
 import { ClientOnboarding } from "./client-onboarding";
 import { ClientPortalShell } from "./client-portal-shell";
 import { ClientProfilePage } from "./client-profile-page";
+import { ClientSettingsPage } from "./client-settings-page";
 import { CoachAssessmentCallsPage } from "./coach-assessment-calls-page";
 import { CoachClientPage } from "./coach-client-page";
 import { CoachClientsPage } from "./coach-clients-page";
@@ -23,10 +25,12 @@ import {
 import { MeasurementRecords } from "./measurement-records";
 import { MeasurementsSheet } from "./measurements-sheet";
 import { OnboardingRecords } from "./onboarding-records";
+import { PaymentCardRecords } from "./payment-card-records";
 import { PhotoRequests } from "./photo-requests";
 import { PhotoLightbox } from "./photo-lightbox";
 import { PhotoView } from "./photo-view";
 import { PortalRequests } from "./portal-requests";
+import { PrivacyPolicyPage } from "./privacy-policy-page";
 import {
   insertInvitedClientRecords,
   insertPaidClientRecords,
@@ -52,11 +56,17 @@ import { createE2eDatabasePool } from "./database";
 import { requireEnv } from "./env";
 import { PublicNav } from "./public-nav";
 import { resolveRunId, runEmailPrefix } from "./run-id";
+import { StripeBillingPortalPage } from "./stripe-billing-portal-page";
 import { StripeCheckoutPage } from "./stripe-checkout";
 import {
-  cleanUpRecordedCheckoutSessions,
+  cleanUpRecordedStripeObjects,
   registerCheckoutSessionForCleanup,
 } from "./stripe-cleanup";
+import {
+  insertSubscribedClientRecords,
+  type SubscribedClient,
+  type SubscribedClientSeed,
+} from "./subscribed-clients";
 
 type PlatformFixtures = {
   siteOutOfWaitlistMode: void;
@@ -65,6 +75,9 @@ type PlatformFixtures = {
   clientOnboarding: ClientOnboarding;
   clientDashboard: ClientDashboard;
   clientProfile: ClientProfilePage;
+  clientSettings: ClientSettingsPage;
+  clientEnded: ClientEndedPage;
+  privacyPolicy: PrivacyPolicyPage;
   measurementsSheet: MeasurementsSheet;
   photoView: PhotoView;
   photoLightbox: PhotoLightbox;
@@ -72,6 +85,7 @@ type PlatformFixtures = {
   testEmail: string;
   visitorEmail: string;
   stripeCheckout: StripeCheckoutPage;
+  stripeBillingPortal: StripeBillingPortalPage;
   registerCheckoutSessionForCleanup: (sessionId: string) => void;
   bookingPage: BookingPage;
   coachAssessmentCalls: CoachAssessmentCallsPage;
@@ -96,6 +110,9 @@ type PlatformFixtures = {
     start: StartChoice,
     state?: ReviewState,
   ) => Promise<SubmittedClient>;
+  provisionSubscribedClient: (
+    seed: SubscribedClientSeed,
+  ) => Promise<SubscribedClient>;
   provisionClientInState: (state: ClientState) => Promise<PaidClient>;
   provisionProfiledClient: (
     profile: SubmissionProfile,
@@ -113,6 +130,7 @@ type PlatformFixtures = {
   portalRequests: PortalRequests;
   provisionCoach: () => Promise<void>;
   onboardingRecords: OnboardingRecords;
+  paymentCardRecords: PaymentCardRecords;
   signIn: () => Promise<void>;
   signInAsCoach: () => Promise<void>;
   signInAsOtherClient: () => Promise<void>;
@@ -295,6 +313,18 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
     await use(new ClientProfilePage(page));
   },
 
+  privacyPolicy: async ({ page }, use) => {
+    await use(new PrivacyPolicyPage(page));
+  },
+
+  clientSettings: async ({ page }, use) => {
+    await use(new ClientSettingsPage(page));
+  },
+
+  clientEnded: async ({ page }, use) => {
+    await use(new ClientEndedPage(page));
+  },
+
   measurementsSheet: async ({ page }, use) => {
     await use(new MeasurementsSheet(page));
   },
@@ -328,12 +358,16 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
     await use(new StripeCheckoutPage(page));
   },
 
+  stripeBillingPortal: async ({ page }, use) => {
+    await use(new StripeBillingPortalPage(page));
+  },
+
   // eslint-disable-next-line no-empty-pattern
   registerCheckoutSessionForCleanup: async ({}, use) => {
     await use((sessionId) =>
       registerCheckoutSessionForCleanup(sessionId, RUN_ID),
     );
-    await cleanUpRecordedCheckoutSessions(RUN_ID, "[e2e cleanup]");
+    await cleanUpRecordedStripeObjects(RUN_ID, "[e2e cleanup]");
   },
 
   bookingPage: async ({ page }, use) => {
@@ -432,6 +466,31 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
         );
       },
     );
+  },
+
+  provisionSubscribedClient: async (
+    { createClerkUser, databasePool, scenarioTag, testEmail },
+    use,
+  ) => {
+    await use(async (seed: SubscribedClientSeed) => {
+      const authSubjectId = await createClerkUser();
+
+      await databasePool.query(INSERT_ACCOUNT, [authSubjectId, "CLIENT"]);
+
+      return insertSubscribedClientRecords(
+        databasePool,
+        {
+          authSubjectId,
+          email: testEmail,
+          firstName: PAID_CLIENT_FIRST_NAME,
+          lastName: `Subscription ${scenarioTag}`,
+          gender: "female",
+          dateOfBirth: ADULT_DATE_OF_BIRTH,
+        },
+        { ...seed, runId: RUN_ID },
+      );
+    });
+    await cleanUpRecordedStripeObjects(RUN_ID, "[e2e cleanup]");
   },
 
   provisionClientInState: async (
@@ -598,6 +657,10 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
 
   onboardingRecords: async ({ databasePool, testEmail }, use) => {
     await use(new OnboardingRecords(databasePool, testEmail));
+  },
+
+  paymentCardRecords: async ({ databasePool }, use) => {
+    await use(new PaymentCardRecords(databasePool));
   },
 
   signIn: async ({ publicNav, accountPortal, testEmail }, use) => {

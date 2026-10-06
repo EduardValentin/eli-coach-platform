@@ -22,6 +22,7 @@ function renderGate(path: string) {
                   <Route element={<p>welcome page</p>} path="/portal/welcome" />
                   <Route element={<p>onboarding page</p>} path="/portal/onboarding" />
                   <Route element={<p>plan page</p>} path="/portal/plan" />
+                  <Route element={<p>ended page</p>} path="/portal/ended" />
                 </Route>
               </Routes>
             </ClientJourneyProvider>
@@ -112,5 +113,49 @@ describe('the client journey gate', () => {
 
     // assert
     expect(screen.getByText('plan page')).toBeVisible();
+  });
+
+  it('sends a client whose refundable cancellation ended her coaching to the ended page', () => {
+    // arrange
+    const path = '/portal/plan?session=client&jstage=reviewing&jrefund=due';
+
+    // act
+    renderGate(path);
+
+    // assert
+    expect(screen.getByText('ended page')).toBeVisible();
+  });
+
+  it('keeps a cancelled client in the portal until her access ends', () => {
+    // arrange
+    const path = '/portal/plan?session=client&jstage=reviewing&jsub=cancelled&jpaid=30';
+
+    // act
+    renderGate(path);
+
+    // assert
+    expect(screen.getByText('plan page')).toBeVisible();
+  });
+
+  it('sends a cancelled client to the ended page once her access has run out', () => {
+    // arrange
+    const path = '/portal/plan?session=client&jstage=reviewing&jsub=cancelled&jpaid=100';
+
+    // act
+    renderGate(path);
+
+    // assert
+    expect(screen.getByText('ended page')).toBeVisible();
+  });
+
+  it('keeps a client whose coaching runs away from the ended page', () => {
+    // arrange
+    const path = '/portal/ended?session=client&jstage=reviewing';
+
+    // act
+    renderGate(path);
+
+    // assert
+    expect(screen.getByText('portal home')).toBeVisible();
   });
 });

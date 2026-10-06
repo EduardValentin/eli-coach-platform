@@ -15,6 +15,7 @@ type ResendInvitationResult =
   | { status: "sent"; email: string }
   | { status: "failed" }
   | { status: "already-admitted" }
+  | { status: "subscription-cancelled-or-ended" }
   | { status: "not-found" };
 
 type ResendInvitationUseCaseOptions = {
@@ -38,6 +39,10 @@ export class ResendInvitationUseCase {
 
     if (!client || !invitation) {
       return { status: "not-found" };
+    }
+
+    if (client.subscriptionCancelledOrEnded) {
+      return { status: "subscription-cancelled-or-ended" };
     }
 
     if (client.authSubjectId || invitation.usedAt) {

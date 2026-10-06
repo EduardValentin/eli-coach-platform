@@ -1,105 +1,217 @@
-import { useState } from 'react';
+import { useRef, useState, type RefObject } from 'react';
 import { CreditCard } from 'lucide-react';
+import { toast } from 'sonner';
+import { useAppState } from '../../context/AppContext';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
 import {
-  canStartWork,
-  workStartDate,
+  cancellationRule,
   deriveStatus,
   type CoachingSubscription,
   type SubscriptionStatus,
 } from '../../domain/coachingSubscription';
-import { cancelSubscription as sendCancellation } from '../../services/subscriptionService';
+import {
+  cancelSubscription as sendCancellation,
+  subscriptionErrorMessage,
+} from '../../services/subscriptionService';
 import {
   bundleLengthLabel,
   formatJourneyDate,
 } from '../../utils/journeyLabels';
-import { Button } from '../ui/button';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '../ui/alert-dialog';
+  CANCEL_ACTION_LABELS,
+  CANCEL_ROW_ACTION_LABEL,
+  CANCELLING_LABEL,
+  cancelConfirmation,
+  cancellationFacts,
+  cancelledToast,
+  CHANGE_ROW_ACTION_LABEL,
+  KEEP_COACHING_LABEL,
+  OPENING_PAYMENT_METHOD_LABEL,
+  type OfferedCancellation,
+} from '../../utils/subscriptionCopy';
+import { Button } from '../ui/button';
+import { ConfirmDialog } from '../ui/confirm-dialog';
+import { InlineProblem } from '../InlineProblem';
 import { SettingsRow, SettingsRows, SettingsSection } from '../SettingsSection';
+import { CardOnFileReading } from './CardOnFileReading';
+import { PaymentMethodProblems } from './PaymentMethodProblems';
+import { usePaymentMethodPortal } from './usePaymentMethodPortal';
 
-const REFUND_CANCEL_LABEL = 'Cancel and get a full refund';
+const ROW_ACTION_CLASS = 'w-full sm:w-28';
 
-const CANCEL_LABEL = 'Cancel subscription';
+const CANCELLATION_IDS = {
+  title: 'subscription-cancel-label',
+  description: 'subscription-cancel-description',
+};
 
-const REFUND_CONFIRMATION =
-  "You'll get a full refund and your access ends right away.";
+const PAYMENT_METHOD_IDS = {
+  title: 'subscription-payment-label',
+  card: 'subscription-payment-card',
+  paymentProblem: 'subscription-payment-problem',
+  handOffProblem: 'subscription-payment-method-problem',
+};
 
-function cancellationFacts(periodEndsAt: Date | undefined): string {
-  const access = periodEndsAt
-    ? `your access stays until ${formatJourneyDate(periodEndsAt)}`
-    : 'your access stays until the end of the coaching you paid for';
-
-  return `You won't be charged again, there is no refund for the coaching already paid, and ${access}.`;
-}
-
-function refundFacts(subscription: CoachingSubscription): string {
-  const deadline = workStartDate(subscription);
-  const until = deadline ? `Until ${formatJourneyDate(deadline)} you` : 'You';
-
-  return `${until} can cancel for a full refund. Your access ends right away.`;
-}
-
-function cancelAction(
-  subscription: CoachingSubscription,
-  now: Date,
-): string | null {
-  if (!canStartWork(subscription, now)) return REFUND_CANCEL_LABEL;
-
-  return deriveStatus(subscription, now) === 'active' ? CANCEL_LABEL : null;
-}
+type OpenStatus = Exclude<SubscriptionStatus, 'ended'>;
 
 function planDescription(
   subscription: CoachingSubscription,
-  status: Exclude<SubscriptionStatus, 'ended'>,
+  status: OpenStatus,
 ): string {
   const paid = `Paid ${formatJourneyDate(subscription.purchasedAt)}`;
-  if (status === 'cancelled' && subscription.cancelledAt) {
-    return `${paid} · cancelled ${formatJourneyDate(subscription.cancelledAt)}.`;
+  const { cancelledAt, periodEndsAt } = subscription;
+
+  if (status === 'cancelled' && cancelledAt && periodEndsAt) {
+    return `${paid} · cancelled ${formatJourneyDate(cancelledAt)} · access until ${formatJourneyDate(periodEndsAt)}.`;
   }
-  if (status === 'active' && subscription.day1) {
-    return `${paid} · started ${formatJourneyDate(subscription.day1)}.`;
+  if (status === 'active' && periodEndsAt) {
+    return `Active until ${formatJourneyDate(periodEndsAt)} · renews then unless you cancel first.`;
   }
-  return `${paid} · starts when your program is ready.`;
+  return `${paid} · starts when your program is delivered.`;
 }
 
-function renewalRow(
-  subscription: CoachingSubscription,
-  status: Exclude<SubscriptionStatus, 'ended'>,
-): { title: string; description: string } | null {
-  const endsAt = subscription.periodEndsAt;
-  if (!endsAt) {
-    if (status === 'cancelled') return null;
-    return {
-      title: 'Renews once your program starts',
-      description: 'Your first term runs from your start date.',
-    };
-  }
-  if (status === 'cancelled') {
-    return {
-      title: `Access until ${formatJourneyDate(endsAt)}`,
-      description: "You won't be charged again.",
-    };
-  }
-  return {
-    title: `Renews on ${formatJourneyDate(endsAt)}`,
-    description:
-      'Your next term is charged on this date unless you cancel first.',
+type CancellationRowProps = {
+  rule: OfferedCancellation;
+  subscription: CoachingSubscription;
+  onCancelled: (cancelled: CoachingSubscription) => void;
+  focusAfterCancelling: RefObject<HTMLElement | null>;
+};
+
+function CancellationRow({
+  rule,
+  subscription,
+  onCancelled,
+  focusAfterCancelling,
+}: CancellationRowProps) {
+  const { appState } = useAppState();
+  const [confirming, setConfirming] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+  const now = new Date();
+  const action = CANCEL_ACTION_LABELS[rule];
+
+  const changeConfirming = (open: boolean) => {
+    setConfirming(open);
+    if (!open) setProblem(null);
   };
+
+  const confirm = async () => {
+    setCancelling(true);
+    setProblem(null);
+
+    try {
+      const cancelled = await sendCancellation(
+        subscription,
+        new Date(),
+        appState.cancelOutcome,
+      );
+      setConfirming(false);
+      onCancelled(cancelled);
+    } catch (error) {
+      setProblem(subscriptionErrorMessage(error, 'cancel-unavailable'));
+    } finally {
+      setCancelling(false);
+    }
+  };
+
+  return (
+    <SettingsRow
+      data-parity="subscription-cancellation"
+      description={cancellationFacts(rule, subscription, now)}
+      descriptionId={CANCELLATION_IDS.description}
+      labelId={CANCELLATION_IDS.title}
+      title="Cancellation"
+    >
+      <Button
+        aria-describedby={`${CANCELLATION_IDS.title} ${CANCELLATION_IDS.description}`}
+        className={ROW_ACTION_CLASS}
+        data-parity="cancel-action"
+        onClick={() => setConfirming(true)}
+        size="sm"
+        type="button"
+        variant="destructive-outline"
+      >
+        {CANCEL_ROW_ACTION_LABEL}
+      </Button>
+
+      <ConfirmDialog
+        cancelLabel={KEEP_COACHING_LABEL}
+        confirmDisabled={cancelling}
+        confirmLabel={cancelling ? CANCELLING_LABEL : action}
+        description={cancelConfirmation(rule, subscription, now)}
+        onConfirm={() => void confirm()}
+        onOpenChange={changeConfirming}
+        open={confirming}
+        returnFocusTo={focusAfterCancelling}
+        title={action}
+        tone="destructive"
+      >
+        {problem && (
+          <InlineProblem data-parity="cancel-problem" role="alert">
+            {problem}
+          </InlineProblem>
+        )}
+      </ConfirmDialog>
+    </SettingsRow>
+  );
+}
+
+function PaymentMethodRow({
+  subscription,
+}: {
+  subscription: CoachingSubscription;
+}) {
+  const { open, opening, problem } = usePaymentMethodPortal();
+  const { paymentProblem } = subscription;
+  const describedBy = [
+    PAYMENT_METHOD_IDS.title,
+    PAYMENT_METHOD_IDS.card,
+    ...(paymentProblem ? [PAYMENT_METHOD_IDS.paymentProblem] : []),
+    ...(problem ? [PAYMENT_METHOD_IDS.handOffProblem] : []),
+  ].join(' ');
+
+  return (
+    <SettingsRow
+      data-parity="subscription-payment-method"
+      description={<CardOnFileReading card={subscription.cardOnFile} />}
+      descriptionId={PAYMENT_METHOD_IDS.card}
+      labelId={PAYMENT_METHOD_IDS.title}
+      problem={
+        (paymentProblem || problem) && (
+          <div className="grid gap-1 pt-1">
+            <PaymentMethodProblems
+              handOffProblem={problem}
+              lineAttributes={{
+                paymentProblem: { id: PAYMENT_METHOD_IDS.paymentProblem },
+                handOffProblem: { id: PAYMENT_METHOD_IDS.handOffProblem },
+              }}
+              subscription={subscription}
+            />
+          </div>
+        )
+      }
+      title="Payment method"
+    >
+      <Button
+        aria-busy={opening}
+        aria-describedby={describedBy}
+        className={ROW_ACTION_CLASS}
+        data-parity="manage-payment-method"
+        disabled={opening}
+        onClick={() => void open()}
+        size="sm"
+        type="button"
+        variant="outline"
+      >
+        {opening ? OPENING_PAYMENT_METHOD_LABEL : CHANGE_ROW_ACTION_LABEL}
+      </Button>
+    </SettingsRow>
+  );
 }
 
 export function SubscriptionSection() {
   const { demoJourney, cancelSubscription } = useClientJourneys();
-  const [confirming, setConfirming] = useState(false);
-  const [cancelling, setCancelling] = useState(false);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+  const focusAfterCancelling = useRef<HTMLElement | null>(null);
 
   const { subscription } = demoJourney;
   if (!subscription) return null;
@@ -108,21 +220,21 @@ export function SubscriptionSection() {
   const status = deriveStatus(subscription, now);
   if (status === 'ended') return null;
 
-  const refundable = !canStartWork(subscription, now);
-  const action = cancelAction(subscription, now);
-  const renewal = renewalRow(subscription, status);
+  const rule = cancellationRule(subscription, now);
 
-  const confirm = async () => {
-    setCancelling(true);
-    const cancelled = await sendCancellation(subscription, new Date());
-    cancelSubscription(demoJourney.callId, cancelled.subscription);
-    setCancelling(false);
-    setConfirming(false);
+  const recordCancellation = (cancelled: CoachingSubscription) => {
+    cancelSubscription(demoJourney.callId, cancelled);
+    if (cancelled.status !== 'cancelled' || !cancelled.periodEndsAt) return;
+
+    focusAfterCancelling.current = headingRef.current;
+    toast.success(cancelledToast(cancelled.periodEndsAt));
   };
 
   return (
     <SettingsSection
       headingId="subscription-heading"
+      headingRef={headingRef}
+      parityRoot="SubscriptionSection"
       title="Subscription"
       icon={
         <CreditCard
@@ -131,66 +243,28 @@ export function SubscriptionSection() {
           size={18}
         />
       }
-      description="Your coaching plan, when it renews, and how to cancel."
     >
       <SettingsRows>
         <SettingsRow
+          data-parity="subscription-plan"
           labelId="subscription-plan-label"
           title={`${bundleLengthLabel(subscription.bundle)} of coaching`}
           description={planDescription(subscription, status)}
         />
 
-        {renewal && (
-          <SettingsRow
-            labelId="subscription-renewal-label"
-            title={renewal.title}
-            description={renewal.description}
+        {rule !== 'none' && (
+          <CancellationRow
+            focusAfterCancelling={focusAfterCancelling}
+            onCancelled={recordCancellation}
+            rule={rule}
+            subscription={subscription}
           />
         )}
 
-        {action && (
-          <SettingsRow
-            labelId="subscription-cancel-label"
-            title="Cancellation"
-            description={
-              refundable
-                ? refundFacts(subscription)
-                : cancellationFacts(subscription.periodEndsAt)
-            }
-          >
-            <Button
-              disabled={cancelling}
-              onClick={() => setConfirming(true)}
-              variant="destructive-outline"
-              size="sm"
-            >
-              Cancel
-            </Button>
-          </SettingsRow>
+        {status !== 'cancelled' && (
+          <PaymentMethodRow subscription={subscription} />
         )}
       </SettingsRows>
-
-      <AlertDialog onOpenChange={setConfirming} open={confirming}>
-        <AlertDialogContent className="rounded-card sm:max-w-md">
-          <AlertDialogHeader>
-            <AlertDialogTitle>{action ?? CANCEL_LABEL}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {refundable
-                ? REFUND_CONFIRMATION
-                : cancellationFacts(subscription.periodEndsAt)}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Keep my coaching</AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              onClick={() => void confirm()}
-            >
-              {action ?? CANCEL_LABEL}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </SettingsSection>
   );
 }

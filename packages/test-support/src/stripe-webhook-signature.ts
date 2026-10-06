@@ -1,7 +1,7 @@
 import { createHmac } from "node:crypto";
 
 export type StripeWebhookEvent = {
-  data: { object: unknown };
+  data: { object: unknown; previous_attributes?: Record<string, unknown> };
   id: string;
   type: string;
 };

@@ -394,8 +394,89 @@ describe('the coach clients list', () => {
     // assert
     expect(names).toContain('Sarah Jenkins');
     expect(
-      screen.getAllByRole('button', { name: 'Terminate' }).length,
-    ).toBeGreaterThan(0);
+      screen.queryByRole('button', { name: 'Terminate' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Remove' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('flags a client who still needs her refund beside her status', () => {
+    // arrange
+    renderMvpList('?jstage=submitted&jrefund=due');
+
+    // act
+    const row = rowFor('Jane Doe');
+
+    // assert
+    expect(within(row).getByText('Inactive')).toBeInTheDocument();
+    expect(within(row).getByText('Needs refund')).toBeInTheDocument();
+  });
+
+  it('keeps flagging a partly refunded client', () => {
+    // arrange
+    renderMvpList('?jstage=submitted&jrefund=part-refunded');
+
+    // act
+    const row = rowFor('Jane Doe');
+
+    // assert
+    expect(within(row).getByText('Needs refund')).toBeInTheDocument();
+  });
+
+  it('drops the flag once her refund is settled', () => {
+    // arrange
+    renderMvpList('?jstage=submitted&jrefund=refunded');
+
+    // act
+    const row = rowFor('Jane Doe');
+
+    // assert
+    expect(within(row).getByText('Inactive')).toBeInTheDocument();
+    expect(within(row).queryByText('Needs refund')).not.toBeInTheDocument();
+  });
+
+  it('offers to view, not review, a client whose coaching has ended', () => {
+    // arrange
+    renderMvpList('?jstage=submitted&jsub=ended');
+
+    // act
+    const row = rowFor('Jane Doe');
+
+    // assert
+    expect(
+      within(row).getByRole('link', { name: 'View details for Jane Doe' }),
+    ).toBeInTheDocument();
+  });
+
+  it('shows a client who cancelled without a refund as Cancelled', () => {
+    // arrange
+    renderMvpList('?jstage=submitted&jsub=cancelled');
+
+    // act
+    const row = rowFor('Jane Doe');
+
+    // assert
+    expect(within(row).getByText('Cancelled')).toBeInTheDocument();
+    expect(within(row).queryByText('Needs refund')).not.toBeInTheDocument();
+  });
+
+  it('flags the refund from the Dev Toggle', async () => {
+    // arrange
+    const user = renderMvpList('?jstage=submitted');
+    await user.click(screen.getByRole('button', { name: 'Open Dev Toggle' }));
+    await user.click(screen.getByRole('tab', { name: 'Journey' }));
+
+    // act
+    await user.click(screen.getByRole('combobox', { name: 'Refund' }));
+    await user.click(await screen.findByRole('option', { name: 'Due' }));
+
+    // assert
+    expect(
+      within(rowFor('Jane Doe')).getByText('Needs refund'),
+    ).toBeInTheDocument();
+    expect(window.location.search).toContain('jrefund=due');
+    expect(window.location.search).toContain('jsub=ended');
   });
 
   it('shows the no-clients empty state when the URL empties the roster', () => {

@@ -9,6 +9,7 @@ import type { OnboardingReviews } from "./onboarding-reviews";
 type ApproveOnboardingAnswersResult =
   | { status: "approved" }
   | { status: "not-found" }
+  | { status: "subscription-cancelled-or-ended" }
   | { status: "not-reviewable" };
 
 type ApproveOnboardingAnswersUseCaseOptions = {
@@ -29,6 +30,10 @@ export class ApproveOnboardingAnswersUseCase {
 
     if (!client) {
       return { status: "not-found" };
+    }
+
+    if (client.subscriptionCancelledOrEnded) {
+      return { status: "subscription-cancelled-or-ended" };
     }
 
     const [stored, reviewed] = await Promise.all([

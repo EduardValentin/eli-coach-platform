@@ -60,7 +60,6 @@ const PARQ_DECLARATION =
   "I have read, understood and completed this questionnaire. My answers are true and complete to the best of my knowledge. If my health changes, I will let my coach know and complete this questionnaire again.";
 const PROGRESS_PHOTO_CONSENT =
   "I agree to share progress photos with my coach. They are only used to follow my progress, and I can ask for them to be deleted at any time.";
-const PHOTOS_SEND_NOTE = "Your photos are sent with your answers.";
 const PHOTOS_LOCKED_NOTE = "Tick the box to add your photos.";
 const NO_PHOTO_OUTCOMES = { front: "absent", side: "absent", back: "absent" };
 const FRONT_REFUSED =
@@ -1411,10 +1410,9 @@ describe("the progress photos on the last form", { timeout: 15_000 }, () => {
     // assert
     expect(screen.getByLabelText("Add front photo")).toBeDisabled();
     expect(screen.getByText(PHOTOS_LOCKED_NOTE)).toBeVisible();
-    expect(screen.queryByText(PHOTOS_SEND_NOTE)).not.toBeInTheDocument();
   });
 
-  it("opens the front, side and back tiles once she agrees, saying the photos go with her answers", async () => {
+  it("opens the front, side and back tiles once she agrees", async () => {
     // arrange
     const user = userEvent.setup();
     await openOnboarding(pageAt(4));
@@ -1428,7 +1426,6 @@ describe("the progress photos on the last form", { timeout: 15_000 }, () => {
     expect(screen.getByLabelText("Add front photo")).toBeEnabled();
     expect(screen.getByLabelText("Add side photo")).toBeEnabled();
     expect(screen.getByLabelText("Add back photo")).toBeEnabled();
-    expect(screen.getByText(PHOTOS_SEND_NOTE)).toBeVisible();
     expect(screen.queryByText(PHOTOS_LOCKED_NOTE)).not.toBeInTheDocument();
   });
 

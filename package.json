@@ -9,6 +9,8 @@
     "overrides": {
       "@types/node": "catalog:",
       "brace-expansion@>=5.0.0 <5.0.11": "5.0.11",
+      "compression": "1.8.2",
+      "proxy-addr": "2.0.8",
       "qs": "6.16.0"
     }
   },
@@ -35,10 +37,13 @@
     "store:assets:local:prepare": "./scripts/dev/prepare_local_store_assets.sh",
     "terms:pdf": "pnpm --filter @eli-coach-platform/content terms:pdf",
     "test": "pnpm typecheck && vitest run",
+    "test:unit": "pnpm typecheck && vitest run --project unit --project tools",
+    "test:integration": "vitest run --project integration",
     "test:e2e": "pnpm --filter @eli-coach-platform/platform test:e2e",
     "test:lighthouse": "lhci autorun --config=./lighthouserc.cjs",
     "typecheck": "pnpm -r --if-present typecheck",
-    "validate": "pnpm lint && pnpm check:boundaries && pnpm test && STORE_ASSET_ROOT=/tmp/eli-coach-store-assets-build MANAGEMENT_API_SECRET=validation-build-management-api-secret-value pnpm build && pnpm check:deploy",
+    "validate": "pnpm validate:unit && pnpm test:integration",
+    "validate:unit": "pnpm lint && pnpm check:boundaries && pnpm test:unit && STORE_ASSET_ROOT=/tmp/eli-coach-store-assets-build MANAGEMENT_API_SECRET=validation-build-management-api-secret-value pnpm build && pnpm check:deploy",
     "check:deploy": "rm -rf /tmp/eli-coach-platform-deploy-check && pnpm --filter @eli-coach-platform/platform --prod deploy /tmp/eli-coach-platform-deploy-check && node tools/check-deploy-resolves.mjs /tmp/eli-coach-platform-deploy-check"
   },
   "devDependencies": {

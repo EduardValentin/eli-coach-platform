@@ -25,6 +25,7 @@ const CLIENT: OnboardingClient = {
     detailsAnsweredAt: null,
     answersApprovedAt: null,
   },
+  subscriptionCancelledOrEnded: false,
 };
 const DRAFT = emptyDraft(new Date("2026-09-28T10:00:00.000Z"));
 

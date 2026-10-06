@@ -1,10 +1,17 @@
 import { describe, expect, it, vi } from "vitest";
 
+import {
+  CoachingSubscription,
+  type CoachingSubscriptions,
+  type CoachingSubscriptionSnapshot,
+  type StartChoice,
+} from "../coaching-subscription";
+
 import { ClientJourney, type ClientJourneySnapshot } from "./client-journey";
 import type { ClientJourneys } from "./client-journeys";
-import type { ClientSubscriptionStarts } from "./client-subscription-starts";
 import { MarkWelcomeSeenUseCase } from "./mark-welcome-seen-use-case";
 import { ReadClientJourneyUseCase } from "./read-client-journey-use-case";
+import { ReadClientPortalStandingUseCase } from "./read-client-portal-standing-use-case";
 import { ReadProgramStatusUseCase } from "./read-program-status-use-case";
 
 const NOW = new Date("2026-09-27T10:00:00.000Z");
@@ -47,12 +54,42 @@ function createJourneys(found: ClientJourney | null) {
   } satisfies ClientJourneys;
 }
 
-function createSubscriptionStarts(
-  found: Awaited<ReturnType<ClientSubscriptionStarts["findOpenForClient"]>>,
-) {
+function subscriptionOf(
+  overrides: Partial<CoachingSubscriptionSnapshot> & {
+    startChoice: StartChoice;
+  },
+): CoachingSubscription {
+  return CoachingSubscription.reconstitute({
+    id: "subscription-1",
+    clientId: "client-1",
+    bundleId: "3-months",
+    months: 3,
+    tier: "regular",
+    amountCents: 44700,
+    currency: "eur",
+    paymentCustomerId: "cus_1",
+    paymentSubscriptionId: "sub_1",
+    checkoutSessionId: "cs_1",
+    paidAt: PURCHASED_AT,
+    status: "not-started",
+    cancelledAt: null,
+    accessEndsAt: null,
+    paymentProblemSince: null,
+    refund: null,
+    ...overrides,
+  });
+}
+
+function createSubscriptions(found: CoachingSubscription | null) {
   return {
-    findOpenForClient: vi.fn().mockResolvedValue(found),
-  } satisfies ClientSubscriptionStarts;
+    findCurrentForClient: vi.fn().mockResolvedValue(found),
+    findCurrentForAuthSubject: vi.fn(),
+    findByPaymentSubscriptionId: vi.fn(),
+    findCurrentByPaymentCustomerId: vi.fn(),
+    findByPaymentIntentId: vi.fn(),
+    save: vi.fn(),
+    saveForEvent: vi.fn(),
+  } satisfies CoachingSubscriptions;
 }
 
 describe("ReadClientJourneyUseCase", () => {
@@ -131,13 +168,13 @@ describe("MarkWelcomeSeenUseCase", () => {
 describe("ReadProgramStatusUseCase", () => {
   it("answers her submission with no later start when she started immediately", async () => {
     // arrange
-    const subscriptionStarts = createSubscriptionStarts({
-      startChoice: "immediate",
-      purchasedAt: PURCHASED_AT,
-    });
+    const subscriptions = createSubscriptions(
+      subscriptionOf({ startChoice: "immediate" }),
+    );
     const useCase = new ReadProgramStatusUseCase({
+      clock: { now: () => NOW },
       journeys: createJourneys(journey(WELCOME_SEEN_AT, SUBMITTED_AT)),
-      subscriptionStarts,
+      subscriptions,
     });
 
     // act
@@ -148,20 +185,19 @@ describe("ReadProgramStatusUseCase", () => {
       kind: "submitted",
       submittedAt: SUBMITTED_AT,
       workStartsOn: null,
+      startNowUntil: null,
     });
-    expect(subscriptionStarts.findOpenForClient).toHaveBeenCalledWith(
-      "client-1",
-    );
+    expect(subscriptions.findCurrentForClient).toHaveBeenCalledWith("client-1");
   });
 
-  it("answers her submission with the day the work starts when she waits out the withdrawal window", async () => {
+  it("answers her submission with the day the work starts and until when she can start now when she waits out the withdrawal window", async () => {
     // arrange
     const useCase = new ReadProgramStatusUseCase({
+      clock: { now: () => NOW },
       journeys: createJourneys(journey(WELCOME_SEEN_AT, SUBMITTED_AT)),
-      subscriptionStarts: createSubscriptionStarts({
-        startChoice: "waiting",
-        purchasedAt: PURCHASED_AT,
-      }),
+      subscriptions: createSubscriptions(
+        subscriptionOf({ startChoice: "waiting" }),
+      ),
     });
 
     // act
@@ -172,14 +208,36 @@ describe("ReadProgramStatusUseCase", () => {
       kind: "submitted",
       submittedAt: SUBMITTED_AT,
       workStartsOn: new Date("2026-10-10T10:00:00.000Z"),
+      startNowUntil: new Date("2026-10-10T10:00:00.000Z"),
     });
   });
 
-  it("answers her submission with no start day when she holds no open subscription", async () => {
+  it("answers neither a coming work start nor start now once her withdrawal deadline has passed on the waiting path", async () => {
     // arrange
     const useCase = new ReadProgramStatusUseCase({
+      clock: { now: () => new Date("2026-10-10T10:00:00.000Z") },
       journeys: createJourneys(journey(WELCOME_SEEN_AT, SUBMITTED_AT)),
-      subscriptionStarts: createSubscriptionStarts(null),
+      subscriptions: createSubscriptions(
+        subscriptionOf({ startChoice: "waiting" }),
+      ),
+    });
+
+    // act
+    const status = await useCase.execute("user_ana");
+
+    // assert
+    expect(status).toMatchObject({
+      workStartsOn: null,
+      startNowUntil: null,
+    });
+  });
+
+  it("answers her submission with no start day when she holds no subscription", async () => {
+    // arrange
+    const useCase = new ReadProgramStatusUseCase({
+      clock: { now: () => NOW },
+      journeys: createJourneys(journey(WELCOME_SEEN_AT, SUBMITTED_AT)),
+      subscriptions: createSubscriptions(null),
     });
 
     // act
@@ -190,6 +248,7 @@ describe("ReadProgramStatusUseCase", () => {
       kind: "submitted",
       submittedAt: SUBMITTED_AT,
       workStartsOn: null,
+      startNowUntil: null,
     });
   });
 
@@ -205,20 +264,20 @@ describe("ReadProgramStatusUseCase", () => {
     async (expected, reviewStamps) => {
       // arrange
       const useCase = new ReadProgramStatusUseCase({
+        clock: { now: () => NOW },
         journeys: createJourneys(
           journey(WELCOME_SEEN_AT, SUBMITTED_AT, reviewStamps),
         ),
-        subscriptionStarts: createSubscriptionStarts(null),
+        subscriptions: createSubscriptions(null),
       });
 
       // act
       const status = await useCase.execute("user_ana");
 
       // assert
-      expect(status).toEqual({
+      expect(status).toMatchObject({
         kind: expected,
         submittedAt: SUBMITTED_AT,
-        workStartsOn: null,
       });
     },
   );
@@ -228,13 +287,13 @@ describe("ReadProgramStatusUseCase", () => {
     ["a subject bound to no client", null],
   ])("answers no status for %s", async (_label, found) => {
     // arrange
-    const subscriptionStarts = createSubscriptionStarts({
-      startChoice: "waiting",
-      purchasedAt: PURCHASED_AT,
-    });
+    const subscriptions = createSubscriptions(
+      subscriptionOf({ startChoice: "waiting" }),
+    );
     const useCase = new ReadProgramStatusUseCase({
+      clock: { now: () => NOW },
       journeys: createJourneys(found),
-      subscriptionStarts,
+      subscriptions,
     });
 
     // act
@@ -242,6 +301,112 @@ describe("ReadProgramStatusUseCase", () => {
 
     // assert
     expect(status).toBeNull();
-    expect(subscriptionStarts.findOpenForClient).not.toHaveBeenCalled();
+    expect(subscriptions.findCurrentForClient).not.toHaveBeenCalled();
+  });
+});
+
+describe("ReadClientPortalStandingUseCase", () => {
+  const ACCESS_END = new Date("2026-12-26T10:00:00.000Z");
+
+  function standingUseCase(options: {
+    found: ClientJourney | null;
+    subscription: CoachingSubscription | null;
+    now: Date;
+  }) {
+    const subscriptions = createSubscriptions(options.subscription);
+
+    return {
+      subscriptions,
+      useCase: new ReadClientPortalStandingUseCase({
+        clock: { now: () => options.now },
+        journeys: createJourneys(options.found),
+        subscriptions,
+      }),
+    };
+  }
+
+  it("opens the portal to a client whose subscription has not ended", async () => {
+    // arrange
+    const found = journey(WELCOME_SEEN_AT);
+    const { useCase, subscriptions } = standingUseCase({
+      found,
+      subscription: subscriptionOf({ startChoice: "waiting" }),
+      now: NOW,
+    });
+
+    // act
+    const standing = await useCase.execute("user_ana");
+
+    // assert
+    expect(standing).toEqual({ journey: found, access: "open" });
+    expect(subscriptions.findCurrentForClient).toHaveBeenCalledWith("client-1");
+  });
+
+  it.each([
+    [
+      "ended",
+      subscriptionOf({
+        startChoice: "waiting",
+        status: "ended",
+        cancelledAt: NOW,
+        accessEndsAt: NOW,
+      }),
+      NOW,
+    ],
+    [
+      "cancelled and past her access end",
+      subscriptionOf({
+        startChoice: "waiting",
+        status: "cancelled",
+        cancelledAt: NOW,
+        accessEndsAt: ACCESS_END,
+      }),
+      ACCESS_END,
+    ],
+  ])(
+    "closes the portal to a client whose subscription is %s",
+    async (_label, subscription, now) => {
+      // arrange
+      const found = journey(WELCOME_SEEN_AT);
+      const { useCase } = standingUseCase({ found, subscription, now });
+
+      // act
+      const standing = await useCase.execute("user_ana");
+
+      // assert
+      expect(standing).toEqual({ journey: found, access: "ended" });
+    },
+  );
+
+  it("opens the portal to a client with no subscription", async () => {
+    // arrange
+    const found = journey(WELCOME_SEEN_AT);
+    const { useCase } = standingUseCase({
+      found,
+      subscription: null,
+      now: NOW,
+    });
+
+    // act
+    const standing = await useCase.execute("user_ana");
+
+    // assert
+    expect(standing).toEqual({ journey: found, access: "open" });
+  });
+
+  it("answers no standing for a subject bound to no client", async () => {
+    // arrange
+    const { useCase, subscriptions } = standingUseCase({
+      found: null,
+      subscription: null,
+      now: NOW,
+    });
+
+    // act
+    const standing = await useCase.execute("user_ana");
+
+    // assert
+    expect(standing).toBeNull();
+    expect(subscriptions.findCurrentForClient).not.toHaveBeenCalled();
   });
 });

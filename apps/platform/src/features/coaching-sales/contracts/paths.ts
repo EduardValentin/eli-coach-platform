@@ -25,6 +25,14 @@ export const CLIENT_ONBOARDING_PATH = `${CLIENT_PORTAL_PATH}/${CLIENT_ONBOARDING
 
 export const CLIENT_ANSWER_QUERY = "answer=1";
 
+export const CLIENT_SETTINGS_ROUTE_SEGMENT = "settings";
+
+export const CLIENT_SETTINGS_PATH = `${CLIENT_PORTAL_PATH}/${CLIENT_SETTINGS_ROUTE_SEGMENT}`;
+
+export const CLIENT_ENDED_ROUTE_SEGMENT = "ended";
+
+export const CLIENT_ENDED_PATH = `${CLIENT_PORTAL_PATH}/${CLIENT_ENDED_ROUTE_SEGMENT}`;
+
 export const COACH_CLIENTS_ROUTE_SEGMENT = "clients";
 
 export const COACH_CLIENTS_PATH = `${COACH_PORTAL_PATH}/${COACH_CLIENTS_ROUTE_SEGMENT}`;
@@ -39,6 +47,9 @@ export const COACHING_SALES_API_PATHS = {
   checkouts: "/api/coaching-sales/checkouts",
   invitation: "/api/coaching-sales/invitation",
   invitationResends: "/api/coaching-sales/invitation-resends",
+  subscriptionCancellation: "/api/coaching-sales/subscription-cancellation",
+  programStart: "/api/coaching-sales/program-start",
+  paymentMethodSession: "/api/coaching-sales/payment-method-session",
 } as const;
 
 type SelectBundleLink = {

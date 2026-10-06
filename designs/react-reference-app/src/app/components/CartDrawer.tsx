@@ -9,10 +9,10 @@ import {
   ShoppingBag,
   ArrowRight,
   CheckCircle2,
-  AlertCircle,
   Loader2,
 } from 'lucide-react';
 import { Checkbox } from './ui/checkbox';
+import { InlineProblem } from './InlineProblem';
 import { Alert } from './ui/alert';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -337,14 +337,13 @@ export function CartDrawer() {
                             aria-describedby={emailError ? emailErrorId : undefined}
                           />
                           {emailError && (
-                            <p
+                            <InlineProblem
                               id={emailErrorId}
                               role="alert"
-                              className="mt-2 flex items-start gap-2 text-sm leading-snug text-destructive"
+                              className="mt-2"
                             >
-                              <AlertCircle size={16} aria-hidden="true" className="shrink-0 mt-0.5" />
                               {emailError}
-                            </p>
+                            </InlineProblem>
                           )}
                         </div>
 

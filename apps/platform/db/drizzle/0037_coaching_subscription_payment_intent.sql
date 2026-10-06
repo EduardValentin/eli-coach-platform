@@ -1,0 +1,2 @@
+ALTER TABLE "app"."coaching_subscriptions" ADD COLUMN "stripe_payment_intent_id" varchar(255);--> statement-breakpoint
+CREATE UNIQUE INDEX "coaching_subscriptions_stripe_payment_intent_id_unique" ON "app"."coaching_subscriptions" USING btree ("stripe_payment_intent_id");

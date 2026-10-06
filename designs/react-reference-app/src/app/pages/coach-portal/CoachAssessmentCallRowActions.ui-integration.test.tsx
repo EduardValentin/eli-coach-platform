@@ -102,6 +102,7 @@ function JourneyDriver() {
             paidAt: new Date(),
             bundle: 3,
             startPath: 'immediate',
+            amountPaidCents: 44700,
           });
         }}
       >

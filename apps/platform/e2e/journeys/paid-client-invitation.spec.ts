@@ -4,6 +4,7 @@ import { latestEmailTo, type CapturedEmail } from "../support/email-capture";
 import { expect, test } from "../support/fixtures";
 import { resolveRunId } from "../support/run-id";
 import { deliverCheckoutCompleted } from "../support/stripe-events";
+import { readCheckoutSubscription } from "../support/stripe-subscriptions";
 
 const RUN_ID = resolveRunId();
 const CLIENT_FIRST_NAME = "Ana";
@@ -15,12 +16,19 @@ const ONBOARDING_PATH = "/client/onboarding";
 const PAYMENT_LINK = /\/select-bundle#[\w-]+$/;
 const INVITATION_LINK = /\/invitation#[\w-]+$/;
 const JOURNEY_TIMEOUT_MS = 300_000;
+const CHECKOUT_CARD = {
+  brand: "visa",
+  lastFour: "4242",
+  expiryMonth: 12,
+  expiryYear: 2034,
+};
 
 test("a paid client receives her invitation, creates her account and lands on the welcome screen", async ({
   accountPortal,
   bookingPage,
   coachAssessmentCalls,
   page,
+  paymentCardRecords,
   provisionAccount,
   publicNav,
   registerCheckoutSessionForCleanup,
@@ -85,15 +93,22 @@ test("a paid client receives her invitation, creates her account and lands on th
   // act
   const delivery = await deliverCheckoutCompleted({
     baseURL: E2E_APP_URL,
-    eventId: `evt_e2e_${RUN_ID}_1`,
     sessionId,
   });
+  const subscription = await readCheckoutSubscription(sessionId);
   await coachAssessmentCalls.open();
   await coachAssessmentCalls.search(visitorEmail);
   const invitationEmail = await latestEmailTo(visitorEmail);
 
   // assert
   expect(delivery.status).toBe(200);
+  expect(subscription.pause_collection).toEqual({
+    behavior: "void",
+    resumes_at: null,
+  });
+  expect(await paymentCardRecords.mirroredCardOf(visitorEmail)).toEqual(
+    CHECKOUT_CARD,
+  );
   await expect(
     coachAssessmentCalls.call(CLIENT_NAME).getByText("Paid", { exact: true }),
   ).toBeVisible();

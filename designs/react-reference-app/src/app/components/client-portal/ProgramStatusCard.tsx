@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ClipboardList } from 'lucide-react';
 import { Link } from 'react-router';
+import { useAppState } from '../../context/AppContext';
 import { useClientJourneys } from '../../context/ClientJourneyContext';
 import { canStartWork, workStartDate } from '../../domain/coachingSubscription';
 import {
@@ -11,7 +12,10 @@ import {
   type JourneyStage,
 } from '../../domain/journey';
 import { IMMEDIATE_START_BODY } from '../../domain/startChoiceCopy';
-import { startSubscriptionNow } from '../../services/subscriptionService';
+import {
+  startSubscriptionNow,
+  subscriptionErrorMessage,
+} from '../../services/subscriptionService';
 import {
   browserTimeZone,
   formatCallSchedule,
@@ -19,16 +23,8 @@ import {
 import { formatJourneyDate } from '../../utils/journeyLabels';
 import { Button, buttonVariants } from '../ui/button';
 import { cn } from '../ui/utils';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '../ui/alert-dialog';
+import { ConfirmDialog } from '../ui/confirm-dialog';
+import { InlineProblem } from '../InlineProblem';
 import { ClientWidget } from './ClientWidget';
 
 function eyebrowFor(stage: JourneyStage): string {
@@ -76,39 +72,12 @@ function supportingLine(
   return SUPPORTING_LINES[journey.stage] ?? '';
 }
 
-function StartNowDialog({
-  open,
-  onOpenChange,
-  onConfirm,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onConfirm: () => void;
-}) {
-  return (
-    <AlertDialog onOpenChange={onOpenChange} open={open}>
-      <AlertDialogContent className="rounded-card sm:max-w-md">
-        <AlertDialogHeader>
-          <AlertDialogTitle>Let Eli start now?</AlertDialogTitle>
-          <AlertDialogDescription>
-            {IMMEDIATE_START_BODY}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Keep my 14 days</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm}>
-            Yes, start now
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  );
-}
-
 export function ProgramStatusCard() {
+  const { appState } = useAppState();
   const { demoJourney, startProgramNow } = useClientJourneys();
   const [confirming, setConfirming] = useState(false);
   const [starting, setStarting] = useState(false);
+  const [startProblem, setStartProblem] = useState<string | null>(null);
 
   const label = clientStatusLabel(demoJourney.stage);
   if (!label) return null;
@@ -119,13 +88,28 @@ export function ProgramStatusCard() {
   const workStart =
     waiting && subscription ? workStartDate(subscription) : null;
 
+  const changeConfirming = (open: boolean) => {
+    setConfirming(open);
+    if (!open) setStartProblem(null);
+  };
+
   const startNow = async () => {
     if (!subscription) return;
     setStarting(true);
-    const started = await startSubscriptionNow(subscription);
-    startProgramNow(demoJourney.callId, started);
-    setStarting(false);
-    setConfirming(false);
+    setStartProblem(null);
+
+    try {
+      const started = await startSubscriptionNow(
+        subscription,
+        appState.startNowOutcome,
+      );
+      startProgramNow(demoJourney.callId, started);
+      setConfirming(false);
+    } catch (error) {
+      setStartProblem(subscriptionErrorMessage(error, 'start-now-unavailable'));
+    } finally {
+      setStarting(false);
+    }
   };
 
   return (
@@ -208,11 +192,22 @@ export function ProgramStatusCard() {
         </div>
       </ClientWidget>
 
-      <StartNowDialog
+      <ConfirmDialog
+        cancelLabel="Keep my 14 days"
+        confirmDisabled={starting}
+        confirmLabel="Yes, start now"
+        description={IMMEDIATE_START_BODY}
         onConfirm={() => void startNow()}
-        onOpenChange={setConfirming}
+        onOpenChange={changeConfirming}
         open={confirming}
-      />
+        title="Let Eli start now?"
+      >
+        {startProblem && (
+          <InlineProblem data-parity="start-now-problem" role="alert">
+            {startProblem}
+          </InlineProblem>
+        )}
+      </ConfirmDialog>
     </div>
   );
 }

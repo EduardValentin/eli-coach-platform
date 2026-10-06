@@ -25,6 +25,11 @@ import {
   PlatformRig,
   type AccountSession,
 } from "~integration-test-config/platform-rig";
+import {
+  stripeSubscriptionObject,
+  SubscriptionLifecycleJourney,
+} from "~integration-test-config/subscription-lifecycle-journey";
+import { toUnixSeconds } from "~integration-test-config/wire-mock/expectations/stripe-api";
 
 type DetailRequestRow = {
   id: string;
@@ -40,6 +45,7 @@ const suite = new ApiIntegrationTestSuite();
 const rig = new PlatformRig(suite);
 const sales = new CoachingSalesJourney(rig);
 const onboarding = new ClientOnboardingJourney(rig, sales);
+const lifecycle = new SubscriptionLifecycleJourney(rig);
 
 const REVIEW_OPENINGS_API = "/api/client-onboarding/review-openings";
 const DETAIL_REQUESTS_API = "/api/client-onboarding/detail-requests";
@@ -426,6 +432,74 @@ describe.sequential("onboarding review integration", () => {
     await expectStampsToProjectReviewRows(clientId);
   });
 
+  it("refuses to open the review of a client whose coaching has ended, writing nothing", async () => {
+    // arrange
+    const clientId = await submittedClient();
+    await endHerCoaching();
+    await rig.holdClock(OPENED_INSTANT);
+
+    // act
+    const refused = await postAs(COACH_SESSION, REVIEW_OPENINGS_API, {
+      clientId,
+    });
+
+    // assert
+    expect(refused.status).toBe(409);
+    expect(await refused.json()).toEqual({
+      error: "subscription-cancelled-or-ended",
+    });
+    expect(await reviewRowOf(clientId)).toBeUndefined();
+    expect(await onboarding.reviewStampsOf(clientId)).toEqual({
+      reviewOpenedAt: null,
+      detailsRequestedAt: null,
+      detailsAnsweredAt: null,
+      answersApprovedAt: null,
+    });
+  });
+
+  it("refuses a detail request for a client whose coaching is cancelled, emailing nothing", async () => {
+    // arrange
+    const clientId = await clientInReview();
+    await cancelHerCoaching();
+    await rig.holdClock(ASKED_INSTANT);
+
+    // act
+    const refused = await askForDetails(clientId, {
+      questions: [WEIGHT_QUESTION],
+      note: WEIGHT_NOTE,
+    });
+
+    // assert
+    expect(refused.status).toBe(409);
+    expect(await refused.json()).toEqual({
+      error: "subscription-cancelled-or-ended",
+    });
+    expect(await requestRowsOf(clientId)).toEqual([]);
+    expect(await detailsEmails()).toEqual([]);
+    await expectStampsToProjectReviewRows(clientId);
+  });
+
+  it("refuses to approve the answers of a client whose coaching has ended, writing nothing", async () => {
+    // arrange
+    const clientId = await clientInReview();
+    await endHerCoaching();
+    await rig.holdClock(APPROVED_INSTANT);
+
+    // act
+    const refused = await postAs(COACH_SESSION, APPROVALS_API, { clientId });
+
+    // assert
+    expect(refused.status).toBe(409);
+    expect(await refused.json()).toEqual({
+      error: "subscription-cancelled-or-ended",
+    });
+    expect(await reviewRowOf(clientId)).toEqual({
+      openedAt: OPENED_INSTANT,
+      approvedAt: null,
+    });
+    await expectStampsToProjectReviewRows(clientId);
+  });
+
   it("answers not found to a review step for a client no one knows", async () => {
     // arrange
     await submittedClient();
@@ -522,6 +596,36 @@ async function submittedClient(): Promise<string> {
   await onboarding.submit(INVITED_CLIENT);
 
   return onboarding.clientIdOf(INVITED_CLIENT);
+}
+
+async function endHerCoaching(): Promise<void> {
+  const delivered = await lifecycle.deliverEvent({
+    id: "evt_review_coaching_ended",
+    type: "customer.subscription.deleted",
+    object: stripeSubscriptionObject({
+      status: "canceled",
+      ended_at: toUnixSeconds(rig.now()),
+    }),
+  });
+
+  if (delivered.status !== 200) {
+    throw new Error(`Ending her coaching answered ${delivered.status}.`);
+  }
+}
+
+async function cancelHerCoaching(): Promise<void> {
+  const delivered = await lifecycle.deliverEvent({
+    id: "evt_review_coaching_cancelled",
+    type: "customer.subscription.updated",
+    object: stripeSubscriptionObject({
+      cancel_at: toUnixSeconds(new Date("2027-01-21T08:00:00.000Z")),
+    }),
+    previousAttributes: { cancel_at: null },
+  });
+
+  if (delivered.status !== 200) {
+    throw new Error(`Cancelling her coaching answered ${delivered.status}.`);
+  }
 }
 
 async function clientInReview(): Promise<string> {

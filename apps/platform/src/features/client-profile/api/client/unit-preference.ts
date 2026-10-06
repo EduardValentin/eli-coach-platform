@@ -5,12 +5,15 @@ import {
   throwMethodNotAllowedResponse,
 } from "@eli-coach-platform/infrastructure/http/server";
 import { clientProfileContext } from "~/features/client-profile/server/guards/client-profile-context.server";
+import { requireOpenClientPortal } from "~/features/coaching-sales/server/guards/require-client-portal-standing.server";
 
 export async function action(args: ActionFunctionArgs) {
-  return handleHttpErrorResponse(() => {
+  return handleHttpErrorResponse(async () => {
     if (args.request.method !== "PUT") {
       throwMethodNotAllowedResponse({ allowedMethods: ["PUT"] });
     }
+
+    await requireOpenClientPortal(args);
 
     return args.context.get(clientProfileContext).unitPreference.save(args);
   });

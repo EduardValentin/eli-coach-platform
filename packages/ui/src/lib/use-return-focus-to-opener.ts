@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, type RefObject } from "react";
 
 function focusedElement(): HTMLElement | null {
   return document.activeElement instanceof HTMLElement
@@ -6,7 +6,9 @@ function focusedElement(): HTMLElement | null {
     : null;
 }
 
-export function useReturnFocusToOpener() {
+export function useReturnFocusToOpener(
+  returnFocusTo?: RefObject<HTMLElement | null>,
+) {
   const opener = useRef<HTMLElement | null>(null);
   const openerDialog = useRef<HTMLElement | null>(null);
 
@@ -17,9 +19,11 @@ export function useReturnFocusToOpener() {
   };
 
   const returnFocusToOpener = (event: Event) => {
-    const target = [opener.current, openerDialog.current].find(
-      (candidate) => candidate?.isConnected,
-    );
+    const target = [
+      returnFocusTo?.current,
+      opener.current,
+      openerDialog.current,
+    ].find((candidate) => candidate?.isConnected);
     if (!target) return;
 
     event.preventDefault();

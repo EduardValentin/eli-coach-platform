@@ -8,6 +8,7 @@ import {
 
 export const EMAIL_CAPTURE_PORT = 3199;
 export const EMAIL_CAPTURE_URL = `http://127.0.0.1:${EMAIL_CAPTURE_PORT}`;
+export const COACH_NOTIFICATION_EMAIL = "coach-notifications@e2e.invalid";
 
 const EMAILS_PATH = "/emails";
 const REFUSALS_PATH = "/refusals";

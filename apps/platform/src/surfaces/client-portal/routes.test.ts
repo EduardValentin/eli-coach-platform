@@ -67,6 +67,52 @@ describe("client portal routes", () => {
     );
   });
 
+  it("serves her settings inside the portal shell", () => {
+    // arrange
+    const accessLayout = clientPortalRoutes.find((entry) =>
+      ACCESS_LAYOUT_FILE.test(entry.file),
+    );
+
+    // act
+    const shell = accessLayout?.children?.find((entry) =>
+      SHELL_LAYOUT_FILE.test(entry.file),
+    );
+
+    // assert
+    expect(shell?.children).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          file: expect.stringMatching(
+            /features\/coaching-sales\/ui\/client\/settings\/settings-page\.tsx$/,
+          ),
+          path: "client/settings",
+        }),
+      ]),
+    );
+  });
+
+  it("serves the ended page behind the access layout but outside the portal shell", () => {
+    // arrange
+    const accessLayout = clientPortalRoutes.find((entry) =>
+      ACCESS_LAYOUT_FILE.test(entry.file),
+    );
+
+    // act
+    const besideShell = accessLayout?.children ?? [];
+
+    // assert
+    expect(besideShell).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          file: expect.stringMatching(
+            /features\/coaching-sales\/ui\/client\/ended\/ended-page\.tsx$/,
+          ),
+          path: "client/ended",
+        }),
+      ]),
+    );
+  });
+
   it("leaves only the manifest, service worker and readiness routes outside it", () => {
     // arrange
     const routePaths = clientPortalRoutes.map((entry) => entry.path);

@@ -4,11 +4,7 @@ import {
   ProgressPhoto,
   type ProgressPhotoView,
 } from "@eli-coach-platform/domain/client-profile";
-import {
-  cn,
-  formatDayMonthYear,
-  useCalendarDayTimeZone,
-} from "@eli-coach-platform/ui/lib";
+import { cn } from "@eli-coach-platform/ui/lib";
 import {
   Button,
   Card,
@@ -43,7 +39,6 @@ type ProgressPhotoBlockProps = {
   consent: ProgressPhotoConsent;
   photos: ProgressPhotoPicks;
   onPhotosChange: (photos: ProgressPhotoPicks) => void;
-  sendNote?: string;
 };
 
 type PhotoTileProps = {
@@ -168,24 +163,10 @@ function PhotoTile({
   );
 }
 
-function ConsentedLine({ at }: { at: string }) {
-  const timeZone = useCalendarDayTimeZone();
-
-  return (
-    <p
-      className="text-sm leading-relaxed text-text-secondary"
-      data-parity="progress-photos-consented"
-    >
-      {PHOTOS_COPY.consented(formatDayMonthYear(at, timeZone))}
-    </p>
-  );
-}
-
 export function ProgressPhotoBlock({
   consent,
   photos,
   onPhotosChange,
-  sendNote,
 }: ProgressPhotoBlockProps) {
   const groupId = useId();
   const noteId = useId();
@@ -217,9 +198,7 @@ export function ProgressPhotoBlock({
         </LabelSuffix>
       </FieldCaption>
 
-      {consent.status === "recorded" ? (
-        <ConsentedLine at={consent.at} />
-      ) : (
+      {consent.status !== "recorded" && (
         <CheckboxField
           checkboxParity="progress-photos-checkbox"
           checked={consent.ticked}
@@ -269,15 +248,6 @@ export function ProgressPhotoBlock({
           id={noteId}
         >
           {PHOTOS_COPY.locked}
-        </p>
-      )}
-
-      {!locked && sendNote && (
-        <p
-          className="text-xs text-text-secondary"
-          data-parity="progress-photos-send-note"
-        >
-          {sendNote}
         </p>
       )}
     </Card>

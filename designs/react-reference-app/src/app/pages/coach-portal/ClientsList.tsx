@@ -1,12 +1,9 @@
-import { useState } from 'react';
 import { PortalPageHeader } from '../../components/PortalPageHeader';
 import { motion } from 'motion/react';
-import { UserX, ArrowRight, ShieldAlert, Users } from 'lucide-react';
+import { ArrowRight, Users } from 'lucide-react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { Button, buttonVariants } from '../../components/ui/button';
 import { cn } from '../../components/ui/utils';
-import { RowActionButton } from '../../components/RowActionButton';
-import { ConfirmDialog } from '../../components/ui/confirm-dialog';
 import { Badge } from '../../components/ui/badge';
 import {
   Select,
@@ -44,11 +41,14 @@ import {
   CLIENT_STATUS_GROUPS,
   clientStatus,
   clientStatusNamed,
+  isCancelledOrEnded,
 } from '../../domain/clientStatus';
 import { format, parseISO } from 'date-fns';
 import { bundleLengthLabel } from '../../domain/bundles';
 import { getInitials, trainingClientIdFor } from '../../utils/clientHelpers';
 import { ClientStatusBadge } from '../../components/coach-portal/ClientStatusBadge';
+import { NeedsRefundBadge } from '../../components/coach-portal/NeedsRefundBadge';
+import { needsRefund } from '../../domain/coachingSubscription';
 import { ClientsUnavailable } from '../../components/coach-portal/ClientsUnavailable';
 import {
   clientDetailPathForJourney,
@@ -141,6 +141,8 @@ function rowActionLabel(name: string, awaitsReview: boolean): string {
 
 function journeyRosterRow(journey: ClientJourney, now: Date): RosterRow {
   const name = journeyName(journey);
+  const awaitsReview =
+    awaitsCoachReview(journey.stage) && !isCancelledOrEnded(journey, now);
 
   return {
     id: journey.callId,
@@ -150,7 +152,8 @@ function journeyRosterRow(journey: ClientJourney, now: Date): RosterRow {
     bundleMonths: journey.subscription?.bundle ?? null,
     joinedAt: journey.subscription?.purchasedAt ?? null,
     detailPath: clientDetailPathForJourney(journey),
-    actionLabel: rowActionLabel(name, awaitsCoachReview(journey.stage)),
+    actionLabel: rowActionLabel(name, awaitsReview),
+    needsRefund: needsRefund(journey.subscription),
   };
 }
 
@@ -169,7 +172,7 @@ function mockRosterRow(
     detailPath: `/coach/clients/${client.id}`,
     actionLabel: rowActionLabel(client.name, false),
     avatarUrl,
-    terminable: { status: client.status },
+    needsRefund: false,
   };
 }
 
@@ -246,43 +249,9 @@ function RosterAvatar({ row }: { row: RosterRow }) {
   );
 }
 
-function RosterActions({
-  row,
-  onTerminate,
-}: {
-  row: RosterRow;
-  onTerminate: (row: RosterRow) => void;
-}) {
+function RosterRowLink({ row }: { row: RosterRow }) {
   return (
-    <div className="flex items-center justify-between gap-2">
-      <div>
-        {row.terminable &&
-          (row.terminable.status === 'Active' ? (
-            <RowActionButton
-              icon={ShieldAlert}
-              tone="destructive"
-              onClick={(event) => {
-                event.stopPropagation();
-                onTerminate(row);
-              }}
-              title="Terminate subscription"
-            >
-              Terminate
-            </RowActionButton>
-          ) : (
-            <RowActionButton
-              icon={UserX}
-              onClick={(event) => {
-                event.stopPropagation();
-                onTerminate(row);
-              }}
-              title="Remove from system"
-            >
-              Remove
-            </RowActionButton>
-          ))}
-      </div>
-
+    <div className="flex items-center justify-end">
       <Link
         to={row.detailPath}
         data-parity="row-link"
@@ -303,17 +272,16 @@ function RosterActions({
 function RosterTableRow({
   row,
   position,
-  onTerminate,
 }: {
   row: RosterRow;
   position: number;
-  onTerminate: (row: RosterRow) => void;
 }) {
   const navigate = useNavigate();
   const rowParity = (cell: string) => `row-${position}-${cell}`;
   return (
     <TableRow
       className="group cursor-pointer"
+      data-parity={`row-${position}`}
       onClick={() => navigate(row.detailPath)}
     >
       <TableCell>
@@ -336,7 +304,12 @@ function RosterTableRow({
         </div>
       </TableCell>
       <TableCell data-parity={rowParity('status')}>
-        <ClientStatusBadge status={row.status} />
+        <div className="flex flex-wrap items-center gap-2">
+          <ClientStatusBadge status={row.status} />
+          {row.needsRefund && (
+            <NeedsRefundBadge parity={rowParity('needs-refund')} />
+          )}
+        </div>
       </TableCell>
       <TableCell
         className="text-sm text-text-secondary font-medium"
@@ -353,7 +326,7 @@ function RosterTableRow({
         {row.joinedAt ? format(row.joinedAt, 'MMM dd, yyyy') : '—'}
       </TableCell>
       <TableCell data-parity={rowParity('actions')}>
-        <RosterActions row={row} onTerminate={onTerminate} />
+        <RosterRowLink row={row} />
       </TableCell>
     </TableRow>
   );
@@ -376,31 +349,7 @@ function emptyRosterCopy(
   };
 }
 
-function removalCopy(row: RosterRow): {
-  title: string;
-  description: string;
-  confirmLabel: string;
-} {
-  if (row.terminable?.status === 'Active') {
-    return {
-      title: `Terminate ${row.name}'s subscription?`,
-      description:
-        'She loses access to her program at the end of the current period. This cannot be undone.',
-      confirmLabel: 'Terminate',
-    };
-  }
-
-  return {
-    title: `Remove ${row.name}?`,
-    description:
-      'Her record is removed from your roster. This cannot be undone.',
-    confirmLabel: 'Remove',
-  };
-}
-
 export function ClientsList() {
-  const [clients, setClients] = useState(MOCK_CLIENTS);
-  const [pendingRemoval, setPendingRemoval] = useState<RosterRow | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const { getProfile } = useClientProfile();
   const { getClientActiveSubscription, getClientSubscriptions } = useTraining();
@@ -433,7 +382,7 @@ export function ClientsList() {
 
   const showsMockRows = isPostMvp && isRosterSeeded;
 
-  const mockRows = (showsMockRows ? clients : [])
+  const mockRows = (showsMockRows ? MOCK_CLIENTS : [])
     .filter((client) => {
       const callId = journeyCallIdForClient(client.id);
       return !(callId !== null && startedCallIds.has(callId));
@@ -511,22 +460,6 @@ export function ClientsList() {
       params.delete(QUERY_PARAM);
     });
   };
-
-  const handleTerminate = (row: RosterRow) => {
-    if (!row.terminable) return;
-    setPendingRemoval(row);
-  };
-
-  const confirmRemoval = () => {
-    if (!pendingRemoval) return;
-
-    setClients((previous) =>
-      previous.filter((client) => client.id !== pendingRemoval.id),
-    );
-    setPendingRemoval(null);
-  };
-
-  const removal = pendingRemoval ? removalCopy(pendingRemoval) : null;
 
   if (appState.clientsRoster === 'unavailable') {
     return <ClientsUnavailable />;
@@ -626,7 +559,6 @@ export function ClientsList() {
                   key={row.id}
                   row={row}
                   position={index + 1}
-                  onTerminate={handleTerminate}
                 />
               ))
             )}
@@ -634,17 +566,6 @@ export function ClientsList() {
         </Table>
       </motion.div>
 
-      <ConfirmDialog
-        open={pendingRemoval !== null}
-        onOpenChange={(open) => {
-          if (!open) setPendingRemoval(null);
-        }}
-        title={removal?.title ?? ''}
-        description={removal?.description}
-        confirmLabel={removal?.confirmLabel}
-        tone="destructive"
-        onConfirm={confirmRemoval}
-      />
     </div>
   );
 }

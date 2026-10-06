@@ -61,6 +61,7 @@ function JourneyProbe() {
             paidAt: new Date(),
             bundle: 3,
             startPath: 'immediate',
+            amountPaidCents: 44700,
           })
         }
       >

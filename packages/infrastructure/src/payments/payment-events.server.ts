@@ -1,6 +1,4 @@
-import type { PaymentEventVerdict } from "./payment-event-verdict.server";
-
-export type { PaymentEventVerdict } from "./payment-event-verdict.server";
+import type { PaymentEventVerdict } from "./payment-event-types.server";
 
 export interface PaymentEvents {
   verify(

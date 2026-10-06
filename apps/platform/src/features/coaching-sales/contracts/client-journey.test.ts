@@ -22,12 +22,17 @@ describe("clientJourneyRedirect", () => {
     ["needs-details", "/client/onboarding"],
     ["approved", "/client"],
     ["approved", "/client/plan"],
+    ["submitted", "/client/settings"],
+    ["approved", "/client/settings"],
   ] as const)("lets a client at the %s step open %s", (step, requestedPath) => {
     // arrange
     const journeyStep = step;
 
     // act
-    const redirectTo = clientJourneyRedirect(journeyStep, requestedPath);
+    const redirectTo = clientJourneyRedirect(
+      { step: journeyStep, access: "open" },
+      requestedPath,
+    );
 
     // assert
     expect(redirectTo).toBeNull();
@@ -46,6 +51,17 @@ describe("clientJourneyRedirect", () => {
     ["needs-details", "/client/welcome", "/client"],
     ["approved", "/client/welcome", "/client"],
     ["approved", "/client/onboarding", "/client"],
+    ["welcome", "/client/settings", "/client/welcome"],
+    ["onboarding", "/client/settings", "/client/onboarding"],
+    ["welcome", "/client/ended", "/client/welcome"],
+    ["onboarding", "/client/ended", "/client/onboarding"],
+    ["submitted", "/client/ended", "/client"],
+    ["needs-details", "/client/ended", "/client"],
+    ["approved", "/client/ended", "/client"],
+    ["approved", "/client/ended/", "/client"],
+    ["approved", "/Client/Ended", "/client"],
+    ["welcome", "/CLIENT/ENDED/", "/client/welcome"],
+    ["approved", "/client/%65nded", "/client"],
   ] as const)(
     "sends a client at the %s step who opens %s to %s",
     (step, requestedPath, expectedPath) => {
@@ -53,10 +69,81 @@ describe("clientJourneyRedirect", () => {
       const journeyStep = step;
 
       // act
-      const redirectTo = clientJourneyRedirect(journeyStep, requestedPath);
+      const redirectTo = clientJourneyRedirect(
+        { step: journeyStep, access: "open" },
+        requestedPath,
+      );
 
       // assert
       expect(redirectTo).toBe(expectedPath);
+    },
+  );
+});
+
+describe("clientJourneyRedirect over a path written differently", () => {
+  it.each([
+    ["approved", "/client/"],
+    ["onboarding", "/client/onboarding/"],
+    ["needs-details", "/Client/Onboarding"],
+  ] as const)("lets a client at the %s step open %s", (step, requestedPath) => {
+    // act
+    const redirectTo = clientJourneyRedirect(
+      { step, access: "open" },
+      requestedPath,
+    );
+
+    // assert
+    expect(redirectTo).toBeNull();
+  });
+
+  it.each(["/client/ended/", "/Client/Ended", "/client/%65nded"])(
+    "lets a client whose coaching has ended open %s",
+    (requestedPath) => {
+      // act
+      const redirectTo = clientJourneyRedirect(
+        { step: "approved", access: "ended" },
+        requestedPath,
+      );
+
+      // assert
+      expect(redirectTo).toBeNull();
+    },
+  );
+});
+
+describe("clientJourneyRedirect once her coaching has ended", () => {
+  it.each(["welcome", "submitted", "approved"] as const)(
+    "lets a client at the %s step open the ended page",
+    (step) => {
+      // act
+      const redirectTo = clientJourneyRedirect(
+        { step, access: "ended" },
+        "/client/ended",
+      );
+
+      // assert
+      expect(redirectTo).toBeNull();
+    },
+  );
+
+  it.each([
+    ["approved", "/client"],
+    ["approved", "/client/settings"],
+    ["approved", "/client/profile"],
+    ["needs-details", "/client/onboarding"],
+    ["welcome", "/client/welcome"],
+    ["approved", "/client/%E0%A4%A"],
+  ] as const)(
+    "sends a client at the %s step who opens %s to the ended page",
+    (step, requestedPath) => {
+      // act
+      const redirectTo = clientJourneyRedirect(
+        { step, access: "ended" },
+        requestedPath,
+      );
+
+      // assert
+      expect(redirectTo).toBe("/client/ended");
     },
   );
 });
@@ -72,13 +159,27 @@ describe("clientJourneyPortalLink", () => {
       const journeyStep = step;
 
       // act
-      const link = clientJourneyPortalLink(journeyStep);
+      const link = clientJourneyPortalLink({
+        step: journeyStep,
+        access: "open",
+      });
 
       // assert
       expect(link).toEqual({
         href: expectedHref,
         label: "Finish your onboarding",
       });
+    },
+  );
+
+  it.each(["welcome", "onboarding"] as const)(
+    "offers no onboarding link at the %s step once her coaching has ended",
+    (step) => {
+      // act
+      const link = clientJourneyPortalLink({ step, access: "ended" });
+
+      // assert
+      expect(link).toBeNull();
     },
   );
 
@@ -89,7 +190,10 @@ describe("clientJourneyPortalLink", () => {
       const journeyStep = step;
 
       // act
-      const link = clientJourneyPortalLink(journeyStep);
+      const link = clientJourneyPortalLink({
+        step: journeyStep,
+        access: "open",
+      });
 
       // assert
       expect(link).toBeNull();
@@ -98,6 +202,22 @@ describe("clientJourneyPortalLink", () => {
 });
 
 describe("programStatusSchema", () => {
+  it("accepts until when she can still start now", () => {
+    // arrange
+    const status = {
+      kind: "submitted",
+      submittedAt: "2026-09-28T10:00:00.000Z",
+      workStartsOn: "2026-10-10T10:00:00.000Z",
+      startNowUntil: "2026-10-10T10:00:00.000Z",
+    };
+
+    // act
+    const parsed = programStatusSchema.safeParse(status);
+
+    // assert
+    expect(parsed.success).toBe(true);
+  });
+
   it.each([
     ["the day the work starts", "2026-10-10T10:00:00.000Z"],
     ["no start day", null],
@@ -107,6 +227,7 @@ describe("programStatusSchema", () => {
       kind: "submitted",
       submittedAt: "2026-09-28T10:00:00.000Z",
       workStartsOn,
+      startNowUntil: workStartsOn,
     };
 
     // act
@@ -124,6 +245,7 @@ describe("programStatusSchema", () => {
         kind,
         submittedAt: "2026-09-28T10:00:00.000Z",
         workStartsOn: null,
+        startNowUntil: null,
       };
 
       // act
@@ -140,6 +262,7 @@ describe("programStatusSchema", () => {
       kind: "onboarding",
       submittedAt: "2026-09-28T10:00:00.000Z",
       workStartsOn: null,
+      startNowUntil: null,
     };
 
     // act
@@ -155,6 +278,7 @@ describe("programStatusSchema", () => {
       kind: "submitted",
       submittedAt: "yesterday",
       workStartsOn: null,
+      startNowUntil: null,
     };
 
     // act

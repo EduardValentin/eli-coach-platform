@@ -12,6 +12,7 @@ import {
   Alert,
   Button,
   Checkbox,
+  InlineProblem,
   Input,
 } from "@eli-coach-platform/ui/primitives";
 import {
@@ -329,13 +330,9 @@ function AcquisitionDetails(props: {
           />
         </label>
         {errors.email ? (
-          <p
-            className="mt-2 text-sm text-feedback-danger"
-            id={props.emailErrorId}
-            role="alert"
-          >
+          <InlineProblem className="mt-2" id={props.emailErrorId} role="alert">
             {errors.email.message}
-          </p>
+          </InlineProblem>
         ) : null}
         <Controller
           control={control}

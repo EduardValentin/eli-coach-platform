@@ -100,7 +100,7 @@ describe('the progress photo block', () => {
     expect(screen.getByLabelText('Add front photo')).toBeEnabled();
   });
 
-  it('states when she agreed once she has consented and opens the tiles', () => {
+  it('opens the tiles without asking again once she has consented', () => {
     // arrange
     const consentedAt = new Date(2026, 8, 18, 10);
 
@@ -108,9 +108,6 @@ describe('the progress photo block', () => {
     render(<PhotoBlock consentedAt={consentedAt} />);
 
     // assert
-    expect(
-      screen.getByText('You agreed to share progress photos on 18 September 2026.'),
-    ).toBeVisible();
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
     expect(screen.getByLabelText('Add front photo')).toBeEnabled();
     expect(screen.getByLabelText('Add side photo')).toBeEnabled();

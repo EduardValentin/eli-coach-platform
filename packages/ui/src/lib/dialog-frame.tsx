@@ -1,6 +1,6 @@
 import { X } from "lucide-react";
 import { Dialog as RadixDialog } from "radix-ui";
-import type { ComponentPropsWithoutRef } from "react";
+import type { ComponentPropsWithoutRef, RefObject } from "react";
 
 import { cn } from "./cn";
 import { useReturnFocusToOpener } from "./use-return-focus-to-opener";
@@ -12,6 +12,7 @@ type DialogFrameProps = Omit<
   "onCloseAutoFocus" | "onOpenAutoFocus"
 > & {
   placement?: DialogFramePlacement;
+  returnFocusTo?: RefObject<HTMLElement | null>;
 };
 
 const FRAME_CLASS =
@@ -28,9 +29,11 @@ export function DialogFrame({
   children,
   className,
   placement = "centred",
+  returnFocusTo,
   ...props
 }: DialogFrameProps) {
-  const { rememberOpener, returnFocusToOpener } = useReturnFocusToOpener();
+  const { rememberOpener, returnFocusToOpener } =
+    useReturnFocusToOpener(returnFocusTo);
 
   return (
     <RadixDialog.Portal>

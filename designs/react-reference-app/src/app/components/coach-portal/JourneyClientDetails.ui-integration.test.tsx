@@ -977,7 +977,7 @@ describe('the coach reading about a client by his or their pronouns', () => {
       ),
     ).toBeInTheDocument();
     expect(
-      within(subscriptionPanel()).getByText('Once his program starts'),
+      within(subscriptionPanel()).getByText('Starts when his program is delivered'),
     ).toBeInTheDocument();
     expect(
       screen.getByText('He has not sent any measurements yet.'),
@@ -1001,7 +1001,7 @@ describe('the coach reading about a client by his or their pronouns', () => {
       ),
     ).toBeInTheDocument();
     expect(
-      within(subscriptionPanel()).getByText('Once their program starts'),
+      within(subscriptionPanel()).getByText('Starts when their program is delivered'),
     ).toBeInTheDocument();
     expect(
       screen.getByText('They have not sent any measurements yet.'),
@@ -1195,6 +1195,130 @@ describe('the coach reading what cycle mode means', () => {
       within(onboardingWidget()).queryByRole('button', {
         name: 'What cycle mode means',
       }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('flags a client who still needs her refund next to her name', () => {
+    // arrange
+    const urlQuery = '?jstage=submitted&jstart=waiting&jrefund=due';
+
+    // act
+    renderDetails(urlQuery, { postMvp: false });
+
+    // assert
+    expect(within(pageHeader()).getByText('Needs refund')).toBeInTheDocument();
+    expect(readingIn(subscriptionPanel(), 'Ended on')).toHaveTextContent(
+      /^\d{1,2} \w+$/,
+    );
+    expect(readingIn(subscriptionPanel(), 'Refund due')).toHaveTextContent(
+      /^€447 by \d{1,2} \w+$/,
+    );
+    expect(
+      within(subscriptionPanel()).getByText(
+        'Full refund: cancelled within the 14-day withdrawal period.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('reads what is still due after a partial refund', () => {
+    // arrange
+    const urlQuery = '?jstage=submitted&jrefund=part-refunded';
+
+    // act
+    renderDetails(urlQuery, { postMvp: false });
+
+    // assert
+    expect(within(pageHeader()).getByText('Needs refund')).toBeInTheDocument();
+    expect(readingIn(subscriptionPanel(), 'Refund due')).toHaveTextContent(
+      /^€298 by \d{1,2} \w+$/,
+    );
+    expect(
+      within(subscriptionPanel()).getByText(
+        'Full refund: cancelled within the 14-day withdrawal period. €149 refunded so far.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('reads the refund date and drops the flag once she is refunded', () => {
+    // arrange
+    const urlQuery = '?jstage=submitted&jrefund=refunded';
+
+    // act
+    renderDetails(urlQuery, { postMvp: false });
+
+    // assert
+    expect(
+      within(pageHeader()).queryByText('Needs refund'),
+    ).not.toBeInTheDocument();
+    expect(readingIn(subscriptionPanel(), 'Refunded')).toHaveTextContent(
+      /^\d{1,2} \w+$/,
+    );
+    expect(
+      within(subscriptionPanel()).queryByText('Refund due'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('reads when a cancelled client loses access', () => {
+    // arrange
+    const urlQuery = '?jstage=submitted&jsub=cancelled&jpaid=14';
+
+    // act
+    renderDetails(urlQuery, { postMvp: false });
+
+    // assert
+    expect(readingIn(subscriptionPanel(), 'Ends on')).toHaveTextContent(
+      /^\d{1,2} \w+$/,
+    );
+    expect(
+      within(pageHeader()).queryByText('Needs refund'),
+    ).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ['cancelled', '?jstage=submitted&jsub=cancelled'],
+    ['ended', '?jstage=submitted&jsub=ended'],
+  ])('keeps the answers readable but offers no review actions once %s', (_state, urlQuery) => {
+    // arrange
+    renderDetails(urlQuery, { postMvp: false });
+
+    // act
+    const onboarding = onboardingWidget();
+
+    // assert
+    expect(within(onboarding).getByText('Answers')).toBeInTheDocument();
+    expect(
+      within(onboarding).queryByRole('button', { name: 'Review answers' }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(onboarding).queryByRole('button', { name: 'Approve answers' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('offers no review action on a client in review once her coaching has ended', () => {
+    // arrange
+    const urlQuery = '?jstage=reviewing&jsub=ended';
+
+    // act
+    renderDetails(urlQuery, { postMvp: false });
+
+    // assert
+    expect(
+      within(onboardingWidget()).queryByRole('button', {
+        name: 'Continue review',
+      }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('offers no invitation re-send once her coaching has ended', () => {
+    // arrange
+    const urlQuery = '?jstage=invited&jsub=ended';
+
+    // act
+    renderDetails(urlQuery, { postMvp: false });
+
+    // assert
+    expect(
+      screen.queryByRole('button', { name: 'Re-send invitation' }),
     ).not.toBeInTheDocument();
   });
 });

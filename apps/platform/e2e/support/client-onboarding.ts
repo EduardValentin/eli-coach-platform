@@ -456,8 +456,8 @@ export class ClientOnboarding {
     await this.photoTiles.withdraw();
   }
 
-  async expectPhotosSendNote(): Promise<void> {
-    await this.photoTiles.expectSendNote();
+  async expectPhotosUnlocked(): Promise<void> {
+    await this.photoTiles.expectUnlocked();
   }
 
   async addPhoto(view: ProgressPhotoView, photo: SamplePhoto): Promise<void> {

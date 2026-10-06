@@ -4,6 +4,7 @@ import type { ClientInvitationIncidents } from "@eli-coach-platform/domain/clien
 import type { ClientOnboardingIncidents } from "@eli-coach-platform/domain/client-onboarding";
 import type { MeasurementIncidents } from "@eli-coach-platform/domain/client-profile";
 import type { ClientRosterIncidents } from "@eli-coach-platform/domain/client-roster";
+import type { CoachingSubscriptionIncidents } from "@eli-coach-platform/domain/coaching-subscription";
 import type { CoachingSalesIncidents } from "@eli-coach-platform/domain/payment-link";
 import type { WaitlistIncidents } from "@eli-coach-platform/domain/waitlist";
 import type { PaymentWebhookIncidents } from "@eli-coach-platform/infrastructure/payments/server";
@@ -14,6 +15,7 @@ type ConsoleLogger = AcquisitionIncidents &
   ClientOnboardingIncidents &
   ClientRosterIncidents &
   CoachingSalesIncidents &
+  CoachingSubscriptionIncidents &
   MeasurementIncidents &
   PaymentWebhookIncidents &
   WaitlistIncidents;
@@ -29,6 +31,16 @@ export function createConsoleLogger(): ConsoleLogger {
       console.error("Assessment calls could not be read.", {
         errorCategory: "assessment_call_listing_failure",
       });
+    },
+    paymentCardRefreshFailed: ({ error, paymentCustomerId }) => {
+      console.error(
+        "Payment card could not be refreshed; Stripe will redeliver.",
+        {
+          errorCategory: "payment_card_mirror_failure",
+          errorClass: errorClassOf(error),
+          paymentCustomerId,
+        },
+      );
     },
     confirmationDeliveryFailed: () => {
       console.error("Waitlist confirmation email failed.", {
@@ -157,12 +169,26 @@ export function createConsoleLogger(): ConsoleLogger {
         reason,
       });
     },
-    paymentEventHandlingFailed: ({ errorClass, eventId, purpose }) => {
+    paymentCardEventMirrored: ({
+      eventId,
+      eventKind,
+      outcome,
+      paymentCustomerId,
+    }) => {
+      console.info("Card on file mirrored.", {
+        eventCategory: "payment_card_event_mirrored",
+        eventId,
+        eventKind,
+        outcome,
+        paymentCustomerId,
+      });
+    },
+    paymentEventHandlingFailed: ({ errorClass, eventId, handler }) => {
       console.error("Payment event handler failed; Stripe will redeliver.", {
         errorCategory: "payment_event_handling_failure",
         errorClass,
         eventId,
-        purpose,
+        handler,
       });
     },
     paymentEventRejected: ({ eventId, reason }) => {
@@ -183,6 +209,18 @@ export function createConsoleLogger(): ConsoleLogger {
       console.error("Payment link email failed.", {
         assessmentCallId,
         errorCategory: "payment_link_email_failure",
+      });
+    },
+    paymentMethodSessionOpened: ({ subscriptionId }) => {
+      console.info("Payment method session opened.", {
+        eventCategory: "payment_method_session_opened",
+        subscriptionId,
+      });
+    },
+    programStartedNow: ({ subscriptionId }) => {
+      console.info("Coaching program started now.", {
+        eventCategory: "coaching_program_started_now",
+        subscriptionId,
       });
     },
     progressPhotoAccessRefused: ({ photoId, requesterRole }) => {
@@ -233,6 +271,35 @@ export function createConsoleLogger(): ConsoleLogger {
         view,
       });
     },
+    refundNotificationFailed: ({ subscriptionId }) => {
+      console.error("Refund due email to the coach failed.", {
+        errorCategory: "coaching_subscription_refund_notification_failure",
+        subscriptionId,
+      });
+    },
+    refundSettled: ({ refundedCents, subscriptionId }) => {
+      console.info("Coaching subscription refund settled.", {
+        eventCategory: "coaching_subscription_refund_settled",
+        refundedCents,
+        subscriptionId,
+      });
+    },
+    renewalHoldApplied: ({ paymentSubscriptionId }) => {
+      console.info("Coaching subscription renewal hold applied.", {
+        eventCategory: "coaching_subscription_renewal_hold_applied",
+        paymentSubscriptionId,
+      });
+    },
+    renewalHoldFailed: ({ error, paymentSubscriptionId }) => {
+      console.error(
+        "Coaching subscription renewal hold failed; Stripe will redeliver.",
+        {
+          errorCategory: "coaching_subscription_renewal_hold_failure",
+          errorClass: errorClassOf(error),
+          paymentSubscriptionId,
+        },
+      );
+    },
     retryableDeliveryAuditPending: ({ requestId }) => {
       console.error("Store retryable delivery audit requires reconciliation.", {
         errorCategory: "store_delivery_retryable_audit_pending",
@@ -254,6 +321,45 @@ export function createConsoleLogger(): ConsoleLogger {
     slotsReadFailed: () => {
       console.error("Assessment call slots could not be read.", {
         errorCategory: "assessment_call_slots_failure",
+      });
+    },
+    subscriptionCancellationFailed: ({ error, rule, subscriptionId }) => {
+      console.error(
+        "Coaching subscription cancellation failed at the payment provider.",
+        {
+          errorCategory: "coaching_subscription_cancellation_failure",
+          errorClass: errorClassOf(error),
+          rule,
+          subscriptionId,
+        },
+      );
+    },
+    subscriptionCancelled: ({
+      refundDueCents,
+      rule,
+      startChoice,
+      subscriptionId,
+    }) => {
+      console.info("Coaching subscription cancelled.", {
+        eventCategory: "coaching_subscription_cancelled",
+        refundDueCents,
+        rule,
+        startChoice,
+        subscriptionId,
+      });
+    },
+    subscriptionEventReconciled: ({
+      eventId,
+      eventKind,
+      outcome,
+      paymentReference,
+    }) => {
+      console.info("Coaching subscription event reconciled.", {
+        eventCategory: "coaching_subscription_event_reconciled",
+        eventId,
+        eventKind,
+        outcome,
+        paymentReference,
       });
     },
     waitlistModeReadFailed: () => {

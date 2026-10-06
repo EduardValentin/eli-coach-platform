@@ -54,4 +54,20 @@ describe('EmailPreview', () => {
     );
     expect(markup).toContain('Answer now');
   });
+
+  it('previews the coach refund email', async () => {
+    // arrange
+    const user = userEvent.setup();
+    render(<EmailPreview />);
+
+    // act
+    await user.click(screen.getByRole('button', { name: 'Refund due — coach' }));
+
+    // assert
+    const markup = await previewedEmail(
+      'Refund due — coach — full-refund',
+      'Full refund: cancelled within the 14-day withdrawal period.',
+    );
+    expect(markup).toContain('A refund is due.');
+  });
 });

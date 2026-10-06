@@ -91,6 +91,7 @@ export const reviewActionAcceptedSchema = z.object({
 export const reviewActionRefusalSchema = z.object({
   error: z.enum([
     "not-found",
+    "subscription-cancelled-or-ended",
     "not-submitted",
     "approved",
     "not-in-review",

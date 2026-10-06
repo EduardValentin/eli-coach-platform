@@ -1,0 +1,10 @@
+[
+  {"waitFor": "[data-parity-root=\"SubscriptionSection\"]"},
+  {"click": "[aria-label=\"Open Dev Toggle\"]"},
+  {"click": "role=tab[name=\"Journey\"]"},
+  {"click": "#dev-journey-card-on-file"},
+  {"click": "role=option[name=\"Mastercard •••• 4444, 03/31\" s]"},
+  {"click": "[aria-label=\"Close Dev Settings\"]"},
+  {"waitFor": "[data-parity=\"payment-card-brand\"] >> text=Mastercard"},
+  {"wait": 400}
+]

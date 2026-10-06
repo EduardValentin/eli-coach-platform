@@ -74,3 +74,115 @@ describe('prototype scope', () => {
     });
   });
 });
+
+function SubscriptionParamsProbe() {
+  const { appState, setAppState } = useAppState();
+
+  return (
+    <>
+      <p>refund {appState.journeyRefund}</p>
+      <p>start {appState.journeyStartPath}</p>
+      <p>subscription {appState.journeySubscriptionStatus}</p>
+      <p>payment problem {String(appState.journeyPaymentProblem)}</p>
+      <p>paid {appState.journeyDaysSincePayment}</p>
+      <p>cancel {appState.cancelOutcome}</p>
+      <p>start now {appState.startNowOutcome}</p>
+      <p>portal {appState.paymentPortalOutcome}</p>
+      <p>card {appState.journeyCardOnFile}</p>
+      <button
+        type="button"
+        onClick={() =>
+          setAppState({
+            journeyPaymentProblem: true,
+            journeyDaysSincePayment: '13',
+            cancelOutcome: 'fails',
+            startNowOutcome: 'fails',
+            paymentPortalOutcome: 'fails',
+            journeyCardOnFile: 'none',
+          })
+        }
+      >
+        Change the subscription params
+      </button>
+    </>
+  );
+}
+
+function renderSubscriptionParams(search = '') {
+  window.history.replaceState(null, '', `/${search}`);
+
+  return render(
+    <MemoryRouter>
+      <AppProvider>
+        <SubscriptionParamsProbe />
+      </AppProvider>
+    </MemoryRouter>,
+  );
+}
+
+describe('subscription dev params', () => {
+  it('reads every subscription param from the URL', () => {
+    // arrange
+    const search =
+      '?jrefund=part-refunded&jpayproblem=1&jpaid=14&jcancel=fails&jstartnow=fails&jpayportal=fails&jcard=mastercard';
+
+    // act
+    renderSubscriptionParams(search);
+
+    // assert
+    expect(screen.getByText('refund part-refunded')).toBeInTheDocument();
+    expect(screen.getByText('payment problem true')).toBeInTheDocument();
+    expect(screen.getByText('paid 14')).toBeInTheDocument();
+    expect(screen.getByText('cancel fails')).toBeInTheDocument();
+    expect(screen.getByText('start now fails')).toBeInTheDocument();
+    expect(screen.getByText('portal fails')).toBeInTheDocument();
+    expect(screen.getByText('card mastercard')).toBeInTheDocument();
+  });
+
+  it('ends the subscription on the waiting path whenever a refund is set', () => {
+    // arrange
+    const search = '?jrefund=due&jsub=active&jstart=immediate';
+
+    // act
+    renderSubscriptionParams(search);
+
+    // assert
+    expect(screen.getByText('subscription ended')).toBeInTheDocument();
+    expect(screen.getByText('start waiting')).toBeInTheDocument();
+  });
+
+  it('falls back to the defaults for unknown values', () => {
+    // arrange
+    const search =
+      '?jrefund=maybe&jpaid=7&jcancel=already-ended&jstartnow=later&jpayportal=later&jcard=amex';
+
+    // act
+    renderSubscriptionParams(search);
+
+    // assert
+    expect(screen.getByText('refund none')).toBeInTheDocument();
+    expect(screen.getByText('paid stage')).toBeInTheDocument();
+    expect(screen.getByText('cancel works')).toBeInTheDocument();
+    expect(screen.getByText('start now works')).toBeInTheDocument();
+    expect(screen.getByText('portal works')).toBeInTheDocument();
+    expect(screen.getByText('card visa')).toBeInTheDocument();
+  });
+
+  it('writes the changed params back to the URL', async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderSubscriptionParams();
+
+    // act
+    await user.click(
+      screen.getByRole('button', { name: 'Change the subscription params' }),
+    );
+
+    // assert
+    await waitFor(() => {
+      expect(window.location.search).toBe(
+        '?jpayproblem=1&jcard=none&jpaid=13&jcancel=fails&jstartnow=fails&jpayportal=fails',
+      );
+    });
+  });
+});

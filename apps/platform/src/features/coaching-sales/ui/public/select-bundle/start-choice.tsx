@@ -2,8 +2,11 @@ import {
   formatDayMonth,
   useCalendarDayTimeZone,
 } from "@eli-coach-platform/ui/lib";
-import { RadioGroup, RadioGroupItem } from "@eli-coach-platform/ui/primitives";
-import { AlertCircle } from "lucide-react";
+import {
+  InlineProblem,
+  RadioGroup,
+  RadioGroupItem,
+} from "@eli-coach-platform/ui/primitives";
 import { useId, type ReactNode, type Ref } from "react";
 import { Link } from "react-router";
 
@@ -11,9 +14,9 @@ import {
   startChoiceSchema,
   type CheckoutChoice,
 } from "~/features/coaching-sales/contracts/coaching-sales";
+import { IMMEDIATE_START_BODY } from "~/features/coaching-sales/ui/shared/immediate-start-copy";
 
 import {
-  IMMEDIATE_START_BODY,
   IMMEDIATE_START_LEAD,
   START_CHOICE_QUESTION,
   WAITING_START_BODY,
@@ -85,19 +88,14 @@ export function StartChoice(props: StartChoiceProps) {
       </RadioGroup>
 
       {props.error ? (
-        <p
-          className="mt-3 flex items-start gap-2 text-sm leading-snug text-feedback-danger"
+        <InlineProblem
+          className="mt-3"
           data-parity="error"
           id={errorId}
           role="alert"
         >
-          <AlertCircle
-            aria-hidden="true"
-            className="mt-0.5 shrink-0"
-            size={16}
-          />
           {props.error}
-        </p>
+        </InlineProblem>
       ) : null}
 
       <Link

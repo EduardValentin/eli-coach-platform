@@ -21,6 +21,7 @@ const CLIENT_ROW = {
   detailsRequestedAt: null,
   detailsAnsweredAt: null,
   answersApprovedAt: null,
+  currentSubscriptionStatus: "not-started",
 };
 
 const ONBOARDING_CLIENT = {
@@ -39,6 +40,7 @@ const ONBOARDING_CLIENT = {
     detailsAnsweredAt: null,
     answersApprovedAt: null,
   },
+  subscriptionCancelledOrEnded: false,
 };
 
 describe("PostgresOnboardingClients#findByAuthSubjectId", () => {
@@ -96,6 +98,27 @@ describe("PostgresOnboardingClients#findByClientId", () => {
     expect(client?.submittedAt).toBeNull();
     expect(client?.reviewStamps.reviewOpenedAt).toBeNull();
   });
+
+  it.each([
+    ["cancelled", true],
+    ["ended", true],
+    ["active", false],
+    [null, false],
+  ] as const)(
+    "reads her coaching as closed for a current %s subscription: %s",
+    async (currentSubscriptionStatus, expected) => {
+      // arrange
+      const clients = new PostgresOnboardingClients(
+        createDatabaseAnswering([{ ...CLIENT_ROW, currentSubscriptionStatus }]),
+      );
+
+      // act
+      const client = await clients.findByClientId(CLIENT_ID);
+
+      // assert
+      expect(client?.subscriptionCancelledOrEnded).toBe(expected);
+    },
+  );
 
   it("answers null for an unknown client", async () => {
     // arrange

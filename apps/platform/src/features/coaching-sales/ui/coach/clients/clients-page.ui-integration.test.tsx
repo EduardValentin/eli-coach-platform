@@ -40,6 +40,7 @@ function rosterClient(
     lastName,
     paidAt: "2026-09-01T09:00:00.000Z",
     status: "invited",
+    needsRefund: false,
     ...overrides,
   };
 }
@@ -316,6 +317,47 @@ describe("the coach's clients page", () => {
     ).toHaveAttribute("href", coachClientPath(DANA.clientId));
   });
 
+  it("flags a client still owed a refund beside her status and no one else", async () => {
+    // arrange
+    const ella = rosterClient("Ella Dobre", {
+      status: "inactive",
+      needsRefund: true,
+    });
+    const flora = rosterClient("Flora Stan", { status: "cancelled" });
+    const gina = rosterClient("Gina Pop", { status: "inactive" });
+
+    // act
+    await renderClientsPage({ clients: [ella, flora, gina] });
+
+    // assert
+    expect(statusCellOf("Ella Dobre")).toHaveTextContent(
+      /^InactiveNeeds refund$/,
+    );
+    expect(statusCellOf("Flora Stan")).toHaveTextContent(/^Cancelled$/);
+    expect(statusCellOf("Gina Pop")).toHaveTextContent(/^Inactive$/);
+    expect(screen.getAllByText("Needs refund")).toHaveLength(1);
+  });
+
+  it("offers her details, never a review, once her coaching is cancelled or ended", async () => {
+    // arrange
+    const flora = rosterClient("Flora Stan", { status: "cancelled" });
+    const gina = rosterClient("Gina Pop", {
+      status: "inactive",
+      needsRefund: true,
+    });
+
+    // act
+    await renderClientsPage({ clients: [flora, gina] });
+
+    // assert
+    expect(
+      screen.getByRole("link", { name: "View details for Flora Stan" }),
+    ).toHaveAttribute("href", coachClientPath(flora.clientId));
+    expect(
+      screen.getByRole("link", { name: "View details for Gina Pop" }),
+    ).toHaveAttribute("href", coachClientPath(gina.clientId));
+  });
+
   it("opens a client's page from anywhere on her row", async () => {
     // arrange
     const user = await renderClientsPage();
@@ -403,6 +445,18 @@ function shownNames(): string[] {
     (row) =>
       within(row).getAllByRole("cell")[0].querySelector("p")?.textContent ?? "",
   );
+}
+
+function statusCellOf(name: string): HTMLElement {
+  const row = bodyRows().find(
+    (candidate) => within(candidate).queryByText(name) !== null,
+  );
+
+  if (!row) {
+    throw new Error(`No row for ${name}.`);
+  }
+
+  return within(row).getAllByRole("cell")[1];
 }
 
 function rowCells(index: number): string[] {

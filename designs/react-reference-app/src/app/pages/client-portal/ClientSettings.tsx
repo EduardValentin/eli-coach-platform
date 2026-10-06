@@ -7,7 +7,10 @@ export function ClientSettings() {
   const { clientProfile } = useClientProfile();
 
   return (
-    <div className="w-full max-w-3xl space-y-6 sm:space-y-8">
+    <div
+      className="w-full max-w-3xl space-y-6 sm:space-y-8"
+      data-parity-root="ClientSettings"
+    >
       <PortalPageHeader
         title="Settings"
         subtitle="Your coaching, and how your measurements are shown across the app."
@@ -15,10 +18,12 @@ export function ClientSettings() {
 
       <SubscriptionSection />
 
-      <UnitPreferencesSettings
-        sampleWeightKg={clientProfile?.currentWeightKg}
-        sampleHeightCm={clientProfile?.heightCm}
-      />
+      <div data-parity="unit-preferences">
+        <UnitPreferencesSettings
+          sampleWeightKg={clientProfile?.currentWeightKg}
+          sampleHeightCm={clientProfile?.heightCm}
+        />
+      </div>
     </div>
   );
 }

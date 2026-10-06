@@ -24,6 +24,7 @@ type RequestOnboardingDetailsCommand = {
 type RequestOnboardingDetailsResult =
   | { status: "requested" }
   | { status: "not-found" }
+  | { status: "subscription-cancelled-or-ended" }
   | { status: "not-in-review" }
   | { status: "invalid"; reason: DetailRequestRefusal };
 
@@ -50,6 +51,10 @@ export class RequestOnboardingDetailsUseCase {
 
     if (!client) {
       return { status: "not-found" };
+    }
+
+    if (client.subscriptionCancelledOrEnded) {
+      return { status: "subscription-cancelled-or-ended" };
     }
 
     const [stored, reviewed] = await Promise.all([

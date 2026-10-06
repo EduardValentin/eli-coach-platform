@@ -2,7 +2,7 @@ export interface PaymentWebhookIncidents {
   paymentEventHandlingFailed(incident: {
     errorClass: string;
     eventId: string;
-    purpose: string;
+    handler: string;
   }): void;
   paymentEventUnrouted(incident: {
     eventId: string;

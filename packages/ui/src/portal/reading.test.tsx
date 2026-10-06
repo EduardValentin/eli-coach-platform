@@ -119,4 +119,55 @@ describe("Reading", () => {
     // assert
     expect(container.firstElementChild).toHaveClass("col-span-full");
   });
+  it("adds a quieter detail line under the value as a second definition", () => {
+    // arrange
+    // act
+    render(
+      <dl>
+        <Reading
+          as="dl-item"
+          detail="Full refund: cancelled within the 14-day withdrawal period."
+          detailParity="subscription-refund-reason"
+          label="Refund due"
+          value="€447 by 16 October"
+          valueParity="subscription-refund-due"
+        />
+      </dl>,
+    );
+
+    // assert
+    const [value, detail] = screen.getAllByRole("definition");
+    expect(value).toHaveTextContent("€447 by 16 October");
+    expect(detail).toHaveTextContent(
+      "Full refund: cancelled within the 14-day withdrawal period.",
+    );
+    expect(detail).toHaveClass("mt-1", "text-xs", "text-text-secondary");
+    expect(detail).toHaveAttribute("data-parity", "subscription-refund-reason");
+  });
+
+  it("sets the detail as a paragraph outside a description list", () => {
+    // arrange
+    // act
+    const { container } = render(
+      <Reading detail="Paid by card." label="Payment" value="€447" />,
+    );
+
+    // assert
+    expect(
+      Array.from(container.querySelectorAll("p"), (line) => line.textContent),
+    ).toEqual(["Payment", "€447", "Paid by card."]);
+  });
+
+  it("renders no detail line without a detail", () => {
+    // arrange
+    // act
+    render(
+      <dl>
+        <Reading as="dl-item" label="Bundle" value="3 months" />
+      </dl>,
+    );
+
+    // assert
+    expect(screen.getAllByRole("definition")).toHaveLength(1);
+  });
 });

@@ -654,7 +654,7 @@ test("a client who measures in pounds and inches sends her answers once, even af
     "Sent to your coach",
     workStartsOnLine(client.paidAt),
   );
-  await clientDashboard.expectNoOnboardingActions();
+  await clientDashboard.expectOnlyStartNowAction();
   const [submission] = await onboardingRecords.submissions();
   expect(await onboardingRecords.submissions()).toHaveLength(1);
   expect(submission.progressPhotosConsentedAt).toBeInstanceOf(Date);
@@ -742,7 +742,7 @@ test("a client who agrees to share progress photos sends front, side and back wi
   await clientOnboarding.agreeToPhotos();
 
   // assert
-  await clientOnboarding.expectPhotosSendNote();
+  await clientOnboarding.expectPhotosUnlocked();
 
   // act
   await clientOnboarding.addPhoto("front", samplePhotoOf("front"));
@@ -783,9 +783,7 @@ test("a client who agrees to share progress photos sends front, side and back wi
   await clientProfile.openAdd();
 
   // assert
-  await measurementsSheet.expectConsentAlreadyGiven(
-    dayMonthYearFormatter.format(new Date()),
-  );
+  await measurementsSheet.expectConsentAlreadyGiven();
 });
 
 test("a client who takes back her photo consent before sending sends no photos", async ({
@@ -861,7 +859,7 @@ test("a client who takes back her photo consent and agrees again starts from emp
   await clientOnboarding.agreeToPhotos();
 
   // assert
-  await clientOnboarding.expectPhotosSendNote();
+  await clientOnboarding.expectPhotosUnlocked();
   await clientOnboarding.expectNoPhotoPreview("front");
   await clientOnboarding.expectNoPhotoPreview("side");
   await clientOnboarding.expectNoPhotoPreview("back");

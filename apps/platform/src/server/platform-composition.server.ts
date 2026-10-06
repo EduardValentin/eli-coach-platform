@@ -2,8 +2,11 @@ import type { AppConfig, DatabaseConfig } from "@eli-coach-platform/config";
 import type { FeatureFlagReader } from "@eli-coach-platform/domain/feature-flag";
 import type { BotDetectionConfig } from "@eli-coach-platform/infrastructure/bot-detection";
 import type {
+  PaymentCardHandler,
   PaymentCompletionHandler,
   PaymentEvents,
+  PaymentRefundHandler,
+  PaymentSubscriptionChangeHandler,
   PaymentWebhookIncidents,
 } from "@eli-coach-platform/infrastructure/payments/server";
 
@@ -36,8 +39,11 @@ type PlatformFeatureHandles = {
   botDetection: BotDetectionConfig;
   featureFlags: FeatureFlagReader;
   incidents: PaymentWebhookIncidents;
+  paymentCardHandler: PaymentCardHandler;
   paymentCompletionHandlers: readonly PaymentCompletionHandler[];
   paymentEvents: PaymentEvents;
+  paymentRefundHandler: PaymentRefundHandler;
+  paymentSubscriptionChangeHandlers: readonly PaymentSubscriptionChangeHandler[];
   version: string;
   webhookSigningSecret: string | undefined;
 };
@@ -56,23 +62,33 @@ export function composePlatformFeature(
     }),
     readyz: new ReadyzController(handles.app),
     stripeWebhooks: new StripeWebhookController({
-      handlersByPurpose: handlersByPurpose(handles.paymentCompletionHandlers),
+      cardHandler: handles.paymentCardHandler,
+      completionHandlersByPurpose: handlersByPurpose(
+        handles.paymentCompletionHandlers,
+        "payment completion",
+      ),
       incidents: handles.incidents,
       paymentEvents: handles.paymentEvents,
+      refundHandler: handles.paymentRefundHandler,
       signingSecret: handles.webhookSigningSecret,
+      subscriptionChangeHandlersByPurpose: handlersByPurpose(
+        handles.paymentSubscriptionChangeHandlers,
+        "subscription change",
+      ),
     }),
   };
 }
 
-function handlersByPurpose(
-  handlers: readonly PaymentCompletionHandler[],
-): ReadonlyMap<string, PaymentCompletionHandler> {
-  const byPurpose = new Map<string, PaymentCompletionHandler>();
+function handlersByPurpose<Handler extends { readonly purpose: string }>(
+  handlers: readonly Handler[],
+  handlerKind: string,
+): ReadonlyMap<string, Handler> {
+  const byPurpose = new Map<string, Handler>();
 
   for (const handler of handlers) {
     if (byPurpose.has(handler.purpose)) {
       throw new Error(
-        `Two payment completion handlers serve the purpose "${handler.purpose}".`,
+        `Two ${handlerKind} handlers serve the purpose "${handler.purpose}".`,
       );
     }
 

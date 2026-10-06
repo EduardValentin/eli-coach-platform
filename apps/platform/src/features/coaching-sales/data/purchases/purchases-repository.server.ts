@@ -3,10 +3,6 @@ import type {
   DatabaseTransaction,
 } from "@eli-coach-platform/db";
 import type {
-  ClientSubscriptionStart,
-  ClientSubscriptionStarts,
-} from "@eli-coach-platform/domain/client-journey";
-import type {
   CoachingPurchase,
   CoachingPurchaseOutcome,
   CoachingPurchases,
@@ -41,7 +37,7 @@ const SALES_STATE_PRECEDENCE: readonly CallSalesState[] = [
 ];
 
 export class PostgresCoachingPurchases
-  implements CoachingPurchases, CallSalesStates, ClientSubscriptionStarts
+  implements CoachingPurchases, CallSalesStates
 {
   constructor(private readonly options: PostgresCoachingPurchasesOptions) {}
 
@@ -99,26 +95,6 @@ export class PostgresCoachingPurchases
 
     return callSalesOf(callIds, advancedSales);
   }
-
-  async findOpenForClient(
-    clientId: string,
-  ): Promise<ClientSubscriptionStart | null> {
-    const [start] = await this.options.database
-      .select({
-        startChoice: coachingSubscriptionsTable.startChoice,
-        purchasedAt: coachingSubscriptionsTable.paidAt,
-      })
-      .from(coachingSubscriptionsTable)
-      .where(
-        and(
-          eq(coachingSubscriptionsTable.clientId, clientId),
-          sql`${coachingSubscriptionsTable.status} <> 'ended'`,
-        ),
-      )
-      .limit(1);
-
-    return start ?? null;
-  }
 }
 
 async function recordPurchase(
@@ -147,20 +123,23 @@ async function recordPurchase(
     throw new Error("Client insert returned no row.");
   }
 
+  const purchased = subscription.toSnapshot();
+
   await transaction.insert(coachingSubscriptionsTable).values({
     clientId: clientRow.id,
     assessmentCallId: client.assessmentCallId,
-    bundleId: subscription.bundleId,
-    months: subscription.months,
-    tier: subscription.tier,
-    amountCents: subscription.amountCents,
-    currency: subscription.currency,
-    stripeCustomerId: subscription.paymentCustomerId,
-    stripeSubscriptionId: subscription.paymentSubscriptionId,
-    stripeCheckoutSessionId: subscription.checkoutSessionId,
-    paidAt: subscription.paidAt,
-    startChoice: subscription.startChoice,
-    status: subscription.status,
+    bundleId: purchased.bundleId,
+    months: purchased.months,
+    tier: purchased.tier,
+    amountCents: purchased.amountCents,
+    currency: purchased.currency,
+    stripeCustomerId: purchased.paymentCustomerId,
+    stripeSubscriptionId: purchased.paymentSubscriptionId,
+    stripePaymentIntentId: purchased.paymentIntentId,
+    stripeCheckoutSessionId: purchased.checkoutSessionId,
+    paidAt: purchased.paidAt,
+    startChoice: purchased.startChoice,
+    status: purchased.status,
     createdAt: recording.receivedAt,
   });
 

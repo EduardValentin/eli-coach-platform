@@ -1,11 +1,20 @@
-import type { ClientJourneyStep } from "@eli-coach-platform/domain/client-journey";
+import type {
+  ClientJourneyStep,
+  ClientPortalAccess,
+} from "@eli-coach-platform/domain/client-journey";
 import { z } from "zod";
 
 import { CLIENT_PORTAL_PATH } from "~/features/accounts/contracts/paths";
 
-import { CLIENT_ONBOARDING_PATH, CLIENT_WELCOME_PATH } from "./paths";
+import {
+  CLIENT_ENDED_PATH,
+  CLIENT_ONBOARDING_PATH,
+  CLIENT_WELCOME_PATH,
+} from "./paths";
 
 const FINISH_ONBOARDING_LABEL = "Finish your onboarding";
+
+const TRAILING_SLASHES = /\/+$/;
 
 const ONBOARDING_JOURNEY_PATHS: readonly string[] = [
   CLIENT_WELCOME_PATH,
@@ -15,6 +24,16 @@ const ONBOARDING_JOURNEY_PATHS: readonly string[] = [
 type ClientJourneyGate = {
   destination: string;
   admits: (requestedPath: string) => boolean;
+};
+
+export type ClientPortalStanding = {
+  step: ClientJourneyStep;
+  access: ClientPortalAccess;
+};
+
+const ENDED_GATE: ClientJourneyGate = {
+  destination: CLIENT_ENDED_PATH,
+  admits: (requestedPath) => requestedPath === CLIENT_ENDED_PATH,
 };
 
 const SUBMITTED_GATE: ClientJourneyGate = {
@@ -43,24 +62,53 @@ const CLIENT_JOURNEY_GATE_BY_STEP = {
 } satisfies Record<ClientJourneyStep, ClientJourneyGate>;
 
 export function clientJourneyRedirect(
-  step: ClientJourneyStep,
+  standing: ClientPortalStanding,
   requestedPath: string,
 ): string | null {
-  const gate = CLIENT_JOURNEY_GATE_BY_STEP[step];
+  const gate = gateOf(standing);
 
-  return gate.admits(requestedPath) ? null : gate.destination;
+  return gate.admits(normalizedPathOf(requestedPath)) ? null : gate.destination;
+}
+
+function normalizedPathOf(requestedPath: string): string {
+  return (
+    decodedPathOf(requestedPath).toLowerCase().replace(TRAILING_SLASHES, "") ||
+    "/"
+  );
+}
+
+function decodedPathOf(requestedPath: string): string {
+  try {
+    return decodeURIComponent(requestedPath);
+  } catch {
+    return requestedPath;
+  }
 }
 
 export function clientJourneyPortalLink(
-  step: ClientJourneyStep,
+  standing: ClientPortalStanding,
 ): { href: string; label: string } | null {
-  if (isAfterSubmission(step)) {
+  if (standing.access === "ended" || isAfterSubmission(standing.step)) {
     return null;
   }
 
   return {
-    href: CLIENT_JOURNEY_GATE_BY_STEP[step].destination,
+    href: CLIENT_JOURNEY_GATE_BY_STEP[standing.step].destination,
     label: FINISH_ONBOARDING_LABEL,
+  };
+}
+
+function gateOf(standing: ClientPortalStanding): ClientJourneyGate {
+  if (standing.access === "ended") {
+    return ENDED_GATE;
+  }
+
+  const stepGate = CLIENT_JOURNEY_GATE_BY_STEP[standing.step];
+
+  return {
+    destination: stepGate.destination,
+    admits: (requestedPath) =>
+      requestedPath !== CLIENT_ENDED_PATH && stepGate.admits(requestedPath),
   };
 }
 
@@ -81,6 +129,7 @@ export const programStatusSchema = z.object({
   kind: z.enum(PROGRAM_STATUS_KINDS),
   submittedAt: z.iso.datetime(),
   workStartsOn: z.iso.datetime().nullable(),
+  startNowUntil: z.iso.datetime().nullable(),
 });
 
 export type ProgramStatus = z.infer<typeof programStatusSchema>;

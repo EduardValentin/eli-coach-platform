@@ -10,22 +10,19 @@ const DEAD_END_BODY_CLASS_NAME =
 type DeadEndContentProps = {
   children?: ReactNode;
   description: ReactNode;
+  detail?: ReactNode;
   eyebrow?: string;
   icon: ReactNode;
   title: string;
 };
 
-type DeadEndPageProps = {
-  children: ReactNode;
-  description: ReactNode;
-  eyebrow: string;
-  icon: ReactNode;
-  landmarkLabel: string;
-  title: string;
-};
+type DeadEndPageProps = DataAttributes &
+  DeadEndContentProps & {
+    landmarkLabel: string;
+  };
 
 function DeadEndContent(props: DeadEndContentProps) {
-  const { children, description, eyebrow, icon, title } = props;
+  const { children, description, detail, eyebrow, icon, title } = props;
 
   return (
     <>
@@ -44,6 +41,14 @@ function DeadEndContent(props: DeadEndContentProps) {
       <p className="mt-4 max-w-md text-lg leading-relaxed text-text-secondary">
         {description}
       </p>
+      {detail ? (
+        <p
+          className="mt-3 max-w-md text-base leading-relaxed text-text-secondary"
+          data-parity="dead-end-detail"
+        >
+          {detail}
+        </p>
+      ) : null}
       {children ? (
         <div className="mt-8 flex justify-center">{children}</div>
       ) : null}
@@ -51,11 +56,19 @@ function DeadEndContent(props: DeadEndContentProps) {
   );
 }
 
-export function DeadEndPage(props: DeadEndPageProps) {
-  const { children, description, eyebrow, icon, landmarkLabel, title } = props;
-
+export function DeadEndPage({
+  children,
+  description,
+  detail,
+  eyebrow,
+  icon,
+  landmarkLabel,
+  title,
+  ...dataAttributes
+}: DeadEndPageProps) {
   return (
     <main
+      {...dataAttributes}
       aria-label={landmarkLabel}
       className={cn(
         DEAD_END_BODY_CLASS_NAME,
@@ -64,6 +77,7 @@ export function DeadEndPage(props: DeadEndPageProps) {
     >
       <DeadEndContent
         description={description}
+        detail={detail}
         eyebrow={eyebrow}
         icon={icon}
         title={title}

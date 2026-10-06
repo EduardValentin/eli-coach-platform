@@ -1,0 +1,8 @@
+[
+  {"waitFor": "[data-parity=\"cancel-action\"]"},
+  {"wait": 400},
+  {"click": "[data-parity=\"cancel-action\"]"},
+  {"waitFor": "[data-parity-root=\"ConfirmDialog\"] [data-parity=\"confirm\"]"},
+  {"hover": "[data-parity-root=\"ConfirmDialog\"] h2"},
+  {"wait": 800}
+]

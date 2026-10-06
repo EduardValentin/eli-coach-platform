@@ -1,4 +1,4 @@
-import { addDays, set, subDays } from 'date-fns';
+import { addDays, addMonths, set, subDays } from 'date-fns';
 import {
   emptyOnboarding,
   isBeforeStage,
@@ -23,18 +23,24 @@ import {
 } from '../domain/measurementSchedule';
 import { profileFromOnboarding } from '../domain/clientProfile';
 import {
+  cancel,
   periodEnd,
   resolveDay1,
+  settleRefund,
   WITHDRAWAL_WINDOW_DAYS,
+  type CardOnFile,
   type CoachingSubscription,
   type SubscriptionStartPath,
   type SubscriptionStatus,
 } from '../domain/coachingSubscription';
+import { TEST_MASTERCARD, TEST_VISA } from './prototypeCards';
+import { bundleForMonths, bundleTotal } from '../domain/bundles';
 import {
   INVITATION_VALIDITY_DAYS,
   type PrototypeInvitationStanding,
 } from './invitationService';
 import { paymentLinkExpiresAt } from './paymentLinkService';
+import { toCents } from '../utils/money';
 import type { PrototypeBooking } from './assessmentCallService';
 import { findCountry } from './countries';
 import type { VisitorGender } from './visitorProfile';
@@ -66,6 +72,43 @@ const SEEDED_PROGRESS_PHOTOS: ProgressPhotoSet = {
   side: SEEDED_PROGRESS_PHOTO,
   back: SEEDED_PROGRESS_PHOTO,
 };
+
+export type PrototypeRefund = 'none' | 'due' | 'part-refunded' | 'refunded';
+
+export const PROTOTYPE_REFUNDS: readonly PrototypeRefund[] = [
+  'none',
+  'due',
+  'part-refunded',
+  'refunded',
+];
+
+export type PrototypeCardOnFile = 'visa' | 'mastercard' | 'none';
+
+export const PROTOTYPE_CARDS_ON_FILE: readonly PrototypeCardOnFile[] = [
+  'visa',
+  'mastercard',
+  'none',
+];
+
+const SEEDED_CARDS: Record<PrototypeCardOnFile, CardOnFile | undefined> = {
+  visa: TEST_VISA,
+  mastercard: TEST_MASTERCARD,
+  none: undefined,
+};
+
+export type PrototypeDaysSincePayment =
+  | 'stage'
+  | '1'
+  | '5'
+  | '13'
+  | '14'
+  | '30'
+  | '100';
+
+export const PROTOTYPE_DAYS_SINCE_PAYMENT: readonly PrototypeDaysSincePayment[] =
+  ['stage', '1', '5', '13', '14', '30', '100'];
+
+const PART_REFUND_SHARE = 1 / 3;
 
 export type PrototypeLifeStage = 'none' | 'pregnant';
 
@@ -102,14 +145,22 @@ export type JourneySeed = {
   measurementsDue: PrototypeMeasurementsDue;
   lifeStage: PrototypeLifeStage;
   seededPhotos: PrototypeSeededPhotos;
+  refund: PrototypeRefund;
+  paymentProblem: boolean;
+  cardOnFile: PrototypeCardOnFile;
+  daysSincePayment: PrototypeDaysSincePayment;
   now: Date;
 };
 
 type SubscriptionSeed = {
   purchasedAt: Date;
+  amountPaidCents: number;
   programReadyAt: Date | null;
   startPath: SubscriptionStartPath;
   status: SubscriptionStatus;
+  refund: PrototypeRefund;
+  paymentProblem: boolean;
+  cardOnFile: PrototypeCardOnFile;
   now: Date;
 };
 
@@ -319,39 +370,90 @@ function seededInvitationState(
   return expiresAt <= now ? 'expired' : 'valid';
 }
 
-function seedSubscription(seed: SubscriptionSeed): CoachingSubscription {
+function runningSubscription(seed: SubscriptionSeed): CoachingSubscription {
   const base: CoachingSubscription = {
     bundle: SEEDED_BUNDLE,
     startPath: seed.startPath,
     purchasedAt: seed.purchasedAt,
+    amountPaidCents: seed.amountPaidCents,
     status: seed.status,
+    paymentProblem: seed.paymentProblem,
+    cardOnFile: SEEDED_CARDS[seed.cardOnFile],
   };
 
   const day1 = resolveDay1(seed);
   if (day1 === null) return base;
 
+  return { ...base, day1, periodEndsAt: periodEnd(day1, base.bundle, 0) };
+}
+
+function refundableCancellationAt(purchasedAt: Date, now: Date): Date {
+  const lastRefundableDay = addDays(purchasedAt, WITHDRAWAL_WINDOW_DAYS - 1);
+  const dayBefore = subDays(now, 1);
+  const cancelledAt = dayBefore < lastRefundableDay ? dayBefore : lastRefundableDay;
+
+  return cancelledAt < purchasedAt ? purchasedAt : cancelledAt;
+}
+
+function refundedSubscription(
+  running: CoachingSubscription,
+  refund: Exclude<PrototypeRefund, 'none'>,
+  now: Date,
+): CoachingSubscription {
+  const cancelled = cancel(
+    { ...running, startPath: 'waiting', status: 'not-started' },
+    refundableCancellationAt(running.purchasedAt, now),
+  );
+  const amountCents = cancelled.refund?.amountCents ?? 0;
+
+  if (refund === 'part-refunded') {
+    return settleRefund(cancelled, {
+      refundedCents: Math.round(amountCents * PART_REFUND_SHARE),
+      at: now,
+    });
+  }
+  if (refund === 'refunded') {
+    return settleRefund(cancelled, { refundedCents: amountCents, at: now });
+  }
+
+  return cancelled;
+}
+
+function seedSubscription(seed: SubscriptionSeed): CoachingSubscription {
+  const running = runningSubscription(seed);
+
+  if (seed.refund !== 'none') {
+    return refundedSubscription(running, seed.refund, seed.now);
+  }
+
   if (seed.status === 'ended') {
     return {
-      ...base,
-      day1,
+      ...running,
       cancelledAt: subDays(seed.now, 2),
       periodEndsAt: subDays(seed.now, 1),
     };
   }
 
-  const periodEndsAt = periodEnd(day1, base.bundle, 0);
-
   if (seed.status === 'cancelled') {
-    return { ...base, day1, periodEndsAt, cancelledAt: subDays(seed.now, 1) };
+    return {
+      ...running,
+      cancelledAt: subDays(seed.now, 1),
+      periodEndsAt:
+        running.periodEndsAt ?? addMonths(seed.purchasedAt, running.bundle),
+    };
   }
 
-  return { ...base, day1, periodEndsAt };
+  return running;
 }
 
 const EXPIRED_INVITATION_AGE_DAYS = INVITATION_VALIDITY_DAYS + 5;
 
 function seededPaidAt(seed: JourneySeed): Date {
-  const { startPath, stage, invitationStanding, now } = seed;
+  const { startPath, stage, invitationStanding, daysSincePayment, now } = seed;
+
+  if (daysSincePayment !== 'stage') {
+    return subDays(now, Number(daysSincePayment));
+  }
 
   const invitationPending = isBeforeStage(stage, 'account-created');
   if (invitationStanding === 'expired' && invitationPending) {
@@ -442,9 +544,15 @@ export function seedJourney(seed: JourneySeed): ClientJourney {
     subscription: reached('invited')
       ? seedSubscription({
           purchasedAt: paidAt,
+          amountPaidCents: toCents(
+            bundleTotal(bundleForMonths(SEEDED_BUNDLE), pricing),
+          ),
           programReadyAt: reached('program-ready') ? programReadyAt : null,
           startPath,
           status: subscriptionStatus,
+          refund: seed.refund,
+          paymentProblem: seed.paymentProblem,
+          cardOnFile: seed.cardOnFile,
           now,
         })
       : undefined,
