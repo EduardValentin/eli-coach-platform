@@ -1,6 +1,7 @@
 import type { AccountSnapshot } from "@eli-coach-platform/domain/account";
 import {
   ClientResource,
+  type ClientResourceIncidents,
   type ClientResourceSnapshot,
   type ListClientResourcesResult,
   type ListClientResourcesUseCase,
@@ -76,40 +77,60 @@ describe("CoachResourcesController load", () => {
     });
 
     // act
-    const resources = await controller.load(coachArgs(), CLIENT_ID);
+    const listing = await controller.load(coachArgs(), CLIENT_ID);
 
     // assert
-    expect(resources).toEqual([
-      {
-        id: NEWER_ID,
-        title: "Meal plan",
-        description: "Week one",
-        file: {
-          originalName: "Meal plan.pdf",
-          downloadName: "Meal plan.pdf",
-          kind: "pdf",
-          sizeBytes: 182_431,
-          pageCount: 3,
+    expect(listing).toEqual({
+      status: "ready",
+      resources: [
+        {
+          id: NEWER_ID,
+          title: "Meal plan",
+          description: "Week one",
+          file: {
+            originalName: "Meal plan.pdf",
+            downloadName: "Meal plan.pdf",
+            kind: "pdf",
+            sizeBytes: 182_431,
+            pageCount: 3,
+          },
+          addedAt: "2026-10-05T09:30:00.000Z",
         },
-        addedAt: "2026-10-05T09:30:00.000Z",
-      },
-      {
-        id: OLDER_ID,
-        title: "Macros",
-        description: "",
-        file: {
-          originalName: "macros",
-          downloadName: "macros.ods",
-          kind: "excel",
-          sizeBytes: 9_120,
-          pageCount: null,
+        {
+          id: OLDER_ID,
+          title: "Macros",
+          description: "",
+          file: {
+            originalName: "macros",
+            downloadName: "macros.ods",
+            kind: "excel",
+            sizeBytes: 9_120,
+            pageCount: null,
+          },
+          addedAt: "2026-10-04T08:00:00.000Z",
         },
-        addedAt: "2026-10-04T08:00:00.000Z",
-      },
-    ]);
+      ],
+    });
     expect(listClientResources).toHaveBeenCalledWith({
       requester: { role: "COACH", authSubjectId: "user_eli" },
       clientId: CLIENT_ID,
+    });
+  });
+
+  it("reports a failed read as an incident and answers a failed listing", async () => {
+    // arrange
+    const { controller, listClientResources, incidents } = createController();
+    const failure = new Error("connection terminated");
+    listClientResources.mockRejectedValue(failure);
+
+    // act
+    const listing = await controller.load(coachArgs(), CLIENT_ID);
+
+    // assert
+    expect(listing).toEqual({ status: "failed" });
+    expect(incidents.resourceListingFailed).toHaveBeenCalledWith({
+      clientId: CLIENT_ID,
+      error: failure,
     });
   });
 
@@ -173,13 +194,15 @@ function createController(
   listed: ListClientResourcesResult = { status: "listed", resources: [] },
 ) {
   const listClientResources = vi.fn().mockResolvedValue(listed);
+  const incidents = { resourceListingFailed: vi.fn() };
   const controller = new CoachResourcesController({
     listClientResources: {
       execute: listClientResources,
     } as unknown as ListClientResourcesUseCase,
+    incidents: incidents as unknown as ClientResourceIncidents,
   });
 
-  return { controller, listClientResources };
+  return { controller, incidents, listClientResources };
 }
 
 function coachArgs(options: { session?: ResolvedSession } = {}) {

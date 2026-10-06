@@ -722,6 +722,32 @@ describe("createConsoleLogger", () => {
     );
   });
 
+  it("logs a client's resources that could not be listed by id and the class and code of its cause only", () => {
+    // arrange
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const logger = createConsoleLogger();
+    const cause = Object.assign(
+      new Error("connect ECONNREFUSED 10.0.0.5:5432 user=platform"),
+      { code: "ECONNREFUSED" },
+    );
+
+    // act
+    logger.resourceListingFailed({ clientId: "client-1", error: cause });
+
+    // assert
+    expect(consoleError).toHaveBeenCalledWith(
+      "Client resources could not be listed.",
+      {
+        clientId: "client-1",
+        errorCategory: "client_resource_listing_failure",
+        errorClass: "Error",
+        errorCode: "ECONNREFUSED",
+      },
+    );
+  });
+
   it("logs a client resource storage failure whose cause has no code by its class alone", () => {
     // arrange
     const consoleError = vi

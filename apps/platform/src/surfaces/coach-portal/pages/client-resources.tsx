@@ -7,11 +7,7 @@ import {
   type MetaFunction,
 } from "react-router";
 
-import type { ClientResourceView } from "~/features/client-resources/contracts/client-resources";
-import {
-  CoachResourceLibrary,
-  type CoachResourceListing,
-} from "~/features/client-resources/ui/coach/resources/coach-resource-library";
+import { CoachResourceLibrary } from "~/features/client-resources/ui/coach/resources/coach-resource-library";
 import { possessive } from "~/features/client-resources/ui/shared/resources/resource-copy";
 import { clientResourcesContext } from "~/features/client-resources/server/guards/client-resources-context.server";
 import { coachClientPath } from "~/features/coaching-sales/contracts/paths";
@@ -25,20 +21,6 @@ const PAGE_CLASS = "w-full";
 
 const PAGE_PARITY_ROOT = "CoachResourceLibrary";
 
-const FAILED_LISTING: CoachResourceListing = { status: "failed" };
-
-async function listingOf(
-  reading: Promise<ClientResourceView[]>,
-): Promise<CoachResourceListing> {
-  try {
-    return { status: "ready", resources: await reading };
-  } catch (error) {
-    if (error instanceof Response) throw error;
-
-    return FAILED_LISTING;
-  }
-}
-
 export async function loader(args: LoaderFunctionArgs) {
   const { clientId } = args.params;
 
@@ -50,11 +32,9 @@ export async function loader(args: LoaderFunctionArgs) {
     args.context
       .get(coachingSalesContext)
       .coachClients.loadClient(args, clientId),
-    listingOf(
-      args.context
-        .get(clientResourcesContext)
-        .coachResources.load(args, clientId),
-    ),
+    args.context
+      .get(clientResourcesContext)
+      .coachResources.load(args, clientId),
   ]);
 
   return { client, listing };

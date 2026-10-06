@@ -251,6 +251,14 @@ export function createConsoleLogger(): ConsoleLogger {
         receivedBytes,
       });
     },
+    resourceListingFailed: ({ clientId, error }) => {
+      console.error("Client resources could not be listed.", {
+        clientId,
+        errorCategory: "client_resource_listing_failure",
+        errorClass: errorClassOf(error),
+        ...errorCodeOf(error),
+      });
+    },
     resourceStorageFailed: ({ clientId, error, resourceId }) => {
       console.error("Client resource could not be stored.", {
         clientId,

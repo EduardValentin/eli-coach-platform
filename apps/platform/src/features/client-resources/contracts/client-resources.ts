@@ -29,6 +29,9 @@ const clientResourceSchema = z.object({
 
 export type ClientResourceView = z.infer<typeof clientResourceSchema>;
 
+export type ClientResourceListing =
+  { status: "ready"; resources: ClientResourceView[] } | { status: "failed" };
+
 export const clientResourceListSchema = z.array(clientResourceSchema);
 
 export const addedResourceAnswerSchema = z.object({

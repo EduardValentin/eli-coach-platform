@@ -88,6 +88,7 @@ function createUseCase() {
     resourceRefused: vi.fn(),
     resourceAccessRefused: vi.fn(),
     resourceStorageFailed: vi.fn(),
+    resourceListingFailed: vi.fn(),
   } satisfies ClientResourceIncidents;
   const useCase = new DownloadClientResourceUseCase({
     resources: new InMemoryClientResources(),

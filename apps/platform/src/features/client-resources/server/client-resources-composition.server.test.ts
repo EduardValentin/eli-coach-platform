@@ -62,6 +62,7 @@ function createHandles() {
       resourceRefused: vi.fn(),
       resourceAccessRefused: vi.fn(),
       resourceStorageFailed: vi.fn(),
+      resourceListingFailed: vi.fn(),
     },
     resourceClients: {
       exists: vi.fn().mockResolvedValue(false),

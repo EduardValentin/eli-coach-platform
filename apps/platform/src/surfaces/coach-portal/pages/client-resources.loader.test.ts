@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { ClientResourceView } from "~/features/client-resources/contracts/client-resources";
-import type { CoachResourceListing } from "~/features/client-resources/ui/coach/resources/coach-resource-library";
+import type {
+  ClientResourceListing,
+  ClientResourceView,
+} from "~/features/client-resources/contracts/client-resources";
 import type { ClientResourcesFeature } from "~/features/client-resources/server/client-resources-composition.server";
 import { clientResourcesContext } from "~/features/client-resources/server/guards/client-resources-context.server";
 import type { CoachClient } from "~/features/coaching-sales/contracts/coach-clients";
@@ -84,12 +86,10 @@ describe("coach client resources page loader", () => {
     await expect(loading).rejects.toMatchObject({ status: 404 });
   });
 
-  it("still reads her record when her resources cannot be read, and says the listing failed", async () => {
+  it("hands on a failed listing of her resources beside her record", async () => {
     // arrange
     const { args, loadResources } = routeArguments();
-    loadResources.mockRejectedValue(
-      new Error("The resources could not be read."),
-    );
+    loadResources.mockResolvedValue({ status: "failed" });
 
     // act
     const loaded = await loader(args);
@@ -143,7 +143,7 @@ describe("coach client resources page meta", () => {
       listing: {
         status: "ready",
         resources: RESOURCES,
-      } as CoachResourceListing,
+      } as ClientResourceListing,
     };
 
     // act
@@ -156,7 +156,9 @@ describe("coach client resources page meta", () => {
 
 function routeArguments(options: { params?: Record<string, string> } = {}) {
   const loadClient = vi.fn().mockResolvedValue(CLIENT);
-  const loadResources = vi.fn().mockResolvedValue(RESOURCES);
+  const loadResources = vi
+    .fn()
+    .mockResolvedValue({ status: "ready", resources: RESOURCES });
   const args = createRequestArgs({
     contexts: [
       contextEntry(coachingSalesContext, {

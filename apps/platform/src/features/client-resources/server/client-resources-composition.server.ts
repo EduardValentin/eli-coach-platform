@@ -56,6 +56,7 @@ export function composeClientResourcesFeature(
     }),
     coachResources: new CoachResourcesController({
       listClientResources: new ListClientResourcesUseCase(accessPorts),
+      incidents: handles.incidents,
     }),
   };
 }

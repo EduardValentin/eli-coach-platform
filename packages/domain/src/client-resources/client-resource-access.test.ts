@@ -67,6 +67,7 @@ function createAccess() {
     resourceRefused: vi.fn(),
     resourceAccessRefused: vi.fn(),
     resourceStorageFailed: vi.fn(),
+    resourceListingFailed: vi.fn(),
   } satisfies ClientResourceIncidents;
   const access = new ClientResourceAccess({ resources, clients, incidents });
 

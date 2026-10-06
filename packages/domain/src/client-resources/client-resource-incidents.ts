@@ -29,9 +29,15 @@ type ClientResourceStorageFailedIncident = {
   error: unknown;
 };
 
+type ClientResourceListingFailedIncident = {
+  clientId: string;
+  error: unknown;
+};
+
 export interface ClientResourceIncidents {
   resourceStored(incident: ClientResourceStoredIncident): void;
   resourceRefused(incident: ClientResourceRefusedIncident): void;
   resourceAccessRefused(incident: ClientResourceAccessRefusedIncident): void;
   resourceStorageFailed(incident: ClientResourceStorageFailedIncident): void;
+  resourceListingFailed(incident: ClientResourceListingFailedIncident): void;
 }
