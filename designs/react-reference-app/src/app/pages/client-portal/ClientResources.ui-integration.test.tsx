@@ -79,6 +79,32 @@ describe('client resources page', () => {
     expect(within(screen.getByRole('button', { name: 'Glute activation warm-up' })).queryByText('New')).not.toBeInTheDocument();
   });
 
+  it('lets her read and download as usual when her opening is not recorded, and keeps the resource new', async () => {
+    // arrange
+    renderPage('&rmark=fails');
+    await userEvent.click(await resourceCard('Glute activation warm-up'));
+    const viewer = screen.getByRole('dialog', { name: 'Glute activation warm-up' });
+
+    // act
+    await userEvent.click(within(viewer).getByRole('button', { name: 'Next page' }));
+
+    // assert
+    expect(within(viewer).getByText('Page 2 of 6')).toBeInTheDocument();
+    expect(within(viewer).getByRole('button', { name: 'Download' })).toBeInTheDocument();
+
+    // act
+    await userEvent.click(within(viewer).getByRole('button', { name: 'Close' }));
+
+    // assert
+    await waitFor(
+      () =>
+        expect(
+          within(screen.getByRole('button', { name: 'Glute activation warm-up' })).getByText('New'),
+        ).toBeInTheDocument(),
+      SERVICE_TIMEOUT,
+    );
+  });
+
   it('pages through a resource and announces each page', async () => {
     // arrange
     renderPage();

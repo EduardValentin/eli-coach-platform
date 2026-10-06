@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Resource, ResourceAddition } from '../domain/resources';
 import {
+  OPENING_NOT_RECORDED,
   PREPARING_MS,
   RESOURCE_LATENCY_MS,
   RESOURCES_UNAVAILABLE,
@@ -373,10 +374,26 @@ describe('changing a resource', () => {
     const server = serverWith([stored({})]);
 
     // act
-    const opened = await settled(server.markOpened('warm-up'));
+    const opened = await settled(server.markOpened('warm-up', 'works'));
 
     // assert
     expect(opened.openedAt).toEqual(NOW);
+  });
+
+  it('leaves the resource unopened when recording the opening fails', async () => {
+    // arrange
+    const server = serverWith([stored({})]);
+    const failure = expect(server.markOpened('warm-up', 'fails')).rejects.toThrow(
+      OPENING_NOT_RECORDED,
+    );
+
+    // act
+    await vi.advanceTimersByTimeAsync(RESOURCE_LATENCY_MS);
+
+    // assert
+    await failure;
+    const listed = await settled(server.listForClient('client-1', 'works'));
+    expect(listed[0].openedAt).toBeNull();
   });
 });
 

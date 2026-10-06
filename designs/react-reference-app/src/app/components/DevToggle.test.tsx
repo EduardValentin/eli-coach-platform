@@ -143,3 +143,34 @@ describe('DevToggle resource upload', () => {
     expect(new URLSearchParams(window.location.search).get('rupload')).toBe('holds');
   });
 });
+
+describe('DevToggle resource opening', () => {
+  it('keeps a failing opening in the address so the state can be shared', async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderDevToggle();
+    await openDevSettings();
+    await user.click(screen.getByRole('tab', { name: 'Resources' }));
+    await user.click(screen.getByRole('combobox', { name: 'Resource opening' }));
+
+    // act
+    await user.click(screen.getByRole('option', { name: 'Fails' }));
+
+    // assert
+    expect(screen.getByRole('combobox', { name: 'Resource opening' })).toHaveTextContent('Fails');
+    expect(new URLSearchParams(window.location.search).get('rmark')).toBe('fails');
+  });
+
+  it('restores a failing opening from the address', async () => {
+    // arrange
+    const user = userEvent.setup();
+    renderDevToggle('?rmark=fails');
+    await openDevSettings();
+
+    // act
+    await user.click(screen.getByRole('tab', { name: 'Resources' }));
+
+    // assert
+    expect(screen.getByRole('combobox', { name: 'Resource opening' })).toHaveTextContent('Fails');
+  });
+});

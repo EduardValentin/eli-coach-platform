@@ -102,7 +102,7 @@ export function ResourceCard({
             </span>
           )}
           {showsNew && (
-            <Badge className="ml-auto" tone="pending">
+            <Badge className="ml-auto" data-parity="resource-new" tone="pending">
               New
             </Badge>
           )}

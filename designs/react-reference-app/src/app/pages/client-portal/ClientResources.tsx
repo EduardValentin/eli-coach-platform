@@ -30,7 +30,7 @@ export function ClientResources() {
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full" data-parity-root="ClientResources">
       {listing.status !== 'failed' && <PortalPageHeader title="Resources" />}
 
       {listing.status === 'loading' && <ResourceGridSkeleton />}
