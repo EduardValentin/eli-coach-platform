@@ -15,6 +15,7 @@ import { ClientEndedPage } from "./client-ended-page";
 import { ClientOnboarding } from "./client-onboarding";
 import { ClientPortalShell } from "./client-portal-shell";
 import { ClientProfilePage } from "./client-profile-page";
+import { ClientResourcesPage } from "./client-resources-page";
 import { ClientSettingsPage } from "./client-settings-page";
 import { CoachAssessmentCallsPage } from "./coach-assessment-calls-page";
 import { CoachClientPage } from "./coach-client-page";
@@ -82,6 +83,7 @@ type PlatformFixtures = {
   clientProfile: ClientProfilePage;
   clientSettings: ClientSettingsPage;
   clientEnded: ClientEndedPage;
+  clientResources: ClientResourcesPage;
   privacyPolicy: PrivacyPolicyPage;
   measurementsSheet: MeasurementsSheet;
   photoView: PhotoView;
@@ -334,6 +336,10 @@ export const test = base.extend<PlatformFixtures, WorkerFixtures>({
 
   clientEnded: async ({ page }, use) => {
     await use(new ClientEndedPage(page));
+  },
+
+  clientResources: async ({ page }, use) => {
+    await use(new ClientResourcesPage(page));
   },
 
   measurementsSheet: async ({ page }, use) => {

@@ -111,4 +111,12 @@ export class ResourceRequests {
       await this.request.get(`${CLIENT_RESOURCES_PATH}/${resourceId}/download`),
     );
   }
+
+  async markOpened(resourceId: string): Promise<number> {
+    const response = await this.request.post(
+      `${CLIENT_RESOURCES_PATH}/${resourceId}/opened`,
+    );
+
+    return response.status();
+  }
 }
