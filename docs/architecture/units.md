@@ -1,6 +1,6 @@
 # Units
 
-Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; last update 2026-10-06 at the merge of main c857226e into the GEN-210 branch 620e61cd, uniting GEN-208's change review at commit 33d12620 (record-only, payments consolidation) and GEN-210's change review at commit 1100de5f.
+Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; last update 2026-10-06 at commit aa4323e6, change review.
 
 | ID | Path:symbol | Component | Kind | Ring | Visibility | Actors | Status |
 |---|---|---|---|---|---|---|---|
@@ -493,7 +493,7 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 | U1397 | domain/payment-link/read-call-sales-states-use-case.ts:ReadCallSalesStatesUseCase | C1 | use-case | use-cases | published | coach | present |
 | U1473 | domain/payment-link/open-bundle-page-use-case.ts:OpenBundlePageUseCase (`open \| closed`, from the sales window) | C1 | use-case | use-cases | published | visitor | present |
 | U1398 | domain/payment-link/index.ts:module | C1 | framework-glue | adapters | published (`./payment-link`) | operator/platform | present |
-| U1399 | packages/domain/package.json:exports (twenty-three subpaths, no `.`) | C1 | framework-glue | frameworks | package-manager entry | operator/platform | present |
+| U1399 | packages/domain/package.json:exports (twenty-four subpaths, no `.`) | C1 | framework-glue | frameworks | package-manager entry | operator/platform | present |
 | U1400 | config/concerns/payments.ts:paymentsShape, PaymentsConfig, refinePayments (`PAYMENTS_PROVIDER` `memory \| stripe`, default `memory`; `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SIGNING_SECRET`; `STRIPE_API_BASE_URL`; `STRIPE_PORTAL_CONFIGURATION_ID`, a customer-portal configuration id; production refuses `memory` and any API base URL and requires the portal configuration id) | C3 | boundary-data | frameworks | `PaymentsConfig` published (`.`) | operator/platform, vendor:stripe | present |
 | U1401 | payments/index.server.ts:module | C6 | framework-glue | frameworks | published (`./payments/server`) | operator/platform | present |
 | U1402 | payments/create-payments.server.ts:createPayments, Payments (one factory for the concern: on `PAYMENTS_PROVIDER` it builds the in-memory checkout, events, subscriptions and customer cards, or one Stripe client and the four Stripe adapters with `STRIPE_VOCABULARY`, the webhook signing secret and the portal configuration id) | C6 | factory | adapters | published | operator/platform | present |
@@ -1013,3 +1013,4 @@ Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tool
 | U3502 | packages/infrastructure/src/documents/create-resource-document-pages.server.ts:createResourceDocumentPages | C6 | adapter | adapters | private | coach, operator/platform | present |
 | U3503 | packages/infrastructure/src/images/create-resource-image-pages.server.ts:createResourceImagePages | C6 | adapter | adapters | private | coach, operator/platform | present |
 | U3504 | packages/ui/src/portal/portal-back-link.tsx:PortalBackLink | C5 | view | frameworks | published (`./portal`) | coach, operator/platform | present |
+| U3505 | apps/platform/db/drizzle/0038_client_resources.sql:migration (creates `client_resources` with the foreign key to `clients`, the `format` CHECK over C1's formats and the client and added-at index) | C21 | framework-glue | frameworks | migration journal | operator/platform | present |

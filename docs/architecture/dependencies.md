@@ -1,6 +1,6 @@
 # Dependencies
 
-Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; last update 2026-10-06 at the merge of main c857226e into the GEN-210 branch 620e61cd, uniting GEN-208's change review at commit 33d12620 (record-only, payments consolidation) and GEN-210's change review at commit 1100de5f.
+Header: audit 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs; last update 2026-10-06 at commit aa4323e6, change review.
 
 ## Component graph
 
@@ -1656,7 +1656,6 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E1945 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/start-choice.tsx | apps/platform/src/features/coaching-sales/ui/public/select-bundle/start-choice-copy.ts | import | no | no | lateral | present |
 | E1946 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/start-choice.tsx | packages/ui/src/primitives/index.ts | import | yes | no | lateral | present |
 | E1947 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/start-choice.tsx | apps/platform/src/features/coaching-sales/contracts/coaching-sales.ts | import | no | yes | inward | present |
-| E1949 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/start-choice.tsx | external:lucide-react | import | n/a | no | lateral | present |
 | E1950 | apps/platform/src/features/coaching-sales/ui/public/select-bundle/start-choice.tsx | external:react | import | n/a | no | lateral | present |
 | E1951 | apps/platform/src/features/waitlist/server/waitlist-composition.server.ts | packages/domain/src/coaching-bundle/index.ts | type-only import | yes | yes | inward | present |
 | E1952 | apps/platform/src/features/waitlist/data/repository.server.ts | packages/domain/src/coaching-bundle/index.ts | type-only import | yes | yes | inward | present |
@@ -3161,7 +3160,6 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E3723 | apps/platform/src/features/client-onboarding/api/client/client-onboarding-controller.server.ts | packages/domain/src/client-profile/index.ts | type-only import | yes | no | lateral | present |
 | E3724 | apps/platform/src/features/client-onboarding/contracts/onboarding.ts | apps/platform/src/features/client-profile/contracts/progress-photo-parts.ts | import | yes | no | lateral | present |
 | E3725 | apps/platform/src/features/client-onboarding/server/client-onboarding-composition.server.ts | packages/domain/src/client-profile/index.ts | type-only import | yes | yes | inward | present |
-| E3728 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-wizard.tsx | apps/platform/src/features/client-profile/contracts/measurements.ts | import | yes | yes | inward | present |
 | E3729 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-wizard.tsx | apps/platform/src/features/client-profile/ui/shared/photos/progress-photo-block.tsx | import | yes | no | lateral | present |
 | E3730 | apps/platform/src/features/client-onboarding/ui/client/onboarding/onboarding-wizard.tsx | apps/platform/src/features/client-profile/ui/shared/photos/progress-photo-picks.ts | import | yes | no | lateral | present |
 | E3731 | apps/platform/src/features/client-onboarding/ui/client/onboarding/use-send-to-coach.ts | apps/platform/src/features/client-profile/ui/shared/photos/progress-photo-picks.ts | import | yes | no | lateral | present |
@@ -3836,3 +3834,6 @@ An edge from A to B means A's source names B. Direction `inward` points toward p
 | E4459 | apps/platform/src/features/client-resources/ui/coach/resources/coach-resource-library.tsx | apps/platform/src/features/client-resources/ui/shared/resources/resources-unavailable.tsx | import | no | no | lateral | present |
 | E4460 | apps/platform/src/features/client-resources/ui/coach/resources/coach-resource-library.tsx | external:react-router | import | n/a | no | lateral | present |
 | E4461 | packages/domain/src/client-resources/list-client-resources-use-case.ts | packages/domain/src/client-resources/client-resource.ts | type-only import | no | yes | inward | present |
+| E4462 | packages/domain/src/coaching-subscription/record-checkout-completed-use-case.ts | packages/domain/src/coaching-subscription/payment-checkout.ts | type-only import | no | no | lateral | present |
+| E4463 | packages/domain/src/client-resources/index.ts | packages/domain/src/client-resources/resource-file-name.ts | import | no | yes | inward | present |
+| E4464 | packages/domain/src/client-resources/client-resources.ts | packages/domain/src/client-resources/client-resource.ts | type-only import | no | yes | inward | present |

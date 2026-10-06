@@ -1,6 +1,6 @@
 # Architecture
 
-Last audit: 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs. Last update: 2026-10-06 at the merge of main c857226e into the GEN-210 branch 620e61cd, uniting GEN-208's change review at commit 33d12620 (record-only, payments consolidation) and GEN-210's change review at commit 1100de5f. Maintained by the architecture inspection workflow; changes ship with the PR that causes them.
+Last audit: 2026-09-15 at commit 148d594f, scope apps/platform, packages, tools, knip.json, eslint.config.mjs. Last update: 2026-10-06 at commit aa4323e6, change review. Maintained by the architecture inspection workflow; changes ship with the PR that causes them.
 
 ## Shape
 
